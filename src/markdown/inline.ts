@@ -49,16 +49,23 @@ export function renderInline(text: string): string {
   // ── Step 7: Images  ![alt](src) ──
   t = t.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img alt="$1" src="$2" class="mdn-img" loading="lazy" />',
+    (_, alt, src) => {
+      stash.push(`<img alt="${alt}" src="${src}" class="mdn-img" loading="lazy" />`);
+      return `\u0001${stash.length - 1}\u0001`;
+    },
   );
 
   // ── Step 8: Links  [label](href) ──
   //    Internal .md links → Nav.go(); external → new tab
   t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_full, label, href) => {
+    let linkHtml = '';
     if (href.endsWith('.md') || href.includes('.md#')) {
-      return `<a href="#" class="mdn-link mdn-link--internal" onclick="Nav.go('${escAttr(href)}');return false;">${label}</a>`;
+      linkHtml = `<a href="#" class="mdn-link mdn-link--internal" onclick="Nav.go('${escAttr(href)}');return false;">${label}</a>`;
+    } else {
+      linkHtml = `<a href="${href}" class="mdn-link" target="_blank" rel="noopener noreferrer">${label}</a>`;
     }
-    return `<a href="${href}" class="mdn-link" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    stash.push(linkHtml);
+    return `\u0001${stash.length - 1}\u0001`;
   });
 
   // ── Step 9: Bare URLs ──
@@ -67,8 +74,8 @@ export function renderInline(text: string): string {
     '<a href="$1" class="mdn-link" target="_blank" rel="noopener noreferrer">$1</a>',
   );
 
-  // ── Step 10: Restore stashed safe HTML tags ──
-  if (stash.length > 0) {
+  // ── Step 10: Restore stashed safe HTML tags recursively ──
+  while (t.includes('\u0001')) {
     t = t.replace(/\u0001(\d+)\u0001/g, (_, i) => stash[+i]);
   }
 

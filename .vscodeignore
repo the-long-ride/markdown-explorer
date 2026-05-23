@@ -8,10 +8,12 @@ test/**
 # Dependency folder
 node_modules/
 
-# Git and development configs
+# Git, Agent, and VS Code development configs
 .git/
 .gitignore
 .gitattributes
+.vscode/**
+.agent/**
 package-lock.json
 
 # Packaged extension binaries
@@ -19,3 +21,6 @@ package-lock.json
 
 # Raw large assets (logo-128.png and logo-500.png are used instead)
 media/logos/logo.png
+
+# Mockups and screenshots (only used in README on GitHub)
+media/screenshots/**

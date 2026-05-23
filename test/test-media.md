@@ -9,10 +9,14 @@ This page tests premium media handling, relative image path resolution, full-scr
 Below are local workspace images to test responsive layout, centering, and hover zoom effect.
 
 ### Image 1: Telemetry Graph Preview
-![Telemetry Graph Preview](image.png)
 
-### Image 2: Workspace Architecture Design
-![Workspace Architecture Design](image-1.png)
+![Telemetry Graph Preview](image.JPG)
+
+Link image: [Instagram - the.long.ride](https://www.instagram.com/p/DUQBs1hkryY)
+
+### Image 2: Markdown Explorer Logo
+
+![Workspace Architecture Design](../media/logos/logo.png)
 
 ---
 
