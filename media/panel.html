@@ -28,6 +28,8 @@
         </div>
       </div>
     </div>
+    <span style="color:var(--bd-s);user-select:none;margin:0 4px;font-size:12px">|</span>
+    {{HOME_BTN}}
     <div class="topbar__divider"></div>
     <div style="display:flex;align-items:center;gap:4px">
       {{BACK_BTN}}
@@ -702,6 +704,12 @@ const UI = {
     lastMsg = msg;
     currentFile = msg.filePath;
     DocHistory.push(msg.filePath);
+
+    // Disable edit button on Welcome page
+    const editBtn = document.querySelector('button[onclick="Nav.openInEditor()"]');
+    if (editBtn) {
+      editBtn.disabled = !msg.filePath;
+    }
 
     document.getElementById('loadingScreen').style.display = 'none';
     const body = document.getElementById('mdBody');

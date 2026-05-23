@@ -1,6 +1,7 @@
 # TypeScript configurations and Source Code
 tsconfig.json
 src/**
+!out/**
 
 # Test files and test sample documents
 test/**

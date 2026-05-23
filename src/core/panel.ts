@@ -37,9 +37,7 @@ export class MarkdownDocsPanel {
 
     if (MarkdownDocsPanel.currentPanel) {
       MarkdownDocsPanel.currentPanel._panel.reveal(column);
-      if (initialFilePath) {
-        void MarkdownDocsPanel.currentPanel._navigateTo(initialFilePath);
-      }
+      void MarkdownDocsPanel.currentPanel._navigateTo(initialFilePath);
       return;
     }
 
@@ -121,10 +119,7 @@ export class MarkdownDocsPanel {
     const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
     this._panel.title = `Markdown Explorer — ${workspaceName}`;
 
-    if (!this._currentFile && flat.length > 0) {
-      const readme = flat.find(f => f.fileName.toLowerCase() === 'readme.md');
-      this._currentFile = readme?.fsPath ?? flat[0].fsPath;
-    }
+    // Do not auto-initialize _currentFile to allow showing the Welcome page by default when null
 
     this._panel.webview.html = this._buildShell(tree, flat, workspaceName);
   }
@@ -148,6 +143,8 @@ export class MarkdownDocsPanel {
 
     if (this._currentFile) {
       await this._sendContent();
+    } else {
+      await this._sendWelcome();
     }
   }
 
@@ -212,7 +209,13 @@ export class MarkdownDocsPanel {
     return p.toLowerCase().replace(/\\/g, '/');
   }
 
-  private async _navigateTo(href: string): Promise<void> {
+  private async _navigateTo(href: string | null): Promise<void> {
+    if (!href) {
+      this._currentFile = null;
+      await this._sendWelcome();
+      return;
+    }
+
     // Resolve relative .md links
     if (!path.isAbsolute(href)) {
       const dir = path.dirname(this._currentFile ?? '');
@@ -230,6 +233,118 @@ export class MarkdownDocsPanel {
     } else {
       await this._panel.webview.postMessage({ command: 'navNotFound', href });
     }
+  }
+
+  private async _sendWelcome(): Promise<void> {
+    const welcomeHtml = this._buildWelcomeHtml();
+    const msg: RenderContentMessage = {
+      command: 'renderContent',
+      html: welcomeHtml,
+      frontmatter: {},
+      toc: [],
+      filePath: '',
+      relativePath: 'Welcome Page',
+      title: 'Welcome',
+      fileList: this._flat,
+    };
+    await this._panel.webview.postMessage(msg);
+  }
+
+  private _buildWelcomeHtml(): string {
+    return `
+<div class="welcome-container" style="max-width: 800px; margin: 0 auto; padding: 20px 10px; font-family: var(--font-ui);">
+  <!-- Hero Section -->
+  <div style="text-align: center; margin-bottom: 32px;">
+    <h1 style="font-size: 2.2em; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; color: var(--tx);">Welcome to Markdown Explorer</h1>
+    <p style="font-size: 1.15em; color: var(--tx2); margin-bottom: 12px; line-height: 1.5;">A premium, local-first documentation viewer and navigator for Visual Studio Code.</p>
+    <div style="font-size: 0.95em; color: var(--tx2);">
+      Created by <a href="https://github.com/the-long-ride" target="_blank" rel="noopener noreferrer" style="color: var(--accent-text); text-decoration: none; font-weight: 600;">the-long-ride</a> · 
+      Repository: <a href="https://github.com/the-long-ride/vscode-extension-markdown-explorer" target="_blank" rel="noopener noreferrer" style="color: var(--accent-text); text-decoration: none; font-weight: 600;">vscode-extension-markdown-explorer</a>
+    </div>
+  </div>
+
+  <!-- Privacy Pledge -->
+  <div style="background: rgba(52, 211, 153, 0.07); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: var(--r-lg); padding: 16px 20px; margin-bottom: 32px;">
+    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--success); margin-bottom: 8px;">
+      <span>🔒 100% Private, Offline-First & Independent</span>
+    </div>
+    <div style="font-size: 12.5px; line-height: 1.6; color: var(--tx2);">
+      We believe your documentation should be kept completely private. 
+      <strong>Markdown Explorer</strong> operates entirely on your local machine:
+      <ul style="margin: 8px 0 0 20px; padding: 0; list-style-type: disc;">
+        <li style="margin-bottom: 4px;"><strong>No Tracking & No Telemetry</strong>: We do not collect or send any usage data, analytics, or keystrokes.</li>
+        <li style="margin-bottom: 4px;"><strong>No External Libraries</strong>: This extension does not package or load any third-party external trackers, analytic scripts, or telemetry libraries.</li>
+        <li style="margin-bottom: 0;"><strong>100% Offline Support</strong>: All markdown parsing, scanning, rendering, and quick search indexing are executed locally with zero remote dependencies.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Feature Guidelines -->
+  <div style="margin-bottom: 32px;">
+    <h2 style="font-size: 1.4em; font-weight: 700; margin-bottom: 16px; border-bottom: 1px solid var(--bd-s); padding-bottom: 6px; color: var(--tx);">How to Use All Features</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+      
+      <!-- Feature 1 -->
+      <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">📁 Workspace Navigation Tree</div>
+        <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
+          The left sidebar displays an interactive folder structure scanning all markdown files in your workspace. Simply click any file to open it in preview mode. You can filter files by name using the search bar at the top of the sidebar.
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">🔍 Instant Quick Search (<kbd>Ctrl+K</kbd>)</div>
+        <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
+          Press <kbd>Ctrl+K</kbd> (or <kbd>Cmd+K</kbd> on Mac) from anywhere in the preview window to open the quick search overlay. Type a query to search across all markdown file names instantly. Use the mouse or keyboard to select and open a file.
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">📋 Excel-Style Interactive Data Tables</div>
+        <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
+          Standard markdown tables are automatically converted to interactive tables. You can sort columns by clicking their headers, use the funnel icon on headers to filter rows by values, and type inside the search bar above the table to search row contents.
+        </div>
+      </div>
+
+      <!-- Feature 4 -->
+      <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">📊 One-Click Table-to-Chart Switcher</div>
+        <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
+          For tables containing numeric columns, a view switcher will appear. Click the <strong>Bar</strong>, <strong>Line</strong>, or <strong>Pie</strong> buttons to instantly visualize the table data as an interactive Chart.js chart.
+        </div>
+      </div>
+
+      <!-- Feature 5 -->
+      <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">🎨 Syntax Highlighting & Mermaid Diagrams</div>
+        <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
+          Enjoy high-contrast, premium syntax highlighting for code blocks (TypeScript, JavaScript, etc.) with custom overrides for comments and optional properties. Markdown Explorer also natively renders standard <code>mermaid</code> code blocks into responsive sequence, flowchart, and class diagrams.
+        </div>
+      </div>
+
+      <!-- Feature 6 -->
+      <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">🖼️ Zoomable Backdrop Media Modal</div>
+        <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
+          Click any image or diagram within your documents to launch a premium backdrop-blur modal. You can scroll to zoom in/out, click and drag to pan across high-res graphics, or use the arrow keys to cycle through all images in the document.
+        </div>
+      </div>
+
+      <!-- Feature 7 -->
+      <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">⌨️ Keyboard Shortcuts & Navigation</div>
+        <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
+          Use <kbd>Ctrl+Alt+V</kbd> (<kbd>Cmd+Alt+V</kbd> on Mac) to quickly toggle the Markdown Explorer view on a markdown file. Navigate back and forward between documents using the arrow buttons in the topbar or <kbd>Alt+Left</kbd> and <kbd>Alt+Right</kbd>.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+    `;
   }
 
   // ---------------------------------------------------------------------------
@@ -269,6 +384,11 @@ export class MarkdownDocsPanel {
       '{{ICON_MOON_URI}}': moonIconUri,
       '{{ICON_SUN_URI}}': sunIconUri,
       '{{ICON_MD_URI}}': logoUri,
+      '{{HOME_BTN}}': renderButton({
+        id: 'homeBtn', className: 'btn btn--icon', onClick: 'Nav.go(null)',
+        label: 'Welcome Page', tooltipPos: 'below',
+        iconHtml: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.88 113.97" width="13" height="13" fill="currentColor"><path d="M18.69,73.37,59.18,32.86c2.14-2.14,2.41-2.23,4.63,0l40.38,40.51V114h-30V86.55a3.38,3.38,0,0,0-3.37-3.37H52.08a3.38,3.38,0,0,0-3.37,3.37V114h-30V73.37ZM60.17.88,0,57.38l14.84,7.79,42.5-42.86c3.64-3.66,3.68-3.74,7.29-.16l43.41,43,14.84-7.79L62.62.79c-1.08-1-1.24-1.13-2.45.09Z" fill-rule="evenodd"/></svg>',
+      }),
       '{{BACK_BTN}}': renderButton({
         id: 'backBtn', className: 'btn btn--icon', onClick: 'DocHistory.back()',
         label: 'Go Back', disabled: true, tooltipPos: 'below',

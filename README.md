@@ -73,8 +73,19 @@ Inspect complex architectures or graphics in high definition. Click any image or
 
 1. **Install the Extension**: Find us on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer) and click **Install**.
 2. **Launch Preview**: Press `Ctrl+Shift+M` (or click the preview magnifying glass icon in the title bar) to open the explorer.
-3. **Toggle Sidebar**: Click the layout icon to hide/show the tree panel to focus on writing.
-4. **Enjoy Premium Docs**: Watch your standard text render into a premium documentation hub.
+3. **Toggle the Viewer**: Press `Ctrl+Alt+V` (or `Cmd+Alt+V` on macOS) to toggle the Markdown Explorer view on any markdown file.
+4. **Toggle Sidebar**: Click the layout icon to hide/show the tree panel to focus on writing.
+5. **Enjoy Premium Docs**: Watch your standard text render into a premium documentation hub.
+
+---
+
+## 🔒 Privacy, Security & Offline-First
+
+Markdown Explorer is designed with strict privacy principles:
+- **100% Offline Use**: All markdown scanning, parsing, rendering, and search indexing are processed entirely on your local machine. No external servers or API requests are ever made.
+- **Zero Tracking**: We do not collect, store, or transmit any analytics, telemetry, usage statistics, or crash reports.
+- **No Third-Party Tracker Libraries**: No Google Analytics, no telemetry trackers, no 3rd-party analytic libraries are packaged or loaded in this extension.
+- **Independent**: Rest easy knowing your documentation and project code never leave your local workspace.
 
 ---
 

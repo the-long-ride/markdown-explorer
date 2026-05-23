@@ -4,6 +4,27 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.1.0] — 2026-05-23
+
+### Added Features & Enhancements
+
+#### 🏠 Welcome Page & Home Button
+* **Offline-First Welcome Page**: Introduced a Welcome page displaying project repository links, author details, usage guidelines, and a strict privacy pledge (100% offline use, zero tracking, and no external tracking libraries).
+* **Topbar Home Button**: Integrated a theme-matching Home button (`| ⌂`) using the `homepage-icon.svg` asset. Clicking it navigates back to the Welcome page.
+* **Edit Button Disablement**: Automatically disables the topbar "Edit" button when on the Welcome page.
+
+#### 📁 Left Activity Bar Sidebar Icon
+* **Sidebar Integration**: Contributed a custom view container to the left activity bar using the `markdown-manifier-light.svg` icon. Selecting it immediately opens or reveals the Markdown Explorer.
+
+#### ⌨️ Toggle Keybinding & Documentation
+* **Keybinding Documentation**: Explicitly documented the `Ctrl+Alt+V` (or `Cmd+Alt+V` on macOS) keybinding to toggle the Markdown Explorer preview.
+* **Privacy Section**: Added a dedicated privacy, security, and offline-first section to the README.
+
+### Fixed Issues
+* **Packaging Fix**: Resolved an issue where compiled JavaScript files in the `out/` folder were excluded from the VSIX due to `.gitignore` rules. Added `!out/**` to `.vscodeignore` to guarantee all compiled code is packaged.
+
+---
+
 ## [1.0.0] — 2026-05-23
 
 This is the initial release of the Markdown Explorer extension.
