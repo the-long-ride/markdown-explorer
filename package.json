@@ -1,0 +1,93 @@
+{
+  "name": "vscode-extension-markdown-explorer",
+  "displayName": "Markdown Explorer",
+  "description": "View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
+  "version": "1.0.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "publisher": "the-long-ride",
+  "repository": { "type": "git", "url": "https://github.com/the-long-ride/vscode-extension-markdown-explorer" },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other", "Visualization"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "markdownExplorer.open",
+        "title": "Markdown Explorer: Open Docs Viewer",
+        "icon": {
+          "light": "./media/icons/markdown-manifier-light.svg",
+          "dark": "./media/icons/markdown-manifier-dark.svg"
+        }
+      },
+      {
+        "command": "markdownExplorer.openFile",
+        "title": "Markdown Explorer: Preview This File",
+        "icon": {
+          "light": "./media/icons/markdown-manifier-light.svg",
+          "dark": "./media/icons/markdown-manifier-dark.svg"
+        }
+      },
+      {
+        "command": "markdownExplorer.toggle",
+        "title": "Markdown Explorer: Toggle Docs Viewer",
+        "icon": {
+          "light": "./media/icons/markdown-manifier-light.svg",
+          "dark": "./media/icons/markdown-manifier-dark.svg"
+        }
+      },
+      {
+        "command": "markdownExplorer.refresh",
+        "title": "Markdown Explorer: Refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        { "command": "markdownExplorer.openFile", "when": "resourceExtname == .md", "group": "navigation" },
+        { "command": "markdownExplorer.toggle", "when": "resourceExtname == .md", "group": "navigation" }
+      ],
+      "explorer/context": [
+        { "command": "markdownExplorer.openFile", "when": "resourceExtname == .md", "group": "navigation" }
+      ]
+    },
+    "keybindings": [
+      { "command": "markdownExplorer.open", "key": "ctrl+shift+m", "mac": "cmd+shift+m" },
+      { "command": "markdownExplorer.toggle", "key": "ctrl+alt+v", "mac": "cmd+alt+v", "when": "editorLangId == markdown" }
+    ],
+    "configuration": {
+      "title": "Markdown Explorer",
+      "properties": {
+        "markdownExplorer.theme": {
+          "type": "string", "default": "auto",
+          "enum": ["auto", "light", "dark"],
+          "description": "Color theme for the docs viewer"
+        },
+        "markdownExplorer.autoRefresh": {
+          "type": "boolean", "default": true,
+          "description": "Automatically refresh when markdown files change"
+        },
+        "markdownExplorer.excludePatterns": {
+          "type": "array",
+          "default": ["**/node_modules/**", "**/.git/**", "**/.vscode/**"],
+          "description": "Glob patterns to exclude from scan"
+        },
+        "markdownExplorer.defaultExpanded": {
+          "type": "boolean", "default": true,
+          "description": "Expand all sections by default"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npm run compile && npx vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  }
+}

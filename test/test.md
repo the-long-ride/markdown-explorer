@@ -1,0 +1,1141 @@
+# 🧪 Markdown Explorer — Stress Test Document
+
+> [!NOTE]
+> This file stress-tests the Markdown Explorer renderer: Mermaid diagram, 1000-row sortable/filterable table, LaTeX-style math, diff blocks, nested callouts with task lists, `<kbd>` tags, and inline HTML.
+
+---
+
+## Data Pipeline Overview
+
+```mermaid
+flowchart LR
+    A([🗂 Raw Source]) --> B[Ingest]
+    B --> C{Validate}
+    C -- Pass --> D[Transform]
+    C -- Fail --> E[/Dead Letter Queue/]
+    D --> F[(Data Warehouse)]
+    D --> G[Stream Bus]
+    G --> H[Real-time Dashboard]
+    F --> I[Batch Analytics]
+    I --> J([📊 Reports])
+    style A fill:#f59e0b,color:#000
+    style E fill:#ef4444,color:#fff
+    style F fill:#3b82f6,color:#fff
+    style J fill:#22c55e,color:#000
+```
+
+---
+
+## Advanced Formatting
+
+### Math Notation
+
+Mean squared error:
+
+```
+MSE = (1/n) * Σ(yᵢ - ŷᵢ)²
+```
+
+Gaussian PDF: `f(x) = (1/(σ√2π)) · exp(−(x−μ)²/(2σ²))`
+
+Inline HTML sub/superscripts: H<sub>2</sub>O, E = mc<sup>2</sup>, log<sub>2</sub>(n)
+
+### Keyboard Shortcuts
+
+| Action        | Windows                                       | Mac                                          |
+| ------------- | --------------------------------------------- | -------------------------------------------- |
+| Global search | <kbd>Ctrl</kbd>+<kbd>K</kbd>                  | <kbd>Cmd</kbd>+<kbd>K</kbd>                  |
+| Open viewer   | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> | <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> |
+| Close overlay | <kbd>Esc</kbd>                                | <kbd>Esc</kbd>                               |
+| Collapse all  | click Collapse                                | click Collapse                               |
+
+### Diff Block
+
+```diff
+- const found = this._flat?.find(f => f.fsPath === href);
++ const normHref = this._normPath(href);
++ const found = this._flat?.find(f =>
++   this._normPath(f.fsPath) === normHref ||
++   this._normPath(f.relativePath) === normHref
++ );
+  if (found) {
+    this._currentFile = found.fsPath;
+    await this._sendContent();
++ } else {
++   await this._panel.webview.postMessage({ command: 'navNotFound', href });
+  }
+```
+
+### Callouts + Task Lists
+
+> [!IMPORTANT]
+> Pre-release checklist:
+>
+> - [x] Fix infinite loading on file navigation
+> - [x] Restructure project to `src/` layout
+> - [x] Port all files from JS to TypeScript
+> - [x] Fix all TS6133 unused-variable errors
+> - [ ] Write unit tests for `parser.ts`
+> - [ ] Add Mermaid rendering support
+> - [ ] Publish to VS Code Marketplace
+
+> [!WARNING]
+> Do **not** ship without running `npm run compile` first.
+
+> [!TIP]
+> Use `npm run watch` during development for automatic recompilation on save.
+
+> [!CAUTION]
+> Setting `retainContextWhenHidden: false` will re-render the webview on every focus, degrading performance on large workspaces.
+
+### Code Samples
+
+```typescript
+private _normPath(p: string): string {
+  return p.toLowerCase().replace(/\\/g, "/");
+}
+```
+
+```python
+import hashlib
+def sig(i, d): return "EVT-" + hashlib.sha1(f"{i}:{d}".encode()).hexdigest()[:12].upper()
+```
+
+```bash
+npm run compile && npx vsce package --no-dependencies
+code --install-extension vscode-extension-markdown-explorer-1.0.0.vsix
+```
+
+### Premium Media Tester
+
+Here are some test images to verify the full-screen modal zoom in/out, drag-to-pan, mouse scroll wheel, and arrow key navigation:
+
+![Telemetry Graph Preview](image.png)
+
+![Workspace Architecture Design](image-1.png)
+
+---
+
+## 1000-Row Dummy Dataset
+
+> [!NOTE]
+> **1 000 rows** of synthetic telemetry. Use the table search and column sort headers to explore.
+
+| Index | Date       | Metric Value | Event Signature                           | Category |
+| ----: | ---------- | -----------: | ----------------------------------------- | -------- |
+|     1 | 2024-01-01 |      6714.25 | `EVT-0C4F64D8808D` — nominal latency      | Alpha    |
+|     2 | 2024-01-02 |      5275.37 | `EVT-BB6C899604F5` — nominal jitter       | Beta     |
+|     3 | 2024-01-03 |      7271.64 | `EVT-C036FEEBA0CD` — baseline latency     | Gamma    |
+|     4 | 2024-01-04 |      7636.38 | `EVT-C08EDA490115` — elevated jitter      | Delta    |
+|     5 | 2024-01-05 |      5105.48 | `EVT-09B49027CA45` — trace drift          | Epsilon  |
+|     6 | 2024-01-06 |      2676.42 | `EVT-C7593FD3BC23` — baseline throughput  | Alpha    |
+|     7 | 2024-01-07 |      8159.96 | `EVT-4F4F3C1B4386` — baseline drift       | Beta     |
+|     8 | 2024-01-08 |      1606.71 | `EVT-CCE4F43896C2` — critical surge       | Gamma    |
+|     9 | 2024-01-09 |       8180.2 | `EVT-9D4541E3B292` — baseline throughput  | Delta    |
+|    10 | 2024-01-10 |      7140.43 | `EVT-A77943BDA3BE` — nominal plateau      | Epsilon  |
+|    11 | 2024-01-11 |      6956.64 | `EVT-5B290DCE7E60` — baseline latency     | Alpha    |
+|    12 | 2024-01-12 |       510.95 | `EVT-B0A25DF359DB` — trace burst          | Beta     |
+|    13 | 2024-01-13 |      8228.55 | `EVT-EF1D3318DC68` — critical burst       | Gamma    |
+|    14 | 2024-01-14 |      8071.33 | `EVT-FF179C0A4631` — inverted drift       | Delta    |
+|    15 | 2024-01-15 |      1576.28 | `EVT-323F515F6FD9` — critical throughput  | Epsilon  |
+|    16 | 2024-01-16 |      7838.26 | `EVT-3204238FEB3A` — saturated latency    | Alpha    |
+|    17 | 2024-01-17 |      2574.61 | `EVT-107E9EAD07A1` — inverted jitter      | Beta     |
+|    18 | 2024-01-18 |      6516.64 | `EVT-7C7D82C46F74` — nominal throughput   | Gamma    |
+|    19 | 2024-01-19 |      6085.14 | `EVT-A07B093E6E5A` — baseline throughput  | Delta    |
+|    20 | 2024-01-20 |      4261.62 | `EVT-312E45AD80C9` — inverted idle        | Epsilon  |
+|    21 | 2024-01-21 |      2262.61 | `EVT-39D4C62BEFBD` — critical drift       | Alpha    |
+|    22 | 2024-01-22 |      2747.64 | `EVT-68DBE4663EC9` — critical surge       | Beta     |
+|    23 | 2024-01-23 |       802.34 | `EVT-8B27148AA868` — anomalous throughput | Gamma    |
+|    24 | 2024-01-24 |      7998.31 | `EVT-B26819F5A19F` — anomalous burst      | Delta    |
+|    25 | 2024-01-25 |      5046.01 | `EVT-B48CB1FE0D33` — critical collapse    | Epsilon  |
+|    26 | 2024-01-26 |       227.68 | `EVT-C71BE59AE920` — critical throughput  | Alpha    |
+|    27 | 2024-01-27 |      6576.02 | `EVT-9E8F2A35CE6D` — critical plateau     | Beta     |
+|    28 | 2024-01-28 |      9296.81 | `EVT-6A04C8FBB4A5` — anomalous drift      | Gamma    |
+|    29 | 2024-01-29 |       6204.4 | `EVT-6442FA6D923F` — critical drift       | Delta    |
+|    30 | 2024-01-30 |      1504.61 | `EVT-717A6AFBEEE8` — anomalous surge      | Epsilon  |
+|    31 | 2024-01-31 |      5370.42 | `EVT-0E371C7C32BA` — anomalous jitter     | Alpha    |
+|    32 | 2024-02-01 |      9081.86 | `EVT-BD3C30A1A79E` — baseline surge       | Beta     |
+|    33 | 2024-02-02 |       292.18 | `EVT-F8C0F96CCC8E` — cyclic plateau       | Gamma    |
+|    34 | 2024-02-03 |      3395.06 | `EVT-7B35A575BA59` — inverted latency     | Delta    |
+|    35 | 2024-02-04 |      1121.11 | `EVT-B1085B3D4A63` — anomalous drift      | Epsilon  |
+|    36 | 2024-02-05 |      7783.49 | `EVT-005C218BA266` — nominal latency      | Alpha    |
+|    37 | 2024-02-06 |      2235.04 | `EVT-5B0CF5E61D08` — baseline burst       | Beta     |
+|    38 | 2024-02-07 |      9871.51 | `EVT-2CBC9C662B60` — inverted idle        | Gamma    |
+|    39 | 2024-02-08 |         7178 | `EVT-279EB529A3FC` — elevated burst       | Delta    |
+|    40 | 2024-02-09 |       9899.3 | `EVT-5F5D1B7FE101` — saturated throughput | Epsilon  |
+|    41 | 2024-02-10 |      3519.53 | `EVT-8B9F81F102AA` — latent throughput    | Alpha    |
+|    42 | 2024-02-11 |       2275.5 | `EVT-C980AEE34131` — elevated throughput  | Beta     |
+|    43 | 2024-02-12 |      2239.62 | `EVT-809DB9AB28A1` — baseline spike       | Gamma    |
+|    44 | 2024-02-13 |      1027.95 | `EVT-1E99BE3832C5` — latent latency       | Delta    |
+|    45 | 2024-02-14 |      1150.33 | `EVT-4E3C0FDC78F5` — trace drift          | Epsilon  |
+|    46 | 2024-02-15 |       7536.4 | `EVT-996D2B10CF7C` — cyclic throughput    | Alpha    |
+|    47 | 2024-02-16 |       516.63 | `EVT-707669BD0373` — cyclic collapse      | Beta     |
+|    48 | 2024-02-17 |      2456.93 | `EVT-F7B281A71090` — latent collapse      | Gamma    |
+|    49 | 2024-02-18 |      2866.52 | `EVT-1C3BC9A4F340` — baseline idle        | Delta    |
+|    50 | 2024-02-19 |      6290.76 | `EVT-664CD8D41A20` — nominal jitter       | Epsilon  |
+|    51 | 2024-02-20 |      1912.15 | `EVT-78B1F663CFB6` — critical jitter      | Alpha    |
+|    52 | 2024-02-21 |      9341.27 | `EVT-7F6473F8399A` — latent surge         | Beta     |
+|    53 | 2024-02-22 |      1438.68 | `EVT-93E3C3D9F4FE` — cyclic latency       | Gamma    |
+|    54 | 2024-02-23 |      3018.21 | `EVT-2EE801D52813` — baseline burst       | Delta    |
+|    55 | 2024-02-24 |      7153.55 | `EVT-983E6DBBE5C2` — nominal burst        | Epsilon  |
+|    56 | 2024-02-25 |      3975.32 | `EVT-CBBA4D9B69D6` — cyclic spike         | Alpha    |
+|    57 | 2024-02-26 |      3547.22 | `EVT-1491839F2139` — latent spike         | Beta     |
+|    58 | 2024-02-27 |      5475.88 | `EVT-87A4536B93B5` — latent collapse      | Gamma    |
+|    59 | 2024-02-28 |      1370.39 | `EVT-97423D268AAA` — nominal throughput   | Delta    |
+|    60 | 2024-02-29 |      1900.36 | `EVT-AA4418BBFDB8` — latent surge         | Epsilon  |
+|    61 | 2024-03-01 |      4099.64 | `EVT-262D0322497C` — baseline spike       | Alpha    |
+|    62 | 2024-03-02 |         1337 | `EVT-E86944B63382` — latent plateau       | Beta     |
+|    63 | 2024-03-03 |       8916.4 | `EVT-D815059280E4` — nominal drift        | Gamma    |
+|    64 | 2024-03-04 |       5467.8 | `EVT-B283E692184C` — saturated plateau    | Delta    |
+|    65 | 2024-03-05 |      8241.11 | `EVT-FAC3FE4DC3C4` — inverted jitter      | Epsilon  |
+|    66 | 2024-03-06 |      3462.87 | `EVT-8FB5AD736B15` — baseline collapse    | Alpha    |
+|    67 | 2024-03-07 |      2546.39 | `EVT-C7BFFAE537C2` — cyclic idle          | Beta     |
+|    68 | 2024-03-08 |      1976.66 | `EVT-DCB72E00CCD0` — elevated jitter      | Gamma    |
+|    69 | 2024-03-09 |      8352.81 | `EVT-F53215F97D4A` — saturated throughput | Delta    |
+|    70 | 2024-03-10 |      4263.07 | `EVT-0866A7C56D68` — cyclic collapse      | Epsilon  |
+|    71 | 2024-03-11 |      7810.06 | `EVT-A7DC7A723F98` — latent plateau       | Alpha    |
+|    72 | 2024-03-12 |      4719.42 | `EVT-780AD11C110B` — cyclic plateau       | Beta     |
+|    73 | 2024-03-13 |      1646.19 | `EVT-78F73AE93A42` — baseline jitter      | Gamma    |
+|    74 | 2024-03-14 |      6379.34 | `EVT-167A8C340CFA` — baseline surge       | Delta    |
+|    75 | 2024-03-15 |      1199.22 | `EVT-A2549D50681A` — cyclic drift         | Epsilon  |
+|    76 | 2024-03-16 |      5260.02 | `EVT-2E203576D969` — inverted jitter      | Alpha    |
+|    77 | 2024-03-17 |       5345.3 | `EVT-CF165B87FEC7` — inverted burst       | Beta     |
+|    78 | 2024-03-18 |      2065.66 | `EVT-C27FBA1DBBDB` — latent throughput    | Gamma    |
+|    79 | 2024-03-19 |       651.26 | `EVT-9DB88780B1A1` — elevated drift       | Delta    |
+|    80 | 2024-03-20 |      1798.03 | `EVT-23C7B14B6DA4` — elevated jitter      | Epsilon  |
+|    81 | 2024-03-21 |      8832.41 | `EVT-198EDF669C6F` — anomalous drift      | Alpha    |
+|    82 | 2024-03-22 |      4592.51 | `EVT-866FCF0A3652` — inverted idle        | Beta     |
+|    83 | 2024-03-23 |      9993.44 | `EVT-D5FD27936739` — trace collapse       | Gamma    |
+|    84 | 2024-03-24 |      3182.03 | `EVT-A640ADA2E57F` — nominal plateau      | Delta    |
+|    85 | 2024-03-25 |      5971.21 | `EVT-D52FEEFBA7D3` — saturated drift      | Epsilon  |
+|    86 | 2024-03-26 |      9565.61 | `EVT-322BAB86475A` — critical spike       | Alpha    |
+|    87 | 2024-03-27 |      8818.38 | `EVT-96146ADF0CC1` — trace plateau        | Beta     |
+|    88 | 2024-03-28 |      8825.96 | `EVT-326F0054E871` — cyclic throughput    | Gamma    |
+|    89 | 2024-03-29 |       3053.7 | `EVT-9814DCAD7473` — baseline throughput  | Delta    |
+|    90 | 2024-03-30 |      8918.88 | `EVT-7E089F3EB541` — anomalous idle       | Epsilon  |
+|    91 | 2024-03-31 |      6589.68 | `EVT-7C1400E4C26A` — latent jitter        | Alpha    |
+|    92 | 2024-04-01 |      9411.74 | `EVT-116DD51FA11A` — inverted throughput  | Beta     |
+|    93 | 2024-04-02 |      3473.93 | `EVT-8D24F8FF8A2A` — saturated throughput | Gamma    |
+|    94 | 2024-04-03 |      6884.47 | `EVT-E35909CF80DA` — baseline drift       | Delta    |
+|    95 | 2024-04-04 |      3504.38 | `EVT-3349911373AD` — elevated idle        | Epsilon  |
+|    96 | 2024-04-05 |      6472.39 | `EVT-66B3413093FB` — saturated drift      | Alpha    |
+|    97 | 2024-04-06 |      6685.48 | `EVT-26D01A3BA95A` — critical latency     | Beta     |
+|    98 | 2024-04-07 |      8441.21 | `EVT-A09A6EDECCEB` — elevated plateau     | Gamma    |
+|    99 | 2024-04-08 |      3578.03 | `EVT-10573B174751` — critical burst       | Delta    |
+|   100 | 2024-04-09 |      3574.82 | `EVT-AC051531A495` — nominal latency      | Epsilon  |
+|   101 | 2024-04-10 |      6475.06 | `EVT-80E6D28839BF` — nominal plateau      | Alpha    |
+|   102 | 2024-04-11 |      1884.29 | `EVT-742FF98047CC` — saturated latency    | Beta     |
+|   103 | 2024-04-12 |      6454.48 | `EVT-0E64AA8E77AB` — saturated collapse   | Gamma    |
+|   104 | 2024-04-13 |       3626.7 | `EVT-5101C629BBCA` — saturated spike      | Delta    |
+|   105 | 2024-04-14 |      4342.43 | `EVT-CE411F5599C5` — nominal surge        | Epsilon  |
+|   106 | 2024-04-15 |      5588.43 | `EVT-D2660DFD0A6A` — baseline idle        | Alpha    |
+|   107 | 2024-04-16 |      4172.52 | `EVT-D07ED48D073C` — saturated plateau    | Beta     |
+|   108 | 2024-04-17 |      6997.43 | `EVT-AEBBF92DA094` — elevated drift       | Gamma    |
+|   109 | 2024-04-18 |      5450.04 | `EVT-DD721FA35657` — cyclic idle          | Delta    |
+|   110 | 2024-04-19 |      3240.95 | `EVT-3E28E9D916FA` — baseline surge       | Epsilon  |
+|   111 | 2024-04-20 |      4570.03 | `EVT-ADEBF8880E20` — latent burst         | Alpha    |
+|   112 | 2024-04-21 |      8608.35 | `EVT-FC7F8FA9F06A` — critical spike       | Beta     |
+|   113 | 2024-04-22 |      4259.54 | `EVT-8BF848D2F75C` — nominal burst        | Gamma    |
+|   114 | 2024-04-23 |      4122.32 | `EVT-BE0D7AA06319` — critical plateau     | Delta    |
+|   115 | 2024-04-24 |      4666.79 | `EVT-F1754C4CA4C4` — trace spike          | Epsilon  |
+|   116 | 2024-04-25 |       7174.8 | `EVT-ACCB603E0383` — anomalous throughput | Alpha    |
+|   117 | 2024-04-26 |       1965.2 | `EVT-BCAB64991F54` — inverted spike       | Beta     |
+|   118 | 2024-04-27 |      9081.05 | `EVT-513F35758092` — latent burst         | Gamma    |
+|   119 | 2024-04-28 |      2163.37 | `EVT-099099BF5A7F` — latent collapse      | Delta    |
+|   120 | 2024-04-29 |      6371.02 | `EVT-3281A792518E` — saturated collapse   | Epsilon  |
+|   121 | 2024-04-30 |      5100.01 | `EVT-C0B37F987B93` — trace throughput     | Alpha    |
+|   122 | 2024-05-01 |      1179.65 | `EVT-58E44F9512F8` — latent idle          | Beta     |
+|   123 | 2024-05-02 |      9202.85 | `EVT-EA5967AF3141` — baseline latency     | Gamma    |
+|   124 | 2024-05-03 |      3834.17 | `EVT-8094BF3D00B6` — nominal drift        | Delta    |
+|   125 | 2024-05-04 |      1183.61 | `EVT-BF952160D100` — critical idle        | Epsilon  |
+|   126 | 2024-05-05 |          315 | `EVT-1098D0227B52` — elevated plateau     | Alpha    |
+|   127 | 2024-05-06 |      8288.54 | `EVT-747174FC76BD` — cyclic drift         | Beta     |
+|   128 | 2024-05-07 |      6022.75 | `EVT-B62F54E3FF22` — nominal surge        | Gamma    |
+|   129 | 2024-05-08 |      2955.61 | `EVT-9D317B951107` — baseline throughput  | Delta    |
+|   130 | 2024-05-09 |       110.38 | `EVT-CF3AA76327D7` — saturated throughput | Epsilon  |
+|   131 | 2024-05-10 |      5350.87 | `EVT-F9E71EC54FBC` — inverted burst       | Alpha    |
+|   132 | 2024-05-11 |      7227.01 | `EVT-535E7C94A192` — latent idle          | Beta     |
+|   133 | 2024-05-12 |       8909.2 | `EVT-098A1CB3988F` — trace spike          | Gamma    |
+|   134 | 2024-05-13 |      8601.39 | `EVT-A6B2C83FBBF3` — inverted collapse    | Delta    |
+|   135 | 2024-05-14 |      9421.26 | `EVT-DFD6C8A59275` — cyclic idle          | Epsilon  |
+|   136 | 2024-05-15 |       983.38 | `EVT-CE99C3AC361C` — inverted plateau     | Alpha    |
+|   137 | 2024-05-16 |      8494.11 | `EVT-8D8A59962B99` — nominal surge        | Beta     |
+|   138 | 2024-05-17 |      9666.53 | `EVT-448771FA0401` — cyclic collapse      | Gamma    |
+|   139 | 2024-05-18 |      4494.22 | `EVT-42E710CA99B0` — latent latency       | Delta    |
+|   140 | 2024-05-19 |      2781.65 | `EVT-D29E9F2800C1` — cyclic drift         | Epsilon  |
+|   141 | 2024-05-20 |      5795.78 | `EVT-F77E7E03619D` — latent plateau       | Alpha    |
+|   142 | 2024-05-21 |        692.7 | `EVT-0A52F2A90D60` — cyclic drift         | Beta     |
+|   143 | 2024-05-22 |      8515.64 | `EVT-027923142BF5` — trace latency        | Gamma    |
+|   144 | 2024-05-23 |      9759.03 | `EVT-460C7ACD25BE` — nominal collapse     | Delta    |
+|   145 | 2024-05-24 |      5172.52 | `EVT-A405DAFF0105` — latent throughput    | Epsilon  |
+|   146 | 2024-05-25 |      5584.98 | `EVT-6DEA2A8C51EA` — saturated drift      | Alpha    |
+|   147 | 2024-05-26 |      1383.41 | `EVT-58AF8415ACAD` — nominal surge        | Beta     |
+|   148 | 2024-05-27 |      1244.69 | `EVT-AF783427C38E` — nominal spike        | Gamma    |
+|   149 | 2024-05-28 |      3884.81 | `EVT-C7F4E015AA57` — baseline plateau     | Delta    |
+|   150 | 2024-05-29 |      7126.84 | `EVT-6B3BF3D30C57` — elevated plateau     | Epsilon  |
+|   151 | 2024-05-30 |      4866.58 | `EVT-B9555115854D` — saturated burst      | Alpha    |
+|   152 | 2024-05-31 |       534.42 | `EVT-732AE18256DA` — elevated collapse    | Beta     |
+|   153 | 2024-06-01 |      9275.59 | `EVT-34BA56329399` — cyclic plateau       | Gamma    |
+|   154 | 2024-06-02 |      3220.32 | `EVT-396664E5C1B2` — elevated spike       | Delta    |
+|   155 | 2024-06-03 |      8324.23 | `EVT-2254F8D8A329` — cyclic throughput    | Epsilon  |
+|   156 | 2024-06-04 |      8303.47 | `EVT-F6E3907C82B5` — anomalous collapse   | Alpha    |
+|   157 | 2024-06-05 |      7855.71 | `EVT-8BEE6EF8CAB3` — cyclic jitter        | Beta     |
+|   158 | 2024-06-06 |      8793.08 | `EVT-74AD98B14475` — nominal idle         | Gamma    |
+|   159 | 2024-06-07 |      6176.15 | `EVT-9F078C5AA9A2` — anomalous surge      | Delta    |
+|   160 | 2024-06-08 |      4592.51 | `EVT-50219CB84AB6` — saturated jitter     | Epsilon  |
+|   161 | 2024-06-09 |      3734.34 | `EVT-99E0A9AAFDEB` — nominal latency      | Alpha    |
+|   162 | 2024-06-10 |      1182.83 | `EVT-CE151A36BA3F` — anomalous burst      | Beta     |
+|   163 | 2024-06-11 |      3580.42 | `EVT-D9319A37D3E5` — anomalous idle       | Gamma    |
+|   164 | 2024-06-12 |      1623.82 | `EVT-9DD8CBDB7B05` — saturated surge      | Delta    |
+|   165 | 2024-06-13 |      3596.98 | `EVT-24FBD052A053` — cyclic plateau       | Epsilon  |
+|   166 | 2024-06-14 |       3450.7 | `EVT-FC1FF14304F2` — elevated jitter      | Alpha    |
+|   167 | 2024-06-15 |      4154.01 | `EVT-644D3984DB8D` — baseline latency     | Beta     |
+|   168 | 2024-06-16 |      1510.71 | `EVT-5D11D7380A7E` — latent drift         | Gamma    |
+|   169 | 2024-06-17 |      7469.29 | `EVT-6EF19E71A8A1` — saturated spike      | Delta    |
+|   170 | 2024-06-18 |      9111.27 | `EVT-B63192A0D986` — anomalous collapse   | Epsilon  |
+|   171 | 2024-06-19 |      1203.26 | `EVT-45E11402801D` — anomalous jitter     | Alpha    |
+|   172 | 2024-06-20 |      6848.77 | `EVT-0F75AB6E0A2E` — latent throughput    | Beta     |
+|   173 | 2024-06-21 |      3017.03 | `EVT-ECD6FA903D4E` — inverted drift       | Gamma    |
+|   174 | 2024-06-22 |      5464.34 | `EVT-1990D43199DA` — anomalous plateau    | Delta    |
+|   175 | 2024-06-23 |      1613.78 | `EVT-BF6DAF46352B` — saturated jitter     | Epsilon  |
+|   176 | 2024-06-24 |      4802.83 | `EVT-2D86656C4A29` — baseline drift       | Alpha    |
+|   177 | 2024-06-25 |      6647.33 | `EVT-000C165990FE` — elevated latency     | Beta     |
+|   178 | 2024-06-26 |      4895.01 | `EVT-272B9855B3ED` — critical latency     | Gamma    |
+|   179 | 2024-06-27 |      1808.64 | `EVT-9270F3CD2224` — elevated jitter      | Delta    |
+|   180 | 2024-06-28 |      7300.26 | `EVT-6489A97128D0` — trace collapse       | Epsilon  |
+|   181 | 2024-06-29 |       448.93 | `EVT-A48C9F71FC6D` — anomalous throughput | Alpha    |
+|   182 | 2024-06-30 |      8627.02 | `EVT-63CD5DED1B96` — critical latency     | Beta     |
+|   183 | 2024-07-01 |      5752.27 | `EVT-AF0A1D89EB58` — saturated collapse   | Gamma    |
+|   184 | 2024-07-02 |      8625.54 | `EVT-745B2EC4F4B4` — critical burst       | Delta    |
+|   185 | 2024-07-03 |      9038.58 | `EVT-4B9F59C23879` — cyclic throughput    | Epsilon  |
+|   186 | 2024-07-04 |      1334.41 | `EVT-09CB16423E60` — latent jitter        | Alpha    |
+|   187 | 2024-07-05 |      1323.71 | `EVT-90A22579CCBD` — elevated throughput  | Beta     |
+|   188 | 2024-07-06 |      1594.16 | `EVT-4B2D15D836EF` — elevated latency     | Gamma    |
+|   189 | 2024-07-07 |       6523.9 | `EVT-505327D7CE0C` — saturated spike      | Delta    |
+|   190 | 2024-07-08 |       894.12 | `EVT-C7FCD3E0CB60` — baseline surge       | Epsilon  |
+|   191 | 2024-07-09 |      8861.27 | `EVT-E1A763E34E9F` — baseline drift       | Alpha    |
+|   192 | 2024-07-10 |      4923.66 | `EVT-20B65E4220CE` — baseline throughput  | Beta     |
+|   193 | 2024-07-11 |      9476.08 | `EVT-792D2C13507C` — elevated burst       | Gamma    |
+|   194 | 2024-07-12 |      1173.55 | `EVT-B527A9A24AB4` — latent collapse      | Delta    |
+|   195 | 2024-07-13 |      4658.05 | `EVT-E9E04276E4E8` — cyclic jitter        | Epsilon  |
+|   196 | 2024-07-14 |      6151.55 | `EVT-E1095ABDA056` — baseline latency     | Alpha    |
+|   197 | 2024-07-15 |       568.26 | `EVT-CB894445EEAA` — critical jitter      | Beta     |
+|   198 | 2024-07-16 |      9178.44 | `EVT-FB623DF000CB` — saturated throughput | Gamma    |
+|   199 | 2024-07-17 |      8141.54 | `EVT-50E9E40EF392` — cyclic latency       | Delta    |
+|   200 | 2024-07-18 |      8847.03 | `EVT-A60DD45D7040` — elevated spike       | Epsilon  |
+|   201 | 2024-07-19 |      7281.71 | `EVT-29824E7F86C2` — anomalous latency    | Alpha    |
+|   202 | 2024-07-20 |      1514.73 | `EVT-558697BE8196` — latent spike         | Beta     |
+|   203 | 2024-07-21 |      2151.23 | `EVT-C53B3B8CB02D` — anomalous drift      | Gamma    |
+|   204 | 2024-07-22 |       504.39 | `EVT-DF3367C21489` — nominal idle         | Delta    |
+|   205 | 2024-07-23 |       7127.9 | `EVT-E75E9F1BEB97` — critical drift       | Epsilon  |
+|   206 | 2024-07-24 |      2329.53 | `EVT-93F5FC0AFF83` — saturated spike      | Alpha    |
+|   207 | 2024-07-25 |      9241.02 | `EVT-B134266BD95D` — critical throughput  | Beta     |
+|   208 | 2024-07-26 |      2595.77 | `EVT-F26FD3086BAB` — critical spike       | Gamma    |
+|   209 | 2024-07-27 |      4935.68 | `EVT-4BAB4F0FB5B5` — latent plateau       | Delta    |
+|   210 | 2024-07-28 |      2680.75 | `EVT-D9F552039D2E` — saturated idle       | Epsilon  |
+|   211 | 2024-07-29 |      8448.69 | `EVT-A37545E7CF4F` — critical throughput  | Alpha    |
+|   212 | 2024-07-30 |      1799.03 | `EVT-BB2666E677D5` — trace spike          | Beta     |
+|   213 | 2024-07-31 |      6939.79 | `EVT-810168B83519` — trace collapse       | Gamma    |
+|   214 | 2024-08-01 |      7574.89 | `EVT-4D2B82128D61` — anomalous latency    | Delta    |
+|   215 | 2024-08-02 |      8174.56 | `EVT-D6A25B14E0A7` — critical collapse    | Epsilon  |
+|   216 | 2024-08-03 |      5416.53 | `EVT-6DD3A5C8A2E6` — elevated burst       | Alpha    |
+|   217 | 2024-08-04 |       7331.2 | `EVT-9EBF49F9B0B6` — baseline latency     | Beta     |
+|   218 | 2024-08-05 |      7463.07 | `EVT-16710803CB25` — latent latency       | Gamma    |
+|   219 | 2024-08-06 |      3760.47 | `EVT-C99CE8B1B125` — anomalous spike      | Delta    |
+|   220 | 2024-08-07 |      7042.18 | `EVT-2FC8FF671EB7` — saturated throughput | Epsilon  |
+|   221 | 2024-08-08 |      5176.67 | `EVT-6CE0BD782D8B` — latent surge         | Alpha    |
+|   222 | 2024-08-09 |      7413.61 | `EVT-20B9EFDC4499` — nominal latency      | Beta     |
+|   223 | 2024-08-10 |      6226.51 | `EVT-DCBF1BF82446` — baseline idle        | Gamma    |
+|   224 | 2024-08-11 |      9523.48 | `EVT-2A553FB83624` — baseline drift       | Delta    |
+|   225 | 2024-08-12 |      6284.63 | `EVT-CABCC2AE6A43` — nominal idle         | Epsilon  |
+|   226 | 2024-08-13 |      8810.33 | `EVT-3712F62FB6D0` — anomalous throughput | Alpha    |
+|   227 | 2024-08-14 |         5950 | `EVT-D250140268F1` — latent surge         | Beta     |
+|   228 | 2024-08-15 |      3813.84 | `EVT-A6634D28A1F1` — baseline throughput  | Gamma    |
+|   229 | 2024-08-16 |         4342 | `EVT-24722E6CBE02` — critical latency     | Delta    |
+|   230 | 2024-08-17 |      9052.89 | `EVT-25A82960EEFF` — cyclic plateau       | Epsilon  |
+|   231 | 2024-08-18 |      9560.12 | `EVT-1992DDF40503` — latent idle          | Alpha    |
+|   232 | 2024-08-19 |      8176.06 | `EVT-BA2F4348A880` — elevated spike       | Beta     |
+|   233 | 2024-08-20 |       4308.7 | `EVT-60CA0429345B` — critical collapse    | Gamma    |
+|   234 | 2024-08-21 |      7586.61 | `EVT-489138D1D794` — latent idle          | Delta    |
+|   235 | 2024-08-22 |      9568.06 | `EVT-6A19E6B6B426` — inverted throughput  | Epsilon  |
+|   236 | 2024-08-23 |      8225.85 | `EVT-4E824F9E9CD9` — nominal surge        | Alpha    |
+|   237 | 2024-08-24 |      5458.73 | `EVT-A6818E2AE50E` — anomalous throughput | Beta     |
+|   238 | 2024-08-25 |       4370.3 | `EVT-A967E2C42A14` — nominal surge        | Gamma    |
+|   239 | 2024-08-26 |      2549.17 | `EVT-A0738CA3CAE7` — nominal spike        | Delta    |
+|   240 | 2024-08-27 |       6562.7 | `EVT-DFCC5FA4A791` — trace throughput     | Epsilon  |
+|   241 | 2024-08-28 |       206.26 | `EVT-D9C29C305882` — inverted surge       | Alpha    |
+|   242 | 2024-08-29 |      7252.43 | `EVT-BC0C56A8B483` — latent burst         | Beta     |
+|   243 | 2024-08-30 |      7128.55 | `EVT-AC82B67BE92C` — cyclic plateau       | Gamma    |
+|   244 | 2024-08-31 |       1842.2 | `EVT-76549900C878` — anomalous drift      | Delta    |
+|   245 | 2024-09-01 |      2253.83 | `EVT-C8017B28A290` — cyclic throughput    | Epsilon  |
+|   246 | 2024-09-02 |      1010.61 | `EVT-FF3A34E8E57A` — anomalous surge      | Alpha    |
+|   247 | 2024-09-03 |       447.83 | `EVT-1F44DD549E7A` — saturated plateau    | Beta     |
+|   248 | 2024-09-04 |      3183.14 | `EVT-01A06D277393` — trace drift          | Gamma    |
+|   249 | 2024-09-05 |      8741.16 | `EVT-FA1CAA4BBD65` — baseline collapse    | Delta    |
+|   250 | 2024-09-06 |      9604.34 | `EVT-8AECBFF0F8B9` — baseline latency     | Epsilon  |
+|   251 | 2024-09-07 |       508.91 | `EVT-0130566913EF` — inverted surge       | Alpha    |
+|   252 | 2024-09-08 |      7138.08 | `EVT-5F39E5C601C7` — inverted jitter      | Beta     |
+|   253 | 2024-09-09 |      9331.38 | `EVT-275F0A1A1382` — elevated surge       | Gamma    |
+|   254 | 2024-09-10 |      5130.14 | `EVT-C86A01514890` — nominal drift        | Delta    |
+|   255 | 2024-09-11 |      8671.99 | `EVT-0AF9890708F8` — trace throughput     | Epsilon  |
+|   256 | 2024-09-12 |      6804.49 | `EVT-F264A6110E89` — elevated jitter      | Alpha    |
+|   257 | 2024-09-13 |      6730.78 | `EVT-95A35CEE6CFB` — nominal surge        | Beta     |
+|   258 | 2024-09-14 |      6679.08 | `EVT-588A73D807A1` — saturated surge      | Gamma    |
+|   259 | 2024-09-15 |       1262.9 | `EVT-83CD4C97A12E` — saturated drift      | Delta    |
+|   260 | 2024-09-16 |      4301.86 | `EVT-7C6EB63D7BC9` — cyclic spike         | Epsilon  |
+|   261 | 2024-09-17 |      6686.71 | `EVT-81F7F4ACADBE` — inverted jitter      | Alpha    |
+|   262 | 2024-09-18 |      8232.51 | `EVT-743213D73CA6` — nominal idle         | Beta     |
+|   263 | 2024-09-19 |       5970.9 | `EVT-3422DDD968EF` — baseline throughput  | Gamma    |
+|   264 | 2024-09-20 |      8312.74 | `EVT-A0D4E2BEB99B` — nominal latency      | Delta    |
+|   265 | 2024-09-21 |       9697.5 | `EVT-FBF185984A0E` — baseline spike       | Epsilon  |
+|   266 | 2024-09-22 |      6737.33 | `EVT-AA91E5189779` — anomalous plateau    | Alpha    |
+|   267 | 2024-09-23 |      2839.94 | `EVT-2569DAD1CC2E` — nominal drift        | Beta     |
+|   268 | 2024-09-24 |      6076.64 | `EVT-10C6275D4ED5` — elevated spike       | Gamma    |
+|   269 | 2024-09-25 |      3918.33 | `EVT-C5E44AA1F947` — trace latency        | Delta    |
+|   270 | 2024-09-26 |       733.89 | `EVT-AB4C031B748B` — baseline throughput  | Epsilon  |
+|   271 | 2024-09-27 |      8536.93 | `EVT-3E908B6CE584` — baseline drift       | Alpha    |
+|   272 | 2024-09-28 |      3170.81 | `EVT-4BDF36276383` — cyclic drift         | Beta     |
+|   273 | 2024-09-29 |       788.18 | `EVT-8D21FB3E03B6` — critical jitter      | Gamma    |
+|   274 | 2024-09-30 |      3592.87 | `EVT-75468386F5EF` — critical surge       | Delta    |
+|   275 | 2024-10-01 |      1945.75 | `EVT-A3297FF4D112` — cyclic plateau       | Epsilon  |
+|   276 | 2024-10-02 |      5386.92 | `EVT-04F86E1D3606` — saturated throughput | Alpha    |
+|   277 | 2024-10-03 |       2136.6 | `EVT-9985F8E63457` — anomalous jitter     | Beta     |
+|   278 | 2024-10-04 |      3601.83 | `EVT-9015F9E276D3` — nominal idle         | Gamma    |
+|   279 | 2024-10-05 |      1700.19 | `EVT-16AEC9F2E631` — critical spike       | Delta    |
+|   280 | 2024-10-06 |      8293.34 | `EVT-15C4F330AE8D` — anomalous surge      | Epsilon  |
+|   281 | 2024-10-07 |      5324.49 | `EVT-D54F59F28778` — baseline plateau     | Alpha    |
+|   282 | 2024-10-08 |        525.8 | `EVT-FF734FCE7D7E` — latent idle          | Beta     |
+|   283 | 2024-10-09 |      8025.77 | `EVT-1C0B004E2D84` — saturated idle       | Gamma    |
+|   284 | 2024-10-10 |      1445.76 | `EVT-FB470B4FBD2B` — saturated spike      | Delta    |
+|   285 | 2024-10-11 |      7694.39 | `EVT-E39218F6C302` — latent latency       | Epsilon  |
+|   286 | 2024-10-12 |      6072.63 | `EVT-56D450DF94AC` — anomalous spike      | Alpha    |
+|   287 | 2024-10-13 |         4229 | `EVT-34D78611B6C8` — cyclic idle          | Beta     |
+|   288 | 2024-10-14 |       733.97 | `EVT-EDEF0FE4421C` — cyclic latency       | Gamma    |
+|   289 | 2024-10-15 |      7945.27 | `EVT-CDD5B548B939` — anomalous drift      | Delta    |
+|   290 | 2024-10-16 |      7329.77 | `EVT-14A03519ACB7` — nominal surge        | Epsilon  |
+|   291 | 2024-10-17 |      9022.46 | `EVT-1707BD1A3C76` — elevated idle        | Alpha    |
+|   292 | 2024-10-18 |      4779.78 | `EVT-5D0380E81115` — cyclic burst         | Beta     |
+|   293 | 2024-10-19 |      7960.16 | `EVT-077E3AF06209` — nominal collapse     | Gamma    |
+|   294 | 2024-10-20 |      3509.63 | `EVT-2C82959E1703` — inverted throughput  | Delta    |
+|   295 | 2024-10-21 |      4122.91 | `EVT-8DB0FB744A9F` — critical collapse    | Epsilon  |
+|   296 | 2024-10-22 |       8540.3 | `EVT-88E69A777E65` — baseline jitter      | Alpha    |
+|   297 | 2024-10-23 |      5471.52 | `EVT-CA14501087B1` — baseline idle        | Beta     |
+|   298 | 2024-10-24 |       195.11 | `EVT-B17399DB986F` — anomalous burst      | Gamma    |
+|   299 | 2024-10-25 |       855.22 | `EVT-45EE3456E987` — anomalous idle       | Delta    |
+|   300 | 2024-10-26 |      7690.94 | `EVT-5CEEC7D014A2` — elevated spike       | Epsilon  |
+|   301 | 2024-10-27 |       2982.1 | `EVT-300364361785` — critical burst       | Alpha    |
+|   302 | 2024-10-28 |       9040.9 | `EVT-92A00F965437` — elevated drift       | Beta     |
+|   303 | 2024-10-29 |      7946.37 | `EVT-A8DF4DA35715` — elevated throughput  | Gamma    |
+|   304 | 2024-10-30 |       5606.5 | `EVT-295A2A042BED` — cyclic jitter        | Delta    |
+|   305 | 2024-10-31 |      5913.29 | `EVT-ED7B6AFC531E` — critical latency     | Epsilon  |
+|   306 | 2024-11-01 |      6493.35 | `EVT-316924EAF519` — saturated surge      | Alpha    |
+|   307 | 2024-11-02 |      3073.21 | `EVT-44AAFB394D91` — latent plateau       | Beta     |
+|   308 | 2024-11-03 |      1452.74 | `EVT-AA73FFE5F710` — nominal burst        | Gamma    |
+|   309 | 2024-11-04 |      1454.18 | `EVT-D7D41B58BE3A` — cyclic collapse      | Delta    |
+|   310 | 2024-11-05 |       342.53 | `EVT-0270F270BBB8` — trace drift          | Epsilon  |
+|   311 | 2024-11-06 |      8856.86 | `EVT-7A90344E6F19` — critical collapse    | Alpha    |
+|   312 | 2024-11-07 |      3901.53 | `EVT-CE44B53778B9` — critical idle        | Beta     |
+|   313 | 2024-11-08 |      5298.82 | `EVT-99CCD2602CDD` — baseline collapse    | Gamma    |
+|   314 | 2024-11-09 |      4922.09 | `EVT-CC7044551BE7` — critical jitter      | Delta    |
+|   315 | 2024-11-10 |      1336.18 | `EVT-44523B95F99D` — latent surge         | Epsilon  |
+|   316 | 2024-11-11 |      3768.24 | `EVT-2A586ED1332F` — anomalous drift      | Alpha    |
+|   317 | 2024-11-12 |      4712.52 | `EVT-64531AEA93DC` — anomalous collapse   | Beta     |
+|   318 | 2024-11-13 |      8833.27 | `EVT-949894606E79` — anomalous drift      | Gamma    |
+|   319 | 2024-11-14 |      5713.05 | `EVT-FC4292C5DD97` — nominal collapse     | Delta    |
+|   320 | 2024-11-15 |      9213.02 | `EVT-506CC37F5F65` — inverted drift       | Epsilon  |
+|   321 | 2024-11-16 |      5323.83 | `EVT-1F405D8B3E06` — inverted collapse    | Alpha    |
+|   322 | 2024-11-17 |      7400.82 | `EVT-AE3B0C909886` — saturated surge      | Beta     |
+|   323 | 2024-11-18 |      3871.51 | `EVT-A631C9D2D1F8` — elevated throughput  | Gamma    |
+|   324 | 2024-11-19 |      4605.09 | `EVT-ADAE9F21E6D4` — nominal latency      | Delta    |
+|   325 | 2024-11-20 |       9538.9 | `EVT-4549DAD29BCF` — cyclic collapse      | Epsilon  |
+|   326 | 2024-11-21 |      6234.82 | `EVT-AED5BACDDA15` — critical jitter      | Alpha    |
+|   327 | 2024-11-22 |      8427.96 | `EVT-FFB7B5CF0019` — inverted spike       | Beta     |
+|   328 | 2024-11-23 |      4985.51 | `EVT-1346E789A05F` — baseline plateau     | Gamma    |
+|   329 | 2024-11-24 |      5598.41 | `EVT-64BA038D3140` — critical burst       | Delta    |
+|   330 | 2024-11-25 |      5863.88 | `EVT-D004A350B6B7` — cyclic collapse      | Epsilon  |
+|   331 | 2024-11-26 |       7827.4 | `EVT-F7E124DCA41E` — saturated surge      | Alpha    |
+|   332 | 2024-11-27 |      4971.59 | `EVT-49722FF90642` — latent jitter        | Beta     |
+|   333 | 2024-11-28 |       4002.8 | `EVT-008D16EF703D` — trace drift          | Gamma    |
+|   334 | 2024-11-29 |      9671.84 | `EVT-0CC69A98743B` — latent jitter        | Delta    |
+|   335 | 2024-11-30 |      3253.15 | `EVT-DA19A9B01D4C` — critical drift       | Epsilon  |
+|   336 | 2024-12-01 |       6550.4 | `EVT-EFE36B46C835` — latent idle          | Alpha    |
+|   337 | 2024-12-02 |       4364.5 | `EVT-6B5DBF2D2B75` — latent latency       | Beta     |
+|   338 | 2024-12-03 |      6844.54 | `EVT-E5D3A8D0A3D2` — critical throughput  | Gamma    |
+|   339 | 2024-12-04 |      8750.43 | `EVT-B7C131657F0D` — critical jitter      | Delta    |
+|   340 | 2024-12-05 |      9327.35 | `EVT-B6CF27163B01` — nominal idle         | Epsilon  |
+|   341 | 2024-12-06 |      2291.78 | `EVT-B525E7A0DE92` — inverted drift       | Alpha    |
+|   342 | 2024-12-07 |      1293.66 | `EVT-8A1EA982A988` — saturated burst      | Beta     |
+|   343 | 2024-12-08 |      4233.77 | `EVT-A0A6BB6D69F1` — anomalous collapse   | Gamma    |
+|   344 | 2024-12-09 |      5920.96 | `EVT-FB8412D17CD6` — elevated idle        | Delta    |
+|   345 | 2024-12-10 |      8877.84 | `EVT-49C1A4AAC890` — cyclic surge         | Epsilon  |
+|   346 | 2024-12-11 |      2575.47 | `EVT-D3BC6DA15B54` — nominal burst        | Alpha    |
+|   347 | 2024-12-12 |      6595.35 | `EVT-0FA99A376EDA` — latent throughput    | Beta     |
+|   348 | 2024-12-13 |      9084.85 | `EVT-5275DB3F0E44` — nominal collapse     | Gamma    |
+|   349 | 2024-12-14 |      7585.37 | `EVT-C09FBB49E937` — critical burst       | Delta    |
+|   350 | 2024-12-15 |      7394.52 | `EVT-BC6950255EBE` — saturated plateau    | Epsilon  |
+|   351 | 2024-12-16 |       916.25 | `EVT-2D66021B2FC9` — anomalous jitter     | Alpha    |
+|   352 | 2024-12-17 |      6489.32 | `EVT-42FB0D674C26` — inverted latency     | Beta     |
+|   353 | 2024-12-18 |      8346.77 | `EVT-EFCE713BB82D` — nominal drift        | Gamma    |
+|   354 | 2024-12-19 |      7958.61 | `EVT-1B065235B130` — elevated spike       | Delta    |
+|   355 | 2024-12-20 |      8013.78 | `EVT-5334D580E94E` — cyclic surge         | Epsilon  |
+|   356 | 2024-12-21 |      5231.61 | `EVT-0F10CC1D57AB` — inverted jitter      | Alpha    |
+|   357 | 2024-12-22 |      2311.55 | `EVT-FF6B5E529DB1` — saturated collapse   | Beta     |
+|   358 | 2024-12-23 |      6651.26 | `EVT-44A1B20A91BB` — elevated jitter      | Gamma    |
+|   359 | 2024-12-24 |      5996.84 | `EVT-A65C780863B6` — trace idle           | Delta    |
+|   360 | 2024-12-25 |      5213.03 | `EVT-20D314A02D71` — trace burst          | Epsilon  |
+|   361 | 2024-12-26 |         9908 | `EVT-C80EF3E9A2F9` — saturated collapse   | Alpha    |
+|   362 | 2024-12-27 |       9292.9 | `EVT-D07ABEC07D13` — baseline surge       | Beta     |
+|   363 | 2024-12-28 |      4248.23 | `EVT-D748BEA66749` — elevated latency     | Gamma    |
+|   364 | 2024-12-29 |      5900.13 | `EVT-496DCEAC264F` — anomalous plateau    | Delta    |
+|   365 | 2024-12-30 |      2192.82 | `EVT-69E9F17F31FD` — cyclic idle          | Epsilon  |
+|   366 | 2024-12-31 |      6102.15 | `EVT-99122ACFD284` — nominal drift        | Alpha    |
+|   367 | 2025-01-01 |      1564.04 | `EVT-014C8F95C62D` — elevated drift       | Beta     |
+|   368 | 2025-01-02 |      3271.78 | `EVT-F220478495EB` — baseline plateau     | Gamma    |
+|   369 | 2025-01-03 |       753.98 | `EVT-84E82FDCCF92` — anomalous latency    | Delta    |
+|   370 | 2025-01-04 |      9278.56 | `EVT-BCB3A0F75D47` — critical spike       | Epsilon  |
+|   371 | 2025-01-05 |      5480.83 | `EVT-CFFC369C1E03` — trace collapse       | Alpha    |
+|   372 | 2025-01-06 |      7634.92 | `EVT-63D54E075E65` — cyclic burst         | Beta     |
+|   373 | 2025-01-07 |      6280.92 | `EVT-2999CF8CB44E` — cyclic drift         | Gamma    |
+|   374 | 2025-01-08 |      9589.63 | `EVT-97DB96EC819B` — critical burst       | Delta    |
+|   375 | 2025-01-09 |       852.91 | `EVT-74A516DBE109` — saturated jitter     | Epsilon  |
+|   376 | 2025-01-10 |      8833.08 | `EVT-F1242DE85D01` — anomalous spike      | Alpha    |
+|   377 | 2025-01-11 |      6123.02 | `EVT-7A96F76A0445` — latent jitter        | Beta     |
+|   378 | 2025-01-12 |      3452.42 | `EVT-036E4215C242` — trace latency        | Gamma    |
+|   379 | 2025-01-13 |      2778.66 | `EVT-3B0BB3A60C13` — saturated latency    | Delta    |
+|   380 | 2025-01-14 |      8499.93 | `EVT-9825B1C647D2` — cyclic throughput    | Epsilon  |
+|   381 | 2025-01-15 |      5813.13 | `EVT-B2AF65C03866` — anomalous latency    | Alpha    |
+|   382 | 2025-01-16 |       7002.9 | `EVT-7600522A469D` — critical latency     | Beta     |
+|   383 | 2025-01-17 |      1521.69 | `EVT-5928CF615DC9` — anomalous throughput | Gamma    |
+|   384 | 2025-01-18 |         1254 | `EVT-8D047F2F1E68` — latent jitter        | Delta    |
+|   385 | 2025-01-19 |         9717 | `EVT-730491372EF2` — nominal latency      | Epsilon  |
+|   386 | 2025-01-20 |      7537.98 | `EVT-67A0A0FD3865` — elevated collapse    | Alpha    |
+|   387 | 2025-01-21 |      7899.96 | `EVT-BCE85A732DC3` — nominal plateau      | Beta     |
+|   388 | 2025-01-22 |      7748.19 | `EVT-9566B2E3C8B1` — trace throughput     | Gamma    |
+|   389 | 2025-01-23 |      2337.29 | `EVT-B0B3F27EC256` — elevated plateau     | Delta    |
+|   390 | 2025-01-24 |      7096.64 | `EVT-044F6CD1982E` — anomalous latency    | Epsilon  |
+|   391 | 2025-01-25 |       3921.1 | `EVT-33E1F91A14D4` — inverted throughput  | Alpha    |
+|   392 | 2025-01-26 |      2599.12 | `EVT-C40B126AD27E` — trace idle           | Beta     |
+|   393 | 2025-01-27 |      3682.15 | `EVT-AD3E7F94FD3E` — trace burst          | Gamma    |
+|   394 | 2025-01-28 |       1151.3 | `EVT-76A72BDD02E6` — inverted throughput  | Delta    |
+|   395 | 2025-01-29 |      3609.14 | `EVT-83B7A470B896` — anomalous throughput | Epsilon  |
+|   396 | 2025-01-30 |      9685.65 | `EVT-2E723D4B35C8` — trace latency        | Alpha    |
+|   397 | 2025-01-31 |      9884.17 | `EVT-AFE3C448EF8C` — baseline spike       | Beta     |
+|   398 | 2025-02-01 |      2984.74 | `EVT-15F0524CD40E` — critical idle        | Gamma    |
+|   399 | 2025-02-02 |      1233.16 | `EVT-E8E787DB02B5` — cyclic latency       | Delta    |
+|   400 | 2025-02-03 |      1398.25 | `EVT-01BFA773C2BD` — anomalous collapse   | Epsilon  |
+|   401 | 2025-02-04 |      1610.21 | `EVT-009777E93AD3` — anomalous plateau    | Alpha    |
+|   402 | 2025-02-05 |      9271.72 | `EVT-60449FCE3679` — inverted jitter      | Beta     |
+|   403 | 2025-02-06 |      2368.24 | `EVT-FDE36830840D` — inverted collapse    | Gamma    |
+|   404 | 2025-02-07 |      5356.67 | `EVT-55BF9AA43F41` — trace collapse       | Delta    |
+|   405 | 2025-02-08 |      2879.42 | `EVT-02F9D4FD14F0` — saturated spike      | Epsilon  |
+|   406 | 2025-02-09 |      9706.01 | `EVT-A67A7B02A85A` — anomalous collapse   | Alpha    |
+|   407 | 2025-02-10 |       624.32 | `EVT-F6B7B1B6FC58` — elevated collapse    | Beta     |
+|   408 | 2025-02-11 |      7710.18 | `EVT-23B636885981` — inverted plateau     | Gamma    |
+|   409 | 2025-02-12 |      7097.05 | `EVT-11666ADB5E5D` — critical surge       | Delta    |
+|   410 | 2025-02-13 |      3363.94 | `EVT-5183CBFD34C9` — nominal burst        | Epsilon  |
+|   411 | 2025-02-14 |      4399.56 | `EVT-D3AA6AF8DC25` — elevated plateau     | Alpha    |
+|   412 | 2025-02-15 |      7601.23 | `EVT-5587AD4B01EF` — latent drift         | Beta     |
+|   413 | 2025-02-16 |        498.9 | `EVT-3EDB203CE2AC` — anomalous surge      | Gamma    |
+|   414 | 2025-02-17 |      8033.22 | `EVT-B5F48CCBC610` — inverted idle        | Delta    |
+|   415 | 2025-02-18 |      3776.66 | `EVT-A6368FF88345` — anomalous latency    | Epsilon  |
+|   416 | 2025-02-19 |      5648.48 | `EVT-31CAE16E1F4E` — critical drift       | Alpha    |
+|   417 | 2025-02-20 |      2408.51 | `EVT-80AF4C30CC69` — nominal drift        | Beta     |
+|   418 | 2025-02-21 |      3527.62 | `EVT-55BEFAAC158A` — critical jitter      | Gamma    |
+|   419 | 2025-02-22 |       9997.9 | `EVT-FE9765F129D0` — trace surge          | Delta    |
+|   420 | 2025-02-23 |      9886.06 | `EVT-43A5499A1EC1` — elevated idle        | Epsilon  |
+|   421 | 2025-02-24 |      4959.22 | `EVT-823A02E1B0AE` — cyclic burst         | Alpha    |
+|   422 | 2025-02-25 |      2386.34 | `EVT-6C97EFE6F0C8` — critical latency     | Beta     |
+|   423 | 2025-02-26 |      9584.47 | `EVT-9B7EDDD9D488` — baseline surge       | Gamma    |
+|   424 | 2025-02-27 |      1523.17 | `EVT-911C6CFCD420` — latent plateau       | Delta    |
+|   425 | 2025-02-28 |       750.39 | `EVT-B4EF597F0575` — elevated burst       | Epsilon  |
+|   426 | 2025-03-01 |      1975.46 | `EVT-3BEB2D3E8966` — trace jitter         | Alpha    |
+|   427 | 2025-03-02 |      8430.72 | `EVT-01E1DACFFD0F` — nominal throughput   | Beta     |
+|   428 | 2025-03-03 |       3429.7 | `EVT-B4F3F8BACC8F` — critical plateau     | Gamma    |
+|   429 | 2025-03-04 |      1985.67 | `EVT-C733D05ADF93` — critical latency     | Delta    |
+|   430 | 2025-03-05 |      6970.42 | `EVT-BC57673FC596` — inverted burst       | Epsilon  |
+|   431 | 2025-03-06 |      5873.76 | `EVT-02D957A135D1` — critical jitter      | Alpha    |
+|   432 | 2025-03-07 |      1339.59 | `EVT-DA694F78B8B8` — trace collapse       | Beta     |
+|   433 | 2025-03-08 |        765.6 | `EVT-509FEB065925` — nominal drift        | Gamma    |
+|   434 | 2025-03-09 |      9712.93 | `EVT-1158DB9ECCB0` — saturated spike      | Delta    |
+|   435 | 2025-03-10 |      6543.75 | `EVT-CA27D52FF66C` — critical jitter      | Epsilon  |
+|   436 | 2025-03-11 |      4024.26 | `EVT-0EE89591C32C` — elevated collapse    | Alpha    |
+|   437 | 2025-03-12 |      6979.75 | `EVT-CE7C5F50C7FF` — cyclic plateau       | Beta     |
+|   438 | 2025-03-13 |      4627.61 | `EVT-0B42759EC1B1` — nominal throughput   | Gamma    |
+|   439 | 2025-03-14 |      5565.49 | `EVT-77B489EF8830` — nominal collapse     | Delta    |
+|   440 | 2025-03-15 |      5913.13 | `EVT-D6ABE6D4E7A2` — critical throughput  | Epsilon  |
+|   441 | 2025-03-16 |       161.95 | `EVT-C4895C1403D5` — elevated surge       | Alpha    |
+|   442 | 2025-03-17 |      1666.51 | `EVT-5D8AB9B5ED2B` — baseline collapse    | Beta     |
+|   443 | 2025-03-18 |      7838.88 | `EVT-3D48DFE65B89` — latent plateau       | Gamma    |
+|   444 | 2025-03-19 |      6821.11 | `EVT-C59DF8608B10` — nominal jitter       | Delta    |
+|   445 | 2025-03-20 |      9014.58 | `EVT-339057AA6508` — cyclic burst         | Epsilon  |
+|   446 | 2025-03-21 |      6003.93 | `EVT-7F557A34E250` — saturated throughput | Alpha    |
+|   447 | 2025-03-22 |      7818.76 | `EVT-D245A20C1D52` — inverted collapse    | Beta     |
+|   448 | 2025-03-23 |      3327.15 | `EVT-5932D951D119` — latent plateau       | Gamma    |
+|   449 | 2025-03-24 |      5874.54 | `EVT-EB1E842EF034` — nominal plateau      | Delta    |
+|   450 | 2025-03-25 |      1436.65 | `EVT-1BA67CFD34D0` — baseline latency     | Epsilon  |
+|   451 | 2025-03-26 |       464.25 | `EVT-0E798D75C4FC` — anomalous throughput | Alpha    |
+|   452 | 2025-03-27 |      3585.22 | `EVT-DD613C7D3A64` — latent drift         | Beta     |
+|   453 | 2025-03-28 |      7252.26 | `EVT-A5C170E491F5` — anomalous burst      | Gamma    |
+|   454 | 2025-03-29 |      3425.77 | `EVT-0BFE939F7DD1` — saturated drift      | Delta    |
+|   455 | 2025-03-30 |      8865.72 | `EVT-64E5AC46ABF9` — critical idle        | Epsilon  |
+|   456 | 2025-03-31 |      7323.32 | `EVT-1232DB8E294F` — baseline jitter      | Alpha    |
+|   457 | 2025-04-01 |      5341.54 | `EVT-80A768D9F4A0` — latent spike         | Beta     |
+|   458 | 2025-04-02 |      7978.77 | `EVT-9AF8F06858FD` — cyclic jitter        | Gamma    |
+|   459 | 2025-04-03 |      2090.47 | `EVT-E98C2256C927` — saturated jitter     | Delta    |
+|   460 | 2025-04-04 |      8193.97 | `EVT-9E1A2AB7204D` — baseline spike       | Epsilon  |
+|   461 | 2025-04-05 |      9736.75 | `EVT-CFB7BC4FBE19` — saturated drift      | Alpha    |
+|   462 | 2025-04-06 |      7872.63 | `EVT-140C065E982C` — saturated idle       | Beta     |
+|   463 | 2025-04-07 |      1653.55 | `EVT-8834056B6E6B` — baseline plateau     | Gamma    |
+|   464 | 2025-04-08 |       2134.6 | `EVT-362ABF43FC2D` — cyclic latency       | Delta    |
+|   465 | 2025-04-09 |      4834.17 | `EVT-324992186D94` — anomalous latency    | Epsilon  |
+|   466 | 2025-04-10 |      4728.27 | `EVT-ACB571C96FE4` — anomalous plateau    | Alpha    |
+|   467 | 2025-04-11 |      2668.32 | `EVT-F2CF0069E61A` — cyclic burst         | Beta     |
+|   468 | 2025-04-12 |      6319.98 | `EVT-2AB6C1E99EAF` — saturated idle       | Gamma    |
+|   469 | 2025-04-13 |      6900.91 | `EVT-13D972DD5349` — elevated idle        | Delta    |
+|   470 | 2025-04-14 |      8550.39 | `EVT-0F2996A0E177` — nominal jitter       | Epsilon  |
+|   471 | 2025-04-15 |       826.58 | `EVT-EE3716455F80` — latent plateau       | Alpha    |
+|   472 | 2025-04-16 |      1032.67 | `EVT-AF3828FDD969` — trace plateau        | Beta     |
+|   473 | 2025-04-17 |      9729.73 | `EVT-648297C4291A` — nominal drift        | Gamma    |
+|   474 | 2025-04-18 |       555.17 | `EVT-357C168EDEC4` — baseline throughput  | Delta    |
+|   475 | 2025-04-19 |      3770.72 | `EVT-67113FDCA36A` — trace throughput     | Epsilon  |
+|   476 | 2025-04-20 |      2834.85 | `EVT-5BF89132D181` — trace drift          | Alpha    |
+|   477 | 2025-04-21 |       763.23 | `EVT-38B6D45AE026` — inverted jitter      | Beta     |
+|   478 | 2025-04-22 |      2891.35 | `EVT-6819BFB51533` — baseline surge       | Gamma    |
+|   479 | 2025-04-23 |      8670.15 | `EVT-9338A04C6940` — trace throughput     | Delta    |
+|   480 | 2025-04-24 |      7524.17 | `EVT-5C4686CDFA43` — critical spike       | Epsilon  |
+|   481 | 2025-04-25 |       9699.3 | `EVT-75729B392148` — trace drift          | Alpha    |
+|   482 | 2025-04-26 |      6250.63 | `EVT-E3B9500FEFA9` — nominal plateau      | Beta     |
+|   483 | 2025-04-27 |      2823.46 | `EVT-F11387BD9FC0` — trace throughput     | Gamma    |
+|   484 | 2025-04-28 |      2192.88 | `EVT-3A33D191DA3E` — anomalous drift      | Delta    |
+|   485 | 2025-04-29 |      6130.24 | `EVT-787928BD4684` — elevated jitter      | Epsilon  |
+|   486 | 2025-04-30 |      5649.45 | `EVT-F54D5EB92951` — elevated jitter      | Alpha    |
+|   487 | 2025-05-01 |      5402.64 | `EVT-E25119DC45C6` — anomalous plateau    | Beta     |
+|   488 | 2025-05-02 |      3156.72 | `EVT-C4408C547EED` — inverted spike       | Gamma    |
+|   489 | 2025-05-03 |       542.81 | `EVT-7DDFC7B6448A` — inverted drift       | Delta    |
+|   490 | 2025-05-04 |       2044.5 | `EVT-EBAAE5B12D88` — elevated throughput  | Epsilon  |
+|   491 | 2025-05-05 |      9276.02 | `EVT-8A85FC495C8A` — elevated throughput  | Alpha    |
+|   492 | 2025-05-06 |      9730.41 | `EVT-C07C2AEAC750` — critical jitter      | Beta     |
+|   493 | 2025-05-07 |      6149.05 | `EVT-FC04F42212F3` — inverted latency     | Gamma    |
+|   494 | 2025-05-08 |      1216.51 | `EVT-F6CD5CE25881` — critical plateau     | Delta    |
+|   495 | 2025-05-09 |      2897.41 | `EVT-E966B3123164` — cyclic jitter        | Epsilon  |
+|   496 | 2025-05-10 |      9005.03 | `EVT-EE07EC70E95F` — saturated drift      | Alpha    |
+|   497 | 2025-05-11 |      4459.32 | `EVT-769C617990A4` — trace throughput     | Beta     |
+|   498 | 2025-05-12 |      7618.96 | `EVT-05D75296299D` — elevated idle        | Gamma    |
+|   499 | 2025-05-13 |       4830.5 | `EVT-EB160C5AE352` — saturated burst      | Delta    |
+|   500 | 2025-05-14 |      9802.06 | `EVT-E92C83C819D2` — baseline drift       | Epsilon  |
+|   501 | 2025-05-15 |      6260.74 | `EVT-27C79E950100` — critical latency     | Alpha    |
+|   502 | 2025-05-16 |       731.71 | `EVT-7E6E0687618B` — elevated jitter      | Beta     |
+|   503 | 2025-05-17 |      3446.96 | `EVT-1979E42517A0` — saturated latency    | Gamma    |
+|   504 | 2025-05-18 |       214.83 | `EVT-D6E7F19B5936` — latent burst         | Delta    |
+|   505 | 2025-05-19 |       989.26 | `EVT-2D905E5DEF6B` — anomalous spike      | Epsilon  |
+|   506 | 2025-05-20 |      9897.77 | `EVT-45099BA714B2` — critical plateau     | Alpha    |
+|   507 | 2025-05-21 |      1868.91 | `EVT-A601BDA1898F` — nominal latency      | Beta     |
+|   508 | 2025-05-22 |       120.14 | `EVT-D99D346F47E5` — inverted plateau     | Gamma    |
+|   509 | 2025-05-23 |      9304.74 | `EVT-DBABE7DC584C` — nominal throughput   | Delta    |
+|   510 | 2025-05-24 |      3215.71 | `EVT-7E8E4EAFD199` — anomalous spike      | Epsilon  |
+|   511 | 2025-05-25 |       7550.6 | `EVT-9EEB51146458` — saturated latency    | Alpha    |
+|   512 | 2025-05-26 |      8526.13 | `EVT-0A40B143EAD0` — anomalous plateau    | Beta     |
+|   513 | 2025-05-27 |      7804.13 | `EVT-478D819A7338` — elevated burst       | Gamma    |
+|   514 | 2025-05-28 |      9670.66 | `EVT-0D12366C0281` — baseline throughput  | Delta    |
+|   515 | 2025-05-29 |      2155.22 | `EVT-3DB45FCF22BD` — anomalous drift      | Epsilon  |
+|   516 | 2025-05-30 |      5838.35 | `EVT-B45886D517FA` — saturated surge      | Alpha    |
+|   517 | 2025-05-31 |         2851 | `EVT-08932581DC46` — anomalous idle       | Beta     |
+|   518 | 2025-06-01 |      5899.21 | `EVT-980C2D36028B` — cyclic spike         | Gamma    |
+|   519 | 2025-06-02 |      2298.65 | `EVT-542BECA53813` — saturated drift      | Delta    |
+|   520 | 2025-06-03 |      2397.15 | `EVT-A9831DF9D7C1` — nominal latency      | Epsilon  |
+|   521 | 2025-06-04 |      2708.96 | `EVT-52F44C2FA513` — critical latency     | Alpha    |
+|   522 | 2025-06-05 |      7243.99 | `EVT-EA1145973AA2` — elevated drift       | Beta     |
+|   523 | 2025-06-06 |       3416.9 | `EVT-EC30F64F2E73` — elevated plateau     | Gamma    |
+|   524 | 2025-06-07 |      4922.23 | `EVT-B5716FC4786D` — elevated collapse    | Delta    |
+|   525 | 2025-06-08 |      3663.32 | `EVT-B23312C508F0` — elevated burst       | Epsilon  |
+|   526 | 2025-06-09 |       912.86 | `EVT-10CBAE8F5955` — inverted drift       | Alpha    |
+|   527 | 2025-06-10 |      5721.55 | `EVT-20B9FD719C90` — trace spike          | Beta     |
+|   528 | 2025-06-11 |      2248.63 | `EVT-EA4024AC72E1` — critical throughput  | Gamma    |
+|   529 | 2025-06-12 |      7830.01 | `EVT-9A388F8B192F` — nominal collapse     | Delta    |
+|   530 | 2025-06-13 |      7442.23 | `EVT-180D7FBA5EBD` — saturated collapse   | Epsilon  |
+|   531 | 2025-06-14 |      6038.67 | `EVT-7C4E1C79A2D1` — baseline throughput  | Alpha    |
+|   532 | 2025-06-15 |      4593.67 | `EVT-7D1261CCC433` — inverted burst       | Beta     |
+|   533 | 2025-06-16 |      8961.36 | `EVT-71DB917BF221` — anomalous latency    | Gamma    |
+|   534 | 2025-06-17 |       466.86 | `EVT-DA06F7ED5976` — elevated spike       | Delta    |
+|   535 | 2025-06-18 |      8605.04 | `EVT-4C492A840B49` — inverted jitter      | Epsilon  |
+|   536 | 2025-06-19 |      8289.66 | `EVT-9DC547E1566F` — elevated burst       | Alpha    |
+|   537 | 2025-06-20 |      8490.33 | `EVT-E9FE27511B21` — nominal collapse     | Beta     |
+|   538 | 2025-06-21 |      9953.07 | `EVT-C1C32EA2B3FE` — saturated surge      | Gamma    |
+|   539 | 2025-06-22 |      6232.45 | `EVT-67E1B7A74976` — critical plateau     | Delta    |
+|   540 | 2025-06-23 |      1432.73 | `EVT-1A2147EE97AD` — latent throughput    | Epsilon  |
+|   541 | 2025-06-24 |      4939.58 | `EVT-9EDE2FF2500F` — baseline idle        | Alpha    |
+|   542 | 2025-06-25 |       715.19 | `EVT-6BABB40FA1C3` — cyclic idle          | Beta     |
+|   543 | 2025-06-26 |      7254.89 | `EVT-159F9466F2CE` — latent burst         | Gamma    |
+|   544 | 2025-06-27 |       552.88 | `EVT-98F6053E6764` — nominal drift        | Delta    |
+|   545 | 2025-06-28 |      1660.44 | `EVT-66AC8988E878` — baseline latency     | Epsilon  |
+|   546 | 2025-06-29 |       760.78 | `EVT-486B7CFA8FA2` — trace jitter         | Alpha    |
+|   547 | 2025-06-30 |      7328.09 | `EVT-7B79F837EB39` — latent plateau       | Beta     |
+|   548 | 2025-07-01 |      2478.94 | `EVT-14470B776DB3` — cyclic spike         | Gamma    |
+|   549 | 2025-07-02 |       539.48 | `EVT-B2E49D6D168C` — saturated collapse   | Delta    |
+|   550 | 2025-07-03 |      3078.13 | `EVT-FE89F0F33979` — cyclic idle          | Epsilon  |
+|   551 | 2025-07-04 |      5560.29 | `EVT-B017F7136614` — inverted burst       | Alpha    |
+|   552 | 2025-07-05 |       867.43 | `EVT-501144459D5F` — baseline idle        | Beta     |
+|   553 | 2025-07-06 |      8230.94 | `EVT-9C8CF2FF5F7E` — inverted plateau     | Gamma    |
+|   554 | 2025-07-07 |      6152.42 | `EVT-AA9B9E7AB3DE` — nominal drift        | Delta    |
+|   555 | 2025-07-08 |       898.35 | `EVT-2794BAFC237E` — cyclic plateau       | Epsilon  |
+|   556 | 2025-07-09 |         5222 | `EVT-EFD84BC90186` — cyclic latency       | Alpha    |
+|   557 | 2025-07-10 |      6815.64 | `EVT-FB69625E1D99` — baseline idle        | Beta     |
+|   558 | 2025-07-11 |      7430.59 | `EVT-FD3375A11754` — anomalous plateau    | Gamma    |
+|   559 | 2025-07-12 |      1597.32 | `EVT-DCB200C727AD` — elevated idle        | Delta    |
+|   560 | 2025-07-13 |      1293.94 | `EVT-4E12BD7D4416` — critical jitter      | Epsilon  |
+|   561 | 2025-07-14 |       7855.3 | `EVT-762B9E782A05` — anomalous throughput | Alpha    |
+|   562 | 2025-07-15 |      8535.17 | `EVT-54F847F7083E` — anomalous spike      | Beta     |
+|   563 | 2025-07-16 |      7656.44 | `EVT-1271F6767540` — critical plateau     | Gamma    |
+|   564 | 2025-07-17 |      4598.18 | `EVT-DA09470EB0B5` — elevated burst       | Delta    |
+|   565 | 2025-07-18 |      3490.74 | `EVT-36F7DF5B9B51` — nominal collapse     | Epsilon  |
+|   566 | 2025-07-19 |      6249.29 | `EVT-A052A470C285` — nominal throughput   | Alpha    |
+|   567 | 2025-07-20 |       5407.4 | `EVT-05EBBF2A39F7` — baseline surge       | Beta     |
+|   568 | 2025-07-21 |      7510.44 | `EVT-C2D1464722F2` — saturated jitter     | Gamma    |
+|   569 | 2025-07-22 |      9684.65 | `EVT-2EF7119461EF` — cyclic drift         | Delta    |
+|   570 | 2025-07-23 |      5623.61 | `EVT-45C3798FED8D` — latent jitter        | Epsilon  |
+|   571 | 2025-07-24 |      9523.99 | `EVT-1EC6126D56E1` — inverted surge       | Alpha    |
+|   572 | 2025-07-25 |      6247.24 | `EVT-9989A279A777` — cyclic idle          | Beta     |
+|   573 | 2025-07-26 |      2557.79 | `EVT-84CCF8AF9224` — elevated drift       | Gamma    |
+|   574 | 2025-07-27 |      5311.44 | `EVT-8F3227AE6741` — inverted surge       | Delta    |
+|   575 | 2025-07-28 |      1593.53 | `EVT-590E8F92396B` — elevated drift       | Epsilon  |
+|   576 | 2025-07-29 |      1362.99 | `EVT-AD737123E13B` — trace jitter         | Alpha    |
+|   577 | 2025-07-30 |      1468.05 | `EVT-506D378145E6` — baseline throughput  | Beta     |
+|   578 | 2025-07-31 |      6108.33 | `EVT-6269270A107F` — baseline spike       | Gamma    |
+|   579 | 2025-08-01 |      5204.99 | `EVT-4C5BEA250539` — critical surge       | Delta    |
+|   580 | 2025-08-02 |       7918.9 | `EVT-F55DDA411316` — cyclic idle          | Epsilon  |
+|   581 | 2025-08-03 |       798.86 | `EVT-6C1FED669A79` — elevated latency     | Alpha    |
+|   582 | 2025-08-04 |      6860.76 | `EVT-2A407A5F81E8` — baseline burst       | Beta     |
+|   583 | 2025-08-05 |       7839.6 | `EVT-81A28541ACCE` — inverted jitter      | Gamma    |
+|   584 | 2025-08-06 |      1747.57 | `EVT-AE9951682002` — trace plateau        | Delta    |
+|   585 | 2025-08-07 |      7869.58 | `EVT-BF45DFE01E4C` — critical surge       | Epsilon  |
+|   586 | 2025-08-08 |       193.37 | `EVT-81D1015F5058` — baseline drift       | Alpha    |
+|   587 | 2025-08-09 |       9747.7 | `EVT-90BD49F82AFD` — cyclic spike         | Beta     |
+|   588 | 2025-08-10 |       795.03 | `EVT-344D66664255` — anomalous drift      | Gamma    |
+|   589 | 2025-08-11 |      2186.58 | `EVT-7EFA4F731DB4` — trace latency        | Delta    |
+|   590 | 2025-08-12 |      2955.93 | `EVT-C203EAAC72C1` — nominal surge        | Epsilon  |
+|   591 | 2025-08-13 |      8843.75 | `EVT-978D7A8B644D` — anomalous drift      | Alpha    |
+|   592 | 2025-08-14 |      6281.98 | `EVT-465A0A028955` — anomalous burst      | Beta     |
+|   593 | 2025-08-15 |      6076.71 | `EVT-E67EFDE8A399` — anomalous surge      | Gamma    |
+|   594 | 2025-08-16 |         7649 | `EVT-09CD6FB1E6FA` — trace idle           | Delta    |
+|   595 | 2025-08-17 |      9950.41 | `EVT-0491D032D3ED` — latent latency       | Epsilon  |
+|   596 | 2025-08-18 |      1662.66 | `EVT-3DF9F735779F` — cyclic burst         | Alpha    |
+|   597 | 2025-08-19 |      7206.28 | `EVT-9D709B6C24BD` — baseline spike       | Beta     |
+|   598 | 2025-08-20 |      4069.23 | `EVT-56D57F83DB93` — cyclic throughput    | Gamma    |
+|   599 | 2025-08-21 |      2773.02 | `EVT-06A8EFD22975` — critical surge       | Delta    |
+|   600 | 2025-08-22 |      7600.82 | `EVT-5619965F2091` — anomalous latency    | Epsilon  |
+|   601 | 2025-08-23 |      4342.39 | `EVT-8473174C87E0` — anomalous idle       | Alpha    |
+|   602 | 2025-08-24 |       5026.3 | `EVT-38A6C16DBBA9` — elevated plateau     | Beta     |
+|   603 | 2025-08-25 |      5904.74 | `EVT-A89F134D5B44` — nominal burst        | Gamma    |
+|   604 | 2025-08-26 |      2319.21 | `EVT-8E12C39AB8BD` — anomalous latency    | Delta    |
+|   605 | 2025-08-27 |      6801.76 | `EVT-D5108D14CEB9` — elevated spike       | Epsilon  |
+|   606 | 2025-08-28 |      7393.53 | `EVT-DFD157F55091` — critical spike       | Alpha    |
+|   607 | 2025-08-29 |      2465.55 | `EVT-24FB4072B6C3` — critical burst       | Beta     |
+|   608 | 2025-08-30 |      5459.86 | `EVT-CAE3A8E81D99` — baseline burst       | Gamma    |
+|   609 | 2025-08-31 |      3624.32 | `EVT-07C662308775` — anomalous idle       | Delta    |
+|   610 | 2025-09-01 |      3083.81 | `EVT-445C1EE903A0` — trace spike          | Epsilon  |
+|   611 | 2025-09-02 |      7655.45 | `EVT-65858C21773A` — cyclic plateau       | Alpha    |
+|   612 | 2025-09-03 |      5684.75 | `EVT-287133A9DC60` — trace collapse       | Beta     |
+|   613 | 2025-09-04 |       695.08 | `EVT-EB66B09C8975` — anomalous idle       | Gamma    |
+|   614 | 2025-09-05 |      2503.93 | `EVT-42B084ABBDC6` — baseline idle        | Delta    |
+|   615 | 2025-09-06 |       307.21 | `EVT-8EBAED397B5E` — anomalous latency    | Epsilon  |
+|   616 | 2025-09-07 |      3143.79 | `EVT-C48A52F18D88` — inverted idle        | Alpha    |
+|   617 | 2025-09-08 |      5530.58 | `EVT-1E7E6E857BD6` — baseline plateau     | Beta     |
+|   618 | 2025-09-09 |      3442.18 | `EVT-2470587C1A34` — baseline spike       | Gamma    |
+|   619 | 2025-09-10 |      6381.62 | `EVT-039C7A1294E7` — cyclic plateau       | Delta    |
+|   620 | 2025-09-11 |       270.64 | `EVT-BE2E1CA00148` — nominal collapse     | Epsilon  |
+|   621 | 2025-09-12 |       2784.9 | `EVT-FCAC68F388A3` — elevated collapse    | Alpha    |
+|   622 | 2025-09-13 |      1074.63 | `EVT-81AE319D55B1` — anomalous burst      | Beta     |
+|   623 | 2025-09-14 |      1425.57 | `EVT-BF1F7E5023F1` — nominal collapse     | Gamma    |
+|   624 | 2025-09-15 |      6458.55 | `EVT-E612F3C62490` — saturated burst      | Delta    |
+|   625 | 2025-09-16 |      7618.43 | `EVT-7C564E8252B9` — latent spike         | Epsilon  |
+|   626 | 2025-09-17 |      8625.76 | `EVT-BE7941EF5A41` — baseline throughput  | Alpha    |
+|   627 | 2025-09-18 |      5035.66 | `EVT-B9400A637AF7` — critical surge       | Beta     |
+|   628 | 2025-09-19 |       495.21 | `EVT-56AE69CF07BD` — inverted collapse    | Gamma    |
+|   629 | 2025-09-20 |      5349.55 | `EVT-17586B4207A9` — anomalous drift      | Delta    |
+|   630 | 2025-09-21 |      5808.31 | `EVT-1960B3A2DB99` — latent spike         | Epsilon  |
+|   631 | 2025-09-22 |       9305.7 | `EVT-BEB71FFAF370` — critical drift       | Alpha    |
+|   632 | 2025-09-23 |      8887.35 | `EVT-65D93DA9B40D` — latent jitter        | Beta     |
+|   633 | 2025-09-24 |      8572.51 | `EVT-4BD1C6CA30A1` — latent throughput    | Gamma    |
+|   634 | 2025-09-25 |      5454.19 | `EVT-84130AE1AA99` — nominal idle         | Delta    |
+|   635 | 2025-09-26 |       7280.4 | `EVT-726B60D081EC` — latent collapse      | Epsilon  |
+|   636 | 2025-09-27 |      3538.69 | `EVT-B73D5DE45D6C` — baseline burst       | Alpha    |
+|   637 | 2025-09-28 |      9384.27 | `EVT-617B5CDDAEB1` — inverted drift       | Beta     |
+|   638 | 2025-09-29 |      8471.45 | `EVT-5F38B4F66375` — baseline throughput  | Gamma    |
+|   639 | 2025-09-30 |       522.25 | `EVT-FC6FD4EAEF27` — elevated burst       | Delta    |
+|   640 | 2025-10-01 |      9849.15 | `EVT-1FD686A91EB9` — baseline throughput  | Epsilon  |
+|   641 | 2025-10-02 |      2400.15 | `EVT-FEF05C8F7A4D` — baseline latency     | Alpha    |
+|   642 | 2025-10-03 |      4368.01 | `EVT-B45B570E57A9` — inverted idle        | Beta     |
+|   643 | 2025-10-04 |      2298.38 | `EVT-8E584E664886` — cyclic throughput    | Gamma    |
+|   644 | 2025-10-05 |      2029.01 | `EVT-8E2D6B93A1BF` — critical burst       | Delta    |
+|   645 | 2025-10-06 |       539.27 | `EVT-D3E1B5EEB63F` — latent collapse      | Epsilon  |
+|   646 | 2025-10-07 |      1556.61 | `EVT-99C5C337D53B` — trace collapse       | Alpha    |
+|   647 | 2025-10-08 |      9648.45 | `EVT-FFB2893E39F0` — nominal collapse     | Beta     |
+|   648 | 2025-10-09 |      8066.97 | `EVT-8DCE4767D40D` — saturated latency    | Gamma    |
+|   649 | 2025-10-10 |        894.2 | `EVT-E83142EC0939` — critical burst       | Delta    |
+|   650 | 2025-10-11 |      2700.68 | `EVT-F9A38D16A74D` — cyclic surge         | Epsilon  |
+|   651 | 2025-10-12 |      7569.28 | `EVT-BD95DF91E3DF` — cyclic drift         | Alpha    |
+|   652 | 2025-10-13 |      9972.82 | `EVT-C5A2370FD3EA` — trace idle           | Beta     |
+|   653 | 2025-10-14 |      4336.56 | `EVT-E749737655AB` — elevated latency     | Gamma    |
+|   654 | 2025-10-15 |      2307.02 | `EVT-4AC2CCE55929` — nominal surge        | Delta    |
+|   655 | 2025-10-16 |      5031.05 | `EVT-F970A257F89C` — inverted surge       | Epsilon  |
+|   656 | 2025-10-17 |       7709.8 | `EVT-3C4DE44E961A` — cyclic burst         | Alpha    |
+|   657 | 2025-10-18 |      2259.14 | `EVT-C08C5942CFE2` — cyclic plateau       | Beta     |
+|   658 | 2025-10-19 |       6886.5 | `EVT-05ED17CF6832` — critical drift       | Gamma    |
+|   659 | 2025-10-20 |      1960.98 | `EVT-17F09FE57B0C` — anomalous plateau    | Delta    |
+|   660 | 2025-10-21 |       366.61 | `EVT-F1B237A4B911` — trace idle           | Epsilon  |
+|   661 | 2025-10-22 |      1184.55 | `EVT-AE2C76E20F00` — latent throughput    | Alpha    |
+|   662 | 2025-10-23 |      2913.27 | `EVT-27201C0F4C35` — anomalous latency    | Beta     |
+|   663 | 2025-10-24 |      2512.59 | `EVT-FBB942E3BBF4` — critical idle        | Gamma    |
+|   664 | 2025-10-25 |      2661.36 | `EVT-E2C139B2D43E` — inverted throughput  | Delta    |
+|   665 | 2025-10-26 |      6562.03 | `EVT-DCE6539C1D06` — inverted throughput  | Epsilon  |
+|   666 | 2025-10-27 |      1496.85 | `EVT-1E23102C25F8` — trace collapse       | Alpha    |
+|   667 | 2025-10-28 |      3944.66 | `EVT-8521497FDEEE` — trace jitter         | Beta     |
+|   668 | 2025-10-29 |      9635.95 | `EVT-B13085488024` — critical plateau     | Gamma    |
+|   669 | 2025-10-30 |      8254.43 | `EVT-2B6D50979DA0` — critical collapse    | Delta    |
+|   670 | 2025-10-31 |      9693.26 | `EVT-F20F47E73843` — cyclic collapse      | Epsilon  |
+|   671 | 2025-11-01 |      7007.73 | `EVT-C2F0987EF550` — anomalous plateau    | Alpha    |
+|   672 | 2025-11-02 |      5700.56 | `EVT-97B20C91C6D2` — nominal latency      | Beta     |
+|   673 | 2025-11-03 |      6826.67 | `EVT-33B1BFEA0DEB` — elevated drift       | Gamma    |
+|   674 | 2025-11-04 |      6372.72 | `EVT-65E43AF6F8A7` — baseline surge       | Delta    |
+|   675 | 2025-11-05 |      9126.08 | `EVT-0394D1109570` — latent latency       | Epsilon  |
+|   676 | 2025-11-06 |      8972.49 | `EVT-7970C3BA8C66` — critical jitter      | Alpha    |
+|   677 | 2025-11-07 |      3343.67 | `EVT-A6612FE4FB6C` — critical latency     | Beta     |
+|   678 | 2025-11-08 |       324.43 | `EVT-6C6A53E1550E` — saturated throughput | Gamma    |
+|   679 | 2025-11-09 |      3516.54 | `EVT-7DDE0D7E4F10` — nominal plateau      | Delta    |
+|   680 | 2025-11-10 |       866.54 | `EVT-362A83F3315B` — anomalous drift      | Epsilon  |
+|   681 | 2025-11-11 |      2907.24 | `EVT-2B1C889C33CB` — elevated jitter      | Alpha    |
+|   682 | 2025-11-12 |      7706.57 | `EVT-FB5187D245E3` — baseline drift       | Beta     |
+|   683 | 2025-11-13 |       863.83 | `EVT-0A396614FABA` — critical idle        | Gamma    |
+|   684 | 2025-11-14 |      8927.96 | `EVT-7499289C372E` — anomalous throughput | Delta    |
+|   685 | 2025-11-15 |      5973.27 | `EVT-2B12E2F5ADFD` — inverted surge       | Epsilon  |
+|   686 | 2025-11-16 |      5336.34 | `EVT-006FF7B8ACBF` — critical throughput  | Alpha    |
+|   687 | 2025-11-17 |      7753.86 | `EVT-3154F8F9211D` — latent throughput    | Beta     |
+|   688 | 2025-11-18 |      5763.37 | `EVT-88E2C819C8EF` — saturated surge      | Gamma    |
+|   689 | 2025-11-19 |       7623.6 | `EVT-84E5E8A77533` — saturated surge      | Delta    |
+|   690 | 2025-11-20 |      9049.17 | `EVT-95976D311F12` — elevated plateau     | Epsilon  |
+|   691 | 2025-11-21 |      2586.43 | `EVT-50631F0278CA` — saturated surge      | Alpha    |
+|   692 | 2025-11-22 |      9318.57 | `EVT-6C5CDA9F868A` — trace jitter         | Beta     |
+|   693 | 2025-11-23 |      5211.11 | `EVT-9F800C625B00` — nominal drift        | Gamma    |
+|   694 | 2025-11-24 |       8595.5 | `EVT-0E353AD8EB6C` — cyclic plateau       | Delta    |
+|   695 | 2025-11-25 |      6540.32 | `EVT-131C5626E721` — anomalous burst      | Epsilon  |
+|   696 | 2025-11-26 |       379.11 | `EVT-1B02F16EF028` — anomalous collapse   | Alpha    |
+|   697 | 2025-11-27 |      2602.23 | `EVT-AE157688CAF4` — cyclic throughput    | Beta     |
+|   698 | 2025-11-28 |       8312.4 | `EVT-2844B843D195` — trace burst          | Gamma    |
+|   699 | 2025-11-29 |      3418.63 | `EVT-2652235FC6E0` — inverted idle        | Delta    |
+|   700 | 2025-11-30 |       4806.9 | `EVT-BD77F17DCEA2` — critical collapse    | Epsilon  |
+|   701 | 2025-12-01 |       5602.1 | `EVT-150A7C315F04` — nominal collapse     | Alpha    |
+|   702 | 2025-12-02 |      6645.09 | `EVT-159745060EE7` — saturated collapse   | Beta     |
+|   703 | 2025-12-03 |      3459.21 | `EVT-35802E02D54A` — saturated spike      | Gamma    |
+|   704 | 2025-12-04 |       5409.3 | `EVT-22AEBF446D8F` — critical plateau     | Delta    |
+|   705 | 2025-12-05 |      6899.62 | `EVT-1F13E78C31EE` — latent latency       | Epsilon  |
+|   706 | 2025-12-06 |       995.32 | `EVT-1766439DA3F3` — latent jitter        | Alpha    |
+|   707 | 2025-12-07 |      1853.77 | `EVT-16D15992E7B2` — inverted jitter      | Beta     |
+|   708 | 2025-12-08 |      8797.99 | `EVT-7CF68DEBD580` — saturated spike      | Gamma    |
+|   709 | 2025-12-09 |      8735.13 | `EVT-5098445EDCF1` — anomalous jitter     | Delta    |
+|   710 | 2025-12-10 |      2282.04 | `EVT-F322EF8D1018` — baseline idle        | Epsilon  |
+|   711 | 2025-12-11 |      6208.14 | `EVT-2A9680E06CBE` — critical latency     | Alpha    |
+|   712 | 2025-12-12 |      5173.81 | `EVT-F6DEA56FEF3A` — trace idle           | Beta     |
+|   713 | 2025-12-13 |       885.54 | `EVT-AEB5310689E2` — latent surge         | Gamma    |
+|   714 | 2025-12-14 |       7283.9 | `EVT-1B013BC11EA7` — saturated surge      | Delta    |
+|   715 | 2025-12-15 |      4843.54 | `EVT-775116DD34B7` — inverted collapse    | Epsilon  |
+|   716 | 2025-12-16 |      1948.38 | `EVT-947838C342BC` — nominal drift        | Alpha    |
+|   717 | 2025-12-17 |      4303.61 | `EVT-3670949AF191` — elevated surge       | Beta     |
+|   718 | 2025-12-18 |      4335.86 | `EVT-513011DB0939` — elevated jitter      | Gamma    |
+|   719 | 2025-12-19 |       6438.2 | `EVT-9275B6B9BC29` — saturated burst      | Delta    |
+|   720 | 2025-12-20 |      4673.63 | `EVT-2D5D8AD78871` — inverted jitter      | Epsilon  |
+|   721 | 2025-12-21 |      5662.58 | `EVT-37D8F2B86D9F` — nominal throughput   | Alpha    |
+|   722 | 2025-12-22 |      7684.85 | `EVT-70D69D28BE83` — latent plateau       | Beta     |
+|   723 | 2025-12-23 |      7753.81 | `EVT-697CA517040B` — nominal idle         | Gamma    |
+|   724 | 2025-12-24 |      4679.27 | `EVT-F12BB24C4D3B` — critical plateau     | Delta    |
+|   725 | 2025-12-25 |      4159.69 | `EVT-C152D89B9A73` — anomalous throughput | Epsilon  |
+|   726 | 2025-12-26 |      4835.67 | `EVT-8ADB198901F6` — trace plateau        | Alpha    |
+|   727 | 2025-12-27 |      6048.86 | `EVT-2ACF26B4FFD9` — saturated jitter     | Beta     |
+|   728 | 2025-12-28 |      9093.15 | `EVT-3EE63EB01134` — inverted drift       | Gamma    |
+|   729 | 2025-12-29 |      8500.81 | `EVT-2FDEFEDC59C2` — nominal surge        | Delta    |
+|   730 | 2025-12-30 |      8598.07 | `EVT-B3360AFB6F79` — cyclic idle          | Epsilon  |
+|   731 | 2025-12-31 |       1326.3 | `EVT-69AF09D80958` — saturated jitter     | Alpha    |
+|   732 | 2026-01-01 |      5806.69 | `EVT-E45078D689B1` — nominal burst        | Beta     |
+|   733 | 2026-01-02 |      7041.71 | `EVT-5BCA07995B32` — inverted surge       | Gamma    |
+|   734 | 2026-01-03 |      8333.96 | `EVT-51F2AB15A699` — anomalous plateau    | Delta    |
+|   735 | 2026-01-04 |      7789.34 | `EVT-F80DE05F7C2C` — latent jitter        | Epsilon  |
+|   736 | 2026-01-05 |      8592.98 | `EVT-837DF1D75989` — critical collapse    | Alpha    |
+|   737 | 2026-01-06 |      2413.89 | `EVT-6C7BD57B9E76` — nominal jitter       | Beta     |
+|   738 | 2026-01-07 |      5913.69 | `EVT-31BCB63DBFEC` — cyclic latency       | Gamma    |
+|   739 | 2026-01-08 |      9406.24 | `EVT-9ACDD128AAD8` — saturated drift      | Delta    |
+|   740 | 2026-01-09 |      7178.13 | `EVT-3E9C4A8DF7AD` — latent surge         | Epsilon  |
+|   741 | 2026-01-10 |      2369.91 | `EVT-5B1928F205FB` — latent drift         | Alpha    |
+|   742 | 2026-01-11 |      9875.68 | `EVT-357252DC82BF` — trace drift          | Beta     |
+|   743 | 2026-01-12 |      7342.57 | `EVT-632DF0E949F0` — cyclic jitter        | Gamma    |
+|   744 | 2026-01-13 |      4781.85 | `EVT-495C15008129` — inverted idle        | Delta    |
+|   745 | 2026-01-14 |      1462.24 | `EVT-EB738E033D43` — inverted jitter      | Epsilon  |
+|   746 | 2026-01-15 |      3174.26 | `EVT-0BB893D61173` — nominal collapse     | Alpha    |
+|   747 | 2026-01-16 |      1263.09 | `EVT-1F71121A006C` — latent latency       | Beta     |
+|   748 | 2026-01-17 |      8967.85 | `EVT-AA04D8AF0CD4` — saturated surge      | Gamma    |
+|   749 | 2026-01-18 |      3539.64 | `EVT-F74BAA8056AA` — baseline surge       | Delta    |
+|   750 | 2026-01-19 |      1062.04 | `EVT-3DE451EE68B2` — saturated burst      | Epsilon  |
+|   751 | 2026-01-20 |         2544 | `EVT-C98D9854A987` — latent surge         | Alpha    |
+|   752 | 2026-01-21 |       762.91 | `EVT-4DD2825CBF12` — saturated spike      | Beta     |
+|   753 | 2026-01-22 |       6696.8 | `EVT-9D4C495C511C` — inverted idle        | Gamma    |
+|   754 | 2026-01-23 |      8415.68 | `EVT-5A0CCC05B4C7` — nominal latency      | Delta    |
+|   755 | 2026-01-24 |       5634.7 | `EVT-CEB13606F579` — inverted drift       | Epsilon  |
+|   756 | 2026-01-25 |      5953.88 | `EVT-A02234F590F1` — anomalous throughput | Alpha    |
+|   757 | 2026-01-26 |      8331.04 | `EVT-8BCDD8002B38` — saturated burst      | Beta     |
+|   758 | 2026-01-27 |      4944.65 | `EVT-6741E91BA747` — baseline plateau     | Gamma    |
+|   759 | 2026-01-28 |      5632.76 | `EVT-D7E3068D1715` — trace jitter         | Delta    |
+|   760 | 2026-01-29 |      5957.11 | `EVT-5F4F5BDDC340` — saturated collapse   | Epsilon  |
+|   761 | 2026-01-30 |      6410.71 | `EVT-6FBAC1C5E918` — saturated latency    | Alpha    |
+|   762 | 2026-01-31 |      7796.66 | `EVT-D9B0AB68EDBA` — elevated surge       | Beta     |
+|   763 | 2026-02-01 |      8921.12 | `EVT-4D7B3B9311BC` — critical latency     | Gamma    |
+|   764 | 2026-02-02 |      7753.34 | `EVT-BFF591722490` — saturated drift      | Delta    |
+|   765 | 2026-02-03 |      2182.72 | `EVT-1AC741EBC9CF` — elevated collapse    | Epsilon  |
+|   766 | 2026-02-04 |      9872.94 | `EVT-2FE1C57F009F` — trace collapse       | Alpha    |
+|   767 | 2026-02-05 |       3324.5 | `EVT-AD437D3FFE1A` — inverted throughput  | Beta     |
+|   768 | 2026-02-06 |      6677.29 | `EVT-B4A1067281A3` — elevated throughput  | Gamma    |
+|   769 | 2026-02-07 |      9886.26 | `EVT-DF90AF99816A` — inverted drift       | Delta    |
+|   770 | 2026-02-08 |      8698.43 | `EVT-DAAA195A6AFF` — baseline jitter      | Epsilon  |
+|   771 | 2026-02-09 |      2167.27 | `EVT-5A31D29FE6DA` — critical latency     | Alpha    |
+|   772 | 2026-02-10 |      8231.01 | `EVT-5F17FFEF98D5` — elevated spike       | Beta     |
+|   773 | 2026-02-11 |      9870.62 | `EVT-0F79563BF874` — inverted burst       | Gamma    |
+|   774 | 2026-02-12 |      5978.22 | `EVT-66BE7D930BE9` — inverted drift       | Delta    |
+|   775 | 2026-02-13 |      9259.01 | `EVT-62A5A19DBB38` — critical plateau     | Epsilon  |
+|   776 | 2026-02-14 |      1875.49 | `EVT-0715152A66A6` — elevated drift       | Alpha    |
+|   777 | 2026-02-15 |       718.79 | `EVT-C6CE19D5AAED` — baseline plateau     | Beta     |
+|   778 | 2026-02-16 |      4319.43 | `EVT-CF79C33AC305` — elevated collapse    | Gamma    |
+|   779 | 2026-02-17 |       7179.2 | `EVT-C8B1CE87BBBD` — latent drift         | Delta    |
+|   780 | 2026-02-18 |      1984.08 | `EVT-E99A1CA26A99` — inverted spike       | Epsilon  |
+|   781 | 2026-02-19 |      4081.81 | `EVT-9342A66FA020` — critical burst       | Alpha    |
+|   782 | 2026-02-20 |      8988.87 | `EVT-13D5CD0DFB9D` — baseline burst       | Beta     |
+|   783 | 2026-02-21 |      2012.51 | `EVT-0728570EEB12` — trace throughput     | Gamma    |
+|   784 | 2026-02-22 |      3787.54 | `EVT-41FD164192E4` — critical burst       | Delta    |
+|   785 | 2026-02-23 |      3357.94 | `EVT-113FA249B237` — inverted throughput  | Epsilon  |
+|   786 | 2026-02-24 |      7109.03 | `EVT-6DD7C46F5AE2` — inverted jitter      | Alpha    |
+|   787 | 2026-02-25 |       313.96 | `EVT-1C7EDB123E75` — cyclic spike         | Beta     |
+|   788 | 2026-02-26 |       780.93 | `EVT-8533FF26BC6C` — cyclic plateau       | Gamma    |
+|   789 | 2026-02-27 |      2793.08 | `EVT-10679B26411A` — inverted collapse    | Delta    |
+|   790 | 2026-02-28 |      2727.35 | `EVT-CDA701DC5341` — nominal jitter       | Epsilon  |
+|   791 | 2026-03-01 |      1320.36 | `EVT-200BF1D5BFC9` — inverted plateau     | Alpha    |
+|   792 | 2026-03-02 |        755.7 | `EVT-B9E6907A0757` — nominal idle         | Beta     |
+|   793 | 2026-03-03 |      8182.95 | `EVT-FDD741ABD1EF` — critical spike       | Gamma    |
+|   794 | 2026-03-04 |      4216.73 | `EVT-C030EA82D3BB` — latent collapse      | Delta    |
+|   795 | 2026-03-05 |      2525.17 | `EVT-CDAA8F5F7E1F` — saturated burst      | Epsilon  |
+|   796 | 2026-03-06 |      4473.79 | `EVT-368AF30747FE` — critical burst       | Alpha    |
+|   797 | 2026-03-07 |      8297.29 | `EVT-BC177504237C` — critical jitter      | Beta     |
+|   798 | 2026-03-08 |      1696.23 | `EVT-894DC8474003` — nominal plateau      | Gamma    |
+|   799 | 2026-03-09 |      9901.07 | `EVT-06C4D3B07CCF` — trace jitter         | Delta    |
+|   800 | 2026-03-10 |      6298.85 | `EVT-AD426CAD4CB7` — saturated surge      | Epsilon  |
+|   801 | 2026-03-11 |      7630.69 | `EVT-1EACBEEACAB5` — latent jitter        | Alpha    |
+|   802 | 2026-03-12 |       8470.9 | `EVT-5347FA66A0AE` — elevated jitter      | Beta     |
+|   803 | 2026-03-13 |      5667.49 | `EVT-CD198BCE9942` — elevated burst       | Gamma    |
+|   804 | 2026-03-14 |      3842.92 | `EVT-10C6AA1AFB61` — cyclic surge         | Delta    |
+|   805 | 2026-03-15 |      7161.65 | `EVT-206152D2C023` — saturated collapse   | Epsilon  |
+|   806 | 2026-03-16 |      5927.19 | `EVT-FB8CC2739405` — cyclic latency       | Alpha    |
+|   807 | 2026-03-17 |      3712.83 | `EVT-C8CECE942CC9` — cyclic idle          | Beta     |
+|   808 | 2026-03-18 |      2820.77 | `EVT-CE4EDAF868B3` — anomalous throughput | Gamma    |
+|   809 | 2026-03-19 |      9956.39 | `EVT-88B927D4F567` — latent idle          | Delta    |
+|   810 | 2026-03-20 |       227.99 | `EVT-980335859D1F` — critical collapse    | Epsilon  |
+|   811 | 2026-03-21 |      4667.02 | `EVT-2B09CEA0938D` — nominal spike        | Alpha    |
+|   812 | 2026-03-22 |      7153.43 | `EVT-1AE7B5484378` — saturated throughput | Beta     |
+|   813 | 2026-03-23 |      6110.34 | `EVT-E71887AE2175` — trace spike          | Gamma    |
+|   814 | 2026-03-24 |      3741.73 | `EVT-4A6D61C2921C` — cyclic collapse      | Delta    |
+|   815 | 2026-03-25 |      9936.44 | `EVT-9088935BCA05` — anomalous latency    | Epsilon  |
+|   816 | 2026-03-26 |      5267.03 | `EVT-E4400C8DE2A2` — anomalous burst      | Alpha    |
+|   817 | 2026-03-27 |      1651.85 | `EVT-E08BDF07E2BC` — anomalous burst      | Beta     |
+|   818 | 2026-03-28 |      1094.68 | `EVT-D4AE10750ED0` — elevated surge       | Gamma    |
+|   819 | 2026-03-29 |      1051.86 | `EVT-AC0B69E6132B` — anomalous spike      | Delta    |
+|   820 | 2026-03-30 |      1918.24 | `EVT-FC42DE99395B` — cyclic jitter        | Epsilon  |
+|   821 | 2026-03-31 |      5799.34 | `EVT-BCC243B48C55` — baseline latency     | Alpha    |
+|   822 | 2026-04-01 |      6854.36 | `EVT-E5327DCD263F` — latent surge         | Beta     |
+|   823 | 2026-04-02 |      3173.76 | `EVT-038463EC4735` — critical plateau     | Gamma    |
+|   824 | 2026-04-03 |      7669.97 | `EVT-59BB8D721D19` — latent spike         | Delta    |
+|   825 | 2026-04-04 |       6784.3 | `EVT-47362180161F` — latent plateau       | Epsilon  |
+|   826 | 2026-04-05 |       8527.1 | `EVT-B74F25BEA3AA` — elevated plateau     | Alpha    |
+|   827 | 2026-04-06 |      9837.56 | `EVT-19AB870880A7` — anomalous burst      | Beta     |
+|   828 | 2026-04-07 |       743.54 | `EVT-C1C991FEE06B` — cyclic idle          | Gamma    |
+|   829 | 2026-04-08 |      3550.41 | `EVT-CCA8C790D358` — trace plateau        | Delta    |
+|   830 | 2026-04-09 |      6097.86 | `EVT-8133C62760A8` — saturated latency    | Epsilon  |
+|   831 | 2026-04-10 |      5722.71 | `EVT-6479BBA36EC9` — anomalous burst      | Alpha    |
+|   832 | 2026-04-11 |      1621.03 | `EVT-59604652DDAA` — inverted drift       | Beta     |
+|   833 | 2026-04-12 |      6511.66 | `EVT-3C6AED34FD46` — trace burst          | Gamma    |
+|   834 | 2026-04-13 |       4202.1 | `EVT-CBFB4904300C` — elevated spike       | Delta    |
+|   835 | 2026-04-14 |       6161.7 | `EVT-9D197B7F8871` — trace spike          | Epsilon  |
+|   836 | 2026-04-15 |       943.62 | `EVT-14D457685C4C` — anomalous jitter     | Alpha    |
+|   837 | 2026-04-16 |      8463.51 | `EVT-EEC612103995` — elevated jitter      | Beta     |
+|   838 | 2026-04-17 |      5079.43 | `EVT-866E78C98FD1` — elevated drift       | Gamma    |
+|   839 | 2026-04-18 |      7753.51 | `EVT-50CFABECF426` — baseline idle        | Delta    |
+|   840 | 2026-04-19 |      5166.85 | `EVT-9267CF5AA561` — trace burst          | Epsilon  |
+|   841 | 2026-04-20 |      7743.91 | `EVT-35505A9C8D3F` — inverted drift       | Alpha    |
+|   842 | 2026-04-21 |      7835.07 | `EVT-42270C3FEAFA` — nominal burst        | Beta     |
+|   843 | 2026-04-22 |      8761.73 | `EVT-758E933C6974` — baseline jitter      | Gamma    |
+|   844 | 2026-04-23 |      6246.19 | `EVT-D7FB4FC35211` — elevated plateau     | Delta    |
+|   845 | 2026-04-24 |      4597.21 | `EVT-C2EE8BCA78FB` — baseline jitter      | Epsilon  |
+|   846 | 2026-04-25 |       763.17 | `EVT-FFAE53625D9B` — anomalous spike      | Alpha    |
+|   847 | 2026-04-26 |      2623.73 | `EVT-4898A49B0CDF` — elevated plateau     | Beta     |
+|   848 | 2026-04-27 |      6683.14 | `EVT-70DAB531F07A` — inverted drift       | Gamma    |
+|   849 | 2026-04-28 |      9650.52 | `EVT-5151CA43ACBA` — critical jitter      | Delta    |
+|   850 | 2026-04-29 |      1814.62 | `EVT-E83A861C61C7` — trace jitter         | Epsilon  |
+|   851 | 2026-04-30 |      6403.44 | `EVT-1DAAE19F25CE` — nominal plateau      | Alpha    |
+|   852 | 2026-05-01 |      9774.91 | `EVT-0322AE384661` — saturated burst      | Beta     |
+|   853 | 2026-05-02 |       719.73 | `EVT-CF1FD6DBBC2D` — cyclic latency       | Gamma    |
+|   854 | 2026-05-03 |      8632.26 | `EVT-D71EBDF69732` — elevated plateau     | Delta    |
+|   855 | 2026-05-04 |       686.24 | `EVT-85687E2DB932` — elevated throughput  | Epsilon  |
+|   856 | 2026-05-05 |      2423.35 | `EVT-8503A7A11325` — critical idle        | Alpha    |
+|   857 | 2026-05-06 |      1229.03 | `EVT-CDBC4A9544D6` — inverted throughput  | Beta     |
+|   858 | 2026-05-07 |       2369.1 | `EVT-F41FFA6036CE` — elevated throughput  | Gamma    |
+|   859 | 2026-05-08 |      6241.59 | `EVT-9BF4179EB42F` — nominal plateau      | Delta    |
+|   860 | 2026-05-09 |       229.84 | `EVT-4DD98E79632E` — cyclic latency       | Epsilon  |
+|   861 | 2026-05-10 |      3413.35 | `EVT-7A3772688932` — inverted latency     | Alpha    |
+|   862 | 2026-05-11 |      9242.11 | `EVT-508EE5C5840E` — latent throughput    | Beta     |
+|   863 | 2026-05-12 |      9924.11 | `EVT-5A8311C624AD` — anomalous plateau    | Gamma    |
+|   864 | 2026-05-13 |      7578.74 | `EVT-5D8AA67F094D` — critical idle        | Delta    |
+|   865 | 2026-05-14 |      2759.63 | `EVT-DDD9871FEF45` — trace throughput     | Epsilon  |
+|   866 | 2026-05-15 |       414.86 | `EVT-851BA3A63A9C` — saturated burst      | Alpha    |
+|   867 | 2026-05-16 |      3367.48 | `EVT-28AC87EC2E1E` — inverted throughput  | Beta     |
+|   868 | 2026-05-17 |      5966.18 | `EVT-AFECB3465FD5` — critical idle        | Gamma    |
+|   869 | 2026-05-18 |      2312.62 | `EVT-DE0587D6692A` — anomalous collapse   | Delta    |
+|   870 | 2026-05-19 |      9080.98 | `EVT-668C70109D19` — trace burst          | Epsilon  |
+|   871 | 2026-05-20 |      5675.82 | `EVT-6C56B78DBA6F` — critical throughput  | Alpha    |
+|   872 | 2026-05-21 |       730.65 | `EVT-CDAD72974CB3` — baseline burst       | Beta     |
+|   873 | 2026-05-22 |      7651.35 | `EVT-561ECC197C3F` — nominal jitter       | Gamma    |
+|   874 | 2026-05-23 |       9738.7 | `EVT-DA5F1BF6A831` — elevated burst       | Delta    |
+|   875 | 2026-05-24 |      7067.97 | `EVT-900EA1A7B8D9` — trace surge          | Epsilon  |
+|   876 | 2026-05-25 |      4418.77 | `EVT-F2C2F0DB4693` — latent collapse      | Alpha    |
+|   877 | 2026-05-26 |       272.26 | `EVT-318DCED7EFA6` — baseline burst       | Beta     |
+|   878 | 2026-05-27 |       4124.5 | `EVT-B2F778B8C975` — saturated throughput | Gamma    |
+|   879 | 2026-05-28 |       1242.9 | `EVT-AA10B6019E3E` — inverted idle        | Delta    |
+|   880 | 2026-05-29 |      4718.59 | `EVT-DD59C9CF4292` — saturated burst      | Epsilon  |
+|   881 | 2026-05-30 |      1968.94 | `EVT-5AF3F8683EEA` — critical latency     | Alpha    |
+|   882 | 2026-05-31 |      3979.83 | `EVT-01610504F29D` — nominal plateau      | Beta     |
+|   883 | 2026-06-01 |      6113.13 | `EVT-117F3C914EB1` — elevated collapse    | Gamma    |
+|   884 | 2026-06-02 |      5490.12 | `EVT-4FB59EBC0A7B` — elevated spike       | Delta    |
+|   885 | 2026-06-03 |      3042.48 | `EVT-D88EE90B3254` — trace spike          | Epsilon  |
+|   886 | 2026-06-04 |      4501.16 | `EVT-D11FF1928324` — cyclic surge         | Alpha    |
+|   887 | 2026-06-05 |      9730.27 | `EVT-542A2C5DDBC0` — inverted spike       | Beta     |
+|   888 | 2026-06-06 |       250.03 | `EVT-4D88D0680EC4` — cyclic surge         | Gamma    |
+|   889 | 2026-06-07 |       433.57 | `EVT-5A3B3913CF62` — nominal drift        | Delta    |
+|   890 | 2026-06-08 |      9284.68 | `EVT-FAF3EB6C0444` — latent surge         | Epsilon  |
+|   891 | 2026-06-09 |      8673.25 | `EVT-15A04D006CB3` — elevated spike       | Alpha    |
+|   892 | 2026-06-10 |      6666.17 | `EVT-C772BAC07E75` — inverted latency     | Beta     |
+|   893 | 2026-06-11 |      4570.93 | `EVT-20189014B740` — trace latency        | Gamma    |
+|   894 | 2026-06-12 |      7493.35 | `EVT-26638E6F743C` — cyclic surge         | Delta    |
+|   895 | 2026-06-13 |      9979.11 | `EVT-45DA8D8C794F` — anomalous drift      | Epsilon  |
+|   896 | 2026-06-14 |       411.09 | `EVT-4479C2E7827A` — nominal drift        | Alpha    |
+|   897 | 2026-06-15 |      6029.47 | `EVT-CF09E82D8554` — saturated collapse   | Beta     |
+|   898 | 2026-06-16 |      9426.23 | `EVT-86C78F2FA9ED` — anomalous plateau    | Gamma    |
+|   899 | 2026-06-17 |      1383.51 | `EVT-AD5A85CB3448` — nominal latency      | Delta    |
+|   900 | 2026-06-18 |      3582.38 | `EVT-F209FF4675B3` — trace throughput     | Epsilon  |
+|   901 | 2026-06-19 |      5926.02 | `EVT-2D64B5143D94` — saturated jitter     | Alpha    |
+|   902 | 2026-06-20 |        900.8 | `EVT-1BAABF7156B6` — saturated plateau    | Beta     |
+|   903 | 2026-06-21 |       438.14 | `EVT-A85D4A05D907` — saturated burst      | Gamma    |
+|   904 | 2026-06-22 |      3371.81 | `EVT-578C17F8696E` — latent burst         | Delta    |
+|   905 | 2026-06-23 |      5387.93 | `EVT-35EDA6269CFE` — elevated plateau     | Epsilon  |
+|   906 | 2026-06-24 |      6944.41 | `EVT-8841389D67ED` — critical spike       | Alpha    |
+|   907 | 2026-06-25 |      4543.39 | `EVT-D4737FCE676D` — critical throughput  | Beta     |
+|   908 | 2026-06-26 |       493.94 | `EVT-7112E5DD0286` — trace jitter         | Gamma    |
+|   909 | 2026-06-27 |      9322.79 | `EVT-CE9E005DD2BA` — latent collapse      | Delta    |
+|   910 | 2026-06-28 |         5279 | `EVT-0972A220D9EE` — baseline idle        | Epsilon  |
+|   911 | 2026-06-29 |       9621.7 | `EVT-CDCBC8B8FFF8` — critical plateau     | Alpha    |
+|   912 | 2026-06-30 |      1395.76 | `EVT-578CFE8C8CFA` — nominal latency      | Beta     |
+|   913 | 2026-07-01 |      5039.25 | `EVT-910A82B9501D` — latent surge         | Gamma    |
+|   914 | 2026-07-02 |      3532.45 | `EVT-7BBF4F7EC428` — latent spike         | Delta    |
+|   915 | 2026-07-03 |      7574.57 | `EVT-651E2F3EA984` — elevated idle        | Epsilon  |
+|   916 | 2026-07-04 |      2838.89 | `EVT-07A65B793881` — anomalous jitter     | Alpha    |
+|   917 | 2026-07-05 |      9547.43 | `EVT-CDEA04E7882E` — anomalous latency    | Beta     |
+|   918 | 2026-07-06 |      7807.83 | `EVT-3303F55CF1F4` — latent drift         | Gamma    |
+|   919 | 2026-07-07 |       9882.3 | `EVT-9CBF504800B1` — baseline drift       | Delta    |
+|   920 | 2026-07-08 |      9795.23 | `EVT-4317D3B65666` — nominal surge        | Epsilon  |
+|   921 | 2026-07-09 |      1786.32 | `EVT-FA597344EC04` — baseline latency     | Alpha    |
+|   922 | 2026-07-10 |      9608.17 | `EVT-85DD7A10EF6D` — trace collapse       | Beta     |
+|   923 | 2026-07-11 |      6268.18 | `EVT-8C043AE7C840` — anomalous throughput | Gamma    |
+|   924 | 2026-07-12 |      8111.03 | `EVT-26F263C081D7` — nominal latency      | Delta    |
+|   925 | 2026-07-13 |      6261.31 | `EVT-BB3B34AB7172` — nominal throughput   | Epsilon  |
+|   926 | 2026-07-14 |       5763.6 | `EVT-B82DA996020B` — elevated throughput  | Alpha    |
+|   927 | 2026-07-15 |      6034.48 | `EVT-4FA10D934CC4` — saturated burst      | Beta     |
+|   928 | 2026-07-16 |      5393.03 | `EVT-750392F9B422` — baseline throughput  | Gamma    |
+|   929 | 2026-07-17 |      4602.85 | `EVT-8420C7BAB569` — nominal latency      | Delta    |
+|   930 | 2026-07-18 |      6018.12 | `EVT-A639C21D408C` — nominal idle         | Epsilon  |
+|   931 | 2026-07-19 |      8003.94 | `EVT-8B24F206DA9F` — baseline surge       | Alpha    |
+|   932 | 2026-07-20 |       495.42 | `EVT-A2E5A1B29F42` — nominal spike        | Beta     |
+|   933 | 2026-07-21 |      3812.04 | `EVT-DE0F1576F0AF` — inverted collapse    | Gamma    |
+|   934 | 2026-07-22 |      7869.85 | `EVT-C8DC8F37D2E5` — saturated throughput | Delta    |
+|   935 | 2026-07-23 |      2081.82 | `EVT-D40368D60926` — nominal jitter       | Epsilon  |
+|   936 | 2026-07-24 |       655.39 | `EVT-5C74C7AC6974` — nominal collapse     | Alpha    |
+|   937 | 2026-07-25 |      3574.24 | `EVT-20F07DD9693A` — anomalous jitter     | Beta     |
+|   938 | 2026-07-26 |      2975.69 | `EVT-D4BCF5F096EA` — trace spike          | Gamma    |
+|   939 | 2026-07-27 |      2461.13 | `EVT-59D1253FFD0F` — saturated plateau    | Delta    |
+|   940 | 2026-07-28 |       150.11 | `EVT-606D58AE00B2` — baseline latency     | Epsilon  |
+|   941 | 2026-07-29 |       6992.1 | `EVT-1E52BEAE85EC` — critical jitter      | Alpha    |
+|   942 | 2026-07-30 |      4634.34 | `EVT-D1F28E4E9D60` — critical idle        | Beta     |
+|   943 | 2026-07-31 |      3392.31 | `EVT-A90B084AE4CB` — baseline plateau     | Gamma    |
+|   944 | 2026-08-01 |      5235.72 | `EVT-A1DE97F21BF8` — nominal spike        | Delta    |
+|   945 | 2026-08-02 |      1690.02 | `EVT-93D127574972` — cyclic throughput    | Epsilon  |
+|   946 | 2026-08-03 |      5162.58 | `EVT-C22D6F52030E` — trace spike          | Alpha    |
+|   947 | 2026-08-04 |       8509.6 | `EVT-A39A6FC18AEE` — trace throughput     | Beta     |
+|   948 | 2026-08-05 |      4021.52 | `EVT-D463149BBFE2` — elevated surge       | Gamma    |
+|   949 | 2026-08-06 |      3522.54 | `EVT-C0657CE98721` — baseline latency     | Delta    |
+|   950 | 2026-08-07 |      2806.17 | `EVT-297CC39ECA53` — cyclic burst         | Epsilon  |
+|   951 | 2026-08-08 |      5486.24 | `EVT-8D47BF1159B1` — trace jitter         | Alpha    |
+|   952 | 2026-08-09 |       7171.3 | `EVT-99CCE86AE872` — critical idle        | Beta     |
+|   953 | 2026-08-10 |      7467.43 | `EVT-A77FA4D227D6` — inverted latency     | Gamma    |
+|   954 | 2026-08-11 |      5772.82 | `EVT-2E3E98AB7232` — inverted burst       | Delta    |
+|   955 | 2026-08-12 |      8763.22 | `EVT-82B91403C53F` — cyclic jitter        | Epsilon  |
+|   956 | 2026-08-13 |      7759.73 | `EVT-ECA0797E2D8D` — nominal burst        | Alpha    |
+|   957 | 2026-08-14 |      4980.94 | `EVT-C95AAB6129E6` — inverted drift       | Beta     |
+|   958 | 2026-08-15 |      5232.41 | `EVT-C2D98F25F175` — nominal latency      | Gamma    |
+|   959 | 2026-08-16 |      1668.88 | `EVT-E7E50508CF9C` — trace surge          | Delta    |
+|   960 | 2026-08-17 |      5383.95 | `EVT-3608225D49AB` — nominal burst        | Epsilon  |
+|   961 | 2026-08-18 |      5377.84 | `EVT-D7FD61D72EFD` — critical surge       | Alpha    |
+|   962 | 2026-08-19 |      3911.99 | `EVT-4841237EA156` — latent collapse      | Beta     |
+|   963 | 2026-08-20 |      2091.89 | `EVT-DC6FCD5530B3` — anomalous surge      | Gamma    |
+|   964 | 2026-08-21 |      3792.53 | `EVT-2D8C8320AD5C` — inverted burst       | Delta    |
+|   965 | 2026-08-22 |      2965.84 | `EVT-883820C50FF5` — elevated idle        | Epsilon  |
+|   966 | 2026-08-23 |      4586.73 | `EVT-DE3A5EB03230` — baseline spike       | Alpha    |
+|   967 | 2026-08-24 |      5127.61 | `EVT-83433CF6CEBB` — baseline drift       | Beta     |
+|   968 | 2026-08-25 |      5787.17 | `EVT-1E50798A14C3` — inverted throughput  | Gamma    |
+|   969 | 2026-08-26 |      2470.76 | `EVT-5F6159547C7D` — critical jitter      | Delta    |
+|   970 | 2026-08-27 |      1903.22 | `EVT-24779B730263` — baseline surge       | Epsilon  |
+|   971 | 2026-08-28 |      8514.47 | `EVT-2543B16D7E7F` — elevated idle        | Alpha    |
+|   972 | 2026-08-29 |      6350.49 | `EVT-F8408813C6E3` — critical idle        | Beta     |
+|   973 | 2026-08-30 |      7949.02 | `EVT-388F52C1CC79` — anomalous collapse   | Gamma    |
+|   974 | 2026-08-31 |      3977.52 | `EVT-E41B8E4CE9AC` — baseline idle        | Delta    |
+|   975 | 2026-09-01 |      8409.23 | `EVT-F56CD6DABCC9` — nominal plateau      | Epsilon  |
+|   976 | 2026-09-02 |      7118.35 | `EVT-163D5130C5BB` — elevated collapse    | Alpha    |
+|   977 | 2026-09-03 |      4373.49 | `EVT-E1963F860342` — inverted surge       | Beta     |
+|   978 | 2026-09-04 |      3700.82 | `EVT-ADE3CC9948EB` — critical burst       | Gamma    |
+|   979 | 2026-09-05 |      1336.24 | `EVT-598932A4F802` — latent jitter        | Delta    |
+|   980 | 2026-09-06 |      7095.86 | `EVT-6CDD5E2825AC` — nominal plateau      | Epsilon  |
+|   981 | 2026-09-07 |      6168.22 | `EVT-6EB678DAE2E9` — critical collapse    | Alpha    |
+|   982 | 2026-09-08 |      9379.71 | `EVT-D8791AE18C40` — baseline burst       | Beta     |
+|   983 | 2026-09-09 |      9628.05 | `EVT-35152A9A07BB` — saturated jitter     | Gamma    |
+|   984 | 2026-09-10 |       207.43 | `EVT-C48A4E97E1B0` — saturated throughput | Delta    |
+|   985 | 2026-09-11 |      5616.33 | `EVT-459D79923FE0` — nominal plateau      | Epsilon  |
+|   986 | 2026-09-12 |      6975.64 | `EVT-640E0AAFA20D` — inverted idle        | Alpha    |
+|   987 | 2026-09-13 |      1232.33 | `EVT-B612527FE995` — baseline surge       | Beta     |
+|   988 | 2026-09-14 |      3417.66 | `EVT-F9105DA32EAD` — inverted collapse    | Gamma    |
+|   989 | 2026-09-15 |       194.89 | `EVT-55992FD9E6AE` — anomalous latency    | Delta    |
+|   990 | 2026-09-16 |       986.69 | `EVT-569C37056704` — baseline throughput  | Epsilon  |
+|   991 | 2026-09-17 |      3916.03 | `EVT-A277338231EB` — critical drift       | Alpha    |
+|   992 | 2026-09-18 |      9093.38 | `EVT-A7D6180B6828` — inverted burst       | Beta     |
+|   993 | 2026-09-19 |      7950.65 | `EVT-9E40700286F1` — latent burst         | Gamma    |
+|   994 | 2026-09-20 |      4091.74 | `EVT-1E8B5ED34F70` — inverted burst       | Delta    |
+|   995 | 2026-09-21 |      6461.95 | `EVT-C8648EA8CA7A` — anomalous throughput | Epsilon  |
+|   996 | 2026-09-22 |      7505.22 | `EVT-CA5C0011D1D0` — cyclic plateau       | Alpha    |
+|   997 | 2026-09-23 |      5454.03 | `EVT-BE8E4020BAFD` — anomalous jitter     | Beta     |
+|   998 | 2026-09-24 |      6224.08 | `EVT-0E8D681647DD` — baseline idle        | Gamma    |
+|   999 | 2026-09-25 |      1608.39 | `EVT-E98C9870B871` — elevated jitter      | Delta    |
+|  1000 | 2026-09-26 |       496.04 | `EVT-9B358D01C77F` — latent throughput    | Epsilon  |
+
+---
+
+## Summary Statistics
+
+| Statistic        | Value                                  |
+| ---------------- | -------------------------------------- |
+| Total rows       | 1 000                                  |
+| Date range       | 2024-01-01 → 2026-09-26                |
+| Metric range     | ~100.00 – ~10 000.00                   |
+| Categories       | Alpha · Beta · Gamma · Delta · Epsilon |
+| Signature format | `EVT-<SHA1[:12].upper()>`              |
+
+---
+
+_Generated by Markdown Explorer stress-test suite · 2026-05-22 16:18_
