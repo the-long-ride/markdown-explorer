@@ -9,6 +9,7 @@
 <link id="hl-theme" rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css" />
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="{{PANEL_CSS_URI}}" />
 </head>
 <body>
@@ -18,9 +19,14 @@
   <header class="topbar">
     <div class="topbar__logo">
       <span class="topbar__logo-icon">
-        <img src="{{ICON_MD_URI}}" width="14" height="14" alt="Markdown Explorer" style="opacity:0.9;filter:invert(0.8)" />
+        <img src="{{ICON_MD_URI}}" width="20" height="20" alt="Markdown Explorer" class="topbar__logo-img" />
       </span>
-      Markdown Explorer
+      <div class="topbar__logo-text-group">
+        <div class="topbar__logo-title">Markdown Explorer</div>
+        <div class="topbar__logo-subtitle">
+          by <a href="https://github.com/the-long-ride/vscode-extension-markdown-explorer" target="_blank" rel="noopener noreferrer">the-long-ride</a>
+        </div>
+      </div>
     </div>
     <div class="topbar__divider"></div>
     <div style="display:flex;align-items:center;gap:4px">
@@ -164,6 +170,16 @@ window.addEventListener('message', (event) => {
       UI.updateThemeButton();
       UI.updateHighlightTheme();
       if (!msg.defaultExpanded) UI.collapseAll();
+      if (fileList.length === 0) {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('mdBody').style.display = 'block';
+        document.getElementById('mdBody').innerHTML =
+          `<div class="state-screen">
+            <div class="state-screen__icon">📁</div>
+            <div class="state-screen__title">No Markdown files found</div>
+            <div class="state-screen__sub">Add a .md file to your workspace to get started.</div>
+          </div>`;
+      }
       break;
     case 'renderContent':
       fileList = msg.fileList ?? fileList;
@@ -193,9 +209,496 @@ const Nav = {
   },
 };
 
+// ── Table ─────────────────────────────────────────────────────────────────────
+const Table = {
+  states: {},
+
+  initState(tableId) {
+    if (!Table.states[tableId]) {
+      Table.states[tableId] = {
+        expanded: false,
+        searchQuery: '',
+        filters: {},
+        chartInstance: null,
+        currentView: 'table',
+        chartable: false,
+        labelColIdx: 0,
+        dataColIdxs: []
+      };
+    }
+    return Table.states[tableId];
+  },
+
+  initCollapsible(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const state = Table.initState(tableId);
+
+    // Auto-detect if table can be visualised as a chart
+    Table.detectChartable(tableId);
+
+    const rows = table.querySelectorAll('tbody tr');
+    if (rows.length > 15) {
+      rows.forEach((row, index) => {
+        if (index >= 15) row.classList.add('is-collapsed-row');
+        else row.classList.remove('is-collapsed-row');
+      });
+      const btn = document.getElementById(tableId + '-toggle-btn');
+      if (btn) { btn.style.display = ''; btn.textContent = 'Show More'; }
+    } else {
+      const btn = document.getElementById(tableId + '-toggle-btn');
+      if (btn) btn.style.display = 'none';
+    }
+  },
+
+  toggleCollapse(tableId) {
+    const state = Table.initState(tableId);
+    state.expanded = !state.expanded;
+    Table.runFilters(tableId);
+  },
+
+  sort(tableId, colIndex) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const rows = [...tbody.querySelectorAll('tr')];
+    const th = table.querySelectorAll('.mdn-th')[colIndex];
+    const asc = !th.classList.contains('sort-asc');
+    table.querySelectorAll('.mdn-th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+    th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+    rows.sort((a, b) => {
+      const at = a.cells[colIndex]?.textContent.trim() ?? '';
+      const bt = b.cells[colIndex]?.textContent.trim() ?? '';
+      const an = parseFloat(at.replace(/[\$,%]/g, ''));
+      const bn = parseFloat(bt.replace(/[\$,%]/g, ''));
+      if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+      return asc ? at.localeCompare(bt) : bt.localeCompare(at);
+    });
+    rows.forEach(r => tbody.appendChild(r));
+    Table.runFilters(tableId);
+  },
+
+  filter(tableId, query) {
+    const state = Table.initState(tableId);
+    state.searchQuery = query;
+    Table.runFilters(tableId);
+  },
+
+  runFilters(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const state = Table.initState(tableId);
+    const q = (state.searchQuery || '').toLowerCase().trim();
+    const filters = state.filters || {};
+
+    let visible = 0;
+    const rows = table.querySelectorAll('tbody tr');
+
+    rows.forEach((row, index) => {
+      // 1. Text search match
+      const textMatch = !q || row.textContent.toLowerCase().includes(q);
+
+      // 2. Category filter match
+      let filterMatch = true;
+      for (const [colIdx, val] of Object.entries(filters)) {
+        const cellText = row.cells[Number(colIdx)]?.textContent.trim() ?? '';
+        if (cellText !== val) {
+          filterMatch = false;
+          break;
+        }
+      }
+
+      const isVisible = textMatch && filterMatch;
+      row.classList.toggle('is-hidden', !isVisible);
+
+      if (isVisible) {
+        visible++;
+        if (!q && Object.keys(filters).length === 0 && !state.expanded && index >= 15) {
+          row.classList.add('is-collapsed-row');
+        } else {
+          row.classList.remove('is-collapsed-row');
+        }
+      } else {
+        row.classList.remove('is-collapsed-row');
+      }
+    });
+
+    // Toggle button display
+    const btn = document.getElementById(tableId + '-toggle-btn');
+    if (btn) {
+      const activeQueryOrFilter = q || Object.keys(filters).length > 0;
+      if (activeQueryOrFilter) {
+        btn.style.display = 'none';
+      } else {
+        btn.style.display = '';
+        btn.textContent = state.expanded ? 'Show Less' : 'Show More';
+      }
+    }
+
+    // Toggle funnel highlight classes on headers
+    table.querySelectorAll('thead th').forEach((th, colIdx) => {
+      const filterBtn = th.querySelector('.mdn-table-filter-btn');
+      if (filterBtn) {
+        filterBtn.classList.toggle('is-active', !!filters[colIdx]);
+      }
+    });
+
+    Table.updateCount(tableId, visible, rows.length);
+
+    // Dynamic Chart Update
+    if (state.currentView !== 'table') {
+      Table.renderChart(tableId, state.currentView);
+    }
+  },
+
+  updateCount(tableId, visible, total) {
+    const el = document.getElementById(tableId + '-count');
+    if (!el) return;
+    const t = total ?? document.getElementById(tableId)?.querySelectorAll('tbody tr').length ?? 0;
+    const v = visible ?? t;
+    el.textContent = v < t ? `${v} / ${t} rows` : `${t} rows`;
+  },
+
+  showFilterMenu(tableId, colIndex, btnEl) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    // Collect all unique cell text contents for colIndex from the raw table DOM (unfiltered)
+    const rows = [...table.querySelectorAll('tbody tr')];
+    const uniqueValues = new Set();
+    rows.forEach(row => {
+      const text = row.cells[colIndex]?.textContent.trim() ?? '';
+      if (text) uniqueValues.add(text);
+    });
+
+    let dropdown = document.getElementById('mdn-filter-dropdown');
+    if (!dropdown) {
+      dropdown = document.createElement('div');
+      dropdown.id = 'mdn-filter-dropdown';
+      dropdown.className = 'mdn-filter-dropdown';
+      document.body.appendChild(dropdown);
+
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#mdn-filter-dropdown') && !e.target.closest('.mdn-table-filter-btn')) {
+          dropdown.style.display = 'none';
+        }
+      });
+    }
+
+    const state = Table.initState(tableId);
+    const activeFilter = state.filters[colIndex] || 'all';
+
+    let html = `<div class="mdn-filter-dropdown-header">Filter by value</div>`;
+    html += `<div class="mdn-filter-item ${activeFilter === 'all' ? 'is-active' : ''}" onclick="Table.applyFilter('${tableId}', ${colIndex}, 'all')">
+      <span><em>All (Show items)</em></span>
+    </div>`;
+
+    [...uniqueValues].sort().forEach(val => {
+      const isActive = activeFilter === val;
+      html += `<div class="mdn-filter-item ${isActive ? 'is-active' : ''}" onclick="Table.applyFilter('${tableId}', ${colIndex}, '${val.replace(/'/g, "\\'")}')">
+        <span>${val}</span>
+      </div>`;
+    });
+
+    dropdown.innerHTML = html;
+    dropdown.style.display = 'block';
+
+    // Position popover relative to clicked funnel icon
+    const rect = btnEl.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+
+    const dropdownWidth = 170;
+    if (rect.left + dropdownWidth > window.innerWidth) {
+      dropdown.style.left = (rect.right - dropdownWidth) + 'px';
+    } else {
+      dropdown.style.left = rect.left + 'px';
+    }
+  },
+
+  applyFilter(tableId, colIndex, category) {
+    const state = Table.initState(tableId);
+    if (!state.filters) state.filters = {};
+
+    if (category === 'all') {
+      delete state.filters[colIndex];
+    } else {
+      state.filters[colIndex] = category;
+    }
+
+    Table.runFilters(tableId);
+
+    const dropdown = document.getElementById('mdn-filter-dropdown');
+    if (dropdown) dropdown.style.display = 'none';
+  },
+
+  detectChartable(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const state = Table.initState(tableId);
+    const headers = [...table.querySelectorAll('thead th')];
+    const rows = [...table.querySelectorAll('tbody tr')];
+    const N = rows.length;
+    if (N < 2) return;
+
+    const numCols = headers.length;
+    const numericCols = [];
+    const labelCols = [];
+
+    for (let colIdx = 0; colIdx < numCols; colIdx++) {
+      let numericCount = 0;
+      let nonEmptyCount = 0;
+      rows.forEach(row => {
+        const text = row.cells[colIdx]?.textContent.trim() ?? '';
+        if (text) {
+          nonEmptyCount++;
+          const clean = text.replace(/[\$,%]/g, '').trim();
+          if (clean !== '' && !isNaN(Number(clean))) {
+            numericCount++;
+          }
+        }
+      });
+
+      if (nonEmptyCount > 0 && (numericCount / nonEmptyCount) >= 0.8) {
+        numericCols.push(colIdx);
+      } else {
+        labelCols.push(colIdx);
+      }
+    }
+
+    if (numericCols.length > 0) {
+      const labelColIdx = labelCols.length > 0 ? labelCols[0] : 0;
+      const dataColIdxs = numericCols.filter(idx => idx !== labelColIdx);
+
+      if (dataColIdxs.length > 0) {
+        state.chartable = true;
+        state.labelColIdx = labelColIdx;
+        state.dataColIdxs = dataColIdxs;
+
+        const switcher = document.getElementById(tableId + '-switcher');
+        if (switcher) {
+          switcher.innerHTML = `
+            <button id="${tableId}-view-table" class="is-active" onclick="Table.switchView('${tableId}', 'table')" title="View Table">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Table
+            </button>
+            <button id="${tableId}-view-bar" onclick="Table.switchView('${tableId}', 'bar')" title="Bar Chart">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Bar
+            </button>
+            <button id="${tableId}-view-line" onclick="Table.switchView('${tableId}', 'line')" title="Line Chart">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="m18.7 8-5.1 5.2-2.8-2.7L7 14.3"/></svg> Line
+            </button>
+            <button id="${tableId}-view-pie" onclick="Table.switchView('${tableId}', 'pie')" title="Pie Chart">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg> Pie
+            </button>
+          `;
+        }
+      }
+    }
+  },
+
+  switchView(tableId, view) {
+    const state = Table.initState(tableId);
+    state.currentView = view;
+
+    const switcher = document.getElementById(tableId + '-switcher');
+    if (switcher) {
+      switcher.querySelectorAll('button').forEach(btn => {
+        btn.classList.toggle('is-active', btn.id === `${tableId}-view-${view}`);
+      });
+    }
+
+    const scrollEl = document.getElementById(tableId + '-scroll');
+    const chartContainer = document.getElementById(tableId + '-chart-container');
+    const toggleBtn = document.getElementById(tableId + '-toggle-btn');
+
+    if (view === 'table') {
+      if (scrollEl) scrollEl.style.display = '';
+      if (toggleBtn && Table.states[tableId]?.expanded !== undefined) {
+        const table = document.getElementById(tableId);
+        const rows = table ? table.querySelectorAll('tbody tr').length : 0;
+        const q = state.searchQuery || '';
+        const filters = state.filters || {};
+        if (rows > 15 && !q && Object.keys(filters).length === 0) {
+          toggleBtn.style.display = '';
+        }
+      }
+      if (chartContainer) chartContainer.style.display = 'none';
+    } else {
+      if (scrollEl) scrollEl.style.display = 'none';
+      if (toggleBtn) toggleBtn.style.display = 'none';
+      if (chartContainer) chartContainer.style.display = 'block';
+      Table.renderChart(tableId, view);
+    }
+  },
+
+  getChartColors(count, isDark) {
+    const baseColors = isDark 
+      ? ['#8b7cf8', '#34d399', '#f87171', '#60a5fa', '#fbbf24', '#ec4899', '#a855f7', '#14b8a6']
+      : ['#6d5ef0', '#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#db2777', '#8b5cf6', '#0d9488'];
+    const result = [];
+    for (let i = 0; i < count; i++) {
+      result.push(baseColors[i % baseColors.length]);
+    }
+    return result;
+  },
+
+  renderChart(tableId, viewType) {
+    const state = Table.initState(tableId);
+    if (!state.chartable) return;
+
+    const canvas = document.getElementById(tableId + '-chart-canvas');
+    if (!canvas) return;
+
+    if (state.chartInstance) {
+      state.chartInstance.destroy();
+      state.chartInstance = null;
+    }
+
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const rows = [...table.querySelectorAll('tbody tr')].filter(r => !r.classList.contains('is-hidden'));
+    
+    if (rows.length === 0) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '13px sans-serif';
+      ctx.fillStyle = 'var(--txm)';
+      ctx.textAlign = 'center';
+      ctx.fillText('No data to display in chart', canvas.width / 2, canvas.height / 2);
+      return;
+    }
+
+    const MAX_CHART_ROWS = 50;
+    const chartRows = rows.slice(0, MAX_CHART_ROWS);
+
+    const labels = chartRows.map(row => {
+      const text = row.cells[state.labelColIdx]?.textContent.trim() ?? '';
+      return text.length > 25 ? text.slice(0, 22) + '...' : text;
+    });
+
+    const isDark = currentTheme === 'dark' || (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const styles = getComputedStyle(document.documentElement);
+    const txColor = styles.getPropertyValue('--tx2').trim() || '#9191a4';
+    const bdColor = styles.getPropertyValue('--bd').trim() || 'rgba(255,255,255,0.1)';
+    const colors = Table.getChartColors(state.dataColIdxs.length, isDark);
+
+    const datasets = state.dataColIdxs.map((colIdx, dsIdx) => {
+      const headerText = table.querySelectorAll('thead th')[colIdx]?.querySelector('.mdn-th-text')?.textContent.trim() ?? `Series ${dsIdx + 1}`;
+      const data = chartRows.map(row => {
+        const text = row.cells[colIdx]?.textContent.trim() ?? '0';
+        const clean = text.replace(/[\$,%]/g, '').trim();
+        return parseFloat(clean) || 0;
+      });
+
+      const color = colors[dsIdx];
+
+      if (viewType === 'pie') {
+        const pieColors = Table.getChartColors(data.length, isDark);
+        return {
+          label: headerText,
+          data: data,
+          backgroundColor: pieColors.map(c => c + 'cc'),
+          borderColor: pieColors,
+          borderWidth: 1
+        };
+      }
+
+      return {
+        label: headerText,
+        data: data,
+        backgroundColor: viewType === 'line' ? color + '1c' : color + 'cc',
+        borderColor: color,
+        borderWidth: 1.5,
+        fill: viewType === 'line',
+        tension: 0.3
+      };
+    });
+
+    const finalDatasets = viewType === 'pie' ? [datasets[0]] : datasets;
+
+    state.chartInstance = new Chart(canvas, {
+      type: viewType === 'pie' ? 'doughnut' : viewType,
+      data: {
+        labels: labels,
+        datasets: finalDatasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: viewType !== 'pie' || finalDatasets[0].data.length <= 15,
+            position: 'bottom',
+            labels: {
+              color: txColor,
+              boxWidth: 12,
+              font: { family: 'var(--font-ui)', size: 11 }
+            }
+          },
+          tooltip: {
+            titleFont: { family: 'var(--font-ui)', size: 12 },
+            bodyFont: { family: 'var(--font-ui)', size: 12 }
+          }
+        },
+        scales: viewType === 'pie' ? {} : {
+          x: {
+            grid: { color: bdColor },
+            ticks: {
+              color: txColor,
+              font: { family: 'var(--font-ui)', size: 10 },
+              maxRotation: 45,
+              minRotation: 0
+            }
+          },
+          y: {
+            grid: { color: bdColor },
+            ticks: {
+              color: txColor,
+              font: { family: 'var(--font-ui)', size: 10 }
+            }
+          }
+        }
+      }
+    });
+  },
+};
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+const Sidebar = {
+  filter(query) {
+    const q = query.toLowerCase().trim();
+    document.querySelectorAll('.tree-file').forEach(el => {
+      const name = (el.dataset.title ?? '').toLowerCase();
+      const p = (el.dataset.path ?? '').toLowerCase();
+      el.style.display = (!q || name.includes(q) || p.includes(q)) ? '' : 'none';
+    });
+    document.querySelectorAll('.tree-folder').forEach(folder => {
+      const hasVisible = [...folder.querySelectorAll('.tree-file')].some(f => f.style.display !== 'none');
+      folder.style.display = (!q || hasVisible) ? '' : 'none';
+    });
+  },
+
+  toggleFolder(el) {
+    const folder = el.closest('.tree-folder');
+    folder.classList.toggle('is-open');
+    const children = folder.querySelector('.tree-folder__children');
+    if (children) children.classList.toggle('is-hidden', !folder.classList.contains('is-open'));
+  },
+};
+
 // ── UI ────────────────────────────────────────────────────────────────────────
 const UI = {
   renderContent(msg) {
+    if (Table.states) {
+      for (const state of Object.values(Table.states)) {
+        if (state.chartInstance) {
+          state.chartInstance.destroy();
+        }
+      }
+    }
+    Table.states = {};
+
     lastMsg = msg;
     currentFile = msg.filePath;
     DocHistory.push(msg.filePath);
@@ -249,6 +752,14 @@ const UI = {
       if (typeof hljs !== 'undefined') {
         document.querySelectorAll('pre code:not(.is-custom-highlighted)').forEach((block) => {
           hljs.highlightElement(block);
+          
+          // Post-process optional properties (like email?: string) so they get colored as attributes
+          if (block.classList.contains('language-typescript') || block.classList.contains('language-ts') || block.classList.contains('language-tsx') || block.classList.contains('language-javascript') || block.classList.contains('language-js')) {
+            let html = block.innerHTML;
+            html = html.replace(/(<span class="hljs-[^"]+">)([a-zA-Z_$][\w$]*)(<\/span>\?\s*:)/g, '<span class="hljs-attr">$2?</span>:');
+            html = html.replace(/\b([a-zA-Z_$][\w$]*)\?\s*:/g, '<span class="hljs-attr">$1?</span>:');
+            block.innerHTML = html;
+          }
         });
       }
     } catch (err) {
@@ -307,9 +818,9 @@ const UI = {
     if (btn) {
       const imgEl = btn.querySelector('#themeBtnIcon');
       if (imgEl) {
-        const isLight = currentTheme === 'light';
-        imgEl.src = isLight ? '{{ICON_MOON_URI}}' : '{{ICON_SUN_URI}}';
-        imgEl.style.filter = isLight ? 'invert(0.5)' : 'invert(0.85)';
+        const isDark = currentTheme === 'dark' || (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        imgEl.src = isDark ? '{{ICON_SUN_URI}}' : '{{ICON_MOON_URI}}';
+        imgEl.style.filter = isDark ? 'invert(0.85)' : 'invert(0.3)';
       }
     }
   },
@@ -332,131 +843,6 @@ const UI = {
   },
 };
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-const Sidebar = {
-  filter(query) {
-    const q = query.toLowerCase().trim();
-    document.querySelectorAll('.tree-file').forEach(el => {
-      const name = (el.dataset.title ?? '').toLowerCase();
-      const p = (el.dataset.path ?? '').toLowerCase();
-      el.style.display = (!q || name.includes(q) || p.includes(q)) ? '' : 'none';
-    });
-    document.querySelectorAll('.tree-folder').forEach(folder => {
-      const hasVisible = [...folder.querySelectorAll('.tree-file')].some(f => f.style.display !== 'none');
-      folder.style.display = (!q || hasVisible) ? '' : 'none';
-    });
-  },
-
-  toggleFolder(el) {
-    const folder = el.closest('.tree-folder');
-    folder.classList.toggle('is-open');
-    const children = folder.querySelector('.tree-folder__children');
-    if (children) children.classList.toggle('is-hidden', !folder.classList.contains('is-open'));
-  },
-};
-
-// ── Table ─────────────────────────────────────────────────────────────────────
-const Table = {
-  states: {},
-
-  initCollapsible(tableId) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    const rows = table.querySelectorAll('tbody tr');
-    if (rows.length > 15) {
-      Table.states[tableId] = { expanded: false };
-      rows.forEach((row, index) => {
-        if (index >= 15) row.classList.add('is-collapsed-row');
-      });
-      const btn = document.getElementById(tableId + '-toggle-btn');
-      if (btn) { btn.style.display = ''; btn.textContent = 'Show More'; }
-    } else {
-      const btn = document.getElementById(tableId + '-toggle-btn');
-      if (btn) btn.style.display = 'none';
-    }
-  },
-
-  toggleCollapse(tableId) {
-    const state = Table.states[tableId];
-    if (!state) return;
-    state.expanded = !state.expanded;
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    const rows = table.querySelectorAll('tbody tr');
-    const btn = document.getElementById(tableId + '-toggle-btn');
-    if (state.expanded) {
-      rows.forEach(row => row.classList.remove('is-collapsed-row'));
-      if (btn) btn.textContent = 'Show Less';
-    } else {
-      rows.forEach((row, index) => {
-        if (index >= 15) row.classList.add('is-collapsed-row');
-      });
-      if (btn) btn.textContent = 'Show More';
-    }
-  },
-
-  sort(tableId, colIndex) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    const tbody = table.querySelector('tbody');
-    const rows = [...tbody.querySelectorAll('tr')];
-    const th = table.querySelectorAll('.mdn-th')[colIndex];
-    const asc = !th.classList.contains('sort-asc');
-    table.querySelectorAll('.mdn-th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
-    th.classList.add(asc ? 'sort-asc' : 'sort-desc');
-    rows.sort((a, b) => {
-      const at = a.cells[colIndex]?.textContent.trim() ?? '';
-      const bt = b.cells[colIndex]?.textContent.trim() ?? '';
-      const an = parseFloat(at); const bn = parseFloat(bt);
-      if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
-      return asc ? at.localeCompare(bt) : bt.localeCompare(at);
-    });
-    rows.forEach(r => tbody.appendChild(r));
-    const searchInput = table.closest('.mdn-table-wrap')?.querySelector('.mdn-table-input');
-    const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const state = Table.states[tableId];
-    if (state && !q) {
-      rows.forEach((row, index) => {
-        if (!state.expanded && index >= 15) row.classList.add('is-collapsed-row');
-        else row.classList.remove('is-collapsed-row');
-      });
-    }
-  },
-
-  filter(tableId, query) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    const q = query.toLowerCase().trim();
-    let visible = 0;
-    const rows = table.querySelectorAll('tbody tr');
-    const state = Table.states[tableId];
-    rows.forEach((row, index) => {
-      const match = !q || row.textContent.toLowerCase().includes(q);
-      row.classList.toggle('is-hidden', !match);
-      if (match) {
-        visible++;
-        if (!q && state && !state.expanded && index >= 15) row.classList.add('is-collapsed-row');
-        else row.classList.remove('is-collapsed-row');
-      } else {
-        row.classList.remove('is-collapsed-row');
-      }
-    });
-    const btn = document.getElementById(tableId + '-toggle-btn');
-    if (btn && state) {
-      if (q) { btn.style.display = 'none'; }
-      else { btn.style.display = ''; btn.textContent = state.expanded ? 'Show Less' : 'Show More'; }
-    }
-    Table.updateCount(tableId, visible, rows.length);
-  },
-
-  updateCount(tableId, visible, total) {
-    const el = document.getElementById(tableId + '-count');
-    if (!el) return;
-    const t = total ?? document.getElementById(tableId)?.querySelectorAll('tbody tr').length ?? 0;
-    const v = visible ?? t;
-    el.textContent = v < t ? `${v} / ${t} rows` : `${t} rows`;
-  },
-};
 
 // ── Code copy ─────────────────────────────────────────────────────────────────
 const UI_copyCode = (btn) => {
@@ -534,7 +920,7 @@ const Search = {
       return;
     }
     container.innerHTML = results.map(({ f }) =>
-      `<div onclick="Search.close();Nav.go('${f.fsPath.replace(/'/g, "\\'")}');return false"
+      `<div onclick="Search.close();Nav.go('${f.fsPath.replace(/\\/g, '/').replace(/'/g, "\\'")}');return false"
             role="option" tabindex="0"
             style="padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bd);transition:background .1s"
             onmouseover="this.style.background='var(--bg-h)'" onmouseout="this.style.background=''">

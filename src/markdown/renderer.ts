@@ -169,13 +169,38 @@ export class HtmlRenderer {
     return `<blockquote class="mdn-blockquote">${renderInline(token.lines.join('\n'))}</blockquote>`;
   }
 
+  private isCategoryColumn(rows: string[][], colIndex: number): boolean {
+    const N = rows.length;
+    if (N < 3) return false;
+    const values = rows.map(r => (r[colIndex] ?? '').trim()).filter(Boolean);
+    const unique = new Set(values);
+    const U = unique.size;
+    if (U <= 1 || U >= N) return false;
+
+    const ratio = U / N;
+    const totalLength = values.reduce((sum, v) => sum + v.length, 0);
+    const avgLength = totalLength / values.length;
+
+    return (U <= 10 || ratio <= 0.4) && avgLength < 40;
+  }
+
   private renderTable(token: TableToken): string {
     const id = shortId('tbl');
 
     const thead = token.headers.map((h, i) => {
       const alignAttr = token.align[i] ? ` style="text-align:${token.align[i]}"` : '';
-      return `<th class="mdn-th" data-col="${i}" onclick="Table.sort('${id}',${i})" tabindex="0"${alignAttr}>
-  ${renderInline(h)}<span class="mdn-sort-icon" aria-hidden="true">⇅</span>
+      const isCat = this.isCategoryColumn(token.rows, i);
+      const filterBtnHtml = isCat
+        ? `<span class="mdn-table-filter-btn" onclick="event.stopPropagation(); Table.showFilterMenu('${id}', ${i}, this)" title="Filter by category" role="button" tabindex="0">
+             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+           </span>`
+        : '';
+      return `<th class="mdn-th${isCat ? ' has-filter' : ''}" data-col="${i}" onclick="Table.sort('${id}',${i})" tabindex="0"${alignAttr}>
+  <div class="mdn-th-content">
+    <span class="mdn-th-text">${renderInline(h)}</span>
+    <span class="mdn-sort-icon" aria-hidden="true">⇅</span>
+    ${filterBtnHtml}
+  </div>
 </th>`;
     }).join('');
 
@@ -190,19 +215,23 @@ export class HtmlRenderer {
       ? `<button class="mdn-table-toggle-btn" onclick="Table.toggleCollapse('${id}')" id="${id}-toggle-btn">Show More</button>`
       : '';
 
-    return `<div class="mdn-table-wrap">
+    return `<div class="mdn-table-wrap" id="${id}-wrap">
   <div class="mdn-table-toolbar">
     <label class="mdn-table-search-wrap" aria-label="Search table">
       <svg class="mdn-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input class="mdn-table-input" type="search" placeholder="Filter rows…" oninput="Table.filter('${id}',this.value)" />
     </label>
     <span class="mdn-row-count" id="${id}-count"></span>
+    <div class="mdn-table-view-switcher" id="${id}-switcher" style="margin-left:auto; display:flex; gap:4px;"></div>
   </div>
-  <div class="mdn-table-scroll">
+  <div class="mdn-table-scroll" id="${id}-scroll">
     <table class="mdn-table" id="${id}">
       <thead><tr>${thead}</tr></thead>
       <tbody>${tbody}</tbody>
     </table>
+  </div>
+  <div class="mdn-table-chart-container" id="${id}-chart-container" style="display:none;">
+    <canvas id="${id}-chart-canvas"></canvas>
   </div>
   ${toggleBtnHtml}
 </div>`;

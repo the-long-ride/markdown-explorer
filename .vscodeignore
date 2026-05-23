@@ -1,0 +1,21 @@
+# TypeScript configurations and Source Code
+tsconfig.json
+src/**
+
+# Test files and test sample documents
+test/**
+
+# Dependency folder
+node_modules/
+
+# Git and development configs
+.git/
+.gitignore
+.gitattributes
+package-lock.json
+
+# Packaged extension binaries
+*.vsix
+
+# Raw large assets (logo-128.png and logo-500.png are used instead)
+media/logos/logo.png

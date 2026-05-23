@@ -5,9 +5,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "publisher": "the-long-ride",
+  "icon": "media/logos/logo-500.png",
   "repository": { "type": "git", "url": "https://github.com/the-long-ride/vscode-extension-markdown-explorer" },
   "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other", "Visualization"],
+  "categories": ["Other", "Visualization", "Themes"],
   "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {

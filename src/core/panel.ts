@@ -152,9 +152,20 @@ export class MarkdownDocsPanel {
   }
 
   private async _sendContent(): Promise<void> {
-    if (!this._currentFile || !this._flat.length) return;
-    const fileInfo = this._flat.find(f => this._normPath(f.fsPath) === this._normPath(this._currentFile!));
-    if (!fileInfo) return;
+    if (!this._currentFile) return;
+    let fileInfo = this._flat.find(f => this._normPath(f.fsPath) === this._normPath(this._currentFile!));
+    if (!fileInfo) {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      const rootPath = workspaceFolder?.uri.fsPath ?? '';
+      const relativePath = rootPath ? path.relative(rootPath, this._currentFile) : path.basename(this._currentFile);
+      fileInfo = {
+        fsPath: this._currentFile,
+        relativePath,
+        parts: relativePath.split(path.sep),
+        fileName: path.basename(this._currentFile),
+        title: path.basename(this._currentFile).replace(/\.md$/i, ''),
+      };
+    }
 
     const raw = WorkspaceScanner.readFile(this._currentFile);
     const { tokens, frontmatter } = parse(raw);
@@ -245,7 +256,9 @@ export class MarkdownDocsPanel {
 
     const moonIconUri = iconUri('moon-icon.svg');
     const sunIconUri  = iconUri('day-sunny-icon.svg');
-    const mdIconUri   = iconUri('markdown-icon.svg');
+    const logoUri = this._panel.webview.asWebviewUri(
+      vscode.Uri.file(path.join(this._extensionPath, 'media', 'logos', 'logo-128.png'))
+    ).toString();
 
     const replacements: Record<string, string> = {
       '{{THEME}}': theme,
@@ -255,7 +268,7 @@ export class MarkdownDocsPanel {
       '{{PANEL_CSS_URI}}': cssUri,
       '{{ICON_MOON_URI}}': moonIconUri,
       '{{ICON_SUN_URI}}': sunIconUri,
-      '{{ICON_MD_URI}}': mdIconUri,
+      '{{ICON_MD_URI}}': logoUri,
       '{{BACK_BTN}}': renderButton({
         id: 'backBtn', className: 'btn btn--icon', onClick: 'DocHistory.back()',
         label: 'Go Back', disabled: true, tooltipPos: 'below',
@@ -338,7 +351,6 @@ export class MarkdownDocsPanel {
         title="${this._escAttr(file.relativePath)}"
         role="treeitem" tabindex="0"
         onkeydown="if(event.key==='Enter')Nav.go('${this._escAttr(file.fsPath)}')">
-        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span class="tree-file__name">${this._escHtml(file.title)}</span>
       </div>`;
     }
