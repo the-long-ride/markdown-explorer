@@ -966,7 +966,7 @@ const Resize = {
 // ── ModalViewer ───────────────────────────────────────────────────────────────
 const getClickableMedia = () => {
   const media = [];
-  document.querySelectorAll('.mdn-body img.mdn-img').forEach(img => {
+  document.querySelectorAll('.mdn-body img').forEach(img => {
     media.push({ type: 'img', element: img, src: img.src });
   });
   document.querySelectorAll('.mdn-body .mdn-mermaid-wrap').forEach(wrap => {
@@ -1116,7 +1116,7 @@ const DocHistory = {
 
 // ── Event delegation ──────────────────────────────────────────────────────────
 document.addEventListener('click', e => {
-  const img = e.target.closest('.mdn-body img.mdn-img');
+  const img = e.target.closest('.mdn-body img');
   if (img) { ModalViewer.open(img); return; }
   const mermaidWrap = e.target.closest('.mdn-body .mdn-mermaid-wrap');
   if (mermaidWrap) { ModalViewer.open(mermaidWrap); return; }

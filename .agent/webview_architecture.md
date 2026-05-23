@@ -53,4 +53,6 @@ sequenceDiagram
 
 ## 🗺️ Path Resolution & Security
 * **Relative Image Rewriting**: Markdown images with relative paths are scanned in `_sendContent` via regular expressions and rewritten to webview-safe URIs using `this._panel.webview.asWebviewUri`.
+* **Safe HTML & General Image Styling**: Raw HTML layout and rendering tags (like `<img>`, `<p>`, `<div>`, `<span>`, etc.) are passed through `SAFE_HTML_TAG_RE` in `inline.ts` unmodified. Images inside raw HTML automatically inherit responsive layout, border-radius, and pan/zoom handlers in the webview via general `.mdn-body img` selectors in `panel.css` and `panel.html`.
+* **Robust Markdown Link Resolution**: Link navigation (`_navigateTo`) decodes URL encoded relative paths (e.g. spaces parsed as `%20`) using `decodeURIComponent` and performs a direct file system check via `fs.existsSync` relative to the current file's parent folder. This ensures newly added or unscanned workspace files can be opened and previewed immediately.
 * **Unscanned Files Safety**: If the active editor is outside the workspace, it won't be scanned. To prevent infinite loading screen locks, the extension dynamically constructs a fallback file descriptor in `_sendContent` using `path.relative` and `path.basename`.

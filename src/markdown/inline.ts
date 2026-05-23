@@ -8,7 +8,7 @@ import { escHtml, escAttr } from '../utils';
  * Safe inline HTML tags that are passed through as-is.
  * Everything else is escaped by escHtml().
  */
-const SAFE_HTML_TAG_RE = /(<\/?(kbd|sub|sup|mark|abbr|u|s)\b[^>]*>|<br\s*\/?>)/gi;
+const SAFE_HTML_TAG_RE = /(<\/?(kbd|sub|sup|mark|abbr|u|s|img|p|div|span|a|h[1-6]|details|summary|strong|em|code|pre|hr)\b[^>]*>|<br\s*\/?>)/gi;
 
 /**
  * Render inline markdown syntax to HTML.

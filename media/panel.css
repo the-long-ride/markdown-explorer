@@ -179,8 +179,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 .mdn-link:hover{border-bottom-color:var(--accent)}
 .mdn-link--internal::before{content:'📄 ';font-size:.82em}
 .mdn-inline-code{background:var(--bg-code);border:1px solid var(--bd-s);border-radius:3px;padding:0 4px;font-family:var(--font-mono);font-size:.82em;color:var(--txc)}
-.mdn-img{max-width:100%;border-radius:var(--r);border:1px solid var(--bd-s);margin:6px 0;cursor:zoom-in;transition:opacity 0.15s}
-.mdn-img:hover{opacity:0.95}
+.mdn-img, .mdn-body img{max-width:100%;border-radius:var(--r);border:1px solid var(--bd-s);margin:6px 0;cursor:zoom-in;transition:opacity 0.15s}
+.mdn-img:hover, .mdn-body img:hover{opacity:0.95}
 .mdn-divider{border:none;border-top:1px solid var(--bd-s);margin:16px 0}
 .mdn-blockquote{border-left:3px solid var(--bd-x);padding:4px 12px;margin:10px 0;color:var(--tx2);font-style:italic;background:var(--bg-e);border-radius:0 var(--r) var(--r) 0}
 

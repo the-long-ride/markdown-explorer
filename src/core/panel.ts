@@ -216,13 +216,29 @@ export class MarkdownDocsPanel {
       return;
     }
 
-    // Resolve relative .md links
-    if (!path.isAbsolute(href)) {
-      const dir = path.dirname(this._currentFile ?? '');
-      href = path.resolve(dir, href.split('#')[0]);
+    try {
+      href = decodeURIComponent(href);
+    } catch {
+      // ignore
     }
 
-    const normHref = this._normPath(href);
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    const rootPath = workspaceFolder?.uri.fsPath ?? '';
+    const dir = this._currentFile ? path.dirname(this._currentFile) : rootPath;
+
+    let resolvedPath = href.split('#')[0];
+    if (!path.isAbsolute(resolvedPath)) {
+      resolvedPath = path.resolve(dir, resolvedPath);
+    }
+
+    // Check if the resolved file actually exists on disk
+    if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isFile()) {
+      this._currentFile = resolvedPath;
+      await this._sendContent();
+      return;
+    }
+
+    const normHref = this._normPath(resolvedPath);
     const found = this._flat.find(
       f => this._normPath(f.fsPath) === normHref || this._normPath(f.relativePath) === normHref,
     );
@@ -231,7 +247,7 @@ export class MarkdownDocsPanel {
       this._currentFile = found.fsPath;
       await this._sendContent();
     } else {
-      await this._panel.webview.postMessage({ command: 'navNotFound', href });
+      await this._panel.webview.postMessage({ command: 'navNotFound', href: resolvedPath });
     }
   }
 
@@ -259,7 +275,8 @@ export class MarkdownDocsPanel {
     <p style="font-size: 1.15em; color: var(--tx2); margin-bottom: 12px; line-height: 1.5;">A premium, local-first documentation viewer and navigator for Visual Studio Code.</p>
     <div style="font-size: 0.95em; color: var(--tx2);">
       Created by <a href="https://github.com/the-long-ride" target="_blank" rel="noopener noreferrer" style="color: var(--accent-text); text-decoration: none; font-weight: 600;">the-long-ride</a> · 
-      Repository: <a href="https://github.com/the-long-ride/vscode-extension-markdown-explorer" target="_blank" rel="noopener noreferrer" style="color: var(--accent-text); text-decoration: none; font-weight: 600;">vscode-extension-markdown-explorer</a>
+      Repository: <a href="https://github.com/the-long-ride/vscode-extension-markdown-explorer" target="_blank" rel="noopener noreferrer" style="color: var(--accent-text); text-decoration: none; font-weight: 600;">vscode-extension-markdown-explorer</a> · 
+      License: <a href="https://github.com/the-long-ride/vscode-extension-markdown-explorer/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" style="color: var(--accent-text); text-decoration: none; font-weight: 600;">MIT</a>
     </div>
   </div>
 
@@ -337,7 +354,7 @@ export class MarkdownDocsPanel {
       <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
         <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">⌨️ Keyboard Shortcuts & Navigation</div>
         <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
-          Use <kbd>Ctrl+Alt+V</kbd> (<kbd>Cmd+Alt+V</kbd> on Mac) to quickly toggle the Markdown Explorer view on a markdown file. Navigate back and forward between documents using the arrow buttons in the topbar or <kbd>Alt+Left</kbd> and <kbd>Alt+Right</kbd>.
+          Use <kbd>Ctrl+Shift+M</kbd> (<kbd>Cmd+Shift+M</kbd> on Mac) to open Markdown Explorer, and <kbd>Ctrl+Alt+V</kbd> (<kbd>Cmd+Alt+V</kbd> on Mac) to quickly toggle the Markdown Explorer view on a markdown file. Navigate back and forward between documents using the arrow buttons in the topbar or <kbd>Alt+Left</kbd> and <kbd>Alt+Right</kbd>.
         </div>
       </div>
 

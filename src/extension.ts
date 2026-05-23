@@ -156,9 +156,26 @@ class MarkdownExplorerSidebarProvider implements vscode.WebviewViewProvider {
       </html>
     `;
 
+    const openAndClose = () => {
+      vscode.commands.executeCommand('markdownExplorer.open');
+      vscode.commands.executeCommand('workbench.action.closeSidebar');
+    };
+
+    // If visible on load, trigger open immediately
+    if (webviewView.visible) {
+      openAndClose();
+    }
+
+    // Also trigger whenever visibility changes to visible
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        openAndClose();
+      }
+    });
+
     webviewView.webview.onDidReceiveMessage(message => {
       if (message.command === 'open') {
-        vscode.commands.executeCommand('markdownExplorer.open');
+        openAndClose();
       }
     });
   }
