@@ -235,6 +235,7 @@ body {
   align-items: center;
   gap: 4px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Buttons */
@@ -311,7 +312,7 @@ body {
   color: var(--tx);
   font-size: 12px;
   font-family: var(--font-ui);
-  width: 160px;
+  width: 130px;
   height: 100%;
 }
 .search-bar input::placeholder {
