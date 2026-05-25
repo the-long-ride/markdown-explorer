@@ -4,6 +4,42 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.2.0] — 2026-05-25
+
+### Added Features & Enhancements
+
+#### ⚛️ Interactive MDX Support
+
+- **MDX Extension Support**: Added native rendering for `.mdx` files, automatically parsing React-like JSX syntax, components, and event handlers.
+- **Import/Export Filtering**: Cleans up and strips MDX import and export statements during rendering so they do not clutter the document.
+- **Stateful Custom Web Components**: Integrated three interactive web components out of the box: `<InteractiveCounter />` for custom count increments, `<ConfettiButton />` for custom celebration particle bursts, and slot-based `<InteractiveTabs />` for nested panels.
+
+#### 🎛️ Sandboxed HTML Live Previews
+
+- **Isolated iframe Executions**: HTML code blocks now render in a secure, isolated `iframe` environment that safely executes Javascript and custom styling without CSS leaks to the main viewport.
+- **Code/Preview Toggle**: Effortlessly toggle between the live visual rendering and raw highlighted source code with a single header button.
+- **Smart Height Scaling**: Automatically listens to the document size inside the iframe and dynamically scales its height to prevent unnecessary scrollbars.
+
+#### 🔢 Code Block Line Numbers
+
+- **Gutter Line Numbers**: Standardized code formatting across all programming language blocks by introducing clean, vertical line numbering.
+
+#### 🎨 Multilingual Syntax Highlighting
+
+- **14 New Languages**: Added robust syntax highlighting rules for C, C++, Java, C#, PHP, Ruby, Swift, Kotlin, R, Scala, Elixir, Dart, Hack, and Perl.
+- **Embedded Style/Script Parsing**: Highlighted custom CSS style blocks and script logic nested within HTML code blocks.
+
+#### ⚙️ Viewer Settings Panel
+
+- **Persistent Configuration Overlay**: Click the new gear icon (`⚙️`) to open a configuration modal. Easily customize whether to show H1 title vs filename in the file tree, and choose whether HTML blocks default to preview or code view.
+
+#### 🔄 Live Editor Buffers & Topbar Refresh
+
+- **Live Buffer Reading**: WorkspaceScanner dynamically queries active `textDocuments` in memory, allowing Markdown Explorer to render unsaved edits instantly when navigating files.
+- **Topbar Refresh Action**: Added a circular sync button on the right of the sidebar toggle button, styled to match the theme color via `fill="currentColor"` and using the new `refresh-icon.svg` asset, to manually trigger a workspace scan and file content reload.
+
+---
+
 ## [1.1.1] — 2026-05-24
 
 ### Added Features & Enhancements

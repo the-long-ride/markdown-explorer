@@ -56,3 +56,34 @@ When switching views, `Table.switchView` hides/shows the table wrapper and chart
   const isDark = currentTheme === 'dark' || (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   ```
 * **Destruction**: Destroys existing `Chart` instances via `state.chartInstance.destroy()` before building new ones to avoid memory leaks.
+
+---
+
+## 🎛️ Isolated HTML Sandboxing
+
+When code blocks are tagged with the `html` language, they are rendered as isolated sandbox preview components to prevent script and styling collisions with the parent documentation viewer.
+
+### 1. Iframe Wrapper & Resize Messaging
+* **sandbox Attributes**: The sandbox iframe uses `sandbox="allow-scripts"` to lock down permissions while allowing interactive scripting.
+* **Responsive Height Calculation**: An inline script inside the generated document listens to `onload`, `DOMContentLoaded`, and updates inside a `setInterval` loop. It posts a message `type: 'resize-iframe'` containing its computed `scrollHeight` up to the parent window.
+* **Parent Resize Listener**: The host document catches this message in its window message listener, matches the generated iframe ID, and adjusts the height dynamically to fit the sandbox exactly without double scrollbars.
+* **Theme Coordination**: When the parent theme updates, a `set-theme` message is posted down into all active sandboxed iframes so their styles re-align perfectly.
+
+### 2. View Mode Toggle
+* The HTML wrap container is managed via `UI.toggleHtmlMode` and `UI.setHtmlMode`. It toggles a `data-mode` attribute between `preview` and `code`.
+* If `preview`, it hides the highlighted raw codeblock container and shows the sandbox iframe container.
+* If `code`, it hides the iframe and displays the standard syntax-highlighted HTML source view.
+
+---
+
+## ⚛️ Stateful Custom Components (MDX)
+
+To support component-driven design inside `.mdx` files, custom HTML elements are registered dynamically on the window object.
+
+### 1. Built-in Interactive Components
+* **`<interactive-counter>`**: Utilizes localized state to increment/decrement numerical values with elastic CSS hover scales.
+* **`<confetti-button>`**: Fires a particle explosion when clicked. Generates and animates 30 dynamic colorful particle divs absolute-positioned relative to the click coordinates, auto-removing them upon completion.
+* **`<interactive-tabs>`**: Integrates a Shadow DOM tab header and panel mapping slot names (e.g. `slot="Overview"`). Encapsulates structural styles inside the shadow root to prevent global css bleed.
+
+### 2. Event Handler Translation
+* Attributes containing JSX-style arrow functions (e.g. `onClick={() => console.log('hi')}`) are transpiled during the markdown inline rendering phase into standard DOM event listeners (e.g. `onclick="console.log('hi')"`).

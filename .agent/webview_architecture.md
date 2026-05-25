@@ -43,6 +43,7 @@ sequenceDiagram
 * **`navigate`**: Sent when a user clicks on a file link or sidebar item. Contains the destination `path`.
 * **`openInEditor`**: Sent when clicking the "Edit" button. Requests the extension to open `path` in a text document view.
 * **`copyCode`**: Sent when clicking the copy button on code blocks. Requests the host write `text` to the clipboard.
+* **`refresh`**: Sent when clicking the Refresh button in the top bar. Requests a full workspace scan and re-render.
 
 ### 2. Extension Host $\rightarrow$ Webview (`panel.ts` to `panel.html`)
 * **`readyAck`**: Acknowledges webview readiness and sends initial `fileList`, `theme`, and expanded configurations.

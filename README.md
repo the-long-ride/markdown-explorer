@@ -69,6 +69,30 @@ Inspect complex architectures or graphics in high definition. Click any image or
 
 ---
 
+### 🎛️ 8. Isolated HTML Live Previews & Sandbox
+
+Test and render web code directly inside your markdown notes. When you mark code blocks as `html`, Markdown Explorer embeds a secure, isolated `iframe` sandbox to execute JavaScript and styles in real-time.
+
+- **Dynamic Interactive Execution**: Supports custom CSS styling (`<style>`) and JavaScript scripts (`<script>`) executing safely in a sandbox.
+- **Instant Preview/Code Switch**: A dedicated header button lets you toggle between the live rendering and the raw highlighted source code in one click.
+- **Auto-Resizing Height**: The sandbox dynamically resizes to match the layout height of the inner content, preventing ugly inner scrollbars.
+
+![HTML Live Preview Mode](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/HTML-interactive_1.png)
+![HTML Live Preview Interactive Scripting](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/HTML-interactive_2.png)
+![HTML Source Code View](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/HTML-interactive_3.png)
+
+---
+
+### ⚛️ 9. Interactive MDX & Custom Components
+
+Write documentation that feels alive. Markdown Explorer fully renders `.mdx` files and supports custom interactive components:
+
+- **Strips Import/Export Declarations**: Cleans out React/JSX `import` and `export` statements automatically, leaving a clean, beautiful presentation layout.
+- **Embedded Stateful Components**: Native runtime support for built-in interactive components like `<InteractiveCounter />` for numeric tracking, `<ConfettiButton />` for particle explosions, and slot-based `<InteractiveTabs />` to organize data panels.
+- **Kebab-Case Transpilation**: Converts PascalCase component declarations dynamically into standard custom web elements under the hood.
+
+---
+
 ## 🚀 How to Get Started
 
 1. **Install the Extension**: Find us on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer) and click **Install**.
@@ -92,10 +116,8 @@ Markdown Explorer is designed with strict privacy principles:
 ## 🗺️ Roadmap & Future Enhancements
 
 We are continuously working to make Markdown Explorer the ultimate documentation tool. Here is what is on our horizon:
-* **💻 Enhanced Code Blocks**: Expand syntax highlighting support to a wider range of programming languages and add premium code block layout designs.
-* **🌐 Embedded HTML Support**: Allow rendering of custom inline and block HTML tags inside `.md` documents, passing them through unchanged.
-* **⚡ MDX Support**: Support rendering `.mdx` files to allow component-driven interactive markdown.
 * **🖥️ Standalone Desktop App**: Clone and export the explorer framework to run as a standalone cross-platform desktop application.
+* **🎨 UI/UX Refinement**: Enhance the markdown explorer user interface with modern styling, fluid micro-animations, theme-tailored color palettes, and glassmorphism layouts.
 
 ---
 
