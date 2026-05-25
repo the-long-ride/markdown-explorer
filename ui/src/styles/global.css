@@ -1388,7 +1388,7 @@ pre code.hljs {
   background: var(--modal-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  z-index: 2000;
+  z-index: 100000;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1398,24 +1398,29 @@ pre code.hljs {
 }
 .mdn-modal-close {
   position: absolute !important;
-  top: 16px;
-  right: 20px;
-  background: none;
-  border: none;
-  color: var(--modal-fg);
-  opacity: 0.7;
-  font-size: 32px;
+  top: 24px;
+  right: 24px;
+  background: var(--bg-e);
+  border: 1px solid var(--bd-s);
+  color: var(--tx2);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   z-index: 2010;
-  transition:
-    opacity 0.15s,
-    transform 0.12s;
+  transition: all 0.15s;
   outline: none;
-  line-height: 1;
 }
 .mdn-modal-close:hover {
-  opacity: 1;
-  transform: scale(1.1);
+  background: var(--bg-h);
+  color: var(--tx);
+  transform: scale(1.05);
+}
+.mdn-modal-close:active {
+  transform: scale(0.95);
 }
 .mdn-modal-nav {
   position: absolute;
@@ -1484,8 +1489,18 @@ pre code.hljs {
   padding: 24px;
   max-width: 90vw;
   max-height: 80vh;
+  min-width: min(80vw, 800px);
+  min-height: min(60vh, 500px);
   width: auto;
   height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mdn-modal-content-svg svg {
+  width: 100% !important;
+  height: auto !important;
+  max-height: calc(80vh - 48px);
 }
 [data-theme="dark"] .mdn-modal-content-svg,
 [data-theme="auto"] .mdn-modal-content-svg {

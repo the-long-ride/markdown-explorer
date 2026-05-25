@@ -32,7 +32,7 @@ async function initLibs() {
   (window as any).Chart = Chart;
 }
 
-initLibs();
+export const libsReady = initLibs();
 
 // Global styles
 import './styles/tokens.css';
@@ -73,6 +73,3 @@ root.render(
     </PlatformProvider>
   </StrictMode>,
 );
-
-// ── Notify host that UI is ready ───────────────────────────────────────────
-bridge.postMessage({ command: 'ready' });

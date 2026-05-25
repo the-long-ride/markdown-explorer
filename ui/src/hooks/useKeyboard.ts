@@ -77,6 +77,9 @@ export function useKeyboard({
       if (isTermsOpen) {
         return;
       }
+      if (isModalOpen) {
+        return;
+      }
 
       // 1. Check overlays priority Esc key
       if (e.key === 'Escape') {
@@ -208,7 +211,7 @@ export function useKeyboard({
     };
 
     const wheelHandler = (e: WheelEvent) => {
-      if (isTermsOpen) return;
+      if (isTermsOpen || isModalOpen) return;
       if (e.ctrlKey) {
         e.preventDefault();
         if (e.deltaY < 0) {

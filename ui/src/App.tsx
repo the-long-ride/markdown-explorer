@@ -49,6 +49,7 @@ export function App() {
 
     const onDragEnter = (e: DragEvent) => {
       if (!isFileDrag(e)) return;
+      if (modalOpen) return;
       e.preventDefault();
       dragCounter.current++;
       if (dragCounter.current === 1) {
@@ -73,6 +74,7 @@ export function App() {
     };
     const onDrop = (e: DragEvent) => {
       if (!isFileDrag(e)) return;
+      if (modalOpen) return;
       e.preventDefault();
       setIsDragging(false);
       dragCounter.current = 0;
@@ -110,7 +112,7 @@ export function App() {
       window.removeEventListener('dragend', onDragEnd);
       document.body.classList.remove('is-dragging-files');
     };
-  }, [bridge]);
+  }, [bridge, modalOpen]);
 
   const { isVisible: scrollTopVisible, scrollToTop } = useScrollVisibility(scrollRef);
 
@@ -274,7 +276,7 @@ export function App() {
 
       {/* Overlays */}
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-      <MediaModal isOpen={modalOpen} onClose={() => setModalOpen(false)} clickedElement={modalTarget} />
+      <MediaModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setModalTarget(null); }} clickedElement={modalTarget} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {isDragging && (

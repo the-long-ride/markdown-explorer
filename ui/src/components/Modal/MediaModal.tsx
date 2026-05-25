@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { TooltipButton } from '../shared/TooltipButton';
-import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon } from '../shared/icons';
+import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from '../shared/icons';
 
 interface MediaItem {
   type: 'img' | 'svg';
@@ -44,26 +44,46 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isOpen || !clickedElement) return;
-    const allMedia = getClickableMedia();
-    let idx = allMedia.findIndex((m) => m.element === clickedElement);
-    if (idx === -1 && clickedElement) {
-      const clickedSrc = (clickedElement as HTMLImageElement).src;
-      const clickedTagName = clickedElement.tagName.toLowerCase();
-      idx = allMedia.findIndex((m) => {
-        if (m.type === 'img' && clickedTagName === 'img') {
-          return m.src === clickedSrc;
-        }
-        if (m.type === 'svg' && clickedTagName !== 'img') {
-          return m.element.className === clickedElement.className && m.element.textContent === clickedElement.textContent;
-        }
-        return false;
-      });
+    if (!isOpen) {
+      setItems([]);
+      setCurrentIndex(0);
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      return;
     }
-    setItems(allMedia.map(({ type, src, html }) => ({ type, src, html })));
-    setCurrentIndex(idx >= 0 ? idx : 0);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
+    if (!clickedElement) return;
+
+    const tryBuild = () => {
+      const allMedia = getClickableMedia();
+      if (allMedia.length === 0) return false;
+
+      let idx = allMedia.findIndex((m) => m.element === clickedElement);
+      if (idx === -1 && clickedElement) {
+        const clickedSrc = (clickedElement as HTMLImageElement).src;
+        const clickedTagName = clickedElement.tagName.toLowerCase();
+        idx = allMedia.findIndex((m) => {
+          if (m.type === 'img' && clickedTagName === 'img') {
+            return m.src === clickedSrc;
+          }
+          if (m.type === 'svg' && clickedTagName !== 'img') {
+            return m.element.className === clickedElement.className && m.element.textContent === clickedElement.textContent;
+          }
+          return false;
+        });
+      }
+
+      setItems(allMedia.map(({ type, src, html }) => ({ type, src, html })));
+      setCurrentIndex(idx >= 0 ? idx : 0);
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      return true;
+    };
+
+    if (!tryBuild()) {
+      // SVG not ready yet — retry after mermaid.run() has had time to resolve
+      const t = setTimeout(() => tryBuild(), 250);
+      return () => clearTimeout(t);
+    }
   }, [isOpen, clickedElement]);
 
   const zoomIn = useCallback(() => setZoom((z) => Math.min(5, z + 0.25)), []);
@@ -122,10 +142,18 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
   };
 
   return (
-    <div id="mediaModal" className="mdn-modal" ref={modalRef} style={{ display: 'flex' }} role="dialog" aria-modal="true">
-      <button className="mdn-modal-close tooltip-container" onClick={onClose} aria-label="Close modal">
-        &times;
-        <span className="tooltip-text">Close</span>
+    <div id="mediaModal" className="mdn-modal" ref={modalRef} style={{ display: 'flex' }} role="dialog" aria-modal="true"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <button
+        className="mdn-modal-close tooltip-container"
+        onClick={onClose}
+        aria-label="Close modal"
+        data-tooltip-pos="below"
+        data-tooltip-align="right"
+      >
+        <CloseIcon size={18} />
+        <span className="tooltip-text">Close modal [Esc]</span>
       </button>
 
       {items.length > 1 && (
@@ -150,6 +178,7 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
               className="mdn-modal-content-img"
               style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
               alt=""
+              draggable={false}
             />
           )}
           {item.type === 'svg' && (

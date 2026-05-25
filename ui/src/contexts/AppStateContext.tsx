@@ -11,6 +11,7 @@ import {
   useReducer,
 } from 'react';
 import { usePlatform } from './PlatformContext';
+import { libsReady } from '../main';
 import type {
   MdFile,
   FolderNode,
@@ -213,7 +214,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   // Listen for host messages
   useEffect(() => {
-    return bridge.onMessage((msg) => {
+    const unsub = bridge.onMessage((msg) => {
       switch (msg.command) {
         case 'readyAck':
           // Check if there is a saved theme in state (since mount useEffect runs first)
@@ -239,6 +240,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           break;
       }
     });
+
+    // Wait for mermaid/chart.js to be on window before telling host we're ready
+    libsReady.then(() => {
+      bridge.postMessage({ command: 'ready' });
+    });
+
+    return unsub;
   }, [bridge]);
 
   // Sync theme to document

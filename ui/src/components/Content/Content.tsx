@@ -2,7 +2,7 @@
 // components/Content/Content.tsx — Main content area (rendered HTML + effects)
 // =============================================================================
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -16,6 +16,14 @@ declare global {
     Chart?: any;
   }
 }
+
+// Memoize the raw HTML container so React does NOT re-apply dangerouslySetInnerHTML
+// when unrelated parent state (e.g. modalOpen) causes a re-render.
+// Without this, every App re-render would overwrite the DOM with the original HTML,
+// destroying SVGs that mermaid.run() injected asynchronously.
+const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+});
 
 interface ContentProps {
   onImageClick: (el: HTMLElement) => void;
@@ -146,23 +154,26 @@ export function Content({ onImageClick, scrollRef }: ContentProps) {
             ...body.querySelectorAll<HTMLElement>(".mermaid"),
           ];
           if (mermaidEls.length > 0) {
+            const runNodes: HTMLElement[] = [];
             mermaidEls.forEach((rawEl) => {
               // Preserve original source on first visit; restore on re-render
               if (!rawEl.dataset.originalCode) {
                 rawEl.dataset.originalCode = rawEl.textContent || "";
-              } else {
-                // Restore raw code (mermaid may have replaced it with SVG)
-                rawEl.textContent = rawEl.dataset.originalCode;
               }
-              rawEl.removeAttribute("data-processed");
-              // Remove any previously rendered SVG inside the wrapper
-              rawEl.querySelectorAll("svg").forEach((svg) => svg.remove());
+              // Only reset if NOT already rendered (avoid flash of raw text)
+              const alreadyRendered = !!rawEl.querySelector("svg");
+              if (!alreadyRendered) {
+                rawEl.removeAttribute("data-processed");
+                // Remove any previously rendered SVG inside the wrapper
+                rawEl.querySelectorAll("svg").forEach((svg) => svg.remove());
+                runNodes.push(rawEl);
+              }
             });
 
             // Use nodes[] to scope to exactly our elements (avoids querySelector global collision)
-            if (typeof mermaid.run === "function") {
+            if (runNodes.length > 0 && typeof mermaid.run === "function") {
               const runId = ++mermaidRunIdRef.current;
-              mermaid.run({ nodes: mermaidEls }).then(() => {
+              mermaid.run({ nodes: runNodes }).then(() => {
                 if (runId !== mermaidRunIdRef.current) return;
               }).catch((err: any) => {
                 console.error("Mermaid render error:", err);
@@ -355,7 +366,7 @@ export function Content({ onImageClick, scrollRef }: ContentProps) {
                   ))}
                 </div>
               )}
-              <div dangerouslySetInnerHTML={{ __html: state.contentHtml }} />
+              <HtmlContent html={state.contentHtml} />
             </div>
           )}
       </div>

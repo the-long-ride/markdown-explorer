@@ -14,6 +14,7 @@ let mainWindow = null;
 let activeWorkspace = null;
 let currentFile = null;
 let flatList = [];
+let readyHandled = false;
 
 // Remove default window menu bar
 Menu.setApplicationMenu(null);
@@ -295,6 +296,8 @@ app.on("window-all-closed", () => {
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
 async function handleReady() {
+  if (readyHandled) return;
+  readyHandled = true;
   const recents = loadRecentWorkspaces();
   if (!activeWorkspace) {
     const ackMsg = {
@@ -334,8 +337,9 @@ function handleOpenFile() {
   });
   if (files && files.length > 0) {
     const selectedFile = files[0];
-    saveRecentWorkspace(selectedFile);
-    activeWorkspace = selectedFile;
+    const folder = path.dirname(selectedFile);
+    saveRecentWorkspace(folder);
+    activeWorkspace = folder;
     currentFile = selectedFile;
     sendWorkspaceData().then(() => sendContent());
   }
@@ -343,7 +347,8 @@ function handleOpenFile() {
 
 function handleOpenPath(filePath) {
   if (!fs.existsSync(filePath)) return;
-  const isFile = fs.statSync(filePath).isFile();
+  const stat = fs.statSync(filePath);
+  const isFile = stat.isFile();
   if (isFile) {
     const ext = path.extname(filePath).toLowerCase();
     if (ext !== ".md" && ext !== ".mdx") {
@@ -356,20 +361,18 @@ function handleOpenPath(filePath) {
       });
       return;
     }
+    activeWorkspace = path.dirname(filePath);
+    currentFile = filePath;
+  } else {
+    activeWorkspace = filePath;
+    currentFile = null;
   }
 
-  saveRecentWorkspace(filePath);
-  activeWorkspace = filePath;
-  if (isFile) {
-    currentFile = filePath;
-    sendWorkspaceData().then(() => sendContent());
-  } else {
-    currentFile = null;
-    sendWorkspaceData().then(() => sendWelcome());
-  }
+  saveRecentWorkspace(activeWorkspace);
+  sendWorkspaceData().then(() => isFile ? sendContent() : sendWelcome());
 }
 
-function handleConfirmOpenPath(filePath) {
+async function handleConfirmOpenPath(filePath) {
   if (!fs.existsSync(filePath)) return;
   if (!activeWorkspace) {
     handleOpenPath(filePath);
@@ -390,18 +393,17 @@ function handleConfirmOpenPath(filePath) {
     }
   }
 
-  const typeStr = isFile ? "file" : "workspace";
-  const choice = dialog.showMessageBoxSync(mainWindow, {
+  const { response } = await dialog.showMessageBox(mainWindow, {
     type: "question",
     buttons: ["Yes", "No"],
     title: "Switch Workspace/File",
-    message: `Do you want to switch to this new ${typeStr}?`,
+    message: "Do you want to switch to this new path?",
     detail: filePath,
     defaultId: 0,
     cancelId: 1,
   });
 
-  if (choice === 0) {
+  if (response === 0) {
     handleOpenPath(filePath);
   }
 }
@@ -456,6 +458,7 @@ function handleZoomOut() {
 }
 
 function handleCloseWorkspace() {
+  readyHandled = false;
   activeWorkspace = null;
   currentFile = null;
   handleReady();
