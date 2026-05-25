@@ -1,0 +1,45 @@
+{
+  "name": "markdown-explorer-desktop",
+  "version": "1.3.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^42.2.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.thelongride.markdownexplorer",
+    "productName": "Markdown Explorer",
+    "electronVersion": "42.2.0",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "scanner.js",
+      "package.json",
+      {
+        "from": "../ui/dist",
+        "to": "ui/dist"
+      },
+      {
+        "from": "../vscode/out",
+        "to": "vscode/out"
+      },
+      {
+        "from": "../ui/assets/logos",
+        "to": "ui/assets/logos"
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "../ui/assets/logos/logo-500.png"
+    }
+  }
+}

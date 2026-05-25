@@ -1,3 +1,24 @@
-out/
+# Node.js dependencies
 node_modules/
+**/node_modules/
+
+# Compilation / Build outputs
+out/
+**/out/
+dist/
+**/dist/
+tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo
+
+# Copied runtime directories (monorepo syncs)
+vscode/ui/
+desktop/ui/
+desktop/vscode/
+
+# Packaging artifacts
 *.vsix
+**/vscode/*.vsix
+
+# OS temporary files
+.DS_Store
+Thumbs.db

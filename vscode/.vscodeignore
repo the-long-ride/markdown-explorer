@@ -1,0 +1,45 @@
+# TypeScript configurations and Source Code
+tsconfig.json
+src/**
+!out/**
+out/**/*.map
+out/**/*.d.ts
+
+# Test files and test sample documents
+test/**
+scripts/**
+
+# Dependency folder
+node_modules/
+
+# Git, Agent, GitHub workflows, and VS Code development configs
+.git/
+.gitignore
+.gitattributes
+.github/**
+.vscode/**
+.agent/**
+package-lock.json
+
+# Packaged extension binaries
+*.vsix
+
+# Raw large assets (logo-128.png and logo-500.png are used instead)
+ui/assets/logos/logo.png
+
+# Mockups and screenshots (only used in README on GitHub)
+media/**
+
+# UI source code and dev configurations (only dist/ and assets/ are needed at runtime)
+ui/src/**
+ui/node_modules/**
+ui/package.json
+ui/package-lock.json
+ui/tsconfig.json
+ui/vite.config.ts
+ui/index.html
+ui/js/**
+ui/css/**
+ui/panel.html
+ui/assets/fonts/
+ui/dist/assets/*.ttf
