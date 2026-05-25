@@ -21,7 +21,7 @@ export class WorkspaceScanner {
     const excludePatterns: string[] = config.get('excludePatterns') ?? ['**/node_modules/**', '**/.git/**'];
     const excludeGlob = `{${excludePatterns.join(',')}}`;
 
-    const uris = await vscode.workspace.findFiles('**/*.md', excludeGlob, WorkspaceScanner.MAX_FILES);
+    const uris = await vscode.workspace.findFiles('**/*.{md,mdx}', excludeGlob, WorkspaceScanner.MAX_FILES);
     uris.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
     const rootPath = folders[0].uri.fsPath;
@@ -46,18 +46,56 @@ export class WorkspaceScanner {
     const relativePath = path.relative(rootPath, fsPath);
     const parts = relativePath.split(path.sep);
     const fileName = parts[parts.length - 1];
-    const title = WorkspaceScanner.extractTitle(fsPath) ?? fileName.replace(/\.md$/i, '');
+    const isMdx = fileName.endsWith('.mdx');
+    const title = WorkspaceScanner.extractTitle(fsPath, isMdx) ?? fileName.replace(/\.(md|mdx)$/i, '');
     return Object.freeze({ fsPath, relativePath, parts, fileName, title });
   }
 
-  private static extractTitle(fsPath: string): string | null {
+  private static extractTitle(fsPath: string, isMdx = false): string | null {
     try {
       const content = fs.readFileSync(fsPath, 'utf8');
+      if (isMdx) {
+        const mdxTitle = WorkspaceScanner.extractMdxTitle(content);
+        if (mdxTitle) return mdxTitle;
+      }
       const match = /^#+\s+(.+)$/m.exec(content);
       return match?.[1]?.trim() ?? null;
     } catch {
       return null;
     }
+  }
+
+  private static extractMdxTitle(content: string): string | null {
+    // 1. Frontmatter title
+    const fmMatch = /^---\n([\s\S]*?)\n---/.exec(content);
+    if (fmMatch) {
+      for (const line of fmMatch[1].split('\n')) {
+        const sep = line.indexOf(':');
+        if (sep > 0 && line.slice(0, sep).trim() === 'title') {
+          return line.slice(sep + 1).trim().replace(/^['"]|['"]$/g, '');
+        }
+      }
+    }
+
+    // 2. export const title = ...
+    const exportMatch = /export\s+(?:const|let|var)\s+title\s*=\s*(['"`])(.*?)\1/.exec(content);
+    if (exportMatch) {
+      return exportMatch[2].trim();
+    }
+
+    // 3. export const meta = { title: ... }
+    const metaMatch = /export\s+(?:const|let|var)\s+meta\s*=\s*\{[\s\S]*?title\s*:\s*(['"`])(.*?)\1/.exec(content);
+    if (metaMatch) {
+      return metaMatch[2].trim();
+    }
+
+    // 4. JSX title prop
+    const jsxMatch = /<[A-Z]\w*\s+[^>]*?title=(?:(['"`])(.*?)\1|\{(['"`])(.*?)\3\})/.exec(content);
+    if (jsxMatch) {
+      return jsxMatch[2]?.trim() ?? jsxMatch[4]?.trim() ?? null;
+    }
+
+    return null;
   }
 
   private static buildTree(flat: MdFile[]): FolderNode {

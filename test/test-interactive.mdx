@@ -1,0 +1,33 @@
+export const title = 'Interactive MDX Components';
+
+# Interactive MDX Components
+
+Welcome to component-driven interactive markdown rendering! This page is rendered from an `.mdx` file.
+
+## 1. Counter Component
+Below is an interactive counter component. It runs entirely inside the VS Code webview sandbox:
+
+<InteractiveCounter initial={10} step={2} />
+
+## 2. Confetti Celebrator
+Click the button below to celebrate component-driven markdown:
+
+<ConfettiButton text="Shoot Confetti! 🎉" />
+
+## 3. Tab Switcher
+Here is a slot-based interactive tab switcher component:
+
+<InteractiveTabs tabs="Overview, Details, Specifications">
+  <div slot="Overview">
+    <h3>Overview Panel</h3>
+    <p>This panel gives a high-level summary of the features enabled by MDX.</p>
+  </div>
+  <div slot="Details">
+    <h3>Details Panel</h3>
+    <p>Web Components are registered dynamically inside the HTML shell of the webview.</p>
+  </div>
+  <div slot="Specifications">
+    <h3>Specifications Panel</h3>
+    <p>Using shadow DOM enables styled, isolated content slotting without global CSS leaks.</p>
+  </div>
+</InteractiveTabs>

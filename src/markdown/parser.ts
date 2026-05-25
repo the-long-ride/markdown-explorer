@@ -14,7 +14,7 @@ export type BlockToken =
   | HrToken;
 
 export interface HeadingToken   { type: 'heading';    level: number; text: string }
-export interface ParagraphToken { type: 'paragraph';  text: string }
+export interface ParagraphToken { type: 'paragraph';  text: string; isJsx?: boolean }
 export interface HrToken        { type: 'hr' }
 
 export interface CodeBlockToken {
@@ -56,11 +56,23 @@ export interface ParseResult {
   frontmatter: Record<string, string>;
 }
 
-export function parse(markdown: string): ParseResult {
+export function parse(markdown: string, isMdx = false): ParseResult {
   const normalized = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const { body, frontmatter } = extractFrontmatter(normalized);
+  const { body: afterFm, frontmatter } = extractFrontmatter(normalized);
+  
+  let body = afterFm;
+  if (isMdx) {
+    // Strip imports and exports from MDX body so they don't render as paragraph text
+    const lines = body.split('\n');
+    const filteredLines = lines.filter(line => {
+      const trimmed = line.trim();
+      return !trimmed.startsWith('import ') && !trimmed.startsWith('export ');
+    });
+    body = filteredLines.join('\n');
+  }
+
   const lines = body.split('\n');
-  const tokens = tokenize(lines);
+  const tokens = tokenize(lines, isMdx);
   return { tokens, frontmatter };
 }
 
@@ -84,7 +96,7 @@ function extractFrontmatter(text: string): { body: string; frontmatter: Record<s
 
 // ── Block tokenizer ────────────────────────────────────────
 
-function tokenize(lines: string[]): BlockToken[] {
+function tokenize(lines: string[], isMdx = false): BlockToken[] {
   const tokens: BlockToken[] = [];
   let i = 0;
 
@@ -93,6 +105,17 @@ function tokenize(lines: string[]): BlockToken[] {
 
     // Skip blank lines
     if (line.trim() === '') { i++; continue; }
+
+    // JSX Block (MDX only)
+    if (isMdx && /^<[A-Za-z]/.test(line.trim())) {
+      const jsxLines: string[] = [];
+      while (i < lines.length && lines[i].trim() !== '') {
+        jsxLines.push(lines[i]);
+        i++;
+      }
+      tokens.push({ type: 'paragraph', text: jsxLines.join('\n'), isJsx: true });
+      continue;
+    }
 
     // Fenced code block
     const fenceMatch = /^(`{3,}|~{3,})([\w.-]*)/.exec(line);

@@ -170,22 +170,43 @@ echo "Backup completed: log_backup_$DATE.tar.gz"
 
 ---
 
-## HTML
+## HTML (Isolated Sandbox Preview)
 
 ```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Test Page</title>
-</head>
-<body>
-  <div class="container" id="main">
-    <h1>Hello, World!</h1>
-    <p class="description">Syntax highlighting tester.</p>
-  </div>
-</body>
-</html>
+<style>
+  h1 {
+    color: var(--accent, #6d5ef0);
+    animation: bounce 1s infinite alternate;
+    font-size: 1.5em;
+    margin: 0 0 8px 0;
+  }
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-5px); }
+  }
+  .sandbox-btn {
+    background: var(--success, #10b981);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+</style>
+
+<div class="container" id="main" style="padding: 10px; border: 1px dashed var(--bd-x); border-radius: 8px;">
+  <h1>Hello, Standalone HTML Sandbox!</h1>
+  <p class="description" style="margin-bottom: 12px;">This HTML code block is rendered as an isolated live page inside an iframe.</p>
+  <button class="sandbox-btn" onclick="alertMsg()">Click Me to Test JS</button>
+  <div id="status" style="margin-top: 10px; font-weight: bold; color: var(--tx2);"></div>
+</div>
+
+<script>
+  function alertMsg() {
+    document.getElementById('status').innerText = 'JavaScript is working! Time: ' + new Date().toLocaleTimeString();
+  }
+</script>
 ```
 
 ---
@@ -220,3 +241,196 @@ LIMIT 10;
 +   await this._panel.webview.postMessage({ command: 'navNotFound', href });
   }
 ```
+
+---
+
+## C
+
+```c
+#include <stdio.h>
+
+// Simple main function
+int main() {
+    printf("Hello, C!\n");
+    return 0;
+}
+```
+
+---
+
+## C++
+
+```cpp
+#include <iostream>
+#include <vector>
+
+/* Entry point */
+int main() {
+    std::vector<int> vec = {10, 20, 30};
+    for (int num : vec) {
+        std::cout << "Value: " << num << std::endl;
+    }
+    return 0;
+}
+```
+
+---
+
+## Java
+
+```java
+package com.test;
+
+public class Main {
+    public static void main(String[] args) {
+        // Output hello statement
+        System.out.println("Hello, Java!");
+        int value = 100;
+    }
+}
+```
+
+---
+
+## C#
+
+```csharp
+using System;
+
+namespace HelloWorld {
+    class Program {
+        static void Main(string[] args) {
+            string greet = "Hello, C#!";
+            Console.WriteLine(greet);
+        }
+    }
+}
+```
+
+---
+
+## PHP
+
+```php
+<?php
+// Simple PHP statement
+$text = "Hello, PHP!";
+echo $text;
+?>
+```
+
+---
+
+## Ruby
+
+```ruby
+# Greet method
+def greet(name)
+  message = "Hello, #{name}!"
+  puts message
+end
+
+greet("Ruby")
+```
+
+---
+
+## Swift
+
+```swift
+import Foundation
+
+let language = "Swift"
+// Print standard output
+print("Hello, \(language)!")
+```
+
+---
+
+## Kotlin
+
+```kotlin
+package hello
+
+fun main() {
+    val name = "Kotlin"
+    println("Hello, $name!")
+}
+```
+
+---
+
+## R
+
+```r
+# Simple helper
+greet <- function(name) {
+  cat("Hello, ", name, "!\n", sep="")
+}
+greet("R")
+```
+
+---
+
+## Scala
+
+```scala
+object HelloWorld {
+  def main(args: Array[String]): Unit = {
+    val message = "Hello, Scala!"
+    println(message)
+  }
+}
+```
+
+---
+
+## Elixir
+
+```elixir
+defmodule Greeter do
+  # Elixir greet function
+  def greet(name) do
+    IO.puts("Hello, #{name}!")
+  end
+end
+
+Greeter.greet("Elixir")
+```
+
+---
+
+## Dart
+
+```dart
+void main() {
+  var name = 'Dart';
+  print('Hello, $name!');
+}
+```
+
+---
+
+## Hack
+
+```hack
+<<__EntryPoint>>
+function main(): void {
+  // Hack hello world
+  echo "Hello, Hack!\n";
+}
+```
+
+---
+
+## Perl
+
+```perl
+use strict;
+use warnings;
+
+my $name = "Perl";
+# Perl printer
+print "Hello, $name!\n";
+```
+

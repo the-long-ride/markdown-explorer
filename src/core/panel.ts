@@ -160,13 +160,16 @@ export class MarkdownDocsPanel {
         relativePath,
         parts: relativePath.split(path.sep),
         fileName: path.basename(this._currentFile),
-        title: path.basename(this._currentFile).replace(/\.md$/i, ''),
+        title: path.basename(this._currentFile).replace(/\.(md|mdx)$/i, ''),
       };
     }
 
     const raw = WorkspaceScanner.readFile(this._currentFile);
-    const { tokens, frontmatter } = parse(raw);
-    const renderer = new HtmlRenderer();
+    const isMdx = this._currentFile.endsWith('.mdx');
+    const { tokens, frontmatter } = parse(raw, isMdx);
+    const config = vscode.workspace.getConfiguration('markdownExplorer');
+    const theme = config.get<string>('theme') ?? 'auto';
+    const renderer = new HtmlRenderer({ theme, isMdx });
     const { html, toc } = renderer.render(tokens);
 
     // Rewrite relative image paths to Webview URIs
@@ -354,7 +357,21 @@ export class MarkdownDocsPanel {
       <div style="background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg); padding: 14px 16px;">
         <div style="font-weight: 700; font-size: 13px; color: var(--accent-text); margin-bottom: 6px;">⌨️ Keyboard Shortcuts & Navigation</div>
         <div style="font-size: 12px; line-height: 1.5; color: var(--tx2);">
-          Use <kbd>Ctrl+Shift+M</kbd> (<kbd>Cmd+Shift+M</kbd> on Mac) to open Markdown Explorer, and <kbd>Ctrl+Alt+V</kbd> (<kbd>Cmd+Alt+V</kbd> on Mac) to quickly toggle the Markdown Explorer view on a markdown file. Navigate back and forward between documents using the arrow buttons in the topbar or <kbd>Alt+Left</kbd> and <kbd>Alt+Right</kbd>.
+          Use <kbd>Ctrl+Shift+M</kbd> (<kbd>Cmd+Shift+M</kbd> on Mac) to open Markdown Explorer, and <kbd>Ctrl+Alt+V</kbd> (<kbd>Cmd+Alt+V</kbd> on Mac) or click the editor title button 
+          <span style="display: inline-flex; align-items: center; justify-content: center; background: rgba(128, 128, 128, 0.15); border: 1px solid var(--bd-s); border-radius: 4px; padding: 2px 4px; margin-left: 2px; vertical-align: middle;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 180" style="width: 14px; height: 10px; display: block;">
+              <g transform="translate(10, 10)">
+                <rect x="10" y="10" width="188" height="108" rx="15" ry="15" stroke="currentColor" stroke-width="12" fill="none" />
+                <path d="M30 90 V30 h20 l20 25 l20-25 h20 v60 h-18 V55 l-17 22 h-10 l-17-22 v35 H30 Z" fill="currentColor" />
+                <path d="M 155 90 l -25 -30 h 15 v -30 h 20 v 30 h 15 z" fill="currentColor" />
+                <circle cx="185" cy="105" r="32" fill="transparent" />
+                <circle cx="185" cy="105" r="26" stroke="currentColor" stroke-width="10" fill="transparent" />
+                <path d="M 168 95 A 18 18 0 0 1 192 85" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.2"/>
+                <line x1="203" y1="123" x2="235" y2="155" stroke="currentColor" stroke-width="16" stroke-linecap="round" />
+              </g>
+            </svg>
+          </span>
+          to quickly toggle the Markdown Explorer view on a markdown file. Navigate back and forward between documents using the arrow buttons in the topbar or <kbd>Alt+Left</kbd> and <kbd>Alt+Right</kbd>.
         </div>
       </div>
 
@@ -432,6 +449,10 @@ export class MarkdownDocsPanel {
         id: 'themeBtn', className: 'btn btn--icon', onClick: 'UI.toggleTheme()', label: 'Toggle Theme', tooltipPos: 'below',
         iconHtml: `<img id="themeBtnIcon" src="${moonIconUri}" width="14" height="14" alt="theme" style="opacity:0.8;filter:invert(0)" />`,
       }),
+      '{{SETTINGS_BTN}}': renderButton({
+        id: 'settingsBtn', className: 'btn btn--icon', onClick: 'UI.openSettings()', label: 'Settings', tooltipPos: 'below',
+        iconHtml: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+      }),
       '{{TOGGLE_SIDEBAR_BTN}}': renderButton({
         className: 'btn btn--icon', onClick: 'UI.toggleSidebar()', label: 'Toggle Sidebar', tooltipPos: 'below',
         iconHtml: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>',
@@ -484,6 +505,7 @@ export class MarkdownDocsPanel {
       html += `<div class="tree-file"
         data-path="${this._escAttr(file.fsPath)}"
         data-title="${this._escAttr(file.title)}"
+        data-filename="${this._escAttr(file.fileName)}"
         onclick="Nav.go('${this._escAttr(file.fsPath)}')"
         title="${this._escAttr(file.relativePath)}"
         role="treeitem" tabindex="0"

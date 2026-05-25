@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="Content-Security-Policy"
-  content="default-src 'none'; style-src 'unsafe-inline' https://cdn.jsdelivr.net vscode-webview-resource:; script-src 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data: vscode-webview-resource:; connect-src *;" />
+  content="default-src 'none'; style-src 'unsafe-inline' https://cdn.jsdelivr.net vscode-webview-resource:; script-src 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data: vscode-webview-resource:; frame-src 'self' data: vscode-webview-resource:; connect-src *;" />
 <title>Markdown Explorer — {{WORKSPACE_NAME}}</title>
 <link id="hl-theme" rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css" />
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
@@ -47,6 +47,7 @@
       {{COLLAPSE_ALL_BTN}}
       {{EDIT_BTN}}
       {{THEME_BTN}}
+      {{SETTINGS_BTN}}
       {{TOGGLE_SIDEBAR_BTN}}
     </div>
   </header>
@@ -130,6 +131,39 @@
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="mdn-modal" style="display:none;" role="dialog" aria-modal="true" onclick="if(event.target===this)UI.closeSettings()">
+  <div class="settings-card">
+    <button class="settings-card__close" onclick="UI.closeSettings()" title="Close settings" aria-label="Close">&times;</button>
+    <div class="settings-card__header">
+      <h2>Settings</h2>
+      <p>Customize your Markdown Explorer view preferences</p>
+    </div>
+    <div class="settings-card__body">
+      <div class="settings-item">
+        <div class="settings-item__info">
+          <div class="settings-item__title">Sidebar File Labels</div>
+          <div class="settings-item__desc">Show document titles/H1 headers instead of raw filenames in the sidebar tree.</div>
+        </div>
+        <label class="switch-toggle" aria-label="Toggle sidebar file labels">
+          <input type="checkbox" id="settingShowTitle" onchange="Settings.toggleShowTitle(this.checked)" />
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <div class="settings-item" style="margin-top: 12px; border-top: 1px solid var(--bd); padding-top: 12px;">
+        <div class="settings-item__info">
+          <div class="settings-item__title">Default HTML Code Block View</div>
+          <div class="settings-item__desc">Show HTML code blocks as interactive previews by default. Otherwise, shows the raw HTML code.</div>
+        </div>
+        <label class="switch-toggle" aria-label="Toggle default HTML view">
+          <input type="checkbox" id="settingDefaultHtmlPreview" onchange="Settings.toggleDefaultHtmlPreview(this.checked)" />
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 const vscode = acquireVsCodeApi();
@@ -164,6 +198,13 @@ window.addEventListener('load', () => {
 
 window.addEventListener('message', (event) => {
   const msg = event.data;
+  if (msg && msg.type === 'resize-iframe') {
+    const iframe = document.getElementById(msg.id);
+    if (iframe) {
+      iframe.style.height = msg.height + 'px';
+    }
+    return;
+  }
   switch (msg.command) {
     case 'readyAck':
       fileList = msg.fileList ?? [];
@@ -171,6 +212,7 @@ window.addEventListener('message', (event) => {
       document.documentElement.dataset.theme = currentTheme;
       UI.updateThemeButton();
       UI.updateHighlightTheme();
+      Settings.init();
       if (!msg.defaultExpanded) UI.collapseAll();
       if (fileList.length === 0) {
         document.getElementById('loadingScreen').style.display = 'none';
@@ -178,8 +220,8 @@ window.addEventListener('message', (event) => {
         document.getElementById('mdBody').innerHTML =
           `<div class="state-screen">
             <div class="state-screen__icon">📁</div>
-            <div class="state-screen__title">No Markdown files found</div>
-            <div class="state-screen__sub">Add a .md file to your workspace to get started.</div>
+            <div class="state-screen__title">No Markdown or MDX files found</div>
+            <div class="state-screen__sub">Add a .md or .mdx file to your workspace to get started.</div>
           </div>`;
       }
       break;
@@ -755,6 +797,9 @@ const UI = {
     // Scroll to top
     document.getElementById('contentScroll').scrollTop = 0;
 
+    // Apply sidebar display settings
+    Settings.apply();
+
     // Syntax highlighting
     try {
       if (typeof hljs !== 'undefined') {
@@ -819,6 +864,12 @@ const UI = {
     document.documentElement.dataset.theme = next;
     currentTheme = next;
     UI.updateThemeButton();
+    // Propagate theme update to any active preview iframes
+    document.querySelectorAll('.mdn-html-preview-iframe').forEach(iframe => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'set-theme', theme: next }, '*');
+      }
+    });
   },
 
   updateThemeButton() {
@@ -848,6 +899,51 @@ const UI = {
     if (scrollContainer) {
       scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  },
+  openSettings() {
+    document.getElementById('settingsModal').style.display = 'flex';
+  },
+  closeSettings() {
+    document.getElementById('settingsModal').style.display = 'none';
+  },
+  setHtmlMode(wrap, mode) {
+    wrap.dataset.mode = mode;
+    const btn = wrap.querySelector('.mdn-toggle-preview-btn');
+    const langLabel = wrap.querySelector('.mdn-codeblock-lang');
+    const previewBody = wrap.querySelector('.mdn-html-preview-body');
+    const codeBody = wrap.querySelector('.mdn-codeblock-body');
+    const toggleTooltip = btn ? btn.querySelector('.tooltip-text') : null;
+    const svg = btn ? btn.querySelector('svg') : null;
+    
+    if (mode === 'preview') {
+      if (langLabel) langLabel.textContent = 'HTML Preview';
+      if (previewBody) previewBody.style.display = '';
+      if (codeBody) codeBody.style.display = 'none';
+      if (toggleTooltip) toggleTooltip.textContent = 'Show Code';
+      if (svg) {
+        svg.outerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>`;
+      }
+      
+      const iframe = previewBody ? previewBody.querySelector('iframe') : null;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'recalculate-height' }, '*');
+      }
+    } else {
+      if (langLabel) langLabel.textContent = 'HTML';
+      if (previewBody) previewBody.style.display = 'none';
+      if (codeBody) codeBody.style.display = 'flex';
+      if (toggleTooltip) toggleTooltip.textContent = 'Show Preview';
+      if (svg) {
+        svg.outerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+      }
+    }
+  },
+  toggleHtmlMode(btn) {
+    const wrap = btn.closest('.mdn-codeblock');
+    if (!wrap) return;
+    const currentMode = wrap.dataset.mode || 'preview';
+    const newMode = currentMode === 'preview' ? 'code' : 'preview';
+    UI.setHtmlMode(wrap, newMode);
   },
 };
 
@@ -934,7 +1030,7 @@ const Search = {
             onmouseover="this.style.background='var(--bg-h)'" onmouseout="this.style.background=''">
          <span style="font-size:16px">📄</span>
          <div>
-           <div style="font-size:13px;font-weight:500;color:var(--tx)">${f.title}</div>
+           <div style="font-size:13px;font-weight:500;color:var(--tx)">${Settings.state.showTitle ? f.title : f.fileName}</div>
            <div style="font-size:11px;color:var(--txm);font-family:var(--font-mono)">${f.relativePath}</div>
          </div>
        </div>`
@@ -1150,6 +1246,8 @@ const Keyboard = {
         if (overlay && overlay.style.display !== 'none') { Search.close(); return; }
         const modal = document.getElementById('mediaModal');
         if (modal && modal.style.display !== 'none') { ModalViewer.close(); return; }
+        const settingsModal = document.getElementById('settingsModal');
+        if (settingsModal && settingsModal.style.display !== 'none') { UI.closeSettings(); return; }
       }
       if (e.key === 'ArrowLeft') {
         const modal = document.getElementById('mediaModal');
@@ -1162,6 +1260,171 @@ const Keyboard = {
     });
   },
 };
+
+// ── Settings Manager ──────────────────────────────────────────────────────────
+const Settings = {
+  state: {
+    showTitle: true,
+    defaultHtmlPreview: true
+  },
+  init() {
+    const saved = vscode.getState() || {};
+    this.state.showTitle = saved.showTitle !== false;
+    this.state.defaultHtmlPreview = saved.defaultHtmlPreview !== false;
+    
+    const checkboxShowTitle = document.getElementById('settingShowTitle');
+    if (checkboxShowTitle) {
+      checkboxShowTitle.checked = this.state.showTitle;
+    }
+    
+    const checkboxHtmlPreview = document.getElementById('settingDefaultHtmlPreview');
+    if (checkboxHtmlPreview) {
+      checkboxHtmlPreview.checked = this.state.defaultHtmlPreview;
+    }
+    
+    this.apply();
+  },
+  toggleShowTitle(checked) {
+    this.state.showTitle = checked;
+    vscode.setState({ ...vscode.getState(), showTitle: checked, defaultHtmlPreview: this.state.defaultHtmlPreview });
+    this.apply();
+  },
+  toggleDefaultHtmlPreview(checked) {
+    this.state.defaultHtmlPreview = checked;
+    vscode.setState({ ...vscode.getState(), showTitle: this.state.showTitle, defaultHtmlPreview: checked });
+    this.apply();
+  },
+  apply() {
+    const showTitle = this.state.showTitle;
+    document.querySelectorAll('.tree-file').forEach(el => {
+      const title = el.dataset.title || '';
+      const filename = el.dataset.filename || '';
+      const nameSpan = el.querySelector('.tree-file__name');
+      if (nameSpan) {
+        nameSpan.textContent = showTitle ? title : filename;
+      }
+    });
+    if (document.getElementById('searchOverlay').style.display !== 'none') {
+      const query = document.getElementById('overlaySearch').value;
+      if (query) Search.doOverlay(query);
+    }
+    
+    // Apply HTML code block modes
+    const defaultMode = this.state.defaultHtmlPreview ? 'preview' : 'code';
+    document.querySelectorAll('.mdn-html-preview-wrap').forEach(wrap => {
+      UI.setHtmlMode(wrap, defaultMode);
+    });
+  }
+};
+
+// ── Interactive Custom Web Components (MDX Support) ────────────────────────
+class InteractiveCounter extends HTMLElement {
+  connectedCallback() {
+    const initial = parseInt(this.getAttribute('initial') || '0', 10);
+    const step = parseInt(this.getAttribute('step') || '1', 10);
+    let count = initial;
+    this.innerHTML = `
+      <div class="interactive-counter">
+        <button class="counter-btn dec-btn">−</button>
+        <span class="counter-val">${count}</span>
+        <button class="counter-btn inc-btn">+</button>
+      </div>
+    `;
+    const valEl = this.querySelector('.counter-val');
+    this.querySelector('.dec-btn').addEventListener('click', () => {
+      count -= step;
+      valEl.textContent = count;
+      valEl.style.transform = 'scale(0.85)';
+      setTimeout(() => valEl.style.transform = 'scale(1)', 100);
+    });
+    this.querySelector('.inc-btn').addEventListener('click', () => {
+      count += step;
+      valEl.textContent = count;
+      valEl.style.transform = 'scale(1.15)';
+      setTimeout(() => valEl.style.transform = 'scale(1)', 100);
+    });
+  }
+}
+customElements.define('interactive-counter', InteractiveCounter);
+
+class ConfettiButton extends HTMLElement {
+  connectedCallback() {
+    const text = this.getAttribute('text') || 'Celebrate!';
+    this.innerHTML = `<button class="btn btn--accent confetti-btn">${text}</button>`;
+    this.querySelector('button').addEventListener('click', (e) => {
+      this.shoot(e.clientX, e.clientY);
+    });
+  }
+  shoot(x, y) {
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-particle';
+      document.body.appendChild(p);
+      const size = Math.random() * 8 + 4;
+      const color = `hsl(${Math.random() * 360}, 90%, 65%)`;
+      p.style.width = `${size}px`;
+      p.style.height = `${size}px`;
+      p.style.background = color;
+      p.style.left = `${x}px`;
+      p.style.top = `${y}px`;
+      p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = Math.random() * 120 + 60;
+      const dx = Math.cos(angle) * velocity;
+      const dy = Math.sin(angle) * velocity - 50;
+      p.animate([
+        { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+      ], {
+        duration: Math.random() * 600 + 600,
+        easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)',
+        fill: 'forwards'
+      }).onfinish = () => p.remove();
+    }
+  }
+}
+customElements.define('confetti-button', ConfettiButton);
+
+class InteractiveTabs extends HTMLElement {
+  connectedCallback() {
+    const tabsAttr = this.getAttribute('tabs') || '';
+    const tabs = tabsAttr.split(',').map(t => t.trim());
+    if (tabs.length === 0) return;
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.innerHTML = `
+      <style>
+        .tabs-header { display: flex; gap: 4px; border-bottom: 1px solid var(--bd-s, #ccc); padding-bottom: 4px; margin-bottom: 12px; }
+        .tab-btn { background: none; border: none; padding: 6px 12px; cursor: pointer; color: var(--tx2, #666); font-family: var(--font-ui, sans-serif); font-size: 11.5px; border-radius: 4px; transition: all 0.12s; }
+        .tab-btn:hover { background: var(--bg-h, #eee); color: var(--tx, #000); }
+        .tab-btn.active { background: var(--accent, #8b7cf8); color: #fff; font-weight: 600; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: tabFadeIn 0.15s ease-out; }
+        @keyframes tabFadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+      </style>
+      <div class="tabs-header">
+        ${tabs.map((tab, idx) => `<button class="tab-btn ${idx === 0 ? 'active' : ''}" data-tab="${tab}">${tab}</button>`).join('')}
+      </div>
+      <div class="tabs-body">
+        ${tabs.map(tab => `<div class="tab-content" id="content-${tab}"><slot name="${tab}"></slot></div>`).join('')}
+      </div>
+    `;
+    const updateActiveTab = (activeTab) => {
+      shadow.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === activeTab);
+      });
+      shadow.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === `content-${activeTab}`);
+      });
+    };
+    updateActiveTab(tabs[0]);
+    shadow.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        updateActiveTab(btn.dataset.tab);
+      });
+    });
+  }
+}
+customElements.define('interactive-tabs', InteractiveTabs);
 </script>
 </body>
 </html>

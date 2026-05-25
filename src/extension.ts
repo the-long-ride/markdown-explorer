@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const editor = vscode.window.activeTextEditor;
       if (editor) {
         const doc = editor.document;
-        if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md')) {
+        if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx')) {
           filePath = doc.fileName;
         }
       }
@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext): void {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
           const doc = editor.document;
-          if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md')) {
+          if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx')) {
             filePath = doc.fileName;
           }
         }
@@ -58,7 +58,7 @@ export function activate(context: vscode.ExtensionContext): void {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
           const doc = editor.document;
-          if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md')) {
+          if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx')) {
             filePath = doc.fileName;
           }
         }
@@ -78,14 +78,14 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       const config = vscode.workspace.getConfiguration('markdownExplorer');
-      if (config.get<boolean>('autoRefresh') && doc.fileName.endsWith('.md')) {
+      if (config.get<boolean>('autoRefresh') && (doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx'))) {
         MarkdownDocsPanel.currentPanel?.refresh();
       }
     }),
   );
 
-  // Auto-refresh on .md file create / delete
-  const watcher = vscode.workspace.createFileSystemWatcher('**/*.md');
+  // Auto-refresh on .md / .mdx file create / delete
+  const watcher = vscode.workspace.createFileSystemWatcher('**/*.{md,mdx}');
   watcher.onDidCreate(() => MarkdownDocsPanel.currentPanel?.refresh());
   watcher.onDidDelete(() => MarkdownDocsPanel.currentPanel?.refresh());
   context.subscriptions.push(watcher);

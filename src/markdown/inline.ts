@@ -9,6 +9,7 @@ import { escHtml, escAttr } from '../utils';
  * Everything else is escaped by escHtml().
  */
 const SAFE_HTML_TAG_RE = /(<\/?(kbd|sub|sup|mark|abbr|u|s|img|p|div|span|a|h[1-6]|details|summary|strong|em|code|pre|hr)\b[^>]*>|<br\s*\/?>)/gi;
+const MDX_SAFE_HTML_TAG_RE = /(<\/?([A-Za-z][A-Za-z0-9-]*)\b[^>]*>|<br\s*\/?>)/gi;
 
 /**
  * Render inline markdown syntax to HTML.
@@ -16,13 +17,62 @@ const SAFE_HTML_TAG_RE = /(<\/?(kbd|sub|sup|mark|abbr|u|s|img|p|div|span|a|h[1-6
  *           images, links (internal .md and external), auto-links,
  *           and safe HTML passthrough (kbd, sub, sup, mark, br, …).
  */
-export function renderInline(text: string): string {
+export function renderInline(text: string, isMdx = false): string {
   if (!text) return '';
 
   // ── Step 0: Stash safe HTML tags so escHtml() can't destroy them ──
   const stash: string[] = [];
-  const stashed = text.replace(SAFE_HTML_TAG_RE, (tag) => {
-    stash.push(tag);
+  const regex = isMdx ? MDX_SAFE_HTML_TAG_RE : SAFE_HTML_TAG_RE;
+  const stashed = text.replace(regex, (tag) => {
+    let finalTag = tag;
+    if (isMdx) {
+      // Clean up self-closing JSX elements and curly braced attributes
+      // 1. Replace curly braces: attr={value} -> attr="value"
+      // and event handlers: onClick={() => code} -> onclick="code"
+      finalTag = finalTag.replace(/([a-zA-Z0-9_-]+)\s*=\s*\{([^}]+)\}/g, (_, attrName, val) => {
+        const trimmedVal = val.trim();
+        // Event handlers
+        if (attrName.toLowerCase().startsWith('on')) {
+          // Check if it's an arrow function: () => ... or (e) => ...
+          const arrowMatch = /^(?:\((?:[a-zA-Z0-9_,\s]*)\)|[a-zA-Z0-9_]+)\s*=>\s*([\s\S]+)$/.exec(trimmedVal);
+          if (arrowMatch) {
+            return `${attrName.toLowerCase()}="${escAttr(arrowMatch[1].trim())}"`;
+          }
+          // Non-arrow function identifier
+          return `${attrName.toLowerCase()}="${escAttr(trimmedVal)}(event)"`;
+        }
+        // String literal in curly braces
+        if (/^(['"])(.*)\1$/.test(trimmedVal)) {
+          return `${attrName}="${escAttr(trimmedVal.slice(1, -1))}"`;
+        }
+        return `${attrName}="${escAttr(trimmedVal)}"`;
+      });
+
+      // 2. Convert self-closing tags to explicit closing tags
+      if (finalTag.endsWith('/>')) {
+        const tagMatch = /^<([A-Za-z][A-Za-z0-9-]*)\b([\s\S]*?)\/>$/.exec(finalTag);
+        if (tagMatch) {
+          const tagName = tagMatch[1];
+          const attrs = tagMatch[2];
+          const kebabTagName = tagName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+          finalTag = `<${kebabTagName}${attrs}></${kebabTagName}>`;
+        }
+      } else {
+        // Convert regular opening/closing tags if they have uppercase letters
+        const tagMatch = /^<\/?([A-Za-z][A-Za-z0-9-]*)\b([\s\S]*?)>$/.exec(finalTag);
+        if (tagMatch) {
+          const tagName = tagMatch[1];
+          const kebabTagName = tagName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+          if (finalTag.startsWith('</')) {
+            finalTag = `</${kebabTagName}>`;
+          } else {
+            const attrs = tagMatch[2];
+            finalTag = `<${kebabTagName}${attrs}>`;
+          }
+        }
+      }
+    }
+    stash.push(finalTag);
     return `\u0001${stash.length - 1}\u0001`;
   });
 
