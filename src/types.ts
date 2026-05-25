@@ -88,8 +88,13 @@ export interface CopyCodeMessage {
   readonly text: string;
 }
 
+export interface RefreshMessage {
+  readonly command: 'refresh';
+}
+
 export type WebviewMessage =
   | NavigateMessage
   | OpenInEditorMessage
   | WebviewReadyMessage
-  | CopyCodeMessage;
+  | CopyCodeMessage
+  | RefreshMessage;

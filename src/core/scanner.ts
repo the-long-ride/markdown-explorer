@@ -34,6 +34,12 @@ export class WorkspaceScanner {
   /** Safely read a file's contents */
   static readFile(fsPath: string): string {
     try {
+      const openDoc = vscode.workspace.textDocuments.find(
+        doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
+      );
+      if (openDoc) {
+        return openDoc.getText();
+      }
       return fs.readFileSync(fsPath, 'utf8');
     } catch {
       return '';
@@ -53,7 +59,10 @@ export class WorkspaceScanner {
 
   private static extractTitle(fsPath: string, isMdx = false): string | null {
     try {
-      const content = fs.readFileSync(fsPath, 'utf8');
+      const openDoc = vscode.workspace.textDocuments.find(
+        doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
+      );
+      const content = openDoc ? openDoc.getText() : fs.readFileSync(fsPath, 'utf8');
       if (isMdx) {
         const mdxTitle = WorkspaceScanner.extractMdxTitle(content);
         if (mdxTitle) return mdxTitle;

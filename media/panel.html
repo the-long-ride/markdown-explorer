@@ -49,6 +49,7 @@
       {{THEME_BTN}}
       {{SETTINGS_BTN}}
       {{TOGGLE_SIDEBAR_BTN}}
+      {{REFRESH_BTN}}
     </div>
   </header>
 
@@ -944,6 +945,9 @@ const UI = {
     const currentMode = wrap.dataset.mode || 'preview';
     const newMode = currentMode === 'preview' ? 'code' : 'preview';
     UI.setHtmlMode(wrap, newMode);
+  },
+  refresh() {
+    vscode.postMessage({ command: 'refresh' });
   },
 };
 
