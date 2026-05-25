@@ -98,7 +98,7 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./ && node scripts/copy-ui.js",
+    "compile": "tsc -p ./ && cd ../ui && npm run build && cd ../vscode && node scripts/copy-ui.js",
     "watch": "tsc -watch -p ./",
     "package": "npm run compile && npx vsce package --no-dependencies"
   },

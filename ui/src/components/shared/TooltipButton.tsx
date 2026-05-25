@@ -1,27 +1,29 @@
 // =============================================================================
-// components/shared/Button.tsx — Reusable button with tooltip
+// components/shared/TooltipButton.tsx — Reusable button with tooltip
 // =============================================================================
 
 import type { ReactNode, ButtonHTMLAttributes } from 'react';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface TooltipButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
   tooltipPos?: 'above' | 'below';
+  tooltipAlign?: 'center' | 'right';
   icon?: ReactNode;
   label?: string;
   onlyIcon?: boolean;
 }
 
-export function Button({
+export function TooltipButton({
   tooltip,
   tooltipPos = 'below',
+  tooltipAlign = 'center',
   icon,
   label,
   onlyIcon = true,
   className = '',
   children,
   ...rest
-}: ButtonProps) {
+}: TooltipButtonProps) {
   const classes = `${className} tooltip-container`.trim();
   const tooltipText = tooltip ?? label ?? '';
 
@@ -29,7 +31,8 @@ export function Button({
     <button
       className={classes}
       data-tooltip-pos={tooltipPos}
-      aria-label={label}
+      data-tooltip-align={tooltipAlign}
+      aria-label={label || tooltip}
       {...rest}
     >
       {onlyIcon ? (

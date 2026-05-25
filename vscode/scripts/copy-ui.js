@@ -3,7 +3,6 @@ const path = require('path');
 
 function copyDirRecursive(src, dest) {
   if (!fs.existsSync(src)) return;
-  fs.mkdirSync(dest, { recursive: true });
   const entries = fs.readdirSync(src, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -13,6 +12,12 @@ function copyDirRecursive(src, dest) {
     if (entry.isDirectory()) {
       copyDirRecursive(srcPath, destPath);
     } else {
+      if (entry.name.endsWith('.ttf')) {
+        continue;
+      }
+      if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+      }
       fs.copyFileSync(srcPath, destPath);
     }
   }
@@ -27,6 +32,13 @@ const vscodeUiAssetsDest = path.join(rootDir, 'vscode', 'ui', 'assets');
 
 console.log('Copying UI build artifacts to VS Code extension folder...');
 try {
+  if (fs.existsSync(vscodeUiDistDest)) {
+    fs.rmSync(vscodeUiDistDest, { recursive: true, force: true });
+  }
+  if (fs.existsSync(vscodeUiAssetsDest)) {
+    fs.rmSync(vscodeUiAssetsDest, { recursive: true, force: true });
+  }
+
   copyDirRecursive(uiDistSrc, vscodeUiDistDest);
   copyDirRecursive(uiAssetsSrc, vscodeUiAssetsDest);
   console.log('UI artifacts copied successfully.');

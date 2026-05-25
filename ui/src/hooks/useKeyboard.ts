@@ -17,6 +17,7 @@ interface UseKeyboardOptions {
   isSearchOpen: boolean;
   isSettingsOpen: boolean;
   isModalOpen: boolean;
+  isTermsOpen: boolean;
 }
 
 function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
@@ -62,6 +63,7 @@ export function useKeyboard({
   isSearchOpen,
   isSettingsOpen,
   isModalOpen,
+  isTermsOpen,
 }: UseKeyboardOptions) {
   const { back, forward } = useNavigation();
   const { state, toggleTheme, toggleSidebar, navigate, refresh } = useAppState();
@@ -72,6 +74,10 @@ export function useKeyboard({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (isTermsOpen) {
+        return;
+      }
+
       // 1. Check overlays priority Esc key
       if (e.key === 'Escape') {
         if (isSearchOpen) {
@@ -138,15 +144,15 @@ export function useKeyboard({
 
       // Desktop specific keybindings
       if (isElectron) {
-        // Zoom in (Ctrl + = or Ctrl + +)
-        if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+        // Zoom in (Desktop)
+        if (matchesShortcut(e, keybindings.zoomIn) || ((e.ctrlKey || e.metaKey) && e.key === '+')) {
           e.preventDefault();
           bridge.postMessage({ command: 'zoom-in' });
           return;
         }
 
-        // Zoom out (Ctrl + -)
-        if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        // Zoom out (Desktop)
+        if (matchesShortcut(e, keybindings.zoomOut)) {
           e.preventDefault();
           bridge.postMessage({ command: 'zoom-out' });
           return;
@@ -190,6 +196,7 @@ export function useKeyboard({
     };
 
     const mouseHandler = (e: MouseEvent) => {
+      if (isTermsOpen) return;
       // e.button: 3 is back mouse button, 4 is forward mouse button
       if (e.button === 3) {
         e.preventDefault();
@@ -201,6 +208,7 @@ export function useKeyboard({
     };
 
     const wheelHandler = (e: WheelEvent) => {
+      if (isTermsOpen) return;
       if (e.ctrlKey) {
         e.preventDefault();
         if (e.deltaY < 0) {
@@ -243,5 +251,6 @@ export function useKeyboard({
     isSearchOpen,
     isSettingsOpen,
     isModalOpen,
+    isTermsOpen,
   ]);
 }

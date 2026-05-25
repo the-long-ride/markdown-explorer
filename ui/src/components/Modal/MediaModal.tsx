@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Button } from '../shared/Button';
+import { TooltipButton } from '../shared/TooltipButton';
 import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon } from '../shared/icons';
 
 interface MediaItem {
@@ -21,12 +21,15 @@ interface MediaModalProps {
 
 function getClickableMedia(): { type: 'img' | 'svg'; element: HTMLElement; src?: string; html?: string }[] {
   const media: { type: 'img' | 'svg'; element: HTMLElement; src?: string; html?: string }[] = [];
-  document.querySelectorAll<HTMLImageElement>('.mdn-body img').forEach((img) => {
-    media.push({ type: 'img', element: img, src: img.src });
-  });
-  document.querySelectorAll<HTMLElement>('.mdn-body .mdn-mermaid-wrap').forEach((wrap) => {
-    const svg = wrap.querySelector('svg');
-    if (svg) media.push({ type: 'svg', element: wrap, html: svg.outerHTML });
+  document.querySelectorAll<HTMLElement>('.mdn-body img, .mdn-body .mdn-mermaid-wrap').forEach((el) => {
+    if (el.tagName.toLowerCase() === 'img') {
+      media.push({ type: 'img', element: el, src: (el as HTMLImageElement).src });
+    } else if (el.classList.contains('mdn-mermaid-wrap')) {
+      const svg = el.querySelector('svg');
+      if (svg) {
+        media.push({ type: 'svg', element: el, html: svg.outerHTML });
+      }
+    }
   });
   return media;
 }
@@ -38,11 +41,25 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, panX: 0, panY: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen || !clickedElement) return;
     const allMedia = getClickableMedia();
-    const idx = allMedia.findIndex((m) => m.element === clickedElement);
+    let idx = allMedia.findIndex((m) => m.element === clickedElement);
+    if (idx === -1 && clickedElement) {
+      const clickedSrc = (clickedElement as HTMLImageElement).src;
+      const clickedTagName = clickedElement.tagName.toLowerCase();
+      idx = allMedia.findIndex((m) => {
+        if (m.type === 'img' && clickedTagName === 'img') {
+          return m.src === clickedSrc;
+        }
+        if (m.type === 'svg' && clickedTagName !== 'img') {
+          return m.element.className === clickedElement.className && m.element.textContent === clickedElement.textContent;
+        }
+        return false;
+      });
+    }
     setItems(allMedia.map(({ type, src, html }) => ({ type, src, html })));
     setCurrentIndex(idx >= 0 ? idx : 0);
     setZoom(1);
@@ -77,15 +94,15 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
 
   // Scroll zoom
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !modalRef.current) return;
     const handler = (e: WheelEvent) => {
       e.preventDefault();
       setZoom((z) => Math.min(5, Math.max(0.25, z + (e.deltaY < 0 ? 0.15 : -0.15))));
     };
-    const wrap = wrapRef.current;
-    wrap?.addEventListener('wheel', handler, { passive: false });
-    return () => wrap?.removeEventListener('wheel', handler);
-  }, [isOpen]);
+    const modal = modalRef.current;
+    modal.addEventListener('wheel', handler, { passive: false });
+    return () => modal.removeEventListener('wheel', handler);
+  }, [isOpen, items.length]);
 
   if (!isOpen || items.length === 0) return null;
   const item = items[currentIndex];
@@ -105,7 +122,7 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
   };
 
   return (
-    <div id="mediaModal" className="mdn-modal" style={{ display: 'flex' }} role="dialog" aria-modal="true">
+    <div id="mediaModal" className="mdn-modal" ref={modalRef} style={{ display: 'flex' }} role="dialog" aria-modal="true">
       <button className="mdn-modal-close tooltip-container" onClick={onClose} aria-label="Close modal">
         &times;
         <span className="tooltip-text">Close</span>
@@ -113,8 +130,8 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
 
       {items.length > 1 && (
         <div className="mdn-modal-nav">
-          <Button className="mdn-modal-btn mdn-modal-btn--prev" onClick={prev} tooltip="Previous" tooltipPos="above" icon={<ChevronLeftIcon size={24} />} />
-          <Button className="mdn-modal-btn mdn-modal-btn--next" onClick={next} tooltip="Next" tooltipPos="above" icon={<ChevronRightIcon size={24} />} />
+          <TooltipButton className="mdn-modal-btn mdn-modal-btn--prev" onClick={prev} tooltip="Previous" tooltipPos="above" icon={<ChevronLeftIcon size={24} />} />
+          <TooltipButton className="mdn-modal-btn mdn-modal-btn--next" onClick={next} tooltip="Next" tooltipPos="above" icon={<ChevronRightIcon size={24} />} />
         </div>
       )}
 
@@ -146,10 +163,10 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
       </div>
 
       <div className="mdn-modal-toolbar">
-        <Button className="mdn-modal-tool" onClick={zoomIn} tooltip="Zoom In" tooltipPos="above" icon={<ZoomInIcon />} />
+        <TooltipButton className="mdn-modal-tool" onClick={zoomIn} tooltip="Zoom In" tooltipPos="above" icon={<ZoomInIcon />} />
         <span className="mdn-modal-zoom-text">{Math.round(zoom * 100)}%</span>
-        <Button className="mdn-modal-tool" onClick={zoomOut} tooltip="Zoom Out" tooltipPos="above" icon={<ZoomOutIcon />} />
-        <Button className="mdn-modal-tool" onClick={reset} tooltip="Reset Zoom" tooltipPos="above" icon={<ResetZoomIcon />} />
+        <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip="Zoom Out" tooltipPos="above" icon={<ZoomOutIcon />} />
+        <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip="Reset Zoom" tooltipPos="above" icon={<ResetZoomIcon />} />
       </div>
     </div>
   );

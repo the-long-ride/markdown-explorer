@@ -4,7 +4,7 @@
 
 import { useAppState } from '../../contexts/AppStateContext';
 import { useNavigation } from '../../contexts/NavigationContext';
-import { Button } from '../shared/Button';
+import { TooltipButton } from '../shared/TooltipButton';
 import {
   HomeIcon, ChevronLeftIcon, ChevronRightIcon,
   ExpandIcon, CollapseIcon, EditIcon, SearchIcon,
@@ -76,7 +76,7 @@ export function Topbar({
       </span>
 
       {/* Home */}
-      <Button
+      <TooltipButton
         className="btn btn--icon"
         onClick={() => navigate(null)}
         tooltip="Welcome Page"
@@ -84,7 +84,7 @@ export function Topbar({
       />
 
       {typeof (window as any).electronAPI !== 'undefined' && (
-        <Button
+        <TooltipButton
           className="btn btn--icon"
           onClick={() => {
             dispatch({
@@ -107,14 +107,14 @@ export function Topbar({
 
       {/* Back / Forward */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <Button
+        <TooltipButton
           className="btn btn--icon"
           onClick={back}
           disabled={!canGoBack}
           tooltip="Go Back"
           icon={<ChevronLeftIcon />}
         />
-        <Button
+        <TooltipButton
           className="btn btn--icon"
           onClick={forward}
           disabled={!canGoForward}
@@ -126,7 +126,7 @@ export function Topbar({
       <div className="topbar__divider" />
 
       {/* Refresh */}
-      <Button
+      <TooltipButton
         className="btn btn--icon"
         onClick={refresh}
         tooltip="Refresh"
@@ -184,9 +184,9 @@ export function Topbar({
           />
         </div>
 
-        <Button className="btn" onClick={onExpandAll} tooltip="Expand All" icon={<ExpandIcon />} />
-        <Button className="btn" onClick={onCollapseAll} tooltip="Collapse" icon={<CollapseIcon />} />
-        <Button
+        <TooltipButton className="btn" onClick={onExpandAll} tooltip="Expand All" icon={<ExpandIcon />} />
+        <TooltipButton className="btn" onClick={onCollapseAll} tooltip="Collapse" icon={<CollapseIcon />} />
+        <TooltipButton
           className="btn"
           onClick={openInEditor}
           tooltip="Open current file in editor"
@@ -195,19 +195,19 @@ export function Topbar({
           label="Edit"
           onlyIcon={false}
         />
-        <Button
+        <TooltipButton
           className="btn btn--icon"
           onClick={toggleTheme}
           tooltip="Toggle Theme"
           icon={isDark ? <SunIcon /> : <MoonIcon />}
         />
-        <Button
+        <TooltipButton
           className="btn btn--icon"
           onClick={onSettingsOpen}
           tooltip="Settings"
           icon={<SettingsIcon />}
         />
-        <Button
+        <TooltipButton
           className="btn btn--icon"
           onClick={toggleSidebar}
           tooltip="Toggle Sidebar"
@@ -218,13 +218,13 @@ export function Topbar({
           <>
             <div className="topbar__divider" style={{ margin: '0 8px' }} />
             <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-              <Button
+              <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
                 tooltip="Minimize"
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>}
               />
-              <Button
+              <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
                 tooltip={state.isMaximized ? "Restore" : "Maximize"}
@@ -237,10 +237,11 @@ export function Topbar({
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
                 )}
               />
-              <Button
+              <TooltipButton
                 className="btn btn--icon window-control-btn window-control-btn--close"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
                 tooltip="Close App"
+                tooltipAlign="right"
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
               />
             </div>

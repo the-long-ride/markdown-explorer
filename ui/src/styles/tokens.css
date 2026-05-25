@@ -9,54 +9,18 @@
   padding: 0;
 }
 
-@font-face {
-  font-family: "Be Vietnam Pro";
-  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-}
-@font-face {
-  font-family: "Be Vietnam Pro";
-  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-Italic.ttf") format("truetype");
-  font-weight: 400;
-  font-style: italic;
-}
-@font-face {
-  font-family: "Be Vietnam Pro";
-  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-SemiBold.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-}
-@font-face {
-  font-family: "Be Vietnam Pro";
-  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Cascadia Code";
-  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-}
-@font-face {
-  font-family: "Cascadia Code";
-  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Italic.ttf") format("truetype");
-  font-weight: 400;
-  font-style: italic;
-}
-@font-face {
-  font-family: "Cascadia Code";
-  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-}
-
+/* ============================================================
+   Custom Fonts — Only used in Electron (body.is-electron).
+   @font-face declarations are defined here but fonts are only
+   downloaded when the font-family is actually applied.
+   VS Code extension excludes .ttf files via .vscodeignore,
+   and never adds body.is-electron, so fonts are never loaded there.
+   ============================================================ */
 :root {
-  --font-ui: -apple-system, "Segoe UI", system-ui, sans-serif;
-  --font-mono:
-    "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  /* VS Code and Electron both get system UI fonts by default.
+     Electron overrides these via body.is-electron below. */
+  --font-ui: var(--vscode-font-family, -apple-system, "Segoe UI", system-ui, sans-serif);
+  --font-mono: var(--vscode-editor-font-family, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace);
   --sidebar-w: 240px;
   --topbar-h: 44px;
   --r: 5px;
@@ -69,6 +33,7 @@
   --danger: #f87171;
 }
 
+/* Electron-only: use bundled custom fonts */
 body.is-electron {
   --font-ui: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono:

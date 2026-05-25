@@ -12,9 +12,35 @@ import { createVsCodeBridge } from './platform/vscode';
 import { createElectronBridge } from './platform/electron';
 import { App } from './App';
 
+// Local library imports for CSP compliance & offline support
+import 'highlight.js/styles/github-dark.css';
+import './components/Content/InteractiveComponents';
+
+async function initLibs() {
+  const [{ default: hljs }, { default: mermaid }, chartModule] = await Promise.all([
+    import('highlight.js'),
+    import('mermaid'),
+    import('chart.js/auto'),
+  ]);
+
+  const { default: Chart } = chartModule;
+  // Chart.js auto-registers all components, but let's keep the .register call to be compatible
+  Chart.register();
+
+  (window as any).hljs = hljs;
+  (window as any).mermaid = mermaid;
+  (window as any).Chart = Chart;
+}
+
+initLibs();
+
 // Global styles
 import './styles/tokens.css';
 import './styles/global.css';
+
+if (typeof (window as any).electronAPI !== 'undefined') {
+  import('./styles/fonts.css');
+}
 
 // ── Detect platform and create bridge ──────────────────────────────────────
 

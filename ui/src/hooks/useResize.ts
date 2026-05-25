@@ -4,7 +4,7 @@
 
 import { useEffect } from 'react';
 
-export function useResize(handleId: string, targetId: string) {
+export function useResize(handleId: string, targetId: string, trigger?: any) {
   useEffect(() => {
     const handle = document.getElementById(handleId);
     const target = document.getElementById(targetId);
@@ -20,17 +20,22 @@ export function useResize(handleId: string, targetId: string) {
       startW = target.offsetWidth;
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
+      document.body.classList.add('is-resizing');
     };
 
     const onMove = (e: MouseEvent) => {
       if (!dragging) return;
-      target.style.width = Math.max(180, Math.min(480, startW + e.clientX - startX)) + 'px';
+      const newWidth = Math.max(180, Math.min(480, startW + e.clientX - startX));
+      document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`);
+      localStorage.setItem('markdown-explorer-sidebar-width', String(newWidth));
     };
 
     const onUp = () => {
+      if (!dragging) return;
       dragging = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      document.body.classList.remove('is-resizing');
     };
 
     handle.addEventListener('mousedown', onDown);
@@ -41,6 +46,7 @@ export function useResize(handleId: string, targetId: string) {
       handle.removeEventListener('mousedown', onDown);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      document.body.classList.remove('is-resizing');
     };
-  }, [handleId, targetId]);
+  }, [handleId, targetId, trigger]);
 }

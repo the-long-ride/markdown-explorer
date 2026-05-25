@@ -121,9 +121,8 @@ Markdown Explorer is also a standalone, zero-dependency desktop application! Whe
 ## 🗺️ Roadmap & Future Enhancements
 
 We are continuously working to make Markdown Explorer the ultimate documentation tool. Here is what is on our horizon:
-* [x] **🖥️ Standalone Desktop App**: Developed a native cross-platform Electron standalone app with absolute folder picker scanner, drag region support, custom control headers, and tray icons.
-* [x] **🎨 UI/UX Refinement**: Upgraded UX layout with modern frameless windows, platform custom font integration, and custom Settings modal tooltips.
-* **🌐 Offline Diagram Customization**: Adding offline local layout engine and interactive sequence configurations for diagrams.
+* **🎨 Theme Customization**: Customize theme for both desktop app and extension
+* **🗂️ Multi-Tab Workspace**: Desktop app: support multi tab for multi workspaces working at 1 time.
 
 ---
 

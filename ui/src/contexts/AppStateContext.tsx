@@ -73,6 +73,8 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   expandAll: 'Ctrl+Shift+e',
   workspaceSelection: 'Ctrl+Shift+h',
   toggleSidebar: 'Ctrl+Shift+p',
+  zoomIn: 'Ctrl+=',
+  zoomOut: 'Ctrl+-',
 };
 
 const initialState: AppState = {

@@ -1,8 +1,4 @@
-// =============================================================================
-// components/Sidebar/Sidebar.tsx — File navigation sidebar
-// =============================================================================
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { SearchIcon } from '../shared/icons';
 import { FileNode, FolderNodeView } from './TreeNode';
@@ -11,10 +7,30 @@ export function Sidebar() {
   const { state } = useAppState();
   const [filter, setFilter] = useState('');
 
+  const treeRef = useRef<HTMLDivElement>(null);
+  const scrollPosRef = useRef(0);
+  const lastWorkspaceRef = useRef(state.workspaceName);
+
   const onFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setFilter(e.target.value),
     [],
   );
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    scrollPosRef.current = e.currentTarget.scrollTop;
+  }, []);
+
+  useLayoutEffect(() => {
+    if (treeRef.current) {
+      if (lastWorkspaceRef.current !== state.workspaceName) {
+        lastWorkspaceRef.current = state.workspaceName;
+        scrollPosRef.current = 0;
+        treeRef.current.scrollTop = 0;
+      } else {
+        treeRef.current.scrollTop = scrollPosRef.current;
+      }
+    }
+  }, [state.tree, state.workspaceName]);
 
   if (!state.tree) return null;
 
@@ -43,7 +59,13 @@ export function Sidebar() {
           />
         </div>
       </div>
-      <div className="sidebar__tree" id="sidebarTree" role="tree">
+      <div 
+        className="sidebar__tree" 
+        id="sidebarTree" 
+        role="tree"
+        ref={treeRef}
+        onScroll={handleScroll}
+      >
         {state.tree.files.map((f) => (
           <FileNode key={f.fsPath} file={f} />
         ))}

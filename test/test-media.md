@@ -16,7 +16,7 @@ Link image: [Instagram - the.long.ride](https://www.instagram.com/p/DUQBs1hkryY)
 
 ### Image 2: Markdown Explorer Logo
 
-![Workspace Architecture Design](../media/logos/logo.png)
+![Workspace Architecture Design](..\ui\assets\logos\logo-128.png)
 
 ---
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { FolderIcon } from '../shared/icons';
-import { Button } from '../shared/Button';
+import { TooltipButton } from '../shared/TooltipButton';
 import logoUrl from '../../assets/logos/logo-128.png';
 
 function formatLastOpened(timestamp?: number) {
@@ -29,8 +29,27 @@ export function WorkspaceSelection() {
   const [modalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+    const droppedPath = (files[0] as any).path; // Electron exposes .path on File
+    if (droppedPath) {
+      bridge.postMessage({ command: 'dropOpen', path: droppedPath });
+    }
+  };
+
   const handleOpenFolder = () => {
     bridge.postMessage({ command: 'openFolder' });
+  };
+
+  const handleOpenFile = () => {
+    bridge.postMessage({ command: 'openFile' });
   };
 
   const handleOpenRecent = (path: string) => {
@@ -50,19 +69,23 @@ export function WorkspaceSelection() {
   });
 
   return (
-    <div className="workspace-selection" style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      background: 'var(--bg)',
-      color: 'var(--tx)',
-      fontFamily: 'var(--font-ui)',
-      padding: '40px 20px',
-      boxSizing: 'border-box',
-      position: 'relative'
-    }}>
+    <div 
+      className="workspace-selection" 
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        color: 'var(--tx)',
+        fontFamily: 'var(--font-ui)',
+        padding: '40px 20px',
+        boxSizing: 'border-box',
+        position: 'relative'
+      }}>
       <div style={{
         position: 'absolute',
         top: 0,
@@ -73,10 +96,11 @@ export function WorkspaceSelection() {
         justifyContent: 'flex-end',
         alignItems: 'center',
         paddingRight: '12px',
+        zIndex: 4000,
         ...((typeof (window as any).electronAPI !== 'undefined') ? { WebkitAppRegion: 'drag' } : {}) as any
       }}>
         <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', ...((typeof (window as any).electronAPI !== 'undefined') ? { WebkitAppRegion: 'no-drag' } : {}) as any }}>
-          <Button
+          <TooltipButton
             className="btn btn--icon"
             onClick={toggleTheme}
             tooltip="Toggle Theme"
@@ -91,13 +115,13 @@ export function WorkspaceSelection() {
           {typeof (window as any).electronAPI !== 'undefined' && (
             <>
               <div style={{ width: '1px', height: '16px', background: 'var(--bd-s)' }} />
-              <Button
+              <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
                 tooltip="Minimize"
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>}
               />
-              <Button
+              <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
                 tooltip={state.isMaximized ? "Restore" : "Maximize"}
@@ -110,7 +134,7 @@ export function WorkspaceSelection() {
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
                 )}
               />
-              <Button
+              <TooltipButton
                 className="btn btn--icon window-control-btn window-control-btn--close"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
                 tooltip="Close App"
@@ -151,7 +175,7 @@ export function WorkspaceSelection() {
         </div>
 
         {/* Core Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
             onClick={handleOpenFolder}
             className="btn btn--accent"
@@ -160,7 +184,7 @@ export function WorkspaceSelection() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
-              padding: '18px 20px',
+              padding: '16px 20px',
               fontSize: '14px',
               fontWeight: 600,
               width: '100%',
@@ -184,6 +208,48 @@ export function WorkspaceSelection() {
           >
             <FolderIcon size={16} />
             Open Folder
+          </button>
+
+          <button
+            onClick={handleOpenFile}
+            className="btn btn--outline"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '12px 16px',
+              fontSize: '12.5px',
+              fontWeight: 500,
+              width: '100%',
+              height: 'auto',
+              borderRadius: 'var(--r-lg)',
+              cursor: 'pointer',
+              border: '1.5px solid var(--bd-s)',
+              background: 'transparent',
+              color: 'var(--tx2)',
+              transition: 'all 0.15s ease',
+              marginTop: '4px'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent)';
+              e.currentTarget.style.color = 'var(--tx)';
+              e.currentTarget.style.background = 'rgba(139, 124, 248, 0.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = 'var(--bd-s)';
+              e.currentTarget.style.color = 'var(--tx2)';
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Open File
           </button>
         </div>
 
@@ -267,7 +333,7 @@ export function WorkspaceSelection() {
                     </div>
                   </div>
 
-                  <button
+                  <TooltipButton
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteRecent(item.path);
@@ -290,20 +356,11 @@ export function WorkspaceSelection() {
                       height: '22px',
                       borderRadius: '4px'
                     }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                      e.currentTarget.style.background = 'rgba(244, 63, 94, 0.15)';
-                      e.currentTarget.style.color = 'var(--danger)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.opacity = '0.5';
-                      e.currentTarget.style.background = 'none';
-                      e.currentTarget.style.color = 'var(--tx2)';
-                    }}
-                    title="Remove from recents"
+                    tooltip="Remove from recents"
+                    tooltipPos="above"
                   >
                     &times;
-                  </button>
+                  </TooltipButton>
                 </div>
               ))}
             </div>
@@ -346,9 +403,14 @@ export function WorkspaceSelection() {
           }}
         >
           <div className="settings-card" style={{ width: '480px', maxWidth: '90%', display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '80vh' }}>
-            <button className="settings-card__close" onClick={() => setModalOpen(false)} title="Close" aria-label="Close">
+            <TooltipButton
+              className="settings-card__close"
+              onClick={() => setModalOpen(false)}
+              tooltip="Close"
+              tooltipPos="below"
+            >
               &times;
-            </button>
+            </TooltipButton>
             <div className="settings-card__header" style={{ margin: 0, paddingBottom: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--tx)', margin: 0 }}>Recent Workspaces</h2>
               <p style={{ fontSize: '11.5px', color: 'var(--tx2)', margin: '4px 0 0' }}>Search and manage your recently opened workspaces</p>
@@ -482,7 +544,7 @@ export function WorkspaceSelection() {
                       </div>
                     </div>
 
-                    <button
+                    <TooltipButton
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteRecent(item.path);
@@ -505,20 +567,11 @@ export function WorkspaceSelection() {
                         height: '20px',
                         borderRadius: '4px'
                       }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.opacity = '1';
-                        e.currentTarget.style.background = 'rgba(244, 63, 94, 0.15)';
-                        e.currentTarget.style.color = 'var(--danger)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.opacity = '0.5';
-                        e.currentTarget.style.background = 'none';
-                        e.currentTarget.style.color = 'var(--tx2)';
-                      }}
-                      title="Remove from recents"
+                      tooltip="Remove from recents"
+                      tooltipPos="above"
                     >
                       &times;
-                    </button>
+                    </TooltipButton>
                   </div>
                 ))
               ) : (

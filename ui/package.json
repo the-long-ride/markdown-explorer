@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:vscode": "tsc -b && BUILD_TARGET=vscode vite build",
+    "build:electron": "tsc -b && BUILD_TARGET=electron vite build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -110,6 +110,25 @@ export interface OpenFolderMessage {
   readonly command: 'openFolder';
 }
 
+export interface OpenFileMessage {
+  readonly command: 'openFile';
+}
+
+export interface OpenPathMessage {
+  readonly command: 'openPath';
+  readonly path: string;
+}
+
+export interface ConfirmOpenPathMessage {
+  readonly command: 'confirmOpenPath';
+  readonly path: string;
+}
+
+export interface DropOpenMessage {
+  readonly command: 'dropOpen';
+  readonly path: string;
+}
+
 export interface OpenRecentWorkspaceMessage {
   readonly command: 'openRecentWorkspace';
   readonly path: string;
@@ -139,8 +158,12 @@ export type WebviewMessage =
   | CopyCodeMessage
   | RefreshMessage
   | OpenFolderMessage
+  | OpenFileMessage
+  | OpenPathMessage
+  | ConfirmOpenPathMessage
   | OpenRecentWorkspaceMessage
   | CloseWorkspaceMessage
   | DeleteRecentWorkspaceMessage
   | ZoomInMessage
-  | ZoomOutMessage;
+  | ZoomOutMessage
+  | DropOpenMessage;

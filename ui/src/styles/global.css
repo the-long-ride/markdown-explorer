@@ -233,7 +233,7 @@ span.topbar__breadcrumb-part {
 
 /* Sidebar */
 .sidebar {
-  width: var(--sidebar-w);
+  width: var(--sidebar-width, var(--sidebar-w, 240px));
   background: var(--bg-s);
   border-right: 1px solid var(--bd-s);
   display: flex;
@@ -375,14 +375,40 @@ span.topbar__breadcrumb-part {
 
 /* Resize handle */
 .sidebar-resize {
-  width: 3px;
+  width: 6px;
+  margin: 0 -3px;
   background: transparent;
   cursor: col-resize;
-  transition: background 0.15s;
+  transition: all 0.15s;
   flex-shrink: 0;
+  z-index: 10;
+  position: relative;
 }
-.sidebar-resize:hover {
+.sidebar-resize::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: transparent;
+  transition: background 0.15s;
+}
+.sidebar-resize:hover::after {
   background: var(--accent);
+}
+
+/* Drag resizing modifiers */
+body.is-resizing .sidebar {
+  transition: none !important;
+}
+body.is-resizing iframe,
+body.is-resizing .mdn-html-preview-iframe {
+  pointer-events: none !important;
+}
+body.is-dragging-files iframe,
+body.is-dragging-files .mdn-html-preview-iframe {
+  pointer-events: none !important;
 }
 /* ============================================================
    Content Area & States
@@ -718,7 +744,7 @@ span.topbar__breadcrumb-part {
 .mdn-html-preview-iframe {
   width: 100%;
   border: none;
-  overflow: hidden;
+  overflow: auto;
   display: block;
   background: transparent;
   height: 60px;
@@ -950,7 +976,6 @@ pre code.hljs {
   border: 1px solid var(--bd-s);
   border-radius: var(--r-lg);
   margin-bottom: 8px;
-  overflow: clip;
   transition:
     border-color 0.15s,
     box-shadow 0.2s;
@@ -969,6 +994,12 @@ pre code.hljs {
   user-select: none;
   border-bottom: 1px solid transparent;
   transition: background 0.12s;
+  border-top-left-radius: calc(var(--r-lg) - 1px);
+  border-top-right-radius: calc(var(--r-lg) - 1px);
+}
+.mdn-section:not([data-expanded="true"]) > .mdn-section-header {
+  border-bottom-left-radius: calc(var(--r-lg) - 1px);
+  border-bottom-right-radius: calc(var(--r-lg) - 1px);
 }
 .mdn-section-header:hover {
   background: var(--bg-h);
@@ -1005,8 +1036,10 @@ pre code.hljs {
   transform: rotate(180deg);
 }
 .mdn-section-body {
-  padding: 12px 16px;
+  padding: 12px 16px 6px;
   display: none;
+  border-bottom-left-radius: calc(var(--r-lg) - 1px);
+  border-bottom-right-radius: calc(var(--r-lg) - 1px);
 }
 .mdn-section[data-expanded="true"] > .mdn-section-body {
   display: block;
@@ -1098,7 +1131,7 @@ pre code.hljs {
   top: -1px;
   z-index: 10;
   background: var(--bg-e);
-  padding: 10px 14px;
+  padding: 8px 12px;
   text-align: left;
   font-weight: 600;
   font-size: 11px;
@@ -1131,7 +1164,7 @@ pre code.hljs {
   font-size: 10px;
 }
 .mdn-table td {
-  padding: 10px 14px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--bd);
   border-right: 1px solid var(--bd);
   color: var(--tx);
@@ -1529,9 +1562,9 @@ pre code.hljs {
   }
 }
 .settings-card__close {
-  position: absolute;
-  top: 14px;
-  right: 16px;
+  position: absolute !important;
+  top: 24px;
+  right: 24px;
   background: none;
   border: none;
   color: var(--tx2);
@@ -1684,6 +1717,24 @@ pre code.hljs {
   visibility: visible;
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Tooltip Right Alignment (avoids window overflow/clipping on far right edges) */
+.tooltip-container[data-tooltip-align="right"] .tooltip-text {
+  left: auto;
+  right: 0;
+}
+.tooltip-container[data-tooltip-align="right"]:not([data-tooltip-pos="below"]) .tooltip-text {
+  transform: translateX(0) translateY(4px);
+}
+.tooltip-container[data-tooltip-align="right"]:not([data-tooltip-pos="below"]):hover .tooltip-text {
+  transform: translateX(0) translateY(0);
+}
+.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"] .tooltip-text {
+  transform: translateX(0) translateY(-4px);
+}
+.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"]:hover .tooltip-text {
+  transform: translateX(0) translateY(0);
 }
 /* ============================================================
    Diff Highlighting
@@ -1895,6 +1946,7 @@ kbd {
    ============================================================ */
 body.is-electron .topbar {
   -webkit-app-region: drag;
+  z-index: 4000;
 }
 
 body.is-electron .topbar__logo,

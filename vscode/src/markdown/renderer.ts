@@ -127,7 +127,7 @@ export class HtmlRenderer {
     const lang = escHtml(token.lang || 'text');
     if (lang.toLowerCase() === 'mermaid') {
       return `<div class="mdn-mermaid-wrap">
-  <div class="mermaid">${escHtml(token.content)}</div>
+  <div class="mermaid">${token.content}</div>
 </div>`;
     }
 
@@ -210,6 +210,11 @@ ${token.content}
       const hasCustomHighlight = highlighted !== escHtml(token.content);
       const isCustom = hasCustomHighlight ? ' is-custom-highlighted' : '';
 
+      const contentWithoutScripts = token.content.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, '');
+      const contentWithoutStyles = contentWithoutScripts.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, '');
+      const contentWithoutComments = contentWithoutStyles.replace(/<!--[\s\S]*?-->/g, '');
+      const showCodeByDefault = contentWithoutComments.trim() === '';
+
       const copyBtnHtml = renderButton({
         className: 'mdn-copy-btn',
         onClick: 'UI.copyCode(this)',
@@ -221,9 +226,11 @@ ${token.content}
       const toggleBtnHtml = renderButton({
         className: 'mdn-toggle-preview-btn',
         onClick: 'UI.toggleHtmlMode(this)',
-        label: 'Show Code',
-        tooltip: 'Show Code',
-        iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>'
+        label: showCodeByDefault ? 'Show Preview' : 'Show Code',
+        tooltip: showCodeByDefault ? 'Show Preview' : 'Show Code',
+        iconHtml: showCodeByDefault
+          ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'
+          : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>'
       });
 
       const lines = token.content.split('\n');
@@ -234,18 +241,18 @@ ${token.content}
         gutterHtml = `<div class="mdn-codeblock-gutter">${lineSpans}</div>`;
       }
 
-      return `<div class="mdn-codeblock mdn-html-preview-wrap" data-mode="preview">
+      return `<div class="mdn-codeblock mdn-html-preview-wrap" data-mode="${showCodeByDefault ? 'code' : 'preview'}">
   <div class="mdn-codeblock-header">
-    <span class="mdn-codeblock-lang">HTML Preview</span>
+    <span class="mdn-codeblock-lang">${showCodeByDefault ? 'HTML' : 'HTML Preview'}</span>
     <div style="display:flex;gap:4px;align-items:center">
       ${toggleBtnHtml}
       ${copyBtnHtml}
     </div>
   </div>
-  <div class="mdn-html-preview-body">
+  <div class="mdn-html-preview-body" style="${showCodeByDefault ? 'display:none' : ''}">
     <iframe id="${iframeId}" class="mdn-html-preview-iframe" sandbox="allow-scripts" srcdoc="${escapedDoc}"></iframe>
   </div>
-  <div class="mdn-codeblock-body" style="display:none">
+  <div class="mdn-codeblock-body" style="${showCodeByDefault ? '' : 'display:none'}">
     ${gutterHtml}
     <pre class="mdn-pre"><code class="language-html${isCustom}">${highlighted}</code></pre>
   </div>
@@ -355,12 +362,13 @@ ${token.content}
 </th>`;
     }).join('');
 
-    const tbody = token.rows.map(row =>
-      `<tr>${row.map((cell, i) => {
+    const tbody = token.rows.map((row, idx) => {
+      const rowClass = idx >= 15 ? ' class="is-collapsed-row"' : '';
+      return `<tr${rowClass}>${row.map((cell, i) => {
         const alignAttr = token.align[i] ? ` style="text-align:${token.align[i]}"` : '';
         return `<td${alignAttr}>${renderInline(cell, this.isMdx)}</td>`;
-      }).join('')}</tr>`
-    ).join('\n');
+      }).join('')}</tr>`;
+    }).join('\n');
 
     const toggleBtnHtml = token.rows.length > 15
       ? `<button class="mdn-table-toggle-btn" onclick="Table.toggleCollapse('${id}')" id="${id}-toggle-btn">Show More</button>`
