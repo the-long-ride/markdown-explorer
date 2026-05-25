@@ -15,6 +15,17 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "compile",
+      "type": "shell",
+      "command": "npm run compile",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "build"
     }
   ]
 }

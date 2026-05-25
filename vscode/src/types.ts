@@ -58,14 +58,28 @@ export interface RenderContentMessage {
   readonly fileList: MdFile[];
 }
 
+export interface RecentWorkspace {
+  readonly name: string;
+  readonly path: string;
+  readonly lastOpened?: number;
+}
+
 export interface ReadyAckMessage {
   readonly command: 'readyAck';
   readonly fileList: MdFile[];
+  readonly tree: FolderNode | null;
   readonly theme: string;
   readonly defaultExpanded: boolean;
+  readonly workspaceName: string;
+  readonly recentWorkspaces?: readonly RecentWorkspace[];
 }
 
-export type HostMessage = RenderContentMessage | ReadyAckMessage;
+export interface NavNotFoundMessage {
+  readonly command: 'navNotFound';
+  readonly href: string;
+}
+
+export type HostMessage = RenderContentMessage | ReadyAckMessage | NavNotFoundMessage;
 
 // ── Webview message types (webview → host) ──────────────────
 
@@ -92,9 +106,41 @@ export interface RefreshMessage {
   readonly command: 'refresh';
 }
 
+export interface OpenFolderMessage {
+  readonly command: 'openFolder';
+}
+
+export interface OpenRecentWorkspaceMessage {
+  readonly command: 'openRecentWorkspace';
+  readonly path: string;
+}
+
+export interface CloseWorkspaceMessage {
+  readonly command: 'closeWorkspace';
+}
+
+export interface DeleteRecentWorkspaceMessage {
+  readonly command: 'deleteRecentWorkspace';
+  readonly path: string;
+}
+
+export interface ZoomInMessage {
+  readonly command: 'zoom-in';
+}
+
+export interface ZoomOutMessage {
+  readonly command: 'zoom-out';
+}
+
 export type WebviewMessage =
   | NavigateMessage
   | OpenInEditorMessage
   | WebviewReadyMessage
   | CopyCodeMessage
-  | RefreshMessage;
+  | RefreshMessage
+  | OpenFolderMessage
+  | OpenRecentWorkspaceMessage
+  | CloseWorkspaceMessage
+  | DeleteRecentWorkspaceMessage
+  | ZoomInMessage
+  | ZoomOutMessage;

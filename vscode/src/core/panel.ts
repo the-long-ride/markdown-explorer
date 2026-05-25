@@ -9,10 +9,8 @@ import * as fs from 'fs';
 import { WorkspaceScanner } from './scanner';
 import { parse } from '../markdown/parser';
 import { HtmlRenderer } from '../markdown/renderer';
-import { renderButton } from '../utils';
 import type {
   MdFile,
-  FolderNode,
   RenderContentMessage,
   ReadyAckMessage,
   WebviewMessage,
@@ -49,7 +47,7 @@ export class MarkdownDocsPanel {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [
-          vscode.Uri.file(path.join(context.extensionPath, 'media')),
+          vscode.Uri.file(path.join(context.extensionPath, 'ui')),
           ...(vscode.workspace.workspaceFolders?.map(f => f.uri) ?? []),
         ],
       },
@@ -124,7 +122,28 @@ export class MarkdownDocsPanel {
 
     // Do not auto-initialize _currentFile to allow showing the Welcome page by default when null
 
-    this._panel.webview.html = this._buildShell(tree, flat, workspaceName);
+    if (!this._panel.webview.html) {
+      this._panel.webview.html = this._buildShell();
+    } else {
+      // Send updated data to the already running webview
+      const config = vscode.workspace.getConfiguration('markdownExplorer');
+      const theme = config.get<string>('theme') ?? 'auto';
+      const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
+      const ackMsg: ReadyAckMessage = {
+        command: 'readyAck',
+        fileList: this._flat,
+        tree,
+        theme,
+        defaultExpanded,
+        workspaceName,
+      };
+      await this._panel.webview.postMessage(ackMsg);
+      if (this._currentFile) {
+        await this._sendContent();
+      } else {
+        await this._sendWelcome();
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -135,12 +154,17 @@ export class MarkdownDocsPanel {
     const config = vscode.workspace.getConfiguration('markdownExplorer');
     const theme = config.get<string>('theme') ?? 'auto';
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
+    const { tree, flat } = await WorkspaceScanner.scan();
+    this._flat = flat;
+    const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
 
     const ackMsg: ReadyAckMessage = {
       command: 'readyAck',
       fileList: this._flat,
+      tree,
       theme,
       defaultExpanded,
+      workspaceName,
     };
     await this._panel.webview.postMessage(ackMsg);
 
@@ -374,7 +398,23 @@ export class MarkdownDocsPanel {
               </g>
             </svg>
           </span>
-          to quickly toggle the Markdown Explorer view on a markdown file. Navigate back and forward between documents using the arrow buttons in the topbar or <kbd>Alt+Left</kbd> and <kbd>Alt+Right</kbd>.
+          to quickly toggle the Markdown Explorer view on a markdown file.
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; color: var(--tx2);">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--bd-s); text-align: left;">
+                <th style="padding: 4px 8px 4px 0; font-weight: 600;">Action</th>
+                <th style="padding: 4px 8px; font-weight: 600;">Default Shortcut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);"><td style="padding: 4px 8px 4px 0;">Back to previous file</td><td style="padding: 4px 8px;"><kbd>Ctrl+←</kbd> (or <kbd>Cmd+←</kbd>) or Mouse Back button</td></tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);"><td style="padding: 4px 8px 4px 0;">Go to next file</td><td style="padding: 4px 8px;"><kbd>Ctrl+→</kbd> (or <kbd>Cmd+→</kbd>) or Mouse Forward button</td></tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);"><td style="padding: 4px 8px 4px 0;">Go to welcome page</td><td style="padding: 4px 8px;"><kbd>Ctrl+H</kbd></td></tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);"><td style="padding: 4px 8px 4px 0;">Open settings modal</td><td style="padding: 4px 8px;"><kbd>Ctrl+I</kbd></td></tr>
+              <tr><td style="padding: 4px 8px 4px 0;">Toggle light/dark mode</td><td style="padding: 4px 8px;"><kbd>Ctrl+Shift+L</kbd></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top: 8px; font-style: italic; font-size: 10.5px;">Note: You can change all keyboard shortcuts from the **Settings Modal** (click settings button or press <kbd>Ctrl+I</kbd>).</div>
         </div>
       </div>
 
@@ -386,164 +426,42 @@ export class MarkdownDocsPanel {
 
   // ---------------------------------------------------------------------------
   // Private: HTML shell
-  // The webview HTML lives in media/panel.html as a static template.
-  // Dynamic values are injected by replacing {{PLACEHOLDER}} tokens.
+  // Loads built React assets from ui/dist/index.html and configures CSP + base href.
   // ---------------------------------------------------------------------------
 
-  private _buildShell(tree: FolderNode, flat: MdFile[], workspaceName: string): string {
-    const config = vscode.workspace.getConfiguration('markdownExplorer');
-    const theme = config.get<string>('theme') ?? 'auto';
-    const navItems = this._renderNode(tree, 0);
-
-    const templatePath = path.join(this._extensionPath, 'media', 'panel.html');
-    let html = fs.readFileSync(templatePath, 'utf8');
-
-    const cssUri = this._panel.webview.asWebviewUri(
-      vscode.Uri.file(path.join(this._extensionPath, 'media', 'panel.css'))
-    ).toString();
-
-    const iconUri = (name: string) => this._panel.webview.asWebviewUri(
-      vscode.Uri.file(path.join(this._extensionPath, 'media', 'icons', name))
-    ).toString();
-
-    const moonIconUri = iconUri('moon-icon.svg');
-    const sunIconUri  = iconUri('day-sunny-icon.svg');
-    const logoUri = this._panel.webview.asWebviewUri(
-      vscode.Uri.file(path.join(this._extensionPath, 'media', 'logos', 'logo-128.png'))
-    ).toString();
-
-    const replacements: Record<string, string> = {
-      '{{THEME}}': theme,
-      '{{WORKSPACE_NAME}}': this._escHtml(workspaceName),
-      '{{FILE_COUNT}}': String(flat.length),
-      '{{NAV_ITEMS}}': navItems,
-      '{{PANEL_CSS_URI}}': cssUri,
-      '{{ICON_MOON_URI}}': moonIconUri,
-      '{{ICON_SUN_URI}}': sunIconUri,
-      '{{ICON_MD_URI}}': logoUri,
-      '{{HOME_BTN}}': renderButton({
-        id: 'homeBtn', className: 'btn btn--icon', onClick: 'Nav.go(null)',
-        label: 'Welcome Page', tooltipPos: 'below',
-        iconHtml: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.88 113.97" width="13" height="13" fill="currentColor"><path d="M18.69,73.37,59.18,32.86c2.14-2.14,2.41-2.23,4.63,0l40.38,40.51V114h-30V86.55a3.38,3.38,0,0,0-3.37-3.37H52.08a3.38,3.38,0,0,0-3.37,3.37V114h-30V73.37ZM60.17.88,0,57.38l14.84,7.79,42.5-42.86c3.64-3.66,3.68-3.74,7.29-.16l43.41,43,14.84-7.79L62.62.79c-1.08-1-1.24-1.13-2.45.09Z" fill-rule="evenodd"/></svg>',
-      }),
-      '{{BACK_BTN}}': renderButton({
-        id: 'backBtn', className: 'btn btn--icon', onClick: 'DocHistory.back()',
-        label: 'Go Back', disabled: true, tooltipPos: 'below',
-        iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>',
-      }),
-      '{{FORWARD_BTN}}': renderButton({
-        id: 'forwardBtn', className: 'btn btn--icon', onClick: 'DocHistory.forward()',
-        label: 'Go Forward', disabled: true, tooltipPos: 'below',
-        iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>',
-      }),
-      '{{EXPAND_ALL_BTN}}': renderButton({
-        className: 'btn', onClick: 'UI.expandAll()', label: 'Expand All', onlyIcon: true, tooltipPos: 'below',
-        iconHtml: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>',
-      }),
-      '{{COLLAPSE_ALL_BTN}}': renderButton({
-        className: 'btn', onClick: 'UI.collapseAll()', label: 'Collapse All', tooltip: 'Collapse', onlyIcon: true, tooltipPos: 'below',
-        iconHtml: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>',
-      }),
-      '{{EDIT_BTN}}': renderButton({
-        className: 'btn', onClick: 'Nav.openInEditor()', label: 'Edit', tooltip: 'Open current file in editor', tooltipPos: 'below',
-        iconHtml: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>',
-      }),
-      '{{THEME_BTN}}': renderButton({
-        id: 'themeBtn', className: 'btn btn--icon', onClick: 'UI.toggleTheme()', label: 'Toggle Theme', tooltipPos: 'below',
-        iconHtml: `<img id="themeBtnIcon" src="${moonIconUri}" width="14" height="14" alt="theme" style="opacity:0.8;filter:invert(0)" />`,
-      }),
-      '{{SETTINGS_BTN}}': renderButton({
-        id: 'settingsBtn', className: 'btn btn--icon', onClick: 'UI.openSettings()', label: 'Settings', tooltipPos: 'below',
-        iconHtml: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-      }),
-      '{{TOGGLE_SIDEBAR_BTN}}': renderButton({
-        className: 'btn btn--icon', onClick: 'UI.toggleSidebar()', label: 'Toggle Sidebar', tooltipPos: 'below',
-        iconHtml: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>',
-      }),
-      '{{REFRESH_BTN}}': renderButton({
-        id: 'refreshBtn', className: 'btn btn--icon', onClick: 'UI.refresh()', label: 'Refresh', tooltipPos: 'below',
-        iconHtml: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.61 122.88" width="14" height="14" fill="currentColor"><path d="M111.9,61.57a5.36,5.36,0,0,1,10.71,0A61.3,61.3,0,0,1,17.54,104.48v12.35a5.36,5.36,0,0,1-10.72,0V89.31A5.36,5.36,0,0,1,12.18,84H40a5.36,5.36,0,1,1,0,10.71H23a50.6,50.6,0,0,0,88.87-33.1ZM106.6,5.36a5.36,5.36,0,1,1,10.71,0V33.14A5.36,5.36,0,0,1,112,38.49H84.44a5.36,5.36,0,1,1,0-10.71H99A50.6,50.6,0,0,0,10.71,61.57,5.36,5.36,0,1,1,0,61.57,61.31,61.31,0,0,1,91.07,8,61.83,61.83,0,0,1,106.6,20.27V5.36Z"/></svg>',
-      }),
-      '{{SCROLL_TO_TOP_BTN}}': renderButton({
-        id: 'scrollToTopBtn', className: 'scroll-to-top-btn', onClick: 'UI.scrollToTop()',
-        label: 'Scroll to Top', onlyIcon: true, tooltipPos: 'above',
-        iconHtml: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>',
-      }),
-      '{{MEDIA_CLOSE_BTN}}': renderButton({
-        className: 'mdn-modal-close', onClick: 'ModalViewer.close()', label: 'Close modal', tooltip: 'Close', onlyIcon: true, tooltipPos: 'below', iconHtml: '&times;',
-      }),
-      '{{MEDIA_PREV_BTN}}': renderButton({
-        className: 'mdn-modal-btn mdn-modal-btn--prev', onClick: 'ModalViewer.prev()', label: 'Previous media', tooltip: 'Previous', onlyIcon: true, tooltipPos: 'above',
-        iconHtml: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>',
-      }),
-      '{{MEDIA_NEXT_BTN}}': renderButton({
-        className: 'mdn-modal-btn mdn-modal-btn--next', onClick: 'ModalViewer.next()', label: 'Next media', tooltip: 'Next', onlyIcon: true, tooltipPos: 'above',
-        iconHtml: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>',
-      }),
-      '{{ZOOM_IN_BTN}}': renderButton({
-        className: 'mdn-modal-tool', onClick: 'ModalViewer.zoomIn()', label: 'Zoom In', onlyIcon: true, tooltipPos: 'above',
-        iconHtml: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
-      }),
-      '{{ZOOM_OUT_BTN}}': renderButton({
-        className: 'mdn-modal-tool', onClick: 'ModalViewer.zoomOut()', label: 'Zoom Out', onlyIcon: true, tooltipPos: 'above',
-        iconHtml: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
-      }),
-      '{{RESET_ZOOM_BTN}}': renderButton({
-        className: 'mdn-modal-tool', onClick: 'ModalViewer.reset()', label: 'Reset Zoom', onlyIcon: true, tooltipPos: 'above',
-        iconHtml: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>',
-      }),
-    };
-
-    for (const [token, value] of Object.entries(replacements)) {
-      html = html.split(token).join(value);
+  private _buildShell(): string {
+    const distPath = path.join(this._extensionPath, 'ui', 'dist');
+    const indexPath = path.join(distPath, 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Markdown Explorer UI Not Found</title>
+        </head>
+        <body style="font-family: sans-serif; padding: 20px; color: var(--vscode-editor-foreground); background-color: var(--vscode-editor-background);">
+          <h2>Markdown Explorer UI has not been built.</h2>
+          <p>Please run <code>npm run build</code> in the <code>ui/</code> folder or <code>npm run compile</code> in the extension folder to build the UI assets.</p>
+        </body>
+        </html>
+      `;
     }
+
+    let html = fs.readFileSync(indexPath, 'utf8');
+
+    // CSP and Base Href
+    const cspSource = this._panel.webview.cspSource;
+    const csp = `default-src 'none'; style-src 'unsafe-inline' ${cspSource}; script-src 'unsafe-inline' ${cspSource}; img-src * data: ${cspSource}; frame-src 'self' data: ${cspSource}; connect-src *;`;
+    const baseUri = this._panel.webview.asWebviewUri(vscode.Uri.file(distPath));
+
+    // Inject base href and CSP into the <head> section
+    const headInjection = `
+  <meta http-equiv="Content-Security-Policy" content="${csp}" />
+  <base href="${baseUri.toString()}/" />`;
+
+    html = html.replace('<head>', `<head>${headInjection}`);
 
     return html;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Private: nav HTML builder
-  // ---------------------------------------------------------------------------
-
-  private _renderNode(node: FolderNode, depth: number): string {
-    let html = '';
-
-    for (const file of node.files) {
-      html += `<div class="tree-file"
-        data-path="${this._escAttr(file.fsPath)}"
-        data-title="${this._escAttr(file.title)}"
-        data-filename="${this._escAttr(file.fileName)}"
-        onclick="Nav.go('${this._escAttr(file.fsPath)}')"
-        title="${this._escAttr(file.relativePath)}"
-        role="treeitem" tabindex="0"
-        onkeydown="if(event.key==='Enter')Nav.go('${this._escAttr(file.fsPath)}')">
-        <span class="tree-file__name">${this._escHtml(file.title)}</span>
-      </div>`;
-    }
-
-    for (const child of node.children) {
-      html += `<div class="tree-folder is-open" role="treeitem">
-        <div class="tree-folder__header" onclick="Sidebar.toggleFolder(this)"
-             role="button" tabindex="0" aria-expanded="true">
-          <span class="tree-folder__chevron" aria-hidden="true">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </span>
-          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${this._escHtml(child.name)}</span>
-        </div>
-        <div class="tree-folder__children" role="group">${this._renderNode(child, depth + 1)}</div>
-      </div>`;
-    }
-
-    return html;
-  }
-
-  private _escAttr(s: string): string {
-    return String(s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-  }
-
-  private _escHtml(s: string): string {
-    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   // ---------------------------------------------------------------------------
