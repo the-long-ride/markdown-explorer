@@ -1,0 +1,203 @@
+/* ============================================================
+   Markdown Explorer — Design Tokens & Reset
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("../../assets/fonts/BeVietnamPro/BeVietnamPro-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Cascadia Code";
+  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Cascadia Code";
+  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Cascadia Code";
+  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  --font-ui: -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono:
+    "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  --sidebar-w: 240px;
+  --topbar-h: 44px;
+  --r: 5px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --accent: #8b7cf8;
+  --accent-dim: rgba(139, 124, 248, 0.14);
+  --accent-text: #a99ef9;
+  --success: #34d399;
+  --danger: #f87171;
+}
+
+body.is-electron {
+  --font-ui: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono:
+    "Cascadia Code", "CascadiaCode", "Fira Code", "JetBrains Mono", Consolas, monospace;
+}
+
+/* Dark theme */
+[data-theme="dark"],
+[data-theme="auto"] {
+  --bg: #1a1a1e;
+  --bg-s: #222228;
+  --bg-e: #2a2a32;
+  --bg-h: #31313c;
+  --bg-a: #383845;
+  --bg-code: #17171c;
+  --bd: rgba(255, 255, 255, 0.1);
+  --bd-s: rgba(255, 255, 255, 0.18);
+  --bd-x: rgba(255, 255, 255, 0.26);
+  --tx: #e2e2e8;
+  --tx2: #9191a4;
+  --txm: #56566a;
+  --txc: #93c5fd;
+  --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --sh-md: 0 4px 20px rgba(0, 0, 0, 0.6);
+  --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.7);
+  --modal-bg: rgba(10, 10, 12, 0.9);
+  --modal-fg: #ffffff;
+
+  /* Dark theme syntax highlighting variables */
+  --hl-kw: #f97583;
+  --hl-cm: #6a737d;
+  --hl-str: #9ecbff;
+  --hl-num: #ffab70;
+  --hl-var: #9cdcfe;
+  --hl-tag: #79b8ff;
+  --hl-attr: #ffab70;
+  --hl-prop: #79b8ff;
+  --hl-sel: #b392f0;
+  --hl-func: #ffcc66;
+  --hl-pkg: #4ec9b0;
+}
+/* Light theme */
+[data-theme="light"] {
+  --bg: #f7f6f3;
+  --bg-s: #faf9f6;
+  --bg-e: #efede8;
+  --bg-h: #e5e3dd;
+  --bg-a: #d8d5cd;
+  --bg-code: #f0ede8;
+  --bd: rgba(0, 0, 0, 0.11);
+  --bd-s: rgba(0, 0, 0, 0.18);
+  --bd-x: rgba(0, 0, 0, 0.28);
+  --tx: #1c1c20;
+  --tx2: #484854;
+  --txm: #666672;
+  --txc: #3730a3;
+  --accent-text: #6d5ef0;
+  --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --sh-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.14);
+  --modal-bg: rgba(247, 246, 243, 0.9);
+  --modal-fg: #1c1c20;
+
+  /* Light theme syntax highlighting variables */
+  --hl-kw: #d73a49;
+  --hl-cm: #5c6370;
+  --hl-str: #032f62;
+  --hl-num: #005cc5;
+  --hl-var: #3572b0;
+  --hl-tag: #22863a;
+  --hl-attr: #6f42c1;
+  --hl-prop: #e36209;
+  --hl-sel: #6f42c1;
+  --hl-func: #b58900;
+  --hl-pkg: #22863a;
+}
+
+/* Auto theme system prefers light overrides */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] {
+    --bg: #f7f6f3;
+    --bg-s: #faf9f6;
+    --bg-e: #efede8;
+    --bg-h: #e5e3dd;
+    --bg-a: #d8d5cd;
+    --bg-code: #f0ede8;
+    --bd: rgba(0, 0, 0, 0.11);
+    --bd-s: rgba(0, 0, 0, 0.18);
+    --bd-x: rgba(0, 0, 0, 0.28);
+    --tx: #1c1c20;
+    --tx2: #484854;
+    --txm: #666672;
+    --txc: #3730a3;
+    --accent-text: #6d5ef0;
+    --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+    --sh-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.14);
+    --modal-bg: rgba(247, 246, 243, 0.9);
+    --modal-fg: #1c1c20;
+
+    --hl-kw: #d73a49;
+    --hl-cm: #5c6370;
+    --hl-str: #032f62;
+    --hl-num: #005cc5;
+    --hl-var: #3572b0;
+    --hl-tag: #22863a;
+    --hl-attr: #6f42c1;
+    --hl-prop: #e36209;
+    --hl-sel: #6f42c1;
+    --hl-func: #b58900;
+    --hl-pkg: #22863a;
+  }
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bd-s) transparent;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
