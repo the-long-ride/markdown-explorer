@@ -45,7 +45,7 @@
     ],
     "win": {
       "target": "portable",
-      "icon": "../ui/assets/logos/logo-500.png"
+      "icon": "../ui/assets/logos/icon-512.png"
     },
     "linux": {
       "target": [
@@ -53,7 +53,7 @@
         "AppImage"
       ],
       "category": "Utility",
-      "icon": "../ui/assets/logos/logo-500.png"
+      "icon": "../ui/assets/logos/icon-515.png"
     }
   }
 }
