@@ -18,8 +18,9 @@ Every agent modifying this repository must also follow these technical rules wit
 ---
 
 ## 🏗️ 1. Path Breadcrumb Collapsing & Ellipsis
-* **Intermediate Folding**: In [Topbar.tsx](file:///f:/Extensions/markdown-explorer/ui/src/components/Topbar/Topbar.tsx), when the active workspace relative path exceeds 3 segments (`breadcrumbParts.length > 3`), intermediate folders **MUST** be collapsed into `...` to keep layout clean: `root / ... / parentFolder / filename.md`.
+* **5-Tier Progressive Folding**: In [Topbar.tsx](file:///f:/Extensions/markdown-explorer/ui/src/components/Topbar/Topbar.tsx), format the relative path with a 5-tier progressive folding algorithm (Tier 1: full path, Tier 2: root/sub/.../parent/file, Tier 3: root/.../parent/file, Tier 4: .../parent/file, Tier 5: .../file...me.md) targeted to fit within a 45-character budget.
 * **Ellipsis Truncation**: Wrap folder and file text nodes in `span.topbar__breadcrumb-part` and set `display`, `overflow`, `text-overflow`, and `white-space` with `!important` inside [global.css](file:///f:/Extensions/markdown-explorer/ui/src/styles/global.css) to enforce ellipsis truncation without parent box clips.
+* **Viewport-Adaptive Tooltip**: Set the breadcrumb tooltip to `max-width: max(280px, calc(100vw - 340px))` in [global.css](file:///f:/Extensions/markdown-explorer/ui/src/styles/global.css) to scale with the viewport without overflowing, use zero-width spaces after slashes to break lines cleanly at slashes, and omit rendering on the Welcome Page.
 
 ---
 
@@ -42,6 +43,10 @@ Every agent modifying this repository must also follow these technical rules wit
 * **Important Enforcements**: Always append `!important` to all `.hljs-` override rules in [global.css](file:///f:/Extensions/markdown-explorer/ui/src/styles/global.css) to guarantee our theme is applied over default CDN styles.
 * **Gutter Line Numbers**: When formatting code blocks, dynamic gutter line numbers are rendered in `.mdn-codeblock-gutter` to match standard IDE aesthetics, except for plain text blocks.
 * **Multilingual Highlighting**: Support custom syntax rules for HTML, C, C++, Java, C#, PHP, Ruby, Swift, Kotlin, R, Scala, Elixir, Dart, Hack, and Perl. Embedded `<style>` and `<script>` elements inside HTML code blocks must be parsed and highlighted natively.
+* **Clipboard Copying**: Register `UI.copyCode` and `UI_copyCode` globally to use `PlatformBridge.copyToClipboard` when available, with a fallback to `navigator.clipboard`.
+* **Mermaid Auto-rendering**: Automatically detect un-tagged or plain text code blocks starting with any valid Mermaid diagram keywords (e.g., `graph`, `flowchart`, `sequenceDiagram`, `stateDiagram`, etc.) and render them as actual Mermaid graphics.
+* **Collapsible Code Blocks**: For code blocks with more than 20 lines, render them as collapsed (`max-height: 380px` with a gradient fade) with a "Show More" / "Show Less" toggle button.
+* **Inline Code Styling**: Style `.mdn-inline-code` representing backticks with a warm Claude-like orange color (`#ff7e40` in dark, `#d95420` in light), `0.88em` font size, and `2px 6px` padding.
 
 ---
 

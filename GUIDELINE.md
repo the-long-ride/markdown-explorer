@@ -134,10 +134,10 @@ The scanner inside [desktop/scanner.js](file:///f:/Extensions/markdown-explorer/
 *   **Search Limit**: The workspace scan is hard-capped at **1000 files** to maintain high UI rendering performance.
 *   **Title Resolution**: The scanner parses titles intelligently. If the file is an `.mdx` document, it matches title fields from frontmatter blocks, exported variables (`export const title = '...'`), exported metadata blocks, and JSX components. For standard `.md` files, it extracts the first high-level heading (`# Heading`). If none exists, it defaults to the file name.
 
-### 5. Path Breadcrumb Truncation
-*   To conserve draggable frameless workspace window space, file breadcrumbs inside the header automatically fold folder chains exceeding 3 levels into an ellipsis (`root / ... / parent / file.md`).
-*   Path folding uses strict `!important` overriding in [ui/src/styles/global.css](file:///f:/Extensions/markdown-explorer/ui/src/styles/global.css) to prevent element overflow bugs.
-*   Hovering over the folded segment reveals the complete absolute filepath inside a beautifully styled tooltip bubble.
+### 5. Path Breadcrumb & Tooltip Refinements
+*   **5-Tier Folding**: Breadcrumbs inside the header automatically collapse using a progressive 5-tier algorithm (Tier 1: full path, Tier 2: root/sub/.../parent/file, Tier 3: root/.../parent/file, Tier 4: .../parent/file, Tier 5: .../file...me.md) designed to fit within a 45-character budget.
+*   **Ellipsis Overflow Prevention**: Path folding uses strict `!important` overriding in [ui/src/styles/global.css](file:///f:/Extensions/markdown-explorer/ui/src/styles/global.css) to prevent element overflow bugs.
+*   **Viewport-Adaptive Tooltip**: Hovering over the breadcrumb container reveals the full path in a left-aligned tooltip scaled dynamically to `max-width: max(280px, calc(100vw - 340px))` to stay within the viewport. Zero-width spaces (`\u200B`) are appended after slashes to wrap lines nicely. The tooltip is excluded on the Welcome Page.
 
 ### 6. Offline Typography and Font Routing
 To ensure the application looks premium offline without making external CDN calls, we package two embedded fonts:

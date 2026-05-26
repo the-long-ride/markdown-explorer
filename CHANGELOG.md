@@ -4,6 +4,20 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.3.5] — 2026-05-27
+
+### Added Features & Enhancements
+- **Mermaid Auto-rendering**: Plain text and un-tagged code blocks starting with any valid Mermaid keyword (such as `flowchart`, `sequenceDiagram`, etc.) are now automatically detected and rendered as visual Mermaid diagrams.
+- **Collapsible Code Blocks**: Code blocks exceeding 20 lines are rendered in a collapsed state (`max-height: 380px` with a bottom gradient fade) and feature a "Show More" / "Show Less" toggle button.
+- **Inline Code Styling**: Backtick elements (`.mdn-inline-code`) are enhanced with a warm Claude-like orange color (`#ff7e40` in dark theme, `#d95420` in light/auto theme), increased font size (`0.88em`), and larger padding (`2px 6px`).
+- **5-Tier Breadcrumb Folding**: Implemented a smart progressive folding algorithm for active file path display (`root / sub-root / ... / parent / file.md`), folding down to `... / file...me.md` for long names, targeting a 45-character budget.
+- **Viewport-Adaptive Breadcrumb Tooltip**: Sized the tooltip using `max-width: max(280px, calc(100vw - 340px))` with left-alignment, slash-wrapping, and omitted it on the Welcome Page.
+
+### Fixed Issues
+- **Code Block Copy Button**: Resolved copy code functionality by registering global window handlers to use `PlatformBridge.copyToClipboard` with `navigator.clipboard` fallback.
+
+---
+
 ## [1.3.4] — 2026-05-26
 
 ### Fixed Issues
