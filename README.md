@@ -3,7 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE)
 [![VS Code Marketplace](https://img.shields.io/badge/VS%20Code%20Marketplace-Install-blueviolet.svg)](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer)
 
-Tired of reading raw Markdown or plain, boring previews? **Markdown Explorer** transforms your markdown files into a premium, interactive web-app experience. Use it directly inside VS Code or as a standalone desktop app.
+Markdown files are built for AI agents, but **Markdown Explorer** is made for humans. 
+
+Tired of reading raw Markdown files or plain, boring previews? Markdown Explorer transforms your markdown documents into a premium, interactive web-app experience. Use it directly inside VS Code or as a standalone desktop app.
 
 ![Markdown Explorer Overview](https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-overview-desktop.png)
 
