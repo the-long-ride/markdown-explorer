@@ -35,8 +35,11 @@ jobs:
           path: vscode/*.vsix
 
   build-desktop:
-    name: Build Desktop Application
-    runs-on: windows-latest
+    name: Build Desktop Application (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -53,11 +56,21 @@ jobs:
       - name: Build Electron App
         run: npm run build:desktop
 
-      - name: Upload Desktop Artifact
+      - name: Upload Desktop Artifact (Windows)
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-app
+          name: desktop-app-windows
           path: desktop/dist/*.exe
+
+      - name: Upload Desktop Artifact (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-app-linux
+          path: |
+            desktop/dist/*.deb
+            desktop/dist/*.AppImage
 
   publish-release:
     name: Create GitHub Release
@@ -70,10 +83,16 @@ jobs:
           name: vscode-extension
           path: ./release-artifacts
 
-      - name: Download Desktop Artifact
+      - name: Download Windows Desktop Artifact
         uses: actions/download-artifact@v4
         with:
-          name: desktop-app
+          name: desktop-app-windows
+          path: ./release-artifacts
+
+      - name: Download Linux Desktop Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-app-linux
           path: ./release-artifacts
 
       - name: Create GitHub Release and Upload Assets
