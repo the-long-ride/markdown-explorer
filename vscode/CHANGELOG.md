@@ -4,6 +4,14 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.3.4] — 2026-05-26
+
+### Fixed Issues
+- **Electron Build Icon**: Corrected builder icon configurations to point to the existing `logo-512.png` asset.
+- **Breadcrumb Tooltip**: Added a tooltip showing the full absolute path when hovering over the current file path breadcrumb.
+
+---
+
 ## [1.3.2] — 2026-05-26
 
 ### Added Features & Enhancements

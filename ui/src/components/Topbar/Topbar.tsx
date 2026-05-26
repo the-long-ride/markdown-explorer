@@ -168,7 +168,7 @@ export function Topbar({
             ),
           )
         )}
-        <span className="tooltip-text">{state.relativePath || ''}</span>
+        <span className="tooltip-text">{state.currentFile || state.relativePath || ''}</span>
       </div>
 
       {/* Actions */}
