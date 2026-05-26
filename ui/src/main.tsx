@@ -58,6 +58,7 @@ function detectBridge() {
 }
 
 const bridge = detectBridge();
+(window as any).PlatformBridge = bridge;
 
 // ── Mount React app ────────────────────────────────────────────────────────
 

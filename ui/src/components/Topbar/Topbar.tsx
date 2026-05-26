@@ -19,6 +19,114 @@ interface TopbarProps {
   onCollapseAll: () => void;
 }
 
+interface BreadcrumbItem {
+  text: string;
+  isBold?: boolean;
+  isEllipsis?: boolean;
+}
+
+function truncateFilename(name: string, maxLen: number): string {
+  if (name.length <= maxLen) return name;
+  const extIdx = name.lastIndexOf('.');
+  const ext = extIdx !== -1 ? name.slice(extIdx) : '';
+  const base = extIdx !== -1 ? name.slice(0, extIdx) : name;
+  const available = maxLen - 3 - ext.length;
+  if (available > 2) {
+    const startLen = Math.ceil(available / 2);
+    const endLen = Math.floor(available / 2);
+    return base.slice(0, startLen) + '...' + base.slice(-endLen) + ext;
+  }
+  return base.slice(0, Math.max(1, maxLen - 3)) + '...';
+}
+
+function getBreadcrumbItems(relativePath: string): BreadcrumbItem[] {
+  if (!relativePath) return [];
+  if (relativePath === 'Welcome Page') {
+    return [{ text: 'Welcome Page', isBold: true }];
+  }
+  const parts = relativePath.split(/[\\/]/).filter(Boolean);
+  const N = parts.length;
+  if (N === 0) return [];
+  const filename = parts[N - 1];
+
+  const getItemsLength = (items: BreadcrumbItem[]) => {
+    return items.reduce((sum, item) => sum + item.text.length, 0) + (items.length - 1) * 3;
+  };
+
+  // Tier 1: Full path (if it fits)
+  const fullItems: BreadcrumbItem[] = parts.map((p, idx) => ({
+    text: p,
+    isBold: idx === N - 1
+  }));
+  if (getItemsLength(fullItems) <= 45) {
+    return fullItems;
+  }
+
+  // Tier 2: root / sub-root / ... / parent / file.md (for N >= 4)
+  if (N >= 4) {
+    const items = [
+      { text: parts[0] },
+      { text: parts[1] },
+      { text: '...', isEllipsis: true },
+      { text: parts[N - 2] },
+      { text: filename, isBold: true }
+    ];
+    if (getItemsLength(items) <= 45) {
+      return items;
+    }
+  }
+
+  // Tier 3: root / ... / parent / file.md (for N >= 3)
+  if (N >= 3) {
+    const items = [
+      { text: parts[0] },
+      { text: '...', isEllipsis: true },
+      { text: parts[N - 2] },
+      { text: filename, isBold: true }
+    ];
+    if (getItemsLength(items) <= 45) {
+      return items;
+    }
+  }
+
+  // Tier 4: ... / parent / file.md (for N >= 2)
+  if (N >= 2) {
+    const parent = parts[N - 2];
+    const items = [
+      { text: '...', isEllipsis: true },
+      { text: parent },
+      { text: filename, isBold: true }
+    ];
+    if (getItemsLength(items) <= 45) {
+      return items;
+    }
+
+    // Try truncating parent if it's too long
+    const truncatedParent = parent.length > 15 ? parent.slice(0, 12) + '...' : parent;
+    const itemsTruncatedParent = [
+      { text: '...', isEllipsis: true },
+      { text: truncatedParent },
+      { text: filename, isBold: true }
+    ];
+    if (getItemsLength(itemsTruncatedParent) <= 45) {
+      return itemsTruncatedParent;
+    }
+  }
+
+  // Tier 5: ... / truncated_filename.md (or just truncated_filename.md if N == 1)
+  const truncatedFile = truncateFilename(filename, 20);
+  if (N >= 2) {
+    return [
+      { text: '...', isEllipsis: true },
+      { text: truncatedFile, isBold: true }
+    ];
+  } else {
+    return [
+      { text: truncatedFile, isBold: true }
+    ];
+  }
+}
+
 export function Topbar({
   onSearchOpen,
   onSettingsOpen,
@@ -41,7 +149,8 @@ export function Topbar({
     (state.theme === 'auto' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-  const breadcrumbParts = (state.relativePath || '').split(/[\\/]/);
+  const breadcrumbItems = getBreadcrumbItems(state.relativePath || '');
+  const breakablePath = (state.currentFile || state.relativePath || '').replace(/[\/\\]/g, '$&' + '\u200B');
 
   return (
     <header className="topbar">
@@ -135,40 +244,23 @@ export function Topbar({
       />
 
       {/* Breadcrumb */}
-      <div className="topbar__breadcrumb" id="breadcrumb">
-        {breadcrumbParts.length > 3 ? (
-          <>
-            <span>
-              <span className="topbar__breadcrumb-part">{breadcrumbParts[0]}</span>
-              <span className="sep">/</span>
-            </span>
-            <span>
-              <span className="topbar__breadcrumb-part" style={{ maxWidth: 'none' }}>...</span>
-              <span className="sep">/</span>
-            </span>
-            <span>
-              <span className="topbar__breadcrumb-part">{breadcrumbParts[breadcrumbParts.length - 2]}</span>
-              <span className="sep">/</span>
-            </span>
-            <span style={{ color: 'var(--tx)', fontWeight: 500 }} className="topbar__breadcrumb-part">
-              {breadcrumbParts[breadcrumbParts.length - 1]}
-            </span>
-          </>
-        ) : (
-          breadcrumbParts.map((part, i) =>
-            i < breadcrumbParts.length - 1 ? (
-              <span key={i}>
-                <span className="topbar__breadcrumb-part">{part}</span>
-                <span className="sep">/</span>
+      <div className="topbar__breadcrumb-container">
+        <div className="topbar__breadcrumb" id="breadcrumb">
+          {breadcrumbItems.map((item, idx) => (
+            <span key={idx}>
+              {idx > 0 && <span className="sep">/</span>}
+              <span
+                className={`topbar__breadcrumb-part${item.isBold ? ' topbar__breadcrumb-part--bold' : ''}`}
+                style={item.isEllipsis ? { maxWidth: 'none' } : undefined}
+              >
+                {item.text}
               </span>
-            ) : (
-              <span key={i} style={{ color: 'var(--tx)', fontWeight: 500 }} className="topbar__breadcrumb-part">
-                {part}
-              </span>
-            ),
-          )
+            </span>
+          ))}
+        </div>
+        {state.relativePath && state.relativePath !== 'Welcome Page' && (
+          <span className="tooltip-text">{breakablePath}</span>
         )}
-        <span className="tooltip-text">{state.currentFile || state.relativePath || ''}</span>
       </div>
 
       {/* Actions */}

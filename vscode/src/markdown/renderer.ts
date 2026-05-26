@@ -121,11 +121,20 @@ export class HtmlRenderer {
     return `<h${token.level} class="mdn-subheading" id="${id}">
   <a class="mdn-anchor" href="#${id}" title="Copy link">#</a>${html}
 </h${token.level}>`;
-  }
+}
 
   private renderCode(token: CodeBlockToken): string {
     const lang = escHtml(token.lang || 'text');
-    if (lang.toLowerCase() === 'mermaid') {
+    const firstWord = token.content.trim().split(/[\s\n\r]/)[0];
+    const mermaidKeywords = [
+      'graph', 'flowchart', 'sequenceDiagram', 'classDiagram', 'stateDiagram', 
+      'stateDiagram-v2', 'erDiagram', 'journey', 'gantt', 'pie', 'quadrantChart', 
+      'xychart-beta', 'mindmap', 'timeline', 'gitGraph', 'c4Diagram', 'sankey-beta', 
+      'block', 'packet-beta', 'kanban', 'architecture', 'zenuml', 'requirementDiagram', 'info'
+    ];
+    const isMermaid = lang.toLowerCase() === 'mermaid' ||
+      ((!token.lang || token.lang.toLowerCase() === 'text') && mermaidKeywords.includes(firstWord));
+    if (isMermaid) {
       return `<div class="mdn-mermaid-wrap">
   <div class="mermaid">${token.content}</div>
 </div>`;
@@ -241,7 +250,11 @@ ${token.content}
         gutterHtml = `<div class="mdn-codeblock-gutter">${lineSpans}</div>`;
       }
 
-      return `<div class="mdn-codeblock mdn-html-preview-wrap" data-mode="${showCodeByDefault ? 'code' : 'preview'}">
+      const toggleCodeBtnHtml = totalLines > 20
+        ? `<button class="mdn-codeblock-toggle-btn" onclick="UI.toggleCodeCollapse(this)">Show More</button>`
+        : '';
+
+      return `<div class="mdn-codeblock mdn-html-preview-wrap" data-mode="${showCodeByDefault ? 'code' : 'preview'}"${totalLines > 20 ? ' data-collapsed="true"' : ''}>
   <div class="mdn-codeblock-header">
     <span class="mdn-codeblock-lang">${showCodeByDefault ? 'HTML' : 'HTML Preview'}</span>
     <div style="display:flex;gap:4px;align-items:center">
@@ -256,6 +269,7 @@ ${token.content}
     ${gutterHtml}
     <pre class="mdn-pre"><code class="language-html${isCustom}">${highlighted}</code></pre>
   </div>
+  ${toggleCodeBtnHtml}
 </div>`;
     }
 
@@ -267,7 +281,7 @@ ${token.content}
       onClick: 'UI.copyCode(this)',
       label: 'Copy',
       tooltip: 'Copy code',
-      iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+      iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"/></svg>'
     });
 
     // Compute line numbers if the block has content
@@ -280,7 +294,11 @@ ${token.content}
       gutterHtml = `<div class="mdn-codeblock-gutter">${lineSpans}</div>`;
     }
 
-    return `<div class="mdn-codeblock">
+    const toggleCodeBtnHtml = totalLines > 20
+      ? `<button class="mdn-codeblock-toggle-btn" onclick="UI.toggleCodeCollapse(this)">Show More</button>`
+      : '';
+
+    return `<div class="mdn-codeblock"${totalLines > 20 ? ' data-collapsed="true"' : ''}>
   <div class="mdn-codeblock-header">
     <span class="mdn-codeblock-lang">${lang}</span>
     ${copyBtnHtml}
@@ -289,6 +307,7 @@ ${token.content}
     ${gutterHtml}
     <pre class="mdn-pre"><code class="language-${lang}${isCustom}">${highlighted}</code></pre>
   </div>
+  ${toggleCodeBtnHtml}
 </div>`;
   }
 

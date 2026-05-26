@@ -375,14 +375,17 @@ function initGlobalHandlers() {
     // Handled by React bridge, but provide a fallback
   };
 
-  // UI_copyCode (global function referenced by rendered HTML)
-  win.UI_copyCode = (btn: HTMLElement) => {
+  // UI.copyCode (global function referenced by HTML code blocks)
+  win.UI.copyCode = (btn: HTMLElement) => {
     const code = btn.closest('.mdn-codeblock')?.querySelector('code')?.innerText ?? '';
-    // Use platform bridge for clipboard (injected separately if needed)
     try {
-      navigator.clipboard.writeText(code);
-    } catch {
-      // Fallback: post message if available
+      if (win.PlatformBridge) {
+        win.PlatformBridge.copyToClipboard(code);
+      } else {
+        navigator.clipboard.writeText(code);
+      }
+    } catch (err) {
+      console.warn('Failed to copy code to clipboard:', err);
     }
     btn.classList.add('is-copied');
     const tooltip = btn.querySelector('.tooltip-text');
@@ -391,6 +394,16 @@ function initGlobalHandlers() {
       btn.classList.remove('is-copied');
       if (tooltip) tooltip.textContent = 'Copy code';
     }, 2000);
+  };
+  win.UI_copyCode = win.UI.copyCode;
+
+  // UI.toggleCodeCollapse (global function to expand/collapse long code blocks)
+  win.UI.toggleCodeCollapse = (btn: HTMLElement) => {
+    const wrap = btn.closest('.mdn-codeblock') as HTMLElement | null;
+    if (!wrap) return;
+    const isCollapsed = wrap.dataset.collapsed === 'true';
+    wrap.dataset.collapsed = isCollapsed ? 'false' : 'true';
+    btn.textContent = isCollapsed ? 'Show Less' : 'Show More';
   };
 
   // Table object (for inline onclick handlers)
