@@ -124,10 +124,7 @@ export interface ConfirmOpenPathMessage {
   readonly path: string;
 }
 
-export interface DropOpenMessage {
-  readonly command: 'dropOpen';
-  readonly path: string;
-}
+
 
 export interface OpenRecentWorkspaceMessage {
   readonly command: 'openRecentWorkspace';
@@ -165,5 +162,4 @@ export type WebviewMessage =
   | CloseWorkspaceMessage
   | DeleteRecentWorkspaceMessage
   | ZoomInMessage
-  | ZoomOutMessage
-  | DropOpenMessage;
+  | ZoomOutMessage;

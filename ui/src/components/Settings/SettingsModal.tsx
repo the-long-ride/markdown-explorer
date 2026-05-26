@@ -219,7 +219,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
-                maxHeight: "350px",
+                maxHeight: "360px",
                 overflowY: "auto",
                 paddingRight: "6px",
               }}

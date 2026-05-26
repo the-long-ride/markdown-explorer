@@ -140,10 +140,7 @@ export interface ZoomOutMessage {
   readonly command: 'zoom-out';
 }
 
-export interface DropOpenMessage {
-  readonly command: 'dropOpen';
-  readonly path: string;
-}
+
 
 export type WebviewMessage =
   | NavigateMessage
@@ -159,8 +156,7 @@ export type WebviewMessage =
   | CloseWorkspaceMessage
   | DeleteRecentWorkspaceMessage
   | ZoomInMessage
-  | ZoomOutMessage
-  | DropOpenMessage;
+  | ZoomOutMessage;
 
 // ── UI state ────────────────────────────────────────────────────────────────
 

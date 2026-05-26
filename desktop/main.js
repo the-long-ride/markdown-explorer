@@ -136,15 +136,25 @@ function createWindow() {
     });
   });
 
-  const uiIndex = path.join(__dirname, "..", "ui", "dist", "index.html");
+  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
+  // // Block new windows and file-drop navigation at the main-process level.
+  // // Without this, dropping a file when Electron has no bubble-phase handler
+  // // causes webContents to navigate to file:///dropped/path, spawning a blank window.
+  // mainWindow.webContents.on('will-navigate', (event) => {
+  //   event.preventDefault();
+  // });
+  // mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+  const uiIndex = path.join(__dirname, '..', 'ui', 'dist', 'index.html');
   mainWindow.loadFile(uiIndex);
 
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.webContents.executeJavaScript(`
-      document.addEventListener('dragover', e => e.preventDefault(), true);
-      document.addEventListener('drop',     e => e.preventDefault(), true);
-    `);
-  });
+  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
+  // mainWindow.webContents.on('did-finish-load', () => {
+  //   mainWindow.webContents.executeJavaScript(`
+  //     document.addEventListener('dragover', e => e.preventDefault(), true);
+  //     document.addEventListener('drop',     e => e.preventDefault(), true);
+  //   `);
+  // });
 }
 
 let tray = null;
@@ -214,24 +224,7 @@ app.whenReady().then(() => {
       case "openPath":
         handleOpenPath(msg.path);
         break;
-      case 'dropOpen': {
-        const droppedPath = msg.path;
-        if (!droppedPath || !fs.existsSync(droppedPath)) break;
-        const stat = fs.statSync(droppedPath);
-        if (stat.isDirectory()) {
-          saveRecentWorkspace(droppedPath);
-          activeWorkspace = droppedPath;
-          currentFile = null;
-          sendWorkspaceData().then(() => sendWelcome());
-        } else if (stat.isFile() && /\.(md|mdx)$/i.test(droppedPath)) {
-          const folder = path.dirname(droppedPath);
-          saveRecentWorkspace(folder);
-          activeWorkspace = folder;
-          currentFile = droppedPath;
-          sendWorkspaceData().then(() => sendContent());
-        }
-        break;
-      }
+
       case "confirmOpenPath":
         handleConfirmOpenPath(msg.path);
         break;
@@ -426,6 +419,8 @@ function handleOpenRecent(folderPath) {
       (w) => path.normalize(w.path) !== path.normalize(folderPath),
     );
     fs.writeFileSync(recentsFile, JSON.stringify(list, null, 2), "utf8");
+    readyHandled = false;
+    handleReady();
   }
 }
 
@@ -438,6 +433,7 @@ function handleDeleteRecentWorkspace(folderPath) {
   } catch (err) {
     console.error("Failed to delete recent workspace:", err);
   }
+  readyHandled = false;
   handleReady();
 }
 

@@ -10,7 +10,7 @@
   gap: 8px;
   padding: 0 12px;
   flex-shrink: 0;
-  z-index: 100;
+  z-index: 200000;
   box-shadow: var(--sh-sm);
 }
 .topbar__logo {
@@ -1398,7 +1398,7 @@ pre code.hljs {
 }
 .mdn-modal-close {
   position: absolute !important;
-  top: 24px;
+  top: calc(var(--topbar-h) + 12px);
   right: 24px;
   background: var(--bg-e);
   border: 1px solid var(--bd-s);
@@ -1961,7 +1961,7 @@ kbd {
    ============================================================ */
 body.is-electron .topbar {
   -webkit-app-region: drag;
-  z-index: 4000;
+  z-index: 200000;
 }
 
 body.is-electron .topbar__logo,
@@ -1992,3 +1992,40 @@ body.is-electron .sidebar-resize {
   background: #f43f5e !important;
   color: #ffffff !important;
 }
+
+/* Recent Workspaces Delete Button */
+.recent-workspace-delete-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 22px;
+  height: 22px;
+  font-size: 16px;
+  background: none;
+  border: none;
+  color: var(--tx2);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  outline: none;
+}
+.recent-workspace-delete-btn:hover {
+  opacity: 1;
+  color: var(--tx);
+  background: var(--bg-h);
+}
+.recent-workspace-delete-btn:active {
+  transform: scale(0.92);
+}
+.recent-workspace-delete-btn--modal {
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  font-size: 15px;
+}
+

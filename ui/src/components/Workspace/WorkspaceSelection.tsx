@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, /* useRef, useEffect */ } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { FolderIcon } from '../shared/icons';
@@ -28,21 +28,31 @@ export function WorkspaceSelection() {
   const bridge = usePlatform();
   const [modalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length === 0) return;
-    const droppedPath = (files[0] as any).path; // Electron exposes .path on File
-    if (droppedPath) {
-      bridge.postMessage({ command: 'dropOpen', path: droppedPath });
-    }
-  };
+  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
+  // const containerRef = useRef<HTMLDivElement>(null);
+  // useEffect(() => {
+  //   const el = containerRef.current;
+  //   if (!el) return;
+  //   const onDragOver = (e: DragEvent) => {
+  //     e.preventDefault();
+  //     if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  //   };
+  //   const onDrop = (e: DragEvent) => {
+  //     e.preventDefault();
+  //     const files = Array.from(e.dataTransfer?.files ?? []);
+  //     if (files.length === 0) return;
+  //     const droppedPath = (files[0] as any).path; // Electron exposes .path on File
+  //     if (droppedPath) {
+  //       bridge.postMessage({ command: 'openPath', path: droppedPath });
+  //     }
+  //   };
+  //   el.addEventListener('dragover', onDragOver);
+  //   el.addEventListener('drop', onDrop);
+  //   return () => {
+  //     el.removeEventListener('dragover', onDragOver);
+  //     el.removeEventListener('drop', onDrop);
+  //   };
+  // }, [bridge]);
 
   const handleOpenFolder = () => {
     bridge.postMessage({ command: 'openFolder' });
@@ -70,9 +80,8 @@ export function WorkspaceSelection() {
 
   return (
     <div 
+      // ref={containerRef} // TODO: Drop-to-open workspace is disabled — buggy, not ready.
       className="workspace-selection" 
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -96,7 +105,7 @@ export function WorkspaceSelection() {
         justifyContent: 'flex-end',
         alignItems: 'center',
         paddingRight: '12px',
-        zIndex: 4000,
+        zIndex: 200000,
         ...((typeof (window as any).electronAPI !== 'undefined') ? { WebkitAppRegion: 'drag' } : {}) as any
       }}>
         <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', ...((typeof (window as any).electronAPI !== 'undefined') ? { WebkitAppRegion: 'no-drag' } : {}) as any }}>
@@ -338,26 +347,10 @@ export function WorkspaceSelection() {
                       e.stopPropagation();
                       handleDeleteRecent(item.path);
                     }}
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--tx2)',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                      opacity: 0.5,
-                      transition: 'all 0.12s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '4px'
-                    }}
+                    className="recent-workspace-delete-btn"
                     tooltip="Remove from recents"
                     tooltipPos="above"
+                    tooltipAlign="right"
                   >
                     &times;
                   </TooltipButton>
@@ -467,11 +460,12 @@ export function WorkspaceSelection() {
             <div style={{
               flex: 1,
               overflowY: 'auto',
+              overflowX: 'hidden',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
               paddingRight: '4px',
-              maxHeight: '45vh'
+              maxHeight: '352px'
             }}>
               {filteredRecents.length > 0 ? (
                 filteredRecents.map((item, idx) => (
@@ -549,26 +543,10 @@ export function WorkspaceSelection() {
                         e.stopPropagation();
                         handleDeleteRecent(item.path);
                       }}
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--tx2)',
-                        fontSize: '15px',
-                        cursor: 'pointer',
-                        opacity: 0.5,
-                        transition: 'all 0.12s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '4px'
-                      }}
+                      className="recent-workspace-delete-btn recent-workspace-delete-btn--modal"
                       tooltip="Remove from recents"
                       tooltipPos="above"
+                      tooltipAlign="right"
                     >
                       &times;
                     </TooltipButton>

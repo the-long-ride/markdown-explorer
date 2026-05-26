@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAppState } from './contexts/AppStateContext';
-import { usePlatform } from './contexts/PlatformContext';
+// import { usePlatform } from './contexts/PlatformContext'; // TODO: re-enable when drop-to-open workspace is fixed
 import { WorkspaceSelection } from './components/Workspace/WorkspaceSelection';
 import { Topbar } from './components/Topbar/Topbar';
 import { Sidebar } from './components/Sidebar/Sidebar';
@@ -28,91 +28,83 @@ export function App() {
   const [modalTarget, setModalTarget] = useState<HTMLElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [isDragging, setIsDragging] = useState(false);
-  const dragCounter = useRef(0);
-  const bridge = usePlatform();
+  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
+  // const [isDragging, setIsDragging] = useState(false);
+  // const dragCounter = useRef(0);
+  // const bridge = usePlatform(); // TODO: re-enable when drop-to-open workspace is fixed
 
   const workspaceNameRef = useRef(state.workspaceName);
   useEffect(() => {
     workspaceNameRef.current = state.workspaceName;
   }, [state.workspaceName]);
 
-  useEffect(() => {
-    // Returns true only if the drag event contains real filesystem files
-    const isFileDrag = (e: DragEvent) => {
-      const types = e.dataTransfer?.types;
-      if (!types) return false;
-      // In Electron, actual file drops have 'Files' in types
-      // Internal drags (e.g. image element drag-to-reorder) should be ignored
-      return types.includes('Files');
-    };
-
-    const onDragEnter = (e: DragEvent) => {
-      if (!isFileDrag(e)) return;
-      if (modalOpen) return;
-      e.preventDefault();
-      dragCounter.current++;
-      if (dragCounter.current === 1) {
-        setIsDragging(true);
-        document.body.classList.add('is-dragging-files');
-      }
-    };
-    const onDragLeave = (e: DragEvent) => {
-      if (!isFileDrag(e)) return;
-      // Only decrement when truly leaving the window (not just moving over a child element)
-      if (e.relatedTarget !== null) return;
-      e.preventDefault();
-      dragCounter.current = 0;
-      setIsDragging(false);
-      document.body.classList.remove('is-dragging-files');
-    };
-    const onDragOver = (e: DragEvent) => {
-      if (isFileDrag(e)) {
-        e.preventDefault();
-        if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
-      }
-    };
-    const onDrop = (e: DragEvent) => {
-      if (!isFileDrag(e)) return;
-      if (modalOpen) return;
-      e.preventDefault();
-      setIsDragging(false);
-      dragCounter.current = 0;
-      document.body.classList.remove('is-dragging-files');
-      const files = Array.from(e.dataTransfer?.files ?? []);
-      if (files.length > 0) {
-        const file = files[0];
-        const filePath = (file as any).path;
-        if (filePath) {
-          const command = workspaceNameRef.current ? 'confirmOpenPath' : 'openPath';
-          bridge.postMessage({ command, path: filePath });
-        }
-      }
-    };
-    // Reset counter if drag ends without a drop (e.g., cancelled by Escape)
-    const onDragEnd = () => {
-      if (dragCounter.current > 0) {
-        dragCounter.current = 0;
-        setIsDragging(false);
-        document.body.classList.remove('is-dragging-files');
-      }
-    };
-
-    window.addEventListener('dragenter', onDragEnter);
-    window.addEventListener('dragleave', onDragLeave);
-    window.addEventListener('dragover', onDragOver);
-    window.addEventListener('drop', onDrop);
-    window.addEventListener('dragend', onDragEnd);
-
-    return () => {
-      window.removeEventListener('dragenter', onDragEnter);
-      window.removeEventListener('dragleave', onDragLeave);
-      window.removeEventListener('dragover', onDragOver);
-      window.removeEventListener('drop', onDrop);
-      window.removeEventListener('dragend', onDragEnd);
-      document.body.classList.remove('is-dragging-files');
-    };
-  }, [bridge, modalOpen]);
+  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
+  // useEffect(() => {
+  //   const isFileDrag = (e: DragEvent) => {
+  //     const types = e.dataTransfer?.types;
+  //     if (!types) return false;
+  //     return types.includes('Files');
+  //   };
+  //   const onDragEnter = (e: DragEvent) => {
+  //     if (!isFileDrag(e)) return;
+  //     if (workspaceNameRef.current) return;
+  //     if (modalOpen) return;
+  //     e.preventDefault();
+  //     dragCounter.current++;
+  //     if (dragCounter.current === 1) {
+  //       setIsDragging(true);
+  //       document.body.classList.add('is-dragging-files');
+  //     }
+  //   };
+  //   const onDragLeave = (e: DragEvent) => {
+  //     if (!isFileDrag(e)) return;
+  //     if (e.relatedTarget !== null) return;
+  //     e.preventDefault();
+  //     dragCounter.current = 0;
+  //     setIsDragging(false);
+  //     document.body.classList.remove('is-dragging-files');
+  //   };
+  //   const onDragOver = (e: DragEvent) => {
+  //     if (isFileDrag(e)) {
+  //       e.preventDefault();
+  //       if (e.dataTransfer) e.dataTransfer.dropEffect = workspaceNameRef.current ? 'none' : 'copy';
+  //     }
+  //   };
+  //   const onDrop = (e: DragEvent) => {
+  //     if (!isFileDrag(e)) return;
+  //     e.preventDefault();
+  //     setIsDragging(false);
+  //     dragCounter.current = 0;
+  //     document.body.classList.remove('is-dragging-files');
+  //     if (workspaceNameRef.current) return;
+  //     if (modalOpen) return;
+  //     const files = Array.from(e.dataTransfer?.files ?? []);
+  //     if (files.length > 0) {
+  //       const filePath = (files[0] as any).path;
+  //       if (filePath) bridge.postMessage({ command: 'openPath', path: filePath });
+  //     }
+  //   };
+  //   const onDragEnd = () => {
+  //     if (dragCounter.current > 0) {
+  //       dragCounter.current = 0;
+  //       setIsDragging(false);
+  //       document.body.classList.remove('is-dragging-files');
+  //     }
+  //   };
+  //   window.addEventListener('dragenter', onDragEnter);
+  //   window.addEventListener('dragleave', onDragLeave);
+  //   window.addEventListener('dragover', onDragOver);
+  //   window.addEventListener('drop', onDrop);
+  //   window.addEventListener('dragend', onDragEnd);
+  //   return () => {
+  //     window.removeEventListener('dragenter', onDragEnter);
+  //     window.removeEventListener('dragleave', onDragLeave);
+  //     window.removeEventListener('dragover', onDragOver);
+  //     window.removeEventListener('drop', onDrop);
+  //     window.removeEventListener('dragend', onDragEnd);
+  //     document.body.classList.remove('is-dragging-files');
+  //   };
+  // }, [bridge, modalOpen]);
 
   const { isVisible: scrollTopVisible, scrollToTop } = useScrollVisibility(scrollRef);
 
@@ -184,7 +176,7 @@ export function App() {
           paddingRight: '12px',
           WebkitAppRegion: 'drag',
           position: 'relative',
-          zIndex: 4000
+          zIndex: 200000
         } as any}>
           <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', WebkitAppRegion: 'no-drag' } as any}>
             <TooltipButton
@@ -279,47 +271,24 @@ export function App() {
       <MediaModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setModalTarget(null); }} clickedElement={modalTarget} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      {isDragging && (
+      {/* TODO: Drop-to-open workspace is disabled — buggy, not ready. */}
+      {/* {isDragging && (
         <div style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: 0, left: 0, right: 0, bottom: 0,
           background: 'var(--modal-bg)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           border: '2.5px dashed var(--accent)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          color: 'var(--tx)',
-          pointerEvents: 'none',
-          transition: 'all 0.2s ease'
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, color: 'var(--tx)',
+          pointerEvents: 'none', transition: 'all 0.2s ease'
         }}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            shapeRendering="geometricPrecision"
-            textRendering="geometricPrecision"
-            imageRendering="optimizeQuality"
-            fillRule="evenodd"
-            clipRule="evenodd"
-            viewBox="0 0 512 501.59"
-            width="56"
-            height="56"
-            fill="currentColor"
-            style={{ marginBottom: '16px', color: 'var(--accent)' }}
-          >
-            <path d="M15.47 366.69h481.06c8.51 0 15.47 6.96 15.47 15.47v103.96c0 8.51-6.96 15.47-15.47 15.47H15.47C6.96 501.59 0 494.63 0 486.12V382.16c0-8.51 6.96-15.47 15.47-15.47zM159.6 158.41h50.98V15.72c0-4.75 2.28-8.92 5.95-11.8C219.61 1.51 223.74 0 228.17 0h55.69c4.43 0 8.55 1.51 11.61 3.93 3.67 2.88 5.97 7.07 5.97 11.79v142.69h50.96c4.89 0 8.85 3.96 8.85 8.85 0 2.15-.77 4.13-2.05 5.66l-97.02 136.29c-2.83 3.97-8.34 4.9-12.31 2.07a8.694 8.694 0 0 1-2.13-2.15l-95.4-136.83c-2.79-4.01-1.79-9.52 2.21-12.3a8.823 8.823 0 0 1 5.05-1.59z" />
-          </svg>
-          <div style={{ fontSize: '20px', fontWeight: 800 }}>
-            {state.workspaceName ? "Drop folder or file to switch" : "Drop folder or file to open"}
-          </div>
+          <div style={{ fontSize: '20px', fontWeight: 800 }}>Drop folder or file to open</div>
           <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>Supports folders and .md / .mdx files</div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
