@@ -75,3 +75,13 @@ Every agent modifying this repository must also follow these technical rules wit
 Before completing your turn, you must run:
 1. `npm run compile`: Verify there are no TypeScript syntax or type compilation errors.
 2. `npm run package`: Verify that the VSIX packages successfully, does not contain ignored files, and remains under **180 KB**.
+
+---
+
+## 📖 8. Readme & Changelog Synchronization
+* **Sync Documentation**: Whenever modifying the root `README.md` or `CHANGELOG.md` (e.g. updating roadmap or version changelogs), you **MUST** synchronize these changes to the VS Code sub-project's documentation files under `./vscode` (specifically `vscode/README.md` and `vscode/CHANGELOG.md`) to maintain documentation parity.
+
+---
+
+## 📝 9. Safe Split Multiple Commits
+* **Commit Splitting**: When preparing changes to commit, you **MUST** split them into separate, logical, atomic commits (e.g. separate commits for configuration updates, feature implementation, and documentation/version bumps) rather than squashing everything into a single massive commit.
