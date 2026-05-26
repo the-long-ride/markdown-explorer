@@ -93,3 +93,19 @@ Configure and rebind keyboard triggers to match your own layout preferences.
 - **GitHub Repository**: [github.com/the-long-ride/markdown-explorer](https://github.com/the-long-ride/markdown-explorer)
 - **Release Logs**: [CHANGELOG.md](https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md)
 - **License**: [MIT](https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE)
+
+## 🐞 Report Issues & Get Help
+
+Before opening a new issue on GitHub, please check whether the issue already exists in the repository's Issues page. This helps avoid duplicates and lets us respond faster.
+
+If you do need to open a new issue, please include the following to help us triage and fix the problem quickly:
+
+- **Search first**: Check https://github.com/the-long-ride/markdown-explorer/issues to see if your problem is already reported.
+- **Short, descriptive title**: One line summary of the problem or requested feature.
+- **Steps to reproduce**: Exact steps you took (files used, buttons clicked, commands run).
+- **Expected vs actual behavior**: What you expected to happen and what actually happened.
+- **Environment details**: OS (Linux/Windows/macOS), app version or extension version, and whether you used the VS Code extension or Desktop app.
+- **Screenshots / minimal sample files**: Attach a screenshot or a small markdown file that reproduces the issue when possible.
+- **Console logs / errors**: Any relevant error messages from the developer console or the app logs.
+
+We appreciate clear, reproducible reports — they help us fix bugs and improve the product faster. Thank you for helping improve Markdown Explorer!

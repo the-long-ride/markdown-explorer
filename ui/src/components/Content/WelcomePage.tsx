@@ -258,6 +258,33 @@ export function WelcomePage() {
           </div>
         </div>
       </div>
+
+      {/* Report Issues */}
+      <div style={{ marginBottom: '32px' }}>
+        <h2
+          style={{
+            fontSize: '1.2em',
+            fontWeight: 700,
+            marginBottom: '10px',
+            color: 'var(--tx)',
+          }}
+        >
+          🐞 Report Issues & Get Help
+        </h2>
+
+        <div style={{ background: 'var(--bg-s)', border: '1px solid var(--bd-s)', borderRadius: 'var(--r-lg)', padding: '12px 16px', fontSize: '12px', color: 'var(--tx2)' }}>
+          <p style={{ marginTop: 0, marginBottom: 8 }}>
+            Before opening a new issue, please check the repository Issues page to avoid duplicates:
+            {' '}
+            <a href="https://github.com/the-long-ride/markdown-explorer/issues" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-text)', fontWeight: 600 }}>Repository Issues</a>
+          </p>
+          <ul style={{ margin: '8px 0 0 18px', padding: 0 }}>
+            <li>Search existing issues first to see if someone already reported it.</li>
+            <li>Include steps to reproduce, your OS, and whether you use the VS Code extension or Desktop app.</li>
+            <li>Attach a small sample markdown file or screenshot and any console errors if available.</li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
