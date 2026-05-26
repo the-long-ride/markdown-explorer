@@ -2,7 +2,7 @@
   "name": "vscode-extension-markdown-explorer",
   "displayName": "Markdown Explorer in VS Code",
   "description": "Markdown for AI agents, Markdown Explorer for human. View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "license": "MIT",
   "publisher": "the-long-ride",
   "icon": "ui/assets/logos/logo-500.png",

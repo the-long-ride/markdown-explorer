@@ -4,6 +4,22 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.3.6] — 2026-05-27
+
+### Added Features & Enhancements
+- **ZenUML Diagram Support**: Installed `@mermaid-js/mermaid-zenuml` and registered it via `mermaid.registerExternalDiagrams([zenuml])` in [main.tsx](ui/src/main.tsx), enabling offline rendering of ZenUML sequence diagrams within code blocks.
+- **Expanded Mermaid Keyword List**: Added `block-beta`, `packet`, `architecture-beta`, `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, and `C4Deployment` to the auto-detection keyword list in [renderer.ts](vscode/src/markdown/renderer.ts) so unlabeled code blocks starting with any of these keywords are rendered as Mermaid diagrams automatically.
+
+### Fixed Issues
+- **General Text Selection**: Enabled text selection in the webview (`user-select: text`) on `html` and `body` in [global.css](ui/src/styles/global.css) to override VS Code's default `user-select: none` webview lock. Interactive UI elements (sidebar, buttons, resize handles, tree nodes, topbar) retain `user-select: none` for clean drag and click behavior.
+- **Heading Text Selection**: Collapsible section titles (`.mdn-section-title`) now explicitly set `user-select: text` so heading text can be selected and copied even though the parent section header uses `user-select: none` for click-to-collapse.
+- **Architecture Diagram Syntax**: Corrected `architecture-beta` edge direction syntax in [test-diagrams.md](test/test-diagrams.md) — directions must use single uppercase letters (`L`, `R`, `T`, `B`), not full words.
+- **C4 Diagram Keyword**: Replaced invalid `c4Diagram` keyword with correct Mermaid C4 specifiers (`C4Context`, `C4Container`, etc.) in both [renderer.ts](vscode/src/markdown/renderer.ts) and [test-diagrams.md](test/test-diagrams.md).
+- **Requirement Diagram Properties**: Fixed invalid `severity` property in test file; replaced with valid `risk: high` and `verifymethod: test` properties per Mermaid spec.
+- **Ordered List Numbering**: Fixed ordered list parser in [parser.ts](vscode/src/markdown/parser.ts) to correctly group consecutive items, support nested content, and honour custom `start` attributes.
+
+---
+
 ## [1.3.5] — 2026-05-27
 
 ### Added Features & Enhancements
