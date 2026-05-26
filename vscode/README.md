@@ -6,7 +6,7 @@
 
 Markdown files are built for AI agents, but **Markdown Explorer** is made for humans. 
 
-Tired of reading raw Markdown files or plain, boring previews? Markdown Explorer transforms your markdown documents into a premium, interactive web-app experience. Use it directly inside VS Code or as a standalone desktop app (available for Windows and Linux).
+Tired of reading raw Markdown files or plain, boring previews? Markdown Explorer transforms your markdown documents into a premium, interactive web-app experience. Use it directly inside VS Code or as a standalone desktop app (available for Windows, Linux and [macOS](docs/macos-install.md)).
 
 ![Markdown Explorer Overview](https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-overview-desktop.png)
 
@@ -53,7 +53,7 @@ Zoom in/out with the mouse wheel and drag to pan across high-res graphics smooth
 </p>
 
 ### 🖥️ Standalone Desktop App
-Explore workspaces offline without running VS Code. Manage your recently opened workspaces easily. Fully supported on Windows (Portable) and Linux (deb & AppImage formats).
+Explore workspaces offline without running VS Code. Manage your recently opened workspaces easily. Fully supported on Windows (Portable), Linux (deb & AppImage formats), and [macOS](docs/macos-install.md) (dmg & zip, Intel + Apple Silicon).
 <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Desktop-app-workspace-selection.png" width="800" alt="Workspace Selection" />
 
 ### ⌨️ Customizable Keyboard Shortcuts
@@ -72,6 +72,7 @@ Configure and rebind keyboard triggers to match your own layout preferences.
 ### Standalone Desktop App:
 - **Windows**: Download the portable `.exe` from the latest GitHub Release and run it. No installation needed.
 - **Linux**: Download the `.deb` or `.AppImage` package from the latest GitHub Release.
+- **[macOS](docs/macos-install.md)**: Download the `.dmg` for your chip (`arm64` for Apple Silicon, `x64` for Intel). See the [macOS Installation Guide](docs/macos-install.md) for first-launch steps (Gatekeeper bypass).
 
 ---
 
