@@ -10,6 +10,10 @@ const path = require("path");
 const fs = require("fs");
 const DesktopScanner = require("./scanner");
 
+const appDir = app.isPackaged
+  ? __dirname
+  : path.join(__dirname, "..");
+
 let mainWindow = null;
 let activeWorkspace = null;
 let currentFile = null;
@@ -64,16 +68,14 @@ function loadMarkdownParser() {
   if (parse && HtmlRenderer) return true;
   try {
     const parserPath = path.join(
-      __dirname,
-      "..",
+      appDir,
       "vscode",
       "out",
       "markdown",
       "parser.js",
     );
     const rendererPath = path.join(
-      __dirname,
-      "..",
+      appDir,
       "vscode",
       "out",
       "markdown",
@@ -100,7 +102,7 @@ function createWindow() {
     isMaximized: true,
     center: true,
     frame: false, // frameless window
-    icon: path.join(__dirname, "..", "ui", "assets", "logos", "logo-500.png"),
+    icon: path.join(appDir, "ui", "assets", "logos", "logo-500.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -145,7 +147,7 @@ function createWindow() {
   // });
   // mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
-  const uiIndex = path.join(__dirname, '..', 'ui', 'dist', 'index.html');
+  const uiIndex = path.join(appDir, 'ui', 'dist', 'index.html');
   mainWindow.loadFile(uiIndex);
 
   // TODO: Drop-to-open workspace is disabled — buggy, not ready.
@@ -165,8 +167,7 @@ app.whenReady().then(() => {
   // Create System Tray Icon
   try {
     const iconPath = path.join(
-      __dirname,
-      "..",
+      appDir,
       "ui",
       "assets",
       "logos",
