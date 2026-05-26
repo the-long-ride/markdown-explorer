@@ -48,7 +48,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: mac
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -67,22 +73,36 @@ jobs:
 
       - name: Build Electron App
         run: npm run build:desktop
+        env:
+          # macOS: skip code signing for unsigned open-source builds.
+          # Set CSC_IDENTITY_AUTO_DISCOVERY=false so electron-builder doesn't
+          # fail when no Apple Developer certificate is present in the runner.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload Desktop Artifact (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform == 'windows'
         uses: actions/upload-artifact@v4
         with:
           name: desktop-app-windows
           path: desktop/dist/*.exe
 
       - name: Upload Desktop Artifact (Linux)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.platform == 'linux'
         uses: actions/upload-artifact@v4
         with:
           name: desktop-app-linux
           path: |
             desktop/dist/*.deb
             desktop/dist/*.AppImage
+
+      - name: Upload Desktop Artifact (macOS)
+        if: matrix.platform == 'mac'
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-app-macos
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
 
   publish-release:
     name: Create GitHub Release
@@ -105,6 +125,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: desktop-app-linux
+          path: ./release-artifacts
+
+      - name: Download macOS Desktop Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-app-macos
           path: ./release-artifacts
 
       - name: Create GitHub Release and Upload Assets

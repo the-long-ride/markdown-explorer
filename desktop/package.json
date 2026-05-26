@@ -54,6 +54,14 @@
       ],
       "category": "Utility",
       "icon": "../ui/assets/logos/logo-512.png"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "../ui/assets/logos/logo-512.png",
+      "category": "public.app-category.developer-tools"
     }
   }
 }
