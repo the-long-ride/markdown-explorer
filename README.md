@@ -1,136 +1,92 @@
 # Markdown Explorer 🚀
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/the-long-ride/vscode-extension-markdown-explorer/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE)
 [![VS Code Marketplace](https://img.shields.io/badge/VS%20Code%20Marketplace-Install-blueviolet.svg)](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer)
 
-Tired of reading raw Markdown files or dealing with plain, boring previews? **Markdown Explorer** transforms your markdown documents into a premium, interactive web-app experience right inside VS Code.
+Tired of reading raw Markdown or plain, boring previews? **Markdown Explorer** transforms your markdown files into a premium, interactive web-app experience. Use it directly inside VS Code or as a standalone desktop app.
 
-Whether you are managing complex project wikis, API documentation, or personal notebooks, Markdown Explorer gives you the power to navigate, search, inspect, and visualize your documents like never before.
-
----
-
-## 🔥 Features That Will Transform Your Workflow
-
-### 📁 1. Seamless Sidebar Navigation Tree
-
-Stop guessing where your files are. Markdown Explorer scans your workspace instantly to build a beautiful, interactive tree menu mapping your folders and documents. Expand folders and hop between files with zero friction.
-![Sidebar Navigation Tree](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/navigation-support.png)
+![Markdown Explorer Overview](https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-overview-desktop.png)
 
 ---
 
-### 🔍 2. Instant Global Search (`Ctrl+K`)
+## 🌟 Key Features
 
-Find any document in milliseconds. Hit `Ctrl+K` from anywhere in the preview to summon a lightning-fast search overlay. Type a query, see matched files immediately, and jump to them instantly.
-![Global Quick Search](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/quick-searching.png)
+### 📁 Sidebar Navigation Tree
+Instantly scans your workspace to build an interactive folder tree. Browse your documentation with ease.
+<img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/navigation-support.png" width="800" alt="Sidebar Navigation" />
 
----
+### 🔍 Instant Global Search (`Ctrl+K`)
+Find any document in milliseconds via a quick-search overlay.
+<img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/quick-searching.png" width="800" alt="Global Search" />
 
-### 📋 3. Excel-Style Interactive Data Tables
+### 📋 Interactive Tables & Charts
+- **Funnel Filters**: Filter columns by values instantly.
+- **Header Sorting**: Sort data ascending or descending.
+- **Charts**: Turn data tables into interactive Bar, Line, or Pie charts with one click.
+<p float="left">
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/datatable-reading-more-comfortable.png" width="49%" alt="Interactive Tables" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/see-datatable-as-common-chart-type.png" width="49%" alt="Charts Switcher" />
+</p>
 
-Say goodbye to horizontal-scrolling walls of text. Tables in Markdown Explorer are interactive powerhouses:
+### 🎨 High-Contrast Code Highlighting & Mermaid Diagrams
+- **Clean Syntax Styling**: Clear colors separating variables, properties, and types.
+- **Mermaid Vector SVG**: Native, offline rendering for workflows and diagrams.
+<p float="left">
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/support-code-block.png" width="49%" alt="Code Syntax Highlighting" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/mermaid-chart.png" width="49%" alt="Mermaid Chart" />
+</p>
 
-- **Frozen Headers**: Column headers stay pinned to the top as you scroll through large datasets.
-- **Smart funnel Filters**: Scans columns and auto-generates category filter dropdowns to isolate rows instantly.
-- **Quick Text Filtering**: Instantly search inside any table via the dedicated filter input.
-- **Header Sorting**: Click any header to sort alphanumeric series in ascending or descending order.
-  ![Interactive Data Tables](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/datatable-reading-more-comfortable.png)
+### 🖼️ Zoomable Backdrop Media Modal
+Zoom in/out with the mouse wheel and drag to pan across high-res graphics smoothly.
+<img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/image-modal.png" width="800" alt="Image Viewer" />
 
----
+### 🎛️ Isolated HTML Sandboxes & Custom MDX
+- Run HTML/CSS/JavaScript safely in isolated iframes.
+- Renders `.mdx` files with stateful custom elements like counters and tabs.
+<p float="left">
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/HTML-interactive_1.png" width="32%" alt="HTML Sandbox" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/HTML-interactive_2.png" width="32%" alt="Sandbox Script Execution" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/HTML-interactive_3.png" width="32%" alt="Toggle Source Code" />
+</p>
 
-### 📊 4. One-Click Table-to-Chart Switcher
+### 🖥️ Standalone Desktop App
+Explore workspaces offline without running VS Code. Manage your recently opened workspaces easily.
+<img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Desktop-app-workspace-selection.png" width="800" alt="Workspace Selection" />
 
-Numbers are better understood when visualized. Markdown Explorer automatically detects numeric columns and lets you instantly convert raw table data into beautiful, interactive **Bar**, **Line**, or **Doughnut/Pie** charts with a single click.
-![Data Table to Chart](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/see-datatable-as-common-chart-type.png)
-
----
-
-### 🎨 5. Pixel-Perfect Syntax Highlighting
-
-Readable code is happy code. Our syntax highlighter features high-contrast rendering in both dark and light modes:
-
-- **Separated Properties & Types**: Properties are highlighted in purple, while types (like `string` or `number`) use orange, eliminating color collision.
-- **Readable Comments**: Comments are styled in rich, high-contrast grays so they are fully legible in light mode.
-- **Nullable Keys Highlight**: Optional properties (e.g. `email?: string`) and keyword properties (`default?: string`) are highlighted as attributes.
-  ![Syntax Highlighting Overrides](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/support-code-block.png)
-
----
-
-### 👾 6. Native Mermaid Diagram Rendering
-
-Visualize workflows, sequence flows, and database architectures inside your docs. Write standard `mermaid` blocks and watch them render as crisp, vector SVG graphics.
-![Mermaid Diagram Rendering](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/mermaid-chart.png)
-
----
-
-### 🖼️ 7. Zoomable Backdrop Media Modal
-
-Inspect complex architectures or graphics in high definition. Click any image or diagram to open a gorgeous fullscreen modal with backdrop-blur. Zoom with your scroll wheel and drag to pan across high-res graphics seamlessly.
-![Zoomable Backdrop Modal](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/image-modal.png)
-
----
-
-### 🎛️ 8. Isolated HTML Live Previews & Sandbox
-
-Test and render web code directly inside your markdown notes. When you mark code blocks as `html`, Markdown Explorer embeds a secure, isolated `iframe` sandbox to execute JavaScript and styles in real-time.
-
-- **Dynamic Interactive Execution**: Supports custom CSS styling (`<style>`) and JavaScript scripts (`<script>`) executing safely in a sandbox.
-- **Instant Preview/Code Switch**: A dedicated header button lets you toggle between the live rendering and the raw highlighted source code in one click.
-- **Auto-Resizing Height**: The sandbox dynamically resizes to match the layout height of the inner content, preventing ugly inner scrollbars.
-
-![HTML Live Preview Mode](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/HTML-interactive_1.png)
-![HTML Live Preview Interactive Scripting](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/HTML-interactive_2.png)
-![HTML Source Code View](https://raw.githubusercontent.com/the-long-ride/vscode-extension-markdown-explorer/main/media/demo/HTML-interactive_3.png)
-
----
-
-### ⚛️ 9. Interactive MDX & Custom Components
-
-Write documentation that feels alive. Markdown Explorer fully renders `.mdx` files and supports custom interactive components:
-
-- **Strips Import/Export Declarations**: Cleans out React/JSX `import` and `export` statements automatically, leaving a clean, beautiful presentation layout.
-- **Embedded Stateful Components**: Native runtime support for built-in interactive components like `<InteractiveCounter />` for numeric tracking, `<ConfettiButton />` for particle explosions, and slot-based `<InteractiveTabs />` to organize data panels.
-- **Kebab-Case Transpilation**: Converts PascalCase component declarations dynamically into standard custom web elements under the hood.
+### ⌨️ Customizable Keyboard Shortcuts
+Configure and rebind keyboard triggers to match your own layout preferences.
+<img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/More-keyboard-shortcut.png" width="800" alt="Custom Keybindings" />
 
 ---
 
 ## 🚀 How to Get Started
 
-1. **Install the Extension**: Find us on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer) and click **Install**.
-2. **Launch Preview**: Press `Ctrl+Shift+M` (or `Cmd+Shift+M` on macOS, or click the preview magnifying glass icon in the title bar) to open the explorer.
-3. **Toggle the Viewer**: Press `Ctrl+Alt+V` (or `Cmd+Alt+V` on macOS) to toggle the Markdown Explorer view on any markdown file.
-4. **Toggle Sidebar**: Click the layout icon to hide/show the tree panel to focus on writing.
-5. **Enjoy Premium Docs**: Watch your standard text render into a premium documentation hub.
+### VS Code Extension:
+1. Search for **Markdown Explorer** on the Marketplace and click **Install**.
+2. Press `Ctrl+Shift+M` (or `Cmd+Shift+M` on macOS) to launch the workspace viewer.
+3. Toggle the view on any open markdown file using `Ctrl+Alt+V` (or `Cmd+Alt+V`).
+
+### Standalone Desktop App:
+- Download the portable `.exe` from the latest GitHub Release and run it. No installation needed.
 
 ---
 
-## 🔒 Privacy, Security & Offline-First
-
-Markdown Explorer is designed with strict privacy principles:
-- **100% Offline Use**: All markdown scanning, parsing, rendering, and search indexing are processed entirely on your local machine. No external servers or API requests are ever made.
-- **Zero Tracking**: We do not collect, store, or transmit any analytics, telemetry, usage statistics, or crash reports.
-- **No Third-Party Tracker Libraries**: No Google Analytics, no telemetry trackers, no 3rd-party analytic libraries are packaged or loaded in this extension.
-- **Independent**: Rest easy knowing your documentation and project code never leave your local workspace.
+## 🔒 100% Offline & Private
+- **Zero Telemetry**: We don't collect, track, or upload any analytics, usage metrics, or file content.
+- **100% Local**: All markdown parsing, indexing, and visualization are done entirely on your machine.
 
 ---
 
-### 🖥️ 10. Standalone Desktop App & CI Releases
-Markdown Explorer is also a standalone, zero-dependency desktop application! When you trigger a release, GitHub Actions automatically compiles both packages in parallel: builds the `.vsix` extension on Ubuntu and builds portable Windows executables on Windows, uploading both final assets together onto the tag-triggered release.
+## 🗺️ Roadmap
+* **🎨 Theme Customization**: Custom color presets for the app and viewer.
+* **🗂️ Multi-Tab Workspace**: Open and browse multiple folders in tabs.
+* **📥 Drag & Drop Opening**: Drop a folder or markdown file into the app window to inspect it instantly.
+* **🐧 Linux Client**: Native Linux builds for desktop environments.
 
 ---
 
-## 🗺️ Roadmap & Future Enhancements
-
-We are continuously working to make Markdown Explorer the ultimate documentation tool. Here is what is on our horizon:
-* **🎨 Theme Customization**: Customize theme for both desktop app and extension
-* **🗂️ Multi-Tab Workspace**: Desktop app: support multi tab for multi workspaces working at 1 time.
-
----
-
-## 🔗 Project Links & Contribution
-
-- **Marketplace Page**: [Install from Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer)
-- **GitHub Repository**: [github.com/the-long-ride/vscode-extension-markdown-explorer](https://github.com/the-long-ride/vscode-extension-markdown-explorer)
-- **Release Logs**: [CHANGELOG.md](https://github.com/the-long-ride/vscode-extension-markdown-explorer/blob/main/CHANGELOG.md)
-- **Development Guidelines**: [GUIDELINE.md](https://github.com/the-long-ride/vscode-extension-markdown-explorer/blob/main/GUIDELINE.md)
-- **MIT License**: [LICENSE](https://github.com/the-long-ride/vscode-extension-markdown-explorer/blob/main/LICENSE)
-
+## 🔗 Links
+- **VS Code Marketplace**: [Install Extension](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer)
+- **GitHub Repository**: [github.com/the-long-ride/markdown-explorer](https://github.com/the-long-ride/markdown-explorer)
+- **Release Logs**: [CHANGELOG.md](https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md)
+- **License**: [MIT](https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE)

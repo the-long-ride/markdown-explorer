@@ -29,6 +29,9 @@ Every agent modifying this repository must also follow these technical rules wit
   * `--txm` (metadata, placeholders, chevrons) must have a contrast ratio of $\ge 4.5:1$ on light backgrounds (current: `#666672`).
   * `--hl-cm` (code comments) must have a contrast ratio of $\ge 4.5:1$ on code blocks (current: `#5c6370`).
 * **Settings Close Tooltip**: Ensure settings Close (`×`) button in [SettingsModal.tsx](file:///f:/Extensions/markdown-explorer/ui/src/components/Settings/SettingsModal.tsx) implements `.tooltip-container` and displays `"Close Settings [Esc]"` below on hover.
+* **Modal Window Controls & Stacking**: The window controls/theme bar in `WorkspaceSelection.tsx` and `App.tsx` and the `.topbar` in `global.css` must have `z-index: 200000` to remain fully active and interactive above any modal backdrops (which have `z-index: 100000`).
+* **Floating Close Buttons**: Floating close buttons (like `.mdn-modal-close` in `MediaModal.tsx`) must be positioned at `top: calc(var(--topbar-h) + 12px)` to prevent clashing/overlapping with the window control buttons.
+* **Recent Workspaces List constraints**: The scrollable workspaces container in the search modal must show at most 5 items at the same time (using `max-height: 352px` and `overflow-y: auto`) and must explicitly set `overflow-x: hidden` to prevent a horizontal scrollbar.
 
 ---
 
