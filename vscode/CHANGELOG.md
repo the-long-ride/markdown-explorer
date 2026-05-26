@@ -4,6 +4,18 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.3.2] — 2026-05-26
+
+### Added Features & Enhancements
+
+#### 🐧 Linux Desktop Support
+- **Linux Packages**: Configured build packaging for Linux desktop clients to output both `.deb` installers and `.AppImage` packages.
+- **GitHub Actions Release Integration**: Configured `release.yml` with a build matrix strategy (`windows-latest`, `ubuntu-latest`) to build and upload Windows and Linux desktop binaries automatically to GitHub Releases.
+- **Debian Control Metadata**: Added necessary packaging fields (homepage, description, author email) in `desktop/package.json` to successfully build Debian-compliant `.deb` installers.
+- **VS Code Linux Debugging**: Verified and ensured that the local `Debug Desktop App` launcher target resolves and executes natively under Linux environments.
+
+---
+
 ## [1.3.1] — 2026-05-26
 
 ### Added Features & Enhancements
