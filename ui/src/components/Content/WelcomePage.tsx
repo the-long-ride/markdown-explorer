@@ -42,18 +42,18 @@ export function WelcomePage() {
           >
             the-long-ride
           </a>{' '}
-          · Repository:{' '}
+          with ❤️ · Repository:{' '}
           <a
-            href="https://github.com/the-long-ride/vscode-extension-markdown-explorer"
+            href="https://github.com/the-long-ride/markdown-explorer"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: 'var(--accent-text)', textDecoration: 'none', fontWeight: 600 }}
           >
-            vscode-extension-markdown-explorer
+            markdown-explorer
           </a>{' '}
           · License:{' '}
           <a
-            href="https://github.com/the-long-ride/vscode-extension-markdown-explorer/blob/main/LICENSE"
+            href="https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: 'var(--accent-text)', textDecoration: 'none', fontWeight: 600 }}

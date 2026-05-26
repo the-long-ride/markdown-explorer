@@ -61,12 +61,13 @@ export function Topbar({
           <div className="topbar__logo-subtitle">
             by{' '}
             <a
-              href="https://github.com/the-long-ride/vscode-extension-markdown-explorer"
+              href="https://github.com/the-long-ride/markdown-explorer"
               target="_blank"
               rel="noopener noreferrer"
             >
               the-long-ride
-            </a>
+            </a>{' '}
+            with ❤️
           </div>
         </div>
       </div>
