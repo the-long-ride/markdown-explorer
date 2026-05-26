@@ -17,15 +17,22 @@ import 'highlight.js/styles/github-dark.css';
 import './components/Content/InteractiveComponents';
 
 async function initLibs() {
-  const [{ default: hljs }, { default: mermaid }, chartModule] = await Promise.all([
+  const [{ default: hljs }, { default: mermaid }, chartModule, { default: zenuml }] = await Promise.all([
     import('highlight.js'),
     import('mermaid'),
     import('chart.js/auto'),
+    import('@mermaid-js/mermaid-zenuml'),
   ]);
 
   const { default: Chart } = chartModule;
   // Chart.js auto-registers all components, but let's keep the .register call to be compatible
   Chart.register();
+
+  try {
+    await mermaid.registerExternalDiagrams([zenuml]);
+  } catch (err) {
+    console.error('Failed to register ZenUML:', err);
+  }
 
   (window as any).hljs = hljs;
   (window as any).mermaid = mermaid;

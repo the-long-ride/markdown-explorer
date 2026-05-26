@@ -1,4 +1,13 @@
 /* ============================================================
+   Global Selection Rules
+   ============================================================ */
+html,
+body {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ============================================================
    Topbar
    ============================================================ */
 .topbar {
@@ -12,6 +21,8 @@
   flex-shrink: 0;
   z-index: 200000;
   box-shadow: var(--sh-sm);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .topbar__logo {
   display: flex;
@@ -138,6 +149,8 @@
   line-height: 1.4;
   border-radius: 6px;
   box-shadow: var(--sh-lg);
+  user-select: text;
+  -webkit-user-select: text;
 }
 .topbar__breadcrumb-part--bold {
   color: var(--tx) !important;
@@ -177,6 +190,8 @@ span.topbar__breadcrumb-part {
   transition: all 0.12s;
   outline: none;
   letter-spacing: 0.01em;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .btn:hover {
   background: var(--bg-h);
@@ -234,6 +249,8 @@ span.topbar__breadcrumb-part {
   font-family: var(--font-ui);
   width: 165px;
   height: 100%;
+  user-select: text;
+  -webkit-user-select: text;
 }
 .search-bar input::placeholder {
   color: var(--txm);
@@ -259,6 +276,8 @@ span.topbar__breadcrumb-part {
   overflow: hidden;
   flex-shrink: 0;
   transition: width 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .sidebar.is-collapsed {
   width: 0;
@@ -307,6 +326,8 @@ span.topbar__breadcrumb-part {
   outline: none;
   color: var(--tx);
   font-size: 11.5px;
+  user-select: text;
+  -webkit-user-select: text;
 }
 .sidebar__search input::placeholder {
   color: var(--txm);
@@ -373,6 +394,8 @@ span.topbar__breadcrumb-part {
   font-size: 11.5px;
   transition: all 0.1s;
   border: 1px solid transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .tree-file:hover {
   background: var(--bg-h);
@@ -401,6 +424,8 @@ span.topbar__breadcrumb-part {
   flex-shrink: 0;
   z-index: 10;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .sidebar-resize::after {
   content: '';
@@ -689,6 +714,9 @@ body.is-dragging-files .mdn-html-preview-iframe {
 .mdn-list-item {
   padding: 1px 0;
   line-height: 1.6;
+}
+.mdn-list-nested {
+  margin-top: 4px;
 }
 .mdn-task {
   display: flex;
@@ -1087,6 +1115,8 @@ pre code.hljs {
   margin: 0;
   font-size: inherit;
   font-weight: 600;
+  user-select: text;
+  -webkit-user-select: text;
 }
 .mdn-section--h1 .mdn-section-title {
   font-size: 1.4em;
@@ -2053,6 +2083,8 @@ body.is-electron .sidebar-resize {
   height: 28px !important;
   border-radius: 4px !important;
   opacity: 0.75;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .window-control-btn:hover {
   background: rgba(255, 255, 255, 0.08) !important;

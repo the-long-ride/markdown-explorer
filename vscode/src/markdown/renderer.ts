@@ -129,8 +129,10 @@ export class HtmlRenderer {
     const mermaidKeywords = [
       'graph', 'flowchart', 'sequenceDiagram', 'classDiagram', 'stateDiagram', 
       'stateDiagram-v2', 'erDiagram', 'journey', 'gantt', 'pie', 'quadrantChart', 
-      'xychart-beta', 'mindmap', 'timeline', 'gitGraph', 'c4Diagram', 'sankey-beta', 
-      'block', 'packet-beta', 'kanban', 'architecture', 'zenuml', 'requirementDiagram', 'info'
+      'xychart-beta', 'mindmap', 'timeline', 'gitGraph', 'sankey-beta', 
+      'block', 'block-beta', 'packet', 'packet-beta', 'kanban', 'architecture', 'architecture-beta', 
+      'zenuml', 'requirementDiagram', 'info',
+      'C4Context', 'C4Container', 'C4Component', 'C4Dynamic', 'C4Deployment'
     ];
     const isMermaid = lang.toLowerCase() === 'mermaid' ||
       ((!token.lang || token.lang.toLowerCase() === 'text') && mermaidKeywords.includes(firstWord));
@@ -417,8 +419,10 @@ ${token.content}
 
   private renderList(token: ListToken): string {
     const tag = token.ordered ? 'ol' : 'ul';
+    const startAttr = (token.ordered && token.start !== undefined && token.start !== 1) ? ` start="${token.start}"` : '';
     const cls = token.ordered ? 'mdn-list mdn-list--ol' : 'mdn-list';
     const items = token.items.map(item => {
+      const nestedContent = item.nestedMarkdown ? `<div class="mdn-list-nested">${this.renderNestedMarkdown(item.nestedMarkdown)}</div>` : '';
       if (item.isTask) {
         const checkedCls = item.checked ? ' is-checked' : '';
         const checkSvg = item.checked
@@ -426,11 +430,16 @@ ${token.content}
           : '';
         return `<li class="mdn-list-item mdn-task${checkedCls}">
   <span class="mdn-checkbox" aria-hidden="true">${checkSvg}</span>
-  <span>${renderInline(item.text, this.isMdx)}</span>
+  <span>${renderInline(item.text, this.isMdx)}${nestedContent}</span>
 </li>`;
       }
-      return `<li class="mdn-list-item">${renderInline(item.text, this.isMdx)}</li>`;
+      return `<li class="mdn-list-item">${renderInline(item.text, this.isMdx)}${nestedContent}</li>`;
     }).join('');
-    return `<${tag} class="${cls}">${items}</${tag}>`;
+    return `<${tag}${startAttr} class="${cls}">${items}</${tag}>`;
+  }
+
+  private renderNestedMarkdown(markdown: string): string {
+    const { tokens } = parse(markdown, this.isMdx);
+    return tokens.map(token => this.renderBlock(token)).join('\n');
   }
 }

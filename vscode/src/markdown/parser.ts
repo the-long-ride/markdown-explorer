@@ -41,11 +41,13 @@ export interface ListItem {
   text: string;
   isTask: boolean;
   checked: boolean;
+  nestedMarkdown?: string;
 }
 
 export interface ListToken {
   type: 'list';
   ordered: boolean;
+  start?: number;
   items: ListItem[];
 }
 
@@ -183,25 +185,69 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
       continue;
     }
 
-    // Ordered list
-    if (/^\d+[.)]\s/.test(line)) {
+    // List tokenizer (handles both ordered & unordered, supporting indentation and nested markdown)
+    const listMarker = getListMarker(line);
+    if (listMarker) {
+      const listType = listMarker.type;
+      const listStart = listMarker.start;
       const items: ListItem[] = [];
-      while (i < lines.length && /^\d+[.)]\s/.test(lines[i])) {
-        items.push(parseListItem(lines[i].replace(/^\d+[.)]\s/, '')));
-        i++;
+      
+      while (i < lines.length) {
+        const currentMarker = getListMarker(lines[i]);
+        if (currentMarker && currentMarker.type === listType) {
+          const item = parseListItem(currentMarker.text);
+          const nestedLines: string[] = [];
+          i++; // consume list marker line
+          
+          // Collect indented lines that belong to this list item
+          while (i < lines.length) {
+            const nextLine = lines[i];
+            if (nextLine.trim() === '') {
+              let peek = i + 1;
+              while (peek < lines.length && lines[peek].trim() === '') {
+                peek++;
+              }
+              if (peek < lines.length && /^\s{2,}/.test(lines[peek])) {
+                nestedLines.push('');
+                i = peek; // skip intermediate blank lines
+              } else {
+                break;
+              }
+            } else if (/^\s{2,}/.test(nextLine)) {
+              const stripCount = Math.min(nextLine.search(/\S/), currentMarker.markerLength);
+              nestedLines.push(nextLine.slice(stripCount));
+              i++;
+            } else {
+              break;
+            }
+          }
+          
+          if (nestedLines.length > 0) {
+            item.nestedMarkdown = nestedLines.join('\n');
+          }
+          items.push(item);
+        } else {
+          break;
+        }
+        
+        // Peek ahead to see if the next list item exists (possibly after some blank lines)
+        let peek = i;
+        while (peek < lines.length && lines[peek].trim() === '') {
+          peek++;
+        }
+        if (peek < lines.length) {
+          const nextMarker = getListMarker(lines[peek]);
+          if (nextMarker && nextMarker.type === listType) {
+            i = peek;
+          } else {
+            break;
+          }
+        } else {
+          break;
+        }
       }
-      tokens.push({ type: 'list', ordered: true, items });
-      continue;
-    }
-
-    // Unordered list
-    if (/^[-*+]\s/.test(line)) {
-      const items: ListItem[] = [];
-      while (i < lines.length && /^[-*+]\s/.test(lines[i])) {
-        items.push(parseListItem(lines[i].replace(/^[-*+]\s/, '')));
-        i++;
-      }
-      tokens.push({ type: 'list', ordered: false, items });
+      
+      tokens.push({ type: 'list', ordered: listType === 'ol', start: listStart, items });
       continue;
     }
 
@@ -210,7 +256,8 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     while (
       i < lines.length &&
       lines[i].trim() !== '' &&
-      !/^(#{1,6}\s|>|[-*+]\s|\d+[.)]\s|`{3,}|~{3,}|[-*_]{3,}$)/.test(lines[i])
+      !/^(#{1,6}\s|>|`{3,}|~{3,}|[-*_]{3,}$)/.test(lines[i]) &&
+      !getListMarker(lines[i])
     ) {
       paraLines.push(lines[i]);
       i++;
@@ -221,6 +268,37 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
   }
 
   return tokens;
+}
+
+// ── List marker helper ──────────────────────────────────────
+interface ListMarkerInfo {
+  type: 'ol' | 'ul';
+  start?: number;
+  markerLength: number;
+  text: string;
+}
+
+function getListMarker(line: string): ListMarkerInfo | null {
+  const match = /^(\s{0,3})(\d+[.)]|[-*+])\s+(.*)$/.exec(line);
+  if (!match) return null;
+  const indent = match[1];
+  const marker = match[2];
+  const text = match[3];
+
+  if (/^[-*+]$/.test(marker)) {
+    return {
+      type: 'ul',
+      markerLength: indent.length + marker.length + 1,
+      text
+    };
+  } else {
+    return {
+      type: 'ol',
+      start: parseInt(marker, 10),
+      markerLength: indent.length + marker.length + 1,
+      text
+    };
+  }
 }
 
 // ── Table parser ───────────────────────────────────────────
