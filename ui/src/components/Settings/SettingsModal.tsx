@@ -6,8 +6,10 @@ import { useState } from "react";
 import {
   useAppState,
   DEFAULT_KEYBINDINGS,
+  THEME_MODE_OPTIONS,
 } from "../../contexts/AppStateContext";
 import { TooltipButton } from "../shared/TooltipButton";
+import { ThemeStylePicker } from "./ThemeStylePicker";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,7 +21,7 @@ const ACTIONS_LIST = [
   { id: "forward", label: "Go to next file", scope: "both" },
   { id: "welcome", label: "Go to welcome page", scope: "both" },
   { id: "settings", label: "Toggle settings modal", scope: "both" },
-  { id: "toggleTheme", label: "Toggle light/dark theme", scope: "both" },
+  { id: "toggleTheme", label: "Toggle light/dark mode", scope: "both" },
   { id: "refresh", label: "Refresh current file", scope: "desktop" },
   { id: "collapseAll", label: "Collapse all headings", scope: "desktop" },
   { id: "expandAll", label: "Expand all headings", scope: "desktop" },
@@ -34,7 +36,7 @@ const ACTIONS_LIST = [
 ];
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { state, updateSettings } = useAppState();
+  const { state, setTheme, setThemeStyle, updateSettings } = useAppState();
   const [recordingAction, setRecordingAction] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -88,7 +90,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   return (
     <div
       id="settingsModal"
-      className="mdn-modal"
+      className="mdn-modal settings-modal"
       style={{ display: "flex" }}
       role="dialog"
       aria-modal="true"
@@ -97,8 +99,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       }}
     >
       <div
-        className="settings-card"
-        style={{ width: "760px", maxWidth: "95%" }}
+        className="settings-card settings-card--settings"
       >
         <TooltipButton
           className="settings-card__close"
@@ -119,6 +120,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         >
           {/* Left Column: Preferences */}
           <div
+            className="settings-card__column settings-card__column--preferences"
             style={{
               flex: 1,
               display: "flex",
@@ -134,12 +136,67 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 marginBottom: "4px",
               }}
             >
+              Appearance
+            </div>
+            <div className="settings-field">
+              <div className="settings-item__info">
+                <div className="settings-item__title">Color Mode</div>
+                <div className="settings-item__desc">
+                  Choose automatic, light, or dark rendering.
+                </div>
+              </div>
+              <div
+                className="segmented-control"
+                role="radiogroup"
+                aria-label="Color mode"
+              >
+                {THEME_MODE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`segmented-option${
+                      state.theme === option.id ? " is-active" : ""
+                    }`}
+                    aria-pressed={state.theme === option.id}
+                    onClick={() => setTheme(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div
+              className="settings-field"
+              style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
+            >
+              <div className="settings-item__info">
+                <div className="settings-item__title">Theme Style</div>
+                <div className="settings-item__desc">
+                  Pick the surface language for panels, spacing, and strokes.
+                </div>
+              </div>
+              <ThemeStylePicker
+                value={state.themeStyle}
+                onChange={setThemeStyle}
+              />
+            </div>
+
+            <div
+              style={{
+                fontWeight: 600,
+                fontSize: "13.5px",
+                color: "var(--tx)",
+                marginTop: "4px",
+                marginBottom: "-4px",
+              }}
+            >
               View Preferences
             </div>
             {/* Show Title */}
             <div
               className="settings-item"
-              style={{ border: "none", paddingTop: 0 }}
+              style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
             >
               <div className="settings-item__info">
                 <div className="settings-item__title">Sidebar File Labels</div>
@@ -195,6 +252,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           {/* Vertical Divider */}
           <div
+            className="settings-card__divider"
             style={{
               width: "1px",
               background: "var(--bd)",
@@ -203,23 +261,24 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           />
 
           {/* Right Column: Shortcuts Customizer */}
-          <div style={{ flex: 1.2, display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: "13.5px",
-                color: "var(--tx)",
-                marginBottom: "12px",
-              }}
-            >
-              Keyboard Shortcuts
+          <div
+            className="settings-card__column settings-card__column--shortcuts"
+            style={{ flex: 1.2, display: "flex", flexDirection: "column" }}
+          >
+            <div className="settings-shortcuts-header">
+              <div className="settings-shortcuts-title">
+                Keyboard Shortcuts
+              </div>
+              <div className="settings-shortcuts-hint">
+                Click a field and press your new keys.
+              </div>
             </div>
             <div
+              className="settings-shortcuts-list"
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
-                maxHeight: "360px",
                 overflowY: "auto",
                 paddingRight: "6px",
               }}
@@ -293,6 +352,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               })}
             </div>
             <div
+              className="settings-shortcuts-footer"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -301,25 +361,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               }}
             >
               <button
+                type="button"
+                className="settings-reset-shortcuts-btn"
                 onClick={() =>
                   updateSettings({ keybindings: DEFAULT_KEYBINDINGS })
                 }
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#6d5ef0",
-                  cursor: "pointer",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: 0,
-                  textDecoration: "underline",
-                }}
               >
                 Reset to Default Shortcuts
               </button>
-              <div style={{ fontSize: "10.5px", color: "var(--tx3)" }}>
-                Click a field and press your new keys.
-              </div>
             </div>
           </div>
         </div>

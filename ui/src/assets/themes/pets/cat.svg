@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Cat mascot">
+  <defs>
+    <linearGradient id="fur" x1="55" y1="37" x2="182" y2="206" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4a5065"/>
+      <stop offset="1" stop-color="#262b3a"/>
+    </linearGradient>
+    <linearGradient id="chest" x1="81" y1="125" x2="159" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5d647c"/>
+      <stop offset="1" stop-color="#3a4054"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="13" stdDeviation="11" flood-color="#0f172a" flood-opacity=".26"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)" stroke="#151a28" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M177 164c26-10 34-41 17-60-9-10-24-12-33-1 20 4 25 28 9 42-12 11-28 7-36-5" fill="none" stroke="#7dd3fc" stroke-width="12"/>
+    <path d="M67 96 44 32l63 41Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M173 96 196 32l-63 41Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M54 106c7-53 125-53 132 0 7 55-21 96-66 96s-73-41-66-96Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M65 88 55 52l32 25Z" fill="#f0a9b8" opacity=".82" stroke-width="0"/>
+    <path d="M175 88 185 52l-32 25Z" fill="#f0a9b8" opacity=".82" stroke-width="0"/>
+    <ellipse cx="120" cy="146" rx="43" ry="33" fill="url(#chest)" stroke-width="0"/>
+    <path d="M86 119c7 8 21 8 28 0M126 119c7 8 21 8 28 0" fill="none" stroke="#f8fafc" stroke-width="6"/>
+    <path d="M112 146h16l-8 10Z" fill="#f8fafc" stroke-width="0"/>
+    <path d="M103 164c9 8 25 8 34 0" fill="none" stroke="#f8fafc" stroke-width="5"/>
+    <path d="M83 148H42M84 162H46M157 148h41M156 162h38" fill="none" stroke="#f8fafc" stroke-width="5"/>
+    <circle cx="84" cy="140" r="9" fill="#f9a8d4" opacity=".45" stroke-width="0"/>
+    <circle cx="156" cy="140" r="9" fill="#f9a8d4" opacity=".45" stroke-width="0"/>
+  </g>
+  <g fill="#7dd3fc" opacity=".82">
+    <circle cx="42" cy="184" r="6"/>
+    <circle cx="203" cy="58" r="4"/>
+  </g>
+</svg>

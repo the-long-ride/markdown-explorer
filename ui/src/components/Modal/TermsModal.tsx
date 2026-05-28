@@ -71,7 +71,7 @@ export function TermsModal({ isOpen, onAgree }: TermsModalProps) {
             alt="Markdown Explorer Logo"
             style={{
               marginBottom: "12px",
-              filter: "drop-shadow(0 4px 12px rgba(139, 124, 248, 0.2))",
+              filter: "drop-shadow(0 4px 12px var(--accent-dim))",
             }}
           />
           <h2
@@ -280,7 +280,7 @@ export function TermsModal({ isOpen, onAgree }: TermsModalProps) {
               border: "none",
               color: checked ? "#ffffff" : "var(--txm)",
               boxShadow: checked
-                ? "0 4px 12px rgba(139, 124, 248, 0.25)"
+                ? "0 4px 12px var(--accent-dim)"
                 : "none",
               transition: "all 0.15s ease",
               textAlign: "center",

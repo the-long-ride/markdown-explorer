@@ -18,6 +18,8 @@ import type {
   TocEntry,
   Frontmatter,
   ThemeMode,
+  ThemeStyle,
+  PetThemeStyle,
   AppSettings,
   PersistedState,
   RenderContentMessage,
@@ -35,6 +37,12 @@ interface AppState {
   currentFile: string | null;
   /** Current theme */
   theme: ThemeMode;
+  /** Whether the user or persisted state explicitly supplied a color mode */
+  hasThemePreference: boolean;
+  /** Current visual theme style */
+  themeStyle: ThemeStyle;
+  /** Whether the user or persisted state explicitly supplied a theme style */
+  hasThemeStylePreference: boolean;
   /** Expand sections by default */
   defaultExpanded: boolean;
   /** Workspace name */
@@ -78,11 +86,102 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   zoomOut: 'Ctrl+-',
 };
 
+export const THEME_MODE_OPTIONS: readonly { id: ThemeMode; label: string }[] = [
+  { id: 'auto', label: 'Auto' },
+  { id: 'light', label: 'Light' },
+  { id: 'dark', label: 'Dark' },
+];
+
+export const THEME_STYLE_OPTIONS: readonly {
+  id: Exclude<ThemeStyle, PetThemeStyle>;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: 'default',
+    label: 'Default',
+    description: 'Compact reader surfaces with the original Markdown Explorer balance.',
+  },
+  {
+    id: 'glass',
+    label: 'Evolved Glass',
+    description: 'Layered translucent panels, softer strokes, and airy document rhythm.',
+  },
+  {
+    id: 'bento',
+    label: 'Bento Grids',
+    description: 'Modular blocks, stronger structure, and denser scan-friendly spacing.',
+  },
+];
+
+export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-shiba';
+
+export const PET_THEME_STYLE_OPTIONS: readonly {
+  id: PetThemeStyle;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: 'pet-white-shiba',
+    label: 'White Shiba',
+    description: 'Snowy fur, warm ears, and a calm little desk buddy.',
+  },
+  {
+    id: 'pet-shiba',
+    label: 'Normal Shiba',
+    description: 'Toasted orange, curled-tail energy with cheerful paw trails.',
+  },
+  {
+    id: 'pet-shiba-memes',
+    label: 'K-Ink (this is my dog =]])',
+    description: 'A black Vietnamese dog theme with inky fur, bright eyes, and loyal desk-buddy energy.',
+  },
+  {
+    id: 'pet-cat',
+    label: 'Cat',
+    description: 'Soft midnight whiskers, fish-bone marks, and nimble motion.',
+  },
+  {
+    id: 'pet-hamster',
+    label: 'Hamster',
+    description: 'Seed colors, round cheeks, and a pocket-sized reading rhythm.',
+  },
+  {
+    id: 'pet-corgi',
+    label: 'Corgi',
+    description: 'Golden loaf shapes, sky notes, and a wagging workspace mood.',
+  },
+];
+
+export const ALL_THEME_STYLE_OPTIONS = [
+  ...THEME_STYLE_OPTIONS,
+  ...PET_THEME_STYLE_OPTIONS,
+] as const;
+
+export function isPetThemeStyle(value: ThemeStyle): value is PetThemeStyle {
+  return PET_THEME_STYLE_OPTIONS.some((option) => option.id === value);
+}
+
+function normalizeThemeMode(value: unknown): ThemeMode {
+  return THEME_MODE_OPTIONS.some((option) => option.id === value)
+    ? (value as ThemeMode)
+    : 'auto';
+}
+
+function normalizeThemeStyle(value: unknown): ThemeStyle {
+  return ALL_THEME_STYLE_OPTIONS.some((option) => option.id === value)
+    ? (value as ThemeStyle)
+    : 'default';
+}
+
 const initialState: AppState = {
   fileList: [],
   tree: null,
   currentFile: null,
   theme: 'auto',
+  hasThemePreference: false,
+  themeStyle: 'default',
+  hasThemeStylePreference: false,
   defaultExpanded: true,
   workspaceName: '',
   sidebarCollapsed: false,
@@ -106,6 +205,7 @@ type Action =
       fileList: MdFile[];
       tree: FolderNode | null;
       theme: ThemeMode;
+      themeStyle: ThemeStyle;
       defaultExpanded: boolean;
       workspaceName: string;
       recentWorkspaces?: readonly RecentWorkspace[];
@@ -115,6 +215,7 @@ type Action =
   | { type: 'SET_LOADING' }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'SET_THEME'; theme: ThemeMode }
+  | { type: 'SET_THEME_STYLE'; themeStyle: ThemeStyle }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean };
 
@@ -125,7 +226,8 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         fileList: action.fileList,
         tree: action.tree,
-        theme: state.theme !== 'auto' ? state.theme : action.theme,
+        theme: state.hasThemePreference ? state.theme : action.theme,
+        themeStyle: state.hasThemeStylePreference ? state.themeStyle : action.themeStyle,
         defaultExpanded: action.defaultExpanded,
         workspaceName: action.workspaceName,
         recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
@@ -156,7 +258,14 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed };
 
     case 'SET_THEME':
-      return { ...state, theme: action.theme };
+      return { ...state, theme: action.theme, hasThemePreference: true };
+
+    case 'SET_THEME_STYLE':
+      return {
+        ...state,
+        themeStyle: action.themeStyle,
+        hasThemeStylePreference: true,
+      };
 
     case 'UPDATE_SETTINGS':
       return {
@@ -184,6 +293,8 @@ interface AppStateContextValue {
   openInEditor: () => void;
   refresh: () => void;
   toggleTheme: () => void;
+  setTheme: (theme: ThemeMode) => void;
+  setThemeStyle: (themeStyle: ThemeStyle) => void;
   toggleSidebar: () => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }
@@ -207,7 +318,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         },
       });
       if (saved.theme) {
-        dispatch({ type: 'SET_THEME', theme: saved.theme });
+        dispatch({ type: 'SET_THEME', theme: normalizeThemeMode(saved.theme) });
+      }
+      if (saved.themeStyle) {
+        dispatch({
+          type: 'SET_THEME_STYLE',
+          themeStyle: normalizeThemeStyle(saved.themeStyle),
+        });
       }
     }
   }, [bridge]);
@@ -217,13 +334,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const unsub = bridge.onMessage((msg) => {
       switch (msg.command) {
         case 'readyAck':
-          // Check if there is a saved theme in state (since mount useEffect runs first)
-          const savedTheme = bridge.getState<PersistedState>()?.theme;
+          // Check saved appearance state because mount effects can race host ready.
+          const savedAppearance = bridge.getState<PersistedState>();
           dispatch({
             type: 'READY_ACK',
             fileList: msg.fileList,
             tree: msg.tree,
-            theme: savedTheme || (msg.theme as ThemeMode) || 'auto',
+            theme: normalizeThemeMode(savedAppearance?.theme ?? msg.theme),
+            themeStyle: normalizeThemeStyle(savedAppearance?.themeStyle ?? msg.themeStyle),
             defaultExpanded: msg.defaultExpanded,
             workspaceName: msg.workspaceName,
             recentWorkspaces: msg.recentWorkspaces,
@@ -252,7 +370,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   // Sync theme to document
   useEffect(() => {
     document.documentElement.dataset.theme = state.theme;
-  }, [state.theme]);
+    document.documentElement.dataset.themeStyle = state.themeStyle;
+  }, [state.theme, state.themeStyle]);
 
   // Persist settings on change
   useEffect(() => {
@@ -261,8 +380,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
       keybindings: state.settings.keybindings,
       theme: state.theme,
+      themeStyle: state.themeStyle,
     });
-  }, [bridge, state.settings, state.theme]);
+  }, [bridge, state.settings, state.theme, state.themeStyle]);
 
   // Actions
   const navigate = useCallback(
@@ -287,7 +407,30 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const next: ThemeMode =
       state.theme === 'dark' || state.theme === 'auto' ? 'light' : 'dark';
     dispatch({ type: 'SET_THEME', theme: next });
-  }, [state.theme]);
+    bridge.postMessage({
+      command: 'updateAppearance',
+      theme: next,
+      themeStyle: state.themeStyle,
+    });
+  }, [bridge, state.theme, state.themeStyle]);
+
+  const setTheme = useCallback((theme: ThemeMode) => {
+    dispatch({ type: 'SET_THEME', theme });
+    bridge.postMessage({
+      command: 'updateAppearance',
+      theme,
+      themeStyle: state.themeStyle,
+    });
+  }, [bridge, state.themeStyle]);
+
+  const setThemeStyle = useCallback((themeStyle: ThemeStyle) => {
+    dispatch({ type: 'SET_THEME_STYLE', themeStyle });
+    bridge.postMessage({
+      command: 'updateAppearance',
+      theme: state.theme,
+      themeStyle,
+    });
+  }, [bridge, state.theme]);
 
   const toggleSidebar = useCallback(() => {
     dispatch({ type: 'TOGGLE_SIDEBAR' });
@@ -305,10 +448,22 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       openInEditor,
       refresh,
       toggleTheme,
+      setTheme,
+      setThemeStyle,
       toggleSidebar,
       updateSettings,
     }),
-    [state, navigate, openInEditor, refresh, toggleTheme, toggleSidebar, updateSettings],
+    [
+      state,
+      navigate,
+      openInEditor,
+      refresh,
+      toggleTheme,
+      setTheme,
+      setThemeStyle,
+      toggleSidebar,
+      updateSettings,
+    ],
   );
 
   return (

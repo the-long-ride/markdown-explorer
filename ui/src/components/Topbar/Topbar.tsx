@@ -202,6 +202,7 @@ export function Topbar({
               fileList: [],
               tree: null,
               theme: state.theme,
+              themeStyle: state.themeStyle,
               defaultExpanded: state.defaultExpanded,
               workspaceName: '',
               recentWorkspaces: state.recentWorkspaces
@@ -291,7 +292,7 @@ export function Topbar({
         <TooltipButton
           className="btn btn--icon"
           onClick={toggleTheme}
-          tooltip="Toggle Theme"
+          tooltip="Toggle light/dark mode"
           icon={isDark ? <SunIcon /> : <MoonIcon />}
         />
         <TooltipButton

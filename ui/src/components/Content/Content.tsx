@@ -285,6 +285,7 @@ export function Content({ onImageClick, scrollRef }: ContentProps) {
   }, [
     state.renderVersion,
     state.theme,
+    state.themeStyle,
     state.isLoading,
     state.notFoundHref,
     onImageClick,

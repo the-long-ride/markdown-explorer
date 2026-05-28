@@ -14,6 +14,7 @@ import { SearchOverlay } from './components/Search/SearchOverlay';
 import { MediaModal } from './components/Modal/MediaModal';
 import { SettingsModal } from './components/Settings/SettingsModal';
 import { TermsModal } from './components/Modal/TermsModal';
+import { ThemeOnboardingModal } from './components/Modal/ThemeOnboardingModal';
 import { TooltipButton } from './components/shared/TooltipButton';
 import { ChevronUpIcon } from './components/shared/icons';
 import { useKeyboard } from './hooks/useKeyboard';
@@ -113,11 +114,29 @@ export function App() {
     if (!isElectron) return true;
     return localStorage.getItem('markdown-explorer-terms-accepted') === 'true';
   });
+  const [themeOnboardingComplete, setThemeOnboardingComplete] = useState(() => {
+    try {
+      return localStorage.getItem('markdown-explorer-theme-onboarding-complete') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const handleAgreeTerms = useCallback(() => {
     localStorage.setItem('markdown-explorer-terms-accepted', 'true');
     setTermsAccepted(true);
   }, []);
+
+  const handleThemeOnboardingComplete = useCallback(() => {
+    try {
+      localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    } catch {
+      // Ignore storage failures; the user can still continue.
+    }
+    setThemeOnboardingComplete(true);
+  }, []);
+
+  const themeOnboardingOpen = termsAccepted && !themeOnboardingComplete;
 
   // Initialize sidebar width from localStorage
   useEffect(() => {
@@ -127,8 +146,25 @@ export function App() {
     }
   }, []);
 
+  // Initialize TOC width from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('markdown-explorer-toc-width');
+    if (stored) {
+      document.documentElement.style.setProperty('--toc-width', `${stored}px`);
+    }
+  }, []);
+
   // Sidebar resize handle
   useResize('sidebarResize', 'sidebar', state.workspaceName);
+
+  // Table of contents resize handle
+  useResize('tocResize', 'tocPanel', `${state.workspaceName}:${state.toc.length}`, {
+    min: 180,
+    max: 360,
+    cssVar: '--toc-width',
+    storageKey: 'markdown-explorer-toc-width',
+    direction: 'rtl',
+  });
 
   // Expand / Collapse all sections
   const expandAll = useCallback(() => {
@@ -154,7 +190,7 @@ export function App() {
     isSearchOpen: searchOpen,
     isSettingsOpen: settingsOpen,
     isModalOpen: modalOpen,
-    isTermsOpen: !termsAccepted,
+    isTermsOpen: !termsAccepted || themeOnboardingOpen,
   });
 
 
@@ -182,7 +218,7 @@ export function App() {
             <TooltipButton
               className="btn btn--icon window-control-btn"
               onClick={toggleTheme}
-              tooltip="Toggle Theme"
+              tooltip="Toggle light/dark mode"
               icon={
                 state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -249,19 +285,31 @@ export function App() {
           <div className="body">
             <Sidebar />
             <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
-            <div style={{ position: 'relative', display: 'flex', flex: 1, overflow: 'hidden' }}>
-              <Content onImageClick={onImageClick} scrollRef={scrollRef} />
-              {/* Scroll to top button */}
-              <TooltipButton
-                className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}`}
-                onClick={scrollToTop}
-                tooltip="Scroll to Top"
-                tooltipPos="above"
-                tooltipAlign="right"
-                icon={<ChevronUpIcon />}
-              />
+            <div className="content-shell">
+              {state.toc.length > 0 && state.currentFile && (
+                <div className="toc-compact-bar">
+                  <TableOfContents variant="compact" />
+                </div>
+              )}
+              <div className="content-shell__main">
+                <Content onImageClick={onImageClick} scrollRef={scrollRef} />
+                {/* Scroll to top button */}
+                <TooltipButton
+                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}`}
+                  onClick={scrollToTop}
+                  tooltip="Scroll to Top"
+                  tooltipPos="above"
+                  tooltipAlign="right"
+                  icon={<ChevronUpIcon />}
+                />
+              </div>
             </div>
-            <TableOfContents />
+            {state.toc.length > 0 && (
+              <>
+                <div className="toc-resize" id="tocResize" role="separator" aria-label="Resize table of contents" />
+                <TableOfContents variant="panel" />
+              </>
+            )}
           </div>
         </>
       )}
@@ -270,6 +318,10 @@ export function App() {
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <MediaModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setModalTarget(null); }} clickedElement={modalTarget} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ThemeOnboardingModal
+        isOpen={themeOnboardingOpen}
+        onComplete={handleThemeOnboardingComplete}
+      />
 
       {/* TODO: Drop-to-open workspace is disabled — buggy, not ready. */}
       {/* {isDragging && (
@@ -716,10 +768,12 @@ function initGlobalHandlers() {
     }
   };
 
-  win.Table.getChartColors = (count: number, isDark: boolean) => {
-    const baseColors = isDark 
-      ? ['#8b7cf8', '#34d399', '#f87171', '#60a5fa', '#fbbf24', '#ec4899', '#a855f7', '#14b8a6']
-      : ['#6d5ef0', '#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#db2777', '#8b5cf6', '#0d9488'];
+  win.Table.getChartColors = (count: number) => {
+    const styles = getComputedStyle(document.documentElement);
+    const baseColors = Array.from({ length: 8 }, (_, idx) => {
+      const token = styles.getPropertyValue(`--chart-${idx + 1}`).trim();
+      return token || ['#8b7cf8', '#34d399', '#f87171', '#60a5fa', '#fbbf24', '#ec4899', '#a855f7', '#14b8a6'][idx];
+    });
     const result = [];
     for (let i = 0; i < count; i++) {
       result.push(baseColors[i % baseColors.length]);
@@ -766,10 +820,8 @@ function initGlobalHandlers() {
       return text.length > 25 ? text.slice(0, 22) + '...' : text;
     });
 
-    const isDark = document.documentElement.dataset.theme === 'dark' || 
-      (document.documentElement.dataset.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     const styles = getComputedStyle(document.documentElement);
-    const colors = win.Table.getChartColors(state.dataColIdxs.length, isDark);
+    const colors = win.Table.getChartColors(state.dataColIdxs.length);
 
     const datasets = state.dataColIdxs.map((colIdx: number, dsIdx: number) => {
       const headerText = table.querySelectorAll('thead th')[colIdx]?.querySelector('.mdn-th-text')?.textContent?.trim() ?? `Series ${dsIdx + 1}`;
@@ -782,7 +834,7 @@ function initGlobalHandlers() {
       const color = colors[dsIdx];
 
       if (viewType === 'pie') {
-        const pieColors = win.Table.getChartColors(data.length, isDark);
+        const pieColors = win.Table.getChartColors(data.length);
         return {
           label: headerText,
           data: data,

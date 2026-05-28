@@ -74,6 +74,27 @@ export function useKeyboard({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (isElectron) {
+        const isZoomIn =
+          matchesShortcut(e, keybindings.zoomIn) ||
+          ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=' || e.key === 'Add'));
+        const isZoomOut =
+          matchesShortcut(e, keybindings.zoomOut) ||
+          ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_' || e.key === 'Subtract'));
+
+        if (isZoomIn) {
+          e.preventDefault();
+          bridge.postMessage({ command: 'zoom-in' });
+          return;
+        }
+
+        if (isZoomOut) {
+          e.preventDefault();
+          bridge.postMessage({ command: 'zoom-out' });
+          return;
+        }
+      }
+
       if (isTermsOpen) {
         return;
       }
@@ -147,20 +168,6 @@ export function useKeyboard({
 
       // Desktop specific keybindings
       if (isElectron) {
-        // Zoom in (Desktop)
-        if (matchesShortcut(e, keybindings.zoomIn) || ((e.ctrlKey || e.metaKey) && e.key === '+')) {
-          e.preventDefault();
-          bridge.postMessage({ command: 'zoom-in' });
-          return;
-        }
-
-        // Zoom out (Desktop)
-        if (matchesShortcut(e, keybindings.zoomOut)) {
-          e.preventDefault();
-          bridge.postMessage({ command: 'zoom-out' });
-          return;
-        }
-
         // 8. Refresh (Desktop)
         if (matchesShortcut(e, keybindings.refresh)) {
           e.preventDefault();
@@ -211,7 +218,6 @@ export function useKeyboard({
     };
 
     const wheelHandler = (e: WheelEvent) => {
-      if (isTermsOpen || isModalOpen) return;
       if (e.ctrlKey) {
         e.preventDefault();
         if (e.deltaY < 0) {

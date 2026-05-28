@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Shiba mascot">
+  <defs>
+    <linearGradient id="fur" x1="52" y1="34" x2="184" y2="202" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f2a64d"/>
+      <stop offset="1" stop-color="#cf692e"/>
+    </linearGradient>
+    <linearGradient id="cream" x1="80" y1="106" x2="154" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff0cf"/>
+      <stop offset="1" stop-color="#ffd29c"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#6b3515" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)" stroke="#5a351f" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M170 155c29-3 42-26 31-47-7-13-23-19-35-9 19 5 21 31 3 40-14 7-27-1-31-13" fill="none" stroke="#d97834" stroke-width="15"/>
+    <path d="M66 96 42 32l63 40Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M174 96 198 32l-63 40Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M74 88c12-44 80-51 92-1 24 15 35 42 27 72-9 35-39 52-73 52s-64-17-73-52c-8-30 3-56 27-71Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M62 47 91 76 76 97Z" fill="#ffcf95" stroke-width="0"/>
+    <path d="M178 47 149 76 164 97Z" fill="#ffcf95" stroke-width="0"/>
+    <path d="M77 128c9-33 77-33 86 0 8 33-10 58-43 58s-51-25-43-58Z" fill="url(#cream)" stroke-width="0"/>
+    <path d="M88 97c6-6 16-7 24-2M128 95c8-5 18-4 24 2" fill="none" stroke="#8f4c28" stroke-width="4" opacity=".45"/>
+    <circle cx="92" cy="122" r="8" fill="#3c2418" stroke-width="0"/>
+    <circle cx="148" cy="122" r="8" fill="#3c2418" stroke-width="0"/>
+    <circle cx="95" cy="119" r="2.4" fill="#fff8ee" stroke-width="0"/>
+    <circle cx="151" cy="119" r="2.4" fill="#fff8ee" stroke-width="0"/>
+    <path d="M113 145h14l-7 9Z" fill="#3c2418" stroke-width="0"/>
+    <path d="M100 162c11 11 29 11 40 0" fill="none" stroke="#3c2418" stroke-width="5"/>
+    <circle cx="79" cy="147" r="10" fill="#f9a8a1" opacity=".58" stroke-width="0"/>
+    <circle cx="161" cy="147" r="10" fill="#f9a8a1" opacity=".58" stroke-width="0"/>
+    <path d="M83 198c22 14 52 14 74 0" fill="none" stroke="#b65d28" stroke-width="10"/>
+    <path d="M75 189c10 13 24 20 45 20s35-7 45-20" fill="none" stroke="#ffd29c" stroke-width="8" opacity=".75"/>
+  </g>
+  <g fill="#ffd166" opacity=".78">
+    <circle cx="42" cy="176" r="5"/>
+    <circle cx="199" cy="162" r="4"/>
+    <circle cx="180" cy="55" r="3"/>
+  </g>
+</svg>

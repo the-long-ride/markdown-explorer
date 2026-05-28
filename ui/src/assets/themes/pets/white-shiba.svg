@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="White shiba mascot">
+  <defs>
+    <linearGradient id="fur" x1="58" y1="30" x2="178" y2="205" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fffaf0"/>
+      <stop offset=".62" stop-color="#fff1d8"/>
+      <stop offset="1" stop-color="#f0cfaa"/>
+    </linearGradient>
+    <linearGradient id="muzzle" x1="78" y1="110" x2="162" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ffe9cf"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#7d5a37" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)" stroke="#735235" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M169 154c30-3 43-26 32-47-7-13-23-19-35-9 19 5 21 31 3 40-14 7-27-1-31-13" fill="none" stroke="#f0d0aa" stroke-width="15"/>
+    <path d="M66 96 43 33l62 40Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M174 96 197 33l-62 40Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M74 88c12-44 80-51 92-1 24 15 35 42 27 72-9 35-39 52-73 52s-64-17-73-52c-8-30 3-56 27-71Z" fill="url(#fur)" stroke-width="6"/>
+    <path d="M63 48 91 76 76 97Z" fill="#ffe1bd" stroke-width="0"/>
+    <path d="M177 48 149 76 164 97Z" fill="#ffe1bd" stroke-width="0"/>
+    <path d="M77 128c9-33 77-33 86 0 8 33-10 58-43 58s-51-25-43-58Z" fill="url(#muzzle)" stroke-width="0"/>
+    <path d="M88 98c6-6 16-7 24-2M128 96c8-5 18-4 24 2" fill="none" stroke="#c28a55" stroke-width="4" opacity=".45"/>
+    <circle cx="92" cy="122" r="8" fill="#4a3120" stroke-width="0"/>
+    <circle cx="148" cy="122" r="8" fill="#4a3120" stroke-width="0"/>
+    <circle cx="95" cy="119" r="2.4" fill="#fffaf5" stroke-width="0"/>
+    <circle cx="151" cy="119" r="2.4" fill="#fffaf5" stroke-width="0"/>
+    <path d="M113 145h14l-7 9Z" fill="#4a3120" stroke-width="0"/>
+    <path d="M100 162c11 11 29 11 40 0" fill="none" stroke="#4a3120" stroke-width="5"/>
+    <circle cx="79" cy="147" r="10" fill="#f8aca5" opacity=".52" stroke-width="0"/>
+    <circle cx="161" cy="147" r="10" fill="#f8aca5" opacity=".52" stroke-width="0"/>
+    <path d="M83 198c22 14 52 14 74 0" fill="none" stroke="#ddb88f" stroke-width="10"/>
+    <path d="M75 189c10 13 24 20 45 20s35-7 45-20" fill="none" stroke="#ffffff" stroke-width="8" opacity=".68"/>
+  </g>
+  <g fill="#e7a95e" opacity=".7">
+    <circle cx="42" cy="176" r="5"/>
+    <circle cx="199" cy="162" r="4"/>
+    <circle cx="180" cy="55" r="3"/>
+    <circle cx="49" cy="58" r="3"/>
+  </g>
+</svg>

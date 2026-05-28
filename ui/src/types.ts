@@ -54,6 +54,7 @@ export interface ReadyAckMessage {
   readonly fileList: MdFile[];
   readonly tree: FolderNode | null;
   readonly theme: string;
+  readonly themeStyle?: string;
   readonly defaultExpanded: boolean;
   readonly workspaceName: string;
   readonly recentWorkspaces?: readonly RecentWorkspace[];
@@ -140,6 +141,12 @@ export interface ZoomOutMessage {
   readonly command: 'zoom-out';
 }
 
+export interface UpdateAppearanceMessage {
+  readonly command: 'updateAppearance';
+  readonly theme: ThemeMode;
+  readonly themeStyle: ThemeStyle;
+}
+
 
 
 export type WebviewMessage =
@@ -156,11 +163,21 @@ export type WebviewMessage =
   | CloseWorkspaceMessage
   | DeleteRecentWorkspaceMessage
   | ZoomInMessage
-  | ZoomOutMessage;
+  | ZoomOutMessage
+  | UpdateAppearanceMessage;
 
 // ── UI state ────────────────────────────────────────────────────────────────
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
+export type PetThemeStyle =
+  | 'pet-white-shiba'
+  | 'pet-shiba'
+  | 'pet-shiba-memes'
+  | 'pet-cat'
+  | 'pet-hamster'
+  | 'pet-corgi';
+
+export type ThemeStyle = 'default' | 'glass' | 'bento' | PetThemeStyle;
 
 export interface AppSettings {
   showTitle: boolean;
@@ -173,4 +190,5 @@ export interface PersistedState {
   defaultHtmlPreview?: boolean;
   keybindings?: Record<string, string>;
   theme?: ThemeMode;
+  themeStyle?: ThemeStyle;
 }

@@ -107,7 +107,7 @@ class InteractiveTabs extends HTMLElement {
         .tabs-header {
           display: flex;
           gap: 4px;
-          border-bottom: 1px solid var(--bd-s, #ccc);
+          border-bottom: var(--stroke-w, 1px) solid var(--bd-s, #ccc);
           padding-bottom: 4px;
           margin-bottom: 12px;
         }

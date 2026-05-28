@@ -1,20 +1,40 @@
 // =============================================================================
-// hooks/useResize.ts — Sidebar resize handle
+// hooks/useResize.ts — Resizable panel handle
 // =============================================================================
 
 import { useEffect } from 'react';
 
-export function useResize(handleId: string, targetId: string, trigger?: any) {
+interface ResizeOptions {
+  min?: number;
+  max?: number;
+  cssVar?: string;
+  storageKey?: string;
+  direction?: 'ltr' | 'rtl';
+}
+
+export function useResize(
+  handleId: string,
+  targetId: string,
+  trigger?: any,
+  options: ResizeOptions = {},
+) {
   useEffect(() => {
     const handle = document.getElementById(handleId);
     const target = document.getElementById(targetId);
     if (!handle || !target) return;
+
+    const min = options.min ?? 180;
+    const max = options.max ?? 480;
+    const cssVar = options.cssVar ?? '--sidebar-width';
+    const storageKey = options.storageKey ?? 'markdown-explorer-sidebar-width';
+    const direction = options.direction ?? 'ltr';
 
     let dragging = false;
     let startX = 0;
     let startW = 0;
 
     const onDown = (e: MouseEvent) => {
+      e.preventDefault();
       dragging = true;
       startX = e.clientX;
       startW = target.offsetWidth;
@@ -25,9 +45,11 @@ export function useResize(handleId: string, targetId: string, trigger?: any) {
 
     const onMove = (e: MouseEvent) => {
       if (!dragging) return;
-      const newWidth = Math.max(180, Math.min(480, startW + e.clientX - startX));
-      document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`);
-      localStorage.setItem('markdown-explorer-sidebar-width', String(newWidth));
+      const delta = e.clientX - startX;
+      const nextWidth = startW + (direction === 'rtl' ? -delta : delta);
+      const newWidth = Math.max(min, Math.min(max, nextWidth));
+      document.documentElement.style.setProperty(cssVar, `${newWidth}px`);
+      localStorage.setItem(storageKey, String(newWidth));
     };
 
     const onUp = () => {
@@ -48,5 +70,14 @@ export function useResize(handleId: string, targetId: string, trigger?: any) {
       document.removeEventListener('mouseup', onUp);
       document.body.classList.remove('is-resizing');
     };
-  }, [handleId, targetId, trigger]);
+  }, [
+    handleId,
+    targetId,
+    trigger,
+    options.min,
+    options.max,
+    options.cssVar,
+    options.storageKey,
+    options.direction,
+  ]);
 }

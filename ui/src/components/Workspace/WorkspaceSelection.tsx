@@ -1,4 +1,4 @@
-import { useState, /* useRef, useEffect */ } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { FolderIcon } from '../shared/icons';
@@ -28,6 +28,8 @@ export function WorkspaceSelection() {
   const bridge = usePlatform();
   const [modalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [workspaceScale, setWorkspaceScale] = useState(1);
+  const workspacePanelRef = useRef<HTMLDivElement>(null);
   // TODO: Drop-to-open workspace is disabled — buggy, not ready.
   // const containerRef = useRef<HTMLDivElement>(null);
   // useEffect(() => {
@@ -70,6 +72,41 @@ export function WorkspaceSelection() {
     bridge.postMessage({ command: 'deleteRecentWorkspace', path });
   };
 
+  useEffect(() => {
+    let rafId = 0;
+
+    const updateScale = () => {
+      const panel = workspacePanelRef.current;
+      if (!panel) return;
+
+      const viewport = window.visualViewport;
+      const viewportWidth = viewport?.width ?? window.innerWidth;
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const availableWidth = Math.max(280, viewportWidth - 40);
+      const availableHeight = Math.max(340, viewportHeight - 88);
+      const rawWidth = Math.max(panel.scrollWidth, panel.offsetWidth, 1);
+      const rawHeight = Math.max(panel.scrollHeight, panel.offsetHeight, 1);
+      const nextScale = Math.min(1, availableWidth / rawWidth, availableHeight / rawHeight);
+
+      setWorkspaceScale(Math.max(0.68, Math.floor(nextScale * 100) / 100));
+    };
+
+    const scheduleUpdate = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateScale);
+    };
+
+    scheduleUpdate();
+    window.addEventListener('resize', scheduleUpdate);
+    window.visualViewport?.addEventListener('resize', scheduleUpdate);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', scheduleUpdate);
+      window.visualViewport?.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [modalOpen, state.recentWorkspaces]);
+
   const recents = state.recentWorkspaces || [];
   const displayRecents = recents.slice(0, 3);
 
@@ -86,14 +123,15 @@ export function WorkspaceSelection() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: workspaceScale < 1 ? 'flex-start' : 'center',
         minHeight: '100vh',
         background: 'var(--bg)',
         color: 'var(--tx)',
         fontFamily: 'var(--font-ui)',
         padding: '40px 20px',
         boxSizing: 'border-box',
-        position: 'relative'
+        position: 'relative',
+        overflow: 'auto'
       }}>
       <div style={{
         position: 'absolute',
@@ -112,7 +150,7 @@ export function WorkspaceSelection() {
           <TooltipButton
             className="btn btn--icon"
             onClick={toggleTheme}
-            tooltip="Toggle Theme"
+            tooltip="Toggle light/dark mode"
             icon={
               state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -153,25 +191,28 @@ export function WorkspaceSelection() {
           )}
         </div>
       </div>
-      <div style={{
+      <div ref={workspacePanelRef} className="workspace-selection__panel" style={{
         width: '100%',
         maxWidth: '420px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
-        gap: '32px'
+        gap: '32px',
+        transform: `scale(${workspaceScale})`,
+        transformOrigin: 'center top',
+        transition: 'transform 0.12s ease'
       }}>
         {/* Title / Hero */}
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
           <img src={logoUrl} width="64" height="64" alt="Markdown Explorer" style={{
             opacity: 0.95,
-            filter: 'drop-shadow(0 4px 12px rgba(139, 124, 248, 0.2))',
+            filter: 'drop-shadow(0 4px 12px var(--accent-dim))',
             marginBottom: '8px'
           }} />
           <h1 style={{
             fontSize: '28px',
             fontWeight: 800,
-            letterSpacing: '-0.03em',
+            letterSpacing: 0,
             margin: 0,
             color: 'var(--tx)'
           }}>Markdown Explorer</h1>
@@ -203,16 +244,16 @@ export function WorkspaceSelection() {
               border: 'none',
               background: 'var(--accent)',
               color: '#fff',
-              boxShadow: '0 4px 12px rgba(139, 124, 248, 0.25)',
+              boxShadow: '0 4px 12px var(--accent-dim)',
               transition: 'all 0.15s ease'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 124, 248, 0.35)';
+              e.currentTarget.style.boxShadow = '0 6px 16px var(--accent-dim)';
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 124, 248, 0.25)';
+              e.currentTarget.style.boxShadow = '0 4px 12px var(--accent-dim)';
             }}
           >
             <FolderIcon size={16} />
@@ -243,7 +284,7 @@ export function WorkspaceSelection() {
             onMouseOver={(e) => {
               e.currentTarget.style.borderColor = 'var(--accent)';
               e.currentTarget.style.color = 'var(--tx)';
-              e.currentTarget.style.background = 'rgba(139, 124, 248, 0.05)';
+              e.currentTarget.style.background = 'var(--accent-dim)';
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.borderColor = 'var(--bd-s)';

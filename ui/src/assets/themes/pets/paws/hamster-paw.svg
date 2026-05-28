@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Hamster paw">
+  <g fill="#d9a45f" stroke="#6b3a1f" stroke-width="1.8" stroke-linejoin="round">
+    <ellipse cx="9" cy="10" rx="3.8" ry="4.8" transform="rotate(-18 9 10)"/>
+    <ellipse cx="16" cy="7.8" rx="3.9" ry="5"/>
+    <ellipse cx="23" cy="10" rx="3.8" ry="4.8" transform="rotate(18 23 10)"/>
+    <path d="M7.3 22.4c.6-5 4.1-8.3 8.7-8.3s8.1 3.3 8.7 8.3c.4 3-1.8 5.2-4.7 4.4-1.8-.5-2.5-1.3-4-1.3s-2.2.8-4 1.3c-2.9.8-5.1-1.4-4.7-4.4Z"/>
+  </g>
+  <g fill="#ffe4ad">
+    <ellipse cx="9" cy="10" rx="1.5" ry="2"/>
+    <ellipse cx="16" cy="7.8" rx="1.55" ry="2.1"/>
+    <ellipse cx="23" cy="10" rx="1.5" ry="2"/>
+    <ellipse cx="16" cy="21.4" rx="4.8" ry="3.6"/>
+  </g>
+</svg>
