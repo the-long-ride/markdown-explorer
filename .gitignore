@@ -25,3 +25,6 @@ Thumbs.db
 
 # antigravity
 .antigravitycli/*.json
+
+# agent-skills
+.agent/skills/
