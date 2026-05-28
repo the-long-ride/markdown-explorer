@@ -2700,7 +2700,8 @@ body.is-resizing .toc-panel {
   }
   .settings-card--settings .settings-card__body {
     flex-direction: column !important;
-    gap: 18px !important;
+    gap: 12px !important;
+    margin-top: 7px !important;
     overflow-y: hidden;
     padding-right: 4px;
   }
@@ -2710,13 +2711,13 @@ body.is-resizing .toc-panel {
     width: 100%;
   }
   .settings-card__column--preferences {
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
   }
   .settings-card__column--shortcuts {
-    flex: 0 1 auto !important;
+    flex: 0 1 clamp(260px, 42vh, 380px) !important;
     min-height: 0;
-    max-height: min(420px, 48vh);
-    padding-top: 18px;
+    max-height: clamp(260px, 42vh, 380px);
+    padding-top: 12px;
     border-top: var(--stroke-w) solid var(--bd);
   }
   .settings-card--settings .settings-card__divider {
@@ -2817,6 +2818,10 @@ body.is-resizing .toc-panel {
   margin-bottom: 20px;
   border-bottom: var(--stroke-w) solid var(--bd);
   padding-bottom: 12px;
+}
+.settings-card--settings .settings-card__header {
+  margin-bottom: 7px;
+  padding-bottom: 10px;
 }
 .settings-card__header h2 {
   font-size: 18px;

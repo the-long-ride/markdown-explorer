@@ -116,7 +116,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
         <div
           className="settings-card__body"
-          style={{ display: "flex", gap: "32px", marginTop: "20px" }}
+          style={{ display: "flex", gap: "32px", marginTop: "7px" }}
         >
           {/* Left Column: Preferences */}
           <div
