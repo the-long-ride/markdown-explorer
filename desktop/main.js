@@ -20,6 +20,12 @@ let currentFile = null;
 let flatList = [];
 let readyHandled = false;
 
+// Electron zoom level maps roughly to factor = 1.2 ^ level.
+// This range gives about 63% to 144%, enough zoom-out for dense views while keeping zoom-in guarded.
+const ZOOM_LEVEL_MIN = -2.5;
+const ZOOM_LEVEL_MAX = 2;
+const ZOOM_LEVEL_STEP = 0.2;
+
 // Remove default window menu bar
 Menu.setApplicationMenu(null);
 
@@ -147,6 +153,9 @@ function createWindow() {
   // });
   // mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
+  mainWindow.webContents.on("did-finish-load", () => {
+    clampAppZoom();
+  });
   const uiIndex = path.join(appDir, 'ui', 'dist', 'index.html');
   mainWindow.loadFile(uiIndex);
 
@@ -299,6 +308,7 @@ async function handleReady() {
       fileList: [],
       tree: null,
       theme: "dark",
+      themeStyle: "default",
       defaultExpanded: true,
       workspaceName: "",
       recentWorkspaces: recents,
@@ -441,17 +451,32 @@ function handleDeleteRecentWorkspace(folderPath) {
 function handleZoomIn() {
   if (!mainWindow) return;
   const currentZoom = mainWindow.webContents.getZoomLevel();
-  if (currentZoom < 5) {
-    mainWindow.webContents.setZoomLevel(currentZoom + 0.5);
-  }
+  setAppZoomLevel(currentZoom + ZOOM_LEVEL_STEP);
 }
 
 function handleZoomOut() {
   if (!mainWindow) return;
   const currentZoom = mainWindow.webContents.getZoomLevel();
-  if (currentZoom > -3) {
-    mainWindow.webContents.setZoomLevel(currentZoom - 0.5);
-  }
+  setAppZoomLevel(currentZoom - ZOOM_LEVEL_STEP);
+}
+
+function clampZoomLevel(zoomLevel) {
+  return Math.min(ZOOM_LEVEL_MAX, Math.max(ZOOM_LEVEL_MIN, zoomLevel));
+}
+
+function normalizeZoomStep(zoomLevel) {
+  return Math.round(zoomLevel / ZOOM_LEVEL_STEP) * ZOOM_LEVEL_STEP;
+}
+
+function setAppZoomLevel(zoomLevel) {
+  if (!mainWindow) return;
+  const nextZoom = clampZoomLevel(normalizeZoomStep(zoomLevel));
+  mainWindow.webContents.setZoomLevel(nextZoom);
+}
+
+function clampAppZoom() {
+  if (!mainWindow) return;
+  setAppZoomLevel(mainWindow.webContents.getZoomLevel());
 }
 
 function handleCloseWorkspace() {
@@ -527,6 +552,7 @@ async function sendWorkspaceData() {
     fileList: flat,
     tree: tree,
     theme: "dark",
+    themeStyle: "default",
     defaultExpanded: true,
     workspaceName: workspaceName,
     recentWorkspaces: recents,

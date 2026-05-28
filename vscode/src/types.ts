@@ -69,6 +69,7 @@ export interface ReadyAckMessage {
   readonly fileList: MdFile[];
   readonly tree: FolderNode | null;
   readonly theme: string;
+  readonly themeStyle?: string;
   readonly defaultExpanded: boolean;
   readonly workspaceName: string;
   readonly recentWorkspaces?: readonly RecentWorkspace[];
@@ -148,6 +149,21 @@ export interface ZoomOutMessage {
   readonly command: 'zoom-out';
 }
 
+export interface UpdateAppearanceMessage {
+  readonly command: 'updateAppearance';
+  readonly theme: 'auto' | 'light' | 'dark';
+  readonly themeStyle:
+    | 'default'
+    | 'glass'
+    | 'bento'
+    | 'pet-white-shiba'
+    | 'pet-shiba'
+    | 'pet-shiba-memes'
+    | 'pet-cat'
+    | 'pet-hamster'
+    | 'pet-corgi';
+}
+
 export type WebviewMessage =
   | NavigateMessage
   | OpenInEditorMessage
@@ -162,4 +178,5 @@ export type WebviewMessage =
   | CloseWorkspaceMessage
   | DeleteRecentWorkspaceMessage
   | ZoomInMessage
-  | ZoomOutMessage;
+  | ZoomOutMessage
+  | UpdateAppearanceMessage;

@@ -61,7 +61,33 @@
         "markdownExplorer.theme": {
           "type": "string", "default": "auto",
           "enum": ["auto", "light", "dark"],
-          "description": "Color theme for the docs viewer"
+          "description": "Color mode for the docs viewer"
+        },
+        "markdownExplorer.themeStyle": {
+          "type": "string", "default": "default",
+          "enum": [
+            "default",
+            "glass",
+            "bento",
+            "pet-white-shiba",
+            "pet-shiba",
+            "pet-shiba-memes",
+            "pet-cat",
+            "pet-hamster",
+            "pet-corgi"
+          ],
+          "enumDescriptions": [
+            "Original compact Markdown Explorer styling.",
+            "Evolved glassmorphism with translucent layered surfaces.",
+            "Bento grids with modular panels and stronger structure.",
+            "Pets theme: white Shiba mascot with snowy vector accents.",
+            "Pets theme: normal Shiba mascot with warm paw-print accents.",
+            "Pets theme: K-Ink, a black Vietnamese dog mascot with inky vector accents.",
+            "Pets theme: cat mascot with whiskers and fish-bone vector accents.",
+            "Pets theme: hamster mascot with seed and wheel vector accents.",
+            "Pets theme: corgi mascot with golden loaf vector accents."
+          ],
+          "description": "Visual style for surfaces, borders, backgrounds, shadows, spacing, and strokes."
         },
         "markdownExplorer.autoRefresh": {
           "type": "boolean", "default": true,

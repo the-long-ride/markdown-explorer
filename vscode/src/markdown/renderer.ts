@@ -17,10 +17,11 @@ interface RenderedOutput {
 /** Sections group tokens under a heading for collapsible UI */
 interface Section {
   heading: HeadingToken;
-  children: BlockToken[];
+  children: SectionNode[];
 }
 
 type TopLevelNode = Section | BlockToken;
+type SectionNode = TopLevelNode;
 
 export interface HtmlRendererOptions {
   theme?: string;
@@ -47,23 +48,56 @@ export class HtmlRenderer {
 
   /**
    * Group consecutive tokens under H1/H2 headings to form collapsible sections.
+   * H2 sections nest under the nearest preceding H1, so an empty H1 does not
+   * render as a standalone panel when its first content is a child heading.
    * H3+ become sub-headings rendered inside their parent section.
    */
   private groupSections(tokens: BlockToken[]): TopLevelNode[] {
     const result: TopLevelNode[] = [];
-    let current: Section | null = null;
+    let currentH1: Section | null = null;
+    let currentH2: Section | null = null;
+
+    const appendToCurrentScope = (node: SectionNode): void => {
+      if (currentH2) {
+        currentH2.children.push(node);
+      } else if (currentH1) {
+        currentH1.children.push(node);
+      } else {
+        result.push(node);
+      }
+    };
+    const closeCurrentH2 = (): void => {
+      if (!currentH2) return;
+      if (currentH1) {
+        currentH1.children.push(currentH2);
+      } else {
+        result.push(currentH2);
+      }
+      currentH2 = null;
+    };
 
     for (const token of tokens) {
-      if (token.type === 'heading' && token.level <= 2) {
-        if (current) result.push(current);
-        current = { heading: token, children: [] };
-      } else if (current) {
-        current.children.push(token);
+      if (token.type === 'heading' && token.level === 1) {
+        closeCurrentH2();
+        if (currentH1) {
+          result.push(currentH1);
+        }
+        currentH1 = { heading: token, children: [] };
+      } else if (token.type === 'heading' && token.level === 2) {
+        closeCurrentH2();
+        currentH2 = { heading: token, children: [] };
+      } else if (currentH1 || currentH2) {
+        appendToCurrentScope(token);
       } else {
         result.push(token);
       }
     }
-    if (current) result.push(current);
+
+    closeCurrentH2();
+    if (currentH1) {
+      result.push(currentH1);
+    }
+
     return result;
   }
 
@@ -78,9 +112,9 @@ export class HtmlRenderer {
     const { level, text } = section.heading;
     const id = slugify(text);
     const headingHtml = renderInline(text, this.isMdx);
-    const inner = section.children.map(b => this.renderBlock(b)).join('\n');
 
     this.toc.push({ level, text, id });
+    const inner = section.children.map(b => this.renderNode(b)).join('\n');
 
     return `<section class="mdn-section mdn-section--h${level}" id="${id}" data-expanded="true">
   <div class="mdn-section-header" onclick="UI.toggleSection(this)" role="button" tabindex="0" aria-expanded="true"

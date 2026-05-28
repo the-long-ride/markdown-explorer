@@ -92,6 +92,12 @@ export class MarkdownDocsPanel {
           case 'refresh':
             await this.refresh();
             break;
+          case 'updateAppearance': {
+            const config = vscode.workspace.getConfiguration('markdownExplorer');
+            await config.update('theme', msg.theme, vscode.ConfigurationTarget.Global);
+            await config.update('themeStyle', msg.themeStyle, vscode.ConfigurationTarget.Global);
+            break;
+          }
         }
       },
       null,
@@ -128,12 +134,14 @@ export class MarkdownDocsPanel {
       // Send updated data to the already running webview
       const config = vscode.workspace.getConfiguration('markdownExplorer');
       const theme = config.get<string>('theme') ?? 'auto';
+      const themeStyle = config.get<string>('themeStyle') ?? 'default';
       const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
       const ackMsg: ReadyAckMessage = {
         command: 'readyAck',
         fileList: this._flat,
         tree,
         theme,
+        themeStyle,
         defaultExpanded,
         workspaceName,
       };
@@ -153,6 +161,7 @@ export class MarkdownDocsPanel {
   private async _onWebviewReady(): Promise<void> {
     const config = vscode.workspace.getConfiguration('markdownExplorer');
     const theme = config.get<string>('theme') ?? 'auto';
+    const themeStyle = config.get<string>('themeStyle') ?? 'default';
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
     const { tree, flat } = await WorkspaceScanner.scan();
     this._flat = flat;
@@ -163,6 +172,7 @@ export class MarkdownDocsPanel {
       fileList: this._flat,
       tree,
       theme,
+      themeStyle,
       defaultExpanded,
       workspaceName,
     };
