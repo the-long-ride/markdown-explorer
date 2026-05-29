@@ -226,20 +226,30 @@ app.whenReady().then(() => {
         await handleReady();
         break;
             case "openFolder":
-        handleOpenFolder();
+        handleOpenFolder(Boolean(msg.openFirstFile));
         break;
       case "openFile":
         handleOpenFile();
         break;
       case "openPath":
-        handleOpenPath(msg.path);
+        handleOpenPath(msg.path, Boolean(msg.openFirstFile));
+        break;
+      case "activateWorkspace":
+        handleActivateWorkspace(
+          msg.workspacePath,
+          msg.filePath,
+          Boolean(msg.openFirstFile),
+        );
+        break;
+      case "searchAcrossWorkspaces":
+        handleSearchAcrossWorkspaces(msg);
         break;
 
       case "confirmOpenPath":
         handleConfirmOpenPath(msg.path);
         break;
       case "openRecentWorkspace":
-        handleOpenRecent(msg.path);
+        handleOpenRecent(msg.path, Boolean(msg.openFirstFile));
         break;
       case "deleteRecentWorkspace":
         handleDeleteRecentWorkspace(msg.path);
@@ -311,6 +321,7 @@ async function handleReady() {
       themeStyle: "default",
       defaultExpanded: true,
       workspaceName: "",
+      workspacePath: undefined,
       recentWorkspaces: recents,
     };
     mainWindow.webContents.send("host-message", ackMsg);
@@ -319,7 +330,7 @@ async function handleReady() {
   }
 }
 
-function handleOpenFolder() {
+function handleOpenFolder(openFirstFile = false) {
   const folders = dialog.showOpenDialogSync(mainWindow, {
     properties: ["openDirectory"],
   });
@@ -328,7 +339,7 @@ function handleOpenFolder() {
     saveRecentWorkspace(selectedFolder);
     activeWorkspace = selectedFolder;
     currentFile = null;
-    sendWorkspaceData().then(() => sendWelcome());
+    sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
   }
 }
 
@@ -349,7 +360,7 @@ function handleOpenFile() {
   }
 }
 
-function handleOpenPath(filePath) {
+function handleOpenPath(filePath, openFirstFile = false) {
   if (!fs.existsSync(filePath)) return;
   const stat = fs.statSync(filePath);
   const isFile = stat.isFile();
@@ -373,7 +384,78 @@ function handleOpenPath(filePath) {
   }
 
   saveRecentWorkspace(activeWorkspace);
-  sendWorkspaceData().then(() => isFile ? sendContent() : sendWelcome());
+  sendWorkspaceData().then(() => sendInitialContent(openFirstFile && !isFile));
+}
+
+function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false) {
+  if (!workspacePath || !fs.existsSync(workspacePath)) return;
+  activeWorkspace = workspacePath;
+  currentFile = filePath && fs.existsSync(filePath) ? filePath : null;
+  saveRecentWorkspace(activeWorkspace);
+  sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
+}
+
+function makeSearchExcerpt(text, index, queryLength) {
+  const start = Math.max(0, index - 72);
+  const end = Math.min(text.length, index + queryLength + 120);
+  return text
+    .slice(start, end)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function handleSearchAcrossWorkspaces(msg) {
+  const query = String(msg.query || "").trim().toLowerCase();
+  const requestId = msg.requestId;
+  const items = Array.isArray(msg.items) ? msg.items : [];
+  if (!query || query.length < 2) {
+    mainWindow.webContents.send("host-message", {
+      command: "crossTabSearchResults",
+      requestId,
+      results: [],
+    });
+    return;
+  }
+
+  const results = [];
+  for (const item of items) {
+    if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
+    const ext = path.extname(item.fsPath).toLowerCase();
+    if (ext !== ".md" && ext !== ".mdx") continue;
+
+    const titleScore = String(item.title || "").toLowerCase().includes(query) ? 4 : 0;
+    const pathScore = String(item.relativePath || "").toLowerCase().includes(query) ? 2 : 0;
+    let contentScore = 0;
+    let excerpt = "";
+
+    try {
+      const raw = fs.readFileSync(item.fsPath, "utf8");
+      const haystack = raw.toLowerCase();
+      const index = haystack.indexOf(query);
+      if (index !== -1) {
+        contentScore = 3;
+        excerpt = makeSearchExcerpt(raw, index, query.length);
+      }
+    } catch (err) {
+      console.error("Failed to search file:", item.fsPath, err);
+    }
+
+    const score = titleScore + pathScore + contentScore;
+    if (score > 0) {
+      results.push({
+        ...item,
+        excerpt,
+        score,
+      });
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  mainWindow.webContents.send("host-message", {
+    command: "crossTabSearchResults",
+    requestId,
+    results: results.slice(0, 80).map(({ score, ...result }) => result),
+  });
 }
 
 async function handleConfirmOpenPath(filePath) {
@@ -412,16 +494,16 @@ async function handleConfirmOpenPath(filePath) {
   }
 }
 
-function handleOpenRecent(folderPath) {
+function handleOpenRecent(folderPath, openFirstFile = false) {
   if (fs.existsSync(folderPath)) {
     saveRecentWorkspace(folderPath);
     activeWorkspace = folderPath;
     if (fs.statSync(folderPath).isFile()) {
       currentFile = folderPath;
-      sendWorkspaceData().then(() => sendContent());
+      sendWorkspaceData().then(() => sendInitialContent(false));
     } else {
       currentFile = null;
-      sendWorkspaceData().then(() => sendWelcome());
+      sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
     }
   } else {
     // Remove invalid path
@@ -555,9 +637,22 @@ async function sendWorkspaceData() {
     themeStyle: "default",
     defaultExpanded: true,
     workspaceName: workspaceName,
+    workspacePath: activeWorkspace,
     recentWorkspaces: recents,
   };
   mainWindow.webContents.send("host-message", ackMsg);
+}
+
+async function sendInitialContent(openFirstFile = false) {
+  if (openFirstFile && !currentFile && flatList.length > 0) {
+    currentFile = flatList[0].fsPath;
+  }
+
+  if (currentFile) {
+    await sendContent();
+  } else {
+    await sendWelcome();
+  }
 }
 
 async function sendContent() {

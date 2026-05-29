@@ -2,13 +2,15 @@
 // App.tsx — Root component
 // =============================================================================
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useAppState } from './contexts/AppStateContext';
-// import { usePlatform } from './contexts/PlatformContext'; // TODO: re-enable when drop-to-open workspace is fixed
+import { usePlatform } from './contexts/PlatformContext';
+import { useNavigation } from './contexts/NavigationContext';
 import { WorkspaceSelection } from './components/Workspace/WorkspaceSelection';
 import { Topbar } from './components/Topbar/Topbar';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { Content } from './components/Content/Content';
+import { WelcomePage } from './components/Content/WelcomePage';
 import { TableOfContents } from './components/TOC/TableOfContents';
 import { SearchOverlay } from './components/Search/SearchOverlay';
 import { MediaModal } from './components/Modal/MediaModal';
@@ -16,13 +18,522 @@ import { SettingsModal } from './components/Settings/SettingsModal';
 import { TermsModal } from './components/Modal/TermsModal';
 import { ThemeOnboardingModal } from './components/Modal/ThemeOnboardingModal';
 import { TooltipButton } from './components/shared/TooltipButton';
-import { ChevronUpIcon } from './components/shared/icons';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  CloseIcon,
+  CollapseIcon,
+  EditIcon,
+  ExpandIcon,
+  HomeIcon,
+  MoonIcon,
+  PlusIcon,
+  RefreshIcon,
+  SearchIcon,
+  SidebarIcon,
+  SettingsIcon,
+  SunIcon,
+} from './components/shared/icons';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useResize } from './hooks/useResize';
 import { useScrollVisibility } from './hooks/useScrollVisibility';
+import logoUrl from './assets/logos/logo-128.png';
+import type { FolderNode, Frontmatter, MdFile, TocEntry } from './types';
+
+type DesktopTabKind = 'home' | 'new' | 'workspace';
+type WorkspaceAliasMap = Record<string, string>;
+
+interface DesktopTab {
+  id: string;
+  kind: DesktopTabKind;
+  alias?: string;
+  workspaceName?: string;
+  workspacePath?: string;
+  fileList: MdFile[];
+  tree: FolderNode | null;
+  currentFile: string | null;
+  contentHtml: string;
+  frontmatter: Frontmatter;
+  toc: TocEntry[];
+  relativePath: string;
+  isLoading: boolean;
+  notFoundHref: string | null;
+}
+
+interface FloatingToolbarPosition {
+  x: number;
+  y: number;
+}
+
+interface PersistedDesktopTab {
+  id: string;
+  kind: DesktopTabKind;
+  alias?: string;
+  workspaceName?: string;
+  workspacePath?: string;
+  currentFile?: string | null;
+}
+
+interface PersistedDesktopTabsState {
+  activeTabId?: string;
+  tabs?: PersistedDesktopTab[];
+}
+
+interface InitialDesktopState {
+  workspaceAliases: WorkspaceAliasMap;
+  tabs: DesktopTab[];
+  activeTabId: string;
+}
+
+const DESKTOP_TABS_STORAGE_KEY = 'markdown-explorer-desktop-tabs-v1';
+const WORKSPACE_ALIASES_STORAGE_KEY = 'markdown-explorer-workspace-aliases-v1';
+
+function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
+  return {
+    id,
+    kind,
+    fileList: [],
+    tree: null,
+    currentFile: null,
+    contentHtml: '',
+    frontmatter: {},
+    toc: [],
+    relativePath: '',
+    isLoading: false,
+    notFoundHref: null,
+  };
+}
+
+function getWorkspaceNameFromPath(workspacePath: string): string {
+  const parts = workspacePath.split(/[\\/]/).filter(Boolean);
+  return parts[parts.length - 1] || workspacePath;
+}
+
+function getTabLabel(tab: DesktopTab): string {
+  const alias = tab.alias?.trim();
+  if (alias) return alias;
+  if (tab.workspaceName) return tab.workspaceName;
+  return tab.kind === 'home' ? 'Home' : 'New workspace';
+}
+
+function createTabId() {
+  return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function readToolbarPosition(): FloatingToolbarPosition {
+  try {
+    const saved = localStorage.getItem('markdown-explorer-tab-toolbar-position');
+    if (saved) {
+      const parsed = JSON.parse(saved) as FloatingToolbarPosition;
+      if (Number.isFinite(parsed.x) && Number.isFinite(parsed.y)) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore persisted layout failures.
+  }
+  return { x: 20, y: 20 };
+}
+
+function readWorkspaceAliases(): WorkspaceAliasMap {
+  try {
+    const saved = localStorage.getItem(WORKSPACE_ALIASES_STORAGE_KEY);
+    if (!saved) return {};
+    const parsed = JSON.parse(saved) as WorkspaceAliasMap;
+    if (!parsed || typeof parsed !== 'object') return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        ([pathValue, alias]) => pathValue && typeof alias === 'string' && alias.trim(),
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function writeWorkspaceAliases(aliases: WorkspaceAliasMap) {
+  try {
+    localStorage.setItem(WORKSPACE_ALIASES_STORAGE_KEY, JSON.stringify(aliases));
+  } catch {
+    // Ignore storage failures; aliases are convenience metadata.
+  }
+}
+
+function readPersistedDesktopTabs(workspaceAliases: WorkspaceAliasMap): {
+  tabs: DesktopTab[];
+  activeTabId: string;
+} {
+  try {
+    const saved = localStorage.getItem(DESKTOP_TABS_STORAGE_KEY);
+    if (!saved) return { tabs: [createEmptyTab('home', 'home')], activeTabId: 'home' };
+
+    const parsed = JSON.parse(saved) as PersistedDesktopTabsState;
+    const restoredTabs = [createEmptyTab('home', 'home')];
+    for (const savedTab of parsed.tabs ?? []) {
+      if (!savedTab.id || savedTab.id === 'home') continue;
+      if (savedTab.kind === 'new') {
+        restoredTabs.push(createEmptyTab(savedTab.id, 'new'));
+        continue;
+      }
+      if (savedTab.kind !== 'workspace' || !savedTab.workspacePath) continue;
+      const tab = createEmptyTab(savedTab.id, 'workspace');
+      tab.workspacePath = savedTab.workspacePath;
+      tab.workspaceName =
+        savedTab.workspaceName || getWorkspaceNameFromPath(savedTab.workspacePath);
+      tab.alias = workspaceAliases[savedTab.workspacePath] ?? savedTab.alias;
+      tab.currentFile = savedTab.currentFile ?? null;
+      restoredTabs.push(tab);
+    }
+
+    const activeTabId = restoredTabs.some((tab) => tab.id === parsed.activeTabId)
+      ? parsed.activeTabId ?? 'home'
+      : 'home';
+    return { tabs: restoredTabs, activeTabId };
+  } catch {
+    return { tabs: [createEmptyTab('home', 'home')], activeTabId: 'home' };
+  }
+}
+
+function writePersistedDesktopTabs(tabs: DesktopTab[], activeTabId: string) {
+  try {
+    const persistedTabs = tabs
+      .filter((tab) => tab.kind !== 'home')
+      .flatMap<PersistedDesktopTab>((tab) => {
+        if (tab.kind === 'new') {
+          return [{ id: tab.id, kind: 'new' }];
+        }
+        if (!tab.workspacePath) return [];
+        return [{
+          id: tab.id,
+          kind: 'workspace',
+          alias: tab.alias?.trim() || undefined,
+          workspaceName: tab.workspaceName,
+          workspacePath: tab.workspacePath,
+          currentFile: tab.currentFile,
+        }];
+      });
+
+    localStorage.setItem(
+      DESKTOP_TABS_STORAGE_KEY,
+      JSON.stringify({
+        activeTabId,
+        tabs: persistedTabs,
+      } satisfies PersistedDesktopTabsState),
+    );
+  } catch {
+    // Ignore storage failures; the app still works for the current session.
+  }
+}
+
+function readInitialDesktopState(): InitialDesktopState {
+  const workspaceAliases = readWorkspaceAliases();
+  const tabState = readPersistedDesktopTabs(workspaceAliases);
+  for (const tab of tabState.tabs) {
+    const alias = tab.alias?.trim();
+    if (tab.workspacePath && alias && !workspaceAliases[tab.workspacePath]) {
+      workspaceAliases[tab.workspacePath] = alias;
+    }
+  }
+  return {
+    workspaceAliases,
+    tabs: tabState.tabs,
+    activeTabId: tabState.activeTabId,
+  };
+}
+
+interface DesktopTabBarProps {
+  tabs: DesktopTab[];
+  activeTabId: string;
+  onSelectTab: (tabId: string) => void;
+  onNewTab: () => void;
+  onCloseTab: (tabId: string) => void;
+  onAliasChange: (tabId: string, alias: string) => void;
+  onSearchOpen: () => void;
+  onThemeToggle: () => void;
+  onSettingsOpen: () => void;
+  onSidebarToggle: () => void;
+  isDark: boolean;
+  isMaximized: boolean;
+}
+
+function DesktopTabBar({
+  tabs,
+  activeTabId,
+  onSelectTab,
+  onNewTab,
+  onCloseTab,
+  onAliasChange,
+  onSearchOpen,
+  onThemeToggle,
+  onSettingsOpen,
+  onSidebarToggle,
+  isDark,
+  isMaximized,
+}: DesktopTabBarProps) {
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [draftAlias, setDraftAlias] = useState('');
+
+  const startEditing = (tab: DesktopTab) => {
+    if (tab.kind !== 'workspace') return;
+    setEditingTabId(tab.id);
+    setDraftAlias(tab.alias ?? tab.workspaceName ?? '');
+  };
+
+  const commitAlias = () => {
+    if (editingTabId) {
+      onAliasChange(editingTabId, draftAlias.trim());
+    }
+    setEditingTabId(null);
+    setDraftAlias('');
+  };
+
+  return (
+    <header className="desktop-tabbar">
+      <div className="desktop-tabbar__brand topbar__logo" aria-label="Markdown Explorer">
+        <span className="topbar__logo-icon">
+          <img
+            src={logoUrl}
+            width={20}
+            height={20}
+            alt="Markdown Explorer"
+            className="topbar__logo-img"
+          />
+        </span>
+        <div className="topbar__logo-text-group">
+          <div className="topbar__logo-title">Markdown Explorer</div>
+          <div className="topbar__logo-subtitle">
+            by{' '}
+            <a
+              href="https://github.com/the-long-ride/markdown-explorer"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              the-long-ride
+            </a>{' '}
+            with ❤️
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        className={`desktop-tabbar__home${activeTabId === 'home' ? ' is-active' : ''}`}
+        aria-label="Home"
+        onClick={() => onSelectTab('home')}
+      >
+        <HomeIcon size={14} />
+      </button>
+      <div className="desktop-tabbar__tabs" role="tablist" aria-label="Workspace tabs">
+        {tabs.filter((tab) => tab.kind !== 'home').map((tab) => {
+          const active = tab.id === activeTabId;
+          const editing = editingTabId === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={`desktop-tab${active ? ' is-active' : ''}`}
+              onClick={() => onSelectTab(tab.id)}
+              onDoubleClick={() => startEditing(tab)}
+              title={tab.workspacePath ?? getTabLabel(tab)}
+            >
+              {editing ? (
+                <input
+                  className="desktop-tab__alias-input"
+                  value={draftAlias}
+                  autoFocus
+                  onChange={(event) => setDraftAlias(event.target.value)}
+                  onClick={(event) => event.stopPropagation()}
+                  onBlur={commitAlias}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') commitAlias();
+                    if (event.key === 'Escape') {
+                      setEditingTabId(null);
+                      setDraftAlias('');
+                    }
+                  }}
+                />
+              ) : (
+                <span className="desktop-tab__label">{getTabLabel(tab)}</span>
+              )}
+              <span
+                className="desktop-tab__close"
+                role="button"
+                tabIndex={-1}
+                aria-label="Close tab"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onCloseTab(tab.id);
+                }}
+              >
+                <CloseIcon size={11} />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <TooltipButton
+        className="btn btn--icon desktop-tabbar__new"
+        onClick={onNewTab}
+        tooltip="New workspace tab"
+        icon={<PlusIcon />}
+      />
+      <div className="desktop-tabbar__spacer" />
+      <button type="button" className="desktop-tabbar__search" onClick={onSearchOpen}>
+        <SearchIcon size={13} />
+        <span>Search all tabs... (Ctrl+Shift+K)</span>
+      </button>
+      <TooltipButton
+        className="btn btn--icon"
+        onClick={onThemeToggle}
+        tooltip="Toggle light/dark mode"
+        icon={isDark ? <SunIcon /> : <MoonIcon />}
+      />
+      <TooltipButton
+        className="btn btn--icon"
+        onClick={onSettingsOpen}
+        tooltip="Settings"
+        icon={<SettingsIcon />}
+      />
+      <TooltipButton
+        className="btn btn--icon"
+        onClick={onSidebarToggle}
+        tooltip="Toggle Sidebar"
+        icon={<SidebarIcon />}
+      />
+      <div className="desktop-tabbar__window-controls">
+        <TooltipButton
+          className="btn btn--icon window-control-btn"
+          onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
+          tooltip="Minimize"
+          icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>}
+        />
+        <TooltipButton
+          className="btn btn--icon window-control-btn"
+          onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
+          tooltip={isMaximized ? 'Restore' : 'Maximize'}
+          icon={isMaximized ? (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+              <path d="M8 3h13v13H8z" />
+              <path d="M16 16v5H3V8h5" />
+            </svg>
+          ) : (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>
+          )}
+        />
+        <TooltipButton
+          className="btn btn--icon window-control-btn window-control-btn--close"
+          onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
+          tooltip="Close App"
+          tooltipAlign="right"
+          icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>}
+        />
+      </div>
+    </header>
+  );
+}
+
+interface FloatingTabToolbarProps {
+  position: FloatingToolbarPosition;
+  onPositionChange: (position: FloatingToolbarPosition) => void;
+  onSearchOpen: () => void;
+  onExpandAll: () => void;
+  onCollapseAll: () => void;
+  onEdit: () => void;
+  onRefresh: () => void;
+  onBack: () => void;
+  onForward: () => void;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  canEdit: boolean;
+}
+
+function FloatingTabToolbar({
+  position,
+  onPositionChange,
+  onSearchOpen,
+  onExpandAll,
+  onCollapseAll,
+  onEdit,
+  onRefresh,
+  onBack,
+  onForward,
+  canGoBack,
+  canGoForward,
+  canEdit,
+}: FloatingTabToolbarProps) {
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest('button, input')) return;
+    dragRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: position.x,
+      originY: position.y,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const next = {
+      x: clamp(drag.originX - (event.clientX - drag.startX), 8, width - 320),
+      y: clamp(drag.originY - (event.clientY - drag.startY), 8, height - 92),
+    };
+    onPositionChange(next);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    dragRef.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
+  return (
+    <div
+      className="tab-floating-toolbar"
+      style={{ right: position.x, bottom: position.y }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+    >
+      <button type="button" className="tab-floating-toolbar__search" onClick={onSearchOpen}>
+        <SearchIcon size={14} />
+        <span>Search docs... (Ctrl+Shift+K)</span>
+      </button>
+      <TooltipButton className="btn btn--icon" onClick={onBack} disabled={!canGoBack} tooltip="Back" icon={<ChevronLeftIcon />} />
+      <TooltipButton className="btn btn--icon" onClick={onForward} disabled={!canGoForward} tooltip="Forward" icon={<ChevronRightIcon />} />
+      <TooltipButton className="btn btn--icon" onClick={onRefresh} tooltip="Refresh tab" icon={<RefreshIcon />} />
+      <TooltipButton className="btn btn--icon" onClick={onExpandAll} tooltip="Expand all" icon={<ExpandIcon />} />
+      <TooltipButton className="btn btn--icon" onClick={onCollapseAll} tooltip="Collapse all" icon={<CollapseIcon />} />
+      <TooltipButton className="btn" onClick={onEdit} disabled={!canEdit} tooltip="Open current file in editor" icon={<EditIcon />} label="Edit" onlyIcon={false} />
+    </div>
+  );
+}
 
 export function App() {
-  const { state, toggleTheme } = useAppState();
+  const { state, toggleTheme, toggleSidebar, dispatch, navigate, refresh, openInEditor } = useAppState();
+  const bridge = usePlatform();
+  const {
+    back,
+    forward,
+    canGoBack,
+    canGoForward,
+    setScope: setNavigationScope,
+  } = useNavigation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -110,6 +621,294 @@ export function App() {
   const { isVisible: scrollTopVisible, scrollToTop } = useScrollVisibility(scrollRef);
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isTabView = isElectron && state.settings.desktopViewMode === 'tabs';
+  const isDark =
+    state.theme === 'dark' ||
+    (state.theme === 'auto' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const initialDesktopStateRef = useRef<InitialDesktopState | null>(null);
+  if (!initialDesktopStateRef.current) {
+    initialDesktopStateRef.current = readInitialDesktopState();
+  }
+  const [workspaceAliases, setWorkspaceAliases] = useState<WorkspaceAliasMap>(
+    () => initialDesktopStateRef.current?.workspaceAliases ?? {},
+  );
+  const [tabs, setTabs] = useState<DesktopTab[]>(
+    () => initialDesktopStateRef.current?.tabs ?? [createEmptyTab('home', 'home')],
+  );
+  const [activeTabId, setActiveTabId] = useState(
+    () => initialDesktopStateRef.current?.activeTabId ?? 'home',
+  );
+  const activeTabIdRef = useRef(activeTabId);
+  const pendingWorkspaceTabIdRef = useRef<string | null>(null);
+  const restoredDesktopTabsRef = useRef(false);
+  const [toolbarPosition, setToolbarPosition] = useState<FloatingToolbarPosition>(() => readToolbarPosition());
+
+  useEffect(() => {
+    activeTabIdRef.current = activeTabId;
+  }, [activeTabId]);
+
+  useEffect(() => {
+    localStorage.setItem('markdown-explorer-tab-toolbar-position', JSON.stringify(toolbarPosition));
+  }, [toolbarPosition]);
+
+  useEffect(() => {
+    if (!isElectron) return;
+    writeWorkspaceAliases(workspaceAliases);
+  }, [isElectron, workspaceAliases]);
+
+  useEffect(() => {
+    if (!isElectron) return;
+    writePersistedDesktopTabs(tabs, activeTabId);
+  }, [activeTabId, isElectron, tabs]);
+
+  useEffect(() => {
+    setNavigationScope(isTabView ? activeTabId : 'focus');
+  }, [activeTabId, isTabView, setNavigationScope]);
+
+  const snapshotCurrentState = useCallback(
+    (tab: DesktopTab): DesktopTab => {
+      const nextWorkspacePath = state.workspacePath || tab.workspacePath;
+      const sameWorkspace =
+        !tab.workspacePath ||
+        !nextWorkspacePath ||
+        tab.workspacePath === nextWorkspacePath;
+      const savedAlias = nextWorkspacePath ? workspaceAliases[nextWorkspacePath] : undefined;
+
+      return {
+        ...tab,
+        kind: state.workspaceName ? 'workspace' : tab.kind,
+        alias: savedAlias ?? (sameWorkspace ? tab.alias : undefined),
+        workspaceName: state.workspaceName || tab.workspaceName,
+        workspacePath: nextWorkspacePath,
+        fileList: state.fileList,
+        tree: state.tree,
+        currentFile: state.currentFile,
+        contentHtml: state.contentHtml,
+        frontmatter: state.frontmatter,
+        toc: state.toc,
+        relativePath: state.relativePath,
+        isLoading: state.isLoading,
+        notFoundHref: state.notFoundHref,
+      };
+    },
+    [
+      state.contentHtml,
+      state.currentFile,
+      state.fileList,
+      state.frontmatter,
+      state.isLoading,
+      state.notFoundHref,
+      state.relativePath,
+      state.toc,
+      state.tree,
+      state.workspaceName,
+      state.workspacePath,
+      workspaceAliases,
+    ],
+  );
+
+  useEffect(() => {
+    if (!isTabView || !state.workspaceName) return;
+    const requestedTabId = pendingWorkspaceTabIdRef.current ?? activeTabIdRef.current;
+    const targetTabId = requestedTabId === 'home' ? createTabId() : requestedTabId;
+    pendingWorkspaceTabIdRef.current = null;
+    setActiveTabId(targetTabId);
+    setTabs((currentTabs) => {
+      const exists = currentTabs.some((tab) => tab.id === targetTabId);
+      const nextTabs = exists
+        ? currentTabs
+        : [...currentTabs, createEmptyTab(targetTabId, 'new')];
+      return nextTabs.map((tab) =>
+        tab.id === targetTabId ? snapshotCurrentState(tab) : tab,
+      );
+    });
+  }, [isTabView, snapshotCurrentState, state.renderVersion, state.workspaceName]);
+
+  const dispatchEmptyWorkspace = useCallback(() => {
+    dispatch({
+      type: 'READY_ACK',
+      fileList: [],
+      tree: null,
+      theme: state.theme,
+      themeStyle: state.themeStyle,
+      defaultExpanded: state.defaultExpanded,
+      workspaceName: '',
+      workspacePath: undefined,
+      recentWorkspaces: state.recentWorkspaces,
+    });
+  }, [
+    dispatch,
+    state.defaultExpanded,
+    state.recentWorkspaces,
+    state.theme,
+    state.themeStyle,
+  ]);
+
+  const activateTab = useCallback(
+    (tabId: string) => {
+      const tab = tabs.find((item) => item.id === tabId);
+      if (!tab) return;
+      setActiveTabId(tabId);
+      setNavigationScope(isTabView ? tabId : 'focus');
+
+      if (tab.kind !== 'workspace' || !tab.workspacePath) {
+        dispatchEmptyWorkspace();
+        bridge.postMessage({ command: 'closeWorkspace' });
+        return;
+      }
+
+      dispatch({
+        type: 'READY_ACK',
+        fileList: tab.fileList,
+        tree: tab.tree,
+        theme: state.theme,
+        themeStyle: state.themeStyle,
+        defaultExpanded: state.defaultExpanded,
+        workspaceName: tab.workspaceName ?? '',
+        workspacePath: tab.workspacePath,
+        recentWorkspaces: state.recentWorkspaces,
+      });
+      if (tab.contentHtml || (!isTabView && !tab.currentFile)) {
+        dispatch({
+          type: 'RENDER_CONTENT',
+          msg: {
+            command: 'renderContent',
+            html: tab.contentHtml,
+            frontmatter: tab.frontmatter,
+            toc: tab.toc,
+            filePath: tab.currentFile ?? '',
+            relativePath: tab.relativePath || 'Welcome Page',
+            title: tab.currentFile ? tab.relativePath || 'Document' : 'Welcome',
+            fileList: tab.fileList,
+          },
+        });
+      } else {
+        dispatch({ type: 'SET_LOADING' });
+      }
+      bridge.postMessage({
+        command: 'activateWorkspace',
+        workspacePath: tab.workspacePath,
+        filePath: tab.currentFile ?? undefined,
+        openFirstFile: isTabView,
+      });
+    },
+    [
+      bridge,
+      dispatch,
+      dispatchEmptyWorkspace,
+      isTabView,
+      setNavigationScope,
+      state.defaultExpanded,
+      state.recentWorkspaces,
+      state.theme,
+      state.themeStyle,
+      tabs,
+    ],
+  );
+
+  useEffect(() => {
+    if (!isTabView || restoredDesktopTabsRef.current || state.isLoading) return;
+    restoredDesktopTabsRef.current = true;
+
+    const activeTab = tabs.find((tab) => tab.id === activeTabId);
+    if (activeTab?.kind === 'workspace' && activeTab.workspacePath) {
+      activateTab(activeTab.id);
+    } else if (!activeTab) {
+      setActiveTabId('home');
+    }
+  }, [activateTab, activeTabId, isTabView, state.isLoading, tabs]);
+
+  const createNewWorkspaceTab = useCallback(() => {
+      const id = createTabId();
+      setTabs((currentTabs) => [...currentTabs, createEmptyTab(id, 'new')]);
+      setActiveTabId(id);
+      setNavigationScope(isTabView ? id : 'focus');
+      dispatchEmptyWorkspace();
+      return id;
+  }, [dispatchEmptyWorkspace, isTabView, setNavigationScope]);
+
+  const prepareWorkspaceOpen = useCallback(() => {
+    if (!isTabView) return;
+    const active = tabs.find((tab) => tab.id === activeTabIdRef.current);
+    if (!active || active.kind === 'home') {
+      pendingWorkspaceTabIdRef.current = createNewWorkspaceTab();
+      return;
+    }
+    pendingWorkspaceTabIdRef.current = active.id;
+  }, [createNewWorkspaceTab, isTabView, tabs]);
+
+  const closeTab = useCallback(
+    (tabId: string) => {
+      setTabs((currentTabs) => {
+        const tabIndex = currentTabs.findIndex((tab) => tab.id === tabId);
+        if (tabIndex === -1) return currentTabs;
+        const nextTabs = currentTabs.filter((tab) => tab.id !== tabId);
+        if (activeTabIdRef.current === tabId) {
+          const fallback = nextTabs[tabIndex - 1] ?? nextTabs[tabIndex] ?? nextTabs[0];
+          setTimeout(() => activateTab(fallback?.id ?? 'home'), 0);
+        }
+        return nextTabs.length ? nextTabs : [createEmptyTab('home', 'home')];
+      });
+    },
+    [activateTab],
+  );
+
+  const updateTabAlias = useCallback((tabId: string, alias: string) => {
+    const normalizedAlias = alias.trim();
+    const tab = tabs.find((item) => item.id === tabId);
+    setTabs((currentTabs) =>
+      currentTabs.map((item) =>
+        item.id === tabId ? { ...item, alias: normalizedAlias } : item,
+      ),
+    );
+    const workspacePath = tab?.workspacePath;
+    if (workspacePath) {
+      setWorkspaceAliases((currentAliases) => {
+        const nextAliases = { ...currentAliases };
+        if (normalizedAlias) {
+          nextAliases[workspacePath] = normalizedAlias;
+        } else {
+          delete nextAliases[workspacePath];
+        }
+        return nextAliases;
+      });
+    }
+  }, [tabs]);
+
+  const crossTabSearchItems = useMemo(
+    () =>
+      tabs.flatMap((tab) =>
+        tab.kind === 'workspace'
+          ? tab.fileList.map((file) => ({
+              tabId: tab.id,
+              tabLabel: getTabLabel(tab),
+              fsPath: file.fsPath,
+              title: file.title,
+              fileName: file.fileName,
+              relativePath: file.relativePath,
+            }))
+          : [],
+      ),
+    [tabs],
+  );
+
+  const handleCrossTabSelect = useCallback(
+    (item: { tabId: string; fsPath: string }) => {
+      const tab = tabs.find((entry) => entry.id === item.tabId);
+      if (!tab) return;
+      setActiveTabId(item.tabId);
+      setNavigationScope(isTabView ? item.tabId : 'focus');
+      bridge.postMessage({
+        command: 'activateWorkspace',
+        workspacePath: tab.workspacePath ?? '',
+        filePath: item.fsPath,
+      });
+      navigate(item.fsPath);
+    },
+    [bridge, isTabView, navigate, setNavigationScope, tabs],
+  );
+
   const [termsAccepted, setTermsAccepted] = useState(() => {
     if (!isElectron) return true;
     return localStorage.getItem('markdown-explorer-terms-accepted') === 'true';
@@ -185,6 +984,7 @@ export function App() {
     onSearchClose: () => setSearchOpen(false),
     onSettingsOpen: () => setSettingsOpen(true),
     onSettingsClose: () => setSettingsOpen(false),
+    onWelcome: isTabView ? () => activateTab('home') : undefined,
     onExpandAll: expandAll,
     onCollapseAll: collapseAll,
     isSearchOpen: searchOpen,
@@ -271,17 +1071,45 @@ export function App() {
   }
 
   return (
-    <div className="app">
-      {!state.workspaceName ? (
-        <WorkspaceSelection />
+    <div className={`app${isTabView ? ' app--tab-view' : ''}`}>
+      {isTabView && (
+        <DesktopTabBar
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onSelectTab={activateTab}
+          onNewTab={createNewWorkspaceTab}
+          onCloseTab={closeTab}
+          onAliasChange={updateTabAlias}
+          onSearchOpen={() => setSearchOpen(true)}
+          onThemeToggle={toggleTheme}
+          onSettingsOpen={() => setSettingsOpen(true)}
+          onSidebarToggle={toggleSidebar}
+          isDark={isDark}
+          isMaximized={state.isMaximized}
+        />
+      )}
+      {isTabView && activeTabId === 'home' ? (
+        <main className="tab-home">
+          <div className="content__scroll" id="homeContentScroll">
+            <WelcomePage />
+          </div>
+        </main>
+      ) : !state.workspaceName ? (
+        <WorkspaceSelection
+          onBeforeOpenWorkspace={prepareWorkspaceOpen}
+          embeddedInTabs={isTabView}
+          workspaceAliases={workspaceAliases}
+        />
       ) : (
         <>
-          <Topbar
-            onSearchOpen={() => setSearchOpen(true)}
-            onSettingsOpen={() => setSettingsOpen(true)}
-            onExpandAll={expandAll}
-            onCollapseAll={collapseAll}
-          />
+          {!isTabView && (
+            <Topbar
+              onSearchOpen={() => setSearchOpen(true)}
+              onSettingsOpen={() => setSettingsOpen(true)}
+              onExpandAll={expandAll}
+              onCollapseAll={collapseAll}
+            />
+          )}
           <div className="body">
             <Sidebar />
             <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
@@ -292,7 +1120,11 @@ export function App() {
                 </div>
               )}
               <div className="content-shell__main">
-                <Content onImageClick={onImageClick} scrollRef={scrollRef} />
+                <Content
+                  onImageClick={onImageClick}
+                  scrollRef={scrollRef}
+                  suppressWelcome={isTabView}
+                />
                 {/* Scroll to top button */}
                 <TooltipButton
                   className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}`}
@@ -303,6 +1135,22 @@ export function App() {
                   icon={<ChevronUpIcon />}
                 />
               </div>
+              {isTabView && (
+                <FloatingTabToolbar
+                  position={toolbarPosition}
+                  onPositionChange={setToolbarPosition}
+                  onSearchOpen={() => setSearchOpen(true)}
+                  onExpandAll={expandAll}
+                  onCollapseAll={collapseAll}
+                  onEdit={openInEditor}
+                  onRefresh={refresh}
+                  onBack={back}
+                  onForward={forward}
+                  canGoBack={canGoBack}
+                  canGoForward={canGoForward}
+                  canEdit={!!state.currentFile}
+                />
+              )}
             </div>
             {state.toc.length > 0 && (
               <>
@@ -315,7 +1163,13 @@ export function App() {
       )}
 
       {/* Overlays */}
-      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        scopeLabel={isTabView ? 'Search all workspace tabs... (Ctrl+Shift+K)' : undefined}
+        crossTabItems={isTabView ? crossTabSearchItems : undefined}
+        onCrossTabSelect={isTabView ? handleCrossTabSelect : undefined}
+      />
       <MediaModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setModalTarget(null); }} clickedElement={modalTarget} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <ThemeOnboardingModal

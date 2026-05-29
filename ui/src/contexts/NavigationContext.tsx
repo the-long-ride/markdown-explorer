@@ -14,6 +14,8 @@ import { useAppState } from './AppStateContext';
 interface NavigationContextValue {
   /** Push a new file to history (called when content renders) */
   push: (fsPath: string) => void;
+  /** Select the history scope used by push/back/forward */
+  setScope: (scopeId: string) => void;
   /** Go back in history */
   back: () => void;
   /** Go forward in history */
@@ -25,67 +27,98 @@ interface NavigationContextValue {
 }
 
 const NavigationContext = createContext<NavigationContextValue | null>(null);
+const DEFAULT_SCOPE_ID = 'default';
+
+interface HistoryState {
+  stack: string[];
+  index: number;
+  isNavigatingHistory: boolean;
+}
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
   const { navigate } = useAppState();
 
-  const stackRef = useRef<string[]>([]);
-  const indexRef = useRef(-1);
-  const isNavRef = useRef(false);
+  const historiesRef = useRef<Record<string, HistoryState>>({});
+  const scopeRef = useRef(DEFAULT_SCOPE_ID);
 
   // Force re-render when history changes (for canGoBack/canGoForward)
-  const [, forceUpdate] = useReducerCompat();
+  const [version, forceUpdate] = useReducerCompat();
+
+  const getHistory = useCallback((scopeId = scopeRef.current) => {
+    if (!historiesRef.current[scopeId]) {
+      historiesRef.current[scopeId] = {
+        stack: [],
+        index: -1,
+        isNavigatingHistory: false,
+      };
+    }
+    return historiesRef.current[scopeId];
+  }, []);
+
+  const setScope = useCallback(
+    (scopeId: string) => {
+      const nextScopeId = scopeId || DEFAULT_SCOPE_ID;
+      if (scopeRef.current === nextScopeId) return;
+      scopeRef.current = nextScopeId;
+      getHistory(nextScopeId);
+      forceUpdate();
+    },
+    [forceUpdate, getHistory],
+  );
 
   const push = useCallback(
     (fsPath: string) => {
-      if (isNavRef.current) {
-        isNavRef.current = false;
+      const history = getHistory();
+      if (history.isNavigatingHistory) {
+        history.isNavigatingHistory = false;
         forceUpdate();
         return;
       }
       if (
-        indexRef.current >= 0 &&
-        stackRef.current[indexRef.current] === fsPath
+        history.index >= 0 &&
+        history.stack[history.index] === fsPath
       ) {
         return;
       }
-      stackRef.current = stackRef.current.slice(0, indexRef.current + 1);
-      stackRef.current.push(fsPath);
-      indexRef.current = stackRef.current.length - 1;
+      history.stack = history.stack.slice(0, history.index + 1);
+      history.stack.push(fsPath);
+      history.index = history.stack.length - 1;
       forceUpdate();
     },
-    [forceUpdate],
+    [forceUpdate, getHistory],
   );
 
   const back = useCallback(() => {
-    if (indexRef.current > 0) {
-      isNavRef.current = true;
-      indexRef.current--;
-      navigate(stackRef.current[indexRef.current]);
+    const history = getHistory();
+    if (history.index > 0) {
+      history.isNavigatingHistory = true;
+      history.index--;
+      navigate(history.stack[history.index]);
       forceUpdate();
     }
-  }, [navigate, forceUpdate]);
+  }, [navigate, forceUpdate, getHistory]);
 
   const forward = useCallback(() => {
-    if (indexRef.current < stackRef.current.length - 1) {
-      isNavRef.current = true;
-      indexRef.current++;
-      navigate(stackRef.current[indexRef.current]);
+    const history = getHistory();
+    if (history.index < history.stack.length - 1) {
+      history.isNavigatingHistory = true;
+      history.index++;
+      navigate(history.stack[history.index]);
       forceUpdate();
     }
-  }, [navigate, forceUpdate]);
+  }, [navigate, forceUpdate, getHistory]);
 
-  const value = useMemo<NavigationContextValue>(
-    () => ({
+  const value = useMemo<NavigationContextValue>(() => {
+    const activeHistory = getHistory();
+    return {
       push,
+      setScope,
       back,
       forward,
-      canGoBack: indexRef.current > 0,
-      canGoForward: indexRef.current < stackRef.current.length - 1,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [push, back, forward, indexRef.current, stackRef.current.length],
-  );
+      canGoBack: activeHistory.index > 0,
+      canGoForward: activeHistory.index < activeHistory.stack.length - 1,
+    };
+  }, [push, setScope, back, forward, getHistory, version]);
 
   return (
     <NavigationContext.Provider value={value}>

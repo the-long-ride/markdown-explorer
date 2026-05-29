@@ -12,6 +12,7 @@ interface UseKeyboardOptions {
   onSearchClose: () => void;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
+  onWelcome?: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
   isSearchOpen: boolean;
@@ -58,6 +59,7 @@ export function useKeyboard({
   onSearchClose,
   onSettingsOpen,
   onSettingsClose,
+  onWelcome,
   onExpandAll,
   onCollapseAll,
   isSearchOpen,
@@ -116,8 +118,18 @@ export function useKeyboard({
         }
       }
 
-      // 2. Ctrl+K -> Search overlay (both)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      // 2. Ctrl+Shift+K -> desktop cross-tab search; Ctrl+K -> current search.
+      if (isElectron && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (isSearchOpen) {
+          onSearchClose();
+        } else {
+          onSearchOpen();
+        }
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         if (isSearchOpen) {
           onSearchClose();
@@ -144,7 +156,11 @@ export function useKeyboard({
       // 5. Welcome page (both)
       if (matchesShortcut(e, keybindings.welcome)) {
         e.preventDefault();
-        navigate(null);
+        if (onWelcome) {
+          onWelcome();
+        } else {
+          navigate(null);
+        }
         return;
       }
 
@@ -255,6 +271,7 @@ export function useKeyboard({
     onSearchClose,
     onSettingsOpen,
     onSettingsClose,
+    onWelcome,
     onExpandAll,
     onCollapseAll,
     isSearchOpen,

@@ -386,7 +386,7 @@ body.is-electron {
   --chart-8: #ca8a04;
 }
 
-/* Pets: vector mascot themes */
+/* Pets: PNG mascot themes */
 [data-theme-style^="pet-"] {
   --topbar-h: 48px;
   --topbar-gap: 9px;
@@ -409,8 +409,8 @@ body.is-electron {
   --r-md: 8px;
   --r-lg: 8px;
   --surface-blur: none;
-  --pet-pattern-opacity: 0.08;
-  --pet-mascot-opacity: 0.24;
+  --pet-bg-main-opacity: 0.24;
+  --pet-bg-side-opacity: 0.16;
 }
 
 [data-theme-style^="pet-"][data-theme="dark"],
@@ -480,43 +480,56 @@ body.is-electron {
   --chart-6: #7c3aed;
   --chart-7: #dc2626;
   --chart-8: #0d9488;
-  --pet-pattern-opacity: 0.065;
-  --pet-mascot-opacity: 0.19;
+  --pet-bg-main-opacity: 0.19;
+  --pet-bg-side-opacity: 0.13;
 }
 
 [data-theme-style="pet-white-shiba"] {
-  --pet-pattern: url("../assets/themes/pets/white-shiba-pattern.svg");
-  --pet-mascot: url("../assets/themes/pets/white-shiba.svg");
+  --pet-bg-happy: url("../assets/themes/pets/backgrounds/white-shiba-happy.png");
+  --pet-bg-wink: url("../assets/themes/pets/backgrounds/white-shiba-wink.png");
+  --pet-bg-blep: url("../assets/themes/pets/backgrounds/white-shiba-blep.png");
   --pet-paw: url("../assets/themes/pets/paws/white-shiba-paw.svg");
 }
 
 [data-theme-style="pet-shiba"] {
-  --pet-pattern: url("../assets/themes/pets/shiba-pattern.svg");
-  --pet-mascot: url("../assets/themes/pets/shiba.svg");
+  --pet-bg-happy: url("../assets/themes/pets/backgrounds/shiba-happy.png");
+  --pet-bg-wink: url("../assets/themes/pets/backgrounds/shiba-wink.png");
+  --pet-bg-blep: url("../assets/themes/pets/backgrounds/shiba-blep.png");
   --pet-paw: url("../assets/themes/pets/paws/shiba-paw.svg");
 }
 
 [data-theme-style="pet-shiba-memes"] {
-  --pet-pattern: url("../assets/themes/pets/shiba-memes-pattern.svg");
-  --pet-mascot: url("../assets/themes/pets/shiba-memes.svg");
+  --pet-bg-happy: url("../assets/themes/pets/backgrounds/shiba-memes-happy.png");
+  --pet-bg-wink: url("../assets/themes/pets/backgrounds/shiba-memes-wink.png");
+  --pet-bg-blep: url("../assets/themes/pets/backgrounds/shiba-memes-blep.png");
   --pet-paw: url("../assets/themes/pets/paws/shiba-memes-paw.svg");
 }
 
+[data-theme-style="pet-k-ink"] {
+  --pet-bg-happy: url("../assets/themes/pets/backgrounds/k-ink-wolf.png");
+  --pet-bg-wink: url("../assets/themes/pets/backgrounds/k-ink-wating.png");
+  --pet-bg-blep: url("../assets/themes/pets/backgrounds/k-ink-surprise.png");
+  --pet-paw: url("../assets/themes/pets/paws/k-ink-paw.svg");
+}
+
 [data-theme-style="pet-cat"] {
-  --pet-pattern: url("../assets/themes/pets/cat-pattern.svg");
-  --pet-mascot: url("../assets/themes/pets/cat.svg");
+  --pet-bg-happy: url("../assets/themes/pets/backgrounds/cat-happy.png");
+  --pet-bg-wink: url("../assets/themes/pets/backgrounds/cat-wink.png");
+  --pet-bg-blep: url("../assets/themes/pets/backgrounds/cat-blep.png");
   --pet-paw: url("../assets/themes/pets/paws/cat-paw.svg");
 }
 
 [data-theme-style="pet-hamster"] {
-  --pet-pattern: url("../assets/themes/pets/hamster-pattern.svg");
-  --pet-mascot: url("../assets/themes/pets/hamster.svg");
+  --pet-bg-happy: url("../assets/themes/pets/backgrounds/hamster-happy.png");
+  --pet-bg-wink: url("../assets/themes/pets/backgrounds/hamster-wink.png");
+  --pet-bg-blep: url("../assets/themes/pets/backgrounds/hamster-blep.png");
   --pet-paw: url("../assets/themes/pets/paws/hamster-paw.svg");
 }
 
 [data-theme-style="pet-corgi"] {
-  --pet-pattern: url("../assets/themes/pets/corgi-pattern.svg");
-  --pet-mascot: url("../assets/themes/pets/corgi.svg");
+  --pet-bg-happy: url("../assets/themes/pets/backgrounds/corgi-happy.png");
+  --pet-bg-wink: url("../assets/themes/pets/backgrounds/corgi-wink.png");
+  --pet-bg-blep: url("../assets/themes/pets/backgrounds/corgi-blep.png");
   --pet-paw: url("../assets/themes/pets/paws/corgi-paw.svg");
 }
 
@@ -561,6 +574,32 @@ body.is-electron {
   --chart-1: #38bdf8;
   --chart-2: #facc15;
   --chart-3: #c084fc;
+}
+
+[data-theme-style="pet-k-ink"][data-theme="dark"],
+[data-theme-style="pet-k-ink"][data-theme="auto"] {
+  --bg: #11100f;
+  --bg-s: #1a1716;
+  --bg-e: #24201e;
+  --bg-h: #302a27;
+  --bg-a: #3b332f;
+  --bg-code: #0d0c0b;
+  --bd: rgba(245, 231, 213, 0.11);
+  --bd-s: rgba(245, 231, 213, 0.2);
+  --bd-x: rgba(245, 231, 213, 0.32);
+  --tx: #f6eee7;
+  --tx2: #cbb9aa;
+  --txm: #826f63;
+  --tx3: #9a877a;
+  --accent: #a98fa0;
+  --accent-dim: rgba(169, 143, 160, 0.16);
+  --accent-text: #d8becb;
+  --txc: #a8b8ca;
+  --chart-1: #a98fa0;
+  --chart-2: #a8b8ca;
+  --chart-3: #d2b48c;
+  --pet-bg-main-opacity: 0.22;
+  --pet-bg-side-opacity: 0.13;
 }
 
 [data-theme-style="pet-cat"][data-theme="dark"],
@@ -630,6 +669,28 @@ body.is-electron {
   --chart-3: #ca8a04;
 }
 
+[data-theme-style="pet-k-ink"][data-theme="light"] {
+  --bg: #f7f5f2;
+  --bg-s: #ffffff;
+  --bg-e: #eee9e3;
+  --bg-h: #e4ddd5;
+  --bg-a: #d7ccc1;
+  --bg-code: #f5f1ec;
+  --tx: #1d1714;
+  --tx2: #55463e;
+  --txm: #7d6b60;
+  --tx3: #8b7a70;
+  --accent: #7f6474;
+  --accent-dim: rgba(127, 100, 116, 0.13);
+  --accent-text: #684b5a;
+  --txc: #52677d;
+  --chart-1: #7f6474;
+  --chart-2: #52677d;
+  --chart-3: #9b7f5f;
+  --pet-bg-main-opacity: 0.18;
+  --pet-bg-side-opacity: 0.1;
+}
+
 [data-theme-style="pet-cat"][data-theme="light"] {
   --accent: #0369a1;
   --accent-dim: rgba(3, 105, 161, 0.13);
@@ -693,8 +754,8 @@ body.is-electron {
     --chart-6: #7c3aed;
     --chart-7: #dc2626;
     --chart-8: #0d9488;
-    --pet-pattern-opacity: 0.065;
-    --pet-mascot-opacity: 0.19;
+    --pet-bg-main-opacity: 0.19;
+    --pet-bg-side-opacity: 0.13;
   }
 
   [data-theme-style="pet-white-shiba"][data-theme="auto"] {
@@ -729,6 +790,28 @@ body.is-electron {
     --chart-1: #111827;
     --chart-2: #0284c7;
     --chart-3: #ca8a04;
+  }
+
+  [data-theme-style="pet-k-ink"][data-theme="auto"] {
+    --bg: #f7f5f2;
+    --bg-s: #ffffff;
+    --bg-e: #eee9e3;
+    --bg-h: #e4ddd5;
+    --bg-a: #d7ccc1;
+    --bg-code: #f5f1ec;
+    --tx: #1d1714;
+    --tx2: #55463e;
+    --txm: #7d6b60;
+    --tx3: #8b7a70;
+    --accent: #7f6474;
+    --accent-dim: rgba(127, 100, 116, 0.13);
+    --accent-text: #684b5a;
+    --txc: #52677d;
+    --chart-1: #7f6474;
+    --chart-2: #52677d;
+    --chart-3: #9b7f5f;
+    --pet-bg-main-opacity: 0.18;
+    --pet-bg-side-opacity: 0.1;
   }
 
   [data-theme-style="pet-cat"][data-theme="auto"] {

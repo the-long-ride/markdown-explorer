@@ -25,6 +25,8 @@ interface BreadcrumbItem {
   isEllipsis?: boolean;
 }
 
+const BREADCRUMB_CHAR_BUDGET = 96;
+
 function truncateFilename(name: string, maxLen: number): string {
   if (name.length <= maxLen) return name;
   const extIdx = name.lastIndexOf('.');
@@ -58,7 +60,7 @@ function getBreadcrumbItems(relativePath: string): BreadcrumbItem[] {
     text: p,
     isBold: idx === N - 1
   }));
-  if (getItemsLength(fullItems) <= 45) {
+  if (getItemsLength(fullItems) <= BREADCRUMB_CHAR_BUDGET) {
     return fullItems;
   }
 
@@ -71,7 +73,7 @@ function getBreadcrumbItems(relativePath: string): BreadcrumbItem[] {
       { text: parts[N - 2] },
       { text: filename, isBold: true }
     ];
-    if (getItemsLength(items) <= 45) {
+    if (getItemsLength(items) <= BREADCRUMB_CHAR_BUDGET) {
       return items;
     }
   }
@@ -84,7 +86,7 @@ function getBreadcrumbItems(relativePath: string): BreadcrumbItem[] {
       { text: parts[N - 2] },
       { text: filename, isBold: true }
     ];
-    if (getItemsLength(items) <= 45) {
+    if (getItemsLength(items) <= BREADCRUMB_CHAR_BUDGET) {
       return items;
     }
   }
@@ -97,24 +99,24 @@ function getBreadcrumbItems(relativePath: string): BreadcrumbItem[] {
       { text: parent },
       { text: filename, isBold: true }
     ];
-    if (getItemsLength(items) <= 45) {
+    if (getItemsLength(items) <= BREADCRUMB_CHAR_BUDGET) {
       return items;
     }
 
     // Try truncating parent if it's too long
-    const truncatedParent = parent.length > 15 ? parent.slice(0, 12) + '...' : parent;
+    const truncatedParent = parent.length > 28 ? parent.slice(0, 25) + '...' : parent;
     const itemsTruncatedParent = [
       { text: '...', isEllipsis: true },
       { text: truncatedParent },
       { text: filename, isBold: true }
     ];
-    if (getItemsLength(itemsTruncatedParent) <= 45) {
+    if (getItemsLength(itemsTruncatedParent) <= BREADCRUMB_CHAR_BUDGET) {
       return itemsTruncatedParent;
     }
   }
 
   // Tier 5: ... / truncated_filename.md (or just truncated_filename.md if N == 1)
-  const truncatedFile = truncateFilename(filename, 20);
+  const truncatedFile = truncateFilename(filename, 48);
   if (N >= 2) {
     return [
       { text: '...', isEllipsis: true },

@@ -19,6 +19,9 @@ interface MediaModalProps {
   clickedElement: HTMLElement | null;
 }
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 20;
+
 function getClickableMedia(): { type: 'img' | 'svg'; element: HTMLElement; src?: string; html?: string }[] {
   const media: { type: 'img' | 'svg'; element: HTMLElement; src?: string; html?: string }[] = [];
   document.querySelectorAll<HTMLElement>('.mdn-body img, .mdn-body .mdn-mermaid-wrap').forEach((el) => {
@@ -86,8 +89,8 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
     }
   }, [isOpen, clickedElement]);
 
-  const zoomIn = useCallback(() => setZoom((z) => Math.min(5, z + 0.25)), []);
-  const zoomOut = useCallback(() => setZoom((z) => Math.max(0.25, z - 0.25)), []);
+  const zoomIn = useCallback(() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25)), []);
+  const zoomOut = useCallback(() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25)), []);
   const reset = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, []);
 
   const prev = useCallback(() => {
@@ -117,7 +120,7 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
     if (!isOpen || !modalRef.current) return;
     const handler = (e: WheelEvent) => {
       e.preventDefault();
-      setZoom((z) => Math.min(5, Math.max(0.25, z + (e.deltaY < 0 ? 0.15 : -0.15))));
+      setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + (e.deltaY < 0 ? 0.15 : -0.15))));
     };
     const modal = modalRef.current;
     modal.addEventListener('wheel', handler, { passive: false });

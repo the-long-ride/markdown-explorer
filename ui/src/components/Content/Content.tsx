@@ -28,9 +28,14 @@ const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
 interface ContentProps {
   onImageClick: (el: HTMLElement) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  suppressWelcome?: boolean;
 }
 
-export function Content({ onImageClick, scrollRef }: ContentProps) {
+export function Content({
+  onImageClick,
+  scrollRef,
+  suppressWelcome = false,
+}: ContentProps) {
   const { state } = useAppState();
   const { push } = useNavigation();
   const bridge = usePlatform();
@@ -344,6 +349,7 @@ export function Content({ onImageClick, scrollRef }: ContentProps) {
         {/* Welcome Page */}
         {!state.isLoading &&
           !state.notFoundHref &&
+          !suppressWelcome &&
           !state.currentFile &&
           state.fileList.length > 0 && <WelcomePage />}
 

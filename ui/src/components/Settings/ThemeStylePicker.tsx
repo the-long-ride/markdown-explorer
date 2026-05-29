@@ -10,12 +10,13 @@ import {
   isPetThemeStyle,
 } from "../../contexts/AppStateContext";
 import type { PetThemeStyle, ThemeStyle } from "../../types";
-import whiteShibaMascot from "../../assets/themes/pets/white-shiba.svg";
-import shibaMascot from "../../assets/themes/pets/shiba.svg";
-import kInkMascot from "../../assets/themes/pets/shiba-memes.svg";
-import catMascot from "../../assets/themes/pets/cat.svg";
-import hamsterMascot from "../../assets/themes/pets/hamster.svg";
-import corgiMascot from "../../assets/themes/pets/corgi.svg";
+import whiteShibaPet from "../../assets/themes/pets/backgrounds/white-shiba-happy.png";
+import shibaPet from "../../assets/themes/pets/backgrounds/shiba-happy.png";
+import blackShibaPet from "../../assets/themes/pets/backgrounds/shiba-memes-happy.png";
+import kInkPet from "../../assets/themes/pets/backgrounds/k-ink-wolf.png";
+import catPet from "../../assets/themes/pets/backgrounds/cat-happy.png";
+import hamsterPet from "../../assets/themes/pets/backgrounds/hamster-happy.png";
+import corgiPet from "../../assets/themes/pets/backgrounds/corgi-happy.png";
 
 interface ThemeStylePickerProps {
   value: ThemeStyle;
@@ -24,22 +25,23 @@ interface ThemeStylePickerProps {
 }
 
 const PETS_DESCRIPTION =
-  "Vector mascots, patterned backgrounds, and soft animated reading surfaces.";
+  "Anime PNG pet companions, playful background buddies, and soft animated reading surfaces.";
 
-const PET_MASCOT_URLS: Record<PetThemeStyle, string> = {
-  "pet-white-shiba": whiteShibaMascot,
-  "pet-shiba": shibaMascot,
-  "pet-shiba-memes": kInkMascot,
-  "pet-cat": catMascot,
-  "pet-hamster": hamsterMascot,
-  "pet-corgi": corgiMascot,
+const PET_IMAGE_URLS: Record<PetThemeStyle, string> = {
+  "pet-white-shiba": whiteShibaPet,
+  "pet-shiba": shibaPet,
+  "pet-shiba-memes": blackShibaPet,
+  "pet-k-ink": kInkPet,
+  "pet-cat": catPet,
+  "pet-hamster": hamsterPet,
+  "pet-corgi": corgiPet,
 };
 
-function PetMascotSwatch({ themeStyle }: { themeStyle: PetThemeStyle }) {
+function PetImageSwatch({ themeStyle }: { themeStyle: PetThemeStyle }) {
   return (
     <img
-      className="pet-theme-swatch-svg"
-      src={PET_MASCOT_URLS[themeStyle]}
+      className="pet-theme-swatch-image"
+      src={PET_IMAGE_URLS[themeStyle]}
       alt=""
       draggable={false}
     />
@@ -119,7 +121,7 @@ export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStyle
           onClick={() => onChange(selectedPetTheme)}
         >
           <span className="theme-style-option__swatch theme-style-option__swatch--pet" aria-hidden="true">
-            <PetMascotSwatch themeStyle={selectedPetTheme} />
+            <PetImageSwatch themeStyle={selectedPetTheme} />
           </span>
           <span className="theme-style-option__text">
             <span className="theme-style-option__label">Pets</span>

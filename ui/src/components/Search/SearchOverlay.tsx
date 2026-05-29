@@ -4,17 +4,41 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
+import { usePlatform } from '../../contexts/PlatformContext';
 import { SearchIcon } from '../shared/icons';
 
 interface SearchOverlayProps {
   isOpen: boolean;
   onClose: () => void;
+  scopeLabel?: string;
+  crossTabItems?: readonly CrossTabSearchItem[];
+  onCrossTabSelect?: (item: CrossTabSearchItem) => void;
 }
 
-export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
+export interface CrossTabSearchItem {
+  tabId: string;
+  tabLabel: string;
+  fsPath: string;
+  title: string;
+  fileName: string;
+  relativePath: string;
+  excerpt?: string;
+}
+
+export function SearchOverlay({
+  isOpen,
+  onClose,
+  scopeLabel,
+  crossTabItems,
+  onCrossTabSelect,
+}: SearchOverlayProps) {
   const { state, navigate } = useAppState();
+  const bridge = usePlatform();
   const [query, setQuery] = useState('');
+  const [remoteQuery, setRemoteQuery] = useState('');
+  const [remoteResults, setRemoteResults] = useState<CrossTabSearchItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestIdRef = useRef('');
 
   useEffect(() => {
     if (isOpen) {
@@ -23,18 +47,39 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     }
   }, [isOpen]);
 
-  const results = query.length >= 2
+  const queryLower = query.toLowerCase();
+  const currentTabResults = query.length >= 2
     ? state.fileList
         .map((f) => ({
           f,
           score:
-            (f.title.toLowerCase().includes(query.toLowerCase()) ? 2 : 0) +
-            (f.relativePath.toLowerCase().includes(query.toLowerCase()) ? 1 : 0),
+            (f.title.toLowerCase().includes(queryLower) ? 2 : 0) +
+            (f.relativePath.toLowerCase().includes(queryLower) ? 1 : 0),
         }))
         .filter((r) => r.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 20)
     : [];
+
+  const crossTabResults = query.length >= 2 && crossTabItems
+    ? crossTabItems
+        .map((item) => ({
+          item,
+          score:
+            (item.title.toLowerCase().includes(queryLower) ? 3 : 0) +
+            (item.fileName.toLowerCase().includes(queryLower) ? 2 : 0) +
+            (item.relativePath.toLowerCase().includes(queryLower) ? 1 : 0) +
+            (item.tabLabel.toLowerCase().includes(queryLower) ? 1 : 0),
+        }))
+        .filter((r) => r.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 40)
+    : [];
+  const hasCrossTabSearch = !!crossTabItems && !!onCrossTabSelect;
+  const displayedCrossTabResults =
+    hasCrossTabSearch && remoteQuery === query
+      ? remoteResults.map((item) => ({ item, score: 0 }))
+      : crossTabResults;
 
   const handleSelect = useCallback(
     (fsPath: string) => {
@@ -43,6 +88,42 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     },
     [onClose, navigate],
   );
+
+  useEffect(() => {
+    if (!isOpen || !hasCrossTabSearch) return;
+    return bridge.onMessage((msg) => {
+      if (
+        msg.command === 'crossTabSearchResults' &&
+        msg.requestId === requestIdRef.current
+      ) {
+        setRemoteQuery(query);
+        setRemoteResults(msg.results as CrossTabSearchItem[]);
+      }
+    });
+  }, [bridge, hasCrossTabSearch, isOpen, query]);
+
+  useEffect(() => {
+    if (!isOpen || !hasCrossTabSearch || !crossTabItems || query.length < 2) {
+      setRemoteQuery('');
+      setRemoteResults([]);
+      return;
+    }
+
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    requestIdRef.current = requestId;
+    const handle = window.setTimeout(() => {
+      bridge.postMessage({
+        command: 'searchAcrossWorkspaces',
+        requestId,
+        query,
+        items: crossTabItems,
+      });
+    }, 160);
+
+    return () => window.clearTimeout(handle);
+  }, [bridge, crossTabItems, hasCrossTabSearch, isOpen, query]);
+
+  const resultCount = hasCrossTabSearch ? displayedCrossTabResults.length : currentTabResults.length;
 
   if (!isOpen) return null;
 
@@ -91,7 +172,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search across all markdown files…"
+            placeholder={scopeLabel ?? "Search across all markdown files…"}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             style={{
@@ -112,41 +193,65 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
         {/* Results */}
         <div style={{ overflowY: 'auto', padding: '8px 0', flex: 1 }} role="listbox">
-          {query.length >= 2 && results.length === 0 && (
+          {query.length >= 2 && resultCount === 0 && (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--txm)', fontSize: 13 }}>
               No files matching "<strong>{query}</strong>"
             </div>
           )}
-          {results.map(({ f }) => (
-            <div
-              key={f.fsPath}
-              onClick={() => handleSelect(f.fsPath)}
-              role="option"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSelect(f.fsPath); }}
-              style={{
-                padding: '10px 16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                borderBottom: '1px solid var(--bd)',
-                transition: 'background .1s',
-              }}
-              onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-h)'; }}
-              onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.background = ''; }}
-            >
-              <span style={{ fontSize: 16 }}>📄</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
-                  {state.settings.showTitle ? f.title : f.fileName}
+          {hasCrossTabSearch
+            ? displayedCrossTabResults.map(({ item }) => (
+                <div
+                  key={`${item.tabId}:${item.fsPath}`}
+                  onClick={() => {
+                    onClose();
+                    onCrossTabSelect(item);
+                  }}
+                  role="option"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onClose();
+                      onCrossTabSelect(item);
+                    }
+                  }}
+                  className="search-result-row"
+                >
+                  <span className="search-result-row__icon">MD</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
+                      {state.settings.showTitle ? item.title : item.fileName}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--txm)', fontFamily: 'var(--font-mono)' }}>
+                      {item.tabLabel} / {item.relativePath}
+                    </div>
+                    {item.excerpt && (
+                      <div className="search-result-row__excerpt">
+                        {item.excerpt}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--txm)', fontFamily: 'var(--font-mono)' }}>
-                  {f.relativePath}
+              ))
+            : currentTabResults.map(({ f }) => (
+                <div
+                  key={f.fsPath}
+                  onClick={() => handleSelect(f.fsPath)}
+                  role="option"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSelect(f.fsPath); }}
+                  className="search-result-row"
+                >
+                  <span className="search-result-row__icon">MD</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
+                      {state.settings.showTitle ? f.title : f.fileName}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--txm)', fontFamily: 'var(--font-mono)' }}>
+                      {f.relativePath}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              ))}
         </div>
       </div>
     </div>

@@ -57,12 +57,29 @@ export interface ReadyAckMessage {
   readonly themeStyle?: string;
   readonly defaultExpanded: boolean;
   readonly workspaceName: string;
+  readonly workspacePath?: string;
   readonly recentWorkspaces?: readonly RecentWorkspace[];
 }
 
 export interface WindowStateChangedMessage {
   readonly command: 'window-state-changed';
   readonly isMaximized: boolean;
+}
+
+export interface CrossTabSearchResultsMessage {
+  readonly command: 'crossTabSearchResults';
+  readonly requestId: string;
+  readonly results: readonly CrossTabSearchResult[];
+}
+
+export interface CrossTabSearchResult {
+  readonly tabId: string;
+  readonly tabLabel: string;
+  readonly fsPath: string;
+  readonly title: string;
+  readonly fileName: string;
+  readonly relativePath: string;
+  readonly excerpt?: string;
 }
 
 export interface NavNotFoundMessage {
@@ -74,7 +91,8 @@ export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
   | NavNotFoundMessage
-  | WindowStateChangedMessage;
+  | WindowStateChangedMessage
+  | CrossTabSearchResultsMessage;
 
 // ── Webview → Host messages ─────────────────────────────────────────────────
 
@@ -103,6 +121,7 @@ export interface RefreshMessage {
 
 export interface OpenFolderMessage {
   readonly command: 'openFolder';
+  readonly openFirstFile?: boolean;
 }
 
 export interface OpenFileMessage {
@@ -112,6 +131,21 @@ export interface OpenFileMessage {
 export interface OpenPathMessage {
   readonly command: 'openPath';
   readonly path: string;
+  readonly openFirstFile?: boolean;
+}
+
+export interface ActivateWorkspaceMessage {
+  readonly command: 'activateWorkspace';
+  readonly workspacePath: string;
+  readonly filePath?: string;
+  readonly openFirstFile?: boolean;
+}
+
+export interface CrossTabSearchMessage {
+  readonly command: 'searchAcrossWorkspaces';
+  readonly requestId: string;
+  readonly query: string;
+  readonly items: readonly CrossTabSearchResult[];
 }
 
 export interface ConfirmOpenPathMessage {
@@ -122,6 +156,7 @@ export interface ConfirmOpenPathMessage {
 export interface OpenRecentWorkspaceMessage {
   readonly command: 'openRecentWorkspace';
   readonly path: string;
+  readonly openFirstFile?: boolean;
 }
 
 export interface CloseWorkspaceMessage {
@@ -158,6 +193,8 @@ export type WebviewMessage =
   | OpenFolderMessage
   | OpenFileMessage
   | OpenPathMessage
+  | ActivateWorkspaceMessage
+  | CrossTabSearchMessage
   | ConfirmOpenPathMessage
   | OpenRecentWorkspaceMessage
   | CloseWorkspaceMessage
@@ -169,10 +206,12 @@ export type WebviewMessage =
 // ── UI state ────────────────────────────────────────────────────────────────
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
+export type DesktopViewMode = 'focus' | 'tabs';
 export type PetThemeStyle =
   | 'pet-white-shiba'
   | 'pet-shiba'
   | 'pet-shiba-memes'
+  | 'pet-k-ink'
   | 'pet-cat'
   | 'pet-hamster'
   | 'pet-corgi';
@@ -182,12 +221,14 @@ export type ThemeStyle = 'default' | 'glass' | 'bento' | PetThemeStyle;
 export interface AppSettings {
   showTitle: boolean;
   defaultHtmlPreview: boolean;
+  desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
 }
 
 export interface PersistedState {
   showTitle?: boolean;
   defaultHtmlPreview?: boolean;
+  desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   theme?: ThemeMode;
   themeStyle?: ThemeStyle;

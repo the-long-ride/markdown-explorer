@@ -19,6 +19,7 @@ import type {
   Frontmatter,
   ThemeMode,
   ThemeStyle,
+  DesktopViewMode,
   PetThemeStyle,
   AppSettings,
   PersistedState,
@@ -47,6 +48,8 @@ interface AppState {
   defaultExpanded: boolean;
   /** Workspace name */
   workspaceName: string;
+  /** Workspace absolute path (Electron only) */
+  workspacePath?: string;
   /** Sidebar collapsed */
   sidebarCollapsed: boolean;
   /** Rendered HTML (from host) */
@@ -133,8 +136,13 @@ export const PET_THEME_STYLE_OPTIONS: readonly {
   },
   {
     id: 'pet-shiba-memes',
-    label: 'K-Ink (this is my dog =]])',
-    description: 'A black Vietnamese dog theme with inky fur, bright eyes, and loyal desk-buddy energy.',
+    label: 'Black Shiba',
+    description: 'A dark Shiba theme with inky fur, bright eyes, and cheerful desk-buddy energy.',
+  },
+  {
+    id: 'pet-k-ink',
+    label: "K-Ink (app author's dog)",
+    description: 'A personal K-Ink theme with expressive ears, warm amber eyes, and anime sticker energy.',
   },
   {
     id: 'pet-cat',
@@ -174,6 +182,10 @@ function normalizeThemeStyle(value: unknown): ThemeStyle {
     : 'default';
 }
 
+function normalizeDesktopViewMode(value: unknown): DesktopViewMode {
+  return value === 'tabs' ? 'tabs' : 'focus';
+}
+
 const initialState: AppState = {
   fileList: [],
   tree: null,
@@ -184,6 +196,7 @@ const initialState: AppState = {
   hasThemeStylePreference: false,
   defaultExpanded: true,
   workspaceName: '',
+  workspacePath: undefined,
   sidebarCollapsed: false,
   contentHtml: '',
   frontmatter: {},
@@ -191,11 +204,34 @@ const initialState: AppState = {
   relativePath: '',
   isLoading: true,
   notFoundHref: null,
-  settings: { showTitle: true, defaultHtmlPreview: true, keybindings: DEFAULT_KEYBINDINGS },
+  settings: {
+    showTitle: true,
+    defaultHtmlPreview: true,
+    desktopViewMode: 'focus',
+    keybindings: DEFAULT_KEYBINDINGS,
+  },
   renderVersion: 0,
   recentWorkspaces: [],
   isMaximized: false,
 };
+
+function createInitialState(saved?: PersistedState): AppState {
+  if (!saved) return initialState;
+  return {
+    ...initialState,
+    theme: saved.theme ? normalizeThemeMode(saved.theme) : initialState.theme,
+    hasThemePreference: !!saved.theme,
+    themeStyle: saved.themeStyle ? normalizeThemeStyle(saved.themeStyle) : initialState.themeStyle,
+    hasThemeStylePreference: !!saved.themeStyle,
+    settings: {
+      ...initialState.settings,
+      showTitle: saved.showTitle !== false,
+      defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+      desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+      keybindings: saved.keybindings ?? DEFAULT_KEYBINDINGS,
+    },
+  };
+}
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -208,6 +244,7 @@ type Action =
       themeStyle: ThemeStyle;
       defaultExpanded: boolean;
       workspaceName: string;
+      workspacePath?: string;
       recentWorkspaces?: readonly RecentWorkspace[];
     }
   | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
@@ -230,6 +267,7 @@ function reducer(state: AppState, action: Action): AppState {
         themeStyle: state.hasThemeStylePreference ? state.themeStyle : action.themeStyle,
         defaultExpanded: action.defaultExpanded,
         workspaceName: action.workspaceName,
+        workspacePath: action.workspacePath,
         recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
         isLoading: false,
       };
@@ -303,7 +341,9 @@ const AppStateContext = createContext<AppStateContextValue | null>(null);
 
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const bridge = usePlatform();
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    createInitialState(bridge.getState<PersistedState>()),
+  );
 
   // Load persisted settings on mount
   useEffect(() => {
@@ -314,6 +354,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         settings: {
           showTitle: saved.showTitle !== false,
           defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+          desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
           keybindings: saved.keybindings ?? DEFAULT_KEYBINDINGS,
         },
       });
@@ -344,6 +385,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             themeStyle: normalizeThemeStyle(savedAppearance?.themeStyle ?? msg.themeStyle),
             defaultExpanded: msg.defaultExpanded,
             workspaceName: msg.workspaceName,
+            workspacePath: msg.workspacePath,
             recentWorkspaces: msg.recentWorkspaces,
           });
           break;
@@ -378,6 +420,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     bridge.setState<PersistedState>({
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
+      desktopViewMode: state.settings.desktopViewMode,
       keybindings: state.settings.keybindings,
       theme: state.theme,
       themeStyle: state.themeStyle,

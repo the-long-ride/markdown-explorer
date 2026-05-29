@@ -193,6 +193,47 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             >
               View Preferences
             </div>
+            {isElectron && (
+              <div
+                className="settings-field"
+                style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
+              >
+                <div className="settings-item__info">
+                  <div className="settings-item__title">Desktop View</div>
+                  <div className="settings-item__desc">
+                    Focus keeps the current single-workspace layout. Tabs lets each workspace live in its own tab.
+                  </div>
+                </div>
+                <div
+                  className="segmented-control"
+                  role="radiogroup"
+                  aria-label="Desktop view mode"
+                >
+                  {[
+                    { id: "focus", label: "Focus" },
+                    { id: "tabs", label: "Tabs" },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`segmented-option${
+                        (state.settings.desktopViewMode ?? "focus") === option.id
+                          ? " is-active"
+                          : ""
+                      }`}
+                      aria-pressed={(state.settings.desktopViewMode ?? "focus") === option.id}
+                      onClick={() =>
+                        updateSettings({
+                          desktopViewMode: option.id as "focus" | "tabs",
+                        })
+                      }
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Show Title */}
             <div
               className="settings-item"

@@ -23,7 +23,17 @@ function formatLastOpened(timestamp?: number) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function WorkspaceSelection() {
+interface WorkspaceSelectionProps {
+  onBeforeOpenWorkspace?: () => void;
+  embeddedInTabs?: boolean;
+  workspaceAliases?: Record<string, string>;
+}
+
+export function WorkspaceSelection({
+  onBeforeOpenWorkspace,
+  embeddedInTabs = false,
+  workspaceAliases = {},
+}: WorkspaceSelectionProps = {}) {
   const { state, toggleTheme } = useAppState();
   const bridge = usePlatform();
   const [modalOpen, setModalOpen] = useState(false);
@@ -57,15 +67,22 @@ export function WorkspaceSelection() {
   // }, [bridge]);
 
   const handleOpenFolder = () => {
-    bridge.postMessage({ command: 'openFolder' });
+    onBeforeOpenWorkspace?.();
+    bridge.postMessage({ command: 'openFolder', openFirstFile: embeddedInTabs });
   };
 
   const handleOpenFile = () => {
+    onBeforeOpenWorkspace?.();
     bridge.postMessage({ command: 'openFile' });
   };
 
   const handleOpenRecent = (path: string) => {
-    bridge.postMessage({ command: 'openRecentWorkspace', path });
+    onBeforeOpenWorkspace?.();
+    bridge.postMessage({
+      command: 'openRecentWorkspace',
+      path,
+      openFirstFile: embeddedInTabs,
+    });
   };
 
   const handleDeleteRecent = (path: string) => {
@@ -109,10 +126,16 @@ export function WorkspaceSelection() {
 
   const recents = state.recentWorkspaces || [];
   const displayRecents = recents.slice(0, 3);
+  const getWorkspaceDisplayName = (item: { name: string; path: string }) =>
+    workspaceAliases[item.path]?.trim() || item.name;
 
   const filteredRecents = recents.filter(item => {
     const q = searchQuery.toLowerCase();
-    return item.name.toLowerCase().includes(q) || item.path.toLowerCase().includes(q);
+    return (
+      getWorkspaceDisplayName(item).toLowerCase().includes(q) ||
+      item.name.toLowerCase().includes(q) ||
+      item.path.toLowerCase().includes(q)
+    );
   });
 
   return (
@@ -139,7 +162,7 @@ export function WorkspaceSelection() {
         left: 0,
         right: 0,
         height: '44px',
-        display: 'flex',
+        display: embeddedInTabs ? 'none' : 'flex',
         justifyContent: 'flex-end',
         alignItems: 'center',
         paddingRight: '12px',
@@ -352,7 +375,7 @@ export function WorkspaceSelection() {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'
-                    }}>{item.name}</div>
+                    }}>{getWorkspaceDisplayName(item)}</div>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -548,7 +571,7 @@ export function WorkspaceSelection() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
-                      }}>{item.name}</div>
+                      }}>{getWorkspaceDisplayName(item)}</div>
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',

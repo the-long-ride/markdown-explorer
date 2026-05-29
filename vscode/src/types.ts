@@ -159,6 +159,7 @@ export interface UpdateAppearanceMessage {
     | 'pet-white-shiba'
     | 'pet-shiba'
     | 'pet-shiba-memes'
+    | 'pet-k-ink'
     | 'pet-cat'
     | 'pet-hamster'
     | 'pet-corgi';
