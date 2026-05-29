@@ -4,6 +4,26 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.3.7] — 2026-05-30
+
+### Added Features & Enhancements
+- **Desktop Workspace Tabs**: Added the optional desktop tab view for opening multiple workspaces, switching between them, renaming tabs, reopening saved tabs, and keeping each tab's current file state.
+- **Cross-Tab Search**: Added desktop cross-workspace search so Tab view can search files from every open workspace with `Ctrl+Shift+K`.
+- **Cute Anime Pet Artwork**: Replaced the pet theme background treatment with transparent PNG anime pet artwork and wired the pet picker to preview those images.
+- **K-Ink Theme**: Added a dedicated `K-Ink (app author's dog)` pet theme with the supplied dog artwork, a custom paw icon, and a softer lower-contrast palette.
+
+### Changed
+- **Black Shiba Restored**: Renamed the previous K-Ink-labelled Shiba theme back to **Black Shiba** so K-Ink can live as its own theme.
+- **Tab View Controls**: Restored top-right Tab view controls for theme toggle, settings, sidebar toggle, and window actions.
+- **Wider Path Display**: Increased breadcrumb and tab label width budgets so file paths use the available toolbar space before truncating.
+- **Media Modal Zoom**: Raised maximum image zoom to **2000%** for high-resolution inspection.
+
+### Maintenance
+- **Electron-Only Desktop Source**: Confirmed the source and dependency tree no longer include Tauri references.
+- **Release Version Bump**: Updated workspace, UI, desktop, and VS Code package metadata to `1.3.7`.
+
+---
+
 ## [1.3.6] — 2026-05-27
 
 ### Added Features & Enhancements

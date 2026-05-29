@@ -22,6 +22,9 @@ Instantly scans your workspace to build an interactive folder tree. Browse your 
 Find any document in milliseconds via a quick-search overlay.
 <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/quick-searching.png" width="800" alt="Global Search" />
 
+### 🗂️ Desktop Workspace Tabs
+Open multiple folders in the desktop app, switch between workspace tabs, rename tabs, and search across every open tab with `Ctrl+Shift+K`.
+
 ### 📋 Interactive Tables & Charts
 - **Funnel Filters**: Filter columns by values instantly.
 - **Header Sorting**: Sort data ascending or descending.
@@ -60,6 +63,9 @@ Explore workspaces offline without running VS Code. Manage your recently opened 
 Configure and rebind keyboard triggers to match your own layout preferences.
 <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/More-keyboard-shortcut.png" width="800" alt="Custom Keybindings" />
 
+### 🐾 Anime Pet Themes
+Choose cute transparent-background pet artwork, including White Shiba, Shiba, Black Shiba, K-Ink, Cat, Hamster, and Corgi themes.
+
 ---
 
 ## 🚀 How to Get Started
@@ -84,8 +90,8 @@ Configure and rebind keyboard triggers to match your own layout preferences.
 
 ## 🗺️ Roadmap
 * **🎨 Theme Customization**: Custom color presets for the app and viewer.
-* **🗂️ Multi-Tab Workspace**: Open and browse multiple folders in tabs.
 * **📥 Drag & Drop Opening**: Drop a folder or markdown file into the app window to inspect it instantly.
+* **🧭 Workspace Profiles**: Save per-workspace reading preferences for repeated documentation flows.
 
 ---
 

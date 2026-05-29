@@ -2,7 +2,7 @@
   "name": "vscode-extension-markdown-explorer",
   "displayName": "Markdown Explorer in VS Code",
   "description": "Markdown for AI agents, Markdown Explorer for human. View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "license": "MIT",
   "publisher": "the-long-ride",
   "icon": "ui/assets/logos/logo-500.png",
@@ -72,6 +72,7 @@
             "pet-white-shiba",
             "pet-shiba",
             "pet-shiba-memes",
+            "pet-k-ink",
             "pet-cat",
             "pet-hamster",
             "pet-corgi"
@@ -80,12 +81,13 @@
             "Original compact Markdown Explorer styling.",
             "Evolved glassmorphism with translucent layered surfaces.",
             "Bento grids with modular panels and stronger structure.",
-            "Pets theme: white Shiba mascot with snowy vector accents.",
-            "Pets theme: normal Shiba mascot with warm paw-print accents.",
-            "Pets theme: K-Ink, a black Vietnamese dog mascot with inky vector accents.",
-            "Pets theme: cat mascot with whiskers and fish-bone vector accents.",
-            "Pets theme: hamster mascot with seed and wheel vector accents.",
-            "Pets theme: corgi mascot with golden loaf vector accents."
+            "Pets theme: white Shiba mascot with cute anime PNG background pets.",
+            "Pets theme: normal Shiba mascot with warm anime PNG background pets.",
+            "Pets theme: black Shiba mascot with inky anime PNG background pets.",
+            "Pets theme: K-Ink (app author's dog) with expressive anime PNG background pets.",
+            "Pets theme: cat mascot with whiskers and cute anime PNG background pets.",
+            "Pets theme: hamster mascot with seed-colored anime PNG background pets.",
+            "Pets theme: corgi mascot with golden-loaf anime PNG background pets."
           ],
           "description": "Visual style for surfaces, borders, backgrounds, shadows, spacing, and strokes."
         },
