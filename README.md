@@ -88,10 +88,9 @@ Choose cute transparent-background pet artwork, including White Shiba, Shiba, Bl
 
 ---
 
-## 🗺️ Roadmap
-* **🎨 Theme Customization**: Custom color presets for the app and viewer.
+## 🗺️ Roadmap 
+
 * **📥 Drag & Drop Opening**: Drop a folder or markdown file into the app window to inspect it instantly.
-* **🧭 Workspace Profiles**: Save per-workspace reading preferences for repeated documentation flows.
 
 ---
 

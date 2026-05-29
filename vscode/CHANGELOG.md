@@ -4,7 +4,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
-## [1.3.7] — 2026-05-30
+## [1.4.0] — 2026-05-30
 
 ### Added Features & Enhancements
 - **Desktop Workspace Tabs**: Added the optional desktop tab view for opening multiple workspaces, switching between them, renaming tabs, reopening saved tabs, and keeping each tab's current file state.
@@ -20,7 +20,8 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ### Maintenance
 - **Electron-Only Desktop Source**: Confirmed the source and dependency tree no longer include Tauri references.
-- **Release Version Bump**: Updated workspace, UI, desktop, and VS Code package metadata to `1.3.7`.
+- **VS Code Bundle Size Reduction**: Reduced the VSIX footprint by resizing decorative pet PNGs and loading selected Highlight.js and Chart.js modules instead of their full bundles.
+- **Release Version Bump**: Updated workspace, UI, desktop, and VS Code package metadata to `1.4.0`.
 
 ---
 
