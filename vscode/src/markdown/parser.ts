@@ -8,6 +8,7 @@ export type BlockToken =
   | HeadingToken
   | ParagraphToken
   | CodeBlockToken
+  | MathBlockToken
   | BlockquoteToken
   | TableToken
   | ListToken
@@ -20,6 +21,11 @@ export interface HrToken        { type: 'hr' }
 export interface CodeBlockToken {
   type: 'code';
   lang: string;
+  content: string;
+}
+
+export interface MathBlockToken {
+  type: 'math';
   content: string;
 }
 
@@ -108,6 +114,21 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     // Skip blank lines
     if (line.trim() === '') { i++; continue; }
 
+    // Display math block: $$ ... $$ or \[ ... \]
+    const displayMathFence = line.trim();
+    if (displayMathFence === '$$' || displayMathFence === '\\[') {
+      const closingFence = displayMathFence === '$$' ? '$$' : '\\]';
+      const mathLines: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== closingFence) {
+        mathLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++; // consume closing fence
+      tokens.push({ type: 'math', content: mathLines.join('\n') });
+      continue;
+    }
+
     // JSX Block (MDX only)
     if (isMdx && /^<[A-Za-z]/.test(line.trim())) {
       const jsxLines: string[] = [];
@@ -174,13 +195,25 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     }
 
     // Table (pipe table)
-    if (line.includes('|') && i + 1 < lines.length && /^[\s|:\-]+$/.test(lines[i + 1])) {
+    if (line.includes('|') && i + 1 < lines.length && isPipeTableSeparator(lines[i + 1])) {
       const tableLines: string[] = [];
       while (i < lines.length && (lines[i].includes('|') || /^[\s|:\-]+$/.test(lines[i]))) {
         tableLines.push(lines[i]);
         i++;
       }
       const table = parseTable(tableLines);
+      if (table) tokens.push(table);
+      continue;
+    }
+
+    // Table (tab-separated text copied from docs/spreadsheets)
+    if (line.includes('\t') && i + 1 < lines.length && lines[i + 1].includes('\t')) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim() !== '' && lines[i].includes('\t')) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      const table = parseTabTable(tableLines);
       if (table) tokens.push(table);
       continue;
     }
@@ -256,7 +289,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     while (
       i < lines.length &&
       lines[i].trim() !== '' &&
-      !/^(#{1,6}\s|>|`{3,}|~{3,}|[-*_]{3,}$)/.test(lines[i]) &&
+      !/^(#{1,6}\s|>|`{3,}|~{3,}|\$\$|\\\[|[-*_]{3,}$)/.test(lines[i]) &&
       !getListMarker(lines[i])
     ) {
       paraLines.push(lines[i]);
@@ -306,11 +339,8 @@ function getListMarker(line: string): ListMarkerInfo | null {
 function parseTable(lines: string[]): TableToken | null {
   if (lines.length < 2) return null;
 
-  const splitCells = (row: string) =>
-    row.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
-
-  const headers = splitCells(lines[0]);
-  const sepCells = splitCells(lines[1]);
+  const headers = splitPipeCells(lines[0]);
+  const sepCells = splitPipeCells(lines[1]);
 
   const align: Array<'left' | 'center' | 'right' | null> = sepCells.map(cell => {
     const s = cell.trim();
@@ -320,9 +350,95 @@ function parseTable(lines: string[]): TableToken | null {
     return null;
   });
 
-  const rows = lines.slice(2).map(splitCells).filter(r => r.some(c => c !== ''));
+  const rows = lines
+    .slice(2)
+    .filter(row => !isPipeTableSeparator(row))
+    .map(row => normalizeTableCells(splitPipeCells(row), headers.length))
+    .filter(r => r.some(c => c !== ''));
 
   return { type: 'table', headers, align, rows };
+}
+
+function parseTabTable(lines: string[]): TableToken | null {
+  if (lines.length < 2) return null;
+
+  const headers = splitTabCells(lines[0]);
+  if (headers.length < 2) return null;
+
+  const rows = lines
+    .slice(1)
+    .map(row => normalizeTableCells(splitTabCells(row), headers.length))
+    .filter(r => r.some(c => c !== ''));
+
+  return {
+    type: 'table',
+    headers,
+    align: headers.map(() => null),
+    rows,
+  };
+}
+
+function isPipeTableSeparator(line: string): boolean {
+  if (!line.includes('|')) return false;
+  const cells = splitPipeCells(line);
+  return cells.length > 0 && cells.every(cell => /^:?-+:?$/.test(cell.trim()));
+}
+
+function splitPipeCells(row: string): string[] {
+  let source = row.trim();
+  if (source.startsWith('|')) source = source.slice(1);
+  if (source.endsWith('|')) source = source.slice(0, -1);
+
+  const cells: string[] = [];
+  let current = '';
+  let inCode = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+
+    if (ch === '\\' && source[i + 1] === '|') {
+      current += '|';
+      i++;
+      continue;
+    }
+
+    if (ch === '`') {
+      let run = '`';
+      while (source[i + 1] === '`') {
+        run += '`';
+        i++;
+      }
+      inCode = !inCode;
+      current += run;
+      continue;
+    }
+
+    if (ch === '|' && !inCode) {
+      cells.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += ch;
+  }
+
+  cells.push(current.trim());
+  return cells;
+}
+
+function splitTabCells(row: string): string[] {
+  return row.split('\t').map(cell => cell.trim());
+}
+
+function normalizeTableCells(cells: string[], columnCount: number): string[] {
+  if (columnCount <= 0 || cells.length === columnCount) return cells;
+  if (cells.length < columnCount) {
+    return [...cells, ...Array(columnCount - cells.length).fill('')];
+  }
+  if (columnCount === 2) {
+    return [cells.slice(0, -1).join(' | '), cells[cells.length - 1]];
+  }
+  return [...cells.slice(0, columnCount - 1), cells.slice(columnCount - 1).join(' | ')];
 }
 
 // ── List item parser ───────────────────────────────────────

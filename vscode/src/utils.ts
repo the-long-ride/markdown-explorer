@@ -41,11 +41,13 @@ export interface ButtonOptions {
   onlyIcon?: boolean;
   disabled?: boolean;
   tooltipPos?: 'above' | 'below';
+  onKeyDown?: string;
 }
 
 export function renderButton(options: ButtonOptions): string {
   const idAttr = options.id ? ` id="${options.id}"` : '';
   const disabledAttr = options.disabled ? ' disabled' : '';
+  const keyDownAttr = options.onKeyDown ? ` onkeydown="${options.onKeyDown}"` : '';
   const tooltipText = options.tooltip || options.label;
   
   const classes = options.className ? options.className.split(' ') : [];
@@ -62,9 +64,8 @@ export function renderButton(options: ButtonOptions): string {
     ? (options.iconHtml || '')
     : `${iconHtml}${iconHtml && labelHtml ? ' ' : ''}${labelHtml}`;
 
-  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${disabledAttr}${tooltipPosAttr}>
+  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${keyDownAttr}${disabledAttr}${tooltipPosAttr}>
   ${content}
   <span class="tooltip-text">${escHtml(tooltipText)}</span>
 </button>`;
 }
-

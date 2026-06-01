@@ -80,7 +80,27 @@ export interface NavNotFoundMessage {
   readonly href: string;
 }
 
-export type HostMessage = RenderContentMessage | ReadyAckMessage | NavNotFoundMessage;
+export interface WorkspaceSearchResult {
+  readonly fsPath: string;
+  readonly title: string;
+  readonly fileName: string;
+  readonly relativePath: string;
+  readonly excerpt?: string;
+  readonly matchIndex?: number;
+  readonly matchOrdinal?: number;
+}
+
+export interface WorkspaceSearchResultsMessage {
+  readonly command: 'workspaceSearchResults';
+  readonly requestId: string;
+  readonly results: readonly WorkspaceSearchResult[];
+}
+
+export type HostMessage =
+  | RenderContentMessage
+  | ReadyAckMessage
+  | NavNotFoundMessage
+  | WorkspaceSearchResultsMessage;
 
 // ── Webview message types (webview → host) ──────────────────
 
@@ -105,6 +125,13 @@ export interface CopyCodeMessage {
 
 export interface RefreshMessage {
   readonly command: 'refresh';
+}
+
+export interface WorkspaceSearchMessage {
+  readonly command: 'searchWorkspace';
+  readonly requestId: string;
+  readonly query: string;
+  readonly items?: readonly WorkspaceSearchResult[];
 }
 
 export interface OpenFolderMessage {
@@ -171,6 +198,7 @@ export type WebviewMessage =
   | WebviewReadyMessage
   | CopyCodeMessage
   | RefreshMessage
+  | WorkspaceSearchMessage
   | OpenFolderMessage
   | OpenFileMessage
   | OpenPathMessage

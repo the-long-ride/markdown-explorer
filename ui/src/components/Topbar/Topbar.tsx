@@ -7,7 +7,7 @@ import { useNavigation } from '../../contexts/NavigationContext';
 import { TooltipButton } from '../shared/TooltipButton';
 import {
   HomeIcon, ChevronLeftIcon, ChevronRightIcon,
-  ExpandIcon, CollapseIcon, EditIcon, SearchIcon,
+  ExpandIcon, CollapseIcon, CopyIcon, EditIcon, SearchIcon,
   SettingsIcon, SidebarIcon, RefreshIcon, SunIcon, MoonIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-128.png';
@@ -17,6 +17,8 @@ interface TopbarProps {
   onSettingsOpen: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
+  onCopyFile: (button?: HTMLElement | null) => void;
+  searchShortcutLabel: string;
 }
 
 interface BreadcrumbItem {
@@ -134,6 +136,8 @@ export function Topbar({
   onSettingsOpen,
   onExpandAll,
   onCollapseAll,
+  onCopyFile,
+  searchShortcutLabel,
 }: TopbarProps) {
   const {
     state,
@@ -272,7 +276,7 @@ export function Topbar({
           <SearchIcon />
           <input
             type="text"
-            placeholder="Search docs… (Ctrl+K)"
+            placeholder={`Search docs... (${searchShortcutLabel})`}
             autoComplete="off"
             onFocus={onSearchOpen}
             aria-label="Search all markdown files"
@@ -290,6 +294,13 @@ export function Topbar({
           icon={<EditIcon />}
           label="Edit"
           onlyIcon={false}
+        />
+        <TooltipButton
+          className="btn btn--icon"
+          onClick={(event) => onCopyFile(event.currentTarget)}
+          tooltip="Copy file content"
+          disabled={!state.currentFile}
+          icon={<CopyIcon />}
         />
         <TooltipButton
           className="btn btn--icon"

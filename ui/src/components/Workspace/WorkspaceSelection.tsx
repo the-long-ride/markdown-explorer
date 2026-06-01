@@ -152,9 +152,12 @@ export function WorkspaceSelection({
         color: 'var(--tx)',
         fontFamily: 'var(--font-ui)',
         padding: '40px 20px',
+        width: '100%',
+        maxWidth: '100vw',
         boxSizing: 'border-box',
         position: 'relative',
-        overflow: 'auto'
+        overflowX: 'hidden',
+        overflowY: 'auto'
       }}>
       <div style={{
         position: 'absolute',
@@ -216,7 +219,8 @@ export function WorkspaceSelection({
       </div>
       <div ref={workspacePanelRef} className="workspace-selection__panel" style={{
         width: '100%',
-        maxWidth: '420px',
+        maxWidth: 'min(420px, 100%)',
+        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
@@ -381,7 +385,8 @@ export function WorkspaceSelection({
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: '12px',
-                      marginTop: '4px'
+                      marginTop: '4px',
+                      minWidth: 0
                     }}>
                       <span style={{
                         fontSize: '11px',
@@ -577,7 +582,8 @@ export function WorkspaceSelection({
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '12px',
-                        marginTop: '2px'
+                        marginTop: '2px',
+                        minWidth: 0
                       }}>
                         <span style={{
                           fontSize: '11px',

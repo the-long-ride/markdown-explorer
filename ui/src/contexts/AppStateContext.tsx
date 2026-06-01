@@ -75,6 +75,9 @@ interface AppState {
 }
 
 export const DEFAULT_KEYBINDINGS: Record<string, string> = {
+  searchCurrent: 'Ctrl+K',
+  searchAllTabs: 'Ctrl+Shift+K',
+  findCurrentFile: 'K',
   back: 'Ctrl+ArrowLeft',
   forward: 'Ctrl+ArrowRight',
   welcome: 'Ctrl+h',
@@ -88,6 +91,27 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
 };
+
+export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
+  ...DEFAULT_KEYBINDINGS,
+  searchCurrent: 'Ctrl+F',
+  searchAllTabs: 'Ctrl+Shift+F',
+  findCurrentFile: 'F',
+};
+
+export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
+  return isDesktop ? DESKTOP_DEFAULT_KEYBINDINGS : DEFAULT_KEYBINDINGS;
+}
+
+function normalizeKeybindings(
+  saved: Record<string, string> | undefined,
+  isDesktop: boolean,
+): Record<string, string> {
+  return {
+    ...getDefaultKeybindings(isDesktop),
+    ...(saved ?? {}),
+  };
+}
 
 export const THEME_MODE_OPTIONS: readonly { id: ThemeMode; label: string }[] = [
   { id: 'auto', label: 'Auto' },
@@ -205,7 +229,7 @@ const initialState: AppState = {
   isLoading: true,
   notFoundHref: null,
   settings: {
-    showTitle: true,
+    showTitle: false,
     defaultHtmlPreview: true,
     desktopViewMode: 'focus',
     keybindings: DEFAULT_KEYBINDINGS,
@@ -215,8 +239,17 @@ const initialState: AppState = {
   isMaximized: false,
 };
 
-function createInitialState(saved?: PersistedState): AppState {
-  if (!saved) return initialState;
+function createInitialState(saved: PersistedState | undefined, isDesktop: boolean): AppState {
+  const defaultKeybindings = getDefaultKeybindings(isDesktop);
+  if (!saved) {
+    return {
+      ...initialState,
+      settings: {
+        ...initialState.settings,
+        keybindings: defaultKeybindings,
+      },
+    };
+  }
   return {
     ...initialState,
     theme: saved.theme ? normalizeThemeMode(saved.theme) : initialState.theme,
@@ -225,10 +258,10 @@ function createInitialState(saved?: PersistedState): AppState {
     hasThemeStylePreference: !!saved.themeStyle,
     settings: {
       ...initialState.settings,
-      showTitle: saved.showTitle !== false,
+      showTitle: saved.showTitle === true,
       defaultHtmlPreview: saved.defaultHtmlPreview !== false,
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
-      keybindings: saved.keybindings ?? DEFAULT_KEYBINDINGS,
+      keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
     },
   };
 }
@@ -341,8 +374,9 @@ const AppStateContext = createContext<AppStateContextValue | null>(null);
 
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const bridge = usePlatform();
+  const isDesktop = typeof (window as any).electronAPI !== 'undefined';
   const [state, dispatch] = useReducer(reducer, undefined, () =>
-    createInitialState(bridge.getState<PersistedState>()),
+    createInitialState(bridge.getState<PersistedState>(), isDesktop),
   );
 
   // Load persisted settings on mount
@@ -352,10 +386,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       dispatch({
         type: 'UPDATE_SETTINGS',
         settings: {
-          showTitle: saved.showTitle !== false,
+          showTitle: saved.showTitle === true,
           defaultHtmlPreview: saved.defaultHtmlPreview !== false,
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
-          keybindings: saved.keybindings ?? DEFAULT_KEYBINDINGS,
+          keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
         },
       });
       if (saved.theme) {
@@ -368,7 +402,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
-  }, [bridge]);
+  }, [bridge, isDesktop]);
 
   // Listen for host messages
   useEffect(() => {

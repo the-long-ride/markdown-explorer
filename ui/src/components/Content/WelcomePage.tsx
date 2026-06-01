@@ -132,10 +132,10 @@ export function WelcomePage() {
           {/* Feature 2 */}
           <div style={{ background: 'var(--bg-s)', border: '1px solid var(--bd-s)', borderRadius: 'var(--r-lg)', padding: '14px 16px' }}>
             <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--accent-text)', marginBottom: '6px' }}>
-              🔍 Instant Quick Search ({isElectron ? <kbd>Ctrl+K</kbd> : <><kbd>Ctrl+K</kbd> (or <kbd>Cmd+K</kbd> on Mac)</>})
+              🔍 Instant Quick Search ({isElectron ? <kbd>Ctrl+F</kbd> : <><kbd>Ctrl+K</kbd> (or <kbd>Cmd+K</kbd> on Mac)</>})
             </div>
             <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--tx2)' }}>
-              Press {isElectron ? <kbd>Ctrl+K</kbd> : <><kbd>Ctrl+K</kbd> (or <kbd>Cmd+K</kbd> on Mac)</>} from anywhere in the preview window to open the quick search overlay. Type a query to search across all markdown file names instantly. Use the mouse or keyboard to select and open a file.
+              Press {isElectron ? <kbd>Ctrl+F</kbd> : <><kbd>Ctrl+K</kbd> (or <kbd>Cmd+K</kbd> on Mac)</>} from anywhere in the preview window to open the quick search overlay. Type a query to search markdown filenames, paths, titles, and file contents. Use the mouse or keyboard to select and open a file.
             </div>
           </div>
 

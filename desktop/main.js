@@ -5,6 +5,8 @@ const {
   ipcMain,
   clipboard,
   Menu,
+  shell,
+  session,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -19,15 +21,80 @@ let activeWorkspace = null;
 let currentFile = null;
 let flatList = [];
 let readyHandled = false;
+const searchIndexCache = new Map();
 
 // Electron zoom level maps roughly to factor = 1.2 ^ level.
 // This range gives about 63% to 144%, enough zoom-out for dense views while keeping zoom-in guarded.
 const ZOOM_LEVEL_MIN = -2.5;
 const ZOOM_LEVEL_MAX = 2;
 const ZOOM_LEVEL_STEP = 0.2;
+const YOUTUBE_EMBED_REFERRER = "https://the-long-ride.github.io/markdown-explorer/";
 
 // Remove default window menu bar
 Menu.setApplicationMenu(null);
+
+function isTruthyEnv(value) {
+  return /^(1|true|yes|on)$/i.test(String(value || ""));
+}
+
+function isDebugMode() {
+  return (
+    !app.isPackaged ||
+    isTruthyEnv(process.env.MARKDOWN_EXPLORER_DEBUG) ||
+    process.argv.includes("--debug") ||
+    process.argv.includes("--devtools")
+  );
+}
+
+function shouldAutoOpenDevTools() {
+  return (
+    isTruthyEnv(process.env.MARKDOWN_EXPLORER_DEBUG) ||
+    process.argv.includes("--devtools")
+  );
+}
+
+function openDevToolsIfDebug() {
+  if (!mainWindow || !isDebugMode()) return false;
+  if (!mainWindow.webContents.isDevToolsOpened()) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
+  return true;
+}
+
+function toggleDevToolsIfDebug() {
+  if (!mainWindow || !isDebugMode()) return false;
+  if (mainWindow.webContents.isDevToolsOpened()) {
+    mainWindow.webContents.closeDevTools();
+  } else {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
+  return true;
+}
+
+function configureYouTubeEmbedHeaders() {
+  const filter = {
+    urls: [
+      "https://www.youtube.com/*",
+      "https://www.youtube-nocookie.com/*",
+    ],
+  };
+
+  session.defaultSession.webRequest.onBeforeSendHeaders(
+    filter,
+    (details, callback) => {
+      const requestHeaders = { ...details.requestHeaders };
+      const hasReferer = Object.keys(requestHeaders).some(
+        (name) => name.toLowerCase() === "referer",
+      );
+
+      if (!hasReferer) {
+        requestHeaders.Referer = YOUTUBE_EMBED_REFERRER;
+      }
+
+      callback({ requestHeaders });
+    },
+  );
+}
 
 const recentsFile = path.join(
   app.getPath("userData"),
@@ -116,16 +183,16 @@ function createWindow() {
     },
   });
 
-  // Block Developer Tools shortcut in production release build
+  // Developer Tools are only available while debugging.
   mainWindow.webContents.on("before-input-event", (event, input) => {
-    if (app.isPackaged) {
-      const isDevToolsKey =
-        (input.control && input.shift && input.key.toLowerCase() === "i") ||
-        (input.meta && input.alt && input.key.toLowerCase() === "i") ||
-        input.key === "F12";
-      if (isDevToolsKey) {
-        event.preventDefault();
-      }
+    const key = String(input.key || "").toLowerCase();
+    const isDevToolsKey =
+      (input.control && input.shift && key === "i") ||
+      (input.meta && input.alt && key === "i") ||
+      key === "f12";
+    if (isDevToolsKey) {
+      event.preventDefault();
+      toggleDevToolsIfDebug();
     }
   });
 
@@ -144,33 +211,39 @@ function createWindow() {
     });
   });
 
-  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
-  // // Block new windows and file-drop navigation at the main-process level.
-  // // Without this, dropping a file when Electron has no bubble-phase handler
-  // // causes webContents to navigate to file:///dropped/path, spawning a blank window.
-  // mainWindow.webContents.on('will-navigate', (event) => {
-  //   event.preventDefault();
-  // });
-  // mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  // Block file-drop navigation at the main-process level. Renderer handles drops.
+  mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
+    const currentUrl = mainWindow.webContents.getURL();
+    if (navigationUrl === currentUrl || navigationUrl.startsWith(`${currentUrl}#`)) {
+      return;
+    }
+    event.preventDefault();
+    if (/^https?:\/\//i.test(navigationUrl)) {
+      void shell.openExternal(navigationUrl);
+    }
+  });
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//i.test(url)) {
+      void shell.openExternal(url);
+    }
+    return { action: "deny" };
+  });
 
   mainWindow.webContents.on("did-finish-load", () => {
     clampAppZoom();
+    if (shouldAutoOpenDevTools()) {
+      openDevToolsIfDebug();
+    }
   });
   const uiIndex = path.join(appDir, 'ui', 'dist', 'index.html');
   mainWindow.loadFile(uiIndex);
 
-  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
-  // mainWindow.webContents.on('did-finish-load', () => {
-  //   mainWindow.webContents.executeJavaScript(`
-  //     document.addEventListener('dragover', e => e.preventDefault(), true);
-  //     document.addEventListener('drop',     e => e.preventDefault(), true);
-  //   `);
-  // });
 }
 
 let tray = null;
 
 app.whenReady().then(() => {
+  configureYouTubeEmbedHeaders();
   createWindow();
 
   // Create System Tray Icon
@@ -243,6 +316,15 @@ app.whenReady().then(() => {
         break;
       case "searchAcrossWorkspaces":
         handleSearchAcrossWorkspaces(msg);
+        break;
+      case "searchWorkspace":
+        handleSearchWorkspace(msg);
+        break;
+      case "indexWorkspaceSearchItems":
+        handleIndexWorkspaceSearchItems(msg);
+        break;
+      case "loadWorkspaceSearchIndexes":
+        handleLoadWorkspaceSearchIndexes(msg);
         break;
 
       case "confirmOpenPath":
@@ -396,66 +478,200 @@ function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false)
 }
 
 function makeSearchExcerpt(text, index, queryLength) {
-  const start = Math.max(0, index - 72);
-  const end = Math.min(text.length, index + queryLength + 120);
-  return text
-    .slice(start, end)
-    .replace(/\s+/g, " ")
-    .trim();
+  const beforeText = text.slice(0, index).replace(/\s+/g, " ").trim();
+  const matchText = text.slice(index, index + queryLength).replace(/\s+/g, " ").trim();
+  const afterText = text.slice(index + queryLength).replace(/\s+/g, " ").trim();
+  const beforeWords = beforeText ? beforeText.split(" ") : [];
+  const afterWords = afterText ? afterText.split(" ") : [];
+  const parts = [];
+
+  if (beforeWords.length > 10) parts.push("...");
+  parts.push(...beforeWords.slice(-10));
+  if (matchText) parts.push(matchText);
+  parts.push(...afterWords.slice(0, 10));
+  if (afterWords.length > 10) parts.push("...");
+
+  return parts.join(" ").trim();
+}
+
+function isMarkdownSearchPath(filePath) {
+  const ext = path.extname(filePath || "").toLowerCase();
+  return ext === ".md" || ext === ".mdx";
+}
+
+function getSearchIndexEntry(filePath) {
+  if (!filePath || !fs.existsSync(filePath) || !isMarkdownSearchPath(filePath)) {
+    return null;
+  }
+
+  const stat = fs.statSync(filePath);
+  const cached = searchIndexCache.get(filePath);
+  if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
+    return cached;
+  }
+
+  const raw = fs.readFileSync(filePath, "utf8");
+  const entry = {
+    mtimeMs: stat.mtimeMs,
+    size: stat.size,
+    raw,
+    lower: raw.toLowerCase(),
+  };
+  searchIndexCache.set(filePath, entry);
+  return entry;
+}
+
+function primeSearchIndex(items) {
+  const paths = [
+    ...new Set(
+      items
+        .map((item) => item && item.fsPath)
+        .filter((filePath) => filePath && isMarkdownSearchPath(filePath)),
+    ),
+  ];
+  let index = 0;
+
+  const step = () => {
+    const end = Math.min(index + 25, paths.length);
+    for (; index < end; index += 1) {
+      try {
+        getSearchIndexEntry(paths[index]);
+      } catch (err) {
+        console.error("Failed to index file for search:", paths[index], err);
+      }
+    }
+
+    if (index < paths.length) {
+      setTimeout(step, 0);
+    }
+  };
+
+  step();
+}
+
+function searchMarkdownItems(query, items, limit = 80) {
+  if (!query || query.length < 2) {
+    return [];
+  }
+
+  const results = [];
+  const maxMatchesPerFile = 8;
+  for (const item of items) {
+    if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
+    if (!isMarkdownSearchPath(item.fsPath)) continue;
+
+    const fileName = item.fileName || path.basename(item.fsPath);
+    const relativePath = item.relativePath || fileName;
+    const title = item.title || fileName.replace(/\.(md|mdx)$/i, "");
+    const titleScore = String(title).toLowerCase().includes(query) ? 5 : 0;
+    const fileNameScore = String(fileName).toLowerCase().includes(query) ? 4 : 0;
+    const pathScore = String(relativePath).toLowerCase().includes(query) ? 2 : 0;
+    const baseScore = titleScore + fileNameScore + pathScore;
+    const contentMatches = [];
+
+    try {
+      const searchEntry = getSearchIndexEntry(item.fsPath);
+      if (searchEntry) {
+        let index = searchEntry.lower.indexOf(query);
+        let ordinal = 0;
+        while (index !== -1 && contentMatches.length < maxMatchesPerFile) {
+          contentMatches.push({
+            index,
+            ordinal,
+            excerpt: makeSearchExcerpt(searchEntry.raw, index, query.length),
+          });
+          ordinal += 1;
+          index = searchEntry.lower.indexOf(query, index + query.length);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to search file:", item.fsPath, err);
+    }
+
+    if (contentMatches.length > 0) {
+      for (const match of contentMatches) {
+        results.push({
+          ...item,
+          title,
+          fileName,
+          relativePath,
+          excerpt: match.excerpt,
+          matchIndex: match.index,
+          matchOrdinal: match.ordinal,
+          score: baseScore + 3 - Math.min(match.ordinal, 20) / 100,
+        });
+      }
+      continue;
+    }
+
+    if (baseScore > 0) {
+      results.push({
+        ...item,
+        title,
+        fileName,
+        relativePath,
+        excerpt: "",
+        score: baseScore,
+      });
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  return results.slice(0, limit).map(({ score, ...result }) => result);
 }
 
 function handleSearchAcrossWorkspaces(msg) {
   const query = String(msg.query || "").trim().toLowerCase();
   const requestId = msg.requestId;
   const items = Array.isArray(msg.items) ? msg.items : [];
-  if (!query || query.length < 2) {
-    mainWindow.webContents.send("host-message", {
-      command: "crossTabSearchResults",
-      requestId,
-      results: [],
-    });
-    return;
-  }
-
-  const results = [];
-  for (const item of items) {
-    if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
-    const ext = path.extname(item.fsPath).toLowerCase();
-    if (ext !== ".md" && ext !== ".mdx") continue;
-
-    const titleScore = String(item.title || "").toLowerCase().includes(query) ? 4 : 0;
-    const pathScore = String(item.relativePath || "").toLowerCase().includes(query) ? 2 : 0;
-    let contentScore = 0;
-    let excerpt = "";
-
-    try {
-      const raw = fs.readFileSync(item.fsPath, "utf8");
-      const haystack = raw.toLowerCase();
-      const index = haystack.indexOf(query);
-      if (index !== -1) {
-        contentScore = 3;
-        excerpt = makeSearchExcerpt(raw, index, query.length);
-      }
-    } catch (err) {
-      console.error("Failed to search file:", item.fsPath, err);
-    }
-
-    const score = titleScore + pathScore + contentScore;
-    if (score > 0) {
-      results.push({
-        ...item,
-        excerpt,
-        score,
-      });
-    }
-  }
-
-  results.sort((a, b) => b.score - a.score);
   mainWindow.webContents.send("host-message", {
     command: "crossTabSearchResults",
     requestId,
-    results: results.slice(0, 80).map(({ score, ...result }) => result),
+    results: searchMarkdownItems(query, items, 80),
   });
+}
+
+function handleSearchWorkspace(msg) {
+  const query = String(msg.query || "").trim().toLowerCase();
+  const requestId = msg.requestId;
+  const items = Array.isArray(msg.items) && msg.items.length > 0 ? msg.items : flatList;
+  mainWindow.webContents.send("host-message", {
+    command: "workspaceSearchResults",
+    requestId,
+    results: searchMarkdownItems(query, items, 80),
+  });
+}
+
+function handleIndexWorkspaceSearchItems(msg) {
+  const items = Array.isArray(msg.items) ? msg.items : [];
+  setTimeout(() => primeSearchIndex(items), 0);
+}
+
+function handleLoadWorkspaceSearchIndexes(msg) {
+  const tabRequests = Array.isArray(msg.tabs) ? msg.tabs : [];
+  setTimeout(() => {
+    const tabs = tabRequests.flatMap((tab) => {
+      const tabId = String(tab?.tabId || "");
+      const workspacePath = String(tab?.workspacePath || "");
+      if (!tabId || !workspacePath || !fs.existsSync(workspacePath)) return [];
+
+      const { tree, flat } = scanWorkspaceData(workspacePath);
+      primeSearchIndex(flat);
+      return [{
+        tabId,
+        workspacePath,
+        fileList: flat,
+        tree,
+      }];
+    });
+
+    if (tabs.length > 0) {
+      mainWindow.webContents.send("host-message", {
+        command: "workspaceSearchIndexLoaded",
+        tabs,
+      });
+    }
+  }, 0);
 }
 
 async function handleConfirmOpenPath(filePath) {
@@ -464,7 +680,8 @@ async function handleConfirmOpenPath(filePath) {
     handleOpenPath(filePath);
     return;
   }
-  const isFile = fs.statSync(filePath).isFile();
+  const stat = fs.statSync(filePath);
+  const isFile = stat.isFile();
   if (isFile) {
     const ext = path.extname(filePath).toLowerCase();
     if (ext !== ".md" && ext !== ".mdx") {
@@ -479,12 +696,17 @@ async function handleConfirmOpenPath(filePath) {
     }
   }
 
+  const targetFolder = isFile ? path.dirname(filePath) : filePath;
+  const targetName = path.basename(targetFolder) || targetFolder;
+  const currentName = activeWorkspace
+    ? (path.basename(activeWorkspace) || activeWorkspace)
+    : "current workspace";
   const { response } = await dialog.showMessageBox(mainWindow, {
     type: "question",
-    buttons: ["Yes", "No"],
-    title: "Switch Workspace/File",
-    message: "Do you want to switch to this new path?",
-    detail: filePath,
+    buttons: ["Switch", "Cancel"],
+    title: "Switch Workspace",
+    message: `Switch to "${targetName}"?`,
+    detail: `Current workspace: ${currentName}\nNew path: ${filePath}`,
     defaultId: 0,
     cancelId: 1,
   });
@@ -603,27 +825,34 @@ async function handleRefresh() {
   }
 }
 
-async function sendWorkspaceData() {
-  if (!activeWorkspace) return;
+function scanWorkspaceData(workspacePath) {
   let tree = null;
   let flat = [];
+
   try {
-    const isFile = fs.statSync(activeWorkspace).isFile();
+    const isFile = fs.statSync(workspacePath).isFile();
     if (isFile) {
-      const ext = path.extname(activeWorkspace).toLowerCase();
-      if (ext === '.md' || ext === '.mdx') {
-        const entry = DesktopScanner.buildFileEntry(activeWorkspace, path.dirname(activeWorkspace));
+      const ext = path.extname(workspacePath).toLowerCase();
+      if (ext === ".md" || ext === ".mdx") {
+        const entry = DesktopScanner.buildFileEntry(workspacePath, path.dirname(workspacePath));
         flat = [entry];
         tree = DesktopScanner.buildTree(flat);
       }
     } else {
-      const result = DesktopScanner.scan(activeWorkspace);
+      const result = DesktopScanner.scan(workspacePath);
       tree = result.tree;
       flat = result.flat;
     }
   } catch (err) {
     console.error("Failed to scan workspace data:", err);
   }
+
+  return { tree, flat };
+}
+
+async function sendWorkspaceData() {
+  if (!activeWorkspace) return;
+  const { tree, flat } = scanWorkspaceData(activeWorkspace);
   flatList = flat;
 
   const workspaceName = path.basename(activeWorkspace);
@@ -655,6 +884,35 @@ async function sendInitialContent(openFirstFile = false) {
   }
 }
 
+function shouldKeepResourceUrl(src) {
+  return /^(https?:|data:|file:|blob:|vscode-webview:|#)/i.test(src);
+}
+
+function toFileResourceUrl(markdownFile, src) {
+  if (shouldKeepResourceUrl(src)) return src;
+  const fileDir = path.dirname(markdownFile);
+  const absolutePath = path.resolve(fileDir, src);
+  return "file:///" + absolutePath.replace(/\\/g, "/");
+}
+
+function rewriteRelativeMediaUrls(html, markdownFile) {
+  const srcAttrRegex = /(<(?:img|video|source|track)\b[^>]*?\bsrc\s*=\s*)(["'])([^"']+)(\2)/gi;
+  const posterAttrRegex = /(<video\b[^>]*?\bposter\s*=\s*)(["'])([^"']+)(\2)/gi;
+
+  const rewriteAttr = (match, prefix, quote, src, suffix) => {
+    try {
+      return `${prefix}${quote}${toFileResourceUrl(markdownFile, src)}${suffix}`;
+    } catch (err) {
+      console.error("Failed to resolve relative media path:", src, err);
+      return match;
+    }
+  };
+
+  return html
+    .replace(srcAttrRegex, rewriteAttr)
+    .replace(posterAttrRegex, rewriteAttr);
+}
+
 async function sendContent() {
   if (!currentFile || !activeWorkspace) return;
   loadMarkdownParser();
@@ -682,27 +940,8 @@ async function sendContent() {
     html = `<div style="padding: 20px; font-family: monospace; white-space: pre-wrap;">${raw}</div>`;
   }
 
-  // Rewrite image paths to file:/// URIs
-  const imgRegex = /<img\s+([^>]*?)src="([^"]+?)"/g;
-  html = html.replace(imgRegex, (match, before, src) => {
-    if (
-      src.startsWith("http://") ||
-      src.startsWith("https://") ||
-      src.startsWith("data:") ||
-      src.startsWith("file:")
-    ) {
-      return match;
-    }
-    try {
-      const fileDir = path.dirname(currentFile);
-      const absolutePath = path.resolve(fileDir, src);
-      const fileUrl = "file:///" + absolutePath.replace(/\\/g, "/");
-      return `<img ${before}src="${fileUrl}"`;
-    } catch (err) {
-      console.error("Failed to resolve relative image path:", src, err);
-      return match;
-    }
-  });
+  // Rewrite local image/video paths to file:/// URIs.
+  html = rewriteRelativeMediaUrls(html, currentFile);
 
   const isWorkspaceFile = fs.statSync(activeWorkspace).isFile();
   const baseDir = isWorkspaceFile ? path.dirname(activeWorkspace) : activeWorkspace;

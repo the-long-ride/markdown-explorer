@@ -14,6 +14,7 @@ import type {
   RenderContentMessage,
   ReadyAckMessage,
   WebviewMessage,
+  WorkspaceSearchResult,
 } from '../types';
 
 export class MarkdownDocsPanel {
@@ -91,6 +92,13 @@ export class MarkdownDocsPanel {
             break;
           case 'refresh':
             await this.refresh();
+            break;
+          case 'searchWorkspace':
+            await this._panel.webview.postMessage({
+              command: 'workspaceSearchResults',
+              requestId: msg.requestId,
+              results: this._searchMarkdownItems(msg.query, msg.items),
+            });
             break;
           case 'updateAppearance': {
             const config = vscode.workspace.getConfiguration('markdownExplorer');
@@ -209,23 +217,8 @@ export class MarkdownDocsPanel {
     const renderer = new HtmlRenderer({ theme, isMdx });
     const { html, toc } = renderer.render(tokens);
 
-    // Rewrite relative image paths to Webview URIs
-    let rewrittenHtml = html;
-    const imgRegex = /<img\s+([^>]*?)src="([^"]+?)"/g;
-    rewrittenHtml = rewrittenHtml.replace(imgRegex, (match, before, src) => {
-      if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:') || src.startsWith('vscode-webview:')) {
-        return match;
-      }
-      try {
-        const fileDir = path.dirname(this._currentFile!);
-        const absolutePath = path.resolve(fileDir, src);
-        const webviewUri = this._panel.webview.asWebviewUri(vscode.Uri.file(absolutePath));
-        return `<img ${before}src="${webviewUri.toString()}"`;
-      } catch (err) {
-        console.error('Failed to resolve relative image path:', src, err);
-        return match;
-      }
-    });
+    // Rewrite local image/video paths to Webview URIs.
+    const rewrittenHtml = this._rewriteRelativeMediaUrls(html);
 
     const msg: RenderContentMessage = {
       command: 'renderContent',
@@ -238,6 +231,126 @@ export class MarkdownDocsPanel {
       fileList: this._flat,
     };
     await this._panel.webview.postMessage(msg);
+  }
+
+  private _makeSearchExcerpt(text: string, index: number, queryLength: number): string {
+    const beforeText = text.slice(0, index).replace(/\s+/g, ' ').trim();
+    const matchText = text.slice(index, index + queryLength).replace(/\s+/g, ' ').trim();
+    const afterText = text.slice(index + queryLength).replace(/\s+/g, ' ').trim();
+    const beforeWords = beforeText ? beforeText.split(' ') : [];
+    const afterWords = afterText ? afterText.split(' ') : [];
+    const parts: string[] = [];
+
+    if (beforeWords.length > 10) parts.push('...');
+    parts.push(...beforeWords.slice(-10));
+    if (matchText) parts.push(matchText);
+    parts.push(...afterWords.slice(0, 10));
+    if (afterWords.length > 10) parts.push('...');
+
+    return parts.join(' ').trim();
+  }
+
+  private _searchMarkdownItems(
+    rawQuery: string,
+    rawItems?: readonly WorkspaceSearchResult[],
+    limit = 80,
+  ): readonly WorkspaceSearchResult[] {
+    const query = String(rawQuery || '').trim().toLowerCase();
+    if (!query || query.length < 2) return [];
+
+    const items = rawItems && rawItems.length > 0 ? rawItems : this._flat;
+    const results: Array<WorkspaceSearchResult & { score: number }> = [];
+    const maxMatchesPerFile = 8;
+
+    for (const item of items) {
+      if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
+      const ext = path.extname(item.fsPath).toLowerCase();
+      if (ext !== '.md' && ext !== '.mdx') continue;
+
+      const fileName = item.fileName || path.basename(item.fsPath);
+      const relativePath = item.relativePath || fileName;
+      const title = item.title || fileName.replace(/\.(md|mdx)$/i, '');
+      const titleScore = title.toLowerCase().includes(query) ? 5 : 0;
+      const fileNameScore = fileName.toLowerCase().includes(query) ? 4 : 0;
+      const pathScore = relativePath.toLowerCase().includes(query) ? 2 : 0;
+      const baseScore = titleScore + fileNameScore + pathScore;
+      const contentMatches: Array<{ index: number; ordinal: number; excerpt: string }> = [];
+
+      const raw = WorkspaceScanner.readFile(item.fsPath);
+      if (raw) {
+        const lowerRaw = raw.toLowerCase();
+        let index = lowerRaw.indexOf(query);
+        let ordinal = 0;
+        while (index !== -1 && contentMatches.length < maxMatchesPerFile) {
+          contentMatches.push({
+            index,
+            ordinal,
+            excerpt: this._makeSearchExcerpt(raw, index, query.length),
+          });
+          ordinal += 1;
+          index = lowerRaw.indexOf(query, index + query.length);
+        }
+      }
+
+      if (contentMatches.length > 0) {
+        for (const match of contentMatches) {
+          results.push({
+            fsPath: item.fsPath,
+            title,
+            fileName,
+            relativePath,
+            excerpt: match.excerpt,
+            matchIndex: match.index,
+            matchOrdinal: match.ordinal,
+            score: baseScore + 3 - Math.min(match.ordinal, 20) / 100,
+          });
+        }
+        continue;
+      }
+
+      if (baseScore > 0) {
+        results.push({
+          fsPath: item.fsPath,
+          title,
+          fileName,
+          relativePath,
+          excerpt: '',
+          score: baseScore,
+        });
+      }
+    }
+
+    results.sort((a, b) => b.score - a.score);
+    return results.slice(0, limit).map(({ score, ...result }) => result);
+  }
+
+  private _shouldKeepResourceUrl(src: string): boolean {
+    return /^(https?:|data:|blob:|vscode-webview:|#)/i.test(src);
+  }
+
+  private _toWebviewResourceUri(src: string): string {
+    if (this._shouldKeepResourceUrl(src)) return src;
+    const fileDir = path.dirname(this._currentFile!);
+    const absolutePath = path.resolve(fileDir, src);
+    return this._panel.webview.asWebviewUri(vscode.Uri.file(absolutePath)).toString();
+  }
+
+  private _rewriteRelativeMediaUrls(html: string): string {
+    const srcAttrRegex = /(<(?:img|video|source|track)\b[^>]*?\bsrc\s*=\s*)(["'])([^"']+)(\2)/gi;
+    const posterAttrRegex = /(<video\b[^>]*?\bposter\s*=\s*)(["'])([^"']+)(\2)/gi;
+
+    const rewriteAttr = (match: string, prefix: string, quote: string, src: string, suffix: string) => {
+      try {
+        return `${prefix}${quote}${this._toWebviewResourceUri(src)}${suffix}`;
+      } catch (err) {
+        console.error('Failed to resolve relative media path:', src, err);
+        return match;
+      }
+    };
+
+    return html
+      .replace(srcAttrRegex, rewriteAttr)
+      .replace(posterAttrRegex, rewriteAttr);
   }
 
   // ---------------------------------------------------------------------------
@@ -332,7 +445,7 @@ export class MarkdownDocsPanel {
 
     // CSP and Base Href
     const cspSource = this._panel.webview.cspSource;
-    const csp = `default-src 'none'; style-src 'unsafe-inline' ${cspSource}; script-src 'unsafe-inline' blob: ${cspSource}; worker-src blob:; img-src * data: blob: ${cspSource}; frame-src 'self' data: ${cspSource}; connect-src *;`;
+    const csp = `default-src 'none'; style-src 'unsafe-inline' ${cspSource}; script-src 'unsafe-inline' blob: ${cspSource}; worker-src blob:; img-src * data: blob: ${cspSource}; media-src * data: blob: ${cspSource}; frame-src 'self' data: ${cspSource} https://www.youtube.com https://www.youtube-nocookie.com; connect-src *;`;
     const baseUri = this._panel.webview.asWebviewUri(vscode.Uri.file(distPath));
 
     // Inject base href and CSP into the <head> section

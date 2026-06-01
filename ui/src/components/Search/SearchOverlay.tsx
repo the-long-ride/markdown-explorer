@@ -1,18 +1,59 @@
 // =============================================================================
-// components/Search/SearchOverlay.tsx — Global search overlay (Ctrl+K)
+// components/Search/SearchOverlay.tsx — Scoped search overlay
 // =============================================================================
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { SearchIcon } from '../shared/icons';
+import type { MdFile, WorkspaceSearchResult } from '../../types';
+
+const SEARCH_OVERLAY_Z_INDEX = 2147483647;
+
+function renderHighlightedExcerpt(excerpt: string, query: string) {
+  const needle = query.trim().replace(/\s+/g, ' ');
+  if (!needle) return excerpt;
+
+  const lowerExcerpt = excerpt.toLowerCase();
+  const lowerNeedle = needle.toLowerCase();
+  const pieces = [];
+  let cursor = 0;
+  let matchIndex = lowerExcerpt.indexOf(lowerNeedle);
+
+  if (matchIndex === -1) return excerpt;
+
+  while (matchIndex !== -1) {
+    if (matchIndex > cursor) {
+      pieces.push(excerpt.slice(cursor, matchIndex));
+    }
+
+    const matchEnd = matchIndex + needle.length;
+    pieces.push(
+      <strong key={`${matchIndex}-${matchEnd}`}>
+        {excerpt.slice(matchIndex, matchEnd)}
+      </strong>,
+    );
+
+    cursor = matchEnd;
+    matchIndex = lowerExcerpt.indexOf(lowerNeedle, cursor);
+  }
+
+  if (cursor < excerpt.length) {
+    pieces.push(excerpt.slice(cursor));
+  }
+
+  return pieces;
+}
 
 interface SearchOverlayProps {
   isOpen: boolean;
   onClose: () => void;
+  scopeKey?: string;
   scopeLabel?: string;
   crossTabItems?: readonly CrossTabSearchItem[];
-  onCrossTabSelect?: (item: CrossTabSearchItem) => void;
+  onWorkspaceSelect?: (item: WorkspaceSearchResult, query: string) => void;
+  onCrossTabSelect?: (item: CrossTabSearchItem, query: string) => void;
 }
 
 export interface CrossTabSearchItem {
@@ -23,13 +64,17 @@ export interface CrossTabSearchItem {
   fileName: string;
   relativePath: string;
   excerpt?: string;
+  matchIndex?: number;
+  matchOrdinal?: number;
 }
 
 export function SearchOverlay({
   isOpen,
   onClose,
+  scopeKey,
   scopeLabel,
   crossTabItems,
+  onWorkspaceSelect,
   onCrossTabSelect,
 }: SearchOverlayProps) {
   const { state, navigate } = useAppState();
@@ -37,23 +82,39 @@ export function SearchOverlay({
   const [query, setQuery] = useState('');
   const [remoteQuery, setRemoteQuery] = useState('');
   const [remoteResults, setRemoteResults] = useState<CrossTabSearchItem[]>([]);
+  const [workspaceRemoteQuery, setWorkspaceRemoteQuery] = useState('');
+  const [workspaceRemoteResults, setWorkspaceRemoteResults] = useState<WorkspaceSearchResult[]>([]);
+  const [isWorkspaceSearching, setIsWorkspaceSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef('');
+  const workspaceRequestIdRef = useRef('');
 
   useEffect(() => {
     if (isOpen) {
       setQuery('');
+      setRemoteQuery('');
+      setRemoteResults([]);
+      setWorkspaceRemoteQuery('');
+      setWorkspaceRemoteResults([]);
+      setIsWorkspaceSearching(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isOpen]);
+  }, [isOpen, scopeKey]);
 
   const queryLower = query.toLowerCase();
+  const toWorkspaceSearchResult = (file: MdFile): WorkspaceSearchResult => ({
+    fsPath: file.fsPath,
+    title: file.title,
+    fileName: file.fileName,
+    relativePath: file.relativePath,
+  });
   const currentTabResults = query.length >= 2
     ? state.fileList
         .map((f) => ({
-          f,
+          item: toWorkspaceSearchResult(f),
           score:
-            (f.title.toLowerCase().includes(queryLower) ? 2 : 0) +
+            (f.title.toLowerCase().includes(queryLower) ? 3 : 0) +
+            (f.fileName.toLowerCase().includes(queryLower) ? 2 : 0) +
             (f.relativePath.toLowerCase().includes(queryLower) ? 1 : 0),
         }))
         .filter((r) => r.score > 0)
@@ -80,13 +141,21 @@ export function SearchOverlay({
     hasCrossTabSearch && remoteQuery === query
       ? remoteResults.map((item) => ({ item, score: 0 }))
       : crossTabResults;
+  const displayedWorkspaceResults =
+    !hasCrossTabSearch && workspaceRemoteQuery === query
+      ? workspaceRemoteResults.map((item) => ({ item, score: 0 }))
+      : currentTabResults;
 
   const handleSelect = useCallback(
-    (fsPath: string) => {
+    (item: WorkspaceSearchResult) => {
       onClose();
-      navigate(fsPath);
+      if (onWorkspaceSelect) {
+        onWorkspaceSelect(item, query);
+        return;
+      }
+      navigate(item.fsPath);
     },
-    [onClose, navigate],
+    [onClose, onWorkspaceSelect, navigate, query],
   );
 
   useEffect(() => {
@@ -98,6 +167,20 @@ export function SearchOverlay({
       ) {
         setRemoteQuery(query);
         setRemoteResults(msg.results as CrossTabSearchItem[]);
+      }
+    });
+  }, [bridge, hasCrossTabSearch, isOpen, query]);
+
+  useEffect(() => {
+    if (!isOpen || hasCrossTabSearch) return;
+    return bridge.onMessage((msg) => {
+      if (
+        msg.command === 'workspaceSearchResults' &&
+        msg.requestId === workspaceRequestIdRef.current
+      ) {
+        setWorkspaceRemoteQuery(query);
+        setWorkspaceRemoteResults(msg.results as WorkspaceSearchResult[]);
+        setIsWorkspaceSearching(false);
       }
     });
   }, [bridge, hasCrossTabSearch, isOpen, query]);
@@ -123,11 +206,34 @@ export function SearchOverlay({
     return () => window.clearTimeout(handle);
   }, [bridge, crossTabItems, hasCrossTabSearch, isOpen, query]);
 
-  const resultCount = hasCrossTabSearch ? displayedCrossTabResults.length : currentTabResults.length;
+  useEffect(() => {
+    if (!isOpen || hasCrossTabSearch || query.length < 2) {
+      setWorkspaceRemoteQuery('');
+      setWorkspaceRemoteResults([]);
+      setIsWorkspaceSearching(false);
+      return;
+    }
+
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    workspaceRequestIdRef.current = requestId;
+    setIsWorkspaceSearching(true);
+    const handle = window.setTimeout(() => {
+      bridge.postMessage({
+        command: 'searchWorkspace',
+        requestId,
+        query,
+        items: state.fileList.map(toWorkspaceSearchResult),
+      });
+    }, 160);
+
+    return () => window.clearTimeout(handle);
+  }, [bridge, hasCrossTabSearch, isOpen, query, state.fileList]);
+
+  const resultCount = hasCrossTabSearch ? displayedCrossTabResults.length : displayedWorkspaceResults.length;
 
   if (!isOpen) return null;
 
-  return (
+  const overlay = (
     <div
       id="searchOverlay"
       role="dialog"
@@ -138,7 +244,7 @@ export function SearchOverlay({
         position: 'fixed',
         inset: 0,
         background: 'rgba(0,0,0,.6)',
-        zIndex: 1000,
+        zIndex: SEARCH_OVERLAY_Z_INDEX,
         alignItems: 'flex-start',
         justifyContent: 'center',
         paddingTop: 80,
@@ -172,7 +278,7 @@ export function SearchOverlay({
           <input
             ref={inputRef}
             type="text"
-            placeholder={scopeLabel ?? "Search across all markdown files…"}
+            placeholder={scopeLabel ?? "Search current workspace…"}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             style={{
@@ -193,7 +299,12 @@ export function SearchOverlay({
 
         {/* Results */}
         <div style={{ overflowY: 'auto', padding: '8px 0', flex: 1 }} role="listbox">
-          {query.length >= 2 && resultCount === 0 && (
+          {query.length >= 2 && !hasCrossTabSearch && isWorkspaceSearching && resultCount === 0 && (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--txm)', fontSize: 13 }}>
+              Searching file contents…
+            </div>
+          )}
+          {query.length >= 2 && resultCount === 0 && (!isWorkspaceSearching || hasCrossTabSearch) && (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--txm)', fontSize: 13 }}>
               No files matching "<strong>{query}</strong>"
             </div>
@@ -201,17 +312,17 @@ export function SearchOverlay({
           {hasCrossTabSearch
             ? displayedCrossTabResults.map(({ item }) => (
                 <div
-                  key={`${item.tabId}:${item.fsPath}`}
+                  key={`${item.tabId}:${item.fsPath}:${item.matchIndex ?? 'file'}`}
                   onClick={() => {
                     onClose();
-                    onCrossTabSelect(item);
+                    onCrossTabSelect?.(item, query);
                   }}
                   role="option"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       onClose();
-                      onCrossTabSelect(item);
+                      onCrossTabSelect?.(item, query);
                     }
                   }}
                   className="search-result-row"
@@ -226,29 +337,34 @@ export function SearchOverlay({
                     </div>
                     {item.excerpt && (
                       <div className="search-result-row__excerpt">
-                        {item.excerpt}
+                        {renderHighlightedExcerpt(item.excerpt, query)}
                       </div>
                     )}
                   </div>
                 </div>
               ))
-            : currentTabResults.map(({ f }) => (
+            : displayedWorkspaceResults.map(({ item }) => (
                 <div
-                  key={f.fsPath}
-                  onClick={() => handleSelect(f.fsPath)}
+                  key={`${item.fsPath}:${item.matchIndex ?? 'file'}`}
+                  onClick={() => handleSelect(item)}
                   role="option"
                   tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSelect(f.fsPath); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSelect(item); }}
                   className="search-result-row"
                 >
                   <span className="search-result-row__icon">MD</span>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
-                      {state.settings.showTitle ? f.title : f.fileName}
+                      {state.settings.showTitle ? item.title : item.fileName}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--txm)', fontFamily: 'var(--font-mono)' }}>
-                      {f.relativePath}
+                      {item.relativePath}
                     </div>
+                    {item.excerpt && (
+                      <div className="search-result-row__excerpt">
+                        {renderHighlightedExcerpt(item.excerpt, query)}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -256,4 +372,6 @@ export function SearchOverlay({
       </div>
     </div>
   );
+
+  return createPortal(overlay, document.body);
 }

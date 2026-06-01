@@ -3,7 +3,7 @@
 // ============================================================
 
 import { parse } from './parser';
-import type { BlockToken, HeadingToken, ListToken, TableToken, CodeBlockToken, BlockquoteToken } from './parser';
+import type { BlockToken, HeadingToken, ListToken, TableToken, CodeBlockToken, BlockquoteToken, MathBlockToken } from './parser';
 import { renderInline } from './inline';
 import { highlight } from './highlighter';
 import { slugify, shortId, escHtml, renderButton } from '../utils';
@@ -22,6 +22,8 @@ interface Section {
 
 type TopLevelNode = Section | BlockToken;
 type SectionNode = TopLevelNode;
+const VIDEO_PARAGRAPH_RE = /(?:\.(?:mp4|m4v|webm|ogv|ogg|mov|mkv|m3u8)(?:[?#][^\s)]*)?)(?:\)|$)/i;
+const YOUTUBE_PARAGRAPH_RE = /https?:\/\/(?:www\.)?(?:youtube(?:-nocookie)?\.com\/(?:watch\?[^)\s]*\bv=|embed\/|shorts\/|live\/)|youtu\.be\/)[^)\s]+/i;
 
 export interface HtmlRendererOptions {
   theme?: string;
@@ -115,6 +117,14 @@ export class HtmlRenderer {
 
     this.toc.push({ level, text, id });
     const inner = section.children.map(b => this.renderNode(b)).join('\n');
+    const copyBtnHtml = renderButton({
+      className: 'mdn-section-copy-btn',
+      onClick: 'UI.copySection(this,event)',
+      label: 'Copy',
+      tooltip: 'Copy section content',
+      onKeyDown: 'event.stopPropagation()',
+      iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+    });
 
     return `<section class="mdn-section mdn-section--h${level}" id="${id}" data-expanded="true">
   <div class="mdn-section-header" onclick="UI.toggleSection(this)" role="button" tabindex="0" aria-expanded="true"
@@ -122,6 +132,7 @@ export class HtmlRenderer {
     <${`h${level}`} class="mdn-section-title">
       <a class="mdn-anchor" href="#${id}" onclick="event.stopPropagation()" title="Copy link">#</a>${headingHtml}
     </${`h${level}`}>
+    ${copyBtnHtml}
     <span class="mdn-section-chevron" aria-hidden="true">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </span>
@@ -139,7 +150,11 @@ export class HtmlRenderer {
         if (token.isJsx || (this.isMdx && /^\s*</.test(token.text))) {
           return renderInline(token.text, true);
         }
+        if (this.isVideoParagraph(token.text)) {
+          return renderInline(token.text, this.isMdx);
+        }
         return `<p>${renderInline(token.text, this.isMdx)}</p>`;
+      case 'math':       return this.renderMath(token);
       case 'code':       return this.renderCode(token);
       case 'blockquote': return this.renderBlockquote(token);
       case 'table':      return this.renderTable(token);
@@ -156,6 +171,20 @@ export class HtmlRenderer {
   <a class="mdn-anchor" href="#${id}" title="Copy link">#</a>${html}
 </h${token.level}>`;
 }
+
+  private isVideoParagraph(text: string): boolean {
+    const trimmed = text.trim();
+    return /^<(video|figure)\b/i.test(trimmed) ||
+      YOUTUBE_PARAGRAPH_RE.test(trimmed) ||
+      /^!\[[^\]]*\]\([^)]+\)$/i.test(trimmed) && VIDEO_PARAGRAPH_RE.test(trimmed) ||
+      /^\[[^\]]+\]\([^)]+\)$/i.test(trimmed) && VIDEO_PARAGRAPH_RE.test(trimmed) ||
+      /^https?:\/\/\S+$/i.test(trimmed) && VIDEO_PARAGRAPH_RE.test(trimmed);
+  }
+
+  private renderMath(token: MathBlockToken): string {
+    const source = token.content.trim();
+    return `<div class="mdn-math mdn-math-block" data-math="${encodeURIComponent(source)}"><pre>${escHtml(source)}</pre></div>`;
+  }
 
   private renderCode(token: CodeBlockToken): string {
     const lang = escHtml(token.lang || 'text');
@@ -282,7 +311,7 @@ ${token.content}
       const totalLines = lines.length;
       let gutterHtml = '';
       if (token.content.trim() !== '') {
-        const lineSpans = Array.from({ length: totalLines }, (_, i) => `<span>${i + 1}</span>`).join('');
+        const lineSpans = Array.from({ length: totalLines }, (_, i) => `<span data-line="${i + 1}">${i + 1}</span>`).join('');
         gutterHtml = `<div class="mdn-codeblock-gutter">${lineSpans}</div>`;
       }
 
@@ -303,7 +332,7 @@ ${token.content}
   </div>
   <div class="mdn-codeblock-body" style="${showCodeByDefault ? '' : 'display:none'}">
     ${gutterHtml}
-    <pre class="mdn-pre"><code class="language-html${isCustom}">${highlighted}</code></pre>
+    <pre class="mdn-pre" tabindex="0"><code class="language-html${isCustom}">${highlighted}</code></pre>
   </div>
   ${toggleCodeBtnHtml}
 </div>`;
@@ -326,7 +355,7 @@ ${token.content}
     let gutterHtml = '';
     const showLineNumbers = lang.toLowerCase() !== 'text' && token.content.trim() !== '';
     if (showLineNumbers) {
-      const lineSpans = Array.from({ length: totalLines }, (_, i) => `<span>${i + 1}</span>`).join('');
+      const lineSpans = Array.from({ length: totalLines }, (_, i) => `<span data-line="${i + 1}">${i + 1}</span>`).join('');
       gutterHtml = `<div class="mdn-codeblock-gutter">${lineSpans}</div>`;
     }
 
@@ -341,7 +370,7 @@ ${token.content}
   </div>
   <div class="mdn-codeblock-body">
     ${gutterHtml}
-    <pre class="mdn-pre"><code class="language-${lang}${isCustom}">${highlighted}</code></pre>
+    <pre class="mdn-pre" tabindex="0"><code class="language-${lang}${isCustom}">${highlighted}</code></pre>
   </div>
   ${toggleCodeBtnHtml}
 </div>`;
@@ -404,7 +433,7 @@ ${token.content}
       const alignAttr = token.align[i] ? ` style="text-align:${token.align[i]}"` : '';
       const isCat = this.isCategoryColumn(token.rows, i);
       const filterBtnHtml = isCat
-        ? `<span class="mdn-table-filter-btn" onclick="event.stopPropagation(); Table.showFilterMenu('${id}', ${i}, this)" title="Filter by category" role="button" tabindex="0">
+        ? `<span class="mdn-table-filter-btn" onclick="event.stopPropagation(); Table.showFilterMenu('${id}', ${i}, this)" title="Filter by values" role="button" tabindex="0">
              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
            </span>`
         : '';

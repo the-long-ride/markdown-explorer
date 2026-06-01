@@ -49,6 +49,9 @@
   --accent: #8b7cf8;
   --accent-dim: rgba(139, 124, 248, 0.14);
   --accent-text: #a99ef9;
+  --inline-code-bg: color-mix(in srgb, var(--accent) 10%, var(--bg-code));
+  --inline-code-border: color-mix(in srgb, var(--accent) 28%, var(--bd-s));
+  --inline-code-fg: color-mix(in srgb, var(--accent-text) 88%, var(--tx));
   --success: #34d399;
   --danger: #f87171;
   --chart-1: #8b7cf8;

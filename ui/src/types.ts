@@ -72,6 +72,22 @@ export interface CrossTabSearchResultsMessage {
   readonly results: readonly CrossTabSearchResult[];
 }
 
+export interface WorkspaceSearchResultsMessage {
+  readonly command: 'workspaceSearchResults';
+  readonly requestId: string;
+  readonly results: readonly WorkspaceSearchResult[];
+}
+
+export interface WorkspaceSearchIndexLoadedMessage {
+  readonly command: 'workspaceSearchIndexLoaded';
+  readonly tabs: readonly {
+    readonly tabId: string;
+    readonly workspacePath: string;
+    readonly fileList: MdFile[];
+    readonly tree: FolderNode | null;
+  }[];
+}
+
 export interface CrossTabSearchResult {
   readonly tabId: string;
   readonly tabLabel: string;
@@ -80,6 +96,18 @@ export interface CrossTabSearchResult {
   readonly fileName: string;
   readonly relativePath: string;
   readonly excerpt?: string;
+  readonly matchIndex?: number;
+  readonly matchOrdinal?: number;
+}
+
+export interface WorkspaceSearchResult {
+  readonly fsPath: string;
+  readonly title: string;
+  readonly fileName: string;
+  readonly relativePath: string;
+  readonly excerpt?: string;
+  readonly matchIndex?: number;
+  readonly matchOrdinal?: number;
 }
 
 export interface NavNotFoundMessage {
@@ -92,7 +120,9 @@ export type HostMessage =
   | ReadyAckMessage
   | NavNotFoundMessage
   | WindowStateChangedMessage
-  | CrossTabSearchResultsMessage;
+  | CrossTabSearchResultsMessage
+  | WorkspaceSearchResultsMessage
+  | WorkspaceSearchIndexLoadedMessage;
 
 // ── Webview → Host messages ─────────────────────────────────────────────────
 
@@ -148,6 +178,26 @@ export interface CrossTabSearchMessage {
   readonly items: readonly CrossTabSearchResult[];
 }
 
+export interface WorkspaceSearchMessage {
+  readonly command: 'searchWorkspace';
+  readonly requestId: string;
+  readonly query: string;
+  readonly items?: readonly WorkspaceSearchResult[];
+}
+
+export interface IndexWorkspaceSearchItemsMessage {
+  readonly command: 'indexWorkspaceSearchItems';
+  readonly items: readonly CrossTabSearchResult[];
+}
+
+export interface LoadWorkspaceSearchIndexesMessage {
+  readonly command: 'loadWorkspaceSearchIndexes';
+  readonly tabs: readonly {
+    readonly tabId: string;
+    readonly workspacePath: string;
+  }[];
+}
+
 export interface ConfirmOpenPathMessage {
   readonly command: 'confirmOpenPath';
   readonly path: string;
@@ -195,6 +245,9 @@ export type WebviewMessage =
   | OpenPathMessage
   | ActivateWorkspaceMessage
   | CrossTabSearchMessage
+  | WorkspaceSearchMessage
+  | IndexWorkspaceSearchItemsMessage
+  | LoadWorkspaceSearchIndexesMessage
   | ConfirmOpenPathMessage
   | OpenRecentWorkspaceMessage
   | CloseWorkspaceMessage

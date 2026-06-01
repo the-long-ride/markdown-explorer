@@ -7,6 +7,8 @@ import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { WelcomePage } from "./WelcomePage";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 
 declare global {
   interface Window {
@@ -133,12 +135,34 @@ export function Content({
               "pre code:not(.is-custom-highlighted)",
             )
             .forEach((block) => {
+              if (/\blanguage-(text|plain|plaintext)\b/.test(block.className)) {
+                return;
+              }
               hljs.highlightElement(block);
             });
         } catch (err) {
           console.error("Highlight error:", err);
         }
       }
+
+      const mathEls = [...body.querySelectorAll<HTMLElement>(".mdn-math[data-math]")];
+      mathEls.forEach((el) => {
+        const raw = el.dataset.math;
+        if (!raw) return;
+        try {
+          const tex = decodeURIComponent(raw);
+          katex.render(tex, el, {
+            displayMode: el.classList.contains("mdn-math-block"),
+            throwOnError: false,
+            strict: false,
+            trust: false,
+            output: "html",
+          });
+          el.classList.add("is-rendered");
+        } catch (err) {
+          console.error("KaTeX render error:", err);
+        }
+      });
 
       // Mermaid rendering — scope to bodyRef elements, use nodes[] to avoid stale selectors
       if (mermaid) {
@@ -365,11 +389,12 @@ export function Content({
               aria-live="polite"
             >
               {fmEntries.length > 0 && (
-                <div className="mdn-frontmatter">
+                <div className="mdn-frontmatter" aria-label="Document properties">
                   {fmEntries.map(([k, v]) => (
-                    <span key={k}>
-                      <strong>{k}</strong>: {v}
-                    </span>
+                    <div className="mdn-frontmatter-field" key={k}>
+                      <span className="mdn-frontmatter-key">{k}</span>
+                      <span className="mdn-frontmatter-value">{v || '\u00a0'}</span>
+                    </div>
                   ))}
                 </div>
               )}

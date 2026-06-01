@@ -2,7 +2,7 @@
 // App.tsx — Root component
 // =============================================================================
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
@@ -13,6 +13,7 @@ import { Content } from './components/Content/Content';
 import { WelcomePage } from './components/Content/WelcomePage';
 import { TableOfContents } from './components/TOC/TableOfContents';
 import { SearchOverlay } from './components/Search/SearchOverlay';
+import { FindInFilePanel } from './components/Search/FindInFilePanel';
 import { MediaModal } from './components/Modal/MediaModal';
 import { SettingsModal } from './components/Settings/SettingsModal';
 import { TermsModal } from './components/Modal/TermsModal';
@@ -24,6 +25,7 @@ import {
   ChevronUpIcon,
   CloseIcon,
   CollapseIcon,
+  CopyIcon,
   EditIcon,
   ExpandIcon,
   HomeIcon,
@@ -42,6 +44,7 @@ import logoUrl from './assets/logos/logo-128.png';
 import type { FolderNode, Frontmatter, MdFile, TocEntry } from './types';
 
 type DesktopTabKind = 'home' | 'new' | 'workspace';
+type SearchScope = 'current' | 'all-tabs';
 type WorkspaceAliasMap = Record<string, string>;
 
 interface DesktopTab {
@@ -66,6 +69,18 @@ interface FloatingToolbarPosition {
   y: number;
 }
 
+interface FloatingToolbarSize {
+  width: number;
+  height: number;
+}
+
+interface PendingSearchJump {
+  filePath: string;
+  query: string;
+  matchOrdinal?: number;
+  token: number;
+}
+
 interface PersistedDesktopTab {
   id: string;
   kind: DesktopTabKind;
@@ -88,6 +103,8 @@ interface InitialDesktopState {
 
 const DESKTOP_TABS_STORAGE_KEY = 'markdown-explorer-desktop-tabs-v1';
 const WORKSPACE_ALIASES_STORAGE_KEY = 'markdown-explorer-workspace-aliases-v1';
+const FLOATING_TOOLBAR_VIEWPORT_MARGIN = 8;
+const FALLBACK_FLOATING_TOOLBAR_SIZE: FloatingToolbarSize = { width: 320, height: 52 };
 
 function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
   return {
@@ -123,6 +140,133 @@ function createTabId() {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function clampFloatingToolbarPosition(
+  position: FloatingToolbarPosition,
+  size: FloatingToolbarSize = FALLBACK_FLOATING_TOOLBAR_SIZE,
+): FloatingToolbarPosition {
+  if (typeof window === 'undefined') return position;
+
+  const margin = FLOATING_TOOLBAR_VIEWPORT_MARGIN;
+  const viewportWidth = Math.max(window.innerWidth, margin * 2);
+  const viewportHeight = Math.max(window.innerHeight, margin * 2);
+  const safeWidth = Math.min(Math.max(size.width, 1), viewportWidth - margin * 2);
+  const safeHeight = Math.min(Math.max(size.height, 1), viewportHeight - margin * 2);
+
+  return {
+    x: clamp(position.x, margin, Math.max(margin, viewportWidth - safeWidth - margin)),
+    y: clamp(position.y, margin, Math.max(margin, viewportHeight - safeHeight - margin)),
+  };
+}
+
+function formatShortcutLabel(shortcut: string): string {
+  return shortcut.split('+').map((part) => part.trim()).filter(Boolean).join('+');
+}
+
+const SEARCH_JUMP_MARK_CLASS = 'mdn-search-jump-mark';
+
+function getSearchJumpRoot(): HTMLElement | null {
+  return document.getElementById('mdBody');
+}
+
+function clearSearchJumpMarks(root = getSearchJumpRoot()) {
+  if (!root) return;
+  root.querySelectorAll<HTMLElement>(`mark.${SEARCH_JUMP_MARK_CLASS}`).forEach((mark) => {
+    const parent = mark.parentNode;
+    if (!parent) return;
+    parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
+    parent.normalize();
+  });
+}
+
+function shouldSkipSearchJumpTextNode(node: Text): boolean {
+  if (!node.nodeValue?.trim()) return true;
+  const parent = node.parentElement;
+  if (!parent) return true;
+  return !!parent.closest([
+    `mark.${SEARCH_JUMP_MARK_CLASS}`,
+    'mark.mdn-find-mark',
+    'button',
+    'input',
+    'textarea',
+    'select',
+    'script',
+    'style',
+    'iframe',
+    'svg',
+    'canvas',
+    '.mdn-line-numbers',
+    '.mdn-table-toolbar',
+    '.mdn-filter-dropdown',
+  ].join(','));
+}
+
+function expandSectionAncestors(element: HTMLElement) {
+  let section = element.closest<HTMLElement>('.mdn-section');
+  while (section) {
+    section.setAttribute('data-expanded', 'true');
+    section = section.parentElement?.closest<HTMLElement>('.mdn-section') ?? null;
+  }
+}
+
+function scrollToRenderedSearchMatch(query: string, matchOrdinal?: number): boolean {
+  const root = getSearchJumpRoot();
+  clearSearchJumpMarks(root);
+  if (!root) return false;
+
+  const needle = query.trim();
+  if (!needle) return false;
+
+  const lowerNeedle = needle.toLowerCase();
+  const targetOrdinal = Number.isFinite(matchOrdinal)
+    ? Math.max(0, Math.floor(matchOrdinal as number))
+    : 0;
+  let seen = 0;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) =>
+      shouldSkipSearchJumpTextNode(node as Text)
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT,
+  });
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode as Text;
+    const text = node.nodeValue || '';
+    const lowerText = text.toLowerCase();
+    let index = lowerText.indexOf(lowerNeedle);
+    while (index !== -1 && seen < targetOrdinal) {
+      seen += 1;
+      index = lowerText.indexOf(lowerNeedle, index + needle.length);
+    }
+    if (index === -1) continue;
+    if (seen !== targetOrdinal) continue;
+
+    const fragment = document.createDocumentFragment();
+    if (index > 0) {
+      fragment.appendChild(document.createTextNode(text.slice(0, index)));
+    }
+
+    const mark = document.createElement('mark');
+    mark.className = SEARCH_JUMP_MARK_CLASS;
+    mark.textContent = text.slice(index, index + needle.length);
+    fragment.appendChild(mark);
+
+    if (index + needle.length < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(index + needle.length)));
+    }
+
+    node.replaceWith(fragment);
+    expandSectionAncestors(mark);
+    mark.scrollIntoView({
+      block: 'center',
+      inline: 'nearest',
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
+    return true;
+  }
+
+  return false;
 }
 
 function readToolbarPosition(): FloatingToolbarPosition {
@@ -246,6 +390,11 @@ function readInitialDesktopState(): InitialDesktopState {
   };
 }
 
+function getDroppedFilePath(file: File): string | undefined {
+  const electronApi = (window as any).electronAPI;
+  return electronApi?.getPathForFile?.(file) || (file as any).path;
+}
+
 interface DesktopTabBarProps {
   tabs: DesktopTab[];
   activeTabId: string;
@@ -254,6 +403,7 @@ interface DesktopTabBarProps {
   onCloseTab: (tabId: string) => void;
   onAliasChange: (tabId: string, alias: string) => void;
   onSearchOpen: () => void;
+  searchShortcutLabel: string;
   onThemeToggle: () => void;
   onSettingsOpen: () => void;
   onSidebarToggle: () => void;
@@ -269,6 +419,7 @@ function DesktopTabBar({
   onCloseTab,
   onAliasChange,
   onSearchOpen,
+  searchShortcutLabel,
   onThemeToggle,
   onSettingsOpen,
   onSidebarToggle,
@@ -339,6 +490,15 @@ function DesktopTabBar({
               aria-selected={active}
               className={`desktop-tab${active ? ' is-active' : ''}`}
               onClick={() => onSelectTab(tab.id)}
+              onMouseDown={(event) => {
+                if (event.button === 1) event.preventDefault();
+              }}
+              onAuxClick={(event) => {
+                if (event.button !== 1) return;
+                event.preventDefault();
+                event.stopPropagation();
+                onCloseTab(tab.id);
+              }}
               onDoubleClick={() => startEditing(tab)}
               title={tab.workspacePath ?? getTabLabel(tab)}
             >
@@ -384,9 +544,9 @@ function DesktopTabBar({
         icon={<PlusIcon />}
       />
       <div className="desktop-tabbar__spacer" />
-      <button type="button" className="desktop-tabbar__search" onClick={onSearchOpen}>
+      <button type="button" className="desktop-tabbar__search" onClick={onSearchOpen} aria-label="Search all tabs">
         <SearchIcon size={13} />
-        <span>Search all tabs... (Ctrl+Shift+K)</span>
+        <span>Search all tabs... ({searchShortcutLabel})</span>
       </button>
       <TooltipButton
         className="btn btn--icon"
@@ -442,9 +602,11 @@ interface FloatingTabToolbarProps {
   position: FloatingToolbarPosition;
   onPositionChange: (position: FloatingToolbarPosition) => void;
   onSearchOpen: () => void;
+  searchShortcutLabel: string;
   onExpandAll: () => void;
   onCollapseAll: () => void;
   onEdit: () => void;
+  onCopyFile: (button?: HTMLElement | null) => void;
   onRefresh: () => void;
   onBack: () => void;
   onForward: () => void;
@@ -457,9 +619,11 @@ function FloatingTabToolbar({
   position,
   onPositionChange,
   onSearchOpen,
+  searchShortcutLabel,
   onExpandAll,
   onCollapseAll,
   onEdit,
+  onCopyFile,
   onRefresh,
   onBack,
   onForward,
@@ -467,6 +631,14 @@ function FloatingTabToolbar({
   canGoForward,
   canEdit,
 }: FloatingTabToolbarProps) {
+  const [actionsCollapsed, setActionsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('markdown-explorer-tab-toolbar-actions-collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     startX: number;
     startY: number;
@@ -474,8 +646,21 @@ function FloatingTabToolbar({
     originY: number;
   } | null>(null);
 
+  const measureToolbar = useCallback((): FloatingToolbarSize => {
+    const rect = toolbarRef.current?.getBoundingClientRect();
+    return rect
+      ? { width: rect.width, height: rect.height }
+      : FALLBACK_FLOATING_TOOLBAR_SIZE;
+  }, []);
+
+  const clampToViewport = useCallback(
+    (nextPosition: FloatingToolbarPosition) => clampFloatingToolbarPosition(nextPosition, measureToolbar()),
+    [measureToolbar],
+  );
+
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest('button, input')) return;
+    if (!(event.target as HTMLElement).closest('.tab-floating-toolbar__move')) return;
+    event.preventDefault();
     dragRef.current = {
       startX: event.clientX,
       startY: event.clientY,
@@ -485,41 +670,94 @@ function FloatingTabToolbar({
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('markdown-explorer-tab-toolbar-actions-collapsed', String(actionsCollapsed));
+    } catch {
+      // Ignore storage failures; toolbar still works for the current session.
+    }
+  }, [actionsCollapsed]);
+
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag) return;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const next = {
-      x: clamp(drag.originX - (event.clientX - drag.startX), 8, width - 320),
-      y: clamp(drag.originY - (event.clientY - drag.startY), 8, height - 92),
-    };
+    const next = clampToViewport({
+      x: drag.originX - (event.clientX - drag.startX),
+      y: drag.originY - (event.clientY - drag.startY),
+    });
     onPositionChange(next);
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
     dragRef.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
   };
+
+  useLayoutEffect(() => {
+    const next = clampToViewport(position);
+    if (next.x !== position.x || next.y !== position.y) {
+      onPositionChange(next);
+    }
+  }, [actionsCollapsed, clampToViewport, onPositionChange, position]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const next = clampToViewport(position);
+      if (next.x !== position.x || next.y !== position.y) {
+        onPositionChange(next);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [clampToViewport, onPositionChange, position]);
 
   return (
     <div
-      className="tab-floating-toolbar"
+      ref={toolbarRef}
+      className={`tab-floating-toolbar${actionsCollapsed ? ' is-actions-collapsed' : ''}`}
       style={{ right: position.x, bottom: position.y }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      <button type="button" className="tab-floating-toolbar__search" onClick={onSearchOpen}>
-        <SearchIcon size={14} />
-        <span>Search docs... (Ctrl+Shift+K)</span>
+      <button type="button" className="tab-floating-toolbar__move tooltip-container" aria-label="Move toolbar">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+          <circle cx="9" cy="6" r="1" />
+          <circle cx="15" cy="6" r="1" />
+          <circle cx="9" cy="12" r="1" />
+          <circle cx="15" cy="12" r="1" />
+          <circle cx="9" cy="18" r="1" />
+          <circle cx="15" cy="18" r="1" />
+        </svg>
+        <span className="tooltip-text">Move toolbar</span>
       </button>
-      <TooltipButton className="btn btn--icon" onClick={onBack} disabled={!canGoBack} tooltip="Back" icon={<ChevronLeftIcon />} />
-      <TooltipButton className="btn btn--icon" onClick={onForward} disabled={!canGoForward} tooltip="Forward" icon={<ChevronRightIcon />} />
-      <TooltipButton className="btn btn--icon" onClick={onRefresh} tooltip="Refresh tab" icon={<RefreshIcon />} />
-      <TooltipButton className="btn btn--icon" onClick={onExpandAll} tooltip="Expand all" icon={<ExpandIcon />} />
-      <TooltipButton className="btn btn--icon" onClick={onCollapseAll} tooltip="Collapse all" icon={<CollapseIcon />} />
-      <TooltipButton className="btn" onClick={onEdit} disabled={!canEdit} tooltip="Open current file in editor" icon={<EditIcon />} label="Edit" onlyIcon={false} />
+      <button type="button" className="tab-floating-toolbar__search" onClick={onSearchOpen} aria-label="Search current workspace">
+        <SearchIcon size={14} />
+        <span>Search docs... ({searchShortcutLabel})</span>
+      </button>
+      <div className="tab-floating-toolbar__actions" aria-hidden={actionsCollapsed}>
+        <TooltipButton className="btn btn--icon" onClick={onBack} disabled={!canGoBack} tooltip="Back" icon={<ChevronLeftIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onForward} disabled={!canGoForward} tooltip="Forward" icon={<ChevronRightIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onRefresh} tooltip="Refresh tab" icon={<RefreshIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onExpandAll} tooltip="Expand all" icon={<ExpandIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onCollapseAll} tooltip="Collapse all" icon={<CollapseIcon />} />
+        <TooltipButton className="btn" onClick={onEdit} disabled={!canEdit} tooltip="Open current file in editor" icon={<EditIcon />} label="Edit" onlyIcon={false} />
+        <TooltipButton
+          className="btn btn--icon"
+          onClick={(event) => onCopyFile(event.currentTarget)}
+          disabled={!canEdit}
+          tooltip="Copy file content"
+          icon={<CopyIcon />}
+        />
+      </div>
+      <TooltipButton
+        className="btn btn--icon tab-floating-toolbar__toggle"
+        onClick={() => setActionsCollapsed((value) => !value)}
+        tooltip={actionsCollapsed ? 'Show toolbar actions' : 'Minimize toolbar actions'}
+        icon={actionsCollapsed ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+      />
     </div>
   );
 }
@@ -535,93 +773,37 @@ export function App() {
     setScope: setNavigationScope,
   } = useNavigation();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchScope, setSearchScope] = useState<SearchScope>('current');
+  const [findOpen, setFindOpen] = useState(false);
+  const [pendingSearchJump, setPendingSearchJump] = useState<PendingSearchJump | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTarget, setModalTarget] = useState<HTMLElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
-  // const [isDragging, setIsDragging] = useState(false);
-  // const dragCounter = useRef(0);
-  // const bridge = usePlatform(); // TODO: re-enable when drop-to-open workspace is fixed
+  const dragCounter = useRef(0);
 
   const workspaceNameRef = useRef(state.workspaceName);
   useEffect(() => {
     workspaceNameRef.current = state.workspaceName;
   }, [state.workspaceName]);
 
-  // TODO: Drop-to-open workspace is disabled — buggy, not ready.
-  // useEffect(() => {
-  //   const isFileDrag = (e: DragEvent) => {
-  //     const types = e.dataTransfer?.types;
-  //     if (!types) return false;
-  //     return types.includes('Files');
-  //   };
-  //   const onDragEnter = (e: DragEvent) => {
-  //     if (!isFileDrag(e)) return;
-  //     if (workspaceNameRef.current) return;
-  //     if (modalOpen) return;
-  //     e.preventDefault();
-  //     dragCounter.current++;
-  //     if (dragCounter.current === 1) {
-  //       setIsDragging(true);
-  //       document.body.classList.add('is-dragging-files');
-  //     }
-  //   };
-  //   const onDragLeave = (e: DragEvent) => {
-  //     if (!isFileDrag(e)) return;
-  //     if (e.relatedTarget !== null) return;
-  //     e.preventDefault();
-  //     dragCounter.current = 0;
-  //     setIsDragging(false);
-  //     document.body.classList.remove('is-dragging-files');
-  //   };
-  //   const onDragOver = (e: DragEvent) => {
-  //     if (isFileDrag(e)) {
-  //       e.preventDefault();
-  //       if (e.dataTransfer) e.dataTransfer.dropEffect = workspaceNameRef.current ? 'none' : 'copy';
-  //     }
-  //   };
-  //   const onDrop = (e: DragEvent) => {
-  //     if (!isFileDrag(e)) return;
-  //     e.preventDefault();
-  //     setIsDragging(false);
-  //     dragCounter.current = 0;
-  //     document.body.classList.remove('is-dragging-files');
-  //     if (workspaceNameRef.current) return;
-  //     if (modalOpen) return;
-  //     const files = Array.from(e.dataTransfer?.files ?? []);
-  //     if (files.length > 0) {
-  //       const filePath = (files[0] as any).path;
-  //       if (filePath) bridge.postMessage({ command: 'openPath', path: filePath });
-  //     }
-  //   };
-  //   const onDragEnd = () => {
-  //     if (dragCounter.current > 0) {
-  //       dragCounter.current = 0;
-  //       setIsDragging(false);
-  //       document.body.classList.remove('is-dragging-files');
-  //     }
-  //   };
-  //   window.addEventListener('dragenter', onDragEnter);
-  //   window.addEventListener('dragleave', onDragLeave);
-  //   window.addEventListener('dragover', onDragOver);
-  //   window.addEventListener('drop', onDrop);
-  //   window.addEventListener('dragend', onDragEnd);
-  //   return () => {
-  //     window.removeEventListener('dragenter', onDragEnter);
-  //     window.removeEventListener('dragleave', onDragLeave);
-  //     window.removeEventListener('dragover', onDragOver);
-  //     window.removeEventListener('drop', onDrop);
-  //     window.removeEventListener('dragend', onDragEnd);
-  //     document.body.classList.remove('is-dragging-files');
-  //   };
-  // }, [bridge, modalOpen]);
-
-  const { isVisible: scrollTopVisible, scrollToTop } = useScrollVisibility(scrollRef);
-
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isTabView = isElectron && state.settings.desktopViewMode === 'tabs';
+  const currentSearchShortcutLabel = formatShortcutLabel(
+    isElectron ? state.settings.keybindings?.searchCurrent ?? 'Ctrl+F' : 'Ctrl+K',
+  );
+  const allTabsSearchShortcutLabel = formatShortcutLabel(
+    state.settings.keybindings?.searchAllTabs ?? 'Ctrl+Shift+F',
+  );
+  const findShortcutLabel = formatShortcutLabel(
+    state.settings.keybindings?.findCurrentFile ?? (isElectron ? 'F' : 'K'),
+  );
+  const { isVisible: scrollTopVisible, scrollToTop } = useScrollVisibility(
+    scrollRef,
+    200,
+    state.workspaceName,
+  );
   const isDark =
     state.theme === 'dark' ||
     (state.theme === 'auto' &&
@@ -642,6 +824,7 @@ export function App() {
   const activeTabIdRef = useRef(activeTabId);
   const pendingWorkspaceTabIdRef = useRef<string | null>(null);
   const restoredDesktopTabsRef = useRef(false);
+  const requestedWorkspaceIndexesRef = useRef<Set<string>>(new Set());
   const [toolbarPosition, setToolbarPosition] = useState<FloatingToolbarPosition>(() => readToolbarPosition());
 
   useEffect(() => {
@@ -838,6 +1021,91 @@ export function App() {
     pendingWorkspaceTabIdRef.current = active.id;
   }, [createNewWorkspaceTab, isTabView, tabs]);
 
+  const openDroppedPath = useCallback((droppedPath: string) => {
+    if (!droppedPath) return;
+    if (isTabView) {
+      const active = tabs.find((tab) => tab.id === activeTabIdRef.current);
+      pendingWorkspaceTabIdRef.current =
+        active?.kind === 'new' ? active.id : createNewWorkspaceTab();
+      bridge.postMessage({
+        command: 'openPath',
+        path: droppedPath,
+        openFirstFile: true,
+      });
+      return;
+    }
+
+    if (workspaceNameRef.current) {
+      bridge.postMessage({ command: 'confirmOpenPath', path: droppedPath });
+      return;
+    }
+
+    bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true });
+  }, [bridge, createNewWorkspaceTab, isTabView, tabs]);
+
+  useEffect(() => {
+    if (!isElectron) return;
+
+    const isFileDrag = (event: DragEvent) => {
+      const types = event.dataTransfer?.types;
+      return !!types && Array.from(types).includes('Files');
+    };
+
+    const resetDragState = () => {
+      dragCounter.current = 0;
+      setIsDragging(false);
+      document.body.classList.remove('is-dragging-files');
+    };
+
+    const onDragEnter = (event: DragEvent) => {
+      if (!isFileDrag(event) || modalOpen) return;
+      event.preventDefault();
+      dragCounter.current += 1;
+      setIsDragging(true);
+      document.body.classList.add('is-dragging-files');
+    };
+
+    const onDragLeave = (event: DragEvent) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      dragCounter.current = Math.max(0, dragCounter.current - 1);
+      if (dragCounter.current === 0 || event.relatedTarget === null) {
+        resetDragState();
+      }
+    };
+
+    const onDragOver = (event: DragEvent) => {
+      if (!isFileDrag(event) || modalOpen) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    };
+
+    const onDrop = (event: DragEvent) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      const files = Array.from(event.dataTransfer?.files ?? []);
+      resetDragState();
+      if (modalOpen || files.length === 0) return;
+      const droppedPath = getDroppedFilePath(files[0]);
+      if (droppedPath) openDroppedPath(droppedPath);
+    };
+
+    window.addEventListener('dragenter', onDragEnter);
+    window.addEventListener('dragleave', onDragLeave);
+    window.addEventListener('dragover', onDragOver);
+    window.addEventListener('drop', onDrop);
+    window.addEventListener('dragend', resetDragState);
+
+    return () => {
+      window.removeEventListener('dragenter', onDragEnter);
+      window.removeEventListener('dragleave', onDragLeave);
+      window.removeEventListener('dragover', onDragOver);
+      window.removeEventListener('drop', onDrop);
+      window.removeEventListener('dragend', resetDragState);
+      resetDragState();
+    };
+  }, [isElectron, modalOpen, openDroppedPath]);
+
   const closeTab = useCallback(
     (tabId: string) => {
       setTabs((currentTabs) => {
@@ -893,10 +1161,126 @@ export function App() {
     [tabs],
   );
 
+  useEffect(() => {
+    if (!isTabView) return;
+    return bridge.onMessage((msg) => {
+      if (msg.command !== 'workspaceSearchIndexLoaded') return;
+      const loadedTabs = new Map(msg.tabs.map((tab) => [tab.tabId, tab]));
+      setTabs((currentTabs) =>
+        currentTabs.map((tab) => {
+          const loaded = loadedTabs.get(tab.id);
+          if (!loaded || tab.workspacePath !== loaded.workspacePath) return tab;
+          if (tab.fileList.length > 0 && tab.tree) return tab;
+          return {
+            ...tab,
+            fileList: loaded.fileList,
+            tree: loaded.tree,
+          };
+        }),
+      );
+    });
+  }, [bridge, isTabView]);
+
+  useEffect(() => {
+    if (!isTabView) return;
+    const pendingTabs = tabs.flatMap((tab) => {
+      if (tab.kind !== 'workspace' || !tab.workspacePath || tab.fileList.length > 0) {
+        return [];
+      }
+
+      const requestKey = `${tab.id}:${tab.workspacePath}`;
+      if (requestedWorkspaceIndexesRef.current.has(requestKey)) {
+        return [];
+      }
+
+      requestedWorkspaceIndexesRef.current.add(requestKey);
+      return [{ tabId: tab.id, workspacePath: tab.workspacePath }];
+    });
+
+    if (pendingTabs.length === 0) return;
+    const handle = window.setTimeout(() => {
+      bridge.postMessage({
+        command: 'loadWorkspaceSearchIndexes',
+        tabs: pendingTabs,
+      });
+    }, 120);
+    return () => window.clearTimeout(handle);
+  }, [bridge, isTabView, tabs]);
+
+  useEffect(() => {
+    if (!isTabView || crossTabSearchItems.length === 0) return;
+    const handle = window.setTimeout(() => {
+      bridge.postMessage({
+        command: 'indexWorkspaceSearchItems',
+        items: crossTabSearchItems,
+      });
+    }, 250);
+    return () => window.clearTimeout(handle);
+  }, [bridge, crossTabSearchItems, isTabView]);
+
+  const openSearch = useCallback((scope: SearchScope = 'current') => {
+    setSearchScope(scope);
+    setFindOpen(false);
+    setSearchOpen(true);
+  }, []);
+
+  const closeSearch = useCallback(() => {
+    setSearchOpen(false);
+  }, []);
+
+  const openFind = useCallback(() => {
+    if (!state.currentFile) return;
+    setSearchOpen(false);
+    setFindOpen(true);
+  }, [state.currentFile]);
+
+  const closeFind = useCallback(() => {
+    setFindOpen(false);
+  }, []);
+
+  useEffect(() => () => clearSearchJumpMarks(), []);
+
+  useEffect(() => {
+    if (!pendingSearchJump) return;
+    if (state.currentFile !== pendingSearchJump.filePath) return;
+
+    const handle = window.setTimeout(() => {
+      scrollToRenderedSearchMatch(pendingSearchJump.query, pendingSearchJump.matchOrdinal);
+      setPendingSearchJump((current) =>
+        current?.token === pendingSearchJump.token ? null : current,
+      );
+    }, 80);
+
+    return () => window.clearTimeout(handle);
+  }, [pendingSearchJump, state.currentFile, state.renderVersion]);
+
+  const queueSearchJump = useCallback(
+    (filePath: string, query: string, matchOrdinal?: number) => {
+      const trimmedQuery = query.trim();
+      if (!filePath || !trimmedQuery) return;
+      setPendingSearchJump({
+        filePath,
+        query: trimmedQuery,
+        matchOrdinal,
+        token: Date.now() + Math.random(),
+      });
+    },
+    [],
+  );
+
+  const handleWorkspaceSearchSelect = useCallback(
+    (item: { fsPath: string; matchOrdinal?: number }, query: string) => {
+      queueSearchJump(item.fsPath, query, item.matchOrdinal);
+      navigate(item.fsPath);
+    },
+    [navigate, queueSearchJump],
+  );
+
   const handleCrossTabSelect = useCallback(
-    (item: { tabId: string; fsPath: string }) => {
+    (item: { tabId: string; fsPath: string; matchOrdinal?: number }, query: string) => {
       const tab = tabs.find((entry) => entry.id === item.tabId);
       if (!tab) return;
+      queueSearchJump(item.fsPath, query, item.matchOrdinal);
       setActiveTabId(item.tabId);
       setNavigationScope(isTabView ? item.tabId : 'focus');
       bridge.postMessage({
@@ -906,7 +1290,7 @@ export function App() {
       });
       navigate(item.fsPath);
     },
-    [bridge, isTabView, navigate, setNavigationScope, tabs],
+    [bridge, isTabView, navigate, queueSearchJump, setNavigationScope, tabs],
   );
 
   const [termsAccepted, setTermsAccepted] = useState(() => {
@@ -978,21 +1362,31 @@ export function App() {
     });
   }, []);
 
+  const copyCurrentFileContent = useCallback((button?: HTMLElement | null) => {
+    (window as any).UI?.copyDocument?.(button);
+  }, []);
+
   // Keyboard shortcuts
   useKeyboard({
-    onSearchOpen: () => setSearchOpen(true),
-    onSearchClose: () => setSearchOpen(false),
+    onSearchOpen: () => openSearch('current'),
+    onCrossTabSearchOpen: isTabView ? () => openSearch('all-tabs') : undefined,
+    onSearchClose: closeSearch,
+    onFindOpen: openFind,
+    onFindClose: closeFind,
     onSettingsOpen: () => setSettingsOpen(true),
     onSettingsClose: () => setSettingsOpen(false),
     onWelcome: isTabView ? () => activateTab('home') : undefined,
     onExpandAll: expandAll,
     onCollapseAll: collapseAll,
     isSearchOpen: searchOpen,
+    isFindOpen: findOpen,
+    activeSearchScope: searchScope,
     isSettingsOpen: settingsOpen,
     isModalOpen: modalOpen,
     isTermsOpen: !termsAccepted || themeOnboardingOpen,
   });
 
+  const isAllTabsSearch = isTabView && searchScope === 'all-tabs';
 
   // Image click → open media modal
   const onImageClick = useCallback((el: HTMLElement) => {
@@ -1080,7 +1474,8 @@ export function App() {
           onNewTab={createNewWorkspaceTab}
           onCloseTab={closeTab}
           onAliasChange={updateTabAlias}
-          onSearchOpen={() => setSearchOpen(true)}
+          onSearchOpen={() => openSearch('all-tabs')}
+          searchShortcutLabel={allTabsSearchShortcutLabel}
           onThemeToggle={toggleTheme}
           onSettingsOpen={() => setSettingsOpen(true)}
           onSidebarToggle={toggleSidebar}
@@ -1104,10 +1499,12 @@ export function App() {
         <>
           {!isTabView && (
             <Topbar
-              onSearchOpen={() => setSearchOpen(true)}
+              onSearchOpen={() => openSearch('current')}
               onSettingsOpen={() => setSettingsOpen(true)}
               onExpandAll={expandAll}
               onCollapseAll={collapseAll}
+              onCopyFile={copyCurrentFileContent}
+              searchShortcutLabel={currentSearchShortcutLabel}
             />
           )}
           <div className="body">
@@ -1127,7 +1524,7 @@ export function App() {
                 />
                 {/* Scroll to top button */}
                 <TooltipButton
-                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}`}
+                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 ? ' scroll-to-top-btn--with-toc' : ''}`}
                   onClick={scrollToTop}
                   tooltip="Scroll to Top"
                   tooltipPos="above"
@@ -1139,10 +1536,12 @@ export function App() {
                 <FloatingTabToolbar
                   position={toolbarPosition}
                   onPositionChange={setToolbarPosition}
-                  onSearchOpen={() => setSearchOpen(true)}
+                  onSearchOpen={() => openSearch('current')}
+                  searchShortcutLabel={currentSearchShortcutLabel}
                   onExpandAll={expandAll}
                   onCollapseAll={collapseAll}
                   onEdit={openInEditor}
+                  onCopyFile={copyCurrentFileContent}
                   onRefresh={refresh}
                   onBack={back}
                   onForward={forward}
@@ -1165,10 +1564,24 @@ export function App() {
       {/* Overlays */}
       <SearchOverlay
         isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        scopeLabel={isTabView ? 'Search all workspace tabs... (Ctrl+Shift+K)' : undefined}
-        crossTabItems={isTabView ? crossTabSearchItems : undefined}
-        onCrossTabSelect={isTabView ? handleCrossTabSelect : undefined}
+        onClose={closeSearch}
+        scopeKey={searchScope}
+        scopeLabel={
+          isAllTabsSearch
+            ? `Search all workspace tabs... (${allTabsSearchShortcutLabel})`
+            : isTabView
+              ? `Search current workspace... (${currentSearchShortcutLabel})`
+              : undefined
+        }
+        crossTabItems={isAllTabsSearch ? crossTabSearchItems : undefined}
+        onWorkspaceSelect={handleWorkspaceSearchSelect}
+        onCrossTabSelect={isAllTabsSearch ? handleCrossTabSelect : undefined}
+      />
+      <FindInFilePanel
+        isOpen={findOpen}
+        onClose={closeFind}
+        renderVersion={state.renderVersion}
+        shortcutLabel={findShortcutLabel}
       />
       <MediaModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setModalTarget(null); }} clickedElement={modalTarget} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
@@ -1177,8 +1590,7 @@ export function App() {
         onComplete={handleThemeOnboardingComplete}
       />
 
-      {/* TODO: Drop-to-open workspace is disabled — buggy, not ready. */}
-      {/* {isDragging && (
+      {isDragging && (
         <div style={{
           position: 'absolute',
           top: 0, left: 0, right: 0, bottom: 0,
@@ -1194,7 +1606,7 @@ export function App() {
           <div style={{ fontSize: '20px', fontWeight: 800 }}>Drop folder or file to open</div>
           <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>Supports folders and .md / .mdx files</div>
         </div>
-      )} */}
+      )}
     </div>
   );
 }
@@ -1281,27 +1693,280 @@ function initGlobalHandlers() {
     // Handled by React bridge, but provide a fallback
   };
 
+  const copyText = (text: string) => {
+    if (!text) return;
+    if (win.PlatformBridge) {
+      win.PlatformBridge.copyToClipboard(text);
+    } else {
+      void navigator.clipboard.writeText(text);
+    }
+  };
+
+  const textFromElement = (source: HTMLElement) => {
+    const clone = source.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll([
+      '.tooltip-text',
+      '.mdn-anchor',
+      '.mdn-section-copy-btn',
+      '.mdn-section-chevron',
+      '.mdn-copy-btn',
+      '.mdn-toggle-preview-btn',
+      '.mdn-codeblock-toggle-btn',
+      '.mdn-codeblock-lang',
+      '.mdn-table-toolbar',
+      '.mdn-table-filter-btn',
+      '.mdn-sort-icon',
+    ].join(',')).forEach((el) => el.remove());
+    return (clone.innerText || clone.textContent || '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
+
+  const markCopied = (btn: HTMLElement | null | undefined, resetText: string) => {
+    if (!btn) return;
+    const feedbackBtn = btn as HTMLElement & { __copyResetTimer?: number };
+    if (feedbackBtn.__copyResetTimer) {
+      window.clearTimeout(feedbackBtn.__copyResetTimer);
+    }
+
+    btn.classList.add('is-copied');
+    const tooltip = btn.querySelector('.tooltip-text');
+    if (tooltip) tooltip.textContent = 'Copied!';
+    feedbackBtn.__copyResetTimer = window.setTimeout(() => {
+      btn.classList.remove('is-copied');
+      if (tooltip) tooltip.textContent = resetText;
+      feedbackBtn.__copyResetTimer = undefined;
+    }, 2000);
+  };
+
+  win.UI.copySection = (btn: HTMLElement, event?: Event) => {
+    event?.stopPropagation();
+    const section = btn.closest('.mdn-section') as HTMLElement | null;
+    const body = Array.from(section?.children ?? [])
+      .find((child) => child.classList.contains('mdn-section-body')) as HTMLElement | undefined;
+    if (!body) return;
+    try {
+      copyText(textFromElement(body));
+      markCopied(btn, 'Copy section content');
+    } catch (err) {
+      console.warn('Failed to copy section to clipboard:', err);
+    }
+  };
+
+  win.UI.copyDocument = (btn?: HTMLElement | null) => {
+    const body = document.getElementById('mdBody') as HTMLElement | null;
+    if (!body) return;
+    try {
+      copyText(textFromElement(body));
+      markCopied(btn, 'Copy file content');
+    } catch (err) {
+      console.warn('Failed to copy document to clipboard:', err);
+    }
+  };
+
   // UI.copyCode (global function referenced by HTML code blocks)
   win.UI.copyCode = (btn: HTMLElement) => {
     const code = btn.closest('.mdn-codeblock')?.querySelector('code')?.innerText ?? '';
     try {
-      if (win.PlatformBridge) {
-        win.PlatformBridge.copyToClipboard(code);
-      } else {
-        navigator.clipboard.writeText(code);
-      }
+      copyText(code);
     } catch (err) {
       console.warn('Failed to copy code to clipboard:', err);
     }
-    btn.classList.add('is-copied');
-    const tooltip = btn.querySelector('.tooltip-text');
-    if (tooltip) tooltip.textContent = 'Copied!';
-    setTimeout(() => {
-      btn.classList.remove('is-copied');
-      if (tooltip) tooltip.textContent = 'Copy code';
-    }, 2000);
+    markCopied(btn, 'Copy code');
   };
   win.UI_copyCode = win.UI.copyCode;
+
+  const getCodeLineNumbers = (block: HTMLElement): HTMLElement[] =>
+    Array.from(block.querySelectorAll('.mdn-codeblock-gutter span')) as HTMLElement[];
+
+  const readCodeLine = (value: string | undefined): number | null => {
+    const line = Number(value);
+    return Number.isFinite(line) && line > 0 ? line : null;
+  };
+
+  const clampCodeLine = (line: number, count: number): number =>
+    Math.min(Math.max(Math.round(line), 1), Math.max(count, 1));
+
+  const paintCodeLineState = (block: HTMLElement) => {
+    const numbers = getCodeLineNumbers(block);
+    const count = numbers.length;
+    if (!count) return;
+
+    const activeLine = readCodeLine(block.dataset.activeLine);
+    const selectedStart = readCodeLine(block.dataset.selectedStart);
+    const selectedEnd = readCodeLine(block.dataset.selectedEnd);
+    const hasSelection = selectedStart !== null && selectedEnd !== null;
+    const rangeStart = hasSelection ? Math.min(selectedStart, selectedEnd) : 0;
+    const rangeEnd = hasSelection ? Math.max(selectedStart, selectedEnd) : -1;
+
+    numbers.forEach((span, index) => {
+      const line = Number(span.dataset.line) || index + 1;
+      span.classList.toggle('is-active', activeLine === line);
+      span.classList.toggle('is-selected', hasSelection && line >= rangeStart && line <= rangeEnd);
+    });
+
+    block.classList.toggle('has-code-line-active', activeLine !== null);
+    block.classList.toggle('has-code-line-selection', hasSelection);
+  };
+
+  const setActiveCodeLine = (block: HTMLElement, line: number | null) => {
+    const count = getCodeLineNumbers(block).length;
+    if (!count || line === null) {
+      delete block.dataset.activeLine;
+    } else {
+      block.dataset.activeLine = String(clampCodeLine(line, count));
+    }
+    paintCodeLineState(block);
+  };
+
+  const setSelectedCodeLines = (block: HTMLElement, startLine: number | null, endLine?: number | null) => {
+    const count = getCodeLineNumbers(block).length;
+    if (!count || startLine === null || endLine === null || endLine === undefined) {
+      delete block.dataset.selectedStart;
+      delete block.dataset.selectedEnd;
+    } else {
+      block.dataset.selectedStart = String(clampCodeLine(startLine, count));
+      block.dataset.selectedEnd = String(clampCodeLine(endLine, count));
+    }
+    paintCodeLineState(block);
+  };
+
+  const clearCodeLineState = (except?: HTMLElement | null) => {
+    document.querySelectorAll('.mdn-codeblock').forEach((blockEl) => {
+      const block = blockEl as HTMLElement;
+      if (except && block === except) return;
+      setActiveCodeLine(block, null);
+      setSelectedCodeLines(block, null);
+    });
+  };
+
+  const lineFromPointer = (pre: HTMLElement, clientY: number): number | null => {
+    const block = pre.closest('.mdn-codeblock') as HTMLElement | null;
+    if (!block) return null;
+    const count = getCodeLineNumbers(block).length;
+    if (!count) return null;
+
+    const code = pre.querySelector('code') as HTMLElement | null;
+    const measureEl = code ?? pre;
+    const styles = window.getComputedStyle(pre);
+    const fontSize = parseFloat(styles.fontSize) || 12;
+    const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.6;
+    const top = measureEl.getBoundingClientRect().top;
+    return clampCodeLine(Math.floor((clientY - top) / lineHeight) + 1, count);
+  };
+
+  const offsetToCodeLine = (text: string, offset: number): number => {
+    const clampedOffset = Math.min(Math.max(offset, 0), text.length);
+    return text.slice(0, clampedOffset).split('\n').length;
+  };
+
+  const getCodeTextOffset = (code: HTMLElement, container: Node, offset: number): number => {
+    const textLength = code.textContent?.length ?? 0;
+    const codeRange = document.createRange();
+    const pointRange = document.createRange();
+    codeRange.selectNodeContents(code);
+
+    try {
+      pointRange.setStart(container, offset);
+      pointRange.collapse(true);
+    } catch {
+      return 0;
+    }
+
+    if (pointRange.compareBoundaryPoints(Range.START_TO_START, codeRange) <= 0) return 0;
+    if (pointRange.compareBoundaryPoints(Range.START_TO_END, codeRange) >= 0) return textLength;
+
+    const beforeRange = document.createRange();
+    beforeRange.setStart(code, 0);
+    beforeRange.setEnd(container, offset);
+    return Math.min(Math.max(beforeRange.toString().length, 0), textLength);
+  };
+
+  const getSelectedCodeLines = (code: HTMLElement, range: Range): { start: number; end: number } | null => {
+    const text = code.textContent ?? '';
+    const startOffset = getCodeTextOffset(code, range.startContainer, range.startOffset);
+    const endOffset = getCodeTextOffset(code, range.endContainer, range.endOffset);
+    const start = Math.min(startOffset, endOffset);
+    const end = Math.max(startOffset, endOffset);
+    if (end <= start) return null;
+
+    const startLine = offsetToCodeLine(text, start);
+    const endLine = offsetToCodeLine(text, Math.max(start, end - 1));
+    return { start: startLine, end: endLine };
+  };
+
+  const syncCodeSelection = () => {
+    const selection = window.getSelection();
+    const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    const hasRange = Boolean(range && !selection?.isCollapsed);
+
+    document.querySelectorAll('.mdn-codeblock').forEach((blockEl) => {
+      const block = blockEl as HTMLElement;
+      const code = block.querySelector('code') as HTMLElement | null;
+      if (!hasRange || !range || !code) {
+        setSelectedCodeLines(block, null);
+        return;
+      }
+
+      let intersects = false;
+      try {
+        intersects = range.intersectsNode(code);
+      } catch {
+        intersects = false;
+      }
+
+      if (!intersects) {
+        setSelectedCodeLines(block, null);
+        return;
+      }
+
+      const selectedLines = getSelectedCodeLines(code, range);
+      if (!selectedLines) {
+        setSelectedCodeLines(block, null);
+        return;
+      }
+
+      setSelectedCodeLines(block, selectedLines.start, selectedLines.end);
+    });
+  };
+
+  const updatePointerCodeLine = (event: PointerEvent | MouseEvent) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const pre = target?.closest('.mdn-pre') as HTMLElement | null;
+
+    if (!pre) {
+      if (target && !target.closest('.mdn-codeblock')) {
+        clearCodeLineState();
+      }
+      return;
+    }
+
+    const block = pre.closest('.mdn-codeblock') as HTMLElement | null;
+    if (!block) return;
+
+    clearCodeLineState(block);
+    const line = lineFromPointer(pre, event.clientY);
+    if (line !== null) {
+      setActiveCodeLine(block, line);
+    }
+  };
+
+  let codeSelectionFrame = 0;
+  const scheduleCodeSelectionSync = () => {
+    if (codeSelectionFrame) return;
+    codeSelectionFrame = window.requestAnimationFrame(() => {
+      codeSelectionFrame = 0;
+      syncCodeSelection();
+    });
+  };
+
+  document.addEventListener('pointerdown', updatePointerCodeLine, true);
+  document.addEventListener('click', updatePointerCodeLine, true);
+  document.addEventListener('pointermove', (event) => {
+    if ((event.buttons & 1) !== 1) return;
+    updatePointerCodeLine(event);
+  }, true);
+  document.addEventListener('selectionchange', scheduleCodeSelectionSync);
 
   // UI.toggleCodeCollapse (global function to expand/collapse long code blocks)
   win.UI.toggleCodeCollapse = (btn: HTMLElement) => {
@@ -1314,11 +1979,55 @@ function initGlobalHandlers() {
 
   // Table object (for inline onclick handlers)
   if (!win.Table) win.Table = {};
-  // Table object (for inline onclick handlers)
-  if (!win.Table) win.Table = {};
   win.Table.states = win.Table.states || {};
 
-  win.Table.initState = (tableId: string) => {
+  type TableFilterValue = string | string[] | null | undefined;
+  type TableFilterMap = Record<string, TableFilterValue>;
+  type TableState = {
+    expanded: boolean;
+    searchQuery: string;
+    filters: TableFilterMap;
+    chartInstance: any;
+    currentView: string;
+    chartable: boolean;
+    labelColIdx: number;
+    dataColIdxs: number[];
+  };
+
+  const TABLE_COLLAPSE_LIMIT = 15;
+
+  const getTableDataRows = (table: HTMLTableElement) => (
+    [...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]
+  ).filter((row) => row.id !== `${table.id}-toggle-row` && !row.dataset.toggle);
+
+  const normalizeFilterValues = (value: TableFilterValue): string[] => {
+    if (Array.isArray(value)) return value.map(String).filter(Boolean);
+    if (typeof value === 'string' && value) return [value];
+    return [];
+  };
+
+  const getActiveFilterEntries = (filters: TableFilterMap) => Object.entries(filters || {})
+    .map(([colIdx, value]) => [Number.parseInt(colIdx, 10), normalizeFilterValues(value)] as const)
+    .filter(([colIdx, values]) => Number.isFinite(colIdx) && values.length > 0);
+
+  const setColumnFilterValues = (state: TableState, colIndex: number, values: string[]) => {
+    if (values.length > 0) {
+      state.filters[colIndex] = values;
+    } else {
+      delete state.filters[colIndex];
+    }
+  };
+
+  const syncFilterButtons = (table: HTMLTableElement, state: TableState) => {
+    table.querySelectorAll<HTMLElement>('.mdn-table-filter-btn').forEach((button) => {
+      const th = button.closest('.mdn-th') as HTMLElement | null;
+      const colIndex = Number.parseInt(th?.dataset.col ?? '', 10);
+      const active = Number.isFinite(colIndex) && normalizeFilterValues(state.filters[colIndex]).length > 0;
+      button.classList.toggle('is-active', active);
+    });
+  };
+
+  win.Table.initState = (tableId: string): TableState => {
     if (!win.Table.states[tableId]) {
       win.Table.states[tableId] = {
         expanded: false,
@@ -1339,7 +2048,7 @@ function initGlobalHandlers() {
     if (!table) return;
     const tbody = table.querySelector('tbody');
     if (!tbody) return;
-    const rows = [...tbody.querySelectorAll('tr')];
+    const rows = getTableDataRows(table);
     const th = table.querySelectorAll('.mdn-th')[colIndex] as HTMLElement | null;
     if (!th) return;
     const asc = !th.classList.contains('sort-asc');
@@ -1355,52 +2064,52 @@ function initGlobalHandlers() {
     });
     rows.forEach((r) => tbody.appendChild(r));
 
-    const state = win.Table.initState(tableId);
-    if (state.currentView !== 'table') {
-      win.Table.renderChart(tableId, state.currentView);
-    }
+    win.Table.applyAllFilters(tableId);
   };
 
   win.Table.applyAllFilters = (tableId: string) => {
     const table = document.getElementById(tableId) as HTMLTableElement | null;
     if (!table) return;
-    const state = win.Table.states[tableId];
-    if (!state) return;
+    const state = win.Table.initState(tableId);
 
     const searchQ = (state.searchQuery || '').toLowerCase().trim();
-    const rows = ([...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]);
-    let visible = 0;
+    const activeFilters = getActiveFilterEntries(state.filters);
+    const rows = getTableDataRows(table);
+    let matchedCount = 0;
 
     rows.forEach((row) => {
-      const matchesSearch = !searchQ || row.textContent!.toLowerCase().includes(searchQ);
+      const matchesSearch = !searchQ || (row.textContent ?? '').toLowerCase().includes(searchQ);
+      const matchesColumnFilters = activeFilters.every(([colIdx, values]) => {
+        const cellVal = (row.cells[colIdx]?.textContent ?? '').trim();
+        return values.includes(cellVal);
+      });
 
-      let matchesColumnFilters = true;
-      if (state.filters) {
-        Object.entries(state.filters).forEach(([colIdxStr, filterVal]) => {
-          if (filterVal) {
-            const colIdx = parseInt(colIdxStr, 10);
-            const cellVal = (row.cells[colIdx]?.textContent ?? '').trim();
-            if (cellVal !== filterVal) matchesColumnFilters = false;
-          }
-        });
+      const isMatched = matchesSearch && matchesColumnFilters;
+      row.classList.toggle('is-hidden', !isMatched);
+      if (!isMatched) {
+        row.classList.remove('is-collapsed-row');
+        return;
       }
 
-      const isVisible = matchesSearch && matchesColumnFilters;
-      (row as HTMLElement).classList.toggle('is-hidden', !isVisible);
-      if (isVisible) visible++;
+      const shouldCollapse = !state.expanded && matchedCount >= TABLE_COLLAPSE_LIMIT;
+      row.classList.toggle('is-collapsed-row', shouldCollapse);
+      matchedCount++;
     });
 
     const countEl = document.getElementById(tableId + '-count');
     if (countEl) {
-      countEl.textContent = visible < rows.length ? `${visible} / ${rows.length} rows` : `${rows.length} rows`;
+      const filtered = searchQ || activeFilters.length > 0;
+      countEl.textContent = filtered || matchedCount < rows.length
+        ? `${matchedCount} / ${rows.length} rows`
+        : `${rows.length} rows`;
     }
 
-    // Show/hide the standalone toggle button (lives outside the table)
     const toggleBtn = document.getElementById(tableId + '-toggle-btn');
     if (toggleBtn) {
-      // Hide the toggle when a search/filter is active (all rows visible)
-      toggleBtn.style.display = visible > 15 && !searchQ && Object.keys(state.filters || {}).length === 0 ? '' : 'none';
+      toggleBtn.style.display = matchedCount > TABLE_COLLAPSE_LIMIT ? '' : 'none';
+      toggleBtn.textContent = state.expanded ? 'Show Less' : 'Show More';
     }
+    syncFilterButtons(table, state);
 
     if (state.currentView !== 'table') {
       win.Table.renderChart(tableId, state.currentView);
@@ -1421,7 +2130,7 @@ function initGlobalHandlers() {
     if (!table) return;
     const state = win.Table.initState(tableId);
 
-    const rows = ([...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]);
+    const rows = getTableDataRows(table);
     const values = rows
       .map(row => (row.cells[colIndex]?.textContent ?? '').trim())
       .filter(Boolean);
@@ -1432,44 +2141,78 @@ function initGlobalHandlers() {
 
     const header = document.createElement('div');
     header.className = 'mdn-filter-dropdown-header';
-    header.textContent = 'Filter Column';
+    header.textContent = 'Filter Values';
     dropdown.appendChild(header);
 
     const allItem = document.createElement('div');
-    allItem.className = `mdn-filter-item${!state.filters[colIndex] ? ' is-active' : ''}`;
+    allItem.className = `mdn-filter-item${normalizeFilterValues(state.filters[colIndex]).length === 0 ? ' is-active' : ''}`;
     allItem.textContent = '(All)';
     allItem.onclick = () => {
-      state.filters[colIndex] = null;
-      buttonEl.classList.remove('is-active');
+      setColumnFilterValues(state, colIndex, []);
+      syncMenu();
       win.Table.applyAllFilters(tableId);
-      dropdown.remove();
     };
     dropdown.appendChild(allItem);
 
+    const valueItems: Array<{ item: HTMLDivElement; check: HTMLSpanElement; value: string }> = [];
+    const syncMenu = () => {
+      const activeValues = new Set(normalizeFilterValues(state.filters[colIndex]));
+      allItem.classList.toggle('is-active', activeValues.size === 0);
+      buttonEl.classList.toggle('is-active', activeValues.size > 0);
+      valueItems.forEach(({ item, check, value }) => {
+        const active = activeValues.has(value);
+        item.classList.toggle('is-active', active);
+        item.setAttribute('aria-checked', String(active));
+        check.textContent = active ? '✓' : '';
+      });
+    };
+
     uniqueValues.forEach(val => {
-      const isActive = state.filters[colIndex] === val;
       const item = document.createElement('div');
-      item.className = `mdn-filter-item${isActive ? ' is-active' : ''}`;
-      item.textContent = val;
+      item.className = 'mdn-filter-item';
+      item.setAttribute('role', 'menuitemcheckbox');
+      const check = document.createElement('span');
+      check.className = 'mdn-filter-check';
+      check.setAttribute('aria-hidden', 'true');
+      const label = document.createElement('span');
+      label.className = 'mdn-filter-label';
+      label.textContent = val;
+      item.appendChild(check);
+      item.appendChild(label);
       item.onclick = () => {
-        state.filters[colIndex] = val;
-        buttonEl.classList.add('is-active');
+        const next = normalizeFilterValues(state.filters[colIndex]);
+        const existingIndex = next.indexOf(val);
+        if (existingIndex >= 0) {
+          next.splice(existingIndex, 1);
+        } else {
+          next.push(val);
+        }
+        setColumnFilterValues(state, colIndex, next);
+        syncMenu();
         win.Table.applyAllFilters(tableId);
-        dropdown.remove();
       };
+      valueItems.push({ item, check, value: val });
       dropdown.appendChild(item);
     });
 
+    if (uniqueValues.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'mdn-filter-empty';
+      empty.textContent = 'No values';
+      dropdown.appendChild(empty);
+    }
+
     document.body.appendChild(dropdown);
+    syncMenu();
     const rect = buttonEl.getBoundingClientRect();
-    dropdown.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    dropdown.style.top = `${rect.bottom + 4}px`;
     
     const dropdownWidth = dropdown.offsetWidth || 160;
     const viewportWidth = window.innerWidth;
-    let leftPos = rect.left + window.scrollX;
+    let leftPos = rect.left;
     
     if (rect.left + dropdownWidth > viewportWidth) {
-      leftPos = rect.right + window.scrollX - dropdownWidth;
+      leftPos = rect.right - dropdownWidth;
     }
     leftPos = Math.max(12, Math.min(leftPos, viewportWidth - dropdownWidth - 12));
     
@@ -1490,20 +2233,14 @@ function initGlobalHandlers() {
     const table = document.getElementById(tableId) as HTMLTableElement | null;
     if (!table) return;
     const state = win.Table.initState(tableId);
-    const rows = [...table.querySelectorAll('tbody tr')] as HTMLElement[];
-    const btn = document.getElementById(tableId + '-toggle-btn');
-    const isCurrentlyCollapsed = rows[15]?.classList.contains('is-collapsed-row');
-    rows.forEach((row, idx) => {
-      if (idx >= 15) row.classList.toggle('is-collapsed-row', !isCurrentlyCollapsed);
-    });
-    state.expanded = isCurrentlyCollapsed;
-    if (btn) btn.textContent = isCurrentlyCollapsed ? 'Show Less' : 'Show More';
+    state.expanded = !state.expanded;
+    win.Table.applyAllFilters(tableId);
   };
 
   win.Table.updateCount = (tableId: string) => {
     const table = document.getElementById(tableId) as HTMLTableElement | null;
     if (!table) return;
-    const total = table.querySelectorAll('tbody tr').length;
+    const total = getTableDataRows(table).length;
     const countEl = document.getElementById(tableId + '-count');
     if (countEl) countEl.textContent = `${total} rows`;
   };
@@ -1513,7 +2250,7 @@ function initGlobalHandlers() {
     if (!table) return;
     const state = win.Table.initState(tableId);
     const headers = [...table.querySelectorAll('thead th')];
-    const rows = ([...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]);
+    const rows = getTableDataRows(table);
 
     // Find numeric columns and text label columns
     const numericCols: number[] = [];
@@ -1591,28 +2328,8 @@ function initGlobalHandlers() {
     if (view === 'table') {
       if (scrollEl) scrollEl.style.display = '';
       if (chartContainer) chartContainer.style.display = 'none';
-
-      // Re-apply collapsed state
-      const rows = [...table.querySelectorAll('tbody tr')].filter(r => r.id !== tableId + '-toggle-row');
-      const totalRows = rows.length;
-      if (totalRows > 15) {
-        const isSearchOrFilterActive = !!state.searchQuery || Object.keys(state.filters || {}).length > 0;
-        const isExpanded = !!state.expanded;
-        
-        rows.forEach((row, idx) => {
-          if (idx >= 15) {
-            (row as HTMLElement).classList.toggle('is-collapsed-row', !isExpanded && !isSearchOrFilterActive);
-          }
-        });
-
-        if (toggleBtn) {
-          toggleBtn.style.display = isSearchOrFilterActive ? 'none' : '';
-          toggleBtn.textContent = isExpanded ? 'Show Less' : 'Show More';
-        }
-        if (toggleRow) {
-          toggleRow.classList.toggle('is-hidden', isSearchOrFilterActive);
-        }
-      }
+      if (toggleRow) toggleRow.classList.add('is-hidden');
+      win.Table.applyAllFilters(tableId);
     } else {
       if (scrollEl) scrollEl.style.display = 'none';
       if (toggleBtn) toggleBtn.style.display = 'none';

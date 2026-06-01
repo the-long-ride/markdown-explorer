@@ -7,17 +7,22 @@ import { useState, useEffect, useCallback } from 'react';
 export function useScrollVisibility(
   scrollRef: React.RefObject<HTMLElement | null>,
   threshold = 200,
+  observeKey?: unknown,
 ) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) {
+      setIsVisible(false);
+      return;
+    }
 
     const handler = () => setIsVisible(el.scrollTop > threshold);
+    handler();
     el.addEventListener('scroll', handler, { passive: true });
     return () => el.removeEventListener('scroll', handler);
-  }, [scrollRef, threshold]);
+  }, [scrollRef, threshold, observeKey]);
 
   const scrollToTop = useCallback(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });

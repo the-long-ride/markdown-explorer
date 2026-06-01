@@ -8,6 +8,7 @@ import type { HostMessage, WebviewMessage } from '../types';
 interface ElectronApi {
   postMessage(msg: WebviewMessage): void;
   onMessage(callback: (msg: HostMessage) => void): () => void;
+  getPathForFile?(file: File): string | undefined;
 }
 
 declare global {

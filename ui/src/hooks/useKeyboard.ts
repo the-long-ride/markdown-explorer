@@ -9,13 +9,18 @@ import { usePlatform } from '../contexts/PlatformContext';
 
 interface UseKeyboardOptions {
   onSearchOpen: () => void;
+  onCrossTabSearchOpen?: () => void;
   onSearchClose: () => void;
+  onFindOpen?: () => void;
+  onFindClose?: () => void;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
   onWelcome?: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
   isSearchOpen: boolean;
+  isFindOpen?: boolean;
+  activeSearchScope?: 'current' | 'all-tabs';
   isSettingsOpen: boolean;
   isModalOpen: boolean;
   isTermsOpen: boolean;
@@ -54,15 +59,27 @@ function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
   return eventKey === targetKey;
 }
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tagName = target.tagName.toLowerCase();
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+}
+
 export function useKeyboard({
   onSearchOpen,
+  onCrossTabSearchOpen,
   onSearchClose,
+  onFindOpen,
+  onFindClose,
   onSettingsOpen,
   onSettingsClose,
   onWelcome,
   onExpandAll,
   onCollapseAll,
   isSearchOpen,
+  isFindOpen = false,
+  activeSearchScope = 'current',
   isSettingsOpen,
   isModalOpen,
   isTermsOpen,
@@ -111,6 +128,11 @@ export function useKeyboard({
           onSearchClose();
           return;
         }
+        if (isFindOpen && onFindClose) {
+          e.preventDefault();
+          onFindClose();
+          return;
+        }
         if (isSettingsOpen) {
           e.preventDefault();
           onSettingsClose();
@@ -118,10 +140,24 @@ export function useKeyboard({
         }
       }
 
-      // 2. Ctrl+Shift+K -> desktop cross-tab search; Ctrl+K -> current search.
-      if (isElectron && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+      // 2. Search shortcuts. Desktop is customizable; VS Code keeps Ctrl+K.
+      if (isElectron && onCrossTabSearchOpen && matchesShortcut(e, keybindings.searchAllTabs)) {
         e.preventDefault();
-        if (isSearchOpen) {
+        if (isSearchOpen && activeSearchScope === 'all-tabs') {
+          onSearchClose();
+        } else {
+          onCrossTabSearchOpen();
+        }
+        return;
+      }
+
+      const isCurrentSearchShortcut = isElectron
+        ? matchesShortcut(e, keybindings.searchCurrent)
+        : (e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k';
+
+      if (isCurrentSearchShortcut) {
+        e.preventDefault();
+        if (isSearchOpen && activeSearchScope === 'current') {
           onSearchClose();
         } else {
           onSearchOpen();
@@ -129,31 +165,37 @@ export function useKeyboard({
         return;
       }
 
-      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k') {
+      // 3. Find in the current rendered file. Bare keys must not fire while typing.
+      if (
+        onFindOpen &&
+        !isSearchOpen &&
+        !isEditableTarget(e.target) &&
+        matchesShortcut(e, keybindings.findCurrentFile)
+      ) {
         e.preventDefault();
-        if (isSearchOpen) {
-          onSearchClose();
+        if (isFindOpen && onFindClose) {
+          onFindClose();
         } else {
-          onSearchOpen();
+          onFindOpen();
         }
         return;
       }
 
-      // 3. Back to previous file (both)
+      // 4. Back to previous file (both)
       if (matchesShortcut(e, keybindings.back)) {
         e.preventDefault();
         back();
         return;
       }
 
-      // 4. Go to next file (both)
+      // 5. Go to next file (both)
       if (matchesShortcut(e, keybindings.forward)) {
         e.preventDefault();
         forward();
         return;
       }
 
-      // 5. Welcome page (both)
+      // 6. Welcome page (both)
       if (matchesShortcut(e, keybindings.welcome)) {
         e.preventDefault();
         if (onWelcome) {
@@ -164,7 +206,7 @@ export function useKeyboard({
         return;
       }
 
-      // 6. Settings Modal (both)
+      // 7. Settings Modal (both)
       if (matchesShortcut(e, keybindings.settings)) {
         e.preventDefault();
         if (isSettingsOpen) {
@@ -175,7 +217,7 @@ export function useKeyboard({
         return;
       }
 
-      // 7. Toggle Theme (both)
+      // 8. Toggle Theme (both)
       if (matchesShortcut(e, keybindings.toggleTheme)) {
         e.preventDefault();
         toggleTheme();
@@ -184,35 +226,35 @@ export function useKeyboard({
 
       // Desktop specific keybindings
       if (isElectron) {
-        // 8. Refresh (Desktop)
+        // 9. Refresh (Desktop)
         if (matchesShortcut(e, keybindings.refresh)) {
           e.preventDefault();
           refresh();
           return;
         }
 
-        // 9. Collapse all headings (Desktop)
+        // 10. Collapse all headings (Desktop)
         if (matchesShortcut(e, keybindings.collapseAll)) {
           e.preventDefault();
           onCollapseAll();
           return;
         }
 
-        // 10. Expand all headings (Desktop)
+        // 11. Expand all headings (Desktop)
         if (matchesShortcut(e, keybindings.expandAll)) {
           e.preventDefault();
           onExpandAll();
           return;
         }
 
-        // 11. Go to workspace selection page (Desktop)
+        // 12. Go to workspace selection page (Desktop)
         if (matchesShortcut(e, keybindings.workspaceSelection)) {
           e.preventDefault();
           bridge.postMessage({ command: 'closeWorkspace' });
           return;
         }
 
-        // 12. Toggle sidebar (Desktop)
+        // 13. Toggle sidebar (Desktop)
         if (matchesShortcut(e, keybindings.toggleSidebar)) {
           e.preventDefault();
           toggleSidebar();
@@ -268,13 +310,18 @@ export function useKeyboard({
     keybindings,
     isElectron,
     onSearchOpen,
+    onCrossTabSearchOpen,
     onSearchClose,
+    onFindOpen,
+    onFindClose,
     onSettingsOpen,
     onSettingsClose,
     onWelcome,
     onExpandAll,
     onCollapseAll,
     isSearchOpen,
+    isFindOpen,
+    activeSearchScope,
     isSettingsOpen,
     isModalOpen,
     isTermsOpen,

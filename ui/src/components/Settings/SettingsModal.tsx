@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   useAppState,
   DEFAULT_KEYBINDINGS,
+  DESKTOP_DEFAULT_KEYBINDINGS,
   THEME_MODE_OPTIONS,
 } from "../../contexts/AppStateContext";
 import { TooltipButton } from "../shared/TooltipButton";
@@ -17,6 +18,9 @@ interface SettingsModalProps {
 }
 
 const ACTIONS_LIST = [
+  { id: "searchCurrent", label: "Search current workspace", scope: "desktop" },
+  { id: "searchAllTabs", label: "Search all tabs", scope: "desktop" },
+  { id: "findCurrentFile", label: "Find in current file", scope: "both" },
   { id: "back", label: "Back to previous file", scope: "both" },
   { id: "forward", label: "Go to next file", scope: "both" },
   { id: "welcome", label: "Go to welcome page", scope: "both" },
@@ -329,6 +333,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 const val = state.settings.keybindings?.[act.id] || "";
                 return (
                   <div
+                    className="settings-shortcut-row"
                     key={act.id}
                     style={{
                       display: "flex",
@@ -338,6 +343,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     }}
                   >
                     <div
+                      className="settings-shortcut-label"
                       style={{
                         color: "var(--tx2)",
                         display: "flex",
@@ -348,6 +354,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <span>{act.label}</span>
                     </div>
                     <input
+                      className="settings-shortcut-input"
                       type="text"
                       readOnly
                       placeholder="Click to record..."
@@ -405,7 +412,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 type="button"
                 className="settings-reset-shortcuts-btn"
                 onClick={() =>
-                  updateSettings({ keybindings: DEFAULT_KEYBINDINGS })
+                  updateSettings({
+                    keybindings: isElectron
+                      ? DESKTOP_DEFAULT_KEYBINDINGS
+                      : DEFAULT_KEYBINDINGS,
+                  })
                 }
               >
                 Reset to Default Shortcuts
