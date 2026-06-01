@@ -4,6 +4,27 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.4] — 2026-06-02
+
+### Added Features & Enhancements
+- **9-Language UI**: Added a built-in language switcher (globe icon in Settings header) supporting English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian. All UI surfaces — Settings modal, Topbar, Sidebar, Table of Contents, Welcome page, floating toolbar, workspace controls and modals — now render in the selected language without a restart.
+- **Sidebar & TOC Translations**: Sidebar heading, file-filter placeholder, TOC title, "Return to top" button, and compact-TOC label are now fully localized.
+- **Welcome Page Translations**: Hero section, features list, keyboard shortcuts table, privacy pledge, and report-issue section are all translated through `welcomeTranslations.ts`.
+- **Close-Tab Tooltip**: Tab close button in the desktop tab bar now shows a native browser `title` tooltip ("Close tab") to avoid layout side-effects from absolute-positioned custom tooltips inside the scrollable tab strip.
+
+### Changed
+- **Settings Modal Width**: Increased maximum width to 912 px (×1.2 from previous 760 px) for better readability at normal zoom levels.
+- **Settings Text Selection**: Text inside `.settings-card` is now selectable (`user-select: text`).
+- **Keyboard Shortcut Order in Settings**: Reordered the shortcut list to *Find in file → Search workspace (current tab) → Search all tabs* for a more logical flow.
+- **Default Toggle-Theme Shortcut (Desktop)**: Changed the desktop app default from `Ctrl+Shift+L` to `Ctrl+L`; VS Code extension default remains `Ctrl+Shift+L`.
+- **Floating Tab Toolbar Opacity**: Toolbar auto-reduces to 20% opacity 3 seconds after losing focus; hover or focus restores full opacity.
+- **Responsive Settings Layout**: Added breakpoints so the settings modal stacks gracefully at narrow viewport widths.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, and VS Code package metadata to `1.4.4`.
+
+---
+
 ## [1.4.2] — 2026-06-01
 
 ### Added Features & Enhancements
