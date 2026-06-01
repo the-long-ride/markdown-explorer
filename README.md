@@ -10,7 +10,7 @@ Markdown files are built for AI agents. **Markdown Explorer** makes them pleasan
 It turns `.md` and `.mdx` folders into a private, searchable documentation app with workspace navigation, rendered diagrams, math, videos, highlighted code, interactive tables, charts, tabs, and desktop support for Windows, Linux, and [macOS](docs/macos-install.md).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-all-tabs.png" width="900" alt="Markdown Explorer searching across open workspace tabs" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png" width="900" alt="Markdown Explorer homepage with workspace navigation and reading layout" />
 </p>
 
 ## Why It Feels Different
@@ -46,8 +46,9 @@ Find the exact content you need, then jump to the exact clicked match.
 Markdown tables become real data views: search rows, sort columns, multi-select filter values, keep large datasets collapsed, and switch to charts when numeric data is detected.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Suport-interact-with-large-data-table.png" width="49%" alt="Large table with multi-select filters and sorted rows" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/View-as-chart-instead-with-datatable.png" width="49%" alt="Markdown table rendered as an interactive chart" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/View-data-table-easier-than-ever.png" width="32%" alt="Markdown table rendered as an easier data view" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Suport-interact-with-large-data-table.png" width="32%" alt="Large table with multi-select filters and sorted rows" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/View-as-chart-instead-with-datatable.png" width="32%" alt="Markdown table rendered as an interactive chart" />
 </p>
 
 ## Diagrams, Math, Code, Media
@@ -60,8 +61,14 @@ Mermaid diagrams render offline, LaTeX math is readable, code blocks are highlig
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format.png" width="49%" alt="Syntax-highlighted code block with line numbers" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format.png" width="31%" alt="Syntax-highlighted code block with line numbers" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format_1.png" width="31%" alt="Markdown Explorer code block formatting example" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format_2.png" width="31%" alt="Markdown Explorer highlighted programming language sample" />
+</p>
+
+<p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-Streaming-Video.png" width="49%" alt="YouTube video embedded inside a Markdown document" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-Streaming-Video_1.png" width="49%" alt="Streaming video preview inside a Markdown document" />
 </p>
 
 ## HTML And Media Tools
@@ -70,7 +77,12 @@ Use isolated HTML previews for interactive examples, and inspect images or diagr
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Interactive-HTML-sandbox_1.png" width="49%" alt="Interactive HTML sandbox in Markdown Explorer" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Interactive-HTML-sandbox_2.png" width="49%" alt="Rendered output from an interactive HTML sandbox" />
+</p>
+
+<p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View.png" width="49%" alt="Zoomable media modal for images and Mermaid diagrams" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View_1.jpg" width="49%" alt="Image modal preview with zoom controls" />
 </p>
 
 ## Desktop Workspace
@@ -78,8 +90,9 @@ Use isolated HTML previews for interactive examples, and inspect images or diagr
 The desktop app opens recent folders quickly, supports drag-and-drop opening, and can keep multiple workspaces alive in tabs.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection-Search-Recently-one.png" width="49%" alt="Desktop workspace selection with recent folders" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage-Include-Help-Section.png" width="49%" alt="Markdown Explorer welcome page with help section" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection-Search-Recently-one.png" width="32%" alt="Desktop workspace selection with recent folders" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage-Include-Help-Section.png" width="32%" alt="Markdown Explorer welcome page with help section" />
 </p>
 
 ## Shortcuts
