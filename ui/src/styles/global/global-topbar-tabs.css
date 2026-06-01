@@ -337,6 +337,16 @@ body {
   -webkit-backdrop-filter: var(--surface-blur);
   cursor: default;
   -webkit-app-region: no-drag;
+  transition: opacity 0.3s ease;
+}
+
+.tab-floating-toolbar.is-dimmed {
+  opacity: 0.35;
+}
+
+.tab-floating-toolbar.is-dimmed:hover,
+.tab-floating-toolbar.is-dimmed:focus-within {
+  opacity: 1;
 }
 
 .tab-floating-toolbar button,
