@@ -648,7 +648,13 @@ h3 {
   min-height: 1.35rem;
   color: var(--soft);
   font-size: 0.88rem;
+  margin-top: auto;
 }
+
+.release-download-count + .button {
+  margin-top: 0.5rem;
+}
+
 
 .release-download-number {
   display: inline-block;

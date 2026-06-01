@@ -93,7 +93,7 @@
       const label = document.createElement("span");
       label.className = "release-download-count";
       label.setAttribute("aria-live", "polite");
-      button.insertAdjacentElement("afterend", label);
+      button.insertAdjacentElement("beforebegin", label);
       return [button, label];
     }),
   );
