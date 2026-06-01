@@ -4,6 +4,47 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.1] — 2026-06-01
+
+### Added Features & Enhancements
+- **Copy Actions**: Added copy buttons for whole files and heading sections, with a small success effect after copying.
+- **Workspace Drop Handling**: Added drag-and-drop support for markdown files and folders from the workspace selection screen, Focus view, and Tab view, including tab-aware folder opening behavior.
+- **Markdown Math & Diagram Rendering**: Added stronger KaTeX handling for LaTeX blocks and constrained rendered Mermaid SVGs to a readable viewport height.
+- **Desktop Shortcut Customization**: Added customizable desktop search shortcuts and changed desktop defaults to `Ctrl+F` for current-workspace search and `Ctrl+Shift+F` for all-tab search.
+- **Find In Current File**: Added a dedicated in-file find panel with desktop `F` and VS Code `K` defaults.
+- **Content Search Jumps**: Search results now carry match positions so clicking a result jumps to the exact selected occurrence, not just the first match in a file.
+- **Markdown Video Support**: Added rendering for local video files and supported streaming links, including YouTube embeds with fallback links.
+- **Static Website**: Added a GitHub Pages website with SEO metadata, release download buttons, and a refreshed screenshot gallery.
+
+### Changed
+- **Markdown Rendering Polish**: Improved frontmatter display, multiline table cell layout, theme-aware inline code styling, copy-friendly inline code wrapping, and richer math test coverage.
+- **Code Block Usability**: Tightened line-number columns, aligned line numbers with code rows, and highlighted focused or selected line ranges in the gutter.
+- **Tab View Controls**: Refined Tab view toolbar layout, compact control behavior, mouse-wheel tab closing, and current-tab versus all-tab search behavior.
+- **Background Pets**: Enlarged background pet artwork and added subtle random movement.
+- **Sidebar Labels**: Defaulted sidebar labels to off.
+- **Search UX**: Search result excerpts now bold the full matched query and show compact context around it.
+- **Settings Layout**: Settings switch to a sequential layout at high zoom or small viewports.
+- **Website And README**: Refreshed product copy, shortcuts documentation, reporting guidelines, and demo screenshots.
+
+### Fixed Issues
+- **Scroll-To-Top Button**: Restored the button in both variants and fixed its position when zoomed in heavily.
+- **Table of Contents Active Marker**: Adjusted active item marker height so it follows text height in the default theme.
+- **Sidebar Resize**: Restored sidebar width adjustment, including first-open restored workspace states.
+- **Markdown Tables**: Improved rendering for rows with multiline cells and long inline code commands.
+- **Large Table Filtering**: Sorting and filtering now operate on all real rows, preserve collapsed state, and support multi-choice column filters.
+- **Search Panel Stacking**: Raised search panel layering so it stays above sticky page UI.
+- **Floating Toolbar Bounds**: Prevented the Tab view floating toolbar from being dragged off-screen.
+- **Workspace Selection Overflow**: Removed the unexpected horizontal scrollbar on the workspace selection page.
+- **Find Highlight Contrast**: Active in-file search highlights now use theme background text color for better readability.
+
+### Removed
+- **PDF Export**: Removed the PDF conversion feature and related packages/code after deciding the app should stay focused on Markdown exploration.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, and VS Code package metadata to `1.4.1`.
+
+---
+
 ## [1.4.0] — 2026-05-30
 
 ### Added Features & Enhancements
