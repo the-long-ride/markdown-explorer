@@ -3,6 +3,7 @@
   const apiUrl = "https://api.github.com/repos/the-long-ride/markdown-explorer/releases/latest";
   const note = document.querySelector("#release-note");
   const buttons = [...document.querySelectorAll(".release-download")];
+  const baseButtonLabels = new Map(buttons.map((button) => [button, button.textContent.trim()]));
 
   const assetMatchers = {
     windows: (name) => name.endsWith(".exe"),
@@ -27,8 +28,10 @@
 
   const setFallback = (message) => {
     buttons.forEach((button) => {
+      const baseLabel = baseButtonLabels.get(button) || button.textContent.trim();
       button.href = releaseUrl;
-      button.setAttribute("aria-label", `${button.textContent}. Opens the latest GitHub Release.`);
+      button.textContent = baseLabel;
+      button.setAttribute("aria-label", `${baseLabel}. Opens the latest GitHub Release.`);
     });
     if (note) note.textContent = message;
   };
@@ -40,22 +43,28 @@
     })
     .then((release) => {
       const assets = Array.isArray(release.assets) ? release.assets : [];
+      const releaseVersion = release.tag_name || release.name || "";
       buttons.forEach((button) => {
+        const baseLabel = baseButtonLabels.get(button) || button.textContent.trim();
+        const versionedLabel = releaseVersion ? `${baseLabel} ${releaseVersion}` : baseLabel;
         const asset = pickAsset(assets, button.dataset.platform);
+        button.textContent = versionedLabel;
+
         if (!asset) {
           button.href = release.html_url || releaseUrl;
-          button.setAttribute("aria-label", `${button.textContent}. Opens the latest GitHub Release.`);
+          button.setAttribute("aria-label", `${versionedLabel}. Opens the GitHub Release page.`);
           return;
         }
 
         button.href = asset.browser_download_url;
-        button.setAttribute("aria-label", `Download ${asset.name}`);
+        button.setAttribute("aria-label", `Download ${asset.name} from GitHub Release ${releaseVersion || "latest"}`);
         button.title = asset.name;
       });
 
       if (note) {
-        const tag = release.tag_name ? ` ${release.tag_name}` : "";
-        note.textContent = `Desktop buttons are using the latest GitHub Release${tag}.`;
+        note.textContent = releaseVersion
+          ? `Desktop downloads resolved from GitHub Release ${releaseVersion}.`
+          : "Desktop downloads resolved from the GitHub Releases API.";
       }
     })
     .catch(() => {
