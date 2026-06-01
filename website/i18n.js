@@ -803,6 +803,10 @@ window.LANGS = {
     privacyTitle: "オフライン、ローカル、実際のプロジェクトフォルダーに快適",
     privacyBody:
       "Markdown Explorer は Markdown コンテンツをアップロードしません。ローカルでスキャンとレンダリングを行い、プライベートメモ、AI メモリフォルダー、エンジニアリングドキュメント、ランブック、プロジェクト知識ベースに役立ちます。",
+    langsEyebrow: "グローバル＆アクセシブル",
+    langsTitle: "母国語によるドキュメント表示",
+    langsBody:
+      "Markdown Explorer はグローバルチーム向けに構築されています。リーダーのインターフェース全体が完全にローカライズされているため、好みの言語でドキュメントワークスペースをシームレスにナビゲート、検索、管理できます。",
     downloadEyebrow: "Markdown Explorer を入手",
     downloadTitle: "拡張機能をインストールまたはデスクトップアプリをダウンロード",
     downloadSubtitle:
