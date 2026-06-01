@@ -321,14 +321,25 @@
         <div class="metric">
           <strong>1000+</strong>
           <span data-i18n="metric3"
-            >rows in data table stay sortable, filterable and view as
-            charts</span
-          >
+            >rows in data table stay sortable, filterable and view as charts
+          </span>
         </div>
         <div class="metric">
           <strong>24</strong>
           <span data-i18n="metric4"
             >Mermaid diagram styles rendered in docs</span
+          >
+        </div>
+        <div class="metric">
+          <strong>HTML</strong>
+          <span data-i18n="metric5"
+            >interactive sandboxes run in isolated previews</span
+          >
+        </div>
+        <div class="metric">
+          <strong>Zoom</strong>
+          <span data-i18n="metric6"
+            >click to enlarge diagrams, charts, and images</span
           >
         </div>
       </section>
@@ -343,7 +354,8 @@
           </h2>
           <p data-i18n="featuresSubtitle">
             Markdown Explorer keeps files local while making big Markdown
-            workspaces easier to scan, search, understand, and present.
+            workspaces easier to scan, search, understand, and present. Support
+            multiple languages.
           </p>
         </div>
 
@@ -426,6 +438,21 @@
               <p data-i18n="featureMediaBody">
                 Embed local video or supported streaming links without turning
                 your documentation into a separate website.
+              </p>
+            </div>
+          </article>
+          <article class="feature-card wide">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View.png"
+              alt="Focused view inside premium media modal"
+            />
+            <div>
+              <p class="card-kicker" data-i18n="featureMediaModalKicker">Media Viewer</p>
+              <h3 data-i18n="featureMediaModalTitle">
+                Zoom and inspect images & diagrams
+              </h3>
+              <p data-i18n="featureMediaModalBody">
+                Click any image, flowchart, or architecture diagram to open a premium fullscreen backdrop-blur modal. Focus on complex details, pan across large graphics, and click anywhere to close.
               </p>
             </div>
           </article>
@@ -623,6 +650,33 @@
         </p>
       </section>
 
+      <section class="section band" aria-labelledby="languages-title">
+        <div class="split">
+          <div>
+            <p class="eyebrow" data-i18n="langsEyebrow">Global & Accessible</p>
+            <h2 id="languages-title" data-i18n="langsTitle">
+              Documentation in your native language
+            </h2>
+          </div>
+          <div>
+            <p data-i18n="langsBody">
+              Markdown Explorer is built for global teams. The entire reader interface is fully localized, allowing you to seamlessly navigate, search, and manage your documentation workspaces in your preferred language.
+            </p>
+            <div class="languages-list">
+              <span class="lang-tag">English</span>
+              <span class="lang-tag">Tiếng Việt</span>
+              <span class="lang-tag">Français</span>
+              <span class="lang-tag">Español</span>
+              <span class="lang-tag">中文</span>
+              <span class="lang-tag">Norsk</span>
+              <span class="lang-tag">日本語</span>
+              <span class="lang-tag">한국어</span>
+              <span class="lang-tag">Русский</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section faq" id="faq" aria-labelledby="faq-title">
         <div class="section-heading">
           <p class="eyebrow" data-i18n="faqEyebrow">Questions</p>
@@ -685,6 +739,7 @@
       </nav>
     </footer>
 
+    <script src="i18n.js" defer></script>
     <script src="script.js" defer></script>
   </body>
 </html>
