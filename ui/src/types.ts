@@ -289,6 +289,7 @@ export interface AppSettings {
   defaultHtmlPreview: boolean;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
+  language?: string;
 }
 
 export interface PersistedState {
@@ -298,4 +299,5 @@ export interface PersistedState {
   keybindings?: Record<string, string>;
   theme?: ThemeMode;
   themeStyle?: ThemeStyle;
+  language?: string;
 }

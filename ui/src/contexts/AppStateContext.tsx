@@ -125,6 +125,7 @@ const initialState: AppState = {
     defaultHtmlPreview: true,
     desktopViewMode: 'focus',
     keybindings: DEFAULT_KEYBINDINGS,
+    language: 'en',
   },
   renderVersion: 0,
   recentWorkspaces: [],
@@ -160,6 +161,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       defaultHtmlPreview: saved.defaultHtmlPreview !== false,
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
+      language: saved.language || 'en',
     },
   };
 }
@@ -296,6 +298,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           defaultHtmlPreview: saved.defaultHtmlPreview !== false,
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
+          language: saved.language || 'en',
         },
       });
       if (saved.theme) {
@@ -368,6 +371,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       keybindings: state.settings.keybindings,
       theme: state.theme,
       themeStyle: state.themeStyle,
+      language: state.settings.language,
     });
   }, [bridge, state.settings, state.theme, state.themeStyle]);
 

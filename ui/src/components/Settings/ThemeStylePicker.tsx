@@ -10,6 +10,8 @@ import {
   isPetThemeStyle,
 } from "../../contexts/appStateConstants";
 import type { PetThemeStyle, ThemeStyle } from "../../types";
+import { useAppState } from "../../contexts/AppStateContext";
+import { getTranslations } from "../../contexts/translations";
 import whiteShibaPet from "../../assets/themes/pets/backgrounds/white-shiba-happy.png";
 import shibaPet from "../../assets/themes/pets/backgrounds/shiba-happy.png";
 import blackShibaPet from "../../assets/themes/pets/backgrounds/shiba-memes-happy.png";
@@ -24,8 +26,6 @@ interface ThemeStylePickerProps {
   className?: string;
 }
 
-const PETS_DESCRIPTION =
-  "Anime PNG pet companions, playful background buddies, and soft animated reading surfaces.";
 
 const PET_IMAGE_URLS: Record<PetThemeStyle, string> = {
   "pet-white-shiba": whiteShibaPet,
@@ -49,6 +49,10 @@ function PetImageSwatch({ themeStyle }: { themeStyle: PetThemeStyle }) {
 }
 
 export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStylePickerProps) {
+  const { state } = useAppState();
+  const currentLang = state.settings.language || "en";
+  const t = getTranslations(currentLang);
+
   const isPetSelected = isPetThemeStyle(value);
   const selectedPetTheme = isPetSelected ? value : DEFAULT_PET_THEME_STYLE;
   const selectedPetOption =
@@ -87,27 +91,41 @@ export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStyle
 
   return (
     <div className={`theme-style-grid${className ? ` ${className}` : ""}`}>
-      {THEME_STYLE_OPTIONS.map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          className={`theme-style-option theme-style-option--${option.id}${
-            value === option.id ? " is-active" : ""
-          }`}
-          aria-pressed={value === option.id}
-          onClick={() => onChange(option.id)}
-        >
-          <span className="theme-style-option__swatch" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
-          <span className="theme-style-option__text">
-            <span className="theme-style-option__label">{option.label}</span>
-            <span className="theme-style-option__desc">{option.description}</span>
-          </span>
-        </button>
-      ))}
+      {THEME_STYLE_OPTIONS.map((option) => {
+        let label = option.label;
+        let desc = option.description;
+        if (option.id === "default") {
+          label = t.themeStyles.defaultLabel;
+          desc = t.themeStyles.defaultDesc;
+        } else if (option.id === "glass") {
+          label = t.themeStyles.glassLabel;
+          desc = t.themeStyles.glassDesc;
+        } else if (option.id === "bento") {
+          label = t.themeStyles.bentoLabel;
+          desc = t.themeStyles.bentoDesc;
+        }
+        return (
+          <button
+            key={option.id}
+            type="button"
+            className={`theme-style-option theme-style-option--${option.id}${
+              value === option.id ? " is-active" : ""
+            }`}
+            aria-pressed={value === option.id}
+            onClick={() => onChange(option.id)}
+          >
+            <span className="theme-style-option__swatch" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            <span className="theme-style-option__text">
+              <span className="theme-style-option__label">{label}</span>
+              <span className="theme-style-option__desc">{desc}</span>
+            </span>
+          </button>
+        );
+      })}
 
       <div
         className={`theme-style-option theme-style-option--pets theme-style-option--${selectedPetTheme}${
@@ -124,8 +142,8 @@ export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStyle
             <PetImageSwatch themeStyle={selectedPetTheme} />
           </span>
           <span className="theme-style-option__text">
-            <span className="theme-style-option__label">Pets</span>
-            <span className="theme-style-option__desc">{PETS_DESCRIPTION}</span>
+            <span className="theme-style-option__label">{t.themeStyles.petsLabel}</span>
+            <span className="theme-style-option__desc">{t.themeStyles.petsDesc}</span>
           </span>
         </button>
 

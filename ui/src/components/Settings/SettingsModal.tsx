@@ -2,7 +2,7 @@
 // components/Settings/SettingsModal.tsx — Settings Modal & Shortcuts Manager
 // =============================================================================
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   DEFAULT_KEYBINDINGS,
   DESKTOP_DEFAULT_KEYBINDINGS,
@@ -12,6 +12,8 @@ import { useAppState } from "../../contexts/AppStateContext";
 import type { UpdateCheckState } from "../../hooks/useUpdateCheck";
 import { TooltipButton } from "../shared/TooltipButton";
 import { ThemeStylePicker } from "./ThemeStylePicker";
+import { LANGUAGE_OPTIONS, getTranslations } from "../../contexts/translations";
+import { GlobeIcon } from "../shared/icons";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -22,9 +24,9 @@ interface SettingsModalProps {
 }
 
 const ACTIONS_LIST = [
+  { id: "findCurrentFile", label: "Find in current file", scope: "both" },
   { id: "searchCurrent", label: "Search current workspace", scope: "desktop" },
   { id: "searchAllTabs", label: "Search all tabs", scope: "desktop" },
-  { id: "findCurrentFile", label: "Find in current file", scope: "both" },
   { id: "back", label: "Back to previous file", scope: "both" },
   { id: "forward", label: "Go to next file", scope: "both" },
   { id: "welcome", label: "Go to welcome page", scope: "both" },
@@ -52,8 +54,38 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const { state, setTheme, setThemeStyle, updateSettings } = useAppState();
   const [recordingAction, setRecordingAction] = useState<string | null>(null);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!langMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!langDropdownRef.current?.contains(event.target as Node)) {
+        setLangMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setLangMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [langMenuOpen]);
 
   if (!isOpen) return null;
+
+  const currentLang = state.settings.language || "en";
+  const t = getTranslations(currentLang);
+
+  const handleLanguageChange = (lang: string) => {
+    updateSettings({ language: lang });
+    setLangMenuOpen(false);
+  };
 
   const isElectron = typeof (window as any).electronAPI !== "undefined";
   const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
@@ -116,18 +148,48 @@ export function SettingsModal({
       <div
         className="settings-card settings-card--settings"
       >
-        <TooltipButton
-          className="settings-card__close"
-          onClick={onClose}
-          tooltip="Close Settings [Esc]"
-          tooltipPos="below"
-          tooltipAlign="right"
-        >
-          &times;
-        </TooltipButton>
+        <div className="settings-card__top-actions">
+          <div className="settings-language-dropdown" ref={langDropdownRef}>
+            <TooltipButton
+              className="settings-language-btn"
+              onClick={() => setLangMenuOpen((open) => !open)}
+              tooltip={t.tooltips.switchLanguage}
+              tooltipPos="below"
+              icon={<GlobeIcon size={16} />}
+            />
+            {langMenuOpen && (
+              <div className="settings-language-menu" role="listbox" aria-label="Languages">
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="option"
+                    aria-selected={currentLang === option.id}
+                    className={`settings-language-menu__option${
+                      currentLang === option.id ? " is-selected" : ""
+                    }`}
+                    onClick={() => handleLanguageChange(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <TooltipButton
+            className="settings-card__close"
+            onClick={onClose}
+            tooltip={t.closeSettings}
+            tooltipPos="below"
+            tooltipAlign="right"
+          >
+            &times;
+          </TooltipButton>
+        </div>
         <div className="settings-card__header">
-          <h2>Settings</h2>
-          <p>Customize your Markdown Explorer view preferences</p>
+          <h2>{t.settings}</h2>
+          <p>{t.subtitle}</p>
         </div>
         <div
           className="settings-card__body"
@@ -151,13 +213,13 @@ export function SettingsModal({
                 marginBottom: "4px",
               }}
             >
-              Appearance
+              {t.appearance}
             </div>
             <div className="settings-field">
               <div className="settings-item__info">
-                <div className="settings-item__title">Color Mode</div>
+                <div className="settings-item__title">{t.colorMode}</div>
                 <div className="settings-item__desc">
-                  Choose automatic, light, or dark rendering.
+                  {t.colorModeDesc}
                 </div>
               </div>
               <div
@@ -165,19 +227,25 @@ export function SettingsModal({
                 role="radiogroup"
                 aria-label="Color mode"
               >
-                {THEME_MODE_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={`segmented-option${
-                      state.theme === option.id ? " is-active" : ""
-                    }`}
-                    aria-pressed={state.theme === option.id}
-                    onClick={() => setTheme(option.id)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                {THEME_MODE_OPTIONS.map((option) => {
+                  let label = option.label;
+                  if (option.id === "auto") label = t.auto;
+                  else if (option.id === "light") label = t.light;
+                  else if (option.id === "dark") label = t.dark;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`segmented-option${
+                        state.theme === option.id ? " is-active" : ""
+                      }`}
+                      aria-pressed={state.theme === option.id}
+                      onClick={() => setTheme(option.id)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -186,9 +254,9 @@ export function SettingsModal({
               style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
             >
               <div className="settings-item__info">
-                <div className="settings-item__title">Theme Style</div>
+                <div className="settings-item__title">{t.themeStyle}</div>
                 <div className="settings-item__desc">
-                  Pick the surface language for panels, spacing, and strokes.
+                  {t.themeStyleDesc}
                 </div>
               </div>
               <ThemeStylePicker
@@ -206,7 +274,7 @@ export function SettingsModal({
                 marginBottom: "-4px",
               }}
             >
-              View Preferences
+              {t.viewPrefs}
             </div>
             {isElectron && (
               <div
@@ -214,9 +282,9 @@ export function SettingsModal({
                 style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
               >
                 <div className="settings-item__info">
-                  <div className="settings-item__title">Desktop View</div>
+                  <div className="settings-item__title">{t.desktopView}</div>
                   <div className="settings-item__desc">
-                    Focus keeps the current single-workspace layout. Tabs lets each workspace live in its own tab.
+                    {t.desktopViewDesc}
                   </div>
                 </div>
                 <div
@@ -227,25 +295,30 @@ export function SettingsModal({
                   {[
                     { id: "focus", label: "Focus" },
                     { id: "tabs", label: "Tabs" },
-                  ].map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      className={`segmented-option${
-                        (state.settings.desktopViewMode ?? "focus") === option.id
-                          ? " is-active"
-                          : ""
-                      }`}
-                      aria-pressed={(state.settings.desktopViewMode ?? "focus") === option.id}
-                      onClick={() =>
-                        updateSettings({
-                          desktopViewMode: option.id as "focus" | "tabs",
-                        })
-                      }
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                  ].map((option) => {
+                    let label = option.label;
+                    if (option.id === "focus") label = t.focus;
+                    else if (option.id === "tabs") label = t.tabs;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={`segmented-option${
+                          (state.settings.desktopViewMode ?? "focus") === option.id
+                            ? " is-active"
+                            : ""
+                        }`}
+                        aria-pressed={(state.settings.desktopViewMode ?? "focus") === option.id}
+                        onClick={() =>
+                          updateSettings({
+                            desktopViewMode: option.id as "focus" | "tabs",
+                          })
+                        }
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -255,10 +328,9 @@ export function SettingsModal({
               style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
             >
               <div className="settings-item__info">
-                <div className="settings-item__title">Sidebar File Labels</div>
+                <div className="settings-item__title">{t.sidebarLabels}</div>
                 <div className="settings-item__desc">
-                  Show document titles/H1 headers instead of raw filenames in
-                  the sidebar tree.
+                  {t.sidebarLabelsDesc}
                 </div>
               </div>
               <label
@@ -283,11 +355,10 @@ export function SettingsModal({
             >
               <div className="settings-item__info">
                 <div className="settings-item__title">
-                  Default HTML Code Block View
+                  {t.htmlPreview}
                 </div>
                 <div className="settings-item__desc">
-                  Show HTML code blocks as interactive previews by default.
-                  Otherwise, shows the raw HTML code.
+                  {t.htmlPreviewDesc}
                 </div>
               </div>
               <label
@@ -323,10 +394,10 @@ export function SettingsModal({
           >
             <div className="settings-shortcuts-header">
               <div className="settings-shortcuts-title">
-                Keyboard Shortcuts
+                {t.shortcuts}
               </div>
               <div className="settings-shortcuts-hint">
-                Click a field and press your new keys.
+                {t.shortcutsHint}
               </div>
             </div>
             <div
@@ -362,7 +433,7 @@ export function SettingsModal({
                         gap: "6px",
                       }}
                     >
-                      <span>{act.label}</span>
+                      <span>{t.actions[act.id as keyof typeof t.actions] || act.label}</span>
                     </div>
                     <input
                       className="settings-shortcut-input"
@@ -431,7 +502,7 @@ export function SettingsModal({
                   })
                 }
               >
-                Reset to Default Shortcuts
+                {t.resetShortcuts}
               </button>
               {updateAvailable && (
                 <div className="settings-update-card" role="status">
