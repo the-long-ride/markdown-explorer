@@ -2,6 +2,8 @@ import { FolderIcon } from '../shared/icons';
 import { TooltipButton } from '../shared/TooltipButton';
 import type { RecentWorkspace } from '../../types';
 import { formatLastOpened } from './workspaceSelectionUtils';
+import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
 
 interface RecentWorkspaceItemProps {
   item: RecentWorkspace;
@@ -18,6 +20,10 @@ export function RecentWorkspaceItem({
   onOpen,
   onDelete,
 }: RecentWorkspaceItemProps) {
+  const { state } = useAppState();
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
+
   return (
     <div
       onClick={onOpen}
@@ -58,7 +64,7 @@ export function RecentWorkspaceItem({
           <span style={{ fontSize: '11px', color: 'var(--tx2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'rtl', textAlign: 'left', flex: 1 }}>{item.path}</span>
           {item.lastOpened && (
             <span style={{ fontSize: modal ? '9.5px' : '10px', color: 'var(--txm)', fontWeight: 500, whiteSpace: 'nowrap' }}>
-              Last opened: {formatLastOpened(item.lastOpened)}
+              {t.recentWorkspaces.lastOpened}: {formatLastOpened(item.lastOpened)}
             </span>
           )}
         </div>
@@ -69,7 +75,7 @@ export function RecentWorkspaceItem({
           onDelete();
         }}
         className={`recent-workspace-delete-btn${modal ? ' recent-workspace-delete-btn--modal' : ''}`}
-        tooltip="Remove from recents"
+        tooltip={t.tooltips.removeFromRecents}
         tooltipPos="above"
         tooltipAlign="right"
       >

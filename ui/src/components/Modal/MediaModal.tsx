@@ -5,6 +5,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { TooltipButton } from '../shared/TooltipButton';
 import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from '../shared/icons';
+import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
 
 interface MediaItem {
   type: 'img' | 'svg';
@@ -38,6 +40,10 @@ function getClickableMedia(): { type: 'img' | 'svg'; element: HTMLElement; src?:
 }
 
 export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps) {
+  const { state } = useAppState();
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
+
   const [items, setItems] = useState<MediaItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [zoom, setZoom] = useState(1);
@@ -156,13 +162,13 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
         data-tooltip-align="right"
       >
         <CloseIcon size={18} />
-        <span className="tooltip-text">Close modal [Esc]</span>
+        <span className="tooltip-text">{t.tooltips.closeModal}</span>
       </button>
 
       {items.length > 1 && (
         <div className="mdn-modal-nav">
-          <TooltipButton className="mdn-modal-btn mdn-modal-btn--prev" onClick={prev} tooltip="Previous" tooltipPos="above" icon={<ChevronLeftIcon size={24} />} />
-          <TooltipButton className="mdn-modal-btn mdn-modal-btn--next" onClick={next} tooltip="Next" tooltipPos="above" icon={<ChevronRightIcon size={24} />} />
+          <TooltipButton className="mdn-modal-btn mdn-modal-btn--prev" onClick={prev} tooltip={t.tooltips.previous} tooltipPos="above" icon={<ChevronLeftIcon size={24} />} />
+          <TooltipButton className="mdn-modal-btn mdn-modal-btn--next" onClick={next} tooltip={t.tooltips.next} tooltipPos="above" icon={<ChevronRightIcon size={24} />} />
         </div>
       )}
 
@@ -195,10 +201,10 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
       </div>
 
       <div className="mdn-modal-toolbar">
-        <TooltipButton className="mdn-modal-tool" onClick={zoomIn} tooltip="Zoom In" tooltipPos="above" icon={<ZoomInIcon />} />
+        <TooltipButton className="mdn-modal-tool" onClick={zoomIn} tooltip={t.tooltips.zoomIn} tooltipPos="above" icon={<ZoomInIcon />} />
         <span className="mdn-modal-zoom-text">{Math.round(zoom * 100)}%</span>
-        <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip="Zoom Out" tooltipPos="above" icon={<ZoomOutIcon />} />
-        <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip="Reset Zoom" tooltipPos="above" icon={<ResetZoomIcon />} />
+        <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip={t.tooltips.zoomOut} tooltipPos="above" icon={<ZoomOutIcon />} />
+        <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip={t.tooltips.resetZoom} tooltipPos="above" icon={<ResetZoomIcon />} />
       </div>
     </div>
   );

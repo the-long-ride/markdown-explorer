@@ -6,6 +6,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
+import { getTranslations } from './contexts/translations';
 import { WorkspaceSelection } from './components/Workspace/WorkspaceSelection';
 import { Topbar } from './components/Topbar/Topbar';
 import { Sidebar } from './components/Sidebar/Sidebar';
@@ -35,6 +36,9 @@ import { clearSearchJumpMarks, scrollToRenderedSearchMatch } from './utils/searc
 
 export function App() {
   const { state, toggleTheme, toggleSidebar, dispatch, navigate, refresh, openInEditor } = useAppState();
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
+
   const bridge = usePlatform();
   const {
     back,
@@ -308,7 +312,7 @@ export function App() {
             <TooltipButton
               className="btn btn--icon window-control-btn"
               onClick={toggleTheme}
-              tooltip="Toggle light/dark mode"
+              tooltip={t.topbar.theme}
               icon={
                 state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -321,13 +325,13 @@ export function App() {
             <TooltipButton
               className="btn btn--icon window-control-btn"
               onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
-              tooltip="Minimize"
+              tooltip={t.tooltips.minimize}
               icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>}
             />
             <TooltipButton
               className="btn btn--icon window-control-btn"
               onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
-              tooltip={state.isMaximized ? "Restore" : "Maximize"}
+              tooltip={state.isMaximized ? t.tooltips.restore : t.tooltips.maximize}
               icon={state.isMaximized ? (
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                   <path d="M8 3h13v13H8z" />
@@ -340,7 +344,7 @@ export function App() {
             <TooltipButton
               className="btn btn--icon window-control-btn window-control-btn--close"
               onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
-              tooltip="Close App"
+              tooltip={t.tooltips.closeApp}
               tooltipAlign="right"
               icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
             />
@@ -424,7 +428,7 @@ export function App() {
                 <TooltipButton
                   className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 ? ' scroll-to-top-btn--with-toc' : ''}`}
                   onClick={scrollToTop}
-                  tooltip="Scroll to Top"
+                  tooltip={t.tooltips.scrollToTop}
                   tooltipPos="above"
                   tooltipAlign="right"
                   icon={<ChevronUpIcon />}
@@ -466,9 +470,9 @@ export function App() {
         scopeKey={searchScope}
         scopeLabel={
           isAllTabsSearch
-            ? `Search all workspace tabs... (${allTabsSearchShortcutLabel})`
+            ? `${t.actions.searchAllTabs}... (${allTabsSearchShortcutLabel})`
             : isTabView
-              ? `Search current workspace... (${currentSearchShortcutLabel})`
+              ? `${t.actions.searchCurrent}... (${currentSearchShortcutLabel})`
               : undefined
         }
         crossTabItems={isAllTabsSearch ? crossTabSearchItems : undefined}

@@ -5,6 +5,7 @@
 import { useAppState } from '../../contexts/AppStateContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { TooltipButton } from '../shared/TooltipButton';
+import { getTranslations } from '../../contexts/translations';
 import {
   HomeIcon, ChevronLeftIcon, ChevronRightIcon,
   ExpandIcon, CollapseIcon, CopyIcon, EditIcon, SearchIcon,
@@ -44,10 +45,10 @@ function truncateFilename(name: string, maxLen: number): string {
   return base.slice(0, Math.max(1, maxLen - 3)) + '...';
 }
 
-function getBreadcrumbItems(relativePath: string): BreadcrumbItem[] {
+function getBreadcrumbItems(relativePath: string, welcomePageLabel: string): BreadcrumbItem[] {
   if (!relativePath) return [];
   if (relativePath === 'Welcome Page') {
-    return [{ text: 'Welcome Page', isBold: true }];
+    return [{ text: welcomePageLabel, isBold: true }];
   }
   const parts = relativePath.split(/[\\/]/).filter(Boolean);
   const N = parts.length;
@@ -152,12 +153,15 @@ export function Topbar({
   } = useAppState();
   const { back, forward, canGoBack, canGoForward } = useNavigation();
 
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
+
   const isDark =
     state.theme === 'dark' ||
     (state.theme === 'auto' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-  const breadcrumbItems = getBreadcrumbItems(state.relativePath || '');
+  const breadcrumbItems = getBreadcrumbItems(state.relativePath || '', t.topbar.welcomePage);
   const breakablePath = (state.currentFile || state.relativePath || '').replace(/[\/\\]/g, '$&' + '\u200B');
 
   return (
@@ -197,7 +201,7 @@ export function Topbar({
       <TooltipButton
         className="btn btn--icon"
         onClick={() => navigate(null)}
-        tooltip="Welcome Page"
+        tooltip={t.topbar.welcomePage}
         icon={<HomeIcon />}
       />
 
@@ -217,7 +221,7 @@ export function Topbar({
             });
             (window as any).electronAPI.postMessage({ command: 'closeWorkspace' });
           }}
-          tooltip="Close Folder (Return to Workspace Selector)"
+          tooltip={t.topbar.closeFolder}
           icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>}
         />
       )}
@@ -230,14 +234,14 @@ export function Topbar({
           className="btn btn--icon"
           onClick={back}
           disabled={!canGoBack}
-          tooltip="Go Back"
+          tooltip={t.topbar.goBack}
           icon={<ChevronLeftIcon />}
         />
         <TooltipButton
           className="btn btn--icon"
           onClick={forward}
           disabled={!canGoForward}
-          tooltip="Go Forward"
+          tooltip={t.topbar.goForward}
           icon={<ChevronRightIcon />}
         />
       </div>
@@ -248,7 +252,7 @@ export function Topbar({
       <TooltipButton
         className="btn btn--icon"
         onClick={refresh}
-        tooltip="Refresh"
+        tooltip={t.topbar.refresh}
         icon={<RefreshIcon />}
       />
 
@@ -278,7 +282,7 @@ export function Topbar({
           <SearchIcon />
           <input
             type="text"
-            placeholder={`Search docs... (${searchShortcutLabel})`}
+            placeholder={`${t.topbar.searchPlaceholder} (${searchShortcutLabel})`}
             autoComplete="off"
             onFocus={onSearchOpen}
             aria-label="Search all markdown files"
@@ -286,40 +290,40 @@ export function Topbar({
           />
         </div>
 
-        <TooltipButton className="btn" onClick={onExpandAll} tooltip="Expand All" icon={<ExpandIcon />} />
-        <TooltipButton className="btn" onClick={onCollapseAll} tooltip="Collapse" icon={<CollapseIcon />} />
+        <TooltipButton className="btn" onClick={onExpandAll} tooltip={t.topbar.expandAll} icon={<ExpandIcon />} />
+        <TooltipButton className="btn" onClick={onCollapseAll} tooltip={t.topbar.collapseAll} icon={<CollapseIcon />} />
         <TooltipButton
           className="btn"
           onClick={openInEditor}
-          tooltip="Open current file in editor"
+          tooltip={t.topbar.edit}
           disabled={!state.currentFile}
           icon={<EditIcon />}
-          label="Edit"
+          label={t.topbar.editLabel}
           onlyIcon={false}
         />
         <TooltipButton
           className="btn btn--icon"
           onClick={(event) => onCopyFile(event.currentTarget)}
-          tooltip="Copy file content"
+          tooltip={t.topbar.copy}
           disabled={!state.currentFile}
           icon={<CopyIcon />}
         />
         <TooltipButton
           className="btn btn--icon"
           onClick={toggleTheme}
-          tooltip="Toggle light/dark mode"
+          tooltip={t.topbar.theme}
           icon={isDark ? <SunIcon /> : <MoonIcon />}
         />
         <TooltipButton
           className={`btn btn--icon${hasUpdate ? ' has-update' : ''}`}
           onClick={onSettingsOpen}
-          tooltip={hasUpdate ? 'Settings - update available' : 'Settings'}
+          tooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
           icon={<SettingsIcon />}
         />
         <TooltipButton
           className="btn btn--icon"
           onClick={toggleSidebar}
-          tooltip="Toggle Sidebar"
+          tooltip={t.topbar.sidebar}
           icon={<SidebarIcon />}
         />
 
@@ -330,13 +334,13 @@ export function Topbar({
               <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
-                tooltip="Minimize"
+                tooltip={t.tooltips.minimize}
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>}
               />
               <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
-                tooltip={state.isMaximized ? "Restore" : "Maximize"}
+                tooltip={state.isMaximized ? t.tooltips.restore : t.tooltips.maximize}
                 icon={state.isMaximized ? (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                     <path d="M8 3h13v13H8z" />
@@ -349,7 +353,7 @@ export function Topbar({
               <TooltipButton
                 className="btn btn--icon window-control-btn window-control-btn--close"
                 onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
-                tooltip="Close App"
+                tooltip={t.tooltips.closeApp}
                 tooltipAlign="right"
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
               />

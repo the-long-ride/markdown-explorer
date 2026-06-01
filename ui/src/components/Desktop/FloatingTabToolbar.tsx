@@ -13,6 +13,8 @@ import {
   RefreshIcon,
   SearchIcon,
 } from '../shared/icons';
+import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
 
 interface FloatingTabToolbarProps {
   position: FloatingToolbarPosition;
@@ -47,6 +49,10 @@ export function FloatingTabToolbar({
   canGoForward,
   canEdit,
 }: FloatingTabToolbarProps) {
+  const { state } = useAppState();
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
+
   const [actionsCollapsed, setActionsCollapsed] = useState(() => {
     try {
       return localStorage.getItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY) === 'true';
@@ -61,6 +67,45 @@ export function FloatingTabToolbar({
     originX: number;
     originY: number;
   } | null>(null);
+
+  const [isDimmed, setIsDimmed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const dimTimeoutRef = useRef<number | null>(null);
+
+  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseLeave = () => setIsHovered(false);
+  const handleFocus = () => setIsFocused(true);
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+    setIsFocused(false);
+  };
+
+  useEffect(() => {
+    if (isHovered || isFocused) {
+      if (dimTimeoutRef.current !== null) {
+        clearTimeout(dimTimeoutRef.current);
+        dimTimeoutRef.current = null;
+      }
+      setIsDimmed(false);
+    } else {
+      if (dimTimeoutRef.current !== null) {
+        clearTimeout(dimTimeoutRef.current);
+      }
+      dimTimeoutRef.current = window.setTimeout(() => {
+        setIsDimmed(true);
+        dimTimeoutRef.current = null;
+      }, 3000);
+    }
+  }, [isHovered, isFocused]);
+
+  useEffect(() => {
+    return () => {
+      if (dimTimeoutRef.current !== null) {
+        clearTimeout(dimTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const measureToolbar = useCallback((): FloatingToolbarSize => {
     const rect = toolbarRef.current?.getBoundingClientRect();
@@ -125,11 +170,15 @@ export function FloatingTabToolbar({
   return (
     <div
       ref={toolbarRef}
-      className={`tab-floating-toolbar${actionsCollapsed ? ' is-actions-collapsed' : ''}`}
+      className={`tab-floating-toolbar${actionsCollapsed ? ' is-actions-collapsed' : ''}${isDimmed ? ' is-dimmed' : ''}`}
       style={{ right: position.x, bottom: position.y }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     >
       <button type="button" className="tab-floating-toolbar__move tooltip-container" aria-label="Move toolbar">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
@@ -140,25 +189,25 @@ export function FloatingTabToolbar({
           <circle cx="9" cy="18" r="1" />
           <circle cx="15" cy="18" r="1" />
         </svg>
-        <span className="tooltip-text">Move toolbar</span>
+        <span className="tooltip-text">{t.tooltips.moveToolbar}</span>
       </button>
-      <button type="button" className="tab-floating-toolbar__search" onClick={onSearchOpen} aria-label="Search current workspace">
+      <button type="button" className="tab-floating-toolbar__search" onClick={onSearchOpen} aria-label={t.actions.searchCurrent}>
         <SearchIcon size={14} />
-        <span>Search docs... ({searchShortcutLabel})</span>
+        <span>{t.topbar.searchPlaceholder} ({searchShortcutLabel})</span>
       </button>
       <div className="tab-floating-toolbar__actions" aria-hidden={actionsCollapsed}>
-        <TooltipButton className="btn btn--icon" onClick={onBack} disabled={!canGoBack} tooltip="Back" icon={<ChevronLeftIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onForward} disabled={!canGoForward} tooltip="Forward" icon={<ChevronRightIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onRefresh} tooltip="Refresh tab" icon={<RefreshIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onExpandAll} tooltip="Expand all" icon={<ExpandIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onCollapseAll} tooltip="Collapse all" icon={<CollapseIcon />} />
-        <TooltipButton className="btn" onClick={onEdit} disabled={!canEdit} tooltip="Open current file in editor" icon={<EditIcon />} label="Edit" onlyIcon={false} />
-        <TooltipButton className="btn btn--icon" onClick={(event) => onCopyFile(event.currentTarget)} disabled={!canEdit} tooltip="Copy file content" icon={<CopyIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onBack} disabled={!canGoBack} tooltip={t.topbar.goBack} icon={<ChevronLeftIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onForward} disabled={!canGoForward} tooltip={t.topbar.goForward} icon={<ChevronRightIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onRefresh} tooltip={t.topbar.refresh} icon={<RefreshIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onExpandAll} tooltip={t.topbar.expandAll} icon={<ExpandIcon />} />
+        <TooltipButton className="btn btn--icon" onClick={onCollapseAll} tooltip={t.topbar.collapseAll} icon={<CollapseIcon />} />
+        <TooltipButton className="btn" onClick={onEdit} disabled={!canEdit} tooltip={t.topbar.edit} icon={<EditIcon />} label={t.topbar.editLabel} onlyIcon={false} />
+        <TooltipButton className="btn btn--icon" onClick={(event) => onCopyFile(event.currentTarget)} disabled={!canEdit} tooltip={t.topbar.copy} icon={<CopyIcon />} />
       </div>
       <TooltipButton
         className="btn btn--icon tab-floating-toolbar__toggle"
         onClick={() => setActionsCollapsed((value) => !value)}
-        tooltip={actionsCollapsed ? 'Show toolbar actions' : 'Minimize toolbar actions'}
+        tooltip={actionsCollapsed ? t.tooltips.showToolbar : t.tooltips.minimizeToolbar}
         icon={actionsCollapsed ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       />
     </div>
