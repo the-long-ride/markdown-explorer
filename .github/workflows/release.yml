@@ -136,6 +136,23 @@ jobs:
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
+          body: |
+            Markdown Explorer release package guide.
+
+            Choose the file that matches how you want to install Markdown Explorer:
+
+            - `*.vsix`: VS Code extension package for manual install. In VS Code, run "Extensions: Install from VSIX..." and choose this file.
+            - `*.exe`: Windows portable desktop app. Download and run directly.
+            - `*.AppImage`: Linux portable desktop app. Mark it executable, then run it.
+            - `*.deb`: Linux installer for Debian, Ubuntu, and compatible distributions.
+            - `*.dmg`: macOS desktop installer. Choose `arm64` for Apple Silicon Macs and `x64` for Intel Macs.
+            - `*.zip`: macOS archive build. Choose `arm64` for Apple Silicon Macs and `x64` for Intel Macs.
+
+            Other install links:
+
+            - VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer
+            - Open VSX: https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer
+            - Project website: https://the-long-ride.github.io/markdown-explorer/
           files: |
             ./release-artifacts/*
           draft: false
