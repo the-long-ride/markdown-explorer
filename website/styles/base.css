@@ -453,6 +453,22 @@ h3 {
   font-size: 0.88rem;
 }
 
+.release-download-number {
+  display: inline-block;
+  color: var(--accent-2);
+  font-size: 1.08em;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0.08rem 0.28rem;
+  background: rgba(255, 142, 48, 0.14);
+  border: 1px solid rgba(255, 142, 48, 0.28);
+  border-radius: 0.35rem;
+}
+
+.release-download-count .release-download-number {
+  font-size: 1.18em;
+}
+
 .faq {
   padding-top: 0;
 }
