@@ -3,13 +3,13 @@ name: Release and Publish
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build and release'
+        description: "Tag to build and release"
         required: false
-        default: ''
+        default: ""
 
 permissions:
   contents: write
@@ -28,8 +28,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm ci
@@ -65,8 +65,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm ci
@@ -153,6 +153,8 @@ jobs:
             - VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer
             - Open VSX: https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer
             - Project website: https://the-long-ride.github.io/markdown-explorer/
+
+            See [Markdown Explorer Change Logs](https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md).
           files: |
             ./release-artifacts/*
           draft: false
