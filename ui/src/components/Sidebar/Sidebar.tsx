@@ -2,10 +2,13 @@ import { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { SearchIcon } from '../shared/icons';
 import { FileNode, FolderNodeView } from './TreeNode';
+import { getTranslations } from '../../contexts/translations';
 
 export function Sidebar() {
   const { state } = useAppState();
   const [filter, setFilter] = useState('');
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
 
   const treeRef = useRef<HTMLDivElement>(null);
   const scrollPosRef = useRef(0);
@@ -42,7 +45,7 @@ export function Sidebar() {
     >
       <div className="sidebar__header">
         <div className="sidebar__title">
-          Files
+          {t.sidebar.files}
           <span className="sidebar__count" id="fileCount">
             {state.fileList.length}
           </span>
@@ -51,11 +54,11 @@ export function Sidebar() {
           <SearchIcon size={12} />
           <input
             type="text"
-            placeholder="Filter files…"
+            placeholder={t.sidebar.filterPlaceholder}
             autoComplete="off"
             value={filter}
             onChange={onFilterChange}
-            aria-label="Filter file list"
+            aria-label={t.sidebar.filterAriaLabel}
           />
         </div>
       </div>

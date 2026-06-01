@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import type { TocEntry } from '../../types';
 import { ChevronUpIcon } from '../shared/icons';
+import { getTranslations } from '../../contexts/translations';
 
 interface TableOfContentsProps {
   variant?: 'panel' | 'compact';
@@ -71,6 +72,8 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
   const { state } = useAppState();
   const [compactOpen, setCompactOpen] = useState(false);
   const activeId = useActiveTocId(state.toc, state.renderVersion);
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
 
   const activeEntry = useMemo(
     () => state.toc.find((entry) => entry.id === activeId) ?? state.toc[0],
@@ -134,7 +137,7 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
           onClick={() => setCompactOpen((open) => !open)}
           title={activeEntry?.text}
         >
-          <span className="toc-compact__label">On this page</span>
+          <span className="toc-compact__label">{t.toc.onThisPage}</span>
           <ChevronUpIcon size={14} className="toc-compact__chevron" />
         </button>
         <div className="toc-compact__menu" hidden={!compactOpen}>
@@ -143,7 +146,7 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
             className="toc-item toc-item--top"
             onClick={scrollToTop}
           >
-            Return to top
+            {t.toc.returnToTop}
           </button>
           {renderItems(true)}
         </div>
@@ -155,11 +158,11 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
     <aside className="toc-panel" id="tocPanel" aria-label="Table of contents">
       <div className="toc-panel__header">
         <div className="toc-panel__title-row">
-          <div className="toc-panel__title">On This Page</div>
+          <div className="toc-panel__title">{t.toc.onThisPage}</div>
           <span className="toc-panel__count">{state.toc.length}</span>
         </div>
         <div className="toc-panel__current" title={activeEntry?.text}>
-          {activeEntry?.text ?? 'Sections'}
+          {activeEntry?.text ?? t.toc.sections}
         </div>
       </div>
       <div className="toc-panel__list" id="tocItems">
