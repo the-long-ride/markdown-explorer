@@ -1,0 +1,78 @@
+@media (max-width: 980px) {
+  .site-header,
+  .site-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero {
+    min-height: 72vh;
+  }
+
+  .hero-copy {
+    font-size: 1.1rem;
+  }
+
+  .hero-shade {
+    background:
+      linear-gradient(0deg, rgba(16, 20, 18, 0.98), rgba(16, 20, 18, 0.5)),
+      linear-gradient(90deg, rgba(16, 20, 18, 0.96), rgba(16, 20, 18, 0.18));
+  }
+
+  .install-strip,
+  .intro,
+  .feature-grid,
+  .feature-card.wide,
+  .split,
+  .gallery-grid,
+  .download-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .install-strip a {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .install-strip a:last-child {
+    border-bottom: 0;
+  }
+
+  .feature-card.wide img {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .gallery-item.large {
+    grid-row: auto;
+  }
+
+  .gallery-item.large img,
+  .gallery-item img {
+    height: auto;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .nav-links a {
+    padding-inline: 0.45rem;
+  }
+
+  .hero-content {
+    margin-inline: 1rem;
+  }
+
+  .button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
