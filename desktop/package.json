@@ -1,12 +1,13 @@
 {
   "name": "markdown-explorer-desktop",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Transforms your markdown documents into a premium, interactive web-app experience.",
   "homepage": "https://github.com/the-long-ride/markdown-explorer",
   "author": {
     "name": "The Long Ride",
     "email": "info@thelongride.com"
   },
+  "publisher": "the-long-ride",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -26,9 +27,7 @@
       "output": "dist"
     },
     "files": [
-      "main.js",
-      "preload.js",
-      "scanner.js",
+      "*.js",
       "package.json",
       {
         "from": "../ui/dist",
@@ -45,7 +44,10 @@
     ],
     "win": {
       "target": "portable",
-      "icon": "../ui/assets/logos/logo-512.png"
+      "icon": "../ui/assets/logos/logo-512.png",
+      "signtoolOptions": {
+        "publisherName": "the-long-ride"
+      }
     },
     "linux": {
       "target": [
