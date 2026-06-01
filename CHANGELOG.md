@@ -4,6 +4,28 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.2] — 2026-06-01
+
+### Added Features & Enhancements
+- **In-App Update Checks**: Desktop and VS Code variants now check the latest GitHub Release on startup and compare it against the running app or extension version.
+- **Update Notification UI**: Settings buttons now show an update indicator when a newer release is available, and Settings includes a `Download new version` action.
+- **Platform-Aware Update Links**: Desktop downloads now resolve to the matching release asset for Windows, macOS, or Linux, while the VS Code variant opens the Marketplace listing.
+- **Release Changelog Links**: Update prompts and website release notes now link directly to the GitHub changelog.
+- **Release Download Counts**: The website reads GitHub Release asset download counts from the GitHub API and displays them beside desktop download buttons.
+
+### Changed
+- **Mermaid Diagram Fit**: Rendered Mermaid SVGs now scale within the available max-height instead of showing an internal overflow scrollbar.
+- **Desktop Main Process Structure**: Split desktop window, tray, IPC, recents, search index, markdown rendering, and YouTube header logic into focused helper modules.
+- **UI Module Structure**: Split large desktop, workspace, state, utility, token, and global style surfaces into smaller focused files.
+
+### Fixed Issues
+- **Tall Mermaid Diagrams**: Tall flowcharts and diagrams now remain contained in the document panel without adding a nested diagram scrollbar.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, lockfile, and website metadata to `1.4.2`.
+
+---
+
 ## [1.4.1] — 2026-06-01
 
 ### Added Features & Enhancements
