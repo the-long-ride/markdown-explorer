@@ -106,7 +106,7 @@ The same renderer is available in the desktop app, with workspace selection, rec
 | Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` |
 | Open settings | `Ctrl+I` | `Ctrl+I` / `Cmd+I` |
-| Toggle theme | `Ctrl+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
+| Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
 | Refresh workspace | `F5` | Use VS Code command or reload webview |
 | Collapse all heading sections | `Ctrl+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` |
 | Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
