@@ -23,6 +23,7 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   searchCurrent: 'Ctrl+F',
   searchAllTabs: 'Ctrl+Shift+F',
   findCurrentFile: 'F',
+  toggleTheme: 'Ctrl+L',
 };
 
 export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
