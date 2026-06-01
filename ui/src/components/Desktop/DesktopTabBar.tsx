@@ -13,6 +13,8 @@ import {
 import logoUrl from '../../assets/logos/logo-128.png';
 import { getTabLabel } from '../../desktop/desktopTabs';
 import type { DesktopTab } from '../../desktop/types';
+import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
 
 interface DesktopTabBarProps {
   tabs: DesktopTab[];
@@ -47,6 +49,10 @@ export function DesktopTabBar({
   isMaximized,
   hasUpdate = false,
 }: DesktopTabBarProps) {
+  const { state } = useAppState();
+  const currentLang = state.settings.language || 'en';
+  const t = getTranslations(currentLang);
+
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [draftAlias, setDraftAlias] = useState('');
 
@@ -131,6 +137,7 @@ export function DesktopTabBar({
                 role="button"
                 tabIndex={-1}
                 aria-label="Close tab"
+                title={t.tooltips.closeTab}
                 onClick={(event) => {
                   event.stopPropagation();
                   onCloseTab(tab.id);
@@ -142,31 +149,31 @@ export function DesktopTabBar({
           );
         })}
       </div>
-      <TooltipButton className="btn btn--icon desktop-tabbar__new" onClick={onNewTab} tooltip="New workspace tab" icon={<PlusIcon />} />
+      <TooltipButton className="btn btn--icon desktop-tabbar__new" onClick={onNewTab} tooltip={t.tooltips.newTab} icon={<PlusIcon />} />
       <div className="desktop-tabbar__spacer" />
-      <button type="button" className="desktop-tabbar__search" onClick={onSearchOpen} aria-label="Search all tabs">
+      <button type="button" className="desktop-tabbar__search" onClick={onSearchOpen} aria-label={t.actions.searchAllTabs}>
         <SearchIcon size={13} />
-        <span>Search all tabs... ({searchShortcutLabel})</span>
+        <span>{t.actions.searchAllTabs}... ({searchShortcutLabel})</span>
       </button>
-      <TooltipButton className="btn btn--icon" onClick={onThemeToggle} tooltip="Toggle light/dark mode" icon={isDark ? <SunIcon /> : <MoonIcon />} />
+      <TooltipButton className="btn btn--icon" onClick={onThemeToggle} tooltip={t.topbar.theme} icon={isDark ? <SunIcon /> : <MoonIcon />} />
       <TooltipButton
         className={`btn btn--icon${hasUpdate ? ' has-update' : ''}`}
         onClick={onSettingsOpen}
-        tooltip={hasUpdate ? 'Settings - update available' : 'Settings'}
+        tooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
         icon={<SettingsIcon />}
       />
-      <TooltipButton className="btn btn--icon" onClick={onSidebarToggle} tooltip="Toggle Sidebar" icon={<SidebarIcon />} />
+      <TooltipButton className="btn btn--icon" onClick={onSidebarToggle} tooltip={t.topbar.sidebar} icon={<SidebarIcon />} />
       <div className="desktop-tabbar__window-controls">
         <TooltipButton
           className="btn btn--icon window-control-btn"
           onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
-          tooltip="Minimize"
+          tooltip={t.tooltips.minimize}
           icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>}
         />
         <TooltipButton
           className="btn btn--icon window-control-btn"
           onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
-          tooltip={isMaximized ? 'Restore' : 'Maximize'}
+          tooltip={isMaximized ? t.tooltips.restore : t.tooltips.maximize}
           icon={isMaximized ? (
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
               <path d="M8 3h13v13H8z" />
@@ -179,7 +186,7 @@ export function DesktopTabBar({
         <TooltipButton
           className="btn btn--icon window-control-btn window-control-btn--close"
           onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
-          tooltip="Close App"
+          tooltip={t.tooltips.closeApp}
           tooltipAlign="right"
           icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>}
         />
