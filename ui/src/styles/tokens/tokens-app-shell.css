@@ -1,0 +1,18 @@
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bd-s) transparent;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}

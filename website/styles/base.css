@@ -440,6 +440,12 @@ h3 {
   font-size: 0.95rem;
 }
 
+.release-note a {
+  color: var(--accent-2);
+  font-weight: 800;
+  text-underline-offset: 0.18em;
+}
+
 .release-download-count {
   display: block;
   min-height: 1.35rem;

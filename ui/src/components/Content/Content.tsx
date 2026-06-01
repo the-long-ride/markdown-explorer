@@ -204,6 +204,11 @@ export function Content({
               const runId = ++mermaidRunIdRef.current;
               mermaid.run({ nodes: runNodes }).then(() => {
                 if (runId !== mermaidRunIdRef.current) return;
+                runNodes.forEach((node) => {
+                  node.querySelectorAll<SVGSVGElement>("svg").forEach((svg) => {
+                    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+                  });
+                });
               }).catch((err: any) => {
                 console.error("Mermaid render error:", err);
               });

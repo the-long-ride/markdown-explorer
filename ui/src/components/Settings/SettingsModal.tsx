@@ -4,17 +4,21 @@
 
 import { useState } from "react";
 import {
-  useAppState,
   DEFAULT_KEYBINDINGS,
   DESKTOP_DEFAULT_KEYBINDINGS,
   THEME_MODE_OPTIONS,
-} from "../../contexts/AppStateContext";
+} from "../../contexts/appStateConstants";
+import { useAppState } from "../../contexts/AppStateContext";
+import type { UpdateCheckState } from "../../hooks/useUpdateCheck";
 import { TooltipButton } from "../shared/TooltipButton";
 import { ThemeStylePicker } from "./ThemeStylePicker";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  updateCheck: UpdateCheckState;
+  onDownloadUpdate: () => void;
+  onOpenChangelog: () => void;
 }
 
 const ACTIONS_LIST = [
@@ -39,13 +43,20 @@ const ACTIONS_LIST = [
   { id: "zoomOut", label: "Zoom out", scope: "desktop" },
 ];
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal({
+  isOpen,
+  onClose,
+  updateCheck,
+  onDownloadUpdate,
+  onOpenChangelog,
+}: SettingsModalProps) {
   const { state, setTheme, setThemeStyle, updateSettings } = useAppState();
   const [recordingAction, setRecordingAction] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const isElectron = typeof (window as any).electronAPI !== "undefined";
+  const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
   const visibleActions = ACTIONS_LIST.filter(
     (act) => act.scope === "both" || isElectron,
   );
@@ -403,8 +414,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               className="settings-shortcuts-footer"
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                flexDirection: "column",
+                justifyContent: "flex-start",
+                alignItems: "flex-start",
                 marginTop: "16px",
               }}
             >
@@ -421,6 +433,31 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 Reset to Default Shortcuts
               </button>
+              {updateAvailable && (
+                <div className="settings-update-card" role="status">
+                  <div className="settings-update-card__title">
+                    New version {updateCheck.latestVersion} available
+                  </div>
+                  <div className="settings-update-card__desc">
+                    Current version {updateCheck.currentVersion}. Release notes:{" "}
+                    <button
+                      type="button"
+                      className="settings-update-card__link"
+                      onClick={onOpenChangelog}
+                    >
+                      see changelog in GitHub
+                    </button>
+                    .
+                  </div>
+                  <button
+                    type="button"
+                    className="settings-download-update-btn"
+                    onClick={onDownloadUpdate}
+                  >
+                    Download new version
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

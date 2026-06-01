@@ -2,10 +2,8 @@
 // components/Modal/ThemeOnboardingModal.tsx — First-run appearance setup
 // =============================================================================
 
-import {
-  THEME_MODE_OPTIONS,
-  useAppState,
-} from "../../contexts/AppStateContext";
+import { useAppState } from "../../contexts/AppStateContext";
+import { THEME_MODE_OPTIONS } from "../../contexts/appStateConstants";
 import { ThemeStylePicker } from "../Settings/ThemeStylePicker";
 
 interface ThemeOnboardingModalProps {

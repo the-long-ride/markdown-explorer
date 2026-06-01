@@ -1,0 +1,200 @@
+/* ============================================================
+   Markdown Explorer — Design Tokens & Reset
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   Custom Fonts — Only used in Electron (body.is-electron).
+   @font-face declarations are defined here but fonts are only
+   downloaded when the font-family is actually applied.
+   VS Code extension excludes .ttf files via .vscodeignore,
+   and never adds body.is-electron, so fonts are never loaded there.
+   ============================================================ */
+:root {
+  /* VS Code and Electron both get system UI fonts by default.
+     Electron overrides these via body.is-electron below. */
+  --font-ui: var(--vscode-font-family, -apple-system, "Segoe UI", system-ui, sans-serif);
+  --font-mono: var(--vscode-editor-font-family, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace);
+  --sidebar-w: 240px;
+  --toc-w: 224px;
+  --topbar-h: 44px;
+  --topbar-gap: 8px;
+  --topbar-pad-x: 12px;
+  --control-h: 26px;
+  --control-pad-x: 8px;
+  --control-gap: 4px;
+  --content-pad-y: 20px;
+  --content-pad-x: 32px;
+  --section-gap: 8px;
+  --section-header-gap: 8px;
+  --section-header-pad-y: 8px;
+  --section-header-pad-x: 12px;
+  --section-body-pad-y: 12px;
+  --section-body-pad-x: 16px;
+  --table-cell-pad-y: 6px;
+  --table-cell-pad-x: 12px;
+  --stroke-w: 1px;
+  --focus-ring: 0 0 0 2px var(--accent-dim);
+  --surface-blur: none;
+  --section-shadow: none;
+  --r: 5px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --accent: #8b7cf8;
+  --accent-dim: rgba(139, 124, 248, 0.14);
+  --accent-text: #a99ef9;
+  --inline-code-bg: color-mix(in srgb, var(--accent) 10%, var(--bg-code));
+  --inline-code-border: color-mix(in srgb, var(--accent) 28%, var(--bd-s));
+  --inline-code-fg: color-mix(in srgb, var(--accent-text) 88%, var(--tx));
+  --success: #34d399;
+  --danger: #f87171;
+  --chart-1: #8b7cf8;
+  --chart-2: #34d399;
+  --chart-3: #f87171;
+  --chart-4: #60a5fa;
+  --chart-5: #fbbf24;
+  --chart-6: #ec4899;
+  --chart-7: #a855f7;
+  --chart-8: #14b8a6;
+}
+
+/* Electron-only: use bundled custom fonts */
+body.is-electron {
+  --font-ui: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono:
+    "Cascadia Code", "CascadiaCode", "Fira Code", "JetBrains Mono", Consolas, monospace;
+}
+
+/* Dark theme */
+[data-theme="dark"],
+[data-theme="auto"] {
+  --bg: #1a1a1e;
+  --bg-s: #222228;
+  --bg-e: #2a2a32;
+  --bg-h: #31313c;
+  --bg-a: #383845;
+  --bg-code: #17171c;
+  --bd: rgba(255, 255, 255, 0.1);
+  --bd-s: rgba(255, 255, 255, 0.18);
+  --bd-x: rgba(255, 255, 255, 0.26);
+  --tx: #e2e2e8;
+  --tx2: #9191a4;
+  --txm: #56566a;
+  --tx3: #6f6f83;
+  --txc: #93c5fd;
+  --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --sh-md: 0 4px 20px rgba(0, 0, 0, 0.6);
+  --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.7);
+  --modal-bg: rgba(10, 10, 12, 0.9);
+  --modal-fg: #ffffff;
+
+  /* Dark theme syntax highlighting variables */
+  --hl-kw: #f97583;
+  --hl-cm: #6a737d;
+  --hl-str: #9ecbff;
+  --hl-num: #ffab70;
+  --hl-var: #9cdcfe;
+  --hl-tag: #79b8ff;
+  --hl-attr: #ffab70;
+  --hl-prop: #79b8ff;
+  --hl-sel: #b392f0;
+  --hl-func: #ffcc66;
+  --hl-pkg: #4ec9b0;
+}
+/* Light theme */
+[data-theme="light"] {
+  --bg: #f7f6f3;
+  --bg-s: #faf9f6;
+  --bg-e: #efede8;
+  --bg-h: #e5e3dd;
+  --bg-a: #d8d5cd;
+  --bg-code: #f0ede8;
+  --bd: rgba(0, 0, 0, 0.11);
+  --bd-s: rgba(0, 0, 0, 0.18);
+  --bd-x: rgba(0, 0, 0, 0.28);
+  --tx: #1c1c20;
+  --tx2: #484854;
+  --txm: #666672;
+  --tx3: #7a7a86;
+  --txc: #3730a3;
+  --accent-text: #6d5ef0;
+  --chart-1: #6d5ef0;
+  --chart-2: #10b981;
+  --chart-3: #ef4444;
+  --chart-4: #3b82f6;
+  --chart-5: #f59e0b;
+  --chart-6: #db2777;
+  --chart-7: #8b5cf6;
+  --chart-8: #0d9488;
+  --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --sh-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.14);
+  --modal-bg: rgba(247, 246, 243, 0.9);
+  --modal-fg: #1c1c20;
+
+  /* Light theme syntax highlighting variables */
+  --hl-kw: #d73a49;
+  --hl-cm: #5c6370;
+  --hl-str: #032f62;
+  --hl-num: #005cc5;
+  --hl-var: #3572b0;
+  --hl-tag: #22863a;
+  --hl-attr: #6f42c1;
+  --hl-prop: #e36209;
+  --hl-sel: #6f42c1;
+  --hl-func: #b58900;
+  --hl-pkg: #22863a;
+}
+
+/* Auto theme system prefers light overrides */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] {
+    --bg: #f7f6f3;
+    --bg-s: #faf9f6;
+    --bg-e: #efede8;
+    --bg-h: #e5e3dd;
+    --bg-a: #d8d5cd;
+    --bg-code: #f0ede8;
+    --bd: rgba(0, 0, 0, 0.11);
+    --bd-s: rgba(0, 0, 0, 0.18);
+    --bd-x: rgba(0, 0, 0, 0.28);
+    --tx: #1c1c20;
+    --tx2: #484854;
+    --txm: #666672;
+    --tx3: #7a7a86;
+    --txc: #3730a3;
+    --accent-text: #6d5ef0;
+    --chart-1: #6d5ef0;
+    --chart-2: #10b981;
+    --chart-3: #ef4444;
+    --chart-4: #3b82f6;
+    --chart-5: #f59e0b;
+    --chart-6: #db2777;
+    --chart-7: #8b5cf6;
+    --chart-8: #0d9488;
+    --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+    --sh-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.14);
+    --modal-bg: rgba(247, 246, 243, 0.9);
+    --modal-fg: #1c1c20;
+
+    --hl-kw: #d73a49;
+    --hl-cm: #5c6370;
+    --hl-str: #032f62;
+    --hl-num: #005cc5;
+    --hl-var: #3572b0;
+    --hl-tag: #22863a;
+    --hl-attr: #6f42c1;
+    --hl-prop: #e36209;
+    --hl-sel: #6f42c1;
+    --hl-func: #b58900;
+    --hl-pkg: #22863a;
+  }
+}
+

@@ -1,0 +1,292 @@
+[data-theme-style^="pet-"] .content {
+  background-image:
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 28%),
+    radial-gradient(circle at 88% 82%, color-mix(in srgb, var(--txc) 12%, transparent), transparent 30%);
+}
+
+[data-theme-style^="pet-"] .content::before,
+[data-theme-style^="pet-"] .content::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme-style^="pet-"] .content::before {
+  inset: 0;
+  background-image:
+    var(--pet-bg-wink),
+    var(--pet-bg-blep);
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    clamp(18px, 5vw, 76px) clamp(64px, 12vh, 150px),
+    calc(100% - clamp(26px, 6vw, 96px)) clamp(58px, 10vh, 128px);
+  background-size:
+    clamp(112px, 14.3vw, 224px) clamp(112px, 14.3vw, 224px),
+    clamp(96px, 11.7vw, 190px) clamp(96px, 11.7vw, 190px);
+  opacity: var(--pet-bg-side-opacity);
+  filter: saturate(1.08);
+  animation: petBackgroundWander 21s ease-in-out infinite alternate;
+}
+
+[data-theme-style^="pet-"] .content::after {
+  right: clamp(18px, 3.9vw, 57px);
+  bottom: clamp(18px, 3.9vw, 55px);
+  width: clamp(195px, 24.7vw, 338px);
+  height: clamp(195px, 24.7vw, 338px);
+  background-image: var(--pet-bg-happy);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: var(--pet-bg-main-opacity);
+  filter: saturate(1.12);
+  transform-origin: center bottom;
+  animation: petMascotWander 16s ease-in-out infinite alternate;
+}
+
+[data-theme-style="pet-k-ink"] .content::before {
+  background-position:
+    clamp(14px, 4vw, 62px) clamp(66px, 12vh, 150px),
+    calc(100% - clamp(20px, 5vw, 78px)) clamp(58px, 10vh, 126px);
+  background-size:
+    clamp(195px, 24.7vw, 429px) auto,
+    clamp(153px, 19.5vw, 322px) auto;
+  opacity: var(--pet-bg-side-opacity);
+  filter: saturate(1.05) contrast(1.04);
+  animation-name: petKInkBackgroundWander;
+}
+
+[data-theme-style="pet-k-ink"] .content::after {
+  right: clamp(16px, 3.4vw, 49px);
+  bottom: clamp(13px, 3.6vw, 49px);
+  width: clamp(299px, 40.3vw, 572px);
+  height: clamp(202px, 27.3vw, 390px);
+  opacity: var(--pet-bg-main-opacity);
+  filter: saturate(1.05) contrast(1.04);
+}
+
+[data-theme-style^="pet-"] .content__scroll,
+[data-theme-style^="pet-"] .scroll-to-top-btn {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme-style^="pet-"] .topbar,
+[data-theme-style^="pet-"] .sidebar,
+[data-theme-style^="pet-"] .toc-panel {
+  border: var(--stroke-w) solid var(--bd-s);
+  box-shadow: var(--sh-sm);
+}
+
+[data-theme-style^="pet-"] .topbar {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, var(--bg-s)), var(--bg-s) 40%),
+    var(--bg-s);
+}
+
+[data-theme-style^="pet-"] .sidebar,
+[data-theme-style^="pet-"] .toc-panel,
+[data-theme-style^="pet-"] .toc-compact__menu {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--bg-s)), var(--bg-s) 34%),
+    var(--bg-s);
+}
+
+[data-theme-style^="pet-"] .toc-compact-bar {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, var(--bg-s)), var(--bg-s) 50%),
+    var(--bg-s);
+  border-bottom-color: var(--bd-s);
+  box-shadow: var(--sh-sm);
+}
+
+[data-theme-style^="pet-"] .toc-panel__header,
+[data-theme-style^="pet-"] .toc-compact__toggle,
+[data-theme-style^="pet-"] .search-bar,
+[data-theme-style^="pet-"] .sidebar__search,
+[data-theme-style^="pet-"] .btn {
+  border-color: var(--bd-s);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--bd-x) 42%, transparent);
+}
+
+[data-theme-style^="pet-"] .toc-compact__toggle {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, var(--bg-e)), var(--bg-e)),
+    var(--bg-e);
+}
+
+[data-theme-style^="pet-"] .toc-compact__toggle::before {
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  background: var(--pet-paw) center / contain no-repeat;
+  box-shadow: none;
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--accent) 32%, transparent));
+}
+
+[data-theme-style^="pet-"] .mdn-section,
+[data-theme-style^="pet-"] .mdn-codeblock,
+[data-theme-style^="pet-"] .mdn-html-preview-wrap,
+[data-theme-style^="pet-"] .mdn-table-scroll,
+[data-theme-style^="pet-"] .mdn-table-chart-container,
+[data-theme-style^="pet-"] .mdn-frontmatter,
+[data-theme-style^="pet-"] .mdn-callout,
+[data-theme-style^="pet-"] .mdn-blockquote {
+  background: color-mix(in srgb, var(--bg-s) 94%, var(--accent) 6%);
+  box-shadow: var(--section-shadow);
+}
+
+[data-theme-style^="pet-"] .mdn-section-header,
+[data-theme-style^="pet-"] .mdn-codeblock-header,
+[data-theme-style^="pet-"] .mdn-th {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, var(--bg-e)), var(--bg-e));
+}
+
+[data-theme-style^="pet-"] .mdn-section--h1 > .mdn-section-header {
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+[data-theme-style^="pet-"] .tree-file.is-active,
+[data-theme-style^="pet-"] .toc-item.is-active {
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+[data-theme-style^="pet-"] .tree-file.is-active::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  background: var(--pet-paw) center / contain no-repeat;
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--accent) 32%, transparent));
+  transform-origin: center bottom;
+  animation: petPawMarkerBounce 3.6s ease-in-out infinite;
+}
+
+[data-theme-style^="pet-"] .toc-item.is-active .toc-item__marker {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 0;
+  background: var(--pet-paw) center / contain no-repeat;
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--accent) 32%, transparent));
+}
+
+[data-theme-style^="pet-"] .tree-file:hover,
+[data-theme-style^="pet-"] .tree-folder__header:hover,
+[data-theme-style^="pet-"] .toc-item:hover,
+[data-theme-style^="pet-"] .mdn-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-h));
+}
+
+[data-theme-style^="pet-"] .topbar__logo-icon {
+  position: relative;
+}
+
+[data-theme-style^="pet-"] .topbar__logo-icon::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  width: 9px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.52;
+  box-shadow:
+    -6px -4px 0 -2px var(--accent),
+    0 -7px 0 -2px var(--accent),
+    6px -4px 0 -2px var(--accent);
+  transform-origin: center;
+  animation: petPawPop 3.8s ease-in-out infinite;
+}
+
+@keyframes petBackgroundWander {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-0.6deg);
+  }
+  18% {
+    transform: translate3d(12px, -9px, 0) rotate(1deg);
+  }
+  42% {
+    transform: translate3d(-9px, 10px, 0) rotate(-1.1deg);
+  }
+  67% {
+    transform: translate3d(16px, 7px, 0) rotate(0.4deg);
+  }
+  84% {
+    transform: translate3d(-5px, -12px, 0) rotate(-0.8deg);
+  }
+  100% {
+    transform: translate3d(8px, 3px, 0) rotate(0.9deg);
+  }
+}
+
+@keyframes petKInkBackgroundWander {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-0.4deg);
+  }
+  21% {
+    transform: translate3d(9px, -7px, 0) rotate(0.7deg);
+  }
+  48% {
+    transform: translate3d(-7px, 8px, 0) rotate(-0.8deg);
+  }
+  73% {
+    transform: translate3d(11px, 5px, 0) rotate(0.3deg);
+  }
+  100% {
+    transform: translate3d(-4px, -8px, 0) rotate(-0.5deg);
+  }
+}
+
+@keyframes petMascotWander {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-1deg) scale(1);
+  }
+  21% {
+    transform: translate3d(-14px, -10px, 0) rotate(1.4deg) scale(1.01);
+  }
+  46% {
+    transform: translate3d(10px, -18px, 0) rotate(-0.8deg) scale(0.995);
+  }
+  71% {
+    transform: translate3d(-8px, 8px, 0) rotate(1.1deg) scale(1.008);
+  }
+  100% {
+    transform: translate3d(12px, -4px, 0) rotate(-0.3deg) scale(1);
+  }
+}
+
+@keyframes petPawPop {
+  0%,
+  72%,
+  100% {
+    opacity: 0;
+    transform: translateY(3px) scale(0.7);
+  }
+  82% {
+    opacity: 0.52;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes petPawMarkerBounce {
+  0%,
+  72%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  82% {
+    transform: translateY(-2px) rotate(5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme-style^="pet-"] .content::before,
+  [data-theme-style^="pet-"] .content::after,
+  [data-theme-style^="pet-"] .topbar__logo-icon::after,
+  [data-theme-style^="pet-"] .tree-file.is-active::before {
+    animation: none;
+  }
+}

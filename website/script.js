@@ -1,6 +1,7 @@
 (() => {
   const releaseUrl = "https://github.com/the-long-ride/markdown-explorer/releases/latest";
   const apiUrl = "https://api.github.com/repos/the-long-ride/markdown-explorer/releases/latest";
+  const changelogUrl = "https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md";
   const note = document.querySelector("#release-note");
   const buttons = [...document.querySelectorAll(".release-download")];
   const baseButtonLabels = new Map(buttons.map((button) => [button, button.textContent.trim()]));
@@ -49,6 +50,17 @@
 
   const formatDownloads = (count) => `${numberFormatter.format(count)} ${count === 1 ? "download" : "downloads"}`;
 
+  const setReleaseNote = (message) => {
+    if (!note) return;
+    note.textContent = "";
+    note.append(document.createTextNode(`${message} `));
+    const link = document.createElement("a");
+    link.href = changelogUrl;
+    link.rel = "noopener";
+    link.textContent = "See changelog on GitHub.";
+    note.append(link);
+  };
+
   const setFallback = (message) => {
     buttons.forEach((button) => {
       const baseLabel = baseButtonLabels.get(button) || button.textContent.trim();
@@ -58,7 +70,7 @@
       const countLabel = downloadCountLabels.get(button);
       if (countLabel) countLabel.textContent = "";
     });
-    if (note) note.textContent = message;
+    setReleaseNote(message);
   };
 
   fetch(apiUrl, { headers: { Accept: "application/vnd.github+json" } })
@@ -93,9 +105,9 @@
       });
 
       if (note) {
-        note.textContent = releaseVersion
+        setReleaseNote(releaseVersion
           ? `Desktop downloads resolved from GitHub Release ${releaseVersion}. ${formatDownloads(selectedDesktopDownloads)} across matched desktop assets.`
-          : "Desktop downloads resolved from the GitHub Releases API.";
+          : "Desktop downloads resolved from the GitHub Releases API.");
       }
     })
     .catch(() => {

@@ -8,7 +8,7 @@ import {
   PET_THEME_STYLE_OPTIONS,
   THEME_STYLE_OPTIONS,
   isPetThemeStyle,
-} from "../../contexts/AppStateContext";
+} from "../../contexts/appStateConstants";
 import type { PetThemeStyle, ThemeStyle } from "../../types";
 import whiteShibaPet from "../../assets/themes/pets/backgrounds/white-shiba-happy.png";
 import shibaPet from "../../assets/themes/pets/backgrounds/shiba-happy.png";

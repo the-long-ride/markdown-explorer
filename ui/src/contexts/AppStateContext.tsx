@@ -12,6 +12,14 @@ import {
 } from 'react';
 import { usePlatform } from './PlatformContext';
 import { libsReady } from '../main';
+import {
+  DEFAULT_KEYBINDINGS,
+  getDefaultKeybindings,
+  normalizeDesktopViewMode,
+  normalizeKeybindings,
+  normalizeThemeMode,
+  normalizeThemeStyle,
+} from './appStateConstants';
 import type {
   MdFile,
   FolderNode,
@@ -19,17 +27,29 @@ import type {
   Frontmatter,
   ThemeMode,
   ThemeStyle,
-  DesktopViewMode,
-  PetThemeStyle,
   AppSettings,
   PersistedState,
   RenderContentMessage,
   RecentWorkspace,
+  AppRuntime,
+  HostPlatform,
 } from '../types';
+
+export {
+  ALL_THEME_STYLE_OPTIONS,
+  DEFAULT_KEYBINDINGS,
+  DEFAULT_PET_THEME_STYLE,
+  DESKTOP_DEFAULT_KEYBINDINGS,
+  PET_THEME_STYLE_OPTIONS,
+  THEME_MODE_OPTIONS,
+  THEME_STYLE_OPTIONS,
+  getDefaultKeybindings,
+  isPetThemeStyle,
+} from './appStateConstants';
 
 // ── State shape ─────────────────────────────────────────────────────────────
 
-interface AppState {
+export interface AppState {
   /** All scanned files */
   fileList: MdFile[];
   /** Sidebar tree structure */
@@ -72,142 +92,14 @@ interface AppState {
   recentWorkspaces: RecentWorkspace[];
   /** Is window maximized (Electron only) */
   isMaximized: boolean;
-}
-
-export const DEFAULT_KEYBINDINGS: Record<string, string> = {
-  searchCurrent: 'Ctrl+K',
-  searchAllTabs: 'Ctrl+Shift+K',
-  findCurrentFile: 'K',
-  back: 'Ctrl+ArrowLeft',
-  forward: 'Ctrl+ArrowRight',
-  welcome: 'Ctrl+h',
-  settings: 'Ctrl+i',
-  toggleTheme: 'Ctrl+Shift+l',
-  refresh: 'F5',
-  collapseAll: 'Ctrl+Shift+x',
-  expandAll: 'Ctrl+Shift+e',
-  workspaceSelection: 'Ctrl+Shift+h',
-  toggleSidebar: 'Ctrl+Shift+p',
-  zoomIn: 'Ctrl+=',
-  zoomOut: 'Ctrl+-',
-};
-
-export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
-  ...DEFAULT_KEYBINDINGS,
-  searchCurrent: 'Ctrl+F',
-  searchAllTabs: 'Ctrl+Shift+F',
-  findCurrentFile: 'F',
-};
-
-export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
-  return isDesktop ? DESKTOP_DEFAULT_KEYBINDINGS : DEFAULT_KEYBINDINGS;
-}
-
-function normalizeKeybindings(
-  saved: Record<string, string> | undefined,
-  isDesktop: boolean,
-): Record<string, string> {
-  return {
-    ...getDefaultKeybindings(isDesktop),
-    ...(saved ?? {}),
-  };
-}
-
-export const THEME_MODE_OPTIONS: readonly { id: ThemeMode; label: string }[] = [
-  { id: 'auto', label: 'Auto' },
-  { id: 'light', label: 'Light' },
-  { id: 'dark', label: 'Dark' },
-];
-
-export const THEME_STYLE_OPTIONS: readonly {
-  id: Exclude<ThemeStyle, PetThemeStyle>;
-  label: string;
-  description: string;
-}[] = [
-  {
-    id: 'default',
-    label: 'Default',
-    description: 'Compact reader surfaces with the original Markdown Explorer balance.',
-  },
-  {
-    id: 'glass',
-    label: 'Evolved Glass',
-    description: 'Layered translucent panels, softer strokes, and airy document rhythm.',
-  },
-  {
-    id: 'bento',
-    label: 'Bento Grids',
-    description: 'Modular blocks, stronger structure, and denser scan-friendly spacing.',
-  },
-];
-
-export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-shiba';
-
-export const PET_THEME_STYLE_OPTIONS: readonly {
-  id: PetThemeStyle;
-  label: string;
-  description: string;
-}[] = [
-  {
-    id: 'pet-white-shiba',
-    label: 'White Shiba',
-    description: 'Snowy fur, warm ears, and a calm little desk buddy.',
-  },
-  {
-    id: 'pet-shiba',
-    label: 'Normal Shiba',
-    description: 'Toasted orange, curled-tail energy with cheerful paw trails.',
-  },
-  {
-    id: 'pet-shiba-memes',
-    label: 'Black Shiba',
-    description: 'A dark Shiba theme with inky fur, bright eyes, and cheerful desk-buddy energy.',
-  },
-  {
-    id: 'pet-k-ink',
-    label: "K-Ink (app author's dog)",
-    description: 'A personal K-Ink theme with expressive ears, warm amber eyes, and anime sticker energy.',
-  },
-  {
-    id: 'pet-cat',
-    label: 'Cat',
-    description: 'Soft midnight whiskers, fish-bone marks, and nimble motion.',
-  },
-  {
-    id: 'pet-hamster',
-    label: 'Hamster',
-    description: 'Seed colors, round cheeks, and a pocket-sized reading rhythm.',
-  },
-  {
-    id: 'pet-corgi',
-    label: 'Corgi',
-    description: 'Golden loaf shapes, sky notes, and a wagging workspace mood.',
-  },
-];
-
-export const ALL_THEME_STYLE_OPTIONS = [
-  ...THEME_STYLE_OPTIONS,
-  ...PET_THEME_STYLE_OPTIONS,
-] as const;
-
-export function isPetThemeStyle(value: ThemeStyle): value is PetThemeStyle {
-  return PET_THEME_STYLE_OPTIONS.some((option) => option.id === value);
-}
-
-function normalizeThemeMode(value: unknown): ThemeMode {
-  return THEME_MODE_OPTIONS.some((option) => option.id === value)
-    ? (value as ThemeMode)
-    : 'auto';
-}
-
-function normalizeThemeStyle(value: unknown): ThemeStyle {
-  return ALL_THEME_STYLE_OPTIONS.some((option) => option.id === value)
-    ? (value as ThemeStyle)
-    : 'default';
-}
-
-function normalizeDesktopViewMode(value: unknown): DesktopViewMode {
-  return value === 'tabs' ? 'tabs' : 'focus';
+  /** Host app version reported by VS Code or Electron */
+  appVersion: string;
+  /** Host runtime variant */
+  appRuntime: AppRuntime;
+  /** Desktop OS/platform when available */
+  hostPlatform: HostPlatform;
+  /** Desktop CPU architecture when available */
+  hostArch: string;
 }
 
 const initialState: AppState = {
@@ -237,6 +129,10 @@ const initialState: AppState = {
   renderVersion: 0,
   recentWorkspaces: [],
   isMaximized: false,
+  appVersion: '',
+  appRuntime: 'vscode',
+  hostPlatform: 'unknown',
+  hostArch: '',
 };
 
 function createInitialState(saved: PersistedState | undefined, isDesktop: boolean): AppState {
@@ -244,6 +140,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
   if (!saved) {
     return {
       ...initialState,
+      appRuntime: isDesktop ? 'desktop' : 'vscode',
       settings: {
         ...initialState.settings,
         keybindings: defaultKeybindings,
@@ -252,6 +149,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
   }
   return {
     ...initialState,
+    appRuntime: isDesktop ? 'desktop' : 'vscode',
     theme: saved.theme ? normalizeThemeMode(saved.theme) : initialState.theme,
     hasThemePreference: !!saved.theme,
     themeStyle: saved.themeStyle ? normalizeThemeStyle(saved.themeStyle) : initialState.themeStyle,
@@ -268,7 +166,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
-type Action =
+export type Action =
   | {
       type: 'READY_ACK';
       fileList: MdFile[];
@@ -279,6 +177,10 @@ type Action =
       workspaceName: string;
       workspacePath?: string;
       recentWorkspaces?: readonly RecentWorkspace[];
+      appVersion?: string;
+      appRuntime?: AppRuntime;
+      hostPlatform?: HostPlatform;
+      hostArch?: string;
     }
   | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
   | { type: 'NAV_NOT_FOUND'; href: string }
@@ -302,6 +204,10 @@ function reducer(state: AppState, action: Action): AppState {
         workspaceName: action.workspaceName,
         workspacePath: action.workspacePath,
         recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
+        appVersion: action.appVersion ?? state.appVersion,
+        appRuntime: action.appRuntime ?? state.appRuntime,
+        hostPlatform: action.hostPlatform ?? state.hostPlatform,
+        hostArch: action.hostArch ?? state.hostArch,
         isLoading: false,
       };
 
@@ -421,6 +327,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             workspaceName: msg.workspaceName,
             workspacePath: msg.workspacePath,
             recentWorkspaces: msg.recentWorkspaces,
+            appVersion: msg.appVersion,
+            appRuntime: msg.appRuntime,
+            hostPlatform: msg.hostPlatform,
+            hostArch: msg.hostArch,
           });
           break;
         case 'renderContent':

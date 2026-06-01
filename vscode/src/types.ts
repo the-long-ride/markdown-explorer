@@ -64,6 +64,9 @@ export interface RecentWorkspace {
   readonly lastOpened?: number;
 }
 
+export type AppRuntime = 'desktop' | 'vscode';
+export type HostPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
+
 export interface ReadyAckMessage {
   readonly command: 'readyAck';
   readonly fileList: MdFile[];
@@ -73,6 +76,10 @@ export interface ReadyAckMessage {
   readonly defaultExpanded: boolean;
   readonly workspaceName: string;
   readonly recentWorkspaces?: readonly RecentWorkspace[];
+  readonly appVersion?: string;
+  readonly appRuntime?: AppRuntime;
+  readonly hostPlatform?: HostPlatform;
+  readonly hostArch?: string;
 }
 
 export interface NavNotFoundMessage {
@@ -192,6 +199,11 @@ export interface UpdateAppearanceMessage {
     | 'pet-corgi';
 }
 
+export interface OpenExternalMessage {
+  readonly command: 'openExternal';
+  readonly url: string;
+}
+
 export type WebviewMessage =
   | NavigateMessage
   | OpenInEditorMessage
@@ -208,4 +220,5 @@ export type WebviewMessage =
   | DeleteRecentWorkspaceMessage
   | ZoomInMessage
   | ZoomOutMessage
-  | UpdateAppearanceMessage;
+  | UpdateAppearanceMessage
+  | OpenExternalMessage;

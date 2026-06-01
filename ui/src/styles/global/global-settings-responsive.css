@@ -1,0 +1,122 @@
+@media (max-width: 520px) {
+  .theme-onboarding-card__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .settings-reset-shortcuts-btn {
+    width: 100%;
+  }
+  .settings-card--settings .segmented-option {
+    font-size: 10px;
+  }
+}
+@media (max-width: 1180px), (max-height: 860px) {
+  .settings-modal {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: calc(var(--topbar-h) + 8px) 8px 8px;
+    overflow: hidden;
+  }
+  .settings-card--settings {
+    width: auto;
+    max-width: none;
+    height: calc(100dvh - var(--topbar-h) - 16px);
+    max-height: calc(100dvh - var(--topbar-h) - 16px);
+    padding: 16px;
+  }
+  .settings-card__close {
+    top: 14px;
+    right: 14px;
+  }
+  .settings-card--settings .settings-card__header {
+    padding-right: 34px;
+  }
+  .settings-card--settings .settings-card__body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    margin-top: 6px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 0 4px 16px 0;
+    overscroll-behavior: contain;
+  }
+  .settings-card__column--preferences,
+  .settings-card__column--shortcuts {
+    flex: none !important;
+    width: 100% !important;
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+  .settings-card__column--shortcuts {
+    padding-top: 16px;
+    border-top: var(--stroke-w) solid var(--bd);
+  }
+  .settings-card--settings .settings-card__divider {
+    display: none !important;
+  }
+  .settings-field,
+  .settings-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+  .settings-item__info {
+    min-width: 0;
+    max-width: none;
+  }
+  .settings-card--settings .segmented-control,
+  .settings-card--settings .theme-style-grid,
+  .settings-card--settings .switch-toggle {
+    align-self: stretch;
+  }
+  .settings-card--settings .switch-toggle {
+    align-self: flex-start;
+    margin-left: 0;
+  }
+  .settings-shortcuts-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  .settings-shortcuts-hint {
+    margin-left: 0;
+    max-width: none;
+    text-align: left;
+  }
+  .settings-shortcuts-list {
+    max-height: none !important;
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+  .settings-shortcut-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    padding: 7px 0;
+    border-bottom: var(--stroke-w) solid color-mix(in srgb, var(--bd) 78%, transparent);
+  }
+  .settings-shortcut-label {
+    color: var(--tx2) !important;
+    line-height: 1.35;
+  }
+  .settings-shortcut-input {
+    width: 100% !important;
+    min-height: 34px;
+    text-align: left !important;
+    letter-spacing: 0.04em !important;
+  }
+  .settings-shortcuts-footer {
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+  }
+  .settings-reset-shortcuts-btn {
+    width: 100%;
+    min-height: 36px;
+  }
+}

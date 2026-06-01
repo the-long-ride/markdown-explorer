@@ -23,6 +23,7 @@ export class MarkdownDocsPanel {
 
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionPath: string;
+  private readonly _extensionVersion: string;
   private _currentFile: string | null;
   private _flat: MdFile[] = [];
   private readonly _disposables: vscode.Disposable[] = [];
@@ -68,6 +69,7 @@ export class MarkdownDocsPanel {
   ) {
     this._panel = panel;
     this._extensionPath = _context.extensionPath;
+    this._extensionVersion = String(_context.extension.packageJSON.version ?? '');
     this._currentFile = initialFilePath;
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
@@ -89,6 +91,11 @@ export class MarkdownDocsPanel {
             break;
           case 'copyCode':
             await vscode.env.clipboard.writeText(msg.text);
+            break;
+          case 'openExternal':
+            if (/^https?:\/\//i.test(msg.url)) {
+              await vscode.env.openExternal(vscode.Uri.parse(msg.url));
+            }
             break;
           case 'refresh':
             await this.refresh();
@@ -152,6 +159,7 @@ export class MarkdownDocsPanel {
         themeStyle,
         defaultExpanded,
         workspaceName,
+        ...this._hostInfo(),
       };
       await this._panel.webview.postMessage(ackMsg);
       if (this._currentFile) {
@@ -183,6 +191,7 @@ export class MarkdownDocsPanel {
       themeStyle,
       defaultExpanded,
       workspaceName,
+      ...this._hostInfo(),
     };
     await this._panel.webview.postMessage(ackMsg);
 
@@ -248,6 +257,22 @@ export class MarkdownDocsPanel {
     if (afterWords.length > 10) parts.push('...');
 
     return parts.join(' ').trim();
+  }
+
+  private _hostInfo() {
+    return {
+      appVersion: this._extensionVersion,
+      appRuntime: 'vscode' as const,
+      hostPlatform: this._hostPlatform(),
+      hostArch: process.arch,
+    };
+  }
+
+  private _hostPlatform() {
+    if (process.platform === 'win32') return 'windows' as const;
+    if (process.platform === 'darwin') return 'macos' as const;
+    if (process.platform === 'linux') return 'linux' as const;
+    return 'unknown' as const;
   }
 
   private _searchMarkdownItems(

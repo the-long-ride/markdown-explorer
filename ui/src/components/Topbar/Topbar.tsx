@@ -19,6 +19,7 @@ interface TopbarProps {
   onCollapseAll: () => void;
   onCopyFile: (button?: HTMLElement | null) => void;
   searchShortcutLabel: string;
+  hasUpdate?: boolean;
 }
 
 interface BreadcrumbItem {
@@ -138,6 +139,7 @@ export function Topbar({
   onCollapseAll,
   onCopyFile,
   searchShortcutLabel,
+  hasUpdate = false,
 }: TopbarProps) {
   const {
     state,
@@ -309,9 +311,9 @@ export function Topbar({
           icon={isDark ? <SunIcon /> : <MoonIcon />}
         />
         <TooltipButton
-          className="btn btn--icon"
+          className={`btn btn--icon${hasUpdate ? ' has-update' : ''}`}
           onClick={onSettingsOpen}
-          tooltip="Settings"
+          tooltip={hasUpdate ? 'Settings - update available' : 'Settings'}
           icon={<SettingsIcon />}
         />
         <TooltipButton

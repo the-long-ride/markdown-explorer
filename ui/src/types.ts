@@ -49,6 +49,9 @@ export interface RecentWorkspace {
   readonly lastOpened?: number;
 }
 
+export type AppRuntime = 'desktop' | 'vscode';
+export type HostPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
+
 export interface ReadyAckMessage {
   readonly command: 'readyAck';
   readonly fileList: MdFile[];
@@ -59,6 +62,10 @@ export interface ReadyAckMessage {
   readonly workspaceName: string;
   readonly workspacePath?: string;
   readonly recentWorkspaces?: readonly RecentWorkspace[];
+  readonly appVersion?: string;
+  readonly appRuntime?: AppRuntime;
+  readonly hostPlatform?: HostPlatform;
+  readonly hostArch?: string;
 }
 
 export interface WindowStateChangedMessage {
@@ -232,6 +239,11 @@ export interface UpdateAppearanceMessage {
   readonly themeStyle: ThemeStyle;
 }
 
+export interface OpenExternalMessage {
+  readonly command: 'openExternal';
+  readonly url: string;
+}
+
 
 
 export type WebviewMessage =
@@ -254,7 +266,8 @@ export type WebviewMessage =
   | DeleteRecentWorkspaceMessage
   | ZoomInMessage
   | ZoomOutMessage
-  | UpdateAppearanceMessage;
+  | UpdateAppearanceMessage
+  | OpenExternalMessage;
 
 // ── UI state ────────────────────────────────────────────────────────────────
 
