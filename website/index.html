@@ -1,30 +1,104 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Markdown Explorer - Rich Markdown viewer for VS Code and desktop</title>
-    <meta name="description" content="Markdown Explorer turns Markdown folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, tabs, and local workspace navigation.">
-    <meta name="keywords" content="Markdown Explorer, markdown viewer, VS Code markdown extension, markdown desktop app, Mermaid markdown, LaTeX markdown, markdown tables, markdown charts, MDX viewer, offline documentation browser">
-    <meta name="author" content="The Long Ride">
-    <meta name="robots" content="index,follow,max-image-preview:large">
-    <link rel="canonical" href="https://the-long-ride.github.io/markdown-explorer/">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Markdown Explorer - Rich Markdown viewer for VS Code and desktop
+    </title>
+    <meta
+      name="description"
+      content="Markdown Explorer turns Markdown folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, tabs, and local workspace navigation."
+    />
+    <meta
+      name="keywords"
+      content="Markdown Explorer, markdown viewer, documentation browser, VS Code extension, markdown desktop app, local markdown reader, Mermaid diagram preview, LaTeX math renderer, interactive tables, data charts, MDX reader, offline documentation, workspace search, private notes, code syntax highlighting, trình xem markdown, đọc file markdown"
+    />
+    <meta name="author" content="the-long-ride" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link
+      rel="canonical"
+      href="https://the-long-ride.github.io/markdown-explorer/"
+    />
 
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Markdown Explorer">
-    <meta property="og:title" content="Markdown Explorer - Rich Markdown viewer">
-    <meta property="og:description" content="Read Markdown like a real documentation app, inside VS Code or as a standalone desktop app.">
-    <meta property="og:url" content="https://the-long-ride.github.io/markdown-explorer/">
-    <meta property="og:image" content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png">
-    <meta property="og:image:alt" content="Markdown Explorer searching across open desktop workspace tabs">
+    <!-- Dynamic Theme Color for Browser Chrome -->
+    <meta
+      name="theme-color"
+      content="#101412"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="theme-color"
+      content="#f5f4f0"
+      media="(prefers-color-scheme: light)"
+    />
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Markdown Explorer - Rich Markdown viewer">
-    <meta name="twitter:description" content="A private, offline Markdown explorer for VS Code and desktop.">
-    <meta name="twitter:image" content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png">
+    <!-- Open Graph (Facebook, Zalo, Telegram, Instagram) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Markdown Explorer" />
+    <meta
+      property="og:title"
+      content="Markdown Explorer - Rich Markdown viewer for VS Code and desktop"
+    />
+    <meta
+      property="og:description"
+      content="Turn Markdown folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, and local workspace navigation."
+    />
+    <meta
+      property="og:url"
+      content="https://the-long-ride.github.io/markdown-explorer/"
+    />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+    />
+    <meta
+      property="og:image:secure_url"
+      content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Markdown Explorer workspace layout featuring dark mode, document tabs, files sidebar, search, and a formatted Markdown preview."
+    />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="vi_VN" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+    <meta property="og:locale:alternate" content="nb_NO" />
+    <meta property="og:locale:alternate" content="ja_JP" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta property="og:locale:alternate" content="ru_RU" />
 
-    <link rel="icon" href="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png">
-    <link rel="stylesheet" href="styles.css">
+    <!-- Twitter Card (Twitter, Telegram, etc.) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Markdown Explorer - Rich Markdown viewer for VS Code and desktop"
+    />
+    <meta
+      name="twitter:description"
+      content="Turn Markdown folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, and local workspace navigation."
+    />
+    <meta
+      name="twitter:image"
+      content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+    />
+
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
 
     <script type="application/ld+json">
       {
@@ -36,7 +110,7 @@
         "description": "Markdown Explorer turns Markdown folders into an interactive, searchable documentation app for VS Code and desktop.",
         "url": "https://the-long-ride.github.io/markdown-explorer/",
         "downloadUrl": "https://github.com/the-long-ride/markdown-explorer/releases/latest",
-        "softwareVersion": "1.4.2",
+        "softwareVersion": "1.4.4",
         "license": "https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE",
         "codeRepository": "https://github.com/the-long-ride/markdown-explorer",
         "screenshot": "https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png",
@@ -62,144 +136,365 @@
     </script>
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main" data-i18n="skipToContent"
+      >Skip to content</a
+    >
 
     <header class="site-header" aria-label="Primary navigation">
       <a class="brand" href="#top" aria-label="Markdown Explorer home">
-        <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png" alt="" width="34" height="34">
+        <img
+          src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+          alt=""
+          width="34"
+          height="34"
+        />
         <span>Markdown Explorer</span>
       </a>
       <nav class="nav-links" aria-label="Page sections">
-        <a href="#features">Features</a>
-        <a href="#gallery">Gallery</a>
-        <a href="#download">Download</a>
-        <a href="#faq">FAQ</a>
-        <a href="https://github.com/the-long-ride/markdown-explorer" rel="noopener">GitHub</a>
+        <a href="#features" data-i18n="navFeatures">Features</a>
+        <a href="#gallery" data-i18n="navGallery">Gallery</a>
+        <a href="#download" data-i18n="navDownload">Download</a>
+        <a href="#faq" data-i18n="navFaq">FAQ</a>
+        <a
+          href="https://github.com/the-long-ride/markdown-explorer"
+          rel="noopener"
+          >GitHub</a
+        >
       </nav>
+      <div class="header-controls">
+        <button
+          id="lang-btn"
+          class="ctrl-btn"
+          aria-label="Switch language"
+          title="Switch language"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path
+              d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+            />
+          </svg>
+          <span id="lang-label">EN</span>
+        </button>
+        <div
+          class="lang-menu"
+          id="lang-menu"
+          role="menu"
+          aria-label="Language selector"
+          hidden
+        >
+          <button role="menuitem" data-lang="en">🇬🇧 English</button>
+          <button role="menuitem" data-lang="vi">🇻🇳 Tiếng Việt</button>
+          <button role="menuitem" data-lang="fr">🇫🇷 Français</button>
+          <button role="menuitem" data-lang="es">🇪🇸 Español</button>
+          <button role="menuitem" data-lang="zh">🇨🇳 中文</button>
+          <button role="menuitem" data-lang="no">🇳🇴 Norsk</button>
+          <button role="menuitem" data-lang="ja">🇯🇵 日本語</button>
+          <button role="menuitem" data-lang="ko">🇰🇷 한국어</button>
+          <button role="menuitem" data-lang="ru">🇷🇺 Русский</button>
+        </div>
+        <button
+          id="theme-btn"
+          class="ctrl-btn"
+          aria-label="Toggle colour theme"
+          title="Toggle colour theme"
+        >
+          <svg
+            class="icon-sun"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg
+            class="icon-moon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </div>
     </header>
 
     <main id="main">
       <section class="hero" id="top" aria-labelledby="hero-title">
         <picture class="hero-media">
-          <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png" alt="Markdown Explorer homepage with workspace navigation and reading layout">
+          <img
+            src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+            alt="Markdown Explorer homepage with workspace navigation and reading layout"
+          />
         </picture>
         <div class="hero-shade" aria-hidden="true"></div>
         <div class="hero-content">
-          <p class="eyebrow">VS Code extension and desktop app</p>
+          <p class="eyebrow" data-i18n="heroEyebrow">
+            VS Code extension and desktop app
+          </p>
           <h1 id="hero-title">Markdown Explorer</h1>
-          <p class="hero-copy">
-            A private Markdown workspace reader with exact search jumps, Mermaid, math, video, syntax-highlighted code, interactive tables, charts, tabs, and a calm layout for real documentation.
+          <p class="hero-copy" data-i18n="heroCopy">
+            A private Markdown workspace reader with exact search jumps,
+            Mermaid, math, video, syntax-highlighted code, interactive tables,
+            charts, tabs, and a calm layout for real documentation.
           </p>
           <div class="hero-actions" aria-label="Primary downloads">
-            <a class="button primary" href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer" rel="noopener">Install for VS Code</a>
-            <a class="button secondary" href="#download">Download desktop app</a>
+            <a
+              class="button primary"
+              href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+              rel="noopener"
+              data-i18n="btnInstallVscode"
+              >Install for VS Code</a
+            >
+            <a
+              class="button secondary"
+              href="#download"
+              data-i18n="btnDownloadDesktop"
+              >Download desktop app</a
+            >
           </div>
         </div>
       </section>
 
       <section class="install-strip" aria-label="Install options">
-        <a href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer" rel="noopener">VS Code Marketplace</a>
-        <a href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer" rel="noopener">Open VSX</a>
-        <a href="https://github.com/the-long-ride/markdown-explorer/releases/latest" rel="noopener">Latest GitHub Release</a>
+        <a
+          href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+          rel="noopener"
+          data-i18n="stripVscodeMarketplace"
+          >VS Code Marketplace</a
+        >
+        <a
+          href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer"
+          rel="noopener"
+          data-i18n="stripOpenVsx"
+          >Open VSX</a
+        >
+        <a
+          href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+          rel="noopener"
+          data-i18n="stripLatestRelease"
+          >Latest GitHub Release</a
+        >
       </section>
 
       <section class="section intro" aria-label="Product highlights">
         <div class="metric">
           <strong>3</strong>
-          <span>search scopes: file, workspace, all tabs</span>
+          <span data-i18n="metric1"
+            >search scopes: file, workspace, all tabs</span
+          >
         </div>
         <div class="metric">
           <strong>25+</strong>
-          <span>highlighted programming languages</span>
+          <span data-i18n="metric2">highlighted programming languages</span>
         </div>
         <div class="metric">
-          <strong>1000</strong>
-          <span>row tables stay sortable and filterable</span>
+          <strong>1000+</strong>
+          <span data-i18n="metric3"
+            >rows in data table stay sortable, filterable and view as
+            charts</span
+          >
         </div>
         <div class="metric">
           <strong>24</strong>
-          <span>Mermaid diagram styles rendered in docs</span>
+          <span data-i18n="metric4"
+            >Mermaid diagram styles rendered in docs</span
+          >
         </div>
       </section>
 
       <section class="section" id="features" aria-labelledby="features-title">
         <div class="section-heading">
-          <p class="eyebrow">Built for agent-era Markdown</p>
-          <h2 id="features-title">Your docs become an app</h2>
-          <p>Markdown Explorer keeps files local while making big Markdown workspaces easier to scan, search, understand, and present.</p>
+          <p class="eyebrow" data-i18n="featuresEyebrow">
+            Built for agent-era Markdown
+          </p>
+          <h2 id="features-title" data-i18n="featuresTitle">
+            Your docs become an app
+          </h2>
+          <p data-i18n="featuresSubtitle">
+            Markdown Explorer keeps files local while making big Markdown
+            workspaces easier to scan, search, understand, and present.
+          </p>
         </div>
 
         <div class="feature-grid">
           <article class="feature-card wide">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-all-tabs.png" alt="Search across all open workspace tabs">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-all-tabs.png"
+              alt="Search across all open workspace tabs"
+            />
             <div>
-              <p class="card-kicker">Search</p>
-              <h3>Find content across every open workspace tab</h3>
-              <p>Search current file, current workspace, or all desktop tabs. Results show focused excerpts and jump to the exact clicked match.</p>
+              <p class="card-kicker" data-i18n="featureSearchKicker">Search</p>
+              <h3 data-i18n="featureSearchTitle">
+                Find content across every open workspace tab
+              </h3>
+              <p data-i18n="featureSearchBody">
+                Search current file, current workspace, or all desktop tabs.
+                Results show focused excerpts and jump to the exact clicked
+                match.
+              </p>
             </div>
           </article>
           <article class="feature-card">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Suport-interact-with-large-data-table.png" alt="Large Markdown table with multi-select filters">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Suport-interact-with-large-data-table.png"
+              alt="Large Markdown table with multi-select filters"
+            />
             <div>
-              <p class="card-kicker">Tables</p>
-              <h3>Large tables stay usable</h3>
-              <p>Sort and filter real rows, use multi-choice filters, and keep long tables collapsed while exploring filtered results.</p>
+              <p class="card-kicker" data-i18n="featureTablesKicker">Tables</p>
+              <h3 data-i18n="featureTablesTitle">Large tables stay usable</h3>
+              <p data-i18n="featureTablesBody">
+                Sort and filter real rows, use multi-choice filters, and keep
+                long tables collapsed while exploring filtered results.
+              </p>
             </div>
           </article>
           <article class="feature-card">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/View-as-chart-instead-with-datatable.png" alt="Markdown table shown as a chart">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/View-as-chart-instead-with-datatable.png"
+              alt="Markdown table shown as a chart"
+            />
             <div>
-              <p class="card-kicker">Charts</p>
-              <h3>Turn Markdown data into charts</h3>
-              <p>Switch suitable tables into Bar, Line, or Pie views when numeric columns are detected.</p>
+              <p class="card-kicker" data-i18n="featureChartsKicker">Charts</p>
+              <h3 data-i18n="featureChartsTitle">
+                Turn Markdown data into charts
+              </h3>
+              <p data-i18n="featureChartsBody">
+                Switch suitable tables into Bar, Line, or Pie views when numeric
+                columns are detected.
+              </p>
             </div>
           </article>
           <article class="feature-card">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Adapt-all-kind-of-mermaid-diagram.png" alt="Multiple Mermaid diagram types rendered">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Adapt-all-kind-of-mermaid-diagram.png"
+              alt="Multiple Mermaid diagram types rendered"
+            />
             <div>
-              <p class="card-kicker">Diagrams</p>
-              <h3>Mermaid diagrams render cleanly</h3>
-              <p>Flowcharts, timelines, git graphs, architecture diagrams, and more render inside your local Markdown reader.</p>
+              <p class="card-kicker" data-i18n="featureDiagramsKicker">
+                Diagrams
+              </p>
+              <h3 data-i18n="featureDiagramsTitle">
+                Mermaid diagrams render cleanly
+              </h3>
+              <p data-i18n="featureDiagramsBody">
+                Flowcharts, timelines, git graphs, architecture diagrams, and
+                more render inside your local Markdown reader.
+              </p>
             </div>
           </article>
           <article class="feature-card">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-Streaming-Video.png" alt="Streaming video embedded in Markdown Explorer">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-Streaming-Video.png"
+              alt="Streaming video embedded in Markdown Explorer"
+            />
             <div>
-              <p class="card-kicker">Media</p>
-              <h3>Markdown can carry video too</h3>
-              <p>Embed local video or supported streaming links without turning your documentation into a separate website.</p>
+              <p class="card-kicker" data-i18n="featureMediaKicker">Media</p>
+              <h3 data-i18n="featureMediaTitle">
+                Markdown can carry video too
+              </h3>
+              <p data-i18n="featureMediaBody">
+                Embed local video or supported streaming links without turning
+                your documentation into a separate website.
+              </p>
             </div>
           </article>
         </div>
       </section>
 
-      <section class="section gallery" id="gallery" aria-labelledby="gallery-title">
+      <section
+        class="section gallery"
+        id="gallery"
+        aria-labelledby="gallery-title"
+      >
         <div class="section-heading">
-          <p class="eyebrow">Fresh screenshots</p>
-          <h2 id="gallery-title">A viewer made for dense docs</h2>
-          <p>Use Markdown Explorer for agent memory folders, engineering runbooks, release notes, diagrams, demos, and knowledge bases.</p>
+          <p class="eyebrow" data-i18n="galleryEyebrow">Fresh screenshots</p>
+          <h2 id="gallery-title" data-i18n="galleryTitle">
+            A viewer made for dense docs
+          </h2>
+          <p data-i18n="gallerySubtitle">
+            Use Markdown Explorer for agent memory folders, engineering
+            runbooks, release notes, diagrams, demos, and knowledge bases.
+          </p>
         </div>
 
         <div class="gallery-grid">
           <figure class="gallery-item large">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format.png" alt="Syntax-highlighted code block in Markdown Explorer">
-            <figcaption>Readable code blocks with language labels, line numbers, copy controls, and strong contrast.</figcaption>
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format.png"
+              alt="Syntax-highlighted code block in Markdown Explorer"
+            />
+            <figcaption data-i18n="galleryCaption1">
+              Readable code blocks with language labels, line numbers, copy
+              controls, and strong contrast.
+            </figcaption>
           </figure>
           <figure class="gallery-item">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Math-formular-display.png" alt="Math formulas rendered in Markdown Explorer">
-            <figcaption>LaTeX math renders directly in the document flow.</figcaption>
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Math-formular-display.png"
+              alt="Math formulas rendered in Markdown Explorer"
+            />
+            <figcaption data-i18n="galleryCaption2">
+              LaTeX math renders directly in the document flow.
+            </figcaption>
           </figure>
           <figure class="gallery-item">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Interactive-HTML-sandbox_1.png" alt="Interactive HTML sandbox in Markdown Explorer">
-            <figcaption>Interactive HTML sandboxes run in isolated previews.</figcaption>
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Interactive-HTML-sandbox_1.png"
+              alt="Interactive HTML sandbox in Markdown Explorer"
+            />
+            <figcaption data-i18n="galleryCaption3">
+              Interactive HTML sandboxes run in isolated previews.
+            </figcaption>
           </figure>
           <figure class="gallery-item">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View.png" alt="Image modal viewing a diagram">
-            <figcaption>Zoom and inspect images or diagrams in a focused media modal.</figcaption>
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View.png"
+              alt="Image modal viewing a diagram"
+            />
+            <figcaption data-i18n="galleryCaption4">
+              Zoom and inspect images or diagrams in a focused media modal.
+            </figcaption>
           </figure>
           <figure class="gallery-item">
-            <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection-Search-Recently-one.png" alt="Desktop workspace selection with recent folders">
-            <figcaption>Desktop mode remembers recent workspaces and opens folders quickly.</figcaption>
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection-Search-Recently-one.png"
+              alt="Desktop workspace selection with recent folders"
+            />
+            <figcaption data-i18n="galleryCaption5">
+              Desktop mode remembers recent workspaces and opens folders
+              quickly.
+            </figcaption>
           </figure>
         </div>
       </section>
@@ -207,84 +502,186 @@
       <section class="section band" aria-labelledby="privacy-title">
         <div class="split">
           <div>
-            <p class="eyebrow">Private by default</p>
-            <h2 id="privacy-title">Offline, local, and comfortable for real project folders</h2>
+            <p class="eyebrow" data-i18n="privacyEyebrow">Private by default</p>
+            <h2 id="privacy-title" data-i18n="privacyTitle">
+              Offline, local, and comfortable for real project folders
+            </h2>
           </div>
-          <p>
-            Markdown Explorer does not upload Markdown content. It scans and renders locally, making it useful for private notes, agent memory folders, engineering docs, runbooks, and project knowledge bases.
+          <p data-i18n="privacyBody">
+            Markdown Explorer does not upload Markdown content. It scans and
+            renders locally, making it useful for private notes, agent memory
+            folders, engineering docs, runbooks, and project knowledge bases.
           </p>
         </div>
       </section>
 
       <section class="section" id="download" aria-labelledby="download-title">
         <div class="section-heading">
-          <p class="eyebrow">Get Markdown Explorer</p>
-          <h2 id="download-title">Install the extension or download the desktop app</h2>
-          <p>The desktop buttons read the current release version and assets from the GitHub API when this page loads.</p>
+          <p class="eyebrow" data-i18n="downloadEyebrow">
+            Get Markdown Explorer
+          </p>
+          <h2 id="download-title" data-i18n="downloadTitle">
+            Install the extension or download the desktop app
+          </h2>
+          <p data-i18n="downloadSubtitle">
+            The desktop buttons read the current release version and assets from
+            the GitHub API when this page loads.
+          </p>
         </div>
 
         <div class="download-grid">
           <article class="download-card">
-            <h3>VS Code Marketplace</h3>
-            <p>Best choice for VS Code users. Launch the docs viewer directly inside your editor.</p>
-            <a class="button primary" href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer" rel="noopener">Install extension</a>
+            <h3 data-i18n="dlVscodeTitle">VS Code Marketplace</h3>
+            <p data-i18n="dlVscodeBody">
+              Best choice for VS Code users. Launch the docs viewer directly
+              inside your editor.
+            </p>
+            <a
+              class="button primary"
+              href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+              rel="noopener"
+              data-i18n="dlVscodeBtn"
+              >Install extension</a
+            >
           </article>
           <article class="download-card">
-            <h3>Open VSX Registry</h3>
-            <p>Use this for VSCodium and VS Code-compatible editors that rely on Open VSX.</p>
-            <a class="button primary" href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer" rel="noopener">Install from Open VSX</a>
+            <h3 data-i18n="dlOvxTitle">Open VSX Registry</h3>
+            <p data-i18n="dlOvxBody">
+              Use this for VSCodium and VS Code-compatible editors that rely on
+              Open VSX.
+            </p>
+            <a
+              class="button primary"
+              href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer"
+              rel="noopener"
+              data-i18n="dlOvxBtn"
+              >Install from Open VSX</a
+            >
           </article>
           <article class="download-card">
-            <h3>Windows desktop</h3>
-            <p>Download the portable `.exe` from the latest release and run it directly.</p>
-            <a class="button primary release-download" data-platform="windows" href="https://github.com/the-long-ride/markdown-explorer/releases/latest" rel="noopener">Download Windows</a>
+            <h3 data-i18n="dlWinTitle">Windows desktop</h3>
+            <p data-i18n="dlWinBody">
+              Download the portable `.exe` from the latest release and run it
+              directly.
+            </p>
+            <a
+              class="button primary release-download"
+              data-platform="windows"
+              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+              rel="noopener"
+              data-i18n="dlWinBtn"
+              >Download Windows</a
+            >
           </article>
           <article class="download-card">
-            <h3>macOS desktop</h3>
-            <p>Download a `.dmg` for your chip. Use `arm64` for Apple Silicon and `x64` for Intel Macs.</p>
-            <a class="button primary release-download" data-platform="macos" href="https://github.com/the-long-ride/markdown-explorer/releases/latest" rel="noopener">Download macOS</a>
+            <h3 data-i18n="dlMacTitle">macOS desktop</h3>
+            <p data-i18n="dlMacBody">
+              Download a `.dmg` for your chip. Use `arm64` for Apple Silicon and
+              `x64` for Intel Macs.
+            </p>
+            <a
+              class="button primary release-download"
+              data-platform="macos"
+              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+              rel="noopener"
+              data-i18n="dlMacBtn"
+              >Download macOS</a
+            >
           </article>
           <article class="download-card">
-            <h3>Linux desktop</h3>
-            <p>Use `.AppImage` for portable launch, or `.deb` on Debian and Ubuntu-based systems.</p>
-            <a class="button primary release-download" data-platform="linux" href="https://github.com/the-long-ride/markdown-explorer/releases/latest" rel="noopener">Download Linux</a>
+            <h3 data-i18n="dlLinuxTitle">Linux desktop</h3>
+            <p data-i18n="dlLinuxBody">
+              Use `.AppImage` for portable launch, or `.deb` on Debian and
+              Ubuntu-based systems.
+            </p>
+            <a
+              class="button primary release-download"
+              data-platform="linux"
+              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+              rel="noopener"
+              data-i18n="dlLinuxBtn"
+              >Download Linux</a
+            >
           </article>
           <article class="download-card quiet">
-            <h3>Latest release page</h3>
-            <p>Every GitHub Release includes file descriptions so you can pick the right package for your OS.</p>
-            <a class="button secondary" href="https://github.com/the-long-ride/markdown-explorer/releases/latest" rel="noopener">View latest release</a>
+            <h3 data-i18n="dlGhTitle">Latest release page</h3>
+            <p data-i18n="dlGhBody">
+              Every GitHub Release includes file descriptions so you can pick
+              the right package for your OS.
+            </p>
+            <a
+              class="button secondary"
+              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+              rel="noopener"
+              data-i18n="dlGhBtn"
+              >View latest release</a
+            >
           </article>
         </div>
-        <p class="release-note" id="release-note">Checking latest release assets...</p>
+        <p class="release-note" id="release-note" data-i18n="releaseChecking">
+          Checking latest release assets...
+        </p>
       </section>
 
       <section class="section faq" id="faq" aria-labelledby="faq-title">
         <div class="section-heading">
-          <p class="eyebrow">Questions</p>
-          <h2 id="faq-title">Common questions</h2>
+          <p class="eyebrow" data-i18n="faqEyebrow">Questions</p>
+          <h2 id="faq-title" data-i18n="faqTitle">Common questions</h2>
         </div>
 
         <details>
-          <summary>Is Markdown Explorer free?</summary>
-          <p>Yes. The project is MIT licensed and the GitHub repository is public.</p>
+          <summary data-i18n="faq1Q">Is Markdown Explorer free?</summary>
+          <p data-i18n="faq1A">
+            Yes. The project is MIT licensed and the GitHub repository is
+            public.
+          </p>
         </details>
         <details>
-          <summary>Does it work without internet?</summary>
-          <p>Yes. Rendering and searching happen locally. The website download buttons use GitHub only to find the latest release files and public download totals.</p>
+          <summary data-i18n="faq2Q">Does it work without internet?</summary>
+          <p data-i18n="faq2A">
+            Yes. Rendering and searching happen locally. The website download
+            buttons use GitHub only to find the latest release files and public
+            download totals.
+          </p>
         </details>
         <details>
-          <summary>Which desktop file should I download?</summary>
-          <p>Windows users should choose `.exe`. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.</p>
+          <summary data-i18n="faq3Q">
+            Which desktop file should I download?
+          </summary>
+          <p data-i18n="faq3A">
+            Windows users should choose `.exe`. Linux users can choose
+            `.AppImage` or `.deb`. macOS users should choose `.dmg`, with
+            `arm64` for Apple Silicon and `x64` for Intel.
+          </p>
         </details>
       </section>
     </main>
 
     <footer class="site-footer">
-      <p>Markdown Explorer by <a href="https://github.com/the-long-ride" rel="noopener">@the-long-ride</a>. MIT licensed.</p>
+      <p>
+        <span data-i18n="footerBy">Markdown Explorer by</span>
+        <a href="https://github.com/the-long-ride" rel="noopener"
+          >@the-long-ride</a
+        >. MIT licensed.
+      </p>
       <nav aria-label="Footer links">
-        <a href="https://github.com/the-long-ride/markdown-explorer" rel="noopener">GitHub</a>
-        <a href="https://github.com/the-long-ride/markdown-explorer/issues" rel="noopener">Issues</a>
-        <a href="https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE" rel="noopener">License</a>
+        <a
+          href="https://github.com/the-long-ride/markdown-explorer"
+          rel="noopener"
+          >GitHub</a
+        >
+        <a
+          href="https://github.com/the-long-ride/markdown-explorer/issues"
+          rel="noopener"
+          data-i18n="footerIssues"
+          >Issues</a
+        >
+        <a
+          href="https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE"
+          rel="noopener"
+          data-i18n="footerLicense"
+          >License</a
+        >
       </nav>
     </footer>
 

@@ -1,8 +1,17 @@
 @media (max-width: 980px) {
-  .site-header,
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
   .site-footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .header-controls {
+    order: 3;
+    margin-left: 0;
   }
 
   .hero {
@@ -15,8 +24,8 @@
 
   .hero-shade {
     background:
-      linear-gradient(0deg, rgba(16, 20, 18, 0.98), rgba(16, 20, 18, 0.5)),
-      linear-gradient(90deg, rgba(16, 20, 18, 0.96), rgba(16, 20, 18, 0.18));
+      var(--hero-shade-h),
+      var(--hero-shade-v);
   }
 
   .install-strip,
@@ -55,6 +64,10 @@
 }
 
 @media (max-width: 560px) {
+  .nav-links {
+    gap: 0.1rem;
+  }
+
   .nav-links a {
     padding-inline: 0.45rem;
   }
