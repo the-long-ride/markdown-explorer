@@ -4,6 +4,21 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.6] — 2026-06-03
+
+### Added Features & Enhancements
+- **Code Selection Gutter Highlighting**: Selecting code across multiple lines now highlights every affected line number in the gutter.
+- **Table Text Wrapping Toggle**: Data tables now include a per-table Wrap/Unwrap control in Table view, defaulting to unwrapped horizontal scanning and hiding during chart views.
+- **String Interpolation Highlighting**: Code highlighting now detects common interpolation forms and gives interpolation expressions contrast from the surrounding string.
+
+### Changed
+- **Compact Markdown Chrome**: Reduced code block, table, section header, and divider spacing for a tighter reading layout.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, and lockfile metadata to `1.4.6`.
+
+---
+
 ## [1.4.5] — 2026-06-03
 
 ### Added Features & Enhancements
