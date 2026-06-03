@@ -14,6 +14,7 @@ export interface DesktopTab {
   tree: FolderNode | null;
   currentFile: string | null;
   contentHtml: string;
+  markdownSource: string | null;
   frontmatter: Frontmatter;
   toc: TocEntry[];
   relativePath: string;

@@ -28,6 +28,68 @@ export function registerCopyHandlers(win: any) {
       .trim();
   };
 
+  const slugifyHeading = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
+  const getHeadingAt = (lines: string[], index: number) => {
+    const atxMatch = /^(#{1,6})\s+(.+?)(?:\s+#+)?\s*$/.exec(lines[index]);
+    if (atxMatch) {
+      return {
+        level: atxMatch[1].length,
+        text: atxMatch[2].trim(),
+        start: index,
+        end: index + 1,
+      };
+    }
+
+    const nextLine = lines[index + 1];
+    if (!nextLine || !lines[index].trim()) return null;
+    if (/^=+$/.test(nextLine.trim())) {
+      return { level: 1, text: lines[index].trim(), start: index, end: index + 2 };
+    }
+    if (/^-+$/.test(nextLine.trim()) && !/^[-*+]\s/.test(lines[index])) {
+      return { level: 2, text: lines[index].trim(), start: index, end: index + 2 };
+    }
+    return null;
+  };
+
+  const markdownSectionFromSource = (
+    source: string | null | undefined,
+    sectionId: string,
+    occurrence = 0,
+  ) => {
+    if (!source || !sectionId) return '';
+    const lines = source.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    let matchedOccurrence = 0;
+
+    for (let index = 0; index < lines.length; index++) {
+      const heading = getHeadingAt(lines, index);
+      if (!heading) continue;
+      if (slugifyHeading(heading.text) !== sectionId) continue;
+      if (matchedOccurrence < occurrence) {
+        matchedOccurrence += 1;
+        continue;
+      }
+
+      let end = lines.length;
+      for (let nextIndex = heading.end; nextIndex < lines.length; nextIndex++) {
+        const nextHeading = getHeadingAt(lines, nextIndex);
+        if (nextHeading && nextHeading.level <= heading.level) {
+          end = nextHeading.start;
+          break;
+        }
+      }
+      return lines.slice(heading.start, end).join('\n').trim();
+    }
+
+    return '';
+  };
+
   const markCopied = (btn: HTMLElement | null | undefined, resetText: string) => {
     if (!btn) return;
     const feedbackBtn = btn as HTMLElement & { __copyResetTimer?: number };
@@ -45,14 +107,19 @@ export function registerCopyHandlers(win: any) {
     }, 2000);
   };
 
+  win.UI.markCopyButtonCopied = markCopied;
+
   win.UI.copySection = (btn: HTMLElement, event?: Event) => {
     event?.stopPropagation();
     const section = btn.closest('.mdn-section') as HTMLElement | null;
     const body = Array.from(section?.children ?? [])
       .find((child) => child.classList.contains('mdn-section-body')) as HTMLElement | undefined;
-    if (!body) return;
+    if (!section || !body) return;
     try {
-      copyText(textFromElement(body));
+      const sameIdSections = Array.from(document.querySelectorAll<HTMLElement>(`.mdn-section[id="${CSS.escape(section.id)}"]`));
+      const occurrence = Math.max(0, sameIdSections.indexOf(section));
+      const markdownSource = markdownSectionFromSource(win.UI.currentMarkdownSource, section.id, occurrence);
+      copyText(markdownSource || textFromElement(body));
       markCopied(btn, 'Copy section content');
     } catch (err) {
       console.warn('Failed to copy section to clipboard:', err);

@@ -1,3 +1,7 @@
+// =============================================================================
+// hooks/useDesktopTabs.ts — Desktop Tab & Workspace management
+// =============================================================================
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Action, AppState } from '../contexts/AppStateContext';
 import {
@@ -59,6 +63,9 @@ export function useDesktopTabs({
   const restoredDesktopTabsRef = useRef(false);
   const requestedWorkspaceIndexesRef = useRef<Set<string>>(new Set());
 
+  // Custom switch workspace state
+  const [pendingDroppedPath, setPendingDroppedPath] = useState<string | null>(null);
+
   useEffect(() => {
     workspaceNameRef.current = state.workspaceName;
   }, [state.workspaceName]);
@@ -102,6 +109,7 @@ export function useDesktopTabs({
         tree: state.tree,
         currentFile: state.currentFile,
         contentHtml: state.contentHtml,
+        markdownSource: state.markdownSource,
         frontmatter: state.frontmatter,
         toc: state.toc,
         relativePath: state.relativePath,
@@ -115,6 +123,7 @@ export function useDesktopTabs({
       state.fileList,
       state.frontmatter,
       state.isLoading,
+      state.markdownSource,
       state.notFoundHref,
       state.relativePath,
       state.toc,
@@ -182,6 +191,7 @@ export function useDesktopTabs({
           msg: {
             command: 'renderContent',
             html: tab.contentHtml,
+            markdownSource: tab.markdownSource,
             frontmatter: tab.frontmatter,
             toc: tab.toc,
             filePath: tab.currentFile ?? '',
@@ -253,12 +263,19 @@ export function useDesktopTabs({
     }
 
     if (workspaceNameRef.current) {
-      bridge.postMessage({ command: 'confirmOpenPath', path: droppedPath });
+      setPendingDroppedPath(droppedPath);
       return;
     }
 
     bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true });
   }, [bridge, createNewWorkspaceTab, isTabView, tabs]);
+
+  const confirmSwitchWorkspace = useCallback(() => {
+    if (pendingDroppedPath) {
+      bridge.postMessage({ command: 'openPath', path: pendingDroppedPath, openFirstFile: true });
+      setPendingDroppedPath(null);
+    }
+  }, [bridge, pendingDroppedPath]);
 
   const closeTab = useCallback(
     (tabId: string) => {
@@ -362,6 +379,9 @@ export function useDesktopTabs({
     createNewWorkspaceTab,
     prepareWorkspaceOpen,
     openDroppedPath,
+    pendingDroppedPath,
+    setPendingDroppedPath,
+    confirmSwitchWorkspace,
     closeTab,
     updateTabAlias,
     crossTabSearchItems,

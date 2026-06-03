@@ -63,6 +63,13 @@ function sendLoading() {
   mainWindow?.webContents.send("host-message", { command: "setLoading" });
 }
 
+function sendRecentWorkspacesChanged() {
+  mainWindow?.webContents.send("host-message", {
+    command: "recentWorkspacesChanged",
+    recentWorkspaces: recentWorkspacesStore.load(),
+  });
+}
+
 function createWindow() {
   mainWindow = createMainWindow({ appDir, debugTools, clampAppZoom });
 }
@@ -312,8 +319,7 @@ function handleOpenRecent(folderPath, openFirstFile = false) {
   } else {
     // Remove invalid path
     recentWorkspacesStore.remove(folderPath);
-    readyHandled = false;
-    handleReady();
+    sendRecentWorkspacesChanged();
   }
 }
 
@@ -323,8 +329,7 @@ function handleDeleteRecentWorkspace(folderPath) {
   } catch (err) {
     console.error("Failed to delete recent workspace:", err);
   }
-  readyHandled = false;
-  handleReady();
+  sendRecentWorkspacesChanged();
 }
 
 function handleZoomIn() {
@@ -534,6 +539,7 @@ async function sendContent() {
   const msg = {
     command: "renderContent",
     html: html,
+    markdownSource: raw,
     frontmatter: frontmatter,
     toc: toc,
     filePath: currentFile,
@@ -548,6 +554,7 @@ async function sendWelcome() {
   const msg = {
     command: "renderContent",
     html: "",
+    markdownSource: "",
     frontmatter: {},
     toc: [],
     filePath: "",

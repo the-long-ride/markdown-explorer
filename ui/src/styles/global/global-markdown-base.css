@@ -66,6 +66,7 @@
   font-size: 1.75em;
   font-weight: 800;
   letter-spacing: 0;
+  margin-top: 6px;
   margin-bottom: 6px;
   line-height: 1.2;
 }
@@ -109,7 +110,8 @@
 .mdn-link {
   color: var(--accent-text);
   text-decoration: none;
-  border-bottom: var(--stroke-w) solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-bottom: var(--stroke-w) solid
+    color-mix(in srgb, var(--accent) 30%, transparent);
   transition: border-color 0.12s;
 }
 .mdn-link:hover {
@@ -148,7 +150,8 @@
   margin: 12px 0;
   padding: 14px 16px;
   background: color-mix(in srgb, var(--accent) 5%, var(--bg-code));
-  border: var(--stroke-w) solid color-mix(in srgb, var(--accent) 28%, var(--bd-s));
+  border: var(--stroke-w) solid
+    color-mix(in srgb, var(--accent) 28%, var(--bd-s));
   border-radius: var(--r-lg);
   box-shadow: var(--sh-sm);
 }

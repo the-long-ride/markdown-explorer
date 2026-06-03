@@ -50,6 +50,7 @@ export interface TocEntry {
 export interface RenderContentMessage {
   readonly command: 'renderContent';
   readonly html: string;
+  readonly markdownSource?: string;
   readonly frontmatter: Frontmatter;
   readonly toc: TocEntry[];
   readonly filePath: string;

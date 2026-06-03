@@ -23,6 +23,7 @@ export function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
     tree: null,
     currentFile: null,
     contentHtml: '',
+    markdownSource: null,
     frontmatter: {},
     toc: [],
     relativePath: '',

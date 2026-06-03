@@ -35,6 +35,7 @@ export type Frontmatter = Record<string, string>;
 export interface RenderContentMessage {
   readonly command: 'renderContent';
   readonly html: string;
+  readonly markdownSource?: string | null;
   readonly frontmatter: Frontmatter;
   readonly toc: TocEntry[];
   readonly filePath: string;
@@ -66,6 +67,11 @@ export interface ReadyAckMessage {
   readonly appRuntime?: AppRuntime;
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
+}
+
+export interface RecentWorkspacesChangedMessage {
+  readonly command: 'recentWorkspacesChanged';
+  readonly recentWorkspaces: readonly RecentWorkspace[];
 }
 
 export interface WindowStateChangedMessage {
@@ -129,6 +135,7 @@ export interface NavNotFoundMessage {
 export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
+  | RecentWorkspacesChangedMessage
   | NavNotFoundMessage
   | SetLoadingMessage
   | WindowStateChangedMessage

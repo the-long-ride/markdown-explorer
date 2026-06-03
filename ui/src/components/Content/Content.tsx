@@ -76,6 +76,17 @@ export function Content({
 
   useEffect(() => {
     const win = window as any;
+    if (!win.UI) win.UI = {};
+    win.UI.currentMarkdownSource = state.markdownSource;
+    return () => {
+      if (win.UI?.currentMarkdownSource === state.markdownSource) {
+        win.UI.currentMarkdownSource = null;
+      }
+    };
+  }, [state.markdownSource]);
+
+  useEffect(() => {
+    const win = window as any;
     if (!win.Nav) win.Nav = {};
     const previousGo = win.Nav.go;
     const go = (fsPath: string | null) => {

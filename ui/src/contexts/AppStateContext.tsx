@@ -74,6 +74,8 @@ export interface AppState {
   sidebarCollapsed: boolean;
   /** Rendered HTML (from host) */
   contentHtml: string;
+  /** Original Markdown/MDX source for exact file copy */
+  markdownSource: string | null;
   /** Current frontmatter */
   frontmatter: Frontmatter;
   /** Current TOC entries */
@@ -115,6 +117,7 @@ const initialState: AppState = {
   workspacePath: undefined,
   sidebarCollapsed: false,
   contentHtml: '',
+  markdownSource: null,
   frontmatter: {},
   toc: [],
   relativePath: '',
@@ -184,6 +187,10 @@ export type Action =
       hostPlatform?: HostPlatform;
       hostArch?: string;
     }
+  | {
+      type: 'RECENT_WORKSPACES_CHANGED';
+      recentWorkspaces: readonly RecentWorkspace[];
+    }
   | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
   | { type: 'NAV_NOT_FOUND'; href: string }
   | { type: 'SET_LOADING' }
@@ -205,6 +212,7 @@ function reducer(state: AppState, action: Action): AppState {
         defaultExpanded: action.defaultExpanded,
         workspaceName: action.workspaceName,
         workspacePath: action.workspacePath,
+        markdownSource: null,
         recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
         appVersion: action.appVersion ?? state.appVersion,
         appRuntime: action.appRuntime ?? state.appRuntime,
@@ -213,12 +221,19 @@ function reducer(state: AppState, action: Action): AppState {
         isLoading: action.workspaceName ? state.isLoading : false,
       };
 
+    case 'RECENT_WORKSPACES_CHANGED':
+      return {
+        ...state,
+        recentWorkspaces: action.recentWorkspaces as RecentWorkspace[],
+      };
+
     case 'RENDER_CONTENT':
       return {
         ...state,
         fileList: action.msg.fileList ?? state.fileList,
         currentFile: action.msg.filePath,
         contentHtml: action.msg.html,
+        markdownSource: action.msg.markdownSource ?? null,
         frontmatter: action.msg.frontmatter,
         toc: action.msg.toc,
         relativePath: action.msg.relativePath,
@@ -334,6 +349,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             appRuntime: msg.appRuntime,
             hostPlatform: msg.hostPlatform,
             hostArch: msg.hostArch,
+          });
+          break;
+        case 'recentWorkspacesChanged':
+          dispatch({
+            type: 'RECENT_WORKSPACES_CHANGED',
+            recentWorkspaces: msg.recentWorkspaces,
           });
           break;
         case 'renderContent':

@@ -233,6 +233,7 @@ export class MarkdownDocsPanel {
     const msg: RenderContentMessage = {
       command: 'renderContent',
       html: rewrittenHtml,
+      markdownSource: raw,
       frontmatter,
       toc,
       filePath: this._currentFile,
@@ -478,6 +479,7 @@ export class MarkdownDocsPanel {
     const msg: RenderContentMessage = {
       command: 'renderContent',
       html: '',
+      markdownSource: '',
       frontmatter: {},
       toc: [],
       filePath: '',

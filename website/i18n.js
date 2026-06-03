@@ -6,7 +6,7 @@ window.LANGS = {
     navGallery: "Gallery",
     navDownload: "Download",
     navFaq: "FAQ",
-    heroEyebrow: "VS Code extension and desktop app",
+    heroEyebrow: "Open source - VS Code extension and desktop app",
     heroCopy:
       "A private Markdown workspace reader with exact search jumps, Mermaid, math, video, syntax-highlighted code, interactive tables, charts, tabs, and a calm layout for real documentation.",
     btnInstallVscode: "Install for VS Code",
@@ -71,7 +71,7 @@ window.LANGS = {
     downloadEyebrow: "Get Markdown Explorer",
     downloadTitle: "Install the extension or download the desktop app",
     downloadSubtitle:
-      "The desktop buttons read the current release version and assets from the GitHub API when this page loads.",
+      "The desktop app goes beyond the VS Code extension with Tabs view, multiple workspaces open at the same time, more keyboard shortcuts, and extra features.",
     dlVscodeTitle: "VS Code Marketplace",
     dlVscodeBody:
       "Best choice for VS Code users. Launch the docs viewer directly inside your editor.",
@@ -131,7 +131,7 @@ window.LANGS = {
     navGallery: "Thư viện",
     navDownload: "Tải xuống",
     navFaq: "FAQ",
-    heroEyebrow: "Tiện ích VS Code và ứng dụng máy tính",
+    heroEyebrow: "Mã nguồn mở - Tiện ích VS Code và ứng dụng máy tính",
     heroCopy:
       "Trình đọc Markdown cá nhân với tìm kiếm chính xác, Mermaid, toán học, video, tô sáng cú pháp, bảng tương tác, biểu đồ, tab và bố cục gọn gàng cho tài liệu thực.",
     btnInstallVscode: "Cài đặt cho VS Code",
@@ -198,7 +198,7 @@ window.LANGS = {
     downloadEyebrow: "Tải Markdown Explorer",
     downloadTitle: "Cài đặt tiện ích hoặc tải ứng dụng máy tính",
     downloadSubtitle:
-      "Các nút máy tính đọc phiên bản phát hành hiện tại và tài sản từ GitHub API khi trang này tải.",
+      "Ứng dụng máy tính hỗ trợ nhiều hơn phiên bản tiện ích VS Code với chế độ xem tab, cho phép bạn mở nhiều workspace cùng lúc, đồng thời có thêm phím tắt và tính năng.",
     dlVscodeTitle: "VS Code Marketplace",
     dlVscodeBody:
       "Lựa chọn tốt nhất cho người dùng VS Code. Khởi chạy trình xem tài liệu trực tiếp bên trong trình soạn thảo.",
@@ -257,7 +257,7 @@ window.LANGS = {
     navGallery: "Galerie",
     navDownload: "Télécharger",
     navFaq: "FAQ",
-    heroEyebrow: "Extension VS Code et application bureau",
+    heroEyebrow: "Open source - Extension VS Code et application bureau",
     heroCopy:
       "Un lecteur Markdown privé avec recherches précises, Mermaid, maths, vidéo, code colorisé, tableaux interactifs, graphiques, onglets et une mise en page calme pour une vraie documentation.",
     btnInstallVscode: "Installer pour VS Code",
@@ -325,7 +325,7 @@ window.LANGS = {
     downloadEyebrow: "Obtenir Markdown Explorer",
     downloadTitle: "Installez l'extension ou téléchargez l'app bureau",
     downloadSubtitle:
-      "Les boutons bureau lisent la version de publication actuelle et les ressources depuis l'API GitHub au chargement de la page.",
+      "L'application de bureau va plus loin que la version extension VS Code avec l'affichage par onglets, l'ouverture de plusieurs espaces de travail en même temps, ainsi que davantage de raccourcis clavier et de fonctionnalités.",
     dlVscodeTitle: "VS Code Marketplace",
     dlVscodeBody:
       "Meilleur choix pour les utilisateurs VS Code. Lancez le lecteur de docs directement dans votre éditeur.",
@@ -385,7 +385,7 @@ window.LANGS = {
     navGallery: "Galería",
     navDownload: "Descargar",
     navFaq: "FAQ",
-    heroEyebrow: "Extensión de VS Code y aplicación de escritorio",
+    heroEyebrow: "Código abierto - Extensión de VS Code y aplicación de escritorio",
     heroCopy:
       "Un lector privado de espacios de trabajo Markdown con búsquedas exactas, Mermaid, matemáticas, vídeo, código resaltado, tablas interactivas, gráficos, pestañas y un diseño tranquilo para documentación real.",
     btnInstallVscode: "Instalar para VS Code",
@@ -453,7 +453,7 @@ window.LANGS = {
     downloadEyebrow: "Obtén Markdown Explorer",
     downloadTitle: "Instala la extensión o descarga la app de escritorio",
     downloadSubtitle:
-      "Los botones de escritorio leen la versión de lanzamiento actual y los activos desde la API de GitHub cuando carga la página.",
+      "La app de escritorio ofrece más que la versión de extensión para VS Code: vista por pestañas, varios espacios de trabajo abiertos al mismo tiempo, y más atajos de teclado y funciones.",
     dlVscodeTitle: "VS Code Marketplace",
     dlVscodeBody:
       "La mejor opción para usuarios de VS Code. Lanza el visor de docs directamente en tu editor.",
@@ -513,7 +513,7 @@ window.LANGS = {
     navGallery: "图库",
     navDownload: "下载",
     navFaq: "常见问题",
-    heroEyebrow: "VS Code 扩展和桌面应用",
+    heroEyebrow: "开源 - VS Code 扩展和桌面应用",
     heroCopy:
       "私有 Markdown 工作区阅读器，具有精确搜索跳转、Mermaid、数学、视频、代码高亮、交互式表格、图表、标签页和适合真实文档的简洁布局。",
     btnInstallVscode: "安装 VS Code 版",
@@ -575,7 +575,7 @@ window.LANGS = {
     downloadEyebrow: "获取 Markdown Explorer",
     downloadTitle: "安装扩展或下载桌面应用",
     downloadSubtitle:
-      "页面加载时，桌面按钮从 GitHub API 读取当前发布版本和资产。",
+      "桌面应用比 VS Code 扩展版本支持更多功能：标签页视图可同时打开多个工作区，并提供更多键盘快捷键和功能。",
     dlVscodeTitle: "VS Code 市场",
     dlVscodeBody: "VS Code 用户的最佳选择。直接在编辑器内启动文档查看器。",
     dlVscodeBtn: "安装扩展",
@@ -629,7 +629,7 @@ window.LANGS = {
     navGallery: "Galleri",
     navDownload: "Last ned",
     navFaq: "FAQ",
-    heroEyebrow: "VS Code-utvidelse og skrivebordsapp",
+    heroEyebrow: "Åpen kildekode - VS Code-utvidelse og skrivebordsapp",
     heroCopy:
       "En privat Markdown-leser med nøyaktige søkehopp, Mermaid, matte, video, syntaksfremheving, interaktive tabeller, diagrammer, faner og et rolig oppsett for ekte dokumentasjon.",
     btnInstallVscode: "Installer for VS Code",
@@ -695,7 +695,7 @@ window.LANGS = {
     downloadEyebrow: "Få Markdown Explorer",
     downloadTitle: "Installer utvidelsen eller last ned skrivebordsappen",
     downloadSubtitle:
-      "Skrivebordsknappene leser gjeldende utgivelsesversjon og ressurser fra GitHub API når denne siden lastes.",
+      "Skrivebordsappen støtter mer enn VS Code-utvidelsen med fanevisning, flere arbeidsområder åpne samtidig, samt flere tastatursnarveier og funksjoner.",
     dlVscodeTitle: "VS Code Marketplace",
     dlVscodeBody:
       "Beste valg for VS Code-brukere. Start dokumentleseren direkte i editoren din.",
@@ -755,7 +755,7 @@ window.LANGS = {
     navGallery: "ギャラリー",
     navDownload: "ダウンロード",
     navFaq: "よくある質問",
-    heroEyebrow: "VS Code 拡張機能とデスクトップアプリ",
+    heroEyebrow: "オープンソース - VS Code 拡張機能とデスクトップアプリ",
     heroCopy:
       "正確な検索ジャンプ、Mermaid、数学、ビデオ、コードハイライト、インタラクティブなテーブル、チャート、タブ、그리고 실제 문서를 위한 차분한 레이아웃을 갖춘 개인 Markdown 워크스페이스 리더.",
     btnInstallVscode: "VS Code にインストール",
@@ -822,7 +822,7 @@ window.LANGS = {
     downloadEyebrow: "Markdown Explorer を入手",
     downloadTitle: "拡張機能をインストールまたはデスクトップアプリをダウンロード",
     downloadSubtitle:
-      "デスクトップボタンはページ読み込み時に GitHub API から現在のリリースバージョンとアセットを読み取ります。",
+      "デスクトップアプリは VS Code 拡張機能版より多くをサポートし、タブ表示で複数のワークスペースを同時に開けるほか、より多くのキーボードショートカットと機能を利用できます。",
     dlVscodeTitle: "VS Code マーケットプレイス",
     dlVscodeBody:
       "VS Code ユーザーに最適。エディター内で直接ドキュメントビューワーを起動します。",
@@ -882,7 +882,7 @@ window.LANGS = {
     navGallery: "갤러리",
     navDownload: "다운로드",
     navFaq: "자주 묻는 질문",
-    heroEyebrow: "VS Code 확장 및 데스크톱 앱",
+    heroEyebrow: "오픈 소스 - VS Code 확장 및 데스크톱 앱",
     heroCopy:
       "정확한 검색 점프, Mermaid, 수학, 비디오, 구문 강조, 대화형 테이블, 차트, 탭 및 실제 문서를 위한 차분한 레이아웃을 갖춘 개인 Markdown 워크스페이스 리더.",
     btnInstallVscode: "VS Code에 설치",
@@ -947,7 +947,7 @@ window.LANGS = {
     downloadEyebrow: "Markdown Explorer 받기",
     downloadTitle: "확장 프로그램 설치 또는 데스크톱 앱 다운로드",
     downloadSubtitle:
-      "데스크톱 버튼은 페이지가 로드될 때 GitHub API에서 현재 릴리스 버전과 자산을 읽습니다.",
+      "데스크톱 앱은 VS Code 확장 버전보다 더 많은 기능을 지원합니다. 탭 보기로 여러 워크스페이스를 동시에 열 수 있고, 더 많은 키보드 단축키와 기능을 제공합니다.",
     dlVscodeTitle: "VS Code 마켓플레이스",
     dlVscodeBody:
       "VS Code 사용자에게 최선의 선택. 편집기 내에서 직접 문서 뷰어를 실행합니다.",
@@ -1007,7 +1007,7 @@ window.LANGS = {
     navGallery: "Галерея",
     navDownload: "Скачать",
     navFaq: "FAQ",
-    heroEyebrow: "Расширение VS Code и настольное приложение",
+    heroEyebrow: "Открытый исходный код - Расширение VS Code и настольное приложение",
     heroCopy:
       "Приватный читатель Markdown с точными прыжками по поиску, Mermaid, математикой, видео, подсветкой кода, интерактивными таблицами, графиками, вкладками и спокойным макетом для настоящей документации.",
     btnInstallVscode: "Установить для VS Code",
@@ -1074,7 +1074,7 @@ window.LANGS = {
     downloadEyebrow: "Получить Markdown Explorer",
     downloadTitle: "Установите расширение или скачайте настольное приложение",
     downloadSubtitle:
-      "Кнопки рабочего стола читают текущую версию релиза и ресурсы из GitHub API при загрузке страницы.",
+      "Настольное приложение поддерживает больше возможностей, чем версия расширения для VS Code: вкладки, одновременное открытие нескольких рабочих областей, а также больше сочетаний клавиш и функций.",
     dlVscodeTitle: "VS Code Marketplace",
     dlVscodeBody:
       "Лучший выбор для пользователей VS Code. Запустите просмотрщик документов прямо в редакторе.",

@@ -19,6 +19,7 @@ import { MediaModal } from './components/Modal/MediaModal';
 import { SettingsModal } from './components/Settings/SettingsModal';
 import { TermsModal } from './components/Modal/TermsModal';
 import { ThemeOnboardingModal } from './components/Modal/ThemeOnboardingModal';
+import { SwitchWorkspaceModal } from './components/Modal/SwitchWorkspaceModal';
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
 import { FloatingTabToolbar } from './components/Desktop/FloatingTabToolbar';
@@ -93,6 +94,9 @@ export function App() {
     createNewWorkspaceTab,
     prepareWorkspaceOpen,
     openDroppedPath,
+    pendingDroppedPath,
+    setPendingDroppedPath,
+    confirmSwitchWorkspace,
     closeTab,
     updateTabAlias,
     crossTabSearchItems,
@@ -263,8 +267,16 @@ export function App() {
   }, []);
 
   const copyCurrentFileContent = useCallback((button?: HTMLElement | null) => {
-    (window as any).UI?.copyDocument?.(button);
-  }, []);
+    if (state.currentFile && state.markdownSource !== null) {
+      bridge.copyToClipboard(state.markdownSource);
+      (window as any).UI?.markCopyButtonCopied?.(button, 'Copy file content');
+      return;
+    }
+
+    if (!state.currentFile) {
+      (window as any).UI?.copyDocument?.(button);
+    }
+  }, [bridge, state.currentFile, state.markdownSource]);
 
   // Keyboard shortcuts
   useKeyboard({
@@ -350,7 +362,11 @@ export function App() {
             />
           </div>
         </div>
-        <TermsModal isOpen={true} onAgree={handleAgreeTerms} />
+        <TermsModal
+          isOpen={true}
+          onAgree={handleAgreeTerms}
+          onOpenExternal={openExternalUrl}
+        />
       </div>
     );
   }
@@ -496,6 +512,12 @@ export function App() {
       <ThemeOnboardingModal
         isOpen={themeOnboardingOpen}
         onComplete={handleThemeOnboardingComplete}
+      />
+      <SwitchWorkspaceModal
+        isOpen={pendingDroppedPath !== null}
+        onClose={() => setPendingDroppedPath(null)}
+        onConfirm={confirmSwitchWorkspace}
+        targetPath={pendingDroppedPath || ''}
       />
 
       {isDragging && (
