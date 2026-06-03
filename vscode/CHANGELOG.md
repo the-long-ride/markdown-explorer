@@ -4,6 +4,28 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.7] — 2026-06-04
+
+### Added Features & Enhancements
+- **Welcome Experience Refresh**: Redesigned the welcome screen with an interactive background, tabbed content, richer workspace actions, and quick guidance for desktop and VS Code users.
+- **Workspace Switch Confirmation**: Added a dedicated desktop confirmation modal when dropping or switching to another workspace, keeping multi-tab workflows clearer.
+- **Desktop Download Messaging**: Updated website download copy to explain that the desktop app supports tabs, multiple workspaces, more keyboard shortcuts, and additional features beyond the VS Code extension.
+
+### Changed
+- **Privacy & Terms Onboarding**: Simplified the first-run legal prompt to a concise agreement with external Privacy Policy and Terms of Service links.
+- **Warm Accent Theme Polish**: Updated accent colors and modal spacing for the refreshed UI direction.
+
+### Fixed
+- **Markdown Copy Formatting**: Copy actions now use the original Markdown source when available so copied content keeps the correct Markdown formatting.
+- **Recent Workspace Removal in Tabs**: Removing an item from recent workspaces in Tab view no longer reopens the previous workspace in a new tab.
+- **Legal Prompt Layout**: Kept the review sentence on one line when space allows and aligned the checkbox with the agreement label.
+
+### Maintenance
+- **Unused Icon Cleanup**: Removed obsolete UI SVG icons from `ui/assets/icons`.
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, website metadata, and lockfile metadata to `1.4.7`.
+
+---
+
 ## [1.4.6] — 2026-06-03
 
 ### Added Features & Enhancements
