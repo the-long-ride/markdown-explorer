@@ -210,7 +210,7 @@ function reducer(state: AppState, action: Action): AppState {
         appRuntime: action.appRuntime ?? state.appRuntime,
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
-        isLoading: false,
+        isLoading: action.workspaceName ? state.isLoading : false,
       };
 
     case 'RENDER_CONTENT':
@@ -342,6 +342,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         case 'navNotFound':
           dispatch({ type: 'NAV_NOT_FOUND', href: msg.href });
           break;
+        case 'setLoading':
+          dispatch({ type: 'SET_LOADING' });
+          break;
         case 'window-state-changed':
           dispatch({ type: 'SET_MAXIMIZED', isMaximized: msg.isMaximized });
           break;
@@ -391,6 +394,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [bridge, state.currentFile]);
 
   const refresh = useCallback(() => {
+    dispatch({ type: 'SET_LOADING' });
     bridge.postMessage({ command: 'refresh' });
   }, [bridge]);
 

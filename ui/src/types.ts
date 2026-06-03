@@ -95,6 +95,10 @@ export interface WorkspaceSearchIndexLoadedMessage {
   }[];
 }
 
+export interface SetLoadingMessage {
+  readonly command: 'setLoading';
+}
+
 export interface CrossTabSearchResult {
   readonly tabId: string;
   readonly tabLabel: string;
@@ -126,6 +130,7 @@ export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
   | NavNotFoundMessage
+  | SetLoadingMessage
   | WindowStateChangedMessage
   | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage

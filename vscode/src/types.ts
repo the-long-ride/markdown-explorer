@@ -87,6 +87,10 @@ export interface NavNotFoundMessage {
   readonly href: string;
 }
 
+export interface SetLoadingMessage {
+  readonly command: 'setLoading';
+}
+
 export interface WorkspaceSearchResult {
   readonly fsPath: string;
   readonly title: string;
@@ -107,6 +111,7 @@ export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
   | NavNotFoundMessage
+  | SetLoadingMessage
   | WorkspaceSearchResultsMessage;
 
 // ── Webview message types (webview → host) ──────────────────

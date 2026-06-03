@@ -59,6 +59,10 @@ function getHostInfo() {
   };
 }
 
+function sendLoading() {
+  mainWindow?.webContents.send("host-message", { command: "setLoading" });
+}
+
 function createWindow() {
   mainWindow = createMainWindow({ appDir, debugTools, clampAppZoom });
 }
@@ -138,6 +142,7 @@ function handleOpenFolder(openFirstFile = false) {
     recentWorkspacesStore.save(selectedFolder);
     activeWorkspace = selectedFolder;
     currentFile = null;
+    sendLoading();
     sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
   }
 }
@@ -155,6 +160,7 @@ function handleOpenFile() {
     recentWorkspacesStore.save(folder);
     activeWorkspace = folder;
     currentFile = selectedFile;
+    sendLoading();
     sendWorkspaceData().then(() => sendContent());
   }
 }
@@ -183,6 +189,7 @@ function handleOpenPath(filePath, openFirstFile = false) {
   }
 
   recentWorkspacesStore.save(activeWorkspace);
+  sendLoading();
   sendWorkspaceData().then(() => sendInitialContent(openFirstFile && !isFile));
 }
 
@@ -294,6 +301,7 @@ function handleOpenRecent(folderPath, openFirstFile = false) {
   if (fs.existsSync(folderPath)) {
     recentWorkspacesStore.save(folderPath);
     activeWorkspace = folderPath;
+    sendLoading();
     if (fs.statSync(folderPath).isFile()) {
       currentFile = folderPath;
       sendWorkspaceData().then(() => sendInitialContent(false));
@@ -357,6 +365,61 @@ function handleCloseWorkspace() {
   handleReady();
 }
 
+function stripNavigationFragment(filePath) {
+  const hashIndex = filePath.indexOf("#");
+  return hashIndex === -1 ? filePath : filePath.slice(0, hashIndex);
+}
+
+function decodeNavigationPath(filePath) {
+  try {
+    return decodeURIComponent(filePath);
+  } catch {
+    return filePath;
+  }
+}
+
+function isRootRelativeWorkspaceHref(filePath) {
+  return (
+    filePath.startsWith("/") &&
+    !filePath.startsWith("//") &&
+    !/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(filePath)
+  );
+}
+
+function isSameOrInsidePath(parentPath, childPath) {
+  const relative = path.relative(path.resolve(parentPath), path.resolve(childPath));
+  return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function getWorkspaceBaseDir() {
+  if (!activeWorkspace || !fs.existsSync(activeWorkspace)) return null;
+  return fs.statSync(activeWorkspace).isFile()
+    ? path.dirname(activeWorkspace)
+    : activeWorkspace;
+}
+
+function resolveNavigationPath(filePath) {
+  const requestedPath = decodeNavigationPath(stripNavigationFragment(String(filePath)));
+  if (!requestedPath && currentFile) return currentFile;
+
+  const baseDir = getWorkspaceBaseDir();
+  const currentDir = currentFile ? path.dirname(currentFile) : baseDir;
+
+  if (baseDir && path.isAbsolute(requestedPath) && isSameOrInsidePath(baseDir, requestedPath)) {
+    return requestedPath;
+  }
+
+  if (baseDir && isRootRelativeWorkspaceHref(requestedPath)) {
+    return path.resolve(baseDir, `.${requestedPath}`);
+  }
+
+  if (!path.isAbsolute(requestedPath) && currentDir) {
+    return path.resolve(currentDir, requestedPath);
+  }
+
+  return requestedPath;
+}
+
 async function handleNavigate(filePath) {
   if (!filePath) {
     currentFile = null;
@@ -364,11 +427,7 @@ async function handleNavigate(filePath) {
     return;
   }
 
-  if (!path.isAbsolute(filePath) && activeWorkspace) {
-    const isFile = fs.statSync(activeWorkspace).isFile();
-    const baseDir = isFile ? path.dirname(activeWorkspace) : activeWorkspace;
-    filePath = path.resolve(baseDir, filePath);
-  }
+  filePath = resolveNavigationPath(filePath);
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     currentFile = filePath;
@@ -383,6 +442,7 @@ async function handleNavigate(filePath) {
 
 async function handleRefresh() {
   if (activeWorkspace) {
+    sendLoading();
     await sendWorkspaceData();
     if (currentFile) {
       await sendContent();

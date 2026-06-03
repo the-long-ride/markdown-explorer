@@ -27,6 +27,17 @@ const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 });
 
+function isWorkspaceNavigationHref(href: string): boolean {
+  const trimmed = href.trim();
+  if (!trimmed || trimmed === "#" || trimmed.startsWith("#")) return false;
+  if (/^[a-z][a-z\d+.-]*:/i.test(trimmed) || trimmed.startsWith("//")) return false;
+  return (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("./") ||
+    trimmed.startsWith("../")
+  );
+}
+
 interface ContentProps {
   onImageClick: (el: HTMLElement) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
@@ -38,7 +49,7 @@ export function Content({
   scrollRef,
   suppressWelcome = false,
 }: ContentProps) {
-  const { state } = useAppState();
+  const { state, navigate } = useAppState();
   const { push } = useNavigation();
   const bridge = usePlatform();
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -62,6 +73,23 @@ export function Content({
   useEffect(() => {
     if (state.currentFile) push(state.currentFile);
   }, [state.currentFile, push]);
+
+  useEffect(() => {
+    const win = window as any;
+    if (!win.Nav) win.Nav = {};
+    const previousGo = win.Nav.go;
+    const go = (fsPath: string | null) => {
+      if (!fsPath) return;
+      navigate(String(fsPath));
+    };
+
+    win.Nav.go = go;
+    return () => {
+      if (win.Nav?.go === go) {
+        win.Nav.go = previousGo;
+      }
+    };
+  }, [navigate]);
 
   // Post-render effects: highlight, mermaid, table init, click handlers, sticky header
   useEffect(() => {
@@ -119,6 +147,13 @@ export function Content({
       if (mermaidWrap) {
         onImageClick(mermaidWrap);
         return;
+      }
+      const link = target.closest<HTMLAnchorElement>(".mdn-body a[href]");
+      const href = link?.getAttribute("href") ?? "";
+      if (link && isWorkspaceNavigationHref(href)) {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(href);
       }
     };
     body.addEventListener("click", handleClick);
@@ -323,6 +358,7 @@ export function Content({
     state.isLoading,
     state.notFoundHref,
     onImageClick,
+    navigate,
     scrollRef,
     bridge,
   ]);

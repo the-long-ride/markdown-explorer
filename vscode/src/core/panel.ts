@@ -127,6 +127,7 @@ export class MarkdownDocsPanel {
   // ---------------------------------------------------------------------------
 
   async refresh(): Promise<void> {
+    await this._sendLoading();
     await this._render();
   }
 
@@ -240,6 +241,10 @@ export class MarkdownDocsPanel {
       fileList: this._flat,
     };
     await this._panel.webview.postMessage(msg);
+  }
+
+  private async _sendLoading(): Promise<void> {
+    await this._panel.webview.postMessage({ command: 'setLoading' });
   }
 
   private _makeSearchExcerpt(text: string, index: number, queryLength: number): string {
@@ -387,6 +392,59 @@ export class MarkdownDocsPanel {
     return p.toLowerCase().replace(/\\/g, '/');
   }
 
+  private _stripNavigationFragment(href: string): string {
+    const hashIndex = href.indexOf('#');
+    return hashIndex === -1 ? href : href.slice(0, hashIndex);
+  }
+
+  private _decodeNavigationHref(href: string): string {
+    try {
+      return decodeURIComponent(href);
+    } catch {
+      return href;
+    }
+  }
+
+  private _isRootRelativeWorkspaceHref(href: string): boolean {
+    return (
+      href.startsWith('/') &&
+      !href.startsWith('//') &&
+      !/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(href)
+    );
+  }
+
+  private _isSameOrInsidePath(parentPath: string, childPath: string): boolean {
+    const relative = path.relative(path.resolve(parentPath), path.resolve(childPath));
+    return relative === '' || (!!relative && !relative.startsWith('..') && !path.isAbsolute(relative));
+  }
+
+  private _resolveNavigationPath(href: string): string {
+    const requestedPath = this._decodeNavigationHref(this._stripNavigationFragment(href));
+    if (!requestedPath && this._currentFile) return this._currentFile;
+
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    const rootPath = workspaceFolder?.uri.fsPath ?? '';
+    const dir = this._currentFile ? path.dirname(this._currentFile) : rootPath;
+
+    if (
+      rootPath &&
+      path.isAbsolute(requestedPath) &&
+      this._isSameOrInsidePath(rootPath, requestedPath)
+    ) {
+      return requestedPath;
+    }
+
+    if (rootPath && this._isRootRelativeWorkspaceHref(requestedPath)) {
+      return path.resolve(rootPath, `.${requestedPath}`);
+    }
+
+    if (!path.isAbsolute(requestedPath)) {
+      return path.resolve(dir, requestedPath);
+    }
+
+    return requestedPath;
+  }
+
   private async _navigateTo(href: string | null): Promise<void> {
     if (!href) {
       this._currentFile = null;
@@ -394,20 +452,7 @@ export class MarkdownDocsPanel {
       return;
     }
 
-    try {
-      href = decodeURIComponent(href);
-    } catch {
-      // ignore
-    }
-
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    const rootPath = workspaceFolder?.uri.fsPath ?? '';
-    const dir = this._currentFile ? path.dirname(this._currentFile) : rootPath;
-
-    let resolvedPath = href.split('#')[0];
-    if (!path.isAbsolute(resolvedPath)) {
-      resolvedPath = path.resolve(dir, resolvedPath);
-    }
+    const resolvedPath = this._resolveNavigationPath(href);
 
     // Check if the resolved file actually exists on disk
     if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isFile()) {

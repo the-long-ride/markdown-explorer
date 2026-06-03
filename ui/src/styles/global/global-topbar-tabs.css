@@ -204,8 +204,19 @@ body {
   color: var(--tx);
 }
 
-.desktop-tabbar__tabs {
+.desktop-tabbar__tabs-wrap {
   flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__tabs {
+  width: 100%;
   min-width: 0;
   max-width: none;
   display: flex;
@@ -213,7 +224,65 @@ body {
   gap: 6px;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__tabs::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.desktop-tabbar__scrollbar {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: -8px;
+  height: 6px;
+  z-index: 2;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__scrollbar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 2px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.desktop-tabbar__scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  height: 4px;
+  min-width: 44px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 12px var(--accent-dim);
+  cursor: grab;
+  -webkit-app-region: no-drag;
+  transition: background 0.12s ease, height 0.12s ease, top 0.12s ease;
+}
+
+.desktop-tabbar__scrollbar:hover .desktop-tabbar__scrollbar-thumb,
+.desktop-tabbar__scrollbar.is-dragging .desktop-tabbar__scrollbar-thumb {
+  top: 2px;
+  height: 3px;
+  background: var(--accent-text);
+}
+
+.desktop-tabbar__scrollbar.is-dragging,
+.desktop-tabbar__scrollbar.is-dragging .desktop-tabbar__scrollbar-thumb {
+  cursor: grabbing;
 }
 
 .desktop-tab {
@@ -428,4 +497,3 @@ body {
 .tab-floating-toolbar__toggle {
   flex: 0 0 var(--control-h);
 }
-
