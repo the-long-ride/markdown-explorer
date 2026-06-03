@@ -1,0 +1,111 @@
+{
+  "version": "0.0.1",
+  "last_updated": "2026-06-03T08:53:15.746Z",
+  "entries": [
+    {
+      "id": "knowledge-markdown-explorer-host-path-resolution-for-internal-markdo",
+      "type": "knowledge",
+      "scope": "workspace",
+      "tags": [
+        "markdown-explorer",
+        "host",
+        "path",
+        "resolution",
+        "for",
+        "internal",
+        "markdown",
+        "navigation"
+      ],
+      "summary": "Knowledge: markdownexplorer host path resolution for internal markdo Context Approved from a human/agent conversation on 20260603; content ...",
+      "file": "knowledge/knowledge-markdown-explorer-host-path-resolution-for-internal-markdo.md",
+      "author": "unknown",
+      "confidence": "high",
+      "ignored": false,
+      "updated": "2026-06-03"
+    },
+    {
+      "id": "knowledge-markdown-explorer-internal-workspace-link-navigation-is-im",
+      "type": "knowledge",
+      "scope": "workspace",
+      "tags": [
+        "markdown-explorer",
+        "internal",
+        "workspace",
+        "link",
+        "navigation",
+        "is",
+        "implemented",
+        "by"
+      ],
+      "summary": "Knowledge: markdownexplorer internal workspace link navigation is im Context Approved from a human/agent conversation on 20260603; content ...",
+      "file": "knowledge/knowledge-markdown-explorer-internal-workspace-link-navigation-is-im.md",
+      "author": "unknown",
+      "confidence": "high",
+      "ignored": false,
+      "updated": "2026-06-03"
+    },
+    {
+      "id": "knowledge-markdown-explorer-loading-feedback-for-workspace-open-refr",
+      "type": "knowledge",
+      "scope": "workspace",
+      "tags": [
+        "markdown-explorer",
+        "loading",
+        "feedback",
+        "for",
+        "workspace",
+        "open",
+        "refresh",
+        "uses"
+      ],
+      "summary": "Knowledge: markdownexplorer loading feedback for workspace open/refr Context Approved from a human/agent conversation on 20260603; content ...",
+      "file": "knowledge/knowledge-markdown-explorer-loading-feedback-for-workspace-open-refr.md",
+      "author": "unknown",
+      "confidence": "high",
+      "ignored": false,
+      "updated": "2026-06-03"
+    },
+    {
+      "id": "knowledge-test-test-navigation-md-is-a-manual-fixture-for-internal-n",
+      "type": "knowledge",
+      "scope": "workspace",
+      "tags": [
+        "test",
+        "test-navigation",
+        "md",
+        "is",
+        "manual",
+        "fixture",
+        "for",
+        "internal"
+      ],
+      "summary": "Knowledge: test/testnavigation.md is a manual fixture for internal n Context Approved from a human/agent conversation on 20260603; content ...",
+      "file": "knowledge/knowledge-test-test-navigation-md-is-a-manual-fixture-for-internal-n.md",
+      "author": "unknown",
+      "confidence": "high",
+      "ignored": false,
+      "updated": "2026-06-03"
+    },
+    {
+      "id": "skill-for-markdown-explorer-ui-host-changes-verify-with-npm-run",
+      "type": "skill",
+      "scope": "workspace",
+      "tags": [
+        "for",
+        "markdown-explorer",
+        "ui",
+        "host",
+        "changes",
+        "verify",
+        "with",
+        "npm"
+      ],
+      "summary": "Skill: For markdownexplorer UI/host changes, verify with npm run Context Approved from a human/agent conversation on 20260603; content is w...",
+      "file": "skills/skill-for-markdown-explorer-ui-host-changes-verify-with-npm-run.md",
+      "author": "unknown",
+      "confidence": "high",
+      "ignored": false,
+      "updated": "2026-06-03"
+    }
+  ]
+}
