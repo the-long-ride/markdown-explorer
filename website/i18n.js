@@ -110,6 +110,8 @@ window.LANGS = {
       "Windows users should choose `.exe`. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.",
     footerBy: "Markdown Explorer by",
     footerIssues: "Issues",
+    footerPrivacy: "Privacy",
+    footerTerms: "Terms",
     footerLicense: "License",
     releaseApiNote: "Desktop downloads resolve to GitHub Release",
     releaseApiNoteFallback:
@@ -234,6 +236,8 @@ window.LANGS = {
       "Người dùng Windows nên chọn `.exe`. Người dùng Linux có thể chọn `.AppImage` hoặc `.deb`. Người dùng macOS nên chọn `.dmg`, với `arm64` cho Apple Silicon và `x64` cho Intel.",
     footerBy: "Markdown Explorer bởi",
     footerIssues: "Vấn đề",
+    footerPrivacy: "Quyền riêng tư",
+    footerTerms: "Điều khoản",
     footerLicense: "Giấy phép",
     releaseApiNote: "Nút tải máy tính trỏ đến GitHub Release",
     releaseApiNoteFallback:
@@ -360,6 +364,8 @@ window.LANGS = {
       "Les utilisateurs Windows doivent choisir `.exe`. Les utilisateurs Linux peuvent choisir `.AppImage` ou `.deb`. Les utilisateurs macOS doivent choisir `.dmg`, avec `arm64` pour Apple Silicon et `x64` pour Intel.",
     footerBy: "Markdown Explorer par",
     footerIssues: "Problèmes",
+    footerPrivacy: "Confidentialité",
+    footerTerms: "Conditions",
     footerLicense: "Licence",
     releaseApiNote: "Les téléchargements bureau pointent vers GitHub Release",
     releaseApiNoteFallback:
@@ -486,6 +492,8 @@ window.LANGS = {
       "Los usuarios de Windows deben elegir `.exe`. Los usuarios de Linux pueden elegir `.AppImage` o `.deb`. Los usuarios de macOS deben elegir `.dmg`, con `arm64` para Apple Silicon y `x64` para Intel.",
     footerBy: "Markdown Explorer por",
     footerIssues: "Problemas",
+    footerPrivacy: "Privacidad",
+    footerTerms: "Términos",
     footerLicense: "Licencia",
     releaseApiNote: "Las descargas de escritorio apuntan a GitHub Release",
     releaseApiNoteFallback:
@@ -602,6 +610,8 @@ window.LANGS = {
       "Windows 用户应选择 `.exe`。Linux 用户可以选择 `.AppImage` 或 `.deb`。macOS 用户应选择 `.dmg`，Apple Silicon 使用 `arm64`，Intel 使用 `x64`。",
     footerBy: "Markdown Explorer 作者",
     footerIssues: "问题反馈",
+    footerPrivacy: "隐私",
+    footerTerms: "条款",
     footerLicense: "许可证",
     releaseApiNote: "桌面下载指向 GitHub Release",
     releaseApiNoteFallback: "桌面下载从 GitHub Releases API 解析。",
@@ -724,6 +734,8 @@ window.LANGS = {
       "Windows-brukere bør velge `.exe`. Linux-brukere kan velge `.AppImage` eller `.deb`. macOS-brukere bør velge `.dmg`, med `arm64` for Apple Silicon og `x64` for Intel.",
     footerBy: "Markdown Explorer av",
     footerIssues: "Problemer",
+    footerPrivacy: "Personvern",
+    footerTerms: "Vilkår",
     footerLicense: "Lisens",
     releaseApiNote: "Skrivebordsnedlastinger peker til GitHub Release",
     releaseApiNoteFallback:
@@ -849,6 +861,8 @@ window.LANGS = {
       "Windows ユーザーは `.exe` を選択してください。Linux ユーザーは `.AppImage` 或いは `.deb` を選択できます。macOS ユーザーは `.dmg` を選択し、Apple Silicon には `arm64`、Intel には `x64` を使用してください。",
     footerBy: "Markdown Explorer 作者",
     footerIssues: "問題",
+    footerPrivacy: "プライバシー",
+    footerTerms: "利用規約",
     footerLicense: "ライセンス",
     releaseApiNote: "デスクトップダウンロードは GitHub Release を指します",
     releaseApiNoteFallback:
@@ -972,6 +986,8 @@ window.LANGS = {
       "Windows 사용자는 `.exe`를 선택해야 합니다. Linux 사용자는 `.AppImage` 또는 `.deb`를 선택할 수 있습니다. macOS 사용자는 Apple Silicon의 경우 `arm64`, Intel의 경우 `x64`를 사용하여 `.dmg`를 선택해야 합니다.",
     footerBy: "Markdown Explorer 제작자",
     footerIssues: "이슈",
+    footerPrivacy: "개인정보",
+    footerTerms: "약관",
     footerLicense: "라이선스",
     releaseApiNote: "데스크톱 다운로드가 GitHub Release를 가리킵니다",
     releaseApiNoteFallback:
@@ -1097,6 +1113,8 @@ window.LANGS = {
       "Пользователям Windows следует выбрать `.exe`. Пользователи Linux могут выбрать `.AppImage` или `.deb`. Пользователям macOS следует выбрать `.dmg`, с `arm64` для Apple Silicon и `x64` для Intel.",
     footerBy: "Markdown Explorer от",
     footerIssues: "Проблемы",
+    footerPrivacy: "Конфиденциальность",
+    footerTerms: "Условия",
     footerLicense: "Лицензия",
     releaseApiNote: "Загрузки рабочего стола указывают на GitHub Release",
     releaseApiNoteFallback:
