@@ -234,7 +234,7 @@
 .mdn-divider {
   border: none;
   border-top: var(--stroke-w) solid var(--bd-s);
-  margin: 16px 0;
+  margin: 8px 0;
 }
 .mdn-blockquote {
   border-left: 3px solid var(--bd-x);

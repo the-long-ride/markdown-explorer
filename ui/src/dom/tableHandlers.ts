@@ -20,6 +20,7 @@ export function registerTableHandlers(win: any) {
     filters: TableFilterMap;
     chartInstance: any;
     currentView: string;
+    wrapped: boolean;
     chartable: boolean;
     labelColIdx: number;
     dataColIdxs: number[];
@@ -66,12 +67,33 @@ export function registerTableHandlers(win: any) {
         filters: {},
         chartInstance: null,
         currentView: 'table',
+        wrapped: false,
         chartable: false,
         labelColIdx: 0,
         dataColIdxs: []
       };
     }
     return win.Table.states[tableId];
+  };
+
+  const syncWrapState = (tableId: string, state: TableState) => {
+    const wrap = document.getElementById(tableId + '-wrap');
+    const button = document.getElementById(tableId + '-wrap-toggle');
+    wrap?.classList.toggle('is-wrapped', state.wrapped);
+
+    if (button) {
+      button.hidden = state.currentView !== 'table';
+      button.classList.toggle('is-active', state.wrapped);
+      button.setAttribute('aria-pressed', String(state.wrapped));
+      button.setAttribute('title', state.wrapped ? 'Unwrap table text' : 'Wrap table text');
+
+      const label = button.querySelector('.mdn-table-wrap-toggle__label');
+      if (label) {
+        label.textContent = state.wrapped ? 'Unwrap' : 'Wrap';
+      } else {
+        button.lastChild?.replaceWith(document.createTextNode(state.wrapped ? ' Unwrap' : ' Wrap'));
+      }
+    }
   };
 
   win.Table.sort = (tableId: string, colIndex: number) => {
@@ -268,6 +290,12 @@ export function registerTableHandlers(win: any) {
     win.Table.applyAllFilters(tableId);
   };
 
+  win.Table.toggleWrap = (tableId: string) => {
+    const state = win.Table.initState(tableId);
+    state.wrapped = !state.wrapped;
+    syncWrapState(tableId, state);
+  };
+
   win.Table.updateCount = (tableId: string) => {
     const table = document.getElementById(tableId) as HTMLTableElement | null;
     if (!table) return;
@@ -350,6 +378,7 @@ export function registerTableHandlers(win: any) {
         btn.classList.toggle('is-active', btn.id === `${tableId}-view-${view}`);
       });
     }
+    syncWrapState(tableId, state);
 
     const scrollEl = document.getElementById(tableId + '-scroll');
     const chartContainer = document.getElementById(tableId + '-chart-container');

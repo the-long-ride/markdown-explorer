@@ -275,7 +275,12 @@ export class HtmlRenderer {
       <input class="mdn-table-input" type="search" placeholder="Filter rows…" oninput="Table.filter('${id}',this.value)" />
     </label>
     <span class="mdn-row-count" id="${id}-count"></span>
-    <div class="mdn-table-view-switcher" id="${id}-switcher" style="margin-left:auto; display:flex; gap:4px;"></div>
+    <div class="mdn-table-toolbar-actions">
+      <button class="mdn-table-wrap-toggle" id="${id}-wrap-toggle" onclick="Table.toggleWrap('${id}', this)" aria-pressed="false" title="Wrap table text">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7h16"/><path d="M4 12h10a4 4 0 0 1 0 8H9"/><path d="m12 17-3 3 3 3"/></svg><span class="mdn-table-wrap-toggle__label">Wrap</span>
+      </button>
+      <div class="mdn-table-view-switcher" id="${id}-switcher"></div>
+    </div>
   </div>
   <div class="mdn-table-scroll" id="${id}-scroll">
     <table class="mdn-table" id="${id}">
