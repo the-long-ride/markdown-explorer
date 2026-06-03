@@ -57,6 +57,15 @@
   .download-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .legal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .legal-toc {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -132,6 +141,10 @@
   .gallery-item img {
     height: auto;
     min-height: 0;
+  }
+
+  .legal-toc {
+    grid-template-columns: 1fr;
   }
 }
 

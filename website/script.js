@@ -209,58 +209,60 @@
       });
     });
 
-  Promise.all([fetchJson(latestApiUrl), fetchReleasePages()])
-    .then(([release, releases]) => {
-      const latestAssets = Array.isArray(release.assets) ? release.assets : [];
-      const allReleaseAssets = releases.flatMap((item) =>
-        Array.isArray(item.assets) ? item.assets : [],
-      );
-      const releaseVersion = release.tag_name || release.name || "";
-      let selectedDesktopDownloads = 0;
-      buttons.forEach((button) => {
-        const baseLabel =
-          baseButtonLabels.get(button) || button.textContent.trim();
-        const versionedLabel = releaseVersion
-          ? `${baseLabel} ${releaseVersion}`
-          : baseLabel;
-        const platformAssets = getPlatformAssets(
-          allReleaseAssets,
-          button.dataset.platform,
+  if (note || buttons.length > 0) {
+    Promise.all([fetchJson(latestApiUrl), fetchReleasePages()])
+      .then(([release, releases]) => {
+        const latestAssets = Array.isArray(release.assets) ? release.assets : [];
+        const allReleaseAssets = releases.flatMap((item) =>
+          Array.isArray(item.assets) ? item.assets : [],
         );
-        const asset = pickAsset(latestAssets, button.dataset.platform);
-        const downloads = getDownloadCount(platformAssets);
-        const countLabel = downloadCountLabels.get(button);
-        button.textContent = versionedLabel;
-        selectedDesktopDownloads += downloads;
-        setDownloadCountLabel(countLabel, downloads);
+        const releaseVersion = release.tag_name || release.name || "";
+        let selectedDesktopDownloads = 0;
+        buttons.forEach((button) => {
+          const baseLabel =
+            baseButtonLabels.get(button) || button.textContent.trim();
+          const versionedLabel = releaseVersion
+            ? `${baseLabel} ${releaseVersion}`
+            : baseLabel;
+          const platformAssets = getPlatformAssets(
+            allReleaseAssets,
+            button.dataset.platform,
+          );
+          const asset = pickAsset(latestAssets, button.dataset.platform);
+          const downloads = getDownloadCount(platformAssets);
+          const countLabel = downloadCountLabels.get(button);
+          button.textContent = versionedLabel;
+          selectedDesktopDownloads += downloads;
+          setDownloadCountLabel(countLabel, downloads);
 
-        if (!asset) {
-          button.href = release.html_url || releaseUrl;
+          if (!asset) {
+            button.href = release.html_url || releaseUrl;
+            button.setAttribute(
+              "aria-label",
+              `${versionedLabel}. Opens the GitHub Release page.`,
+            );
+            return;
+          }
+
+          button.href = asset.browser_download_url;
           button.setAttribute(
             "aria-label",
-            `${versionedLabel}. Opens the GitHub Release page.`,
+            `Download ${asset.name} from GitHub Release ${releaseVersion || "latest"}`,
           );
-          return;
-        }
+          button.title = asset.name;
+        });
 
-        button.href = asset.browser_download_url;
-        button.setAttribute(
-          "aria-label",
-          `Download ${asset.name} from GitHub Release ${releaseVersion || "latest"}`,
+        setReleaseNote(
+          releaseVersion
+            ? `${t().releaseApiNote} ${releaseVersion}.`
+            : t().releaseApiNoteFallback,
+          selectedDesktopDownloads,
         );
-        button.title = asset.name;
+      })
+      .catch(() => {
+        setFallback(t().releaseApiFail);
       });
-
-      setReleaseNote(
-        releaseVersion
-          ? `${t().releaseApiNote} ${releaseVersion}.`
-          : t().releaseApiNoteFallback,
-        selectedDesktopDownloads,
-      );
-    })
-    .catch(() => {
-      setFallback(t().releaseApiFail);
-    });
+  }
 
   /* ── Image Lightbox Modal ──────────────────────────────────── */
   document.querySelectorAll(".feature-card img, .gallery-item img, .hero-media img").forEach((img) => {
