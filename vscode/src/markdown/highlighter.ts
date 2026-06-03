@@ -4,6 +4,83 @@
 
 type Rule = [RegExp, string];
 
+type TokenMatch = {
+  start: number;
+  end: number;
+  cls: string;
+  text: string;
+};
+
+const SIMPLE_GROUP_A_CLASSES = new Set(['cm', 'str', 'attr']);
+const DOLLAR_BRACE_LANGS = new Set([
+  'javascript', 'js',
+  'typescript', 'ts',
+  'bash', 'sh', 'shell',
+  'php', 'hack',
+  'perl', 'pl',
+  'kotlin', 'kt',
+  'scala',
+  'dart',
+  'csharp', 'cs', 'c#',
+]);
+const BARE_DOLLAR_LANGS = new Set([
+  'bash', 'sh', 'shell',
+  'php', 'hack',
+  'perl', 'pl',
+  'kotlin', 'kt',
+  'scala',
+  'dart',
+]);
+const HASH_BRACE_LANGS = new Set(['ruby', 'rb', 'elixir', 'ex', 'exs']);
+const PYTHON_LANGS = new Set(['python', 'py']);
+const JAVASCRIPT_LANGS = new Set(['javascript', 'js', 'typescript', 'ts']);
+const CSHARP_LANGS = new Set(['csharp', 'cs', 'c#']);
+
+function cloneGlobalRegex(regex: RegExp): RegExp {
+  return new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : `${regex.flags}g`);
+}
+
+function isSingleQuotedString(value: string): boolean {
+  return /^(?:[rRuUbBfF]+)?'''/.test(value) || /^(?:[rRuUbBfF]+)?'/.test(value);
+}
+
+function isPythonFString(value: string): boolean {
+  return /^[rRuUbB]*[fF][rRuUbB]*(?=["'])/.test(value);
+}
+
+function isCSharpInterpolatedString(value: string): boolean {
+  return /^\$@?"/.test(value) || /^@\$"/.test(value);
+}
+
+function highlightStringInterpolations(value: string, lang: string): string {
+  const canUseDollarBrace = DOLLAR_BRACE_LANGS.has(lang) &&
+    (!JAVASCRIPT_LANGS.has(lang) || value.startsWith('`')) &&
+    (!CSHARP_LANGS.has(lang) || isCSharpInterpolatedString(value));
+  const canUseBareDollar = BARE_DOLLAR_LANGS.has(lang) && !isSingleQuotedString(value) && !/^r["']/.test(value);
+  const canUseHashBrace = HASH_BRACE_LANGS.has(lang) && !isSingleQuotedString(value);
+  const canUsePythonBrace = PYTHON_LANGS.has(lang) && isPythonFString(value);
+  const canUseSwiftParen = lang === 'swift' && !isSingleQuotedString(value);
+
+  let result = value;
+  if (canUseDollarBrace) {
+    result = result.replace(/(\$\{)([^{}\n]+)(\})/g, '$1<span class="hl-var">$2</span>$3');
+  }
+  if (canUseHashBrace) {
+    result = result.replace(/(#\{)([^{}\n]+)(\})/g, '$1<span class="hl-var">$2</span>$3');
+  }
+  if (canUseSwiftParen) {
+    result = result.replace(/(\\\()([^()\n]+)(\))/g, '$1<span class="hl-var">$2</span>$3');
+  }
+  if (canUsePythonBrace || (CSHARP_LANGS.has(lang) && isCSharpInterpolatedString(value))) {
+    result = result.replace(/(\{)([^{}\n]+)(\})/g, '$1<span class="hl-var">$2</span>$3');
+  }
+  if (canUseBareDollar) {
+    result = result.replace(/(\$)(?!\{)([\w#@*!?-]+)/g, '$1<span class="hl-var">$2</span>');
+  }
+
+  return result;
+}
+
 const RULES: Record<string, Rule[]> = {
   javascript: [
     [/\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|new|import|export|default|from|of|in|typeof|instanceof|async|await|try|catch|finally|throw|void|delete|yield|this)\b/g, 'kw'],
@@ -37,7 +114,7 @@ const RULES: Record<string, Rule[]> = {
   python: [
     [/\b(def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|pass|break|continue|and|or|not|in|is|lambda|True|False|None|yield|global|nonlocal|del|assert)\b/g, 'kw'],
     [/(#[^\n]*)/g, 'cm'],
-    [/("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, 'str'],
+    [/(?:[rRuUbBfF]{0,3})("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, 'str'],
     [/\b(\d+\.?\d*(?:e[+-]?\d+)?)\b/g, 'num'],
     [/(<span class="hl-kw">class<\/span>\s+)([a-zA-Z_]\w*)/g, '$1<span class="hl-sel">$2</span>'],
     [/(<span class="hl-kw">def<\/span>\s+)([a-zA-Z_]\w*)/g, '$1<span class="hl-func">$2</span>'],
@@ -151,7 +228,7 @@ const RULES: Record<string, Rule[]> = {
     [/\b(abstract|as|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|false|finally|fixed|float|for|foreach|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|private|protected|public|readonly|ref|return|sbyte|sealed|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|virtual|void|volatile|while|add|alias|and|ascending|args|async|await|by|descending|dynamic|equals|from|get|global|group|init|into|join|let|managed|nameof|not|notnull|on|or|orderby|partial|record|remove|select|set|unmanaged|value|var|when|where|with|yield)\b/g, 'kw'],
     [/(\/\/[^\n]*)/g, 'cm'],
     [/(\/\*[\s\S]*?\*\/)/g, 'cm'],
-    [/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|@"(?:[^"]|"")*")/g, 'str'],
+    [/(\$@"(?:[^"]|"")*"|@\$"(?:[^"]|"")*"|\$"(?:[^"\\]|\\.)*"|@"(?:[^"]|"")*"|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, 'str'],
     [/\b(0x[0-9a-fA-F]+|\d+\.?\d*(?:e[+-]?\d+)?)\b/g, 'num'],
     [/(<span class="hl-kw">namespace<\/span>\s+)([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)/g, '$1<span class="hl-pkg">$2</span>'],
     [/(<span class="hl-kw">(class|interface|struct|record)<\/span>\s+)([a-zA-Z_]\w*)/g, '$1<span class="hl-sel">$3</span>'],
@@ -214,7 +291,7 @@ const RULES: Record<string, Rule[]> = {
     [/\b(abstract|case|catch|class|def|do|else|extends|false|final|finally|for|forSome|if|implicit|import|lazy|match|new|null|object|override|package|private|protected|return|sealed|super|this|throw|trait|true|try|type|val|var|while|with|yield|macro)\b/g, 'kw'],
     [/(\/\/[^\n]*)/g, 'cm'],
     [/(\/\*[\s\S]*?\*\/)/g, 'cm'],
-    [/("(?:[^"\\]|\\.)*"|"""[\s\S]*?""")/g, 'str'],
+    [/([sfr]"""[\s\S]*?"""|[sfr]"(?:[^"\\]|\\.)*"|"(?:[^"\\]|\\.)*"|"""[\s\S]*?""")/g, 'str'],
     [/\b(0x[0-9a-fA-F]+|\d+\.?\d*(?:e[+-]?\d+)?)\b/g, 'num'],
     [/(<span class="hl-kw">(class|trait|object)<\/span>\s+)([a-zA-Z_]\w*)/g, '$1<span class="hl-sel">$3</span>'],
     [/(<span class="hl-kw">def<\/span>\s+)([a-zA-Z_]\w*)/g, '$1<span class="hl-func">$2</span>'],
@@ -354,22 +431,66 @@ export function highlight(code: string, lang: string): string {
   const rules = RULES[lowerLang];
   if (!rules) return result;
 
-  // Partition rules into Group A (comments, strings, attributes) and Group B (all others)
-  const groupA: Rule[] = [];
+  // Partition rules into simple Group A tokens, complex Group A replacements, and Group B.
+  // Simple tokens are masked by source position so `//` inside a string stays part of the string.
+  const simpleGroupA: Rule[] = [];
+  const complexGroupA: Rule[] = [];
   const groupB: Rule[] = [];
   for (const rule of rules) {
     const [_, cls] = rule;
-    const isGroupA = cls === 'cm' || cls === 'str' || cls === 'attr' ||
-                     cls.includes('hl-cm') || cls.includes('hl-str') || cls.includes('hl-attr');
-    if (isGroupA) {
-      groupA.push(rule);
+    const isSimpleGroupA = SIMPLE_GROUP_A_CLASSES.has(cls);
+    const isComplexGroupA = cls.includes('hl-cm') || cls.includes('hl-str') || cls.includes('hl-attr');
+    if (isSimpleGroupA) {
+      simpleGroupA.push(rule);
+    } else if (isComplexGroupA) {
+      complexGroupA.push(rule);
     } else {
       groupB.push(rule);
     }
   }
 
-  // Phase 1: Run Group A rules and mask their matched spans immediately to isolate comments/strings
-  for (const [regex, cls] of groupA) {
+  // Phase 1: Mask comments/strings/attributes by lexical position, not rule order.
+  const tokenMatches: TokenMatch[] = [];
+  for (const [regex, cls] of simpleGroupA) {
+    const matcher = cloneGlobalRegex(regex);
+    let match: RegExpExecArray | null;
+    while ((match = matcher.exec(result)) !== null) {
+      const text = match[0];
+      if (!text) {
+        matcher.lastIndex += 1;
+        continue;
+      }
+      tokenMatches.push({
+        start: match.index,
+        end: match.index + text.length,
+        cls,
+        text,
+      });
+    }
+  }
+
+  tokenMatches.sort((a, b) => a.start - b.start || b.end - b.start - (a.end - a.start));
+
+  let maskedResult = '';
+  let cursor = 0;
+  let maskedUntil = 0;
+  for (const match of tokenMatches) {
+    if (match.start < maskedUntil) continue;
+
+    maskedResult += result.slice(cursor, match.start);
+    const content = match.cls === 'str'
+      ? highlightStringInterpolations(match.text, lowerLang)
+      : match.text;
+    const idx = placeholders.length;
+    placeholders.push(`<span class="hl-${match.cls}">${content}</span>`);
+    maskedResult += getPlaceholder(idx);
+    cursor = match.end;
+    maskedUntil = match.end;
+  }
+  result = maskedResult + result.slice(cursor);
+
+  // Phase 1b: Run complex Group A replacements, then mask their spans too.
+  for (const [regex, cls] of complexGroupA) {
     if (cls.includes('<') || cls.includes('$')) {
       result = result.replace(regex, cls);
     } else {

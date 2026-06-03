@@ -5,7 +5,7 @@
   background: var(--bg-code);
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r-lg);
-  margin: 12px 0;
+  margin: 8px 0;
   box-shadow: var(--sh-sm);
   position: relative;
   transition:
@@ -59,7 +59,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--section-header-pad-y) - 2px) var(--section-header-pad-x);
+  padding: calc(var(--section-header-pad-y) - 4px) var(--section-header-pad-x);
   background: var(--bg-e);
   border-bottom: var(--stroke-w) solid var(--bd-s);
   border-top-left-radius: calc(var(--r-lg) - 1px);
@@ -84,7 +84,7 @@
   border-radius: 3px;
   color: var(--txm);
   font-size: 10.5px;
-  padding: 2px 7px;
+  padding: 1px 6px;
   cursor: pointer;
   transition: all 0.12s;
   font-family: var(--font-ui);

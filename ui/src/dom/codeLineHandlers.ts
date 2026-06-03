@@ -105,17 +105,53 @@ export function registerCodeLineHandlers() {
     return Math.min(Math.max(beforeRange.toString().length, 0), textLength);
   };
 
-  const getSelectedCodeLines = (code: HTMLElement, range: Range): { start: number; end: number } | null => {
+  const getSelectedCodeLinesFromRects = (block: HTMLElement, code: HTMLElement, range: Range): { start: number; end: number } | null => {
+    const count = getCodeLineNumbers(block).length;
+    if (!count) return null;
+
+    const pre = code.closest('.mdn-pre') as HTMLElement | null;
+    const measureEl = pre ?? code;
+    const styles = window.getComputedStyle(measureEl);
+    const fontSize = parseFloat(styles.fontSize) || 12;
+    const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.6;
+    const codeRect = code.getBoundingClientRect();
+    if (!codeRect.height || !lineHeight) return null;
+
+    let startLine = Number.POSITIVE_INFINITY;
+    let endLine = Number.NEGATIVE_INFINITY;
+    Array.from(range.getClientRects()).forEach((rect) => {
+      if (!rect.width && !rect.height) return;
+      const top = Math.max(rect.top, codeRect.top);
+      const bottom = Math.min(rect.bottom, codeRect.bottom);
+      if (bottom <= top) return;
+
+      const rectStartLine = clampCodeLine(Math.floor((top - codeRect.top) / lineHeight) + 1, count);
+      const rectEndLine = clampCodeLine(Math.floor((bottom - 1 - codeRect.top) / lineHeight) + 1, count);
+      startLine = Math.min(startLine, rectStartLine);
+      endLine = Math.max(endLine, rectEndLine);
+    });
+
+    if (!Number.isFinite(startLine) || !Number.isFinite(endLine)) return null;
+    return { start: startLine, end: endLine };
+  };
+
+  const getSelectedCodeLines = (block: HTMLElement, code: HTMLElement, range: Range): { start: number; end: number } | null => {
     const text = code.textContent ?? '';
     const startOffset = getCodeTextOffset(code, range.startContainer, range.startOffset);
     const endOffset = getCodeTextOffset(code, range.endContainer, range.endOffset);
     const start = Math.min(startOffset, endOffset);
     const end = Math.max(startOffset, endOffset);
-    if (end <= start) return null;
+    const rectLines = getSelectedCodeLinesFromRects(block, code, range);
+    if (end <= start) return rectLines;
 
     const startLine = offsetToCodeLine(text, start);
     const endLine = offsetToCodeLine(text, Math.max(start, end - 1));
-    return { start: startLine, end: endLine };
+    if (!rectLines) return { start: startLine, end: endLine };
+
+    return {
+      start: Math.min(startLine, rectLines.start),
+      end: Math.max(endLine, rectLines.end),
+    };
   };
 
   const syncCodeSelection = () => {
@@ -143,7 +179,7 @@ export function registerCodeLineHandlers() {
         return;
       }
 
-      const selectedLines = getSelectedCodeLines(code, range);
+      const selectedLines = getSelectedCodeLines(block, code, range);
       if (!selectedLines) {
         setSelectedCodeLines(block, null);
         return;
@@ -153,7 +189,7 @@ export function registerCodeLineHandlers() {
     });
   };
 
-  const updatePointerCodeLine = (event: PointerEvent | MouseEvent) => {
+  const updatePointerCodeLine = (event: PointerEvent | MouseEvent): { block: HTMLElement; line: number | null } | null => {
     const target = event.target instanceof Element ? event.target : null;
     const pre = target?.closest('.mdn-pre') as HTMLElement | null;
 
@@ -161,17 +197,50 @@ export function registerCodeLineHandlers() {
       if (target && !target.closest('.mdn-codeblock')) {
         clearCodeLineState();
       }
-      return;
+      return null;
     }
 
     const block = pre.closest('.mdn-codeblock') as HTMLElement | null;
-    if (!block) return;
+    if (!block) return null;
 
     clearCodeLineState(block);
     const line = lineFromPointer(pre, event.clientY);
     if (line !== null) {
       setActiveCodeLine(block, line);
     }
+    return { block, line };
+  };
+
+  let dragBlock: HTMLElement | null = null;
+  let dragStartLine: number | null = null;
+
+  const beginPointerCodeSelection = (event: PointerEvent) => {
+    const state = updatePointerCodeLine(event);
+    dragBlock = state?.block ?? null;
+    dragStartLine = state?.line ?? null;
+
+    if (dragBlock) {
+      setSelectedCodeLines(dragBlock, null);
+    }
+  };
+
+  const updatePointerCodeSelection = (event: PointerEvent) => {
+    if ((event.buttons & 1) !== 1) return;
+
+    if (!dragBlock || dragStartLine === null) {
+      updatePointerCodeLine(event);
+      return;
+    }
+
+    const pre = dragBlock.querySelector('.mdn-pre') as HTMLElement | null;
+    if (!pre) return;
+
+    clearCodeLineState(dragBlock);
+    const line = lineFromPointer(pre, event.clientY);
+    if (line === null) return;
+
+    setActiveCodeLine(dragBlock, line);
+    setSelectedCodeLines(dragBlock, dragStartLine, line);
   };
 
   let codeSelectionFrame = 0;
@@ -183,11 +252,17 @@ export function registerCodeLineHandlers() {
     });
   };
 
-  document.addEventListener('pointerdown', updatePointerCodeLine, true);
+  const finishPointerCodeSelection = () => {
+    dragBlock = null;
+    dragStartLine = null;
+    scheduleCodeSelectionSync();
+  };
+
+  document.addEventListener('pointerdown', beginPointerCodeSelection, true);
   document.addEventListener('click', updatePointerCodeLine, true);
-  document.addEventListener('pointermove', (event) => {
-    if ((event.buttons & 1) !== 1) return;
-    updatePointerCodeLine(event);
-  }, true);
+  document.addEventListener('pointermove', updatePointerCodeSelection, true);
+  document.addEventListener('pointerup', finishPointerCodeSelection, true);
+  document.addEventListener('pointercancel', finishPointerCodeSelection, true);
   document.addEventListener('selectionchange', scheduleCodeSelectionSync);
+  document.addEventListener('keyup', scheduleCodeSelectionSync, true);
 }
