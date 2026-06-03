@@ -4,6 +4,23 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.5] — 2026-06-03
+
+### Added Features & Enhancements
+- **Internal Workspace Links**: Markdown links starting with `/`, `./`, or `../` now navigate to referenced workspace files and stay in back/forward history.
+- **Navigation Test Fixture**: Added `test/test-navigation.md` to exercise same-folder, workspace-root, and parent-directory Markdown links.
+- **Workspace Loading Feedback**: Opening workspaces and refreshing now show the existing loading screen while host scan and render work is in progress.
+- **Desktop Tab Scrollbar**: Added a draggable custom accent-colored tab scrollbar positioned below the desktop tab strip.
+
+### Changed
+- **README Homepage Link**: Added the Markdown Explorer homepage link to the README.
+- **VS Code Marketplace Homepage**: The VS Code extension manifest now points to the GitHub Pages homepage.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, and lockfile metadata to `1.4.5`.
+
+---
+
 ## [1.4.4] — 2026-06-02
 
 ### Added Features & Enhancements

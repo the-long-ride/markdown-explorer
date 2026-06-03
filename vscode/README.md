@@ -9,6 +9,8 @@ Markdown files are built for AI agents. **Markdown Explorer** makes them pleasan
 
 It turns `.md` and `.mdx` folders into a private, searchable documentation app inside VS Code, with workspace navigation, rendered diagrams, math, videos, highlighted code, interactive tables, charts, and a real reading layout. A standalone desktop app is also available for Windows, Linux, and [macOS](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md).
 
+Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-ride.github.io/markdown-explorer/)
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png" width="900" alt="Markdown Explorer homepage with workspace navigation and reading layout" />
 </p>
