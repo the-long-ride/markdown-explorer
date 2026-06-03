@@ -1,6 +1,6 @@
 {
   "version": "0.0.1",
-  "last_updated": "2026-06-03T08:53:15.746Z",
+  "last_updated": "2026-06-03T13:02:43.052Z",
   "entries": [
     {
       "id": "knowledge-markdown-explorer-host-path-resolution-for-internal-markdo",
@@ -82,6 +82,27 @@
       "summary": "Knowledge: test/testnavigation.md is a manual fixture for internal n Context Approved from a human/agent conversation on 20260603; content ...",
       "file": "knowledge/knowledge-test-test-navigation-md-is-a-manual-fixture-for-internal-n.md",
       "author": "unknown",
+      "confidence": "high",
+      "ignored": false,
+      "updated": "2026-06-03"
+    },
+    {
+      "id": "skill-bump-version-v-parameter-from-human-will-be-a-versio",
+      "type": "skill",
+      "scope": "workspace",
+      "tags": [
+        "bump",
+        "version",
+        "parameter",
+        "from",
+        "human",
+        "will",
+        "be",
+        "in"
+      ],
+      "summary": "Skill: Bump version v... Parameter from human will be a versio Context Approved from a human/agent conversation on 20260603; content is wri...",
+      "file": "skills/skill-bump-version-v-parameter-from-human-will-be-a-versio.md",
+      "author": "long.trinh@upheads.no",
       "confidence": "high",
       "ignored": false,
       "updated": "2026-06-03"

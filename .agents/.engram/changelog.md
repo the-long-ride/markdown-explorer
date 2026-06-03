@@ -4,3 +4,6 @@
 - 2026-06-03T08:53:15.732Z knowledge/knowledge-test-test-navigation-md-is-a-manual-fixture-for-internal-n.md: add knowledge: knowledge-test-test-navigation-md-is-a-manual-fixture-for-internal-n
 - 2026-06-03T08:53:15.742Z knowledge/knowledge-markdown-explorer-loading-feedback-for-workspace-open-refr.md: add knowledge: knowledge-markdown-explorer-loading-feedback-for-workspace-open-refr
 - 2026-06-03T08:53:15.748Z skills/skill-for-markdown-explorer-ui-host-changes-verify-with-npm-run.md: add skill: skill-for-markdown-explorer-ui-host-changes-verify-with-npm-run
+- 2026-06-03T13:01:31.022Z skills/skill-bump-version-v-parameter-from-human-will-be-a-versio.md: add skill: skill-bump-version-v-parameter-from-human-will-be-a-versio
+- 2026-06-03T13:02:00.873Z skills/skill-bump-version-v-parameter-from-human-will-be-a-versio.md: update skill: skill-bump-version-v-parameter-from-human-will-be-a-versio
+- 2026-06-03T13:02:43.055Z skills/skill-bump-version-v-parameter-from-human-will-be-a-versio.md: update skill: skill-bump-version-v-parameter-from-human-will-be-a-versio
