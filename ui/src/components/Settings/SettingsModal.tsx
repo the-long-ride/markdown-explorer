@@ -45,6 +45,11 @@ const ACTIONS_LIST = [
   { id: "zoomOut", label: "Zoom out", scope: "desktop" },
 ];
 
+function formatCurrentVersion(version: string) {
+  const match = version.trim().match(/^v?(\d+)\.(\d+)\.(\d+)/i);
+  return match ? `v${match[1]}.${match[2]}.${match[3]}` : "";
+}
+
 export function SettingsModal({
   isOpen,
   onClose,
@@ -81,6 +86,9 @@ export function SettingsModal({
 
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
+  const currentVersionLabel = formatCurrentVersion(
+    updateCheck.currentVersion || state.appVersion,
+  );
 
   const handleLanguageChange = (lang: string) => {
     updateSettings({ language: lang });
@@ -149,6 +157,9 @@ export function SettingsModal({
         className="settings-card settings-card--settings"
       >
         <div className="settings-card__top-actions">
+          {currentVersionLabel && (
+            <span className="settings-current-version">{currentVersionLabel}</span>
+          )}
           <div className="settings-language-dropdown" ref={langDropdownRef}>
             <TooltipButton
               className="settings-language-btn"
