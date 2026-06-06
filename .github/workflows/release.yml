@@ -105,7 +105,7 @@ jobs:
             desktop/dist/*.zip
 
   publish-release:
-    name: Create GitHub Release
+    name: Publish Extension and GitHub Release
     needs: [build-vscode, build-desktop]
     runs-on: ubuntu-latest
     steps:
@@ -132,6 +132,56 @@ jobs:
         with:
           name: desktop-app-macos
           path: ./release-artifacts
+
+      - name: Verify Marketplace Tokens
+        shell: bash
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN || secrets.OVSX_PAT }}
+          VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN || secrets.VSCE_PAT }}
+        run: |
+          missing=0
+
+          if [ -z "$OPEN_VSX_TOKEN" ]; then
+            echo "::error::Set OPEN_VSX_TOKEN (or OVSX_PAT) repository secret to publish to Open VSX."
+            missing=1
+          fi
+
+          if [ -z "$VS_MARKETPLACE_TOKEN" ]; then
+            echo "::error::Set VS_MARKETPLACE_TOKEN (or VSCE_PAT) repository secret to publish to the VS Code Marketplace."
+            missing=1
+          fi
+
+          exit "$missing"
+
+      - name: Locate VSIX Package
+        id: vsix
+        shell: bash
+        run: |
+          mapfile -t files < <(find ./release-artifacts -type f -name "*.vsix" | sort)
+
+          if [ "${#files[@]}" -ne 1 ]; then
+            printf '::error::Expected exactly one VSIX package, found %s.\n' "${#files[@]}"
+            printf '%s\n' "${files[@]}"
+            exit 1
+          fi
+
+          printf 'Found VSIX package: %s\n' "${files[0]}"
+          printf 'path=%s\n' "${files[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish VSIX to Open VSX
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.OPEN_VSX_TOKEN || secrets.OVSX_PAT }}
+          extensionFile: ${{ steps.vsix.outputs.path }}
+          skipDuplicate: true
+
+      - name: Publish VSIX to VS Code Marketplace
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN || secrets.VSCE_PAT }}
+          registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ steps.vsix.outputs.path }}
+          skipDuplicate: true
 
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
