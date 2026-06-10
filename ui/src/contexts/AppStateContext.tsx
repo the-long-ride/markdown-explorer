@@ -33,6 +33,7 @@ import type {
   RecentWorkspace,
   AppRuntime,
   HostPlatform,
+  WorkspaceUnavailableReason,
 } from '../types';
 
 export {
@@ -86,6 +87,10 @@ export interface AppState {
   isLoading: boolean;
   /** Nav not found href */
   notFoundHref: string | null;
+  /** Workspace path that could not be opened */
+  workspaceUnavailablePath: string | null;
+  /** Why the workspace could not be opened */
+  workspaceUnavailableReason: WorkspaceUnavailableReason | null;
   /** User settings */
   settings: AppSettings;
   /** Content render counter (triggers effects) */
@@ -123,6 +128,8 @@ const initialState: AppState = {
   relativePath: '',
   isLoading: true,
   notFoundHref: null,
+  workspaceUnavailablePath: null,
+  workspaceUnavailableReason: null,
   settings: {
     showTitle: false,
     defaultHtmlPreview: true,
@@ -193,6 +200,17 @@ export type Action =
     }
   | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
   | { type: 'NAV_NOT_FOUND'; href: string }
+  | {
+      type: 'WORKSPACE_UNAVAILABLE';
+      workspacePath: string;
+      workspaceName: string;
+      reason: WorkspaceUnavailableReason;
+      recentWorkspaces?: readonly RecentWorkspace[];
+      appVersion?: string;
+      appRuntime?: AppRuntime;
+      hostPlatform?: HostPlatform;
+      hostArch?: string;
+    }
   | { type: 'SET_LOADING' }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'SET_THEME'; theme: ThemeMode }
@@ -219,6 +237,8 @@ function reducer(state: AppState, action: Action): AppState {
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
         isLoading: action.workspaceName ? state.isLoading : false,
+        workspaceUnavailablePath: null,
+        workspaceUnavailableReason: null,
       };
 
     case 'RECENT_WORKSPACES_CHANGED':
@@ -239,14 +259,53 @@ function reducer(state: AppState, action: Action): AppState {
         relativePath: action.msg.relativePath,
         isLoading: false,
         notFoundHref: null,
+        workspaceUnavailablePath: null,
+        workspaceUnavailableReason: null,
         renderVersion: state.renderVersion + 1,
       };
 
     case 'NAV_NOT_FOUND':
-      return { ...state, isLoading: false, notFoundHref: action.href };
+      return {
+        ...state,
+        isLoading: false,
+        notFoundHref: action.href,
+        workspaceUnavailablePath: null,
+        workspaceUnavailableReason: null,
+      };
+
+    case 'WORKSPACE_UNAVAILABLE':
+      return {
+        ...state,
+        fileList: [],
+        tree: null,
+        currentFile: null,
+        workspaceName: action.workspaceName,
+        workspacePath: action.workspacePath,
+        contentHtml: '',
+        markdownSource: null,
+        frontmatter: {},
+        toc: [],
+        relativePath: '',
+        isLoading: false,
+        notFoundHref: null,
+        workspaceUnavailablePath: action.workspacePath,
+        workspaceUnavailableReason: action.reason,
+        recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
+        appVersion: action.appVersion ?? state.appVersion,
+        appRuntime: action.appRuntime ?? state.appRuntime,
+        hostPlatform: action.hostPlatform ?? state.hostPlatform,
+        hostArch: action.hostArch ?? state.hostArch,
+        renderVersion: state.renderVersion + 1,
+      };
 
     case 'SET_LOADING':
-      return { ...state, isLoading: true, notFoundHref: null };
+      return {
+        ...state,
+        isLoading: true,
+        notFoundHref: null,
+        workspaceUnavailablePath: null,
+        workspaceUnavailableReason: null,
+      };
 
     case 'TOGGLE_SIDEBAR':
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed };
@@ -362,6 +421,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           break;
         case 'navNotFound':
           dispatch({ type: 'NAV_NOT_FOUND', href: msg.href });
+          break;
+        case 'workspaceUnavailable':
+          dispatch({
+            type: 'WORKSPACE_UNAVAILABLE',
+            workspacePath: msg.workspacePath,
+            workspaceName: msg.workspaceName,
+            reason: msg.reason,
+            recentWorkspaces: msg.recentWorkspaces,
+            appVersion: msg.appVersion,
+            appRuntime: msg.appRuntime,
+            hostPlatform: msg.hostPlatform,
+            hostArch: msg.hostArch,
+          });
           break;
         case 'setLoading':
           dispatch({ type: 'SET_LOADING' });

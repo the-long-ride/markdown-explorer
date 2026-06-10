@@ -1,4 +1,10 @@
-import type { FolderNode, Frontmatter, MdFile, TocEntry } from '../types';
+import type {
+  FolderNode,
+  Frontmatter,
+  MdFile,
+  TocEntry,
+  WorkspaceUnavailableReason,
+} from '../types';
 
 export type DesktopTabKind = 'home' | 'new' | 'workspace';
 export type SearchScope = 'current' | 'all-tabs';
@@ -20,6 +26,8 @@ export interface DesktopTab {
   relativePath: string;
   isLoading: boolean;
   notFoundHref: string | null;
+  workspaceUnavailablePath: string | null;
+  workspaceUnavailableReason: WorkspaceUnavailableReason | null;
 }
 
 export interface FloatingToolbarPosition {

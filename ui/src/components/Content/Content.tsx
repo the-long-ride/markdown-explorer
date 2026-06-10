@@ -7,6 +7,7 @@ import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { WelcomePage } from "./WelcomePage";
+import { AlertTriangleIcon, FolderIcon, TrashIcon } from "../shared/icons";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
@@ -53,6 +54,13 @@ export function Content({
   const { push } = useNavigation();
   const bridge = usePlatform();
   const bodyRef = useRef<HTMLDivElement>(null);
+  const workspaceUnavailablePath = state.workspaceUnavailablePath;
+  const isDesktopTabView =
+    typeof (window as any).electronAPI !== "undefined" &&
+    state.settings.desktopViewMode === "tabs";
+  const isUnavailableWorkspaceInHistory = workspaceUnavailablePath
+    ? state.recentWorkspaces.some((item) => item.path === workspaceUnavailablePath)
+    : false;
 
   const scrollPositionsRef = useRef<Record<string, number>>({});
   const lastFileRef = useRef<string | null>(null);
@@ -105,7 +113,7 @@ export function Content({
   // Post-render effects: highlight, mermaid, table init, click handlers, sticky header
   useEffect(() => {
     const body = bodyRef.current;
-    if (!body || state.isLoading || state.notFoundHref) return;
+    if (!body || state.isLoading || state.notFoundHref || state.workspaceUnavailablePath) return;
 
     const hljs = (window as any).hljs;
     const mermaid = (window as any).mermaid;
@@ -368,6 +376,7 @@ export function Content({
     state.themeStyle,
     state.isLoading,
     state.notFoundHref,
+    state.workspaceUnavailablePath,
     onImageClick,
     navigate,
     scrollRef,
@@ -376,6 +385,15 @@ export function Content({
 
   // Frontmatter header
   const fmEntries = Object.entries(state.frontmatter);
+
+  const handleOpenWorkspaceAgain = () => {
+    bridge.postMessage({ command: "openFolder", openFirstFile: isDesktopTabView });
+  };
+
+  const handleDeleteUnavailableWorkspace = () => {
+    if (!workspaceUnavailablePath) return;
+    bridge.postMessage({ command: "deleteRecentWorkspace", path: workspaceUnavailablePath });
+  };
 
   return (
     <main className="content" id="mainContent">
@@ -392,8 +410,48 @@ export function Content({
           </div>
         )}
 
+        {/* Workspace unavailable */}
+        {!state.isLoading && workspaceUnavailablePath && (
+          <div className="state-screen state-screen--workspace-unavailable">
+            <div className="state-screen__icon state-screen__icon--warning">
+              <AlertTriangleIcon size={34} />
+            </div>
+            <div className="state-screen__title">Workspace not found</div>
+            <div className="state-screen__sub">
+              The current path no longer exists or is locked. Please open the workspace again.
+            </div>
+            <div className="state-screen__path">{workspaceUnavailablePath}</div>
+            {isDesktopTabView && (
+              <div className="state-screen__hint">
+                Tab view: close this tab after deleting it from history, then open the workspace again.
+              </div>
+            )}
+            <div className="state-screen__actions">
+              <button
+                type="button"
+                className="state-screen__button state-screen__button--primary"
+                onClick={handleOpenWorkspaceAgain}
+              >
+                <FolderIcon size={14} />
+                <span>Open Workspace Again</span>
+              </button>
+              <button
+                type="button"
+                className="state-screen__button state-screen__button--danger"
+                onClick={handleDeleteUnavailableWorkspace}
+                disabled={!isUnavailableWorkspaceInHistory}
+              >
+                <TrashIcon size={14} />
+                <span>
+                  {isUnavailableWorkspaceInHistory ? "Delete from History" : "Removed from History"}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Not Found */}
-        {state.notFoundHref && (
+        {!workspaceUnavailablePath && state.notFoundHref && (
           <div className="state-screen">
             <div className="state-screen__icon">⚠️</div>
             <div className="state-screen__title">File not found</div>
@@ -409,6 +467,7 @@ export function Content({
         {/* Empty workspace */}
         {!state.isLoading &&
           !state.notFoundHref &&
+          !workspaceUnavailablePath &&
           state.fileList.length === 0 &&
           !state.contentHtml && (
             <div className="state-screen">
@@ -425,6 +484,7 @@ export function Content({
         {/* Welcome Page */}
         {!state.isLoading &&
           !state.notFoundHref &&
+          !workspaceUnavailablePath &&
           !suppressWelcome &&
           !state.currentFile &&
           state.fileList.length > 0 && <WelcomePage />}
@@ -432,6 +492,7 @@ export function Content({
         {/* Content */}
         {!state.isLoading &&
           !state.notFoundHref &&
+          !workspaceUnavailablePath &&
           state.currentFile &&
           state.contentHtml && (
             <div

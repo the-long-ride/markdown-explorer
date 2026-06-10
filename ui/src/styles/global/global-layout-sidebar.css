@@ -268,6 +268,82 @@ body.is-dragging-files .mdn-html-preview-iframe {
   font-size: 12px;
   line-height: 1.6;
 }
+.state-screen__hint {
+  max-width: min(760px, 100%);
+  color: var(--tx2);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.state-screen__path {
+  max-width: min(560px, 100%);
+  padding: 8px 10px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-code);
+  color: var(--tx2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.state-screen__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.state-screen__button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-s);
+  color: var(--tx2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+.state-screen__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.state-screen__button:disabled {
+  cursor: default;
+  opacity: 0.56;
+}
+.state-screen__button--primary {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--bd-s));
+  background: var(--accent);
+  color: #fff;
+}
+.state-screen__button--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 86%, #000);
+}
+.state-screen__button--danger {
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 40%, var(--bd-s));
+  color: color-mix(in srgb, var(--danger, #ef4444) 82%, var(--tx));
+}
+.state-screen__button--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger, #ef4444) 10%, var(--bg-h));
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 60%, var(--bd-s));
+}
+.state-screen__icon--warning {
+  color: color-mix(in srgb, var(--danger, #ef4444) 75%, var(--accent));
+  opacity: 0.85;
+}
+@media (max-width: 760px) {
+  .state-screen__hint {
+    white-space: normal;
+  }
+}
 .spinner {
   width: 24px;
   height: 24px;

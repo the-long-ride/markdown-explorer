@@ -29,6 +29,8 @@ export function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
     relativePath: '',
     isLoading: false,
     notFoundHref: null,
+    workspaceUnavailablePath: null,
+    workspaceUnavailableReason: null,
   };
 }
 

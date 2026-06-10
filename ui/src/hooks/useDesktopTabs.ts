@@ -115,6 +115,8 @@ export function useDesktopTabs({
         relativePath: state.relativePath,
         isLoading: state.isLoading,
         notFoundHref: state.notFoundHref,
+        workspaceUnavailablePath: state.workspaceUnavailablePath,
+        workspaceUnavailableReason: state.workspaceUnavailableReason,
       };
     },
     [
@@ -128,6 +130,8 @@ export function useDesktopTabs({
       state.relativePath,
       state.toc,
       state.tree,
+      state.workspaceUnavailablePath,
+      state.workspaceUnavailableReason,
       state.workspaceName,
       state.workspacePath,
       workspaceAliases,

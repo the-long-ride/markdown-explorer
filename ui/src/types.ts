@@ -132,11 +132,26 @@ export interface NavNotFoundMessage {
   readonly href: string;
 }
 
+export type WorkspaceUnavailableReason = 'missing' | 'locked';
+
+export interface WorkspaceUnavailableMessage {
+  readonly command: 'workspaceUnavailable';
+  readonly workspacePath: string;
+  readonly workspaceName: string;
+  readonly reason: WorkspaceUnavailableReason;
+  readonly recentWorkspaces?: readonly RecentWorkspace[];
+  readonly appVersion?: string;
+  readonly appRuntime?: AppRuntime;
+  readonly hostPlatform?: HostPlatform;
+  readonly hostArch?: string;
+}
+
 export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
   | RecentWorkspacesChangedMessage
   | NavNotFoundMessage
+  | WorkspaceUnavailableMessage
   | SetLoadingMessage
   | WindowStateChangedMessage
   | CrossTabSearchResultsMessage
