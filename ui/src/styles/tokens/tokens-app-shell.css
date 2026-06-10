@@ -16,3 +16,23 @@ body {
   flex-direction: column;
   height: 100vh;
 }
+
+html[data-custom-theme-id] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--custom-theme-bg-image);
+  background-size: var(--custom-theme-bg-fit, cover);
+  background-position: var(--custom-theme-bg-position, center);
+  background-repeat: no-repeat;
+  opacity: var(--custom-theme-bg-opacity, 0.16);
+  filter: blur(var(--custom-theme-bg-blur, 0));
+  transform: scale(1.02);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[data-custom-theme-id] .app {
+  position: relative;
+  z-index: 1;
+}

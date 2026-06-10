@@ -252,6 +252,11 @@ export interface DeleteRecentWorkspaceMessage {
   readonly path: string;
 }
 
+export interface ReplaceRecentWorkspacesMessage {
+  readonly command: 'replaceRecentWorkspaces';
+  readonly recentWorkspaces: readonly RecentWorkspace[];
+}
+
 export interface ZoomInMessage {
   readonly command: 'zoom-in';
 }
@@ -291,6 +296,7 @@ export type WebviewMessage =
   | OpenRecentWorkspaceMessage
   | CloseWorkspaceMessage
   | DeleteRecentWorkspaceMessage
+  | ReplaceRecentWorkspacesMessage
   | ZoomInMessage
   | ZoomOutMessage
   | UpdateAppearanceMessage
@@ -311,12 +317,69 @@ export type PetThemeStyle =
 
 export type ThemeStyle = 'default' | 'glass' | 'bento' | PetThemeStyle;
 
+export type CustomThemeScheme = 'light' | 'dark';
+
+export type CustomThemeColorKey =
+  | 'bg'
+  | 'surface'
+  | 'elevated'
+  | 'hover'
+  | 'active'
+  | 'code'
+  | 'text'
+  | 'textMuted'
+  | 'textSoft'
+  | 'textSubtle'
+  | 'accent'
+  | 'accentText'
+  | 'border'
+  | 'borderStrong'
+  | 'success'
+  | 'danger'
+  | 'chart1'
+  | 'chart2'
+  | 'chart3'
+  | 'chart4';
+
+export type CustomThemeColorOverrides = Partial<Record<CustomThemeColorKey, string>>;
+
+export interface CustomThemeLayout {
+  readonly density?: 'compact' | 'comfortable' | 'spacious';
+  readonly radius?: number;
+  readonly strokeWidth?: number;
+  readonly contentPadding?: number;
+  readonly sectionGap?: number;
+}
+
+export interface CustomThemeBackground {
+  readonly type?: 'none' | 'image';
+  readonly imageDataUrl?: string;
+  readonly opacity?: number;
+  readonly fit?: 'cover' | 'contain';
+  readonly position?: string;
+  readonly blur?: number;
+}
+
+export interface CustomTheme {
+  readonly id: string;
+  readonly name: string;
+  readonly baseStyle: ThemeStyle;
+  readonly colorMode?: ThemeMode;
+  readonly createdAt: number;
+  readonly updatedAt: number;
+  readonly colors?: Partial<Record<CustomThemeScheme, CustomThemeColorOverrides>>;
+  readonly layout?: CustomThemeLayout;
+  readonly background?: CustomThemeBackground;
+}
+
 export interface AppSettings {
   showTitle: boolean;
   defaultHtmlPreview: boolean;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   language?: string;
+  customThemes?: CustomTheme[];
+  activeCustomThemeId?: string;
 }
 
 export interface PersistedState {
@@ -327,4 +390,6 @@ export interface PersistedState {
   theme?: ThemeMode;
   themeStyle?: ThemeStyle;
   language?: string;
+  customThemes?: CustomTheme[];
+  activeCustomThemeId?: string;
 }

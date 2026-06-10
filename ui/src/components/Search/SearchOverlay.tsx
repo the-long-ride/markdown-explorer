@@ -235,6 +235,7 @@ export function SearchOverlay({
 
   const overlay = (
     <div
+      className="search-overlay"
       id="searchOverlay"
       role="dialog"
       aria-modal="true"
@@ -252,6 +253,7 @@ export function SearchOverlay({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
+        className="search-overlay-card"
         style={{
           background: 'var(--bg-s)',
           border: '1px solid var(--bd)',
@@ -266,6 +268,7 @@ export function SearchOverlay({
       >
         {/* Search input */}
         <div
+          className="search-overlay-input-row"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -298,7 +301,7 @@ export function SearchOverlay({
         </div>
 
         {/* Results */}
-        <div style={{ overflowY: 'auto', padding: '8px 0', flex: 1 }} role="listbox">
+        <div className="search-overlay-results" style={{ overflowY: 'auto', padding: '8px 0', flex: 1 }} role="listbox">
           {query.length >= 2 && !hasCrossTabSearch && isWorkspaceSearching && resultCount === 0 && (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--txm)', fontSize: 13 }}>
               Searching file contents…

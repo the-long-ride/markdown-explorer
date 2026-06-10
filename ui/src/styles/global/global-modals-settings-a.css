@@ -589,6 +589,51 @@
   opacity: 0.82;
 }
 
+.settings-data-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.settings-data-btn {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--tx2);
+  font: 800 11px/1 var(--font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+.settings-data-btn:hover {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+  color: var(--tx);
+  transform: translateY(-1px);
+}
+
+.settings-data-status {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tx2);
+  font: 700 10.5px/1 var(--font-ui);
+  opacity: 0.78;
+}
+
 .settings-language-dropdown {
   position: relative;
 }

@@ -135,6 +135,7 @@ app.whenReady().then(() => {
       confirmOpenPath: handleConfirmOpenPath,
       openRecent: handleOpenRecent,
       deleteRecentWorkspace: handleDeleteRecentWorkspace,
+      replaceRecentWorkspaces: handleReplaceRecentWorkspaces,
       closeWorkspace: handleCloseWorkspace,
       zoomIn: handleZoomIn,
       zoomOut: handleZoomOut,
@@ -374,6 +375,15 @@ function handleDeleteRecentWorkspace(folderPath) {
     recentWorkspacesStore.remove(folderPath);
   } catch (err) {
     console.error("Failed to delete recent workspace:", err);
+  }
+  sendRecentWorkspacesChanged();
+}
+
+function handleReplaceRecentWorkspaces(recentWorkspaces) {
+  try {
+    recentWorkspacesStore.replace(recentWorkspaces);
+  } catch (err) {
+    console.error("Failed to replace recent workspaces:", err);
   }
   sendRecentWorkspacesChanged();
 }

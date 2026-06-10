@@ -20,6 +20,12 @@ import {
   normalizeThemeMode,
   normalizeThemeStyle,
 } from './appStateConstants';
+import {
+  applyCustomThemeToRoot,
+  getActiveCustomTheme,
+  normalizeActiveCustomThemeId,
+  normalizeCustomThemes,
+} from '../theme/customThemes';
 import type {
   MdFile,
   FolderNode,
@@ -136,6 +142,7 @@ const initialState: AppState = {
     desktopViewMode: 'focus',
     keybindings: DEFAULT_KEYBINDINGS,
     language: 'en',
+    customThemes: [],
   },
   renderVersion: 0,
   recentWorkspaces: [],
@@ -158,6 +165,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       },
     };
   }
+  const customThemes = normalizeCustomThemes(saved.customThemes);
   return {
     ...initialState,
     appRuntime: isDesktop ? 'desktop' : 'vscode',
@@ -172,6 +180,8 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
       language: saved.language || 'en',
+      customThemes,
+      activeCustomThemeId: normalizeActiveCustomThemeId(saved.activeCustomThemeId, customThemes),
     },
   };
 }
@@ -215,6 +225,7 @@ export type Action =
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'SET_THEME'; theme: ThemeMode }
   | { type: 'SET_THEME_STYLE'; themeStyle: ThemeStyle }
+  | { type: 'SELECT_CUSTOM_THEME'; themeId: string | undefined }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean };
 
@@ -318,13 +329,52 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         themeStyle: action.themeStyle,
         hasThemeStylePreference: true,
+        settings: { ...state.settings, activeCustomThemeId: undefined },
       };
 
-    case 'UPDATE_SETTINGS':
+    case 'SELECT_CUSTOM_THEME': {
+      const customTheme = action.themeId
+        ? state.settings.customThemes?.find((theme) => theme.id === action.themeId)
+        : undefined;
       return {
         ...state,
-        settings: { ...state.settings, ...action.settings },
+        themeStyle: customTheme?.baseStyle ?? state.themeStyle,
+        hasThemeStylePreference: customTheme ? true : state.hasThemeStylePreference,
+        settings: {
+          ...state.settings,
+          activeCustomThemeId: customTheme?.id,
+        },
       };
+    }
+
+    case 'UPDATE_SETTINGS': {
+      const customThemes = action.settings.customThemes
+        ? normalizeCustomThemes(action.settings.customThemes)
+        : state.settings.customThemes;
+      const activeCustomThemeId =
+        'activeCustomThemeId' in action.settings || action.settings.customThemes
+          ? normalizeActiveCustomThemeId(
+              'activeCustomThemeId' in action.settings
+                ? action.settings.activeCustomThemeId
+                : state.settings.activeCustomThemeId,
+              customThemes ?? [],
+            )
+          : state.settings.activeCustomThemeId;
+      const activeCustomTheme = activeCustomThemeId
+        ? customThemes?.find((theme) => theme.id === activeCustomThemeId)
+        : undefined;
+      return {
+        ...state,
+        themeStyle: activeCustomTheme?.baseStyle ?? state.themeStyle,
+        hasThemeStylePreference: activeCustomTheme ? true : state.hasThemeStylePreference,
+        settings: {
+          ...state.settings,
+          ...action.settings,
+          customThemes,
+          activeCustomThemeId,
+        },
+      };
+    }
 
     case 'SET_MAXIMIZED':
       return {
@@ -348,6 +398,7 @@ interface AppStateContextValue {
   toggleTheme: () => void;
   setTheme: (theme: ThemeMode) => void;
   setThemeStyle: (themeStyle: ThemeStyle) => void;
+  selectCustomTheme: (themeId: string | undefined) => void;
   toggleSidebar: () => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }
@@ -365,6 +416,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const saved = bridge.getState<PersistedState>();
     if (saved) {
+      const customThemes = normalizeCustomThemes(saved.customThemes);
+      const activeCustomThemeId = normalizeActiveCustomThemeId(saved.activeCustomThemeId, customThemes);
       dispatch({
         type: 'UPDATE_SETTINGS',
         settings: {
@@ -373,12 +426,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
           language: saved.language || 'en',
+          customThemes,
+          activeCustomThemeId,
         },
       });
       if (saved.theme) {
         dispatch({ type: 'SET_THEME', theme: normalizeThemeMode(saved.theme) });
       }
-      if (saved.themeStyle) {
+      if (activeCustomThemeId) {
+        dispatch({ type: 'SELECT_CUSTOM_THEME', themeId: activeCustomThemeId });
+      } else if (saved.themeStyle) {
         dispatch({
           type: 'SET_THEME_STYLE',
           themeStyle: normalizeThemeStyle(saved.themeStyle),
@@ -454,9 +511,24 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   // Sync theme to document
   useEffect(() => {
+    const activeCustomTheme = getActiveCustomTheme(state.settings);
     document.documentElement.dataset.theme = state.theme;
-    document.documentElement.dataset.themeStyle = state.themeStyle;
-  }, [state.theme, state.themeStyle]);
+    document.documentElement.dataset.themeStyle = activeCustomTheme?.baseStyle ?? state.themeStyle;
+    applyCustomThemeToRoot(document.documentElement, activeCustomTheme, state.theme);
+
+    if (state.theme !== 'auto') return;
+    const media = window.matchMedia?.('(prefers-color-scheme: light)');
+    if (!media) return;
+    const handleChange = () => {
+      applyCustomThemeToRoot(
+        document.documentElement,
+        getActiveCustomTheme(state.settings),
+        state.theme,
+      );
+    };
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, [state.settings, state.theme, state.themeStyle]);
 
   // Persist settings on change
   useEffect(() => {
@@ -468,6 +540,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       theme: state.theme,
       themeStyle: state.themeStyle,
       language: state.settings.language,
+      customThemes: state.settings.customThemes,
+      activeCustomThemeId: state.settings.activeCustomThemeId,
     });
   }, [bridge, state.settings, state.theme, state.themeStyle]);
 
@@ -520,6 +594,24 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
   }, [bridge, state.theme]);
 
+  const selectCustomTheme = useCallback((themeId: string | undefined) => {
+    const customTheme = themeId
+      ? state.settings.customThemes?.find((theme) => theme.id === themeId)
+      : undefined;
+    dispatch({ type: 'SELECT_CUSTOM_THEME', themeId: customTheme?.id });
+    if (customTheme) {
+      const nextThemeMode = customTheme.colorMode ?? state.theme;
+      if (customTheme.colorMode) {
+        dispatch({ type: 'SET_THEME', theme: customTheme.colorMode });
+      }
+      bridge.postMessage({
+        command: 'updateAppearance',
+        theme: nextThemeMode,
+        themeStyle: customTheme.baseStyle,
+      });
+    }
+  }, [bridge, state.settings.customThemes, state.theme]);
+
   const toggleSidebar = useCallback(() => {
     dispatch({ type: 'TOGGLE_SIDEBAR' });
   }, []);
@@ -538,6 +630,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       toggleTheme,
       setTheme,
       setThemeStyle,
+      selectCustomTheme,
       toggleSidebar,
       updateSettings,
     }),
@@ -549,6 +642,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       toggleTheme,
       setTheme,
       setThemeStyle,
+      selectCustomTheme,
       toggleSidebar,
       updateSettings,
     ],

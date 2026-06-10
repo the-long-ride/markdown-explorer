@@ -40,7 +40,30 @@ function createRecentWorkspacesStore(app) {
     fs.writeFileSync(recentsFile, JSON.stringify(list, null, 2), "utf8");
   }
 
-  return { load, save, remove };
+  function replace(workspaces) {
+    const seen = new Set();
+    const list = Array.isArray(workspaces)
+      ? workspaces.flatMap((workspace) => {
+          const workspacePath = typeof workspace?.path === "string" ? workspace.path.trim() : "";
+          if (!workspacePath) return [];
+          const normPath = path.normalize(workspacePath);
+          if (seen.has(normPath)) return [];
+          seen.add(normPath);
+          return [{
+            name: typeof workspace?.name === "string" && workspace.name.trim()
+              ? workspace.name.trim()
+              : path.basename(workspacePath) || workspacePath,
+            path: workspacePath,
+            lastOpened: Number.isFinite(Number(workspace?.lastOpened))
+              ? Number(workspace.lastOpened)
+              : Date.now(),
+          }];
+        }).slice(0, 100)
+      : [];
+    fs.writeFileSync(recentsFile, JSON.stringify(list, null, 2), "utf8");
+  }
+
+  return { load, save, remove, replace };
 }
 
 module.exports = { createRecentWorkspacesStore };

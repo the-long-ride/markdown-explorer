@@ -37,6 +37,9 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "deleteRecentWorkspace":
         handlers.deleteRecentWorkspace(msg.path);
         break;
+      case "replaceRecentWorkspaces":
+        handlers.replaceRecentWorkspaces(msg.recentWorkspaces);
+        break;
       case "closeWorkspace":
         handlers.closeWorkspace();
         break;

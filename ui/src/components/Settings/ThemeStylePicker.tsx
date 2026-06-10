@@ -24,6 +24,8 @@ interface ThemeStylePickerProps {
   value: ThemeStyle;
   onChange: (themeStyle: ThemeStyle) => void;
   className?: string;
+  showCustomThemes?: boolean;
+  onOpenThemeRemix?: () => void;
 }
 
 
@@ -48,8 +50,14 @@ function PetImageSwatch({ themeStyle }: { themeStyle: PetThemeStyle }) {
   );
 }
 
-export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStylePickerProps) {
-  const { state } = useAppState();
+export function ThemeStylePicker({
+  value,
+  onChange,
+  className = "",
+  showCustomThemes = false,
+  onOpenThemeRemix,
+}: ThemeStylePickerProps) {
+  const { state, selectCustomTheme } = useAppState();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
 
@@ -59,7 +67,13 @@ export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStyle
     PET_THEME_STYLE_OPTIONS.find((option) => option.id === selectedPetTheme) ??
     PET_THEME_STYLE_OPTIONS[0];
   const [petMenuOpen, setPetMenuOpen] = useState(false);
+  const [customMenuOpen, setCustomMenuOpen] = useState(false);
   const petDropdownRef = useRef<HTMLDivElement>(null);
+  const customDropdownRef = useRef<HTMLDivElement>(null);
+  const customThemes = state.settings.customThemes ?? [];
+  const activeCustomTheme = state.settings.activeCustomThemeId
+    ? customThemes.find((theme) => theme.id === state.settings.activeCustomThemeId)
+    : undefined;
 
   useEffect(() => {
     if (!petMenuOpen) return;
@@ -84,9 +98,37 @@ export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStyle
     };
   }, [petMenuOpen]);
 
+  useEffect(() => {
+    if (!customMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!customDropdownRef.current?.contains(event.target as Node)) {
+        setCustomMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setCustomMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [customMenuOpen]);
+
   const handlePetChange = (themeStyle: PetThemeStyle) => {
     onChange(themeStyle);
     setPetMenuOpen(false);
+  };
+
+  const handleCustomThemeChange = (themeId: string) => {
+    selectCustomTheme(themeId);
+    setCustomMenuOpen(false);
   };
 
   return (
@@ -193,6 +235,76 @@ export function ThemeStylePicker({ value, onChange, className = "" }: ThemeStyle
           </div>
         </div>
       </div>
+
+      {showCustomThemes && customThemes.length > 0 && (
+        <div
+          className={`theme-style-option theme-style-option--custom${
+            activeCustomTheme ? " is-active" : ""
+          }`}
+        >
+          <span className="theme-style-option__swatch theme-style-option__swatch--custom" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className="theme-style-option__text">
+            <span className="theme-style-option__label">Custom themes</span>
+            <span className="theme-style-option__desc">
+              {activeCustomTheme ? activeCustomTheme.name : "Select one of your saved remixes"}
+            </span>
+          </span>
+          <div
+            className={`custom-theme-dropdown${customMenuOpen ? " is-open" : ""}`}
+            ref={customDropdownRef}
+          >
+            <button
+              type="button"
+              className="custom-theme-select"
+              aria-haspopup="listbox"
+              aria-expanded={customMenuOpen}
+              onClick={() => setCustomMenuOpen((open) => !open)}
+            >
+              <span className="custom-theme-select__label">
+                {activeCustomTheme?.name ?? "Choose custom theme"}
+              </span>
+              <span className="pet-theme-select__chevron" aria-hidden="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
+            </button>
+            <div
+              className="custom-theme-menu"
+              role="listbox"
+              aria-label="Custom themes"
+              hidden={!customMenuOpen}
+            >
+              {customThemes.map((theme) => {
+                const isSelected = theme.id === activeCustomTheme?.id;
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    className={`custom-theme-menu__option${isSelected ? " is-selected" : ""}`}
+                    onClick={() => handleCustomThemeChange(theme.id)}
+                  >
+                    <span className="custom-theme-menu__swatch" aria-hidden="true" />
+                    <span className="custom-theme-menu__label">{theme.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {onOpenThemeRemix && (
+        <button type="button" className="theme-remix-launch-btn" onClick={onOpenThemeRemix}>
+          Theme Remix
+        </button>
+      )}
     </div>
   );
 }

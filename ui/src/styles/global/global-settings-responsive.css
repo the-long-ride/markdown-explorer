@@ -27,6 +27,16 @@
   .settings-card__top-actions {
     top: 14px;
     right: 14px;
+    gap: 8px;
+  }
+  .settings-card__top-actions .settings-data-status {
+    display: none;
+  }
+  .settings-card__top-actions .settings-data-btn {
+    width: 30px;
+    padding: 0;
+    gap: 0;
+    font-size: 0;
   }
   .settings-card__close {
     top: 14px;

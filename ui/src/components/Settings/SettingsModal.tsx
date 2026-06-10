@@ -12,8 +12,11 @@ import { useAppState } from "../../contexts/AppStateContext";
 import type { UpdateCheckState } from "../../hooks/useUpdateCheck";
 import { TooltipButton } from "../shared/TooltipButton";
 import { ThemeStylePicker } from "./ThemeStylePicker";
+import { ThemeRemixModal } from "./ThemeRemixModal";
 import { LANGUAGE_OPTIONS, getTranslations } from "../../contexts/translations";
-import { GlobeIcon } from "../shared/icons";
+import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings } from "../../settings/settingsImportExport";
+import { usePlatform } from "../../contexts/PlatformContext";
+import { CopyIcon, FolderIcon, GlobeIcon } from "../shared/icons";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -57,9 +60,13 @@ export function SettingsModal({
   onDownloadUpdate,
   onOpenChangelog,
 }: SettingsModalProps) {
-  const { state, setTheme, setThemeStyle, updateSettings } = useAppState();
+  const { state, dispatch, setTheme, setThemeStyle, updateSettings } = useAppState();
+  const bridge = usePlatform();
   const [recordingAction, setRecordingAction] = useState<string | null>(null);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [themeRemixOpen, setThemeRemixOpen] = useState(false);
+  const [settingsDataStatus, setSettingsDataStatus] = useState("");
+  const importInputRef = useRef<HTMLInputElement>(null);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -142,6 +149,65 @@ export function SettingsModal({
     (e.target as HTMLInputElement).blur();
   };
 
+  const exportSettings = () => {
+    const envelope = createSettingsExport({
+      theme: state.theme,
+      themeStyle: state.themeStyle,
+      settings: state.settings,
+      recentWorkspaces: state.recentWorkspaces,
+      appVersion: state.appVersion,
+    });
+    const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `markdown-explorer-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setSettingsDataStatus("Exported settings JSON.");
+  };
+
+  const importSettingsFile = (file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = parseSettingsImport(String(reader.result || ""), isElectron);
+        const activeCustomTheme = imported.settings.activeCustomThemeId
+          ? imported.settings.customThemes?.find((theme) => theme.id === imported.settings.activeCustomThemeId)
+          : undefined;
+        updateSettings(imported.settings);
+        setTheme(imported.theme);
+        if (!activeCustomTheme) {
+          setThemeStyle(imported.themeStyle);
+        } else {
+          bridge.postMessage({
+            command: "updateAppearance",
+            theme: imported.theme,
+            themeStyle: activeCustomTheme.baseStyle,
+          });
+        }
+        dispatch({
+          type: "RECENT_WORKSPACES_CHANGED",
+          recentWorkspaces: imported.recentWorkspaces,
+        });
+        if (isElectron) {
+          bridge.postMessage({
+            command: "replaceRecentWorkspaces",
+            recentWorkspaces: imported.recentWorkspaces,
+          });
+        }
+        restoreLocalUiSettings(imported.localUi);
+        setSettingsDataStatus("Imported settings and workspace history.");
+      } catch (err) {
+        setSettingsDataStatus(err instanceof Error ? err.message : "Import failed.");
+      } finally {
+        if (importInputRef.current) importInputRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div
       id="settingsModal"
@@ -159,6 +225,40 @@ export function SettingsModal({
         <div className="settings-card__top-actions">
           {currentVersionLabel && (
             <span className="settings-current-version">{currentVersionLabel}</span>
+          )}
+          <div className="settings-data-actions" role="group" aria-label="Settings data">
+            <button
+              type="button"
+              className="settings-data-btn"
+              onClick={() => importInputRef.current?.click()}
+              aria-label="Import all user settings from JSON"
+              title="Import all user settings from JSON"
+            >
+              <FolderIcon size={13} />
+              Import JSON
+            </button>
+            <button
+              type="button"
+              className="settings-data-btn"
+              onClick={exportSettings}
+              aria-label="Export all user settings to JSON"
+              title="Export all user settings to JSON"
+            >
+              <CopyIcon size={13} />
+              Export JSON
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={(event) => importSettingsFile(event.currentTarget.files?.[0])}
+            />
+          </div>
+          {settingsDataStatus && (
+            <span className="settings-data-status" role="status">
+              {settingsDataStatus}
+            </span>
           )}
           <div className="settings-language-dropdown" ref={langDropdownRef}>
             <TooltipButton
@@ -273,6 +373,8 @@ export function SettingsModal({
               <ThemeStylePicker
                 value={state.themeStyle}
                 onChange={setThemeStyle}
+                showCustomThemes
+                onOpenThemeRemix={() => setThemeRemixOpen(true)}
               />
             </div>
 
@@ -544,6 +646,10 @@ export function SettingsModal({
           </div>
         </div>
       </div>
+      <ThemeRemixModal
+        isOpen={themeRemixOpen}
+        onClose={() => setThemeRemixOpen(false)}
+      />
     </div>
   );
 }
