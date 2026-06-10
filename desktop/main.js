@@ -70,6 +70,42 @@ function sendRecentWorkspacesChanged() {
   });
 }
 
+function isAccessDeniedError(err) {
+  return err && (err.code === "EACCES" || err.code === "EPERM");
+}
+
+function getWorkspacePathStatus(workspacePath) {
+  if (!workspacePath || typeof workspacePath !== "string") {
+    return { ok: false, reason: "missing" };
+  }
+
+  try {
+    fs.accessSync(workspacePath, fs.constants.R_OK);
+    const stat = fs.statSync(workspacePath);
+    return { ok: true, stat };
+  } catch (err) {
+    return {
+      ok: false,
+      reason: isAccessDeniedError(err) ? "locked" : "missing",
+    };
+  }
+}
+
+function sendWorkspaceUnavailable(workspacePath, reason = "missing") {
+  activeWorkspace = null;
+  currentFile = null;
+  flatList = [];
+
+  mainWindow?.webContents.send("host-message", {
+    command: "workspaceUnavailable",
+    workspacePath,
+    workspaceName: path.basename(workspacePath || "") || workspacePath || "Workspace",
+    reason,
+    recentWorkspaces: recentWorkspacesStore.load(),
+    ...getHostInfo(),
+  });
+}
+
 function createWindow() {
   mainWindow = createMainWindow({ appDir, debugTools, clampAppZoom });
 }
@@ -173,8 +209,13 @@ function handleOpenFile() {
 }
 
 function handleOpenPath(filePath, openFirstFile = false) {
-  if (!fs.existsSync(filePath)) return;
-  const stat = fs.statSync(filePath);
+  const status = getWorkspacePathStatus(filePath);
+  if (!status.ok) {
+    sendWorkspaceUnavailable(filePath, status.reason);
+    return;
+  }
+
+  const stat = status.stat;
   const isFile = stat.isFile();
   if (isFile) {
     const ext = path.extname(filePath).toLowerCase();
@@ -201,7 +242,12 @@ function handleOpenPath(filePath, openFirstFile = false) {
 }
 
 function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false) {
-  if (!workspacePath || !fs.existsSync(workspacePath)) return;
+  const status = getWorkspacePathStatus(workspacePath);
+  if (!status.ok) {
+    sendWorkspaceUnavailable(workspacePath, status.reason);
+    return;
+  }
+
   activeWorkspace = workspacePath;
   currentFile = filePath && fs.existsSync(filePath) ? filePath : null;
   recentWorkspacesStore.save(activeWorkspace);
@@ -305,21 +351,21 @@ async function handleConfirmOpenPath(filePath) {
 }
 
 function handleOpenRecent(folderPath, openFirstFile = false) {
-  if (fs.existsSync(folderPath)) {
-    recentWorkspacesStore.save(folderPath);
-    activeWorkspace = folderPath;
-    sendLoading();
-    if (fs.statSync(folderPath).isFile()) {
-      currentFile = folderPath;
-      sendWorkspaceData().then(() => sendInitialContent(false));
-    } else {
-      currentFile = null;
-      sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
-    }
+  const status = getWorkspacePathStatus(folderPath);
+  if (!status.ok) {
+    sendWorkspaceUnavailable(folderPath, status.reason);
+    return;
+  }
+
+  recentWorkspacesStore.save(folderPath);
+  activeWorkspace = folderPath;
+  sendLoading();
+  if (status.stat.isFile()) {
+    currentFile = folderPath;
+    sendWorkspaceData().then(() => sendInitialContent(false));
   } else {
-    // Remove invalid path
-    recentWorkspacesStore.remove(folderPath);
-    sendRecentWorkspacesChanged();
+    currentFile = null;
+    sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
   }
 }
 
@@ -447,6 +493,12 @@ async function handleNavigate(filePath) {
 
 async function handleRefresh() {
   if (activeWorkspace) {
+    const status = getWorkspacePathStatus(activeWorkspace);
+    if (!status.ok) {
+      sendWorkspaceUnavailable(activeWorkspace, status.reason);
+      return;
+    }
+
     sendLoading();
     await sendWorkspaceData();
     if (currentFile) {
@@ -484,6 +536,12 @@ function scanWorkspaceData(workspacePath) {
 
 async function sendWorkspaceData() {
   if (!activeWorkspace) return;
+  const status = getWorkspacePathStatus(activeWorkspace);
+  if (!status.ok) {
+    sendWorkspaceUnavailable(activeWorkspace, status.reason);
+    return;
+  }
+
   const { tree, flat } = scanWorkspaceData(activeWorkspace);
   flatList = flat;
 
