@@ -4,6 +4,22 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.8] — 2026-06-10
+
+### Added Features & Enhancements
+- **Theme Remix**: Added a settings workflow for creating, editing, duplicating, deleting, selecting, importing, and exporting custom themes built from app layouts, pet themes, custom colors, density, spacing, and background images.
+- **Settings Import & Export**: Added JSON import/export for user settings, custom themes, and desktop workspace history, with schema metadata for future compatibility.
+- **Workspace Not Found Recovery**: Added validation for desktop workspace paths so missing or locked workspaces show a not-found page with recovery actions instead of loading forever.
+
+### Changed
+- **K-Ink Readability Polish**: Darkened K-Ink panel surfaces and brightened sidebar, table of contents, search, and content text for better contrast.
+- **Theme Remix Refinements**: Updated remix controls with custom dropdowns, compact icon-only item actions, range values, image-size warnings, constrained modal height, and safer list scrolling.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, website metadata, and lockfile metadata to `1.4.8`.
+
+---
+
 ## [1.4.7] — 2026-06-04
 
 ### Added Features & Enhancements
