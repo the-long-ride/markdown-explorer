@@ -134,6 +134,7 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
     showTitle: raw.showTitle === true,
     defaultHtmlPreview: raw.defaultHtmlPreview !== false,
     fileTabs: raw.fileTabs === true,
+    documentConversion: raw.documentConversion === true,
     scopeFocus: normalizeScopeFocus(raw.scopeFocus),
     desktopViewMode: normalizeDesktopViewMode(raw.desktopViewMode),
     keybindings: normalizeKeybindings(normalizeKeybindingsForImport(raw.keybindings), isDesktop),

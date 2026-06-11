@@ -6,6 +6,7 @@ import { useEffect, useRef, memo } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
+import { getTranslations } from "../../contexts/translations";
 import { WelcomePage } from "./WelcomePage";
 import { AlertTriangleIcon, FolderIcon, TrashIcon } from "../shared/icons";
 import katex from "katex";
@@ -39,6 +40,24 @@ function isWorkspaceNavigationHref(href: string): boolean {
   );
 }
 
+function formatPreviewDuration(durationMs: number | undefined): string {
+  if (!Number.isFinite(durationMs) || !durationMs) return "";
+  if (durationMs < 1000) return `${Math.max(1, Math.round(durationMs))} ms`;
+  return `${(durationMs / 1000).toFixed(durationMs < 10_000 ? 1 : 0)} s`;
+}
+
+const DEFAULT_CONVERSION_WARNING =
+  "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file.";
+const DEFAULT_CONVERSION_FAILURE_WARNING =
+  "Markdown Explorer could not convert this file. The details are shown below.";
+
+function formatTemplate(template: string, values: Record<string, string>): string {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.split(`{${key}}`).join(value),
+    template,
+  );
+}
+
 interface ContentProps {
   onImageClick: (el: HTMLElement) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
@@ -50,11 +69,41 @@ export function Content({
   scrollRef,
   suppressWelcome = false,
 }: ContentProps) {
-  const { state, navigate } = useAppState();
+  const { state, navigate, updateSettings } = useAppState();
+  const currentLang = state.settings.language || "en";
+  const t = getTranslations(currentLang);
   const { push } = useNavigation();
   const bridge = usePlatform();
   const bodyRef = useRef<HTMLDivElement>(null);
   const workspaceUnavailablePath = state.workspaceUnavailablePath;
+  const previewInfo = state.previewInfo;
+  const previewDuration = formatPreviewDuration(previewInfo?.durationMs);
+  const previewCopy = t.documentPreview;
+  const previewTitle = previewInfo
+    ? formatTemplate(
+        previewInfo.kind === "converted"
+          ? previewCopy.convertedTitle
+          : previewCopy.textTitle,
+        { sourceLabel: previewInfo.sourceLabel },
+      )
+    : "";
+  const previewWarning =
+    previewInfo?.qualityWarning === DEFAULT_CONVERSION_FAILURE_WARNING
+      ? previewCopy.conversionFailedWarning
+      : previewInfo?.qualityWarning &&
+          previewInfo.qualityWarning !== DEFAULT_CONVERSION_WARNING
+        ? previewInfo.qualityWarning
+        : previewInfo?.kind === "converted"
+          ? previewCopy.convertedWarning
+          : previewCopy.textWarning;
+  const previewMeta = previewInfo && previewDuration
+    ? formatTemplate(previewCopy.durationMeta, {
+        status: previewInfo.fromCache
+          ? previewCopy.loadedCachedConversion
+          : previewCopy.preparedLocally,
+        duration: previewDuration,
+      })
+    : "";
   const isDesktopTabView =
     typeof (window as any).electronAPI !== "undefined" &&
     state.settings.desktopViewMode === "tabs";
@@ -406,7 +455,10 @@ export function Content({
             style={{ display: "flex" }}
           >
             <div className="spinner" />
-            <div className="state-screen__title">Loading docs…</div>
+            <div className="state-screen__title">{state.loadingLabel || "Loading docs..."}</div>
+            {state.loadingDetail && (
+              <div className="state-screen__sub">{state.loadingDetail}</div>
+            )}
           </div>
         )}
 
@@ -473,11 +525,24 @@ export function Content({
             <div className="state-screen">
               <div className="state-screen__icon">📁</div>
               <div className="state-screen__title">
-                No Markdown or MDX files found
+                {state.settings.documentConversion
+                  ? "No supported documents found"
+                  : "No Markdown or MDX files found"}
               </div>
               <div className="state-screen__sub">
-                Add a .md or .mdx file to your workspace to get started.
+                {state.settings.documentConversion
+                  ? "Add Markdown, DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, or TXT files to this workspace."
+                  : "Add a .md or .mdx file, or turn on document conversion to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files."}
               </div>
+              {!state.settings.documentConversion && (
+                <button
+                  type="button"
+                  className="state-screen__button state-screen__button--primary"
+                  onClick={() => updateSettings({ documentConversion: true })}
+                >
+                  Enable document conversion
+                </button>
+              )}
             </div>
           )}
 
@@ -501,6 +566,27 @@ export function Content({
               ref={bodyRef}
               aria-live="polite"
             >
+              {previewInfo && (
+                <div
+                  className={`document-preview-notice document-preview-notice--${previewInfo.kind}`}
+                  role="note"
+                >
+                  <AlertTriangleIcon size={16} />
+                  <div className="document-preview-notice__body">
+                    <div className="document-preview-notice__title">
+                      {previewTitle}
+                    </div>
+                    <div className="document-preview-notice__text">
+                      {previewWarning}
+                    </div>
+                    {previewMeta && (
+                      <div className="document-preview-notice__meta">
+                        {previewMeta}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {fmEntries.length > 0 && (
                 <div className="mdn-frontmatter" aria-label="Document properties">
                   {fmEntries.map(([k, v]) => (

@@ -4,6 +4,7 @@
 
 import * as vscode from 'vscode';
 import { MarkdownDocsPanel } from './core/panel';
+import { isKnownSupportedFilePath } from './core/documentConversion';
 
 export function activate(context: vscode.ExtensionContext): void {
   console.log('Markdown Explorer activated');
@@ -21,7 +22,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const editor = vscode.window.activeTextEditor;
       if (editor) {
         const doc = editor.document;
-        if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx')) {
+        if (doc.languageId === 'markdown' || isKnownSupportedFilePath(doc.fileName)) {
           filePath = doc.fileName;
         }
       }
@@ -39,7 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
           const doc = editor.document;
-          if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx')) {
+          if (doc.languageId === 'markdown' || isKnownSupportedFilePath(doc.fileName)) {
             filePath = doc.fileName;
           }
         }
@@ -58,7 +59,7 @@ export function activate(context: vscode.ExtensionContext): void {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
           const doc = editor.document;
-          if (doc.languageId === 'markdown' || doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx')) {
+          if (doc.languageId === 'markdown' || isKnownSupportedFilePath(doc.fileName)) {
             filePath = doc.fileName;
           }
         }
@@ -78,14 +79,14 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       const config = vscode.workspace.getConfiguration('markdownExplorer');
-      if (config.get<boolean>('autoRefresh') && (doc.fileName.endsWith('.md') || doc.fileName.endsWith('.mdx'))) {
+      if (config.get<boolean>('autoRefresh') && isKnownSupportedFilePath(doc.fileName)) {
         MarkdownDocsPanel.currentPanel?.refresh();
       }
     }),
   );
 
-  // Auto-refresh on .md / .mdx file create / delete
-  const watcher = vscode.workspace.createFileSystemWatcher('**/*.{md,mdx}');
+  // Auto-refresh on supported file create / delete
+  const watcher = vscode.workspace.createFileSystemWatcher('**/*.{md,mdx,docx,pdf,html,xlsx,pptx,odt,odp,ods,rtf,txt}');
   watcher.onDidCreate(() => MarkdownDocsPanel.currentPanel?.refresh());
   watcher.onDidDelete(() => MarkdownDocsPanel.currentPanel?.refresh());
   context.subscriptions.push(watcher);

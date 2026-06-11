@@ -5,6 +5,7 @@ import type {
   ContentTab,
   TocEntry,
   WorkspaceUnavailableReason,
+  DocumentPreviewInfo,
 } from '../types';
 
 export type DesktopTabKind = 'home' | 'new' | 'workspace';
@@ -24,6 +25,7 @@ export interface DesktopTab {
   markdownSource: string | null;
   frontmatter: Frontmatter;
   toc: TocEntry[];
+  previewInfo: DocumentPreviewInfo | null;
   relativePath: string;
   isLoading: boolean;
   notFoundHref: string | null;

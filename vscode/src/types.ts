@@ -11,6 +11,8 @@ export interface MdFile {
   readonly fileName: string;
   /** First H1 heading, or filename without extension */
   readonly title: string;
+  readonly extension?: string;
+  readonly documentKind?: 'markdown' | 'document';
 }
 
 /** Folder node in the sidebar tree */
@@ -45,6 +47,15 @@ export interface TocEntry {
   readonly id: string;
 }
 
+export interface DocumentPreviewInfo {
+  readonly kind: 'converted' | 'text';
+  readonly sourceExtension: string;
+  readonly sourceLabel: string;
+  readonly durationMs?: number;
+  readonly fromCache?: boolean;
+  readonly qualityWarning?: string;
+}
+
 // ── Webview message types (host → webview) ──────────────────
 
 export interface RenderContentMessage {
@@ -57,6 +68,7 @@ export interface RenderContentMessage {
   readonly relativePath: string;
   readonly title: string;
   readonly fileList: MdFile[];
+  readonly previewInfo?: DocumentPreviewInfo | null;
 }
 
 export interface RecentWorkspace {
@@ -81,6 +93,7 @@ export interface ReadyAckMessage {
   readonly appRuntime?: AppRuntime;
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
+  readonly documentConversionEnabled?: boolean;
 }
 
 export interface NavNotFoundMessage {
@@ -90,6 +103,8 @@ export interface NavNotFoundMessage {
 
 export interface SetLoadingMessage {
   readonly command: 'setLoading';
+  readonly label?: string;
+  readonly detail?: string;
 }
 
 export interface WorkspaceSearchResult {
@@ -129,6 +144,7 @@ export interface OpenInEditorMessage {
 
 export interface WebviewReadyMessage {
   readonly command: 'ready';
+  readonly documentConversionEnabled?: boolean;
 }
 
 export interface CopyCodeMessage {
@@ -210,6 +226,11 @@ export interface OpenExternalMessage {
   readonly url: string;
 }
 
+export interface SetDocumentConversionMessage {
+  readonly command: 'setDocumentConversion';
+  readonly enabled: boolean;
+}
+
 export type WebviewMessage =
   | NavigateMessage
   | OpenInEditorMessage
@@ -227,4 +248,5 @@ export type WebviewMessage =
   | ZoomInMessage
   | ZoomOutMessage
   | UpdateAppearanceMessage
-  | OpenExternalMessage;
+  | OpenExternalMessage
+  | SetDocumentConversionMessage;

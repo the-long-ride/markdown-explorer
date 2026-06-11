@@ -2,7 +2,7 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
   ipcMain.on("webview-message", async (_event, msg) => {
     switch (msg.command) {
       case "ready":
-        await handlers.ready();
+        await handlers.ready(msg);
         break;
       case "openFolder":
         handlers.openFolder(Boolean(msg.openFirstFile));
@@ -65,6 +65,9 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         break;
       case "refresh":
         await handlers.refresh();
+        break;
+      case "setDocumentConversion":
+        await handlers.setDocumentConversion(Boolean(msg.enabled));
         break;
       case "window-minimize":
         getMainWindow()?.minimize();

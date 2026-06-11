@@ -9,7 +9,19 @@ import * as fs from 'fs';
 import { WorkspaceScanner } from './scanner';
 import { parse } from '../markdown/parser';
 import { HtmlRenderer } from '../markdown/renderer';
+import {
+  createFailureMarkdown,
+  DocumentConverter,
+  getFileTypeLabel,
+  isExtraDocumentFilePath,
+  isKnownSupportedFilePath,
+  isMarkdownFilePath,
+  isSupportedFilePath,
+  isTextDocumentFilePath,
+  stripKnownExtension,
+} from './documentConversion';
 import type {
+  DocumentPreviewInfo,
   MdFile,
   RenderContentMessage,
   ReadyAckMessage,
@@ -26,6 +38,8 @@ export class MarkdownDocsPanel {
   private readonly _extensionVersion: string;
   private _currentFile: string | null;
   private _flat: MdFile[] = [];
+  private _documentConversionEnabled: boolean;
+  private readonly _documentConverter = new DocumentConverter();
   private readonly _disposables: vscode.Disposable[] = [];
 
   // ---------------------------------------------------------------------------
@@ -71,6 +85,7 @@ export class MarkdownDocsPanel {
     this._extensionPath = _context.extensionPath;
     this._extensionVersion = String(_context.extension.packageJSON.version ?? '');
     this._currentFile = initialFilePath;
+    this._documentConversionEnabled = this._readDocumentConversionEnabled();
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
@@ -87,6 +102,9 @@ export class MarkdownDocsPanel {
             }
             break;
           case 'ready':
+            if (typeof msg.documentConversionEnabled === 'boolean') {
+              this._documentConversionEnabled = msg.documentConversionEnabled;
+            }
             await this._onWebviewReady();
             break;
           case 'copyCode':
@@ -99,6 +117,9 @@ export class MarkdownDocsPanel {
             break;
           case 'refresh':
             await this.refresh();
+            break;
+          case 'setDocumentConversion':
+            await this._setDocumentConversion(Boolean(msg.enabled));
             break;
           case 'searchWorkspace':
             await this._panel.webview.postMessage({
@@ -127,7 +148,7 @@ export class MarkdownDocsPanel {
   // ---------------------------------------------------------------------------
 
   async refresh(): Promise<void> {
-    await this._sendLoading();
+    await this._sendLoading('Refreshing workspace...');
     await this._render();
   }
 
@@ -136,7 +157,7 @@ export class MarkdownDocsPanel {
   // ---------------------------------------------------------------------------
 
   private async _render(): Promise<void> {
-    const { tree, flat } = await WorkspaceScanner.scan();
+    const { tree, flat } = await WorkspaceScanner.scan(this._documentConversionEnabled);
     this._flat = flat;
 
     const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
@@ -160,6 +181,7 @@ export class MarkdownDocsPanel {
         themeStyle,
         defaultExpanded,
         workspaceName,
+        documentConversionEnabled: this._documentConversionEnabled,
         ...this._hostInfo(),
       };
       await this._panel.webview.postMessage(ackMsg);
@@ -180,7 +202,7 @@ export class MarkdownDocsPanel {
     const theme = config.get<string>('theme') ?? 'auto';
     const themeStyle = config.get<string>('themeStyle') ?? 'default';
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
-    const { tree, flat } = await WorkspaceScanner.scan();
+    const { tree, flat } = await WorkspaceScanner.scan(this._documentConversionEnabled);
     this._flat = flat;
     const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
 
@@ -192,6 +214,7 @@ export class MarkdownDocsPanel {
       themeStyle,
       defaultExpanded,
       workspaceName,
+      documentConversionEnabled: this._documentConversionEnabled,
       ...this._hostInfo(),
     };
     await this._panel.webview.postMessage(ackMsg);
@@ -205,6 +228,12 @@ export class MarkdownDocsPanel {
 
   private async _sendContent(): Promise<void> {
     if (!this._currentFile) return;
+    if (!isSupportedFilePath(this._currentFile, this._documentConversionEnabled)) {
+      this._currentFile = null;
+      await this._sendWelcome();
+      return;
+    }
+
     let fileInfo = this._flat.find(f => this._normPath(f.fsPath) === this._normPath(this._currentFile!));
     if (!fileInfo) {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -215,11 +244,37 @@ export class MarkdownDocsPanel {
         relativePath,
         parts: relativePath.split(path.sep),
         fileName: path.basename(this._currentFile),
-        title: path.basename(this._currentFile).replace(/\.(md|mdx)$/i, ''),
+        title: stripKnownExtension(path.basename(this._currentFile)),
       };
     }
 
-    const raw = WorkspaceScanner.readFile(this._currentFile);
+    let raw = '';
+    let previewInfo: DocumentPreviewInfo | null = null;
+    try {
+      if (isMarkdownFilePath(this._currentFile)) {
+        raw = WorkspaceScanner.readFile(this._currentFile);
+      } else {
+        await this._sendLoading(
+          isExtraDocumentFilePath(this._currentFile) ? 'Preparing document preview...' : 'Loading docs...',
+          `Preparing ${getFileTypeLabel(this._currentFile)} preview locally.`,
+        );
+        const result = await this._documentConverter.readMarkdown(this._currentFile);
+        raw = result.markdown;
+        previewInfo = result.previewInfo;
+      }
+    } catch (err) {
+      console.error('Failed to prepare file preview:', this._currentFile, err);
+      raw = createFailureMarkdown(this._currentFile, err);
+      previewInfo = isExtraDocumentFilePath(this._currentFile)
+        ? {
+            kind: 'converted',
+            sourceExtension: path.extname(this._currentFile).toLowerCase(),
+            sourceLabel: getFileTypeLabel(this._currentFile),
+            qualityWarning: 'Markdown Explorer could not convert this file. The details are shown below.',
+          }
+        : null;
+    }
+
     const isMdx = this._currentFile.endsWith('.mdx');
     const { tokens, frontmatter } = parse(raw, isMdx);
     const config = vscode.workspace.getConfiguration('markdownExplorer');
@@ -240,12 +295,13 @@ export class MarkdownDocsPanel {
       relativePath: fileInfo.relativePath,
       title: fileInfo.title,
       fileList: this._flat,
+      previewInfo,
     };
     await this._panel.webview.postMessage(msg);
   }
 
-  private async _sendLoading(): Promise<void> {
-    await this._panel.webview.postMessage({ command: 'setLoading' });
+  private async _sendLoading(label?: string, detail?: string): Promise<void> {
+    await this._panel.webview.postMessage({ command: 'setLoading', label, detail });
   }
 
   private _makeSearchExcerpt(text: string, index: number, queryLength: number): string {
@@ -295,19 +351,20 @@ export class MarkdownDocsPanel {
 
     for (const item of items) {
       if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
-      const ext = path.extname(item.fsPath).toLowerCase();
-      if (ext !== '.md' && ext !== '.mdx') continue;
+      if (!isKnownSupportedFilePath(item.fsPath)) continue;
 
       const fileName = item.fileName || path.basename(item.fsPath);
       const relativePath = item.relativePath || fileName;
-      const title = item.title || fileName.replace(/\.(md|mdx)$/i, '');
+      const title = item.title || stripKnownExtension(fileName);
       const titleScore = title.toLowerCase().includes(query) ? 5 : 0;
       const fileNameScore = fileName.toLowerCase().includes(query) ? 4 : 0;
       const pathScore = relativePath.toLowerCase().includes(query) ? 2 : 0;
       const baseScore = titleScore + fileNameScore + pathScore;
       const contentMatches: Array<{ index: number; ordinal: number; excerpt: string }> = [];
 
-      const raw = WorkspaceScanner.readFile(item.fsPath);
+      const raw = isMarkdownFilePath(item.fsPath) || isTextDocumentFilePath(item.fsPath)
+        ? WorkspaceScanner.readFile(item.fsPath)
+        : '';
       if (raw) {
         const lowerRaw = raw.toLowerCase();
         let index = lowerRaw.indexOf(query);
@@ -456,7 +513,11 @@ export class MarkdownDocsPanel {
     const resolvedPath = this._resolveNavigationPath(href);
 
     // Check if the resolved file actually exists on disk
-    if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isFile()) {
+    if (
+      fs.existsSync(resolvedPath) &&
+      fs.statSync(resolvedPath).isFile() &&
+      isSupportedFilePath(resolvedPath, this._documentConversionEnabled)
+    ) {
       this._currentFile = resolvedPath;
       await this._sendContent();
       return;
@@ -486,8 +547,28 @@ export class MarkdownDocsPanel {
       relativePath: 'Welcome Page',
       title: 'Welcome',
       fileList: this._flat,
+      previewInfo: null,
     };
     await this._panel.webview.postMessage(msg);
+  }
+
+  private _readDocumentConversionEnabled(): boolean {
+    const config = vscode.workspace.getConfiguration('markdownExplorer');
+    return config.get<boolean>('documentConversion') === true;
+  }
+
+  private async _setDocumentConversion(enabled: boolean): Promise<void> {
+    if (this._documentConversionEnabled === enabled) return;
+    this._documentConversionEnabled = enabled;
+
+    const config = vscode.workspace.getConfiguration('markdownExplorer');
+    await config.update('documentConversion', enabled, vscode.ConfigurationTarget.Global);
+
+    await this._sendLoading(enabled ? 'Finding supported documents...' : 'Refreshing Markdown files...');
+    if (this._currentFile && !isSupportedFilePath(this._currentFile, enabled)) {
+      this._currentFile = null;
+    }
+    await this._render();
   }
 
   // ---------------------------------------------------------------------------

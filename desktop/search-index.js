@@ -1,5 +1,11 @@
 const fs = require("fs");
 const path = require("path");
+const {
+  isKnownSupportedFilePath,
+  isMarkdownFilePath,
+  isTextDocumentFilePath,
+  stripKnownExtension,
+} = require("./document-converter");
 
 function makeSearchExcerpt(text, index, queryLength) {
   const beforeText = text.slice(0, index).replace(/\s+/g, " ").trim();
@@ -18,16 +24,15 @@ function makeSearchExcerpt(text, index, queryLength) {
   return parts.join(" ").trim();
 }
 
-function isMarkdownSearchPath(filePath) {
-  const ext = path.extname(filePath || "").toLowerCase();
-  return ext === ".md" || ext === ".mdx";
+function canSearchFileContents(filePath) {
+  return isMarkdownFilePath(filePath) || isTextDocumentFilePath(filePath);
 }
 
 function createSearchIndex() {
   const cache = new Map();
 
   function getEntry(filePath) {
-    if (!filePath || !fs.existsSync(filePath) || !isMarkdownSearchPath(filePath)) {
+    if (!filePath || !fs.existsSync(filePath) || !canSearchFileContents(filePath)) {
       return null;
     }
 
@@ -53,7 +58,7 @@ function createSearchIndex() {
       ...new Set(
         items
           .map((item) => item && item.fsPath)
-          .filter((filePath) => filePath && isMarkdownSearchPath(filePath)),
+          .filter((filePath) => filePath && canSearchFileContents(filePath)),
       ),
     ];
     let index = 0;
@@ -80,11 +85,11 @@ function createSearchIndex() {
     const maxMatchesPerFile = 8;
     for (const item of items) {
       if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
-      if (!isMarkdownSearchPath(item.fsPath)) continue;
+      if (!isKnownSupportedFilePath(item.fsPath)) continue;
 
       const fileName = item.fileName || path.basename(item.fsPath);
       const relativePath = item.relativePath || fileName;
-      const title = item.title || fileName.replace(/\.(md|mdx)$/i, "");
+      const title = item.title || stripKnownExtension(fileName);
       const titleScore = String(title).toLowerCase().includes(query) ? 5 : 0;
       const fileNameScore = String(fileName).toLowerCase().includes(query) ? 4 : 0;
       const pathScore = String(relativePath).toLowerCase().includes(query) ? 2 : 0;
@@ -92,8 +97,9 @@ function createSearchIndex() {
       const contentMatches = [];
 
       try {
-        const entry = getEntry(item.fsPath);
-        if (entry) {
+        if (canSearchFileContents(item.fsPath)) {
+          const entry = getEntry(item.fsPath);
+          if (!entry) continue;
           let index = entry.lower.indexOf(query);
           let ordinal = 0;
           while (index !== -1 && contentMatches.length < maxMatchesPerFile) {

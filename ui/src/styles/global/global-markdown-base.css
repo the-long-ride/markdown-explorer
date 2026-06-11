@@ -22,6 +22,52 @@
   font-family: var(--font-mono);
   color: var(--tx2);
 }
+.document-preview-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 11px 12px;
+  border: var(--stroke-w) solid
+    color-mix(in srgb, var(--accent) 35%, var(--bd-s));
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--accent) 9%, var(--bg-s));
+  color: var(--tx2);
+}
+.document-preview-notice svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--accent);
+}
+.document-preview-notice__body {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.document-preview-notice__title {
+  color: var(--tx);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+.document-preview-notice__text,
+.document-preview-notice__meta {
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.document-preview-notice__meta {
+  color: var(--tx3);
+  font-family: var(--font-mono);
+}
+.document-preview-notice--text {
+  border-color: color-mix(in srgb, var(--tx2) 22%, var(--bd-s));
+  border-left-color: var(--tx2);
+  background: color-mix(in srgb, var(--tx2) 6%, var(--bg-s));
+}
+.document-preview-notice--text svg {
+  color: var(--tx2);
+}
 .mdn-frontmatter-field {
   display: inline-flex;
   align-items: stretch;

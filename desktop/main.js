@@ -14,6 +14,14 @@ const DesktopScanner = require("./scanner");
 const { createAppTray } = require("./tray");
 const { createDebugTools } = require("./debug-tools");
 const { registerIpcHandlers } = require("./ipc-handlers");
+const {
+  createDocumentConverter,
+  getFileTypeLabel,
+  getOpenDialogFilters,
+  isExtraDocumentFilePath,
+  isSupportedFilePath,
+  stripKnownExtension,
+} = require("./document-converter");
 const { createMarkdownRenderer } = require("./markdown-renderer");
 const { createMainWindow } = require("./window");
 const { createRecentWorkspacesStore } = require("./recents");
@@ -29,7 +37,9 @@ let activeWorkspace = null;
 let currentFile = null;
 let flatList = [];
 let readyHandled = false;
+let documentConversionEnabled = false;
 const markdownRenderer = createMarkdownRenderer(appDir);
+const documentConverter = createDocumentConverter();
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
 const searchIndex = createSearchIndex();
 const debugTools = createDebugTools(app);
@@ -59,8 +69,12 @@ function getHostInfo() {
   };
 }
 
-function sendLoading() {
-  mainWindow?.webContents.send("host-message", { command: "setLoading" });
+function sendLoading(label, detail) {
+  mainWindow?.webContents.send("host-message", {
+    command: "setLoading",
+    label,
+    detail,
+  });
 }
 
 function sendRecentWorkspacesChanged() {
@@ -141,6 +155,7 @@ app.whenReady().then(() => {
       zoomOut: handleZoomOut,
       navigate: handleNavigate,
       refresh: handleRefresh,
+      setDocumentConversion: handleSetDocumentConversion,
     },
   });
   app.on("activate", () => {
@@ -154,7 +169,11 @@ app.on("window-all-closed", () => {
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
-async function handleReady() {
+async function handleReady(msg = {}) {
+  if (typeof msg.documentConversionEnabled === "boolean") {
+    documentConversionEnabled = msg.documentConversionEnabled;
+  }
+
   if (readyHandled) return;
   readyHandled = true;
   const recents = recentWorkspacesStore.load();
@@ -169,6 +188,7 @@ async function handleReady() {
       workspaceName: "",
       workspacePath: undefined,
       recentWorkspaces: recents,
+      documentConversionEnabled,
       ...getHostInfo(),
     };
     mainWindow.webContents.send("host-message", ackMsg);
@@ -186,7 +206,7 @@ function handleOpenFolder(openFirstFile = false) {
     recentWorkspacesStore.save(selectedFolder);
     activeWorkspace = selectedFolder;
     currentFile = null;
-    sendLoading();
+    sendLoading("Loading workspace...");
     sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
   }
 }
@@ -194,9 +214,7 @@ function handleOpenFolder(openFirstFile = false) {
 function handleOpenFile() {
   const files = dialog.showOpenDialogSync(mainWindow, {
     properties: ["openFile"],
-    filters: [
-      { name: "Markdown Files", extensions: ["md", "mdx"] }
-    ]
+    filters: getOpenDialogFilters(documentConversionEnabled),
   });
   if (files && files.length > 0) {
     const selectedFile = files[0];
@@ -204,7 +222,9 @@ function handleOpenFile() {
     recentWorkspacesStore.save(folder);
     activeWorkspace = folder;
     currentFile = selectedFile;
-    sendLoading();
+    sendLoading(
+      isExtraDocumentFilePath(selectedFile) ? "Preparing document preview..." : "Loading docs...",
+    );
     sendWorkspaceData().then(() => sendContent());
   }
 }
@@ -219,13 +239,14 @@ function handleOpenPath(filePath, openFirstFile = false) {
   const stat = status.stat;
   const isFile = stat.isFile();
   if (isFile) {
-    const ext = path.extname(filePath).toLowerCase();
-    if (ext !== ".md" && ext !== ".mdx") {
+    if (!isSupportedFilePath(filePath, documentConversionEnabled)) {
       dialog.showMessageBoxSync(mainWindow, {
         type: "warning",
         buttons: ["OK"],
         title: "Unsupported File Type",
-        message: "Markdown Explorer only supports opening .md and .mdx files.",
+        message: documentConversionEnabled
+          ? "Markdown Explorer cannot preview this file type."
+          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
         detail: filePath,
       });
       return;
@@ -238,7 +259,7 @@ function handleOpenPath(filePath, openFirstFile = false) {
   }
 
   recentWorkspacesStore.save(activeWorkspace);
-  sendLoading();
+  sendLoading("Loading workspace...");
   sendWorkspaceData().then(() => sendInitialContent(openFirstFile && !isFile));
 }
 
@@ -250,7 +271,12 @@ function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false)
   }
 
   activeWorkspace = workspacePath;
-  currentFile = filePath && fs.existsSync(filePath) ? filePath : null;
+  currentFile =
+    filePath &&
+    fs.existsSync(filePath) &&
+    isSupportedFilePath(filePath, documentConversionEnabled)
+      ? filePath
+      : null;
   recentWorkspacesStore.save(activeWorkspace);
   sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
 }
@@ -318,13 +344,14 @@ async function handleConfirmOpenPath(filePath) {
   const stat = fs.statSync(filePath);
   const isFile = stat.isFile();
   if (isFile) {
-    const ext = path.extname(filePath).toLowerCase();
-    if (ext !== ".md" && ext !== ".mdx") {
+    if (!isSupportedFilePath(filePath, documentConversionEnabled)) {
       dialog.showMessageBoxSync(mainWindow, {
         type: "warning",
         buttons: ["OK"],
         title: "Unsupported File Type",
-        message: "Markdown Explorer only supports opening .md and .mdx files.",
+        message: documentConversionEnabled
+          ? "Markdown Explorer cannot preview this file type."
+          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
         detail: filePath,
       });
       return;
@@ -360,7 +387,7 @@ function handleOpenRecent(folderPath, openFirstFile = false) {
 
   recentWorkspacesStore.save(folderPath);
   activeWorkspace = folderPath;
-  sendLoading();
+  sendLoading("Loading workspace...");
   if (status.stat.isFile()) {
     currentFile = folderPath;
     sendWorkspaceData().then(() => sendInitialContent(false));
@@ -490,7 +517,11 @@ async function handleNavigate(filePath) {
 
   filePath = resolveNavigationPath(filePath);
 
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+  if (
+    fs.existsSync(filePath) &&
+    fs.statSync(filePath).isFile() &&
+    isSupportedFilePath(filePath, documentConversionEnabled)
+  ) {
     currentFile = filePath;
     await sendContent();
   } else {
@@ -509,13 +540,36 @@ async function handleRefresh() {
       return;
     }
 
-    sendLoading();
+    sendLoading("Refreshing workspace...");
     await sendWorkspaceData();
     if (currentFile) {
       await sendContent();
     } else {
       await sendWelcome();
     }
+  }
+}
+
+async function handleSetDocumentConversion(enabled) {
+  const nextEnabled = enabled === true;
+  if (documentConversionEnabled === nextEnabled) return;
+  documentConversionEnabled = nextEnabled;
+
+  if (!activeWorkspace) return;
+
+  sendLoading(nextEnabled ? "Finding supported documents..." : "Refreshing Markdown files...");
+  await sendWorkspaceData();
+
+  if (currentFile && !isSupportedFilePath(currentFile, documentConversionEnabled)) {
+    currentFile = null;
+    await sendWelcome();
+    return;
+  }
+
+  if (currentFile) {
+    await sendContent();
+  } else {
+    await sendWelcome();
   }
 }
 
@@ -526,14 +580,13 @@ function scanWorkspaceData(workspacePath) {
   try {
     const isFile = fs.statSync(workspacePath).isFile();
     if (isFile) {
-      const ext = path.extname(workspacePath).toLowerCase();
-      if (ext === ".md" || ext === ".mdx") {
+      if (isSupportedFilePath(workspacePath, documentConversionEnabled)) {
         const entry = DesktopScanner.buildFileEntry(workspacePath, path.dirname(workspacePath));
         flat = [entry];
         tree = DesktopScanner.buildTree(flat);
       }
     } else {
-      const result = DesktopScanner.scan(workspacePath);
+      const result = DesktopScanner.scan(workspacePath, { documentConversionEnabled });
       tree = result.tree;
       flat = result.flat;
     }
@@ -568,6 +621,7 @@ async function sendWorkspaceData() {
     workspaceName: workspaceName,
     workspacePath: activeWorkspace,
     recentWorkspaces: recents,
+    documentConversionEnabled,
     ...getHostInfo(),
   };
   mainWindow.webContents.send("host-message", ackMsg);
@@ -587,12 +641,35 @@ async function sendInitialContent(openFirstFile = false) {
 
 async function sendContent() {
   if (!currentFile || !activeWorkspace) return;
+  if (!isSupportedFilePath(currentFile, documentConversionEnabled)) {
+    currentFile = null;
+    await sendWelcome();
+    return;
+  }
 
   let raw = "";
+  let previewInfo = null;
   try {
-    raw = fs.readFileSync(currentFile, "utf8");
+    if (isExtraDocumentFilePath(currentFile)) {
+      sendLoading(
+        "Preparing document preview...",
+        `Preparing ${getFileTypeLabel(currentFile)} preview locally.`,
+      );
+    }
+    const result = await documentConverter.readMarkdown(currentFile);
+    raw = result.markdown;
+    previewInfo = result.previewInfo;
   } catch (err) {
     console.error("Failed to read file:", currentFile, err);
+    raw = documentConverter.createFailureMarkdown(currentFile, err);
+    previewInfo = isExtraDocumentFilePath(currentFile)
+      ? {
+          kind: "converted",
+          sourceExtension: path.extname(currentFile).toLowerCase(),
+          sourceLabel: getFileTypeLabel(currentFile),
+          qualityWarning: "Markdown Explorer could not convert this file. The details are shown below.",
+        }
+      : null;
   }
 
   const { html, frontmatter, toc } = markdownRenderer.render(currentFile, raw);
@@ -601,7 +678,7 @@ async function sendContent() {
   const baseDir = isWorkspaceFile ? path.dirname(activeWorkspace) : activeWorkspace;
   const fileInfo = flatList.find((f) => f.fsPath === currentFile) || {
     relativePath: path.relative(baseDir, currentFile),
-    title: path.basename(currentFile).replace(/\.(md|mdx)$/i, ""),
+    title: stripKnownExtension(path.basename(currentFile)),
   };
 
   const msg = {
@@ -614,6 +691,7 @@ async function sendContent() {
     relativePath: fileInfo.relativePath,
     title: fileInfo.title,
     fileList: flatList,
+    previewInfo,
   };
   mainWindow.webContents.send("host-message", msg);
 }
@@ -629,6 +707,7 @@ async function sendWelcome() {
     relativePath: "Welcome Page",
     title: "Welcome",
     fileList: flatList,
+    previewInfo: null,
   };
   mainWindow.webContents.send("host-message", msg);
 }

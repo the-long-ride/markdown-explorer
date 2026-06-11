@@ -94,6 +94,22 @@ export interface Translations {
     closeTab: string;
     openChangelog: string;
   };
+  tabContextMenu: {
+    closeThisTab: string;
+    closeTabsToRight: string;
+    closeOtherTabs: string;
+    closeAllTabs: string;
+  };
+  documentPreview: {
+    convertedTitle: string;
+    textTitle: string;
+    convertedWarning: string;
+    conversionFailedWarning: string;
+    textWarning: string;
+    preparedLocally: string;
+    loadedCachedConversion: string;
+    durationMeta: string;
+  };
   recentWorkspaces: {
     title: string;
     subtitle: string;
@@ -225,6 +241,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeTab: "Close Tab",
       openChangelog: "Click to open the change logs",
     },
+    tabContextMenu: {
+      closeThisTab: "Close this tab",
+      closeTabsToRight: "Close tabs to the right",
+      closeOtherTabs: "Close other tabs",
+      closeAllTabs: "Close all tabs",
+    },
+    documentPreview: {
+      convertedTitle: "Converted {sourceLabel} preview",
+      textTitle: "{sourceLabel} preview",
+      convertedWarning: "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file.",
+      conversionFailedWarning: "Markdown Explorer could not convert this file. The details are shown below.",
+      textWarning: "Plain text is rendered through Markdown Explorer, so Markdown-like syntax may be formatted.",
+      preparedLocally: "Prepared locally",
+      loadedCachedConversion: "Loaded cached conversion",
+      durationMeta: "{status} in {duration}",
+    },
     recentWorkspaces: {
       title: "Recent Workspaces",
       subtitle: "Search and manage your recently opened workspaces",
@@ -338,6 +370,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Đóng cửa sổ [Esc]",
       closeTab: "Đóng tab",
       openChangelog: "Nhấp để mở nhật ký thay đổi",
+    },
+    tabContextMenu: {
+      closeThisTab: "Đóng tab này",
+      closeTabsToRight: "Đóng các tab bên phải",
+      closeOtherTabs: "Đóng các tab khác",
+      closeAllTabs: "Đóng tất cả tab",
+    },
+    documentPreview: {
+      convertedTitle: "Bản xem trước {sourceLabel} đã chuyển đổi",
+      textTitle: "Bản xem trước {sourceLabel}",
+      convertedWarning: "Bản xem trước này được chuyển đổi sang Markdown. Bố cục, hình ảnh, bảng và kiểu dáng có thể không khớp hoàn toàn với tệp gốc.",
+      conversionFailedWarning: "Markdown Explorer không thể chuyển đổi tệp này. Chi tiết được hiển thị bên dưới.",
+      textWarning: "Văn bản thuần được hiển thị qua Markdown Explorer, nên cú pháp giống Markdown có thể được định dạng.",
+      preparedLocally: "Chuẩn bị cục bộ",
+      loadedCachedConversion: "Đã tải bản chuyển đổi trong bộ nhớ đệm",
+      durationMeta: "{status} trong {duration}",
     },
     recentWorkspaces: {
       title: "Không gian làm việc gần đây",
@@ -453,6 +501,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeTab: "Fermer l'onglet",
       openChangelog: "Cliquez pour ouvrir le journal des modifications",
     },
+    tabContextMenu: {
+      closeThisTab: "Fermer cet onglet",
+      closeTabsToRight: "Fermer les onglets à droite",
+      closeOtherTabs: "Fermer les autres onglets",
+      closeAllTabs: "Fermer tous les onglets",
+    },
+    documentPreview: {
+      convertedTitle: "Aperçu {sourceLabel} converti",
+      textTitle: "Aperçu {sourceLabel}",
+      convertedWarning: "Cet aperçu a été converti en Markdown. La mise en page, les images, les tableaux et les styles peuvent ne pas correspondre parfaitement au fichier d'origine.",
+      conversionFailedWarning: "Markdown Explorer n'a pas pu convertir ce fichier. Les détails sont affichés ci-dessous.",
+      textWarning: "Le texte brut est rendu par Markdown Explorer, donc une syntaxe proche de Markdown peut être formatée.",
+      preparedLocally: "Préparé localement",
+      loadedCachedConversion: "Conversion en cache chargée",
+      durationMeta: "{status} en {duration}",
+    },
     recentWorkspaces: {
       title: "Espaces de travail récents",
       subtitle: "Recherchez et gérez vos espaces de travail récemment ouverts",
@@ -566,6 +630,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Cerrar ventana [Esc]",
       closeTab: "Cerrar pestaña",
       openChangelog: "Haz clic para abrir el registro de cambios",
+    },
+    tabContextMenu: {
+      closeThisTab: "Cerrar esta pestaña",
+      closeTabsToRight: "Cerrar pestañas a la derecha",
+      closeOtherTabs: "Cerrar otras pestañas",
+      closeAllTabs: "Cerrar todas las pestañas",
+    },
+    documentPreview: {
+      convertedTitle: "Vista previa {sourceLabel} convertida",
+      textTitle: "Vista previa {sourceLabel}",
+      convertedWarning: "Esta vista previa se convirtió a Markdown. El diseño, las imágenes, las tablas y los estilos pueden no coincidir perfectamente con el archivo original.",
+      conversionFailedWarning: "Markdown Explorer no pudo convertir este archivo. Los detalles se muestran abajo.",
+      textWarning: "El texto plano se renderiza mediante Markdown Explorer, por lo que la sintaxis similar a Markdown puede formatearse.",
+      preparedLocally: "Preparado localmente",
+      loadedCachedConversion: "Conversión en caché cargada",
+      durationMeta: "{status} en {duration}",
     },
     recentWorkspaces: {
       title: "Espacios de trabajo recientes",
@@ -681,6 +761,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeTab: "关闭标签页",
       openChangelog: "点击打开更新日志",
     },
+    tabContextMenu: {
+      closeThisTab: "关闭此标签页",
+      closeTabsToRight: "关闭右侧标签页",
+      closeOtherTabs: "关闭其他标签页",
+      closeAllTabs: "关闭所有标签页",
+    },
+    documentPreview: {
+      convertedTitle: "已转换的 {sourceLabel} 预览",
+      textTitle: "{sourceLabel} 预览",
+      convertedWarning: "此预览已转换为 Markdown。布局、图片、表格和样式可能无法与原始文件完全一致。",
+      conversionFailedWarning: "Markdown Explorer 无法转换此文件。详细信息如下所示。",
+      textWarning: "纯文本会通过 Markdown Explorer 渲染，因此类似 Markdown 的语法可能会被格式化。",
+      preparedLocally: "已在本地准备",
+      loadedCachedConversion: "已加载缓存转换",
+      durationMeta: "{status}，耗时 {duration}",
+    },
     recentWorkspaces: {
       title: "最近的工作区",
       subtitle: "搜索和管理您最近打开的工作区",
@@ -794,6 +890,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Lukk modal [Esc]",
       closeTab: "Lukk fane",
       openChangelog: "Klikk for å åpne endringsloggen",
+    },
+    tabContextMenu: {
+      closeThisTab: "Lukk denne fanen",
+      closeTabsToRight: "Lukk faner til høyre",
+      closeOtherTabs: "Lukk andre faner",
+      closeAllTabs: "Lukk alle faner",
+    },
+    documentPreview: {
+      convertedTitle: "Konvertert {sourceLabel}-forhåndsvisning",
+      textTitle: "{sourceLabel}-forhåndsvisning",
+      convertedWarning: "Denne forhåndsvisningen ble konvertert til Markdown. Layout, bilder, tabeller og stil kan avvike fra originalfilen.",
+      conversionFailedWarning: "Markdown Explorer kunne ikke konvertere denne filen. Detaljene vises nedenfor.",
+      textWarning: "Ren tekst gjengis gjennom Markdown Explorer, så Markdown-lignende syntaks kan bli formatert.",
+      preparedLocally: "Klargjort lokalt",
+      loadedCachedConversion: "Lastet bufret konvertering",
+      durationMeta: "{status} på {duration}",
     },
     recentWorkspaces: {
       title: "Nylige arbeidsområder",
@@ -909,6 +1021,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeTab: "タブを閉じる",
       openChangelog: "クリックして変更履歴を開く",
     },
+    tabContextMenu: {
+      closeThisTab: "このタブを閉じる",
+      closeTabsToRight: "右側のタブを閉じる",
+      closeOtherTabs: "他のタブを閉じる",
+      closeAllTabs: "すべてのタブを閉じる",
+    },
+    documentPreview: {
+      convertedTitle: "変換済み {sourceLabel} プレビュー",
+      textTitle: "{sourceLabel} プレビュー",
+      convertedWarning: "このプレビューは Markdown に変換されました。レイアウト、画像、表、スタイルは元のファイルと完全には一致しない場合があります。",
+      conversionFailedWarning: "Markdown Explorer はこのファイルを変換できませんでした。詳細は以下に表示されています。",
+      textWarning: "プレーンテキストは Markdown Explorer で表示されるため、Markdown に似た構文が整形される場合があります。",
+      preparedLocally: "ローカルで準備済み",
+      loadedCachedConversion: "キャッシュ済み変換を読み込みました",
+      durationMeta: "{status}: {duration}",
+    },
     recentWorkspaces: {
       title: "最近のワークスペース",
       subtitle: "最近開いたワークスペースの検索と管理",
@@ -1023,6 +1151,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeTab: "탭 닫기",
       openChangelog: "변경 로그를 열려면 클릭",
     },
+    tabContextMenu: {
+      closeThisTab: "이 탭 닫기",
+      closeTabsToRight: "오른쪽 탭 닫기",
+      closeOtherTabs: "다른 탭 닫기",
+      closeAllTabs: "모든 탭 닫기",
+    },
+    documentPreview: {
+      convertedTitle: "변환된 {sourceLabel} 미리보기",
+      textTitle: "{sourceLabel} 미리보기",
+      convertedWarning: "이 미리보기는 Markdown으로 변환되었습니다. 레이아웃, 이미지, 표, 스타일이 원본 파일과 완전히 일치하지 않을 수 있습니다.",
+      conversionFailedWarning: "Markdown Explorer에서 이 파일을 변환할 수 없습니다. 자세한 내용은 아래에 표시됩니다.",
+      textWarning: "일반 텍스트는 Markdown Explorer를 통해 렌더링되므로 Markdown과 유사한 구문이 서식으로 표시될 수 있습니다.",
+      preparedLocally: "로컬에서 준비됨",
+      loadedCachedConversion: "캐시된 변환 로드됨",
+      durationMeta: "{status}: {duration}",
+    },
     recentWorkspaces: {
       title: "최근 작업 공간",
       subtitle: "최근에 연 작업 공간 검색 및 관리",
@@ -1136,6 +1280,22 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Закрыть окно [Esc]",
       closeTab: "Закрыть вкладку",
       openChangelog: "Нажмите, чтобы открыть журнал изменений",
+    },
+    tabContextMenu: {
+      closeThisTab: "Закрыть эту вкладку",
+      closeTabsToRight: "Закрыть вкладки справа",
+      closeOtherTabs: "Закрыть остальные вкладки",
+      closeAllTabs: "Закрыть все вкладки",
+    },
+    documentPreview: {
+      convertedTitle: "Преобразованный предпросмотр {sourceLabel}",
+      textTitle: "Предпросмотр {sourceLabel}",
+      convertedWarning: "Этот предпросмотр был преобразован в Markdown. Макет, изображения, таблицы и стили могут не полностью совпадать с исходным файлом.",
+      conversionFailedWarning: "Markdown Explorer не удалось преобразовать этот файл. Подробности показаны ниже.",
+      textWarning: "Обычный текст отображается через Markdown Explorer, поэтому синтаксис, похожий на Markdown, может быть отформатирован.",
+      preparedLocally: "Подготовлено локально",
+      loadedCachedConversion: "Загружено кэшированное преобразование",
+      durationMeta: "{status} за {duration}",
     },
     recentWorkspaces: {
       title: "Недавние рабочие области",

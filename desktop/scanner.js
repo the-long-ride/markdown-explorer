@@ -1,11 +1,18 @@
 const fs = require('fs');
 const path = require('path');
+const {
+  getExtension,
+  isMarkdownFilePath,
+  isSupportedFilePath,
+  stripKnownExtension,
+} = require('./document-converter');
 
 class DesktopScanner {
-  static scan(rootPath) {
+  static scan(rootPath, options = {}) {
     const flat = [];
     const maxFiles = 1000;
     const excludes = ['.git', 'node_modules', '.vscode', 'out', 'dist'];
+    const documentConversionEnabled = options.documentConversionEnabled === true;
 
     function traverse(currentDir) {
       if (flat.length >= maxFiles) return;
@@ -24,8 +31,7 @@ class DesktopScanner {
         if (entry.isDirectory()) {
           traverse(fullPath);
         } else if (entry.isFile()) {
-          const ext = path.extname(entry.name).toLowerCase();
-          if (ext === '.md' || ext === '.mdx') {
+          if (isSupportedFilePath(fullPath, documentConversionEnabled)) {
             flat.push(DesktopScanner.buildFileEntry(fullPath, rootPath));
           }
         }
@@ -42,9 +48,14 @@ class DesktopScanner {
     const relativePath = path.relative(rootPath, fsPath);
     const parts = relativePath.split(path.sep);
     const fileName = parts[parts.length - 1];
-    const isMdx = fileName.endsWith('.mdx');
-    const title = DesktopScanner.extractTitle(fsPath, isMdx) ?? fileName.replace(/\.(md|mdx)$/i, '');
-    return { fsPath, relativePath, parts, fileName, title };
+    const ext = getExtension(fileName);
+    const isMarkdown = isMarkdownFilePath(fileName);
+    const isMdx = ext === '.mdx';
+    const title = isMarkdown
+      ? DesktopScanner.extractTitle(fsPath, isMdx) ?? stripKnownExtension(fileName)
+      : stripKnownExtension(fileName);
+    const documentKind = isMarkdown ? 'markdown' : 'document';
+    return { fsPath, relativePath, parts, fileName, title, extension: ext, documentKind };
   }
 
   static extractTitle(fsPath, isMdx = false) {

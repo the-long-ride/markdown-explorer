@@ -10,6 +10,8 @@ export interface MdFile {
   readonly parts: readonly string[];
   readonly fileName: string;
   readonly title: string;
+  readonly extension?: string;
+  readonly documentKind?: 'markdown' | 'document';
 }
 
 /** Folder node in the sidebar tree */
@@ -30,6 +32,15 @@ export interface TocEntry {
 /** Parsed frontmatter key-value pairs */
 export type Frontmatter = Record<string, string>;
 
+export interface DocumentPreviewInfo {
+  readonly kind: 'converted' | 'text';
+  readonly sourceExtension: string;
+  readonly sourceLabel: string;
+  readonly durationMs?: number;
+  readonly fromCache?: boolean;
+  readonly qualityWarning?: string;
+}
+
 // ── Host → Webview messages ─────────────────────────────────────────────────
 
 export interface RenderContentMessage {
@@ -42,6 +53,7 @@ export interface RenderContentMessage {
   readonly relativePath: string;
   readonly title: string;
   readonly fileList: MdFile[];
+  readonly previewInfo?: DocumentPreviewInfo | null;
 }
 
 export interface ContentTab {
@@ -53,6 +65,7 @@ export interface ContentTab {
   readonly markdownSource: string | null;
   readonly frontmatter: Frontmatter;
   readonly toc: TocEntry[];
+  readonly previewInfo: DocumentPreviewInfo | null;
 }
 
 export interface RecentWorkspace {
@@ -78,6 +91,7 @@ export interface ReadyAckMessage {
   readonly appRuntime?: AppRuntime;
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
+  readonly documentConversionEnabled?: boolean;
 }
 
 export interface RecentWorkspacesChangedMessage {
@@ -114,6 +128,8 @@ export interface WorkspaceSearchIndexLoadedMessage {
 
 export interface SetLoadingMessage {
   readonly command: 'setLoading';
+  readonly label?: string;
+  readonly detail?: string;
 }
 
 export interface CrossTabSearchResult {
@@ -183,6 +199,7 @@ export interface OpenInEditorMessage {
 
 export interface WebviewReadyMessage {
   readonly command: 'ready';
+  readonly documentConversionEnabled?: boolean;
 }
 
 export interface CopyCodeMessage {
@@ -287,6 +304,11 @@ export interface OpenExternalMessage {
   readonly url: string;
 }
 
+export interface SetDocumentConversionMessage {
+  readonly command: 'setDocumentConversion';
+  readonly enabled: boolean;
+}
+
 
 
 export type WebviewMessage =
@@ -311,7 +333,8 @@ export type WebviewMessage =
   | ZoomInMessage
   | ZoomOutMessage
   | UpdateAppearanceMessage
-  | OpenExternalMessage;
+  | OpenExternalMessage
+  | SetDocumentConversionMessage;
 
 // ── UI state ────────────────────────────────────────────────────────────────
 
@@ -387,6 +410,7 @@ export interface AppSettings {
   showTitle: boolean;
   defaultHtmlPreview: boolean;
   fileTabs: boolean;
+  documentConversion: boolean;
   scopeFocus?: Record<string, string[]>;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
@@ -399,6 +423,7 @@ export interface PersistedState {
   showTitle?: boolean;
   defaultHtmlPreview?: boolean;
   fileTabs?: boolean;
+  documentConversion?: boolean;
   scopeFocus?: Record<string, string[]>;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;

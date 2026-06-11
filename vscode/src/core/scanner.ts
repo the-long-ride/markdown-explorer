@@ -6,12 +6,18 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import type { MdFile, FolderNode, ScanResult } from '../types';
+import {
+  getExtension,
+  isMarkdownFilePath,
+  isSupportedFilePath,
+  stripKnownExtension,
+} from './documentConversion';
 
 export class WorkspaceScanner {
   private static readonly MAX_FILES = 1000;
 
   /** Scan workspace for all .md files, return tree + flat list */
-  static async scan(): Promise<ScanResult> {
+  static async scan(documentConversionEnabled = false): Promise<ScanResult> {
     const folders = vscode.workspace.workspaceFolders;
     const emptyResult: ScanResult = { tree: WorkspaceScanner.emptyRoot(), flat: [] };
 
@@ -21,7 +27,14 @@ export class WorkspaceScanner {
     const excludePatterns: string[] = config.get('excludePatterns') ?? ['**/node_modules/**', '**/.git/**'];
     const excludeGlob = `{${excludePatterns.join(',')}}`;
 
-    const uris = await vscode.workspace.findFiles('**/*.{md,mdx}', excludeGlob, WorkspaceScanner.MAX_FILES);
+    const includeGlob = documentConversionEnabled
+      ? '**/*.{md,mdx,docx,pdf,html,xlsx,pptx,odt,odp,ods,rtf,txt}'
+      : '**/*.{md,mdx}';
+    const uris = (await vscode.workspace.findFiles(
+      includeGlob,
+      excludeGlob,
+      WorkspaceScanner.MAX_FILES,
+    )).filter(uri => isSupportedFilePath(uri.fsPath, documentConversionEnabled));
     uris.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
     const rootPath = folders[0].uri.fsPath;
@@ -52,9 +65,14 @@ export class WorkspaceScanner {
     const relativePath = path.relative(rootPath, fsPath);
     const parts = relativePath.split(path.sep);
     const fileName = parts[parts.length - 1];
-    const isMdx = fileName.endsWith('.mdx');
-    const title = WorkspaceScanner.extractTitle(fsPath, isMdx) ?? fileName.replace(/\.(md|mdx)$/i, '');
-    return Object.freeze({ fsPath, relativePath, parts, fileName, title });
+    const ext = getExtension(fileName);
+    const isMarkdown = isMarkdownFilePath(fileName);
+    const isMdx = ext === '.mdx';
+    const title = isMarkdown
+      ? WorkspaceScanner.extractTitle(fsPath, isMdx) ?? stripKnownExtension(fileName)
+      : stripKnownExtension(fileName);
+    const documentKind = isMarkdown ? 'markdown' : 'document';
+    return Object.freeze({ fsPath, relativePath, parts, fileName, title, extension: ext, documentKind });
   }
 
   private static extractTitle(fsPath: string, isMdx = false): string | null {

@@ -41,6 +41,7 @@ import type {
   AppRuntime,
   HostPlatform,
   WorkspaceUnavailableReason,
+  DocumentPreviewInfo,
 } from '../types';
 
 export {
@@ -92,6 +93,12 @@ export interface AppState {
   relativePath: string;
   /** Is loading content */
   isLoading: boolean;
+  /** Loading title from the host, if a specific stage is known */
+  loadingLabel: string;
+  /** Loading detail from the host, if a specific stage is known */
+  loadingDetail: string;
+  /** Metadata for converted or imported previews */
+  previewInfo: DocumentPreviewInfo | null;
   /** Nav not found href */
   notFoundHref: string | null;
   /** Workspace path that could not be opened */
@@ -138,6 +145,9 @@ const initialState: AppState = {
   toc: [],
   relativePath: '',
   isLoading: true,
+  loadingLabel: 'Loading docs...',
+  loadingDetail: '',
+  previewInfo: null,
   notFoundHref: null,
   workspaceUnavailablePath: null,
   workspaceUnavailableReason: null,
@@ -145,6 +155,7 @@ const initialState: AppState = {
     showTitle: false,
     defaultHtmlPreview: true,
     fileTabs: false,
+    documentConversion: false,
     scopeFocus: {},
     desktopViewMode: 'focus',
     keybindings: DEFAULT_KEYBINDINGS,
@@ -187,6 +198,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       showTitle: saved.showTitle === true,
       defaultHtmlPreview: saved.defaultHtmlPreview !== false,
       fileTabs: saved.fileTabs === true,
+      documentConversion: saved.documentConversion === true,
       scopeFocus: saved.scopeFocus ?? {},
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
@@ -216,6 +228,7 @@ export type Action =
       appRuntime?: AppRuntime;
       hostPlatform?: HostPlatform;
       hostArch?: string;
+      documentConversionEnabled?: boolean;
     }
   | {
       type: 'RECENT_WORKSPACES_CHANGED';
@@ -225,6 +238,9 @@ export type Action =
   | { type: 'NAV_NOT_FOUND'; href: string }
   | { type: 'ACTIVATE_CONTENT_TAB'; filePath: string }
   | { type: 'CLOSE_CONTENT_TAB'; filePath: string }
+  | { type: 'CLOSE_CONTENT_TABS_TO_RIGHT'; filePath: string }
+  | { type: 'CLOSE_OTHER_CONTENT_TABS'; filePath: string }
+  | { type: 'CLOSE_ALL_CONTENT_TABS' }
   | {
       type: 'WORKSPACE_UNAVAILABLE';
       workspacePath: string;
@@ -236,7 +252,7 @@ export type Action =
       hostPlatform?: HostPlatform;
       hostArch?: string;
     }
-  | { type: 'SET_LOADING' }
+  | { type: 'SET_LOADING'; label?: string; detail?: string }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'SET_THEME'; theme: ThemeMode }
   | { type: 'SET_THEME_STYLE'; themeStyle: ThemeStyle }
@@ -253,7 +269,8 @@ function getPathFileName(filePath: string): string {
 }
 
 function stripMarkdownExtension(fileName: string): string {
-  return fileName.replace(/\.(md|mdx)$/i, '');
+  const extIndex = fileName.lastIndexOf('.');
+  return extIndex > 0 ? fileName.slice(0, extIndex) : fileName;
 }
 
 function findFileInfo(fileList: readonly MdFile[], filePath: string): MdFile | undefined {
@@ -290,6 +307,7 @@ function createContentTabFromMessage(
     markdownSource: msg.markdownSource ?? null,
     frontmatter: msg.frontmatter,
     toc: msg.toc,
+    previewInfo: msg.previewInfo ?? null,
   };
 }
 
@@ -307,6 +325,7 @@ function createContentTabFromState(state: AppState): ContentTab | null {
     markdownSource: state.markdownSource,
     frontmatter: state.frontmatter,
     toc: state.toc,
+    previewInfo: state.previewInfo,
   };
 }
 
@@ -320,6 +339,9 @@ function applyContentTab(state: AppState, tab: ContentTab, tabs = state.contentT
     toc: tab.toc,
     relativePath: tab.relativePath,
     isLoading: false,
+    loadingLabel: '',
+    loadingDetail: '',
+    previewInfo: tab.previewInfo ?? null,
     notFoundHref: null,
     workspaceUnavailablePath: null,
     workspaceUnavailableReason: null,
@@ -327,6 +349,51 @@ function applyContentTab(state: AppState, tab: ContentTab, tabs = state.contentT
     activeContentTabPath: tab.filePath,
     renderVersion: state.renderVersion + 1,
   };
+}
+
+function clearContentTabs(state: AppState): AppState {
+  return {
+    ...state,
+    currentFile: null,
+    contentHtml: '',
+    markdownSource: null,
+    frontmatter: {},
+    toc: [],
+    previewInfo: null,
+    relativePath: '',
+    isLoading: false,
+    notFoundHref: null,
+    contentTabs: [],
+    activeContentTabPath: null,
+    renderVersion: state.renderVersion + 1,
+  };
+}
+
+function applyContentTabsFallback(
+  state: AppState,
+  tabs: readonly ContentTab[],
+  preferredPath?: string,
+): AppState {
+  const nextTabs = tabs as ContentTab[];
+  if (nextTabs.length === 0) return clearContentTabs(state);
+
+  const activePath = normalizePathKey(state.activeContentTabPath ?? '');
+  const activeTab = nextTabs.find(
+    (item) => normalizePathKey(item.filePath) === activePath,
+  );
+  if (activeTab) {
+    return {
+      ...state,
+      contentTabs: nextTabs,
+    };
+  }
+
+  const preferredTab = preferredPath
+    ? nextTabs.find(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(preferredPath),
+      )
+    : null;
+  return applyContentTab(state, preferredTab ?? nextTabs[nextTabs.length - 1], nextTabs);
 }
 
 function refreshContentTabMetadata(
@@ -367,6 +434,11 @@ function reducer(state: AppState, action: Action): AppState {
         workspaceName: action.workspaceName,
         workspacePath: action.workspacePath,
         markdownSource: null,
+        previewInfo: null,
+        settings: {
+          ...state.settings,
+          documentConversion: action.documentConversionEnabled ?? state.settings.documentConversion,
+        },
         recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
         appVersion: action.appVersion ?? state.appVersion,
         appRuntime: action.appRuntime ?? state.appRuntime,
@@ -402,8 +474,11 @@ function reducer(state: AppState, action: Action): AppState {
         markdownSource: action.msg.markdownSource ?? null,
         frontmatter: action.msg.frontmatter,
         toc: action.msg.toc,
+        previewInfo: action.msg.previewInfo ?? null,
         relativePath: action.msg.relativePath,
         isLoading: false,
+        loadingLabel: '',
+        loadingDetail: '',
         notFoundHref: null,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -465,20 +540,29 @@ function reducer(state: AppState, action: Action): AppState {
       }
       const fallback = nextTabs[tabIndex - 1] ?? nextTabs[tabIndex] ?? null;
       if (fallback) return applyContentTab(state, fallback, nextTabs);
-      return {
-        ...state,
-        currentFile: null,
-        contentHtml: '',
-        markdownSource: null,
-        frontmatter: {},
-        toc: [],
-        relativePath: '',
-        isLoading: false,
-        notFoundHref: null,
-        contentTabs: [],
-        activeContentTabPath: null,
-        renderVersion: state.renderVersion + 1,
-      };
+      return clearContentTabs(state);
+    }
+
+    case 'CLOSE_CONTENT_TABS_TO_RIGHT': {
+      const tabIndex = state.contentTabs.findIndex(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
+      );
+      if (tabIndex === -1 || tabIndex >= state.contentTabs.length - 1) return state;
+      const nextTabs = state.contentTabs.slice(0, tabIndex + 1);
+      return applyContentTabsFallback(state, nextTabs, action.filePath);
+    }
+
+    case 'CLOSE_OTHER_CONTENT_TABS': {
+      const targetTab = state.contentTabs.find(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
+      );
+      if (!targetTab || state.contentTabs.length <= 1) return state;
+      return applyContentTab(state, targetTab, [targetTab]);
+    }
+
+    case 'CLOSE_ALL_CONTENT_TABS': {
+      if (state.contentTabs.length === 0) return state;
+      return clearContentTabs(state);
     }
 
     case 'WORKSPACE_UNAVAILABLE':
@@ -493,8 +577,11 @@ function reducer(state: AppState, action: Action): AppState {
         markdownSource: null,
         frontmatter: {},
         toc: [],
+        previewInfo: null,
         relativePath: '',
         isLoading: false,
+        loadingLabel: '',
+        loadingDetail: '',
         notFoundHref: null,
         workspaceUnavailablePath: action.workspacePath,
         workspaceUnavailableReason: action.reason,
@@ -512,6 +599,8 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         isLoading: true,
+        loadingLabel: action.label || 'Loading docs...',
+        loadingDetail: action.detail || '',
         notFoundHref: null,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -614,6 +703,9 @@ interface AppStateContextValue {
   navigate: (fsPath: string | null) => void;
   activateContentTab: (fsPath: string) => void;
   closeContentTab: (fsPath: string) => void;
+  closeContentTabsToRight: (fsPath: string) => void;
+  closeOtherContentTabs: (fsPath: string) => void;
+  closeAllContentTabs: () => void;
   openInEditor: () => void;
   refresh: () => void;
   toggleTheme: () => void;
@@ -645,6 +737,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           showTitle: saved.showTitle === true,
           defaultHtmlPreview: saved.defaultHtmlPreview !== false,
           fileTabs: saved.fileTabs === true,
+          documentConversion: saved.documentConversion === true,
           scopeFocus: saved.scopeFocus ?? {},
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
@@ -688,6 +781,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             appRuntime: msg.appRuntime,
             hostPlatform: msg.hostPlatform,
             hostArch: msg.hostArch,
+            documentConversionEnabled: msg.documentConversionEnabled,
           });
           break;
         case 'recentWorkspacesChanged':
@@ -716,7 +810,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           });
           break;
         case 'setLoading':
-          dispatch({ type: 'SET_LOADING' });
+          dispatch({ type: 'SET_LOADING', label: msg.label, detail: msg.detail });
           break;
         case 'window-state-changed':
           dispatch({ type: 'SET_MAXIMIZED', isMaximized: msg.isMaximized });
@@ -726,7 +820,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     // Wait for mermaid/chart.js to be on window before telling host we're ready
     libsReady.then(() => {
-      bridge.postMessage({ command: 'ready' });
+      const saved = bridge.getState<PersistedState>();
+      bridge.postMessage({
+        command: 'ready',
+        documentConversionEnabled:
+          typeof saved?.documentConversion === 'boolean'
+            ? saved.documentConversion
+            : undefined,
+      });
     });
 
     return unsub;
@@ -759,6 +860,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
       fileTabs: state.settings.fileTabs,
+      documentConversion: state.settings.documentConversion,
       scopeFocus: state.settings.scopeFocus,
       desktopViewMode: state.settings.desktopViewMode,
       keybindings: state.settings.keybindings,
@@ -834,6 +936,45 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [bridge, state.activeContentTabPath, state.contentTabs],
   );
 
+  const closeContentTabsToRight = useCallback(
+    (fsPath: string) => {
+      const targetIndex = state.contentTabs.findIndex(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(fsPath),
+      );
+      if (targetIndex === -1 || targetIndex >= state.contentTabs.length - 1) return;
+      const activeIndex = state.contentTabs.findIndex(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(state.activeContentTabPath ?? ''),
+      );
+      dispatch({ type: 'CLOSE_CONTENT_TABS_TO_RIGHT', filePath: fsPath });
+      if (activeIndex === -1 || activeIndex > targetIndex) {
+        bridge.postMessage({ command: 'navigate', path: fsPath });
+      }
+    },
+    [bridge, state.activeContentTabPath, state.contentTabs],
+  );
+
+  const closeOtherContentTabs = useCallback(
+    (fsPath: string) => {
+      const targetTab = state.contentTabs.find(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(fsPath),
+      );
+      if (!targetTab || state.contentTabs.length <= 1) return;
+      const targetIsActive =
+        normalizePathKey(state.activeContentTabPath ?? '') === normalizePathKey(fsPath);
+      dispatch({ type: 'CLOSE_OTHER_CONTENT_TABS', filePath: fsPath });
+      if (!targetIsActive) {
+        bridge.postMessage({ command: 'navigate', path: fsPath });
+      }
+    },
+    [bridge, state.activeContentTabPath, state.contentTabs],
+  );
+
+  const closeAllContentTabs = useCallback(() => {
+    if (state.contentTabs.length === 0) return;
+    dispatch({ type: 'CLOSE_ALL_CONTENT_TABS' });
+    bridge.postMessage({ command: 'navigate', path: '' });
+  }, [bridge, state.contentTabs.length]);
+
   const openInEditor = useCallback(() => {
     if (state.currentFile) {
       bridge.postMessage({ command: 'openInEditor', path: state.currentFile });
@@ -898,7 +1039,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     dispatch({ type: 'UPDATE_SETTINGS', settings: patch });
-  }, []);
+    if ('documentConversion' in patch) {
+      bridge.postMessage({
+        command: 'setDocumentConversion',
+        enabled: patch.documentConversion === true,
+      });
+    }
+  }, [bridge]);
 
   const value = useMemo<AppStateContextValue>(
     () => ({
@@ -907,6 +1054,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       navigate,
       activateContentTab,
       closeContentTab,
+      closeContentTabsToRight,
+      closeOtherContentTabs,
+      closeAllContentTabs,
       openInEditor,
       refresh,
       toggleTheme,
@@ -921,6 +1071,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       navigate,
       activateContentTab,
       closeContentTab,
+      closeContentTabsToRight,
+      closeOtherContentTabs,
+      closeAllContentTabs,
       openInEditor,
       refresh,
       toggleTheme,

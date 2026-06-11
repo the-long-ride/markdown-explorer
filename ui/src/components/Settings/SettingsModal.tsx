@@ -44,6 +44,7 @@ const ACTIONS_LIST = [
     scope: "desktop",
   },
   { id: "toggleSidebar", label: "Toggle sidebar visibility", scope: "desktop" },
+  { id: "sidebarCursorMode", label: "Sidebar cursor mode", scope: "both" },
   { id: "zoomIn", label: "Zoom in", scope: "desktop" },
   { id: "zoomOut", label: "Zoom out", scope: "desktop" },
 ];
@@ -493,6 +494,34 @@ export function SettingsModal({
                   checked={state.settings.fileTabs}
                   onChange={(e) =>
                     updateSettings({ fileTabs: e.target.checked })
+                  }
+                />
+                <span className="switch-slider" />
+              </label>
+            </div>
+
+            {/* Document Conversion */}
+            <div
+              className="settings-item settings-item--document-conversion"
+              style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
+            >
+              <div className="settings-item__info">
+                <div className="settings-item__title">
+                  Read DOCX, PDF, Office, and text files
+                </div>
+                <div className="settings-item__desc">
+                  Converts DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT to Markdown for preview. Converted previews can lose layout or formatting quality.
+                </div>
+              </div>
+              <label
+                className="switch-toggle"
+                aria-label="Toggle document conversion previews"
+              >
+                <input
+                  type="checkbox"
+                  checked={state.settings.documentConversion}
+                  onChange={(e) =>
+                    updateSettings({ documentConversion: e.target.checked })
                   }
                 />
                 <span className="switch-slider" />

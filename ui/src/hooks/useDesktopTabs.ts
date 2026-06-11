@@ -112,6 +112,7 @@ export function useDesktopTabs({
         markdownSource: state.markdownSource,
         frontmatter: state.frontmatter,
         toc: state.toc,
+        previewInfo: state.previewInfo,
         relativePath: state.relativePath,
         isLoading: state.isLoading,
         notFoundHref: state.notFoundHref,
@@ -131,6 +132,7 @@ export function useDesktopTabs({
       state.isLoading,
       state.markdownSource,
       state.notFoundHref,
+      state.previewInfo,
       state.relativePath,
       state.toc,
       state.tree,
@@ -204,6 +206,7 @@ export function useDesktopTabs({
             markdownSource: tab.markdownSource,
             frontmatter: tab.frontmatter,
             toc: tab.toc,
+            previewInfo: tab.previewInfo,
             filePath: tab.currentFile ?? '',
             relativePath: tab.relativePath || 'Welcome Page',
             title: tab.currentFile ? tab.relativePath || 'Document' : 'Welcome',
@@ -303,6 +306,58 @@ export function useDesktopTabs({
     [activateTab],
   );
 
+  const closeTabsToRight = useCallback(
+    (tabId: string) => {
+      setTabs((currentTabs) => {
+        const workspaceTabs = currentTabs.filter((tab) => tab.kind !== 'home');
+        const workspaceIndex = workspaceTabs.findIndex((tab) => tab.id === tabId);
+        if (workspaceIndex === -1 || workspaceIndex >= workspaceTabs.length - 1) {
+          return currentTabs;
+        }
+
+        const retainedWorkspaceIds = new Set(
+          workspaceTabs.slice(0, workspaceIndex + 1).map((tab) => tab.id),
+        );
+        const nextTabs = currentTabs.filter(
+          (tab) => tab.kind === 'home' || retainedWorkspaceIds.has(tab.id),
+        );
+        if (!nextTabs.some((tab) => tab.id === activeTabIdRef.current)) {
+          window.setTimeout(() => activateTab(tabId), 0);
+        }
+        return nextTabs.length ? nextTabs : [createEmptyTab('home', 'home')];
+      });
+    },
+    [activateTab],
+  );
+
+  const closeOtherTabs = useCallback(
+    (tabId: string) => {
+      setTabs((currentTabs) => {
+        const targetTab = currentTabs.find((tab) => tab.id === tabId);
+        if (!targetTab || targetTab.kind === 'home') return currentTabs;
+        const nextTabs = currentTabs.filter((tab) => tab.kind === 'home' || tab.id === tabId);
+        if (activeTabIdRef.current !== tabId) {
+          window.setTimeout(() => activateTab(tabId), 0);
+        }
+        return nextTabs.length ? nextTabs : [createEmptyTab('home', 'home')];
+      });
+    },
+    [activateTab],
+  );
+
+  const closeAllTabs = useCallback(() => {
+    setTabs((currentTabs) => {
+      const homeTab = currentTabs.find((tab) => tab.kind === 'home') ?? createEmptyTab('home', 'home');
+      window.setTimeout(() => {
+        setActiveTabId(homeTab.id);
+        setNavigationScope(isTabView ? homeTab.id : 'focus');
+        dispatchEmptyWorkspace();
+        bridge.postMessage({ command: 'closeWorkspace' });
+      }, 0);
+      return [homeTab];
+    });
+  }, [bridge, dispatchEmptyWorkspace, isTabView, setNavigationScope]);
+
   const updateTabAlias = useCallback((tabId: string, alias: string) => {
     const normalizedAlias = alias.trim();
     const tab = tabs.find((item) => item.id === tabId);
@@ -393,6 +448,9 @@ export function useDesktopTabs({
     setPendingDroppedPath,
     confirmSwitchWorkspace,
     closeTab,
+    closeTabsToRight,
+    closeOtherTabs,
+    closeAllTabs,
     updateTabAlias,
     crossTabSearchItems,
   };
