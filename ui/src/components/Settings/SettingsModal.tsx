@@ -224,7 +224,19 @@ export function SettingsModal({
       >
         <div className="settings-card__top-actions">
           {currentVersionLabel && (
-            <span className="settings-current-version">{currentVersionLabel}</span>
+            <a
+              className="settings-current-version tooltip-container"
+              href={updateCheck.changelogUrl || "#"}
+              onClick={(event) => {
+                event.preventDefault();
+                onOpenChangelog();
+              }}
+              aria-label={t.tooltips.openChangelog}
+              data-tooltip-pos="below"
+            >
+              {currentVersionLabel}
+              <span className="tooltip-text">{t.tooltips.openChangelog}</span>
+            </a>
           )}
           <div className="settings-data-actions" role="group" aria-label="Settings data">
             <button

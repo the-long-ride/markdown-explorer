@@ -92,6 +92,7 @@ export interface Translations {
     moveToolbar: string;
     closeModal: string;
     closeTab: string;
+    openChangelog: string;
   };
   recentWorkspaces: {
     title: string;
@@ -222,6 +223,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "Move toolbar",
       closeModal: "Close modal [Esc]",
       closeTab: "Close Tab",
+      openChangelog: "Click to open the change logs",
     },
     recentWorkspaces: {
       title: "Recent Workspaces",
@@ -335,6 +337,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "Di chuyển thanh công cụ",
       closeModal: "Đóng cửa sổ [Esc]",
       closeTab: "Đóng tab",
+      openChangelog: "Nhấp để mở nhật ký thay đổi",
     },
     recentWorkspaces: {
       title: "Không gian làm việc gần đây",
@@ -448,6 +451,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "Déplacer la barre d'outils",
       closeModal: "Fermer la fenêtre [Esc]",
       closeTab: "Fermer l'onglet",
+      openChangelog: "Cliquez pour ouvrir le journal des modifications",
     },
     recentWorkspaces: {
       title: "Espaces de travail récents",
@@ -561,6 +565,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "Mover barra de herramientas",
       closeModal: "Cerrar ventana [Esc]",
       closeTab: "Cerrar pestaña",
+      openChangelog: "Haz clic para abrir el registro de cambios",
     },
     recentWorkspaces: {
       title: "Espacios de trabajo recientes",
@@ -674,6 +679,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "移动工具栏",
       closeModal: "关闭窗口 [Esc]",
       closeTab: "关闭标签页",
+      openChangelog: "点击打开更新日志",
     },
     recentWorkspaces: {
       title: "最近的工作区",
@@ -787,6 +793,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "Flytt verktøylinje",
       closeModal: "Lukk modal [Esc]",
       closeTab: "Lukk fane",
+      openChangelog: "Klikk for å åpne endringsloggen",
     },
     recentWorkspaces: {
       title: "Nylige arbeidsområder",
@@ -900,6 +907,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "ツールバーを移動",
       closeModal: "モーダルを閉じる [Esc]",
       closeTab: "タブを閉じる",
+      openChangelog: "クリックして変更履歴を開く",
     },
     recentWorkspaces: {
       title: "最近のワークスペース",
@@ -1013,6 +1021,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "도구 모음 이동",
       closeModal: "모달 닫기 [Esc]",
       closeTab: "탭 닫기",
+      openChangelog: "변경 로그를 열려면 클릭",
     },
     recentWorkspaces: {
       title: "최근 작업 공간",
@@ -1126,6 +1135,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       moveToolbar: "Переместить панель",
       closeModal: "Закрыть окно [Esc]",
       closeTab: "Закрыть вкладку",
+      openChangelog: "Нажмите, чтобы открыть журнал изменений",
     },
     recentWorkspaces: {
       title: "Недавние рабочие области",

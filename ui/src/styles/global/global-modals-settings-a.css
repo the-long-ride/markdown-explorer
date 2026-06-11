@@ -582,11 +582,23 @@
 
 .settings-current-version {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
   color: var(--tx2);
   font: 800 11px/1 var(--font-ui);
   letter-spacing: 0;
   white-space: nowrap;
   opacity: 0.82;
+  text-decoration: none;
+  outline: none;
+}
+
+.settings-current-version:hover,
+.settings-current-version:focus-visible {
+  color: var(--accent);
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .settings-data-actions {
