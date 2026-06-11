@@ -36,6 +36,7 @@ import type {
   AppSettings,
   PersistedState,
   RenderContentMessage,
+  ContentTab,
   RecentWorkspace,
   AppRuntime,
   HostPlatform,
@@ -101,6 +102,10 @@ export interface AppState {
   settings: AppSettings;
   /** Content render counter (triggers effects) */
   renderVersion: number;
+  /** Open content tabs for the current workspace */
+  contentTabs: ContentTab[];
+  /** Active content tab path */
+  activeContentTabPath: string | null;
   /** Recent workspaces (Electron only) */
   recentWorkspaces: RecentWorkspace[];
   /** Is window maximized (Electron only) */
@@ -139,12 +144,16 @@ const initialState: AppState = {
   settings: {
     showTitle: false,
     defaultHtmlPreview: true,
+    fileTabs: false,
+    scopeFocus: {},
     desktopViewMode: 'focus',
     keybindings: DEFAULT_KEYBINDINGS,
     language: 'en',
     customThemes: [],
   },
   renderVersion: 0,
+  contentTabs: [],
+  activeContentTabPath: null,
   recentWorkspaces: [],
   isMaximized: false,
   appVersion: '',
@@ -177,6 +186,8 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       ...initialState.settings,
       showTitle: saved.showTitle === true,
       defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+      fileTabs: saved.fileTabs === true,
+      scopeFocus: saved.scopeFocus ?? {},
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
       language: saved.language || 'en',
@@ -198,6 +209,8 @@ export type Action =
       defaultExpanded: boolean;
       workspaceName: string;
       workspacePath?: string;
+      contentTabs?: readonly ContentTab[];
+      activeContentTabPath?: string | null;
       recentWorkspaces?: readonly RecentWorkspace[];
       appVersion?: string;
       appRuntime?: AppRuntime;
@@ -210,6 +223,8 @@ export type Action =
     }
   | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
   | { type: 'NAV_NOT_FOUND'; href: string }
+  | { type: 'ACTIVATE_CONTENT_TAB'; filePath: string }
+  | { type: 'CLOSE_CONTENT_TAB'; filePath: string }
   | {
       type: 'WORKSPACE_UNAVAILABLE';
       workspacePath: string;
@@ -229,9 +244,119 @@ export type Action =
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean };
 
+function normalizePathKey(value: string): string {
+  return value.replace(/\\/g, '/').toLowerCase();
+}
+
+function getPathFileName(filePath: string): string {
+  return filePath.split(/[\\/]/).filter(Boolean).pop() || filePath || 'Document';
+}
+
+function stripMarkdownExtension(fileName: string): string {
+  return fileName.replace(/\.(md|mdx)$/i, '');
+}
+
+function findFileInfo(fileList: readonly MdFile[], filePath: string): MdFile | undefined {
+  const target = normalizePathKey(filePath);
+  return fileList.find(
+    (file) =>
+      normalizePathKey(file.fsPath) === target ||
+      normalizePathKey(file.relativePath) === target,
+  );
+}
+
+function upsertContentTab(tabs: readonly ContentTab[], tab: ContentTab): ContentTab[] {
+  const existingIndex = tabs.findIndex(
+    (item) => normalizePathKey(item.filePath) === normalizePathKey(tab.filePath),
+  );
+  if (existingIndex === -1) return [...tabs, tab];
+  return tabs.map((item, index) => (index === existingIndex ? tab : item));
+}
+
+function createContentTabFromMessage(
+  msg: RenderContentMessage,
+  fileList: readonly MdFile[],
+): ContentTab {
+  const fileInfo = findFileInfo(fileList, msg.filePath);
+  const relativePath = msg.relativePath || fileInfo?.relativePath || getPathFileName(msg.filePath);
+  const fileName = fileInfo?.fileName || getPathFileName(relativePath || msg.filePath);
+  const title = msg.title || fileInfo?.title || stripMarkdownExtension(fileName);
+  return {
+    filePath: msg.filePath,
+    relativePath,
+    fileName,
+    title,
+    contentHtml: msg.html,
+    markdownSource: msg.markdownSource ?? null,
+    frontmatter: msg.frontmatter,
+    toc: msg.toc,
+  };
+}
+
+function createContentTabFromState(state: AppState): ContentTab | null {
+  if (!state.currentFile) return null;
+  const fileInfo = findFileInfo(state.fileList, state.currentFile);
+  const relativePath = state.relativePath || fileInfo?.relativePath || getPathFileName(state.currentFile);
+  const fileName = fileInfo?.fileName || getPathFileName(relativePath || state.currentFile);
+  return {
+    filePath: state.currentFile,
+    relativePath,
+    fileName,
+    title: fileInfo?.title || stripMarkdownExtension(fileName),
+    contentHtml: state.contentHtml,
+    markdownSource: state.markdownSource,
+    frontmatter: state.frontmatter,
+    toc: state.toc,
+  };
+}
+
+function applyContentTab(state: AppState, tab: ContentTab, tabs = state.contentTabs): AppState {
+  return {
+    ...state,
+    currentFile: tab.filePath,
+    contentHtml: tab.contentHtml,
+    markdownSource: tab.markdownSource,
+    frontmatter: tab.frontmatter,
+    toc: tab.toc,
+    relativePath: tab.relativePath,
+    isLoading: false,
+    notFoundHref: null,
+    workspaceUnavailablePath: null,
+    workspaceUnavailableReason: null,
+    contentTabs: tabs as ContentTab[],
+    activeContentTabPath: tab.filePath,
+    renderVersion: state.renderVersion + 1,
+  };
+}
+
+function refreshContentTabMetadata(
+  tabs: readonly ContentTab[],
+  fileList: readonly MdFile[],
+): ContentTab[] {
+  if (tabs.length === 0 || fileList.length === 0) return tabs as ContentTab[];
+  return tabs.map((tab) => {
+    const fileInfo = findFileInfo(fileList, tab.filePath);
+    if (!fileInfo) return tab;
+    return {
+      ...tab,
+      fileName: fileInfo.fileName,
+      title: fileInfo.title,
+      relativePath: fileInfo.relativePath,
+    };
+  });
+}
+
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case 'READY_ACK':
+    case 'READY_ACK': {
+      const nextWorkspaceKey = action.workspacePath ?? action.workspaceName;
+      const currentWorkspaceKey = state.workspacePath ?? state.workspaceName;
+      const workspaceChanged = nextWorkspaceKey !== currentWorkspaceKey;
+      const restoredContentTabs = action.contentTabs
+        ? refreshContentTabMetadata(action.contentTabs, action.fileList)
+        : workspaceChanged
+          ? []
+          : refreshContentTabMetadata(state.contentTabs, action.fileList);
       return {
         ...state,
         fileList: action.fileList,
@@ -250,7 +375,15 @@ function reducer(state: AppState, action: Action): AppState {
         isLoading: action.workspaceName ? state.isLoading : false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
+        contentTabs: restoredContentTabs,
+        activeContentTabPath:
+          action.activeContentTabPath !== undefined
+            ? action.activeContentTabPath
+            : workspaceChanged
+              ? null
+              : state.activeContentTabPath,
       };
+    }
 
     case 'RECENT_WORKSPACES_CHANGED':
       return {
@@ -258,11 +391,13 @@ function reducer(state: AppState, action: Action): AppState {
         recentWorkspaces: action.recentWorkspaces as RecentWorkspace[],
       };
 
-    case 'RENDER_CONTENT':
-      return {
+    case 'RENDER_CONTENT': {
+      const filePath = action.msg.filePath || null;
+      const nextFileList = action.msg.fileList ?? state.fileList;
+      const baseState: AppState = {
         ...state,
-        fileList: action.msg.fileList ?? state.fileList,
-        currentFile: action.msg.filePath,
+        fileList: nextFileList,
+        currentFile: filePath,
         contentHtml: action.msg.html,
         markdownSource: action.msg.markdownSource ?? null,
         frontmatter: action.msg.frontmatter,
@@ -274,6 +409,30 @@ function reducer(state: AppState, action: Action): AppState {
         workspaceUnavailableReason: null,
         renderVersion: state.renderVersion + 1,
       };
+      if (!state.settings.fileTabs) {
+        return {
+          ...baseState,
+          contentTabs: [],
+          activeContentTabPath: null,
+        };
+      }
+      if (!filePath) {
+        return {
+          ...baseState,
+          contentTabs: refreshContentTabMetadata(state.contentTabs, nextFileList),
+          activeContentTabPath: null,
+        };
+      }
+      const tab = createContentTabFromMessage(action.msg, nextFileList);
+      return {
+        ...baseState,
+        contentTabs: upsertContentTab(
+          refreshContentTabMetadata(state.contentTabs, nextFileList),
+          tab,
+        ),
+        activeContentTabPath: filePath,
+      };
+    }
 
     case 'NAV_NOT_FOUND':
       return {
@@ -283,6 +442,44 @@ function reducer(state: AppState, action: Action): AppState {
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
       };
+
+    case 'ACTIVATE_CONTENT_TAB': {
+      const tab = state.contentTabs.find(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
+      );
+      if (!tab) return state;
+      return applyContentTab(state, tab);
+    }
+
+    case 'CLOSE_CONTENT_TAB': {
+      const tabIndex = state.contentTabs.findIndex(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
+      );
+      if (tabIndex === -1) return state;
+      const nextTabs = state.contentTabs.filter((_, index) => index !== tabIndex);
+      if (normalizePathKey(state.activeContentTabPath ?? '') !== normalizePathKey(action.filePath)) {
+        return {
+          ...state,
+          contentTabs: nextTabs,
+        };
+      }
+      const fallback = nextTabs[tabIndex - 1] ?? nextTabs[tabIndex] ?? null;
+      if (fallback) return applyContentTab(state, fallback, nextTabs);
+      return {
+        ...state,
+        currentFile: null,
+        contentHtml: '',
+        markdownSource: null,
+        frontmatter: {},
+        toc: [],
+        relativePath: '',
+        isLoading: false,
+        notFoundHref: null,
+        contentTabs: [],
+        activeContentTabPath: null,
+        renderVersion: state.renderVersion + 1,
+      };
+    }
 
     case 'WORKSPACE_UNAVAILABLE':
       return {
@@ -306,6 +503,8 @@ function reducer(state: AppState, action: Action): AppState {
         appRuntime: action.appRuntime ?? state.appRuntime,
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
+        contentTabs: [],
+        activeContentTabPath: null,
         renderVersion: state.renderVersion + 1,
       };
 
@@ -363,7 +562,7 @@ function reducer(state: AppState, action: Action): AppState {
       const activeCustomTheme = activeCustomThemeId
         ? customThemes?.find((theme) => theme.id === activeCustomThemeId)
         : undefined;
-      return {
+      const nextState = {
         ...state,
         themeStyle: activeCustomTheme?.baseStyle ?? state.themeStyle,
         hasThemeStylePreference: activeCustomTheme ? true : state.hasThemeStylePreference,
@@ -374,6 +573,26 @@ function reducer(state: AppState, action: Action): AppState {
           activeCustomThemeId,
         },
       };
+      if ('fileTabs' in action.settings) {
+        if (action.settings.fileTabs === false) {
+          return {
+            ...nextState,
+            contentTabs: [],
+            activeContentTabPath: null,
+          };
+        }
+        if (action.settings.fileTabs === true && !state.settings.fileTabs) {
+          const currentTab = createContentTabFromState(state);
+          return {
+            ...nextState,
+            contentTabs: currentTab
+              ? upsertContentTab(state.contentTabs, currentTab)
+              : state.contentTabs,
+            activeContentTabPath: currentTab?.filePath ?? state.activeContentTabPath,
+          };
+        }
+      }
+      return nextState;
     }
 
     case 'SET_MAXIMIZED':
@@ -393,6 +612,8 @@ interface AppStateContextValue {
   state: AppState;
   dispatch: React.Dispatch<Action>;
   navigate: (fsPath: string | null) => void;
+  activateContentTab: (fsPath: string) => void;
+  closeContentTab: (fsPath: string) => void;
   openInEditor: () => void;
   refresh: () => void;
   toggleTheme: () => void;
@@ -423,6 +644,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         settings: {
           showTitle: saved.showTitle === true,
           defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+          fileTabs: saved.fileTabs === true,
+          scopeFocus: saved.scopeFocus ?? {},
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
           language: saved.language || 'en',
@@ -535,6 +758,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     bridge.setState<PersistedState>({
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
+      fileTabs: state.settings.fileTabs,
+      scopeFocus: state.settings.scopeFocus,
       desktopViewMode: state.settings.desktopViewMode,
       keybindings: state.settings.keybindings,
       theme: state.theme,
@@ -546,12 +771,67 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [bridge, state.settings, state.theme, state.themeStyle]);
 
   // Actions
+  const getCachedContentTabPath = useCallback(
+    (fsPath: string) => {
+      if (!state.settings.fileTabs || !fsPath) return null;
+      const pathWithoutFragment = fsPath.split('#')[0];
+      const target = normalizePathKey(pathWithoutFragment);
+      const fileInfo = state.fileList.find(
+        (file) => normalizePathKey(file.fsPath) === target,
+      );
+      const targetPath = fileInfo?.fsPath ?? pathWithoutFragment;
+      const tab = state.contentTabs.find(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(targetPath),
+      );
+      return tab?.filePath ?? null;
+    },
+    [state.contentTabs, state.fileList, state.settings.fileTabs],
+  );
+
   const navigate = useCallback(
     (fsPath: string | null) => {
+      const targetPath = fsPath ?? '';
+      if (targetPath) {
+        const cachedPath = getCachedContentTabPath(targetPath);
+        if (cachedPath) {
+          dispatch({ type: 'ACTIVATE_CONTENT_TAB', filePath: cachedPath });
+          bridge.postMessage({ command: 'navigate', path: cachedPath });
+          return;
+        }
+      }
       dispatch({ type: 'SET_LOADING' });
-      bridge.postMessage({ command: 'navigate', path: fsPath ?? '' });
+      bridge.postMessage({ command: 'navigate', path: targetPath });
+    },
+    [bridge, getCachedContentTabPath],
+  );
+
+  const activateContentTab = useCallback(
+    (fsPath: string) => {
+      if (!fsPath) return;
+      dispatch({ type: 'ACTIVATE_CONTENT_TAB', filePath: fsPath });
+      bridge.postMessage({ command: 'navigate', path: fsPath });
     },
     [bridge],
+  );
+
+  const closeContentTab = useCallback(
+    (fsPath: string) => {
+      const tabIndex = state.contentTabs.findIndex(
+        (item) => normalizePathKey(item.filePath) === normalizePathKey(fsPath),
+      );
+      if (tabIndex === -1) return;
+      const closingActive =
+        normalizePathKey(state.activeContentTabPath ?? '') === normalizePathKey(fsPath);
+      const nextTabs = state.contentTabs.filter((_, index) => index !== tabIndex);
+      const fallback = closingActive
+        ? nextTabs[tabIndex - 1] ?? nextTabs[tabIndex] ?? null
+        : null;
+      dispatch({ type: 'CLOSE_CONTENT_TAB', filePath: fsPath });
+      if (closingActive) {
+        bridge.postMessage({ command: 'navigate', path: fallback?.filePath ?? '' });
+      }
+    },
+    [bridge, state.activeContentTabPath, state.contentTabs],
   );
 
   const openInEditor = useCallback(() => {
@@ -625,6 +905,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       state,
       dispatch,
       navigate,
+      activateContentTab,
+      closeContentTab,
       openInEditor,
       refresh,
       toggleTheme,
@@ -637,6 +919,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [
       state,
       navigate,
+      activateContentTab,
+      closeContentTab,
       openInEditor,
       refresh,
       toggleTheme,

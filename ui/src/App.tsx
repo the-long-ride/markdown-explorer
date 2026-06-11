@@ -11,6 +11,7 @@ import { WorkspaceSelection } from './components/Workspace/WorkspaceSelection';
 import { Topbar } from './components/Topbar/Topbar';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { Content } from './components/Content/Content';
+import { ContentTabs } from './components/Content/ContentTabs';
 import { WelcomePage } from './components/Content/WelcomePage';
 import { TableOfContents } from './components/TOC/TableOfContents';
 import { SearchOverlay } from './components/Search/SearchOverlay';
@@ -429,6 +430,7 @@ export function App() {
             <Sidebar />
             <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
             <div className="content-shell">
+              <ContentTabs />
               {state.toc.length > 0 && state.currentFile && (
                 <div className="toc-compact-bar">
                   <TableOfContents variant="compact" />

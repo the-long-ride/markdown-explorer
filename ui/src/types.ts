@@ -44,6 +44,17 @@ export interface RenderContentMessage {
   readonly fileList: MdFile[];
 }
 
+export interface ContentTab {
+  readonly filePath: string;
+  readonly relativePath: string;
+  readonly fileName: string;
+  readonly title: string;
+  readonly contentHtml: string;
+  readonly markdownSource: string | null;
+  readonly frontmatter: Frontmatter;
+  readonly toc: TocEntry[];
+}
+
 export interface RecentWorkspace {
   readonly name: string;
   readonly path: string;
@@ -375,6 +386,8 @@ export interface CustomTheme {
 export interface AppSettings {
   showTitle: boolean;
   defaultHtmlPreview: boolean;
+  fileTabs: boolean;
+  scopeFocus?: Record<string, string[]>;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   language?: string;
@@ -385,6 +398,8 @@ export interface AppSettings {
 export interface PersistedState {
   showTitle?: boolean;
   defaultHtmlPreview?: boolean;
+  fileTabs?: boolean;
+  scopeFocus?: Record<string, string[]>;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   theme?: ThemeMode;

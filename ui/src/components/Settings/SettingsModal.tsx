@@ -461,6 +461,32 @@ export function SettingsModal({
               </label>
             </div>
 
+            {/* File Tabs */}
+            <div
+              className="settings-item"
+              style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
+            >
+              <div className="settings-item__info">
+                <div className="settings-item__title">{t.fileTabs}</div>
+                <div className="settings-item__desc">
+                  {t.fileTabsDesc}
+                </div>
+              </div>
+              <label
+                className="switch-toggle"
+                aria-label={t.fileTabs}
+              >
+                <input
+                  type="checkbox"
+                  checked={state.settings.fileTabs}
+                  onChange={(e) =>
+                    updateSettings({ fileTabs: e.target.checked })
+                  }
+                />
+                <span className="switch-slider" />
+              </label>
+            </div>
+
             {/* Default HTML Preview */}
             <div
               className="settings-item"

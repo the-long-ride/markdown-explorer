@@ -2,6 +2,7 @@ import type {
   FolderNode,
   Frontmatter,
   MdFile,
+  ContentTab,
   TocEntry,
   WorkspaceUnavailableReason,
 } from '../types';
@@ -28,6 +29,8 @@ export interface DesktopTab {
   notFoundHref: string | null;
   workspaceUnavailablePath: string | null;
   workspaceUnavailableReason: WorkspaceUnavailableReason | null;
+  contentTabs: ContentTab[];
+  activeContentTabPath: string | null;
 }
 
 export interface FloatingToolbarPosition {

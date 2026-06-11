@@ -109,6 +109,23 @@ function normalizeKeybindingsForImport(value: unknown): Record<string, string> |
   return entries.length ? Object.fromEntries(entries) : undefined;
 }
 
+function normalizeScopeFocus(value: unknown): Record<string, string[]> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const entries = Object.entries(value as Record<string, unknown>).flatMap(([workspaceKey, paths]) => {
+    if (typeof workspaceKey !== 'string' || !workspaceKey.trim() || !Array.isArray(paths)) return [];
+    const seen = new Set<string>();
+    const normalizedPaths = paths.flatMap((path) => {
+      if (typeof path !== 'string') return [];
+      const normalizedPath = path.trim().slice(0, 1_000);
+      if (!normalizedPath || seen.has(normalizedPath)) return [];
+      seen.add(normalizedPath);
+      return [normalizedPath];
+    }).slice(0, 10_000);
+    return [[workspaceKey.trim().slice(0, 1_000), normalizedPaths] as const];
+  });
+  return Object.fromEntries(entries);
+}
+
 function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
   const raw = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   const customThemes = normalizeCustomThemes(raw.customThemes);
@@ -116,6 +133,8 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
   return {
     showTitle: raw.showTitle === true,
     defaultHtmlPreview: raw.defaultHtmlPreview !== false,
+    fileTabs: raw.fileTabs === true,
+    scopeFocus: normalizeScopeFocus(raw.scopeFocus),
     desktopViewMode: normalizeDesktopViewMode(raw.desktopViewMode),
     keybindings: normalizeKeybindings(normalizeKeybindingsForImport(raw.keybindings), isDesktop),
     language: typeof raw.language === 'string' && raw.language.trim()

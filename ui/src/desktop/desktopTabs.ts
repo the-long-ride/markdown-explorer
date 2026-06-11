@@ -31,6 +31,8 @@ export function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
     notFoundHref: null,
     workspaceUnavailablePath: null,
     workspaceUnavailableReason: null,
+    contentTabs: [],
+    activeContentTabPath: null,
   };
 }
 

@@ -20,6 +20,8 @@ export interface Translations {
   tabs: string;
   sidebarLabels: string;
   sidebarLabelsDesc: string;
+  fileTabs: string;
+  fileTabsDesc: string;
   htmlPreview: string;
   htmlPreviewDesc: string;
   shortcuts: string;
@@ -102,6 +104,10 @@ export interface Translations {
     files: string;
     filterPlaceholder: string;
     filterAriaLabel: string;
+    scopeFocus: string;
+    clearScopeFocus: string;
+    noScopeFiles: string;
+    noFiles: string;
   };
   toc: {
     onThisPage: string;
@@ -144,6 +150,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "Tabs",
     sidebarLabels: "Sidebar File Labels",
     sidebarLabelsDesc: "Show document titles/H1 headers instead of raw filenames in the sidebar tree.",
+    fileTabs: "Open Files in Tabs",
+    fileTabsDesc: "When enabled, opening a file creates or activates a document tab. When disabled, it replaces the current panel.",
     htmlPreview: "Default HTML Code Block View",
     htmlPreviewDesc: "Show HTML code blocks as interactive previews by default. Otherwise, shows the raw HTML code.",
     shortcuts: "Keyboard Shortcuts",
@@ -226,6 +234,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "Files",
       filterPlaceholder: "Filter files…",
       filterAriaLabel: "Filter file list",
+      scopeFocus: "Scope Focus",
+      clearScopeFocus: "Clear focusing scope",
+      noScopeFiles: "No files selected for this scope",
+      noFiles: "No matching files",
     },
     toc: {
       onThisPage: "On This Page",
@@ -251,6 +263,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "Tab",
     sidebarLabels: "Nhãn tệp thanh bên",
     sidebarLabelsDesc: "Hiển thị tiêu đề tài liệu/tiêu đề H1 thay vì tên tệp gốc trong cây thanh bên.",
+    fileTabs: "Mở tệp trong tab",
+    fileTabsDesc: "Khi bật, mở tệp sẽ tạo hoặc kích hoạt tab tài liệu. Khi tắt, tệp sẽ thay thế khung hiện tại.",
     htmlPreview: "Xem trước khối mã HTML mặc định",
     htmlPreviewDesc: "Hiển thị mặc định các khối mã HTML dưới dạng bản xem trước tương tác. Nếu không, hiển thị mã HTML thô.",
     shortcuts: "Phím tắt bàn phím",
@@ -333,6 +347,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "Tệp",
       filterPlaceholder: "Lọc tệp…",
       filterAriaLabel: "Lọc danh sách tệp",
+      scopeFocus: "Tập trung phạm vi",
+      clearScopeFocus: "Xóa phạm vi tập trung",
+      noScopeFiles: "Chưa chọn tệp nào cho phạm vi này",
+      noFiles: "Không có tệp phù hợp",
     },
     toc: {
       onThisPage: "Nội dung trang",
@@ -358,6 +376,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "Onglets",
     sidebarLabels: "Étiquettes de fichiers latérales",
     sidebarLabelsDesc: "Afficher les titres des documents/en-têtes H1 au lieu des noms de fichiers bruts dans l'arborescence latérale.",
+    fileTabs: "Ouvrir les fichiers en onglets",
+    fileTabsDesc: "Si activé, ouvrir un fichier crée ou active un onglet de document. Sinon, il remplace le panneau actuel.",
     htmlPreview: "Aperçu du bloc de code HTML",
     htmlPreviewDesc: "Afficher les blocs de code HTML sous forme d'aperçus interactifs par défaut. Sinon, affiche le code HTML brut.",
     shortcuts: "Raccourcis clavier",
@@ -440,6 +460,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "Fichiers",
       filterPlaceholder: "Filtrer les fichiers…",
       filterAriaLabel: "Filtrer la liste des fichiers",
+      scopeFocus: "Focus de portée",
+      clearScopeFocus: "Effacer le focus de portée",
+      noScopeFiles: "Aucun fichier sélectionné pour cette portée",
+      noFiles: "Aucun fichier correspondant",
     },
     toc: {
       onThisPage: "Sur cette page",
@@ -465,6 +489,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "Pestañas",
     sidebarLabels: "Etiquetas de archivo laterales",
     sidebarLabelsDesc: "Muestre los títulos de los documentos/encabezados H1 en lugar de los nombres de archivo sin procesar en la barra lateral.",
+    fileTabs: "Abrir archivos en pestañas",
+    fileTabsDesc: "Si está activado, abrir un archivo crea o activa una pestaña de documento. Si está desactivado, reemplaza el panel actual.",
     htmlPreview: "Vista de bloque de código HTML",
     htmlPreviewDesc: "Muestre bloques de código HTML como vistas previas interactivas de forma predeterminada. De lo contrario, muestra el código HTML sin procesar.",
     shortcuts: "Atajos de teclado",
@@ -547,6 +573,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "Archivos",
       filterPlaceholder: "Filtrar archivos…",
       filterAriaLabel: "Filtrar lista de archivos",
+      scopeFocus: "Enfoque de alcance",
+      clearScopeFocus: "Limpiar enfoque de alcance",
+      noScopeFiles: "No hay archivos seleccionados para este alcance",
+      noFiles: "No hay archivos coincidentes",
     },
     toc: {
       onThisPage: "En esta página",
@@ -572,6 +602,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "标签页",
     sidebarLabels: "侧边栏文件标签",
     sidebarLabelsDesc: "在侧边栏树中显示文档标题/H1 标题，而不是原始文件名。",
+    fileTabs: "在标签页中打开文件",
+    fileTabsDesc: "启用后，打开文件会创建或激活文档标签页。关闭后，文件会替换当前面板。",
     htmlPreview: "默认 HTML 代码块视图",
     htmlPreviewDesc: "默认将 HTML 代码块显示为交互式预览。否则显示原始 HTML 代码。",
     shortcuts: "键盘快捷键",
@@ -654,6 +686,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "文件",
       filterPlaceholder: "过滤文件…",
       filterAriaLabel: "过滤文件列表",
+      scopeFocus: "范围聚焦",
+      clearScopeFocus: "清除范围聚焦",
+      noScopeFiles: "此范围未选择任何文件",
+      noFiles: "没有匹配的文件",
     },
     toc: {
       onThisPage: "本页内容",
@@ -679,6 +715,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "Faner",
     sidebarLabels: "Filsider i sidemenyen",
     sidebarLabelsDesc: "Vis dokumenttitler/H1-overskrifter i stedet for rå filnavn i sidemenytreet.",
+    fileTabs: "Åpne filer i faner",
+    fileTabsDesc: "Når dette er på, åpnes filer i en ny eller eksisterende dokumentfane. Når det er av, erstatter filen gjeldende panel.",
     htmlPreview: "Forhåndsvisning av HTML-kodeblokk",
     htmlPreviewDesc: "Vis HTML-kodeblokker som interaktive forhåndsvisninger som standard. Ellers vises rå HTML-kode.",
     shortcuts: "Tastatursnarveier",
@@ -761,6 +799,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "Filer",
       filterPlaceholder: "Filtrer filer…",
       filterAriaLabel: "Filtrer filliste",
+      scopeFocus: "Scope-fokus",
+      clearScopeFocus: "Tøm scope-fokus",
+      noScopeFiles: "Ingen filer valgt for dette scope",
+      noFiles: "Ingen samsvarende filer",
     },
     toc: {
       onThisPage: "På denne siden",
@@ -786,6 +828,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "タブ",
     sidebarLabels: "サイドバーのファイルラベル",
     sidebarLabelsDesc: "サイドバーツリーに元のファイル名ではなく、ドキュメントのタイトル/H1ヘッダーを表示します。",
+    fileTabs: "ファイルをタブで開く",
+    fileTabsDesc: "オンにすると、ファイルを開いたときにドキュメントタブを作成またはアクティブ化します。オフでは現在のパネルを置き換えます。",
     htmlPreview: "デフォルトの HTML コードブロック表示",
     htmlPreviewDesc: "デフォルトで HTML コードブロックをインタラクティブなプレビューとして表示します。それ以外の場合は、生の HTML コードを表示します。",
     shortcuts: "キーボードショートカット",
@@ -868,6 +912,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "ファイル",
       filterPlaceholder: "ファイルをフィルター…",
       filterAriaLabel: "ファイル一覧をフィルター",
+      scopeFocus: "スコープフォーカス",
+      clearScopeFocus: "スコープフォーカスをクリア",
+      noScopeFiles: "このスコープで選択されたファイルはありません",
+      noFiles: "一致するファイルはありません",
     },
     toc: {
       onThisPage: "このページの内容",
@@ -893,6 +941,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "탭",
     sidebarLabels: "사이드바 파일 레이블",
     sidebarLabelsDesc: "사이드바 트리에서 원시 파일 이름 대신 문서 제목/H1 헤더를 표시합니다.",
+    fileTabs: "파일을 탭으로 열기",
+    fileTabsDesc: "켜면 파일을 열 때 문서 탭을 만들거나 활성화합니다. 끄면 현재 패널을 대체합니다.",
     htmlPreview: "기본 HTML 코드 블록 보기",
     htmlPreviewDesc: "기본적으로 HTML 코드 블록을 대화형 미리보기로 표시합니다. 그렇지 않으면 원시 HTML 코드를 표시합니다.",
     shortcuts: "키보드 단축키",
@@ -975,6 +1025,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "파일",
       filterPlaceholder: "파일 필터링…",
       filterAriaLabel: "파일 목록 필터링",
+      scopeFocus: "범위 포커스",
+      clearScopeFocus: "범위 포커스 지우기",
+      noScopeFiles: "이 범위에 선택된 파일이 없습니다",
+      noFiles: "일치하는 파일이 없습니다",
     },
     toc: {
       onThisPage: "이 페이지의 내용",
@@ -1000,6 +1054,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     tabs: "Вкладки",
     sidebarLabels: "Метки файлов в боковой панели",
     sidebarLabelsDesc: "Показывать заголовки документов/H1 вместо исходных имен файлов в дереве боковой панели.",
+    fileTabs: "Открывать файлы во вкладках",
+    fileTabsDesc: "Если включено, открытие файла создает или активирует вкладку документа. Если выключено, файл заменяет текущую панель.",
     htmlPreview: "Просмотр блоков кода HTML",
     htmlPreviewDesc: "По умолчанию показывать блоки кода HTML как интерактивный предпросмотр. В противном случае показывать исходный код HTML.",
     shortcuts: "Сочетания клавиш",
@@ -1082,6 +1138,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       files: "Файлы",
       filterPlaceholder: "Фильтр файлов…",
       filterAriaLabel: "Фильтровать список файлов",
+      scopeFocus: "Фокус области",
+      clearScopeFocus: "Очистить фокус области",
+      noScopeFiles: "Для этой области файлы не выбраны",
+      noFiles: "Нет совпадающих файлов",
     },
     toc: {
       onThisPage: "На этой странице",

@@ -117,10 +117,14 @@ export function useDesktopTabs({
         notFoundHref: state.notFoundHref,
         workspaceUnavailablePath: state.workspaceUnavailablePath,
         workspaceUnavailableReason: state.workspaceUnavailableReason,
+        contentTabs: state.contentTabs,
+        activeContentTabPath: state.activeContentTabPath,
       };
     },
     [
+      state.activeContentTabPath,
       state.contentHtml,
+      state.contentTabs,
       state.currentFile,
       state.fileList,
       state.frontmatter,
@@ -187,6 +191,8 @@ export function useDesktopTabs({
         defaultExpanded: state.defaultExpanded,
         workspaceName: tab.workspaceName ?? '',
         workspacePath: tab.workspacePath,
+        contentTabs: tab.contentTabs,
+        activeContentTabPath: tab.activeContentTabPath,
         recentWorkspaces: state.recentWorkspaces,
       });
       if (tab.contentHtml || (!isTabView && !tab.currentFile)) {
