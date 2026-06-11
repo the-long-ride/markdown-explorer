@@ -26,6 +26,8 @@
     "directories": {
       "output": "dist"
     },
+    "asar": true,
+    "compression": "maximum",
     "files": [
       "*.js",
       "package.json",
@@ -35,7 +37,11 @@
       },
       {
         "from": "../vscode/out",
-        "to": "vscode/out"
+        "to": "vscode/out",
+        "filter": [
+          "**/*",
+          "!vendor/**"
+        ]
       },
       {
         "from": "../ui/assets/logos",
