@@ -18,7 +18,10 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 ## Why It Feels Different
 
 - **Read workspaces, not loose files**: file tree, table of contents, section cards, copy buttons, recent workspaces, and desktop tabs.
+- **Preview more document types**: opt in to local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files, with an in-app note that converted previews may lose layout or formatting quality.
 - **Search where you need**: current file, current workspace, or every open desktop tab, with content excerpts and exact jump-to-result behavior.
+- **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+S`, arrow keys, Enter, and Esc.
+- **Shape the workspace**: file tabs, Scope Focus, Theme Remix, and settings import/export keep large doc sets personal without changing project files.
 - **Render rich Markdown**: Mermaid, LaTeX math, images, streaming video, MDX, HTML sandboxes, callouts, frontmatter, and code blocks.
 - **Use data inside docs**: sort, filter, multi-select table filters, collapse large tables, and switch tables into Bar, Line, or Pie charts.
 - **Stay private**: rendering and indexing are local. No telemetry, no file uploads.
@@ -32,6 +35,24 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 | Windows desktop | [Download the latest `.exe`](https://github.com/the-long-ride/markdown-explorer/releases/latest) |
 | Linux desktop | [Download `.AppImage` or `.deb`](https://github.com/the-long-ride/markdown-explorer/releases/latest) |
 | macOS desktop | [Download `.dmg` for arm64 or x64](https://github.com/the-long-ride/markdown-explorer/releases/latest). First launch notes: [macOS guide](docs/macos-install.md) |
+
+## Recent Feature Guide
+
+Recent releases from `v1.4.5` onward focus on faster navigation, safer desktop workflow, and richer local previews.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Converted-Document-Preview.png" width="32%" alt="Converted DOCX preview with best-effort quality notice" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Sidebar-Cursor-Mode.png" width="32%" alt="Sidebar Cursor mode highlighting the file tree" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Theme-Remix-Settings.png" width="32%" alt="Theme Remix settings for custom Markdown Explorer themes" />
+</p>
+
+- **Workspace links**: links that start with `/`, `./`, or `../` navigate to files inside the current workspace and stay in back/forward history.
+- **Reading polish**: table Wrap/Unwrap controls, code gutter selection highlighting, compact Markdown chrome, and clearer string interpolation make dense docs easier to scan.
+- **Desktop recovery**: workspace switching is confirmed, unavailable workspaces show recovery actions, and stale recent entries can be removed.
+- **Theme Remix**: create, duplicate, edit, import, and export custom themes with color, density, spacing, and optional background image controls.
+- **Content File Tabs and Scope Focus**: keep opened docs in tabs and narrow the sidebar to selected files/folders for the current workspace.
+- **Converted document previews**: enable best-effort local previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT.
+- **Sidebar Cursor mode**: press `Alt+S`, move with `Up`/`Down`, press `Enter` to expand folders or open files, and press `Esc` or click outside the sidebar to exit.
 
 ## Search Modes
 
@@ -97,6 +118,12 @@ The desktop app opens recent folders quickly, supports drag-and-drop opening, an
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage-Include-Help-Section.png" width="32%" alt="Markdown Explorer welcome page with help section" />
 </p>
 
+## Converted Document Previews
+
+Markdown Explorer can optionally show DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files by converting them to Markdown locally with `@the-long-ride/markdown-them`.
+
+Turn on **Read DOCX, PDF, Office, and text files** in Settings. The app scans those extra extensions only after the toggle is enabled, converts files only when opened, and caches converted Markdown by file timestamp and size for faster repeat views. Converted previews are best-effort and can differ from the original layout, tables, images, or styling.
+
 ## Shortcuts
 
 Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly defaults inside the webview.
@@ -118,6 +145,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
 | Go to workspace selection | `Ctrl+Shift+H` | N/A |
 | Toggle sidebar | `Ctrl+Shift+P` | `Ctrl+Shift+P` / `Cmd+Shift+P` |
+| Sidebar cursor mode | `Alt+S` | `Alt+S` |
 | Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom |
 | Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom |
 

@@ -171,6 +171,44 @@ interface TipItem {
   badge?: string;
 }
 
+const RECENT_FEATURE_GUIDE: TipItem[] = [
+  {
+    title: "Workspace links and loading feedback",
+    desc: "Links that start with [/], [./], or [../] now open matching files inside the current workspace and stay in back/forward history. Slow file loads and conversions show a loading state so you know the app is still working.",
+    badge: "v1.4.5",
+  },
+  {
+    title: "Cleaner code blocks and table wrapping",
+    desc: "Code selections highlight every affected gutter line, string interpolation is easier to read, and each data table has a Wrap/Unwrap control for switching between compact scanning and full text reading.",
+    badge: "v1.4.6",
+  },
+  {
+    title: "Safer desktop workspace flow",
+    desc: "Desktop workspace switching asks for confirmation, missing workspaces show recovery actions, and recent workspace entries can be removed from the tabs view when a folder is no longer available.",
+    badge: "v1.4.7+",
+  },
+  {
+    title: "Theme Remix and settings portability",
+    desc: "Open Settings, choose [Theme Remix], then create, duplicate, tune, import, or export custom themes with custom colors, density, spacing, and optional background images.",
+    badge: "v1.4.8",
+  },
+  {
+    title: "Content File Tabs and Scope Focus",
+    desc: "Turn on [Open Files in Tabs] to keep document tabs in the reader. Use [Scope Focus] in the sidebar to select only the files or folders you want visible for the current workspace.",
+    badge: "v1.4.9",
+  },
+  {
+    title: "Converted document previews",
+    desc: "Turn on [Read DOCX, PDF, Office, and text files] in Settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT. Conversion is local and best-effort, so complex layout may not match the source exactly.",
+    badge: "Current",
+  },
+  {
+    title: "Sidebar Cursor mode",
+    desc: "Press [Alt+S] to highlight the sidebar, then use [Up]/[Down] to move, [Enter] to expand folders or open files, and [Esc], [Alt+S], or an outside click to leave the mode.",
+    badge: "Current",
+  },
+];
+
 const TIPS_CONTENT: Record<string, TipItem[]> = {
   vi: [
     {
@@ -351,6 +389,31 @@ export function WelcomePage() {
       <div className="tab-content">
         {activeTab === 'features' && (
           <div className="features-grid">
+            <div className="recent-guide-card">
+              <div className="recent-guide-header">
+                <div>
+                  <div className="recent-guide-eyebrow">Recent feature guide</div>
+                  <h2>What is new since v1.4.5</h2>
+                </div>
+                <button
+                  className="card-action-btn"
+                  onClick={() => setActiveTab('shortcuts')}
+                >
+                  {cleanTitle(labels.viewShortcuts)}
+                  <ArrowRightIcon className="action-btn-icon" />
+                </button>
+              </div>
+              <div className="recent-guide-list">
+                {RECENT_FEATURE_GUIDE.map((item) => (
+                  <div className="recent-guide-item" key={`${item.badge}-${item.title}`}>
+                    {item.badge && <span className="recent-guide-badge">{item.badge}</span>}
+                    <h3>{item.title}</h3>
+                    <p>{renderDescription(item.desc)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Feature 1: Navigation Tree */}
             <div className="feature-card">
               <div className="feature-card-title">
@@ -527,6 +590,12 @@ export function WelcomePage() {
                     <tr>
                       <td>{wt.shortcutsTable.rows.sidebar}</td>
                       <td><kbd>Ctrl+Shift+P</kbd></td>
+                    </tr>
+                    <tr>
+                      <td>Sidebar cursor mode</td>
+                      <td>
+                        <kbd>Alt+S</kbd> then <kbd>Up</kbd>/<kbd>Down</kbd>, <kbd>Enter</kbd>, <kbd>Esc</kbd>
+                      </td>
                     </tr>
                     <tr>
                       <td>{wt.shortcutsTable.rows.zoomIn}</td>

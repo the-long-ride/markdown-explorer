@@ -8,7 +8,7 @@ window.LANGS = {
     navFaq: "FAQ",
     heroEyebrow: "Open source - VS Code extension and desktop app",
     heroCopy:
-      "A private Markdown workspace reader with exact search jumps, Mermaid, math, video, syntax-highlighted code, interactive tables, charts, tabs, and a calm layout for real documentation.",
+      "A private Markdown workspace reader with exact search jumps, Mermaid, math, video, syntax-highlighted code, interactive tables, charts, tabs, converted document previews, Sidebar Cursor mode, and Theme Remix for real documentation.",
     btnInstallVscode: "Install for VS Code",
     btnDownloadDesktop: "Download desktop app",
     stripVscodeMarketplace: "VS Code Marketplace",
@@ -23,7 +23,7 @@ window.LANGS = {
     featuresEyebrow: "Built for agent-era Markdown",
     featuresTitle: "Your docs become an app",
     featuresSubtitle:
-      "Markdown Explorer keeps files local while making big Markdown workspaces easier to scan, search, understand, and present.",
+      "Markdown Explorer keeps files local while making big Markdown and document workspaces easier to scan, search, understand, and present.",
     featureSearchKicker: "Search",
     featureSearchTitle: "Find content across every open workspace tab",
     featureSearchBody:

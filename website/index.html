@@ -8,7 +8,7 @@
     </title>
     <meta
       name="description"
-      content="Markdown Explorer turns Markdown folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, tabs, and local workspace navigation."
+      content="Markdown Explorer turns Markdown and document folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, tabs, local document conversion, Sidebar Cursor mode, and Theme Remix."
     />
     <meta
       name="keywords"
@@ -42,7 +42,7 @@
     />
     <meta
       property="og:description"
-      content="Turn Markdown folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, and local workspace navigation."
+      content="Turn Markdown and document folders into a private, searchable documentation app for VS Code and desktop with converted previews, Sidebar Cursor mode, Theme Remix, Mermaid, math, video, interactive tables, charts, and local workspace navigation."
     />
     <meta
       property="og:url"
@@ -81,7 +81,7 @@
     />
     <meta
       name="twitter:description"
-      content="Turn Markdown folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, and local workspace navigation."
+      content="Turn Markdown and document folders into a private, searchable documentation app for VS Code and desktop with converted previews, Sidebar Cursor mode, Theme Remix, Mermaid, math, video, interactive tables, charts, and local workspace navigation."
     />
     <meta
       name="twitter:image"
@@ -121,6 +121,10 @@
           "Mermaid and LaTeX rendering",
           "Syntax-highlighted code blocks",
           "Interactive tables and charts",
+          "Converted DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT previews",
+          "Sidebar Cursor mode for keyboard-first file navigation",
+          "Content File Tabs and Scope Focus",
+          "Theme Remix custom themes and settings import/export",
           "Local and streaming video support",
           "Offline desktop app"
         ],
@@ -267,7 +271,8 @@
           <p class="hero-copy" data-i18n="heroCopy">
             A private Markdown workspace reader with exact search jumps,
             Mermaid, math, video, syntax-highlighted code, interactive tables,
-            charts, tabs, and a calm layout for real documentation.
+            charts, tabs, converted document previews, Sidebar Cursor mode, and
+            Theme Remix for real documentation.
           </p>
           <div class="hero-actions" aria-label="Primary downloads">
             <a
@@ -354,7 +359,7 @@
             Your docs become an app
           </h2>
           <p data-i18n="featuresSubtitle">
-            Markdown Explorer keeps files local while making big Markdown
+            Markdown Explorer keeps files local while making big Markdown and document
             workspaces easier to scan, search, understand, and present. Support
             multiple languages.
           </p>
@@ -375,6 +380,52 @@
                 Search current file, current workspace, or all desktop tabs.
                 Results show focused excerpts and jump to the exact clicked
                 match.
+              </p>
+            </div>
+          </article>
+          <article class="feature-card wide">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Converted-Document-Preview.png"
+              alt="Converted document preview with best-effort quality notice"
+            />
+            <div>
+              <p class="card-kicker">Document previews</p>
+              <h3>Read DOCX, PDF, Office, web, and text files</h3>
+              <p>
+                Enable local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT,
+                ODP, ODS, RTF, and TXT files. Markdown Explorer converts on
+                open, caches repeat previews, and clearly marks best-effort
+                rendering quality.
+              </p>
+            </div>
+          </article>
+          <article class="feature-card">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Sidebar-Cursor-Mode.png"
+              alt="Sidebar Cursor mode highlighting the current file in the tree"
+            />
+            <div>
+              <p class="card-kicker">Keyboard navigation</p>
+              <h3>Move through the sidebar with Alt+S</h3>
+              <p>
+                Enter Sidebar Cursor mode, move with Up and Down, press Enter
+                to expand folders or open files, and exit with Esc, Alt+S, or
+                an outside click.
+              </p>
+            </div>
+          </article>
+          <article class="feature-card">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Theme-Remix-Settings.png"
+              alt="Theme Remix custom theme editor"
+            />
+            <div>
+              <p class="card-kicker">Theme Remix</p>
+              <h3>Build custom reading themes</h3>
+              <p>
+                Create, duplicate, edit, import, and export custom themes with
+                colors, density, spacing, layout style, and optional background
+                images.
               </p>
             </div>
           </article>
@@ -489,6 +540,26 @@
           </figure>
           <figure class="gallery-item">
             <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Converted-Document-Preview.png"
+              alt="Converted DOCX preview inside Markdown Explorer"
+            />
+            <figcaption>
+              Best-effort converted previews make DOCX, PDF, Office, web, and
+              text files readable in the same workspace.
+            </figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Sidebar-Cursor-Mode.png"
+              alt="Sidebar Cursor mode active in Markdown Explorer"
+            />
+            <figcaption>
+              Sidebar Cursor mode highlights the file tree for keyboard-first
+              folder expansion and file opening.
+            </figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img
               src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Math-formular-display.png"
               alt="Math formulas rendered in Markdown Explorer"
             />
@@ -522,6 +593,16 @@
             <figcaption data-i18n="galleryCaption5">
               Desktop mode remembers recent workspaces and opens folders
               quickly.
+            </figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Theme-Remix-Settings.png"
+              alt="Theme Remix modal with color, layout, and background controls"
+            />
+            <figcaption>
+              Theme Remix and settings import/export help teams keep personal
+              reading preferences portable.
             </figcaption>
           </figure>
         </div>
@@ -698,6 +779,15 @@
             Yes. Rendering and searching happen locally. The website download
             buttons use GitHub only to find the latest release files and public
             download totals.
+          </p>
+        </details>
+        <details>
+          <summary>Can it preview DOCX, PDF, Office, web, and text files?</summary>
+          <p>
+            Yes. Turn on <strong>Read DOCX, PDF, Office, and text files</strong>
+            in Settings. Conversion happens locally and is best-effort, so
+            complex page layout, images, or styling can differ from the
+            original file.
           </p>
         </details>
         <details>
