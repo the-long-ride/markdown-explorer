@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useLayoutEffect, useEffect } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { CloseIcon, SearchIcon } from '../shared/icons';
 import { TooltipButton } from '../shared/TooltipButton';
@@ -38,13 +38,27 @@ function folderHasVisibleContent(
   );
 }
 
-export function Sidebar() {
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tagName = target.tagName.toLowerCase();
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+}
+
+interface SidebarProps {
+  cursorMode?: boolean;
+  onCursorModeClose?: () => void;
+}
+
+export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps) {
   const { state, updateSettings } = useAppState();
   const [filter, setFilter] = useState('');
   const [scopeFocusEditing, setScopeFocusEditing] = useState(false);
+  const [cursorItemId, setCursorItemId] = useState<string | null>(null);
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
+  const navRef = useRef<HTMLElement>(null);
   const treeRef = useRef<HTMLDivElement>(null);
   const scrollPosRef = useRef(0);
   const lastWorkspaceRef = useRef(state.workspaceName);
@@ -154,6 +168,128 @@ export function Sidebar() {
     scrollPosRef.current = e.currentTarget.scrollTop;
   }, []);
 
+  const getCursorItems = useCallback((): HTMLElement[] => {
+    const root = treeRef.current;
+    if (!root) return [];
+    return Array.from(
+      root.querySelectorAll<HTMLElement>('[data-sidebar-cursor-item="true"]'),
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!cursorMode) {
+      setCursorItemId(null);
+      return;
+    }
+
+    const items = getCursorItems();
+    if (items.length === 0) {
+      setCursorItemId(null);
+      return;
+    }
+
+    const currentItem = cursorItemId
+      ? items.find((item) => item.dataset.sidebarId === cursorItemId)
+      : null;
+    const activeFileItem = state.currentFile
+      ? items.find(
+          (item) =>
+            item.dataset.sidebarKind === 'file' &&
+            item.dataset.sidebarId === state.currentFile,
+        )
+      : null;
+    const nextItem = currentItem ?? activeFileItem ?? items[0];
+    const nextId = nextItem.dataset.sidebarId ?? null;
+    if (nextId !== cursorItemId) {
+      setCursorItemId(nextId);
+      return;
+    }
+
+    nextItem.focus({ preventScroll: true });
+    nextItem.scrollIntoView({ block: 'nearest' });
+  }, [
+    cursorItemId,
+    cursorMode,
+    filter,
+    getCursorItems,
+    hideUnselected,
+    scopeFocusEditing,
+    selectedFilePaths,
+    state.currentFile,
+    state.tree,
+  ]);
+
+  useEffect(() => {
+    if (!cursorMode) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (isEditableTarget(event.target)) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          onCursorModeClose?.();
+        }
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onCursorModeClose?.();
+        return;
+      }
+
+      if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+
+      const items = getCursorItems();
+      if (items.length === 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      let index = cursorItemId
+        ? items.findIndex((item) => item.dataset.sidebarId === cursorItemId)
+        : -1;
+      if (index < 0) {
+        index = Math.max(0, items.findIndex((item) => item === document.activeElement));
+      }
+
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        const nextIndex = Math.min(items.length - 1, Math.max(0, index + direction));
+        setCursorItemId(items[nextIndex]?.dataset.sidebarId ?? null);
+        return;
+      }
+
+      const currentItem = items[index] ?? items[0];
+      if (!currentItem) return;
+      if (currentItem.dataset.sidebarKind === 'file') {
+        currentItem.click();
+        onCursorModeClose?.();
+        return;
+      }
+
+      currentItem.click();
+      setCursorItemId(currentItem.dataset.sidebarId ?? null);
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [cursorItemId, cursorMode, getCursorItems, onCursorModeClose]);
+
+  useEffect(() => {
+    if (!cursorMode) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && navRef.current?.contains(target)) return;
+      onCursorModeClose?.();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true);
+  }, [cursorMode, onCursorModeClose]);
+
   useLayoutEffect(() => {
     if (treeRef.current) {
       if (lastWorkspaceRef.current !== state.workspaceName) {
@@ -170,9 +306,10 @@ export function Sidebar() {
 
   return (
     <nav
-      className={`sidebar${state.sidebarCollapsed ? ' is-collapsed' : ''}`}
+      ref={navRef}
+      className={`sidebar${state.sidebarCollapsed ? ' is-collapsed' : ''}${cursorMode ? ' is-cursor-mode' : ''}`}
       id="sidebar"
-      aria-label="File navigation"
+      aria-label={cursorMode ? 'File navigation, cursor mode active' : 'File navigation'}
     >
       <div className="sidebar__header">
         <div className="sidebar__title">
@@ -225,7 +362,13 @@ export function Sidebar() {
         onScroll={handleScroll}
       >
         {visibleRootFiles.map((f) => (
-          <FileNode key={f.fsPath} file={f} scopeFocus={scopeFocusTree} />
+          <FileNode
+            key={f.fsPath}
+            file={f}
+            scopeFocus={scopeFocusTree}
+            cursorMode={cursorMode}
+            cursorItemId={cursorItemId}
+          />
         ))}
         {visibleRootChildren.map((child) => (
           <FolderNodeView
@@ -233,6 +376,8 @@ export function Sidebar() {
             node={child}
             filter={filter}
             scopeFocus={scopeFocusTree}
+            cursorMode={cursorMode}
+            cursorItemId={cursorItemId}
           />
         ))}
         {!hasVisibleTreeItems && (

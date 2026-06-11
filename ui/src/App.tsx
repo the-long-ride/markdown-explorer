@@ -56,6 +56,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTarget, setModalTarget] = useState<HTMLElement | null>(null);
+  const [sidebarCursorMode, setSidebarCursorMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
@@ -99,6 +100,9 @@ export function App() {
     setPendingDroppedPath,
     confirmSwitchWorkspace,
     closeTab,
+    closeTabsToRight,
+    closeOtherTabs,
+    closeAllTabs,
     updateTabAlias,
     crossTabSearchItems,
   } = useDesktopTabs({
@@ -226,6 +230,67 @@ export function App() {
 
   const themeOnboardingOpen = termsAccepted && !themeOnboardingComplete;
 
+  const closeSidebarCursorMode = useCallback(() => {
+    setSidebarCursorMode(false);
+  }, []);
+
+  const toggleSidebarCursorMode = useCallback(() => {
+    if (
+      !state.workspaceName ||
+      searchOpen ||
+      findOpen ||
+      settingsOpen ||
+      modalOpen ||
+      !termsAccepted ||
+      themeOnboardingOpen
+    ) {
+      return;
+    }
+    if (sidebarCursorMode) {
+      setSidebarCursorMode(false);
+      return;
+    }
+    if (state.sidebarCollapsed) {
+      toggleSidebar();
+    }
+    setSidebarCursorMode(true);
+  }, [
+    findOpen,
+    modalOpen,
+    searchOpen,
+    settingsOpen,
+    sidebarCursorMode,
+    state.sidebarCollapsed,
+    state.workspaceName,
+    termsAccepted,
+    themeOnboardingOpen,
+    toggleSidebar,
+  ]);
+
+  useEffect(() => {
+    if (
+      !state.workspaceName ||
+      state.sidebarCollapsed ||
+      searchOpen ||
+      findOpen ||
+      settingsOpen ||
+      modalOpen ||
+      !termsAccepted ||
+      themeOnboardingOpen
+    ) {
+      setSidebarCursorMode(false);
+    }
+  }, [
+    findOpen,
+    modalOpen,
+    searchOpen,
+    settingsOpen,
+    state.sidebarCollapsed,
+    state.workspaceName,
+    termsAccepted,
+    themeOnboardingOpen,
+  ]);
+
   // Initialize sidebar width from localStorage
   useEffect(() => {
     const stored = localStorage.getItem('markdown-explorer-sidebar-width');
@@ -291,9 +356,12 @@ export function App() {
     onWelcome: isTabView ? () => activateTab('home') : undefined,
     onExpandAll: expandAll,
     onCollapseAll: collapseAll,
+    onSidebarCursorModeToggle: toggleSidebarCursorMode,
+    onSidebarCursorModeClose: closeSidebarCursorMode,
     isSearchOpen: searchOpen,
     isFindOpen: findOpen,
     activeSearchScope: searchScope,
+    isSidebarCursorMode: sidebarCursorMode,
     isSettingsOpen: settingsOpen,
     isModalOpen: modalOpen,
     isTermsOpen: !termsAccepted || themeOnboardingOpen,
@@ -376,13 +444,19 @@ export function App() {
     return (
       <div className="state-screen" style={{ display: 'flex', height: '100vh', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--tx)' }}>
         <div className="spinner" />
-        <div className="state-screen__title" style={{ marginTop: '12px', fontSize: '14px', fontWeight: 500 }}>Loading docs…</div>
+        <div className="state-screen__title" style={{ marginTop: '12px', fontSize: '14px', fontWeight: 500 }}>
+          {state.loadingLabel || 'Loading docs...'}
+        </div>
+        {state.loadingDetail && (
+          <div className="state-screen__sub">{state.loadingDetail}</div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className={`app${isTabView ? ' app--tab-view' : ''}`}>
+    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}`}>
+      <div className="sidebar-cursor-backdrop" aria-hidden="true" />
       {isTabView && (
         <DesktopTabBar
           tabs={tabs}
@@ -390,6 +464,9 @@ export function App() {
           onSelectTab={activateTab}
           onNewTab={createNewWorkspaceTab}
           onCloseTab={closeTab}
+          onCloseTabsToRight={closeTabsToRight}
+          onCloseOtherTabs={closeOtherTabs}
+          onCloseAllTabs={closeAllTabs}
           onAliasChange={updateTabAlias}
           onSearchOpen={() => openSearch('all-tabs')}
           searchShortcutLabel={allTabsSearchShortcutLabel}
@@ -427,7 +504,10 @@ export function App() {
             />
           )}
           <div className="body">
-            <Sidebar />
+            <Sidebar
+              cursorMode={sidebarCursorMode}
+              onCursorModeClose={closeSidebarCursorMode}
+            />
             <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
             <div className="content-shell">
               <ContentTabs />
@@ -536,7 +616,11 @@ export function App() {
           pointerEvents: 'none', transition: 'all 0.2s ease'
         }}>
           <div style={{ fontSize: '20px', fontWeight: 800 }}>Drop folder or file to open</div>
-          <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>Supports folders and .md / .mdx files</div>
+          <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>
+            {state.settings.documentConversion
+              ? 'Supports folders, Markdown, DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files'
+              : 'Supports folders and .md / .mdx files'}
+          </div>
         </div>
       )}
     </div>

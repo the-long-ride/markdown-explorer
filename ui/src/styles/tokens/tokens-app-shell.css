@@ -15,6 +15,26 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  position: relative;
+}
+
+.sidebar-cursor-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150000;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.48);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.app.app--sidebar-cursor-mode .sidebar-cursor-backdrop {
+  opacity: 1;
+}
+
+.app.app--sidebar-cursor-mode .topbar,
+.app.app--sidebar-cursor-mode .desktop-tabbar {
+  z-index: 100000;
 }
 
 html[data-custom-theme-id] body::before {

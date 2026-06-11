@@ -83,26 +83,35 @@ function ScopeCheckbox({
 export function FileNode({
   file,
   scopeFocus,
+  cursorMode = false,
+  cursorItemId = null,
 }: {
   file: MdFile;
   scopeFocus?: ScopeFocusTreeProps;
+  cursorMode?: boolean;
+  cursorItemId?: string | null;
 }) {
   const { state, navigate } = useAppState();
   const isActive = state.currentFile === file.fsPath;
+  const isCursor = cursorMode && cursorItemId === file.fsPath;
   const displayName = state.settings.showTitle ? file.title : file.fileName;
   const isChecked = scopeFocus?.selectedFilePaths.has(file.fsPath) ?? true;
 
   return (
     <div
-      className={`tree-file${isActive ? ' is-active' : ''}${scopeFocus?.editing ? ' is-scope-editing' : ''}`}
+      className={`tree-file${isActive ? ' is-active' : ''}${isCursor ? ' is-cursor' : ''}${scopeFocus?.editing ? ' is-scope-editing' : ''}`}
       data-path={file.fsPath}
       data-title={file.title}
       data-filename={file.fileName}
+      data-sidebar-cursor-item="true"
+      data-sidebar-kind="file"
+      data-sidebar-id={file.fsPath}
       onClick={() => navigate(file.fsPath)}
       onKeyDown={(e) => { if (e.key === 'Enter') navigate(file.fsPath); }}
       title={file.relativePath}
       role="treeitem"
       tabIndex={0}
+      aria-selected={isCursor || isActive}
     >
       <span className="tree-file__name">{displayName}</span>
       {scopeFocus?.editing && (
@@ -120,10 +129,14 @@ export function FolderNodeView({
   node,
   filter,
   scopeFocus,
+  cursorMode = false,
+  cursorItemId = null,
 }: {
   node: FolderNode;
   filter: string;
   scopeFocus: ScopeFocusTreeProps;
+  cursorMode?: boolean;
+  cursorItemId?: string | null;
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const toggle = useCallback(() => setIsOpen((v) => !v), []);
@@ -144,6 +157,8 @@ export function FolderNodeView({
   const visibleChildren = node.children.filter((child) =>
     folderHasVisibleContent(child, q, scopeFocus),
   );
+  const folderCursorId = `folder:${node.path}`;
+  const isCursor = cursorMode && cursorItemId === folderCursorId;
 
   if (!folderHasVisibleContent(node, q, scopeFocus)) return null;
 
@@ -153,11 +168,20 @@ export function FolderNodeView({
       role="treeitem"
     >
       <div
-        className="tree-folder__header"
+        className={`tree-folder__header${isCursor ? ' is-cursor' : ''}`}
         onClick={toggle}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggle();
+          }
+        }}
         role="button"
         tabIndex={0}
         aria-expanded={isOpen}
+        data-sidebar-cursor-item="true"
+        data-sidebar-kind="folder"
+        data-sidebar-id={folderCursorId}
       >
         <span className="tree-folder__chevron" aria-hidden="true">
           <FolderChevronIcon />
@@ -178,7 +202,13 @@ export function FolderNodeView({
       {isOpen && (
         <div className="tree-folder__children" role="group">
           {visibleFiles.map((f) => (
-            <FileNode key={f.fsPath} file={f} scopeFocus={scopeFocus} />
+            <FileNode
+              key={f.fsPath}
+              file={f}
+              scopeFocus={scopeFocus}
+              cursorMode={cursorMode}
+              cursorItemId={cursorItemId}
+            />
           ))}
           {visibleChildren.map((child) => (
             <FolderNodeView
@@ -186,6 +216,8 @@ export function FolderNodeView({
               node={child}
               filter={filter}
               scopeFocus={scopeFocus}
+              cursorMode={cursorMode}
+              cursorItemId={cursorItemId}
             />
           ))}
         </div>

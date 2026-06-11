@@ -14,6 +14,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   expandAll: 'Ctrl+Shift+e',
   workspaceSelection: 'Ctrl+Shift+h',
   toggleSidebar: 'Ctrl+Shift+p',
+  sidebarCursorMode: 'Alt+S',
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
 };

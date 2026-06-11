@@ -1,12 +1,23 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { getTranslations } from "../../contexts/translations";
+import {
+  TabContextMenu,
+  type TabContextMenuAction,
+} from "../shared/TabContextMenu";
 import { CloseIcon } from "../shared/icons";
 
 const SCROLLBAR_TRACK_INLINE_INSET = 16;
 
 export function ContentTabs() {
-  const { state, activateContentTab, closeContentTab } = useAppState();
+  const {
+    state,
+    activateContentTab,
+    closeContentTab,
+    closeContentTabsToRight,
+    closeOtherContentTabs,
+    closeAllContentTabs,
+  } = useAppState();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
@@ -23,6 +34,11 @@ export function ContentTabs() {
     thumbWidth: 0,
   });
   const [isScrollbarDragging, setIsScrollbarDragging] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    filePath: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const updateScrollbarMetrics = useCallback(() => {
     const el = tabsScrollRef.current;
@@ -167,7 +183,44 @@ export function ContentTabs() {
     };
   }, [isScrollbarDragging, updateScrollbarMetrics]);
 
+  useEffect(() => {
+    if (!contextMenu) return;
+    if (state.contentTabs.some((tab) => tab.filePath === contextMenu.filePath)) return;
+    setContextMenu(null);
+  }, [contextMenu, state.contentTabs]);
+
+  const handleContextMenuAction = useCallback(
+    (action: TabContextMenuAction) => {
+      if (!contextMenu) return;
+      switch (action) {
+        case "closeThisTab":
+          closeContentTab(contextMenu.filePath);
+          break;
+        case "closeTabsToRight":
+          closeContentTabsToRight(contextMenu.filePath);
+          break;
+        case "closeOtherTabs":
+          closeOtherContentTabs(contextMenu.filePath);
+          break;
+        case "closeAllTabs":
+          closeAllContentTabs();
+          break;
+      }
+    },
+    [
+      closeAllContentTabs,
+      closeContentTab,
+      closeContentTabsToRight,
+      closeOtherContentTabs,
+      contextMenu,
+    ],
+  );
+
   if (!state.settings.fileTabs || state.contentTabs.length === 0) return null;
+
+  const contextMenuTabIndex = contextMenu
+    ? state.contentTabs.findIndex((tab) => tab.filePath === contextMenu.filePath)
+    : -1;
 
   return (
     <div className="content-tabs-wrap">
@@ -190,6 +243,15 @@ export function ContentTabs() {
               tabIndex={0}
               title={tab.relativePath}
               onClick={() => activateContentTab(tab.filePath)}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setContextMenu({
+                  filePath: tab.filePath,
+                  x: event.clientX,
+                  y: event.clientY,
+                });
+              }}
               onKeyDown={(event) => {
                 if (event.key !== "Enter" && event.key !== " ") return;
                 event.preventDefault();
@@ -237,6 +299,23 @@ export function ContentTabs() {
             onPointerDown={beginScrollbarDrag}
           />
         </div>
+      )}
+      {contextMenu && (
+        <TabContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          labels={t.tabContextMenu}
+          disabled={{
+            closeThisTab: contextMenuTabIndex === -1,
+            closeTabsToRight:
+              contextMenuTabIndex === -1 ||
+              contextMenuTabIndex >= state.contentTabs.length - 1,
+            closeOtherTabs: state.contentTabs.length <= 1,
+            closeAllTabs: state.contentTabs.length === 0,
+          }}
+          onAction={handleContextMenuAction}
+          onClose={() => setContextMenu(null)}
+        />
       )}
     </div>
   );

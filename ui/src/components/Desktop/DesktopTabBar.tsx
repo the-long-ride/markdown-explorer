@@ -15,6 +15,10 @@ import { getTabLabel } from '../../desktop/desktopTabs';
 import type { DesktopTab } from '../../desktop/types';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
+import {
+  TabContextMenu,
+  type TabContextMenuAction,
+} from '../shared/TabContextMenu';
 
 const SCROLLBAR_TRACK_INLINE_INSET = 8;
 
@@ -24,6 +28,9 @@ interface DesktopTabBarProps {
   onSelectTab: (tabId: string) => void;
   onNewTab: () => void;
   onCloseTab: (tabId: string) => void;
+  onCloseTabsToRight: (tabId: string) => void;
+  onCloseOtherTabs: (tabId: string) => void;
+  onCloseAllTabs: () => void;
   onAliasChange: (tabId: string, alias: string) => void;
   onSearchOpen: () => void;
   searchShortcutLabel: string;
@@ -41,6 +48,9 @@ export function DesktopTabBar({
   onSelectTab,
   onNewTab,
   onCloseTab,
+  onCloseTabsToRight,
+  onCloseOtherTabs,
+  onCloseAllTabs,
   onAliasChange,
   onSearchOpen,
   searchShortcutLabel,
@@ -54,9 +64,15 @@ export function DesktopTabBar({
   const { state } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const workspaceTabs = tabs.filter((tab) => tab.kind !== 'home');
 
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [draftAlias, setDraftAlias] = useState('');
+  const [contextMenu, setContextMenu] = useState<{
+    tabId: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const scrollbarTrackRef = useRef<HTMLDivElement>(null);
   const scrollbarDragRef = useRef<{
@@ -203,6 +219,39 @@ export function DesktopTabBar({
     };
   }, [isScrollbarDragging, updateScrollbarMetrics]);
 
+  useEffect(() => {
+    if (!contextMenu) return;
+    if (tabs.some((tab) => tab.kind !== 'home' && tab.id === contextMenu.tabId)) return;
+    setContextMenu(null);
+  }, [contextMenu, tabs]);
+
+  const handleContextMenuAction = useCallback(
+    (action: TabContextMenuAction) => {
+      if (!contextMenu) return;
+      switch (action) {
+        case 'closeThisTab':
+          onCloseTab(contextMenu.tabId);
+          break;
+        case 'closeTabsToRight':
+          onCloseTabsToRight(contextMenu.tabId);
+          break;
+        case 'closeOtherTabs':
+          onCloseOtherTabs(contextMenu.tabId);
+          break;
+        case 'closeAllTabs':
+          onCloseAllTabs();
+          break;
+      }
+    },
+    [
+      contextMenu,
+      onCloseAllTabs,
+      onCloseOtherTabs,
+      onCloseTab,
+      onCloseTabsToRight,
+    ],
+  );
+
   const startEditing = (tab: DesktopTab) => {
     if (tab.kind !== 'workspace') return;
     setEditingTabId(tab.id);
@@ -214,6 +263,10 @@ export function DesktopTabBar({
     setEditingTabId(null);
     setDraftAlias('');
   };
+
+  const contextMenuTabIndex = contextMenu
+    ? workspaceTabs.findIndex((tab) => tab.id === contextMenu.tabId)
+    : -1;
 
   return (
     <header className="desktop-tabbar">
@@ -244,7 +297,7 @@ export function DesktopTabBar({
           aria-label="Workspace tabs"
           onScroll={updateScrollbarMetrics}
         >
-          {tabs.filter((tab) => tab.kind !== 'home').map((tab) => {
+          {workspaceTabs.map((tab) => {
             const active = tab.id === activeTabId;
             const editing = editingTabId === tab.id;
             return (
@@ -255,6 +308,15 @@ export function DesktopTabBar({
                 aria-selected={active}
                 className={`desktop-tab${active ? ' is-active' : ''}`}
                 onClick={() => onSelectTab(tab.id)}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setContextMenu({
+                    tabId: tab.id,
+                    x: event.clientX,
+                    y: event.clientY,
+                  });
+                }}
                 onMouseDown={(event) => {
                   if (event.button === 1) event.preventDefault();
                 }}
@@ -321,6 +383,23 @@ export function DesktopTabBar({
           </div>
         )}
       </div>
+      {contextMenu && (
+        <TabContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          labels={t.tabContextMenu}
+          disabled={{
+            closeThisTab: contextMenuTabIndex === -1,
+            closeTabsToRight:
+              contextMenuTabIndex === -1 ||
+              contextMenuTabIndex >= workspaceTabs.length - 1,
+            closeOtherTabs: workspaceTabs.length <= 1,
+            closeAllTabs: workspaceTabs.length === 0,
+          }}
+          onAction={handleContextMenuAction}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
       <TooltipButton className="btn btn--icon desktop-tabbar__new" onClick={onNewTab} tooltip={t.tooltips.newTab} icon={<PlusIcon />} />
       <div className="desktop-tabbar__spacer" />
       <button type="button" className="desktop-tabbar__search" onClick={onSearchOpen} aria-label={t.actions.searchAllTabs}>

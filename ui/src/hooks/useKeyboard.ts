@@ -18,9 +18,12 @@ interface UseKeyboardOptions {
   onWelcome?: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
+  onSidebarCursorModeToggle?: () => void;
+  onSidebarCursorModeClose?: () => void;
   isSearchOpen: boolean;
   isFindOpen?: boolean;
   activeSearchScope?: 'current' | 'all-tabs';
+  isSidebarCursorMode?: boolean;
   isSettingsOpen: boolean;
   isModalOpen: boolean;
   isTermsOpen: boolean;
@@ -77,9 +80,12 @@ export function useKeyboard({
   onWelcome,
   onExpandAll,
   onCollapseAll,
+  onSidebarCursorModeToggle,
+  onSidebarCursorModeClose,
   isSearchOpen,
   isFindOpen = false,
   activeSearchScope = 'current',
+  isSidebarCursorMode = false,
   isSettingsOpen,
   isModalOpen,
   isTermsOpen,
@@ -121,8 +127,19 @@ export function useKeyboard({
         return;
       }
 
+      if (onSidebarCursorModeToggle && matchesShortcut(e, keybindings.sidebarCursorMode)) {
+        e.preventDefault();
+        onSidebarCursorModeToggle();
+        return;
+      }
+
       // 1. Check overlays priority Esc key
       if (e.key === 'Escape') {
+        if (isSidebarCursorMode && onSidebarCursorModeClose) {
+          e.preventDefault();
+          onSidebarCursorModeClose();
+          return;
+        }
         if (isSearchOpen) {
           e.preventDefault();
           onSearchClose();
@@ -319,9 +336,12 @@ export function useKeyboard({
     onWelcome,
     onExpandAll,
     onCollapseAll,
+    onSidebarCursorModeToggle,
+    onSidebarCursorModeClose,
     isSearchOpen,
     isFindOpen,
     activeSearchScope,
+    isSidebarCursorMode,
     isSettingsOpen,
     isModalOpen,
     isTermsOpen,

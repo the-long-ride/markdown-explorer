@@ -348,6 +348,73 @@ body {
   outline: none;
 }
 
+.tab-context-menu {
+  position: fixed;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r-md);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--bg-s)), var(--bg-s) 45%),
+    var(--bg-s);
+  color: var(--tx);
+  box-shadow: var(--sh-lg);
+  z-index: 400000;
+  -webkit-app-region: no-drag;
+}
+
+.tab-context-menu__item {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: calc(var(--r) - 2px);
+  background: transparent;
+  color: var(--tx2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+  -webkit-app-region: no-drag;
+}
+
+.tab-context-menu__item:hover,
+.tab-context-menu__item:focus-visible {
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}
+
+.tab-context-menu__item.is-primary {
+  color: var(--tx);
+}
+
+.tab-context-menu__item:disabled {
+  color: var(--txm);
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.tab-context-menu__item:disabled:hover,
+.tab-context-menu__item:disabled:focus-visible {
+  background: transparent;
+  color: var(--txm);
+}
+
 .desktop-tabbar__spacer {
   flex: 0 0 8px;
   min-width: 8px;
