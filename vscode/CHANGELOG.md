@@ -4,6 +4,24 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.0] — 2026-06-11
+
+### Added Features & Enhancements
+- **Document Conversion Preview**: Added optional Markdown previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files using `@the-long-ride/markdown-them`, with loading feedback during scan and conversion work.
+- **Sidebar Cursor Mode**: Added `Alt+S` sidebar keyboard navigation with highlighted focus, arrow-key movement, Enter-to-open or expand folders, Escape-to-exit, and click-outside dismissal.
+- **Tab Context Menus**: Added right-click actions for content tabs: close current tab, close tabs to the right, close other tabs, and close all tabs.
+
+### Changed
+- **Sidebar Focus Treatment**: Dimmed the rest of the app and strengthened the sidebar shadow while Sidebar Cursor Mode is active, with eased transitions.
+- **Converted Preview Messaging**: Localized converted-document warning text so users understand conversion preview quality may differ from the original file.
+- **Welcome Guidance**: Updated the welcome page with guidance for recent features from the 1.4.5 series through this release.
+
+### Maintenance
+- **Feature Screenshots**: Refreshed README and website images for document conversion, Sidebar Cursor Mode, and Theme Remix.
+- **Release Version Bump**: Updated VS Code, UI, workspace metadata, and lockfile metadata to `1.5.0`.
+
+---
+
 ## [1.4.8] — 2026-06-10
 
 ### Added Features & Enhancements
