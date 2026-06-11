@@ -4,6 +4,21 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.4.9] — 2026-06-11
+
+### Added Features & Enhancements
+- **Content File Tabs**: Added an optional VS Code-like content tab strip so opened Markdown files can create or activate document tabs instead of always replacing the current panel.
+- **Scope Focus**: Added a sidebar scope focusing mode with persisted file/folder selection, folder-wide descendant toggles, hidden unselected items, and compact custom circular selection controls.
+- **Settings Changelog Link**: Made the settings version note link directly to the GitHub changelog with localized tooltip text.
+
+### Changed
+- **Content Tab Strip Polish**: Updated the content tab strip with a thinner custom horizontal scrollbar, a bottom-line-only section treatment, and tab labels based on either file names or H1 titles depending on the existing label setting.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, website metadata, and lockfile metadata to `1.4.9`.
+
+---
+
 ## [1.4.8] — 2026-06-10
 
 ### Added Features & Enhancements
