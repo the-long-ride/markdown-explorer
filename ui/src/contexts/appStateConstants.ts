@@ -28,6 +28,13 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
 };
 
 export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
+  const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
+  if (isChrome) {
+    return {
+      ...DEFAULT_KEYBINDINGS,
+      refresh: 'Alt+R',
+    };
+  }
   return isDesktop ? DESKTOP_DEFAULT_KEYBINDINGS : DEFAULT_KEYBINDINGS;
 }
 

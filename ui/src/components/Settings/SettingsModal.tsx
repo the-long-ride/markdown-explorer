@@ -4,9 +4,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  DEFAULT_KEYBINDINGS,
-  DESKTOP_DEFAULT_KEYBINDINGS,
   THEME_MODE_OPTIONS,
+  getDefaultKeybindings,
 } from "../../contexts/appStateConstants";
 import { useAppState } from "../../contexts/AppStateContext";
 import type { UpdateCheckState } from "../../hooks/useUpdateCheck";
@@ -104,9 +103,11 @@ export function SettingsModal({
   };
 
   const isElectron = typeof (window as any).electronAPI !== "undefined";
+  const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
+  const isDesktopLike = isElectron || isChrome;
   const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
   const visibleActions = ACTIONS_LIST.filter(
-    (act) => act.scope === "both" || isElectron,
+    (act) => act.scope === "both" || isDesktopLike,
   );
 
   const handleKeyDown = (
@@ -501,32 +502,34 @@ export function SettingsModal({
             </div>
 
             {/* Document Conversion */}
-            <div
-              className="settings-item settings-item--document-conversion"
-              style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
-            >
-              <div className="settings-item__info">
-                <div className="settings-item__title">
-                  Read DOCX, PDF, Office, and text files
-                </div>
-                <div className="settings-item__desc">
-                  Converts DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT to Markdown for preview. Converted previews can lose layout or formatting quality.
-                </div>
-              </div>
-              <label
-                className="switch-toggle"
-                aria-label="Toggle document conversion previews"
+            {isElectron && (
+              <div
+                className="settings-item settings-item--document-conversion"
+                style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
               >
-                <input
-                  type="checkbox"
-                  checked={state.settings.documentConversion}
-                  onChange={(e) =>
-                    updateSettings({ documentConversion: e.target.checked })
-                  }
-                />
-                <span className="switch-slider" />
-              </label>
-            </div>
+                <div className="settings-item__info">
+                  <div className="settings-item__title">
+                    {t.documentConversion}
+                  </div>
+                  <div className="settings-item__desc">
+                    {t.documentConversionDesc}
+                  </div>
+                </div>
+                <label
+                  className="switch-toggle"
+                  aria-label="Toggle document conversion previews"
+                >
+                  <input
+                    type="checkbox"
+                    checked={state.settings.documentConversion}
+                    onChange={(e) =>
+                      updateSettings({ documentConversion: e.target.checked })
+                    }
+                  />
+                  <span className="switch-slider" />
+                </label>
+              </div>
+            )}
 
             {/* Default HTML Preview */}
             <div
@@ -676,9 +679,7 @@ export function SettingsModal({
                 className="settings-reset-shortcuts-btn"
                 onClick={() =>
                   updateSettings({
-                    keybindings: isElectron
-                      ? DESKTOP_DEFAULT_KEYBINDINGS
-                      : DEFAULT_KEYBINDINGS,
+                    keybindings: getDefaultKeybindings(isElectron),
                   })
                 }
               >

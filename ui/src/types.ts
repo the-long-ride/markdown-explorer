@@ -74,7 +74,7 @@ export interface RecentWorkspace {
   readonly lastOpened?: number;
 }
 
-export type AppRuntime = 'desktop' | 'vscode';
+export type AppRuntime = 'desktop' | 'vscode' | 'chrome';
 export type HostPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
 
 export interface ReadyAckMessage {
@@ -214,6 +214,7 @@ export interface RefreshMessage {
 export interface OpenFolderMessage {
   readonly command: 'openFolder';
   readonly openFirstFile?: boolean;
+  readonly handle?: any;
 }
 
 export interface OpenFileMessage {

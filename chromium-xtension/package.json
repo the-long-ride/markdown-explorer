@@ -1,0 +1,16 @@
+{
+  "name": "markdown-explorer-chromium-xtension",
+  "version": "1.5.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc -b && vite build",
+    "package": "npm run build && cd dist && tar -cf ../markdown-explorer-chromium.zip ."
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.5.2",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  }
+}

@@ -2,6 +2,10 @@
 // main.tsx — React entry point
 // =============================================================================
 
+// =============================================================================
+// main.tsx — React entry point
+// =============================================================================
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -10,6 +14,7 @@ import { AppStateProvider } from './contexts/AppStateContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { createVsCodeBridge } from './platform/vscode';
 import { createElectronBridge } from './platform/electron';
+import { createChromeBridge } from './platform/chrome';
 import { App } from './App';
 
 // Local library imports for CSP compliance & offline support
@@ -122,7 +127,7 @@ export const libsReady = initLibs();
 import './styles/tokens.css';
 import './styles/global.css';
 
-if (typeof (window as any).electronAPI !== 'undefined') {
+if (typeof (window as any).electronAPI !== 'undefined' || typeof (window as any).__chromeExtBus !== 'undefined') {
   import('./styles/fonts.css');
 }
 
@@ -138,7 +143,12 @@ function detectBridge() {
     document.body.classList.add('is-electron');
     return createElectronBridge();
   }
-  throw new Error('Unknown platform. Expected VS Code webview or Electron.');
+  // Chromium Extension provides window.__chromeExtBus
+  if (typeof (window as any).__chromeExtBus !== 'undefined') {
+    document.body.classList.add('is-chrome-ext');
+    return createChromeBridge();
+  }
+  throw new Error('Unknown platform. Expected VS Code webview, Electron, or Chromium Extension.');
 }
 
 const bridge = detectBridge();

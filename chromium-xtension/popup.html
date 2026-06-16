@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 280px;
+      padding: 16px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #151518;
+      color: #f4efe8;
+    }
+    .popup-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .popup-header img { width: 28px; height: 28px; }
+    .popup-header h1 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .popup-desc {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #a59e95;
+      margin-bottom: 14px;
+    }
+    .popup-btn {
+      display: block;
+      width: 100%;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #ffa34f 0%, #ff861b 100%);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .popup-btn:hover { opacity: 0.85; }
+    .popup-btn:active { opacity: 0.7; }
+    .popup-footer {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 10.5px;
+      color: #5a544e;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-header">
+    <img src="icons/icon-128.png" alt="Markdown Explorer" />
+    <h1>Markdown Explorer</h1>
+  </div>
+  <p class="popup-desc">
+    Open a local folder of Markdown files and explore them with a premium,
+    interactive reading experience.
+  </p>
+  <button class="popup-btn" id="openBtn">Open Markdown Explorer</button>
+  <div class="popup-footer">v1.5.1 · Offline · No Tracking</div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

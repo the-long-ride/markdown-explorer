@@ -95,6 +95,8 @@ export function useKeyboard({
   const bridge = usePlatform();
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
+  const isDesktopLike = isElectron || isChrome;
   const keybindings = state.settings.keybindings || {};
 
   useEffect(() => {
@@ -158,7 +160,7 @@ export function useKeyboard({
       }
 
       // 2. Search shortcuts. Desktop is customizable; VS Code keeps Ctrl+K.
-      if (isElectron && onCrossTabSearchOpen && matchesShortcut(e, keybindings.searchAllTabs)) {
+      if (isDesktopLike && onCrossTabSearchOpen && matchesShortcut(e, keybindings.searchAllTabs)) {
         e.preventDefault();
         if (isSearchOpen && activeSearchScope === 'all-tabs') {
           onSearchClose();
@@ -168,7 +170,7 @@ export function useKeyboard({
         return;
       }
 
-      const isCurrentSearchShortcut = isElectron
+      const isCurrentSearchShortcut = isDesktopLike
         ? matchesShortcut(e, keybindings.searchCurrent)
         : (e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k';
 
@@ -242,7 +244,7 @@ export function useKeyboard({
       }
 
       // Desktop specific keybindings
-      if (isElectron) {
+      if (isDesktopLike) {
         // 9. Refresh (Desktop)
         if (matchesShortcut(e, keybindings.refresh)) {
           e.preventDefault();

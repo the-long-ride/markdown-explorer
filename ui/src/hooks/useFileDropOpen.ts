@@ -3,20 +3,24 @@ import { getDroppedFilePath } from '../desktop/desktopTabs';
 
 interface UseFileDropOpenParams {
   isElectron: boolean;
+  isChrome: boolean;
   modalOpen: boolean;
   openDroppedPath: (path: string) => void;
+  openDroppedFolder?: (handle: any) => void;
 }
 
 export function useFileDropOpen({
   isElectron,
+  isChrome,
   modalOpen,
   openDroppedPath,
+  openDroppedFolder,
 }: UseFileDropOpenParams) {
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
   useEffect(() => {
-    if (!isElectron) return;
+    if (!isElectron && !isChrome) return;
 
     const isFileDrag = (event: DragEvent) => {
       const types = event.dataTransfer?.types;
@@ -50,12 +54,32 @@ export function useFileDropOpen({
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
     };
 
-    const onDrop = (event: DragEvent) => {
+    const onDrop = async (event: DragEvent) => {
       if (!isFileDrag(event)) return;
       event.preventDefault();
-      const files = Array.from(event.dataTransfer?.files ?? []);
       resetDragState();
-      if (modalOpen || files.length === 0) return;
+      if (modalOpen) return;
+
+      if (isChrome && event.dataTransfer?.items && openDroppedFolder) {
+        const items = Array.from(event.dataTransfer.items);
+        if (items.length > 0) {
+          const item = items[0];
+          if (typeof (item as any).getAsFileSystemHandle === 'function') {
+            try {
+              const handle = await (item as any).getAsFileSystemHandle();
+              if (handle && handle.kind === 'directory') {
+                openDroppedFolder(handle);
+                return;
+              }
+            } catch (err) {
+              console.error('Failed to get FileSystemHandle on drop:', err);
+            }
+          }
+        }
+      }
+
+      const files = Array.from(event.dataTransfer?.files ?? []);
+      if (files.length === 0) return;
       const droppedPath = getDroppedFilePath(files[0]);
       if (droppedPath) openDroppedPath(droppedPath);
     };
@@ -74,7 +98,8 @@ export function useFileDropOpen({
       window.removeEventListener('dragend', resetDragState);
       resetDragState();
     };
-  }, [isElectron, modalOpen, openDroppedPath]);
+  }, [isElectron, isChrome, modalOpen, openDroppedPath, openDroppedFolder]);
 
   return { isDragging };
 }
+

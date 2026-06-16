@@ -1,11 +1,12 @@
 {
   "name": "markdown-explorer-workspace",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "workspaces": [
     "ui",
     "vscode",
-    "desktop"
+    "desktop",
+    "chromium-xtension"
   ],
   "scripts": {
     "build:ui": "npm run build --workspace=ui",
@@ -14,6 +15,7 @@
     "watch": "npm run watch --workspace=vscode",
     "package": "npm run compile && npm run package --workspace=vscode",
     "start:desktop": "npm run start --workspace=desktop",
-    "build:desktop": "npm run compile && npm run dist --workspace=desktop"
+    "build:desktop": "npm run compile && npm run dist --workspace=desktop",
+    "build:chromium": "npm run build --workspace=markdown-explorer-chromium-xtension"
   }
 }
