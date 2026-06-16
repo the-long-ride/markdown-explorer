@@ -73,6 +73,11 @@
 
 .homepage-link-container {
   margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .homepage-link {
@@ -615,3 +620,10 @@ kbd {
     justify-content: center;
   }
 }
+
+.desktop-recommendation {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--tx3);
+}
+

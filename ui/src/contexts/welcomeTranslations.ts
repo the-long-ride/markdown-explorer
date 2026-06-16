@@ -10,6 +10,8 @@ export interface WelcomeTranslations {
     createdBy: string;
     repository: string;
     license: string;
+    desktopRecommendation: string;
+    macosInstallBtn: string;
   };
   privacy: {
     title: string;
@@ -67,6 +69,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "Created by",
       repository: "Repository",
       license: "License",
+      desktopRecommendation: "For the best experience, we recommend using the Desktop App.",
+      macosInstallBtn: "Install Guide",
     },
     privacy: {
       title: "🔒 100% Private, Offline-First & Independent",
@@ -152,6 +156,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "Tạo bởi",
       repository: "Kho lưu trữ",
       license: "Giấy phép",
+      desktopRecommendation: "Để có trải nghiệm tốt nhất, chúng tôi khuyên bạn nên sử dụng ứng dụng Desktop.",
+      macosInstallBtn: "Hướng dẫn cài đặt",
     },
     privacy: {
       title: "🔒 100% Riêng tư, Cục bộ trước hết & Độc lập",
@@ -237,6 +243,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "Créé par",
       repository: "Dépôt",
       license: "Licence",
+      desktopRecommendation: "Pour la meilleure expérience, nous vous recommandons d'utiliser l'application Bureau.",
+      macosInstallBtn: "Guide d'installation",
     },
     privacy: {
       title: "🔒 105% Privé, Local-First & Indépendant",
@@ -322,6 +330,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "Creado por",
       repository: "Repositorio",
       license: "Licencia",
+      desktopRecommendation: "Para obtener la mejor experiencia, recomendamos utilizar la aplicación de Escritorio.",
+      macosInstallBtn: "Guía de instalación",
     },
     privacy: {
       title: "🔒 100% Privado, Local-First e Independiente",
@@ -407,6 +417,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "开发者",
       repository: "开源仓库",
       license: "开源协议",
+      desktopRecommendation: "为获得最佳体验，建议使用桌面客户端。",
+      macosInstallBtn: "安装指南",
     },
     privacy: {
       title: "🔒 100% 隐私安全、本地优先与独立运行",
@@ -492,6 +504,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "Laget av",
       repository: "Kildekode",
       license: "Lisens",
+      desktopRecommendation: "For den beste opplevelsen, anbefaler vi å bruke skrivebordsappen.",
+      macosInstallBtn: "Installeringsveiledning",
     },
     privacy: {
       title: "🔒 100% Privat, Frakoblet-Først & Uavhengig",
@@ -577,6 +591,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "作成者",
       repository: "リポジトリ",
       license: "ライセンス",
+      desktopRecommendation: "最高の体験を得るために、デスクトップアプリの使用をお勧めします。",
+      macosInstallBtn: "インストールガイド",
     },
     privacy: {
       title: "🔒 100% プライベート、ローカル優先、独立稼働",
@@ -662,6 +678,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "만든 이",
       repository: "저장소",
       license: "라이선스",
+      desktopRecommendation: "최상의 경험을 위해 데스크톱 앱을 사용하는 것을 권장합니다.",
+      macosInstallBtn: "설치 가이드",
     },
     privacy: {
       title: "🔒 100% 개인 정보 보호, 로컬 우선 및 독립 실행",
@@ -747,6 +765,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       createdBy: "Создатель",
       repository: "Репозиторий",
       license: "Лицензия",
+      desktopRecommendation: "Для наилучшего удобства рекомендуем использовать приложение для ПК.",
+      macosInstallBtn: "Руководство по установке",
     },
     privacy: {
       title: "🔒 100% Конфиденциально, Локально и Независимо",

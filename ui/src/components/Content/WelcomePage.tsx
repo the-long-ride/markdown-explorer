@@ -281,6 +281,8 @@ const getTipIcon = (index: number) => {
 
 export function WelcomePage() {
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
+  const isDesktopLike = isElectron || isChrome;
   const { state } = useAppState();
   const currentLang = state.settings.language || 'en';
   const wt = getWelcomeTranslations(currentLang);
@@ -350,6 +352,36 @@ export function WelcomePage() {
             <GlobeIcon className="link-icon" />
             <span>https://the-long-ride.github.io/markdown-explorer</span>
           </a>
+          {isElectron && state.hostPlatform === 'macos' && (
+            <a
+              href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="homepage-link"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="link-icon"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+              <span>{wt.hero.macosInstallBtn}</span>
+            </a>
+          )}
+          {!isElectron && (
+            <div className="desktop-recommendation">
+              {wt.hero.desktopRecommendation}
+            </div>
+          )}
         </div>
       </div>
 
@@ -569,11 +601,11 @@ export function WelcomePage() {
                   <td>{wt.shortcutsTable.rows.zoomModal}</td>
                   <td><kbd>{wt.shortcutsTable.rows.zoomModalShortcut}</kbd></td>
                 </tr>
-                {isElectron && (
+                {isDesktopLike && (
                   <>
                     <tr>
                       <td>{wt.shortcutsTable.rows.refresh}</td>
-                      <td><kbd>F5</kbd></td>
+                      <td><kbd>{isElectron ? 'F5' : 'Alt+R'}</kbd></td>
                     </tr>
                     <tr>
                       <td>{wt.shortcutsTable.rows.collapse}</td>
@@ -597,6 +629,10 @@ export function WelcomePage() {
                         <kbd>Alt+S</kbd> then <kbd>Up</kbd>/<kbd>Down</kbd>, <kbd>Enter</kbd>, <kbd>Esc</kbd>
                       </td>
                     </tr>
+                  </>
+                )}
+                {isElectron && (
+                  <>
                     <tr>
                       <td>{wt.shortcutsTable.rows.zoomIn}</td>
                       <td><kbd>Ctrl + =</kbd> (<kbd>Ctrl + +</kbd>) {wt.shortcutsTable.rows.zoomInShortcut}</td>
