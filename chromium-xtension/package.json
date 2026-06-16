@@ -9,8 +9,8 @@
     "package": "npm run build && cd dist && tar -cf ../markdown-explorer-chromium.zip ."
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.5.2",
+    "@vitejs/plugin-react": "^6.0.2",
     "typescript": "~5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^8.0.16"
   }
 }

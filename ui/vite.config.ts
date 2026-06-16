@@ -23,10 +23,10 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-mermaid': ['mermaid'],
-          'vendor-chart': ['chart.js'],
-          'vendor-hljs': ['highlight.js'],
+        manualChunks: (id) => {
+          if (id.includes('mermaid')) return 'vendor-mermaid';
+          if (id.includes('chart.js')) return 'vendor-chart';
+          if (id.includes('highlight.js')) return 'vendor-hljs';
         },
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
