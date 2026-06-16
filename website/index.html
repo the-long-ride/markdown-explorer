@@ -111,7 +111,7 @@
         "description": "Markdown Explorer turns Markdown folders into an interactive, searchable documentation app for VS Code and desktop.",
         "url": "https://the-long-ride.github.io/markdown-explorer/",
         "downloadUrl": "https://github.com/the-long-ride/markdown-explorer/releases/latest",
-        "softwareVersion": "1.5.0",
+        "softwareVersion": "1.5.1",
         "license": "https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE",
         "codeRepository": "https://github.com/the-long-ride/markdown-explorer",
         "screenshot": "https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png",
@@ -641,6 +641,63 @@
 
         <div class="download-grid">
           <article class="download-card">
+            <h3 data-i18n="dlWinTitle">Windows desktop</h3>
+            <p data-i18n="dlWinBody">
+              Download the portable `.exe` from the latest release and run it
+              directly.
+            </p>
+            <a
+              class="button primary release-download"
+              data-platform="windows"
+              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+              rel="noopener"
+              data-i18n="dlWinBtn"
+              >Download Windows</a
+            >
+          </article>
+          <article class="download-card">
+            <h3 data-i18n="dlLinuxTitle">Linux desktop</h3>
+            <p data-i18n="dlLinuxBody">
+              Use `.AppImage` for portable launch, or `.deb` on Debian and
+              Ubuntu-based systems.
+            </p>
+            <div class="card-actions">
+              <a
+                class="button primary release-download"
+                data-platform="linux"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxBtn"
+                >Download Linux</a
+              >
+            </div>
+          </article>
+          <article class="download-card">
+            <h3 data-i18n="dlMacTitle">macOS desktop</h3>
+            <p data-i18n="dlMacBody">
+              Download a `.dmg` for your chip. Use `arm64` for Apple Silicon and
+              `x64` for Intel Macs.
+            </p>
+            <div class="card-actions">
+              <a
+                class="button secondary"
+                href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
+                target="_blank"
+                rel="noopener"
+                data-i18n="macosInstallBtn"
+                >Install Guide</a
+              >
+              <a
+                class="button primary release-download"
+                data-platform="macos"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlMacBtn"
+                >Download macOS</a
+              >
+            </div>
+          </article>
+          <article class="download-card">
             <h3 data-i18n="dlVscodeTitle">VS Code Marketplace</h3>
             <p data-i18n="dlVscodeBody">
               Best choice for VS Code users. Launch the docs viewer directly
@@ -669,49 +726,27 @@
             >
           </article>
           <article class="download-card">
-            <h3 data-i18n="dlWinTitle">Windows desktop</h3>
-            <p data-i18n="dlWinBody">
-              Download the portable `.exe` from the latest release and run it
-              directly.
+            <h3 data-i18n="dlChromiumTitle">Chromium extension</h3>
+            <p data-i18n="dlChromiumBody">
+              Run Markdown Explorer directly in your browser. Install unpacked extension from the latest release.
             </p>
-            <a
-              class="button primary release-download"
-              data-platform="windows"
-              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-              rel="noopener"
-              data-i18n="dlWinBtn"
-              >Download Windows</a
-            >
-          </article>
-          <article class="download-card">
-            <h3 data-i18n="dlMacTitle">macOS desktop</h3>
-            <p data-i18n="dlMacBody">
-              Download a `.dmg` for your chip. Use `arm64` for Apple Silicon and
-              `x64` for Intel Macs.
-            </p>
-            <a
-              class="button primary release-download"
-              data-platform="macos"
-              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-              rel="noopener"
-              data-i18n="dlMacBtn"
-              >Download macOS</a
-            >
-          </article>
-          <article class="download-card">
-            <h3 data-i18n="dlLinuxTitle">Linux desktop</h3>
-            <p data-i18n="dlLinuxBody">
-              Use `.AppImage` for portable launch, or `.deb` on Debian and
-              Ubuntu-based systems.
-            </p>
-            <a
-              class="button primary release-download"
-              data-platform="linux"
-              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-              rel="noopener"
-              data-i18n="dlLinuxBtn"
-              >Download Linux</a
-            >
+            <div class="card-actions">
+              <button
+                type="button"
+                class="button secondary"
+                id="guide-btn"
+                data-i18n="guideBtn"
+                >Install Guide</button
+              >
+              <a
+                class="button primary release-download"
+                data-platform="chromium"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlChromiumBtn"
+                >Download extension</a
+              >
+            </div>
           </article>
           <article class="download-card quiet">
             <h3 data-i18n="dlGhTitle">Latest release page</h3>
@@ -830,8 +865,43 @@
           data-i18n="footerLicense"
           >License</a
         >
-      </nav>
     </footer>
+
+    <!-- Chromium Extension Installation Guide Modal -->
+    <div id="guide-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <header class="modal-header">
+          <h3 data-i18n="modalTitle">Extension Install Guide</h3>
+          <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">&times;</button>
+        </header>
+        <div class="modal-body">
+          <p data-i18n="modalIntro">Follow these steps to load the unpacked extension in any Chromium-based browser (Chrome, Brave, Edge, etc.):</p>
+          <ol>
+            <li>
+              <span data-i18n="modalStep1">Download the extension zip file and extract its contents to a folder.</span>
+            </li>
+            <li>
+              <strong data-i18n="modalStep2Important">Important:</strong>
+              <span data-i18n="modalStep2">Move the extracted folder to a stable, permanent directory (such as your Documents folder). Do not leave it in your Downloads folder or delete it, as moving it later will break the installed extension.</span>
+            </li>
+            <li>
+              <span data-i18n="modalStep3">Open your browser and navigate to the extensions management page:</span>
+              <ul>
+                <li>Chrome: <code>chrome://extensions</code></li>
+                <li>Brave: <code>brave://extensions</code></li>
+                <li>Edge: <code>edge://extensions</code></li>
+              </ul>
+            </li>
+            <li>
+              <span data-i18n="modalStep4">Turn on the <strong>Developer mode</strong> switch (usually found in the top-right corner).</span>
+            </li>
+            <li>
+              <span data-i18n="modalStep5">Click the <strong>Load unpacked</strong> button (usually in the top-left) and select the extracted extension folder.</span>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
 
     <script src="i18n.js" defer></script>
     <script src="script.js" defer></script>

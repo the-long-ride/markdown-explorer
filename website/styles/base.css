@@ -624,6 +624,7 @@ h3 {
 
 .download-card .button {
   margin-top: auto;
+  width: 100%;
 }
 
 .download-card.quiet {
@@ -843,4 +844,152 @@ summary {
 
 .lightbox-modal.active img {
   transform: scale(1);
+}
+
+/* ── Modal & Actions ───────────────────────────────────────── */
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: auto;
+}
+
+.download-card .button {
+  margin-top: 0;
+  width: 100%;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 1rem;
+  animation: modalOverlayFade 200ms ease;
+}
+
+.modal-card {
+  position: relative;
+  width: min(580px, 100%);
+  max-height: min(650px, 85vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: modalFadeIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 850;
+  color: var(--text);
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.modal-body p {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.modal-body ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.modal-body li {
+  line-height: 1.5;
+}
+
+.modal-body code {
+  font-family: monospace;
+  background: rgba(127, 127, 127, 0.18);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.88em;
+  color: var(--text);
+}
+
+.modal-body strong {
+  color: var(--text);
+}
+
+.modal-body ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style-type: disc;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+}
+
+@keyframes modalOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

@@ -92,6 +92,10 @@ window.LANGS = {
     dlLinuxBody:
       "Use `.AppImage` for portable launch, or `.deb` on Debian and Ubuntu-based systems.",
     dlLinuxBtn: "Download Linux",
+    dlChromiumTitle: "Chromium extension",
+    dlChromiumBody:
+      "Run Markdown Explorer directly in your browser. Install unpacked extension from the latest release.",
+    dlChromiumBtn: "Download extension zip",
     dlGhTitle: "Latest release page",
     dlGhBody:
       "Every GitHub Release includes file descriptions so you can pick the right package for your OS.",
@@ -123,6 +127,16 @@ window.LANGS = {
     acrossAllVersions: "across all versions",
     acrossAllDesktop: "across all desktop releases.",
     seeChangelog: "See changelog on GitHub.",
+    guideBtn: "Install Guide",
+    macosInstallBtn: "Install Guide",
+    modalTitle: "Extension Install Guide",
+    modalIntro: "Follow these steps to load the unpacked extension in any Chromium-based browser (Chrome, Brave, Edge, etc.):",
+    modalStep1: "Download the extension zip file and extract its contents to a folder.",
+    modalStep2Important: "Important:",
+    modalStep2: "Move the extracted folder to a stable, permanent directory (such as your Documents folder). Do not leave it in your Downloads folder or delete it, as moving it later will break the installed extension.",
+    modalStep3: "Open your browser and navigate to the extensions management page:",
+    modalStep4: "Turn on the Developer mode switch (usually found in the top-right corner).",
+    modalStep5: "Click the Load unpacked button (usually in the top-left) and select the extracted extension folder.",
   },
   vi: {
     label: "VI",
@@ -219,6 +233,10 @@ window.LANGS = {
     dlLinuxBody:
       "Dùng `.AppImage` để khởi chạy di động hoặc `.deb` trên hệ thống Debian và Ubuntu.",
     dlLinuxBtn: "Tải Linux",
+    dlChromiumTitle: "Tiện ích Chromium",
+    dlChromiumBody:
+      "Chạy Markdown Explorer trực tiếp trong trình duyệt của bạn. Cài đặt tiện ích đã giải nén từ bản phát hành mới nhất.",
+    dlChromiumBtn: "Tải tiện ích zip",
     dlGhTitle: "Trang phát hành mới nhất",
     dlGhBody:
       "Mỗi GitHub Release bao gồm mô tả tệp để bạn có thể chọn gói phù hợp cho hệ điều hành của mình.",
@@ -249,6 +267,16 @@ window.LANGS = {
     acrossAllVersions: "trên tất cả phiên bản",
     acrossAllDesktop: "trên tất cả bản phát hành máy tính.",
     seeChangelog: "Xem changelog trên GitHub.",
+    guideBtn: "Hướng dẫn cài đặt",
+    macosInstallBtn: "Hướng dẫn cài đặt",
+    modalTitle: "Hướng dẫn cài đặt tiện ích",
+    modalIntro: "Làm theo các bước sau để tải tiện ích đã giải nén vào bất kỳ trình duyệt nhân Chromium nào (Chrome, Brave, Edge, v.v.):",
+    modalStep1: "Tải xuống tệp zip của tiện ích và giải nén nội dung vào một thư mục.",
+    modalStep2Important: "Quan trọng:",
+    modalStep2: "Di chuyển thư mục đã giải nén đến một thư mục ổn định, cố định (chẳng hạn như thư mục Documents của bạn). Không để nó trong thư mục Downloads hoặc xóa đi, vì nếu di chuyển sau này sẽ làm hỏng tiện ích đã cài đặt.",
+    modalStep3: "Mở trình duyệt của bạn và điều hướng đến trang quản lý tiện ích mở rộng:",
+    modalStep4: "Bật công tắc Chế độ dành cho nhà phát triển (Developer mode) (thường nằm ở góc trên cùng bên phải).",
+    modalStep5: "Nhấp vào nút Tải tiện ích đã giải nén (Load unpacked) (thường ở góc trên cùng bên trái) và chọn thư mục tiện ích đã giải nén.",
   },
   fr: {
     label: "FR",
@@ -346,6 +374,10 @@ window.LANGS = {
     dlLinuxBody:
       "Utilisez `.AppImage` pour un lancement portable, ou `.deb` sur les systèmes Debian et Unis.",
     dlLinuxBtn: "Télécharger Linux",
+    dlChromiumTitle: "Extension Chromium",
+    dlChromiumBody:
+      "Exécutez Markdown Explorer directement dans votre navigateur. Installez l'extension non compressée depuis la dernière version.",
+    dlChromiumBtn: "Télécharger l'extension zip",
     dlGhTitle: "Dernière page de version",
     dlGhBody:
       "Chaque version GitHub inclut des descriptions de fichiers pour choisir le bon paquet pour votre OS.",
@@ -377,6 +409,16 @@ window.LANGS = {
     acrossAllVersions: "dans toutes les versions",
     acrossAllDesktop: "dans toutes les versions bureau.",
     seeChangelog: "Voir le changelog sur GitHub.",
+    guideBtn: "Guide d'installation",
+    macosInstallBtn: "Guide d'installation",
+    modalTitle: "Guide d'installation de l'extension",
+    modalIntro: "Suivez ces étapes pour charger l'extension non compressée dans n'importe quel navigateur basé sur Chromium (Chrome, Brave, Edge, etc.) :",
+    modalStep1: "Téléchargez le fichier zip de l'extension et extrayez son contenu dans un dossier.",
+    modalStep2Important: "Important :",
+    modalStep2: "Déplacez le dossier extrait vers un répertoire stable et permanent (comme votre dossier Documents). Ne le laissez pas dans votre dossier Téléchargements et ne le supprimez pas, car le déplacer plus tard désactivera l'extension installée.",
+    modalStep3: "Ouvrez votre navigateur et accédez à la page de gestion des extensions :",
+    modalStep4: "Activez le mode développeur (Developer mode) (généralement situé dans le coin supérieur droit).",
+    modalStep5: "Cliquez sur le bouton Charger l'extension non paquetée (Load unpacked) (généralement en haut à gauche) et sélectionnez le dossier de l'extension extrait.",
   },
   es: {
     label: "ES",
@@ -474,6 +516,10 @@ window.LANGS = {
     dlLinuxBody:
       "Usa `.AppImage` para lanzamiento portable, o `.deb` en sistemas Debian y Ubuntu.",
     dlLinuxBtn: "Descargar Linux",
+    dlChromiumTitle: "Extensión Chromium",
+    dlChromiumBody:
+      "Ejecute Markdown Explorer directamente en su navegador. Instale la extensión descomprimida desde la última versión.",
+    dlChromiumBtn: "Descargar extensión zip",
     dlGhTitle: "Última página de lanzamiento",
     dlGhBody:
       "Cada GitHub Release incluye descripciones de archivos para elegir el paquete correcto para tu SO.",
@@ -505,6 +551,16 @@ window.LANGS = {
     acrossAllVersions: "en todas las versiones",
     acrossAllDesktop: "en todas las versiones de escritorio.",
     seeChangelog: "Ver changelog en GitHub.",
+    guideBtn: "Guía de instalación",
+    macosInstallBtn: "Guía de instalación",
+    modalTitle: "Guía de instalación de la extensión",
+    modalIntro: "Siga estos pasos para cargar la extensión descomprimida en cualquier navegador basado en Chromium (Chrome, Brave, Edge, etc.):",
+    modalStep1: "Descargue el archivo zip de la extensión y extraiga su contenido en una carpeta.",
+    modalStep2Important: "Importante:",
+    modalStep2: "Mueva la carpeta extraída a un directorio estable y permanente (como su carpeta de Documentos). No la deje en su carpeta de Descargas ni la elimine, ya que moverla más tarde dañará la extensión instalada.",
+    modalStep3: "Abra su navegador y navegue a la página de administración de extensiones:",
+    modalStep4: "Active el interruptor de Modo de desarrollador (Developer mode) (que generalmente se encuentra en la esquina superior derecha).",
+    modalStep5: "Haga clic en el botón Cargar descomprimida (Load unpacked) (generalmente en la esquina superior izquierda) y seleccione la carpeta de la extensión extraída.",
   },
   zh: {
     label: "中文",
@@ -593,6 +649,10 @@ window.LANGS = {
     dlLinuxBody:
       "使用 `.AppImage` 进行便携启动，或在 Debian 和 Ubuntu 系统上使用 `.deb`。",
     dlLinuxBtn: "下载 Linux 版",
+    dlChromiumTitle: "Chromium 扩展",
+    dlChromiumBody:
+      "直接在浏览器中运行 Markdown Explorer。从最新版本中安装未打包的扩展。",
+    dlChromiumBtn: "下载扩展 zip",
     dlGhTitle: "最新发布页面",
     dlGhBody:
       "每个 GitHub Release 都包含文件描述，以便您为您的操作系统选择正确的软件包。",
@@ -621,6 +681,16 @@ window.LANGS = {
     acrossAllVersions: "跨所有版本",
     acrossAllDesktop: "跨所有桌面版本。",
     seeChangelog: "在 GitHub 上查看更新日志。",
+    guideBtn: "安装指南",
+    macosInstallBtn: "安装指南",
+    modalTitle: "扩展程序安装指南",
+    modalIntro: "请按照以下步骤在任何基于 Chromium 的浏览器（Chrome、Brave、Edge 等）中加载已解压的扩展程序：",
+    modalStep1: "下载扩展程序 zip 文件并将内容解压到一个文件夹中。",
+    modalStep2Important: "重要提示：",
+    modalStep2: "将解压后的文件夹移动到一个稳定且永久的目录（例如您的“文档”文件夹）。请勿将其留在“下载”文件夹中或删除，因为以后移动它会导致已安装的扩展程序失效。",
+    modalStep3: "打开浏览器并导航至扩展程序管理页面：",
+    modalStep4: "开启“开发者模式 (Developer mode)”开关（通常位于右上角）。",
+    modalStep5: "点击“加载已解压的扩展程序 (Load unpacked)”按钮（通常位于左上角），然后选择解压后的扩展程序文件夹。",
   },
   no: {
     label: "NO",
@@ -716,6 +786,10 @@ window.LANGS = {
     dlLinuxBody:
       "Bruk `.AppImage` for bærbar oppstart, eller `.deb` på Debian og Ubuntu-baserte systemer.",
     dlLinuxBtn: "Last ned Linux",
+    dlChromiumTitle: "Chromium-utvidelse",
+    dlChromiumBody:
+      "Kjør Markdown Explorer direkte i nettleseren din. Installer utpakket utvidelse fra siste utgivelse.",
+    dlChromiumBtn: "Last ned utvidelse zip",
     dlGhTitle: "Siste utgivelsesside",
     dlGhBody:
       "Hver GitHub-utgivelse inkluderer filbeskrivelser slik at du kan velge riktig pakke for ditt OS.",
@@ -747,6 +821,16 @@ window.LANGS = {
     acrossAllVersions: "på tvers av alle versjoner",
     acrossAllDesktop: "på tvers av alle skrivebordsutgivelser.",
     seeChangelog: "Se endringslogg på GitHub.",
+    guideBtn: "Installeringsveiledning",
+    macosInstallBtn: "Installeringsveiledning",
+    modalTitle: "Installeringsveiledning for utvidelse",
+    modalIntro: "Følg disse trinnene for å laste inn den utpakkede utvidelsen i en hvilken som helst Chromium-basert nettleser (Chrome, Brave, Edge, osv.):",
+    modalStep1: "Last ned zip-filen for utvidelsen og pakk ut innholdet i en mappe.",
+    modalStep2Important: "Viktig:",
+    modalStep2: "Flytt den utpakkede mappen til en stabil, permanent katalog (som Dokumenter-mappen din). Ikke la den ligge i Nedlastinger-mappen eller slett den, da flytting senere vil ødelegge den installerte utvidelsen.",
+    modalStep3: "Åpne nettleseren din og naviger til siden for administrasjon av utvivelser:",
+    modalStep4: "Slå på Utviklermodus (Developer mode) (vanligvis øverst til høyre).",
+    modalStep5: "Klikk på Last inn utpakket-knappen (Load unpacked) (vanligvis øverst til venstre) og velg den utpakkede utvidelsesmappen.",
   },
   ja: {
     label: "JA",
@@ -843,6 +927,10 @@ window.LANGS = {
     dlLinuxBody:
       "ポータブル起動には `.AppImage`、Debian および Ubuntu ベースのシステムには `.deb` を使用します。",
     dlLinuxBtn: "Linux をダウンロード",
+    dlChromiumTitle: "Chromium 拡張機能",
+    dlChromiumBody:
+      "ブラウザで直接 Markdown Explorer を実行します。最新リリースから展開済みの拡張機能をインストールします。",
+    dlChromiumBtn: "拡張機能 zip をダウンロード",
     dlGhTitle: "最新リリースページ",
     dlGhBody:
       "各 GitHub release にはファイルの説明が含まれており、OS に適したパッケージを選択できます。",
@@ -874,6 +962,16 @@ window.LANGS = {
     acrossAllVersions: "全バージョンを通じて",
     acrossAllDesktop: "全デスクトップリリースを通じて。",
     seeChangelog: "GitHub で変更履歴を見る。",
+    guideBtn: "インストールガイド",
+    macosInstallBtn: "インストールガイド",
+    modalTitle: "拡張機能のインストールガイド",
+    modalIntro: "Chromiumベースのブラウザ（Chrome、Brave、Edgeなど）に展開済みの拡張機能を読み込むには、次の手順に従ってください。",
+    modalStep1: "拡張機能のzipファイルをダウンロードし、内容をフォルダに展開します。",
+    modalStep2Important: "重要:",
+    modalStep2: "展開したフォルダを安定した恒久的なディレクトリ（「ドキュメント」フォルダなど）に移動します。「ダウンロード」フォルダに入れたままにしたり、削除したりしないでください。後で移動するとインストールされた拡張機能が壊れます。",
+    modalStep3: "ブラウザを開いて、拡張機能管理ページに移動します。",
+    modalStep4: "「デベロッパー モード (Developer mode)」スイッチをオンにします（通常は右上にあります）。",
+    modalStep5: "「パッケージ化されていない拡張機能を読み込む (Load unpacked)」ボタンをクリックし（通常は左上）、展開した拡張機能フォルダを選択します。",
   },
   ko: {
     label: "KO",
@@ -968,6 +1066,10 @@ window.LANGS = {
     dlLinuxBody:
       "이식 가능한 실행에는 `.AppImage`를, Debian 및 Ubuntu 기반 시스템에는 `.deb`를 사용합니다.",
     dlLinuxBtn: "Linux 다운로드",
+    dlChromiumTitle: "Chromium 확장 프로그램",
+    dlChromiumBody:
+      "브라우저에서 직접 Markdown Explorer를 실행합니다. 최신 릴리스에서 압축 해제된 확장 프로그램을 설치합니다.",
+    dlChromiumBtn: "확장 프로그램 zip 다운로드",
     dlGhTitle: "최신 릴리스 페이지",
     dlGhBody:
       "각 GitHub 릴리스에는 파일 설명이 포함되어 있어 OS에 맞는 패키지를 선택할 수 있습니다.",
@@ -999,6 +1101,16 @@ window.LANGS = {
     acrossAllVersions: "모든 버전에 걸쳐",
     acrossAllDesktop: "모든 데스크톱 릴리스에 걸쳐.",
     seeChangelog: "GitHub에서 변경 로그 보기.",
+    guideBtn: "설치 가이드",
+    macosInstallBtn: "설치 가이드",
+    modalTitle: "확장 프로그램 설치 가이드",
+    modalIntro: "Chromium 기반 브라우저(Chrome, Brave, Edge 등)에 압축 해제된 확장 프로그램을 로드하려면 다음 단계를 따르세요.",
+    modalStep1: "확장 프로그램 zip 파일을 다운로드하고 콘텐츠를 폴더에 압축 해제합니다.",
+    modalStep2Important: "중요:",
+    modalStep2: "압축을 푼 폴더를 안정적이고 영구적인 디렉토리(예: 문서 폴더)로 이동하십시오. 다운로드 폴더에 그대로 두거나 삭제하지 마십시오. 나중에 폴더를 이동하면 설치된 확장 프로그램이 작동하지 않습니다.",
+    modalStep3: "브라우저를 열고 확장 프로그램 관리 페이지로 이동합니다:",
+    modalStep4: "개발자 모드 (Developer mode) 토글을 켭니다(보통 우측 상단에 위치).",
+    modalStep5: "압축해제된 확장 프로그램을 로드합니다 (Load unpacked) 버튼을 클릭하고(보통 좌측 상단) 압축을 푼 확장 프로그램 폴더를 선택합니다.",
   },
   ru: {
     label: "RU",
@@ -1095,6 +1207,10 @@ window.LANGS = {
     dlLinuxBody:
       "Используйте `.AppImage` для портативного запуска или `.deb` на Debian и Ubuntu-системах.",
     dlLinuxBtn: "Скачать Linux",
+    dlChromiumTitle: "Расширение Chromium",
+    dlChromiumBody:
+      "Запускайте Markdown Explorer прямо в браузере. Установите распакованное расширение из последнего выпуска.",
+    dlChromiumBtn: "Скачать zip расширения",
     dlGhTitle: "Страница последнего релиза",
     dlGhBody:
       "Каждый GitHub Release содержит описания файлов, чтобы вы могли выбрать правильный пакет для своей ОС.",
@@ -1126,5 +1242,15 @@ window.LANGS = {
     acrossAllVersions: "по всем версиям",
     acrossAllDesktop: "по всем релизам рабочего стола.",
     seeChangelog: "Смотрите журнал изменений на GitHub.",
+    guideBtn: "Руководство по установке",
+    macosInstallBtn: "Руководство по установке",
+    modalTitle: "Руководство по установке расширения",
+    modalIntro: "Выполните следующие шаги, чтобы загрузить распакованное расширение в любом браузере на базе Chromium (Chrome, Brave, Edge и т. д.):",
+    modalStep1: "Скачайте zip-архив расширения и распакуйте его содержимое в папку.",
+    modalStep2Important: "Важно:",
+    modalStep2: "Переместите распакованную папку в стабильный, постоянный каталог (например, в папку «Документы»). Не оставляйте её в папке «Загрузки» и не удаляйте, так как перемещение в дальнейшем нарушит работу установленного расширения.",
+    modalStep3: "Откройте браузер и перейдите на страницу управления расширениями:",
+    modalStep4: "Включите режим разработчика (Developer mode) (обычно в правом верхнем углу).",
+    modalStep5: "Нажмите кнопку «Загрузить распакованное расширение» (Load unpacked) (обычно в левом верхнем углу) и выберите распакованную папку расширения.",
   },
 };

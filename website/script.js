@@ -101,14 +101,16 @@
 
   const assetMatchers = {
     windows: (name) => name.endsWith(".exe"),
-    macos: (name) => name.endsWith(".dmg") || name.endsWith(".zip"),
+    macos: (name) => name.endsWith(".dmg") || (name.endsWith(".zip") && !name.includes("chromium") && !name.includes("chrome")),
     linux: (name) => name.endsWith(".appimage") || name.endsWith(".deb"),
+    chromium: (name) => name.endsWith("-chromium.zip") || name.endsWith("-chrome.zip") || (name.includes("chromium") && name.endsWith(".zip"))
   };
 
   const preferredScore = {
     windows: (name) => (name.endsWith(".exe") ? 10 : 0),
     macos: (name) => (name.endsWith(".dmg") ? 10 : 5),
     linux: (name) => (name.endsWith(".appimage") ? 10 : 5),
+    chromium: (name) => (name.includes("chromium") ? 10 : 5)
   };
 
   const pickAsset = (assets, platform) => {
@@ -303,4 +305,37 @@
       document.addEventListener("keydown", handleEscape);
     });
   });
+  /* ── Install Guide Modal logic ────────────────────────────────── */
+  const guideBtn = document.getElementById("guide-btn");
+  const guideModal = document.getElementById("guide-modal");
+  const modalCloseBtn = document.getElementById("modal-close-btn");
+
+  if (guideBtn && guideModal && modalCloseBtn) {
+    const openModal = () => {
+      guideModal.style.display = "flex";
+      document.body.style.overflow = "hidden"; // Prevent background scroll
+    };
+
+    const closeModal = () => {
+      guideModal.style.display = "none";
+      document.body.style.overflow = "";
+    };
+
+    guideBtn.addEventListener("click", openModal);
+    modalCloseBtn.addEventListener("click", closeModal);
+
+    // Close on clicking the backdrop overlay
+    guideModal.addEventListener("click", (e) => {
+      if (e.target === guideModal) {
+        closeModal();
+      }
+    });
+
+    // Close on Escape key press
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && guideModal.style.display === "flex") {
+        closeModal();
+      }
+    });
+  }
 })();
