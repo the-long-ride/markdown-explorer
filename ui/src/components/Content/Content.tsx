@@ -204,6 +204,183 @@ export function Content({
     // Image / mermaid click → media modal
     const handleClick = (e: Event) => {
       const target = e.target as HTMLElement;
+
+      // Chromium Extension Manifest V3 CSP Event Delegation for inline handlers
+      const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
+      if (isChrome) {
+        // 1. Copy Section button
+        const copySectionBtn = target.closest(".mdn-section-copy-btn") as HTMLElement | null;
+        if (copySectionBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const win = window as any;
+          if (win.UI?.copySection) {
+            win.UI.copySection(copySectionBtn, e);
+          }
+          return;
+        }
+
+        // 2. Copy Code button
+        const copyCodeBtn = target.closest(".mdn-copy-btn") as HTMLElement | null;
+        if (copyCodeBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const win = window as any;
+          if (win.UI?.copyCode) {
+            win.UI.copyCode(copyCodeBtn);
+          }
+          return;
+        }
+
+        // 3. Section header toggle (Expand/Collapse)
+        const sectionHeader = target.closest(".mdn-section-header") as HTMLElement | null;
+        if (sectionHeader) {
+          if (target.closest(".mdn-anchor") || target.closest(".mdn-section-copy-btn")) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          const win = window as any;
+          if (win.UI?.toggleSection) {
+            win.UI.toggleSection(sectionHeader);
+          }
+          return;
+        }
+
+        // 4. Code block HTML preview toggle
+        const togglePreviewBtn = target.closest(".mdn-toggle-preview-btn") as HTMLElement | null;
+        if (togglePreviewBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const win = window as any;
+          if (win.UI?.toggleHtmlMode) {
+            win.UI.toggleHtmlMode(togglePreviewBtn);
+          }
+          return;
+        }
+
+        // 5. Code block collapse toggle button (Show More / Show Less)
+        const codeblockToggleBtn = target.closest(".mdn-codeblock-toggle-btn") as HTMLElement | null;
+        if (codeblockToggleBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const win = window as any;
+          if (win.UI?.toggleCodeCollapse) {
+            win.UI.toggleCodeCollapse(codeblockToggleBtn);
+          }
+          return;
+        }
+
+        // 6. Table Sort / Filter menu trigger click on TH or filter button
+        const th = target.closest(".mdn-th") as HTMLElement | null;
+        if (th) {
+          const filterBtn = target.closest(".mdn-table-filter-btn") as HTMLElement | null;
+          if (filterBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const table = th.closest("table") as HTMLTableElement | null;
+            const colIdx = th.dataset.col ? parseInt(th.dataset.col, 10) : null;
+            const win = window as any;
+            if (table && colIdx !== null && win.Table?.showFilterMenu) {
+              win.Table.showFilterMenu(table.id, colIdx, filterBtn);
+            }
+            return;
+          }
+
+          e.preventDefault();
+          e.stopPropagation();
+          const table = th.closest("table") as HTMLTableElement | null;
+          const colIdx = th.dataset.col ? parseInt(th.dataset.col, 10) : null;
+          const win = window as any;
+          if (table && colIdx !== null && win.Table?.sort) {
+            win.Table.sort(table.id, colIdx);
+          }
+          return;
+        }
+
+        // 7. Table collapse toggle button
+        const tableToggleBtn = target.closest(".mdn-table-toggle-btn") as HTMLElement | null;
+        if (tableToggleBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const tableId = tableToggleBtn.id.replace("-toggle-btn", "");
+          const win = window as any;
+          if (win.Table?.toggleCollapse) {
+            win.Table.toggleCollapse(tableId);
+          }
+          return;
+        }
+
+        // 8. Table wrap toggle button
+        const tableWrapToggle = target.closest(".mdn-table-wrap-toggle") as HTMLElement | null;
+        if (tableWrapToggle) {
+          e.preventDefault();
+          e.stopPropagation();
+          const tableId = tableWrapToggle.id.replace("-wrap-toggle", "");
+          const win = window as any;
+          if (win.Table?.toggleWrap) {
+            win.Table.toggleWrap(tableId);
+          }
+          return;
+        }
+
+        // 9. Table view switcher dropdown triggers
+        const selectBtn = target.closest(".mdn-table-view-select") as HTMLElement | null;
+        if (selectBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const dropdownEl = selectBtn.closest(".mdn-table-view-dropdown") as HTMLElement | null;
+          if (dropdownEl && dropdownEl.id) {
+            const tableId = dropdownEl.id.replace("-view-dropdown", "");
+            const win = window as any;
+            if (win.Table?.toggleViewDropdown) {
+              win.Table.toggleViewDropdown(tableId, e);
+            }
+          }
+          return;
+        }
+
+        // 9b. Table view switcher option clicks
+        const optionBtn = target.closest(".mdn-table-view-menu__option") as HTMLElement | null;
+        if (optionBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const dropdownEl = optionBtn.closest(".mdn-table-view-dropdown") as HTMLElement | null;
+          const val = optionBtn.getAttribute("data-value");
+          if (dropdownEl && dropdownEl.id && val) {
+            const tableId = dropdownEl.id.replace("-view-dropdown", "");
+            const win = window as any;
+            if (win.Table?.switchView) {
+              win.Table.switchView(tableId, val);
+            }
+            if (win.Table?.closeViewDropdown) {
+              win.Table.closeViewDropdown(tableId);
+            }
+          }
+          return;
+        }
+
+        // 10. Internal document link clicks
+        const internalLink = target.closest(".mdn-link--internal") as HTMLElement | null;
+        if (internalLink) {
+          e.preventDefault();
+          e.stopPropagation();
+          const onclickAttr = internalLink.getAttribute("onclick") || "";
+          const match = onclickAttr.match(/Nav\.go\('([^']+)'\)/);
+          if (match) {
+            const path = match[1];
+            navigate(path);
+          }
+          return;
+        }
+
+        // 11. Anchor hashtag copy-link clicks
+        const anchorLink = target.closest(".mdn-anchor") as HTMLElement | null;
+        if (anchorLink) {
+          e.stopPropagation();
+          // let normal click event navigate/focus the hash tag
+        }
+      }
       const img = target.closest(".mdn-body img") as HTMLElement | null;
       if (img) {
         onImageClick(img);

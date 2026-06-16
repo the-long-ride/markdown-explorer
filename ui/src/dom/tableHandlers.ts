@@ -347,19 +347,40 @@ export function registerTableHandlers(win: any) {
         const switcher = document.getElementById(tableId + '-switcher');
         if (switcher) {
           // Always re-populate switcher (clear first to handle re-renders)
+          const currentView = state.currentView || 'table';
+          const formattedLabels: Record<string, string> = {
+            table: 'Table',
+            bar: 'Bar Chart',
+            line: 'Line Chart',
+            pie: 'Pie Chart'
+          };
+          const activeLabel = formattedLabels[currentView] || 'Table';
+
           switcher.innerHTML = `
-            <button id="${tableId}-view-table" class="is-active" onclick="Table.switchView('${tableId}', 'table')" title="View Table">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Table
-            </button>
-            <button id="${tableId}-view-bar" onclick="Table.switchView('${tableId}', 'bar')" title="Bar Chart">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Bar
-            </button>
-            <button id="${tableId}-view-line" onclick="Table.switchView('${tableId}', 'line')" title="Line Chart">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="m18.7 8-5.1 5.2-2.8-2.7L7 14.3"/></svg> Line
-            </button>
-            <button id="${tableId}-view-pie" onclick="Table.switchView('${tableId}', 'pie')" title="Pie Chart">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg> Pie
-            </button>
+            <div class="mdn-table-view-dropdown" id="${tableId}-view-dropdown">
+              <button type="button" class="mdn-table-view-select" aria-haspopup="listbox" aria-expanded="false">
+                <span class="mdn-table-view-select__label">${activeLabel}</span>
+                <span class="mdn-table-view-select__chevron" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </span>
+              </button>
+              <div class="mdn-table-view-menu" role="listbox" aria-label="Table view type" hidden>
+                <button type="button" role="option" data-value="table" aria-selected="${currentView === 'table' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'table' ? ' is-selected' : ''}">
+                  <span class="mdn-table-view-menu__label">Table</span>
+                </button>
+                <button type="button" role="option" data-value="bar" aria-selected="${currentView === 'bar' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'bar' ? ' is-selected' : ''}">
+                  <span class="mdn-table-view-menu__label">Bar Chart</span>
+                </button>
+                <button type="button" role="option" data-value="line" aria-selected="${currentView === 'line' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'line' ? ' is-selected' : ''}">
+                  <span class="mdn-table-view-menu__label">Line Chart</span>
+                </button>
+                <button type="button" role="option" data-value="pie" aria-selected="${currentView === 'pie' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'pie' ? ' is-selected' : ''}">
+                  <span class="mdn-table-view-menu__label">Pie Chart</span>
+                </button>
+              </div>
+            </div>
           `;
         }
       }
@@ -372,10 +393,28 @@ export function registerTableHandlers(win: any) {
     const state = win.Table.initState(tableId);
     state.currentView = view;
 
-    const switcher = document.getElementById(tableId + '-switcher');
-    if (switcher) {
-      switcher.querySelectorAll('button').forEach(btn => {
-        btn.classList.toggle('is-active', btn.id === `${tableId}-view-${view}`);
+    const dropdown = document.getElementById(tableId + '-view-dropdown');
+    if (dropdown) {
+      const labelEl = dropdown.querySelector('.mdn-table-view-select__label');
+      if (labelEl) {
+        const formattedLabels: Record<string, string> = {
+          table: 'Table',
+          bar: 'Bar Chart',
+          line: 'Line Chart',
+          pie: 'Pie Chart'
+        };
+        labelEl.textContent = formattedLabels[view] || view;
+      }
+      const options = dropdown.querySelectorAll('.mdn-table-view-menu__option');
+      options.forEach(opt => {
+        const optVal = opt.getAttribute('data-value');
+        if (optVal === view) {
+          opt.classList.add('is-selected');
+          opt.setAttribute('aria-selected', 'true');
+        } else {
+          opt.classList.remove('is-selected');
+          opt.setAttribute('aria-selected', 'false');
+        }
       });
     }
     syncWrapState(tableId, state);
@@ -397,6 +436,50 @@ export function registerTableHandlers(win: any) {
       if (chartContainer) chartContainer.style.display = 'block';
       win.Table.renderChart(tableId, view);
     }
+  };
+
+  win.Table.toggleViewDropdown = (tableId: string, event: Event) => {
+    event.stopPropagation();
+    const dropdown = document.getElementById(tableId + '-view-dropdown');
+    if (!dropdown) return;
+    const button = dropdown.querySelector('.mdn-table-view-select') as HTMLButtonElement | null;
+    const menu = dropdown.querySelector('.mdn-table-view-menu') as HTMLDivElement | null;
+    if (!button || !menu) return;
+
+    const isOpen = dropdown.classList.contains('is-open');
+    if (isOpen) {
+      win.Table.closeViewDropdown(tableId);
+    } else {
+      // Close all other view dropdowns first
+      document.querySelectorAll('.mdn-table-view-dropdown.is-open').forEach((other) => {
+        const otherId = other.id.replace('-view-dropdown', '');
+        win.Table.closeViewDropdown(otherId);
+      });
+
+      dropdown.classList.add('is-open');
+      button.setAttribute('aria-expanded', 'true');
+      menu.removeAttribute('hidden');
+
+      const outsideClickListener = (e: MouseEvent) => {
+        if (!dropdown.contains(e.target as Node)) {
+          win.Table.closeViewDropdown(tableId);
+          document.removeEventListener('click', outsideClickListener);
+        }
+      };
+      setTimeout(() => {
+        document.addEventListener('click', outsideClickListener);
+      }, 0);
+    }
+  };
+
+  win.Table.closeViewDropdown = (tableId: string) => {
+    const dropdown = document.getElementById(tableId + '-view-dropdown');
+    if (!dropdown) return;
+    const button = dropdown.querySelector('.mdn-table-view-select') as HTMLButtonElement | null;
+    const menu = dropdown.querySelector('.mdn-table-view-menu') as HTMLDivElement | null;
+    if (button) button.setAttribute('aria-expanded', 'false');
+    if (menu) menu.setAttribute('hidden', '');
+    dropdown.classList.remove('is-open');
   };
 
   win.Table.getChartColors = (count: number) => {
