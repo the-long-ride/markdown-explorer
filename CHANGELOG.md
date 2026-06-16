@@ -4,6 +4,19 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.1] — 2026-06-16
+
+### Added Features & Enhancements
+- **Chromium Extension Variant**: Introduced a new variant of Markdown Explorer as a standalone Chromium Browser Extension, allowing users to run it directly inside Chrome, Brave, Edge, and other Chromium browsers with local file access.
+- **Enhanced Chart View**: Merged the separate chart view switcher buttons into a single custom dropdown selection menu that matches the pet theme dropdown design and fits compactly next to the Wrap button.
+- **Parallel Release Pipeline**: Configured a new parallel build process in the GitHub Actions workflow (`release.yml`) using Node 24 to package and release the Chromium extension.
+- **K-Ink Pet Theme Polish**: Restructured pet theme CSS styles to restrict dark-mode overrides in the K-Ink theme, restoring proper high-contrast text rendering on light backgrounds when using light or auto-light modes.
+
+### Fixed
+- **Settings Translation**: Localized the Document Conversion preview setting title and description in the Settings modal for all supported languages.
+
+---
+
 ## [1.5.0] — 2026-06-11
 
 ### Added Features & Enhancements

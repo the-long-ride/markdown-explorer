@@ -4,6 +4,25 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.1] — 2026-06-16
+
+### Added Features & Enhancements
+- **Chromium Extension Variant**: Introduced a new variant of Markdown Explorer as a standalone Chromium Browser Extension, allowing users to run it directly inside Chrome, Brave, Edge, and other Chromium browsers with local file access.
+- **Enhanced Chart View**: Merged the separate chart view switcher buttons into a single custom dropdown selection menu that matches the pet theme dropdown design and fits compactly next to the Wrap button.
+- **macOS Install Guide Link**: Added an installation and Gatekeeper bypass guide button for the macOS desktop app, available on both the landing website and inside the desktop app interface (on the welcome and workspace selection screens), using the GitHub content guidelines link.
+- **Parallel Release Pipeline**: Configured a new parallel build process in the GitHub Actions workflow (`release.yml`) using Node 24 to package and release the Chromium extension.
+- **K-Ink Pet Theme Polish**: Restructured pet theme CSS styles to restrict dark-mode overrides in the K-Ink theme, restoring proper high-contrast text rendering on light backgrounds when using light or auto-light modes.
+
+### Changed & Renamed
+- **Chrome to Chromium Transition**: Renamed all code, comment, build script, and documentation references from "Chrome Extension" to "Chromium Extension" for platform accuracy.
+
+### Fixed
+- **Chromium Extension Media Loading**: Fixed local and secure external media loading/rendering in the Chromium extension and normalized Windows backslashes in relative image/video paths.
+- **Chromium Guide Translation Fallbacks**: Added fallback English labels `(Developer mode)` and `(Load unpacked)` to all non-English Chromium extension installation guide translations and resolved a Cyrillic typo in the Korean translation.
+- **Settings Translation**: Localized the Document Conversion preview setting title and description in the Settings modal for all supported languages.
+
+---
+
 ## [1.5.0] — 2026-06-11
 
 ### Added Features & Enhancements

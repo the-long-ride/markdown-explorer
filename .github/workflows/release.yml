@@ -94,8 +94,7 @@ jobs:
           path: |
             desktop/dist/*.deb
             desktop/dist/*.AppImage
-
-      - name: Upload Desktop Artifact (macOS)
+      - name: Upload Desktop Artifact (macOS)
         if: matrix.platform == 'mac'
         uses: actions/upload-artifact@v7
         with:
@@ -104,9 +103,42 @@ jobs:
             desktop/dist/*.dmg
             desktop/dist/*.zip
 
+  build-chromium-extension:
+    name: Build Chromium Extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Chromium Extension
+        run: npm run build:chromium
+
+      - name: Create Zip File
+        run: |
+          cd chromium-xtension/dist
+          zip -r ../markdown-explorer-chromium.zip .
+
+      - name: Upload Chromium Extension Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chromium-extension
+          path: chromium-xtension/markdown-explorer-chromium.zip
+
   publish-release:
     name: Publish Extension and GitHub Release
-    needs: [build-vscode, build-desktop]
+    needs: [build-vscode, build-desktop, build-chromium-extension]
     runs-on: ubuntu-latest
     steps:
       - name: Download VSIX Artifact
@@ -131,6 +163,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: desktop-app-macos
+          path: ./release-artifacts
+
+      - name: Download Chromium Extension Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chromium-extension
           path: ./release-artifacts
 
       - name: Verify Marketplace Tokens
@@ -197,6 +235,7 @@ jobs:
             - `*.deb`: Linux installer for Debian, Ubuntu, and compatible distributions.
             - `*.dmg`: macOS desktop installer. Choose `arm64` for Apple Silicon Macs and `x64` for Intel Macs.
             - `*.zip`: macOS archive build. Choose `arm64` for Apple Silicon Macs and `x64` for Intel Macs.
+            - `markdown-explorer-chromium.zip`: Unpacked Chromium extension. Unzip the file, go to your browser's extensions page (`chrome://extensions`), enable "Developer mode", click "Load unpacked", and select the unzipped directory.
 
             Other install links:
 
