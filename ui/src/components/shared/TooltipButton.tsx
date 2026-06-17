@@ -7,7 +7,7 @@ import type { ReactNode, ButtonHTMLAttributes } from 'react';
 interface TooltipButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
   tooltipPos?: 'above' | 'below';
-  tooltipAlign?: 'center' | 'right';
+  tooltipAlign?: 'center' | 'left' | 'right';
   icon?: ReactNode;
   label?: string;
   onlyIcon?: boolean;

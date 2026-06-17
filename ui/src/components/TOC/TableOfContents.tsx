@@ -5,7 +5,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import type { TocEntry } from '../../types';
-import { ChevronUpIcon } from '../shared/icons';
+import { ChevronUpIcon, DoubleChevronRightIcon } from '../shared/icons';
+import { TooltipButton } from '../shared/TooltipButton';
 import { getTranslations } from '../../contexts/translations';
 
 interface TableOfContentsProps {
@@ -69,7 +70,7 @@ function useActiveTocId(toc: readonly TocEntry[], renderVersion: number) {
 }
 
 export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
-  const { state } = useAppState();
+  const { state, toggleToc } = useAppState();
   const [compactOpen, setCompactOpen] = useState(false);
   const activeId = useActiveTocId(state.toc, state.renderVersion);
   const currentLang = state.settings.language || 'en';
@@ -155,11 +156,22 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
   }
 
   return (
-    <aside className="toc-panel" id="tocPanel" aria-label="Table of contents">
+    <aside className={`toc-panel${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocPanel" aria-label="Table of contents">
       <div className="toc-panel__header">
-        <div className="toc-panel__title-row">
-          <div className="toc-panel__title">{t.toc.onThisPage}</div>
-          <span className="toc-panel__count">{state.toc.length}</span>
+        <div className="toc-panel__title-row" style={{ paddingLeft: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <div className="toc-panel__title">{t.toc.onThisPage}</div>
+            <span className="toc-panel__count">{state.toc.length}</span>
+          </div>
+          <TooltipButton
+            type="button"
+            className="toc-panel__close-btn"
+            onClick={toggleToc}
+            tooltip={t.actions.toggleToc}
+            tooltipPos="below"
+            tooltipAlign="left"
+            icon={<DoubleChevronRightIcon size={12} />}
+          />
         </div>
         <div className="toc-panel__current" title={activeEntry?.text}>
           {activeEntry?.text ?? t.toc.sections}
