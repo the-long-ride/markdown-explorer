@@ -55,6 +55,11 @@ function formatCurrentVersion(version: string) {
   return match ? `v${match[1]}.${match[2]}.${match[3]}` : "";
 }
 
+// Shortcuts that are reserved by the browser/OS and cannot be registered.
+const BANNED_SHORTCUTS: Record<string, string> = {
+  "Ctrl+Space": "Ctrl+Space is reserved by Chromium for input focus and cannot be used as a shortcut.",
+};
+
 export function SettingsModal({
   isOpen,
   onClose,
@@ -142,6 +147,14 @@ export function SettingsModal({
 
     parts.push(keyName);
     const shortcutStr = parts.join("+");
+
+    // Reject banned shortcuts — rollback and notify
+    if (BANNED_SHORTCUTS[shortcutStr]) {
+      setSettingsDataStatus(`⚠️ ${BANNED_SHORTCUTS[shortcutStr]}`);
+      setRecordingAction(null);
+      (e.target as HTMLInputElement).blur();
+      return;
+    }
 
     const nextBindings = {
       ...state.settings.keybindings,

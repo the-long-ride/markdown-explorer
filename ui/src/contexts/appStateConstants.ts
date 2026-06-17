@@ -18,7 +18,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   sidebarCursorMode: 'Alt+S',
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
-  locateFile: 'Ctrl+Space',
+  locateFile: 'Ctrl+Q',
 };
 
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
