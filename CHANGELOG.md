@@ -4,6 +4,26 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.2] — 2026-06-17
+
+### Added Features & Enhancements
+- **Collapsible TOC Panel**: Added a collapse/expand button to the Table of Contents panel so users can hide it entirely and reclaim horizontal reading space. The collapsed state is persisted across sessions via `localStorage` and can also be toggled with a configurable keyboard shortcut. A floating reopen button appears at the content edge when the panel is hidden; on narrow viewports, the compact TOC bar gains a matching toggle button.
+- **Locate Current File in Sidebar**: Added a crosshair button in the sidebar header that scrolls the file tree to the currently open file and highlights it. Parent folders expand automatically if the file is nested inside a collapsed directory. The action is also available as a configurable keyboard shortcut in Settings → Keyboard Shortcuts.
+- **New Icons**: Added `LocateIcon` (crosshair), `TocIcon`, `DoubleChevronLeftIcon`, and `DoubleChevronRightIcon` to the shared icon set.
+- **Tooltip Left-Alignment**: Extended `TooltipButton` and the tooltip CSS with a `left` alignment option to prevent tooltip clipping near the right edge of the UI.
+- **Shortcuts Table Driven by Action Registry**: The shortcuts reference table in the Welcome page is now generated from the same `ACTIONS_LIST` used by the Settings keyboard customizer, so newly registered actions appear automatically without manual table updates.
+- **toggleToc & locateFile Actions**: Registered two new customizable keyboard actions (`toggleToc`, `locateFile`) across the action registry, keybindings, and all 9 supported UI languages.
+
+### Changed
+- **Welcome Page Recent Feature Guide**: Refreshed the "What is new" guide to cover changes from v1.5.0 onwards. Previous `Current` badge entries are now stamped with their release version (`v1.5.0`, `v1.5.1`), and two new `v1.5.2` items document the collapsible TOC and Locate File features.
+- **Body Min-Size Tokens**: Added `min-width: 460px` and `min-height: 360px` to the app shell body to prevent layout collapse at very small viewport sizes.
+- **Pet Theme Sidebar Border**: Scoped the sidebar resize handle background and border rule to pet themes only, restoring the correct separator style.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, and VS Code package metadata to `1.5.2`.
+
+---
+
 ## [1.5.1] — 2026-06-16
 
 ### Added Features & Enhancements
