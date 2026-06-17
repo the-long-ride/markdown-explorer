@@ -17,6 +17,25 @@ import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings } fro
 import { usePlatform } from "../../contexts/PlatformContext";
 import { CopyIcon, FolderIcon, GlobeIcon } from "../shared/icons";
 
+import whiteShibaBlep from "../../assets/themes/pets/backgrounds/white-shiba-blep.png";
+import shibaBlep from "../../assets/themes/pets/backgrounds/shiba-blep.png";
+import blackShibaBlep from "../../assets/themes/pets/backgrounds/shiba-memes-blep.png";
+import kInkSurprise from "../../assets/themes/pets/backgrounds/k-ink-surprise.png";
+import catBlep from "../../assets/themes/pets/backgrounds/cat-blep.png";
+import hamsterBlep from "../../assets/themes/pets/backgrounds/hamster-blep.png";
+import corgiBlep from "../../assets/themes/pets/backgrounds/corgi-blep.png";
+
+const PET_BLEP_URLS = {
+  "pet-white-shiba": whiteShibaBlep,
+  "pet-shiba": shibaBlep,
+  "pet-shiba-memes": blackShibaBlep,
+  "pet-k-ink": kInkSurprise,
+  "pet-cat": catBlep,
+  "pet-hamster": hamsterBlep,
+  "pet-corgi": corgiBlep,
+};
+
+
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -73,6 +92,7 @@ export function SettingsModal({
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [themeRemixOpen, setThemeRemixOpen] = useState(false);
   const [settingsDataStatus, setSettingsDataStatus] = useState("");
+  const [bannedShortcutError, setBannedShortcutError] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -148,9 +168,9 @@ export function SettingsModal({
     parts.push(keyName);
     const shortcutStr = parts.join("+");
 
-    // Reject banned shortcuts — rollback and notify
+    // Reject banned shortcuts — rollback and notify via dialog
     if (BANNED_SHORTCUTS[shortcutStr]) {
-      setSettingsDataStatus(`⚠️ ${BANNED_SHORTCUTS[shortcutStr]}`);
+      setBannedShortcutError(BANNED_SHORTCUTS[shortcutStr]);
       setRecordingAction(null);
       (e.target as HTMLInputElement).blur();
       return;
@@ -733,6 +753,57 @@ export function SettingsModal({
         isOpen={themeRemixOpen}
         onClose={() => setThemeRemixOpen(false)}
       />
+      {bannedShortcutError && (
+        <div
+          className="mdn-modal banned-shortcut-modal"
+          style={{ display: "flex" }}
+          role="dialog"
+          aria-modal="true"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setBannedShortcutError(null);
+          }}
+        >
+          <div className="settings-card banned-shortcut-card">
+            <button
+              type="button"
+              className="settings-card__close"
+              onClick={() => setBannedShortcutError(null)}
+              aria-label="Close warning"
+            >
+              &times;
+            </button>
+            <div className="banned-shortcut-header">
+              {state.themeStyle.startsWith("pet-") ? (
+                <div className="banned-shortcut-mascot">
+                  <img
+                    src={
+                      PET_BLEP_URLS[state.themeStyle as keyof typeof PET_BLEP_URLS] ||
+                      shibaBlep
+                    }
+                    alt="Warning Mascot"
+                    draggable={false}
+                  />
+                </div>
+              ) : (
+                <div className="banned-shortcut-icon">⚠️</div>
+              )}
+              <h3>Banned Shortcut</h3>
+            </div>
+            <div className="banned-shortcut-body">
+              <p>{bannedShortcutError}</p>
+            </div>
+            <div className="banned-shortcut-footer">
+              <button
+                type="button"
+                className="banned-shortcut-close-btn"
+                onClick={() => setBannedShortcutError(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
