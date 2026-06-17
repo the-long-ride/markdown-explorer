@@ -136,6 +136,9 @@ export interface Translations {
     returnToTop: string;
     sections: string;
   };
+  bannedShortcutTitle: string;
+  bannedShortcutDismiss: string;
+  bannedShortcutImeMessage: string;
 }
 
 
@@ -288,6 +291,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "Return to top",
       sections: "Sections",
     },
+    bannedShortcutTitle: "Banned Shortcut",
+    bannedShortcutDismiss: "Dismiss",
+    bannedShortcutImeMessage: "Ctrl+Space triggers the IME (Input Method Editor) in Chromium and cannot be used as an app shortcut.",
   },
   vi: {
     settings: "Cài đặt",
@@ -423,6 +429,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "Quay lại đầu trang",
       sections: "Các mục",
     },
+    bannedShortcutTitle: "Phím tắt bị cấm",
+    bannedShortcutDismiss: "Bỏ qua",
+    bannedShortcutImeMessage: "Ctrl+Space kích hoạt IME (Bộ gõ phương thức nhập) trong Chromium và không thể được sử dụng làm phím tắt ứng dụng.",
   },
   fr: {
     settings: "Paramètres",
@@ -558,6 +567,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "Retour en haut",
       sections: "Sections",
     },
+    bannedShortcutTitle: "Raccourci interdit",
+    bannedShortcutDismiss: "Ignorer",
+    bannedShortcutImeMessage: "Ctrl+Space déclenche l'IME (éditeur de méthode d'entrée) dans Chromium et ne peut pas être utilisé comme raccourci d'application.",
   },
   es: {
     settings: "Ajustes",
@@ -693,6 +705,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "Volver arriba",
       sections: "Secciones",
     },
+    bannedShortcutTitle: "Atajo prohibido",
+    bannedShortcutDismiss: "Descartar",
+    bannedShortcutImeMessage: "Ctrl+Space activa el IME (Editor de método de entrada) en Chromium y no se puede usar como un atajo de la aplicación.",
   },
   zh: {
     settings: "设置",
@@ -828,6 +843,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "返回顶部",
       sections: "小节",
     },
+    bannedShortcutTitle: "禁用的快捷键",
+    bannedShortcutDismiss: "关闭",
+    bannedShortcutImeMessage: "Ctrl+Space 在 Chromium 中触发输入法生成器 (IME)，无法用作应用快捷键。",
   },
   no: {
     settings: "Innstillinger",
@@ -963,6 +981,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "Tilbake til toppen",
       sections: "Seksjoner",
     },
+    bannedShortcutTitle: "Forbudt snarvei",
+    bannedShortcutDismiss: "Avvis",
+    bannedShortcutImeMessage: "Ctrl+Space utløser IME (Input Method Editor) i Chromium og kan ikke brukes som en snarvei i appen.",
   },
   ja: {
     settings: "設定",
@@ -1098,6 +1119,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "先頭に戻る",
       sections: "セクション",
     },
+    bannedShortcutTitle: "禁止されたショートカット",
+    bannedShortcutDismiss: "閉じる",
+    bannedShortcutImeMessage: "Ctrl+SpaceはChromiumのIME（入力方式エディター）を起動するため、アプリのショートカットとして使用できません。",
   },
   ko: {
     settings: "설정",
@@ -1233,6 +1257,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "맨 위로 이동",
       sections: "섹션",
     },
+    bannedShortcutTitle: "금지된 단축키",
+    bannedShortcutDismiss: "닫기",
+    bannedShortcutImeMessage: "Ctrl+Space는 Chromium에서 IME(입력기)를 실행하므로 앱 단축키로 사용할 수 없습니다.",
   },
   ru: {
     settings: "Настройки",
@@ -1368,6 +1395,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       returnToTop: "Вернуться наверх",
       sections: "Разделы",
     },
+    bannedShortcutTitle: "Запрещенное сочетание клавиш",
+    bannedShortcutDismiss: "Закрыть",
+    bannedShortcutImeMessage: "Ctrl+Space запускает IME (редактор метода ввода) в Chromium и не может использоваться в качестве сочетания клавиш приложения.",
   },
 };
 

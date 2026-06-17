@@ -12,10 +12,10 @@ import type { UpdateCheckState } from "../../hooks/useUpdateCheck";
 import { TooltipButton } from "../shared/TooltipButton";
 import { ThemeStylePicker } from "./ThemeStylePicker";
 import { ThemeRemixModal } from "./ThemeRemixModal";
-import { LANGUAGE_OPTIONS, getTranslations } from "../../contexts/translations";
+import { LANGUAGE_OPTIONS, getTranslations, Translations } from "../../contexts/translations";
 import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings } from "../../settings/settingsImportExport";
 import { usePlatform } from "../../contexts/PlatformContext";
-import { CopyIcon, FolderIcon, GlobeIcon } from "../shared/icons";
+import { CopyIcon, FolderIcon, GlobeIcon, AlertTriangleIcon } from "../shared/icons";
 
 import whiteShibaBlep from "../../assets/themes/pets/backgrounds/white-shiba-blep.png";
 import shibaBlep from "../../assets/themes/pets/backgrounds/shiba-blep.png";
@@ -75,8 +75,8 @@ function formatCurrentVersion(version: string) {
 }
 
 // Shortcuts that are reserved by the browser/OS and cannot be registered.
-const BANNED_SHORTCUTS: Record<string, string> = {
-  "Ctrl+Space": "Ctrl+Space triggers the IME (Input Method Editor) in Chromium and cannot be used as an app shortcut.",
+const BANNED_SHORTCUTS: Record<string, keyof Translations> = {
+  "Ctrl+Space": "bannedShortcutImeMessage",
 };
 
 export function SettingsModal({
@@ -170,7 +170,8 @@ export function SettingsModal({
 
     // Reject banned shortcuts — rollback and notify via dialog
     if (BANNED_SHORTCUTS[shortcutStr]) {
-      setBannedShortcutError(BANNED_SHORTCUTS[shortcutStr]);
+      const translationKey = BANNED_SHORTCUTS[shortcutStr];
+      setBannedShortcutError(t[translationKey] as string);
       setRecordingAction(null);
       (e.target as HTMLInputElement).blur();
       return;
@@ -785,9 +786,11 @@ export function SettingsModal({
                   />
                 </div>
               ) : (
-                <div className="banned-shortcut-icon">⚠️</div>
+                <div className="banned-shortcut-icon">
+                  <AlertTriangleIcon size={38} />
+                </div>
               )}
-              <h3>Banned Shortcut</h3>
+              <h3>{t.bannedShortcutTitle}</h3>
             </div>
             <div className="banned-shortcut-body">
               <p>{bannedShortcutError}</p>
@@ -798,7 +801,7 @@ export function SettingsModal({
                 className="banned-shortcut-close-btn"
                 onClick={() => setBannedShortcutError(null)}
               >
-                Dismiss
+                {t.bannedShortcutDismiss}
               </button>
             </div>
           </div>
