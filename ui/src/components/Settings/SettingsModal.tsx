@@ -57,7 +57,7 @@ function formatCurrentVersion(version: string) {
 
 // Shortcuts that are reserved by the browser/OS and cannot be registered.
 const BANNED_SHORTCUTS: Record<string, string> = {
-  "Ctrl+Space": "Ctrl+Space is reserved by Chromium for input focus and cannot be used as a shortcut.",
+  "Ctrl+Space": "Ctrl+Space triggers the IME (Input Method Editor) in Chromium and cannot be used as an app shortcut.",
 };
 
 export function SettingsModal({
