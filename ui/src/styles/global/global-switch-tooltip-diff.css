@@ -106,6 +106,24 @@
 .tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"]:hover .tooltip-text {
   transform: translateX(0) translateY(0);
 }
+
+/* Tooltip Left Alignment (avoids window overflow/clipping on far left edges) */
+.tooltip-container[data-tooltip-align="left"] .tooltip-text {
+  left: 0;
+  right: auto;
+}
+.tooltip-container[data-tooltip-align="left"]:not([data-tooltip-pos="below"]) .tooltip-text {
+  transform: translateX(0) translateY(4px);
+}
+.tooltip-container[data-tooltip-align="left"]:not([data-tooltip-pos="below"]):hover .tooltip-text {
+  transform: translateX(0) translateY(0);
+}
+.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"] .tooltip-text {
+  transform: translateX(0) translateY(-4px);
+}
+.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"]:hover .tooltip-text {
+  transform: translateX(0) translateY(0);
+}
 /* ============================================================
    Diff Highlighting
    ============================================================ */
@@ -241,7 +259,8 @@
   transition:
     opacity 0.2s,
     transform 0.2s,
-    background 0.12s;
+    background 0.12s,
+    right 0.18s ease;
   box-shadow: var(--sh-md);
   z-index: 999;
   pointer-events: none;

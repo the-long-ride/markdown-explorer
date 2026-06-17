@@ -92,6 +92,11 @@
     var(--bg-s);
 }
 
+[data-theme-style^="pet-"] .sidebar-resize {
+  background: var(--bg);
+  border-right: var(--stroke-w) solid var(--bd-s);
+}
+
 [data-theme-style^="pet-"] .toc-compact-bar {
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, var(--bg-s)), var(--bg-s) 50%),

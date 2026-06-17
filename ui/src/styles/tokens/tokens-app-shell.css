@@ -6,6 +6,11 @@ body {
   color: var(--tx);
   font-family: var(--font-ui);
   font-size: 13px;
+  /* Prevent layout from collapsing below a usable size:
+     min-width: sidebar-min(180) + readable-content(280) = 460px
+     min-height: topbar(~48) + compact-toc-bar(~50) + content(262) = 360px */
+  min-width: 460px;
+  min-height: 360px;
 }
 * {
   scrollbar-width: thin;
