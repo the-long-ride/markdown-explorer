@@ -54,8 +54,10 @@ export interface Translations {
     expandAll: string;
     workspaceSelection: string;
     toggleSidebar: string;
+    toggleToc: string;
     zoomIn: string;
     zoomOut: string;
+    locateFile: string;
   };
   topbar: {
     welcomePage: string;
@@ -95,6 +97,7 @@ export interface Translations {
     closeModal: string;
     closeTab: string;
     openChangelog: string;
+    locateFile: string;
   };
   tabContextMenu: {
     closeThisTab: string;
@@ -203,8 +206,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "Expand all headings",
       workspaceSelection: "Go to workspace selection",
       toggleSidebar: "Toggle sidebar visibility",
+      toggleToc: "Toggle TOC",
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
+      locateFile: "Locate current file",
     },
     topbar: {
       welcomePage: "Welcome Page",
@@ -244,6 +249,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Close modal [Esc]",
       closeTab: "Close Tab",
       openChangelog: "Click to open the change logs",
+      locateFile: "Locate file",
     },
     tabContextMenu: {
       closeThisTab: "Close this tab",
@@ -335,8 +341,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "Mở rộng tất cả các tiêu đề",
       workspaceSelection: "Đi tới chọn không gian làm việc",
       toggleSidebar: "Bật/Tắt thanh bên",
+      toggleToc: "Mục lục",
       zoomIn: "Phóng to",
       zoomOut: "Thu nhỏ",
+      locateFile: "Định vị tệp hiện tại",
     },
     topbar: {
       welcomePage: "Trang chào mừng",
@@ -376,6 +384,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Đóng cửa sổ [Esc]",
       closeTab: "Đóng tab",
       openChangelog: "Nhấp để mở nhật ký thay đổi",
+      locateFile: "Tìm tệp",
     },
     tabContextMenu: {
       closeThisTab: "Đóng tab này",
@@ -467,8 +476,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "Développer tous les titres",
       workspaceSelection: "Aller à la sélection d'espace de travail",
       toggleSidebar: "Afficher/Masquer la barre latérale",
+      toggleToc: "Table",
       zoomIn: "Zoom avant",
       zoomOut: "Zoom arrière",
+      locateFile: "Localiser le fichier actuel",
     },
     topbar: {
       welcomePage: "Page d'accueil",
@@ -508,6 +519,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Fermer la fenêtre [Esc]",
       closeTab: "Fermer l'onglet",
       openChangelog: "Cliquez pour ouvrir le journal des modifications",
+      locateFile: "Cibler",
     },
     tabContextMenu: {
       closeThisTab: "Fermer cet onglet",
@@ -599,8 +611,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "Expandir todos los títulos",
       workspaceSelection: "Ir a selección de espacio de trabajo",
       toggleSidebar: "Alternar visibilidad de barra lateral",
+      toggleToc: "TOC",
       zoomIn: "Acercar",
       zoomOut: "Alejar",
+      locateFile: "Localizar archivo actual",
     },
     topbar: {
       welcomePage: "Página de bienvenida",
@@ -640,6 +654,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Cerrar ventana [Esc]",
       closeTab: "Cerrar pestaña",
       openChangelog: "Haz clic para abrir el registro de cambios",
+      locateFile: "Localizar",
     },
     tabContextMenu: {
       closeThisTab: "Cerrar esta pestaña",
@@ -731,8 +746,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "展开所有标题",
       workspaceSelection: "前往工作区选择",
       toggleSidebar: "切换侧边栏可见性",
+      toggleToc: "目录",
       zoomIn: "放大",
       zoomOut: "缩小",
+      locateFile: "定位当前文件",
     },
     topbar: {
       welcomePage: "欢迎页面",
@@ -772,6 +789,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "关闭窗口 [Esc]",
       closeTab: "关闭标签页",
       openChangelog: "点击打开更新日志",
+      locateFile: "定位文件",
     },
     tabContextMenu: {
       closeThisTab: "关闭此标签页",
@@ -863,8 +881,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "Utvid alle overskrifter",
       workspaceSelection: "Gå til valg av arbeidsområde",
       toggleSidebar: "Bytt sidemenyvisning",
+      toggleToc: "TOC",
       zoomIn: "Zoom inn",
       zoomOut: "Zoom ut",
+      locateFile: "Finn gjeldende fil",
     },
     topbar: {
       welcomePage: "Velkomstside",
@@ -904,6 +924,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Lukk modal [Esc]",
       closeTab: "Lukk fane",
       openChangelog: "Klikk for å åpne endringsloggen",
+      locateFile: "Finn fil",
     },
     tabContextMenu: {
       closeThisTab: "Lukk denne fanen",
@@ -995,8 +1016,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "すべての見出しを展開する",
       workspaceSelection: "ワークスペースの選択に移動",
       toggleSidebar: "サイドバーの表示を切り替える",
+      toggleToc: "目次",
       zoomIn: "拡大",
       zoomOut: "縮小",
+      locateFile: "現在のファイルを特定",
     },
     topbar: {
       welcomePage: "ウェルカムページ",
@@ -1036,6 +1059,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "モーダルを閉じる [Esc]",
       closeTab: "タブを閉じる",
       openChangelog: "クリックして変更履歴を開く",
+      locateFile: "位置表示",
     },
     tabContextMenu: {
       closeThisTab: "このタブを閉じる",
@@ -1127,8 +1151,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "모든 제목 펼치기",
       workspaceSelection: "작업 공간 선택으로 이동",
       toggleSidebar: "사이드바 표시 전환",
+      toggleToc: "목차",
       zoomIn: "확대",
       zoomOut: "축소",
+      locateFile: "현재 파일 위치 찾기",
     },
     topbar: {
       welcomePage: "시작 페이지",
@@ -1168,6 +1194,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "모달 닫기 [Esc]",
       closeTab: "탭 닫기",
       openChangelog: "변경 로그를 열려면 클릭",
+      locateFile: "파일 찾기",
     },
     tabContextMenu: {
       closeThisTab: "이 탭 닫기",
@@ -1259,8 +1286,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "Развернуть все заголовки",
       workspaceSelection: "Перейти к выбору рабочей области",
       toggleSidebar: "Переключить видимость боковой панели",
+      toggleToc: "Оглавление",
       zoomIn: "Увеличить",
       zoomOut: "Уменьшить",
+      locateFile: "Найти текущий файл",
     },
     topbar: {
       welcomePage: "Приветственная страница",
@@ -1300,6 +1329,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       closeModal: "Закрыть окно [Esc]",
       closeTab: "Закрыть вкладку",
       openChangelog: "Нажмите, чтобы открыть журнал изменений",
+      locateFile: "Найти файл",
     },
     tabContextMenu: {
       closeThisTab: "Закрыть эту вкладку",
