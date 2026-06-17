@@ -14,9 +14,11 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   expandAll: 'Ctrl+Shift+e',
   workspaceSelection: 'Ctrl+Shift+h',
   toggleSidebar: 'Ctrl+Shift+p',
+  toggleToc: 'Ctrl+T',
   sidebarCursorMode: 'Alt+S',
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
+  locateFile: 'Ctrl+Space',
 };
 
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
@@ -25,6 +27,7 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   searchAllTabs: 'Ctrl+Shift+F',
   findCurrentFile: 'F',
   toggleTheme: 'Ctrl+L',
+  toggleSidebar: 'Ctrl+B',
 };
 
 export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {

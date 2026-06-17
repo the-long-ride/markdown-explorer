@@ -27,6 +27,8 @@ interface UseKeyboardOptions {
   isSettingsOpen: boolean;
   isModalOpen: boolean;
   isTermsOpen: boolean;
+  onToggleToc?: () => void;
+  onLocateFile?: () => void;
 }
 
 function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
@@ -89,6 +91,8 @@ export function useKeyboard({
   isSettingsOpen,
   isModalOpen,
   isTermsOpen,
+  onToggleToc,
+  onLocateFile,
 }: UseKeyboardOptions) {
   const { back, forward } = useNavigation();
   const { state, toggleTheme, toggleSidebar, navigate, refresh } = useAppState();
@@ -243,6 +247,18 @@ export function useKeyboard({
         return;
       }
 
+      if (onToggleToc && matchesShortcut(e, keybindings.toggleToc)) {
+        e.preventDefault();
+        onToggleToc();
+        return;
+      }
+
+      if (onLocateFile && !isEditableTarget(e.target) && matchesShortcut(e, keybindings.locateFile)) {
+        e.preventDefault();
+        onLocateFile();
+        return;
+      }
+
       // Desktop specific keybindings
       if (isDesktopLike) {
         // 9. Refresh (Desktop)
@@ -347,5 +363,7 @@ export function useKeyboard({
     isSettingsOpen,
     isModalOpen,
     isTermsOpen,
+    onToggleToc,
+    onLocateFile,
   ]);
 }

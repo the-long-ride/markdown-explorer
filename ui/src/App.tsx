@@ -24,7 +24,7 @@ import { SwitchWorkspaceModal } from './components/Modal/SwitchWorkspaceModal';
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
 import { FloatingTabToolbar } from './components/Desktop/FloatingTabToolbar';
-import { ChevronUpIcon } from './components/shared/icons';
+import { ChevronUpIcon, DoubleChevronLeftIcon, ExpandIcon, CollapseIcon } from './components/shared/icons';
 import type { PendingSearchJump, SearchScope } from './desktop/types';
 import { initGlobalHandlers } from './dom/globalHandlers';
 import { useDesktopTabs } from './hooks/useDesktopTabs';
@@ -37,7 +37,7 @@ import { formatShortcutLabel } from './utils/shortcuts';
 import { clearSearchJumpMarks, scrollToRenderedSearchMatch } from './utils/searchJump';
 
 export function App() {
-  const { state, toggleTheme, toggleSidebar, dispatch, navigate, refresh, openInEditor } = useAppState();
+  const { state, toggleTheme, toggleSidebar, toggleToc, dispatch, navigate, refresh, openInEditor } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -375,6 +375,10 @@ export function App() {
     isSettingsOpen: settingsOpen,
     isModalOpen: modalOpen,
     isTermsOpen: !termsAccepted || themeOnboardingOpen,
+    onToggleToc: toggleToc,
+    onLocateFile: () => {
+      window.dispatchEvent(new CustomEvent('locate-active-file'));
+    },
   });
 
   const isAllTabsSearch = isTabView && searchScope === 'all-tabs';
@@ -524,11 +528,31 @@ export function App() {
             <div className="content-shell">
               <ContentTabs />
               {state.toc.length > 0 && state.currentFile && (
-                <div className="toc-compact-bar">
+                <div className={`toc-compact-bar${state.tocCollapsed ? ' is-collapsed' : ''}`}>
                   <TableOfContents variant="compact" />
+                  <TooltipButton
+                    type="button"
+                    className="toc-compact-bar__toggle-btn"
+                    onClick={toggleToc}
+                    tooltip={t.actions.toggleToc}
+                    tooltipPos="below"
+                    tooltipAlign="right"
+                    icon={state.tocCollapsed ? <ExpandIcon size={14} /> : <CollapseIcon size={14} />}
+                  />
                 </div>
               )}
               <div className="content-shell__main">
+                {state.toc.length > 0 && state.tocCollapsed && (
+                  <TooltipButton
+                    type="button"
+                    className="toc-panel__open-btn"
+                    onClick={toggleToc}
+                    tooltip={t.actions.toggleToc}
+                    tooltipPos="below"
+                    tooltipAlign="right"
+                    icon={<DoubleChevronLeftIcon size={14} />}
+                  />
+                )}
                 <Content
                   onImageClick={onImageClick}
                   scrollRef={scrollRef}
@@ -536,7 +560,7 @@ export function App() {
                 />
                 {/* Scroll to top button */}
                 <TooltipButton
-                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 ? ' scroll-to-top-btn--with-toc' : ''}`}
+                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 && !state.tocCollapsed ? ' scroll-to-top-btn--with-toc' : ''}`}
                   onClick={scrollToTop}
                   tooltip={t.tooltips.scrollToTop}
                   tooltipPos="above"
@@ -565,7 +589,7 @@ export function App() {
             </div>
             {state.toc.length > 0 && (
               <>
-                <div className="toc-resize" id="tocResize" role="separator" aria-label="Resize table of contents" />
+                <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label="Resize table of contents" />
                 <TableOfContents variant="panel" />
               </>
             )}

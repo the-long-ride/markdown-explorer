@@ -81,6 +81,8 @@ export interface AppState {
   workspacePath?: string;
   /** Sidebar collapsed */
   sidebarCollapsed: boolean;
+  /** TOC panel collapsed */
+  tocCollapsed: boolean;
   /** Rendered HTML (from host) */
   contentHtml: string;
   /** Original Markdown/MDX source for exact file copy */
@@ -139,6 +141,7 @@ const initialState: AppState = {
   workspaceName: '',
   workspacePath: undefined,
   sidebarCollapsed: false,
+  tocCollapsed: false,
   contentHtml: '',
   markdownSource: null,
   frontmatter: {},
@@ -175,10 +178,14 @@ const initialState: AppState = {
 
 function createInitialState(saved: PersistedState | undefined, isDesktop: boolean): AppState {
   const defaultKeybindings = getDefaultKeybindings(isDesktop);
+  const tocCollapsed = typeof localStorage !== 'undefined'
+    ? localStorage.getItem('markdown-explorer-toc-collapsed') === 'true'
+    : false;
   if (!saved) {
     return {
       ...initialState,
       appRuntime: isDesktop ? 'desktop' : 'vscode',
+      tocCollapsed,
       settings: {
         ...initialState.settings,
         keybindings: defaultKeybindings,
@@ -193,6 +200,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
     hasThemePreference: !!saved.theme,
     themeStyle: saved.themeStyle ? normalizeThemeStyle(saved.themeStyle) : initialState.themeStyle,
     hasThemeStylePreference: !!saved.themeStyle,
+    tocCollapsed,
     settings: {
       ...initialState.settings,
       showTitle: saved.showTitle === true,
@@ -254,6 +262,7 @@ export type Action =
     }
   | { type: 'SET_LOADING'; label?: string; detail?: string }
   | { type: 'TOGGLE_SIDEBAR' }
+  | { type: 'TOGGLE_TOC' }
   | { type: 'SET_THEME'; theme: ThemeMode }
   | { type: 'SET_THEME_STYLE'; themeStyle: ThemeStyle }
   | { type: 'SELECT_CUSTOM_THEME'; themeId: string | undefined }
@@ -609,6 +618,16 @@ function reducer(state: AppState, action: Action): AppState {
     case 'TOGGLE_SIDEBAR':
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed };
 
+    case 'TOGGLE_TOC': {
+      const nextCollapsed = !state.tocCollapsed;
+      try {
+        localStorage.setItem('markdown-explorer-toc-collapsed', String(nextCollapsed));
+      } catch (e) {
+        // ignore
+      }
+      return { ...state, tocCollapsed: nextCollapsed };
+    }
+
     case 'SET_THEME':
       return { ...state, theme: action.theme, hasThemePreference: true };
 
@@ -713,6 +732,7 @@ interface AppStateContextValue {
   setThemeStyle: (themeStyle: ThemeStyle) => void;
   selectCustomTheme: (themeId: string | undefined) => void;
   toggleSidebar: () => void;
+  toggleToc: () => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }
 
@@ -1037,6 +1057,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'TOGGLE_SIDEBAR' });
   }, []);
 
+  const toggleToc = useCallback(() => {
+    dispatch({ type: 'TOGGLE_TOC' });
+  }, []);
+
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     dispatch({ type: 'UPDATE_SETTINGS', settings: patch });
     if ('documentConversion' in patch) {
@@ -1064,6 +1088,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setThemeStyle,
       selectCustomTheme,
       toggleSidebar,
+      toggleToc,
       updateSettings,
     }),
     [
@@ -1081,6 +1106,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setThemeStyle,
       selectCustomTheme,
       toggleSidebar,
+      toggleToc,
       updateSettings,
     ],
   );
