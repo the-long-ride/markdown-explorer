@@ -63,6 +63,7 @@ export const ACTIONS_LIST = [
   },
   { id: "toggleSidebar", label: "Toggle sidebar visibility", scope: "desktop" },
   { id: "toggleToc", label: "Toggle table of contents panel", scope: "both" },
+  { id: "toggleFocusMode", label: "Toggle focus mode", scope: "both" },
   { id: "sidebarCursorMode", label: "Sidebar cursor mode", scope: "both" },
   { id: "locateFile", label: "Locate current open file in sidebar", scope: "both" },
   { id: "zoomIn", label: "Zoom in", scope: "desktop" },

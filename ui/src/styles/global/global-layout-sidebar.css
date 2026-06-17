@@ -639,3 +639,44 @@ body.is-dragging-files .mdn-html-preview-iframe {
     transform: rotate(360deg);
   }
 }
+
+/* Focus mode */
+.focus-mode-btn {
+  position: absolute !important;
+  top: var(--content-pad-y, 20px);
+  left: 6px;
+  z-index: 10000;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--bg-e);
+  color: var(--tx2);
+  cursor: pointer;
+  box-shadow: var(--sh-sm);
+  opacity: 0.3; /* lower opacity value */
+  transition: opacity 0.12s, color 0.12s, background-color 0.12s, transform 0.12s;
+  border-radius: var(--r);
+}
+
+.focus-mode-btn:hover {
+  opacity: 1;
+  background: var(--bg-h);
+  color: var(--tx);
+  transform: translateY(-0.5px);
+}
+
+.app--focus-mode .topbar,
+.app--focus-mode .desktop-tabbar,
+.app--focus-mode .sidebar,
+.app--focus-mode .sidebar-resize,
+.app--focus-mode .content-tabs-wrap,
+.app--focus-mode .toc-compact-bar,
+.app--focus-mode .toc-resize,
+.app--focus-mode .toc-panel,
+.app--focus-mode .toc-panel__open-btn,
+.app--focus-mode .tab-floating-toolbar {
+  display: none !important;
+}

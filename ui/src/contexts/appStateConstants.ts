@@ -19,6 +19,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
   locateFile: 'Ctrl+Q',
+  toggleFocusMode: 'Ctrl+Alt+F',
 };
 
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {

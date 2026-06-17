@@ -94,16 +94,22 @@
   left: auto;
   right: 0;
 }
-.tooltip-container[data-tooltip-align="right"]:not([data-tooltip-pos="below"]) .tooltip-text {
+.tooltip-container[data-tooltip-align="right"]:not([data-tooltip-pos="below"])
+  .tooltip-text {
   transform: translateX(0) translateY(4px);
 }
-.tooltip-container[data-tooltip-align="right"]:not([data-tooltip-pos="below"]):hover .tooltip-text {
+.tooltip-container[data-tooltip-align="right"]:not(
+    [data-tooltip-pos="below"]
+  ):hover
+  .tooltip-text {
   transform: translateX(0) translateY(0);
 }
-.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"] .tooltip-text {
+.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"]
+  .tooltip-text {
   transform: translateX(0) translateY(-4px);
 }
-.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"]:hover .tooltip-text {
+.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"]:hover
+  .tooltip-text {
   transform: translateX(0) translateY(0);
 }
 
@@ -112,16 +118,22 @@
   left: 0;
   right: auto;
 }
-.tooltip-container[data-tooltip-align="left"]:not([data-tooltip-pos="below"]) .tooltip-text {
+.tooltip-container[data-tooltip-align="left"]:not([data-tooltip-pos="below"])
+  .tooltip-text {
   transform: translateX(0) translateY(4px);
 }
-.tooltip-container[data-tooltip-align="left"]:not([data-tooltip-pos="below"]):hover .tooltip-text {
+.tooltip-container[data-tooltip-align="left"]:not(
+    [data-tooltip-pos="below"]
+  ):hover
+  .tooltip-text {
   transform: translateX(0) translateY(0);
 }
-.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"] .tooltip-text {
+.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"]
+  .tooltip-text {
   transform: translateX(0) translateY(-4px);
 }
-.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"]:hover .tooltip-text {
+.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"]:hover
+  .tooltip-text {
   transform: translateX(0) translateY(0);
 }
 /* ============================================================
@@ -243,7 +255,7 @@
 .scroll-to-top-btn {
   position: fixed !important;
   bottom: 32px;
-  right: 24px;
+  right: 16px;
   background: var(--accent);
   color: #fff;
   border: none;
@@ -267,7 +279,7 @@
   outline: none;
 }
 .scroll-to-top-btn--with-toc {
-  right: 24px;
+  right: 16px;
 }
 @media (min-width: 1180px) {
   .scroll-to-top-btn--with-toc {

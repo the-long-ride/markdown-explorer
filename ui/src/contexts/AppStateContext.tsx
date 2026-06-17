@@ -127,6 +127,8 @@ export interface AppState {
   hostPlatform: HostPlatform;
   /** Desktop CPU architecture when available */
   hostArch: string;
+  /** Focus mode active */
+  focusMode: boolean;
 }
 
 const initialState: AppState = {
@@ -174,6 +176,7 @@ const initialState: AppState = {
   appRuntime: 'vscode',
   hostPlatform: 'unknown',
   hostArch: '',
+  focusMode: false,
 };
 
 function createInitialState(saved: PersistedState | undefined, isDesktop: boolean): AppState {
@@ -186,6 +189,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       ...initialState,
       appRuntime: isDesktop ? 'desktop' : 'vscode',
       tocCollapsed,
+      focusMode: false,
       settings: {
         ...initialState.settings,
         keybindings: defaultKeybindings,
@@ -267,7 +271,8 @@ export type Action =
   | { type: 'SET_THEME_STYLE'; themeStyle: ThemeStyle }
   | { type: 'SELECT_CUSTOM_THEME'; themeId: string | undefined }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
-  | { type: 'SET_MAXIMIZED'; isMaximized: boolean };
+  | { type: 'SET_MAXIMIZED'; isMaximized: boolean }
+  | { type: 'TOGGLE_FOCUS_MODE' };
 
 function normalizePathKey(value: string): string {
   return value.replace(/\\/g, '/').toLowerCase();
@@ -463,6 +468,7 @@ function reducer(state: AppState, action: Action): AppState {
             : workspaceChanged
               ? null
               : state.activeContentTabPath,
+        focusMode: false,
       };
     }
 
@@ -602,6 +608,7 @@ function reducer(state: AppState, action: Action): AppState {
         contentTabs: [],
         activeContentTabPath: null,
         renderVersion: state.renderVersion + 1,
+        focusMode: false,
       };
 
     case 'SET_LOADING':
@@ -709,6 +716,12 @@ function reducer(state: AppState, action: Action): AppState {
         isMaximized: action.isMaximized,
       };
 
+    case 'TOGGLE_FOCUS_MODE':
+      return {
+        ...state,
+        focusMode: !state.focusMode,
+      };
+
     default:
       return state;
   }
@@ -733,6 +746,7 @@ interface AppStateContextValue {
   selectCustomTheme: (themeId: string | undefined) => void;
   toggleSidebar: () => void;
   toggleToc: () => void;
+  toggleFocusMode: () => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }
 
@@ -1061,6 +1075,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'TOGGLE_TOC' });
   }, []);
 
+  const toggleFocusMode = useCallback(() => {
+    dispatch({ type: 'TOGGLE_FOCUS_MODE' });
+  }, []);
+
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     dispatch({ type: 'UPDATE_SETTINGS', settings: patch });
     if ('documentConversion' in patch) {
@@ -1089,6 +1107,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       selectCustomTheme,
       toggleSidebar,
       toggleToc,
+      toggleFocusMode,
       updateSettings,
     }),
     [
@@ -1107,6 +1126,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       selectCustomTheme,
       toggleSidebar,
       toggleToc,
+      toggleFocusMode,
       updateSettings,
     ],
   );

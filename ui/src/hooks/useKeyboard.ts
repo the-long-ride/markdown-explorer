@@ -29,6 +29,7 @@ interface UseKeyboardOptions {
   isTermsOpen: boolean;
   onToggleToc?: () => void;
   onLocateFile?: () => void;
+  onToggleFocusMode?: () => void;
 }
 
 function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
@@ -93,6 +94,7 @@ export function useKeyboard({
   isTermsOpen,
   onToggleToc,
   onLocateFile,
+  onToggleFocusMode,
 }: UseKeyboardOptions) {
   const { back, forward } = useNavigation();
   const { state, toggleTheme, toggleSidebar, navigate, refresh } = useAppState();
@@ -256,6 +258,12 @@ export function useKeyboard({
       if (onLocateFile && !isEditableTarget(e.target) && matchesShortcut(e, keybindings.locateFile)) {
         e.preventDefault();
         onLocateFile();
+        return;
+      }
+
+      if (onToggleFocusMode && matchesShortcut(e, keybindings.toggleFocusMode)) {
+        e.preventDefault();
+        onToggleFocusMode();
         return;
       }
 

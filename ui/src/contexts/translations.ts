@@ -58,6 +58,7 @@ export interface Translations {
     zoomIn: string;
     zoomOut: string;
     locateFile: string;
+    toggleFocusMode?: string;
   };
   topbar: {
     welcomePage: string;
@@ -213,6 +214,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
       locateFile: "Locate current file",
+      toggleFocusMode: "Toggle focus mode",
     },
     topbar: {
       welcomePage: "Welcome Page",

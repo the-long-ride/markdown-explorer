@@ -24,7 +24,7 @@ import { SwitchWorkspaceModal } from './components/Modal/SwitchWorkspaceModal';
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
 import { FloatingTabToolbar } from './components/Desktop/FloatingTabToolbar';
-import { ChevronUpIcon, DoubleChevronLeftIcon, ExpandIcon, CollapseIcon } from './components/shared/icons';
+import { ChevronUpIcon, DoubleChevronLeftIcon, ExpandIcon, CollapseIcon, MaximizeIcon, MinimizeIcon } from './components/shared/icons';
 import type { PendingSearchJump, SearchScope } from './desktop/types';
 import { initGlobalHandlers } from './dom/globalHandlers';
 import { useDesktopTabs } from './hooks/useDesktopTabs';
@@ -37,7 +37,7 @@ import { formatShortcutLabel } from './utils/shortcuts';
 import { clearSearchJumpMarks, scrollToRenderedSearchMatch } from './utils/searchJump';
 
 export function App() {
-  const { state, toggleTheme, toggleSidebar, toggleToc, dispatch, navigate, refresh, openInEditor } = useAppState();
+  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, dispatch, navigate, refresh, openInEditor } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -379,6 +379,7 @@ export function App() {
     onLocateFile: () => {
       window.dispatchEvent(new CustomEvent('locate-active-file'));
     },
+    onToggleFocusMode: toggleFocusMode,
   });
 
   const isAllTabsSearch = isTabView && searchScope === 'all-tabs';
@@ -471,7 +472,7 @@ export function App() {
   }
 
   return (
-    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}`}>
+    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
       {isTabView && (
         <DesktopTabBar
@@ -542,6 +543,17 @@ export function App() {
                 </div>
               )}
               <div className="content-shell__main">
+                {state.currentFile && (
+                  <TooltipButton
+                    type="button"
+                    className={`focus-mode-btn${state.focusMode ? ' is-active' : ''}`}
+                    onClick={toggleFocusMode}
+                    tooltip={state.focusMode ? "Exit Focus Mode" : "Focus Mode"}
+                    tooltipPos="below"
+                    tooltipAlign="left"
+                    icon={state.focusMode ? <MinimizeIcon size={12} /> : <MaximizeIcon size={12} />}
+                  />
+                )}
                 {state.toc.length > 0 && state.tocCollapsed && (
                   <TooltipButton
                     type="button"
