@@ -66,15 +66,24 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   const scrollToActiveFile = useCallback(() => {
     if (!state.currentFile) return;
     window.dispatchEvent(new CustomEvent('locate-active-file'));
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const activeEl = treeRef.current?.querySelector('.tree-file.is-active');
-        if (activeEl) {
-          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
-    });
   }, [state.currentFile]);
+
+  // Listen for locate-active-file event (dispatched by button OR keyboard shortcut)
+  // and scroll the tree to the active item after folders have had a chance to expand.
+  useEffect(() => {
+    const handleLocateScroll = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const activeEl = treeRef.current?.querySelector('.tree-file.is-active');
+          if (activeEl) {
+            activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+      });
+    };
+    window.addEventListener('locate-active-file', handleLocateScroll);
+    return () => window.removeEventListener('locate-active-file', handleLocateScroll);
+  }, []);
 
   const onFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setFilter(e.target.value),
