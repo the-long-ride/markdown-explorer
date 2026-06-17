@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useLayoutEffect, useEffect } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
-import { CloseIcon, SearchIcon } from '../shared/icons';
+import { CloseIcon, SearchIcon, LocateIcon } from '../shared/icons';
 import { TooltipButton } from '../shared/TooltipButton';
 import { FileNode, FolderNodeView } from './TreeNode';
 import type { ScopeFocusTreeProps } from './TreeNode';
@@ -62,6 +62,19 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   const treeRef = useRef<HTMLDivElement>(null);
   const scrollPosRef = useRef(0);
   const lastWorkspaceRef = useRef(state.workspaceName);
+
+  const scrollToActiveFile = useCallback(() => {
+    if (!state.currentFile) return;
+    window.dispatchEvent(new CustomEvent('locate-active-file'));
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const activeEl = treeRef.current?.querySelector('.tree-file.is-active');
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    });
+  }, [state.currentFile]);
 
   const onFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setFilter(e.target.value),
@@ -313,7 +326,18 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     >
       <div className="sidebar__header">
         <div className="sidebar__title">
-          {t.sidebar.files}
+          <span>{t.sidebar.files}</span>
+          {state.currentFile && (
+            <TooltipButton
+              type="button"
+              className="sidebar__locate-btn"
+              onClick={scrollToActiveFile}
+              tooltip={t.tooltips.locateFile}
+              tooltipPos="below"
+              tooltipAlign="right"
+              icon={<LocateIcon size={12} />}
+            />
+          )}
           <span className="sidebar__count" id="fileCount">
             {state.fileList.length}
           </span>

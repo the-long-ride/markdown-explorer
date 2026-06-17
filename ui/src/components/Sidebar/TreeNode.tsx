@@ -140,9 +140,32 @@ export function FolderNodeView({
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const toggle = useCallback(() => setIsOpen((v) => !v), []);
-
+  const { state } = useAppState();
   const q = filter.toLowerCase().trim();
+
   const descendantFilePaths = getFolderFilePaths(node);
+  const lastExpandedFileRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (state.currentFile && descendantFilePaths.includes(state.currentFile)) {
+      if (lastExpandedFileRef.current !== state.currentFile) {
+        lastExpandedFileRef.current = state.currentFile;
+        setIsOpen(true);
+      }
+    } else {
+      lastExpandedFileRef.current = null;
+    }
+  }, [state.currentFile, descendantFilePaths]);
+
+  useEffect(() => {
+    const handleLocate = () => {
+      if (state.currentFile && descendantFilePaths.includes(state.currentFile)) {
+        setIsOpen(true);
+      }
+    };
+    window.addEventListener('locate-active-file', handleLocate);
+    return () => window.removeEventListener('locate-active-file', handleLocate);
+  }, [state.currentFile, descendantFilePaths]);
   const selectedDescendantCount = descendantFilePaths.filter((filePath) =>
     scopeFocus.selectedFilePaths.has(filePath),
   ).length;
