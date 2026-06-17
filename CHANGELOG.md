@@ -4,6 +4,18 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.3] — 2026-06-17
+
+### Added
+- **Native TXT File Support**: Added native support for `.txt` files directly in Markdown Explorer with guard
+
+### Fixed
+- **VS Code Extension Views Schema**: Added missing `icon` property to the webview view definition in `package.json` to resolve VS Code schema warnings.
+
+==
+
+---
+
 ## [1.5.2] — 2026-06-17
 
 ### Added Features & Enhancements

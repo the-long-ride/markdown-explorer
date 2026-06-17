@@ -57,7 +57,8 @@ function isExtraDocumentFilePath(filePath) {
 
 function isSupportedFilePath(filePath, documentConversionEnabled = false) {
   if (isMarkdownFilePath(filePath)) return true;
-  return documentConversionEnabled && isExtraDocumentFilePath(filePath);
+  if (isTextDocumentFilePath(filePath)) return true;
+  return documentConversionEnabled && isConvertibleDocumentFilePath(filePath);
 }
 
 function isKnownSupportedFilePath(filePath) {
@@ -76,7 +77,11 @@ function getFileTypeLabel(filePath) {
 
 function getOpenDialogFilters(documentConversionEnabled = false) {
   if (!documentConversionEnabled) {
-    return [{ name: "Markdown Files", extensions: ["md", "mdx"] }];
+    return [
+      { name: "Supported Files", extensions: ["md", "mdx", "txt"] },
+      { name: "Markdown Files", extensions: ["md", "mdx"] },
+      { name: "Text Files", extensions: ["txt"] },
+    ];
   }
   return [
     {
@@ -96,6 +101,7 @@ function getOpenDialogFilters(documentConversionEnabled = false) {
         "txt",
       ],
     },
+    { name: "Markdown and Text Files", extensions: ["md", "mdx", "txt"] },
     { name: "Markdown Files", extensions: ["md", "mdx"] },
     {
       name: "Converted Document Files",
@@ -109,7 +115,6 @@ function getOpenDialogFilters(documentConversionEnabled = false) {
         "odp",
         "ods",
         "rtf",
-        "txt",
       ],
     },
   ];

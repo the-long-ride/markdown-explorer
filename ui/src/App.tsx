@@ -667,7 +667,7 @@ export function App() {
           <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>
             {state.settings.documentConversion
               ? 'Supports folders, Markdown, DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files'
-              : 'Supports folders and .md / .mdx files'}
+              : 'Supports folders, .md / .mdx, and .txt files'}
           </div>
         </div>
       )}

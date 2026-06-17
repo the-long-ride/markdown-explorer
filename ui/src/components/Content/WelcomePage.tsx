@@ -265,7 +265,7 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
     },
     {
       title: "Xem trước tài liệu được chuyển đổi",
-      desc: "Bật tùy chọn [Đọc tệp DOCX, PDF, Office và văn bản] trong Cài đặt để xem trước các định dạng DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF và TXT. Quá trình chuyển đổi diễn ra cục bộ và cố gắng tối đa, nên các bố cục phức tạp có thể không khớp chính xác với bản gốc.",
+      desc: "Bật tùy chọn [Đọc tệp DOCX, PDF, Office và văn bản] trong Cài đặt để xem trước các định dạng DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS và RTF. Quá trình chuyển đổi diễn ra cục bộ và cố gắng tối đa, nên các bố cục phức tạp có thể không khớp chính xác với bản gốc.",
       badge: "v1.5.0",
     },
     {
@@ -288,6 +288,11 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
       desc: "Nhấp vào nút thu phóng ở góc trên cùng bên trái của thẻ tài liệu để bật/tắt Chế độ Tập trung, ẩn thanh bên, thanh trên cùng và mục lục để có giao diện đọc sạch sẽ. Bạn cũng có thể nhấn [Ctrl+Alt+F] để bật/tắt nhanh.",
       badge: "v1.5.2",
     },
+    {
+      title: "Hỗ trợ tệp TXT gốc",
+      desc: "Xem trực tiếp nội dung các tệp .txt trong Markdown Explorer mà không cần bật chức năng chuyển đổi tài liệu.",
+      badge: "v1.5.3",
+    },
   ],
   en: [
     {
@@ -297,7 +302,7 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
     },
     {
       title: "Converted document previews",
-      desc: "Turn on [Read DOCX, PDF, Office, and text files] in Settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT. Conversion is local and best-effort, so complex layout may not match the source exactly.",
+      desc: "Turn on [Read DOCX, PDF, Office, and text files] in Settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, and RTF. Conversion is local and best-effort, so complex layout may not match the source exactly.",
       badge: "v1.5.0",
     },
     {
@@ -319,6 +324,11 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
       title: "Focus mode reading view",
       desc: "Click the fullscreen toggle button in the top-left of the document content area to toggle Focus Mode, hiding the topbar, sidebar, and table of contents for a clean reading interface. You can also use [Ctrl+Alt+F] to toggle it instantly.",
       badge: "v1.5.2",
+    },
+    {
+      title: "Native TXT File Support",
+      desc: "View .txt files directly in Markdown Explorer without needing to turn on document conversion.",
+      badge: "v1.5.3",
     },
   ],
 };

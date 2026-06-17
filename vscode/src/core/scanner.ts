@@ -29,7 +29,7 @@ export class WorkspaceScanner {
 
     const includeGlob = documentConversionEnabled
       ? '**/*.{md,mdx,docx,pdf,html,xlsx,pptx,odt,odp,ods,rtf,txt}'
-      : '**/*.{md,mdx}';
+      : '**/*.{md,mdx,txt}';
     const uris = (await vscode.workspace.findFiles(
       includeGlob,
       excludeGlob,

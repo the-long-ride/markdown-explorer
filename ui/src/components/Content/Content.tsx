@@ -704,12 +704,12 @@ export function Content({
               <div className="state-screen__title">
                 {state.settings.documentConversion
                   ? "No supported documents found"
-                  : "No Markdown or MDX files found"}
+                  : "No Markdown, MDX, or TXT files found"}
               </div>
               <div className="state-screen__sub">
                 {state.settings.documentConversion
                   ? "Add Markdown, DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, or TXT files to this workspace."
-                  : "Add a .md or .mdx file, or turn on document conversion to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files."}
+                  : "Add a .md, .mdx, or .txt file, or turn on document conversion to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, and RTF files."}
               </div>
               {!state.settings.documentConversion && (
                 <button

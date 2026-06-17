@@ -89,7 +89,8 @@ export function isSupportedFilePath(
   documentConversionEnabled = false,
 ): boolean {
   if (isMarkdownFilePath(filePath)) return true;
-  return documentConversionEnabled && isExtraDocumentFilePath(filePath);
+  if (isTextDocumentFilePath(filePath)) return true;
+  return documentConversionEnabled && isConvertibleDocumentFilePath(filePath);
 }
 
 export function isKnownSupportedFilePath(filePath: string): boolean {
