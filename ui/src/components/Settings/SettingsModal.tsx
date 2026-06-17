@@ -25,7 +25,7 @@ interface SettingsModalProps {
   onOpenChangelog: () => void;
 }
 
-const ACTIONS_LIST = [
+export const ACTIONS_LIST = [
   { id: "findCurrentFile", label: "Find in current file", scope: "both" },
   { id: "searchCurrent", label: "Search current workspace", scope: "desktop" },
   { id: "searchAllTabs", label: "Search all tabs", scope: "desktop" },
@@ -43,7 +43,9 @@ const ACTIONS_LIST = [
     scope: "desktop",
   },
   { id: "toggleSidebar", label: "Toggle sidebar visibility", scope: "desktop" },
+  { id: "toggleToc", label: "Toggle table of contents panel", scope: "both" },
   { id: "sidebarCursorMode", label: "Sidebar cursor mode", scope: "both" },
+  { id: "locateFile", label: "Locate current open file in sidebar", scope: "both" },
   { id: "zoomIn", label: "Zoom in", scope: "desktop" },
   { id: "zoomOut", label: "Zoom out", scope: "desktop" },
 ];

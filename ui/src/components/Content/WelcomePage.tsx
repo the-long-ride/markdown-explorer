@@ -5,6 +5,8 @@
 import { useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
+import { getTranslations } from '../../contexts/translations';
+import { ACTIONS_LIST } from '../Settings/SettingsModal';
 import { InteractiveBackground } from '../shared/InteractiveBackground';
 import './WelcomePage.css';
 
@@ -153,16 +155,99 @@ const cleanTitle = (text: string): string => {
   return text.replace(/^[✨⌨️🔒💡🔍🛠️📁📊📋🎨🖼️🐞🌐]\s*/u, '').replace(/\s*→\s*$/, '').trim();
 };
 
-const TAB_LABELS: Record<string, { features: string; shortcuts: string; privacy: string; tips: string; viewShortcuts: string }> = {
-  en: { features: "Features", shortcuts: "Shortcuts", privacy: "Privacy", tips: "Tips & Practices", viewShortcuts: "View shortcuts" },
-  vi: { features: "Tính năng", shortcuts: "Phím tắt", privacy: "Riêng tư", tips: "Mẹo & Thực hành", viewShortcuts: "Xem phím tắt" },
-  fr: { features: "Fonctionnalités", shortcuts: "Raccourcis", privacy: "Confidentialité", tips: "Conseils", viewShortcuts: "Voir les raccourcis" },
-  es: { features: "Funciones", shortcuts: "Atajos", privacy: "Privacidad", tips: "Consejos", viewShortcuts: "Ver atajos" },
-  zh: { features: "功能特性", shortcuts: "快捷键", privacy: "隐私", tips: "技巧与实践", viewShortcuts: "查看快捷键" },
-  no: { features: "Funksjoner", shortcuts: "Snarveier", privacy: "Personvern", tips: "Tips", viewShortcuts: "Vis snarveier" },
-  ja: { features: "功能一覧", shortcuts: "ショートカット", privacy: "プライバシー", tips: "ヒントとコツ", viewShortcuts: "ショートカットを表示" },
-  ko: { features: "기능 소개", shortcuts: "단축키", privacy: "개인정보", tips: "팁 및 가이드", viewShortcuts: "단축키 보기" },
-  ru: { features: "Возможности", shortcuts: "Сочетания клавиш", privacy: "Конфиденциальность", tips: "Советы", viewShortcuts: "Посмотреть сочетания" }
+const TAB_LABELS: Record<
+  string,
+  {
+    features: string;
+    shortcuts: string;
+    privacy: string;
+    tips: string;
+    viewShortcuts: string;
+    recentGuideEyebrow: string;
+    recentGuideTitle: string;
+  }
+> = {
+  en: {
+    features: "Features",
+    shortcuts: "Shortcuts",
+    privacy: "Privacy",
+    tips: "Tips & Practices",
+    viewShortcuts: "View shortcuts",
+    recentGuideEyebrow: "Recent feature guide",
+    recentGuideTitle: "What is new since v1.4.5"
+  },
+  vi: {
+    features: "Tính năng",
+    shortcuts: "Phím tắt",
+    privacy: "Riêng tư",
+    tips: "Mẹo & Thực hành",
+    viewShortcuts: "Xem phím tắt",
+    recentGuideEyebrow: "Hướng dẫn tính năng mới",
+    recentGuideTitle: "Các điểm mới kể từ v1.4.5"
+  },
+  fr: {
+    features: "Fonctionnalités",
+    shortcuts: "Raccourcis",
+    privacy: "Confidentialité",
+    tips: "Conseils",
+    viewShortcuts: "Voir les raccourcis",
+    recentGuideEyebrow: "Guide des nouvelles fonctionnalités",
+    recentGuideTitle: "Quoi de neuf depuis la v1.4.5"
+  },
+  es: {
+    features: "Funciones",
+    shortcuts: "Atajos",
+    privacy: "Privacidad",
+    tips: "Consejos",
+    viewShortcuts: "Ver atajos",
+    recentGuideEyebrow: "Guía de funciones recientes",
+    recentGuideTitle: "Novedades desde la v1.4.5"
+  },
+  zh: {
+    features: "功能特性",
+    shortcuts: "快捷键",
+    privacy: "隐私",
+    tips: "技巧与实践",
+    viewShortcuts: "查看快捷键",
+    recentGuideEyebrow: "近期功能指南",
+    recentGuideTitle: "v1.4.5 以来的新特性"
+  },
+  no: {
+    features: "Funksjoner",
+    shortcuts: "Snarveier",
+    privacy: "Personvern",
+    tips: "Tips",
+    viewShortcuts: "Vis snarveier",
+    recentGuideEyebrow: "Guide for nye funksjoner",
+    recentGuideTitle: "Hva er nytt siden v1.4.5"
+  },
+  ja: {
+    features: "功能一覧",
+    shortcuts: "ショートカット",
+    privacy: "プライバシー",
+    tips: "ヒントとコツ",
+    viewShortcuts: "ショートカットを表示",
+    recentGuideEyebrow: "最近の機能ガイド",
+    recentGuideTitle: "v1.4.5 以降の新機能"
+  },
+  ko: {
+    features: "기능 소개",
+    shortcuts: "단축키",
+    privacy: "개인정보",
+    tips: "팁 및 가이드",
+    viewShortcuts: "단축키 보기",
+    recentGuideEyebrow: "최근 기능 가이드",
+    recentGuideTitle: "v1.4.5 이후 변경 사항"
+  },
+  ru: {
+    features: "Возможности",
+    shortcuts: "Сочетания клавиш",
+    privacy: "Конфиденциальность",
+    tips: "Советы",
+    viewShortcuts: "Посмотреть сочетания",
+    recentGuideEyebrow: "Обзор новых функций",
+    recentGuideTitle: "Что нового с версии 1.4.5"
+  }
 };
 
 interface TipItem {
@@ -171,43 +256,82 @@ interface TipItem {
   badge?: string;
 }
 
-const RECENT_FEATURE_GUIDE: TipItem[] = [
-  {
-    title: "Workspace links and loading feedback",
-    desc: "Links that start with [/], [./], or [../] now open matching files inside the current workspace and stay in back/forward history. Slow file loads and conversions show a loading state so you know the app is still working.",
-    badge: "v1.4.5",
-  },
-  {
-    title: "Cleaner code blocks and table wrapping",
-    desc: "Code selections highlight every affected gutter line, string interpolation is easier to read, and each data table has a Wrap/Unwrap control for switching between compact scanning and full text reading.",
-    badge: "v1.4.6",
-  },
-  {
-    title: "Safer desktop workspace flow",
-    desc: "Desktop workspace switching asks for confirmation, missing workspaces show recovery actions, and recent workspace entries can be removed from the tabs view when a folder is no longer available.",
-    badge: "v1.4.7+",
-  },
-  {
-    title: "Theme Remix and settings portability",
-    desc: "Open Settings, choose [Theme Remix], then create, duplicate, tune, import, or export custom themes with custom colors, density, spacing, and optional background images.",
-    badge: "v1.4.8",
-  },
-  {
-    title: "Content File Tabs and Scope Focus",
-    desc: "Turn on [Open Files in Tabs] to keep document tabs in the reader. Use [Scope Focus] in the sidebar to select only the files or folders you want visible for the current workspace.",
-    badge: "v1.4.9",
-  },
-  {
-    title: "Converted document previews",
-    desc: "Turn on [Read DOCX, PDF, Office, and text files] in Settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT. Conversion is local and best-effort, so complex layout may not match the source exactly.",
-    badge: "Current",
-  },
-  {
-    title: "Sidebar Cursor mode",
-    desc: "Press [Alt+S] to highlight the sidebar, then use [Up]/[Down] to move, [Enter] to expand folders or open files, and [Esc], [Alt+S], or an outside click to leave the mode.",
-    badge: "Current",
-  },
-];
+const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
+  vi: [
+    {
+      title: "Liên kết không gian làm việc & phản hồi tải dữ liệu",
+      desc: "Các liên kết bắt đầu bằng [/], [./], hoặc [../] giờ đây sẽ mở các tệp khớp trong không gian làm việc hiện tại và lưu lại trong lịch sử điều hướng. Quá trình tải tệp chậm và chuyển đổi định dạng sẽ hiển thị trạng thái chờ tải để bạn biết ứng dụng vẫn đang hoạt động.",
+      badge: "v1.4.5",
+    },
+    {
+      title: "Khối mã sạch hơn & ngắt dòng bảng dữ liệu",
+      desc: "Vùng chọn mã sẽ tô sáng tất cả các dòng tương ứng, chuỗi nội suy dễ đọc hơn, và mỗi bảng dữ liệu có tùy chọn Bật/Tắt ngắt dòng để chuyển đổi linh hoạt giữa giao diện gọn gàng và đọc văn bản đầy đủ.",
+      badge: "v1.4.6",
+    },
+    {
+      title: "Quy trình chuyển không gian làm việc an toàn trên Desktop",
+      desc: "Chuyển đổi không gian làm việc trên Desktop sẽ yêu cầu xác nhận, các không gian làm việc bị thiếu sẽ hiển thị các hành động khôi phục, và danh sách gần đây có thể được xóa trực tiếp khỏi giao diện tab khi thư mục không còn tồn tại.",
+      badge: "v1.4.7+",
+    },
+    {
+      title: "Theme Remix & khả năng di chuyển cấu hình",
+      desc: "Mở Cài đặt, chọn [Theme Remix], sau đó tạo, nhân bản, tùy chỉnh, nhập hoặc xuất các giao diện tùy chỉnh với màu sắc, mật độ hiển thị, khoảng cách và hình nền tùy chọn.",
+      badge: "v1.4.8",
+    },
+    {
+      title: "Tab tài liệu & Tập trung phạm vi (Scope Focus)",
+      desc: "Bật tùy chọn [Mở tệp trong tab] để giữ các tab tài liệu trong trình đọc. Sử dụng [Tập trung phạm vi] ở thanh bên để chỉ hiển thị các tệp hoặc thư mục bạn muốn thấy trong không gian làm việc hiện tại.",
+      badge: "v1.4.9",
+    },
+    {
+      title: "Xem trước tài liệu được chuyển đổi",
+      desc: "Bật tùy chọn [Đọc tệp DOCX, PDF, Office và văn bản] trong Cài đặt để xem trước các định dạng DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF và TXT. Quá trình chuyển đổi diễn ra cục bộ và cố gắng tối đa, nên các bố cục phức tạp có thể không khớp chính xác với bản gốc.",
+      badge: "Current",
+    },
+    {
+      title: "Chế độ con trỏ thanh bên (Sidebar Cursor)",
+      desc: "Nhấn [Alt+S] để tô sáng thanh bên, sau đó sử dụng các phím [Lên]/[Xuống] để di chuyển, [Enter] to mở rộng thư mục hoặc mở tệp, và [Esc], [Alt+S] hoặc nhấp ra ngoài để thoát chế độ.",
+      badge: "Current",
+    },
+  ],
+  en: [
+    {
+      title: "Workspace links and loading feedback",
+      desc: "Links that start with [/], [./], or [../] now open matching files inside the current workspace and stay in back/forward history. Slow file loads and conversions show a loading state so you know the app is still working.",
+      badge: "v1.4.5",
+    },
+    {
+      title: "Cleaner code blocks and table wrapping",
+      desc: "Code selections highlight every affected gutter line, string interpolation is easier to read, and each data table has a Wrap/Unwrap control for switching between compact scanning and full text reading.",
+      badge: "v1.4.6",
+    },
+    {
+      title: "Safer desktop workspace flow",
+      desc: "Desktop workspace switching asks for confirmation, missing workspaces show recovery actions, and recent workspace entries can be removed from the tabs view when a folder is no longer available.",
+      badge: "v1.4.7+",
+    },
+    {
+      title: "Theme Remix and settings portability",
+      desc: "Open Settings, choose [Theme Remix], then create, duplicate, tune, import, or export custom themes with custom colors, density, spacing, and optional background images.",
+      badge: "v1.4.8",
+    },
+    {
+      title: "Content File Tabs and Scope Focus",
+      desc: "Turn on [Open Files in Tabs] to keep document tabs in the reader. Use [Scope Focus] in the sidebar to select only the files or folders you want visible for the current workspace.",
+      badge: "v1.4.9",
+    },
+    {
+      title: "Converted document previews",
+      desc: "Turn on [Read DOCX, PDF, Office, and text files] in Settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT. Conversion is local and best-effort, so complex layout may not match the source exactly.",
+      badge: "Current",
+    },
+    {
+      title: "Sidebar Cursor mode",
+      desc: "Press [Alt+S] to highlight the sidebar, then use [Up]/[Down] to move, [Enter] to expand folders or open files, and [Esc], [Alt+S], or an outside click to leave the mode.",
+      badge: "Current",
+    },
+  ],
+};
 
 const TIPS_CONTENT: Record<string, TipItem[]> = {
   vi: [
@@ -279,6 +403,21 @@ const getTipIcon = (index: number) => {
   }
 };
 
+const renderShortcutKeys = (shortcutStr: string) => {
+  if (!shortcutStr) return null;
+  const parts = shortcutStr.split('+');
+  return (
+    <span className="shortcut-keys-wrapper" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+      {parts.map((part, idx) => (
+        <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          {idx > 0 && <span style={{ color: 'var(--tx3)', fontWeight: 500 }}>+</span>}
+          <kbd style={{ margin: 0 }}>{part}</kbd>
+        </span>
+      ))}
+    </span>
+  );
+};
+
 export function WelcomePage() {
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
@@ -286,6 +425,7 @@ export function WelcomePage() {
   const { state } = useAppState();
   const currentLang = state.settings.language || 'en';
   const wt = getWelcomeTranslations(currentLang);
+  const t = getTranslations(currentLang);
   
   const [activeTab, setActiveTab] = useState<'features' | 'shortcuts' | 'privacy' | 'tips'>('features');
   const labels = TAB_LABELS[currentLang] || TAB_LABELS.en;
@@ -421,30 +561,6 @@ export function WelcomePage() {
       <div className="tab-content">
         {activeTab === 'features' && (
           <div className="features-grid">
-            <div className="recent-guide-card">
-              <div className="recent-guide-header">
-                <div>
-                  <div className="recent-guide-eyebrow">Recent feature guide</div>
-                  <h2>What is new since v1.4.5</h2>
-                </div>
-                <button
-                  className="card-action-btn"
-                  onClick={() => setActiveTab('shortcuts')}
-                >
-                  {cleanTitle(labels.viewShortcuts)}
-                  <ArrowRightIcon className="action-btn-icon" />
-                </button>
-              </div>
-              <div className="recent-guide-list">
-                {RECENT_FEATURE_GUIDE.map((item) => (
-                  <div className="recent-guide-item" key={`${item.badge}-${item.title}`}>
-                    {item.badge && <span className="recent-guide-badge">{item.badge}</span>}
-                    <h3>{item.title}</h3>
-                    <p>{renderDescription(item.desc)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* Feature 1: Navigation Tree */}
             <div className="feature-card">
@@ -549,6 +665,31 @@ export function WelcomePage() {
                 </button>
               </div>
             </div>
+
+            <div className="recent-guide-card">
+              <div className="recent-guide-header">
+                <div>
+                  <div className="recent-guide-eyebrow">{labels.recentGuideEyebrow}</div>
+                  <h2>{labels.recentGuideTitle}</h2>
+                </div>
+                <button
+                  className="card-action-btn"
+                  onClick={() => setActiveTab('shortcuts')}
+                >
+                  {cleanTitle(labels.viewShortcuts)}
+                  <ArrowRightIcon className="action-btn-icon" />
+                </button>
+              </div>
+              <div className="recent-guide-list">
+                {(RECENT_FEATURE_GUIDE_CONTENT[currentLang] || RECENT_FEATURE_GUIDE_CONTENT.en).map((item) => (
+                  <div className="recent-guide-item" key={`${item.badge}-${item.title}`}>
+                    {item.badge && <span className="recent-guide-badge">{item.badge}</span>}
+                    <h3>{item.title}</h3>
+                    <p>{renderDescription(item.desc)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -571,78 +712,28 @@ export function WelcomePage() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>{wt.shortcutsTable.rows.back}</td>
-                  <td>
-                    {isElectron ? <kbd>Ctrl+&larr;</kbd> : <><kbd>Ctrl+&larr;</kbd> (or <kbd>Cmd+&larr;</kbd>)</>}{' '}
-                    {wt.shortcutsTable.rows.backShortcut}
-                  </td>
-                </tr>
-                <tr>
-                  <td>{wt.shortcutsTable.rows.forward}</td>
-                  <td>
-                    {isElectron ? <kbd>Ctrl+&rarr;</kbd> : <><kbd>Ctrl+&rarr;</kbd> (or <kbd>Cmd+&rarr;</kbd>)</>}{' '}
-                    {wt.shortcutsTable.rows.forwardShortcut}
-                  </td>
-                </tr>
-                <tr>
-                  <td>{wt.shortcutsTable.rows.welcome}</td>
-                  <td><kbd>Ctrl+H</kbd></td>
-                </tr>
-                <tr>
-                  <td>{wt.shortcutsTable.rows.settings}</td>
-                  <td><kbd>Ctrl+I</kbd></td>
-                </tr>
-                <tr>
-                  <td>{wt.shortcutsTable.rows.theme}</td>
-                  <td><kbd>{isElectron ? 'Ctrl+L' : 'Ctrl+Shift+L'}</kbd></td>
-                </tr>
+                {ACTIONS_LIST.filter((act) => act.scope === 'both' || isDesktopLike).map((act) => {
+                  const val = state.settings.keybindings?.[act.id] || "";
+                  return (
+                    <tr key={act.id}>
+                      <td>{t.actions[act.id as keyof typeof t.actions] || act.label}</td>
+                      <td>
+                        {renderShortcutKeys(val)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {/* Special non-customizable shortcuts */}
                 <tr>
                   <td>{wt.shortcutsTable.rows.zoomModal}</td>
                   <td><kbd>{wt.shortcutsTable.rows.zoomModalShortcut}</kbd></td>
                 </tr>
-                {isDesktopLike && (
-                  <>
-                    <tr>
-                      <td>{wt.shortcutsTable.rows.refresh}</td>
-                      <td><kbd>{isElectron ? 'F5' : 'Alt+R'}</kbd></td>
-                    </tr>
-                    <tr>
-                      <td>{wt.shortcutsTable.rows.collapse}</td>
-                      <td><kbd>Ctrl+Shift+X</kbd></td>
-                    </tr>
-                    <tr>
-                      <td>{wt.shortcutsTable.rows.expand}</td>
-                      <td><kbd>Ctrl+Shift+E</kbd></td>
-                    </tr>
-                    <tr>
-                      <td>{wt.shortcutsTable.rows.workspace}</td>
-                      <td><kbd>Ctrl+Shift+H</kbd></td>
-                    </tr>
-                    <tr>
-                      <td>{wt.shortcutsTable.rows.sidebar}</td>
-                      <td><kbd>Ctrl+Shift+P</kbd></td>
-                    </tr>
-                    <tr>
-                      <td>Sidebar cursor mode</td>
-                      <td>
-                        <kbd>Alt+S</kbd> then <kbd>Up</kbd>/<kbd>Down</kbd>, <kbd>Enter</kbd>, <kbd>Esc</kbd>
-                      </td>
-                    </tr>
-                  </>
-                )}
-                {isElectron && (
-                  <>
-                    <tr>
-                      <td>{wt.shortcutsTable.rows.zoomIn}</td>
-                      <td><kbd>Ctrl + =</kbd> (<kbd>Ctrl + +</kbd>) {wt.shortcutsTable.rows.zoomInShortcut}</td>
-                    </tr>
-                    <tr>
-                      <td>{wt.shortcutsTable.rows.zoomOut}</td>
-                      <td><kbd>Ctrl + -</kbd> {wt.shortcutsTable.rows.zoomOutShortcut}</td>
-                    </tr>
-                  </>
-                )}
+                <tr>
+                  <td>Sidebar cursor mode details</td>
+                  <td>
+                    Use <kbd>Up</kbd> / <kbd>Down</kbd> to move, <kbd>Enter</kbd> to expand/open, <kbd>Esc</kbd> to leave
+                  </td>
+                </tr>
               </tbody>
             </table>
             <div className="shortcuts-note">
