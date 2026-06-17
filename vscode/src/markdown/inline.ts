@@ -251,8 +251,15 @@ export function renderInline(text: string, isMdx = false): string {
   );
 
   // ── Step 10: Restore stashed safe HTML tags recursively ──
-  while (t.includes('\u0001')) {
-    t = t.replace(/\u0001(\d+)\u0001/g, (_, i) => stash[+i]);
+  let replaced = true;
+  let depth = 0;
+  while (t.includes('\u0001') && replaced && depth < 100) {
+    replaced = false;
+    t = t.replace(/\u0001(\d+)\u0001/g, (_, i) => {
+      replaced = true;
+      return stash[+i] ?? '';
+    });
+    depth++;
   }
 
   return t;

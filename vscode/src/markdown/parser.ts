@@ -14,32 +14,42 @@ export type BlockToken =
   | ListToken
   | HrToken;
 
-export interface HeadingToken   { type: 'heading';    level: number; text: string }
-export interface ParagraphToken { type: 'paragraph';  text: string; isJsx?: boolean }
-export interface HrToken        { type: 'hr' }
+export interface HeadingToken {
+  type: "heading";
+  level: number;
+  text: string;
+}
+export interface ParagraphToken {
+  type: "paragraph";
+  text: string;
+  isJsx?: boolean;
+}
+export interface HrToken {
+  type: "hr";
+}
 
 export interface CodeBlockToken {
-  type: 'code';
+  type: "code";
   lang: string;
   content: string;
 }
 
 export interface MathBlockToken {
-  type: 'math';
+  type: "math";
   content: string;
 }
 
 export interface BlockquoteToken {
-  type: 'blockquote';
+  type: "blockquote";
   /** Raw lines with `>` stripped */
   lines: string[];
 }
 
 export interface TableToken {
-  type: 'table';
+  type: "table";
   headers: string[];
   /** Alignment per column: 'left' | 'center' | 'right' | null */
-  align: Array<'left' | 'center' | 'right' | null>;
+  align: Array<"left" | "center" | "right" | null>;
   rows: string[][];
 }
 
@@ -51,7 +61,7 @@ export interface ListItem {
 }
 
 export interface ListToken {
-  type: 'list';
+  type: "list";
   ordered: boolean;
   start?: number;
   items: ListItem[];
@@ -65,34 +75,37 @@ export interface ParseResult {
 }
 
 export function parse(markdown: string, isMdx = false): ParseResult {
-  const normalized = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const normalized = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   const { body: afterFm, frontmatter } = extractFrontmatter(normalized);
-  
+
   let body = afterFm;
   if (isMdx) {
     // Strip imports and exports from MDX body so they don't render as paragraph text
-    const lines = body.split('\n');
-    const filteredLines = lines.filter(line => {
+    const lines = body.split("\n");
+    const filteredLines = lines.filter((line) => {
       const trimmed = line.trim();
-      return !trimmed.startsWith('import ') && !trimmed.startsWith('export ');
+      return !trimmed.startsWith("import ") && !trimmed.startsWith("export ");
     });
-    body = filteredLines.join('\n');
+    body = filteredLines.join("\n");
   }
 
-  const lines = body.split('\n');
+  const lines = body.split("\n");
   const tokens = tokenize(lines, isMdx);
   return { tokens, frontmatter };
 }
 
 // ── Frontmatter ────────────────────────────────────────────
 
-function extractFrontmatter(text: string): { body: string; frontmatter: Record<string, string> } {
+function extractFrontmatter(text: string): {
+  body: string;
+  frontmatter: Record<string, string>;
+} {
   const match = /^---\n([\s\S]*?)\n---\n?/.exec(text);
   if (!match) return { body: text, frontmatter: {} };
 
   const frontmatter: Record<string, string> = {};
-  for (const line of match[1].split('\n')) {
-    const sep = line.indexOf(':');
+  for (const line of match[1].split("\n")) {
+    const sep = line.indexOf(":");
     if (sep > 0) {
       const key = line.slice(0, sep).trim();
       const val = line.slice(sep + 1).trim();
@@ -109,15 +122,19 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
   let i = 0;
 
   while (i < lines.length) {
+    const startIndex = i;
     const line = lines[i];
 
     // Skip blank lines
-    if (line.trim() === '') { i++; continue; }
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
 
     // Display math block: $$ ... $$ or \[ ... \]
     const displayMathFence = line.trim();
-    if (displayMathFence === '$$' || displayMathFence === '\\[') {
-      const closingFence = displayMathFence === '$$' ? '$$' : '\\]';
+    if (displayMathFence === "$$" || displayMathFence === "\\[") {
+      const closingFence = displayMathFence === "$$" ? "$$" : "\\]";
       const mathLines: string[] = [];
       i++;
       while (i < lines.length && lines[i].trim() !== closingFence) {
@@ -125,18 +142,22 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         i++;
       }
       if (i < lines.length) i++; // consume closing fence
-      tokens.push({ type: 'math', content: mathLines.join('\n') });
+      tokens.push({ type: "math", content: mathLines.join("\n") });
       continue;
     }
 
     // JSX Block (MDX only)
     if (isMdx && /^<[A-Za-z]/.test(line.trim())) {
       const jsxLines: string[] = [];
-      while (i < lines.length && lines[i].trim() !== '') {
+      while (i < lines.length && lines[i].trim() !== "") {
         jsxLines.push(lines[i]);
         i++;
       }
-      tokens.push({ type: 'paragraph', text: jsxLines.join('\n'), isJsx: true });
+      tokens.push({
+        type: "paragraph",
+        text: jsxLines.join("\n"),
+        isJsx: true,
+      });
       continue;
     }
 
@@ -152,14 +173,18 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         i++;
       }
       i++; // consume closing fence
-      tokens.push({ type: 'code', lang, content: codeLines.join('\n') });
+      tokens.push({ type: "code", lang, content: codeLines.join("\n") });
       continue;
     }
 
     // ATX heading
     const headingMatch = /^(#{1,6})\s+(.+?)(?:\s+#+)?$/.exec(line);
     if (headingMatch) {
-      tokens.push({ type: 'heading', level: headingMatch[1].length, text: headingMatch[2].trim() });
+      tokens.push({
+        type: "heading",
+        level: headingMatch[1].length,
+        text: headingMatch[2].trim(),
+      });
       i++;
       continue;
     }
@@ -168,36 +193,46 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     if (i + 1 < lines.length) {
       const next = lines[i + 1];
       if (/^=+$/.test(next.trim()) && line.trim()) {
-        tokens.push({ type: 'heading', level: 1, text: line.trim() });
-        i += 2; continue;
+        tokens.push({ type: "heading", level: 1, text: line.trim() });
+        i += 2;
+        continue;
       }
       if (/^-+$/.test(next.trim()) && line.trim() && !line.match(/^[-*+]\s/)) {
-        tokens.push({ type: 'heading', level: 2, text: line.trim() });
-        i += 2; continue;
+        tokens.push({ type: "heading", level: 2, text: line.trim() });
+        i += 2;
+        continue;
       }
     }
 
     // Horizontal rule
     if (/^[-*_]{3,}$/.test(line.trim())) {
-      tokens.push({ type: 'hr' });
-      i++; continue;
+      tokens.push({ type: "hr" });
+      i++;
+      continue;
     }
 
     // Blockquote
-    if (line.startsWith('>')) {
+    if (line.startsWith(">")) {
       const bqLines: string[] = [];
-      while (i < lines.length && lines[i].startsWith('>')) {
+      while (i < lines.length && lines[i].startsWith(">")) {
         bqLines.push(lines[i].slice(1).trimStart());
         i++;
       }
-      tokens.push({ type: 'blockquote', lines: bqLines });
+      tokens.push({ type: "blockquote", lines: bqLines });
       continue;
     }
 
     // Table (pipe table)
-    if (line.includes('|') && i + 1 < lines.length && isPipeTableSeparator(lines[i + 1])) {
+    if (
+      line.includes("|") &&
+      i + 1 < lines.length &&
+      isPipeTableSeparator(lines[i + 1])
+    ) {
       const tableLines: string[] = [];
-      while (i < lines.length && (lines[i].includes('|') || /^[\s|:\-]+$/.test(lines[i]))) {
+      while (
+        i < lines.length &&
+        (lines[i].includes("|") || /^[\s|:\-]+$/.test(lines[i]))
+      ) {
         tableLines.push(lines[i]);
         i++;
       }
@@ -207,9 +242,17 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     }
 
     // Table (tab-separated text copied from docs/spreadsheets)
-    if (line.includes('\t') && i + 1 < lines.length && lines[i + 1].includes('\t')) {
+    if (
+      line.includes("\t") &&
+      i + 1 < lines.length &&
+      lines[i + 1].includes("\t")
+    ) {
       const tableLines: string[] = [];
-      while (i < lines.length && lines[i].trim() !== '' && lines[i].includes('\t')) {
+      while (
+        i < lines.length &&
+        lines[i].trim() !== "" &&
+        lines[i].includes("\t")
+      ) {
         tableLines.push(lines[i]);
         i++;
       }
@@ -224,48 +267,51 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
       const listType = listMarker.type;
       const listStart = listMarker.start;
       const items: ListItem[] = [];
-      
+
       while (i < lines.length) {
         const currentMarker = getListMarker(lines[i]);
         if (currentMarker && currentMarker.type === listType) {
           const item = parseListItem(currentMarker.text);
           const nestedLines: string[] = [];
           i++; // consume list marker line
-          
+
           // Collect indented lines that belong to this list item
           while (i < lines.length) {
             const nextLine = lines[i];
-            if (nextLine.trim() === '') {
+            if (nextLine.trim() === "") {
               let peek = i + 1;
-              while (peek < lines.length && lines[peek].trim() === '') {
+              while (peek < lines.length && lines[peek].trim() === "") {
                 peek++;
               }
               if (peek < lines.length && /^\s{2,}/.test(lines[peek])) {
-                nestedLines.push('');
+                nestedLines.push("");
                 i = peek; // skip intermediate blank lines
               } else {
                 break;
               }
             } else if (/^\s{2,}/.test(nextLine)) {
-              const stripCount = Math.min(nextLine.search(/\S/), currentMarker.markerLength);
+              const stripCount = Math.min(
+                nextLine.search(/\S/),
+                currentMarker.markerLength,
+              );
               nestedLines.push(nextLine.slice(stripCount));
               i++;
             } else {
               break;
             }
           }
-          
+
           if (nestedLines.length > 0) {
-            item.nestedMarkdown = nestedLines.join('\n');
+            item.nestedMarkdown = nestedLines.join("\n");
           }
           items.push(item);
         } else {
           break;
         }
-        
+
         // Peek ahead to see if the next list item exists (possibly after some blank lines)
         let peek = i;
-        while (peek < lines.length && lines[peek].trim() === '') {
+        while (peek < lines.length && lines[peek].trim() === "") {
           peek++;
         }
         if (peek < lines.length) {
@@ -279,8 +325,13 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
           break;
         }
       }
-      
-      tokens.push({ type: 'list', ordered: listType === 'ol', start: listStart, items });
+
+      tokens.push({
+        type: "list",
+        ordered: listType === "ol",
+        start: listStart,
+        items,
+      });
       continue;
     }
 
@@ -288,7 +339,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     const paraLines: string[] = [];
     while (
       i < lines.length &&
-      lines[i].trim() !== '' &&
+      lines[i].trim() !== "" &&
       !/^(#{1,6}\s|>|`{3,}|~{3,}|\$\$|\\\[|[-*_]{3,}$)/.test(lines[i]) &&
       !getListMarker(lines[i])
     ) {
@@ -296,7 +347,13 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
       i++;
     }
     if (paraLines.length) {
-      tokens.push({ type: 'paragraph', text: paraLines.join(' ') });
+      tokens.push({ type: "paragraph", text: paraLines.join(" ") });
+    }
+
+    // Safety fallback: if no tokenizer consumed the line, consume it as a paragraph to prevent infinite loops.
+    if (i === startIndex) {
+      tokens.push({ type: "paragraph", text: lines[i] });
+      i++;
     }
   }
 
@@ -305,7 +362,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
 
 // ── List marker helper ──────────────────────────────────────
 interface ListMarkerInfo {
-  type: 'ol' | 'ul';
+  type: "ol" | "ul";
   start?: number;
   markerLength: number;
   text: string;
@@ -320,16 +377,16 @@ function getListMarker(line: string): ListMarkerInfo | null {
 
   if (/^[-*+]$/.test(marker)) {
     return {
-      type: 'ul',
+      type: "ul",
       markerLength: indent.length + marker.length + 1,
-      text
+      text,
     };
   } else {
     return {
-      type: 'ol',
+      type: "ol",
       start: parseInt(marker, 10),
       markerLength: indent.length + marker.length + 1,
-      text
+      text,
     };
   }
 }
@@ -342,21 +399,23 @@ function parseTable(lines: string[]): TableToken | null {
   const headers = splitPipeCells(lines[0]);
   const sepCells = splitPipeCells(lines[1]);
 
-  const align: Array<'left' | 'center' | 'right' | null> = sepCells.map(cell => {
-    const s = cell.trim();
-    if (s.startsWith(':') && s.endsWith(':')) return 'center';
-    if (s.endsWith(':')) return 'right';
-    if (s.startsWith(':')) return 'left';
-    return null;
-  });
+  const align: Array<"left" | "center" | "right" | null> = sepCells.map(
+    (cell) => {
+      const s = cell.trim();
+      if (s.startsWith(":") && s.endsWith(":")) return "center";
+      if (s.endsWith(":")) return "right";
+      if (s.startsWith(":")) return "left";
+      return null;
+    },
+  );
 
   const rows = lines
     .slice(2)
-    .filter(row => !isPipeTableSeparator(row))
-    .map(row => normalizeTableCells(splitPipeCells(row), headers.length))
-    .filter(r => r.some(c => c !== ''));
+    .filter((row) => !isPipeTableSeparator(row))
+    .map((row) => normalizeTableCells(splitPipeCells(row), headers.length))
+    .filter((r) => r.some((c) => c !== ""));
 
-  return { type: 'table', headers, align, rows };
+  return { type: "table", headers, align, rows };
 }
 
 function parseTabTable(lines: string[]): TableToken | null {
@@ -367,11 +426,11 @@ function parseTabTable(lines: string[]): TableToken | null {
 
   const rows = lines
     .slice(1)
-    .map(row => normalizeTableCells(splitTabCells(row), headers.length))
-    .filter(r => r.some(c => c !== ''));
+    .map((row) => normalizeTableCells(splitTabCells(row), headers.length))
+    .filter((r) => r.some((c) => c !== ""));
 
   return {
-    type: 'table',
+    type: "table",
     headers,
     align: headers.map(() => null),
     rows,
@@ -379,33 +438,35 @@ function parseTabTable(lines: string[]): TableToken | null {
 }
 
 function isPipeTableSeparator(line: string): boolean {
-  if (!line.includes('|')) return false;
+  if (!line.includes("|")) return false;
   const cells = splitPipeCells(line);
-  return cells.length > 0 && cells.every(cell => /^:?-+:?$/.test(cell.trim()));
+  return (
+    cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell.trim()))
+  );
 }
 
 function splitPipeCells(row: string): string[] {
   let source = row.trim();
-  if (source.startsWith('|')) source = source.slice(1);
-  if (source.endsWith('|')) source = source.slice(0, -1);
+  if (source.startsWith("|")) source = source.slice(1);
+  if (source.endsWith("|")) source = source.slice(0, -1);
 
   const cells: string[] = [];
-  let current = '';
+  let current = "";
   let inCode = false;
 
   for (let i = 0; i < source.length; i++) {
     const ch = source[i];
 
-    if (ch === '\\' && source[i + 1] === '|') {
-      current += '|';
+    if (ch === "\\" && source[i + 1] === "|") {
+      current += "|";
       i++;
       continue;
     }
 
-    if (ch === '`') {
-      let run = '`';
-      while (source[i + 1] === '`') {
-        run += '`';
+    if (ch === "`") {
+      let run = "`";
+      while (source[i + 1] === "`") {
+        run += "`";
         i++;
       }
       inCode = !inCode;
@@ -413,9 +474,9 @@ function splitPipeCells(row: string): string[] {
       continue;
     }
 
-    if (ch === '|' && !inCode) {
+    if (ch === "|" && !inCode) {
       cells.push(current.trim());
-      current = '';
+      current = "";
       continue;
     }
 
@@ -427,18 +488,21 @@ function splitPipeCells(row: string): string[] {
 }
 
 function splitTabCells(row: string): string[] {
-  return row.split('\t').map(cell => cell.trim());
+  return row.split("\t").map((cell) => cell.trim());
 }
 
 function normalizeTableCells(cells: string[], columnCount: number): string[] {
   if (columnCount <= 0 || cells.length === columnCount) return cells;
   if (cells.length < columnCount) {
-    return [...cells, ...Array(columnCount - cells.length).fill('')];
+    return [...cells, ...Array(columnCount - cells.length).fill("")];
   }
   if (columnCount === 2) {
-    return [cells.slice(0, -1).join(' | '), cells[cells.length - 1]];
+    return [cells.slice(0, -1).join(" | "), cells[cells.length - 1]];
   }
-  return [...cells.slice(0, columnCount - 1), cells.slice(columnCount - 1).join(' | ')];
+  return [
+    ...cells.slice(0, columnCount - 1),
+    cells.slice(columnCount - 1).join(" | "),
+  ];
 }
 
 // ── List item parser ───────────────────────────────────────
@@ -446,7 +510,11 @@ function normalizeTableCells(cells: string[], columnCount: number): string[] {
 function parseListItem(text: string): ListItem {
   const taskMatch = /^\[(x| )\]\s+(.+)$/i.exec(text);
   if (taskMatch) {
-    return { text: taskMatch[2], isTask: true, checked: taskMatch[1].toLowerCase() === 'x' };
+    return {
+      text: taskMatch[2],
+      isTask: true,
+      checked: taskMatch[1].toLowerCase() === "x",
+    };
   }
   return { text, isTask: false, checked: false };
 }
