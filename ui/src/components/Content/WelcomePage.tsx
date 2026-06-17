@@ -174,7 +174,7 @@ const TAB_LABELS: Record<
     tips: "Tips & Practices",
     viewShortcuts: "View shortcuts",
     recentGuideEyebrow: "Recent feature guide",
-    recentGuideTitle: "What is new since v1.4.5"
+    recentGuideTitle: "What is new since v1.5.0"
   },
   vi: {
     features: "Tính năng",
@@ -183,7 +183,7 @@ const TAB_LABELS: Record<
     tips: "Mẹo & Thực hành",
     viewShortcuts: "Xem phím tắt",
     recentGuideEyebrow: "Hướng dẫn tính năng mới",
-    recentGuideTitle: "Các điểm mới kể từ v1.4.5"
+    recentGuideTitle: "Các điểm mới kể từ v1.5.0"
   },
   fr: {
     features: "Fonctionnalités",
@@ -192,7 +192,7 @@ const TAB_LABELS: Record<
     tips: "Conseils",
     viewShortcuts: "Voir les raccourcis",
     recentGuideEyebrow: "Guide des nouvelles fonctionnalités",
-    recentGuideTitle: "Quoi de neuf depuis la v1.4.5"
+    recentGuideTitle: "Quoi de neuf depuis la v1.5.0"
   },
   es: {
     features: "Funciones",
@@ -201,7 +201,7 @@ const TAB_LABELS: Record<
     tips: "Consejos",
     viewShortcuts: "Ver atajos",
     recentGuideEyebrow: "Guía de funciones recientes",
-    recentGuideTitle: "Novedades desde la v1.4.5"
+    recentGuideTitle: "Novedades desde la v1.5.0"
   },
   zh: {
     features: "功能特性",
@@ -210,7 +210,7 @@ const TAB_LABELS: Record<
     tips: "技巧与实践",
     viewShortcuts: "查看快捷键",
     recentGuideEyebrow: "近期功能指南",
-    recentGuideTitle: "v1.4.5 以来的新特性"
+    recentGuideTitle: "v1.5.0 以来的新特性"
   },
   no: {
     features: "Funksjoner",
@@ -219,7 +219,7 @@ const TAB_LABELS: Record<
     tips: "Tips",
     viewShortcuts: "Vis snarveier",
     recentGuideEyebrow: "Guide for nye funksjoner",
-    recentGuideTitle: "Hva er nytt siden v1.4.5"
+    recentGuideTitle: "Hva er nytt siden v1.5.0"
   },
   ja: {
     features: "功能一覧",
@@ -228,7 +228,7 @@ const TAB_LABELS: Record<
     tips: "ヒントとコツ",
     viewShortcuts: "ショートカットを表示",
     recentGuideEyebrow: "最近の機能ガイド",
-    recentGuideTitle: "v1.4.5 以降の新機能"
+    recentGuideTitle: "v1.5.0 以降の新機能"
   },
   ko: {
     features: "기능 소개",
@@ -237,7 +237,7 @@ const TAB_LABELS: Record<
     tips: "팁 및 가이드",
     viewShortcuts: "단축키 보기",
     recentGuideEyebrow: "최근 기능 가이드",
-    recentGuideTitle: "v1.4.5 이후 변경 사항"
+    recentGuideTitle: "v1.5.0 이후 변경 사항"
   },
   ru: {
     features: "Возможности",
@@ -246,7 +246,7 @@ const TAB_LABELS: Record<
     tips: "Советы",
     viewShortcuts: "Посмотреть сочетания",
     recentGuideEyebrow: "Обзор новых функций",
-    recentGuideTitle: "Что нового с версии 1.4.5"
+    recentGuideTitle: "Что нового с версии 1.5.0"
   }
 };
 
@@ -259,26 +259,6 @@ interface TipItem {
 const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
   vi: [
     {
-      title: "Liên kết không gian làm việc & phản hồi tải dữ liệu",
-      desc: "Các liên kết bắt đầu bằng [/], [./], hoặc [../] giờ đây sẽ mở các tệp khớp trong không gian làm việc hiện tại và lưu lại trong lịch sử điều hướng. Quá trình tải tệp chậm và chuyển đổi định dạng sẽ hiển thị trạng thái chờ tải để bạn biết ứng dụng vẫn đang hoạt động.",
-      badge: "v1.4.5",
-    },
-    {
-      title: "Khối mã sạch hơn & ngắt dòng bảng dữ liệu",
-      desc: "Vùng chọn mã sẽ tô sáng tất cả các dòng tương ứng, chuỗi nội suy dễ đọc hơn, và mỗi bảng dữ liệu có tùy chọn Bật/Tắt ngắt dòng để chuyển đổi linh hoạt giữa giao diện gọn gàng và đọc văn bản đầy đủ.",
-      badge: "v1.4.6",
-    },
-    {
-      title: "Quy trình chuyển không gian làm việc an toàn trên Desktop",
-      desc: "Chuyển đổi không gian làm việc trên Desktop sẽ yêu cầu xác nhận, các không gian làm việc bị thiếu sẽ hiển thị các hành động khôi phục, và danh sách gần đây có thể được xóa trực tiếp khỏi giao diện tab khi thư mục không còn tồn tại.",
-      badge: "v1.4.7+",
-    },
-    {
-      title: "Theme Remix & khả năng di chuyển cấu hình",
-      desc: "Mở Cài đặt, chọn [Theme Remix], sau đó tạo, nhân bản, tùy chỉnh, nhập hoặc xuất các giao diện tùy chỉnh với màu sắc, mật độ hiển thị, khoảng cách và hình nền tùy chọn.",
-      badge: "v1.4.8",
-    },
-    {
       title: "Tab tài liệu & Tập trung phạm vi (Scope Focus)",
       desc: "Bật tùy chọn [Mở tệp trong tab] để giữ các tab tài liệu trong trình đọc. Sử dụng [Tập trung phạm vi] ở thanh bên để chỉ hiển thị các tệp hoặc thư mục bạn muốn thấy trong không gian làm việc hiện tại.",
       badge: "v1.4.9",
@@ -286,35 +266,25 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
     {
       title: "Xem trước tài liệu được chuyển đổi",
       desc: "Bật tùy chọn [Đọc tệp DOCX, PDF, Office và văn bản] trong Cài đặt để xem trước các định dạng DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF và TXT. Quá trình chuyển đổi diễn ra cục bộ và cố gắng tối đa, nên các bố cục phức tạp có thể không khớp chính xác với bản gốc.",
-      badge: "Current",
+      badge: "v1.5.0",
     },
     {
       title: "Chế độ con trỏ thanh bên (Sidebar Cursor)",
-      desc: "Nhấn [Alt+S] để tô sáng thanh bên, sau đó sử dụng các phím [Lên]/[Xuống] để di chuyển, [Enter] to mở rộng thư mục hoặc mở tệp, và [Esc], [Alt+S] hoặc nhấp ra ngoài để thoát chế độ.",
-      badge: "Current",
+      desc: "Nhấn [Alt+S] để tô sáng thanh bên, sau đó sử dụng các phím [Lên]/[Xuống] để di chuyển, [Enter] để mở rộng thư mục hoặc mở tệp, và [Esc], [Alt+S] hoặc nhấp ra ngoài để thoát chế độ.",
+      badge: "v1.5.1",
+    },
+    {
+      title: "Thu gọn bảng mục lục (TOC)",
+      desc: "Nhấn nút [×] trên bảng mục lục để thu gọn hoàn toàn, giải phóng thêm không gian cho nội dung. Nhấn nút mũi tên ở góc để mở lại. Trạng thái được lưu lại giữa các phiên. Bạn cũng có thể dùng phím tắt tùy chỉnh để bật/tắt nhanh.",
+      badge: "v1.5.2",
+    },
+    {
+      title: "Định vị tệp hiện tại trong thanh bên",
+      desc: "Nhấn nút kính ngắm trên tiêu đề thanh bên để cuộn đến và làm nổi bật tệp đang mở. Các thư mục cha sẽ tự động mở rộng nếu cần. Bạn cũng có thể gán phím tắt [Định vị tệp] trong Cài đặt phím tắt.",
+      badge: "v1.5.2",
     },
   ],
   en: [
-    {
-      title: "Workspace links and loading feedback",
-      desc: "Links that start with [/], [./], or [../] now open matching files inside the current workspace and stay in back/forward history. Slow file loads and conversions show a loading state so you know the app is still working.",
-      badge: "v1.4.5",
-    },
-    {
-      title: "Cleaner code blocks and table wrapping",
-      desc: "Code selections highlight every affected gutter line, string interpolation is easier to read, and each data table has a Wrap/Unwrap control for switching between compact scanning and full text reading.",
-      badge: "v1.4.6",
-    },
-    {
-      title: "Safer desktop workspace flow",
-      desc: "Desktop workspace switching asks for confirmation, missing workspaces show recovery actions, and recent workspace entries can be removed from the tabs view when a folder is no longer available.",
-      badge: "v1.4.7+",
-    },
-    {
-      title: "Theme Remix and settings portability",
-      desc: "Open Settings, choose [Theme Remix], then create, duplicate, tune, import, or export custom themes with custom colors, density, spacing, and optional background images.",
-      badge: "v1.4.8",
-    },
     {
       title: "Content File Tabs and Scope Focus",
       desc: "Turn on [Open Files in Tabs] to keep document tabs in the reader. Use [Scope Focus] in the sidebar to select only the files or folders you want visible for the current workspace.",
@@ -323,12 +293,22 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
     {
       title: "Converted document previews",
       desc: "Turn on [Read DOCX, PDF, Office, and text files] in Settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT. Conversion is local and best-effort, so complex layout may not match the source exactly.",
-      badge: "Current",
+      badge: "v1.5.0",
     },
     {
       title: "Sidebar Cursor mode",
       desc: "Press [Alt+S] to highlight the sidebar, then use [Up]/[Down] to move, [Enter] to expand folders or open files, and [Esc], [Alt+S], or an outside click to leave the mode.",
-      badge: "Current",
+      badge: "v1.5.1",
+    },
+    {
+      title: "Collapsible TOC panel",
+      desc: "Click the [×] button inside the TOC panel to collapse it and reclaim reading space. Click the arrow button at the content edge to reopen it. The state persists across sessions and can also be toggled with a customisable keyboard shortcut.",
+      badge: "v1.5.2",
+    },
+    {
+      title: "Locate current file in sidebar",
+      desc: "Click the crosshair button in the sidebar header to scroll to and highlight the currently open file. Parent folders expand automatically if the file is nested. You can also assign a keyboard shortcut via Settings → Keyboard Shortcuts.",
+      badge: "v1.5.2",
     },
   ],
 };
