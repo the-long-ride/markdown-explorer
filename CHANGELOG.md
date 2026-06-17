@@ -7,6 +7,9 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ## [1.5.2] — 2026-06-17
 
 ### Added Features & Enhancements
+- **Focus Mode**: Added a new fullscreen toggle button in the top-left of the document content area. When clicked, it opens the current file in Focus Mode, hiding the sidebar, header, and Table of Contents (TOC) panel for a clean reading interface. The layout hides all workspace controls, navigation tabs, and floating toolbars to focus strictly on markdown content.
+- **Focus Mode Shortcut**: Registered a new customizable action (`toggleFocusMode`) with the default keyboard shortcut `Ctrl+Alt+F` to easily toggle the view.
+- **Shortcut Registry & Translations**: Wired the Focus Mode action into the keyboard customizer under Settings and added localized translations for the setting descriptions in all 9 supported UI languages.
 - **Collapsible TOC Panel**: Added a collapse/expand button to the Table of Contents panel so users can hide it entirely and reclaim horizontal reading space. The collapsed state is persisted across sessions via `localStorage` and can also be toggled with a configurable keyboard shortcut. A floating reopen button appears at the content edge when the panel is hidden; on narrow viewports, the compact TOC bar gains a matching toggle button.
 - **Locate Current File in Sidebar**: Added a crosshair button in the sidebar header that scrolls the file tree to the currently open file and highlights it. Parent folders expand automatically if the file is nested inside a collapsed directory. The action is also available as a configurable keyboard shortcut in Settings → Keyboard Shortcuts.
 - **New Icons**: Added `LocateIcon` (crosshair), `TocIcon`, `DoubleChevronLeftIcon`, and `DoubleChevronRightIcon` to the shared icon set.

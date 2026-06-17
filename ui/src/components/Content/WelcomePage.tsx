@@ -283,6 +283,11 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
       desc: "Nhấn nút kính ngắm trên tiêu đề thanh bên để cuộn đến và làm nổi bật tệp đang mở. Các thư mục cha sẽ tự động mở rộng nếu cần. Bạn cũng có thể gán phím tắt [Định vị tệp] trong Cài đặt phím tắt.",
       badge: "v1.5.2",
     },
+    {
+      title: "Chế độ đọc tập trung (Focus Mode)",
+      desc: "Nhấp vào nút thu phóng ở góc trên cùng bên trái của thẻ tài liệu để bật/tắt Chế độ Tập trung, ẩn thanh bên, thanh trên cùng và mục lục để có giao diện đọc sạch sẽ. Bạn cũng có thể nhấn [Ctrl+Alt+F] để bật/tắt nhanh.",
+      badge: "v1.5.2",
+    },
   ],
   en: [
     {
@@ -308,6 +313,11 @@ const RECENT_FEATURE_GUIDE_CONTENT: Record<string, TipItem[]> = {
     {
       title: "Locate current file in sidebar",
       desc: "Click the crosshair button in the sidebar header to scroll to and highlight the currently open file. Parent folders expand automatically if the file is nested. You can also assign a keyboard shortcut via Settings → Keyboard Shortcuts.",
+      badge: "v1.5.2",
+    },
+    {
+      title: "Focus mode reading view",
+      desc: "Click the fullscreen toggle button in the top-left of the document content area to toggle Focus Mode, hiding the topbar, sidebar, and table of contents for a clean reading interface. You can also use [Ctrl+Alt+F] to toggle it instantly.",
       badge: "v1.5.2",
     },
   ],
