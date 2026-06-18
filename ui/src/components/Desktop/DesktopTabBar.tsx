@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { TooltipButton } from '../shared/TooltipButton';
+import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import {
   CloseIcon,
-  HomeIcon,
-  MoonIcon,
   PlusIcon,
   SearchIcon,
-  SettingsIcon,
   SidebarIcon,
-  SunIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-128.png';
 import { getTabLabel } from '../../desktop/desktopTabs';
@@ -61,7 +58,7 @@ export function DesktopTabBar({
   isMaximized,
   hasUpdate = false,
 }: DesktopTabBarProps) {
-  const { state } = useAppState();
+  const { state, openInEditor } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
   const workspaceTabs = tabs.filter((tab) => tab.kind !== 'home');
@@ -281,14 +278,6 @@ export function DesktopTabBar({
           </div>
         </div>
       </div>
-      <button
-        type="button"
-        className={`desktop-tabbar__home${activeTabId === 'home' ? ' is-active' : ''}`}
-        aria-label="Home"
-        onClick={() => onSelectTab('home')}
-      >
-        <HomeIcon size={14} />
-      </button>
       <div className="desktop-tabbar__tabs-wrap">
         <div
           ref={tabsScrollRef}
@@ -406,14 +395,34 @@ export function DesktopTabBar({
         <SearchIcon size={13} />
         <span>{t.actions.searchAllTabs}... ({searchShortcutLabel})</span>
       </button>
-      <TooltipButton className="btn btn--icon" onClick={onThemeToggle} tooltip={t.topbar.theme} icon={isDark ? <SunIcon /> : <MoonIcon />} />
       <TooltipButton
-        className={`btn btn--icon${hasUpdate ? ' has-update' : ''}`}
-        onClick={onSettingsOpen}
-        tooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
-        icon={<SettingsIcon />}
+        className="btn btn--icon"
+        onClick={onSidebarToggle}
+        tooltip={t.topbar.sidebar}
+        shortcut={state.settings.keybindings?.toggleSidebar}
+        icon={<SidebarIcon />}
       />
-      <TooltipButton className="btn btn--icon" onClick={onSidebarToggle} tooltip={t.topbar.sidebar} icon={<SidebarIcon />} />
+      <ToolbarActionMenu
+        triggerTooltip={t.topbar.moreActions}
+        homeLabel={t.topbar.home}
+        themeLabel={t.topbar.themeLabel}
+        editLabel={t.topbar.editLabel}
+        settingsLabel={t.topbar.settings}
+        homeTooltip={t.topbar.welcomePage}
+        themeTooltip={t.topbar.theme}
+        editTooltip={t.topbar.edit}
+        settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
+        homeShortcut={state.settings.keybindings?.welcome}
+        themeShortcut={state.settings.keybindings?.toggleTheme}
+        settingsShortcut={state.settings.keybindings?.settings}
+        canEdit={!!state.currentFile}
+        isDark={isDark}
+        hasUpdate={hasUpdate}
+        onHome={() => onSelectTab('home')}
+        onTheme={onThemeToggle}
+        onEdit={openInEditor}
+        onSettings={onSettingsOpen}
+      />
       <div className="desktop-tabbar__window-controls">
         <TooltipButton
           className="btn btn--icon window-control-btn"

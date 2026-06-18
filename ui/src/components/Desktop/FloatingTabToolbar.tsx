@@ -196,11 +196,43 @@ export function FloatingTabToolbar({
         <span>{t.topbar.searchPlaceholder} ({searchShortcutLabel})</span>
       </button>
       <div className="tab-floating-toolbar__actions" aria-hidden={actionsCollapsed}>
-        <TooltipButton className="btn btn--icon" onClick={onBack} disabled={!canGoBack} tooltip={t.topbar.goBack} icon={<ChevronLeftIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onForward} disabled={!canGoForward} tooltip={t.topbar.goForward} icon={<ChevronRightIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onRefresh} tooltip={t.topbar.refresh} icon={<RefreshIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onExpandAll} tooltip={t.topbar.expandAll} icon={<ExpandIcon />} />
-        <TooltipButton className="btn btn--icon" onClick={onCollapseAll} tooltip={t.topbar.collapseAll} icon={<CollapseIcon />} />
+        <TooltipButton
+          className="btn btn--icon"
+          onClick={onBack}
+          disabled={!canGoBack}
+          tooltip={t.topbar.goBack}
+          shortcut={state.settings.keybindings?.back}
+          icon={<ChevronLeftIcon />}
+        />
+        <TooltipButton
+          className="btn btn--icon"
+          onClick={onForward}
+          disabled={!canGoForward}
+          tooltip={t.topbar.goForward}
+          shortcut={state.settings.keybindings?.forward}
+          icon={<ChevronRightIcon />}
+        />
+        <TooltipButton
+          className="btn btn--icon"
+          onClick={onRefresh}
+          tooltip={t.topbar.refresh}
+          shortcut={state.settings.keybindings?.refresh}
+          icon={<RefreshIcon />}
+        />
+        <TooltipButton
+          className="btn btn--icon"
+          onClick={onExpandAll}
+          tooltip={t.topbar.expandAll}
+          shortcut={state.settings.keybindings?.expandAll}
+          icon={<ExpandIcon />}
+        />
+        <TooltipButton
+          className="btn btn--icon"
+          onClick={onCollapseAll}
+          tooltip={t.topbar.collapseAll}
+          shortcut={state.settings.keybindings?.collapseAll}
+          icon={<CollapseIcon />}
+        />
         <TooltipButton className="btn" onClick={onEdit} disabled={!canEdit} tooltip={t.topbar.edit} icon={<EditIcon />} label={t.topbar.editLabel} onlyIcon={false} />
         <TooltipButton className="btn btn--icon" onClick={(event) => onCopyFile(event.currentTarget)} disabled={!canEdit} tooltip={t.topbar.copy} icon={<CopyIcon />} />
       </div>

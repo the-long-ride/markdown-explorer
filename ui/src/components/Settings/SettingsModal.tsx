@@ -17,6 +17,7 @@ import { LANGUAGE_OPTIONS, getTranslations, Translations } from "../../contexts/
 import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings } from "../../settings/settingsImportExport";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { CopyIcon, FolderIcon, GlobeIcon, AlertTriangleIcon } from "../shared/icons";
+import { formatShortcutLabel } from "../../utils/shortcuts";
 
 import whiteShibaBlep from "../../assets/themes/pets/backgrounds/white-shiba-blep.png";
 import shibaBlep from "../../assets/themes/pets/backgrounds/shiba-blep.png";
@@ -691,7 +692,7 @@ export function SettingsModal({
                       value={
                         isRecording
                           ? "Press keys..."
-                          : val.split("+").join(" + ")
+                          : formatShortcutLabel(val, " + ")
                       }
                       onFocus={() => setRecordingAction(act.id)}
                       onBlur={() => {

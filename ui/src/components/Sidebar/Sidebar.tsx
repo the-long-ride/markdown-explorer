@@ -342,6 +342,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
               className="sidebar__locate-btn"
               onClick={scrollToActiveFile}
               tooltip={t.tooltips.locateFile}
+              shortcut={state.settings.keybindings?.locateFile}
               tooltipPos="below"
               tooltipAlign="right"
               icon={<LocateIcon size={12} />}

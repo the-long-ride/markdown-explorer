@@ -61,7 +61,10 @@ export interface Translations {
     toggleFocusMode?: string;
   };
   topbar: {
+    home: string;
     welcomePage: string;
+    themeLabel: string;
+    moreActions: string;
     closeFolder: string;
     goBack: string;
     goForward: string;
@@ -233,7 +236,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       toggleFocusMode: "Toggle focus mode",
     },
     topbar: {
+      home: "Home",
       welcomePage: "Welcome Page",
+      themeLabel: "Theme",
+      moreActions: "More actions",
       closeFolder: "Close Folder (Return to Workspace Selector)",
       goBack: "Go Back",
       goForward: "Go Forward",
@@ -387,7 +393,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Định vị tệp hiện tại",
     },
     topbar: {
+      home: "Trang chủ",
       welcomePage: "Trang chào mừng",
+      themeLabel: "Giao diện",
+      moreActions: "Tác vụ khác",
       closeFolder: "Đóng thư mục (Quay lại trang chọn không gian)",
       goBack: "Quay lại",
       goForward: "Đi tiếp",
@@ -541,7 +550,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Localiser le fichier actuel",
     },
     topbar: {
+      home: "Accueil",
       welcomePage: "Page d'accueil",
+      themeLabel: "Thème",
+      moreActions: "Plus d'actions",
       closeFolder: "Fermer le dossier (Retour à la sélection)",
       goBack: "Retour",
       goForward: "Suivant",
@@ -695,7 +707,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Localizar archivo actual",
     },
     topbar: {
+      home: "Inicio",
       welcomePage: "Página de bienvenida",
+      themeLabel: "Tema",
+      moreActions: "Más acciones",
       closeFolder: "Cerrar carpeta (Volver a la selección)",
       goBack: "Atrás",
       goForward: "Adelante",
@@ -849,7 +864,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "定位当前文件",
     },
     topbar: {
+      home: "主页",
       welcomePage: "欢迎页面",
+      themeLabel: "主题",
+      moreActions: "更多操作",
       closeFolder: "关闭文件夹 (返回工作区选择)",
       goBack: "后退",
       goForward: "前进",
@@ -1003,7 +1021,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Finn gjeldende fil",
     },
     topbar: {
+      home: "Hjem",
       welcomePage: "Velkomstside",
+      themeLabel: "Tema",
+      moreActions: "Flere handlinger",
       closeFolder: "Lukk mappe (Gå til valg av arbeidsområde)",
       goBack: "Tilbake",
       goForward: "Frem",
@@ -1157,7 +1178,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "現在のファイルを特定",
     },
     topbar: {
+      home: "ホーム",
       welcomePage: "ウェルカムページ",
+      themeLabel: "テーマ",
+      moreActions: "その他の操作",
       closeFolder: "フォルダーを閉じる (選択に戻る)",
       goBack: "戻る",
       goForward: "進む",
@@ -1311,7 +1335,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "현재 파일 위치 찾기",
     },
     topbar: {
+      home: "홈",
       welcomePage: "시작 페이지",
+      themeLabel: "테마",
+      moreActions: "추가 작업",
       closeFolder: "폴더 닫기 (선택으로 돌아가기)",
       goBack: "뒤로",
       goForward: "앞으로",
@@ -1465,7 +1492,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Найти текущий файл",
     },
     topbar: {
+      home: "Главная",
       welcomePage: "Приветственная страница",
+      themeLabel: "Тема",
+      moreActions: "Другие действия",
       closeFolder: "Закрыть папку (Вернуться к выбору)",
       goBack: "Назад",
       goForward: "Вперед",

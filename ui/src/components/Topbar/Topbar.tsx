@@ -5,12 +5,13 @@
 import { useAppState } from '../../contexts/AppStateContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { TooltipButton } from '../shared/TooltipButton';
+import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
 import {
-  HomeIcon, ChevronLeftIcon, ChevronRightIcon,
-  ExpandIcon, CollapseIcon, CopyIcon, EditIcon, SearchIcon,
-  SettingsIcon, SidebarIcon, RefreshIcon, SunIcon, MoonIcon,
+  ChevronLeftIcon, ChevronRightIcon,
+  ExpandIcon, CollapseIcon, CopyIcon, SearchIcon,
+  SidebarIcon, RefreshIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-128.png';
 
@@ -199,14 +200,6 @@ export function Topbar({
         |
       </span>
 
-      {/* Home */}
-      <TooltipButton
-        className="btn btn--icon"
-        onClick={() => navigate(null)}
-        tooltip={t.topbar.welcomePage}
-        icon={<HomeIcon />}
-      />
-
       {(state.appRuntime === 'desktop' || state.appRuntime === 'chrome') && (
         <TooltipButton
           className="btn btn--icon"
@@ -237,6 +230,7 @@ export function Topbar({
           onClick={back}
           disabled={!canGoBack}
           tooltip={t.topbar.goBack}
+          shortcut={state.settings.keybindings?.back}
           icon={<ChevronLeftIcon />}
         />
         <TooltipButton
@@ -244,6 +238,7 @@ export function Topbar({
           onClick={forward}
           disabled={!canGoForward}
           tooltip={t.topbar.goForward}
+          shortcut={state.settings.keybindings?.forward}
           icon={<ChevronRightIcon />}
         />
       </div>
@@ -255,6 +250,7 @@ export function Topbar({
         className="btn btn--icon"
         onClick={refresh}
         tooltip={t.topbar.refresh}
+        shortcut={state.settings.keybindings?.refresh}
         icon={<RefreshIcon />}
       />
 
@@ -292,19 +288,20 @@ export function Topbar({
           />
         </div>
 
-        <TooltipButton className="btn" onClick={onExpandAll} tooltip={t.topbar.expandAll} icon={<ExpandIcon />} />
-        <TooltipButton className="btn" onClick={onCollapseAll} tooltip={t.topbar.collapseAll} icon={<CollapseIcon />} />
-        {state.appRuntime === 'desktop' && (
-          <TooltipButton
-            className="btn"
-            onClick={openInEditor}
-            tooltip={t.topbar.edit}
-            disabled={!state.currentFile}
-            icon={<EditIcon />}
-            label={t.topbar.editLabel}
-            onlyIcon={false}
-          />
-        )}
+        <TooltipButton
+          className="btn"
+          onClick={onExpandAll}
+          tooltip={t.topbar.expandAll}
+          shortcut={state.settings.keybindings?.expandAll}
+          icon={<ExpandIcon />}
+        />
+        <TooltipButton
+          className="btn"
+          onClick={onCollapseAll}
+          tooltip={t.topbar.collapseAll}
+          shortcut={state.settings.keybindings?.collapseAll}
+          icon={<CollapseIcon />}
+        />
         <TooltipButton
           className="btn btn--icon"
           onClick={(event) => onCopyFile(event.currentTarget)}
@@ -314,21 +311,31 @@ export function Topbar({
         />
         <TooltipButton
           className="btn btn--icon"
-          onClick={toggleTheme}
-          tooltip={t.topbar.theme}
-          icon={isDark ? <SunIcon /> : <MoonIcon />}
-        />
-        <TooltipButton
-          className={`btn btn--icon${hasUpdate ? ' has-update' : ''}`}
-          onClick={onSettingsOpen}
-          tooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
-          icon={<SettingsIcon />}
-        />
-        <TooltipButton
-          className="btn btn--icon"
           onClick={toggleSidebar}
           tooltip={t.topbar.sidebar}
+          shortcut={state.settings.keybindings?.toggleSidebar}
           icon={<SidebarIcon />}
+        />
+        <ToolbarActionMenu
+          triggerTooltip={t.topbar.moreActions}
+          homeLabel={t.topbar.home}
+          themeLabel={t.topbar.themeLabel}
+          editLabel={t.topbar.editLabel}
+          settingsLabel={t.topbar.settings}
+          homeTooltip={t.topbar.welcomePage}
+          themeTooltip={t.topbar.theme}
+          editTooltip={t.topbar.edit}
+          settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
+          homeShortcut={state.settings.keybindings?.welcome}
+          themeShortcut={state.settings.keybindings?.toggleTheme}
+          settingsShortcut={state.settings.keybindings?.settings}
+          canEdit={state.appRuntime === 'desktop' && !!state.currentFile}
+          isDark={isDark}
+          hasUpdate={hasUpdate}
+          onHome={() => navigate(null)}
+          onTheme={toggleTheme}
+          onEdit={openInEditor}
+          onSettings={onSettingsOpen}
         />
 
         {typeof (window as any).electronAPI !== 'undefined' && (

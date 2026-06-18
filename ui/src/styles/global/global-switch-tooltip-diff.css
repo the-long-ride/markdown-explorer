@@ -390,6 +390,8 @@ body.is-electron .topbar {
 
 body.is-electron .topbar__logo,
 body.is-electron .btn,
+body.is-electron .toolbar-action-menu,
+body.is-electron .toolbar-action-menu__panel,
 body.is-electron .search-bar,
 body.is-electron .topbar__divider,
 body.is-electron .topbar__breadcrumb-container,

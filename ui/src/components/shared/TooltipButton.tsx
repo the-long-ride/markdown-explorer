@@ -3,9 +3,11 @@
 // =============================================================================
 
 import type { ReactNode, ButtonHTMLAttributes } from 'react';
+import { buildShortcutTooltip } from '../../utils/toolbar-menu.js';
 
 interface TooltipButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
+  shortcut?: string;
   tooltipPos?: 'above' | 'below';
   tooltipAlign?: 'center' | 'left' | 'right';
   icon?: ReactNode;
@@ -15,6 +17,7 @@ interface TooltipButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function TooltipButton({
   tooltip,
+  shortcut,
   tooltipPos = 'below',
   tooltipAlign = 'center',
   icon,
@@ -25,7 +28,7 @@ export function TooltipButton({
   ...rest
 }: TooltipButtonProps) {
   const classes = `${className} tooltip-container`.trim();
-  const tooltipText = tooltip ?? label ?? '';
+  const tooltipText = buildShortcutTooltip(tooltip ?? label ?? '', shortcut);
 
   return (
     <button
