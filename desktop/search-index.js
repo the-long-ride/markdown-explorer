@@ -84,14 +84,14 @@ function createSearchIndex() {
     step();
   }
 
-  function search(query, items, limit = 80) {
+  function search(query, items, limit = 10000) {
     if (!query || query.length < 2) return [];
 
     const normQuery = normalizeForSearch(query);
     if (!normQuery) return [];
 
     const results = [];
-    const maxMatchesPerFile = 8;
+    const maxMatchesPerFile = 10000;
     for (const item of items) {
       if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
       if (!isKnownSupportedFilePath(item.fsPath)) continue;
@@ -117,11 +117,15 @@ function createSearchIndex() {
             const result = entry.haystack.indexOfNormalized(normQuery, nextNormIndex);
             if (!result) break;
             
+            const textBefore = entry.raw.slice(0, result.match.index);
+            const lineNumber = textBefore.split("\n").length;
+
             contentMatches.push({
               index: result.match.index,
               ordinal,
               excerpt: makeSearchExcerpt(entry.raw, result.match.index, result.match.matchLength),
               matchLength: result.match.matchLength,
+              lineNumber,
             });
             
             ordinal += 1;
@@ -143,6 +147,7 @@ function createSearchIndex() {
             matchIndex: match.index,
             matchOrdinal: match.ordinal,
             matchLength: match.matchLength,
+            lineNumber: match.lineNumber,
             score: baseScore + 3 - Math.min(match.ordinal, 20) / 100,
           });
         }

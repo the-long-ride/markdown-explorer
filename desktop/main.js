@@ -335,7 +335,7 @@ function handleSearchAcrossWorkspaces(msg) {
   mainWindow.webContents.send("host-message", {
     command: "crossTabSearchResults",
     requestId,
-    results: searchIndex.search(query, items, 80),
+    results: searchIndex.search(query, items, 10000),
   });
 }
 
@@ -346,7 +346,7 @@ function handleSearchWorkspace(msg) {
   mainWindow.webContents.send("host-message", {
     command: "workspaceSearchResults",
     requestId,
-    results: searchIndex.search(query, items, 80),
+    results: searchIndex.search(query, items, 10000),
   });
 }
 
@@ -740,6 +740,7 @@ async function sendWorkspaceData() {
 
   const { tree, flat } = scanWorkspaceData(activeWorkspace);
   flatList = flat;
+  searchIndex.prime(flat);
 
   const workspaceName = path.basename(activeWorkspace);
   const recents = recentWorkspacesStore.load();
