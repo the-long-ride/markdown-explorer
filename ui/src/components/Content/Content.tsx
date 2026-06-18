@@ -7,9 +7,9 @@ import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { getTranslations } from "../../contexts/translations";
+import { getChart, getHighlightJs, getKatex, getMermaid } from "../../lib/renderLibs";
 import { WelcomePage } from "./WelcomePage";
 import { AlertTriangleIcon, FolderIcon, TrashIcon } from "../shared/icons";
-import katex from "katex";
 import "katex/dist/katex.min.css";
 
 declare global {
@@ -163,9 +163,6 @@ export function Content({
   useEffect(() => {
     const body = bodyRef.current;
     if (!body || state.isLoading || state.notFoundHref || state.workspaceUnavailablePath) return;
-
-    const hljs = (window as any).hljs;
-    const mermaid = (window as any).mermaid;
 
     // Sticky table header (JS-based, because overflow-x:auto blocks native sticky)
     const scrollContainer = scrollRef.current;
@@ -405,173 +402,177 @@ export function Content({
 
     let cancelled = false;
     const rafId = requestAnimationFrame(() => {
-      if (cancelled) return;
+      void (async () => {
+        if (cancelled) return;
 
-      // Syntax highlighting
-      if (hljs) {
-        try {
-          body
-            .querySelectorAll<HTMLElement>(
-              "pre code:not(.is-custom-highlighted)",
-            )
-            .forEach((block) => {
-              if (/\blanguage-(text|plain|plaintext)\b/.test(block.className)) {
-                return;
+        const codeBlocks = [
+          ...body.querySelectorAll<HTMLElement>("pre code:not(.is-custom-highlighted)"),
+        ].filter((block) => !/\blanguage-(text|plain|plaintext)\b/.test(block.className));
+
+        if (codeBlocks.length > 0) {
+          try {
+            const hljs = await getHighlightJs();
+            if (!cancelled) {
+              codeBlocks.forEach((block) => hljs.highlightElement(block));
+            }
+          } catch (err) {
+            console.error("Highlight error:", err);
+          }
+        }
+
+        const mathEls = [...body.querySelectorAll<HTMLElement>(".mdn-math[data-math]")];
+        if (mathEls.length > 0) {
+          try {
+            const katex = await getKatex();
+            if (!cancelled) {
+              mathEls.forEach((el) => {
+                const raw = el.dataset.math;
+                if (!raw) return;
+                try {
+                  const tex = decodeURIComponent(raw);
+                  katex.render(tex, el, {
+                    displayMode: el.classList.contains("mdn-math-block"),
+                    throwOnError: false,
+                    strict: false,
+                    trust: false,
+                    output: "html",
+                  });
+                  el.classList.add("is-rendered");
+                } catch (err) {
+                  console.error("KaTeX render error:", err);
+                }
+              });
+            }
+          } catch (err) {
+            console.error("KaTeX load error:", err);
+          }
+        }
+
+        const mermaidEls = [...body.querySelectorAll<HTMLElement>(".mermaid")];
+        if (mermaidEls.length > 0) {
+          try {
+            const mermaid = await getMermaid();
+            if (!cancelled) {
+              const isDark =
+                state.theme === "dark" ||
+                (state.theme === "auto" &&
+                  window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+              mermaid.initialize({
+                startOnLoad: false,
+                securityLevel: "loose",
+                fontFamily: "var(--font-mono)",
+                theme: isDark ? "dark" : "default",
+              });
+
+              const runNodes: HTMLElement[] = [];
+              mermaidEls.forEach((rawEl) => {
+                if (!rawEl.dataset.originalCode) {
+                  rawEl.dataset.originalCode = rawEl.textContent || "";
+                }
+                const alreadyRendered = !!rawEl.querySelector("svg");
+                if (!alreadyRendered) {
+                  rawEl.removeAttribute("data-processed");
+                  rawEl.querySelectorAll("svg").forEach((svg) => svg.remove());
+                  runNodes.push(rawEl);
+                }
+              });
+
+              if (runNodes.length > 0 && typeof mermaid.run === "function") {
+                const runId = ++mermaidRunIdRef.current;
+                mermaid.run({ nodes: runNodes }).then(() => {
+                  if (cancelled || runId !== mermaidRunIdRef.current) return;
+                  runNodes.forEach((node) => {
+                    node.querySelectorAll<SVGSVGElement>("svg").forEach((svg) => {
+                      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+                    });
+                  });
+                }).catch((err: any) => {
+                  console.error("Mermaid render error:", err);
+                });
               }
-              hljs.highlightElement(block);
-            });
-        } catch (err) {
-          console.error("Highlight error:", err);
+            }
+          } catch (err) {
+            console.error("Mermaid error:", err);
+          }
         }
-      }
 
-      const mathEls = [...body.querySelectorAll<HTMLElement>(".mdn-math[data-math]")];
-      mathEls.forEach((el) => {
-        const raw = el.dataset.math;
-        if (!raw) return;
-        try {
-          const tex = decodeURIComponent(raw);
-          katex.render(tex, el, {
-            displayMode: el.classList.contains("mdn-math-block"),
-            throwOnError: false,
-            strict: false,
-            trust: false,
-            output: "html",
+        const tables = [...body.querySelectorAll<HTMLElement>(".mdn-table")];
+        if (tables.length > 0) {
+          try {
+            await getChart();
+          } catch (err) {
+            console.error("Chart.js load error:", err);
+          }
+        }
+
+        tables.forEach((table) => {
+          const rows = [
+            ...table.querySelectorAll<HTMLElement>("tbody tr"),
+          ].filter((r) => !r.dataset.toggle);
+          const total = rows.length;
+          const countEl = document.getElementById(table.id + "-count");
+          if (countEl) countEl.textContent = `${total} rows`;
+
+          rows.forEach((row, index) => {
+            if (index >= 15) row.classList.add("is-collapsed-row");
+            else row.classList.remove("is-collapsed-row");
           });
-          el.classList.add("is-rendered");
-        } catch (err) {
-          console.error("KaTeX render error:", err);
-        }
-      });
 
-      // Mermaid rendering — scope to bodyRef elements, use nodes[] to avoid stale selectors
-      if (mermaid) {
-        try {
-          const isDark =
+          const btn = document.getElementById(table.id + "-toggle-btn");
+          if (btn) {
+            btn.style.display = total > 15 ? "" : "none";
+            btn.textContent = "Show More";
+          }
+        });
+
+        Promise.resolve().then(() => {
+          if (cancelled) return;
+          const Win = window as any;
+          if (!Win.Table || tables.length === 0) return;
+
+          if (Win.Table.states) {
+            Object.values(Win.Table.states as Record<string, any>).forEach(
+              (s: any) => {
+                if (s?.chartInstance) {
+                  try {
+                    s.chartInstance.destroy();
+                  } catch (_) {
+                    /* ignore */
+                  }
+                }
+              },
+            );
+          }
+          Win.Table.states = {};
+
+          tables.forEach((table) => {
+            Win.Table.detectChartable?.(table.id);
+          });
+        });
+
+        const htmlPreviewIframes = [
+          ...body.querySelectorAll<HTMLIFrameElement>(".mdn-html-preview-iframe"),
+        ];
+        if (htmlPreviewIframes.length > 0) {
+          const isThemeDark =
             state.theme === "dark" ||
             (state.theme === "auto" &&
               window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-          mermaid.initialize({
-            startOnLoad: false,
-            securityLevel: "loose",
-            fontFamily: "var(--font-mono)",
-            theme: isDark ? "dark" : "default",
+          htmlPreviewIframes.forEach((iframe) => {
+            iframe.contentWindow?.postMessage(
+              { type: "set-theme", theme: isThemeDark ? "dark" : "light" },
+              "*",
+            );
           });
-
-          const mermaidEls = [
-            ...body.querySelectorAll<HTMLElement>(".mermaid"),
-          ];
-          if (mermaidEls.length > 0) {
-            const runNodes: HTMLElement[] = [];
-            mermaidEls.forEach((rawEl) => {
-              // Preserve original source on first visit; restore on re-render
-              if (!rawEl.dataset.originalCode) {
-                rawEl.dataset.originalCode = rawEl.textContent || "";
-              }
-              // Only reset if NOT already rendered (avoid flash of raw text)
-              const alreadyRendered = !!rawEl.querySelector("svg");
-              if (!alreadyRendered) {
-                rawEl.removeAttribute("data-processed");
-                // Remove any previously rendered SVG inside the wrapper
-                rawEl.querySelectorAll("svg").forEach((svg) => svg.remove());
-                runNodes.push(rawEl);
-              }
-            });
-
-            // Use nodes[] to scope to exactly our elements (avoids querySelector global collision)
-            if (runNodes.length > 0 && typeof mermaid.run === "function") {
-              const runId = ++mermaidRunIdRef.current;
-              mermaid.run({ nodes: runNodes }).then(() => {
-                if (runId !== mermaidRunIdRef.current) return;
-                runNodes.forEach((node) => {
-                  node.querySelectorAll<SVGSVGElement>("svg").forEach((svg) => {
-                    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-                  });
-                });
-              }).catch((err: any) => {
-                console.error("Mermaid render error:", err);
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Mermaid error:", err);
         }
-      }
 
-      // Table: row counts, collapse > 15 rows
-      body.querySelectorAll<HTMLElement>(".mdn-table").forEach((table) => {
-        // Exclude the toggle-button row from count
-        const rows = [
-          ...table.querySelectorAll<HTMLElement>("tbody tr"),
-        ].filter((r) => !r.dataset.toggle);
-        const total = rows.length;
-        const countEl = document.getElementById(table.id + "-count");
-        if (countEl) countEl.textContent = `${total} rows`;
-
-        // Collapse rows beyond 15
-        rows.forEach((row, index) => {
-          if (index >= 15) row.classList.add("is-collapsed-row");
-          else row.classList.remove("is-collapsed-row");
+        body.querySelectorAll(".mdn-section").forEach((s) => {
+          (s as HTMLElement).dataset.expanded = "true";
         });
 
-        // Show/hide toggle button (lives OUTSIDE the table, inside mdn-table-wrap)
-        const btn = document.getElementById(table.id + "-toggle-btn");
-        if (btn) {
-          btn.style.display = total > 15 ? "" : "none";
-          btn.textContent = "Show More";
-        }
-      });
-
-      // Schedule chart detection after paint is complete
-      Promise.resolve().then(() => {
-        if (cancelled) return;
-        const Win = window as any;
-        if (!Win.Table) return;
-
-        // Reset ALL table states on each new content render (mirrors old renderContent behaviour)
-        if (Win.Table.states) {
-          // Destroy any existing chart instances to prevent canvas reuse errors
-          Object.values(Win.Table.states as Record<string, any>).forEach(
-            (s: any) => {
-              if (s?.chartInstance) {
-                try {
-                  s.chartInstance.destroy();
-                } catch (_) {
-                  /* ignore */
-                }
-              }
-            },
-          );
-        }
-        Win.Table.states = {};
-
-        body.querySelectorAll<HTMLElement>(".mdn-table").forEach((table) => {
-          Win.Table.detectChartable?.(table.id);
-        });
-      });
-
-      // Sync theme to HTML preview iframes
-      const isThemeDark =
-        state.theme === "dark" ||
-        (state.theme === "auto" &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches);
-      body
-        .querySelectorAll<HTMLIFrameElement>(".mdn-html-preview-iframe")
-        .forEach((iframe) => {
-          iframe.contentWindow?.postMessage(
-            { type: "set-theme", theme: isThemeDark ? "dark" : "light" },
-            "*",
-          );
-        });
-
-      // Expand all sections by default
-      body.querySelectorAll(".mdn-section").forEach((s) => {
-        (s as HTMLElement).dataset.expanded = "true";
-      });
-
-      // Run sticky header positioning once DOM is settled
-      handleScroll();
+        handleScroll();
+      })();
     });
 
     // Restore or reset scroll position only when file/version changes

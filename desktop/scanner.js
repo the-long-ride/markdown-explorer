@@ -60,7 +60,7 @@ class DesktopScanner {
 
   static extractTitle(fsPath, isMdx = false) {
     try {
-      const content = fs.readFileSync(fsPath, 'utf8');
+      const content = DesktopScanner.readTitleChunk(fsPath);
       if (isMdx) {
         const mdxTitle = DesktopScanner.extractMdxTitle(content);
         if (mdxTitle) return mdxTitle;
@@ -69,6 +69,17 @@ class DesktopScanner {
       return match?.[1]?.trim() ?? null;
     } catch {
       return null;
+    }
+  }
+
+  static readTitleChunk(fsPath) {
+    const fd = fs.openSync(fsPath, 'r');
+    try {
+      const buffer = Buffer.allocUnsafe(64 * 1024);
+      const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, 0);
+      return buffer.subarray(0, bytesRead).toString('utf8');
+    } finally {
+      fs.closeSync(fd);
     }
   }
 

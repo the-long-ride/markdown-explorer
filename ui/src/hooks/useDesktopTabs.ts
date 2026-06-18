@@ -425,14 +425,6 @@ export function useDesktopTabs({
     return () => window.clearTimeout(handle);
   }, [bridge, isTabView, tabs]);
 
-  useEffect(() => {
-    if (!isTabView || crossTabSearchItems.length === 0) return;
-    const handle = window.setTimeout(() => {
-      bridge.postMessage({ command: 'indexWorkspaceSearchItems', items: crossTabSearchItems });
-    }, 250);
-    return () => window.clearTimeout(handle);
-  }, [bridge, crossTabSearchItems, isTabView]);
-
   return {
     activeTabId,
     tabs,

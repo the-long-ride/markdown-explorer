@@ -1,5 +1,6 @@
 const path = require("path");
 const { BrowserWindow, shell } = require("electron");
+const perf = require("./perf-timer");
 
 function createMainWindow({ appDir, debugTools, clampAppZoom }) {
   const mainWindow = new BrowserWindow({
@@ -61,6 +62,8 @@ function createMainWindow({ appDir, debugTools, clampAppZoom }) {
   });
 
   mainWindow.webContents.on("did-finish-load", () => {
+    perf.mark("renderer:did-finish-load");
+    perf.measure("window create to renderer load", "window:created", "renderer:did-finish-load");
     clampAppZoom();
     if (debugTools.shouldAutoOpenDevTools()) {
       debugTools.openDevToolsIfDebug(mainWindow);

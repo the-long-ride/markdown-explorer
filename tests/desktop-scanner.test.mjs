@@ -52,3 +52,12 @@ test("scan ignores excluded folders and unsupported files", () => {
   assert.equal(tree.children.length, 1);
   assert.equal(tree.children[0].name, "docs");
 });
+
+test("extractTitle reads headings found within the initial title chunk", () => {
+  const rootDir = makeTempDir("scanner-chunk-");
+  const filePath = path.join(rootDir, "long.md");
+  const prefix = "a".repeat(70 * 1024);
+  writeFile(filePath, `${prefix}\n# Late Heading`);
+
+  assert.equal(DesktopScanner.extractTitle(filePath, false), null);
+});

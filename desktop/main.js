@@ -27,10 +27,13 @@ const { createMainWindow } = require("./window");
 const { createRecentWorkspacesStore } = require("./recents");
 const { createSearchIndex } = require("./search-index");
 const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
+const perf = require("./perf-timer");
 
 const appDir = app.isPackaged
   ? __dirname
   : path.join(__dirname, "..");
+
+perf.mark("main:required");
 
 let mainWindow = null;
 let activeWorkspace = null;
@@ -122,10 +125,13 @@ function sendWorkspaceUnavailable(workspacePath, reason = "missing") {
 
 function createWindow() {
   mainWindow = createMainWindow({ appDir, debugTools, clampAppZoom });
+  perf.mark("window:created");
 }
 let tray = null;
 
 app.whenReady().then(() => {
+  perf.mark("electron:ready");
+  perf.measure("main require to electron ready", "main:required", "electron:ready");
   configureYouTubeEmbedHeaders(session);
   createWindow();
   tray = createAppTray(appDir, () => mainWindow);
@@ -176,6 +182,7 @@ async function handleReady(msg = {}) {
 
   if (readyHandled) return;
   readyHandled = true;
+  perf.mark("host:ready");
   const recents = recentWorkspacesStore.load();
   if (!activeWorkspace) {
     const ackMsg = {
@@ -192,6 +199,8 @@ async function handleReady(msg = {}) {
       ...getHostInfo(),
     };
     mainWindow.webContents.send("host-message", ackMsg);
+    perf.mark("host:ready-ack");
+    perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
   } else {
     await sendWorkspaceData();
   }

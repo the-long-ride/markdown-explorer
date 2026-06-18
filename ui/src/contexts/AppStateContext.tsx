@@ -11,7 +11,6 @@ import {
   useReducer,
 } from 'react';
 import { usePlatform } from './PlatformContext';
-import { libsReady } from '../main';
 import {
   DEFAULT_KEYBINDINGS,
   getDefaultKeybindings,
@@ -755,6 +754,8 @@ const AppStateContext = createContext<AppStateContextValue | null>(null);
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const bridge = usePlatform();
   const isDesktop = typeof (window as any).electronAPI !== 'undefined';
+  const shouldLogPerf =
+    import.meta.env.DEV || new URLSearchParams(window.location.search).has('perf');
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     createInitialState(bridge.getState<PersistedState>(), isDesktop),
   );
@@ -852,20 +853,21 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Wait for mermaid/chart.js to be on window before telling host we're ready
-    libsReady.then(() => {
-      const saved = bridge.getState<PersistedState>();
-      bridge.postMessage({
-        command: 'ready',
-        documentConversionEnabled:
-          typeof saved?.documentConversion === 'boolean'
-            ? saved.documentConversion
-            : undefined,
-      });
+    const saved = bridge.getState<PersistedState>();
+    if (shouldLogPerf) {
+      performance.mark('renderer:ready-post');
+      console.info('[perf] mark renderer:ready-post');
+    }
+    bridge.postMessage({
+      command: 'ready',
+      documentConversionEnabled:
+        typeof saved?.documentConversion === 'boolean'
+          ? saved.documentConversion
+          : undefined,
     });
 
     return unsub;
-  }, [bridge]);
+  }, [bridge, shouldLogPerf]);
 
   // Sync theme to document
   useEffect(() => {

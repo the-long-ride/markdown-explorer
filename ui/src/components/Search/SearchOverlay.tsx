@@ -207,6 +207,21 @@ export function SearchOverlay({
   }, [bridge, crossTabItems, hasCrossTabSearch, isOpen, query]);
 
   useEffect(() => {
+    if (!isOpen || !hasCrossTabSearch || !crossTabItems || crossTabItems.length === 0 || query.length < 2) {
+      return;
+    }
+
+    const handle = window.setTimeout(() => {
+      bridge.postMessage({
+        command: 'indexWorkspaceSearchItems',
+        items: crossTabItems,
+      });
+    }, 100);
+
+    return () => window.clearTimeout(handle);
+  }, [bridge, crossTabItems, hasCrossTabSearch, isOpen, query]);
+
+  useEffect(() => {
     if (!isOpen || hasCrossTabSearch || query.length < 2) {
       setWorkspaceRemoteQuery('');
       setWorkspaceRemoteResults([]);

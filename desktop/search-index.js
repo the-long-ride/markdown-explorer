@@ -30,6 +30,8 @@ function canSearchFileContents(filePath) {
 
 function createSearchIndex() {
   const cache = new Map();
+  const MAX_INDEXABLE_BYTES = 2 * 1024 * 1024;
+  const PRIME_BATCH_SIZE = 5;
 
   function getEntry(filePath) {
     if (!filePath || !fs.existsSync(filePath) || !canSearchFileContents(filePath)) {
@@ -37,6 +39,9 @@ function createSearchIndex() {
     }
 
     const stat = fs.statSync(filePath);
+    if (stat.size > MAX_INDEXABLE_BYTES) {
+      return null;
+    }
     const cached = cache.get(filePath);
     if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
       return cached;
@@ -64,7 +69,7 @@ function createSearchIndex() {
     let index = 0;
 
     const step = () => {
-      const end = Math.min(index + 25, paths.length);
+      const end = Math.min(index + PRIME_BATCH_SIZE, paths.length);
       for (; index < end; index += 1) {
         try {
           getEntry(paths[index]);

@@ -42,3 +42,15 @@ test("search ranks title matches and includes content excerpts", () => {
   assert.equal(results[2].fsPath, notesPath);
   assert.match(results[0].excerpt, /performance/i);
 });
+
+test("search skips oversized files when no path or title match exists", () => {
+  const rootDir = makeTempDir("search-large-");
+  const filePath = path.join(rootDir, "large.md");
+  writeFile(filePath, `# Big File\n\n${"lorem ipsum ".repeat(300000)}`);
+
+  const results = createSearchIndex().search("needle", [
+    { fsPath: filePath, fileName: "large.md", relativePath: "large.md", title: "Big File" },
+  ]);
+
+  assert.deepEqual(results, []);
+});
