@@ -2,17 +2,13 @@
 // chrome/src/chrome-host.ts — Host-side message router running in tab context
 // =============================================================================
 
-import {
-  pickDirectory,
-  readTextFile,
-  verifyPermission
-} from './file-access';
-import { BrowserScanner } from './scanner';
-import { renderMarkdown } from './markdown-renderer';
-import { BrowserSearchIndex } from './search-index';
-import { BrowserRecentWorkspaces } from './recent-workspaces';
-import { rewriteMediaUrls, revokeAll } from './media-resolver';
-import type { MdFile, FolderNode } from '../../ui/src/types';
+import { pickDirectory, readTextFile, verifyPermission } from "./file-access";
+import { BrowserScanner } from "./scanner";
+import { renderMarkdown } from "./markdown-renderer";
+import { BrowserSearchIndex } from "./search-index";
+import { BrowserRecentWorkspaces } from "./recent-workspaces";
+import { rewriteMediaUrls, revokeAll } from "./media-resolver";
+import type { MdFile, FolderNode } from "../../ui/src/types";
 
 declare global {
   interface Window {
@@ -28,8 +24,8 @@ if (!window.__chromeExtBus) {
 const bus = window.__chromeExtBus;
 
 let activeHandle: FileSystemDirectoryHandle | null = null;
-let activeWorkspacePath = '';
-let activeWorkspaceName = '';
+let activeWorkspacePath = "";
+let activeWorkspaceName = "";
 let currentFile: string | null = null; // Relative path, e.g. "docs/intro.md"
 let flatList: MdFile[] = [];
 let workspaceTree: FolderNode | null = null;
@@ -38,50 +34,50 @@ let readyHandled = false;
 
 function getHostInfo() {
   return {
-    appVersion: '1.5.1',
-    appRuntime: 'chrome' as const,
-    hostPlatform: 'unknown' as const,
-    hostArch: 'unknown'
+    appVersion: chrome.runtime.getManifest().version,
+    appRuntime: "chrome" as const,
+    hostPlatform: "unknown" as const,
+    hostArch: "unknown",
   };
 }
 
 function sendToWebview(msg: any) {
-  bus.dispatchEvent(new CustomEvent('host-message', { detail: msg }));
+  bus.dispatchEvent(new CustomEvent("host-message", { detail: msg }));
 }
 
 function sendLoading(label: string, detail?: string) {
   sendToWebview({
-    command: 'setLoading',
+    command: "setLoading",
     label,
-    detail
+    detail,
   });
 }
 
 async function sendRecentWorkspacesChanged() {
   const recents = await BrowserRecentWorkspaces.load();
   sendToWebview({
-    command: 'recentWorkspacesChanged',
-    recentWorkspaces: recents
+    command: "recentWorkspacesChanged",
+    recentWorkspaces: recents,
   });
 }
 
-function sendWorkspaceUnavailable(workspacePath: string, reason = 'missing') {
+function sendWorkspaceUnavailable(workspacePath: string, reason = "missing") {
   activeHandle = null;
-  activeWorkspacePath = '';
-  activeWorkspaceName = '';
+  activeWorkspacePath = "";
+  activeWorkspaceName = "";
   currentFile = null;
   flatList = [];
   workspaceTree = null;
   searchIndex = null;
 
-  BrowserRecentWorkspaces.load().then(recents => {
+  BrowserRecentWorkspaces.load().then((recents) => {
     sendToWebview({
-      command: 'workspaceUnavailable',
+      command: "workspaceUnavailable",
       workspacePath,
-      workspaceName: workspacePath.split('/').pop() || 'Workspace',
+      workspaceName: workspacePath.split("/").pop() || "Workspace",
       reason,
       recentWorkspaces: recents,
-      ...getHostInfo()
+      ...getHostInfo(),
     });
   });
 }
@@ -102,21 +98,21 @@ async function sendWorkspaceData() {
     const recents = await BrowserRecentWorkspaces.load();
 
     sendToWebview({
-      command: 'readyAck',
+      command: "readyAck",
       fileList: flat,
       tree: tree,
-      theme: 'dark',
-      themeStyle: 'default',
+      theme: "dark",
+      themeStyle: "default",
       defaultExpanded: true,
       workspaceName: activeWorkspaceName,
       workspacePath: activeWorkspacePath,
       recentWorkspaces: recents,
       documentConversionEnabled: false,
-      ...getHostInfo()
+      ...getHostInfo(),
     });
   } catch (err) {
-    console.error('Failed to scan workspace:', err);
-    sendWorkspaceUnavailable(activeWorkspacePath, 'missing');
+    console.error("Failed to scan workspace:", err);
+    sendWorkspaceUnavailable(activeWorkspacePath, "missing");
   }
 }
 
@@ -135,24 +131,24 @@ async function sendInitialContent(openFirstFile = false) {
 async function sendContent() {
   if (!currentFile || !activeHandle) return;
 
-  let raw = '';
+  let raw = "";
   try {
     raw = await readTextFile(activeHandle, currentFile);
   } catch (err) {
-    console.error('Failed to read file:', currentFile, err);
+    console.error("Failed to read file:", currentFile, err);
     raw = `# File Not Found\n\nCould not read file: **${currentFile}**`;
   }
 
   const { html, frontmatter, toc } = renderMarkdown(currentFile, raw);
   const rewrittenHtml = await rewriteMediaUrls(activeHandle, html, currentFile);
 
-  const fileInfo = flatList.find(f => f.relativePath === currentFile) || {
+  const fileInfo = flatList.find((f) => f.relativePath === currentFile) || {
     relativePath: currentFile,
-    title: currentFile.split('/').pop() || 'Untitled'
+    title: currentFile.split("/").pop() || "Untitled",
   };
 
   sendToWebview({
-    command: 'renderContent',
+    command: "renderContent",
     html: rewrittenHtml,
     markdownSource: raw,
     frontmatter,
@@ -161,48 +157,48 @@ async function sendContent() {
     relativePath: fileInfo.relativePath,
     title: fileInfo.title,
     fileList: flatList,
-    previewInfo: null
+    previewInfo: null,
   });
 }
 
 async function sendWelcome() {
   sendToWebview({
-    command: 'renderContent',
-    html: '',
-    markdownSource: '',
+    command: "renderContent",
+    html: "",
+    markdownSource: "",
     frontmatter: {},
     toc: [],
-    filePath: '',
-    relativePath: 'Welcome Page',
-    title: 'Welcome',
+    filePath: "",
+    relativePath: "Welcome Page",
+    title: "Welcome",
     fileList: flatList,
-    previewInfo: null
+    previewInfo: null,
   });
 }
 
 // Subscribe to messages from Webview
-bus.addEventListener('webview-message', async (e: Event) => {
+bus.addEventListener("webview-message", async (e: Event) => {
   const msg = (e as CustomEvent).detail;
   if (!msg) return;
 
   switch (msg.command) {
-    case 'ready': {
+    case "ready": {
       if (readyHandled) return;
       readyHandled = true;
       const recents = await BrowserRecentWorkspaces.load();
       if (!activeHandle) {
         sendToWebview({
-          command: 'readyAck',
+          command: "readyAck",
           fileList: [],
           tree: null,
-          theme: 'dark',
-          themeStyle: 'default',
+          theme: "dark",
+          themeStyle: "default",
           defaultExpanded: true,
-          workspaceName: '',
+          workspaceName: "",
           workspacePath: undefined,
           recentWorkspaces: recents,
           documentConversionEnabled: false,
-          ...getHostInfo()
+          ...getHostInfo(),
         });
       } else {
         await sendWorkspaceData();
@@ -210,7 +206,7 @@ bus.addEventListener('webview-message', async (e: Event) => {
       break;
     }
 
-    case 'openFolder': {
+    case "openFolder": {
       try {
         const handle = msg.handle || (await pickDirectory());
         activeHandle = handle;
@@ -218,28 +214,32 @@ bus.addEventListener('webview-message', async (e: Event) => {
         activeWorkspacePath = handle.name; // In browser, name is path prefix
         currentFile = null;
 
-        sendLoading('Loading workspace...');
-        await BrowserRecentWorkspaces.save(activeWorkspaceName, activeWorkspacePath, handle);
+        sendLoading("Loading workspace...");
+        await BrowserRecentWorkspaces.save(
+          activeWorkspaceName,
+          activeWorkspacePath,
+          handle,
+        );
         await sendWorkspaceData();
         await sendInitialContent(msg.openFirstFile !== false);
       } catch (err) {
-        console.warn('Folder selection cancelled or failed:', err);
+        console.warn("Folder selection cancelled or failed:", err);
       }
       break;
     }
 
-    case 'openRecentWorkspace': {
+    case "openRecentWorkspace": {
       const folderPath = msg.path;
       const handle = await BrowserRecentWorkspaces.getHandle(folderPath);
       if (!handle) {
-        sendWorkspaceUnavailable(folderPath, 'missing');
+        sendWorkspaceUnavailable(folderPath, "missing");
         return;
       }
 
-      sendLoading('Checking permission...');
+      sendLoading("Checking permission...");
       const hasPermission = await verifyPermission(handle);
       if (!hasPermission) {
-        sendWorkspaceUnavailable(folderPath, 'locked');
+        sendWorkspaceUnavailable(folderPath, "locked");
         return;
       }
 
@@ -248,24 +248,28 @@ bus.addEventListener('webview-message', async (e: Event) => {
       activeWorkspacePath = folderPath;
       currentFile = null;
 
-      sendLoading('Loading workspace...');
-      await BrowserRecentWorkspaces.save(activeWorkspaceName, activeWorkspacePath, handle);
+      sendLoading("Loading workspace...");
+      await BrowserRecentWorkspaces.save(
+        activeWorkspaceName,
+        activeWorkspacePath,
+        handle,
+      );
       await sendWorkspaceData();
       await sendInitialContent(msg.openFirstFile !== false);
       break;
     }
 
-    case 'deleteRecentWorkspace': {
+    case "deleteRecentWorkspace": {
       await BrowserRecentWorkspaces.remove(msg.path);
       await sendRecentWorkspacesChanged();
       break;
     }
 
-    case 'closeWorkspace': {
+    case "closeWorkspace": {
       readyHandled = false;
       activeHandle = null;
-      activeWorkspacePath = '';
-      activeWorkspaceName = '';
+      activeWorkspacePath = "";
+      activeWorkspaceName = "";
       currentFile = null;
       flatList = [];
       workspaceTree = null;
@@ -274,22 +278,22 @@ bus.addEventListener('webview-message', async (e: Event) => {
 
       const recents = await BrowserRecentWorkspaces.load();
       sendToWebview({
-        command: 'readyAck',
+        command: "readyAck",
         fileList: [],
         tree: null,
-        theme: 'dark',
-        themeStyle: 'default',
+        theme: "dark",
+        themeStyle: "default",
         defaultExpanded: true,
-        workspaceName: '',
+        workspaceName: "",
         workspacePath: undefined,
         recentWorkspaces: recents,
         documentConversionEnabled: false,
-        ...getHostInfo()
+        ...getHostInfo(),
       });
       break;
     }
 
-    case 'navigate': {
+    case "navigate": {
       if (!msg.path) {
         currentFile = null;
         await sendWelcome();
@@ -300,9 +304,9 @@ bus.addEventListener('webview-message', async (e: Event) => {
       break;
     }
 
-    case 'refresh': {
+    case "refresh": {
       if (activeHandle) {
-        sendLoading('Refreshing workspace...');
+        sendLoading("Refreshing workspace...");
         await sendWorkspaceData();
         if (currentFile) {
           await sendContent();
@@ -313,60 +317,65 @@ bus.addEventListener('webview-message', async (e: Event) => {
       break;
     }
 
-    case 'searchWorkspace': {
-      const query = String(msg.query || '').trim().toLowerCase();
+    case "searchWorkspace": {
+      const query = String(msg.query || "")
+        .trim()
+        .toLowerCase();
       const requestId = msg.requestId;
       if (searchIndex) {
         const results = await searchIndex.search(query, flatList, 80);
         sendToWebview({
-          command: 'workspaceSearchResults',
+          command: "workspaceSearchResults",
           requestId,
-          results
+          results,
         });
       } else {
         sendToWebview({
-          command: 'workspaceSearchResults',
+          command: "workspaceSearchResults",
           requestId,
-          results: []
+          results: [],
         });
       }
       break;
     }
 
-    case 'loadWorkspaceSearchIndexes': {
+    case "loadWorkspaceSearchIndexes": {
       const tabRequests = Array.isArray(msg.tabs) ? msg.tabs : [];
       const tabs = tabRequests.flatMap((tab: any) => {
-        const tabId = String(tab?.tabId || '');
-        const workspacePath = String(tab?.workspacePath || '');
-        if (!tabId || !workspacePath || workspacePath !== activeWorkspacePath) return [];
+        const tabId = String(tab?.tabId || "");
+        const workspacePath = String(tab?.workspacePath || "");
+        if (!tabId || !workspacePath || workspacePath !== activeWorkspacePath)
+          return [];
 
-        return [{
-          tabId,
-          workspacePath: activeWorkspacePath,
-          fileList: flatList,
-          tree: workspaceTree
-        }];
+        return [
+          {
+            tabId,
+            workspacePath: activeWorkspacePath,
+            fileList: flatList,
+            tree: workspaceTree,
+          },
+        ];
       });
 
       if (tabs.length > 0) {
         sendToWebview({
-          command: 'workspaceSearchIndexLoaded',
-          tabs
+          command: "workspaceSearchIndexLoaded",
+          tabs,
         });
       }
       break;
     }
 
-    case 'indexWorkspaceSearchItems': {
+    case "indexWorkspaceSearchItems": {
       if (searchIndex) {
         searchIndex.prime(msg.items || []);
       }
       break;
     }
 
-    case 'openExternal': {
-      if (typeof msg.url === 'string' && /^https?:\/\//i.test(msg.url)) {
-        window.open(msg.url, '_blank');
+    case "openExternal": {
+      if (typeof msg.url === "string" && /^https?:\/\//i.test(msg.url)) {
+        window.open(msg.url, "_blank");
       }
       break;
     }
