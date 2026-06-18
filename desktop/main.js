@@ -26,6 +26,7 @@ const { createMarkdownRenderer } = require("./markdown-renderer");
 const { createMainWindow } = require("./window");
 const { createRecentWorkspacesStore } = require("./recents");
 const { createSearchIndex } = require("./search-index");
+const { createUpdateManager } = require("./update-manager");
 const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
 const perf = require("./perf-timer");
 
@@ -41,6 +42,7 @@ let currentFile = null;
 let flatList = [];
 let readyHandled = false;
 let documentConversionEnabled = false;
+let updateManager = null;
 const markdownRenderer = createMarkdownRenderer(appDir);
 const documentConverter = createDocumentConverter();
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
@@ -85,6 +87,10 @@ function sendRecentWorkspacesChanged() {
     command: "recentWorkspacesChanged",
     recentWorkspaces: recentWorkspacesStore.load(),
   });
+}
+
+function sendHostMessage(message) {
+  mainWindow?.webContents.send("host-message", message);
 }
 
 function isAccessDeniedError(err) {
@@ -135,6 +141,12 @@ app.whenReady().then(() => {
   configureYouTubeEmbedHeaders(session);
   createWindow();
   tray = createAppTray(appDir, () => mainWindow);
+  updateManager = createUpdateManager({
+    app,
+    execPath: process.execPath,
+    relaunchArgs: process.argv.slice(1),
+    sendToWindow: sendHostMessage,
+  });
 
   registerIpcHandlers({
     ipcMain,
@@ -162,6 +174,9 @@ app.whenReady().then(() => {
       navigate: handleNavigate,
       refresh: handleRefresh,
       setDocumentConversion: handleSetDocumentConversion,
+      downloadUpdate: handleDownloadUpdate,
+      scheduleDownloadedUpdate: handleScheduleDownloadedUpdate,
+      restartAndApplyUpdate: handleRestartAndApplyUpdate,
     },
   });
   app.on("activate", () => {
@@ -171,6 +186,11 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on("before-quit", () => {
+  if (!updateManager) return;
+  void updateManager.applyPendingUpdateOnQuit();
 });
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -201,8 +221,10 @@ async function handleReady(msg = {}) {
     mainWindow.webContents.send("host-message", ackMsg);
     perf.mark("host:ready-ack");
     perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
+    updateManager?.sendCurrentState();
   } else {
     await sendWorkspaceData();
+    updateManager?.sendCurrentState();
   }
 }
 
@@ -580,6 +602,25 @@ async function handleSetDocumentConversion(enabled) {
   } else {
     await sendWelcome();
   }
+}
+
+async function handleDownloadUpdate(msg) {
+  if (!updateManager) return;
+  await updateManager.startDownload({
+    version: String(msg?.version || ""),
+    url: String(msg?.url || ""),
+  });
+}
+
+async function handleScheduleDownloadedUpdate() {
+  if (!updateManager) return;
+  await updateManager.schedulePendingUpdate();
+}
+
+async function handleRestartAndApplyUpdate() {
+  if (!updateManager) return;
+  await updateManager.restartAndApplyUpdate();
+  app.quit();
 }
 
 function scanWorkspaceData(workspacePath) {

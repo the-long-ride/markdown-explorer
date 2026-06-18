@@ -231,8 +231,33 @@ export function App() {
   }, [bridge]);
 
   const downloadUpdate = useCallback(() => {
+    if (isElectron && state.hostPlatform === 'windows' && updateCheck.downloadUrl) {
+      bridge.postMessage({
+        command: 'downloadUpdate',
+        version: updateCheck.latestVersion,
+        url: updateCheck.downloadUrl,
+      });
+      return;
+    }
     openExternalUrl(updateCheck.downloadUrl);
-  }, [openExternalUrl, updateCheck.downloadUrl]);
+  }, [
+    bridge,
+    isElectron,
+    openExternalUrl,
+    state.hostPlatform,
+    updateCheck.downloadUrl,
+    updateCheck.latestVersion,
+  ]);
+
+  const scheduleUpdateOnExit = useCallback(() => {
+    if (!isElectron) return;
+    bridge.postMessage({ command: 'scheduleDownloadedUpdate' });
+  }, [bridge, isElectron]);
+
+  const restartAndApplyUpdate = useCallback(() => {
+    if (!isElectron) return;
+    bridge.postMessage({ command: 'restartAndApplyUpdate' });
+  }, [bridge, isElectron]);
 
   const openUpdateChangelog = useCallback(() => {
     openExternalUrl(updateCheck.changelogUrl);
@@ -572,7 +597,7 @@ export function App() {
                 />
                 {/* Scroll to top button */}
                 <TooltipButton
-                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 && !state.tocCollapsed ? ' scroll-to-top-btn--with-toc' : ''}`}
+                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 && !state.tocCollapsed && !state.focusMode ? ' scroll-to-top-btn--with-toc' : ''}`}
                   onClick={scrollToTop}
                   tooltip={t.tooltips.scrollToTop}
                   tooltipPos="above"
@@ -636,7 +661,10 @@ export function App() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         updateCheck={updateCheck}
+        hostUpdateState={state.updateState}
         onDownloadUpdate={downloadUpdate}
+        onScheduleUpdateOnExit={scheduleUpdateOnExit}
+        onRestartAndApplyUpdate={restartAndApplyUpdate}
         onOpenChangelog={openUpdateChangelog}
       />
       <ThemeOnboardingModal

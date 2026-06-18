@@ -41,6 +41,15 @@ export interface DocumentPreviewInfo {
   readonly qualityWarning?: string;
 }
 
+export interface UpdateState {
+  readonly status: 'idle' | 'downloading' | 'downloaded' | 'scheduled-on-exit' | 'applying' | 'error';
+  readonly version?: string;
+  readonly downloadedVersion?: string;
+  readonly downloadedFileName?: string;
+  readonly progressPercent?: number;
+  readonly error?: string;
+}
+
 // ── Host → Webview messages ─────────────────────────────────────────────────
 
 export interface RenderContentMessage {
@@ -132,6 +141,11 @@ export interface SetLoadingMessage {
   readonly detail?: string;
 }
 
+export interface UpdateStateChangedMessage {
+  readonly command: 'updateStateChanged';
+  readonly state: UpdateState;
+}
+
 export interface CrossTabSearchResult {
   readonly tabId: string;
   readonly tabLabel: string;
@@ -180,6 +194,7 @@ export type HostMessage =
   | NavNotFoundMessage
   | WorkspaceUnavailableMessage
   | SetLoadingMessage
+  | UpdateStateChangedMessage
   | WindowStateChangedMessage
   | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage
@@ -310,6 +325,20 @@ export interface SetDocumentConversionMessage {
   readonly enabled: boolean;
 }
 
+export interface DownloadUpdateMessage {
+  readonly command: 'downloadUpdate';
+  readonly version: string;
+  readonly url: string;
+}
+
+export interface ScheduleDownloadedUpdateMessage {
+  readonly command: 'scheduleDownloadedUpdate';
+}
+
+export interface RestartAndApplyUpdateMessage {
+  readonly command: 'restartAndApplyUpdate';
+}
+
 
 
 export type WebviewMessage =
@@ -335,7 +364,10 @@ export type WebviewMessage =
   | ZoomOutMessage
   | UpdateAppearanceMessage
   | OpenExternalMessage
-  | SetDocumentConversionMessage;
+  | SetDocumentConversionMessage
+  | DownloadUpdateMessage
+  | ScheduleDownloadedUpdateMessage
+  | RestartAndApplyUpdateMessage;
 
 // ── UI state ────────────────────────────────────────────────────────────────
 

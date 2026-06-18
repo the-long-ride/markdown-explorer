@@ -69,6 +69,15 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "setDocumentConversion":
         await handlers.setDocumentConversion(Boolean(msg.enabled));
         break;
+      case "downloadUpdate":
+        await handlers.downloadUpdate(msg);
+        break;
+      case "scheduleDownloadedUpdate":
+        await handlers.scheduleDownloadedUpdate();
+        break;
+      case "restartAndApplyUpdate":
+        await handlers.restartAndApplyUpdate();
+        break;
       case "window-minimize":
         getMainWindow()?.minimize();
         break;

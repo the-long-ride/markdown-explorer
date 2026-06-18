@@ -9,6 +9,7 @@ import {
 } from "../../contexts/appStateConstants";
 import { useAppState } from "../../contexts/AppStateContext";
 import type { UpdateCheckState } from "../../hooks/useUpdateCheck";
+import type { UpdateState } from "../../types";
 import { TooltipButton } from "../shared/TooltipButton";
 import { ThemeStylePicker } from "./ThemeStylePicker";
 import { ThemeRemixModal } from "./ThemeRemixModal";
@@ -40,7 +41,10 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   updateCheck: UpdateCheckState;
+  hostUpdateState: UpdateState;
   onDownloadUpdate: () => void;
+  onScheduleUpdateOnExit: () => void;
+  onRestartAndApplyUpdate: () => void;
   onOpenChangelog: () => void;
 }
 
@@ -84,7 +88,10 @@ export function SettingsModal({
   isOpen,
   onClose,
   updateCheck,
+  hostUpdateState,
   onDownloadUpdate,
+  onScheduleUpdateOnExit,
+  onRestartAndApplyUpdate,
   onOpenChangelog,
 }: SettingsModalProps) {
   const { state, dispatch, setTheme, setThemeStyle, updateSettings } = useAppState();
@@ -134,9 +141,30 @@ export function SettingsModal({
   const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
   const isDesktopLike = isElectron || isChrome;
   const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
+  const updateStatus = hostUpdateState.status;
+  const isUpdateDownloading = updateStatus === "downloading";
+  const isUpdateDownloaded = updateStatus === "downloaded";
+  const isUpdateScheduled = updateStatus === "scheduled-on-exit";
+  const isUpdateApplying = updateStatus === "applying";
+  const updateErrorCode = updateStatus === "error" ? hostUpdateState.error || "" : "";
+  const updateVersionLabel = hostUpdateState.downloadedVersion || updateCheck.latestVersion;
+  const showUpdateCard =
+    updateAvailable ||
+    isUpdateDownloading ||
+    isUpdateDownloaded ||
+    isUpdateScheduled ||
+    isUpdateApplying ||
+    updateStatus === "error";
   const visibleActions = ACTIONS_LIST.filter(
     (act) => act.scope === "both" || isDesktopLike,
   );
+
+  const getUpdateErrorText = () => {
+    if (!updateErrorCode) return "";
+    if (updateErrorCode === "missing-staged-update") return t.update.stagedMissing;
+    if (updateErrorCode.includes("download")) return t.update.downloadFailed;
+    return t.update.installFailed;
+  };
 
   const handleKeyDown = (
     actionId: string,
@@ -722,29 +750,57 @@ export function SettingsModal({
               >
                 {t.resetShortcuts}
               </button>
-              {updateAvailable && (
+              {showUpdateCard && (
                 <div className="settings-update-card" role="status">
                   <div className="settings-update-card__title">
-                    New version {updateCheck.latestVersion} available
+                    {t.update.availableTitle.replace("{version}", updateVersionLabel || "")}
                   </div>
                   <div className="settings-update-card__desc">
-                    Current version {updateCheck.currentVersion}. Release notes:{" "}
+                    {t.update.availableDescription.replace(
+                      "{version}",
+                      updateCheck.currentVersion || state.appVersion,
+                    )}{" "}
                     <button
                       type="button"
                       className="settings-update-card__link"
                       onClick={onOpenChangelog}
                     >
-                      see changelog in GitHub
+                      {t.update.viewChangelog}
                     </button>
                     .
                   </div>
-                  <button
-                    type="button"
-                    className="settings-download-update-btn"
-                    onClick={onDownloadUpdate}
-                  >
-                    Download new version
-                  </button>
+                  {isUpdateDownloading ? (
+                    <div className="settings-update-card__desc">
+                      {t.update.downloading.replace(
+                        "{progress}",
+                        String(hostUpdateState.progressPercent ?? 0),
+                      )}
+                    </div>
+                  ) : null}
+                  {isUpdateScheduled ? (
+                    <div className="settings-update-card__desc">
+                      {t.update.scheduled}
+                    </div>
+                  ) : null}
+                  {isUpdateApplying ? (
+                    <div className="settings-update-card__desc">
+                      {t.update.applying}
+                    </div>
+                  ) : null}
+                  {updateStatus === "error" ? (
+                    <div className="settings-update-card__desc">
+                      {getUpdateErrorText()}
+                    </div>
+                  ) : null}
+                  {!isUpdateDownloading && !isUpdateScheduled && !isUpdateApplying && !isUpdateDownloaded ? (
+                    <button
+                      type="button"
+                      className="settings-download-update-btn"
+                      onClick={onDownloadUpdate}
+                    >
+                      {t.update.downloadButton}
+                    </button>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -755,6 +811,44 @@ export function SettingsModal({
         isOpen={themeRemixOpen}
         onClose={() => setThemeRemixOpen(false)}
       />
+      {isUpdateDownloaded && (
+        <div
+          className="mdn-modal banned-shortcut-modal"
+          style={{ display: "flex" }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="settings-card banned-shortcut-card">
+            <div className="banned-shortcut-header">
+              <div className="banned-shortcut-icon">
+                <AlertTriangleIcon size={38} />
+              </div>
+              <h3>{t.update.restartPromptTitle}</h3>
+            </div>
+            <div className="banned-shortcut-body">
+              <p>
+                {t.update.restartPromptBody.replace("{version}", updateVersionLabel || "")}
+              </p>
+            </div>
+            <div className="banned-shortcut-footer">
+              <button
+                type="button"
+                className="banned-shortcut-close-btn"
+                onClick={onScheduleUpdateOnExit}
+              >
+                {t.update.updateOnExit}
+              </button>
+              <button
+                type="button"
+                className="banned-shortcut-close-btn"
+                onClick={onRestartAndApplyUpdate}
+              >
+                {t.update.restartAndUpdate}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {bannedShortcutError && (
         <div
           className="mdn-modal banned-shortcut-modal"

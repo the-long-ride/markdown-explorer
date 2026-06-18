@@ -41,6 +41,7 @@ import type {
   HostPlatform,
   WorkspaceUnavailableReason,
   DocumentPreviewInfo,
+  UpdateState,
 } from '../types';
 
 export {
@@ -128,6 +129,19 @@ export interface AppState {
   hostArch: string;
   /** Focus mode active */
   focusMode: boolean;
+  /** Desktop self-update state */
+  updateState: UpdateState;
+}
+
+function createEmptyUpdateState(): UpdateState {
+  return {
+    status: 'idle',
+    version: '',
+    downloadedVersion: '',
+    downloadedFileName: '',
+    progressPercent: 0,
+    error: '',
+  };
 }
 
 const initialState: AppState = {
@@ -176,6 +190,7 @@ const initialState: AppState = {
   hostPlatform: 'unknown',
   hostArch: '',
   focusMode: false,
+  updateState: createEmptyUpdateState(),
 };
 
 function createInitialState(saved: PersistedState | undefined, isDesktop: boolean): AppState {
@@ -264,6 +279,7 @@ export type Action =
       hostArch?: string;
     }
   | { type: 'SET_LOADING'; label?: string; detail?: string }
+  | { type: 'SET_UPDATE_STATE'; updateState: UpdateState }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_TOC' }
   | { type: 'SET_THEME'; theme: ThemeMode }
@@ -621,6 +637,15 @@ function reducer(state: AppState, action: Action): AppState {
         workspaceUnavailableReason: null,
       };
 
+    case 'SET_UPDATE_STATE':
+      return {
+        ...state,
+        updateState: {
+          ...createEmptyUpdateState(),
+          ...action.updateState,
+        },
+      };
+
     case 'TOGGLE_SIDEBAR':
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed };
 
@@ -846,6 +871,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           break;
         case 'setLoading':
           dispatch({ type: 'SET_LOADING', label: msg.label, detail: msg.detail });
+          break;
+        case 'updateStateChanged':
+          dispatch({ type: 'SET_UPDATE_STATE', updateState: msg.state });
           break;
         case 'window-state-changed':
           dispatch({ type: 'SET_MAXIMIZED', isMaximized: msg.isMaximized });
