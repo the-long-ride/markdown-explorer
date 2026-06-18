@@ -220,6 +220,24 @@
         );
         const releaseVersion = release.tag_name || release.name || "";
         let selectedDesktopDownloads = 0;
+
+        // Patch JSON-LD softwareVersion with the live tag (strip leading "v")
+        const liveVersion = releaseVersion.replace(/^v/i, "");
+        if (liveVersion) {
+          try {
+            const ldScript = document.querySelector(
+              'script[type="application/ld+json"]',
+            );
+            if (ldScript) {
+              const data = JSON.parse(ldScript.textContent);
+              data.softwareVersion = liveVersion;
+              ldScript.textContent = JSON.stringify(data, null, 2);
+            }
+          } catch (_) {
+            // non-critical — ignore parse errors
+          }
+        }
+
         buttons.forEach((button) => {
           const baseLabel =
             baseButtonLabels.get(button) || button.textContent.trim();
