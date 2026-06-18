@@ -50,7 +50,7 @@ Recent releases from `v1.4.5` onward focus on faster navigation, safer desktop w
 - **Reading polish**: table Wrap/Unwrap controls, code gutter selection highlighting, compact Markdown chrome, and clearer string interpolation make dense docs easier to scan.
 - **Desktop recovery**: workspace switching is confirmed, unavailable workspaces show recovery actions, and stale recent entries can be removed.
 - **Theme Remix**: create, duplicate, edit, import, and export custom themes with color, density, spacing, and optional background image controls.
-- **Content File Tabs and Scope Focus**: keep opened docs in tabs and narrow the sidebar to selected files/folders for the current workspace.
+- **Content File Tabs and Scope Focus**: keep opened docs in tabs, narrow the sidebar to selected files/folders for the current workspace, and automatically keep scoped files aligned when the workspace changes.
 - **Converted document previews**: enable best-effort local previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT.
 - **Sidebar Cursor mode**: press `Alt+S`, move with `Up`/`Down`, press `Enter` to expand folders or open files, and press `Esc` or click outside the sidebar to exit.
 
@@ -110,7 +110,7 @@ Use isolated HTML previews for interactive examples, and inspect images or diagr
 
 ## Desktop Workspace
 
-The desktop app opens recent folders quickly, supports drag-and-drop opening, and can keep multiple workspaces alive in tabs.
+The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />

@@ -25,6 +25,10 @@ import {
   normalizeActiveCustomThemeId,
   normalizeCustomThemes,
 } from '../theme/customThemes';
+import {
+  collectSelectedFolderPaths,
+  reconcileScopeFocusPaths,
+} from './scope-focus-reconcile.js';
 import type {
   MdFile,
   FolderNode,
@@ -293,6 +297,10 @@ function normalizePathKey(value: string): string {
   return value.replace(/\\/g, '/').toLowerCase();
 }
 
+function getWorkspaceScopeKey(workspacePath: string | undefined, workspaceName: string): string {
+  return workspacePath || workspaceName || 'default';
+}
+
 function getPathFileName(filePath: string): string {
   return filePath.split(/[\\/]/).filter(Boolean).pop() || filePath || 'Document';
 }
@@ -442,17 +450,70 @@ function refreshContentTabMetadata(
   });
 }
 
+function reconcileScopeFocusSetting({
+  scopeFocus,
+  scopeKey,
+  previousFileList,
+  nextFileList,
+  previousTree,
+  includeNewFiles,
+}: {
+  scopeFocus: Record<string, string[]> | undefined;
+  scopeKey: string;
+  previousFileList: readonly MdFile[];
+  nextFileList: readonly MdFile[];
+  previousTree: FolderNode | null;
+  includeNewFiles: boolean;
+}): Record<string, string[]> | undefined {
+  if (!scopeFocus || !Object.prototype.hasOwnProperty.call(scopeFocus, scopeKey)) {
+    return scopeFocus;
+  }
+
+  const savedScopePaths = scopeFocus[scopeKey] ?? [];
+  const previousFilePaths = previousFileList.map((file) => file.fsPath);
+  const nextFilePaths = nextFileList.map((file) => file.fsPath);
+  const previousFilePathSet = new Set(previousFilePaths);
+  const selectedFolderPaths = collectSelectedFolderPaths(
+    previousTree,
+    new Set(savedScopePaths.filter((filePath) => previousFilePathSet.has(filePath))),
+  );
+  const reconciledPaths = reconcileScopeFocusPaths({
+    savedScopePaths,
+    previousFilePaths: includeNewFiles ? previousFilePaths : nextFilePaths,
+    nextFilePaths,
+    selectedFolderPaths,
+  });
+
+  if (reconciledPaths === null) return scopeFocus;
+
+  const nextScopeFocus = { ...scopeFocus };
+  if (nextFilePaths.length > 0 && reconciledPaths.length >= nextFilePaths.length) {
+    delete nextScopeFocus[scopeKey];
+  } else {
+    nextScopeFocus[scopeKey] = reconciledPaths;
+  }
+  return nextScopeFocus;
+}
+
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'READY_ACK': {
-      const nextWorkspaceKey = action.workspacePath ?? action.workspaceName;
-      const currentWorkspaceKey = state.workspacePath ?? state.workspaceName;
+      const nextWorkspaceKey = getWorkspaceScopeKey(action.workspacePath, action.workspaceName);
+      const currentWorkspaceKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
       const workspaceChanged = nextWorkspaceKey !== currentWorkspaceKey;
       const restoredContentTabs = action.contentTabs
         ? refreshContentTabMetadata(action.contentTabs, action.fileList)
         : workspaceChanged
           ? []
           : refreshContentTabMetadata(state.contentTabs, action.fileList);
+      const reconciledScopeFocus = reconcileScopeFocusSetting({
+        scopeFocus: state.settings.scopeFocus,
+        scopeKey: nextWorkspaceKey,
+        previousFileList: state.fileList,
+        nextFileList: action.fileList,
+        previousTree: state.tree,
+        includeNewFiles: !workspaceChanged && state.fileList.length > 0,
+      });
       return {
         ...state,
         fileList: action.fileList,
@@ -467,6 +528,7 @@ function reducer(state: AppState, action: Action): AppState {
         settings: {
           ...state.settings,
           documentConversion: action.documentConversionEnabled ?? state.settings.documentConversion,
+          scopeFocus: reconciledScopeFocus,
         },
         recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
         appVersion: action.appVersion ?? state.appVersion,

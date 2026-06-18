@@ -28,6 +28,7 @@ const { createRecentWorkspacesStore } = require("./recents");
 const { createSearchIndex } = require("./search-index");
 const { createUpdateManager } = require("./update-manager");
 const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
+const { createWorkspaceWatchController } = require("./workspace-watch");
 const perf = require("./perf-timer");
 
 const appDir = app.isPackaged
@@ -48,6 +49,13 @@ const documentConverter = createDocumentConverter();
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
 const searchIndex = createSearchIndex();
 const debugTools = createDebugTools(app);
+const workspaceWatch = createWorkspaceWatchController({
+  fs,
+  setTimeout,
+  clearTimeout,
+  debounceMs: 120,
+  onRefresh: refreshActiveWorkspaceFromWatch,
+});
 
 // Electron zoom level maps roughly to factor = 1.2 ^ level.
 // This range gives about 63% to 144%, enough zoom-out for dense views while keeping zoom-in guarded.
@@ -115,6 +123,7 @@ function getWorkspacePathStatus(workspacePath) {
 }
 
 function sendWorkspaceUnavailable(workspacePath, reason = "missing") {
+  workspaceWatch.dispose();
   activeWorkspace = null;
   currentFile = null;
   flatList = [];
@@ -189,6 +198,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  workspaceWatch.dispose();
   if (!updateManager) return;
   void updateManager.applyPendingUpdateOnQuit();
 });
@@ -223,6 +233,7 @@ async function handleReady(msg = {}) {
     perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
     updateManager?.sendCurrentState();
   } else {
+    bindWorkspaceWatch();
     await sendWorkspaceData();
     updateManager?.sendCurrentState();
   }
@@ -237,6 +248,7 @@ function handleOpenFolder(openFirstFile = false) {
     recentWorkspacesStore.save(selectedFolder);
     activeWorkspace = selectedFolder;
     currentFile = null;
+    bindWorkspaceWatch();
     sendLoading("Loading workspace...");
     sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
   }
@@ -253,6 +265,7 @@ function handleOpenFile() {
     recentWorkspacesStore.save(folder);
     activeWorkspace = folder;
     currentFile = selectedFile;
+    bindWorkspaceWatch();
     sendLoading(
       isExtraDocumentFilePath(selectedFile) ? "Preparing document preview..." : "Loading docs...",
     );
@@ -290,6 +303,7 @@ function handleOpenPath(filePath, openFirstFile = false) {
   }
 
   recentWorkspacesStore.save(activeWorkspace);
+  bindWorkspaceWatch();
   sendLoading("Loading workspace...");
   sendWorkspaceData().then(() => sendInitialContent(openFirstFile && !isFile));
 }
@@ -309,6 +323,7 @@ function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false)
       ? filePath
       : null;
   recentWorkspacesStore.save(activeWorkspace);
+  bindWorkspaceWatch();
   sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
 }
 
@@ -418,6 +433,7 @@ function handleOpenRecent(folderPath, openFirstFile = false) {
 
   recentWorkspacesStore.save(folderPath);
   activeWorkspace = folderPath;
+  bindWorkspaceWatch();
   sendLoading("Loading workspace...");
   if (status.stat.isFile()) {
     currentFile = folderPath;
@@ -479,6 +495,7 @@ function clampAppZoom() {
 
 function handleCloseWorkspace() {
   readyHandled = false;
+  workspaceWatch.dispose();
   activeWorkspace = null;
   currentFile = null;
   handleReady();
@@ -515,6 +532,53 @@ function getWorkspaceBaseDir() {
   return fs.statSync(activeWorkspace).isFile()
     ? path.dirname(activeWorkspace)
     : activeWorkspace;
+}
+
+function bindWorkspaceWatch() {
+  workspaceWatch.watchWorkspace(getWorkspaceBaseDir());
+}
+
+function isCurrentFileStillAvailable() {
+  if (!currentFile) return false;
+
+  const status = getWorkspacePathStatus(currentFile);
+  if (!status.ok || !status.stat.isFile()) return false;
+  if (!isSupportedFilePath(currentFile, documentConversionEnabled)) return false;
+
+  return flatList.some((file) => file.fsPath === currentFile);
+}
+
+async function refreshActiveWorkspace({
+  showLoading = false,
+  loadingLabel = "Refreshing workspace...",
+} = {}) {
+  if (!activeWorkspace) return;
+
+  const status = getWorkspacePathStatus(activeWorkspace);
+  if (!status.ok) {
+    sendWorkspaceUnavailable(activeWorkspace, status.reason);
+    return;
+  }
+
+  if (showLoading) {
+    sendLoading(loadingLabel);
+  }
+
+  await sendWorkspaceData();
+
+  if (!isCurrentFileStillAvailable()) {
+    currentFile = null;
+  }
+
+  if (currentFile) {
+    await sendContent();
+  } else {
+    await sendWelcome();
+  }
+}
+
+async function refreshActiveWorkspaceFromWatch() {
+  await refreshActiveWorkspace();
 }
 
 function resolveNavigationPath(filePath) {
@@ -564,21 +628,7 @@ async function handleNavigate(filePath) {
 }
 
 async function handleRefresh() {
-  if (activeWorkspace) {
-    const status = getWorkspacePathStatus(activeWorkspace);
-    if (!status.ok) {
-      sendWorkspaceUnavailable(activeWorkspace, status.reason);
-      return;
-    }
-
-    sendLoading("Refreshing workspace...");
-    await sendWorkspaceData();
-    if (currentFile) {
-      await sendContent();
-    } else {
-      await sendWelcome();
-    }
-  }
+  await refreshActiveWorkspace({ showLoading: true });
 }
 
 async function handleSetDocumentConversion(enabled) {
