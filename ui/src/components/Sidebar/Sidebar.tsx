@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo, useRef, useLayoutEffect, useEffect } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
-import { CloseIcon, SearchIcon, LocateIcon } from '../shared/icons';
+import { CloseIcon, SearchIcon, LocateIcon, FolderIcon } from '../shared/icons';
 import { TooltipButton } from '../shared/TooltipButton';
 import { FileNode, FolderNodeView } from './TreeNode';
 import type { ScopeFocusTreeProps } from './TreeNode';
 import { getTranslations } from '../../contexts/translations';
 import type { FolderNode, MdFile } from '../../types';
+import { SidebarSearch } from './SidebarSearch';
 
 function getWorkspaceScopeKey(workspacePath: string | undefined, workspaceName: string): string {
   return workspacePath || workspaceName || 'default';
@@ -51,7 +52,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps) {
-  const { state, updateSettings } = useAppState();
+  const { state, updateSettings, dispatch } = useAppState();
   const [filter, setFilter] = useState('');
   const [scopeFocusEditing, setScopeFocusEditing] = useState(false);
   const [cursorItemId, setCursorItemId] = useState<string | null>(null);
@@ -333,93 +334,118 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
       id="sidebar"
       aria-label={cursorMode ? 'File navigation, cursor mode active' : 'File navigation'}
     >
-      <div className="sidebar__header">
-        <div className="sidebar__title">
-          <span>{t.sidebar.files}</span>
-          {state.currentFile && (
-            <TooltipButton
-              type="button"
-              className="sidebar__locate-btn"
-              onClick={scrollToActiveFile}
-              tooltip={t.tooltips.locateFile}
-              shortcut={state.settings.keybindings?.locateFile}
-              tooltipPos="below"
-              tooltipAlign="right"
-              icon={<LocateIcon size={12} />}
-            />
-          )}
-          <span className="sidebar__count" id="fileCount">
-            {state.fileList.length}
-          </span>
-        </div>
-        <div className="sidebar__search">
-          <SearchIcon size={12} />
-          <input
-            type="text"
-            placeholder={t.sidebar.filterPlaceholder}
-            autoComplete="off"
-            value={filter}
-            onChange={onFilterChange}
-            aria-label={t.sidebar.filterAriaLabel}
-          />
-        </div>
-        <div className="sidebar__scope">
-          <button
-            type="button"
-            className={`sidebar__scope-btn${scopeFocusEditing || hasScopeEntry ? ' is-active' : ''}`}
-            onClick={() => setScopeFocusEditing((editing) => !editing)}
-            aria-pressed={scopeFocusEditing}
-          >
-            <span>{t.sidebar.scopeFocus}</span>
-            <span className="sidebar__scope-count">
-              {scopeFocusCount}/{allFilePaths.length}
-            </span>
-          </button>
-          {hasScopeEntry && (
-            <TooltipButton
-              type="button"
-              className="sidebar__scope-clear"
-              onClick={clearScopeFocus}
-              tooltip={t.sidebar.clearScopeFocus}
-              tooltipPos="below"
-              tooltipAlign="right"
-              icon={<CloseIcon size={12} />}
-            />
-          )}
-        </div>
-      </div>
-      <div 
-        className="sidebar__tree" 
-        id="sidebarTree" 
-        role="tree"
-        ref={treeRef}
-        onScroll={handleScroll}
-      >
-        {visibleRootFiles.map((f) => (
-          <FileNode
-            key={f.fsPath}
-            file={f}
-            scopeFocus={scopeFocusTree}
-            cursorMode={cursorMode}
-            cursorItemId={cursorItemId}
-          />
-        ))}
-        {visibleRootChildren.map((child) => (
-          <FolderNodeView
-            key={child.path}
-            node={child}
-            filter={filter}
-            scopeFocus={scopeFocusTree}
-            cursorMode={cursorMode}
-            cursorItemId={cursorItemId}
-          />
-        ))}
-        {!hasVisibleTreeItems && (
-          <div className="sidebar__empty-scope">
-            {hasScopeEntry ? t.sidebar.noScopeFiles : t.sidebar.noFiles}
+      {state.sidebarActiveTab === 'files' ? (
+        <>
+          <div className="sidebar__header">
+            <div className="sidebar__title">
+              <div className="sidebar__tab-strip">
+                <button
+                  type="button"
+                  className="sidebar__tab-btn is-active"
+                  onClick={() => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'files' })}
+                >
+                  <FolderIcon size={12} />
+                  <span>{t.sidebar.files}</span>
+                </button>
+                <button
+                  type="button"
+                  className="sidebar__tab-btn"
+                  onClick={() => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'search' })}
+                >
+                  <SearchIcon size={12} />
+                  <span>{t.sidebar.search || 'Search'}</span>
+                </button>
+              </div>
+              <div className="sidebar__title-actions" style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+                {state.currentFile && (
+                  <TooltipButton
+                    type="button"
+                    className="sidebar__locate-btn"
+                    onClick={scrollToActiveFile}
+                    tooltip={t.tooltips.locateFile}
+                    shortcut={state.settings.keybindings?.locateFile}
+                    tooltipPos="below"
+                    tooltipAlign="right"
+                    icon={<LocateIcon size={12} />}
+                  />
+                )}
+                <span className="sidebar__count" id="fileCount">
+                  {state.fileList.length}
+                </span>
+              </div>
+            </div>
+            <div className="sidebar__search">
+              <SearchIcon size={12} />
+              <input
+                type="text"
+                placeholder={t.sidebar.filterPlaceholder}
+                autoComplete="off"
+                value={filter}
+                onChange={onFilterChange}
+                aria-label={t.sidebar.filterAriaLabel}
+              />
+            </div>
+            <div className="sidebar__scope">
+              <button
+                type="button"
+                className={`sidebar__scope-btn${scopeFocusEditing || hasScopeEntry ? ' is-active' : ''}`}
+                onClick={() => setScopeFocusEditing((editing) => !editing)}
+                aria-pressed={scopeFocusEditing}
+              >
+                <span>{t.sidebar.scopeFocus}</span>
+                <span className="sidebar__scope-count">
+                  {scopeFocusCount}/{allFilePaths.length}
+                </span>
+              </button>
+              {hasScopeEntry && (
+                <TooltipButton
+                  type="button"
+                  className="sidebar__scope-clear"
+                  onClick={clearScopeFocus}
+                  tooltip={t.sidebar.clearScopeFocus}
+                  tooltipPos="below"
+                  tooltipAlign="right"
+                  icon={<CloseIcon size={12} />}
+                />
+              )}
+            </div>
           </div>
-        )}
-      </div>
+          <div 
+            className="sidebar__tree" 
+            id="sidebarTree" 
+            role="tree"
+            ref={treeRef}
+            onScroll={handleScroll}
+          >
+            {visibleRootFiles.map((f) => (
+              <FileNode
+                key={f.fsPath}
+                file={f}
+                scopeFocus={scopeFocusTree}
+                cursorMode={cursorMode}
+                cursorItemId={cursorItemId}
+              />
+            ))}
+            {visibleRootChildren.map((child) => (
+              <FolderNodeView
+                key={child.path}
+                node={child}
+                filter={filter}
+                scopeFocus={scopeFocusTree}
+                cursorMode={cursorMode}
+                cursorItemId={cursorItemId}
+              />
+            ))}
+            {!hasVisibleTreeItems && (
+              <div className="sidebar__empty-scope">
+                {hasScopeEntry ? t.sidebar.noScopeFiles : t.sidebar.noFiles}
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <SidebarSearch />
+      )}
     </nav>
   );
 }
