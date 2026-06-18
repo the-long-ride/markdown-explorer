@@ -56,6 +56,7 @@ interface SearchOverlayProps {
   crossTabItems?: readonly CrossTabSearchItem[];
   onWorkspaceSelect?: (item: WorkspaceSearchResult, query: string) => void;
   onCrossTabSelect?: (item: CrossTabSearchItem, query: string) => void;
+  isIndexing?: boolean;
 }
 
 export interface CrossTabSearchItem {
@@ -78,6 +79,7 @@ export function SearchOverlay({
   crossTabItems,
   onWorkspaceSelect,
   onCrossTabSelect,
+  isIndexing,
 }: SearchOverlayProps) {
   const { state, navigate } = useAppState();
   const bridge = usePlatform();
@@ -294,13 +296,18 @@ export function SearchOverlay({
             borderBottom: '1px solid var(--bd)',
           }}
         >
-          <SearchIcon size={16} style={{ color: 'var(--txm)' }} />
+          {isIndexing ? (
+            <div className="spinner" style={{ width: 16, height: 16, borderWidth: 1.5, flexShrink: 0 }} />
+          ) : (
+            <SearchIcon size={16} style={{ color: 'var(--txm)' }} />
+          )}
           <input
             ref={inputRef}
             type="text"
-            placeholder={scopeLabel ?? "Search current workspace…"}
+            placeholder={isIndexing ? "Indexing other workspaces…" : (scopeLabel ?? "Search current workspace…")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            disabled={isIndexing}
             style={{
               flex: 1,
               background: 'none',
@@ -309,6 +316,8 @@ export function SearchOverlay({
               fontSize: 15,
               color: 'var(--tx)',
               fontFamily: 'var(--font-ui)',
+              cursor: isIndexing ? 'not-allowed' : 'text',
+              opacity: isIndexing ? 0.6 : 1,
             }}
             aria-label="Search query"
           />

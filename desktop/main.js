@@ -357,29 +357,61 @@ function handleIndexWorkspaceSearchItems(msg) {
 
 function handleLoadWorkspaceSearchIndexes(msg) {
   const tabRequests = Array.isArray(msg.tabs) ? msg.tabs : [];
-  setTimeout(() => {
-    const tabs = tabRequests.flatMap((tab) => {
-      const tabId = String(tab?.tabId || "");
-      const workspacePath = String(tab?.workspacePath || "");
-      if (!tabId || !workspacePath || !fs.existsSync(workspacePath)) return [];
+  if (tabRequests.length === 0) return;
 
-      const { tree, flat } = scanWorkspaceData(workspacePath);
-      searchIndex.prime(flat);
-      return [{
-        tabId,
-        workspacePath,
-        fileList: flat,
-        tree,
-      }];
-    });
+  let index = 0;
 
-    if (tabs.length > 0) {
-      mainWindow.webContents.send("host-message", {
-        command: "workspaceSearchIndexLoaded",
-        tabs,
-      });
+  function processNext() {
+    if (index >= tabRequests.length) return;
+
+    const tab = tabRequests[index];
+    const tabId = String(tab?.tabId || "");
+    const workspacePath = String(tab?.workspacePath || "");
+
+    if (tabId && workspacePath) {
+      if (fs.existsSync(workspacePath)) {
+        try {
+          const { tree, flat } = scanWorkspaceData(workspacePath);
+          searchIndex.prime(flat);
+          mainWindow.webContents.send("host-message", {
+            command: "workspaceSearchIndexLoaded",
+            tabs: [{
+              tabId,
+              workspacePath,
+              fileList: flat,
+              tree,
+            }],
+          });
+        } catch (err) {
+          console.error("Failed to index workspace search index:", workspacePath, err);
+          mainWindow.webContents.send("host-message", {
+            command: "workspaceSearchIndexLoaded",
+            tabs: [{
+              tabId,
+              workspacePath,
+              fileList: [],
+              tree: null,
+            }],
+          });
+        }
+      } else {
+        mainWindow.webContents.send("host-message", {
+          command: "workspaceSearchIndexLoaded",
+          tabs: [{
+            tabId,
+            workspacePath,
+            fileList: [],
+            tree: null,
+          }],
+        });
+      }
     }
-  }, 0);
+
+    index += 1;
+    setTimeout(processNext, 150);
+  }
+
+  setTimeout(processNext, 50);
 }
 
 async function handleConfirmOpenPath(filePath) {

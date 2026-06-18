@@ -106,6 +106,7 @@ export function App() {
     closeAllTabs,
     updateTabAlias,
     crossTabSearchItems,
+    isIndexingAcrossTabs,
   } = useDesktopTabs({
     state,
     dispatch,
@@ -496,7 +497,7 @@ export function App() {
   }
 
   return (
-    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}`}>
+    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
       {isTabView && (
         <DesktopTabBar
@@ -651,6 +652,7 @@ export function App() {
         crossTabItems={isAllTabsSearch ? crossTabSearchItems : undefined}
         onWorkspaceSelect={handleWorkspaceSearchSelect}
         onCrossTabSelect={isAllTabsSearch ? handleCrossTabSelect : undefined}
+        isIndexing={isAllTabsSearch && isIndexingAcrossTabs}
       />
       <FindInFilePanel
         isOpen={findOpen}

@@ -658,11 +658,22 @@ body {
 /* ============================================================
    Maximized state offset on Windows to prevent titlebar hidden cutoff
    ============================================================ */
-.is-maximized-windows .desktop-tabbar {
+.is-windows .desktop-tabbar {
   padding-top: 9px !important;
-  height: 44px !important;
-  flex: 0 0 44px !important;
+  padding-bottom: 6px !important;
+  height: 46px !important;
+  flex: 0 0 46px !important;
+}
+.is-windows.app--tab-view .workspace-selection {
+  min-height: calc(100vh - 46px) !important;
+}
+
+.is-maximized-windows .desktop-tabbar {
+  padding-top: 13px !important;
+  padding-bottom: 6px !important;
+  height: 50px !important;
+  flex: 0 0 50px !important;
 }
 .is-maximized-windows.app--tab-view .workspace-selection {
-  min-height: calc(100vh - 44px) !important;
+  min-height: calc(100vh - 50px) !important;
 }

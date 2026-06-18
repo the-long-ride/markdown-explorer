@@ -62,6 +62,7 @@ export function useDesktopTabs({
   const pendingWorkspaceTabIdRef = useRef<string | null>(null);
   const restoredDesktopTabsRef = useRef(false);
   const requestedWorkspaceIndexesRef = useRef<Set<string>>(new Set());
+  const tabsRef = useRef(tabs);
 
   // Custom switch workspace state
   const [pendingDroppedPath, setPendingDroppedPath] = useState<string | null>(null);
@@ -69,6 +70,10 @@ export function useDesktopTabs({
   useEffect(() => {
     workspaceNameRef.current = state.workspaceName;
   }, [state.workspaceName]);
+
+  useEffect(() => {
+    tabsRef.current = tabs;
+  });
 
   useEffect(() => {
     activeTabIdRef.current = activeTabId;
@@ -120,6 +125,7 @@ export function useDesktopTabs({
         workspaceUnavailableReason: state.workspaceUnavailableReason,
         contentTabs: state.contentTabs,
         activeContentTabPath: state.activeContentTabPath,
+        isIndexed: tab.isIndexed || (tab.id === activeTabId && !state.isLoading),
       };
     },
     [
@@ -406,29 +412,40 @@ export function useDesktopTabs({
         currentTabs.map((tab) => {
           const loaded = loadedTabs.get(tab.id) as any;
           if (!loaded || tab.workspacePath !== loaded.workspacePath) return tab;
-          if (tab.fileList.length > 0 && tab.tree) return tab;
-          return { ...tab, fileList: loaded.fileList, tree: loaded.tree };
+          return {
+            ...tab,
+            fileList: tab.fileList.length > 0 ? tab.fileList : loaded.fileList,
+            tree: tab.tree ? tab.tree : loaded.tree,
+            isIndexed: true,
+          };
         }),
       );
     });
   }, [bridge, isTabView]);
 
   useEffect(() => {
-    if (!isTabView) return;
-    const pendingTabs = tabs.flatMap((tab) => {
-      if (tab.kind !== 'workspace' || !tab.workspacePath || tab.fileList.length > 0) return [];
-      const requestKey = `${tab.id}:${tab.workspacePath}`;
-      if (requestedWorkspaceIndexesRef.current.has(requestKey)) return [];
-      requestedWorkspaceIndexesRef.current.add(requestKey);
-      return [{ tabId: tab.id, workspacePath: tab.workspacePath }];
-    });
-
-    if (pendingTabs.length === 0) return;
+    if (!isTabView || state.isLoading) return;
+    // Read tabs via ref so this effect doesn't re-run (and cancel the timer)
+    // every time the active tab's snapshot is updated.
     const handle = window.setTimeout(() => {
-      bridge.postMessage({ command: 'loadWorkspaceSearchIndexes', tabs: pendingTabs });
-    }, 120);
+      const pendingTabs = tabsRef.current.flatMap((tab) => {
+        if (tab.kind !== 'workspace' || !tab.workspacePath || tab.isIndexed || tab.fileList.length > 0) return [];
+        const requestKey = `${tab.id}:${tab.workspacePath}`;
+        if (requestedWorkspaceIndexesRef.current.has(requestKey)) return [];
+        requestedWorkspaceIndexesRef.current.add(requestKey);
+        return [{ tabId: tab.id, workspacePath: tab.workspacePath }];
+      });
+      if (pendingTabs.length > 0) {
+        bridge.postMessage({ command: 'loadWorkspaceSearchIndexes', tabs: pendingTabs });
+      }
+    }, 1000);
     return () => window.clearTimeout(handle);
-  }, [bridge, isTabView, tabs]);
+  }, [bridge, isTabView, state.isLoading]);
+
+  const isIndexingAcrossTabs = useMemo(() => {
+    if (!isTabView) return false;
+    return tabs.some((tab) => tab.kind === 'workspace' && tab.workspacePath && !tab.isIndexed && tab.fileList.length === 0);
+  }, [isTabView, tabs]);
 
   return {
     activeTabId,
@@ -450,5 +467,6 @@ export function useDesktopTabs({
     closeAllTabs,
     updateTabAlias,
     crossTabSearchItems,
+    isIndexingAcrossTabs,
   };
 }

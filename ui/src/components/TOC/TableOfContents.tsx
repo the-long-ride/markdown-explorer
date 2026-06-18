@@ -90,7 +90,7 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
       parent.dataset.expanded = 'true';
       parent = (parent.parentElement?.closest('.mdn-section') as HTMLElement | null) ?? null;
     }
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
 
   const scrollToTop = useCallback(() => {

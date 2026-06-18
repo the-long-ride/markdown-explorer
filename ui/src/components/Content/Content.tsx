@@ -396,6 +396,23 @@ export function Content({
         e.preventDefault();
         e.stopPropagation();
         navigate(href);
+      } else if (link && href.startsWith("#") && href.length > 1) {
+        // Hash anchor: prevent default top-scroll and center the target instead
+        e.preventDefault();
+        const targetId = decodeURIComponent(href.slice(1));
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          // Expand collapsed sections if needed
+          let section = targetEl.closest<HTMLElement>(".mdn-section");
+          while (section) {
+            section.setAttribute("data-expanded", "true");
+            section = section.parentElement?.closest<HTMLElement>(".mdn-section") ?? null;
+          }
+          targetEl.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+            block: "center",
+          });
+        }
       }
     };
     body.addEventListener("click", handleClick);

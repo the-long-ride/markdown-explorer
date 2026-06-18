@@ -33,6 +33,7 @@ export interface DesktopTab {
   workspaceUnavailableReason: WorkspaceUnavailableReason | null;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
+  isIndexed?: boolean;
 }
 
 export interface FloatingToolbarPosition {
