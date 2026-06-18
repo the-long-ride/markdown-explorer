@@ -242,7 +242,16 @@ export function scrollToRenderedSearchMatch(
 
   if (activeMark) {
     expandSectionAncestors(activeMark);
-    activeMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    activeMark.scrollIntoView({ behavior: 'auto', block: 'center' });
+
+    // Perform follow-up scroll centering adjustments to handle late async rendering/layout shifts (like math equations, images, or charts rendering)
+    window.setTimeout(() => {
+      activeMark?.scrollIntoView({ behavior: 'auto', block: 'center' });
+    }, 150);
+    window.setTimeout(() => {
+      activeMark?.scrollIntoView({ behavior: 'auto', block: 'center' });
+    }, 400);
+
     window.setTimeout(() => activeMark?.classList.add('is-active'), 120);
     return true;
   }

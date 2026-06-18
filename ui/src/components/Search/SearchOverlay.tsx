@@ -211,7 +211,7 @@ export function SearchOverlay({
   }, [bridge, crossTabItems, hasCrossTabSearch, isOpen, query]);
 
   useEffect(() => {
-    if (!isOpen || !hasCrossTabSearch || !crossTabItems || crossTabItems.length === 0 || query.length < 2) {
+    if (!isOpen || !hasCrossTabSearch || !crossTabItems || crossTabItems.length === 0) {
       return;
     }
 
@@ -223,7 +223,7 @@ export function SearchOverlay({
     }, 100);
 
     return () => window.clearTimeout(handle);
-  }, [bridge, crossTabItems, hasCrossTabSearch, isOpen, query]);
+  }, [bridge, crossTabItems, hasCrossTabSearch, isOpen]);
 
   useEffect(() => {
     if (!isOpen || hasCrossTabSearch || query.length < 2) {

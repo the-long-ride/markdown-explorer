@@ -150,17 +150,27 @@ export function App() {
     if (!pendingSearchJump) return;
     if (state.currentFile !== pendingSearchJump.filePath) return;
 
-    const handle = window.setTimeout(() => {
-      scrollToRenderedSearchMatch(
-        pendingSearchJump.query, 
-        pendingSearchJump.matchOrdinal, 
+    let retries = 0;
+    let handle = 0;
+
+    const tryScroll = () => {
+      const success = scrollToRenderedSearchMatch(
+        pendingSearchJump.query,
+        pendingSearchJump.matchOrdinal,
         pendingSearchJump.matchIndex,
         state.markdownSource
       );
-      setPendingSearchJump((current) =>
-        current?.token === pendingSearchJump.token ? null : current,
-      );
-    }, 80);
+      if (!success && retries < 4) {
+        retries++;
+        handle = window.setTimeout(tryScroll, 100);
+      } else {
+        setPendingSearchJump((current) =>
+          current?.token === pendingSearchJump.token ? null : current,
+        );
+      }
+    };
+
+    handle = window.setTimeout(tryScroll, 80);
 
     return () => window.clearTimeout(handle);
   }, [pendingSearchJump, state.currentFile, state.renderVersion, state.markdownSource]);
@@ -179,6 +189,25 @@ export function App() {
     },
     [],
   );
+
+  const openSidebarSearch = useCallback(() => {
+    if (state.sidebarCollapsed) {
+      toggleSidebar();
+    }
+    dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'search' });
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('focus-sidebar-search-input'));
+    }, 50);
+  }, [state.sidebarCollapsed, toggleSidebar, dispatch]);
+
+  useEffect(() => {
+    const handleJump = (e: CustomEvent) => {
+      const { filePath, query, matchOrdinal, matchIndex } = e.detail;
+      queueSearchJump(filePath, query, matchOrdinal, matchIndex);
+    };
+    window.addEventListener('search-jump', handleJump as any);
+    return () => window.removeEventListener('search-jump', handleJump as any);
+  }, [queueSearchJump]);
 
   const handleWorkspaceSearchSelect = useCallback(
     (item: { fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string) => {
@@ -380,7 +409,7 @@ export function App() {
 
   // Keyboard shortcuts
   useKeyboard({
-    onSearchOpen: () => openSearch('current'),
+    onSearchOpen: openSidebarSearch,
     onCrossTabSearchOpen: isTabView ? () => openSearch('all-tabs') : undefined,
     onSearchClose: closeSearch,
     onFindOpen: openFind,
@@ -536,7 +565,7 @@ export function App() {
         <>
           {!isTabView && (
             <Topbar
-              onSearchOpen={() => openSearch('current')}
+              onSearchOpen={openSidebarSearch}
               onSettingsOpen={() => setSettingsOpen(true)}
               onExpandAll={expandAll}
               onCollapseAll={collapseAll}
@@ -612,7 +641,7 @@ export function App() {
                 <FloatingTabToolbar
                   position={toolbarPosition}
                   onPositionChange={setToolbarPosition}
-                  onSearchOpen={() => openSearch('current')}
+                  onSearchOpen={openSidebarSearch}
                   searchShortcutLabel={currentSearchShortcutLabel}
                   onExpandAll={expandAll}
                   onCollapseAll={collapseAll}
