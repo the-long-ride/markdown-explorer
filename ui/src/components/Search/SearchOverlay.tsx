@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { SearchIcon } from '../shared/icons';
+import { normalizeForSearch, unicodeIndexOf } from '../../utils/unicodeSearch';
 import type { MdFile, WorkspaceSearchResult } from '../../types';
 
 const SEARCH_OVERLAY_Z_INDEX = 2147483647;
@@ -15,20 +16,21 @@ function renderHighlightedExcerpt(excerpt: string, query: string) {
   const needle = query.trim().replace(/\s+/g, ' ');
   if (!needle) return excerpt;
 
-  const lowerExcerpt = excerpt.toLowerCase();
-  const lowerNeedle = needle.toLowerCase();
   const pieces = [];
   let cursor = 0;
-  let matchIndex = lowerExcerpt.indexOf(lowerNeedle);
+  let result = unicodeIndexOf(excerpt, needle, 0);
 
-  if (matchIndex === -1) return excerpt;
+  if (!result) return excerpt;
 
-  while (matchIndex !== -1) {
+  while (result) {
+    const matchIndex = result.index;
+    const matchLength = result.matchLength;
+    
     if (matchIndex > cursor) {
       pieces.push(excerpt.slice(cursor, matchIndex));
     }
 
-    const matchEnd = matchIndex + needle.length;
+    const matchEnd = matchIndex + matchLength;
     pieces.push(
       <strong key={`${matchIndex}-${matchEnd}`}>
         {excerpt.slice(matchIndex, matchEnd)}
@@ -36,7 +38,7 @@ function renderHighlightedExcerpt(excerpt: string, query: string) {
     );
 
     cursor = matchEnd;
-    matchIndex = lowerExcerpt.indexOf(lowerNeedle, cursor);
+    result = unicodeIndexOf(excerpt, needle, cursor);
   }
 
   if (cursor < excerpt.length) {
@@ -101,7 +103,7 @@ export function SearchOverlay({
     }
   }, [isOpen, scopeKey]);
 
-  const queryLower = query.toLowerCase();
+  const normQuery = normalizeForSearch(query);
   const toWorkspaceSearchResult = (file: MdFile): WorkspaceSearchResult => ({
     fsPath: file.fsPath,
     title: file.title,
@@ -113,9 +115,9 @@ export function SearchOverlay({
         .map((f) => ({
           item: toWorkspaceSearchResult(f),
           score:
-            (f.title.toLowerCase().includes(queryLower) ? 3 : 0) +
-            (f.fileName.toLowerCase().includes(queryLower) ? 2 : 0) +
-            (f.relativePath.toLowerCase().includes(queryLower) ? 1 : 0),
+            (normalizeForSearch(f.title).includes(normQuery) ? 3 : 0) +
+            (normalizeForSearch(f.fileName).includes(normQuery) ? 2 : 0) +
+            (normalizeForSearch(f.relativePath).includes(normQuery) ? 1 : 0),
         }))
         .filter((r) => r.score > 0)
         .sort((a, b) => b.score - a.score)
@@ -127,10 +129,10 @@ export function SearchOverlay({
         .map((item) => ({
           item,
           score:
-            (item.title.toLowerCase().includes(queryLower) ? 3 : 0) +
-            (item.fileName.toLowerCase().includes(queryLower) ? 2 : 0) +
-            (item.relativePath.toLowerCase().includes(queryLower) ? 1 : 0) +
-            (item.tabLabel.toLowerCase().includes(queryLower) ? 1 : 0),
+            (normalizeForSearch(item.title).includes(normQuery) ? 3 : 0) +
+            (normalizeForSearch(item.fileName).includes(normQuery) ? 2 : 0) +
+            (normalizeForSearch(item.relativePath).includes(normQuery) ? 1 : 0) +
+            (normalizeForSearch(item.tabLabel).includes(normQuery) ? 1 : 0),
         }))
         .filter((r) => r.score > 0)
         .sort((a, b) => b.score - a.score)

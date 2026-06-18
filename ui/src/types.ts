@@ -101,6 +101,7 @@ export interface ReadyAckMessage {
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
   readonly documentConversionEnabled?: boolean;
+  readonly isMaximized?: boolean;
 }
 
 export interface RecentWorkspacesChangedMessage {
@@ -166,6 +167,7 @@ export interface WorkspaceSearchResult {
   readonly excerpt?: string;
   readonly matchIndex?: number;
   readonly matchOrdinal?: number;
+  readonly matchLength?: number;
 }
 
 export interface NavNotFoundMessage {
@@ -185,6 +187,7 @@ export interface WorkspaceUnavailableMessage {
   readonly appRuntime?: AppRuntime;
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
+  readonly isMaximized?: boolean;
 }
 
 export type HostMessage =

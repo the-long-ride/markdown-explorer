@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronUpIcon, CloseIcon, SearchIcon } from '../shared/icons';
+import { unicodeIndexOf } from '../../utils/unicodeSearch';
 
 const FIND_PANEL_Z_INDEX = 2147483647;
 const FIND_MARK_CLASS = 'mdn-find-mark';
@@ -56,7 +57,6 @@ function highlightFindMatches(query: string): HTMLElement[] {
   const needle = query.trim();
   if (!needle) return [];
 
-  const lowerNeedle = needle.toLowerCase();
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) =>
       shouldSkipTextNode(node as Text)
@@ -71,25 +71,28 @@ function highlightFindMatches(query: string): HTMLElement[] {
 
   textNodes.forEach((node) => {
     const text = node.nodeValue || '';
-    const lowerText = text.toLowerCase();
-    let index = lowerText.indexOf(lowerNeedle);
-    if (index === -1) return;
+    
+    let result = unicodeIndexOf(text, needle, 0);
+    if (!result) return;
 
     const fragment = document.createDocumentFragment();
     let cursor = 0;
 
-    while (index !== -1) {
+    while (result) {
+      const index = result.index;
+      const matchLength = result.matchLength;
+      
       if (index > cursor) {
         fragment.appendChild(document.createTextNode(text.slice(cursor, index)));
       }
 
       const mark = document.createElement('mark');
       mark.className = FIND_MARK_CLASS;
-      mark.textContent = text.slice(index, index + needle.length);
+      mark.textContent = text.slice(index, index + matchLength);
       fragment.appendChild(mark);
 
-      cursor = index + needle.length;
-      index = lowerText.indexOf(lowerNeedle, cursor);
+      cursor = index + matchLength;
+      result = unicodeIndexOf(text, needle, cursor);
     }
 
     if (cursor < text.length) {

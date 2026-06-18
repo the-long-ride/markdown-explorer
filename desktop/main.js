@@ -79,6 +79,7 @@ function getHostInfo() {
     appRuntime: "desktop",
     hostPlatform: getHostPlatform(),
     hostArch: process.arch,
+    isMaximized: mainWindow ? mainWindow.isMaximized() : false,
   };
 }
 

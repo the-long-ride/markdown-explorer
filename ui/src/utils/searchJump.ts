@@ -1,3 +1,5 @@
+import { unicodeIndexOf } from './unicodeSearch';
+
 const SEARCH_JUMP_MARK_CLASS = 'mdn-search-jump-mark';
 
 function getSearchJumpRoot(): HTMLElement | null {
@@ -6,7 +8,7 @@ function getSearchJumpRoot(): HTMLElement | null {
 
 export function clearSearchJumpMarks(root = getSearchJumpRoot()) {
   if (!root) return;
-  root.querySelectorAll<HTMLElement>(`mark.${SEARCH_JUMP_MARK_CLASS}`).forEach((mark) => {
+  root.querySelectorAll<HTMLElement>(`mark.${SEARCH_JUMP_MARK_CLASS}, mark.mdn-search-jump-mark-secondary`).forEach((mark) => {
     const parent = mark.parentNode;
     if (!parent) return;
     parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
@@ -44,7 +46,12 @@ function expandSectionAncestors(element: HTMLElement) {
   }
 }
 
-export function scrollToRenderedSearchMatch(query: string, matchOrdinal?: number): boolean {
+export function scrollToRenderedSearchMatch(
+  query: string, 
+  matchOrdinal?: number,
+  matchIndex?: number,
+  rawMarkdownSource?: string | null
+): boolean {
   const root = getSearchJumpRoot();
   clearSearchJumpMarks(root);
   if (!root) return false;
@@ -52,11 +59,21 @@ export function scrollToRenderedSearchMatch(query: string, matchOrdinal?: number
   const needle = query.trim();
   if (!needle) return false;
 
-  const lowerNeedle = needle.toLowerCase();
   const targetOrdinal = Number.isFinite(matchOrdinal)
     ? Math.max(0, Math.floor(matchOrdinal ?? 0))
     : 0;
-  let seenOrdinal = 0;
+
+  // We collect all possible matches in the DOM first
+  const matches: Array<{
+    node: Text;
+    index: number;
+    matchLength: number;
+    cumulativeTextOffset: number;
+  }> = [];
+
+  const textNodesInfo: Array<{ node: Text; text: string }> = [];
+  let cumulativeTextOffset = 0;
+
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       return shouldSkipSearchJumpTextNode(node as Text)
@@ -68,23 +85,166 @@ export function scrollToRenderedSearchMatch(query: string, matchOrdinal?: number
   let node = walker.nextNode() as Text | null;
   while (node) {
     const text = node.nodeValue ?? '';
-    const index = text.toLowerCase().indexOf(lowerNeedle);
-    if (index !== -1) {
-      if (seenOrdinal === targetOrdinal) {
-        const range = document.createRange();
-        range.setStart(node, index);
-        range.setEnd(node, index + needle.length);
-        const mark = document.createElement('mark');
-        mark.className = SEARCH_JUMP_MARK_CLASS;
-        range.surroundContents(mark);
-        expandSectionAncestors(mark);
-        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        window.setTimeout(() => mark.classList.add('is-active'), 120);
-        return true;
-      }
-      seenOrdinal++;
+    textNodesInfo.push({ node, text });
+    let fromIndex = 0;
+    
+    while (fromIndex < text.length) {
+      const result = unicodeIndexOf(text, needle, fromIndex);
+      if (!result) break;
+      
+      matches.push({
+        node,
+        index: result.index,
+        matchLength: result.matchLength,
+        cumulativeTextOffset: cumulativeTextOffset + result.index
+      });
+      
+      fromIndex = result.index + result.matchLength;
     }
+    
+    cumulativeTextOffset += text.length;
     node = walker.nextNode() as Text | null;
+  }
+
+  if (matches.length === 0) return false;
+
+  // Decide which match to select
+  let selectedMatchIndex = -1;
+
+  if (rawMarkdownSource && Number.isFinite(matchIndex) && matchIndex! >= 0) {
+    // Context-based matching with proximity tie-breaker:
+    // Finds the DOM match that best overlaps with the raw context around targetOffset.
+    const targetOffset = matchIndex!;
+    const matchLength = needle.length;
+
+    const rawBefore = rawMarkdownSource.slice(Math.max(0, targetOffset - 80), targetOffset);
+    const rawAfter = rawMarkdownSource.slice(targetOffset + matchLength, targetOffset + matchLength + 80);
+
+    const cleanWords = (text: string) =>
+      text
+        .replace(/[#*_[\]()`~:|<>\-+=]/g, ' ')
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length >= 2);
+
+    const targetBeforeWords = cleanWords(rawBefore).slice(-5);
+    const targetAfterWords = cleanWords(rawAfter).slice(0, 5);
+
+    const fullRenderedText = textNodesInfo.map((info) => info.text).join('');
+
+    const cleanDOMWords = (text: string) =>
+      text
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length >= 2);
+
+    let bestScore = -Infinity;
+
+    for (let i = 0; i < matches.length; i++) {
+      const matchOffset = matches[i].cumulativeTextOffset;
+      const domBefore = fullRenderedText.slice(Math.max(0, matchOffset - 120), matchOffset);
+      const domAfter = fullRenderedText.slice(matchOffset + matches[i].matchLength, matchOffset + matches[i].matchLength + 120);
+
+      const domBeforeWords = cleanDOMWords(domBefore).slice(-5);
+      const domAfterWords = cleanDOMWords(domAfter).slice(0, 5);
+
+      let overlapScore = 0;
+      for (const word of targetBeforeWords) {
+        if (domBeforeWords.includes(word)) overlapScore++;
+      }
+      for (const word of targetAfterWords) {
+        if (domAfterWords.includes(word)) overlapScore++;
+      }
+
+      const rawVsDomDistance = Math.abs(matchOffset - targetOffset);
+      const finalScore = overlapScore * 1000000 - rawVsDomDistance;
+
+      if (finalScore > bestScore) {
+        bestScore = finalScore;
+        selectedMatchIndex = i;
+      }
+    }
+  } else if (Number.isFinite(matchIndex) && matchIndex! >= 0) {
+    // Proximity hint strategy (fallback when markdown source is not available)
+    const targetOffset = matchIndex!;
+    let closestDistance = Infinity;
+    
+    for (let i = 0; i < matches.length; i++) {
+      const distance = Math.abs(matches[i].cumulativeTextOffset - targetOffset);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        selectedMatchIndex = i;
+      }
+    }
+  } else if (targetOrdinal < matches.length) {
+    // Fallback: use ordinal counting
+    selectedMatchIndex = targetOrdinal;
+  } else {
+    // Fallback: use the first match if ordinal is out of bounds
+    selectedMatchIndex = 0;
+  }
+
+  let activeMark: HTMLElement | null = null;
+
+  // Group matches by text node. Since matches are collected in order,
+  // the matches inside each node will be in ascending order of index.
+  const nodeMatchesMap = new Map<Text, Array<{
+    index: number;
+    matchLength: number;
+    globalIndex: number;
+  }>>();
+
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    if (!nodeMatchesMap.has(match.node)) {
+      nodeMatchesMap.set(match.node, []);
+    }
+    nodeMatchesMap.get(match.node)!.push({
+      index: match.index,
+      matchLength: match.matchLength,
+      globalIndex: i,
+    });
+  }
+
+  for (const [textNode, nodeMatches] of nodeMatchesMap.entries()) {
+    const parent = textNode.parentNode;
+    if (!parent) continue;
+
+    const text = textNode.nodeValue ?? '';
+    const fragment = document.createDocumentFragment();
+    let cursor = 0;
+
+    for (const match of nodeMatches) {
+      if (match.index > cursor) {
+        fragment.appendChild(document.createTextNode(text.slice(cursor, match.index)));
+      }
+
+      const mark = document.createElement('mark');
+      mark.textContent = text.slice(match.index, match.index + match.matchLength);
+      
+      if (match.globalIndex === selectedMatchIndex) {
+        mark.className = SEARCH_JUMP_MARK_CLASS;
+        activeMark = mark;
+      } else {
+        mark.className = 'mdn-search-jump-mark-secondary';
+      }
+
+      fragment.appendChild(mark);
+      cursor = match.index + match.matchLength;
+    }
+
+    if (cursor < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(cursor)));
+    }
+
+    parent.replaceChild(fragment, textNode);
+  }
+
+  if (activeMark) {
+    expandSectionAncestors(activeMark);
+    activeMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => activeMark?.classList.add('is-active'), 120);
+    return true;
   }
 
   return false;

@@ -259,6 +259,7 @@ export type Action =
       hostPlatform?: HostPlatform;
       hostArch?: string;
       documentConversionEnabled?: boolean;
+      isMaximized?: boolean;
     }
   | {
       type: 'RECENT_WORKSPACES_CHANGED';
@@ -281,6 +282,7 @@ export type Action =
       appRuntime?: AppRuntime;
       hostPlatform?: HostPlatform;
       hostArch?: string;
+      isMaximized?: boolean;
     }
   | { type: 'SET_LOADING'; label?: string; detail?: string }
   | { type: 'SET_UPDATE_STATE'; updateState: UpdateState }
@@ -535,6 +537,7 @@ function reducer(state: AppState, action: Action): AppState {
         appRuntime: action.appRuntime ?? state.appRuntime,
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
+        isMaximized: action.isMaximized ?? state.isMaximized,
         isLoading: action.workspaceName ? state.isLoading : false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -682,6 +685,7 @@ function reducer(state: AppState, action: Action): AppState {
         appRuntime: action.appRuntime ?? state.appRuntime,
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
+        isMaximized: action.isMaximized ?? state.isMaximized,
         contentTabs: [],
         activeContentTabPath: null,
         renderVersion: state.renderVersion + 1,
@@ -904,6 +908,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             hostPlatform: msg.hostPlatform,
             hostArch: msg.hostArch,
             documentConversionEnabled: msg.documentConversionEnabled,
+            isMaximized: msg.isMaximized,
           });
           break;
         case 'recentWorkspacesChanged':
@@ -929,6 +934,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             appRuntime: msg.appRuntime,
             hostPlatform: msg.hostPlatform,
             hostArch: msg.hostArch,
+            isMaximized: msg.isMaximized,
           });
           break;
         case 'setLoading':

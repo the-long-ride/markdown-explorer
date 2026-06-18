@@ -172,7 +172,7 @@ export function useDesktopTabs({
   }, [dispatch, state.defaultExpanded, state.recentWorkspaces, state.theme, state.themeStyle]);
 
   const activateTab = useCallback(
-    (tabId: string) => {
+    (tabId: string, targetFilePath?: string) => {
       const tab = tabs.find((item) => item.id === tabId);
       if (!tab) return;
       setActiveTabId(tabId);
@@ -184,6 +184,8 @@ export function useDesktopTabs({
         return;
       }
 
+      const fileToOpen = targetFilePath !== undefined ? targetFilePath : tab.currentFile;
+
       dispatch({
         type: 'READY_ACK',
         fileList: tab.fileList,
@@ -194,10 +196,13 @@ export function useDesktopTabs({
         workspaceName: tab.workspaceName ?? '',
         workspacePath: tab.workspacePath,
         contentTabs: tab.contentTabs,
-        activeContentTabPath: tab.activeContentTabPath,
+        activeContentTabPath: fileToOpen ?? tab.activeContentTabPath,
         recentWorkspaces: state.recentWorkspaces,
       });
-      if (tab.contentHtml || (!isTabView && !tab.currentFile)) {
+
+      const useCachedContent = targetFilePath === undefined || targetFilePath === tab.currentFile;
+
+      if (useCachedContent && (tab.contentHtml || (!isTabView && !tab.currentFile))) {
         dispatch({
           type: 'RENDER_CONTENT',
           msg: {
@@ -219,8 +224,8 @@ export function useDesktopTabs({
       bridge.postMessage({
         command: 'activateWorkspace',
         workspacePath: tab.workspacePath,
-        filePath: tab.currentFile ?? undefined,
-        openFirstFile: isTabView,
+        filePath: fileToOpen ?? undefined,
+        openFirstFile: isTabView && !fileToOpen,
       });
     },
     [

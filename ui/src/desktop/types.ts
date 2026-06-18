@@ -49,6 +49,7 @@ export interface PendingSearchJump {
   filePath: string;
   query: string;
   matchOrdinal?: number;
+  matchIndex?: number;
   token: number;
 }
 

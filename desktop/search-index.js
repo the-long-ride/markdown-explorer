@@ -6,11 +6,12 @@ const {
   isTextDocumentFilePath,
   stripKnownExtension,
 } = require("./document-converter");
+const { normalizeForSearch, prepareHaystack } = require("./unicode-search");
 
-function makeSearchExcerpt(text, index, queryLength) {
+function makeSearchExcerpt(text, index, matchLength) {
   const beforeText = text.slice(0, index).replace(/\s+/g, " ").trim();
-  const matchText = text.slice(index, index + queryLength).replace(/\s+/g, " ").trim();
-  const afterText = text.slice(index + queryLength).replace(/\s+/g, " ").trim();
+  const matchText = text.slice(index, index + matchLength).replace(/\s+/g, " ").trim();
+  const afterText = text.slice(index + matchLength).replace(/\s+/g, " ").trim();
   const beforeWords = beforeText ? beforeText.split(" ") : [];
   const afterWords = afterText ? afterText.split(" ") : [];
   const parts = [];
@@ -52,7 +53,7 @@ function createSearchIndex() {
       mtimeMs: stat.mtimeMs,
       size: stat.size,
       raw,
-      lower: raw.toLowerCase(),
+      haystack: prepareHaystack(raw),
     };
     cache.set(filePath, entry);
     return entry;
@@ -86,6 +87,9 @@ function createSearchIndex() {
   function search(query, items, limit = 80) {
     if (!query || query.length < 2) return [];
 
+    const normQuery = normalizeForSearch(query);
+    if (!normQuery) return [];
+
     const results = [];
     const maxMatchesPerFile = 8;
     for (const item of items) {
@@ -95,9 +99,9 @@ function createSearchIndex() {
       const fileName = item.fileName || path.basename(item.fsPath);
       const relativePath = item.relativePath || fileName;
       const title = item.title || stripKnownExtension(fileName);
-      const titleScore = String(title).toLowerCase().includes(query) ? 5 : 0;
-      const fileNameScore = String(fileName).toLowerCase().includes(query) ? 4 : 0;
-      const pathScore = String(relativePath).toLowerCase().includes(query) ? 2 : 0;
+      const titleScore = normalizeForSearch(String(title)).includes(normQuery) ? 5 : 0;
+      const fileNameScore = normalizeForSearch(String(fileName)).includes(normQuery) ? 4 : 0;
+      const pathScore = normalizeForSearch(String(relativePath)).includes(normQuery) ? 2 : 0;
       const baseScore = titleScore + fileNameScore + pathScore;
       const contentMatches = [];
 
@@ -105,16 +109,23 @@ function createSearchIndex() {
         if (canSearchFileContents(item.fsPath)) {
           const entry = getEntry(item.fsPath);
           if (!entry) continue;
-          let index = entry.lower.indexOf(query);
+          
+          let nextNormIndex = 0;
           let ordinal = 0;
-          while (index !== -1 && contentMatches.length < maxMatchesPerFile) {
+          
+          while (contentMatches.length < maxMatchesPerFile) {
+            const result = entry.haystack.indexOfNormalized(normQuery, nextNormIndex);
+            if (!result) break;
+            
             contentMatches.push({
-              index,
+              index: result.match.index,
               ordinal,
-              excerpt: makeSearchExcerpt(entry.raw, index, query.length),
+              excerpt: makeSearchExcerpt(entry.raw, result.match.index, result.match.matchLength),
+              matchLength: result.match.matchLength,
             });
+            
             ordinal += 1;
-            index = entry.lower.indexOf(query, index + query.length);
+            nextNormIndex = result.nextNormIndex;
           }
         }
       } catch (err) {
@@ -131,6 +142,7 @@ function createSearchIndex() {
             excerpt: match.excerpt,
             matchIndex: match.index,
             matchOrdinal: match.ordinal,
+            matchLength: match.matchLength,
             score: baseScore + 3 - Math.min(match.ordinal, 20) / 100,
           });
         }

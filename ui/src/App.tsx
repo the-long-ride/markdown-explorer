@@ -90,7 +90,6 @@ export function App() {
   const {
     activeTabId,
     tabs,
-    setActiveTabId,
     workspaceAliases,
     toolbarPosition,
     setToolbarPosition,
@@ -151,23 +150,29 @@ export function App() {
     if (state.currentFile !== pendingSearchJump.filePath) return;
 
     const handle = window.setTimeout(() => {
-      scrollToRenderedSearchMatch(pendingSearchJump.query, pendingSearchJump.matchOrdinal);
+      scrollToRenderedSearchMatch(
+        pendingSearchJump.query, 
+        pendingSearchJump.matchOrdinal, 
+        pendingSearchJump.matchIndex,
+        state.markdownSource
+      );
       setPendingSearchJump((current) =>
         current?.token === pendingSearchJump.token ? null : current,
       );
     }, 80);
 
     return () => window.clearTimeout(handle);
-  }, [pendingSearchJump, state.currentFile, state.renderVersion]);
+  }, [pendingSearchJump, state.currentFile, state.renderVersion, state.markdownSource]);
 
   const queueSearchJump = useCallback(
-    (filePath: string, query: string, matchOrdinal?: number) => {
+    (filePath: string, query: string, matchOrdinal?: number, matchIndex?: number) => {
       const trimmedQuery = query.trim();
       if (!filePath || !trimmedQuery) return;
       setPendingSearchJump({
         filePath,
         query: trimmedQuery,
         matchOrdinal,
+        matchIndex,
         token: Date.now() + Math.random(),
       });
     },
@@ -175,28 +180,21 @@ export function App() {
   );
 
   const handleWorkspaceSearchSelect = useCallback(
-    (item: { fsPath: string; matchOrdinal?: number }, query: string) => {
-      queueSearchJump(item.fsPath, query, item.matchOrdinal);
+    (item: { fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string) => {
+      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex);
       navigate(item.fsPath);
     },
     [navigate, queueSearchJump],
   );
 
   const handleCrossTabSelect = useCallback(
-    (item: { tabId: string; fsPath: string; matchOrdinal?: number }, query: string) => {
+    (item: { tabId: string; fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string) => {
       const tab = tabs.find((entry) => entry.id === item.tabId);
       if (!tab) return;
-      queueSearchJump(item.fsPath, query, item.matchOrdinal);
-      setActiveTabId(item.tabId);
-      setNavigationScope(isTabView ? item.tabId : 'focus');
-      bridge.postMessage({
-        command: 'activateWorkspace',
-        workspacePath: tab.workspacePath ?? '',
-        filePath: item.fsPath,
-      });
-      navigate(item.fsPath);
+      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex);
+      activateTab(item.tabId, item.fsPath);
     },
-    [bridge, isTabView, navigate, queueSearchJump, setNavigationScope, tabs],
+    [activateTab, queueSearchJump, tabs],
   );
 
   const [termsAccepted, setTermsAccepted] = useState(() => {
@@ -498,7 +496,7 @@ export function App() {
   }
 
   return (
-    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}`}>
+    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
       {isTabView && (
         <DesktopTabBar

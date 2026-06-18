@@ -115,6 +115,7 @@ export interface WorkspaceSearchResult {
   readonly excerpt?: string;
   readonly matchIndex?: number;
   readonly matchOrdinal?: number;
+  readonly matchLength?: number;
 }
 
 export interface WorkspaceSearchResultsMessage {

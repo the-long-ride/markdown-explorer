@@ -28,6 +28,7 @@ import type {
   WebviewMessage,
   WorkspaceSearchResult,
 } from '../types';
+import { normalizeForSearch, unicodeIndexOf } from './unicodeSearch';
 
 export class MarkdownDocsPanel {
   static currentPanel: MarkdownDocsPanel | undefined;
@@ -304,10 +305,10 @@ export class MarkdownDocsPanel {
     await this._panel.webview.postMessage({ command: 'setLoading', label, detail });
   }
 
-  private _makeSearchExcerpt(text: string, index: number, queryLength: number): string {
+  private _makeSearchExcerpt(text: string, index: number, matchLength: number): string {
     const beforeText = text.slice(0, index).replace(/\s+/g, ' ').trim();
-    const matchText = text.slice(index, index + queryLength).replace(/\s+/g, ' ').trim();
-    const afterText = text.slice(index + queryLength).replace(/\s+/g, ' ').trim();
+    const matchText = text.slice(index, index + matchLength).replace(/\s+/g, ' ').trim();
+    const afterText = text.slice(index + matchLength).replace(/\s+/g, ' ').trim();
     const beforeWords = beforeText ? beforeText.split(' ') : [];
     const afterWords = afterText ? afterText.split(' ') : [];
     const parts: string[] = [];
@@ -356,27 +357,32 @@ export class MarkdownDocsPanel {
       const fileName = item.fileName || path.basename(item.fsPath);
       const relativePath = item.relativePath || fileName;
       const title = item.title || stripKnownExtension(fileName);
-      const titleScore = title.toLowerCase().includes(query) ? 5 : 0;
-      const fileNameScore = fileName.toLowerCase().includes(query) ? 4 : 0;
-      const pathScore = relativePath.toLowerCase().includes(query) ? 2 : 0;
+      const titleScore = normalizeForSearch(title).includes(query) ? 5 : 0;
+      const fileNameScore = normalizeForSearch(fileName).includes(query) ? 4 : 0;
+      const pathScore = normalizeForSearch(relativePath).includes(query) ? 2 : 0;
       const baseScore = titleScore + fileNameScore + pathScore;
-      const contentMatches: Array<{ index: number; ordinal: number; excerpt: string }> = [];
+      const contentMatches: Array<{ index: number; ordinal: number; excerpt: string; matchLength: number }> = [];
 
       const raw = isMarkdownFilePath(item.fsPath) || isTextDocumentFilePath(item.fsPath)
         ? WorkspaceScanner.readFile(item.fsPath)
         : '';
       if (raw) {
-        const lowerRaw = raw.toLowerCase();
-        let index = lowerRaw.indexOf(query);
+        let fromIndex = 0;
         let ordinal = 0;
-        while (index !== -1 && contentMatches.length < maxMatchesPerFile) {
+        
+        while (contentMatches.length < maxMatchesPerFile) {
+          const result = unicodeIndexOf(raw, query, fromIndex);
+          if (!result) break;
+          
           contentMatches.push({
-            index,
+            index: result.index,
             ordinal,
-            excerpt: this._makeSearchExcerpt(raw, index, query.length),
+            excerpt: this._makeSearchExcerpt(raw, result.index, result.matchLength),
+            matchLength: result.matchLength,
           });
+          
           ordinal += 1;
-          index = lowerRaw.indexOf(query, index + query.length);
+          fromIndex = result.index + result.matchLength;
         }
       }
 
@@ -390,6 +396,7 @@ export class MarkdownDocsPanel {
             excerpt: match.excerpt,
             matchIndex: match.index,
             matchOrdinal: match.ordinal,
+            matchLength: match.matchLength,
             score: baseScore + 3 - Math.min(match.ordinal, 20) / 100,
           });
         }

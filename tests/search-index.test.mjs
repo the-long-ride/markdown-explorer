@@ -54,3 +54,63 @@ test("search skips oversized files when no path or title match exists", () => {
 
   assert.deepEqual(results, []);
 });
+
+test("search handles multilingual locale-specific case folding correctly", () => {
+  const rootDir = makeTempDir("search-multi-");
+  const turkishPath = path.join(rootDir, "turkish.md");
+  const germanPath = path.join(rootDir, "german.md");
+  
+  // Note: the Turkish İ and German ß change length or byte representation when lowercased natively
+  writeFile(turkishPath, "Welcome to İstanbul.");
+  writeFile(germanPath, "Die Hauptstraße ist lang.");
+
+  const items = [
+    { fsPath: turkishPath, fileName: "turkish.md", relativePath: "turkish.md", title: "Turkish" },
+    { fsPath: germanPath, fileName: "german.md", relativePath: "german.md", title: "German" },
+  ];
+
+  const index = createSearchIndex();
+  
+  // Test Turkish
+  const trResults = index.search("istanbul", items);
+  assert.equal(trResults.length, 1);
+  assert.equal(trResults[0].fsPath, turkishPath);
+  assert.match(trResults[0].excerpt, /İstanbul/);
+  // Verify match index is exactly where "İ" starts in the raw string (offset 11)
+  assert.equal(trResults[0].matchIndex, 11);
+  assert.equal(trResults[0].matchLength, 8); // "İstanbul".length
+
+  // Test German
+  const deResults = index.search("strasse", items);
+  assert.equal(deResults.length, 1);
+  assert.equal(deResults[0].fsPath, germanPath);
+  assert.match(deResults[0].excerpt, /straße/i);
+});
+
+test("search handles unicode composed/decomposed normalization correctly", () => {
+  const rootDir = makeTempDir("search-norm-");
+  const nfcPath = path.join(rootDir, "nfc.md");
+  const nfdPath = path.join(rootDir, "nfd.md");
+  
+  // NFC (composed): \u00E9
+  writeFile(nfcPath, "I love caf\u00E9s.");
+  
+  // NFD (decomposed): e + \u0301
+  writeFile(nfdPath, "Let's go to the cafe\u0301.");
+
+  const items = [
+    { fsPath: nfcPath, fileName: "nfc.md", relativePath: "nfc.md", title: "NFC" },
+    { fsPath: nfdPath, fileName: "nfd.md", relativePath: "nfd.md", title: "NFD" },
+  ];
+
+  const index = createSearchIndex();
+  
+  // Search using NFC
+  const results = index.search("caf\u00E9", items);
+  assert.equal(results.length, 2);
+  
+  // The excerpt should contain the original representation
+  const nfdMatch = results.find(r => r.fsPath === nfdPath);
+  assert.ok(nfdMatch);
+  assert.equal(nfdMatch.matchLength, 5); // "cafe\u0301".length
+});

@@ -5,17 +5,19 @@
 import type { MdFile } from '../../ui/src/types';
 import { resolveFileHandle } from './file-access';
 
+import { normalizeForSearch, prepareHaystack } from '../../ui/src/utils/unicodeSearch';
+
 interface CacheEntry {
   lastModified: number;
   size: number;
   raw: string;
-  lower: string;
+  haystack: ReturnType<typeof prepareHaystack>;
 }
 
-function makeSearchExcerpt(text: string, index: number, queryLength: number): string {
+function makeSearchExcerpt(text: string, index: number, matchLength: number): string {
   const beforeText = text.slice(0, index).replace(/\s+/g, ' ').trim();
-  const matchText = text.slice(index, index + queryLength).replace(/\s+/g, ' ').trim();
-  const afterText = text.slice(index + queryLength).replace(/\s+/g, ' ').trim();
+  const matchText = text.slice(index, index + matchLength).replace(/\s+/g, ' ').trim();
+  const afterText = text.slice(index + matchLength).replace(/\s+/g, ' ').trim();
   const beforeWords = beforeText ? beforeText.split(' ') : [];
   const afterWords = afterText ? afterText.split(' ') : [];
   const parts: string[] = [];
@@ -58,7 +60,7 @@ export class BrowserSearchIndex {
         lastModified: file.lastModified,
         size: file.size,
         raw,
-        lower: raw.toLowerCase()
+        haystack: prepareHaystack(raw)
       };
       this.cache.set(relativePath, entry);
       return entry;
@@ -100,25 +102,31 @@ export class BrowserSearchIndex {
       const relativePath = item.relativePath;
       const title = item.title || stripKnownExtension(fileName);
 
-      const titleScore = title.toLowerCase().includes(trimmedQuery) ? 5 : 0;
-      const fileNameScore = fileName.toLowerCase().includes(trimmedQuery) ? 4 : 0;
-      const pathScore = relativePath.toLowerCase().includes(trimmedQuery) ? 2 : 0;
+      const titleScore = normalizeForSearch(title).includes(trimmedQuery) ? 5 : 0;
+      const fileNameScore = normalizeForSearch(fileName).includes(trimmedQuery) ? 4 : 0;
+      const pathScore = normalizeForSearch(relativePath).includes(trimmedQuery) ? 2 : 0;
       const baseScore = titleScore + fileNameScore + pathScore;
-      const contentMatches: Array<{ index: number; ordinal: number; excerpt: string }> = [];
+      const contentMatches: Array<{ index: number; ordinal: number; excerpt: string; matchLength: number }> = [];
 
       try {
         const entry = await this.getEntry(item.relativePath);
         if (entry) {
-          let index = entry.lower.indexOf(trimmedQuery);
+          let nextNormIndex = 0;
           let ordinal = 0;
-          while (index !== -1 && contentMatches.length < maxMatchesPerFile) {
+          
+          while (contentMatches.length < maxMatchesPerFile) {
+            const result = entry.haystack.indexOfNormalized(trimmedQuery, nextNormIndex);
+            if (!result) break;
+            
             contentMatches.push({
-              index,
+              index: result.match.index,
               ordinal,
-              excerpt: makeSearchExcerpt(entry.raw, index, trimmedQuery.length)
+              excerpt: makeSearchExcerpt(entry.raw, result.match.index, result.match.matchLength),
+              matchLength: result.match.matchLength
             });
+            
             ordinal++;
-            index = entry.lower.indexOf(trimmedQuery, index + trimmedQuery.length);
+            nextNormIndex = result.nextNormIndex;
           }
         }
       } catch (err) {
@@ -135,6 +143,7 @@ export class BrowserSearchIndex {
             excerpt: match.excerpt,
             matchIndex: match.index,
             matchOrdinal: match.ordinal,
+            matchLength: match.matchLength,
             score: baseScore + 3 - Math.min(match.ordinal, 20) / 100
           });
         }
