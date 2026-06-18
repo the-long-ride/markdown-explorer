@@ -4,15 +4,29 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
-## [1.5.3] — 2026-06-17
+## [1.5.3] — 2026-06-18
 
 ### Added
-- **Native TXT File Support**: Added native support for `.txt` files directly in Markdown Explorer with guard
+- **Windows Portable Self-Update Flow**: Desktop app on Windows can now download and apply updates in-place without requiring a separate installer. Settings shows a progress card with download percentage, scheduled-on-exit, and apply-now actions. An external helper process swaps the running `.exe` on quit and writes a result code so the next launch can report success or failure. All update strings are fully localized across the 9 supported UI languages.
+- **Workspace File Watcher**: Desktop now watches the active workspace directory for file-system changes (create, rename, delete) and automatically refreshes the sidebar and scope focus state with a 120 ms debounce, so the file tree stays in sync without a manual refresh.
+- **Scope Focus Live Sync**: Scope focus selection is now reconciled automatically when the workspace file list changes. New files that belong to a previously selected folder are included automatically; removed files are dropped. Folder-level selections track all descendant files so adding files inside a focused folder never breaks the scope.
+- **Native TXT File Support**: Added native support for `.txt` files directly in Markdown Explorer, allowing plain-text content to be viewed without enabling the document conversion feature.
+
+### Changed
+- **Deferred Desktop Startup**: Heavy startup work (workspace scan, search index build) is now deferred until after the window is fully visible, reducing perceived cold-start time. A `MDN_PERF=1` environment variable enables high-resolution timing marks for startup profiling.
+- **Render Library Code-Splitting**: Highlight.js, KaTeX, Mermaid, and Chart.js are now loaded through a dedicated `renderLibs.ts` module and split into separate async chunks by Vite, keeping the initial JS bundle smaller and improving first-render speed.
 
 ### Fixed
+- **Parser & Inline Renderer Robustness**: Resolved a loading-forever hang and crashes triggered by malformed or binary file inputs. The Markdown parser now guards every token type with explicit interface definitions and safe fallbacks, and the inline renderer handles unexpected node shapes without throwing.
 - **VS Code Extension Views Schema**: Added missing `icon` property to the webview view definition in `package.json` to resolve VS Code schema warnings.
 
-==
+### Tests
+- **Desktop Module Coverage**: Added lightweight unit tests for the workspace scanner, recent workspaces list, and search index modules to catch regressions in core desktop data-layer logic.
+- **Scope Focus Reconcile Tests**: Added test suite covering new-file inclusion, removed-file pruning, folder-level descendant tracking, and cross-platform path normalization for the scope focus reconcile algorithm.
+- **Update Manager Tests**: Added test coverage for the full Windows portable update state machine: download progress, staging, manifest persistence, helper launch, result code reading, and edge cases like a missing staged file.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, and VS Code package metadata to `1.5.3`.
 
 ---
 
