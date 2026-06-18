@@ -128,6 +128,7 @@ export interface Translations {
   };
   sidebar: {
     files: string;
+    search: string;
     filterPlaceholder: string;
     filterAriaLabel: string;
     scopeFocus: string;
@@ -303,6 +304,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "Files",
+      search: "Search",
       filterPlaceholder: "Filter files…",
       filterAriaLabel: "Filter file list",
       scopeFocus: "Scope Focus",
@@ -460,6 +462,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "Tệp",
+      search: "Tìm kiếm",
       filterPlaceholder: "Lọc tệp…",
       filterAriaLabel: "Lọc danh sách tệp",
       scopeFocus: "Tập trung phạm vi",
@@ -617,6 +620,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "Fichiers",
+      search: "Recherche",
       filterPlaceholder: "Filtrer les fichiers…",
       filterAriaLabel: "Filtrer la liste des fichiers",
       scopeFocus: "Focus de portée",
@@ -774,6 +778,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "Archivos",
+      search: "Buscar",
       filterPlaceholder: "Filtrar archivos…",
       filterAriaLabel: "Filtrar lista de archivos",
       scopeFocus: "Enfoque de alcance",
@@ -931,6 +936,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "文件",
+      search: "搜索",
       filterPlaceholder: "过滤文件…",
       filterAriaLabel: "过滤文件列表",
       scopeFocus: "范围聚焦",
@@ -1088,6 +1094,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "Filer",
+      search: "Søk",
       filterPlaceholder: "Filtrer filer…",
       filterAriaLabel: "Filtrer filliste",
       scopeFocus: "Scope-fokus",
@@ -1245,6 +1252,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "ファイル",
+      search: "検索",
       filterPlaceholder: "ファイルをフィルター…",
       filterAriaLabel: "ファイル一覧をフィルター",
       scopeFocus: "スコープフォーカス",
@@ -1402,6 +1410,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "파일",
+      search: "검색",
       filterPlaceholder: "파일 필터링…",
       filterAriaLabel: "파일 목록 필터링",
       scopeFocus: "범위 포커스",
@@ -1559,6 +1568,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     },
     sidebar: {
       files: "Файлы",
+      search: "Поиск",
       filterPlaceholder: "Фильтр файлов…",
       filterAriaLabel: "Фильтровать список файлов",
       scopeFocus: "Фокус области",

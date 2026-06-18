@@ -168,6 +168,7 @@ export interface WorkspaceSearchResult {
   readonly matchIndex?: number;
   readonly matchOrdinal?: number;
   readonly matchLength?: number;
+  readonly lineNumber?: number;
 }
 
 export interface NavNotFoundMessage {
@@ -342,8 +343,6 @@ export interface RestartAndApplyUpdateMessage {
   readonly command: 'restartAndApplyUpdate';
 }
 
-
-
 export type WebviewMessage =
   | NavigateMessage
   | OpenInEditorMessage
@@ -448,6 +447,7 @@ export interface AppSettings {
   fileTabs: boolean;
   documentConversion: boolean;
   scopeFocus?: Record<string, string[]>;
+  searchScopeFocus?: Record<string, string[]>;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   language?: string;
@@ -461,6 +461,7 @@ export interface PersistedState {
   fileTabs?: boolean;
   documentConversion?: boolean;
   scopeFocus?: Record<string, string[]>;
+  searchScopeFocus?: Record<string, string[]>;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   theme?: ThemeMode;

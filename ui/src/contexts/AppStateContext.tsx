@@ -135,6 +135,8 @@ export interface AppState {
   focusMode: boolean;
   /** Desktop self-update state */
   updateState: UpdateState;
+  /** Active sidebar tab */
+  sidebarActiveTab: 'files' | 'search';
 }
 
 function createEmptyUpdateState(): UpdateState {
@@ -195,6 +197,7 @@ const initialState: AppState = {
   hostArch: '',
   focusMode: false,
   updateState: createEmptyUpdateState(),
+  sidebarActiveTab: 'files',
 };
 
 function createInitialState(saved: PersistedState | undefined, isDesktop: boolean): AppState {
@@ -211,6 +214,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       settings: {
         ...initialState.settings,
         keybindings: defaultKeybindings,
+        searchScopeFocus: {},
       },
     };
   }
@@ -230,6 +234,7 @@ function createInitialState(saved: PersistedState | undefined, isDesktop: boolea
       fileTabs: saved.fileTabs === true,
       documentConversion: saved.documentConversion === true,
       scopeFocus: saved.scopeFocus ?? {},
+      searchScopeFocus: saved.searchScopeFocus ?? {},
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
       language: saved.language || 'en',
@@ -293,7 +298,9 @@ export type Action =
   | { type: 'SELECT_CUSTOM_THEME'; themeId: string | undefined }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean }
-  | { type: 'TOGGLE_FOCUS_MODE' };
+  | { type: 'TOGGLE_FOCUS_MODE' }
+  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: 'files' | 'search' }
+  | { type: 'SET_SIDEBAR_COLLAPSED'; collapsed: boolean };
 
 function normalizePathKey(value: string): string {
   return value.replace(/\\/g, '/').toLowerCase();
@@ -516,6 +523,14 @@ function reducer(state: AppState, action: Action): AppState {
         previousTree: state.tree,
         includeNewFiles: !workspaceChanged && state.fileList.length > 0,
       });
+      const reconciledSearchScopeFocus = reconcileScopeFocusSetting({
+        scopeFocus: state.settings.searchScopeFocus,
+        scopeKey: nextWorkspaceKey,
+        previousFileList: state.fileList,
+        nextFileList: action.fileList,
+        previousTree: state.tree,
+        includeNewFiles: !workspaceChanged && state.fileList.length > 0,
+      });
       return {
         ...state,
         fileList: action.fileList,
@@ -531,6 +546,7 @@ function reducer(state: AppState, action: Action): AppState {
           ...state.settings,
           documentConversion: action.documentConversionEnabled ?? state.settings.documentConversion,
           scopeFocus: reconciledScopeFocus,
+          searchScopeFocus: reconciledSearchScopeFocus,
         },
         recentWorkspaces: (action.recentWorkspaces as RecentWorkspace[]) ?? state.recentWorkspaces,
         appVersion: action.appVersion ?? state.appVersion,
@@ -549,6 +565,7 @@ function reducer(state: AppState, action: Action): AppState {
               ? null
               : state.activeContentTabPath,
         focusMode: false,
+        sidebarActiveTab: 'files',
       };
     }
 
@@ -812,6 +829,12 @@ function reducer(state: AppState, action: Action): AppState {
         focusMode: !state.focusMode,
       };
 
+    case 'SET_SIDEBAR_ACTIVE_TAB':
+      return { ...state, sidebarActiveTab: action.tab };
+
+    case 'SET_SIDEBAR_COLLAPSED':
+      return { ...state, sidebarCollapsed: action.collapsed };
+
     default:
       return state;
   }
@@ -835,6 +858,8 @@ interface AppStateContextValue {
   setThemeStyle: (themeStyle: ThemeStyle) => void;
   selectCustomTheme: (themeId: string | undefined) => void;
   toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  setSidebarActiveTab: (tab: 'files' | 'search') => void;
   toggleToc: () => void;
   toggleFocusMode: () => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
@@ -865,6 +890,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           fileTabs: saved.fileTabs === true,
           documentConversion: saved.documentConversion === true,
           scopeFocus: saved.scopeFocus ?? {},
+          searchScopeFocus: saved.searchScopeFocus ?? {},
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
           language: saved.language || 'en',
@@ -994,6 +1020,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       fileTabs: state.settings.fileTabs,
       documentConversion: state.settings.documentConversion,
       scopeFocus: state.settings.scopeFocus,
+      searchScopeFocus: state.settings.searchScopeFocus,
       desktopViewMode: state.settings.desktopViewMode,
       keybindings: state.settings.keybindings,
       theme: state.theme,
@@ -1204,6 +1231,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setThemeStyle,
       selectCustomTheme,
       toggleSidebar,
+      setSidebarCollapsed: useCallback((collapsed: boolean) => {
+        dispatch({ type: 'SET_SIDEBAR_COLLAPSED', collapsed });
+      }, []),
+      setSidebarActiveTab: useCallback((tab: 'files' | 'search') => {
+        dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab });
+      }, []),
       toggleToc,
       toggleFocusMode,
       updateSettings,
