@@ -2,7 +2,7 @@
 // components/Sidebar/SidebarSearch.tsx — Workspace search panel in sidebar
 // =============================================================================
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { CloseIcon, SearchIcon, FolderIcon, FolderChevronIcon } from '../shared/icons';
@@ -12,6 +12,17 @@ import { getTranslations } from '../../contexts/translations';
 import { FileNode, FolderNodeView } from './TreeNode';
 import type { ScopeFocusTreeProps } from './TreeNode';
 import type { FolderNode, WorkspaceSearchResult } from '../../types';
+
+export interface SidebarSearchStatus {
+  isSearching: boolean;
+  resultCount: number;
+  showCount: boolean;
+}
+
+interface SidebarSearchProps {
+  isVisible: boolean;
+  onStatusChange?: (status: SidebarSearchStatus) => void;
+}
 
 interface SearchResultFileNode {
   kind: 'file';
@@ -248,8 +259,8 @@ function SearchResultFolderView({ node, query, collapsedPaths, togglePath }: Sea
   );
 }
 
-export function SidebarSearch() {
-  const { state, updateSettings, dispatch } = useAppState();
+export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps) {
+  const { state, updateSettings } = useAppState();
   const bridge = usePlatform();
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -261,6 +272,38 @@ export function SidebarSearch() {
   const t = getTranslations(currentLang);
   const inputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef('');
+
+  // Refs and state to preserve scroll positions
+  const resultsTreeRef = useRef<HTMLDivElement>(null);
+  const scopeTreeRef = useRef<HTMLDivElement>(null);
+  const resultsScrollPosRef = useRef<number>(0);
+  const scopeScrollPosRef = useRef<number>(0);
+
+  const handleResultsScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    resultsScrollPosRef.current = e.currentTarget.scrollTop;
+  };
+
+  const handleScopeScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    scopeScrollPosRef.current = e.currentTarget.scrollTop;
+  };
+
+  useLayoutEffect(() => {
+    if (isVisible) {
+      if (scopeFocusEditing && scopeTreeRef.current) {
+        scopeTreeRef.current.scrollTop = scopeScrollPosRef.current;
+      } else if (!scopeFocusEditing && resultsTreeRef.current) {
+        resultsTreeRef.current.scrollTop = resultsScrollPosRef.current;
+      }
+    }
+  }, [isVisible, scopeFocusEditing]);
+
+  // Reset scroll position when query changes
+  useEffect(() => {
+    resultsScrollPosRef.current = 0;
+    if (resultsTreeRef.current) {
+      resultsTreeRef.current.scrollTop = 0;
+    }
+  }, [query]);
 
   // 1. Sidebar Search Tab Scope Focus States
   const searchScopeKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
@@ -414,6 +457,15 @@ export function SidebarSearch() {
     return () => window.removeEventListener('focus-sidebar-search-input', focusInput);
   }, []);
 
+  // Report status to parent for fading title-actions
+  useEffect(() => {
+    onStatusChange?.({
+      isSearching,
+      resultCount: results.length,
+      showCount: query.trim().length >= 2 && results.length > 0 && !scopeFocusEditing,
+    });
+  }, [isSearching, results.length, query, scopeFocusEditing, onStatusChange]);
+
   // Build recursive tree from flat results
   const fileMap = useMemo(() => {
     const map = new Map<string, WorkspaceSearchResult[]>();
@@ -442,35 +494,7 @@ export function SidebarSearch() {
 
   return (
     <>
-      <div className="sidebar__header">
-        <div className="sidebar__title">
-          <div className="sidebar__tab-strip">
-            <button
-              type="button"
-              className="sidebar__tab-btn"
-              onClick={() => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'files' })}
-            >
-              <FolderIcon size={12} />
-              <span>{t.sidebar.files}</span>
-            </button>
-            <button
-              type="button"
-              className="sidebar__tab-btn is-active"
-              onClick={() => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'search' })}
-            >
-              <SearchIcon size={12} />
-              <span>{t.sidebar.search || 'Search'}</span>
-            </button>
-          </div>
-          <div className="sidebar__title-actions" style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-            {isSearching && (
-              <div className="spinner" style={{ width: 10, height: 10, borderWidth: 1.5 }} />
-            )}
-            {query.trim().length >= 2 && results.length > 0 && !scopeFocusEditing && (
-              <span className="sidebar__count">{results.length}</span>
-            )}
-          </div>
-        </div>
+      <div className="sidebar__header-fields">
         <div className="sidebar__search">
           <SearchIcon size={12} />
           <input
@@ -510,7 +534,13 @@ export function SidebarSearch() {
       </div>
 
       {scopeFocusEditing ? (
-        <div className="sidebar__tree" id="searchScopeTree" role="tree">
+        <div
+          className="sidebar__tree sidebar__tree--from-right"
+          id="searchScopeTree"
+          role="tree"
+          ref={scopeTreeRef}
+          onScroll={handleScopeScroll}
+        >
           {visibleRootFiles.map((f) => (
             <FileNode
               key={f.fsPath}
@@ -528,7 +558,12 @@ export function SidebarSearch() {
           ))}
         </div>
       ) : (
-        <div className="sidebar__tree" id="searchResultsTree">
+        <div
+          className="sidebar__tree sidebar__tree--from-right"
+          id="searchResultsTree"
+          ref={resultsTreeRef}
+          onScroll={handleResultsScroll}
+        >
           {query.trim().length < 2 && (
             <div className="sidebar__empty-scope" style={{ fontSize: 11 }}>
               Enter at least 2 characters to search.

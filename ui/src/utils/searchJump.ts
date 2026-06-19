@@ -242,15 +242,35 @@ export function scrollToRenderedSearchMatch(
 
   if (activeMark) {
     expandSectionAncestors(activeMark);
-    activeMark.scrollIntoView({ behavior: 'auto', block: 'center' });
 
-    // Perform follow-up scroll centering adjustments to handle late async rendering/layout shifts (like math equations, images, or charts rendering)
+    // Helper: check if the mark is reasonably centred in the scroll viewport
+    const isMarkVisible = (mark: HTMLElement): boolean => {
+      const scrollContainer = mark.closest('.content__scroll');
+      if (!scrollContainer) return false;
+      const markRect = mark.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      // Consider "visible" if fully within the container with some margin
+      return (
+        markRect.top >= containerRect.top - 20 &&
+        markRect.bottom <= containerRect.bottom + 20
+      );
+    };
+
+    // Initial smooth scroll
+    activeMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Follow-up correction scrolls only if the mark drifted off-screen
+    // (e.g. due to late async rendering of images, math, or charts)
     window.setTimeout(() => {
-      activeMark?.scrollIntoView({ behavior: 'auto', block: 'center' });
-    }, 150);
+      if (activeMark && !isMarkVisible(activeMark)) {
+        activeMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 250);
     window.setTimeout(() => {
-      activeMark?.scrollIntoView({ behavior: 'auto', block: 'center' });
-    }, 400);
+      if (activeMark && !isMarkVisible(activeMark)) {
+        activeMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 600);
 
     window.setTimeout(() => activeMark?.classList.add('is-active'), 120);
     return true;
