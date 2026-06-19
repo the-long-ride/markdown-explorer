@@ -2,10 +2,6 @@
 // main.tsx — React entry point
 // =============================================================================
 
-// =============================================================================
-// main.tsx — React entry point
-// =============================================================================
-
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -17,7 +13,8 @@ import { createElectronBridge } from './platform/electron';
 import { createChromeBridge } from './platform/chrome';
 import { App } from './App';
 
-import './components/Content/InteractiveComponents';
+// Defer interactive component registration until after initial mount
+setTimeout(() => import('./components/Content/InteractiveComponents'), 100);
 
 // Global styles
 import './styles/tokens.css';
@@ -29,10 +26,6 @@ const shouldLogPerf =
 if (shouldLogPerf) {
   performance.mark('renderer:entry');
   console.info('[perf] mark renderer:entry');
-}
-
-if (typeof (window as any).electronAPI !== 'undefined' || typeof (window as any).__chromeExtBus !== 'undefined') {
-  import('./styles/fonts.css');
 }
 
 // ── Detect platform and create bridge ──────────────────────────────────────
@@ -60,6 +53,14 @@ const bridge = detectBridge();
 
 // ── Mount React app ────────────────────────────────────────────────────────
 
+// Dismiss the HTML splash screen once React mounts
+function dismissSplash() {
+  const splash = document.querySelector('.splash');
+  if (!splash) return;
+  splash.classList.add('fade-out');
+  setTimeout(() => splash.remove(), 350);
+}
+
 const root = createRoot(document.getElementById('root')!);
 root.render(
   <StrictMode>
@@ -72,6 +73,8 @@ root.render(
     </PlatformProvider>
   </StrictMode>,
 );
+
+dismissSplash();
 
 // ── Perf timing: collect renderer-side marks for main process ──────────────
 

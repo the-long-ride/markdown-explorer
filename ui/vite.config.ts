@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { copyFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { resolve, dirname } from 'path';
 
 export default defineConfig(({ mode }) => {
   const isElectron = process.env.BUILD_TARGET === 'electron' || mode === 'electron';
@@ -20,14 +22,48 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
-      // Strip modulepreload links for lazy-loaded vendor chunks.
-      // Vite auto-generates <link rel="modulepreload"> for ALL dynamic import chunks,
-      // which forces the browser to fetch + parse mermaid (6.2MB), hljs, katex, and chart
-      // on cold start even though they are only needed after content rendering.
+      // Copy bundled fonts to dist so critical inline @font-face in index.html can find them.
+      // Electron needs the TTF files at dist/assets/fonts/ for fast first-paint font loading.
       {
-        name: 'strip-lazy-modulepreload',
+        name: 'copy-fonts',
+        enforce: 'post',
+        writeBundle() {
+          const srcRoot = resolve(__dirname, 'assets/fonts');
+          const destRoot = resolve(__dirname, 'dist/assets/fonts');
+          if (!existsSync(srcRoot)) return;
+          function copyDir(src, dest) {
+            mkdirSync(dest, { recursive: true });
+            for (const entry of readdirSync(src, { withFileTypes: true })) {
+              const srcPath = resolve(src, entry.name);
+              const destPath = resolve(dest, entry.name);
+              if (entry.isDirectory()) copyDir(srcPath, destPath);
+              else copyFileSync(srcPath, destPath);
+            }
+          }
+          copyDir(srcRoot, destRoot);
+        },
+      },
+      // Non-blocking CSS + strip lazy modulepreload.
+      // 1) Converts <link rel="stylesheet"> to async load with media="print" trick,
+      //    adds a preload hint so the download starts as early as possible,
+      //    and a <noscript> fallback for users without JS.
+      // 2) Strips modulepreload links for lazy-loaded vendor chunks so the
+      //    browser doesn't pre-parse mermaid (6.2MB), hljs, katex, or chart on cold start.
+      {
+        name: 'html-optimizations',
         enforce: 'post',
         transformIndexHtml(html) {
+          // Make CSS non-blocking so the browser can paint before stylesheets arrive.
+          // Critical inline styles in index.html provide the initial frame.
+          html = html.replace(
+            /<link\s+rel="stylesheet"([^>]*)href="([^"]+)"([^>]*)>/gi,
+            (match, before, href, after) => {
+              // Already has a media attribute — leave it alone
+              if (/media=/i.test(match)) return match;
+              return `<link rel="preload" as="style" href="${href}">\n    <link rel="stylesheet"${before}href="${href}"${after} media="print" onload="this.media='all'">\n    <noscript><link rel="stylesheet"${before}href="${href}"${after}></noscript>`;
+            }
+          );
+          // Strip modulepreload for lazy chunks
           return html.replace(
             /<link\s+rel="modulepreload"[^>]*href="[^"]*\/([^/"]+)"[^>]*>/gi,
             (match, filename) => {

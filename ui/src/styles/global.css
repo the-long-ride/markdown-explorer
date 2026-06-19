@@ -9,6 +9,10 @@
 @import './global/global-theme-pets-a.css';
 @import './global/global-modals-settings-a.css';
 @import './global/global-settings-responsive.css';
-@import './global/global-settings-theme-picker.css';
+@import './global/global-theme-picker-settings.css';
+@import './global/global-theme-picker-styles.css';
+@import './global/global-theme-picker-pets.css';
+@import './global/global-theme-picker-custom.css';
+@import './global/global-theme-picker-remix.css';
 @import './global/global-switch-tooltip-diff.css';
 @import './global/global-electron-workspace.css';

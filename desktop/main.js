@@ -10,26 +10,12 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const DesktopScanner = require("./scanner");
-const { createAppTray } = require("./tray");
-const { createDebugTools } = require("./debug-tools");
-const { registerIpcHandlers } = require("./ipc-handlers");
-const {
-  createDocumentConverter,
-  getFileTypeLabel,
-  getOpenDialogFilters,
-  isExtraDocumentFilePath,
-  isSupportedFilePath,
-  stripKnownExtension,
-} = require("./document-converter");
-const { createMarkdownRenderer } = require("./markdown-renderer");
-const { createMainWindow } = require("./window");
-const { createRecentWorkspacesStore } = require("./recents");
-const { createSearchIndex } = require("./search-index");
-const { createUpdateManager } = require("./update-manager");
-const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
-const { createWorkspaceWatchController } = require("./workspace-watch");
+
 const perf = require("./perf-timer");
+const { createMainWindow } = require("./window");
+const { createDebugTools } = require("./debug-tools");
+const { createRecentWorkspacesStore } = require("./recents");
+const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
 
 const appDir = app.isPackaged
   ? __dirname
@@ -43,19 +29,72 @@ let currentFile = null;
 let flatList = [];
 let readyHandled = false;
 let documentConversionEnabled = false;
+
+// Deferred heavy modules — loaded lazily to speed up cold start.
+// The window appears before these parse + initialize.
+let DesktopScanner = null;
+let searchIndex = null;
 let updateManager = null;
-const markdownRenderer = createMarkdownRenderer(appDir);
-const documentConverter = createDocumentConverter();
-const recentWorkspacesStore = createRecentWorkspacesStore(app);
-const searchIndex = createSearchIndex();
+let documentConverter = null;
+let markdownRenderer = null;
+let workspaceWatch = null;
+
 const debugTools = createDebugTools(app);
-const workspaceWatch = createWorkspaceWatchController({
-  fs,
-  setTimeout,
-  clearTimeout,
-  debounceMs: 120,
-  onRefresh: refreshActiveWorkspaceFromWatch,
-});
+const recentWorkspacesStore = createRecentWorkspacesStore(app);
+
+function ensureHeavyModules() {
+  if (DesktopScanner) return;
+  DesktopScanner = require("./scanner");
+  const { createDocumentConverter, getFileTypeLabel, getOpenDialogFilters, isExtraDocumentFilePath, isSupportedFilePath, stripKnownExtension } = require("./document-converter");
+  const { createMarkdownRenderer } = require("./markdown-renderer");
+  const { createSearchIndex } = require("./search-index");
+  const { createWorkspaceWatchController } = require("./workspace-watch");
+
+  documentConverter = createDocumentConverter();
+  markdownRenderer = createMarkdownRenderer(appDir);
+  searchIndex = createSearchIndex();
+  workspaceWatch = createWorkspaceWatchController({
+    fs,
+    setTimeout,
+    clearTimeout,
+    debounceMs: 120,
+    onRefresh: refreshActiveWorkspaceFromWatch,
+  });
+}
+
+// Expose require-time constants from document-converter without loading the full module.
+// These are just string checks — no heavy parsing needed.
+function isSupportedFilePathLite(filePath, docConvEnabled) {
+  if (!filePath) return false;
+  const ext = path.extname(filePath).toLowerCase();
+  if ([".md", ".mdx", ".markdown", ".txt"].includes(ext)) return true;
+  if (docConvEnabled && [".docx", ".pdf", ".html", ".xlsx", ".pptx", ".odt", ".odp", ".ods", ".rtf"].includes(ext)) return true;
+  return false;
+}
+
+function isExtraDocumentFilePathLite(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  return [".docx", ".pdf", ".html", ".xlsx", ".pptx", ".odt", ".odp", ".ods", ".rtf"].includes(ext);
+}
+
+function getFileTypeLabelLite(filePath) {
+  const ext = path.extname(filePath).toLowerCase().replace(".", "");
+  const labels = { docx: "Word", pdf: "PDF", html: "HTML", xlsx: "Excel", pptx: "PowerPoint", odt: "OpenDocument Text", odp: "OpenDocument Presentation", ods: "OpenDocument Spreadsheet", rtf: "Rich Text" };
+  return labels[ext] || ext.toUpperCase();
+}
+
+function getOpenDialogFiltersLite(docConvEnabled) {
+  const filters = [{ name: "Markdown", extensions: ["md", "mdx", "markdown"] }];
+  if (docConvEnabled) filters.push(
+    { name: "Documents", extensions: ["docx", "pdf", "html", "xlsx", "pptx", "odt", "odp", "ods", "rtf"] },
+    { name: "All Files", extensions: ["*"] },
+  );
+  return filters;
+}
+
+function stripKnownExtensionLite(filename) {
+  return filename.replace(/\.(md|mdx|markdown|txt|docx|pdf|html|xlsx|pptx|odt|odp|ods|rtf)$/i, "");
+}
 
 // Electron zoom level maps roughly to factor = 1.2 ^ level.
 // This range gives about 63% to 144%, enough zoom-out for dense views while keeping zoom-in guarded.
@@ -124,7 +163,7 @@ function getWorkspacePathStatus(workspacePath) {
 }
 
 function sendWorkspaceUnavailable(workspacePath, reason = "missing") {
-  workspaceWatch.dispose();
+  if (workspaceWatch) workspaceWatch.dispose();
   activeWorkspace = null;
   currentFile = null;
   flatList = [];
@@ -150,44 +189,49 @@ app.whenReady().then(() => {
   perf.measure("main require to electron ready", "main:required", "electron:ready");
   configureYouTubeEmbedHeaders(session);
   createWindow();
-  tray = createAppTray(appDir, () => mainWindow);
-  updateManager = createUpdateManager({
-    app,
-    execPath: process.execPath,
-    relaunchArgs: process.argv.slice(1),
-    sendToWindow: sendHostMessage,
-  });
-
-  registerIpcHandlers({
-    ipcMain,
-    clipboard,
-    fs,
-    shell,
-    getMainWindow: () => mainWindow,
-    handlers: {
-      ready: handleReady,
-      openFolder: handleOpenFolder,
-      openFile: handleOpenFile,
-      openPath: handleOpenPath,
-      activateWorkspace: handleActivateWorkspace,
-      searchAcrossWorkspaces: handleSearchAcrossWorkspaces,
-      searchWorkspace: handleSearchWorkspace,
-      indexWorkspaceSearchItems: handleIndexWorkspaceSearchItems,
-      loadWorkspaceSearchIndexes: handleLoadWorkspaceSearchIndexes,
-      confirmOpenPath: handleConfirmOpenPath,
-      openRecent: handleOpenRecent,
-      deleteRecentWorkspace: handleDeleteRecentWorkspace,
-      replaceRecentWorkspaces: handleReplaceRecentWorkspaces,
-      closeWorkspace: handleCloseWorkspace,
-      zoomIn: handleZoomIn,
-      zoomOut: handleZoomOut,
-      navigate: handleNavigate,
-      refresh: handleRefresh,
-      setDocumentConversion: handleSetDocumentConversion,
-      downloadUpdate: handleDownloadUpdate,
-      scheduleDownloadedUpdate: handleScheduleDownloadedUpdate,
-      restartAndApplyUpdate: handleRestartAndApplyUpdate,
-    },
+  // Defer tray + update manager — not needed for first visible frame
+  setImmediate(() => {
+    const { createAppTray } = require("./tray");
+    const { registerIpcHandlers } = require('./ipc-handlers');
+    tray = createAppTray(appDir, () => mainWindow);
+    const { createUpdateManager } = require("./update-manager");
+    updateManager = createUpdateManager({
+      app,
+      execPath: process.execPath,
+      relaunchArgs: process.argv.slice(1),
+      sendToWindow: sendHostMessage,
+    });
+    registerIpcHandlers({
+      ipcMain,
+      clipboard,
+      fs,
+      shell,
+      getMainWindow: () => mainWindow,
+      handlers: {
+        ready: handleReady,
+        openFolder: handleOpenFolder,
+        openFile: handleOpenFile,
+        openPath: handleOpenPath,
+        activateWorkspace: handleActivateWorkspace,
+        searchAcrossWorkspaces: handleSearchAcrossWorkspaces,
+        searchWorkspace: handleSearchWorkspace,
+        indexWorkspaceSearchItems: handleIndexWorkspaceSearchItems,
+        loadWorkspaceSearchIndexes: handleLoadWorkspaceSearchIndexes,
+        confirmOpenPath: handleConfirmOpenPath,
+        openRecent: handleOpenRecent,
+        deleteRecentWorkspace: handleDeleteRecentWorkspace,
+        replaceRecentWorkspaces: handleReplaceRecentWorkspaces,
+        closeWorkspace: handleCloseWorkspace,
+        zoomIn: handleZoomIn,
+        zoomOut: handleZoomOut,
+        navigate: handleNavigate,
+        refresh: handleRefresh,
+        setDocumentConversion: handleSetDocumentConversion,
+        downloadUpdate: handleDownloadUpdate,
+        scheduleDownloadedUpdate: handleScheduleDownloadedUpdate,
+        restartAndApplyUpdate: handleRestartAndApplyUpdate,
+      },
+    });
   });
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -199,7 +243,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
-  workspaceWatch.dispose();
+  if (workspaceWatch) workspaceWatch.dispose();
   if (!updateManager) return;
   void updateManager.applyPendingUpdateOnQuit();
 });
@@ -235,6 +279,7 @@ async function handleReady(msg = {}) {
     perf.printSummary();
     updateManager?.sendCurrentState();
   } else {
+    ensureHeavyModules();
     bindWorkspaceWatch();
     await sendWorkspaceData();
     updateManager?.sendCurrentState();
@@ -242,6 +287,7 @@ async function handleReady(msg = {}) {
 }
 
 function handleOpenFolder(openFirstFile = false) {
+  ensureHeavyModules();
   const folders = dialog.showOpenDialogSync(mainWindow, {
     properties: ["openDirectory"],
   });
@@ -257,9 +303,10 @@ function handleOpenFolder(openFirstFile = false) {
 }
 
 function handleOpenFile() {
+  ensureHeavyModules();
   const files = dialog.showOpenDialogSync(mainWindow, {
     properties: ["openFile"],
-    filters: getOpenDialogFilters(documentConversionEnabled),
+    filters: getOpenDialogFiltersLite(documentConversionEnabled),
   });
   if (files && files.length > 0) {
     const selectedFile = files[0];
@@ -269,13 +316,14 @@ function handleOpenFile() {
     currentFile = selectedFile;
     bindWorkspaceWatch();
     sendLoading(
-      isExtraDocumentFilePath(selectedFile) ? "Preparing document preview..." : "Loading docs...",
+      isExtraDocumentFilePathLite(selectedFile) ? "Preparing document preview..." : "Loading docs...",
     );
     sendWorkspaceData().then(() => sendContent());
   }
 }
 
 function handleOpenPath(filePath, openFirstFile = false) {
+  ensureHeavyModules();
   const status = getWorkspacePathStatus(filePath);
   if (!status.ok) {
     sendWorkspaceUnavailable(filePath, status.reason);
@@ -285,14 +333,14 @@ function handleOpenPath(filePath, openFirstFile = false) {
   const stat = status.stat;
   const isFile = stat.isFile();
   if (isFile) {
-    if (!isSupportedFilePath(filePath, documentConversionEnabled)) {
+    if (!isSupportedFilePathLite(filePath, documentConversionEnabled)) {
       dialog.showMessageBoxSync(mainWindow, {
         type: "warning",
         buttons: ["OK"],
         title: "Unsupported File Type",
         message: documentConversionEnabled
           ? "Markdown Explorer cannot preview this file type."
-          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
+          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTX, and TXT files.",
         detail: filePath,
       });
       return;
@@ -311,6 +359,7 @@ function handleOpenPath(filePath, openFirstFile = false) {
 }
 
 function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false) {
+  ensureHeavyModules();
   const status = getWorkspacePathStatus(workspacePath);
   if (!status.ok) {
     sendWorkspaceUnavailable(workspacePath, status.reason);
@@ -321,7 +370,7 @@ function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false)
   currentFile =
     filePath &&
     fs.existsSync(filePath) &&
-    isSupportedFilePath(filePath, documentConversionEnabled)
+    isSupportedFilePathLite(filePath, documentConversionEnabled)
       ? filePath
       : null;
   recentWorkspacesStore.save(activeWorkspace);
@@ -330,6 +379,7 @@ function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false)
 }
 
 function handleSearchAcrossWorkspaces(msg) {
+  ensureHeavyModules();
   const query = String(msg.query || "").trim().toLowerCase();
   const requestId = msg.requestId;
   const items = Array.isArray(msg.items) ? msg.items : [];
@@ -341,6 +391,7 @@ function handleSearchAcrossWorkspaces(msg) {
 }
 
 function handleSearchWorkspace(msg) {
+  ensureHeavyModules();
   const query = String(msg.query || "").trim().toLowerCase();
   const requestId = msg.requestId;
   const items = Array.isArray(msg.items) && msg.items.length > 0 ? msg.items : flatList;
@@ -352,11 +403,13 @@ function handleSearchWorkspace(msg) {
 }
 
 function handleIndexWorkspaceSearchItems(msg) {
+  ensureHeavyModules();
   const items = Array.isArray(msg.items) ? msg.items : [];
   setTimeout(() => searchIndex.prime(items), 0);
 }
 
 function handleLoadWorkspaceSearchIndexes(msg) {
+  ensureHeavyModules();
   const tabRequests = Array.isArray(msg.tabs) ? msg.tabs : [];
   if (tabRequests.length === 0) return;
 
@@ -424,14 +477,14 @@ async function handleConfirmOpenPath(filePath) {
   const stat = fs.statSync(filePath);
   const isFile = stat.isFile();
   if (isFile) {
-    if (!isSupportedFilePath(filePath, documentConversionEnabled)) {
+    if (!isSupportedFilePathLite(filePath, documentConversionEnabled)) {
       dialog.showMessageBoxSync(mainWindow, {
         type: "warning",
         buttons: ["OK"],
         title: "Unsupported File Type",
         message: documentConversionEnabled
           ? "Markdown Explorer cannot preview this file type."
-          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
+          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTX, and TXT files.",
         detail: filePath,
       });
       return;
@@ -459,6 +512,7 @@ async function handleConfirmOpenPath(filePath) {
 }
 
 function handleOpenRecent(folderPath, openFirstFile = false) {
+  ensureHeavyModules();
   const status = getWorkspacePathStatus(folderPath);
   if (!status.ok) {
     sendWorkspaceUnavailable(folderPath, status.reason);
@@ -529,7 +583,7 @@ function clampAppZoom() {
 
 function handleCloseWorkspace() {
   readyHandled = false;
-  workspaceWatch.dispose();
+  if (workspaceWatch) workspaceWatch.dispose();
   activeWorkspace = null;
   currentFile = null;
   handleReady();
@@ -569,7 +623,7 @@ function getWorkspaceBaseDir() {
 }
 
 function bindWorkspaceWatch() {
-  workspaceWatch.watchWorkspace(getWorkspaceBaseDir());
+  if (workspaceWatch) workspaceWatch.watchWorkspace(getWorkspaceBaseDir());
 }
 
 function isCurrentFileStillAvailable() {
@@ -577,7 +631,7 @@ function isCurrentFileStillAvailable() {
 
   const status = getWorkspacePathStatus(currentFile);
   if (!status.ok || !status.stat.isFile()) return false;
-  if (!isSupportedFilePath(currentFile, documentConversionEnabled)) return false;
+  if (!isSupportedFilePathLite(currentFile, documentConversionEnabled)) return false;
 
   return flatList.some((file) => file.fsPath === currentFile);
 }
@@ -638,6 +692,7 @@ function resolveNavigationPath(filePath) {
 }
 
 async function handleNavigate(filePath) {
+  ensureHeavyModules();
   if (!filePath) {
     currentFile = null;
     await sendWelcome();
@@ -649,7 +704,7 @@ async function handleNavigate(filePath) {
   if (
     fs.existsSync(filePath) &&
     fs.statSync(filePath).isFile() &&
-    isSupportedFilePath(filePath, documentConversionEnabled)
+    isSupportedFilePathLite(filePath, documentConversionEnabled)
   ) {
     currentFile = filePath;
     await sendContent();
@@ -666,6 +721,7 @@ async function handleRefresh() {
 }
 
 async function handleSetDocumentConversion(enabled) {
+  ensureHeavyModules();
   const nextEnabled = enabled === true;
   if (documentConversionEnabled === nextEnabled) return;
   documentConversionEnabled = nextEnabled;
@@ -675,7 +731,7 @@ async function handleSetDocumentConversion(enabled) {
   sendLoading(nextEnabled ? "Finding supported documents..." : "Refreshing Markdown files...");
   await sendWorkspaceData();
 
-  if (currentFile && !isSupportedFilePath(currentFile, documentConversionEnabled)) {
+  if (currentFile && !isSupportedFilePathLite(currentFile, documentConversionEnabled)) {
     currentFile = null;
     await sendWelcome();
     return;
@@ -708,13 +764,14 @@ async function handleRestartAndApplyUpdate() {
 }
 
 function scanWorkspaceData(workspacePath) {
+  ensureHeavyModules();
   let tree = null;
   let flat = [];
 
   try {
     const isFile = fs.statSync(workspacePath).isFile();
     if (isFile) {
-      if (isSupportedFilePath(workspacePath, documentConversionEnabled)) {
+      if (isSupportedFilePathLite(workspacePath, documentConversionEnabled)) {
         const entry = DesktopScanner.buildFileEntry(workspacePath, path.dirname(workspacePath));
         flat = [entry];
         tree = DesktopScanner.buildTree(flat);
@@ -741,7 +798,7 @@ async function sendWorkspaceData() {
 
   const { tree, flat } = scanWorkspaceData(activeWorkspace);
   flatList = flat;
-  searchIndex.prime(flat);
+  if (searchIndex) searchIndex.prime(flat);
 
   const workspaceName = path.basename(activeWorkspace);
   const recents = recentWorkspacesStore.load();
@@ -775,8 +832,9 @@ async function sendInitialContent(openFirstFile = false) {
 }
 
 async function sendContent() {
+  ensureHeavyModules();
   if (!currentFile || !activeWorkspace) return;
-  if (!isSupportedFilePath(currentFile, documentConversionEnabled)) {
+  if (!isSupportedFilePathLite(currentFile, documentConversionEnabled)) {
     currentFile = null;
     await sendWelcome();
     return;
@@ -785,10 +843,10 @@ async function sendContent() {
   let raw = "";
   let previewInfo = null;
   try {
-    if (isExtraDocumentFilePath(currentFile)) {
+    if (isExtraDocumentFilePathLite(currentFile)) {
       sendLoading(
         "Preparing document preview...",
-        `Preparing ${getFileTypeLabel(currentFile)} preview locally.`,
+        `Preparing ${getFileTypeLabelLite(currentFile)} preview locally.`,
       );
     }
     const result = await documentConverter.readMarkdown(currentFile);
@@ -797,11 +855,11 @@ async function sendContent() {
   } catch (err) {
     console.error("Failed to read file:", currentFile, err);
     raw = documentConverter.createFailureMarkdown(currentFile, err);
-    previewInfo = isExtraDocumentFilePath(currentFile)
+    previewInfo = isExtraDocumentFilePathLite(currentFile)
       ? {
           kind: "converted",
           sourceExtension: path.extname(currentFile).toLowerCase(),
-          sourceLabel: getFileTypeLabel(currentFile),
+          sourceLabel: getFileTypeLabelLite(currentFile),
           qualityWarning: "Markdown Explorer could not convert this file. The details are shown below.",
         }
       : null;
@@ -813,7 +871,7 @@ async function sendContent() {
   const baseDir = isWorkspaceFile ? path.dirname(activeWorkspace) : activeWorkspace;
   const fileInfo = flatList.find((f) => f.fsPath === currentFile) || {
     relativePath: path.relative(baseDir, currentFile),
-    title: stripKnownExtension(path.basename(currentFile)),
+    title: stripKnownExtensionLite(path.basename(currentFile)),
   };
 
   const msg = {

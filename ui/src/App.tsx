@@ -2,7 +2,7 @@
 // App.tsx — Root component
 // =============================================================================
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
 import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
@@ -13,19 +13,21 @@ import { Sidebar } from './components/Sidebar/Sidebar';
 import { Content } from './components/Content/Content';
 import { ContentTabs } from './components/Content/ContentTabs';
 import { WelcomePage } from './components/Content/WelcomePage';
-import { TableOfContents } from './components/TOC/TableOfContents';
-import { SearchOverlay } from './components/Search/SearchOverlay';
-import { FindInFilePanel } from './components/Search/FindInFilePanel';
-import { MediaModal } from './components/Modal/MediaModal';
-import { SettingsModal } from './components/Settings/SettingsModal';
-import { TermsModal } from './components/Modal/TermsModal';
-import { ThemeOnboardingModal } from './components/Modal/ThemeOnboardingModal';
-import { SwitchWorkspaceModal } from './components/Modal/SwitchWorkspaceModal';
+const TableOfContents = lazy(() => import('./components/TOC/TableOfContents').then(m => ({ default: m.TableOfContents })));
+// Lazy-loaded — only parsed when first opened
+const SearchOverlay = lazy(() => import('./components/Search/SearchOverlay').then(m => ({ default: m.SearchOverlay })));
+const FindInFilePanel = lazy(() => import('./components/Search/FindInFilePanel').then(m => ({ default: m.FindInFilePanel })));
+const MediaModal = lazy(() => import('./components/Modal/MediaModal').then(m => ({ default: m.MediaModal })));
+const SettingsModal = lazy(() => import('./components/Settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const TermsModal = lazy(() => import('./components/Modal/TermsModal').then(m => ({ default: m.TermsModal })));
+const ThemeOnboardingModal = lazy(() => import('./components/Modal/ThemeOnboardingModal').then(m => ({ default: m.ThemeOnboardingModal })));
+const SwitchWorkspaceModal = lazy(() => import('./components/Modal/SwitchWorkspaceModal').then(m => ({ default: m.SwitchWorkspaceModal })));
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
-import { FloatingTabToolbar } from './components/Desktop/FloatingTabToolbar';
+const FloatingTabToolbar = lazy(() => import('./components/Desktop/FloatingTabToolbar').then(m => ({ default: m.FloatingTabToolbar })));
 import { ChevronUpIcon, DoubleChevronLeftIcon, ExpandIcon, CollapseIcon, MaximizeIcon, MinimizeIcon } from './components/shared/icons';
 import type { PendingSearchJump, SearchScope } from './desktop/types';
+// Defer global DOM handlers until after mount
 import { initGlobalHandlers } from './dom/globalHandlers';
 import { useDesktopTabs } from './hooks/useDesktopTabs';
 import { useFileDropOpen } from './hooks/useFileDropOpen';
@@ -37,6 +39,8 @@ import { formatShortcutLabel } from './utils/shortcuts';
 import { clearSearchJumpMarks, scrollToRenderedSearchMatch } from './utils/searchJump';
 
 export function App() {
+  // Register global DOM handlers after first paint (not needed for initial render)
+  useEffect(() => { initGlobalHandlers(); }, []);
   const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, dispatch, navigate, refresh, openInEditor } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
@@ -502,11 +506,11 @@ export function App() {
             </div>
           )}
         </div>
-        <TermsModal
+        <Suspense fallback={null}><TermsModal
           isOpen={true}
           onAgree={handleAgreeTerms}
           onOpenExternal={openExternalUrl}
-        />
+        /></Suspense>
       </div>
     );
   }
@@ -584,7 +588,7 @@ export function App() {
               <ContentTabs />
               {state.toc.length > 0 && state.currentFile && (
                 <div className={`toc-compact-bar${state.tocCollapsed ? ' is-collapsed' : ''}`}>
-                  <TableOfContents variant="compact" />
+                  <Suspense fallback={null}><TableOfContents variant="compact" /></Suspense>
                   <TooltipButton
                     type="button"
                     className="toc-compact-bar__toggle-btn"
@@ -595,7 +599,7 @@ export function App() {
                     tooltipAlign="right"
                     icon={state.tocCollapsed ? <ExpandIcon size={14} /> : <CollapseIcon size={14} />}
                   />
-                </div>
+              </div>
               )}
               <div className="content-shell__main">
                 {state.currentFile && (
@@ -638,7 +642,7 @@ export function App() {
                 />
               </div>
               {isTabView && (
-                <FloatingTabToolbar
+                <Suspense fallback={null}><FloatingTabToolbar
                   position={toolbarPosition}
                   onPositionChange={setToolbarPosition}
                   onSearchOpen={openSidebarSearch}
@@ -653,20 +657,21 @@ export function App() {
                   canGoBack={canGoBack}
                   canGoForward={canGoForward}
                   canEdit={!!state.currentFile}
-                />
+                /></Suspense>
               )}
             </div>
             {state.toc.length > 0 && (
               <>
                 <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label="Resize table of contents" />
-                <TableOfContents variant="panel" />
+                <Suspense fallback={null}><TableOfContents variant="panel" /></Suspense>
               </>
             )}
           </div>
         </>
       )}
 
-      {/* Overlays */}
+      {/* Overlays — lazy-loaded components, Suspense fallback is a no-op (invisible when closed) */}
+      <Suspense fallback={null}>
       <SearchOverlay
         isOpen={searchOpen}
         onClose={closeSearch}
@@ -710,6 +715,7 @@ export function App() {
         onConfirm={confirmSwitchWorkspace}
         targetPath={pendingDroppedPath || ''}
       />
+      </Suspense>
 
       {isDragging && (
         <div style={{
