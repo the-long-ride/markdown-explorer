@@ -68,6 +68,13 @@ function createMainWindow({ appDir, debugTools, clampAppZoom }) {
     if (debugTools.shouldAutoOpenDevTools()) {
       debugTools.openDevToolsIfDebug(mainWindow);
     }
+    // Collect renderer-side perf marks if available
+    mainWindow.webContents.executeJavaScript("window.__mdnPerfEntries ? window.__mdnPerfEntries() : null").then((rendererEntries) => {
+      if (rendererEntries) {
+        perf.setRendererMarks(rendererEntries);
+        perf.printSummary();
+      }
+    }).catch(() => {});
   });
 
   mainWindow.loadFile(path.join(appDir, "ui", "dist", "index.html"));

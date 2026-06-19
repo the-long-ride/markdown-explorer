@@ -10,7 +10,6 @@ import { getTranslations } from "../../contexts/translations";
 import { getChart, getHighlightJs, getKatex, getMermaid } from "../../lib/renderLibs";
 import { WelcomePage } from "./WelcomePage";
 import { AlertTriangleIcon, FolderIcon, TrashIcon } from "../shared/icons";
-import "katex/dist/katex.min.css";
 
 declare global {
   interface Window {

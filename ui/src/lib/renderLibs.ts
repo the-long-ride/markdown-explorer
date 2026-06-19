@@ -9,19 +9,21 @@ function getWindowObject() {
 
 export function getHighlightJs() {
   if (!highlightPromise) {
-    highlightPromise = Promise.all([
-      import("highlight.js/lib/core"),
-      import("highlight.js/lib/languages/javascript"),
-      import("highlight.js/lib/languages/typescript"),
-      import("highlight.js/lib/languages/json"),
-      import("highlight.js/lib/languages/css"),
-      import("highlight.js/lib/languages/xml"),
-      import("highlight.js/lib/languages/markdown"),
-      import("highlight.js/lib/languages/bash"),
-      import("highlight.js/lib/languages/powershell"),
-      import("highlight.js/lib/languages/yaml"),
-      import("highlight.js/lib/languages/python"),
-    ]).then(([{ default: hljs }, ...languages]) => {
+    highlightPromise = (async () => {
+      await import("highlight.js/styles/github-dark.css");
+      const [{ default: hljs }, ...languages] = await Promise.all([
+        import("highlight.js/lib/core"),
+        import("highlight.js/lib/languages/javascript"),
+        import("highlight.js/lib/languages/typescript"),
+        import("highlight.js/lib/languages/json"),
+        import("highlight.js/lib/languages/css"),
+        import("highlight.js/lib/languages/xml"),
+        import("highlight.js/lib/languages/markdown"),
+        import("highlight.js/lib/languages/bash"),
+        import("highlight.js/lib/languages/powershell"),
+        import("highlight.js/lib/languages/yaml"),
+        import("highlight.js/lib/languages/python"),
+      ]);
       const names = [
         "javascript",
         "typescript",
@@ -48,7 +50,7 @@ export function getHighlightJs() {
 
       getWindowObject().hljs = hljs;
       return hljs;
-    });
+    })();
   }
 
   return highlightPromise;
@@ -101,7 +103,10 @@ export function getChart() {
 
 export function getKatex() {
   if (!katexPromise) {
-    katexPromise = import("katex").then((mod) => mod.default);
+    katexPromise = Promise.all([
+      import("katex"),
+      import("katex/dist/katex.min.css"),
+    ]).then(([mod]) => mod.default);
   }
 
   return katexPromise;

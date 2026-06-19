@@ -232,6 +232,7 @@ async function handleReady(msg = {}) {
     mainWindow.webContents.send("host-message", ackMsg);
     perf.mark("host:ready-ack");
     perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
+    perf.printSummary();
     updateManager?.sendCurrentState();
   } else {
     bindWorkspaceWatch();

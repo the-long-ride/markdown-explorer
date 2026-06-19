@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const isElectron = process.env.BUILD_TARGET === 'electron' || mode === 'electron';
 
+  // Chunks that must not be modulepreloaded — they load on-demand via dynamic import()
+  const LAZY_CHUNKS = ['vendor-mermaid', 'vendor-hljs', 'katex', 'vendor-chart'];
+
   return {
     plugins: [
       react(),
@@ -16,7 +19,25 @@ export default defineConfig(({ mode }) => {
             return code.replace(/@font-face\s*\{[^}]*\}/g, '');
           }
         }
-      }
+      },
+      // Strip modulepreload links for lazy-loaded vendor chunks.
+      // Vite auto-generates <link rel="modulepreload"> for ALL dynamic import chunks,
+      // which forces the browser to fetch + parse mermaid (6.2MB), hljs, katex, and chart
+      // on cold start even though they are only needed after content rendering.
+      {
+        name: 'strip-lazy-modulepreload',
+        enforce: 'post',
+        transformIndexHtml(html) {
+          return html.replace(
+            /<link\s+rel="modulepreload"[^>]*href="[^"]*\/([^/"]+)"[^>]*>/gi,
+            (match, filename) => {
+              const base = filename.replace(/\.js$/, '');
+              if (LAZY_CHUNKS.includes(base)) return '';
+              return match;
+            },
+          );
+        },
+      },
     ].filter(Boolean),
     base: './',
     build: {

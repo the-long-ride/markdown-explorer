@@ -17,7 +17,6 @@ import { createElectronBridge } from './platform/electron';
 import { createChromeBridge } from './platform/chrome';
 import { App } from './App';
 
-import 'highlight.js/styles/github-dark.css';
 import './components/Content/InteractiveComponents';
 
 // Global styles
@@ -73,3 +72,22 @@ root.render(
     </PlatformProvider>
   </StrictMode>,
 );
+
+// ── Perf timing: collect renderer-side marks for main process ──────────────
+
+if (shouldLogPerf) {
+  performance.mark('renderer:react-mounted');
+  console.info('[perf] mark renderer:react-mounted');
+
+  // Expose a collector so the main process can query timing after did-finish-load
+  (window as any).__mdnPerfEntries = () => {
+    const entries = performance.getEntriesByType('mark');
+    const result: Record<string, number> = {};
+    for (const e of entries) {
+      if (e.name.startsWith('renderer:') || e.name.startsWith('main:')) {
+        result[e.name] = Math.round(e.startTime);
+      }
+    }
+    return result;
+  };
+}

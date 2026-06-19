@@ -1,5 +1,6 @@
 const enabled = process.env.MDN_PERF === "1";
 const marks = new Map();
+const rendererMarks = new Map();
 
 function now() {
   return Number(process.hrtime.bigint()) / 1_000_000;
@@ -20,4 +21,42 @@ function measure(name, startName, endName = name) {
   }
 }
 
-module.exports = { mark, measure };
+function setRendererMarks(entries) {
+  if (!enabled || !entries) return;
+  Object.assign(rendererMarks, entries);
+}
+
+function printSummary() {
+  if (!enabled) return;
+  const pairs = [];
+  if (marks.has("main:required") && marks.has("electron:ready")) {
+    pairs.push(["Module require", marks.get("main:required"), marks.get("electron:ready")]);
+  }
+  if (marks.has("electron:ready") && marks.has("window:created")) {
+    pairs.push(["Window create", marks.get("electron:ready"), marks.get("window:created")]);
+  }
+  if (marks.has("window:created") && marks.has("renderer:did-finish-load")) {
+    pairs.push(["HTML load + renderer boot", marks.get("window:created"), marks.get("renderer:did-finish-load")]);
+  }
+  console.log("\n[perf] ==== COLD START SUMMARY ====");
+  let totalStart = null;
+  let totalEnd = null;
+  for (const [label, start, end] of pairs) {
+    console.log(`[perf]   ${label}: ${Math.round(end - start)}ms`);
+    if (totalStart === null) totalStart = start;
+    totalEnd = end;
+  }
+  if (totalStart !== null && totalEnd !== null) {
+    console.log(`[perf]   TOTAL (main require → renderer load): ${Math.round(totalEnd - totalStart)}ms`);
+  }
+  if (rendererMarks["renderer:entry"] != null) {
+    const rtEntry = rendererMarks["renderer:entry"];
+    console.log(`[perf]   Renderer JS entry: ${rtEntry}ms (from nav start)`);
+  }
+  if (rendererMarks["renderer:react-mounted"] != null) {
+    console.log(`[perf]   React mounted: ${rendererMarks["renderer:react-mounted"]}ms (from nav start)`);
+  }
+  console.log("[perf] ================================\n");
+}
+
+module.exports = { mark, measure, setRendererMarks, printSummary };
