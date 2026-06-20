@@ -377,6 +377,39 @@ export function Content({
           // let normal click event navigate/focus the hash tag
         }
       }
+
+      // Table view switcher dropdown (runs in all environments: Electron + Chrome)
+      const selectBtn = target.closest(".mdn-table-view-select") as HTMLElement | null;
+      if (selectBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdownEl = selectBtn.closest(".mdn-table-view-dropdown") as HTMLElement | null;
+        if (dropdownEl && dropdownEl.id) {
+          const tableId = dropdownEl.id.replace("-view-dropdown", "");
+          const win = window as any;
+          if (win.Table?.toggleViewDropdown) {
+            win.Table.toggleViewDropdown(tableId, e);
+          }
+        }
+        return;
+      }
+
+      // Table view switcher menu option clicks (runs in all environments)
+      const optionBtn = target.closest(".mdn-table-view-menu__option") as HTMLElement | null;
+      if (optionBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdownEl = optionBtn.closest(".mdn-table-view-dropdown") as HTMLElement | null;
+        const val = optionBtn.getAttribute("data-value");
+        if (dropdownEl && dropdownEl.id && val) {
+          const tableId = dropdownEl.id.replace("-view-dropdown", "");
+          const win = window as any;
+          if (win.Table?.switchView) win.Table.switchView(tableId, val);
+          if (win.Table?.closeViewDropdown) win.Table.closeViewDropdown(tableId);
+        }
+        return;
+      }
+
       const img = target.closest(".mdn-body img") as HTMLElement | null;
       if (img) {
         onImageClick(img);

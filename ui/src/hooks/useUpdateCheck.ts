@@ -72,7 +72,17 @@ function getDesktopAssetScore(assetName: string, platform: HostPlatform, arch: s
   const normalizedArch = arch.toLowerCase();
   let score = 0;
 
-  if (platform === 'windows' && name.endsWith('.exe')) score += 20;
+  if (platform === 'windows' && name.endsWith('.zip')) {
+    // Zip = unpacked build. Preferred for in-app updates because it contains
+    // the full app directory (exe + resources/app.asar + assets).
+    // Works correctly for both NSIS-installed and unpacked-directory users.
+    score += 25;
+  }
+  if (platform === 'windows' && name.endsWith('.exe')) {
+    // Portable exe (self-extracting) works for portable users.
+    // NSIS setup installers are scored lower — they can't be used for in-app update.
+    score += name.includes('setup') || name.includes('installer') ? 12 : 20;
+  }
   if (platform === 'linux' && name.endsWith('.appimage')) score += 20;
   if (platform === 'linux' && name.endsWith('.deb')) score += 12;
   if (platform === 'macos' && name.endsWith('.dmg')) score += 20;
@@ -139,7 +149,11 @@ export function useUpdateCheck({
     const controller = new AbortController();
     setState(initialState);
 
-    fetch(RELEASE_API_URL, {
+    // Delay update check to avoid competing with first paint
+    const delayMs = 8000;
+    const timer = setTimeout(() => {
+      if (controller.signal.aborted) return;
+      fetch(RELEASE_API_URL, {
       headers: { Accept: 'application/vnd.github+json' },
       signal: controller.signal,
     })
@@ -171,8 +185,9 @@ export function useUpdateCheck({
           error: err instanceof Error ? err.message : 'Unable to check for updates',
         });
       });
+    }, delayMs);
 
-    return () => controller.abort();
+    return () => { controller.abort(); clearTimeout(timer); };
   }, [currentVersion, hostArch, hostPlatform, initialState, runtime]);
 
   return state;
