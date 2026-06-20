@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   /* ── i18n dictionary ───────────────────────────────────────────── */
   const LANGS = window.LANGS;
 
@@ -100,37 +100,74 @@
   const numberFormatter = new Intl.NumberFormat();
 
   const assetMatchers = {
-    windows: (name) => name.endsWith(".exe"),
-    macos: (name) => name.endsWith(".dmg") || (name.endsWith(".zip") && !name.includes("chromium") && !name.includes("chrome")),
-    linux: (name) => name.endsWith(".appimage") || name.endsWith(".deb"),
+    "windows-nsis": (name) => name.includes("setup") && name.endsWith(".exe"),
+    "windows-portable": (name) => !name.includes("setup") && name.endsWith(".exe"),
+    "macos-arm64": (name) => name.endsWith(".dmg") && name.includes("arm64"),
+    "macos-x64": (name) => name.endsWith(".dmg") && name.includes("x64"),
+    "linux-appimage": (name) => name.endsWith(".appimage"),
+    "linux-deb": (name) => name.endsWith(".deb"),
     chromium: (name) => name.endsWith("-chromium.zip") || name.endsWith("-chrome.zip") || (name.includes("chromium") && name.endsWith(".zip"))
   };
 
+  const platformGroup = {
+    "windows-nsis": "windows",
+    "windows-portable": "windows",
+    "macos-arm64": "macos",
+    "macos-x64": "macos",
+    "linux-appimage": "linux",
+    "linux-deb": "linux"
+  };
+
   const preferredScore = {
-    windows: (name) => (name.endsWith(".exe") ? 10 : 0),
-    macos: (name) => (name.endsWith(".dmg") ? 10 : 5),
-    linux: (name) => (name.endsWith(".appimage") ? 10 : 5),
+    "windows-nsis": () => 10,
+    "windows-portable": () => 10,
+    "macos-arm64": () => 10,
+    "macos-x64": () => 10,
+    "linux-appimage": () => 10,
+    "linux-deb": () => 10,
     chromium: (name) => (name.includes("chromium") ? 10 : 5)
+  };
+
+  const fallbackMatchers = {
+    "macos-arm64": (name) => name.endsWith(".dmg"),
+    "macos-x64": (name) => name.endsWith(".dmg"),
   };
 
   const pickAsset = (assets, platform) => {
     const matcher = assetMatchers[platform];
     if (!matcher) return null;
-    return (
-      assets
-        .filter((asset) => matcher(asset.name.toLowerCase()))
-        .sort(
-          (a, b) =>
-            preferredScore[platform](b.name.toLowerCase()) -
-            preferredScore[platform](a.name.toLowerCase()),
-        )[0] || null
-    );
+    const exact = assets
+      .filter((asset) => matcher(asset.name.toLowerCase()))
+      .sort(
+        (a, b) =>
+          preferredScore[platform](b.name.toLowerCase()) -
+          preferredScore[platform](a.name.toLowerCase()),
+      );
+    if (exact.length > 0) return exact[0];
+    // Fallback: try the broader matcher if the arch-specific one found nothing
+    const fb = fallbackMatchers[platform];
+    if (fb) {
+      return assets.filter((asset) => fb(asset.name.toLowerCase()))[0] || null;
+    }
+    return null;
   };
 
   const getPlatformAssets = (assets, platform) => {
     const matcher = assetMatchers[platform];
     if (!matcher) return [];
-    return assets.filter((asset) => matcher(asset.name.toLowerCase()));
+    const direct = assets.filter((asset) => matcher(asset.name.toLowerCase()));
+    // Also include sibling-variant assets for download totals (e.g. windows-nsis + windows-portable)
+    const group = platformGroup[platform];
+    if (group) {
+      const siblingKeys = Object.keys(platformGroup).filter((k) => k !== platform && platformGroup[k] === group);
+      const siblings = siblingKeys.flatMap((key) => {
+        const m = assetMatchers[key];
+        return m ? assets.filter((asset) => m(asset.name.toLowerCase())) : [];
+      });
+      const seen = new Set(direct.map((a) => a.id));
+      for (const a of siblings) { if (!seen.has(a.id)) { direct.push(a); seen.add(a.id); } }
+    }
+    return direct;
   };
 
   const getDownloadCount = (assets) =>

@@ -1,4 +1,4 @@
-window.LANGS = {
+﻿window.LANGS = {
   en: {
     label: "EN",
     skipToContent: "Skip to content",
@@ -82,16 +82,21 @@ window.LANGS = {
     dlOvxBtn: "Install from Open VSX",
     dlWinTitle: "Windows desktop",
     dlWinBody:
-      "Download the portable `.exe` from the latest release and run it directly.",
-    dlWinBtn: "Download Windows",
+      "Use the NSIS installer for Start Menu and desktop shortcuts, or the portable `.exe` to run directly without installation.",
+    dlWinNsisBtn: "Download Installer",
+    dlWinPortableBtn: "Download Portable",
     dlMacTitle: "macOS desktop",
     dlMacBody:
       "Download a `.dmg` for your chip. Use `arm64` for Apple Silicon and `x64` for Intel Macs.",
     dlMacBtn: "Download macOS",
+    dlMacArmBtn: "Download Apple Silicon",
+    dlMacIntelBtn: "Download Intel",
     dlLinuxTitle: "Linux desktop",
     dlLinuxBody:
       "Use `.AppImage` for portable launch, or `.deb` on Debian and Ubuntu-based systems.",
     dlLinuxBtn: "Download Linux",
+    dlLinuxAppImageBtn: "Download AppImage",
+    dlLinuxDebBtn: "Download .deb",
     dlChromiumTitle: "Chromium extension",
     dlChromiumBody:
       "Run Markdown Explorer directly in your browser. Install unpacked extension from the latest release.",
@@ -111,7 +116,7 @@ window.LANGS = {
       "Yes. Rendering and searching happen locally. The website download buttons use GitHub only to find the latest release files and public download totals.",
     faq3Q: "Which desktop file should I download?",
     faq3A:
-      "Windows users should choose `.exe`. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.",
+      "Windows users can choose the NSIS installer (`Setup *.exe`) for Start Menu integration or the portable `.exe` to run directly. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.",
     footerBy: "Markdown Explorer by",
     footerIssues: "Issues",
     footerPrivacy: "Privacy",
@@ -225,14 +230,20 @@ window.LANGS = {
     dlWinBody:
       "Tải `.exe` di động từ bản phát hành mới nhất và chạy trực tiếp.",
     dlWinBtn: "Tải Windows",
+    dlWinNsisBtn: "Tải Bộ cài",
+    dlWinPortableBtn: "Tải Di động",
     dlMacTitle: "Máy tính macOS",
     dlMacBody:
       "Tải `.dmg` cho chip của bạn. Dùng `arm64` cho Apple Silicon và `x64` cho Intel Mac.",
     dlMacBtn: "Tải macOS",
+    dlMacArmBtn: "Tải Apple Silicon",
+    dlMacIntelBtn: "Tải Intel",
     dlLinuxTitle: "Máy tính Linux",
     dlLinuxBody:
       "Dùng `.AppImage` để khởi chạy di động hoặc `.deb` trên hệ thống Debian và Ubuntu.",
     dlLinuxBtn: "Tải Linux",
+    dlLinuxAppImageBtn: "Tải AppImage",
+    dlLinuxDebBtn: "Tải .deb",
     dlChromiumTitle: "Tiện ích Chromium",
     dlChromiumBody:
       "Chạy Markdown Explorer trực tiếp trong trình duyệt của bạn. Cài đặt tiện ích đã giải nén từ bản phát hành mới nhất.",
@@ -251,7 +262,7 @@ window.LANGS = {
       "Có. Kết xuất và tìm kiếm diễn ra cục bộ. Các nút tải xuống của trang web chỉ sử dụng GitHub để tìm tệp phát hành mới nhất và tổng số lượt tải xuống công khai.",
     faq3Q: "Tôi nên tải tệp máy tính nào?",
     faq3A:
-      "Người dùng Windows nên chọn `.exe`. Người dùng Linux có thể chọn `.AppImage` hoặc `.deb`. Người dùng macOS nên chọn `.dmg`, với `arm64` cho Apple Silicon và `x64` cho Intel.",
+      "Người dùng Windows có thể chọn bộ cài NSIS (`Setup *.exe`) để tích hợp Start Menu hoặc `.exe` di động chạy trực tiếp. Người dùng Linux có thể chọn `.AppImage` hoặc `.deb`. Người dùng macOS nên chọn `.dmg`, với `arm64` cho Apple Silicon và `x64` cho Intel.",
     footerBy: "Markdown Explorer bởi",
     footerIssues: "Vấn đề",
     footerPrivacy: "Quyền riêng tư",
@@ -366,14 +377,20 @@ window.LANGS = {
     dlWinBody:
       "Téléchargez le `.exe` portable depuis la dernière version et exécutez-le directement.",
     dlWinBtn: "Télécharger Windows",
+    dlWinNsisBtn: "Téléchargez l'installateur",
+    dlWinPortableBtn: "Télécharger Portable",
     dlMacTitle: "Bureau macOS",
     dlMacBody:
       "Téléchargez un `.dmg` pour votre puce. Utilisez `arm64` pour Apple Silicon et `x64` pour les Mac Intel.",
     dlMacBtn: "Télécharger macOS",
+    dlMacArmBtn: "Télécharger Apple Silicon",
+    dlMacIntelBtn: "Télécharger Intel",
     dlLinuxTitle: "Bureau Linux",
     dlLinuxBody:
       "Utilisez `.AppImage` pour un lancement portable, ou `.deb` sur les systèmes Debian et Unis.",
     dlLinuxBtn: "Télécharger Linux",
+    dlLinuxAppImageBtn: "Télécharger AppImage",
+    dlLinuxDebBtn: "Télécharger .deb",
     dlChromiumTitle: "Extension Chromium",
     dlChromiumBody:
       "Exécutez Markdown Explorer directement dans votre navigateur. Installez l'extension non compressée depuis la dernière version.",
@@ -508,14 +525,20 @@ window.LANGS = {
     dlWinBody:
       "Descarga el `.exe` portable desde la última versión y ejecútalo directamente.",
     dlWinBtn: "Descargar Windows",
+    dlWinNsisBtn: "Descargar Instalador",
+    dlWinPortableBtn: "Descargar Portable",
     dlMacTitle: "Escritorio macOS",
     dlMacBody:
       "Descarga un `.dmg` para tu chip. Usa `arm64` para Apple Silicon y `x64` para Mac Intel.",
     dlMacBtn: "Descargar macOS",
+    dlMacArmBtn: "Descargar Apple Silicon",
+    dlMacIntelBtn: "Descargar Intel",
     dlLinuxTitle: "Escritorio Linux",
     dlLinuxBody:
       "Usa `.AppImage` para lanzamiento portable, o `.deb` en sistemas Debian y Ubuntu.",
     dlLinuxBtn: "Descargar Linux",
+    dlLinuxAppImageBtn: "Descargar AppImage",
+    dlLinuxDebBtn: "Descargar .deb",
     dlChromiumTitle: "Extensión Chromium",
     dlChromiumBody:
       "Ejecute Markdown Explorer directamente en su navegador. Instale la extensión descomprimida desde la última versión.",
@@ -641,14 +664,20 @@ window.LANGS = {
     dlWinTitle: "Windows 桌面",
     dlWinBody: "从最新版本下载便携式 `.exe` 并直接运行。",
     dlWinBtn: "下载 Windows 版",
+    dlWinNsisBtn: "下载安装版",
+    dlWinPortableBtn: "下载便携版",
     dlMacTitle: "macOS 桌面",
     dlMacBody:
       "为您的芯片下载 `.dmg`。Apple Silicon 使用 `arm64`，Intel Mac 使用 `x64`。",
     dlMacBtn: "下载 macOS 版",
+    dlMacArmBtn: "下载 Apple Silicon",
+    dlMacIntelBtn: "下载 Intel",
     dlLinuxTitle: "Linux 桌面",
     dlLinuxBody:
       "使用 `.AppImage` 进行便携启动，或在 Debian 和 Ubuntu 系统上使用 `.deb`。",
     dlLinuxBtn: "下载 Linux 版",
+    dlLinuxAppImageBtn: "下载 AppImage",
+    dlLinuxDebBtn: "下载 .deb",
     dlChromiumTitle: "Chromium 扩展",
     dlChromiumBody:
       "直接在浏览器中运行 Markdown Explorer。从最新版本中安装未打包的扩展。",
@@ -778,14 +807,20 @@ window.LANGS = {
     dlWinBody:
       "Last ned den bærbare `.exe` fra siste utgivelse og kjør den direkte.",
     dlWinBtn: "Last ned Windows",
+    dlWinNsisBtn: "Last ned installasjonsprogram",
+    dlWinPortableBtn: "Last ned portabel",
     dlMacTitle: "macOS-skrivebord",
     dlMacBody:
       "Last ned en `.dmg` for brikken din. Bruk `arm64` for Apple Silicon og `x64` for Intel Mac.",
     dlMacBtn: "Last ned macOS",
+    dlMacArmBtn: "Last ned Apple Silicon",
+    dlMacIntelBtn: "Last ned Intel",
     dlLinuxTitle: "Linux-skrivebord",
     dlLinuxBody:
       "Bruk `.AppImage` for bærbar oppstart, eller `.deb` på Debian og Ubuntu-baserte systemer.",
     dlLinuxBtn: "Last ned Linux",
+    dlLinuxAppImageBtn: "Last ned AppImage",
+    dlLinuxDebBtn: "Last ned .deb",
     dlChromiumTitle: "Chromium-utvidelse",
     dlChromiumBody:
       "Kjør Markdown Explorer direkte i nettleseren din. Installer utpakket utvidelse fra siste utgivelse.",
@@ -919,14 +954,20 @@ window.LANGS = {
     dlWinBody:
       "最新リリースからポータブル `.exe` をダウンロードして直接実行します。",
     dlWinBtn: "Windows をダウンロード",
+    dlWinNsisBtn: "インストーラーをダウンロード",
+    dlWinPortableBtn: "ポータブル版をダウンロード",
     dlMacTitle: "macOS デスクトップ",
     dlMacBody:
       "チップ用の `.dmg` をダウンロードします。Apple Silicon には `arm64`、Intel Mac には `x64` を使用します。",
     dlMacBtn: "macOS をダウンロード",
+    dlMacArmBtn: "Apple Silicon 版をダウンロード",
+    dlMacIntelBtn: "Intel 版をダウンロード",
     dlLinuxTitle: "Linux デスクトップ",
     dlLinuxBody:
       "ポータブル起動には `.AppImage`、Debian および Ubuntu ベースのシステムには `.deb` を使用します。",
     dlLinuxBtn: "Linux をダウンロード",
+    dlLinuxAppImageBtn: "AppImage をダウンロード",
+    dlLinuxDebBtn: ".deb をダウンロード",
     dlChromiumTitle: "Chromium 拡張機能",
     dlChromiumBody:
       "ブラウザで直接 Markdown Explorer を実行します。最新リリースから展開済みの拡張機能をインストールします。",
@@ -1058,14 +1099,20 @@ window.LANGS = {
     dlWinBody:
       "최신 릴리스에서 이식 가능한 `.exe`를 다운로드하여 직접 실행합니다.",
     dlWinBtn: "Windows 다운로드",
+    dlWinNsisBtn: "설치 파일 다운로드",
+    dlWinPortableBtn: "포터블 다운로드",
     dlMacTitle: "macOS 데스크톱",
     dlMacBody:
       "칩에 맞는 `.dmg`를 다운로드합니다. Apple Silicon에는 `arm64` , Intel Mac에는 `x64`를 사용합니다.",
     dlMacBtn: "macOS 다운로드",
+    dlMacArmBtn: "Apple Silicon 다운로드",
+    dlMacIntelBtn: "Intel 다운로드",
     dlLinuxTitle: "Linux 데스크톱",
     dlLinuxBody:
       "이식 가능한 실행에는 `.AppImage`를, Debian 및 Ubuntu 기반 시스템에는 `.deb`를 사용합니다.",
     dlLinuxBtn: "Linux 다운로드",
+    dlLinuxAppImageBtn: "AppImage 다운로드",
+    dlLinuxDebBtn: ".deb 다운로드",
     dlChromiumTitle: "Chromium 확장 프로그램",
     dlChromiumBody:
       "브라우저에서 직접 Markdown Explorer를 실행합니다. 최신 릴리스에서 압축 해제된 확장 프로그램을 설치합니다.",
@@ -1199,14 +1246,20 @@ window.LANGS = {
     dlWinBody:
       "Скачайте портативный `.exe` из последнего релиза и запустите напрямую.",
     dlWinBtn: "Скачать Windows",
+    dlWinNsisBtn: "Скачать установщик",
+    dlWinPortableBtn: "Скачать портативную версию",
     dlMacTitle: "macOS рабочий стол",
     dlMacBody:
       "Скачайте `.dmg` для вашего чипа. Используйте `arm64` для Apple Silicon и `x64` для Intel Mac.",
     dlMacBtn: "Скачать macOS",
+    dlMacArmBtn: "Скачать Apple Silicon",
+    dlMacIntelBtn: "Скачать Intel",
     dlLinuxTitle: "Linux рабочий стол",
     dlLinuxBody:
       "Используйте `.AppImage` для портативного запуска или `.deb` на Debian и Ubuntu-системах.",
     dlLinuxBtn: "Скачать Linux",
+    dlLinuxAppImageBtn: "Скачать AppImage",
+    dlLinuxDebBtn: "Скачать .deb",
     dlChromiumTitle: "Расширение Chromium",
     dlChromiumBody:
       "Запускайте Markdown Explorer прямо в браузере. Установите распакованное расширение из последнего выпуска.",

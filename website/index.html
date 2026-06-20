@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
@@ -643,17 +643,26 @@
           <article class="download-card">
             <h3 data-i18n="dlWinTitle">Windows desktop</h3>
             <p data-i18n="dlWinBody">
-              Download the portable `.exe` from the latest release and run it
-              directly.
+              Use the NSIS installer for Start Menu and desktop shortcuts, or the portable `.exe` to run directly without installation.
             </p>
-            <a
-              class="button primary release-download"
-              data-platform="windows"
-              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-              rel="noopener"
-              data-i18n="dlWinBtn"
-              >Download Windows</a
-            >
+            <div class="card-actions">
+              <a
+                class="button primary release-download"
+                data-platform="windows-nsis"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinNsisBtn"
+                >Download Installer</a
+              >
+              <a
+                class="button secondary release-download"
+                data-platform="windows-portable"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinPortableBtn"
+                >Download Portable</a
+              >
+            </div>
           </article>
           <article class="download-card">
             <h3 data-i18n="dlLinuxTitle">Linux desktop</h3>
@@ -664,11 +673,19 @@
             <div class="card-actions">
               <a
                 class="button primary release-download"
-                data-platform="linux"
+                data-platform="linux-appimage"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
-                data-i18n="dlLinuxBtn"
-                >Download Linux</a
+                data-i18n="dlLinuxAppImageBtn"
+                >Download AppImage</a
+              >
+              <a
+                class="button secondary release-download"
+                data-platform="linux-deb"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxDebBtn"
+                >Download .deb</a
               >
             </div>
           </article>
@@ -689,11 +706,19 @@
               >
               <a
                 class="button primary release-download"
-                data-platform="macos"
+                data-platform="macos-arm64"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
-                data-i18n="dlMacBtn"
-                >Download macOS</a
+                data-i18n="dlMacArmBtn"
+                >Download Apple Silicon</a
+              >
+              <a
+                class="button secondary release-download"
+                data-platform="macos-x64"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlMacIntelBtn"
+                >Download Intel</a
               >
             </div>
           </article>
@@ -830,9 +855,10 @@
             Which desktop file should I download?
           </summary>
           <p data-i18n="faq3A">
-            Windows users should choose `.exe`. Linux users can choose
-            `.AppImage` or `.deb`. macOS users should choose `.dmg`, with
-            `arm64` for Apple Silicon and `x64` for Intel.
+            Windows users can choose the NSIS installer (`Setup *.exe`)
+            for Start Menu integration or the portable `.exe` to run directly.
+            Linux users can choose `.AppImage` or `.deb`. macOS users should
+            choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.
           </p>
         </details>
       </section>

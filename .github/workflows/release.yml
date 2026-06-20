@@ -1,4 +1,4 @@
-name: Release and Publish
+﻿name: Release and Publish
 
 on:
   push:
@@ -230,7 +230,8 @@ jobs:
             Choose the file that matches how you want to install Markdown Explorer:
 
             - `*.vsix`: VS Code extension package for manual install. In VS Code, run "Extensions: Install from VSIX..." and choose this file.
-            - `*.exe`: Windows portable desktop app. Download and run directly.
+            - `Markdown Explorer Setup *.exe`: Windows NSIS installer. Run to install Markdown Explorer with Start Menu shortcuts, desktop shortcut, and customizable install directory.
+            - `Markdown Explorer *.exe` (portable): Windows portable desktop app. Download and run directly, no installation required.
             - `*.AppImage`: Linux portable desktop app. Mark it executable, then run it.
             - `*.deb`: Linux installer for Debian, Ubuntu, and compatible distributions.
             - `*.dmg`: macOS desktop installer. Choose `arm64` for Apple Silicon Macs and `x64` for Intel Macs.
