@@ -1,4 +1,5 @@
 const fs = require('fs');
+const fsp = require('fs').promises;
 const path = require('path');
 const {
   getExtension,
@@ -6,22 +7,45 @@ const {
   isSupportedFilePath,
   stripKnownExtension,
 } = require('./document-converter');
+const DEFAULT_IGNORED_FOLDERS = [
+  '.git', 'node_modules', '.vscode', 'dist', 'out', 'build',
+  'coverage', '.next', '.nuxt', '.turbo', '.cache', 'vendor',
+  'target', 'bin', 'obj',
+];
+
+function loadIgnorePatterns(rootPath) {
+  const ignorePath = path.join(rootPath, '.markdown-explorer-ignore');
+  try {
+    const content = fs.readFileSync(ignorePath, 'utf8');
+    return content.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  } catch {
+    return [];
+  }
+}
 
 class DesktopScanner {
-  static scan(rootPath, options = {}) {
+  // Async scanner — uses BFS with setImmediate yielding every YIELD_EVERY files
+  // so the main thread stays responsive during large workspace scans.
+  static async scan(rootPath, options = {}) {
     const flat = [];
     const maxFiles = 1000;
-    const excludes = ['.git', 'node_modules', '.vscode', 'out', 'dist'];
+    const customIgnores = loadIgnorePatterns(rootPath);
+    const excludes = [...DEFAULT_IGNORED_FOLDERS, ...customIgnores];
     const documentConversionEnabled = options.documentConversionEnabled === true;
+    const YIELD_EVERY = 30;
 
-    function traverse(currentDir) {
-      if (flat.length >= maxFiles) return;
-      let entries = [];
+    const dirQueue = [rootPath];
+    let filesSinceYield = 0;
+    let titleBatch = []; // collect markdown files needing title extraction
+
+    while (dirQueue.length > 0 && flat.length < maxFiles) {
+      const currentDir = dirQueue.shift();
+      let entries;
       try {
-        entries = fs.readdirSync(currentDir, { withFileTypes: true });
+        entries = await fsp.readdir(currentDir, { withFileTypes: true });
       } catch (err) {
         console.error('Failed to read directory:', currentDir, err);
-        return;
+        continue;
       }
 
       for (const entry of entries) {
@@ -29,19 +53,89 @@ class DesktopScanner {
         const fullPath = path.join(currentDir, entry.name);
 
         if (entry.isDirectory()) {
-          traverse(fullPath);
+          dirQueue.push(fullPath);
         } else if (entry.isFile()) {
           if (isSupportedFilePath(fullPath, documentConversionEnabled)) {
-            flat.push(DesktopScanner.buildFileEntry(fullPath, rootPath));
+            // Fast path: use filename as title, extract real title async below
+            const isMdx = fullPath.toLowerCase().endsWith('.mdx');
+            const isMarkdown = fullPath.match(/\.(md|mdx|markdown)$/i);
+            const entryObj = {
+              ...DesktopScanner.buildFileEntryLite(fullPath, rootPath, isMarkdown ? 'pending' : stripKnownExtension(fullPath)),
+              _needsTitle: isMarkdown ? isMdx : false,
+            };
+            flat.push(entryObj);
+            if (isMarkdown) titleBatch.push({ entry: entryObj, isMdx: !!isMdx });
+            filesSinceYield++;
           }
         }
       }
+
+      // Yield to event loop periodically to keep UI responsive
+      if (filesSinceYield >= YIELD_EVERY) {
+        filesSinceYield = 0;
+        await new Promise(resolve => setImmediate(resolve));
+      }
     }
 
-    traverse(rootPath);
+    // Extract titles asynchronously in batches (yielding between each)
+    const TITLE_BATCH = 8;
+    for (let i = 0; i < titleBatch.length; i += TITLE_BATCH) {
+      const batch = titleBatch.slice(i, i + TITLE_BATCH);
+      for (const { entry, isMdx } of batch) {
+        try {
+          const title = await DesktopScanner.extractTitleAsync(entry.fsPath, isMdx);
+          if (title) entry.title = title;
+        } catch {
+          // keep the pending/placeholder title
+        }
+      }
+      if (i + TITLE_BATCH < titleBatch.length) {
+        await new Promise(resolve => setImmediate(resolve));
+      }
+    }
+
     flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
     const tree = DesktopScanner.buildTree(flat);
     return { tree, flat };
+  }
+
+  // Lightweight file entry builder (used during scan, title filled later)
+  static buildFileEntryLite(fsPath, rootPath, placeholderTitle) {
+    const relativePath = path.relative(rootPath, fsPath);
+    const parts = relativePath.split(path.sep);
+    const fileName = parts[parts.length - 1];
+    const ext = getExtension(fileName);
+    const isMarkdown = isMarkdownFilePath(fileName);
+    const title = placeholderTitle || stripKnownExtension(fileName);
+    const documentKind = isMarkdown ? 'markdown' : 'document';
+    return { fsPath, relativePath, parts, fileName, title, extension: ext, documentKind };
+  }
+
+  // Async title extraction — reads the first 64 KB and extracts H1 / frontmatter.
+  static async extractTitleAsync(fsPath, isMdx = false) {
+    try {
+      const content = await DesktopScanner.readTitleChunkAsync(fsPath);
+      if (isMdx) {
+        const mdxTitle = DesktopScanner.extractMdxTitle(content);
+        if (mdxTitle) return mdxTitle;
+      }
+      const match = /^#+\s+(.+)$/m.exec(content);
+      return match?.[1]?.trim() ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  static async readTitleChunkAsync(fsPath) {
+    let fd;
+    try {
+      fd = await fsp.open(fsPath, 'r');
+      const buffer = Buffer.allocUnsafe(8 * 1024);
+      const { bytesRead } = await fd.read(buffer, 0, buffer.length, 0);
+      return buffer.subarray(0, bytesRead).toString('utf8');
+    } finally {
+      if (fd) await fd.close();
+    }
   }
 
   static buildFileEntry(fsPath, rootPath) {
@@ -75,7 +169,7 @@ class DesktopScanner {
   static readTitleChunk(fsPath) {
     const fd = fs.openSync(fsPath, 'r');
     try {
-      const buffer = Buffer.allocUnsafe(64 * 1024);
+      const buffer = Buffer.allocUnsafe(8 * 1024);
       const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, 0);
       return buffer.subarray(0, bytesRead).toString('utf8');
     } finally {

@@ -1,3 +1,5 @@
+require('v8-compile-cache');
+
 const {
   app,
   BrowserWindow,
@@ -105,6 +107,12 @@ const ZOOM_LEVEL_STEP = 0.2;
 // Remove default window menu bar
 Menu.setApplicationMenu(null);
 
+// ── Chromium startup tuning for desktop app ────────────────────────────────
+// Must be set before app.whenReady() to take effect.
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-networking');
+
 function getHostPlatform() {
   if (process.platform === "win32") return "windows";
   if (process.platform === "darwin") return "macos";
@@ -188,7 +196,29 @@ app.whenReady().then(() => {
   perf.mark("electron:ready");
   perf.measure("main require to electron ready", "main:required", "electron:ready");
   configureYouTubeEmbedHeaders(session);
-  createWindow();
+
+  // Pre-warm the GPU process so the real window paints faster.
+  // Create a tiny hidden window to force Chromium to initialize the GPU.
+  const hidden = new (require("electron").BrowserWindow)({
+    width: 1,
+    height: 1,
+    show: false,
+    skipTaskbar: true,
+    paintWhenInitiallyHidden: false,
+  });
+  hidden.loadURL("about:blank");
+  hidden.once("ready-to-show", () => {
+    hidden.close();
+    createWindow();
+  });
+  // Timeout: if GPU init takes >1s, just show the real window anyway.
+  const gpuTimeout = setTimeout(() => {
+    if (!hidden.isDestroyed()) {
+      hidden.close();
+      createWindow();
+    }
+  }, 1000);
+  hidden.once("closed", () => clearTimeout(gpuTimeout));
   // Defer tray + update manager — not needed for first visible frame
   setImmediate(() => {
     const { createAppTray } = require("./tray");
@@ -425,7 +455,7 @@ function handleLoadWorkspaceSearchIndexes(msg) {
     if (tabId && workspacePath) {
       if (fs.existsSync(workspacePath)) {
         try {
-          const { tree, flat } = scanWorkspaceData(workspacePath);
+          const { tree, flat } = await scanWorkspaceData(workspacePath);
           searchIndex.prime(flat);
           mainWindow.webContents.send("host-message", {
             command: "workspaceSearchIndexLoaded",
@@ -763,7 +793,7 @@ async function handleRestartAndApplyUpdate() {
   app.quit();
 }
 
-function scanWorkspaceData(workspacePath) {
+async function scanWorkspaceData(workspacePath) {
   ensureHeavyModules();
   let tree = null;
   let flat = [];
@@ -777,7 +807,7 @@ function scanWorkspaceData(workspacePath) {
         tree = DesktopScanner.buildTree(flat);
       }
     } else {
-      const result = DesktopScanner.scan(workspacePath, { documentConversionEnabled });
+      const result = await DesktopScanner.scan(workspacePath, { documentConversionEnabled });
       tree = result.tree;
       flat = result.flat;
     }
@@ -796,7 +826,7 @@ async function sendWorkspaceData() {
     return;
   }
 
-  const { tree, flat } = scanWorkspaceData(activeWorkspace);
+  const { tree, flat } = await scanWorkspaceData(activeWorkspace);
   flatList = flat;
   if (searchIndex) searchIndex.prime(flat);
 

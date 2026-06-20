@@ -4,6 +4,8 @@ const perf = require("./perf-timer");
 
 function createMainWindow({ appDir, debugTools, clampAppZoom }) {
   const mainWindow = new BrowserWindow({
+    show: false,
+    backgroundColor: '#151518',
     width: 1200,
     height: 700,
     isMaximized: true,
@@ -78,6 +80,11 @@ function createMainWindow({ appDir, debugTools, clampAppZoom }) {
   });
 
   mainWindow.loadFile(path.join(appDir, "ui", "dist", "index.html"));
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
   return mainWindow;
 }
 
