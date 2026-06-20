@@ -1,20 +1,21 @@
 // =============================================================================
 // main.tsx — React entry point
+// Thin bootstrap: window appears instantly, heavy app loads after.
 // =============================================================================
 
-import { StrictMode } from 'react';
+import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { PlatformProvider } from './contexts/PlatformContext';
-import { AppStateProvider } from './contexts/AppStateContext';
-import { NavigationProvider } from './contexts/NavigationContext';
 import { createVsCodeBridge } from './platform/vscode';
 import { createElectronBridge } from './platform/electron';
 import { createChromeBridge } from './platform/chrome';
-import { App } from './App';
 
-// Defer interactive component registration until after initial mount
-setTimeout(() => import('./components/Content/InteractiveComponents'), 100);
+// Lazy-load the full application shell (providers + App + all components).
+// This keeps index.js tiny so the window paints instantly.
+// Start the dynamic import immediately — don't wait for React's lazy factory.
+const appShellPromise = import('./AppShell').then(m => ({ default: m.default }));
+const AppShell = lazy(() => appShellPromise);
 
 // Global styles
 import './styles/tokens.css';
@@ -65,32 +66,11 @@ const root = createRoot(document.getElementById('root')!);
 root.render(
   <StrictMode>
     <PlatformProvider bridge={bridge}>
-      <AppStateProvider>
-        <NavigationProvider>
-          <App />
-        </NavigationProvider>
-      </AppStateProvider>
+      <Suspense fallback={null}>
+        <AppShell />
+      </Suspense>
     </PlatformProvider>
   </StrictMode>,
 );
 
 dismissSplash();
-
-// ── Perf timing: collect renderer-side marks for main process ──────────────
-
-if (shouldLogPerf) {
-  performance.mark('renderer:react-mounted');
-  console.info('[perf] mark renderer:react-mounted');
-
-  // Expose a collector so the main process can query timing after did-finish-load
-  (window as any).__mdnPerfEntries = () => {
-    const entries = performance.getEntriesByType('mark');
-    const result: Record<string, number> = {};
-    for (const e of entries) {
-      if (e.name.startsWith('renderer:') || e.name.startsWith('main:')) {
-        result[e.name] = Math.round(e.startTime);
-      }
-    }
-    return result;
-  };
-}

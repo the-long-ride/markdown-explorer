@@ -7,12 +7,13 @@ import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
 import { getTranslations } from './contexts/translations';
-import { WorkspaceSelection } from './components/Workspace/WorkspaceSelection';
 import { Topbar } from './components/Topbar/Topbar';
-import { Sidebar } from './components/Sidebar/Sidebar';
-import { Content } from './components/Content/Content';
-import { ContentTabs } from './components/Content/ContentTabs';
-import { WelcomePage } from './components/Content/WelcomePage';
+
+const Sidebar = lazy(() => import('./components/Sidebar/Sidebar').then(m => ({ default: m.Sidebar })));
+const Content = lazy(() => import('./components/Content/Content').then(m => ({ default: m.Content })));
+const WorkspaceSelection = lazy(() => import('./components/Workspace/WorkspaceSelection').then(m => ({ default: m.WorkspaceSelection })));
+const ContentTabs = lazy(() => import('./components/Content/ContentTabs').then(m => ({ default: m.ContentTabs })));
+const WelcomePage = lazy(() => import('./components/Content/WelcomePage').then(m => ({ default: m.WelcomePage })));
 const TableOfContents = lazy(() => import('./components/TOC/TableOfContents').then(m => ({ default: m.TableOfContents })));
 // Lazy-loaded — only parsed when first opened
 const SearchOverlay = lazy(() => import('./components/Search/SearchOverlay').then(m => ({ default: m.SearchOverlay })));

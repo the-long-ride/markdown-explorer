@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const isElectron = process.env.BUILD_TARGET === 'electron' || mode === 'electron';
 
   // Chunks that must not be modulepreloaded — they load on-demand via dynamic import()
-  const LAZY_CHUNKS = ['vendor-mermaid', 'vendor-hljs', 'katex', 'vendor-chart'];
+  const LAZY_CHUNKS = ['vendor-mermaid', 'vendor-hljs', 'katex', 'vendor-chart', 'vendor-react', 'translationsData'];
 
   return {
     plugins: [
@@ -82,6 +82,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: (id) => {
+            if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) return 'vendor-react';
             if (id.includes('mermaid')) return 'vendor-mermaid';
             if (id.includes('chart.js')) return 'vendor-chart';
             if (id.includes('highlight.js')) return 'vendor-hljs';
