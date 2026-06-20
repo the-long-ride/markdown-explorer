@@ -38,7 +38,6 @@ let DesktopScanner = null;
 let searchIndex = null;
 let updateManager = null;
 let documentConverter = null;
-let markdownRenderer = null;
 let workspaceWatch = null;
 
 const debugTools = createDebugTools(app);
@@ -48,12 +47,10 @@ function ensureHeavyModules() {
   if (DesktopScanner) return;
   DesktopScanner = require("./scanner");
   const { createDocumentConverter, getFileTypeLabel, getOpenDialogFilters, isExtraDocumentFilePath, isSupportedFilePath, stripKnownExtension } = require("./document-converter");
-  const { createMarkdownRenderer } = require("./markdown-renderer");
   const { createSearchIndex } = require("./search-index");
   const { createWorkspaceWatchController } = require("./workspace-watch");
 
   documentConverter = createDocumentConverter();
-  markdownRenderer = createMarkdownRenderer(appDir);
   searchIndex = createSearchIndex();
   workspaceWatch = createWorkspaceWatchController({
     fs,
@@ -895,8 +892,6 @@ async function sendContent() {
       : null;
   }
 
-  const { html, frontmatter, toc } = markdownRenderer.render(currentFile, raw);
-
   const isWorkspaceFile = fs.statSync(activeWorkspace).isFile();
   const baseDir = isWorkspaceFile ? path.dirname(activeWorkspace) : activeWorkspace;
   const fileInfo = flatList.find((f) => f.fsPath === currentFile) || {
@@ -906,10 +901,10 @@ async function sendContent() {
 
   const msg = {
     command: "renderContent",
-    html: html,
+    html: "",
     markdownSource: raw,
-    frontmatter: frontmatter,
-    toc: toc,
+    frontmatter: {},
+    toc: [],
     filePath: currentFile,
     relativePath: fileInfo.relativePath,
     title: fileInfo.title,

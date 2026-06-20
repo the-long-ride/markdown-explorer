@@ -44,14 +44,6 @@
         "to": "ui/dist"
       },
       {
-        "from": "../vscode/out",
-        "to": "vscode/out",
-        "filter": [
-          "**/*",
-          "!vendor/**"
-        ]
-      },
-      {
         "from": "../ui/assets/logos",
         "to": "ui/assets/logos"
       }

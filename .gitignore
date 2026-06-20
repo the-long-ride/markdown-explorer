@@ -28,3 +28,6 @@ Thumbs.db
 
 # agent-skills
 .agent/skills/
+
+# Tauri / Rust build artifacts
+desktop-tauri/src-tauri/target*/

@@ -1,0 +1,13 @@
+{
+  "name": "markdown-explorer-desktop-tauri",
+  "version": "1.5.3",
+  "private": true,
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

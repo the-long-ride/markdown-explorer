@@ -48,6 +48,10 @@ import type {
   UpdateState,
 } from '../types';
 
+import { parse } from '../markdown/parser';
+import { HtmlRenderer } from '../markdown/renderer';
+import { rewriteRelativeMediaUrls } from '../markdown/mediaUrls';
+
 export {
   ALL_THEME_STYLE_OPTIONS,
   DEFAULT_KEYBINDINGS,
@@ -336,6 +340,31 @@ function upsertContentTab(tabs: readonly ContentTab[], tab: ContentTab): Content
   return tabs.map((item, index) => (index === existingIndex ? tab : item));
 }
 
+interface RenderedMarkdown {
+  html: string;
+  frontmatter: Record<string, string>;
+  toc: Array<{ level: number; text: string; id: string }>;
+}
+
+function renderMarkdownClientSide(
+  markdownSource: string | null | undefined,
+  filePath: string | null,
+  isMdx?: boolean,
+): RenderedMarkdown {
+  const empty = { html: '', frontmatter: {}, toc: [] };
+  if (!markdownSource) return empty;
+  try {
+    const result = parse(markdownSource, isMdx ?? false);
+    const renderer = new HtmlRenderer({ theme: 'auto', isMdx: isMdx ?? false });
+    const rendered = renderer.render(result.tokens);
+    const html = rewriteRelativeMediaUrls(rendered.html, filePath ?? '');
+    return { html, frontmatter: result.frontmatter, toc: rendered.toc };
+  } catch (err) {
+    console.error('Client-side markdown rendering failed:', err);
+    return { html: `<pre>${markdownSource}</pre>`, frontmatter: {}, toc: [] };
+  }
+}
+
 function createContentTabFromMessage(
   msg: RenderContentMessage,
   fileList: readonly MdFile[],
@@ -344,15 +373,19 @@ function createContentTabFromMessage(
   const relativePath = msg.relativePath || fileInfo?.relativePath || getPathFileName(msg.filePath);
   const fileName = fileInfo?.fileName || getPathFileName(relativePath || msg.filePath);
   const title = msg.title || fileInfo?.title || stripMarkdownExtension(fileName);
+  const isMdx = msg.filePath ? msg.filePath.endsWith('.mdx') : false;
+  const rendered = msg.markdownSource
+    ? renderMarkdownClientSide(msg.markdownSource, msg.filePath, isMdx)
+    : { html: msg.html, frontmatter: msg.frontmatter, toc: msg.toc };
   return {
     filePath: msg.filePath,
     relativePath,
     fileName,
     title,
-    contentHtml: msg.html,
+    contentHtml: rendered.html,
     markdownSource: msg.markdownSource ?? null,
-    frontmatter: msg.frontmatter,
-    toc: msg.toc,
+    frontmatter: rendered.frontmatter,
+    toc: rendered.toc,
     previewInfo: msg.previewInfo ?? null,
   };
 }
@@ -578,14 +611,18 @@ function reducer(state: AppState, action: Action): AppState {
     case 'RENDER_CONTENT': {
       const filePath = action.msg.filePath || null;
       const nextFileList = action.msg.fileList ?? state.fileList;
+      const isMdx = filePath ? filePath.endsWith('.mdx') : false;
+      const rendered = action.msg.markdownSource
+        ? renderMarkdownClientSide(action.msg.markdownSource, filePath, isMdx)
+        : { html: action.msg.html, frontmatter: action.msg.frontmatter, toc: action.msg.toc };
       const baseState: AppState = {
         ...state,
         fileList: nextFileList,
         currentFile: filePath,
-        contentHtml: action.msg.html,
+        contentHtml: rendered.html,
         markdownSource: action.msg.markdownSource ?? null,
-        frontmatter: action.msg.frontmatter,
-        toc: action.msg.toc,
+        frontmatter: rendered.frontmatter,
+        toc: rendered.toc,
         previewInfo: action.msg.previewInfo ?? null,
         relativePath: action.msg.relativePath,
         isLoading: false,

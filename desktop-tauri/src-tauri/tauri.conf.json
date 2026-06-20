@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicoverbruggen/tauri-docs/refs/heads/dev/src/tauri-conf-schema.json",
+  "productName": "Markdown Explorer",
+  "version": "1.5.3",
+  "identifier": "com.thelongride.markdownexplorer",
+  "build": {
+    "frontendDist": "../ui/dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev --workspace=ui",
+    "beforeBuildCommand": "npm run build --workspace=ui"
+  },
+  "app": {
+  "windows": [
+      {
+        "title": "Markdown Explorer",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 400,
+        "minHeight": 300,
+        "decorations": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https:; media-src 'self' file: https:; connect-src 'self' https:; font-src 'self' data:;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  },
+  "plugins": {
+    "opener": {
+      "open": false
+    }
+  }
+}
