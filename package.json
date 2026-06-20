@@ -16,8 +16,15 @@
     "compile": "npm run build:ui && npm run build:vscode",
     "watch": "npm run watch --workspace=vscode",
     "package": "npm run compile && npm run package --workspace=vscode",
-    "start:desktop": "npm run start --workspace=desktop",
-    "build:desktop": "npm run build:ui:electron && npm run build:vscode && npm run dist --workspace=desktop",
+    "start:desktop": "npm run start:electron",
+    "start:electron": "npm run start --workspace=desktop",
+    "build:desktop": "npm run build:electron",
+    "build:electron": "npm run build:ui:electron && npm run build:vscode && npm run dist --workspace=desktop",
+    "build:electron:nsis": "npm run build:ui:electron && npm run build:vscode && npm run dist:nsis --workspace=desktop",
+    "build:electron:portable": "npm run build:ui:electron && npm run build:vscode && npm run dist:portable --workspace=desktop",
+    "build:electron:win-zip": "npm run build:ui:electron && npm run build:vscode && npm run dist:win-zip --workspace=desktop",
+    "build:electron:mac": "npm run build:ui:electron && npm run build:vscode && npm run dist:mac --workspace=desktop",
+    "build:electron:linux": "npm run build:ui:electron && npm run build:vscode && npm run dist:linux --workspace=desktop",
     "build:chromium": "npm run build --workspace=markdown-explorer-chromium-xtension"
   }
 }
