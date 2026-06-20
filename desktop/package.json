@@ -13,7 +13,12 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dist:nsis": "electron-builder --win nsis",
+    "dist:portable": "electron-builder --win portable",
+    "dist:win-zip": "electron-builder --win zip",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
   },
   "devDependencies": {
     "electron": "^42.2.0",
@@ -54,28 +59,19 @@
     "win": {
       "target": [
         {
-          "arch": [
-            "x64"
-          ],
+          "arch": ["x64"],
           "target": "nsis"
         },
         {
-          "arch": [
-            "x64"
-          ],
+          "arch": ["x64"],
           "target": "portable"
         },
         {
-          "arch": [
-            "x64"
-          ],
+          "arch": ["x64"],
           "target": "zip"
         }
       ],
-      "icon": "../ui/assets/logos/logo-512.png",
-      "signtoolOptions": {
-        "publisherName": "the-long-ride"
-      }
+      "icon": "../ui/assets/logos/logo-512.png"
     },
     "linux": {
       "target": [
@@ -89,17 +85,11 @@
       "target": [
         {
           "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         },
         {
           "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         }
       ],
       "icon": "../ui/assets/logos/logo-512.png",
