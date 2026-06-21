@@ -24,7 +24,7 @@ function createAppStub(rootDir) {
   };
 }
 
-function createManagerHarness() {
+function createManagerHarness(options = {}) {
   const rootDir = makeTempDir("update-manager-");
   const sent = [];
   const helperCalls = [];
@@ -34,7 +34,7 @@ function createManagerHarness() {
     app: createAppStub(rootDir),
     fs,
     path,
-    execPath: path.join(rootDir, "Markdown Explorer.exe"),
+    execPath: options.execPath || path.join(rootDir, "Markdown Explorer.exe"),
     relaunchArgs: ["--flag"],
     sendToWindow(message) {
       sent.push(message);
@@ -56,8 +56,8 @@ function createManagerHarness() {
 
 test("getUpdateAssetFileName keeps the release asset extension", () => {
   assert.equal(
-    getUpdateAssetFileName("https://example.test/Markdown%20Explorer%201.5.3.exe"),
-    "Markdown Explorer 1.5.3.exe",
+    getUpdateAssetFileName("https://example.test/Markdown%20Explorer%20Setup.exe"),
+    "Markdown Explorer Setup.exe",
   );
 });
 

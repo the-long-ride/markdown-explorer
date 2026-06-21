@@ -88,7 +88,7 @@ function createUpdateManager(deps = {}) {
 
   function ensureWindows() {
     if (platform !== "win32") {
-      throw new Error("Portable self-update is only supported on Windows.");
+      throw new Error("In-app updates are only supported on Windows.");
     }
   }
 

@@ -72,16 +72,13 @@ function getDesktopAssetScore(assetName: string, platform: HostPlatform, arch: s
   const normalizedArch = arch.toLowerCase();
   let score = 0;
 
-  if (platform === 'windows' && name.endsWith('.zip')) {
-    // Zip = unpacked build. Preferred for in-app updates because it contains
-    // the full app directory (exe + resources/app.asar + assets).
-    // Works correctly for both NSIS-installed and unpacked-directory users.
-    score += 25;
-  }
   if (platform === 'windows' && name.endsWith('.exe')) {
-    // Portable exe (self-extracting) works for portable users.
-    // NSIS setup installers are scored lower — they can't be used for in-app update.
-    score += name.includes('setup') || name.includes('installer') ? 12 : 20;
+    // Prefer the NSIS installer for standard desktop releases and in-app updates.
+    score += name.includes('setup') || name.includes('installer') ? 30 : 18;
+  }
+  if (platform === 'windows' && name.endsWith('.zip')) {
+    // Keep unpacked zip builds as a lower-priority fallback for manual installs.
+    score += 12;
   }
   if (platform === 'linux' && name.endsWith('.appimage')) score += 20;
   if (platform === 'linux' && name.endsWith('.deb')) score += 12;

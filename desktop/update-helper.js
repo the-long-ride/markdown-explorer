@@ -7,6 +7,11 @@ function escapeForDoubleQuotes(value) {
   return String(value ?? "").replace(/"/g, '""');
 }
 
+function isInstallerExe(stagedFilePath) {
+  const normalized = String(stagedFilePath || "").toLowerCase();
+  return normalized.endsWith(".exe") && (normalized.includes("setup") || normalized.includes("installer"));
+}
+
 function createWindowsUpdateScript({
   stagedFilePath,
   targetExePath,
@@ -15,7 +20,8 @@ function createWindowsUpdateScript({
   resultFilePath,
 }) {
   const quotedArgs = relaunchArgs.map((arg) => `"${escapeForDoubleQuotes(arg)}"`).join(" ");
-  const isZip = stagedFilePath.toLowerCase().endsWith(".zip");
+  const normalizedPath = String(stagedFilePath || "").toLowerCase();
+  const isZip = normalizedPath.endsWith(".zip");
 
   if (isZip) {
     return createZipUpdateScript({
@@ -23,9 +29,59 @@ function createWindowsUpdateScript({
     });
   }
 
+  if (isInstallerExe(stagedFilePath)) {
+    return createInstallerUpdateScript({
+      stagedFilePath, targetExePath, workingDirectory, relaunchArgs, resultFilePath, quotedArgs,
+    });
+  }
+
   return createExeUpdateScript({
     stagedFilePath, targetExePath, workingDirectory, relaunchArgs, resultFilePath, quotedArgs,
   });
+}
+
+function createInstallerUpdateScript({
+  stagedFilePath,
+  targetExePath,
+  workingDirectory,
+  quotedArgs,
+  resultFilePath,
+}) {
+  const quotedInstaller = escapeForDoubleQuotes(stagedFilePath);
+  const quotedTarget = escapeForDoubleQuotes(targetExePath);
+  const quotedWorkDir = escapeForDoubleQuotes(workingDirectory);
+  const quotedResult = escapeForDoubleQuotes(resultFilePath || "");
+
+  return [
+    "@echo off",
+    "setlocal",
+    `set RESULT_FILE="${quotedResult}"`,
+    "",
+    "if not %RESULT_FILE%==\"\" del /Q %RESULT_FILE% >nul 2>nul",
+    "echo Waiting for app to exit...",
+    "for /L %%i in (1,1,120) do (",
+    `  2>nul (>>"${quotedTarget}" echo off) && goto install`,
+    "  timeout /t 1 /nobreak >nul",
+    ")",
+    "goto failed",
+    "",
+    ":install",
+    "echo Running installer update...",
+    `start /wait "" "${quotedInstaller}" /S`,
+    "if errorlevel 1 goto failed",
+    "if not %RESULT_FILE%==\"\" > %RESULT_FILE% echo applied",
+    `if exist "${quotedTarget}" start "" /D "${quotedWorkDir}" "${quotedTarget}" ${quotedArgs}`.trim(),
+    "goto cleanup",
+    "",
+    ":failed",
+    "if not %RESULT_FILE%==\"\" > %RESULT_FILE% echo install-failed",
+    `if exist "${quotedTarget}" start "" /D "${quotedWorkDir}" "${quotedTarget}" ${quotedArgs}`.trim(),
+    "",
+    ":cleanup",
+    `del /Q "${quotedInstaller}" >nul 2>nul`,
+    "del /Q %~f0 >nul 2>nul",
+    "endlocal",
+  ].join("\r\n");
 }
 
 function createExeUpdateScript({
@@ -118,12 +174,12 @@ function createZipUpdateScript({
     "if errorlevel 8 goto failed",
     "",
     "if not %RESULT_FILE%==\"\" > %RESULT_FILE% echo applied",
-    `start "" /D "${quotedWorkDir}" "${quotedTarget}" ${quotedArgs}`,
+    `start "" /D "${quotedWorkDir}" "${quotedTarget}" ${quotedArgs}`.trim(),
     "goto cleanup",
     "",
     ":failed",
     "if not %RESULT_FILE%==\"\" > %RESULT_FILE% echo install-failed",
-    `if exist "${quotedTarget}" start "" /D "${quotedWorkDir}" "${quotedTarget}" ${quotedArgs}`,
+    `if exist "${quotedTarget}" start "" /D "${quotedWorkDir}" "${quotedTarget}" ${quotedArgs}`.trim(),
     "",
     ":cleanup",
     `rmdir /S /Q "${quotedExtract}" >nul 2>nul`,
@@ -154,5 +210,6 @@ function launchWindowsUpdateHelper(payload, deps = {}) {
 
 module.exports = {
   createWindowsUpdateScript,
+  isInstallerExe,
   launchWindowsUpdateHelper,
 };

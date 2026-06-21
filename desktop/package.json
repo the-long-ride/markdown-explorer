@@ -69,7 +69,8 @@
           "target": "zip"
         }
       ],
-      "icon": "../ui/assets/logos/logo-512.png"
+      "icon": "../ui/assets/logos/logo-512.png",
+      "artifactName": "${productName}.${ext}"
     },
     "linux": {
       "target": [
@@ -105,10 +106,15 @@
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,
       "createStartMenuShortcut": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "artifactName": "${productName} Setup.${ext}",
+      "runAfterFinish": false
     },
     "portable": {
-      "artifactName": "${productName} ${version}.${ext}"
+      "artifactName": "${productName} Portable.${ext}"
+    },
+    "zip": {
+      "artifactName": "${productName}.zip"
     }
   },
   "dependencies": {
