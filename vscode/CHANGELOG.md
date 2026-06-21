@@ -7,10 +7,12 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ## [1.5.4] — 2026-06-21
 
 ### Changed
-- **Desktop UI Controls**: Tightened sidebar tab sizing, raised the sidebar minimum width to 245 px, and improved tab-view header control spacing so primary actions stay grouped more consistently.
-- **Theme Toggle Copy**: Renamed the light/dark toggle action to context-aware labels that show the next mode and matching icon state across desktop and browser app surfaces.
+- **Workspace Search Layout**: Moved workspace search into the sidebar so the app variants follow a more VS Code-like navigation flow.
+- **Desktop Release Packaging**: Windows desktop releases now prioritize the NSIS installer, and desktop artifact filenames no longer include the version number.
+- **Desktop UI Controls**: Tightened sidebar tab sizing, raised the sidebar minimum width to 245 px, improved tab-view header control spacing so primary actions stay grouped more consistently, and renamed the light/dark toggle action to context-aware next-mode labels.
 
 ### Fixed
+- **Windows Installer Updates**: The desktop updater now handles NSIS installer packages correctly during in-app update flows.
 - **TOC & Focus Controls**: Removed redundant in-body TOC toggle controls and kept focus-mode access inside the settings action menu across header variants.
 - **Search Readability**: Improved contrast and icon visibility for sidebar search and all-tabs search results across themes, especially in darker and pet-theme surfaces.
 - **Workspace Renaming Guidance**: Added desktop workspace rename affordances and aligned recent-workspace interactions with tab-based rename behavior.
