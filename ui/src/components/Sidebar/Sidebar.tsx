@@ -378,7 +378,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
               dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "files" })
             }
           >
-            <FolderIcon size={12} />
+            <FolderIcon size={14} />
             <span>{t.sidebar.files}</span>
           </button>
           <button
@@ -388,7 +388,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
               dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "search" })
             }
           >
-            <SearchIcon size={12} />
+            <SearchIcon size={14} />
             <span>{t.sidebar.search || "Search"}</span>
           </button>
           <span
@@ -436,7 +436,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
       >
         <div className="sidebar__header-fields">
           <div className="sidebar__search">
-            <SearchIcon size={12} />
+            <SearchIcon size={15} />
             <input
               type="text"
               placeholder={t.sidebar.filterPlaceholder}

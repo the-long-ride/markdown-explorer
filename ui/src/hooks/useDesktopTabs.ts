@@ -369,22 +369,39 @@ export function useDesktopTabs({
     });
   }, [bridge, dispatchEmptyWorkspace, isTabView, setNavigationScope]);
 
-  const updateTabAlias = useCallback((tabId: string, alias: string) => {
+  const updateWorkspaceAlias = useCallback((workspacePath: string, alias: string, fallbackName = '') => {
     const normalizedAlias = alias.trim();
-    const tab = tabs.find((item) => item.id === tabId);
+    const persistedAlias = normalizedAlias && normalizedAlias !== fallbackName.trim()
+      ? normalizedAlias
+      : '';
+
+    setWorkspaceAliases((currentAliases) => {
+      const nextAliases = { ...currentAliases };
+      if (persistedAlias) nextAliases[workspacePath] = persistedAlias;
+      else delete nextAliases[workspacePath];
+      return nextAliases;
+    });
+
     setTabs((currentTabs) =>
-      currentTabs.map((item) => (item.id === tabId ? { ...item, alias: normalizedAlias } : item)),
+      currentTabs.map((item) =>
+        item.workspacePath === workspacePath
+          ? { ...item, alias: persistedAlias || undefined }
+          : item,
+      ),
     );
-    const workspacePath = tab?.workspacePath;
-    if (workspacePath) {
-      setWorkspaceAliases((currentAliases) => {
-        const nextAliases = { ...currentAliases };
-        if (normalizedAlias) nextAliases[workspacePath] = normalizedAlias;
-        else delete nextAliases[workspacePath];
-        return nextAliases;
-      });
+  }, []);
+
+  const updateTabAlias = useCallback((tabId: string, alias: string) => {
+    const tab = tabs.find((item) => item.id === tabId);
+    if (!tab) return;
+    if (tab.workspacePath) {
+      updateWorkspaceAlias(tab.workspacePath, alias, tab.workspaceName ?? '');
+      return;
     }
-  }, [tabs]);
+    setTabs((currentTabs) =>
+      currentTabs.map((item) => (item.id === tabId ? { ...item, alias: alias.trim() || undefined } : item)),
+    );
+  }, [tabs, updateWorkspaceAlias]);
 
   const crossTabSearchItems = useMemo<CrossTabSearchItem[]>(
     () =>
@@ -466,7 +483,9 @@ export function useDesktopTabs({
     closeOtherTabs,
     closeAllTabs,
     updateTabAlias,
+    updateWorkspaceAlias,
     crossTabSearchItems,
     isIndexingAcrossTabs,
   };
 }
+

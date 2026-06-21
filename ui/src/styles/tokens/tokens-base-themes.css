@@ -10,15 +10,15 @@
 }
 
 /* ============================================================
-   Custom Fonts — Only used in Electron (body.is-electron).
+   Custom Fonts — Only used in app runtimes.
    @font-face declarations are defined here but fonts are only
    downloaded when the font-family is actually applied.
    VS Code extension excludes .ttf files via .vscodeignore,
-   and never adds body.is-electron, so fonts are never loaded there.
+   and never adds the app runtime body classes, so fonts are never loaded there.
    ============================================================ */
 :root {
-  /* VS Code and Electron both get system UI fonts by default.
-     Electron overrides these via body.is-electron below. */
+  /* VS Code and app runtimes both get system UI fonts by default.
+     App runtimes override these via body runtime classes below. */
   --font-ui: var(--vscode-font-family, -apple-system, "Segoe UI", system-ui, sans-serif);
   --font-mono: var(--vscode-editor-font-family, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace);
   --sidebar-w: 240px;
@@ -64,8 +64,9 @@
   --chart-8: #14b8a6;
 }
 
-/* Electron: use bundled custom fonts */
-body.is-electron {
+/* App runtimes: use bundled custom fonts */
+body.is-electron,
+body.is-chrome-ext {
   --font-ui: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono:
     "Cascadia Code", "CascadiaCode", "Fira Code", "JetBrains Mono", Consolas, monospace;
@@ -196,5 +197,9 @@ body.is-electron {
     --hl-pkg: #22863a;
   }
 }
+
+
+
+
 
 

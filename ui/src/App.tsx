@@ -111,6 +111,7 @@ export function App() {
     closeOtherTabs,
     closeAllTabs,
     updateTabAlias,
+    updateWorkspaceAlias,
     crossTabSearchItems,
     isIndexingAcrossTabs,
   } = useDesktopTabs({
@@ -545,8 +546,6 @@ export function App() {
           onCloseOtherTabs={closeOtherTabs}
           onCloseAllTabs={closeAllTabs}
           onAliasChange={updateTabAlias}
-          onSearchOpen={() => openSearch('all-tabs')}
-          searchShortcutLabel={allTabsSearchShortcutLabel}
           onThemeToggle={toggleTheme}
           onSettingsOpen={() => setSettingsOpen(true)}
           onSidebarToggle={toggleSidebar}
@@ -566,6 +565,7 @@ export function App() {
           onBeforeOpenWorkspace={prepareWorkspaceOpen}
           embeddedInTabs={isTabView}
           workspaceAliases={workspaceAliases}
+          onWorkspaceAliasChange={updateWorkspaceAlias}
         />
       ) : (
         <>
@@ -729,5 +729,6 @@ export function App() {
 }
 
 initGlobalHandlers();
+
 
 

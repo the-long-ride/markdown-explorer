@@ -192,6 +192,43 @@ body {
   text-align: left;
 }
 
+.toolbar-action-menu__switch {
+  width: 28px;
+  height: 16px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--txm) 32%, transparent);
+  border: 1px solid color-mix(in srgb, var(--txm) 44%, transparent);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.toolbar-action-menu__switch-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg-s);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.toolbar-action-menu__switch.is-on {
+  background: color-mix(in srgb, var(--accent) 40%, var(--accent-dim));
+  border-color: color-mix(in srgb, var(--accent) 58%, transparent);
+}
+
+.toolbar-action-menu__switch.is-on .toolbar-action-menu__switch-thumb {
+  transform: translateX(12px);
+  background: #fff;
+}
+
+.toolbar-action-menu__switch.is-disabled {
+  opacity: 0.5;
+}
+
 .toolbar-action-menu__item.is-primary {
   color: var(--tx);
 }

@@ -4,7 +4,6 @@ import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import {
   CloseIcon,
   PlusIcon,
-  SearchIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-128.png';
 import { getTabLabel } from '../../desktop/desktopTabs';
@@ -29,8 +28,6 @@ interface DesktopTabBarProps {
   onCloseOtherTabs: (tabId: string) => void;
   onCloseAllTabs: () => void;
   onAliasChange: (tabId: string, alias: string) => void;
-  onSearchOpen: () => void;
-  searchShortcutLabel: string;
   onThemeToggle: () => void;
   onSettingsOpen: () => void;
   onSidebarToggle: () => void;
@@ -49,8 +46,6 @@ export function DesktopTabBar({
   onCloseOtherTabs,
   onCloseAllTabs,
   onAliasChange,
-  onSearchOpen,
-  searchShortcutLabel,
   onThemeToggle,
   onSettingsOpen,
   onSidebarToggle,
@@ -392,10 +387,6 @@ export function DesktopTabBar({
       )}
       <TooltipButton className="btn btn--icon desktop-tabbar__new" onClick={onNewTab} tooltip={t.tooltips.newTab} icon={<PlusIcon />} />
       <div className="desktop-tabbar__spacer" />
-      <button type="button" className="desktop-tabbar__search" onClick={onSearchOpen} aria-label={t.actions.searchAllTabs}>
-        <SearchIcon size={13} />
-        <span>{t.actions.searchAllTabs}... ({searchShortcutLabel})</span>
-      </button>
       <ToolbarActionMenu
         triggerTooltip={t.topbar.moreActions}
         homeLabel={t.topbar.home}
@@ -415,14 +406,18 @@ export function DesktopTabBar({
         onHome={() => onSelectTab('home')}
         onTheme={onThemeToggle}
         onEdit={openInEditor}
+        showEdit={false}
         onSettings={onSettingsOpen}
         sidebarLabel={t.actions.toggleSidebar}
         sidebarTooltip={t.actions.toggleSidebar}
         sidebarShortcut={state.settings.keybindings?.toggleSidebar}
+        sidebarActive={!state.sidebarCollapsed}
         onSidebarToggle={onSidebarToggle}
         tocLabel={t.actions.toggleToc}
         tocTooltip={t.actions.toggleToc}
         tocShortcut={state.settings.keybindings?.toggleToc}
+        tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
+        tocToggleDisabled={!state.currentFile || state.toc.length === 0}
         onTocToggle={toggleToc}
         focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
         focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
@@ -461,3 +456,4 @@ export function DesktopTabBar({
     </header>
   );
 }
+

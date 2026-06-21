@@ -30,6 +30,7 @@ interface ToolbarActionMenuProps {
   canEdit: boolean;
   isDark: boolean;
   hasUpdate?: boolean;
+  showEdit?: boolean;
   onHome: () => void;
   onTheme: () => void;
   onEdit: () => void;
@@ -38,11 +39,14 @@ interface ToolbarActionMenuProps {
   sidebarLabel?: string;
   sidebarTooltip?: string;
   sidebarShortcut?: string;
+  sidebarActive?: boolean;
   onSidebarToggle?: () => void;
 
   tocLabel?: string;
   tocTooltip?: string;
   tocShortcut?: string;
+  tocActive?: boolean;
+  tocToggleDisabled?: boolean;
   onTocToggle?: () => void;
 
   focusModeLabel?: string;
@@ -90,6 +94,7 @@ export function ToolbarActionMenu({
   canEdit,
   isDark,
   hasUpdate = false,
+  showEdit = true,
   onHome,
   onTheme,
   onEdit,
@@ -97,10 +102,13 @@ export function ToolbarActionMenu({
   sidebarLabel,
   sidebarTooltip,
   sidebarShortcut,
+  sidebarActive = false,
   onSidebarToggle,
   tocLabel,
   tocTooltip,
   tocShortcut,
+  tocActive = false,
+  tocToggleDisabled = false,
   onTocToggle,
   focusModeLabel,
   focusModeTooltip,
@@ -140,6 +148,7 @@ export function ToolbarActionMenu({
     label: string;
     tooltip: string;
     disabled: boolean;
+    toggleState?: boolean;
   }> = [
     {
       id: "home",
@@ -153,13 +162,16 @@ export function ToolbarActionMenu({
       tooltip: buildShortcutTooltip(themeTooltip, themeShortcut),
       disabled: false,
     },
-    {
+  ];
+
+  if (showEdit) {
+    items.push({
       id: "edit",
       label: editLabel,
       tooltip: buildShortcutTooltip(editTooltip),
       disabled: !canEdit,
-    },
-  ];
+    });
+  }
 
   if (onSidebarToggle && sidebarLabel && sidebarTooltip) {
     items.push({
@@ -167,6 +179,7 @@ export function ToolbarActionMenu({
       label: sidebarLabel,
       tooltip: buildShortcutTooltip(sidebarTooltip, sidebarShortcut),
       disabled: false,
+      toggleState: sidebarActive,
     });
   }
 
@@ -175,7 +188,8 @@ export function ToolbarActionMenu({
       id: "toc",
       label: tocLabel,
       tooltip: buildShortcutTooltip(tocTooltip, tocShortcut),
-      disabled: false,
+      disabled: tocToggleDisabled,
+      toggleState: tocActive,
     });
   }
 
@@ -246,8 +260,9 @@ export function ToolbarActionMenu({
             <TooltipButton
               key={item.id}
               type="button"
-              role="menuitem"
-              className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}`}
+              role="menuitemcheckbox"
+              aria-checked={typeof item.toggleState === "boolean" ? item.toggleState : undefined}
+              className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}${typeof item.toggleState === "boolean" ? " is-toggle" : ""}`}
               onClick={() => handleAction(item)}
               tooltip={item.tooltip}
               icon={getItemIcon(item.id, isDark, isFocusMode)}
@@ -256,10 +271,20 @@ export function ToolbarActionMenu({
               disabled={item.disabled}
               tooltipPos="above"
               tooltipAlign="left"
-            />
+            >
+              {typeof item.toggleState === "boolean" && (
+                <span
+                  className={`toolbar-action-menu__switch${item.toggleState ? " is-on" : ""}${item.disabled ? " is-disabled" : ""}`}
+                  aria-hidden="true"
+                >
+                  <span className="toolbar-action-menu__switch-thumb" />
+                </span>
+              )}
+            </TooltipButton>
           ))}
         </div>
       )}
     </div>
   );
 }
+

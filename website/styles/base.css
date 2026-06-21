@@ -656,6 +656,10 @@ h3 {
   margin-top: 0.5rem;
 }
 
+.release-download-count + .card-actions {
+  margin-top: 0.5rem;
+  width: 100%;
+}
 
 .release-download-number {
   display: inline-block;
@@ -993,3 +997,5 @@ summary {
     transform: scale(1) translateY(0);
   }
 }
+
+

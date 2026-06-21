@@ -30,26 +30,6 @@
         "${workspaceFolder}/vscode/out/**/*.js"
       ],
       "preLaunchTask": "compile"
-    },
-    {
-      "name": "Debug Tauri Desktop (CodeLLDB)",
-      "type": "lldb",
-      "request": "launch",
-      "preLaunchTask": "tauri:dev-frontend",
-      "cargo": {
-        "args": [
-          "build",
-          "--manifest-path=${workspaceFolder}/desktop-tauri/src-tauri/Cargo.toml"
-        ],
-        "filter": {
-          "name": "markdown-explorer",
-          "kind": "bin"
-        }
-      },
-      "env": {
-        "TAURI_DEBUG": "true"
-      },
-      "cwd": "${workspaceFolder}/desktop-tauri/src-tauri"
     }
   ]
 }

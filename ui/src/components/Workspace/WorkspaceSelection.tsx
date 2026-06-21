@@ -10,17 +10,18 @@ import { WorkspaceWindowControls } from './WorkspaceWindowControls';
 import { InteractiveBackground } from '../shared/InteractiveBackground';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
 
-
 interface WorkspaceSelectionProps {
   onBeforeOpenWorkspace?: () => void;
   embeddedInTabs?: boolean;
   workspaceAliases?: Record<string, string>;
+  onWorkspaceAliasChange?: (workspacePath: string, alias: string, fallbackName?: string) => void;
 }
 
 export function WorkspaceSelection({
   onBeforeOpenWorkspace,
   embeddedInTabs = false,
   workspaceAliases = {},
+  onWorkspaceAliasChange,
 }: WorkspaceSelectionProps = {}) {
   const { state, toggleTheme } = useAppState();
   const bridge = usePlatform();
@@ -221,6 +222,11 @@ export function WorkspaceSelection({
         {recents.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
             <h3 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, color: 'var(--tx2)' }}>Workspaces</h3>
+            {embeddedInTabs && isDesktop && (
+              <p style={{ margin: '-8px 0 0', fontSize: '11px', color: 'var(--tx3)', lineHeight: 1.5 }}>
+                Tip: Double-click a workspace tab in Tab view to rename it.
+              </p>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {displayRecents.map((item, idx) => (
                 <RecentWorkspaceItem
@@ -229,6 +235,7 @@ export function WorkspaceSelection({
                   displayName={getWorkspaceDisplayName(item)}
                   onOpen={() => handleOpenRecent(item.path)}
                   onDelete={() => handleDeleteRecent(item.path)}
+                  onRename={onWorkspaceAliasChange ? (nextName) => onWorkspaceAliasChange(item.path, nextName, item.name) : undefined}
                 />
               ))}
             </div>
@@ -248,7 +255,6 @@ export function WorkspaceSelection({
           </div>
         )}
 
-        {/* File System Access API Guidance */}
         {!isDesktop && (
           <div
             style={{
@@ -351,11 +357,10 @@ export function WorkspaceSelection({
           onClose={() => setModalOpen(false)}
           onOpenRecent={handleOpenRecent}
           onDeleteRecent={handleDeleteRecent}
+          onRenameRecent={onWorkspaceAliasChange}
           getDisplayName={getWorkspaceDisplayName}
         />
       )}
     </div>
   );
 }
-
-

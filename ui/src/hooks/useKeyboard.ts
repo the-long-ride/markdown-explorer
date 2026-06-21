@@ -253,12 +253,14 @@ export function useKeyboard({
       // 8. Toggle Theme (both)
       if (matchesShortcut(e, keybindings.toggleTheme)) {
         e.preventDefault();
+        if (e.repeat) return;
         toggleTheme();
         return;
       }
 
       if (onToggleToc && matchesShortcut(e, keybindings.toggleToc)) {
         e.preventDefault();
+        if (e.repeat) return;
         onToggleToc();
         return;
       }
@@ -271,6 +273,7 @@ export function useKeyboard({
 
       if (onToggleFocusMode && matchesShortcut(e, keybindings.toggleFocusMode)) {
         e.preventDefault();
+        if (e.repeat) return;
         onToggleFocusMode();
         return;
       }
@@ -308,6 +311,7 @@ export function useKeyboard({
         // 13. Toggle sidebar (Desktop)
         if (matchesShortcut(e, keybindings.toggleSidebar)) {
           e.preventDefault();
+          if (e.repeat) return;
           toggleSidebar();
           return;
         }

@@ -26,22 +26,6 @@
         "panel": "shared"
       },
       "group": "build"
-    },
-    {
-      "label": "tauri:dev-frontend",
-      "type": "shell",
-      "command": "if ((Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue)) { Write-Host 'VITE dev server ready in 0ms (already running)' } else { npm run dev --workspace=ui }",
-      "isBackground": true,
-      "problemMatcher": {
-        "pattern": {
-          "regexp": "^.*"
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^.*VITE.*|^.*already running.*",
-          "endsPattern": "^.*ready in.*"
-        }
-      }
     }
   ]
 }

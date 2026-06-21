@@ -786,10 +786,14 @@ body.is-dragging-files .mdn-html-preview-iframe {
   min-width: 0;
 }
 
+.sidebar__tab-btn svg {
+  flex: 0 0 auto;
+}
+
 .sidebar__tab-btn span {
   white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 

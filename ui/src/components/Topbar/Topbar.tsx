@@ -11,7 +11,7 @@ import { usePlatform } from '../../contexts/PlatformContext';
 import {
   ChevronLeftIcon, ChevronRightIcon,
   ExpandIcon, CollapseIcon, CopyIcon,
-  SidebarIcon, RefreshIcon, TocIcon,
+  RefreshIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-128.png';
 
@@ -298,21 +298,6 @@ export function Topbar({
           disabled={!state.currentFile}
           icon={<CopyIcon />}
         />
-        <TooltipButton
-          className="btn btn--icon"
-          onClick={toggleSidebar}
-          tooltip={t.topbar.sidebar}
-          shortcut={state.settings.keybindings?.toggleSidebar}
-          icon={<SidebarIcon />}
-        />
-        <TooltipButton
-          className={`btn btn--icon${!state.tocCollapsed ? ' is-active' : ''}`}
-          onClick={toggleToc}
-          disabled={!state.currentFile || state.toc.length === 0}
-          tooltip={t.actions.toggleToc}
-          shortcut={state.settings.keybindings?.toggleToc}
-          icon={<TocIcon />}
-        />
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
           homeLabel={t.topbar.home}
@@ -333,6 +318,17 @@ export function Topbar({
           onTheme={toggleTheme}
           onEdit={openInEditor}
           onSettings={onSettingsOpen}
+          sidebarLabel={t.actions.toggleSidebar}
+          sidebarTooltip={t.actions.toggleSidebar}
+          sidebarShortcut={state.settings.keybindings?.toggleSidebar}
+          sidebarActive={!state.sidebarCollapsed}
+          onSidebarToggle={toggleSidebar}
+          tocLabel={t.actions.toggleToc}
+          tocTooltip={t.actions.toggleToc}
+          tocShortcut={state.settings.keybindings?.toggleToc}
+          tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
+          tocToggleDisabled={!state.currentFile || state.toc.length === 0}
+          onTocToggle={toggleToc}
           focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
           focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
           focusModeShortcut={state.settings.keybindings?.toggleFocusMode}

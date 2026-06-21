@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   /* ── i18n dictionary ───────────────────────────────────────────── */
   const LANGS = window.LANGS;
 
@@ -89,12 +89,18 @@
     buttons.map((button) => [button, button.textContent.trim()]),
   );
   const downloadCountLabels = new Map(
-    buttons.map((button) => {
+    [...new Set(buttons.map((button) => button.closest(".download-card")).filter(Boolean))].map((card) => {
       const label = document.createElement("span");
       label.className = "release-download-count";
       label.setAttribute("aria-live", "polite");
-      button.insertAdjacentElement("beforebegin", label);
-      return [button, label];
+      const actions = card.querySelector(".card-actions");
+      if (actions) {
+        actions.insertAdjacentElement("beforebegin", label);
+      } else {
+        const primaryButton = card.querySelector(".release-download");
+        if (primaryButton) primaryButton.insertAdjacentElement("beforebegin", label);
+      }
+      return [card, label];
     }),
   );
   const numberFormatter = new Intl.NumberFormat();
@@ -106,7 +112,10 @@
     "macos-x64": (name) => name.endsWith(".dmg") && name.includes("x64"),
     "linux-appimage": (name) => name.endsWith(".appimage"),
     "linux-deb": (name) => name.endsWith(".deb"),
-    chromium: (name) => name.endsWith("-chromium.zip") || name.endsWith("-chrome.zip") || (name.includes("chromium") && name.endsWith(".zip"))
+    chromium: (name) =>
+      name.endsWith("-chromium.zip") ||
+      name.endsWith("-chrome.zip") ||
+      (name.includes("chromium") && name.endsWith(".zip")),
   };
 
   const platformGroup = {
@@ -115,8 +124,10 @@
     "macos-arm64": "macos",
     "macos-x64": "macos",
     "linux-appimage": "linux",
-    "linux-deb": "linux"
+    "linux-deb": "linux",
   };
+
+  const getCountKey = (platform) => platformGroup[platform] || platform;
 
   const preferredScore = {
     "windows-nsis": () => 10,
@@ -125,7 +136,7 @@
     "macos-x64": () => 10,
     "linux-appimage": () => 10,
     "linux-deb": () => 10,
-    chromium: (name) => (name.includes("chromium") ? 10 : 5)
+    chromium: (name) => (name.includes("chromium") ? 10 : 5),
   };
 
   const fallbackMatchers = {
@@ -144,7 +155,6 @@
           preferredScore[platform](a.name.toLowerCase()),
       );
     if (exact.length > 0) return exact[0];
-    // Fallback: try the broader matcher if the arch-specific one found nothing
     const fb = fallbackMatchers[platform];
     if (fb) {
       return assets.filter((asset) => fb(asset.name.toLowerCase()))[0] || null;
@@ -156,16 +166,24 @@
     const matcher = assetMatchers[platform];
     if (!matcher) return [];
     const direct = assets.filter((asset) => matcher(asset.name.toLowerCase()));
-    // Also include sibling-variant assets for download totals (e.g. windows-nsis + windows-portable)
     const group = platformGroup[platform];
     if (group) {
-      const siblingKeys = Object.keys(platformGroup).filter((k) => k !== platform && platformGroup[k] === group);
+      const siblingKeys = Object.keys(platformGroup).filter(
+        (key) => key !== platform && platformGroup[key] === group,
+      );
       const siblings = siblingKeys.flatMap((key) => {
-        const m = assetMatchers[key];
-        return m ? assets.filter((asset) => m(asset.name.toLowerCase())) : [];
+        const siblingMatcher = assetMatchers[key];
+        return siblingMatcher
+          ? assets.filter((asset) => siblingMatcher(asset.name.toLowerCase()))
+          : [];
       });
-      const seen = new Set(direct.map((a) => a.id));
-      for (const a of siblings) { if (!seen.has(a.id)) { direct.push(a); seen.add(a.id); } }
+      const seen = new Set(direct.map((asset) => asset.id));
+      for (const asset of siblings) {
+        if (!seen.has(asset.id)) {
+          direct.push(asset);
+          seen.add(asset.id);
+        }
+      }
     }
     return direct;
   };
@@ -217,8 +235,9 @@
         "aria-label",
         `${baseLabel}. Opens the latest GitHub Release.`,
       );
-      const countLabel = downloadCountLabels.get(button);
-      if (countLabel) countLabel.textContent = "";
+    });
+    downloadCountLabels.forEach((label) => {
+      label.textContent = "";
     });
     setReleaseNote(message);
   };
@@ -233,7 +252,7 @@
     if (!linkHeader) return "";
     const nextLink = linkHeader
       .split(",")
-      .find((link) => link.includes('rel="next"'));
+      .find((link) => link.includes(`rel="next"`));
     const match = nextLink && nextLink.match(/<([^>]+)>/);
     return match ? match[1] : "";
   };
@@ -257,13 +276,14 @@
         );
         const releaseVersion = release.tag_name || release.name || "";
         let selectedDesktopDownloads = 0;
+        const downloadsByKey = new Map();
+        const countedKeys = new Set();
 
-        // Patch JSON-LD softwareVersion with the live tag (strip leading "v")
         const liveVersion = releaseVersion.replace(/^v/i, "");
         if (liveVersion) {
           try {
             const ldScript = document.querySelector(
-              'script[type="application/ld+json"]',
+              `script[type="application/ld+json"]`,
             );
             if (ldScript) {
               const data = JSON.parse(ldScript.textContent);
@@ -281,16 +301,22 @@
           const versionedLabel = releaseVersion
             ? `${baseLabel} ${releaseVersion}`
             : baseLabel;
-          const platformAssets = getPlatformAssets(
-            allReleaseAssets,
-            button.dataset.platform,
-          );
-          const asset = pickAsset(latestAssets, button.dataset.platform);
-          const downloads = getDownloadCount(platformAssets);
-          const countLabel = downloadCountLabels.get(button);
+          const platform = button.dataset.platform;
+          const countKey = getCountKey(platform);
+          if (!downloadsByKey.has(countKey)) {
+            const platformAssets = getPlatformAssets(allReleaseAssets, platform);
+            downloadsByKey.set(countKey, getDownloadCount(platformAssets));
+          }
+          const downloads = downloadsByKey.get(countKey) ?? 0;
+          const asset = pickAsset(latestAssets, platform);
+          const card = button.closest(".download-card");
+          const countLabel = card ? downloadCountLabels.get(card) : null;
           button.textContent = versionedLabel;
-          selectedDesktopDownloads += downloads;
-          setDownloadCountLabel(countLabel, downloads);
+          if (countLabel && !countedKeys.has(countKey)) {
+            setDownloadCountLabel(countLabel, downloads);
+            countedKeys.add(countKey);
+            selectedDesktopDownloads += downloads;
+          }
 
           if (!asset) {
             button.href = release.html_url || releaseUrl;
@@ -320,7 +346,6 @@
         setFallback(t().releaseApiFail);
       });
   }
-
   /* ── Image Lightbox Modal ──────────────────────────────────── */
   document.querySelectorAll(".feature-card img, .gallery-item img, .hero-media img").forEach((img) => {
     img.style.cursor = "zoom-in";
@@ -394,3 +419,5 @@
     });
   }
 })();
+
+

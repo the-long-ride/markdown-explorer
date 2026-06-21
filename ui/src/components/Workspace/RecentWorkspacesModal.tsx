@@ -11,6 +11,7 @@ interface RecentWorkspacesModalProps {
   onClose: () => void;
   onOpenRecent: (path: string) => void;
   onDeleteRecent: (path: string) => void;
+  onRenameRecent?: (path: string, nextName: string, fallbackName: string) => void;
   getDisplayName: (item: RecentWorkspace) => string;
 }
 
@@ -21,6 +22,7 @@ export function RecentWorkspacesModal({
   onClose,
   onOpenRecent,
   onDeleteRecent,
+  onRenameRecent,
   getDisplayName,
 }: RecentWorkspacesModalProps) {
   const { state } = useAppState();
@@ -75,6 +77,7 @@ export function RecentWorkspacesModal({
                   onClose();
                 }}
                 onDelete={() => onDeleteRecent(item.path)}
+                onRename={onRenameRecent ? (nextName) => onRenameRecent(item.path, nextName, item.name) : undefined}
               />
             ))
           ) : (
