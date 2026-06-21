@@ -23,7 +23,11 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https:; media-src 'self' file: https:; connect-src 'self' https:; font-src 'self' data:;"
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: https://asset.localhost http://asset.localhost file: https:; media-src 'self' asset: https://asset.localhost http://asset.localhost file: https:; connect-src 'self' https:; font-src 'self' data:;",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["**/*"]
+      }
     }
   },
   "bundle": {
