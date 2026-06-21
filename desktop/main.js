@@ -442,7 +442,7 @@ function handleLoadWorkspaceSearchIndexes(msg) {
 
   let index = 0;
 
-  function processNext() {
+  async function processNext() {
     if (index >= tabRequests.length) return;
 
     const tab = tabRequests[index];

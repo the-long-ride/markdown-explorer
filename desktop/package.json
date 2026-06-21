@@ -87,12 +87,10 @@
       "icon": "../ui/assets/logos/logo-512.png",
       "category": "public.app-category.developer-tools"
     },
-    "nsis": {
-      "oneClick": false,
-      "installerIcon": "../ui/assets/logos/logo-512.png",
-      "shortcutName": "Markdown Explorer",
-      "uninstallerIcon": "../ui/assets/logos/logo-512.png",
-      "allowToChangeInstallationDirectory": true,
+      "nsis": {
+        "oneClick": false,
+        "shortcutName": "Markdown Explorer",
+        "allowToChangeInstallationDirectory": true,
       "perMachine": false,
       "createStartMenuShortcut": true,
       "createDesktopShortcut": true
