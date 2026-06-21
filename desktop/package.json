@@ -112,9 +112,6 @@
     },
     "portable": {
       "artifactName": "${productName} Portable.${ext}"
-    },
-    "zip": {
-      "artifactName": "${productName}.zip"
     }
   },
   "dependencies": {
