@@ -1,9 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Markdown Explorer",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "Transforms your markdown documents into a premium, interactive web-app experience — directly in your browser.",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

@@ -1,6 +1,6 @@
 {
   "name": "markdown-explorer-workspace",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "private": true,
   "workspaces": [
     "ui",
@@ -28,4 +28,3 @@
     "build:chromium": "npm run build --workspace=markdown-explorer-chromium-xtension"
   }
 }
-

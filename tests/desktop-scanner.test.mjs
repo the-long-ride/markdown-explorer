@@ -35,7 +35,7 @@ test("extractTitle falls back to markdown heading when MDX metadata is absent", 
   assert.equal(DesktopScanner.extractTitle(filePath, true), "Visible Heading");
 });
 
-test("scan ignores excluded folders and unsupported files", () => {
+test("scan ignores excluded folders and unsupported files", async () => {
   const rootDir = makeTempDir("scanner-scan-");
   writeFile(path.join(rootDir, "docs", "guide.md"), "# Guide");
   writeFile(path.join(rootDir, ".git", "ignored.md"), "# Git");
@@ -43,7 +43,7 @@ test("scan ignores excluded folders and unsupported files", () => {
   writeFile(path.join(rootDir, "notes.txt"), "plain text");
   writeFile(path.join(rootDir, "image.png"), "not supported");
 
-  const { flat, tree } = DesktopScanner.scan(rootDir);
+  const { flat, tree } = await DesktopScanner.scan(rootDir);
 
   assert.deepEqual(
     flat.map((entry) => entry.relativePath).sort(),

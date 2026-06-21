@@ -2,15 +2,25 @@
   "name": "vscode-extension-markdown-explorer",
   "displayName": "Markdown Explorer in VS Code",
   "description": "Markdown for AI agents, Markdown Explorer for human. View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "license": "MIT",
   "publisher": "the-long-ride",
   "icon": "ui/assets/logos/logo-500.png",
   "homepage": "https://the-long-ride.github.io/markdown-explorer/",
-  "repository": { "type": "git", "url": "https://github.com/the-long-ride/markdown-explorer" },
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other", "Visualization"],
-  "activationEvents": ["onStartupFinished"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/the-long-ride/markdown-explorer"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -46,26 +56,49 @@
     ],
     "menus": {
       "editor/title": [
-        { "command": "markdownExplorer.toggle", "when": "resourceExtname == .md || resourceExtname == .mdx", "group": "navigation" }
+        {
+          "command": "markdownExplorer.toggle",
+          "when": "resourceExtname == .md || resourceExtname == .mdx",
+          "group": "navigation"
+        }
       ],
       "explorer/context": [
-        { "command": "markdownExplorer.openFile", "when": "resourceExtname == .md || resourceExtname == .mdx", "group": "navigation" }
+        {
+          "command": "markdownExplorer.openFile",
+          "when": "resourceExtname == .md || resourceExtname == .mdx",
+          "group": "navigation"
+        }
       ]
     },
     "keybindings": [
-      { "command": "markdownExplorer.open", "key": "ctrl+shift+m", "mac": "cmd+shift+m" },
-      { "command": "markdownExplorer.toggle", "key": "ctrl+alt+v", "mac": "cmd+alt+v", "when": "editorLangId == markdown" }
+      {
+        "command": "markdownExplorer.open",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m"
+      },
+      {
+        "command": "markdownExplorer.toggle",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v",
+        "when": "editorLangId == markdown"
+      }
     ],
     "configuration": {
       "title": "Markdown Explorer",
       "properties": {
         "markdownExplorer.theme": {
-          "type": "string", "default": "auto",
-          "enum": ["auto", "light", "dark"],
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "light",
+            "dark"
+          ],
           "description": "Color mode for the docs viewer"
         },
         "markdownExplorer.themeStyle": {
-          "type": "string", "default": "default",
+          "type": "string",
+          "default": "default",
           "enum": [
             "default",
             "glass",
@@ -93,20 +126,27 @@
           "description": "Visual style for surfaces, borders, backgrounds, shadows, spacing, and strokes."
         },
         "markdownExplorer.autoRefresh": {
-          "type": "boolean", "default": true,
+          "type": "boolean",
+          "default": true,
           "description": "Automatically refresh when markdown files change"
         },
         "markdownExplorer.documentConversion": {
-          "type": "boolean", "default": false,
+          "type": "boolean",
+          "default": false,
           "description": "Show DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files by converting them to Markdown for preview. Conversion quality can vary by file."
         },
         "markdownExplorer.excludePatterns": {
           "type": "array",
-          "default": ["**/node_modules/**", "**/.git/**", "**/.vscode/**"],
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/.vscode/**"
+          ],
           "description": "Glob patterns to exclude from scan"
         },
         "markdownExplorer.defaultExpanded": {
-          "type": "boolean", "default": true,
+          "type": "boolean",
+          "default": true,
           "description": "Expand all sections by default"
         }
       }

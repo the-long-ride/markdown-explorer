@@ -10,6 +10,8 @@ import { BrowserRecentWorkspaces } from "./recent-workspaces";
 import { rewriteMediaUrls, revokeAll } from "./media-resolver";
 import type { MdFile, FolderNode } from "../../ui/src/types";
 
+declare const chrome: { runtime: { getManifest(): { version: string } } };
+
 declare global {
   interface Window {
     __chromeExtBus?: EventTarget;

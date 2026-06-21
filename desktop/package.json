@@ -1,6 +1,6 @@
 {
   "name": "markdown-explorer-desktop",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "Markdown Explorer - Transforms your markdown documents into a premium, interactive web-app experience.",
   "homepage": "https://github.com/the-long-ride/markdown-explorer",
   "author": {
@@ -51,15 +51,21 @@
     "win": {
       "target": [
         {
-          "arch": ["x64"],
+          "arch": [
+            "x64"
+          ],
           "target": "nsis"
         },
         {
-          "arch": ["x64"],
+          "arch": [
+            "x64"
+          ],
           "target": "portable"
         },
         {
-          "arch": ["x64"],
+          "arch": [
+            "x64"
+          ],
           "target": "zip"
         }
       ],
@@ -77,20 +83,26 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "icon": "../ui/assets/logos/logo-512.png",
       "category": "public.app-category.developer-tools"
     },
-      "nsis": {
-        "oneClick": false,
-        "shortcutName": "Markdown Explorer",
-        "allowToChangeInstallationDirectory": true,
+    "nsis": {
+      "oneClick": false,
+      "shortcutName": "Markdown Explorer",
+      "allowToChangeInstallationDirectory": true,
       "perMachine": false,
       "createStartMenuShortcut": true,
       "createDesktopShortcut": true

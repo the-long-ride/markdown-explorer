@@ -4,6 +4,22 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.4] — 2026-06-21
+
+### Changed
+- **Desktop UI Controls**: Tightened sidebar tab sizing, raised the sidebar minimum width to 245 px, and improved tab-view header control spacing so primary actions stay grouped more consistently.
+- **Theme Toggle Copy**: Renamed the light/dark toggle action to context-aware labels that show the next mode and matching icon state across desktop and browser app surfaces.
+
+### Fixed
+- **TOC & Focus Controls**: Removed redundant in-body TOC toggle controls and kept focus-mode access inside the settings action menu across header variants.
+- **Search Readability**: Improved contrast and icon visibility for sidebar search and all-tabs search results across themes, especially in darker and pet-theme surfaces.
+- **Workspace Renaming Guidance**: Added desktop workspace rename affordances and aligned recent-workspace interactions with tab-based rename behavior.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, Chromium extension, manifest, and lockfile metadata to `1.5.4`.
+
+---
+
 ## [1.5.1] — 2026-06-16
 
 ### Added Features & Enhancements
