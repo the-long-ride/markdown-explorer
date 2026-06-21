@@ -76,6 +76,8 @@ export interface Translations {
     editLabel: string;
     copy: string;
     theme: string;
+    switchToDarkMode: string;
+    switchToLightMode: string;
     settings: string;
     settingsUpdate: string;
     sidebar: string;
@@ -257,6 +259,8 @@ let _TRANSLATIONS: Record<string, Translations> = {
       editLabel: "Edit",
       copy: "Copy file content",
       theme: "Toggle light/dark mode",
+      switchToDarkMode: "Switch to Dark mode",
+      switchToLightMode: "Switch to Light mode",
       settings: "Settings",
       settingsUpdate: "Settings - update available",
       sidebar: "Toggle Sidebar",

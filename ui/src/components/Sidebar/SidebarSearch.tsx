@@ -496,7 +496,7 @@ export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps)
     <>
       <div className="sidebar__header-fields">
         <div className="sidebar__search">
-          <SearchIcon size={12} />
+          <SearchIcon size={15} />
           <input
             ref={inputRef}
             type="text"

@@ -373,7 +373,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
         <div className="sidebar__tab-strip">
           <button
             type="button"
-            className={`sidebar__tab-btn${isFiles ? " is-active" : ""}`}
+            className={`sidebar__tab-btn sidebar__tab-btn--files${isFiles ? " is-active" : ""}`}
             onClick={() =>
               dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "files" })
             }

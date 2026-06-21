@@ -57,6 +57,7 @@ export function DesktopTabBar({
   const bridge = usePlatform();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const workspaceTabs = tabs.filter((tab) => tab.kind !== 'home');
 
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
@@ -390,11 +391,11 @@ export function DesktopTabBar({
       <ToolbarActionMenu
         triggerTooltip={t.topbar.moreActions}
         homeLabel={t.topbar.home}
-        themeLabel={t.topbar.themeLabel}
+        themeLabel={themeToggleLabel}
         editLabel={t.topbar.editLabel}
         settingsLabel={t.topbar.settings}
         homeTooltip={t.topbar.welcomePage}
-        themeTooltip={t.topbar.theme}
+        themeTooltip={themeToggleLabel}
         editTooltip={t.topbar.edit}
         settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
         homeShortcut={state.settings.keybindings?.welcome}

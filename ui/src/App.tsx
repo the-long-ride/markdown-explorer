@@ -26,7 +26,7 @@ const SwitchWorkspaceModal = lazy(() => import('./components/Modal/SwitchWorkspa
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
 const FloatingTabToolbar = lazy(() => import('./components/Desktop/FloatingTabToolbar').then(m => ({ default: m.FloatingTabToolbar })));
-import { ChevronUpIcon, ExpandIcon, CollapseIcon, MinimizeIcon } from './components/shared/icons';
+import { ChevronUpIcon, MinimizeIcon } from './components/shared/icons';
 import type { PendingSearchJump, SearchScope } from './desktop/types';
 // Defer global DOM handlers until after mount
 import { initGlobalHandlers } from './dom/globalHandlers';
@@ -93,6 +93,7 @@ export function App() {
     state.theme === 'dark' ||
     (state.theme === 'auto' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const {
     activeTabId,
     tabs,
@@ -378,7 +379,7 @@ export function App() {
   }, []);
 
   // Sidebar resize handle
-  useResize('sidebarResize', 'sidebar', state.workspaceName, { min: 210 });
+  useResize('sidebarResize', 'sidebar', state.workspaceName, { min: 245 });
 
   // Table of contents resize handle
   useResize('tocResize', 'tocPanel', `${state.workspaceName}:${state.toc.length}`, {
@@ -469,7 +470,7 @@ export function App() {
               <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={toggleTheme}
-                tooltip={t.topbar.theme}
+                tooltip={themeToggleLabel}
                 shortcut={state.settings.keybindings?.toggleTheme}
                 icon={
                   state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? (
@@ -589,17 +590,7 @@ export function App() {
               {state.toc.length > 0 && state.currentFile && (
                 <div className={`toc-compact-bar${state.tocCollapsed ? ' is-collapsed' : ''}`}>
                   <Suspense fallback={null}><TableOfContents variant="compact" /></Suspense>
-                  <TooltipButton
-                    type="button"
-                    className="toc-compact-bar__toggle-btn"
-                    onClick={toggleToc}
-                    tooltip={t.actions.toggleToc}
-                    shortcut={state.settings.keybindings?.toggleToc}
-                    tooltipPos="below"
-                    tooltipAlign="right"
-                    icon={state.tocCollapsed ? <ExpandIcon size={14} /> : <CollapseIcon size={14} />}
-                  />
-              </div>
+                </div>
               )}
               <div className="content-shell__main">
                 <Content

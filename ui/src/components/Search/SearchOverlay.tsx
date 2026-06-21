@@ -299,7 +299,7 @@ export function SearchOverlay({
           {isIndexing ? (
             <div className="spinner" style={{ width: 16, height: 16, borderWidth: 1.5, flexShrink: 0 }} />
           ) : (
-            <SearchIcon size={16} style={{ color: 'var(--txm)' }} />
+            <SearchIcon size={16} style={{ color: 'var(--tx2)' }} />
           )}
           <input
             ref={inputRef}
@@ -317,7 +317,7 @@ export function SearchOverlay({
               color: 'var(--tx)',
               fontFamily: 'var(--font-ui)',
               cursor: isIndexing ? 'not-allowed' : 'text',
-              opacity: isIndexing ? 0.6 : 1,
+              opacity: 1,
             }}
             aria-label="Search query"
           />
@@ -329,12 +329,12 @@ export function SearchOverlay({
         {/* Results */}
         <div className="search-overlay-results" style={{ overflowY: 'auto', padding: '8px 0', flex: 1 }} role="listbox">
           {query.length >= 2 && !hasCrossTabSearch && isWorkspaceSearching && resultCount === 0 && (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--txm)', fontSize: 13 }}>
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
               Searching file contents…
             </div>
           )}
           {query.length >= 2 && resultCount === 0 && (!isWorkspaceSearching || hasCrossTabSearch) && (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--txm)', fontSize: 13 }}>
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
               No files matching "<strong>{query}</strong>"
             </div>
           )}
@@ -361,7 +361,7 @@ export function SearchOverlay({
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
                       {state.settings.showTitle ? item.title : item.fileName}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--txm)', fontFamily: 'var(--font-mono)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--tx2)', fontFamily: 'var(--font-mono)' }}>
                       {item.tabLabel} / {item.relativePath}
                     </div>
                     {item.excerpt && (
@@ -386,7 +386,7 @@ export function SearchOverlay({
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
                       {state.settings.showTitle ? item.title : item.fileName}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--txm)', fontFamily: 'var(--font-mono)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--tx2)', fontFamily: 'var(--font-mono)' }}>
                       {item.relativePath}
                     </div>
                     {item.excerpt && (

@@ -21,7 +21,7 @@
      App runtimes override these via body runtime classes below. */
   --font-ui: var(--vscode-font-family, -apple-system, "Segoe UI", system-ui, sans-serif);
   --font-mono: var(--vscode-editor-font-family, "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace);
-  --sidebar-w: 240px;
+  --sidebar-w: 245px;
   --toc-w: 224px;
   --topbar-h: 44px;
   --topbar-gap: 8px;

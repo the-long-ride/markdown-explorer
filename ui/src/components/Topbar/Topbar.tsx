@@ -163,6 +163,7 @@ export function Topbar({
     state.theme === 'dark' ||
     (state.theme === 'auto' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
 
   const breadcrumbItems = getBreadcrumbItems(state.relativePath || '', t.topbar.welcomePage);
   const breakablePath = (state.currentFile || state.relativePath || '').replace(/[\/\\]/g, '$&' + '\u200B');
@@ -301,11 +302,11 @@ export function Topbar({
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
           homeLabel={t.topbar.home}
-          themeLabel={t.topbar.themeLabel}
+          themeLabel={themeToggleLabel}
           editLabel={t.topbar.editLabel}
           settingsLabel={t.topbar.settings}
           homeTooltip={t.topbar.welcomePage}
-          themeTooltip={t.topbar.theme}
+          themeTooltip={themeToggleLabel}
           editTooltip={t.topbar.edit}
           settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
           homeShortcut={state.settings.keybindings?.welcome}
