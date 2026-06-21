@@ -13,6 +13,7 @@ interface TauriWindow {
   __TAURI__?: {
     core?: {
       invoke: TauriInvoke;
+      convertFileSrc?: (src: string) => string;
     };
     event?: {
       listen: TauriListen;
@@ -32,6 +33,34 @@ export function createTauriBridge(): PlatformBridge {
 
   const STATE_KEY = 'markdown-explorer-ui-state';
 
+  // ── Start listening IMMEDIATELY on bridge creation ────────────────────────
+  // listen() is async — it does an IPC round-trip to register the listener in
+  // Rust. If we only call it inside onMessage() (which is called from a React
+  // useEffect), the registration may not complete before postMessage('ready')
+  // fires, causing readyAck to be emitted and dropped before the handler
+  // exists. Starting here, at module-evaluation time, gives maximum lead time.
+  //
+  // Any events that arrive before onMessage() attaches a handler are buffered
+  // and replayed synchronously when the handler is registered.
+  const earlyBuffer: HostMessage[] = [];
+  let messageHandler: ((msg: HostMessage) => void) | null = null;
+  let unlistenFn: (() => void) | null = null;
+
+  if (tauri.event?.listen) {
+    tauri.event.listen('host-message', (event) => {
+      const msg = event.payload as HostMessage;
+      if (messageHandler) {
+        messageHandler(msg);
+      } else {
+        earlyBuffer.push(msg);
+      }
+    }).then((fn) => {
+      unlistenFn = fn;
+    }).catch((err) => {
+      console.error('Tauri host-message listener failed:', err);
+    });
+  }
+
   return {
     async postMessage(msg: WebviewMessage) {
       try {
@@ -46,20 +75,22 @@ export function createTauriBridge(): PlatformBridge {
     },
 
     onMessage(handler: (msg: HostMessage) => void): () => void {
-      let unlisten: (() => void) | null = null;
+      messageHandler = handler;
 
-      if (tauri.event?.listen) {
-        tauri.event.listen('host-message', (event) => {
-          handler(event.payload as HostMessage);
-        }).then((fn) => {
-          unlisten = fn;
-        }).catch((err) => {
-          console.error('Tauri onMessage listen failed:', err);
-        });
+      // Flush any events that arrived before this handler was registered
+      if (earlyBuffer.length > 0) {
+        for (const msg of earlyBuffer) {
+          handler(msg);
+        }
+        earlyBuffer.length = 0;
       }
 
       return () => {
-        if (unlisten) unlisten();
+        messageHandler = null;
+        if (unlistenFn) {
+          unlistenFn();
+          unlistenFn = null;
+        }
       };
     },
 
