@@ -26,6 +26,22 @@
         "panel": "shared"
       },
       "group": "build"
+    },
+    {
+      "label": "tauri:dev-frontend",
+      "type": "shell",
+      "command": "npm run dev --workspace=ui",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*VITE.*",
+          "endsPattern": "^.*ready in.*"
+        }
+      }
     }
   ]
 }
