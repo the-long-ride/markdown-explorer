@@ -8,10 +8,8 @@ import {
   ChevronRightIcon,
   CollapseIcon,
   CopyIcon,
-  EditIcon,
   ExpandIcon,
   RefreshIcon,
-  SearchIcon,
 } from '../shared/icons';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
@@ -19,11 +17,8 @@ import { getTranslations } from '../../contexts/translations';
 interface FloatingTabToolbarProps {
   position: FloatingToolbarPosition;
   onPositionChange: (position: FloatingToolbarPosition) => void;
-  onSearchOpen: () => void;
-  searchShortcutLabel: string;
   onExpandAll: () => void;
   onCollapseAll: () => void;
-  onEdit: () => void;
   onCopyFile: (button?: HTMLElement | null) => void;
   onRefresh: () => void;
   onBack: () => void;
@@ -36,11 +31,8 @@ interface FloatingTabToolbarProps {
 export function FloatingTabToolbar({
   position,
   onPositionChange,
-  onSearchOpen,
-  searchShortcutLabel,
   onExpandAll,
   onCollapseAll,
-  onEdit,
   onCopyFile,
   onRefresh,
   onBack,
@@ -191,10 +183,6 @@ export function FloatingTabToolbar({
         </svg>
         <span className="tooltip-text">{t.tooltips.moveToolbar}</span>
       </button>
-      <button type="button" className="tab-floating-toolbar__search" onClick={onSearchOpen} aria-label={t.actions.searchCurrent}>
-        <SearchIcon size={14} />
-        <span>{t.topbar.searchPlaceholder} ({searchShortcutLabel})</span>
-      </button>
       <div className="tab-floating-toolbar__actions" aria-hidden={actionsCollapsed}>
         <TooltipButton
           className="btn btn--icon"
@@ -233,7 +221,6 @@ export function FloatingTabToolbar({
           shortcut={state.settings.keybindings?.collapseAll}
           icon={<CollapseIcon />}
         />
-        <TooltipButton className="btn" onClick={onEdit} disabled={!canEdit} tooltip={t.topbar.edit} icon={<EditIcon />} label={t.topbar.editLabel} onlyIcon={false} />
         <TooltipButton className="btn btn--icon" onClick={(event) => onCopyFile(event.currentTarget)} disabled={!canEdit} tooltip={t.topbar.copy} icon={<CopyIcon />} />
       </div>
       <TooltipButton

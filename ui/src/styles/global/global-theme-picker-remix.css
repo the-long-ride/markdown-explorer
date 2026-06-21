@@ -223,7 +223,7 @@
 }
 
 .theme-remix-list__icon-btn .tooltip-text {
-  z-index: 50000;
+  z-index: 99999999;
 }
 
 .theme-remix-list__icon-btn:hover:not(:disabled),

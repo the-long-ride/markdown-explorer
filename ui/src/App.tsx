@@ -26,7 +26,7 @@ const SwitchWorkspaceModal = lazy(() => import('./components/Modal/SwitchWorkspa
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
 const FloatingTabToolbar = lazy(() => import('./components/Desktop/FloatingTabToolbar').then(m => ({ default: m.FloatingTabToolbar })));
-import { ChevronUpIcon, DoubleChevronLeftIcon, ExpandIcon, CollapseIcon, MaximizeIcon, MinimizeIcon } from './components/shared/icons';
+import { ChevronUpIcon, DoubleChevronLeftIcon, ExpandIcon, CollapseIcon, MinimizeIcon } from './components/shared/icons';
 import type { PendingSearchJump, SearchScope } from './desktop/types';
 // Defer global DOM handlers until after mount
 import { initGlobalHandlers } from './dom/globalHandlers';
@@ -42,7 +42,7 @@ import { clearSearchJumpMarks, scrollToRenderedSearchMatch } from './utils/searc
 export function App() {
   // Register global DOM handlers after first paint (not needed for initial render)
   useEffect(() => { initGlobalHandlers(); }, []);
-  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, dispatch, navigate, refresh, openInEditor } = useAppState();
+  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, dispatch, navigate, refresh } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -65,9 +65,11 @@ export function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
+  const isDesktop = isElectron || isTauri;
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  const isDesktopLike = isElectron || isChrome;
-  const isTabView = isElectron && state.settings.desktopViewMode === 'tabs';
+  const isDesktopLike = isDesktop || isChrome;
+  const isTabView = isDesktop && state.settings.desktopViewMode === 'tabs';
   const updateCheck = useUpdateCheck({
     currentVersion: state.appVersion,
     runtime: state.appRuntime,
@@ -116,12 +118,12 @@ export function App() {
     state,
     dispatch,
     bridge,
-    isElectron,
+    isDesktop,
     isTabView,
     setNavigationScope,
   });
   const { isDragging } = useFileDropOpen({
-    isElectron,
+    isDesktop,
     isChrome,
     modalOpen,
     openDroppedPath,
@@ -376,7 +378,7 @@ export function App() {
   }, []);
 
   // Sidebar resize handle
-  useResize('sidebarResize', 'sidebar', state.workspaceName);
+  useResize('sidebarResize', 'sidebar', state.workspaceName, { min: 210 });
 
   // Table of contents resize handle
   useResize('tocResize', 'tocPanel', `${state.workspaceName}:${state.toc.length}`, {
@@ -462,7 +464,7 @@ export function App() {
           position: 'relative',
           zIndex: 200000
         } as any}>
-          {isElectron && (
+          {isDesktop && (
             <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', WebkitAppRegion: 'no-drag' } as any}>
               <TooltipButton
                 className="btn btn--icon window-control-btn"
@@ -480,13 +482,13 @@ export function App() {
               <div style={{ width: '1px', height: '16px', background: 'var(--bd-s)' }} />
               <TooltipButton
                 className="btn btn--icon window-control-btn"
-                onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
+                onClick={() => bridge.postMessage({ command: 'window-minimize' })}
                 tooltip={t.tooltips.minimize}
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>}
               />
               <TooltipButton
                 className="btn btn--icon window-control-btn"
-                onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
+                onClick={() => bridge.postMessage({ command: 'window-maximize' })}
                 tooltip={state.isMaximized ? t.tooltips.restore : t.tooltips.maximize}
                 icon={state.isMaximized ? (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
@@ -499,7 +501,7 @@ export function App() {
               />
               <TooltipButton
                 className="btn btn--icon window-control-btn window-control-btn--close"
-                onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
+                onClick={() => bridge.postMessage({ command: 'window-close' })}
                 tooltip={t.tooltips.closeApp}
                 tooltipAlign="right"
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
@@ -570,12 +572,10 @@ export function App() {
         <>
           {!isTabView && (
             <Topbar
-              onSearchOpen={openSidebarSearch}
               onSettingsOpen={() => setSettingsOpen(true)}
               onExpandAll={expandAll}
               onCollapseAll={collapseAll}
               onCopyFile={copyCurrentFileContent}
-              searchShortcutLabel={currentSearchShortcutLabel}
               hasUpdate={updateCheck.hasUpdate}
             />
           )}
@@ -603,18 +603,6 @@ export function App() {
               </div>
               )}
               <div className="content-shell__main">
-                {state.currentFile && (
-                  <TooltipButton
-                    type="button"
-                    className={`focus-mode-btn${state.focusMode ? ' is-active' : ''}`}
-                    onClick={toggleFocusMode}
-                    tooltip={state.focusMode ? "Exit Focus Mode" : "Focus Mode"}
-                    shortcut={state.settings.keybindings?.toggleFocusMode}
-                    tooltipPos="below"
-                    tooltipAlign="left"
-                    icon={state.focusMode ? <MinimizeIcon size={12} /> : <MaximizeIcon size={12} />}
-                  />
-                )}
                 {state.toc.length > 0 && state.tocCollapsed && (
                   <TooltipButton
                     type="button"
@@ -646,11 +634,8 @@ export function App() {
                 <Suspense fallback={null}><FloatingTabToolbar
                   position={toolbarPosition}
                   onPositionChange={setToolbarPosition}
-                  onSearchOpen={openSidebarSearch}
-                  searchShortcutLabel={currentSearchShortcutLabel}
                   onExpandAll={expandAll}
                   onCollapseAll={collapseAll}
-                  onEdit={openInEditor}
                   onCopyFile={copyCurrentFileContent}
                   onRefresh={refresh}
                   onBack={back}
@@ -717,6 +702,19 @@ export function App() {
         targetPath={pendingDroppedPath || ''}
       />
       </Suspense>
+
+      {state.focusMode && (
+        <TooltipButton
+          type="button"
+          className="exit-focus-btn focus-mode-btn"
+          onClick={toggleFocusMode}
+          tooltip={t.actions.toggleFocusMode || "Exit Focus Mode"}
+          shortcut={state.settings.keybindings?.toggleFocusMode}
+          tooltipPos="below"
+          tooltipAlign="right"
+          icon={<MinimizeIcon size={12} />}
+        />
+      )}
 
       {isDragging && (
         <div style={{

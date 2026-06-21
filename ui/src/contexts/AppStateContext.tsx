@@ -587,7 +587,9 @@ function reducer(state: AppState, action: Action): AppState {
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
         isMaximized: action.isMaximized ?? state.isMaximized,
-        isLoading: action.workspaceName ? state.isLoading : false,
+        isLoading: workspaceChanged
+          ? (action.workspaceName ? state.isLoading : false)
+          : false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
         contentTabs: restoredContentTabs,
@@ -1241,6 +1243,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'TOGGLE_FOCUS_MODE' });
   }, []);
 
+  const setSidebarCollapsed = useCallback((collapsed: boolean) => {
+    dispatch({ type: 'SET_SIDEBAR_COLLAPSED', collapsed });
+  }, []);
+
+  const setSidebarActiveTab = useCallback((tab: 'files' | 'search') => {
+    dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab });
+  }, []);
+
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     dispatch({ type: 'UPDATE_SETTINGS', settings: patch });
     if ('documentConversion' in patch) {
@@ -1268,12 +1278,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setThemeStyle,
       selectCustomTheme,
       toggleSidebar,
-      setSidebarCollapsed: useCallback((collapsed: boolean) => {
-        dispatch({ type: 'SET_SIDEBAR_COLLAPSED', collapsed });
-      }, []),
-      setSidebarActiveTab: useCallback((tab: 'files' | 'search') => {
-        dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab });
-      }, []),
+      setSidebarCollapsed,
+      setSidebarActiveTab,
       toggleToc,
       toggleFocusMode,
       updateSettings,
@@ -1293,6 +1299,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setThemeStyle,
       selectCustomTheme,
       toggleSidebar,
+      setSidebarCollapsed,
+      setSidebarActiveTab,
       toggleToc,
       toggleFocusMode,
       updateSettings,

@@ -5,6 +5,8 @@ import { resolve, dirname } from 'path';
 
 export default defineConfig(({ mode }) => {
   const isElectron = process.env.BUILD_TARGET === 'electron' || mode === 'electron';
+  const isTauri = process.env.BUILD_TARGET === 'tauri' || mode === 'tauri';
+  const isDesktop = isElectron || isTauri;
 
   // Chunks that must not be modulepreloaded — they load on-demand via dynamic import()
   const LAZY_CHUNKS = ['vendor-mermaid', 'vendor-hljs', 'katex', 'vendor-chart', 'vendor-react', 'translationsData'];
@@ -13,7 +15,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       // Strip @font-face from CSS when building for VS Code
-      !isElectron && {
+      !isDesktop && {
         name: 'strip-font-face',
         enforce: 'pre',
         transform(code, id) {
@@ -22,6 +24,7 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
+
       // Copy bundled fonts to dist so critical inline @font-face in index.html can find them.
       // Electron needs the TTF files at dist/assets/fonts/ for fast first-paint font loading.
       {

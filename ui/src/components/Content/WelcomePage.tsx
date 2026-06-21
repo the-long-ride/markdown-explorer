@@ -814,8 +814,10 @@ const renderShortcutKeys = (shortcutStr: string) => {
 
 export function WelcomePage() {
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
+  const isDesktop = isElectron || isTauri;
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  const isDesktopLike = isElectron || isChrome;
+  const isDesktopLike = isDesktop || isChrome;
   const { state } = useAppState();
   const currentLang = state.settings.language || 'en';
   const wt = getWelcomeTranslations(currentLang);
@@ -848,7 +850,7 @@ export function WelcomePage() {
           {wt.hero.title}
         </h1>
         <p className="hero-subtitle">
-          {isElectron ? wt.hero.descDesktop : wt.hero.descVSCode}
+          {isDesktop ? wt.hero.descDesktop : wt.hero.descVSCode}
         </p>
         <div className="hero-meta">
           {wt.hero.createdBy}{' '}
@@ -886,7 +888,7 @@ export function WelcomePage() {
             <GlobeIcon className="link-icon" />
             <span>https://the-long-ride.github.io/markdown-explorer</span>
           </a>
-          {isElectron && state.hostPlatform === 'macos' && (
+          {isDesktop && state.hostPlatform === 'macos' && (
             <a
               href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
               target="_blank"
@@ -911,7 +913,7 @@ export function WelcomePage() {
               <span>{wt.hero.macosInstallBtn}</span>
             </a>
           )}
-          {!isElectron && (
+          {!isDesktop && (
             <div className="desktop-recommendation">
               {wt.hero.desktopRecommendation}
             </div>
@@ -977,7 +979,7 @@ export function WelcomePage() {
                 {wt.features.search.desc}
                 <div style={{ marginTop: '8px' }}>
                   <strong>
-                    {isElectron ? (
+                    {isDesktop ? (
                       <>
                         <kbd>F</kbd> · <kbd>Ctrl+F</kbd> · <kbd>Ctrl+Shift+F</kbd>
                       </>
@@ -1042,7 +1044,7 @@ export function WelcomePage() {
                 {cleanTitle(wt.features.shortcuts.title)}
               </div>
               <div className="feature-card-desc">
-                {!isElectron && (
+                {!isDesktop && (
                   <div style={{ marginBottom: '8px' }}>
                     {wt.features.shortcuts.vscodeDesc}
                   </div>
@@ -1093,7 +1095,7 @@ export function WelcomePage() {
               <KeyboardIcon className="section-icon" />
               {cleanTitle(wt.features.shortcuts.title)}
             </h2>
-            {!isElectron && (
+            {!isDesktop && (
               <div style={{ marginBottom: '12px', fontSize: '0.85rem', color: 'var(--tx2)', lineHeight: '1.5' }}>
                 {wt.features.shortcuts.vscodeDesc}
               </div>

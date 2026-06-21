@@ -46,7 +46,7 @@
   position: relative;
 }
 .tooltip-container:hover {
-  z-index: 20;
+  z-index: 99999999;
 }
 .tooltip-text {
   visibility: hidden;
@@ -66,7 +66,7 @@
   transition:
     opacity 0.12s,
     transform 0.12s;
-  z-index: 10000;
+  z-index: 99999999;
   box-shadow: var(--sh-md);
 }
 .tooltip-container:not([data-tooltip-pos="below"]) .tooltip-text {
@@ -381,9 +381,10 @@ kbd {
 }
 
 /* ============================================================
-   Electron Frameless Drag Region & Window Controls
+   Electron & Tauri Frameless Drag Region & Window Controls
    ============================================================ */
-body.is-electron .topbar {
+body.is-electron .topbar,
+body.is-tauri .topbar {
   -webkit-app-region: drag;
   z-index: 200000;
 }
@@ -396,7 +397,16 @@ body.is-electron .search-bar,
 body.is-electron .topbar__divider,
 body.is-electron .topbar__breadcrumb-container,
 body.is-electron .window-controls,
-body.is-electron .sidebar-resize {
+body.is-electron .sidebar-resize,
+body.is-tauri .topbar__logo,
+body.is-tauri .btn,
+body.is-tauri .toolbar-action-menu,
+body.is-tauri .toolbar-action-menu__panel,
+body.is-tauri .search-bar,
+body.is-tauri .topbar__divider,
+body.is-tauri .topbar__breadcrumb-container,
+body.is-tauri .window-controls,
+body.is-tauri .sidebar-resize {
   -webkit-app-region: no-drag;
 }
 

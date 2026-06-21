@@ -10,18 +10,16 @@ import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
 import {
   ChevronLeftIcon, ChevronRightIcon,
-  ExpandIcon, CollapseIcon, CopyIcon, SearchIcon,
-  SidebarIcon, RefreshIcon,
+  ExpandIcon, CollapseIcon, CopyIcon,
+  SidebarIcon, RefreshIcon, TocIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-128.png';
 
 interface TopbarProps {
-  onSearchOpen: () => void;
   onSettingsOpen: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
   onCopyFile: (button?: HTMLElement | null) => void;
-  searchShortcutLabel: string;
   hasUpdate?: boolean;
 }
 
@@ -136,12 +134,10 @@ function getBreadcrumbItems(relativePath: string, welcomePageLabel: string): Bre
 }
 
 export function Topbar({
-  onSearchOpen,
   onSettingsOpen,
   onExpandAll,
   onCollapseAll,
   onCopyFile,
-  searchShortcutLabel,
   hasUpdate = false,
 }: TopbarProps) {
   const {
@@ -151,10 +147,15 @@ export function Topbar({
     refresh,
     toggleTheme,
     toggleSidebar,
+    toggleToc,
+    toggleFocusMode,
     dispatch,
   } = useAppState();
   const { back, forward, canGoBack, canGoForward } = useNavigation();
   const bridge = usePlatform();
+  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
+  const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isDesktop = isElectron || isTauri;
 
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
@@ -276,17 +277,6 @@ export function Topbar({
 
       {/* Actions */}
       <div className="topbar__actions">
-        <div className="search-bar">
-          <SearchIcon />
-          <input
-            type="text"
-            placeholder={`${t.topbar.searchPlaceholder} (${searchShortcutLabel})`}
-            autoComplete="off"
-            onFocus={onSearchOpen}
-            aria-label="Search all markdown files"
-            readOnly
-          />
-        </div>
 
         <TooltipButton
           className="btn"
@@ -316,6 +306,14 @@ export function Topbar({
           shortcut={state.settings.keybindings?.toggleSidebar}
           icon={<SidebarIcon />}
         />
+        <TooltipButton
+          className={`btn btn--icon${!state.tocCollapsed ? ' is-active' : ''}`}
+          onClick={toggleToc}
+          disabled={!state.currentFile || state.toc.length === 0}
+          tooltip={t.actions.toggleToc}
+          shortcut={state.settings.keybindings?.toggleToc}
+          icon={<TocIcon />}
+        />
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
           homeLabel={t.topbar.home}
@@ -336,21 +334,26 @@ export function Topbar({
           onTheme={toggleTheme}
           onEdit={openInEditor}
           onSettings={onSettingsOpen}
+          focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
+          focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
+          focusModeShortcut={state.settings.keybindings?.toggleFocusMode}
+          isFocusMode={state.focusMode}
+          onFocusModeToggle={toggleFocusMode}
         />
 
-        {typeof (window as any).electronAPI !== 'undefined' && (
+        {isDesktop && (
           <>
             <div className="topbar__divider" style={{ margin: '0 8px' }} />
             <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
               <TooltipButton
                 className="btn btn--icon window-control-btn"
-                onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
+                onClick={() => bridge.postMessage({ command: 'window-minimize' })}
                 tooltip={t.tooltips.minimize}
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>}
               />
               <TooltipButton
                 className="btn btn--icon window-control-btn"
-                onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
+                onClick={() => bridge.postMessage({ command: 'window-maximize' })}
                 tooltip={state.isMaximized ? t.tooltips.restore : t.tooltips.maximize}
                 icon={state.isMaximized ? (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
@@ -363,7 +366,7 @@ export function Topbar({
               />
               <TooltipButton
                 className="btn btn--icon window-control-btn window-control-btn--close"
-                onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
+                onClick={() => bridge.postMessage({ command: 'window-close' })}
                 tooltip={t.tooltips.closeApp}
                 tooltipAlign="right"
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}

@@ -3,6 +3,7 @@ import type { ThemeMode } from '../../types';
 import { isDesktopRuntime } from './workspaceSelectionUtils';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
+import { usePlatform } from '../../contexts/PlatformContext';
 
 interface WorkspaceWindowControlsProps {
   embeddedInTabs: boolean;
@@ -18,6 +19,7 @@ export function WorkspaceWindowControls({
   onToggleTheme,
 }: WorkspaceWindowControlsProps) {
   const { state } = useAppState();
+  const bridge = usePlatform();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -55,10 +57,10 @@ export function WorkspaceWindowControls({
         {isDesktop && (
           <>
             <div style={{ width: '1px', height: '16px', background: 'var(--bd-s)' }} />
-            <TooltipButton className="btn btn--icon window-control-btn" onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })} tooltip={t.tooltips.minimize} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>} />
+            <TooltipButton className="btn btn--icon window-control-btn" onClick={() => bridge.postMessage({ command: 'window-minimize' })} tooltip={t.tooltips.minimize} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>} />
             <TooltipButton
               className="btn btn--icon window-control-btn"
-              onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
+              onClick={() => bridge.postMessage({ command: 'window-maximize' })}
               tooltip={isMaximized ? t.tooltips.restore : t.tooltips.maximize}
               icon={isMaximized ? (
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M8 3h13v13H8z" /><path d="M16 16v5H3V8h5" /></svg>
@@ -66,7 +68,7 @@ export function WorkspaceWindowControls({
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>
               )}
             />
-            <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })} tooltip={t.tooltips.closeApp} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
+            <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={() => bridge.postMessage({ command: 'window-close' })} tooltip={t.tooltips.closeApp} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
           </>
         )}
       </div>

@@ -139,8 +139,10 @@ export function SettingsModal({
   };
 
   const isElectron = typeof (window as any).electronAPI !== "undefined";
+  const isTauri = typeof (window as any).__TAURI__ !== "undefined";
+  const isDesktop = isElectron || isTauri;
   const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
-  const isDesktopLike = isElectron || isChrome;
+  const isDesktopLike = isDesktop || isChrome;
   const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
   const updateStatus = hostUpdateState.status;
   const isUpdateDownloading = updateStatus === "downloading";
@@ -240,7 +242,7 @@ export function SettingsModal({
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const imported = parseSettingsImport(String(reader.result || ""), isElectron);
+        const imported = parseSettingsImport(String(reader.result || ""), isDesktop);
         const activeCustomTheme = imported.settings.activeCustomThemeId
           ? imported.settings.customThemes?.find((theme) => theme.id === imported.settings.activeCustomThemeId)
           : undefined;
@@ -259,7 +261,7 @@ export function SettingsModal({
           type: "RECENT_WORKSPACES_CHANGED",
           recentWorkspaces: imported.recentWorkspaces,
         });
-        if (isElectron) {
+        if (isDesktop) {
           bridge.postMessage({
             command: "replaceRecentWorkspaces",
             recentWorkspaces: imported.recentWorkspaces,
@@ -469,7 +471,7 @@ export function SettingsModal({
             >
               {t.viewPrefs}
             </div>
-            {isElectron && (
+            {isDesktop && (
               <div
                 className="settings-field"
                 style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
@@ -534,7 +536,7 @@ export function SettingsModal({
                   type="checkbox"
                   checked={state.settings.showTitle}
                   onChange={(e) =>
-                    updateSettings({ showTitle: e.target.checked })
+                     updateSettings({ showTitle: e.target.checked })
                   }
                 />
                 <span className="switch-slider" />
@@ -568,7 +570,7 @@ export function SettingsModal({
             </div>
 
             {/* Document Conversion */}
-            {isElectron && (
+            {isDesktop && (
               <div
                 className="settings-item settings-item--document-conversion"
                 style={{ borderTop: "1px solid var(--bd)", paddingTop: "16px" }}
@@ -709,6 +711,7 @@ export function SettingsModal({
                       style={{
                         width: "130px",
                         textAlign: "center",
+                        fontFamily: "var(--font-ui)",
                         background: isRecording
                           ? "rgba(109, 94, 240, 0.15)"
                           : "var(--bg-s)",
@@ -745,7 +748,7 @@ export function SettingsModal({
                 className="settings-reset-shortcuts-btn"
                 onClick={() =>
                   updateSettings({
-                    keybindings: getDefaultKeybindings(isElectron),
+                    keybindings: getDefaultKeybindings(isDesktop),
                   })
                 }
               >

@@ -274,6 +274,7 @@
 }
 .settings-shortcut-input {
   box-sizing: border-box;
+  font-family: var(--font-ui);
 }
 .settings-reset-shortcuts-btn {
   --reset-warning: #f59e0b;

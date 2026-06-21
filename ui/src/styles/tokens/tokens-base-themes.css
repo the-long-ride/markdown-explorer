@@ -64,8 +64,9 @@
   --chart-8: #14b8a6;
 }
 
-/* Electron-only: use bundled custom fonts */
-body.is-electron {
+/* Electron and Tauri: use bundled custom fonts */
+body.is-electron,
+body.is-tauri {
   --font-ui: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono:
     "Cascadia Code", "CascadiaCode", "Fira Code", "JetBrains Mono", Consolas, monospace;

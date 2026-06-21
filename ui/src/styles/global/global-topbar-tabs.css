@@ -156,7 +156,7 @@ body {
 }
 
 .toolbar-action-menu__item .tooltip-text {
-  z-index: 310000;
+  z-index: 99999999;
 }
 
 .toolbar-action-menu__item:hover,

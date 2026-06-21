@@ -9,7 +9,6 @@
   overflow: hidden;
 }
 
-/* Sidebar */
 .sidebar {
   width: var(--sidebar-width, var(--sidebar-w, 240px));
   background: var(--bg-s);
@@ -21,12 +20,18 @@
   position: relative;
   z-index: 1;
   transition:
-    width 0.2s ease,
     box-shadow 180ms ease,
     border-color 180ms ease,
     background 180ms ease;
   user-select: none;
   -webkit-user-select: none;
+}
+body:not(.is-resizing) .sidebar {
+  transition:
+    width 0.2s ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
 }
 .sidebar.is-collapsed {
   width: 0;
@@ -63,6 +68,8 @@
   align-items: center;
   justify-content: space-between;
   min-height: 22px;
+  position: relative;
+  z-index: 10;
 }
 .sidebar__header-fields {
   padding: 0 10px 6px;
@@ -76,7 +83,7 @@
 .sidebar__title-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   margin-left: auto;
   min-height: 22px;
   min-width: 22px;
@@ -113,8 +120,6 @@
     background 0.12s,
     color 0.12s,
     border-color 0.12s;
-  margin-left: auto;
-  margin-right: 8px;
   box-sizing: border-box;
 }
 .sidebar__locate-btn:hover {
@@ -685,12 +690,12 @@ body.is-dragging-files .mdn-html-preview-iframe {
 
 /* Focus mode */
 .focus-mode-btn {
-  position: absolute !important;
-  top: var(--content-pad-y, 20px);
-  left: 6px;
+  position: fixed !important;
+  top: calc(var(--topbar-h) + 12px);
+  right: 6px;
   z-index: 10000;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -699,20 +704,46 @@ body.is-dragging-files .mdn-html-preview-iframe {
   color: var(--tx2);
   cursor: pointer;
   box-shadow: var(--sh-sm);
-  opacity: 0.3; /* lower opacity value */
-  transition:
-    opacity 0.12s,
-    color 0.12s,
-    background-color 0.12s,
-    transform 0.12s;
+  opacity: 0.25;
   border-radius: var(--r);
+  transition:
+    opacity 0.18s ease,
+    color 0.15s ease,
+    background-color 0.15s ease,
+    right 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.28s ease,
+    box-shadow 0.18s ease;
+}
+
+/* When TOC is visible (default): sit above the TOC open button at top-right */
+/* When TOC collapses: slide to the very right edge of the window */
+.focus-mode-btn.toc-is-collapsed {
+  right: 0;
+  border-radius: var(--r) 0 0 var(--r);
+  box-shadow:
+    -2px 0 10px color-mix(in srgb, var(--accent) 12%, transparent),
+    var(--sh-sm);
 }
 
 .focus-mode-btn:hover {
   opacity: 1;
   background: var(--bg-h);
   color: var(--tx);
-  transform: translateY(-0.5px);
+}
+
+.focus-mode-btn.toc-is-collapsed:hover {
+  right: 4px;
+  border-radius: var(--r);
+}
+
+.exit-focus-btn {
+  position: fixed !important;
+  top: 12px !important;
+  right: 28px !important;
+  z-index: 99999999 !important;
+  border: 1px solid var(--bd) !important;
+  backdrop-filter: var(--surface-blur) !important;
+  -webkit-backdrop-filter: var(--surface-blur) !important;
 }
 
 .app--focus-mode .topbar,
@@ -751,7 +782,16 @@ body.is-dragging-files .mdn-html-preview-iframe {
   cursor: pointer;
   transition: color 0.18s ease;
   text-transform: none;
+  white-space: nowrap;
+  min-width: 0;
 }
+
+.sidebar__tab-btn span {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
 
 .sidebar__tab-btn:hover {
   color: var(--tx);

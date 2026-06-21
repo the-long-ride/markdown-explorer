@@ -101,19 +101,41 @@ export function useKeyboard({
   const bridge = usePlatform();
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
+  const isDesktop = isElectron || isTauri;
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  const isDesktopLike = isElectron || isChrome;
+  const isDesktopLike = isDesktop || isChrome;
   const keybindings = state.settings.keybindings || {};
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (isElectron) {
+      if (isTauri) {
+        // Block the native WebView find-in-page bar (Ctrl+F / Ctrl+G / F3).
+        // Tauri's WebView (WebView2 on Windows, WKWebView on macOS) shows its
+        // own OS find bar on these shortcuts.  We suppress it here so only the
+        // app's own FindInFilePanel is used.
+        const isNativeFind =
+          (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
+          (e.key === 'f' || e.key === 'F' || e.key === 'g' || e.key === 'G');
+        const isFindNext = e.key === 'F3';
+        if (isNativeFind || isFindNext) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Let the app's find shortcut handler below take over for Ctrl+F/G.
+          // F3 is just suppressed — no built-in mapping.
+          if (isFindNext) return;
+        }
+      }
+
+      if (isDesktop) {
         const isZoomIn =
           matchesShortcut(e, keybindings.zoomIn) ||
           ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=' || e.key === 'Add'));
         const isZoomOut =
           matchesShortcut(e, keybindings.zoomOut) ||
           ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_' || e.key === 'Subtract'));
+        // Block Ctrl+0 so WebView2 doesn't reset its own zoom independently of our app zoom
+        const isZoomReset = (e.ctrlKey || e.metaKey) && e.key === '0';
 
         if (isZoomIn) {
           e.preventDefault();
@@ -124,6 +146,11 @@ export function useKeyboard({
         if (isZoomOut) {
           e.preventDefault();
           bridge.postMessage({ command: 'zoom-out' });
+          return;
+        }
+
+        if (isZoomReset) {
+          e.preventDefault();
           return;
         }
       }
@@ -329,16 +356,16 @@ export function useKeyboard({
       }
     };
 
-    document.addEventListener('keydown', handler);
+    document.addEventListener('keydown', handler, true);
     window.addEventListener('mouseup', mouseHandler);
-    if (isElectron) {
+    if (isDesktop) {
       window.addEventListener('wheel', wheelHandler, { passive: false });
     }
 
     return () => {
-      document.removeEventListener('keydown', handler);
+      document.removeEventListener('keydown', handler, true);
       window.removeEventListener('mouseup', mouseHandler);
-      if (isElectron) {
+      if (isDesktop) {
         window.removeEventListener('wheel', wheelHandler);
       }
     };
@@ -351,7 +378,7 @@ export function useKeyboard({
     toggleSidebar,
     bridge,
     keybindings,
-    isElectron,
+    isDesktop,
     onSearchOpen,
     onCrossTabSearchOpen,
     onSearchClose,

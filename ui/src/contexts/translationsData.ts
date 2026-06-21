@@ -212,10 +212,11 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       expandAll: "Mở rộng tất cả các tiêu đề",
       workspaceSelection: "Đi tới chọn không gian làm việc",
       toggleSidebar: "Bật/Tắt thanh bên",
-      toggleToc: "Mục lục",
+      toggleToc: "Bật/Tắt mục lục",
       zoomIn: "Phóng to",
       zoomOut: "Thu nhỏ",
       locateFile: "Định vị tệp hiện tại",
+      toggleFocusMode: "Bật/Tắt chế độ tập trung",
     },
     topbar: {
       home: "Trang chủ",
@@ -374,6 +375,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Zoom avant",
       zoomOut: "Zoom arrière",
       locateFile: "Localiser le fichier actuel",
+      toggleFocusMode: "Basculer le mode focus",
     },
     topbar: {
       home: "Accueil",
@@ -532,6 +534,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Acercar",
       zoomOut: "Alejar",
       locateFile: "Localizar archivo actual",
+      toggleFocusMode: "Alternar modo de enfoque",
     },
     topbar: {
       home: "Inicio",
@@ -690,6 +693,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "放大",
       zoomOut: "缩小",
       locateFile: "定位当前文件",
+      toggleFocusMode: "切换专注模式",
     },
     topbar: {
       home: "主页",
@@ -848,6 +852,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Zoom inn",
       zoomOut: "Zoom ut",
       locateFile: "Finn gjeldende fil",
+      toggleFocusMode: "Bytt fokusmodus",
     },
     topbar: {
       home: "Hjem",
@@ -1006,6 +1011,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "拡大",
       zoomOut: "縮小",
       locateFile: "現在のファイルを特定",
+      toggleFocusMode: "フォーカスモードを切り替える",
     },
     topbar: {
       home: "ホーム",
@@ -1164,6 +1170,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "확대",
       zoomOut: "축소",
       locateFile: "현재 파일 위치 찾기",
+      toggleFocusMode: "포커스 모드 전환",
     },
     topbar: {
       home: "홈",
@@ -1322,6 +1329,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Увеличить",
       zoomOut: "Уменьшить",
       locateFile: "Найти текущий файл",
+      toggleFocusMode: "Переключить режим фокусировки",
     },
     topbar: {
       home: "Главная",

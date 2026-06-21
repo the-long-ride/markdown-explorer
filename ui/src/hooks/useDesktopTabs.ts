@@ -29,7 +29,7 @@ interface UseDesktopTabsParams {
     postMessage: (message: any) => void;
     onMessage: (handler: (message: any) => void) => () => void;
   };
-  isElectron: boolean;
+  isDesktop: boolean;
   isTabView: boolean;
   setNavigationScope: (scopeId: string) => void;
 }
@@ -38,7 +38,7 @@ export function useDesktopTabs({
   state,
   dispatch,
   bridge,
-  isElectron,
+  isDesktop,
   isTabView,
   setNavigationScope,
 }: UseDesktopTabsParams) {
@@ -84,12 +84,12 @@ export function useDesktopTabs({
   }, [toolbarPosition]);
 
   useEffect(() => {
-    if (isElectron) writeWorkspaceAliases(workspaceAliases);
-  }, [isElectron, workspaceAliases]);
+    if (isDesktop) writeWorkspaceAliases(workspaceAliases);
+  }, [isDesktop, workspaceAliases]);
 
   useEffect(() => {
-    if (isElectron) writePersistedDesktopTabs(tabs, activeTabId);
-  }, [activeTabId, isElectron, tabs]);
+    if (isDesktop) writePersistedDesktopTabs(tabs, activeTabId);
+  }, [activeTabId, isDesktop, tabs]);
 
   useEffect(() => {
     setNavigationScope(isTabView ? activeTabId : 'focus');

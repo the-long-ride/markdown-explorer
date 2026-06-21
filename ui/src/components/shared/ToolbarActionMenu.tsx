@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { createToolbarMenuItems, type ToolbarMenuItem } from "../../utils/toolbar-menu.js";
+import { buildShortcutTooltip } from "../../utils/toolbar-menu.js";
 import {
   EditIcon,
   HomeIcon,
   SettingsIcon,
   MoonIcon,
   SunIcon,
+  SidebarIcon,
+  TocIcon,
+  MinimizeIcon,
+  MaximizeIcon,
 } from "./icons";
 import { TooltipButton } from "./TooltipButton";
 
@@ -30,16 +34,38 @@ interface ToolbarActionMenuProps {
   onTheme: () => void;
   onEdit: () => void;
   onSettings: () => void;
+
+  sidebarLabel?: string;
+  sidebarTooltip?: string;
+  sidebarShortcut?: string;
+  onSidebarToggle?: () => void;
+
+  tocLabel?: string;
+  tocTooltip?: string;
+  tocShortcut?: string;
+  onTocToggle?: () => void;
+
+  focusModeLabel?: string;
+  focusModeTooltip?: string;
+  focusModeShortcut?: string;
+  isFocusMode?: boolean;
+  onFocusModeToggle?: () => void;
 }
 
-function getItemIcon(item: ToolbarMenuItem, isDark: boolean) {
-  switch (item.id) {
+function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
+  switch (id) {
     case "home":
       return <HomeIcon size={13} />;
     case "theme":
       return isDark ? <SunIcon size={14} /> : <MoonIcon size={14} />;
     case "edit":
       return <EditIcon size={12} />;
+    case "sidebar":
+      return <SidebarIcon size={14} />;
+    case "toc":
+      return <TocIcon size={14} />;
+    case "focusMode":
+      return isFocusMode ? <MinimizeIcon size={12} /> : <MaximizeIcon size={12} />;
     case "settings":
       return <SettingsIcon size={14} />;
     default:
@@ -68,6 +94,19 @@ export function ToolbarActionMenu({
   onTheme,
   onEdit,
   onSettings,
+  sidebarLabel,
+  sidebarTooltip,
+  sidebarShortcut,
+  onSidebarToggle,
+  tocLabel,
+  tocTooltip,
+  tocShortcut,
+  onTocToggle,
+  focusModeLabel,
+  focusModeTooltip,
+  focusModeShortcut,
+  isFocusMode = false,
+  onFocusModeToggle,
 }: ToolbarActionMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -96,28 +135,67 @@ export function ToolbarActionMenu({
     };
   }, [open]);
 
-  const items = createToolbarMenuItems({
-    labels: {
-      home: homeLabel,
-      theme: themeLabel,
-      edit: editLabel,
-      settings: settingsLabel,
+  const items: Array<{
+    id: string;
+    label: string;
+    tooltip: string;
+    disabled: boolean;
+  }> = [
+    {
+      id: "home",
+      label: homeLabel,
+      tooltip: buildShortcutTooltip(homeTooltip, homeShortcut),
+      disabled: false,
     },
-    tooltips: {
-      home: homeTooltip,
-      theme: themeTooltip,
-      edit: editTooltip,
-      settings: settingsTooltip,
+    {
+      id: "theme",
+      label: themeLabel,
+      tooltip: buildShortcutTooltip(themeTooltip, themeShortcut),
+      disabled: false,
     },
-    shortcuts: {
-      home: homeShortcut,
-      theme: themeShortcut,
-      settings: settingsShortcut,
+    {
+      id: "edit",
+      label: editLabel,
+      tooltip: buildShortcutTooltip(editTooltip),
+      disabled: !canEdit,
     },
-    canEdit,
+  ];
+
+  if (onSidebarToggle && sidebarLabel && sidebarTooltip) {
+    items.push({
+      id: "sidebar",
+      label: sidebarLabel,
+      tooltip: buildShortcutTooltip(sidebarTooltip, sidebarShortcut),
+      disabled: false,
+    });
+  }
+
+  if (onTocToggle && tocLabel && tocTooltip) {
+    items.push({
+      id: "toc",
+      label: tocLabel,
+      tooltip: buildShortcutTooltip(tocTooltip, tocShortcut),
+      disabled: false,
+    });
+  }
+
+  if (onFocusModeToggle && focusModeLabel && focusModeTooltip) {
+    items.push({
+      id: "focusMode",
+      label: focusModeLabel,
+      tooltip: buildShortcutTooltip(focusModeTooltip, focusModeShortcut),
+      disabled: false,
+    });
+  }
+
+  items.push({
+    id: "settings",
+    label: settingsLabel,
+    tooltip: buildShortcutTooltip(settingsTooltip, settingsShortcut),
+    disabled: false,
   });
 
-  const handleAction = (item: ToolbarMenuItem) => {
+  const handleAction = (item: typeof items[number]) => {
     setOpen(false);
     switch (item.id) {
       case "home":
@@ -128,6 +206,15 @@ export function ToolbarActionMenu({
         return;
       case "edit":
         onEdit();
+        return;
+      case "sidebar":
+        onSidebarToggle?.();
+        return;
+      case "toc":
+        onTocToggle?.();
+        return;
+      case "focusMode":
+        onFocusModeToggle?.();
         return;
       case "settings":
         onSettings();
@@ -163,7 +250,7 @@ export function ToolbarActionMenu({
               className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}`}
               onClick={() => handleAction(item)}
               tooltip={item.tooltip}
-              icon={getItemIcon(item, isDark)}
+              icon={getItemIcon(item.id, isDark, isFocusMode)}
               label={item.label}
               onlyIcon={false}
               disabled={item.disabled}

@@ -5,13 +5,13 @@ import {
   CloseIcon,
   PlusIcon,
   SearchIcon,
-  SidebarIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-128.png';
 import { getTabLabel } from '../../desktop/desktopTabs';
 import type { DesktopTab } from '../../desktop/types';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
+import { usePlatform } from '../../contexts/PlatformContext';
 import {
   TabContextMenu,
   type TabContextMenuAction,
@@ -58,7 +58,8 @@ export function DesktopTabBar({
   isMaximized,
   hasUpdate = false,
 }: DesktopTabBarProps) {
-  const { state, openInEditor } = useAppState();
+  const { state, openInEditor, toggleToc, toggleFocusMode } = useAppState();
+  const bridge = usePlatform();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
   const workspaceTabs = tabs.filter((tab) => tab.kind !== 'home');
@@ -395,13 +396,6 @@ export function DesktopTabBar({
         <SearchIcon size={13} />
         <span>{t.actions.searchAllTabs}... ({searchShortcutLabel})</span>
       </button>
-      <TooltipButton
-        className="btn btn--icon"
-        onClick={onSidebarToggle}
-        tooltip={t.topbar.sidebar}
-        shortcut={state.settings.keybindings?.toggleSidebar}
-        icon={<SidebarIcon />}
-      />
       <ToolbarActionMenu
         triggerTooltip={t.topbar.moreActions}
         homeLabel={t.topbar.home}
@@ -422,17 +416,30 @@ export function DesktopTabBar({
         onTheme={onThemeToggle}
         onEdit={openInEditor}
         onSettings={onSettingsOpen}
+        sidebarLabel={t.actions.toggleSidebar}
+        sidebarTooltip={t.actions.toggleSidebar}
+        sidebarShortcut={state.settings.keybindings?.toggleSidebar}
+        onSidebarToggle={onSidebarToggle}
+        tocLabel={t.actions.toggleToc}
+        tocTooltip={t.actions.toggleToc}
+        tocShortcut={state.settings.keybindings?.toggleToc}
+        onTocToggle={toggleToc}
+        focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
+        focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
+        focusModeShortcut={state.settings.keybindings?.toggleFocusMode}
+        isFocusMode={state.focusMode}
+        onFocusModeToggle={toggleFocusMode}
       />
       <div className="desktop-tabbar__window-controls">
         <TooltipButton
           className="btn btn--icon window-control-btn"
-          onClick={() => (window as any).electronAPI.postMessage({ command: 'window-minimize' })}
+          onClick={() => bridge.postMessage({ command: 'window-minimize' })}
           tooltip={t.tooltips.minimize}
           icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>}
         />
         <TooltipButton
           className="btn btn--icon window-control-btn"
-          onClick={() => (window as any).electronAPI.postMessage({ command: 'window-maximize' })}
+          onClick={() => bridge.postMessage({ command: 'window-maximize' })}
           tooltip={isMaximized ? t.tooltips.restore : t.tooltips.maximize}
           icon={isMaximized ? (
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
@@ -445,7 +452,7 @@ export function DesktopTabBar({
         />
         <TooltipButton
           className="btn btn--icon window-control-btn window-control-btn--close"
-          onClick={() => (window as any).electronAPI.postMessage({ command: 'window-close' })}
+          onClick={() => bridge.postMessage({ command: 'window-close' })}
           tooltip={t.tooltips.closeApp}
           tooltipAlign="right"
           icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>}

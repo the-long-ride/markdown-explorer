@@ -29,6 +29,8 @@ export function WorkspaceSelection({
   const [workspaceScale, setWorkspaceScale] = useState(1);
   const workspacePanelRef = useRef<HTMLDivElement>(null);
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
+  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
+  const isDesktop = isElectron || isTauri;
 
   const handleOpenFolder = () => {
     onBeforeOpenWorkspace?.();
@@ -164,7 +166,7 @@ export function WorkspaceSelection({
             Open Folder
           </button>
 
-          {isElectron && (
+          {isDesktop && (
             <button
               onClick={handleOpenFile}
               className="btn btn--outline"
@@ -248,7 +250,7 @@ export function WorkspaceSelection({
         )}
 
         {/* File System Access API Guidance */}
-        {!isElectron && (
+        {!isDesktop && (
           <div
             style={{
               marginTop: '16px',

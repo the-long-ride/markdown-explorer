@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getDroppedFilePath } from '../desktop/desktopTabs';
 
 interface UseFileDropOpenParams {
-  isElectron: boolean;
+  isDesktop: boolean;
   isChrome: boolean;
   modalOpen: boolean;
   openDroppedPath: (path: string) => void;
@@ -10,7 +10,7 @@ interface UseFileDropOpenParams {
 }
 
 export function useFileDropOpen({
-  isElectron,
+  isDesktop,
   isChrome,
   modalOpen,
   openDroppedPath,
@@ -20,7 +20,63 @@ export function useFileDropOpen({
   const dragCounter = useRef(0);
 
   useEffect(() => {
-    if (!isElectron && !isChrome) return;
+    if (!isDesktop && !isChrome) return;
+
+    const tauri = (window as any).__TAURI__;
+    if (tauri?.event?.listen) {
+      let active = true;
+      let unlistens: (() => void)[] = [];
+
+      const setupTauriDragDrop = async () => {
+        try {
+          const uEnter = await tauri.event.listen('tauri://drag-enter', () => {
+            if (modalOpen) return;
+            setIsDragging(true);
+            document.body.classList.add('is-dragging-files');
+          });
+          if (active) unlistens.push(uEnter);
+          else uEnter();
+
+          const uLeave = await tauri.event.listen('tauri://drag-leave', () => {
+            setIsDragging(false);
+            document.body.classList.remove('is-dragging-files');
+          });
+          if (active) unlistens.push(uLeave);
+          else uLeave();
+
+          const uDrop = await tauri.event.listen('tauri://drag-drop', (event: any) => {
+            setIsDragging(false);
+            document.body.classList.remove('is-dragging-files');
+            if (modalOpen) return;
+            const paths = event.payload?.paths;
+            if (paths && paths.length > 0) {
+              const droppedPath = paths[0];
+              if (droppedPath) openDroppedPath(droppedPath);
+            }
+          });
+          if (active) unlistens.push(uDrop);
+          else uDrop();
+
+          const uCancel = await tauri.event.listen('tauri://drag-cancelled', () => {
+            setIsDragging(false);
+            document.body.classList.remove('is-dragging-files');
+          });
+          if (active) unlistens.push(uCancel);
+          else uCancel();
+        } catch (err) {
+          console.error('Failed to setup Tauri drag-drop listeners:', err);
+        }
+      };
+
+      setupTauriDragDrop();
+
+      return () => {
+        active = false;
+        unlistens.forEach((fn) => fn());
+        document.body.classList.remove('is-dragging-files');
+        setIsDragging(false);
+      };
+    }
 
     const isFileDrag = (event: DragEvent) => {
       const types = event.dataTransfer?.types;
@@ -98,7 +154,7 @@ export function useFileDropOpen({
       window.removeEventListener('dragend', resetDragState);
       resetDragState();
     };
-  }, [isElectron, isChrome, modalOpen, openDroppedPath, openDroppedFolder]);
+  }, [isDesktop, isChrome, modalOpen, openDroppedPath, openDroppedFolder]);
 
   return { isDragging };
 }

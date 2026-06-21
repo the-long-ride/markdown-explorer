@@ -305,6 +305,18 @@ export interface ReplaceRecentWorkspacesMessage {
   readonly recentWorkspaces: readonly RecentWorkspace[];
 }
 
+export interface WindowMinimizeMessage {
+  readonly command: 'window-minimize';
+}
+
+export interface WindowMaximizeMessage {
+  readonly command: 'window-maximize';
+}
+
+export interface WindowCloseMessage {
+  readonly command: 'window-close';
+}
+
 export interface ZoomInMessage {
   readonly command: 'zoom-in';
 }
@@ -364,6 +376,9 @@ export type WebviewMessage =
   | ReplaceRecentWorkspacesMessage
   | ZoomInMessage
   | ZoomOutMessage
+  | WindowMinimizeMessage
+  | WindowMaximizeMessage
+  | WindowCloseMessage
   | UpdateAppearanceMessage
   | OpenExternalMessage
   | SetDocumentConversionMessage

@@ -394,9 +394,9 @@ body.is-resizing .toc-panel {
 }
 
 .toc-panel__open-btn {
-  position: absolute !important;
-  top: 12px;
-  right: 12px;
+  position: fixed !important;
+  top: calc(var(--topbar-h) + 48px);
+  right: 6px;
   z-index: 100;
   width: 28px;
   height: 28px;
@@ -408,7 +408,9 @@ body.is-resizing .toc-panel {
   color: var(--tx2);
   cursor: pointer;
   box-shadow: none;
-  transition: color 0.12s;
+  transition:
+    color 0.12s,
+    right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .toc-panel__open-btn:hover {
   background: none;
