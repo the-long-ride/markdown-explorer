@@ -139,8 +139,7 @@ export function SettingsModal({
   };
 
   const isElectron = typeof (window as any).electronAPI !== "undefined";
-  const isTauri = typeof (window as any).__TAURI__ !== "undefined";
-  const isDesktop = isElectron || isTauri;
+  const isDesktop = isElectron;
   const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
   const isDesktopLike = isDesktop || isChrome;
   const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
@@ -909,3 +908,5 @@ export function SettingsModal({
     </div>
   );
 }
+
+

@@ -10,7 +10,6 @@ import { PlatformProvider } from './contexts/PlatformContext';
 import { createVsCodeBridge } from './platform/vscode';
 import { createElectronBridge } from './platform/electron';
 import { createChromeBridge } from './platform/chrome';
-import { createTauriBridge } from './platform/tauri';
 
 // Lazy-load the full application shell (providers + App + all components).
 // This keeps index.js tiny so the window paints instantly.
@@ -47,11 +46,6 @@ function detectBridge() {
     document.body.classList.add('is-chrome-ext');
     return createChromeBridge();
   }
-  // Tauri provides window.__TAURI__
-  if (typeof (window as any).__TAURI__ !== 'undefined') {
-    document.body.classList.add('is-tauri');
-    return createTauriBridge();
-  }
   throw new Error('Unknown platform. Expected VS Code webview, Electron, or Chromium Extension.');
 }
 
@@ -80,3 +74,4 @@ root.render(
 );
 
 dismissSplash();
+

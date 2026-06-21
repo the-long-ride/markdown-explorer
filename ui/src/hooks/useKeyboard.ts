@@ -101,32 +101,13 @@ export function useKeyboard({
   const bridge = usePlatform();
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
-  const isDesktop = isElectron || isTauri;
+  const isDesktop = isElectron;
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
   const isDesktopLike = isDesktop || isChrome;
   const keybindings = state.settings.keybindings || {};
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (isTauri) {
-        // Block the native WebView find-in-page bar (Ctrl+F / Ctrl+G / F3).
-        // Tauri's WebView (WebView2 on Windows, WKWebView on macOS) shows its
-        // own OS find bar on these shortcuts.  We suppress it here so only the
-        // app's own FindInFilePanel is used.
-        const isNativeFind =
-          (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
-          (e.key === 'f' || e.key === 'F' || e.key === 'g' || e.key === 'G');
-        const isFindNext = e.key === 'F3';
-        if (isNativeFind || isFindNext) {
-          e.preventDefault();
-          e.stopPropagation();
-          // Let the app's find shortcut handler below take over for Ctrl+F/G.
-          // F3 is just suppressed — no built-in mapping.
-          if (isFindNext) return;
-        }
-      }
-
       if (isDesktop) {
         const isZoomIn =
           matchesShortcut(e, keybindings.zoomIn) ||
@@ -402,3 +383,5 @@ export function useKeyboard({
     onLocateFile,
   ]);
 }
+
+

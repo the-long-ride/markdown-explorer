@@ -8,7 +8,6 @@
     "build": "tsc -b && vite build",
     "build:vscode": "tsc -b && vite build --mode vscode",
     "build:electron": "tsc -b && vite build --mode electron",
-    "build:tauri": "tsc -b && vite build --mode tauri",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -28,3 +27,4 @@
     "vite": "^8.0.16"
   }
 }
+

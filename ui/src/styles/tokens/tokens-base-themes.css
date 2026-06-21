@@ -64,9 +64,8 @@
   --chart-8: #14b8a6;
 }
 
-/* Electron and Tauri: use bundled custom fonts */
-body.is-electron,
-body.is-tauri {
+/* Electron: use bundled custom fonts */
+body.is-electron {
   --font-ui: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono:
     "Cascadia Code", "CascadiaCode", "Fira Code", "JetBrains Mono", Consolas, monospace;
@@ -197,4 +196,5 @@ body.is-tauri {
     --hl-pkg: #22863a;
   }
 }
+
 

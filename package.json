@@ -6,8 +6,7 @@
     "ui",
     "vscode",
     "desktop",
-    "chromium-xtension",
-    "desktop-tauri"
+    "chromium-xtension"
   ],
   "scripts": {
     "test": "node --test tests/*.test.mjs",
@@ -26,10 +25,7 @@
     "build:electron:win-zip": "npm run build:ui:electron && npm run build:vscode && npm run dist:win-zip --workspace=desktop",
     "build:electron:mac": "npm run build:ui:electron && npm run build:vscode && npm run dist:mac --workspace=desktop",
     "build:electron:linux": "npm run build:ui:electron && npm run build:vscode && npm run dist:linux --workspace=desktop",
-    "build:chromium": "npm run build --workspace=markdown-explorer-chromium-xtension",
-    "build:tauri": "npm run build:tauri --workspace=ui && npm run build --workspace=desktop-tauri",
-    "build:tauri:win": "npm run build:tauri --workspace=ui && npm run build --workspace=desktop-tauri",
-    "build:tauri:mac": "npm run build:tauri --workspace=ui && npm run build --workspace=desktop-tauri",
-    "build:tauri:linux": "npm run build:tauri --workspace=ui && npm run build --workspace=desktop-tauri"
+    "build:chromium": "npm run build --workspace=markdown-explorer-chromium-xtension"
   }
 }
+

@@ -25,10 +25,6 @@ export function toFileResourceUrl(markdownFilePath: string, src: string): string
   // Resolve relative path
   const resolved = resolveRelativePath(fileDir, src);
 
-  const tauri = (window as any).__TAURI__;
-  if (tauri?.core?.convertFileSrc) {
-    return tauri.core.convertFileSrc(resolved);
-  }
 
   return 'file:///' + resolved.replace(/\\/g, '/');
 }
@@ -74,3 +70,4 @@ export function rewriteRelativeMediaUrls(html: string, markdownFilePath: string)
       `${prefix}${quote}${toFileResourceUrl(markdownFilePath, src)}${suffix}`,
     );
 }
+

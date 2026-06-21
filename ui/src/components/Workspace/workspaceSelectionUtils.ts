@@ -17,5 +17,7 @@ export function formatLastOpened(timestamp?: number) {
 }
 
 export function isDesktopRuntime() {
-  return typeof (window as any).electronAPI !== 'undefined' || typeof (window as any).__TAURI__ !== 'undefined';
+  return typeof (window as any).electronAPI !== 'undefined';
 }
+
+

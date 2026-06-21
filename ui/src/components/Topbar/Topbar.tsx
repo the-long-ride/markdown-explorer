@@ -153,9 +153,8 @@ export function Topbar({
   } = useAppState();
   const { back, forward, canGoBack, canGoForward } = useNavigation();
   const bridge = usePlatform();
-  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isDesktop = isElectron || isTauri;
+  const isDesktop = isElectron;
 
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
@@ -378,3 +377,5 @@ export function Topbar({
     </header>
   );
 }
+
+

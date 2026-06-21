@@ -26,7 +26,7 @@ const SwitchWorkspaceModal = lazy(() => import('./components/Modal/SwitchWorkspa
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
 const FloatingTabToolbar = lazy(() => import('./components/Desktop/FloatingTabToolbar').then(m => ({ default: m.FloatingTabToolbar })));
-import { ChevronUpIcon, DoubleChevronLeftIcon, ExpandIcon, CollapseIcon, MinimizeIcon } from './components/shared/icons';
+import { ChevronUpIcon, ExpandIcon, CollapseIcon, MinimizeIcon } from './components/shared/icons';
 import type { PendingSearchJump, SearchScope } from './desktop/types';
 // Defer global DOM handlers until after mount
 import { initGlobalHandlers } from './dom/globalHandlers';
@@ -65,8 +65,7 @@ export function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
-  const isDesktop = isElectron || isTauri;
+  const isDesktop = isElectron;
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
   const isDesktopLike = isDesktop || isChrome;
   const isTabView = isDesktop && state.settings.desktopViewMode === 'tabs';
@@ -603,18 +602,6 @@ export function App() {
               </div>
               )}
               <div className="content-shell__main">
-                {state.toc.length > 0 && state.tocCollapsed && (
-                  <TooltipButton
-                    type="button"
-                    className="toc-panel__open-btn"
-                    onClick={toggleToc}
-                    tooltip={t.actions.toggleToc}
-                    shortcut={state.settings.keybindings?.toggleToc}
-                    tooltipPos="below"
-                    tooltipAlign="right"
-                    icon={<DoubleChevronLeftIcon size={14} />}
-                  />
-                )}
                 <Content
                   onImageClick={onImageClick}
                   scrollRef={scrollRef}
@@ -742,3 +729,5 @@ export function App() {
 }
 
 initGlobalHandlers();
+
+

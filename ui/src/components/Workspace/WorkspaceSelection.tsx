@@ -29,8 +29,7 @@ export function WorkspaceSelection({
   const [workspaceScale, setWorkspaceScale] = useState(1);
   const workspacePanelRef = useRef<HTMLDivElement>(null);
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
-  const isDesktop = isElectron || isTauri;
+  const isDesktop = isElectron;
 
   const handleOpenFolder = () => {
     onBeforeOpenWorkspace?.();
@@ -358,3 +357,5 @@ export function WorkspaceSelection({
     </div>
   );
 }
+
+

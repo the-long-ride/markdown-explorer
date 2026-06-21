@@ -814,8 +814,7 @@ const renderShortcutKeys = (shortcutStr: string) => {
 
 export function WelcomePage() {
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
-  const isDesktop = isElectron || isTauri;
+  const isDesktop = isElectron;
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
   const isDesktopLike = isDesktop || isChrome;
   const { state } = useAppState();
@@ -1208,3 +1207,5 @@ export function WelcomePage() {
     </div>
   );
 }
+
+
