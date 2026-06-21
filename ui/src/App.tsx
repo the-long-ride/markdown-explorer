@@ -492,8 +492,8 @@ export function App() {
                 tooltip={state.isMaximized ? t.tooltips.restore : t.tooltips.maximize}
                 icon={state.isMaximized ? (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-                    <path d="M8 3h13v13H8z" />
-                    <path d="M16 16v5H3V8h5" />
+                    <path d="M8 8V3h13v13h-5" />
+                    <path d="M3 8h13v13H3z" />
                   </svg>
                 ) : (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
