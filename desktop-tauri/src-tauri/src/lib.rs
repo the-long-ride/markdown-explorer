@@ -19,7 +19,7 @@ use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
 
 // ── Application state ───────────────────────────────────────
 
@@ -45,6 +45,7 @@ struct ReadyAckPayload {
     theme: String,
     default_expanded: bool,
     workspace_name: String,
+    workspace_path: Option<String>,
     recent_workspaces: Vec<RecentWorkspace>,
     app_version: String,
     app_runtime: String,
@@ -68,6 +69,7 @@ struct RenderContentPayload {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct IncomingMessage {
     command: String,
     #[serde(default)]
@@ -86,6 +88,8 @@ struct IncomingMessage {
     theme_style: Option<String>,
     #[serde(default)]
     enabled: Option<bool>,
+    #[serde(default)]
+    open_first_file: Option<bool>,
 }
 
 fn host_platform() -> &'static str {
@@ -110,7 +114,23 @@ fn emit_to_webview(app: &AppHandle, payload: &impl Serialize) {
 
 // ── Command handlers ────────────────────────────────────────
 
+fn emit_welcome(app: &AppHandle, file_list: Vec<MdFile>) {
+    emit_to_webview(app, &RenderContentPayload {
+        command: "renderContent".into(),
+        html: String::new(),
+        markdown_source: String::new(),
+        frontmatter: Value::Object(Default::default()),
+        toc: vec![],
+        file_path: String::new(),
+        relative_path: "Welcome Page".into(),
+        title: "Welcome".into(),
+        file_list,
+        preview_info: None,
+    });
+}
+
 fn handle_ready(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
+    let recent = data.recents_store.get_all().to_vec();
     if let Some(ref ws) = data.workspace_path {
         let result = scan(ws, data.doc_conversion);
         let file_list = result.flat.clone();
@@ -125,14 +145,14 @@ fn handle_ready(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
             // On file change, re-scan is triggered by client sending "refresh"
         }));
 
-        let recent = data.recents_store.get_all().to_vec();
         emit_to_webview(app, &ReadyAckPayload {
             command: "readyAck".into(),
-            file_list,
+            file_list: file_list.clone(),
             tree: data.scanner_result.as_ref().map(|r| r.tree.clone()),
             theme: "auto".into(),
             default_expanded: true,
             workspace_name: workspace_name(ws),
+            workspace_path: Some(ws.to_string_lossy().to_string()),
             recent_workspaces: recent,
             app_version: "1.5.3".into(),
             app_runtime: "desktop".into(),
@@ -144,6 +164,28 @@ fn handle_ready(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
             name: workspace_name(ws),
             path: ws.to_string_lossy().to_string(),
             last_opened: None,
+        });
+
+        // Send initial content
+        if let Some(ref cur_file) = data.current_file {
+            let cur_file_str = cur_file.to_string_lossy().to_string();
+            handle_navigate(app, data, &cur_file_str)?;
+        } else {
+            emit_welcome(app, file_list);
+        }
+    } else {
+        emit_to_webview(app, &ReadyAckPayload {
+            command: "readyAck".into(),
+            file_list: vec![],
+            tree: None,
+            theme: "auto".into(),
+            default_expanded: true,
+            workspace_name: "".into(),
+            workspace_path: None,
+            recent_workspaces: recent,
+            app_version: "1.5.3".into(),
+            app_runtime: "desktop".into(),
+            host_platform: host_platform().into(),
         });
     }
     Ok(())
@@ -189,15 +231,37 @@ fn handle_navigate(app: &AppHandle, data: &mut AppData, path: &str) -> Result<()
     Ok(())
 }
 
-fn handle_open_folder(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
-    // Tauri v2 file dialog: use rfd crate
-    // For now, accept a path sent from the client side
-    // (The actual folder picker is triggered from the frontend via tauri-plugin-dialog)
-    handle_ready(app, data)
+fn handle_open_folder(app: &AppHandle, data: &mut AppData, open_first_file: bool) -> Result<(), String> {
+    let folder = rfd::FileDialog::new()
+        .pick_folder();
+    if let Some(path) = folder {
+        data.workspace_path = Some(path.clone());
+        data.current_file = None;
+        if open_first_file {
+            let result = scan(&path, data.doc_conversion);
+            if let Some(first_file) = result.flat.first() {
+                data.current_file = Some(std::path::PathBuf::from(&first_file.fs_path));
+            }
+        }
+        handle_ready(app, data)?;
+    }
+    Ok(())
 }
 
-fn handle_open_file(_app: &AppHandle, _data: &mut AppData) -> Result<(), String> {
-    // Similar to openFolder — file picker from frontend
+fn handle_open_file(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
+    let mut builder = rfd::FileDialog::new();
+    if data.doc_conversion {
+        builder = builder.add_filter("Supported Files", &["md", "markdown", "mdx", "txt", "docx", "pdf", "html", "xlsx", "pptx", "odt", "odp", "ods", "rtf"]);
+    } else {
+        builder = builder.add_filter("Markdown & Text", &["md", "markdown", "mdx", "txt"]);
+    }
+    let file = builder.pick_file();
+    if let Some(path) = file {
+        let parent = path.parent().ok_or("No parent folder")?.to_path_buf();
+        data.workspace_path = Some(parent);
+        data.current_file = Some(path);
+        handle_ready(app, data)?;
+    }
     Ok(())
 }
 
@@ -216,6 +280,7 @@ fn handle_refresh(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
         theme: "auto".into(),
         default_expanded: true,
         workspace_name: workspace_name(&ws),
+        workspace_path: Some(ws.to_string_lossy().to_string()),
         recent_workspaces: recent,
         app_version: "1.5.3".into(),
         app_runtime: "desktop".into(),
@@ -245,14 +310,21 @@ fn handle_search(app: &AppHandle, data: &mut AppData, query: &str, request_id: &
     Ok(())
 }
 
-fn handle_open_recent(app: &AppHandle, data: &mut AppData, path: &str) -> Result<(), String> {
+fn handle_open_recent(app: &AppHandle, data: &mut AppData, path: &str, open_first_file: bool) -> Result<(), String> {
     let ws_path = PathBuf::from(path);
     if !ws_path.exists() {
         return Err(format!("Workspace not found: {}", path));
     }
 
-    data.workspace_path = Some(ws_path);
+    data.workspace_path = Some(ws_path.clone());
     data.recents_store.update_last_opened(path);
+    if open_first_file {
+        data.current_file = None;
+        let result = scan(&ws_path, data.doc_conversion);
+        if let Some(first_file) = result.flat.first() {
+            data.current_file = Some(std::path::PathBuf::from(&first_file.fs_path));
+        }
+    }
     handle_ready(app, data)
 }
 
@@ -280,6 +352,7 @@ fn dispatch(state: State<'_, Mutex<AppData>>, app: AppHandle, command: String, p
         command: command.clone(),
         path: None, request_id: None, query: None,
         text: None, url: None, theme: None, theme_style: None, enabled: None,
+        open_first_file: None,
     });
 
     let result = match command.as_str() {
@@ -288,23 +361,43 @@ fn dispatch(state: State<'_, Mutex<AppData>>, app: AppHandle, command: String, p
             let p = msg.path.as_deref().ok_or("Missing path")?;
             handle_navigate(&app, &mut data, p)
         }
-        "openFolder" => handle_open_folder(&app, &mut data),
+        "openFolder" => {
+            let off = msg.open_first_file.unwrap_or(false);
+            handle_open_folder(&app, &mut data, off)
+        }
         "openFile" => handle_open_file(&app, &mut data),
         "openPath" => {
             let p = msg.path.as_deref().ok_or("Missing path")?;
             let ws = PathBuf::from(p);
-            data.workspace_path = Some(ws);
+            data.workspace_path = Some(ws.clone());
+            let off = msg.open_first_file.unwrap_or(false);
+            if off {
+                data.current_file = None;
+                let result = scan(&ws, data.doc_conversion);
+                if let Some(first_file) = result.flat.first() {
+                    data.current_file = Some(std::path::PathBuf::from(&first_file.fs_path));
+                }
+            }
             handle_ready(&app, &mut data)
         }
         "confirmOpenPath" => {
             let p = msg.path.as_deref().ok_or("Missing path")?;
             let ws = PathBuf::from(p);
-            data.workspace_path = Some(ws);
+            data.workspace_path = Some(ws.clone());
+            let off = msg.open_first_file.unwrap_or(false);
+            if off {
+                data.current_file = None;
+                let result = scan(&ws, data.doc_conversion);
+                if let Some(first_file) = result.flat.first() {
+                    data.current_file = Some(std::path::PathBuf::from(&first_file.fs_path));
+                }
+            }
             handle_ready(&app, &mut data)
         }
         "openRecentWorkspace" => {
             let p = msg.path.as_deref().ok_or("Missing path")?;
-            handle_open_recent(&app, &mut data, p)
+            let off = msg.open_first_file.unwrap_or(false);
+            handle_open_recent(&app, &mut data, p, off)
         }
         "closeWorkspace" => handle_close_workspace(&mut data),
         "deleteRecentWorkspace" => {
@@ -328,8 +421,8 @@ fn dispatch(state: State<'_, Mutex<AppData>>, app: AppHandle, command: String, p
             }
             Ok(())
         }
-        "zoom-in" => handle_zoom_in(&app),
-        "zoom-out" => handle_zoom_out(&app),
+        "zoom-in" => handle_zoom_in(&app, &mut data),
+        "zoom-out" => handle_zoom_out(&app, &mut data),
         "window-minimize" => handle_window_minimize(&app),
         "window-maximize" => handle_window_maximize(&app),
         "window-close" => handle_window_close(&app),
@@ -350,6 +443,13 @@ fn dispatch(state: State<'_, Mutex<AppData>>, app: AppHandle, command: String, p
             let fp = v.get("filePath").and_then(|v| v.as_str());
             handle_activate_workspace(&app, &mut data, wp, fp)
         }
+        "loadWorkspaceSearchIndexes" => {
+            // Extract only what we need, then release the lock before doing I/O
+            let doc_conversion = data.doc_conversion;
+            drop(data);
+            return handle_load_workspace_search_indexes(&app, doc_conversion, &payload)
+                .map(|_| "ok".to_string());
+        }
         // copyCode is no-op (handled client-side)
         // updateAppearance is no-op (handled client-side)
         // searchAcrossWorkspaces / indexWorkspaceSearchItems deferred
@@ -364,6 +464,7 @@ fn dispatch(state: State<'_, Mutex<AppData>>, app: AppHandle, command: String, p
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let recents_dir = dirs_next().unwrap_or_else(|| PathBuf::from("."));
+    let last_maximized = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -378,10 +479,32 @@ pub fn run() {
             zoom_level: 1.0,
         }))
         .invoke_handler(tauri::generate_handler![dispatch])
-        .setup(|app| {
+        .on_window_event(move |window, event| {
+            if let WindowEvent::Resized(_) = event {
+                if let Ok(maximized) = window.is_maximized() {
+                    let last = last_maximized.load(std::sync::atomic::Ordering::Relaxed);
+                    if maximized != last {
+                        last_maximized.store(maximized, std::sync::atomic::Ordering::Relaxed);
+
+                        #[derive(Serialize)]
+                        #[serde(rename_all = "camelCase")]
+                        struct WindowStatePayload {
+                            command: String,
+                            is_maximized: bool,
+                        }
+
+                        emit_to_webview(window.app_handle(), &WindowStatePayload {
+                            command: "window-state-changed".into(),
+                            is_maximized: maximized,
+                        });
+                    }
+                }
+            }
+        })
+        .setup(|_app| {
             #[cfg(debug_assertions)]
             {
-                if let Some(window) = app.get_webview_window("main") {
+                if let Some(window) = _app.get_webview_window("main") {
                     window.open_devtools();
                 }
             }
@@ -394,21 +517,17 @@ pub fn run() {
 fn dirs_next() -> Option<PathBuf> {
     dirs::data_dir()
 }
-fn handle_zoom_in(app: &AppHandle) -> Result<(), String> {
+fn handle_zoom_in(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
-        let state = app.state::<Mutex<AppData>>();
-        let mut data = state.lock().map_err(|e| format!("Lock error: {}", e))?;
-        data.zoom_level += 0.1;
+        data.zoom_level = (data.zoom_level + 0.1).min(3.0);
         window.set_zoom(data.zoom_level).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
-fn handle_zoom_out(app: &AppHandle) -> Result<(), String> {
+fn handle_zoom_out(app: &AppHandle, data: &mut AppData) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
-        let state = app.state::<Mutex<AppData>>();
-        let mut data = state.lock().map_err(|e| format!("Lock error: {}", e))?;
-        data.zoom_level = (data.zoom_level - 0.1).max(0.1);
+        data.zoom_level = (data.zoom_level - 0.1).max(0.3);
         window.set_zoom(data.zoom_level).map_err(|e| e.to_string())?;
     }
     Ok(())
@@ -461,5 +580,65 @@ fn handle_activate_workspace(app: &AppHandle, data: &mut AppData, workspace_path
     if let Some(fp) = file_path {
         handle_navigate(app, data, fp)?;
     }
+    Ok(())
+}
+
+// NOTE: This function must NOT hold the AppData mutex — it does directory scanning (I/O).
+// The caller must drop the mutex guard before calling this.
+fn handle_load_workspace_search_indexes(app: &AppHandle, doc_conversion: bool, payload: &str) -> Result<(), String> {
+    let v: Value = serde_json::from_str(payload).unwrap_or_default();
+    let tabs_array = match v.get("tabs").and_then(|t| t.as_array()) {
+        Some(arr) => arr.clone(),
+        None => return Ok(()), // no tabs to load — silently succeed
+    };
+
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct LoadedTab {
+        tab_id: String,
+        workspace_path: String,
+        file_list: Vec<MdFile>,
+        tree: Option<scanner::FolderNode>,
+    }
+
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct WorkspaceSearchIndexLoadedPayload {
+        command: String,
+        tabs: Vec<LoadedTab>,
+    }
+
+    let mut loaded_tabs = Vec::new();
+
+    for tab_val in &tabs_array {
+        let tab_id = tab_val.get("tabId").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let ws_path_str = tab_val.get("workspacePath").and_then(|v| v.as_str()).unwrap_or("").to_string();
+
+        if !tab_id.is_empty() && !ws_path_str.is_empty() {
+            let ws_path = PathBuf::from(&ws_path_str);
+            if ws_path.exists() {
+                let result = scan(&ws_path, doc_conversion);
+                loaded_tabs.push(LoadedTab {
+                    tab_id,
+                    workspace_path: ws_path_str,
+                    file_list: result.flat,
+                    tree: Some(result.tree),
+                });
+            } else {
+                loaded_tabs.push(LoadedTab {
+                    tab_id,
+                    workspace_path: ws_path_str,
+                    file_list: vec![],
+                    tree: None,
+                });
+            }
+        }
+    }
+
+    emit_to_webview(app, &WorkspaceSearchIndexLoadedPayload {
+        command: "workspaceSearchIndexLoaded".into(),
+        tabs: loaded_tabs,
+    });
+
     Ok(())
 }

@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 
 const DEBOUNCE_MS: u64 = 120;
 
+#[allow(dead_code)]
 pub struct WorkspaceWatcher {
     sender: Option<mpsc::Sender<()>>,
 }
@@ -76,6 +77,7 @@ impl WorkspaceWatcher {
     }
 
     /// Signal a stop (drop the sender)
+    #[allow(dead_code)]
     pub fn stop(mut self) {
         drop(self.sender.take());
     }

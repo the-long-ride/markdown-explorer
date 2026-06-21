@@ -4,13 +4,12 @@
   "version": "1.5.3",
   "identifier": "com.thelongride.markdownexplorer",
   "build": {
-    "frontendDist": "../ui/dist",
-    "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm run dev --workspace=ui",
-    "beforeBuildCommand": "npm run build --workspace=ui"
+    "frontendDist": "../../ui/dist",
+    "devUrl": "http://localhost:5173"
   },
   "app": {
-  "windows": [
+    "withGlobalTauri": true,
+    "windows": [
       {
         "title": "Markdown Explorer",
         "width": 1200,
@@ -19,7 +18,8 @@
         "minHeight": 300,
         "decorations": false,
         "titleBarStyle": "Overlay",
-        "hiddenTitle": true
+        "hiddenTitle": true,
+        "zoomHotkeysEnabled": false
       }
     ],
     "security": {
@@ -43,8 +43,6 @@
     }
   },
   "plugins": {
-    "opener": {
-      "open": false
-    }
+    "opener": {}
   }
 }

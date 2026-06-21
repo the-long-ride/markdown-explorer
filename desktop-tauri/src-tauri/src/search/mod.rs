@@ -150,6 +150,7 @@ impl SearchIndex {
             .collect()
     }
 
+    #[allow(dead_code)]
     pub fn file_count(&self) -> usize {
         self.files.len()
     }

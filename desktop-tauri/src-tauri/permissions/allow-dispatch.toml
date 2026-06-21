@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-dispatch"
+description = "Allows the dispatch command"
+commands.allow = ["dispatch"]
