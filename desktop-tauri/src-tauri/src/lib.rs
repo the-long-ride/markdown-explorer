@@ -504,8 +504,10 @@ pub fn run() {
         .setup(|_app| {
             #[cfg(debug_assertions)]
             {
-                if let Some(window) = _app.get_webview_window("main") {
-                    window.open_devtools();
+                if std::env::var("TAURI_DEBUG").map(|v| v == "true").unwrap_or(false) {
+                    if let Some(window) = _app.get_webview_window("main") {
+                        window.open_devtools();
+                    }
                 }
             }
             Ok(())

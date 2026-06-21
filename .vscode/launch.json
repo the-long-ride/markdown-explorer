@@ -46,6 +46,9 @@
           "kind": "bin"
         }
       },
+      "env": {
+        "TAURI_DEBUG": "true"
+      },
       "cwd": "${workspaceFolder}/desktop-tauri/src-tauri"
     }
   ]
