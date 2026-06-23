@@ -86,7 +86,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // Auto-refresh on supported file create / delete
-  const watcher = vscode.workspace.createFileSystemWatcher('**/*.{md,mdx,docx,pdf,html,xlsx,pptx,odt,odp,ods,rtf,txt}');
+  const watcher = vscode.workspace.createFileSystemWatcher('**/*.{md,mdx,doc,docx,pdf,html,xls,xlsx,xlm,pptx,odt,odp,ods,rtf,txt}');
   watcher.onDidCreate(() => MarkdownDocsPanel.currentPanel?.refresh());
   watcher.onDidDelete(() => MarkdownDocsPanel.currentPanel?.refresh());
   context.subscriptions.push(watcher);

@@ -206,7 +206,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
     fileTabs: "Open Files in Tabs",
     fileTabsDesc: "When enabled, opening a file creates or activates a document tab. When disabled, it replaces the current panel.",
     documentConversion: "Read DOCX, PDF, Office, and text files",
-    documentConversionDesc: "Converts DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, and RTF to Markdown for preview. Converted previews can lose layout or formatting quality.",
+    documentConversionDesc: "Converts DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF to Markdown for preview. Converted previews can lose layout or formatting quality.",
     htmlPreview: "Default HTML Code Block View",
     htmlPreviewDesc: "Show HTML code blocks as interactive previews by default. Otherwise, shows the raw HTML code.",
     shortcuts: "Keyboard Shortcuts",

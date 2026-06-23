@@ -28,7 +28,7 @@ export class WorkspaceScanner {
     const excludeGlob = `{${excludePatterns.join(',')}}`;
 
     const includeGlob = documentConversionEnabled
-      ? '**/*.{md,mdx,docx,pdf,html,xlsx,pptx,odt,odp,ods,rtf,txt}'
+      ? '**/*.{md,mdx,doc,docx,pdf,html,xls,xlsx,xlm,pptx,odt,odp,ods,rtf,txt}'
       : '**/*.{md,mdx,txt}';
     const uris = (await vscode.workspace.findFiles(
       includeGlob,

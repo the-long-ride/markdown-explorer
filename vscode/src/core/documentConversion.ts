@@ -28,10 +28,13 @@ interface CacheEntry {
 export const MARKDOWN_EXTENSIONS = new Set(['.md', '.mdx']);
 export const TEXT_DOCUMENT_EXTENSIONS = new Set(['.txt']);
 export const CONVERTIBLE_DOCUMENT_EXTENSIONS = new Set([
+  '.doc',
   '.docx',
   '.pdf',
   '.html',
+  '.xls',
   '.xlsx',
+  '.xlm',
   '.pptx',
   '.odt',
   '.odp',

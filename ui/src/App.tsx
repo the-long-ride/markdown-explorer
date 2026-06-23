@@ -710,7 +710,7 @@ export function App() {
           <div style={{ fontSize: '20px', fontWeight: 800 }}>Drop folder or file to open</div>
           <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>
             {state.settings.documentConversion
-              ? 'Supports folders, Markdown, DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files'
+              ? 'Supports folders, Markdown, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files'
               : 'Supports folders, .md / .mdx, and .txt files'}
           </div>
         </div>

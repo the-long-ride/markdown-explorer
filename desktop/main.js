@@ -67,32 +67,32 @@ function isSupportedFilePathLite(filePath, docConvEnabled) {
   if (!filePath) return false;
   const ext = path.extname(filePath).toLowerCase();
   if ([".md", ".mdx", ".markdown", ".txt"].includes(ext)) return true;
-  if (docConvEnabled && [".docx", ".pdf", ".html", ".xlsx", ".pptx", ".odt", ".odp", ".ods", ".rtf"].includes(ext)) return true;
+  if (docConvEnabled && [".doc", ".docx", ".pdf", ".html", ".xls", ".xlsx", ".xlm", ".pptx", ".odt", ".odp", ".ods", ".rtf"].includes(ext)) return true;
   return false;
 }
 
 function isExtraDocumentFilePathLite(filePath) {
   const ext = path.extname(filePath).toLowerCase();
-  return [".docx", ".pdf", ".html", ".xlsx", ".pptx", ".odt", ".odp", ".ods", ".rtf"].includes(ext);
+  return [".doc", ".docx", ".pdf", ".html", ".xls", ".xlsx", ".xlm", ".pptx", ".odt", ".odp", ".ods", ".rtf"].includes(ext);
 }
 
 function getFileTypeLabelLite(filePath) {
   const ext = path.extname(filePath).toLowerCase().replace(".", "");
-  const labels = { docx: "Word", pdf: "PDF", html: "HTML", xlsx: "Excel", pptx: "PowerPoint", odt: "OpenDocument Text", odp: "OpenDocument Presentation", ods: "OpenDocument Spreadsheet", rtf: "Rich Text" };
+  const labels = { doc: "Word", docx: "Word", pdf: "PDF", html: "HTML", xls: "Excel", xlsx: "Excel", xlm: "Excel", pptx: "PowerPoint", odt: "OpenDocument Text", odp: "OpenDocument Presentation", ods: "OpenDocument Spreadsheet", rtf: "Rich Text" };
   return labels[ext] || ext.toUpperCase();
 }
 
 function getOpenDialogFiltersLite(docConvEnabled) {
   const filters = [{ name: "Markdown", extensions: ["md", "mdx", "markdown"] }];
   if (docConvEnabled) filters.push(
-    { name: "Documents", extensions: ["docx", "pdf", "html", "xlsx", "pptx", "odt", "odp", "ods", "rtf"] },
+    { name: "Documents", extensions: ["doc", "docx", "pdf", "html", "xls", "xlsx", "xlm", "pptx", "odt", "odp", "ods", "rtf"] },
     { name: "All Files", extensions: ["*"] },
   );
   return filters;
 }
 
 function stripKnownExtensionLite(filename) {
-  return filename.replace(/\.(md|mdx|markdown|txt|docx|pdf|html|xlsx|pptx|odt|odp|ods|rtf)$/i, "");
+  return filename.replace(/\.(md|mdx|markdown|txt|doc|docx|pdf|html|xls|xlsx|xlm|pptx|odt|odp|ods|rtf)$/i, "");
 }
 
 // Electron zoom level maps roughly to factor = 1.2 ^ level.
@@ -367,7 +367,7 @@ function handleOpenPath(filePath, openFirstFile = false) {
         title: "Unsupported File Type",
         message: documentConversionEnabled
           ? "Markdown Explorer cannot preview this file type."
-          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTX, and TXT files.",
+          : "Turn on document conversion in Markdown Explorer settings to preview DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
         detail: filePath,
       });
       return;
@@ -511,7 +511,7 @@ async function handleConfirmOpenPath(filePath) {
         title: "Unsupported File Type",
         message: documentConversionEnabled
           ? "Markdown Explorer cannot preview this file type."
-          : "Turn on document conversion in Markdown Explorer settings to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTX, and TXT files.",
+          : "Turn on document conversion in Markdown Explorer settings to preview DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
         detail: filePath,
       });
       return;

@@ -4,10 +4,13 @@ const path = require("path");
 const MARKDOWN_EXTENSIONS = new Set([".md", ".mdx"]);
 const TEXT_DOCUMENT_EXTENSIONS = new Set([".txt"]);
 const CONVERTIBLE_DOCUMENT_EXTENSIONS = new Set([
+  ".doc",
   ".docx",
   ".pdf",
   ".html",
+  ".xls",
   ".xlsx",
+  ".xlm",
   ".pptx",
   ".odt",
   ".odp",
@@ -89,10 +92,13 @@ function getOpenDialogFilters(documentConversionEnabled = false) {
       extensions: [
         "md",
         "mdx",
+        "doc",
         "docx",
         "pdf",
         "html",
+        "xls",
         "xlsx",
+        "xlm",
         "pptx",
         "odt",
         "odp",
@@ -106,10 +112,13 @@ function getOpenDialogFilters(documentConversionEnabled = false) {
     {
       name: "Converted Document Files",
       extensions: [
+        "doc",
         "docx",
         "pdf",
         "html",
+        "xls",
         "xlsx",
+        "xlm",
         "pptx",
         "odt",
         "odp",

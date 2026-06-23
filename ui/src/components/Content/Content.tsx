@@ -758,8 +758,8 @@ export function Content({
               </div>
               <div className="state-screen__sub">
                 {state.settings.documentConversion
-                  ? "Add Markdown, DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, or TXT files to this workspace."
-                  : "Add a .md, .mdx, or .txt file, or turn on document conversion to preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, and RTF files."}
+                  ? "Add Markdown, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, or TXT files to this workspace."
+                  : "Add a .md, .mdx, or .txt file, or turn on document conversion to preview DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF files."}
               </div>
               {!state.settings.documentConversion && (
                 <button
