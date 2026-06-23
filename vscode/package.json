@@ -2,7 +2,7 @@
   "name": "vscode-extension-markdown-explorer",
   "displayName": "Markdown Explorer in VS Code",
   "description": "Markdown for AI agents, Markdown Explorer for human. View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "license": "MIT",
   "publisher": "the-long-ride",
   "icon": "ui/assets/logos/logo-500.png",
@@ -133,7 +133,7 @@
         "markdownExplorer.documentConversion": {
           "type": "boolean",
           "default": false,
-          "description": "Show DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files by converting them to Markdown for preview. Conversion quality can vary by file."
+          "description": "Show DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files by converting them to Markdown for preview. Conversion quality can vary by file."
         },
         "markdownExplorer.excludePatterns": {
           "type": "array",
@@ -183,6 +183,6 @@
     "typescript": "^5.3.0"
   },
   "dependencies": {
-    "@the-long-ride/markdown-them": "^1.3.0"
+    "@the-long-ride/markdown-them": "^1.3.1"
   }
 }

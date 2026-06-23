@@ -4,6 +4,17 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.5] — 2026-06-23
+
+### Added
+- **New Document Formats Support**: Added support for converting and previewing `.doc`, `.xls`, and `.xlm` file formats to Markdown preview.
+
+### Maintenance
+- **Dependency Upgrades**: Upgraded `@the-long-ride/markdown-them` package to version `1.3.1`.
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, Chromium extension, manifest, and lockfile metadata to `1.5.5`.
+
+---
+
 ## [1.5.4] — 2026-06-21
 
 ### Changed
