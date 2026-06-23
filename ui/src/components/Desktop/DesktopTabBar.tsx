@@ -407,7 +407,7 @@ export function DesktopTabBar({
         onHome={() => onSelectTab('home')}
         onTheme={onThemeToggle}
         onEdit={openInEditor}
-        showEdit={false}
+        showEdit={true}
         onSettings={onSettingsOpen}
         sidebarLabel={t.actions.toggleSidebar}
         sidebarTooltip={t.actions.toggleSidebar}
