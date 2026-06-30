@@ -13,12 +13,34 @@ function createStartupReadyAck({
     theme: "dark",
     themeStyle: "default",
     defaultExpanded: true,
-    workspaceName: workspacePath ? path.basename(workspacePath) : "",
+    workspaceName: path.basename(workspacePath || ""),
     workspacePath: workspacePath || undefined,
     recentWorkspaces,
     documentConversionEnabled,
     ...hostInfo,
   };
+}
+
+async function runDeferredLoad({
+  ensureHeavyModules,
+  bindWorkspaceWatch,
+  sendLoading,
+  sendWorkspaceData,
+  sendInitialContent,
+  openFirstFile = false,
+  sendUpdateState,
+  onError,
+}) {
+  try {
+    sendLoading("Loading workspace...");
+    ensureHeavyModules();
+    bindWorkspaceWatch();
+    await sendWorkspaceData();
+    await sendInitialContent(openFirstFile);
+    sendUpdateState?.();
+  } catch (err) {
+    onError?.(err);
+  }
 }
 
 function deferWorkspaceLoad({
@@ -33,20 +55,21 @@ function deferWorkspaceLoad({
   onError,
 }) {
   schedule(async () => {
-    try {
-      sendLoading("Loading workspace...");
-      ensureHeavyModules();
-      bindWorkspaceWatch();
-      await sendWorkspaceData();
-      await sendInitialContent(openFirstFile);
-      sendUpdateState?.();
-    } catch (err) {
-      onError?.(err);
-    }
+    await runDeferredLoad({
+      ensureHeavyModules,
+      bindWorkspaceWatch,
+      sendLoading,
+      sendWorkspaceData,
+      sendInitialContent,
+      openFirstFile,
+      sendUpdateState,
+      onError,
+    });
   }, 0);
 }
 
 module.exports = {
   createStartupReadyAck,
   deferWorkspaceLoad,
+  runDeferredLoad,
 };

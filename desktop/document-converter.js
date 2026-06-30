@@ -32,10 +32,7 @@ const CONVERSION_QUALITY_WARNING =
 let markdownThem = null;
 
 function getMarkdownThem() {
-  if (!markdownThem) {
-    markdownThem = require("@the-long-ride/markdown-them");
-  }
-  return markdownThem;
+  return markdownThem || (markdownThem = require("@the-long-ride/markdown-them"));
 }
 
 function getExtension(filePath) {
@@ -59,9 +56,7 @@ function isExtraDocumentFilePath(filePath) {
 }
 
 function isSupportedFilePath(filePath, documentConversionEnabled = false) {
-  if (isMarkdownFilePath(filePath)) return true;
-  if (isTextDocumentFilePath(filePath)) return true;
-  return documentConversionEnabled && isConvertibleDocumentFilePath(filePath);
+  return isMarkdownFilePath(filePath) || isTextDocumentFilePath(filePath) || (documentConversionEnabled && isConvertibleDocumentFilePath(filePath));
 }
 
 function isKnownSupportedFilePath(filePath) {
@@ -79,64 +74,63 @@ function getFileTypeLabel(filePath) {
 }
 
 function getOpenDialogFilters(documentConversionEnabled = false) {
-  if (!documentConversionEnabled) {
-    return [
-      { name: "Supported Files", extensions: ["md", "mdx", "txt"] },
-      { name: "Markdown Files", extensions: ["md", "mdx"] },
-      { name: "Text Files", extensions: ["txt"] },
-    ];
-  }
-  return [
-    {
-      name: "Supported Documents",
-      extensions: [
-        "md",
-        "mdx",
-        "doc",
-        "docx",
-        "pdf",
-        "html",
-        "xls",
-        "xlsx",
-        "xlm",
-        "pptx",
-        "odt",
-        "odp",
-        "ods",
-        "rtf",
-        "txt",
-      ],
-    },
-    { name: "Markdown and Text Files", extensions: ["md", "mdx", "txt"] },
-    { name: "Markdown Files", extensions: ["md", "mdx"] },
-    {
-      name: "Converted Document Files",
-      extensions: [
-        "doc",
-        "docx",
-        "pdf",
-        "html",
-        "xls",
-        "xlsx",
-        "xlm",
-        "pptx",
-        "odt",
-        "odp",
-        "ods",
-        "rtf",
-      ],
-    },
-  ];
+  return documentConversionEnabled
+    ? [
+        {
+          name: "Supported Documents",
+          extensions: [
+            "md",
+            "mdx",
+            "doc",
+            "docx",
+            "pdf",
+            "html",
+            "xls",
+            "xlsx",
+            "xlm",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "txt",
+          ],
+        },
+        { name: "Markdown and Text Files", extensions: ["md", "mdx", "txt"] },
+        { name: "Markdown Files", extensions: ["md", "mdx"] },
+        {
+          name: "Converted Document Files",
+          extensions: [
+            "doc",
+            "docx",
+            "pdf",
+            "html",
+            "xls",
+            "xlsx",
+            "xlm",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+          ],
+        },
+      ]
+    : [
+        { name: "Supported Files", extensions: ["md", "mdx", "txt"] },
+        { name: "Markdown Files", extensions: ["md", "mdx"] },
+        { name: "Text Files", extensions: ["txt"] },
+      ];
 }
 
 function normalizePreviewMarkdown(markdown, filePath) {
   const trimmed = String(markdown || "").trim();
   const title = stripKnownExtension(path.basename(filePath)).replace(/[\r\n]+/g, " ").trim();
-  if (!trimmed) {
-    return `# ${title}\n\n_No readable content was found while preparing this preview._`;
-  }
-  if (/^#\s+.+$/m.test(trimmed)) return trimmed;
-  return `# ${title}\n\n${trimmed}`;
+  return !trimmed
+    ? `# ${title}\n\n_No readable content was found while preparing this preview._`
+    : /^#\s+.+$/m.test(trimmed)
+      ? trimmed
+      : `# ${title}\n\n${trimmed}`;
 }
 
 function createFailureMarkdown(filePath, err) {
@@ -153,65 +147,43 @@ function createFailureMarkdown(filePath, err) {
   ].join("\n");
 }
 
-function createDocumentConverter() {
-  const cache = new Map();
+function classifyExtension(ext) {
+  return MARKDOWN_EXTENSIONS.has(ext) ? "markdown"
+    : TEXT_DOCUMENT_EXTENSIONS.has(ext) ? "text"
+    : CONVERTIBLE_DOCUMENT_EXTENSIONS.has(ext) ? "convertible"
+    : "unsupported";
+}
 
-  async function getCachedConversion(filePath, stat) {
-    const cached = cache.get(filePath);
-    if (
-      cached &&
-      cached.mtimeMs === stat.mtimeMs &&
-      cached.size === stat.size
-    ) {
-      return {
-        markdown: cached.markdown,
-        previewInfo: {
-          kind: "converted",
-          sourceExtension: getExtension(filePath),
-          sourceLabel: getFileTypeLabel(filePath),
-          durationMs: cached.durationMs,
-          fromCache: true,
-        },
-      };
-    }
-    return null;
-  }
+async function readMarkdownFile(ext, filePath, resolveMarkdownThem, cache) {
+  const fileType = classifyExtension(ext);
 
-  async function readMarkdown(filePath) {
-    const ext = getExtension(filePath);
-
-    if (MARKDOWN_EXTENSIONS.has(ext)) {
-      return {
-        markdown: await fs.promises.readFile(filePath, "utf8"),
-        previewInfo: null,
-      };
-    }
-
-    if (TEXT_DOCUMENT_EXTENSIONS.has(ext)) {
-      return {
-        markdown: normalizePreviewMarkdown(
-          await fs.promises.readFile(filePath, "utf8"),
-          filePath,
-        ),
-        previewInfo: {
-          kind: "text",
-          sourceExtension: ext,
-          sourceLabel: getFileTypeLabel(filePath),
-        },
-      };
-    }
-
-    if (!CONVERTIBLE_DOCUMENT_EXTENSIONS.has(ext)) {
-      throw new Error(`Unsupported file type: ${ext || path.basename(filePath)}`);
-    }
-
+  if (fileType === "unsupported") {
+    throw new Error(`Unsupported file type: ${ext || path.basename(filePath)}`);
+  } else if (fileType === "markdown") {
+    return {
+      markdown: await fs.promises.readFile(filePath, "utf8"),
+      previewInfo: null,
+    };
+  } else if (fileType === "text") {
+    return {
+      markdown: normalizePreviewMarkdown(
+        await fs.promises.readFile(filePath, "utf8"),
+        filePath,
+      ),
+      previewInfo: {
+        kind: "text",
+        sourceExtension: ext,
+        sourceLabel: getFileTypeLabel(filePath),
+      },
+    };
+  } else {
     const stat = await fs.promises.stat(filePath);
-    const cached = await getCachedConversion(filePath, stat);
+    const cached = await getCachedConversionResult(cache, filePath, stat);
     if (cached) return cached;
 
     const startedAt = Date.now();
     const markdown = normalizePreviewMarkdown(
-      await getMarkdownThem().generateMarkdown(filePath),
+      await resolveMarkdownThem().generateMarkdown(filePath),
       filePath,
     );
     const durationMs = Date.now() - startedAt;
@@ -234,6 +206,32 @@ function createDocumentConverter() {
       },
     };
   }
+}
+
+async function getCachedConversionResult(cache, filePath, stat) {
+  const cached = cache.get(filePath);
+  return (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size)
+    ? {
+        markdown: cached.markdown,
+        previewInfo: {
+          kind: "converted",
+          sourceExtension: getExtension(filePath),
+          sourceLabel: getFileTypeLabel(filePath),
+          durationMs: cached.durationMs,
+          fromCache: true,
+        },
+      }
+    : null;
+}
+
+function createDocumentConverter({ getMarkdownThem: injectedGetMarkdownThem } = {}) {
+  const cache = new Map();
+  const resolveMarkdownThem = injectedGetMarkdownThem || getMarkdownThem;
+
+  async function readMarkdown(filePath) {
+    const ext = getExtension(filePath);
+    return readMarkdownFile(ext, filePath, resolveMarkdownThem, cache);
+  }
 
   return {
     readMarkdown,
@@ -248,9 +246,12 @@ module.exports = {
   MARKDOWN_EXTENSIONS,
   TEXT_DOCUMENT_EXTENSIONS,
   CONVERSION_QUALITY_WARNING,
+  classifyExtension,
   createDocumentConverter,
+  createFailureMarkdown,
   getExtension,
   getFileTypeLabel,
+  getMarkdownThem,
   getOpenDialogFilters,
   isConvertibleDocumentFilePath,
   isExtraDocumentFilePath,
@@ -258,5 +259,8 @@ module.exports = {
   isMarkdownFilePath,
   isSupportedFilePath,
   isTextDocumentFilePath,
+  normalizePreviewMarkdown,
+  readMarkdownFile,
+  getCachedConversionResult,
   stripKnownExtension,
 };

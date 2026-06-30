@@ -210,6 +210,10 @@ function launchWindowsUpdateHelper(payload, deps = {}) {
 
 module.exports = {
   createWindowsUpdateScript,
+  createInstallerUpdateScript,
+  createExeUpdateScript,
+  createZipUpdateScript,
+  escapeForDoubleQuotes,
   isInstallerExe,
   launchWindowsUpdateHelper,
 };

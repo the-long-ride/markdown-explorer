@@ -22,14 +22,13 @@ function normalizePathKey(filePath) {
 
 function isSupportedWatchPath(filePath, documentConversionEnabled) {
   const ext = path.extname(String(filePath || "")).toLowerCase();
-  if (!ext) return true;
-  if (BASE_SUPPORTED_EXTENSIONS.has(ext)) return true;
-  return documentConversionEnabled === true && EXTRA_DOCUMENT_EXTENSIONS.has(ext);
+  return !ext ? true
+    : BASE_SUPPORTED_EXTENSIONS.has(ext) ? true
+    : documentConversionEnabled === true && EXTRA_DOCUMENT_EXTENSIONS.has(ext);
 }
 
 function isWatchChangeRelevant({ changedPath, documentConversionEnabled } = {}) {
-  if (!changedPath) return true;
-  return isSupportedWatchPath(changedPath, documentConversionEnabled);
+  return !changedPath ? true : isSupportedWatchPath(changedPath, documentConversionEnabled);
 }
 
 function shouldNotifyCurrentFileChanged({
@@ -37,13 +36,14 @@ function shouldNotifyCurrentFileChanged({
   changedPath,
   currentFileStillAvailable = true,
 } = {}) {
-  if (!currentFile) return false;
-  if (currentFileStillAvailable === false) return true;
-  if (!changedPath) return false;
-  return normalizePathKey(currentFile) === normalizePathKey(changedPath);
+  return !currentFile ? false
+    : currentFileStillAvailable === false ? true
+    : !changedPath ? false
+    : normalizePathKey(currentFile) === normalizePathKey(changedPath);
 }
 
 module.exports = {
+  isSupportedWatchPath,
   isWatchChangeRelevant,
   shouldNotifyCurrentFileChanged,
 };

@@ -1,8 +1,9 @@
 const path = require("path");
 
 function normalizeWatchFilename(filename) {
-  if (Buffer.isBuffer(filename)) return filename.toString();
-  return typeof filename === "string" ? filename : "";
+  return Buffer.isBuffer(filename) ? filename.toString()
+    : typeof filename === "string" ? filename
+    : "";
 }
 
 function createWatchChange(workspacePath, eventType, filename) {
@@ -15,14 +16,73 @@ function createWatchChange(workspacePath, eventType, filename) {
 }
 
 function mergeWatchChange(currentChange, nextChange) {
-  if (!nextChange) return currentChange;
-  if (!currentChange) return nextChange;
-  if (currentChange.fsPath && currentChange.fsPath === nextChange.fsPath) return nextChange;
-  return {
-    eventType: "mixed",
-    relativePath: "",
-    fsPath: "",
-  };
+  return !nextChange ? currentChange
+    : !currentChange ? nextChange
+    : (currentChange.fsPath && currentChange.fsPath === nextChange.fsPath) ? nextChange
+    : { eventType: "mixed", relativePath: "", fsPath: "" };
+}
+
+function clearPendingTimerFn(debounceTimer, clearTimeoutImpl) {
+  if (debounceTimer.value) {
+    clearTimeoutImpl(debounceTimer.value);
+    debounceTimer.value = null;
+  }
+}
+
+function closeCurrentWatcherFn(currentWatcher, onWatchError) {
+  try {
+    currentWatcher.value?.close?.();
+  } catch (error) {
+    onWatchError(error);
+  }
+  currentWatcher.value = null;
+}
+
+async function runRefreshFn(state, onRefresh) {
+  if (!state.workspacePath.value || state.generation.value !== state.watchGeneration.value || state.workspacePath.value !== state.currentWorkspacePath.value) {
+    return;
+  }
+  if (state.refreshInFlight.value) {
+    state.refreshQueued.value = true;
+    return;
+  }
+
+  const change = state.pendingChange.value;
+  state.pendingChange.value = null;
+  state.refreshInFlight.value = true;
+  try {
+    await onRefresh(state.workspacePath.value, change);
+  } finally {
+    state.refreshInFlight.value = false;
+    if (state.refreshQueued.value && state.generation.value === state.watchGeneration.value && state.workspacePath.value === state.currentWorkspacePath.value) {
+      state.refreshQueued.value = false;
+      scheduleRefreshFn(state, onRefresh, null);
+    }
+  }
+}
+
+function scheduleRefreshFn(state, onRefresh, change) {
+  state.pendingChange.value = mergeWatchChange(state.pendingChange.value, change);
+  clearPendingTimerFn(state.debounceTimer, state.clearTimeoutImpl);
+  state.debounceTimer.value = state.setTimeoutImpl(() => {
+    state.debounceTimer.value = null;
+    void runRefreshFn(state, onRefresh);
+  }, state.debounceMs);
+}
+
+function bindWatcherFn(state, onRefresh) {
+  try {
+    state.currentWatcher.value = state.fs.watch(state.workspacePath.value, { recursive: true }, (eventType, filename) => {
+      scheduleRefreshFn(
+        state,
+        onRefresh,
+        createWatchChange(state.workspacePath.value, eventType, filename),
+      );
+    });
+  } catch (error) {
+    state.currentWatcher.value = null;
+    state.onWatchError(error);
+  }
 }
 
 function createWorkspaceWatchController({
@@ -33,93 +93,60 @@ function createWorkspaceWatchController({
   onRefresh,
   onWatchError = (error) => console.error("Workspace watch failed:", error),
 }) {
-  let currentWorkspacePath = null;
-  let currentWatcher = null;
-  let debounceTimer = null;
-  let watchGeneration = 0;
-  let refreshInFlight = false;
-  let refreshQueued = false;
-  let pendingChange = null;
+  const state = {
+    currentWorkspacePath: { value: null },
+    currentWatcher: { value: null },
+    debounceTimer: { value: null },
+    watchGeneration: { value: 0 },
+    refreshInFlight: { value: false },
+    refreshQueued: { value: false },
+    pendingChange: { value: null },
+    workspacePath: { value: null },
+    generation: { value: 0 },
+    debounceMs,
+    fs,
+    setTimeoutImpl: setTimeout,
+    clearTimeoutImpl: clearTimeout,
+    onWatchError,
+  };
 
   function clearPendingTimer() {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-      debounceTimer = null;
-    }
+    clearPendingTimerFn(state.debounceTimer, state.clearTimeoutImpl);
   }
 
   function closeCurrentWatcher() {
-    try {
-      currentWatcher?.close?.();
-    } catch (error) {
-      onWatchError(error);
-    }
-    currentWatcher = null;
+    closeCurrentWatcherFn(state.currentWatcher, state.onWatchError);
   }
 
-  async function runRefresh(workspacePath, generation) {
-    if (!workspacePath || generation !== watchGeneration || workspacePath !== currentWorkspacePath) {
-      return;
-    }
-    if (refreshInFlight) {
-      refreshQueued = true;
-      return;
-    }
-
-    const change = pendingChange;
-    pendingChange = null;
-    refreshInFlight = true;
-    try {
-      await onRefresh(workspacePath, change);
-    } finally {
-      refreshInFlight = false;
-      if (refreshQueued && generation === watchGeneration && workspacePath === currentWorkspacePath) {
-        refreshQueued = false;
-        scheduleRefresh(workspacePath, generation);
-      }
-    }
-  }
-
-  function scheduleRefresh(workspacePath = currentWorkspacePath, generation = watchGeneration, change = null) {
-    pendingChange = mergeWatchChange(pendingChange, change);
-    clearPendingTimer();
-    debounceTimer = setTimeout(() => {
-      debounceTimer = null;
-      void runRefresh(workspacePath, generation);
-    }, debounceMs);
+  function scheduleRefresh(workspacePath = state.currentWorkspacePath.value, generation = state.watchGeneration.value, change = null) {
+    state.workspacePath.value = workspacePath;
+    state.generation.value = generation;
+    scheduleRefreshFn(state, onRefresh, change);
   }
 
   function bindWatcher(workspacePath, generation) {
-    try {
-      currentWatcher = fs.watch(workspacePath, { recursive: true }, (eventType, filename) => {
-        scheduleRefresh(
-          workspacePath,
-          generation,
-          createWatchChange(workspacePath, eventType, filename),
-        );
-      });
-    } catch (error) {
-      currentWatcher = null;
-      onWatchError(error);
-    }
+    state.workspacePath.value = workspacePath;
+    state.generation.value = generation;
+    bindWatcherFn(state, onRefresh);
   }
 
   function watchWorkspace(workspacePath) {
-    watchGeneration += 1;
-    currentWorkspacePath = workspacePath || null;
-    refreshQueued = false;
-    pendingChange = null;
+    state.watchGeneration.value += 1;
+    state.currentWorkspacePath.value = workspacePath || null;
+    state.refreshQueued.value = false;
+    state.pendingChange.value = null;
     clearPendingTimer();
     closeCurrentWatcher();
 
-    if (!currentWorkspacePath) return;
-    bindWatcher(currentWorkspacePath, watchGeneration);
+    if (state.currentWorkspacePath.value) {
+      bindWatcher(state.currentWorkspacePath.value, state.watchGeneration.value);
+    }
   }
 
   function dispose() {
-    currentWorkspacePath = null;
-    refreshQueued = false;
-    pendingChange = null;
+    state.currentWorkspacePath.value = null;
+    state.refreshQueued.value = false;
+    state.pendingChange.value = null;
     clearPendingTimer();
     closeCurrentWatcher();
   }
@@ -133,4 +160,12 @@ function createWorkspaceWatchController({
 
 module.exports = {
   createWorkspaceWatchController,
+  clearPendingTimerFn,
+  closeCurrentWatcherFn,
+  runRefreshFn,
+  scheduleRefreshFn,
+  bindWatcherFn,
+  normalizeWatchFilename,
+  createWatchChange,
+  mergeWatchChange,
 };

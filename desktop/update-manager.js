@@ -49,6 +49,125 @@ async function defaultDownloadUpdateFile({ url, destinationPath, onProgress }) {
   });
 }
 
+function buildScheduledState(manifest) {
+  return {
+    status: "scheduled-on-exit",
+    version: manifest.version,
+    downloadedVersion: manifest.version,
+    downloadedFileName: path.basename(manifest.stagedFilePath),
+    progressPercent: 100,
+    error: "",
+  };
+}
+
+function getHelperPayload(manifest, resultPath) {
+  return {
+    stagedFilePath: manifest.stagedFilePath,
+    targetExePath: manifest.targetExePath,
+    workingDirectory: manifest.workingDirectory,
+    relaunchArgs: manifest.relaunchArgs || [],
+    resultFilePath: resultPath,
+  };
+}
+
+function readResultCode(fsImpl, resultPath) {
+  if (!fsImpl.existsSync(resultPath)) return "";
+  try {
+    return String(fsImpl.readFileSync(resultPath, "utf8") || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function clearResultCode(fsImpl, resultPath) {
+  if (fsImpl.existsSync(resultPath)) {
+    fsImpl.unlinkSync(resultPath);
+  }
+}
+
+function readManifest(fsImpl, manifestPath) {
+  if (!fsImpl.existsSync(manifestPath)) return null;
+  try {
+    return JSON.parse(fsImpl.readFileSync(manifestPath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function clearManifest(fsImpl, manifestPath) {
+  if (fsImpl.existsSync(manifestPath)) {
+    fsImpl.unlinkSync(manifestPath);
+  }
+}
+
+function writeManifest(fsImpl, manifestDir, manifestPath, manifest) {
+  fsImpl.mkdirSync(manifestDir, { recursive: true });
+  fsImpl.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+}
+
+function restorePersistedState(fsImpl, manifestPath, resultPath) {
+  const resultCode = readResultCode(fsImpl, resultPath);
+  if (resultCode) {
+    clearResultCode(fsImpl, resultPath);
+    return {
+      status: resultCode === "applied" ? "idle" : "error",
+      version: "",
+      downloadedVersion: "",
+      downloadedFileName: "",
+      progressPercent: 0,
+      error: resultCode === "applied" ? "" : resultCode,
+    };
+  }
+
+  const manifest = readManifest(fsImpl, manifestPath);
+  if (!manifest) return createEmptyState();
+  if (!fsImpl.existsSync(manifest.stagedFilePath)) {
+    clearManifest(fsImpl, manifestPath);
+    return {
+      status: "error",
+      version: manifest.version || "",
+      downloadedVersion: "",
+      downloadedFileName: "",
+      progressPercent: 0,
+      error: "missing-staged-update",
+    };
+  }
+  return { state: buildScheduledState(manifest), manifest };
+}
+
+function startDownloadState(version, fileName, progressPercent, error = "") {
+  return {
+    status: "downloading",
+    version,
+    downloadedVersion: "",
+    downloadedFileName: fileName,
+    progressPercent,
+    error,
+  };
+}
+
+function downloadedState(version, fileName) {
+  return {
+    status: "downloaded",
+    version,
+    downloadedVersion: version,
+    downloadedFileName: fileName,
+    progressPercent: 100,
+    error: "",
+  };
+}
+
+function errorState(version, fileName, error) {
+  return {
+    status: "error",
+    version,
+    downloadedVersion: "",
+    downloadedFileName: fileName,
+    progressPercent: 0,
+    error: error instanceof Error ? error.message : "download-failed",
+  };
+}
+
 function createUpdateManager(deps = {}) {
   const fsImpl = deps.fs || fs;
   const pathImpl = deps.path || path;
@@ -100,100 +219,29 @@ function createUpdateManager(deps = {}) {
     return resultPath;
   }
 
-  function clearManifest() {
-    if (fsImpl.existsSync(manifestPath)) {
-      fsImpl.unlinkSync(manifestPath);
-    }
+  function doClearManifest() {
+    clearManifest(fsImpl, manifestPath);
   }
 
-  function readResultCode() {
-    if (!fsImpl.existsSync(resultPath)) return "";
-    try {
-      return String(fsImpl.readFileSync(resultPath, "utf8") || "").trim();
-    } catch {
-      return "";
-    }
+  function doReadManifest() {
+    return readManifest(fsImpl, manifestPath);
   }
 
-  function clearResultCode() {
-    if (fsImpl.existsSync(resultPath)) {
-      fsImpl.unlinkSync(resultPath);
-    }
+  function doReadResultCode() {
+    return readResultCode(fsImpl, resultPath);
   }
 
-  function readManifest() {
-    if (!fsImpl.existsSync(manifestPath)) return null;
-    try {
-      return JSON.parse(fsImpl.readFileSync(manifestPath, "utf8"));
-    } catch {
-      return null;
-    }
+  function doClearResultCode() {
+    clearResultCode(fsImpl, resultPath);
   }
 
-  function writeManifest(manifest) {
-    fsImpl.mkdirSync(manifestDir, { recursive: true });
-    fsImpl.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
-  }
-
-  function buildScheduledState(manifest) {
-    return {
-      status: "scheduled-on-exit",
-      version: manifest.version,
-      downloadedVersion: manifest.version,
-      downloadedFileName: pathImpl.basename(manifest.stagedFilePath),
-      progressPercent: 100,
-      error: "",
-    };
-  }
-
-  function getHelperPayload(manifest) {
-    return {
-      stagedFilePath: manifest.stagedFilePath,
-      targetExePath: manifest.targetExePath,
-      workingDirectory: manifest.workingDirectory,
-      relaunchArgs: manifest.relaunchArgs || [],
-      resultFilePath: resultPath,
-    };
+  function doRestorePersistedState() {
+    return restorePersistedState(fsImpl, manifestPath, resultPath);
   }
 
   function launchHelperForManifest(manifest) {
-    launchHelper(getHelperPayload(manifest));
+    launchHelper(getHelperPayload(manifest, resultPath));
     helperLaunched = true;
-  }
-
-  function restorePersistedState() {
-    const resultCode = readResultCode();
-    if (resultCode) {
-      clearResultCode();
-      return {
-        status: resultCode === "applied" ? "idle" : "error",
-        version: "",
-        downloadedVersion: "",
-        downloadedFileName: "",
-        progressPercent: 0,
-        error: resultCode === "applied" ? "" : resultCode,
-      };
-    }
-
-    const manifest = readManifest();
-    if (!manifest) return createEmptyState();
-    if (!fsImpl.existsSync(manifest.stagedFilePath)) {
-      clearManifest();
-      return {
-        status: "error",
-        version: manifest.version || "",
-        downloadedVersion: "",
-        downloadedFileName: "",
-        progressPercent: 0,
-        error: "missing-staged-update",
-      };
-    }
-    lastDownloaded = {
-      version: manifest.version,
-      downloadUrl: manifest.downloadUrl,
-      stagedFilePath: manifest.stagedFilePath,
-    };
-    return buildScheduledState(manifest);
   }
 
   async function startDownload({ version, url }) {
@@ -201,14 +249,7 @@ function createUpdateManager(deps = {}) {
     helperLaunched = false;
     const fileName = getUpdateAssetFileName(url);
     const destinationPath = pathImpl.join(stagingDir, fileName);
-    emitState({
-      status: "downloading",
-      version,
-      downloadedVersion: "",
-      downloadedFileName: fileName,
-      progressPercent: 0,
-      error: "",
-    });
+    emitState(startDownloadState(version, fileName, 0));
 
     try {
       await downloadUpdateFile({
@@ -216,12 +257,8 @@ function createUpdateManager(deps = {}) {
         destinationPath,
         onProgress(progress) {
           emitState({
-            status: "downloading",
-            version,
-            downloadedVersion: "",
-            downloadedFileName: fileName,
+            ...startDownloadState(version, fileName, 0),
             progressPercent: Number(progress?.percent) || 0,
-            error: "",
           });
         },
       });
@@ -230,27 +267,13 @@ function createUpdateManager(deps = {}) {
         downloadUrl: url,
         stagedFilePath: destinationPath,
       };
-      emitState({
-        status: "downloaded",
-        version,
-        downloadedVersion: version,
-        downloadedFileName: fileName,
-        progressPercent: 100,
-        error: "",
-      });
+      emitState(downloadedState(version, fileName));
       return { stagedFilePath: destinationPath, fileName };
     } catch (error) {
       try {
         if (fsImpl.existsSync(destinationPath)) fsImpl.unlinkSync(destinationPath);
       } catch {}
-      emitState({
-        status: "error",
-        version,
-        downloadedVersion: "",
-        downloadedFileName: fileName,
-        progressPercent: 0,
-        error: error instanceof Error ? error.message : "download-failed",
-      });
+      emitState(errorState(version, fileName, error));
       throw error;
     }
   }
@@ -266,7 +289,7 @@ function createUpdateManager(deps = {}) {
       relaunchArgs,
       createdAt: Date.now(),
     };
-    writeManifest(manifest);
+    writeManifest(fsImpl, manifestDir, manifestPath, manifest);
     lastDownloaded = {
       version: manifest.version,
       downloadUrl: manifest.downloadUrl,
@@ -278,13 +301,13 @@ function createUpdateManager(deps = {}) {
 
   async function restartAndApplyUpdate() {
     ensureWindows();
-    const manifest = readManifest() || (lastDownloaded ? await schedulePendingUpdate(lastDownloaded) : null);
+    const manifest = doReadManifest() || (lastDownloaded ? await schedulePendingUpdate(lastDownloaded) : null);
     if (!manifest) throw new Error("No downloaded update is ready to apply.");
     emitState({
       ...buildScheduledState(manifest),
       status: "applying",
     });
-    clearManifest();
+    doClearManifest();
     launchHelperForManifest(manifest);
     return true;
   }
@@ -292,18 +315,40 @@ function createUpdateManager(deps = {}) {
   async function applyPendingUpdateOnQuit() {
     ensureWindows();
     if (helperLaunched) return false;
-    const manifest = readManifest();
+    const manifest = doReadManifest();
     if (!manifest) return false;
-    clearManifest();
+    doClearManifest();
     launchHelperForManifest(manifest);
     return true;
   }
 
   function sendCurrentState() {
-    emitState(state.status === "idle" ? restorePersistedState() : state);
+    const restored = doRestorePersistedState();
+    if (restored.manifest) {
+      lastDownloaded = {
+        version: restored.manifest.version,
+        downloadUrl: restored.manifest.downloadUrl,
+        stagedFilePath: restored.manifest.stagedFilePath,
+      };
+      emitState(restored.state);
+    } else if (restored.state) {
+      emitState(restored.state);
+    } else {
+      emitState(restored);
+    }
   }
 
-  state = restorePersistedState();
+  const initial = doRestorePersistedState();
+  if (initial.manifest) {
+    lastDownloaded = {
+      version: initial.manifest.version,
+      downloadUrl: initial.manifest.downloadUrl,
+      stagedFilePath: initial.manifest.stagedFilePath,
+    };
+    state = initial.state;
+  } else {
+    state = initial.state || initial;
+  }
 
   return {
     getManifestPath,
@@ -316,12 +361,24 @@ function createUpdateManager(deps = {}) {
     restartAndApplyUpdate,
     applyPendingUpdateOnQuit,
     sendCurrentState,
-    clearManifest,
-    readManifest,
+    clearManifest: doClearManifest,
+    readManifest: doReadManifest,
   };
 }
 
 module.exports = {
   createUpdateManager,
   getUpdateAssetFileName,
+  createEmptyState,
+  buildScheduledState,
+  getHelperPayload,
+  readResultCode,
+  clearResultCode,
+  readManifest,
+  clearManifest,
+  writeManifest,
+  restorePersistedState,
+  startDownloadState,
+  downloadedState,
+  errorState,
 };

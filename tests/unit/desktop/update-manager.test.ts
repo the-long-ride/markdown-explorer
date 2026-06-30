@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createUpdateManager, getUpdateAssetFileName } from '../../../desktop/update-manager.js';
+import { createUpdateManager, getUpdateAssetFileName, createEmptyState, buildScheduledState, getHelperPayload, readResultCode, clearResultCode, readManifest, clearManifest, writeManifest, restorePersistedState, startDownloadState, downloadedState, errorState } from '../../../desktop/update-manager.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -153,5 +153,212 @@ describe('createUpdateManager', () => {
     expect(sent.at(-1).state.status).toBe('error');
     expect(sent.at(-1).state.error).toBe('install-failed');
     expect(fs.existsSync(manager.getResultPath())).toBe(false);
+  });
+});
+
+describe('buildScheduledState', () => {
+  test('creates scheduled state from manifest', () => {
+    const state = buildScheduledState({ version: '1.0', stagedFilePath: '/tmp/update.exe' });
+    expect(state.status).toBe('scheduled-on-exit');
+    expect(state.version).toBe('1.0');
+    expect(state.downloadedVersion).toBe('1.0');
+    expect(state.downloadedFileName).toBe('update.exe');
+    expect(state.progressPercent).toBe(100);
+    expect(state.error).toBe('');
+  });
+});
+
+describe('getHelperPayload', () => {
+  test('creates helper payload with resultPath', () => {
+    const payload = getHelperPayload(
+      { stagedFilePath: '/tmp/update.exe', targetExePath: '/app/app.exe', workingDirectory: '/app', relaunchArgs: ['--flag'] },
+      '/tmp/result.txt',
+    );
+    expect(payload.stagedFilePath).toBe('/tmp/update.exe');
+    expect(payload.targetExePath).toBe('/app/app.exe');
+    expect(payload.resultFilePath).toBe('/tmp/result.txt');
+    expect(payload.relaunchArgs).toEqual(['--flag']);
+  });
+
+  test('defaults relaunchArgs to empty array when not provided', () => {
+    const payload = getHelperPayload(
+      { stagedFilePath: '/tmp/update.exe', targetExePath: '/app/app.exe', workingDirectory: '/app' } as any,
+      '/tmp/result.txt',
+    );
+    expect(payload.relaunchArgs).toEqual([]);
+  });
+});
+
+describe('readResultCode', () => {
+  test('returns empty string when result file does not exist', () => {
+    expect(readResultCode(fs, '/nonexistent/path/result.txt')).toBe('');
+  });
+
+  test('returns trimmed content when result file exists', () => {
+    const dir = makeTempDir('um-rrc-');
+    const f = path.join(dir, 'result.txt');
+    fs.writeFileSync(f, '  applied  \n');
+    expect(readResultCode(fs, f)).toBe('applied');
+  });
+
+  test('returns empty string on read error', () => {
+    const dir = makeTempDir('um-rrc-err-');
+    const f = path.join(dir, 'result.txt');
+    fs.writeFileSync(f, 'content');
+    const mockFs = { ...fs, readFileSync: () => { throw new Error('read fail'); }, existsSync: () => true };
+    expect(readResultCode(mockFs as any, f)).toBe('');
+  });
+});
+
+describe('clearResultCode', () => {
+  test('deletes result file when it exists', () => {
+    const dir = makeTempDir('um-clrc-');
+    const f = path.join(dir, 'result.txt');
+    fs.writeFileSync(f, 'applied');
+    clearResultCode(fs, f);
+    expect(fs.existsSync(f)).toBe(false);
+  });
+
+  test('does nothing when result file does not exist', () => {
+    clearResultCode(fs, '/nonexistent/path/result.txt');
+  });
+});
+
+describe('readManifest', () => {
+  test('returns null when manifest does not exist', () => {
+    expect(readManifest(fs, '/nonexistent/path/manifest.json')).toBeNull();
+  });
+
+  test('returns parsed manifest when file exists', () => {
+    const dir = makeTempDir('um-rm-');
+    const f = path.join(dir, 'manifest.json');
+    fs.writeFileSync(f, JSON.stringify({ version: '1.0' }));
+    expect(readManifest(fs, f)).toEqual({ version: '1.0' });
+  });
+
+  test('returns null when manifest is invalid JSON', () => {
+    const dir = makeTempDir('um-rm-invalid-');
+    const f = path.join(dir, 'manifest.json');
+    fs.writeFileSync(f, 'not json');
+    expect(readManifest(fs, f)).toBeNull();
+  });
+});
+
+describe('clearManifest', () => {
+  test('deletes manifest file when it exists', () => {
+    const dir = makeTempDir('um-clm-');
+    const f = path.join(dir, 'manifest.json');
+    fs.writeFileSync(f, '{}');
+    clearManifest(fs, f);
+    expect(fs.existsSync(f)).toBe(false);
+  });
+
+  test('does nothing when manifest does not exist', () => {
+    clearManifest(fs, '/nonexistent/path/manifest.json');
+  });
+});
+
+describe('writeManifest', () => {
+  test('creates directory and writes manifest', () => {
+    const dir = makeTempDir('um-wm-');
+    const manifestDir = path.join(dir, 'updates');
+    const manifestPath = path.join(manifestDir, 'manifest.json');
+    writeManifest(fs, manifestDir, manifestPath, { version: '1.0' });
+    expect(fs.existsSync(manifestPath)).toBe(true);
+    expect(JSON.parse(fs.readFileSync(manifestPath, 'utf8'))).toEqual({ version: '1.0' });
+  });
+});
+
+describe('restorePersistedState', () => {
+  test('returns empty state when no result or manifest', () => {
+    const dir = makeTempDir('um-rps-empty-');
+    const manifestPath = path.join(dir, 'manifest.json');
+    const resultPath = path.join(dir, 'result.txt');
+    const result = restorePersistedState(fs, manifestPath, resultPath);
+    expect(result).toEqual(createEmptyState());
+  });
+
+  test('returns applied/idle state when result is "applied"', () => {
+    const dir = makeTempDir('um-rps-applied-');
+    const manifestPath = path.join(dir, 'manifest.json');
+    const resultPath = path.join(dir, 'result.txt');
+    fs.writeFileSync(resultPath, 'applied');
+    const result = restorePersistedState(fs, manifestPath, resultPath);
+    expect(result.status).toBe('idle');
+    expect(fs.existsSync(resultPath)).toBe(false);
+  });
+
+  test('returns error state when result is not "applied"', () => {
+    const dir = makeTempDir('um-rps-error-');
+    const manifestPath = path.join(dir, 'manifest.json');
+    const resultPath = path.join(dir, 'result.txt');
+    fs.writeFileSync(resultPath, 'install-failed');
+    const result = restorePersistedState(fs, manifestPath, resultPath);
+    expect(result.status).toBe('error');
+    expect(result.error).toBe('install-failed');
+  });
+
+  test('returns error state when manifest exists but staged file is missing', () => {
+    const dir = makeTempDir('um-rps-missing-');
+    const manifestPath = path.join(dir, 'manifest.json');
+    const resultPath = path.join(dir, 'result.txt');
+    fs.writeFileSync(manifestPath, JSON.stringify({ version: '1.0', stagedFilePath: '/nonexistent/file.exe', downloadUrl: 'http://example.com' }));
+    const result = restorePersistedState(fs, manifestPath, resultPath);
+    expect(result.status).toBe('error');
+    expect(result.error).toBe('missing-staged-update');
+    expect(fs.existsSync(manifestPath)).toBe(false);
+  });
+
+  test('returns scheduled state when manifest and staged file exist', () => {
+    const dir = makeTempDir('um-rps-scheduled-');
+    const manifestPath = path.join(dir, 'manifest.json');
+    const resultPath = path.join(dir, 'result.txt');
+    const stagedPath = path.join(dir, 'update.exe');
+    fs.writeFileSync(stagedPath, 'data');
+    fs.writeFileSync(manifestPath, JSON.stringify({ version: '1.0', stagedFilePath: stagedPath, downloadUrl: 'http://example.com' }));
+    const result: any = restorePersistedState(fs, manifestPath, resultPath);
+    expect(result.state.status).toBe('scheduled-on-exit');
+    expect(result.manifest).toBeTruthy();
+  });
+});
+
+describe('createEmptyState', () => {
+  test('creates default idle state', () => {
+    const state = createEmptyState();
+    expect(state.status).toBe('idle');
+    expect(state.version).toBe('');
+    expect(state.progressPercent).toBe(0);
+    expect(state.error).toBe('');
+  });
+});
+
+describe('startDownloadState', () => {
+  test('creates downloading state', () => {
+    const state = startDownloadState('v1', 'app.exe', 50);
+    expect(state.status).toBe('downloading');
+    expect(state.version).toBe('v1');
+    expect(state.progressPercent).toBe(50);
+  });
+});
+
+describe('downloadedState', () => {
+  test('creates downloaded state', () => {
+    const state = downloadedState('v1', 'app.exe');
+    expect(state.status).toBe('downloaded');
+    expect(state.progressPercent).toBe(100);
+  });
+});
+
+describe('errorState', () => {
+  test('creates error state from Error object', () => {
+    const state = errorState('v1', 'app.exe', new Error('fail'));
+    expect(state.status).toBe('error');
+    expect(state.error).toBe('fail');
+  });
+
+  test('creates error state from string error', () => {
+    const state = errorState('v1', 'app.exe', 'string fail' as any);
+    expect(state.status).toBe('error');
+    expect(state.error).toBe('download-failed');
   });
 });

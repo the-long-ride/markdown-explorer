@@ -204,7 +204,8 @@ class DesktopScanner {
     // 4. JSX title prop
     const jsxMatch = /<[A-Z]\w*\s+[^>]*?title=(?:(['"`])(.*?)\1|\{(['"`])(.*?)\3\})/.exec(content);
     if (jsxMatch) {
-      return jsxMatch[2]?.trim() ?? jsxMatch[4]?.trim() ?? null;
+      const title = (jsxMatch[2] ?? jsxMatch[4]);
+      return title ? title.trim() : null;
     }
 
     return null;
@@ -235,3 +236,4 @@ class DesktopScanner {
 }
 
 module.exports = DesktopScanner;
+module.exports.loadIgnorePatterns = loadIgnorePatterns;
