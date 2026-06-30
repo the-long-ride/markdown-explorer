@@ -1,3 +1,30 @@
+const path = require("path");
+
+function normalizeWatchFilename(filename) {
+  if (Buffer.isBuffer(filename)) return filename.toString();
+  return typeof filename === "string" ? filename : "";
+}
+
+function createWatchChange(workspacePath, eventType, filename) {
+  const relativePath = normalizeWatchFilename(filename);
+  return {
+    eventType: typeof eventType === "string" ? eventType : "change",
+    relativePath,
+    fsPath: relativePath ? path.join(workspacePath, relativePath) : "",
+  };
+}
+
+function mergeWatchChange(currentChange, nextChange) {
+  if (!nextChange) return currentChange;
+  if (!currentChange) return nextChange;
+  if (currentChange.fsPath && currentChange.fsPath === nextChange.fsPath) return nextChange;
+  return {
+    eventType: "mixed",
+    relativePath: "",
+    fsPath: "",
+  };
+}
+
 function createWorkspaceWatchController({
   fs,
   setTimeout,
@@ -12,6 +39,7 @@ function createWorkspaceWatchController({
   let watchGeneration = 0;
   let refreshInFlight = false;
   let refreshQueued = false;
+  let pendingChange = null;
 
   function clearPendingTimer() {
     if (debounceTimer) {
@@ -38,9 +66,11 @@ function createWorkspaceWatchController({
       return;
     }
 
+    const change = pendingChange;
+    pendingChange = null;
     refreshInFlight = true;
     try {
-      await onRefresh(workspacePath);
+      await onRefresh(workspacePath, change);
     } finally {
       refreshInFlight = false;
       if (refreshQueued && generation === watchGeneration && workspacePath === currentWorkspacePath) {
@@ -50,7 +80,8 @@ function createWorkspaceWatchController({
     }
   }
 
-  function scheduleRefresh(workspacePath = currentWorkspacePath, generation = watchGeneration) {
+  function scheduleRefresh(workspacePath = currentWorkspacePath, generation = watchGeneration, change = null) {
+    pendingChange = mergeWatchChange(pendingChange, change);
     clearPendingTimer();
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
@@ -60,8 +91,12 @@ function createWorkspaceWatchController({
 
   function bindWatcher(workspacePath, generation) {
     try {
-      currentWatcher = fs.watch(workspacePath, { recursive: true }, () => {
-        scheduleRefresh(workspacePath, generation);
+      currentWatcher = fs.watch(workspacePath, { recursive: true }, (eventType, filename) => {
+        scheduleRefresh(
+          workspacePath,
+          generation,
+          createWatchChange(workspacePath, eventType, filename),
+        );
       });
     } catch (error) {
       currentWatcher = null;
@@ -73,6 +108,7 @@ function createWorkspaceWatchController({
     watchGeneration += 1;
     currentWorkspacePath = workspacePath || null;
     refreshQueued = false;
+    pendingChange = null;
     clearPendingTimer();
     closeCurrentWatcher();
 
@@ -83,6 +119,7 @@ function createWorkspaceWatchController({
   function dispose() {
     currentWorkspacePath = null;
     refreshQueued = false;
+    pendingChange = null;
     clearPendingTimer();
     closeCurrentWatcher();
   }

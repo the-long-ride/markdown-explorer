@@ -386,8 +386,8 @@ export function DesktopTabBar({
           onClose={() => setContextMenu(null)}
         />
       )}
-      <TooltipButton className="btn btn--icon desktop-tabbar__new" onClick={onNewTab} tooltip={t.tooltips.newTab} icon={<PlusIcon />} />
       <div className="desktop-tabbar__spacer" />
+      <TooltipButton className="btn btn--icon desktop-tabbar__new" onClick={onNewTab} tooltip={t.tooltips.newTab} icon={<PlusIcon />} />
       <ToolbarActionMenu
         triggerTooltip={t.topbar.moreActions}
         homeLabel={t.topbar.home}

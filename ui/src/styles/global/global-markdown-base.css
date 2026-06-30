@@ -397,3 +397,45 @@
   text-decoration: line-through;
   color: var(--txm);
 }
+.current-file-change-notice {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-block: 8px;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--bd-s));
+  border-left-color: color-mix(in srgb, var(--accent) 72%, var(--bd-s));
+  background: color-mix(in srgb, var(--bg-s) 82%, var(--accent) 18%);
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--shadow) 10%, transparent);
+  backdrop-filter: blur(14px);
+}
+.current-file-change-notice__body {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.current-file-change-notice__button {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding-inline: 10px;
+  font-weight: 600;
+}
+.current-file-change-notice__button:focus-visible {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--bg) 72%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+@media (max-width: 720px) {
+  .current-file-change-notice__body {
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+

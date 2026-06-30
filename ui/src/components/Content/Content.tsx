@@ -68,7 +68,7 @@ export function Content({
   scrollRef,
   suppressWelcome = false,
 }: ContentProps) {
-  const { state, navigate, updateSettings } = useAppState();
+  const { state, navigate, refresh, updateSettings } = useAppState();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
   const { push } = useNavigation();
@@ -793,6 +793,22 @@ export function Content({
               ref={bodyRef}
               aria-live="polite"
             >
+              {state.staleContentFilePath === state.currentFile && (
+                <div className="document-preview-notice current-file-change-notice" role="status">
+                  <AlertTriangleIcon size={16} />
+                  <div className="document-preview-notice__body current-file-change-notice__body">
+                    <span>{previewCopy.currentFileChangedOnDisk}</span>
+                    <button
+                      type="button"
+                      className="btn current-file-change-notice__button"
+                      onClick={refresh}
+                    >
+                      {previewCopy.refreshCurrentFile}
+                    </button>
+                    <span>{previewCopy.currentFileChangedSuffix}</span>
+                  </div>
+                </div>
+              )}
               {previewInfo && (
                 <div
                   className={`document-preview-notice document-preview-notice--${previewInfo.kind}`}
@@ -831,3 +847,6 @@ export function Content({
     </main>
   );
 }
+
+
+

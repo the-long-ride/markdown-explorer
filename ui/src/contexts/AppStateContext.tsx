@@ -109,6 +109,8 @@ export interface AppState {
   loadingDetail: string;
   /** Metadata for converted or imported previews */
   previewInfo: DocumentPreviewInfo | null;
+  /** Current file changed on disk and waits for user refresh */
+  staleContentFilePath: string | null;
   /** Nav not found href */
   notFoundHref: string | null;
   /** Workspace path that could not be opened */
@@ -176,6 +178,7 @@ const initialState: AppState = {
   loadingLabel: 'Loading docs...',
   loadingDetail: '',
   previewInfo: null,
+  staleContentFilePath: null,
   notFoundHref: null,
   workspaceUnavailablePath: null,
   workspaceUnavailableReason: null,
@@ -275,6 +278,15 @@ export type Action =
       recentWorkspaces: readonly RecentWorkspace[];
     }
   | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
+  | {
+      type: 'WORKSPACE_FILES_CHANGED';
+      fileList: MdFile[];
+      tree: FolderNode | null;
+      workspaceName: string;
+      workspacePath?: string;
+      documentConversionEnabled?: boolean;
+    }
+  | { type: 'CURRENT_FILE_CHANGED'; filePath: string }
   | { type: 'NAV_NOT_FOUND'; href: string }
   | { type: 'ACTIVATE_CONTENT_TAB'; filePath: string }
   | { type: 'CLOSE_CONTENT_TAB'; filePath: string }
@@ -590,6 +602,7 @@ function reducer(state: AppState, action: Action): AppState {
         isLoading: workspaceChanged
           ? (action.workspaceName ? state.isLoading : false)
           : false,
+        staleContentFilePath: null,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
         contentTabs: restoredContentTabs,
@@ -630,6 +643,7 @@ function reducer(state: AppState, action: Action): AppState {
         isLoading: false,
         loadingLabel: '',
         loadingDetail: '',
+        staleContentFilePath: null,
         notFoundHref: null,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -659,6 +673,52 @@ function reducer(state: AppState, action: Action): AppState {
         activeContentTabPath: filePath,
       };
     }
+
+    case 'WORKSPACE_FILES_CHANGED': {
+      const nextWorkspaceKey = getWorkspaceScopeKey(action.workspacePath, action.workspaceName);
+      const currentWorkspaceKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
+      const workspaceChanged = nextWorkspaceKey !== currentWorkspaceKey;
+      const reconciledScopeFocus = reconcileScopeFocusSetting({
+        scopeFocus: state.settings.scopeFocus,
+        scopeKey: nextWorkspaceKey,
+        previousFileList: state.fileList,
+        nextFileList: action.fileList,
+        previousTree: state.tree,
+        includeNewFiles: !workspaceChanged && state.fileList.length > 0,
+      });
+      const reconciledSearchScopeFocus = reconcileScopeFocusSetting({
+        scopeFocus: state.settings.searchScopeFocus,
+        scopeKey: nextWorkspaceKey,
+        previousFileList: state.fileList,
+        nextFileList: action.fileList,
+        previousTree: state.tree,
+        includeNewFiles: !workspaceChanged && state.fileList.length > 0,
+      });
+      return {
+        ...state,
+        fileList: action.fileList,
+        tree: action.tree,
+        workspaceName: action.workspaceName,
+        workspacePath: action.workspacePath,
+        settings: {
+          ...state.settings,
+          documentConversion: action.documentConversionEnabled ?? state.settings.documentConversion,
+          scopeFocus: reconciledScopeFocus,
+          searchScopeFocus: reconciledSearchScopeFocus,
+        },
+        contentTabs: refreshContentTabMetadata(state.contentTabs, action.fileList),
+        isLoading: false,
+        workspaceUnavailablePath: null,
+        workspaceUnavailableReason: null,
+      };
+    }
+
+    case 'CURRENT_FILE_CHANGED':
+      if (normalizePathKey(state.currentFile ?? '') !== normalizePathKey(action.filePath)) return state;
+      return {
+        ...state,
+        staleContentFilePath: action.filePath,
+      };
 
     case 'NAV_NOT_FOUND':
       return {
@@ -754,6 +814,7 @@ function reducer(state: AppState, action: Action): AppState {
         isLoading: true,
         loadingLabel: action.label || 'Loading docs...',
         loadingDetail: action.detail || '',
+        staleContentFilePath: null,
         notFoundHref: null,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -975,6 +1036,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             documentConversionEnabled: msg.documentConversionEnabled,
             isMaximized: msg.isMaximized,
           });
+          break;
+        case 'workspaceFilesChanged':
+          dispatch({
+            type: 'WORKSPACE_FILES_CHANGED',
+            fileList: msg.fileList,
+            tree: msg.tree,
+            workspaceName: msg.workspaceName,
+            workspacePath: msg.workspacePath,
+            documentConversionEnabled: msg.documentConversionEnabled,
+          });
+          break;
+        case 'currentFileChanged':
+          dispatch({ type: 'CURRENT_FILE_CHANGED', filePath: msg.filePath });
           break;
         case 'recentWorkspacesChanged':
           dispatch({
@@ -1319,3 +1393,6 @@ export function useAppState(): AppStateContextValue {
   if (!ctx) throw new Error('useAppState must be used within AppStateProvider');
   return ctx;
 }
+
+
+

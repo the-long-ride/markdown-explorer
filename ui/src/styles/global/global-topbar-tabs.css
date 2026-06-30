@@ -115,7 +115,9 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
+  width: max-content;
   min-width: 196px;
+  max-width: calc(100vw - 16px);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -132,7 +134,7 @@ body {
 
 .toolbar-action-menu__item {
   width: 100%;
-  min-width: 0;
+  min-width: max-content;
   min-height: 30px;
   display: flex;
   align-items: center;
@@ -187,8 +189,9 @@ body {
 }
 
 .toolbar-action-menu__item .btn-label {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
+  white-space: nowrap;
   text-align: left;
 }
 

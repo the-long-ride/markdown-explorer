@@ -46,6 +46,10 @@ let workspaceWatch = null;
 
 const debugTools = createDebugTools(app);
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
+const {
+  isWatchChangeRelevant,
+  shouldNotifyCurrentFileChanged,
+} = require("./workspace-refresh");
 
 function ensureHeavyModules() {
   if (DesktopScanner) return;
@@ -674,6 +678,8 @@ function isCurrentFileStillAvailable() {
 async function refreshActiveWorkspace({
   showLoading = false,
   loadingLabel = "Refreshing workspace...",
+  preserveCurrentContent = false,
+  changedPath = "",
 } = {}) {
   if (!activeWorkspace) return;
 
@@ -685,6 +691,21 @@ async function refreshActiveWorkspace({
 
   if (showLoading) {
     sendLoading(loadingLabel);
+  }
+
+  if (preserveCurrentContent) {
+    await sendWorkspaceFilesChanged();
+    const currentFileStillAvailable = isCurrentFileStillAvailable();
+    if (
+      shouldNotifyCurrentFileChanged({
+        currentFile,
+        changedPath,
+        currentFileStillAvailable,
+      })
+    ) {
+      sendCurrentFileChanged();
+    }
+    return;
   }
 
   await sendWorkspaceData();
@@ -700,8 +721,21 @@ async function refreshActiveWorkspace({
   }
 }
 
-async function refreshActiveWorkspaceFromWatch() {
-  await refreshActiveWorkspace();
+async function refreshActiveWorkspaceFromWatch(_workspacePath, change = null) {
+  const changedPath = change?.fsPath || "";
+  if (
+    !isWatchChangeRelevant({
+      changedPath,
+      documentConversionEnabled,
+    })
+  ) {
+    return;
+  }
+
+  await refreshActiveWorkspace({
+    preserveCurrentContent: true,
+    changedPath,
+  });
 }
 
 function resolveNavigationPath(filePath) {
@@ -823,6 +857,36 @@ async function scanWorkspaceData(workspacePath) {
   return { tree, flat };
 }
 
+function sendCurrentFileChanged() {
+  if (!currentFile) return;
+  mainWindow?.webContents.send("host-message", {
+    command: "currentFileChanged",
+    filePath: currentFile,
+  });
+}
+
+async function sendWorkspaceFilesChanged() {
+  if (!activeWorkspace) return;
+  const status = getWorkspacePathStatus(activeWorkspace);
+  if (!status.ok) {
+    sendWorkspaceUnavailable(activeWorkspace, status.reason);
+    return;
+  }
+
+  const { tree, flat } = await scanWorkspaceData(activeWorkspace);
+  flatList = flat;
+  if (searchIndex) searchIndex.prime(flat);
+
+  mainWindow.webContents.send("host-message", {
+    command: "workspaceFilesChanged",
+    fileList: flat,
+    tree,
+    workspaceName: path.basename(activeWorkspace),
+    workspacePath: activeWorkspace,
+    documentConversionEnabled,
+  });
+}
+
 async function sendWorkspaceData() {
   if (!activeWorkspace) return;
   const status = getWorkspacePathStatus(activeWorkspace);
@@ -937,3 +1001,5 @@ async function sendWelcome() {
   };
   mainWindow.webContents.send("host-message", msg);
 }
+
+

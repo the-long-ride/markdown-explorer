@@ -104,6 +104,20 @@ export interface ReadyAckMessage {
   readonly isMaximized?: boolean;
 }
 
+export interface WorkspaceFilesChangedMessage {
+  readonly command: 'workspaceFilesChanged';
+  readonly fileList: MdFile[];
+  readonly tree: FolderNode | null;
+  readonly workspaceName: string;
+  readonly workspacePath?: string;
+  readonly documentConversionEnabled?: boolean;
+}
+
+export interface CurrentFileChangedMessage {
+  readonly command: 'currentFileChanged';
+  readonly filePath: string;
+}
+
 export interface RecentWorkspacesChangedMessage {
   readonly command: 'recentWorkspacesChanged';
   readonly recentWorkspaces: readonly RecentWorkspace[];
@@ -194,6 +208,8 @@ export interface WorkspaceUnavailableMessage {
 export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
+  | WorkspaceFilesChangedMessage
+  | CurrentFileChangedMessage
   | RecentWorkspacesChangedMessage
   | NavNotFoundMessage
   | WorkspaceUnavailableMessage
@@ -485,3 +501,5 @@ export interface PersistedState {
   customThemes?: CustomTheme[];
   activeCustomThemeId?: string;
 }
+
+

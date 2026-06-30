@@ -119,6 +119,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "Prepared locally",
       loadedCachedConversion: "Loaded cached conversion",
       durationMeta: "{status} in {duration}",
+      currentFileChangedOnDisk: "Current file has been changed. Click",
+      refreshCurrentFile: "Refresh",
+      currentFileChangedSuffix: "button to see new changes.",
     },
     recentWorkspaces: {
       title: "Recent Workspaces",
@@ -280,6 +283,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "Chuẩn bị cục bộ",
       loadedCachedConversion: "Đã tải bản chuyển đổi trong bộ nhớ đệm",
       durationMeta: "{status} trong {duration}",
+      currentFileChangedOnDisk: "Tệp hiện tại đã thay đổi. Nhấn",
+      refreshCurrentFile: "Tải lại",
+      currentFileChangedSuffix: "để xem thay đổi mới.",
     },
     recentWorkspaces: {
       title: "Không gian làm việc gần đây",
@@ -441,6 +447,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "Préparé localement",
       loadedCachedConversion: "Conversion en cache chargée",
       durationMeta: "{status} en {duration}",
+      currentFileChangedOnDisk: "Le fichier actuel a été modifié. Cliquez sur",
+      refreshCurrentFile: "Actualiser",
+      currentFileChangedSuffix: "pour voir les nouvelles modifications.",
     },
     recentWorkspaces: {
       title: "Espaces de travail récents",
@@ -602,6 +611,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "Preparado localmente",
       loadedCachedConversion: "Conversión en caché cargada",
       durationMeta: "{status} en {duration}",
+      currentFileChangedOnDisk: "El archivo actual ha cambiado. Haz clic en",
+      refreshCurrentFile: "Actualizar",
+      currentFileChangedSuffix: "para ver los cambios nuevos.",
     },
     recentWorkspaces: {
       title: "Espacios de trabajo recientes",
@@ -763,6 +775,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "已在本地准备",
       loadedCachedConversion: "已加载缓存转换",
       durationMeta: "{status}，耗时 {duration}",
+      currentFileChangedOnDisk: "当前文件已发生更改。点击",
+      refreshCurrentFile: "刷新",
+      currentFileChangedSuffix: "按钮以查看最新内容。",
     },
     recentWorkspaces: {
       title: "最近的工作区",
@@ -924,6 +939,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "Klargjort lokalt",
       loadedCachedConversion: "Lastet bufret konvertering",
       durationMeta: "{status} på {duration}",
+      currentFileChangedOnDisk: "Gjeldende fil har blitt endret. Klikk",
+      refreshCurrentFile: "Oppdater",
+      currentFileChangedSuffix: "for å se de nye endringene.",
     },
     recentWorkspaces: {
       title: "Nylige arbeidsområder",
@@ -1085,6 +1103,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "ローカルで準備済み",
       loadedCachedConversion: "キャッシュ済み変換を読み込みました",
       durationMeta: "{status}: {duration}",
+      currentFileChangedOnDisk: "現在のファイルが変更されました。",
+      refreshCurrentFile: "更新",
+      currentFileChangedSuffix: "ボタンをクリックして新しい変更を確認してください。",
     },
     recentWorkspaces: {
       title: "最近のワークスペース",
@@ -1246,6 +1267,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "로컬에서 준비됨",
       loadedCachedConversion: "캐시된 변환 로드됨",
       durationMeta: "{status}: {duration}",
+      currentFileChangedOnDisk: "현재 파일이 변경되었습니다. ",
+      refreshCurrentFile: "새로고침",
+      currentFileChangedSuffix: "버튼을 눌러 새 변경 사항을 확인하세요.",
     },
     recentWorkspaces: {
       title: "최근 작업 공간",
@@ -1407,6 +1431,9 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       preparedLocally: "Подготовлено локально",
       loadedCachedConversion: "Загружено кэшированное преобразование",
       durationMeta: "{status} за {duration}",
+      currentFileChangedOnDisk: "Текущий файл был изменен. Нажмите",
+      refreshCurrentFile: "Обновить",
+      currentFileChangedSuffix: "чтобы увидеть новые изменения.",
     },
     recentWorkspaces: {
       title: "Недавние рабочие области",
@@ -1451,3 +1478,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     bannedShortcutImeMessage: "Ctrl+Space запускает IME (редактор метода ввода) в Chromium и не может использоваться в качестве сочетания клавиш приложения.",
   },
 };
+
+
+
+

@@ -120,6 +120,9 @@ export interface Translations {
     preparedLocally: string;
     loadedCachedConversion: string;
     durationMeta: string;
+    currentFileChangedOnDisk: string;
+    refreshCurrentFile: string;
+    currentFileChangedSuffix: string;
   };
   recentWorkspaces: {
     title: string;
@@ -303,6 +306,9 @@ let _TRANSLATIONS: Record<string, Translations> = {
       preparedLocally: "Prepared locally",
       loadedCachedConversion: "Loaded cached conversion",
       durationMeta: "{status} in {duration}",
+      currentFileChangedOnDisk: "Current file has been changed. Click",
+      refreshCurrentFile: "Refresh",
+      currentFileChangedSuffix: "button to see new changes.",
     },
     recentWorkspaces: {
       title: "Recent Workspaces",
@@ -359,4 +365,6 @@ export function getTranslations(langCode: string): Translations {
   const code = (langCode || "en").toLowerCase() as AppLanguage;
   return _TRANSLATIONS[code] || _TRANSLATIONS["en"];
 }
+
+
 

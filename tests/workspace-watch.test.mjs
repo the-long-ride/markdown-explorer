@@ -66,3 +66,34 @@ test("workspace watcher ignores stale scheduled refreshes after workspace switch
 
   assert.deepEqual(refreshedWorkspaces, ["C:/docs-two"]);
 });
+
+test("workspace watcher passes changed file details to refresh", async () => {
+  let watcherHandler = null;
+  const refreshes = [];
+
+  const controller = createWorkspaceWatchController({
+    fs: {
+      watch(_target, _options, handler) {
+        watcherHandler = handler;
+        return { close() {} };
+      },
+    },
+    setTimeout,
+    clearTimeout,
+    debounceMs: 5,
+    async onRefresh(workspacePath, change) {
+      refreshes.push({ workspacePath, change });
+    },
+  });
+
+  controller.watchWorkspace("C:/docs");
+  watcherHandler?.("change", "guide.md");
+
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  assert.equal(refreshes.length, 1);
+  assert.equal(refreshes[0].workspacePath, "C:/docs");
+  assert.equal(refreshes[0].change.eventType, "change");
+  assert.equal(refreshes[0].change.relativePath, "guide.md");
+  assert.equal(refreshes[0].change.fsPath.replace(/\\/g, "/"), "C:/docs/guide.md");
+});
