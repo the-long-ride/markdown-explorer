@@ -1,13 +1,17 @@
-const fs = require("fs");
-const path = require("path");
-const { Menu: ElectronMenu, Tray } = require("electron");
-
-function createAppTray(appDir, getMainWindow) {
+function createAppTray({
+  appDir,
+  getMainWindow,
+  fs,
+  pathImpl,
+  TrayConstructor,
+  ElectronMenu,
+  appQuit,
+} = {}) {
   try {
-    const iconPath = path.join(appDir, "ui", "assets", "logos", "logo-128.png");
+    const iconPath = pathImpl.join(appDir, "ui", "assets", "logos", "logo-128.png");
     if (!fs.existsSync(iconPath)) return null;
 
-    const tray = new Tray(iconPath);
+    const tray = new TrayConstructor(iconPath);
     const contextMenu = ElectronMenu.buildFromTemplate([
       {
         label: "Open Markdown Explorer",
@@ -23,7 +27,7 @@ function createAppTray(appDir, getMainWindow) {
       {
         label: "Quit",
         click: () => {
-          require("electron").app.quit();
+          appQuit();
         },
       },
     ]);

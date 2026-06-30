@@ -2,20 +2,20 @@ function isTruthyEnv(value) {
   return /^(1|true|yes|on)$/i.test(String(value || ""));
 }
 
-function createDebugTools(app) {
+function createDebugTools({ isPackaged, env = process.env, argv = process.argv } = {}) {
   function isDebugMode() {
     return (
-      !app.isPackaged ||
-      isTruthyEnv(process.env.MARKDOWN_EXPLORER_DEBUG) ||
-      process.argv.includes("--debug") ||
-      process.argv.includes("--devtools")
+      !isPackaged ||
+      isTruthyEnv(env.MARKDOWN_EXPLORER_DEBUG) ||
+      argv.includes("--debug") ||
+      argv.includes("--devtools")
     );
   }
 
   function shouldAutoOpenDevTools() {
     return (
-      isTruthyEnv(process.env.MARKDOWN_EXPLORER_DEBUG) ||
-      process.argv.includes("--devtools")
+      isTruthyEnv(env.MARKDOWN_EXPLORER_DEBUG) ||
+      argv.includes("--devtools")
     );
   }
 

@@ -1,9 +1,14 @@
-const path = require("path");
-const { BrowserWindow, shell } = require("electron");
-const perf = require("./perf-timer");
-
-function createMainWindow({ appDir, debugTools, clampAppZoom }) {
-  const mainWindow = new BrowserWindow({
+function createMainWindow({
+  appDir,
+  debugTools,
+  clampAppZoom,
+  BrowserWindowConstructor,
+  shellImpl,
+  perfImpl,
+  pathImpl,
+  dirname,
+} = {}) {
+  const mainWindow = new BrowserWindowConstructor({
     show: false,
     backgroundColor: '#151518',
     width: 1200,
@@ -11,9 +16,9 @@ function createMainWindow({ appDir, debugTools, clampAppZoom }) {
     isMaximized: true,
     center: true,
     frame: false,
-    icon: path.join(appDir, "ui", "assets", "logos", "logo-500.png"),
+    icon: pathImpl.join(appDir, "ui", "assets", "logos", "logo-500.png"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: pathImpl.join(dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -52,34 +57,33 @@ function createMainWindow({ appDir, debugTools, clampAppZoom }) {
     }
     event.preventDefault();
     if (/^https?:\/\//i.test(navigationUrl)) {
-      void shell.openExternal(navigationUrl);
+      void shellImpl.openExternal(navigationUrl);
     }
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//i.test(url)) {
-      void shell.openExternal(url);
+      void shellImpl.openExternal(url);
     }
     return { action: "deny" };
   });
 
   mainWindow.webContents.on("did-finish-load", () => {
-    perf.mark("renderer:did-finish-load");
-    perf.measure("window create to renderer load", "window:created", "renderer:did-finish-load");
+    perfImpl.mark("renderer:did-finish-load");
+    perfImpl.measure("window create to renderer load", "window:created", "renderer:did-finish-load");
     clampAppZoom();
     if (debugTools.shouldAutoOpenDevTools()) {
       debugTools.openDevToolsIfDebug(mainWindow);
     }
-    // Collect renderer-side perf marks if available
     mainWindow.webContents.executeJavaScript("window.__mdnPerfEntries ? window.__mdnPerfEntries() : null").then((rendererEntries) => {
       if (rendererEntries) {
-        perf.setRendererMarks(rendererEntries);
-        perf.printSummary();
+        perfImpl.setRendererMarks(rendererEntries);
+        perfImpl.printSummary();
       }
     }).catch(() => {});
   });
 
-  mainWindow.loadFile(path.join(appDir, "ui", "dist", "index.html"));
+  mainWindow.loadFile(pathImpl.join(appDir, "ui", "dist", "index.html"));
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
@@ -88,4 +92,22 @@ function createMainWindow({ appDir, debugTools, clampAppZoom }) {
   return mainWindow;
 }
 
-module.exports = { createMainWindow };
+const path = require("path");
+const { BrowserWindow, shell } = require("electron");
+const perf = require("./perf-timer");
+
+function createMainWindowLegacy(deps) {
+  const { appDir, debugTools, clampAppZoom } = deps;
+  return createMainWindow({
+    appDir,
+    debugTools,
+    clampAppZoom,
+    BrowserWindowConstructor: BrowserWindow,
+    shellImpl: shell,
+    perfImpl: perf,
+    pathImpl: path,
+    dirname: __dirname,
+  });
+}
+
+module.exports = { createMainWindow, createMainWindowLegacy };

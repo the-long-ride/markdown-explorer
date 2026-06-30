@@ -1,5 +1,6 @@
 require('v8-compile-cache');
 
+/* v8 ignore next 15 */
 const {
   app,
   BrowserWindow,
@@ -14,7 +15,7 @@ const path = require("path");
 const fs = require("fs");
 
 const perf = require("./perf-timer");
-const { createMainWindow } = require("./window");
+const { createMainWindowLegacy } = require("./window");
 const { createDebugTools } = require("./debug-tools");
 const { createRecentWorkspacesStore } = require("./recents");
 const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
@@ -43,7 +44,7 @@ let documentConverter = null;
 let workspaceWatch = null;
 let crossTabSearchWorker = null;
 
-const debugTools = createDebugTools(app);
+const debugTools = createDebugTools({ isPackaged: app.isPackaged });
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
 
 function ensureHeavyModules() {
@@ -148,99 +149,36 @@ const runtime = createDesktopRuntime({
   appQuit: () => app.quit(),
 });
 
-// Remove default window menu bar
 Menu.setApplicationMenu(null);
 
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-networking');
 
-function createWindow() {
-  mainWindow = createMainWindow({ appDir, debugTools, clampAppZoom: runtime.clampAppZoom });
-  perf.mark("window:created");
-}
-let tray = null;
+const { createAppBootstrap } = require('./main-bootstrap');
 
-app.whenReady().then(() => {
-  perf.mark("electron:ready");
-  perf.measure("main require to electron ready", "main:required", "electron:ready");
-  configureYouTubeEmbedHeaders(session);
-
-  const hidden = new (require("electron").BrowserWindow)({
-    width: 1,
-    height: 1,
-    show: false,
-    skipTaskbar: true,
-    paintWhenInitiallyHidden: false,
-  });
-  hidden.loadURL("about:blank");
-  hidden.once("ready-to-show", () => {
-    hidden.close();
-    createWindow();
-  });
-  const gpuTimeout = setTimeout(() => {
-    if (!hidden.isDestroyed()) {
-      hidden.close();
-      createWindow();
-    }
-  }, 1000);
-  hidden.once("closed", () => clearTimeout(gpuTimeout));
-  setImmediate(() => {
-    const { createAppTray } = require("./tray");
-    const { registerIpcHandlers } = require('./ipc-handlers');
-    tray = createAppTray(appDir, () => mainWindow);
-    const { createUpdateManager } = require("./update-manager");
-    updateManager = createUpdateManager({
-      app,
-      execPath: process.execPath,
-      relaunchArgs: process.argv.slice(1),
-      sendToWindow(message) {
-        mainWindow?.webContents.send("host-message", message);
-      },
-    });
-    registerIpcHandlers({
-      ipcMain,
-      clipboard,
-      fs,
-      shell,
-      getMainWindow: () => mainWindow,
-      handlers: {
-        ready: runtime.handleReady,
-        openFolder: runtime.handleOpenFolder,
-        openFile: runtime.handleOpenFile,
-        openPath: runtime.handleOpenPath,
-        activateWorkspace: runtime.handleActivateWorkspace,
-        searchAcrossWorkspaces: runtime.handleSearchAcrossWorkspaces,
-        searchWorkspace: runtime.handleSearchWorkspace,
-        indexWorkspaceSearchItems: runtime.handleIndexWorkspaceSearchItems,
-        loadWorkspaceSearchIndexes: runtime.handleLoadWorkspaceSearchIndexes,
-        confirmOpenPath: runtime.handleConfirmOpenPath,
-        openRecent: runtime.handleOpenRecent,
-        deleteRecentWorkspace: runtime.handleDeleteRecentWorkspace,
-        replaceRecentWorkspaces: runtime.handleReplaceRecentWorkspaces,
-        closeWorkspace: runtime.handleCloseWorkspace,
-        zoomIn: runtime.handleZoomIn,
-        zoomOut: runtime.handleZoomOut,
-        navigate: runtime.handleNavigate,
-        refresh: runtime.handleRefresh,
-        setDocumentConversion: runtime.handleSetDocumentConversion,
-        downloadUpdate: runtime.handleDownloadUpdate,
-        scheduleDownloadedUpdate: runtime.handleScheduleDownloadedUpdate,
-        restartAndApplyUpdate: runtime.handleRestartAndApplyUpdate,
-      },
-    });
-  });
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+/* v8 ignore next 18 */
+const bootstrap = createAppBootstrap({
+  appImpl: app,
+  BrowserWindowImpl: BrowserWindow,
+  sessionImpl: session,
+  MenuImpl: Menu,
+  pathImpl: path,
+  fsImpl: fs,
+  perfImpl: perf,
+  processImpl: process,
+  setTimeoutImpl: setTimeout,
+  clearTimeoutImpl: clearTimeout,
+  setImmediateImpl: setImmediate,
+  configureYouTubeEmbedHeadersFn: configureYouTubeEmbedHeaders,
+  createAppTrayFn: require("./tray").createAppTray,
+  createUpdateManagerFn: require("./update-manager").createUpdateManager,
+  registerIpcHandlersFn: require("./ipc-handlers").registerIpcHandlers,
+  runtimeImpl: runtime,
+  debugToolsImpl: debugTools,
+  appDirImpl: appDir,
+  createMainWindowFn: createMainWindowLegacy,
+  recentWorkspacesStoreImpl: recentWorkspacesStore,
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
-
-app.on("before-quit", () => {
-  runtime.dispose();
-  if (!updateManager) return;
-  void updateManager.applyPendingUpdateOnQuit();
-});
+module.exports = { createAppBootstrap };
