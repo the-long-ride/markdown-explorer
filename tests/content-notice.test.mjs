@@ -37,10 +37,10 @@ test("translations declare stale current-file notice copy for all languages", as
 
   const languages = ["en", "vi", "fr", "es", "zh", "no", "ja", "ko", "ru"];
   for (const lang of languages) {
-    const start = translationsData.indexOf(`${lang}: {`);
-    assert.notEqual(start, -1, `missing language block: ${lang}`);
+    const start = translationsData.indexOf("\n  " + lang + ": {") + 1;
+    assert.ok(start > 0, "missing language block: " + lang);
     const nextStart = languages
-      .map((candidate) => candidate === lang ? -1 : translationsData.indexOf(`${candidate}: {`, start + 1))
+      .map((candidate) => candidate === lang ? -1 : translationsData.indexOf("\n  " + candidate + ": {", start + 1) + 1)
       .filter((index) => index > start)
       .sort((a, b) => a - b)[0] ?? translationsData.length;
     const block = translationsData.slice(start, nextStart);

@@ -43,6 +43,7 @@ let searchIndex = null;
 let updateManager = null;
 let documentConverter = null;
 let workspaceWatch = null;
+let crossTabSearchWorker = null;
 
 const debugTools = createDebugTools(app);
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
@@ -71,6 +72,38 @@ function ensureHeavyModules() {
 
 // Expose require-time constants from document-converter without loading the full module.
 // These are just string checks — no heavy parsing needed.
+function ensureCrossTabSearchWorker() {
+  if (crossTabSearchWorker) return crossTabSearchWorker;
+  const { createSearchWorkerController } = require("./search-worker-controller");
+  crossTabSearchWorker = createSearchWorkerController({
+    onMessage(message) {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (message.type === "batch") {
+        mainWindow.webContents.send("host-message", {
+          command: "crossTabSearchResults",
+          requestId: message.requestId,
+          results: message.results,
+          done: false,
+        });
+        return;
+      }
+      if (message.type === "done" || message.type === "error") {
+        mainWindow.webContents.send("host-message", {
+          command: "crossTabSearchResults",
+          requestId: message.requestId,
+          results: [],
+          done: true,
+          total: message.total || 0,
+          truncated: Boolean(message.truncated),
+          cancelled: Boolean(message.cancelled),
+          error: message.type === "error" ? message.message : undefined,
+        });
+      }
+    },
+  });
+  return crossTabSearchWorker;
+}
+
 function isSupportedFilePathLite(filePath, docConvEnabled) {
   if (!filePath) return false;
   const ext = path.extname(filePath).toLowerCase();
@@ -279,6 +312,7 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   if (workspaceWatch) workspaceWatch.dispose();
+  if (crossTabSearchWorker) crossTabSearchWorker.dispose();
   if (!updateManager) return;
   void updateManager.applyPendingUpdateOnQuit();
 });
@@ -419,13 +453,9 @@ function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false)
 
 function handleSearchAcrossWorkspaces(msg) {
   ensureHeavyModules();
-  const query = String(msg.query || "").trim().toLowerCase();
-  const requestId = msg.requestId;
-  const items = Array.isArray(msg.items) ? msg.items : [];
-  mainWindow.webContents.send("host-message", {
-    command: "crossTabSearchResults",
-    requestId,
-    results: searchIndex.search(query, items, 10000),
+  ensureCrossTabSearchWorker().search({
+    requestId: msg.requestId,
+    query: String(msg.query || "").trim().toLowerCase(),
   });
 }
 
@@ -443,8 +473,7 @@ function handleSearchWorkspace(msg) {
 
 function handleIndexWorkspaceSearchItems(msg) {
   ensureHeavyModules();
-  const items = Array.isArray(msg.items) ? msg.items : [];
-  setTimeout(() => searchIndex.prime(items), 0);
+  ensureCrossTabSearchWorker().setItems(Array.isArray(msg.items) ? msg.items : []);
 }
 
 function handleLoadWorkspaceSearchIndexes(msg) {

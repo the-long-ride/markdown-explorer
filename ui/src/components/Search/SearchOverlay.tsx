@@ -5,12 +5,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { SearchIcon } from '../shared/icons';
 import { normalizeForSearch, unicodeIndexOf } from '../../utils/unicodeSearch';
 import type { MdFile, WorkspaceSearchResult } from '../../types';
 
 const SEARCH_OVERLAY_Z_INDEX = 2147483647;
+const CROSS_TAB_RESULT_PAGE_SIZE = 100;
 
 function renderHighlightedExcerpt(excerpt: string, query: string) {
   const needle = query.trim().replace(/\s+/g, ' ');
@@ -83,9 +85,12 @@ export function SearchOverlay({
 }: SearchOverlayProps) {
   const { state, navigate } = useAppState();
   const bridge = usePlatform();
+  const t = getTranslations(state.settings.language || 'en');
   const [query, setQuery] = useState('');
   const [remoteQuery, setRemoteQuery] = useState('');
   const [remoteResults, setRemoteResults] = useState<CrossTabSearchItem[]>([]);
+  const [visibleCrossTabCount, setVisibleCrossTabCount] = useState(CROSS_TAB_RESULT_PAGE_SIZE);
+  const [isCrossTabSearching, setIsCrossTabSearching] = useState(false);
   const [workspaceRemoteQuery, setWorkspaceRemoteQuery] = useState('');
   const [workspaceRemoteResults, setWorkspaceRemoteResults] = useState<WorkspaceSearchResult[]>([]);
   const [isWorkspaceSearching, setIsWorkspaceSearching] = useState(false);
@@ -98,6 +103,8 @@ export function SearchOverlay({
       setQuery('');
       setRemoteQuery('');
       setRemoteResults([]);
+      setVisibleCrossTabCount(CROSS_TAB_RESULT_PAGE_SIZE);
+      setIsCrossTabSearching(false);
       setWorkspaceRemoteQuery('');
       setWorkspaceRemoteResults([]);
       setIsWorkspaceSearching(false);
@@ -126,25 +133,13 @@ export function SearchOverlay({
         .slice(0, 20)
     : [];
 
-  const crossTabResults = query.length >= 2 && crossTabItems
-    ? crossTabItems
-        .map((item) => ({
-          item,
-          score:
-            (normalizeForSearch(item.title).includes(normQuery) ? 3 : 0) +
-            (normalizeForSearch(item.fileName).includes(normQuery) ? 2 : 0) +
-            (normalizeForSearch(item.relativePath).includes(normQuery) ? 1 : 0) +
-            (normalizeForSearch(item.tabLabel).includes(normQuery) ? 1 : 0),
-        }))
-        .filter((r) => r.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 40)
-    : [];
   const hasCrossTabSearch = !!crossTabItems && !!onCrossTabSelect;
   const displayedCrossTabResults =
     hasCrossTabSearch && remoteQuery === query
-      ? remoteResults.map((item) => ({ item, score: 0 }))
-      : crossTabResults;
+      ? remoteResults
+          .slice(0, visibleCrossTabCount)
+          .map((item) => ({ item, score: 0 }))
+      : [];
   const displayedWorkspaceResults =
     !hasCrossTabSearch && workspaceRemoteQuery === query
       ? workspaceRemoteResults.map((item) => ({ item, score: 0 }))
@@ -170,7 +165,12 @@ export function SearchOverlay({
         msg.requestId === requestIdRef.current
       ) {
         setRemoteQuery(query);
-        setRemoteResults(msg.results as CrossTabSearchItem[]);
+        if (msg.done) {
+          setIsCrossTabSearching(false);
+        } else {
+          const nextBatch = msg.results as CrossTabSearchItem[];
+          setRemoteResults((current) => [...current, ...nextBatch]);
+        }
       }
     });
   }, [bridge, hasCrossTabSearch, isOpen, query]);
@@ -193,17 +193,22 @@ export function SearchOverlay({
     if (!isOpen || !hasCrossTabSearch || !crossTabItems || query.length < 2) {
       setRemoteQuery('');
       setRemoteResults([]);
+      setVisibleCrossTabCount(CROSS_TAB_RESULT_PAGE_SIZE);
+      setIsCrossTabSearching(false);
       return;
     }
 
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     requestIdRef.current = requestId;
+    setRemoteQuery(query);
+    setRemoteResults([]);
+    setVisibleCrossTabCount(CROSS_TAB_RESULT_PAGE_SIZE);
+    setIsCrossTabSearching(true);
     const handle = window.setTimeout(() => {
       bridge.postMessage({
         command: 'searchAcrossWorkspaces',
         requestId,
         query,
-        items: crossTabItems,
       });
     }, 160);
 
@@ -211,9 +216,7 @@ export function SearchOverlay({
   }, [bridge, crossTabItems, hasCrossTabSearch, isOpen, query]);
 
   useEffect(() => {
-    if (!isOpen || !hasCrossTabSearch || !crossTabItems || crossTabItems.length === 0) {
-      return;
-    }
+    if (!isOpen || !hasCrossTabSearch || !crossTabItems || crossTabItems.length === 0) return;
 
     const handle = window.setTimeout(() => {
       bridge.postMessage({
@@ -328,12 +331,17 @@ export function SearchOverlay({
 
         {/* Results */}
         <div className="search-overlay-results" style={{ overflowY: 'auto', padding: '8px 0', flex: 1 }} role="listbox">
+          {query.length >= 2 && hasCrossTabSearch && isCrossTabSearching && resultCount === 0 && (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
+              Searching file contents…
+            </div>
+          )}
           {query.length >= 2 && !hasCrossTabSearch && isWorkspaceSearching && resultCount === 0 && (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
               Searching file contents…
             </div>
           )}
-          {query.length >= 2 && resultCount === 0 && (!isWorkspaceSearching || hasCrossTabSearch) && (
+          {query.length >= 2 && resultCount === 0 && !isCrossTabSearching && (!isWorkspaceSearching || hasCrossTabSearch) && (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
               No files matching "<strong>{query}</strong>"
             </div>
@@ -397,6 +405,17 @@ export function SearchOverlay({
                   </div>
                 </div>
               ))}
+          {hasCrossTabSearch && remoteResults.length > displayedCrossTabResults.length && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 12px 12px' }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setVisibleCrossTabCount((count) => count + CROSS_TAB_RESULT_PAGE_SIZE)}
+              >
+                {t.actions.loadMore}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -132,6 +132,11 @@ export interface CrossTabSearchResultsMessage {
   readonly command: 'crossTabSearchResults';
   readonly requestId: string;
   readonly results: readonly CrossTabSearchResult[];
+  readonly done?: boolean;
+  readonly total?: number;
+  readonly truncated?: boolean;
+  readonly cancelled?: boolean;
+  readonly error?: string;
 }
 
 export interface WorkspaceSearchResultsMessage {
@@ -273,19 +278,19 @@ export interface CrossTabSearchMessage {
   readonly command: 'searchAcrossWorkspaces';
   readonly requestId: string;
   readonly query: string;
-  readonly items: readonly CrossTabSearchResult[];
+  readonly items?: readonly CrossTabSearchResult[];
 }
 
 export interface WorkspaceSearchMessage {
   readonly command: 'searchWorkspace';
   readonly requestId: string;
   readonly query: string;
-  readonly items?: readonly WorkspaceSearchResult[];
+  readonly items: readonly WorkspaceSearchResult[];
 }
 
 export interface IndexWorkspaceSearchItemsMessage {
   readonly command: 'indexWorkspaceSearchItems';
-  readonly items: readonly CrossTabSearchResult[];
+  readonly items?: readonly CrossTabSearchResult[];
 }
 
 export interface LoadWorkspaceSearchIndexesMessage {

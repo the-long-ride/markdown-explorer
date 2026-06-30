@@ -160,7 +160,143 @@ function createSearchIndex() {
     return results.slice(0, limit).map(({ score, ...result }) => result);
   }
 
-  return { prime, search };
+
+  async function searchIncremental(query, items, options = {}) {
+    const {
+      batchSize = 100,
+      maxResults = 2000,
+      maxMatchesPerFile = 200,
+      yieldEvery = 25,
+      shouldCancel = () => false,
+      onBatch = () => {},
+    } = options;
+
+    if (!query || query.length < 2) {
+      return { total: 0, truncated: false, cancelled: false };
+    }
+
+    const normQuery = normalizeForSearch(query);
+    if (!normQuery) {
+      return { total: 0, truncated: false, cancelled: false };
+    }
+
+    let batch = [];
+    let total = 0;
+    let workSinceYield = 0;
+    let truncated = false;
+
+    const flush = () => {
+      if (batch.length === 0) return;
+      batch.sort((a, b) => b.score - a.score);
+      onBatch(batch.map(({ score, ...result }) => result));
+      batch = [];
+    };
+
+    const yieldAndCheckCancellation = async () => {
+      workSinceYield += 1;
+      if (workSinceYield < Math.max(1, yieldEvery)) return false;
+      workSinceYield = 0;
+      await new Promise((resolve) => setImmediate(resolve));
+      return shouldCancel();
+    };
+
+    const pushResult = (result) => {
+      if (total >= maxResults) {
+        truncated = true;
+        return false;
+      }
+      batch.push(result);
+      total += 1;
+      if (batch.length >= batchSize) flush();
+      return true;
+    };
+
+    searchItems:
+    for (const item of items) {
+      if (shouldCancel()) {
+        flush();
+        return { total, truncated, cancelled: true };
+      }
+      if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
+      if (!isKnownSupportedFilePath(item.fsPath)) continue;
+
+      const fileName = item.fileName || path.basename(item.fsPath);
+      const relativePath = item.relativePath || fileName;
+      const title = item.title || stripKnownExtension(fileName);
+      const titleScore = normalizeForSearch(String(title)).includes(normQuery) ? 5 : 0;
+      const fileNameScore = normalizeForSearch(String(fileName)).includes(normQuery) ? 4 : 0;
+      const pathScore = normalizeForSearch(String(relativePath)).includes(normQuery) ? 2 : 0;
+      const baseScore = titleScore + fileNameScore + pathScore;
+      let matchCount = 0;
+
+      try {
+        if (canSearchFileContents(item.fsPath)) {
+          const entry = getEntry(item.fsPath);
+          if (entry) {
+            let nextNormIndex = 0;
+            let ordinal = 0;
+            let lineNumber = 1;
+            let lineCursor = 0;
+
+            while (matchCount < maxMatchesPerFile) {
+              const result = entry.haystack.indexOfNormalized(normQuery, nextNormIndex);
+              if (!result) break;
+
+              let nextLineBreak = entry.raw.indexOf("\n", lineCursor);
+              while (nextLineBreak !== -1 && nextLineBreak < result.match.index) {
+                lineNumber += 1;
+                lineCursor = nextLineBreak + 1;
+                nextLineBreak = entry.raw.indexOf("\n", lineCursor);
+              }
+
+              if (!pushResult({
+                ...item,
+                title,
+                fileName,
+                relativePath,
+                excerpt: makeSearchExcerpt(entry.raw, result.match.index, result.match.matchLength),
+                matchIndex: result.match.index,
+                matchOrdinal: ordinal,
+                matchLength: result.match.matchLength,
+                lineNumber,
+                score: baseScore + 3 - Math.min(ordinal, 20) / 100,
+              })) {
+                break searchItems;
+              }
+
+              matchCount += 1;
+              ordinal += 1;
+              nextNormIndex = result.nextNormIndex;
+
+              if (await yieldAndCheckCancellation()) {
+                flush();
+                return { total, truncated, cancelled: true };
+              }
+            }
+
+            if (matchCount >= maxMatchesPerFile) truncated = true;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to search file:", item.fsPath, err);
+      }
+
+      if (matchCount === 0 && baseScore > 0) {
+        if (!pushResult({ ...item, title, fileName, relativePath, excerpt: "", score: baseScore })) {
+          break;
+        }
+      }
+
+      if (await yieldAndCheckCancellation()) {
+        flush();
+        return { total, truncated, cancelled: true };
+      }
+    }
+
+    flush();
+    return { total, truncated, cancelled: false };
+  }
+  return { prime, search, searchIncremental };
 }
 
 module.exports = { createSearchIndex };

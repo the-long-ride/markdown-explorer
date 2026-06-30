@@ -114,3 +114,51 @@ test("search handles unicode composed/decomposed normalization correctly", () =>
   assert.ok(nfdMatch);
   assert.equal(nfdMatch.matchLength, 5); // "cafe\u0301".length
 });
+
+test("incremental search emits bounded batches and limits matches per file", async () => {
+  const rootDir = makeTempDir("search-incremental-");
+  const filePath = path.join(rootDir, "many.md");
+  writeFile(filePath, Array.from({ length: 20 }, (_, index) => `needle ${index}`).join("\n"));
+
+  const batches = [];
+  const result = await createSearchIndex().searchIncremental(
+    "needle",
+    [{ fsPath: filePath, fileName: "many.md", relativePath: "many.md", title: "Many" }],
+    {
+      batchSize: 2,
+      maxResults: 5,
+      maxMatchesPerFile: 5,
+      onBatch: (batch) => batches.push(batch),
+    },
+  );
+
+  assert.deepEqual(batches.map((batch) => batch.length), [2, 2, 1]);
+  assert.equal(result.total, 5);
+  assert.equal(result.truncated, true);
+  assert.equal(result.cancelled, false);
+});
+
+test("incremental search yields so an active request can be cancelled", async () => {
+  const rootDir = makeTempDir("search-cancel-");
+  const items = Array.from({ length: 40 }, (_, index) => {
+    const filePath = path.join(rootDir, `${index}.md`);
+    writeFile(filePath, `needle ${index}`);
+    return {
+      fsPath: filePath,
+      fileName: `${index}.md`,
+      relativePath: `${index}.md`,
+      title: `${index}`,
+    };
+  });
+
+  let cancelled = false;
+  setImmediate(() => { cancelled = true; });
+  const result = await createSearchIndex().searchIncremental("needle", items, {
+    batchSize: 10,
+    yieldEvery: 1,
+    shouldCancel: () => cancelled,
+  });
+
+  assert.equal(result.cancelled, true);
+  assert.ok(result.total < items.length);
+});

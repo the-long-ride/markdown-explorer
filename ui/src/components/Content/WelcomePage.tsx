@@ -887,6 +887,15 @@ export function WelcomePage() {
             <GlobeIcon className="link-icon" />
             <span>https://the-long-ride.github.io/markdown-explorer</span>
           </a>
+          <a
+            href="https://the-long-ride.github.io/markdown-them"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="homepage-link"
+          >
+            <GlobeIcon className="link-icon" />
+            <span>Markdown Them - privacy-first document to markdown</span>
+          </a>
           {isDesktop && state.hostPlatform === 'macos' && (
             <a
               href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"

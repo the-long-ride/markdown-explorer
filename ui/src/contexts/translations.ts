@@ -43,6 +43,7 @@ export interface Translations {
   actions: {
     searchCurrent: string;
     searchAllTabs: string;
+    loadMore: string;
     findCurrentFile: string;
     back: string;
     forward: string;
@@ -229,6 +230,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
     actions: {
       searchCurrent: "Search current workspace",
       searchAllTabs: "Search all tabs",
+      loadMore: "Load more",
       findCurrentFile: "Find in current file",
       back: "Back to previous file",
       forward: "Go to next file",

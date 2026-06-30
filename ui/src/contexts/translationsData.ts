@@ -42,6 +42,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "Search current workspace",
       searchAllTabs: "Search all tabs",
+      loadMore: "Load more",
       findCurrentFile: "Find in current file",
       back: "Back to previous file",
       forward: "Go to next file",
@@ -206,6 +207,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "Tìm kiếm không gian làm việc hiện tại",
       searchAllTabs: "Tìm kiếm tất cả các tab",
+      loadMore: "Tải thêm",
       findCurrentFile: "Tìm trong tệp hiện tại",
       back: "Quay lại tệp trước đó",
       forward: "Đi tới tệp tiếp theo",
@@ -370,6 +372,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "Rechercher dans l'espace de travail actuel",
       searchAllTabs: "Rechercher dans tous les onglets",
+      loadMore: "Afficher plus",
       findCurrentFile: "Rechercher dans le fichier actuel",
       back: "Retour au fichier précédent",
       forward: "Aller au fichier suivant",
@@ -534,6 +537,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "Buscar en el espacio de trabajo actual",
       searchAllTabs: "Buscar en todas las pestañas",
+      loadMore: "Cargar más",
       findCurrentFile: "Buscar en el archivo actual",
       back: "Volver al archivo anterior",
       forward: "Ir al siguiente archivo",
@@ -698,6 +702,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "搜索当前工作区",
       searchAllTabs: "搜索所有标签页",
+      loadMore: "加载更多",
       findCurrentFile: "在当前文件中查找",
       back: "返回上一个文件",
       forward: "前往下一个文件",
@@ -862,6 +867,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "Søk i gjeldende arbeidsområde",
       searchAllTabs: "Søk i alle faner",
+      loadMore: "Last inn flere",
       findCurrentFile: "Finn i gjeldende fil",
       back: "Tilbake til forrige fil",
       forward: "Gå til neste fil",
@@ -1026,6 +1032,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "現在のワークスペースを検索",
       searchAllTabs: "すべてのタブを検索",
+      loadMore: "さらに読み込む",
       findCurrentFile: "現在のファイル内を検索",
       back: "前のファイルに戻る",
       forward: "次のファイルに進む",
@@ -1190,6 +1197,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "현재 작업 공간 검색",
       searchAllTabs: "모든 탭 검색",
+      loadMore: "더 보기",
       findCurrentFile: "현재 파일에서 찾기",
       back: "이전 파일로 돌아가기",
       forward: "다음 파일로 이동",
@@ -1354,6 +1362,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     actions: {
       searchCurrent: "Поиск в текущей рабочей области",
       searchAllTabs: "Поиск по всем вкладкам",
+      loadMore: "Загрузить ещё",
       findCurrentFile: "Найти в текущем файле",
       back: "Назад к предыдущему файлу",
       forward: "Перейти к следующему файлу",
