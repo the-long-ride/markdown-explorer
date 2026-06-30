@@ -18,6 +18,10 @@ const { createMainWindow } = require("./window");
 const { createDebugTools } = require("./debug-tools");
 const { createRecentWorkspacesStore } = require("./recents");
 const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
+const {
+  createStartupReadyAck,
+  deferWorkspaceLoad,
+} = require("./startup-workspace");
 
 const appDir = app.isPackaged
   ? __dirname
@@ -286,30 +290,28 @@ async function handleReady(msg = {}) {
   readyHandled = true;
   perf.mark("host:ready");
   const recents = recentWorkspacesStore.load();
-  if (!activeWorkspace) {
-    const ackMsg = {
-      command: "readyAck",
-      fileList: [],
-      tree: null,
-      theme: "dark",
-      themeStyle: "default",
-      defaultExpanded: true,
-      workspaceName: "",
-      workspacePath: undefined,
-      recentWorkspaces: recents,
-      documentConversionEnabled,
-      ...getHostInfo(),
-    };
-    mainWindow.webContents.send("host-message", ackMsg);
-    perf.mark("host:ready-ack");
-    perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
-    perf.printSummary();
-    updateManager?.sendCurrentState();
-  } else {
-    ensureHeavyModules();
-    bindWorkspaceWatch();
-    await sendWorkspaceData();
-    updateManager?.sendCurrentState();
+  const ackMsg = createStartupReadyAck({
+    workspacePath: activeWorkspace,
+    recentWorkspaces: recents,
+    documentConversionEnabled,
+    hostInfo: getHostInfo(),
+  });
+  mainWindow.webContents.send("host-message", ackMsg);
+  perf.mark("host:ready-ack");
+  perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
+  perf.printSummary();
+  updateManager?.sendCurrentState();
+
+  if (activeWorkspace) {
+    deferWorkspaceLoad({
+      ensureHeavyModules,
+      bindWorkspaceWatch,
+      sendLoading,
+      sendWorkspaceData,
+      sendInitialContent,
+      sendUpdateState: () => updateManager?.sendCurrentState(),
+      onError: (err) => console.error("Failed to load startup workspace:", err),
+    });
   }
 }
 
@@ -386,7 +388,6 @@ function handleOpenPath(filePath, openFirstFile = false) {
 }
 
 function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false) {
-  ensureHeavyModules();
   const status = getWorkspacePathStatus(workspacePath);
   if (!status.ok) {
     sendWorkspaceUnavailable(workspacePath, status.reason);
@@ -401,8 +402,15 @@ function handleActivateWorkspace(workspacePath, filePath, openFirstFile = false)
       ? filePath
       : null;
   recentWorkspacesStore.save(activeWorkspace);
-  bindWorkspaceWatch();
-  sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
+  deferWorkspaceLoad({
+    ensureHeavyModules,
+    bindWorkspaceWatch,
+    sendLoading,
+    sendWorkspaceData,
+    sendInitialContent,
+    openFirstFile,
+    onError: (err) => console.error("Failed to activate workspace:", err),
+  });
 }
 
 function handleSearchAcrossWorkspaces(msg) {
