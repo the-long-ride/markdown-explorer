@@ -9,7 +9,14 @@
     "chromium-xtension"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:desktop": "vitest run --project desktop",
+    "test:vscode": "vitest run --project vscode",
+    "test:ui": "vitest run --project ui",
+    "test:chromium": "vitest run --project chromium",
+    "test:contracts": "vitest run --project contracts --project manifest --project build",
     "build:ui:electron": "npm run build:electron --workspace=ui",
     "build:ui": "npm run build --workspace=ui",
     "build:vscode": "npm run compile --workspace=vscode",
@@ -26,5 +33,17 @@
     "build:electron:mac": "npm run build:ui:electron && npm run build:vscode && npm run dist:mac --workspace=desktop",
     "build:electron:linux": "npm run build:ui:electron && npm run build:vscode && npm run dist:linux --workspace=desktop",
     "build:chromium": "npm run build --workspace=markdown-explorer-chromium-xtension"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^6.0.3",
+    "@vitest/coverage-v8": "^4.1.9",
+    "fake-indexeddb": "^6.2.5",
+    "fast-glob": "^3.3.3",
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.9"
   }
 }

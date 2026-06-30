@@ -31,3 +31,9 @@ Thumbs.db
 
 # Tauri / Rust build artifacts
 desktop-tauri/src-tauri/target*/
+
+# Coverage
+coverage/
+
+# Implementation plans (never commit)
+plan-ignore-from-commit.md
