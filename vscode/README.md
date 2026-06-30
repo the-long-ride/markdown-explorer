@@ -112,7 +112,7 @@ The same renderer is available in the desktop app, with workspace selection, rec
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection-Search-Recently-one.png" width="32%" alt="Desktop workspace selection with recent folders" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage-Include-Help-Section.png" width="32%" alt="Markdown Explorer welcome page with help section" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png" width="32%" alt="Markdown Explorer welcome page with help section" />
 </p>
 
 ## Converted Document Previews
