@@ -43,11 +43,69 @@ export function getHostInfo() {
   };
 }
 
-function sendToWebview(msg: any) {
+export function normalizeSearchQuery(query: unknown): string {
+  return String(query || "")
+    .trim()
+    .toLowerCase();
+}
+
+export function filterSearchIndexTabs(
+  tabRequests: unknown[],
+  activeWorkspacePath: string,
+): Array<{ tabId: string; workspacePath: string; fileList: MdFile[]; tree: FolderNode | null }> {
+  return (Array.isArray(tabRequests) ? tabRequests : []).flatMap((tab: any) => {
+    const tabId = String(tab?.tabId || "");
+    const workspacePath = String(tab?.workspacePath || "");
+    if (!tabId || !workspacePath || workspacePath !== activeWorkspacePath)
+      return [];
+
+    return [
+      {
+        tabId,
+        workspacePath: activeWorkspacePath,
+        fileList: [] as MdFile[],
+        tree: null as FolderNode | null,
+      },
+    ];
+  });
+}
+
+export function isValidExternalUrl(url: unknown): boolean {
+  return typeof url === "string" && /^https?:\/\//i.test(url);
+}
+
+export function extractWorkspaceName(workspacePath: string): string {
+  return workspacePath.split("/").pop() || "Workspace";
+}
+
+export function findFileInfo(
+  flatList: MdFile[],
+  relativePath: string,
+): { relativePath: string; title: string } {
+  return (
+    flatList.find((f) => f.relativePath === relativePath) || {
+      relativePath,
+      title: relativePath.split("/").pop() || "Untitled",
+    }
+  );
+}
+
+export function shouldOpenFirstFile(
+  currentFile: string | null,
+  openFirstFile: boolean | undefined,
+  flatList: MdFile[],
+): string | null {
+  if (openFirstFile !== false && !currentFile && flatList.length > 0) {
+    return flatList[0].relativePath;
+  }
+  return currentFile;
+}
+
+export function sendToWebview(msg: any) {
   bus.dispatchEvent(new CustomEvent("host-message", { detail: msg }));
 }
 
-function sendLoading(label: string, detail?: string) {
+export function sendLoading(label: string, detail?: string) {
   sendToWebview({
     command: "setLoading",
     label,
@@ -80,7 +138,7 @@ function sendWorkspaceUnavailable(workspacePath: string, reason = "missing") {
     sendToWebview({
       command: "workspaceUnavailable",
       workspacePath,
-      workspaceName: workspacePath.split("/").pop() || "Workspace",
+      workspaceName: extractWorkspaceName(workspacePath),
       reason,
       recentWorkspaces: recents,
       ...getHostInfo(),
@@ -123,8 +181,9 @@ async function sendWorkspaceData() {
 }
 
 async function sendInitialContent(openFirstFile = false) {
-  if (openFirstFile && !currentFile && flatList.length > 0) {
-    currentFile = flatList[0].relativePath;
+  const resolvedFile = shouldOpenFirstFile(currentFile, openFirstFile, flatList);
+  if (resolvedFile && resolvedFile !== currentFile) {
+    currentFile = resolvedFile;
   }
 
   if (currentFile) {
@@ -148,10 +207,7 @@ async function sendContent() {
   const { html, frontmatter, toc } = renderMarkdown(currentFile, raw);
   const rewrittenHtml = await rewriteMediaUrls(activeHandle, html, currentFile);
 
-  const fileInfo = flatList.find((f) => f.relativePath === currentFile) || {
-    relativePath: currentFile,
-    title: currentFile.split("/").pop() || "Untitled",
-  };
+  const fileInfo = findFileInfo(flatList, currentFile);
 
   sendToWebview({
     command: "renderContent",
@@ -318,9 +374,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
     }
 
     case "searchWorkspace": {
-      const query = String(msg.query || "")
-        .trim()
-        .toLowerCase();
+      const query = normalizeSearchQuery(msg.query);
       const requestId = msg.requestId;
       if (searchIndex) {
         const results = await searchIndex.search(query, flatList, 80);
@@ -340,22 +394,11 @@ bus.addEventListener("webview-message", async (e: Event) => {
     }
 
     case "loadWorkspaceSearchIndexes": {
-      const tabRequests = Array.isArray(msg.tabs) ? msg.tabs : [];
-      const tabs = tabRequests.flatMap((tab: any) => {
-        const tabId = String(tab?.tabId || "");
-        const workspacePath = String(tab?.workspacePath || "");
-        if (!tabId || !workspacePath || workspacePath !== activeWorkspacePath)
-          return [];
-
-        return [
-          {
-            tabId,
-            workspacePath: activeWorkspacePath,
-            fileList: flatList,
-            tree: workspaceTree,
-          },
-        ];
-      });
+      const tabs = filterSearchIndexTabs(msg.tabs, activeWorkspacePath).map((tab) => ({
+        ...tab,
+        fileList: flatList,
+        tree: workspaceTree,
+      }));
 
       if (tabs.length > 0) {
         sendToWebview({
@@ -374,8 +417,8 @@ bus.addEventListener("webview-message", async (e: Event) => {
     }
 
     case "openExternal": {
-      if (typeof msg.url === "string" && /^https?:\/\//i.test(msg.url)) {
-        window.open(msg.url, "_blank");
+      if (isValidExternalUrl(msg.url)) {
+        window.open(msg.url as string, "_blank");
       }
       break;
     }
