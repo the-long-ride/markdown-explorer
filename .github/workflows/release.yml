@@ -18,6 +18,10 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        project: [desktop, vscode, ui, chromium, contracts, manifest, build]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -33,8 +37,8 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Tests
-        run: npm test
+      - name: Run Tests (${{ matrix.project }})
+        run: npx vitest run --project ${{ matrix.project }}
 
   build-vscode:
     name: Build VS Code Extension

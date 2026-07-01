@@ -13,78 +13,58 @@ concurrency:
 
 jobs:
   test:
-    name: Test (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    name: ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [desktop, vscode, ui, chromium, contracts, manifest, build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npx vitest run --project ${{ matrix.project }}
+
+  test-coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm run test:coverage -- --coverage.thresholds.100=false
+        env: { CI: true }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: coverage-report, path: coverage/, retention-days: 14 }
+
+  test-cross-platform:
+    name: Cross-platform (${{ matrix.os }}, Node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: ['20', '22', '24']
-
+        os: [windows-latest, macos-latest]
+        node-version: ['20', '22']
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Tests
-        run: npm test
-
-  test-coverage:
-    name: Coverage Report
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Generate Coverage
-        run: npm run test:coverage -- --coverage.thresholds.100=false
-        env:
-          CI: true
-
-      - name: Upload Coverage Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 14
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ matrix.node-version }}, cache: npm }
+      - run: npm ci
+      - run: npm test
 
   build-verify:
-    name: Build Verify (${{ matrix.target }})
+    name: Build (${{ matrix.target }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         target: [ui, vscode, chromium]
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build ${{ matrix.target }}
-        run: npm run build:${{ matrix.target }}
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm run build:${{ matrix.target }}

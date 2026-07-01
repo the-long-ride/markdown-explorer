@@ -28,20 +28,28 @@ const runtimeExclude = [
   'desktop/vscode/**',
 ];
 
+const poolOptions = {
+  forks: { singleFork: false },
+  threads: { singleThread: false },
+};
+
 export default defineConfig({
   plugins: [react()],
   test: {
     restoreMocks: true,
     clearMocks: true,
     unstubGlobals: true,
+    pool: 'forks',
+    poolOptions,
+    fileParallelism: true,
     projects: [
-      { extends: true, test: { name: 'desktop', environment: 'node', include: ['tests/unit/desktop/**/*.test.ts'], setupFiles: ['tests/setup/node.ts'] } },
-      { extends: true, test: { name: 'vscode', environment: 'node', include: ['tests/unit/vscode/**/*.test.ts'], setupFiles: ['tests/setup/node.ts'] } },
-      { extends: true, test: { name: 'ui', environment: 'jsdom', include: ['tests/unit/ui/**/*.test.{ts,tsx}'], setupFiles: ['tests/setup/dom.ts'] } },
-      { extends: true, test: { name: 'chromium', environment: 'jsdom', include: ['tests/unit/chromium/**/*.test.{ts,tsx}'], setupFiles: ['tests/setup/chromium.ts'] } },
-      { extends: true, test: { name: 'contracts', environment: 'node', include: ['tests/contracts/**/*.test.ts'], setupFiles: ['tests/setup/node.ts'] } },
-      { extends: true, test: { name: 'manifest', environment: 'node', include: ['tests/manifest/**/*.test.ts'], setupFiles: ['tests/setup/node.ts'] } },
-      { extends: true, test: { name: 'build', environment: 'node', include: ['tests/unit/build/**/*.test.ts'], setupFiles: ['tests/setup/node.ts'] } },
+      { extends: true, test: { name: 'desktop',    environment: 'node',  include: ['tests/unit/desktop/**/*.test.ts'],       setupFiles: ['tests/setup/node.ts'] } },
+      { extends: true, test: { name: 'vscode',     environment: 'node',  include: ['tests/unit/vscode/**/*.test.ts'],        setupFiles: ['tests/setup/node.ts'] } },
+      { extends: true, test: { name: 'ui',         environment: 'jsdom', include: ['tests/unit/ui/**/*.test.{ts,tsx}'],      setupFiles: ['tests/setup/dom.ts'] } },
+      { extends: true, test: { name: 'chromium',   environment: 'jsdom', include: ['tests/unit/chromium/**/*.test.{ts,tsx}'], setupFiles: ['tests/setup/chromium.ts'] } },
+      { extends: true, test: { name: 'contracts',  environment: 'node',  include: ['tests/contracts/**/*.test.ts'],          setupFiles: ['tests/setup/node.ts'] } },
+      { extends: true, test: { name: 'manifest',    environment: 'node',  include: ['tests/manifest/**/*.test.ts'],           setupFiles: ['tests/setup/node.ts'] } },
+      { extends: true, test: { name: 'build',       environment: 'node',  include: ['tests/unit/build/**/*.test.ts'],         setupFiles: ['tests/setup/node.ts'] } },
     ],
     coverage: {
       provider: 'v8',

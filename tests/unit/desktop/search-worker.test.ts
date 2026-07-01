@@ -17,7 +17,16 @@ function writeFile(filePath: string, content: string) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
+async function settleTimers(ms = 50) {
+  await vi.advanceTimersByTimeAsync(ms);
+  await vi.advanceTimersByTimeAsync(0);
+}
+
 describe('createSearchWorkerHandler', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   test('set-items replaces items and primes index', async () => {
     const dir = makeTempDir('sw-setitems-');
     const filePath = path.join(dir, 'test.md');
@@ -34,7 +43,7 @@ describe('createSearchWorkerHandler', () => {
     }];
 
     handler.handleMessage({ type: 'set-items', items });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -46,7 +55,7 @@ describe('createSearchWorkerHandler', () => {
       yieldEvery: 25,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'r1');
     expect(doneMsg).toBeTruthy();
@@ -78,7 +87,7 @@ describe('createSearchWorkerHandler', () => {
     }];
 
     handler.handleMessage({ type: 'set-items', items });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -90,7 +99,7 @@ describe('createSearchWorkerHandler', () => {
       yieldEvery: 25,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && !m.requestId);
     expect(doneMsg).toBeTruthy();
@@ -102,7 +111,7 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items: null });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -114,7 +123,7 @@ describe('createSearchWorkerHandler', () => {
       yieldEvery: 25,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'r2');
     expect(doneMsg).toBeTruthy();
@@ -138,7 +147,7 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -154,7 +163,7 @@ describe('createSearchWorkerHandler', () => {
       yieldEvery: 1,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await settleTimers(200);
 
     const staleMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'stale');
     expect(staleMsg?.cancelled).toBe(true);
@@ -168,7 +177,7 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items: [] });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -176,7 +185,7 @@ describe('createSearchWorkerHandler', () => {
       query: 'a',
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'short');
     expect(doneMsg).toBeTruthy();
@@ -200,7 +209,7 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -209,7 +218,7 @@ describe('createSearchWorkerHandler', () => {
       batchSize: 50,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await settleTimers(100);
 
     const batchMsgs = messages.filter((m: any) => m.type === 'batch' && m.requestId === 'batch-test');
     expect(batchMsgs.length).toBeGreaterThan(0);
@@ -228,7 +237,7 @@ describe('createSearchWorkerHandler', () => {
       query: 'test',
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'err-test');
     expect(doneMsg).toBeTruthy();
@@ -243,7 +252,7 @@ describe('createSearchWorkerHandler', () => {
       requestId: 'no-query',
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'no-query');
     expect(doneMsg).toBeTruthy();
@@ -267,7 +276,7 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -276,11 +285,11 @@ describe('createSearchWorkerHandler', () => {
       yieldEvery: 1,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await vi.advanceTimersByTimeAsync(1);
 
     handler.handleMessage({ type: 'set-items', items: [] });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await settleTimers(100);
 
     const activeDone = messages.find((m: any) => m.type === 'done' && m.requestId === 'active');
     expect(activeDone).toBeTruthy();
@@ -302,14 +311,14 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items: [{ fsPath: filePath, fileName: 'doc.md', relativePath: 'doc.md', title: 'Doc' }] });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
       query: 'content',
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done');
     expect(doneMsg).toBeTruthy();
@@ -321,7 +330,7 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items: [] });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -329,7 +338,7 @@ describe('createSearchWorkerHandler', () => {
       query: undefined,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'no-query-undef');
     expect(doneMsg).toBeTruthy();
@@ -345,7 +354,7 @@ describe('createSearchWorkerHandler', () => {
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items: [{ fsPath: filePath, fileName: 'doc.md', relativePath: 'doc.md', title: 'Doc' }] });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({
       type: 'search',
@@ -353,7 +362,7 @@ describe('createSearchWorkerHandler', () => {
       query: 'findable',
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'opt-test');
     expect(doneMsg).toBeTruthy();
@@ -361,17 +370,16 @@ describe('createSearchWorkerHandler', () => {
   });
 
   test('emits error message with string error (not Error instance)', async () => {
-    const origSearchIncremental = require('../../../desktop/search-index.js').createSearchIndex;
     const messages: any[] = [];
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
 
     handler.handleMessage({ type: 'set-items', items: [] });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await settleTimers();
 
     vi.spyOn(handler.searchIndex, 'searchIncremental').mockRejectedValueOnce('string error');
     handler.handleMessage({ type: 'search', requestId: 'str-err', query: 'test' });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const errMsg = messages.find((m: any) => m.type === 'error' && m.requestId === 'str-err');
     expect(errMsg).toBeTruthy();
@@ -380,6 +388,10 @@ describe('createSearchWorkerHandler', () => {
 });
 
 describe('search-worker additional branch coverage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   test('search handles missing type (goes to else of set-items, then !== search returns)', () => {
     const messages: any[] = [];
     const handler = createSearchWorkerHandler((msg: any) => messages.push(msg));
@@ -397,10 +409,10 @@ describe('search-worker additional branch coverage', () => {
 
     const items = [{ fsPath: filePath, fileName: 'test.md', relativePath: 'test.md', title: 'Test' }];
     handler.handleMessage({ type: 'set-items', items });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     handler.handleMessage({ type: 'search', requestId: 'r1', query: 'searchable' });
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'r1');
     expect(doneMsg).toBeTruthy();
@@ -409,6 +421,10 @@ describe('search-worker additional branch coverage', () => {
 });
 
 describe('handleWorkerMessage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   test('set-items updates items and resets activeRequestId', async () => {
     const dir = makeTempDir('hwm-setitems-');
     const filePath = path.join(dir, 'test.md');
@@ -455,13 +471,13 @@ describe('handleWorkerMessage', () => {
     const state = { searchIndex: createSearchIndex(), items: { value: [] }, activeRequestId: { value: '' }, postMessage: (msg: any) => messages.push(msg) };
 
     handleWorkerMessage({ type: 'set-items', items: [{ fsPath: filePath }] }, state);
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await settleTimers();
 
     const result = handleWorkerMessage({ type: 'search', query: 'findable' }, state);
     expect(result).not.toBeNull();
     expect(result!.activeRequestId).toBe('');
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
     const doneMsg = messages.find((m: any) => m.type === 'done');
     expect(doneMsg).toBeTruthy();
   });
@@ -471,10 +487,10 @@ describe('handleWorkerMessage', () => {
     const state = { searchIndex: createSearchIndex(), items: { value: [] }, activeRequestId: { value: '' }, postMessage: (msg: any) => messages.push(msg) };
 
     handleWorkerMessage({ type: 'set-items', items: [] }, state);
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await settleTimers();
 
     handleWorkerMessage({ type: 'search', requestId: 'r1' }, state);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const doneMsg = messages.find((m: any) => m.type === 'done' && m.requestId === 'r1');
     expect(doneMsg).toBeTruthy();
@@ -488,7 +504,7 @@ describe('handleWorkerMessage', () => {
     vi.spyOn(state.searchIndex, 'searchIncremental').mockRejectedValueOnce('string error');
     handleWorkerMessage({ type: 'search', requestId: 'err', query: 'test' }, state);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await settleTimers();
 
     const errMsg = messages.find((m: any) => m.type === 'error' && m.requestId === 'err');
     expect(errMsg).toBeTruthy();

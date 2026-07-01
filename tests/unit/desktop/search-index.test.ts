@@ -310,9 +310,10 @@ describe('createSearchIndex', () => {
       { fsPath: path.join(d, 'bad.doc'), notAPath: true },
     ];
 
+    vi.useFakeTimers();
     index.prime(items);
-
-    await new Promise<void>((resolve) => setTimeout(resolve, 500));
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(0);
 
     const results = index.search('content', [
       { fsPath: f1, fileName: 'a.md', relativePath: 'a.md', title: 'A' },
@@ -330,9 +331,10 @@ describe('createSearchIndex', () => {
     });
 
     const index = createSearchIndex();
+    vi.useFakeTimers();
     index.prime(files as any);
-
-    await new Promise<void>((resolve) => setTimeout(resolve, 500));
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(0);
 
     const items = files.map((f, i) => ({
       ...f,
@@ -522,8 +524,9 @@ describe('createSearchIndex', () => {
       return fs.readFileSync(p, enc);
     });
 
+    vi.useFakeTimers();
     index.prime([{ fsPath: f }]);
-    await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    await vi.advanceTimersByTimeAsync(0);
     spy.mockRestore();
 
     const results = index.search('searchable', [{ fsPath: f, fileName: 'good.md', relativePath: 'good.md', title: 'Good' }]);
