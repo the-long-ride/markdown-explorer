@@ -80,6 +80,14 @@ export const markCopied = (btn: HTMLElement | null | undefined, resetText: strin
   }, 2000);
 };
 
+export function cleanClonedText(text: string): string {
+  return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+export function computeSectionOccurrence(sections: Element[], section: Element): number {
+  return Math.max(0, sections.indexOf(section));
+}
+
 export function registerCopyHandlers(win: any) {
   const copyText = (text: string) => {
     if (!text) return;
@@ -105,9 +113,7 @@ export function registerCopyHandlers(win: any) {
       '.mdn-table-filter-btn',
       '.mdn-sort-icon',
     ].join(',')).forEach((el) => el.remove());
-    return (clone.innerText || clone.textContent || '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    return cleanClonedText(clone.innerText || clone.textContent || '');
   };
 
   win.UI.markCopyButtonCopied = markCopied;
@@ -120,7 +126,7 @@ export function registerCopyHandlers(win: any) {
     if (!section || !body) return;
     try {
       const sameIdSections = Array.from(document.querySelectorAll<HTMLElement>(`.mdn-section[id="${CSS.escape(section.id)}"]`));
-      const occurrence = Math.max(0, sameIdSections.indexOf(section));
+      const occurrence = computeSectionOccurrence(sameIdSections, section);
       const markdownSource = markdownSectionFromSource(win.UI.currentMarkdownSource, section.id, occurrence);
       copyText(markdownSource || textFromElement(body));
       markCopied(btn, 'Copy section content');

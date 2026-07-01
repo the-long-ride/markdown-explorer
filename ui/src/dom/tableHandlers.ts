@@ -34,6 +34,54 @@ export function setColumnFilterValues(state: TableState, colIndex: number, value
   }
 }
 
+export function compareRows(at: string, bt: string, asc: boolean): number {
+  const an = parseFloat(at.replace(/[\$,%]/g, ''));
+  const bn = parseFloat(bt.replace(/[\$,%]/g, ''));
+  if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+  return asc ? at.localeCompare(bt) : bt.localeCompare(at);
+}
+
+export function formatRowCount(matchedCount: number, totalRows: number, isFiltered: boolean): string {
+  return isFiltered || matchedCount < totalRows
+    ? `${matchedCount} / ${totalRows} rows`
+    : `${totalRows} rows`;
+}
+
+export function truncateLabel(text: string, maxLength = 25): string {
+  return text.length > maxLength ? text.slice(0, maxLength - 3) + '...' : text;
+}
+
+export function detectColumnTypes(
+  headers: { length: number },
+  getCellText: (rowIdx: number, colIdx: number) => string,
+  maxRows = 10
+): { numericCols: number[]; labelCols: number[] } {
+  const numericCols: number[] = [];
+  const labelCols: number[] = [];
+
+  for (let idx = 0; idx < headers.length; idx++) {
+    let isNumeric = true;
+    let hasVal = false;
+    for (let row = 0; row < maxRows; row++) {
+      const text = getCellText(row, idx);
+      if (!text) continue;
+      const clean = text.replace(/[\$,%]/g, '');
+      if (isNaN(Number(clean))) {
+        isNumeric = false;
+      } else {
+        hasVal = true;
+      }
+    }
+    if (isNumeric && hasVal) {
+      numericCols.push(idx);
+    } else {
+      labelCols.push(idx);
+    }
+  }
+
+  return { numericCols, labelCols };
+}
+
 export function registerTableHandlers(win: any) {
   // UI.toggleCodeCollapse (global function to expand/collapse long code blocks)
   win.UI.toggleCodeCollapse = (btn: HTMLElement) => {
@@ -111,10 +159,7 @@ export function registerTableHandlers(win: any) {
     rows.sort((a, b) => {
       const at = a.cells[colIndex]?.textContent?.trim() ?? '';
       const bt = b.cells[colIndex]?.textContent?.trim() ?? '';
-      const an = parseFloat(at.replace(/[\$,%]/g, ''));
-      const bn = parseFloat(bt.replace(/[\$,%]/g, ''));
-      if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
-      return asc ? at.localeCompare(bt) : bt.localeCompare(at);
+      return compareRows(at, bt, asc);
     });
     rows.forEach((r) => tbody.appendChild(r));
 
@@ -153,9 +198,7 @@ export function registerTableHandlers(win: any) {
     const countEl = document.getElementById(tableId + '-count');
     if (countEl) {
       const filtered = searchQ || activeFilters.length > 0;
-      countEl.textContent = filtered || matchedCount < rows.length
-        ? `${matchedCount} / ${rows.length} rows`
-        : `${rows.length} rows`;
+      countEl.textContent = formatRowCount(matchedCount, rows.length, filtered);
     }
 
     const toggleBtn = document.getElementById(tableId + '-toggle-btn');
@@ -312,29 +355,10 @@ export function registerTableHandlers(win: any) {
     const headers = [...table.querySelectorAll('thead th')];
     const rows = getTableDataRows(table);
 
-    // Find numeric columns and text label columns
-    const numericCols: number[] = [];
-    const labelCols: number[] = [];
-
-    headers.forEach((_, idx) => {
-      let isNumeric = true;
-      let hasVal = false;
-      rows.slice(0, 10).forEach(row => {
-        const text = row.cells[idx]?.textContent?.trim() ?? '';
-        if (!text) return;
-        const clean = text.replace(/[\$,%]/g, '');
-        if (isNaN(Number(clean))) {
-          isNumeric = false;
-        } else {
-          hasVal = true;
-        }
-      });
-      if (isNumeric && hasVal) {
-        numericCols.push(idx);
-      } else {
-        labelCols.push(idx);
-      }
-    });
+    const { numericCols, labelCols } = detectColumnTypes(
+      { length: headers.length },
+      (rowIdx, colIdx) => rows[rowIdx]?.cells[colIdx]?.textContent?.trim() ?? ''
+    );
 
     if (numericCols.length > 0) {
       const labelColIdx = labelCols.length > 0 ? labelCols[0] : 0;
@@ -532,7 +556,7 @@ export function registerTableHandlers(win: any) {
 
     const labels = chartRows.map(row => {
       const text = row.cells[state.labelColIdx]?.textContent?.trim() ?? '';
-      return text.length > 25 ? text.slice(0, 22) + '...' : text;
+      return truncateLabel(text);
     });
 
     const styles = getComputedStyle(document.documentElement);

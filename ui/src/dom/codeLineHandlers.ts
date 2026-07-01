@@ -12,6 +12,50 @@ export function offsetToCodeLine(text: string, offset: number): number {
   return text.slice(0, clampedOffset).split('\n').length;
 }
 
+export function computeLineClasses(
+  line: number,
+  activeLine: number | null,
+  selectedStart: number | null,
+  selectedEnd: number | null,
+): { isActive: boolean; isSelected: boolean } {
+  const isActive = line === activeLine;
+  const hasSelection = selectedStart !== null && selectedEnd !== null;
+  const rangeStart = hasSelection ? Math.min(selectedStart, selectedEnd) : 0;
+  const rangeEnd = hasSelection ? Math.max(selectedStart, selectedEnd) : -1;
+  const isSelected = hasSelection && line >= rangeStart && line <= rangeEnd;
+  return { isActive, isSelected };
+}
+
+export function lineFromPosition(clientY: number, top: number, lineHeight: number, count: number): number {
+  return clampCodeLine(Math.floor((clientY - top) / lineHeight) + 1, count);
+}
+
+export function mergeLineRanges(
+  offsetRange: { start: number; end: number } | null,
+  rectRange: { start: number; end: number } | null,
+): { start: number; end: number } | null {
+  if (offsetRange && offsetRange.end <= offsetRange.start) {
+    if (!rectRange || rectRange.end <= rectRange.start) return null;
+    return rectRange;
+  }
+  if (!offsetRange) {
+    if (rectRange && rectRange.end <= rectRange.start) return null;
+    return rectRange;
+  }
+  if (!rectRange) return offsetRange;
+  return { start: Math.min(offsetRange.start, rectRange.start), end: Math.max(offsetRange.end, rectRange.end) };
+}
+
+export function computeVisibleRows(
+  rows: { classList: { contains(s: string): boolean }; id: string }[],
+  tableId: string,
+  maxRows = 50,
+) {
+  return rows
+    .filter(row => !row.classList.contains('is-hidden') && row.id !== tableId + '-toggle-row')
+    .slice(0, maxRows);
+}
+
 export function registerCodeLineHandlers() {
   const getCodeLineNumbers = (block: HTMLElement): HTMLElement[] =>
     Array.from(block.querySelectorAll('.mdn-codeblock-gutter span')) as HTMLElement[];
@@ -24,14 +68,12 @@ export function registerCodeLineHandlers() {
     const activeLine = readCodeLine(block.dataset.activeLine);
     const selectedStart = readCodeLine(block.dataset.selectedStart);
     const selectedEnd = readCodeLine(block.dataset.selectedEnd);
-    const hasSelection = selectedStart !== null && selectedEnd !== null;
-    const rangeStart = hasSelection ? Math.min(selectedStart, selectedEnd) : 0;
-    const rangeEnd = hasSelection ? Math.max(selectedStart, selectedEnd) : -1;
 
     numbers.forEach((span, index) => {
       const line = Number(span.dataset.line) || index + 1;
-      span.classList.toggle('is-active', activeLine === line);
-      span.classList.toggle('is-selected', hasSelection && line >= rangeStart && line <= rangeEnd);
+      const { isActive, isSelected } = computeLineClasses(line, activeLine, selectedStart, selectedEnd);
+      span.classList.toggle('is-active', isActive);
+      span.classList.toggle('is-selected', isSelected);
     });
 
     block.classList.toggle('has-code-line-active', activeLine !== null);
@@ -81,7 +123,7 @@ export function registerCodeLineHandlers() {
     const fontSize = parseFloat(styles.fontSize) || 12;
     const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.6;
     const top = measureEl.getBoundingClientRect().top;
-    return clampCodeLine(Math.floor((clientY - top) / lineHeight) + 1, count);
+    return lineFromPosition(clientY, top, lineHeight, count);
   };
 
   const getCodeTextOffset = (code: HTMLElement, container: Node, offset: number): number => {
@@ -143,16 +185,8 @@ export function registerCodeLineHandlers() {
     const start = Math.min(startOffset, endOffset);
     const end = Math.max(startOffset, endOffset);
     const rectLines = getSelectedCodeLinesFromRects(block, code, range);
-    if (end <= start) return rectLines;
-
-    const startLine = offsetToCodeLine(text, start);
-    const endLine = offsetToCodeLine(text, Math.max(start, end - 1));
-    if (!rectLines) return { start: startLine, end: endLine };
-
-    return {
-      start: Math.min(startLine, rectLines.start),
-      end: Math.max(endLine, rectLines.end),
-    };
+    const offsetLines = end > start ? { start: offsetToCodeLine(text, start), end: offsetToCodeLine(text, Math.max(start, end - 1)) } : null;
+    return mergeLineRanges(offsetLines, rectLines);
   };
 
   const syncCodeSelection = () => {

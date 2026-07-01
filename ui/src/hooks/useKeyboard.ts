@@ -72,6 +72,172 @@ export function isEditableTarget(target: EventTarget | null): boolean {
   return tagName === 'input' || tagName === 'textarea' || tagName === 'select';
 }
 
+export type KeyboardAction =
+  | { type: 'zoom-in' }
+  | { type: 'zoom-out' }
+  | { type: 'zoom-reset' }
+  | { type: 'sidebar-cursor-mode-toggle' }
+  | { type: 'close-sidebar-cursor-mode' }
+  | { type: 'close-search' }
+  | { type: 'close-find' }
+  | { type: 'close-settings' }
+  | { type: 'cross-tab-search-toggle' }
+  | { type: 'current-search-toggle' }
+  | { type: 'find-toggle' }
+  | { type: 'back' }
+  | { type: 'forward' }
+  | { type: 'welcome' }
+  | { type: 'settings-toggle' }
+  | { type: 'toggle-theme' }
+  | { type: 'toggle-toc' }
+  | { type: 'locate-file' }
+  | { type: 'toggle-focus-mode' }
+  | { type: 'refresh' }
+  | { type: 'collapse-all' }
+  | { type: 'expand-all' }
+  | { type: 'workspace-selection' }
+  | { type: 'toggle-sidebar' }
+  | null;
+
+export interface KeyboardState {
+  isDesktop: boolean;
+  isDesktopLike: boolean;
+  isTermsOpen: boolean;
+  isModalOpen: boolean;
+  isSearchOpen: boolean;
+  isFindOpen: boolean;
+  isSettingsOpen: boolean;
+  isSidebarCursorMode: boolean;
+  activeSearchScope: 'current' | 'all-tabs';
+  keybindings: Record<string, string>;
+  hasOnCrossTabSearchOpen: boolean;
+  hasOnFindOpen: boolean;
+  hasOnSidebarCursorModeToggle: boolean;
+  hasOnSidebarCursorModeClose: boolean;
+  hasOnWelcome: boolean;
+  hasOnToggleToc: boolean;
+  hasOnLocateFile: boolean;
+  hasOnToggleFocusMode: boolean;
+  hasOnFindClose: boolean;
+  isRepeat: boolean;
+  isEditableTarget: boolean;
+}
+
+export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): KeyboardAction {
+  if (state.isDesktop) {
+    const isZoomIn =
+      matchesShortcut(e, state.keybindings.zoomIn) ||
+      ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=' || e.key === 'Add'));
+    const isZoomOut =
+      matchesShortcut(e, state.keybindings.zoomOut) ||
+      ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_' || e.key === 'Subtract'));
+    const isZoomReset = (e.ctrlKey || e.metaKey) && e.key === '0';
+
+    if (isZoomIn) return { type: 'zoom-in' };
+    if (isZoomOut) return { type: 'zoom-out' };
+    if (isZoomReset) return { type: 'zoom-reset' };
+  }
+
+  if (state.isTermsOpen) return null;
+  if (state.isModalOpen) return null;
+
+  if (state.hasOnSidebarCursorModeToggle && matchesShortcut(e, state.keybindings.sidebarCursorMode)) {
+    return { type: 'sidebar-cursor-mode-toggle' };
+  }
+
+  if (e.key === 'Escape') {
+    if (state.isSidebarCursorMode && state.hasOnSidebarCursorModeClose) {
+      return { type: 'close-sidebar-cursor-mode' };
+    }
+    if (state.isSearchOpen) {
+      return { type: 'close-search' };
+    }
+    if (state.isFindOpen && state.hasOnFindClose) {
+      return { type: 'close-find' };
+    }
+    if (state.isSettingsOpen) {
+      return { type: 'close-settings' };
+    }
+  }
+
+  if (state.isDesktopLike && state.hasOnCrossTabSearchOpen && matchesShortcut(e, state.keybindings.searchAllTabs)) {
+    return { type: 'cross-tab-search-toggle' };
+  }
+
+  const isCurrentSearchShortcut = state.isDesktopLike
+    ? matchesShortcut(e, state.keybindings.searchCurrent)
+    : (e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k';
+
+  if (isCurrentSearchShortcut) {
+    return { type: 'current-search-toggle' };
+  }
+
+  if (
+    state.hasOnFindOpen &&
+    !state.isSearchOpen &&
+    !state.isEditableTarget &&
+    matchesShortcut(e, state.keybindings.findCurrentFile)
+  ) {
+    return { type: 'find-toggle' };
+  }
+
+  if (matchesShortcut(e, state.keybindings.back)) {
+    return { type: 'back' };
+  }
+
+  if (matchesShortcut(e, state.keybindings.forward)) {
+    return { type: 'forward' };
+  }
+
+  if (matchesShortcut(e, state.keybindings.welcome)) {
+    return { type: 'welcome' };
+  }
+
+  if (matchesShortcut(e, state.keybindings.settings)) {
+    return { type: 'settings-toggle' };
+  }
+
+  if (matchesShortcut(e, state.keybindings.toggleTheme)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-theme' };
+  }
+
+  if (state.hasOnToggleToc && matchesShortcut(e, state.keybindings.toggleToc)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-toc' };
+  }
+
+  if (state.hasOnLocateFile && !state.isEditableTarget && matchesShortcut(e, state.keybindings.locateFile)) {
+    return { type: 'locate-file' };
+  }
+
+  if (state.hasOnToggleFocusMode && matchesShortcut(e, state.keybindings.toggleFocusMode)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-focus-mode' };
+  }
+
+  if (state.isDesktopLike) {
+    if (matchesShortcut(e, state.keybindings.refresh)) {
+      return { type: 'refresh' };
+    }
+    if (matchesShortcut(e, state.keybindings.collapseAll)) {
+      return { type: 'collapse-all' };
+    }
+    if (matchesShortcut(e, state.keybindings.expandAll)) {
+      return { type: 'expand-all' };
+    }
+    if (matchesShortcut(e, state.keybindings.workspaceSelection)) {
+      return { type: 'workspace-selection' };
+    }
+    if (matchesShortcut(e, state.keybindings.toggleSidebar)) {
+      if (state.isRepeat) return null;
+      return { type: 'toggle-sidebar' };
+    }
+  }
+
+  return null;
+}
+
 export function useKeyboard({
   onSearchOpen,
   onCrossTabSearchOpen,
@@ -108,213 +274,125 @@ export function useKeyboard({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (isDesktop) {
-        const isZoomIn =
-          matchesShortcut(e, keybindings.zoomIn) ||
-          ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=' || e.key === 'Add'));
-        const isZoomOut =
-          matchesShortcut(e, keybindings.zoomOut) ||
-          ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_' || e.key === 'Subtract'));
-        // Block Ctrl+0 so WebView2 doesn't reset its own zoom independently of our app zoom
-        const isZoomReset = (e.ctrlKey || e.metaKey) && e.key === '0';
+      const action = resolveKeyboardAction(e, {
+        isDesktop,
+        isDesktopLike,
+        isTermsOpen,
+        isModalOpen,
+        isSearchOpen,
+        isFindOpen: !!isFindOpen,
+        isSettingsOpen,
+        isSidebarCursorMode,
+        activeSearchScope,
+        keybindings,
+        hasOnCrossTabSearchOpen: !!onCrossTabSearchOpen,
+        hasOnFindOpen: !!onFindOpen,
+        hasOnSidebarCursorModeToggle: !!onSidebarCursorModeToggle,
+        hasOnSidebarCursorModeClose: !!onSidebarCursorModeClose,
+        hasOnWelcome: !!onWelcome,
+        hasOnToggleToc: !!onToggleToc,
+        hasOnLocateFile: !!onLocateFile,
+        hasOnToggleFocusMode: !!onToggleFocusMode,
+        hasOnFindClose: !!onFindClose,
+        isRepeat: e.repeat,
+        isEditableTarget: isEditableTarget(e.target),
+      });
 
-        if (isZoomIn) {
-          e.preventDefault();
+      if (!action) return;
+      e.preventDefault();
+
+      switch (action.type) {
+        case 'zoom-in':
           bridge.postMessage({ command: 'zoom-in' });
-          return;
-        }
-
-        if (isZoomOut) {
-          e.preventDefault();
+          break;
+        case 'zoom-out':
           bridge.postMessage({ command: 'zoom-out' });
-          return;
-        }
-
-        if (isZoomReset) {
-          e.preventDefault();
-          return;
-        }
-      }
-
-      if (isTermsOpen) {
-        return;
-      }
-      if (isModalOpen) {
-        return;
-      }
-
-      if (onSidebarCursorModeToggle && matchesShortcut(e, keybindings.sidebarCursorMode)) {
-        e.preventDefault();
-        onSidebarCursorModeToggle();
-        return;
-      }
-
-      // 1. Check overlays priority Esc key
-      if (e.key === 'Escape') {
-        if (isSidebarCursorMode && onSidebarCursorModeClose) {
-          e.preventDefault();
-          onSidebarCursorModeClose();
-          return;
-        }
-        if (isSearchOpen) {
-          e.preventDefault();
+          break;
+        case 'zoom-reset':
+          break;
+        case 'sidebar-cursor-mode-toggle':
+          onSidebarCursorModeToggle?.();
+          break;
+        case 'close-sidebar-cursor-mode':
+          onSidebarCursorModeClose?.();
+          break;
+        case 'close-search':
           onSearchClose();
-          return;
-        }
-        if (isFindOpen && onFindClose) {
-          e.preventDefault();
-          onFindClose();
-          return;
-        }
-        if (isSettingsOpen) {
-          e.preventDefault();
+          break;
+        case 'close-find':
+          onFindClose?.();
+          break;
+        case 'close-settings':
           onSettingsClose();
-          return;
-        }
-      }
-
-      // 2. Search shortcuts. Desktop is customizable; VS Code keeps Ctrl+K.
-      if (isDesktopLike && onCrossTabSearchOpen && matchesShortcut(e, keybindings.searchAllTabs)) {
-        e.preventDefault();
-        if (isSearchOpen && activeSearchScope === 'all-tabs') {
-          onSearchClose();
-        } else {
-          onCrossTabSearchOpen();
-        }
-        return;
-      }
-
-      const isCurrentSearchShortcut = isDesktopLike
-        ? matchesShortcut(e, keybindings.searchCurrent)
-        : (e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k';
-
-      if (isCurrentSearchShortcut) {
-        e.preventDefault();
-        if (isSearchOpen && activeSearchScope === 'current') {
-          onSearchClose();
-        } else {
-          onSearchOpen();
-        }
-        return;
-      }
-
-      // 3. Find in the current rendered file. Bare keys must not fire while typing.
-      if (
-        onFindOpen &&
-        !isSearchOpen &&
-        !isEditableTarget(e.target) &&
-        matchesShortcut(e, keybindings.findCurrentFile)
-      ) {
-        e.preventDefault();
-        if (isFindOpen && onFindClose) {
-          onFindClose();
-        } else {
-          onFindOpen();
-        }
-        return;
-      }
-
-      // 4. Back to previous file (both)
-      if (matchesShortcut(e, keybindings.back)) {
-        e.preventDefault();
-        back();
-        return;
-      }
-
-      // 5. Go to next file (both)
-      if (matchesShortcut(e, keybindings.forward)) {
-        e.preventDefault();
-        forward();
-        return;
-      }
-
-      // 6. Welcome page (both)
-      if (matchesShortcut(e, keybindings.welcome)) {
-        e.preventDefault();
-        if (onWelcome) {
-          onWelcome();
-        } else {
-          navigate(null);
-        }
-        return;
-      }
-
-      // 7. Settings Modal (both)
-      if (matchesShortcut(e, keybindings.settings)) {
-        e.preventDefault();
-        if (isSettingsOpen) {
-          onSettingsClose();
-        } else {
-          onSettingsOpen();
-        }
-        return;
-      }
-
-      // 8. Toggle Theme (both)
-      if (matchesShortcut(e, keybindings.toggleTheme)) {
-        e.preventDefault();
-        if (e.repeat) return;
-        toggleTheme();
-        return;
-      }
-
-      if (onToggleToc && matchesShortcut(e, keybindings.toggleToc)) {
-        e.preventDefault();
-        if (e.repeat) return;
-        onToggleToc();
-        return;
-      }
-
-      if (onLocateFile && !isEditableTarget(e.target) && matchesShortcut(e, keybindings.locateFile)) {
-        e.preventDefault();
-        onLocateFile();
-        return;
-      }
-
-      if (onToggleFocusMode && matchesShortcut(e, keybindings.toggleFocusMode)) {
-        e.preventDefault();
-        if (e.repeat) return;
-        onToggleFocusMode();
-        return;
-      }
-
-      // Desktop specific keybindings
-      if (isDesktopLike) {
-        // 9. Refresh (Desktop)
-        if (matchesShortcut(e, keybindings.refresh)) {
-          e.preventDefault();
+          break;
+        case 'cross-tab-search-toggle':
+          if (isSearchOpen && activeSearchScope === 'all-tabs') {
+            onSearchClose();
+          } else {
+            onCrossTabSearchOpen?.();
+          }
+          break;
+        case 'current-search-toggle':
+          if (isSearchOpen && activeSearchScope === 'current') {
+            onSearchClose();
+          } else {
+            onSearchOpen();
+          }
+          break;
+        case 'find-toggle':
+          if (isFindOpen && onFindClose) {
+            onFindClose();
+          } else {
+            onFindOpen?.();
+          }
+          break;
+        case 'back':
+          back();
+          break;
+        case 'forward':
+          forward();
+          break;
+        case 'welcome':
+          if (onWelcome) {
+            onWelcome();
+          } else {
+            navigate(null);
+          }
+          break;
+        case 'settings-toggle':
+          if (isSettingsOpen) {
+            onSettingsClose();
+          } else {
+            onSettingsOpen();
+          }
+          break;
+        case 'toggle-theme':
+          toggleTheme();
+          break;
+        case 'toggle-toc':
+          onToggleToc?.();
+          break;
+        case 'locate-file':
+          onLocateFile?.();
+          break;
+        case 'toggle-focus-mode':
+          onToggleFocusMode?.();
+          break;
+        case 'refresh':
           refresh();
-          return;
-        }
-
-        // 10. Collapse all headings (Desktop)
-        if (matchesShortcut(e, keybindings.collapseAll)) {
-          e.preventDefault();
+          break;
+        case 'collapse-all':
           onCollapseAll();
-          return;
-        }
-
-        // 11. Expand all headings (Desktop)
-        if (matchesShortcut(e, keybindings.expandAll)) {
-          e.preventDefault();
+          break;
+        case 'expand-all':
           onExpandAll();
-          return;
-        }
-
-        // 12. Go to workspace selection page (Desktop)
-        if (matchesShortcut(e, keybindings.workspaceSelection)) {
-          e.preventDefault();
+          break;
+        case 'workspace-selection':
           bridge.postMessage({ command: 'closeWorkspace' });
-          return;
-        }
-
-        // 13. Toggle sidebar (Desktop)
-        if (matchesShortcut(e, keybindings.toggleSidebar)) {
-          e.preventDefault();
-          if (e.repeat) return;
+          break;
+        case 'toggle-sidebar':
           toggleSidebar();
-          return;
-        }
+          break;
       }
     };
 
