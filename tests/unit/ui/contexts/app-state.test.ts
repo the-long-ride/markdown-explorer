@@ -804,6 +804,42 @@ describe('reducer', () => {
     expect(reducer(state, { type: 'SET_SIDEBAR_COLLAPSED', collapsed: true }).sidebarCollapsed).toBe(true);
   });
 
+  describe('WORKSPACE_FILES_CHANGED', () => {
+    test('updates fileList and tree', () => {
+      const state = makeState({ isLoading: false });
+      const newFileList: MdFile[] = [
+        { fsPath: 'C:/docs/new.md', relativePath: 'new.md', fileName: 'new.md', title: 'New' },
+      ];
+      const newTree: FolderNode = { name: 'docs', path: 'docs', files: newFileList, children: [] };
+      const result = reducer(state, {
+        type: 'WORKSPACE_FILES_CHANGED',
+        fileList: newFileList,
+        tree: newTree,
+        workspaceName: 'docs',
+        workspacePath: 'C:/docs',
+      });
+      expect(result.fileList).toEqual(newFileList);
+      expect(result.tree).toEqual(newTree);
+    });
+
+    test('reconciles scope focus with new file list', () => {
+      const state = makeState({
+        settings: {
+          ...initialState.settings,
+          scopeFocus: { default: ['removed-file.md'] },
+        },
+      });
+      const result = reducer(state, {
+        type: 'WORKSPACE_FILES_CHANGED',
+        fileList: [{ fsPath: 'C:/kept.md', relativePath: 'kept.md', fileName: 'kept.md', title: 'Kept' }],
+        tree: null,
+        workspaceName: 'ws',
+        workspacePath: 'C:/ws',
+      });
+      expect(result.settings.scopeFocus).toBeDefined();
+    });
+  });
+
   test('unknown action returns unchanged state', () => {
     const state = makeState();
     expect(reducer(state, { type: 'UNKNOWN_ACTION' } as any)).toEqual(state);

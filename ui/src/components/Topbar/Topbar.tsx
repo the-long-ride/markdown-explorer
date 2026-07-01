@@ -31,7 +31,7 @@ interface BreadcrumbItem {
 
 const BREADCRUMB_CHAR_BUDGET = 96;
 
-function truncateFilename(name: string, maxLen: number): string {
+export function truncateFilename(name: string, maxLen: number): string {
   if (name.length <= maxLen) return name;
   const extIdx = name.lastIndexOf('.');
   const ext = extIdx !== -1 ? name.slice(extIdx) : '';
@@ -45,7 +45,7 @@ function truncateFilename(name: string, maxLen: number): string {
   return base.slice(0, Math.max(1, maxLen - 3)) + '...';
 }
 
-function getBreadcrumbItems(relativePath: string, welcomePageLabel: string): BreadcrumbItem[] {
+export function getBreadcrumbItems(relativePath: string, welcomePageLabel: string): BreadcrumbItem[] {
   if (!relativePath) return [];
   if (relativePath === 'Welcome Page') {
     return [{ text: welcomePageLabel, isBold: true }];

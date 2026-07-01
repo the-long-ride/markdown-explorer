@@ -14,7 +14,7 @@ import type { MdFile, WorkspaceSearchResult } from '../../types';
 const SEARCH_OVERLAY_Z_INDEX = 2147483647;
 const CROSS_TAB_RESULT_PAGE_SIZE = 100;
 
-function renderHighlightedExcerpt(excerpt: string, query: string) {
+export function renderHighlightedExcerpt(excerpt: string, query: string) {
   const needle = query.trim().replace(/\s+/g, ' ');
   if (!needle) return excerpt;
 

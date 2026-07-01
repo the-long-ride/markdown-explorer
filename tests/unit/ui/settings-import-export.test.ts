@@ -349,3 +349,152 @@ describe('restoreLocalUiSettings', () => {
     expect(localStorage.getItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY)).toBeNull();
   });
 });
+
+describe('parseSettingsImport - normalizeSettings branches', () => {
+  const makeEnvelope = (settings: Record<string, unknown>) => ({
+    kind: 'markdown-explorer-settings',
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    payload: { theme: 'dark', themeStyle: 'default', settings, recentWorkspaces: [] },
+  });
+
+  test('showTitle defaults to false', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
+    expect(result.settings.showTitle).toBe(false);
+  });
+
+  test('showTitle true preserves true', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({ showTitle: true })), false);
+    expect(result.settings.showTitle).toBe(true);
+  });
+
+  test('defaultHtmlPreview defaults to true', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
+    expect(result.settings.defaultHtmlPreview).toBe(true);
+  });
+
+  test('defaultHtmlPreview false preserves false', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({ defaultHtmlPreview: false })), false);
+    expect(result.settings.defaultHtmlPreview).toBe(false);
+  });
+
+  test('fileTabs defaults to false', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
+    expect(result.settings.fileTabs).toBe(false);
+  });
+
+  test('documentConversion defaults to false', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
+    expect(result.settings.documentConversion).toBe(false);
+  });
+
+  test('language defaults to en', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
+    expect(result.settings.language).toBe('en');
+  });
+
+  test('language trimmed and sliced to 12', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({ language: '  en-US-extra  ' })), false);
+    expect(result.settings.language).toBe('en-US-extra');
+  });
+
+  test('empty language string defaults to en', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({ language: '   ' })), false);
+    expect(result.settings.language).toBe('en');
+  });
+
+  test('non-string language defaults to en', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({ language: 42 })), false);
+    expect(result.settings.language).toBe('en');
+  });
+
+  test('null settings object uses defaults', () => {
+    const envelope = {
+      kind: 'markdown-explorer-settings',
+      schemaVersion: 1,
+      payload: { theme: 'dark', themeStyle: 'default', settings: null, recentWorkspaces: [] },
+    };
+    const result = parseSettingsImport(JSON.stringify(envelope), false);
+    expect(result.settings.showTitle).toBe(false);
+    expect(result.settings.defaultHtmlPreview).toBe(true);
+  });
+
+  test('keybindings from import are normalized', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      keybindings: { search: 'Ctrl+K', home: '  Ctrl+H  ' },
+    })), false);
+    expect(result.settings.keybindings.search).toBe('Ctrl+K');
+    expect(result.settings.keybindings.home).toBe('Ctrl+H');
+  });
+
+  test('keybindings with empty values are filtered', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      keybindings: { search: '  ' },
+    })), false);
+    expect(result.settings.keybindings.search).toBeUndefined();
+  });
+
+  test('keybindings with non-string values are filtered', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      keybindings: { search: 42 as any, home: 'Ctrl+H' },
+    })), false);
+    expect(result.settings.keybindings.search).toBeUndefined();
+  });
+
+  test('keybindings sliced to 48 chars', () => {
+    const long = 'a'.repeat(60);
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      keybindings: { search: long },
+    })), false);
+    expect(result.settings.keybindings.search!.length).toBe(48);
+  });
+
+  test('scopeFocus normalized from import', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      scopeFocus: { '/ws': ['a.md', 'b.md'] },
+    })), false);
+    expect(result.settings.scopeFocus['/ws']).toEqual(['a.md', 'b.md']);
+  });
+
+  test('scopeFocus with non-array paths filtered', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      scopeFocus: { '/ws': 'not-an-array' },
+    })), false);
+    expect(result.settings.scopeFocus['/ws']).toBeUndefined();
+  });
+
+  test('scopeFocus with empty workspace key filtered', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      scopeFocus: { '': ['a.md'] },
+    })), false);
+    expect(Object.keys(result.settings.scopeFocus)).toHaveLength(0);
+  });
+
+  test('scopeFocus deduplicates paths', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      scopeFocus: { '/ws': ['a.md', 'a.md'] },
+    })), false);
+    expect(result.settings.scopeFocus['/ws']).toEqual(['a.md']);
+  });
+
+  test('scopeFocus non-object value defaults to empty', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      scopeFocus: 'string-value',
+    })), false);
+    expect(result.settings.scopeFocus).toEqual({});
+  });
+
+  test('desktopViewMode from import', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      desktopViewMode: 'tabs',
+    })), true);
+    expect(result.settings.desktopViewMode).toBe('tabs');
+  });
+
+  test('desktopViewMode defaults to focus for unknown value', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({
+      desktopViewMode: 'tab-view',
+    })), true);
+    expect(result.settings.desktopViewMode).toBe('focus');
+  });
+});

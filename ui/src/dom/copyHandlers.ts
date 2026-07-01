@@ -63,7 +63,7 @@ export function markdownSectionFromSource(
   return '';
 }
 
-const markCopied = (btn: HTMLElement | null | undefined, resetText: string) => {
+export const markCopied = (btn: HTMLElement | null | undefined, resetText: string) => {
   if (!btn) return;
   const feedbackBtn = btn as HTMLElement & { __copyResetTimer?: number };
   if (feedbackBtn.__copyResetTimer) {

@@ -189,5 +189,64 @@ describe('unicodeSearch', () => {
       const haystack = prepareHaystack('abc');
       expect(haystack.indexOfNormalized('xyz')).toBeNull();
     });
+
+    test('indexOf returns null for empty normNeedle', () => {
+      const haystack = prepareHaystack('abc');
+      expect(haystack.indexOf('')).toBeNull();
+    });
+
+    test('indexOf with fromIndex > 0', () => {
+      const haystack = prepareHaystack('abcabc');
+      const result = haystack.indexOf('abc', 1);
+      expect(result).not.toBeNull();
+      expect(result!.index).toBe(3);
+    });
+
+    test('indexOfNormalized iterates through matches', () => {
+      const haystack = prepareHaystack('abcabc');
+      const first = haystack.indexOfNormalized('abc');
+      expect(first).not.toBeNull();
+      const second = haystack.indexOfNormalized('abc', first!.nextNormIndex);
+      expect(second).not.toBeNull();
+      expect(second!.match.index).toBe(3);
+    });
+  });
+
+  describe('unicodeIndexOf edge cases', () => {
+    test('fromIndex beyond text length returns null', () => {
+      expect(unicodeIndexOf('abc', 'abc', 10)).toBeNull();
+    });
+
+    test('fromIndex at boundary finds match starting at that index', () => {
+      expect(unicodeIndexOf('ab', 'ab', 0)!.index).toBe(0);
+    });
+
+    test('empty text returns null', () => {
+      expect(unicodeIndexOf('', 'abc')).toBeNull();
+    });
+
+    test('needle longer than text returns null', () => {
+      expect(unicodeIndexOf('ab', 'abc')).toBeNull();
+    });
+
+    test('normNeedle empty returns null', () => {
+      expect(unicodeIndexOf('\u0130', '\u0307')).toBeNull();
+    });
+  });
+
+  describe('unicodeFindAll edge cases', () => {
+    test('returns empty when needle normalized is empty', () => {
+      expect(unicodeFindAll('text', '\u0307')).toEqual([]);
+    });
+
+    test('maxResults = 0 returns empty', () => {
+      expect(unicodeFindAll('abcabc', 'abc', 0)).toEqual([]);
+    });
+
+    test('finds single occurrence', () => {
+      const results = unicodeFindAll('abc', 'abc');
+      expect(results).toHaveLength(1);
+      expect(results[0].index).toBe(0);
+    });
   });
 });

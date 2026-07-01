@@ -1,14 +1,20 @@
+export function readCodeLine(value: string | undefined): number | null {
+  const line = Number(value);
+  return Number.isFinite(line) && line > 0 ? line : null;
+}
+
+export function clampCodeLine(line: number, count: number): number {
+  return Math.min(Math.max(Math.round(line), 1), Math.max(count, 1));
+}
+
+export function offsetToCodeLine(text: string, offset: number): number {
+  const clampedOffset = Math.min(Math.max(offset, 0), text.length);
+  return text.slice(0, clampedOffset).split('\n').length;
+}
+
 export function registerCodeLineHandlers() {
   const getCodeLineNumbers = (block: HTMLElement): HTMLElement[] =>
     Array.from(block.querySelectorAll('.mdn-codeblock-gutter span')) as HTMLElement[];
-
-  const readCodeLine = (value: string | undefined): number | null => {
-    const line = Number(value);
-    return Number.isFinite(line) && line > 0 ? line : null;
-  };
-
-  const clampCodeLine = (line: number, count: number): number =>
-    Math.min(Math.max(Math.round(line), 1), Math.max(count, 1));
 
   const paintCodeLineState = (block: HTMLElement) => {
     const numbers = getCodeLineNumbers(block);
@@ -76,11 +82,6 @@ export function registerCodeLineHandlers() {
     const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.6;
     const top = measureEl.getBoundingClientRect().top;
     return clampCodeLine(Math.floor((clientY - top) / lineHeight) + 1, count);
-  };
-
-  const offsetToCodeLine = (text: string, offset: number): number => {
-    const clampedOffset = Math.min(Math.max(offset, 0), text.length);
-    return text.slice(0, clampedOffset).split('\n').length;
   };
 
   const getCodeTextOffset = (code: HTMLElement, container: Node, offset: number): number => {

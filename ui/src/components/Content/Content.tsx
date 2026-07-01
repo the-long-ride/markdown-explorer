@@ -28,7 +28,7 @@ const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 });
 
-function isWorkspaceNavigationHref(href: string): boolean {
+export function isWorkspaceNavigationHref(href: string): boolean {
   const trimmed = href.trim();
   if (!trimmed || trimmed === "#" || trimmed.startsWith("#")) return false;
   if (/^[a-z][a-z\d+.-]*:/i.test(trimmed) || trimmed.startsWith("//")) return false;
@@ -39,7 +39,7 @@ function isWorkspaceNavigationHref(href: string): boolean {
   );
 }
 
-function formatPreviewDuration(durationMs: number | undefined): string {
+export function formatPreviewDuration(durationMs: number | undefined): string {
   if (!Number.isFinite(durationMs) || !durationMs) return "";
   if (durationMs < 1000) return `${Math.max(1, Math.round(durationMs))} ms`;
   return `${(durationMs / 1000).toFixed(durationMs < 10_000 ? 1 : 0)} s`;
@@ -50,7 +50,7 @@ const DEFAULT_CONVERSION_WARNING =
 const DEFAULT_CONVERSION_FAILURE_WARNING =
   "Markdown Explorer could not convert this file. The details are shown below.";
 
-function formatTemplate(template: string, values: Record<string, string>): string {
+export function formatTemplate(template: string, values: Record<string, string>): string {
   return Object.entries(values).reduce(
     (result, [key, value]) => result.split(`{${key}}`).join(value),
     template,

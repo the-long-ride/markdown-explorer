@@ -2,6 +2,73 @@ import { registerCodeLineHandlers } from './codeLineHandlers';
 import { registerCopyHandlers } from './copyHandlers';
 import { registerTableHandlers } from './tableHandlers';
 
+export function toggleSection(headerEl: HTMLElement) {
+  const section = headerEl.closest('.mdn-section') as HTMLElement | null;
+  if (!section) return;
+  const expanded = section.dataset.expanded === 'true';
+  section.dataset.expanded = expanded ? 'false' : 'true';
+  headerEl.setAttribute('aria-expanded', String(!expanded));
+}
+
+export function expandAll() {
+  document.querySelectorAll('.mdn-section').forEach((s) => {
+    (s as HTMLElement).dataset.expanded = 'true';
+  });
+}
+
+export function collapseAll() {
+  document.querySelectorAll('.mdn-section').forEach((s) => {
+    (s as HTMLElement).dataset.expanded = 'false';
+  });
+}
+
+export function setHtmlMode(wrap: HTMLElement, mode: string) {
+  wrap.dataset.mode = mode;
+  const langLabel = wrap.querySelector('.mdn-codeblock-lang') as HTMLElement | null;
+  const previewBody = wrap.querySelector('.mdn-html-preview-body') as HTMLElement | null;
+  const codeBody = wrap.querySelector('.mdn-codeblock-body') as HTMLElement | null;
+  const toggleBtn = wrap.querySelector('.mdn-toggle-preview-btn') as HTMLElement | null;
+  const tooltipText = wrap.querySelector('.mdn-toggle-preview-btn .tooltip-text') as HTMLElement | null;
+  if (mode === 'preview') {
+    if (langLabel) langLabel.textContent = 'HTML Preview';
+    if (previewBody) previewBody.style.display = '';
+    if (codeBody) codeBody.style.display = 'none';
+    if (tooltipText) tooltipText.textContent = 'Show Code';
+    if (toggleBtn) {
+      const svg = toggleBtn.querySelector('svg');
+      if (svg) {
+        svg.outerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>';
+      }
+    }
+  } else {
+    if (langLabel) langLabel.textContent = 'HTML';
+    if (previewBody) previewBody.style.display = 'none';
+    if (codeBody) codeBody.style.display = 'flex';
+    if (tooltipText) tooltipText.textContent = 'Show Preview';
+    if (toggleBtn) {
+      const svg = toggleBtn.querySelector('svg');
+      if (svg) {
+        svg.outerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+      }
+    }
+  }
+}
+
+export function toggleHtmlMode(btn: HTMLElement) {
+  const wrap = btn.closest('.mdn-codeblock') as HTMLElement | null;
+  if (!wrap) return;
+  const currentMode = wrap.dataset.mode || 'preview';
+  setHtmlMode(wrap, currentMode === 'preview' ? 'code' : 'preview');
+}
+
+export function triggerToggleCodeCollapse(btn: HTMLElement) {
+  const wrap = btn.closest('.mdn-codeblock') as HTMLElement | null;
+  if (!wrap) return;
+  const isCollapsed = wrap.dataset.collapsed === 'true';
+  wrap.dataset.collapsed = isCollapsed ? 'false' : 'true';
+  btn.textContent = isCollapsed ? 'Show Less' : 'Show More';
+}
+
 export function initGlobalHandlers() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const win = window as any;
@@ -21,60 +88,11 @@ export function initGlobalHandlers() {
 
   // UI.toggleSection
   if (!win.UI) win.UI = {};
-  win.UI.toggleSection = (headerEl: HTMLElement) => {
-    const section = headerEl.closest('.mdn-section') as HTMLElement | null;
-    if (!section) return;
-    const expanded = section.dataset.expanded === 'true';
-    section.dataset.expanded = expanded ? 'false' : 'true';
-    headerEl.setAttribute('aria-expanded', String(!expanded));
-  };
-  win.UI.expandAll = () => {
-    document.querySelectorAll('.mdn-section').forEach((s) => {
-      (s as HTMLElement).dataset.expanded = 'true';
-    });
-  };
-  win.UI.collapseAll = () => {
-    document.querySelectorAll('.mdn-section').forEach((s) => {
-      (s as HTMLElement).dataset.expanded = 'false';
-    });
-  };
-  win.UI.setHtmlMode = (wrap: HTMLElement, mode: string) => {
-    wrap.dataset.mode = mode;
-    const langLabel = wrap.querySelector('.mdn-codeblock-lang') as HTMLElement | null;
-    const previewBody = wrap.querySelector('.mdn-html-preview-body') as HTMLElement | null;
-    const codeBody = wrap.querySelector('.mdn-codeblock-body') as HTMLElement | null;
-    const toggleBtn = wrap.querySelector('.mdn-toggle-preview-btn') as HTMLElement | null;
-    const tooltipText = wrap.querySelector('.mdn-toggle-preview-btn .tooltip-text') as HTMLElement | null;
-    if (mode === 'preview') {
-      if (langLabel) langLabel.textContent = 'HTML Preview';
-      if (previewBody) previewBody.style.display = '';
-      if (codeBody) codeBody.style.display = 'none';
-      if (tooltipText) tooltipText.textContent = 'Show Code';
-      if (toggleBtn) {
-        const svg = toggleBtn.querySelector('svg');
-        if (svg) {
-          svg.outerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>';
-        }
-      }
-    } else {
-      if (langLabel) langLabel.textContent = 'HTML';
-      if (previewBody) previewBody.style.display = 'none';
-      if (codeBody) codeBody.style.display = 'flex';
-      if (tooltipText) tooltipText.textContent = 'Show Preview';
-      if (toggleBtn) {
-        const svg = toggleBtn.querySelector('svg');
-        if (svg) {
-          svg.outerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
-        }
-      }
-    }
-  };
-  win.UI.toggleHtmlMode = (btn: HTMLElement) => {
-    const wrap = btn.closest('.mdn-codeblock') as HTMLElement | null;
-    if (!wrap) return;
-    const currentMode = wrap.dataset.mode || 'preview';
-    win.UI.setHtmlMode(wrap, currentMode === 'preview' ? 'code' : 'preview');
-  };
+  win.UI.toggleSection = toggleSection;
+  win.UI.expandAll = expandAll;
+  win.UI.collapseAll = collapseAll;
+  win.UI.setHtmlMode = setHtmlMode;
+  win.UI.toggleHtmlMode = toggleHtmlMode;
   win.UI.refresh = () => {
     // Handled by React bridge, but provide a fallback
   };

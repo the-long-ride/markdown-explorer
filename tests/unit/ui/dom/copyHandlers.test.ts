@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { slugifyHeading, getHeadingAt, markdownSectionFromSource } from '../../../../ui/src/dom/copyHandlers';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { slugifyHeading, getHeadingAt, markdownSectionFromSource, markCopied, registerCopyHandlers } from '../../../../ui/src/dom/copyHandlers';
 
 describe('dom/copyHandlers pure functions', () => {
   describe('slugifyHeading', () => {
@@ -18,6 +18,22 @@ describe('dom/copyHandlers pure functions', () => {
     it('deduplicates hyphens', () => {
       expect(slugifyHeading('a - b')).toBe('a-b');
     });
+
+    it('trims whitespace then converts to hyphens', () => {
+      expect(slugifyHeading('a b')).toBe('a-b');
+    });
+
+    it('preserves internal hyphens', () => {
+      expect(slugifyHeading('hello-world')).toBe('hello-world');
+    });
+
+    it('handles only special characters', () => {
+      expect(slugifyHeading('@@@')).toBe('');
+    });
+
+    it('removes unicode chars with ascii-only regex', () => {
+      expect(slugifyHeading('Über Code')).toBe('ber-code');
+    });
   });
 
   describe('getHeadingAt', () => {
@@ -31,6 +47,18 @@ describe('dom/copyHandlers pure functions', () => {
       const lines = ['## Sub-heading'];
       const heading = getHeadingAt(lines, 0);
       expect(heading).toEqual({ level: 2, text: 'Sub-heading', start: 0, end: 1 });
+    });
+
+    it('detects ATX h3', () => {
+      const lines = ['### Section 3'];
+      const heading = getHeadingAt(lines, 0);
+      expect(heading).toEqual({ level: 3, text: 'Section 3', start: 0, end: 1 });
+    });
+
+    it('detects ATX h6', () => {
+      const lines = ['###### Deepest'];
+      const heading = getHeadingAt(lines, 0);
+      expect(heading).toEqual({ level: 6, text: 'Deepest', start: 0, end: 1 });
     });
 
     it('strips trailing # from heading', () => {
@@ -73,6 +101,12 @@ describe('dom/copyHandlers pure functions', () => {
       const lines = ['Title'];
       const heading = getHeadingAt(lines, 0);
       expect(heading).toBeNull();
+    });
+
+    it('handles line at end of array', () => {
+      const lines = ['text', '# Last'];
+      const heading = getHeadingAt(lines, 1);
+      expect(heading).toEqual({ level: 1, text: 'Last', start: 1, end: 2 });
     });
   });
 
@@ -129,6 +163,123 @@ describe('dom/copyHandlers pure functions', () => {
       const source = '# Final\n\nLast content';
       const result = markdownSectionFromSource(source, 'final');
       expect(result).toContain('Last content');
+    });
+
+    it('includes sub-headings in section', () => {
+      const source = '# Main\n\n## Sub\n\nSub content\n\n# Next';
+      const result = markdownSectionFromSource(source, 'main');
+      expect(result).toContain('Sub');
+      expect(result).toContain('Sub content');
+      expect(result).not.toContain('Next');
+    });
+  });
+
+  describe('markCopied', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('adds is-copied class to button', () => {
+      const btn = document.createElement('button');
+      document.body.appendChild(btn);
+      markCopied(btn, 'Copy');
+      expect(btn.classList.contains('is-copied')).toBe(true);
+      document.body.removeChild(btn);
+    });
+
+    it('sets tooltip text to Copied!', () => {
+      const btn = document.createElement('button');
+      btn.innerHTML = '<span class="tooltip-text">Copy</span>';
+      document.body.appendChild(btn);
+      markCopied(btn, 'Copy');
+      expect(btn.querySelector('.tooltip-text')!.textContent).toBe('Copied!');
+      document.body.removeChild(btn);
+    });
+
+    it('resets after timeout', () => {
+      const btn = document.createElement('button');
+      btn.innerHTML = '<span class="tooltip-text">Copy</span>';
+      document.body.appendChild(btn);
+      markCopied(btn, 'Copy');
+      vi.advanceTimersByTime(2100);
+      expect(btn.classList.contains('is-copied')).toBe(false);
+      expect(btn.querySelector('.tooltip-text')!.textContent).toBe('Copy');
+      document.body.removeChild(btn);
+    });
+
+    it('does nothing when btn is null', () => {
+      expect(() => markCopied(null, 'Copy')).not.toThrow();
+    });
+
+    it('does nothing when btn is undefined', () => {
+      expect(() => markCopied(undefined, 'Copy')).not.toThrow();
+    });
+
+    it('clears previous timer when called again', () => {
+      const btn = document.createElement('button');
+      document.body.appendChild(btn);
+      markCopied(btn, 'First');
+      markCopied(btn, 'Second');
+      vi.advanceTimersByTime(2100);
+      expect(btn.classList.contains('is-copied')).toBe(false);
+      document.body.removeChild(btn);
+    });
+
+    it('works without tooltip', () => {
+      const btn = document.createElement('button');
+      document.body.appendChild(btn);
+      markCopied(btn, 'Copy');
+      expect(btn.classList.contains('is-copied')).toBe(true);
+      document.body.removeChild(btn);
+    });
+  });
+
+  describe('registerCopyHandlers', () => {
+    beforeEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('registers UI.copySection on window', () => {
+      const win: any = { UI: {} };
+      registerCopyHandlers(win);
+      expect(typeof win.UI.copySection).toBe('function');
+    });
+
+    it('registers UI.copyDocument on window', () => {
+      const win: any = { UI: {} };
+      registerCopyHandlers(win);
+      expect(typeof win.UI.copyDocument).toBe('function');
+    });
+
+    it('registers UI.copyCode on window', () => {
+      const win: any = { UI: {} };
+      registerCopyHandlers(win);
+      expect(typeof win.UI.copyCode).toBe('function');
+    });
+
+    it('registers UI.markCopyButtonCopied on window', () => {
+      const win: any = { UI: {} };
+      registerCopyHandlers(win);
+      expect(typeof win.UI.markCopyButtonCopied).toBe('function');
+    });
+
+    it('registers copyCode that calls copyText via PlatformBridge', () => {
+      const mockCopy = vi.fn();
+      const win: any = { UI: {}, PlatformBridge: { copyToClipboard: mockCopy } };
+      registerCopyHandlers(win);
+      expect(typeof win.UI.copyCode).toBe('function');
+    });
+
+    it('registers copyCode that falls back to navigator.clipboard', () => {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.assign(navigator, { clipboard: { writeText } });
+      const win: any = { UI: {} };
+      registerCopyHandlers(win);
+      expect(typeof win.UI.copyCode).toBe('function');
     });
   });
 });
