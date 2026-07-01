@@ -95,9 +95,9 @@ function createDesktopRuntime(deps) {
     createSearchIndex,
     createSearchWorkerController,
     createWorkspaceWatchController,
-    documentConverter: documentConverterImpl,
+    setTimeout: setTimeoutImpl,
+    clearTimeout: clearTimeoutImpl,
     perf,
-    updateManager,
     DesktopScanner: DesktopScannerImpl,
     isWatchChangeRelevant,
     shouldNotifyCurrentFileChanged,
@@ -308,11 +308,11 @@ function createDesktopRuntime(deps) {
           `Preparing ${getFileTypeLabelLite(currentFile)} preview locally.`,
         );
       }
-      const result = await documentConverterImpl.readMarkdown(currentFile);
+      const result = await deps.documentConverter.readMarkdown(currentFile);
       raw = result.markdown;
       previewInfo = result.previewInfo;
     } catch (err) {
-      raw = documentConverterImpl.createFailureMarkdown(currentFile, err);
+      raw = deps.documentConverter.createFailureMarkdown(currentFile, err);
       previewInfo = isExtraDocumentFilePathLite(currentFile)
         ? {
             kind: "converted",
@@ -360,7 +360,16 @@ function createDesktopRuntime(deps) {
   }
 
   function bindWorkspaceWatch() {
-    if (workspaceWatch) workspaceWatch.watchWorkspace(getWorkspaceBaseDir());
+    if (!workspaceWatch) {
+      workspaceWatch = createWorkspaceWatchController({
+        fs,
+        setTimeout: setTimeoutImpl,
+        clearTimeout: clearTimeoutImpl,
+        debounceMs: 120,
+        onRefresh: (...args) => refreshActiveWorkspaceFromWatch(...args),
+      });
+    }
+    workspaceWatch.watchWorkspace(getWorkspaceBaseDir());
   }
 
   async function refreshActiveWorkspaceFromWatch(_wsPath, change = null) {
@@ -412,7 +421,7 @@ function createDesktopRuntime(deps) {
     perf.mark("host:ready-ack");
     perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
     perf.printSummary();
-    updateManager?.sendCurrentState();
+    deps.updateManager?.sendCurrentState();
 
     if (workspacePath) {
       deferWorkspaceLoad({
@@ -421,7 +430,7 @@ function createDesktopRuntime(deps) {
         sendLoading,
         sendWorkspaceData,
         sendInitialContent,
-        sendUpdateState: () => updateManager?.sendCurrentState(),
+        sendUpdateState: () => deps.updateManager?.sendCurrentState(),
         onError: (err) => console.error("Failed to load startup workspace:", err),
       });
     }
@@ -761,21 +770,21 @@ function createDesktopRuntime(deps) {
   }
 
   async function handleDownloadUpdate(msg) {
-    if (!updateManager) return;
-    await updateManager.startDownload({
+    if (!deps.updateManager) return;
+    await deps.updateManager.startDownload({
       version: String(msg?.version || ""),
       url: String(msg?.url || ""),
     });
   }
 
   async function handleScheduleDownloadedUpdate() {
-    if (!updateManager) return;
-    await updateManager.schedulePendingUpdate();
+    if (!deps.updateManager) return;
+    await deps.updateManager.schedulePendingUpdate();
   }
 
   async function handleRestartAndApplyUpdate() {
-    if (!updateManager) return;
-    await updateManager.restartAndApplyUpdate();
+    if (!deps.updateManager) return;
+    await deps.updateManager.restartAndApplyUpdate();
     if (appQuit) appQuit();
   }
 

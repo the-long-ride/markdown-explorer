@@ -41,7 +41,6 @@ let DesktopScanner = null;
 let searchIndex = null;
 let updateManager = null;
 let documentConverter = null;
-let workspaceWatch = null;
 let crossTabSearchWorker = null;
 
 const debugTools = createDebugTools({ isPackaged: app.isPackaged });
@@ -52,22 +51,16 @@ function ensureHeavyModules() {
   DesktopScanner = require("./scanner");
   const { createDocumentConverter } = require("./document-converter");
   const { createSearchIndex } = require("./search-index");
-  const { createWorkspaceWatchController } = require("./workspace-watch");
 
   documentConverter = createDocumentConverter();
   searchIndex = createSearchIndex();
-  workspaceWatch = createWorkspaceWatchController({
-    fs,
-    setTimeout,
-    clearTimeout,
-    debounceMs: 120,
-    onRefresh: (...args) => runtime.refreshActiveWorkspaceFromWatch(...args),
-  });
 }
 
 const runtime = createDesktopRuntime({
   path,
   fs,
+  setTimeout,
+  clearTimeout,
   dialog,
   getMainWindow: () => mainWindow,
   sendHostMessage(message) {
@@ -179,6 +172,8 @@ const bootstrap = createAppBootstrap({
   appDirImpl: appDir,
   createMainWindowFn: createMainWindowLegacy,
   recentWorkspacesStoreImpl: recentWorkspacesStore,
+  setMainWindow: (win) => { mainWindow = win; },
+  setUpdateManager: (um) => { updateManager = um; },
 });
 
 module.exports = { createAppBootstrap };

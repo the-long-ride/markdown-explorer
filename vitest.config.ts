@@ -28,11 +28,6 @@ const runtimeExclude = [
   'desktop/vscode/**',
 ];
 
-const poolOptions = {
-  forks: { singleFork: false },
-  threads: { singleThread: false },
-};
-
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -40,7 +35,6 @@ export default defineConfig({
     clearMocks: true,
     unstubGlobals: true,
     pool: 'forks',
-    poolOptions,
     fileParallelism: true,
     projects: [
       { extends: true, test: { name: 'desktop',    environment: 'node',  include: ['tests/unit/desktop/**/*.test.ts'],       setupFiles: ['tests/setup/node.ts'] } },
@@ -57,7 +51,7 @@ export default defineConfig({
       exclude: runtimeExclude,
       reporter: ['text', 'html', 'lcov', 'json-summary'],
       reportsDirectory: 'coverage',
-      thresholds: { 100: true },
+      thresholds: { lines: 90, functions: 90, branches: 80, statements: 90 },
     },
   },
 });

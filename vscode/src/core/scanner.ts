@@ -23,14 +23,14 @@ function getDefaultWorkspaceContext(): WorkspaceContext | null {
   try {
     const vscode = require('vscode');
     return {
-      workspaceFolders: vscode.workspace.workspaceFolders,
+      get workspaceFolders() { return vscode.workspace.workspaceFolders; },
       getConfiguration(section: string) {
         return vscode.workspace.getConfiguration(section);
       },
       findFiles(include: string, exclude: string, maxResults: number) {
         return vscode.workspace.findFiles(include, exclude, maxResults);
       },
-      textDocuments: vscode.workspace.textDocuments,
+      get textDocuments() { return vscode.workspace.textDocuments; },
     };
   } catch {
     return null;

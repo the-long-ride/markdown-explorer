@@ -19,6 +19,8 @@ function createAppBootstrap({
   appDirImpl,
   createMainWindowFn,
   recentWorkspacesStoreImpl,
+  setMainWindow,
+  setUpdateManager,
 } = {}) {
   let mainWindowRef = null;
   let trayRef = null;
@@ -26,6 +28,7 @@ function createAppBootstrap({
 
   function createWindow() {
     mainWindowRef = createMainWindowFn({ appDir: appDirImpl, debugTools: debugToolsImpl, clampAppZoom: runtimeImpl.clampAppZoom });
+    if (setMainWindow) setMainWindow(mainWindowRef);
     perfImpl.mark("window:created");
   }
 
@@ -79,6 +82,7 @@ function createAppBootstrap({
           mainWindowRef?.webContents.send("host-message", message);
         },
       });
+      if (setUpdateManager) setUpdateManager(updateManagerRef);
       registerIpcHandlersFn({
         ipcMain: require("electron").ipcMain,
         clipboard: require("electron").clipboard,

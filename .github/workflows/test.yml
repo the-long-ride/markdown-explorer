@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '24', cache: npm }
       - run: npm ci
-      - run: npm run test:coverage -- --coverage.thresholds.100=false
+      - run: npm run test:coverage -- --coverage.thresholds.lines=90 --coverage.thresholds.functions=90 --coverage.thresholds.branches=80 --coverage.thresholds.statements=90
         env: { CI: true }
       - uses: actions/upload-artifact@v4
         if: always()
@@ -46,8 +46,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
-        node-version: ['20', '22']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ['20', '22', '24']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

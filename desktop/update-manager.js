@@ -323,6 +323,10 @@ function createUpdateManager(deps = {}) {
   }
 
   function sendCurrentState() {
+    if (state.status !== "idle") {
+      sendToWindow({ command: "updateStateChanged", state });
+      return;
+    }
     const restored = doRestorePersistedState();
     if (restored.manifest) {
       lastDownloaded = {
