@@ -2,11 +2,32 @@
 // extension.ts — VS Code extension entry point
 // ============================================================
 
-import * as vscode from 'vscode';
+let _vscode: any = null;
+
+function getVscode(): typeof import('vscode') {
+  if (!_vscode) {
+    _vscode = require('vscode');
+  }
+  return _vscode;
+}
+
+export function overrideVscodeForTest(mock: any): void {
+  _vscode = mock;
+}
+
 import { MarkdownDocsPanel } from './core/panel';
 import { isKnownSupportedFilePath } from './core/documentConversion';
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(context: import('vscode').ExtensionContext): void {
+  _doActivate(context, getVscode());
+}
+
+export function deactivate(): void {}
+
+export function _doActivate(
+  context: import('vscode').ExtensionContext,
+  vscode: typeof import('vscode'),
+): void {
   console.log('Markdown Explorer activated');
 
   // Register sidebar webview provider
@@ -32,7 +53,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Open docs viewer focused on a specific file
   context.subscriptions.push(
-    vscode.commands.registerCommand('markdownExplorer.openFile', (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('markdownExplorer.openFile', (uri?: import('vscode').Uri) => {
       let filePath: string | null = null;
       if (uri?.fsPath) {
         filePath = uri.fsPath;
@@ -92,16 +113,16 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(watcher);
 }
 
-export function deactivate(): void {}
+type VscodeWebviewViewProvider = import('vscode').WebviewViewProvider;
 
-class MarkdownExplorerSidebarProvider implements vscode.WebviewViewProvider {
+class MarkdownExplorerSidebarProvider implements VscodeWebviewViewProvider {
   public static readonly viewType = 'markdownExplorerSidebar';
-  constructor(private readonly _context: vscode.ExtensionContext) {}
+  constructor(private readonly _context: import('vscode').ExtensionContext) {}
 
   public resolveWebviewView(
-    webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken,
+    webviewView: import('vscode').WebviewView,
+    _context: import('vscode').WebviewViewResolveContext,
+    _token: import('vscode').CancellationToken,
   ) {
     webviewView.webview.options = {
       enableScripts: true,
@@ -158,8 +179,8 @@ class MarkdownExplorerSidebarProvider implements vscode.WebviewViewProvider {
     `;
 
     const openAndClose = () => {
-      vscode.commands.executeCommand('markdownExplorer.open');
-      vscode.commands.executeCommand('workbench.action.closeSidebar');
+      getVscode().commands.executeCommand('markdownExplorer.open');
+      getVscode().commands.executeCommand('workbench.action.closeSidebar');
     };
 
     // If visible on load, trigger open immediately

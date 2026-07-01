@@ -2,7 +2,19 @@
 // core/panel.ts — WebviewPanel: UI shell + message bridge
 // =============================================================================
 
-import * as vscode from 'vscode';
+let _vscode: any = null;
+
+function getVscode(): typeof import('vscode') {
+  if (!_vscode) {
+    _vscode = require('vscode');
+  }
+  return _vscode;
+}
+
+export function overrideVscodeForTest(mock: any): void {
+  _vscode = mock;
+}
+
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -34,21 +46,21 @@ export class MarkdownDocsPanel {
   static currentPanel: MarkdownDocsPanel | undefined;
   private static readonly VIEW_TYPE = 'markdownExplorer';
 
-  private readonly _panel: vscode.WebviewPanel;
+  private readonly _panel: import('vscode').WebviewPanel;
   private readonly _extensionPath: string;
   private readonly _extensionVersion: string;
   private _currentFile: string | null;
   private _flat: MdFile[] = [];
   private _documentConversionEnabled: boolean;
   private readonly _documentConverter = new DocumentConverter();
-  private readonly _disposables: vscode.Disposable[] = [];
+  private readonly _disposables: import('vscode').Disposable[] = [];
 
   // ---------------------------------------------------------------------------
   // Factory
   // ---------------------------------------------------------------------------
 
-  static createOrShow(context: vscode.ExtensionContext, initialFilePath: string | null): void {
-    const column = vscode.ViewColumn.Active;
+  static createOrShow(context: import('vscode').ExtensionContext, initialFilePath: string | null): void {
+    const column = getVscode().ViewColumn.Active;
 
     if (MarkdownDocsPanel.currentPanel) {
       MarkdownDocsPanel.currentPanel._panel.reveal(column);
@@ -56,7 +68,7 @@ export class MarkdownDocsPanel {
       return;
     }
 
-    const panel = vscode.window.createWebviewPanel(
+    const panel = getVscode().window.createWebviewPanel(
       MarkdownDocsPanel.VIEW_TYPE,
       'Markdown Explorer',
       column,
@@ -64,8 +76,8 @@ export class MarkdownDocsPanel {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [
-          vscode.Uri.file(path.join(context.extensionPath, 'ui')),
-          ...(vscode.workspace.workspaceFolders?.map(f => f.uri) ?? []),
+          getVscode().Uri.file(path.join(context.extensionPath, 'ui')),
+          ...(getVscode().workspace.workspaceFolders?.map(f => f.uri) ?? []),
         ],
       },
     );
@@ -78,8 +90,8 @@ export class MarkdownDocsPanel {
   // ---------------------------------------------------------------------------
 
   private constructor(
-    panel: vscode.WebviewPanel,
-    _context: vscode.ExtensionContext,
+    panel: import('vscode').WebviewPanel,
+    _context: import('vscode').ExtensionContext,
     initialFilePath: string | null,
   ) {
     this._panel = panel;
@@ -98,8 +110,8 @@ export class MarkdownDocsPanel {
             break;
           case 'openInEditor':
             if (msg.path) {
-              const doc = await vscode.workspace.openTextDocument(msg.path);
-              await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
+              const doc = await getVscode().workspace.openTextDocument(msg.path);
+              await getVscode().window.showTextDocument(doc, getVscode().ViewColumn.One);
             }
             break;
           case 'ready':
@@ -109,11 +121,11 @@ export class MarkdownDocsPanel {
             await this._onWebviewReady();
             break;
           case 'copyCode':
-            await vscode.env.clipboard.writeText(msg.text);
+            await getVscode().env.clipboard.writeText(msg.text);
             break;
           case 'openExternal':
             if (/^https?:\/\//i.test(msg.url)) {
-              await vscode.env.openExternal(vscode.Uri.parse(msg.url));
+              await getVscode().env.openExternal(getVscode().Uri.parse(msg.url));
             }
             break;
           case 'refresh':
@@ -130,9 +142,9 @@ export class MarkdownDocsPanel {
             });
             break;
           case 'updateAppearance': {
-            const config = vscode.workspace.getConfiguration('markdownExplorer');
-            await config.update('theme', msg.theme, vscode.ConfigurationTarget.Global);
-            await config.update('themeStyle', msg.themeStyle, vscode.ConfigurationTarget.Global);
+            const config = getVscode().workspace.getConfiguration('markdownExplorer');
+            await config.update('theme', msg.theme, getVscode().ConfigurationTarget.Global);
+            await config.update('themeStyle', msg.themeStyle, getVscode().ConfigurationTarget.Global);
             break;
           }
         }
@@ -161,7 +173,7 @@ export class MarkdownDocsPanel {
     const { tree, flat } = await WorkspaceScanner.scan(this._documentConversionEnabled);
     this._flat = flat;
 
-    const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
+    const workspaceName = getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
     this._panel.title = `Markdown Explorer — ${workspaceName}`;
 
     // Do not auto-initialize _currentFile to allow showing the Welcome page by default when null
@@ -170,7 +182,7 @@ export class MarkdownDocsPanel {
       this._panel.webview.html = this._buildShell();
     } else {
       // Send updated data to the already running webview
-      const config = vscode.workspace.getConfiguration('markdownExplorer');
+      const config = getVscode().workspace.getConfiguration('markdownExplorer');
       const theme = config.get<string>('theme') ?? 'auto';
       const themeStyle = config.get<string>('themeStyle') ?? 'default';
       const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
@@ -199,13 +211,13 @@ export class MarkdownDocsPanel {
   // ---------------------------------------------------------------------------
 
   private async _onWebviewReady(): Promise<void> {
-    const config = vscode.workspace.getConfiguration('markdownExplorer');
+    const config = getVscode().workspace.getConfiguration('markdownExplorer');
     const theme = config.get<string>('theme') ?? 'auto';
     const themeStyle = config.get<string>('themeStyle') ?? 'default';
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
     const { tree, flat } = await WorkspaceScanner.scan(this._documentConversionEnabled);
     this._flat = flat;
-    const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
+    const workspaceName = getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
 
     const ackMsg: ReadyAckMessage = {
       command: 'readyAck',
@@ -237,7 +249,7 @@ export class MarkdownDocsPanel {
 
     let fileInfo = this._flat.find(f => this._normPath(f.fsPath) === this._normPath(this._currentFile!));
     if (!fileInfo) {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      const workspaceFolder = getVscode().workspace.workspaceFolders?.[0];
       const rootPath = workspaceFolder?.uri.fsPath ?? '';
       const relativePath = rootPath ? path.relative(rootPath, this._currentFile) : path.basename(this._currentFile);
       fileInfo = {
@@ -278,7 +290,7 @@ export class MarkdownDocsPanel {
 
     const isMdx = this._currentFile.endsWith('.mdx');
     const { tokens, frontmatter } = parse(raw, isMdx);
-    const config = vscode.workspace.getConfiguration('markdownExplorer');
+    const config = getVscode().workspace.getConfiguration('markdownExplorer');
     const theme = config.get<string>('theme') ?? 'auto';
     const renderer = new HtmlRenderer({ theme, isMdx });
     const { html, toc } = renderer.render(tokens);
@@ -427,7 +439,7 @@ export class MarkdownDocsPanel {
     if (this._shouldKeepResourceUrl(src)) return src;
     const fileDir = path.dirname(this._currentFile!);
     const absolutePath = path.resolve(fileDir, src);
-    return this._panel.webview.asWebviewUri(vscode.Uri.file(absolutePath)).toString();
+    return this._panel.webview.asWebviewUri(getVscode().Uri.file(absolutePath)).toString();
   }
 
   private _rewriteRelativeMediaUrls(html: string): string {
@@ -487,7 +499,7 @@ export class MarkdownDocsPanel {
     const requestedPath = this._decodeNavigationHref(this._stripNavigationFragment(href));
     if (!requestedPath && this._currentFile) return this._currentFile;
 
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    const workspaceFolder = getVscode().workspace.workspaceFolders?.[0];
     const rootPath = workspaceFolder?.uri.fsPath ?? '';
     const dir = this._currentFile ? path.dirname(this._currentFile) : rootPath;
 
@@ -560,7 +572,7 @@ export class MarkdownDocsPanel {
   }
 
   private _readDocumentConversionEnabled(): boolean {
-    const config = vscode.workspace.getConfiguration('markdownExplorer');
+    const config = getVscode().workspace.getConfiguration('markdownExplorer');
     return config.get<boolean>('documentConversion') === true;
   }
 
@@ -568,8 +580,8 @@ export class MarkdownDocsPanel {
     if (this._documentConversionEnabled === enabled) return;
     this._documentConversionEnabled = enabled;
 
-    const config = vscode.workspace.getConfiguration('markdownExplorer');
-    await config.update('documentConversion', enabled, vscode.ConfigurationTarget.Global);
+    const config = getVscode().workspace.getConfiguration('markdownExplorer');
+    await config.update('documentConversion', enabled, getVscode().ConfigurationTarget.Global);
 
     await this._sendLoading(enabled ? 'Finding supported documents...' : 'Refreshing Markdown files...');
     if (this._currentFile && !isSupportedFilePath(this._currentFile, enabled)) {
@@ -606,7 +618,7 @@ export class MarkdownDocsPanel {
     // CSP and Base Href
     const cspSource = this._panel.webview.cspSource;
     const csp = `default-src 'none'; style-src 'unsafe-inline' ${cspSource}; script-src 'unsafe-inline' blob: ${cspSource}; worker-src blob:; img-src * data: blob: ${cspSource}; media-src * data: blob: ${cspSource}; frame-src 'self' data: ${cspSource} https://www.youtube.com https://www.youtube-nocookie.com; connect-src *;`;
-    const baseUri = this._panel.webview.asWebviewUri(vscode.Uri.file(distPath));
+    const baseUri = this._panel.webview.asWebviewUri(getVscode().Uri.file(distPath));
 
     // Inject base href and CSP into the <head> section
     const headInjection = `

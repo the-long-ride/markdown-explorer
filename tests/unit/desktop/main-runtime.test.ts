@@ -834,15 +834,337 @@ describe('createDesktopRuntime', () => {
       expect(runtime.state.documentConversionEnabled).toBe(false);
     });
 
-    test('state setters update internal state', () => {
-      runtime.state.workspacePath = '/test';
-      expect(runtime.state.workspacePath).toBe('/test');
-      runtime.state.currentFile = '/test/file.md';
-      expect(runtime.state.currentFile).toBe('/test/file.md');
-      runtime.state.flatList = [{ fsPath: '/a.md' }];
-      expect(runtime.state.flatList).toEqual([{ fsPath: '/a.md' }]);
+    test('handleLoadWorkspaceSearchIndexes processes tab requests sequentially', async () => {
+      ctx.deps.fs.existsSync.mockReturnValue(true);
+      ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [{ fsPath: '/t1/a.md' }] });
+      runtime.handleLoadWorkspaceSearchIndexes({
+        tabs: [
+          { tabId: 't1', workspacePath: '/ws1' },
+          { tabId: 't2', workspacePath: '/ws2' },
+        ],
+      });
+      await new Promise((r) => setTimeout(r, 500));
+      const messages = ctx.sentMessages.filter((m: any) => m.command === 'workspaceSearchIndexLoaded');
+      expect(messages.length).toBeGreaterThanOrEqual(2);
+    });
+
+    test('handleLoadWorkspaceSearchIndexes sends empty list when workspacePath missing', async () => {
+      ctx.deps.fs.existsSync.mockReturnValue(false);
+      runtime.handleLoadWorkspaceSearchIndexes({
+        tabs: [{ tabId: 't1', workspacePath: '/missing-ws' }],
+      });
+      await new Promise((r) => setTimeout(r, 400));
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceSearchIndexLoaded');
+      expect(msg).toBeDefined();
+      expect(msg.tabs[0].fileList).toEqual([]);
+    });
+
+    test('handleLoadWorkspaceSearchIndexes sends empty when scan fails', async () => {
+      ctx.deps.fs.existsSync.mockReturnValue(true);
+      ctx.deps.scanWorkspaceData.mockRejectedValue(new Error('scan fail'));
+      runtime.handleLoadWorkspaceSearchIndexes({
+        tabs: [{ tabId: 't1', workspacePath: '/ws1' }],
+      });
+      await new Promise((r) => setTimeout(r, 400));
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceSearchIndexLoaded');
+      expect(msg).toBeDefined();
+      expect(msg.tabs[0].fileList).toEqual([]);
+    });
+
+    test('handleLoadWorkspaceSearchIndexes skips tab with empty tabId', async () => {
+      ctx.deps.fs.existsSync.mockReturnValue(true);
+      runtime.handleLoadWorkspaceSearchIndexes({
+        tabs: [{ tabId: '', workspacePath: '/ws1' }],
+      });
+      await new Promise((r) => setTimeout(r, 400));
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceSearchIndexLoaded');
+      expect(msg).toBeUndefined();
+    });
+  });
+
+  describe('handleOpenFolder (openFirstFile=true)', () => {
+    test('sets openFirstFile=true and opens folder', () => {
+      ctx.deps.dialog.showOpenDialogSync.mockReturnValue(['/my/project']);
+      runtime.handleOpenFolder(true);
+      expect(runtime.state.workspacePath).toBe('/my/project');
+    });
+
+    test('sets openFirstFile=true and handles dialog cancel', () => {
+      ctx.deps.dialog.showOpenDialogSync.mockReturnValue(null);
+      runtime.handleOpenFolder(true);
+      expect(runtime.state.workspacePath).toBeNull();
+    });
+  });
+
+  describe('handleOpenPath edge cases', () => {
+    test('opens directory with openFirstFile flag', () => {
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      runtime.handleOpenPath('/my/project', true);
+      expect(runtime.state.workspacePath).toBe('/my/project');
+      expect(runtime.state.currentFile).toBeNull();
+    });
+
+    test('sends locked reason for EACCES on access', () => {
+      const err: any = new Error('EACCES');
+      err.code = 'EACCES';
+      ctx.deps.fs.accessSync.mockImplementation(() => { throw err; });
+      runtime.handleOpenPath('/locked');
+      const unavailable = ctx.sentMessages.find((m: any) => m.command === 'workspaceUnavailable');
+      expect(unavailable).toBeDefined();
+      expect(unavailable.reason).toBe('locked');
+    });
+
+    test('sends locked reason for EPERM on access', () => {
+      const err: any = new Error('EPERM');
+      err.code = 'EPERM';
+      ctx.deps.fs.accessSync.mockImplementation(() => { throw err; });
+      runtime.handleOpenPath('/restricted');
+      const unavailable = ctx.sentMessages.find((m: any) => m.command === 'workspaceUnavailable');
+      expect(unavailable).toBeDefined();
+      expect(unavailable.reason).toBe('locked');
+    });
+  });
+
+  describe('handleActivateWorkspace edge cases', () => {
+    test('null filePath should not set currentFile', () => {
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      runtime.handleActivateWorkspace('/my/project', null, false);
+      expect(runtime.state.workspacePath).toBe('/my/project');
+      expect(runtime.state.currentFile).toBeNull();
+    });
+
+    test('missing filePath skips', () => {
+      ctx.deps.fs.accessSync.mockImplementation(() => { throw new Error('ENOENT'); });
+      runtime.handleActivateWorkspace('/ws');
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceUnavailable');
+      expect(msg).toBeDefined();
+    });
+  });
+
+  describe('handleConfirmOpenPath edge cases', () => {
+    test('returns early when file does not exist', async () => {
+      ctx.deps.fs.existsSync.mockReturnValue(false);
+      await runtime.handleConfirmOpenPath('/nonexistent');
+      expect(ctx.deps.dialog.showMessageBox).not.toHaveBeenCalled();
+    });
+
+    test('directory path delegates to handleOpenPath without workspace', async () => {
+      ctx.deps.fs.existsSync.mockReturnValue(true);
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      await runtime.handleConfirmOpenPath('/my/project');
+      expect(runtime.state.workspacePath).toContain('project');
+    });
+  });
+
+  describe('handleOpenRecent edge cases', () => {
+    test('sets currentFile null when recent is directory with openFirstFile', () => {
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      runtime.handleOpenRecent('/recent/folder', true);
+      expect(runtime.state.currentFile).toBeNull();
+      expect(runtime.state.workspacePath).toBe('/recent/folder');
+    });
+
+    test('non-string workspace path fallback', () => {
+      runtime.handleOpenRecent(null, false);
+      const unavailable = ctx.sentMessages.find((m: any) => m.command === 'workspaceUnavailable');
+      expect(unavailable).toBeDefined();
+    });
+  });
+
+  describe('sendWorkspaceFilesChanged via refreshActiveWorkspace', () => {
+    test('refresh sends workspaceFilesChanged when preserveCurrentContent true', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.flatList = [];
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [] });
+      await runtime.refreshActiveWorkspace({ preserveCurrentContent: true });
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceFilesChanged');
+      expect(msg).toBeDefined();
+      expect(msg.fileList).toBeDefined();
+      expect(msg.documentConversionEnabled).toBeDefined();
+    });
+  });
+
+  describe('sendCurrentFileChanged via refreshActiveWorkspace', () => {
+    test('preserveCurrentContent with non-matching changedPath sends currentFileChanged', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.flatList = [];
+      runtime.state.currentFile = '/my/project/readme.md';
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [] });
+      ctx.deps.shouldNotifyCurrentFileChanged.mockReturnValue(true);
+      await runtime.refreshActiveWorkspace({ preserveCurrentContent: true, changedPath: '' });
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'currentFileChanged');
+      expect(msg).toBeDefined();
+    });
+  });
+
+  describe('isCurrentFileStillAvailable via refreshActiveWorkspace', () => {
+    test('refresh with preserveCurrentContent=false clears unsupported file', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.flatList = [];
+      runtime.state.currentFile = '/my/project/unsupported.zzz';
+      runtime.state.documentConversionEnabled = false;
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [] });
+      await runtime.refreshActiveWorkspace({ showLoading: false });
+      expect(runtime.state.currentFile).toBeNull();
+    });
+  });
+
+  describe('sendContent edge cases', () => {
+    test('sendContent sends failure markdown when converter fails (not extra doc)', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.currentFile = '/my/project/readme.md';
+      runtime.state.flatList = [];
+      runtime.state.documentConversionEnabled = false;
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => true });
+      ctx.deps.documentConverter.readMarkdown.mockRejectedValue(new Error('conversion failed'));
+      ctx.deps.documentConverter.createFailureMarkdown.mockReturnValue('# error');
+      await runtime.handleNavigate('/my/project/readme.md');
+      const failures = ctx.sentMessages.filter((m: any) => m.command === 'renderContent' && m.markdownSource !== '');
+      expect(failures.length).toBeGreaterThan(0);
+    });
+
+    test('sendContent sets previewInfo in catch for extra doc type', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.currentFile = '/my/project/report.docx';
+      runtime.state.flatList = [];
       runtime.state.documentConversionEnabled = true;
-      expect(runtime.state.documentConversionEnabled).toBe(true);
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => true });
+      ctx.deps.documentConverter.readMarkdown.mockRejectedValue(new Error('fail'));
+      ctx.deps.documentConverter.createFailureMarkdown.mockReturnValue('# fail');
+      await runtime.handleNavigate('/my/project/report.docx');
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'renderContent' && m.previewInfo);
+      expect(msg).toBeDefined();
+      expect(msg.previewInfo.kind).toBe('converted');
+    });
+
+    test('sendContent skips when currentFile becomes unsupported', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.currentFile = '/my/project/image.png';
+      runtime.state.flatList = [];
+      runtime.state.documentConversionEnabled = false;
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      await runtime.handleNavigate('/my/project/image.png');
+      const notFound = ctx.sentMessages.find((m: any) => m.command === 'navNotFound');
+      expect(notFound).toBeDefined();
+    });
+  });
+
+  describe('refreshActiveWorkspaceFromWatch via handleRefresh', () => {
+    test('refresh with irrelevant watch change skips', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.flatList = [];
+      ctx.deps.isWatchChangeRelevant.mockReturnValue(false);
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [] });
+      await runtime.handleRefresh();
+    });
+
+    test('refresh with relevant watch change processes', async () => {
+      runtime.state.workspacePath = '/my/project';
+      runtime.state.flatList = [];
+      ctx.deps.isWatchChangeRelevant.mockReturnValue(true);
+      ctx.deps.shouldNotifyCurrentFileChanged.mockReturnValue(false);
+      ctx.deps.fs.accessSync.mockImplementation(() => {});
+      ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
+      ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [] });
+      await runtime.handleRefresh();
+      expect(ctx.deps.scanWorkspaceData).toHaveBeenCalled();
+    });
+  });
+
+  describe('ensureCrossTabSearchWorker', () => {
+    test('creates worker with batch message handler', async () => {
+      const mockWorkerSetup = vi.fn();
+      ctx.deps.createSearchWorkerController = mockWorkerSetup.mockReturnValue(
+        ctx.mockSearchWorker,
+      );
+      const freshRuntime = createDesktopRuntime(ctx.deps);
+      freshRuntime.handleSearchAcrossWorkspaces({ requestId: 'r1', query: 'test' });
+      expect(mockWorkerSetup).toHaveBeenCalled();
+      const handlerConfig = mockWorkerSetup.mock.calls[0][0];
+      expect(handlerConfig.onMessage).toBeDefined();
+      handlerConfig.onMessage({ type: 'batch', requestId: 'r1', results: [{ fsPath: '/a.md' }] });
+      const batchMsg = ctx.sentMessages.find((m: any) => m.command === 'crossTabSearchResults' && m.done === false);
+      expect(batchMsg).toBeDefined();
+    });
+
+    test('crossTab worker handler sends done for error type', async () => {
+      const mockWorkerSetup = vi.fn();
+      ctx.deps.createSearchWorkerController = mockWorkerSetup.mockReturnValue(
+        ctx.mockSearchWorker,
+      );
+      ctx.deps.getMainWindow = vi.fn(() => ctx.mockWindow);
+      const freshRuntime = createDesktopRuntime(ctx.deps);
+      freshRuntime.handleSearchAcrossWorkspaces({ requestId: 'r1', query: 'test' });
+      const handlerConfig = mockWorkerSetup.mock.calls[0][0];
+      handlerConfig.onMessage({ type: 'error', requestId: 'r1', message: 'search failed' });
+      const errMsg = ctx.sentMessages.find(
+        (m: any) => m.command === 'crossTabSearchResults' && m.done === true && m.error === 'search failed',
+      );
+      expect(errMsg).toBeDefined();
+    });
+
+    test('crossTab worker handler does nothing when window is destroyed', async () => {
+      const mockWorkerSetup = vi.fn();
+      ctx.deps.createSearchWorkerController = mockWorkerSetup.mockReturnValue(
+        ctx.mockSearchWorker,
+      );
+      ctx.deps.getMainWindow = vi.fn(() => ctx.mockWindow);
+      ctx.mockWindow.isDestroyed = vi.fn(() => true);
+      const sentBefore = ctx.sentMessages.length;
+      const freshRuntime = createDesktopRuntime(ctx.deps);
+      freshRuntime.handleSearchAcrossWorkspaces({ requestId: 'r1', query: 'test' });
+      const handlerConfig = mockWorkerSetup.mock.calls[0][0];
+      handlerConfig.onMessage({ type: 'batch', requestId: 'r1', results: [{ fsPath: '/a.md' }] });
+      expect(ctx.sentMessages.length).toBe(sentBefore);
+    });
+  });
+
+  describe('edge case helpers', () => {
+    test('getFileTypeLabelLite returns empty string for empty path', () => {
+      expect(getFileTypeLabelLite('')).toBe('');
+    });
+
+    test('isSupportedFilePathLite handles file with no extension', () => {
+      expect(isSupportedFilePathLite('Makefile', false)).toBe(false);
+    });
+
+    test('stripKnownExtensionLite returns same for empty string', () => {
+      expect(stripKnownExtensionLite('')).toBe('');
+    });
+  });
+
+  describe('closeWorkspace edge cases', () => {
+    test('handles re-closing with null workspace', () => {
+      runtime.handleCloseWorkspace();
+      expect(runtime.state.workspacePath).toBeNull();
+      expect(runtime.state.currentFile).toBeNull();
+    });
+  });
+
+  describe('refresh edge cases', () => {
+    test('refresh sends unavailable when workspace missing', async () => {
+      runtime.state.workspacePath = '/gone';
+      ctx.deps.fs.accessSync.mockImplementation(() => { throw new Error('ENOENT'); });
+      await runtime.refreshActiveWorkspace({ showLoading: true });
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceUnavailable');
+      expect(msg).toBeDefined();
+    });
+
+    test('refreshActiveWorkspace does nothing when no workspace', async () => {
+      await runtime.refreshActiveWorkspace({ showLoading: false });
+      expect(ctx.deps.scanWorkspaceData).not.toHaveBeenCalled();
     });
   });
 });

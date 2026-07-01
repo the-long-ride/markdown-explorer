@@ -2,7 +2,6 @@
 // core/scanner.ts — Workspace .md file discovery & tree build
 // ============================================================
 
-import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import type { MdFile, FolderNode, ScanResult } from '../types';
@@ -13,24 +12,65 @@ import {
   stripKnownExtension,
 } from './documentConversion';
 
+export interface WorkspaceContext {
+  workspaceFolders: Array<{ uri: { fsPath: string } }> | undefined;
+  getConfiguration(section: string): { get<T>(key: string): T | undefined };
+  findFiles(include: string, exclude: string, maxResults: number): Promise<Array<{ fsPath: string }>>;
+  textDocuments: Array<{ fileName?: string; getText(): string }>;
+}
+
+function getDefaultWorkspaceContext(): WorkspaceContext | null {
+  try {
+    const vscode = require('vscode');
+    return {
+      workspaceFolders: vscode.workspace.workspaceFolders,
+      getConfiguration(section: string) {
+        return vscode.workspace.getConfiguration(section);
+      },
+      findFiles(include: string, exclude: string, maxResults: number) {
+        return vscode.workspace.findFiles(include, exclude, maxResults);
+      },
+      textDocuments: vscode.workspace.textDocuments,
+    };
+  } catch {
+    return null;
+  }
+}
+
+let _defaultContext: WorkspaceContext | null | undefined;
+
+function getContext(): WorkspaceContext | null {
+  if (_defaultContext === undefined) {
+    _defaultContext = getDefaultWorkspaceContext();
+  }
+  return _defaultContext;
+}
+
+export function setWorkspaceContextForTest(ctx: WorkspaceContext | null): void {
+  _defaultContext = ctx;
+}
+
 export class WorkspaceScanner {
   private static readonly MAX_FILES = 1000;
 
   /** Scan workspace for all .md files, return tree + flat list */
   static async scan(documentConversionEnabled = false): Promise<ScanResult> {
-    const folders = vscode.workspace.workspaceFolders;
+    const ctx = getContext();
+    if (!ctx) throw new Error('vscode workspace not available');
+
+    const folders = ctx.workspaceFolders;
     const emptyResult: ScanResult = { tree: WorkspaceScanner.emptyRoot(), flat: [] };
 
     if (!folders?.length) return emptyResult;
 
-    const config = vscode.workspace.getConfiguration('markdownExplorer');
+    const config = ctx.getConfiguration('markdownExplorer');
     const excludePatterns: string[] = config.get('excludePatterns') ?? ['**/node_modules/**', '**/.git/**'];
     const excludeGlob = `{${excludePatterns.join(',')}}`;
 
     const includeGlob = documentConversionEnabled
       ? '**/*.{md,mdx,doc,docx,pdf,html,xls,xlsx,xlm,pptx,odt,odp,ods,rtf,txt}'
       : '**/*.{md,mdx,txt}';
-    const uris = (await vscode.workspace.findFiles(
+    const uris = (await ctx.findFiles(
       includeGlob,
       excludeGlob,
       WorkspaceScanner.MAX_FILES,
@@ -47,11 +87,14 @@ export class WorkspaceScanner {
   /** Safely read a file's contents */
   static readFile(fsPath: string): string {
     try {
-      const openDoc = vscode.workspace.textDocuments.find(
-        doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
-      );
-      if (openDoc) {
-        return openDoc.getText();
+      const ctx = getContext();
+      if (ctx) {
+        const openDoc = ctx.textDocuments.find(
+          doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
+        );
+        if (openDoc) {
+          return openDoc.getText();
+        }
       }
       return fs.readFileSync(fsPath, 'utf8');
     } catch {
@@ -59,9 +102,9 @@ export class WorkspaceScanner {
     }
   }
 
-  // ── Private helpers ────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────
 
-  private static buildFileEntry(fsPath: string, rootPath: string): MdFile {
+  static buildFileEntry(fsPath: string, rootPath: string): MdFile {
     const relativePath = path.relative(rootPath, fsPath);
     const parts = relativePath.split(path.sep);
     const fileName = parts[parts.length - 1];
@@ -75,12 +118,24 @@ export class WorkspaceScanner {
     return Object.freeze({ fsPath, relativePath, parts, fileName, title, extension: ext, documentKind });
   }
 
-  private static extractTitle(fsPath: string, isMdx = false): string | null {
+  static extractTitle(fsPath: string, isMdx = false): string | null {
     try {
-      const openDoc = vscode.workspace.textDocuments.find(
-        doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
-      );
-      const content = openDoc ? openDoc.getText() : fs.readFileSync(fsPath, 'utf8');
+      const ctx = getContext();
+      if (ctx) {
+        const openDoc = ctx.textDocuments.find(
+          doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
+        );
+        if (openDoc) {
+          const content = openDoc.getText();
+          if (isMdx) {
+            const mdxTitle = WorkspaceScanner.extractMdxTitle(content);
+            if (mdxTitle) return mdxTitle;
+          }
+          const match = /^#+\s+(.+)$/m.exec(content);
+          return match?.[1]?.trim() ?? null;
+        }
+      }
+      const content = fs.readFileSync(fsPath, 'utf8');
       if (isMdx) {
         const mdxTitle = WorkspaceScanner.extractMdxTitle(content);
         if (mdxTitle) return mdxTitle;
@@ -92,7 +147,7 @@ export class WorkspaceScanner {
     }
   }
 
-  private static extractMdxTitle(content: string): string | null {
+  static extractMdxTitle(content: string): string | null {
     // 1. Frontmatter title
     const fmMatch = /^---\n([\s\S]*?)\n---/.exec(content);
     if (fmMatch) {
@@ -125,7 +180,7 @@ export class WorkspaceScanner {
     return null;
   }
 
-  private static buildTree(flat: MdFile[]): FolderNode {
+  static buildTree(flat: MdFile[]): FolderNode {
     const root = WorkspaceScanner.emptyRoot();
 
     for (const file of flat) {

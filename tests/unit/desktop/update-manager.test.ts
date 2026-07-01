@@ -60,6 +60,18 @@ describe('createUpdateManager', () => {
     ).toBe('Markdown Explorer Setup.exe');
   });
 
+  test('getUpdateAssetFileName falls back when no extension', () => {
+    expect(
+      getUpdateAssetFileName('https://example.test/download'),
+    ).toBe('download');
+  });
+
+  test('getUpdateAssetFileName catches invalid URL', () => {
+    expect(
+      getUpdateAssetFileName('not-a-url'),
+    ).toBe('update.exe');
+  });
+
   test('startDownload stages the file and emits downloading then downloaded states', async () => {
     const { manager, sent, downloads } = createManagerHarness();
 
@@ -125,6 +137,51 @@ describe('createUpdateManager', () => {
     expect(fs.existsSync(manager.getManifestPath())).toBe(false);
   });
 
+  test('restartAndApplyUpdate throws when no pending manifest', async () => {
+    const { manager } = createManagerHarness();
+    await expect(manager.restartAndApplyUpdate()).rejects.toThrow('No downloaded');
+  });
+
+  test('ensureWindows throws on non-win32 platform', async () => {
+    const manager = createUpdateManager({
+      platform: 'darwin',
+      app: createAppStub(makeTempDir('um-darwin-')),
+      fs, path,
+      execPath: '/fake',
+      relaunchArgs: [],
+      sendToWindow: () => {},
+      downloadUpdateFile: async () => {},
+      launchHelper: async () => {},
+    });
+    await expect(
+      manager.startDownload({ version: 'v1', url: 'http://example.com/update' }),
+    ).rejects.toThrow('only supported on Windows');
+  });
+
+  test('startDownload emits error state on download failure', async () => {
+    const dir = makeTempDir('um-dl-error-');
+    const sent: any[] = [];
+    const manager = createUpdateManager({
+      platform: 'win32',
+      app: createAppStub(dir),
+      fs, path,
+      execPath: path.join(dir, 'Markdown Explorer.exe'),
+      relaunchArgs: [],
+      sendToWindow(message: any) {
+        sent.push(message);
+      },
+      async downloadUpdateFile() {
+        throw new Error('network failure');
+      },
+      async launchHelper() {},
+    });
+
+    await expect(
+      manager.startDownload({ version: 'v1.5.3', url: 'https://fail.com/update.exe' }),
+    ).rejects.toThrow('network failure');
+    expect(sent.at(-1).state.status).toBe('error');
+  });
+
   test('applyPendingUpdateOnQuit launches helper only when a pending manifest exists', async () => {
     const { manager, helperCalls } = createManagerHarness();
     const stagedFilePath = path.join(makeTempDir('update-quit-'), 'Markdown Explorer 1.5.3.exe');
@@ -141,6 +198,20 @@ describe('createUpdateManager', () => {
     expect(await manager.applyPendingUpdateOnQuit()).toBe(true);
     expect(helperCalls.length).toBe(1);
     expect(fs.existsSync(manager.getManifestPath())).toBe(false);
+  });
+
+  test('applyPendingUpdateOnQuit returns false when helper already launched', async () => {
+    const { manager } = createManagerHarness();
+    const stagedFilePath = path.join(makeTempDir('um-quit-twice-'), 'update.exe');
+    fs.writeFileSync(stagedFilePath, 'data');
+
+    await manager.schedulePendingUpdate({
+      version: 'v1.5.3',
+      downloadUrl: 'https://example.com/update.exe',
+      stagedFilePath,
+    });
+    await manager.applyPendingUpdateOnQuit();
+    expect(await manager.applyPendingUpdateOnQuit()).toBe(false);
   });
 
   test('sendCurrentState restores a failed apply result as an error state', () => {
