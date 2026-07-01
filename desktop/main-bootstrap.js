@@ -21,6 +21,10 @@ function createAppBootstrap({
   recentWorkspacesStoreImpl,
   setMainWindow,
   setUpdateManager,
+  TrayConstructor = require("electron").Tray,
+  ipcMainImpl = require("electron").ipcMain,
+  clipboardImpl = require("electron").clipboard,
+  shellImpl = require("electron").shell,
 } = {}) {
   let mainWindowRef = null;
   let trayRef = null;
@@ -70,7 +74,7 @@ function createAppBootstrap({
         getMainWindow,
         fs: fsImpl,
         pathImpl,
-        TrayConstructor: require("electron").Tray,
+        TrayConstructor,
         ElectronMenu: MenuImpl,
         appQuit: () => appImpl.quit(),
       });
@@ -84,10 +88,10 @@ function createAppBootstrap({
       });
       if (setUpdateManager) setUpdateManager(updateManagerRef);
       registerIpcHandlersFn({
-        ipcMain: require("electron").ipcMain,
-        clipboard: require("electron").clipboard,
+        ipcMain: ipcMainImpl,
+        clipboard: clipboardImpl,
         fs: fsImpl,
-        shell: require("electron").shell,
+        shell: shellImpl,
         getMainWindow,
         handlers: {
           ready: runtimeImpl.handleReady,

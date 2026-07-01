@@ -4,6 +4,7 @@ require('v8-compile-cache');
 const {
   app,
   BrowserWindow,
+  Tray,
   dialog,
   ipcMain,
   clipboard,
@@ -174,6 +175,10 @@ const bootstrap = createAppBootstrap({
   recentWorkspacesStoreImpl: recentWorkspacesStore,
   setMainWindow: (win) => { mainWindow = win; },
   setUpdateManager: (um) => { updateManager = um; },
+  TrayConstructor: Tray,
+  ipcMainImpl: ipcMain,
+  clipboardImpl: clipboard,
+  shellImpl: shell,
 });
 
 module.exports = { createAppBootstrap };

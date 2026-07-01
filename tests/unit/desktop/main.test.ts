@@ -153,6 +153,10 @@ describe('createAppBootstrap', () => {
       appDirImpl: '/test/app',
       createMainWindowFn,
       recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
+      TrayConstructor: vi.fn(),
+      ipcMainImpl: {},
+      clipboardImpl: {},
+      shellImpl: { openExternal: vi.fn() },
     });
   });
 
@@ -207,6 +211,10 @@ describe('createAppBootstrap', () => {
         appDirImpl: '/test/app', pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
         fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
         recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
+        TrayConstructor: vi.fn(),
+        ipcMainImpl: {},
+        clipboardImpl: {},
+        shellImpl: { openExternal: vi.fn() },
       });
       await Promise.resolve();
     });
@@ -321,6 +329,10 @@ describe('createAppBootstrap', () => {
         appDirImpl: '/test/app', pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
         fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
         recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
+        TrayConstructor: vi.fn(),
+        ipcMainImpl: {},
+        clipboardImpl: {},
+        shellImpl: { openExternal: vi.fn() },
       });
       await Promise.resolve();
       appImpl._trigger('before-quit');
@@ -338,6 +350,10 @@ describe('createAppBootstrap', () => {
         appDirImpl: '/test/app', pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
         fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
         recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
+        TrayConstructor: vi.fn(),
+        ipcMainImpl: {},
+        clipboardImpl: {},
+        shellImpl: { openExternal: vi.fn() },
       });
       await Promise.resolve();
       appImpl._trigger('before-quit');
