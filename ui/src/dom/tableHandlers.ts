@@ -1,3 +1,39 @@
+type TableFilterValue = string | string[] | null | undefined;
+type TableFilterMap = Record<string, TableFilterValue>;
+type TableState = {
+  expanded: boolean;
+  searchQuery: string;
+  filters: TableFilterMap;
+  chartInstance: any;
+  currentView: string;
+  wrapped: boolean;
+  chartable: boolean;
+  labelColIdx: number;
+  dataColIdxs: number[];
+};
+
+const TABLE_COLLAPSE_LIMIT = 15;
+
+export function normalizeFilterValues(value: TableFilterValue): string[] {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value === 'string' && value) return [value];
+  return [];
+}
+
+export function getActiveFilterEntries(filters: TableFilterMap) {
+  return Object.entries(filters || {})
+    .map(([colIdx, value]) => [Number.parseInt(colIdx, 10), normalizeFilterValues(value)] as const)
+    .filter(([colIdx, values]) => Number.isFinite(colIdx) && values.length > 0);
+}
+
+export function setColumnFilterValues(state: TableState, colIndex: number, values: string[]) {
+  if (values.length > 0) {
+    state.filters[colIndex] = values;
+  } else {
+    delete state.filters[colIndex];
+  }
+}
+
 export function registerTableHandlers(win: any) {
   // UI.toggleCodeCollapse (global function to expand/collapse long code blocks)
   win.UI.toggleCodeCollapse = (btn: HTMLElement) => {
@@ -12,44 +48,9 @@ export function registerTableHandlers(win: any) {
   if (!win.Table) win.Table = {};
   win.Table.states = win.Table.states || {};
 
-  type TableFilterValue = string | string[] | null | undefined;
-  type TableFilterMap = Record<string, TableFilterValue>;
-  type TableState = {
-    expanded: boolean;
-    searchQuery: string;
-    filters: TableFilterMap;
-    chartInstance: any;
-    currentView: string;
-    wrapped: boolean;
-    chartable: boolean;
-    labelColIdx: number;
-    dataColIdxs: number[];
-  };
-
-  const TABLE_COLLAPSE_LIMIT = 15;
-
   const getTableDataRows = (table: HTMLTableElement) => (
     [...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]
   ).filter((row) => row.id !== `${table.id}-toggle-row` && !row.dataset.toggle);
-
-  const normalizeFilterValues = (value: TableFilterValue): string[] => {
-    if (Array.isArray(value)) return value.map(String).filter(Boolean);
-    if (typeof value === 'string' && value) return [value];
-    return [];
-  };
-
-  const getActiveFilterEntries = (filters: TableFilterMap) => Object.entries(filters || {})
-    .map(([colIdx, value]) => [Number.parseInt(colIdx, 10), normalizeFilterValues(value)] as const)
-    .filter(([colIdx, values]) => Number.isFinite(colIdx) && values.length > 0);
-
-  const setColumnFilterValues = (state: TableState, colIndex: number, values: string[]) => {
-    if (values.length > 0) {
-      state.filters[colIndex] = values;
-    } else {
-      delete state.filters[colIndex];
-    }
-  };
-
   const syncFilterButtons = (table: HTMLTableElement, state: TableState) => {
     table.querySelectorAll<HTMLElement>('.mdn-table-filter-btn').forEach((button) => {
       const th = button.closest('.mdn-th') as HTMLElement | null;

@@ -36,11 +36,11 @@ interface UseUpdateCheckParams {
   readonly hostArch: string;
 }
 
-function normalizeVersion(version: string) {
+export function normalizeVersion(version: string) {
   return version.trim().replace(/^v/i, '').split(/[+-]/)[0];
 }
 
-function parseVersion(version: string) {
+export function parseVersion(version: string) {
   const normalized = normalizeVersion(version);
   const match = normalized.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
   if (!match) return null;
@@ -51,7 +51,7 @@ function parseVersion(version: string) {
   ];
 }
 
-function compareVersions(left: string, right: string) {
+export function compareVersions(left: string, right: string) {
   const a = parseVersion(left);
   const b = parseVersion(right);
   if (!a || !b) {
@@ -67,7 +67,7 @@ function compareVersions(left: string, right: string) {
   return 0;
 }
 
-function getDesktopAssetScore(assetName: string, platform: HostPlatform, arch: string) {
+export function getDesktopAssetScore(assetName: string, platform: HostPlatform, arch: string) {
   const name = assetName.toLowerCase();
   const normalizedArch = arch.toLowerCase();
   let score = 0;
@@ -91,7 +91,7 @@ function getDesktopAssetScore(assetName: string, platform: HostPlatform, arch: s
   return score;
 }
 
-function pickDesktopDownloadUrl(
+export function pickDesktopDownloadUrl(
   assets: readonly GitHubReleaseAsset[],
   platform: HostPlatform,
   arch: string,
@@ -107,7 +107,7 @@ function pickDesktopDownloadUrl(
   return best?.browser_download_url;
 }
 
-function getDownloadUrl(
+export function getDownloadUrl(
   release: GitHubRelease,
   runtime: AppRuntime,
   platform: HostPlatform,

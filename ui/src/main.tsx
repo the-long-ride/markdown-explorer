@@ -31,18 +31,18 @@ if (shouldLogPerf) {
 
 // ── Detect platform and create bridge ──────────────────────────────────────
 
-function detectBridge() {
+export function detectBridge(win: any = window) {
   // VS Code webview provides acquireVsCodeApi
-  if (typeof (window as any).acquireVsCodeApi === 'function') {
+  if (typeof win.acquireVsCodeApi === 'function') {
     return createVsCodeBridge();
   }
   // Electron provides window.electronAPI via preload.js
-  if (typeof (window as any).electronAPI !== 'undefined') {
+  if (typeof win.electronAPI !== 'undefined') {
     document.body.classList.add('is-electron');
     return createElectronBridge();
   }
 // Chromium Extension provides window.__chromeExtBus
-  if (typeof (window as any).__chromeExtBus !== 'undefined') {
+  if (typeof win.__chromeExtBus !== 'undefined') {
     document.body.classList.add('is-chrome-ext');
     return createChromeBridge();
   }

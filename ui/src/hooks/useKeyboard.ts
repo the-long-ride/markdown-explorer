@@ -32,7 +32,7 @@ interface UseKeyboardOptions {
   onToggleFocusMode?: () => void;
 }
 
-function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
+export function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
   if (!shortcut) return false;
   const parts = shortcut.split('+').map((p) => p.trim().toLowerCase());
 
@@ -65,7 +65,7 @@ function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
   return eventKey === targetKey;
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {
+export function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;
   const tagName = target.tagName.toLowerCase();
