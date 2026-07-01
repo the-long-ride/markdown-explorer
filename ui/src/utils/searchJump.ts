@@ -45,7 +45,7 @@ export function _shouldSkipSearchJumpTextNode(node: Text, markClass: string): bo
 export function _selectMatchIndex(
   matches: Array<{ cumulativeTextOffset: number; matchLength: number }>,
   needle: string,
-  matchOrdinal: number,
+  matchOrdinal: number | undefined,
   matchIndex: number | undefined,
   rawMarkdownSource: string | null | undefined,
   fullRenderedText: string,
@@ -56,7 +56,7 @@ export function _selectMatchIndex(
     ? Math.max(0, Math.floor(matchOrdinal ?? 0))
     : 0;
 
-  if (rawMarkdownSource && Number.isFinite(matchIndex) && matchIndex >= 0) {
+  if (rawMarkdownSource && Number.isFinite(matchIndex) && matchIndex !== undefined && matchIndex >= 0) {
     const targetOffset = matchIndex;
     const matchLength = needle.length;
 
@@ -107,7 +107,7 @@ export function _selectMatchIndex(
       }
     }
     return selected;
-  } else if (Number.isFinite(matchIndex) && matchIndex >= 0) {
+  } else if (matchIndex !== undefined && Number.isFinite(matchIndex) && matchIndex >= 0) {
     const targetOffset = matchIndex;
     let closestDistance = Infinity;
     let selected = 0;
@@ -147,10 +147,6 @@ export function scrollToRenderedSearchMatch(
 
   const needle = query.trim();
   if (!needle) return false;
-
-  const targetOrdinal = Number.isFinite(matchOrdinal)
-    ? Math.max(0, Math.floor(matchOrdinal ?? 0))
-    : 0;
 
   // We collect all possible matches in the DOM first
   const matches: Array<{
@@ -202,8 +198,8 @@ export function scrollToRenderedSearchMatch(
   const selectedMatchIndex = _selectMatchIndex(
     matches,
     needle,
-    matchOrdinal ?? undefined,
-    matchIndex ?? undefined,
+    matchOrdinal,
+    matchIndex,
     rawMarkdownSource ?? undefined,
     fullRenderedText,
   );

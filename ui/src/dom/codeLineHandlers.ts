@@ -77,7 +77,7 @@ export function registerCodeLineHandlers() {
     });
 
     block.classList.toggle('has-code-line-active', activeLine !== null);
-    block.classList.toggle('has-code-line-selection', hasSelection);
+    block.classList.toggle('has-code-line-selection', selectedStart !== null && selectedEnd !== null);
   };
 
   const setActiveCodeLine = (block: HTMLElement, line: number | null) => {
