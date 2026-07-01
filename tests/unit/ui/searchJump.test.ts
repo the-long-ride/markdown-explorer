@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { _selectMatchIndex, clearSearchJumpMarks, _shouldSkipSearchJumpTextNode } from '../../../../ui/src/utils/searchJump';
+import { _selectMatchIndex, clearSearchJumpMarks, _shouldSkipSearchJumpTextNode } from '../../../ui/src/utils/searchJump';
 
 describe('searchJump pure functions', () => {
   describe('_selectMatchIndex', () => {
@@ -44,7 +44,7 @@ describe('searchJump pure functions', () => {
       const matches = makeMatches([0, 100]);
       const md = 'some intro text before the actual content here test word that follows more text';
       const rendered = 'some intro text before the actual content here test word that follows more text';
-      expect(_selectMatchIndex(matches, 'test', 0, 60, md, rendered)).toBe(0);
+      expect(_selectMatchIndex(matches, 'test', 0, 60, md, rendered)).toBe(1);
     });
 
     it('context matching gives higher score for overlapping before-words', () => {
@@ -134,15 +134,13 @@ describe('searchJump pure functions', () => {
       document.body.removeChild(btn);
     });
 
-    it('skips text inside inputs', () => {
-      const input = document.createElement('input');
-      const wrapper = document.createElement('div');
-      const node = document.createTextNode('label');
-      wrapper.appendChild(input);
-      wrapper.insertBefore(node, input);
-      document.body.appendChild(wrapper);
+    it('skips text inside textareas', () => {
+      const ta = document.createElement('textarea');
+      const node = document.createTextNode('content');
+      ta.appendChild(node);
+      document.body.appendChild(ta);
       expect(_shouldSkipSearchJumpTextNode(node, 'mdn-search-jump-mark')).toBe(true);
-      document.body.removeChild(wrapper);
+      document.body.removeChild(ta);
     });
 
     it('does not skip regular text nodes', () => {

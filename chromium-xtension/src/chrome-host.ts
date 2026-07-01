@@ -34,7 +34,7 @@ let workspaceTree: FolderNode | null = null;
 let searchIndex: BrowserSearchIndex | null = null;
 let readyHandled = false;
 
-function getHostInfo() {
+export function getHostInfo() {
   return {
     appVersion: chrome.runtime.getManifest().version,
     appRuntime: "chrome" as const,
@@ -63,7 +63,7 @@ async function sendRecentWorkspacesChanged() {
   });
 }
 
-function sendWorkspaceUnavailable(workspacePath: string, reason = "missing") {
+export function resetWorkspaceState(): void {
   activeHandle = null;
   activeWorkspacePath = "";
   activeWorkspaceName = "";
@@ -71,6 +71,10 @@ function sendWorkspaceUnavailable(workspacePath: string, reason = "missing") {
   flatList = [];
   workspaceTree = null;
   searchIndex = null;
+}
+
+function sendWorkspaceUnavailable(workspacePath: string, reason = "missing") {
+  resetWorkspaceState();
 
   BrowserRecentWorkspaces.load().then((recents) => {
     sendToWebview({
@@ -269,13 +273,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
 
     case "closeWorkspace": {
       readyHandled = false;
-      activeHandle = null;
-      activeWorkspacePath = "";
-      activeWorkspaceName = "";
-      currentFile = null;
-      flatList = [];
-      workspaceTree = null;
-      searchIndex = null;
+      resetWorkspaceState();
       revokeAll();
 
       const recents = await BrowserRecentWorkspaces.load();

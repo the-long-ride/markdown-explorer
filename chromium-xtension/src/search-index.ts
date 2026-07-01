@@ -14,7 +14,7 @@ interface CacheEntry {
   haystack: ReturnType<typeof prepareHaystack>;
 }
 
-function makeSearchExcerpt(text: string, index: number, matchLength: number): string {
+export function makeSearchExcerpt(text: string, index: number, matchLength: number): string {
   const beforeText = text.slice(0, index).replace(/\s+/g, ' ').trim();
   const matchText = text.slice(index, index + matchLength).replace(/\s+/g, ' ').trim();
   const afterText = text.slice(index + matchLength).replace(/\s+/g, ' ').trim();

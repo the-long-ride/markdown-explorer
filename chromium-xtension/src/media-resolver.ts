@@ -17,7 +17,7 @@ export function revokeAll(): void {
   activeBlobUrls.clear();
 }
 
-function resolvePath(basePath: string, relativePath: string): string {
+export function resolvePath(basePath: string, relativePath: string): string {
   const normalizedRelPath = relativePath.replace(/\\/g, '/');
   const normalizedBasePath = basePath.replace(/\\/g, '/');
   const isAbsolute = normalizedRelPath.startsWith('/');
@@ -35,6 +35,10 @@ function resolvePath(basePath: string, relativePath: string): string {
     }
   }
   return resolvedParts.join('/');
+}
+
+export function isExternalUrl(rawPath: string): boolean {
+  return /^(https?:|data:|file:|blob:|vscode-webview:|#)/i.test(rawPath);
 }
 
 export async function rewriteMediaUrls(
@@ -82,7 +86,7 @@ export async function rewriteMediaUrls(
   // Resolve matches in parallel
   const replacements = await Promise.all(
     matches.map(async (m) => {
-      if (/^(https?:|data:|file:|blob:|vscode-webview:|#)/i.test(m.rawPath)) {
+      if (isExternalUrl(m.rawPath)) {
         return { original: m.fullMatch, replacement: m.fullMatch };
       }
       const resolvedPath = resolvePath(dirPath, m.rawPath);

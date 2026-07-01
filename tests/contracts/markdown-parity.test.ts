@@ -147,7 +147,7 @@ describe('markdown parity', () => {
           expect(uiResult).toEqual(vscodeResult);
 
           if (needle && text) {
-            const desktopResult = desktopUnicode.buildNormMap
+            const desktopResult1 = desktopUnicode.buildNormMap
               ? (() => {
                   const normNeedle = desktopUnicode.normalizeForSearch(needle);
                   if (!normNeedle) return null;
