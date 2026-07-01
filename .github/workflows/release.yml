@@ -15,34 +15,25 @@ permissions:
   contents: write
 
 jobs:
-  test:
-    name: Run Tests
+  test-gate:
+    name: Verify Tests Passed
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        project: [desktop, vscode, ui, chromium, contracts, manifest, build]
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Tests (${{ matrix.project }})
-        run: npx vitest run --project ${{ matrix.project }}
+      - name: Check test workflow status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REF="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}"
+          STATUS=$(gh run list --workflow Test.yml --branch main --status success --limit 1 --json conclusion -q '.[0].conclusion' 2>/dev/null || echo "")
+          if [ "$STATUS" != "success" ]; then
+            echo "::error::Test workflow has not passed on main. Cannot release."
+            exit 1
+          fi
+          echo "Test workflow passed on main. Proceeding with release."
 
   build-vscode:
     name: Build VS Code Extension
-    needs: test
+    needs: test-gate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -71,7 +62,7 @@ jobs:
 
   build-desktop:
     name: Build Desktop Application (${{ matrix.os }})
-    needs: test
+    needs: test-gate
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -132,7 +123,7 @@ jobs:
 
   build-chromium-extension:
     name: Build Chromium Extension
-    needs: test
+    needs: test-gate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

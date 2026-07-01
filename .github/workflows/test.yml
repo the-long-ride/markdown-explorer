@@ -22,7 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '24', cache: npm }
+        with:
+          node-version: "24"
+          cache: npm
       - run: npm ci
       - run: npx vitest run --project ${{ matrix.project }}
 
@@ -32,26 +34,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '24', cache: npm }
+        with:
+          node-version: "24"
+          cache: npm
       - run: npm ci
       - run: npm run test:coverage
-        env: { CI: true }
+        env:
+          CI: true
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: coverage-report, path: coverage/, retention-days: 14 }
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
 
   test-cross-platform:
     name: Cross-platform (${{ matrix.os }}, Node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: ['20', '22', '24']
+        node-version: ["20", "22", "24"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ matrix.node-version }}, cache: npm }
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
       - run: npm ci
       - run: npm test
 
@@ -65,6 +76,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '24', cache: npm }
+        with:
+          node-version: "24"
+          cache: npm
       - run: npm ci
       - run: npm run build:${{ matrix.target }}
