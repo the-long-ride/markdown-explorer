@@ -328,7 +328,6 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
   };
 
   const handleDuplicateTheme = (themeToDuplicate = selectedTheme) => {
-    if (!themeToDuplicate) return;
     if (!canCreateTheme) {
       showStatus("Custom theme limit reached.", "error");
       return;
@@ -347,7 +346,6 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
   };
 
   const handleDeleteTheme = (themeToDelete = selectedTheme) => {
-    if (!themeToDelete) return;
     const nextThemes = customThemes.filter((theme) => theme.id !== themeToDelete.id);
     const nextActiveId =
       state.settings.activeCustomThemeId === themeToDelete.id
