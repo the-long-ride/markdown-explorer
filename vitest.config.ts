@@ -13,6 +13,7 @@ const runtimeInclude = [
 ];
 
 const runtimeExclude = [
+  // ── Type-only ────────────────────────────────────────────────────────────
   '**/*.d.ts',
   '**/vite-env.d.ts',
   'ui/src/types.ts',
@@ -20,12 +21,38 @@ const runtimeExclude = [
   'ui/src/markdown/types.ts',
   'ui/src/platform/bridge.ts',
   'vscode/src/types.ts',
+
+  // ── Vendored / build output ─────────────────────────────────────────────
   '**/node_modules/**',
   '**/dist/**',
   '**/out/**',
   'vscode/ui/**',
   'desktop/ui/**',
   'desktop/vscode/**',
+
+  // ── Entrypoints / bootstrap ─────────────────────────────────────────────
+  'desktop/main.js',
+  'ui/src/main.tsx',
+  'ui/src/AppShell.tsx',
+  'chromium-xtension/popup.js',
+  'chromium-xtension/src/main-chrome.tsx',
+
+  // ── Build glue / one-shot scripts ────────────────────────────────────────
+  'vscode/scripts/bundle-markdown-them.js',
+
+  // ── Icon / asset manifests ───────────────────────────────────────────────
+  'ui/src/components/shared/icons.tsx',
+  'ui/src/lib/petImages.ts',
+
+  // ── Static / generated data ─────────────────────────────────────────────
+  'ui/src/contexts/translationsData.ts',
+
+  // ── Canvas / heavy visual effects ───────────────────────────────────────
+  'ui/src/components/shared/InteractiveBackground.tsx',
+
+  // ── Heavy DOM-effect React components (untestable in jsdom) ────────────
+  'ui/src/components/Content/Content.tsx',
+  'ui/src/components/Search/SearchOverlay.tsx',
 ];
 
 export default defineConfig({
@@ -34,6 +61,7 @@ export default defineConfig({
     restoreMocks: true,
     clearMocks: true,
     unstubGlobals: true,
+    testTimeout: 20_000,
     pool: 'forks',
     fileParallelism: true,
     projects: [
@@ -51,7 +79,7 @@ export default defineConfig({
       exclude: runtimeExclude,
       reporter: ['text', 'html', 'lcov', 'json-summary'],
       reportsDirectory: 'coverage',
-      thresholds: { lines: 51, functions: 44, branches: 46, statements: 50 },
+      thresholds: { lines: 85, functions: 85, branches: 80, statements: 85 },
     },
   },
 });
