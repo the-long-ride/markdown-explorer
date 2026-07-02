@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -49,6 +49,7 @@ describe('createRecentWorkspacesStore', () => {
   });
 
   test('load returns [] when file contains invalid JSON', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     const userDataDir = makeTempDir('recents-load-');
     const recentsFile = path.join(userDataDir, 'recent-workspaces.json');
     fs.writeFileSync(recentsFile, 'not json at all', 'utf8');
@@ -69,6 +70,7 @@ describe('createRecentWorkspacesStore', () => {
   });
 
   test('save catches writeFileSync failure', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     const userDataDir = makeTempDir('recents-save-fail-');
     const recentsFile = path.join(userDataDir, 'recent-workspaces.json');
     fs.writeFileSync(recentsFile, '[]', 'utf8');

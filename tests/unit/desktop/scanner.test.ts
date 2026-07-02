@@ -128,6 +128,7 @@ describe('DesktopScanner', () => {
     });
 
     test('skips directories that fail to readdir', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
       const rootDir = makeTempDir('scan-faildir-');
       const failDir = path.join(rootDir, 'faildir');
       vi.spyOn(fs.promises, 'readdir').mockImplementation(async (dir) => {

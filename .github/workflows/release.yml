@@ -45,7 +45,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install Dependencies
@@ -75,15 +75,15 @@ jobs:
             platform: mac
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
 
       - name: Install Dependencies
@@ -99,22 +99,22 @@ jobs:
 
       - name: Upload Desktop Artifact (Windows)
         if: matrix.platform == 'windows'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: desktop-app-windows
           path: desktop/dist/*.exe
 
       - name: Upload Desktop Artifact (Linux)
         if: matrix.platform == 'linux'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: desktop-app-linux
           path: |
             desktop/dist/*.deb
             desktop/dist/*.AppImage
-      - name: Upload Desktop Artifact (macOS)
+      - name: Upload Desktop Artifact (macOS)
         if: matrix.platform == 'mac'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: desktop-app-macos
           path: |
@@ -135,7 +135,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
 
       - name: Install Dependencies
