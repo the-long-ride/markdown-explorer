@@ -227,14 +227,6 @@ function createUpdateManager(deps = {}) {
     return readManifest(fsImpl, manifestPath);
   }
 
-  function doReadResultCode() {
-    return readResultCode(fsImpl, resultPath);
-  }
-
-  function doClearResultCode() {
-    clearResultCode(fsImpl, resultPath);
-  }
-
   function doRestorePersistedState() {
     return restorePersistedState(fsImpl, manifestPath, resultPath);
   }

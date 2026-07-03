@@ -514,6 +514,7 @@ describe('createSearchIndex', () => {
   });
 
   test('prime catches errors when getEntry throws', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const d = makeTempDir('prime-error-');
     const f = path.join(d, 'good.md');
     writeFile(f, 'searchable content');
@@ -531,9 +532,11 @@ describe('createSearchIndex', () => {
 
     const results = index.search('searchable', [{ fsPath: f, fileName: 'good.md', relativePath: 'good.md', title: 'Good' }]);
     expect(results.length).toBe(1);
+    consoleSpy.mockRestore();
   });
 
   test('search catches errors during content search', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const d = makeTempDir('search-error-');
     const f = path.join(d, 'doc.md');
     writeFile(f, 'needle content');
@@ -547,9 +550,11 @@ describe('createSearchIndex', () => {
     const results = index.search('needle', [{ fsPath: f, fileName: 'doc.md', relativePath: 'doc.md', title: 'Doc' }]);
     expect(results).toEqual([]);
     spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 
   test('searchIncremental catches errors during content search', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const d = makeTempDir('inc-search-error-');
     const f = path.join(d, 'doc.md');
     writeFile(f, 'needle content');
@@ -563,6 +568,7 @@ describe('createSearchIndex', () => {
     const result = await index.searchIncremental('needle', [{ fsPath: f, fileName: 'doc.md', relativePath: 'doc.md', title: 'Doc' }]);
     expect(result.total).toBe(0);
     spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 
   test('searchIncremental returns empty when normalized query is empty', async () => {
@@ -594,6 +600,7 @@ describe('createSearchIndex', () => {
   });
 
   test('search catches error during getEntry for content-searchable file', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const d = makeTempDir('search-getentry-err-');
     const f = path.join(d, 'doc.md');
     writeFile(f, 'needle content');
@@ -607,6 +614,7 @@ describe('createSearchIndex', () => {
     const results = index.search('needle', [{ fsPath: f, fileName: 'doc.md', relativePath: 'doc.md', title: 'Doc' }]);
     expect(results).toEqual([]);
     spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 
   test('searchIncremental breaks searchItems label when pushResult returns false', async () => {
@@ -640,6 +648,7 @@ describe('createSearchIndex', () => {
   });
 
   test('searchIncremental handles error in getEntry for content-searchable file', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const d = makeTempDir('inc-stat-err-');
     const f = path.join(d, 'doc.md');
     writeFile(f, 'needle content');
@@ -653,6 +662,7 @@ describe('createSearchIndex', () => {
     const result = await index.searchIncremental('needle', [{ fsPath: f, fileName: 'doc.md', relativePath: 'doc.md', title: 'Doc' }]);
     expect(result.total).toBe(0);
     spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 
   test('makeSearchExcerpt with empty matchText does not push to parts', () => {
