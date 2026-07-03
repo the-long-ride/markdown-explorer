@@ -328,9 +328,8 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
   };
 
   const handleDuplicateTheme = (themeToDuplicate = selectedTheme) => {
-    if (!themeToDuplicate) return;
-    if (!canCreateTheme) {
-      showStatus("Custom theme limit reached.", "error");
+    if (!canCreateTheme || !themeToDuplicate) {
+      if (!canCreateTheme) showStatus("Custom theme limit reached.", "error");
       return;
     }
     const duplicate: CustomTheme = {

@@ -35,5 +35,8 @@ desktop-tauri/src-tauri/target*/
 # Coverage
 coverage/
 
+# Agents
+.agents/
+
 # Implementation plans (never commit)
 plan-ignore-from-commit.md

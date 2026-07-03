@@ -240,3 +240,113 @@ describe('BrowserScanner.buildTree', () => {
     expect(tree.children).toHaveLength(1);
   });
 });
+
+describe('BrowserScanner.buildFileEntry', () => {
+  it('builds entry with title extracted from content', async () => {
+    const handle: any = {
+      getFile: async () => ({ text: async () => '# Hello\n\nWorld' }),
+    };
+    const entry = await BrowserScanner.buildFileEntry(handle, 'readme.md');
+    expect(entry.title).toBe('Hello');
+    expect(entry.fileName).toBe('readme.md');
+    expect(entry.extension).toBe('.md');
+    expect(entry.fsPath).toBe('readme.md');
+  });
+
+  it('uses filename fallback when reading fails', async () => {
+    const handle: any = {
+      getFile: async () => { throw new Error('read fail'); },
+    };
+    const entry = await BrowserScanner.buildFileEntry(handle, 'docs/guide.md');
+    expect(entry.title).toBe('guide');
+  });
+
+  it('extracts mdx title', async () => {
+    const handle: any = {
+      getFile: async () => ({ text: async () => 'export const title = "MDX"\n' }),
+    };
+    const entry = await BrowserScanner.buildFileEntry(handle, 'page.mdx');
+    expect(entry.title).toBe('MDX');
+    expect(entry.extension).toBe('.mdx');
+  });
+
+  it('sets extension to empty string when no dot in filename', async () => {
+    const handle: any = {
+      getFile: async () => ({ text: async () => 'No heading' }),
+    };
+    const entry = await BrowserScanner.buildFileEntry(handle, 'README');
+    expect(entry.title).toBe('README');
+    expect(entry.extension).toBe('');
+  });
+});
+
+describe('BrowserScanner.scan', () => {
+  it('scans a simple directory', async () => {
+    const mockFile: any = {
+      kind: 'file',
+      name: 'readme.md',
+      getFile: async () => ({ text: async () => '# Hello' }),
+    };
+    const root: any = {
+      async *values() {
+        yield mockFile;
+      },
+    };
+    const result = await BrowserScanner.scan(root);
+    expect(result.flat).toHaveLength(1);
+    expect(result.flat[0].fileName).toBe('readme.md');
+    expect(result.tree.files).toHaveLength(1);
+  });
+
+  it('respects max file limit', async () => {
+    const root: any = {
+      async *values() {
+        for (let i = 0; i < 1002; i++) {
+          yield {
+            kind: 'file',
+            name: `f${i}.md`,
+            getFile: async () => ({ text: async () => '' }),
+          };
+        }
+      },
+    };
+    const result = await BrowserScanner.scan(root);
+    expect(result.flat.length).toBe(1000);
+  });
+
+  it('skips excluded directories', async () => {
+    const root: any = {
+      async *values() {
+        yield { kind: 'directory', name: '.git' };
+        yield { kind: 'directory', name: 'node_modules' };
+        yield { kind: 'directory', name: 'valid', async *values() {} };
+      },
+    };
+    const result = await BrowserScanner.scan(root);
+    expect(result.flat).toHaveLength(0);
+  });
+
+  it('traverses subdirectories', async () => {
+    const childFile: any = {
+      kind: 'file',
+      name: 'child.md',
+      getFile: async () => ({ text: async () => '# Child' }),
+    };
+    const childDir: any = {
+      kind: 'directory',
+      name: 'sub',
+      async *values() {
+        yield childFile;
+      },
+    };
+    const root: any = {
+      async *values() {
+        yield childDir;
+      },
+    };
+    const result = await BrowserScanner.scan(root);
+    expect(result.flat).toHaveLength(1);
+    expect(result.flat[0].fileName).toBe('child.md');
+    expect(result.tree.children).toHaveLength(1);
+  });
+});

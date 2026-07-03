@@ -1,0 +1,430 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { Content } from "../../../../ui/src/components/Content/Content";
+import { useAppState } from "../../../../ui/src/contexts/AppStateContext";
+import { useNavigation } from "../../../../ui/src/contexts/NavigationContext";
+import { usePlatform } from "../../../../ui/src/contexts/PlatformContext";
+
+vi.mock("../../../../ui/src/contexts/AppStateContext");
+vi.mock("../../../../ui/src/contexts/NavigationContext");
+vi.mock("../../../../ui/src/contexts/PlatformContext");
+
+vi.mock("../../../../ui/src/contexts/translations", () => ({
+  getTranslations: () => ({
+    documentPreview: {
+      currentFileChangedOnDisk: "Current file changed on disk",
+      refreshCurrentFile: "Refresh",
+      currentFileChangedSuffix: "Click to reload.",
+      convertedTitle: "Converted: {sourceLabel}",
+      textTitle: "Text: {sourceLabel}",
+      convertedWarning: "Converted warning",
+      textWarning: "Text warning",
+      conversionFailedWarning: "Conversion failed",
+      durationMeta: "{status} in {duration}",
+      preparedLocally: "prepared locally",
+      loadedCachedConversion: "loaded from cache",
+    },
+  }),
+}));
+
+vi.mock("../../../../ui/src/lib/renderLibs", () => ({
+  getChart: vi.fn(),
+  getHighlightJs: vi.fn(),
+  getKatex: vi.fn(),
+  getMermaid: vi.fn(),
+}));
+
+vi.mock("../../../../ui/src/components/Content/WelcomePage", () => ({
+  WelcomePage: () => <div data-testid="welcome-page">WelcomePage</div>,
+}));
+
+vi.mock("../../../../ui/src/components/shared/icons", () => ({
+  AlertTriangleIcon: ({ size }: { size?: number }) => (
+    <svg data-testid="alert-triangle-icon" width={size} height={size} />
+  ),
+  FolderIcon: ({ size }: { size?: number }) => (
+    <svg data-testid="folder-icon" width={size} height={size} />
+  ),
+  TrashIcon: ({ size }: { size?: number }) => (
+    <svg data-testid="trash-icon" width={size} height={size} />
+  ),
+}));
+
+const mockNavigate = vi.fn();
+const mockRefresh = vi.fn();
+const mockUpdateSettings = vi.fn();
+const mockPush = vi.fn();
+const mockPostMessage = vi.fn();
+
+function makeState(overrides: Record<string, unknown> = {}) {
+  return {
+    fileList: [{ path: "/readme.md" }],
+    tree: null,
+    currentFile: null,
+    theme: "light" as const,
+    hasThemePreference: false,
+    themeStyle: "default" as const,
+    hasThemeStylePreference: false,
+    defaultExpanded: true,
+    workspaceName: "test",
+    workspacePath: "/test",
+    sidebarCollapsed: false,
+    tocCollapsed: false,
+    contentHtml: "",
+    markdownSource: null,
+    frontmatter: {},
+    toc: [],
+    relativePath: "",
+    isLoading: false,
+    loadingLabel: "",
+    loadingDetail: "",
+    previewInfo: null,
+    staleContentFilePath: null,
+    notFoundHref: null,
+    workspaceUnavailablePath: null,
+    workspaceUnavailableReason: null,
+    settings: {
+      language: "en",
+      keybindings: {},
+      desktopViewMode: "default",
+      documentConversion: false,
+    },
+    renderVersion: 1,
+    contentTabs: [],
+    activeContentTabPath: null,
+    recentWorkspaces: [],
+    isMaximized: false,
+    appVersion: "1.0.0",
+    appRuntime: "web" as const,
+    hostPlatform: "web" as const,
+    hostArch: "x64",
+    focusMode: false,
+    updateState: { status: "idle" },
+    sidebarActiveTab: "files" as const,
+    ...overrides,
+  };
+}
+
+function setup(overrides: Record<string, unknown> = {}) {
+  vi.mocked(useAppState).mockReturnValue({
+    state: makeState(overrides),
+    navigate: mockNavigate,
+    refresh: mockRefresh,
+    updateSettings: mockUpdateSettings,
+  });
+  vi.mocked(useNavigation).mockReturnValue({ push: mockPush });
+  vi.mocked(usePlatform).mockReturnValue({ postMessage: mockPostMessage });
+
+  const scrollRef = { current: null } as React.RefObject<HTMLDivElement | null>;
+  const onImageClick = vi.fn();
+
+  return render(
+    <Content onImageClick={onImageClick} scrollRef={scrollRef} />
+  );
+}
+
+function setupWithProps(
+  overrides: Record<string, unknown> = {},
+  props: { suppressWelcome?: boolean } = {}
+) {
+  vi.mocked(useAppState).mockReturnValue({
+    state: makeState(overrides),
+    navigate: mockNavigate,
+    refresh: mockRefresh,
+    updateSettings: mockUpdateSettings,
+  });
+  vi.mocked(useNavigation).mockReturnValue({ push: mockPush });
+  vi.mocked(usePlatform).mockReturnValue({ postMessage: mockPostMessage });
+
+  const scrollRef = { current: null } as React.RefObject<HTMLDivElement | null>;
+  const onImageClick = vi.fn();
+
+  return render(
+    <Content
+      onImageClick={onImageClick}
+      scrollRef={scrollRef}
+      suppressWelcome={props.suppressWelcome}
+    />
+  );
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  delete (window as Record<string, unknown>).electronAPI;
+});
+
+describe("Content rendering", () => {
+  it("renders loading spinner when isLoading", () => {
+    const { container } = setup({ isLoading: true });
+    expect(container.querySelector(".spinner")).toBeInTheDocument();
+    expect(screen.getByText("Loading docs...")).toBeInTheDocument();
+  });
+
+  it("renders custom loading label", () => {
+    setup({ isLoading: true, loadingLabel: "Scanning workspace..." });
+    expect(screen.getByText("Scanning workspace...")).toBeInTheDocument();
+  });
+
+  it("renders loading detail when provided", () => {
+    setup({ isLoading: true, loadingDetail: "Please wait" });
+    expect(screen.getByText("Please wait")).toBeInTheDocument();
+  });
+
+  it("renders not found screen when notFoundHref is set", () => {
+    setup({ notFoundHref: "/missing/file.md" });
+    expect(screen.getByText("File not found")).toBeInTheDocument();
+    expect(screen.getByText("/missing/file.md")).toBeInTheDocument();
+  });
+
+  it("renders workspace unavailable with Open Workspace Again button", () => {
+    setup({
+      workspaceUnavailablePath: "/gone/workspace",
+      recentWorkspaces: [{ path: "/gone/workspace" }],
+    });
+    expect(screen.getByText("Workspace not found")).toBeInTheDocument();
+    expect(screen.getByText("/gone/workspace")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Open Workspace Again/i })
+    ).toBeInTheDocument();
+  });
+
+  it("renders Delete from History button when workspace is in recents", () => {
+    setup({
+      workspaceUnavailablePath: "/gone/workspace",
+      recentWorkspaces: [{ path: "/gone/workspace" }],
+    });
+    expect(
+      screen.getByRole("button", { name: /Delete from History/i })
+    ).toBeInTheDocument();
+  });
+
+  it("disables delete button when workspace not in recents", () => {
+    setup({
+      workspaceUnavailablePath: "/gone/workspace",
+      recentWorkspaces: [],
+    });
+    expect(
+      screen.getByRole("button", { name: /Removed from History/i })
+    ).toBeDisabled();
+  });
+
+  it("sends openFolder message when Open Workspace Again is clicked", () => {
+    setup({
+      workspaceUnavailablePath: "/gone/workspace",
+      recentWorkspaces: [],
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Open Workspace Again/i })
+    );
+    expect(mockPostMessage).toHaveBeenCalledWith({
+      command: "openFolder",
+      openFirstFile: false,
+    });
+  });
+
+  it("sends deleteRecentWorkspace when delete button is clicked", () => {
+    setup({
+      workspaceUnavailablePath: "/gone/workspace",
+      recentWorkspaces: [{ path: "/gone/workspace" }],
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Delete from History/i })
+    );
+    expect(mockPostMessage).toHaveBeenCalledWith({
+      command: "deleteRecentWorkspace",
+      path: "/gone/workspace",
+    });
+  });
+
+  it("renders tab-view hint for unavailable workspace in desktop tab view", () => {
+    (window as Record<string, unknown>).electronAPI = {};
+    setup({
+      workspaceUnavailablePath: "/gone",
+      settings: {
+        language: "en",
+        keybindings: {},
+        desktopViewMode: "tabs",
+        documentConversion: false,
+      },
+    });
+    expect(screen.getByText(/Tab view:/i)).toBeInTheDocument();
+  });
+
+  it("renders empty workspace message when no files and no content", () => {
+    setup({ fileList: [], contentHtml: "" });
+    expect(
+      screen.getByText("No Markdown, MDX, or TXT files found")
+    ).toBeInTheDocument();
+  });
+
+  it("renders document conversion empty message when enabled", () => {
+    setup({
+      fileList: [],
+      contentHtml: "",
+      settings: {
+        language: "en",
+        keybindings: {},
+        desktopViewMode: "default",
+        documentConversion: true,
+      },
+    });
+    expect(
+      screen.getByText("No supported documents found")
+    ).toBeInTheDocument();
+  });
+
+  it("renders enable document conversion button when conversion is off", () => {
+    setup({ fileList: [], contentHtml: "" });
+    expect(
+      screen.getByRole("button", { name: /Enable document conversion/i })
+    ).toBeInTheDocument();
+  });
+
+  it("hides enable document conversion button when conversion is on", () => {
+    setup({
+      fileList: [],
+      contentHtml: "",
+      settings: {
+        language: "en",
+        keybindings: {},
+        desktopViewMode: "default",
+        documentConversion: true,
+      },
+    });
+    expect(
+      screen.queryByRole("button", { name: /Enable document conversion/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("calls updateSettings when enable document conversion button is clicked", () => {
+    setup({ fileList: [], contentHtml: "" });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Enable document conversion/i })
+    );
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      documentConversion: true,
+    });
+  });
+
+  it("renders welcome page when no current file and files exist", () => {
+    setup({ fileList: [{ path: "/readme.md" }], currentFile: null });
+    expect(screen.getByTestId("welcome-page")).toBeInTheDocument();
+  });
+
+  it("hides welcome page when suppressWelcome is true", () => {
+    setupWithProps(
+      { fileList: [{ path: "/readme.md" }], currentFile: null },
+      { suppressWelcome: true }
+    );
+    expect(screen.queryByTestId("welcome-page")).not.toBeInTheDocument();
+  });
+
+  it("renders content body when currentFile exists", () => {
+    const { container } = setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+    });
+    expect(container.querySelector(".mdn-body")).toBeInTheDocument();
+  });
+
+  it("renders stale file notice when staleContentFilePath matches currentFile", () => {
+    setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+      staleContentFilePath: "/readme.md",
+    });
+    expect(
+      screen.getByText("Current file changed on disk")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Refresh/i })
+    ).toBeInTheDocument();
+  });
+
+  it("hides stale file notice when staleContentFilePath differs from currentFile", () => {
+    setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+      staleContentFilePath: "/other.md",
+    });
+    expect(
+      screen.queryByText("Current file changed on disk")
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders frontmatter entries", () => {
+    setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+      frontmatter: { title: "Test", author: "Bot" },
+    });
+    expect(screen.getByText("title")).toBeInTheDocument();
+    expect(screen.getByText("Test")).toBeInTheDocument();
+    expect(screen.getByText("author")).toBeInTheDocument();
+    expect(screen.getByText("Bot")).toBeInTheDocument();
+  });
+
+  it("renders converted preview info notice", () => {
+    setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+      previewInfo: {
+        kind: "converted",
+        sourceLabel: "report.docx",
+        qualityWarning: undefined,
+        durationMs: 1500,
+        fromCache: false,
+      },
+    });
+    expect(screen.getByText("Converted: report.docx")).toBeInTheDocument();
+    expect(screen.getByText("Converted warning")).toBeInTheDocument();
+  });
+
+  it("renders text preview info notice", () => {
+    setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+      previewInfo: {
+        kind: "text",
+        sourceLabel: "notes.txt",
+        qualityWarning: undefined,
+        durationMs: 200,
+        fromCache: true,
+      },
+    });
+    expect(screen.getByText("Text: notes.txt")).toBeInTheDocument();
+    expect(screen.getByText("Text warning")).toBeInTheDocument();
+  });
+
+  it("does not render content body when isLoading", () => {
+    const { container } = setup({
+      isLoading: true,
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+    });
+    expect(container.querySelector(".mdn-body")).not.toBeInTheDocument();
+  });
+
+  it("does not render content body when notFoundHref is set", () => {
+    const { container } = setup({
+      notFoundHref: "/missing.md",
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+    });
+    expect(container.querySelector(".mdn-body")).not.toBeInTheDocument();
+  });
+
+  it("does not render content body when workspaceUnavailablePath is set", () => {
+    const { container } = setup({
+      workspaceUnavailablePath: "/gone",
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+    });
+    expect(container.querySelector(".mdn-body")).not.toBeInTheDocument();
+  });
+
+  it("renders main content wrapper element", () => {
+    setup();
+    expect(document.querySelector("main.content")).toBeInTheDocument();
+  });
+});

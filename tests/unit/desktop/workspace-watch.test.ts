@@ -104,6 +104,36 @@ describe('createWorkspaceWatchController', () => {
     expect(refreshes[0].change.relativePath).toBe('guide.md');
     expect(refreshes[0].change.fsPath.replace(/\\/g, '/')).toBe('C:/docs/guide.md');
   });
+
+  test('dispose resets state and closes watcher', async () => {
+    vi.useFakeTimers();
+    let watcherClosed = false;
+    let watcherHandler: ((event: string, filename: string) => void) | null = null;
+    let refreshCount = 0;
+
+    const controller = createWorkspaceWatchController({
+      fs: {
+        watch(_target: string, _options: any, handler: (event: string, filename: string) => void) {
+          watcherHandler = handler;
+          return { close() { watcherClosed = true; } };
+        },
+      } as any,
+      setTimeout,
+      clearTimeout,
+      debounceMs: 5,
+      async onRefresh() { refreshCount += 1; },
+    });
+
+    controller.watchWorkspace('C:/docs');
+    watcherHandler?.('change', 'a.md');
+
+    controller.dispose();
+
+    expect(watcherClosed).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(20);
+    expect(refreshCount).toBe(0);
+  });
 });
 
 describe('clearPendingTimerFn', () => {

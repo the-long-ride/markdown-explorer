@@ -566,9 +566,11 @@ describe('createDesktopRuntime', () => {
     });
 
     test('still sends changed notification on remove error', () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       ctx.deps.recentWorkspacesStore.remove.mockImplementation(() => { throw new Error('fail'); });
       runtime.handleDeleteRecentWorkspace('/old/project');
       expect(ctx.deps.sendRecentWorkspacesChanged).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 
@@ -581,9 +583,11 @@ describe('createDesktopRuntime', () => {
     });
 
     test('still sends changed notification on replace error', () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       ctx.deps.recentWorkspacesStore.replace.mockImplementation(() => { throw new Error('fail'); });
       runtime.handleReplaceRecentWorkspaces([]);
       expect(ctx.deps.sendRecentWorkspacesChanged).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 
