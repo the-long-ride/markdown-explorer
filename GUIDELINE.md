@@ -17,23 +17,24 @@ The mission of `GUIDELINE.md` is to preserve codebase health, establish standard
 ### 1. Prerequisites
 Ensure the following tools are installed on your machine:
 *   **Node.js**: Version `18.x` or higher is recommended (supports ESModules and workspace configurations).
-*   **npm**: Version `9.x` or higher.
+*   **pnpm**: Version `9.x` or higher (managed via [Corepack](https://nodejs.org/api/corepack.html) or installed globally). Enable with `corepack enable` then `corepack prepare pnpm@latest --activate`.
 *   **Visual Studio Code**: The recommended IDE for extension development.
 
-### 2. Monorepo Setup (NPM Workspaces)
-This project leverages **NPM Workspaces** to share code, models, and assets across different deployment runtimes. The workspace modules are defined in the root [package.json](file:///f:/Extensions/markdown-explorer/package.json):
+### 2. Monorepo Setup (pnpm Workspaces)
+This project leverages **pnpm Workspaces** to share code, models, and assets across different deployment runtimes. The workspace modules are defined in the root [pnpm-workspace.yaml](pnpm-workspace.yaml):
 *   `ui` (React Shared Frontend)
 *   `vscode` (VS Code Extension runtime)
 *   `desktop` (Electron Standalone Desktop container)
+*   `chromium-xtension` (Chromium browser extension)
 
 To configure your local developer environment:
 1.  Clone the repository.
 2.  Open the workspace folder in VS Code.
 3.  Install all workspace dependencies concurrently by running the following command in the **root directory**:
     ```bash
-    npm install
+    pnpm install
     ```
-    *This runs a single install command that recursively resolves dependencies across `ui`, `vscode`, and `desktop` and creates symlinks for shared builds.*
+    *This runs a single install command that recursively resolves dependencies across `ui`, `vscode`, `desktop`, and `chromium-xtension`, linking the shared pnpm content-addressable store and symlinking workspace packages.*
 
 ---
 
@@ -85,24 +86,24 @@ We provide unified commands inside the root [package.json](file:///f:/Extensions
 1.  Open the workspace root in VS Code.
 2.  Press **`F5`** (or go to *Run and Debug* and select **Debug Extension**).
 3.  VS Code automatically runs a pre-launch compilation step:
-    *   Rebuilds the shared React UI (`npm run build:ui`).
+    *   Rebuilds the shared React UI (`pnpm run build:ui`).
     *   Copies UI output assets into the `vscode/` workspace.
-    *   Starts a watch compilation on extension TS files (`npm run watch`).
+    *   Starts a watch compilation on extension TS files (`pnpm run watch`).
 4.  A new **Extension Development Host** window will spawn.
 5.  In the new host, open any folder containing `.md` or `.mdx` files, open a markdown file, and trigger the preview using `Ctrl+Alt+V` or `Ctrl+Shift+M`.
 
 ### 2. Standalone Electron App (Desktop Workflow)
 1.  Build the shared UI assets:
     ```bash
-    npm run build:ui
+    pnpm run build:ui
     ```
 2.  Compile the VS Code markdown parser (which is dynamically loaded by the desktop app):
     ```bash
-    npm run build:vscode
+    pnpm run build:vscode
     ```
 3.  Launch the standalone desktop application:
     ```bash
-    npm run start:desktop
+    pnpm run start:desktop
     ```
     *This executes `electron .` within the `desktop/` workspace folder, opening a frameless desktop window pointing to the compiled React UI.*
 
@@ -171,14 +172,14 @@ To ensure the application looks premium offline without making external CDN call
 ### 1. VS Code Extension packaging
 To compile assets and package the extension into a single redistributable `.vsix` binary, run:
 ```bash
-npm run package
+pnpm run package
 ```
 *This command runs a clean React UI compilation, triggers the `copy-ui.js` copier script to copy compiled bundles into the `vscode/` extension folder, compiles TypeScript extension logic, and packages everything using VSCE.*
 
 ### 2. Standalone Electron Desktop App packaging
 To compile assets and bundle the Electron application, run:
 ```bash
-npm run build:desktop
+pnpm run build:desktop
 ```
 *This compiles the shared UI, compiles the VS Code markdown parser, and executes `electron-builder` under the `desktop` workspace to bundle a portable Windows binary (or standard system installers) under `desktop/dist/`.*
 
