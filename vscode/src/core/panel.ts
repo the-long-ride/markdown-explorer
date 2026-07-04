@@ -607,7 +607,7 @@ export class MarkdownDocsPanel {
         </head>
         <body style="font-family: sans-serif; padding: 20px; color: var(--vscode-editor-foreground); background-color: var(--vscode-editor-background);">
           <h2>Markdown Explorer UI has not been built.</h2>
-          <p>Please run <code>npm run build</code> in the <code>ui/</code> folder or <code>npm run compile</code> in the extension folder to build the UI assets.</p>
+          <p>Please run <code>pnpm run build</code> in the <code>ui/</code> folder or <code>pnpm run compile</code> in the extension folder to build the UI assets.</p>
         </body>
         </html>
       `;
