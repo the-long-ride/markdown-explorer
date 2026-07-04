@@ -171,9 +171,9 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./ && node scripts/bundle-markdown-them.js && cd ../ui && npm run build && cd ../vscode && node scripts/copy-ui.js",
+    "compile": "tsc -p ./ && node scripts/bundle-markdown-them.js && cd ../ui && pnpm run build && cd ../vscode && node scripts/copy-ui.js",
     "watch": "tsc -watch -p ./",
-    "package": "npm run compile && npx vsce package --no-dependencies"
+    "package": "pnpm run compile && pnpm exec vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

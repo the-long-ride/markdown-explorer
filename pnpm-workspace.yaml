@@ -1,0 +1,14 @@
+packages:
+  - ui
+  - vscode
+  - desktop
+  - chromium-xtension
+
+allowBuilds:
+  esbuild: true
+  '@vscode/vsce-sign': true
+  electron-winstaller: true
+  keytar: true
+  tesseract.js: true
+
+shamefullyHoist: true

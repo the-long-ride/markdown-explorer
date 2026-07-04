@@ -4,7 +4,7 @@
     {
       "label": "watch",
       "type": "shell",
-      "command": "npm run watch",
+      "command": "pnpm run watch",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "presentation": {
@@ -19,7 +19,7 @@
     {
       "label": "compile",
       "type": "shell",
-      "command": "npm run compile",
+      "command": "pnpm run compile",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",

@@ -49,17 +49,36 @@ describe('package configuration contracts', () => {
   });
 
   describe('workspace membership', () => {
-    test('root workspaces list all four sub-packages', async () => {
+    const expectedPackages = ['ui', 'vscode', 'desktop', 'chromium-xtension'];
+
+    async function readWorkspacePackages() {
+      const yaml = await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8');
+      return yaml
+        .split('\n')
+        .filter((line) => line.trim().startsWith('- '))
+        .map((line) => line.trim().slice(2).trim().replace(/^['"]|['"]$/g, ''));
+    }
+
+    test('pnpm-workspace.yaml lists all four sub-packages', async () => {
+      expect(existsSync(resolve(root, 'pnpm-workspace.yaml'))).toBe(true);
+      const packages = await readWorkspacePackages();
+      expect(packages).toEqual(expect.arrayContaining(expectedPackages));
+      expect(packages).toHaveLength(4);
+    });
+
+    test('root manifest declares pnpm as package manager', async () => {
       const pkg = await readJson('package.json');
-      expect(pkg.workspaces).toEqual(
-        expect.arrayContaining(['ui', 'vscode', 'desktop', 'chromium-xtension']),
-      );
-      expect(pkg.workspaces).toHaveLength(4);
+      expect(pkg.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+/);
+    });
+
+    test('root manifest no longer declares npm workspaces', async () => {
+      const pkg = await readJson('package.json');
+      expect(pkg.workspaces).toBeUndefined();
     });
 
     test('every workspace sub-directory has a package.json', async () => {
-      const pkg = await readJson('package.json');
-      for (const ws of pkg.workspaces) {
+      const packages = await readWorkspacePackages();
+      for (const ws of packages) {
         expect(existsSync(resolve(root, ws, 'package.json'))).toBe(true);
       }
     });

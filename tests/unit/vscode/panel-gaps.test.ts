@@ -145,7 +145,7 @@ describe('_buildShell', () => {
     const html = panel._buildShell();
 
     expect(html).toContain('Markdown Explorer UI has not been built');
-    expect(html).toContain('npm run build');
+    expect(html).toContain('pnpm run build');
   });
 });
 
