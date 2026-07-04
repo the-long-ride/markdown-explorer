@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 const uiTypes = await import('../../ui/src/types.ts');
 const vscodeTypes = await import('../../vscode/src/types.ts');
 const require = createRequire(import.meta.url);
-const ipcHandlers = require('../../desktop/ipc-handlers.js');
+const ipcHandlers = require('../../electron/core/ipc-handlers.js');
 
 type UiHostMessage = typeof uiTypes.HostMessage;
 type VscodeHostMessage = typeof vscodeTypes.HostMessage;

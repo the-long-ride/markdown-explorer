@@ -1,7 +1,7 @@
 packages:
   - ui
   - vscode
-  - desktop
+  - electron
   - chromium-xtension
 
 allowBuilds:

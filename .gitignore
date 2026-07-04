@@ -12,8 +12,8 @@ tsconfig.tsbuildinfo
 
 # Copied runtime directories (monorepo syncs)
 vscode/ui/
-desktop/ui/
-desktop/vscode/
+electron/ui/
+electron/vscode/
 
 # Packaging artifacts
 *.vsix

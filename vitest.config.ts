@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 const runtimeInclude = [
-  'desktop/**/*.js',
+  'electron/**/*.js',
   'vscode/src/**/*.ts',
   'vscode/scripts/**/*.js',
   'ui/src/**/*.{ts,tsx,js}',
@@ -27,11 +27,11 @@ const runtimeExclude = [
   '**/dist/**',
   '**/out/**',
   'vscode/ui/**',
-  'desktop/ui/**',
-  'desktop/vscode/**',
+  'electron/ui/**',
+  'electron/vscode/**',
 
   // ── Entrypoints / bootstrap ─────────────────────────────────────────────
-  'desktop/main.js',
+  'electron/main.js',
   'ui/src/main.tsx',
   'ui/src/AppShell.tsx',
   'chromium-xtension/popup.js',
@@ -65,7 +65,7 @@ export default defineConfig({
     pool: 'forks',
     fileParallelism: true,
     projects: [
-      { extends: true, test: { name: 'desktop',    environment: 'node',  include: ['tests/unit/desktop/**/*.test.ts'],       setupFiles: ['tests/setup/node.ts'] } },
+      { extends: true, test: { name: 'electron',    environment: 'node',  include: ['tests/unit/electron/**/*.test.ts'],       setupFiles: ['tests/setup/node.ts'] } },
       { extends: true, test: { name: 'vscode',     environment: 'node',  include: ['tests/unit/vscode/**/*.test.ts'],        setupFiles: ['tests/setup/node.ts'] } },
       { extends: true, test: { name: 'ui',         environment: 'jsdom', include: ['tests/unit/ui/**/*.test.{ts,tsx}'],      setupFiles: ['tests/setup/dom.ts'] } },
       { extends: true, test: { name: 'chromium',   environment: 'jsdom', include: ['tests/unit/chromium/**/*.test.{ts,tsx}'], setupFiles: ['tests/setup/chromium.ts'] } },

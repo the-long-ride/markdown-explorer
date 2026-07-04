@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { createMarkdownRenderer } = require('../../desktop/markdown-renderer.js');
+const { createMarkdownRenderer } = require('../../electron/render/markdown-renderer.js');
 
 describe('platform paths', () => {
   describe('path.win32', () => {
