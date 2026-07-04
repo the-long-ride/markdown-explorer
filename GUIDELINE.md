@@ -24,7 +24,7 @@ Ensure the following tools are installed on your machine:
 This project leverages **pnpm Workspaces** to share code, models, and assets across different deployment runtimes. The workspace modules are defined in the root [pnpm-workspace.yaml](pnpm-workspace.yaml):
 *   `ui` (React Shared Frontend)
 *   `vscode` (VS Code Extension runtime)
-*   `desktop` (Electron Standalone Desktop container)
+*   `electron` (Electron Standalone Desktop container)
 *   `chromium-xtension` (Chromium browser extension)
 
 To configure your local developer environment:
@@ -34,7 +34,7 @@ To configure your local developer environment:
     ```bash
     pnpm install
     ```
-    *This runs a single install command that recursively resolves dependencies across `ui`, `vscode`, `desktop`, and `chromium-xtension`, linking the shared pnpm content-addressable store and symlinking workspace packages.*
+    *This runs a single install command that recursively resolves dependencies across `ui`, `vscode`, `electron`, and `chromium-xtension`, linking the shared pnpm content-addressable store and symlinking workspace packages.*
 
 ---
 
@@ -43,10 +43,10 @@ To configure your local developer environment:
 ```mermaid
 graph TD
     UI[ui/ Shared React Frontend] -->|vite build| vscode_dest[vscode/ui/dist]
-    UI -->|vite build| desktop_dest[desktop/ui/dist]
+    UI -->|vite build| desktop_dest[electron/ui/dist]
     VSCode[vscode/ VS Code runtime] -->|compiled TS| Parser[vscode/out/markdown/parser.js]
     VSCode -->|compiled TS| Renderer[vscode/out/markdown/renderer.js]
-    Desktop[desktop/ Electron shell] -->|runs main.js| Loader[Loads Shared React UI dist]
+    Desktop[electron/ Electron shell] -->|runs main.js| Loader[Loads Shared React UI dist]
     Desktop -->|runtime require| Parser
     Desktop -->|runtime require| Renderer
 ```
@@ -63,15 +63,15 @@ graph TD
     *   [vscode/src/markdown/parser.ts](file:///f:/Extensions/markdown-explorer/vscode/src/markdown/parser.ts): Tokenizes markdown headings, tables, code blocks, MDX tags, and callouts.
     *   [vscode/src/markdown/renderer.ts](file:///f:/Extensions/markdown-explorer/vscode/src/markdown/renderer.ts): Renders markdown tokens into rich, interactive HTML nodes.
     *   [vscode/scripts/copy-ui.js](file:///f:/Extensions/markdown-explorer/vscode/scripts/copy-ui.js): Compiles and copies React UI distribution assets into the extension folder before VSIX packaging.
-*   **`desktop/` (Electron standalone shell)**:
+*   **`electron/` (Electron standalone shell)**:
     *   Coordinates operating system integrations.
-    *   [desktop/main.js](file:///f:/Extensions/markdown-explorer/desktop/main.js): Main process managing the frameless window, system tray menu, IPC event handlers, and active paths.
-    *   [desktop/preload.js](file:///f:/Extensions/markdown-explorer/desktop/preload.js): Context-isolated bridge exposing a secure platform communication interface (`electronAPI`).
-    *   [desktop/scanner.js](file:///f:/Extensions/markdown-explorer/desktop/scanner.js): Scans local folders recursively to map out markdown files and automatically extract frontmatter/heading titles.
+    *   [electron/main.js](file:///f:/Extensions/markdown-explorer/electron/main.js): Main process managing the frameless window, system tray menu, IPC event handlers, and active paths.
+    *   [electron/preload/preload.js](file:///f:/Extensions/markdown-explorer/electron/preload/preload.js): Context-isolated bridge exposing a secure platform communication interface (`electronAPI`).
+    *   [electron/workspace/scanner.js](file:///f:/Extensions/markdown-explorer/electron/workspace/scanner.js): Scans local folders recursively to map out markdown files and automatically extract frontmatter/heading titles.
 
 ### 2. Dynamic Parser Binding Architecture
 To avoid duplicating the core markdown parsing logic, the Standalone Electron App dynamically binds and imports the VS Code compiled TS tokenizer and renderer at runtime. 
-Inside [desktop/main.js](file:///f:/Extensions/markdown-explorer/desktop/main.js):
+Inside [electron/main.js](file:///f:/Extensions/markdown-explorer/electron/main.js):
 *   On startup, Electron attempts to `require()` compiled TS files from `../vscode/out/markdown/parser.js` and `../vscode/out/markdown/renderer.js`.
 *   If found, they are dynamically bound to the file renderer. If they aren't compiled yet, Electron falls back gracefully to rendering raw markdown as plain monospaced text.
 *   **Developer Rule**: When editing markdown parsing logic, ensure both VS Code and shared React assets are rebuilt so the changes propagate to the Electron runtime.
@@ -103,9 +103,9 @@ We provide unified commands inside the root [package.json](file:///f:/Extensions
     ```
 3.  Launch the standalone desktop application:
     ```bash
-    pnpm run start:desktop
+    pnpm run start:electron
     ```
-    *This executes `electron .` within the `desktop/` workspace folder, opening a frameless desktop window pointing to the compiled React UI.*
+    *This executes `electron .` within the `electron/` workspace folder, opening a frameless desktop window pointing to the compiled React UI.*
 
 ---
 
@@ -115,7 +115,7 @@ Version **1.3.0** introduced a production-grade standalone desktop wrapper for M
 
 ### 1. Frameless Window Custom Controls
 To deliver a sleek, premium experience, the desktop app uses a frameless window configuration:
-*   Inside [desktop/main.js](file:///f:/Extensions/markdown-explorer/desktop/main.js), the BrowserWindow is created with `frame: false`.
+*   Inside [electron/main.js](file:///f:/Extensions/markdown-explorer/electron/main.js), the BrowserWindow is created with `frame: false`.
 *   A custom Topbar inside [ui/src/App.tsx](file:///f:/Extensions/markdown-explorer/ui/src/App.tsx) handles window dragging using `-webkit-app-region: drag` and excludes buttons via `-webkit-app-region: no-drag`.
 *   Titlebar control buttons (Minimize, Maximize/Restore, Close) are bound to IPC commands (`window-minimize`, `window-maximize`, and `window-close`), which safely invoke native Electron BrowserWindow state operations.
 *   Developer Tools access (`F12` or `Ctrl+Shift+I`) is automatically blocked in production/packaged builds to secure client data.
@@ -130,7 +130,7 @@ To deliver a sleek, premium experience, the desktop app uses a frameless window 
 *   This persistence ledger is loaded on startup and displayed on the centermost Workspace Selection Page, allowing users to collapse recent lists or launch workspaces with a single click.
 
 ### 4. High-Performance Workspace Scanner
-The scanner inside [desktop/scanner.js](file:///f:/Extensions/markdown-explorer/desktop/scanner.js) builds a tree view of local workspace files using native node file-system APIs:
+The scanner inside [electron/workspace/scanner.js](file:///f:/Extensions/markdown-explorer/electron/workspace/scanner.js) builds a tree view of local workspace files using native node file-system APIs:
 *   **Exclusions**: Folders like `.git`, `node_modules`, `.vscode`, `out`, and `dist` are strictly ignored to prevent scanning overhead.
 *   **Search Limit**: The workspace scan is hard-capped at **1000 files** to maintain high UI rendering performance.
 *   **Title Resolution**: The scanner parses titles intelligently. If the file is an `.mdx` document, it matches title fields from frontmatter blocks, exported variables (`export const title = '...'`), exported metadata blocks, and JSX components. For standard `.md` files, it extracts the first high-level heading (`# Heading`). If none exists, it defaults to the file name.
@@ -154,7 +154,7 @@ To ensure the application looks premium offline without making external CDN call
 
 ### 8. Relative Image Path URL Resolver
 *   Because Electron webviews run under strict sandbox guidelines, standard relative image paths (e.g. `src="images/screenshot.png"`) will fail to render when running on local filesystems.
-*   Inside `desktop/main.js`, a regex scanner intercepts compiled HTML output at render-time and replaces relative paths with absolute `file:///` URLs mapped to the workspace folder. This allows local visual media to render seamlessly in both extension and desktop modes.
+*   Inside `electron/main.js`, a regex scanner intercepts compiled HTML output at render-time and replaces relative paths with absolute `file:///` URLs mapped to the workspace folder. This allows local visual media to render seamlessly in both extension and desktop modes.
 
 ---
 
@@ -164,7 +164,7 @@ To ensure the application looks premium offline without making external CDN call
 # Packaging Targets and Output Folders
 ├── vscode/
 │   └── vscode-extension-markdown-explorer-1.3.0.vsix (Packaged Extension)
-└── desktop/
+└── electron/
     └── dist/
         └── Markdown Explorer Portable.exe            (Windows Desktop Target)
 ```
@@ -179,9 +179,9 @@ pnpm run package
 ### 2. Standalone Electron Desktop App packaging
 To compile assets and bundle the Electron application, run:
 ```bash
-pnpm run build:desktop
+pnpm run build:electron
 ```
-*This compiles the shared UI, compiles the VS Code markdown parser, and executes `electron-builder` under the `desktop` workspace to bundle a portable Windows binary (or standard system installers) under `desktop/dist/`.*
+*This compiles the shared UI, compiles the VS Code markdown parser, and executes `electron-builder` under the `electron` workspace to bundle a portable Windows binary (or standard system installers) under `electron/dist/`.*
 
 ### 3. CI/CD Release Pipeline
 Our automated GitHub Actions release workflow packages deployment targets in parallel:
