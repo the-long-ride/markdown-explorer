@@ -108,7 +108,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: desktop-app-windows
-          path: desktop/dist/*.exe
+          path: electron/dist/*.exe
 
       - name: Upload Desktop Artifact (Linux)
         if: matrix.platform == 'linux'
@@ -116,16 +116,16 @@ jobs:
         with:
           name: desktop-app-linux
           path: |
-            desktop/dist/*.deb
-            desktop/dist/*.AppImage
+            electron/dist/*.deb
+            electron/dist/*.AppImage
       - name: Upload Desktop Artifact (macOS)
         if: matrix.platform == 'mac'
         uses: actions/upload-artifact@v4
         with:
           name: desktop-app-macos
           path: |
-            desktop/dist/*.dmg
-            desktop/dist/*.zip
+            electron/dist/*.dmg
+            electron/dist/*.zip
 
   build-chromium-extension:
     name: Build Chromium Extension
