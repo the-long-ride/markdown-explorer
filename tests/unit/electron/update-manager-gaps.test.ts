@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import {
   createUpdateManager,
-} from '../../../desktop/update-manager.js';
+} from '../../../electron/update/update-manager.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

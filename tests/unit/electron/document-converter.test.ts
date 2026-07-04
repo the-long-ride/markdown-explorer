@@ -29,7 +29,7 @@ const {
   CONVERTIBLE_DOCUMENT_EXTENSIONS,
   EXTRA_DOCUMENT_EXTENSIONS,
   ALL_SUPPORTED_EXTENSIONS,
-} = require('../../../desktop/document-converter.js');
+} = require('../../../electron/render/document-converter.js');
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

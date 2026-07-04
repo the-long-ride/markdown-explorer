@@ -11,7 +11,7 @@ import {
   escapeForDoubleQuotes,
   isInstallerExe,
   launchWindowsUpdateHelper,
-} from '../../../desktop/update-helper.js';
+} from '../../../electron/update/update-helper.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

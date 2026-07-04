@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createSearchIndex, canSearchFileContents, shouldSkipSearchItem, scoreItemName, searchItems, flushBatch, pushSearchResult, primeIndex, searchItemsIncremental } from '../../../desktop/search-index.js';
+import { createSearchIndex, canSearchFileContents, shouldSkipSearchItem, scoreItemName, searchItems, flushBatch, pushSearchResult, primeIndex, searchItemsIncremental } from '../../../electron/search/search-index.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -860,7 +860,7 @@ describe('searchItems', () => {
       const raw = fs.readFileSync(p, 'utf8');
       return { mtimeMs: stat.mtimeMs, size: stat.size, raw, haystack: prepareHaystack(raw) };
     };
-    const { prepareHaystack } = require('../../../desktop/unicode-search.js');
+    const { prepareHaystack } = require('../../../electron/search/unicode-search.js');
     const results = searchItems('needle', [{ fsPath: f, fileName: 'doc.md', relativePath: 'doc.md', title: 'Doc' }], index.search ? ((p: string) => {
       const entry = (index as any).getEntry?.(p);
       return entry;

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createUpdateManager, getUpdateAssetFileName, createEmptyState, buildScheduledState, getHelperPayload, readResultCode, clearResultCode, readManifest, clearManifest, writeManifest, restorePersistedState, startDownloadState, downloadedState, errorState } from '../../../desktop/update-manager.js';
+import { createUpdateManager, getUpdateAssetFileName, createEmptyState, buildScheduledState, getHelperPayload, readResultCode, clearResultCode, readManifest, clearManifest, writeManifest, restorePersistedState, startDownloadState, downloadedState, errorState } from '../../../electron/update/update-manager.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

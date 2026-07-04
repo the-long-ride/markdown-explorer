@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
-const { createAppTray } = require('../../../desktop/tray.js');
+const { createAppTray } = require('../../../electron/window/tray.js');
 
 function makeTrayMock() {
   const events: Record<string, Function> = {};

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi, afterEach } from 'vitest';
 
-import { createWorkspaceWatchController, clearPendingTimerFn, closeCurrentWatcherFn, scheduleRefreshFn, bindWatcherFn, runRefreshFn, normalizeWatchFilename, createWatchChange, mergeWatchChange } from '../../../desktop/workspace-watch.js';
+import { createWorkspaceWatchController, clearPendingTimerFn, closeCurrentWatcherFn, scheduleRefreshFn, bindWatcherFn, runRefreshFn, normalizeWatchFilename, createWatchChange, mergeWatchChange } from '../../../electron/workspace/workspace-watch.js';
 
 describe('createWorkspaceWatchController', () => {
   afterEach(() => {

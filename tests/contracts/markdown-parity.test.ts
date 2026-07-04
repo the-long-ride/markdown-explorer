@@ -21,7 +21,7 @@ import {
 
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const desktopUnicode = require('../../desktop/unicode-search.js');
+const desktopUnicode = require('../../electron/search/unicode-search.js');
 
 function sanitizeTocEntry(entry: { level: number; text: string; id: string }) {
   return { level: entry.level, text: entry.text, id: entry.id };

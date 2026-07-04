@@ -2,7 +2,7 @@ import { describe, expect, test, vi, beforeEach } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { registerIpcHandlers } = require('../../../desktop/ipc-handlers.js');
+const { registerIpcHandlers } = require('../../../electron/core/ipc-handlers.js');
 
 describe('registerIpcHandlers', () => {
   let ipcMain: { on: ReturnType<typeof vi.fn> };

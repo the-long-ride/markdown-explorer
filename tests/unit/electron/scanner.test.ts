@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import DesktopScanner from '../../../desktop/scanner.js';
-import { loadIgnorePatterns } from '../../../desktop/scanner.js';
+import DesktopScanner from '../../../electron/workspace/scanner.js';
+import { loadIgnorePatterns } from '../../../electron/workspace/scanner.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

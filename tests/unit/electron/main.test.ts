@@ -2,7 +2,7 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createAppBootstrap } = require('../../../desktop/main-bootstrap.js');
+const { createAppBootstrap } = require('../../../electron/core/main-bootstrap.js');
 
 function makeAppMock() {
   const events: Record<string, Function[]> = {};

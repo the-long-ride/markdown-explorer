@@ -2,7 +2,7 @@ import { describe, expect, test, vi, beforeEach } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { configureYouTubeEmbedHeaders } = require('../../../desktop/youtube-headers.js');
+const { configureYouTubeEmbedHeaders } = require('../../../electron/youtube/youtube-headers.js');
 
 describe('configureYouTubeEmbedHeaders', () => {
   test('registers webRequest listener for YouTube domains', () => {

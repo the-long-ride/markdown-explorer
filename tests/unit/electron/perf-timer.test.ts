@@ -2,7 +2,7 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createPerfTimer } = require('../../../desktop/perf-timer.js');
+const { createPerfTimer } = require('../../../electron/perf/perf-timer.js');
 
 describe('createPerfTimer', () => {
   let hrtime: { bigint: ReturnType<typeof vi.fn> };

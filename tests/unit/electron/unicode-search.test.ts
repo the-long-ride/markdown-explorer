@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { normalizeForSearch, prepareHaystack, buildNormMap, identityMapSpan, mappingMapSpan, computeOrigEnd, haystackIndexOf, haystackIndexOfNormalized } = require('../../../desktop/unicode-search.js');
+const { normalizeForSearch, prepareHaystack, buildNormMap, identityMapSpan, mappingMapSpan, computeOrigEnd, haystackIndexOf, haystackIndexOfNormalized } = require('../../../electron/search/unicode-search.js');
 
 describe('normalizeForSearch', () => {
   test('NFC-normalizes, uppercases, lowercases, and strips combining dot above', () => {

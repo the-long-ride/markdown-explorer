@@ -9,7 +9,7 @@ describe('preload.js exposePreloadApi', () => {
     const ipcRendererInstance = { send: vi.fn(), on: vi.fn(), removeListener: vi.fn() };
     const webUtilsInstance = { getPathForFile: vi.fn() };
 
-    const { exposePreloadApi } = require('../../../desktop/preload.js');
+    const { exposePreloadApi } = require('../../../electron/preload/preload.js');
     exposePreloadApi({ contextBridgeInstance, ipcRendererInstance, webUtilsInstance });
 
     expect(contextBridgeInstance.exposeInMainWorld).toHaveBeenCalledTimes(1);
@@ -28,7 +28,7 @@ describe('preload.js exposePreloadApi', () => {
     const ipcRendererInstance = { send: vi.fn(), on: vi.fn(), removeListener: vi.fn() };
     const webUtilsInstance = { getPathForFile: vi.fn(() => '/test') };
 
-    const { exposePreloadApi } = require('../../../desktop/preload.js');
+    const { exposePreloadApi } = require('../../../electron/preload/preload.js');
     exposePreloadApi({ contextBridgeInstance, ipcRendererInstance, webUtilsInstance });
 
     const api = contextBridgeInstance.exposeInMainWorld.mock.calls[0][1];

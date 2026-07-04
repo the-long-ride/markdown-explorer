@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { Worker } from 'worker_threads';
 
-import { createSearchWorkerController } from '../../../desktop/search-worker-controller.js';
+import { createSearchWorkerController } from '../../../electron/search/search-worker-controller.js';
 
 function createFixture(prefix: string, fileCount: number, content: (index: number) => string) {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));

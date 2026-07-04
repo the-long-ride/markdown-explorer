@@ -16,7 +16,7 @@ const {
   decodeNavigationPath,
   isRootRelativeWorkspaceHref,
   isSameOrInsidePath,
-} = require('../../../desktop/main-runtime.js');
+} = require('../../../electron/core/main-runtime.js');
 
 function createMockDeps(overrides: Record<string, any> = {}) {
   const sentMessages: any[] = [];

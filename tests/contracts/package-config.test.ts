@@ -18,7 +18,7 @@ describe('package configuration contracts', () => {
     test('all package manifests share the same version', async () => {
       const [root, desktop, vscode, ui, chromium, chromiumManifest] = await Promise.all([
         readJson('package.json'),
-        readJson('desktop/package.json'),
+        readJson('electron/package.json'),
         readJson('vscode/package.json'),
         readJson('ui/package.json'),
         readJson('chromium-xtension/package.json'),
@@ -49,7 +49,7 @@ describe('package configuration contracts', () => {
   });
 
   describe('workspace membership', () => {
-    const expectedPackages = ['ui', 'vscode', 'desktop', 'chromium-xtension'];
+    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension'];
 
     async function readWorkspacePackages() {
       const yaml = await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8');
@@ -223,23 +223,23 @@ describe('package configuration contracts', () => {
 
   describe('desktop (Electron) build configuration', () => {
     test('appId is com.thelongride.markdownexplorer', async () => {
-      const pkg = await readJson('desktop/package.json');
+      const pkg = await readJson('electron/package.json');
       expect(pkg.build.appId).toBe('com.thelongride.markdownexplorer');
     });
 
     test('productName is Markdown Explorer', async () => {
-      const pkg = await readJson('desktop/package.json');
+      const pkg = await readJson('electron/package.json');
       expect(pkg.build.productName).toBe('Markdown Explorer');
     });
 
     test('ASAR is enabled with node_modules unpacked', async () => {
-      const pkg = await readJson('desktop/package.json');
+      const pkg = await readJson('electron/package.json');
       expect(pkg.build.asar).toBe(true);
       expect(pkg.build.asarUnpack).toContain('node_modules/**');
     });
 
     test('bunds UI dist and assets', async () => {
-      const pkg = await readJson('desktop/package.json');
+      const pkg = await readJson('electron/package.json');
       const files = pkg.build.files;
       const hasUiDist = files.some((f: any) => typeof f === 'object' && f.from === '../ui/dist');
       const hasUiLogos = files.some((f: any) => typeof f === 'object' && f.from === '../ui/assets/logos');
@@ -248,13 +248,13 @@ describe('package configuration contracts', () => {
     });
 
     test('publisher matches VS Code publisher', async () => {
-      const desktop = await readJson('desktop/package.json');
+      const desktop = await readJson('electron/package.json');
       const vscode = await readJson('vscode/package.json');
       expect(desktop.publisher).toBe(vscode.publisher);
     });
 
     test('shared markdown-them dependency matches VS Code', async () => {
-      const desktop = await readJson('desktop/package.json');
+      const desktop = await readJson('electron/package.json');
       const vscode = await readJson('vscode/package.json');
       expect(desktop.dependencies['@the-long-ride/markdown-them'])
         .toBe(vscode.dependencies['@the-long-ride/markdown-them']);

@@ -5,7 +5,7 @@ import {
   normalizeWatchFilename,
   createWatchChange,
   mergeWatchChange,
-} from '../../../desktop/workspace-watch.js';
+} from '../../../electron/workspace/workspace-watch.js';
 
 describe('normalizeWatchFilename', () => {
   it('converts Buffer to string', () => {

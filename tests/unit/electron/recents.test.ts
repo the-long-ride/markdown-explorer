@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createRecentWorkspacesStore } from '../../../desktop/recents.js';
+import { createRecentWorkspacesStore } from '../../../electron/workspace/recents.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

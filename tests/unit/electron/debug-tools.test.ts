@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createDebugTools } = require('../../../desktop/debug-tools.js');
+const { createDebugTools } = require('../../../electron/window/debug-tools.js');
 
 function makeWindow(devToolsOpen = false) {
   return {

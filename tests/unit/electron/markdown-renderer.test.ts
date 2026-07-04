@@ -4,7 +4,7 @@ import path from 'node:path';
 import url from 'node:url';
 
 const require = createRequire(import.meta.url);
-const { createMarkdownRenderer, shouldKeepResourceUrl, toFileResourceUrl, rewriteAttr, rewriteRelativeMediaUrls, loadMarkdownParser, renderWithParser, renderFallback } = require('../../../desktop/markdown-renderer.js');
+const { createMarkdownRenderer, shouldKeepResourceUrl, toFileResourceUrl, rewriteAttr, rewriteRelativeMediaUrls, loadMarkdownParser, renderWithParser, renderFallback } = require('../../../electron/render/markdown-renderer.js');
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

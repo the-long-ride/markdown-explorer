@@ -4,7 +4,7 @@ import {
   isSupportedWatchPath,
   isWatchChangeRelevant,
   shouldNotifyCurrentFileChanged,
-} from '../../../desktop/workspace-refresh.js';
+} from '../../../electron/workspace/workspace-refresh.js';
 
 describe('workspace-refresh', () => {
   test('watch refresh ignores extra document changes when document conversion is disabled', () => {

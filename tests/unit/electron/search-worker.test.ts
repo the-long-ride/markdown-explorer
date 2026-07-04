@@ -5,8 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
-const { createSearchWorkerHandler, handleWorkerMessage, resolveMessageItems, resolveRequestId, resolveQuery } = require('../../../desktop/search-worker.js');
-const { createSearchIndex } = require('../../../desktop/search-index.js');
+const { createSearchWorkerHandler, handleWorkerMessage, resolveMessageItems, resolveRequestId, resolveQuery } = require('../../../electron/search/search-worker.js');
+const { createSearchIndex } = require('../../../electron/search/search-index.js');
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

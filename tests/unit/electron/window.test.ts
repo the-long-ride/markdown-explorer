@@ -2,7 +2,7 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createMainWindow } = require('../../../desktop/window.js');
+const { createMainWindow } = require('../../../electron/window/window.js');
 
 function makeBrowserWindowMock() {
   const events: Record<string, Function[]> = {};
@@ -120,7 +120,7 @@ describe('createMainWindow', () => {
 
   test('sets preload script path from dirname', () => {
     create();
-    expect(pathImpl.join).toHaveBeenCalledWith('/test/app/desktop', 'preload.js');
+    expect(pathImpl.join).toHaveBeenCalledWith('/test/app/desktop', '..', 'preload', 'preload.js');
   });
 
   test('loads index.html file', () => {

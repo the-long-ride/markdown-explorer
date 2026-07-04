@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createPreloadApi } = require('../../../desktop/preload-api.js');
+const { createPreloadApi } = require('../../../electron/preload/preload-api.js');
 
 describe('createPreloadApi', () => {
   test('postMessage calls ipcRenderer.send with webview-message channel', () => {

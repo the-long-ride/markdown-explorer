@@ -4,7 +4,7 @@ import {
   createStartupReadyAck,
   deferWorkspaceLoad,
   runDeferredLoad,
-} from '../../../desktop/startup-workspace.js';
+} from '../../../electron/core/startup-workspace.js';
 
 describe('startup workspace', () => {
   test('startup ready ack exposes app shell before workspace files exist', () => {
