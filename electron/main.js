@@ -15,20 +15,20 @@ const {
 const path = require("path");
 const fs = require("fs");
 
-const perf = require("./perf-timer");
-const { createMainWindowLegacy } = require("./window");
-const { createDebugTools } = require("./debug-tools");
-const { createRecentWorkspacesStore } = require("./recents");
-const { configureYouTubeEmbedHeaders } = require("./youtube-headers");
+const perf = require("./perf/perf-timer");
+const { createMainWindowLegacy } = require("./window/window");
+const { createDebugTools } = require("./window/debug-tools");
+const { createRecentWorkspacesStore } = require("./workspace/recents");
+const { configureYouTubeEmbedHeaders } = require("./youtube/youtube-headers");
 const {
   createStartupReadyAck,
   deferWorkspaceLoad,
-} = require("./startup-workspace");
-const { createDesktopRuntime } = require('./main-runtime');
+} = require("./core/startup-workspace");
+const { createDesktopRuntime } = require('./core/main-runtime');
 const {
   isWatchChangeRelevant,
   shouldNotifyCurrentFileChanged,
-} = require("./workspace-refresh");
+} = require("./workspace/workspace-refresh");
 
 const appDir = app.isPackaged
   ? __dirname
@@ -49,9 +49,9 @@ const recentWorkspacesStore = createRecentWorkspacesStore(app);
 
 function ensureHeavyModules() {
   if (DesktopScanner) return;
-  DesktopScanner = require("./scanner");
-  const { createDocumentConverter } = require("./document-converter");
-  const { createSearchIndex } = require("./search-index");
+  DesktopScanner = require("./workspace/scanner");
+  const { createDocumentConverter } = require("./render/document-converter");
+  const { createSearchIndex } = require("./search/search-index");
 
   documentConverter = createDocumentConverter();
   searchIndex = createSearchIndex();
@@ -101,7 +101,7 @@ const runtime = createDesktopRuntime({
     try {
       const isFile = fs.statSync(wsPath).isFile();
       if (isFile) {
-        const { isSupportedFilePathLite } = require('./main-runtime');
+        const { isSupportedFilePathLite } = require('./core/main-runtime');
         if (isSupportedFilePathLite(wsPath, runtime.state.documentConversionEnabled)) {
           const entry = DesktopScanner.buildFileEntry(wsPath, path.dirname(wsPath));
           flat = [entry];
@@ -119,15 +119,15 @@ const runtime = createDesktopRuntime({
     return { tree, flat };
   },
   createSearchIndex() {
-    const { createSearchIndex } = require("./search-index");
+    const { createSearchIndex } = require("./search/search-index");
     return createSearchIndex();
   },
   createSearchWorkerController(opts) {
-    const { createSearchWorkerController } = require("./search-worker-controller");
+    const { createSearchWorkerController } = require("./search/search-worker-controller");
     return createSearchWorkerController(opts);
   },
   createWorkspaceWatchController(opts) {
-    const { createWorkspaceWatchController } = require("./workspace-watch");
+    const { createWorkspaceWatchController } = require("./workspace/workspace-watch");
     return createWorkspaceWatchController(opts);
   },
   get documentConverter() {
@@ -149,7 +149,7 @@ app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-networking');
 
-const { createAppBootstrap } = require('./main-bootstrap');
+const { createAppBootstrap } = require('./core/main-bootstrap');
 
 /* v8 ignore next 18 */
 const bootstrap = createAppBootstrap({
@@ -165,9 +165,9 @@ const bootstrap = createAppBootstrap({
   clearTimeoutImpl: clearTimeout,
   setImmediateImpl: setImmediate,
   configureYouTubeEmbedHeadersFn: configureYouTubeEmbedHeaders,
-  createAppTrayFn: require("./tray").createAppTray,
-  createUpdateManagerFn: require("./update-manager").createUpdateManager,
-  registerIpcHandlersFn: require("./ipc-handlers").registerIpcHandlers,
+  createAppTrayFn: require("./window/tray").createAppTray,
+  createUpdateManagerFn: require("./update/update-manager").createUpdateManager,
+  registerIpcHandlersFn: require("./core/ipc-handlers").registerIpcHandlers,
   runtimeImpl: runtime,
   debugToolsImpl: debugTools,
   appDirImpl: appDir,

@@ -6,7 +6,7 @@ const {
   isMarkdownFilePath,
   isSupportedFilePath,
   stripKnownExtension,
-} = require('./document-converter');
+} = require('../render/document-converter');
 const DEFAULT_IGNORED_FOLDERS = [
   '.git', 'node_modules', '.vscode', 'dist', 'out', 'build',
   'coverage', '.next', '.nuxt', '.turbo', '.cache', 'vendor',

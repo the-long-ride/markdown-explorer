@@ -18,7 +18,7 @@ function createMainWindow({
     frame: false,
     icon: pathImpl.join(appDir, "ui", "assets", "logos", "logo-500.png"),
     webPreferences: {
-      preload: pathImpl.join(dirname, "preload.js"),
+      preload: pathImpl.join(dirname, "..", "preload", "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -94,7 +94,7 @@ function createMainWindow({
 
 const path = require("path");
 const { BrowserWindow, shell } = require("electron");
-const perf = require("./perf-timer");
+const perf = require("../perf/perf-timer");
 
 function createMainWindowLegacy(deps) {
   const { appDir, debugTools, clampAppZoom } = deps;

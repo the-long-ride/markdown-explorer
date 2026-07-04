@@ -5,7 +5,7 @@ const {
   isMarkdownFilePath,
   isTextDocumentFilePath,
   stripKnownExtension,
-} = require("./document-converter");
+} = require("../render/document-converter");
 const { normalizeForSearch, prepareHaystack } = require("./unicode-search");
 
 function makeSearchExcerpt(text, index, matchLength) {

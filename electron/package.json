@@ -1,5 +1,5 @@
 {
-  "name": "markdown-explorer-desktop",
+  "name": "markdown-explorer-electron",
   "version": "1.5.5",
   "description": "Markdown Explorer - Transforms your markdown documents into a premium, interactive web-app experience.",
   "homepage": "https://github.com/the-long-ride/markdown-explorer",
@@ -37,8 +37,17 @@
     ],
     "compression": "normal",
     "files": [
-      "*.js",
+      "main.js",
       "package.json",
+      "core/**/*.js",
+      "window/**/*.js",
+      "workspace/**/*.js",
+      "search/**/*.js",
+      "render/**/*.js",
+      "update/**/*.js",
+      "preload/**/*.js",
+      "perf/**/*.js",
+      "youtube/**/*.js",
       {
         "from": "../ui/dist",
         "to": "ui/dist"
