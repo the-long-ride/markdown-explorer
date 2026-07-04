@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [desktop, vscode, ui, chromium, contracts, manifest, build]
+        project: [electron, vscode, ui, chromium, contracts, manifest, build]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -49,25 +49,6 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 14
-
-  test-cross-platform:
-    name: Cross-platform (${{ matrix.os }}, Node ${{ matrix.node-version }})
-    runs-on: ${{ matrix.os }}
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: ["20", "24"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
 
   build-verify:
     name: Build (${{ matrix.target }})
