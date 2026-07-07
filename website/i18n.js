@@ -6,6 +6,9 @@
     navGallery: "Gallery",
     navDownload: "Download",
     navFaq: "FAQ",
+    navDemo: "Demo",
+    navDemoExamples: "Example files",
+    navDemoTry: "Open a file",
     heroEyebrow: "Open source - VS Code extension and desktop app",
     heroCopy:
       "A private Markdown workspace reader with exact search jumps, Mermaid, math, video, syntax-highlighted code, interactive tables, charts, tabs, converted document previews, Sidebar Cursor mode, and Theme Remix for real documentation.",

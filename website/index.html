@@ -156,7 +156,41 @@
         <span>Markdown Explorer</span>
       </a>
       <nav class="nav-links" aria-label="Page sections">
-        <a href="demo/" data-i18n="navDemo">Demo</a>
+        <span class="nav-dropdown-wrap">
+          <button
+            id="demo-btn"
+            class="nav-dropdown-btn"
+            aria-haspopup="true"
+            aria-expanded="false"
+            data-i18n="navDemo"
+          >
+            Demo ▾
+          </button>
+          <div
+            class="nav-dropdown-menu"
+            id="demo-menu"
+            role="menu"
+            aria-label="Demo options"
+            hidden
+          >
+            <a
+              href="demo/examples/"
+              target="_blank"
+              rel="noopener"
+              role="menuitem"
+              data-i18n="navDemoExamples"
+              >Example files</a
+            >
+            <a
+              href="demo/try/"
+              target="_blank"
+              rel="noopener"
+              role="menuitem"
+              data-i18n="navDemoTry"
+              >Open a file</a
+            >
+          </div>
+        </span>
         <a href="#features" data-i18n="navFeatures">Features</a>
         <a href="#gallery" data-i18n="navGallery">Gallery</a>
         <a href="#download" data-i18n="navDownload">Download</a>

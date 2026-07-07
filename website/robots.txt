@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://the-long-ride.github.io/markdown-explorer/sitemap.xml
+LLM: https://the-long-ride.github.io/markdown-explorer/llm.txt

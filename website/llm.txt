@@ -1,0 +1,161 @@
+# Markdown Explorer
+
+> Rich Markdown viewer for VS Code and desktop. Turn Markdown and
+> document folders into a private, searchable documentation app.
+
+## Overview
+
+Markdown Explorer is an open-source (MIT) tool that renders Markdown
+workspaces with Mermaid diagrams, LaTeX math, syntax-highlighted code,
+interactive data tables and charts, converted document previews, and
+document tabs. It runs as a VS Code extension, a standalone desktop app
+(Electron / Tauri), and a Chromium browser extension. All content stays
+local — nothing is uploaded.
+
+- Homepage: https://the-long-ride.github.io/markdown-explorer/
+- Repository: https://github.com/the-long-ride/markdown-explorer
+- License: MIT
+- Current version: 1.5.5
+- Languages: English, Tiếng Việt, Français, Español, 中文, Norsk, 日本語, 한국어, Русский
+
+## Platforms
+
+| Platform | Format |
+|---|---|
+| VS Code / VSCodium | Extension (Marketplace + Open VSX) |
+| Windows desktop | NSIS installer, portable `.exe`, `.zip` |
+| macOS desktop | `.dmg` (arm64 Apple Silicon / x64 Intel) |
+| Linux desktop | `.AppImage`, `.deb` |
+| Chromium browser | Unpacked extension (Chrome, Brave, Edge) |
+
+## Core features
+
+### Document rendering
+- Full GFM (GitHub-Flavored Markdown) with tables, task lists, strikethrough, footnotes
+- GitHub-style alert callouts: `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`
+- 25+ programming languages syntax-highlighted (highlight.js) with copy controls, language labels, and line numbers
+- Mermaid diagrams (flowchart, sequence, class, state, ER, Gantt, pie, git graph, C4, architecture, timeline, mindmap, sankey, block, XY chart, requirement, packet, and more)
+- LaTeX math rendering (KaTeX) inline `$...$` and display `$$...$$`
+- Local and streaming video embedding
+- Image zoom via fullscreen backdrop-blur media modal
+- Interactive HTML sandboxes in isolated iframe previews
+- MDX support with interactive JSX components
+
+### Data tables & charts
+- Large tables (1000+ rows) with multi-select column filters
+- Sortable columns, row count badges
+- View-as-chart toggle: Bar, Line, Pie views auto-detected from numeric columns
+- Collapsed long-table mode for scrolling through filtered results
+
+### Converted document previews
+- Local conversion of non-Markdown files: DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, TXT
+- Best-effort rendering with quality notice
+- Cached repeat previews
+
+### Workspace navigation
+- Open any local folder as a documentation workspace
+- File tree sidebar with expand/collapse, file icons by type
+- **Sidebar Cursor mode** (Alt+S): keyboard-first file tree navigation with Up/Down, Enter to open, Esc to exit
+- **Content File Tabs**: open multiple files as tabs (desktop only)
+- **Scope Focus**: filter the sidebar to show only the current file's folder siblings
+- **Workspace aliases**: rename workspace tabs to custom labels
+- Recent workspaces remembered across sessions
+- Workspace file-watcher: live refresh when files change on disk
+
+### Search
+- **3 search scopes**: current file, current workspace, all open desktop tabs
+- Results show focused excerpts with match highlighting
+- Click a result to jump to the exact line in the document
+- Cross-tab search across all open workspace tabs (desktop)
+
+### Custom theming
+- **Theme Remix**: build, duplicate, edit, import, and export custom themes
+- Controls: colors, density/spacing, content width, sidebar width, layout style, optional background images
+- Pre-built theme pets included (`pet-wave`, `pet-circuit`, etc.)
+- Settings import/export for sharing across machines
+
+### Multi-workspace (desktop only)
+- Open multiple folders simultaneously as separate desktop tabs
+- Tab context menu: close, close-to-right, close-others, close-all
+- Middle-click to close a tab, double-click to rename alias
+- Home tab with recent workspaces and quick actions
+
+### Editor integration (VS Code)
+- Sidebar icon opens Markdown Explorer in a dedicated panel
+- Right-click any `.md` file → "Open in Markdown Explorer"
+- Open-in-editor button sends the current file back to VS Code text editor
+- Font face stripping for VS Code webview compatibility
+
+## Keyboard shortcuts
+
+| Action | Default binding |
+|---|---|
+| Settings | `Ctrl+,` |
+| Toggle theme | `Ctrl+T` |
+| Toggle sidebar | `Ctrl+B` |
+| Toggle TOC | `Ctrl+Shift+T` |
+| Toggle focus mode | `Ctrl+Shift+F` |
+| Welcome page | `Ctrl+Shift+W` |
+| Sidebar cursor mode | `Alt+S` |
+
+## Demo
+
+A live browser demo is available at `/demo` with two modes:
+- `/demo/examples` — browse rendered example Markdown documents
+- `/demo/try` — open any `.md` file from your device; renders locally, nothing uploaded
+
+## Installation
+
+### VS Code
+```
+code --install-extension the-long-ride.vscode-extension-markdown-explorer
+```
+Marketplace: https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer
+Open VSX: https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer
+
+### Desktop
+Download from GitHub Releases: https://github.com/the-long-ride/markdown-explorer/releases/latest
+Choose the asset matching your OS and architecture.
+
+### Chromium extension
+Download the zip from the latest release, extract to a permanent folder, load unpacked via `chrome://extensions` (Developer mode → Load unpacked).
+
+## FAQ
+
+**Is it free?** Yes, MIT licensed. Public repository.
+
+**Does it work offline?** Yes. Rendering and search are fully local. Only the website download page fetches release metadata from GitHub.
+
+**Can it preview Office/PDF files?** Yes. Enable "Read DOCX, PDF, Office, and text files" in Settings. Conversion is local, best-effort.
+
+**What desktop file should I download?**
+- Windows: NSIS `Setup *.exe` for Start Menu, or portable `.exe`
+- Linux: `.AppImage` or `.deb`
+- macOS: `.dmg` (arm64 for Apple Silicon, x64 for Intel)
+
+## Privacy
+
+Markdown Explorer does not upload or transmit Markdown content. All scanning, rendering, search, and document conversion happens locally on your device. No telemetry, no analytics, no cloud processing.
+
+## Agent / LLM use
+
+Markdown Explorer is designed for the agent era:
+- Use local Markdown folders as agent memory / knowledge bases
+- Navigate thousands of `.md` files with workspace search and Sidebar Cursor mode
+- Rich rendering of Mermaid diagrams and LaTeX math produced by code-generation agents
+- Syntax-highlighted code blocks make agent output readable
+- Interactive tables help inspect structured agent output
+- Privacy-first: agent memory stays local, not uploaded
+
+## Links
+
+- Homepage: https://the-long-ride.github.io/markdown-explorer/
+- GitHub: https://github.com/the-long-ride/markdown-explorer
+- Issues: https://github.com/the-long-ride/markdown-explorer/issues
+- Releases: https://github.com/the-long-ride/markdown-explorer/releases
+- Changelog: https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md
+- Privacy: https://the-long-ride.github.io/markdown-explorer/privacy.html
+- Terms: https://the-long-ride.github.io/markdown-explorer/terms.html
+- Demo examples: https://the-long-ride.github.io/markdown-explorer/demo/examples/
+- Demo try: https://the-long-ride.github.io/markdown-explorer/demo/try/
+- Sitemap: https://the-long-ride.github.io/markdown-explorer/sitemap.xml
