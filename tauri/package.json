@@ -1,0 +1,9 @@
+{
+  "name": "@the-long-ride/markdown-explorer-tauri",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev",
+    "build": "cargo tauri build"
+  }
+}

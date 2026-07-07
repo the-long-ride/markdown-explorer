@@ -1,5 +1,24 @@
+function createPreloadApi({ ipcRenderer, webUtils }) {
+  return {
+    postMessage: (msg) => ipcRenderer.send('webview-message', msg),
+    onMessage: (callback) => {
+      const subscription = (event, ...args) => callback(...args);
+      ipcRenderer.on('host-message', subscription);
+      return () => {
+        ipcRenderer.removeListener('host-message', subscription);
+      };
+    },
+    getPathForFile: (file) => {
+      try {
+        return webUtils.getPathForFile(file);
+      } catch {
+        return file && file.path;
+      }
+    },
+  };
+}
+
 function exposePreloadApi({ contextBridgeInstance, ipcRendererInstance, webUtilsInstance } = {}) {
-  const { createPreloadApi } = require('./preload-api');
   const api = createPreloadApi({
     ipcRenderer: ipcRendererInstance,
     webUtils: webUtilsInstance,
@@ -15,6 +34,8 @@ try {
     ipcRendererInstance: ipcRenderer,
     webUtilsInstance: webUtils,
   });
-} catch (_) {}
+} catch (err) {
+  console.error('[preload] Failed to expose electronAPI:', err);
+}
 
 module.exports = { exposePreloadApi };

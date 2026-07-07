@@ -3,6 +3,8 @@ packages:
   - vscode
   - electron
   - chromium-xtension
+  - tauri
+  - tauri/sidecar/mdthem-sidecar
 
 allowBuilds:
   esbuild: true

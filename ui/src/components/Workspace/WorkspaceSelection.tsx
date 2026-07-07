@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { FolderIcon } from '../shared/icons';
-import logoUrl from '../../assets/logos/logo-128.png';
+import logoUrl from '../../assets/logos/logo-500.png?inline';
 import type { RecentWorkspace } from '../../types';
 import { RecentWorkspaceItem } from './RecentWorkspaceItem';
 import { RecentWorkspacesModal } from './RecentWorkspacesModal';

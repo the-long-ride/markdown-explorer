@@ -24,7 +24,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REF="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}"
-          STATUS=$(gh run list --workflow Test.yml --branch main --status success --limit 1 --json conclusion -q '.[0].conclusion' 2>/dev/null || echo "")
+          STATUS=$(gh run list --workflow test.yml --branch main --status success --limit 1 --json conclusion -q '.[0].conclusion' 2>/dev/null || echo "")
           if [ "$STATUS" != "success" ]; then
             echo "::error::Test workflow has not passed on main. Cannot release."
             exit 1
@@ -63,8 +63,8 @@ jobs:
           name: vscode-extension
           path: vscode/*.vsix
 
-  build-desktop:
-    name: Build Desktop Application (${{ matrix.os }})
+  build-electron-desktop:
+    name: Build Electron Desktop Application (${{ matrix.os }})
     needs: test-gate
     runs-on: ${{ matrix.os }}
     strategy:
@@ -95,8 +95,8 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Electron App
-        run: pnpm run build:desktop
+      - name: Build Electron Desktop Application
+        run: pnpm run build:electron
         env:
           # macOS: skip code signing for unsigned open-source builds.
           # Set CSC_IDENTITY_AUTO_DISCOVERY=false so electron-builder doesn't
@@ -126,6 +126,91 @@ jobs:
           path: |
             electron/dist/*.dmg
             electron/dist/*.zip
+
+  build-tauri-desktop:
+    name: Build Tauri Desktop Application (${{ matrix.os }})
+    needs: test-gate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked --version '^2'
+
+      - name: Build shared UI bundle
+        run: pnpm run build:ui:electron
+
+      - name: Build Tauri bundle for Windows
+        if: runner.os == 'Windows'
+        working-directory: tauri
+        run: cargo tauri build --bundles nsis
+
+      - name: Build Tauri bundle for Linux
+        if: runner.os == 'Linux'
+        working-directory: tauri
+        run: cargo tauri build --bundles appimage,deb
+
+      - name: Build Tauri bundle for macOS
+        if: runner.os == 'macOS'
+        working-directory: tauri
+        run: cargo tauri build --bundles dmg
+
+      - name: Upload Tauri Artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-desktop-windows
+          path: tauri/target/release/bundle/nsis/*.exe
+
+      - name: Upload Tauri Artifact (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-desktop-linux
+          path: |
+            tauri/target/release/bundle/appimage/*.AppImage
+            tauri/target/release/bundle/deb/*.deb
+
+      - name: Upload Tauri Artifact (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-desktop-macos
+          path: tauri/target/release/bundle/dmg/*.dmg
 
   build-chromium-extension:
     name: Build Chromium Extension
@@ -166,38 +251,74 @@ jobs:
 
   publish-release:
     name: Publish Extension and GitHub Release
-    needs: [build-vscode, build-desktop, build-chromium-extension]
+    needs: [build-vscode, build-electron-desktop, build-tauri-desktop, build-chromium-extension]
     runs-on: ubuntu-latest
     steps:
       - name: Download VSIX Artifact
         uses: actions/download-artifact@v4
         with:
           name: vscode-extension
-          path: ./release-artifacts
+          path: ./release-artifacts/vscode
 
-      - name: Download Windows Desktop Artifact
+      - name: Download Electron Windows Desktop Artifact
         uses: actions/download-artifact@v4
         with:
           name: desktop-app-windows
-          path: ./release-artifacts
+          path: ./release-artifacts/electron-windows
 
-      - name: Download Linux Desktop Artifact
+      - name: Download Electron Linux Desktop Artifact
         uses: actions/download-artifact@v4
         with:
           name: desktop-app-linux
-          path: ./release-artifacts
+          path: ./release-artifacts/electron-linux
 
-      - name: Download macOS Desktop Artifact
+      - name: Download Electron macOS Desktop Artifact
         uses: actions/download-artifact@v4
         with:
           name: desktop-app-macos
-          path: ./release-artifacts
+          path: ./release-artifacts/electron-macos
+
+      - name: Download Tauri Windows Desktop Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tauri-desktop-windows
+          path: ./release-artifacts/tauri-windows
+
+      - name: Download Tauri Linux Desktop Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tauri-desktop-linux
+          path: ./release-artifacts/tauri-linux
+
+      - name: Download Tauri macOS Desktop Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tauri-desktop-macos
+          path: ./release-artifacts/tauri-macos
 
       - name: Download Chromium Extension Artifact
         uses: actions/download-artifact@v4
         with:
           name: chromium-extension
-          path: ./release-artifacts
+          path: ./release-artifacts/chromium
+
+      - name: Stage release assets with variant prefixes
+        shell: bash
+        run: |
+          mkdir -p release-assets
+
+          find ./release-artifacts/vscode -type f -name "*.vsix" -exec cp {} ./release-assets/ \;
+          find ./release-artifacts/chromium -type f -name "*.zip" -exec cp {} ./release-assets/ \;
+
+          while IFS= read -r file; do
+            base=$(basename "$file")
+            cp "$file" "./release-assets/electron-${base}"
+          done < <(find ./release-artifacts/electron-windows ./release-artifacts/electron-linux ./release-artifacts/electron-macos -type f)
+
+          while IFS= read -r file; do
+            base=$(basename "$file")
+            cp "$file" "./release-assets/tauri-${base}"
+          done < <(find ./release-artifacts/tauri-windows ./release-artifacts/tauri-linux ./release-artifacts/tauri-macos -type f)
 
       - name: Verify Marketplace Tokens
         shell: bash
@@ -258,12 +379,8 @@ jobs:
             Choose the file that matches how you want to install Markdown Explorer:
 
             - `*.vsix`: VS Code extension package for manual install. In VS Code, run "Extensions: Install from VSIX..." and choose this file.
-            - `Markdown Explorer Setup *.exe`: Windows NSIS installer. Run to install Markdown Explorer with Start Menu shortcuts, desktop shortcut, and customizable install directory.
-            - `Markdown Explorer *.exe` (portable): Windows portable desktop app. Download and run directly, no installation required.
-            - `*.AppImage`: Linux portable desktop app. Mark it executable, then run it.
-            - `*.deb`: Linux installer for Debian, Ubuntu, and compatible distributions.
-            - `*.dmg`: macOS desktop installer. Choose `arm64` for Apple Silicon Macs and `x64` for Intel Macs.
-            - `*.zip`: macOS archive build. Choose `arm64` for Apple Silicon Macs and `x64` for Intel Macs.
+            - `electron-*.exe`, `electron-*.AppImage`, `electron-*.deb`, `electron-*.dmg`, `electron-*.zip`: Electron desktop builds.
+            - `tauri-*.exe`, `tauri-*.AppImage`, `tauri-*.deb`, `tauri-*.dmg`: Tauri desktop builds.
             - `markdown-explorer-chromium.zip`: Unpacked Chromium extension. Unzip the file, go to your browser's extensions page (`chrome://extensions`), enable "Developer mode", click "Load unpacked", and select the unzipped directory.
 
             Other install links:
@@ -274,7 +391,7 @@ jobs:
 
             See [Markdown Explorer Change Logs](https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md).
           files: |
-            ./release-artifacts/*
+            ./release-assets/*
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}

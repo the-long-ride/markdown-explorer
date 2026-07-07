@@ -111,7 +111,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   RefreshIcon: () => React.createElement('span', { 'data-testid': 'refresh-icon' }),
 }));
 
-vi.mock('../../../../ui/src/assets/logos/logo-128.png', () => ({
+vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({
   default: 'logo.png',
 }));
 

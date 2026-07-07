@@ -5,7 +5,7 @@ import {
   CloseIcon,
   PlusIcon,
 } from '../shared/icons';
-import logoUrl from '../../assets/logos/logo-128.png';
+import logoUrl from '../../assets/logos/logo-500.png?inline';
 import { getTabLabel } from '../../desktop/desktopTabs';
 import type { DesktopTab } from '../../desktop/types';
 import { useAppState } from '../../contexts/AppStateContext';

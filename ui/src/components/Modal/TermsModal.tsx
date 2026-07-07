@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { useState, type MouseEvent } from "react";
-import logoUrl from "../../assets/logos/logo-128.png";
+import logoUrl from "../../assets/logos/logo-500.png?inline";
 
 interface TermsModalProps {
   isOpen: boolean;

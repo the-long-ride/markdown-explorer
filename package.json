@@ -25,7 +25,11 @@
     "build:electron:win-zip": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist:win-zip",
     "build:electron:mac": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist:mac",
     "build:electron:linux": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist:linux",
-    "build:chromium": "pnpm --filter ./chromium-xtension run build"
+    "build:chromium": "pnpm --filter ./chromium-xtension run build",
+    "start:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run dev",
+    "build:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run build",
+    "test:tauri": "cargo test --manifest-path tauri/Cargo.toml -- --test-threads=1",
+    "test:desktop": "pnpm run test:electron && pnpm run test:tauri"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
