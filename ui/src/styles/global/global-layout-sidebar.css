@@ -556,7 +556,7 @@ body.is-dragging-files .mdn-html-preview-iframe {
 .content__scroll {
   flex: 1;
   overflow-y: auto;
-  padding: var(--content-pad-y) var(--content-pad-x) 60px;
+  padding: 0 var(--content-pad-x) 60px;
   max-width: 100%;
   width: 100%;
   margin: 0 auto;

@@ -834,7 +834,7 @@ export function Content({
                   </div>
                 </div>
               )}
-              {state.toc.length > 0 && (
+              {state.toc.length > 0 && !state.tocCollapsed && (
                 <Suspense fallback={null}>
                   <TableOfContents variant="compact" />
                 </Suspense>

@@ -63,13 +63,24 @@
 }
 
 [data-theme-style="glass"] .toc-panel__header,
-[data-theme-style="glass"] .toc-compact__toggle,
-[data-theme-style="glass"] .toc-compact__menu {
+[data-theme-style="glass"] .toc-compact__toggle {
   border-color: var(--bd-s);
   background: var(--bg-e);
   box-shadow:
     var(--sh-sm),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme-style="glass"] .toc-compact__menu {
+  border-color: var(--bd-s);
+  background: rgba(16, 22, 32, 0.95);
+  box-shadow: var(--sh-lg);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+}
+
+[data-theme-style="glass"][data-theme="light"] .toc-compact__menu {
+  background: rgba(255, 255, 255, 0.96);
 }
 
 [data-theme-style="glass"] .content__scroll {
