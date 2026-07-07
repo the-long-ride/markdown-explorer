@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Try a file - Markdown Explorer Demo</title>
+    <meta
+      name="description"
+      content="Open a local Markdown file or folder in the full Markdown Explorer interface — sidebar, TOC, search, and all features. Nothing is uploaded."
+    />
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../styles/base.css" />
+    <link rel="stylesheet" href="../../styles/responsive.css" />
+    <link rel="stylesheet" href="../assets/demo.css" />
+    <style>
+      .try-hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 3rem 1.5rem;
+        text-align: center;
+      }
+      .try-hero__title {
+        font-size: clamp(1.5rem, 4vw, 2.25rem);
+        font-weight: 800;
+        letter-spacing: -.02em;
+        color: var(--text-primary, #f4efe8);
+        margin: 0;
+      }
+      .try-hero__desc {
+        max-width: 520px;
+        color: var(--text-secondary, #b0aa9e);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 0;
+      }
+      .try-hero__desc code {
+        background: rgba(255,255,255,.08);
+        padding: .1em .35em;
+        border-radius: 4px;
+        font-size: .9em;
+      }
+      .try-cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+      }
+      .try-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .75rem 1.75rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        transition: transform .15s, box-shadow .15s;
+        border: none;
+      }
+      .try-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+      .try-btn--primary {
+        background: linear-gradient(135deg, #ff9130 0%, #ff6b00 100%);
+        color: #fff;
+      }
+      .try-btn--secondary {
+        background: rgba(255,255,255,.08);
+        color: var(--text-primary, #f4efe8);
+        border: 1px solid rgba(255,255,255,.12);
+      }
+      .try-note {
+        font-size: .8rem;
+        color: var(--text-secondary, #b0aa9e);
+        opacity: .7;
+      }
+      .try-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        justify-content: center;
+        max-width: 600px;
+      }
+      .try-feature {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .85rem;
+        color: var(--text-secondary, #b0aa9e);
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
+        padding: .35rem .75rem;
+        border-radius: 999px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-page">
+      <header class="demo-bar">
+        <a class="demo-bar__brand" href="../../index.html">
+          <img
+            src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+            alt=""
+          />
+          <span>Markdown Explorer</span>
+        </a>
+        <span class="demo-bar__crumb">/ Demo / Try</span>
+        <div class="demo-bar__spacer"></div>
+        <button id="theme-btn" class="demo-bar__toggle" type="button">
+          Toggle theme
+        </button>
+        <a class="demo-bar__back" href="../index.html">Demo home</a>
+      </header>
+
+      <main class="demo-content" style="flex:1; overflow:auto">
+        <div class="try-hero">
+          <h1 class="try-hero__title">Try Markdown Explorer in your browser</h1>
+          <p class="try-hero__desc">
+            Open a local document folder — the full explorer interface loads right in the
+            browser. <strong>Nothing is uploaded</strong>; all reading happens locally.
+          </p>
+
+          <div class="try-features">
+            <span class="try-feature">📂 Sidebar &amp; file tree</span>
+            <span class="try-feature">🔍 Full-text search</span>
+            <span class="try-feature">📖 Table of contents</span>
+            <span class="try-feature">🧜 Mermaid diagrams</span>
+            <span class="try-feature">∑ Math / LaTeX</span>
+            <span class="try-feature">📊 Charts &amp; tables</span>
+          </div>
+
+          <div class="try-cta-row">
+            <a
+              href="../../app/?mode=file"
+              class="try-btn try-btn--primary"
+              id="open-folder-btn"
+            >
+              📂 Open a folder
+            </a>
+            <a
+              href="../../app/?mode=test"
+              class="try-btn try-btn--secondary"
+              id="test-workspace-btn"
+            >
+              🧪 Explore test workspace
+            </a>
+          </div>
+
+          <p class="try-note">
+            Requires a Chromium-based browser (Chrome, Edge, Arc, Brave) for local folder access.<br />
+            No installation or extensions needed.
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        const html = document.documentElement;
+        const LS = "mde-site-theme";
+        html.setAttribute("data-theme", localStorage.getItem(LS) || "dark");
+        document
+          .getElementById("theme-btn")
+          .addEventListener("click", () => {
+            const next =
+              html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            html.setAttribute("data-theme", next);
+            localStorage.setItem(LS, next);
+          });
+      })();
+    </script>
+  </body>
+</html>

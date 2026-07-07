@@ -38,6 +38,12 @@ vi.mock("../../../../ui/src/components/Content/WelcomePage", () => ({
   WelcomePage: () => <div data-testid="welcome-page">WelcomePage</div>,
 }));
 
+vi.mock("../../../../ui/src/components/TOC/TableOfContents", () => ({
+  TableOfContents: ({ variant }: { variant: string }) => (
+    <div data-testid={`toc-${variant}`}>TableOfContents {variant}</div>
+  ),
+}));
+
 vi.mock("../../../../ui/src/components/shared/icons", () => ({
   AlertTriangleIcon: ({ size }: { size?: number }) => (
     <svg data-testid="alert-triangle-icon" width={size} height={size} />
@@ -426,5 +432,14 @@ describe("Content rendering", () => {
   it("renders main content wrapper element", () => {
     setup();
     expect(document.querySelector("main.content")).toBeInTheDocument();
+  });
+
+  it("renders compact TableOfContents inside content body when toc items exist", async () => {
+    setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+      toc: [{ level: 1, text: "Introduction", id: "introduction" }],
+    });
+    expect(await screen.findByTestId("toc-compact")).toBeInTheDocument();
   });
 });

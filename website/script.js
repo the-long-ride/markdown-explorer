@@ -73,6 +73,41 @@
   // Apply initial language
   applyLang(currentLang);
 
+  /* ── Demo dropdown ─────────────────────────────────────────────── */
+  const demoBtn = document.getElementById("demo-btn");
+  const demoMenu = document.getElementById("demo-menu");
+  if (demoBtn && demoMenu) {
+    demoBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = !demoMenu.hidden;
+      demoMenu.hidden = open;
+      demoBtn.setAttribute("aria-expanded", (!open).toString());
+      demoBtn.classList.toggle("is-open", !open);
+    });
+    demoMenu.querySelectorAll("a[role='menuitem']").forEach((link) => {
+      link.addEventListener("click", () => {
+        demoMenu.hidden = true;
+        demoBtn.setAttribute("aria-expanded", "false");
+        demoBtn.classList.remove("is-open");
+      });
+    });
+    document.addEventListener("click", (e) => {
+      if (demoMenu.hidden) return;
+      if (!demoMenu.contains(e.target) && e.target !== demoBtn) {
+        demoMenu.hidden = true;
+        demoBtn.setAttribute("aria-expanded", "false");
+        demoBtn.classList.remove("is-open");
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !demoMenu.hidden) {
+        demoMenu.hidden = true;
+        demoBtn.setAttribute("aria-expanded", "false");
+        demoBtn.classList.remove("is-open");
+      }
+    });
+  }
+
   /* ── GitHub release download logic ───────────────────────────── */
   const releaseUrl =
     "https://github.com/the-long-ride/markdown-explorer/releases/latest";

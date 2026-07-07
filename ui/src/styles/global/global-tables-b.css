@@ -444,3 +444,23 @@ body.is-resizing .toc-panel {
     display: inline-flex;
   }
 }
+
+/* Sticky top compact TOC inside content block */
+.mdn-body .toc-compact {
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  background: var(--bg);
+  padding: 8px 0;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.current-file-change-notice ~ .toc-compact {
+  top: 44px;
+}
+
+.app--focus-mode .toc-compact {
+  display: none !important;
+}
+

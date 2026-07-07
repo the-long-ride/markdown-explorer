@@ -44,3 +44,7 @@ coverage/
 
 # Implementation plans (never commit)
 plan-ignore-from-commit.md
+
+# Website demo examples — generated from test/*.md by the deploy workflow
+website/demo/examples/files/
+website/demo/examples/manifest.json

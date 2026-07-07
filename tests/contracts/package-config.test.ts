@@ -16,13 +16,14 @@ describe('package configuration contracts', () => {
     let versions: Record<string, string>;
 
     test('all package manifests share the same version', async () => {
-      const [root, desktop, vscode, ui, chromium, chromiumManifest] = await Promise.all([
+      const [root, desktop, vscode, ui, chromium, chromiumManifest, websiteApp] = await Promise.all([
         readJson('package.json'),
         readJson('electron/package.json'),
         readJson('vscode/package.json'),
         readJson('ui/package.json'),
         readJson('chromium-xtension/package.json'),
         readJson('chromium-xtension/manifest.json'),
+        readJson('website-app/package.json'),
       ]);
 
       versions = {
@@ -32,6 +33,7 @@ describe('package configuration contracts', () => {
         ui: ui.version,
         chromium: chromium.version,
         chromiumManifest: chromiumManifest.version,
+        websiteApp: websiteApp.version,
       };
 
       const v = versions.root;
@@ -40,6 +42,7 @@ describe('package configuration contracts', () => {
       expect(versions.ui).toBe(v);
       expect(versions.chromium).toBe(v);
       expect(versions.chromiumManifest).toBe(v);
+      expect(versions.websiteApp).toBe(v);
     });
 
     test('version follows semver format', async () => {
@@ -49,7 +52,7 @@ describe('package configuration contracts', () => {
   });
 
   describe('workspace membership', () => {
-    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension', 'tauri', 'tauri/sidecar/mdthem-sidecar'];
+    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension', 'tauri', 'tauri/sidecar/mdthem-sidecar', 'website-app'];
 
     async function readWorkspacePackages() {
       const yaml = await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8');

@@ -587,11 +587,7 @@ export function App() {
             <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
             <div className="content-shell">
               <ContentTabs />
-              {state.toc.length > 0 && state.currentFile && (
-                <div className={`toc-compact-bar${state.tocCollapsed ? ' is-collapsed' : ''}`}>
-                  <Suspense fallback={null}><TableOfContents variant="compact" /></Suspense>
-                </div>
-              )}
+
               <div className="content-shell__main">
                 <Content
                   onImageClick={onImageClick}

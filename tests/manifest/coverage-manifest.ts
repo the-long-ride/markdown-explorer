@@ -133,6 +133,7 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/platform/chrome.ts': ['tests/unit/ui/platform-bridges.test.ts', 'tests/unit/chromium/chrome-bridge.test.ts'],
   'ui/src/platform/electron.ts': ['tests/unit/ui/platform-bridges.test.ts'],
   'ui/src/platform/vscode.ts': ['tests/unit/ui/platform-bridges.test.ts'],
+  'ui/src/platform/web.ts': ['tests/unit/ui/platform-bridges.test.ts'],
   'ui/src/settings/settingsImportExport.ts': ['tests/unit/ui/settings-import-export.test.ts'],
   'ui/src/theme/customThemes.ts': ['tests/unit/ui/custom-themes.test.ts'],
   'ui/src/utils/searchJump.ts': ['tests/unit/ui/utils.test.ts'],

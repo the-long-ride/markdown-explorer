@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markdown Explorer – Live Demo</title>
+  <meta name="description" content="Try Markdown Explorer in your browser — open a local folder or explore the built-in test workspace. Nothing is uploaded." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://the-long-ride.github.io/markdown-explorer/app/" />
+  <link rel="icon" href="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png" />
+  <!-- Critical inline styles for fast first paint — avoids render-blocking CSS wait -->
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{background:#151518;color:#f4efe8}
+    body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif}
+    #root{min-height:100vh}
+    /* @font-face with font-display:swap — starts font download immediately, shows fallback text */
+    @font-face{font-family:"Be Vietnam Pro";src:url("./assets/fonts/BeVietnamPro/BeVietnamPro-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:"Be Vietnam Pro";src:url("./assets/fonts/BeVietnamPro/BeVietnamPro-Italic.ttf") format("truetype");font-weight:400;font-style:italic;font-display:swap}
+    @font-face{font-family:"Be Vietnam Pro";src:url("./assets/fonts/BeVietnamPro/BeVietnamPro-SemiBold.ttf") format("truetype");font-weight:600;font-style:normal;font-display:swap}
+    @font-face{font-family:"Be Vietnam Pro";src:url("./assets/fonts/BeVietnamPro/BeVietnamPro-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+    @font-face{font-family:"Cascadia Code";src:url("./assets/fonts/CascadiaCode/CascadiaCode-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:"Cascadia Code";src:url("./assets/fonts/CascadiaCode/CascadiaCode-Italic.ttf") format("truetype");font-weight:400;font-style:italic;font-display:swap}
+    @font-face{font-family:"Cascadia Code";src:url("./assets/fonts/CascadiaCode/CascadiaCode-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+    /* Splash screen — visible instantly, removed by React mount */
+    .splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#151518;z-index:99999;transition:opacity .3s}
+    .splash.fade-out{opacity:0;pointer-events:none}
+    .splash-spinner{width:28px;height:28px;border:2.5px solid rgba(255,255,255,.1);border-top-color:#ff9130;border-radius:50%;animation:splash-spin .8s linear infinite}
+    @keyframes splash-spin{to{transform:rotate(360deg)}}
+    .splash-label{margin-top:14px;font-size:13px;font-weight:600;color:#f4efe8;letter-spacing:.02em;opacity:.8}
+  </style>
+</head>
+<body>
+  <div id="root">
+    <!-- Splash screen — rendered instantly by HTML, replaced by React -->
+    <div class="splash">
+      <div class="splash-spinner"></div>
+      <div class="splash-label">Loading…</div>
+    </div>
+  </div>
+  <script type="module" src="./src/main-web.tsx"></script>
+</body>
+</html>

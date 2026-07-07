@@ -416,9 +416,10 @@ body {
 }
 
 .desktop-tab {
-  flex: 0 1 clamp(180px, 26vw, 520px);
-  max-width: min(520px, 42vw);
+  flex: 0 0 auto;
+  max-width: 80ch;
   min-width: 118px;
+  width: max-content;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -428,13 +429,11 @@ body {
 }
 
 .desktop-tab.is-active {
-  flex-basis: clamp(220px, 34vw, 680px);
-  max-width: min(680px, 52vw);
+  max-width: 80ch;
 }
 
 .desktop-tabbar__tabs .desktop-tab:only-child {
-  flex-basis: clamp(260px, 44vw, 760px);
-  max-width: min(760px, 58vw);
+  max-width: 80ch;
 }
 
 .desktop-tab__label {
