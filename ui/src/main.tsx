@@ -10,6 +10,7 @@ import { PlatformProvider } from './contexts/PlatformContext';
 import { createVsCodeBridge } from './platform/vscode';
 import { createElectronBridge } from './platform/electron';
 import { createChromeBridge } from './platform/chrome';
+import { createWebBridge } from './platform/web';
 
 // Lazy-load the full application shell (providers + App + all components).
 // This keeps index.js tiny so the window paints instantly.
@@ -46,7 +47,12 @@ export function detectBridge(win: any = window) {
     document.body.classList.add('is-chrome-ext');
     return createChromeBridge();
   }
-  throw new Error('Unknown platform. Expected VS Code webview, Electron, or Chromium Extension.');
+  // Web demo provides window.__webDemoBus
+  if (typeof win.__webDemoBus !== 'undefined') {
+    document.body.classList.add('is-web-demo');
+    return createWebBridge();
+  }
+  throw new Error('Unknown platform. Expected VS Code webview, Electron, Chromium Extension, or Web Demo.');
 }
 
 const bridge = detectBridge();

@@ -6,7 +6,7 @@
     <title>Try a file - Markdown Explorer Demo</title>
     <meta
       name="description"
-      content="Open a Markdown file from your device and render it in the browser with the Markdown Explorer demo reader. Nothing is uploaded."
+      content="Open a local Markdown file or folder in the full Markdown Explorer interface — sidebar, TOC, search, and all features. Nothing is uploaded."
     />
     <link
       rel="icon"
@@ -21,6 +21,89 @@
     <link rel="stylesheet" href="../../styles/base.css" />
     <link rel="stylesheet" href="../../styles/responsive.css" />
     <link rel="stylesheet" href="../assets/demo.css" />
+    <style>
+      .try-hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 3rem 1.5rem;
+        text-align: center;
+      }
+      .try-hero__title {
+        font-size: clamp(1.5rem, 4vw, 2.25rem);
+        font-weight: 800;
+        letter-spacing: -.02em;
+        color: var(--text-primary, #f4efe8);
+        margin: 0;
+      }
+      .try-hero__desc {
+        max-width: 520px;
+        color: var(--text-secondary, #b0aa9e);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 0;
+      }
+      .try-hero__desc code {
+        background: rgba(255,255,255,.08);
+        padding: .1em .35em;
+        border-radius: 4px;
+        font-size: .9em;
+      }
+      .try-cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+      }
+      .try-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .75rem 1.75rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        transition: transform .15s, box-shadow .15s;
+        border: none;
+      }
+      .try-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+      .try-btn--primary {
+        background: linear-gradient(135deg, #ff9130 0%, #ff6b00 100%);
+        color: #fff;
+      }
+      .try-btn--secondary {
+        background: rgba(255,255,255,.08);
+        color: var(--text-primary, #f4efe8);
+        border: 1px solid rgba(255,255,255,.12);
+      }
+      .try-note {
+        font-size: .8rem;
+        color: var(--text-secondary, #b0aa9e);
+        opacity: .7;
+      }
+      .try-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        justify-content: center;
+        max-width: 600px;
+      }
+      .try-feature {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .85rem;
+        color: var(--text-secondary, #b0aa9e);
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
+        padding: .35rem .75rem;
+        border-radius: 999px;
+      }
+    </style>
   </head>
   <body>
     <div class="demo-page">
@@ -40,29 +123,48 @@
         <a class="demo-bar__back" href="../index.html">Demo home</a>
       </header>
 
-      <main class="demo-content" style="flex: 1">
-        <div id="content" class="demo-content__inner">
-          <div id="picker" class="demo-dropzone">
-            <p class="demo-dropzone__title">Open a Markdown file</p>
-            <p class="demo-dropzone__hint">
-              Choose a <code>.md</code>, <code>.markdown</code>, or
-              <code>.txt</code> file from your device. It is read locally in
-              your browser and never uploaded.
-            </p>
-            <button type="button" class="demo-dropzone__btn" id="pick-btn">
-              📂 Choose file
-            </button>
-            <input
-              type="file"
-              id="file-input"
-              accept=".md,.markdown,.mdx,.txt,text/markdown,text/plain"
-            />
+      <main class="demo-content" style="flex:1; overflow:auto">
+        <div class="try-hero">
+          <h1 class="try-hero__title">Try Markdown Explorer in your browser</h1>
+          <p class="try-hero__desc">
+            Open a local document folder — the full explorer interface loads right in the
+            browser. <strong>Nothing is uploaded</strong>; all reading happens locally.
+          </p>
+
+          <div class="try-features">
+            <span class="try-feature">📂 Sidebar &amp; file tree</span>
+            <span class="try-feature">🔍 Full-text search</span>
+            <span class="try-feature">📖 Table of contents</span>
+            <span class="try-feature">🧜 Mermaid diagrams</span>
+            <span class="try-feature">∑ Math / LaTeX</span>
+            <span class="try-feature">📊 Charts &amp; tables</span>
           </div>
+
+          <div class="try-cta-row">
+            <a
+              href="../../app/?mode=file"
+              class="try-btn try-btn--primary"
+              id="open-folder-btn"
+            >
+              📂 Open a folder
+            </a>
+            <a
+              href="../../app/?mode=test"
+              class="try-btn try-btn--secondary"
+              id="test-workspace-btn"
+            >
+              🧪 Explore test workspace
+            </a>
+          </div>
+
+          <p class="try-note">
+            Requires a Chromium-based browser (Chrome, Edge, Arc, Brave) for local folder access.<br />
+            No installation or extensions needed.
+          </p>
         </div>
       </main>
     </div>
 
-    <script src="../assets/demo.js" defer></script>
     <script>
       (function () {
         const html = document.documentElement;
@@ -75,91 +177,7 @@
               html.getAttribute("data-theme") === "dark" ? "light" : "dark";
             html.setAttribute("data-theme", next);
             localStorage.setItem(LS, next);
-            if (window.mermaid) {
-              window.mermaid.initialize({
-                startOnLoad: false,
-                theme: next === "light" ? "default" : "dark",
-                securityLevel: "strict",
-              });
-            }
           });
-
-        const contentEl = document.getElementById("content");
-        const dropzone = document.getElementById("picker");
-        const fileInput = document.getElementById("file-input");
-        const pickBtn = document.getElementById("pick-btn");
-
-        pickBtn.addEventListener("click", () => fileInput.click());
-        fileInput.addEventListener("change", () => {
-          if (fileInput.files && fileInput.files[0]) openFile(fileInput.files[0]);
-        });
-
-        ["dragenter", "dragover"].forEach((evt) =>
-          dropzone.addEventListener(evt, (e) => {
-            e.preventDefault();
-            dropzone.classList.add("is-dragover");
-          }),
-        );
-        ["dragleave", "drop"].forEach((evt) =>
-          dropzone.addEventListener(evt, (e) => {
-            e.preventDefault();
-            dropzone.classList.remove("is-dragover");
-          }),
-        );
-        dropzone.addEventListener("drop", (e) => {
-          const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-          if (f) openFile(f);
-        });
-
-        function escapeHtml(s) {
-          return String(s)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-        }
-
-        async function openFile(file) {
-          const meta =
-            '<div class="demo-file-meta"><span class="demo-file-meta__name">' +
-            escapeHtml(file.name) +
-            " (" +
-            (file.size / 1024).toFixed(1) +
-            " KB)</span>" +
-            '<button type="button" class="demo-file-meta__clear" id="clear-btn">Open another file</button></div>';
-          contentEl.innerHTML =
-            meta +
-            '<div class="demo-status"><div class="demo-spinner"></div>Rendering…</div>';
-          document.getElementById("clear-btn").addEventListener("click", () => {
-            fileInput.value = "";
-            location.reload();
-          });
-          try {
-            const text = await file.text();
-            contentEl.innerHTML =
-              meta + '<article id="doc" class="markdown-body"></article>';
-            document.getElementById("clear-btn").addEventListener("click", () => {
-              fileInput.value = "";
-              location.reload();
-            });
-            await window.DemoRenderer.render(
-              contentEl.querySelector("#doc"),
-              text,
-            );
-            document.querySelector(".demo-content").scrollTop = 0;
-          } catch (err) {
-            contentEl.innerHTML =
-              meta +
-              '<div class="demo-status demo-status--error">Could not render ' +
-              escapeHtml(file.name) +
-              ": " +
-              escapeHtml(String(err.message || err)) +
-              "</div>";
-            document.getElementById("clear-btn").addEventListener("click", () => {
-              fileInput.value = "";
-              location.reload();
-            });
-          }
-        }
       })();
     </script>
   </body>

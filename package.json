@@ -26,6 +26,7 @@
     "build:electron:mac": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist:mac",
     "build:electron:linux": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist:linux",
     "build:chromium": "pnpm --filter ./chromium-xtension run build",
+    "build:website-app": "pnpm --filter ./website-app run build",
     "start:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run dev",
     "build:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run build",
     "test:tauri": "cargo test --manifest-path tauri/Cargo.toml -- --test-threads=1",

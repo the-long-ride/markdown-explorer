@@ -6,7 +6,11 @@ on:
       - main
     paths:
       - 'website/**'
+      - 'website-app/**'
       - 'test/**'
+      - 'ui/**'
+      - 'chromium-xtension/**'
+      - 'vscode/src/markdown/**'
       - '.github/workflows/deploy-website.yml'
   workflow_dispatch:
 
@@ -20,15 +24,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy GitHub Pages
+  build:
+    name: Build Website
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build website-app (React demo)
+        run: pnpm --filter ./website-app run build
+
+      - name: Copy app build into website/app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p website/app
+          cp -r website-app/dist/. website/app/
 
       - name: Sync example Markdown files
         shell: bash
@@ -64,13 +89,21 @@ jobs:
           PY
 
       - name: Setup Pages
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@v5
 
       - name: Upload Website Artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: website
 
+  deploy:
+    name: Deploy GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4

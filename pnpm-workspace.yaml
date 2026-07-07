@@ -5,6 +5,7 @@ packages:
   - chromium-xtension
   - tauri
   - tauri/sidecar/mdthem-sidecar
+  - website-app
 
 allowBuilds:
   esbuild: true
