@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Try a file - Markdown Explorer Demo</title>
+    <meta
+      name="description"
+      content="Open a Markdown file from your device and render it in the browser with the Markdown Explorer demo reader. Nothing is uploaded."
+    />
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../styles/base.css" />
+    <link rel="stylesheet" href="../../styles/responsive.css" />
+    <link rel="stylesheet" href="../assets/demo.css" />
+  </head>
+  <body>
+    <div class="demo-page">
+      <header class="demo-bar">
+        <a class="demo-bar__brand" href="../../index.html">
+          <img
+            src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+            alt=""
+          />
+          <span>Markdown Explorer</span>
+        </a>
+        <span class="demo-bar__crumb">/ Demo / Try</span>
+        <div class="demo-bar__spacer"></div>
+        <button id="theme-btn" class="demo-bar__toggle" type="button">
+          Toggle theme
+        </button>
+        <a class="demo-bar__back" href="../index.html">Demo home</a>
+      </header>
+
+      <main class="demo-content" style="flex: 1">
+        <div id="content" class="demo-content__inner">
+          <div id="picker" class="demo-dropzone">
+            <p class="demo-dropzone__title">Open a Markdown file</p>
+            <p class="demo-dropzone__hint">
+              Choose a <code>.md</code>, <code>.markdown</code>, or
+              <code>.txt</code> file from your device. It is read locally in
+              your browser and never uploaded.
+            </p>
+            <button type="button" class="demo-dropzone__btn" id="pick-btn">
+              📂 Choose file
+            </button>
+            <input
+              type="file"
+              id="file-input"
+              accept=".md,.markdown,.mdx,.txt,text/markdown,text/plain"
+            />
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="../assets/demo.js" defer></script>
+    <script>
+      (function () {
+        const html = document.documentElement;
+        const LS = "mde-site-theme";
+        html.setAttribute("data-theme", localStorage.getItem(LS) || "dark");
+        document
+          .getElementById("theme-btn")
+          .addEventListener("click", () => {
+            const next =
+              html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            html.setAttribute("data-theme", next);
+            localStorage.setItem(LS, next);
+            if (window.mermaid) {
+              window.mermaid.initialize({
+                startOnLoad: false,
+                theme: next === "light" ? "default" : "dark",
+                securityLevel: "strict",
+              });
+            }
+          });
+
+        const contentEl = document.getElementById("content");
+        const dropzone = document.getElementById("picker");
+        const fileInput = document.getElementById("file-input");
+        const pickBtn = document.getElementById("pick-btn");
+
+        pickBtn.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", () => {
+          if (fileInput.files && fileInput.files[0]) openFile(fileInput.files[0]);
+        });
+
+        ["dragenter", "dragover"].forEach((evt) =>
+          dropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            dropzone.classList.add("is-dragover");
+          }),
+        );
+        ["dragleave", "drop"].forEach((evt) =>
+          dropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove("is-dragover");
+          }),
+        );
+        dropzone.addEventListener("drop", (e) => {
+          const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) openFile(f);
+        });
+
+        function escapeHtml(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        }
+
+        async function openFile(file) {
+          const meta =
+            '<div class="demo-file-meta"><span class="demo-file-meta__name">' +
+            escapeHtml(file.name) +
+            " (" +
+            (file.size / 1024).toFixed(1) +
+            " KB)</span>" +
+            '<button type="button" class="demo-file-meta__clear" id="clear-btn">Open another file</button></div>';
+          contentEl.innerHTML =
+            meta +
+            '<div class="demo-status"><div class="demo-spinner"></div>Rendering…</div>';
+          document.getElementById("clear-btn").addEventListener("click", () => {
+            fileInput.value = "";
+            location.reload();
+          });
+          try {
+            const text = await file.text();
+            contentEl.innerHTML =
+              meta + '<article id="doc" class="markdown-body"></article>';
+            document.getElementById("clear-btn").addEventListener("click", () => {
+              fileInput.value = "";
+              location.reload();
+            });
+            await window.DemoRenderer.render(
+              contentEl.querySelector("#doc"),
+              text,
+            );
+            document.querySelector(".demo-content").scrollTop = 0;
+          } catch (err) {
+            contentEl.innerHTML =
+              meta +
+              '<div class="demo-status demo-status--error">Could not render ' +
+              escapeHtml(file.name) +
+              ": " +
+              escapeHtml(String(err.message || err)) +
+              "</div>";
+            document.getElementById("clear-btn").addEventListener("click", () => {
+              fileInput.value = "";
+              location.reload();
+            });
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
