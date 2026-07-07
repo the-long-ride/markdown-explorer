@@ -255,13 +255,13 @@
 .scroll-to-top-btn {
   position: fixed !important;
   bottom: 32px;
-  right: 16px;
+  right: 30px;
   background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,15 +279,15 @@
   outline: none;
 }
 .scroll-to-top-btn--with-toc {
-  right: 16px;
+  right: 30px;
 }
 @media (min-width: 1180px) {
   .scroll-to-top-btn--with-toc {
-    right: calc(var(--toc-width, var(--toc-w, 224px)) + 18px);
+    right: calc(var(--toc-width, var(--toc-w, 224px)) + 32px);
   }
 }
 .app--tab-view .scroll-to-top-btn {
-  bottom: 28px;
+  bottom: 26px;
 }
 .scroll-to-top-btn.is-visible {
   opacity: 1;
