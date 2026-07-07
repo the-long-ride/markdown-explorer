@@ -17,6 +17,12 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).not.toMatch(/pnpm\/action-setup@v4[\s\S]*version:\s*11/);
   });
 
+  test('deploy website workflow uses Node 24 and packageManager pnpm version', () => {
+    const workflow = readWorkflow('deploy-website.yml');
+    expect(workflow).toMatch(/node-version:\s*['"]?24['"]?/);
+    expect(workflow).not.toMatch(/pnpm\/action-setup@v4[\s\S]*version:\s*11/);
+  });
+
   test('test workflow runs UI tests on pull requests', () => {
     const workflow = readWorkflow('test.yml');
     expect(workflow).toContain('pnpm run test:ui');
