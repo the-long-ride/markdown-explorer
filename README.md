@@ -108,6 +108,17 @@ Use isolated HTML previews for interactive examples, and inspect images or diagr
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View_1.jpg" width="49%" alt="Image modal preview with zoom controls" />
 </p>
 
+## Desktop Variants
+
+Markdown Explorer ships as an Electron desktop app for Windows, Linux, and macOS. A Tauri desktop variant is also available as a lightweight alternative using the system WebView.
+
+| Variant | Status | Commands |
+| --- | --- | --- |
+| Electron | Stable, released | `pnpm run start:electron`, `pnpm run build:electron` |
+| Tauri | Development | `pnpm run start:tauri`, `pnpm run build:tauri` |
+
+Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. See [Tauri Desktop Variant](docs/tauri-desktop-variant.md) for architecture, tradeoffs, and build notes.
+
 ## Desktop Workspace
 
 The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling.

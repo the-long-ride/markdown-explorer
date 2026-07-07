@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Markdown Explorer",
+  "version": "0.1.0",
+  "identifier": "com.the-long-ride.markdown-explorer",
+  "build": {
+    "frontendDist": "../ui/dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": null,
+      "assetProtocol": { "enable": true, "scope": ["**"] }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": ["icons/icon.png"],
+    "externalBin": []
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": ["https://updates.the-long-ride.dev/markdown-explorer/{{target}}/{{arch}}/{{current_version}}"],
+      "pubkey": "PLACEHOLDER_PUBKEY_REPLACE_BEFORE_RELEASE",
+      "windows": { "installMode": "passive" }
+    }
+  }
+}

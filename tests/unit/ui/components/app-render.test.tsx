@@ -231,7 +231,7 @@ vi.mock('../../../../ui/src/components/Topbar/Topbar', () => ({
   Topbar: ({ onSettingsOpen }: any) =>
     createElement('div', { 'data-testid': 'topbar' }, createElement('button', { 'data-testid': 'topbar-settings', onClick: onSettingsOpen }, 'Settings')),
 }));
-vi.mock('../../../../ui/src/assets/logos/logo-128.png', () => ({
+vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({
   default: 'data:image/png;base64,test',
 }));
 vi.mock('../../../../ui/src/components/shared/icons', () => ({

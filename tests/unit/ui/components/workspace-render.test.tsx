@@ -75,7 +75,7 @@ vi.mock('../../../../ui/src/components/Workspace/workspaceSelectionUtils', () =>
   formatLastOpened: () => '1m ago',
 }));
 
-vi.mock('../../../../ui/src/assets/logos/logo-128.png', () => ({
+vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({
   default: 'logo.png',
 }));
 

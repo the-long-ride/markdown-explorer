@@ -30,7 +30,11 @@ Thumbs.db
 .agent/skills/
 
 # Tauri / Rust build artifacts
+tauri/target/
+tauri/debug-*.txt
 desktop-tauri/src-tauri/target*/
+
+/docs
 
 # Coverage
 coverage/

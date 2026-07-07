@@ -15,7 +15,7 @@
       "preLaunchTask": "watch"
     },
     {
-      "name": "Debug Desktop App",
+      "name": "Debug Electron Desktop App",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/electron",
@@ -30,6 +30,47 @@
         "${workspaceFolder}/vscode/out/**/*.js"
       ],
       "preLaunchTask": "compile"
+    },
+    {
+      "name": "Debug Tauri Desktop App (LLDB)",
+      "type": "lldb",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/tauri",
+      "cargo": {
+        "args": ["build", "--manifest-path", "${workspaceFolder}/tauri/Cargo.toml"],
+        "filter": {
+          "kind": "bin",
+          "name": "markdown-explorer-tauri"
+        }
+      },
+      "args": [],
+      "env": {
+        "MDN_PERF": "1"
+      },
+      "preLaunchTask": "build-ui-tauri"
+    },
+    {
+      "name": "Debug Tauri Desktop App (MSVC)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/tauri/target/debug/markdown-explorer-tauri.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/tauri",
+      "env": {
+        "MDN_PERF": "1"
+      },
+      "preLaunchTask": "build-ui-tauri",
+      "sourceFileMap": {
+        "${workspaceFolder}/tauri/src": "${workspaceFolder}/tauri/src"
+      }
+    },
+    {
+      "name": "Run Tauri Dev",
+      "type": "shell",
+      "request": "launch",
+      "command": "pnpm run start:tauri",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
     }
   ]
 }

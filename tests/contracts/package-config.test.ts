@@ -49,7 +49,7 @@ describe('package configuration contracts', () => {
   });
 
   describe('workspace membership', () => {
-    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension'];
+    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension', 'tauri', 'tauri/sidecar/mdthem-sidecar'];
 
     async function readWorkspacePackages() {
       const yaml = await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8');
@@ -59,11 +59,11 @@ describe('package configuration contracts', () => {
         .map((line) => line.trim().slice(2).trim().replace(/^['"]|['"]$/g, ''));
     }
 
-    test('pnpm-workspace.yaml lists all four sub-packages', async () => {
+    test('pnpm-workspace.yaml lists all sub-packages', async () => {
       expect(existsSync(resolve(root, 'pnpm-workspace.yaml'))).toBe(true);
       const packages = await readWorkspacePackages();
       expect(packages).toEqual(expect.arrayContaining(expectedPackages));
-      expect(packages).toHaveLength(4);
+      expect(packages).toHaveLength(expectedPackages.length);
     });
 
     test('root manifest declares pnpm as package manager', async () => {

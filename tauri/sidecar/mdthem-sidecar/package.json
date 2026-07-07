@@ -1,0 +1,9 @@
+{
+  "name": "markdown-explorer-mdthem-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@the-long-ride/markdown-them": "^1.3.1"
+  }
+}

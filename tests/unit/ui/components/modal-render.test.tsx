@@ -35,7 +35,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   ChevronRightIcon: () => <span>chevron-right-icon</span>,
 }));
 
-vi.mock('../../../../ui/src/assets/logos/logo-128.png', () => ({ default: 'logo.png' }));
+vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({ default: 'logo.png' }));
 
 describe('MediaModal', () => {
   beforeEach(() => {

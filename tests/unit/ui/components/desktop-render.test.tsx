@@ -136,7 +136,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => {
   };
 });
 
-vi.mock('../../../../ui/src/assets/logos/logo-128.png', () => ({
+vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({
   default: 'logo.png',
 }));
 

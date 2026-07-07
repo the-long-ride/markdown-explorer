@@ -13,7 +13,7 @@ import {
   ExpandIcon, CollapseIcon, CopyIcon,
   RefreshIcon,
 } from '../shared/icons';
-import logoUrl from '../../assets/logos/logo-128.png';
+import logoUrl from '../../assets/logos/logo-500.png?inline';
 
 interface TopbarProps {
   onSettingsOpen: () => void;

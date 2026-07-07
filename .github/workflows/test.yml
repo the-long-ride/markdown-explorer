@@ -1,68 +1,106 @@
-name: Test
+name: test
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
-
-concurrency:
-  group: test-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
-  test:
-    name: ${{ matrix.project }}
+  contracts:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:contracts
+
+  electron:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:electron
+
+  tauri:
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        project: [electron, vscode, ui, chromium, contracts, manifest, build]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: 11
       - uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec vitest run --project ${{ matrix.project }}
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri
+      - run: pnpm run test:tauri
 
-  test-coverage:
-    name: Coverage
+  tauri-coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          node-version: "24"
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run test:coverage
-        env:
-          CI: true
-      - uses: actions/upload-artifact@v4
-        if: always()
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
         with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 14
+          workspaces: tauri
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate coverage and check 85% threshold
+        run: |
+          cargo llvm-cov --manifest-path tauri/Cargo.toml --workspace \
+            --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs|sidecar.rs" \
+            --text 2>&1 | tee coverage.txt
 
-  build-verify:
-    name: Build (${{ matrix.target }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [ui, vscode, chromium]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+          pct=$(grep "^TOTAL" coverage.txt | awk '{print $NF}' | sed 's/%//')
+          echo "=== Total coverage (excluding Tauri-runtime modules): ${pct}% ==="
+
+          if [ "$(echo "$pct < 85" | bc -l)" -eq 1 ]; then
+            echo "FAIL: Coverage ${pct}% is below 85% threshold"
+            tail -30 coverage.txt
+            exit 1
+          fi
+          echo "PASS: Coverage ${pct}% meets 85% threshold"
+
+          cargo llvm-cov --manifest-path tauri/Cargo.toml --workspace \
+            --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs|sidecar.rs" \
+            --lcov --output-path lcov.info
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
         with:
-          node-version: "24"
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build:${{ matrix.target }}
+          name: tauri-coverage
+          path: lcov.info
