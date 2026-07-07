@@ -2,7 +2,7 @@
 // components/Content/Content.tsx — Main content area (rendered HTML + effects)
 // =============================================================================
 
-import { useEffect, useRef, memo } from "react";
+import { useEffect, useRef, memo, lazy, Suspense } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -10,6 +10,10 @@ import { getTranslations } from "../../contexts/translations";
 import { getChart, getHighlightJs, getKatex, getMermaid } from "../../lib/renderLibs";
 import { WelcomePage } from "./WelcomePage";
 import { AlertTriangleIcon, FolderIcon, TrashIcon } from "../shared/icons";
+
+const TableOfContents = lazy(() =>
+  import("../TOC/TableOfContents").then((m) => ({ default: m.TableOfContents }))
+);
 
 declare global {
   interface Window {
@@ -829,6 +833,11 @@ export function Content({
                     )}
                   </div>
                 </div>
+              )}
+              {state.toc.length > 0 && (
+                <Suspense fallback={null}>
+                  <TableOfContents variant="compact" />
+                </Suspense>
               )}
               {fmEntries.length > 0 && (
                 <div className="mdn-frontmatter" aria-label="Document properties">
