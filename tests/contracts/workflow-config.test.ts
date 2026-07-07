@@ -27,6 +27,18 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).not.toContain('Swatinem/rust-cache@v2');
   });
 
+  test('tauri CI jobs build frontend dist before cargo compiles', () => {
+    const workflow = readWorkflow('test.yml');
+    const uiBuilds = workflow.match(/pnpm run build:ui:electron/g) ?? [];
+    expect(uiBuilds).toHaveLength(2);
+    expect(workflow).toMatch(
+      /pnpm run build:ui:electron[\s\S]*pnpm run test:tauri/,
+    );
+    expect(workflow).toMatch(
+      /pnpm run build:ui:electron[\s\S]*cargo llvm-cov/,
+    );
+  });
+
   test('release workflow keeps Electron and Tauri desktop builds separate', () => {
     const workflow = readWorkflow('release.yml');
     expect(workflow).toContain('name: Build Electron Desktop Application');
