@@ -110,12 +110,12 @@ Use isolated HTML previews for interactive examples, and inspect images or diagr
 
 ## Desktop Variants
 
-Markdown Explorer ships as an Electron desktop app for Windows, Linux, and macOS. A Tauri desktop variant is also available as a lightweight alternative using the system WebView.
+Markdown Explorer ships as an Electron desktop app for Windows, Linux, and macOS. A Tauri desktop variant is also available as a lightweight alternative using the system WebView, with preview release artifacts published alongside Electron builds.
 
 | Variant | Status | Commands |
 | --- | --- | --- |
 | Electron | Stable, released | `pnpm run start:electron`, `pnpm run build:electron` |
-| Tauri | Development | `pnpm run start:tauri`, `pnpm run build:tauri` |
+| Tauri | Preview release builds available | `pnpm run start:tauri`, `pnpm run build:tauri` |
 
 Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. See [Tauri Desktop Variant](docs/tauri-desktop-variant.md) for architecture, tradeoffs, and build notes.
 
