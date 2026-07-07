@@ -94,7 +94,7 @@ jobs:
         run: |
           cargo llvm-cov --manifest-path tauri/Cargo.toml --workspace \
             --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs|sidecar.rs" \
-            --text 2>&1 | tee coverage.txt
+            --text -- --test-threads=1 2>&1 | tee coverage.txt
 
           pct=$(grep "^TOTAL" coverage.txt | awk '{print $NF}' | sed 's/%//')
           echo "=== Total coverage (excluding Tauri-runtime modules): ${pct}% ==="
@@ -108,7 +108,7 @@ jobs:
 
           cargo llvm-cov --manifest-path tauri/Cargo.toml --workspace \
             --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs|sidecar.rs" \
-            --lcov --output-path lcov.info
+            --lcov --output-path lcov.info -- --test-threads=1
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:

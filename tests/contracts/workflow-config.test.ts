@@ -39,6 +39,13 @@ describe('GitHub Actions workflow contracts', () => {
     );
   });
 
+  test('tauri coverage serializes Rust tests like test:tauri', () => {
+    const workflow = readWorkflow('test.yml');
+    const serializedCoverageRuns =
+      workflow.match(/cargo llvm-cov[\s\S]*?-- --test-threads=1/g) ?? [];
+    expect(serializedCoverageRuns).toHaveLength(2);
+  });
+
   test('release workflow keeps Electron and Tauri desktop builds separate', () => {
     const workflow = readWorkflow('release.yml');
     expect(workflow).toContain('name: Build Electron Desktop Application');

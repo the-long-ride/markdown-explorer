@@ -47,6 +47,15 @@ describe('tauri package config', () => {
     ).toBe(true);
   });
 
+  test('tauri build script lets Tauri own Windows manifest embedding', () => {
+    const buildScript = fs.readFileSync(
+      path.join(repoRoot, 'tauri/build.rs'),
+      'utf8',
+    );
+    expect(buildScript).not.toContain('MANIFESTINPUT');
+    expect(buildScript).not.toContain('MANIFEST:EMBED');
+  });
+
   test('tauri tauri.conf.json exists', () => {
     expect(
       fs.existsSync(path.join(repoRoot, 'tauri/tauri.conf.json')),

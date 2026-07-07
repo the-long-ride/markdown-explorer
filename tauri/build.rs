@@ -2,8 +2,6 @@ fn main() {
     tauri_build::build();
 
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-    let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
     let out_dir = std::env::var("OUT_DIR").unwrap_or_default();
 
     if target_os != "windows" {
@@ -40,71 +38,6 @@ fn main() {
                     }
                     break;
                 }
-            }
-        }
-    }
-
-    let manifest_xml = std::path::PathBuf::from(&manifest_dir)
-        .join("windows-app-manifest.xml");
-
-    if !manifest_xml.exists() {
-        std::fs::write(
-            &manifest_xml,
-            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <dependency>
-    <dependentAssembly>
-      <assemblyIdentity
-        type="win32"
-        name="Microsoft.Windows.Common-Controls"
-        version="6.0.0.0"
-        processorArchitecture="*"
-        publicKeyToken="6595b64144ccf1df"
-        language="*"
-      />
-    </dependentAssembly>
-  </dependency>
-</assembly>
-"#,
-        )
-        .expect("failed to write windows-app-manifest.xml");
-    }
-
-    println!("cargo:rerun-if-changed={}", manifest_xml.display());
-
-    if target_env == "msvc" {
-        println!("cargo:rustc-link-arg=/MANIFEST:EMBED");
-        println!(
-            "cargo:rustc-link-arg=/MANIFESTINPUT:{}",
-            manifest_xml.to_str().unwrap()
-        );
-    } else if target_env == "gnu" {
-        let rc_file = std::path::PathBuf::from(&out_dir).join("manifest.rc");
-        std::fs::write(
-            &rc_file,
-            format!("1 24 \"{}\"", manifest_xml.to_str().unwrap().replace('\\', "/")),
-        )
-        .expect("failed to write manifest.rc");
-
-        let obj_file = std::path::PathBuf::from(&out_dir).join("manifest_resource.o");
-        let status = std::process::Command::new("windres")
-            .arg("--input")
-            .arg(&rc_file)
-            .arg("--output")
-            .arg(&obj_file)
-            .arg("-O")
-            .arg("coff")
-            .status();
-
-        match status {
-            Ok(s) if s.success() => {
-                println!(
-                    "cargo:rustc-link-arg={}",
-                    obj_file.to_str().unwrap()
-                );
-            }
-            _ => {
-                println!("cargo:warning=windres failed to compile manifest resource");
             }
         }
     }

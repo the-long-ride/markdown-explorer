@@ -43,7 +43,9 @@ impl PerfTimer {
             return;
         }
         let inner = self.inner.lock();
-        let Some(&start) = inner.marks.get(start_name) else { return };
+        let Some(&start) = inner.marks.get(start_name) else {
+            return;
+        };
         let now = Instant::now();
         let ms = now.duration_since(start).as_millis();
         eprintln!("[perf] {name}: {ms}ms");
@@ -117,40 +119,66 @@ impl Default for PerfTimer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use parking_lot::MutexGuard;
+    use std::ffi::OsString;
+
+    static PERF_LOCK: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
+
+    struct PerfEnvGuard {
+        _lock: MutexGuard<'static, ()>,
+        previous: Option<OsString>,
+    }
+
+    impl PerfEnvGuard {
+        fn set(value: Option<&str>) -> Self {
+            let lock = PERF_LOCK.lock();
+            let previous = std::env::var_os("MDN_PERF");
+            match value {
+                Some(value) => std::env::set_var("MDN_PERF", value),
+                None => std::env::remove_var("MDN_PERF"),
+            }
+            Self {
+                _lock: lock,
+                previous,
+            }
+        }
+    }
+
+    impl Drop for PerfEnvGuard {
+        fn drop(&mut self) {
+            match &self.previous {
+                Some(value) => std::env::set_var("MDN_PERF", value),
+                None => std::env::remove_var("MDN_PERF"),
+            }
+        }
+    }
 
     #[test]
     fn disabled_by_default() {
-        std::env::remove_var("MDN_PERF");
+        let _env = PerfEnvGuard::set(None);
         let timer = PerfTimer::new();
         assert!(!timer.is_enabled());
     }
 
     #[test]
     fn mark_measure_noop_when_disabled() {
-        std::env::remove_var("MDN_PERF");
+        let _env = PerfEnvGuard::set(None);
         let timer = PerfTimer::new();
         timer.mark("test");
         timer.measure("test", "test");
         timer.print_summary();
     }
 
-    static PERF_LOCK: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
-
     #[test]
     fn enabled_with_env() {
-        let _guard = PERF_LOCK.lock();
-        std::env::remove_var("MDN_PERF");
-        std::env::set_var("MDN_PERF", "1");
+        let _env = PerfEnvGuard::set(Some("1"));
         let timer = PerfTimer::new();
         assert!(timer.is_enabled());
-        std::env::remove_var("MDN_PERF");
     }
 
     #[test]
     fn mark_measure_set_renderer_when_enabled() {
-        let _guard = PERF_LOCK.lock();
-        std::env::remove_var("MDN_PERF");
-        std::env::set_var("MDN_PERF", "1");
+        let _env = PerfEnvGuard::set(Some("1"));
         let timer = PerfTimer::new();
         assert!(timer.is_enabled());
         timer.mark("main:required");
@@ -164,24 +192,18 @@ mod tests {
         entries.insert("renderer:react-mounted".to_string(), 200.0);
         timer.set_renderer_marks(entries);
         timer.print_summary();
-        std::env::remove_var("MDN_PERF");
     }
 
     #[test]
     fn measure_unknown_start_is_noop() {
-        let _guard = PERF_LOCK.lock();
-        std::env::remove_var("MDN_PERF");
-        std::env::set_var("MDN_PERF", "1");
+        let _env = PerfEnvGuard::set(Some("1"));
         let timer = PerfTimer::new();
         timer.measure("test", "nonexistent_mark");
-        std::env::remove_var("MDN_PERF");
     }
 
     #[test]
     fn set_renderer_marks_extends_when_enabled() {
-        let _guard = PERF_LOCK.lock();
-        std::env::remove_var("MDN_PERF");
-        std::env::set_var("MDN_PERF", "1");
+        let _env = PerfEnvGuard::set(Some("1"));
         let timer = PerfTimer::new();
         let mut entries = HashMap::new();
         entries.insert("key1".to_string(), 10.0);
@@ -189,24 +211,20 @@ mod tests {
         entries.insert("key2".to_string(), 20.0);
         timer.set_renderer_marks(entries);
         timer.print_summary();
-        std::env::remove_var("MDN_PERF");
     }
 
     #[test]
     fn print_summary_with_partial_marks() {
-        let _guard = PERF_LOCK.lock();
-        std::env::remove_var("MDN_PERF");
-        std::env::set_var("MDN_PERF", "1");
+        let _env = PerfEnvGuard::set(Some("1"));
         let timer = PerfTimer::new();
         timer.mark("main:required");
         timer.mark("window:created");
         timer.print_summary();
-        std::env::remove_var("MDN_PERF");
     }
 
     #[test]
     fn set_renderer_marks_noop_when_disabled() {
-        std::env::remove_var("MDN_PERF");
+        let _env = PerfEnvGuard::set(None);
         let timer = PerfTimer::new();
         assert!(!timer.is_enabled());
         let mut entries = HashMap::new();
@@ -217,7 +235,7 @@ mod tests {
 
     #[test]
     fn default_equals_new() {
-        std::env::remove_var("MDN_PERF");
+        let _env = PerfEnvGuard::set(None);
         let d = PerfTimer::default();
         let n = PerfTimer::new();
         assert_eq!(d.is_enabled(), n.is_enabled());
@@ -225,7 +243,7 @@ mod tests {
 
     #[test]
     fn print_summary_noop_when_disabled() {
-        std::env::remove_var("MDN_PERF");
+        let _env = PerfEnvGuard::set(None);
         let timer = PerfTimer::new();
         timer.print_summary();
         assert!(!timer.is_enabled());
