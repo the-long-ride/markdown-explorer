@@ -22,6 +22,11 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).toContain('pnpm run test:ui');
   });
 
+  test('tauri CI jobs avoid restoring cached target artifacts', () => {
+    const workflow = readWorkflow('test.yml');
+    expect(workflow).not.toContain('Swatinem/rust-cache@v2');
+  });
+
   test('release workflow keeps Electron and Tauri desktop builds separate', () => {
     const workflow = readWorkflow('release.yml');
     expect(workflow).toContain('name: Build Electron Desktop Application');
