@@ -53,39 +53,6 @@ jobs:
           mkdir -p website/app
           cp -r website-app/dist/. website/app/
 
-      - name: Sync example Markdown files
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p website/demo/examples/files
-          cp -f test/*.md website/demo/examples/files/ 2>/dev/null || true
-          # Regenerate manifest.json from the first H1 of each file.
-          python3 - <<'PY'
-          import json, os, re
-          from pathlib import Path
-          files_dir = Path("website/demo/examples/files")
-          entries = []
-          for p in sorted(files_dir.glob("*.md")):
-              title = p.stem
-              try:
-                  for line in p.read_text(encoding="utf-8").splitlines():
-                      if line.startswith("# "):
-                          t = line[2:].strip()
-                          t = re.sub(r'[^\x20-\x7E]', '', t)
-                          t = re.sub(r'^\s*Test:\s*', '', t)
-                          t = re.sub(r'\s+', ' ', t).strip()
-                          if t:
-                              title = t
-                          break
-              except Exception:
-                  pass
-              entries.append({"file": p.name, "title": title})
-          Path("website/demo/examples/manifest.json").write_text(
-              json.dumps({"files": entries}, indent=2, ensure_ascii=False),
-              encoding="utf-8",
-          )
-          PY
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
