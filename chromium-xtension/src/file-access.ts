@@ -77,6 +77,15 @@ export async function pickDirectory(): Promise<FileSystemDirectoryHandle> {
   return await win.showDirectoryPicker();
 }
 
+export async function pickFile(): Promise<FileSystemFileHandle> {
+  const win = window as any;
+  if (typeof win.showOpenFilePicker !== 'function') {
+    throw new Error('File System Access API is not supported in this browser.');
+  }
+  const [handle] = await win.showOpenFilePicker();
+  return handle;
+}
+
 /**
  * Resolves a relative path (forward-slash delimited) against a root directory handle.
  * Returns the file handle, or null if not found or if it is a directory.

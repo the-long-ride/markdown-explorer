@@ -11,7 +11,7 @@ import { BrowserScanner } from '../../chromium-xtension/src/scanner';
 import { BrowserSearchIndex } from '../../chromium-xtension/src/search-index';
 import { BrowserRecentWorkspaces } from '../../chromium-xtension/src/recent-workspaces';
 import { rewriteMediaUrls, revokeAll } from '../../chromium-xtension/src/media-resolver';
-import { pickDirectory, readTextFile, verifyPermission } from '../../chromium-xtension/src/file-access';
+import { pickDirectory, pickFile, readTextFile, verifyPermission } from '../../chromium-xtension/src/file-access';
 import {
   virtualFiles,
   virtualTree,
@@ -53,6 +53,7 @@ let activeHandle: FileSystemDirectoryHandle | null = null;
 let activeWorkspacePath = '';
 let activeWorkspaceName = '';
 let searchIndex: BrowserSearchIndex | null = null;
+let singleFileHandle: FileSystemFileHandle | null = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -236,6 +237,7 @@ function resetFileState() {
   flatList = [];
   workspaceTree = null;
   searchIndex = null;
+  singleFileHandle = null;
 }
 
 async function loadHandleWorkspace(handle: FileSystemDirectoryHandle, openFirstFile = true) {
@@ -303,6 +305,96 @@ async function sendFileContent(relativePath: string) {
   send({
     command: 'renderContent',
     html: rewrittenHtml,
+    markdownSource: raw,
+    frontmatter,
+    toc,
+    filePath: relativePath,
+    relativePath: fileInfo.relativePath,
+    title: fileInfo.title,
+    fileList: flatList,
+    previewInfo: null,
+  });
+}
+
+// ── File-mode: single dropped file (FileSystemFileHandle) ──────────────────────
+
+function buildMdFileFromName(fileName: string): MdFile {
+  const dot = fileName.lastIndexOf('.');
+  const ext = dot !== -1 ? fileName.slice(dot).toLowerCase() : '';
+  const base = dot !== -1 ? fileName.slice(0, dot) : fileName;
+  return {
+    fsPath: fileName,
+    relativePath: fileName,
+    parts: [fileName],
+    fileName,
+    title: base || fileName,
+    extension: ext,
+    documentKind: 'markdown',
+  };
+}
+
+async function loadSingleFileWorkspace(handle: FileSystemFileHandle) {
+  resetFileState();
+  singleFileHandle = handle;
+  const fileName = handle.name;
+  activeWorkspaceName = fileName;
+  activeWorkspacePath = fileName;
+  currentFile = fileName;
+
+  const entry = buildMdFileFromName(fileName);
+  flatList = [entry];
+  workspaceTree = { name: fileName, path: '', children: [], files: [entry] };
+
+  sendLoading('Loading file…');
+  const recents = await BrowserRecentWorkspaces.load();
+  send({
+    command: 'readyAck',
+    fileList: flatList,
+    tree: workspaceTree,
+    theme: 'dark',
+    themeStyle: 'default',
+    defaultExpanded: true,
+    workspaceName: activeWorkspaceName,
+    workspacePath: activeWorkspacePath,
+    recentWorkspaces: recents,
+    documentConversionEnabled: false,
+    ...hostInfo(),
+  });
+
+  await sendSingleFileContent(fileName);
+}
+
+async function sendSingleFileContent(relativePath: string) {
+  if (!singleFileHandle) {
+    send({
+      command: 'renderContent',
+      html: '',
+      markdownSource: '',
+      frontmatter: {},
+      toc: [],
+      filePath: '',
+      relativePath: 'Welcome Page',
+      title: 'Welcome',
+      fileList: flatList,
+      previewInfo: null,
+    });
+    return;
+  }
+
+  let raw = '';
+  try {
+    const file = await singleFileHandle.getFile();
+    raw = await file.text();
+  } catch {
+    raw = `# File Not Found\n\nCould not read: **${relativePath}**`;
+  }
+
+  const { html, frontmatter, toc } = renderMarkdown(relativePath, raw);
+  const fileInfo = findFileInfo(flatList, relativePath);
+
+  send({
+    command: 'renderContent',
+    html,
     markdownSource: raw,
     frontmatter,
     toc,
@@ -436,6 +528,30 @@ bus.addEventListener('webview-message', async (e: Event) => {
       break;
     }
 
+    case 'openFile': {
+      try {
+        const handle = await pickFile();
+        if (handle && handle.kind === 'file') {
+          await loadSingleFileWorkspace(handle);
+        }
+      } catch (err) {
+        console.warn('Single file selection cancelled or failed:', err);
+      }
+      break;
+    }
+
+    case 'openFileHandle': {
+      try {
+        const handle = msg.handle;
+        if (handle && handle.kind === 'file') {
+          await loadSingleFileWorkspace(handle);
+        }
+      } catch (err) {
+        console.warn('Single file selection cancelled or failed:', err);
+      }
+      break;
+    }
+
     case 'openRecentWorkspace': {
       const folderPath: string = msg.path;
       const handle = await BrowserRecentWorkspaces.getHandle(folderPath);
@@ -495,7 +611,11 @@ bus.addEventListener('webview-message', async (e: Event) => {
         return;
       }
       currentFile = path;
-      await sendFileContent(path);
+      if (singleFileHandle) {
+        await sendSingleFileContent(path);
+      } else {
+        await sendFileContent(path);
+      }
       break;
     }
 
@@ -522,6 +642,9 @@ bus.addEventListener('webview-message', async (e: Event) => {
           ...hostInfo(),
         });
         if (currentFile) await sendFileContent(currentFile);
+      } else if (singleFileHandle) {
+        sendLoading('Refreshing file…');
+        if (currentFile) await sendSingleFileContent(currentFile);
       }
       break;
     }
@@ -531,6 +654,57 @@ bus.addEventListener('webview-message', async (e: Event) => {
       if (searchIndex) {
         const results = await searchIndex.search(q, flatList, 80);
         send({ command: 'workspaceSearchResults', requestId: msg.requestId, results });
+      } else if (singleFileHandle && flatList.length > 0) {
+        try {
+          const file = await singleFileHandle.getFile();
+          const raw = await file.text();
+          const haystack = prepareHaystack(raw);
+          const results = [];
+          const item = flatList[0];
+          const title = item.title;
+          const fileName = item.fileName;
+          const relativePath = item.relativePath;
+
+          const titleScore = normalizeForSearch(title).includes(q) ? 5 : 0;
+          const fileNameScore = normalizeForSearch(fileName).includes(q) ? 4 : 0;
+          const baseScore = titleScore + fileNameScore;
+          
+          let nextNormIndex = 0;
+          let ordinal = 0;
+          while (results.length < 8) {
+            const result = haystack.indexOfNormalized(q, nextNormIndex);
+            if (!result) break;
+            results.push({
+              ...item,
+              title,
+              fileName,
+              relativePath,
+              excerpt: makeExcerpt(raw, result.match.index, result.match.matchLength),
+              matchIndex: result.match.index,
+              matchOrdinal: ordinal,
+              matchLength: result.match.matchLength,
+            });
+            ordinal++;
+            nextNormIndex = result.nextNormIndex;
+          }
+          
+          if (results.length === 0 && baseScore > 0) {
+            results.push({
+              ...item,
+              title,
+              fileName,
+              relativePath,
+              excerpt: '',
+              matchIndex: 0,
+              matchOrdinal: 0,
+              matchLength: 0,
+            });
+          }
+          send({ command: 'workspaceSearchResults', requestId: msg.requestId, results });
+        } catch (err) {
+          console.error('Failed to search single file:', err);
+          send({ command: 'workspaceSearchResults', requestId: msg.requestId, results: [] });
+        }
       } else {
         send({ command: 'workspaceSearchResults', requestId: msg.requestId, results: [] });
       }
