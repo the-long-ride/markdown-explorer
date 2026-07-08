@@ -71,6 +71,21 @@
       "command": "pnpm run start:tauri",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug Web Demo",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "preLaunchTask": "dev: website-app",
+      "url": "http://localhost:5173/markdown-explorer/app/",
+      "webRoot": "${workspaceFolder}/website-app",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "/markdown-explorer/app/src/*": "${workspaceFolder}/website-app/src/*",
+        "/markdown-explorer/app/@fs/F:/my-repos/markdown-explorer/*": "${workspaceFolder}/*",
+        "/markdown-explorer/app/node_modules/*": "${workspaceFolder}/node_modules/*"
+      }
     }
   ]
 }

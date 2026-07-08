@@ -52,6 +52,25 @@
         "panel": "dedicated"
       },
       "group": "build"
+    },
+    {
+      "label": "dev: website-app",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["--filter", "./website-app", "run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": "$tsc-watch",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
     }
   ]
 }
