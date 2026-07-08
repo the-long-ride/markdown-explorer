@@ -115,11 +115,19 @@
     "https://api.github.com/repos/the-long-ride/markdown-explorer/releases/latest";
   const releasesApiUrl =
     "https://api.github.com/repos/the-long-ride/markdown-explorer/releases?per_page=100";
+  const openVsxApiUrl =
+    "https://open-vsx.org/api/the-long-ride/vscode-extension-markdown-explorer";
+  const marketplaceApiUrl =
+    "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery";
   const changelogUrl =
     "https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md";
   const apiHeaders = { Accept: "application/vnd.github+json" };
   const note = document.querySelector("#release-note");
-  const buttons = [...document.querySelectorAll(".release-download")];
+  const releaseButtons = [...document.querySelectorAll(".release-download")];
+  const marketplaceButtons = [
+    ...document.querySelectorAll(".marketplace-download"),
+  ];
+  const buttons = [...releaseButtons, ...marketplaceButtons];
   const baseButtonLabels = new Map(
     buttons.map((button) => [button, button.textContent.trim()]),
   );
@@ -139,14 +147,42 @@
     }),
   );
   const numberFormatter = new Intl.NumberFormat();
+  const hasPrefix = (name, prefix) => name.startsWith(`${prefix}-`);
+  const isElectronAsset = (name) => hasPrefix(name, "electron");
+  const isTauriAsset = (name) => hasPrefix(name, "tauri");
+  const isLegacyDesktopAsset = (name) =>
+    name.startsWith("markdown.explorer") ||
+    name.startsWith("markdown-explorer-desktop") ||
+    name.startsWith("markdown explorer");
+  const isElectronLikeAsset = (name) =>
+    isElectronAsset(name) || isLegacyDesktopAsset(name);
 
   const assetMatchers = {
-    "windows-nsis": (name) => name.includes("setup") && name.endsWith(".exe"),
-    "windows-portable": (name) => !name.includes("setup") && name.endsWith(".exe"),
-    "macos-arm64": (name) => name.endsWith(".dmg") && name.includes("arm64"),
-    "macos-x64": (name) => name.endsWith(".dmg") && name.includes("x64"),
-    "linux-appimage": (name) => name.endsWith(".appimage"),
-    "linux-deb": (name) => name.endsWith(".deb"),
+    "windows-nsis": (name) =>
+      isElectronLikeAsset(name) &&
+      (name.includes("setup") || /\.\\d+\\.\\d+\\.\\d+\\.exe$/.test(name)) &&
+      name.endsWith(".exe"),
+    "windows-portable": (name) =>
+      isElectronLikeAsset(name) &&
+      !name.includes("setup") &&
+      !/\.\\d+\\.\\d+\\.\\d+\\.exe$/.test(name) &&
+      name.endsWith(".exe"),
+    "macos-arm64": (name) =>
+      isElectronLikeAsset(name) &&
+      name.endsWith(".dmg") &&
+      name.includes("arm64"),
+    "macos-x64": (name) =>
+      isElectronLikeAsset(name) &&
+      name.endsWith(".dmg") &&
+      (name.includes("x64") || !name.includes("arm64")),
+    "linux-appimage": (name) =>
+      isElectronLikeAsset(name) && name.endsWith(".appimage"),
+    "linux-deb": (name) => isElectronLikeAsset(name) && name.endsWith(".deb"),
+    "tauri-windows": (name) => isTauriAsset(name) && name.endsWith(".exe"),
+    "tauri-linux-appimage": (name) =>
+      isTauriAsset(name) && name.endsWith(".appimage"),
+    "tauri-linux-deb": (name) => isTauriAsset(name) && name.endsWith(".deb"),
+    "tauri-macos": (name) => isTauriAsset(name) && name.endsWith(".dmg"),
     chromium: (name) =>
       name.endsWith("-chromium.zip") ||
       name.endsWith("-chrome.zip") ||
@@ -160,6 +196,10 @@
     "macos-x64": "macos",
     "linux-appimage": "linux",
     "linux-deb": "linux",
+    "tauri-windows": "windows",
+    "tauri-linux-appimage": "linux",
+    "tauri-linux-deb": "linux",
+    "tauri-macos": "macos",
   };
 
   const getCountKey = (platform) => platformGroup[platform] || platform;
@@ -171,12 +211,20 @@
     "macos-x64": () => 10,
     "linux-appimage": () => 10,
     "linux-deb": () => 10,
+    "tauri-windows": () => 10,
+    "tauri-linux-appimage": () => 10,
+    "tauri-linux-deb": () => 10,
+    "tauri-macos": () => 10,
     chromium: (name) => (name.includes("chromium") ? 10 : 5),
   };
 
   const fallbackMatchers = {
-    "macos-arm64": (name) => name.endsWith(".dmg"),
-    "macos-x64": (name) => name.endsWith(".dmg"),
+    "macos-arm64": (name) =>
+      isElectronLikeAsset(name) && name.endsWith(".dmg") && name.includes("arm64"),
+    "macos-x64": (name) =>
+      isElectronLikeAsset(name) &&
+      name.endsWith(".dmg") &&
+      !name.includes("arm64"),
   };
 
   const pickAsset = (assets, platform) => {
@@ -245,6 +293,34 @@
     appendHighlightedDownloads(label, count, t().acrossAllVersions);
   };
 
+  const applyMarketplaceCounts = (marketplaceDownloads = {}) => {
+    marketplaceButtons.forEach((button) => {
+      const baseLabel =
+        baseButtonLabels.get(button) || button.textContent.trim();
+      const platform = button.dataset.platform;
+      const card = button.closest(".download-card");
+      const countLabel = card ? downloadCountLabels.get(card) : null;
+      const downloadCount = marketplaceDownloads[platform];
+
+      button.textContent = baseLabel;
+      button.setAttribute(
+        "aria-label",
+        `${baseLabel}. Opens ${platform === "open-vsx" ? "Open VSX" : "VS Code Marketplace"}.`,
+      );
+
+      if (!countLabel || !Number.isFinite(downloadCount)) return;
+
+      countLabel.textContent = "";
+      appendHighlightedDownloads(
+        countLabel,
+        downloadCount,
+        platform === "open-vsx"
+          ? t().onOpenVsx
+          : t().onVscodeMarketplace,
+      );
+    });
+  };
+
   const setReleaseNote = (message, downloadCount = null) => {
     if (!note) return;
     note.textContent = "";
@@ -261,7 +337,7 @@
   };
 
   const setFallback = (message) => {
-    buttons.forEach((button) => {
+    releaseButtons.forEach((button) => {
       const baseLabel =
         baseButtonLabels.get(button) || button.textContent.trim();
       button.href = releaseUrl;
@@ -283,6 +359,54 @@
       return response.json();
     });
 
+  const fetchMarketplaceDownloadStats = async () => {
+    const [openVsxResponse, marketplaceResponse] = await Promise.all([
+      fetch(openVsxApiUrl),
+      fetch(marketplaceApiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json;api-version=7.2-preview.1;excludeUrls=true",
+        },
+        body: JSON.stringify({
+          filters: [
+            {
+              criteria: [
+                {
+                  filterType: 7,
+                  value: "the-long-ride.vscode-extension-markdown-explorer",
+                },
+              ],
+            },
+          ],
+          flags: 914,
+        }),
+      }),
+    ]);
+
+    if (!openVsxResponse.ok) {
+      throw new Error(`Open VSX returned ${openVsxResponse.status}`);
+    }
+    if (!marketplaceResponse.ok) {
+      throw new Error(`Marketplace returned ${marketplaceResponse.status}`);
+    }
+
+    const openVsx = await openVsxResponse.json();
+    const marketplace = await marketplaceResponse.json();
+    const statistics =
+      marketplace?.results?.[0]?.extensions?.[0]?.statistics || [];
+
+    return {
+      "open-vsx": Number(openVsx.downloadCount) || 0,
+      "vscode-marketplace":
+        Number(
+          statistics.find(
+            (entry) => entry.statisticName === "downloadCount",
+          )?.value,
+        ) || 0,
+    };
+  };
+
   const getNextPageUrl = (linkHeader) => {
     if (!linkHeader) return "";
     const nextLink = linkHeader
@@ -303,8 +427,21 @@
     });
 
   if (note || buttons.length > 0) {
-    Promise.all([fetchJson(latestApiUrl), fetchReleasePages()])
-      .then(([release, releases]) => {
+    Promise.allSettled([
+      Promise.all([fetchJson(latestApiUrl), fetchReleasePages()]),
+      fetchMarketplaceDownloadStats(),
+    ])
+      .then(([releaseResult, marketplaceResult]) => {
+        const marketplaceDownloads =
+          marketplaceResult.status === "fulfilled" ? marketplaceResult.value : {};
+
+        if (releaseResult.status !== "fulfilled") {
+          applyMarketplaceCounts(marketplaceDownloads);
+          setFallback(t().releaseApiFail);
+          return;
+        }
+
+        const [release, releases] = releaseResult.value;
         const latestAssets = Array.isArray(release.assets) ? release.assets : [];
         const allReleaseAssets = releases.flatMap((item) =>
           Array.isArray(item.assets) ? item.assets : [],
@@ -330,7 +467,7 @@
           }
         }
 
-        buttons.forEach((button) => {
+        releaseButtons.forEach((button) => {
           const baseLabel =
             baseButtonLabels.get(button) || button.textContent.trim();
           const versionedLabel = releaseVersion
@@ -369,6 +506,8 @@
           );
           button.title = asset.name;
         });
+
+        applyMarketplaceCounts(marketplaceDownloads);
 
         setReleaseNote(
           releaseVersion

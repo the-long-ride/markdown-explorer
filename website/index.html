@@ -693,6 +693,14 @@
                 data-i18n="dlWinPortableBtn"
                 >Download Portable</a
               >
+              <a
+                class="button secondary release-download"
+                data-platform="tauri-windows"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinLightweightBtn"
+                >Download Lightweight</a
+              >
             </div>
           </article>
           <article class="download-card">
@@ -717,6 +725,22 @@
                 rel="noopener"
                 data-i18n="dlLinuxDebBtn"
                 >Download .deb</a
+              >
+              <a
+                class="button secondary release-download"
+                data-platform="tauri-linux-appimage"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxLightweightAppImageBtn"
+                >Download Lightweight AppImage</a
+              >
+              <a
+                class="button secondary release-download"
+                data-platform="tauri-linux-deb"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxLightweightDebBtn"
+                >Download Lightweight .deb</a
               >
             </div>
           </article>
@@ -751,6 +775,14 @@
                 data-i18n="dlMacIntelBtn"
                 >Download Intel</a
               >
+              <a
+                class="button secondary release-download"
+                data-platform="tauri-macos"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlMacLightweightBtn"
+                >Download Lightweight</a
+              >
             </div>
           </article>
           <article class="download-card">
@@ -759,13 +791,16 @@
               Best choice for VS Code users. Launch the docs viewer directly
               inside your editor.
             </p>
-            <a
-              class="button primary"
-              href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
-              rel="noopener"
-              data-i18n="dlVscodeBtn"
-              >Install extension</a
-            >
+            <div class="card-actions">
+              <a
+                class="button primary marketplace-download"
+                data-platform="vscode-marketplace"
+                href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+                rel="noopener"
+                data-i18n="dlVscodeBtn"
+                >Install extension</a
+              >
+            </div>
           </article>
           <article class="download-card">
             <h3 data-i18n="dlOvxTitle">Open VSX Registry</h3>
@@ -773,13 +808,16 @@
               Use this for VSCodium and VS Code-compatible editors that rely on
               Open VSX.
             </p>
-            <a
-              class="button primary"
-              href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer"
-              rel="noopener"
-              data-i18n="dlOvxBtn"
-              >Install from Open VSX</a
-            >
+            <div class="card-actions">
+              <a
+                class="button primary marketplace-download"
+                data-platform="open-vsx"
+                href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer"
+                rel="noopener"
+                data-i18n="dlOvxBtn"
+                >Install from Open VSX</a
+              >
+            </div>
           </article>
           <article class="download-card">
             <h3 data-i18n="dlChromiumTitle">Chromium extension</h3>
