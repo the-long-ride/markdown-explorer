@@ -100,9 +100,9 @@ local — nothing is uploaded.
 
 ## Demo
 
-A live browser demo is available at `/demo` with two modes:
-- `/demo/examples` — browse rendered example Markdown documents
-- `/demo/try` — open any `.md` file from your device; renders locally, nothing uploaded
+A live browser demo is available at `/app` with two modes:
+- `/app/?mode=test` — browse the built-in example Markdown documents (renders locally, nothing uploaded)
+- `/app/?mode=file` — open a local folder or file from your device; renders locally, nothing uploaded
 
 ## Installation
 
@@ -156,6 +156,6 @@ Markdown Explorer is designed for the agent era:
 - Changelog: https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md
 - Privacy: https://the-long-ride.github.io/markdown-explorer/privacy.html
 - Terms: https://the-long-ride.github.io/markdown-explorer/terms.html
-- Demo examples: https://the-long-ride.github.io/markdown-explorer/demo/examples/
-- Demo try: https://the-long-ride.github.io/markdown-explorer/demo/try/
+- Demo (test workspace): https://the-long-ride.github.io/markdown-explorer/app/?mode=test
+- Demo (open folder/file): https://the-long-ride.github.io/markdown-explorer/app/?mode=file
 - Sitemap: https://the-long-ride.github.io/markdown-explorer/sitemap.xml
