@@ -4,6 +4,38 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.6] — 2026-07-08
+
+### Added
+- **Tauri Desktop Variant**: Introduced a new Tauri-based desktop app (`tauri/`) with a full Rust backend — dispatcher, workspace scanner/watcher, search index, update manager, document converter, YouTube renderer, and performance profiling module.
+- **Smooth App Opening**: Added animated loading transition when the app starts to improve perceived performance.
+- **Search Load More**: Multi-tab search now shows a "load more" control for paginated results instead of flooding the view.
+- **Compact TOC Sticky**: Compact table-of-contents is now sticky inside the content area and gated behind `!tocCollapsed` state.
+
+### Changed
+- **Website Demo**: Rebuilt demo landing as a React app with virtual and file modes; replaced bridge page with a nav dropdown (Examples / Open a file). CI generates the demo file manifest from `tests/*.md` on deploy.
+- **Workspace State Detection**: Improved file-state change detection in the workspace watcher and refresh logic; extended `AppStateContext` to track pending-refresh signals.
+- **Electron Source Layout**: Renamed `desktop/` to `electron/` and reorganised sources by mission area (IPC, lifecycle, search, render, workspace).
+- **Package Manager**: Migrated root workspace and all sub-packages to `pnpm` with isolated + shamefully-hoisted node_modules.
+
+### Fixed
+- **Workspace Tab Sizing**: Workspace tabs now size to their label width with an 80-ch ellipsis cap.
+- **Scroll-to-Top Button**: Shrunk and nudged the scroll-to-top button to reduce visual footprint.
+
+### Tests & Coverage
+- **Vitest Infrastructure**: Bootstrapped full Vitest coverage suite with per-package gates (lines / functions / statements).
+- **Component Tests**: Added render and interaction tests for all major UI components (Topbar, DesktopTabBar, SidebarSearch, WorkspaceSelection, modals).
+- **Hook & Context Tests**: Coverage for `useDesktopTabs`, `useUpdateCheck`, `useFileDropOpen`, `useIsDark`, `usePlatform`, `AppStateContext`, navigation reducer, and DOM handlers.
+- **Electron Tests**: 755+ tests covering native shell, IPC, lifecycle, diagnostics, filesystem, renderer, search, and workspace watcher.
+- **Chromium Tests**: Tests for file-access, scanner, search-index, chrome-host commands, and bootstrap.
+- **Contract Tests**: Host-message parity, package-config contracts, Tauri dispatcher/host-message parity, and workflow-config assertions.
+- **CI**: OS/Node matrix (Node ≥ 22), parallel test jobs, fake timers for performance, release gate on passing tests.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, Chromium extension, manifest, and lockfile metadata to `1.5.6`.
+
+---
+
 ## [1.5.5] — 2026-06-23
 
 ### Added

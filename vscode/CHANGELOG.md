@@ -4,6 +4,25 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.6] — 2026-07-08
+
+### Added
+- **Smooth App Opening**: Added animated loading transition when the app starts.
+- **Search Load More**: Multi-tab search now shows a "load more" control for paginated results.
+- **Compact TOC Sticky**: Compact table-of-contents is now sticky inside the content area.
+
+### Fixed
+- **Workspace Tab Sizing**: Workspace tabs now size to their label width with an 80-ch ellipsis cap.
+
+### Tests & Coverage
+- **Panel Gap Tests**: Added VS Code panel gap and extension tests.
+- **Component Coverage**: Render and interaction tests for all major UI components, hook and context coverage, and DOM handler tests.
+
+### Maintenance
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, Chromium extension, manifest, and lockfile metadata to `1.5.6`.
+
+---
+
 ## [1.5.5] — 2026-06-23
 
 ### Added
