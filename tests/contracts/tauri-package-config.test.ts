@@ -10,6 +10,10 @@ const workspace = fs.readFileSync(
   path.join(repoRoot, 'pnpm-workspace.yaml'),
   'utf8',
 );
+const releaseWorkflow = fs.readFileSync(
+  path.join(repoRoot, '.github/workflows/release.yml'),
+  'utf8',
+);
 
 describe('tauri package config', () => {
   test('root package exposes start:tauri script', () => {
@@ -74,6 +78,29 @@ describe('tauri package config', () => {
       fs.readFileSync(path.join(repoRoot, 'tauri/tauri.conf.json'), 'utf8'),
     );
     expect(conf.app?.windows).toEqual([]);
+  });
+
+  test('tauri.conf.json declares branded bundle icons for desktop installers', () => {
+    const conf = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'tauri/tauri.conf.json'), 'utf8'),
+    );
+    expect(conf.bundle?.icon).toEqual(
+      expect.arrayContaining([
+        'icons/icon.png',
+        'icons/icon.ico',
+        'icons/icon.icns',
+      ]),
+    );
+  });
+
+  test('tauri branded icon assets exist', () => {
+    for (const rel of [
+      'tauri/icons/icon.png',
+      'tauri/icons/icon.ico',
+      'tauri/icons/icon.icns',
+    ]) {
+      expect(fs.existsSync(path.join(repoRoot, rel))).toBe(true);
+    }
   });
 
   test('capabilities include core:event:allow-emit for frontend→backend events', () => {
@@ -150,5 +177,19 @@ describe('tauri package config', () => {
     expect(watch).toContain('target');
     expect(watch).toContain('node_modules');
     expect(watch).toContain('.git');
+  });
+
+  test('release workflow syncs tauri version from release tag', () => {
+    expect(releaseWorkflow).toContain('Derive Tauri release version');
+    expect(releaseWorkflow).toContain('TAURI_VERSION=${TAG_VALUE#v}');
+    expect(releaseWorkflow).toContain("tauri/tauri.conf.json', 'tauri/package.json");
+    expect(releaseWorkflow).toContain("Expected release tag like v1.2.3");
+  });
+
+  test('release workflow strips embedded versions from tauri asset names', () => {
+    expect(releaseWorkflow).toContain('Rename Tauri artifacts');
+    expect(releaseWorkflow).toContain('base.replace(`_${version}`, \'\')');
+    expect(releaseWorkflow).toContain('base.replace(`-${version}`, \'\')');
+    expect(releaseWorkflow).toContain("new Set(['.deb', '.AppImage', '.dmg', '.exe', '.msi'])");
   });
 });

@@ -162,6 +162,31 @@ jobs:
       - name: Build shared UI bundle
         run: pnpm run build:ui:electron
 
+      - name: Derive Tauri release version
+        shell: bash
+        run: |
+          TAG_VALUE="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}"
+          if [[ ! "$TAG_VALUE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Expected release tag like v1.2.3, got '$TAG_VALUE'."
+            exit 1
+          fi
+
+          echo "TAURI_RELEASE_TAG=$TAG_VALUE" >> "$GITHUB_ENV"
+          echo "TAURI_VERSION=${TAG_VALUE#v}" >> "$GITHUB_ENV"
+
+      - name: Sync Tauri version to release tag
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          for (const file of ['tauri/tauri.conf.json', 'tauri/package.json']) {
+            const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+            json.version = process.env.TAURI_VERSION;
+            fs.writeFileSync(file, `${JSON.stringify(json, null, 2)}\n`);
+          }
+          NODE
+
       - name: Build Tauri bundle for Windows
         if: runner.os == 'Windows'
         working-directory: tauri
@@ -176,6 +201,40 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: tauri
         run: cargo tauri build --bundles dmg
+
+      - name: Rename Tauri artifacts
+        shell: bash
+        working-directory: tauri
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const root = path.join('target', 'release', 'bundle');
+          const version = process.env.TAURI_VERSION;
+          const renameable = new Set(['.deb', '.AppImage', '.dmg', '.exe', '.msi']);
+
+          function walk(dir) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            return entries.flatMap((entry) => {
+              const fullPath = path.join(dir, entry.name);
+              return entry.isDirectory() ? walk(fullPath) : [fullPath];
+            });
+          }
+
+          for (const file of walk(root)) {
+            const ext = path.extname(file);
+            if (!renameable.has(ext)) continue;
+
+            const dir = path.dirname(file);
+            const base = path.basename(file);
+            const next = base.replace(`_${version}`, '').replace(`-${version}`, '');
+            if (base === next) continue;
+
+            fs.renameSync(file, path.join(dir, next));
+            console.log(`${base} -> ${next}`);
+          }
+          NODE
 
       - name: Upload Tauri Artifact (Windows)
         if: runner.os == 'Windows'
