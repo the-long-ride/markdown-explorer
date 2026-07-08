@@ -67,6 +67,8 @@ export function App() {
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isDesktop = isElectron;
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
+  const isWebDemoEnv = typeof (window as any).__webDemoBus !== 'undefined';
+  const isWebFileMode = isWebDemoEnv && new URLSearchParams(window.location.search).get('mode') === 'file';
   const isDesktopLike = isDesktop || isChrome;
   const isTabView = isDesktop && state.settings.desktopViewMode === 'tabs';
   const updateCheck = useUpdateCheck({
@@ -126,10 +128,14 @@ export function App() {
   const { isDragging } = useFileDropOpen({
     isDesktop,
     isChrome,
+    isWebDemo: isWebFileMode,
     modalOpen,
     openDroppedPath,
     openDroppedFolder: useCallback((handle: any) => {
       bridge.postMessage({ command: 'openFolder', handle, openFirstFile: true });
+    }, [bridge]),
+    openDroppedFileHandle: useCallback((handle: any) => {
+      bridge.postMessage({ command: 'openFileHandle', handle });
     }, [bridge]),
   });
   const openSearch = useCallback((scope: SearchScope = 'current') => {

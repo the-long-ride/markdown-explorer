@@ -261,6 +261,11 @@ export interface OpenFileMessage {
   readonly command: 'openFile';
 }
 
+export interface OpenFileHandleMessage {
+  readonly command: 'openFileHandle';
+  readonly handle?: any;
+}
+
 export interface OpenPathMessage {
   readonly command: 'openPath';
   readonly path: string;
@@ -384,6 +389,7 @@ export type WebviewMessage =
   | RefreshMessage
   | OpenFolderMessage
   | OpenFileMessage
+  | OpenFileHandleMessage
   | OpenPathMessage
   | ActivateWorkspaceMessage
   | CrossTabSearchMessage

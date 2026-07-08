@@ -4,23 +4,27 @@ import { getDroppedFilePath } from '../desktop/desktopTabs';
 interface UseFileDropOpenParams {
   isDesktop: boolean;
   isChrome: boolean;
+  isWebDemo?: boolean;
   modalOpen: boolean;
   openDroppedPath: (path: string) => void;
   openDroppedFolder?: (handle: any) => void;
+  openDroppedFileHandle?: (handle: any) => void;
 }
 
 export function useFileDropOpen({
   isDesktop,
   isChrome,
+  isWebDemo = false,
   modalOpen,
   openDroppedPath,
   openDroppedFolder,
+  openDroppedFileHandle,
 }: UseFileDropOpenParams) {
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
   useEffect(() => {
-    if (!isDesktop && !isChrome) return;
+    if (!isDesktop && !isChrome && !isWebDemo) return;
 
     const isFileDrag = (event: DragEvent) => {
       const types = event.dataTransfer?.types;
@@ -60,7 +64,7 @@ export function useFileDropOpen({
       resetDragState();
       if (modalOpen) return;
 
-      if (isChrome && event.dataTransfer?.items && openDroppedFolder) {
+      if ((isChrome || isWebDemo) && event.dataTransfer?.items && openDroppedFolder) {
         const items = Array.from(event.dataTransfer.items);
         if (items.length > 0) {
           const item = items[0];
@@ -69,6 +73,10 @@ export function useFileDropOpen({
               const handle = await (item as any).getAsFileSystemHandle();
               if (handle && handle.kind === 'directory') {
                 openDroppedFolder(handle);
+                return;
+              }
+              if (isWebDemo && handle && (handle as any).kind === 'file' && openDroppedFileHandle) {
+                openDroppedFileHandle(handle);
                 return;
               }
             } catch (err) {
@@ -98,7 +106,7 @@ export function useFileDropOpen({
       window.removeEventListener('dragend', resetDragState);
       resetDragState();
     };
-  }, [isDesktop, isChrome, modalOpen, openDroppedPath, openDroppedFolder]);
+  }, [isDesktop, isChrome, isWebDemo, modalOpen, openDroppedPath, openDroppedFolder, openDroppedFileHandle]);
 
   return { isDragging };
 }
