@@ -10,13 +10,13 @@ Below are local workspace images to test responsive layout, centering, and hover
 
 ### Image 1: Telemetry Graph Preview
 
-![Telemetry Graph Preview](image.JPG)
+![Telemetry Graph Preview](https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/test/image.JPG)
 
 Link image: [Instagram - the.long.ride](https://www.instagram.com/p/DUQBs1hkryY)
 
 ### Image 2: Markdown Explorer Logo
 
-![Workspace Architecture Design](..\ui\assets\logos\logo-128.png)
+![Workspace Architecture Design](https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png)
 
 ---
 
