@@ -3,7 +3,7 @@ name: Release and Publish
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:
@@ -16,20 +16,8 @@ permissions:
 
 jobs:
   test-gate:
-    name: Verify Tests Passed
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check test workflow status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          REF="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}"
-          STATUS=$(gh run list --workflow test.yml --branch main --status success --limit 1 --json conclusion -q '.[0].conclusion' 2>/dev/null || echo "")
-          if [ "$STATUS" != "success" ]; then
-            echo "::error::Test workflow has not passed on main. Cannot release."
-            exit 1
-          fi
-          echo "Test workflow passed on main. Proceeding with release."
+    name: Verify Test Workflow Passed
+    uses: ./.github/workflows/test.yml
 
   build-vscode:
     name: Build VS Code Extension
