@@ -28,32 +28,6 @@
       "group": "build"
     },
     {
-      "label": "build-ui-tauri",
-      "type": "shell",
-      "command": "pnpm run build:ui:electron",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "silent",
-        "panel": "shared"
-      },
-      "group": "build"
-    },
-    {
-      "label": "tauri-dev",
-      "type": "shell",
-      "command": "cargo tauri dev",
-      "options": {
-        "cwd": "${workspaceFolder}/tauri"
-      },
-      "problemMatcher": [],
-      "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      },
-      "group": "build"
-    },
-    {
       "label": "dev: website-app",
       "type": "shell",
       "command": "pnpm",
