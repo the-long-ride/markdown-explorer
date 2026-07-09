@@ -107,6 +107,8 @@ describe('createMainWindow', () => {
     const opts = BrowserWindowConstructor.mock.calls[0][0];
     expect(opts.show).toBe(false);
     expect(opts.backgroundColor).toBe('#151518');
+    expect(opts.minWidth).toBe(720);
+    expect(opts.minHeight).toBe(480);
     expect(opts.isMaximized).toBe(true);
     expect(opts.frame).toBe(false);
     expect(opts.webPreferences.contextIsolation).toBe(true);

@@ -61,7 +61,7 @@ describe('tauri dispatcher parity', () => {
   });
 
   test('activateWorkspace reads openFirstFile from message', () => {
-    const match = dispatcherSrc.match(/"activateWorkspace"\s*=>\s*\{[\s\S]*?openFirstFile[\s\S]*?msg\.get\("openFirstFile"\)/);
+    const match = dispatcherSrc.match(/"activateWorkspace"\s*=>\s*\{[\s\S]*?openFirstFile[\s\S]*?msg\s*\.\s*get\("openFirstFile"\)/);
     expect(match).not.toBeNull();
   });
 

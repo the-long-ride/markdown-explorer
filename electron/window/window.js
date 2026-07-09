@@ -13,6 +13,8 @@ function createMainWindow({
     backgroundColor: '#151518',
     width: 1200,
     height: 700,
+    minWidth: 720,
+    minHeight: 480,
     isMaximized: true,
     center: true,
     frame: false,
