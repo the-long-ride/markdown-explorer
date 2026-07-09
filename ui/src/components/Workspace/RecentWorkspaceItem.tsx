@@ -116,7 +116,10 @@ export function RecentWorkspaceItem({
           )}
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', alignSelf: 'flex-start' }}>
+      <div 
+        className={`recent-workspace-actions${modal ? ' recent-workspace-actions--modal' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {onRename && !isEditing && (
           <TooltipButton
             onClick={(event) => {
