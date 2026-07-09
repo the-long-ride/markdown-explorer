@@ -5,7 +5,8 @@ import { resolve, dirname } from 'path';
 
 export default defineConfig(({ mode }) => {
   const isElectron = process.env.BUILD_TARGET === 'electron' || mode === 'electron';
-  const isDesktop = isElectron;
+  const isTauri = mode === 'tauri';
+  const isDesktop = isElectron || isTauri;
 
   // Chunks that must not be modulepreloaded — they load on-demand via dynamic import()
   const LAZY_CHUNKS = ['vendor-mermaid', 'vendor-hljs', 'katex', 'vendor-chart', 'vendor-react', 'translationsData'];
@@ -62,7 +63,7 @@ export default defineConfig(({ mode }) => {
             (match, before, href, after) => {
               // Already has a media attribute — leave it alone
               if (/media=/i.test(match)) return match;
-              return `<link rel="preload" as="style" href="${href}">\n    <link rel="stylesheet"${before}href="${href}"${after} media="print" onload="this.media='all'">\n    <noscript><link rel="stylesheet"${before}href="${href}"${after}></noscript>`;
+              return `<link rel="preload" as="style" href="${href}" crossorigin>\n    <link rel="stylesheet"${before}href="${href}"${after} media="print" onload="this.media='all'" crossorigin>\n    <noscript><link rel="stylesheet"${before}href="${href}"${after}></noscript>`;
             }
           );
           // Strip modulepreload for lazy chunks

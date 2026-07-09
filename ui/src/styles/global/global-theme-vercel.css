@@ -1,0 +1,131 @@
+/* ============================================================
+   Vercel Style Layout & Theme (Geist Design Spec)
+   ============================================================ */
+
+/* Panel styles: borders, background, shadow, and radius overrides */
+[data-theme-style="vercel"] .topbar,
+[data-theme-style="vercel"] .sidebar,
+[data-theme-style="vercel"] .toc-panel {
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-s);
+  box-shadow: none;
+}
+
+[data-theme-style="vercel"] .topbar {
+  margin: 8px 10px 0;
+}
+
+[data-theme-style="vercel"] .body {
+  gap: 8px;
+  padding: 8px;
+}
+
+/* Sizing and alignment constraints */
+[data-theme-style="vercel"] .toc-compact,
+[data-theme-style="vercel"] .mdn-body {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+[data-theme-style="vercel"] .content__scroll {
+  padding-bottom: 36px;
+}
+
+/* Buttons, Search/Inputs, Copy and Preview Buttons */
+[data-theme-style="vercel"] .btn,
+[data-theme-style="vercel"] .mdn-copy-btn,
+[data-theme-style="vercel"] .mdn-toggle-preview-btn {
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  gap: var(--control-gap);
+}
+
+[data-theme-style="vercel"] .btn {
+  height: var(--control-h);
+  padding: 0 var(--control-pad-x);
+  background: var(--bg);
+  color: var(--tx);
+  font-weight: 500;
+  box-shadow: var(--sh-sm);
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+[data-theme-style="vercel"] .btn:hover {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+  box-shadow: var(--sh-sm);
+}
+
+[data-theme-style="vercel"] .btn:active {
+  background: var(--bg-a);
+  transform: none;
+}
+
+[data-theme-style="vercel"] .btn--accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  font-weight: 500;
+  box-shadow: var(--sh-sm);
+}
+
+[data-theme-style="vercel"] .btn--accent:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+[data-theme-style="vercel"] .search-bar,
+[data-theme-style="vercel"] .sidebar__search,
+[data-theme-style="vercel"] .mdn-table-search-wrap,
+[data-theme-style="vercel"] .settings-shortcut-input {
+  height: var(--control-h);
+  padding: 0 var(--control-pad-x);
+  gap: var(--control-gap);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--tx);
+  box-shadow: none;
+}
+
+[data-theme-style="vercel"] .search-bar input,
+[data-theme-style="vercel"] .sidebar__search input,
+[data-theme-style="vercel"] .mdn-table-search-wrap input {
+  font-size: 12px;
+  color: var(--tx);
+}
+
+[data-theme-style="vercel"] .search-bar:focus-within,
+[data-theme-style="vercel"] .sidebar__search:focus-within,
+[data-theme-style="vercel"] .mdn-table-search-wrap:focus-within {
+  border-color: var(--accent);
+  background: var(--bg);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+[data-theme-style="vercel"] .search-bar input:focus-visible,
+[data-theme-style="vercel"] .sidebar__search input:focus-visible,
+[data-theme-style="vercel"] .mdn-table-search-wrap input:focus-visible {
+  box-shadow: none !important;
+}
+
+/* Geist focus outline rule */
+[data-theme-style="vercel"] :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+/* Active node border left insets for tree-file and toc-item */
+[data-theme-style="vercel"] .tree-file.is-active,
+[data-theme-style="vercel"] .toc-item.is-active {
+  box-shadow: inset 2px 0 0 var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+[data-theme-style="vercel"] .tree-file.is-active {
+  border-color: transparent;
+}

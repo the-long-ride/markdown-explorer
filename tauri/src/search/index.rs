@@ -1,5 +1,7 @@
 use crate::search::unicode::{normalize_for_search, prepare_haystack, PreparedHaystack};
-use crate::workspace::file_types::{is_markdown_file_path, strip_known_extension, extension, EXTRA_DOCUMENT_EXTENSIONS};
+use crate::workspace::file_types::{
+    extension, is_markdown_file_path, strip_known_extension, EXTRA_DOCUMENT_EXTENSIONS,
+};
 use crate::workspace::scanner::{DocumentKind, MdFile};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
@@ -15,6 +17,10 @@ const MAX_SYNC_MATCHES_PER_FILE: usize = 10000;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceSearchResult {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tab_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tab_label: Option<String>,
     pub fs_path: String,
     pub title: String,
     pub file_name: String,
@@ -65,9 +71,21 @@ fn should_skip_search_item(item: &MdFile) -> bool {
 }
 
 fn score_item_name(title: &str, file_name: &str, relative_path: &str, norm_query: &str) -> i32 {
-    let title_score = if normalize_for_search(title).contains(norm_query) { 5 } else { 0 };
-    let file_name_score = if normalize_for_search(file_name).contains(norm_query) { 4 } else { 0 };
-    let path_score = if normalize_for_search(relative_path).contains(norm_query) { 2 } else { 0 };
+    let title_score = if normalize_for_search(title).contains(norm_query) {
+        5
+    } else {
+        0
+    };
+    let file_name_score = if normalize_for_search(file_name).contains(norm_query) {
+        4
+    } else {
+        0
+    };
+    let path_score = if normalize_for_search(relative_path).contains(norm_query) {
+        2
+    } else {
+        0
+    };
     title_score + file_name_score + path_score
 }
 
@@ -89,26 +107,51 @@ pub fn make_search_excerpt(text: &str, index: usize, match_length: usize) -> Str
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ");
-    let after_text: String = text[end..]
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
+    let after_text: String = text[end..].split_whitespace().collect::<Vec<_>>().join(" ");
 
-    let before_words: Vec<&str> = if before_text.is_empty() { vec![] } else { before_text.split(' ').collect() };
-    let after_words: Vec<&str> = if after_text.is_empty() { vec![] } else { after_text.split(' ').collect() };
+    let before_words: Vec<&str> = if before_text.is_empty() {
+        vec![]
+    } else {
+        before_text.split(' ').collect()
+    };
+    let after_words: Vec<&str> = if after_text.is_empty() {
+        vec![]
+    } else {
+        after_text.split(' ').collect()
+    };
 
     let mut parts: Vec<String> = Vec::new();
-    if before_words.len() > 10 { parts.push("...".to_string()); }
-    parts.extend(before_words.iter().rev().take(10).rev().map(|s| s.to_string()));
-    if !match_text.is_empty() { parts.push(match_text); }
+    if before_words.len() > 10 {
+        parts.push("...".to_string());
+    }
+    parts.extend(
+        before_words
+            .iter()
+            .rev()
+            .take(10)
+            .rev()
+            .map(|s| s.to_string()),
+    );
+    if !match_text.is_empty() {
+        parts.push(match_text);
+    }
     parts.extend(after_words.iter().take(10).map(|s| s.to_string()));
-    if after_words.len() > 10 { parts.push("...".to_string()); }
+    if after_words.len() > 10 {
+        parts.push("...".to_string());
+    }
 
     parts.join(" ").trim().to_string()
 }
 
-fn make_result(item: &MdFile, title: &str, file_name: &str, relative_path: &str) -> WorkspaceSearchResult {
+fn make_result(
+    item: &MdFile,
+    title: &str,
+    file_name: &str,
+    relative_path: &str,
+) -> WorkspaceSearchResult {
     WorkspaceSearchResult {
+        tab_id: item.tab_id.clone(),
+        tab_label: item.tab_label.clone(),
         fs_path: item.fs_path.clone(),
         title: title.to_string(),
         file_name: file_name.to_string(),
@@ -126,7 +169,10 @@ fn make_result(item: &MdFile, title: &str, file_name: &str, relative_path: &str)
 
 impl SearchIndex {
     pub(crate) fn get_entry(&self, file_path: &str) -> Option<SearchEntry> {
-        if file_path.is_empty() || !Path::new(file_path).exists() || !can_search_file_contents(file_path) {
+        if file_path.is_empty()
+            || !Path::new(file_path).exists()
+            || !can_search_file_contents(file_path)
+        {
             return None;
         }
         let metadata = fs::metadata(file_path).ok()?;
@@ -152,7 +198,12 @@ impl SearchIndex {
 
         let raw = fs::read_to_string(file_path).ok()?;
         let haystack = prepare_haystack(&raw);
-        let entry = SearchEntry { mtime_ms, size, raw, haystack };
+        let entry = SearchEntry {
+            mtime_ms,
+            size,
+            raw,
+            haystack,
+        };
         {
             let mut cache = self.cache.write();
             cache.insert(file_path.to_string(), entry.clone());
@@ -179,22 +230,46 @@ impl SearchIndex {
         }
     }
 
-    pub fn search(&self, query: &str, items: &[MdFile], limit: usize) -> Vec<WorkspaceSearchResult> {
-        let norm_query = if query.len() < 2 { return vec![]; } else { normalize_for_search(query) };
-        if norm_query.is_empty() { return vec![]; }
+    pub fn search(
+        &self,
+        query: &str,
+        items: &[MdFile],
+        limit: usize,
+    ) -> Vec<WorkspaceSearchResult> {
+        let norm_query = if query.len() < 2 {
+            return vec![];
+        } else {
+            normalize_for_search(query)
+        };
+        if norm_query.is_empty() {
+            return vec![];
+        }
 
         let mut scored: Vec<ScoredResult> = Vec::new();
 
         for item in items {
-            if should_skip_search_item(item) { continue; }
+            if should_skip_search_item(item) {
+                continue;
+            }
 
             let file_name = if item.file_name.is_empty() {
-                Path::new(&item.fs_path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
+                Path::new(&item.fs_path)
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default()
             } else {
                 item.file_name.clone()
             };
-            let relative_path = if item.relative_path.is_empty() { file_name.clone() } else { item.relative_path.clone() };
-            let title = if item.title.is_empty() { strip_known_extension(&file_name) } else { item.title.clone() };
+            let relative_path = if item.relative_path.is_empty() {
+                file_name.clone()
+            } else {
+                item.relative_path.clone()
+            };
+            let title = if item.title.is_empty() {
+                strip_known_extension(&file_name)
+            } else {
+                item.title.clone()
+            };
             let base_score = score_item_name(&title, &file_name, &relative_path, &norm_query);
 
             if can_search_file_contents(&item.fs_path) {
@@ -205,13 +280,17 @@ impl SearchIndex {
                     let mut found_any = false;
 
                     while ordinal < MAX_SYNC_MATCHES_PER_FILE {
-                        let result = match entry.haystack.index_of_normalized(&norm_query, next_norm_index) {
+                        let result = match entry
+                            .haystack
+                            .index_of_normalized(&norm_query, next_norm_index)
+                        {
                             Some(r) => r,
                             None => break,
                         };
                         found_any = true;
                         let line_number = raw[..result.hit.index].split('\n').count();
-                        let excerpt = make_search_excerpt(raw, result.hit.index, result.hit.match_length);
+                        let excerpt =
+                            make_search_excerpt(raw, result.hit.index, result.hit.match_length);
                         let score = base_score as f64 + 3.0 - (ordinal.min(20) as f64) / 100.0;
 
                         let mut result_item = make_result(item, &title, &file_name, &relative_path);
@@ -221,23 +300,35 @@ impl SearchIndex {
                         result_item.match_length = Some(result.hit.match_length);
                         result_item.line_number = Some(line_number);
 
-                        scored.push(ScoredResult { result: result_item, score });
+                        scored.push(ScoredResult {
+                            result: result_item,
+                            score,
+                        });
 
                         ordinal += 1;
                         next_norm_index = result.next_norm_index;
                     }
 
-                    if found_any { continue; }
+                    if found_any {
+                        continue;
+                    }
                 }
             }
 
             if base_score > 0 {
                 let result_item = make_result(item, &title, &file_name, &relative_path);
-                scored.push(ScoredResult { result: result_item, score: base_score as f64 });
+                scored.push(ScoredResult {
+                    result: result_item,
+                    score: base_score as f64,
+                });
             }
         }
 
-        scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        scored.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         scored.into_iter().take(limit).map(|s| s.result).collect()
     }
 
@@ -248,12 +339,20 @@ impl SearchIndex {
         options: IncrementalOptions,
     ) -> IncrementalSummary {
         let norm_query = if query.len() < 2 {
-            return IncrementalSummary { total: 0, truncated: false, cancelled: false };
+            return IncrementalSummary {
+                total: 0,
+                truncated: false,
+                cancelled: false,
+            };
         } else {
             normalize_for_search(query)
         };
         if norm_query.is_empty() {
-            return IncrementalSummary { total: 0, truncated: false, cancelled: false };
+            return IncrementalSummary {
+                total: 0,
+                truncated: false,
+                cancelled: false,
+            };
         }
 
         let mut batch: Vec<ScoredResult> = Vec::new();
@@ -264,17 +363,34 @@ impl SearchIndex {
         for item in &items {
             if (options.should_cancel)() {
                 flush_batch(&mut batch, &options.on_batch);
-                return IncrementalSummary { total, truncated, cancelled: true };
+                return IncrementalSummary {
+                    total,
+                    truncated,
+                    cancelled: true,
+                };
             }
-            if should_skip_search_item(item) { continue; }
+            if should_skip_search_item(item) {
+                continue;
+            }
 
             let file_name = if item.file_name.is_empty() {
-                Path::new(&item.fs_path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
+                Path::new(&item.fs_path)
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default()
             } else {
                 item.file_name.clone()
             };
-            let relative_path = if item.relative_path.is_empty() { file_name.clone() } else { item.relative_path.clone() };
-            let title = if item.title.is_empty() { strip_known_extension(&file_name) } else { item.title.clone() };
+            let relative_path = if item.relative_path.is_empty() {
+                file_name.clone()
+            } else {
+                item.relative_path.clone()
+            };
+            let title = if item.title.is_empty() {
+                strip_known_extension(&file_name)
+            } else {
+                item.title.clone()
+            };
             let base_score = score_item_name(&title, &file_name, &relative_path, &norm_query);
             let mut match_count = 0;
 
@@ -287,23 +403,29 @@ impl SearchIndex {
                     let mut line_cursor = 0;
 
                     while match_count < options.max_matches_per_file {
-                        let result = match entry.haystack.index_of_normalized(&norm_query, next_norm_index) {
+                        let result = match entry
+                            .haystack
+                            .index_of_normalized(&norm_query, next_norm_index)
+                        {
                             Some(r) => r,
                             None => break,
                         };
 
-                        let mut next_line_break = raw[line_cursor..].find('\n').map(|p| p + line_cursor);
+                        let mut next_line_break =
+                            raw[line_cursor..].find('\n').map(|p| p + line_cursor);
                         while let Some(nlb) = next_line_break {
                             if nlb < result.hit.index {
                                 line_number += 1;
                                 line_cursor = nlb + 1;
-                                next_line_break = raw[line_cursor..].find('\n').map(|p| p + line_cursor);
+                                next_line_break =
+                                    raw[line_cursor..].find('\n').map(|p| p + line_cursor);
                             } else {
                                 break;
                             }
                         }
 
-                        let excerpt = make_search_excerpt(raw, result.hit.index, result.hit.match_length);
+                        let excerpt =
+                            make_search_excerpt(raw, result.hit.index, result.hit.match_length);
                         let score = base_score as f64 + 3.0 - (ordinal.min(20) as f64) / 100.0;
 
                         let mut result_item = make_result(item, &title, &file_name, &relative_path);
@@ -316,10 +438,17 @@ impl SearchIndex {
                         if total >= options.max_results {
                             truncated = true;
                             flush_batch(&mut batch, &options.on_batch);
-                            return IncrementalSummary { total, truncated, cancelled: false };
+                            return IncrementalSummary {
+                                total,
+                                truncated,
+                                cancelled: false,
+                            };
                         }
 
-                        batch.push(ScoredResult { result: result_item, score });
+                        batch.push(ScoredResult {
+                            result: result_item,
+                            score,
+                        });
                         total += 1;
                         if batch.len() >= options.batch_size {
                             flush_batch(&mut batch, &options.on_batch);
@@ -335,7 +464,11 @@ impl SearchIndex {
                             tokio::task::yield_now().await;
                             if (options.should_cancel)() {
                                 flush_batch(&mut batch, &options.on_batch);
-                                return IncrementalSummary { total, truncated, cancelled: true };
+                                return IncrementalSummary {
+                                    total,
+                                    truncated,
+                                    cancelled: true,
+                                };
                             }
                         }
                     }
@@ -350,10 +483,17 @@ impl SearchIndex {
                 if total >= options.max_results {
                     truncated = true;
                     flush_batch(&mut batch, &options.on_batch);
-                    return IncrementalSummary { total, truncated, cancelled: false };
+                    return IncrementalSummary {
+                        total,
+                        truncated,
+                        cancelled: false,
+                    };
                 }
                 let result_item = make_result(item, &title, &file_name, &relative_path);
-                batch.push(ScoredResult { result: result_item, score: base_score as f64 });
+                batch.push(ScoredResult {
+                    result: result_item,
+                    score: base_score as f64,
+                });
                 total += 1;
                 if batch.len() >= options.batch_size {
                     flush_batch(&mut batch, &options.on_batch);
@@ -366,19 +506,33 @@ impl SearchIndex {
                 tokio::task::yield_now().await;
                 if (options.should_cancel)() {
                     flush_batch(&mut batch, &options.on_batch);
-                    return IncrementalSummary { total, truncated, cancelled: true };
+                    return IncrementalSummary {
+                        total,
+                        truncated,
+                        cancelled: true,
+                    };
                 }
             }
         }
 
         flush_batch(&mut batch, &options.on_batch);
-        IncrementalSummary { total, truncated, cancelled: false }
+        IncrementalSummary {
+            total,
+            truncated,
+            cancelled: false,
+        }
     }
 }
 
 fn flush_batch(batch: &mut Vec<ScoredResult>, on_batch: &dyn Fn(Vec<WorkspaceSearchResult>)) {
-    if batch.is_empty() { return; }
-    batch.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+    if batch.is_empty() {
+        return;
+    }
+    batch.sort_by(|a, b| {
+        b.score
+            .partial_cmp(&a.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     let drained: Vec<_> = batch.drain(..).map(|s| s.result).collect();
     on_batch(drained);
 }
@@ -418,7 +572,10 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn temp_dir(prefix: &str) -> std::path::PathBuf {
-        let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
         let dir = std::env::temp_dir().join(format!("{prefix}-{stamp}"));
         fs::create_dir_all(&dir).unwrap();
         dir
@@ -438,6 +595,8 @@ mod tests {
             title: title.to_string(),
             extension: extension(path.to_string_lossy().as_ref()),
             document_kind: DocumentKind::Markdown,
+            tab_id: None,
+            tab_label: None,
         }
     }
 
@@ -453,10 +612,19 @@ mod tests {
         let root = temp_dir("search-idx");
         let guide = root.join("guide.md");
         let notes = root.join("notes.md");
-        write(&guide, "# Performance Guide\n\nStartup performance matters here.");
-        write(&notes, "# Notes\n\nThis file also mentions performance tuning.");
+        write(
+            &guide,
+            "# Performance Guide\n\nStartup performance matters here.",
+        );
+        write(
+            &notes,
+            "# Notes\n\nThis file also mentions performance tuning.",
+        );
 
-        let items = vec![make_item(&notes, "Notes"), make_item(&guide, "Performance Guide")];
+        let items = vec![
+            make_item(&notes, "Notes"),
+            make_item(&guide, "Performance Guide"),
+        ];
         let idx = SearchIndex::default();
         let results = idx.search("performance", &items, 10000);
 
@@ -465,6 +633,24 @@ mod tests {
         assert_eq!(results[1].fs_path, guide.to_string_lossy());
         assert_eq!(results[2].fs_path, notes.to_string_lossy());
         assert!(results[0].excerpt.as_ref().unwrap().contains("performance"));
+    }
+
+    #[test]
+    fn search_preserves_tab_metadata_for_cross_tab_results() {
+        let root = temp_dir("search-tab-meta");
+        let guide = root.join("guide.md");
+        write(&guide, "# Guide\n\nJump target content.");
+
+        let mut item = make_item(&guide, "Guide");
+        item.tab_id = Some("tab-1".to_string());
+        item.tab_label = Some("Docs".to_string());
+
+        let idx = SearchIndex::default();
+        let results = idx.search("target", &[item], 10000);
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].tab_id.as_deref(), Some("tab-1"));
+        assert_eq!(results[0].tab_label.as_deref(), Some("Docs"));
     }
 
     #[test]
@@ -493,11 +679,19 @@ mod tests {
 
         let tr_results = idx.search("istanbul", &items, 10000);
         assert_eq!(tr_results.len(), 1);
-        assert!(tr_results[0].excerpt.as_ref().unwrap().contains("\u{0130}stanbul"));
+        assert!(tr_results[0]
+            .excerpt
+            .as_ref()
+            .unwrap()
+            .contains("\u{0130}stanbul"));
 
         let de_results = idx.search("strasse", &items, 10000);
         assert_eq!(de_results.len(), 1);
-        assert!(de_results[0].excerpt.as_ref().unwrap().contains("stra\u{00DF}e"));
+        assert!(de_results[0]
+            .excerpt
+            .as_ref()
+            .unwrap()
+            .contains("stra\u{00DF}e"));
     }
 
     #[test]

@@ -28,7 +28,11 @@ fn main() {
     {
         if let Ok(entries) = std::fs::read_dir(build_dir) {
             for entry in entries.flatten() {
-                let dll_path = entry.path().join("out").join(arch_dir).join("WebView2Loader.dll");
+                let dll_path = entry
+                    .path()
+                    .join("out")
+                    .join(arch_dir)
+                    .join("WebView2Loader.dll");
                 if dll_path.exists() {
                     let deps_dir = build_dir.parent().map(|p| p.join("deps"));
                     if let Some(deps_dir) = deps_dir {

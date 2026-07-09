@@ -19,13 +19,21 @@ pub struct WorkspacePathStatus {
 
 pub fn get_workspace_path_status(path: &Path) -> WorkspacePathStatus {
     match fs::metadata(path) {
-        Ok(metadata) => WorkspacePathStatus { ok: true, is_file: metadata.is_file(), reason: None },
+        Ok(metadata) => WorkspacePathStatus {
+            ok: true,
+            is_file: metadata.is_file(),
+            reason: None,
+        },
         Err(err) => {
             let locked = matches!(err.kind(), std::io::ErrorKind::PermissionDenied);
             WorkspacePathStatus {
                 ok: false,
                 is_file: false,
-                reason: Some(if locked { WorkspaceUnavailableReason::Locked } else { WorkspaceUnavailableReason::Missing }),
+                reason: Some(if locked {
+                    WorkspaceUnavailableReason::Locked
+                } else {
+                    WorkspaceUnavailableReason::Missing
+                }),
             }
         }
     }
@@ -33,13 +41,19 @@ pub fn get_workspace_path_status(path: &Path) -> WorkspacePathStatus {
 
 pub fn workspace_base_dir(workspace_path: &Path) -> PathBuf {
     if workspace_path.is_file() {
-        workspace_path.parent().unwrap_or(workspace_path).to_path_buf()
+        workspace_path
+            .parent()
+            .unwrap_or(workspace_path)
+            .to_path_buf()
     } else {
         workspace_path.to_path_buf()
     }
 }
 
-pub fn choose_workspace_and_file(path: &Path, document_conversion_enabled: bool) -> Result<(PathBuf, Option<PathBuf>), &'static str> {
+pub fn choose_workspace_and_file(
+    path: &Path,
+    document_conversion_enabled: bool,
+) -> Result<(PathBuf, Option<PathBuf>), &'static str> {
     let status = get_workspace_path_status(path);
     if !status.ok {
         return Err("unavailable");
@@ -48,7 +62,10 @@ pub fn choose_workspace_and_file(path: &Path, document_conversion_enabled: bool)
         if !is_supported_file_path(&path.to_string_lossy(), document_conversion_enabled) {
             return Err("unsupported");
         }
-        return Ok((path.parent().unwrap_or(path).to_path_buf(), Some(path.to_path_buf())));
+        return Ok((
+            path.parent().unwrap_or(path).to_path_buf(),
+            Some(path.to_path_buf()),
+        ));
     }
     Ok((path.to_path_buf(), None))
 }
@@ -59,7 +76,10 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn temp_dir(prefix: &str) -> PathBuf {
-        let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
         let dir = std::env::temp_dir().join(format!("{prefix}-{stamp}"));
         fs::create_dir_all(&dir).unwrap();
         dir
@@ -128,7 +148,10 @@ mod tests {
     #[test]
     fn choose_workspace_rejects_missing_path() {
         let missing = std::env::temp_dir().join("nonexistent-tauri-ws");
-        assert_eq!(choose_workspace_and_file(&missing, false), Err("unavailable"));
+        assert_eq!(
+            choose_workspace_and_file(&missing, false),
+            Err("unavailable")
+        );
     }
 
     #[test]

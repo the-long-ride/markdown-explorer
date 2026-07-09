@@ -47,9 +47,11 @@ mod tests {
 
     #[test]
     fn ready_ack_with_workspace() {
-        let recents = vec![
-            RecentWorkspace { name: "Workspace A".to_string(), path: "/ws/a".to_string(), last_opened: 1000 },
-        ];
+        let recents = vec![RecentWorkspace {
+            name: "Workspace A".to_string(),
+            path: "/ws/a".to_string(),
+            last_opened: 1000,
+        }];
         let result = create_startup_ready_ack(
             Some(Path::new("/ws/project")),
             recents,
@@ -71,14 +73,7 @@ mod tests {
 
     #[test]
     fn ready_ack_without_workspace() {
-        let result = create_startup_ready_ack(
-            None,
-            vec![],
-            false,
-            "linux",
-            "arm64",
-            true,
-        );
+        let result = create_startup_ready_ack(None, vec![], false, "linux", "arm64", true);
         assert_eq!(result["workspaceName"], "");
         assert!(result.get("workspacePath").is_none());
         assert!(!result["workspacePath"].is_string());
@@ -112,8 +107,16 @@ mod tests {
     #[test]
     fn ready_ack_recent_workspaces_serialized() {
         let recents = vec![
-            RecentWorkspace { name: "A".to_string(), path: "/ws/a".to_string(), last_opened: 1000 },
-            RecentWorkspace { name: "B".to_string(), path: "/ws/b".to_string(), last_opened: 2000 },
+            RecentWorkspace {
+                name: "A".to_string(),
+                path: "/ws/a".to_string(),
+                last_opened: 1000,
+            },
+            RecentWorkspace {
+                name: "B".to_string(),
+                path: "/ws/b".to_string(),
+                last_opened: 2000,
+            },
         ];
         let result = create_startup_ready_ack(None, recents, false, "win32", "x64", false);
         let arr = result["recentWorkspaces"].as_array().unwrap();

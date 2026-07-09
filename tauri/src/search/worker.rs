@@ -12,8 +12,16 @@ pub enum SearchWorkerCommand {
 }
 
 pub enum SearchWorkerMessage {
-    Batch { request_id: String, results: Vec<WorkspaceSearchResult> },
-    Done { request_id: String, total: usize, truncated: bool, cancelled: bool },
+    Batch {
+        request_id: String,
+        results: Vec<WorkspaceSearchResult>,
+    },
+    Done {
+        request_id: String,
+        total: usize,
+        truncated: bool,
+        cancelled: bool,
+    },
 }
 
 pub struct SearchWorkerHandle {
@@ -108,7 +116,9 @@ impl SearchWorkerHandle {
     }
 
     pub fn search(&self, request_id: String, query: String) {
-        let _ = self.tx.send(SearchWorkerCommand::Search { request_id, query });
+        let _ = self
+            .tx
+            .send(SearchWorkerCommand::Search { request_id, query });
     }
 
     pub fn cancel(&self) {
@@ -127,10 +137,7 @@ mod tests {
 
     fn make_file(name: &str) -> MdFile {
         // Use a real temp .md file so the search index doesn't skip it
-        let mut tmp = tempfile::Builder::new()
-            .suffix(".md")
-            .tempfile()
-            .unwrap();
+        let mut tmp = tempfile::Builder::new().suffix(".md").tempfile().unwrap();
         use std::io::Write;
         let _ = tmp.write_all(b"test content for search");
         let fs_path = tmp.path().to_string_lossy().to_string();
@@ -144,6 +151,16 @@ mod tests {
             title: name.to_string(),
             extension: "md".to_string(),
             document_kind: crate::workspace::scanner::DocumentKind::Markdown,
+            tab_id: None,
+            tab_label: None,
+        }
+    }
+
+    fn make_tab_file(name: &str, tab_id: &str, tab_label: &str) -> MdFile {
+        MdFile {
+            tab_id: Some(tab_id.to_string()),
+            tab_label: Some(tab_label.to_string()),
+            ..make_file(name)
         }
     }
 
@@ -168,7 +185,9 @@ mod tests {
                     assert_eq!(request_id, "req1");
                     got_batch = true;
                 }
-                Ok(Some(SearchWorkerMessage::Done { request_id, total, .. })) => {
+                Ok(Some(SearchWorkerMessage::Done {
+                    request_id, total, ..
+                })) => {
                     assert_eq!(request_id, "req1");
                     assert!(total > 0);
                     got_done = true;
@@ -179,6 +198,42 @@ mod tests {
         }
         handle.dispose();
         assert!(got_batch || got_done);
+    }
+
+    #[tokio::test]
+    async fn search_results_preserve_cross_tab_metadata() {
+        let (msg_tx, mut msg_rx) = mpsc::unbounded_channel::<SearchWorkerMessage>();
+
+        let handle = create_search_worker(move |msg| {
+            let _ = msg_tx.send(msg);
+        });
+
+        handle.set_items(vec![make_tab_file("a", "tab-1", "Workspace A")]);
+        handle.search("req1".into(), "test".into());
+
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+        let mut got_metadata = false;
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(Duration::from_millis(500), msg_rx.recv()).await {
+                Ok(Some(SearchWorkerMessage::Batch {
+                    request_id,
+                    results,
+                })) => {
+                    assert_eq!(request_id, "req1");
+                    if let Some(result) = results.first() {
+                        assert_eq!(result.tab_id.as_deref(), Some("tab-1"));
+                        assert_eq!(result.tab_label.as_deref(), Some("Workspace A"));
+                        got_metadata = true;
+                        break;
+                    }
+                }
+                Ok(Some(SearchWorkerMessage::Done { .. })) => break,
+                _ => {}
+            }
+        }
+
+        handle.dispose();
+        assert!(got_metadata);
     }
 
     #[tokio::test]
@@ -194,7 +249,7 @@ mod tests {
         handle.cancel();
         handle.search("req2".into(), "content".into());
 
-        let deadline = tokio::time:: Instant::now() + Duration::from_secs(5);
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
         while tokio::time::Instant::now() < deadline {
             match tokio::time::timeout(Duration::from_millis(500), msg_rx.recv()).await {
                 Ok(Some(SearchWorkerMessage::Done { request_id, .. })) => {

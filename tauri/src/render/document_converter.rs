@@ -56,9 +56,7 @@ fn get_extension(file_path: &str) -> String {
 
 fn get_file_type_label(file_path: &str) -> String {
     let ext = get_extension(file_path);
-    ext.strip_prefix('.')
-        .unwrap_or(&ext)
-        .to_uppercase()
+    ext.strip_prefix('.').unwrap_or(&ext).to_uppercase()
 }
 
 fn strip_known_extension(file_name: &str) -> String {
@@ -72,19 +70,29 @@ fn normalize_preview_markdown(markdown: &str, file_path: &str) -> String {
     let trimmed = markdown.trim();
     if trimmed.is_empty() {
         let title = strip_known_extension(
-            Path::new(file_path).file_name().map(|n| n.to_string_lossy().to_string()).as_deref().unwrap_or(file_path),
+            Path::new(file_path)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .as_deref()
+                .unwrap_or(file_path),
         )
         .replace('\n', " ")
         .replace('\r', " ")
         .trim()
         .to_string();
-        return format!("# {title}\n\n_No readable content was found while preparing this preview._");
+        return format!(
+            "# {title}\n\n_No readable content was found while preparing this preview._"
+        );
     }
     if trimmed.lines().any(|l| l.starts_with('#')) {
         trimmed.to_string()
     } else {
         let title = strip_known_extension(
-            Path::new(file_path).file_name().map(|n| n.to_string_lossy().to_string()).as_deref().unwrap_or(file_path),
+            Path::new(file_path)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .as_deref()
+                .unwrap_or(file_path),
         )
         .replace('\n', " ")
         .replace('\r', " ")
@@ -105,8 +113,8 @@ impl DocumentConverter {
         match ext {
             ".md" | ".mdx" => DocumentKind::Markdown,
             ".txt" => DocumentKind::Text,
-            ".doc" | ".docx" | ".pdf" | ".html" | ".xls" | ".xlsx" | ".xlm"
-            | ".pptx" | ".odt" | ".odp" | ".ods" | ".rtf" => DocumentKind::Convertible,
+            ".doc" | ".docx" | ".pdf" | ".html" | ".xls" | ".xlsx" | ".xlm" | ".pptx" | ".odt"
+            | ".odp" | ".ods" | ".rtf" => DocumentKind::Convertible,
             _ => DocumentKind::Unsupported,
         }
     }
@@ -127,11 +135,7 @@ impl DocumentConverter {
         )
     }
 
-    pub fn read_markdown(
-        &self,
-        file_path: &str,
-        sidecar_available: bool,
-    ) -> ReadMarkdownResult {
+    pub fn read_markdown(&self, file_path: &str, sidecar_available: bool) -> ReadMarkdownResult {
         let ext = get_extension(file_path);
         let kind = self.classify_extension(&ext);
 
@@ -225,7 +229,12 @@ impl DocumentConverter {
                                 let mut cache = self.cache.lock();
                                 cache.insert(
                                     file_path.to_string(),
-                                    CacheEntry { mtime_ms, size, markdown: markdown.clone(), duration_ms },
+                                    CacheEntry {
+                                        mtime_ms,
+                                        size,
+                                        markdown: markdown.clone(),
+                                        duration_ms,
+                                    },
                                 );
                             }
                             ReadMarkdownResult {

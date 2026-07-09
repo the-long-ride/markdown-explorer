@@ -152,11 +152,19 @@ mod tests {
     #[test]
     fn init_debug_mode_with_various_envs() {
         // Test with empty env value
-        init_debug_mode(true, &[("MARKDOWN_EXPLORER_DEBUG".to_string(), "".to_string())], &[]);
+        init_debug_mode(
+            true,
+            &[("MARKDOWN_EXPLORER_DEBUG".to_string(), "".to_string())],
+            &[],
+        );
         assert!(is_debug_mode()); // true in test builds
 
         // Test with "0" env value
-        init_debug_mode(true, &[("MARKDOWN_EXPLORER_DEBUG".to_string(), "0".to_string())], &[]);
+        init_debug_mode(
+            true,
+            &[("MARKDOWN_EXPLORER_DEBUG".to_string(), "0".to_string())],
+            &[],
+        );
         assert!(is_debug_mode()); // still true in test builds
 
         // Test with multiple env vars
@@ -171,7 +179,15 @@ mod tests {
         assert!(is_debug_mode());
 
         // Test with debug flag in argv
-        init_debug_mode(true, &[], &["app".to_string(), "--debug".to_string(), "extra".to_string()]);
+        init_debug_mode(
+            true,
+            &[],
+            &[
+                "app".to_string(),
+                "--debug".to_string(),
+                "extra".to_string(),
+            ],
+        );
         assert!(is_debug_mode());
 
         // Test with devtools flag in argv

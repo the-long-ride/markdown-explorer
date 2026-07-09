@@ -117,7 +117,7 @@ Markdown Explorer ships as an Electron desktop app for Windows, Linux, and macOS
 | Electron | Stable, released | `pnpm run start:electron`, `pnpm run build:electron` |
 | Tauri | Preview release builds available | `pnpm run start:tauri`, `pnpm run build:tauri` |
 
-Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. See [Tauri Desktop Variant](docs/tauri-desktop-variant.md) for architecture, tradeoffs, and build notes.
+Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. `pnpm run start:tauri` runs a live Vite dev server plus `cargo tauri dev`, so UI edits reload the Tauri window during development. See [Tauri Desktop Variant](docs/tauri-desktop-variant.md) for architecture, tradeoffs, and build notes.
 
 ## Desktop Workspace
 

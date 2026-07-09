@@ -34,11 +34,19 @@ fn char_to_byte_offset(s: &str, char_idx: usize) -> usize {
         .unwrap_or_else(|| s.len())
 }
 
-fn compute_orig_end(to_original: &[usize], n_norm: usize, original_len: usize, norm_end: usize) -> usize {
+fn compute_orig_end(
+    to_original: &[usize],
+    n_norm: usize,
+    original_len: usize,
+    norm_end: usize,
+) -> usize {
     if norm_end >= n_norm {
         return original_len;
     }
-    let prev = norm_end.checked_sub(1).and_then(|i| to_original.get(i).copied()).unwrap_or(0);
+    let prev = norm_end
+        .checked_sub(1)
+        .and_then(|i| to_original.get(i).copied())
+        .unwrap_or(0);
     let mut k = norm_end;
     while k < n_norm {
         let val = to_original.get(k).copied().unwrap_or(0);
@@ -138,7 +146,11 @@ impl PreparedHaystack {
             .map(|r| r.hit)
     }
 
-    pub fn index_of_normalized(&self, norm_needle: &str, norm_from_index: usize) -> Option<NormalizedSearchResult> {
+    pub fn index_of_normalized(
+        &self,
+        norm_needle: &str,
+        norm_from_index: usize,
+    ) -> Option<NormalizedSearchResult> {
         let norm_chars: Vec<char> = self.normalized_text.chars().collect();
         let needle_chars: Vec<char> = norm_needle.chars().collect();
 
@@ -149,7 +161,13 @@ impl PreparedHaystack {
         let norm_idx = find_subsequence(&norm_chars, &needle_chars, norm_from_index)?;
         let norm_len = needle_chars.len();
 
-        let (orig_idx, orig_len) = map_span(&self.to_original, &self.original, &self.normalized_text, norm_idx, norm_len);
+        let (orig_idx, orig_len) = map_span(
+            &self.to_original,
+            &self.original,
+            &self.normalized_text,
+            norm_idx,
+            norm_len,
+        );
 
         Some(NormalizedSearchResult {
             hit: SearchMatch {
@@ -228,7 +246,9 @@ mod tests {
     fn index_of_respects_from_index() {
         let h = prepare_haystack("hello hello");
         let first = h.index_of("hello", 0).unwrap();
-        let second = h.index_of("hello", first.index + first.match_length).unwrap();
+        let second = h
+            .index_of("hello", first.index + first.match_length)
+            .unwrap();
         assert!(second.index > first.index);
     }
 
@@ -238,7 +258,10 @@ mod tests {
         let r = h.index_of("istanbul", 0).unwrap();
         assert_eq!(r.index, 11);
         assert_eq!(r.match_length, 9);
-        assert_eq!(&h.original[r.index..r.index + r.match_length], "\u{0130}stanbul");
+        assert_eq!(
+            &h.original[r.index..r.index + r.match_length],
+            "\u{0130}stanbul"
+        );
     }
 
     #[test]
@@ -261,7 +284,9 @@ mod tests {
     fn index_of_normalized_finds_subsequent() {
         let h = prepare_haystack("hello hello");
         let first = h.index_of_normalized("hello", 0).unwrap();
-        let second = h.index_of_normalized("hello", first.next_norm_index).unwrap();
+        let second = h
+            .index_of_normalized("hello", first.next_norm_index)
+            .unwrap();
         assert_eq!(second.hit.index, 6);
     }
 
@@ -297,7 +322,10 @@ mod tests {
     fn sharp_s_match_returns_correct_substring() {
         let h = prepare_haystack("Stra\u{00DF}e");
         let r = h.index_of("strasse", 0).unwrap();
-        assert_eq!(&h.original[r.index..r.index + r.match_length], "Stra\u{00DF}e");
+        assert_eq!(
+            &h.original[r.index..r.index + r.match_length],
+            "Stra\u{00DF}e"
+        );
     }
 
     #[test]

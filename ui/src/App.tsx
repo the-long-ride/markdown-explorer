@@ -696,6 +696,30 @@ export function App() {
         />
       )}
 
+      {state.focusMode && (state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'desktop') && (
+        <TooltipButton
+          type="button"
+          className="close-folder-focus-btn focus-mode-btn"
+          onClick={() => {
+            dispatch({
+              type: 'READY_ACK',
+              fileList: [],
+              tree: null,
+              theme: state.theme,
+              themeStyle: state.themeStyle,
+              defaultExpanded: state.defaultExpanded,
+              workspaceName: '',
+              recentWorkspaces: state.recentWorkspaces
+            });
+            bridge.postMessage({ command: 'closeWorkspace' });
+          }}
+          tooltip={t.topbar.closeFolder || "Close Folder"}
+          tooltipPos="below"
+          tooltipAlign="right"
+          icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>}
+        />
+      )}
+
       {isDragging && (
         <div style={{
           position: 'absolute',

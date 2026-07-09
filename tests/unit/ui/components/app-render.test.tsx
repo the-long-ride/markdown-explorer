@@ -152,7 +152,7 @@ vi.mock('../../../../ui/src/contexts/NavigationContext', () => ({
 
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
-    topbar: { switchToLightMode: 'Light mode', switchToDarkMode: 'Dark mode' },
+    topbar: { switchToLightMode: 'Light mode', switchToDarkMode: 'Dark mode', closeFolder: 'Close Folder' },
     tooltips: {
       minimize: 'Minimize',
       maximize: 'Maximize',
@@ -575,5 +575,54 @@ describe('App render', () => {
     mockState = createMockState({ isLoading: true, workspaceName: '', loadingLabel: 'Loading', loadingDetail: 'Parsing files...' });
     render(createElement(App));
     expect(screen.getByText('Parsing files...')).toBeInTheDocument();
+  });
+
+  it('renders close folder button in focus mode for tauri/vscode/desktop runtimes', async () => {
+    mockState = createMockState({ focusMode: true, appRuntime: 'tauri' });
+    const { rerender } = render(createElement(App));
+    await waitFor(() => {
+      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
+    });
+
+    mockState = createMockState({ focusMode: true, appRuntime: 'vscode' });
+    rerender(createElement(App));
+    await waitFor(() => {
+      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
+    });
+
+    mockState = createMockState({ focusMode: true, appRuntime: 'desktop' });
+    rerender(createElement(App));
+    await waitFor(() => {
+      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
+    });
+  });
+
+  it('clicking close folder button in focus mode triggers workspace close flow', async () => {
+    mockState = createMockState({ focusMode: true, appRuntime: 'tauri' });
+    render(createElement(App));
+    await waitFor(() => {
+      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTitle('Close Folder'));
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'READY_ACK',
+      fileList: [],
+      tree: null,
+      theme: mockState.theme,
+      themeStyle: mockState.themeStyle,
+      defaultExpanded: mockState.defaultExpanded,
+      workspaceName: '',
+      recentWorkspaces: mockState.recentWorkspaces,
+    });
+    expect(mockBridge.postMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
+  });
+
+  it('does not render close folder button in focus mode for chrome runtime', async () => {
+    mockState = createMockState({ focusMode: true, appRuntime: 'chrome' });
+    render(createElement(App));
+    await waitFor(() => {
+      expect(screen.getByTitle('Exit Focus Mode')).toBeInTheDocument();
+    });
+    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
   });
 });

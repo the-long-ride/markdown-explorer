@@ -64,11 +64,19 @@
   flex: 1 1 auto;
   min-width: 0;
   height: 30px;
-  border: 0;
-  outline: 0;
-  background: transparent;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
   color: var(--tx);
   font: inherit;
+  padding: 0 8px;
+  outline: 0;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.find-in-file-panel input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
 }
 
 .find-in-file-panel__count {
@@ -359,4 +367,30 @@ span.topbar__breadcrumb-part {
 }
 .search-bar input::placeholder {
   color: var(--txm);
+}
+
+/* Search overlay input */
+.search-overlay-input {
+  flex: 1;
+  height: 36px;
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  padding: 0 12px;
+  outline: none;
+  font-size: 15px;
+  color: var(--tx);
+  font-family: var(--font-ui);
+  cursor: text;
+  opacity: 1;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.search-overlay-input:disabled {
+  cursor: not-allowed;
+}
+
+.search-overlay-input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
 }

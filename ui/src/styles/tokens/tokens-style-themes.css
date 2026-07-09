@@ -7,7 +7,7 @@
   --control-pad-x: 11px;
   --control-gap: 6px;
   --content-pad-y: 30px;
-  --content-pad-x: 44px;
+  --content-pad-x: 22px;
   --section-gap: 18px;
   --section-header-gap: 10px;
   --section-header-pad-y: 12px;
@@ -31,7 +31,7 @@
   --control-pad-x: 9px;
   --control-gap: 5px;
   --content-pad-y: 26px;
-  --content-pad-x: 36px;
+  --content-pad-x: 18px;
   --section-gap: 16px;
   --section-header-gap: 8px;
   --section-header-pad-y: 11px;
@@ -188,4 +188,117 @@
   --chart-7: #db2777;
   --chart-8: #ca8a04;
 }
+
+[data-theme-style="vercel"] {
+  --topbar-h: 44px;
+  --topbar-gap: 8px;
+  --topbar-pad-x: 12px;
+  --control-h: 26px;
+  --control-pad-x: 8px;
+  --control-gap: 4px;
+  --content-pad-y: 20px;
+  --content-pad-x: 16px;
+  --section-gap: 8px;
+  --section-header-gap: 8px;
+  --section-header-pad-y: 8px;
+  --section-header-pad-x: 12px;
+  --section-body-pad-y: 12px;
+  --section-body-pad-x: 16px;
+  --table-cell-pad-y: 6px;
+  --table-cell-pad-x: 12px;
+  --stroke-w: 1px;
+  --r: 6px;
+  --r-md: 6px;
+  --r-lg: 12px;
+  --font-ui: "Geist Sans", "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Cascadia Code", "CascadiaCode", "Fira Code", monospace;
+  --accent-hover: #0059ec;
+}
+
+/* Vercel Theme: dark and auto-dark */
+[data-theme-style="vercel"][data-theme="dark"],
+[data-theme-style="vercel"][data-theme="auto"] {
+  --bg: #000000;
+  --bg-s: #0a0a0a;
+  --bg-e: #171717;
+  --bg-h: #171717;
+  --bg-a: #262626;
+  --bg-code: #0a0a0a;
+  --bd: rgba(255, 255, 255, 0.08);
+  --bd-s: #2e2e2e;
+  --bd-x: #444444;
+  --tx: #ffffff;
+  --tx2: #888888;
+  --txm: #666666;
+  --tx3: #444444;
+  --txc: #0070f3;
+  --accent: #0070f3;
+  --accent-dim: rgba(0, 112, 243, 0.15);
+  --accent-text: #3291ff;
+  --accent-hover: #3291ff;
+  --sh-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --sh-lg: 0 8px 32px rgba(0, 0, 0, 0.7);
+  --section-shadow: none;
+  --modal-bg: rgba(0, 0, 0, 0.9);
+  --modal-fg: #ffffff;
+}
+
+/* Vercel Theme: light */
+[data-theme-style="vercel"][data-theme="light"] {
+  --bg: #ffffff;
+  --bg-s: #fafafa;
+  --bg-e: #ffffff;
+  --bg-h: #f2f2f2;
+  --bg-a: #ebebeb;
+  --bg-code: #fafafa;
+  --bd: rgba(0, 0, 0, 0.05);
+  --bd-s: #eaeaea;
+  --bd-x: #c9c9c9;
+  --tx: #171717;
+  --tx2: #4d4d4d;
+  --txm: #7d7d7d;
+  --tx3: #8f8f8f;
+  --txc: #006bff;
+  --accent: #006bff;
+  --accent-dim: rgba(0, 107, 255, 0.08);
+  --accent-text: #006bff;
+  --accent-hover: #0059ec;
+  --sh-sm: 0 2px 2px rgba(0, 0, 0, 0.04);
+  --sh-md: 0 1px 1px rgba(0, 0, 0, 0.02), 0 4px 8px -4px rgba(0, 0, 0, 0.04), 0 16px 24px -8px rgba(0, 0, 0, 0.06);
+  --sh-lg: 0 1px 1px rgba(0, 0, 0, 0.02), 0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 24px 32px -8px rgba(0, 0, 0, 0.06);
+  --section-shadow: none;
+  --modal-bg: rgba(255, 255, 255, 0.9);
+  --modal-fg: #171717;
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme-style="vercel"][data-theme="auto"] {
+    --bg: #ffffff;
+    --bg-s: #fafafa;
+    --bg-e: #ffffff;
+    --bg-h: #f2f2f2;
+    --bg-a: #ebebeb;
+    --bg-code: #fafafa;
+    --bd: rgba(0, 0, 0, 0.05);
+    --bd-s: #eaeaea;
+    --bd-x: #c9c9c9;
+    --tx: #171717;
+    --tx2: #4d4d4d;
+    --txm: #7d7d7d;
+    --tx3: #8f8f8f;
+    --txc: #006bff;
+    --accent: #006bff;
+    --accent-dim: rgba(0, 107, 255, 0.08);
+    --accent-text: #006bff;
+    --accent-hover: #0059ec;
+    --sh-sm: 0 2px 2px rgba(0, 0, 0, 0.04);
+    --sh-md: 0 1px 1px rgba(0, 0, 0, 0.02), 0 4px 8px -4px rgba(0, 0, 0, 0.04), 0 16px 24px -8px rgba(0, 0, 0, 0.06);
+    --sh-lg: 0 1px 1px rgba(0, 0, 0, 0.02), 0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 24px 32px -8px rgba(0, 0, 0, 0.06);
+    --section-shadow: none;
+    --modal-bg: rgba(255, 255, 255, 0.9);
+    --modal-fg: #171717;
+  }
+}
+
 

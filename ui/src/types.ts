@@ -83,7 +83,7 @@ export interface RecentWorkspace {
   readonly lastOpened?: number;
 }
 
-export type AppRuntime = 'desktop' | 'vscode' | 'chrome';
+export type AppRuntime = 'desktop' | 'vscode' | 'chrome' | 'tauri';
 export type HostPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
 
 export interface ReadyAckMessage {
@@ -426,7 +426,7 @@ export type PetThemeStyle =
   | 'pet-hamster'
   | 'pet-corgi';
 
-export type ThemeStyle = 'default' | 'glass' | 'bento' | PetThemeStyle;
+export type ThemeStyle = 'default' | 'glass' | 'bento' | 'vercel' | PetThemeStyle;
 
 export type CustomThemeScheme = 'light' | 'dark';
 

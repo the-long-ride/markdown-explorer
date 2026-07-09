@@ -1,6 +1,6 @@
 pub const EXTRA_DOCUMENT_EXTENSIONS: &[&str] = &[
-    ".doc", ".docx", ".pdf", ".html", ".xls", ".xlsx", ".xlm", ".pptx",
-    ".odt", ".odp", ".ods", ".rtf",
+    ".doc", ".docx", ".pdf", ".html", ".xls", ".xlsx", ".xlm", ".pptx", ".odt", ".odp", ".ods",
+    ".rtf",
 ];
 
 pub fn extension(file_name: &str) -> String {
@@ -20,7 +20,10 @@ pub fn is_extra_document_file_path(file_path: &str) -> bool {
 }
 
 pub fn is_supported_file_path(file_path: &str, document_conversion_enabled: bool) -> bool {
-    if matches!(extension(file_path).as_str(), ".md" | ".mdx" | ".markdown" | ".txt") {
+    if matches!(
+        extension(file_path).as_str(),
+        ".md" | ".mdx" | ".markdown" | ".txt"
+    ) {
         return true;
     }
     document_conversion_enabled && is_extra_document_file_path(file_path)

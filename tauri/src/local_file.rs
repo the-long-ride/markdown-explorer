@@ -101,9 +101,7 @@ mod server {
         request: http::Request<Vec<u8>>,
     ) -> http::Response<Vec<u8>> {
         let uri_str = request.uri().to_string();
-        let path_str = uri_str
-            .strip_prefix("local-file://")
-            .unwrap_or("");
+        let path_str = uri_str.strip_prefix("local-file://").unwrap_or("");
 
         let decoded_path = urlencoding::decode(path_str).unwrap_or_else(|_| path_str.into());
         let decoded_path = strip_query_fragment(decoded_path.as_ref());
@@ -228,7 +226,10 @@ mod tests {
 
     #[test]
     fn strip_query_fragment_removes_query() {
-        assert_eq!(strip_query_fragment("F:/my-repos/img.png?v=1"), "F:/my-repos/img.png");
+        assert_eq!(
+            strip_query_fragment("F:/my-repos/img.png?v=1"),
+            "F:/my-repos/img.png"
+        );
         assert_eq!(strip_query_fragment("img.png#anchor"), "img.png");
         assert_eq!(strip_query_fragment("img.png"), "img.png");
         assert_eq!(strip_query_fragment("img.png?v=1#x"), "img.png");
@@ -246,7 +247,10 @@ mod tests {
         let uri = "local-file://F:/my-repos/img.png?v=1";
         let raw = uri.strip_prefix("local-file://").unwrap_or("");
         let decoded = urlencoding::decode(raw).unwrap_or_else(|_| raw.into());
-        assert_eq!(strip_query_fragment(decoded.as_ref()), "F:/my-repos/img.png");
+        assert_eq!(
+            strip_query_fragment(decoded.as_ref()),
+            "F:/my-repos/img.png"
+        );
     }
 
     #[test]
