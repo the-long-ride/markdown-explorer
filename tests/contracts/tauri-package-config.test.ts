@@ -14,6 +14,10 @@ const releaseWorkflow = fs.readFileSync(
   path.join(repoRoot, '.github/workflows/release.yml'),
   'utf8',
 );
+const rustToolchain = fs.readFileSync(
+  path.join(repoRoot, 'tauri/rust-toolchain.toml'),
+  'utf8',
+);
 
 describe('tauri package config', () => {
   test('root package exposes start:tauri script', () => {
@@ -49,6 +53,14 @@ describe('tauri package config', () => {
     expect(
       fs.existsSync(path.join(repoRoot, 'tauri/Cargo.toml')),
     ).toBe(true);
+  });
+
+  test('tauri rust toolchain channel does not include target triple', () => {
+    const channel = rustToolchain.match(/^channel\s*=\s*"([^"]+)"/m)?.[1];
+    expect(channel).toBeTruthy();
+    expect(channel).not.toMatch(
+      /-(?:x86_64|aarch64|i686|armv7)-[a-z0-9_]+-[a-z0-9_]+/,
+    );
   });
 
   test('tauri build script lets Tauri own Windows manifest embedding', () => {
