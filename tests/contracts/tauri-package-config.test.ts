@@ -188,8 +188,9 @@ describe('tauri package config', () => {
 
   test('release workflow strips embedded versions from tauri asset names', () => {
     expect(releaseWorkflow).toContain('Rename Tauri artifacts');
-    expect(releaseWorkflow).toContain('base.replace(`_${version}`, \'\')');
-    expect(releaseWorkflow).toContain('base.replace(`-${version}`, \'\')');
+    expect(releaseWorkflow).toContain(
+      "base.replace(`_${version}`, '').replace(`-${version}`, '')",
+    );
     expect(releaseWorkflow).toContain("new Set(['.deb', '.AppImage', '.dmg', '.exe', '.msi'])");
   });
 });
