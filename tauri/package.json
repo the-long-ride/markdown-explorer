@@ -1,6 +1,6 @@
 {
   "name": "@the-long-ride/markdown-explorer-tauri",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "private": true,
   "scripts": {
     "dev": "cargo tauri dev",

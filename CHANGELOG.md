@@ -4,6 +4,23 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.7] — 2026-07-09
+
+### Added
+- **Vercel Theme**: Added a new Vercel-inspired styling theme with a sleek, clean, modern dark and light design, complete with custom design tokens, style picker integration, and translations.
+
+### Fixed
+- **Workspace Selection in Focus Mode**: Restored the Close Folder button in Focus view for Tauri, VS Code extension, and Electron desktop app, allowing users to exit the current workspace and open another.
+- **Workspace Search**: Fixed a bug where workspace searches returned no results in Tauri by resolving items from the server-side flat list using `fsPath`.
+- **Workspace List Actions Overlap**: Positioned the Rename and Delete buttons side-by-side instead of overlapping at the same absolute coordinates.
+
+### Changed
+- **Search Inputs Styling**: Refactored global Search Overlay and Find in File inputs to share consistent styling, adding rounded borders (`var(--r)`), padding, hover effects, and focus rings.
+- **Horizontal Scrollbar Removal**: Hidden horizontal scrollbars on the main layout content container (`.content__scroll`) to prevent layout shifting on long code blocks or tables.
+- **Electron Minimum Size**: Set the Electron app minimum window size to `720x480` to align window constraints with the Tauri version.
+
+---
+
 ## [1.5.6] — 2026-07-08
 
 ### Added
