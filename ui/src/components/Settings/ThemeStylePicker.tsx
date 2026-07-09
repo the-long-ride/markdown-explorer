@@ -145,6 +145,9 @@ export function ThemeStylePicker({
         } else if (option.id === "bento") {
           label = t.themeStyles.bentoLabel;
           desc = t.themeStyles.bentoDesc;
+        } else if (option.id === "vercel") {
+          label = t.themeStyles.vercelLabel;
+          desc = t.themeStyles.vercelDesc;
         }
         return (
           <button

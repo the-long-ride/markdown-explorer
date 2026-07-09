@@ -68,6 +68,11 @@ export const THEME_STYLE_OPTIONS: readonly {
     label: 'Bento Grids',
     description: 'Modular blocks, stronger structure, and denser scan-friendly spacing.',
   },
+  {
+    id: 'vercel',
+    label: 'Vercel',
+    description: 'High-contrast monochrome, sharp borders, and geometric focus.',
+  },
 ];
 
 export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-shiba';

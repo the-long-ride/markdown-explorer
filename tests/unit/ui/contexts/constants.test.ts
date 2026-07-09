@@ -75,6 +75,7 @@ describe('appStateConstants', () => {
     expect(normalizeThemeStyle('glass')).toBe('glass');
     expect(normalizeThemeStyle('default')).toBe('default');
     expect(normalizeThemeStyle('bento')).toBe('bento');
+    expect(normalizeThemeStyle('vercel')).toBe('vercel');
   });
 
   test('normalizeThemeStyle invalid falls back to default', () => {
@@ -97,6 +98,8 @@ describe('appStateConstants', () => {
   test('isPetThemeStyle returns false for non-pet styles', () => {
     expect(isPetThemeStyle('default')).toBe(false);
     expect(isPetThemeStyle('glass')).toBe(false);
+    expect(isPetThemeStyle('bento')).toBe(false);
+    expect(isPetThemeStyle('vercel')).toBe(false);
   });
 
   test('THEME_MODE_OPTIONS has 3 entries', () => {

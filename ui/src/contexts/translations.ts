@@ -37,6 +37,8 @@ export interface Translations {
     glassDesc: string;
     bentoLabel: string;
     bentoDesc: string;
+    vercelLabel: string;
+    vercelDesc: string;
     petsLabel: string;
     petsDesc: string;
   };
@@ -224,6 +226,8 @@ let _TRANSLATIONS: Record<string, Translations> = {
       glassDesc: "Layered translucent panels, softer strokes, and airy document rhythm",
       bentoLabel: "Bento Grids",
       bentoDesc: "Modular blocks, stronger structure, and denser scan-friendly spacing",
+      vercelLabel: "Vercel",
+      vercelDesc: "High-contrast monochrome, sharp borders, and geometric focus",
       petsLabel: "Pets",
       petsDesc: "Anime PNG pet companions, playful background buddies, and soft animated reading surfaces",
     },

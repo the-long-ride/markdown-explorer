@@ -84,7 +84,7 @@
 }
 
 [data-theme-style="glass"] .content__scroll {
-  padding-bottom: 72px;
+  padding-bottom: 36px;
 }
 
 [data-theme-style="glass"] .toc-compact,
@@ -216,7 +216,7 @@
 }
 
 [data-theme-style="bento"] .content__scroll {
-  padding-bottom: 76px;
+  padding-bottom: 38px;
 }
 
 [data-theme-style="bento"] .btn,
