@@ -4,8 +4,42 @@ on:
   workflow_call:
   push:
     branches: [main]
+    paths:
+      - 'tests/**'
+      - 'electron/**'
+      - 'vscode/src/**'
+      - 'vscode/scripts/**'
+      - 'ui/src/**'
+      - 'ui/vite.config.ts'
+      - 'chromium-xtension/src/**'
+      - 'chromium-xtension/popup.js'
+      - 'chromium-xtension/vite.config.ts'
+      - 'tauri/src/**'
+      - 'tauri/tests/**'
+      - 'tauri/Cargo.toml'
+      - 'tauri/Cargo.lock'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'vitest.config.ts'
   pull_request:
     branches: [main]
+    paths:
+      - 'tests/**'
+      - 'electron/**'
+      - 'vscode/src/**'
+      - 'vscode/scripts/**'
+      - 'ui/src/**'
+      - 'ui/vite.config.ts'
+      - 'chromium-xtension/src/**'
+      - 'chromium-xtension/popup.js'
+      - 'chromium-xtension/vite.config.ts'
+      - 'tauri/src/**'
+      - 'tauri/tests/**'
+      - 'tauri/Cargo.toml'
+      - 'tauri/Cargo.lock'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'vitest.config.ts'
 
 jobs:
   contracts:

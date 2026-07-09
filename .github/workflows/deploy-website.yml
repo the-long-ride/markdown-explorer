@@ -7,7 +7,6 @@ on:
     paths:
       - 'website/**'
       - 'website-app/**'
-      - 'test/**'
       - 'ui/**'
       - 'chromium-xtension/**'
       - 'vscode/src/markdown/**'
