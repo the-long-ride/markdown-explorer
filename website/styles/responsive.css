@@ -1,10 +1,30 @@
+/* Hero viewport caps */
+.hero {
+  min-height: clamp(34rem, 88vh, 58rem);
+}
+
+.hero-content {
+  max-height: min(42rem, calc(100vh - 7.5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: clamp(0.35rem, 1vw, 0.75rem);
+  scrollbar-width: thin;
+}
+
 @media (max-width: 980px) {
   .hero {
-    min-height: 72vh;
+    min-height: min(54rem, calc(100svh - 4.5rem));
+    align-items: center;
   }
 
   .hero-copy {
     font-size: 1.1rem;
+  }
+
+  .hero-content {
+    max-height: min(38rem, calc(100svh - 6rem));
+    padding-top: clamp(4.5rem, 10vh, 6.5rem);
+    padding-bottom: clamp(2.5rem, 6vh, 4rem);
   }
 
   .hero-shade {
@@ -97,11 +117,58 @@
   .nav-links a {
     padding-inline: 0.5rem;
   }
+
+  .hero {
+    min-height: auto;
+  }
+
+  .hero-content {
+    width: calc(100% - 2rem);
+    max-height: none;
+    overflow-y: visible;
+    margin-inline: 1rem;
+    padding-right: 0;
+    padding-top: 4.25rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 580px) {
+  .site-header {
+    gap: 0.75rem;
+  }
+
+  .nav-links {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+  }
+
+  .nav-dropdown-wrap,
+  .nav-links a {
+    flex: 0 0 auto;
+  }
+
   .hero-content {
     margin-inline: 1rem;
+    max-height: none;
+    padding-top: 3.75rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .hero-copy {
+    font-size: 0.94rem;
+    margin-top: 1rem;
+  }
+
+  .hero-actions {
+    margin-top: 1.25rem;
   }
 
   .button {
