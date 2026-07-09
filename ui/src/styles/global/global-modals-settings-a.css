@@ -186,6 +186,9 @@
   user-select: text;
   -webkit-user-select: text;
 }
+.settings-modal {
+  background: var(--bg);
+}
 .settings-modal,
 .theme-onboarding-modal {
   justify-content: flex-start;

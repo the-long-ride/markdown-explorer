@@ -344,14 +344,15 @@
 }
 .mdn-list--ol {
   list-style: decimal;
+  padding-left: 24px;
 }
 .mdn-list:not(.mdn-list--ol) {
   list-style: none;
 }
-.mdn-list:not(.mdn-list--ol) .mdn-list-item {
+.mdn-list:not(.mdn-list--ol) > .mdn-list-item {
   position: relative;
 }
-.mdn-list:not(.mdn-list--ol) .mdn-list-item:not(.mdn-task)::before {
+.mdn-list:not(.mdn-list--ol) > .mdn-list-item:not(.mdn-task)::before {
   content: "";
   position: absolute;
   left: -12px;

@@ -307,21 +307,11 @@ export function SearchOverlay({
           <input
             ref={inputRef}
             type="text"
+            className="search-overlay-input"
             placeholder={isIndexing ? "Indexing other workspaces…" : (scopeLabel ?? "Search current workspace…")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             disabled={isIndexing}
-            style={{
-              flex: 1,
-              background: 'none',
-              border: 'none',
-              outline: 'none',
-              fontSize: 15,
-              color: 'var(--tx)',
-              fontFamily: 'var(--font-ui)',
-              cursor: isIndexing ? 'not-allowed' : 'text',
-              opacity: 1,
-            }}
             aria-label="Search query"
           />
           <kbd style={{ fontSize: 11, padding: '2px 6px', background: 'var(--bg-e)', borderRadius: 4, color: 'var(--txm)', border: '1px solid var(--bd)' }}>
