@@ -68,21 +68,14 @@ impl UpdateManager {
         let version = version.to_string();
         let url = url.to_string();
 
-        let file_name = url
-            .split('/')
-            .last()
-            .unwrap_or("update.msi")
-            .to_string();
+        let file_name = url.split('/').last().unwrap_or("update.msi").to_string();
         let dest_path = staging_dir.join(&file_name);
 
         let app_for_progress = app.clone();
         let version_for_progress = version.clone();
         let file_name_for_progress = file_name.clone();
 
-        Self::emit_state(
-            &app,
-            &UpdateState::downloading(&version, &file_name, 0),
-        );
+        Self::emit_state(&app, &UpdateState::downloading(&version, &file_name, 0));
 
         tauri::async_runtime::spawn(async move {
             let result = tokio::task::spawn_blocking(move || {

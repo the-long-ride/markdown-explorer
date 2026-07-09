@@ -17,16 +17,26 @@ pub fn create_watch_change(workspace_path: &Path, event_type: &str, filename: &s
     let fs_path = if relative_path.is_empty() {
         String::new()
     } else {
-        workspace_path.join(&relative_path).to_string_lossy().to_string()
+        workspace_path
+            .join(&relative_path)
+            .to_string_lossy()
+            .to_string()
     };
     WatchChange {
-        event_type: if event_type.is_empty() { "change".to_string() } else { event_type.to_string() },
+        event_type: if event_type.is_empty() {
+            "change".to_string()
+        } else {
+            event_type.to_string()
+        },
         relative_path,
         fs_path,
     }
 }
 
-pub fn merge_watch_change(current: Option<WatchChange>, next: Option<WatchChange>) -> Option<WatchChange> {
+pub fn merge_watch_change(
+    current: Option<WatchChange>,
+    next: Option<WatchChange>,
+) -> Option<WatchChange> {
     match (current, next) {
         (None, n) => n,
         (c, None) => c,
@@ -46,13 +56,26 @@ pub fn merge_watch_change(current: Option<WatchChange>, next: Option<WatchChange
 
 const BASE_SUPPORTED_EXTENSIONS: &[&str] = &[".md", ".mdx", ".markdown", ".txt"];
 const EXTRA_DOCUMENT_EXTENSIONS: &[&str] = &[
-    ".doc", ".docx", ".pdf", ".html", ".xls", ".xlsx", ".xlm", ".pptx",
-    ".odt", ".odp", ".ods", ".rtf",
+    ".doc", ".docx", ".pdf", ".html", ".xls", ".xlsx", ".xlm", ".pptx", ".odt", ".odp", ".ods",
+    ".rtf",
 ];
 
 const IGNORED_DIRS: &[&str] = &[
-    ".git", "node_modules", ".vscode", "dist", "out", "build", "coverage",
-    ".next", ".nuxt", ".turbo", ".cache", "vendor", "target", "bin", "obj",
+    ".git",
+    "node_modules",
+    ".vscode",
+    "dist",
+    "out",
+    "build",
+    "coverage",
+    ".next",
+    ".nuxt",
+    ".turbo",
+    ".cache",
+    "vendor",
+    "target",
+    "bin",
+    "obj",
     ".tauri",
 ];
 
@@ -197,10 +220,7 @@ impl WorkspaceWatchController {
 
         let _ = watcher_for_task;
 
-        Self {
-            state,
-            watcher,
-        }
+        Self { state, watcher }
     }
 
     pub fn watch_workspace(&self, workspace_path: Option<&Path>) {
@@ -354,7 +374,8 @@ fn run_refresh<F>(
     let should_requeue = {
         let mut s = state.lock();
         s.refresh_in_flight = false;
-        s.refresh_queued && s.current_generation == s.watch_generation
+        s.refresh_queued
+            && s.current_generation == s.watch_generation
             && s.current_workspace == s.current_workspace_path
     };
 
@@ -391,16 +412,32 @@ mod tests {
 
     #[test]
     fn merge_same_path_keeps_newest() {
-        let c1 = Some(WatchChange { event_type: "rename".into(), relative_path: "a.md".into(), fs_path: "/ws/a.md".into() });
-        let c2 = Some(WatchChange { event_type: "modify".into(), relative_path: "a.md".into(), fs_path: "/ws/a.md".into() });
+        let c1 = Some(WatchChange {
+            event_type: "rename".into(),
+            relative_path: "a.md".into(),
+            fs_path: "/ws/a.md".into(),
+        });
+        let c2 = Some(WatchChange {
+            event_type: "modify".into(),
+            relative_path: "a.md".into(),
+            fs_path: "/ws/a.md".into(),
+        });
         let merged = merge_watch_change(c1, c2);
         assert_eq!(merged.unwrap().event_type, "modify");
     }
 
     #[test]
     fn merge_different_paths_becomes_mixed() {
-        let c1 = Some(WatchChange { event_type: "rename".into(), relative_path: "a.md".into(), fs_path: "/ws/a.md".into() });
-        let c2 = Some(WatchChange { event_type: "modify".into(), relative_path: "b.md".into(), fs_path: "/ws/b.md".into() });
+        let c1 = Some(WatchChange {
+            event_type: "rename".into(),
+            relative_path: "a.md".into(),
+            fs_path: "/ws/a.md".into(),
+        });
+        let c2 = Some(WatchChange {
+            event_type: "modify".into(),
+            relative_path: "b.md".into(),
+            fs_path: "/ws/b.md".into(),
+        });
         let merged = merge_watch_change(c1, c2);
         assert_eq!(merged.unwrap().event_type, "mixed");
     }
@@ -429,27 +466,47 @@ mod tests {
 
     #[test]
     fn should_notify_no_current_file() {
-        assert!(!should_notify_current_file_changed(None, "/ws/file.md", true));
+        assert!(!should_notify_current_file_changed(
+            None,
+            "/ws/file.md",
+            true
+        ));
     }
 
     #[test]
     fn should_notify_file_unavailable() {
-        assert!(should_notify_current_file_changed(Some("/ws/file.md"), "/ws/other.md", false));
+        assert!(should_notify_current_file_changed(
+            Some("/ws/file.md"),
+            "/ws/other.md",
+            false
+        ));
     }
 
     #[test]
     fn should_notify_matching_path() {
-        assert!(should_notify_current_file_changed(Some("/WS/File.md"), "/ws/file.md", true));
+        assert!(should_notify_current_file_changed(
+            Some("/WS/File.md"),
+            "/ws/file.md",
+            true
+        ));
     }
 
     #[test]
     fn should_not_notify_different_path() {
-        assert!(!should_notify_current_file_changed(Some("/ws/file.md"), "/ws/other.md", true));
+        assert!(!should_notify_current_file_changed(
+            Some("/ws/file.md"),
+            "/ws/other.md",
+            true
+        ));
     }
 
     #[test]
     fn should_not_notify_empty_changed_path() {
-        assert!(!should_notify_current_file_changed(Some("/ws/file.md"), "", true));
+        assert!(!should_notify_current_file_changed(
+            Some("/ws/file.md"),
+            "",
+            true
+        ));
     }
 
     #[tokio::test]
@@ -530,16 +587,24 @@ mod tests {
 
     #[test]
     fn is_ignored_watch_path_filters_target() {
-        assert!(is_ignored_watch_path("/workspace/tauri/target/debug/app.exe"));
+        assert!(is_ignored_watch_path(
+            "/workspace/tauri/target/debug/app.exe"
+        ));
         assert!(is_ignored_watch_path("/workspace/target"));
         assert!(is_ignored_watch_path("/workspace/target/"));
-        assert!(is_ignored_watch_path("C:\\workspace\\tauri\\target\\debug\\deps\\lib.rs"));
+        assert!(is_ignored_watch_path(
+            "C:\\workspace\\tauri\\target\\debug\\deps\\lib.rs"
+        ));
     }
 
     #[test]
     fn is_ignored_watch_path_filters_node_modules() {
-        assert!(is_ignored_watch_path("/workspace/node_modules/react/index.js"));
-        assert!(is_ignored_watch_path("/workspace/ui/node_modules/.pnpm/node_modules/foo/index.js"));
+        assert!(is_ignored_watch_path(
+            "/workspace/node_modules/react/index.js"
+        ));
+        assert!(is_ignored_watch_path(
+            "/workspace/ui/node_modules/.pnpm/node_modules/foo/index.js"
+        ));
     }
 
     #[test]
@@ -550,8 +615,14 @@ mod tests {
 
     #[test]
     fn is_ignored_watch_path_filters_all_ignored_dirs() {
-        for dir in &[".vscode", "dist", "out", "build", "coverage", ".next", ".nuxt", ".turbo", ".cache", "vendor", "bin", "obj", ".tauri"] {
-            assert!(is_ignored_watch_path(&format!("/workspace/{dir}/some_file")), "failed for {dir}");
+        for dir in &[
+            ".vscode", "dist", "out", "build", "coverage", ".next", ".nuxt", ".turbo", ".cache",
+            "vendor", "bin", "obj", ".tauri",
+        ] {
+            assert!(
+                is_ignored_watch_path(&format!("/workspace/{dir}/some_file")),
+                "failed for {dir}"
+            );
         }
     }
 
@@ -566,7 +637,9 @@ mod tests {
 
     #[test]
     fn is_ignored_watch_path_backslash_normalization() {
-        assert!(is_ignored_watch_path("C:\\Users\\dev\\project\\node_modules\\foo\\index.js"));
+        assert!(is_ignored_watch_path(
+            "C:\\Users\\dev\\project\\node_modules\\foo\\index.js"
+        ));
         assert!(is_ignored_watch_path("C:\\project\\target\\debug\\app.exe"));
         assert!(!is_ignored_watch_path("C:\\project\\docs\\readme.md"));
     }

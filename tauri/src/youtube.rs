@@ -126,7 +126,9 @@ mod tests {
     fn allows_youtube_embed_paths() {
         assert!(is_allowed_youtube_path("/embed/abc123"));
         assert!(is_allowed_youtube_path("/www.youtube.com/embed/abc123"));
-        assert!(is_allowed_youtube_path("/www.youtube-nocookie.com/embed/abc123"));
+        assert!(is_allowed_youtube_path(
+            "/www.youtube-nocookie.com/embed/abc123"
+        ));
     }
 
     #[test]

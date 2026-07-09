@@ -1,23 +1,23 @@
-pub mod error;
-pub mod workspace;
-pub mod search;
-pub mod runtime;
-pub mod perf;
-pub mod render;
-pub mod youtube;
-pub mod debug_tools;
-pub mod local_file;
 #[cfg(not(test))]
 pub mod app_state;
 #[cfg(not(test))]
 pub mod core;
+pub mod debug_tools;
 #[cfg(not(test))]
 pub mod dispatcher;
-#[cfg(not(test))]
-pub mod preload;
-pub mod update;
+pub mod error;
 #[cfg(not(test))]
 pub mod host_message;
+pub mod local_file;
+pub mod perf;
+#[cfg(not(test))]
+pub mod preload;
+pub mod render;
+pub mod runtime;
+pub mod search;
+pub mod update;
+pub mod workspace;
+pub mod youtube;
 
 #[cfg(not(test))]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

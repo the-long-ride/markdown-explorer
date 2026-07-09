@@ -64,9 +64,7 @@ pub fn resolve_navigation_path(
         }
     }
 
-    let current_dir = current_file
-        .and_then(|f| f.parent())
-        .unwrap_or(base_dir);
+    let current_dir = current_file.and_then(|f| f.parent()).unwrap_or(base_dir);
 
     let requested_pb = Path::new(&requested_path);
 
@@ -118,13 +116,22 @@ mod tests {
 
     #[test]
     fn strip_fragment() {
-        assert_eq!(strip_navigation_fragment("path/to/file.md#section"), "path/to/file.md");
-        assert_eq!(strip_navigation_fragment("path/to/file.md"), "path/to/file.md");
+        assert_eq!(
+            strip_navigation_fragment("path/to/file.md#section"),
+            "path/to/file.md"
+        );
+        assert_eq!(
+            strip_navigation_fragment("path/to/file.md"),
+            "path/to/file.md"
+        );
     }
 
     #[test]
     fn decode_percent_encoded() {
-        assert_eq!(decode_navigation_path("path%20to%20file.md"), "path to file.md");
+        assert_eq!(
+            decode_navigation_path("path%20to%20file.md"),
+            "path to file.md"
+        );
         assert_eq!(decode_navigation_path("plain.md"), "plain.md");
     }
 
@@ -140,7 +147,10 @@ mod tests {
     fn same_or_inside_path() {
         let parent = Path::new("/workspace");
         assert!(is_same_or_inside_path(parent, Path::new("/workspace")));
-        assert!(is_same_or_inside_path(parent, Path::new("/workspace/docs/file.md")));
+        assert!(is_same_or_inside_path(
+            parent,
+            Path::new("/workspace/docs/file.md")
+        ));
         assert!(!is_same_or_inside_path(parent, Path::new("/other/file.md")));
     }
 

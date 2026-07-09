@@ -1,5 +1,7 @@
 use crate::error::HostResult;
-use crate::workspace::file_types::{extension, is_markdown_file_path, is_supported_file_path, strip_known_extension};
+use crate::workspace::file_types::{
+    extension, is_markdown_file_path, is_supported_file_path, strip_known_extension,
+};
 use regex_lite::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
@@ -11,8 +13,21 @@ use std::path::{Path, PathBuf};
 const MAX_FILES: usize = 1000;
 const TITLE_CHUNK_BYTES: usize = 8 * 1024;
 const DEFAULT_IGNORED_FOLDERS: &[&str] = &[
-    ".git", "node_modules", ".vscode", "dist", "out", "build", "coverage",
-    ".next", ".nuxt", ".turbo", ".cache", "vendor", "target", "bin", "obj",
+    ".git",
+    "node_modules",
+    ".vscode",
+    "dist",
+    "out",
+    "build",
+    "coverage",
+    ".next",
+    ".nuxt",
+    ".turbo",
+    ".cache",
+    "vendor",
+    "target",
+    "bin",
+    "obj",
 ];
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -25,6 +40,10 @@ pub struct MdFile {
     pub title: String,
     pub extension: String,
     pub document_kind: DocumentKind,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tab_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tab_label: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -80,7 +99,9 @@ pub fn extract_mdx_title(content: &str) -> Option<String> {
     if let Some(frontmatter) = content.strip_prefix("---\n") {
         if let Some(end) = frontmatter.find("\n---") {
             for line in frontmatter[..end].lines() {
-                let Some(sep) = line.find(':') else { continue; };
+                let Some(sep) = line.find(':') else {
+                    continue;
+                };
                 if sep > 0 && line[..sep].trim() == "title" {
                     let title = line[sep + 1..].trim().trim_matches(['\'', '"']);
                     if !title.is_empty() {
@@ -91,19 +112,35 @@ pub fn extract_mdx_title(content: &str) -> Option<String> {
         }
     }
 
-    let export_title = Regex::new(r#"export\s+(?:const|let|var)\s+title\s*=\s*(['"`])([^'"`]*)['"`]"#).ok()?;
+    let export_title =
+        Regex::new(r#"export\s+(?:const|let|var)\s+title\s*=\s*(['"`])([^'"`]*)['"`]"#).ok()?;
     if let Some(caps) = export_title.captures(content) {
-        return caps.get(2).map(|m| m.as_str().trim().to_string()).filter(|s| !s.is_empty());
+        return caps
+            .get(2)
+            .map(|m| m.as_str().trim().to_string())
+            .filter(|s| !s.is_empty());
     }
 
-    let meta_title = Regex::new(r#"export\s+(?:const|let|var)\s+meta\s*=\s*\{(?s:.*?)title\s*:\s*(['"`])([^'"`]*)['"`]"#).ok()?;
+    let meta_title = Regex::new(
+        r#"export\s+(?:const|let|var)\s+meta\s*=\s*\{(?s:.*?)title\s*:\s*(['"`])([^'"`]*)['"`]"#,
+    )
+    .ok()?;
     if let Some(caps) = meta_title.captures(content) {
-        return caps.get(2).map(|m| m.as_str().trim().to_string()).filter(|s| !s.is_empty());
+        return caps
+            .get(2)
+            .map(|m| m.as_str().trim().to_string())
+            .filter(|s| !s.is_empty());
     }
 
-    let jsx_title = Regex::new(r#"<[A-Z]\w*\s+[^>]*?title=(?:(['"`])([^'"`]*)['"`]|\{(['"`])([^'"`]*)['"`]\})"#).ok()?;
+    let jsx_title = Regex::new(
+        r#"<[A-Z]\w*\s+[^>]*?title=(?:(['"`])([^'"`]*)['"`]|\{(['"`])([^'"`]*)['"`]\})"#,
+    )
+    .ok()?;
     jsx_title.captures(content).and_then(|caps| {
-        caps.get(2).or_else(|| caps.get(4)).map(|m| m.as_str().trim().to_string()).filter(|s| !s.is_empty())
+        caps.get(2)
+            .or_else(|| caps.get(4))
+            .map(|m| m.as_str().trim().to_string())
+            .filter(|s| !s.is_empty())
     })
 }
 
@@ -115,13 +152,24 @@ pub fn extract_title(fs_path: &Path, is_mdx: bool) -> Option<String> {
         }
     }
     let heading = Regex::new(r"(?m)^#+\s+(.+)$").ok()?;
-    heading.captures(&content).and_then(|caps| caps.get(1)).map(|m| m.as_str().trim().to_string()).filter(|s| !s.is_empty())
+    heading
+        .captures(&content)
+        .and_then(|caps| caps.get(1))
+        .map(|m| m.as_str().trim().to_string())
+        .filter(|s| !s.is_empty())
 }
 
 pub fn build_file_entry_lite(fs_path: &Path, root_path: &Path, placeholder_title: &str) -> MdFile {
-    let relative = pathdiff::diff_paths(fs_path, root_path).unwrap_or_else(|| fs_path.to_path_buf());
-    let parts: Vec<String> = relative.iter().map(|p| p.to_string_lossy().to_string()).collect();
-    let file_name = fs_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let relative =
+        pathdiff::diff_paths(fs_path, root_path).unwrap_or_else(|| fs_path.to_path_buf());
+    let parts: Vec<String> = relative
+        .iter()
+        .map(|p| p.to_string_lossy().to_string())
+        .collect();
+    let file_name = fs_path
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
     let ext = extension(&file_name);
     let markdown = is_markdown_file_path(&file_name);
 
@@ -129,15 +177,28 @@ pub fn build_file_entry_lite(fs_path: &Path, root_path: &Path, placeholder_title
         fs_path: fs_path.to_string_lossy().to_string(),
         relative_path: parts.join(std::path::MAIN_SEPARATOR_STR),
         parts,
-        title: if placeholder_title.is_empty() { strip_known_extension(&file_name) } else { placeholder_title.to_string() },
+        title: if placeholder_title.is_empty() {
+            strip_known_extension(&file_name)
+        } else {
+            placeholder_title.to_string()
+        },
         file_name,
         extension: ext,
-        document_kind: if markdown { DocumentKind::Markdown } else { DocumentKind::Document },
+        document_kind: if markdown {
+            DocumentKind::Markdown
+        } else {
+            DocumentKind::Document
+        },
+        tab_id: None,
+        tab_label: None,
     }
 }
 
 pub fn build_file_entry(fs_path: &Path, root_path: &Path) -> MdFile {
-    let file_name = fs_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let file_name = fs_path
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
     let ext = extension(&file_name);
     let markdown = is_markdown_file_path(&file_name);
     let title = if markdown {
@@ -149,7 +210,12 @@ pub fn build_file_entry(fs_path: &Path, root_path: &Path) -> MdFile {
 }
 
 pub fn build_tree(flat: &[MdFile]) -> FolderNode {
-    let mut root = FolderNode { name: "root".into(), path: String::new(), children: vec![], files: vec![] };
+    let mut root = FolderNode {
+        name: "root".into(),
+        path: String::new(),
+        children: vec![],
+        files: vec![],
+    };
     for file in flat {
         insert_file(&mut root, file, 0);
     }
@@ -162,17 +228,29 @@ fn insert_file(node: &mut FolderNode, file: &MdFile, depth: usize) {
         return;
     }
     let name = &file.parts[depth];
-    let idx = node.children.iter().position(|child| &child.name == name).unwrap_or_else(|| {
-        let path = file.parts[..=depth].join("/");
-        node.children.push(FolderNode { name: name.clone(), path, children: vec![], files: vec![] });
-        node.children.len() - 1
-    });
+    let idx = node
+        .children
+        .iter()
+        .position(|child| &child.name == name)
+        .unwrap_or_else(|| {
+            let path = file.parts[..=depth].join("/");
+            node.children.push(FolderNode {
+                name: name.clone(),
+                path,
+                children: vec![],
+                files: vec![],
+            });
+            node.children.len() - 1
+        });
     insert_file(&mut node.children[idx], file, depth + 1);
 }
 
 pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {
     let custom_ignores = load_ignore_patterns(root_path);
-    let mut excludes: Vec<String> = DEFAULT_IGNORED_FOLDERS.iter().map(|s| s.to_string()).collect();
+    let mut excludes: Vec<String> = DEFAULT_IGNORED_FOLDERS
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
     excludes.extend(custom_ignores);
 
     let mut flat: Vec<MdFile> = Vec::new();
@@ -206,7 +284,12 @@ pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {
                 queue.push_back(path);
                 continue;
             }
-            if file_type.is_file() && is_supported_file_path(&path.to_string_lossy(), options.document_conversion_enabled) {
+            if file_type.is_file()
+                && is_supported_file_path(
+                    &path.to_string_lossy(),
+                    options.document_conversion_enabled,
+                )
+            {
                 flat.push(build_file_entry(&path, root_path));
             }
         }
@@ -223,7 +306,10 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn temp_dir(prefix: &str) -> PathBuf {
-        let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
         let dir = std::env::temp_dir().join(format!("{prefix}-{stamp}"));
         fs::create_dir_all(&dir).unwrap();
         dir
@@ -236,7 +322,13 @@ mod tests {
 
     #[test]
     fn extract_mdx_title_prefers_frontmatter() {
-        assert_eq!(extract_mdx_title("---\ntitle: \"Frontmatter Title\"\n---\n\nexport const title = 'Ignored';").unwrap(), "Frontmatter Title");
+        assert_eq!(
+            extract_mdx_title(
+                "---\ntitle: \"Frontmatter Title\"\n---\n\nexport const title = 'Ignored';"
+            )
+            .unwrap(),
+            "Frontmatter Title"
+        );
     }
 
     #[test]
@@ -257,8 +349,18 @@ mod tests {
         write(&root.join("image.png"), "not supported");
 
         let result = scan(&root, ScanOptions::default()).unwrap();
-        let rel: Vec<_> = result.flat.iter().map(|entry| entry.relative_path.clone()).collect();
-        assert_eq!(rel, vec!["docs\\guide.md".replace('\\', std::path::MAIN_SEPARATOR_STR), "notes.txt".to_string()]);
+        let rel: Vec<_> = result
+            .flat
+            .iter()
+            .map(|entry| entry.relative_path.clone())
+            .collect();
+        assert_eq!(
+            rel,
+            vec![
+                "docs\\guide.md".replace('\\', std::path::MAIN_SEPARATOR_STR),
+                "notes.txt".to_string()
+            ]
+        );
         assert_eq!(result.tree.children[0].name, "docs");
     }
 
@@ -269,7 +371,14 @@ mod tests {
         write(&root.join("skip.md"), "# Skip");
         write(&root.join(".markdown-explorer-ignore"), "skip.md\n");
         let result = scan(&root, ScanOptions::default()).unwrap();
-        assert_eq!(result.flat.iter().map(|e| e.file_name.as_str()).collect::<Vec<_>>(), vec!["keep.md"]);
+        assert_eq!(
+            result
+                .flat
+                .iter()
+                .map(|e| e.file_name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["keep.md"]
+        );
     }
 
     #[test]
@@ -278,8 +387,20 @@ mod tests {
         write(&root.join("report.doc"), "fake doc");
         write(&root.join("readme.md"), "# Readme");
         let off = scan(&root, ScanOptions::default()).unwrap();
-        assert_eq!(off.flat.iter().map(|e| e.file_name.as_str()).collect::<Vec<_>>(), vec!["readme.md"]);
-        let on = scan(&root, ScanOptions { document_conversion_enabled: true }).unwrap();
+        assert_eq!(
+            off.flat
+                .iter()
+                .map(|e| e.file_name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["readme.md"]
+        );
+        let on = scan(
+            &root,
+            ScanOptions {
+                document_conversion_enabled: true,
+            },
+        )
+        .unwrap();
         assert_eq!(on.flat.len(), 2);
     }
 

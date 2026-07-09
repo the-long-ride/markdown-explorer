@@ -23,7 +23,11 @@ pub fn boot() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_window_state::Builder::new().with_denylist(&["decorations"]).build())
+        .plugin(
+            tauri_plugin_window_state::Builder::new()
+                .with_denylist(&["decorations"])
+                .build(),
+        )
         .register_uri_scheme_protocol("youtube-proxy", crate::youtube::handle_youtube_proxy)
         .register_uri_scheme_protocol("local-file", crate::local_file::handle_local_file)
         .manage(state)
@@ -32,15 +36,16 @@ pub fn boot() {
             let app_handle = app.handle().clone();
             crate::dispatcher::Dispatcher::mount(&app_handle, state_for_dispatch.clone());
 
-            let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-                .title("Markdown Explorer")
-                .inner_size(1280.0, 800.0)
-                .min_inner_size(720.0, 480.0)
-                .resizable(true)
-                .fullscreen(false)
-                .decorations(false)
-                .initialization_script(&shim_js)
-                .build()?;
+            let window =
+                WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+                    .title("Markdown Explorer")
+                    .inner_size(1280.0, 800.0)
+                    .min_inner_size(720.0, 480.0)
+                    .resizable(true)
+                    .fullscreen(false)
+                    .decorations(false)
+                    .initialization_script(&shim_js)
+                    .build()?;
             let icon = match Image::from_bytes(APP_ICON_PNG) {
                 Ok(img) => img,
                 Err(err) => {

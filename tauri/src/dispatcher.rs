@@ -1,16 +1,19 @@
 #![allow(dead_code)]
 
+use crate::app_state::AppState;
+use crate::app_state::RuntimeState;
 use crate::host_message;
 use crate::runtime::navigation;
 use crate::runtime::refresh::{is_watch_change_relevant, should_notify_current_file_changed};
 use crate::search::index::SearchIndex;
 use crate::search::worker::{create_search_worker, SearchWorkerMessage};
-use crate::workspace::open::{get_workspace_path_status, choose_workspace_and_file, WorkspaceUnavailableReason};
+use crate::workspace::file_types::{extension, is_markdown_file_path, strip_known_extension};
+use crate::workspace::open::{
+    choose_workspace_and_file, get_workspace_path_status, WorkspaceUnavailableReason,
+};
 use crate::workspace::recents::{RecentWorkspaceInput, RecentWorkspacesStore};
-use crate::workspace::scanner::{scan, MdFile, ScanOptions};
+use crate::workspace::scanner::{scan, DocumentKind, MdFile, ScanOptions};
 use crate::workspace::watch::{WatchChange, WorkspaceWatchController};
-use crate::app_state::RuntimeState;
-use crate::app_state::AppState;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -21,6 +24,90 @@ use tauri_plugin_opener::OpenerExt;
 pub struct Dispatcher {
     pub app: AppHandle,
     pub state: AppState,
+}
+
+fn md_file_from_search_payload(item: &Value) -> Option<MdFile> {
+    let fs_path = item.get("fsPath").and_then(Value::as_str)?.to_string();
+    let file_name = item
+        .get("fileName")
+        .and_then(Value::as_str)
+        .filter(|s| !s.is_empty())
+        .map(ToOwned::to_owned)
+        .or_else(|| {
+            Path::new(&fs_path)
+                .file_name()
+                .map(|name| name.to_string_lossy().to_string())
+        })
+        .unwrap_or_default();
+    let relative_path = item
+        .get("relativePath")
+        .and_then(Value::as_str)
+        .filter(|s| !s.is_empty())
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| file_name.clone());
+    let title = item
+        .get("title")
+        .and_then(Value::as_str)
+        .filter(|s| !s.is_empty())
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| strip_known_extension(&file_name));
+    let parts = relative_path
+        .split(['/', '\\'])
+        .filter(|part| !part.is_empty())
+        .map(ToOwned::to_owned)
+        .collect::<Vec<_>>();
+
+    Some(MdFile {
+        fs_path: fs_path.clone(),
+        relative_path,
+        parts,
+        file_name,
+        title,
+        extension: extension(&fs_path),
+        document_kind: if is_markdown_file_path(&fs_path) {
+            DocumentKind::Markdown
+        } else {
+            DocumentKind::Document
+        },
+        tab_id: item
+            .get("tabId")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned),
+        tab_label: item
+            .get("tabLabel")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned),
+    })
+}
+
+fn resolve_search_items(items: Option<Value>, flat_list: &[MdFile]) -> Vec<MdFile> {
+    match items {
+        Some(ref value) if value.is_array() => serde_json::from_value::<Vec<MdFile>>(value.clone())
+            .unwrap_or_else(|_| {
+                let flat_by_path = flat_list
+                    .iter()
+                    .map(|file| (file.fs_path.as_str(), file))
+                    .collect::<std::collections::HashMap<_, _>>();
+                value
+                    .as_array()
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|item| {
+                                let payload = md_file_from_search_payload(item)?;
+                                let mut resolved = flat_by_path
+                                    .get(payload.fs_path.as_str())
+                                    .map(|file| (*file).clone())
+                                    .unwrap_or_else(|| payload.clone());
+                                resolved.tab_id = payload.tab_id;
+                                resolved.tab_label = payload.tab_label;
+                                Some(resolved)
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default()
+            }),
+        _ => flat_list.to_vec(),
+    }
 }
 
 impl Dispatcher {
@@ -57,7 +144,12 @@ impl Dispatcher {
             state.flat_list.clear();
         }
         let store = self.recents_store();
-        host_message::emit_workspace_unavailable(&self.app, &path.to_string_lossy(), reason, store.load());
+        host_message::emit_workspace_unavailable(
+            &self.app,
+            &path.to_string_lossy(),
+            reason,
+            store.load(),
+        );
     }
 
     fn set_workspace(&self, workspace_path: PathBuf, current_file: Option<PathBuf>) {
@@ -80,7 +172,9 @@ impl Dispatcher {
                 self.send_initial_content(open_first_file);
             }
             Err("unavailable") => {
-                let reason = get_workspace_path_status(path).reason.unwrap_or(WorkspaceUnavailableReason::Missing);
+                let reason = get_workspace_path_status(path)
+                    .reason
+                    .unwrap_or(WorkspaceUnavailableReason::Missing);
                 self.send_workspace_unavailable(path, reason);
             }
             Err("unsupported") => {
@@ -130,11 +224,29 @@ impl Dispatcher {
         }
         let app = self.app.clone();
         let handle = create_search_worker(move |msg| match msg {
-            SearchWorkerMessage::Batch { request_id, results } => {
-                host_message::emit_cross_tab_search_results_batch(&app, &request_id, json!(results));
+            SearchWorkerMessage::Batch {
+                request_id,
+                results,
+            } => {
+                host_message::emit_cross_tab_search_results_batch(
+                    &app,
+                    &request_id,
+                    json!(results),
+                );
             }
-            SearchWorkerMessage::Done { request_id, total, truncated, cancelled } => {
-                host_message::emit_cross_tab_search_results_done(&app, &request_id, total, truncated, cancelled);
+            SearchWorkerMessage::Done {
+                request_id,
+                total,
+                truncated,
+                cancelled,
+            } => {
+                host_message::emit_cross_tab_search_results_done(
+                    &app,
+                    &request_id,
+                    total,
+                    truncated,
+                    cancelled,
+                );
             }
         });
         state.search_worker = Some(handle);
@@ -180,16 +292,24 @@ impl Dispatcher {
 
     fn is_current_file_still_available(&self) -> bool {
         let state = self.state.inner.read();
-        let Some(ref current_file) = state.current_file else { return false; };
+        let Some(ref current_file) = state.current_file else {
+            return false;
+        };
         let status = get_workspace_path_status(current_file);
         if !status.ok || !status.is_file {
             return false;
         }
         let doc_conv = state.document_conversion_enabled;
-        if !crate::workspace::file_types::is_supported_file_path(&current_file.to_string_lossy(), doc_conv) {
+        if !crate::workspace::file_types::is_supported_file_path(
+            &current_file.to_string_lossy(),
+            doc_conv,
+        ) {
             return false;
         }
-        state.flat_list.iter().any(|f| f.fs_path == current_file.to_string_lossy())
+        state
+            .flat_list
+            .iter()
+            .any(|f| f.fs_path == current_file.to_string_lossy())
     }
 
     fn send_workspace_data(&self) {
@@ -197,16 +317,26 @@ impl Dispatcher {
             let state = self.state.inner.read();
             state.workspace_path.clone()
         };
-        let Some(workspace_path) = workspace_path else { return; };
+        let Some(workspace_path) = workspace_path else {
+            return;
+        };
 
         let status = get_workspace_path_status(&workspace_path);
         if !status.ok {
-            self.send_workspace_unavailable(&workspace_path, status.reason.unwrap_or(WorkspaceUnavailableReason::Missing));
+            self.send_workspace_unavailable(
+                &workspace_path,
+                status.reason.unwrap_or(WorkspaceUnavailableReason::Missing),
+            );
             return;
         }
 
         let document_conversion_enabled = self.state.inner.read().document_conversion_enabled;
-        let result = match scan(&workspace_path, ScanOptions { document_conversion_enabled }) {
+        let result = match scan(
+            &workspace_path,
+            ScanOptions {
+                document_conversion_enabled,
+            },
+        ) {
             Ok(r) => r,
             Err(err) => {
                 eprintln!("Failed to scan workspace: {err}");
@@ -247,16 +377,26 @@ impl Dispatcher {
             let state = self.state.inner.read();
             state.workspace_path.clone()
         };
-        let Some(workspace_path) = workspace_path else { return; };
+        let Some(workspace_path) = workspace_path else {
+            return;
+        };
 
         let status = get_workspace_path_status(&workspace_path);
         if !status.ok {
-            self.send_workspace_unavailable(&workspace_path, status.reason.unwrap_or(WorkspaceUnavailableReason::Missing));
+            self.send_workspace_unavailable(
+                &workspace_path,
+                status.reason.unwrap_or(WorkspaceUnavailableReason::Missing),
+            );
             return;
         }
 
         let document_conversion_enabled = self.state.inner.read().document_conversion_enabled;
-        let result = match scan(&workspace_path, ScanOptions { document_conversion_enabled }) {
+        let result = match scan(
+            &workspace_path,
+            ScanOptions {
+                document_conversion_enabled,
+            },
+        ) {
             Ok(r) => r,
             Err(err) => {
                 eprintln!("Failed to scan workspace on watch: {err}");
@@ -294,7 +434,13 @@ impl Dispatcher {
             state.current_file.is_none() && !state.flat_list.is_empty()
         };
         if should_open_first {
-            let first = self.state.inner.read().flat_list.first().map(|f| f.fs_path.clone());
+            let first = self
+                .state
+                .inner
+                .read()
+                .flat_list
+                .first()
+                .map(|f| f.fs_path.clone());
             if let Some(first_path) = first {
                 self.state.inner.write().current_file = Some(PathBuf::from(first_path));
             }
@@ -309,7 +455,9 @@ impl Dispatcher {
 
     fn send_content(&self) {
         let current_file = self.state.inner.read().current_file.clone();
-        let Some(ref current_file) = current_file else { return; };
+        let Some(ref current_file) = current_file else {
+            return;
+        };
         let file_path_str = current_file.to_string_lossy().to_string();
 
         let doc_conv = self.state.inner.read().document_conversion_enabled;
@@ -321,21 +469,17 @@ impl Dispatcher {
         let preview_info = result.preview_info;
 
         let flat_list = self.state.inner.read().flat_list.clone();
-        let file_info = flat_list
-            .iter()
-            .find(|f| f.fs_path == file_path_str);
+        let file_info = flat_list.iter().find(|f| f.fs_path == file_path_str);
 
         let relative_path = file_info
             .map(|f| f.relative_path.clone())
             .unwrap_or_else(|| file_path_str.clone());
-        let title = file_info
-            .map(|f| f.title.clone())
-            .unwrap_or_else(|| {
-                current_file
-                    .file_stem()
-                    .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or_default()
-            });
+        let title = file_info.map(|f| f.title.clone()).unwrap_or_else(|| {
+            current_file
+                .file_stem()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default()
+        });
 
         let mut extra = serde_json::Map::new();
         extra.insert("html".into(), "".into());
@@ -346,7 +490,10 @@ impl Dispatcher {
         extra.insert("relativePath".into(), relative_path.into());
         extra.insert("title".into(), title.into());
         extra.insert("fileList".into(), json!(flat_list));
-        extra.insert("previewInfo".into(), serde_json::to_value(preview_info).unwrap_or(Value::Null));
+        extra.insert(
+            "previewInfo".into(),
+            serde_json::to_value(preview_info).unwrap_or(Value::Null),
+        );
         host_message::emit(&self.app, "renderContent", extra);
     }
 
@@ -371,11 +518,16 @@ impl Dispatcher {
             let state = self.state.inner.read();
             state.workspace_path.clone()
         };
-        let Some(workspace_path) = workspace_path else { return; };
+        let Some(workspace_path) = workspace_path else {
+            return;
+        };
 
         let status = get_workspace_path_status(&workspace_path);
         if !status.ok {
-            self.send_workspace_unavailable(&workspace_path, status.reason.unwrap_or(WorkspaceUnavailableReason::Missing));
+            self.send_workspace_unavailable(
+                &workspace_path,
+                status.reason.unwrap_or(WorkspaceUnavailableReason::Missing),
+            );
             return;
         }
 
@@ -384,7 +536,11 @@ impl Dispatcher {
             let current_file_still_available = self.is_current_file_still_available();
             let current_file = self.state.inner.read().current_file.clone();
             let cf_str = current_file.as_ref().and_then(|p| p.to_str());
-            if should_notify_current_file_changed(cf_str, changed_path, current_file_still_available) {
+            if should_notify_current_file_changed(
+                cf_str,
+                changed_path,
+                current_file_still_available,
+            ) {
                 if let Some(ref cf) = current_file {
                     host_message::emit_current_file_changed(&self.app, &cf.to_string_lossy());
                 }
@@ -409,7 +565,10 @@ impl Dispatcher {
     // ── B2 command handlers ──
 
     async fn handle_ready(&self, msg: &Value) {
-        if let Some(enabled) = msg.get("documentConversionEnabled").and_then(Value::as_bool) {
+        if let Some(enabled) = msg
+            .get("documentConversionEnabled")
+            .and_then(Value::as_bool)
+        {
             self.state.inner.write().document_conversion_enabled = enabled;
         }
 
@@ -422,7 +581,8 @@ impl Dispatcher {
         self.state.inner.write().ready_handled = true;
 
         let config_dir = self.app.path().app_config_dir().unwrap_or_default();
-        let persisted_state = crate::update::manager::UpdateManager::restore_and_emit(&self.app, &config_dir);
+        let persisted_state =
+            crate::update::manager::UpdateManager::restore_and_emit(&self.app, &config_dir);
         self.state.inner.write().update_state = persisted_state;
 
         self.state.inner.read().perf.mark("host:ready");
@@ -442,7 +602,11 @@ impl Dispatcher {
         let _ = self.app.emit("host-message", ack);
 
         self.state.inner.read().perf.mark("host:ready-ack");
-        self.state.inner.read().perf.measure("host ready to readyAck", "host:ready");
+        self.state
+            .inner
+            .read()
+            .perf
+            .measure("host ready to readyAck", "host:ready");
         self.state.inner.read().perf.print_summary();
 
         if workspace_path.is_some() {
@@ -484,7 +648,10 @@ impl Dispatcher {
         let doc_conv = self.state.inner.read().document_conversion_enabled;
         let exists = resolved.exists();
         let is_file = exists && resolved.is_file();
-        let supported = crate::workspace::file_types::is_supported_file_path(&resolved.to_string_lossy(), doc_conv);
+        let supported = crate::workspace::file_types::is_supported_file_path(
+            &resolved.to_string_lossy(),
+            doc_conv,
+        );
 
         if is_file && supported {
             self.state.inner.write().current_file = Some(resolved);
@@ -497,31 +664,7 @@ impl Dispatcher {
     fn handle_search_workspace(&self, request_id: &str, query: &str, items: Option<Value>) {
         let idx = self.ensure_search_index();
         let flat_list = self.state.inner.read().flat_list.clone();
-        let items: Vec<MdFile> = match items {
-            Some(ref v) if v.is_array() => {
-                // The UI sends partial item objects (fsPath/title/fileName/relativePath only).
-                // Try full deserialization first; if it fails (missing required fields like
-                // parts/extension/document_kind), fall back to filtering the server-side
-                // flat_list by the fsPath set from the UI payload.
-                serde_json::from_value::<Vec<MdFile>>(v.clone()).unwrap_or_else(|_| {
-                    let paths: std::collections::HashSet<String> = v
-                        .as_array()
-                        .map(|arr| {
-                            arr.iter()
-                                .filter_map(|item| item.get("fsPath").and_then(Value::as_str))
-                                .map(ToOwned::to_owned)
-                                .collect()
-                        })
-                        .unwrap_or_default();
-                    if paths.is_empty() {
-                        flat_list.clone()
-                    } else {
-                        flat_list.iter().filter(|f| paths.contains(&f.fs_path)).cloned().collect()
-                    }
-                })
-            }
-            _ => flat_list,
-        };
+        let items = resolve_search_items(items, &flat_list);
         let query = query.trim().to_lowercase();
         let results = idx.search(&query, &items, 10000);
         host_message::emit_workspace_search_results(&self.app, request_id, json!(results));
@@ -536,8 +679,10 @@ impl Dispatcher {
         }
     }
 
-    fn handle_index_workspace_search_items(&self, items: Vec<MdFile>) {
+    fn handle_index_workspace_search_items(&self, items: Option<Value>) {
         self.ensure_search_worker();
+        let flat_list = self.state.inner.read().flat_list.clone();
+        let items = resolve_search_items(items, &flat_list);
         let state = self.state.inner.read();
         if let Some(ref worker) = state.search_worker {
             worker.set_items(items);
@@ -553,13 +698,26 @@ impl Dispatcher {
         tokio::time::sleep(Duration::from_millis(50)).await;
 
         for tab in &tab_requests {
-            let tab_id = tab.get("tabId").and_then(Value::as_str).unwrap_or("").to_string();
-            let ws_path = tab.get("workspacePath").and_then(Value::as_str).unwrap_or("").to_string();
+            let tab_id = tab
+                .get("tabId")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string();
+            let ws_path = tab
+                .get("workspacePath")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string();
 
             if !tab_id.is_empty() && !ws_path.is_empty() {
                 if Path::new(&ws_path).exists() {
                     let doc_conv = self.state.inner.read().document_conversion_enabled;
-                    match scan(Path::new(&ws_path), ScanOptions { document_conversion_enabled: doc_conv }) {
+                    match scan(
+                        Path::new(&ws_path),
+                        ScanOptions {
+                            document_conversion_enabled: doc_conv,
+                        },
+                    ) {
                         Ok(result) => {
                             let idx = self.ensure_search_index();
                             idx.prime(&result.flat);
@@ -654,7 +812,10 @@ impl Dispatcher {
         match cmd {
             // ── B1 handlers ──
             "openFolder" => {
-                let open_first_file = msg.get("openFirstFile").and_then(Value::as_bool).unwrap_or(false);
+                let open_first_file = msg
+                    .get("openFirstFile")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
                 if let Some(path) = self.pick_folder() {
                     self.handle_open_path(&path, open_first_file);
                 }
@@ -666,18 +827,30 @@ impl Dispatcher {
             }
             "openPath" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {
-                    let open_first_file = msg.get("openFirstFile").and_then(Value::as_bool).unwrap_or(false);
+                    let open_first_file = msg
+                        .get("openFirstFile")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(false);
                     self.handle_open_path(Path::new(path_str), open_first_file);
                 }
             }
             "activateWorkspace" => {
                 if let Some(workspace_path_str) = msg.get("workspacePath").and_then(Value::as_str) {
-                    let file_path = msg.get("filePath").and_then(Value::as_str).map(PathBuf::from);
-                    let open_first_file = msg.get("openFirstFile").and_then(Value::as_bool).unwrap_or(false);
+                    let file_path = msg
+                        .get("filePath")
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from);
+                    let open_first_file = msg
+                        .get("openFirstFile")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(false);
                     let path = PathBuf::from(workspace_path_str);
                     let status = get_workspace_path_status(&path);
                     if !status.ok {
-                        self.send_workspace_unavailable(&path, status.reason.unwrap_or(WorkspaceUnavailableReason::Missing));
+                        self.send_workspace_unavailable(
+                            &path,
+                            status.reason.unwrap_or(WorkspaceUnavailableReason::Missing),
+                        );
                     } else {
                         let current_file = file_path.filter(|p| p.exists());
                         self.recents_store().save(&path);
@@ -692,7 +865,10 @@ impl Dispatcher {
             }
             "openRecentWorkspace" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {
-                    let open_first_file = msg.get("openFirstFile").and_then(Value::as_bool).unwrap_or(false);
+                    let open_first_file = msg
+                        .get("openFirstFile")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(false);
                     self.handle_open_path(Path::new(path_str), open_first_file);
                 }
             }
@@ -727,7 +903,9 @@ impl Dispatcher {
                 let entries = msg
                     .get("recentWorkspaces")
                     .cloned()
-                    .and_then(|value| serde_json::from_value::<Vec<RecentWorkspaceInput>>(value).ok())
+                    .and_then(|value| {
+                        serde_json::from_value::<Vec<RecentWorkspaceInput>>(value).ok()
+                    })
                     .unwrap_or_default();
                 let store = self.recents_store();
                 store.replace(entries);
@@ -745,22 +923,34 @@ impl Dispatcher {
                 self.handle_navigate(file_path).await;
             }
             "searchWorkspace" => {
-                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("").to_string();
-                let query = msg.get("query").and_then(Value::as_str).unwrap_or("").to_string();
+                let request_id = msg
+                    .get("requestId")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let query = msg
+                    .get("query")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
                 let items = msg.get("items").cloned();
                 self.handle_search_workspace(&request_id, &query, items);
             }
             "searchAcrossWorkspaces" => {
-                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("").to_string();
-                let query = msg.get("query").and_then(Value::as_str).unwrap_or("").to_string();
+                let request_id = msg
+                    .get("requestId")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let query = msg
+                    .get("query")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
                 self.handle_search_across_workspaces(&request_id, &query);
             }
             "indexWorkspaceSearchItems" => {
-                let items = msg
-                    .get("items")
-                    .cloned()
-                    .and_then(|v| serde_json::from_value::<Vec<MdFile>>(v).ok())
-                    .unwrap_or_default();
+                let items = msg.get("items").cloned();
                 self.handle_index_workspace_search_items(items);
             }
             "loadWorkspaceSearchIndexes" => {
@@ -818,17 +1008,31 @@ impl Dispatcher {
             }
             // ── C3: Update ──
             "downloadUpdate" => {
-                let version = msg.get("version").and_then(Value::as_str).unwrap_or("").to_string();
-                let url = msg.get("url").and_then(Value::as_str).unwrap_or("").to_string();
+                let version = msg
+                    .get("version")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let url = msg
+                    .get("url")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
                 if !version.is_empty() && !url.is_empty() {
                     let file_name = url.split('/').last().unwrap_or("update.msi").to_string();
-                    let new_state = crate::update::UpdateState::downloading(&version, &file_name, 0);
+                    let new_state =
+                        crate::update::UpdateState::downloading(&version, &file_name, 0);
                     {
                         self.state.inner.write().update_state = new_state.clone();
                     }
                     crate::update::manager::UpdateManager::emit_state(&self.app, &new_state);
 
-                    let staging_dir = self.app.path().app_data_dir().unwrap_or_default().join("staged");
+                    let staging_dir = self
+                        .app
+                        .path()
+                        .app_data_dir()
+                        .unwrap_or_default()
+                        .join("staged");
                     crate::update::manager::UpdateManager::start_download(
                         self.app.clone(),
                         &version,
@@ -892,6 +1096,26 @@ mod tests {
     }
 
     #[test]
+    fn test_mdfile_full_deserialization_preserves_tab_metadata() {
+        let val = json!([{
+            "tabId": "tab-1",
+            "tabLabel": "Workspace A",
+            "fsPath": "/path/to/file.md",
+            "relativePath": "file.md",
+            "parts": ["file.md"],
+            "fileName": "file.md",
+            "title": "My Title",
+            "extension": ".md",
+            "documentKind": "markdown"
+        }]);
+
+        let items: Vec<MdFile> = serde_json::from_value(val).unwrap();
+
+        assert_eq!(items[0].tab_id.as_deref(), Some("tab-1"));
+        assert_eq!(items[0].tab_label.as_deref(), Some("Workspace A"));
+    }
+
+    #[test]
     fn test_mdfile_partial_deserialization_fallback_extraction() {
         // Simulates the lightweight search payload sent by the UI
         let val = json!([{
@@ -918,5 +1142,101 @@ mod tests {
 
         assert_eq!(paths.len(), 1);
         assert!(paths.contains("/path/to/file.md"));
+    }
+
+    #[test]
+    fn test_resolve_search_items_falls_back_for_partial_cross_tab_payload() {
+        let val = json!([{
+            "tabId": "tab-1",
+            "tabLabel": "Workspace A",
+            "fsPath": "/path/to/file.md",
+            "relativePath": "file.md",
+            "fileName": "file.md",
+            "title": "My Title"
+        }]);
+        let flat_list = vec![MdFile {
+            fs_path: "/path/to/file.md".into(),
+            relative_path: "file.md".into(),
+            parts: vec!["file.md".into()],
+            file_name: "file.md".into(),
+            title: "My Title".into(),
+            extension: Some(".md".into()),
+            document_kind: crate::workspace::scanner::DocumentKind::Markdown,
+        }];
+
+        let items = resolve_search_items(Some(val), &flat_list);
+
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].fs_path, "/path/to/file.md");
+        assert_eq!(items[0].tab_id.as_deref(), Some("tab-1"));
+        assert_eq!(items[0].tab_label.as_deref(), Some("Workspace A"));
+    }
+
+    #[test]
+    fn test_resolve_search_items_builds_partial_item_not_in_active_flat_list() {
+        let val = json!([{
+            "tabId": "tab-2",
+            "tabLabel": "Workspace B",
+            "fsPath": "/other-workspace/guide.md",
+            "relativePath": "docs/guide.md",
+            "fileName": "guide.md",
+            "title": "Guide"
+        }]);
+
+        let items = resolve_search_items(Some(val), &[]);
+
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].fs_path, "/other-workspace/guide.md");
+        assert_eq!(items[0].relative_path, "docs/guide.md");
+        assert_eq!(items[0].parts, vec!["docs", "guide.md"]);
+        assert_eq!(items[0].extension, ".md");
+        assert_eq!(items[0].document_kind, DocumentKind::Markdown);
+        assert_eq!(items[0].tab_id.as_deref(), Some("tab-2"));
+        assert_eq!(items[0].tab_label.as_deref(), Some("Workspace B"));
+    }
+
+    #[test]
+    fn test_resolve_search_items_builds_minimal_payload_like_electron() {
+        let val = json!([{
+            "fsPath": "/other-workspace/notes.txt"
+        }]);
+
+        let items = resolve_search_items(Some(val), &[]);
+
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].fs_path, "/other-workspace/notes.txt");
+        assert_eq!(items[0].file_name, "notes.txt");
+        assert_eq!(items[0].relative_path, "notes.txt");
+        assert_eq!(items[0].title, "notes");
+        assert_eq!(items[0].parts, vec!["notes.txt"]);
+        assert_eq!(items[0].extension, ".txt");
+        assert_eq!(items[0].document_kind, DocumentKind::Document);
+    }
+
+    #[test]
+    fn test_resolve_search_items_keeps_full_mdfile_payload() {
+        let val = json!([{
+            "fsPath": "/path/to/file.md",
+            "relativePath": "file.md",
+            "parts": ["file.md"],
+            "fileName": "file.md",
+            "title": "My Title",
+            "extension": ".md",
+            "documentKind": "markdown"
+        }]);
+        let flat_list = vec![MdFile {
+            fs_path: "/path/to/file.md".into(),
+            relative_path: "file.md".into(),
+            parts: vec!["file.md".into()],
+            file_name: "file.md".into(),
+            title: "My Title".into(),
+            extension: Some(".md".into()),
+            document_kind: crate::workspace::scanner::DocumentKind::Markdown,
+        }];
+
+        let items = resolve_search_items(Some(val), &flat_list);
+
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].title, "My Title");
     }
 }

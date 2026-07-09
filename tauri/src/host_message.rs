@@ -51,7 +51,10 @@ pub fn emit_ready_ack_full(
         extra.insert("workspacePath".into(), wp.into());
     }
     extra.insert("recentWorkspaces".into(), json!(recent_workspaces));
-    extra.insert("documentConversionEnabled".into(), document_conversion_enabled.into());
+    extra.insert(
+        "documentConversionEnabled".into(),
+        document_conversion_enabled.into(),
+    );
     extra.insert("appRuntime".into(), "tauri".into());
     extra.insert("hostPlatform".into(), std::env::consts::OS.into());
     extra.insert("hostArch".into(), std::env::consts::ARCH.into());
@@ -88,7 +91,13 @@ pub fn emit_workspace_unavailable(
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| if workspace_path.is_empty() { "Workspace".into() } else { workspace_path.into() })
+            .unwrap_or_else(|| {
+                if workspace_path.is_empty() {
+                    "Workspace".into()
+                } else {
+                    workspace_path.into()
+                }
+            })
             .into(),
     );
     extra.insert("reason".into(), json!(reason));
@@ -123,7 +132,10 @@ pub fn emit_workspace_files_changed(
     extra.insert("tree".into(), tree);
     extra.insert("workspaceName".into(), workspace_name.into());
     extra.insert("workspacePath".into(), workspace_path.into());
-    extra.insert("documentConversionEnabled".into(), document_conversion_enabled.into());
+    extra.insert(
+        "documentConversionEnabled".into(),
+        document_conversion_enabled.into(),
+    );
     emit(app, "workspaceFilesChanged", extra);
 }
 
@@ -139,22 +151,14 @@ pub fn emit_nav_not_found(app: &AppHandle, href: &str) {
     emit(app, "navNotFound", extra);
 }
 
-pub fn emit_workspace_search_results(
-    app: &AppHandle,
-    request_id: &str,
-    results: Value,
-) {
+pub fn emit_workspace_search_results(app: &AppHandle, request_id: &str, results: Value) {
     let mut extra = serde_json::Map::new();
     extra.insert("requestId".into(), request_id.into());
     extra.insert("results".into(), results);
     emit(app, "workspaceSearchResults", extra);
 }
 
-pub fn emit_cross_tab_search_results_batch(
-    app: &AppHandle,
-    request_id: &str,
-    results: Value,
-) {
+pub fn emit_cross_tab_search_results_batch(app: &AppHandle, request_id: &str, results: Value) {
     let mut extra = serde_json::Map::new();
     extra.insert("requestId".into(), request_id.into());
     extra.insert("results".into(), results);
@@ -187,12 +191,15 @@ pub fn emit_workspace_search_index_loaded(
     tree: Value,
 ) {
     let mut extra = serde_json::Map::new();
-    extra.insert("tabs".into(), json!([{
-        "tabId": tab_id,
-        "workspacePath": workspace_path,
-        "fileList": file_list,
-        "tree": tree,
-    }]));
+    extra.insert(
+        "tabs".into(),
+        json!([{
+            "tabId": tab_id,
+            "workspacePath": workspace_path,
+            "fileList": file_list,
+            "tree": tree,
+        }]),
+    );
     emit(app, "workspaceSearchIndexLoaded", extra);
 }
 

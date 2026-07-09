@@ -92,12 +92,10 @@ mod tests {
     #[test]
     fn repo_root_is_parent_of_manifest_dir() {
         let root = repo_root();
-        let manifest_dir =
-            std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| String::new());
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| String::new());
         if !manifest_dir.is_empty() {
             let tauri_dir = std::path::Path::new(&manifest_dir);
             assert_eq!(root, tauri_dir.parent().unwrap_or(tauri_dir));
         }
     }
-
 }
