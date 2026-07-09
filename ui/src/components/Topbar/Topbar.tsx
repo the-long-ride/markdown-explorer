@@ -201,7 +201,7 @@ export function Topbar({
         |
       </span>
 
-      {(state.appRuntime === 'desktop' || state.appRuntime === 'chrome') && (
+      {(state.appRuntime === 'desktop' || state.appRuntime === 'chrome' || state.appRuntime === 'tauri') && (
         <TooltipButton
           className="btn btn--icon"
           onClick={() => {
@@ -312,7 +312,7 @@ export function Topbar({
           homeShortcut={state.settings.keybindings?.welcome}
           themeShortcut={state.settings.keybindings?.toggleTheme}
           settingsShortcut={state.settings.keybindings?.settings}
-          canEdit={state.appRuntime === 'desktop' && !!state.currentFile}
+          canEdit={(state.appRuntime === 'desktop' || state.appRuntime === 'tauri') && !!state.currentFile}
           isDark={isDark}
           hasUpdate={hasUpdate}
           onHome={() => navigate(null)}

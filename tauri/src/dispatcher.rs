@@ -498,7 +498,28 @@ impl Dispatcher {
         let idx = self.ensure_search_index();
         let flat_list = self.state.inner.read().flat_list.clone();
         let items: Vec<MdFile> = match items {
-            Some(v) if v.is_array() => serde_json::from_value(v).unwrap_or_default(),
+            Some(ref v) if v.is_array() => {
+                // The UI sends partial item objects (fsPath/title/fileName/relativePath only).
+                // Try full deserialization first; if it fails (missing required fields like
+                // parts/extension/document_kind), fall back to filtering the server-side
+                // flat_list by the fsPath set from the UI payload.
+                serde_json::from_value::<Vec<MdFile>>(v.clone()).unwrap_or_else(|_| {
+                    let paths: std::collections::HashSet<String> = v
+                        .as_array()
+                        .map(|arr| {
+                            arr.iter()
+                                .filter_map(|item| item.get("fsPath").and_then(Value::as_str))
+                                .map(ToOwned::to_owned)
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    if paths.is_empty() {
+                        flat_list.clone()
+                    } else {
+                        flat_list.iter().filter(|f| paths.contains(&f.fs_path)).cloned().collect()
+                    }
+                })
+            }
             _ => flat_list,
         };
         let query = query.trim().to_lowercase();
@@ -846,5 +867,56 @@ impl Dispatcher {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_mdfile_full_deserialization() {
+        let val = json!([{
+            "fsPath": "/path/to/file.md",
+            "relativePath": "file.md",
+            "parts": ["file.md"],
+            "fileName": "file.md",
+            "title": "My Title",
+            "extension": ".md",
+            "documentKind": "markdown"
+        }]);
+        let items: Result<Vec<MdFile>, _> = serde_json::from_value(val);
+        assert!(items.is_ok());
+        assert_eq!(items.unwrap()[0].title, "My Title");
+    }
+
+    #[test]
+    fn test_mdfile_partial_deserialization_fallback_extraction() {
+        // Simulates the lightweight search payload sent by the UI
+        let val = json!([{
+            "fsPath": "/path/to/file.md",
+            "relativePath": "file.md",
+            "fileName": "file.md",
+            "title": "My Title"
+        }]);
+
+        // Attempting to deserialize as full MdFile fails because of missing required fields
+        let full_deser: Result<Vec<MdFile>, _> = serde_json::from_value(val.clone());
+        assert!(full_deser.is_err());
+
+        // The fallback extraction retrieves the paths
+        let paths: std::collections::HashSet<String> = val
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|item| item.get("fsPath").and_then(Value::as_str))
+                    .map(ToOwned::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        assert_eq!(paths.len(), 1);
+        assert!(paths.contains("/path/to/file.md"));
     }
 }
