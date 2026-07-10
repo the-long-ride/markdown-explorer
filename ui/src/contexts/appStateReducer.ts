@@ -72,6 +72,7 @@ export interface AppState {
   appRuntime: AppRuntime;
   hostPlatform: HostPlatform;
   hostArch: string;
+  canInstallUpdates: boolean;
   focusMode: boolean;
   updateState: UpdateState;
   sidebarActiveTab: 'files' | 'search';
@@ -94,6 +95,7 @@ export type Action =
       appRuntime?: AppRuntime;
       hostPlatform?: HostPlatform;
       hostArch?: string;
+      canInstallUpdates?: boolean;
       documentConversionEnabled?: boolean;
       isMaximized?: boolean;
     }
@@ -127,6 +129,7 @@ export type Action =
       appRuntime?: AppRuntime;
       hostPlatform?: HostPlatform;
       hostArch?: string;
+      canInstallUpdates?: boolean;
       isMaximized?: boolean;
     }
   | { type: 'SET_LOADING'; label?: string; detail?: string }
@@ -199,6 +202,7 @@ export const initialState: AppState = {
   appRuntime: 'vscode',
   hostPlatform: 'unknown',
   hostArch: '',
+  canInstallUpdates: false,
   focusMode: false,
   updateState: createEmptyUpdateState(),
   sidebarActiveTab: 'files',
@@ -538,6 +542,7 @@ export function reducer(
         appRuntime: action.appRuntime ?? state.appRuntime,
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
+        canInstallUpdates: action.canInstallUpdates ?? state.canInstallUpdates,
         isMaximized: action.isMaximized ?? state.isMaximized,
         isLoading: workspaceChanged
           ? (action.workspaceName ? state.isLoading : false)
@@ -741,6 +746,7 @@ export function reducer(
         appRuntime: action.appRuntime ?? state.appRuntime,
         hostPlatform: action.hostPlatform ?? state.hostPlatform,
         hostArch: action.hostArch ?? state.hostArch,
+        canInstallUpdates: action.canInstallUpdates ?? state.canInstallUpdates,
         isMaximized: action.isMaximized ?? state.isMaximized,
         contentTabs: [],
         activeContentTabPath: null,

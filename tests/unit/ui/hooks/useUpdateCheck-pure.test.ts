@@ -4,8 +4,11 @@ import {
   parseVersion,
   compareVersions,
   getDesktopAssetScore,
+  isInstallableDesktopAsset,
   pickDesktopDownloadUrl,
+  pickInstallableDesktopDownloadUrl,
   getDownloadUrl,
+  getInstallableDownloadUrl,
 } from '../../../../ui/src/hooks/useUpdateCheck';
 
 describe('normalizeVersion', () => {
@@ -199,6 +202,20 @@ describe('getDesktopAssetScore', () => {
       expect(getDesktopAssetScore('app.AppImage', 'linux', 'x64')).toBeGreaterThan(0);
     });
   });
+
+  describe('runtime asset prefixes', () => {
+    it('prefers Electron assets for Electron desktop runtime', () => {
+      const electronScore = getDesktopAssetScore('electron-Markdown Explorer Setup.exe', 'windows', 'x64', 'desktop');
+      const tauriScore = getDesktopAssetScore('tauri-Markdown Explorer Setup.exe', 'windows', 'x64', 'desktop');
+      expect(electronScore).toBeGreaterThan(tauriScore);
+    });
+
+    it('prefers Tauri assets for Tauri runtime', () => {
+      const electronScore = getDesktopAssetScore('electron-Markdown Explorer Setup.exe', 'windows', 'x64', 'tauri');
+      const tauriScore = getDesktopAssetScore('tauri-Markdown Explorer Setup.exe', 'windows', 'x64', 'tauri');
+      expect(tauriScore).toBeGreaterThan(electronScore);
+    });
+  });
 });
 
 describe('pickDesktopDownloadUrl', () => {
@@ -242,6 +259,61 @@ describe('pickDesktopDownloadUrl', () => {
     const url = pickDesktopDownloadUrl(assets, 'windows', 'x64');
     expect(url).toBe('http://example.com/app-setup.exe');
   });
+
+  it('picks Electron installer over Tauri installer for Electron desktop', () => {
+    const assets = [
+      { name: 'tauri-Markdown Explorer Setup.exe', browser_download_url: 'http://example.com/tauri.exe' },
+      { name: 'electron-Markdown Explorer Setup.exe', browser_download_url: 'http://example.com/electron.exe' },
+    ];
+    const url = pickDesktopDownloadUrl(assets, 'windows', 'x64', 'desktop');
+    expect(url).toBe('http://example.com/electron.exe');
+  });
+});
+
+describe('installable desktop download selection', () => {
+  const releaseAssets = [
+    {
+      name: 'electron-Markdown Explorer Portable.exe',
+      browser_download_url: 'http://example.com/electron-portable.exe',
+    },
+    {
+      name: 'electron-Markdown Explorer.zip',
+      browser_download_url: 'http://example.com/electron.zip',
+    },
+    {
+      name: 'tauri-Markdown Explorer Setup.exe',
+      browser_download_url: 'http://example.com/tauri-setup.exe',
+    },
+    {
+      name: 'electron-Markdown Explorer Setup.exe',
+      browser_download_url: 'http://example.com/electron-setup.exe',
+    },
+  ];
+
+  it('marks only matching Windows installer assets as installable for Electron', () => {
+    expect(isInstallableDesktopAsset('electron-Markdown Explorer Setup.exe', 'windows', 'desktop')).toBe(true);
+    expect(isInstallableDesktopAsset('electron-Markdown Explorer Portable.exe', 'windows', 'desktop')).toBe(false);
+    expect(isInstallableDesktopAsset('electron-Markdown Explorer.zip', 'windows', 'desktop')).toBe(false);
+    expect(isInstallableDesktopAsset('tauri-Markdown Explorer Setup.exe', 'windows', 'desktop')).toBe(false);
+  });
+
+  it('picks Electron Windows setup for current Electron Windows app', () => {
+    expect(pickInstallableDesktopDownloadUrl(releaseAssets, 'windows', 'x64', 'desktop'))
+      .toBe('http://example.com/electron-setup.exe');
+  });
+
+  it('picks Tauri Windows setup for current Tauri Windows app', () => {
+    expect(pickInstallableDesktopDownloadUrl(releaseAssets, 'windows', 'x64', 'tauri'))
+      .toBe('http://example.com/tauri-setup.exe');
+  });
+
+  it('returns no installable URL when only portable or archive assets exist', () => {
+    const assets = [
+      { name: 'electron-Markdown Explorer Portable.exe', browser_download_url: 'http://example.com/portable.exe' },
+      { name: 'electron-Markdown Explorer.zip', browser_download_url: 'http://example.com/app.zip' },
+    ];
+    expect(pickInstallableDesktopDownloadUrl(assets, 'windows', 'x64', 'desktop')).toBeUndefined();
+  });
 });
 
 describe('getDownloadUrl', () => {
@@ -282,4 +354,25 @@ describe('getDownloadUrl', () => {
     expect(url).toBe('http://example.com/release');
   });
 
+});
+
+describe('getInstallableDownloadUrl', () => {
+  it('returns Electron setup URL for Electron Windows release assets', () => {
+    const release = {
+      assets: [
+        { name: 'electron-Markdown Explorer Portable.exe', browser_download_url: 'http://example.com/portable.exe' },
+        { name: 'electron-Markdown Explorer Setup.exe', browser_download_url: 'http://example.com/setup.exe' },
+      ],
+    };
+    expect(getInstallableDownloadUrl(release, 'desktop', 'windows', 'x64')).toBe('http://example.com/setup.exe');
+  });
+
+  it('returns undefined for vscode runtime', () => {
+    const release = {
+      assets: [
+        { name: 'electron-Markdown Explorer Setup.exe', browser_download_url: 'http://example.com/setup.exe' },
+      ],
+    };
+    expect(getInstallableDownloadUrl(release, 'vscode', 'windows', 'x64')).toBeUndefined();
+  });
 });

@@ -1020,19 +1020,21 @@ impl Dispatcher {
                     .to_string();
                 if !version.is_empty() && !url.is_empty() {
                     let file_name = url.split('/').last().unwrap_or("update.msi").to_string();
-                    let new_state =
-                        crate::update::UpdateState::downloading(&version, &file_name, 0);
-                    {
-                        self.state.inner.write().update_state = new_state.clone();
-                    }
-                    crate::update::manager::UpdateManager::emit_state(&self.app, &new_state);
-
                     let staging_dir = self
                         .app
                         .path()
                         .app_data_dir()
                         .unwrap_or_default()
                         .join("staged");
+                    let staged_file_path = staging_dir.join(&file_name);
+                    let new_state =
+                        crate::update::UpdateState::downloading(&version, &file_name, 0)
+                            .with_staged_file_path(staged_file_path.to_string_lossy());
+                    {
+                        self.state.inner.write().update_state = new_state.clone();
+                    }
+                    crate::update::manager::UpdateManager::emit_state(&self.app, &new_state);
+
                     crate::update::manager::UpdateManager::start_download(
                         self.app.clone(),
                         &version,
@@ -1043,14 +1045,16 @@ impl Dispatcher {
             }
             "scheduleDownloadedUpdate" => {
                 let state = self.state.inner.read().update_state.clone();
-                if state.status == crate::update::UpdateStatus::Downloaded {
+                let staged_file_path = state.staged_file_path.as_deref().map(PathBuf::from);
+                if let Some(staged_file_path) = staged_file_path.filter(|path| path.exists()) {
                     let version = state.version.clone().unwrap_or_default();
                     let file_name = state.downloaded_file_name.clone().unwrap_or_default();
                     let config_dir = self.app.path().app_config_dir().unwrap_or_default();
                     let manager = crate::update::manager::UpdateManager::new(config_dir);
-                    manager.schedule_update(&self.app, &version, &file_name);
+                    manager.schedule_update(&self.app, &version, &file_name, &staged_file_path);
                     self.state.inner.write().update_state =
-                        crate::update::UpdateState::scheduled(&version, &file_name);
+                        crate::update::UpdateState::scheduled(&version, &file_name)
+                            .with_staged_file_path(staged_file_path.to_string_lossy());
                 }
             }
             "restartAndApplyUpdate" => {

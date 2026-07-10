@@ -150,6 +150,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             appRuntime: msg.appRuntime,
             hostPlatform: msg.hostPlatform,
             hostArch: msg.hostArch,
+            canInstallUpdates: msg.canInstallUpdates,
             documentConversionEnabled: msg.documentConversionEnabled,
             isMaximized: msg.isMaximized,
           });
@@ -190,6 +191,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             appRuntime: msg.appRuntime,
             hostPlatform: msg.hostPlatform,
             hostArch: msg.hostArch,
+            canInstallUpdates: msg.canInstallUpdates,
             isMaximized: msg.isMaximized,
           });
           break;

@@ -273,7 +273,7 @@ export function App() {
   }, [bridge]);
 
   const downloadUpdate = useCallback(() => {
-    if (isElectron && state.hostPlatform === 'windows' && updateCheck.downloadUrl) {
+    if (state.canInstallUpdates && updateCheck.canInstallUpdate && updateCheck.downloadUrl) {
       bridge.postMessage({
         command: 'downloadUpdate',
         version: updateCheck.latestVersion,
@@ -284,22 +284,22 @@ export function App() {
     openExternalUrl(updateCheck.downloadUrl);
   }, [
     bridge,
-    isElectron,
     openExternalUrl,
-    state.hostPlatform,
+    state.canInstallUpdates,
+    updateCheck.canInstallUpdate,
     updateCheck.downloadUrl,
     updateCheck.latestVersion,
   ]);
 
   const scheduleUpdateOnExit = useCallback(() => {
-    if (!isElectron) return;
+    if (!state.canInstallUpdates) return;
     bridge.postMessage({ command: 'scheduleDownloadedUpdate' });
-  }, [bridge, isElectron]);
+  }, [bridge, state.canInstallUpdates]);
 
   const restartAndApplyUpdate = useCallback(() => {
-    if (!isElectron) return;
+    if (!state.canInstallUpdates) return;
     bridge.postMessage({ command: 'restartAndApplyUpdate' });
-  }, [bridge, isElectron]);
+  }, [bridge, state.canInstallUpdates]);
 
   const openUpdateChangelog = useCallback(() => {
     openExternalUrl(updateCheck.changelogUrl);

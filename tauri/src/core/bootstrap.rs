@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use tauri::{image::Image, WebviewUrl, WebviewWindowBuilder};
+use tauri::{image::Image, Manager, WebviewUrl, WebviewWindowBuilder};
 
 const APP_ICON_PNG: &[u8] = include_bytes!("../../icons/icon.png");
 
@@ -65,11 +65,23 @@ pub fn boot() {
 
             let win_for_event = window.clone();
             let app_for_event = app_handle.clone();
-            window.on_window_event(move |event| {
-                if let tauri::WindowEvent::Resized(_) = event {
+            window.on_window_event(move |event| match event {
+                tauri::WindowEvent::Resized(_) => {
                     let is_max = win_for_event.is_maximized().unwrap_or(false);
                     crate::host_message::emit_window_state_changed(&app_for_event, is_max);
                 }
+                tauri::WindowEvent::CloseRequested { .. } => {
+                    if let Ok(config_dir) = app_for_event.path().app_config_dir() {
+                        if let Err(err) =
+                            crate::update::manager::UpdateManager::apply_pending_update_on_exit(
+                                &config_dir,
+                            )
+                        {
+                            eprintln!("warning: failed to launch pending update: {err}");
+                        }
+                    }
+                }
+                _ => {}
             });
 
             Ok(())

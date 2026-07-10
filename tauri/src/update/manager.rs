@@ -3,12 +3,112 @@ use serde_json::json;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use tauri::{AppHandle, Emitter};
 
 const MANIFEST_FILE: &str = "pending-update.json";
 
 pub struct UpdateManager {
     config_dir: PathBuf,
+}
+
+fn escape_for_cmd_quotes(value: impl AsRef<str>) -> String {
+    value.as_ref().replace('"', "\"\"")
+}
+
+fn is_installer_file(path: &Path) -> bool {
+    let name = path
+        .file_name()
+        .map(|value| value.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    path.extension()
+        .map(|ext| ext.to_string_lossy().eq_ignore_ascii_case("exe"))
+        .unwrap_or(false)
+        && (name.contains("setup") || name.contains("installer"))
+}
+
+pub fn can_install_updates() -> bool {
+    cfg!(target_os = "windows") && !cfg!(debug_assertions)
+}
+
+pub fn create_windows_installer_update_script(
+    staged_file_path: &Path,
+    target_exe_path: &Path,
+    working_directory: &Path,
+) -> String {
+    let quoted_installer = escape_for_cmd_quotes(staged_file_path.to_string_lossy());
+    let quoted_target = escape_for_cmd_quotes(target_exe_path.to_string_lossy());
+    let quoted_work_dir = escape_for_cmd_quotes(working_directory.to_string_lossy());
+
+    let install_command = if is_installer_file(staged_file_path) {
+        format!("start /wait \"\" \"{quoted_installer}\" /S")
+    } else {
+        format!("start /wait \"\" \"{quoted_installer}\"")
+    };
+
+    [
+        "@echo off".to_string(),
+        "setlocal".to_string(),
+        "echo Waiting for app to exit...".to_string(),
+        "for /L %%i in (1,1,120) do (".to_string(),
+        format!("  2>nul (>>\"{quoted_target}\" echo off) && goto install"),
+        "  timeout /t 1 /nobreak >nul".to_string(),
+        ")".to_string(),
+        "goto cleanup".to_string(),
+        "".to_string(),
+        ":install".to_string(),
+        "echo Running installer update...".to_string(),
+        install_command,
+        format!(
+            "if exist \"{quoted_target}\" start \"\" /D \"{quoted_work_dir}\" \"{quoted_target}\""
+        ),
+        "".to_string(),
+        ":cleanup".to_string(),
+        format!("del /Q \"{quoted_installer}\" >nul 2>nul"),
+        "del /Q %~f0 >nul 2>nul".to_string(),
+        "endlocal".to_string(),
+    ]
+    .join("\r\n")
+}
+
+pub fn launch_windows_installer_update_helper(
+    staged_file_path: &Path,
+    target_exe_path: &Path,
+    working_directory: &Path,
+) -> Result<PathBuf, String> {
+    let script_dir = std::env::temp_dir().join("markdown-explorer-updater");
+    fs::create_dir_all(&script_dir).map_err(|err| format!("failed to create helper dir: {err}"))?;
+    let script_path = script_dir.join(format!(
+        "apply-tauri-update-{}.cmd",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_millis())
+            .unwrap_or(0)
+    ));
+    fs::write(
+        &script_path,
+        create_windows_installer_update_script(
+            staged_file_path,
+            target_exe_path,
+            working_directory,
+        ),
+    )
+    .map_err(|err| format!("failed to write helper script: {err}"))?;
+
+    let mut command =
+        Command::new(std::env::var("ComSpec").unwrap_or_else(|_| "cmd.exe".to_string()));
+    command.args(["/d", "/s", "/c"]).arg(&script_path);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const DETACHED_PROCESS: u32 = 0x00000008;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        command.creation_flags(DETACHED_PROCESS | CREATE_NO_WINDOW);
+    }
+    command
+        .spawn()
+        .map_err(|err| format!("failed to launch helper: {err}"))?;
+    Ok(script_path)
 }
 
 impl UpdateManager {
@@ -70,6 +170,7 @@ impl UpdateManager {
 
         let file_name = url.split('/').last().unwrap_or("update.msi").to_string();
         let dest_path = staging_dir.join(&file_name);
+        let dest_path_for_emit = dest_path.clone();
 
         let app_for_progress = app.clone();
         let version_for_progress = version.clone();
@@ -127,7 +228,8 @@ impl UpdateManager {
                 Ok(Ok(())) => {
                     Self::emit_state(
                         &app_for_progress,
-                        &UpdateState::downloaded(&version_for_progress, &file_name_for_progress),
+                        &UpdateState::downloaded(&version_for_progress, &file_name_for_progress)
+                            .with_staged_file_path(dest_path_for_emit.to_string_lossy()),
                     );
                 }
                 Ok(Err(err)) => {
@@ -146,8 +248,15 @@ impl UpdateManager {
         });
     }
 
-    pub fn schedule_update(&self, app: &AppHandle, version: &str, file_name: &str) {
-        let state = UpdateState::scheduled(version, file_name);
+    pub fn schedule_update(
+        &self,
+        app: &AppHandle,
+        version: &str,
+        file_name: &str,
+        staged_file_path: &Path,
+    ) {
+        let state = UpdateState::scheduled(version, file_name)
+            .with_staged_file_path(staged_file_path.to_string_lossy());
         Self::emit_state(app, &state);
 
         let _ = fs::create_dir_all(&self.config_dir);
@@ -156,12 +265,45 @@ impl UpdateManager {
         }
     }
 
+    pub fn apply_pending_update_on_exit(config_dir: &Path) -> Result<bool, String> {
+        if !can_install_updates() {
+            return Ok(false);
+        }
+        let manager = UpdateManager::new(config_dir.to_path_buf());
+        let Some(state) = manager.load_persisted_state() else {
+            return Ok(false);
+        };
+        let Some(staged_file_path) = state.staged_file_path.as_deref() else {
+            manager.clear_persisted_state();
+            return Ok(false);
+        };
+        let staged_path = PathBuf::from(staged_file_path);
+        if !staged_path.exists() {
+            manager.clear_persisted_state();
+            return Ok(false);
+        }
+        let target_exe = std::env::current_exe()
+            .map_err(|err| format!("failed to resolve current executable: {err}"))?;
+        let working_dir = target_exe
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| PathBuf::from("."));
+        manager.clear_persisted_state();
+        launch_windows_installer_update_helper(&staged_path, &target_exe, &working_dir)?;
+        Ok(true)
+    }
+
     pub fn apply_update(app: &AppHandle, version: &str, config_dir: &Path) {
         Self::emit_state(app, &UpdateState::applying(version));
 
-        let manifest = config_dir.join(MANIFEST_FILE);
-        let _ = fs::remove_file(&manifest);
-        app.restart();
+        match Self::apply_pending_update_on_exit(config_dir) {
+            Ok(true) => app.exit(0),
+            Ok(false) => Self::emit_state(
+                app,
+                &UpdateState::error_state(version, "missing-staged-update"),
+            ),
+            Err(err) => Self::emit_state(app, &UpdateState::error_state(version, &err)),
+        }
     }
 }
 
@@ -220,13 +362,40 @@ mod tests {
 
         // We can't call schedule_update without an AppHandle, but we can
         // write the manifest manually and test load_persisted_state.
-        let state = UpdateState::scheduled("5.0", "update.msi");
+        let state = UpdateState::scheduled("5.0", "update.msi")
+            .with_staged_file_path(tmp.path().join("update.msi").to_string_lossy());
         let json = serde_json::to_string_pretty(&state).unwrap();
         fs::write(mgr.manifest_path(), json).unwrap();
 
         let loaded = mgr.load_persisted_state().unwrap();
         assert_eq!(loaded.status, UpdateStatus::ScheduledOnExit);
         assert_eq!(loaded.version.as_deref(), Some("5.0"));
+    }
+
+    #[test]
+    fn windows_installer_script_waits_runs_silent_installer_and_relaunches() {
+        let script = create_windows_installer_update_script(
+            Path::new("C:/Temp/Markdown Explorer Setup.exe"),
+            Path::new("C:/Program Files/Markdown Explorer/Markdown Explorer.exe"),
+            Path::new("C:/Program Files/Markdown Explorer"),
+        );
+
+        assert!(script.contains("Waiting for app to exit"));
+        assert!(script.contains("/S"));
+        assert!(script.contains("start \"\" /D"));
+        assert!(script.contains("del /Q \"C:/Temp/Markdown Explorer Setup.exe\""));
+    }
+
+    #[test]
+    fn installer_file_detection_requires_setup_or_installer_exe() {
+        assert!(is_installer_file(Path::new("Markdown Explorer Setup.exe")));
+        assert!(is_installer_file(Path::new(
+            "Markdown Explorer Installer.exe"
+        )));
+        assert!(!is_installer_file(Path::new(
+            "Markdown Explorer Portable.exe"
+        )));
+        assert!(!is_installer_file(Path::new("Markdown Explorer.zip")));
     }
 
     #[test]
