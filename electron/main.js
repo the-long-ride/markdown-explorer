@@ -25,6 +25,7 @@ const {
   deferWorkspaceLoad,
 } = require("./core/startup-workspace");
 const { createDesktopRuntime } = require('./core/main-runtime');
+const { isInstallerUpdateSupported } = require("./update/update-manager");
 const {
   isWatchChangeRelevant,
   shouldNotifyCurrentFileChanged,
@@ -74,6 +75,7 @@ const runtime = createDesktopRuntime({
       hostPlatform: process.platform === "win32" ? "windows" : process.platform === "darwin" ? "macos" : process.platform === "linux" ? "linux" : "unknown",
       hostArch: process.arch,
       isMaximized: mainWindow ? mainWindow.isMaximized() : false,
+      canInstallUpdates: isInstallerUpdateSupported({ platform: process.platform, app }),
     };
   },
   sendLoading(label, detail) {

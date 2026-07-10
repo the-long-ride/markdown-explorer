@@ -58,6 +58,10 @@ pub fn emit_ready_ack_full(
     extra.insert("appRuntime".into(), "tauri".into());
     extra.insert("hostPlatform".into(), std::env::consts::OS.into());
     extra.insert("hostArch".into(), std::env::consts::ARCH.into());
+    extra.insert(
+        "canInstallUpdates".into(),
+        crate::update::manager::can_install_updates().into(),
+    );
     extra.insert("isMaximized".into(), false.into());
     emit(app, "readyAck", extra);
 }

@@ -46,6 +46,7 @@ export interface UpdateState {
   readonly version?: string;
   readonly downloadedVersion?: string;
   readonly downloadedFileName?: string;
+  readonly stagedFilePath?: string;
   readonly progressPercent?: number;
   readonly error?: string;
 }
@@ -100,6 +101,7 @@ export interface ReadyAckMessage {
   readonly appRuntime?: AppRuntime;
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
+  readonly canInstallUpdates?: boolean;
   readonly documentConversionEnabled?: boolean;
   readonly isMaximized?: boolean;
 }
@@ -207,6 +209,7 @@ export interface WorkspaceUnavailableMessage {
   readonly appRuntime?: AppRuntime;
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
+  readonly canInstallUpdates?: boolean;
   readonly isMaximized?: boolean;
 }
 

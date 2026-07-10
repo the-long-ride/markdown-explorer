@@ -168,6 +168,14 @@ function errorState(version, fileName, error) {
   };
 }
 
+function isPortableRuntime(env = process.env) {
+  return Boolean(env.PORTABLE_EXECUTABLE_DIR || env.PORTABLE_EXECUTABLE_FILE || env.PORTABLE_EXECUTABLE_APP_FILENAME);
+}
+
+function isInstallerUpdateSupported({ platform = process.platform, app, env = process.env } = {}) {
+  return platform === "win32" && app?.isPackaged === true && !isPortableRuntime(env);
+}
+
 function createUpdateManager(deps = {}) {
   const fsImpl = deps.fs || fs;
   const pathImpl = deps.path || path;
@@ -185,6 +193,11 @@ function createUpdateManager(deps = {}) {
     }));
   const execPath = deps.execPath || process.execPath;
   const relaunchArgs = deps.relaunchArgs || process.argv.slice(1);
+  const installerUpdatesSupported = deps.installerUpdatesSupported ?? isInstallerUpdateSupported({
+    platform,
+    app,
+    env: deps.env,
+  });
   const manifestDir = pathImpl.join(app.getPath("userData"), "updates");
   const manifestPath = pathImpl.join(manifestDir, "pending-update.json");
   const resultPath = pathImpl.join(manifestDir, "last-update-result.txt");
@@ -208,6 +221,13 @@ function createUpdateManager(deps = {}) {
   function ensureWindows() {
     if (platform !== "win32") {
       throw new Error("In-app updates are only supported on Windows.");
+    }
+  }
+
+  function ensureInstallerUpdatesSupported() {
+    ensureWindows();
+    if (!installerUpdatesSupported) {
+      throw new Error("In-app updates require the installed Windows version.");
     }
   }
 
@@ -237,7 +257,7 @@ function createUpdateManager(deps = {}) {
   }
 
   async function startDownload({ version, url }) {
-    ensureWindows();
+    ensureInstallerUpdatesSupported();
     helperLaunched = false;
     const fileName = getUpdateAssetFileName(url);
     const destinationPath = pathImpl.join(stagingDir, fileName);
@@ -271,7 +291,7 @@ function createUpdateManager(deps = {}) {
   }
 
   async function schedulePendingUpdate(payload = {}) {
-    ensureWindows();
+    ensureInstallerUpdatesSupported();
     const manifest = {
       version: payload.version || lastDownloaded?.version || "",
       downloadUrl: payload.downloadUrl || lastDownloaded?.downloadUrl || "",
@@ -292,7 +312,7 @@ function createUpdateManager(deps = {}) {
   }
 
   async function restartAndApplyUpdate() {
-    ensureWindows();
+    ensureInstallerUpdatesSupported();
     const manifest = doReadManifest() || (lastDownloaded ? await schedulePendingUpdate(lastDownloaded) : null);
     if (!manifest) throw new Error("No downloaded update is ready to apply.");
     emitState({
@@ -305,7 +325,7 @@ function createUpdateManager(deps = {}) {
   }
 
   async function applyPendingUpdateOnQuit() {
-    ensureWindows();
+    if (!installerUpdatesSupported) return false;
     if (helperLaunched) return false;
     const manifest = doReadManifest();
     if (!manifest) return false;
@@ -352,6 +372,9 @@ function createUpdateManager(deps = {}) {
     getState() {
       return state;
     },
+    isInstallerUpdateSupported() {
+      return installerUpdatesSupported;
+    },
     startDownload,
     schedulePendingUpdate,
     restartAndApplyUpdate,
@@ -377,4 +400,6 @@ module.exports = {
   startDownloadState,
   downloadedState,
   errorState,
+  isPortableRuntime,
+  isInstallerUpdateSupported,
 };

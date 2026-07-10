@@ -24,6 +24,8 @@ pub struct UpdateState {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub downloaded_file_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub staged_file_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub progress_percent: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -72,6 +74,11 @@ impl UpdateState {
             version: Some(version.to_string()),
             ..Default::default()
         }
+    }
+
+    pub fn with_staged_file_path(mut self, staged_file_path: impl Into<String>) -> Self {
+        self.staged_file_path = Some(staged_file_path.into());
+        self
     }
 
     pub fn error_state(version: &str, message: &str) -> Self {

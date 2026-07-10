@@ -23,6 +23,7 @@ export interface UpdateCheckState {
   readonly currentVersion: string;
   readonly latestVersion: string;
   readonly downloadUrl: string;
+  readonly canInstallUpdate: boolean;
   readonly releaseUrl: string;
   readonly changelogUrl: string;
   readonly hasUpdate: boolean;
@@ -67,10 +68,23 @@ export function compareVersions(left: string, right: string) {
   return 0;
 }
 
-export function getDesktopAssetScore(assetName: string, platform: HostPlatform, arch: string) {
+export function getDesktopAssetScore(
+  assetName: string,
+  platform: HostPlatform,
+  arch: string,
+  runtime: AppRuntime = 'desktop',
+) {
   const name = assetName.toLowerCase();
   const normalizedArch = arch.toLowerCase();
   let score = 0;
+
+  if (runtime === 'desktop') {
+    if (name.startsWith('electron-')) score += 40;
+    if (name.startsWith('tauri-')) score -= 40;
+  } else if (runtime === 'tauri') {
+    if (name.startsWith('tauri-')) score += 40;
+    if (name.startsWith('electron-')) score -= 40;
+  }
 
   if (platform === 'windows' && name.endsWith('.exe')) {
     // Prefer the NSIS installer for standard desktop releases and in-app updates.
@@ -91,15 +105,49 @@ export function getDesktopAssetScore(assetName: string, platform: HostPlatform, 
   return score;
 }
 
+export function isInstallableDesktopAsset(
+  assetName: string,
+  platform: HostPlatform,
+  runtime: AppRuntime,
+) {
+  const name = assetName.toLowerCase();
+  if (platform !== 'windows') return false;
+  if (!name.endsWith('.exe')) return false;
+  if (!(name.includes('setup') || name.includes('installer'))) return false;
+  if (runtime === 'desktop') return name.startsWith('electron-') || !name.startsWith('tauri-');
+  if (runtime === 'tauri') return name.startsWith('tauri-') || !name.startsWith('electron-');
+  return false;
+}
+
 export function pickDesktopDownloadUrl(
   assets: readonly GitHubReleaseAsset[],
   platform: HostPlatform,
   arch: string,
+  runtime: AppRuntime = 'desktop',
 ) {
   const best = assets
     .map((asset) => ({
       asset,
-      score: getDesktopAssetScore(asset.name ?? '', platform, arch),
+      score: getDesktopAssetScore(asset.name ?? '', platform, arch, runtime),
+    }))
+    .filter(({ asset, score }) => score > 0 && !!asset.browser_download_url)
+    .sort((a, b) => b.score - a.score)[0]?.asset;
+
+  return best?.browser_download_url;
+}
+
+export function pickInstallableDesktopDownloadUrl(
+  assets: readonly GitHubReleaseAsset[],
+  platform: HostPlatform,
+  arch: string,
+  runtime: AppRuntime,
+) {
+  const best = assets
+    .map((asset) => ({
+      asset,
+      score: isInstallableDesktopAsset(asset.name ?? '', platform, runtime)
+        ? getDesktopAssetScore(asset.name ?? '', platform, arch, runtime)
+        : 0,
     }))
     .filter(({ asset, score }) => score > 0 && !!asset.browser_download_url)
     .sort((a, b) => b.score - a.score)[0]?.asset;
@@ -116,7 +164,18 @@ export function getDownloadUrl(
   if (runtime === 'vscode') return VSCODE_MARKETPLACE_URL;
 
   const assets = Array.isArray(release.assets) ? release.assets : [];
-  return pickDesktopDownloadUrl(assets, platform, arch) || release.html_url || RELEASE_FALLBACK_URL;
+  return pickDesktopDownloadUrl(assets, platform, arch, runtime) || release.html_url || RELEASE_FALLBACK_URL;
+}
+
+export function getInstallableDownloadUrl(
+  release: GitHubRelease,
+  runtime: AppRuntime,
+  platform: HostPlatform,
+  arch: string,
+) {
+  if (runtime !== 'desktop' && runtime !== 'tauri') return undefined;
+  const assets = Array.isArray(release.assets) ? release.assets : [];
+  return pickInstallableDesktopDownloadUrl(assets, platform, arch, runtime);
 }
 
 export function useUpdateCheck({
@@ -130,6 +189,7 @@ export function useUpdateCheck({
     currentVersion,
     latestVersion: '',
     downloadUrl: runtime === 'vscode' ? VSCODE_MARKETPLACE_URL : RELEASE_FALLBACK_URL,
+    canInstallUpdate: false,
     releaseUrl: RELEASE_FALLBACK_URL,
     changelogUrl: CHANGELOG_URL,
     hasUpdate: false,
@@ -163,12 +223,20 @@ export function useUpdateCheck({
         const hasUpdate = latestVersion
           ? compareVersions(latestVersion, currentVersion) > 0
           : false;
+        const installableDownloadUrl = getInstallableDownloadUrl(
+          release,
+          runtime,
+          hostPlatform,
+          hostArch,
+        );
 
         setState({
           status: hasUpdate ? 'available' : 'current',
           currentVersion,
           latestVersion,
-          downloadUrl: getDownloadUrl(release, runtime, hostPlatform, hostArch),
+          downloadUrl: installableDownloadUrl
+            || getDownloadUrl(release, runtime, hostPlatform, hostArch),
+          canInstallUpdate: Boolean(installableDownloadUrl),
           releaseUrl: release.html_url || RELEASE_FALLBACK_URL,
           changelogUrl: CHANGELOG_URL,
           hasUpdate,

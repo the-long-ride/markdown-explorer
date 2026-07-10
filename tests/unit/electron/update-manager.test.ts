@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createUpdateManager, getUpdateAssetFileName, createEmptyState, buildScheduledState, getHelperPayload, readResultCode, clearResultCode, readManifest, clearManifest, writeManifest, restorePersistedState, startDownloadState, downloadedState, errorState } from '../../../electron/update/update-manager.js';
+import { createUpdateManager, getUpdateAssetFileName, createEmptyState, buildScheduledState, getHelperPayload, readResultCode, clearResultCode, readManifest, clearManifest, writeManifest, restorePersistedState, startDownloadState, downloadedState, errorState, isInstallerUpdateSupported, isPortableRuntime } from '../../../electron/update/update-manager.js';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -158,6 +158,40 @@ describe('createUpdateManager', () => {
     ).rejects.toThrow('only supported on Windows');
   });
 
+  test('startDownload rejects portable Windows builds before staging', async () => {
+    const manager = createUpdateManager({
+      platform: 'win32',
+      app: createAppStub(makeTempDir('um-portable-')),
+      fs, path,
+      env: { PORTABLE_EXECUTABLE_DIR: 'C:\\Portable' },
+      execPath: 'C:\\Portable\\Markdown Explorer.exe',
+      relaunchArgs: [],
+      sendToWindow: () => {},
+      downloadUpdateFile: async () => { throw new Error('should not download'); },
+      launchHelper: async () => {},
+    });
+
+    expect(manager.isInstallerUpdateSupported()).toBe(false);
+    await expect(
+      manager.startDownload({ version: 'v1', url: 'https://example.com/Setup.exe' }),
+    ).rejects.toThrow('installed Windows version');
+  });
+
+  test('applyPendingUpdateOnQuit no-ops for unsupported builds', async () => {
+    const manager = createUpdateManager({
+      platform: 'win32',
+      app: { ...createAppStub(makeTempDir('um-dev-')), isPackaged: false },
+      fs, path,
+      execPath: 'C:\\dev\\Markdown Explorer.exe',
+      relaunchArgs: [],
+      sendToWindow: () => {},
+      downloadUpdateFile: async () => {},
+      launchHelper: async () => { throw new Error('should not launch'); },
+    });
+
+    expect(await manager.applyPendingUpdateOnQuit()).toBe(false);
+  });
+
   test('startDownload emits error state on download failure', async () => {
     const dir = makeTempDir('um-dl-error-');
     const sent: any[] = [];
@@ -224,6 +258,31 @@ describe('createUpdateManager', () => {
     expect(sent.at(-1).state.status).toBe('error');
     expect(sent.at(-1).state.error).toBe('install-failed');
     expect(fs.existsSync(manager.getResultPath())).toBe(false);
+  });
+});
+
+describe('installer update support detection', () => {
+  test('detects electron-builder portable env vars', () => {
+    expect(isPortableRuntime({ PORTABLE_EXECUTABLE_DIR: 'C:\\Portable' })).toBe(true);
+    expect(isPortableRuntime({})).toBe(false);
+  });
+
+  test('allows only packaged non-portable Windows apps', () => {
+    expect(isInstallerUpdateSupported({
+      platform: 'win32',
+      app: { isPackaged: true },
+      env: {},
+    })).toBe(true);
+    expect(isInstallerUpdateSupported({
+      platform: 'win32',
+      app: { isPackaged: false },
+      env: {},
+    })).toBe(false);
+    expect(isInstallerUpdateSupported({
+      platform: 'linux',
+      app: { isPackaged: true },
+      env: {},
+    })).toBe(false);
   });
 });
 
