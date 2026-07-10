@@ -168,8 +168,8 @@ img {
   background: rgba(127, 127, 127, 0.12);
 }
 .nav-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 6px);
+  position: fixed;
+  top: 0;
   left: 0;
   z-index: 100;
   display: flex;
@@ -180,6 +180,9 @@ img {
   border: 1px solid var(--line);
   border-radius: 10px;
   box-shadow: var(--shadow);
+}
+.nav-dropdown-menu[data-open="true"] {
+  z-index: 1001;
 }
 .nav-dropdown-menu[hidden] {
   display: none;
