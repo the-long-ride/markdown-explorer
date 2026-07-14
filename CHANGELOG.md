@@ -4,6 +4,18 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.9] — 2026-07-14
+
+### Fixed
+- **Tauri Update Checks**: Added dynamic Tauri app version metadata to ready and workspace-unavailable host messages so Settings can show the running version and compare update releases correctly.
+- **Desktop Installer Selection**: Prevented Electron update checks from selecting Tauri installer assets while preserving legacy unprefixed Electron installer support.
+
+### Maintenance
+- **Tauri Dependency Audit**: Refreshed Tauri lockfile dependencies and documented that the remaining `glib` advisory applies only to Linux Tauri transitive dependencies.
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, Chromium extension, Tauri, manifest, and lockfile metadata to `1.5.9`.
+
+---
+
 ## [1.5.8] — 2026-07-14
 
 ### Added
