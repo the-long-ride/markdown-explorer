@@ -298,7 +298,7 @@ describe('BrowserScanner.scan', () => {
     expect(result.tree.files).toHaveLength(1);
   });
 
-  it('respects max file limit', async () => {
+  it('scans more than 1000 files', async () => {
     const root: any = {
       async *values() {
         for (let i = 0; i < 1002; i++) {
@@ -311,7 +311,7 @@ describe('BrowserScanner.scan', () => {
       },
     };
     const result = await BrowserScanner.scan(root);
-    expect(result.flat.length).toBe(1000);
+    expect(result.flat.length).toBe(1002);
   });
 
   it('skips excluded directories', async () => {
