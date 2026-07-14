@@ -36,6 +36,7 @@
     "prebuild:chromium": "pnpm run sync-versions",
     "prebuild:website-app": "pnpm run sync-versions",
     "start:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run dev",
+    "start:tauri:live": "node scripts/start-tauri-dev.mjs",
     "build:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run build",
     "test:tauri": "cargo test --manifest-path tauri/Cargo.toml -- --test-threads=1",
     "test:desktop": "pnpm run test:electron && pnpm run test:tauri"

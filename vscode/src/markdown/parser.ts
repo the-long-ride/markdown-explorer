@@ -7,6 +7,7 @@
 export type BlockToken =
   | HeadingToken
   | ParagraphToken
+  | HtmlCommentToken
   | CodeBlockToken
   | MathBlockToken
   | BlockquoteToken
@@ -23,6 +24,10 @@ export interface ParagraphToken {
   type: "paragraph";
   text: string;
   isJsx?: boolean;
+}
+export interface HtmlCommentToken {
+  type: "html-comment";
+  content: string;
 }
 export interface HrToken {
   type: "hr";
@@ -132,6 +137,40 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     }
 
     // Display math block: $$ ... $$ or \[ ... \]
+    if (line.trimStart().startsWith("<!--")) {
+      const commentLines: string[] = [];
+      let endIndex = i;
+      let closingIndex = -1;
+      let sourceLength = 0;
+
+      while (endIndex < lines.length && closingIndex === -1) {
+        const commentLine = lines[endIndex];
+        const lineClosingIndex = commentLine.indexOf("-->");
+        commentLines.push(commentLine);
+        if (lineClosingIndex !== -1) {
+          closingIndex = sourceLength + lineClosingIndex;
+        }
+        sourceLength += commentLine.length + 1;
+        endIndex++;
+      }
+
+      if (closingIndex !== -1) {
+        const source = commentLines.join("\n");
+        const trailingText = source.slice(closingIndex + "-->".length);
+        tokens.push({
+          type: "html-comment",
+          content: source.slice(source.indexOf("<!--") + 4, closingIndex),
+        });
+        if (trailingText) {
+          lines[endIndex - 1] = trailingText;
+          i = endIndex - 1;
+        } else {
+          i = endIndex;
+        }
+        continue;
+      }
+    }
+
     const displayMathFence = line.trim();
     if (displayMathFence === "$$" || displayMathFence === "\\[") {
       const closingFence = displayMathFence === "$$" ? "$$" : "\\]";
@@ -341,6 +380,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
       i < lines.length &&
       lines[i].trim() !== "" &&
       !/^(#{1,6}\s|>|`{3,}|~{3,}|\$\$|\\\[|[-*_]{3,}$)/.test(lines[i]) &&
+      !(lines[i].trimStart().startsWith("<!--") && lines.slice(i).some((line) => line.includes("-->"))) &&
       !getListMarker(lines[i])
     ) {
       paraLines.push(lines[i]);

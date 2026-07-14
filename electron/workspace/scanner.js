@@ -28,7 +28,6 @@ class DesktopScanner {
   // so the main thread stays responsive during large workspace scans.
   static async scan(rootPath, options = {}) {
     const flat = [];
-    const maxFiles = 1000;
     const customIgnores = loadIgnorePatterns(rootPath);
     const excludes = [...DEFAULT_IGNORED_FOLDERS, ...customIgnores];
     const documentConversionEnabled = options.documentConversionEnabled === true;
@@ -38,7 +37,7 @@ class DesktopScanner {
     let filesSinceYield = 0;
     let titleBatch = []; // collect markdown files needing title extraction
 
-    while (dirQueue.length > 0 && flat.length < maxFiles) {
+    while (dirQueue.length > 0) {
       const currentDir = dirQueue.shift();
       let entries;
       try {

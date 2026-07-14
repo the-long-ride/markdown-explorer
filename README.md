@@ -50,7 +50,7 @@ Recent releases from `v1.4.5` onward focus on faster navigation, safer desktop w
 - **Reading polish**: table Wrap/Unwrap controls, code gutter selection highlighting, compact Markdown chrome, and clearer string interpolation make dense docs easier to scan.
 - **Desktop recovery**: workspace switching is confirmed, unavailable workspaces show recovery actions, and stale recent entries can be removed.
 - **Theme Remix**: create, duplicate, edit, import, and export custom themes with color, density, spacing, and optional background image controls.
-- **Content File Tabs and Scope Focus**: keep opened docs in tabs, narrow the sidebar to selected files/folders for the current workspace, and automatically keep scoped files aligned when the workspace changes.
+- **Content File Tabs and Scope Focus**: keep opened docs in tabs, narrow the sidebar to selected files/folders for the current workspace, use the Files scope editor's icon actions to select or clear every item, and automatically keep scoped files aligned when the workspace changes.
 - **Converted document previews**: enable best-effort local previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT.
 - **Sidebar Cursor mode**: press `Alt+S`, move with `Up`/`Down`, press `Enter` to expand folders or open files, and press `Esc` or click outside the sidebar to exit.
 
@@ -119,7 +119,7 @@ Installed Windows desktop builds can check for updates in Settings, download the
 | Electron | Stable, released | `pnpm run start:electron`, `pnpm run build:electron` |
 | Tauri | Preview release builds available | `pnpm run start:tauri`, `pnpm run build:tauri` |
 
-Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. `pnpm run start:tauri` runs a live Vite dev server plus `cargo tauri dev`, so UI edits reload the Tauri window during development. See [Tauri Desktop Variant](docs/tauri-desktop-variant.md) for architecture, tradeoffs, and build notes.
+Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. `pnpm run start:tauri` runs a live Vite dev server plus `cargo tauri dev`, so UI edits reload the Tauri window during development. Tauri debug/build Cargo downloads and artifacts use a global cache at `%LOCALAPPDATA%\\MarkdownExplorer\\tauri-cache` on Windows; set `MARKDOWN_EXPLORER_TAURI_CACHE` to override it. See [Tauri Desktop Variant](docs/tauri-desktop-variant.md) for architecture, tradeoffs, and build notes.
 
 ## Desktop Workspace
 

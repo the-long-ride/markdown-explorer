@@ -144,7 +144,7 @@ describe('DesktopScanner', () => {
       expect(flat.map((e: any) => e.relativePath)).toEqual(['ok.md']);
     });
 
-    test('caps results at 1000 files', { timeout: 30_000 }, async () => {
+    test('scans more than 1000 files', { timeout: 30_000 }, async () => {
       const rootDir = makeTempDir('scan-maxfiles-');
       for (let i = 0; i < 1100; i++) {
         const sub = path.join(rootDir, `d${String(i).padStart(5, '0')}`);
@@ -154,7 +154,7 @@ describe('DesktopScanner', () => {
 
       const { flat } = await DesktopScanner.scan(rootDir);
 
-      expect(flat.length).toBe(1000);
+      expect(flat.length).toBe(1100);
     });
 
     test('yields to event loop every 30 files', async () => {

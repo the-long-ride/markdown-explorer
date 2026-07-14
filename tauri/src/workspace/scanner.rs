@@ -10,7 +10,6 @@ use std::io::{Read, Seek, SeekFrom};
 #[allow(unused_imports)]
 use std::path::{Path, PathBuf};
 
-const MAX_FILES: usize = 1000;
 const TITLE_CHUNK_BYTES: usize = 8 * 1024;
 const DEFAULT_IGNORED_FOLDERS: &[&str] = &[
     ".git",
@@ -257,9 +256,6 @@ pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {
     let mut queue = VecDeque::from([root_path.to_path_buf()]);
 
     while let Some(current_dir) = queue.pop_front() {
-        if flat.len() >= MAX_FILES {
-            break;
-        }
         let entries = match fs::read_dir(&current_dir) {
             Ok(entries) => entries,
             Err(err) => {
@@ -268,9 +264,6 @@ pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {
             }
         };
         for entry in entries.flatten() {
-            if flat.len() >= MAX_FILES {
-                break;
-            }
             let name = entry.file_name().to_string_lossy().to_string();
             if excludes.iter().any(|exclude| exclude == &name) {
                 continue;
@@ -402,6 +395,20 @@ mod tests {
         )
         .unwrap();
         assert_eq!(on.flat.len(), 2);
+    }
+
+    #[test]
+    fn scan_includes_more_than_1000_files() {
+        let root = temp_dir("tauri-large-scan");
+        for index in 0..1100 {
+            write(
+                &root.join(format!("dir-{index:04}/file.md")),
+                "# Title",
+            );
+        }
+
+        let result = scan(&root, ScanOptions::default()).unwrap();
+        assert_eq!(result.flat.len(), 1100);
     }
 
     #[test]

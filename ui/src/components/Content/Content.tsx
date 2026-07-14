@@ -840,14 +840,24 @@ export function Content({
                 </Suspense>
               )}
               {fmEntries.length > 0 && (
-                <div className="mdn-frontmatter" aria-label="Document properties">
-                  {fmEntries.map(([k, v]) => (
-                    <div className="mdn-frontmatter-field" key={k}>
-                      <span className="mdn-frontmatter-key">{k}</span>
-                      <span className="mdn-frontmatter-value">{v || '\u00a0'}</span>
-                    </div>
-                  ))}
-                </div>
+                <details className="mdn-frontmatter" open aria-label="Document properties">
+                  <summary className="mdn-frontmatter-summary">
+                    <span>Properties</span>
+                    <span className="mdn-frontmatter-count">
+                      {fmEntries.length} {fmEntries.length === 1 ? "property" : "properties"}
+                    </span>
+                  </summary>
+                  <div className="mdn-frontmatter-grid">
+                    {fmEntries.map(([key, value]) => (
+                      <div className="mdn-frontmatter-field" key={key}>
+                        <span className="mdn-frontmatter-key">{key}</span>
+                        <span className={`mdn-frontmatter-value${value ? "" : " is-empty"}`}>
+                          {value || "\u00a0"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
               )}
               <HtmlContent html={state.contentHtml} />
             </div>

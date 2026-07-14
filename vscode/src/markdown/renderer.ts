@@ -3,7 +3,7 @@
 // ============================================================
 
 import { parse } from './parser';
-import type { BlockToken, HeadingToken, ListToken, TableToken, BlockquoteToken, MathBlockToken } from './parser';
+import type { BlockToken, HeadingToken, ListToken, TableToken, BlockquoteToken, HtmlCommentToken, MathBlockToken } from './parser';
 import { renderInline } from './inline';
 import { renderCodeBlock } from './codeRenderer';
 import { slugify, shortId, escHtml, renderButton } from '../utils';
@@ -154,6 +154,7 @@ export class HtmlRenderer {
           return renderInline(token.text, this.isMdx);
         }
         return `<p>${renderInline(token.text, this.isMdx)}</p>`;
+      case 'html-comment': return this.renderHtmlComment(token);
       case 'math':       return this.renderMath(token);
       case 'code':       return renderCodeBlock(token, this.theme);
       case 'blockquote': return this.renderBlockquote(token);
@@ -184,6 +185,10 @@ export class HtmlRenderer {
   private renderMath(token: MathBlockToken): string {
     const source = token.content.trim();
     return `<div class="mdn-math mdn-math-block" data-math="${encodeURIComponent(source)}"><pre>${escHtml(source)}</pre></div>`;
+  }
+
+  private renderHtmlComment(token: HtmlCommentToken): string {
+    return `<div class="mdn-html-comment" role="note"><code>${escHtml(token.content)}</code></div>`;
   }
 
   private renderBlockquote(token: BlockquoteToken): string {

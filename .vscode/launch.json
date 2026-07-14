@@ -12,7 +12,11 @@
       "outFiles": [
         "${workspaceFolder}/vscode/out/**/*.js"
       ],
-      "preLaunchTask": "watch"
+      "preLaunchTask": "watch",
+      "presentation": {
+        "group": "debug",
+        "order": 1
+      }
     },
     {
       "name": "Electron Desktop App",
@@ -26,16 +30,47 @@
       "args": [
         "."
       ],
+      "console": "integratedTerminal",
       "outFiles": [
         "${workspaceFolder}/vscode/out/**/*.js"
       ],
-      "preLaunchTask": "compile"
+      "preLaunchTask": "compile",
+      "presentation": {
+        "group": "debug",
+        "order": 2
+      }
     },
     {
       "name": "Tauri Desktop App",
-      "type": "node-terminal",
+      "type": "node",
       "request": "launch",
-      "command": "pnpm run start:tauri"
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "run",
+        "start:tauri"
+      ],
+      "console": "integratedTerminal",
+      "presentation": {
+        "group": "debug",
+        "order": 3
+      }
+    },
+    {
+      "name": "Tauri Desktop App (live UI)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "run",
+        "start:tauri:live"
+      ],
+      "console": "integratedTerminal",
+      "presentation": {
+        "group": "debug",
+        "order": 4
+      }
     },
     {
       "name": "Web Demo",
@@ -50,6 +85,10 @@
         "/markdown-explorer/app/src/*": "${workspaceFolder}/website-app/src/*",
         "/markdown-explorer/app/@fs/F:/my-repos/markdown-explorer/*": "${workspaceFolder}/*",
         "/markdown-explorer/app/node_modules/*": "${workspaceFolder}/node_modules/*"
+      },
+      "presentation": {
+        "group": "debug",
+        "order": 5
       }
     }
   ]

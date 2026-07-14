@@ -7,7 +7,7 @@ import {
   useEffect,
 } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
-import { CloseIcon, SearchIcon, LocateIcon, FolderIcon } from "../shared/icons";
+import { CheckIcon, CloseIcon, SearchIcon, LocateIcon, FolderIcon } from "../shared/icons";
 import { TooltipButton } from "../shared/TooltipButton";
 import { FileNode, FolderNodeView } from "./TreeNode";
 import type { ScopeFocusTreeProps } from "./TreeNode";
@@ -134,6 +134,10 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     !scopeFocusEditing &&
     selectedFilePaths.size < allFilePaths.length;
   const scopeFocusCount = hasScopeEntry ? selectedFilePaths.size : allFilePaths.length;
+  const allFilesSelected = allFilePaths.length > 0 && selectedFilePaths.size === allFilePaths.length;
+  const bulkScopeActionLabel = allFilesSelected
+    ? t.sidebar.uncheckAll || "Uncheck all"
+    : t.sidebar.checkAll || "Check all";
 
   const updateScopeFocusPaths = useCallback(
     (nextPaths: Iterable<string>) => {
@@ -184,6 +188,10 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     delete nextScopeFocus[scopeKey];
     updateSettings({ scopeFocus: nextScopeFocus });
   }, [scopeKey, state.settings.scopeFocus, updateSettings]);
+
+  const toggleAllScopeFiles = useCallback(() => {
+    updateScopeFocusPaths(allFilesSelected ? [] : allFilePaths);
+  }, [allFilePaths, allFilesSelected, updateScopeFocusPaths]);
 
   const scopeFocusTree = useMemo<ScopeFocusTreeProps>(
     () => ({
@@ -458,6 +466,19 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
                 {scopeFocusCount}/{allFilePaths.length}
               </span>
             </button>
+            {scopeFocusEditing && allFilePaths.length > 0 && (
+              <TooltipButton
+                type="button"
+                className="sidebar__scope-toggle-all"
+                onClick={toggleAllScopeFiles}
+                tooltip={bulkScopeActionLabel}
+                label={bulkScopeActionLabel}
+                aria-label={bulkScopeActionLabel}
+                tooltipPos="below"
+                tooltipAlign="right"
+                icon={allFilesSelected ? <CloseIcon size={13} /> : <CheckIcon size={13} />}
+              />
+            )}
             {hasScopeEntry && (
               <TooltipButton
                 type="button"

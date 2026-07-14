@@ -1,0 +1,12 @@
+{
+  // Last-selected debug config is remembered; default pick for a clean workspace:
+  "debug.openDebug": "openOnDebugBreak",
+  "debug.internalConsoleOptions": "openOnSessionStart",
+  // Prefer integrated terminal so Tauri/Electron cargo/pnpm output stays visible on F5
+  "debug.terminal.clearBeforeReusing": true,
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  // rust-analyzer: use the Tauri crate when editing Rust
+  "rust-analyzer.linkedProjects": [
+    "tauri/Cargo.toml"
+  ]
+}

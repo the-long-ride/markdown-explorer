@@ -10,7 +10,7 @@
 }
 
 .sidebar {
-  width: var(--sidebar-width, var(--sidebar-w, 245px));
+  width: var(--sidebar-width, var(--sidebar-w, 250px));
   background: var(--bg-s);
   border-right: var(--stroke-w) solid var(--bd-s);
   display: flex;
@@ -160,7 +160,10 @@ body:not(.is-resizing) .sidebar {
   margin-top: 4px;
 }
 .sidebar__scope-btn,
-.sidebar__scope-clear {
+.sidebar__scope-clear,
+.sidebar__scope-toggle-all {
+  flex: 0 0 22px;
+  width: 22px;
   min-width: 0;
   height: 22px;
   display: inline-flex;
@@ -174,20 +177,22 @@ body:not(.is-resizing) .sidebar {
   font-size: 10.5px;
   font-weight: 700;
   cursor: pointer;
-  padding: 0 6px;
+  padding: 0;
 }
 .sidebar__scope-btn {
   flex: 1;
   justify-content: space-between;
   gap: 5px;
 }
+.sidebar__scope-btn > span:first-child {
+  padding-left: 4px;
+}
 .sidebar__scope-clear {
-  flex: 0 0 22px;
-  width: 22px;
   padding: 0;
 }
 .sidebar__scope-btn:hover,
-.sidebar__scope-clear:hover {
+.sidebar__scope-clear:hover,
+.sidebar__scope-toggle-all:hover {
   background: var(--bg-h);
   color: var(--tx);
   border-color: var(--bd-x);
@@ -205,6 +210,7 @@ body:not(.is-resizing) .sidebar {
   font-size: 9.5px;
   line-height: 1;
   padding: 2px 4px;
+  margin-right: 3px;
 }
 .sidebar__scope-btn.is-active .sidebar__scope-count {
   color: var(--accent-text);

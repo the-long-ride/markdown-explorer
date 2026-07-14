@@ -3,7 +3,7 @@
   "version": "1.5.7",
   "private": true,
   "scripts": {
-    "dev": "cargo tauri dev",
-    "build": "cargo tauri build"
+    "dev": "node scripts/run-with-global-cache.mjs dev",
+    "build": "node scripts/run-with-global-cache.mjs build"
   }
 }

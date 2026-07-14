@@ -7,13 +7,10 @@ import type { MdFile, FolderNode } from '../../ui/src/types';
 export class BrowserScanner {
   static async scan(rootHandle: FileSystemDirectoryHandle): Promise<{ tree: FolderNode; flat: MdFile[] }> {
     const flat: MdFile[] = [];
-    const maxFiles = 1000;
     const excludes = ['.git', 'node_modules', '.vscode', 'out', 'dist'];
 
     // Define traverse as a local recursive helper
     async function traverse(currentHandle: FileSystemDirectoryHandle, currentRelativePath: string) {
-      if (flat.length >= maxFiles) return;
-
       // Typecast values iterator since TS types for FileSystemDirectoryHandle might vary
       const entries = (currentHandle as any).values();
       for await (const entry of entries) {
@@ -28,7 +25,6 @@ export class BrowserScanner {
           if (lowerName.endsWith('.md') || lowerName.endsWith('.mdx')) {
             const fileEntry = await BrowserScanner.buildFileEntry(entry, relativePath);
             flat.push(fileEntry);
-            if (flat.length >= maxFiles) break;
           }
         }
       }
