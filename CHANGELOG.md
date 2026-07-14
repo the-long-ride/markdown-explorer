@@ -4,6 +4,24 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.5.8] — 2026-07-14
+
+### Added
+- **Sidebar Scope Actions**: Added bulk selection toggle actions (Check all / Uncheck all) for sidebar scope focus editor.
+- **HTML Comment Support**: Added parsing and rendering for markdown HTML comments, rendering them inside styled code blocks.
+- **Markdown Properties Rendering**: Refactored frontmatter properties display to render inside an openable details disclosure grid.
+
+### Changed
+- **Tauri Global Cache**: Configured Tauri cargo build artifacts to use a global cache under `%LOCALAPPDATA%\\MarkdownExplorer\\tauri-cache`.
+- **Rust Linker Selection**: Configured automatic fallback from MSVC to GNU target toolchain when `link.exe` is missing on Windows.
+- **Scanner Limit Removal**: Removed the 1000 file scanning limit across Browser, Electron, and Tauri workspace scanners.
+- **VS Code Launch Configuration**: Updated debug configurations for Tauri and Electron live reload, and set sorting order.
+
+### Fixed
+- **Tauri Cache Test**: Fixed directory path expectation in unit test to use space-free `MarkdownExplorer`.
+
+---
+
 ## [1.5.7] — 2026-07-09
 
 ### Added
