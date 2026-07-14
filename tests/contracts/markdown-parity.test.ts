@@ -53,6 +53,17 @@ describe('markdown parity', () => {
         expect(uiResult.frontmatter).toEqual(vscodeResult.frontmatter);
       });
     }
+
+    test('unclosed HTML comments stay paragraphs in both parsers', () => {
+      const markdown = '<!-- unclosed';
+      const uiParsed = parseUi(markdown, false);
+      const vscodeParsed = parseVsCode(markdown, false);
+
+      expect(vscodeParsed.tokens).toEqual(uiParsed.tokens);
+      expect(uiParsed.tokens).toEqual([
+        { type: 'paragraph', text: '<!-- unclosed' },
+      ]);
+    });
   });
 
   describe('renderer parity', () => {
@@ -71,6 +82,68 @@ describe('markdown parity', () => {
         expect(uiRendered.toc.map(sanitizeTocEntry)).toEqual(vscodeRendered.toc.map(sanitizeTocEntry));
       });
     }
+
+    test('HTML comments render as escaped readable blocks', () => {
+      const markdown = '<!-- Archived by <team>\nReason: internal note -->';
+      const uiParsed = parseUi(markdown, false);
+      const vscodeParsed = parseVsCode(markdown, false);
+      const uiHtml = new UiRenderer({ theme: 'dark', isMdx: false }).render(uiParsed.tokens).html;
+      const vscodeHtml = new VsCodeRenderer({ theme: 'dark', isMdx: false }).render(vscodeParsed.tokens).html;
+
+      expect(uiParsed.tokens[0]).toMatchObject({ type: 'html-comment' });
+      expect(vscodeParsed.tokens).toEqual(uiParsed.tokens);
+      expect(uiHtml).toContain('class="mdn-html-comment"');
+      expect(uiHtml).toContain('Archived by &lt;team&gt;');
+      expect(uiHtml).not.toContain('Archived by <team>');
+      expect(vscodeHtml).toBe(uiHtml);
+    });
+
+    test('paragraph before a complete HTML comment remains a separate rendered block', () => {
+      const markdown = 'text\n<!-- note -->';
+      const expectedTokens = [
+        { type: 'paragraph', text: 'text' },
+        { type: 'html-comment', content: ' note ' },
+      ];
+      const uiParsed = parseUi(markdown, false);
+      const vscodeParsed = parseVsCode(markdown, false);
+      const uiHtml = new UiRenderer({ theme: 'dark', isMdx: false }).render(uiParsed.tokens).html;
+      const vscodeHtml = new VsCodeRenderer({ theme: 'dark', isMdx: false }).render(vscodeParsed.tokens).html;
+
+      expect(uiParsed.tokens).toEqual(expectedTokens);
+      expect(vscodeParsed.tokens).toEqual(expectedTokens);
+      expect(uiHtml).toContain('<p>text</p>');
+      expect(uiHtml).toContain('class="mdn-html-comment"');
+      expect(uiHtml.indexOf('<p>text</p>')).toBeLessThan(uiHtml.indexOf('mdn-html-comment'));
+      expect(vscodeHtml).toBe(uiHtml);
+    });
+
+    test('HTML comment content preserves multiline whitespace', () => {
+      const markdown = '<!--\n  indented note  \n-->';
+      const expectedContent = '\n  indented note  \n';
+      const uiParsed = parseUi(markdown, false);
+      const vscodeParsed = parseVsCode(markdown, false);
+
+      expect(uiParsed.tokens).toEqual([{ type: 'html-comment', content: expectedContent }]);
+      expect(vscodeParsed.tokens).toEqual([{ type: 'html-comment', content: expectedContent }]);
+    });
+
+    test('HTML comment closing-line text is preserved in parsed and rendered output', () => {
+      const markdown = '<!-- note --> visible text';
+      const uiParsed = parseUi(markdown, false);
+      const vscodeParsed = parseVsCode(markdown, false);
+      const uiHtml = new UiRenderer({ theme: 'dark', isMdx: false }).render(uiParsed.tokens).html;
+      const vscodeHtml = new VsCodeRenderer({ theme: 'dark', isMdx: false }).render(vscodeParsed.tokens).html;
+
+      for (const parsed of [uiParsed, vscodeParsed]) {
+        expect(parsed.tokens).toContainEqual(expect.objectContaining({ type: 'html-comment', content: ' note ' }));
+        expect(parsed.tokens).toContainEqual(expect.objectContaining({
+          type: 'paragraph',
+          text: expect.stringContaining('visible text'),
+        }));
+      }
+      expect(uiHtml).toContain('visible text');
+      expect(vscodeHtml).toBe(uiHtml);
+    });
   });
 
   describe('expected tokens', () => {
