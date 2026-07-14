@@ -591,6 +591,7 @@ impl Dispatcher {
         let doc_conv = self.state.inner.read().document_conversion_enabled;
         let recents = self.recents_store().load();
 
+        let app_version = self.app.package_info().version.to_string();
         let ack = crate::runtime::startup::create_startup_ready_ack(
             workspace_path.as_deref(),
             recents,
@@ -598,6 +599,7 @@ impl Dispatcher {
             std::env::consts::OS,
             std::env::consts::ARCH,
             false,
+            &app_version,
         );
         let _ = self.app.emit("host-message", ack);
 

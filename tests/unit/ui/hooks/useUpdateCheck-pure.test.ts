@@ -297,6 +297,26 @@ describe('installable desktop download selection', () => {
     expect(isInstallableDesktopAsset('tauri-Markdown Explorer Setup.exe', 'windows', 'desktop')).toBe(false);
   });
 
+  it('correctly handles assets with electron/tauri keywords in name but no starting prefixes', () => {
+    const assets = [
+      { name: 'markdown-explorer-tauri-setup.exe', browser_download_url: 'http://example.com/tauri-contains.exe' },
+      { name: 'markdown-explorer-electron-setup.exe', browser_download_url: 'http://example.com/electron-contains.exe' },
+    ];
+    expect(isInstallableDesktopAsset('markdown-explorer-electron-setup.exe', 'windows', 'desktop')).toBe(true);
+    expect(isInstallableDesktopAsset('markdown-explorer-tauri-setup.exe', 'windows', 'desktop')).toBe(false);
+    expect(pickInstallableDesktopDownloadUrl(assets, 'windows', 'x64', 'desktop')).toBe('http://example.com/electron-contains.exe');
+  });
+
+  it('keeps legacy unprefixed Electron Windows installers installable without letting Tauri use them', () => {
+    const assets = [
+      { name: 'tauri-Markdown Explorer Setup.exe', browser_download_url: 'http://example.com/tauri-setup.exe' },
+      { name: 'Markdown Explorer Setup 1.2.3-test.exe', browser_download_url: 'http://example.com/legacy-electron-setup.exe' },
+    ];
+    expect(isInstallableDesktopAsset('Markdown Explorer Setup 1.2.3-test.exe', 'windows', 'desktop')).toBe(true);
+    expect(isInstallableDesktopAsset('Markdown Explorer Setup 1.2.3-test.exe', 'windows', 'tauri')).toBe(false);
+    expect(pickInstallableDesktopDownloadUrl(assets, 'windows', 'x64', 'desktop')).toBe('http://example.com/legacy-electron-setup.exe');
+  });
+
   it('picks Electron Windows setup for current Electron Windows app', () => {
     expect(pickInstallableDesktopDownloadUrl(releaseAssets, 'windows', 'x64', 'desktop'))
       .toBe('http://example.com/electron-setup.exe');

@@ -56,6 +56,7 @@ pub fn emit_ready_ack_full(
         document_conversion_enabled.into(),
     );
     extra.insert("appRuntime".into(), "tauri".into());
+    extra.insert("appVersion".into(), app.package_info().version.to_string().into());
     extra.insert("hostPlatform".into(), std::env::consts::OS.into());
     extra.insert("hostArch".into(), std::env::consts::ARCH.into());
     extra.insert(
@@ -106,6 +107,15 @@ pub fn emit_workspace_unavailable(
     );
     extra.insert("reason".into(), json!(reason));
     extra.insert("recentWorkspaces".into(), json!(recent_workspaces));
+    extra.insert("appRuntime".into(), "tauri".into());
+    extra.insert("appVersion".into(), app.package_info().version.to_string().into());
+    extra.insert("hostPlatform".into(), std::env::consts::OS.into());
+    extra.insert("hostArch".into(), std::env::consts::ARCH.into());
+    extra.insert(
+        "canInstallUpdates".into(),
+        crate::update::manager::can_install_updates().into(),
+    );
+    extra.insert("isMaximized".into(), false.into());
     emit(app, "workspaceUnavailable", extra);
 }
 

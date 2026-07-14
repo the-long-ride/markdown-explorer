@@ -79,11 +79,11 @@ export function getDesktopAssetScore(
   let score = 0;
 
   if (runtime === 'desktop') {
-    if (name.startsWith('electron-')) score += 40;
-    if (name.startsWith('tauri-')) score -= 40;
+    if (name.includes('electron')) score += 40;
+    if (name.includes('tauri')) score -= 40;
   } else if (runtime === 'tauri') {
-    if (name.startsWith('tauri-')) score += 40;
-    if (name.startsWith('electron-')) score -= 40;
+    if (name.includes('tauri')) score += 40;
+    if (name.includes('electron')) score -= 40;
   }
 
   if (platform === 'windows' && name.endsWith('.exe')) {
@@ -114,8 +114,14 @@ export function isInstallableDesktopAsset(
   if (platform !== 'windows') return false;
   if (!name.endsWith('.exe')) return false;
   if (!(name.includes('setup') || name.includes('installer'))) return false;
-  if (runtime === 'desktop') return name.startsWith('electron-') || !name.startsWith('tauri-');
-  if (runtime === 'tauri') return name.startsWith('tauri-') || !name.startsWith('electron-');
+  const hasElectronKeyword = name.includes('electron');
+  const hasTauriKeyword = name.includes('tauri');
+  if (runtime === 'desktop') {
+    return !hasTauriKeyword;
+  }
+  if (runtime === 'tauri') {
+    return hasTauriKeyword && !hasElectronKeyword;
+  }
   return false;
 }
 
