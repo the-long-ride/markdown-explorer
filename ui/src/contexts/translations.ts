@@ -141,6 +141,8 @@ export interface Translations {
     filterAriaLabel: string;
     scopeFocus: string;
     clearScopeFocus: string;
+    checkAll: string;
+    uncheckAll: string;
     noScopeFiles: string;
     noFiles: string;
   };
@@ -330,6 +332,8 @@ let _TRANSLATIONS: Record<string, Translations> = {
       filterAriaLabel: "Filter file list",
       scopeFocus: "Scope Focus",
       clearScopeFocus: "Clear focusing scope",
+      checkAll: "Check all",
+      uncheckAll: "Uncheck all",
       noScopeFiles: "No files selected for this scope",
       noFiles: "No matching files",
     },

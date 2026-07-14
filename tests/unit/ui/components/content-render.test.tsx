@@ -370,6 +370,25 @@ describe("Content rendering", () => {
     expect(screen.getByText("Bot")).toBeInTheDocument();
   });
 
+  it("renders document properties in an open key/value disclosure", () => {
+    const { container } = setup({
+      currentFile: "/readme.md",
+      contentHtml: "<h1>Hello</h1>",
+      frontmatter: { id: "knowledge-1", tags: "[docs, rendering]" },
+    });
+
+    const properties = container.querySelector("details.mdn-frontmatter");
+    expect(properties).not.toBeNull();
+    if (!properties) throw new Error("properties disclosure was not rendered");
+    expect(properties.tagName).toBe("DETAILS");
+    expect(properties).toHaveAttribute("open");
+    expect(screen.getByText("2 properties")).toBeInTheDocument();
+    expect(screen.getByText("id")).toBeInTheDocument();
+    expect(screen.getByText("knowledge-1")).toBeInTheDocument();
+    expect(screen.getByText("tags")).toBeInTheDocument();
+    expect(screen.getByText("[docs, rendering]")).toBeInTheDocument();
+  });
+
   it("renders converted preview info notice", () => {
     setup({
       currentFile: "/readme.md",

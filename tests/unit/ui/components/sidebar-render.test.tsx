@@ -59,6 +59,7 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
+  CheckIcon: () => <span>check-icon</span>,
   CloseIcon: () => <span>close-icon</span>,
   SearchIcon: () => <span>search-icon</span>,
   LocateIcon: () => <span>locate-icon</span>,
@@ -260,6 +261,41 @@ describe('Sidebar render', () => {
     expect(scopeBtn!.className).toContain('is-active');
     fireEvent.click(scopeBtn!);
     expect(scopeBtn!.className).not.toContain('is-active');
+  });
+
+  it('shows an uncheck-all action while editing a fully selected scope', () => {
+    render(<Sidebar />);
+    const scopeBtn = screen.getAllByRole('button').find((btn) =>
+      btn.className.includes('sidebar__scope-btn'),
+    );
+    fireEvent.click(scopeBtn!);
+    expect(screen.getByRole('button', { name: 'Uncheck all' })).toBeInTheDocument();
+  });
+
+  it('checks all files when the scope is partially selected', () => {
+    mockState.fileList = [
+      { fsPath: '/docs/readme.md', relativePath: 'readme.md', fileName: 'readme.md', title: 'Readme' },
+      { fsPath: '/docs/guide.md', relativePath: 'guide.md', fileName: 'guide.md', title: 'Guide' },
+    ];
+    mockState.tree = { name: 'Docs', path: '/docs', files: mockState.fileList, children: [] };
+    mockState.settings.scopeFocus = { '/docs': ['/docs/readme.md'] };
+    render(<Sidebar />);
+    const scopeBtn = screen.getAllByRole('button').find((btn) =>
+      btn.className.includes('sidebar__scope-btn'),
+    );
+    fireEvent.click(scopeBtn!);
+    fireEvent.click(screen.getByRole('button', { name: 'Check all' }));
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ scopeFocus: {} });
+  });
+
+  it('unchecks all files from a fully selected scope', () => {
+    render(<Sidebar />);
+    const scopeBtn = screen.getAllByRole('button').find((btn) =>
+      btn.className.includes('sidebar__scope-btn'),
+    );
+    fireEvent.click(scopeBtn!);
+    fireEvent.click(screen.getByRole('button', { name: 'Uncheck all' }));
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ scopeFocus: { '/docs': [] } });
   });
 
   it('renders scope count showing total files when no scope entry', () => {
