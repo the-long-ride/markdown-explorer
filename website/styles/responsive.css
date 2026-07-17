@@ -1,37 +1,46 @@
 /* Hero viewport caps */
 .hero {
-  min-height: clamp(34rem, 88vh, 58rem);
+  min-height: auto;
 }
 
 .hero-content {
-  max-height: min(42rem, calc(100vh - 7.5rem));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: clamp(0.35rem, 1vw, 0.75rem);
-  scrollbar-width: thin;
+  max-height: none;
+  overflow-y: visible;
+  padding-right: 0;
 }
 
 @media (max-width: 980px) {
   .hero {
-    min-height: min(54rem, calc(100svh - 4.5rem));
-    align-items: center;
+    width: calc(100% - 2rem);
+    padding: clamp(4rem, 10vh, 6rem) 0 2rem;
+  }
+
+  .hero-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .hero-buttons-side {
+    align-items: flex-start;
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .hero-demo {
+    align-items: flex-start;
+  }
+
+  .demo-buttons {
+    justify-content: flex-start;
   }
 
   .hero-copy {
     font-size: 1.1rem;
   }
 
-  .hero-content {
-    max-height: min(38rem, calc(100svh - 6rem));
-    padding-top: clamp(4.5rem, 10vh, 6.5rem);
-    padding-bottom: clamp(2.5rem, 6vh, 4rem);
-  }
 
-  .hero-shade {
-    background:
-      var(--hero-shade-h),
-      var(--hero-shade-v);
-  }
 
   /* Tablet Optimized Grids (581px - 980px) */
   .intro {

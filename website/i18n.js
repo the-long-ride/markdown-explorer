@@ -9,6 +9,7 @@
     navDemo: "Demo",
     navDemoExamples: "Example files",
     navDemoTry: "Open a file",
+    heroDemoLabel: "Try instantly in browser:",
     heroEyebrow: "Open source - VS Code extension and desktop app",
     heroCopy:
       "A private Markdown workspace reader with exact search jumps, Mermaid, math, video, syntax-highlighted code, interactive tables, charts, tabs, converted document previews, Sidebar Cursor mode, and Theme Remix for real documentation.",
@@ -23,6 +24,8 @@
     metric4: "Mermaid diagram styles rendered in docs",
     metric5: "interactive sandboxes run in isolated previews",
     metric6: "click to enlarge diagrams, charts, and images",
+    featuresSectionTitle: "Features & capabilities",
+    featuresSectionSubtitle: "Explore the powerful tools built into Markdown Explorer to make local documentation interactive and comfortable.",
     featuresEyebrow: "Built for agent-era Markdown",
     featuresTitle: "Your docs become an app",
     featuresSubtitle:
@@ -155,6 +158,10 @@
   vi: {
     label: "VI",
     skipToContent: "Bỏ qua nội dung",
+    navDemo: "Demo",
+    navDemoExamples: "Tệp mẫu",
+    navDemoTry: "Mở một tệp",
+    heroDemoLabel: "Dùng thử trực tiếp trên trình duyệt:",
     navFeatures: "Tính năng",
     navGallery: "Thư viện",
     navDownload: "Tải xuống",
@@ -173,6 +180,8 @@
     metric4: "kiểu sơ đồ Mermaid được kết xuất trong tài liệu",
     metric5: "sandbox tương tác chạy trong bản xem trước biệt lập",
     metric6: "nhấp để phóng to sơ đồ, biểu đồ và hình ảnh",
+    featuresSectionTitle: "Tính năng & Khả năng",
+    featuresSectionSubtitle: "Khám phá các công cụ mạnh mẽ được tích hợp trong Markdown Explorer giúp tài liệu cục bộ trở nên tương tác và dễ chịu.",
     featuresEyebrow: "Được xây dựng cho Markdown thời AI",
     featuresTitle: "Tài liệu của bạn trở thành ứng dụng",
     featuresSubtitle:
@@ -307,6 +316,10 @@
   fr: {
     label: "FR",
     skipToContent: "Passer au contenu",
+    navDemo: "Démo",
+    navDemoExamples: "Fichiers d'exemple",
+    navDemoTry: "Ouvrir un fichier",
+    heroDemoLabel: "Essayer instantanément dans le navigateur:",
     navFeatures: "Fonctionnalités",
     navGallery: "Galerie",
     navDownload: "Télécharger",
@@ -758,6 +771,10 @@
   no: {
     label: "NO",
     skipToContent: "Hopp til innhold",
+    navDemo: "Demo",
+    navDemoExamples: "Eksempelfiler",
+    navDemoTry: "Åpne en fil",
+    heroDemoLabel: "Prøv umiddelbart i nettleseren:",
     navFeatures: "Funksjoner",
     navGallery: "Galleri",
     navDownload: "Last ned",
@@ -910,6 +927,10 @@
   ja: {
     label: "JA",
     skipToContent: "コンテンツへスキップ",
+    navDemo: "デモ",
+    navDemoExamples: "サンプルファイル",
+    navDemoTry: "ファイルを開く",
+    heroDemoLabel: "ブラウザで今すぐ試す:",
     navFeatures: "機能",
     navGallery: "ギャラリー",
     navDownload: "ダウンロード",

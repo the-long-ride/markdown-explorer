@@ -287,38 +287,60 @@
 
     <main id="main">
       <section class="hero" id="top" aria-labelledby="hero-title">
-        <picture class="hero-media">
-          <img
-            src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
-            alt="Markdown Explorer homepage with workspace navigation and reading layout"
-          />
-        </picture>
-        <div class="hero-shade" aria-hidden="true"></div>
         <div class="hero-content">
-          <p class="eyebrow" data-i18n="heroEyebrow">
-            Open source - VS Code extension and desktop app
-          </p>
-          <h1 id="hero-title">Markdown Explorer</h1>
-          <p class="hero-copy" data-i18n="heroCopy">
-            A private Markdown workspace reader with exact search jumps,
-            Mermaid, math, video, syntax-highlighted code, interactive tables,
-            charts, tabs, converted document previews, Sidebar Cursor mode, and
-            Theme Remix for real documentation.
-          </p>
-          <div class="hero-actions" aria-label="Primary downloads">
-            <a
-              class="button primary"
-              href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
-              rel="noopener"
-              data-i18n="btnInstallVscode"
-              >Install for VS Code</a
-            >
-            <a
-              class="button secondary"
-              href="#download"
-              data-i18n="btnDownloadDesktop"
-              >Download desktop app</a
-            >
+          <div class="hero-text-side">
+            <p class="eyebrow" data-i18n="heroEyebrow">
+              Open source - VS Code extension and desktop app
+            </p>
+            <h1 id="hero-title">Markdown Explorer</h1>
+            <p class="hero-copy" data-i18n="heroCopy">
+              A private Markdown workspace reader with exact search jumps,
+              Mermaid, math, video, syntax-highlighted code, interactive tables,
+              charts, tabs, converted document previews, Sidebar Cursor mode, and
+              Theme Remix for real documentation.
+            </p>
+          </div>
+
+          <div class="hero-buttons-side">
+            <div class="hero-actions" aria-label="Primary downloads">
+              <a
+                class="button primary"
+                href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+                rel="noopener"
+                data-i18n="btnInstallVscode"
+                >Install for VS Code</a
+              >
+              <a
+                class="button secondary"
+                href="#download"
+                data-i18n="btnDownloadDesktop"
+                >Download desktop app</a
+              >
+            </div>
+
+            <div class="hero-demo">
+              <span class="demo-label" data-i18n="heroDemoLabel">Try instantly in browser:</span>
+              <div class="demo-buttons">
+                <a
+                  class="button demo-primary"
+                  href="app/?mode=file"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                  <span data-i18n="navDemoTry">Open a file</span>
+                </a>
+                <a
+                  class="button demo-secondary"
+                  href="app/?mode=test"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  <span data-i18n="navDemoExamples">Example files</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -386,17 +408,30 @@
           <p class="eyebrow" data-i18n="featuresEyebrow">
             Built for agent-era Markdown
           </p>
-          <h2 id="features-title" data-i18n="featuresTitle">
-            Your docs become an app
+          <h2 id="features-title" data-i18n="featuresSectionTitle">
+            Features & capabilities
           </h2>
-          <p data-i18n="featuresSubtitle">
-            Markdown Explorer keeps files local while making big Markdown and document
-            workspaces easier to scan, search, understand, and present. Support
-            multiple languages.
+          <p data-i18n="featuresSectionSubtitle">
+            Explore the powerful tools built into Markdown Explorer to make local documentation interactive and comfortable.
           </p>
         </div>
 
         <div class="feature-grid">
+          <article class="feature-card wide">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+              alt="Markdown Explorer welcome workspace layout"
+            />
+            <div>
+              <p class="card-kicker">Workspace viewer</p>
+              <h3 data-i18n="featuresTitle">Your docs become an app</h3>
+              <p data-i18n="featuresSubtitle">
+                Markdown Explorer keeps files local while making big Markdown and document
+                workspaces easier to scan, search, understand, and present. Support
+                multiple languages.
+              </p>
+            </div>
+          </article>
           <article class="feature-card wide">
             <img
               src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-all-tabs.png"
