@@ -9,6 +9,7 @@ interface ElectronApi {
   postMessage(msg: WebviewMessage): void;
   onMessage(callback: (msg: HostMessage) => void): () => void;
   getPathForFile?(file: File): string | undefined;
+  consumeDroppedPaths?(): string[];
 }
 
 declare global {

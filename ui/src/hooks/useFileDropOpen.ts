@@ -92,11 +92,46 @@ export function useFileDropOpen({
       if (droppedPath) openDroppedPath(droppedPath);
     };
 
+    const onTauriFileDrop = (event: Event) => {
+      resetDragState();
+      if (modalOpen) return;
+      const paths = (event as CustomEvent<string[]>).detail;
+      const droppedPath = Array.isArray(paths) ? paths[0] : undefined;
+      if (droppedPath) openDroppedPath(droppedPath);
+    };
+
+    const onTauriFileDropState = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string }>).detail;
+      if (detail?.type === 'over') {
+        if (modalOpen) return;
+        dragCounter.current = 1;
+        setIsDragging(true);
+        document.body.classList.add('is-dragging-files');
+        return;
+      }
+      if (detail?.type === 'drop' || detail?.type === 'cancel' || detail?.type === 'leave') {
+        resetDragState();
+      }
+    };
+
+    const onWindowBlur = () => resetDragState();
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') resetDragState();
+    };
+    const onPointerExit = (event: MouseEvent) => {
+      if (event.relatedTarget === null) resetDragState();
+    };
+
     window.addEventListener('dragenter', onDragEnter);
     window.addEventListener('dragleave', onDragLeave);
     window.addEventListener('dragover', onDragOver);
     window.addEventListener('drop', onDrop);
     window.addEventListener('dragend', resetDragState);
+    window.addEventListener('blur', onWindowBlur);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('mouseout', onPointerExit);
+    window.addEventListener('markdown-explorer-tauri-file-drop', onTauriFileDrop);
+    window.addEventListener('markdown-explorer-tauri-file-drop-state', onTauriFileDropState);
 
     return () => {
       window.removeEventListener('dragenter', onDragEnter);
@@ -104,6 +139,11 @@ export function useFileDropOpen({
       window.removeEventListener('dragover', onDragOver);
       window.removeEventListener('drop', onDrop);
       window.removeEventListener('dragend', resetDragState);
+      window.removeEventListener('blur', onWindowBlur);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('mouseout', onPointerExit);
+      window.removeEventListener('markdown-explorer-tauri-file-drop', onTauriFileDrop);
+      window.removeEventListener('markdown-explorer-tauri-file-drop-state', onTauriFileDropState);
       resetDragState();
     };
   }, [isDesktop, isChrome, isWebDemo, modalOpen, openDroppedPath, openDroppedFolder, openDroppedFileHandle]);

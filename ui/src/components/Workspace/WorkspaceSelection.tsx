@@ -138,14 +138,14 @@ export function WorkspaceSelection({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'stretch',
-          gap: '32px',
+          gap: '24px',
           transform: `scale(${workspaceScale})`,
           transformOrigin: 'center top',
           transition: 'transform 0.12s ease',
         }}
       >
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-          <img src={logoUrl} width="64" height="64" alt="Markdown Explorer" style={{ opacity: 0.95, filter: 'drop-shadow(0 4px 12px var(--accent-dim))', marginBottom: '8px' }} />
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <img src={logoUrl} width="64" height="64" alt="Markdown Explorer" style={{ opacity: 0.95, filter: 'drop-shadow(0 4px 12px var(--accent-dim))' }} />
           <h1 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: 0, margin: 0, color: 'var(--tx)' }}>Markdown Explorer</h1>
           <p style={{ fontSize: '14px', color: 'var(--tx2)', margin: 0, lineHeight: 1.5 }}>Documentation viewer & navigator</p>
         </div>
@@ -242,7 +242,7 @@ export function WorkspaceSelection({
         </div>
 
         {recents.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '8px' }}>
             <h3 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, color: 'var(--tx2)' }}>Workspaces</h3>
             {embeddedInTabs && isDesktop && (
               <p style={{ margin: '-8px 0 0', fontSize: '11px', color: 'var(--tx3)', lineHeight: 1.5 }}>

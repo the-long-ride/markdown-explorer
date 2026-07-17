@@ -187,5 +187,6 @@ export function readInitialDesktopState(): InitialDesktopState {
 
 export function getDroppedFilePath(file: File): string | undefined {
   const electronApi = (window as any).electronAPI;
-  return electronApi?.getPathForFile?.(file) || (file as any).path;
+  const tauriDroppedPath = electronApi?.consumeDroppedPaths?.()[0];
+  return tauriDroppedPath || electronApi?.getPathForFile?.(file) || (file as any).path;
 }

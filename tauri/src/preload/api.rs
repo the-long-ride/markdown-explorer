@@ -17,6 +17,15 @@ pub fn electron_api_shim_js() -> &'static str {
   }, true);
   const listeners = new Set();
   let unlistenHost = null;
+  let dropListenerStarted = false;
+  let unlistenDrop = null;
+  let droppedPaths = [];
+
+  function dispatchTauriFileDropState(type, paths) {
+    window.dispatchEvent(new CustomEvent('markdown-explorer-tauri-file-drop-state', {
+      detail: { type: type, paths: Array.isArray(paths) ? paths.slice() : [] }
+    }));
+  }
 
   function ensureHostListener() {
     if (unlistenHost) return;
@@ -34,6 +43,67 @@ pub fn electron_api_shim_js() -> &'static str {
     } else {
       unlistenHost = dereg;
     }
+  }
+
+  function ensureDropListener() {
+    if (dropListenerStarted || unlistenDrop) return;
+    if (!window.__TAURI__) {
+      setTimeout(ensureDropListener, 50);
+      return;
+    }
+
+    var webview = window.__TAURI__.webview;
+    var webviewWindow = window.__TAURI__.webviewWindow;
+    var windowApi = window.__TAURI__.window;
+    var currentWebview = webview && typeof webview.getCurrentWebview === 'function'
+      ? webview.getCurrentWebview()
+      : webviewWindow && typeof webviewWindow.getCurrentWebviewWindow === 'function'
+        ? webviewWindow.getCurrentWebviewWindow()
+        : windowApi && typeof windowApi.getCurrentWindow === 'function'
+          ? windowApi.getCurrentWindow()
+          : null;
+    if (currentWebview && typeof currentWebview.onDragDropEvent === 'function') {
+      dropListenerStarted = true;
+      var dereg = currentWebview.onDragDropEvent(function (e) {
+        var payload = e && e.payload;
+        if (payload && payload.type === 'over') {
+          dispatchTauriFileDropState('over');
+        } else if (payload && payload.type === 'drop' && Array.isArray(payload.paths)) {
+          droppedPaths = payload.paths.slice();
+          dispatchTauriFileDropState('drop', droppedPaths);
+          window.dispatchEvent(new CustomEvent('markdown-explorer-tauri-file-drop', { detail: droppedPaths.slice() }));
+        } else if (payload && (payload.type === 'cancel' || payload.type === 'leave')) {
+          droppedPaths = [];
+          dispatchTauriFileDropState(payload.type);
+        }
+      });
+      if (dereg && typeof dereg.then === 'function') {
+        dereg.then(function (fn) { unlistenDrop = fn; });
+      } else {
+        unlistenDrop = dereg;
+      }
+      return;
+    }
+
+    if (!window.__TAURI__.event || typeof window.__TAURI__.event.listen !== 'function') {
+      setTimeout(ensureDropListener, 50);
+      return;
+    }
+    dropListenerStarted = true;
+    window.__TAURI__.event.listen('tauri://drag-enter', function () {
+      dispatchTauriFileDropState('over');
+    });
+    window.__TAURI__.event.listen('tauri://drag-leave', function () {
+      dispatchTauriFileDropState('leave');
+    });
+    window.__TAURI__.event.listen('tauri://file-drop', function (e) {
+      var paths = e && e.payload;
+      droppedPaths = Array.isArray(paths) ? paths.slice() : [];
+      if (droppedPaths.length) {
+        dispatchTauriFileDropState('drop', droppedPaths);
+        window.dispatchEvent(new CustomEvent('markdown-explorer-tauri-file-drop', { detail: droppedPaths.slice() }));
+      }
+    }).then(function (fn) { unlistenDrop = fn; });
   }
 
   window.electronAPI = {
@@ -61,8 +131,15 @@ pub fn electron_api_shim_js() -> &'static str {
     },
     getPathForFile: function (file) {
       return file && file.path;
+    },
+    consumeDroppedPaths: function () {
+      ensureDropListener();
+      var paths = droppedPaths.slice();
+      droppedPaths = [];
+      return paths;
     }
   };
+  ensureDropListener();
 
   function fileSrcToAsset(url) {
     if (!url || typeof url !== 'string') return url;
@@ -159,5 +236,22 @@ mod tests {
         assert!(js.contains("e.preventDefault()"));
         assert!(js.contains("e.stopImmediatePropagation()"));
         assert!(js.contains("'r' || k === 'R' || k === 'F5'"));
+    }
+
+    #[test]
+    fn test_electron_api_shim_js_contains_drag_drop_bridge() {
+        let js = electron_api_shim_js();
+        assert!(js.contains("onDragDropEvent"));
+        assert!(js.contains("getCurrentWebview"));
+        assert!(js.contains("getCurrentWebviewWindow"));
+        assert!(js.contains("getCurrentWindow"));
+        assert!(js.contains("payload.paths"));
+        assert!(js.contains("dispatchTauriFileDropState"));
+        assert!(js.contains("markdown-explorer-tauri-file-drop-state"));
+        assert!(js.contains("consumeDroppedPaths"));
+        assert!(js.contains("markdown-explorer-tauri-file-drop"));
+        assert!(js.contains("tauri://drag-enter"));
+        assert!(js.contains("tauri://drag-leave"));
+        assert!(js.contains("tauri://file-drop"));
     }
 }

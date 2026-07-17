@@ -728,6 +728,7 @@ export function App() {
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           border: '2.5px dashed var(--accent)',
+          borderTop: 'none',
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
           zIndex: 10000, color: 'var(--tx)',
@@ -735,9 +736,7 @@ export function App() {
         }}>
           <div style={{ fontSize: '20px', fontWeight: 800 }}>Drop folder or file to open</div>
           <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>
-            {state.settings.documentConversion
-              ? 'Supports folders, Markdown, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files'
-              : 'Supports folders, .md / .mdx, and .txt files'}
+            Supports folders, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF files
           </div>
         </div>
       )}

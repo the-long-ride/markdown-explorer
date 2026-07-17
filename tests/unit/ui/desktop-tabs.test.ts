@@ -224,6 +224,17 @@ describe('desktopTabs', () => {
       delete (window as any).electronAPI;
     });
 
+    test('uses Tauri consumed dropped path before DOM file path fallbacks', () => {
+      (window as any).electronAPI = {
+        consumeDroppedPaths: vi.fn().mockReturnValue(['C:\\docs\\dropped-folder']),
+        getPathForFile: vi.fn().mockReturnValue('C:\\docs\\from-file.md'),
+      };
+      const file = new File([], 'test.md');
+      (file as any).path = 'C:\\docs\\fallback.md';
+      expect(getDroppedFilePath(file)).toBe('C:\\docs\\dropped-folder');
+      delete (window as any).electronAPI;
+    });
+
     test('falls back to file.path', () => {
       const file = new File([], 'test.md');
       (file as any).path = '/fallback/path.md';

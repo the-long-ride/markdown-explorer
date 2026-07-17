@@ -532,6 +532,7 @@ describe('App render', () => {
     render(createElement(App));
     await waitFor(() => {
       expect(screen.getByText('Drop folder or file to open')).toBeInTheDocument();
+      expect(screen.getByText('Supports folders, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF files')).toBeInTheDocument();
     });
     useFileDropOpenReturn = { isDragging: false };
   });
