@@ -96,6 +96,16 @@ Mermaid diagrams render offline, LaTeX math is readable, code blocks are highlig
 
 ## HTML And Media Tools
 
+### Terminal command fences
+
+Use an explicit terminal language tag for command-oriented Markdown blocks:
+
+```bash
+npm run build -- --mode=production && python app.py --count 2 --enabled true
+```
+
+Markdown Explorer highlights executable names, flags, scalar values, environment variables, strings, comments, shell operators, and line continuations. Subcommands and ordinary arguments keep the default code color. Supported tags: `bash`, `sh`, `shell`, `zsh`, `powershell`, `pwsh`, `cmd`, and `terminal`.
+
 Use isolated HTML previews for interactive examples, and inspect images or diagrams in a zoomable media modal.
 
 <p align="center">

@@ -71,6 +71,19 @@ describe('markdown/renderer', () => {
         expect(html).toContain('mdn-section-copy-btn');
       });
 
+      it('renders the heading level immediately before the section copy button', () => {
+        const tokens = tokenize('# Title\n## Subheading');
+        const renderer = new HtmlRenderer();
+        const { html } = renderer.render(tokens);
+
+        expect(html).toMatch(
+          /<span class="mdn-section-heading-level" aria-hidden="true">H1<\/span>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
+        );
+        expect(html).toMatch(
+          /<span class="mdn-section-heading-level" aria-hidden="true">H2<\/span>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
+        );
+      });
+
       it('renders chevron in section header', () => {
         const tokens = tokenize('# Title');
         const renderer = new HtmlRenderer();

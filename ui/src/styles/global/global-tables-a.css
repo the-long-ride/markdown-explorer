@@ -57,6 +57,27 @@
   font-size: 1.15em;
   font-weight: 700;
 }
+.mdn-section-heading-level {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  color: var(--tx2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+.mdn-section-header:hover .mdn-section-heading-level,
+.mdn-section-header:focus-within .mdn-section-heading-level {
+  visibility: visible;
+  opacity: 1;
+}
 .mdn-section-copy-btn {
   display: inline-flex;
   align-items: center;
@@ -596,7 +617,6 @@
 .mdn-table-view-menu__option.is-selected {
   background: var(--accent-dim);
   color: var(--accent-text);
-  box-shadow: inset 3px 0 0 var(--accent);
 }
 .mdn-table-view-menu__label {
   min-width: 0;
@@ -604,4 +624,3 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-

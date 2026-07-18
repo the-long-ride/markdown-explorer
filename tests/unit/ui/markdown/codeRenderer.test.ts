@@ -89,6 +89,20 @@ describe('markdown/codeRenderer', () => {
     expect(html).toContain('hl-kw');
   });
 
+  it('renders terminal commands with semantic token classes', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'bash', content: 'npm --help' }, 'auto');
+    expect(html).toContain('<span class="hl-cmd">npm</span>');
+    expect(html).toContain('<span class="hl-param">--help</span>');
+    expect(html).toContain('language-bash');
+    expect(html).toContain('mdn-copy-btn');
+  });
+
+  it('renders PowerShell commands through terminal highlighting', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'pwsh', content: 'Write-Host -ForegroundColor Green' }, 'auto');
+    expect(html).toContain('<span class="hl-cmd">Write-Host</span>');
+    expect(html).toContain('<span class="hl-param">-ForegroundColor</span>');
+  });
+
   it('renders code block with line numbers for non-text lang', () => {
     const html = renderCodeBlock({ type: 'code', lang: 'python', content: 'def foo():\n  pass' }, 'auto');
     expect(html).toContain('mdn-codeblock-gutter');

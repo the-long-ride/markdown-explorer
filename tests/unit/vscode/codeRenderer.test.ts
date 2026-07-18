@@ -45,6 +45,22 @@ describe('renderCodeBlock', () => {
       expect(html).toContain('const');
     });
 
+    test('renders terminal commands with semantic token classes', () => {
+      const token = { type: 'code' as const, lang: 'bash', content: 'npm --help' };
+      const html = renderCodeBlock(token, 'auto');
+      expect(html).toContain('<span class="hl-cmd">npm</span>');
+      expect(html).toContain('<span class="hl-param">--help</span>');
+      expect(html).toContain('language-bash');
+      expect(html).toContain('mdn-copy-btn');
+    });
+
+    test('renders PowerShell commands through terminal highlighting', () => {
+      const token = { type: 'code' as const, lang: 'pwsh', content: 'Write-Host -ForegroundColor Green' };
+      const html = renderCodeBlock(token, 'auto');
+      expect(html).toContain('<span class="hl-cmd">Write-Host</span>');
+      expect(html).toContain('<span class="hl-param">-ForegroundColor</span>');
+    });
+
     test('renders code block with escapped language name', () => {
       const token = { type: 'code' as const, lang: 'c++', content: 'int main() {}' };
       const html = renderCodeBlock(token, 'auto');

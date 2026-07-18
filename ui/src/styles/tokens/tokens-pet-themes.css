@@ -206,6 +206,8 @@
   --accent: #a98fa0;
   --accent-dim: rgba(169, 143, 160, 0.16);
   --accent-text: #d8becb;
+  --hl-func: #d8becb;
+  --hl-terminal-muted: #a98fa0;
   --txc: #a8b8ca;
   --chart-1: #a98fa0;
   --chart-2: #a8b8ca;
@@ -295,6 +297,8 @@
   --accent: #7f6474;
   --accent-dim: rgba(127, 100, 116, 0.13);
   --accent-text: #684b5a;
+  --hl-func: #684b5a;
+  --hl-terminal-muted: #9b8791;
   --txc: #52677d;
   --chart-1: #7f6474;
   --chart-2: #52677d;
