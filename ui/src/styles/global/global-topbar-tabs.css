@@ -342,7 +342,7 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: drag;
 }
 
 .desktop-tabbar__tabs {
@@ -356,7 +356,7 @@ body {
   overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: drag;
 }
 
 .desktop-tabbar__tabs::-webkit-scrollbar {
@@ -692,6 +692,15 @@ body {
 
 .tab-floating-toolbar__toggle {
   flex: 0 0 var(--control-h);
+}
+
+.app--tauri.app--fullscreen .topbar,
+.app--tauri.app--fullscreen .topbar *,
+.app--tauri.app--fullscreen .desktop-tabbar,
+.app--tauri.app--fullscreen .desktop-tabbar *,
+.app--tauri.app--fullscreen .desktop-tabbar__tabs-wrap,
+.app--tauri.app--fullscreen .desktop-tabbar__tabs {
+  -webkit-app-region: no-drag !important;
 }
 
 /* ============================================================

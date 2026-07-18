@@ -34,6 +34,8 @@ interface DesktopTabBarProps {
   isDark: boolean;
   isMaximized: boolean;
   hasUpdate?: boolean;
+  isFullscreen?: boolean;
+  onFullscreenToggle?: () => void;
 }
 
 export function DesktopTabBar({
@@ -52,6 +54,8 @@ export function DesktopTabBar({
   isDark,
   isMaximized,
   hasUpdate = false,
+  isFullscreen = false,
+  onFullscreenToggle,
 }: DesktopTabBarProps) {
   const { state, openInEditor, toggleToc, toggleFocusMode } = useAppState();
   const bridge = usePlatform();
@@ -261,6 +265,9 @@ export function DesktopTabBar({
   const contextMenuTabIndex = contextMenu
     ? workspaceTabs.findIndex((tab) => tab.id === contextMenu.tabId)
     : -1;
+  const shouldExitTauriFullscreenOnRestore =
+    state.appRuntime === 'tauri' && isFullscreen && onFullscreenToggle;
+  const showsRestoreControl = isMaximized || isFullscreen;
 
   return (
     <header className="desktop-tabbar">
@@ -425,6 +432,11 @@ export function DesktopTabBar({
         focusModeShortcut={state.settings.keybindings?.toggleFocusMode}
         isFocusMode={state.focusMode}
         onFocusModeToggle={toggleFocusMode}
+        fullscreenLabel={t.actions.toggleFullscreen}
+        fullscreenTooltip={t.actions.toggleFullscreenTooltip}
+        fullscreenShortcut="F11"
+        isFullscreen={isFullscreen}
+        onFullscreenToggle={onFullscreenToggle}
       />
       <div className="desktop-tabbar__window-controls">
         <TooltipButton
@@ -435,9 +447,15 @@ export function DesktopTabBar({
         />
         <TooltipButton
           className="btn btn--icon window-control-btn"
-          onClick={() => bridge.postMessage({ command: 'window-maximize' })}
-          tooltip={isMaximized ? t.tooltips.restore : t.tooltips.maximize}
-          icon={isMaximized ? (
+          onClick={() => {
+            if (shouldExitTauriFullscreenOnRestore) {
+              onFullscreenToggle?.();
+            } else {
+              bridge.postMessage({ command: 'window-maximize' });
+            }
+          }}
+          tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize}
+          icon={showsRestoreControl ? (
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
               <path d="M8 8V3h13v13h-5" />
               <path d="M3 8h13v13H3z" />

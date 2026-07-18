@@ -1,4 +1,4 @@
-function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, shell }) {
+function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, shell, platform = process.platform }) {
   ipcMain.on("webview-message", async (_event, msg) => {
     switch (msg.command) {
       case "ready":
@@ -91,6 +91,20 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "window-close":
         getMainWindow()?.close();
         break;
+      case "toggle-fullscreen": {
+        const mainWindow = getMainWindow();
+        if (!mainWindow) break;
+        try {
+          if (platform === "win32") {
+            mainWindow.setKiosk(!mainWindow.isKiosk());
+          } else {
+            mainWindow.setFullScreen(!mainWindow.isFullScreen());
+          }
+        } catch (error) {
+          console.error("[electron] Failed to toggle fullscreen:", error);
+        }
+        break;
+      }
     }
   });
 }

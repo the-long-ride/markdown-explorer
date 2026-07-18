@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
-use crate::app_state::AppState;
-use crate::app_state::RuntimeState;
+use crate::app_state::{AppState, FullscreenTransition, RuntimeState};
 use crate::host_message;
 use crate::runtime::navigation;
 use crate::runtime::refresh::{is_watch_change_relevant, should_notify_current_file_changed};
@@ -990,7 +989,12 @@ impl Dispatcher {
             }
             "window-maximize" => {
                 if let Some(window) = self.app.get_webview_window("main") {
-                    if let Ok(true) = window.is_maximized() {
+                    if let Ok(true) = window.is_fullscreen() {
+                        self.state.inner.write().fullscreen_transition = FullscreenTransition::Idle;
+                        if window.set_fullscreen(false).is_ok() {
+                            host_message::emit_fullscreen_changed(&self.app, false);
+                        }
+                    } else if let Ok(true) = window.is_maximized() {
                         let _ = window.unmaximize();
                     } else {
                         let _ = window.maximize();
@@ -1001,6 +1005,37 @@ impl Dispatcher {
                 if let Some(window) = self.app.get_webview_window("main") {
                     let _ = window.close();
                 }
+            }
+            "toggle-fullscreen" => {
+                let app = self.app.clone();
+                let state = self.state.clone();
+                let _ = self.app.run_on_main_thread(move || {
+                    if let Some(window) = app.get_webview_window("main") {
+                        if let Ok(is_fullscreen) = window.is_fullscreen() {
+                            if is_fullscreen {
+                                if window.set_fullscreen(false).is_ok() {
+                                    state.inner.write().fullscreen_transition =
+                                        FullscreenTransition::Idle;
+                                    host_message::emit_fullscreen_changed(&app, false);
+                                }
+                            } else if window.is_maximized().unwrap_or(false) {
+                                state.inner.write().fullscreen_transition =
+                                    FullscreenTransition::AwaitingUnmaximize;
+                                if window.unmaximize().is_err() {
+                                    state.inner.write().fullscreen_transition =
+                                        FullscreenTransition::Idle;
+                                }
+                            } else {
+                                state.inner.write().fullscreen_transition =
+                                    FullscreenTransition::AwaitingMaximize;
+                                if window.maximize().is_err() {
+                                    state.inner.write().fullscreen_transition =
+                                        FullscreenTransition::Idle;
+                                }
+                            }
+                        }
+                    }
+                });
             }
             "zoom-in" => {
                 self.handle_zoom(1);

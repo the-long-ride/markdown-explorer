@@ -15,6 +15,12 @@ async function read(filePath: string) {
 }
 
 describe('content-notice', () => {
+  test('skips txt code blocks during Highlight.js post-processing', async () => {
+    const content = await read(contentPath);
+
+    expect(content).toMatch(/language-\(txt\|text\|plain\|plaintext\)/);
+  });
+
   test('stale current-file notice uses translation keys instead of hardcoded copy', async () => {
     const content = await read(contentPath);
 

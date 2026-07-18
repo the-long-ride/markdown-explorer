@@ -79,6 +79,7 @@ interface AppStateContextValue {
   setSidebarActiveTab: (tab: 'files' | 'search') => void;
   toggleToc: () => void;
   toggleFocusMode: () => void;
+  toggleDesktopViewMode: () => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }
 
@@ -454,6 +455,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [bridge]);
 
+  const toggleDesktopViewMode = useCallback(() => {
+    updateSettings({
+      desktopViewMode: state.settings.desktopViewMode === 'tabs' ? 'focus' : 'tabs',
+    });
+  }, [state.settings.desktopViewMode, updateSettings]);
+
   const value = useMemo<AppStateContextValue>(
     () => ({
       state,
@@ -475,6 +482,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setSidebarActiveTab,
       toggleToc,
       toggleFocusMode,
+      toggleDesktopViewMode,
       updateSettings,
     }),
     [
@@ -496,6 +504,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setSidebarActiveTab,
       toggleToc,
       toggleFocusMode,
+      toggleDesktopViewMode,
       updateSettings,
     ],
   );

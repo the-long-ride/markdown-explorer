@@ -104,6 +104,7 @@ export interface ReadyAckMessage {
   readonly canInstallUpdates?: boolean;
   readonly documentConversionEnabled?: boolean;
   readonly isMaximized?: boolean;
+  readonly isFullscreen?: boolean;
 }
 
 export interface WorkspaceFilesChangedMessage {
@@ -128,6 +129,11 @@ export interface RecentWorkspacesChangedMessage {
 export interface WindowStateChangedMessage {
   readonly command: 'window-state-changed';
   readonly isMaximized: boolean;
+}
+
+export interface FullscreenStateChangedMessage {
+  readonly command: 'fullscreenChanged';
+  readonly isFullscreen: boolean;
 }
 
 export interface CrossTabSearchResultsMessage {
@@ -224,6 +230,7 @@ export type HostMessage =
   | SetLoadingMessage
   | UpdateStateChangedMessage
   | WindowStateChangedMessage
+  | FullscreenStateChangedMessage
   | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage
   | WorkspaceSearchIndexLoadedMessage;
@@ -346,6 +353,10 @@ export interface WindowCloseMessage {
   readonly command: 'window-close';
 }
 
+export interface ToggleFullscreenMessage {
+  readonly command: 'toggle-fullscreen';
+}
+
 export interface ZoomInMessage {
   readonly command: 'zoom-in';
 }
@@ -409,6 +420,7 @@ export type WebviewMessage =
   | WindowMinimizeMessage
   | WindowMaximizeMessage
   | WindowCloseMessage
+  | ToggleFullscreenMessage
   | UpdateAppearanceMessage
   | OpenExternalMessage
   | SetDocumentConversionMessage

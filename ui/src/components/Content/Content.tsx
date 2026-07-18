@@ -460,7 +460,7 @@ export function Content({
 
         const codeBlocks = [
           ...body.querySelectorAll<HTMLElement>("pre code:not(.is-custom-highlighted)"),
-        ].filter((block) => !/\blanguage-(text|plain|plaintext)\b/.test(block.className));
+        ].filter((block) => !/\blanguage-(txt|text|plain|plaintext)\b/.test(block.className));
 
         if (codeBlocks.length > 0) {
           try {

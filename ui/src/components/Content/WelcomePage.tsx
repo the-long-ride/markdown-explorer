@@ -1116,7 +1116,11 @@ export function WelcomePage() {
                 </tr>
               </thead>
               <tbody>
-                {ACTIONS_LIST.filter((act) => act.scope === 'both' || isDesktopLike).map((act) => {
+                {ACTIONS_LIST.filter((act) =>
+                  act.scope === 'both' ||
+                  (act.scope === 'desktop' && isDesktopLike) ||
+                  (act.scope === 'electron' && isDesktop),
+                ).map((act) => {
                   const val = state.settings.keybindings?.[act.id] || "";
                   return (
                     <tr key={act.id}>
@@ -1127,6 +1131,12 @@ export function WelcomePage() {
                     </tr>
                   );
                 })}
+                {isDesktop && (
+                  <tr>
+                    <td>{t.actions.toggleFullscreen}</td>
+                    <td><kbd>F11</kbd></td>
+                  </tr>
+                )}
                 {/* Special non-customizable shortcuts */}
                 <tr>
                   <td>{wt.shortcutsTable.rows.zoomModal}</td>

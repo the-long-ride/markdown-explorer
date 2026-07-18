@@ -20,8 +20,8 @@ describe('appStateConstants', () => {
     expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(19);
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 19 entries', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(19);
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 20 entries', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(20);
   });
 
   test('DESKTOP_DEFAULT_KEYBINDINGS overrides 5 from defaults', () => {
@@ -31,6 +31,7 @@ describe('appStateConstants', () => {
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleTheme).toBe('Ctrl+L');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleSidebar).toBe('Ctrl+B');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.refresh).toBe('F5');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleDesktopViewMode).toBe('Ctrl+Alt+T');
   });
 
   test('getDefaultKeybindings(true) returns desktop keybindings', () => {

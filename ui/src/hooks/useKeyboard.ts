@@ -30,6 +30,9 @@ interface UseKeyboardOptions {
   onToggleToc?: () => void;
   onLocateFile?: () => void;
   onToggleFocusMode?: () => void;
+  onToggleDesktopViewMode?: () => void;
+  onToggleFullscreen?: () => void;
+  onWorkspaceSelection?: () => void;
 }
 
 export function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
@@ -92,6 +95,8 @@ export type KeyboardAction =
   | { type: 'toggle-toc' }
   | { type: 'locate-file' }
   | { type: 'toggle-focus-mode' }
+  | { type: 'toggle-desktop-view-mode' }
+  | { type: 'toggle-fullscreen' }
   | { type: 'refresh' }
   | { type: 'collapse-all' }
   | { type: 'expand-all' }
@@ -118,6 +123,8 @@ export interface KeyboardState {
   hasOnToggleToc: boolean;
   hasOnLocateFile: boolean;
   hasOnToggleFocusMode: boolean;
+  hasOnToggleDesktopViewMode: boolean;
+  hasOnToggleFullscreen: boolean;
   hasOnFindClose: boolean;
   isRepeat: boolean;
   isEditableTarget: boolean;
@@ -140,6 +147,11 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
 
   if (state.isTermsOpen) return null;
   if (state.isModalOpen) return null;
+
+  if (state.isDesktop && state.hasOnToggleFullscreen && e.key === 'F11') {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-fullscreen' };
+  }
 
   if (state.hasOnSidebarCursorModeToggle && matchesShortcut(e, state.keybindings.sidebarCursorMode)) {
     return { type: 'sidebar-cursor-mode-toggle' };
@@ -216,6 +228,15 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     return { type: 'toggle-focus-mode' };
   }
 
+  if (state.isDesktop && state.hasOnToggleDesktopViewMode && matchesShortcut(e, state.keybindings.toggleDesktopViewMode)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-desktop-view-mode' };
+  }
+
+  if (matchesShortcut(e, state.keybindings.workspaceSelection)) {
+    return { type: 'workspace-selection' };
+  }
+
   if (state.isDesktopLike) {
     if (matchesShortcut(e, state.keybindings.refresh)) {
       return { type: 'refresh' };
@@ -225,9 +246,6 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     }
     if (matchesShortcut(e, state.keybindings.expandAll)) {
       return { type: 'expand-all' };
-    }
-    if (matchesShortcut(e, state.keybindings.workspaceSelection)) {
-      return { type: 'workspace-selection' };
     }
     if (matchesShortcut(e, state.keybindings.toggleSidebar)) {
       if (state.isRepeat) return null;
@@ -261,6 +279,9 @@ export function useKeyboard({
   onToggleToc,
   onLocateFile,
   onToggleFocusMode,
+  onToggleDesktopViewMode,
+  onToggleFullscreen,
+  onWorkspaceSelection,
 }: UseKeyboardOptions) {
   const { back, forward } = useNavigation();
   const { state, toggleTheme, toggleSidebar, navigate, refresh } = useAppState();
@@ -293,6 +314,8 @@ export function useKeyboard({
         hasOnToggleToc: !!onToggleToc,
         hasOnLocateFile: !!onLocateFile,
         hasOnToggleFocusMode: !!onToggleFocusMode,
+        hasOnToggleDesktopViewMode: !!onToggleDesktopViewMode,
+        hasOnToggleFullscreen: !!onToggleFullscreen,
         hasOnFindClose: !!onFindClose,
         isRepeat: e.repeat,
         isEditableTarget: isEditableTarget(e.target),
@@ -378,6 +401,12 @@ export function useKeyboard({
         case 'toggle-focus-mode':
           onToggleFocusMode?.();
           break;
+        case 'toggle-desktop-view-mode':
+          onToggleDesktopViewMode?.();
+          break;
+        case 'toggle-fullscreen':
+          onToggleFullscreen?.();
+          break;
         case 'refresh':
           refresh();
           break;
@@ -388,7 +417,8 @@ export function useKeyboard({
           onExpandAll();
           break;
         case 'workspace-selection':
-          bridge.postMessage({ command: 'closeWorkspace' });
+          onWorkspaceSelection?.();
+          if (!onWorkspaceSelection) bridge.postMessage({ command: 'closeWorkspace' });
           break;
         case 'toggle-sidebar':
           toggleSidebar();
@@ -463,6 +493,9 @@ export function useKeyboard({
     isTermsOpen,
     onToggleToc,
     onLocateFile,
+    onToggleDesktopViewMode,
+    onToggleFullscreen,
+    onWorkspaceSelection,
   ]);
 }
 

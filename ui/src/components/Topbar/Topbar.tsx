@@ -21,6 +21,8 @@ interface TopbarProps {
   onCollapseAll: () => void;
   onCopyFile: (button?: HTMLElement | null) => void;
   hasUpdate?: boolean;
+  isFullscreen?: boolean;
+  onFullscreenToggle?: () => void;
 }
 
 interface BreadcrumbItem {
@@ -139,6 +141,8 @@ export function Topbar({
   onCollapseAll,
   onCopyFile,
   hasUpdate = false,
+  isFullscreen = false,
+  onFullscreenToggle,
 }: TopbarProps) {
   const {
     state,
@@ -167,6 +171,9 @@ export function Topbar({
 
   const breadcrumbItems = getBreadcrumbItems(state.relativePath || '', t.topbar.welcomePage);
   const breakablePath = (state.currentFile || state.relativePath || '').replace(/[\/\\]/g, '$&' + '\u200B');
+  const shouldExitTauriFullscreenOnRestore =
+    state.appRuntime === 'tauri' && isFullscreen && onFullscreenToggle;
+  const showsRestoreControl = state.isMaximized || isFullscreen;
 
   return (
     <header className="topbar">
@@ -335,6 +342,11 @@ export function Topbar({
           focusModeShortcut={state.settings.keybindings?.toggleFocusMode}
           isFocusMode={state.focusMode}
           onFocusModeToggle={toggleFocusMode}
+          fullscreenLabel={t.actions.toggleFullscreen}
+          fullscreenTooltip={t.actions.toggleFullscreenTooltip}
+          fullscreenShortcut="F11"
+          isFullscreen={isFullscreen}
+          onFullscreenToggle={onFullscreenToggle}
         />
 
         {isDesktop && (
@@ -349,9 +361,15 @@ export function Topbar({
               />
               <TooltipButton
                 className="btn btn--icon window-control-btn"
-                onClick={() => bridge.postMessage({ command: 'window-maximize' })}
-                tooltip={state.isMaximized ? t.tooltips.restore : t.tooltips.maximize}
-                icon={state.isMaximized ? (
+                onClick={() => {
+                  if (shouldExitTauriFullscreenOnRestore) {
+                    onFullscreenToggle?.();
+                  } else {
+                    bridge.postMessage({ command: 'window-maximize' });
+                  }
+                }}
+                tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize}
+                icon={showsRestoreControl ? (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                     <path d="M8 8V3h13v13h-5" />
                     <path d="M3 8h13v13H3z" />

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { DesktopTab } from '../../../../ui/src/desktop/types';
 
 const mockPostMessage = vi.fn();
@@ -187,6 +189,7 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
       <button data-testid="menu-sidebar" onClick={props.onSidebarToggle}>Sidebar</button>
       <button data-testid="menu-toc" onClick={props.onTocToggle}>TOC</button>
       <button data-testid="menu-focus" onClick={props.onFocusModeToggle}>Focus</button>
+      <button data-testid="menu-fullscreen" onClick={props.onFullscreenToggle}>Show full screen</button>
     </div>
   ),
 }));
@@ -252,6 +255,23 @@ describe('DesktopTabBar interactions', () => {
     return render(React.createElement(DesktopTabBar, { ...props, ...overrides }));
   }
 
+  it('keeps unused tab-bar space draggable while controls remain interactive', () => {
+    const css = readFileSync(
+      resolve(__dirname, '../../../../ui/src/styles/global/global-topbar-tabs.css'),
+      'utf8',
+    );
+
+    expect(css).toMatch(
+      /\.desktop-tabbar__tabs-wrap\s*\{[^}]*-webkit-app-region:\s*drag;/s,
+    );
+    expect(css).toMatch(
+      /\.desktop-tabbar__tabs\s*\{[^}]*-webkit-app-region:\s*drag;/s,
+    );
+    expect(css).toMatch(
+      /\.desktop-tabbar__scrollbar\s*\{[^}]*-webkit-app-region:\s*no-drag;/s,
+    );
+  });
+
   it('switches active tab when a workspace tab is clicked', () => {
     renderTabBar();
     const [, ws2Tab] = screen.getAllByRole('tab');
@@ -271,6 +291,13 @@ describe('DesktopTabBar interactions', () => {
     fireEvent.click(screen.getByTestId('menu-home'));
     expect(props.onSelectTab).toHaveBeenCalledTimes(1);
     expect(props.onSelectTab).toHaveBeenCalledWith('home');
+  });
+
+  it('toggles fullscreen from the toolbar action menu', () => {
+    const onFullscreenToggle = vi.fn();
+    renderTabBar({ onFullscreenToggle });
+    fireEvent.click(screen.getByTestId('menu-fullscreen'));
+    expect(onFullscreenToggle).toHaveBeenCalledTimes(1);
   });
 
   it('closes a tab when its close button is clicked', () => {

@@ -222,3 +222,9 @@ pub fn emit_window_state_changed(app: &AppHandle, is_maximized: bool) {
     extra.insert("isMaximized".into(), is_maximized.into());
     emit(app, "window-state-changed", extra);
 }
+
+pub fn emit_fullscreen_changed(app: &AppHandle, is_fullscreen: bool) {
+    let mut extra = serde_json::Map::new();
+    extra.insert("isFullscreen".into(), is_fullscreen.into());
+    emit(app, "fullscreenChanged", extra);
+}

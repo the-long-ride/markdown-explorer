@@ -71,6 +71,9 @@ vi.mock("../../../../ui/src/contexts/translations", () => ({
       zoomOut: "Zoom out",
       locateFile: "Locate file",
       toggleFocusMode: "Toggle focus mode",
+      toggleDesktopViewMode: "Toggle Tabs/Focus view",
+      toggleFullscreen: "Show full screen",
+      toggleFullscreenTooltip: "Toggle native full screen window",
       sidebarCursorMode: "Sidebar cursor mode",
     },
   }),
@@ -84,6 +87,7 @@ vi.mock("../../../../ui/src/components/Settings/SettingsModal", () => ({
     { id: "searchCurrent", label: "Search current workspace", scope: "desktop" },
     { id: "refresh", label: "Refresh", scope: "desktop" },
     { id: "toggleSidebar", label: "Toggle sidebar", scope: "desktop" },
+    { id: "toggleDesktopViewMode", label: "Toggle Tabs/Focus view", scope: "electron" },
   ],
 }));
 
@@ -276,6 +280,27 @@ describe("WelcomePage rendering", () => {
     setup();
     fireEvent.click(screen.getByText("Shortcuts"));
     expect(screen.queryByText("Refresh")).not.toBeInTheDocument();
+  });
+
+  it("shows the desktop view toggle shortcut only in the desktop app", () => {
+    (window as Record<string, unknown>).electronAPI = {};
+    setup();
+    fireEvent.click(screen.getByText("Shortcuts"));
+    expect(screen.getByText("Toggle Tabs/Focus view")).toBeInTheDocument();
+  });
+
+  it("hides the desktop view toggle shortcut outside the desktop app", () => {
+    setup();
+    fireEvent.click(screen.getByText("Shortcuts"));
+    expect(screen.queryByText("Toggle Tabs/Focus view")).not.toBeInTheDocument();
+  });
+
+  it("shows fixed F11 fullscreen shortcut only on desktop", () => {
+    (window as Record<string, unknown>).electronAPI = {};
+    setup();
+    fireEvent.click(screen.getByText("Shortcuts"));
+    expect(screen.getByText("Show full screen")).toBeInTheDocument();
+    expect(screen.getByText("F11")).toBeInTheDocument();
   });
 
   it("shows macOS install link only on desktop + macos", () => {

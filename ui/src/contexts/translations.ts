@@ -61,7 +61,10 @@ export interface Translations {
     zoomIn: string;
     zoomOut: string;
     locateFile: string;
+    toggleDesktopViewMode: string;
     toggleFocusMode?: string;
+    toggleFullscreen: string;
+    toggleFullscreenTooltip: string;
   };
   topbar: {
     home: string;
@@ -252,7 +255,10 @@ let _TRANSLATIONS: Record<string, Translations> = {
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
       locateFile: "Locate current file",
+      toggleDesktopViewMode: "Toggle Tabs/Focus view",
       toggleFocusMode: "Toggle focus mode",
+      toggleFullscreen: "Show full screen",
+      toggleFullscreenTooltip: "Toggle native full screen window",
     },
     topbar: {
       home: "Home",

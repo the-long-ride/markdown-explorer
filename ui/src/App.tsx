@@ -23,6 +23,7 @@ const SettingsModal = lazy(() => import('./components/Settings/SettingsModal').t
 const TermsModal = lazy(() => import('./components/Modal/TermsModal').then(m => ({ default: m.TermsModal })));
 const ThemeOnboardingModal = lazy(() => import('./components/Modal/ThemeOnboardingModal').then(m => ({ default: m.ThemeOnboardingModal })));
 const SwitchWorkspaceModal = lazy(() => import('./components/Modal/SwitchWorkspaceModal').then(m => ({ default: m.SwitchWorkspaceModal })));
+const WorkspaceSelectionConfirmModal = lazy(() => import('./components/Modal/WorkspaceSelectionConfirmModal').then(m => ({ default: m.WorkspaceSelectionConfirmModal })));
 import { TooltipButton } from './components/shared/TooltipButton';
 import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
 const FloatingTabToolbar = lazy(() => import('./components/Desktop/FloatingTabToolbar').then(m => ({ default: m.FloatingTabToolbar })));
@@ -42,7 +43,7 @@ import { clearSearchJumpMarks, scrollToRenderedSearchMatch } from './utils/searc
 export function App() {
   // Register global DOM handlers after first paint (not needed for initial render)
   useEffect(() => { initGlobalHandlers(); }, []);
-  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, dispatch, navigate, refresh } = useAppState();
+  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, toggleDesktopViewMode, dispatch, navigate, refresh } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -59,6 +60,8 @@ export function App() {
   const [findOpen, setFindOpen] = useState(false);
   const [pendingSearchJump, setPendingSearchJump] = useState<PendingSearchJump | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [workspaceSelectionConfirmOpen, setWorkspaceSelectionConfirmOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTarget, setModalTarget] = useState<HTMLElement | null>(null);
   const [sidebarCursorMode, setSidebarCursorMode] = useState(false);
@@ -157,6 +160,18 @@ export function App() {
   const closeFind = useCallback(() => {
     setFindOpen(false);
   }, []);
+
+  useEffect(() => {
+    return bridge.onMessage((msg) => {
+      if (msg.command === 'fullscreenChanged') {
+        setIsFullscreen(msg.isFullscreen);
+      }
+    });
+  }, [bridge]);
+
+  const toggleFullscreen = useCallback(() => {
+    bridge.postMessage({ command: 'toggle-fullscreen' });
+  }, [bridge]);
 
   useEffect(() => () => clearSearchJumpMarks(), []);
 
@@ -409,6 +424,32 @@ export function App() {
     });
   }, []);
 
+  const closeWorkspaceToSelection = useCallback(() => {
+    dispatch({
+      type: 'READY_ACK',
+      fileList: [],
+      tree: null,
+      theme: state.theme,
+      themeStyle: state.themeStyle,
+      defaultExpanded: state.defaultExpanded,
+      workspaceName: '',
+      recentWorkspaces: state.recentWorkspaces,
+    });
+    bridge.postMessage({ command: 'closeWorkspace' });
+  }, [bridge, dispatch, state.defaultExpanded, state.recentWorkspaces, state.theme, state.themeStyle]);
+
+  const requestWorkspaceSelection = useCallback(() => {
+    if (isTabView) {
+      createNewWorkspaceTab();
+      return;
+    }
+    if (!isTabView && state.workspaceName) {
+      setWorkspaceSelectionConfirmOpen(true);
+      return;
+    }
+    closeWorkspaceToSelection();
+  }, [closeWorkspaceToSelection, createNewWorkspaceTab, isTabView, state.workspaceName]);
+
   const copyCurrentFileContent = useCallback((button?: HTMLElement | null) => {
     if (state.currentFile && state.markdownSource !== null) {
       bridge.copyToClipboard(state.markdownSource);
@@ -447,6 +488,9 @@ export function App() {
       window.dispatchEvent(new CustomEvent('locate-active-file'));
     },
     onToggleFocusMode: toggleFocusMode,
+    onToggleDesktopViewMode: toggleDesktopViewMode,
+    onToggleFullscreen: toggleFullscreen,
+    onWorkspaceSelection: requestWorkspaceSelection,
   });
 
   const isAllTabsSearch = isTabView && searchScope === 'all-tabs';
@@ -540,7 +584,7 @@ export function App() {
   }
 
   return (
-    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
+    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.appRuntime === 'tauri' ? ' app--tauri' : ''}${isFullscreen ? ' app--fullscreen' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
       {isTabView && (
         <DesktopTabBar
@@ -559,6 +603,8 @@ export function App() {
           isDark={isDark}
           isMaximized={state.isMaximized}
           hasUpdate={updateCheck.hasUpdate}
+          isFullscreen={isFullscreen}
+          onFullscreenToggle={toggleFullscreen}
         />
       )}
       {isTabView && activeTabId === 'home' ? (
@@ -583,6 +629,8 @@ export function App() {
               onCollapseAll={collapseAll}
               onCopyFile={copyCurrentFileContent}
               hasUpdate={updateCheck.hasUpdate}
+              isFullscreen={isFullscreen}
+              onFullscreenToggle={toggleFullscreen}
             />
           )}
           <div className="body">
@@ -681,6 +729,14 @@ export function App() {
         onConfirm={confirmSwitchWorkspace}
         targetPath={pendingDroppedPath || ''}
       />
+      <WorkspaceSelectionConfirmModal
+        isOpen={workspaceSelectionConfirmOpen}
+        onClose={() => setWorkspaceSelectionConfirmOpen(false)}
+        onConfirm={() => {
+          setWorkspaceSelectionConfirmOpen(false);
+          closeWorkspaceToSelection();
+        }}
+      />
       </Suspense>
 
       {state.focusMode && (
@@ -693,30 +749,6 @@ export function App() {
           tooltipPos="below"
           tooltipAlign="right"
           icon={<MinimizeIcon size={12} />}
-        />
-      )}
-
-      {state.focusMode && (state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'desktop') && (
-        <TooltipButton
-          type="button"
-          className="close-folder-focus-btn focus-mode-btn"
-          onClick={() => {
-            dispatch({
-              type: 'READY_ACK',
-              fileList: [],
-              tree: null,
-              theme: state.theme,
-              themeStyle: state.themeStyle,
-              defaultExpanded: state.defaultExpanded,
-              workspaceName: '',
-              recentWorkspaces: state.recentWorkspaces
-            });
-            bridge.postMessage({ command: 'closeWorkspace' });
-          }}
-          tooltip={t.topbar.closeFolder || "Close Folder"}
-          tooltipPos="below"
-          tooltipAlign="right"
-          icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>}
         />
       )}
 

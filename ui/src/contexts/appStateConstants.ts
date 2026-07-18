@@ -12,7 +12,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   refresh: 'F5',
   collapseAll: 'Ctrl+Shift+x',
   expandAll: 'Ctrl+Shift+e',
-  workspaceSelection: 'Ctrl+Shift+h',
+  workspaceSelection: 'Ctrl+Alt+W',
   toggleSidebar: 'Ctrl+Shift+p',
   toggleToc: 'Ctrl+T',
   sidebarCursorMode: 'Alt+S',
@@ -29,6 +29,8 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   findCurrentFile: 'F',
   toggleTheme: 'Ctrl+L',
   toggleSidebar: 'Ctrl+B',
+  workspaceSelection: 'Ctrl+N',
+  toggleDesktopViewMode: 'Ctrl+Alt+T',
 };
 
 export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
