@@ -116,6 +116,7 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       zoomOut: 'Zoom out',
       locateFile: 'Locate',
       toggleFocusMode: 'Focus mode',
+      toggleDesktopViewMode: 'Toggle Tabs/Focus view',
     },
     tooltips: {
       switchLanguage: 'Switch Language',
@@ -397,6 +398,46 @@ describe('SettingsModal', () => {
     expect(screen.getByText('Keyboard Shortcuts')).toBeInTheDocument();
   });
 
+  it('lists workspace selection shortcut on non-desktop platforms', () => {
+    delete (window as any).electronAPI;
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    expect(screen.getByText('Workspace')).toBeInTheDocument();
+  });
+
+  it('allows workspace selection binding to be recorded on non-desktop platforms', () => {
+    mockState = { ...getMockState(), settings: { ...getMockState().settings, keybindings: { workspaceSelection: 'Ctrl+Alt+W' } } };
+    const { container } = render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    const row = screen.getByText('Workspace').closest('.settings-shortcut-row');
+    const input = row?.querySelector('input');
+    expect(input).toHaveValue('Ctrl+Alt+W');
+    fireEvent.focus(input!);
+    fireEvent.keyDown(input!, { key: 'n', ctrlKey: true });
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { workspaceSelection: 'Ctrl+N' } });
+    expect(container.querySelector('.settings-shortcut-row')).toBeInTheDocument();
+  });
+
   it('renders action shortcut rows', () => {
     render(
       <SettingsModal
@@ -412,6 +453,126 @@ describe('SettingsModal', () => {
     );
     const shortcutRows = document.querySelectorAll('.settings-shortcut-row');
     expect(shortcutRows.length).toBeGreaterThan(0);
+  });
+
+  it('renders desktop keyboard shortcut search and filters rows while typing', () => {
+    (window as any).electronAPI = {};
+
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+
+    const search = screen.getByPlaceholderText('Search keyboard shortcuts...');
+    expect(search).toBeInTheDocument();
+    expect(search).toHaveClass('settings-shortcuts-search-input');
+    expect(screen.getByRole('button', { name: 'Clear keyboard shortcut search' })).toHaveClass(
+      'settings-shortcuts-search-clear',
+    );
+
+    fireEvent.change(search, { target: { value: 'toggleTheme' } });
+    expect(document.querySelectorAll('.settings-shortcut-row')).toHaveLength(1);
+    expect(screen.getByText('Toggle theme')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear keyboard shortcut search' }));
+    expect(document.querySelectorAll('.settings-shortcut-row').length).toBeGreaterThan(1);
+
+    delete (window as any).electronAPI;
+  });
+
+  it('does not render keyboard shortcut search outside desktop app', () => {
+    delete (window as any).electronAPI;
+
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+
+    expect(screen.queryByPlaceholderText('Search keyboard shortcuts...')).not.toBeInTheDocument();
+  });
+
+  it('renders Desktop View segmented control with exactly two options', () => {
+    (window as any).electronAPI = {};
+
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+
+    const control = screen.getByRole('radiogroup', { name: 'Desktop view mode' });
+    expect(control).toHaveClass('segmented-control--two');
+    expect(control.querySelectorAll('.segmented-option')).toHaveLength(2);
+
+    delete (window as any).electronAPI;
+  });
+
+  it('lists the desktop view toggle shortcut only in the desktop app', () => {
+    (window as any).electronAPI = {};
+    mockState = {
+      ...getMockState(),
+      settings: {
+        ...getMockState().settings,
+        keybindings: { toggleDesktopViewMode: 'Ctrl+Alt+T' },
+      },
+    };
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    const row = screen.getByText('Toggle Tabs/Focus view').closest('.settings-shortcut-row');
+    expect(row).toBeInTheDocument();
+    expect(row?.querySelector('input')).toHaveValue('Ctrl+Alt+T');
+
+    delete (window as any).electronAPI;
+  });
+
+  it('hides the desktop view toggle shortcut outside the desktop app', () => {
+    delete (window as any).electronAPI;
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    expect(screen.queryByText('Toggle Tabs/Focus view')).not.toBeInTheDocument();
   });
 
   it('renders Reset to Default Shortcuts button', () => {
@@ -640,5 +801,7 @@ describe('SettingsModal', () => {
     expect(ACTIONS_LIST.length).toBeGreaterThan(0);
     expect(ACTIONS_LIST.some(a => a.id === 'settings')).toBe(true);
     expect(ACTIONS_LIST.some(a => a.id === 'toggleTheme')).toBe(true);
+    expect(ACTIONS_LIST.find(a => a.id === 'workspaceSelection')?.scope).toBe('both');
+    expect(ACTIONS_LIST.find(a => a.id === 'toggleDesktopViewMode')?.scope).toBe('electron');
   });
 });

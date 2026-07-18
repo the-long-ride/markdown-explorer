@@ -414,6 +414,11 @@
   z-index: 2000;
 }
 
+.theme-remix-menu--portal {
+  position: fixed;
+  z-index: 310000;
+}
+
 .theme-remix-menu[hidden] {
   display: none;
 }
@@ -460,7 +465,6 @@
 .theme-remix-menu__option.is-selected {
   background: var(--accent-dim);
   color: var(--accent-text);
-  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .theme-remix-menu__mark {

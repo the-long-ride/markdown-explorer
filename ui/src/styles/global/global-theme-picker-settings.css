@@ -107,6 +107,10 @@
   border-radius: var(--r-md);
 }
 
+.segmented-control--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .segmented-option {
   min-width: 0;
   height: 28px;

@@ -267,7 +267,6 @@ body:not(.is-resizing) .sidebar {
   background: color-mix(in srgb, var(--accent) 16%, var(--bg-h));
   color: var(--accent-text);
   border-color: color-mix(in srgb, var(--accent) 46%, transparent);
-  box-shadow: inset 3px 0 0 var(--accent);
 }
 .tree-folder__chevron {
   color: var(--txm);
@@ -747,16 +746,6 @@ body.is-dragging-files .mdn-html-preview-iframe {
   position: fixed !important;
   top: 12px !important;
   right: 28px !important;
-  z-index: 99999999 !important;
-  border: 1px solid var(--bd) !important;
-  backdrop-filter: var(--surface-blur) !important;
-  -webkit-backdrop-filter: var(--surface-blur) !important;
-}
-
-.close-folder-focus-btn {
-  position: fixed !important;
-  top: 12px !important;
-  right: 64px !important;
   z-index: 99999999 !important;
   border: 1px solid var(--bd) !important;
   backdrop-filter: var(--surface-blur) !important;

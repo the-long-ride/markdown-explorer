@@ -804,7 +804,7 @@ describe('SettingsModal deep', () => {
 
   describe('ACTIONS_LIST', () => {
     it('contains expected number of actions', () => {
-      expect(ACTIONS_LIST.length).toBe(19);
+      expect(ACTIONS_LIST.length).toBe(20);
     });
 
     it('contains findCurrentFile action', () => {

@@ -116,11 +116,8 @@
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
 
-/* Active node border left insets for tree-file and toc-item */
-[data-theme-style="vercel"] .tree-file.is-active,
-[data-theme-style="vercel"] .toc-item.is-active {
-  box-shadow: inset 2px 0 0 var(--accent);
-  border-left-color: var(--accent);
+/* Active node border left inset for tree files */
+[data-theme-style="vercel"] .tree-file.is-active {
   background: var(--accent-dim);
   color: var(--accent-text);
   font-weight: 600;

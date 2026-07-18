@@ -18,6 +18,9 @@ import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings } fro
 import { usePlatform } from "../../contexts/PlatformContext";
 import { CopyIcon, FolderIcon, GlobeIcon, AlertTriangleIcon } from "../shared/icons";
 import { formatShortcutLabel } from "../../utils/shortcuts";
+import {
+  filterKeyboardShortcutActions,
+} from "./keyboardShortcutSearch";
 
 import whiteShibaBlep from "../../assets/themes/pets/backgrounds/white-shiba-blep.png";
 import shibaBlep from "../../assets/themes/pets/backgrounds/shiba-blep.png";
@@ -64,9 +67,10 @@ export const ACTIONS_LIST = [
   {
     id: "workspaceSelection",
     label: "Go to workspace selection",
-    scope: "desktop",
+    scope: "both",
   },
   { id: "toggleSidebar", label: "Toggle sidebar visibility", scope: "desktop" },
+  { id: "toggleDesktopViewMode", label: "Toggle Tabs/Focus view", scope: "electron" },
   { id: "toggleToc", label: "Toggle table of contents panel", scope: "both" },
   { id: "toggleFocusMode", label: "Toggle focus mode", scope: "both" },
   { id: "sidebarCursorMode", label: "Sidebar cursor mode", scope: "both" },
@@ -102,6 +106,7 @@ export function SettingsModal({
   const [themeRemixOpen, setThemeRemixOpen] = useState(false);
   const [settingsDataStatus, setSettingsDataStatus] = useState("");
   const [bannedShortcutError, setBannedShortcutError] = useState<string | null>(null);
+  const [shortcutSearchQuery, setShortcutSearchQuery] = useState("");
   const importInputRef = useRef<HTMLInputElement>(null);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -158,7 +163,15 @@ export function SettingsModal({
     isUpdateApplying ||
     updateStatus === "error";
   const visibleActions = ACTIONS_LIST.filter(
-    (act) => act.scope === "both" || isDesktopLike,
+    (act) =>
+      act.scope === "both" ||
+      (act.scope === "desktop" && isDesktopLike) ||
+      (act.scope === "electron" && isDesktop),
+  );
+  const filteredActions = filterKeyboardShortcutActions(
+    visibleActions,
+    shortcutSearchQuery,
+    t.actions,
   );
 
   const getUpdateErrorText = () => {
@@ -385,7 +398,7 @@ export function SettingsModal({
         </div>
         <div
           className="settings-card__body"
-          style={{ display: "flex", gap: "32px", marginTop: "7px" }}
+          style={{ display: "flex", gap: "16px", marginTop: "7px" }}
         >
           {/* Left Column: Preferences */}
           <div
@@ -403,8 +416,7 @@ export function SettingsModal({
                 fontSize: "13.5px",
                 color: "var(--tx)",
                 marginBottom: "4px",
-              }}
-            >
+              }}            >
               {t.appearance}
             </div>
             <div className="settings-field">
@@ -482,7 +494,7 @@ export function SettingsModal({
                   </div>
                 </div>
                 <div
-                  className="segmented-control"
+                  className="segmented-control segmented-control--two"
                   role="radiogroup"
                   aria-label="Desktop view mode"
                 >
@@ -650,6 +662,35 @@ export function SettingsModal({
                 {t.shortcutsHint}
               </div>
             </div>
+            {isDesktop && (
+              <div
+                className="settings-shortcuts-search"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginTop: "10px",
+                  marginBottom: "12px",
+                }}
+              >
+                <input
+                  className="settings-shortcuts-search-input"
+                  type="text"
+                  value={shortcutSearchQuery}
+                  onChange={(event) => setShortcutSearchQuery(event.target.value)}
+                  placeholder="Search keyboard shortcuts..."
+                  aria-label="Search keyboard shortcuts"
+                />
+                <button
+                  className="settings-shortcuts-search-clear"
+                  type="button"
+                  onClick={() => setShortcutSearchQuery("")}
+                  aria-label="Clear keyboard shortcut search"
+                  disabled={!shortcutSearchQuery}
+                >
+                  &times;
+                </button>
+              </div>
+            )}
             <div
               className="settings-shortcuts-list"
               style={{
@@ -660,7 +701,7 @@ export function SettingsModal({
                 paddingRight: "6px",
               }}
             >
-              {visibleActions.map((act) => {
+              {filteredActions.map((act) => {
                 const isRecording = recordingAction === act.id;
                 const val = state.settings.keybindings?.[act.id] || "";
                 return (
@@ -908,5 +949,3 @@ export function SettingsModal({
     </div>
   );
 }
-
-

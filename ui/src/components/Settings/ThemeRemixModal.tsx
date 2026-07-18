@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   PET_THEME_STYLE_OPTIONS,
   THEME_MODE_OPTIONS,
@@ -201,12 +202,32 @@ function ThemeRemixDropdown<T extends string>({
 }: ThemeRemixDropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const selectRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const selectedOption = options.find((option) => option.value === value) ?? options[0];
+
+  const updateMenuPosition = () => {
+    const rect = selectRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMenuPosition({
+      top: rect.bottom + 5,
+      left: rect.left,
+      width: rect.width,
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
     const handlePointerDown = (event: PointerEvent) => {
-      if (!dropdownRef.current?.contains(event.target as Node)) {
+      if (
+        !dropdownRef.current?.contains(event.target as Node) &&
+        !menuRef.current?.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -215,11 +236,16 @@ function ThemeRemixDropdown<T extends string>({
         setOpen(false);
       }
     };
+    updateMenuPosition();
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
     };
   }, [open]);
 
@@ -228,6 +254,7 @@ function ThemeRemixDropdown<T extends string>({
       <button
         type="button"
         className="theme-remix-select"
+        ref={selectRef}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
@@ -239,27 +266,36 @@ function ThemeRemixDropdown<T extends string>({
           </svg>
         </span>
       </button>
-      <div className="theme-remix-menu" role="listbox" aria-label={ariaLabel} hidden={!open}>
-        {options.map((option) => {
-          const selected = option.value === value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              aria-selected={selected}
-              className={`theme-remix-menu__option${selected ? " is-selected" : ""}`}
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-            >
-              <span className="theme-remix-menu__mark" aria-hidden="true" />
-              <span className="theme-remix-menu__label">{option.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {open && menuPosition && createPortal(
+        <div
+          ref={menuRef}
+          className="theme-remix-menu theme-remix-menu--portal"
+          role="listbox"
+          aria-label={ariaLabel}
+          style={menuPosition}
+        >
+          {options.map((option) => {
+            const selected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={`theme-remix-menu__option${selected ? " is-selected" : ""}`}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <span className="theme-remix-menu__mark" aria-hidden="true" />
+                <span className="theme-remix-menu__label">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

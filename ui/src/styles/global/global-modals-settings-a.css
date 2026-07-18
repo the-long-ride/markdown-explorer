@@ -279,6 +279,84 @@
   box-sizing: border-box;
   font-family: var(--font-ui);
 }
+.settings-shortcuts-search-input {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-right: 0;
+  border-radius: var(--r-md) 0 0 var(--r-md);
+  background: var(--bg-s);
+  color: var(--tx);
+  font: 600 11px/1 var(--font-ui);
+  outline: none;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+.settings-shortcuts-search-input::placeholder {
+  color: var(--tx3);
+  opacity: 1;
+}
+.settings-shortcuts-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+  position: relative;
+  z-index: 1;
+}
+.settings-shortcuts-search-clear {
+  box-sizing: border-box;
+  width: 32px;
+  height: 30px;
+  padding: 0 8px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: var(--bg-e);
+  color: var(--tx2);
+  cursor: pointer;
+  font: 800 13px/1 var(--font-ui);
+  outline: none;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease;
+}
+.settings-shortcuts-search-clear:hover:not(:disabled) {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+  color: var(--tx);
+}
+.settings-shortcuts-search-clear:focus-visible {
+  box-shadow: var(--focus-ring);
+  position: relative;
+  z-index: 1;
+}
+.settings-shortcuts-search-clear:disabled {
+  cursor: default;
+  opacity: 0.52;
+}
+[data-theme-style="glass"] .settings-shortcuts-search-input,
+[data-theme-style="glass"] .settings-shortcuts-search-clear {
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+}
+[data-theme-style="bento"] .settings-shortcuts-search-input,
+[data-theme-style="bento"] .settings-shortcuts-search-clear {
+  border-radius: var(--r) 0 0 var(--r);
+  box-shadow: var(--sh-sm);
+}
+[data-theme-style="bento"] .settings-shortcuts-search-clear {
+  border-left-width: 3px;
+  border-radius: 0 var(--r) var(--r) 0;
+}
+[data-theme-style^="pet-"] .settings-shortcuts-search-input,
+[data-theme-style^="pet-"] .settings-shortcuts-search-clear {
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-s));
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--bd-s));
+}
 .settings-reset-shortcuts-btn {
   --reset-warning: #f59e0b;
   --reset-warning-strong: #d97706;
@@ -508,7 +586,7 @@
   }
   .settings-card--settings .settings-card__body {
     flex-direction: column !important;
-    gap: 12px !important;
+    gap: 6px !important;
     margin-top: 7px !important;
     overflow-y: hidden;
     padding-right: 4px;
@@ -723,7 +801,6 @@
 .settings-language-menu__option.is-selected {
   background: var(--accent-dim);
   color: var(--accent-text);
-  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 /* ============================================================

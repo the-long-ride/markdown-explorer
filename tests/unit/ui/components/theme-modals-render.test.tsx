@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ThemeRemixModal } from '../../../../ui/src/components/Settings/ThemeRemixModal';
@@ -427,6 +429,29 @@ describe('ThemeStylePicker', () => {
     render(<ThemeStylePicker value="pet-shiba" onChange={() => {}} />);
     const petsOption = document.querySelector('.theme-style-option--pets');
     expect(petsOption!.className).toContain('is-active');
+  });
+
+  it('keeps selected menu styling without left rails', () => {
+    const styles = [
+      'ui/src/styles/global/global-tables-a.css',
+      'ui/src/styles/global/global-theme-picker-pets.css',
+      'ui/src/styles/global/global-theme-picker-remix.css',
+      'ui/src/styles/global/global-theme-picker-custom.css',
+      'ui/src/styles/global/global-modals-settings-a.css',
+      'ui/src/styles/global/global-theme-glass-bento.css',
+    ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
+
+    expect(styles).toMatch(/\.mdn-table-view-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);
+    expect(styles).toMatch(/\.pet-theme-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);
+    expect(styles).toMatch(/\.theme-remix-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);
+    expect(styles).not.toMatch(/\.mdn-table-view-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
+    expect(styles).not.toMatch(/\.pet-theme-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
+    expect(styles).not.toMatch(/\.theme-remix-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
+    expect(styles).not.toMatch(/\.custom-theme-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
+    expect(styles).not.toMatch(/\.settings-language-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
+    expect(styles).not.toMatch(/\[data-theme-style="bento"\] \.mdn-section--h1 > \.mdn-section-header\s*\{[^}]*box-shadow:\s*inset 4px 0 0/s);
+    expect(styles).not.toMatch(/\[data-theme-style="bento"\] \.mdn-section--h2 > \.mdn-section-header\s*\{[^}]*box-shadow:\s*inset 4px 0 0/s);
+    expect(styles).toContain('.theme-remix-menu__option.is-selected .theme-remix-menu__mark');
   });
 
   it('renders custom themes section when showCustomThemes is true and custom themes exist', () => {
