@@ -4,7 +4,47 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [1.6.0] — 2026-07-20
+
+### Added
+- **Windows File Explorer integration**: installers can add Markdown file and folder context-menu entries, with optional desktop shortcut creation.
+- **Lazy workspace loading**: desktop, Tauri, VS Code, Chromium, and web file-mode variants now show scan progress and remain usable while large workspaces finish scanning.
+- **Three-surface shortcut documentation**: synchronized Desktop app, VS Code extension, and Chromium extension shortcut tables.
+- **Tab Drag & Drop Ghost Preview**: Workspace and document tabs now display a floating glassmorphic ghost element following the cursor during drag operations, replacing the static vertical rail indicator.
+- **On-the-Fly Tab Reordering**: Tabs swap positions dynamically on hover during drag rather than waiting for pointer release, providing immediate visual feedback.
+- **Tips & Practices (9 languages)**: Added 9 multilingual Tips & Practices cards to the Welcome home page, covering keyboard shortcuts, focus mode, cross-workspace search, tab management, and more — available in English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
+- **Terminal Code Fence Highlighting**: Added syntax highlighting for terminal/shell code fences (`bash`, `sh`, `terminal`, `console`, `cmd`, `powershell`, `zsh`) with distinct visual styling.
+- **Fullscreen Transient Mode**: Added transient fullscreen mode for Electron and Tauri desktop that auto-exits when switching between workspaces.
+- **Keyboard Shortcut Search**: Added a search field to the keyboard shortcuts section of the Settings modal for fast shortcut discovery.
+- **Keyboard Shortcuts — Close Tabs**: Added configurable keyboard shortcuts to close the current tab, close tabs to the right, close other tabs, and close all tabs.
+- **Keyboard Shortcuts — Toggle Active State**: Added keyboard shortcuts to toggle active UI states including sidebar, table of contents, and focus mode directly from the keyboard.
+- **Incremental Title Search Flushing**: Improved search result delivery by flushing incremental title matches immediately to reduce perceived search latency.
+
+### Changed
+- **External workspace opening**: opening a Markdown file resolves its containing folder while preserving the selected file; opening a folder opens that folder directly in the active tab or Focus workspace.
+- **Loading screen**: centered initial loading UI now hands off to a non-blocking scan-progress indicator after the short startup window.
+- **Release metadata**: synchronized all app, extension, UI, website, and Tauri manifests to `1.6.0`.
+- **Document Link Icon**: Replaced the CSS `📄` emoji prefix on internal workspace reference links with a meaningful SVG icon.
+- **Switch Toggle Contrast**: Improved contrast of switch/toggle button circles in the Settings modal keyboard shortcuts binding section for better legibility.
+- **Settings Modal Width**: Increased the Settings modal width by 10% for improved readability.
+- **Floating Ghost CSS**: All tab ghost layout properties moved from JSX inline styles into the `.tab-drag-ghost` CSS class to comply with the no-inline-style contract.
+
+### Fixed
+- **Focus-view external opens**: bridge message handling now remains active outside Tab view so native file and folder opens replace the current Focus workspace correctly.
+- **Search Flush**: Fixed incremental title-match search results not being flushed to the UI promptly during workspace-wide search.
+
+### Removed
+- **New Feature Guide**: Removed the new feature guide overlay component, all associated translation keys, and supporting data files from the Welcome page.
+- **Drop Target Rail**: Removed the vertical accent line drop target indicator (`is-drop-target`) shown during tab drag operations.
+
+### Maintenance
+- **LOC Budget Fix**: Compressed `DesktopTabBar.tsx` window control SVG layout to satisfy the strict 400-line source LOC budget.
+- **Release Version Bump**: Updated workspace, UI, desktop, VS Code, Chromium extension, Tauri, and manifest metadata to `1.6.0`.
+
+---
+
 ## [1.5.9] — 2026-07-14
+
 
 ### Fixed
 - **Tauri Update Checks**: Added dynamic Tauri app version metadata to ready and workspace-unavailable host messages so Settings can show the running version and compare update releases correctly.

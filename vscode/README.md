@@ -121,26 +121,35 @@ Turn on **Read DOCX, PDF, Office, and text files** in Settings to scan and previ
 
 ## Shortcuts
 
-| Action | Desktop app | VS Code |
-| --- | --- | --- |
-| Open Markdown Explorer | N/A | `Ctrl+Shift+M` / `Cmd+Shift+M` |
-| Toggle preview for current Markdown file | N/A | `Ctrl+Alt+V` / `Cmd+Alt+V` |
-| Search current workspace | `Ctrl+F` | `Ctrl+K` / `Cmd+K` |
-| Search all open workspace tabs | `Ctrl+Shift+F` | N/A |
-| Find in current file | `F` | `K` |
-| Back to previous file | `Ctrl+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back |
-| Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
-| Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` |
-| Open settings | `Ctrl+I` | `Ctrl+I` / `Cmd+I` |
-| Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
-| Refresh workspace | `F5` | Use VS Code command or reload webview |
-| Collapse all heading sections | `Ctrl+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` |
-| Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
-| Go to workspace selection | `Ctrl+Shift+H` | N/A |
-| Toggle sidebar | `Ctrl+Shift+P` | `Ctrl+Shift+P` / `Cmd+Shift+P` |
-| Sidebar cursor mode | `Alt+S` | `Alt+S` |
-| Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom |
-| Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom |
+| Action | Desktop app | VS Code extension | Chromium extension |
+| --- | --- | --- | --- |
+| Open Markdown Explorer | N/A | `Ctrl+Shift+M` / `Cmd+Shift+M` | N/A |
+| Toggle preview for current Markdown file | N/A | `Ctrl+Alt+V` / `Cmd+Alt+V` | N/A |
+| Search current workspace | `Ctrl+F` | `Ctrl+K` / `Cmd+K` | `Ctrl+K` / `Cmd+K` |
+| Search all open workspace tabs | `Ctrl+Shift+F` | N/A | N/A |
+| Find in current file | `F` | `K` | `K` |
+| Back to previous file | `Ctrl+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back |
+| Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
+| Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
+| Open settings | `Ctrl+I` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
+| Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
+| Refresh workspace | `F5` | `F5` | `Alt+R` |
+| Collapse all heading sections | `Ctrl+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` |
+| Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
+| Go to workspace selection | `Ctrl+N` | `Ctrl+Alt+W` / `Cmd+Alt+W` | `Ctrl+Alt+W` / `Cmd+Alt+W` |
+| Toggle sidebar | `Ctrl+B` | `Ctrl+Shift+P` / `Cmd+Shift+P` | `Ctrl+Shift+P` / `Cmd+Shift+P` |
+| Toggle table of contents | `Ctrl+T` | `Ctrl+T` / `Cmd+T` | `Ctrl+T` / `Cmd+T` |
+| Locate current file | `Ctrl+Q` | `Ctrl+Q` / `Cmd+Q` | `Ctrl+Q` / `Cmd+Q` |
+| Toggle Focus mode | `Ctrl+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` |
+| Toggle desktop Tabs/Focus view | `Ctrl+Alt+T` | N/A | N/A |
+| Close current content tab | `Ctrl+W` | N/A | N/A |
+| Close all content tabs | `Ctrl+Shift+W` | N/A | N/A |
+| Close content tabs to the right | `Ctrl+Alt+W` | N/A | N/A |
+| Close other content tabs | `Ctrl+Alt+O` | N/A | N/A |
+| Toggle fullscreen | `F11` | N/A | N/A |
+| Sidebar cursor mode | `Alt+S` | `Alt+S` | `Alt+S` |
+| Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom | Use browser zoom |
+| Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom | Use browser zoom |
 
 ## Privacy
 

@@ -1,6 +1,6 @@
 # TypeScript configurations and Source Code
 **/tsconfig.json
-**/src/**
+src/**
 **/out/**/*.map
 **/out/**/*.d.ts
 
