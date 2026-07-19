@@ -301,6 +301,9 @@ jobs:
     needs: [build-vscode, build-electron-desktop, build-tauri-desktop, build-chromium-extension]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
       - name: Download VSIX Artifact
         uses: actions/download-artifact@v4
         with:
@@ -359,13 +362,21 @@ jobs:
 
           while IFS= read -r file; do
             base=$(basename "$file")
-            cp "$file" "./release-assets/electron-${base}"
+            safe_base=${base// /.}
+            cp "$file" "./release-assets/electron-${safe_base}"
           done < <(find ./release-artifacts/electron-windows ./release-artifacts/electron-linux ./release-artifacts/electron-macos -type f)
 
           while IFS= read -r file; do
             base=$(basename "$file")
-            cp "$file" "./release-assets/tauri-${base}"
+            safe_base=${base// /.}
+            cp "$file" "./release-assets/tauri-${safe_base}"
           done < <(find ./release-artifacts/tauri-windows ./release-artifacts/tauri-linux ./release-artifacts/tauri-macos -type f)
+
+      - name: Generate Release Notes
+        env:
+          RELEASE_ASSETS_DIR: ./release-assets
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}
+        run: node .github/scripts/release-notes.mjs
 
       - name: Verify Marketplace Tokens
         shell: bash
@@ -420,26 +431,11 @@ jobs:
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          body: |
-            Markdown Explorer release package guide.
-
-            Choose the file that matches how you want to install Markdown Explorer:
-
-            - `*.vsix`: VS Code extension package for manual install. In VS Code, run "Extensions: Install from VSIX..." and choose this file.
-            - `electron-*.exe`, `electron-*.AppImage`, `electron-*.deb`, `electron-*.dmg`, `electron-*.zip`: Electron desktop builds.
-            - `tauri-*.exe`, `tauri-*.AppImage`, `tauri-*.deb`, `tauri-*.dmg`: Tauri desktop builds.
-            - `markdown-explorer-chromium.zip`: Unpacked Chromium extension. Unzip the file, go to your browser's extensions page (`chrome://extensions`), enable "Developer mode", click "Load unpacked", and select the unzipped directory.
-
-            Other install links:
-
-            - VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer
-            - Open VSX: https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer
-            - Project website: https://the-long-ride.github.io/markdown-explorer/
-
-            See [Markdown Explorer Change Logs](https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md).
+          body_path: ./release-notes.md
           files: |
             ./release-assets/*
           draft: false
           prerelease: false
+          overwrite_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.event_name != 'workflow_dispatch' && github.ref_name || '' }}

@@ -62,4 +62,17 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).toContain('cargo tauri build --bundles appimage,deb');
     expect(workflow).toContain('cargo tauri build --bundles dmg');
   });
+
+  test('release workflow generates grouped download notes', () => {
+    const workflow = readWorkflow('release.yml');
+    expect(workflow).toContain('node .github/scripts/release-notes.mjs');
+    expect(workflow).toContain('RELEASE_ASSETS_DIR: ./release-assets');
+    expect(workflow).toContain('body_path: ./release-notes.md');
+    expect(workflow).not.toContain('Markdown Explorer release package guide.');
+    expect(workflow).toMatch(
+      /publish-release:[\s\S]*uses: actions\/checkout@v6/,
+    );
+    expect(workflow).toContain("safe_base=${base// /.}");
+    expect(workflow).toContain('overwrite_files: true');
+  });
 });

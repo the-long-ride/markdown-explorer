@@ -1,0 +1,25 @@
+{
+  "bundle": {
+    "linux": {
+      "deb": {
+        "desktopTemplate": "./linux/markdown-explorer.desktop"
+      }
+    },
+    "fileAssociations": [
+      {
+        "ext": ["md", "mdx"],
+        "name": "Markdown Document",
+        "description": "Markdown document",
+        "role": "Editor",
+        "mimeType": "text/markdown"
+      },
+      {
+        "ext": [],
+        "name": "Folder",
+        "description": "Folder",
+        "role": "Editor",
+        "mimeType": "inode/directory"
+      }
+    ]
+  }
+}

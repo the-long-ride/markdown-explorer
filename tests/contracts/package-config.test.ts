@@ -241,6 +241,20 @@ describe('package configuration contracts', () => {
       expect(pkg.build.asarUnpack).toContain('node_modules/**');
     });
 
+    test('registers Markdown and MDX files with macOS Finder and Linux desktops', async () => {
+      const pkg = await readJson('electron/package.json');
+      const associations = pkg.build.fileAssociations;
+
+      expect(associations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ ext: 'md', mimeType: 'text/markdown', role: 'Editor', rank: 'Alternate' }),
+        expect.objectContaining({ ext: 'mdx', mimeType: 'application/x-markdown-explorer-mdx', role: 'Editor', rank: 'Alternate' }),
+      ]));
+      expect(pkg.desktopName).toBe('markdown-explorer');
+      expect(pkg.build.linux.syncDesktopName).toBe(true);
+      expect(pkg.build.linux.mimeTypes).toContain('inode/directory');
+      expect(pkg.build.mac.icon).toBe('../ui/assets/logos/logo-512.png');
+    });
+
     test('bunds UI dist and assets', async () => {
       const pkg = await readJson('electron/package.json');
       const files = pkg.build.files;

@@ -5,11 +5,25 @@ use tauri_plugin_window_state::StateFlags;
 
 const APP_ICON_PNG: &[u8] = include_bytes!("../../icons/icon.png");
 
+fn handle_external_open_path(app: &tauri::AppHandle, path: std::path::PathBuf) {
+    let state = app.state::<crate::app_state::AppState>();
+    if state.inner.read().ready_handled {
+        crate::host_message::emit_external_open_path(app, &path.to_string_lossy());
+    } else {
+        state.inner.write().external_open_path = Some(path);
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 pub fn boot() {
     let state = crate::app_state::AppState::new();
-    state.inner.write().external_open_path = crate::runtime::external_open::parse_external_open_path(
-        &std::env::args().collect::<Vec<_>>(),
-    );
+    state.inner.write().external_open_path =
+        crate::runtime::external_open::parse_external_open_path(
+            &std::env::args().collect::<Vec<_>>(),
+        );
     state.inner.read().perf.mark("main:required");
 
     let is_packaged = !cfg!(debug_assertions);
@@ -21,7 +35,7 @@ pub fn boot() {
     let state_for_dispatch = state.clone();
     let shim_js = crate::preload::api::electron_api_shim_js().to_string();
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
@@ -32,16 +46,7 @@ pub fn boot() {
             let Some(path) = crate::runtime::external_open::parse_external_open_path(&args) else {
                 return;
             };
-            let state = app.state::<crate::app_state::AppState>();
-            if state.inner.read().ready_handled {
-                crate::host_message::emit_external_open_path(app, &path.to_string_lossy());
-            } else {
-                state.inner.write().external_open_path = Some(path);
-            }
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
+            handle_external_open_path(app, path);
         }))
         .plugin(
             tauri_plugin_window_state::Builder::new()
@@ -131,6 +136,18 @@ pub fn boot() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app, event| {
+        #[cfg(target_os = "macos")]
+        if let tauri::RunEvent::Opened { urls } = event {
+            if let Some(path) = urls.into_iter().find_map(|url| url.to_file_path().ok()) {
+                handle_external_open_path(app, path);
+            }
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        let _ = (app, event);
+    });
 }

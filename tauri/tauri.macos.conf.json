@@ -1,0 +1,23 @@
+{
+  "bundle": {
+    "fileAssociations": [
+      {
+        "ext": ["md", "mdx"],
+        "contentTypes": ["net.daringfireball.markdown", "public.plain-text"],
+        "name": "Markdown Document",
+        "description": "Markdown document",
+        "role": "Editor",
+        "rank": "Alternate",
+        "mimeType": "text/markdown"
+      },
+      {
+        "ext": [],
+        "contentTypes": ["public.folder"],
+        "name": "Folder",
+        "description": "Folder",
+        "role": "Editor",
+        "rank": "Alternate"
+      }
+    ]
+  }
+}

@@ -8,6 +8,7 @@
     "email": "info@thelongride.com"
   },
   "publisher": "the-long-ride",
+  "desktopName": "markdown-explorer",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -35,6 +36,22 @@
     "asar": true,
     "asarUnpack": [
       "node_modules/**"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown document",
+        "role": "Editor",
+        "rank": "Alternate",
+        "mimeType": "text/markdown"
+      },
+      {
+        "ext": "mdx",
+        "name": "MDX document",
+        "role": "Editor",
+        "rank": "Alternate",
+        "mimeType": "application/x-markdown-explorer-mdx"
+      }
     ],
     "compression": "normal",
     "files": [
@@ -83,6 +100,10 @@
       "artifactName": "${productName}.${ext}"
     },
     "linux": {
+      "syncDesktopName": true,
+      "mimeTypes": [
+        "inode/directory"
+      ],
       "target": [
         "deb",
         "AppImage"
@@ -112,11 +133,12 @@
     },
     "nsis": {
       "oneClick": false,
+      "include": "build/installer.nsh",
       "shortcutName": "Markdown Explorer",
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,
       "createStartMenuShortcut": true,
-      "createDesktopShortcut": true,
+      "createDesktopShortcut": false,
       "artifactName": "${productName} Setup.${ext}",
       "runAfterFinish": false
     },

@@ -1,15 +1,35 @@
 import { describe, expect, test } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(__dirname, '../..');
 const hooks = readFileSync(resolve(root, 'tauri/windows/explorer-hooks.nsh'), 'utf8');
 const config = JSON.parse(readFileSync(resolve(root, 'tauri/tauri.conf.json'), 'utf8'));
+const electronConfig = JSON.parse(readFileSync(resolve(root, 'electron/package.json'), 'utf8'));
+const electronHooksPath = resolve(root, 'electron/build/installer.nsh');
 
 describe('Windows Explorer installer integration', () => {
+  test('uses Electron NSIS hooks with the same opt-in File Explorer choices', () => {
+    expect(electronConfig.build.nsis.include).toBe('build/installer.nsh');
+    expect(existsSync(electronHooksPath)).toBe(true);
+
+    const electronHooks = readFileSync(electronHooksPath, 'utf8');
+    expect(electronConfig.build.nsis.createDesktopShortcut).toBe(false);
+    expect(electronHooks).toContain('!macro customPageAfterChangeDir');
+    expect(electronHooks).toContain('!ifndef BUILD_UNINSTALLER');
+    expect(electronHooks).toContain('Create desktop shortcut');
+    expect(electronHooks).toContain('Add Markdown Explorer to .md and .mdx context menus');
+    expect(electronHooks).toContain('Add Open Folder in Markdown Explorer to File Explorer');
+    expect(electronHooks).toContain('SystemFileAssociations\\.md\\shell\\MarkdownExplorer');
+    expect(electronHooks).toContain('Directory\\Background\\shell\\MarkdownExplorer');
+  });
+
   test('uses Tauri NSIS hooks and defines a checked-by-default options page', () => {
     expect(config.bundle.windows.nsis.installerHooks).toBe('./windows/explorer-hooks.nsh');
-    expect(hooks).toContain('!macro NSIS_CUSTOM_PAGES');
+    // Tauri includes installerHooks before declaring its pages. A direct Page
+    // declaration is compiled; a custom macro is ignored unless a template
+    // explicitly invokes it.
+    expect(hooks).not.toContain('!macro NSIS_CUSTOM_PAGES');
     expect(hooks).toContain('Page custom MarkdownExplorerOptions MarkdownExplorerOptionsLeave');
     expect(hooks).toContain('${NSD_Check} $ME_DesktopShortcutCheckbox');
     expect(hooks).toContain('${NSD_Check} $ME_MarkdownContextCheckbox');
