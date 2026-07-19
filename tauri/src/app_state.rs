@@ -11,6 +11,7 @@ pub struct AppState {
 #[derive(Default)]
 pub struct AppStateInner {
     pub workspace_path: Option<std::path::PathBuf>,
+    pub external_open_path: Option<std::path::PathBuf>,
     pub current_file: Option<std::path::PathBuf>,
     pub recents: Vec<crate::workspace::recents::RecentWorkspace>,
     pub flat_list: Vec<crate::workspace::scanner::MdFile>,

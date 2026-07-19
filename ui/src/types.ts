@@ -138,6 +138,11 @@ export interface FullscreenStateChangedMessage {
   readonly isFullscreen: boolean;
 }
 
+export interface ExternalOpenPathMessage {
+  readonly command: 'externalOpenPath';
+  readonly path: string;
+}
+
 export interface CrossTabSearchResultsMessage {
   readonly command: 'crossTabSearchResults';
   readonly requestId: string;
@@ -233,6 +238,7 @@ export type HostMessage =
   | UpdateStateChangedMessage
   | WindowStateChangedMessage
   | FullscreenStateChangedMessage
+  | ExternalOpenPathMessage
   | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage
   | WorkspaceSearchIndexLoadedMessage;

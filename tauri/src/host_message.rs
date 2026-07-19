@@ -234,3 +234,9 @@ pub fn emit_fullscreen_changed(app: &AppHandle, is_fullscreen: bool) {
     extra.insert("isFullscreen".into(), is_fullscreen.into());
     emit(app, "fullscreenChanged", extra);
 }
+
+pub fn emit_external_open_path(app: &AppHandle, path: &str) {
+    let mut extra = serde_json::Map::new();
+    extra.insert("path".into(), path.into());
+    emit(app, "externalOpenPath", extra);
+}

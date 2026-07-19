@@ -378,9 +378,16 @@ export function useDesktopTabs({
   );
 
   useEffect(() => {
-    if (!isTabView) return;
     return bridge.onMessage((msg) => {
-      if (msg.command !== 'workspaceSearchIndexLoaded') return;
+      if (msg.command === 'externalOpenPath') {
+        if (isTabView) {
+          const targetTabId = createNewWorkspaceTab();
+          pendingWorkspaceTabIdRef.current = targetTabId;
+        }
+        bridge.postMessage({ command: 'openPath', path: msg.path, openFirstFile: false });
+        return;
+      }
+      if (!isTabView || msg.command !== 'workspaceSearchIndexLoaded') return;
       const loadedTabs = new Map(msg.tabs.map((tab: any) => [tab.tabId, tab]));
       setTabs((currentTabs) =>
         currentTabs.map((tab) => {
@@ -395,7 +402,7 @@ export function useDesktopTabs({
         }),
       );
     });
-  }, [bridge, isTabView]);
+  }, [bridge, createNewWorkspaceTab, isTabView]);
 
   useEffect(() => {
     if (!isTabView || state.isLoading) return;

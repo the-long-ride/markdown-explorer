@@ -44,6 +44,10 @@ impl Dispatcher {
         if let Some(object) = ack.as_object() {
             host_message::emit(&self.app, "readyAck", object.clone());
         }
+        let external_open_path = self.state.inner.write().external_open_path.take();
+        if let Some(path) = external_open_path {
+            host_message::emit_external_open_path(&self.app, &path.to_string_lossy());
+        }
         self.state.inner.read().perf.mark("tauri:readyAck");
 
         if workspace_path.is_some() {

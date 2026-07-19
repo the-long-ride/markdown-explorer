@@ -24,6 +24,7 @@ const {
   createStartupReadyAck,
   deferWorkspaceLoad,
 } = require("./core/startup-workspace");
+const { findExternalOpenPath, createExternalOpenQueue } = require('./core/external-open');
 const { createDesktopRuntime } = require('./core/main-runtime');
 const { isInstallerUpdateSupported } = require("./update/update-manager");
 const {
@@ -47,6 +48,13 @@ let crossTabSearchWorker = null;
 
 const debugTools = createDebugTools({ isPackaged: app.isPackaged });
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
+const externalOpenQueue = createExternalOpenQueue();
+const startupExternalPath = findExternalOpenPath(process.argv, fs);
+if (startupExternalPath) externalOpenQueue.push(startupExternalPath);
+
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
 
 function ensureHeavyModules() {
   if (DesktopScanner) return;
@@ -191,6 +199,20 @@ const bootstrap = createAppBootstrap({
   ipcMainImpl: ipcMain,
   clipboardImpl: clipboard,
   shellImpl: shell,
+  externalOpenQueue,
+});
+
+app.on('second-instance', (_event, argv) => {
+  const externalPath = findExternalOpenPath(argv, fs);
+  if (!externalPath) return;
+  const window = bootstrap.getMainWindow();
+  if (!window) {
+    externalOpenQueue.push(externalPath);
+    return;
+  }
+  if (window.isMinimized?.()) window.restore();
+  window.focus?.();
+  bootstrap.deliverExternalOpenPath(externalPath);
 });
 
 module.exports = { createAppBootstrap };

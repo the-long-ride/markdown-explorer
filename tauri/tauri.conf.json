@@ -32,7 +32,12 @@
       "icons/icon.ico",
       "icons/icon.icns"
     ],
-    "externalBin": []
+    "externalBin": [],
+    "windows": {
+      "nsis": {
+        "installerHooks": "./windows/explorer-hooks.nsh"
+      }
+    }
   },
   "plugins": {
     "updater": {

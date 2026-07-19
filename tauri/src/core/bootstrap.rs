@@ -7,6 +7,9 @@ const APP_ICON_PNG: &[u8] = include_bytes!("../../icons/icon.png");
 
 pub fn boot() {
     let state = crate::app_state::AppState::new();
+    state.inner.write().external_open_path = crate::runtime::external_open::parse_external_open_path(
+        &std::env::args().collect::<Vec<_>>(),
+    );
     state.inner.read().perf.mark("main:required");
 
     let is_packaged = !cfg!(debug_assertions);
@@ -24,6 +27,22 @@ pub fn boot() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            let args: Vec<String> = argv.into_iter().collect();
+            let Some(path) = crate::runtime::external_open::parse_external_open_path(&args) else {
+                return;
+            };
+            let state = app.state::<crate::app_state::AppState>();
+            if state.inner.read().ready_handled {
+                crate::host_message::emit_external_open_path(app, &path.to_string_lossy());
+            } else {
+                state.inner.write().external_open_path = Some(path);
+            }
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 // The custom title bar must remain custom, and fullscreen is transient.

@@ -25,6 +25,7 @@ function createAppBootstrap({
   ipcMainImpl = require("electron").ipcMain,
   clipboardImpl = require("electron").clipboard,
   shellImpl = require("electron").shell,
+  externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
   let trayRef = null;
@@ -42,6 +43,20 @@ function createAppBootstrap({
 
   function getUpdateManager() {
     return updateManagerRef;
+  }
+
+  async function handleReady(message) {
+    await runtimeImpl.handleReady(message);
+    deliverExternalOpenPath(externalOpenQueue?.take());
+  }
+
+  function deliverExternalOpenPath(externalPath) {
+    if (externalPath) {
+      mainWindowRef?.webContents.send('host-message', {
+        command: 'externalOpenPath',
+        path: externalPath,
+      });
+    }
   }
 
   appImpl.whenReady().then(() => {
@@ -94,7 +109,7 @@ function createAppBootstrap({
         shell: shellImpl,
         getMainWindow,
         handlers: {
-          ready: runtimeImpl.handleReady,
+          ready: handleReady,
           openFolder: runtimeImpl.handleOpenFolder,
           openFile: runtimeImpl.handleOpenFile,
           openPath: runtimeImpl.handleOpenPath,
@@ -135,7 +150,7 @@ function createAppBootstrap({
     }
   });
 
-  return { createWindow, getMainWindow, getUpdateManager };
+  return { createWindow, getMainWindow, getUpdateManager, deliverExternalOpenPath };
 }
 
 module.exports = { createAppBootstrap };
