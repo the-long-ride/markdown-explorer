@@ -54,7 +54,10 @@ export class WorkspaceScanner {
   private static readonly MAX_FILES = 1000;
 
   /** Scan workspace for all .md files, return tree + flat list */
-  static async scan(documentConversionEnabled = false): Promise<ScanResult> {
+  static async scan(
+    documentConversionEnabled = false,
+    reportProgress: (count: number) => void = () => {},
+  ): Promise<ScanResult> {
     const ctx = getContext();
     if (!ctx) throw new Error('vscode workspace not available');
 
@@ -78,7 +81,15 @@ export class WorkspaceScanner {
     uris.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
     const rootPath = folders[0].uri.fsPath;
-    const flat: MdFile[] = uris.map(uri => WorkspaceScanner.buildFileEntry(uri.fsPath, rootPath));
+    const flat: MdFile[] = [];
+    for (const uri of uris) {
+      flat.push(WorkspaceScanner.buildFileEntry(uri.fsPath, rootPath));
+      if (flat.length % 100 === 0) {
+        reportProgress(flat.length);
+        await new Promise<void>(resolve => setTimeout(resolve, 0));
+      }
+    }
+    reportProgress(flat.length);
     const tree = WorkspaceScanner.buildTree(flat);
 
     return { tree, flat };

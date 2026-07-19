@@ -129,11 +129,15 @@ Installed Windows desktop builds can check for updates in Settings, download the
 | Electron | Stable, released | `pnpm run start:electron`, `pnpm run build:electron` |
 | Tauri | Preview release builds available | `pnpm run start:tauri`, `pnpm run build:tauri` |
 
-Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. `pnpm run start:tauri` runs a live Vite dev server plus `cargo tauri dev`, so UI edits reload the Tauri window during development. Tauri debug/build Cargo downloads and artifacts use a global cache at `%LOCALAPPDATA%\\MarkdownExplorer\\tauri-cache` on Windows; set `MARKDOWN_EXPLORER_TAURI_CACHE` to override it. See [Tauri Desktop Variant](docs/tauri-desktop-variant.md) for architecture, tradeoffs, and build notes.
+Both variants share the same UI bundle and preserve the full `WebviewMessage` / `HostMessage` contract. `pnpm run start:tauri` runs a live Vite dev server plus `cargo tauri dev`, so UI edits reload the Tauri window during development. Tauri debug/build Cargo downloads and artifacts use a global cache at `%LOCALAPPDATA%\\MarkdownExplorer\\tauri-cache` on Windows; set `MARKDOWN_EXPLORER_TAURI_CACHE` to override it.
+
+### Windows File Explorer
+
+The Windows installer provides checked-by-default choices to create a desktop shortcut, add **Open with Markdown Explorer** for `.md` and `.mdx` files, and add **Open Folder in Markdown Explorer** to folder and empty-folder-background menus. Opening a Markdown file loads its containing folder as the workspace and displays that selected file. Opening a folder loads that exact folder. In Tab view this opens a workspace tab; in Focus view it replaces the current workspace. Portable and ZIP builds do not modify File Explorer automatically.
 
 ## Desktop Workspace
 
-The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling.
+The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling. Large workspace scans report the running file count and continue in the background, so the app remains usable instead of holding the startup screen open.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />

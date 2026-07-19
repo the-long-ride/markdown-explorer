@@ -117,6 +117,7 @@ export function reducer(
         previewInfo: action.msg.previewInfo ?? null,
         relativePath: action.msg.relativePath,
         isLoading: false,
+        isWorkspaceScanning: false,
         loadingLabel: '',
         loadingDetail: '',
         staleContentFilePath: null,
@@ -184,6 +185,7 @@ export function reducer(
         },
         contentTabs: refreshContentTabMetadata(state.contentTabs, action.fileList),
         isLoading: false,
+        isWorkspaceScanning: false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
       };
@@ -301,6 +303,9 @@ export function reducer(
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
       };
+
+    case 'WORKSPACE_SCAN_PROGRESS':
+      return { ...state, isWorkspaceScanning: action.active, scannedFiles: action.scannedFiles };
 
     case 'SET_UPDATE_STATE':
       return {

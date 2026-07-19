@@ -76,8 +76,6 @@ impl Dispatcher {
             .and_then(|p| p.into_path().ok())
     }
 
-    // ── B2 helpers ──
-
     pub(super) fn ensure_search_index(&self) -> SearchIndex {
         {
             let state = self.state.inner.read();
@@ -204,46 +202,54 @@ impl Dispatcher {
             return;
         }
 
-        let document_conversion_enabled = self.state.inner.read().document_conversion_enabled;
-        let result = match scan(
-            &workspace_path,
-            ScanOptions {
-                document_conversion_enabled,
-            },
-        ) {
-            Ok(r) => r,
-            Err(err) => {
-                eprintln!("Failed to scan workspace: {err}");
+        let document_conversion_enabled = self.state.inner.read().document_conversion_enabled; let app = self.app.clone();
+        let state = self.state.clone(); host_message::emit_workspace_scan_progress(&app, 0, true);
+
+        std::thread::spawn(move || {
+            let progress_app = app.clone(); let result = scan_with_progress(
+                &workspace_path,
+                ScanOptions {
+                    document_conversion_enabled,
+                },
+                |scanned_files| {
+                    host_message::emit_workspace_scan_progress(&progress_app, scanned_files, true);
+                },
+            );
+            let result = match result {
+                Ok(result) => result,
+                Err(err) => {
+                    eprintln!("Failed to scan workspace: {err}");
+                    host_message::emit_workspace_scan_progress(&app, 0, false);
+                    return;
+                }
+            };
+
+            if state.inner.read().workspace_path.as_ref() != Some(&workspace_path) {
                 return;
             }
-        };
 
-        let flat = result.flat.clone();
-        {
-            let mut state = self.state.inner.write();
-            state.flat_list = flat.clone();
-            state.runtime_state = RuntimeState::Ready;
-        }
+            let flat = result.flat.clone();
+            let mut inner = state.inner.write(); inner.flat_list = flat.clone(); inner.runtime_state = RuntimeState::Ready;
 
-        let idx = self.ensure_search_index();
-        idx.prime(&flat);
-
-        let store = self.recents_store();
-        let workspace_name = workspace_path
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| workspace_path.to_string_lossy().to_string());
-
-        host_message::emit_ready_ack_full(
-            &self.app,
-            json!(flat),
-            json!(result.tree),
-            &workspace_name,
-            Some(&workspace_path.to_string_lossy()),
-            store.load(),
-            document_conversion_enabled,
-        );
+            let dispatcher = Dispatcher { app: app.clone(), state: state.clone() };
+            let idx = dispatcher.ensure_search_index();
+            idx.prime(&flat);
+            let workspace_name = workspace_path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| workspace_path.to_string_lossy().to_string());
+            host_message::emit_workspace_files_changed(
+                &app,
+                json!(flat),
+                json!(result.tree),
+                &workspace_name,
+                &workspace_path.to_string_lossy(),
+                document_conversion_enabled,
+            );
+            host_message::emit_workspace_scan_progress(&app, result.flat.len(), false);
+            dispatcher.send_initial_content(true);
+        });
     }
 
     pub(super) fn send_workspace_files_changed(&self) {

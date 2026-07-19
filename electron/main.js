@@ -24,6 +24,7 @@ const {
   createStartupReadyAck,
   deferWorkspaceLoad,
 } = require("./core/startup-workspace");
+const { findExternalOpenPath, createExternalOpenQueue } = require('./core/external-open');
 const { createDesktopRuntime } = require('./core/main-runtime');
 const { isInstallerUpdateSupported } = require("./update/update-manager");
 const {
@@ -47,6 +48,13 @@ let crossTabSearchWorker = null;
 
 const debugTools = createDebugTools({ isPackaged: app.isPackaged });
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
+const externalOpenQueue = createExternalOpenQueue();
+const startupExternalPath = findExternalOpenPath(process.argv, fs);
+if (startupExternalPath) externalOpenQueue.push(startupExternalPath);
+
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
 
 function ensureHeavyModules() {
   if (DesktopScanner) return;
@@ -99,6 +107,11 @@ const runtime = createDesktopRuntime({
     ensureHeavyModules();
     let tree = null;
     let flat = [];
+    mainWindow?.webContents.send("host-message", {
+      command: "workspaceScanProgress",
+      scannedFiles: 0,
+      active: true,
+    });
 
     try {
       const isFile = fs.statSync(wsPath).isFile();
@@ -110,7 +123,16 @@ const runtime = createDesktopRuntime({
           tree = DesktopScanner.buildTree(flat);
         }
       } else {
-        const result = await DesktopScanner.scan(wsPath, { documentConversionEnabled: runtime.state.documentConversionEnabled });
+        const result = await DesktopScanner.scan(wsPath, {
+          documentConversionEnabled: runtime.state.documentConversionEnabled,
+          onProgress(scannedFiles) {
+            mainWindow?.webContents.send("host-message", {
+              command: "workspaceScanProgress",
+              scannedFiles,
+              active: true,
+            });
+          },
+        });
         tree = result.tree;
         flat = result.flat;
       }
@@ -118,6 +140,11 @@ const runtime = createDesktopRuntime({
       console.error("Failed to scan workspace data:", err);
     }
 
+    mainWindow?.webContents.send("host-message", {
+      command: "workspaceScanProgress",
+      scannedFiles: flat.length,
+      active: false,
+    });
     return { tree, flat };
   },
   createSearchIndex() {
@@ -191,6 +218,20 @@ const bootstrap = createAppBootstrap({
   ipcMainImpl: ipcMain,
   clipboardImpl: clipboard,
   shellImpl: shell,
+  externalOpenQueue,
+});
+
+app.on('second-instance', (_event, argv) => {
+  const externalPath = findExternalOpenPath(argv, fs);
+  if (!externalPath) return;
+  const window = bootstrap.getMainWindow();
+  if (!window) {
+    externalOpenQueue.push(externalPath);
+    return;
+  }
+  if (window.isMinimized?.()) window.restore();
+  window.focus?.();
+  bootstrap.deliverExternalOpenPath(externalPath);
 });
 
 module.exports = { createAppBootstrap };

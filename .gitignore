@@ -45,3 +45,4 @@ coverage/
 # Implementation plans (never commit)
 plan-ignore-from-commit.md
 .codebase-memory/
+/docs/superpowers

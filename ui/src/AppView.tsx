@@ -99,6 +99,11 @@ export function AppView(props: any) {
   return (
     <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.appRuntime === 'tauri' ? ' app--tauri' : ''}${isFullscreen ? ' app--fullscreen' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
+      {state.isWorkspaceScanning && (
+        <div className="workspace-scan-progress" role="status" aria-live="polite">
+          Scanning {state.scannedFiles.toLocaleString()} files…
+        </div>
+      )}
       {isTabView && (
         <DesktopTabBar
           tabs={tabs}

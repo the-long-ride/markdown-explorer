@@ -30,13 +30,30 @@
 }
 
 .state-screen--initial-loading {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100dvh;
   color: var(--tx);
   background: var(--bg);
+}
+
+.workspace-scan-progress {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 100001;
+  padding: 8px 12px;
+  color: var(--tx);
+  font-size: 12px;
+  font-weight: 650;
+  background: var(--bg-s);
+  border: 1px solid var(--bd-s);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
 }
 
 .state-screen--initial-loading .state-screen__title {

@@ -240,7 +240,7 @@ describe('createAppBootstrap', () => {
     test('registerIpcHandlers maps all handler functions', async () => {
       await Promise.resolve();
       const call = registerIpcHandlersFn.mock.calls[0][0];
-      expect(call.handlers.ready).toBe(runtimeImpl.handleReady);
+      expect(call.handlers.ready).toEqual(expect.any(Function));
       expect(call.handlers.openFolder).toBe(runtimeImpl.handleOpenFolder);
       expect(call.handlers.openFile).toBe(runtimeImpl.handleOpenFile);
       expect(call.handlers.openPath).toBe(runtimeImpl.handleOpenPath);
@@ -380,5 +380,27 @@ describe('createAppBootstrap', () => {
       const um = result.getUpdateManager();
       expect(um).toBeDefined();
     });
+  });
+
+  test('delivers queued Explorer path after renderer ready', async () => {
+    const externalOpenQueue = { take: vi.fn(() => 'C:/Docs/guide.md') };
+    result = createAppBootstrap({
+      appImpl, BrowserWindowImpl, sessionImpl, MenuImpl, perfImpl, processImpl,
+      setTimeoutImpl, clearTimeoutImpl, setImmediateImpl, configureYouTubeEmbedHeadersFn,
+      createAppTrayFn, createUpdateManagerFn, registerIpcHandlersFn, runtimeImpl,
+      debugToolsImpl, createMainWindowFn, appDirImpl: '/test/app',
+      pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
+      fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
+      recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
+      TrayConstructor: vi.fn(), ipcMainImpl: {}, clipboardImpl: {}, shellImpl: { openExternal: vi.fn() },
+      externalOpenQueue,
+    });
+    await Promise.resolve();
+    hiddenMock._triggerOnce('ready-to-show');
+    const handlers = registerIpcHandlersFn.mock.calls.at(-1)[0].handlers;
+    await handlers.ready({});
+    expect(result.getMainWindow().webContents.send).toHaveBeenCalledWith(
+      'host-message', { command: 'externalOpenPath', path: 'C:/Docs/guide.md' },
+    );
   });
 });

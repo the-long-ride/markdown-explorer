@@ -26,6 +26,16 @@ function makeTab(filePath: string, overrides: Partial<ContentTab> = {}): Content
 }
 
 describe('appStateReducer - inline callback coverage with populated contentTabs', () => {
+  test('WORKSPACE_SCAN_PROGRESS exposes a running scanned-file count', () => {
+    const next = appStateReducer(makeState(), {
+      type: 'WORKSPACE_SCAN_PROGRESS',
+      scannedFiles: 250,
+      active: true,
+    });
+    expect(next.isWorkspaceScanning).toBe(true);
+    expect(next.scannedFiles).toBe(250);
+  });
+
   test('REORDER_CONTENT_TABS moves dragged tab before target', () => {
     const tabA = makeTab('/a.md');
     const tabB = makeTab('/b.md');

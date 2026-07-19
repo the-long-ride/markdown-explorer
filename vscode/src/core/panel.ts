@@ -174,40 +174,11 @@ export class MarkdownDocsPanel {
   // ---------------------------------------------------------------------------
 
   private async _render(): Promise<void> {
-    const { tree, flat } = await WorkspaceScanner.scan(this._documentConversionEnabled);
-    this._flat = flat;
-
-    const workspaceName = getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
-    this._panel.title = `Markdown Explorer — ${workspaceName}`;
-
-    // Do not auto-initialize _currentFile to allow showing the Welcome page by default when null
-
     if (!this._panel.webview.html) {
       this._panel.webview.html = buildWebviewShell(this._extensionPath, this._panel, getVscode());
-    } else {
-      // Send updated data to the already running webview
-      const config = getVscode().workspace.getConfiguration('markdownExplorer');
-      const theme = config.get<string>('theme') ?? 'auto';
-      const themeStyle = config.get<string>('themeStyle') ?? 'default';
-      const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
-      const ackMsg: ReadyAckMessage = {
-        command: 'readyAck',
-        fileList: this._flat,
-        tree,
-        theme,
-        themeStyle,
-        defaultExpanded,
-        workspaceName,
-        documentConversionEnabled: this._documentConversionEnabled,
-        ...this._hostInfo(),
-      };
-      await this._panel.webview.postMessage(ackMsg);
-      if (this._currentFile) {
-        await this._sendContent();
-      } else {
-        await this._sendWelcome();
-      }
+      return;
     }
+    await this._onWebviewReady();
   }
 
   // ---------------------------------------------------------------------------
@@ -219,9 +190,23 @@ export class MarkdownDocsPanel {
     const theme = config.get<string>('theme') ?? 'auto';
     const themeStyle = config.get<string>('themeStyle') ?? 'default';
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
-    const { tree, flat } = await WorkspaceScanner.scan(this._documentConversionEnabled);
-    this._flat = flat;
+    let revealed = false;
+    await this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
+    const scanPromise = WorkspaceScanner.scan(this._documentConversionEnabled, scannedFiles => {
+      void this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles, active: true });
+    });
     const workspaceName = getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
+    const revealTimer = setTimeout(() => {
+      revealed = true;
+      void this._panel.webview.postMessage({
+        command: 'readyAck', fileList: [], tree: null, theme, themeStyle, defaultExpanded,
+        workspaceName, documentConversionEnabled: this._documentConversionEnabled, ...this._hostInfo(),
+      });
+    }, 2500);
+    const { tree, flat } = await scanPromise;
+    clearTimeout(revealTimer);
+    this._flat = flat;
+    this._panel.title = `Markdown Explorer — ${workspaceName}`;
 
     const ackMsg: ReadyAckMessage = {
       command: 'readyAck',
@@ -234,7 +219,11 @@ export class MarkdownDocsPanel {
       documentConversionEnabled: this._documentConversionEnabled,
       ...this._hostInfo(),
     };
-    await this._panel.webview.postMessage(ackMsg);
+    await this._panel.webview.postMessage(revealed ? {
+      command: 'workspaceFilesChanged', fileList: this._flat, tree, workspaceName,
+      documentConversionEnabled: this._documentConversionEnabled,
+    } : ackMsg);
+    await this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false });
 
     if (this._currentFile) {
       await this._sendContent();

@@ -11,7 +11,7 @@ use crate::workspace::open::{
     choose_workspace_and_file, get_workspace_path_status, WorkspaceUnavailableReason,
 };
 use crate::workspace::recents::{RecentWorkspaceInput, RecentWorkspacesStore};
-use crate::workspace::scanner::{scan, DocumentKind, MdFile, ScanOptions};
+use crate::workspace::scanner::{scan, scan_with_progress, DocumentKind, MdFile, ScanOptions};
 use crate::workspace::watch::{WatchChange, WorkspaceWatchController};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};

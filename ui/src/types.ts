@@ -138,6 +138,11 @@ export interface FullscreenStateChangedMessage {
   readonly isFullscreen: boolean;
 }
 
+export interface ExternalOpenPathMessage {
+  readonly command: 'externalOpenPath';
+  readonly path: string;
+}
+
 export interface CrossTabSearchResultsMessage {
   readonly command: 'crossTabSearchResults';
   readonly requestId: string;
@@ -169,6 +174,12 @@ export interface SetLoadingMessage {
   readonly command: 'setLoading';
   readonly label?: string;
   readonly detail?: string;
+}
+
+export interface WorkspaceScanProgressMessage {
+  readonly command: 'workspaceScanProgress';
+  readonly scannedFiles: number;
+  readonly active: boolean;
 }
 
 export interface UpdateStateChangedMessage {
@@ -230,9 +241,11 @@ export type HostMessage =
   | NavNotFoundMessage
   | WorkspaceUnavailableMessage
   | SetLoadingMessage
+  | WorkspaceScanProgressMessage
   | UpdateStateChangedMessage
   | WindowStateChangedMessage
   | FullscreenStateChangedMessage
+  | ExternalOpenPathMessage
   | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage
   | WorkspaceSearchIndexLoadedMessage;
