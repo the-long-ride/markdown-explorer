@@ -20,6 +20,48 @@ pub fn electron_api_shim_js() -> &'static str {
   let dropListenerStarted = false;
   let unlistenDrop = null;
   let droppedPaths = [];
+  let tauriFullscreenDragLocked = false;
+
+  function applyTauriFullscreenDragLock(root) {
+    var nodes = [];
+    if (root && root.nodeType === 1) nodes.push(root);
+    if (root && root.querySelectorAll) {
+      var matches = root.querySelectorAll('[data-tauri-drag-region], [data-tauri-drag-region-disabled]');
+      for (var i = 0; i < matches.length; i++) nodes.push(matches[i]);
+    }
+
+    for (var j = 0; j < nodes.length; j++) {
+      var el = nodes[j];
+      if (!el || !el.getAttribute) continue;
+      var hasDragRegion = el.getAttribute('data-tauri-drag-region') !== null;
+      var disabledValue = el.getAttribute('data-tauri-drag-region-disabled');
+      if (tauriFullscreenDragLocked && hasDragRegion) {
+        el.setAttribute('data-tauri-drag-region-disabled', el.getAttribute('data-tauri-drag-region') || '');
+        el.removeAttribute('data-tauri-drag-region');
+      } else if (!tauriFullscreenDragLocked && disabledValue !== null) {
+        el.setAttribute('data-tauri-drag-region', disabledValue);
+        el.removeAttribute('data-tauri-drag-region-disabled');
+      }
+    }
+  }
+
+  function setTauriFullscreenDragLocked(locked) {
+    tauriFullscreenDragLocked = Boolean(locked);
+    applyTauriFullscreenDragLock(document);
+  }
+
+  document.addEventListener('mousedown', function (e) {
+    if (!tauriFullscreenDragLocked || e.button !== 0) return;
+    var path = e.composedPath ? e.composedPath() : [];
+    for (var i = 0; i < path.length; i++) {
+      var el = path[i];
+      if (el && el.getAttribute && el.getAttribute('data-tauri-drag-region') !== null) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
+    }
+  }, true);
 
   function dispatchTauriFileDropState(type, paths) {
     window.dispatchEvent(new CustomEvent('markdown-explorer-tauri-file-drop-state', {
@@ -36,6 +78,9 @@ pub fn electron_api_shim_js() -> &'static str {
     const dereg = window.__TAURI__.event.listen('host-message', function (e) {
       const payload = e && e.payload;
       if (!payload) return;
+      if (payload.command === 'fullscreenChanged') {
+        setTauriFullscreenDragLocked(payload.isFullscreen);
+      }
       listeners.forEach(function (cb) { try { cb(payload); } catch (err) { console.error('host-message listener threw:', err); } });
     });
     if (dereg && typeof dereg.then === 'function') {
@@ -184,6 +229,7 @@ pub fn electron_api_shim_js() -> &'static str {
           var node = m.addedNodes[j];
           if (node.nodeType === 1) {
             patchSrc(node);
+            applyTauriFullscreenDragLock(node);
             if (node.querySelectorAll) {
               var els = node.querySelectorAll('img,video,source,track,link');
               for (var k = 0; k < els.length; k++) {
@@ -195,13 +241,16 @@ pub fn electron_api_shim_js() -> &'static str {
         if (m.type === 'attributes' && (m.attributeName === 'src' || m.attributeName === 'href')) {
           patchSrc(m.target);
         }
+        if (m.type === 'attributes' && m.attributeName === 'data-tauri-drag-region') {
+          applyTauriFullscreenDragLock(m.target);
+        }
       }
     });
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['src', 'poster', 'href']
+      attributeFilter: ['src', 'poster', 'href', 'data-tauri-drag-region']
     });
 
     // Guard anchor clicks that point at local files: never let them navigate

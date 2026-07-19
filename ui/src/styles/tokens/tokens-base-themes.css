@@ -41,6 +41,7 @@
   --table-cell-pad-x: 12px;
   --stroke-w: 1px;
   --focus-ring: 0 0 0 2px var(--accent-dim);
+  --hl-terminal-muted: var(--tx2);
   --surface-blur: none;
   --section-shadow: none;
   --r: 5px;
@@ -107,6 +108,7 @@ body.is-chrome-ext {
   --hl-sel: #b392f0;
   --hl-func: #ffcc66;
   --hl-pkg: #4ec9b0;
+  --hl-terminal-muted: var(--tx2);
 }
 [data-theme="light"] {
   --bg: #fdfbf7;
@@ -150,6 +152,7 @@ body.is-chrome-ext {
   --hl-sel: #6f42c1;
   --hl-func: #b58900;
   --hl-pkg: #22863a;
+  --hl-terminal-muted: var(--tx2);
 }
 
 /* Auto theme system prefers light overrides */
@@ -195,6 +198,7 @@ body.is-chrome-ext {
     --hl-sel: #6f42c1;
     --hl-func: #b58900;
     --hl-pkg: #22863a;
+    --hl-terminal-muted: var(--tx2);
   }
 }
 

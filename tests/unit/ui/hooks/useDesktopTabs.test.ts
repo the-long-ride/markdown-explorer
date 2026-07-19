@@ -30,6 +30,15 @@ vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
     return `tab-mock-${nextTabId}`;
   },
   getTabLabel: (tab: any) => tab.alias || tab.workspaceName || (tab.kind === 'home' ? 'Home' : 'New workspace'),
+  reorderDesktopTabs: (tabs: any[], sourceId: string, targetId: string) => {
+    const sourceIndex = tabs.findIndex((tab) => tab.id === sourceId && tab.kind !== 'home');
+    const targetIndex = tabs.findIndex((tab) => tab.id === targetId && tab.kind !== 'home');
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return tabs;
+    const nextTabs = [...tabs];
+    const [source] = nextTabs.splice(sourceIndex, 1);
+    nextTabs.splice(nextTabs.findIndex((tab) => tab.id === targetId), 0, source);
+    return nextTabs;
+  },
   readInitialDesktopState: () => ({
     workspaceAliases: {} as Record<string, string>,
     tabs: [
@@ -595,6 +604,30 @@ describe('useDesktopTabs', () => {
       act(() => { result.current.closeTabsToRight(tab1); });
 
       expect(result.current.tabs.find((t: any) => t.id === tab2)).toBeUndefined();
+    });
+  });
+
+  describe('reorderTabs', () => {
+    it('moves a workspace tab before the drop target without moving home', () => {
+      const { result } = setupHook();
+
+      let tab1 = '', tab2 = '';
+      act(() => { tab1 = result.current.createNewWorkspaceTab(); });
+      act(() => { tab2 = result.current.createNewWorkspaceTab(); });
+
+      act(() => { result.current.reorderTabs(tab2, tab1); });
+
+      expect(result.current.tabs.map((tab: any) => tab.id)).toEqual(['home', tab2, tab1]);
+    });
+
+    it('does not move the home tab', () => {
+      const { result } = setupHook();
+
+      let tabId = '';
+      act(() => { tabId = result.current.createNewWorkspaceTab(); });
+      act(() => { result.current.reorderTabs('home', tabId); });
+
+      expect(result.current.tabs[0].id).toBe('home');
     });
   });
 

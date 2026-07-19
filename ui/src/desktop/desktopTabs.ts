@@ -53,6 +53,16 @@ export function createTabId() {
   return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+export function reorderDesktopTabs(tabs: readonly DesktopTab[], sourceId: string, targetId: string): DesktopTab[] {
+  const sourceIndex = tabs.findIndex((tab) => tab.id === sourceId && tab.kind !== 'home');
+  const targetIndex = tabs.findIndex((tab) => tab.id === targetId && tab.kind !== 'home');
+  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return tabs as DesktopTab[];
+  const nextTabs = [...tabs];
+  const [source] = nextTabs.splice(sourceIndex, 1);
+  nextTabs.splice(nextTabs.findIndex((tab) => tab.id === targetId), 0, source);
+  return nextTabs;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }

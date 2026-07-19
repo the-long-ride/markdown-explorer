@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { TableOfContents } from '../../../../ui/src/components/TOC/TableOfContents';
 
 let mockState: any;
@@ -71,6 +73,22 @@ describe('TableOfContents', () => {
     expect(tocItems[1]).toHaveTextContent('Getting Started');
     expect(tocItems[2]).toHaveTextContent('Installation');
     expect(tocItems[3]).toHaveTextContent('Configuration');
+  });
+
+  it('renders marker hooks with a default active dot', () => {
+    render(<TableOfContents />);
+
+    expect(document.querySelectorAll('.toc-item__marker')).toHaveLength(4);
+    const styles = readFileSync(
+      resolve(process.cwd(), 'ui/src/styles/global/global-tables-b.css'),
+      'utf8',
+    );
+    expect(styles).toMatch(
+      /\.toc-item\.is-active \.toc-item__marker\s*\{[^}]*display: block;[^}]*background: var\(--accent\);/s,
+    );
+    expect(styles).toMatch(
+      /\.toc-item\.is-active \.toc-item__marker\s*\{[^}]*margin-right: 4px;/s,
+    );
   });
 
   it('renders toc items with correct heading level class', () => {
@@ -155,6 +173,84 @@ describe('TableOfContents', () => {
     it('renders toggle button with On This Page label', () => {
       render(<TableOfContents variant="compact" />);
       expect(screen.getByText('On This Page')).toBeInTheDocument();
+    });
+
+    it('does not define a decorative left rail for the compact toggle', () => {
+      const styles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/global/global-tables-b.css'),
+        'utf8',
+      );
+
+      expect(styles).toMatch(/\.toc-compact__toggle::before\s*\{\s*display: none;/);
+    });
+
+    it('removes active TOC and refresh-banner rails while retaining pet paw hooks', () => {
+      const themeStyles = [
+        'ui/src/styles/global/global-theme-vercel.css',
+        'ui/src/styles/global/global-theme-glass-bento.css',
+        'ui/src/styles/global/global-theme-pets-a.css',
+      ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
+      const markdownStyles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/global/global-markdown-base.css'),
+        'utf8',
+      );
+
+      expect(themeStyles).not.toMatch(/\.toc-item\.is-active[^}]*box-shadow/);
+      expect(markdownStyles).not.toContain('border-left-color: color-mix(in srgb, var(--accent) 72%');
+      expect(themeStyles).toContain('.tree-file.is-active::before');
+      expect(themeStyles).toContain('.toc-item.is-active .toc-item__marker');
+      expect(themeStyles).toMatch(
+        /\.toc-compact__toggle::before\s*\{[^}]*display: block;[^}]*background: var\(--pet-paw\)/s,
+      );
+      expect(themeStyles).toMatch(
+        /\.toc-item\.is-active \.toc-item__marker\s*\{\s*display: block;\s*width: 16px;\s*height: 16px;\s*margin-top: 1px;\s*margin-right: 0;\s*flex: 0 0 16px;/s,
+      );
+    });
+
+    it('removes preview-notice and pet heading rails', () => {
+      const markdownStyles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/global/global-markdown-base.css'),
+        'utf8',
+      );
+      const petStyles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/global/global-theme-pets-a.css'),
+        'utf8',
+      );
+
+      expect(markdownStyles).not.toMatch(
+        /\.document-preview-notice\s*\{[^}]*border-left\s*:/s,
+      );
+      expect(markdownStyles).not.toContain('border-left-color: var(--tx2);');
+      expect(petStyles).not.toMatch(
+        /\.mdn-section--h1\s*>\s*\.mdn-section-header\s*\{[^}]*box-shadow\s*:/s,
+      );
+    });
+
+    it('defines a secondary heading level badge that appears on heading hover', () => {
+      const sectionStyles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/global/global-tables-a.css'),
+        'utf8',
+      );
+
+      expect(sectionStyles).toMatch(
+        /\.mdn-section-heading-level\s*\{[^}]*color:\s*var\(--tx2\);[^}]*visibility:\s*hidden;/s,
+      );
+      expect(sectionStyles).toMatch(
+        /\.mdn-section-header:hover\s+\.mdn-section-heading-level[^}]*visibility:\s*visible;/s,
+      );
+    });
+
+    it('removes sidebar file rails while keeping pet paw hooks', () => {
+      const sidebarStyles = [
+        'ui/src/styles/global/global-layout-sidebar.css',
+        'ui/src/styles/global/global-theme-vercel.css',
+        'ui/src/styles/global/global-theme-glass-bento.css',
+        'ui/src/styles/global/global-theme-pets-a.css',
+      ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
+
+      expect(sidebarStyles).not.toMatch(/\.tree-file\.is-active[^}]*box-shadow\s*:/s);
+      expect(sidebarStyles).not.toMatch(/\.tree-file\.is-cursor\s*\{[^}]*box-shadow\s*:/s);
+      expect(sidebarStyles).toContain('.tree-file.is-active::before');
     });
 
     it('toggles compact menu on click', () => {

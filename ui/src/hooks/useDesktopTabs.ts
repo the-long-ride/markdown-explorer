@@ -8,11 +8,13 @@ import {
   createEmptyTab,
   createTabId,
   getTabLabel,
+  reorderDesktopTabs,
   readInitialDesktopState,
   readToolbarPosition,
   writePersistedDesktopTabs,
   writeWorkspaceAliases,
 } from '../desktop/desktopTabs';
+import { snapshotDesktopTab } from '../desktop/desktopTabSnapshot';
 import { FLOATING_TOOLBAR_STORAGE_KEY } from '../desktop/constants';
 import type {
   CrossTabSearchItem,
@@ -96,58 +98,8 @@ export function useDesktopTabs({
   }, [activeTabId, isTabView, setNavigationScope]);
 
   const snapshotCurrentState = useCallback(
-    (tab: DesktopTab): DesktopTab => {
-      const nextWorkspacePath = state.workspacePath || tab.workspacePath;
-      const sameWorkspace =
-        !tab.workspacePath ||
-        !nextWorkspacePath ||
-        tab.workspacePath === nextWorkspacePath;
-      const savedAlias = nextWorkspacePath ? workspaceAliases[nextWorkspacePath] : undefined;
-
-      return {
-        ...tab,
-        kind: state.workspaceName ? 'workspace' : tab.kind,
-        alias: savedAlias ?? (sameWorkspace ? tab.alias : undefined),
-        workspaceName: state.workspaceName || tab.workspaceName,
-        workspacePath: nextWorkspacePath,
-        fileList: state.fileList,
-        tree: state.tree,
-        currentFile: state.currentFile,
-        contentHtml: state.contentHtml,
-        markdownSource: state.markdownSource,
-        frontmatter: state.frontmatter,
-        toc: state.toc,
-        previewInfo: state.previewInfo,
-        relativePath: state.relativePath,
-        isLoading: state.isLoading,
-        notFoundHref: state.notFoundHref,
-        workspaceUnavailablePath: state.workspaceUnavailablePath,
-        workspaceUnavailableReason: state.workspaceUnavailableReason,
-        contentTabs: state.contentTabs,
-        activeContentTabPath: state.activeContentTabPath,
-        isIndexed: tab.isIndexed || (tab.id === activeTabId && !state.isLoading),
-      };
-    },
-    [
-      state.activeContentTabPath,
-      state.contentHtml,
-      state.contentTabs,
-      state.currentFile,
-      state.fileList,
-      state.frontmatter,
-      state.isLoading,
-      state.markdownSource,
-      state.notFoundHref,
-      state.previewInfo,
-      state.relativePath,
-      state.toc,
-      state.tree,
-      state.workspaceUnavailablePath,
-      state.workspaceUnavailableReason,
-      state.workspaceName,
-      state.workspacePath,
-      workspaceAliases,
-    ],
+    (tab: DesktopTab) => snapshotDesktopTab(state, tab, activeTabId, workspaceAliases),
+    [activeTabId, state, workspaceAliases],
   );
 
   useEffect(() => {
@@ -317,6 +269,11 @@ export function useDesktopTabs({
     [activateTab],
   );
 
+  const reorderTabs = useCallback((sourceTabId: string, targetTabId: string) => {
+    if (!sourceTabId || !targetTabId || sourceTabId === targetTabId) return;
+    setTabs((currentTabs) => reorderDesktopTabs(currentTabs, sourceTabId, targetTabId));
+  }, []);
+
   const closeTabsToRight = useCallback(
     (tabId: string) => {
       setTabs((currentTabs) => {
@@ -479,6 +436,7 @@ export function useDesktopTabs({
     setPendingDroppedPath,
     confirmSwitchWorkspace,
     closeTab,
+    reorderTabs,
     closeTabsToRight,
     closeOtherTabs,
     closeAllTabs,
@@ -488,4 +446,3 @@ export function useDesktopTabs({
     isIndexingAcrossTabs,
   };
 }
-

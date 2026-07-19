@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { ChevronUpIcon, CloseIcon, SearchIcon } from '../shared/icons';
 import { unicodeIndexOf } from '../../utils/unicodeSearch';
 
-const FIND_PANEL_Z_INDEX = 2147483647;
 const FIND_MARK_CLASS = 'mdn-find-mark';
 const FIND_ACTIVE_CLASS = 'is-active';
 
@@ -188,7 +187,6 @@ export function FindInFilePanel({
   return createPortal(
     <div
       className="find-in-file-panel"
-      style={{ zIndex: FIND_PANEL_Z_INDEX }}
       role="dialog"
       aria-label="Find in current file"
     >

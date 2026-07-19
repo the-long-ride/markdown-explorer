@@ -178,12 +178,54 @@ describe('highlight', () => {
   describe('bash', () => {
     test('produces syntax-highlighted output for bash', () => {
       const result = highlight('echo "Hello $USER"', 'bash');
-      expect(result).toContain('hl-kw');
+      expect(result).toContain('hl-cmd');
     });
 
     test('highlights bracket variables', () => {
       const result = highlight('export PATH=${HOME}', 'bash');
       expect(result).toContain('hl-var');
+    });
+
+    test('distinguishes executable, flags, values, and operators', () => {
+      const result = highlight('npm run build -- --mode=production && python app.py --count 2 --enabled true', 'bash');
+      expect(result).toContain('<span class="hl-cmd">npm</span>');
+      expect(result).toContain('<span class="hl-param">--</span>');
+      expect(result).toContain('<span class="hl-param">--mode</span>');
+      expect(result).toContain('<span class="hl-cmd">python</span>');
+      expect(result).toContain('<span class="hl-param">--count</span>');
+      expect(result).toContain('<span class="hl-val">2</span>');
+      expect(result).toContain('<span class="hl-val">true</span>');
+      expect(result).toContain('<span class="hl-op">&amp;&amp;</span>');
+      expect(result).not.toContain('<span class="hl-cmd">run</span>');
+    });
+
+    test('protects quoted values and comments while styling shell operators', () => {
+      const result = highlight('my-app.exe "--help" $HOME \\\n  --name "value && -x" # --comment', 'sh');
+      expect(result).toContain('<span class="hl-cmd">my-app.exe</span>');
+      expect(result).toContain('<span class="hl-str">"--help"</span>');
+      expect(result).toContain('<span class="hl-var">$HOME</span>');
+      expect(result).toContain('<span class="hl-op">\\</span>');
+      expect(result).toContain('<span class="hl-str">"value &amp;&amp; -x"</span>');
+      expect(result).toContain('<span class="hl-cm"># --comment</span>');
+    });
+
+    test('highlights PowerShell command syntax and aliases', () => {
+      const result = highlight('pwsh -File .\\build.ps1 -Count 3 -Enabled $true; Write-Host "ok"', 'powershell');
+      expect(result).toContain('<span class="hl-cmd">pwsh</span>');
+      expect(result).toContain('<span class="hl-param">-File</span>');
+      expect(result).toContain('<span class="hl-val">3</span>');
+      expect(result).toContain('<span class="hl-val">$true</span>');
+      expect(result).toContain('<span class="hl-op">;</span>');
+      expect(result).toContain('<span class="hl-cmd">Write-Host</span>');
+    });
+
+    test('does not activate terminal highlighting for text fences', () => {
+      expect(highlight('my-app --flag', 'text')).not.toContain('hl-cmd');
+    });
+
+    test('styles cmd caret escape as an operator', () => {
+      const result = highlight('echo one ^ echo two', 'cmd');
+      expect(result).toContain('<span class="hl-op">^</span>');
     });
   });
 

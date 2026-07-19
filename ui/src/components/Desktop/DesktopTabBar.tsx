@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { TooltipButton } from '../shared/TooltipButton';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import {
@@ -15,8 +15,9 @@ import {
   TabContextMenu,
   type TabContextMenuAction,
 } from '../shared/TabContextMenu';
-
-const SCROLLBAR_TRACK_INLINE_INSET = 8;
+import { useTabBarScrollbar } from './useTabBarScrollbar';
+import { useCssVars } from '../../utils/useCssVars';
+import { getEnabledShortcut } from '../../utils/shortcuts';
 
 interface DesktopTabBarProps {
   tabs: DesktopTab[];
@@ -24,6 +25,7 @@ interface DesktopTabBarProps {
   onSelectTab: (tabId: string) => void;
   onNewTab: () => void;
   onCloseTab: (tabId: string) => void;
+  onReorderTabs: (sourceTabId: string, targetTabId: string) => void;
   onCloseTabsToRight: (tabId: string) => void;
   onCloseOtherTabs: (tabId: string) => void;
   onCloseAllTabs: () => void;
@@ -34,6 +36,8 @@ interface DesktopTabBarProps {
   isDark: boolean;
   isMaximized: boolean;
   hasUpdate?: boolean;
+  isFullscreen?: boolean;
+  onFullscreenToggle?: () => void;
 }
 
 export function DesktopTabBar({
@@ -42,6 +46,7 @@ export function DesktopTabBar({
   onSelectTab,
   onNewTab,
   onCloseTab,
+  onReorderTabs,
   onCloseTabsToRight,
   onCloseOtherTabs,
   onCloseAllTabs,
@@ -52,6 +57,8 @@ export function DesktopTabBar({
   isDark,
   isMaximized,
   hasUpdate = false,
+  isFullscreen = false,
+  onFullscreenToggle,
 }: DesktopTabBarProps) {
   const { state, openInEditor, toggleToc, toggleFocusMode } = useAppState();
   const bridge = usePlatform();
@@ -67,157 +74,44 @@ export function DesktopTabBar({
     x: number;
     y: number;
   } | null>(null);
-  const tabsScrollRef = useRef<HTMLDivElement>(null);
-  const scrollbarTrackRef = useRef<HTMLDivElement>(null);
-  const scrollbarDragRef = useRef<{
-    startX: number;
-    startScrollLeft: number;
-    maxScrollLeft: number;
-    maxThumbLeft: number;
-  } | null>(null);
-  const [scrollbarMetrics, setScrollbarMetrics] = useState({
-    visible: false,
-    thumbLeft: 0,
-    thumbWidth: 0,
+  const draggedTabIdRef = useRef<string | null>(null);
+  const didDragRef = useRef(false);
+  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const [ghostLabel, setGhostLabel] = useState<string>("");
+  const {
+    tabsScrollRef,
+    scrollbarTrackRef,
+    scrollbarMetrics,
+    isScrollbarDragging,
+    updateScrollbarMetrics,
+    beginScrollbarDrag,
+    handleScrollbarTrackPointerDown,
+  } = useTabBarScrollbar(activeTabId, tabs);
+  const scrollbarThumbRef = useRef<HTMLDivElement>(null);
+  useCssVars(scrollbarThumbRef, {
+    '--scrollbar-thumb-width': `${scrollbarMetrics.thumbWidth}px`,
+    '--scrollbar-thumb-left': `${scrollbarMetrics.thumbLeft}px`,
   });
-  const [isScrollbarDragging, setIsScrollbarDragging] = useState(false);
-
-  const updateScrollbarMetrics = useCallback(() => {
-    const el = tabsScrollRef.current;
-    if (!el) return;
-
-    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-    if (maxScrollLeft <= 1) {
-      setScrollbarMetrics((current) =>
-        current.visible ? { visible: false, thumbLeft: 0, thumbWidth: 0 } : current,
-      );
-      return;
-    }
-
-    const track = scrollbarTrackRef.current;
-    const trackWidth = track?.clientWidth ?? Math.max(0, el.clientWidth - SCROLLBAR_TRACK_INLINE_INSET);
-    const thumbWidth = Math.min(
-      trackWidth,
-      Math.max(44, (el.clientWidth / el.scrollWidth) * trackWidth),
-    );
-    const maxThumbLeft = Math.max(0, trackWidth - thumbWidth);
-    const thumbLeft = maxThumbLeft === 0
-      ? 0
-      : (el.scrollLeft / maxScrollLeft) * maxThumbLeft;
-
-    setScrollbarMetrics((current) => {
-      const next = {
-        visible: true,
-        thumbLeft,
-        thumbWidth,
-      };
-      if (
-        current.visible === next.visible &&
-        Math.abs(current.thumbLeft - next.thumbLeft) < 0.5 &&
-        Math.abs(current.thumbWidth - next.thumbWidth) < 0.5
-      ) {
-        return current;
-      }
-      return next;
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    const handle = requestAnimationFrame(updateScrollbarMetrics);
-    return () => cancelAnimationFrame(handle);
-  }, [activeTabId, tabs, updateScrollbarMetrics]);
-
-  useEffect(() => {
-    const el = tabsScrollRef.current;
-    if (!el) return;
-
-    const resizeObserver = typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(updateScrollbarMetrics)
-      : null;
-    resizeObserver?.observe(el);
-
-    window.addEventListener('resize', updateScrollbarMetrics);
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', updateScrollbarMetrics);
-    };
-  }, [updateScrollbarMetrics]);
-
-  const beginScrollbarDrag = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const el = tabsScrollRef.current;
-    const track = scrollbarTrackRef.current;
-    if (!el || !track || !scrollbarMetrics.visible) return;
-
-    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-    const maxThumbLeft = Math.max(0, track.clientWidth - scrollbarMetrics.thumbWidth);
-    if (maxScrollLeft <= 0 || maxThumbLeft <= 0) return;
-
-    scrollbarDragRef.current = {
-      startX: event.clientX,
-      startScrollLeft: el.scrollLeft,
-      maxScrollLeft,
-      maxThumbLeft,
-    };
-    setIsScrollbarDragging(true);
-    event.preventDefault();
-    event.stopPropagation();
-  }, [scrollbarMetrics.thumbWidth, scrollbarMetrics.visible]);
-
-  const handleScrollbarTrackPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const el = tabsScrollRef.current;
-    const track = scrollbarTrackRef.current;
-    if (!el || !track || !scrollbarMetrics.visible) return;
-
-    const trackRect = track.getBoundingClientRect();
-    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-    const maxThumbLeft = Math.max(0, track.clientWidth - scrollbarMetrics.thumbWidth);
-    if (maxScrollLeft <= 0 || maxThumbLeft <= 0) return;
-
-    const nextThumbLeft = Math.min(
-      maxThumbLeft,
-      Math.max(0, event.clientX - trackRect.left - scrollbarMetrics.thumbWidth / 2),
-    );
-    el.scrollLeft = (nextThumbLeft / maxThumbLeft) * maxScrollLeft;
-    updateScrollbarMetrics();
-    beginScrollbarDrag(event);
-  }, [beginScrollbarDrag, scrollbarMetrics.thumbWidth, scrollbarMetrics.visible, updateScrollbarMetrics]);
-
-  useEffect(() => {
-    if (!isScrollbarDragging) return;
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const el = tabsScrollRef.current;
-      const drag = scrollbarDragRef.current;
-      if (!el || !drag) return;
-
-      const deltaX = event.clientX - drag.startX;
-      const nextScrollLeft = drag.startScrollLeft +
-        (deltaX / drag.maxThumbLeft) * drag.maxScrollLeft;
-      el.scrollLeft = Math.min(drag.maxScrollLeft, Math.max(0, nextScrollLeft));
-      updateScrollbarMetrics();
-    };
-
-    const handlePointerUp = () => {
-      scrollbarDragRef.current = null;
-      setIsScrollbarDragging(false);
-      updateScrollbarMetrics();
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
-    };
-  }, [isScrollbarDragging, updateScrollbarMetrics]);
 
   useEffect(() => {
     if (!contextMenu) return;
     if (tabs.some((tab) => tab.kind !== 'home' && tab.id === contextMenu.tabId)) return;
     setContextMenu(null);
   }, [contextMenu, tabs]);
+
+  useEffect(() => {
+    const finishPointerDrag = () => {
+      draggedTabIdRef.current = null;
+      setDraggedTabId(null);
+    };
+    document.addEventListener('pointerup', finishPointerDrag);
+    document.addEventListener('pointercancel', finishPointerDrag);
+    return () => {
+      document.removeEventListener('pointerup', finishPointerDrag);
+      document.removeEventListener('pointercancel', finishPointerDrag);
+    };
+  }, []);
 
   const handleContextMenuAction = useCallback(
     (action: TabContextMenuAction) => {
@@ -261,6 +155,9 @@ export function DesktopTabBar({
   const contextMenuTabIndex = contextMenu
     ? workspaceTabs.findIndex((tab) => tab.id === contextMenu.tabId)
     : -1;
+  const shouldExitTauriFullscreenOnRestore =
+    state.appRuntime === 'tauri' && isFullscreen && onFullscreenToggle;
+  const showsRestoreControl = isMaximized || isFullscreen;
 
   return (
     <header className="desktop-tabbar">
@@ -286,14 +183,14 @@ export function DesktopTabBar({
           {workspaceTabs.map((tab) => {
             const active = tab.id === activeTabId;
             const editing = editingTabId === tab.id;
+            const label = getTabLabel(tab);
             return (
               <button
                 key={tab.id}
                 type="button"
                 role="tab"
                 aria-selected={active}
-                className={`desktop-tab${active ? ' is-active' : ''}`}
-                onClick={() => onSelectTab(tab.id)}
+                className={`desktop-tab${active ? ' is-active' : ''}${draggedTabId === tab.id ? ' is-dragging' : ''}`}
                 onContextMenu={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -313,7 +210,48 @@ export function DesktopTabBar({
                   onCloseTab(tab.id);
                 }}
                 onDoubleClick={() => startEditing(tab)}
-                title={tab.workspacePath ?? getTabLabel(tab)}
+                title={tab.workspacePath ?? label}
+                onPointerDown={(event) => {
+                  if (editing || event.button !== 0 || (event.target as HTMLElement).closest('.desktop-tab__close')) return;
+                  draggedTabIdRef.current = tab.id;
+                  didDragRef.current = false;
+                  setDraggedTabId(tab.id);
+                  setGhostLabel(label);
+
+                  const handlePointerMove = (moveEvent: PointerEvent) => {
+                    if (ghostRef.current) {
+                      ghostRef.current.style.transform = `translate3d(${moveEvent.clientX + 10}px, ${moveEvent.clientY + 10}px, 0)`;
+                      ghostRef.current.style.display = 'flex';
+                    }
+                  };
+
+                  document.addEventListener('pointermove', handlePointerMove);
+
+                  const cleanUpMove = () => {
+                    document.removeEventListener('pointermove', handlePointerMove);
+                    document.removeEventListener('pointerup', cleanUpMove);
+                    document.removeEventListener('pointercancel', cleanUpMove);
+                    if (ghostRef.current) {
+                      ghostRef.current.style.display = 'none';
+                    }
+                  };
+                  document.addEventListener('pointerup', cleanUpMove);
+                  document.addEventListener('pointercancel', cleanUpMove);
+                }}
+                onPointerEnter={() => {
+                  if (draggedTabIdRef.current && draggedTabIdRef.current !== tab.id) {
+                    onReorderTabs(draggedTabIdRef.current, tab.id);
+                    didDragRef.current = true;
+                  }
+                }}
+                onClick={(event) => {
+                  if (didDragRef.current) {
+                    event.preventDefault();
+                    didDragRef.current = false;
+                    return;
+                  }
+                  onSelectTab(tab.id);
+                }}
               >
                 {editing ? (
                   <input
@@ -359,11 +297,8 @@ export function DesktopTabBar({
             onPointerDown={handleScrollbarTrackPointerDown}
           >
             <div
+              ref={scrollbarThumbRef}
               className="desktop-tabbar__scrollbar-thumb"
-              style={{
-                width: `${scrollbarMetrics.thumbWidth}px`,
-                transform: `translateX(${scrollbarMetrics.thumbLeft}px)`,
-              }}
               onPointerDown={beginScrollbarDrag}
             />
           </div>
@@ -373,7 +308,7 @@ export function DesktopTabBar({
         <TabContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          labels={t.tabContextMenu}
+        labels={t.tabContextMenu}
           disabled={{
             closeThisTab: contextMenuTabIndex === -1,
             closeTabsToRight:
@@ -398,9 +333,9 @@ export function DesktopTabBar({
         themeTooltip={themeToggleLabel}
         editTooltip={t.topbar.edit}
         settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
-        homeShortcut={state.settings.keybindings?.welcome}
-        themeShortcut={state.settings.keybindings?.toggleTheme}
-        settingsShortcut={state.settings.keybindings?.settings}
+        homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
+        themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
+        settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
         canEdit={!!state.currentFile}
         isDark={isDark}
         hasUpdate={hasUpdate}
@@ -411,50 +346,40 @@ export function DesktopTabBar({
         onSettings={onSettingsOpen}
         sidebarLabel={t.actions.toggleSidebar}
         sidebarTooltip={t.actions.toggleSidebar}
-        sidebarShortcut={state.settings.keybindings?.toggleSidebar}
+        sidebarShortcut={getEnabledShortcut(state.settings, 'toggleSidebar')}
         sidebarActive={!state.sidebarCollapsed}
         onSidebarToggle={onSidebarToggle}
         tocLabel={t.actions.toggleToc}
         tocTooltip={t.actions.toggleToc}
-        tocShortcut={state.settings.keybindings?.toggleToc}
+        tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')}
         tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
         tocToggleDisabled={!state.currentFile || state.toc.length === 0}
         onTocToggle={toggleToc}
         focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
         focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
-        focusModeShortcut={state.settings.keybindings?.toggleFocusMode}
+        focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}
         isFocusMode={state.focusMode}
         onFocusModeToggle={toggleFocusMode}
+        showFullscreen
+        fullscreenLabel={t.actions.toggleFullscreen}
+        fullscreenTooltip={t.actions.toggleFullscreenTooltip}
+        fullscreenShortcut="F11"
+        isFullscreen={isFullscreen}
+        onFullscreenToggle={onFullscreenToggle}
       />
       <div className="desktop-tabbar__window-controls">
-        <TooltipButton
-          className="btn btn--icon window-control-btn"
-          onClick={() => bridge.postMessage({ command: 'window-minimize' })}
-          tooltip={t.tooltips.minimize}
-          icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>}
-        />
-        <TooltipButton
-          className="btn btn--icon window-control-btn"
-          onClick={() => bridge.postMessage({ command: 'window-maximize' })}
-          tooltip={isMaximized ? t.tooltips.restore : t.tooltips.maximize}
-          icon={isMaximized ? (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-              <path d="M8 8V3h13v13h-5" />
-              <path d="M3 8h13v13H3z" />
-            </svg>
-          ) : (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>
-          )}
-        />
-        <TooltipButton
-          className="btn btn--icon window-control-btn window-control-btn--close"
-          onClick={() => bridge.postMessage({ command: 'window-close' })}
-          tooltip={t.tooltips.closeApp}
-          tooltipAlign="right"
-          icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>}
-        />
+        <TooltipButton className="btn btn--icon window-control-btn" onClick={() => bridge.postMessage({ command: 'window-minimize' })} tooltip={t.tooltips.minimize} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>} />
+        <TooltipButton className="btn btn--icon window-control-btn" onClick={() => shouldExitTauriFullscreenOnRestore ? onFullscreenToggle?.() : bridge.postMessage({ command: 'window-maximize' })} tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize} icon={showsRestoreControl ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M8 8V3h13v13h-5" /><path d="M3 8h13v13H3z" /></svg>) : (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>)} />
+        <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={() => bridge.postMessage({ command: 'window-close' })} tooltip={t.tooltips.closeApp} tooltipAlign="right" icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
       </div>
+      {draggedTabId && (
+        <div
+          ref={ghostRef}
+          className="tab-drag-ghost"
+        >
+          {ghostLabel}
+        </div>
+      )}
     </header>
   );
 }
-

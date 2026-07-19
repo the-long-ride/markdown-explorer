@@ -152,15 +152,7 @@ export function InteractiveBackground() {
   return (
     <canvas
       ref={canvasRef}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        pointerEvents: 'none', // Allow clicks to pass through
-        zIndex: 0,
-      }}
+      className="interactive-background-canvas"
     />
   );
 }

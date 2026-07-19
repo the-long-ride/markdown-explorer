@@ -28,6 +28,7 @@ const REQUIRED_HOST_COMMANDS = [
   'crossTabSearchResults',
   'workspaceSearchResults',
   'workspaceSearchIndexLoaded',
+  'fullscreenChanged',
 ];
 
 describe('tauri host-message parity', () => {

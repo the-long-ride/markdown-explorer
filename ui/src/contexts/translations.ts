@@ -61,7 +61,10 @@ export interface Translations {
     zoomIn: string;
     zoomOut: string;
     locateFile: string;
+    toggleDesktopViewMode: string;
     toggleFocusMode?: string;
+    toggleFullscreen: string;
+    toggleFullscreenTooltip: string;
   };
   topbar: {
     home: string;
@@ -109,6 +112,8 @@ export interface Translations {
     locateFile: string;
   };
   tabContextMenu: {
+    moveTabLeft: string;
+    moveTabRight: string;
     closeThisTab: string;
     closeTabsToRight: string;
     closeOtherTabs: string;
@@ -252,7 +257,10 @@ let _TRANSLATIONS: Record<string, Translations> = {
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
       locateFile: "Locate current file",
+      toggleDesktopViewMode: "Toggle Tabs/Focus view",
       toggleFocusMode: "Toggle focus mode",
+      toggleFullscreen: "Show full screen",
+      toggleFullscreenTooltip: "Toggle native full screen window",
     },
     topbar: {
       home: "Home",
@@ -300,6 +308,8 @@ let _TRANSLATIONS: Record<string, Translations> = {
       locateFile: "Locate file",
     },
     tabContextMenu: {
+      moveTabLeft: "Move tab left",
+      moveTabRight: "Move tab right",
       closeThisTab: "Close this tab",
       closeTabsToRight: "Close tabs to the right",
       closeOtherTabs: "Close other tabs",

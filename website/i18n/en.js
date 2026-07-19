@@ -1,0 +1,157 @@
+window.LANGS = window.LANGS || {};
+window.LANGS.en = {
+    label: "EN",
+    skipToContent: "Skip to content",
+    navFeatures: "Features",
+    navGallery: "Gallery",
+    navDownload: "Download",
+    navFaq: "FAQ",
+    navDemo: "Demo",
+    navDemoExamples: "Example files",
+    navDemoTry: "Open a file",
+    heroDemoLabel: "Try instantly in browser:",
+    heroEyebrow: "Open source - VS Code extension and desktop app",
+    heroCopy:
+      "A private Markdown workspace reader with exact search jumps, Mermaid, math, video, syntax-highlighted code, interactive tables, charts, tabs, converted document previews, Sidebar Cursor mode, and Theme Remix for real documentation.",
+    btnInstallVscode: "Install for VS Code",
+    btnDownloadDesktop: "Download desktop app",
+    stripVscodeMarketplace: "VS Code Marketplace",
+    stripOpenVsx: "Open VSX",
+    stripLatestRelease: "Latest GitHub Release",
+    metric1: "search scopes: file, workspace, all tabs",
+    metric2: "highlighted programming languages",
+    metric3: "rows in data table stay sortable & filterable and also can be viewed as charts",
+    metric4: "Mermaid diagram styles rendered in docs",
+    metric5: "interactive sandboxes run in isolated previews",
+    metric6: "click to enlarge diagrams, charts, and images",
+    featuresSectionTitle: "Features & capabilities",
+    featuresSectionSubtitle: "Explore the powerful tools built into Markdown Explorer to make local documentation interactive and comfortable.",
+    featuresEyebrow: "Built for agent-era Markdown",
+    featuresTitle: "Your docs become an app",
+    featuresSubtitle:
+      "Markdown Explorer keeps files local while making big Markdown and document workspaces easier to scan, search, understand, and present.",
+    featureSearchKicker: "Search",
+    featureSearchTitle: "Find content across every open workspace tab",
+    featureSearchBody:
+      "Search current file, current workspace, or all desktop tabs. Results show focused excerpts and jump to the exact clicked match.",
+    featureTablesKicker: "Tables",
+    featureTablesTitle: "Large tables stay usable",
+    featureTablesBody:
+      "Sort and filter real rows, use multi-choice filters, and keep long tables collapsed while exploring filtered results.",
+    featureChartsKicker: "Charts",
+    featureChartsTitle: "Turn Markdown data into charts",
+    featureChartsBody:
+      "Switch suitable tables into Bar, Line, or Pie views when numeric columns are detected.",
+    featureDiagramsKicker: "Diagrams",
+    featureDiagramsTitle: "Mermaid diagrams render cleanly",
+    featureDiagramsBody:
+      "Flowcharts, timelines, git graphs, architecture diagrams, and more render inside your local Markdown reader.",
+    featureMediaKicker: "Media",
+    featureMediaTitle: "Markdown can carry video too",
+    featureMediaBody:
+      "Embed local video or supported streaming links without turning your documentation into a separate website.",
+    featureMediaModalKicker: "Media Viewer",
+    featureMediaModalTitle: "Zoom and inspect images & diagrams",
+    featureMediaModalBody:
+      "Click any image, flowchart, or architecture diagram to open a premium fullscreen backdrop-blur modal. Focus on complex details, pan across large graphics, and click anywhere to close.",
+    galleryEyebrow: "Fresh screenshots",
+    galleryTitle: "A viewer made for dense docs",
+    gallerySubtitle:
+      "Use Markdown Explorer for agent memory folders, engineering runbooks, release notes, diagrams, demos, and knowledge bases.",
+    galleryCaption1:
+      "Readable code blocks with language labels, line numbers, copy controls, and strong contrast.",
+    galleryCaption2: "LaTeX math renders directly in the document flow.",
+    galleryCaption3: "Interactive HTML sandboxes run in isolated previews.",
+    galleryCaption4:
+      "Zoom and inspect images or diagrams in a focused media modal.",
+    galleryCaption5:
+      "Desktop mode remembers recent workspaces and opens folders quickly.",
+    privacyEyebrow: "Private by default",
+    privacyTitle: "Offline, local, and comfortable for real project folders",
+    privacyBody:
+      "Markdown Explorer does not upload Markdown content. It scans and renders locally, making it useful for private notes, agent memory folders, engineering docs, runbooks, and project knowledge bases.",
+    langsEyebrow: "Global & Accessible",
+    langsTitle: "Documentation in your native language",
+    langsBody:
+      "Markdown Explorer is built for global teams. The entire reader interface is fully localized, allowing you to seamlessly navigate, search, and manage your documentation workspaces in your preferred language.",
+    downloadEyebrow: "Get Markdown Explorer",
+    downloadTitle: "Install the extension or download the desktop app",
+    downloadSubtitle:
+      "The desktop app goes beyond the VS Code extension with Tabs view, multiple workspaces open at the same time, more keyboard shortcuts, and extra features. Lightweight builds use Tauri for smaller bundle size with full features.",
+    dlVscodeTitle: "VS Code Marketplace",
+    dlVscodeBody:
+      "Best choice for VS Code users. Launch the docs viewer directly inside your editor.",
+    dlVscodeBtn: "Install extension",
+    dlOvxTitle: "Open VSX Registry",
+    dlOvxBody:
+      "Use this for VSCodium and VS Code-compatible editors that rely on Open VSX.",
+    dlOvxBtn: "Install from Open VSX",
+    dlWinTitle: "Windows desktop",
+    dlWinBody:
+      "Use the NSIS installer for Start Menu and desktop shortcuts, or the portable `.exe` to run directly without installation.",
+    dlWinNsisBtn: "Installer",
+    dlWinPortableBtn: "Portable",
+    dlMacTitle: "macOS desktop",
+    dlMacBody:
+      "Download a `.dmg` for your chip. Use `arm64` for Apple Silicon and `x64` for Intel Macs.",
+    dlMacBtn: "macOS",
+    dlMacArmBtn: "Apple Silicon",
+    dlMacIntelBtn: "Intel",
+    dlLinuxTitle: "Linux desktop",
+    dlLinuxBody:
+      "Use Electron `.AppImage` for portable launch or `.deb` on Debian and Ubuntu-based systems. Lightweight builds are available as AppImage or `.deb`.",
+    dlLinuxBtn: "Linux",
+    dlLinuxAppImageBtn: "AppImage",
+    dlLinuxDebBtn: ".deb",
+    dlWinLightweightBtn: "Lightweight",
+    dlLinuxLightweightAppImageBtn: "Lightweight AppImage",
+    dlLinuxLightweightDebBtn: "Lightweight .deb",
+    dlMacLightweightBtn: "Lightweight",
+    dlChromiumTitle: "Chromium extension",
+    dlChromiumBody:
+      "Run Markdown Explorer directly in your browser. Install unpacked extension from the latest release.",
+    dlChromiumBtn: "Extension zip",
+    dlGhTitle: "Latest release page",
+    dlGhBody:
+      "Every GitHub Release includes file descriptions so you can pick the right package for your OS.",
+    dlGhBtn: "View latest release",
+    releaseChecking: "Checking latest release assets...",
+    faqEyebrow: "Questions",
+    faqTitle: "Common questions",
+    faq1Q: "Is Markdown Explorer free?",
+    faq1A:
+      "Yes. The project is MIT licensed and the GitHub repository is public.",
+    faq2Q: "Does it work without internet?",
+    faq2A:
+      "Yes. Rendering and searching happen locally. The website download buttons use GitHub only to find the latest release files and public download totals.",
+    faq3Q: "Which desktop file should I download?",
+    faq3A:
+      "Windows users can choose the NSIS installer (`Setup *.exe`) for Start Menu integration or the portable `.exe` to run directly. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.",
+    footerBy: "Markdown Explorer by",
+    footerIssues: "Issues",
+    footerPrivacy: "Privacy",
+    footerTerms: "Terms",
+    footerLicense: "License",
+    releaseApiNote: "Desktop downloads resolve to GitHub Release",
+    releaseApiNoteFallback:
+      "Desktop downloads resolve from the GitHub Releases API.",
+    releaseApiFail:
+      "Could not read GitHub assets right now. Download buttons open the latest release page instead.",
+    download: "download",
+    downloads: "downloads",
+    acrossAllVersions: "across all versions",
+    acrossAllDesktop: "across all desktop releases.",
+    onVscodeMarketplace: "on VS Code Marketplace",
+    onOpenVsx: "on Open VSX",
+    seeChangelog: "See changelog on GitHub.",
+    guideBtn: "Install Guide",
+    macosInstallBtn: "Install Guide",
+    modalTitle: "Extension Install Guide",
+    modalIntro: "Follow these steps to load the unpacked extension in any Chromium-based browser (Chrome, Brave, Edge, etc.):",
+    modalStep1: "Download the extension zip file and extract its contents to a folder.",
+    modalStep2Important: "Important:",
+    modalStep2: "Move the extracted folder to a stable, permanent directory (such as your Documents folder). Do not leave it in your Downloads folder or delete it, as moving it later will break the installed extension.",
+    modalStep3: "Open your browser and navigate to the extensions management page:",
+    modalStep4: "Turn on the Developer mode switch (usually found in the top-right corner).",
+    modalStep5: "Click the Load unpacked button (usually in the top-left) and select the extracted extension folder.",
+  };

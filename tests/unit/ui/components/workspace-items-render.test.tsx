@@ -285,13 +285,13 @@ describe('WorkspaceWindowControls', () => {
   it('hides controls when embeddedInTabs is true', () => {
     const { container } = render(<WorkspaceWindowControls embeddedInTabs={true} theme="light" isMaximized={false} onToggleTheme={vi.fn()} />);
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.display).toBe('none');
+    expect(wrapper).toHaveClass('is-hidden');
   });
 
   it('shows controls when embeddedInTabs is false', () => {
     const { container } = render(<WorkspaceWindowControls embeddedInTabs={false} theme="light" isMaximized={false} onToggleTheme={vi.fn()} />);
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.display).toBe('flex');
+    expect(wrapper).not.toHaveClass('is-hidden');
   });
 
   it('does not render window control buttons in non-desktop mode', () => {

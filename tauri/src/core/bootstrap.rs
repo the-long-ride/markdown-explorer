@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use tauri::{image::Image, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri_plugin_window_state::StateFlags;
 
 const APP_ICON_PNG: &[u8] = include_bytes!("../../icons/icon.png");
 
@@ -25,7 +26,10 @@ pub fn boot() {
         .plugin(tauri_plugin_process::init())
         .plugin(
             tauri_plugin_window_state::Builder::new()
-                .with_denylist(&["decorations"])
+                // The custom title bar must remain custom, and fullscreen is transient.
+                .with_state_flags(
+                    StateFlags::all() & !(StateFlags::FULLSCREEN | StateFlags::DECORATIONS),
+                )
                 .build(),
         )
         .register_uri_scheme_protocol("youtube-proxy", crate::youtube::handle_youtube_proxy)
@@ -44,6 +48,7 @@ pub fn boot() {
                     .resizable(true)
                     .fullscreen(false)
                     .decorations(false)
+                    .auto_resize()
                     .initialization_script(&shim_js)
                     .build()?;
             let icon = match Image::from_bytes(APP_ICON_PNG) {
@@ -65,10 +70,31 @@ pub fn boot() {
 
             let win_for_event = window.clone();
             let app_for_event = app_handle.clone();
+            let state_for_event = state_for_dispatch.clone();
             window.on_window_event(move |event| match event {
                 tauri::WindowEvent::Resized(_) => {
                     let is_max = win_for_event.is_maximized().unwrap_or(false);
                     crate::host_message::emit_window_state_changed(&app_for_event, is_max);
+
+                    let transition = state_for_event.inner.read().fullscreen_transition;
+                    match transition {
+                        crate::app_state::FullscreenTransition::AwaitingMaximize if is_max => {
+                            state_for_event.inner.write().fullscreen_transition =
+                                crate::app_state::FullscreenTransition::AwaitingUnmaximize;
+                            if win_for_event.unmaximize().is_err() {
+                                state_for_event.inner.write().fullscreen_transition =
+                                    crate::app_state::FullscreenTransition::Idle;
+                            }
+                        }
+                        crate::app_state::FullscreenTransition::AwaitingUnmaximize if !is_max => {
+                            state_for_event.inner.write().fullscreen_transition =
+                                crate::app_state::FullscreenTransition::Idle;
+                            if win_for_event.set_fullscreen(true).is_ok() {
+                                crate::host_message::emit_fullscreen_changed(&app_for_event, true);
+                            }
+                        }
+                        _ => {}
+                    }
                 }
                 tauri::WindowEvent::CloseRequested { .. } => {
                     if let Ok(config_dir) = app_for_event.path().app_config_dir() {

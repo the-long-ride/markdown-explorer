@@ -1,0 +1,45 @@
+.tree-file-search-match-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: var(--r);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--tx2);
+  transition:
+    background 0.12s,
+    color 0.12s;
+  user-select: none;
+}
+
+.tree-file-search-match-row:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
+.tree-file-search-match-line {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 10px;
+  min-width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tree-file-search-match-excerpt {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-file-search-match-excerpt strong {
+  color: var(--tx);
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 700;
+}

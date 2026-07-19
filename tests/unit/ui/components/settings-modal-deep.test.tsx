@@ -377,6 +377,25 @@ describe('SettingsModal deep', () => {
       expect(mockUpdateSettings).toHaveBeenCalled();
     });
 
+    it('rejects a shortcut already assigned to another command', () => {
+      renderModal();
+      const inputs = document.querySelectorAll('.settings-shortcut-input') as NodeListOf<HTMLInputElement>;
+      fireEvent.focus(inputs[0]);
+      fireEvent.keyDown(inputs[0], { key: 't', altKey: true });
+      expect(screen.getByText('Banned Shortcut')).toBeInTheDocument();
+      expect(mockUpdateSettings).not.toHaveBeenCalled();
+    });
+
+    it('disables a shortcut from its switch', () => {
+      renderModal();
+      const shortcutSwitch = screen.getAllByRole('switch')[0];
+      expect(shortcutSwitch).toHaveAttribute('aria-checked', 'true');
+      fireEvent.click(shortcutSwitch);
+      expect(mockUpdateSettings).toHaveBeenCalledWith({
+        disabledKeybindings: expect.objectContaining({ findCurrentFile: true }),
+      });
+    });
+
     it('rejects Ctrl+Space as banned shortcut', () => {
       renderModal();
       const inputs = document.querySelectorAll('.settings-shortcut-input') as NodeListOf<HTMLInputElement>;
@@ -423,7 +442,10 @@ describe('SettingsModal deep', () => {
     it('Reset to Default Shortcuts calls updateSettings with defaults', () => {
       renderModal();
       fireEvent.click(screen.getByText('Reset to Default Shortcuts'));
-      expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K' } });
+      expect(mockUpdateSettings).toHaveBeenCalledWith({
+        keybindings: { searchCurrent: 'Ctrl+K' },
+        disabledKeybindings: {},
+      });
     });
   });
 
@@ -804,7 +826,7 @@ describe('SettingsModal deep', () => {
 
   describe('ACTIONS_LIST', () => {
     it('contains expected number of actions', () => {
-      expect(ACTIONS_LIST.length).toBe(19);
+      expect(ACTIONS_LIST.length).toBe(24);
     });
 
     it('contains findCurrentFile action', () => {

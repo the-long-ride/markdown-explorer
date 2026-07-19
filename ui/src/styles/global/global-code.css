@@ -287,6 +287,15 @@
 .hl-pkg {
   color: var(--hl-pkg);
 }
+.hl-cmd {
+  color: var(--hl-func);
+  font-weight: 600;
+}
+.hl-param,
+.hl-op,
+.hl-val {
+  color: var(--hl-terminal-muted);
+}
 
 /* Highlight.js overrides */
 .hljs-keyword {
@@ -316,7 +325,7 @@
   font-weight: 600 !important;
 }
 .hljs-params {
-  color: var(--tx2) !important;
+  color: var(--hl-terminal-muted) !important;
 }
 .hljs-built_in {
   color: var(--hl-prop) !important;

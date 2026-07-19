@@ -1,0 +1,112 @@
+#termsModal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--modal-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.terms-card {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 680px;
+  max-width: min(94vw, 680px);
+  gap: 22px;
+  padding: 32px;
+  background: rgba(30, 30, 36, 0.45);
+  border: 1px solid var(--bd-s);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lg);
+}
+
+.terms-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  text-align: center;
+}
+
+.terms-logo {
+  margin-bottom: 12px;
+  filter: drop-shadow(0 4px 12px var(--accent-dim));
+}
+
+.terms-header h2 {
+  margin: 0;
+  color: var(--tx);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.terms-header p {
+  margin: 8px 0 0;
+  color: var(--tx2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.terms-link {
+  color: var(--accent-text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.terms-agreement {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.terms-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tx);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.terms-checkbox {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  margin-top: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.terms-checkbox-label span {
+  line-height: 1.4;
+}
+
+.terms-continue {
+  width: 100%;
+  padding: 14px;
+  color: var(--txm);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: not-allowed;
+  background: var(--bg-e);
+  border: none;
+  border-radius: var(--r-lg);
+  box-shadow: none;
+  transition: all 0.15s ease;
+}
+
+.terms-continue.is-enabled {
+  color: #fff;
+  cursor: pointer;
+  background: var(--accent);
+  box-shadow: 0 4px 12px var(--accent-dim);
+}

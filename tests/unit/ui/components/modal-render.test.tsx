@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MediaModal } from '../../../../ui/src/components/Modal/MediaModal';
 import { TermsModal } from '../../../../ui/src/components/Modal/TermsModal';
 import { SwitchWorkspaceModal } from '../../../../ui/src/components/Modal/SwitchWorkspaceModal';
+import { WorkspaceSelectionConfirmModal } from '../../../../ui/src/components/Modal/WorkspaceSelectionConfirmModal';
 
 const mockState: any = {
   settings: { language: 'en' },
@@ -285,5 +286,51 @@ describe('SwitchWorkspaceModal', () => {
     );
     expect(screen.getByText('Hủy')).toBeInTheDocument();
     expect(screen.getByText('Chuyển')).toBeInTheDocument();
+  });
+});
+
+describe('WorkspaceSelectionConfirmModal', () => {
+  it('returns null when closed', () => {
+    const { container } = render(
+      <WorkspaceSelectionConfirmModal isOpen={false} onClose={() => {}} onConfirm={() => {}} />,
+    );
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('cancel closes dialog without confirming', () => {
+    const onClose = vi.fn();
+    const onConfirm = vi.fn();
+    render(<WorkspaceSelectionConfirmModal isOpen={true} onClose={onClose} onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('confirm closes workspace flow', () => {
+    const onConfirm = vi.fn();
+    render(<WorkspaceSelectionConfirmModal isOpen={true} onClose={() => {}} onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses stronger backdrop and matching outline action buttons', () => {
+    render(<WorkspaceSelectionConfirmModal isOpen={true} onClose={() => {}} onConfirm={() => {}} />);
+    const dialog = screen.getByRole('dialog');
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    const confirm = screen.getByRole('button', { name: 'Confirm' });
+
+    expect(dialog).toHaveClass('workspace-selection-confirm-modal');
+    expect(cancel).toHaveClass('workspace-selection-confirm-button', 'workspace-selection-confirm-button--outline');
+    expect(confirm).toHaveClass('workspace-selection-confirm-button');
+  });
+
+  it('Escape cancels and Enter confirms', () => {
+    const onClose = vi.fn();
+    const onConfirm = vi.fn();
+    render(<WorkspaceSelectionConfirmModal isOpen={true} onClose={onClose} onConfirm={onConfirm} />);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.keyDown(document, { key: 'Enter' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 });

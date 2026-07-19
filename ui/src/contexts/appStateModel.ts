@@ -1,0 +1,258 @@
+import {
+  normalizeActiveCustomThemeId,
+  normalizeCustomThemes,
+} from '../theme/customThemes';
+import {
+  DEFAULT_KEYBINDINGS,
+  getDefaultKeybindings,
+  normalizeDesktopViewMode,
+  normalizeKeybindings,
+  normalizeThemeMode,
+  normalizeThemeStyle,
+} from './appStateConstants';
+import type {
+  AppRuntime,
+  AppSettings,
+  ContentTab,
+  FolderNode,
+  Frontmatter,
+  HostPlatform,
+  MdFile,
+  PersistedState,
+  RecentWorkspace,
+  ThemeMode,
+  ThemeStyle,
+  TocEntry,
+  UpdateState,
+  WorkspaceUnavailableReason,
+  DocumentPreviewInfo,
+  RenderContentMessage,
+} from '../types';
+
+export interface AppState {
+  fileList: MdFile[];
+  tree: FolderNode | null;
+  currentFile: string | null;
+  theme: ThemeMode;
+  hasThemePreference: boolean;
+  themeStyle: ThemeStyle;
+  hasThemeStylePreference: boolean;
+  defaultExpanded: boolean;
+  workspaceName: string;
+  workspacePath?: string;
+  sidebarCollapsed: boolean;
+  tocCollapsed: boolean;
+  contentHtml: string;
+  markdownSource: string | null;
+  frontmatter: Frontmatter;
+  toc: TocEntry[];
+  relativePath: string;
+  isLoading: boolean;
+  loadingLabel: string;
+  loadingDetail: string;
+  previewInfo: DocumentPreviewInfo | null;
+  staleContentFilePath: string | null;
+  notFoundHref: string | null;
+  workspaceUnavailablePath: string | null;
+  workspaceUnavailableReason: WorkspaceUnavailableReason | null;
+  settings: AppSettings;
+  renderVersion: number;
+  contentTabs: ContentTab[];
+  activeContentTabPath: string | null;
+  recentWorkspaces: RecentWorkspace[];
+  isMaximized: boolean;
+  appVersion: string;
+  appRuntime: AppRuntime;
+  hostPlatform: HostPlatform;
+  hostArch: string;
+  canInstallUpdates: boolean;
+  focusMode: boolean;
+  updateState: UpdateState;
+  sidebarActiveTab: 'files' | 'search';
+}
+
+export type Action =
+  | {
+      type: 'READY_ACK';
+      fileList: MdFile[];
+      tree: FolderNode | null;
+      theme: ThemeMode;
+      themeStyle: ThemeStyle;
+      defaultExpanded: boolean;
+      workspaceName: string;
+      workspacePath?: string;
+      contentTabs?: readonly ContentTab[];
+      activeContentTabPath?: string | null;
+      recentWorkspaces?: readonly RecentWorkspace[];
+      appVersion?: string;
+      appRuntime?: AppRuntime;
+      hostPlatform?: HostPlatform;
+      hostArch?: string;
+      canInstallUpdates?: boolean;
+      documentConversionEnabled?: boolean;
+      isMaximized?: boolean;
+    }
+  | {
+      type: 'RECENT_WORKSPACES_CHANGED';
+      recentWorkspaces: readonly RecentWorkspace[];
+    }
+  | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
+  | {
+      type: 'WORKSPACE_FILES_CHANGED';
+      fileList: MdFile[];
+      tree: FolderNode | null;
+      workspaceName: string;
+      workspacePath?: string;
+      documentConversionEnabled?: boolean;
+    }
+  | { type: 'CURRENT_FILE_CHANGED'; filePath: string }
+  | { type: 'NAV_NOT_FOUND'; href: string }
+  | { type: 'ACTIVATE_CONTENT_TAB'; filePath: string }
+  | { type: 'REORDER_CONTENT_TABS'; sourcePath: string; targetPath: string }
+  | { type: 'CLOSE_CONTENT_TAB'; filePath: string }
+  | { type: 'CLOSE_CONTENT_TABS_TO_RIGHT'; filePath: string }
+  | { type: 'CLOSE_OTHER_CONTENT_TABS'; filePath: string }
+  | { type: 'CLOSE_ALL_CONTENT_TABS' }
+  | {
+      type: 'WORKSPACE_UNAVAILABLE';
+      workspacePath: string;
+      workspaceName: string;
+      reason: WorkspaceUnavailableReason;
+      recentWorkspaces?: readonly RecentWorkspace[];
+      appVersion?: string;
+      appRuntime?: AppRuntime;
+      hostPlatform?: HostPlatform;
+      hostArch?: string;
+      canInstallUpdates?: boolean;
+      isMaximized?: boolean;
+    }
+  | { type: 'SET_LOADING'; label?: string; detail?: string }
+  | { type: 'SET_UPDATE_STATE'; updateState: UpdateState }
+  | { type: 'TOGGLE_SIDEBAR' }
+  | { type: 'TOGGLE_TOC' }
+  | { type: 'SET_THEME'; theme: ThemeMode }
+  | { type: 'SET_THEME_STYLE'; themeStyle: ThemeStyle }
+  | { type: 'SELECT_CUSTOM_THEME'; themeId: string | undefined }
+  | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
+  | { type: 'SET_MAXIMIZED'; isMaximized: boolean }
+  | { type: 'TOGGLE_FOCUS_MODE' }
+  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: 'files' | 'search' }
+  | { type: 'SET_SIDEBAR_COLLAPSED'; collapsed: boolean };
+
+export function createEmptyUpdateState(): UpdateState {
+  return {
+    status: 'idle',
+    version: '',
+    downloadedVersion: '',
+    downloadedFileName: '',
+    progressPercent: 0,
+    error: '',
+  };
+}
+
+export const initialState: AppState = {
+  fileList: [],
+  tree: null,
+  currentFile: null,
+  theme: 'auto',
+  hasThemePreference: false,
+  themeStyle: 'default',
+  hasThemeStylePreference: false,
+  defaultExpanded: true,
+  workspaceName: '',
+  workspacePath: undefined,
+  sidebarCollapsed: false,
+  tocCollapsed: false,
+  contentHtml: '',
+  markdownSource: null,
+  frontmatter: {},
+  toc: [],
+  relativePath: '',
+  isLoading: true,
+  loadingLabel: 'Loading docs...',
+  loadingDetail: '',
+  previewInfo: null,
+  staleContentFilePath: null,
+  notFoundHref: null,
+  workspaceUnavailablePath: null,
+  workspaceUnavailableReason: null,
+  settings: {
+    showTitle: false,
+    defaultHtmlPreview: true,
+    fileTabs: false,
+    documentConversion: false,
+    scopeFocus: {},
+    desktopViewMode: 'focus',
+    keybindings: DEFAULT_KEYBINDINGS,
+    disabledKeybindings: {},
+    language: 'en',
+    customThemes: [],
+  },
+  renderVersion: 0,
+  contentTabs: [],
+  activeContentTabPath: null,
+  recentWorkspaces: [],
+  isMaximized: false,
+  appVersion: '',
+  appRuntime: 'vscode',
+  hostPlatform: 'unknown',
+  hostArch: '',
+  canInstallUpdates: false,
+  focusMode: false,
+  updateState: createEmptyUpdateState(),
+  sidebarActiveTab: 'files',
+};
+
+export function createInitialState(
+  saved: PersistedState | undefined,
+  isDesktop: boolean,
+  storage?: Storage | { getItem(k: string): string | null },
+): AppState {
+  const tocCollapsed = storage
+    ? storage.getItem('markdown-explorer-toc-collapsed') === 'true'
+    : false;
+  const defaultKeybindings = getDefaultKeybindings(isDesktop);
+  if (!saved) {
+    return {
+      ...initialState,
+      appRuntime: isDesktop ? 'desktop' : 'vscode',
+      tocCollapsed,
+      focusMode: false,
+      settings: {
+        ...initialState.settings,
+        keybindings: defaultKeybindings,
+        disabledKeybindings: {},
+        searchScopeFocus: {},
+      },
+    };
+  }
+  const customThemes = normalizeCustomThemes(saved.customThemes);
+  return {
+    ...initialState,
+    appRuntime: isDesktop ? 'desktop' : 'vscode',
+    theme: saved.theme ? normalizeThemeMode(saved.theme) : initialState.theme,
+    hasThemePreference: !!saved.theme,
+    themeStyle: saved.themeStyle ? normalizeThemeStyle(saved.themeStyle) : initialState.themeStyle,
+    hasThemeStylePreference: !!saved.themeStyle,
+    tocCollapsed,
+    settings: {
+      ...initialState.settings,
+      showTitle: saved.showTitle === true,
+      defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+      fileTabs: saved.fileTabs === true,
+      documentConversion: saved.documentConversion === true,
+      scopeFocus: saved.scopeFocus ?? {},
+      searchScopeFocus: saved.searchScopeFocus ?? {},
+      desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+      keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
+      disabledKeybindings: saved.disabledKeybindings ?? {},
+      language: saved.language || 'en',
+      customThemes,
+      activeCustomThemeId: normalizeActiveCustomThemeId(saved.activeCustomThemeId, customThemes),
+    },
+  };
+}
+
+export function normalizePathKey(value: string): string {
+  return value.replace(/\\/g, '/').toLowerCase();
+}

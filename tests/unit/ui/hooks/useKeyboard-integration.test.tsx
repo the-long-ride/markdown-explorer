@@ -47,6 +47,7 @@ const defaultProps = {
   onToggleToc: vi.fn(),
   onLocateFile: vi.fn(),
   onToggleFocusMode: vi.fn(),
+  onWorkspaceSelection: vi.fn(),
 };
 
 function fireKeyDown(opts: Partial<KeyboardEventInit> & { key: string }) {
@@ -417,9 +418,18 @@ describe('useKeyboard hook integration', () => {
 
   it('dispatches closeWorkspace on workspace-selection action', () => {
     (window as any).__chromeExtBus = {};
-    renderHook(() => useKeyboard(defaultProps));
+    const { onWorkspaceSelection, ...legacyProps } = defaultProps;
+    renderHook(() => useKeyboard(legacyProps));
     fireKeyDown({ key: 'w', ctrlKey: true, shiftKey: true });
     expect(mockPostMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
+  });
+
+  it('calls workspace-selection callback instead of closing directly when provided', () => {
+    (window as any).__chromeExtBus = {};
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'w', ctrlKey: true, shiftKey: true });
+    expect(defaultProps.onWorkspaceSelection).toHaveBeenCalledTimes(1);
+    expect(mockPostMessage).not.toHaveBeenCalledWith({ command: 'closeWorkspace' });
   });
 
   it('does not fire actions when isModalOpen is true', () => {

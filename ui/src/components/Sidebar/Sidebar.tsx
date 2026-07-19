@@ -15,6 +15,8 @@ import { getTranslations } from "../../contexts/translations";
 import type { FolderNode, MdFile } from "../../types";
 import { SidebarSearch } from "./SidebarSearch";
 import type { SidebarSearchStatus } from "./SidebarSearch";
+import { useSidebarCursorNavigation } from "./useSidebarCursorNavigation";
+import { getEnabledShortcut } from "../../utils/shortcuts";
 
 function getWorkspaceScopeKey(
   workspacePath: string | undefined,
@@ -50,13 +52,6 @@ function folderHasVisibleContent(
   );
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  if (target.isContentEditable) return true;
-  const tagName = target.tagName.toLowerCase();
-  return tagName === "input" || tagName === "textarea" || tagName === "select";
-}
-
 interface SidebarProps {
   cursorMode?: boolean;
   onCursorModeClose?: () => void;
@@ -66,7 +61,6 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   const { state, updateSettings, dispatch } = useAppState();
   const [filter, setFilter] = useState("");
   const [scopeFocusEditing, setScopeFocusEditing] = useState(false);
-  const [cursorItemId, setCursorItemId] = useState<string | null>(null);
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
 
@@ -88,6 +82,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
 
   const isFiles = state.sidebarActiveTab === "files";
   const isSearch = state.sidebarActiveTab === "search";
+  const tabIndicatorRef = useRef<HTMLSpanElement>(null);
 
   const scrollToActiveFile = useCallback(() => {
     if (!state.currentFile) return;
@@ -133,6 +128,16 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     hasScopeEntry &&
     !scopeFocusEditing &&
     selectedFilePaths.size < allFilePaths.length;
+  const cursorItemId = useSidebarCursorNavigation({
+    cursorMode,
+    currentFile: state.currentFile,
+    treeRef,
+    filter,
+    hideUnselected,
+    scopeFocusEditing,
+    selectedFilePaths,
+    onCursorModeClose,
+  });
   const scopeFocusCount = hasScopeEntry ? selectedFilePaths.size : allFilePaths.length;
   const allFilesSelected = allFilePaths.length > 0 && selectedFilePaths.size === allFilePaths.length;
   const bulkScopeActionLabel = allFilesSelected
@@ -224,135 +229,6 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     scrollPosRef.current = e.currentTarget.scrollTop;
   }, []);
 
-  const getCursorItems = useCallback((): HTMLElement[] => {
-    const root = treeRef.current;
-    if (!root) return [];
-    return Array.from(
-      root.querySelectorAll<HTMLElement>('[data-sidebar-cursor-item="true"]'),
-    );
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!cursorMode) {
-      setCursorItemId(null);
-      return;
-    }
-
-    const items = getCursorItems();
-    if (items.length === 0) {
-      setCursorItemId(null);
-      return;
-    }
-
-    const currentItem = cursorItemId
-      ? items.find((item) => item.dataset.sidebarId === cursorItemId)
-      : null;
-    const activeFileItem = state.currentFile
-      ? items.find(
-          (item) =>
-            item.dataset.sidebarKind === "file" &&
-            item.dataset.sidebarId === state.currentFile,
-        )
-      : null;
-    const nextItem = currentItem ?? activeFileItem ?? items[0];
-    const nextId = nextItem.dataset.sidebarId ?? null;
-    if (nextId !== cursorItemId) {
-      setCursorItemId(nextId);
-      return;
-    }
-
-    nextItem.focus({ preventScroll: true });
-    nextItem.scrollIntoView({ block: "nearest" });
-  }, [
-    cursorItemId,
-    cursorMode,
-    filter,
-    getCursorItems,
-    hideUnselected,
-    scopeFocusEditing,
-    selectedFilePaths,
-    state.currentFile,
-    state.tree,
-  ]);
-
-  useEffect(() => {
-    if (!cursorMode) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (isEditableTarget(event.target)) {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          onCursorModeClose?.();
-        }
-        return;
-      }
-
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        onCursorModeClose?.();
-        return;
-      }
-
-      if (!["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) return;
-
-      const items = getCursorItems();
-      if (items.length === 0) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      let index = cursorItemId
-        ? items.findIndex((item) => item.dataset.sidebarId === cursorItemId)
-        : -1;
-      if (index < 0) {
-        index = Math.max(
-          0,
-          items.findIndex((item) => item === document.activeElement),
-        );
-      }
-
-      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-        const direction = event.key === "ArrowDown" ? 1 : -1;
-        const nextIndex = Math.min(
-          items.length - 1,
-          Math.max(0, index + direction),
-        );
-        setCursorItemId(items[nextIndex]?.dataset.sidebarId ?? null);
-        return;
-      }
-
-      const currentItem = items[index] ?? items[0];
-      if (!currentItem) return;
-      if (currentItem.dataset.sidebarKind === "file") {
-        currentItem.click();
-        onCursorModeClose?.();
-        return;
-      }
-
-      currentItem.click();
-      setCursorItemId(currentItem.dataset.sidebarId ?? null);
-    };
-
-    document.addEventListener("keydown", handleKeyDown, true);
-    return () => document.removeEventListener("keydown", handleKeyDown, true);
-  }, [cursorItemId, cursorMode, getCursorItems, onCursorModeClose]);
-
-  useEffect(() => {
-    if (!cursorMode) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (target instanceof Node && navRef.current?.contains(target)) return;
-      onCursorModeClose?.();
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown, true);
-    return () =>
-      document.removeEventListener("pointerdown", handlePointerDown, true);
-  }, [cursorMode, onCursorModeClose]);
-
   useLayoutEffect(() => {
     if (treeRef.current && isFiles) {
       if (lastWorkspaceRef.current !== state.workspaceName) {
@@ -400,10 +276,8 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
             <span>{t.sidebar.search || "Search"}</span>
           </button>
           <span
-            className="sidebar__tab-indicator"
-            style={{
-              transform: isSearch ? "translateX(100%)" : "translateX(0)",
-            }}
+            className={`sidebar__tab-indicator${isSearch ? ' is-search' : ''}`}
+            ref={tabIndicatorRef}
           />
         </div>
 
@@ -416,7 +290,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
                 className="sidebar__locate-btn"
                 onClick={scrollToActiveFile}
                 tooltip={t.tooltips.locateFile}
-                shortcut={state.settings.keybindings?.locateFile}
+                shortcut={getEnabledShortcut(state.settings, 'locateFile')}
                 tooltipPos="below"
                 tooltipAlign="right"
                 icon={<LocateIcon size={12} />}
@@ -429,7 +303,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
         ) : (
           <div className="sidebar__title-actions" key="search-actions">
             {searchStatus.isSearching && (
-              <div className="spinner" style={{ width: 10, height: 10, borderWidth: 1.5 }} />
+              <div className="spinner sidebar__search-spinner" />
             )}
             {searchStatus.showCount && (
               <span className="sidebar__count">{searchStatus.resultCount}</span>

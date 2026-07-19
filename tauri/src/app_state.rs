@@ -20,10 +20,19 @@ pub struct AppStateInner {
     pub runtime_state: RuntimeState,
     pub ready_handled: bool,
     pub document_conversion_enabled: bool,
+    pub fullscreen_transition: FullscreenTransition,
     pub update_state: crate::update::UpdateState,
     pub zoom_level: f64,
     pub perf: crate::perf::PerfTimer,
     pub converter: crate::render::document_converter::DocumentConverter,
+}
+
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FullscreenTransition {
+    #[default]
+    Idle,
+    AwaitingMaximize,
+    AwaitingUnmaximize,
 }
 
 #[derive(Default, Clone, Copy, Debug)]

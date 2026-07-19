@@ -51,6 +51,7 @@ let mockOnAliasChange = vi.fn();
 let mockOnThemeToggle = vi.fn();
 let mockOnSettingsOpen = vi.fn();
 let mockOnSidebarToggle = vi.fn();
+let mockOnReorderTabs = vi.fn();
 
 function createMockAppState(overrides: Record<string, unknown> = {}) {
   return {
@@ -260,6 +261,7 @@ function renderTabBar(tabOverrides: Partial<Parameters<typeof DesktopTabBar>[0]>
     onThemeToggle: mockOnThemeToggle,
     onSettingsOpen: mockOnSettingsOpen,
     onSidebarToggle: mockOnSidebarToggle,
+    onReorderTabs: mockOnReorderTabs,
     isDark: false,
     isMaximized: false,
     hasUpdate: false,
@@ -699,6 +701,48 @@ describe('DesktopTabBar deep', () => {
       unmount();
       expect(disconnectSpy).toHaveBeenCalled();
       (global as any).ResizeObserver = origRO;
+    });
+  });
+
+  describe('drag and drop with ghost preview', () => {
+    it('sets dragging state and displays ghost tab preview', () => {
+      const homeTab = makeDesktopTab('home', 'home');
+      const ws1 = makeDesktopTab('ws1', 'workspace', { workspaceName: 'WS1' });
+      const ws2 = makeDesktopTab('ws2', 'workspace', { workspaceName: 'WS2' });
+
+      renderTabBar({
+        tabs: [homeTab, ws1, ws2],
+        activeTabId: 'ws1',
+      });
+
+      const tabA = screen.getByRole('tab', { name: /WS1/ });
+      const tabB = screen.getByRole('tab', { name: /WS2/ });
+
+      // Initially, no dragging class and no ghost element
+      expect(tabA.className).not.toContain('is-dragging');
+      expect(document.querySelector('.tab-drag-ghost')).toBeNull();
+
+      // Trigger pointerdown on tab A
+      fireEvent.pointerDown(tabA, { button: 0 });
+
+      // Now tab A has is-dragging class
+      expect(tabA.className).toContain('is-dragging');
+      const ghost = document.querySelector('.tab-drag-ghost') as HTMLElement;
+      expect(ghost).toBeInTheDocument();
+      expect(ghost?.textContent).toBe('WS1');
+
+      // Trigger pointermove to update position
+      fireEvent.pointerMove(document, { clientX: 100, clientY: 200 });
+      expect(ghost.style.transform).toBe('translate3d(110px, 210px, 0)');
+
+      // Trigger pointerenter on tab B -> swaps tabs
+      fireEvent.pointerEnter(tabB);
+      expect(mockOnReorderTabs).toHaveBeenCalledWith('ws1', 'ws2');
+
+      // Trigger pointerup on document -> clears dragging
+      fireEvent.pointerUp(document);
+      expect(tabA.className).not.toContain('is-dragging');
+      expect(document.querySelector('.tab-drag-ghost')).toBeNull();
     });
   });
 });

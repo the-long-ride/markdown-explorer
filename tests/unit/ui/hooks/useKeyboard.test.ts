@@ -1,11 +1,54 @@
 import { describe, it, expect } from 'vitest';
-import { matchesShortcut, isEditableTarget } from '../../../../ui/src/hooks/useKeyboard';
+import { matchesShortcut, isEditableTarget, resolveKeyboardAction } from '../../../../ui/src/hooks/useKeyboard';
+import { getDefaultKeybindings } from '../../../../ui/src/contexts/appStateConstants';
 
 function mockKeyboardEvent(opts: Partial<KeyboardEventInit> & { key: string }): KeyboardEvent {
   return new KeyboardEvent('keydown', opts);
 }
 
 describe('useKeyboard pure functions', () => {
+  const keyboardState = (isDesktop: boolean, workspaceSelection: string) => ({
+    isDesktop,
+    isDesktopLike: isDesktop,
+    isTermsOpen: false,
+    isModalOpen: false,
+    isSearchOpen: false,
+    isFindOpen: false,
+    isSettingsOpen: false,
+    isSidebarCursorMode: false,
+    activeSearchScope: 'current' as const,
+    keybindings: { workspaceSelection },
+    hasOnCrossTabSearchOpen: false,
+    hasOnFindOpen: false,
+    hasOnSidebarCursorModeToggle: false,
+    hasOnSidebarCursorModeClose: false,
+    hasOnWelcome: false,
+    hasOnToggleToc: false,
+    hasOnLocateFile: false,
+    hasOnToggleFocusMode: false,
+    hasOnFindClose: false,
+    isRepeat: false,
+    isEditableTarget: false,
+  });
+
+  it('uses Ctrl+N as desktop workspace-selection default', () => {
+    expect(getDefaultKeybindings(true).workspaceSelection).toBe('Ctrl+N');
+  });
+
+  it('uses Ctrl+Alt+W as non-desktop workspace-selection default', () => {
+    expect(getDefaultKeybindings(false).workspaceSelection).toBe('Ctrl+Alt+W');
+  });
+
+  it('resolves desktop Ctrl+N to workspace selection', () => {
+    expect(resolveKeyboardAction(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true }), keyboardState(true, 'Ctrl+N')))
+      .toEqual({ type: 'workspace-selection' });
+  });
+
+  it('resolves non-desktop Ctrl+Alt+W to workspace selection', () => {
+    expect(resolveKeyboardAction(new KeyboardEvent('keydown', { key: 'w', ctrlKey: true, altKey: true }), keyboardState(false, 'Ctrl+Alt+W')))
+      .toEqual({ type: 'workspace-selection' });
+  });
+
   describe('matchesShortcut', () => {
     it('matches simple key', () => {
       const e = mockKeyboardEvent({ key: 'Escape' });

@@ -25,6 +25,7 @@ let useDesktopTabsReturn = {
   crossTabSearchItems: [] as any[],
   isIndexingAcrossTabs: false,
 };
+let mockKeyboardOptions: any;
 
 const mockToggleTheme = vi.fn();
 const mockToggleSidebar = vi.fn();
@@ -248,7 +249,7 @@ vi.mock('../../../../ui/src/hooks/useFileDropOpen', () => ({
   useFileDropOpen: () => useFileDropOpenReturn,
 }));
 vi.mock('../../../../ui/src/hooks/useKeyboard', () => ({
-  useKeyboard: vi.fn(),
+  useKeyboard: (options: any) => { mockKeyboardOptions = options; },
 }));
 vi.mock('../../../../ui/src/hooks/useResize', () => ({
   useResize: vi.fn(),
@@ -266,6 +267,7 @@ vi.mock('../../../../ui/src/hooks/useUpdateCheck', () => ({
 }));
 vi.mock('../../../../ui/src/utils/shortcuts', () => ({
   formatShortcutLabel: (s: string) => s,
+  getEnabledShortcut: (settings: any, actionId: string) => settings.disabledKeybindings?.[actionId] ? undefined : settings.keybindings?.[actionId],
 }));
 vi.mock('../../../../ui/src/utils/searchJump', () => ({
   clearSearchJumpMarks: vi.fn(),
@@ -281,6 +283,7 @@ describe('App render', () => {
     vi.stubGlobal('electronAPI', undefined);
     delete (window as any).__chromeExtBus;
     mockState = createMockState();
+    mockKeyboardOptions = undefined;
     useFileDropOpenReturn = { isDragging: false };
     useDesktopTabsReturn = {
       activeTabId: 'home',
@@ -471,6 +474,23 @@ describe('App render', () => {
     });
   });
 
+  it('applies fullscreen UI state when native host enters fullscreen', async () => {
+    let notifyHostMessage: ((message: { command: string; isFullscreen?: boolean }) => void) | undefined;
+    mockBridge.onMessage.mockImplementation((listener) => {
+      notifyHostMessage = listener;
+      return () => {};
+    });
+
+    render(createElement(App));
+    await waitFor(() => expect(notifyHostMessage).toBeDefined());
+
+    notifyHostMessage?.({ command: 'fullscreenChanged', isFullscreen: true });
+
+    await waitFor(() => {
+      expect(document.querySelector('.app--fullscreen')).toBeInTheDocument();
+    });
+  });
+
   it('app has is-windows class when hostPlatform is windows', async () => {
     mockState = createMockState({ hostPlatform: 'windows' });
     render(createElement(App));
@@ -578,44 +598,35 @@ describe('App render', () => {
     expect(screen.getByText('Parsing files...')).toBeInTheDocument();
   });
 
-  it('renders close folder button in focus mode for tauri/vscode/desktop runtimes', async () => {
+  it('does not render redundant close folder button in focus mode', async () => {
     mockState = createMockState({ focusMode: true, appRuntime: 'tauri' });
     const { rerender } = render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
+      expect(screen.getByTitle('Exit Focus Mode')).toBeInTheDocument();
     });
+    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
 
     mockState = createMockState({ focusMode: true, appRuntime: 'vscode' });
     rerender(createElement(App));
-    await waitFor(() => {
-      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
-    });
+    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
 
     mockState = createMockState({ focusMode: true, appRuntime: 'desktop' });
     rerender(createElement(App));
-    await waitFor(() => {
-      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
-    });
+    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
   });
 
-  it('clicking close folder button in focus mode triggers workspace close flow', async () => {
-    mockState = createMockState({ focusMode: true, appRuntime: 'tauri' });
+  it('opens a new workspace-selection tab from the shortcut in Tab view', () => {
+    vi.stubGlobal('electronAPI', {});
+    mockState = createMockState({
+      appRuntime: 'desktop',
+      settings: { ...createMockState().settings, desktopViewMode: 'tabs' },
+    });
     render(createElement(App));
-    await waitFor(() => {
-      expect(screen.getByTitle('Close Folder')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByTitle('Close Folder'));
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'READY_ACK',
-      fileList: [],
-      tree: null,
-      theme: mockState.theme,
-      themeStyle: mockState.themeStyle,
-      defaultExpanded: mockState.defaultExpanded,
-      workspaceName: '',
-      recentWorkspaces: mockState.recentWorkspaces,
-    });
-    expect(mockBridge.postMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
+
+    mockKeyboardOptions.onWorkspaceSelection();
+
+    expect(useDesktopTabsReturn.createNewWorkspaceTab).toHaveBeenCalledTimes(1);
+    expect(mockBridge.postMessage).not.toHaveBeenCalledWith({ command: 'closeWorkspace' });
   });
 
   it('does not render close folder button in focus mode for chrome runtime', async () => {

@@ -54,6 +54,12 @@ interface ToolbarActionMenuProps {
   focusModeShortcut?: string;
   isFocusMode?: boolean;
   onFocusModeToggle?: () => void;
+  showFullscreen?: boolean;
+  fullscreenLabel?: string;
+  fullscreenTooltip?: string;
+  fullscreenShortcut?: string;
+  isFullscreen?: boolean;
+  onFullscreenToggle?: () => void;
 }
 
 function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
@@ -70,6 +76,8 @@ function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
       return <TocIcon size={14} />;
     case "focusMode":
       return isFocusMode ? <MinimizeIcon size={12} /> : <MaximizeIcon size={12} />;
+    case "fullscreen":
+      return <MaximizeIcon size={12} />;
     case "settings":
       return <SettingsIcon size={14} />;
     default:
@@ -115,6 +123,12 @@ export function ToolbarActionMenu({
   focusModeShortcut,
   isFocusMode = false,
   onFocusModeToggle,
+  showFullscreen = false,
+  fullscreenLabel,
+  fullscreenTooltip,
+  fullscreenShortcut,
+  isFullscreen = false,
+  onFullscreenToggle,
 }: ToolbarActionMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -202,6 +216,16 @@ export function ToolbarActionMenu({
     });
   }
 
+  if (showFullscreen && onFullscreenToggle && fullscreenLabel && fullscreenTooltip) {
+    items.push({
+      id: "fullscreen",
+      label: fullscreenLabel,
+      tooltip: buildShortcutTooltip(fullscreenTooltip, fullscreenShortcut),
+      disabled: false,
+      toggleState: isFullscreen,
+    });
+  }
+
   items.push({
     id: "settings",
     label: settingsLabel,
@@ -229,6 +253,9 @@ export function ToolbarActionMenu({
         return;
       case "focusMode":
         onFocusModeToggle?.();
+        return;
+      case "fullscreen":
+        onFullscreenToggle?.();
         return;
       case "settings":
         onSettings();

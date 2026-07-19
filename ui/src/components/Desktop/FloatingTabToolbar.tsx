@@ -12,7 +12,9 @@ import {
   RefreshIcon,
 } from '../shared/icons';
 import { useAppState } from '../../contexts/AppStateContext';
+import { useCssVars } from '../../utils/useCssVars';
 import { getTranslations } from '../../contexts/translations';
+import { getEnabledShortcut } from '../../utils/shortcuts';
 
 interface FloatingTabToolbarProps {
   position: FloatingToolbarPosition;
@@ -159,11 +161,12 @@ export function FloatingTabToolbar({
     return () => window.removeEventListener('resize', handleResize);
   }, [clampToViewport, onPositionChange, position]);
 
+  useCssVars(toolbarRef, { '--toolbar-right': `${position.x}px`, '--toolbar-bottom': `${position.y}px` });
+
   return (
     <div
       ref={toolbarRef}
       className={`tab-floating-toolbar${actionsCollapsed ? ' is-actions-collapsed' : ''}${isDimmed ? ' is-dimmed' : ''}`}
-      style={{ right: position.x, bottom: position.y }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -189,7 +192,7 @@ export function FloatingTabToolbar({
           onClick={onBack}
           disabled={!canGoBack}
           tooltip={t.topbar.goBack}
-          shortcut={state.settings.keybindings?.back}
+          shortcut={getEnabledShortcut(state.settings, 'back')}
           icon={<ChevronLeftIcon />}
         />
         <TooltipButton
@@ -197,28 +200,28 @@ export function FloatingTabToolbar({
           onClick={onForward}
           disabled={!canGoForward}
           tooltip={t.topbar.goForward}
-          shortcut={state.settings.keybindings?.forward}
+          shortcut={getEnabledShortcut(state.settings, 'forward')}
           icon={<ChevronRightIcon />}
         />
         <TooltipButton
           className="btn btn--icon"
           onClick={onRefresh}
           tooltip={t.topbar.refresh}
-          shortcut={state.settings.keybindings?.refresh}
+          shortcut={getEnabledShortcut(state.settings, 'refresh')}
           icon={<RefreshIcon />}
         />
         <TooltipButton
           className="btn btn--icon"
           onClick={onExpandAll}
           tooltip={t.topbar.expandAll}
-          shortcut={state.settings.keybindings?.expandAll}
+          shortcut={getEnabledShortcut(state.settings, 'expandAll')}
           icon={<ExpandIcon />}
         />
         <TooltipButton
           className="btn btn--icon"
           onClick={onCollapseAll}
           tooltip={t.topbar.collapseAll}
-          shortcut={state.settings.keybindings?.collapseAll}
+          shortcut={getEnabledShortcut(state.settings, 'collapseAll')}
           icon={<CollapseIcon />}
         />
         <TooltipButton className="btn btn--icon" onClick={(event) => onCopyFile(event.currentTarget)} disabled={!canEdit} tooltip={t.topbar.copy} icon={<CopyIcon />} />

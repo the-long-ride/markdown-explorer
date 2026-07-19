@@ -184,15 +184,12 @@ describe('WorkspaceSelection', () => {
     expect(screen.getAllByTestId('recent-workspace-item')).toHaveLength(3);
   });
 
-  it('shows Show More button when more than 3 recents', () => {
+  it('shows Show More link button when recent workspaces are present', () => {
     mockState.recentWorkspaces = [
       { name: 'A', path: '/a' },
-      { name: 'B', path: '/b' },
-      { name: 'C', path: '/c' },
-      { name: 'D', path: '/d' },
     ];
     render(React.createElement(WorkspaceSelection));
-    expect(screen.getByText('Show More...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show More...' })).toHaveClass('workspace-selection__show-more');
   });
 
   it('opens modal when Show More clicked', () => {

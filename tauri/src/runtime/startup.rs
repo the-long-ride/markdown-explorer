@@ -77,7 +77,8 @@ mod tests {
 
     #[test]
     fn ready_ack_without_workspace() {
-        let result = create_startup_ready_ack(None, vec![], false, "linux", "arm64", true, "1.2.3-test");
+        let result =
+            create_startup_ready_ack(None, vec![], false, "linux", "arm64", true, "1.2.3-test");
         assert_eq!(result["workspaceName"], "");
         assert_eq!(result["appVersion"], "1.2.3-test");
         assert!(result.get("workspacePath").is_none());
@@ -89,7 +90,8 @@ mod tests {
 
     #[test]
     fn ready_ack_has_theme_and_tree() {
-        let result = create_startup_ready_ack(None, vec![], true, "win32", "x64", false, "1.2.3-test");
+        let result =
+            create_startup_ready_ack(None, vec![], true, "win32", "x64", false, "1.2.3-test");
         assert_eq!(result["theme"], "dark");
         assert_eq!(result["themeStyle"], "default");
         assert_eq!(result["defaultExpanded"], true);
@@ -124,7 +126,8 @@ mod tests {
                 last_opened: 2000,
             },
         ];
-        let result = create_startup_ready_ack(None, recents, false, "win32", "x64", false, "1.2.3-test");
+        let result =
+            create_startup_ready_ack(None, recents, false, "win32", "x64", false, "1.2.3-test");
         let arr = result["recentWorkspaces"].as_array().unwrap();
         assert_eq!(arr.len(), 2);
         assert_eq!(arr[0]["name"], "A");

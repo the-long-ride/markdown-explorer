@@ -56,7 +56,10 @@ pub fn emit_ready_ack_full(
         document_conversion_enabled.into(),
     );
     extra.insert("appRuntime".into(), "tauri".into());
-    extra.insert("appVersion".into(), app.package_info().version.to_string().into());
+    extra.insert(
+        "appVersion".into(),
+        app.package_info().version.to_string().into(),
+    );
     extra.insert("hostPlatform".into(), std::env::consts::OS.into());
     extra.insert("hostArch".into(), std::env::consts::ARCH.into());
     extra.insert(
@@ -108,7 +111,10 @@ pub fn emit_workspace_unavailable(
     extra.insert("reason".into(), json!(reason));
     extra.insert("recentWorkspaces".into(), json!(recent_workspaces));
     extra.insert("appRuntime".into(), "tauri".into());
-    extra.insert("appVersion".into(), app.package_info().version.to_string().into());
+    extra.insert(
+        "appVersion".into(),
+        app.package_info().version.to_string().into(),
+    );
     extra.insert("hostPlatform".into(), std::env::consts::OS.into());
     extra.insert("hostArch".into(), std::env::consts::ARCH.into());
     extra.insert(
@@ -221,4 +227,10 @@ pub fn emit_window_state_changed(app: &AppHandle, is_maximized: bool) {
     let mut extra = serde_json::Map::new();
     extra.insert("isMaximized".into(), is_maximized.into());
     emit(app, "window-state-changed", extra);
+}
+
+pub fn emit_fullscreen_changed(app: &AppHandle, is_fullscreen: bool) {
+    let mut extra = serde_json::Map::new();
+    extra.insert("isFullscreen".into(), is_fullscreen.into());
+    emit(app, "fullscreenChanged", extra);
 }

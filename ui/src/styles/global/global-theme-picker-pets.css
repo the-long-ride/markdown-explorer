@@ -143,5 +143,4 @@
 .pet-theme-menu__option.is-selected {
   background: var(--accent-dim);
   color: var(--accent-text);
-  box-shadow: inset 3px 0 0 var(--accent);
 }

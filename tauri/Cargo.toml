@@ -46,3 +46,6 @@ tauri = {}
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+
+[patch.crates-io]
+glib = { path = "vendor/glib" }

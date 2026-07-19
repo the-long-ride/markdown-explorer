@@ -55,6 +55,20 @@ describe('tauri package config', () => {
     ).toBe(true);
   });
 
+  test('pins glib to the patched VariantStrIter implementation', () => {
+    const cargo = fs.readFileSync(path.join(repoRoot, 'tauri/Cargo.toml'), 'utf8');
+    const variantIter = fs.readFileSync(
+      path.join(repoRoot, 'tauri/vendor/glib/src/variant_iter.rs'),
+      'utf8',
+    );
+
+    expect(cargo).toContain('[patch.crates-io]');
+    expect(cargo).toContain('glib = { path = "vendor/glib" }');
+    expect(variantIter).toContain('let mut p: *mut libc::c_char');
+    expect(variantIter).toContain('&mut p');
+    expect(variantIter).not.toContain('            &p,');
+  });
+
   test('tauri rust toolchain channel does not include target triple', () => {
     const channel = rustToolchain.match(/^channel\s*=\s*"([^"]+)"/m)?.[1];
     expect(channel).toBeTruthy();

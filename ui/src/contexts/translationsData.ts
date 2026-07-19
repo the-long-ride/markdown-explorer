@@ -60,7 +60,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
       locateFile: "Locate current file",
+      toggleDesktopViewMode: "Toggle Tabs/Focus view",
       toggleFocusMode: "Toggle focus mode",
+      toggleFullscreen: "Show full screen",
+      toggleFullscreenTooltip: "Toggle native full screen window",
     },
     topbar: {
       home: "Home",
@@ -108,6 +111,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Locate file",
     },
     tabContextMenu: {
+      moveTabLeft: "Move tab left",
+      moveTabRight: "Move tab right",
       closeThisTab: "Close this tab",
       closeTabsToRight: "Close tabs to the right",
       closeOtherTabs: "Close other tabs",
@@ -229,7 +234,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Phóng to",
       zoomOut: "Thu nhỏ",
       locateFile: "Định vị tệp hiện tại",
+      toggleDesktopViewMode: "Chuyển đổi chế độ Tab/Tập trung",
       toggleFocusMode: "Bật/Tắt chế độ tập trung",
+      toggleFullscreen: "Hiển thị toàn màn hình",
+      toggleFullscreenTooltip: "Bật/Tắt cửa sổ toàn màn hình gốc",
     },
     topbar: {
       home: "Trang chủ",
@@ -277,6 +285,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Tìm tệp",
     },
     tabContextMenu: {
+      moveTabLeft: "Di chuyển tab sang trái",
+      moveTabRight: "Di chuyển tab sang phải",
       closeThisTab: "Đóng tab này",
       closeTabsToRight: "Đóng các tab bên phải",
       closeOtherTabs: "Đóng các tab khác",
@@ -398,7 +408,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Zoom avant",
       zoomOut: "Zoom arrière",
       locateFile: "Localiser le fichier actuel",
+      toggleDesktopViewMode: "Basculer entre les vues Onglets/Focus",
       toggleFocusMode: "Basculer le mode focus",
+      toggleFullscreen: "Afficher en plein écran",
+      toggleFullscreenTooltip: "Basculer la fenêtre native en plein écran",
     },
     topbar: {
       home: "Accueil",
@@ -446,6 +459,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Cibler",
     },
     tabContextMenu: {
+      moveTabLeft: "Déplacer l'onglet à gauche",
+      moveTabRight: "Déplacer l'onglet à droite",
       closeThisTab: "Fermer cet onglet",
       closeTabsToRight: "Fermer les onglets à droite",
       closeOtherTabs: "Fermer les autres onglets",
@@ -567,7 +582,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Acercar",
       zoomOut: "Alejar",
       locateFile: "Localizar archivo actual",
+      toggleDesktopViewMode: "Alternar vista Pestañas/Enfoque",
       toggleFocusMode: "Alternar modo de enfoque",
+      toggleFullscreen: "Mostrar pantalla completa",
+      toggleFullscreenTooltip: "Alternar ventana nativa de pantalla completa",
     },
     topbar: {
       home: "Inicio",
@@ -615,6 +633,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Localizar",
     },
     tabContextMenu: {
+      moveTabLeft: "Mover pestaña a la izquierda",
+      moveTabRight: "Mover pestaña a la derecha",
       closeThisTab: "Cerrar esta pestaña",
       closeTabsToRight: "Cerrar pestañas a la derecha",
       closeOtherTabs: "Cerrar otras pestañas",
@@ -736,7 +756,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "放大",
       zoomOut: "缩小",
       locateFile: "定位当前文件",
+      toggleDesktopViewMode: "切换标签页/专注视图",
       toggleFocusMode: "切换专注模式",
+      toggleFullscreen: "显示全屏",
+      toggleFullscreenTooltip: "切换原生全屏窗口",
     },
     topbar: {
       home: "主页",
@@ -784,6 +807,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "定位文件",
     },
     tabContextMenu: {
+      moveTabLeft: "向左移动标签页",
+      moveTabRight: "向右移动标签页",
       closeThisTab: "关闭此标签页",
       closeTabsToRight: "关闭右侧标签页",
       closeOtherTabs: "关闭其他标签页",
@@ -905,7 +930,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Zoom inn",
       zoomOut: "Zoom ut",
       locateFile: "Finn gjeldende fil",
+      toggleDesktopViewMode: "Bytt mellom fane- og fokusvisning",
       toggleFocusMode: "Bytt fokusmodus",
+      toggleFullscreen: "Vis fullskjerm",
+      toggleFullscreenTooltip: "Slå av/på opprinnelig fullskjermvindu",
     },
     topbar: {
       home: "Hjem",
@@ -953,6 +981,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Finn fil",
     },
     tabContextMenu: {
+      moveTabLeft: "Flytt fanen til venstre",
+      moveTabRight: "Flytt fanen til høyre",
       closeThisTab: "Lukk denne fanen",
       closeTabsToRight: "Lukk faner til høyre",
       closeOtherTabs: "Lukk andre faner",
@@ -1074,7 +1104,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "拡大",
       zoomOut: "縮小",
       locateFile: "現在のファイルを特定",
+      toggleDesktopViewMode: "タブ/フォーカス表示を切り替える",
       toggleFocusMode: "フォーカスモードを切り替える",
+      toggleFullscreen: "全画面表示",
+      toggleFullscreenTooltip: "ネイティブ全画面ウィンドウを切り替え",
     },
     topbar: {
       home: "ホーム",
@@ -1122,6 +1155,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "位置表示",
     },
     tabContextMenu: {
+      moveTabLeft: "タブを左へ移動",
+      moveTabRight: "タブを右へ移動",
       closeThisTab: "このタブを閉じる",
       closeTabsToRight: "右側のタブを閉じる",
       closeOtherTabs: "他のタブを閉じる",
@@ -1243,7 +1278,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "확대",
       zoomOut: "축소",
       locateFile: "현재 파일 위치 찾기",
+      toggleDesktopViewMode: "탭/포커스 보기 전환",
       toggleFocusMode: "포커스 모드 전환",
+      toggleFullscreen: "전체 화면 표시",
+      toggleFullscreenTooltip: "네이티브 전체 화면 창 전환",
     },
     topbar: {
       home: "홈",
@@ -1291,6 +1329,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "파일 찾기",
     },
     tabContextMenu: {
+      moveTabLeft: "탭을 왼쪽으로 이동",
+      moveTabRight: "탭을 오른쪽으로 이동",
       closeThisTab: "이 탭 닫기",
       closeTabsToRight: "오른쪽 탭 닫기",
       closeOtherTabs: "다른 탭 닫기",
@@ -1412,7 +1452,10 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       zoomIn: "Увеличить",
       zoomOut: "Уменьшить",
       locateFile: "Найти текущий файл",
+      toggleDesktopViewMode: "Переключить вид вкладок/фокуса",
       toggleFocusMode: "Переключить режим фокусировки",
+      toggleFullscreen: "Показать во весь экран",
+      toggleFullscreenTooltip: "Переключить нативное полноэкранное окно",
     },
     topbar: {
       home: "Главная",
@@ -1460,6 +1503,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Найти файл",
     },
     tabContextMenu: {
+      moveTabLeft: "Переместить вкладку влево",
+      moveTabRight: "Переместить вкладку вправо",
       closeThisTab: "Закрыть эту вкладку",
       closeTabsToRight: "Закрыть вкладки справа",
       closeOtherTabs: "Закрыть остальные вкладки",

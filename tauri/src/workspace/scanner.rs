@@ -401,10 +401,7 @@ mod tests {
     fn scan_includes_more_than_1000_files() {
         let root = temp_dir("tauri-large-scan");
         for index in 0..1100 {
-            write(
-                &root.join(format!("dir-{index:04}/file.md")),
-                "# Title",
-            );
+            write(&root.join(format!("dir-{index:04}/file.md")), "# Title");
         }
 
         let result = scan(&root, ScanOptions::default()).unwrap();

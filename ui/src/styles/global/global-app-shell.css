@@ -1,0 +1,75 @@
+.app--terms-gate {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+}
+
+.app--terms-gate__dragbar {
+  position: relative;
+  z-index: 200000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 44px;
+  padding-right: 12px;
+  -webkit-app-region: drag;
+}
+
+.app--terms-gate .window-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.app--terms-gate__divider {
+  width: 1px;
+  height: 16px;
+  background: var(--bd-s);
+}
+
+.state-screen--initial-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: var(--tx);
+  background: var(--bg);
+}
+
+.state-screen--initial-loading .state-screen__title {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx);
+  pointer-events: none;
+  background: var(--modal-bg);
+  border: 2.5px dashed var(--accent);
+  border-top: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+}
+
+.drop-overlay__title {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.drop-overlay__detail {
+  margin-top: 8px;
+  color: var(--tx2);
+  font-size: 13px;
+}

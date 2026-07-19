@@ -13,6 +13,10 @@ describe('registerIpcHandlers', () => {
   let fs: { existsSync: ReturnType<typeof vi.fn> };
   let registeredHandler: Function;
 
+  const register = (platform = 'linux') => {
+    registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, shell, platform });
+  };
+
   beforeEach(() => {
     ipcMain = {
       on: vi.fn((channel: string, handler: Function) => {
@@ -48,7 +52,7 @@ describe('registerIpcHandlers', () => {
     clipboard = { writeText: vi.fn() };
     fs = { existsSync: vi.fn() };
 
-    registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, shell });
+    register();
   });
 
   test('registers webview-message listener', () => {
@@ -130,6 +134,49 @@ describe('registerIpcHandlers', () => {
     test('window-close safe when getMainWindow returns null', () => {
       getMainWindow.mockReturnValue(null);
       registeredHandler(null, { command: 'window-close' });
+    });
+
+    test('toggle-fullscreen enters fullscreen and synchronizes the renderer state', () => {
+      const win = {
+        isFullScreen: vi.fn(() => false),
+        setFullScreen: vi.fn(),
+        webContents: { send: vi.fn() },
+      };
+      getMainWindow.mockReturnValue(win);
+      registeredHandler(null, { command: 'toggle-fullscreen' });
+      expect(win.setFullScreen).toHaveBeenCalledWith(true);
+      expect(win.webContents.send).toHaveBeenCalledWith('host-message', {
+        command: 'fullscreenChanged',
+        isFullscreen: true,
+      });
+    });
+
+    test('toggle-fullscreen exits fullscreen when window is fullscreen', () => {
+      const win = { isFullScreen: vi.fn(() => true), setFullScreen: vi.fn() };
+      getMainWindow.mockReturnValue(win);
+      registeredHandler(null, { command: 'toggle-fullscreen' });
+      expect(win.setFullScreen).toHaveBeenCalledWith(false);
+    });
+
+    test('toggle-fullscreen uses kiosk mode on Windows to cover the taskbar work area', () => {
+      const win = {
+        isKiosk: vi.fn(() => false),
+        setKiosk: vi.fn(),
+        isFullScreen: vi.fn(() => false),
+        setFullScreen: vi.fn(),
+        webContents: { send: vi.fn() },
+      };
+      getMainWindow.mockReturnValue(win);
+      register('win32');
+
+      registeredHandler(null, { command: 'toggle-fullscreen' });
+
+      expect(win.setKiosk).toHaveBeenCalledWith(true);
+      expect(win.setFullScreen).not.toHaveBeenCalled();
+      expect(win.webContents.send).toHaveBeenCalledWith('host-message', {
+        command: 'fullscreenChanged',
+        isFullscreen: true,
+      });
     });
 
     test('window-maximize toggles maximize when maximized', () => {

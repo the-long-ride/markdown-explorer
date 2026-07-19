@@ -26,6 +26,20 @@ function makeTab(filePath: string, overrides: Partial<ContentTab> = {}): Content
 }
 
 describe('appStateReducer - inline callback coverage with populated contentTabs', () => {
+  test('REORDER_CONTENT_TABS moves dragged tab before target', () => {
+    const tabA = makeTab('/a.md');
+    const tabB = makeTab('/b.md');
+    const tabC = makeTab('/c.md');
+    const state = makeState({ contentTabs: [tabA, tabB, tabC], activeContentTabPath: '/a.md' });
+    const next = appStateReducer(state, {
+      type: 'REORDER_CONTENT_TABS',
+      sourcePath: '/c.md',
+      targetPath: '/a.md',
+    });
+
+    expect(next.contentTabs.map((tab) => tab.filePath)).toEqual(['/c.md', '/a.md', '/b.md']);
+  });
+
   test('CLOSE_CONTENT_TAB filter callback removes middle tab', () => {
     const tabA = makeTab('/a.md');
     const tabB = makeTab('/b.md');

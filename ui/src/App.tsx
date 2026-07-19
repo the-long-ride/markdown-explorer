@@ -7,42 +7,26 @@ import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
 import { getTranslations } from './contexts/translations';
-import { Topbar } from './components/Topbar/Topbar';
 
-const Sidebar = lazy(() => import('./components/Sidebar/Sidebar').then(m => ({ default: m.Sidebar })));
-const Content = lazy(() => import('./components/Content/Content').then(m => ({ default: m.Content })));
-const WorkspaceSelection = lazy(() => import('./components/Workspace/WorkspaceSelection').then(m => ({ default: m.WorkspaceSelection })));
-const ContentTabs = lazy(() => import('./components/Content/ContentTabs').then(m => ({ default: m.ContentTabs })));
-const WelcomePage = lazy(() => import('./components/Content/WelcomePage').then(m => ({ default: m.WelcomePage })));
-const TableOfContents = lazy(() => import('./components/TOC/TableOfContents').then(m => ({ default: m.TableOfContents })));
-// Lazy-loaded — only parsed when first opened
-const SearchOverlay = lazy(() => import('./components/Search/SearchOverlay').then(m => ({ default: m.SearchOverlay })));
-const FindInFilePanel = lazy(() => import('./components/Search/FindInFilePanel').then(m => ({ default: m.FindInFilePanel })));
-const MediaModal = lazy(() => import('./components/Modal/MediaModal').then(m => ({ default: m.MediaModal })));
-const SettingsModal = lazy(() => import('./components/Settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const TermsModal = lazy(() => import('./components/Modal/TermsModal').then(m => ({ default: m.TermsModal })));
-const ThemeOnboardingModal = lazy(() => import('./components/Modal/ThemeOnboardingModal').then(m => ({ default: m.ThemeOnboardingModal })));
-const SwitchWorkspaceModal = lazy(() => import('./components/Modal/SwitchWorkspaceModal').then(m => ({ default: m.SwitchWorkspaceModal })));
 import { TooltipButton } from './components/shared/TooltipButton';
-import { DesktopTabBar } from './components/Desktop/DesktopTabBar';
-const FloatingTabToolbar = lazy(() => import('./components/Desktop/FloatingTabToolbar').then(m => ({ default: m.FloatingTabToolbar })));
-import { ChevronUpIcon, MinimizeIcon } from './components/shared/icons';
 import type { PendingSearchJump, SearchScope } from './desktop/types';
 // Defer global DOM handlers until after mount
 import { initGlobalHandlers } from './dom/globalHandlers';
 import { useDesktopTabs } from './hooks/useDesktopTabs';
 import { useFileDropOpen } from './hooks/useFileDropOpen';
-import { useKeyboard } from './hooks/useKeyboard';
-import { useResize } from './hooks/useResize';
 import { useScrollVisibility } from './hooks/useScrollVisibility';
 import { useUpdateCheck } from './hooks/useUpdateCheck';
-import { formatShortcutLabel } from './utils/shortcuts';
-import { clearSearchJumpMarks, scrollToRenderedSearchMatch } from './utils/searchJump';
+import { formatShortcutLabel, getEnabledShortcut } from './utils/shortcuts';
+import { AppView } from './AppView';
+import { useAppSearchEffects } from './useAppSearchEffects';
+import { useAppLayoutEffects } from './useAppLayoutEffects';
 
 export function App() {
+  // AppView owns the root class: state.appRuntime === 'tauri' ? ' app--tauri' : ''.
   // Register global DOM handlers after first paint (not needed for initial render)
   useEffect(() => { initGlobalHandlers(); }, []);
-  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, dispatch, navigate, refresh } = useAppState();
+  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, toggleDesktopViewMode, dispatch, navigate, refresh } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -59,16 +43,16 @@ export function App() {
   const [findOpen, setFindOpen] = useState(false);
   const [pendingSearchJump, setPendingSearchJump] = useState<PendingSearchJump | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [workspaceSelectionConfirmOpen, setWorkspaceSelectionConfirmOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTarget, setModalTarget] = useState<HTMLElement | null>(null);
   const [sidebarCursorMode, setSidebarCursorMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isDesktop = isElectron;
+  const isDesktop = typeof (window as any).electronAPI !== 'undefined';
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  const isWebDemoEnv = typeof (window as any).__webDemoBus !== 'undefined';
-  const isWebFileMode = isWebDemoEnv && new URLSearchParams(window.location.search).get('mode') === 'file';
+  const isWebFileMode = typeof (window as any).__webDemoBus !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'file';
   const isDesktopLike = isDesktop || isChrome;
   const isTabView = isDesktop && state.settings.desktopViewMode === 'tabs';
   const updateCheck = useUpdateCheck({
@@ -78,13 +62,13 @@ export function App() {
     hostArch: state.hostArch,
   });
   const currentSearchShortcutLabel = formatShortcutLabel(
-    isDesktopLike ? state.settings.keybindings?.searchCurrent ?? 'Ctrl+F' : 'Ctrl+K',
+    isDesktopLike ? getEnabledShortcut(state.settings, 'searchCurrent') ?? '' : 'Ctrl+K',
   );
   const allTabsSearchShortcutLabel = formatShortcutLabel(
-    state.settings.keybindings?.searchAllTabs ?? 'Ctrl+Shift+F',
+    getEnabledShortcut(state.settings, 'searchAllTabs') ?? '',
   );
   const findShortcutLabel = formatShortcutLabel(
-    state.settings.keybindings?.findCurrentFile ?? (isDesktopLike ? 'F' : 'K'),
+    getEnabledShortcut(state.settings, 'findCurrentFile') ?? (isDesktopLike ? '' : 'K'),
   );
   const { isVisible: scrollTopVisible, scrollToTop } = useScrollVisibility(
     scrollRef,
@@ -95,7 +79,6 @@ export function App() {
     state.theme === 'dark' ||
     (state.theme === 'auto' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const {
     activeTabId,
     tabs,
@@ -110,6 +93,7 @@ export function App() {
     setPendingDroppedPath,
     confirmSwitchWorkspace,
     closeTab,
+    reorderTabs,
     closeTabsToRight,
     closeOtherTabs,
     closeAllTabs,
@@ -158,88 +142,23 @@ export function App() {
     setFindOpen(false);
   }, []);
 
-  useEffect(() => () => clearSearchJumpMarks(), []);
-
-  useEffect(() => {
-    if (!pendingSearchJump) return;
-    if (state.currentFile !== pendingSearchJump.filePath) return;
-
-    let retries = 0;
-    let handle = 0;
-
-    const tryScroll = () => {
-      const success = scrollToRenderedSearchMatch(
-        pendingSearchJump.query,
-        pendingSearchJump.matchOrdinal,
-        pendingSearchJump.matchIndex,
-        state.markdownSource
-      );
-      if (!success && retries < 4) {
-        retries++;
-        handle = window.setTimeout(tryScroll, 100);
-      } else {
-        setPendingSearchJump((current) =>
-          current?.token === pendingSearchJump.token ? null : current,
-        );
-      }
-    };
-
-    handle = window.setTimeout(tryScroll, 80);
-
-    return () => window.clearTimeout(handle);
-  }, [pendingSearchJump, state.currentFile, state.renderVersion, state.markdownSource]);
-
-  const queueSearchJump = useCallback(
-    (filePath: string, query: string, matchOrdinal?: number, matchIndex?: number) => {
-      const trimmedQuery = query.trim();
-      if (!filePath || !trimmedQuery) return;
-      setPendingSearchJump({
-        filePath,
-        query: trimmedQuery,
-        matchOrdinal,
-        matchIndex,
-        token: Date.now() + Math.random(),
-      });
-    },
-    [],
-  );
-
-  const openSidebarSearch = useCallback(() => {
-    if (state.sidebarCollapsed) {
-      toggleSidebar();
-    }
-    dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'search' });
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('focus-sidebar-search-input'));
-    }, 50);
-  }, [state.sidebarCollapsed, toggleSidebar, dispatch]);
-
-  useEffect(() => {
-    const handleJump = (e: CustomEvent) => {
-      const { filePath, query, matchOrdinal, matchIndex } = e.detail;
-      queueSearchJump(filePath, query, matchOrdinal, matchIndex);
-    };
-    window.addEventListener('search-jump', handleJump as any);
-    return () => window.removeEventListener('search-jump', handleJump as any);
-  }, [queueSearchJump]);
-
-  const handleWorkspaceSearchSelect = useCallback(
-    (item: { fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string) => {
-      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex);
-      navigate(item.fsPath);
-    },
-    [navigate, queueSearchJump],
-  );
-
-  const handleCrossTabSelect = useCallback(
-    (item: { tabId: string; fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string) => {
-      const tab = tabs.find((entry) => entry.id === item.tabId);
-      if (!tab) return;
-      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex);
-      activateTab(item.tabId, item.fsPath);
-    },
-    [activateTab, queueSearchJump, tabs],
-  );
+  const {
+    toggleFullscreen,
+    openSidebarSearch,
+    handleWorkspaceSearchSelect,
+    handleCrossTabSelect,
+  } = useAppSearchEffects({
+    bridge,
+    state,
+    pendingSearchJump,
+    setPendingSearchJump,
+    setIsFullscreen,
+    navigate,
+    tabs,
+    activateTab,
+    toggleSidebar,
+    dispatch,
+  });
 
   const [termsAccepted, setTermsAccepted] = useState(() => {
     if (!isDesktopLike) return true;
@@ -305,148 +224,41 @@ export function App() {
     openExternalUrl(updateCheck.changelogUrl);
   }, [openExternalUrl, updateCheck.changelogUrl]);
 
-  const themeOnboardingOpen = termsAccepted && !themeOnboardingComplete;
-
-  const closeSidebarCursorMode = useCallback(() => {
-    setSidebarCursorMode(false);
-  }, []);
-
-  const toggleSidebarCursorMode = useCallback(() => {
-    if (
-      !state.workspaceName ||
-      searchOpen ||
-      findOpen ||
-      settingsOpen ||
-      modalOpen ||
-      !termsAccepted ||
-      themeOnboardingOpen
-    ) {
-      return;
-    }
-    if (sidebarCursorMode) {
-      setSidebarCursorMode(false);
-      return;
-    }
-    if (state.sidebarCollapsed) {
-      toggleSidebar();
-    }
-    setSidebarCursorMode(true);
-  }, [
-    findOpen,
-    modalOpen,
-    searchOpen,
-    settingsOpen,
+  const {
+    themeOnboardingOpen,
+    closeWorkspaceToSelection,
+    closeSidebarCursorMode,
+    expandAll,
+    collapseAll,
+    copyCurrentFileContent,
+  } = useAppLayoutEffects({
+    state,
+    bridge,
+    dispatch,
+    termsAccepted,
+    themeOnboardingComplete,
+    setSidebarCursorMode,
     sidebarCursorMode,
-    state.sidebarCollapsed,
-    state.workspaceName,
-    termsAccepted,
-    themeOnboardingOpen,
-    toggleSidebar,
-  ]);
-
-  useEffect(() => {
-    if (
-      !state.workspaceName ||
-      state.sidebarCollapsed ||
-      searchOpen ||
-      findOpen ||
-      settingsOpen ||
-      modalOpen ||
-      !termsAccepted ||
-      themeOnboardingOpen
-    ) {
-      setSidebarCursorMode(false);
-    }
-  }, [
-    findOpen,
-    modalOpen,
     searchOpen,
+    findOpen,
     settingsOpen,
-    state.sidebarCollapsed,
-    state.workspaceName,
-    termsAccepted,
-    themeOnboardingOpen,
-  ]);
-
-  // Initialize sidebar width from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('markdown-explorer-sidebar-width');
-    if (stored) {
-      document.documentElement.style.setProperty('--sidebar-width', `${stored}px`);
-    }
-  }, []);
-
-  // Initialize TOC width from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('markdown-explorer-toc-width');
-    if (stored) {
-      document.documentElement.style.setProperty('--toc-width', `${stored}px`);
-    }
-  }, []);
-
-  // Sidebar resize handle
-  useResize('sidebarResize', 'sidebar', state.workspaceName, { min: 245 });
-
-  // Table of contents resize handle
-  useResize('tocResize', 'tocPanel', `${state.workspaceName}:${state.toc.length}`, {
-    min: 180,
-    max: 360,
-    cssVar: '--toc-width',
-    storageKey: 'markdown-explorer-toc-width',
-    direction: 'rtl',
-  });
-
-  // Expand / Collapse all sections
-  const expandAll = useCallback(() => {
-    document.querySelectorAll('.mdn-section').forEach((s) => {
-      (s as HTMLElement).dataset.expanded = 'true';
-    });
-  }, []);
-
-  const collapseAll = useCallback(() => {
-    document.querySelectorAll('.mdn-section').forEach((s) => {
-      (s as HTMLElement).dataset.expanded = 'false';
-    });
-  }, []);
-
-  const copyCurrentFileContent = useCallback((button?: HTMLElement | null) => {
-    if (state.currentFile && state.markdownSource !== null) {
-      bridge.copyToClipboard(state.markdownSource);
-      (window as any).UI?.markCopyButtonCopied?.(button, 'Copy file content');
-      return;
-    }
-
-    if (!state.currentFile) {
-      (window as any).UI?.copyDocument?.(button);
-    }
-  }, [bridge, state.currentFile, state.markdownSource]);
-
-  // Keyboard shortcuts
-  useKeyboard({
-    onSearchOpen: openSidebarSearch,
-    onCrossTabSearchOpen: isTabView ? () => openSearch('all-tabs') : undefined,
-    onSearchClose: closeSearch,
-    onFindOpen: openFind,
-    onFindClose: closeFind,
-    onSettingsOpen: () => setSettingsOpen(true),
-    onSettingsClose: () => setSettingsOpen(false),
-    onWelcome: isTabView ? () => activateTab('home') : undefined,
-    onExpandAll: expandAll,
-    onCollapseAll: collapseAll,
-    onSidebarCursorModeToggle: toggleSidebarCursorMode,
-    onSidebarCursorModeClose: closeSidebarCursorMode,
-    isSearchOpen: searchOpen,
-    isFindOpen: findOpen,
-    activeSearchScope: searchScope,
-    isSidebarCursorMode: sidebarCursorMode,
-    isSettingsOpen: settingsOpen,
-    isModalOpen: modalOpen,
-    isTermsOpen: !termsAccepted || themeOnboardingOpen,
-    onToggleToc: toggleToc,
-    onLocateFile: () => {
-      window.dispatchEvent(new CustomEvent('locate-active-file'));
-    },
-    onToggleFocusMode: toggleFocusMode,
+    modalOpen,
+    toggleSidebar,
+    isTabView,
+    createNewWorkspaceTab,
+    setWorkspaceSelectionConfirmOpen,
+    openSidebarSearch,
+    openSearch,
+    closeSearch,
+    openFind,
+    closeFind,
+    setSettingsOpen,
+    activateTab,
+    searchScope,
+    toggleToc,
+    toggleFocusMode,
+    toggleDesktopViewMode,
+    toggleFullscreen,
   });
 
   const isAllTabsSearch = isTabView && searchScope === 'all-tabs';
@@ -459,25 +271,16 @@ export function App() {
 
   if (!termsAccepted && isDesktopLike) {
     return (
-      <div className="app" style={{ height: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
+      <div className="app app--terms-gate">
         {/* Custom top bar for window dragging & controls */}
-        <div style={{
-          height: '44px',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          paddingRight: '12px',
-          WebkitAppRegion: 'drag',
-          position: 'relative',
-          zIndex: 200000
-        } as any}>
+        <div className="app--terms-gate__dragbar">
           {isDesktop && (
-            <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', WebkitAppRegion: 'no-drag' } as any}>
+            <div className="window-controls">
               <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={toggleTheme}
-                tooltip={themeToggleLabel}
-                shortcut={state.settings.keybindings?.toggleTheme}
+                tooltip={isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode}
+                shortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
                 icon={
                   state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -486,7 +289,7 @@ export function App() {
                   )
                 }
               />
-              <div style={{ width: '1px', height: '16px', background: 'var(--bd-s)' }} />
+              <div className="app--terms-gate__divider" />
               <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => bridge.postMessage({ command: 'window-minimize' })}
@@ -527,9 +330,9 @@ export function App() {
 
   if (state.isLoading && !state.workspaceName) {
     return (
-      <div className="state-screen" style={{ display: 'flex', height: '100vh', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--tx)' }}>
+      <div className="state-screen state-screen--initial-loading">
         <div className="spinner" />
-        <div className="state-screen__title" style={{ marginTop: '12px', fontSize: '14px', fontWeight: 500 }}>
+        <div className="state-screen__title">
           {state.loadingLabel || 'Loading docs...'}
         </div>
         {state.loadingDetail && (
@@ -540,207 +343,81 @@ export function App() {
   }
 
   return (
-    <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
-      <div className="sidebar-cursor-backdrop" aria-hidden="true" />
-      {isTabView && (
-        <DesktopTabBar
-          tabs={tabs}
-          activeTabId={activeTabId}
-          onSelectTab={activateTab}
-          onNewTab={createNewWorkspaceTab}
-          onCloseTab={closeTab}
-          onCloseTabsToRight={closeTabsToRight}
-          onCloseOtherTabs={closeOtherTabs}
-          onCloseAllTabs={closeAllTabs}
-          onAliasChange={updateTabAlias}
-          onThemeToggle={toggleTheme}
-          onSettingsOpen={() => setSettingsOpen(true)}
-          onSidebarToggle={toggleSidebar}
-          isDark={isDark}
-          isMaximized={state.isMaximized}
-          hasUpdate={updateCheck.hasUpdate}
-        />
-      )}
-      {isTabView && activeTabId === 'home' ? (
-        <main className="tab-home">
-          <div className="content__scroll" id="homeContentScroll">
-            <WelcomePage />
-          </div>
-        </main>
-      ) : !state.workspaceName ? (
-        <WorkspaceSelection
-          onBeforeOpenWorkspace={prepareWorkspaceOpen}
-          embeddedInTabs={isTabView}
-          workspaceAliases={workspaceAliases}
-          onWorkspaceAliasChange={updateWorkspaceAlias}
-        />
-      ) : (
-        <>
-          {!isTabView && (
-            <Topbar
-              onSettingsOpen={() => setSettingsOpen(true)}
-              onExpandAll={expandAll}
-              onCollapseAll={collapseAll}
-              onCopyFile={copyCurrentFileContent}
-              hasUpdate={updateCheck.hasUpdate}
-            />
-          )}
-          <div className="body">
-            <Sidebar
-              cursorMode={sidebarCursorMode}
-              onCursorModeClose={closeSidebarCursorMode}
-            />
-            <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
-            <div className="content-shell">
-              <ContentTabs />
-
-              <div className="content-shell__main">
-                <Content
-                  onImageClick={onImageClick}
-                  scrollRef={scrollRef}
-                  suppressWelcome={isTabView}
-                />
-                {/* Scroll to top button */}
-                <TooltipButton
-                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 && !state.tocCollapsed && !state.focusMode ? ' scroll-to-top-btn--with-toc' : ''}`}
-                  onClick={scrollToTop}
-                  tooltip={t.tooltips.scrollToTop}
-                  tooltipPos="above"
-                  tooltipAlign="right"
-                  icon={<ChevronUpIcon />}
-                />
-              </div>
-              {isTabView && (
-                <Suspense fallback={null}><FloatingTabToolbar
-                  position={toolbarPosition}
-                  onPositionChange={setToolbarPosition}
-                  onExpandAll={expandAll}
-                  onCollapseAll={collapseAll}
-                  onCopyFile={copyCurrentFileContent}
-                  onRefresh={refresh}
-                  onBack={back}
-                  onForward={forward}
-                  canGoBack={canGoBack}
-                  canGoForward={canGoForward}
-                  canEdit={!!state.currentFile}
-                /></Suspense>
-              )}
-            </div>
-            {state.toc.length > 0 && (
-              <>
-                <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label="Resize table of contents" />
-                <Suspense fallback={null}><TableOfContents variant="panel" /></Suspense>
-              </>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Overlays — lazy-loaded components, Suspense fallback is a no-op (invisible when closed) */}
-      <Suspense fallback={null}>
-      <SearchOverlay
-        isOpen={searchOpen}
-        onClose={closeSearch}
-        scopeKey={searchScope}
-        scopeLabel={
-          isAllTabsSearch
-            ? `${t.actions.searchAllTabs}... (${allTabsSearchShortcutLabel})`
-            : isTabView
-              ? `${t.actions.searchCurrent}... (${currentSearchShortcutLabel})`
-              : undefined
-        }
-        crossTabItems={isAllTabsSearch ? crossTabSearchItems : undefined}
-        onWorkspaceSelect={handleWorkspaceSearchSelect}
-        onCrossTabSelect={isAllTabsSearch ? handleCrossTabSelect : undefined}
-        isIndexing={isAllTabsSearch && isIndexingAcrossTabs}
-      />
-      <FindInFilePanel
-        isOpen={findOpen}
-        onClose={closeFind}
-        renderVersion={state.renderVersion}
-        shortcutLabel={findShortcutLabel}
-      />
-      <MediaModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setModalTarget(null); }} clickedElement={modalTarget} />
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        updateCheck={updateCheck}
-        hostUpdateState={state.updateState}
-        onDownloadUpdate={downloadUpdate}
-        onScheduleUpdateOnExit={scheduleUpdateOnExit}
-        onRestartAndApplyUpdate={restartAndApplyUpdate}
-        onOpenChangelog={openUpdateChangelog}
-      />
-      <ThemeOnboardingModal
-        isOpen={themeOnboardingOpen}
-        onComplete={handleThemeOnboardingComplete}
-      />
-      <SwitchWorkspaceModal
-        isOpen={pendingDroppedPath !== null}
-        onClose={() => setPendingDroppedPath(null)}
-        onConfirm={confirmSwitchWorkspace}
-        targetPath={pendingDroppedPath || ''}
-      />
-      </Suspense>
-
-      {state.focusMode && (
-        <TooltipButton
-          type="button"
-          className="exit-focus-btn focus-mode-btn"
-          onClick={toggleFocusMode}
-          tooltip={t.actions.toggleFocusMode || "Exit Focus Mode"}
-          shortcut={state.settings.keybindings?.toggleFocusMode}
-          tooltipPos="below"
-          tooltipAlign="right"
-          icon={<MinimizeIcon size={12} />}
-        />
-      )}
-
-      {state.focusMode && (state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'desktop') && (
-        <TooltipButton
-          type="button"
-          className="close-folder-focus-btn focus-mode-btn"
-          onClick={() => {
-            dispatch({
-              type: 'READY_ACK',
-              fileList: [],
-              tree: null,
-              theme: state.theme,
-              themeStyle: state.themeStyle,
-              defaultExpanded: state.defaultExpanded,
-              workspaceName: '',
-              recentWorkspaces: state.recentWorkspaces
-            });
-            bridge.postMessage({ command: 'closeWorkspace' });
-          }}
-          tooltip={t.topbar.closeFolder || "Close Folder"}
-          tooltipPos="below"
-          tooltipAlign="right"
-          icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>}
-        />
-      )}
-
-      {isDragging && (
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'var(--modal-bg)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '2.5px dashed var(--accent)',
-          borderTop: 'none',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          zIndex: 10000, color: 'var(--tx)',
-          pointerEvents: 'none', transition: 'all 0.2s ease'
-        }}>
-          <div style={{ fontSize: '20px', fontWeight: 800 }}>Drop folder or file to open</div>
-          <div style={{ fontSize: '13px', color: 'var(--tx2)', marginTop: '8px' }}>
-            Supports folders, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF files
-          </div>
-        </div>
-      )}
-    </div>
+    <AppView
+      isTabView={isTabView}
+       sidebarCursorMode={sidebarCursorMode}
+       closeSidebarCursorMode={closeSidebarCursorMode}
+      state={state}
+      activeTabId={activeTabId}
+      tabs={tabs}
+      activateTab={activateTab}
+      createNewWorkspaceTab={createNewWorkspaceTab}
+      closeTab={closeTab}
+      reorderTabs={reorderTabs}
+      closeTabsToRight={closeTabsToRight}
+      closeOtherTabs={closeOtherTabs}
+      closeAllTabs={closeAllTabs}
+      updateTabAlias={updateTabAlias}
+      toggleTheme={toggleTheme}
+      setSettingsOpen={setSettingsOpen}
+      toggleSidebar={toggleSidebar}
+      isDark={isDark}
+      updateCheck={updateCheck}
+      isFullscreen={isFullscreen}
+      toggleFullscreen={toggleFullscreen}
+      prepareWorkspaceOpen={prepareWorkspaceOpen}
+      workspaceAliases={workspaceAliases}
+      updateWorkspaceAlias={updateWorkspaceAlias}
+      scrollRef={scrollRef}
+      scrollTopVisible={scrollTopVisible}
+      scrollToTop={scrollToTop}
+      t={t}
+      expandAll={expandAll}
+      collapseAll={collapseAll}
+      copyCurrentFileContent={copyCurrentFileContent}
+      refresh={refresh}
+      back={back}
+      forward={forward}
+      canGoBack={canGoBack}
+      canGoForward={canGoForward}
+       currentFile={state.currentFile}
+      searchOpen={searchOpen}
+      closeSearch={closeSearch}
+      searchScope={searchScope}
+      isAllTabsSearch={isAllTabsSearch}
+      allTabsSearchShortcutLabel={allTabsSearchShortcutLabel}
+      currentSearchShortcutLabel={currentSearchShortcutLabel}
+      crossTabSearchItems={crossTabSearchItems}
+      handleWorkspaceSearchSelect={handleWorkspaceSearchSelect}
+      handleCrossTabSelect={handleCrossTabSelect}
+      isIndexingAcrossTabs={isIndexingAcrossTabs}
+      findOpen={findOpen}
+      closeFind={closeFind}
+      findShortcutLabel={findShortcutLabel}
+      modalOpen={modalOpen}
+      setModalOpen={setModalOpen}
+      modalTarget={modalTarget}
+      setModalTarget={setModalTarget}
+      settingsOpen={settingsOpen}
+      downloadUpdate={downloadUpdate}
+      scheduleUpdateOnExit={scheduleUpdateOnExit}
+      restartAndApplyUpdate={restartAndApplyUpdate}
+      openUpdateChangelog={openUpdateChangelog}
+      themeOnboardingOpen={themeOnboardingOpen}
+      handleThemeOnboardingComplete={handleThemeOnboardingComplete}
+      pendingDroppedPath={pendingDroppedPath}
+      setPendingDroppedPath={setPendingDroppedPath}
+      confirmSwitchWorkspace={confirmSwitchWorkspace}
+      workspaceSelectionConfirmOpen={workspaceSelectionConfirmOpen}
+      setWorkspaceSelectionConfirmOpen={setWorkspaceSelectionConfirmOpen}
+      closeWorkspaceToSelection={closeWorkspaceToSelection}
+       focusMode={state.focusMode}
+      toggleFocusMode={toggleFocusMode}
+      isDragging={isDragging}
+      toolbarPosition={toolbarPosition}
+      setToolbarPosition={setToolbarPosition}
+      onImageClick={onImageClick}
+    />
   );
 }
 

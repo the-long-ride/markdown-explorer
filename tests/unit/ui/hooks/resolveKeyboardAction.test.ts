@@ -19,12 +19,17 @@ const defaultBindings: Record<string, string> = {
   toggleToc: 'ctrl+shift+u',
   locateFile: 'ctrl+shift+l',
   toggleFocusMode: 'ctrl+shift+f',
+  toggleDesktopViewMode: 'ctrl+alt+t',
   sidebarCursorMode: 'ctrl+shift+s',
   refresh: 'ctrl+r',
   collapseAll: 'ctrl+shift+c',
   expandAll: 'ctrl+shift+e',
-  workspaceSelection: 'ctrl+shift+w',
+  workspaceSelection: 'ctrl+n',
   toggleSidebar: 'ctrl+b',
+  closeContentTab: 'ctrl+w',
+  closeAllContentTabs: 'ctrl+shift+w',
+  closeContentTabsToRight: 'ctrl+alt+w',
+  closeOtherContentTabs: 'ctrl+alt+o',
 };
 
 function defaultState(overrides: Partial<KeyboardState> = {}): KeyboardState {
@@ -47,6 +52,7 @@ function defaultState(overrides: Partial<KeyboardState> = {}): KeyboardState {
     hasOnToggleToc: true,
     hasOnLocateFile: true,
     hasOnToggleFocusMode: true,
+    hasOnToggleDesktopViewMode: false,
     hasOnFindClose: true,
     isRepeat: false,
     isEditableTarget: false,
@@ -498,6 +504,37 @@ describe('resolveKeyboardAction', () => {
     });
   });
 
+  describe('fullscreen toggle', () => {
+    it('returns toggle-fullscreen for fixed F11 on desktop', () => {
+      const e = mkEvent({ key: 'F11' });
+      const result = resolveKeyboardAction(e, defaultState({
+        isDesktop: true,
+        isDesktopLike: true,
+        hasOnToggleFullscreen: true,
+      }));
+      expect(result).toEqual({ type: 'toggle-fullscreen' });
+    });
+
+    it('does not expose fixed F11 outside desktop runtimes', () => {
+      const e = mkEvent({ key: 'F11' });
+      const result = resolveKeyboardAction(e, defaultState({
+        hasOnToggleFullscreen: true,
+      }));
+      expect(result).toBeNull();
+    });
+
+    it('does not repeat fullscreen toggle while F11 is held', () => {
+      const e = mkEvent({ key: 'F11' });
+      const result = resolveKeyboardAction(e, defaultState({
+        isDesktop: true,
+        isDesktopLike: true,
+        hasOnToggleFullscreen: true,
+        isRepeat: true,
+      }));
+      expect(result).toBeNull();
+    });
+  });
+
   describe('desktop-only shortcuts', () => {
     const desktopState = (overrides: Partial<KeyboardState> = {}): KeyboardState =>
       defaultState({ isDesktop: true, isDesktopLike: true, ...overrides });
@@ -521,7 +558,7 @@ describe('resolveKeyboardAction', () => {
     });
 
     it('workspace-selection: returns workspace-selection on keybinding match', () => {
-      const e = mkEvent({ key: 'w', ctrlKey: true, shiftKey: true });
+      const e = mkEvent({ key: 'n', ctrlKey: true });
       const result = resolveKeyboardAction(e, desktopState());
       expect(result).toEqual({ type: 'workspace-selection' });
     });
@@ -530,6 +567,34 @@ describe('resolveKeyboardAction', () => {
       const e = mkEvent({ key: 'b', ctrlKey: true });
       const result = resolveKeyboardAction(e, desktopState());
       expect(result).toEqual({ type: 'toggle-sidebar' });
+    });
+
+    it('toggle-desktop-view-mode: returns action on Ctrl+Alt+T', () => {
+      const e = mkEvent({ key: 't', ctrlKey: true, altKey: true });
+      const result = resolveKeyboardAction(e, desktopState({ hasOnToggleDesktopViewMode: true }));
+      expect(result).toEqual({ type: 'toggle-desktop-view-mode' });
+    });
+
+    it('toggle-desktop-view-mode returns null outside the desktop app', () => {
+      const e = mkEvent({ key: 't', ctrlKey: true, altKey: true });
+      const result = resolveKeyboardAction(e, defaultState({
+        isDesktopLike: true,
+        hasOnToggleDesktopViewMode: true,
+      }));
+      expect(result).toBeNull();
+    });
+
+    it.each([
+      [{ key: 'w', ctrlKey: true }, { type: 'close-content-tab' }],
+      [{ key: 'w', ctrlKey: true, shiftKey: true }, { type: 'close-all-content-tabs' }],
+      [{ key: 'w', ctrlKey: true, altKey: true }, { type: 'close-content-tabs-to-right' }],
+      [{ key: 'o', ctrlKey: true, altKey: true }, { type: 'close-other-content-tabs' }],
+    ])('routes document close shortcut %o', (event, expected) => {
+      expect(resolveKeyboardAction(mkEvent(event), desktopState())).toEqual(expected);
+    });
+
+    it('does not route document close shortcuts outside desktop runtime', () => {
+      expect(resolveKeyboardAction(mkEvent({ key: 'w', ctrlKey: true }), defaultState())).toBeNull();
     });
   });
 
@@ -552,10 +617,13 @@ describe('resolveKeyboardAction', () => {
       expect(result).toBeNull();
     });
 
-    it('workspace-selection returns null when not isDesktopLike', () => {
-      const e = mkEvent({ key: 'w', ctrlKey: true, shiftKey: true });
-      const result = resolveKeyboardAction(e, defaultState({ isDesktopLike: false }));
-      expect(result).toBeNull();
+    it('workspace-selection works on other platforms with Ctrl+Alt+W', () => {
+      const e = mkEvent({ key: 'w', ctrlKey: true, altKey: true });
+      const result = resolveKeyboardAction(e, defaultState({
+        isDesktopLike: false,
+        keybindings: { ...defaultState().keybindings, workspaceSelection: 'ctrl+alt+w' },
+      }));
+      expect(result).toEqual({ type: 'workspace-selection' });
     });
 
     it('toggle-sidebar returns null when not isDesktopLike', () => {

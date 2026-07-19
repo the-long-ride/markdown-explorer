@@ -1,0 +1,9 @@
+.state-screen--loading { display: flex; }
+.state-screen__sub--path { font-family: var(--font-mono); font-size: 11px; }
+.welcome-spacer--small { margin-top: 8px; }
+.welcome-spacer--medium { margin-bottom: 8px; }
+.welcome-feature-card__detail { margin-bottom: 12px; color: var(--tx2); font-size: 0.85rem; line-height: 1.5; }
+.tip-card-desc--multiline { white-space: pre-line; }
+.shortcut-keys-wrapper, .shortcut-keys-wrapper__part { display: inline-flex; align-items: center; gap: 4px; }
+.shortcut-keys-wrapper__plus { color: var(--tx3); font-weight: 500; }
+.shortcut-keys-wrapper kbd { margin: 0; }

@@ -428,11 +428,11 @@ describe('FloatingTabToolbar', () => {
     expect(toolbar?.className).toContain('is-actions-collapsed');
   });
 
-  it('sets position style from props', () => {
+  it('sets position CSS variables from props', () => {
     const { container } = render(React.createElement(FloatingTabToolbar, { ...defaultFloatingProps, position: { x: 100, y: 200 } }));
     const toolbar = container.querySelector('.tab-floating-toolbar') as HTMLElement;
-    expect(toolbar.style.right).toBe('100px');
-    expect(toolbar.style.bottom).toBe('200px');
+    expect(toolbar.style.getPropertyValue('--toolbar-right')).toBe('100px');
+    expect(toolbar.style.getPropertyValue('--toolbar-bottom')).toBe('200px');
   });
 
   it('calls onCopyFile when copy button clicked', () => {

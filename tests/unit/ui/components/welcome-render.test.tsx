@@ -71,6 +71,9 @@ vi.mock("../../../../ui/src/contexts/translations", () => ({
       zoomOut: "Zoom out",
       locateFile: "Locate file",
       toggleFocusMode: "Toggle focus mode",
+      toggleDesktopViewMode: "Toggle Tabs/Focus view",
+      toggleFullscreen: "Show full screen",
+      toggleFullscreenTooltip: "Toggle native full screen window",
       sidebarCursorMode: "Sidebar cursor mode",
     },
   }),
@@ -84,6 +87,7 @@ vi.mock("../../../../ui/src/components/Settings/SettingsModal", () => ({
     { id: "searchCurrent", label: "Search current workspace", scope: "desktop" },
     { id: "refresh", label: "Refresh", scope: "desktop" },
     { id: "toggleSidebar", label: "Toggle sidebar", scope: "desktop" },
+    { id: "toggleDesktopViewMode", label: "Toggle Tabs/Focus view", scope: "electron" },
   ],
 }));
 
@@ -189,7 +193,7 @@ describe("WelcomePage rendering", () => {
     expect(screen.getByText("Interactive Tables")).toBeInTheDocument();
     expect(screen.getByText("Table Charts")).toBeInTheDocument();
     expect(screen.getByText("Syntax Highlighting")).toBeInTheDocument();
-    expect(screen.getByText(/Media Modal/)).toBeInTheDocument();
+    expect(screen.getByText(/Media Viewer/)).toBeInTheDocument();
   });
 
   it("switches to shortcuts tab when View shortcuts button is clicked", () => {
@@ -237,11 +241,11 @@ describe("WelcomePage rendering", () => {
     expect(screen.getByText("Open an issue")).toBeInTheDocument();
   });
 
-  it("renders recent feature guide card in features tab", () => {
+  it("does not render recent feature guide card in features tab", () => {
     setup();
     expect(
-      screen.getByText("What is new since v1.5.0 — v1.5.3")
-    ).toBeInTheDocument();
+      screen.queryByText("What is new since v1.5.0 — v1.5.3")
+    ).not.toBeInTheDocument();
   });
 
   it("renders desktop recommendation when not on desktop", () => {
@@ -276,6 +280,27 @@ describe("WelcomePage rendering", () => {
     setup();
     fireEvent.click(screen.getByText("Shortcuts"));
     expect(screen.queryByText("Refresh")).not.toBeInTheDocument();
+  });
+
+  it("shows the desktop view toggle shortcut only in the desktop app", () => {
+    (window as Record<string, unknown>).electronAPI = {};
+    setup();
+    fireEvent.click(screen.getByText("Shortcuts"));
+    expect(screen.getByText("Toggle Tabs/Focus view")).toBeInTheDocument();
+  });
+
+  it("hides the desktop view toggle shortcut outside the desktop app", () => {
+    setup();
+    fireEvent.click(screen.getByText("Shortcuts"));
+    expect(screen.queryByText("Toggle Tabs/Focus view")).not.toBeInTheDocument();
+  });
+
+  it("shows fixed F11 fullscreen shortcut only on desktop", () => {
+    (window as Record<string, unknown>).electronAPI = {};
+    setup();
+    fireEvent.click(screen.getByText("Shortcuts"));
+    expect(screen.getByText("Show full screen")).toBeInTheDocument();
+    expect(screen.getByText("F11")).toBeInTheDocument();
   });
 
   it("shows macOS install link only on desktop + macos", () => {

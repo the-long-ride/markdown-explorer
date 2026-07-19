@@ -85,8 +85,7 @@ where
                                     on_batch: Box::new(on_batch),
                                     ..Default::default()
                                 },
-                            )
-                            .await;
+                            );
 
                         on_msg(SearchWorkerMessage::Done {
                             request_id: req_id,

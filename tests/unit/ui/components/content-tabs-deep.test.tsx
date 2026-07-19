@@ -7,6 +7,7 @@ const mockCloseContentTab = vi.fn();
 const mockCloseContentTabsToRight = vi.fn();
 const mockCloseOtherContentTabs = vi.fn();
 const mockCloseAllContentTabs = vi.fn();
+const mockReorderContentTabs = vi.fn();
 
 let capturedOnAction: ((action: any) => void) | null = null;
 let capturedOnClose: (() => void) | null = null;
@@ -90,6 +91,7 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
     navigate: vi.fn(),
     refresh: vi.fn(),
     activateContentTab: mockActivateContentTab,
+    reorderContentTabs: mockReorderContentTabs,
     closeContentTab: mockCloseContentTab,
     closeContentTabsToRight: mockCloseContentTabsToRight,
     closeOtherContentTabs: mockCloseOtherContentTabs,
@@ -656,6 +658,48 @@ describe('ContentTabs deep', () => {
       render(createElement(ContentTabs));
       fireEvent.contextMenu(screen.getByRole('tab'), { clientX: 10, clientY: 10 });
       expect(screen.getByTestId('ctx-close-this')).not.toBeDisabled();
+    });
+  });
+
+  describe('drag and drop with ghost preview', () => {
+    it('sets dragging state and displays ghost tab preview', () => {
+      mockAppState = createMockAppState({
+        contentTabs: [
+          makeTab('/a.md', 'a.md', 'A'),
+          makeTab('/b.md', 'b.md', 'B'),
+        ],
+        activeContentTabPath: '/a.md',
+      });
+      render(createElement(ContentTabs));
+
+      const tabA = screen.getByRole('tab', { name: /a\.md/ });
+      const tabB = screen.getByRole('tab', { name: /b\.md/ });
+
+      // Initially, no dragging class and no ghost element
+      expect(tabA.className).not.toContain('is-dragging');
+      expect(document.querySelector('.tab-drag-ghost')).toBeNull();
+
+      // Trigger pointerdown on tab A
+      fireEvent.pointerDown(tabA, { button: 0 });
+
+      // Now tab A has is-dragging class
+      expect(tabA.className).toContain('is-dragging');
+      const ghost = document.querySelector('.tab-drag-ghost') as HTMLElement;
+      expect(ghost).toBeInTheDocument();
+      expect(ghost?.textContent).toBe('a.md');
+
+      // Trigger pointermove to update position
+      fireEvent.pointerMove(document, { clientX: 100, clientY: 200 });
+      expect(ghost.style.transform).toBe('translate3d(110px, 210px, 0)');
+
+      // Trigger pointerenter on tab B -> swaps tabs
+      fireEvent.pointerEnter(tabB);
+      expect(mockReorderContentTabs).toHaveBeenCalledWith('/a.md', '/b.md');
+
+      // Trigger pointerup on document -> clears dragging
+      fireEvent.pointerUp(document);
+      expect(tabA.className).not.toContain('is-dragging');
+      expect(document.querySelector('.tab-drag-ghost')).toBeNull();
     });
   });
 });

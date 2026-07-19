@@ -132,6 +132,7 @@ export class HtmlRenderer {
     <${`h${level}`} class="mdn-section-title">
       <a class="mdn-anchor" href="#${id}" onclick="event.stopPropagation()" title="Copy link">#</a>${headingHtml}
     </${`h${level}`}>
+    <span class="mdn-section-heading-level" aria-hidden="true">H${level}</span>
     ${copyBtnHtml}
     <span class="mdn-section-chevron" aria-hidden="true">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>

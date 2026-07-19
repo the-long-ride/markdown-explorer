@@ -1,0 +1,138 @@
+
+.privacy-list li::marker {
+  color: var(--success);
+}
+
+.issues-card {
+  background: var(--bg-s);
+  border: 1px solid var(--bd-s);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: var(--sh-sm);
+}
+
+.issues-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--tx);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.issues-title svg.section-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.issues-desc {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--tx2);
+  margin-bottom: 12px;
+}
+
+.issues-desc a {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.issues-desc a:hover {
+  text-decoration: underline;
+}
+
+.issues-list {
+  margin: 8px 0 0 20px;
+  padding: 0;
+  list-style-type: square;
+}
+
+.issues-list li {
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: var(--tx2);
+  line-height: 1.5;
+}
+
+.issues-list li::marker {
+  color: var(--accent-text);
+}
+
+/* Tips & Best Practices Tab */
+.tips-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tip-card {
+  background: var(--bg-s);
+  border: 1px solid var(--bd-s);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: var(--sh-sm);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tip-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: var(--sh-md), 0 0 12px var(--accent-dim);
+}
+
+.tip-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tip-card-title {
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--tx);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tip-card-title svg.tip-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.tip-card-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-text);
+  background: var(--accent-dim);
+  border: 1px solid rgba(139, 124, 248, 0.2);
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tip-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--tx2);
+}
+
+.desktop-recommendation {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--tx3);
+}
+

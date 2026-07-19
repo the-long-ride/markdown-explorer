@@ -175,7 +175,17 @@ const bootstrap = createAppBootstrap({
   appDirImpl: appDir,
   createMainWindowFn: createMainWindowLegacy,
   recentWorkspacesStoreImpl: recentWorkspacesStore,
-  setMainWindow: (win) => { mainWindow = win; },
+  setMainWindow: (win) => {
+    mainWindow = win;
+    const emitFullscreenState = () => {
+      mainWindow?.webContents.send("host-message", {
+        command: "fullscreenChanged",
+        isFullscreen: mainWindow.isFullScreen() || mainWindow.isKiosk(),
+      });
+    };
+    win.on("enter-full-screen", emitFullscreenState);
+    win.on("leave-full-screen", emitFullscreenState);
+  },
   setUpdateManager: (um) => { updateManager = um; },
   TrayConstructor: Tray,
   ipcMainImpl: ipcMain,

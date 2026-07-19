@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { DesktopTab } from '../../../../ui/src/desktop/types';
 
 const mockPostMessage = vi.fn();
@@ -187,13 +189,14 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
       <button data-testid="menu-sidebar" onClick={props.onSidebarToggle}>Sidebar</button>
       <button data-testid="menu-toc" onClick={props.onTocToggle}>TOC</button>
       <button data-testid="menu-focus" onClick={props.onFocusModeToggle}>Focus</button>
+      {props.showFullscreen && <button data-testid="menu-fullscreen" onClick={props.onFullscreenToggle}>Show full screen</button>}
     </div>
   ),
 }));
 
 vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
-  TabContextMenu: ({ onAction, onClose, disabled }: any) => (
-    <div data-testid="tab-context-menu">
+  TabContextMenu: ({ onAction, onClose, disabled, shortcuts }: any) => (
+    <div data-testid="tab-context-menu" data-shortcuts={shortcuts ? 'present' : 'absent'}>
       <button data-testid="ctx-close-this" disabled={disabled?.closeThisTab} onClick={() => onAction('closeThisTab')}>Close</button>
       <button data-testid="ctx-close-right" disabled={disabled?.closeTabsToRight} onClick={() => onAction('closeTabsToRight')}>Close right</button>
       <button data-testid="ctx-close-others" disabled={disabled?.closeOtherTabs} onClick={() => onAction('closeOtherTabs')}>Close others</button>
@@ -235,6 +238,7 @@ describe('DesktopTabBar interactions', () => {
       onSelectTab: vi.fn(),
       onNewTab: vi.fn(),
       onCloseTab: vi.fn(),
+      onReorderTabs: vi.fn(),
       onCloseTabsToRight: vi.fn(),
       onCloseOtherTabs: vi.fn(),
       onCloseAllTabs: vi.fn(),
@@ -251,6 +255,23 @@ describe('DesktopTabBar interactions', () => {
   function renderTabBar(overrides: Partial<typeof props> = {}) {
     return render(React.createElement(DesktopTabBar, { ...props, ...overrides }));
   }
+
+  it('keeps unused tab-bar space draggable while controls remain interactive', () => {
+    const css = readFileSync(
+      resolve(__dirname, '../../../../ui/src/styles/global/global-topbar-tabs.css'),
+      'utf8',
+    );
+
+    expect(css).toMatch(
+      /\.desktop-tabbar__tabs-wrap\s*\{[^}]*-webkit-app-region:\s*drag;/s,
+    );
+    expect(css).toMatch(
+      /\.desktop-tabbar__tabs\s*\{[^}]*-webkit-app-region:\s*drag;/s,
+    );
+    expect(css).toMatch(
+      /\.desktop-tabbar__scrollbar\s*\{[^}]*-webkit-app-region:\s*no-drag;/s,
+    );
+  });
 
   it('switches active tab when a workspace tab is clicked', () => {
     renderTabBar();
@@ -273,6 +294,22 @@ describe('DesktopTabBar interactions', () => {
     expect(props.onSelectTab).toHaveBeenCalledWith('home');
   });
 
+  it('reorders workspace tabs on drop', () => {
+    renderTabBar();
+    const [ws1Tab, ws2Tab] = screen.getAllByRole('tab');
+    fireEvent.pointerDown(ws2Tab, { button: 0 });
+    fireEvent.pointerEnter(ws1Tab);
+    fireEvent.pointerUp(document);
+    expect(props.onReorderTabs).toHaveBeenCalledWith('ws2', 'ws1');
+  });
+
+  it('toggles fullscreen from the toolbar action menu', () => {
+    const onFullscreenToggle = vi.fn();
+    renderTabBar({ onFullscreenToggle });
+    fireEvent.click(screen.getByTestId('menu-fullscreen'));
+    expect(onFullscreenToggle).toHaveBeenCalledTimes(1);
+  });
+
   it('closes a tab when its close button is clicked', () => {
     renderTabBar();
     const closeButtons = screen.getAllByLabelText('Close tab');
@@ -288,6 +325,14 @@ describe('DesktopTabBar interactions', () => {
     fireEvent.contextMenu(ws1Tab, { clientX: 42, clientY: 84 });
     expect(screen.getByTestId('tab-context-menu')).toBeInTheDocument();
   });
+
+  it('does not show document keyboard shortcuts in the workspace tab menu', () => {
+    renderTabBar();
+    const [ws1Tab] = screen.getAllByRole('tab');
+    fireEvent.contextMenu(ws1Tab, { clientX: 42, clientY: 84 });
+    expect(screen.getByTestId('tab-context-menu')).toHaveAttribute('data-shortcuts', 'absent');
+  });
+
 
   it('closes the target tab from the context menu', () => {
     renderTabBar();

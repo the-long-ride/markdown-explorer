@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { highlight } from '../../../../ui/src/markdown/highlighter';
 
 describe('markdown/highlighter', () => {
@@ -126,7 +128,7 @@ describe('markdown/highlighter', () => {
   describe('bash', () => {
     it('highlights commands', () => {
       const result = highlight('echo "hello"', 'bash');
-      expect(result).toContain('hl-kw');
+      expect(result).toContain('hl-cmd');
       expect(result).toContain('hl-str');
     });
 
@@ -143,6 +145,67 @@ describe('markdown/highlighter', () => {
     it('highlights comments', () => {
       const result = highlight('# comment', 'bash');
       expect(result).toContain('hl-cm');
+    });
+
+    it('distinguishes executable, flags, values, and operators', () => {
+      const result = highlight('npm run build -- --mode=production && python app.py --count 2 --enabled true', 'bash');
+      expect(result).toContain('<span class="hl-cmd">npm</span>');
+      expect(result).toContain('<span class="hl-param">--</span>');
+      expect(result).toContain('<span class="hl-param">--mode</span>');
+      expect(result).toContain('<span class="hl-cmd">python</span>');
+      expect(result).toContain('<span class="hl-param">--count</span>');
+      expect(result).toContain('<span class="hl-val">2</span>');
+      expect(result).toContain('<span class="hl-val">true</span>');
+      expect(result).toContain('<span class="hl-op">&amp;&amp;</span>');
+      expect(result).not.toContain('<span class="hl-cmd">run</span>');
+    });
+
+    it('defines a dedicated muted terminal color for K-Ink syntax', () => {
+      const codeStyles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/global/global-code.css'),
+        'utf8',
+      );
+      const themeStyles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/tokens/tokens-pet-themes.css'),
+        'utf8',
+      );
+
+      expect(codeStyles).toContain('color: var(--hl-terminal-muted);');
+      expect(themeStyles).toMatch(
+        /\[data-theme-style="pet-k-ink"\]\[data-theme="dark"\],[\s\S]*?--hl-terminal-muted:/,
+      );
+      expect(themeStyles).toMatch(
+        /\[data-theme-style="pet-k-ink"\]\[data-theme="light"\][\s\S]*?--hl-terminal-muted:/,
+      );
+    });
+
+    it('protects quoted values and comments while styling shell operators', () => {
+      const result = highlight('my-app.exe "--help" $HOME \\\n  --name "value && -x" # --comment', 'sh');
+      expect(result).toContain('<span class="hl-cmd">my-app.exe</span>');
+      expect(result).toContain('<span class="hl-str">"--help"</span>');
+      expect(result).toContain('<span class="hl-var">$HOME</span>');
+      expect(result).toContain('<span class="hl-op">\\</span>');
+      expect(result).toContain('<span class="hl-str">"value &amp;&amp; -x"</span>');
+      expect(result).toContain('<span class="hl-cm"># --comment</span>');
+    });
+
+    it('highlights PowerShell command syntax and aliases', () => {
+      const result = highlight('pwsh -File .\\build.ps1 -Count 3 -Enabled $true; Write-Host "ok"', 'powershell');
+      expect(result).toContain('<span class="hl-cmd">pwsh</span>');
+      expect(result).toContain('<span class="hl-param">-File</span>');
+      expect(result).toContain('<span class="hl-val">3</span>');
+      expect(result).toContain('<span class="hl-val">$true</span>');
+      expect(result).toContain('<span class="hl-op">;</span>');
+      expect(result).toContain('<span class="hl-cmd">Write-Host</span>');
+    });
+
+    it('does not activate terminal highlighting for text fences', () => {
+      expect(highlight('my-app --flag', 'text')).not.toContain('hl-cmd');
+    });
+
+    it('styles cmd caret escape as an operator', () => {
+      const result = highlight('echo one ^ echo two', 'cmd');
+      expect(result).toContain('<span class="hl-op">^</span>');
     });
   });
 

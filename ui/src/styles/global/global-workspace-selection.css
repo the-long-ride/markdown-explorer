@@ -1,0 +1,71 @@
+.workspace-selection-confirm-modal {
+  display: flex;
+  background: linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), var(--modal-bg);
+}
+
+.workspace-selection-confirm-card {
+  display: flex;
+  flex-direction: column;
+  width: 450px;
+  gap: 16px;
+  padding: 24px;
+}
+
+.workspace-selection-confirm-card h3 {
+  margin: 0;
+  color: var(--tx);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.workspace-selection-confirm-card__body {
+  color: var(--tx2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.workspace-selection-confirm-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bd);
+}
+
+.workspace-selection-confirm-button {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 20px;
+  color: #fff;
+  font: 800 11px/1 var(--font-ui);
+  cursor: pointer;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+}
+
+.workspace-selection-confirm-button--outline {
+  color: var(--tx2);
+  background: transparent;
+  border-color: var(--bd-s);
+}
+
+.workspace-window-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 200000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 44px;
+  padding-right: 12px;
+}
+
+.workspace-window-controls.is-hidden { display: none; }
+.workspace-window-controls.is-desktop { -webkit-app-region: drag; }
+.workspace-window-controls .window-controls { display: flex; align-items: center; gap: 8px; }
+.workspace-window-controls.is-desktop .window-controls { -webkit-app-region: no-drag; }
+.workspace-window-controls__divider { width: 1px; height: 16px; background: var(--bd-s); }

@@ -178,6 +178,41 @@ describe('dom/tableHandlers registerTableHandlers', () => {
       expect(btn.classList.contains('is-active')).toBe(true);
       expect(btn.getAttribute('aria-pressed')).toBe('true');
     });
+
+    it('sizes wrapped columns from their average cell content length', () => {
+      registerTableHandlers(win);
+      document.body.innerHTML = `
+        <div id="t1-wrap"></div>
+        <table id="t1">
+          <thead><tr><th class="mdn-th">Index</th><th class="mdn-th">Date</th><th class="mdn-th">Metric Value</th><th class="mdn-th">Event Signature</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>2024-01-01</td><td>6714.25</td><td>EVT-0C4F64D880D — nominal latency</td></tr>
+            <tr><td>2</td><td>2024-01-02</td><td>5275.37</td><td>EVT-BB6C899604F5 — nominal jitter</td></tr>
+          </tbody>
+        </table>`;
+
+      win.Table.toggleWrap('t1');
+
+      const columns = document.querySelectorAll('#t1 colgroup[data-mdn-wrapped-columns] col');
+      const widths = [...columns].map((column) => Number.parseFloat(column.style.getPropertyValue('--mdn-column-width')));
+      expect(widths).toHaveLength(4);
+      expect(widths[0]).toBeLessThan(widths[1]);
+      expect(widths[2]).toBeLessThan(widths[1]);
+      expect(widths[1]).toBeLessThan(widths[3]);
+      expect(widths[0]).toBeLessThan(25);
+    });
+
+    it('removes calculated column widths when wrap mode is disabled', () => {
+      registerTableHandlers(win);
+      document.body.innerHTML = `
+        <div id="t1-wrap"></div>
+        <table id="t1"><thead><tr><th class="mdn-th">Name</th></tr></thead><tbody><tr><td>Value</td></tr></tbody></table>`;
+
+      win.Table.toggleWrap('t1');
+      win.Table.toggleWrap('t1');
+
+      expect(document.querySelector('#t1 colgroup[data-mdn-wrapped-columns]')).not.toBeInTheDocument();
+    });
   });
 
   describe('Table.updateCount', () => {

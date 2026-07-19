@@ -210,7 +210,7 @@ export function FolderNodeView({
           <FolderChevronIcon />
         </span>
         <FolderIcon />
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span className="tree-folder__name">
           {node.name}
         </span>
         {scopeFocus.editing && (
