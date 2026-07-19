@@ -335,6 +335,11 @@ export function App() {
         <div className="state-screen__title">
           {state.loadingLabel || 'Loading docs...'}
         </div>
+        {state.isWorkspaceScanning && (
+          <div className="state-screen__sub">
+            Scanning {state.scannedFiles.toLocaleString()} files…
+          </div>
+        )}
         {state.loadingDetail && (
           <div className="state-screen__sub">{state.loadingDetail}</div>
         )}

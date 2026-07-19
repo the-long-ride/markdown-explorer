@@ -79,6 +79,13 @@ pub fn emit_loading(app: &AppHandle, label: &str, detail: Option<&str>) {
     emit(app, "setLoading", extra);
 }
 
+pub fn emit_workspace_scan_progress(app: &AppHandle, scanned_files: usize, active: bool) {
+    let mut extra = serde_json::Map::new();
+    extra.insert("scannedFiles".into(), scanned_files.into());
+    extra.insert("active".into(), active.into());
+    emit(app, "workspaceScanProgress", extra);
+}
+
 pub fn emit_recent_workspaces_changed(app: &AppHandle, recent_workspaces: Vec<RecentWorkspace>) {
     let mut extra = serde_json::Map::new();
     extra.insert("recentWorkspaces".into(), json!(recent_workspaces));

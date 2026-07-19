@@ -145,15 +145,42 @@ function registerRuntimeWorkspaceHandlers(context) {
       return;
     }
 
-    const { tree, flat } = await scanWorkspaceData(state.workspacePath);
+    const workspacePath = state.workspacePath;
+    const workspaceName = pathApi.basename(workspacePath);
+    const recents = recentWorkspacesStore.load();
+    let displayedWorkspace = false;
+    const revealTimer = setTimeout(() => {
+      if (state.workspacePath !== workspacePath) return;
+      displayedWorkspace = true;
+      sendHostMessage({
+        command: "readyAck",
+        fileList: [],
+        tree: null,
+        theme: "dark",
+        themeStyle: "default",
+        defaultExpanded: true,
+        workspaceName,
+        workspacePath,
+        recentWorkspaces: recents,
+        documentConversionEnabled: state.documentConversionEnabled,
+        ...getHostInfo(),
+      });
+    }, 2500);
+    const { tree, flat } = await scanWorkspaceData(workspacePath);
+    clearTimeout(revealTimer);
+    if (state.workspacePath !== workspacePath) return;
     state.flatList = flat;
     const idx = ensureSearchIndex();
     idx.prime(flat);
 
-    const workspaceName = pathApi.basename(state.workspacePath);
-    const recents = recentWorkspacesStore.load();
-
-    sendHostMessage({
+    sendHostMessage(displayedWorkspace ? {
+      command: "workspaceFilesChanged",
+      fileList: flat,
+      tree,
+      workspaceName,
+      workspacePath,
+      documentConversionEnabled: state.documentConversionEnabled,
+    } : {
       command: "readyAck",
       fileList: flat,
       tree,
@@ -161,7 +188,7 @@ function registerRuntimeWorkspaceHandlers(context) {
       themeStyle: "default",
       defaultExpanded: true,
       workspaceName,
-      workspacePath: state.workspacePath,
+      workspacePath,
       recentWorkspaces: recents,
       documentConversionEnabled: state.documentConversionEnabled,
       ...getHostInfo(),

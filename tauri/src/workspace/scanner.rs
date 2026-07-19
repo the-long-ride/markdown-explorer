@@ -245,6 +245,14 @@ fn insert_file(node: &mut FolderNode, file: &MdFile, depth: usize) {
 }
 
 pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {
+    scan_with_progress(root_path, options, |_| {})
+}
+
+pub fn scan_with_progress(
+    root_path: &Path,
+    options: ScanOptions,
+    mut report_progress: impl FnMut(usize),
+) -> HostResult<ScanResult> {
     let custom_ignores = load_ignore_patterns(root_path);
     let mut excludes: Vec<String> = DEFAULT_IGNORED_FOLDERS
         .iter()
@@ -284,11 +292,15 @@ pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {
                 )
             {
                 flat.push(build_file_entry(&path, root_path));
+                if flat.len() % 100 == 0 {
+                    report_progress(flat.len());
+                }
             }
         }
     }
 
     flat.sort_by(|a, b| a.fs_path.cmp(&b.fs_path));
+    report_progress(flat.len());
     let tree = build_tree(&flat);
     Ok(ScanResult { tree, flat })
 }
@@ -406,6 +418,19 @@ mod tests {
 
         let result = scan(&root, ScanOptions::default()).unwrap();
         assert_eq!(result.flat.len(), 1100);
+    }
+
+    #[test]
+    fn scan_reports_supported_file_progress() {
+        let root = temp_dir("tauri-progress-scan");
+        for index in 0..100 {
+            write(&root.join(format!("file-{index:03}.md")), "# Title");
+        }
+        let mut progress = vec![];
+        let result = scan_with_progress(&root, ScanOptions::default(), |count| progress.push(count))
+            .unwrap();
+        assert_eq!(result.flat.len(), 100);
+        assert_eq!(progress, vec![100, 100]);
     }
 
     #[test]

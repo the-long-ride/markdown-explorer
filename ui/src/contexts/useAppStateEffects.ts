@@ -134,6 +134,13 @@ export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldL
         case 'setLoading':
           dispatch({ type: 'SET_LOADING', label: msg.label, detail: msg.detail });
           break;
+        case 'workspaceScanProgress':
+          dispatch({
+            type: 'WORKSPACE_SCAN_PROGRESS',
+            scannedFiles: msg.scannedFiles,
+            active: msg.active,
+          });
+          break;
         case 'updateStateChanged':
           dispatch({ type: 'SET_UPDATE_STATE', updateState: msg.state });
           break;

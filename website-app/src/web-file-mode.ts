@@ -54,14 +54,38 @@ async function loadHandleWorkspace(handle: FileSystemDirectoryHandle, openFirstF
   sendLoading('Loading workspace…');
   await BrowserRecentWorkspaces.save(state.activeWorkspaceName, state.activeWorkspacePath, handle);
 
-  const { tree, flat } = await BrowserScanner.scan(handle);
+  let revealed = false;
+  send({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
+  const scanPromise = BrowserScanner.scan(handle, {
+    onProgress(scannedFiles) {
+      send({ command: 'workspaceScanProgress', scannedFiles, active: true });
+    },
+  });
+  const revealTimer = window.setTimeout(async () => {
+    if (state.activeHandle !== handle) return;
+    revealed = true;
+    send({
+      command: 'readyAck', fileList: [], tree: null, theme: 'dark', themeStyle: 'default',
+      defaultExpanded: true, workspaceName: state.activeWorkspaceName,
+      workspacePath: state.activeWorkspacePath,
+      recentWorkspaces: await BrowserRecentWorkspaces.load(), documentConversionEnabled: false,
+      ...hostInfo(),
+    });
+  }, 2500);
+  const { tree, flat } = await scanPromise;
+  window.clearTimeout(revealTimer);
+  if (state.activeHandle !== handle) return;
   state.flatList = flat;
   state.workspaceTree = tree;
   state.searchIndex = new BrowserSearchIndex(handle);
   state.searchIndex.prime(flat);
 
   const recents = await BrowserRecentWorkspaces.load();
-  send({
+  send(revealed ? {
+    command: 'workspaceFilesChanged', fileList: flat, tree,
+    workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,
+    documentConversionEnabled: false,
+  } : {
     command: 'readyAck',
     fileList: flat,
     tree,
@@ -74,6 +98,7 @@ async function loadHandleWorkspace(handle: FileSystemDirectoryHandle, openFirstF
     documentConversionEnabled: false,
     ...hostInfo(),
   });
+  send({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false });
 
   if (openFirstFile && flat.length > 0) {
     state.currentFile = flat[0].relativePath;

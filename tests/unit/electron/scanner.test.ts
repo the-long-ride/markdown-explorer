@@ -157,6 +157,18 @@ describe('DesktopScanner', () => {
       expect(flat.length).toBe(1100);
     });
 
+    test('reports the scanned supported-file count while scanning', async () => {
+      const rootDir = makeTempDir('scan-progress-');
+      for (let i = 0; i < 100; i++) {
+        writeFile(path.join(rootDir, `f${String(i).padStart(3, '0')}.md`), '# t');
+      }
+      const progress: number[] = [];
+
+      await DesktopScanner.scan(rootDir, { onProgress: (count: number) => progress.push(count) });
+
+      expect(progress).toEqual([100, 100]);
+    });
+
     test('yields to event loop every 30 files', async () => {
       const rootDir = makeTempDir('scan-yield-');
       const spy = vi.spyOn(globalThis, 'setImmediate');

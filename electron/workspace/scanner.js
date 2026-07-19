@@ -31,6 +31,7 @@ class DesktopScanner {
     const customIgnores = loadIgnorePatterns(rootPath);
     const excludes = [...DEFAULT_IGNORED_FOLDERS, ...customIgnores];
     const documentConversionEnabled = options.documentConversionEnabled === true;
+    const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
     const YIELD_EVERY = 30;
 
     const dirQueue = [rootPath];
@@ -63,6 +64,7 @@ class DesktopScanner {
               _needsTitle: isMarkdown ? isMdx : false,
             };
             flat.push(entryObj);
+            if (onProgress && flat.length % 100 === 0) onProgress(flat.length);
             if (isMarkdown) titleBatch.push({ entry: entryObj, isMdx: !!isMdx });
             filesSinceYield++;
           }
@@ -94,6 +96,7 @@ class DesktopScanner {
     }
 
     flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+    if (onProgress) onProgress(flat.length);
     const tree = DesktopScanner.buildTree(flat);
     return { tree, flat };
   }

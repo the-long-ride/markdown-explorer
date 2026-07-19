@@ -50,6 +50,8 @@ export interface AppState {
   isLoading: boolean;
   loadingLabel: string;
   loadingDetail: string;
+  isWorkspaceScanning: boolean;
+  scannedFiles: number;
   previewInfo: DocumentPreviewInfo | null;
   staleContentFilePath: string | null;
   notFoundHref: string | null;
@@ -127,6 +129,7 @@ export type Action =
       isMaximized?: boolean;
     }
   | { type: 'SET_LOADING'; label?: string; detail?: string }
+  | { type: 'WORKSPACE_SCAN_PROGRESS'; scannedFiles: number; active: boolean }
   | { type: 'SET_UPDATE_STATE'; updateState: UpdateState }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_TOC' }
@@ -171,6 +174,8 @@ export const initialState: AppState = {
   isLoading: true,
   loadingLabel: 'Loading docs...',
   loadingDetail: '',
+  isWorkspaceScanning: false,
+  scannedFiles: 0,
   previewInfo: null,
   staleContentFilePath: null,
   notFoundHref: null,

@@ -107,6 +107,11 @@ const runtime = createDesktopRuntime({
     ensureHeavyModules();
     let tree = null;
     let flat = [];
+    mainWindow?.webContents.send("host-message", {
+      command: "workspaceScanProgress",
+      scannedFiles: 0,
+      active: true,
+    });
 
     try {
       const isFile = fs.statSync(wsPath).isFile();
@@ -118,7 +123,16 @@ const runtime = createDesktopRuntime({
           tree = DesktopScanner.buildTree(flat);
         }
       } else {
-        const result = await DesktopScanner.scan(wsPath, { documentConversionEnabled: runtime.state.documentConversionEnabled });
+        const result = await DesktopScanner.scan(wsPath, {
+          documentConversionEnabled: runtime.state.documentConversionEnabled,
+          onProgress(scannedFiles) {
+            mainWindow?.webContents.send("host-message", {
+              command: "workspaceScanProgress",
+              scannedFiles,
+              active: true,
+            });
+          },
+        });
         tree = result.tree;
         flat = result.flat;
       }
@@ -126,6 +140,11 @@ const runtime = createDesktopRuntime({
       console.error("Failed to scan workspace data:", err);
     }
 
+    mainWindow?.webContents.send("host-message", {
+      command: "workspaceScanProgress",
+      scannedFiles: flat.length,
+      active: false,
+    });
     return { tree, flat };
   },
   createSearchIndex() {

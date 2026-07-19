@@ -2187,7 +2187,7 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
 name = "markdown-explorer-tauri"
-version = "1.5.10"
+version = "1.5.9"
 dependencies = [
  "anyhow",
  "http",

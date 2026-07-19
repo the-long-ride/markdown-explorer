@@ -137,7 +137,7 @@ The Windows installer provides checked-by-default choices to create a desktop sh
 
 ## Desktop Workspace
 
-The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling.
+The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling. Large workspace scans report the running file count and continue in the background, so the app remains usable instead of holding the startup screen open.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />

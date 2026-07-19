@@ -150,7 +150,29 @@ async function sendWorkspaceData() {
   if (!activeHandle) return;
 
   try {
-    const { tree, flat } = await BrowserScanner.scan(activeHandle);
+    const handle = activeHandle;
+    const workspacePath = activeWorkspacePath;
+    const workspaceName = activeWorkspaceName;
+    let revealed = false;
+    sendToWebview({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
+    const scanPromise = BrowserScanner.scan(handle, {
+      onProgress(scannedFiles) {
+        sendToWebview({ command: 'workspaceScanProgress', scannedFiles, active: true });
+      },
+    });
+    const revealTimer = window.setTimeout(async () => {
+      if (activeHandle !== handle) return;
+      revealed = true;
+      sendToWebview({
+        command: 'readyAck', fileList: [], tree: null, theme: 'dark', themeStyle: 'default',
+        defaultExpanded: true, workspaceName, workspacePath,
+        recentWorkspaces: await BrowserRecentWorkspaces.load(), documentConversionEnabled: false,
+        ...getHostInfo(),
+      });
+    }, 2500);
+    const { tree, flat } = await scanPromise;
+    window.clearTimeout(revealTimer);
+    if (activeHandle !== handle) return;
     flatList = flat;
     workspaceTree = tree;
 
@@ -161,19 +183,23 @@ async function sendWorkspaceData() {
 
     const recents = await BrowserRecentWorkspaces.load();
 
-    sendToWebview({
+    sendToWebview(revealed ? {
+      command: 'workspaceFilesChanged',
+      fileList: flat, tree, workspaceName, workspacePath, documentConversionEnabled: false,
+    } : {
       command: "readyAck",
       fileList: flat,
       tree: tree,
       theme: "dark",
       themeStyle: "default",
       defaultExpanded: true,
-      workspaceName: activeWorkspaceName,
-      workspacePath: activeWorkspacePath,
+      workspaceName,
+      workspacePath,
       recentWorkspaces: recents,
       documentConversionEnabled: false,
       ...getHostInfo(),
     });
+    sendToWebview({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false });
   } catch (err) {
     console.error("Failed to scan workspace:", err);
     sendWorkspaceUnavailable(activeWorkspacePath, "missing");

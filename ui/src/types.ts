@@ -176,6 +176,12 @@ export interface SetLoadingMessage {
   readonly detail?: string;
 }
 
+export interface WorkspaceScanProgressMessage {
+  readonly command: 'workspaceScanProgress';
+  readonly scannedFiles: number;
+  readonly active: boolean;
+}
+
 export interface UpdateStateChangedMessage {
   readonly command: 'updateStateChanged';
   readonly state: UpdateState;
@@ -235,6 +241,7 @@ export type HostMessage =
   | NavNotFoundMessage
   | WorkspaceUnavailableMessage
   | SetLoadingMessage
+  | WorkspaceScanProgressMessage
   | UpdateStateChangedMessage
   | WindowStateChangedMessage
   | FullscreenStateChangedMessage

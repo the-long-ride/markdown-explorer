@@ -112,6 +112,27 @@ describe('MarkdownDocsPanel', () => {
   });
 
   describe('message handler dispatch', () => {
+    test('reveals the workspace after 2.5 seconds while a scan is still pending', async () => {
+      vi.useFakeTimers();
+      let resolveScan!: (value: { tree: null; flat: [] }) => void;
+      const scanner = await import('../../../vscode/src/core/scanner');
+      vi.mocked(scanner.WorkspaceScanner.scan).mockImplementationOnce(() => new Promise(resolve => {
+        resolveScan = resolve as typeof resolveScan;
+      }));
+      setupVscodeMock();
+      const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
+      MarkdownDocsPanel.createOrShow(context, null);
+      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
+
+      const pending = msgHandler({ command: 'ready' });
+      await vi.advanceTimersByTimeAsync(2500);
+
+      expect(mockPostMessage.mock.calls.some((call: any) => call[0].command === 'readyAck')).toBe(true);
+      resolveScan({ tree: null, flat: [] });
+      await pending;
+      vi.useRealTimers();
+    });
+
     test('handles ready message', async () => {
       setupVscodeMock();
       const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
