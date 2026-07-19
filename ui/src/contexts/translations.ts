@@ -112,6 +112,8 @@ export interface Translations {
     locateFile: string;
   };
   tabContextMenu: {
+    moveTabLeft: string;
+    moveTabRight: string;
     closeThisTab: string;
     closeTabsToRight: string;
     closeOtherTabs: string;
@@ -306,6 +308,8 @@ let _TRANSLATIONS: Record<string, Translations> = {
       locateFile: "Locate file",
     },
     tabContextMenu: {
+      moveTabLeft: "Move tab left",
+      moveTabRight: "Move tab right",
       closeThisTab: "Close this tab",
       closeTabsToRight: "Close tabs to the right",
       closeOtherTabs: "Close other tabs",

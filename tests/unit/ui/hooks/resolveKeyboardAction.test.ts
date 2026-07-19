@@ -24,8 +24,12 @@ const defaultBindings: Record<string, string> = {
   refresh: 'ctrl+r',
   collapseAll: 'ctrl+shift+c',
   expandAll: 'ctrl+shift+e',
-  workspaceSelection: 'ctrl+shift+w',
+  workspaceSelection: 'ctrl+n',
   toggleSidebar: 'ctrl+b',
+  closeContentTab: 'ctrl+w',
+  closeAllContentTabs: 'ctrl+shift+w',
+  closeContentTabsToRight: 'ctrl+alt+w',
+  closeOtherContentTabs: 'ctrl+alt+o',
 };
 
 function defaultState(overrides: Partial<KeyboardState> = {}): KeyboardState {
@@ -554,7 +558,7 @@ describe('resolveKeyboardAction', () => {
     });
 
     it('workspace-selection: returns workspace-selection on keybinding match', () => {
-      const e = mkEvent({ key: 'w', ctrlKey: true, shiftKey: true });
+      const e = mkEvent({ key: 'n', ctrlKey: true });
       const result = resolveKeyboardAction(e, desktopState());
       expect(result).toEqual({ type: 'workspace-selection' });
     });
@@ -578,6 +582,19 @@ describe('resolveKeyboardAction', () => {
         hasOnToggleDesktopViewMode: true,
       }));
       expect(result).toBeNull();
+    });
+
+    it.each([
+      [{ key: 'w', ctrlKey: true }, { type: 'close-content-tab' }],
+      [{ key: 'w', ctrlKey: true, shiftKey: true }, { type: 'close-all-content-tabs' }],
+      [{ key: 'w', ctrlKey: true, altKey: true }, { type: 'close-content-tabs-to-right' }],
+      [{ key: 'o', ctrlKey: true, altKey: true }, { type: 'close-other-content-tabs' }],
+    ])('routes document close shortcut %o', (event, expected) => {
+      expect(resolveKeyboardAction(mkEvent(event), desktopState())).toEqual(expected);
+    });
+
+    it('does not route document close shortcuts outside desktop runtime', () => {
+      expect(resolveKeyboardAction(mkEvent({ key: 'w', ctrlKey: true }), defaultState())).toBeNull();
     });
   });
 

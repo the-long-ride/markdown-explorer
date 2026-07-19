@@ -111,6 +111,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Locate file",
     },
     tabContextMenu: {
+      moveTabLeft: "Move tab left",
+      moveTabRight: "Move tab right",
       closeThisTab: "Close this tab",
       closeTabsToRight: "Close tabs to the right",
       closeOtherTabs: "Close other tabs",
@@ -283,6 +285,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Tìm tệp",
     },
     tabContextMenu: {
+      moveTabLeft: "Di chuyển tab sang trái",
+      moveTabRight: "Di chuyển tab sang phải",
       closeThisTab: "Đóng tab này",
       closeTabsToRight: "Đóng các tab bên phải",
       closeOtherTabs: "Đóng các tab khác",
@@ -455,6 +459,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Cibler",
     },
     tabContextMenu: {
+      moveTabLeft: "Déplacer l'onglet à gauche",
+      moveTabRight: "Déplacer l'onglet à droite",
       closeThisTab: "Fermer cet onglet",
       closeTabsToRight: "Fermer les onglets à droite",
       closeOtherTabs: "Fermer les autres onglets",
@@ -627,6 +633,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Localizar",
     },
     tabContextMenu: {
+      moveTabLeft: "Mover pestaña a la izquierda",
+      moveTabRight: "Mover pestaña a la derecha",
       closeThisTab: "Cerrar esta pestaña",
       closeTabsToRight: "Cerrar pestañas a la derecha",
       closeOtherTabs: "Cerrar otras pestañas",
@@ -799,6 +807,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "定位文件",
     },
     tabContextMenu: {
+      moveTabLeft: "向左移动标签页",
+      moveTabRight: "向右移动标签页",
       closeThisTab: "关闭此标签页",
       closeTabsToRight: "关闭右侧标签页",
       closeOtherTabs: "关闭其他标签页",
@@ -971,6 +981,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Finn fil",
     },
     tabContextMenu: {
+      moveTabLeft: "Flytt fanen til venstre",
+      moveTabRight: "Flytt fanen til høyre",
       closeThisTab: "Lukk denne fanen",
       closeTabsToRight: "Lukk faner til høyre",
       closeOtherTabs: "Lukk andre faner",
@@ -1143,6 +1155,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "位置表示",
     },
     tabContextMenu: {
+      moveTabLeft: "タブを左へ移動",
+      moveTabRight: "タブを右へ移動",
       closeThisTab: "このタブを閉じる",
       closeTabsToRight: "右側のタブを閉じる",
       closeOtherTabs: "他のタブを閉じる",
@@ -1315,6 +1329,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "파일 찾기",
     },
     tabContextMenu: {
+      moveTabLeft: "탭을 왼쪽으로 이동",
+      moveTabRight: "탭을 오른쪽으로 이동",
       closeThisTab: "이 탭 닫기",
       closeTabsToRight: "오른쪽 탭 닫기",
       closeOtherTabs: "다른 탭 닫기",
@@ -1487,6 +1503,8 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
       locateFile: "Найти файл",
     },
     tabContextMenu: {
+      moveTabLeft: "Переместить вкладку влево",
+      moveTabRight: "Переместить вкладку вправо",
       closeThisTab: "Закрыть эту вкладку",
       closeTabsToRight: "Закрыть вкладки справа",
       closeOtherTabs: "Закрыть остальные вкладки",

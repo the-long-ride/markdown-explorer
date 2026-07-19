@@ -11,3 +11,10 @@ export function formatShortcutLabel(shortcut: string, joiner = '+'): string {
     .filter(Boolean)
     .join(joiner);
 }
+
+export function getEnabledShortcut(
+  settings: { keybindings?: Record<string, string>; disabledKeybindings?: Record<string, boolean> },
+  actionId: string,
+): string | undefined {
+  return settings.disabledKeybindings?.[actionId] ? undefined : settings.keybindings?.[actionId];
+}

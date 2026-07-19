@@ -7,6 +7,7 @@ import { TooltipButton } from '../shared/TooltipButton';
 import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from '../shared/icons';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
+import { useCssVars } from '../../utils/useCssVars';
 
 interface MediaItem {
   type: 'img' | 'svg';
@@ -51,6 +52,11 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, panX: 0, panY: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const mediaImageRef = useRef<HTMLImageElement>(null);
+  const mediaSvgRef = useRef<HTMLDivElement>(null);
+  const transformVars = { '--pan-x': `${pan.x}px`, '--pan-y': `${pan.y}px`, '--zoom': zoom };
+  useCssVars(mediaImageRef, transformVars);
+  useCssVars(mediaSvgRef, transformVars);
 
   useEffect(() => {
     if (!isOpen) {
@@ -151,7 +157,7 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
   };
 
   return (
-    <div id="mediaModal" className="mdn-modal" ref={modalRef} style={{ display: 'flex' }} role="dialog" aria-modal="true"
+    <div id="mediaModal" className="mdn-modal media-modal" ref={modalRef} role="dialog" aria-modal="true"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <button
@@ -184,16 +190,16 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
           {item.type === 'img' && (
             <img
               src={item.src}
-              className="mdn-modal-content-img"
-              style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+              ref={mediaImageRef}
+              className="mdn-modal-content-img media-modal__transform"
               alt=""
               draggable={false}
             />
           )}
           {item.type === 'svg' && (
             <div
-              className="mdn-modal-content-svg"
-              style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+              className="mdn-modal-content-svg media-modal__transform"
+              ref={mediaSvgRef}
               dangerouslySetInnerHTML={{ __html: item.html ?? '' }}
             />
           )}

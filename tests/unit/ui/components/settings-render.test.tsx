@@ -605,7 +605,7 @@ describe('SettingsModal', () => {
       />,
     );
     fireEvent.click(screen.getByText('Reset to Default Shortcuts'));
-    expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K' } });
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K' }, disabledKeybindings: {} });
   });
 
   it('calls onClose when close button is clicked', () => {

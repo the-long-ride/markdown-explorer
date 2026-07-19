@@ -29,37 +29,21 @@ export function WorkspaceSelectionConfirmModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="workspace-selection-confirm-title"
-      style={{
-        display: 'flex',
-        background:
-          'linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), var(--modal-bg)',
-      }}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="settings-card" style={{ width: '450px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <h3 id="workspace-selection-confirm-title" style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--tx)' }}>
+      <div className="settings-card workspace-selection-confirm-card">
+        <h3 id="workspace-selection-confirm-title">
           Return to workspace selection?
         </h3>
-        <div style={{ fontSize: '14px', lineHeight: 1.5, color: 'var(--tx2)' }}>
+        <div className="workspace-selection-confirm-card__body">
           Close the current workspace and choose another one?
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px', borderTop: '1px solid var(--bd)', paddingTop: '16px' }}>
+        <div className="workspace-selection-confirm-card__actions">
           <button
             type="button"
             className="workspace-selection-confirm-button workspace-selection-confirm-button--outline"
-            style={{
-              height: '32px',
-              minHeight: '32px',
-              padding: '0 20px',
-              border: '1px solid var(--bd-s)',
-              borderRadius: 'var(--r-md)',
-              background: 'transparent',
-              color: 'var(--tx2)',
-              font: '800 11px/1 var(--font-ui)',
-              cursor: 'pointer',
-            }}
             onClick={onClose}
           >
             Cancel
@@ -67,17 +51,6 @@ export function WorkspaceSelectionConfirmModal({
           <button
             type="button"
             className="workspace-selection-confirm-button"
-            style={{
-              height: '32px',
-              minHeight: '32px',
-              padding: '0 20px',
-              border: '1px solid transparent',
-              borderRadius: 'var(--r-md)',
-              background: 'var(--accent)',
-              color: '#fff',
-              font: '800 11px/1 var(--font-ui)',
-              cursor: 'pointer',
-            }}
             onClick={onConfirm}
           >
             Confirm

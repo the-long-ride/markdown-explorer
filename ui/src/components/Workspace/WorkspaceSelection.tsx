@@ -9,6 +9,7 @@ import { RecentWorkspacesModal } from './RecentWorkspacesModal';
 import { WorkspaceWindowControls } from './WorkspaceWindowControls';
 import { InteractiveBackground } from '../shared/InteractiveBackground';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
+import { useCssVars } from '../../utils/useCssVars';
 
 interface WorkspaceSelectionProps {
   onBeforeOpenWorkspace?: () => void;
@@ -29,6 +30,7 @@ export function WorkspaceSelection({
   const [searchQuery, setSearchQuery] = useState('');
   const [workspaceScale, setWorkspaceScale] = useState(1);
   const workspacePanelRef = useRef<HTMLDivElement>(null);
+  useCssVars(workspacePanelRef, { '--workspace-scale': workspaceScale });
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isDesktop = isElectron;
   const isWebDemo = typeof (window as any).__webDemoBus !== 'undefined';
@@ -101,24 +103,7 @@ export function WorkspaceSelection({
 
   return (
     <div
-      className="workspace-selection"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: workspaceScale < 1 ? 'flex-start' : 'center',
-        minHeight: '100vh',
-        background: 'var(--bg)',
-        color: 'var(--tx)',
-        fontFamily: 'var(--font-ui)',
-        padding: '40px 20px',
-        width: '100%',
-        maxWidth: '100vw',
-        boxSizing: 'border-box',
-        position: 'relative',
-        overflowX: 'hidden',
-        overflowY: 'auto',
-      }}
+      className={`workspace-selection ${workspaceScale < 1 ? 'workspace-selection--scaled-down' : 'workspace-selection--centered'}`}
     >
       <InteractiveBackground />
       <WorkspaceWindowControls
@@ -131,39 +116,18 @@ export function WorkspaceSelection({
       <div
         ref={workspacePanelRef}
         className="workspace-selection__panel"
-        style={{
-          width: '100%',
-          maxWidth: 'min(420px, 100%)',
-          minWidth: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'stretch',
-          gap: '24px',
-          transform: `scale(${workspaceScale})`,
-          transformOrigin: 'center top',
-          transition: 'transform 0.12s ease',
-        }}
       >
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-          <img src={logoUrl} width="64" height="64" alt="Markdown Explorer" style={{ opacity: 0.95, filter: 'drop-shadow(0 4px 12px var(--accent-dim))' }} />
-          <h1 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: 0, margin: 0, color: 'var(--tx)' }}>Markdown Explorer</h1>
-          <p style={{ fontSize: '14px', color: 'var(--tx2)', margin: 0, lineHeight: 1.5 }}>Documentation viewer & navigator</p>
+        <div className="workspace-selection__brand">
+          <img className="workspace-selection__brand-logo" src={logoUrl} width="64" height="64" alt="Markdown Explorer" />
+          <h1>Markdown Explorer</h1>
+          <p>Documentation viewer & navigator</p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="workspace-selection__actions">
           {!isWebFileMode && (
             <button
               onClick={handleOpenFolder}
-              className="btn btn--accent"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px 20px', fontSize: '14px', fontWeight: 600, width: '100%', height: 'auto', borderRadius: 'var(--r-lg)', cursor: 'pointer', border: 'none', background: 'var(--accent)', color: '#fff', boxShadow: '0 4px 12px var(--accent-dim)', transition: 'all 0.15s ease' }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px var(--accent-dim)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'none';
-                e.currentTarget.style.boxShadow = '0 4px 12px var(--accent-dim)';
-              }}
+              className="workspace-selection__open-button"
             >
               <FolderIcon size={16} />
               Open Folder
@@ -173,55 +137,14 @@ export function WorkspaceSelection({
           {(isDesktop || isWebFileMode) && (
             <button
               onClick={handleOpenFile}
-              className={isWebFileMode ? "btn btn--accent" : "btn btn--outline"}
-              style={
-                isWebFileMode
-                  ? { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px 20px', fontSize: '14px', fontWeight: 600, width: '100%', height: 'auto', borderRadius: 'var(--r-lg)', cursor: 'pointer', border: 'none', background: 'var(--accent)', color: '#fff', boxShadow: '0 4px 12px var(--accent-dim)', transition: 'all 0.15s ease' }
-                  : { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', fontSize: '12.5px', fontWeight: 500, width: '100%', height: 'auto', borderRadius: 'var(--r-lg)', cursor: 'pointer', border: '1.5px solid var(--bd-s)', background: 'transparent', color: 'var(--tx2)', transition: 'all 0.15s ease', marginTop: '4px' }
-              }
-              onMouseOver={
-                isWebFileMode
-                  ? (e) => {
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 6px 16px var(--accent-dim)';
-                    }
-                  : (e) => {
-                      e.currentTarget.style.borderColor = 'var(--accent)';
-                      e.currentTarget.style.color = 'var(--tx)';
-                      e.currentTarget.style.background = 'var(--accent-dim)';
-                    }
-              }
-              onMouseOut={
-                isWebFileMode
-                  ? (e) => {
-                      e.currentTarget.style.transform = 'none';
-                      e.currentTarget.style.boxShadow = '0 4px 12px var(--accent-dim)';
-                    }
-                  : (e) => {
-                      e.currentTarget.style.borderColor = 'var(--bd-s)';
-                      e.currentTarget.style.color = 'var(--tx2)';
-                      e.currentTarget.style.background = 'transparent';
-                    }
-              }
+              className={`${isWebFileMode ? 'workspace-selection__open-button' : 'workspace-selection__open-file'}`}
             >
-              <svg width={isWebFileMode ? "16" : "14"} height={isWebFileMode ? "16" : "14"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+              <svg className="workspace-selection__tip-icon" width={isWebFileMode ? "16" : "14"} height={isWebFileMode ? "16" : "14"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
               Open File
             </button>
           )}
 
-          <div
-            style={{
-              fontSize: '11px',
-              color: 'var(--tx3)',
-              textAlign: 'center',
-              marginTop: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              opacity: 0.8,
-            }}
-          >
+          <div className="workspace-selection__tip">
             <svg
               width="12"
               height="12"
@@ -231,7 +154,6 @@ export function WorkspaceSelection({
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ flexShrink: 0 }}
             >
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="16" x2="12" y2="12" />
@@ -242,14 +164,14 @@ export function WorkspaceSelection({
         </div>
 
         {recents.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '8px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, color: 'var(--tx2)' }}>Workspaces</h3>
+          <div className="workspace-selection__recents">
+            <h3>Workspaces</h3>
             {embeddedInTabs && isDesktop && (
-              <p style={{ margin: '-8px 0 0', fontSize: '11px', color: 'var(--tx3)', lineHeight: 1.5 }}>
+              <p className="workspace-selection__recents-note">
                 Tip: Double-click a workspace tab in Tab view to rename it.
               </p>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="workspace-selection__recent-list">
               {displayRecents.map((item, idx) => (
                 <RecentWorkspaceItem
                   key={`${item.path}-${idx}`}
@@ -261,15 +183,14 @@ export function WorkspaceSelection({
                 />
               ))}
             </div>
-            {recents.length > 3 && (
+            {recents.length > 0 && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery('');
                   setModalOpen(true);
                 }}
-                style={{ alignSelf: 'center', background: 'none', border: 'none', fontSize: '12px', fontWeight: 600, color: 'var(--accent)', cursor: 'pointer', padding: '6px 12px', transition: 'opacity 0.1s' }}
-                onMouseOver={(e) => { e.currentTarget.style.opacity = '0.8'; }}
-                onMouseOut={(e) => { e.currentTarget.style.opacity = '1'; }}
+                className="workspace-selection__show-more"
               >
                 Show More...
               </button>
@@ -278,30 +199,16 @@ export function WorkspaceSelection({
         )}
 
         {!isDesktop && !isWebDemo && (
-          <div
-            style={{
-              marginTop: '16px',
-              padding: '14px',
-              borderRadius: 'var(--r-md)',
-              border: '1px solid var(--bd-s)',
-              background: 'var(--bg-elevated)',
-              fontSize: '12px',
-              lineHeight: 1.45,
-              color: 'var(--tx2)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent)', fontWeight: 600 }}>
+          <div className="workspace-selection__guide">
+            <div className="workspace-selection__guide-title">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
               <span>Browser Configuration Guide</span>
             </div>
-            <span style={{ fontSize: '11.5px', color: 'var(--tx2)' }}>
+            <span className="workspace-selection__guide-copy">
               To open local folders in the browser, the File System Access API is required. If folder selection fails, configure your browser flags:
             </span>
-            <div style={{ fontSize: '11px', color: 'var(--tx3)', display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '4px' }}>
-              <div>1. Open a new tab and visit: <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-hover)', padding: '2px 4px', borderRadius: '3px', userSelect: 'all' }}>chrome://flags</code> or <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-hover)', padding: '2px 4px', borderRadius: '3px', userSelect: 'all' }}>brave://flags</code></div>
+            <div className="workspace-selection__guide-list">
+              <div>1. Open a new tab and visit: <code>chrome://flags</code> or <code>brave://flags</code></div>
               <div>2. Search for: <strong>File System Access API</strong></div>
               <div>3. Set it to <strong>Enabled</strong> and relaunch your browser.</div>
             </div>
@@ -309,61 +216,19 @@ export function WorkspaceSelection({
         )}
 
         {isElectron && state.hostPlatform === 'macos' && (
-          <div
-            style={{
-              marginTop: '16px',
-              padding: '14px',
-              borderRadius: 'var(--r-md)',
-              border: '1px solid var(--bd-s)',
-              background: 'var(--bg-elevated)',
-              fontSize: '12px',
-              lineHeight: 1.45,
-              color: 'var(--tx2)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              alignItems: 'center',
-              textAlign: 'center'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent)', fontWeight: 600 }}>
+          <div className="workspace-selection__guide workspace-selection__guide--mac">
+            <div className="workspace-selection__guide-title">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
               <span>macOS Installation & Security</span>
             </div>
-            <span style={{ fontSize: '11.5px', color: 'var(--tx2)' }}>
+            <span className="workspace-selection__guide-copy">
               If you run into security blocks or permission issues, check the installation guide:
             </span>
             <a
               href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                padding: '8px 14px',
-                fontSize: '11.5px',
-                fontWeight: 500,
-                borderRadius: '20px',
-                cursor: 'pointer',
-                border: '1.5px solid var(--bd-s)',
-                background: 'transparent',
-                color: 'var(--tx2)',
-                textDecoration: 'none',
-                transition: 'all 0.15s ease',
-                marginTop: '4px'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = 'var(--accent)';
-                e.currentTarget.style.color = 'var(--tx)';
-                e.currentTarget.style.background = 'var(--accent-dim)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = 'var(--bd-s)';
-                e.currentTarget.style.color = 'var(--tx2)';
-                e.currentTarget.style.background = 'transparent';
-              }}
+              className="workspace-selection__guide-link"
             >
               {getWelcomeTranslations(state.settings.language || 'en').hero.macosInstallBtn}
             </a>

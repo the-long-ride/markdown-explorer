@@ -444,18 +444,18 @@ describe('Sidebar render', () => {
     expect(indicator).toBeInTheDocument();
   });
 
-  it('tab indicator translates to 0 for files tab', () => {
+  it('tab indicator has no search modifier for files tab', () => {
     mockState.sidebarActiveTab = 'files';
     render(<Sidebar />);
     const indicator = document.querySelector('.sidebar__tab-indicator') as HTMLElement;
-    expect(indicator.style.transform).toBe('translateX(0)');
+    expect(indicator).not.toHaveClass('is-search');
   });
 
-  it('tab indicator translates to 100% for search tab', () => {
+  it('tab indicator has search modifier for search tab', () => {
     mockState.sidebarActiveTab = 'search';
     render(<Sidebar />);
     const indicator = document.querySelector('.sidebar__tab-indicator') as HTMLElement;
-    expect(indicator.style.transform).toBe('translateX(100%)');
+    expect(indicator).toHaveClass('is-search');
   });
 
   it('renders tree container with role tree', () => {

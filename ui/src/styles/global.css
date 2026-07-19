@@ -1,4 +1,14 @@
 @import './global/global-topbar-tabs.css';
+@import './global/global-content-layout.css';
+@import './global/global-app-shell.css';
+@import './global/global-settings-layout.css';
+@import './global/global-terms-modal.css';
+@import './global/global-workspace-selection.css';
+@import './global/global-recent-workspaces.css';
+@import './global/global-search-overlay.css';
+@import './global/global-switch-workspace-modal.css';
+@import './global/global-workspace-selection-screen.css';
+@import './global/global-dynamic-layout.css';
 @import './global/global-search-buttons.css';
 @import './global/global-layout-sidebar.css';
 @import './global/global-markdown-base.css';
@@ -17,3 +27,31 @@
 @import './global/global-theme-picker-remix.css';
 @import './global/global-switch-tooltip-diff.css';
 @import './global/global-electron-workspace.css';
+
+.sidebar__tab-indicator { transition: transform 0.2s ease; }
+.sidebar__tab-indicator.is-search { transform: translateX(100%); }
+.sidebar__search-spinner { width: 10px; height: 10px; border-width: 1.5px; }
+
+.tab-drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  left: 0;
+  top: 0;
+  transform: translate3d(0, 0, 0);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r);
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--accent);
+  color: var(--tx);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+}
+

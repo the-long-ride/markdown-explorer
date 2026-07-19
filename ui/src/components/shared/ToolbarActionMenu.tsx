@@ -54,6 +54,7 @@ interface ToolbarActionMenuProps {
   focusModeShortcut?: string;
   isFocusMode?: boolean;
   onFocusModeToggle?: () => void;
+  showFullscreen?: boolean;
   fullscreenLabel?: string;
   fullscreenTooltip?: string;
   fullscreenShortcut?: string;
@@ -122,6 +123,7 @@ export function ToolbarActionMenu({
   focusModeShortcut,
   isFocusMode = false,
   onFocusModeToggle,
+  showFullscreen = false,
   fullscreenLabel,
   fullscreenTooltip,
   fullscreenShortcut,
@@ -214,14 +216,14 @@ export function ToolbarActionMenu({
     });
   }
 
-    if (onFullscreenToggle && fullscreenLabel && fullscreenTooltip) {
-      items.push({
-        id: "fullscreen",
-        label: fullscreenLabel,
-        tooltip: buildShortcutTooltip(fullscreenTooltip, fullscreenShortcut),
-        disabled: false,
-        toggleState: isFullscreen,
-      });
+  if (showFullscreen && onFullscreenToggle && fullscreenLabel && fullscreenTooltip) {
+    items.push({
+      id: "fullscreen",
+      label: fullscreenLabel,
+      tooltip: buildShortcutTooltip(fullscreenTooltip, fullscreenShortcut),
+      disabled: false,
+      toggleState: isFullscreen,
+    });
   }
 
   items.push({

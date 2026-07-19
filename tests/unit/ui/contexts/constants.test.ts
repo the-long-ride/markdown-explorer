@@ -20,8 +20,8 @@ describe('appStateConstants', () => {
     expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(19);
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 20 entries', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(20);
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 24 entries', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(24);
   });
 
   test('DESKTOP_DEFAULT_KEYBINDINGS overrides 5 from defaults', () => {

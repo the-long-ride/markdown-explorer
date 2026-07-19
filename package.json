@@ -12,6 +12,7 @@
     "test:ui": "vitest run --project ui",
     "test:chromium": "vitest run --project chromium",
     "test:contracts": "vitest run --project contracts --project manifest --project build",
+    "lint:ui-styles": "vitest run tests/contracts/ui-style-contract.test.ts",
     "build:ui:electron": "pnpm --filter ./ui run build:electron",
     "build:ui": "pnpm --filter ./ui run build",
     "build:vscode": "pnpm --filter ./vscode run compile",

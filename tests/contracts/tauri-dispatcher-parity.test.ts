@@ -197,8 +197,11 @@ describe('tauri dispatcher parity', () => {
     expect(toolbarActionMenuSrc).not.toContain('tooltip: "Toggle native full screen window [F11]"');
     expect(toolbarActionMenuSrc).toContain('fullscreenLabel');
     expect(toolbarActionMenuSrc).toContain('fullscreenTooltip');
+    expect(toolbarActionMenuSrc).toContain('showFullscreen');
     expect(toolbarActionMenuSrc).toContain('buildShortcutTooltip(fullscreenTooltip, fullscreenShortcut)');
 
+    expect(topbarSrc).toContain('showFullscreen={isDesktop}');
+    expect(desktopTabBarSrc).toContain('showFullscreen');
     for (const src of [desktopTabBarSrc, topbarSrc]) {
       expect(src).toContain('fullscreenLabel={t.actions.toggleFullscreen}');
       expect(src).toContain('fullscreenTooltip={t.actions.toggleFullscreenTooltip}');

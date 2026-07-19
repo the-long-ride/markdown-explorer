@@ -95,11 +95,18 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         const mainWindow = getMainWindow();
         if (!mainWindow) break;
         try {
+          let isFullscreen;
           if (platform === "win32") {
-            mainWindow.setKiosk(!mainWindow.isKiosk());
+            isFullscreen = !mainWindow.isKiosk();
+            mainWindow.setKiosk(isFullscreen);
           } else {
-            mainWindow.setFullScreen(!mainWindow.isFullScreen());
+            isFullscreen = !mainWindow.isFullScreen();
+            mainWindow.setFullScreen(isFullscreen);
           }
+          mainWindow.webContents?.send("host-message", {
+            command: "fullscreenChanged",
+            isFullscreen,
+          });
         } catch (error) {
           console.error("[electron] Failed to toggle fullscreen:", error);
         }

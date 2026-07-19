@@ -1,0 +1,11 @@
+@keyframes warningPulse {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.15));
+  }
+  100% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.45));
+  }
+}
+

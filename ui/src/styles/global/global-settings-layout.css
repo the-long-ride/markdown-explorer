@@ -1,0 +1,133 @@
+.settings-card__column--preferences,
+.settings-card__column--shortcuts {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-card__column--preferences {
+  flex: 1;
+  gap: 16px;
+}
+
+.settings-card__column--shortcuts {
+  flex: 1.2;
+}
+
+.settings-panel-heading {
+  margin-bottom: 4px;
+  color: var(--tx);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.settings-panel-heading--secondary {
+  margin-top: 4px;
+  margin-bottom: -4px;
+}
+
+.settings-field--separated,
+.settings-item--separated {
+  padding-top: 16px;
+  border-top: 1px solid var(--bd);
+}
+
+.settings-shortcuts-search {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.settings-shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.settings-shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.settings-shortcut-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tx2);
+}
+
+.settings-shortcut-toggle {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 18px;
+  margin-left: auto;
+  margin-right: 8px;
+  padding: 2px;
+  border: 1px solid var(--bd-s);
+  border-radius: 999px;
+  background: var(--bg-s);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.settings-shortcut-toggle span {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--tx3);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.settings-shortcut-toggle.is-enabled {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.settings-shortcut-toggle.is-enabled span {
+  transform: translateX(14px);
+  background: #fff;
+}
+
+.settings-shortcut-input {
+  width: 130px;
+  padding: 4px 8px;
+  color: var(--tx);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg-s);
+  border: 1px solid var(--bd-s);
+  border-radius: 6px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.settings-shortcut-input:focus {
+  color: var(--accent-text);
+  background: rgba(109, 94, 240, 0.15);
+  border-color: var(--accent);
+}
+
+.settings-shortcuts-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin-top: 16px;
+}
+
+.settings-modal-dialog {
+  display: flex;
+}
+
+.settings-modal { display: flex; }
+.settings-card__body--settings { display: flex; gap: 16px; margin-top: 7px; }
+.settings-card__divider { align-self: stretch; width: 1px; background: var(--bd); }

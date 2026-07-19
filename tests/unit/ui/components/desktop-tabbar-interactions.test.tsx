@@ -189,14 +189,14 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
       <button data-testid="menu-sidebar" onClick={props.onSidebarToggle}>Sidebar</button>
       <button data-testid="menu-toc" onClick={props.onTocToggle}>TOC</button>
       <button data-testid="menu-focus" onClick={props.onFocusModeToggle}>Focus</button>
-      <button data-testid="menu-fullscreen" onClick={props.onFullscreenToggle}>Show full screen</button>
+      {props.showFullscreen && <button data-testid="menu-fullscreen" onClick={props.onFullscreenToggle}>Show full screen</button>}
     </div>
   ),
 }));
 
 vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
-  TabContextMenu: ({ onAction, onClose, disabled }: any) => (
-    <div data-testid="tab-context-menu">
+  TabContextMenu: ({ onAction, onClose, disabled, shortcuts }: any) => (
+    <div data-testid="tab-context-menu" data-shortcuts={shortcuts ? 'present' : 'absent'}>
       <button data-testid="ctx-close-this" disabled={disabled?.closeThisTab} onClick={() => onAction('closeThisTab')}>Close</button>
       <button data-testid="ctx-close-right" disabled={disabled?.closeTabsToRight} onClick={() => onAction('closeTabsToRight')}>Close right</button>
       <button data-testid="ctx-close-others" disabled={disabled?.closeOtherTabs} onClick={() => onAction('closeOtherTabs')}>Close others</button>
@@ -238,6 +238,7 @@ describe('DesktopTabBar interactions', () => {
       onSelectTab: vi.fn(),
       onNewTab: vi.fn(),
       onCloseTab: vi.fn(),
+      onReorderTabs: vi.fn(),
       onCloseTabsToRight: vi.fn(),
       onCloseOtherTabs: vi.fn(),
       onCloseAllTabs: vi.fn(),
@@ -293,6 +294,15 @@ describe('DesktopTabBar interactions', () => {
     expect(props.onSelectTab).toHaveBeenCalledWith('home');
   });
 
+  it('reorders workspace tabs on drop', () => {
+    renderTabBar();
+    const [ws1Tab, ws2Tab] = screen.getAllByRole('tab');
+    fireEvent.pointerDown(ws2Tab, { button: 0 });
+    fireEvent.pointerEnter(ws1Tab);
+    fireEvent.pointerUp(document);
+    expect(props.onReorderTabs).toHaveBeenCalledWith('ws2', 'ws1');
+  });
+
   it('toggles fullscreen from the toolbar action menu', () => {
     const onFullscreenToggle = vi.fn();
     renderTabBar({ onFullscreenToggle });
@@ -315,6 +325,14 @@ describe('DesktopTabBar interactions', () => {
     fireEvent.contextMenu(ws1Tab, { clientX: 42, clientY: 84 });
     expect(screen.getByTestId('tab-context-menu')).toBeInTheDocument();
   });
+
+  it('does not show document keyboard shortcuts in the workspace tab menu', () => {
+    renderTabBar();
+    const [ws1Tab] = screen.getAllByRole('tab');
+    fireEvent.contextMenu(ws1Tab, { clientX: 42, clientY: 84 });
+    expect(screen.getByTestId('tab-context-menu')).toHaveAttribute('data-shortcuts', 'absent');
+  });
+
 
   it('closes the target tab from the context menu', () => {
     renderTabBar();

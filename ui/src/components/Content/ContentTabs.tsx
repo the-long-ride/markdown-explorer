@@ -6,6 +6,8 @@ import {
   type TabContextMenuAction,
 } from "../shared/TabContextMenu";
 import { CloseIcon } from "../shared/icons";
+import { useCssVars } from "../../utils/useCssVars";
+import { getEnabledShortcut } from "../../utils/shortcuts";
 
 const SCROLLBAR_TRACK_INLINE_INSET = 16;
 
@@ -13,6 +15,7 @@ export function ContentTabs() {
   const {
     state,
     activateContentTab,
+    reorderContentTabs,
     closeContentTab,
     closeContentTabsToRight,
     closeOtherContentTabs,
@@ -22,6 +25,7 @@ export function ContentTabs() {
   const t = getTranslations(currentLang);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const scrollbarTrackRef = useRef<HTMLDivElement>(null);
+  const scrollbarThumbRef = useRef<HTMLDivElement>(null);
   const scrollbarDragRef = useRef<{
     startX: number;
     startScrollLeft: number;
@@ -33,12 +37,21 @@ export function ContentTabs() {
     thumbLeft: 0,
     thumbWidth: 0,
   });
+  useCssVars(scrollbarThumbRef, {
+    '--scrollbar-thumb-width': `${scrollbarMetrics.thumbWidth}px`,
+    '--scrollbar-thumb-left': `${scrollbarMetrics.thumbLeft}px`,
+  });
   const [isScrollbarDragging, setIsScrollbarDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     filePath: string;
     x: number;
     y: number;
   } | null>(null);
+  const draggedTabPathRef = useRef<string | null>(null);
+  const didDragRef = useRef(false);
+  const [draggedTabPath, setDraggedTabPath] = useState<string | null>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const [ghostLabel, setGhostLabel] = useState<string>("");
 
   const updateScrollbarMetrics = useCallback(() => {
     const el = tabsScrollRef.current;
@@ -189,6 +202,19 @@ export function ContentTabs() {
     setContextMenu(null);
   }, [contextMenu, state.contentTabs]);
 
+  useEffect(() => {
+    const finishPointerDrag = () => {
+      draggedTabPathRef.current = null;
+      setDraggedTabPath(null);
+    };
+    document.addEventListener('pointerup', finishPointerDrag);
+    document.addEventListener('pointercancel', finishPointerDrag);
+    return () => {
+      document.removeEventListener('pointerup', finishPointerDrag);
+      document.removeEventListener('pointercancel', finishPointerDrag);
+    };
+  }, []);
+
   const handleContextMenuAction = useCallback(
     (action: TabContextMenuAction) => {
       if (!contextMenu) return;
@@ -237,12 +263,52 @@ export function ContentTabs() {
           return (
             <div
               key={tab.filePath}
-              className={`content-tab${active ? " is-active" : ""}`}
+              className={`content-tab${active ? " is-active" : ""}${draggedTabPath === tab.filePath ? " is-dragging" : ""}`}
               role="tab"
               aria-selected={active}
               tabIndex={0}
               title={tab.relativePath}
-              onClick={() => activateContentTab(tab.filePath)}
+              onPointerDown={(event) => {
+                if (event.button !== 0 || (event.target as HTMLElement).closest('.content-tab__close')) return;
+                draggedTabPathRef.current = tab.filePath;
+                didDragRef.current = false;
+                setDraggedTabPath(tab.filePath);
+                setGhostLabel(label);
+
+                const handlePointerMove = (moveEvent: PointerEvent) => {
+                  if (ghostRef.current) {
+                    ghostRef.current.style.transform = `translate3d(${moveEvent.clientX + 10}px, ${moveEvent.clientY + 10}px, 0)`;
+                    ghostRef.current.style.display = 'flex';
+                  }
+                };
+
+                document.addEventListener('pointermove', handlePointerMove);
+
+                const cleanUpMove = () => {
+                  document.removeEventListener('pointermove', handlePointerMove);
+                  document.removeEventListener('pointerup', cleanUpMove);
+                  document.removeEventListener('pointercancel', cleanUpMove);
+                  if (ghostRef.current) {
+                    ghostRef.current.style.display = 'none';
+                  }
+                };
+                document.addEventListener('pointerup', cleanUpMove);
+                document.addEventListener('pointercancel', cleanUpMove);
+              }}
+              onPointerEnter={() => {
+                if (draggedTabPathRef.current && draggedTabPathRef.current !== tab.filePath) {
+                  reorderContentTabs(draggedTabPathRef.current, tab.filePath);
+                  didDragRef.current = true;
+                }
+              }}
+              onClick={(event) => {
+                if (didDragRef.current) {
+                  event.preventDefault();
+                  didDragRef.current = false;
+                  return;
+                }
+                activateContentTab(tab.filePath);
+              }}
               onContextMenu={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -291,11 +357,8 @@ export function ContentTabs() {
           onPointerDown={handleScrollbarTrackPointerDown}
         >
           <div
+            ref={scrollbarThumbRef}
             className="content-tabs__scrollbar-thumb"
-            style={{
-              width: `${scrollbarMetrics.thumbWidth}px`,
-              transform: `translateX(${scrollbarMetrics.thumbLeft}px)`,
-            }}
             onPointerDown={beginScrollbarDrag}
           />
         </div>
@@ -305,6 +368,12 @@ export function ContentTabs() {
           x={contextMenu.x}
           y={contextMenu.y}
           labels={t.tabContextMenu}
+          shortcuts={{
+            closeThisTab: getEnabledShortcut(state.settings, 'closeContentTab'),
+            closeTabsToRight: getEnabledShortcut(state.settings, 'closeContentTabsToRight'),
+            closeOtherTabs: getEnabledShortcut(state.settings, 'closeOtherContentTabs'),
+            closeAllTabs: getEnabledShortcut(state.settings, 'closeAllContentTabs'),
+          }}
           disabled={{
             closeThisTab: contextMenuTabIndex === -1,
             closeTabsToRight:
@@ -316,6 +385,14 @@ export function ContentTabs() {
           onAction={handleContextMenuAction}
           onClose={() => setContextMenu(null)}
         />
+      )}
+      {draggedTabPath && (
+        <div
+          ref={ghostRef}
+          className="tab-drag-ghost"
+        >
+          {ghostLabel}
+        </div>
       )}
     </div>
   );

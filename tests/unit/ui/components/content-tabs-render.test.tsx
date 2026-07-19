@@ -7,6 +7,7 @@ const mockCloseContentTab = vi.fn();
 const mockCloseContentTabsToRight = vi.fn();
 const mockCloseOtherContentTabs = vi.fn();
 const mockCloseAllContentTabs = vi.fn();
+const mockReorderContentTabs = vi.fn();
 
 const baseSettings = {
   language: 'en',
@@ -91,6 +92,7 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
     closeContentTabsToRight: mockCloseContentTabsToRight,
     closeOtherContentTabs: mockCloseOtherContentTabs,
     closeAllContentTabs: mockCloseAllContentTabs,
+    reorderContentTabs: mockReorderContentTabs,
     openInEditor: vi.fn(),
     setTheme: vi.fn(),
     setThemeStyle: vi.fn(),
@@ -247,6 +249,19 @@ describe('ContentTabs render', () => {
     const auxEvent = new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 });
     bTab.dispatchEvent(auxEvent);
     expect(mockCloseContentTab).toHaveBeenCalledWith('/b.md');
+  });
+
+  it('reorders document tabs on drop', () => {
+    mockAppState = createMockAppState({
+      contentTabs: [makeTab('/a.md', 'a.md', 'A'), makeTab('/b.md', 'b.md', 'B')],
+      activeContentTabPath: '/a.md',
+    });
+    render(createElement(ContentTabs));
+    const [firstTab, secondTab] = screen.getAllByRole('tab');
+    fireEvent.pointerDown(secondTab, { button: 0 });
+    fireEvent.pointerEnter(firstTab);
+    fireEvent.pointerUp(document);
+    expect(mockReorderContentTabs).toHaveBeenCalledWith('/b.md', '/a.md');
   });
 
   it('auxClick with button 0 does not close tab', () => {

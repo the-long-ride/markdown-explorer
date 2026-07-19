@@ -1,0 +1,13 @@
+.content-tabs__scrollbar-thumb { width: var(--scrollbar-thumb-width); transform: translateX(var(--scrollbar-thumb-left)); }
+.desktop-tabbar__scrollbar-thumb { width: var(--scrollbar-thumb-width); transform: translateX(var(--scrollbar-thumb-left)); }
+.tab-floating-toolbar { right: var(--toolbar-right); bottom: var(--toolbar-bottom); }
+.tab-context-menu { left: var(--menu-left); top: var(--menu-top); }
+.interactive-background-canvas { position: fixed; top: 0; left: 0; z-index: 0; width: 100vw; height: 100vh; pointer-events: none; }
+.media-modal { display: flex; }
+.media-modal__transform { transform: translate(var(--pan-x), var(--pan-y)) scale(var(--zoom)); }
+.find-in-file-panel { z-index: 2147483646; }
+.theme-remix-modal { display: flex; }
+.theme-remix-menu--portal { top: var(--menu-top); left: var(--menu-left); width: var(--menu-width); }
+.theme-remix-background-preview__image { object-fit: var(--background-fit, cover); }
+.theme-remix-background-preview__image--cover { object-fit: cover; }
+.theme-remix-background-preview__image--contain { object-fit: contain; }

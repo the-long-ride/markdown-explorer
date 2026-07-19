@@ -158,7 +158,7 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
     <aside className={`toc-panel${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocPanel" aria-label="Table of contents">
       <div className="toc-panel__header">
         <div className="toc-panel__title-row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+          <div className="toc-panel__title-group">
             <div className="toc-panel__title">{t.toc.onThisPage}</div>
             <span className="toc-panel__count">{state.toc.length}</span>
           </div>

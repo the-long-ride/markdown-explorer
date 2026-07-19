@@ -11,7 +11,6 @@ import { SearchIcon } from '../shared/icons';
 import { normalizeForSearch, unicodeIndexOf } from '../../utils/unicodeSearch';
 import type { MdFile, WorkspaceSearchResult } from '../../types';
 
-const SEARCH_OVERLAY_Z_INDEX = 2147483647;
 const CROSS_TAB_RESULT_PAGE_SIZE = 100;
 
 export function renderHighlightedExcerpt(excerpt: string, query: string) {
@@ -262,47 +261,19 @@ export function SearchOverlay({
       role="dialog"
       aria-modal="true"
       aria-label="Search"
-      style={{
-        display: 'flex',
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,.6)',
-        zIndex: SEARCH_OVERLAY_Z_INDEX,
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        paddingTop: 80,
-      }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         className="search-overlay-card"
-        style={{
-          background: 'var(--bg-s)',
-          border: '1px solid var(--bd)',
-          borderRadius: 12,
-          width: 560,
-          maxHeight: '60vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: 'var(--sh-lg)',
-          overflow: 'hidden',
-        }}
       >
         {/* Search input */}
         <div
           className="search-overlay-input-row"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '14px 16px',
-            borderBottom: '1px solid var(--bd)',
-          }}
         >
           {isIndexing ? (
-            <div className="spinner" style={{ width: 16, height: 16, borderWidth: 1.5, flexShrink: 0 }} />
+            <div className="spinner" />
           ) : (
-            <SearchIcon size={16} style={{ color: 'var(--tx2)' }} />
+            <SearchIcon size={16} className="search-icon" />
           )}
           <input
             ref={inputRef}
@@ -314,25 +285,25 @@ export function SearchOverlay({
             disabled={isIndexing}
             aria-label="Search query"
           />
-          <kbd style={{ fontSize: 11, padding: '2px 6px', background: 'var(--bg-e)', borderRadius: 4, color: 'var(--txm)', border: '1px solid var(--bd)' }}>
+          <kbd>
             Esc
           </kbd>
         </div>
 
         {/* Results */}
-        <div className="search-overlay-results" style={{ overflowY: 'auto', padding: '8px 0', flex: 1 }} role="listbox">
+        <div className="search-overlay-results" role="listbox">
           {query.length >= 2 && hasCrossTabSearch && isCrossTabSearching && resultCount === 0 && (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
+            <div className="search-overlay-message">
               Searching file contents…
             </div>
           )}
           {query.length >= 2 && !hasCrossTabSearch && isWorkspaceSearching && resultCount === 0 && (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
+            <div className="search-overlay-message">
               Searching file contents…
             </div>
           )}
           {query.length >= 2 && resultCount === 0 && !isCrossTabSearching && (!isWorkspaceSearching || hasCrossTabSearch) && (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--tx2)', fontSize: 13 }}>
+            <div className="search-overlay-message">
               No files matching "<strong>{query}</strong>"
             </div>
           )}
@@ -355,11 +326,11 @@ export function SearchOverlay({
                   className="search-result-row"
                 >
                   <span className="search-result-row__icon">MD</span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
+                  <div className="search-result-row__content">
+                    <div className="search-result-row__title">
                       {state.settings.showTitle ? item.title : item.fileName}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--tx2)', fontFamily: 'var(--font-mono)' }}>
+                    <div className="search-result-row__path">
                       {item.tabLabel} / {item.relativePath}
                     </div>
                     {item.excerpt && (
@@ -380,11 +351,11 @@ export function SearchOverlay({
                   className="search-result-row"
                 >
                   <span className="search-result-row__icon">MD</span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>
+                  <div className="search-result-row__content">
+                    <div className="search-result-row__title">
                       {state.settings.showTitle ? item.title : item.fileName}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--tx2)', fontFamily: 'var(--font-mono)' }}>
+                    <div className="search-result-row__path">
                       {item.relativePath}
                     </div>
                     {item.excerpt && (
@@ -396,7 +367,7 @@ export function SearchOverlay({
                 </div>
               ))}
           {hasCrossTabSearch && remoteResults.length > displayedCrossTabResults.length && (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 12px 12px' }}>
+            <div className="search-overlay-load-more">
               <button
                 type="button"
                 className="btn"

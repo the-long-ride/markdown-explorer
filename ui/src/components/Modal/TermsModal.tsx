@@ -35,96 +35,36 @@ export function TermsModal({
       window.open(url, "_blank", "noopener,noreferrer");
     };
 
-  const legalLinkStyle = {
-    color: "var(--accent-text)",
-    fontWeight: 700,
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
-  };
-
   return (
     <div
       id="termsModal"
       className="mdn-modal"
-      style={{
-        display: "flex",
-        position: "fixed",
-        inset: 0,
-        zIndex: 3000,
-        background: "var(--modal-bg)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
-      }}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="settings-card"
-        style={{
-          width: "680px",
-          maxWidth: "min(94vw, 680px)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "22px",
-          background: "rgba(30, 30, 36, 0.45)",
-          border: "1px solid var(--bd-s)",
-          borderRadius: "var(--r-lg)",
-          boxShadow: "var(--sh-lg)",
-          padding: "32px",
-          boxSizing: "border-box",
-        }}
+        className="settings-card terms-card"
       >
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            margin: 0,
-          }}
-        >
+        <div className="terms-header">
           <img
             src={logoUrl}
             width="56"
             height="56"
             alt="Markdown Explorer Logo"
-            style={{
-              marginBottom: "12px",
-              filter: "drop-shadow(0 4px 12px var(--accent-dim))",
-            }}
+            className="terms-logo"
           />
-          <h2
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "var(--tx)",
-              margin: 0,
-            }}
-          >
+          <h2>
             Welcome to Markdown Explorer
           </h2>
-          <p
-            style={{
-              fontSize: "13px",
-              color: "var(--tx2)",
-              lineHeight: 1.6,
-              marginTop: "8px",
-              marginRight: 0,
-              marginBottom: 0,
-              marginLeft: 0,
-            }}
-          >
+          <p>
             Please review and accept our{" "}
             <a
               href={PRIVACY_POLICY_URL}
               target="_blank"
               rel="noreferrer"
               onClick={openExternal(PRIVACY_POLICY_URL)}
-              style={legalLinkStyle}
+              className="terms-link"
             >
               Privacy Policy
             </a>{" "}
@@ -134,7 +74,7 @@ export function TermsModal({
               target="_blank"
               rel="noreferrer"
               onClick={openExternal(TERMS_OF_SERVICE_URL)}
-              style={legalLinkStyle}
+              className="terms-link"
             >
               Terms of Service
             </a>{" "}
@@ -143,39 +83,15 @@ export function TermsModal({
         </div>
 
         {/* Checkbox and Agreement */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-            marginTop: "4px",
-          }}
-        >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              cursor: "pointer",
-              fontSize: "12px",
-              userSelect: "none",
-              color: "var(--tx)",
-            }}
-          >
+        <div className="terms-agreement">
+          <label className="terms-checkbox-label">
             <input
               type="checkbox"
               checked={checked}
               onChange={(e) => setChecked(e.target.checked)}
-              style={{
-                marginTop: 0,
-                width: "15px",
-                height: "15px",
-                flex: "0 0 15px",
-                cursor: "pointer",
-                accentColor: "var(--accent)",
-              }}
+              className="terms-checkbox"
             />
-            <span style={{ lineHeight: "1.4" }}>
+            <span>
               I have read and agreed to the Privacy Policy and Terms of
               Service.
             </span>
@@ -185,23 +101,7 @@ export function TermsModal({
           <button
             disabled={!checked}
             onClick={onAgree}
-            className={`btn ${checked ? "btn--accent" : ""}`}
-            style={{
-              width: "100%",
-              padding: "14px",
-              fontSize: "13px",
-              fontWeight: 600,
-              borderRadius: "var(--r-lg)",
-              cursor: checked ? "pointer" : "not-allowed",
-              background: checked ? "var(--accent)" : "var(--bg-e)",
-              border: "none",
-              color: checked ? "#ffffff" : "var(--txm)",
-              boxShadow: checked
-                ? "0 4px 12px var(--accent-dim)"
-                : "none",
-              transition: "all 0.15s ease",
-              textAlign: "center",
-            }}
+            className={`btn terms-continue${checked ? " is-enabled" : ""}`}
           >
             Continue
           </button>

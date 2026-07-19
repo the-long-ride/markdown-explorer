@@ -168,6 +168,7 @@ describe('ThemeRemixModal interactions', () => {
     expect(mockUpdateSettings).toHaveBeenCalled();
     const lastCall = mockUpdateSettings.mock.calls[mockUpdateSettings.mock.calls.length - 1][0];
     expect(lastCall.customThemes[0].baseStyle).toBe('glass');
+    expect(screen.queryByRole('listbox', { name: 'Base layout' })).not.toBeInTheDocument();
   });
 
   it('changes color mode via the dropdown', () => {
@@ -177,6 +178,7 @@ describe('ThemeRemixModal interactions', () => {
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Color mode' })).getByText('Dark'));
     const lastCall = mockUpdateSettings.mock.calls[mockUpdateSettings.mock.calls.length - 1][0];
     expect(lastCall.customThemes[0].colorMode).toBe('dark');
+    expect(screen.queryByRole('listbox', { name: 'Color mode' })).not.toBeInTheDocument();
   });
 
   it('changes density via the dropdown', () => {
@@ -186,6 +188,7 @@ describe('ThemeRemixModal interactions', () => {
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Density' })).getByText('Spacious'));
     const lastCall = mockUpdateSettings.mock.calls[mockUpdateSettings.mock.calls.length - 1][0];
     expect(lastCall.customThemes[0].layout.density).toBe('spacious');
+    expect(screen.queryByRole('listbox', { name: 'Density' })).not.toBeInTheDocument();
   });
 
   it('changes image fit via the dropdown', () => {
@@ -195,6 +198,16 @@ describe('ThemeRemixModal interactions', () => {
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Image fit' })).getByText('Contain'));
     const lastCall = mockUpdateSettings.mock.calls[mockUpdateSettings.mock.calls.length - 1][0];
     expect(lastCall.customThemes[0].background.fit).toBe('contain');
+    expect(screen.queryByRole('listbox', { name: 'Image fit' })).not.toBeInTheDocument();
+  });
+
+  it('closes a dropdown with Escape without changing the theme', () => {
+    mockState.settings.customThemes = [makeTheme()];
+    render(<ThemeRemixModal isOpen={true} onClose={() => {}} />);
+    openDropdownFor('Density');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('listbox', { name: 'Density' })).not.toBeInTheDocument();
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
   });
 
   it('duplicates a theme when duplicate button is clicked', () => {

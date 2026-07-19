@@ -4,7 +4,7 @@
   "description": "Markdown Explorer - Transforms your markdown documents into a premium, interactive web-app experience.",
   "homepage": "https://github.com/the-long-ride/markdown-explorer",
   "author": {
-    "name": "The Long Ride",
+    "name": "the-long-ride",
     "email": "info@thelongride.com"
   },
   "publisher": "the-long-ride",
@@ -27,6 +27,7 @@
   "build": {
     "appId": "com.thelongride.markdownexplorer",
     "productName": "Markdown Explorer",
+    "copyright": "Copyright © 2026 the-long-ride",
     "electronVersion": "42.2.0",
     "directories": {
       "output": "dist"

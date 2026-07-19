@@ -193,7 +193,7 @@ describe("WelcomePage rendering", () => {
     expect(screen.getByText("Interactive Tables")).toBeInTheDocument();
     expect(screen.getByText("Table Charts")).toBeInTheDocument();
     expect(screen.getByText("Syntax Highlighting")).toBeInTheDocument();
-    expect(screen.getByText(/Media Modal/)).toBeInTheDocument();
+    expect(screen.getByText(/Media Viewer/)).toBeInTheDocument();
   });
 
   it("switches to shortcuts tab when View shortcuts button is clicked", () => {
@@ -241,11 +241,11 @@ describe("WelcomePage rendering", () => {
     expect(screen.getByText("Open an issue")).toBeInTheDocument();
   });
 
-  it("renders recent feature guide card in features tab", () => {
+  it("does not render recent feature guide card in features tab", () => {
     setup();
     expect(
-      screen.getByText("What is new since v1.5.0 — v1.5.3")
-    ).toBeInTheDocument();
+      screen.queryByText("What is new since v1.5.0 — v1.5.3")
+    ).not.toBeInTheDocument();
   });
 
   it("renders desktop recommendation when not on desktop", () => {

@@ -41,24 +41,22 @@ describe('InteractiveBackground', () => {
     expect(canvas).toBeInTheDocument();
   });
 
-  it('canvas has fixed positioning and full viewport dimensions', () => {
+  it('canvas uses CSS class for fixed viewport positioning', () => {
     const { container } = render(React.createElement(InteractiveBackground));
     const canvas = container.querySelector('canvas') as HTMLCanvasElement;
-    expect(canvas.style.position).toBe('fixed');
-    expect(canvas.style.width).toBe('100vw');
-    expect(canvas.style.height).toBe('100vh');
+    expect(canvas).toHaveClass('interactive-background-canvas');
   });
 
-  it('canvas has pointer-events none for click-through', () => {
+  it('canvas keeps CSS class for click-through behavior', () => {
     const { container } = render(React.createElement(InteractiveBackground));
     const canvas = container.querySelector('canvas') as HTMLCanvasElement;
-    expect(canvas.style.pointerEvents).toBe('none');
+    expect(canvas).toHaveClass('interactive-background-canvas');
   });
 
-  it('canvas has z-index 0', () => {
+  it('canvas keeps CSS class for stacking behavior', () => {
     const { container } = render(React.createElement(InteractiveBackground));
     const canvas = container.querySelector('canvas') as HTMLCanvasElement;
-    expect(canvas.style.zIndex).toBe('0');
+    expect(canvas).toHaveClass('interactive-background-canvas');
   });
 });
 
@@ -82,6 +80,19 @@ describe('TabContextMenu', () => {
     expect(screen.getByText('Close to Right')).toBeInTheDocument();
     expect(screen.getByText('Close Others')).toBeInTheDocument();
     expect(screen.getByText('Close All')).toBeInTheDocument();
+  });
+
+  it('renders provided shortcut labels beside actions', () => {
+    render(React.createElement(TabContextMenu, {
+      x: 100,
+      y: 100,
+      labels: defaultLabels,
+      shortcuts: { closeThisTab: 'Ctrl+W', closeOtherTabs: 'Ctrl+Alt+O' },
+      onAction: vi.fn(),
+      onClose: vi.fn(),
+    }));
+    expect(screen.getByText('Ctrl + W')).toBeInTheDocument();
+    expect(screen.getByText('Ctrl + Alt + O')).toBeInTheDocument();
   });
 
   it('renders with role menu', () => {
@@ -125,9 +136,9 @@ describe('TabContextMenu', () => {
       disabled: { closeTabsToRight: true, closeOtherTabs: true },
       onAction: vi.fn(), onClose: vi.fn(),
     }));
-    expect(screen.getByText('Close to Right')).toBeDisabled();
-    expect(screen.getByText('Close Others')).toBeDisabled();
-    expect(screen.getByText('Close')).not.toBeDisabled();
+    expect(screen.getByText('Close to Right').closest('button')).toBeDisabled();
+    expect(screen.getByText('Close Others').closest('button')).toBeDisabled();
+    expect(screen.getByText('Close').closest('button')).not.toBeDisabled();
   });
 
   it('calls onClose on Escape keydown', () => {
@@ -334,6 +345,54 @@ describe('ToolbarActionMenu', () => {
     render(React.createElement(ToolbarActionMenu, { ...defaultProps, focusModeLabel: 'Focus', focusModeTooltip: 'Focus mode', onFocusModeToggle: vi.fn() }));
     fireEvent.click(screen.getByRole('button', { name: /more/i }));
     expect(screen.getByText('Focus')).toBeInTheDocument();
+  });
+
+  it('hides fullscreen toggle unless explicitly enabled', () => {
+    render(React.createElement(ToolbarActionMenu, {
+      ...defaultProps,
+      fullscreenLabel: 'Show full screen',
+      fullscreenTooltip: 'Toggle full screen',
+      onFullscreenToggle: vi.fn(),
+    }));
+    fireEvent.click(screen.getByRole('button', { name: /more/i }));
+    expect(screen.queryByText('Show full screen')).not.toBeInTheDocument();
+  });
+
+  it('renders and invokes fullscreen toggle when enabled', () => {
+    const onFullscreenToggle = vi.fn();
+    render(React.createElement(ToolbarActionMenu, {
+      ...defaultProps,
+      showFullscreen: true,
+      fullscreenLabel: 'Show full screen',
+      fullscreenTooltip: 'Toggle full screen',
+      onFullscreenToggle,
+    }));
+    fireEvent.click(screen.getByRole('button', { name: /more/i }));
+    fireEvent.click(screen.getByText('Show full screen'));
+    expect(onFullscreenToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('reflects the native fullscreen state in the switch', () => {
+    const { rerender } = render(React.createElement(ToolbarActionMenu, {
+      ...defaultProps,
+      showFullscreen: true,
+      fullscreenLabel: 'Show full screen',
+      fullscreenTooltip: 'Toggle full screen',
+      isFullscreen: false,
+      onFullscreenToggle: vi.fn(),
+    }));
+    fireEvent.click(screen.getByRole('button', { name: /more/i }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /show full screen/i })).toHaveAttribute('aria-checked', 'false');
+
+    rerender(React.createElement(ToolbarActionMenu, {
+      ...defaultProps,
+      showFullscreen: true,
+      fullscreenLabel: 'Show full screen',
+      fullscreenTooltip: 'Toggle full screen',
+      isFullscreen: true,
+      onFullscreenToggle: vi.fn(),
+    }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /show full screen/i })).toHaveAttribute('aria-checked', 'true');
   });
 
   it('closes on Escape keydown', () => {

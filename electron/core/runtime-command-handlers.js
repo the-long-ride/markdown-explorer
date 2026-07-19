@@ -1,0 +1,385 @@
+const { registerRuntimeUpdateHandlers } = require("./runtime-update-handlers");
+
+function registerRuntimeCommandHandlers(context) {
+  const { state, deps, pathApi, fs, dialog, getMainWindow, sendHostMessage, getHostInfo, sendLoading, sendRecentWorkspacesChanged, recentWorkspacesStore, createStartupReadyAck, deferWorkspaceLoad, ensureHeavyModules, scanWorkspaceData, perf, appQuit, isSupportedFilePathLite, isExtraDocumentFilePathLite, getOpenDialogFiltersLite, ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, bindWorkspaceWatch, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome, refreshActiveWorkspace, resolveNavigationPath, setAppZoomLevel, ZOOM_LEVEL_STEP, isAccessDeniedError, decodeNavigationPath, stripNavigationFragment, isRootRelativeWorkspaceHref, isSameOrInsidePath } = context;
+
+  async function handleReady(msg = {}) {
+    if (typeof msg.documentConversionEnabled === "boolean") {
+      state.documentConversionEnabled = msg.documentConversionEnabled;
+    }
+
+    if (state.readyHandled) return;
+    state.readyHandled = true;
+    perf.mark("host:ready");
+    const recents = recentWorkspacesStore.load();
+    const ackMsg = createStartupReadyAck({
+      workspacePath: state.workspacePath,
+      recentWorkspaces: recents,
+      documentConversionEnabled: state.documentConversionEnabled,
+      hostInfo: getHostInfo(),
+    });
+    sendHostMessage(ackMsg);
+    perf.mark("host:ready-ack");
+    perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
+    perf.printSummary();
+    deps.updateManager?.sendCurrentState();
+
+    if (state.workspacePath) {
+      deferWorkspaceLoad({
+        ensureHeavyModules,
+        bindWorkspaceWatch,
+        sendLoading,
+        sendWorkspaceData,
+        sendInitialContent,
+        sendUpdateState: () => deps.updateManager?.sendCurrentState(),
+        onError: (err) => console.error("Failed to load startup workspace:", err),
+      });
+    }
+  }
+
+  function handleOpenFolder(openFirstFile = false) {
+    ensureHeavyModules();
+    const folders = dialog.showOpenDialogSync(getMainWindow(), {
+      properties: ["openDirectory"],
+    });
+    if (folders && folders.length > 0) {
+      const selectedFolder = folders[0];
+      recentWorkspacesStore.save(selectedFolder);
+      state.workspacePath = selectedFolder;
+      state.currentFile = null;
+      bindWorkspaceWatch();
+      sendLoading("Loading workspace...");
+      sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
+    }
+  }
+
+  function handleOpenFile() {
+    ensureHeavyModules();
+    const files = dialog.showOpenDialogSync(getMainWindow(), {
+      properties: ["openFile"],
+      filters: getOpenDialogFiltersLite(state.documentConversionEnabled),
+    });
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      const folder = pathApi.dirname(selectedFile);
+      recentWorkspacesStore.save(folder);
+      state.workspacePath = folder;
+      state.currentFile = selectedFile;
+      bindWorkspaceWatch();
+      sendLoading(
+        isExtraDocumentFilePathLite(selectedFile) ? "Preparing document preview..." : "Loading docs...",
+      );
+      sendWorkspaceData().then(() => sendContent());
+    }
+  }
+
+  function handleOpenPath(filePath, openFirstFile = false) {
+    ensureHeavyModules();
+    const status = getWorkspacePathStatus(filePath);
+    if (!status.ok) {
+      sendWorkspaceUnavailable(filePath, status.reason);
+      return;
+    }
+
+    const stat = status.stat;
+    const isFile = stat.isFile();
+    if (isFile) {
+      if (!isSupportedFilePathLite(filePath, state.documentConversionEnabled)) {
+        dialog.showMessageBoxSync(getMainWindow(), {
+          type: "warning",
+          buttons: ["OK"],
+          title: "Unsupported File Type",
+          message: state.documentConversionEnabled
+            ? "Markdown Explorer cannot preview this file type."
+            : "Turn on document conversion in Markdown Explorer settings to preview DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
+          detail: filePath,
+        });
+        return;
+      }
+      state.workspacePath = pathApi.dirname(filePath);
+      state.currentFile = filePath;
+    } else {
+      state.workspacePath = filePath;
+      state.currentFile = null;
+    }
+
+    recentWorkspacesStore.save(state.workspacePath);
+    bindWorkspaceWatch();
+    sendLoading("Loading workspace...");
+    sendWorkspaceData().then(() => sendInitialContent(openFirstFile && !isFile));
+  }
+
+  function handleActivateWorkspace(wsPath, filePath, openFirstFile = false) {
+    const status = getWorkspacePathStatus(wsPath);
+    if (!status.ok) {
+      sendWorkspaceUnavailable(wsPath, status.reason);
+      return;
+    }
+
+    state.workspacePath = wsPath;
+    state.currentFile =
+      filePath &&
+      fs.existsSync(filePath) &&
+      isSupportedFilePathLite(filePath, state.documentConversionEnabled)
+        ? filePath
+        : null;
+    recentWorkspacesStore.save(state.workspacePath);
+    deferWorkspaceLoad({
+      ensureHeavyModules,
+      bindWorkspaceWatch,
+      sendLoading,
+      sendWorkspaceData,
+      sendInitialContent,
+      openFirstFile,
+      onError: (err) => console.error("Failed to activate workspace:", err),
+    });
+  }
+
+  function handleSearchAcrossWorkspaces(msg) {
+    ensureHeavyModules();
+    ensureCrossTabSearchWorker().search({
+      requestId: msg.requestId,
+      query: String(msg.query || "").trim().toLowerCase(),
+    });
+  }
+
+  function handleSearchWorkspace(msg) {
+    ensureHeavyModules();
+    const idx = ensureSearchIndex();
+    const query = String(msg.query || "").trim().toLowerCase();
+    const requestId = msg.requestId;
+    const items = Array.isArray(msg.items) && msg.items.length > 0 ? msg.items : state.flatList;
+    sendHostMessage({
+      command: "workspaceSearchResults",
+      requestId,
+      results: idx.search(query, items, 10000),
+    });
+  }
+
+  function handleIndexWorkspaceSearchItems(msg) {
+    ensureHeavyModules();
+    ensureCrossTabSearchWorker().setItems(Array.isArray(msg.items) ? msg.items : []);
+  }
+
+  function handleLoadWorkspaceSearchIndexes(msg) {
+    ensureHeavyModules();
+    const tabRequests = Array.isArray(msg.tabs) ? msg.tabs : [];
+    if (tabRequests.length === 0) return;
+
+    let index = 0;
+
+    async function processNext() {
+      if (index >= tabRequests.length) return;
+
+      const tab = tabRequests[index];
+      const tabId = String(tab?.tabId || "");
+      const wsPath = String(tab?.workspacePath || "");
+
+      if (tabId && wsPath) {
+        if (fs.existsSync(wsPath)) {
+          try {
+            const { tree, flat } = await scanWorkspaceData(wsPath);
+            const idx = ensureSearchIndex();
+            idx.prime(flat);
+            sendHostMessage({
+              command: "workspaceSearchIndexLoaded",
+              tabs: [{
+                tabId,
+                workspacePath: wsPath,
+                fileList: flat,
+                tree,
+              }],
+            });
+          } catch (err) {
+            sendHostMessage({
+              command: "workspaceSearchIndexLoaded",
+              tabs: [{
+                tabId,
+                workspacePath: wsPath,
+                fileList: [],
+                tree: null,
+              }],
+            });
+          }
+        } else {
+          sendHostMessage({
+            command: "workspaceSearchIndexLoaded",
+            tabs: [{
+              tabId,
+              workspacePath: wsPath,
+              fileList: [],
+              tree: null,
+            }],
+          });
+        }
+      }
+
+      index += 1;
+      setTimeout(processNext, 150);
+    }
+
+    setTimeout(processNext, 50);
+  }
+
+  async function handleConfirmOpenPath(filePath) {
+    if (!fs.existsSync(filePath)) return;
+    if (!state.workspacePath) {
+      handleOpenPath(filePath);
+      return;
+    }
+    const stat = fs.statSync(filePath);
+    const isFile = stat.isFile();
+    if (isFile) {
+      if (!isSupportedFilePathLite(filePath, state.documentConversionEnabled)) {
+        dialog.showMessageBoxSync(getMainWindow(), {
+          type: "warning",
+          buttons: ["OK"],
+          title: "Unsupported File Type",
+          message: state.documentConversionEnabled
+            ? "Markdown Explorer cannot preview this file type."
+            : "Turn on document conversion in Markdown Explorer settings to preview DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files.",
+          detail: filePath,
+        });
+        return;
+      }
+    }
+
+    const targetFolder = isFile ? pathApi.dirname(filePath) : filePath;
+    const targetName = pathApi.basename(targetFolder) || targetFolder;
+    const currentName = state.workspacePath
+      ? (pathApi.basename(state.workspacePath) || state.workspacePath)
+      : "current workspace";
+    const { response } = await dialog.showMessageBox(getMainWindow(), {
+      type: "question",
+      buttons: ["Switch", "Cancel"],
+      title: "Switch Workspace",
+      message: `Switch to "${targetName}"?`,
+      detail: `Current workspace: ${currentName}\nNew path: ${filePath}`,
+      defaultId: 0,
+      cancelId: 1,
+    });
+
+    if (response === 0) {
+      handleOpenPath(filePath);
+    }
+  }
+
+  function handleOpenRecent(folderPath, openFirstFile = false) {
+    ensureHeavyModules();
+    const status = getWorkspacePathStatus(folderPath);
+    if (!status.ok) {
+      sendWorkspaceUnavailable(folderPath, status.reason);
+      return;
+    }
+
+    recentWorkspacesStore.save(folderPath);
+    state.workspacePath = folderPath;
+    bindWorkspaceWatch();
+    sendLoading("Loading workspace...");
+    if (status.stat.isFile()) {
+      state.currentFile = folderPath;
+      sendWorkspaceData().then(() => sendInitialContent(false));
+    } else {
+      state.currentFile = null;
+      sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
+    }
+  }
+
+  function handleDeleteRecentWorkspace(folderPath) {
+    try {
+      recentWorkspacesStore.remove(folderPath);
+    } catch (err) {
+      console.error("Failed to delete recent workspace:", err);
+    }
+    sendRecentWorkspacesChanged();
+  }
+
+  function handleReplaceRecentWorkspaces(recentWorkspaces) {
+    try {
+      recentWorkspacesStore.replace(recentWorkspaces);
+    } catch (err) {
+      console.error("Failed to replace recent workspaces:", err);
+    }
+    sendRecentWorkspacesChanged();
+  }
+
+  function handleZoomIn() {
+    const win = getMainWindow();
+    if (!win) return;
+    const currentZoom = win.webContents.getZoomLevel();
+    setAppZoomLevel(currentZoom + ZOOM_LEVEL_STEP);
+  }
+
+  function handleZoomOut() {
+    const win = getMainWindow();
+    if (!win) return;
+    const currentZoom = win.webContents.getZoomLevel();
+    setAppZoomLevel(currentZoom - ZOOM_LEVEL_STEP);
+  }
+
+  async function handleNavigate(filePath) {
+    ensureHeavyModules();
+    if (!filePath) {
+      state.currentFile = null;
+      await sendWelcome();
+      return;
+    }
+
+    filePath = resolveNavigationPath(filePath);
+
+    if (
+      fs.existsSync(filePath) &&
+      fs.statSync(filePath).isFile() &&
+      isSupportedFilePathLite(filePath, state.documentConversionEnabled)
+    ) {
+      state.currentFile = filePath;
+      await sendContent();
+    } else {
+      sendHostMessage({
+        command: "navNotFound",
+        href: filePath,
+      });
+    }
+  }
+
+  async function handleRefresh() {
+    await refreshActiveWorkspace({ showLoading: true });
+  }
+
+  async function handleSetDocumentConversion(enabled) {
+    ensureHeavyModules();
+    const nextEnabled = enabled === true;
+    if (state.documentConversionEnabled === nextEnabled) return;
+    state.documentConversionEnabled = nextEnabled;
+
+    if (!state.workspacePath) return;
+
+    sendLoading(nextEnabled ? "Finding supported documents..." : "Refreshing Markdown files...");
+    await sendWorkspaceData();
+
+    if (state.currentFile && !isSupportedFilePathLite(state.currentFile, state.documentConversionEnabled)) {
+      state.currentFile = null;
+      await sendWelcome();
+      return;
+    }
+
+    if (state.currentFile) {
+      await sendContent();
+    } else {
+      await sendWelcome();
+    }
+  }
+
+  const {
+    handleDownloadUpdate,
+    handleScheduleDownloadedUpdate,
+    handleRestartAndApplyUpdate,
+    handleCloseWorkspace,
+  } = registerRuntimeUpdateHandlers({ deps, appQuit, state, handleReady });
+
+
+
+  return { handleReady, handleOpenFolder, handleOpenFile, handleOpenPath, handleActivateWorkspace, handleSearchAcrossWorkspaces, handleSearchWorkspace, handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes, handleConfirmOpenPath, handleOpenRecent, handleDeleteRecentWorkspace, handleReplaceRecentWorkspaces, handleZoomIn, handleZoomOut, handleNavigate, handleRefresh, handleSetDocumentConversion, handleDownloadUpdate, handleScheduleDownloadedUpdate, handleRestartAndApplyUpdate, handleCloseWorkspace };
+}
+
+module.exports = { registerRuntimeCommandHandlers };

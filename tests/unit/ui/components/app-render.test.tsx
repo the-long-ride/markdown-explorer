@@ -267,6 +267,7 @@ vi.mock('../../../../ui/src/hooks/useUpdateCheck', () => ({
 }));
 vi.mock('../../../../ui/src/utils/shortcuts', () => ({
   formatShortcutLabel: (s: string) => s,
+  getEnabledShortcut: (settings: any, actionId: string) => settings.disabledKeybindings?.[actionId] ? undefined : settings.keybindings?.[actionId],
 }));
 vi.mock('../../../../ui/src/utils/searchJump', () => ({
   clearSearchJumpMarks: vi.fn(),

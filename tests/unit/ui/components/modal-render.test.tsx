@@ -322,8 +322,6 @@ describe('WorkspaceSelectionConfirmModal', () => {
     expect(dialog).toHaveClass('workspace-selection-confirm-modal');
     expect(cancel).toHaveClass('workspace-selection-confirm-button', 'workspace-selection-confirm-button--outline');
     expect(confirm).toHaveClass('workspace-selection-confirm-button');
-    expect(cancel).toHaveStyle({ height: '32px', padding: '0px 20px' });
-    expect(confirm).toHaveStyle({ height: '32px', padding: '0px 20px' });
   });
 
   it('Escape cancels and Enter confirms', () => {

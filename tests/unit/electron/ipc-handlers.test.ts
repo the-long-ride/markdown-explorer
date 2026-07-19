@@ -136,11 +136,19 @@ describe('registerIpcHandlers', () => {
       registeredHandler(null, { command: 'window-close' });
     });
 
-    test('toggle-fullscreen enters fullscreen when window is not fullscreen', () => {
-      const win = { isFullScreen: vi.fn(() => false), setFullScreen: vi.fn() };
+    test('toggle-fullscreen enters fullscreen and synchronizes the renderer state', () => {
+      const win = {
+        isFullScreen: vi.fn(() => false),
+        setFullScreen: vi.fn(),
+        webContents: { send: vi.fn() },
+      };
       getMainWindow.mockReturnValue(win);
       registeredHandler(null, { command: 'toggle-fullscreen' });
       expect(win.setFullScreen).toHaveBeenCalledWith(true);
+      expect(win.webContents.send).toHaveBeenCalledWith('host-message', {
+        command: 'fullscreenChanged',
+        isFullscreen: true,
+      });
     });
 
     test('toggle-fullscreen exits fullscreen when window is fullscreen', () => {
@@ -156,6 +164,7 @@ describe('registerIpcHandlers', () => {
         setKiosk: vi.fn(),
         isFullScreen: vi.fn(() => false),
         setFullScreen: vi.fn(),
+        webContents: { send: vi.fn() },
       };
       getMainWindow.mockReturnValue(win);
       register('win32');
@@ -164,6 +173,10 @@ describe('registerIpcHandlers', () => {
 
       expect(win.setKiosk).toHaveBeenCalledWith(true);
       expect(win.setFullScreen).not.toHaveBeenCalled();
+      expect(win.webContents.send).toHaveBeenCalledWith('host-message', {
+        command: 'fullscreenChanged',
+        isFullscreen: true,
+      });
     });
 
     test('window-maximize toggles maximize when maximized', () => {

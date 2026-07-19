@@ -14,6 +14,7 @@ import {
   RefreshIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
+import { getEnabledShortcut } from '../../utils/shortcuts';
 
 interface TopbarProps {
   onSettingsOpen: () => void;
@@ -204,7 +205,7 @@ export function Topbar({
         </div>
       </div>
 
-      <span style={{ color: 'var(--bd-s)', userSelect: 'none', margin: '0 4px', fontSize: 12 }}>
+      <span className="topbar__crumb-separator">
         |
       </span>
 
@@ -232,13 +233,13 @@ export function Topbar({
       <div className="topbar__divider" />
 
       {/* Back / Forward */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div className="topbar__nav-actions">
         <TooltipButton
           className="btn btn--icon"
           onClick={back}
           disabled={!canGoBack}
           tooltip={t.topbar.goBack}
-          shortcut={state.settings.keybindings?.back}
+          shortcut={getEnabledShortcut(state.settings, 'back')}
           icon={<ChevronLeftIcon />}
         />
         <TooltipButton
@@ -246,7 +247,7 @@ export function Topbar({
           onClick={forward}
           disabled={!canGoForward}
           tooltip={t.topbar.goForward}
-          shortcut={state.settings.keybindings?.forward}
+          shortcut={getEnabledShortcut(state.settings, 'forward')}
           icon={<ChevronRightIcon />}
         />
       </div>
@@ -258,7 +259,7 @@ export function Topbar({
         className="btn btn--icon"
         onClick={refresh}
         tooltip={t.topbar.refresh}
-        shortcut={state.settings.keybindings?.refresh}
+        shortcut={getEnabledShortcut(state.settings, 'refresh')}
         icon={<RefreshIcon />}
       />
 
@@ -269,8 +270,7 @@ export function Topbar({
             <span key={idx}>
               {idx > 0 && <span className="sep">/</span>}
               <span
-                className={`topbar__breadcrumb-part${item.isBold ? ' topbar__breadcrumb-part--bold' : ''}`}
-                style={item.isEllipsis ? { maxWidth: 'none' } : undefined}
+                  className={`topbar__breadcrumb-part${item.isBold ? ' topbar__breadcrumb-part--bold' : ''}${item.isEllipsis ? ' topbar__breadcrumb-part--ellipsis' : ''}`}
               >
                 {item.text}
               </span>
@@ -289,14 +289,14 @@ export function Topbar({
           className="btn"
           onClick={onExpandAll}
           tooltip={t.topbar.expandAll}
-          shortcut={state.settings.keybindings?.expandAll}
+          shortcut={getEnabledShortcut(state.settings, 'expandAll')}
           icon={<ExpandIcon />}
         />
         <TooltipButton
           className="btn"
           onClick={onCollapseAll}
           tooltip={t.topbar.collapseAll}
-          shortcut={state.settings.keybindings?.collapseAll}
+          shortcut={getEnabledShortcut(state.settings, 'collapseAll')}
           icon={<CollapseIcon />}
         />
         <TooltipButton
@@ -316,9 +316,9 @@ export function Topbar({
           themeTooltip={themeToggleLabel}
           editTooltip={t.topbar.edit}
           settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
-          homeShortcut={state.settings.keybindings?.welcome}
-          themeShortcut={state.settings.keybindings?.toggleTheme}
-          settingsShortcut={state.settings.keybindings?.settings}
+          homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
+          themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
+          settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
           canEdit={(state.appRuntime === 'desktop' || state.appRuntime === 'tauri') && !!state.currentFile}
           isDark={isDark}
           hasUpdate={hasUpdate}
@@ -328,20 +328,21 @@ export function Topbar({
           onSettings={onSettingsOpen}
           sidebarLabel={t.actions.toggleSidebar}
           sidebarTooltip={t.actions.toggleSidebar}
-          sidebarShortcut={state.settings.keybindings?.toggleSidebar}
+          sidebarShortcut={getEnabledShortcut(state.settings, 'toggleSidebar')}
           sidebarActive={!state.sidebarCollapsed}
           onSidebarToggle={toggleSidebar}
           tocLabel={t.actions.toggleToc}
           tocTooltip={t.actions.toggleToc}
-          tocShortcut={state.settings.keybindings?.toggleToc}
+          tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')}
           tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
           tocToggleDisabled={!state.currentFile || state.toc.length === 0}
           onTocToggle={toggleToc}
           focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
           focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
-          focusModeShortcut={state.settings.keybindings?.toggleFocusMode}
+          focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}
           isFocusMode={state.focusMode}
           onFocusModeToggle={toggleFocusMode}
+          showFullscreen={isDesktop}
           fullscreenLabel={t.actions.toggleFullscreen}
           fullscreenTooltip={t.actions.toggleFullscreenTooltip}
           fullscreenShortcut="F11"
@@ -351,8 +352,8 @@ export function Topbar({
 
         {isDesktop && (
           <>
-            <div className="topbar__divider" style={{ margin: '0 8px' }} />
-            <div className="window-controls" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <div className="topbar__divider topbar__divider--actions" />
+            <div className="window-controls topbar__window-controls">
               <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => bridge.postMessage({ command: 'window-minimize' })}

@@ -82,6 +82,9 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
+      // Mermaid is intentionally isolated and lazy-loaded; keep its known large
+      // vendor chunk from masking warnings for the eagerly loaded application.
+      chunkSizeWarningLimit: 6500,
       rollupOptions: {
         output: {
           manualChunks: (id) => {

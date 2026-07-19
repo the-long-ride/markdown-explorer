@@ -121,39 +121,19 @@ export function SwitchWorkspaceModal({
 
   return (
     <div
-      className="mdn-modal"
+      className="mdn-modal switch-workspace-modal"
       role="dialog"
       aria-modal="true"
-      style={{ display: 'flex' }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="settings-card"
-        style={{
-          width: '450px',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-        }}
+        className="settings-card switch-workspace-card"
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'var(--accent-dim)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--accent-text)',
-              flexShrink: 0,
-            }}
-          >
+        <div className="switch-workspace-header">
+          <div className="switch-workspace-header__icon">
             <svg
               width="20"
               height="20"
@@ -170,109 +150,40 @@ export function SwitchWorkspaceModal({
             </svg>
           </div>
           <div>
-            <h3
-              style={{
-                fontSize: '15px',
-                fontWeight: 800,
-                color: 'var(--tx)',
-                margin: 0,
-              }}
-            >
+            <h3>
               {t.title}
             </h3>
           </div>
         </div>
 
         {/* Message */}
-        <div
-          style={{
-            fontSize: '14px',
-            fontWeight: 650,
-            color: 'var(--tx)',
-            lineHeight: 1.4,
-          }}
-        >
+        <div className="switch-workspace-message">
           {formatString(t.message, targetWorkspaceName)}
         </div>
 
         {/* Path Details Bento Box */}
-        <div
-          style={{
-            background: 'var(--bg-s)',
-            border: '1px solid var(--bd-s)',
-            borderRadius: 'var(--r-md)',
-            padding: '12px 16px',
-            fontSize: '12px',
-            lineHeight: 1.6,
-            color: 'var(--tx2)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px',
-          }}
-        >
+        <div className="switch-workspace-paths">
           <div>
             {formatString(t.currentWorkspace, currentWorkspaceName)}
           </div>
-          <div style={{ wordBreak: 'break-all' }}>
+          <div className="switch-workspace-paths__new">
             {formatString(t.newPath, targetPath)}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '10px',
-            marginTop: '8px',
-            borderTop: '1px solid var(--bd)',
-            paddingTop: '16px',
-          }}
-        >
+        <div className="switch-workspace-actions">
           <button
             type="button"
             className="segmented-option"
             onClick={onClose}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '32px',
-              padding: '0 16px',
-              borderRadius: 'var(--r-md)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: '1px solid var(--bd-s)',
-              background: 'transparent',
-              color: 'var(--tx2)',
-              minWidth: '80px',
-              boxSizing: 'border-box',
-            }}
           >
             {t.cancelBtn}
           </button>
           <button
             type="button"
-            className="settings-download-update-btn"
             onClick={onConfirm}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '32px',
-              padding: '0 20px',
-              borderRadius: 'var(--r-md)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              background: 'var(--accent)',
-              border: '1px solid transparent',
-              color: '#ffffff',
-              gap: '6px',
-              minWidth: '90px',
-              boxSizing: 'border-box',
-            }}
+            className="settings-download-update-btn switch-workspace-confirm"
           >
             <span>{t.switchBtn}</span>
             <svg

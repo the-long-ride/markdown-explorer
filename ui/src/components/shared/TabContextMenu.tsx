@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { useCssVars } from "../../utils/useCssVars";
+import { formatShortcutLabel } from "../../utils/shortcuts";
 
 export type TabContextMenuAction =
   | "closeThisTab"
@@ -13,16 +15,19 @@ export interface TabContextMenuLabels {
   closeAllTabs: string;
 }
 
+export type TabContextMenuShortcuts = Partial<Record<TabContextMenuAction, string>>;
+
 interface TabContextMenuProps {
   x: number;
   y: number;
   labels: TabContextMenuLabels;
+  shortcuts?: TabContextMenuShortcuts;
   disabled?: Partial<Record<TabContextMenuAction, boolean>>;
   onAction: (action: TabContextMenuAction) => void;
   onClose: () => void;
 }
 
-const MENU_WIDTH = 220;
+const MENU_WIDTH = 280;
 const MENU_HEIGHT = 142;
 const MENU_MARGIN = 8;
 
@@ -34,6 +39,7 @@ export function TabContextMenu({
   x,
   y,
   labels,
+  shortcuts,
   disabled,
   onAction,
   onClose,
@@ -45,6 +51,7 @@ export function TabContextMenu({
   const top = typeof window === "undefined"
     ? y
     : clampPosition(y, window.innerHeight || MENU_HEIGHT + MENU_MARGIN * 2, MENU_HEIGHT);
+  useCssVars(menuRef, { '--menu-left': `${left}px`, '--menu-top': `${top}px` });
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -68,35 +75,35 @@ export function TabContextMenu({
     };
   }, [onClose]);
 
-  const items: readonly { action: TabContextMenuAction; label: string }[] = [
-    { action: "closeThisTab", label: labels.closeThisTab },
-    { action: "closeTabsToRight", label: labels.closeTabsToRight },
-    { action: "closeOtherTabs", label: labels.closeOtherTabs },
-    { action: "closeAllTabs", label: labels.closeAllTabs },
+  const items: readonly { action: TabContextMenuAction; label: string; shortcut?: string }[] = [
+    { action: "closeThisTab", label: labels.closeThisTab, shortcut: shortcuts?.closeThisTab },
+    { action: "closeTabsToRight", label: labels.closeTabsToRight, shortcut: shortcuts?.closeTabsToRight },
+    { action: "closeOtherTabs", label: labels.closeOtherTabs, shortcut: shortcuts?.closeOtherTabs },
+    { action: "closeAllTabs", label: labels.closeAllTabs, shortcut: shortcuts?.closeAllTabs },
   ];
 
   return (
     <div
       ref={menuRef}
       className="tab-context-menu"
-      style={{ left, top }}
       role="menu"
       aria-label="Tab actions"
       onContextMenu={(event) => event.preventDefault()}
     >
-      {items.map((item, index) => (
+      {items.map((item) => (
         <button
           key={item.action}
           type="button"
           role="menuitem"
-          className={`tab-context-menu__item${index === 0 ? " is-primary" : ""}`}
+          className={`tab-context-menu__item${item.action === "closeThisTab" ? " is-primary" : ""}`}
           disabled={disabled?.[item.action]}
           onClick={() => {
             onAction(item.action);
             onClose();
           }}
         >
-          {item.label}
+          <span>{item.label}</span>
+          {item.shortcut ? <kbd>{formatShortcutLabel(item.shortcut, ' + ')}</kbd> : null}
         </button>
       ))}
     </div>

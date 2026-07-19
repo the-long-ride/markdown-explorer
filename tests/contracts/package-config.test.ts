@@ -168,7 +168,7 @@ describe('package configuration contracts', () => {
 
     test('main entry points to compiled output', async () => {
       const pkg = await readJson('vscode/package.json');
-      expect(pkg.main).toBe('./out/extension.js');
+      expect(pkg.main).toBe('./out/vscode/src/extension.js');
     });
 
     test('publisher is the-long-ride', async () => {

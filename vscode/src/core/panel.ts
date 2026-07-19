@@ -26,10 +26,8 @@ import {
   DocumentConverter,
   getFileTypeLabel,
   isExtraDocumentFilePath,
-  isKnownSupportedFilePath,
   isMarkdownFilePath,
   isSupportedFilePath,
-  isTextDocumentFilePath,
   stripKnownExtension,
 } from './documentConversion';
 import type {
@@ -40,7 +38,13 @@ import type {
   WebviewMessage,
   WorkspaceSearchResult,
 } from '../types';
-import { normalizeForSearch, unicodeIndexOf } from './unicodeSearch';
+import { normalizePanelPath, resolvePanelNavigationPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath } from './panelNavigation';
+import { buildWebviewShell } from './panelShell';
+import { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
+
+export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
+export { buildWebviewShell } from './panelShell';
+export { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
 
 export class MarkdownDocsPanel {
   static currentPanel: MarkdownDocsPanel | undefined;
@@ -138,7 +142,7 @@ export class MarkdownDocsPanel {
             await this._panel.webview.postMessage({
               command: 'workspaceSearchResults',
               requestId: msg.requestId,
-              results: this._searchMarkdownItems(msg.query, msg.items),
+              results: searchMarkdownItems(msg.query, msg.items, this._flat),
             });
             break;
           case 'updateAppearance': {
@@ -179,7 +183,7 @@ export class MarkdownDocsPanel {
     // Do not auto-initialize _currentFile to allow showing the Welcome page by default when null
 
     if (!this._panel.webview.html) {
-      this._panel.webview.html = this._buildShell();
+      this._panel.webview.html = buildWebviewShell(this._extensionPath, this._panel, getVscode());
     } else {
       // Send updated data to the already running webview
       const config = getVscode().workspace.getConfiguration('markdownExplorer');
@@ -247,7 +251,7 @@ export class MarkdownDocsPanel {
       return;
     }
 
-    let fileInfo = this._flat.find(f => this._normPath(f.fsPath) === this._normPath(this._currentFile!));
+    let fileInfo = this._flat.find(f => normalizePanelPath(f.fsPath) === normalizePanelPath(this._currentFile!));
     if (!fileInfo) {
       const workspaceFolder = getVscode().workspace.workspaceFolders?.[0];
       const rootPath = workspaceFolder?.uri.fsPath ?? '';
@@ -317,23 +321,6 @@ export class MarkdownDocsPanel {
     await this._panel.webview.postMessage({ command: 'setLoading', label, detail });
   }
 
-  private _makeSearchExcerpt(text: string, index: number, matchLength: number): string {
-    const beforeText = text.slice(0, index).replace(/\s+/g, ' ').trim();
-    const matchText = text.slice(index, index + matchLength).replace(/\s+/g, ' ').trim();
-    const afterText = text.slice(index + matchLength).replace(/\s+/g, ' ').trim();
-    const beforeWords = beforeText ? beforeText.split(' ') : [];
-    const afterWords = afterText ? afterText.split(' ') : [];
-    const parts: string[] = [];
-
-    if (beforeWords.length > 10) parts.push('...');
-    parts.push(...beforeWords.slice(-10));
-    if (matchText) parts.push(matchText);
-    parts.push(...afterWords.slice(0, 10));
-    if (afterWords.length > 10) parts.push('...');
-
-    return parts.join(' ').trim();
-  }
-
   private _hostInfo() {
     return {
       appVersion: this._extensionVersion,
@@ -348,87 +335,6 @@ export class MarkdownDocsPanel {
     if (process.platform === 'darwin') return 'macos' as const;
     if (process.platform === 'linux') return 'linux' as const;
     return 'unknown' as const;
-  }
-
-  private _searchMarkdownItems(
-    rawQuery: string,
-    rawItems?: readonly WorkspaceSearchResult[],
-    limit = 80,
-  ): readonly WorkspaceSearchResult[] {
-    const query = String(rawQuery || '').trim().toLowerCase();
-    if (!query || query.length < 2) return [];
-
-    const items = rawItems && rawItems.length > 0 ? rawItems : this._flat;
-    const results: Array<WorkspaceSearchResult & { score: number }> = [];
-    const maxMatchesPerFile = 8;
-
-    for (const item of items) {
-      if (!item.fsPath || !fs.existsSync(item.fsPath)) continue;
-      if (!isKnownSupportedFilePath(item.fsPath)) continue;
-
-      const fileName = item.fileName || path.basename(item.fsPath);
-      const relativePath = item.relativePath || fileName;
-      const title = item.title || stripKnownExtension(fileName);
-      const titleScore = normalizeForSearch(title).includes(query) ? 5 : 0;
-      const fileNameScore = normalizeForSearch(fileName).includes(query) ? 4 : 0;
-      const pathScore = normalizeForSearch(relativePath).includes(query) ? 2 : 0;
-      const baseScore = titleScore + fileNameScore + pathScore;
-      const contentMatches: Array<{ index: number; ordinal: number; excerpt: string; matchLength: number }> = [];
-
-      const raw = isMarkdownFilePath(item.fsPath) || isTextDocumentFilePath(item.fsPath)
-        ? WorkspaceScanner.readFile(item.fsPath)
-        : '';
-      if (raw) {
-        let fromIndex = 0;
-        let ordinal = 0;
-        
-        while (contentMatches.length < maxMatchesPerFile) {
-          const result = unicodeIndexOf(raw, query, fromIndex);
-          if (!result) break;
-          
-          contentMatches.push({
-            index: result.index,
-            ordinal,
-            excerpt: this._makeSearchExcerpt(raw, result.index, result.matchLength),
-            matchLength: result.matchLength,
-          });
-          
-          ordinal += 1;
-          fromIndex = result.index + result.matchLength;
-        }
-      }
-
-      if (contentMatches.length > 0) {
-        for (const match of contentMatches) {
-          results.push({
-            fsPath: item.fsPath,
-            title,
-            fileName,
-            relativePath,
-            excerpt: match.excerpt,
-            matchIndex: match.index,
-            matchOrdinal: match.ordinal,
-            matchLength: match.matchLength,
-            score: baseScore + 3 - Math.min(match.ordinal, 20) / 100,
-          });
-        }
-        continue;
-      }
-
-      if (baseScore > 0) {
-        results.push({
-          fsPath: item.fsPath,
-          title,
-          fileName,
-          relativePath,
-          excerpt: '',
-          score: baseScore,
-        });
-      }
-    }
-
-    results.sort((a, b) => b.score - a.score);
-    return results.slice(0, limit).map(({ score, ...result }) => result);
   }
 
   private _shouldKeepResourceUrl(src: string): boolean {
@@ -464,63 +370,28 @@ export class MarkdownDocsPanel {
   // Private: navigation
   // ---------------------------------------------------------------------------
 
-  /** Normalize path for case-insensitive, separator-agnostic comparison (Windows-safe). */
-  private _normPath(p: string): string {
-    return p.toLowerCase().replace(/\\/g, '/');
-  }
-
-  private _stripNavigationFragment(href: string): string {
-    const hashIndex = href.indexOf('#');
-    return hashIndex === -1 ? href : href.slice(0, hashIndex);
-  }
-
-  private _decodeNavigationHref(href: string): string {
-    try {
-      return decodeURIComponent(href);
-    } catch {
-      return href;
-    }
-  }
-
-  private _isRootRelativeWorkspaceHref(href: string): boolean {
-    return (
-      href.startsWith('/') &&
-      !href.startsWith('//') &&
-      !/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(href)
-    );
-  }
-
-  private _isSameOrInsidePath(parentPath: string, childPath: string): boolean {
-    const relative = path.relative(path.resolve(parentPath), path.resolve(childPath));
-    return relative === '' || (!!relative && !relative.startsWith('..') && !path.isAbsolute(relative));
-  }
-
   private _resolveNavigationPath(href: string): string {
-    const requestedPath = this._decodeNavigationHref(this._stripNavigationFragment(href));
-    if (!requestedPath && this._currentFile) return this._currentFile;
-
-    const workspaceFolder = getVscode().workspace.workspaceFolders?.[0];
-    const rootPath = workspaceFolder?.uri.fsPath ?? '';
-    const dir = this._currentFile ? path.dirname(this._currentFile) : rootPath;
-
-    if (
-      rootPath &&
-      path.isAbsolute(requestedPath) &&
-      this._isSameOrInsidePath(rootPath, requestedPath)
-    ) {
-      return requestedPath;
-    }
-
-    if (rootPath && this._isRootRelativeWorkspaceHref(requestedPath)) {
-      return path.resolve(rootPath, `.${requestedPath}`);
-    }
-
-    if (!path.isAbsolute(requestedPath)) {
-      return path.resolve(dir, requestedPath);
-    }
-
-    return requestedPath;
+    const rootPath = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+    return resolvePanelNavigationPath(href, this._currentFile, rootPath);
   }
+
+  _makeSearchExcerpt(text: string, index: number, matchLength: number) {
+    return makeSearchExcerpt(text, index, matchLength);
+  }
+
+  _searchMarkdownItems(query: string, rawItems?: readonly WorkspaceSearchResult[]) {
+    return searchMarkdownItems(query, rawItems, this._flat);
+  }
+
+  _isSameOrInsidePath(parentPath: string, childPath: string) {
+    return isSameOrInsidePath(parentPath, childPath);
+  }
+
+  _normPath(value: string) { return normalizePanelPath(value); }
+  _stripNavigationFragment(value: string) { return stripNavigationFragment(value); }
+  _decodeNavigationHref(value: string) { return decodeNavigationHref(value); }
+  _isRootRelativeWorkspaceHref(value: string) { return isRootRelativeWorkspaceHref(value); }
+  _buildShell() { return buildWebviewShell(this._extensionPath, this._panel, getVscode()); }
 
   private async _navigateTo(href: string | null): Promise<void> {
     if (!href) {
@@ -542,9 +413,9 @@ export class MarkdownDocsPanel {
       return;
     }
 
-    const normHref = this._normPath(resolvedPath);
+    const normHref = normalizePanelPath(resolvedPath);
     const found = this._flat.find(
-      f => this._normPath(f.fsPath) === normHref || this._normPath(f.relativePath) === normHref,
+      f => normalizePanelPath(f.fsPath) === normHref || normalizePanelPath(f.relativePath) === normHref,
     );
 
     if (found) {
@@ -588,46 +459,6 @@ export class MarkdownDocsPanel {
       this._currentFile = null;
     }
     await this._render();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Private: HTML shell
-  // Loads built React assets from ui/dist/index.html and configures CSP + base href.
-  // ---------------------------------------------------------------------------
-
-  private _buildShell(): string {
-    const distPath = path.join(this._extensionPath, 'ui', 'dist');
-    const indexPath = path.join(distPath, 'index.html');
-    if (!fs.existsSync(indexPath)) {
-      return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Markdown Explorer UI Not Found</title>
-        </head>
-        <body style="font-family: sans-serif; padding: 20px; color: var(--vscode-editor-foreground); background-color: var(--vscode-editor-background);">
-          <h2>Markdown Explorer UI has not been built.</h2>
-          <p>Please run <code>pnpm run build</code> in the <code>ui/</code> folder or <code>pnpm run compile</code> in the extension folder to build the UI assets.</p>
-        </body>
-        </html>
-      `;
-    }
-
-    let html = fs.readFileSync(indexPath, 'utf8');
-
-    // CSP and Base Href
-    const cspSource = this._panel.webview.cspSource;
-    const csp = `default-src 'none'; style-src 'unsafe-inline' ${cspSource}; script-src 'unsafe-inline' blob: ${cspSource}; worker-src blob:; img-src * data: blob: ${cspSource}; media-src * data: blob: ${cspSource}; frame-src 'self' data: ${cspSource} https://www.youtube.com https://www.youtube-nocookie.com; connect-src *;`;
-    const baseUri = this._panel.webview.asWebviewUri(getVscode().Uri.file(distPath));
-
-    // Inject base href and CSP into the <head> section
-    const headInjection = `
-  <meta http-equiv="Content-Security-Policy" content="${csp}" />
-  <base href="${baseUri.toString()}/" />`;
-
-    html = html.replace('<head>', `<head>${headInjection}`);
-
-    return html;
   }
 
   // ---------------------------------------------------------------------------

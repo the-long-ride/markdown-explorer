@@ -31,6 +31,10 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleSidebar: 'Ctrl+B',
   workspaceSelection: 'Ctrl+N',
   toggleDesktopViewMode: 'Ctrl+Alt+T',
+  closeContentTab: 'Ctrl+W',
+  closeAllContentTabs: 'Ctrl+Shift+W',
+  closeContentTabsToRight: 'Ctrl+Alt+W',
+  closeOtherContentTabs: 'Ctrl+Alt+O',
 };
 
 export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
