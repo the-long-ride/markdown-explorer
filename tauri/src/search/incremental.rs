@@ -99,6 +99,9 @@ impl SearchIndex {
                     score: base_score as f64,
                 });
                 total += 1;
+                if total >= options.max_results {
+                    truncated = true;
+                }
             }
             if truncated {
                 break;
@@ -196,6 +199,8 @@ mod tests {
     #[test]
     fn incremental_flushes_batches() {
         let root = temp_dir("incremental-batch");
+        write(&root.join("guide-one.md"), "# Guide One");
+        write(&root.join("guide-two.md"), "# Guide Two");
         let items = vec![
             make_item(&root.join("guide-one.md"), "Guide One"),
             make_item(&root.join("guide-two.md"), "Guide Two"),
@@ -220,6 +225,8 @@ mod tests {
     #[test]
     fn incremental_truncates_at_max_results() {
         let root = temp_dir("incremental-truncate");
+        write(&root.join("guide-one.md"), "# Guide One");
+        write(&root.join("guide-two.md"), "# Guide Two");
         let items = vec![
             make_item(&root.join("guide-one.md"), "Guide One"),
             make_item(&root.join("guide-two.md"), "Guide Two"),
