@@ -76,8 +76,6 @@ impl Dispatcher {
             .and_then(|p| p.into_path().ok())
     }
 
-    // ── B2 helpers ──
-
     pub(super) fn ensure_search_index(&self) -> SearchIndex {
         {
             let state = self.state.inner.read();
@@ -204,14 +202,11 @@ impl Dispatcher {
             return;
         }
 
-        let document_conversion_enabled = self.state.inner.read().document_conversion_enabled;
-        let app = self.app.clone();
-        let state = self.state.clone();
-        host_message::emit_workspace_scan_progress(&app, 0, true);
+        let document_conversion_enabled = self.state.inner.read().document_conversion_enabled; let app = self.app.clone();
+        let state = self.state.clone(); host_message::emit_workspace_scan_progress(&app, 0, true);
 
         std::thread::spawn(move || {
-            let progress_app = app.clone();
-            let result = scan_with_progress(
+            let progress_app = app.clone(); let result = scan_with_progress(
                 &workspace_path,
                 ScanOptions {
                     document_conversion_enabled,
@@ -234,11 +229,7 @@ impl Dispatcher {
             }
 
             let flat = result.flat.clone();
-            {
-                let mut inner = state.inner.write();
-                inner.flat_list = flat.clone();
-                inner.runtime_state = RuntimeState::Ready;
-            }
+            let mut inner = state.inner.write(); inner.flat_list = flat.clone(); inner.runtime_state = RuntimeState::Ready;
 
             let dispatcher = Dispatcher { app: app.clone(), state: state.clone() };
             let idx = dispatcher.ensure_search_index();

@@ -29,6 +29,7 @@ export const coverageManifest: Record<string, string[]> = {
   'electron/window/debug-tools.js': ['tests/unit/electron/debug-tools.test.ts'],
   'electron/render/document-converter.js': ['tests/unit/electron/document-converter.test.ts'],
   'electron/core/ipc-handlers.js': ['tests/unit/electron/ipc-handlers.test.ts'],
+  'electron/core/external-open.js': ['tests/unit/electron/external-open.test.ts'],
   'electron/main.js': ['tests/unit/electron/main-runtime.test.ts'],
   'electron/core/main-bootstrap.js': ['tests/unit/electron/main-runtime.test.ts'],
   'electron/core/main-runtime.js': ['tests/unit/electron/main-runtime.test.ts'],

@@ -1066,9 +1066,9 @@ describe('useDesktopTabs', () => {
       expect(updated?.isIndexed).toBe(wasIndexedBefore);
     });
 
-    it('does not register handler when not tabView', () => {
+    it('registers handler when not tabView for external opens', () => {
       const { bridge } = setupHook({ isTabView: false });
-      expect(bridge.onMessage).not.toHaveBeenCalled();
+      expect(bridge.onMessage).toHaveBeenCalledTimes(1);
     });
   });
 

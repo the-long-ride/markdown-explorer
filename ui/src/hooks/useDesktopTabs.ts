@@ -1,7 +1,3 @@
-// =============================================================================
-// hooks/useDesktopTabs.ts — Desktop Tab & Workspace management
-// =============================================================================
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Action, AppState } from '../contexts/AppStateContext';
 import {
@@ -66,24 +62,17 @@ export function useDesktopTabs({
   const requestedWorkspaceIndexesRef = useRef<Set<string>>(new Set());
   const tabsRef = useRef(tabs);
 
-  // Custom switch workspace state
   const [pendingDroppedPath, setPendingDroppedPath] = useState<string | null>(null);
 
-  useEffect(() => {
-    workspaceNameRef.current = state.workspaceName;
-  }, [state.workspaceName]);
+  useEffect(() => { workspaceNameRef.current = state.workspaceName; }, [state.workspaceName]);
 
   useEffect(() => {
     tabsRef.current = tabs;
   });
 
-  useEffect(() => {
-    activeTabIdRef.current = activeTabId;
-  }, [activeTabId]);
+  useEffect(() => { activeTabIdRef.current = activeTabId; }, [activeTabId]);
 
-  useEffect(() => {
-    localStorage.setItem(FLOATING_TOOLBAR_STORAGE_KEY, JSON.stringify(toolbarPosition));
-  }, [toolbarPosition]);
+  useEffect(() => { localStorage.setItem(FLOATING_TOOLBAR_STORAGE_KEY, JSON.stringify(toolbarPosition)); }, [toolbarPosition]);
 
   useEffect(() => {
     if (isDesktop) writeWorkspaceAliases(workspaceAliases);
@@ -406,8 +395,6 @@ export function useDesktopTabs({
 
   useEffect(() => {
     if (!isTabView || state.isLoading) return;
-    // Read tabs via ref so this effect doesn't re-run (and cancel the timer)
-    // every time the active tab's snapshot is updated.
     const handle = window.setTimeout(() => {
       const pendingTabs = tabsRef.current.flatMap((tab) => {
         if (tab.kind !== 'workspace' || !tab.workspacePath || tab.isIndexed || tab.fileList.length > 0) return [];

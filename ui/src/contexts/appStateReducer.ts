@@ -305,11 +305,7 @@ export function reducer(
       };
 
     case 'WORKSPACE_SCAN_PROGRESS':
-      return {
-        ...state,
-        isWorkspaceScanning: action.active,
-        scannedFiles: action.scannedFiles,
-      };
+      return { ...state, isWorkspaceScanning: action.active, scannedFiles: action.scannedFiles };
 
     case 'SET_UPDATE_STATE':
       return {
