@@ -32,6 +32,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ### Fixed
 - **Focus-view external opens**: bridge message handling now remains active outside Tab view so native file and folder opens replace the current Focus workspace correctly.
 - **Search Flush**: Fixed incremental title-match search results not being flushed to the UI promptly during workspace-wide search.
+- **Check for update**: now launched by Markdown Explorer’s native updater helper, never browser.
 
 ### Removed
 - **New Feature Guide**: Removed the new feature guide overlay component, all associated translation keys, and supporting data files from the Welcome page.

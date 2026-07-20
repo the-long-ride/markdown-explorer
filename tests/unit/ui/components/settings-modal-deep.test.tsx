@@ -159,8 +159,8 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       downloading: 'Downloading... {progress}%',
       applying: 'Applying...',
       scheduled: 'Scheduled.',
-      updateOnExit: 'Update on Exit',
-      restartAndUpdate: 'Restart and Update',
+      updateOnExit: 'Update when I close',
+      restartAndUpdate: 'Restart now',
       restartPromptTitle: 'Install update',
       restartPromptBody: 'Version {version} ready.',
       downloadFailed: 'Download failed.',
@@ -737,25 +737,34 @@ describe('SettingsModal deep', () => {
       expect(screen.getByText('Install update')).toBeInTheDocument();
     });
 
-    it('Update on Exit button calls onScheduleUpdateOnExit', () => {
+    it('uses Restart now as the primary action and Update when I close as the deferred action', () => {
+      renderModal({
+        updateCheck: { status: 'available', hasUpdate: true, currentVersion: 'v1.0.0', latestVersion: 'v1.1.0', changelogUrl: '#' },
+        hostUpdateState: { status: 'downloaded', downloadedVersion: 'v1.1.0' },
+      });
+      expect(screen.getByRole('button', { name: 'Restart now' })).toHaveClass('settings-update-dialog__restart');
+      expect(screen.getByRole('button', { name: 'Update when I close' })).toHaveClass('settings-update-dialog__defer');
+    });
+
+    it('Update when I close button calls onScheduleUpdateOnExit', () => {
       const onScheduleUpdateOnExit = vi.fn();
       renderModal({
         updateCheck: { status: 'available', hasUpdate: true, currentVersion: 'v1.0.0', latestVersion: 'v1.1.0', changelogUrl: '#' },
         hostUpdateState: { status: 'downloaded', downloadedVersion: 'v1.1.0' },
         onScheduleUpdateOnExit,
       });
-      fireEvent.click(screen.getByText('Update on Exit'));
+      fireEvent.click(screen.getByText('Update when I close'));
       expect(onScheduleUpdateOnExit).toHaveBeenCalled();
     });
 
-    it('Restart and Update button calls onRestartAndApplyUpdate', () => {
+    it('Restart now button calls onRestartAndApplyUpdate', () => {
       const onRestartAndApplyUpdate = vi.fn();
       renderModal({
         updateCheck: { status: 'available', hasUpdate: true, currentVersion: 'v1.0.0', latestVersion: 'v1.1.0', changelogUrl: '#' },
         hostUpdateState: { status: 'downloaded', downloadedVersion: 'v1.1.0' },
         onRestartAndApplyUpdate,
       });
-      fireEvent.click(screen.getByText('Restart and Update'));
+      fireEvent.click(screen.getByText('Restart now'));
       expect(onRestartAndApplyUpdate).toHaveBeenCalled();
     });
   });

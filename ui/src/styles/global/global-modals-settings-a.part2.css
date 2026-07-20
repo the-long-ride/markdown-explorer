@@ -432,6 +432,26 @@
   transform: translateY(1px);
 }
 
+.settings-update-dialog__actions {
+  gap: 10px;
+}
+
+.settings-update-dialog__defer {
+  border-color: var(--bd-s);
+  background: var(--bg-e);
+  color: var(--tx);
+  box-shadow: none;
+}
+
+.settings-update-dialog__defer:hover {
+  background: var(--bg-h);
+  box-shadow: none;
+}
+
+.settings-update-dialog__restart {
+  order: -1;
+}
+
 /* Specific theme customizations for dialog matching */
 [data-theme-style="glass"] .banned-shortcut-close-btn {
   box-shadow: var(--sh-sm), inset 0 1px 0 rgba(255, 255, 255, 0.12);

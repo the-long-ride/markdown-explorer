@@ -122,7 +122,7 @@ Use isolated HTML previews for interactive examples, and inspect images or diagr
 
 Markdown Explorer ships as an Electron desktop app for Windows, Linux, and macOS. A Tauri desktop variant is also available as a lightweight alternative using the system WebView, with preview release artifacts published alongside Electron builds.
 
-Installed Windows desktop builds can check for updates in Settings, download the matching installer, and apply the update after the app closes. Portable, development, and manual archive builds still check for new releases, but they open the release download instead of running the in-app installer flow.
+Installed Windows Tauri and Electron desktop builds can check for updates in Settings and download the matching installer in-app. When it is ready, choose **Restart now** to install and relaunch immediately, or **Update when I close** to finish installation after the next normal exit. Portable, development, and manual archive builds still check for new releases, but they open the release download instead of running the in-app installer flow.
 
 | Variant | Status | Commands |
 | --- | --- | --- |

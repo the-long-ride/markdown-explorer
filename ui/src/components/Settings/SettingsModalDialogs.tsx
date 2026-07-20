@@ -13,9 +13,9 @@ export function DownloadedUpdateDialog({ t, version, onSchedule, onRestart }: Do
       <div className="settings-card banned-shortcut-card">
         <div className="banned-shortcut-header"><div className="banned-shortcut-icon"><AlertTriangleIcon size={38} /></div><h3>{t.update.restartPromptTitle}</h3></div>
         <div className="banned-shortcut-body"><p>{t.update.restartPromptBody.replace('{version}', version || '')}</p></div>
-        <div className="banned-shortcut-footer">
-          <button type="button" className="banned-shortcut-close-btn" onClick={onSchedule}>{t.update.updateOnExit}</button>
-          <button type="button" className="banned-shortcut-close-btn" onClick={onRestart}>{t.update.restartAndUpdate}</button>
+        <div className="banned-shortcut-footer settings-update-dialog__actions">
+          <button type="button" className="banned-shortcut-close-btn settings-update-dialog__defer" onClick={onSchedule}>{t.update.updateOnExit}</button>
+          <button type="button" className="banned-shortcut-close-btn settings-update-dialog__restart" onClick={onRestart}>{t.update.restartAndUpdate}</button>
         </div>
       </div>
     </div>
