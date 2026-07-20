@@ -14,12 +14,12 @@ const DOWNLOAD_ICON_SVG =
   const assetMatchers = {
     "windows-nsis": (name) =>
       isElectronLikeAsset(name) &&
-      (name.includes("setup") || /\.\\d+\\.\\d+\\.\\d+\\.exe$/.test(name)) &&
+      (name.includes("setup") || /\.\d+\.\d+\.\d+\.exe$/.test(name)) &&
       name.endsWith(".exe"),
     "windows-portable": (name) =>
       isElectronLikeAsset(name) &&
       !name.includes("setup") &&
-      !/\.\\d+\\.\\d+\\.\\d+\\.exe$/.test(name) &&
+      !/\.\d+\.\d+\.\d+\.exe$/.test(name) &&
       name.endsWith(".exe"),
     "macos-arm64": (name) =>
       isElectronLikeAsset(name) &&

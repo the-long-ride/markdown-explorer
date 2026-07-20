@@ -6,6 +6,20 @@ const fetchJson = (url) =>
     });
 
   const fetchMarketplaceDownloadStats = async () => {
+    // Try static pre-fetched JSON first (generated weekly by GHA, no CORS concerns)
+    try {
+      const res = await fetch("./marketplace-stats.json");
+      if (res.ok) {
+        const stats = await res.json();
+        if (typeof stats["open-vsx"] === "number" && typeof stats["vscode-marketplace"] === "number") {
+          return stats;
+        }
+      }
+    } catch (_) {
+      // fall through to live API
+    }
+
+    // Live fallback: VS Code Marketplace supports CORS (Access-Control-Allow-Origin: *)
     const [openVsxResponse, marketplaceResponse] = await Promise.all([
       fetch(openVsxApiUrl),
       fetch(marketplaceApiUrl, {
@@ -72,7 +86,7 @@ const fetchJson = (url) =>
       });
     });
 
-  applyLang(currentLang);
   return { fetchJson, fetchMarketplaceDownloadStats, fetchReleasePages };
 };
+
 

@@ -10,6 +10,7 @@ on:
       - 'ui/**'
       - 'chromium-xtension/**'
       - 'vscode/src/markdown/**'
+      - 'scripts/fetch-marketplace-stats.mjs'
       - '.github/workflows/deploy-website.yml'
   workflow_dispatch:
 
@@ -17,6 +18,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
@@ -41,6 +43,36 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Download Marketplace Stats Artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          RUN_ID=$(curl -sf \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/refresh-marketplace-stats.yml/runs?status=success&per_page=1" \
+            | jq -r '.workflow_runs[0].id // empty')
+
+          if [ -n "$RUN_ID" ]; then
+            ARTIFACT_URL=$(curl -sf \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts" \
+              | jq -r '.artifacts[] | select(.name == "marketplace-stats") | .archive_download_url // empty')
+
+            if [ -n "$ARTIFACT_URL" ]; then
+              curl -sL -H "Authorization: Bearer $GH_TOKEN" "$ARTIFACT_URL" -o /tmp/marketplace-stats.zip
+              unzip -o /tmp/marketplace-stats.zip -d website/
+              echo "Using marketplace-stats artifact from refresh run $RUN_ID"
+              exit 0
+            fi
+          fi
+
+          echo "No artifact found — fetching live stats as fallback."
+          node scripts/fetch-marketplace-stats.mjs
 
       - name: Build website-app (React demo)
         run: pnpm --filter ./website-app run build
