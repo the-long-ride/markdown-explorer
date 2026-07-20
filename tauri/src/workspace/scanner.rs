@@ -481,14 +481,27 @@ mod tests {
         .unwrap();
 
         assert_eq!(result.flat.len(), 3);
+        assert_eq!(discovered.len(), 3);
+
+        // The scanner walks directories in parallel, so discovery order (and
+        // therefore the cumulative count assigned to each file) is not
+        // deterministic. Verify that every file was reported exactly once with
+        // a unique 1-based count, regardless of order.
+        let mut discovered_names: Vec<_> =
+            discovered.iter().map(|(name, _)| name.clone()).collect();
+        discovered_names.sort();
         assert_eq!(
-            discovered,
+            discovered_names,
             vec![
-                ("file-0.md".to_string(), 1),
-                ("file-1.md".to_string(), 2),
-                ("file-2.md".to_string(), 3),
+                "file-0.md".to_string(),
+                "file-1.md".to_string(),
+                "file-2.md".to_string(),
             ]
         );
+
+        let mut counts: Vec<_> = discovered.iter().map(|(_, count)| *count).collect();
+        counts.sort();
+        assert_eq!(counts, vec![1, 2, 3]);
     }
 
     #[test]
