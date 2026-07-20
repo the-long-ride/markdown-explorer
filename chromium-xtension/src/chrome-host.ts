@@ -3,7 +3,11 @@
 // =============================================================================
 
 import { pickDirectory, readTextFile, verifyPermission } from "./file-access";
-import { BrowserScanner } from "./scanner";
+import {
+  scanWorkspaceIncrementally,
+  WORKSPACE_SCAN_BATCH_SIZE,
+  WORKSPACE_SCAN_REVEAL_DELAY_MS,
+} from "./incremental-workspace-scan";
 import { renderMarkdown } from "./markdown-renderer";
 import { BrowserSearchIndex } from "./search-index";
 import { BrowserRecentWorkspaces } from "./recent-workspaces";
@@ -33,6 +37,9 @@ let flatList: MdFile[] = [];
 let workspaceTree: FolderNode | null = null;
 let searchIndex: BrowserSearchIndex | null = null;
 let readyHandled = false;
+let workspaceScanGeneration = 0;
+
+export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS };
 
 export function getHostInfo() {
   return {
@@ -122,6 +129,7 @@ async function sendRecentWorkspacesChanged() {
 }
 
 export function resetWorkspaceState(): void {
+  workspaceScanGeneration += 1;
   activeHandle = null;
   activeWorkspacePath = "";
   activeWorkspaceName = "";
@@ -151,28 +159,37 @@ async function sendWorkspaceData() {
 
   try {
     const handle = activeHandle;
+    const scanGeneration = ++workspaceScanGeneration;
     const workspacePath = activeWorkspacePath;
     const workspaceName = activeWorkspaceName;
-    let revealed = false;
+    const recentsPromise = BrowserRecentWorkspaces.load();
     sendToWebview({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
-    const scanPromise = BrowserScanner.scan(handle, {
+    const result = await scanWorkspaceIncrementally({
+      handle,
+      isCurrent: () => activeHandle === handle && scanGeneration === workspaceScanGeneration,
       onProgress(scannedFiles) {
         sendToWebview({ command: 'workspaceScanProgress', scannedFiles, active: true });
       },
+      async onReveal(next) {
+        const recentWorkspaces = await recentsPromise;
+        if (activeHandle !== handle || scanGeneration !== workspaceScanGeneration) return;
+        flatList = next.fileList;
+        workspaceTree = next.tree;
+        sendToWebview({
+          command: 'readyAck', ...next, theme: 'dark', themeStyle: 'default',
+          defaultExpanded: true, workspaceName, workspacePath, recentWorkspaces,
+          documentConversionEnabled: false, ...getHostInfo(),
+        });
+      },
+      onChanged(next) {
+        flatList = next.fileList;
+        workspaceTree = next.tree;
+        sendToWebview({ command: 'workspaceFilesChanged', ...next, workspaceName, workspacePath,
+          documentConversionEnabled: false });
+      },
     });
-    const revealTimer = window.setTimeout(async () => {
-      if (activeHandle !== handle) return;
-      revealed = true;
-      sendToWebview({
-        command: 'readyAck', fileList: [], tree: null, theme: 'dark', themeStyle: 'default',
-        defaultExpanded: true, workspaceName, workspacePath,
-        recentWorkspaces: await BrowserRecentWorkspaces.load(), documentConversionEnabled: false,
-        ...getHostInfo(),
-      });
-    }, 2500);
-    const { tree, flat } = await scanPromise;
-    window.clearTimeout(revealTimer);
-    if (activeHandle !== handle) return;
+    if (!result) return;
+    const { tree, flat } = result;
     flatList = flat;
     workspaceTree = tree;
 
@@ -181,24 +198,6 @@ async function sendWorkspaceData() {
     }
     searchIndex.prime(flat);
 
-    const recents = await BrowserRecentWorkspaces.load();
-
-    sendToWebview(revealed ? {
-      command: 'workspaceFilesChanged',
-      fileList: flat, tree, workspaceName, workspacePath, documentConversionEnabled: false,
-    } : {
-      command: "readyAck",
-      fileList: flat,
-      tree: tree,
-      theme: "dark",
-      themeStyle: "default",
-      defaultExpanded: true,
-      workspaceName,
-      workspacePath,
-      recentWorkspaces: recents,
-      documentConversionEnabled: false,
-      ...getHostInfo(),
-    });
     sendToWebview({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false });
   } catch (err) {
     console.error("Failed to scan workspace:", err);

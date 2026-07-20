@@ -457,8 +457,31 @@ describe('reducer', () => {
     expect(next.recentWorkspaces).toEqual([{ name: 'x', path: '/x', lastOpened: 1 }]);
   });
 
-  describe('RENDER_CONTENT', () => {
-    test('fileTabs disabled clears tabs', () => {
+  test('WORKSPACE_SCAN_PROGRESS does not turn background indexing into global loading', () => {
+    const state = makeState({ isLoading: false, workspaceName: '' });
+    const next = reducer(state, {
+      type: 'WORKSPACE_SCAN_PROGRESS',
+      active: true,
+      scannedFiles: 2400,
+    });
+    expect(next.isLoading).toBe(false);
+    expect(next.isWorkspaceScanning).toBe(true);
+    expect(next.scannedFiles).toBe(2400);
+  });
+
+    describe('RENDER_CONTENT', () => {
+      test('keeps an active workspace scan visible while initial content renders', () => {
+        const state = makeState({ isWorkspaceScanning: true, scannedFiles: 3 });
+        const next = reducer(state, {
+          type: 'RENDER_CONTENT',
+          msg: { filePath: '', html: '', frontmatter: {}, toc: [], relativePath: '' } as any,
+        });
+
+        expect(next.isWorkspaceScanning).toBe(true);
+        expect(next.scannedFiles).toBe(3);
+      });
+
+      test('fileTabs disabled clears tabs', () => {
       const state = makeState({ settings: { ...initialState.settings, fileTabs: false } });
       const next = reducer(state, { type: 'RENDER_CONTENT', msg: { filePath: '/a.md', html: '<p>x</p>', frontmatter: {}, toc: [], relativePath: 'a.md' } as any });
       expect(next.contentTabs).toEqual([]);
@@ -820,6 +843,18 @@ describe('reducer', () => {
       });
       expect(result.fileList).toEqual(newFileList);
       expect(result.tree).toEqual(newTree);
+    });
+
+    test('preserves active scan state for incremental snapshots', () => {
+      const state = makeState({ isWorkspaceScanning: true });
+      const result = reducer(state, {
+        type: 'WORKSPACE_FILES_CHANGED',
+        fileList: [],
+        tree: null,
+        workspaceName: 'docs',
+        workspacePath: 'C:/docs',
+      });
+      expect(result.isWorkspaceScanning).toBe(true);
     });
 
     test('reconciles scope focus with new file list', () => {

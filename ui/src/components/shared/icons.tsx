@@ -95,6 +95,37 @@ export const FolderIcon = ({ size = 12, ...rest }: IconProps) => (
   </svg>
 );
 
+export const FileNotFoundIcon = ({ size = 52, ...rest }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 64 64"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...rest}
+  >
+    <path d="M16 6h22l12 12v40H16z" />
+    <path d="M38 6v12h12" />
+    <path d="M23 31h20" opacity=".45" />
+    <text
+      x="32"
+      y="46"
+      fill="currentColor"
+      stroke="none"
+      textAnchor="middle"
+      fontSize="12"
+      fontWeight="700"
+      fontFamily="system-ui, sans-serif"
+    >
+      404
+    </text>
+  </svg>
+);
+
 export const AlertTriangleIcon = ({ size = 16, ...rest }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...rest}>
     <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -246,4 +277,3 @@ export const MinimizeIcon = ({ size = 12, ...rest }: IconProps) => (
     <path d="M10 14l-7 7" />
   </svg>
 );
-

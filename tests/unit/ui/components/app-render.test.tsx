@@ -348,6 +348,20 @@ describe('App render', () => {
     expect(screen.getByText('Loading docs...')).toBeInTheDocument();
   });
 
+  it('replaces workspace selection with centered scan loader', () => {
+    mockState = createMockState({
+      isLoading: false,
+      isWorkspaceScanning: true,
+      scannedFiles: 2400,
+      workspaceName: '',
+      loadingLabel: 'Loading docs...',
+    });
+    render(createElement(App));
+    expect(screen.getByText('Loading docs...')).toBeInTheDocument();
+    expect(screen.getByText('Scanning 2,400 files…')).toBeInTheDocument();
+    expect(screen.queryByTestId('workspace-selection')).not.toBeInTheDocument();
+  });
+
   it('calls toggleTheme on theme toggle button in terms screen', async () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.removeItem('markdown-explorer-terms-accepted');

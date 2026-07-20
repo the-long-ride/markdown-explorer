@@ -26,6 +26,9 @@ interface FileModeDeps {
   extractWorkspaceName: (path: string) => string;
 }
 
+export const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
+export const WORKSPACE_SCAN_BATCH_SIZE = 32;
+
 export function createFileModeHandlers({
   state,
   send,
@@ -34,7 +37,9 @@ export function createFileModeHandlers({
   findFileInfo,
   extractWorkspaceName,
 }: FileModeDeps) {
+let workspaceScanGeneration = 0;
 function resetFileState() {
+  workspaceScanGeneration += 1;
   state.activeHandle = null;
   state.activeWorkspacePath = '';
   state.activeWorkspaceName = '';
@@ -46,6 +51,7 @@ function resetFileState() {
 }
 
 async function loadHandleWorkspace(handle: FileSystemDirectoryHandle, openFirstFile = true) {
+  const scanGeneration = ++workspaceScanGeneration;
   state.activeHandle = handle;
   state.activeWorkspaceName = handle.name;
   state.activeWorkspacePath = handle.name;
@@ -55,37 +61,84 @@ async function loadHandleWorkspace(handle: FileSystemDirectoryHandle, openFirstF
   await BrowserRecentWorkspaces.save(state.activeWorkspaceName, state.activeWorkspacePath, handle);
 
   let revealed = false;
+  let revealStarted = false;
+  let thresholdElapsed = false;
+  let lastPublishedCount = 0;
+  const discovered: MdFile[] = [];
+  const recentsPromise = BrowserRecentWorkspaces.load();
+  const snapshot = () => {
+    const fileList = [...discovered].sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+    return { fileList, tree: BrowserScanner.buildTree(fileList) };
+  };
+  const publishChanged = () => {
+    if (state.activeHandle !== handle || scanGeneration !== workspaceScanGeneration) return;
+    const next = snapshot();
+    lastPublishedCount = next.fileList.length;
+    state.flatList = next.fileList;
+    state.workspaceTree = next.tree;
+    send({
+      command: 'workspaceFilesChanged', ...next,
+      workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,
+      documentConversionEnabled: false,
+    });
+  };
+  let revealPromise: Promise<void> | null = null;
+  const startReveal = () => {
+    if (revealStarted || discovered.length === 0) return;
+    revealStarted = true;
+    revealPromise = (async () => {
+      const recentWorkspaces = await recentsPromise;
+      if (state.activeHandle !== handle || scanGeneration !== workspaceScanGeneration) return;
+      const next = snapshot();
+      lastPublishedCount = next.fileList.length;
+      state.flatList = next.fileList;
+      state.workspaceTree = next.tree;
+      send({
+        command: 'readyAck', ...next, theme: 'dark', themeStyle: 'default',
+        defaultExpanded: true, workspaceName: state.activeWorkspaceName,
+        workspacePath: state.activeWorkspacePath, recentWorkspaces,
+        documentConversionEnabled: false, ...hostInfo(),
+      });
+      revealed = true;
+    })();
+  };
   send({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
   const scanPromise = BrowserScanner.scan(handle, {
     onProgress(scannedFiles) {
+      if (state.activeHandle !== handle || scanGeneration !== workspaceScanGeneration) return;
       send({ command: 'workspaceScanProgress', scannedFiles, active: true });
     },
+    onFile(file, scannedFiles) {
+      if (state.activeHandle !== handle || scanGeneration !== workspaceScanGeneration) return;
+      discovered.push(file);
+      if (thresholdElapsed && !revealStarted) startReveal();
+      else if (revealed && scannedFiles % WORKSPACE_SCAN_BATCH_SIZE === 0) publishChanged();
+    },
   });
-  const revealTimer = window.setTimeout(async () => {
-    if (state.activeHandle !== handle) return;
-    revealed = true;
-    send({
-      command: 'readyAck', fileList: [], tree: null, theme: 'dark', themeStyle: 'default',
-      defaultExpanded: true, workspaceName: state.activeWorkspaceName,
-      workspacePath: state.activeWorkspacePath,
-      recentWorkspaces: await BrowserRecentWorkspaces.load(), documentConversionEnabled: false,
-      ...hostInfo(),
-    });
-  }, 2500);
+  const revealTimer = window.setTimeout(() => {
+    if (state.activeHandle !== handle || scanGeneration !== workspaceScanGeneration) return;
+    thresholdElapsed = true;
+    startReveal();
+  }, WORKSPACE_SCAN_REVEAL_DELAY_MS);
   const { tree, flat } = await scanPromise;
   window.clearTimeout(revealTimer);
-  if (state.activeHandle !== handle) return;
+  if (revealPromise) await revealPromise;
+  if (state.activeHandle !== handle || scanGeneration !== workspaceScanGeneration) return;
   state.flatList = flat;
   state.workspaceTree = tree;
   state.searchIndex = new BrowserSearchIndex(handle);
   state.searchIndex.prime(flat);
 
-  const recents = await BrowserRecentWorkspaces.load();
-  send(revealed ? {
-    command: 'workspaceFilesChanged', fileList: flat, tree,
-    workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,
-    documentConversionEnabled: false,
-  } : {
+  const recents = await recentsPromise;
+  if (revealed) {
+    if (lastPublishedCount !== flat.length) {
+      send({
+        command: 'workspaceFilesChanged', fileList: flat, tree,
+        workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,
+        documentConversionEnabled: false,
+      });
+    }
+  } else send({
     command: 'readyAck',
     fileList: flat,
     tree,

@@ -117,7 +117,6 @@ export function reducer(
         previewInfo: action.msg.previewInfo ?? null,
         relativePath: action.msg.relativePath,
         isLoading: false,
-        isWorkspaceScanning: false,
         loadingLabel: '',
         loadingDetail: '',
         staleContentFilePath: null,
@@ -185,7 +184,6 @@ export function reducer(
         },
         contentTabs: refreshContentTabMetadata(state.contentTabs, action.fileList),
         isLoading: false,
-        isWorkspaceScanning: false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
       };

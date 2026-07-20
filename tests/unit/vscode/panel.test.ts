@@ -112,11 +112,13 @@ describe('MarkdownDocsPanel', () => {
   });
 
   describe('message handler dispatch', () => {
-    test('reveals the workspace after 2.5 seconds while a scan is still pending', async () => {
+    test('keeps loading at 3 seconds until files arrive, then refreshes at 32 files', async () => {
       vi.useFakeTimers();
-      let resolveScan!: (value: { tree: null; flat: [] }) => void;
+      let resolveScan!: (value: { tree: null; flat: any[] }) => void;
+      let reportFile!: (file: any, count: number) => void;
       const scanner = await import('../../../vscode/src/core/scanner');
-      vi.mocked(scanner.WorkspaceScanner.scan).mockImplementationOnce(() => new Promise(resolve => {
+      vi.mocked(scanner.WorkspaceScanner.scan).mockImplementationOnce((_conversion, _progress, onFile) => new Promise(resolve => {
+        reportFile = onFile;
         resolveScan = resolve as typeof resolveScan;
       }));
       setupVscodeMock();
@@ -125,10 +127,28 @@ describe('MarkdownDocsPanel', () => {
       const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
 
       const pending = msgHandler({ command: 'ready' });
-      await vi.advanceTimersByTimeAsync(2500);
+      await vi.advanceTimersByTimeAsync(2999);
+      expect(mockPostMessage.mock.calls.some((call: any) => call[0].command === 'readyAck')).toBe(false);
 
-      expect(mockPostMessage.mock.calls.some((call: any) => call[0].command === 'readyAck')).toBe(true);
-      resolveScan({ tree: null, flat: [] });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(mockPostMessage.mock.calls.some((call: any) => call[0].command === 'readyAck')).toBe(false);
+
+      const files = Array.from({ length: 32 }, (_, index) => ({
+        fsPath: `/workspace/f${index}.md`, relativePath: `f${index}.md`,
+        parts: [`f${index}.md`], fileName: `f${index}.md`, title: `File ${index}`,
+        extension: '.md', documentKind: 'markdown',
+      }));
+      reportFile(files[0], 1);
+      await Promise.resolve();
+      const reveal = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'readyAck');
+      expect(reveal?.[0].fileList).toHaveLength(1);
+
+      for (let index = 1; index < files.length; index++) reportFile(files[index], index + 1);
+      await Promise.resolve();
+      const refreshes = mockPostMessage.mock.calls.filter((call: any) => call[0].command === 'workspaceFilesChanged');
+      expect(refreshes.at(-1)?.[0].fileList).toHaveLength(32);
+
+      resolveScan({ tree: null, flat: files });
       await pending;
       vi.useRealTimers();
     });

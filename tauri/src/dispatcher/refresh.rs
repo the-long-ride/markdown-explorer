@@ -1,7 +1,11 @@
 use super::*;
 
 impl Dispatcher {
-    pub(super) async fn refresh_from_watch(&self, _workspace_path: PathBuf, change: Option<WatchChange>) {
+    pub(super) async fn refresh_from_watch(
+        &self,
+        _workspace_path: PathBuf,
+        change: Option<WatchChange>,
+    ) {
         let changed_path = change.as_ref().map(|c| c.fs_path.as_str()).unwrap_or("");
         let doc_conv = self.state.inner.read().document_conversion_enabled;
 
@@ -12,7 +16,11 @@ impl Dispatcher {
         self.refresh_active_workspace(true, changed_path).await;
     }
 
-    pub(super) async fn refresh_active_workspace(&self, preserve_current_content: bool, changed_path: &str) {
+    pub(super) async fn refresh_active_workspace(
+        &self,
+        preserve_current_content: bool,
+        changed_path: &str,
+    ) {
         let workspace_path = {
             let state = self.state.inner.read();
             state.workspace_path.clone()

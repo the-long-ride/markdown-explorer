@@ -103,14 +103,13 @@ const runtime = createDesktopRuntime({
   createStartupReadyAck,
   deferWorkspaceLoad,
   ensureHeavyModules,
-  async scanWorkspaceData(wsPath) {
+  async scanWorkspaceData(wsPath, options = {}) {
     ensureHeavyModules();
+    const isCurrent = typeof options.isCurrent === 'function' ? options.isCurrent : () => true;
     let tree = null;
     let flat = [];
-    mainWindow?.webContents.send("host-message", {
-      command: "workspaceScanProgress",
-      scannedFiles: 0,
-      active: true,
+    if (isCurrent()) mainWindow?.webContents.send("host-message", {
+      command: "workspaceScanProgress", scannedFiles: 0, active: true,
     });
 
     try {
@@ -121,16 +120,21 @@ const runtime = createDesktopRuntime({
           const entry = DesktopScanner.buildFileEntry(wsPath, path.dirname(wsPath));
           flat = [entry];
           tree = DesktopScanner.buildTree(flat);
+          options.onFile?.(entry, 1);
         }
       } else {
         const result = await DesktopScanner.scan(wsPath, {
           documentConversionEnabled: runtime.state.documentConversionEnabled,
           onProgress(scannedFiles) {
+            if (!isCurrent()) return;
             mainWindow?.webContents.send("host-message", {
               command: "workspaceScanProgress",
               scannedFiles,
               active: true,
             });
+          },
+          onFile(file, scannedFiles) {
+            options.onFile?.(file, scannedFiles);
           },
         });
         tree = result.tree;
@@ -140,10 +144,8 @@ const runtime = createDesktopRuntime({
       console.error("Failed to scan workspace data:", err);
     }
 
-    mainWindow?.webContents.send("host-message", {
-      command: "workspaceScanProgress",
-      scannedFiles: flat.length,
-      active: false,
+    if (isCurrent()) mainWindow?.webContents.send("host-message", {
+      command: "workspaceScanProgress", scannedFiles: flat.length, active: false,
     });
     return { tree, flat };
   },

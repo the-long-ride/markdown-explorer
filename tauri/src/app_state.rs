@@ -19,6 +19,7 @@ pub struct AppStateInner {
     pub search_worker: Option<crate::search::worker::SearchWorkerHandle>,
     pub watch_controller: Option<crate::workspace::watch::WorkspaceWatchController>,
     pub runtime_state: RuntimeState,
+    pub workspace_scan_generation: u64,
     pub ready_handled: bool,
     pub document_conversion_enabled: bool,
     pub fullscreen_transition: FullscreenTransition,

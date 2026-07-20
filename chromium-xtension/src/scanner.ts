@@ -5,11 +5,21 @@
 import type { MdFile, FolderNode } from '../../ui/src/types';
 
 export class BrowserScanner {
+  private static readonly TITLE_CHUNK_BYTES = 8 * 1024;
+  private static readonly TITLE_CONCURRENCY = 32;
+
   static async scan(
     rootHandle: FileSystemDirectoryHandle,
-    options: { onProgress?: (count: number) => void } = {},
+    options: {
+      onProgress?: (count: number) => void;
+      onFile?: (file: MdFile, count: number) => void;
+    } = {},
   ): Promise<{ tree: FolderNode; flat: MdFile[] }> {
     const flat: MdFile[] = [];
+    const discovered: Array<{
+      handle: FileSystemFileHandle;
+      relativePath: string;
+    }> = [];
     const excludes = ['.git', 'node_modules', '.vscode', 'out', 'dist'];
 
     // Define traverse as a local recursive helper
@@ -26,17 +36,27 @@ export class BrowserScanner {
         } else if (entry.kind === 'file') {
           const lowerName = entry.name.toLowerCase();
           if (lowerName.endsWith('.md') || lowerName.endsWith('.mdx')) {
-            const fileEntry = await BrowserScanner.buildFileEntry(entry, relativePath);
-            flat.push(fileEntry);
-            if (flat.length % 100 === 0) options.onProgress?.(flat.length);
+            discovered.push({ handle: entry, relativePath });
           }
         }
       }
     }
 
     await traverse(rootHandle, '');
+    for (let index = 0; index < discovered.length; index += BrowserScanner.TITLE_CONCURRENCY) {
+      const batch = discovered.slice(index, index + BrowserScanner.TITLE_CONCURRENCY);
+      await Promise.all(
+        batch.map(async file => {
+          const entry = await BrowserScanner.buildFileEntry(file.handle, file.relativePath);
+          options.onFile?.(entry, flat.length + 1);
+          flat.push(entry);
+          return entry;
+        }),
+      );
+      options.onProgress?.(flat.length);
+    }
     flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
-    options.onProgress?.(flat.length);
+    if (discovered.length === 0) options.onProgress?.(0);
     const tree = BrowserScanner.buildTree(flat);
     return { tree, flat };
   }
@@ -51,7 +71,10 @@ export class BrowserScanner {
     let title = '';
     try {
       const file = await fileHandle.getFile();
-      const content = await file.text();
+      const titleSource = typeof file.slice === 'function'
+        ? file.slice(0, BrowserScanner.TITLE_CHUNK_BYTES)
+        : file;
+      const content = await titleSource.text();
       title = BrowserScanner.extractTitle(content, isMdx) || BrowserScanner.stripKnownExtension(fileName);
     } catch (err) {
       title = BrowserScanner.stripKnownExtension(fileName);

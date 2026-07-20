@@ -141,6 +141,24 @@ describe('WorkspaceScanner', () => {
   });
 
   describe('scan', () => {
+    test('reports every discovered file with a cumulative count', async () => {
+      const rootDir = makeTempDir('vsscan-incremental-');
+      const paths = ['one.md', 'two.md', 'three.md'];
+      paths.forEach(name => writeFile(path.join(rootDir, name), `# ${name}`));
+      setWorkspaceContextForTest(makeWorkspaceContext({
+        workspaceFolders: [{ uri: { fsPath: rootDir } }],
+        findFiles: async () => paths.map(name => ({ fsPath: path.join(rootDir, name) })),
+      }));
+      const discovered: Array<{ fileName: string; count: number }> = [];
+
+      await WorkspaceScanner.scan(false, () => {}, (file, count) => {
+        discovered.push({ fileName: file.fileName, count });
+      });
+
+      expect(discovered.map(item => item.fileName)).toEqual([...paths].sort());
+      expect(discovered.map(item => item.count)).toEqual([1, 2, 3]);
+    });
+
     test('returns empty result when no workspace folders', async () => {
       setWorkspaceContextForTest(
         makeWorkspaceContext({ workspaceFolders: undefined }),
@@ -248,6 +266,21 @@ describe('WorkspaceScanner', () => {
       await WorkspaceScanner.scan();
       expect(capturedExclude[0]).toContain('node_modules');
       expect(capturedExclude[0]).toContain('.git');
+    });
+
+    test('does not cap workspace discovery at 1000 files', async () => {
+      let capturedMaxResults: number | undefined = 0;
+      setWorkspaceContextForTest(
+        makeWorkspaceContext({
+          findFiles(_include, _exclude, maxResults) {
+            capturedMaxResults = maxResults;
+            return Promise.resolve([]);
+          },
+        }),
+      );
+
+      await WorkspaceScanner.scan();
+      expect(capturedMaxResults).toBeUndefined();
     });
 
     test('throws when context is not set', async () => {
@@ -368,6 +401,15 @@ describe('WorkspaceScanner', () => {
       );
       const title = WorkspaceScanner.extractTitle(path.join('/fake', 'open.md'), false);
       expect(title).toBe('Open Only');
+    });
+
+    test('reads only the first title chunk from disk', () => {
+      const rootDir = makeTempDir('vsxt-chunk-');
+      const filePath = path.join(rootDir, 'large.md');
+      writeFile(filePath, `${'x'.repeat(9 * 1024)}\n# Late Heading`);
+      setWorkspaceContextForTest(makeWorkspaceContext({ textDocuments: [] }));
+
+      expect(WorkspaceScanner.extractTitle(filePath, false)).toBeNull();
     });
   });
 

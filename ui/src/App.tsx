@@ -328,7 +328,7 @@ export function App() {
     );
   }
 
-  if (state.isLoading && !state.workspaceName) {
+  if ((state.isLoading || state.isWorkspaceScanning) && !state.workspaceName) {
     return (
       <div className="state-screen state-screen--initial-loading">
         <div className="spinner" />

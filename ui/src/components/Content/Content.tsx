@@ -8,7 +8,7 @@ import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { getTranslations } from "../../contexts/translations";
 import { WelcomePage } from "./WelcomePage";
-import { AlertTriangleIcon, FolderIcon, TrashIcon } from "../shared/icons";
+import { AlertTriangleIcon, FileNotFoundIcon, FolderIcon, TrashIcon } from "../shared/icons";
 import { useContentEffects } from "./useContentEffects";
 // Highlighting deliberately skips language-(txt|text|plain|plaintext) blocks.
 
@@ -199,12 +199,15 @@ export function Content({
 
         {/* Empty workspace */}
         {!state.isLoading &&
+          !state.isWorkspaceScanning &&
           !state.notFoundHref &&
           !workspaceUnavailablePath &&
           state.fileList.length === 0 &&
           !state.contentHtml && (
             <div className="state-screen">
-              <div className="state-screen__icon">📁</div>
+              <div className="state-screen__icon">
+                <FileNotFoundIcon />
+              </div>
               <div className="state-screen__title">
                 {state.settings.documentConversion
                   ? "No supported documents found"

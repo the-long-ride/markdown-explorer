@@ -1,9 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getHostInfo, resetWorkspaceState } from '../../../chromium-xtension/src/chrome-host';
+import {
+  getHostInfo,
+  resetWorkspaceState,
+  WORKSPACE_SCAN_BATCH_SIZE,
+  WORKSPACE_SCAN_REVEAL_DELAY_MS,
+} from '../../../chromium-xtension/src/chrome-host';
 
 declare const chrome: { runtime: { getManifest(): { version: string } } };
 
 describe('getHostInfo', () => {
+  it('uses the shared 3-second workspace reveal threshold', () => {
+    expect(WORKSPACE_SCAN_REVEAL_DELAY_MS).toBe(3000);
+  });
+  it('uses cumulative 32-file workspace refresh batches', () => {
+    expect(WORKSPACE_SCAN_BATCH_SIZE).toBe(32);
+  });
   it('returns chrome runtime info', () => {
     (globalThis as any).chrome = { runtime: { getManifest: () => ({ version: '1.2.3' }) } };
     const info = getHostInfo();

@@ -55,6 +55,7 @@ export const coverageManifest: Record<string, string[]> = {
   'vscode/scripts/bundle-markdown-them.js': ['tests/unit/build/copy-ui.test.ts'],
   'vscode/scripts/copy-ui.js': ['tests/unit/build/copy-ui.test.ts'],
   'vscode/src/core/documentConversion.ts': ['tests/unit/vscode/documentConversion.test.ts'],
+  'vscode/src/core/incrementalScan.ts': ['tests/unit/vscode/panel.test.ts'],
   'vscode/src/core/panel.ts': ['tests/unit/vscode/panel.test.ts'],
   'vscode/src/core/scanner.ts': ['tests/unit/vscode/scanner.test.ts'],
   'vscode/src/core/unicodeSearch.ts': ['tests/unit/vscode/unicodeSearch.test.ts'],
@@ -147,6 +148,9 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/vite.config.ts': ['tests/unit/build/copy-ui.test.ts'],
 
   'chromium-xtension/src/chrome-host.ts': ['tests/unit/chromium/chrome-host.test.ts'],
+  'chromium-xtension/src/incremental-workspace-scan.ts': [
+    'tests/unit/chromium/incremental-workspace-scan.test.ts',
+  ],
   'chromium-xtension/src/file-access.ts': ['tests/unit/chromium/file-access.test.ts'],
   'chromium-xtension/src/main-chrome.tsx': ['tests/unit/chromium/chrome-host.test.ts'],
   'chromium-xtension/src/markdown-renderer.ts': ['tests/unit/chromium/markdown-renderer.test.ts'],

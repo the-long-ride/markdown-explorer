@@ -9,6 +9,7 @@ use std::fs;
 use std::io::{Read, Seek, SeekFrom};
 #[allow(unused_imports)]
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 const TITLE_CHUNK_BYTES: usize = 8 * 1024;
 const DEFAULT_IGNORED_FOLDERS: &[&str] = &[
@@ -28,6 +29,37 @@ const DEFAULT_IGNORED_FOLDERS: &[&str] = &[
     "bin",
     "obj",
 ];
+
+fn export_title_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(r#"export\s+(?:const|let|var)\s+title\s*=\s*(['"`])([^'"`]*)['"`]"#)
+            .expect("valid MDX export-title regex")
+    })
+}
+
+fn meta_title_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(
+            r#"export\s+(?:const|let|var)\s+meta\s*=\s*\{(?s:.*?)title\s*:\s*(['"`])([^'"`]*)['"`]"#,
+        )
+        .expect("valid MDX meta-title regex")
+    })
+}
+
+fn jsx_title_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(r#"<[A-Z]\w*\s+[^>]*?title=(?:(['"`])([^'"`]*)['"`]|\{(['"`])([^'"`]*)['"`]\})"#)
+            .expect("valid MDX JSX-title regex")
+    })
+}
+
+fn heading_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"(?m)^#+\s+(.+)$").expect("valid Markdown heading regex"))
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -111,31 +143,21 @@ pub fn extract_mdx_title(content: &str) -> Option<String> {
         }
     }
 
-    let export_title =
-        Regex::new(r#"export\s+(?:const|let|var)\s+title\s*=\s*(['"`])([^'"`]*)['"`]"#).ok()?;
-    if let Some(caps) = export_title.captures(content) {
+    if let Some(caps) = export_title_regex().captures(content) {
         return caps
             .get(2)
             .map(|m| m.as_str().trim().to_string())
             .filter(|s| !s.is_empty());
     }
 
-    let meta_title = Regex::new(
-        r#"export\s+(?:const|let|var)\s+meta\s*=\s*\{(?s:.*?)title\s*:\s*(['"`])([^'"`]*)['"`]"#,
-    )
-    .ok()?;
-    if let Some(caps) = meta_title.captures(content) {
+    if let Some(caps) = meta_title_regex().captures(content) {
         return caps
             .get(2)
             .map(|m| m.as_str().trim().to_string())
             .filter(|s| !s.is_empty());
     }
 
-    let jsx_title = Regex::new(
-        r#"<[A-Z]\w*\s+[^>]*?title=(?:(['"`])([^'"`]*)['"`]|\{(['"`])([^'"`]*)['"`]\})"#,
-    )
-    .ok()?;
-    jsx_title.captures(content).and_then(|caps| {
+    jsx_title_regex().captures(content).and_then(|caps| {
         caps.get(2)
             .or_else(|| caps.get(4))
             .map(|m| m.as_str().trim().to_string())
@@ -150,8 +172,7 @@ pub fn extract_title(fs_path: &Path, is_mdx: bool) -> Option<String> {
             return Some(title);
         }
     }
-    let heading = Regex::new(r"(?m)^#+\s+(.+)$").ok()?;
-    heading
+    heading_regex()
         .captures(&content)
         .and_then(|caps| caps.get(1))
         .map(|m| m.as_str().trim().to_string())
@@ -251,7 +272,16 @@ pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {
 pub fn scan_with_progress(
     root_path: &Path,
     options: ScanOptions,
+    report_progress: impl FnMut(usize),
+) -> HostResult<ScanResult> {
+    scan_with_callbacks(root_path, options, report_progress, |_, _| {})
+}
+
+pub fn scan_with_callbacks(
+    root_path: &Path,
+    options: ScanOptions,
     mut report_progress: impl FnMut(usize),
+    mut report_file: impl FnMut(&MdFile, usize),
 ) -> HostResult<ScanResult> {
     let custom_ignores = load_ignore_patterns(root_path);
     let mut excludes: Vec<String> = DEFAULT_IGNORED_FOLDERS
@@ -292,6 +322,7 @@ pub fn scan_with_progress(
                 )
             {
                 flat.push(build_file_entry(&path, root_path));
+                report_file(flat.last().expect("file was just appended"), flat.len());
                 if flat.len() % 100 == 0 {
                     report_progress(flat.len());
                 }
@@ -427,10 +458,37 @@ mod tests {
             write(&root.join(format!("file-{index:03}.md")), "# Title");
         }
         let mut progress = vec![];
-        let result = scan_with_progress(&root, ScanOptions::default(), |count| progress.push(count))
-            .unwrap();
+        let result =
+            scan_with_progress(&root, ScanOptions::default(), |count| progress.push(count))
+                .unwrap();
         assert_eq!(result.flat.len(), 100);
         assert_eq!(progress, vec![100, 100]);
+    }
+
+    #[test]
+    fn scan_reports_each_discovered_file_with_cumulative_count() {
+        let root = temp_dir("tauri-incremental-scan");
+        for index in 0..3 {
+            write(&root.join(format!("file-{index}.md")), "# Title");
+        }
+        let mut discovered = vec![];
+        let result = scan_with_callbacks(
+            &root,
+            ScanOptions::default(),
+            |_| {},
+            |file, count| discovered.push((file.file_name.clone(), count)),
+        )
+        .unwrap();
+
+        assert_eq!(result.flat.len(), 3);
+        assert_eq!(
+            discovered,
+            vec![
+                ("file-0.md".to_string(), 1),
+                ("file-1.md".to_string(), 2),
+                ("file-2.md".to_string(), 3),
+            ]
+        );
     }
 
     #[test]

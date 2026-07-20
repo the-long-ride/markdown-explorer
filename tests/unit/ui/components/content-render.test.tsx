@@ -51,6 +51,9 @@ vi.mock("../../../../ui/src/components/shared/icons", () => ({
   FolderIcon: ({ size }: { size?: number }) => (
     <svg data-testid="folder-icon" width={size} height={size} />
   ),
+  FileNotFoundIcon: ({ size }: { size?: number }) => (
+    <svg data-testid="file-not-found-icon" width={size} height={size} />
+  ),
   TrashIcon: ({ size }: { size?: number }) => (
     <svg data-testid="trash-icon" width={size} height={size} />
   ),
@@ -261,6 +264,15 @@ describe("Content rendering", () => {
     expect(
       screen.getByText("No Markdown, MDX, or TXT files found")
     ).toBeInTheDocument();
+    expect(screen.getByTestId("file-not-found-icon")).toBeInTheDocument();
+    expect(screen.queryByText("📁")).not.toBeInTheDocument();
+  });
+
+  it("does not render the empty workspace while scanning", () => {
+    setup({ fileList: [], contentHtml: "", isWorkspaceScanning: true });
+    expect(
+      screen.queryByText("No Markdown, MDX, or TXT files found")
+    ).not.toBeInTheDocument();
   });
 
   it("renders document conversion empty message when enabled", () => {

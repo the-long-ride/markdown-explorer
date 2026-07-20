@@ -6,8 +6,7 @@ impl Dispatcher {
         const ZOOM_MIN: f64 = -2.5;
         const ZOOM_MAX: f64 = 2.0;
         let current = self.state.inner.read().zoom_level;
-        let next = ((current + direction as f64 * ZOOM_STEP).clamp(ZOOM_MIN, ZOOM_MAX)
-            / ZOOM_STEP)
+        let next = ((current + direction as f64 * ZOOM_STEP).clamp(ZOOM_MIN, ZOOM_MAX) / ZOOM_STEP)
             .round()
             * ZOOM_STEP;
         self.state.inner.write().zoom_level = next;
@@ -27,7 +26,11 @@ impl Dispatcher {
         }
         host_message::emit_loading(
             &self.app,
-            if enabled { "Finding supported documents..." } else { "Refreshing Markdown files..." },
+            if enabled {
+                "Finding supported documents..."
+            } else {
+                "Refreshing Markdown files..."
+            },
             None,
         );
         self.send_workspace_data();

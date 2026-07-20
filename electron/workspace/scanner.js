@@ -32,7 +32,14 @@ class DesktopScanner {
     const excludes = [...DEFAULT_IGNORED_FOLDERS, ...customIgnores];
     const documentConversionEnabled = options.documentConversionEnabled === true;
     const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
+    const onFile = typeof options.onFile === 'function' ? options.onFile : null;
     const YIELD_EVERY = 30;
+    const titleConcurrency = Math.max(1, Number(options.titleConcurrency) || 32);
+    const titleReadTimeoutMs = Math.max(1, Number(options.titleReadTimeoutMs) || 250);
+    const titleExtractionTimeoutMs = Math.max(
+      titleReadTimeoutMs,
+      Number(options.titleExtractionTimeoutMs) || 1500,
+    );
 
     const dirQueue = [rootPath];
     let filesSinceYield = 0;
@@ -64,6 +71,7 @@ class DesktopScanner {
               _needsTitle: isMarkdown ? isMdx : false,
             };
             flat.push(entryObj);
+            if (onFile) onFile(entryObj, flat.length);
             if (onProgress && flat.length % 100 === 0) onProgress(flat.length);
             if (isMarkdown) titleBatch.push({ entry: entryObj, isMdx: !!isMdx });
             filesSinceYield++;
@@ -78,19 +86,30 @@ class DesktopScanner {
       }
     }
 
-    // Extract titles asynchronously in batches (yielding between each)
-    const TITLE_BATCH = 8;
-    for (let i = 0; i < titleBatch.length; i += TITLE_BATCH) {
-      const batch = titleBatch.slice(i, i + TITLE_BATCH);
-      for (const { entry, isMdx } of batch) {
+    // Title reads are optional enrichment. Never hold initial workspace load on a
+    // slow disk, network share, antivirus scan, or one unresponsive file handle.
+    const titleDeadline = Date.now() + titleExtractionTimeoutMs;
+    for (let i = 0; i < titleBatch.length && Date.now() < titleDeadline; i += titleConcurrency) {
+      const batch = titleBatch.slice(i, i + titleConcurrency);
+      await Promise.all(batch.map(async ({ entry, isMdx }) => {
+        const remainingMs = titleDeadline - Date.now();
+        if (remainingMs <= 0) return;
+        let timer;
         try {
-          const title = await DesktopScanner.extractTitleAsync(entry.fsPath, isMdx);
+          const title = await Promise.race([
+            DesktopScanner.extractTitleAsync(entry.fsPath, isMdx),
+            new Promise((resolve) => {
+              timer = setTimeout(() => resolve(null), Math.min(titleReadTimeoutMs, remainingMs));
+            }),
+          ]);
           if (title) entry.title = title;
         } catch {
           // keep the pending/placeholder title
+        } finally {
+          if (timer) clearTimeout(timer);
         }
-      }
-      if (i + TITLE_BATCH < titleBatch.length) {
+      }));
+      if (i + titleConcurrency < titleBatch.length && Date.now() < titleDeadline) {
         await new Promise(resolve => setImmediate(resolve));
       }
     }

@@ -1,9 +1,32 @@
+const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
+const WORKSPACE_SCAN_BATCH_SIZE = 32;
+
 function registerRuntimeWorkspaceHandlers(context) {
   const { state, deps, pathApi, fs, getMainWindow, sendHostMessage, getHostInfo, sendLoading, sendRecentWorkspacesChanged, recentWorkspacesStore, scanWorkspaceData, createSearchIndex, createSearchWorkerController, isSupportedFilePathLite, isExtraDocumentFilePathLite, getFileTypeLabelLite, stripKnownExtensionLite, isAccessDeniedError, stripNavigationFragment, decodeNavigationPath, isRootRelativeWorkspaceHref, isSameOrInsidePath } = context;
+  let workspaceScanGeneration = 0;
 
   function ensureSearchIndex() {
     if (!state.searchIndex) state.searchIndex = createSearchIndex();
     return state.searchIndex;
+  }
+
+  function buildWorkspaceTree(flat) {
+    const root = { name: "root", path: "", children: [], files: [] };
+    for (const file of flat) {
+      let node = root;
+      const dirs = file.parts.slice(0, -1);
+      for (let index = 0; index < dirs.length; index += 1) {
+        const name = dirs[index];
+        let child = node.children.find((item) => item.name === name);
+        if (!child) {
+          child = { name, path: dirs.slice(0, index + 1).join("/"), children: [], files: [] };
+          node.children.push(child);
+        }
+        node = child;
+      }
+      node.files.push(file);
+    }
+    return root;
   }
 
   function ensureCrossTabSearchWorker() {
@@ -146,41 +169,65 @@ function registerRuntimeWorkspaceHandlers(context) {
     }
 
     const workspacePath = state.workspacePath;
+    const scanGeneration = ++workspaceScanGeneration;
     const workspaceName = pathApi.basename(workspacePath);
     const recents = recentWorkspacesStore.load();
     let displayedWorkspace = false;
-    const revealTimer = setTimeout(() => {
-      if (state.workspacePath !== workspacePath) return;
+    let thresholdElapsed = false;
+    let lastPublishedCount = 0;
+    const discovered = [];
+    const snapshot = () => {
+      const fileList = [...discovered].sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+      return { fileList, tree: buildWorkspaceTree(fileList) };
+    };
+    const publishReveal = () => {
+      if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration || displayedWorkspace || discovered.length === 0) return;
       displayedWorkspace = true;
+      const next = snapshot();
+      lastPublishedCount = next.fileList.length;
+      state.flatList = next.fileList;
       sendHostMessage({
-        command: "readyAck",
-        fileList: [],
-        tree: null,
-        theme: "dark",
-        themeStyle: "default",
-        defaultExpanded: true,
-        workspaceName,
-        workspacePath,
-        recentWorkspaces: recents,
-        documentConversionEnabled: state.documentConversionEnabled,
-        ...getHostInfo(),
+        command: "readyAck", ...next, theme: "dark", themeStyle: "default",
+        defaultExpanded: true, workspaceName, workspacePath, recentWorkspaces: recents,
+        documentConversionEnabled: state.documentConversionEnabled, ...getHostInfo(),
       });
-    }, 2500);
-    const { tree, flat } = await scanWorkspaceData(workspacePath);
+    };
+    const publishChanged = () => {
+      if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
+      const next = snapshot();
+      lastPublishedCount = next.fileList.length;
+      state.flatList = next.fileList;
+      sendHostMessage({
+        command: "workspaceFilesChanged", ...next, workspaceName, workspacePath,
+        documentConversionEnabled: state.documentConversionEnabled,
+      });
+    };
+    const revealTimer = setTimeout(() => {
+      if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
+      thresholdElapsed = true;
+      publishReveal();
+    }, WORKSPACE_SCAN_REVEAL_DELAY_MS);
+    const { tree, flat } = await scanWorkspaceData(workspacePath, {
+      isCurrent: () => state.workspacePath === workspacePath && scanGeneration === workspaceScanGeneration,
+      onFile(file, scannedFiles) {
+        if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
+        discovered.push(file);
+        if (thresholdElapsed && !displayedWorkspace) publishReveal();
+        else if (displayedWorkspace && scannedFiles % WORKSPACE_SCAN_BATCH_SIZE === 0) publishChanged();
+      },
+    });
     clearTimeout(revealTimer);
-    if (state.workspacePath !== workspacePath) return;
+    if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
     state.flatList = flat;
     const idx = ensureSearchIndex();
     idx.prime(flat);
 
-    sendHostMessage(displayedWorkspace ? {
-      command: "workspaceFilesChanged",
-      fileList: flat,
-      tree,
-      workspaceName,
-      workspacePath,
-      documentConversionEnabled: state.documentConversionEnabled,
-    } : {
+    if (displayedWorkspace) {
+      if (lastPublishedCount !== flat.length) sendHostMessage({
+        command: "workspaceFilesChanged", fileList: flat, tree, workspaceName, workspacePath,
+        documentConversionEnabled: state.documentConversionEnabled,
+      });
+    } else sendHostMessage({
       command: "readyAck",
       fileList: flat,
       tree,
@@ -277,4 +324,8 @@ function registerRuntimeWorkspaceHandlers(context) {
   return { ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, getWorkspaceBaseDir, isCurrentFileStillAvailable, resolveNavigationPath, sendCurrentFileChanged, sendWorkspaceFilesChanged, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome };
 }
 
-module.exports = { registerRuntimeWorkspaceHandlers };
+module.exports = {
+  registerRuntimeWorkspaceHandlers,
+  WORKSPACE_SCAN_REVEAL_DELAY_MS,
+  WORKSPACE_SCAN_BATCH_SIZE,
+};

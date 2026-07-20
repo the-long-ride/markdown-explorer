@@ -15,7 +15,7 @@ import {
 export interface WorkspaceContext {
   workspaceFolders: Array<{ uri: { fsPath: string } }> | undefined;
   getConfiguration(section: string): { get<T>(key: string): T | undefined };
-  findFiles(include: string, exclude: string, maxResults: number): Promise<Array<{ fsPath: string }>>;
+  findFiles(include: string, exclude: string, maxResults?: number): Promise<Array<{ fsPath: string }>>;
   textDocuments: Array<{ fileName?: string; getText(): string }>;
 }
 
@@ -51,12 +51,13 @@ export function setWorkspaceContextForTest(ctx: WorkspaceContext | null): void {
 }
 
 export class WorkspaceScanner {
-  private static readonly MAX_FILES = 1000;
+  private static readonly TITLE_CHUNK_BYTES = 8 * 1024;
 
   /** Scan workspace for all .md files, return tree + flat list */
   static async scan(
     documentConversionEnabled = false,
     reportProgress: (count: number) => void = () => {},
+    reportFile: (file: MdFile, count: number) => void = () => {},
   ): Promise<ScanResult> {
     const ctx = getContext();
     if (!ctx) throw new Error('vscode workspace not available');
@@ -73,17 +74,16 @@ export class WorkspaceScanner {
     const includeGlob = documentConversionEnabled
       ? '**/*.{md,mdx,doc,docx,pdf,html,xls,xlsx,xlm,pptx,odt,odp,ods,rtf,txt}'
       : '**/*.{md,mdx,txt}';
-    const uris = (await ctx.findFiles(
-      includeGlob,
-      excludeGlob,
-      WorkspaceScanner.MAX_FILES,
-    )).filter(uri => isSupportedFilePath(uri.fsPath, documentConversionEnabled));
+    const uris = (await ctx.findFiles(includeGlob, excludeGlob))
+      .filter(uri => isSupportedFilePath(uri.fsPath, documentConversionEnabled));
     uris.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
     const rootPath = folders[0].uri.fsPath;
     const flat: MdFile[] = [];
     for (const uri of uris) {
-      flat.push(WorkspaceScanner.buildFileEntry(uri.fsPath, rootPath));
+      const file = WorkspaceScanner.buildFileEntry(uri.fsPath, rootPath);
+      flat.push(file);
+      reportFile(file, flat.length);
       if (flat.length % 100 === 0) {
         reportProgress(flat.length);
         await new Promise<void>(resolve => setTimeout(resolve, 0));
@@ -146,7 +146,7 @@ export class WorkspaceScanner {
           return match?.[1]?.trim() ?? null;
         }
       }
-      const content = fs.readFileSync(fsPath, 'utf8');
+      const content = WorkspaceScanner.readTitleChunk(fsPath);
       if (isMdx) {
         const mdxTitle = WorkspaceScanner.extractMdxTitle(content);
         if (mdxTitle) return mdxTitle;
@@ -189,6 +189,17 @@ export class WorkspaceScanner {
     }
 
     return null;
+  }
+
+  private static readTitleChunk(fsPath: string): string {
+    const fd = fs.openSync(fsPath, 'r');
+    try {
+      const buffer = Buffer.allocUnsafe(WorkspaceScanner.TITLE_CHUNK_BYTES);
+      const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, 0);
+      return buffer.toString('utf8', 0, bytesRead);
+    } finally {
+      fs.closeSync(fd);
+    }
   }
 
   static buildTree(flat: MdFile[]): FolderNode {

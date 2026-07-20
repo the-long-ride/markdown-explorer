@@ -47,9 +47,12 @@ impl Dispatcher {
             if !tab_id.is_empty() && !ws_path.is_empty() {
                 let (flat, tree) = if Path::new(ws_path).exists() {
                     let doc_conv = self.state.inner.read().document_conversion_enabled;
-                    scan(Path::new(ws_path), ScanOptions {
-                        document_conversion_enabled: doc_conv,
-                    })
+                    scan(
+                        Path::new(ws_path),
+                        ScanOptions {
+                            document_conversion_enabled: doc_conv,
+                        },
+                    )
                     .map(|result| {
                         self.ensure_search_index().prime(&result.flat);
                         (json!(result.flat), json!(result.tree))

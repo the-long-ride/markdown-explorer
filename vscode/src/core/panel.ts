@@ -19,6 +19,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { WorkspaceScanner } from './scanner';
+import {
+  scanWorkspaceIncrementally,
+  WORKSPACE_SCAN_BATCH_SIZE,
+  WORKSPACE_SCAN_REVEAL_DELAY_MS,
+} from './incrementalScan';
 import { parse } from '../markdown/parser';
 import { HtmlRenderer } from '../markdown/renderer';
 import {
@@ -34,7 +39,6 @@ import type {
   DocumentPreviewInfo,
   MdFile,
   RenderContentMessage,
-  ReadyAckMessage,
   WebviewMessage,
   WorkspaceSearchResult,
 } from '../types';
@@ -46,6 +50,8 @@ export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRo
 export { buildWebviewShell } from './panelShell';
 export { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
 
+export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS };
+
 export class MarkdownDocsPanel {
   static currentPanel: MarkdownDocsPanel | undefined;
   private static readonly VIEW_TYPE = 'markdownExplorer';
@@ -55,6 +61,7 @@ export class MarkdownDocsPanel {
   private readonly _extensionVersion: string;
   private _currentFile: string | null;
   private _flat: MdFile[] = [];
+  private _scanGeneration = 0;
   private _documentConversionEnabled: boolean;
   private readonly _documentConverter = new DocumentConverter();
   private readonly _disposables: import('vscode').Disposable[] = [];
@@ -190,39 +197,32 @@ export class MarkdownDocsPanel {
     const theme = config.get<string>('theme') ?? 'auto';
     const themeStyle = config.get<string>('themeStyle') ?? 'default';
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
-    let revealed = false;
-    await this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
-    const scanPromise = WorkspaceScanner.scan(this._documentConversionEnabled, scannedFiles => {
-      void this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles, active: true });
-    });
+    const scanGeneration = ++this._scanGeneration;
     const workspaceName = getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
-    const revealTimer = setTimeout(() => {
-      revealed = true;
-      void this._panel.webview.postMessage({
-        command: 'readyAck', fileList: [], tree: null, theme, themeStyle, defaultExpanded,
-        workspaceName, documentConversionEnabled: this._documentConversionEnabled, ...this._hostInfo(),
-      });
-    }, 2500);
-    const { tree, flat } = await scanPromise;
-    clearTimeout(revealTimer);
+    await this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
+    const result = await scanWorkspaceIncrementally({
+      documentConversionEnabled: this._documentConversionEnabled,
+      isCurrent: () => scanGeneration === this._scanGeneration,
+      onProgress: scannedFiles => {
+        void this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles, active: true });
+      },
+      onReveal: next => {
+        this._flat = next.fileList;
+        void this._panel.webview.postMessage({
+          command: 'readyAck', ...next, theme, themeStyle, defaultExpanded,
+          workspaceName, documentConversionEnabled: this._documentConversionEnabled, ...this._hostInfo(),
+        });
+      },
+      onChanged: next => {
+        this._flat = next.fileList;
+        void this._panel.webview.postMessage({ command: 'workspaceFilesChanged', ...next, workspaceName,
+          documentConversionEnabled: this._documentConversionEnabled });
+      },
+    });
+    if (!result) return;
+    const { flat } = result;
     this._flat = flat;
     this._panel.title = `Markdown Explorer — ${workspaceName}`;
-
-    const ackMsg: ReadyAckMessage = {
-      command: 'readyAck',
-      fileList: this._flat,
-      tree,
-      theme,
-      themeStyle,
-      defaultExpanded,
-      workspaceName,
-      documentConversionEnabled: this._documentConversionEnabled,
-      ...this._hostInfo(),
-    };
-    await this._panel.webview.postMessage(revealed ? {
-      command: 'workspaceFilesChanged', fileList: this._flat, tree, workspaceName,
-      documentConversionEnabled: this._documentConversionEnabled,
-    } : ackMsg);
     await this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false });
 
     if (this._currentFile) {

@@ -17,6 +17,10 @@ const {
   isRootRelativeWorkspaceHref,
   isSameOrInsidePath,
 } = require('../../../electron/core/main-runtime.js');
+const {
+  WORKSPACE_SCAN_BATCH_SIZE,
+  WORKSPACE_SCAN_REVEAL_DELAY_MS,
+} = require('../../../electron/core/runtime-workspace-handlers.js');
 
 function createMockDeps(overrides: Record<string, any> = {}) {
   const sentMessages: any[] = [];
@@ -257,6 +261,11 @@ describe('createDesktopRuntime', () => {
     runtime.state.flatList = flat;
   }
 
+  test('uses the shared 3-second reveal and 32-file refresh batch', () => {
+    expect(WORKSPACE_SCAN_REVEAL_DELAY_MS).toBe(3000);
+    expect(WORKSPACE_SCAN_BATCH_SIZE).toBe(32);
+  });
+
   describe('handleReady', () => {
     test('sends readyAck on first call', async () => {
       await runtime.handleReady({ documentConversionEnabled: true });
@@ -315,6 +324,40 @@ describe('createDesktopRuntime', () => {
       ctx.deps.dialog.showOpenDialogSync.mockReturnValue([]);
       runtime.handleOpenFolder();
       expect(runtime.state.workspacePath).toBeNull();
+    });
+
+    test('keeps loading with no files, then reveals discovered files and refreshes at 32', async () => {
+      vi.useFakeTimers();
+      try {
+        ctx.deps.dialog.showOpenDialogSync.mockReturnValue(['/my/project']);
+        let resolveScan!: (value: { tree: null; flat: any[] }) => void;
+        let onFile!: (file: any, count: number) => void;
+        ctx.deps.scanWorkspaceData.mockImplementation((_path: string, options: any) => {
+          onFile = options.onFile;
+          return new Promise(resolve => { resolveScan = resolve; });
+        });
+
+        runtime.handleOpenFolder();
+        await vi.advanceTimersByTimeAsync(WORKSPACE_SCAN_REVEAL_DELAY_MS);
+        expect(ctx.sentMessages.some((message: any) => message.command === 'readyAck')).toBe(false);
+
+        const files = Array.from({ length: WORKSPACE_SCAN_BATCH_SIZE }, (_, index) => ({
+          fsPath: `/my/project/f${index}.md`, relativePath: `f${index}.md`,
+          parts: [`f${index}.md`], fileName: `f${index}.md`, title: `File ${index}`,
+          extension: '.md', documentKind: 'markdown',
+        }));
+        onFile(files[0], 1);
+        expect(ctx.sentMessages.find((message: any) => message.command === 'readyAck')?.fileList).toHaveLength(1);
+
+        for (let index = 1; index < files.length; index += 1) onFile(files[index], index + 1);
+        const refreshes = ctx.sentMessages.filter((message: any) => message.command === 'workspaceFilesChanged');
+        expect(refreshes.at(-1)?.fileList).toHaveLength(WORKSPACE_SCAN_BATCH_SIZE);
+
+        resolveScan({ tree: null, flat: files });
+        await Promise.resolve();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

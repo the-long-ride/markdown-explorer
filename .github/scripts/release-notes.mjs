@@ -18,39 +18,68 @@ const releasePreamble = [
   '[Markdown Explorer Change Logs](https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md)',
 ].join('\n');
 
-function classifyAsset(asset) {
-  const name = asset.toLowerCase();
+function normalizeAsset(asset) {
+  if (typeof asset === 'string') return { name: asset, size: 0 };
+  if (!asset || typeof asset.name !== 'string') {
+    throw new Error('Release asset must be a string or { name, size } object');
+  }
+  const size = Number(asset.size);
+  return {
+    name: asset.name,
+    size: Number.isFinite(size) && size > 0 ? size : 0,
+  };
+}
 
-  if (name.endsWith('.vsix')) return 'VS Code Extension';
-  if (name.includes('chromium') && name.endsWith('.zip')) {
+function formatSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '—';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let i = 0;
+  while (value >= 1024 && i < units.length - 1) {
+    value /= 1024;
+    i += 1;
+  }
+  const decimals = i === 0 ? 0 : value < 10 ? 1 : 0;
+  return `${value.toFixed(decimals)} ${units[i]}`;
+}
+
+function classifyAsset(name) {
+  const lower = name.toLowerCase();
+
+  if (lower.endsWith('.vsix')) return 'VS Code Extension';
+  if (lower.includes('chromium') && lower.endsWith('.zip')) {
     return 'Chromium Extension';
   }
-  if (name.endsWith('.exe')) return 'Windows';
-  if (name.endsWith('.dmg') || name.endsWith('.zip')) return 'macOS';
-  if (name.endsWith('.deb') || name.endsWith('.appimage')) return 'Linux';
+  if (lower.endsWith('.exe')) return 'Windows';
+  if (lower.endsWith('.dmg') || lower.endsWith('.zip')) return 'macOS';
+  if (lower.endsWith('.deb') || lower.endsWith('.appimage')) return 'Linux';
   return 'Other';
 }
 
-function describeAsset(asset, platform) {
-  const name = asset.toLowerCase();
-  const runtime = name.startsWith('electron-')
+function describeAsset(name, platform) {
+  const lower = name.toLowerCase();
+  const runtime = lower.startsWith('electron-')
     ? 'Electron desktop'
-    : name.startsWith('tauri-')
+    : lower.startsWith('tauri-')
       ? 'Tauri desktop'
       : '';
 
   if (platform === 'VS Code Extension') return 'VS Code extension package.';
   if (platform === 'Chromium Extension') return 'Chromium extension package.';
-  if (platform === 'Windows') return `${runtime || 'Desktop'} installer for Windows.`;
+  if (platform === 'Windows') {
+    return lower.includes('setup')
+      ? `${runtime || 'Desktop'} installer for Windows.`
+      : `${runtime || 'Desktop'} portable executable for Windows.`;
+  }
   if (platform === 'macOS') {
-    return name.endsWith('.dmg')
+    return lower.endsWith('.dmg')
       ? `${runtime || 'Desktop'} disk image for macOS.`
       : `${runtime || 'Desktop'} archive for macOS.`;
   }
   if (platform === 'Linux') {
-    return name.endsWith('.deb')
+    return lower.endsWith('.deb')
       ? `${runtime || 'Desktop'} Debian package for Linux.`
-      : `${runtime || 'Desktop'} AppImage for Linux.`;
+      : `${runtime || 'Desktop'} portable AppImage for Linux.`;
   }
   return 'Release asset.';
 }
@@ -60,31 +89,32 @@ function escapeCell(value) {
 }
 
 export function renderReleaseNotes({ tag, serverUrl, repository, assets }) {
-  if (!assets.length) throw new Error('No release assets found');
-  if (assets.some((asset) => /\s/.test(asset))) {
+  const normalized = assets.map(normalizeAsset);
+  if (!normalized.length) throw new Error('No release assets found');
+  if (normalized.some((asset) => /\s/.test(asset.name))) {
     throw new Error('Release asset names must not contain whitespace');
   }
 
   const grouped = Object.fromEntries(platforms.map((platform) => [platform, []]));
-  for (const asset of assets) grouped[classifyAsset(asset)].push(asset);
+  for (const asset of normalized) grouped[classifyAsset(asset.name)].push(asset);
 
   const baseUrl = `${serverUrl.replace(/\/$/, '')}/${repository}/releases/download/${tag}`;
   const sections = platforms.flatMap((platform) => {
     const platformAssets = grouped[platform].sort((left, right) =>
-      left.localeCompare(right),
+      left.name.localeCompare(right.name),
     );
     if (!platformAssets.length) return [];
 
     const rows = platformAssets.map((asset) => {
-      const url = `${baseUrl}/${encodeURIComponent(asset)}`;
-      return `| ${escapeCell(asset)} | [Download](${url}) | ${describeAsset(asset, platform)} |`;
+      const url = `${baseUrl}/${encodeURIComponent(asset.name)}`;
+      return `| ${escapeCell(asset.name)} | [Download](${url}) | ${formatSize(asset.size)} | ${describeAsset(asset.name, platform)} |`;
     });
 
     return [
       `### ${platform}`,
       '',
-      '| Name | Download | Description |',
-      '| --- | --- | --- |',
+      '| Name | Download | Size | Description |',
+      '| --- | --- | --- | --- |',
       ...rows,
     ];
   });
@@ -97,7 +127,10 @@ function main() {
   const assets = fs
     .readdirSync(assetsDir, { withFileTypes: true })
     .filter((entry) => entry.isFile())
-    .map((entry) => entry.name);
+    .map((entry) => ({
+      name: entry.name,
+      size: fs.statSync(path.join(assetsDir, entry.name)).size,
+    }));
   const notes = renderReleaseNotes({ tag, serverUrl, repository, assets });
   fs.writeFileSync(path.resolve('release-notes.md'), notes);
 }

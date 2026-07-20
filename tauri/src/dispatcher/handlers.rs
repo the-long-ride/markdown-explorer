@@ -10,12 +10,17 @@ impl Dispatcher {
         RecentWorkspacesStore::new(app_config)
     }
 
-    pub(super) fn send_workspace_unavailable(&self, path: &Path, reason: WorkspaceUnavailableReason) {
+    pub(super) fn send_workspace_unavailable(
+        &self,
+        path: &Path,
+        reason: WorkspaceUnavailableReason,
+    ) {
         {
             let mut state = self.state.inner.write();
             state.workspace_path = None;
             state.current_file = None;
             state.flat_list.clear();
+            state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
         }
         let store = self.recents_store();
         host_message::emit_workspace_unavailable(
@@ -30,6 +35,9 @@ impl Dispatcher {
         let mut state = self.state.inner.write();
         state.workspace_path = Some(workspace_path);
         state.current_file = current_file;
+        state.flat_list.clear();
+        state.runtime_state = RuntimeState::Initializing;
+        state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
     }
 
     pub(super) fn handle_open_path(&self, path: &Path, open_first_file: bool) {
@@ -182,74 +190,6 @@ impl Dispatcher {
             .flat_list
             .iter()
             .any(|f| f.fs_path == current_file.to_string_lossy())
-    }
-
-    pub(super) fn send_workspace_data(&self) {
-        let workspace_path = {
-            let state = self.state.inner.read();
-            state.workspace_path.clone()
-        };
-        let Some(workspace_path) = workspace_path else {
-            return;
-        };
-
-        let status = get_workspace_path_status(&workspace_path);
-        if !status.ok {
-            self.send_workspace_unavailable(
-                &workspace_path,
-                status.reason.unwrap_or(WorkspaceUnavailableReason::Missing),
-            );
-            return;
-        }
-
-        let document_conversion_enabled = self.state.inner.read().document_conversion_enabled; let app = self.app.clone();
-        let state = self.state.clone(); host_message::emit_workspace_scan_progress(&app, 0, true);
-
-        std::thread::spawn(move || {
-            let progress_app = app.clone(); let result = scan_with_progress(
-                &workspace_path,
-                ScanOptions {
-                    document_conversion_enabled,
-                },
-                |scanned_files| {
-                    host_message::emit_workspace_scan_progress(&progress_app, scanned_files, true);
-                },
-            );
-            let result = match result {
-                Ok(result) => result,
-                Err(err) => {
-                    eprintln!("Failed to scan workspace: {err}");
-                    host_message::emit_workspace_scan_progress(&app, 0, false);
-                    return;
-                }
-            };
-
-            if state.inner.read().workspace_path.as_ref() != Some(&workspace_path) {
-                return;
-            }
-
-            let flat = result.flat.clone();
-            let mut inner = state.inner.write(); inner.flat_list = flat.clone(); inner.runtime_state = RuntimeState::Ready;
-
-            let dispatcher = Dispatcher { app: app.clone(), state: state.clone() };
-            let idx = dispatcher.ensure_search_index();
-            idx.prime(&flat);
-            let workspace_name = workspace_path
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .filter(|s| !s.is_empty())
-                .unwrap_or_else(|| workspace_path.to_string_lossy().to_string());
-            host_message::emit_workspace_files_changed(
-                &app,
-                json!(flat),
-                json!(result.tree),
-                &workspace_name,
-                &workspace_path.to_string_lossy(),
-                document_conversion_enabled,
-            );
-            host_message::emit_workspace_scan_progress(&app, result.flat.len(), false);
-            dispatcher.send_initial_content(true);
-        });
     }
 
     pub(super) fn send_workspace_files_changed(&self) {

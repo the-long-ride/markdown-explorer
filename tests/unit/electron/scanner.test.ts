@@ -169,6 +169,22 @@ describe('DesktopScanner', () => {
       expect(progress).toEqual([100, 100]);
     });
 
+    test('reports every discovered file with a cumulative count', async () => {
+      const rootDir = makeTempDir('scan-incremental-');
+      for (let i = 0; i < 3; i++) writeFile(path.join(rootDir, `f${i}.md`), '# t');
+      const discovered: Array<{ fileName: string; count: number }> = [];
+
+      await DesktopScanner.scan(rootDir, {
+        onFile: (file: any, count: number) => discovered.push({ fileName: file.fileName, count }),
+      });
+
+      expect(discovered).toEqual([
+        { fileName: 'f0.md', count: 1 },
+        { fileName: 'f1.md', count: 2 },
+        { fileName: 'f2.md', count: 3 },
+      ]);
+    });
+
     test('yields to event loop every 30 files', async () => {
       const rootDir = makeTempDir('scan-yield-');
       const spy = vi.spyOn(globalThis, 'setImmediate');
@@ -196,9 +212,42 @@ describe('DesktopScanner', () => {
         );
       }
 
-      await DesktopScanner.scan(rootDir);
+      await DesktopScanner.scan(rootDir, { titleConcurrency: 8 });
 
       expect(titleYieldCalls).toBeGreaterThan(0);
+    });
+
+    test('extracts title chunks concurrently instead of serially', async () => {
+      const rootDir = makeTempDir('scan-title-concurrency-');
+      for (let i = 0; i < 4; i++) {
+        writeFile(path.join(rootDir, `doc${i}.md`), `# Title ${i}`);
+      }
+      const pending: Array<() => void> = [];
+      const extractTitle = vi.spyOn(DesktopScanner, 'extractTitleAsync').mockImplementation(
+        () => new Promise((resolve) => pending.push(() => resolve(null))),
+      );
+
+      const scanPromise = DesktopScanner.scan(rootDir, { titleConcurrency: 4 });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(extractTitle).toHaveBeenCalledTimes(4);
+      pending.forEach((resolve) => resolve());
+      await scanPromise;
+    });
+
+    test('finishes scan when a title read stalls', async () => {
+      const rootDir = makeTempDir('scan-title-timeout-');
+      writeFile(path.join(rootDir, 'blocked.md'), '# Blocked');
+      vi.spyOn(DesktopScanner, 'extractTitleAsync').mockImplementation(
+        () => new Promise(() => {}),
+      );
+
+      const completed = await Promise.race([
+        DesktopScanner.scan(rootDir, { titleReadTimeoutMs: 5 }).then(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 100)),
+      ]);
+
+      expect(completed).toBe(true);
     });
 
     test('loads and applies custom ignore patterns from .markdown-explorer-ignore', async () => {

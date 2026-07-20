@@ -11,10 +11,16 @@ use crate::workspace::open::{
     choose_workspace_and_file, get_workspace_path_status, WorkspaceUnavailableReason,
 };
 use crate::workspace::recents::{RecentWorkspaceInput, RecentWorkspacesStore};
-use crate::workspace::scanner::{scan, scan_with_progress, DocumentKind, MdFile, ScanOptions};
+use crate::workspace::scanner::{
+    build_tree, scan, scan_with_callbacks, DocumentKind, MdFile, ScanOptions,
+};
 use crate::workspace::watch::{WatchChange, WorkspaceWatchController};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
+use std::sync::{
+    atomic::{AtomicBool, AtomicUsize, Ordering},
+    Arc, Mutex,
+};
 use std::time::Duration;
 use tauri::{AppHandle, Listener, Manager};
 use tauri_plugin_clipboard_manager::ClipboardExt;
@@ -111,6 +117,7 @@ fn resolve_search_items(items: Option<Value>, flat_list: &[MdFile]) -> Vec<MdFil
 
 mod commands;
 mod handlers;
+mod incremental_scan;
 #[path = "dispatcher/navigation.rs"]
 mod navigation_handlers;
 mod ready;

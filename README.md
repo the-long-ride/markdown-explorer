@@ -137,7 +137,7 @@ The Windows installer provides checked-by-default choices to create a desktop sh
 
 ## Desktop Workspace
 
-The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling. Large workspace scans report the running file count and continue in the background, so the app remains usable instead of holding the startup screen open.
+The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling. Workspace loading shows the running scan count; if a scan lasts longer than three seconds, Markdown Explorer opens with the files found so far and refreshes the tree in cumulative batches of 32 while scanning continues. An empty-workspace message appears only after scanning finishes with no supported files.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />

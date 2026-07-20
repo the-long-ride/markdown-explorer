@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { BrowserScanner } from '../../../chromium-xtension/src/scanner';
 import type { MdFile } from '../../../ui/src/types';
 
@@ -242,6 +242,20 @@ describe('BrowserScanner.buildTree', () => {
 });
 
 describe('BrowserScanner.buildFileEntry', () => {
+  it('reads only the first 8 KiB title chunk', async () => {
+    const chunkText = async () => '# Chunk Title';
+    const fullText = async () => { throw new Error('full file must not be read'); };
+    const slice = vi.fn(() => ({ text: chunkText }));
+    const handle: any = {
+      getFile: async () => ({ slice, text: fullText }),
+    };
+
+    const entry = await BrowserScanner.buildFileEntry(handle, 'large.md');
+
+    expect(slice).toHaveBeenCalledWith(0, 8 * 1024);
+    expect(entry.title).toBe('Chunk Title');
+  });
+
   it('builds entry with title extracted from content', async () => {
     const handle: any = {
       getFile: async () => ({ text: async () => '# Hello\n\nWorld' }),
@@ -281,6 +295,61 @@ describe('BrowserScanner.buildFileEntry', () => {
 });
 
 describe('BrowserScanner.scan', () => {
+  it('reports each completed file while keeping cumulative counts', async () => {
+    const root: any = {
+      async *values() {
+        for (let index = 0; index < 3; index++) {
+          yield {
+            kind: 'file',
+            name: `f${index}.md`,
+            getFile: async () => ({ text: async () => `# File ${index}` }),
+          };
+        }
+      },
+    };
+    const discovered: Array<{ name: string; count: number }> = [];
+
+    await BrowserScanner.scan(root, {
+      onFile(file, count) {
+        discovered.push({ name: file.fileName, count });
+      },
+    });
+
+    expect(discovered).toHaveLength(3);
+    expect(discovered.map(item => item.count).sort((a, b) => a - b)).toEqual([1, 2, 3]);
+    expect(discovered.map(item => item.name).sort()).toEqual(['f0.md', 'f1.md', 'f2.md']);
+  });
+
+  it('extracts titles concurrently with bounded parallelism', async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const root: any = {
+      async *values() {
+        for (let index = 0; index < 40; index++) {
+          yield {
+            kind: 'file',
+            name: `f${index}.md`,
+            getFile: async () => ({
+              slice: () => ({
+                text: async () => {
+                  inFlight += 1;
+                  maxInFlight = Math.max(maxInFlight, inFlight);
+                  await new Promise(resolve => setTimeout(resolve, 0));
+                  inFlight -= 1;
+                  return '# Title';
+                },
+              }),
+            }),
+          };
+        }
+      },
+    };
+
+    await BrowserScanner.scan(root);
+
+    expect(maxInFlight).toBeGreaterThan(1);
+    expect(maxInFlight).toBeLessThanOrEqual(32);
+  });
   it('scans a simple directory', async () => {
     const mockFile: any = {
       kind: 'file',
