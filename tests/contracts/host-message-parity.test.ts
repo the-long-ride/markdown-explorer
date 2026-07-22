@@ -21,12 +21,13 @@ const UI_HOST_COMMANDS: (UiHostMessage extends { command: infer C }[] ? C : neve
 
 const VSCODE_HOST_COMMANDS: string[] = [
   'renderContent', 'readyAck', 'navNotFound', 'setLoading', 'workspaceSearchResults',
+  'workspaceFilesChanged', 'currentFileChanged',
 ];
 
 const CHROMIUM_HOST_COMMANDS: string[] = [
   'readyAck', 'renderContent', 'setLoading', 'workspaceFilesChanged',
   'recentWorkspacesChanged', 'workspaceUnavailable', 'workspaceSearchResults',
-  'workspaceSearchIndexLoaded',
+  'workspaceSearchIndexLoaded', 'currentFileChanged',
 ];
 
 const DESKTOP_WEBVIEW_COMMANDS: string[] = [
@@ -124,11 +125,9 @@ describe('host-message parity', () => {
     test('VSCode omits desktop/chromium-only host messages', () => {
       expect(VSCODE_EXCLUDED_HOST.sort()).toEqual([
         'crossTabSearchResults',
-        'currentFileChanged',
         'recentWorkspacesChanged',
         'updateStateChanged',
         'window-state-changed',
-        'workspaceFilesChanged',
         'workspaceSearchIndexLoaded',
         'workspaceUnavailable',
       ].sort());

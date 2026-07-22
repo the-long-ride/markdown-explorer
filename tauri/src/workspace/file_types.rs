@@ -11,6 +11,19 @@ pub fn extension(file_name: &str) -> String {
         .unwrap_or_default()
 }
 
+pub fn workspace_relative_path(workspace: &std::path::Path, full_path: &std::path::Path) -> String {
+    full_path
+        .strip_prefix(workspace)
+        .ok()
+        .map(|relative| relative.to_string_lossy().replace('\\', "/"))
+        .unwrap_or_else(|| {
+            full_path
+                .file_name()
+                .map(|name| name.to_string_lossy().to_string())
+                .unwrap_or_default()
+        })
+}
+
 pub fn is_markdown_file_path(file_path: &str) -> bool {
     matches!(extension(file_path).as_str(), ".md" | ".mdx" | ".markdown")
 }
@@ -92,6 +105,16 @@ mod tests {
         assert_eq!(extension("FILE.TXT"), ".txt");
         assert_eq!(extension("noext"), "");
         assert_eq!(extension("path/to/file.dOCX"), ".docx");
+    }
+
+    #[test]
+    fn workspace_relative_path_preserves_subdirectory() {
+        let workspace = std::path::Path::new("/workspace");
+        let changed_file = workspace.join("sub").join("note.md");
+        assert_eq!(
+            workspace_relative_path(workspace, &changed_file),
+            "sub/note.md"
+        );
     }
 
     #[test]

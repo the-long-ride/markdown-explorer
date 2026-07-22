@@ -4,6 +4,17 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [Unreleased]
+
+### Added
+- **VS Code external-file-change banner**: saving a Markdown file outside the panel now re-scans the sidebar and emits `currentFileChanged` so the renderer shows the "file changed — click refresh" banner instead of silently replacing the open document.
+- **Chromium extension external-file-change banner**: added a lightweight polling file watcher (`current-file-watcher.ts`) using File System Access `getFile()` lastModified/size signatures so external edits show the same banner parity as Electron/Tauri/VS Code.
+
+### Fixed
+- **Tauri subdirectory file-change refresh banner**: the Tauri native file watcher reported only the changed file's name, dropping its directory, so edits to a Markdown file nested in a subfolder of the open workspace no longer showed the "current file has changed — click refresh" banner. The watcher now reports the changed file's path relative to the watched workspace so it matches the open file and the banner appears.
+
+---
+
 ## [1.6.0] — 2026-07-20
 
 ### Added

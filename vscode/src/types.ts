@@ -124,12 +124,28 @@ export interface WorkspaceSearchResultsMessage {
   readonly results: readonly WorkspaceSearchResult[];
 }
 
+export interface WorkspaceFilesChangedMessage {
+  readonly command: 'workspaceFilesChanged';
+  readonly fileList: MdFile[];
+  readonly tree: FolderNode | null;
+  readonly workspaceName: string;
+  readonly workspacePath?: string;
+  readonly documentConversionEnabled?: boolean;
+}
+
+export interface CurrentFileChangedMessage {
+  readonly command: 'currentFileChanged';
+  readonly filePath: string;
+}
+
 export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
   | NavNotFoundMessage
   | SetLoadingMessage
-  | WorkspaceSearchResultsMessage;
+  | WorkspaceSearchResultsMessage
+  | WorkspaceFilesChangedMessage
+  | CurrentFileChangedMessage;
 
 // ── Webview message types (webview → host) ──────────────────
 

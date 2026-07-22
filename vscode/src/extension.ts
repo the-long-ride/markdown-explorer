@@ -96,19 +96,28 @@ export function _doActivate(
     }),
   );
 
-  // Auto-refresh on file save
+  // Auto-refresh on file save (banner-style: only re-scan sidebar; if the
+  // saved file is the one currently displayed, the panel emits a
+  // `currentFileChanged` message so the UI shows the banner without
+  // clobbering the open document).
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       const config = vscode.workspace.getConfiguration('markdownExplorer');
       if (config.get<boolean>('autoRefresh') && isKnownSupportedFilePath(doc.fileName)) {
-        MarkdownDocsPanel.currentPanel?.refresh();
+        const savedPath = doc.uri?.fsPath ?? doc.fileName;
+        MarkdownDocsPanel.currentPanel?.refreshFromWatch?.(savedPath);
       }
     }),
   );
 
-  // Auto-refresh on supported file create / delete
+  // Auto-refresh on supported file create / change / delete
   const watcher = vscode.workspace.createFileSystemWatcher('**/*.{md,mdx,doc,docx,pdf,html,xls,xlsx,xlm,pptx,odt,odp,ods,rtf,txt}');
-  watcher.onDidCreate(() => MarkdownDocsPanel.currentPanel?.refresh());
+  watcher.onDidCreate((uri) => {
+    MarkdownDocsPanel.currentPanel?.refreshFromWatch?.(uri?.fsPath);
+  });
+  watcher.onDidChange((uri) => {
+    MarkdownDocsPanel.currentPanel?.refreshFromWatch?.(uri?.fsPath);
+  });
   watcher.onDidDelete(() => MarkdownDocsPanel.currentPanel?.refresh());
   context.subscriptions.push(watcher);
 }

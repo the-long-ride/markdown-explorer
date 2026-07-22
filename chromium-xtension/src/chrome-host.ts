@@ -4,6 +4,10 @@
 
 import { pickDirectory, readTextFile, verifyPermission } from "./file-access";
 import {
+  startCurrentFileWatcher,
+  stopCurrentFileWatcher,
+} from "./current-file-watcher";
+import {
   scanWorkspaceIncrementally,
   WORKSPACE_SCAN_BATCH_SIZE,
   WORKSPACE_SCAN_REVEAL_DELAY_MS,
@@ -102,10 +106,7 @@ export function shouldOpenFirstFile(
   openFirstFile: boolean | undefined,
   flatList: MdFile[],
 ): string | null {
-  if (openFirstFile !== false && !currentFile && flatList.length > 0) {
-    return flatList[0].relativePath;
-  }
-  return currentFile;
+  return openFirstFile !== false && !currentFile && flatList.length > 0 ? flatList[0].relativePath : currentFile;
 }
 
 export function sendToWebview(msg: any) {
@@ -113,11 +114,7 @@ export function sendToWebview(msg: any) {
 }
 
 export function sendLoading(label: string, detail?: string) {
-  sendToWebview({
-    command: "setLoading",
-    label,
-    detail,
-  });
+  sendToWebview({ command: "setLoading", label, detail });
 }
 
 async function sendRecentWorkspacesChanged() {
@@ -130,6 +127,7 @@ async function sendRecentWorkspacesChanged() {
 
 export function resetWorkspaceState(): void {
   workspaceScanGeneration += 1;
+  stopCurrentFileWatcher();
   activeHandle = null;
   activeWorkspacePath = "";
   activeWorkspaceName = "";
@@ -209,6 +207,7 @@ async function sendInitialContent(openFirstFile = false) {
   const resolvedFile = shouldOpenFirstFile(currentFile, openFirstFile, flatList);
   if (resolvedFile && resolvedFile !== currentFile) {
     currentFile = resolvedFile;
+    startCurrentFileWatcher(activeHandle, currentFile, (p) => sendToWebview({ command: "currentFileChanged", filePath: p }));
   }
 
   if (currentFile) {
@@ -299,7 +298,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
         activeHandle = handle;
         activeWorkspaceName = handle.name;
         activeWorkspacePath = handle.name; // In browser, name is path prefix
-        currentFile = null;
+        currentFile = null; stopCurrentFileWatcher();
 
         sendLoading("Loading workspace...");
         await BrowserRecentWorkspaces.save(
@@ -333,7 +332,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
       activeHandle = handle;
       activeWorkspaceName = handle.name;
       activeWorkspacePath = folderPath;
-      currentFile = null;
+      currentFile = null; stopCurrentFileWatcher();
 
       sendLoading("Loading workspace...");
       await BrowserRecentWorkspaces.save(
@@ -377,10 +376,12 @@ bus.addEventListener("webview-message", async (e: Event) => {
     case "navigate": {
       if (!msg.path) {
         currentFile = null;
+        stopCurrentFileWatcher();
         await sendWelcome();
         return;
       }
       currentFile = msg.path;
+      startCurrentFileWatcher(activeHandle, currentFile, (p) => sendToWebview({ command: "currentFileChanged", filePath: p }));
       await sendContent();
       break;
     }

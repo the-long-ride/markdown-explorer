@@ -26,8 +26,18 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         let file = dir.join("guide.mdx");
         fs::write(&file, "# Guide").unwrap();
-        assert_eq!(parse_external_open_path(&vec!["app".into(), "--squirrel-firstrun".into(), file.to_string_lossy().into_owned()]), Some(file));
-        assert_eq!(parse_external_open_path(&vec!["app".into(), dir.to_string_lossy().into_owned()]), Some(dir.clone()));
+        assert_eq!(
+            parse_external_open_path(&vec![
+                "app".into(),
+                "--squirrel-firstrun".into(),
+                file.to_string_lossy().into_owned()
+            ]),
+            Some(file)
+        );
+        assert_eq!(
+            parse_external_open_path(&vec!["app".into(), dir.to_string_lossy().into_owned()]),
+            Some(dir.clone())
+        );
         let _ = fs::remove_dir_all(dir);
     }
 }

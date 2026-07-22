@@ -57,6 +57,7 @@ export const coverageManifest: Record<string, string[]> = {
   'vscode/src/core/documentConversion.ts': ['tests/unit/vscode/documentConversion.test.ts'],
   'vscode/src/core/incrementalScan.ts': ['tests/unit/vscode/panel.test.ts'],
   'vscode/src/core/panel.ts': ['tests/unit/vscode/panel.test.ts'],
+  'vscode/src/core/panelWatch.ts': ['tests/unit/vscode/panelWatch.test.ts'],
   'vscode/src/core/scanner.ts': ['tests/unit/vscode/scanner.test.ts'],
   'vscode/src/core/unicodeSearch.ts': ['tests/unit/vscode/unicodeSearch.test.ts'],
   'vscode/src/extension.ts': ['tests/unit/vscode/extension.test.ts'],
@@ -148,6 +149,7 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/vite.config.ts': ['tests/unit/build/copy-ui.test.ts'],
 
   'chromium-xtension/src/chrome-host.ts': ['tests/unit/chromium/chrome-host.test.ts'],
+  'chromium-xtension/src/current-file-watcher.ts': ['tests/unit/chromium/current-file-watcher.test.ts'],
   'chromium-xtension/src/incremental-workspace-scan.ts': [
     'tests/unit/chromium/incremental-workspace-scan.test.ts',
   ],

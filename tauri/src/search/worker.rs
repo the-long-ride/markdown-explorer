@@ -76,16 +76,15 @@ where
                             }
                         };
 
-                        let result = index
-                            .search_incremental(
-                                &query,
-                                items,
-                                IncrementalOptions {
-                                    should_cancel: Box::new(should_cancel),
-                                    on_batch: Box::new(on_batch),
-                                    ..Default::default()
-                                },
-                            );
+                        let result = index.search_incremental(
+                            &query,
+                            items,
+                            IncrementalOptions {
+                                should_cancel: Box::new(should_cancel),
+                                on_batch: Box::new(on_batch),
+                                ..Default::default()
+                            },
+                        );
 
                         on_msg(SearchWorkerMessage::Done {
                             request_id: req_id,

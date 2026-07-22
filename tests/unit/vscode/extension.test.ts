@@ -33,7 +33,7 @@ function makeVscodeMock(overrides: any = {}) {
   const registeredCommands: Record<string, Function> = {};
   const registeredProviders: Record<string, any> = {};
   const onDidSaveHandlers: Function[] = [];
-  const watcherEvents: Record<string, Function[]> = { onDidCreate: [], onDidDelete: [] };
+  const watcherEvents: Record<string, Function[]> = { onDidCreate: [], onDidChange: [], onDidDelete: [] };
 
   return {
     window: {
@@ -58,6 +58,7 @@ function makeVscodeMock(overrides: any = {}) {
       })),
       createFileSystemWatcher: vi.fn(() => ({
         onDidCreate: vi.fn((h: any) => { watcherEvents.onDidCreate.push(h); }),
+        onDidChange: vi.fn((h: any) => { watcherEvents.onDidChange.push(h); }),
         onDidDelete: vi.fn((h: any) => { watcherEvents.onDidDelete.push(h); }),
         dispose: vi.fn(),
       })),
@@ -172,14 +173,14 @@ describe('_doActivate', () => {
   });
 
   test('auto-refresh on supported file save', () => {
-    const mockRefresh = vi.fn();
-    Panel.currentPanel = { refresh: mockRefresh };
+    const mockRefreshFromWatch = vi.fn();
+    Panel.currentPanel = { refreshFromWatch: mockRefreshFromWatch };
     vscode.workspace.getConfiguration.mockReturnValue({
       get: vi.fn(() => true),
     });
     _doActivate(context as any, vscode as any);
     vscode._onDidSaveHandlers[0]({ fileName: '/test/readme.md' });
-    expect(mockRefresh).toHaveBeenCalled();
+    expect(mockRefreshFromWatch).toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
 
@@ -213,11 +214,20 @@ describe('_doActivate', () => {
   });
 
   test('file watcher onDidCreate refreshes panel', () => {
-    const mockRefresh = vi.fn();
-    Panel.currentPanel = { refresh: mockRefresh };
+    const mockRefreshFromWatch = vi.fn();
+    Panel.currentPanel = { refreshFromWatch: mockRefreshFromWatch };
     _doActivate(context as any, vscode as any);
-    vscode._watcherEvents.onDidCreate[0]();
-    expect(mockRefresh).toHaveBeenCalled();
+    vscode._watcherEvents.onDidCreate[0]({ fsPath: '/test/new.md' });
+    expect(mockRefreshFromWatch).toHaveBeenCalled();
+    Panel.currentPanel = undefined;
+  });
+
+  test('file watcher onDidChange refreshes panel with file path', () => {
+    const mockRefreshFromWatch = vi.fn();
+    Panel.currentPanel = { refreshFromWatch: mockRefreshFromWatch };
+    _doActivate(context as any, vscode as any);
+    vscode._watcherEvents.onDidChange[0]({ fsPath: '/test/changed.md' });
+    expect(mockRefreshFromWatch).toHaveBeenCalledWith('/test/changed.md');
     Panel.currentPanel = undefined;
   });
 
