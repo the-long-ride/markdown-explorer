@@ -7,7 +7,7 @@
 
 Markdown files are built for AI agents. **Markdown Explorer** makes them pleasant for humans.
 
-It turns `.md` and `.mdx` folders into a private, searchable documentation app inside VS Code, with workspace navigation, rendered diagrams, math, videos, highlighted code, interactive tables, charts, and a real reading layout. A standalone desktop app is also available for Windows, Linux, and [macOS](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md).
+It turns `.md` and `.mdx` folders into a private, searchable documentation app with workspace navigation, rendered diagrams, math, videos, highlighted code, interactive tables, charts, tabs, and support for VS Code, Chromium browsers, desktop apps (Windows, Linux, [macOS](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md)), and an interactive [demo web app](https://the-long-ride.github.io/markdown-explorer/).
 
 Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-ride.github.io/markdown-explorer/)
 
@@ -17,26 +17,27 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 
 ## Why It Feels Different
 
-- **Read workspaces, not loose files**: file tree, table of contents, section cards, copy buttons, and polished document navigation.
-- **Preview more document types**: opt in to local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files, with a clear note that converted previews may lose layout or formatting quality.
-- **Search where you need**: current file or current workspace in VS Code, with content excerpts and exact jump-to-result behavior.
+- **Read workspaces, not loose files**: file tree, table of contents, section cards, copy buttons, recent workspaces, and desktop tabs.
+- **Preview more document types**: opt in to local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files, with an in-app note that converted previews may lose layout or formatting quality.
+- **Search where you need**: current file, current workspace, or every open desktop tab, with content excerpts and exact jump-to-result behavior.
 - **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+S`, arrow keys, Enter, and Esc.
 - **Shape the workspace**: file tabs, Scope Focus, Theme Remix, and settings import/export keep large doc sets personal without changing project files.
 - **Render rich Markdown**: Mermaid, LaTeX math, images, streaming video, MDX, HTML sandboxes, callouts, frontmatter, and code blocks.
 - **Use data inside docs**: sort, filter, multi-select table filters, collapse large tables, and switch tables into Bar, Line, or Pie charts.
 - **Stay private**: rendering and indexing are local. No telemetry, no file uploads.
 
-## Install
+## Installation
 
 | Platform | Get It |
 | --- | --- |
 | VS Code | [Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer) |
 | Open VSX | [Install from Open VSX](https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer) |
-| Desktop app | [Download the latest GitHub Release](https://github.com/the-long-ride/markdown-explorer/releases/latest) |
+| Windows desktop | [Download the latest `.exe`](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size) |
+| Linux desktop | [Download `.AppImage` or `.deb`](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size) |
+| macOS desktop | [Download `.dmg` for arm64 or x64](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size). First launch notes: [macOS guide](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md) |
+| Chromium extension | [Download `.zip` release](https://github.com/the-long-ride/markdown-explorer/releases/latest). Setup guide: [Chromium guide](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/chromium-install.md) |
 
-## Recent Feature Guide
-
-Recent releases from `v1.4.5` onward focus on faster navigation, safer workspace flow, and richer local previews.
+## Features
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Converted-Document-Preview.png" width="32%" alt="Converted DOCX preview with best-effort quality notice" />
@@ -44,12 +45,44 @@ Recent releases from `v1.4.5` onward focus on faster navigation, safer workspace
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Theme-Remix-Settings.png" width="32%" alt="Theme Remix settings for custom Markdown Explorer themes" />
 </p>
 
-- **Workspace links**: links that start with `/`, `./`, or `../` navigate to files inside the current workspace and stay in back/forward history.
-- **Reading polish**: table Wrap/Unwrap controls, code gutter selection highlighting, compact Markdown chrome, and clearer string interpolation make dense docs easier to scan.
-- **Theme Remix**: create, duplicate, edit, import, and export custom themes with color, density, spacing, and optional background image controls.
-- **Content File Tabs and Scope Focus**: keep opened docs in tabs and narrow the sidebar to selected files/folders for the current workspace.
-- **Converted document previews**: enable best-effort local previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT.
-- **Sidebar Cursor mode**: press `Alt+S`, move with `Up`/`Down`, press `Enter` to expand folders or open files, and press `Esc` or click outside the sidebar to exit.
+- **Workspace Navigation & Organization**
+  - **Workspaces & Folders**: Open local folders, manage recent workspaces, and navigate multi-workspace desktop tabs.
+  - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
+  - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
+  - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
+  - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Ctrl+Q` / `Cmd+Q` shortcut.
+  - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+S`) with arrow keys, `Enter`, and `Esc`.
+  - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
+  - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
+  - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
+
+- **Document Previews & Rich Media**
+  - **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
+  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, etc.) and KaTeX math formulas.
+  - **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
+  - **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
+  - **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
+  - **Video Embedding**: Support for local video files and YouTube/streaming video embeds.
+
+- **Data Tables & Charts**
+  - **Interactive Filtering & Sorting**: Multi-select column filters, row sorting, and text wrap/unwrap controls.
+  - **Collapsible Datasets**: Compact view for large datasets (1000+ rows).
+  - **View-as-Chart**: Automatically convert numeric table columns into interactive Bar, Line, or Pie charts.
+
+- **Converted Document Previews**
+  - **Multi-Format Local Conversion**: Opt-in previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
+  - **Smart Caching**: Fast re-views using file timestamp and size caching.
+
+- **Search & Discovery**
+  - **Flexible Search Scopes**: Search inside current file, current workspace, or across all open desktop tabs.
+  - **Jump-to-Result**: Click search excerpts to jump directly to exact matches.
+
+- **Customization & Platform Support**
+  - **Theme Remix**: Create, edit, import, and export custom themes with color, density, spacing, and background image controls.
+  - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
+  - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
+  - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
+  - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
 
 ## Search Modes
 
@@ -58,7 +91,7 @@ Find the exact content you need, then jump to the exact clicked match.
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-current-opened-file.png" width="31%" alt="Find inside the currently opened Markdown file" />
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-current-workspace.png" width="31%" alt="Search current workspace content" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-all-tabs.png" width="31%" alt="Search across desktop workspace tabs" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-all-tabs.png" width="31%" alt="Search across all desktop workspace tabs" />
 </p>
 
 ## Tables That Stay Useful
@@ -105,9 +138,13 @@ Use isolated HTML previews for interactive examples, and inspect images or diagr
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View_1.jpg" width="49%" alt="Image modal preview with zoom controls" />
 </p>
 
-## Workspace And Desktop Screens
+## Windows File Explorer
 
-The same renderer is available in the desktop app, with workspace selection, recent folders, and a welcome page for getting started.
+The Windows installer provides checked-by-default choices to create a desktop shortcut, add **Open with Markdown Explorer** for `.md` and `.mdx` files, and add **Open Folder in Markdown Explorer** to folder and empty-folder-background menus. Opening a Markdown file loads its containing folder as the workspace and displays that selected file. Opening a folder loads that exact folder. In Tab view this opens a workspace tab; in Focus view it replaces the current workspace. Portable and ZIP builds do not modify File Explorer automatically.
+
+## Desktop Workspace
+
+The desktop app opens recent folders quickly, supports drag-and-drop opening, can keep multiple workspaces alive in tabs, and automatically refreshes open workspaces from native filesystem change events without polling. Workspace loading shows the running scan count; if a scan lasts longer than three seconds, Markdown Explorer opens with the files found so far and refreshes the tree in cumulative batches of 32 while scanning continues. An empty-workspace message appears only after scanning finishes with no supported files.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />
@@ -117,9 +154,13 @@ The same renderer is available in the desktop app, with workspace selection, rec
 
 ## Converted Document Previews
 
-Turn on **Read DOCX, PDF, Office, and text files** in Settings to scan and preview DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files. Conversion is local, runs only when a file is opened, and is cached by file timestamp and size for repeat views.
+Markdown Explorer can optionally show DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files by converting them to Markdown locally with `@the-long-ride/markdown-them`.
 
-## Shortcuts
+Turn on **Read DOCX, PDF, Office, and text files** in Settings. The app scans those extra extensions only after the toggle is enabled, converts files only when opened, and caches converted Markdown by file timestamp and size for faster repeat views. Converted previews are best-effort and can differ from the original layout, tables, images, or styling.
+
+## Keyboard Shortcuts
+
+Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly defaults inside the webview.
 
 | Action | Desktop app | VS Code extension | Chromium extension |
 | --- | --- | --- | --- |
@@ -161,6 +202,7 @@ Turn on **Read DOCX, PDF, Office, and text files** in Settings to scan and previ
 ## Links
 
 - [Website](https://the-long-ride.github.io/markdown-explorer/)
+- [Demo Web App](https://the-long-ride.github.io/markdown-explorer/)
 - [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer)
 - [Open VSX](https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer)
 - [Latest GitHub Release](https://github.com/the-long-ride/markdown-explorer/releases/latest)
@@ -185,4 +227,12 @@ When you open an issue, include what you can:
 - **Minimal Markdown sample**: helpful for parser, Mermaid, math, table, video, or code-block issues.
 - **Console or log output**: include errors from VS Code Developer Tools, Electron Developer Tools, or the terminal when available.
 
-No need to make it perfect. A small reproducible example is already a huge gift to the project.
+No need to make it perfect. A small reproducible example is already a huge gift to the project 💕.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE) file for details.
+
+## Author
+
+[the-long-ride](https://github.com/the-long-ride) - passionate about making Markdown more enjoyable and useful for everyone. If you find this project helpful, consider starring the repository or sharing it with others who might benefit!
