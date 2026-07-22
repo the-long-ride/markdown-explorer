@@ -1,3 +1,9 @@
+/* Global Reset for Mobile Overflow Prevention */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 /* Hero viewport caps */
 .hero {
   min-height: auto;
@@ -7,40 +13,138 @@
   max-height: none;
   overflow-y: visible;
   padding-right: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 980px) {
+  .site-header {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: clamp(0.4rem, 1.5vw, 1rem);
+    padding: 0.75rem 1rem;
+  }
+
+  .brand {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  /* Single-line Header Navigation for iPad/Tablet */
+  .nav-links {
+    order: 2;
+    width: auto;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.1rem, 1vw, 0.35rem);
+    margin: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-links a,
+  .nav-dropdown-btn {
+    padding: 0.35rem 0.45rem;
+    font-size: 0.84rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .header-controls {
+    order: 3;
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+
   .hero {
     width: calc(100% - 2rem);
-    padding: clamp(4rem, 10vh, 6rem) 0 2rem;
+    padding: clamp(2.5rem, 5vh, 3.5rem) 0 1.5rem;
   }
 
   .hero-content {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 2.5rem;
   }
 
+  .hero-buttons-side,
+  .hero-actions-wrap {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  /* iPad 2-Column Hero Buttons Layout */
   .hero-buttons-side {
-    align-items: flex-start;
+    padding: 1.25rem 1.5rem;
+    gap: 1.25rem;
   }
 
-  .hero-actions {
-    justify-content: flex-start;
+  .hero-actions,
+  .demo-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .hero-actions .button,
+  .demo-buttons .button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: nowrap;
   }
 
   .hero-demo {
-    align-items: flex-start;
-  }
-
-  .demo-buttons {
-    justify-content: flex-start;
+    align-items: stretch;
+    width: 100%;
   }
 
   .hero-copy {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    margin-top: 2.25rem;
   }
 
+  /* Footer Exactly 2 Centered Rows on iPad / Tablet */
+  .site-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.55rem;
+    padding: 1.35rem 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
+  .site-footer p {
+    margin: 0;
+    font-size: 0.88rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .site-footer nav {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(0.4rem, 2.5vw, 1.25rem);
+    width: 100%;
+  }
+
+  .site-footer nav a {
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
 
   /* Tablet Optimized Grids (581px - 980px) */
   .intro {
@@ -103,7 +207,157 @@
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .brand {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  .header-controls {
+    order: 2;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  /* Header Navigation Stretching 100% Across Mobile Row */
+  .nav-links {
+    order: 3;
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.35rem;
+    gap: 0.25rem;
+    box-sizing: border-box;
+  }
+
+  .nav-dropdown-wrap,
+  .nav-links a {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    justify-content: center;
+    display: inline-flex;
+    padding: 0.38rem 0.2rem;
+    font-size: 0.84rem;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .hero {
+    min-height: auto;
+    padding: 1.5rem 0 1rem;
+  }
+
+  .hero-content {
+    width: calc(100% - 2rem);
+    max-height: none;
+    overflow-y: visible;
+    margin-inline: 1rem;
+    padding-right: 0;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+    gap: 2.25rem;
+  }
+
+  /* Spacious Hero Badge & Title for Mobile/Tablet */
+  .hero-badge {
+    padding: 0.45rem 1rem;
+    font-size: 0.7rem;
+    line-height: 1.45;
+    gap: 0.75rem;
+    margin-bottom: 2.4rem;
+    letter-spacing: 0.03em;
+    border-radius: 16px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero-badge .badge-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .hero-badge .badge-dot::after {
+    width: 12px;
+    height: 12px;
+    margin-top: -6px;
+    margin-left: -6px;
+  }
+
+  .hero-text-side h1 {
+    font-size: clamp(2.1rem, 7.5vw, 2.85rem);
+    line-height: 0.96;
+    letter-spacing: -0.01em;
+  }
+
+  .hero-copy {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin-top: 2.25rem;
+  }
+
+  /* Full Width 2-Column Buttons inside Hero Container */
+  .hero-buttons-side {
+    width: 100%;
+    align-items: stretch;
+    padding: 1.1rem;
+    gap: 1rem;
+    border-radius: 14px;
+  }
+
+  .hero-actions-wrap,
+  .hero-demo {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .hero-demo {
+    padding-top: 1rem;
+  }
+
+  .actions-label,
+  .demo-label {
+    text-align: left;
+    align-self: flex-start;
+    font-size: 0.76rem;
+  }
+
+  .hero-actions,
+  .demo-buttons {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+  }
+
+  .hero-actions .button,
+  .demo-buttons .button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 580px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .site-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
   }
 
   .brand {
@@ -115,98 +369,161 @@
     margin-left: auto;
   }
 
+  /* Navigation Bar 100% Full-Width Coverage Across Mobile Row */
   .nav-links {
     order: 3;
     width: 100%;
-    justify-content: center;
-    margin-top: 0.2rem;
-    gap: 0.15rem;
-  }
-
-  .nav-links a {
-    padding-inline: 0.5rem;
-  }
-
-  .hero {
-    min-height: auto;
-  }
-
-  .hero-content {
-    width: calc(100% - 2rem);
-    max-height: none;
-    overflow-y: visible;
-    margin-inline: 1rem;
-    padding-right: 0;
-    padding-top: 4.25rem;
-    padding-bottom: 1.75rem;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-@media (max-width: 580px) {
-  .site-header {
-    gap: 0.75rem;
-  }
-
-  .nav-links {
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-    scrollbar-width: thin;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.3rem;
+    gap: 0.2rem;
+    box-sizing: border-box;
   }
 
   .nav-dropdown-wrap,
   .nav-links a {
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    justify-content: center;
+    display: inline-flex;
+    padding: 0.38rem 0.15rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .hero {
+    padding: 0.75rem 0 0.75rem;
   }
 
   .hero-content {
     margin-inline: 1rem;
     max-height: none;
-    padding-top: 3.75rem;
-    padding-bottom: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    gap: 2rem;
+  }
+
+  .hero-badge {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    gap: 0.65rem;
+    margin-bottom: 2.2rem;
+  }
+
+  .hero-text-side h1 {
+    font-size: 2.1rem;
+    line-height: 0.95;
   }
 
   .hero-copy {
-    font-size: 0.94rem;
-    margin-top: 1rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-top: 2rem;
   }
 
-  .hero-actions {
-    margin-top: 1.25rem;
+  .hero-buttons-side {
+    padding: 0.9rem;
+    gap: 0.85rem;
+  }
+
+  /* Single Column Stacked Buttons on Mobile Screens */
+  .hero-actions,
+  .demo-buttons {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
   }
 
   .button {
     width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 
+  /* Less Content & Compact Cards in Capabilities Section */
+  .capabilities-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .cap-card {
+    padding: 0.95rem 1.1rem;
+    border-radius: 12px;
+  }
+
+  .cap-card h3 {
+    font-size: 1.05rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .cap-card p {
+    font-size: 0.85rem;
+    line-height: 1.38;
+    margin-bottom: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cap-tags {
+    display: none !important;
+  }
+
+  .capabilities-tabs-bar {
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .cap-tab-btn {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  /* Footer Exactly 2 Rows */
   .site-footer {
-    align-items: flex-start;
+    display: flex;
     flex-direction: column;
-    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.5rem;
+    padding: 1.25rem 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .site-footer p {
+    margin: 0;
+    font-size: 0.85rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .site-footer nav {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(0.3rem, 2.5vw, 1.2rem);
+    width: 100%;
+  }
+
+  .site-footer nav a {
+    white-space: nowrap;
+    font-size: 0.82rem;
   }
 
   /* Mobile Single-Column Overrides */
-  .install-strip,
-  .intro,
   .feature-grid,
   .gallery-grid,
   .download-grid,
   .split {
     grid-template-columns: 1fr;
-  }
-
-  .install-strip a {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .install-strip a:last-child {
-    border-bottom: 0;
   }
 
   .gallery-item.large {

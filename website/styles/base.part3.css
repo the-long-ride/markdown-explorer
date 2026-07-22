@@ -14,11 +14,26 @@
 .site-footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 1rem;
   padding: 1.5rem clamp(1rem, 4vw, 4rem);
   color: var(--muted);
   border-top: 1px solid var(--line);
   background: var(--footer-bg);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.site-footer nav a {
+  white-space: nowrap;
 }
 
 /* ── Image Lightbox Modal ──────────────────────────────────── */

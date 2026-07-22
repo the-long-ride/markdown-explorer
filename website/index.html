@@ -141,6 +141,7 @@
     </script>
   </head>
   <body>
+    <canvas id="page-bg-canvas" class="page-bg-canvas" aria-hidden="true"></canvas>
     <a class="skip-link" href="#main" data-i18n="skipToContent"
       >Skip to content</a
     >
@@ -289,9 +290,10 @@
       <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero-content">
           <div class="hero-text-side">
-            <p class="eyebrow" data-i18n="heroEyebrow">
-              Open source - VS Code extension and desktop app
-            </p>
+            <div class="hero-badge">
+              <span class="badge-dot"></span>
+              <span data-i18n="heroEyebrow">Open Source • MIT Licensed<br>Cross-OS Platform for Desktop, VS Code & Web</span>
+            </div>
             <h1 id="hero-title">Markdown Explorer</h1>
             <p class="hero-copy" data-i18n="heroCopy">
               A private Markdown workspace reader with exact search jumps,
@@ -302,20 +304,23 @@
           </div>
 
           <div class="hero-buttons-side">
-            <div class="hero-actions" aria-label="Primary downloads">
-              <a
-                class="button primary"
-                href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
-                rel="noopener"
-                data-i18n="btnInstallVscode"
-                >Install for VS Code</a
-              >
-              <a
-                class="button secondary"
-                href="#download"
-                data-i18n="btnDownloadDesktop"
-                >Download desktop app</a
-              >
+            <div class="hero-actions-wrap">
+              <span class="actions-label" data-i18n="heroInstallNowLabel">Install now:</span>
+              <div class="hero-actions" aria-label="Primary downloads">
+                <a
+                  class="button primary"
+                  href="#download"
+                  data-i18n="btnDownloadDesktop"
+                  >Download desktop app</a
+                >
+                <a
+                  class="button secondary"
+                  href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+                  rel="noopener"
+                  data-i18n="btnInstallVscode"
+                  >Install for VS Code</a
+                >
+              </div>
             </div>
 
             <div class="hero-demo">
@@ -345,61 +350,197 @@
         </div>
       </section>
 
-      <section class="install-strip" aria-label="Install options">
-        <a
-          href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
-          rel="noopener"
-          data-i18n="stripVscodeMarketplace"
-          >VS Code Marketplace</a
-        >
-        <a
-          href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer"
-          rel="noopener"
-          data-i18n="stripOpenVsx"
-          >Open VSX</a
-        >
-        <a
-          href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-          rel="noopener"
-          data-i18n="stripLatestRelease"
-          >Latest GitHub Release</a
-        >
-      </section>
+      <div class="section-divider" aria-hidden="true"></div>
 
-      <section class="section intro" aria-label="Product highlights">
-        <div class="metric">
-          <strong>3</strong>
-          <span data-i18n="metric1"
-            >search scopes: file, workspace, all tabs</span
-          >
+      <section class="section capabilities-section" aria-label="Capabilities showcase">
+        <div class="capabilities-header">
+          <div class="capabilities-badge">
+            <span class="badge-dot"></span>
+            <span data-i18n="capBadge">COMPLETE DOCUMENTATION TOOLKIT</span>
+          </div>
+          <h2 class="capabilities-title" data-i18n="capTitle">Engineered for agent memory, runbooks & dense docs</h2>
+          <p class="capabilities-desc" data-i18n="capDesc">
+            Markdown Explorer transforms local Markdown and document folders into an interactive, searchable documentation app.
+          </p>
         </div>
-        <div class="metric">
-          <strong>25+</strong>
-          <span data-i18n="metric2">highlighted programming languages</span>
+
+        <div class="capabilities-tabs-bar" role="tablist" aria-label="Feature categories">
+          <button class="cap-tab-btn active" data-category="all" role="tab" aria-selected="true">
+            <span data-i18n="tabAll">All Capabilities</span>
+          </button>
+          <button class="cap-tab-btn" data-category="docs" role="tab" aria-selected="false">
+            <span data-i18n="tabDocs">Document Previews</span>
+          </button>
+          <button class="cap-tab-btn" data-category="nav" role="tab" aria-selected="false">
+            <span data-i18n="tabNav">Workspace & Search</span>
+          </button>
+          <button class="cap-tab-btn" data-category="data" role="tab" aria-selected="false">
+            <span data-i18n="tabData">Tables & Charts</span>
+          </button>
+          <button class="cap-tab-btn" data-category="media" role="tab" aria-selected="false">
+            <span data-i18n="tabMedia">Media & Themes</span>
+          </button>
+          <button class="cap-tab-btn" data-category="core" role="tab" aria-selected="false">
+            <span data-i18n="tabCore">Privacy & Core</span>
+          </button>
         </div>
-        <div class="metric">
-          <strong>1000+</strong>
-          <span data-i18n="metric3"
-            >rows in data table stay sortable, filterable and view as charts
-          </span>
-        </div>
-        <div class="metric">
-          <strong>24</strong>
-          <span data-i18n="metric4"
-            >Mermaid diagram styles rendered in docs</span
-          >
-        </div>
-        <div class="metric">
-          <strong>HTML</strong>
-          <span data-i18n="metric5"
-            >interactive sandboxes run in isolated previews</span
-          >
-        </div>
-        <div class="metric">
-          <strong>Zoom</strong>
-          <span data-i18n="metric6"
-            >click to enlarge diagrams, charts, and images</span
-          >
+
+        <div class="capabilities-grid">
+          <!-- Card 1: Document Previews (Feature) -->
+          <article class="cap-card" data-category="docs">
+            <div class="cap-card-header">
+              <span class="cap-card-num">10+</span>
+              <span class="cap-chip" data-i18n="chipOffice">Office & Docs</span>
+            </div>
+            <h3 data-i18n="cap1Title">Local Document Previews</h3>
+            <p data-i18n="cap1Desc">Read DOCX, PDF, XLSX, PPTX, HTML, ODT, ODP, ODS, RTF, and TXT files directly inside your workspace with local timestamp caching.</p>
+            <div class="cap-tags">
+              <span>.docx</span><span>.pdf</span><span>.xlsx</span><span>.pptx</span><span>.html</span><span>.rtf</span>
+            </div>
+          </article>
+
+          <!-- Card 2: 3 Search Scopes (Feature) -->
+          <article class="cap-card" data-category="nav">
+            <div class="cap-card-header">
+              <span class="cap-card-num">3</span>
+              <span class="cap-chip" data-i18n="chipSearch">Search Scopes</span>
+            </div>
+            <h3 data-i18n="cap2Title">Multi-Scope Workspace Search</h3>
+            <p data-i18n="cap2Desc">Search current file, active workspace, or across all open desktop tabs. Excerpts show context and jump directly to exact clicked matches.</p>
+            <div class="cap-tags">
+              <span>File</span><span>Workspace</span><span>Desktop Tabs</span><span>Exact Jump</span>
+            </div>
+          </article>
+
+          <!-- Card 3: Keyboard Navigation (Feature) -->
+          <article class="cap-card" data-category="nav">
+            <div class="cap-card-header">
+              <svg class="cap-card-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6" y2="8"></line><line x1="10" y1="8" x2="10" y2="8"></line><line x1="14" y1="8" x2="14" y2="8"></line><line x1="18" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="10" y1="12" x2="10" y2="12"></line><line x1="14" y1="12" x2="14" y2="12"></line><line x1="18" y1="12" x2="18" y2="12"></line><line x1="7" y1="16" x2="17" y2="16"></line></svg>
+              <span class="cap-chip" data-i18n="chipKeyboard">Keyboard First</span>
+            </div>
+            <h3 data-i18n="cap3Title">Sidebar Cursor & File Jump</h3>
+            <p data-i18n="cap3Desc">Navigate the file tree without touching the mouse using Alt+S, arrow keys, Enter, and Esc. Highlight and locate current file with Ctrl+Q.</p>
+            <div class="cap-tags">
+              <span>Alt+S</span><span>Ctrl+Q</span><span>Ctrl+B</span><span>Ctrl+T</span>
+            </div>
+          </article>
+
+          <!-- Card 4: Desktop Tabs & Focus (Feature) -->
+          <article class="cap-card" data-category="nav">
+            <div class="cap-card-header">
+              <svg class="cap-card-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+              <span class="cap-chip" data-i18n="chipDesktop">Desktop Workspace</span>
+            </div>
+            <h3 data-i18n="cap4Title">Multi-Workspace Tab View</h3>
+            <p data-i18n="cap4Desc">Keep multiple project folders open simultaneously in desktop tabs. Switch between Tab view and distraction-free Focus view instantly.</p>
+            <div class="cap-tags">
+              <span>Ctrl+Alt+T</span><span>Ctrl+Alt+F</span><span>Workspace Aliases</span>
+            </div>
+          </article>
+
+          <!-- Card 5: Tables to Charts (Feature) -->
+          <article class="cap-card" data-category="data">
+            <div class="cap-card-header">
+              <span class="cap-card-num">1000+</span>
+              <span class="cap-chip" data-i18n="chipData">Data Rows</span>
+            </div>
+            <h3 data-i18n="cap5Title">Interactive Tables & Charts</h3>
+            <p data-i18n="cap5Desc">Sort, filter, and multi-select values across dense datasets. Convert suitable numeric table columns into interactive Bar, Line, or Pie charts.</p>
+            <div class="cap-tags">
+              <span>Multi-Select Filter</span><span>Column Sort</span><span>Bar/Line/Pie</span>
+            </div>
+          </article>
+
+          <!-- Card 6: Diagrams & Math (Feature) -->
+          <article class="cap-card" data-category="media">
+            <div class="cap-card-header">
+              <svg class="cap-card-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              <span class="cap-chip" data-i18n="chipDiagrams">Offline Render</span>
+            </div>
+            <h3 data-i18n="cap6Title">Mermaid Diagrams & LaTeX Math</h3>
+            <p data-i18n="cap6Desc">Render flowcharts, sequence diagrams, ER models, git graphs, and mindmaps offline. Display LaTeX formulas inline with document text.</p>
+            <div class="cap-tags">
+              <span>Flowcharts</span><span>Git Graphs</span><span>Mindmaps</span><span>KaTeX</span>
+            </div>
+          </article>
+
+          <!-- Card 7: Media Modal Zoom (Feature) -->
+          <article class="cap-card" data-category="media">
+            <div class="cap-card-header">
+              <svg class="cap-card-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              <span class="cap-chip" data-i18n="chipZoom">Modal Zoom</span>
+            </div>
+            <h3 data-i18n="cap7Title">Fullscreen Media Inspection</h3>
+            <p data-i18n="cap7Desc">Click any image or Mermaid diagram to open a backdrop-blur modal. Focus on complex architecture details with mousewheel zoom and drag panning.</p>
+            <div class="cap-tags">
+              <span>Backdrop Blur</span><span>Zoom & Pan</span><span>1-Click Close</span>
+            </div>
+          </article>
+
+          <!-- Card 8: Sandboxes & Streaming Video (Feature) -->
+          <article class="cap-card" data-category="media">
+            <div class="cap-card-header">
+              <svg class="cap-card-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+              <span class="cap-chip" data-i18n="chipRich">Rich Content</span>
+            </div>
+            <h3 data-i18n="cap8Title">HTML Sandboxes & Video Embeds</h3>
+            <p data-i18n="cap8Desc">Run isolated HTML previews for interactive code examples. Embed local video files or YouTube and streaming video links inside Markdown docs.</p>
+            <div class="cap-tags">
+              <span>HTML Iframe</span><span>Local Video</span><span>YouTube Embeds</span>
+            </div>
+          </article>
+
+          <!-- Card 9: Theme Remix (Feature) -->
+          <article class="cap-card" data-category="media">
+            <div class="cap-card-header">
+              <svg class="cap-card-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+              <span class="cap-chip" data-i18n="chipTheme">Personalization</span>
+            </div>
+            <h3 data-i18n="cap9Title">Theme Remix & Hotkey Editor</h3>
+            <p data-i18n="cap9Desc">Customize colors, density, line spacing, layout style, and background images. Export, import, and share reading presets across team members.</p>
+            <div class="cap-tags">
+              <span>Color Remix</span><span>Density</span><span>Backgrounds</span><span>Import/Export</span>
+            </div>
+          </article>
+
+          <!-- Card 10: Code Syntax Highlighting (Feature) -->
+          <article class="cap-card" data-category="media">
+            <div class="cap-card-header">
+              <span class="cap-card-num">25+</span>
+              <span class="cap-chip" data-i18n="chipSyntax">Code Fences</span>
+            </div>
+            <h3 data-i18n="cap12Title">Syntax Highlighting & Copy</h3>
+            <p data-i18n="cap12Desc">High-contrast syntax highlighting across 25+ programming languages with line numbers, language badges, and quick code block copy buttons.</p>
+            <div class="cap-tags">
+              <span>25+ Languages</span><span>Line Numbers</span><span>Copy Button</span>
+            </div>
+          </article>
+
+          <!-- Card 11: Privacy First (Private First!) -->
+          <article class="cap-card" data-category="core">
+            <div class="cap-card-header">
+              <span class="cap-card-num">100%</span>
+              <span class="cap-chip" data-i18n="chipPrivacy">Local & Private</span>
+            </div>
+            <h3 data-i18n="cap11Title">Zero Telemetry & Offline Indexing</h3>
+            <p data-i18n="cap11Desc">100% local parsing, indexing, and rendering with zero telemetry and no file uploads. Live auto-refresh detects filesystem updates instantly.</p>
+            <div class="cap-tags">
+              <span>No Telemetry</span><span>No File Upload</span><span>Native Watcher</span>
+            </div>
+          </article>
+
+          <!-- Card 12: Tauri & Electron Builds (Platform!) -->
+          <article class="cap-card" data-category="core">
+            <div class="cap-card-header">
+              <svg class="cap-card-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              <span class="cap-chip" data-i18n="chipEngines">Desktop Engines</span>
+            </div>
+            <h3 data-i18n="cap10Title">Tauri & Electron Builds</h3>
+            <p data-i18n="cap10Desc">Choose lightweight Tauri builds for minimal memory footprint and fast launch, or Electron builds for maximum battle-tested OS stability.</p>
+            <div class="cap-tags">
+              <span>Tauri Lightweight</span><span>Electron</span><span>Windows/Linux/macOS</span>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -701,7 +842,9 @@
           <p data-i18n="downloadSubtitle">
             The desktop app goes beyond the VS Code extension with Tabs view,
             multiple workspaces open at the same time, more keyboard shortcuts,
-            and extra features.
+            and extra features. Lightweight variants are powered by Tauri for a
+            minimal resource footprint and faster performance, while standard
+            builds use Electron for battle-tested stability across all platforms.
           </p>
         </div>
 
@@ -714,6 +857,14 @@
             <div class="card-actions">
               <a
                 class="button primary release-download"
+                data-platform="tauri-windows"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinLightweightBtn"
+                >Lightweight</a
+              >
+              <a
+                class="button secondary release-download"
                 data-platform="windows-nsis"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
@@ -728,14 +879,6 @@
                 data-i18n="dlWinPortableBtn"
                 >Portable</a
               >
-              <a
-                class="button secondary release-download"
-                data-platform="tauri-windows"
-                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-                rel="noopener"
-                data-i18n="dlWinLightweightBtn"
-                >Lightweight</a
-              >
             </div>
           </article>
           <article class="download-card">
@@ -747,6 +890,14 @@
             <div class="card-actions">
               <a
                 class="button primary release-download"
+                data-platform="tauri-linux-appimage"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxLightweightAppImageBtn"
+                >Lightweight AppImage</a
+              >
+              <a
+                class="button secondary release-download"
                 data-platform="linux-appimage"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
@@ -760,14 +911,6 @@
                 rel="noopener"
                 data-i18n="dlLinuxDebBtn"
                 >.deb</a
-              >
-              <a
-                class="button secondary release-download"
-                data-platform="tauri-linux-appimage"
-                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-                rel="noopener"
-                data-i18n="dlLinuxLightweightAppImageBtn"
-                >Lightweight AppImage</a
               >
               <a
                 class="button secondary release-download"
@@ -787,6 +930,14 @@
             </p>
             <div class="card-actions">
               <a
+                class="button primary release-download"
+                data-platform="tauri-macos"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlMacLightweightBtn"
+                >Lightweight</a
+              >
+              <a
                 class="button secondary"
                 href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
                 target="_blank"
@@ -795,7 +946,7 @@
                 >Install Guide</a
               >
               <a
-                class="button primary release-download"
+                class="button secondary release-download"
                 data-platform="macos-arm64"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
@@ -809,14 +960,6 @@
                 rel="noopener"
                 data-i18n="dlMacIntelBtn"
                 >Intel</a
-              >
-              <a
-                class="button secondary release-download"
-                data-platform="tauri-macos"
-                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-                rel="noopener"
-                data-i18n="dlMacLightweightBtn"
-                >Lightweight</a
               >
             </div>
           </article>
@@ -926,43 +1069,50 @@
 
       <section class="section faq" id="faq" aria-labelledby="faq-title">
         <div class="section-heading">
-          <p class="eyebrow" data-i18n="faqEyebrow">Questions</p>
+          <p class="eyebrow" data-i18n="faqEyebrow">FAQ</p>
           <h2 id="faq-title" data-i18n="faqTitle">Common questions</h2>
         </div>
 
         <details>
           <summary data-i18n="faq1Q">Is Markdown Explorer free?</summary>
           <p data-i18n="faq1A">
-            Yes. The project is MIT licensed and the GitHub repository is
-            public.
+            Yes. The project is MIT licensed and the GitHub repository is public.
           </p>
         </details>
         <details>
           <summary data-i18n="faq2Q">Does it work without internet?</summary>
           <p data-i18n="faq2A">
-            Yes. Rendering and searching happen locally. The website download
-            buttons use GitHub only to find the latest release files and public
-            download totals.
+            Yes. Rendering and searching happen locally. The website download buttons use GitHub only to find the latest release files and public download totals.
           </p>
         </details>
         <details>
-          <summary>Can it preview DOCX, PDF, Office, web, and text files?</summary>
-          <p>
-            Yes. Turn on <strong>Read DOCX, PDF, Office, and text files</strong>
-            in Settings. Conversion happens locally and is best-effort, so
-            complex page layout, images, or styling can differ from the
-            original file.
+          <summary data-i18n="faq4Q">What document formats can I preview locally?</summary>
+          <p data-i18n="faq4A">
+            In addition to Markdown (.md), Markdown Explorer supports local previews of DOCX, PDF, XLSX, PPTX, HTML, ODT, ODP, ODS, RTF, and TXT files directly inside your workspace with local caching.
           </p>
         </details>
         <details>
-          <summary data-i18n="faq3Q">
-            Which desktop file should I download?
-          </summary>
+          <summary data-i18n="faq5Q">What is the difference between Tauri and Electron builds?</summary>
+          <p data-i18n="faq5A">
+            Lightweight Tauri builds offer a minimal resource footprint and fast startup, while Electron builds provide maximum cross-platform stability and battle-tested OS compatibility.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq6Q">Does Markdown Explorer collect any telemetry or user data?</summary>
+          <p data-i18n="faq6A">
+            No. Markdown Explorer is 100% private and offline-first with zero telemetry, no tracking scripts, and no remote file uploads.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq7Q">How do interactive tables and Chart.js visualization work?</summary>
+          <p data-i18n="faq7A">
+            Standard Markdown tables automatically gain row sorting and multi-select filters. When numeric columns are detected, you can switch the table into an interactive Bar, Line, or Pie chart with one click.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq3Q">Which desktop file should I download?</summary>
           <p data-i18n="faq3A">
-            Windows users can choose the NSIS installer (`Setup *.exe`)
-            for Start Menu integration or the portable `.exe` to run directly.
-            Linux users can choose `.AppImage` or `.deb`. macOS users should
-            choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.
+            Windows users can choose the NSIS installer (`Setup *.exe`) for Start Menu integration or the portable `.exe` to run directly. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.
           </p>
         </details>
       </section>
@@ -1035,6 +1185,12 @@
 
     <script src="i18n/en.js" defer></script>
     <script src="i18n/vi.js" defer></script>
+    <script src="i18n/fr.js" defer></script>
+    <script src="i18n/es.js" defer></script>
+    <script src="i18n/zh.js" defer></script>
+    <script src="i18n/no.js" defer></script>
+    <script src="i18n/ja.js" defer></script>
+    <script src="i18n/ko.js" defer></script>
     <script src="i18n/ru.js" defer></script>
     <script src="site-download-helpers.js" defer></script>
     <script src="site-download-rendering.js" defer></script>

@@ -49,9 +49,34 @@
   --hero-shade-v: linear-gradient(90deg, rgba(245, 244, 240, 0.96), rgba(245, 244, 240, 0.18));
 }
 
-/* ── Reset ─────────────────────────────────────────────────── */
+/* ── Reset & Thin Scrollbar ───────────────────────────────── */
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(127, 127, 127, 0.35) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(127, 127, 127, 0.32);
+  border-radius: 10px;
+  transition: background 160ms ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-2);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 html {
@@ -306,19 +331,107 @@ img {
   overflow: visible;
 }
 
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 45%;
+  left: 35%;
+  transform: translate(-50%, -50%);
+  width: 750px;
+  height: 550px;
+  background: radial-gradient(ellipse at center, rgba(255, 142, 48, 0.16) 0%, rgba(255, 100, 30, 0.04) 50%, transparent 75%);
+  filter: blur(75px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+}
+
 .hero-content {
   position: relative;
+  z-index: 1;
   width: 100%;
   padding: 0;
   margin: 0;
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: clamp(2rem, 5vw, 5rem);
-  align-items: end;
+  align-items: center;
 }
 
 .hero-text-side {
   text-align: left;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.55rem 1.2rem;
+  line-height: 1.5;
+  background: linear-gradient(135deg, rgba(255, 142, 48, 0.14) 0%, rgba(255, 90, 20, 0.05) 100%);
+  border: 1px solid rgba(255, 142, 48, 0.35);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--accent-2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 2.8rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(255, 142, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  cursor: default;
+}
+
+.hero-badge:hover {
+  transform: translateY(-1.5px);
+  border-color: rgba(255, 142, 48, 0.6);
+  box-shadow: 0 6px 22px rgba(255, 142, 48, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.hero-badge .badge-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 8px var(--accent-2);
+  flex-shrink: 0;
+}
+
+.hero-badge .badge-dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15px;
+  height: 15px;
+  margin-top: -7.5px;
+  margin-left: -7.5px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-2);
+  animation: badgePulse 2s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
+  box-sizing: border-box;
+}
+
+@keyframes badgePulse {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
 }
 
 .hero-buttons-side {
@@ -327,9 +440,29 @@ img {
   align-items: flex-end;
   gap: 1.5rem;
   width: 100%;
+  padding: 1.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+  transition: border-color 260ms ease, box-shadow 260ms ease, transform 260ms ease;
+}
+
+.hero-buttons-side:hover {
+  border-color: rgba(255, 142, 48, 0.35);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
 }
 
 
+
+.hero-actions-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.8rem;
+  width: 100%;
+}
 
 /* ── Hero Demo ─────────────────────────────────────────────── */
 .hero-demo {
@@ -343,6 +476,7 @@ img {
   width: 100%;
 }
 
+.actions-label,
 .demo-label {
   font-size: 0.82rem;
   color: var(--soft);
@@ -424,6 +558,18 @@ img {
   font-size: 0.76rem;
 }
 
+code {
+  display: inline-block;
+  padding: 0.12rem 0.42rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 0.88em;
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
 h1,
 h2,
 h3,
@@ -454,7 +600,7 @@ h3 {
 
 .hero-copy {
   max-width: 66ch;
-  margin: 1.4rem 0 0;
+  margin: 2.4rem 0 0;
   color: var(--muted);
   font-size: 1.22rem;
 }
