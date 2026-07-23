@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>
-      Markdown Explorer - Rich Markdown viewer for VS Code and desktop
+      Markdown Explorer — Private Markdown workspace for humans
     </title>
     <meta
       name="description"
-      content="Markdown Explorer turns Markdown and document folders into a private, searchable documentation app for VS Code and desktop with Mermaid, math, video, code highlighting, interactive tables, charts, tabs, local document conversion, Sidebar Cursor mode, and Theme Remix."
+      content="Turn Markdown folders and AI-generated project knowledge into a private, searchable documentation workspace with exact search jumps, diagrams, math, code, tables, charts, and local document previews."
     />
     <meta
       name="keywords"
@@ -38,11 +38,11 @@
     <meta property="og:site_name" content="Markdown Explorer" />
     <meta
       property="og:title"
-      content="Markdown Explorer - Rich Markdown viewer for VS Code and desktop"
+      content="Markdown Explorer — Make AI-era Markdown useful for humans"
     />
     <meta
       property="og:description"
-      content="Turn Markdown and document folders into a private, searchable documentation app for VS Code and desktop with converted previews, Sidebar Cursor mode, Theme Remix, Mermaid, math, video, interactive tables, charts, and local workspace navigation."
+      content="Turn Markdown folders and AI-generated project knowledge into a private, searchable workspace with exact search jumps, diagrams, math, code, interactive tables, and local previews."
     />
     <meta
       property="og:url"
@@ -77,11 +77,11 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="Markdown Explorer - Rich Markdown viewer for VS Code and desktop"
+      content="Markdown Explorer — Make AI-era Markdown useful for humans"
     />
     <meta
       name="twitter:description"
-      content="Turn Markdown and document folders into a private, searchable documentation app for VS Code and desktop with converted previews, Sidebar Cursor mode, Theme Remix, Mermaid, math, video, interactive tables, charts, and local workspace navigation."
+      content="Turn Markdown folders and AI-generated project knowledge into a private, searchable workspace with exact search jumps, diagrams, math, code, interactive tables, and local previews."
     />
     <meta
       name="twitter:image"
@@ -108,10 +108,10 @@
         "name": "Markdown Explorer",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Windows, macOS, Linux, VS Code",
-        "description": "Markdown Explorer turns Markdown folders into an interactive, searchable documentation app for VS Code and desktop.",
+        "description": "Markdown Explorer turns Markdown folders and AI-generated project knowledge into a private, searchable documentation workspace for humans.",
         "url": "https://the-long-ride.github.io/markdown-explorer/",
         "downloadUrl": "https://github.com/the-long-ride/markdown-explorer/releases/latest",
-        "softwareVersion": "1.5.3",
+        "softwareVersion": "1.6.0",
         "license": "https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE",
         "codeRepository": "https://github.com/the-long-ride/markdown-explorer",
         "screenshot": "https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png",
@@ -292,59 +292,96 @@
           <div class="hero-text-side">
             <div class="hero-badge">
               <span class="badge-dot"></span>
-              <span data-i18n="heroEyebrow">Open Source • MIT Licensed<br>Cross-OS Platform for Desktop, VS Code & Web</span>
+              <span data-i18n="heroProductLabel">Private by default • Free and open source</span>
             </div>
-            <h1 id="hero-title">Markdown Explorer</h1>
+
+            <h1 id="hero-title">
+              Markdown <br />
+              <span class="hero-title-accent">Explorer</span>
+            </h1>
+
             <p class="hero-copy" data-i18n="heroCopy">
-              A private Markdown workspace reader with exact search jumps,
-              Mermaid, math, video, syntax-highlighted code, interactive tables,
-              charts, tabs, converted document previews, Sidebar Cursor mode, and
-              Theme Remix for real documentation.
+              Turn Markdown folders, agent memory, technical docs, and project notes into a private workspace you can search, navigate, and actually enjoy reading.
             </p>
+
+            <div class="hero-actions" aria-label="Try Markdown Explorer">
+              <a
+                class="button primary hero-primary-cta"
+                href="app/?mode=file"
+                target="_blank"
+                rel="noopener"
+              >
+                <svg class="btn-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                <span data-i18n="heroTryFile">Open your Markdown file</span>
+              </a>
+              <a
+                class="button secondary"
+                href="app/?mode=test"
+                target="_blank"
+                rel="noopener"
+              >
+                <span data-i18n="heroExploreDemo">Live demo</span>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+
+            <div class="hero-install-links" aria-label="Install Markdown Explorer">
+              <a href="#download" class="accent-link" data-i18n="heroDownloadDesktop">Download the desktop app</a>
+              <span aria-hidden="true">•</span>
+              <a
+                href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+                rel="noopener"
+                data-i18n="heroInstallVscode"
+              >Install for VS Code</a>
+            </div>
+
+            <ul class="hero-proof-list" aria-label="Product promises">
+              <li>
+                <strong data-i18n="heroProofPrivate">Private by default</strong>
+                <span data-i18n="heroProofPrivateCopy">Local parsing, indexing, search, and rendering.</span>
+              </li>
+              <li>
+                <strong data-i18n="heroProofOpen">Open source</strong>
+                <span data-i18n="heroProofOpenCopy">Free to use under the MIT license.</span>
+              </li>
+              <li>
+                <strong data-i18n="heroProofEverywhere">Use it everywhere</strong>
+                <span data-i18n="heroProofEverywhereCopy">Browser, VS Code, Windows, macOS, and Linux.</span>
+              </li>
+            </ul>
           </div>
 
-          <div class="hero-buttons-side">
-            <div class="hero-actions-wrap">
-              <span class="actions-label" data-i18n="heroInstallNowLabel">Install now:</span>
-              <div class="hero-actions" aria-label="Primary downloads">
-                <a
-                  class="button primary"
-                  href="#download"
-                  data-i18n="btnDownloadDesktop"
-                  >Download desktop app</a
-                >
-                <a
-                  class="button secondary"
-                  href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
-                  rel="noopener"
-                  data-i18n="btnInstallVscode"
-                  >Install for VS Code</a
-                >
-              </div>
-            </div>
+          <div class="hero-visual-side">
+            <a
+              class="hero-product-preview"
+              href="app/?mode=test"
+              target="_blank"
+              rel="noopener"
+              aria-label="Open the Markdown Explorer live demo"
+            >
+              <span class="hero-preview-kicker" data-i18n="heroPreviewKicker">Your documentation becomes an app</span>
+              <img
+                class="hero-product-preview-image"
+                src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+                alt="Markdown Explorer showing a file tree, document tabs, and a rendered Markdown workspace"
+                width="1200"
+                height="750"
+                loading="eager"
+                fetchpriority="high"
+              />
+              <span class="hero-preview-caption">
+                <span data-i18n="heroPreviewCaption">Open a folder. Search everything. Jump to the exact answer.</span>
+                <span class="hero-preview-arrow" aria-hidden="true">↗</span>
+              </span>
+            </a>
 
-            <div class="hero-demo">
-              <span class="demo-label" data-i18n="heroDemoLabel">Try instantly in browser:</span>
-              <div class="demo-buttons">
-                <a
-                  class="button demo-primary"
-                  href="app/?mode=file"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                  <span data-i18n="navDemoTry">Open a file</span>
-                </a>
-                <a
-                  class="button demo-secondary"
-                  href="app/?mode=test"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                  <span data-i18n="navDemoExamples">Example files</span>
-                </a>
-              </div>
+            <div class="hero-use-cases" aria-label="Built for">
+              <span data-i18n="heroBuiltFor">Built for</span>
+              <ul>
+                <li data-i18n="heroUseCaseAi">AI-generated project knowledge</li>
+                <li data-i18n="heroUseCaseEngineering">Engineering documentation</li>
+                <li data-i18n="heroUseCaseResearch">Research and technical writing</li>
+              </ul>
             </div>
           </div>
         </div>
