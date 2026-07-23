@@ -10,6 +10,11 @@ on:
         description: "Tag to build and release"
         required: false
         default: ""
+      dry_run:
+        description: "Build store packages without publishing them"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -296,8 +301,8 @@ jobs:
           name: chromium-extension
           path: chromium-xtension/markdown-explorer-chromium.zip
 
-  publish-release:
-    name: Publish Extension and GitHub Release
+  create-draft-release:
+    name: Create Draft Release and Publish Extensions
     needs: [build-vscode, build-electron-desktop, build-tauri-desktop, build-chromium-extension]
     runs-on: ubuntu-latest
     steps:
@@ -428,14 +433,39 @@ jobs:
           extensionFile: ${{ steps.vsix.outputs.path }}
           skipDuplicate: true
 
-      - name: Create GitHub Release and Upload Assets
+      - name: Create Draft GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
           body_path: ./release-notes.md
           files: |
             ./release-assets/*
-          draft: false
+          draft: true
           prerelease: false
           overwrite_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.event_name != 'workflow_dispatch' && github.ref_name || '' }}
+
+  desktop-stores:
+    name: Publish Desktop Stores
+    needs: create-draft-release
+    uses: ./.github/workflows/publish-desktop-stores.yml
+    with:
+      tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}
+      dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+    secrets: inherit
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: desktop-stores
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Publish Draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}

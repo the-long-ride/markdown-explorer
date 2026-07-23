@@ -75,4 +75,48 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).toContain("safe_base=${base// /.}");
     expect(workflow).toContain('overwrite_files: true');
   });
+
+  test('desktop store workflow publishes Tauri packages from reusable releases', () => {
+    const workflow = readWorkflow('publish-desktop-stores.yml');
+    expect(workflow).toContain('workflow_call:');
+    expect(workflow).toContain('tauri.microsoft-store.conf.json');
+    expect(workflow).toContain('microsoft/microsoft-store-apppublisher@v1.1');
+    expect(workflow).toContain('msstore submission update');
+    expect(workflow).toContain('msstore submission publish');
+    expect(workflow).toContain('SNAPCRAFT_STORE_CREDENTIALS');
+    expect(workflow).toContain('snapcraft upload');
+    expect(workflow).toContain('dry_run');
+  });
+
+  test('desktop store workflow keeps all publishing credentials in secrets', () => {
+    const workflow = readWorkflow('publish-desktop-stores.yml');
+    expect(workflow).toContain('secrets.AZURE_AD_APPLICATION_CLIENT_ID');
+    expect(workflow).toContain('secrets.AZURE_AD_APPLICATION_SECRET');
+    expect(workflow).toContain('secrets.AZURE_AD_TENANT_ID');
+    expect(workflow).toContain('secrets.MICROSOFT_STORE_SELLER_ID');
+    expect(workflow).toContain('secrets.MICROSOFT_STORE_PRODUCT_ID');
+    expect(workflow).toContain('secrets.WINDOWS_CERTIFICATE_BASE64');
+    expect(workflow).toContain('secrets.WINDOWS_CERTIFICATE_PASSWORD');
+    expect(workflow).toContain('secrets.SNAPCRAFT_STORE_CREDENTIALS');
+    expect(workflow).not.toMatch(/clientSecret:\s*["']?[A-Za-z0-9_-]{12,}/);
+  });
+
+  test('release creates a draft before reusable desktop-store publishing then publishes it', () => {
+    const release = readWorkflow('release.yml');
+    const stores = readWorkflow('publish-desktop-stores.yml');
+
+    expect(release).toContain('create-draft-release:');
+    expect(release).toContain('uses: ./.github/workflows/publish-desktop-stores.yml');
+    expect(release).toMatch(/publish-release:[\s\S]*needs:\s*desktop-stores/);
+    expect(release).toMatch(/create-draft-release:[\s\S]*draft:\s*true/);
+    expect(release).toMatch(/publish-release:[\s\S]*draft:\s*false/);
+
+    expect(stores).toContain('workflow_call:');
+    expect(stores).toContain('vars.PUBLISH_MICROSOFT_STORE');
+    expect(stores).toContain('vars.PUBLISH_UBUNTU_APP_CENTER');
+    expect(stores).toContain('vars.SNAP_CHANNEL');
+    expect(stores).not.toMatch(/inputs\.publish_/);
+    expect(stores).not.toMatch(/inputs\.snap_channel/);
+  });
+
 });

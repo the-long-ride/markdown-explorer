@@ -1,0 +1,339 @@
+name: Publish Tauri Desktop Stores
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Draft GitHub release tag to publish to desktop stores"
+        required: true
+        type: string
+      dry_run:
+        description: "Build artifacts without uploading or submitting them"
+        required: true
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing GitHub release tag to build, such as v1.6.0"
+        required: true
+        type: string
+      dry_run:
+        description: "Build artifacts without uploading or submitting them"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-stores-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "24"
+  STORE_ENVIRONMENT: desktop-stores
+
+jobs:
+  resolve-release:
+    name: Resolve release settings
+    runs-on: ubuntu-latest
+    environment: desktop-stores
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+      dry_run: ${{ steps.release.outputs.dry_run }}
+      publish_microsoft_store: ${{ steps.release.outputs.publish_microsoft_store }}
+      publish_ubuntu_app_center: ${{ steps.release.outputs.publish_ubuntu_app_center }}
+      snap_channel: ${{ steps.release.outputs.snap_channel }}
+    steps:
+      - name: Validate release inputs
+        id: release
+        shell: bash
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          INPUT_PUBLISH_MS: ${{ vars.PUBLISH_MICROSOFT_STORE }}
+          INPUT_PUBLISH_SNAP: ${{ vars.PUBLISH_UBUNTU_APP_CENTER }}
+          INPUT_SNAP_CHANNEL: ${{ vars.SNAP_CHANNEL }}
+        run: |
+          set -euo pipefail
+
+          TAG_VALUE="$INPUT_TAG"
+          DRY_RUN="${INPUT_DRY_RUN:-true}"
+          PUBLISH_MS="${INPUT_PUBLISH_MS:-false}"
+          PUBLISH_SNAP="${INPUT_PUBLISH_SNAP:-false}"
+          SNAP_CHANNEL="${INPUT_SNAP_CHANNEL:-stable}"
+
+          if [[ ! "$TAG_VALUE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Expected a release tag such as v1.6.0, got '$TAG_VALUE'."
+            exit 1
+          fi
+
+          echo "tag=$TAG_VALUE" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG_VALUE#v}" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
+          echo "publish_microsoft_store=$PUBLISH_MS" >> "$GITHUB_OUTPUT"
+          echo "publish_ubuntu_app_center=$PUBLISH_SNAP" >> "$GITHUB_OUTPUT"
+          echo "snap_channel=$SNAP_CHANNEL" >> "$GITHUB_OUTPUT"
+
+  microsoft-store:
+    name: Build and publish Microsoft Store installer
+    needs: resolve-release
+    runs-on: windows-latest
+    environment: desktop-stores
+    env:
+      RELEASE_TAG: ${{ needs.resolve-release.outputs.tag }}
+      TAURI_VERSION: ${{ needs.resolve-release.outputs.version }}
+      DRY_RUN: ${{ needs.resolve-release.outputs.dry_run }}
+      SHOULD_PUBLISH: ${{ needs.resolve-release.outputs.publish_microsoft_store }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.resolve-release.outputs.tag }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked --version '^2'
+
+      - name: Build shared UI bundle
+        run: pnpm run build:ui:electron
+
+      - name: Import Windows code-signing certificate
+        if: env.DRY_RUN != 'true' && env.SHOULD_PUBLISH == 'true'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_BASE64)) {
+            throw "WINDOWS_CERTIFICATE_BASE64 is required for a Store submission."
+          }
+
+          $certificatePath = Join-Path $env:RUNNER_TEMP "markdown-explorer-store-signing.pfx"
+          [IO.File]::WriteAllBytes(
+            $certificatePath,
+            [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64)
+          )
+          $password = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $certificate = Import-PfxCertificate `
+            -FilePath $certificatePath `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -Password $password
+
+          if (-not $certificate.Thumbprint) {
+            throw "The PFX certificate could not be imported."
+          }
+
+          "WINDOWS_CERTIFICATE_THUMBPRINT=$($certificate.Thumbprint)" | Out-File `
+            -FilePath $env:GITHUB_ENV `
+            -Encoding utf8 `
+            -Append
+
+      - name: Create Store-specific Tauri configuration
+        shell: pwsh
+        env:
+          WINDOWS_TIMESTAMP_URL: ${{ vars.WINDOWS_TIMESTAMP_URL }}
+        run: |
+          node -e @'
+          const fs = require('node:fs');
+          const file = 'tauri/tauri.microsoft-store.conf.json';
+          const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+          config.version = process.env.TAURI_VERSION;
+
+          if (process.env.DRY_RUN !== 'true' && process.env.SHOULD_PUBLISH === 'true') {
+            config.bundle.windows.certificateThumbprint = process.env.WINDOWS_CERTIFICATE_THUMBPRINT;
+            config.bundle.windows.digestAlgorithm = 'sha256';
+            config.bundle.windows.timestampUrl =
+              process.env.WINDOWS_TIMESTAMP_URL || 'http://timestamp.digicert.com';
+          }
+
+          fs.writeFileSync(
+            'tauri/tauri.microsoft-store.ci.conf.json',
+            `${JSON.stringify(config, null, 2)}\n`,
+          );
+          '@
+
+      - name: Build offline NSIS installer
+        working-directory: tauri
+        run: cargo tauri build --bundles nsis --config tauri.microsoft-store.ci.conf.json
+
+      - name: Stage Store installer
+        id: installer
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem "tauri/target/release/bundle/nsis/*-setup.exe" | Select-Object -First 1
+          if (-not $installer) {
+            throw "Tauri did not produce an NSIS installer."
+          }
+
+          $assetName = "markdown-explorer-$env:TAURI_VERSION-windows-x64-store-setup.exe"
+          $assetPath = Join-Path $env:RUNNER_TEMP $assetName
+          Copy-Item $installer.FullName $assetPath
+
+          "asset_name=$assetName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "asset_path=$assetPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Upload Windows Store build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: microsoft-store-installer-${{ needs.resolve-release.outputs.version }}
+          path: ${{ steps.installer.outputs.asset_path }}
+
+      - name: Upload immutable installer to GitHub Release
+        if: env.DRY_RUN != 'true' && env.SHOULD_PUBLISH == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: ${{ steps.installer.outputs.asset_path }}
+          ASSET_NAME: ${{ steps.installer.outputs.asset_name }}
+        run: |
+          gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY | Out-Null
+          gh release upload $env:RELEASE_TAG `
+            "$env:ASSET_PATH#$env:ASSET_NAME" `
+            --repo $env:GITHUB_REPOSITORY `
+            --clobber
+
+      - name: Configure Microsoft Store CLI
+        if: env.DRY_RUN != 'true' && env.SHOULD_PUBLISH == 'true'
+        uses: microsoft/microsoft-store-apppublisher@v1.1
+
+      - name: Submit installer to Microsoft Store
+        if: env.DRY_RUN != 'true' && env.SHOULD_PUBLISH == 'true'
+        shell: pwsh
+        env:
+          AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          MICROSOFT_STORE_SELLER_ID: ${{ secrets.MICROSOFT_STORE_SELLER_ID }}
+          MICROSOFT_STORE_PRODUCT_ID: ${{ secrets.MICROSOFT_STORE_PRODUCT_ID }}
+          ASSET_NAME: ${{ steps.installer.outputs.asset_name }}
+        run: |
+          msstore reconfigure `
+            --tenantId $env:AZURE_AD_TENANT_ID `
+            --sellerId $env:MICROSOFT_STORE_SELLER_ID `
+            --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID `
+            --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+
+          $repository = $env:GITHUB_REPOSITORY
+          $packageUrl = "https://github.com/$repository/releases/download/$env:RELEASE_TAG/$env:ASSET_NAME"
+          $package = @{
+            packages = @(
+              @{
+                packageUrl = $packageUrl
+                languages = @("en-us")
+                architectures = @("X64")
+                isSilentInstall = $false
+                installerParameters = "/S"
+                genericDocUrl = "https://github.com/the-long-ride/markdown-explorer/blob/main/.github/STORE_PUBLISHING.md#installer-error-codes"
+                packageType = "exe"
+              }
+            )
+          } | ConvertTo-Json -Depth 8 -Compress
+
+          msstore submission update $env:MICROSOFT_STORE_PRODUCT_ID $package
+          msstore submission publish $env:MICROSOFT_STORE_PRODUCT_ID
+
+  ubuntu-app-center:
+    name: Build and publish Ubuntu App Center Snap
+    needs: resolve-release
+    runs-on: ubuntu-latest
+    environment: desktop-stores
+    env:
+      TAURI_VERSION: ${{ needs.resolve-release.outputs.version }}
+      DRY_RUN: ${{ needs.resolve-release.outputs.dry_run }}
+      SHOULD_PUBLISH: ${{ needs.resolve-release.outputs.publish_ubuntu_app_center }}
+      SNAP_CHANNEL: ${{ needs.resolve-release.outputs.snap_channel }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.resolve-release.outputs.tag }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked --version '^2'
+
+      - name: Build shared UI bundle
+        run: pnpm run build:ui:electron
+
+      - name: Build Tauri Linux binary
+        working-directory: tauri
+        run: cargo tauri build --no-bundle --config tauri.linux.conf.json
+
+      - name: Stage Snap payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p snap/local
+          install -m 0755 tauri/target/release/markdown-explorer-tauri snap/local/markdown-explorer
+          install -m 0644 snap/gui/markdown-explorer.desktop snap/local/markdown-explorer.desktop
+          install -m 0644 ui/assets/logos/logo-512.png snap/local/icon.png
+          sed -i "s/^version: .*/version: '$TAURI_VERSION'/" snap/snapcraft.yaml
+
+      - name: Build Snap
+        id: snapcraft
+        uses: snapcore/action-build@v1
+
+      - name: Upload Snap build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-app-center-snap-${{ needs.resolve-release.outputs.version }}
+          path: ${{ steps.snapcraft.outputs.snap }}
+
+      - name: Install Snapcraft publisher
+        if: env.DRY_RUN != 'true' && env.SHOULD_PUBLISH == 'true'
+        run: sudo snap install snapcraft --classic
+
+      - name: Publish Snap to Ubuntu App Center
+        if: env.DRY_RUN != 'true' && env.SHOULD_PUBLISH == 'true'
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+          SNAP_FILE: ${{ steps.snapcraft.outputs.snap }}
+        run: snapcraft upload --release="$SNAP_CHANNEL" "$SNAP_FILE"
