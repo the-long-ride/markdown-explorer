@@ -1,0 +1,46 @@
+name: markdown-explorer
+title: Markdown Explorer
+base: core24
+version: '1.6.0'
+summary: Private workspace reader for Markdown documentation
+description: |
+  Markdown Explorer turns Markdown folders, AI-generated project knowledge,
+  engineering documentation, and research notes into a private, searchable
+  workspace. Navigate file trees, jump to exact search matches, and render
+  Mermaid diagrams, math, code, tables, charts, images, and video locally.
+
+  The Snap uses strict confinement. Files in your home directory are available
+  through the home interface; removable drives require the removable-media
+  interface to be connected.
+license: MIT
+grade: stable
+confinement: strict
+website: https://the-long-ride.github.io/markdown-explorer/
+source-code: https://github.com/the-long-ride/markdown-explorer
+issues: https://github.com/the-long-ride/markdown-explorer/issues
+
+platforms:
+  amd64:
+
+apps:
+  markdown-explorer:
+    command: usr/bin/markdown-explorer
+    desktop: usr/share/applications/markdown-explorer.desktop
+    extensions: [gnome]
+    plugs:
+      - home
+      - removable-media
+      - network
+      - network-status
+
+parts:
+  markdown-explorer:
+    plugin: dump
+    source: snap/local
+    organize:
+      markdown-explorer: usr/bin/markdown-explorer
+      markdown-explorer.desktop: usr/share/applications/markdown-explorer.desktop
+      icon.png: usr/share/icons/hicolor/512x512/apps/markdown-explorer.png
+    override-prime: |
+      craftctl default
+      chmod 0755 "$CRAFT_PRIME/usr/bin/markdown-explorer"

@@ -46,3 +46,7 @@ coverage/
 plan-ignore-from-commit.md
 .codebase-memory/
 /docs/superpowers
+# Store packaging staging and generated credentials/config
+snap/local/
+*.snap
+tauri/tauri.microsoft-store.ci.conf.json

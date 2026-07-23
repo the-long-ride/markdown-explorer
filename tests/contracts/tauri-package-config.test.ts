@@ -219,4 +219,38 @@ describe('tauri package config', () => {
     );
     expect(releaseWorkflow).toContain("new Set(['.deb', '.AppImage', '.dmg', '.exe', '.msi'])");
   });
+
+  test('Microsoft Store Tauri config uses the offline WebView2 installer', () => {
+    const conf = JSON.parse(
+      fs.readFileSync(
+        path.join(repoRoot, 'tauri/tauri.microsoft-store.conf.json'),
+        'utf8',
+      ),
+    );
+    expect(conf.bundle?.targets).toEqual(['nsis']);
+    expect(conf.bundle?.windows?.webviewInstallMode?.type).toBe(
+      'offlineInstaller',
+    );
+  });
+
+  test('Snapcraft packages the Tauri binary for Ubuntu App Center', () => {
+    const snapcraft = fs.readFileSync(
+      path.join(repoRoot, 'snap/snapcraft.yaml'),
+      'utf8',
+    );
+    const desktop = fs.readFileSync(
+      path.join(repoRoot, 'snap/gui/markdown-explorer.desktop'),
+      'utf8',
+    );
+
+    expect(snapcraft).toContain('name: markdown-explorer');
+    expect(snapcraft).toContain('base: core24');
+    expect(snapcraft).toContain('confinement: strict');
+    expect(snapcraft).toContain('extensions: [gnome]');
+    expect(snapcraft).toContain('plugin: dump');
+    expect(snapcraft).toContain('command: usr/bin/markdown-explorer');
+    expect(desktop).toContain('Exec=markdown-explorer %F');
+    expect(desktop).toContain('MimeType=text/markdown;');
+  });
+
 });
