@@ -101,22 +101,21 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).not.toMatch(/clientSecret:\s*["']?[A-Za-z0-9_-]{12,}/);
   });
 
-  test('release creates a draft before reusable desktop-store publishing then publishes it', () => {
+  test('release publishes GitHub Release before reusable desktop-store publishing', () => {
     const release = readWorkflow('release.yml');
     const stores = readWorkflow('publish-desktop-stores.yml');
     const desktopStoresJob = release.match(
       /  desktop-stores:\n([\s\S]*?)(?=\n  [\w-]+:\n|\n*$)/,
     )?.[1];
 
-    expect(release).toContain('create-draft-release:');
+    expect(release).toContain('publish-release:');
     expect(release).toContain('uses: ./.github/workflows/publish-desktop-stores.yml');
     expect(desktopStoresJob).toBeDefined();
-    expect(desktopStoresJob).toMatch(/needs:\s*create-draft-release/);
+    expect(desktopStoresJob).toMatch(/needs:\s*publish-release/);
     expect(desktopStoresJob).toMatch(/tag:\s*\$\{\{[^}]+\}\}/);
     expect(desktopStoresJob).toMatch(/dry_run:\s*\$\{\{[^}]+\}\}/);
-    expect(release).toMatch(/publish-release:[\s\S]*needs:\s*desktop-stores/);
-    expect(release).toMatch(/create-draft-release:[\s\S]*draft:\s*true/);
     expect(release).toMatch(/publish-release:[\s\S]*draft:\s*false/);
+    expect(release).not.toContain('create-draft-release:');
 
     expect(stores).toContain('workflow_call:');
     expect(stores).toContain('vars.PUBLISH_MICROSOFT_STORE');
