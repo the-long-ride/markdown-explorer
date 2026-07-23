@@ -19,11 +19,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { WorkspaceScanner } from './scanner';
-import {
-  scanWorkspaceIncrementally,
-  WORKSPACE_SCAN_BATCH_SIZE,
-  WORKSPACE_SCAN_REVEAL_DELAY_MS,
-} from './incrementalScan';
+import { scanWorkspaceIncrementally } from './incrementalScan';
+import { refreshPanelFromWatch } from './panelWatch';
 import { parse } from '../markdown/parser';
 import { HtmlRenderer } from '../markdown/renderer';
 import {
@@ -50,7 +47,7 @@ export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRo
 export { buildWebviewShell } from './panelShell';
 export { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
 
-export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS };
+export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS } from './incrementalScan';
 
 export class MarkdownDocsPanel {
   static currentPanel: MarkdownDocsPanel | undefined;
@@ -174,6 +171,24 @@ export class MarkdownDocsPanel {
   async refresh(): Promise<void> {
     await this._sendLoading('Refreshing workspace...');
     await this._render();
+  }
+
+  /** Watcher-triggered refresh: re-scan sidebar, emit `currentFileChanged` banner when the saved file is the open one. See panelWatch.ts. */
+  async refreshFromWatch(changedPath?: string | null): Promise<void> {
+    if (!this._panel.webview.html) { await this._render(); return; }
+    await refreshPanelFromWatch(
+      {
+        documentConversionEnabled: this._documentConversionEnabled,
+        scanGeneration: this._scanGeneration,
+        currentFile: this._currentFile,
+        workspaceName: getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace',
+        postMessage: (m) => this._panel.webview.postMessage(m),
+        bumpScanGeneration: () => ++this._scanGeneration,
+        isCurrentScan: (g) => g === this._scanGeneration,
+        setFlat: (f) => { this._flat = f; },
+      },
+      changedPath,
+    );
   }
 
   // ---------------------------------------------------------------------------

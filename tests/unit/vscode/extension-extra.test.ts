@@ -29,7 +29,7 @@ function makeVscodeMock(overrides: any = {}) {
   const registeredCommands: Record<string, Function> = {};
   const registeredProviders: Record<string, any> = [];
   const onDidSaveHandlers: Function[] = [];
-  const watcherEvents: Record<string, Function[]> = { onDidCreate: [], onDidDelete: [] };
+  const watcherEvents: Record<string, Function[]> = { onDidCreate: [], onDidChange: [], onDidDelete: [] };
 
   return {
     window: {
@@ -55,6 +55,7 @@ function makeVscodeMock(overrides: any = {}) {
       })),
       createFileSystemWatcher: vi.fn(() => ({
         onDidCreate: vi.fn((h: any) => { watcherEvents.onDidCreate.push(h); }),
+        onDidChange: vi.fn((h: any) => { watcherEvents.onDidChange?.push(h); }),
         onDidDelete: vi.fn((h: any) => { watcherEvents.onDidDelete.push(h); }),
         dispose: vi.fn(),
       })),

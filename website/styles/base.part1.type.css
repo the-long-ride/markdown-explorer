@@ -1,0 +1,62 @@
+/* ── Type ──────────────────────────────────────────────────── */
+.eyebrow,
+.card-kicker {
+  margin: 0 0 0.7rem;
+  color: var(--accent-2);
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.card-kicker {
+  color: var(--accent-3);
+  font-size: 0.76rem;
+}
+
+code {
+  display: inline-block;
+  padding: 0.12rem 0.42rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 0.88em;
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(3.2rem, 8vw, 6.25rem);
+  line-height: 0.93;
+  letter-spacing: 0;
+}
+
+h2 {
+  margin: 0;
+  font-size: clamp(2.1rem, 5vw, 3.35rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.18rem;
+  line-height: 1.2;
+}
+
+.hero-copy {
+  max-width: 66ch;
+  margin: 2.4rem 0 0;
+  color: var(--muted);
+  font-size: 1.22rem;
+}

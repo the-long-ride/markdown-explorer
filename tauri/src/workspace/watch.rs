@@ -1,3 +1,4 @@
+use super::file_types::workspace_relative_path;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use parking_lot::Mutex;
 use std::path::{Path, PathBuf};
@@ -179,17 +180,16 @@ impl WorkspaceWatchController {
         let notify_watcher: Option<RecommendedWatcher> =
             notify::recommended_watcher(move |res: Result<notify::Event, _>| {
                 if let Ok(event) = res {
-                    let path = event.paths.first().cloned().unwrap_or_default();
-                    let path_str = path.to_string_lossy();
-                    if is_ignored_watch_path(&path_str) {
+                    let full_path = event
+                        .paths
+                        .first()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    if is_ignored_watch_path(&full_path) {
                         return;
                     }
                     let event_type = format!("{:?}", event.kind).to_lowercase();
-                    let filename = path
-                        .file_name()
-                        .map(|n| n.to_string_lossy().to_string())
-                        .unwrap_or_default();
-                    let _ = notify_tx.send((event_type, filename));
+                    let _ = notify_tx.send((event_type, full_path));
                 }
             })
             .ok();
@@ -199,12 +199,13 @@ impl WorkspaceWatchController {
 
         tokio::spawn(async move {
             let on_refresh = Arc::new(on_refresh);
-            while let Some((event_type, filename)) = notify_rx.recv().await {
+            while let Some((event_type, full_path)) = notify_rx.recv().await {
                 let (ws, gen) = {
                     let s = watcher_state.lock();
                     (s.current_workspace.clone(), s.watch_generation)
                 };
                 if let Some(ws) = ws {
+                    let filename = workspace_relative_path(&ws, Path::new(&full_path));
                     let change = create_watch_change(&ws, &event_type, &filename);
                     schedule_refresh(
                         &watcher_state,
@@ -348,26 +349,15 @@ fn run_refresh<F>(
         return;
     }
 
-    let in_flight = {
-        let s = state.lock();
-        s.refresh_in_flight
-    };
-
-    if in_flight {
-        let mut s = state.lock();
-        s.refresh_queued = true;
-        return;
-    }
-
     let change = {
         let mut s = state.lock();
+        if s.refresh_in_flight {
+            s.refresh_queued = true;
+            return;
+        }
+        s.refresh_in_flight = true;
         s.pending_change.take()
     };
-
-    {
-        let mut s = state.lock();
-        s.refresh_in_flight = true;
-    }
 
     on_refresh(workspace.clone(), change);
 
