@@ -104,9 +104,16 @@ describe('GitHub Actions workflow contracts', () => {
   test('release creates a draft before reusable desktop-store publishing then publishes it', () => {
     const release = readWorkflow('release.yml');
     const stores = readWorkflow('publish-desktop-stores.yml');
+    const desktopStoresJob = release.match(
+      /  desktop-stores:\n([\s\S]*?)(?=\n  [\w-]+:\n|\n*$)/,
+    )?.[1];
 
     expect(release).toContain('create-draft-release:');
     expect(release).toContain('uses: ./.github/workflows/publish-desktop-stores.yml');
+    expect(desktopStoresJob).toBeDefined();
+    expect(desktopStoresJob).toMatch(/needs:\s*create-draft-release/);
+    expect(desktopStoresJob).toMatch(/tag:\s*\$\{\{[^}]+\}\}/);
+    expect(desktopStoresJob).toMatch(/dry_run:\s*\$\{\{[^}]+\}\}/);
     expect(release).toMatch(/publish-release:[\s\S]*needs:\s*desktop-stores/);
     expect(release).toMatch(/create-draft-release:[\s\S]*draft:\s*true/);
     expect(release).toMatch(/publish-release:[\s\S]*draft:\s*false/);
@@ -117,6 +124,7 @@ describe('GitHub Actions workflow contracts', () => {
     expect(stores).toContain('vars.SNAP_CHANNEL');
     expect(stores).not.toMatch(/inputs\.publish_/);
     expect(stores).not.toMatch(/inputs\.snap_channel/);
+    expect(stores).not.toContain('STORE_ENVIRONMENT');
   });
 
 });

@@ -32,7 +32,6 @@ concurrency:
 
 env:
   NODE_VERSION: "24"
-  STORE_ENVIRONMENT: desktop-stores
 
 jobs:
   resolve-release:
