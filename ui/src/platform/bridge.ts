@@ -22,5 +22,5 @@ export interface PlatformBridge {
   setState<T>(state: T): void;
 
   /** Copy text to clipboard (delegated to host) */
-  copyToClipboard(text: string): void;
+  copyToClipboard(text: string): void | Promise<void>;
 }

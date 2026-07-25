@@ -57,7 +57,19 @@ function createDesktopRuntime(deps) {
     searchIndex: null,
     crossTabSearchWorker: null,
     workspaceWatch: null,
+    workspaceOperationId: null,
+    workspaceTabId: null,
   };
+
+  const getWorkspaceOperationMetadata = () => ({
+    ...(runtimeState.workspaceOperationId ? { workspaceOperationId: runtimeState.workspaceOperationId } : {}),
+    ...(runtimeState.workspaceTabId ? { workspaceTabId: runtimeState.workspaceTabId } : {}),
+  });
+  const sendScopedHostMessage = (message) => sendHostMessage({
+    ...getWorkspaceOperationMetadata(),
+    ...message,
+  });
+  const sendScopedLoading = (label, detail) => sendLoading(label, detail, getWorkspaceOperationMetadata());
 
   const workspaceHandlers = registerRuntimeWorkspaceHandlers({
     state: runtimeState,
@@ -65,9 +77,9 @@ function createDesktopRuntime(deps) {
     pathApi,
     fs,
     getMainWindow,
-    sendHostMessage,
+    sendHostMessage: sendScopedHostMessage,
     getHostInfo,
-    sendLoading,
+    sendLoading: sendScopedLoading,
     sendRecentWorkspacesChanged,
     recentWorkspacesStore,
     scanWorkspaceData,
@@ -96,7 +108,9 @@ function createDesktopRuntime(deps) {
     sendWorkspaceData,
     sendInitialContent,
     sendContent,
-    sendWelcome
+    sendWelcome,
+    cancelWorkspaceScan,
+    cancelAllWorkspaceScans
   } = workspaceHandlers;
 
   function bindWorkspaceWatch() {
@@ -148,9 +162,9 @@ function createDesktopRuntime(deps) {
     fs,
     dialog,
     getMainWindow,
-    sendHostMessage,
+    sendHostMessage: sendScopedHostMessage,
     getHostInfo,
-    sendLoading,
+    sendLoading: sendScopedLoading,
     sendRecentWorkspacesChanged,
     recentWorkspacesStore,
     createStartupReadyAck,
@@ -180,6 +194,8 @@ function createDesktopRuntime(deps) {
     stripNavigationFragment,
     isRootRelativeWorkspaceHref,
     isSameOrInsidePath,
+    cancelWorkspaceScan,
+    cancelAllWorkspaceScans,
     deps,
   });
   const {
@@ -204,7 +220,9 @@ function createDesktopRuntime(deps) {
     handleDownloadUpdate,
     handleScheduleDownloadedUpdate,
     handleRestartAndApplyUpdate,
-    handleCloseWorkspace
+    handleCloseWorkspace,
+    handleCancelWorkspaceScan,
+    handleCancelAllWorkspaceScans
   } = commandHandlers;
 
   async function refreshActiveWorkspace({
@@ -222,11 +240,12 @@ function createDesktopRuntime(deps) {
     }
 
     if (showLoading) {
-      sendLoading(loadingLabel);
+      sendScopedLoading(loadingLabel);
     }
 
     if (preserveCurrentContent) {
-      await sendWorkspaceFilesChanged();
+      const completed = await sendWorkspaceFilesChanged();
+      if (!completed) return;
       const currentFileStillAvailable = isCurrentFileStillAvailable();
       if (
         shouldNotifyCurrentFileChanged({
@@ -240,7 +259,8 @@ function createDesktopRuntime(deps) {
       return;
     }
 
-    await sendWorkspaceData();
+    const completed = await sendWorkspaceData();
+    if (!completed) return;
 
     if (!isCurrentFileStillAvailable()) {
       runtimeState.currentFile = null;
@@ -284,6 +304,8 @@ function createDesktopRuntime(deps) {
     handleScheduleDownloadedUpdate,
     handleRestartAndApplyUpdate,
     handleCloseWorkspace,
+    handleCancelWorkspaceScan,
+    handleCancelAllWorkspaceScans,
     clampAppZoom,
     refreshActiveWorkspace,
     refreshActiveWorkspaceFromWatch,

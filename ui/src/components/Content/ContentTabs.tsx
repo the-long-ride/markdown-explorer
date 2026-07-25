@@ -8,8 +8,16 @@ import {
 import { CloseIcon } from "../shared/icons";
 import { useCssVars } from "../../utils/useCssVars";
 import { getEnabledShortcut } from "../../utils/shortcuts";
+import {
+  CONTENT_TAB_CLOSE_REQUEST_EVENT,
+  type ContentTabCloseRequest,
+} from "./contentTabCloseEvents";
 
 const SCROLLBAR_TRACK_INLINE_INSET = 16;
+export const CONTENT_TAB_CLOSE_FADE_MS = 90;
+export const CONTENT_TAB_CLOSE_COLLAPSE_MS = 140;
+
+type TabClosePhase = 'idle' | 'fade' | 'collapse';
 
 export function ContentTabs() {
   const {
@@ -50,6 +58,11 @@ export function ContentTabs() {
   const draggedTabPathRef = useRef<string | null>(null);
   const didDragRef = useRef(false);
   const [draggedTabPath, setDraggedTabPath] = useState<string | null>(null);
+  const [closingTabPaths, setClosingTabPaths] = useState<Set<string>>(() => new Set());
+  const [closingPhase, setClosingPhase] = useState<TabClosePhase>('idle');
+  const tabElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const closeTimersRef = useRef<number[]>([]);
+  const closeInProgressRef = useRef(false);
   const ghostRef = useRef<HTMLDivElement>(null);
   const [ghostLabel, setGhostLabel] = useState<string>("");
 
@@ -215,21 +228,84 @@ export function ContentTabs() {
     };
   }, []);
 
+  useEffect(() => () => {
+    closeTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    closeTimersRef.current = [];
+    closeInProgressRef.current = false;
+  }, []);
+
+  const requestTabClose = useCallback((filePaths: string[], commitClose: () => void) => {
+    if (closeInProgressRef.current || filePaths.length === 0) return;
+
+    const prefersReducedMotion = typeof window === 'undefined'
+      || (typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (prefersReducedMotion) {
+      commitClose();
+      return;
+    }
+
+    const renderedPaths = filePaths.filter((filePath) => {
+      const element = tabElementsRef.current.get(filePath);
+      if (!element) return false;
+      const measuredWidth = Math.max(
+        element.getBoundingClientRect().width,
+        element.offsetWidth,
+        1,
+      );
+      element.style.setProperty('--content-tab-close-width', `${measuredWidth}px`);
+      return true;
+    });
+
+    if (renderedPaths.length === 0) {
+      commitClose();
+      return;
+    }
+
+    closeInProgressRef.current = true;
+    setClosingTabPaths(new Set(renderedPaths));
+    setClosingPhase('fade');
+
+    const fadeTimer = window.setTimeout(() => {
+      setClosingPhase('collapse');
+      const collapseTimer = window.setTimeout(() => {
+        setClosingTabPaths(new Set());
+        setClosingPhase('idle');
+        closeInProgressRef.current = false;
+        closeTimersRef.current = [];
+        commitClose();
+      }, CONTENT_TAB_CLOSE_COLLAPSE_MS);
+      closeTimersRef.current.push(collapseTimer);
+    }, CONTENT_TAB_CLOSE_FADE_MS);
+    closeTimersRef.current = [fadeTimer];
+  }, []);
+
   const handleContextMenuAction = useCallback(
     (action: TabContextMenuAction) => {
       if (!contextMenu) return;
       switch (action) {
         case "closeThisTab":
-          closeContentTab(contextMenu.filePath);
+          requestTabClose([contextMenu.filePath], () => closeContentTab(contextMenu.filePath));
           break;
-        case "closeTabsToRight":
-          closeContentTabsToRight(contextMenu.filePath);
+        case "closeTabsToRight": {
+          const targetIndex = state.contentTabs.findIndex((tab) => tab.filePath === contextMenu.filePath);
+          requestTabClose(
+            state.contentTabs.slice(targetIndex + 1).map((tab) => tab.filePath),
+            () => closeContentTabsToRight(contextMenu.filePath),
+          );
           break;
+        }
         case "closeOtherTabs":
-          closeOtherContentTabs(contextMenu.filePath);
+          requestTabClose(
+            state.contentTabs.filter((tab) => tab.filePath !== contextMenu.filePath).map((tab) => tab.filePath),
+            () => closeOtherContentTabs(contextMenu.filePath),
+          );
           break;
         case "closeAllTabs":
-          closeAllContentTabs();
+          requestTabClose(
+            state.contentTabs.map((tab) => tab.filePath),
+            closeAllContentTabs,
+          );
           break;
       }
     },
@@ -239,8 +315,50 @@ export function ContentTabs() {
       closeContentTabsToRight,
       closeOtherContentTabs,
       contextMenu,
+      requestTabClose,
+      state.contentTabs,
     ],
   );
+
+  useEffect(() => {
+    const handleRequestedClose = (event: Event) => {
+      const detail = (event as CustomEvent<ContentTabCloseRequest>).detail;
+      if (!detail) return;
+      event.preventDefault();
+      switch (detail.action) {
+        case 'closeThisTab':
+          requestTabClose([detail.filePath], () => closeContentTab(detail.filePath));
+          break;
+        case 'closeTabsToRight': {
+          const targetIndex = state.contentTabs.findIndex((tab) => tab.filePath === detail.filePath);
+          if (targetIndex < 0) return;
+          requestTabClose(
+            state.contentTabs.slice(targetIndex + 1).map((tab) => tab.filePath),
+            () => closeContentTabsToRight(detail.filePath),
+          );
+          break;
+        }
+        case 'closeOtherTabs':
+          requestTabClose(
+            state.contentTabs.filter((tab) => tab.filePath !== detail.filePath).map((tab) => tab.filePath),
+            () => closeOtherContentTabs(detail.filePath),
+          );
+          break;
+        case 'closeAllTabs':
+          requestTabClose(state.contentTabs.map((tab) => tab.filePath), closeAllContentTabs);
+          break;
+      }
+    };
+    window.addEventListener(CONTENT_TAB_CLOSE_REQUEST_EVENT, handleRequestedClose);
+    return () => window.removeEventListener(CONTENT_TAB_CLOSE_REQUEST_EVENT, handleRequestedClose);
+  }, [
+    closeAllContentTabs,
+    closeContentTab,
+    closeContentTabsToRight,
+    closeOtherContentTabs,
+    requestTabClose,
+    state.contentTabs,
+  ]);
 
   if (!state.settings.fileTabs || state.contentTabs.length === 0) return null;
 
@@ -260,10 +378,19 @@ export function ContentTabs() {
         {state.contentTabs.map((tab) => {
           const active = state.activeContentTabPath === tab.filePath;
           const label = state.settings.showTitle ? tab.title || tab.fileName : tab.fileName;
+          const closePhaseClass = closingTabPaths.has(tab.filePath)
+            ? closingPhase === 'collapse'
+              ? ' is-closing--collapse'
+              : ' is-closing--fade'
+            : '';
           return (
             <div
               key={tab.filePath}
-              className={`content-tab${active ? " is-active" : ""}${draggedTabPath === tab.filePath ? " is-dragging" : ""}`}
+              ref={(element) => {
+                if (element) tabElementsRef.current.set(tab.filePath, element);
+                else tabElementsRef.current.delete(tab.filePath);
+              }}
+              className={`content-tab${active ? " is-active" : ""}${draggedTabPath === tab.filePath ? " is-dragging" : ""}${closePhaseClass}`}
               role="tab"
               aria-selected={active}
               tabIndex={0}
@@ -329,7 +456,7 @@ export function ContentTabs() {
               onAuxClick={(event) => {
                 if (event.button !== 1) return;
                 event.preventDefault();
-                closeContentTab(tab.filePath);
+                requestTabClose([tab.filePath], () => closeContentTab(tab.filePath));
               }}
             >
               <span className="content-tab__label">{label}</span>
@@ -340,7 +467,7 @@ export function ContentTabs() {
                 title={t.tooltips.closeTab}
                 onClick={(event) => {
                   event.stopPropagation();
-                  closeContentTab(tab.filePath);
+                  requestTabClose([tab.filePath], () => closeContentTab(tab.filePath));
                 }}
               >
                 <CloseIcon size={11} />

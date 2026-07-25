@@ -112,6 +112,7 @@ describe('markdown/inline', () => {
       const result = renderInline('[Other](other.md)');
       expect(result).toContain('Nav.go');
       expect(result).toContain('mdn-link--internal');
+      expect(result).toContain('data-mdn-target=');
     });
 
     it('renders internal .md#anchor links', () => {

@@ -42,6 +42,7 @@ import type {
 import { normalizePanelPath, resolvePanelNavigationPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath } from './panelNavigation';
 import { buildWebviewShell } from './panelShell';
 import { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
+import { HtmlPreviewServer } from './htmlPreviewServer';
 
 export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
 export { buildWebviewShell } from './panelShell';
@@ -62,6 +63,7 @@ export class MarkdownDocsPanel {
   private _documentConversionEnabled: boolean;
   private readonly _documentConverter = new DocumentConverter();
   private readonly _disposables: import('vscode').Disposable[] = [];
+  private readonly _htmlPreviewServer: HtmlPreviewServer;
 
   // ---------------------------------------------------------------------------
   // Factory
@@ -107,6 +109,9 @@ export class MarkdownDocsPanel {
     this._extensionVersion = String(_context.extension.packageJSON.version ?? '');
     this._currentFile = initialFilePath;
     this._documentConversionEnabled = this._readDocumentConversionEnabled();
+    this._htmlPreviewServer = new HtmlPreviewServer((url) =>
+      getVscode().env.openExternal(getVscode().Uri.parse(url)),
+    );
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
@@ -132,8 +137,13 @@ export class MarkdownDocsPanel {
             await getVscode().env.clipboard.writeText(msg.text);
             break;
           case 'openExternal':
-            if (/^https?:\/\//i.test(msg.url)) {
+            if (/^(?:https?|file):\/\//i.test(msg.url)) {
               await getVscode().env.openExternal(getVscode().Uri.parse(msg.url));
+            }
+            break;
+          case 'openHtmlPreview':
+            if (typeof msg.documentHtml === 'string' && msg.documentHtml.trim()) {
+              await this._htmlPreviewServer.open(msg.documentHtml);
             }
             break;
           case 'refresh':
@@ -472,6 +482,7 @@ export class MarkdownDocsPanel {
   dispose(): void {
     MarkdownDocsPanel.currentPanel = undefined;
     this._panel.dispose();
+    void this._htmlPreviewServer.dispose();
     this._disposables.forEach(d => d.dispose());
     this._disposables.length = 0;
   }

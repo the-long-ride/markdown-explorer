@@ -121,6 +121,7 @@ pub fn boot() {
                     }
                 }
                 tauri::WindowEvent::CloseRequested { .. } => {
+                    tauri::async_runtime::spawn(crate::runtime::html_preview::shutdown());
                     if let Ok(config_dir) = app_for_event.path().app_config_dir() {
                         if let Err(err) =
                             crate::update::manager::UpdateManager::apply_pending_update_on_exit(

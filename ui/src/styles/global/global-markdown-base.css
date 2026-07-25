@@ -12,7 +12,6 @@
   min-width: 0;
   background: var(--bg-e);
   border: var(--stroke-w) solid var(--bd-s);
-  border-left: 3px solid var(--accent);
   border-radius: var(--r);
   margin-bottom: 16px;
   font-size: 11.5px;

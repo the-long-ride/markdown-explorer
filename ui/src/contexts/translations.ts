@@ -110,6 +110,22 @@ export interface Translations {
     closeTab: string;
     openChangelog: string;
     locateFile: string;
+    cancelScan: string;
+  };
+  previewActions: {
+    openInBrowser: string;
+    openAsModal: string;
+    showCode: string;
+    showPreview: string;
+    copyCode: string;
+    modalTitle: string;
+    closeModal: string;
+    openError: string;
+    linkMenu: string;
+    copyLink: string;
+    linkCopied: string;
+    unableToOpenLink: string;
+    copyFailed: string;
   };
   tabContextMenu: {
     moveTabLeft: string;
@@ -306,6 +322,22 @@ let _TRANSLATIONS: Record<string, Translations> = {
       closeTab: "Close Tab",
       openChangelog: "Click to open the change logs",
       locateFile: "Locate file",
+      cancelScan: "Cancel scan",
+    },
+    previewActions: {
+      openInBrowser: "Open in browser",
+      openAsModal: "Open as modal",
+      showCode: "Show code",
+      showPreview: "Show preview",
+      copyCode: "Copy code",
+      modalTitle: "HTML preview",
+      closeModal: "Close HTML preview",
+      openError: "Unable to open HTML preview",
+      linkMenu: "Link actions",
+      copyLink: "Copy link",
+      linkCopied: "Link copied",
+      unableToOpenLink: "Unable to open link",
+      copyFailed: "Unable to copy link",
     },
     tabContextMenu: {
       moveTabLeft: "Move tab left",

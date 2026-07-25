@@ -3,6 +3,20 @@ use super::*;
 impl Dispatcher {
     pub async fn handle(self, msg: Value) -> Result<(), String> {
         let cmd = msg.get("command").and_then(|v| v.as_str()).unwrap_or("");
+        if matches!(
+            cmd,
+            "openFolder" | "openFile" | "openPath" | "activateWorkspace" | "openRecentWorkspace"
+        ) {
+            let mut state = self.state.inner.write();
+            state.workspace_operation_id = msg
+                .get("workspaceOperationId")
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned);
+            state.workspace_tab_id = msg
+                .get("workspaceTabId")
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned);
+        }
         match cmd {
             // ── B1 handlers ──
             "openFolder" => {
@@ -47,13 +61,12 @@ impl Dispatcher {
                         );
                     } else {
                         let current_file = file_path.filter(|p| p.exists());
-                        self.recents_store().save(&path);
+                        self.save_recent_workspace(&path);
                         self.set_workspace(path, current_file);
                         self.ensure_workspace_watch();
                         self.bind_watch();
                         host_message::emit_loading(&self.app, "Loading workspace...", None);
-                        self.send_workspace_data();
-                        self.send_initial_content(open_first_file);
+                        self.send_workspace_data(open_first_file);
                     }
                 }
             }
@@ -67,17 +80,74 @@ impl Dispatcher {
                 }
             }
             "closeWorkspace" => {
-                {
+                let operation = {
                     let mut state = self.state.inner.write();
+                    let operation = host_message::WorkspaceOperationMetadata::from_parts(
+                        state.workspace_operation_id.as_deref(),
+                        state.workspace_tab_id.as_deref(),
+                    );
                     state.workspace_path = None;
                     state.current_file = None;
                     state.flat_list.clear();
                     state.ready_handled = false;
+                    state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
+                    state.workspace_operation_id = None;
+                    state.workspace_tab_id = None;
                     if let Some(ref wc) = state.watch_controller {
                         wc.dispose();
                     }
+                    operation
+                };
+                let ready_message = operation
+                    .as_ref()
+                    .map(|operation| {
+                        json!({
+                            "workspaceOperationId": operation.operation_id.clone(),
+                            "workspaceTabId": operation.tab_id.clone(),
+                        })
+                    })
+                    .unwrap_or_else(|| json!({}));
+                self.handle_ready(&ready_message).await;
+            }
+            "cancelWorkspaceScan" => {
+                let requested_operation = msg
+                    .get("workspaceOperationId")
+                    .and_then(Value::as_str);
+                let cancelled = {
+                    let mut state = self.state.inner.write();
+                    let matches = requested_operation.is_some()
+                        && state.workspace_operation_id.as_deref() == requested_operation;
+                    if !matches {
+                        None
+                    } else {
+                        let operation = host_message::WorkspaceOperationMetadata::from_parts(
+                            state.workspace_operation_id.as_deref(),
+                            state.workspace_tab_id.as_deref(),
+                        );
+                        state.workspace_scan_generation =
+                            state.workspace_scan_generation.wrapping_add(1);
+                        state.runtime_state = RuntimeState::Ready;
+                        let scanned_files = state.flat_list.len();
+                        state.workspace_operation_id = None;
+                        state.workspace_tab_id = None;
+                        Some((scanned_files, operation))
+                    }
+                };
+                if let Some((scanned_files, operation)) = cancelled {
+                    host_message::emit_workspace_scan_progress_scoped(
+                        &self.app,
+                        scanned_files,
+                        false,
+                        operation.as_ref(),
+                    );
                 }
-                self.handle_ready(&json!({})).await;
+            }
+            "cancelAllWorkspaceScans" => {
+                let mut state = self.state.inner.write();
+                state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
+                state.runtime_state = RuntimeState::Ready;
+                state.workspace_operation_id = None;
+                state.workspace_tab_id = None;
             }
             "confirmOpenPath" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {
@@ -166,9 +236,19 @@ impl Dispatcher {
             "openExternal" => {
                 if let Some(url) = msg.get("url").and_then(Value::as_str) {
                     let url_lower = url.to_lowercase();
-                    if url_lower.starts_with("http://") || url_lower.starts_with("https://") {
+                    if url_lower.starts_with("http://")
+                        || url_lower.starts_with("https://")
+                        || url_lower.starts_with("file://")
+                    {
                         let _ = self.app.opener().open_url(url, None::<&str>);
                     }
+                }
+            }
+            "openHtmlPreview" => {
+                if let Some(document_html) = msg.get("documentHtml").and_then(Value::as_str) {
+                    crate::runtime::html_preview::open(&self.app, document_html)
+                        .await
+                        .map_err(|error| error.to_string())?;
                 }
             }
             "setDocumentConversion" => {

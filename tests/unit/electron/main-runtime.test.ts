@@ -311,6 +311,7 @@ describe('createDesktopRuntime', () => {
       expect(runtime.state.workspacePath).toBe('/my/project');
       expect(runtime.state.currentFile).toBeNull();
       expect(ctx.deps.recentWorkspacesStore.save).toHaveBeenCalledWith('/my/project');
+      expect(ctx.deps.sendRecentWorkspacesChanged).toHaveBeenCalled();
       expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Loading workspace...');
     });
 
@@ -368,6 +369,7 @@ describe('createDesktopRuntime', () => {
       expect(runtime.state.workspacePath).toContain('project');
       expect(runtime.state.currentFile).toBe('/my/project/readme.md');
       expect(ctx.deps.recentWorkspacesStore.save).toHaveBeenCalled();
+      expect(ctx.deps.sendRecentWorkspacesChanged).toHaveBeenCalled();
     });
 
     test('shows preparing document message for extra doc types', () => {

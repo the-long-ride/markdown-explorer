@@ -147,8 +147,7 @@
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
   cursor: pointer;
   background: none;
   border: none;

@@ -52,6 +52,45 @@
 .content-tab.is-drop-target {
   box-shadow: inset 3px 0 0 var(--accent);
 }
+.content-tab.is-closing--fade,
+.content-tab.is-closing--collapse {
+  box-sizing: border-box;
+  flex: 0 0 var(--content-tab-close-width);
+  width: var(--content-tab-close-width);
+  min-width: var(--content-tab-close-width);
+  max-width: var(--content-tab-close-width);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.content-tab.is-closing--fade {
+  opacity: 0;
+  transition: opacity 90ms ease;
+}
+
+.content-tab.is-closing--collapse {
+  flex-basis: 0;
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  gap: 0;
+  margin-right: -4px;
+  padding-left: 0;
+  padding-right: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+  opacity: 0;
+  transition:
+    flex-basis 140ms ease,
+    width 140ms ease,
+    min-width 140ms ease,
+    max-width 140ms ease,
+    gap 140ms ease,
+    margin-right 140ms ease,
+    padding 140ms ease,
+    border-width 140ms ease;
+}
+
 .content-tab:hover,
 .content-tab:focus-visible {
   background: var(--bg-h);
@@ -66,6 +105,9 @@
   border-color: var(--bd-s);
   border-bottom-color: var(--bg);
   font-weight: 700;
+}
+.content-tab.is-active.is-closing--collapse {
+  flex-basis: 0;
 }
 .content-tab__label {
   min-width: 0;
@@ -484,4 +526,11 @@
 .tree-file-search-matches {
   padding-left: 18px;
   margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content-tab.is-closing--fade,
+  .content-tab.is-closing--collapse {
+    transition: none !important;
+  }
 }

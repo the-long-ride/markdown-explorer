@@ -1,16 +1,57 @@
 use serde_json::{json, Value};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::workspace::open::WorkspaceUnavailableReason;
 use crate::workspace::recents::RecentWorkspace;
 
-pub fn emit(app: &AppHandle, command: &str, extra: serde_json::Map<String, Value>) {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WorkspaceOperationMetadata {
+    pub operation_id: String,
+    pub tab_id: String,
+}
+
+impl WorkspaceOperationMetadata {
+    pub fn from_parts(operation_id: Option<&str>, tab_id: Option<&str>) -> Option<Self> {
+        Some(Self {
+            operation_id: operation_id?.to_owned(),
+            tab_id: tab_id?.to_owned(),
+        })
+    }
+}
+
+pub fn current_workspace_operation(app: &AppHandle) -> Option<WorkspaceOperationMetadata> {
+    let state = app.state::<crate::app_state::AppState>();
+    let inner = state.inner.read();
+    WorkspaceOperationMetadata::from_parts(
+        inner.workspace_operation_id.as_deref(),
+        inner.workspace_tab_id.as_deref(),
+    )
+}
+
+pub fn emit_scoped(
+    app: &AppHandle,
+    command: &str,
+    extra: serde_json::Map<String, Value>,
+    operation: Option<&WorkspaceOperationMetadata>,
+) {
     let mut payload = serde_json::Map::new();
     payload.insert("command".into(), command.into());
     for (k, v) in extra {
         payload.insert(k, v);
     }
+    if let Some(operation) = operation {
+        payload.insert(
+            "workspaceOperationId".into(),
+            operation.operation_id.clone().into(),
+        );
+        payload.insert("workspaceTabId".into(), operation.tab_id.clone().into());
+    }
     let _ = app.emit("host-message", json!(payload));
+}
+
+pub fn emit(app: &AppHandle, command: &str, extra: serde_json::Map<String, Value>) {
+    let operation = current_workspace_operation(app);
+    emit_scoped(app, command, extra, operation.as_ref());
 }
 
 pub fn emit_ready_ack(
@@ -70,20 +111,40 @@ pub fn emit_ready_ack_full(
     emit(app, "readyAck", extra);
 }
 
-pub fn emit_loading(app: &AppHandle, label: &str, detail: Option<&str>) {
+pub fn emit_loading_scoped(
+    app: &AppHandle,
+    label: &str,
+    detail: Option<&str>,
+    operation: Option<&WorkspaceOperationMetadata>,
+) {
     let mut extra = serde_json::Map::new();
     extra.insert("label".into(), label.into());
     if let Some(detail) = detail {
         extra.insert("detail".into(), detail.into());
     }
-    emit(app, "setLoading", extra);
+    emit_scoped(app, "setLoading", extra, operation);
 }
 
-pub fn emit_workspace_scan_progress(app: &AppHandle, scanned_files: usize, active: bool) {
+pub fn emit_loading(app: &AppHandle, label: &str, detail: Option<&str>) {
+    let operation = current_workspace_operation(app);
+    emit_loading_scoped(app, label, detail, operation.as_ref());
+}
+
+pub fn emit_workspace_scan_progress_scoped(
+    app: &AppHandle,
+    scanned_files: usize,
+    active: bool,
+    operation: Option<&WorkspaceOperationMetadata>,
+) {
     let mut extra = serde_json::Map::new();
     extra.insert("scannedFiles".into(), scanned_files.into());
     extra.insert("active".into(), active.into());
-    emit(app, "workspaceScanProgress", extra);
+    emit_scoped(app, "workspaceScanProgress", extra, operation);
+}
+
+pub fn emit_workspace_scan_progress(app: &AppHandle, scanned_files: usize, active: bool) {
+    let operation = current_workspace_operation(app);
+    emit_workspace_scan_progress_scoped(app, scanned_files, active, operation.as_ref());
 }
 
 pub fn emit_recent_workspaces_changed(app: &AppHandle, recent_workspaces: Vec<RecentWorkspace>) {
@@ -92,11 +153,12 @@ pub fn emit_recent_workspaces_changed(app: &AppHandle, recent_workspaces: Vec<Re
     emit(app, "recentWorkspacesChanged", extra);
 }
 
-pub fn emit_workspace_unavailable(
+pub fn emit_workspace_unavailable_scoped(
     app: &AppHandle,
     workspace_path: &str,
     reason: WorkspaceUnavailableReason,
     recent_workspaces: Vec<RecentWorkspace>,
+    operation: Option<&WorkspaceOperationMetadata>,
 ) {
     let mut extra = serde_json::Map::new();
     extra.insert("workspacePath".into(), workspace_path.into());
@@ -104,8 +166,8 @@ pub fn emit_workspace_unavailable(
         "workspaceName".into(),
         std::path::Path::new(workspace_path)
             .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .filter(|s| !s.is_empty())
+            .map(|name| name.to_string_lossy().to_string())
+            .filter(|name| !name.is_empty())
             .unwrap_or_else(|| {
                 if workspace_path.is_empty() {
                     "Workspace".into()
@@ -129,10 +191,30 @@ pub fn emit_workspace_unavailable(
         crate::update::manager::can_install_updates().into(),
     );
     extra.insert("isMaximized".into(), false.into());
-    emit(app, "workspaceUnavailable", extra);
+    emit_scoped(app, "workspaceUnavailable", extra, operation);
 }
 
-pub fn emit_render_content_empty_welcome(app: &AppHandle, file_list: Value) {
+pub fn emit_workspace_unavailable(
+    app: &AppHandle,
+    workspace_path: &str,
+    reason: WorkspaceUnavailableReason,
+    recent_workspaces: Vec<RecentWorkspace>,
+) {
+    let operation = current_workspace_operation(app);
+    emit_workspace_unavailable_scoped(
+        app,
+        workspace_path,
+        reason,
+        recent_workspaces,
+        operation.as_ref(),
+    );
+}
+
+pub fn emit_render_content_empty_welcome_scoped(
+    app: &AppHandle,
+    file_list: Value,
+    operation: Option<&WorkspaceOperationMetadata>,
+) {
     let mut extra = serde_json::Map::new();
     extra.insert("html".into(), "".into());
     extra.insert("markdownSource".into(), "".into());
@@ -143,16 +225,23 @@ pub fn emit_render_content_empty_welcome(app: &AppHandle, file_list: Value) {
     extra.insert("title".into(), "Welcome".into());
     extra.insert("fileList".into(), file_list);
     extra.insert("previewInfo".into(), Value::Null);
-    emit(app, "renderContent", extra);
+    emit_scoped(app, "renderContent", extra, operation);
 }
 
-pub fn emit_workspace_files_changed(
+pub fn emit_render_content_empty_welcome(app: &AppHandle, file_list: Value) {
+    let operation = current_workspace_operation(app);
+    emit_render_content_empty_welcome_scoped(app, file_list, operation.as_ref());
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn emit_workspace_files_changed_scoped(
     app: &AppHandle,
     file_list: Value,
     tree: Value,
     workspace_name: &str,
     workspace_path: &str,
     document_conversion_enabled: bool,
+    operation: Option<&WorkspaceOperationMetadata>,
 ) {
     let mut extra = serde_json::Map::new();
     extra.insert("fileList".into(), file_list);
@@ -163,7 +252,27 @@ pub fn emit_workspace_files_changed(
         "documentConversionEnabled".into(),
         document_conversion_enabled.into(),
     );
-    emit(app, "workspaceFilesChanged", extra);
+    emit_scoped(app, "workspaceFilesChanged", extra, operation);
+}
+
+pub fn emit_workspace_files_changed(
+    app: &AppHandle,
+    file_list: Value,
+    tree: Value,
+    workspace_name: &str,
+    workspace_path: &str,
+    document_conversion_enabled: bool,
+) {
+    let operation = current_workspace_operation(app);
+    emit_workspace_files_changed_scoped(
+        app,
+        file_list,
+        tree,
+        workspace_name,
+        workspace_path,
+        document_conversion_enabled,
+        operation.as_ref(),
+    );
 }
 
 pub fn emit_current_file_changed(app: &AppHandle, file_path: &str) {

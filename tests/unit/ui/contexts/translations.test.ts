@@ -5,6 +5,7 @@ import {
   LANGUAGE_OPTIONS,
 } from '../../../../ui/src/contexts/translations';
 import type { Translations } from '../../../../ui/src/contexts/translations';
+import { TRANSLATIONS } from '../../../../ui/src/contexts/translationsData';
 
 describe('translations', () => {
   test('getTranslations("en") returns English translations with all required keys', () => {
@@ -57,12 +58,26 @@ describe('translations', () => {
       'sidebarLabels', 'sidebarLabelsDesc', 'fileTabs', 'fileTabsDesc',
       'documentConversion', 'documentConversionDesc', 'htmlPreview', 'htmlPreviewDesc',
       'shortcuts', 'shortcutsHint', 'resetShortcuts', 'closeSettings',
-      'themeStyles', 'actions', 'topbar', 'tooltips', 'tabContextMenu',
+      'themeStyles', 'actions', 'topbar', 'tooltips', 'previewActions', 'tabContextMenu',
       'documentPreview', 'recentWorkspaces', 'sidebar', 'toc', 'update',
       'bannedShortcutTitle', 'bannedShortcutDismiss', 'bannedShortcutImeMessage',
     ];
     for (const key of requiredKeys) {
       expect(t[key]).toBeDefined();
+    }
+  });
+
+
+  test('all supported languages contain every preview action translation', () => {
+    const keys = [
+      'openInBrowser', 'openAsModal', 'showCode', 'showPreview', 'copyCode',
+      'modalTitle', 'closeModal', 'openError', 'linkMenu', 'copyLink',
+      'linkCopied', 'unableToOpenLink', 'copyFailed',
+    ];
+    for (const option of LANGUAGE_OPTIONS) {
+      const group = TRANSLATIONS[option.id].previewActions as Record<string, string>;
+      expect(Object.keys(group).sort()).toEqual([...keys].sort());
+      for (const key of keys) expect(group[key].trim()).not.toBe('');
     }
   });
 

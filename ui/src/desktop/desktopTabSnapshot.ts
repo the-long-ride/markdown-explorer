@@ -34,5 +34,6 @@ export function snapshotDesktopTab(
     contentTabs: state.contentTabs,
     activeContentTabPath: state.activeContentTabPath,
     isIndexed: tab.isIndexed || (tab.id === activeTabId && !state.isLoading),
+    workspaceLoadState: state.workspaceName && !state.isLoading && !state.isWorkspaceScanning ? 'ready' : tab.workspaceLoadState,
   };
 }

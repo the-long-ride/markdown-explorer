@@ -280,8 +280,24 @@ pub fn scan_with_progress(
 pub fn scan_with_callbacks(
     root_path: &Path,
     options: ScanOptions,
+    report_progress: impl FnMut(usize),
+    report_file: impl FnMut(&MdFile, usize),
+) -> HostResult<ScanResult> {
+    scan_with_callbacks_and_cancel(
+        root_path,
+        options,
+        report_progress,
+        report_file,
+        || false,
+    )
+}
+
+pub fn scan_with_callbacks_and_cancel(
+    root_path: &Path,
+    options: ScanOptions,
     mut report_progress: impl FnMut(usize),
     mut report_file: impl FnMut(&MdFile, usize),
+    mut should_cancel: impl FnMut() -> bool,
 ) -> HostResult<ScanResult> {
     let custom_ignores = load_ignore_patterns(root_path);
     let mut excludes: Vec<String> = DEFAULT_IGNORED_FOLDERS
@@ -294,6 +310,9 @@ pub fn scan_with_callbacks(
     let mut queue = VecDeque::from([root_path.to_path_buf()]);
 
     while let Some(current_dir) = queue.pop_front() {
+        if should_cancel() {
+            break;
+        }
         let entries = match fs::read_dir(&current_dir) {
             Ok(entries) => entries,
             Err(err) => {
@@ -302,6 +321,9 @@ pub fn scan_with_callbacks(
             }
         };
         for entry in entries.flatten() {
+            if should_cancel() {
+                break;
+            }
             let name = entry.file_name().to_string_lossy().to_string();
             if excludes.iter().any(|exclude| exclude == &name) {
                 continue;

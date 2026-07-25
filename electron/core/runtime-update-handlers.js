@@ -19,11 +19,17 @@ function registerRuntimeUpdateHandlers({ deps, appQuit, state, handleReady }) {
   }
 
   function handleCloseWorkspace() {
+    const operation = {
+      ...(state.workspaceOperationId ? { workspaceOperationId: state.workspaceOperationId } : {}),
+      ...(state.workspaceTabId ? { workspaceTabId: state.workspaceTabId } : {}),
+    };
     state.readyHandled = false;
     if (state.workspaceWatch) state.workspaceWatch.dispose();
     state.workspacePath = null;
     state.currentFile = null;
-    handleReady();
+    state.workspaceOperationId = null;
+    state.workspaceTabId = null;
+    handleReady({ workspaceOperationMetadata: operation });
   }
   return {
     handleDownloadUpdate,

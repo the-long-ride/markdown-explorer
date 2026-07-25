@@ -20,6 +20,8 @@ pub struct AppStateInner {
     pub watch_controller: Option<crate::workspace::watch::WorkspaceWatchController>,
     pub runtime_state: RuntimeState,
     pub workspace_scan_generation: u64,
+    pub workspace_operation_id: Option<String>,
+    pub workspace_tab_id: Option<String>,
     pub ready_handled: bool,
     pub document_conversion_enabled: bool,
     pub fullscreen_transition: FullscreenTransition,

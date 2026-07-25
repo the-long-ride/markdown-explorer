@@ -34,6 +34,8 @@ export interface DesktopTab {
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
   isIndexed?: boolean;
+  workspaceOperationId?: string;
+  workspaceLoadState?: 'idle' | 'loading' | 'ready';
 }
 
 export interface FloatingToolbarPosition {

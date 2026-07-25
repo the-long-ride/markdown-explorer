@@ -37,6 +37,18 @@ describe('AppStateProvider integration', () => {
     vi.restoreAllMocks();
   });
 
+  describe('refresh', () => {
+    it('does not enter loading state or post refresh when there is no current file', () => {
+      const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
+
+      expect(result.current.state.currentFile).toBeNull();
+      act(() => { result.current.refresh(); });
+
+      expect(result.current.state.isLoading).toBe(false);
+      expect(mockBridge.postMessage).not.toHaveBeenCalledWith({ command: 'refresh' });
+    });
+  });
+
   describe('navigate', () => {
     it('dispatches SET_LOADING and sends empty path when called with null', () => {
       const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });

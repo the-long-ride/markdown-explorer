@@ -35,7 +35,8 @@ async function runDeferredLoad({
     sendLoading("Loading workspace...");
     ensureHeavyModules();
     bindWorkspaceWatch();
-    await sendWorkspaceData();
+    const completed = await sendWorkspaceData();
+    if (!completed) return;
     await sendInitialContent(openFirstFile);
     sendUpdateState?.();
   } catch (err) {

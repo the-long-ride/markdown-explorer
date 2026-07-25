@@ -19,6 +19,11 @@ import { useTabBarScrollbar } from './useTabBarScrollbar';
 import { useCssVars } from '../../utils/useCssVars';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 
+const TAB_CLOSE_FADE_MS = 90;
+const TAB_CLOSE_COLLAPSE_MS = 140;
+
+type TabClosePhase = 'idle' | 'fade' | 'collapse';
+
 interface DesktopTabBarProps {
   tabs: DesktopTab[];
   activeTabId: string;
@@ -77,6 +82,11 @@ export function DesktopTabBar({
   const draggedTabIdRef = useRef<string | null>(null);
   const didDragRef = useRef(false);
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+  const [closingTabIds, setClosingTabIds] = useState<Set<string>>(() => new Set());
+  const [closingPhase, setClosingPhase] = useState<TabClosePhase>('idle');
+  const tabElementsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const closeTimersRef = useRef<number[]>([]);
+  const closeInProgressRef = useRef(false);
   const ghostRef = useRef<HTMLDivElement>(null);
   const [ghostLabel, setGhostLabel] = useState<string>("");
   const {
@@ -113,21 +123,83 @@ export function DesktopTabBar({
     };
   }, []);
 
+  useEffect(() => () => {
+    closeTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    closeTimersRef.current = [];
+    closeInProgressRef.current = false;
+  }, []);
+
+  const requestTabClose = useCallback((tabIds: string[], commitClose: () => void) => {
+    if (closeInProgressRef.current || tabIds.length === 0) return;
+
+    const prefersReducedMotion = typeof window === 'undefined'
+      || (typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (prefersReducedMotion) {
+      commitClose();
+      return;
+    }
+
+    const renderedTabIds = tabIds.filter((tabId) => {
+      const element = tabElementsRef.current.get(tabId);
+      if (!element) return false;
+      const measuredWidth = Math.max(
+        element.getBoundingClientRect().width,
+        element.offsetWidth,
+        1,
+      );
+      element.style.setProperty('--desktop-tab-close-width', `${measuredWidth}px`);
+      return true;
+    });
+
+    if (renderedTabIds.length === 0) {
+      commitClose();
+      return;
+    }
+
+    closeInProgressRef.current = true;
+    setClosingTabIds(new Set(renderedTabIds));
+    setClosingPhase('fade');
+
+    const fadeTimer = window.setTimeout(() => {
+      setClosingPhase('collapse');
+      const collapseTimer = window.setTimeout(() => {
+        setClosingTabIds(new Set());
+        setClosingPhase('idle');
+        closeInProgressRef.current = false;
+        closeTimersRef.current = [];
+        commitClose();
+      }, TAB_CLOSE_COLLAPSE_MS);
+      closeTimersRef.current.push(collapseTimer);
+    }, TAB_CLOSE_FADE_MS);
+    closeTimersRef.current = [fadeTimer];
+  }, []);
+
   const handleContextMenuAction = useCallback(
     (action: TabContextMenuAction) => {
       if (!contextMenu) return;
+      const targetIndex = workspaceTabs.findIndex((tab) => tab.id === contextMenu.tabId);
       switch (action) {
         case 'closeThisTab':
-          onCloseTab(contextMenu.tabId);
+          requestTabClose([contextMenu.tabId], () => onCloseTab(contextMenu.tabId));
           break;
         case 'closeTabsToRight':
-          onCloseTabsToRight(contextMenu.tabId);
+          requestTabClose(
+            workspaceTabs.slice(targetIndex + 1).map((tab) => tab.id),
+            () => onCloseTabsToRight(contextMenu.tabId),
+          );
           break;
         case 'closeOtherTabs':
-          onCloseOtherTabs(contextMenu.tabId);
+          requestTabClose(
+            workspaceTabs.filter((tab) => tab.id !== contextMenu.tabId).map((tab) => tab.id),
+            () => onCloseOtherTabs(contextMenu.tabId),
+          );
           break;
         case 'closeAllTabs':
-          onCloseAllTabs();
+          requestTabClose(
+            workspaceTabs.map((tab) => tab.id),
+            onCloseAllTabs,
+          );
           break;
       }
     },
@@ -137,6 +209,8 @@ export function DesktopTabBar({
       onCloseOtherTabs,
       onCloseTab,
       onCloseTabsToRight,
+      requestTabClose,
+      workspaceTabs,
     ],
   );
 
@@ -184,13 +258,22 @@ export function DesktopTabBar({
             const active = tab.id === activeTabId;
             const editing = editingTabId === tab.id;
             const label = getTabLabel(tab);
+            const closePhaseClass = closingTabIds.has(tab.id)
+              ? closingPhase === 'collapse'
+                ? ' is-closing--collapse'
+                : ' is-closing--fade'
+              : '';
             return (
               <button
                 key={tab.id}
+                ref={(element) => {
+                  if (element) tabElementsRef.current.set(tab.id, element);
+                  else tabElementsRef.current.delete(tab.id);
+                }}
                 type="button"
                 role="tab"
                 aria-selected={active}
-                className={`desktop-tab${active ? ' is-active' : ''}${draggedTabId === tab.id ? ' is-dragging' : ''}`}
+                className={`desktop-tab${active ? ' is-active' : ''}${draggedTabId === tab.id ? ' is-dragging' : ''}${closePhaseClass}`}
                 onContextMenu={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -207,7 +290,7 @@ export function DesktopTabBar({
                   if (event.button !== 1) return;
                   event.preventDefault();
                   event.stopPropagation();
-                  onCloseTab(tab.id);
+                  requestTabClose([tab.id], () => onCloseTab(tab.id));
                 }}
                 onDoubleClick={() => startEditing(tab)}
                 title={tab.workspacePath ?? label}
@@ -280,7 +363,7 @@ export function DesktopTabBar({
                   title={t.tooltips.closeTab}
                   onClick={(event) => {
                     event.stopPropagation();
-                    onCloseTab(tab.id);
+                    requestTabClose([tab.id], () => onCloseTab(tab.id));
                   }}
                 >
                   <CloseIcon size={11} />
@@ -322,7 +405,13 @@ export function DesktopTabBar({
         />
       )}
       <div className="desktop-tabbar__spacer" />
-      <TooltipButton className="btn btn--icon desktop-tabbar__new" onClick={onNewTab} tooltip={t.tooltips.newTab} icon={<PlusIcon />} />
+      <TooltipButton
+        className="btn btn--icon desktop-tabbar__new"
+        onClick={onNewTab}
+        tooltip={t.tooltips.newTab}
+        shortcut={getEnabledShortcut(state.settings, 'workspaceSelection')}
+        icon={<PlusIcon />}
+      />
       <ToolbarActionMenu
         triggerTooltip={t.topbar.moreActions}
         homeLabel={t.topbar.home}

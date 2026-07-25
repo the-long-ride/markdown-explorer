@@ -68,23 +68,6 @@ export function SettingsPreferencesPanel({
   </div>
 
   <div
-    className="settings-field settings-field--separated"
-  >
-    <div className="settings-item__info">
-      <div className="settings-item__title">{t.themeStyle}</div>
-      <div className="settings-item__desc">
-        {t.themeStyleDesc}
-      </div>
-    </div>
-    <ThemeStylePicker
-      value={state.themeStyle}
-      onChange={setThemeStyle}
-      showCustomThemes
-      onOpenThemeRemix={onOpenThemeRemix}
-    />
-  </div>
-
-  <div
     className="settings-panel-heading settings-panel-heading--secondary"
   >
     {t.viewPrefs}
@@ -238,6 +221,23 @@ export function SettingsPreferencesPanel({
       />
       <span className="switch-slider" />
     </label>
+  </div>
+
+  <div
+    className="settings-field settings-field--separated"
+  >
+    <div className="settings-item__info">
+      <div className="settings-item__title">{t.themeStyle}</div>
+      <div className="settings-item__desc">
+        {t.themeStyleDesc}
+      </div>
+    </div>
+    <ThemeStylePicker
+      value={state.themeStyle}
+      onChange={setThemeStyle}
+      showCustomThemes
+      onOpenThemeRemix={onOpenThemeRemix}
+    />
   </div>
 </div>
 </>

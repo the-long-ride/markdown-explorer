@@ -56,6 +56,20 @@ describe('markdown/renderer', () => {
         expect(html).toContain('mdn-subheading');
       });
 
+      it('assigns unique ids to duplicate heading text', () => {
+        const renderer = new HtmlRenderer();
+        const { html, toc } = renderer.render([
+          { type: 'heading', level: 1, text: 'Fixed' },
+          { type: 'heading', level: 3, text: 'Fixed' },
+          { type: 'heading', level: 2, text: 'Fixed' },
+        ] as BlockToken[]);
+
+        expect(toc.map((entry) => entry.id)).toEqual(['fixed', 'fixed-1', 'fixed-2']);
+        expect(html).toContain('id="fixed"');
+        expect(html).toContain('id="fixed-1"');
+        expect(html).toContain('id="fixed-2"');
+      });
+
       it('adds anchor links', () => {
         const tokens = tokenize('# My Title');
         const renderer = new HtmlRenderer();

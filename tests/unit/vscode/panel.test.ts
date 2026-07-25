@@ -213,6 +213,42 @@ describe('MarkdownDocsPanel', () => {
       expect(openExternal).toHaveBeenCalled();
     });
 
+
+    test('handles openHtmlPreview with an in-memory localhost session', async () => {
+      const openExternal = vi.fn(() => Promise.resolve(true));
+      setupVscodeMock({ env: { clipboard: { writeText: vi.fn() }, openExternal } });
+      const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
+      MarkdownDocsPanel.createOrShow(context, null);
+
+      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
+      await msgHandler({ command: 'openHtmlPreview', documentHtml: '<!doctype html><p>Preview</p>' });
+      expect(openExternal).toHaveBeenCalledWith(expect.stringMatching(/^http:\/\/127\.0\.0\.1:\d+\/preview\//));
+      MarkdownDocsPanel.currentPanel?.dispose();
+    });
+
+    test('ignores empty openHtmlPreview documents', async () => {
+      const openExternal = vi.fn(() => Promise.resolve(true));
+      setupVscodeMock({ env: { clipboard: { writeText: vi.fn() }, openExternal } });
+      const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
+      MarkdownDocsPanel.createOrShow(context, null);
+
+      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
+      await msgHandler({ command: 'openHtmlPreview', documentHtml: '   ' });
+      expect(openExternal).not.toHaveBeenCalled();
+      MarkdownDocsPanel.currentPanel?.dispose();
+    });
+
+    test('handles openExternal with a local file URL', async () => {
+      const openExternal = vi.fn();
+      setupVscodeMock({ env: { clipboard: { writeText: vi.fn() }, openExternal } });
+      const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
+      MarkdownDocsPanel.createOrShow(context, null);
+
+      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
+      await msgHandler({ command: 'openExternal', url: 'file:///tmp/readme.md' });
+      expect(openExternal).toHaveBeenCalled();
+    });
+
     test('ignores openExternal with non-HTTP URL', async () => {
       const openExternal = vi.fn();
       setupVscodeMock({ env: { clipboard: { writeText: vi.fn() }, openExternal } });

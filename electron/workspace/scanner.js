@@ -33,6 +33,7 @@ class DesktopScanner {
     const documentConversionEnabled = options.documentConversionEnabled === true;
     const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
     const onFile = typeof options.onFile === 'function' ? options.onFile : null;
+    const isCurrent = typeof options.isCurrent === 'function' ? options.isCurrent : () => true;
     const YIELD_EVERY = 30;
     const titleConcurrency = Math.max(1, Number(options.titleConcurrency) || 32);
     const titleReadTimeoutMs = Math.max(1, Number(options.titleReadTimeoutMs) || 250);
@@ -45,7 +46,7 @@ class DesktopScanner {
     let filesSinceYield = 0;
     let titleBatch = []; // collect markdown files needing title extraction
 
-    while (dirQueue.length > 0) {
+    while (dirQueue.length > 0 && isCurrent()) {
       const currentDir = dirQueue.shift();
       let entries;
       try {
@@ -56,6 +57,7 @@ class DesktopScanner {
       }
 
       for (const entry of entries) {
+        if (!isCurrent()) break;
         if (excludes.includes(entry.name)) continue;
         const fullPath = path.join(currentDir, entry.name);
 
@@ -72,6 +74,7 @@ class DesktopScanner {
             };
             flat.push(entryObj);
             if (onFile) onFile(entryObj, flat.length);
+            if (!isCurrent()) break;
             if (onProgress && flat.length % 100 === 0) onProgress(flat.length);
             if (isMarkdown) titleBatch.push({ entry: entryObj, isMdx: !!isMdx });
             filesSinceYield++;
@@ -89,9 +92,10 @@ class DesktopScanner {
     // Title reads are optional enrichment. Never hold initial workspace load on a
     // slow disk, network share, antivirus scan, or one unresponsive file handle.
     const titleDeadline = Date.now() + titleExtractionTimeoutMs;
-    for (let i = 0; i < titleBatch.length && Date.now() < titleDeadline; i += titleConcurrency) {
+    for (let i = 0; i < titleBatch.length && Date.now() < titleDeadline && isCurrent(); i += titleConcurrency) {
       const batch = titleBatch.slice(i, i + titleConcurrency);
       await Promise.all(batch.map(async ({ entry, isMdx }) => {
+        if (!isCurrent()) return;
         const remainingMs = titleDeadline - Date.now();
         if (remainingMs <= 0) return;
         let timer;
@@ -115,7 +119,7 @@ class DesktopScanner {
     }
 
     flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
-    if (onProgress) onProgress(flat.length);
+    if (onProgress && isCurrent()) onProgress(flat.length);
     const tree = DesktopScanner.buildTree(flat);
     return { tree, flat };
   }

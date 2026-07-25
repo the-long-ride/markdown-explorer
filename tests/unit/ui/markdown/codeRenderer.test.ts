@@ -141,3 +141,29 @@ describe('markdown/codeRenderer', () => {
     expect(html).toContain('mdn-codeblock');
   });
 });
+
+describe('HTML preview action toolbar', () => {
+  it('renders four icon-only actions in browser, modal, toggle, copy order', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<p>hello</p>' }, 'auto');
+    const classes = [
+      'mdn-open-browser-btn',
+      'mdn-open-modal-btn',
+      'mdn-toggle-preview-btn',
+      'mdn-copy-btn',
+    ];
+    const positions = classes.map((className) => html.indexOf(className));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(html).not.toContain('class="btn-label"');
+  });
+
+  it('adds translated-label hooks and accessible English fallbacks to HTML actions', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<p>hello</p>' }, 'auto');
+    expect(html).toContain('data-i18n-key="openInBrowser"');
+    expect(html).toContain('data-i18n-key="openAsModal"');
+    expect(html).toContain('title="Open in browser"');
+    expect(html).toContain('aria-label="Open in browser"');
+    expect(html).toContain('title="Open as modal"');
+    expect(html).toContain('aria-label="Open as modal"');
+  });
+});

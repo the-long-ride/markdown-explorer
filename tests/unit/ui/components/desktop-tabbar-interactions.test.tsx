@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -227,6 +227,11 @@ describe('DesktopTabBar interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAppState = createMockAppState();
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => ({ matches: true })),
+    });
 
     const homeTab = makeDesktopTab('home', 'home');
     const ws1 = makeDesktopTab('ws1', 'workspace', { workspaceName: 'Docs' });
@@ -317,6 +322,89 @@ describe('DesktopTabBar interactions', () => {
     expect(props.onCloseTab).toHaveBeenCalledTimes(1);
     expect(props.onCloseTab).toHaveBeenCalledWith('ws2');
     expect(props.onSelectTab).not.toHaveBeenCalled();
+  });
+
+  it('fades then collapses a closing workspace tab before invoking the callback', () => {
+    vi.useFakeTimers();
+    try {
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+      renderTabBar();
+      const closeButtons = screen.getAllByLabelText('Close tab');
+      const tab = screen.getAllByRole('tab')[1];
+
+      fireEvent.click(closeButtons[1]);
+      expect(props.onCloseTab).not.toHaveBeenCalled();
+      expect(tab).toHaveClass('is-closing--fade');
+
+      act(() => vi.advanceTimersByTime(90));
+      expect(tab).toHaveClass('is-closing--collapse');
+      expect(props.onCloseTab).not.toHaveBeenCalled();
+
+      act(() => vi.advanceTimersByTime(140));
+      expect(props.onCloseTab).toHaveBeenCalledWith('ws2');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('animates every tab removed by a bulk close action', () => {
+    vi.useFakeTimers();
+    try {
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+      const ws3 = makeDesktopTab('ws3', 'workspace', { workspaceName: 'API' });
+      renderTabBar({ tabs: [...props.tabs, ws3] });
+      const [ws1Tab, ws2Tab, ws3Tab] = screen.getAllByRole('tab');
+      fireEvent.contextMenu(ws1Tab, { clientX: 10, clientY: 10 });
+      fireEvent.click(screen.getByTestId('ctx-close-right'));
+
+      expect(ws2Tab).toHaveClass('is-closing--fade');
+      expect(ws3Tab).toHaveClass('is-closing--fade');
+      expect(props.onCloseTabsToRight).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(230));
+      expect(props.onCloseTabsToRight).toHaveBeenCalledWith('ws1');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('animates every tab removed by close-other-tabs', () => {
+    vi.useFakeTimers();
+    try {
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+      const ws3 = makeDesktopTab('ws3', 'workspace', { workspaceName: 'API' });
+      renderTabBar({ tabs: [...props.tabs, ws3] });
+      const [ws1Tab, ws2Tab, ws3Tab] = screen.getAllByRole('tab');
+      fireEvent.contextMenu(ws2Tab, { clientX: 10, clientY: 10 });
+      fireEvent.click(screen.getByTestId('ctx-close-others'));
+
+      expect(ws1Tab).toHaveClass('is-closing--fade');
+      expect(ws2Tab).not.toHaveClass('is-closing--fade');
+      expect(ws3Tab).toHaveClass('is-closing--fade');
+      expect(props.onCloseOtherTabs).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(230));
+      expect(props.onCloseOtherTabs).toHaveBeenCalledWith('ws2');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('animates every tab removed by close-all-tabs', () => {
+    vi.useFakeTimers();
+    try {
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+      const ws3 = makeDesktopTab('ws3', 'workspace', { workspaceName: 'API' });
+      renderTabBar({ tabs: [...props.tabs, ws3] });
+      const tabs = screen.getAllByRole('tab');
+      fireEvent.contextMenu(tabs[1], { clientX: 10, clientY: 10 });
+      fireEvent.click(screen.getByTestId('ctx-close-all'));
+
+      for (const tab of tabs) expect(tab).toHaveClass('is-closing--fade');
+      expect(props.onCloseAllTabs).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(230));
+      expect(props.onCloseAllTabs).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('right-clicking a tab opens the context menu', () => {

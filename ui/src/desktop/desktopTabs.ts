@@ -34,6 +34,7 @@ export function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
     workspaceUnavailableReason: null,
     contentTabs: [],
     activeContentTabPath: null,
+    workspaceLoadState: kind === 'workspace' ? 'ready' : 'idle',
   };
 }
 
@@ -138,6 +139,7 @@ export function readPersistedDesktopTabs(workspaceAliases: WorkspaceAliasMap): {
       restored.workspaceName = tab.workspaceName;
       restored.workspacePath = tab.workspacePath;
       restored.currentFile = tab.currentFile ?? null;
+      restored.workspaceLoadState = tab.kind === 'workspace' ? 'ready' : 'idle';
       if (restored.workspacePath) {
         restored.alias = workspaceAliases[restored.workspacePath] ?? restored.alias;
       }

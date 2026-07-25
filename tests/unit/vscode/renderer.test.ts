@@ -46,6 +46,20 @@ describe('HtmlRenderer', () => {
       expect(toc[0].text).toBe('My Title');
     });
 
+    test('assigns unique ids to duplicate heading text', () => {
+      const renderer = new HtmlRenderer();
+      const { html, toc } = renderer.render([
+        { type: 'heading', level: 1, text: 'Fixed' },
+        { type: 'heading', level: 3, text: 'Fixed' },
+        { type: 'heading', level: 2, text: 'Fixed' },
+      ] as BlockToken[]);
+
+      expect(toc.map((entry) => entry.id)).toEqual(['fixed', 'fixed-1', 'fixed-2']);
+      expect(html).toContain('id="fixed"');
+      expect(html).toContain('id="fixed-1"');
+      expect(html).toContain('id="fixed-2"');
+    });
+
     test('renders heading with inline markdown', () => {
       const r = new HtmlRenderer();
       const { html } = r.render([heading(2, '**bold** heading')]);

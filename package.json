@@ -5,6 +5,7 @@
   "packageManager": "pnpm@11.9.0",
   "scripts": {
     "test": "vitest run",
+    "test:node": "node --experimental-strip-types --test tests/node/*.test.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:electron": "vitest run --project electron",

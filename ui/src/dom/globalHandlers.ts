@@ -33,8 +33,12 @@ export function setHtmlMode(wrap: HTMLElement, mode: string) {
     if (langLabel) langLabel.textContent = 'HTML Preview';
     if (previewBody) previewBody.style.display = '';
     if (codeBody) codeBody.style.display = 'none';
-    if (tooltipText) tooltipText.textContent = 'Show Code';
+    const showCodeLabel = toggleBtn?.dataset.labelShowCode || 'Show Code';
+    if (tooltipText) tooltipText.textContent = showCodeLabel;
     if (toggleBtn) {
+      toggleBtn.title = showCodeLabel;
+      toggleBtn.setAttribute('aria-label', showCodeLabel);
+      toggleBtn.dataset.i18nKey = 'showCode';
       const svg = toggleBtn.querySelector('svg');
       if (svg) {
         svg.outerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>';
@@ -44,8 +48,12 @@ export function setHtmlMode(wrap: HTMLElement, mode: string) {
     if (langLabel) langLabel.textContent = 'HTML';
     if (previewBody) previewBody.style.display = 'none';
     if (codeBody) codeBody.style.display = 'flex';
-    if (tooltipText) tooltipText.textContent = 'Show Preview';
+    const showPreviewLabel = toggleBtn?.dataset.labelShowPreview || 'Show Preview';
+    if (tooltipText) tooltipText.textContent = showPreviewLabel;
     if (toggleBtn) {
+      toggleBtn.title = showPreviewLabel;
+      toggleBtn.setAttribute('aria-label', showPreviewLabel);
+      toggleBtn.dataset.i18nKey = 'showPreview';
       const svg = toggleBtn.querySelector('svg');
       if (svg) {
         svg.outerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -93,6 +101,8 @@ export function initGlobalHandlers() {
   win.UI.collapseAll = collapseAll;
   win.UI.setHtmlMode = setHtmlMode;
   win.UI.toggleHtmlMode = toggleHtmlMode;
+  win.UI.openHtmlPreview ||= () => {};
+  win.UI.openHtmlPreviewModal ||= () => {};
   win.UI.refresh = () => {
     // Handled by React bridge, but provide a fallback
   };

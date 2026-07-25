@@ -199,9 +199,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [bridge, state.currentFile]);
 
   const refresh = useCallback(() => {
+    if (!state.currentFile) return;
     dispatch({ type: 'SET_LOADING' });
     bridge.postMessage({ command: 'refresh' });
-  }, [bridge]);
+  }, [bridge, state.currentFile]);
 
   const toggleTheme = useCallback(() => {
     const next: ThemeMode =

@@ -197,6 +197,17 @@ describe('chrome-host bus command handlers', () => {
       openSpy.mockRestore();
     });
 
+
+    it('opens valid file URL in a new tab', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      sendWebviewMessage({ command: 'openExternal', url: 'file:///tmp/readme.md' });
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(openSpy).toHaveBeenCalledWith('file:///tmp/readme.md', '_blank');
+      openSpy.mockRestore();
+    });
+
     it('opens valid uppercase HTTPS URL', async () => {
       const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 

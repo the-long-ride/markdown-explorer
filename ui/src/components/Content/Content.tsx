@@ -2,7 +2,7 @@
 // components/Content/Content.tsx — Main content area (rendered HTML + effects)
 // =============================================================================
 
-import { useRef, memo, lazy, Suspense } from "react";
+import { useRef, useState, useCallback, useEffect, memo, lazy, Suspense } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -10,6 +10,18 @@ import { getTranslations } from "../../contexts/translations";
 import { WelcomePage } from "./WelcomePage";
 import { AlertTriangleIcon, FileNotFoundIcon, FolderIcon, TrashIcon } from "../shared/icons";
 import { useContentEffects } from "./useContentEffects";
+import { HtmlPreviewModal } from "../Modal/HtmlPreviewModal";
+import {
+  LinkContextMenu,
+  type LinkContextMenuState,
+} from "../shared/LinkContextMenu";
+import {
+  documentBaseHref,
+  injectBaseHref,
+  openHtmlPreviewInBrowser,
+  prepareStandaloneHtmlPreview,
+} from "../../dom/htmlPreviewActions";
+import type { ResolvedLink } from "../../dom/linkContextMenu";
 // Highlighting deliberately skips language-(txt|text|plain|plaintext) blocks.
 
 export { isWorkspaceNavigationHref } from "./contentUtils";
@@ -35,6 +47,24 @@ const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 });
 
+function buildRenderedDocumentSnapshot(
+  contentHtml: string,
+  title: string,
+  baseHref: string | null,
+  fragment: string,
+): string {
+  const safeTitle = title.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character] || character);
+  const hash = fragment.startsWith('#') ? fragment : '';
+  const scriptHash = JSON.stringify(hash)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+  const snapshot = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><style>html{scroll-behavior:smooth}body{max-width:960px;margin:0 auto;padding:32px;font:16px/1.6 system-ui,sans-serif;color:#202124;background:#fff}img,video,svg{max-width:100%;height:auto}pre{overflow:auto;padding:16px;border-radius:8px;background:#f5f5f5}table{border-collapse:collapse;max-width:100%}th,td{border:1px solid #d7d7d7;padding:6px 10px}@media(prefers-color-scheme:dark){body{color:#eceff4;background:#181a1f}pre{background:#24272e}th,td{border-color:#4b505c}}</style></head><body>${contentHtml}<script>window.addEventListener('load',function(){var hash=${scriptHash};if(hash){location.hash=hash;var target=document.getElementById(decodeURIComponent(hash.slice(1)));if(target)target.scrollIntoView({block:'center'});}});<\/script></body></html>`;
+  return injectBaseHref(snapshot, baseHref);
+}
+
 export function formatPreviewDuration(durationMs: number | undefined): string {
   if (!Number.isFinite(durationMs) || !durationMs) return "";
   if (durationMs < 1000) return `${Math.max(1, Math.round(durationMs))} ms`;
@@ -57,12 +87,14 @@ interface ContentProps {
   onImageClick: (el: HTMLElement) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   suppressWelcome?: boolean;
+  onCancelWorkspaceScan?: () => void;
 }
 
 export function Content({
   onImageClick,
   scrollRef,
   suppressWelcome = false,
+  onCancelWorkspaceScan,
 }: ContentProps) {
   const { state, navigate, refresh, updateSettings } = useAppState();
   const currentLang = state.settings.language || "en";
@@ -70,6 +102,10 @@ export function Content({
   const { push } = useNavigation();
   const bridge = usePlatform();
   const bodyRef = useRef<HTMLDivElement>(null);
+  const [htmlModal, setHtmlModal] = useState<{ documentHtml: string; trigger: HTMLElement } | null>(null);
+  const [linkMenu, setLinkMenu] = useState<LinkContextMenuState | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const actionNoticeTimerRef = useRef<number | null>(null);
   const workspaceUnavailablePath = state.workspaceUnavailablePath;
   const previewInfo = state.previewInfo;
   const previewDuration = formatPreviewDuration(previewInfo?.durationMs);
@@ -106,6 +142,70 @@ export function Content({
     ? state.recentWorkspaces.some((item) => item.path === workspaceUnavailablePath)
     : false;
 
+  const showActionNotice = useCallback((message: string) => {
+    setActionNotice(message);
+    if (actionNoticeTimerRef.current !== null) window.clearTimeout(actionNoticeTimerRef.current);
+    actionNoticeTimerRef.current = window.setTimeout(() => setActionNotice(null), 2600);
+  }, []);
+
+  useEffect(() => () => {
+    if (actionNoticeTimerRef.current !== null) window.clearTimeout(actionNoticeTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    setLinkMenu(null);
+    setHtmlModal(null);
+  }, [state.currentFile, state.renderVersion]);
+
+  const handleOpenHtmlModal = useCallback((documentHtml: string, trigger: HTMLElement) => {
+    setLinkMenu(null);
+    setHtmlModal({
+      documentHtml: prepareStandaloneHtmlPreview(documentHtml, state.currentFile),
+      trigger,
+    });
+  }, [state.currentFile]);
+
+  const handleOpenResolvedLink = useCallback((link: ResolvedLink) => {
+    setLinkMenu(null);
+    if (!link.openable) {
+      showActionNotice(t.previewActions.unableToOpenLink);
+      return;
+    }
+    if (link.kind === "fragment") {
+      const fragment = link.raw.startsWith("#") ? link.raw : new URL(link.resolved).hash;
+      const documentHtml = buildRenderedDocumentSnapshot(
+        state.contentHtml,
+        state.relativePath || state.currentFile || "Markdown Explorer",
+        documentBaseHref(state.currentFile),
+        fragment,
+      );
+      openHtmlPreviewInBrowser({
+        bridge,
+        runtime: state.appRuntime || "desktop",
+        documentHtml,
+        currentFile: state.currentFile,
+        title: state.relativePath || state.currentFile || t.previewActions.modalTitle,
+        onError: () => showActionNotice(t.previewActions.unableToOpenLink),
+      });
+      return;
+    }
+    bridge.postMessage({ command: "openExternal", url: link.resolved });
+  }, [bridge, showActionNotice, state.appRuntime, state.contentHtml, state.currentFile, state.relativePath, t.previewActions.unableToOpenLink]);
+
+  const handleCopyResolvedLink = useCallback(async (link: ResolvedLink) => {
+    if (!link.copyable) {
+      showActionNotice(t.previewActions.copyFailed);
+      return;
+    }
+    try {
+      await bridge.copyToClipboard(link.resolved);
+      setLinkMenu(null);
+      showActionNotice(t.previewActions.linkCopied);
+    } catch {
+      showActionNotice(t.previewActions.copyFailed);
+    }
+  }, [bridge, showActionNotice, t.previewActions.copyFailed, t.previewActions.linkCopied]);
+
   useContentEffects({
     state,
     bodyRef,
@@ -114,6 +214,10 @@ export function Content({
     navigate,
     push,
     bridge,
+    previewLabels: t.previewActions,
+    onOpenHtmlModal: handleOpenHtmlModal,
+    onOpenLinkMenu: setLinkMenu,
+    onActionError: showActionNotice,
   });
   // Frontmatter header
   const fmEntries = Object.entries(state.frontmatter);
@@ -128,8 +232,9 @@ export function Content({
   };
 
   return (
-    <main className="content" id="mainContent">
-      <div className="content__scroll" id="contentScroll" ref={scrollRef}>
+    <>
+      <main className="content" id="mainContent">
+        <div className="content__scroll" id="contentScroll" ref={scrollRef}>
         {/* Loading */}
         {state.isLoading && (
           <div
@@ -140,6 +245,15 @@ export function Content({
             <div className="state-screen__title">{state.loadingLabel || "Loading docs..."}</div>
             {state.loadingDetail && (
               <div className="state-screen__sub">{state.loadingDetail}</div>
+            )}
+            {onCancelWorkspaceScan && (
+              <button
+                type="button"
+                className="btn state-screen__cancel"
+                onClick={onCancelWorkspaceScan}
+              >
+                {t.tooltips.cancelScan}
+              </button>
             )}
           </div>
         )}
@@ -315,10 +429,29 @@ export function Content({
               <HtmlContent html={state.contentHtml} />
             </div>
           )}
-      </div>
-    </main>
+        </div>
+      </main>
+      {htmlModal && (
+        <HtmlPreviewModal
+          documentHtml={htmlModal.documentHtml}
+          title={t.previewActions.modalTitle}
+          closeLabel={t.previewActions.closeModal}
+          trigger={htmlModal.trigger}
+          onClose={() => setHtmlModal(null)}
+        />
+      )}
+      {linkMenu && (
+        <LinkContextMenu
+          state={linkMenu}
+          menuLabel={t.previewActions.linkMenu}
+          openLabel={t.previewActions.openInBrowser}
+          copyLabel={t.previewActions.copyLink}
+          onOpen={handleOpenResolvedLink}
+          onCopy={handleCopyResolvedLink}
+          onClose={() => setLinkMenu(null)}
+        />
+      )}
+      {actionNotice && <div className="mdn-action-notice" role="status">{actionNotice}</div>}
+    </>
   );
 }
-
-
-

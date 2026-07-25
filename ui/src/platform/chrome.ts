@@ -54,9 +54,7 @@ export function createChromeBridge(): PlatformBridge {
     },
 
     copyToClipboard(text: string) {
-      navigator.clipboard.writeText(text).catch(err => {
-        console.error('Failed to write to clipboard:', err);
-      });
+      return navigator.clipboard.writeText(text);
     },
   };
 }

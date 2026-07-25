@@ -32,6 +32,7 @@ export interface HtmlRendererOptions {
 
 export class HtmlRenderer {
   private readonly toc: TocEntry[] = [];
+  private readonly headingIdCounts = new Map<string, number>();
   private readonly theme: string;
   private readonly isMdx: boolean;
 
@@ -110,9 +111,16 @@ export class HtmlRenderer {
 
   // ── Collapsible section ────────────────────────────────────
 
+  private nextHeadingId(text: string): string {
+    const baseId = slugify(text);
+    const duplicateIndex = this.headingIdCounts.get(baseId) ?? 0;
+    this.headingIdCounts.set(baseId, duplicateIndex + 1);
+    return duplicateIndex === 0 ? baseId : `${baseId}-${duplicateIndex}`;
+  }
+
   private renderSection(section: Section): string {
     const { level, text } = section.heading;
-    const id = slugify(text);
+    const id = this.nextHeadingId(text);
     const headingHtml = renderInline(text, this.isMdx);
 
     this.toc.push({ level, text, id });
@@ -166,7 +174,7 @@ export class HtmlRenderer {
   }
 
   private renderSubHeading(token: HeadingToken): string {
-    const id = slugify(token.text);
+    const id = this.nextHeadingId(token.text);
     const html = renderInline(token.text, this.isMdx);
     this.toc.push({ level: token.level, text: token.text, id });
     return `<h${token.level} class="mdn-subheading" id="${id}">

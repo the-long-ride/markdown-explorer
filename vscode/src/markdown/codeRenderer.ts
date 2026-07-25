@@ -1,6 +1,7 @@
 import type { CodeBlockToken } from './parser';
 import { highlight } from './highlighter';
 import { escHtml, renderButton, shortId } from '../utils';
+import { buildHtmlPreviewDocument, hasRenderableHtmlContent } from './htmlPreviewDocument';
 export function renderCodeBlock(token: CodeBlockToken, theme: string): string {
     const lang = escHtml(token.lang || 'text');
     const firstWord = token.content.trim().split(/[\s\n\r]/)[0];
@@ -22,94 +23,50 @@ export function renderCodeBlock(token: CodeBlockToken, theme: string): string {
 
     if (lang.toLowerCase() === 'html') {
       const iframeId = shortId('html');
-      const wrappedDoc = `<!DOCTYPE html>
-<html lang="en" data-theme="${theme}">
-<head>
-<meta charset="UTF-8" />
-<style>
-  :root {
-    --font-ui: -apple-system, 'Segoe UI', system-ui, sans-serif;
-    --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
-    --accent: #8b7cf8;
-    --success: #34d399;
-    --danger: #f87171;
-  }
-  [data-theme="dark"], [data-theme="auto"] {
-    --bg: #1a1a1e; --bg-s: #222228; --bg-e: #2a2a32; --bg-h: #31313c; --bg-a: #383845; --bg-code: #17171c;
-    --bd: rgba(255,255,255,.10); --bd-s: rgba(255,255,255,.18); --bd-x: rgba(255,255,255,.26);
-    --tx: #e2e2e8; --tx2: #9191a4; --txm: #56566a; --txc: #93c5fd;
-  }
-  [data-theme="light"] {
-    --bg: #f7f6f3; --bg-s: #faf9f6; --bg-e: #efede8; --bg-h: #e5e3dd; --bg-a: #d8d5cd; --bg-code: #f0ede8;
-    --bd: rgba(0,0,0,.11); --bd-s: rgba(0,0,0,.18); --bd-x: rgba(0,0,0,.28);
-    --tx: #1c1c20; --tx2: #484854; --txm: #666672; --txc: #3730a3;
-  }
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] {
-      --bg: #f7f6f3; --bg-s: #faf9f6; --bg-e: #efede8; --bg-h: #e5e3dd; --bg-a: #d8d5cd; --bg-code: #f0ede8;
-      --bd: rgba(0,0,0,.11); --bd-s: rgba(0,0,0,.18); --bd-x: rgba(0,0,0,.28);
-      --tx: #1c1c20; --tx2: #484854; --txm: #666672; --txc: #3730a3;
-    }
-  }
-  body {
-    margin: 0;
-    padding: 16px;
-    font-family: var(--font-ui);
-    color: var(--tx);
-    background: transparent;
-  }
-</style>
-</head>
-<body>
-${token.content}
-<script>
-  (function() {
-    function sendHeight() {
-      window.parent.postMessage({
-        type: 'resize-iframe',
-        id: '${iframeId}',
-        height: document.documentElement.scrollHeight || document.body.scrollHeight
-      }, '*');
-    }
-    window.addEventListener('load', sendHeight);
-    window.addEventListener('DOMContentLoaded', sendHeight);
-    let lastHeight = 0;
-    setInterval(function() {
-      let currentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-      if (currentHeight !== lastHeight) {
-        lastHeight = currentHeight;
-        sendHeight();
-      }
-    }, 100);
-    window.addEventListener('message', function(event) {
-      if (event.data && event.data.type === 'set-theme') {
-        document.documentElement.setAttribute('data-theme', event.data.theme);
-        setTimeout(sendHeight, 50);
-      } else if (event.data && event.data.type === 'recalculate-height') {
-        sendHeight();
-      }
-    });
-  })();
-</script>
-</body>
-</html>`;
+      const wrappedDoc = buildHtmlPreviewDocument(token.content, {
+        theme,
+        iframeId,
+        target: 'inline',
+      });
 
       const escapedDoc = escHtml(wrappedDoc);
       const highlighted = highlight(token.content, token.lang);
       const hasCustomHighlight = highlighted !== escHtml(token.content);
       const isCustom = hasCustomHighlight ? ' is-custom-highlighted' : '';
 
-      const contentWithoutScripts = token.content.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, '');
-      const contentWithoutStyles = contentWithoutScripts.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, '');
-      const contentWithoutComments = contentWithoutStyles.replace(/<!--[\s\S]*?-->/g, '');
-      const showCodeByDefault = contentWithoutComments.trim() === '';
+      const showCodeByDefault = !hasRenderableHtmlContent(token.content);
 
       const copyBtnHtml = renderButton({
         className: 'mdn-copy-btn',
         onClick: 'UI.copyCode(this)',
-        label: 'Copy',
+        label: 'Copy code',
         tooltip: 'Copy code',
+        title: 'Copy code',
+        ariaLabel: 'Copy code',
+        dataI18nKey: 'copyCode',
         iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+      });
+
+      const openBrowserBtnHtml = renderButton({
+        className: 'mdn-open-browser-btn',
+        onClick: 'UI.openHtmlPreview(this)',
+        label: 'Open in browser',
+        tooltip: 'Open in browser',
+        title: 'Open in browser',
+        ariaLabel: 'Open in browser',
+        dataI18nKey: 'openInBrowser',
+        iconHtml: '<svg width="13" height="13" viewBox="0 0 122.88 115.71" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M116.56,3.69l-3.84,53.76l-17.69-15c-19.5,8.72-29.96,23.99-30.51,43.77c-17.95-26.98-7.46-50.4,12.46-65.97 L64.96,3L116.56,3.69L116.56,3.69z M28.3,0h14.56v19.67H32.67c-4.17,0-7.96,1.71-10.72,4.47c-2.75,2.75-4.46,6.55-4.46,10.72 l-0.03,46c0.03,4.16,1.75,7.95,4.5,10.71c2.76,2.76,6.56,4.48,10.71,4.48h58.02c4.15,0,7.95-1.72,10.71-4.48 c2.76-2.76,4.48-6.55,4.48-10.71v-6.96h17.01v11.33c0,7.77-3.2,17.04-8.32,22.16c-5.12,5.12-12.21,8.32-19.98,8.32H28.3 c-7.77,0-14.86-3.2-19.98-8.32C3.19,102.26,0,95.18,0,87.41l0.03-59.1C0,20.52,3.19,13.43,8.31,8.31C13.43,3.19,20.51,0,28.3,0 L28.3,0z"/></svg>'
+      });
+
+      const openModalBtnHtml = renderButton({
+        className: 'mdn-open-modal-btn',
+        onClick: 'UI.openHtmlPreviewModal(this)',
+        label: 'Open as modal',
+        tooltip: 'Open as modal',
+        title: 'Open as modal',
+        ariaLabel: 'Open as modal',
+        dataI18nKey: 'openAsModal',
+        iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 8h18M15 12h3v3M18 12l-5 5"/></svg>'
       });
 
       const toggleBtnHtml = renderButton({
@@ -117,6 +74,9 @@ ${token.content}
         onClick: 'UI.toggleHtmlMode(this)',
         label: showCodeByDefault ? 'Show Preview' : 'Show Code',
         tooltip: showCodeByDefault ? 'Show Preview' : 'Show Code',
+        title: showCodeByDefault ? 'Show Preview' : 'Show Code',
+        ariaLabel: showCodeByDefault ? 'Show Preview' : 'Show Code',
+        dataI18nKey: showCodeByDefault ? 'showPreview' : 'showCode',
         iconHtml: showCodeByDefault
           ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'
           : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>'
@@ -134,16 +94,19 @@ ${token.content}
         ? `<button class="mdn-codeblock-toggle-btn" onclick="UI.toggleCodeCollapse(this)">Show More</button>`
         : '';
 
-      return `<div class="mdn-codeblock mdn-html-preview-wrap" data-mode="${showCodeByDefault ? 'code' : 'preview'}"${totalLines > 20 ? ' data-collapsed="true"' : ''}>
+      return `<div class="mdn-codeblock mdn-html-preview-wrap" data-preview-theme="${escHtml(theme)}" data-mode="${showCodeByDefault ? 'code' : 'preview'}"${totalLines > 20 ? ' data-collapsed="true"' : ''}>
   <div class="mdn-codeblock-header">
     <span class="mdn-codeblock-lang">${showCodeByDefault ? 'HTML' : 'HTML Preview'}</span>
     <div style="display:flex;gap:4px;align-items:center">
+      ${openBrowserBtnHtml}
+      ${openModalBtnHtml}
       ${toggleBtnHtml}
       ${copyBtnHtml}
     </div>
   </div>
   <div class="mdn-html-preview-body" style="${showCodeByDefault ? 'display:none' : ''}">
     <iframe id="${iframeId}" class="mdn-html-preview-iframe" sandbox="allow-scripts" srcdoc="${escapedDoc}"></iframe>
+    <template class="mdn-html-preview-source">${escHtml(token.content)}</template>
   </div>
   <div class="mdn-codeblock-body" style="${showCodeByDefault ? '' : 'display:none'}">
     ${gutterHtml}

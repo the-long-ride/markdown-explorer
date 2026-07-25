@@ -36,6 +36,7 @@ export function AppView(props: any) {
   closeTabsToRight,
   closeOtherTabs,
   closeAllTabs,
+  cancelCurrentWorkspaceScan,
   updateTabAlias,
   toggleTheme,
   setSettingsOpen,
@@ -99,11 +100,6 @@ export function AppView(props: any) {
   return (
     <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.appRuntime === 'tauri' ? ' app--tauri' : ''}${isFullscreen ? ' app--fullscreen' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
-      {state.isWorkspaceScanning && (
-        <div className="workspace-scan-progress" role="status" aria-live="polite">
-          Scanning {state.scannedFiles.toLocaleString()} files…
-        </div>
-      )}
       {isTabView && (
         <DesktopTabBar
           tabs={tabs}
@@ -126,6 +122,16 @@ export function AppView(props: any) {
           onFullscreenToggle={toggleFullscreen}
         />
       )}
+      {state.isWorkspaceScanning && (
+        <div className="workspace-scan-progress" role="status" aria-live="polite">
+          <span>Scanning {state.scannedFiles.toLocaleString()} files…</span>
+          {isTabView && (
+            <button type="button" className="workspace-scan-progress__cancel" onClick={cancelCurrentWorkspaceScan}>
+              {t.tooltips.cancelScan}
+            </button>
+          )}
+        </div>
+      )}
       {isTabView && activeTabId === 'home' ? (
         <main className="tab-home">
           <div className="content__scroll" id="homeContentScroll">
@@ -133,12 +139,30 @@ export function AppView(props: any) {
           </div>
         </main>
       ) : !state.workspaceName ? (
-        <WorkspaceSelection
-          onBeforeOpenWorkspace={prepareWorkspaceOpen}
-          embeddedInTabs={isTabView}
-          workspaceAliases={workspaceAliases}
-          onWorkspaceAliasChange={updateWorkspaceAlias}
-        />
+        isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
+          <main className="tab-loading">
+            <div className="state-screen state-screen--tab-loading">
+              <div className="spinner" />
+              <div className="state-screen__title">{state.loadingLabel || 'Loading docs...'}</div>
+              {state.isWorkspaceScanning && (
+                <div className="state-screen__sub">
+                  Scanning {state.scannedFiles.toLocaleString()} files…
+                </div>
+              )}
+              {state.loadingDetail && <div className="state-screen__sub">{state.loadingDetail}</div>}
+              <button type="button" className="btn state-screen__cancel" onClick={cancelCurrentWorkspaceScan}>
+                {t.tooltips.cancelScan}
+              </button>
+            </div>
+          </main>
+        ) : (
+          <WorkspaceSelection
+            onBeforeOpenWorkspace={prepareWorkspaceOpen}
+            embeddedInTabs={isTabView}
+            workspaceAliases={workspaceAliases}
+            onWorkspaceAliasChange={updateWorkspaceAlias}
+          />
+        )
       ) : (
         <>
           {!isTabView && (
@@ -166,6 +190,7 @@ export function AppView(props: any) {
                   onImageClick={onImageClick}
                   scrollRef={scrollRef}
                   suppressWelcome={isTabView}
+                  onCancelWorkspaceScan={isTabView ? cancelCurrentWorkspaceScan : undefined}
                 />
                 {/* Scroll to top button */}
                 <TooltipButton

@@ -97,6 +97,7 @@ export function App() {
     closeTabsToRight,
     closeOtherTabs,
     closeAllTabs,
+    cancelCurrentWorkspaceScan,
     updateTabAlias,
     updateWorkspaceAlias,
     crossTabSearchItems,
@@ -116,11 +117,13 @@ export function App() {
     modalOpen,
     openDroppedPath,
     openDroppedFolder: useCallback((handle: any) => {
-      bridge.postMessage({ command: 'openFolder', handle, openFirstFile: true });
-    }, [bridge]),
+      const operation = prepareWorkspaceOpen();
+      bridge.postMessage({ command: 'openFolder', handle, openFirstFile: true, ...operation });
+    }, [bridge, prepareWorkspaceOpen]),
     openDroppedFileHandle: useCallback((handle: any) => {
-      bridge.postMessage({ command: 'openFileHandle', handle });
-    }, [bridge]),
+      const operation = prepareWorkspaceOpen();
+      bridge.postMessage({ command: 'openFileHandle', handle, ...operation });
+    }, [bridge, prepareWorkspaceOpen]),
   });
   const openSearch = useCallback((scope: SearchScope = 'current') => {
     setSearchScope(scope);
@@ -328,7 +331,7 @@ export function App() {
     );
   }
 
-  if ((state.isLoading || state.isWorkspaceScanning) && !state.workspaceName) {
+  if (!isTabView && (state.isLoading || state.isWorkspaceScanning) && !state.workspaceName) {
     return (
       <div className="state-screen state-screen--initial-loading">
         <div className="spinner" />
@@ -362,6 +365,7 @@ export function App() {
       closeTabsToRight={closeTabsToRight}
       closeOtherTabs={closeOtherTabs}
       closeAllTabs={closeAllTabs}
+      cancelCurrentWorkspaceScan={cancelCurrentWorkspaceScan}
       updateTabAlias={updateTabAlias}
       toggleTheme={toggleTheme}
       setSettingsOpen={setSettingsOpen}

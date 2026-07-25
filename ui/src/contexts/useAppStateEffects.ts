@@ -13,6 +13,7 @@ import {
 } from '../theme/customThemes';
 import type { HostMessage, PersistedState, WebviewMessage } from '../types';
 import type { Action, AppState } from './appStateReducer';
+import { acceptsWorkspaceHostMessage } from '../desktop/workspaceOperations';
 
 type AppStateEffectsArgs = {
   bridge: {
@@ -68,6 +69,18 @@ export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldL
   // Listen for host messages
   useEffect(() => {
     const unsub = bridge.onMessage((msg) => {
+      const workspaceScopedCommands = new Set([
+        'readyAck',
+        'workspaceFilesChanged',
+        'currentFileChanged',
+        'renderContent',
+        'workspaceUnavailable',
+        'setLoading',
+        'workspaceScanProgress',
+      ]);
+      if (workspaceScopedCommands.has(msg.command) && !acceptsWorkspaceHostMessage(msg)) {
+        return;
+      }
       switch (msg.command) {
         case 'readyAck':
           // Check saved appearance state because mount effects can race host ready.

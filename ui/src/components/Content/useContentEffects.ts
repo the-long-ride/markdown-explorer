@@ -1,6 +1,14 @@
 import { useEffect, useRef } from "react";
 import { isWorkspaceNavigationHref } from "./contentUtils";
 import { scheduleContentEnhancements } from "./scheduleContentEnhancements";
+import {
+  applyPreviewActionTranslations,
+  getHtmlPreviewDocument,
+  openHtmlPreviewInBrowser,
+  type PreviewActionLabels,
+} from "../../dom/htmlPreviewActions";
+import { resolveRenderedLink } from "../../dom/linkContextMenu";
+import type { LinkContextMenuState } from "../shared/LinkContextMenu";
 
 interface ContentEffectsArgs {
   state: any;
@@ -10,6 +18,10 @@ interface ContentEffectsArgs {
   navigate: (path: string) => void;
   push: (path: string) => void;
   bridge: any;
+  previewLabels: PreviewActionLabels;
+  onOpenHtmlModal: (documentHtml: string, trigger: HTMLElement) => void;
+  onOpenLinkMenu: (state: LinkContextMenuState) => void;
+  onActionError: (message: string) => void;
 }
 
 export function useContentEffects({
@@ -20,6 +32,10 @@ export function useContentEffects({
   navigate,
   push,
   bridge,
+  previewLabels,
+  onOpenHtmlModal,
+  onOpenLinkMenu,
+  onActionError,
 }: ContentEffectsArgs) {
   const scrollPositionsRef = useRef<Record<string, number>>({});
   const lastFileRef = useRef<string | null>(null);
@@ -74,6 +90,22 @@ export function useContentEffects({
     const body = bodyRef.current;
     if (!body || state.isLoading || state.notFoundHref || state.workspaceUnavailablePath) return;
 
+    applyPreviewActionTranslations(body, previewLabels);
+
+    const handleContextMenu = (event: MouseEvent) => {
+      if (!(event.target instanceof Element)) return;
+      const anchor = event.target.closest<HTMLAnchorElement>("a[href], a[data-mdn-target]");
+      if (!anchor || !body.contains(anchor)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onOpenLinkMenu({
+        x: event.clientX,
+        y: event.clientY,
+        anchor,
+        link: resolveRenderedLink(anchor, state.currentFile || ""),
+      });
+    };
+
     // Sticky table header (JS-based, because overflow-x:auto blocks native sticky)
     const scrollContainer = scrollRef.current;
     const handleScroll = () => {
@@ -111,6 +143,39 @@ export function useContentEffects({
     // Image / mermaid click → media modal
     const handleClick = (e: Event) => {
       const target = e.target as HTMLElement;
+
+      const openBrowserBtn = target.closest(".mdn-open-browser-btn") as HTMLElement | null;
+      if (openBrowserBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const documentHtml = getHtmlPreviewDocument(openBrowserBtn);
+        if (!documentHtml) {
+          onActionError(previewLabels.openError);
+          return;
+        }
+        openHtmlPreviewInBrowser({
+          bridge,
+          runtime: state.appRuntime || "desktop",
+          documentHtml,
+          currentFile: state.currentFile,
+          title: previewLabels.modalTitle,
+          onError: () => onActionError(previewLabels.openError),
+        });
+        return;
+      }
+
+      const openModalBtn = target.closest(".mdn-open-modal-btn") as HTMLElement | null;
+      if (openModalBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const documentHtml = getHtmlPreviewDocument(openModalBtn, "modal");
+        if (!documentHtml) {
+          onActionError(previewLabels.openError);
+          return;
+        }
+        onOpenHtmlModal(documentHtml, openModalBtn);
+        return;
+      }
 
       // Chromium Extension Manifest V3 CSP Event Delegation for inline handlers
       const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
@@ -359,6 +424,7 @@ export function useContentEffects({
       }
     };
     body.addEventListener("click", handleClick);
+    body.addEventListener("contextmenu", handleContextMenu);
 
     const stopEnhancements = scheduleContentEnhancements({
       body,
@@ -382,8 +448,9 @@ export function useContentEffects({
     }
 
     return () => {
-    stopEnhancements();
+      stopEnhancements();
       body.removeEventListener("click", handleClick);
+      body.removeEventListener("contextmenu", handleContextMenu);
       if (scrollContainer) {
         scrollContainer.removeEventListener("scroll", handleScroll);
       }
@@ -399,5 +466,11 @@ export function useContentEffects({
     navigate,
     scrollRef,
     bridge,
+    previewLabels,
+    onOpenHtmlModal,
+    onOpenLinkMenu,
+    onActionError,
+    state.currentFile,
+    state.appRuntime,
   ]);
 }

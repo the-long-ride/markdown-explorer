@@ -12,7 +12,7 @@ use crate::workspace::open::{
 };
 use crate::workspace::recents::{RecentWorkspaceInput, RecentWorkspacesStore};
 use crate::workspace::scanner::{
-    build_tree, scan, scan_with_callbacks, DocumentKind, MdFile, ScanOptions,
+    build_tree, scan, scan_with_callbacks_and_cancel, DocumentKind, MdFile, ScanOptions,
 };
 use crate::workspace::watch::{WatchChange, WorkspaceWatchController};
 use serde_json::{json, Value};
@@ -131,7 +131,7 @@ mod settings;
 // "searchAcrossWorkspaces" =>, "searchWorkspace" =>, "indexWorkspaceSearchItems" =>,
 // "loadWorkspaceSearchIndexes" =>, "confirmOpenPath" =>, "openRecentWorkspace" =>,
 // "deleteRecentWorkspace" =>, "replaceRecentWorkspaces" =>, "closeWorkspace" =>,
-// "zoom-out" =>, "openInEditor" =>, "copyCode" =>, "openExternal" =>,
+// "zoom-out" =>, "openInEditor" =>, "copyCode" =>, "openExternal" =>, "openHtmlPreview" =>,
 // "refresh" =>, "setDocumentConversion" =>, "downloadUpdate" =>,
 // "scheduleDownloadedUpdate" =>, "restartAndApplyUpdate" =>, "window-minimize" =>,
 // "window-maximize" => { window.set_fullscreen(false); window.is_fullscreen(); host_message::emit_fullscreen_changed(&self.app, false); window.is_maximized() },

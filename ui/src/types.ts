@@ -55,8 +55,15 @@ export interface UpdateState {
 
 // ── Host → Webview messages ─────────────────────────────────────────────────
 
+export interface WorkspaceOperationMetadata {
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
+}
+
 export interface RenderContentMessage {
   readonly command: 'renderContent';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly html: string;
   readonly markdownSource?: string | null;
   readonly frontmatter: Frontmatter;
@@ -91,6 +98,8 @@ export type HostPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
 
 export interface ReadyAckMessage {
   readonly command: 'readyAck';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly fileList: MdFile[];
   readonly tree: FolderNode | null;
   readonly theme: string;
@@ -111,6 +120,8 @@ export interface ReadyAckMessage {
 
 export interface WorkspaceFilesChangedMessage {
   readonly command: 'workspaceFilesChanged';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly fileList: MdFile[];
   readonly tree: FolderNode | null;
   readonly workspaceName: string;
@@ -120,6 +131,8 @@ export interface WorkspaceFilesChangedMessage {
 
 export interface CurrentFileChangedMessage {
   readonly command: 'currentFileChanged';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly filePath: string;
 }
 
@@ -172,12 +185,16 @@ export interface WorkspaceSearchIndexLoadedMessage {
 
 export interface SetLoadingMessage {
   readonly command: 'setLoading';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly label?: string;
   readonly detail?: string;
 }
 
 export interface WorkspaceScanProgressMessage {
   readonly command: 'workspaceScanProgress';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly scannedFiles: number;
   readonly active: boolean;
 }
@@ -220,6 +237,8 @@ export type WorkspaceUnavailableReason = 'missing' | 'locked';
 
 export interface WorkspaceUnavailableMessage {
   readonly command: 'workspaceUnavailable';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly workspacePath: string;
   readonly workspaceName: string;
   readonly reason: WorkspaceUnavailableReason;
@@ -278,27 +297,37 @@ export interface RefreshMessage {
 
 export interface OpenFolderMessage {
   readonly command: 'openFolder';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly openFirstFile?: boolean;
   readonly handle?: any;
 }
 
 export interface OpenFileMessage {
   readonly command: 'openFile';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
 }
 
 export interface OpenFileHandleMessage {
   readonly command: 'openFileHandle';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly handle?: any;
 }
 
 export interface OpenPathMessage {
   readonly command: 'openPath';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly path: string;
   readonly openFirstFile?: boolean;
 }
 
 export interface ActivateWorkspaceMessage {
   readonly command: 'activateWorkspace';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly workspacePath: string;
   readonly filePath?: string;
   readonly openFirstFile?: boolean;
@@ -338,12 +367,24 @@ export interface ConfirmOpenPathMessage {
 
 export interface OpenRecentWorkspaceMessage {
   readonly command: 'openRecentWorkspace';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
   readonly path: string;
   readonly openFirstFile?: boolean;
 }
 
 export interface CloseWorkspaceMessage {
   readonly command: 'closeWorkspace';
+  readonly workspaceOperationId?: string;
+}
+
+export interface CancelWorkspaceScanMessage {
+  readonly command: 'cancelWorkspaceScan';
+  readonly workspaceOperationId: string;
+}
+
+export interface CancelAllWorkspaceScansMessage {
+  readonly command: 'cancelAllWorkspaceScans';
 }
 
 export interface DeleteRecentWorkspaceMessage {
@@ -391,6 +432,11 @@ export interface OpenExternalMessage {
   readonly url: string;
 }
 
+export interface OpenHtmlPreviewMessage {
+  readonly command: 'openHtmlPreview';
+  readonly documentHtml: string;
+}
+
 export interface SetDocumentConversionMessage {
   readonly command: 'setDocumentConversion';
   readonly enabled: boolean;
@@ -428,6 +474,8 @@ export type WebviewMessage =
   | ConfirmOpenPathMessage
   | OpenRecentWorkspaceMessage
   | CloseWorkspaceMessage
+  | CancelWorkspaceScanMessage
+  | CancelAllWorkspaceScansMessage
   | DeleteRecentWorkspaceMessage
   | ReplaceRecentWorkspacesMessage
   | ZoomInMessage
@@ -438,6 +486,7 @@ export type WebviewMessage =
   | ToggleFullscreenMessage
   | UpdateAppearanceMessage
   | OpenExternalMessage
+  | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage
   | DownloadUpdateMessage
   | ScheduleDownloadedUpdateMessage

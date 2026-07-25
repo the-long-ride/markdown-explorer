@@ -55,6 +55,7 @@ export async function scanWorkspaceIncrementally({
   };
 
   const scanPromise = BrowserScanner.scan(handle, {
+    isCurrent,
     onProgress(count) {
       if (isCurrent()) onProgress(count);
     },

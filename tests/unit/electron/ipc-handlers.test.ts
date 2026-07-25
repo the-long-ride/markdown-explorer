@@ -46,6 +46,7 @@ describe('registerIpcHandlers', () => {
       downloadUpdate: vi.fn(() => Promise.resolve()),
       scheduleDownloadedUpdate: vi.fn(() => Promise.resolve()),
       restartAndApplyUpdate: vi.fn(() => Promise.resolve()),
+      openHtmlPreview: vi.fn(() => Promise.resolve()),
     };
     getMainWindow = vi.fn();
     shell = { openExternal: vi.fn(), openPath: vi.fn() };
@@ -243,7 +244,12 @@ describe('registerIpcHandlers', () => {
       expect(shell.openExternal).not.toHaveBeenCalled();
     });
 
-    test('rejects non-HTTP URL', () => {
+    test('opens local file URLs', () => {
+      registeredHandler(null, { command: 'openExternal', url: 'file:///tmp/readme.md' });
+      expect(shell.openExternal).toHaveBeenCalledWith('file:///tmp/readme.md');
+    });
+
+    test('rejects unsupported URL schemes', () => {
       registeredHandler(null, { command: 'openExternal', url: 'ftp://example.com' });
       expect(shell.openExternal).not.toHaveBeenCalled();
     });
@@ -251,6 +257,18 @@ describe('registerIpcHandlers', () => {
     test('rejects empty URL', () => {
       registeredHandler(null, { command: 'openExternal', url: '' });
       expect(shell.openExternal).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('openHtmlPreview', () => {
+    test('passes non-empty HTML to the in-memory preview server handler', async () => {
+      await registeredHandler(null, { command: 'openHtmlPreview', documentHtml: '<!doctype html><p>Preview</p>' });
+      expect(handlers.openHtmlPreview).toHaveBeenCalledWith('<!doctype html><p>Preview</p>');
+    });
+
+    test('rejects empty preview documents', async () => {
+      await registeredHandler(null, { command: 'openHtmlPreview', documentHtml: '   ' });
+      expect(handlers.openHtmlPreview).not.toHaveBeenCalled();
     });
   });
 

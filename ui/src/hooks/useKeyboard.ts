@@ -6,6 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAppState } from '../contexts/AppStateContext';
 import { usePlatform } from '../contexts/PlatformContext';
+import { requestAnimatedContentTabClose } from '../components/Content/contentTabCloseEvents';
 
 interface UseKeyboardOptions {
   onSearchOpen: () => void;
@@ -70,7 +71,17 @@ export function useKeyboard({
   onWorkspaceSelection,
 }: UseKeyboardOptions) {
   const { back, forward } = useNavigation();
-  const { state, toggleTheme, toggleSidebar, navigate, refresh, closeContentTab, closeContentTabsToRight, closeOtherContentTabs, closeAllContentTabs } = useAppState();
+  const {
+    state,
+    toggleTheme,
+    toggleSidebar,
+    navigate,
+    refresh,
+    closeContentTab,
+    closeAllContentTabs,
+    closeContentTabsToRight,
+    closeOtherContentTabs,
+  } = useAppState();
   const bridge = usePlatform();
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
@@ -89,6 +100,12 @@ export function useKeyboard({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (!state.currentFile && e.key === 'F5') {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
       const action = resolveKeyboardAction(e, {
         isDesktop,
         isDesktopLike,
@@ -202,16 +219,33 @@ export function useKeyboard({
           onToggleFullscreen?.();
           break;
         case 'close-content-tab':
-          if (state.activeContentTabPath) closeContentTab(state.activeContentTabPath);
+          if (state.activeContentTabPath) {
+            const filePath = state.activeContentTabPath;
+            if (!requestAnimatedContentTabClose({ action: 'closeThisTab', filePath })) {
+              closeContentTab(filePath);
+            }
+          }
           break;
         case 'close-all-content-tabs':
-          closeAllContentTabs();
+          if (!requestAnimatedContentTabClose({ action: 'closeAllTabs' })) {
+            closeAllContentTabs();
+          }
           break;
         case 'close-content-tabs-to-right':
-          if (state.activeContentTabPath) closeContentTabsToRight(state.activeContentTabPath);
+          if (state.activeContentTabPath) {
+            const filePath = state.activeContentTabPath;
+            if (!requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath })) {
+              closeContentTabsToRight(filePath);
+            }
+          }
           break;
         case 'close-other-content-tabs':
-          if (state.activeContentTabPath) closeOtherContentTabs(state.activeContentTabPath);
+          if (state.activeContentTabPath) {
+            const filePath = state.activeContentTabPath;
+            if (!requestAnimatedContentTabClose({ action: 'closeOtherTabs', filePath })) {
+              closeOtherContentTabs(filePath);
+            }
+          }
           break;
         case 'refresh':
           refresh();
@@ -276,9 +310,9 @@ export function useKeyboard({
     toggleTheme,
     toggleSidebar,
     closeContentTab,
+    closeAllContentTabs,
     closeContentTabsToRight,
     closeOtherContentTabs,
-    closeAllContentTabs,
     bridge,
     keybindings,
     isDesktop,
@@ -306,5 +340,7 @@ export function useKeyboard({
     onToggleDesktopViewMode,
     onToggleFullscreen,
     onWorkspaceSelection,
+    state.activeContentTabPath,
+    state.currentFile,
   ]);
 }

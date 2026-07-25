@@ -243,6 +243,11 @@ export interface OpenExternalMessage {
   readonly url: string;
 }
 
+export interface OpenHtmlPreviewMessage {
+  readonly command: 'openHtmlPreview';
+  readonly documentHtml: string;
+}
+
 export interface SetDocumentConversionMessage {
   readonly command: 'setDocumentConversion';
   readonly enabled: boolean;
@@ -266,4 +271,5 @@ export type WebviewMessage =
   | ZoomOutMessage
   | UpdateAppearanceMessage
   | OpenExternalMessage
+  | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage;
