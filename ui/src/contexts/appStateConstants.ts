@@ -20,10 +20,12 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   zoomOut: 'Ctrl+-',
   locateFile: 'Ctrl+Q',
   toggleFocusMode: 'Ctrl+Alt+F',
+  toggleHtmlPreview: 'Ctrl+Alt+H',
 };
 
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   ...DEFAULT_KEYBINDINGS,
+  settings: 'Ctrl+,',
   searchCurrent: 'Ctrl+F',
   searchAllTabs: 'Ctrl+Shift+F',
   findCurrentFile: 'F',
@@ -31,6 +33,7 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleSidebar: 'Ctrl+B',
   workspaceSelection: 'Ctrl+N',
   toggleDesktopViewMode: 'Ctrl+Alt+T',
+  openCurrentDocumentLocation: 'Shift+Alt+R',
   closeContentTab: 'Ctrl+W',
   closeAllContentTabs: 'Ctrl+Shift+W',
   closeContentTabsToRight: 'Ctrl+Alt+W',
@@ -79,9 +82,14 @@ export const THEME_STYLE_OPTIONS: readonly {
     label: 'Vercel',
     description: 'High-contrast monochrome, sharp borders, and geometric focus.',
   },
+  {
+    id: 'tokyo-night',
+    label: 'Tokyo Night',
+    description: 'Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast.',
+  },
 ];
 
-export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-shiba';
+export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-white-shiba';
 
 export const PET_THEME_STYLE_OPTIONS: readonly {
   id: PetThemeStyle;
@@ -92,16 +100,6 @@ export const PET_THEME_STYLE_OPTIONS: readonly {
     id: 'pet-white-shiba',
     label: 'White Shiba',
     description: 'Snowy fur, warm ears, and a calm little desk buddy.',
-  },
-  {
-    id: 'pet-shiba',
-    label: 'Normal Shiba',
-    description: 'Toasted orange, curled-tail energy with cheerful paw trails.',
-  },
-  {
-    id: 'pet-shiba-memes',
-    label: 'Black Shiba',
-    description: 'A dark Shiba theme with inky fur, bright eyes, and cheerful desk-buddy energy.',
   },
   {
     id: 'pet-k-ink',
@@ -151,6 +149,8 @@ export function normalizeThemeMode(value: unknown): ThemeMode {
 }
 
 export function normalizeThemeStyle(value: unknown): ThemeStyle {
+  if (value === 'pet-shiba-memes') return 'tokyo-night';
+  if (value === 'pet-shiba') return 'pet-white-shiba';
   return ALL_THEME_STYLE_OPTIONS.some((option) => option.id === value)
     ? (value as ThemeStyle)
     : 'default';

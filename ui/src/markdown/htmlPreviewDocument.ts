@@ -46,11 +46,22 @@ export function buildHtmlPreviewDocument(
   content: string,
   options: HtmlPreviewDocumentOptions = {},
 ): string {
-  const theme = options.theme || 'auto';
   const target = options.target || 'inline';
   const baseTag = options.baseHref
     ? `<base href="${escapeAttribute(options.baseHref)}" />\n`
     : '';
+  const networkGuard = `<script data-mdn-network-guard>
+(function () {
+  function blocked(name) {
+    return function () { throw new Error('Markdown Explorer local-first preview blocked ' + name + '.'); };
+  }
+  try { Object.defineProperty(window, 'fetch', { configurable: false, writable: false, value: blocked('fetch') }); } catch (_) {}
+  try { Object.defineProperty(window, 'XMLHttpRequest', { configurable: false, writable: false, value: blocked('XMLHttpRequest') }); } catch (_) {}
+  try { Object.defineProperty(window, 'WebSocket', { configurable: false, writable: false, value: blocked('WebSocket') }); } catch (_) {}
+  try { Object.defineProperty(window, 'EventSource', { configurable: false, writable: false, value: blocked('EventSource') }); } catch (_) {}
+  try { Object.defineProperty(navigator, 'sendBeacon', { configurable: false, writable: false, value: blocked('sendBeacon') }); } catch (_) {}
+})();
+</script>`;
   const resizeScript = target === 'inline' && options.iframeId
     ? `<script data-mdn-inline-resize>
   (function() {
@@ -72,57 +83,18 @@ export function buildHtmlPreviewDocument(
       }
     }, 100);
     window.addEventListener('message', function(event) {
-      if (event.data && event.data.type === 'set-theme') {
-        document.documentElement.setAttribute('data-theme', event.data.theme);
-        setTimeout(sendHeight, 50);
-      } else if (event.data && event.data.type === 'recalculate-height') {
-        sendHeight();
-      }
+      if (event.data && event.data.type === 'recalculate-height') sendHeight();
     });
   })();
 </script>`
     : '';
 
   return `<!DOCTYPE html>
-<html lang="en" data-theme="${escapeAttribute(theme)}">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 ${baseTag}<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {
-    --font-ui: -apple-system, 'Segoe UI', system-ui, sans-serif;
-    --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
-    --accent: #8b7cf8;
-    --success: #34d399;
-    --danger: #f87171;
-  }
-  [data-theme="dark"], [data-theme="auto"] {
-    --bg: #1a1a1e; --bg-s: #222228; --bg-e: #2a2a32; --bg-h: #31313c; --bg-a: #383845; --bg-code: #17171c;
-    --bd: rgba(255,255,255,.10); --bd-s: rgba(255,255,255,.18); --bd-x: rgba(255,255,255,.26);
-    --tx: #e2e2e8; --tx2: #9191a4; --txm: #56566a; --txc: #93c5fd;
-  }
-  [data-theme="light"] {
-    --bg: #f7f6f3; --bg-s: #faf9f6; --bg-e: #efede8; --bg-h: #e5e3dd; --bg-a: #d8d5cd; --bg-code: #f0ede8;
-    --bd: rgba(0,0,0,.11); --bd-s: rgba(0,0,0,.18); --bd-x: rgba(0,0,0,.28);
-    --tx: #1c1c20; --tx2: #484854; --txm: #666672; --txc: #3730a3;
-  }
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] {
-      --bg: #f7f6f3; --bg-s: #faf9f6; --bg-e: #efede8; --bg-h: #e5e3dd; --bg-a: #d8d5cd; --bg-code: #f0ede8;
-      --bd: rgba(0,0,0,.11); --bd-s: rgba(0,0,0,.18); --bd-x: rgba(0,0,0,.28);
-      --tx: #1c1c20; --tx2: #484854; --txm: #666672; --txc: #3730a3;
-    }
-  }
-  html, body { min-height: 100%; }
-  body {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 16px;
-    font-family: var(--font-ui);
-    color: var(--tx);
-    background: ${target === 'inline' ? 'transparent' : 'var(--bg)'};
-  }
-</style>
+${networkGuard}
 </head>
 <body>
 ${content}

@@ -13,8 +13,6 @@ import type { PetThemeStyle, ThemeStyle } from "../../types";
 import { useAppState } from "../../contexts/AppStateContext";
 import { getTranslations } from "../../contexts/translations";
 import whiteShibaPet from "../../assets/themes/pets/backgrounds/white-shiba-happy.png";
-import shibaPet from "../../assets/themes/pets/backgrounds/shiba-happy.png";
-import blackShibaPet from "../../assets/themes/pets/backgrounds/shiba-memes-happy.png";
 import kInkPet from "../../assets/themes/pets/backgrounds/k-ink-wolf.png";
 import catPet from "../../assets/themes/pets/backgrounds/cat-happy.png";
 import hamsterPet from "../../assets/themes/pets/backgrounds/hamster-happy.png";
@@ -31,8 +29,6 @@ interface ThemeStylePickerProps {
 
 const PET_IMAGE_URLS: Record<PetThemeStyle, string> = {
   "pet-white-shiba": whiteShibaPet,
-  "pet-shiba": shibaPet,
-  "pet-shiba-memes": blackShibaPet,
   "pet-k-ink": kInkPet,
   "pet-cat": catPet,
   "pet-hamster": hamsterPet,
@@ -148,6 +144,9 @@ export function ThemeStylePicker({
         } else if (option.id === "vercel") {
           label = t.themeStyles.vercelLabel;
           desc = t.themeStyles.vercelDesc;
+        } else if (option.id === "tokyo-night") {
+          label = t.themeStyles.tokyoNightLabel;
+          desc = t.themeStyles.tokyoNightDesc;
         }
         return (
           <button

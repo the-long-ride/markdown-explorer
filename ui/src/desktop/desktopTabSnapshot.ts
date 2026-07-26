@@ -23,6 +23,7 @@ export function snapshotDesktopTab(
     currentFile: state.currentFile,
     contentHtml: state.contentHtml,
     markdownSource: state.markdownSource,
+    sourceDocumentText: state.sourceDocumentText,
     frontmatter: state.frontmatter,
     toc: state.toc,
     previewInfo: state.previewInfo,

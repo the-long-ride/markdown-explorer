@@ -57,22 +57,6 @@
       }
     },
     {
-      "name": "Tauri Desktop App (live UI)",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "run",
-        "start:tauri:live"
-      ],
-      "console": "integratedTerminal",
-      "presentation": {
-        "group": "debug",
-        "order": 4
-      }
-    },
-    {
       "name": "Web Demo",
       "type": "chrome",
       "request": "attach",

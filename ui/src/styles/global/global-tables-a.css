@@ -5,10 +5,3 @@
 .mdn-table-view-menu__option.is-selected {
   background: var(--accent-dim);
 }
-.mdn-section-heading-level {
-  color: var(--tx2);
-  visibility: hidden;
-}
-.mdn-section-header:hover .mdn-section-heading-level {
-  visibility: visible;
-}

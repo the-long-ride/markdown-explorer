@@ -69,8 +69,9 @@ describe('formatShortcutLabel', () => {
     expect(formatShortcutLabel('a+b+c')).toBe('A+B+C');
   });
 
-  test('multi-char parts preserved', () => {
-    expect(formatShortcutLabel('Ctrl+ArrowLeft')).toBe('Ctrl+ArrowLeft');
+  test('left and right arrows use compact glyphs', () => {
+    expect(formatShortcutLabel('Ctrl+ArrowLeft')).toBe('Ctrl+←');
+    expect(formatShortcutLabel('Alt+ArrowRight')).toBe('Alt+→');
   });
 
   test('empty parts filtered', () => {

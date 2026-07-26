@@ -444,6 +444,8 @@ body {
 .desktop-tab.is-dragging {
   opacity: 0.58;
   cursor: grabbing;
+  border-color: var(--accent);
+  border-style: dashed;
 }
 
 .desktop-tab.is-drop-target {
@@ -533,4 +535,59 @@ body {
   font-weight: 700;
   padding: 0 6px;
   outline: none;
+}
+
+/* Shared header actions in desktop Tabs view. */
+.header-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.desktop-tabbar__navigation-actions,
+.desktop-tabbar__document-actions {
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__navigation-separator,
+.desktop-tabbar__window-separator {
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__navigation-actions .btn,
+.desktop-tabbar__document-actions .btn {
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
+}
+
+@media (max-width: 1120px) {
+  .desktop-tabbar__brand .topbar__logo-subtitle {
+    display: none;
+  }
+
+  .desktop-tabbar__brand {
+    min-width: auto;
+  }
+}
+
+.topbar__action-btn,
+.topbar__new-workspace-btn {
+  width: var(--control-h, 30px);
+  height: var(--control-h, 30px);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--tx2);
+}
+
+.topbar__action-btn:hover,
+.topbar__action-btn:focus-visible,
+.topbar__new-workspace-btn:hover,
+.topbar__new-workspace-btn:focus-visible {
+  border-color: var(--bd-x);
+  background: var(--bg-h);
+  color: var(--tx);
 }

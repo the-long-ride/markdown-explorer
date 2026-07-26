@@ -73,6 +73,7 @@ function createMockState(overrides: Record<string, unknown> = {}) {
       fileTabs: true,
       showTitle: false,
       defaultHtmlPreview: true,
+      defaultCsvPreview: true,
       documentConversion: false,
       scopeFocus: {},
       searchScopeFocus: {},
@@ -543,7 +544,7 @@ describe('App render', () => {
     });
   });
 
-  it('renders floating tab toolbar in tab view with workspace and non-home tab active', async () => {
+  it('does not render the floating toolbar in tab view', async () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.setItem('markdown-explorer-terms-accepted', 'true');
     localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
@@ -557,8 +558,9 @@ describe('App render', () => {
     };
     render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTestId('floating-tab-toolbar')).toBeInTheDocument();
+      expect(screen.getByTestId('desktop-tab-bar')).toBeInTheDocument();
     });
+    expect(screen.queryByTestId('floating-tab-toolbar')).not.toBeInTheDocument();
   });
 
   it('renders drop overlay when isDragging', async () => {

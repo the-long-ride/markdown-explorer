@@ -52,4 +52,30 @@ describe('website homepage positioning', () => {
     expect(base).toContain('.hero-proof-list');
     expect(responsive).toContain('.hero-product-preview');
   });
+  test('documents the latest HTML, data, workspace, and store work with screenshots', () => {
+    const html = read('website/index.html');
+    const english = read('website/i18n/en.js');
+    const readme = read('README.md');
+    const latestStyles = read('website/styles/base.part2.css');
+
+    expect(html).toContain('id="latest-features"');
+    expect(html).toContain('data-i18n="latestHtmlTitle"');
+    expect(html).toContain('data-i18n="latestDataTitle"');
+    expect(html).toContain('data-i18n="latestWorkspaceTitle"');
+    expect(html).toContain('data-i18n="latestStoresTitle"');
+    expect(html).toContain('Supported-HTML-File-Preview.png');
+    expect(html).toContain('View-data-table-easier-than-ever.png');
+    expect(html).toContain('VS-Code-style-mutli-workspace-multi-document-tabs.png');
+    expect(english).toContain('Microsoft Store and Ubuntu App Center');
+    expect(latestStyles).toMatch(
+      /\.latest-feature-grid \.feature-card img \{[\s\S]*height: auto;/,
+    );
+
+    expect(readme).toContain('## Features');
+    expect(readme).toContain('CSV and TSV Code Fences');
+    expect(readme).toContain('Open in Browser');
+    expect(readme).toContain('Microsoft Store and Ubuntu App Center');
+    expect(readme).toContain('media/demo/chart-for datatable-and-CSV-TSV.png');
+  });
+
 });

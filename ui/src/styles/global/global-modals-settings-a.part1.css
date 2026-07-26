@@ -472,3 +472,13 @@
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-s));
   color: var(--tx);
 }
+
+/* The Appearance wrapper is the single left-pane scroll owner. */
+.settings-card--settings .settings-appearance-scroll {
+  overflow-y: auto;
+}
+.settings-card--settings .settings-card__column--preferences {
+  overflow: visible;
+  max-height: none;
+  padding-right: 0;
+}

@@ -10,7 +10,9 @@ import {
 
 const labels = {
   openInBrowser: 'Browser', openAsModal: 'Modal', showCode: 'Code', showPreview: 'Preview',
-  copyCode: 'Copy', modalTitle: 'HTML', closeModal: 'Close', openError: 'Error',
+  copyCode: 'Copy', plainText: 'Plain', csvPreviewTitle: 'CSV data', tsvPreviewTitle: 'TSV data',
+  csvMalformedQuote: 'Malformed fields', csvUnevenRows: 'Uneven rows',
+  modalTitle: 'HTML', closeModal: 'Close', openError: 'Error',
   linkMenu: 'Links', copyLink: 'Copy link', linkCopied: 'Copied', unableToOpenLink: 'No open', copyFailed: 'No copy',
 };
 
@@ -42,6 +44,25 @@ describe('html preview actions', () => {
     expect(button.getAttribute('aria-label')).toBe('Browser');
     expect(button.querySelector('.tooltip-text')?.textContent).toBe('Browser');
     const toggle = document.querySelector('.mdn-toggle-preview-btn')!;
+    expect(toggle.getAttribute('data-label-show-code')).toBe('Code');
+    expect(toggle.getAttribute('data-label-show-preview')).toBe('Preview');
+  });
+
+  test('translates CSV preview titles, warnings, and plain text labels', () => {
+    document.body.innerHTML = `
+      <div class="mdn-codeblock mdn-csv-preview-wrap" data-mode="preview">
+        <span class="mdn-codeblock-lang" data-i18n-preview-key="csvPreviewTitle">CSV Preview</span>
+        <button class="mdn-toggle-csv-btn" data-i18n-key="showCode"><span class="tooltip-text"></span></button>
+        <div data-i18n-content-key="csvMalformedQuote">fallback</div>
+      </div>
+      <span data-i18n-content-key="plainText">PLAIN TEXT</span>`;
+
+    applyPreviewActionTranslations(document.body, labels);
+
+    expect(document.querySelector('.mdn-codeblock-lang')?.textContent).toBe('CSV data');
+    expect(document.querySelector('[data-i18n-content-key="csvMalformedQuote"]')?.textContent).toBe('Malformed fields');
+    expect(document.querySelector('[data-i18n-content-key="plainText"]')?.textContent).toBe('Plain');
+    const toggle = document.querySelector('.mdn-toggle-csv-btn')!;
     expect(toggle.getAttribute('data-label-show-code')).toBe('Code');
     expect(toggle.getAttribute('data-label-show-preview')).toBe('Preview');
   });

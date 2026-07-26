@@ -53,16 +53,28 @@ function registerRuntimeCommandHandlers(context) {
     const folders = dialog.showOpenDialogSync(getMainWindow(), {
       properties: ["openDirectory"],
     });
-    if (folders && folders.length > 0) {
-      const selectedFolder = folders[0];
-      recentWorkspacesStore.save(selectedFolder);
-      sendRecentWorkspacesChanged();
-      state.workspacePath = selectedFolder;
-      state.currentFile = null;
-      bindWorkspaceWatch();
-      sendLoading("Loading workspace...");
-      sendWorkspaceData().then((completed) => completed && sendInitialContent(openFirstFile));
+    if (!folders || folders.length === 0) {
+      sendHostMessage({
+        command: "workspaceOpenCancelled",
+        workspaceOperationId: operation.workspaceOperationId,
+        workspaceTabId: operation.workspaceTabId,
+      });
+      state.workspaceOperationId = null;
+      state.workspaceTabId = null;
+      return;
     }
+
+    const selectedFolder = folders[0];
+    if (operation.replaceRecentWorkspacePath && operation.replaceRecentWorkspacePath !== selectedFolder) {
+      recentWorkspacesStore.remove(operation.replaceRecentWorkspacePath);
+    }
+    recentWorkspacesStore.save(selectedFolder);
+    sendRecentWorkspacesChanged();
+    state.workspacePath = selectedFolder;
+    state.currentFile = null;
+    bindWorkspaceWatch();
+    sendLoading("Loading workspace...");
+    sendWorkspaceData().then((completed) => completed && sendInitialContent(openFirstFile));
   }
 
   function handleOpenFile(operation = {}) {

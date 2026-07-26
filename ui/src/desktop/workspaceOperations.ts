@@ -59,24 +59,10 @@ interface WorkspaceCancellationTab {
   workspaceLoadState?: 'idle' | 'loading' | 'ready';
 }
 
-export function resolveWorkspaceCancellationFallback<T extends WorkspaceCancellationTab>(
+export function resetCancelledWorkspaceTab<T extends WorkspaceCancellationTab>(
   tabs: readonly T[],
   cancelledTabId: string,
-): {
-  remainingTabs: T[];
-  readyWorkspaceTabId: string | null;
-  homeTabId: string | null;
-} {
-  const remainingTabs = tabs.filter((tab) => tab.id !== cancelledTabId);
-  const readyWorkspace = [...remainingTabs].reverse().find((tab) =>
-    tab.kind === 'workspace'
-      && Boolean(tab.workspacePath)
-      && tab.workspaceLoadState !== 'loading',
-  );
-  const homeTab = remainingTabs.find((tab) => tab.kind === 'home');
-  return {
-    remainingTabs,
-    readyWorkspaceTabId: readyWorkspace?.id ?? null,
-    homeTabId: homeTab?.id ?? null,
-  };
+  createNewTab: (id: string) => T,
+): T[] {
+  return tabs.map((tab) => tab.id === cancelledTabId ? createNewTab(cancelledTabId) : tab);
 }

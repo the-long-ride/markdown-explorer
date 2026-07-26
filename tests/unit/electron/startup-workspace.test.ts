@@ -59,6 +59,7 @@ describe('startup workspace', () => {
       },
       async sendWorkspaceData() {
         calls.push('workspace');
+        return true;
       },
       async sendInitialContent(openFirstFile: boolean) {
         calls.push(`content:${openFirstFile}`);
@@ -94,7 +95,7 @@ describe('runDeferredLoad', () => {
       ensureHeavyModules() { calls.push('heavy'); },
       bindWorkspaceWatch() { calls.push('watch'); },
       sendLoading(label: string) { calls.push(`loading:${label}`); },
-      async sendWorkspaceData() { calls.push('workspace'); },
+      async sendWorkspaceData() { calls.push('workspace'); return true; },
       async sendInitialContent(openFirstFile: boolean) { calls.push(`content:${openFirstFile}`); },
       openFirstFile: true,
       sendUpdateState() { calls.push('updates'); },
@@ -130,12 +131,26 @@ describe('runDeferredLoad', () => {
       ensureHeavyModules() { calls.push('heavy'); },
       bindWorkspaceWatch() { calls.push('watch'); },
       sendLoading() { calls.push('loading'); },
-      async sendWorkspaceData() { calls.push('workspace'); },
+      async sendWorkspaceData() { calls.push('workspace'); return true; },
       async sendInitialContent() { calls.push('content'); },
       sendUpdateState: undefined as any,
       onError: undefined as any,
     });
     expect(calls).toEqual(['loading', 'heavy', 'watch', 'workspace', 'content']);
+  });
+
+  test('stops when the workspace scan is no longer current', async () => {
+    const calls: string[] = [];
+    await runDeferredLoad({
+      ensureHeavyModules() { calls.push('heavy'); },
+      bindWorkspaceWatch() { calls.push('watch'); },
+      sendLoading() { calls.push('loading'); },
+      async sendWorkspaceData() { calls.push('workspace'); return false; },
+      async sendInitialContent() { calls.push('content'); },
+      sendUpdateState() { calls.push('updates'); },
+      onError() { calls.push('error'); },
+    });
+    expect(calls).toEqual(['loading', 'heavy', 'watch', 'workspace']);
   });
 
   test('openFirstFile defaults to false', async () => {
@@ -144,7 +159,7 @@ describe('runDeferredLoad', () => {
       ensureHeavyModules() {},
       bindWorkspaceWatch() {},
       sendLoading() {},
-      async sendWorkspaceData() {},
+      async sendWorkspaceData() { return true; },
       async sendInitialContent(openFirstFile: boolean) { calls.push(`open:${openFirstFile}`); },
       sendUpdateState() {},
       onError() {},

@@ -44,6 +44,7 @@ export interface HrToken {
 export interface CodeBlockToken {
   type: "code";
   lang: string;
+  meta?: string;
   content: string;
 }
 
@@ -109,11 +110,38 @@ export function parse(markdown: string, isMdx = false): ParseResult {
 
 // ── Frontmatter ────────────────────────────────────────────
 
+function scanFrontmatterPreamble(text: string): number {
+  let index = 0;
+
+  const skipBlankLines = () => {
+    while (index < text.length) {
+      const match = /^[ \t]*(?:\n|$)/.exec(text.slice(index));
+      if (!match || match[0] === '') break;
+      index += match[0].length;
+      if (!match[0].endsWith('\n')) break;
+    }
+  };
+
+  skipBlankLines();
+  while (text.startsWith('<!--', index)) {
+    const closingIndex = text.indexOf('-->', index + 4);
+    if (closingIndex === -1) return -1;
+    index = closingIndex + 3;
+    if (text[index] === '\r' && text[index + 1] === '\n') index += 2;
+    else if (text[index] === '\n' || text[index] === '\r') index += 1;
+    skipBlankLines();
+  }
+
+  return index;
+}
+
 function extractFrontmatter(text: string): {
   body: string;
   frontmatter: Record<string, string>;
 } {
-  const match = /^---\n([\s\S]*?)\n---\n?/.exec(text);
+  const frontmatterStart = scanFrontmatterPreamble(text);
+  if (frontmatterStart < 0) return { body: text, frontmatter: {} };
+  const match = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text.slice(frontmatterStart));
   if (!match) return { body: text, frontmatter: {} };
 
   const frontmatter: Record<string, string> = {};
@@ -125,7 +153,10 @@ function extractFrontmatter(text: string): {
       frontmatter[key] = val;
     }
   }
-  return { body: text.slice(match[0].length), frontmatter };
+
+  const preservedPreamble = text.slice(0, frontmatterStart);
+  const bodyAfterFrontmatter = text.slice(frontmatterStart + match[0].length);
+  return { body: `${preservedPreamble}${bodyAfterFrontmatter}`, frontmatter };
 }
 
 // ── Block tokenizer ────────────────────────────────────────
@@ -209,10 +240,11 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     }
 
     // Fenced code block
-    const fenceMatch = /^(`{3,}|~{3,})([\w.-]*)/.exec(line);
+    const fenceMatch = /^(`{3,}|~{3,})\s*([^\s`]*)?(?:\s+(.*?))?\s*$/.exec(line);
     if (fenceMatch) {
       const fence = fenceMatch[1];
-      const lang = fenceMatch[2].trim();
+      const lang = (fenceMatch[2] ?? '').trim();
+      const meta = (fenceMatch[3] ?? '').trim();
       const codeLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].startsWith(fence)) {
@@ -220,7 +252,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         i++;
       }
       i++; // consume closing fence
-      tokens.push({ type: "code", lang, content: codeLines.join("\n") });
+      tokens.push({ type: "code", lang, ...(meta ? { meta } : {}), content: codeLines.join("\n") });
       continue;
     }
 

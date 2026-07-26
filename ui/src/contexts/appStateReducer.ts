@@ -61,6 +61,7 @@ export function reducer(
         workspaceName: action.workspaceName,
         workspacePath: action.workspacePath,
         markdownSource: null,
+        currentHtmlPreviewOverride: workspaceChanged ? undefined : state.currentHtmlPreviewOverride,
         previewInfo: null,
         settings: {
           ...state.settings,
@@ -104,14 +105,27 @@ export function reducer(
       const nextFileList = action.msg.fileList ?? state.fileList;
       const isMdx = filePath ? filePath.endsWith('.mdx') : false;
       const rendered = action.msg.markdownSource
-        ? renderMarkdownClientSide(action.msg.markdownSource, filePath, isMdx)
+        ? renderMarkdownClientSide(action.msg.markdownSource, filePath, isMdx, state.settings)
         : { html: action.msg.html, frontmatter: action.msg.frontmatter, toc: action.msg.toc };
+      const existingTab = filePath
+        ? state.contentTabs.find(
+            (item) => normalizePathKey(item.filePath) === normalizePathKey(filePath),
+          )
+        : undefined;
+      const retainedCurrentOverride =
+        filePath && normalizePathKey(state.currentFile ?? '') === normalizePathKey(filePath)
+          ? state.currentHtmlPreviewOverride
+          : undefined;
+      const resolvedHtmlPreviewOverride =
+        action.htmlPreviewOverride ?? existingTab?.htmlPreviewOverride ?? retainedCurrentOverride;
       const baseState: AppState = {
         ...state,
         fileList: nextFileList,
         currentFile: filePath,
         contentHtml: rendered.html,
         markdownSource: action.msg.markdownSource ?? null,
+        sourceDocumentText: action.msg.sourceDocumentText ?? null,
+        currentHtmlPreviewOverride: resolvedHtmlPreviewOverride,
         frontmatter: rendered.frontmatter,
         toc: rendered.toc,
         previewInfo: action.msg.previewInfo ?? null,
@@ -139,7 +153,10 @@ export function reducer(
           activeContentTabPath: null,
         };
       }
-      const tab = createContentTabFromMessage(action.msg, nextFileList);
+      const tab = {
+        ...createContentTabFromMessage(action.msg, nextFileList, state.settings),
+        htmlPreviewOverride: resolvedHtmlPreviewOverride,
+      };
       return {
         ...baseState,
         contentTabs: upsertContentTab(
@@ -182,7 +199,11 @@ export function reducer(
           scopeFocus: reconciledScopeFocus,
           searchScopeFocus: reconciledSearchScopeFocus,
         },
-        contentTabs: refreshContentTabMetadata(state.contentTabs, action.fileList),
+        contentTabs: workspaceChanged
+          ? []
+          : refreshContentTabMetadata(state.contentTabs, action.fileList),
+        activeContentTabPath: workspaceChanged ? null : state.activeContentTabPath,
+        currentHtmlPreviewOverride: workspaceChanged ? undefined : state.currentHtmlPreviewOverride,
         isLoading: false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -216,6 +237,28 @@ export function reducer(
     case 'REORDER_CONTENT_TABS': {
       const contentTabs = reorderContentTabs(state.contentTabs, action.sourcePath, action.targetPath);
       return contentTabs === state.contentTabs ? state : { ...state, contentTabs };
+    }
+
+    case 'SET_CONTENT_TAB_HTML_PREVIEW': {
+      const target = normalizePathKey(action.filePath);
+      const isCurrent = normalizePathKey(state.currentFile ?? '') === target;
+      let changed = false;
+      const contentTabs = state.contentTabs.map((tab) => {
+        if (normalizePathKey(tab.filePath) !== target) return tab;
+        changed = true;
+        if (action.enabled === undefined) {
+          const { htmlPreviewOverride: _removed, ...rest } = tab;
+          return rest;
+        }
+        return { ...tab, htmlPreviewOverride: action.enabled };
+      });
+      if (!changed && !isCurrent) return state;
+      return {
+        ...state,
+        contentTabs,
+        currentHtmlPreviewOverride: isCurrent ? action.enabled : state.currentHtmlPreviewOverride,
+        renderVersion: state.renderVersion + 1,
+      };
     }
 
     case 'CLOSE_CONTENT_TAB': {
@@ -380,6 +423,33 @@ export function reducer(
           activeCustomThemeId,
         },
       };
+      const previewDefaultsChanged = 'defaultHtmlCodeBlockPreview' in action.settings || 'defaultCsvPreview' in action.settings;
+      if (previewDefaultsChanged) {
+        const rerenderTab = (tab: AppState['contentTabs'][number]) => {
+          if (!tab.markdownSource) return tab;
+          const rendered = renderMarkdownClientSide(
+            tab.markdownSource,
+            tab.filePath,
+            tab.filePath.endsWith('.mdx'),
+            nextState.settings,
+          );
+          return { ...tab, contentHtml: rendered.html, frontmatter: rendered.frontmatter, toc: rendered.toc };
+        };
+        const contentTabs = nextState.contentTabs.map(rerenderTab);
+        if (nextState.markdownSource) {
+          const rendered = renderMarkdownClientSide(
+            nextState.markdownSource,
+            nextState.currentFile,
+            nextState.currentFile?.endsWith('.mdx') ?? false,
+            nextState.settings,
+          );
+          nextState.contentHtml = rendered.html;
+          nextState.frontmatter = rendered.frontmatter;
+          nextState.toc = rendered.toc;
+          nextState.renderVersion += 1;
+        }
+        nextState.contentTabs = contentTabs;
+      }
       if ('fileTabs' in action.settings) {
         if (action.settings.fileTabs === false) {
           return {
@@ -389,7 +459,7 @@ export function reducer(
           };
         }
         if (action.settings.fileTabs === true && !state.settings.fileTabs) {
-          const currentTab = createContentTabFromState(state);
+          const currentTab = createContentTabFromState(nextState);
           return {
             ...nextState,
             contentTabs: currentTab

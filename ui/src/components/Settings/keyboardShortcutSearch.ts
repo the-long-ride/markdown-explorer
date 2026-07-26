@@ -21,6 +21,7 @@ export const KEYBOARD_SHORTCUT_ENGLISH_LABELS: Record<string, string> = {
   toggleFocusMode: 'Toggle focus mode',
   sidebarCursorMode: 'Sidebar cursor mode',
   locateFile: 'Locate current open file in sidebar',
+  openCurrentDocumentLocation: 'Open current document folder',
   zoomIn: 'Zoom in',
   zoomOut: 'Zoom out',
 };

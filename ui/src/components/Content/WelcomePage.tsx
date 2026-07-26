@@ -2,7 +2,7 @@
 // components/Content/WelcomePage.tsx — Common Welcome & Guidelines Screen
 // =============================================================================
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
 import { getTranslations } from '../../contexts/translations';
@@ -15,7 +15,13 @@ import {
   KeyboardIcon, LightbulbIcon, LockIcon, ModalIcon, SearchIcon, SparklesIcon,
   TableIcon,
 } from './WelcomePageIcons';
-import { TIPS_CONTENT } from './welcomeTipsContent';
+import { TIP_GROUP_LABELS, TIPS_CONTENT, type TipGroupId, type TipItem } from './welcomeTipsContent';
+
+type WelcomeTipGroup = {
+  id: TipGroupId;
+  title: string;
+  items: TipItem[];
+};
 
 // =============================================================================
 // Helper Utilities & Localized Labels (Emoji-free)
@@ -24,6 +30,7 @@ import { TIPS_CONTENT } from './welcomeTipsContent';
 import { cleanTitle, TAB_LABELS } from './welcomeLabels';
 import { renderWelcomeDescription } from './renderWelcomeDescription';
 import { getTipIcon, renderShortcutKeys } from './welcomePageHelpers';
+import { formatShortcutLabel, getEnabledShortcut } from '../../utils/shortcuts';
 
 export function WelcomePage() {
   const isDesktop = typeof (window as any).electronAPI !== 'undefined';
@@ -36,6 +43,36 @@ export function WelcomePage() {
   
   const [activeTab, setActiveTab] = useState<'features' | 'shortcuts' | 'privacy' | 'tips'>('features');
   const labels = TAB_LABELS[currentLang] || TAB_LABELS.en;
+  const tipGroups: WelcomeTipGroup[] = useMemo(() => {
+    const shortcut = (action: string) =>
+      formatShortcutLabel(getEnabledShortcut(state.settings, action as any) || '');
+    const replaceShortcut = (value: string, action: string) =>
+      value.replace('{shortcut}', shortcut(action));
+    const base = TIPS_CONTENT[currentLang] || TIPS_CONTENT.en;
+    const labelsForLanguage = TIP_GROUP_LABELS[currentLang] || TIP_GROUP_LABELS.en;
+    const groups: Record<TipGroupId, Array<TipItem>> = {
+      navigateAndOrganize: [
+        base[0], base[2], base[5], base[6], base[8],
+        { ...wt.tips.tipToggleDesktopView, desc: replaceShortcut(wt.tips.tipToggleDesktopView.desc, 'toggleDesktopViewMode') },
+        { ...wt.tips.tipOpenContainingFolder, desc: replaceShortcut(wt.tips.tipOpenContainingFolder.desc, 'openCurrentDocumentLocation') },
+        wt.tips.tipSidebarActions,
+        wt.tips.tipWorkspaceRecovery,
+      ].filter(Boolean),
+      previewStructuredContent: [
+        base[1], base[3],
+        { ...wt.tips.tipToggleHtmlPreview, desc: replaceShortcut(wt.tips.tipToggleHtmlPreview.desc, 'toggleHtmlPreview') },
+        wt.tips.tipCsvPreview,
+        wt.tips.tipHtmlDocuments,
+      ].filter(Boolean),
+      workWithRichDocuments: [base[4], wt.tips.tipOpenHtmlBrowser, wt.tips.tipImageRows].filter(Boolean),
+      personalizeMarkdownExplorer: [base[7]].filter(Boolean),
+    };
+    return (Object.keys(groups) as Array<TipGroupId>).map((id) => ({
+      id,
+      title: labelsForLanguage[id],
+      items: groups[id],
+    }));
+  }, [currentLang, state.settings, wt.tips]);
   
 
 
@@ -60,7 +97,7 @@ export function WelcomePage() {
           >
             the-long-ride
           </a>{' '}
-          with ❤️ · {wt.hero.repository}:{' '}
+          with ❤️ - {wt.hero.repository}:{' '}
           <a
             href="https://github.com/the-long-ride/markdown-explorer"
             target="_blank"
@@ -68,7 +105,7 @@ export function WelcomePage() {
           >
             markdown-explorer
           </a>{' '}
-          · {wt.hero.license}:{' '}
+          - {wt.hero.license}:{' '}
           <a
             href="https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE"
             target="_blank"
@@ -234,7 +271,18 @@ export function WelcomePage() {
               </div>
             </div>
 
-            {/* Feature 6: Media Modal */}
+            {/* Feature 6: Interactive HTML & Document Previews */}
+            <div className="feature-card">
+              <div className="feature-card-title">
+                <GlobeIcon className="card-icon" />
+                {cleanTitle(wt.features.html.title)}
+              </div>
+              <div className="feature-card-desc">
+                {wt.features.html.desc}
+              </div>
+            </div>
+
+            {/* Feature 7: Media Modal */}
             <div className="feature-card">
               <div className="feature-card-title">
                 <ModalIcon className="card-icon" />
@@ -320,7 +368,7 @@ export function WelcomePage() {
                 <tr>
                   <td>Sidebar cursor mode details</td>
                   <td>
-                    Use <kbd>Up</kbd> / <kbd>Down</kbd> to move, <kbd>Enter</kbd> to expand/open, <kbd>Esc</kbd> to leave
+                    Use <kbd>UP</kbd> / <kbd>DOWN</kbd> to move, <kbd>ENTER</kbd> to expand/open, <kbd>ESC</kbd> to leave
                   </td>
                 </tr>
               </tbody>
@@ -332,20 +380,27 @@ export function WelcomePage() {
         )}
 
         {activeTab === 'tips' && (
-          <div className="tips-container">
-            {(TIPS_CONTENT[currentLang] || TIPS_CONTENT.en).map((item, idx) => (
-              <div className="tip-card" key={idx}>
-                <div className="tip-card-header">
-                  <h3 className="tip-card-title">
-                    {getTipIcon(idx)}
-                    {item.title}
-                  </h3>
-                  {item.badge && <span className="tip-card-badge">{item.badge}</span>}
+          <div className="tips-use-cases">
+            {tipGroups.map((group) => (
+              <section className="tips-use-case" key={group.id} data-tip-group={group.id}>
+                <h2 className="tips-use-case__title">{group.title}</h2>
+                <div className="tips-container">
+                  {group.items.map((item, idx) => (
+                    <div className="tip-card" key={`${group.id}-${idx}`}>
+                      <div className="tip-card-header">
+                        <h3 className="tip-card-title">
+                          {getTipIcon(idx)}
+                          {item.title}
+                        </h3>
+                        {item.badge && <span className="tip-card-badge">{item.badge}</span>}
+                      </div>
+                      <div className="tip-card-desc tip-card-desc--multiline">
+                        {renderWelcomeDescription(item.desc)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-          <div className="tip-card-desc tip-card-desc--multiline">
-                  {renderWelcomeDescription(item.desc)}
-                </div>
-              </div>
+              </section>
             ))}
           </div>
         )}

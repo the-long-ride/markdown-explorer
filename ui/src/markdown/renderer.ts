@@ -6,7 +6,8 @@ import { parse } from './parser';
 import type { BlockToken, HeadingToken, ListToken, TableToken, BlockquoteToken, HtmlCommentToken, MathBlockToken } from './parser';
 import { renderInline } from './inline';
 import { renderCodeBlock } from './codeRenderer';
-import { slugify, shortId, escHtml, renderButton } from './utils';
+import { slugify, escHtml, renderButton } from './utils';
+import { renderInteractiveTable } from './tableRenderer';
 import type { TocEntry } from './types';
 
 interface RenderedOutput {
@@ -25,9 +26,31 @@ type SectionNode = TopLevelNode;
 const VIDEO_PARAGRAPH_RE = /(?:\.(?:mp4|m4v|webm|ogv|ogg|mov|mkv|m3u8)(?:[?#][^\s)]*)?)(?:\)|$)/i;
 const YOUTUBE_PARAGRAPH_RE = /https?:\/\/(?:www\.)?(?:youtube(?:-nocookie)?\.com\/(?:watch\?[^)\s]*\bv=|embed\/|shorts\/|live\/)|youtu\.be\/)[^)\s]+/i;
 
+const IMAGE_ONLY_MARKDOWN_RE = /\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)|!\[[^\]]*\]\([^)]+\)/g;
+
+function renderImageRowParagraph(text: string, isMdx: boolean): string | null {
+  const matches = Array.from(text.matchAll(IMAGE_ONLY_MARKDOWN_RE));
+  if (matches.length < 2) return null;
+
+  let cursor = 0;
+  for (const match of matches) {
+    const matchIndex = match.index ?? 0;
+    if (text.slice(cursor, matchIndex).trim() !== '') return null;
+    cursor = matchIndex + match[0].length;
+  }
+  if (text.slice(cursor).trim() !== '') return null;
+
+  const items = matches.map((match) =>
+    `<span class="mdn-image-row__item">${renderInline(match[0], isMdx)}</span>`,
+  ).join('');
+  return `<div class="mdn-image-row" style="--mdn-image-count:${matches.length}">${items}</div>`;
+}
+
 export interface HtmlRendererOptions {
   theme?: string;
   isMdx?: boolean;
+  defaultHtmlPreview?: boolean;
+  defaultCsvPreview?: boolean;
 }
 
 export class HtmlRenderer {
@@ -35,10 +58,14 @@ export class HtmlRenderer {
   private readonly headingIdCounts = new Map<string, number>();
   private readonly theme: string;
   private readonly isMdx: boolean;
+  private readonly defaultHtmlPreview: boolean;
+  private readonly defaultCsvPreview: boolean;
 
   constructor(options?: HtmlRendererOptions) {
     this.theme = options?.theme || 'auto';
     this.isMdx = options?.isMdx || false;
+    this.defaultHtmlPreview = options?.defaultHtmlPreview !== false;
+    this.defaultCsvPreview = options?.defaultCsvPreview !== false;
   }
 
   render(tokens: BlockToken[]): RenderedOutput {
@@ -138,9 +165,8 @@ export class HtmlRenderer {
   <div class="mdn-section-header" onclick="UI.toggleSection(this)" role="button" tabindex="0" aria-expanded="true"
        onkeydown="if(event.key==='Enter'||event.key===' ')UI.toggleSection(this)">
     <${`h${level}`} class="mdn-section-title">
-      <a class="mdn-anchor" href="#${id}" onclick="event.stopPropagation()" title="Copy link">#</a>${headingHtml}
+      <span class="mdn-heading-text">${headingHtml}<span class="mdn-heading-level" aria-hidden="true">H${level}</span></span>
     </${`h${level}`}>
-    <span class="mdn-section-heading-level" aria-hidden="true">H${level}</span>
     ${copyBtnHtml}
     <span class="mdn-section-chevron" aria-hidden="true">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -162,10 +188,16 @@ export class HtmlRenderer {
         if (this.isVideoParagraph(token.text)) {
           return renderInline(token.text, this.isMdx);
         }
-        return `<p>${renderInline(token.text, this.isMdx)}</p>`;
+        return renderImageRowParagraph(token.text, this.isMdx)
+          ?? `<p>${renderInline(token.text, this.isMdx)}</p>`;
       case 'html-comment': return this.renderHtmlComment(token);
       case 'math':       return this.renderMath(token);
-      case 'code':       return renderCodeBlock(token, this.theme);
+      case 'code':       return renderCodeBlock(token, {
+        theme: this.theme,
+        isMdx: this.isMdx,
+        defaultHtmlPreview: this.defaultHtmlPreview,
+        defaultCsvPreview: this.defaultCsvPreview,
+      });
       case 'blockquote': return this.renderBlockquote(token);
       case 'table':      return this.renderTable(token);
       case 'list':       return this.renderList(token);
@@ -177,8 +209,8 @@ export class HtmlRenderer {
     const id = this.nextHeadingId(token.text);
     const html = renderInline(token.text, this.isMdx);
     this.toc.push({ level: token.level, text: token.text, id });
-    return `<h${token.level} class="mdn-subheading" id="${id}">
-  <a class="mdn-anchor" href="#${id}" title="Copy link">#</a>${html}
+    return `<h${token.level} class="mdn-subheading" id="${id}" tabindex="-1">
+  <span class="mdn-heading-text">${html}<span class="mdn-heading-level" aria-hidden="true">H${token.level}</span></span>
 </h${token.level}>`;
 }
 
@@ -235,78 +267,12 @@ export class HtmlRenderer {
     return `<blockquote class="mdn-blockquote">${renderInline(token.lines.join('\n'), this.isMdx)}</blockquote>`;
   }
 
-  private isCategoryColumn(rows: string[][], colIndex: number): boolean {
-    const N = rows.length;
-    if (N < 3) return false;
-    const values = rows.map(r => (r[colIndex] ?? '').trim()).filter(Boolean);
-    const unique = new Set(values);
-    const U = unique.size;
-    if (U <= 1 || U >= N) return false;
-
-    const ratio = U / N;
-    const totalLength = values.reduce((sum, v) => sum + v.length, 0);
-    const avgLength = totalLength / values.length;
-
-    return (U <= 10 || ratio <= 0.4) && avgLength < 40;
-  }
-
   private renderTable(token: TableToken): string {
-    const id = shortId('tbl');
-
-    const thead = token.headers.map((h, i) => {
-      const alignAttr = token.align[i] ? ` style="text-align:${token.align[i]}"` : '';
-      const isCat = this.isCategoryColumn(token.rows, i);
-      const filterBtnHtml = isCat
-        ? `<span class="mdn-table-filter-btn" onclick="event.stopPropagation(); Table.showFilterMenu('${id}', ${i}, this)" title="Filter by values" role="button" tabindex="0">
-             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-           </span>`
-        : '';
-      return `<th class="mdn-th${isCat ? ' has-filter' : ''}" data-col="${i}" onclick="Table.sort('${id}',${i})" tabindex="0"${alignAttr}>
-  <div class="mdn-th-content">
-    <span class="mdn-th-text">${renderInline(h, this.isMdx)}</span>
-    <span class="mdn-sort-icon" aria-hidden="true">⇅</span>
-    ${filterBtnHtml}
-  </div>
-</th>`;
-    }).join('');
-
-    const tbody = token.rows.map((row, idx) => {
-      const rowClass = idx >= 15 ? ' class="is-collapsed-row"' : '';
-      return `<tr${rowClass}>${row.map((cell, i) => {
-        const alignAttr = token.align[i] ? ` style="text-align:${token.align[i]}"` : '';
-        return `<td${alignAttr}>${renderInline(cell, this.isMdx)}</td>`;
-      }).join('')}</tr>`;
-    }).join('\n');
-
-    const toggleBtnHtml = token.rows.length > 15
-      ? `<button class="mdn-table-toggle-btn" onclick="Table.toggleCollapse('${id}')" id="${id}-toggle-btn">Show More</button>`
-      : '';
-
-    return `<div class="mdn-table-wrap" id="${id}-wrap">
-  <div class="mdn-table-toolbar">
-    <label class="mdn-table-search-wrap" aria-label="Search table">
-      <svg class="mdn-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="mdn-table-input" type="search" placeholder="Filter rows…" oninput="Table.filter('${id}',this.value)" />
-    </label>
-    <span class="mdn-row-count" id="${id}-count"></span>
-    <div class="mdn-table-toolbar-actions">
-      <button class="mdn-table-wrap-toggle" id="${id}-wrap-toggle" onclick="Table.toggleWrap('${id}', this)" aria-pressed="false" title="Wrap table text">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7h16"/><path d="M4 12h10a4 4 0 0 1 0 8H9"/><path d="m12 17-3 3 3 3"/></svg><span class="mdn-table-wrap-toggle__label">Wrap</span>
-      </button>
-      <div class="mdn-table-view-switcher" id="${id}-switcher"></div>
-    </div>
-  </div>
-  <div class="mdn-table-scroll" id="${id}-scroll">
-    <table class="mdn-table" id="${id}">
-      <thead><tr>${thead}</tr></thead>
-      <tbody>${tbody}</tbody>
-    </table>
-  </div>
-  <div class="mdn-table-chart-container" id="${id}-chart-container" style="display:none;">
-    <canvas id="${id}-chart-canvas"></canvas>
-  </div>
-  ${toggleBtnHtml}
-</div>`;
+    return renderInteractiveTable({
+      headers: token.headers,
+      rows: token.rows,
+      align: token.align,
+    }, this.isMdx);
   }
 
   private renderList(token: ListToken): string {

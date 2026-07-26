@@ -136,3 +136,23 @@
     letter-spacing: 0.04em !important;
   }
 }
+
+@media (min-width: 901px) {
+  .settings-card--settings .settings-card__body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+
+  .settings-card__column--preferences {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 900px) {
+  .settings-appearance-scroll {
+    flex: none;
+    width: 100%;
+    overflow: visible;
+    padding-right: 0;
+  }
+}

@@ -53,6 +53,25 @@ describe('registerCopyHandlers', () => {
     // Verify markCopied side-effect (button gets is-copied class if copy succeeds)
   });
 
+  it('copyCode prefers the raw code source over inline code inside a CSV preview', () => {
+    registerCopyHandlers(win);
+    document.body.innerHTML = `
+      <div class="mdn-codeblock mdn-csv-preview-wrap">
+        <div class="mdn-csv-preview-body"><code>preview-cell</code></div>
+        <div class="mdn-code-source"><code>name,count\nDesktop,10</code></div>
+        <button id="copyCsvBtn"></button>
+      </div>
+    `;
+    const previewCode = document.querySelector('.mdn-csv-preview-body code') as HTMLElement;
+    const sourceCode = document.querySelector('.mdn-code-source code') as HTMLElement;
+    Object.defineProperty(previewCode, 'innerText', { configurable: true, value: 'preview-cell' });
+    Object.defineProperty(sourceCode, 'innerText', { configurable: true, value: 'name,count\nDesktop,10' });
+
+    win.UI.copyCode(document.getElementById('copyCsvBtn') as HTMLElement);
+
+    expect(mockCopy).toHaveBeenCalledWith('name,count\nDesktop,10');
+  });
+
   it('copyDocument uses mdBody when present', () => {
     registerCopyHandlers(win);
     document.body.innerHTML = `

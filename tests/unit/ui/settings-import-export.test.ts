@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
   SETTINGS_EXPORT_KIND,
   SETTINGS_EXPORT_SCHEMA_VERSION,
+  SettingsImportError,
   createSettingsExport,
   normalizeRecentWorkspaces,
   parseSettingsImport,
@@ -102,6 +103,7 @@ describe('createSettingsExport', () => {
     settings: {
       showTitle: false,
       defaultHtmlPreview: true,
+      defaultCsvPreview: true,
       fileTabs: false,
       documentConversion: false,
       scopeFocus: {},
@@ -216,6 +218,21 @@ describe('parseSettingsImport', () => {
   test('schemaVersion NaN throws unknown schema version', () => {
     const envelope = { ...validEnvelope, schemaVersion: 'abc' };
     expect(() => parseSettingsImport(JSON.stringify(envelope), false)).toThrow('unknown schema version');
+  });
+
+  test.each([
+    ['{bad json', 'invalidJson'],
+    ['42', 'missingData'],
+    [JSON.stringify({ ...validEnvelope, kind: 'wrong' }), 'wrongFile'],
+    [JSON.stringify({ ...validEnvelope, schemaVersion: -1 }), 'unknownSchema'],
+  ])('exposes a localizable error code for %s', (raw, expectedCode) => {
+    try {
+      parseSettingsImport(raw, false);
+      throw new Error('expected import parsing to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SettingsImportError);
+      expect((error as SettingsImportError).code).toBe(expectedCode);
+    }
   });
 
   test('missing payload defaults to empty', () => {
@@ -376,6 +393,16 @@ describe('parseSettingsImport - normalizeSettings branches', () => {
   test('defaultHtmlPreview false preserves false', () => {
     const result = parseSettingsImport(JSON.stringify(makeEnvelope({ defaultHtmlPreview: false })), false);
     expect(result.settings.defaultHtmlPreview).toBe(false);
+  });
+
+  test('defaultCsvPreview defaults to true for legacy exports', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
+    expect(result.settings.defaultCsvPreview).toBe(true);
+  });
+
+  test('defaultCsvPreview false preserves false', () => {
+    const result = parseSettingsImport(JSON.stringify(makeEnvelope({ defaultCsvPreview: false })), false);
+    expect(result.settings.defaultCsvPreview).toBe(false);
   });
 
   test('fileTabs defaults to false', () => {

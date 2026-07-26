@@ -31,3 +31,8 @@ These paths are root-relative when the repository is opened as the workspace.
 - [macOS install notes](../docs/macos-install.md)
 
 After following any link, use Ctrl + Left arrow or the app back button to return here.
+
+## External Links
+
+- [Markdown Explorer on GitHub](https://github.com/the-long-ride/markdown-explorer)
+- [Markdown Explorer website](https://the-long-ride.github.io/markdown-explorer/)

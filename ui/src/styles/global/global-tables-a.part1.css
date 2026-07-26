@@ -15,6 +15,7 @@
   box-shadow: var(--sh-sm);
 }
 .mdn-section-header {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--section-header-gap);
@@ -57,26 +58,9 @@
   font-size: 1.15em;
   font-weight: 700;
 }
-.mdn-section-heading-level {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  color: var(--tx2);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.12s ease;
-  pointer-events: none;
-}
-.mdn-section-header:hover .mdn-section-heading-level,
-.mdn-section-header:focus-within .mdn-section-heading-level {
-  visibility: visible;
-  opacity: 1;
+/* Heading level badge styling is shared in global-markdown-base.css. */
+.mdn-section-title .mdn-heading-text {
+  max-width: calc(100% - 36px);
 }
 .mdn-section-copy-btn {
   display: inline-flex;

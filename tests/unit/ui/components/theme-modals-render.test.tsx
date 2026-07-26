@@ -57,9 +57,9 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
     { id: 'bento', label: 'Bento', description: 'Bento style' },
   ],
   PET_THEME_STYLE_OPTIONS: [
-    { id: 'pet-shiba', label: 'Shiba', description: 'Shiba style' },
+    { id: 'pet-white-shiba', label: 'White Shiba', description: 'White Shiba style' },
   ],
-  DEFAULT_PET_THEME_STYLE: 'pet-shiba',
+  DEFAULT_PET_THEME_STYLE: 'pet-white-shiba',
   isPetThemeStyle: (value: string) => value.startsWith('pet-'),
 }));
 
@@ -420,13 +420,13 @@ describe('ThemeStylePicker', () => {
     render(<ThemeStylePicker value="default" onChange={onChange} />);
     const petSelect = screen.getAllByRole('button').find((b) => b.className.includes('pet-theme-select'));
     fireEvent.click(petSelect!);
-    const shibaOption = screen.getAllByRole('option').find((b) => b.textContent?.includes('Shiba'));
+    const shibaOption = screen.getAllByRole('option').find((b) => b.textContent?.includes('White Shiba'));
     fireEvent.click(shibaOption!);
-    expect(onChange).toHaveBeenCalledWith('pet-shiba');
+    expect(onChange).toHaveBeenCalledWith('pet-white-shiba');
   });
 
   it('marks pets option as active when pet theme is selected', () => {
-    render(<ThemeStylePicker value="pet-shiba" onChange={() => {}} />);
+    render(<ThemeStylePicker value="pet-white-shiba" onChange={() => {}} />);
     const petsOption = document.querySelector('.theme-style-option--pets');
     expect(petsOption!.className).toContain('is-active');
   });

@@ -16,12 +16,12 @@ import {
 } from '../../../../ui/src/contexts/appStateConstants';
 
 describe('appStateConstants', () => {
-  test('DEFAULT_KEYBINDINGS has 19 entries', () => {
-    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(19);
+  test('DEFAULT_KEYBINDINGS has 20 entries', () => {
+    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(20);
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 24 entries', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(24);
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 26 entries', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(26);
   });
 
   test('DESKTOP_DEFAULT_KEYBINDINGS overrides 5 from defaults', () => {
@@ -32,6 +32,7 @@ describe('appStateConstants', () => {
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleSidebar).toBe('Ctrl+B');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.refresh).toBe('F5');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleDesktopViewMode).toBe('Ctrl+Alt+T');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.openCurrentDocumentLocation).toBe('Shift+Alt+R');
   });
 
   test('getDefaultKeybindings(true) returns desktop keybindings', () => {
@@ -77,6 +78,7 @@ describe('appStateConstants', () => {
     expect(normalizeThemeStyle('default')).toBe('default');
     expect(normalizeThemeStyle('bento')).toBe('bento');
     expect(normalizeThemeStyle('vercel')).toBe('vercel');
+    expect(normalizeThemeStyle('tokyo-night')).toBe('tokyo-night');
   });
 
   test('normalizeThemeStyle invalid falls back to default', () => {
@@ -92,7 +94,7 @@ describe('appStateConstants', () => {
   });
 
   test('isPetThemeStyle identifies pet themes', () => {
-    expect(isPetThemeStyle('pet-shiba')).toBe(true);
+    expect(isPetThemeStyle('pet-white-shiba')).toBe(true);
     expect(isPetThemeStyle('pet-cat')).toBe(true);
   });
 
@@ -101,6 +103,7 @@ describe('appStateConstants', () => {
     expect(isPetThemeStyle('glass')).toBe(false);
     expect(isPetThemeStyle('bento')).toBe(false);
     expect(isPetThemeStyle('vercel')).toBe(false);
+    expect(isPetThemeStyle('tokyo-night')).toBe(false);
   });
 
   test('THEME_MODE_OPTIONS has 3 entries', () => {

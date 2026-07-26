@@ -30,8 +30,11 @@ interface UseKeyboardOptions {
   isTermsOpen: boolean;
   onToggleToc?: () => void;
   onLocateFile?: () => void;
+  onOpenCurrentDocumentLocation?: () => void;
   onToggleFocusMode?: () => void;
   onToggleDesktopViewMode?: () => void;
+  activeHtmlDocument?: boolean;
+  onToggleActiveHtmlDocumentPreview?: () => void;
   onToggleFullscreen?: () => void;
   onWorkspaceSelection?: () => void;
 }
@@ -65,8 +68,11 @@ export function useKeyboard({
   isTermsOpen,
   onToggleToc,
   onLocateFile,
+  onOpenCurrentDocumentLocation,
   onToggleFocusMode,
   onToggleDesktopViewMode,
+  activeHtmlDocument = false,
+  onToggleActiveHtmlDocumentPreview,
   onToggleFullscreen,
   onWorkspaceSelection,
 }: UseKeyboardOptions) {
@@ -85,7 +91,7 @@ export function useKeyboard({
   const bridge = usePlatform();
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isDesktop = isElectron;
+  const isDesktop = isElectron || state.appRuntime === 'tauri';
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
   const isDesktopLike = isDesktop || isChrome;
   const keybindings = useMemo(
@@ -124,8 +130,11 @@ export function useKeyboard({
         hasOnWelcome: !!onWelcome,
         hasOnToggleToc: !!onToggleToc,
         hasOnLocateFile: !!onLocateFile,
+        hasOnOpenCurrentDocumentLocation: !!onOpenCurrentDocumentLocation,
         hasOnToggleFocusMode: !!onToggleFocusMode,
         hasOnToggleDesktopViewMode: !!onToggleDesktopViewMode,
+        activeHtmlDocument,
+        onToggleActiveHtmlDocumentPreview: !!onToggleActiveHtmlDocumentPreview,
         hasOnToggleFullscreen: !!onToggleFullscreen,
         hasOnFindClose: !!onFindClose,
         isRepeat: e.repeat,
@@ -209,11 +218,17 @@ export function useKeyboard({
         case 'locate-file':
           onLocateFile?.();
           break;
+        case 'open-current-document-location':
+          onOpenCurrentDocumentLocation?.();
+          break;
         case 'toggle-focus-mode':
           onToggleFocusMode?.();
           break;
         case 'toggle-desktop-view-mode':
           onToggleDesktopViewMode?.();
+          break;
+        case 'toggle-active-html-document-preview':
+          onToggleActiveHtmlDocumentPreview?.();
           break;
         case 'toggle-fullscreen':
           onToggleFullscreen?.();
@@ -337,7 +352,10 @@ export function useKeyboard({
     isTermsOpen,
     onToggleToc,
     onLocateFile,
+    onOpenCurrentDocumentLocation,
     onToggleDesktopViewMode,
+    activeHtmlDocument,
+    onToggleActiveHtmlDocumentPreview,
     onToggleFullscreen,
     onWorkspaceSelection,
     state.activeContentTabPath,

@@ -342,20 +342,26 @@ function registerRuntimeWorkspaceHandlers(context) {
     }
 
     let raw = "";
+    let sourceDocumentText = null;
     let previewInfo = null;
+    const isHtmlDocument = /\.html?$/i.test(currentFile);
     try {
-      if (isExtraDocumentFilePathLite(currentFile)) {
-        sendLoading(
-          "Preparing document preview...",
-          `Preparing ${getFileTypeLabelLite(currentFile)} preview locally.`,
-        );
+      if (isHtmlDocument) {
+        sourceDocumentText = fs.readFileSync(currentFile, "utf8");
+      } else {
+        if (isExtraDocumentFilePathLite(currentFile)) {
+          sendLoading(
+            "Preparing document preview...",
+            `Preparing ${getFileTypeLabelLite(currentFile)} preview locally.`,
+          );
+        }
+        const result = await deps.documentConverter.readMarkdown(currentFile);
+        raw = result.markdown;
+        previewInfo = result.previewInfo;
       }
-      const result = await deps.documentConverter.readMarkdown(currentFile);
-      raw = result.markdown;
-      previewInfo = result.previewInfo;
     } catch (err) {
-      raw = deps.documentConverter.createFailureMarkdown(currentFile, err);
-      previewInfo = isExtraDocumentFilePathLite(currentFile)
+      raw = isHtmlDocument ? "" : deps.documentConverter.createFailureMarkdown(currentFile, err);
+      previewInfo = !isHtmlDocument && isExtraDocumentFilePathLite(currentFile)
         ? {
             kind: "converted",
             sourceExtension: pathApi.extname(currentFile).toLowerCase(),
@@ -377,6 +383,7 @@ function registerRuntimeWorkspaceHandlers(context) {
       command: "renderContent",
       html: "",
       markdownSource: raw,
+      sourceDocumentText,
       frontmatter: {},
       toc: [],
       filePath: currentFile,
@@ -386,6 +393,61 @@ function registerRuntimeWorkspaceHandlers(context) {
       previewInfo,
       ...request.operation,
     });
+  }
+
+
+  function readWorkspaceTextResource(message = {}) {
+    const requestId = String(message.requestId || "");
+    const respond = (payload) => sendHostMessage({
+      command: "workspaceTextResourceResult",
+      requestId,
+      ...payload,
+    });
+    if (!requestId || !message.documentPath || !message.resourcePath) {
+      respond({ ok: false, reason: "unsupported" });
+      return;
+    }
+    const baseDir = getWorkspaceBaseDir();
+    if (!baseDir) {
+      respond({ ok: false, reason: "missing" });
+      return;
+    }
+    const reference = String(message.resourcePath).split(/[?#]/, 1)[0];
+    if (!reference || /^(?:https?:|data:|blob:|javascript:)/i.test(reference)) {
+      respond({ ok: false, reason: "unsupported" });
+      return;
+    }
+    let resolvedPath;
+    try {
+      if (/^file:\/\//i.test(reference)) {
+        const url = new URL(reference);
+        resolvedPath = decodeURIComponent(url.pathname.replace(/^\/(?:([A-Za-z]:))/, "$1"));
+      } else if (reference.startsWith("/")) {
+        resolvedPath = pathApi.resolve(baseDir, `.${reference}`);
+      } else {
+        resolvedPath = pathApi.isAbsolute(reference)
+          ? pathApi.normalize(reference)
+          : pathApi.resolve(pathApi.dirname(String(message.documentPath)), reference);
+      }
+      const allowedExtension = /\.(?:css|js|mjs|cjs)$/i.test(resolvedPath);
+      if (!allowedExtension || !isSameOrInsidePath(baseDir, resolvedPath, pathApi)) {
+        respond({ ok: false, reason: "outside-workspace" });
+        return;
+      }
+      if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
+        respond({ ok: false, reason: "missing" });
+        return;
+      }
+      const workspaceReal = fs.realpathSync(baseDir);
+      const targetReal = fs.realpathSync(resolvedPath);
+      if (!isSameOrInsidePath(workspaceReal, targetReal, pathApi)) {
+        respond({ ok: false, reason: "outside-workspace" });
+        return;
+      }
+      respond({ ok: true, content: fs.readFileSync(targetReal, "utf8"), resolvedPath: targetReal });
+    } catch {
+      respond({ ok: false, reason: "unreadable" });
+    }
   }
 
   async function sendWelcome(request = captureWorkspaceRequest(null)) {
@@ -406,7 +468,7 @@ function registerRuntimeWorkspaceHandlers(context) {
     });
   }
 
-  return { ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, getWorkspaceBaseDir, isCurrentFileStillAvailable, resolveNavigationPath, sendCurrentFileChanged, sendWorkspaceFilesChanged, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome, cancelWorkspaceScan, cancelAllWorkspaceScans };
+  return { ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, getWorkspaceBaseDir, isCurrentFileStillAvailable, resolveNavigationPath, sendCurrentFileChanged, sendWorkspaceFilesChanged, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome, readWorkspaceTextResource, cancelWorkspaceScan, cancelAllWorkspaceScans };
 }
 
 module.exports = {

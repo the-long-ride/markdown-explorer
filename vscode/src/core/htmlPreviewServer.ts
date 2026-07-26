@@ -41,7 +41,7 @@ export class HtmlPreviewServer {
   private startPromise: Promise<string> | null = null;
   private cleanupTimer: NodeJS.Timeout | null = null;
 
-  constructor(private readonly openExternal: (url: string) => Promise<unknown>) {}
+  constructor(private readonly openExternal: (url: string) => PromiseLike<unknown>) {}
 
   async open(documentHtml: string): Promise<string> {
     if (typeof documentHtml !== 'string' || !documentHtml.trim()) {

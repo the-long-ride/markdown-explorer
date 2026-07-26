@@ -147,7 +147,10 @@ export function registerCopyHandlers(win: any) {
   };
 
   win.UI.copyCode = (btn: HTMLElement) => {
-    const code = btn.closest('.mdn-codeblock')?.querySelector('code')?.innerText ?? '';
+    const block = btn.closest('.mdn-codeblock');
+    const codeElement = block?.querySelector<HTMLElement>('.mdn-code-source code')
+      ?? block?.querySelector<HTMLElement>('code');
+    const code = codeElement?.innerText ?? codeElement?.textContent ?? '';
     try {
       copyText(code);
     } catch (err) {

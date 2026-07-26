@@ -66,6 +66,7 @@ export interface RenderContentMessage {
   readonly workspaceTabId?: string;
   readonly html: string;
   readonly markdownSource?: string | null;
+  readonly sourceDocumentText?: string | null;
   readonly frontmatter: Frontmatter;
   readonly toc: TocEntry[];
   readonly filePath: string;
@@ -82,6 +83,8 @@ export interface ContentTab {
   readonly title: string;
   readonly contentHtml: string;
   readonly markdownSource: string | null;
+  readonly sourceDocumentText?: string | null;
+  readonly htmlPreviewOverride?: boolean;
   readonly frontmatter: Frontmatter;
   readonly toc: TocEntry[];
   readonly previewInfo: DocumentPreviewInfo | null;
@@ -199,6 +202,12 @@ export interface WorkspaceScanProgressMessage {
   readonly active: boolean;
 }
 
+export interface WorkspaceOpenCancelledMessage {
+  readonly command: 'workspaceOpenCancelled';
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
+}
+
 export interface UpdateStateChangedMessage {
   readonly command: 'updateStateChanged';
   readonly state: UpdateState;
@@ -251,6 +260,16 @@ export interface WorkspaceUnavailableMessage {
   readonly isMaximized?: boolean;
 }
 
+
+export interface WorkspaceTextResourceResultMessage {
+  readonly command: 'workspaceTextResourceResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly content?: string;
+  readonly resolvedPath?: string;
+  readonly reason?: 'outside-workspace' | 'missing' | 'unreadable' | 'unsupported';
+}
+
 export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
@@ -261,15 +280,25 @@ export type HostMessage =
   | WorkspaceUnavailableMessage
   | SetLoadingMessage
   | WorkspaceScanProgressMessage
+  | WorkspaceOpenCancelledMessage
   | UpdateStateChangedMessage
   | WindowStateChangedMessage
   | FullscreenStateChangedMessage
   | ExternalOpenPathMessage
   | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage
-  | WorkspaceSearchIndexLoadedMessage;
+  | WorkspaceSearchIndexLoadedMessage
+  | WorkspaceTextResourceResultMessage;
 
 // ── Webview → Host messages ─────────────────────────────────────────────────
+
+
+export interface ReadWorkspaceTextResourceMessage {
+  readonly command: 'readWorkspaceTextResource';
+  readonly requestId: string;
+  readonly documentPath: string;
+  readonly resourcePath: string;
+}
 
 export interface NavigateMessage {
   readonly command: 'navigate';
@@ -301,6 +330,7 @@ export interface OpenFolderMessage {
   readonly workspaceTabId?: string;
   readonly openFirstFile?: boolean;
   readonly handle?: any;
+  readonly replaceRecentWorkspacePath?: string;
 }
 
 export interface OpenFileMessage {
@@ -427,6 +457,14 @@ export interface UpdateAppearanceMessage {
   readonly themeStyle: ThemeStyle;
 }
 
+export type ShellLocationMode = 'open-directory' | 'reveal-file' | 'open-parent-directory';
+
+export interface OpenShellLocationMessage {
+  readonly command: 'openShellLocation';
+  readonly path: string;
+  readonly mode: ShellLocationMode;
+}
+
 export interface OpenExternalMessage {
   readonly command: 'openExternal';
   readonly url: string;
@@ -457,6 +495,7 @@ export interface RestartAndApplyUpdateMessage {
 }
 
 export type WebviewMessage =
+  | ReadWorkspaceTextResourceMessage
   | NavigateMessage
   | OpenInEditorMessage
   | WebviewReadyMessage
@@ -485,6 +524,7 @@ export type WebviewMessage =
   | WindowCloseMessage
   | ToggleFullscreenMessage
   | UpdateAppearanceMessage
+  | OpenShellLocationMessage
   | OpenExternalMessage
   | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage

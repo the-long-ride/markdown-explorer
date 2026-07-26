@@ -47,6 +47,8 @@
 .content-tab.is-dragging {
   opacity: 0.58;
   cursor: grabbing;
+  border-color: var(--accent);
+  border-style: dashed;
 }
 
 .content-tab.is-drop-target {

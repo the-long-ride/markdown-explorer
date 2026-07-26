@@ -24,6 +24,7 @@ export function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
     currentFile: null,
     contentHtml: '',
     markdownSource: null,
+    sourceDocumentText: null,
     frontmatter: {},
     toc: [],
     previewInfo: null,

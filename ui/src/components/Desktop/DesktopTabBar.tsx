@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TooltipButton } from '../shared/TooltipButton';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
+import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import {
   CloseIcon,
+  CloseAllIcon,
+  CloseOthersIcon,
+  CloseRightIcon,
+  CloseTabIcon,
+  OpenFolderLocationIcon,
   PlusIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
@@ -18,6 +24,7 @@ import {
 import { useTabBarScrollbar } from './useTabBarScrollbar';
 import { useCssVars } from '../../utils/useCssVars';
 import { getEnabledShortcut } from '../../utils/shortcuts';
+import { getShellLocationLabel, requestShellLocation, supportsShellLocation } from '../../desktop/shellLocation';
 
 const TAB_CLOSE_FADE_MS = 90;
 const TAB_CLOSE_COLLAPSE_MS = 140;
@@ -38,6 +45,14 @@ interface DesktopTabBarProps {
   onThemeToggle: () => void;
   onSettingsOpen: () => void;
   onSidebarToggle: () => void;
+  onBack: () => void;
+  onForward: () => void;
+  onRefresh: () => void;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  onCollapseAll: () => void;
+  onExpandAll: () => void;
+  onCopyFile: (button?: HTMLElement | null) => void;
   isDark: boolean;
   isMaximized: boolean;
   hasUpdate?: boolean;
@@ -59,6 +74,14 @@ export function DesktopTabBar({
   onThemeToggle,
   onSettingsOpen,
   onSidebarToggle,
+  onBack,
+  onForward,
+  onRefresh,
+  canGoBack,
+  canGoForward,
+  onCollapseAll,
+  onExpandAll,
+  onCopyFile,
   isDark,
   isMaximized,
   hasUpdate = false,
@@ -180,6 +203,13 @@ export function DesktopTabBar({
       if (!contextMenu) return;
       const targetIndex = workspaceTabs.findIndex((tab) => tab.id === contextMenu.tabId);
       switch (action) {
+        case 'openLocation': {
+          const targetTab = workspaceTabs.find((tab) => tab.id === contextMenu.tabId);
+          if (targetTab?.workspacePath && supportsShellLocation(state.appRuntime)) {
+            requestShellLocation(bridge, targetTab.workspacePath, 'open-directory');
+          }
+          break;
+        }
         case 'closeThisTab':
           requestTabClose([contextMenu.tabId], () => onCloseTab(contextMenu.tabId));
           break;
@@ -204,12 +234,14 @@ export function DesktopTabBar({
       }
     },
     [
+      bridge,
       contextMenu,
       onCloseAllTabs,
       onCloseOtherTabs,
       onCloseTab,
       onCloseTabsToRight,
       requestTabClose,
+      state.appRuntime,
       workspaceTabs,
     ],
   );
@@ -246,6 +278,20 @@ export function DesktopTabBar({
           </div>
         </div>
       </div>
+      <span
+        className="topbar__crumb-separator desktop-tabbar__navigation-separator"
+        aria-hidden="true"
+      >
+        |
+      </span>
+      <NavigationHeaderActions
+        onBack={onBack}
+        onForward={onForward}
+        onRefresh={onRefresh}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        className="desktop-tabbar__navigation-actions"
+      />
       <div className="desktop-tabbar__tabs-wrap">
         <div
           ref={tabsScrollRef}
@@ -391,7 +437,24 @@ export function DesktopTabBar({
         <TabContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-        labels={t.tabContextMenu}
+          labels={{
+            ...t.tabContextMenu,
+            openLocation: supportsShellLocation(state.appRuntime)
+              ? getShellLocationLabel(t, state.hostPlatform, 'folder')
+              : undefined,
+          }}
+          openLocationIcon={<OpenFolderLocationIcon />}
+          closeThisTabIcon={<CloseTabIcon />}
+          closeTabsToRightIcon={<CloseRightIcon />}
+          closeOtherTabsIcon={<CloseOthersIcon />}
+          closeAllTabsIcon={<CloseAllIcon />}
+          shortcuts={{
+            closeThisTab: getEnabledShortcut(state.settings, 'closeContentTab'),
+            closeTabsToRight: getEnabledShortcut(state.settings, 'closeContentTabsToRight'),
+            closeOtherTabs: getEnabledShortcut(state.settings, 'closeOtherContentTabs'),
+            closeAllTabs: getEnabledShortcut(state.settings, 'closeAllContentTabs'),
+          }}
+          ariaLabel={t.tabContextMenu.menuLabel}
           disabled={{
             closeThisTab: contextMenuTabIndex === -1,
             closeTabsToRight:
@@ -404,13 +467,19 @@ export function DesktopTabBar({
           onClose={() => setContextMenu(null)}
         />
       )}
-      <div className="desktop-tabbar__spacer" />
       <TooltipButton
-        className="btn btn--icon desktop-tabbar__new"
+        className="btn btn--icon desktop-tabbar__new topbar__new-workspace-btn topbar__action-btn"
         onClick={onNewTab}
         tooltip={t.tooltips.newTab}
         shortcut={getEnabledShortcut(state.settings, 'workspaceSelection')}
         icon={<PlusIcon />}
+      />
+      <DocumentHeaderActions
+        onCollapseAll={onCollapseAll}
+        onExpandAll={onExpandAll}
+        onCopyFile={onCopyFile}
+        canCopyFile={!!state.currentFile}
+        className="desktop-tabbar__document-actions"
       />
       <ToolbarActionMenu
         triggerTooltip={t.topbar.moreActions}
@@ -456,6 +525,12 @@ export function DesktopTabBar({
         isFullscreen={isFullscreen}
         onFullscreenToggle={onFullscreenToggle}
       />
+      <span
+        className="topbar__crumb-separator desktop-tabbar__window-separator"
+        aria-hidden="true"
+      >
+        |
+      </span>
       <div className="desktop-tabbar__window-controls">
         <TooltipButton className="btn btn--icon window-control-btn" onClick={() => bridge.postMessage({ command: 'window-minimize' })} tooltip={t.tooltips.minimize} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>} />
         <TooltipButton className="btn btn--icon window-control-btn" onClick={() => shouldExitTauriFullscreenOnRestore ? onFullscreenToggle?.() : bridge.postMessage({ command: 'window-maximize' })} tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize} icon={showsRestoreControl ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M8 8V3h13v13h-5" /><path d="M3 8h13v13H3z" /></svg>) : (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>)} />

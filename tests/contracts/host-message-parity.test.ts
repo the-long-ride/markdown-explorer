@@ -31,7 +31,7 @@ const CHROMIUM_HOST_COMMANDS: string[] = [
 ];
 
 const DESKTOP_WEBVIEW_COMMANDS: string[] = [
-  'ready', 'navigate', 'openFolder', 'openFile', 'openPath',
+  'ready', 'navigate', 'openFolder', 'openFile', 'openPath', 'openShellLocation',
   'activateWorkspace', 'searchAcrossWorkspaces', 'searchWorkspace',
   'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
   'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
@@ -67,7 +67,7 @@ describe('host-message parity', () => {
 
   describe('fixture covers every UI WebviewMessage discriminant', () => {
     const UI_WEBVIEW_COMMANDS = [
-      'ready', 'navigate', 'openFolder', 'openFile', 'openFileHandle', 'openPath',
+      'ready', 'navigate', 'openFolder', 'openFile', 'openFileHandle', 'openPath', 'openShellLocation',
       'activateWorkspace', 'searchWorkspace', 'searchAcrossWorkspaces',
       'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
       'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
@@ -146,6 +146,7 @@ describe('host-message parity', () => {
         'downloadUpdate',
         'indexWorkspaceSearchItems',
         'loadWorkspaceSearchIndexes',
+        'openShellLocation',
         'replaceRecentWorkspaces',
         'restartAndApplyUpdate',
         'scheduleDownloadedUpdate',
@@ -174,6 +175,7 @@ describe('host-message parity', () => {
         'openHtmlPreview',
         'openInEditor',
         'openPath',
+        'openShellLocation',
         'replaceRecentWorkspaces',
         'restartAndApplyUpdate',
         'scheduleDownloadedUpdate',
@@ -225,6 +227,7 @@ describe('host-message parity', () => {
       const pathFactories: Record<string, () => any> = {
         navigate: () => webviewMessages.navigate('/test.md'),
         openPath: () => webviewMessages.openPath('/test.md'),
+        openShellLocation: () => webviewMessages.openShellLocation('/test.md', 'reveal-file'),
         activateWorkspace: () => webviewMessages.activateWorkspace('/ws'),
         searchWorkspace: () => webviewMessages.searchWorkspace('test'),
         searchAcrossWorkspaces: () => webviewMessages.searchAcrossWorkspaces('test'),

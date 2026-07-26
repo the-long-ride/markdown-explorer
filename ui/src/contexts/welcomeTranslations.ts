@@ -25,6 +25,7 @@ export interface WelcomeTranslations {
     tables: { title: string; desc: string };
     charts: { title: string; desc: string };
     highlight: { title: string; desc: string };
+    html: { title: string; desc: string };
     modal: { title: string; desc: string };
     shortcuts: { title: string; vscodeDesc: string; desc: string };
   };
@@ -51,6 +52,17 @@ export interface WelcomeTranslations {
       zoomOutShortcut: string;
     };
     note: string;
+  };
+  tips: {
+    tipToggleDesktopView: { title: string; desc: string };
+    tipToggleHtmlPreview: { title: string; desc: string };
+    tipOpenContainingFolder: { title: string; desc: string };
+    tipSidebarActions: { title: string; desc: string };
+    tipCsvPreview: { title: string; desc: string };
+    tipHtmlDocuments: { title: string; desc: string };
+    tipOpenHtmlBrowser: { title: string; desc: string };
+    tipImageRows: { title: string; desc: string };
+    tipWorkspaceRecovery: { title: string; desc: string };
   };
   issues: {
     title: string;
@@ -93,15 +105,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Excel-Style Interactive Data Tables",
-        desc: "Standard markdown tables are automatically converted to interactive tables. You can sort columns by clicking their headers, use the funnel icon on headers to filter rows by values, and type inside the search bar above the table to search row contents.",
+        desc: "Standard Markdown tables as well as CSV and TSV code blocks are automatically converted to interactive tables. You can sort columns by clicking their headers, use the funnel icon on headers to filter rows by values, and type inside the search bar above the table to search row contents.",
       },
       charts: {
         title: "📊 One-Click Table-to-Chart Switcher",
-        desc: "For tables containing numeric columns, a view switcher will appear. Click the Bar, Line, or Pie buttons to instantly visualize the table data as an interactive Chart.js chart.",
+        desc: "For Markdown tables and CSV or TSV code blocks containing numeric columns, a view switcher will appear. Click the Bar, Line, or Pie buttons to instantly visualize the table data as an interactive Chart.js chart.",
       },
       highlight: {
         title: "🎨 Syntax Highlighting & Mermaid Diagrams",
         desc: "Enjoy high-contrast, premium syntax highlighting for code blocks (TypeScript, JavaScript, etc.) with custom overrides for comments and optional properties. Mermaid sequence, flowchart, and class diagrams render natively on the client with 100% strict offline containment.",
+      },
+      html: {
+        title: "🌐 Interactive HTML & Document Preview Modes",
+        desc: "Open .html and .htm files as isolated interactive web previews or converted Markdown on the fly (toggle with Ctrl+Alt+H). Embedded local CSS and JS run securely under local policies, fenced HTML code blocks render as interactive iframe sandboxes, and document tab menus include 'Open in Browser' for native execution.",
       },
       modal: {
         title: "🖼️ Zoomable Backdrop Media Modal",
@@ -135,7 +151,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "Zoom out",
         zoomOutShortcut: "or Wheel Down",
       },
-      note: "Note: You can change all keyboard shortcuts from the Settings Modal (click settings button or press Ctrl+I).",
+      note: "Note: You can change all keyboard shortcuts from the Settings modal.",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "Switch Focus and Tabs views", desc: "Use {shortcut} to move between the distraction-free Focus layout and workspace Tabs without opening Settings." },
+      tipToggleHtmlPreview: { title: "Toggle interactive HTML instantly", desc: "Use {shortcut} to switch the active .html or .htm document between HTML Preview and Markdown View." },
+      tipOpenContainingFolder: { title: "Open the active document folder", desc: "Use {shortcut} in the desktop app to open the current document’s containing folder in Explorer, Finder, or your file manager." },
+      tipSidebarActions: { title: "Discover file and folder actions", desc: "Hover a file or folder in Sidebar → Files and use the three-dot button for native location actions." },
+      tipCsvPreview: { title: "Explore CSV and TSV as data", desc: "CSV and TSV code blocks can open as interactive tables with sorting, filtering, wrapping, charts, and a source-view toggle." },
+      tipHtmlDocuments: { title: "Preview complete HTML documents", desc: "Open .html or .htm files as isolated interactive pages, or switch the tab to converted Markdown for reading." },
+      tipOpenHtmlBrowser: { title: "Open local HTML in your browser", desc: "Use Open in Browser from an HTML document tab to launch the original local file with its relative assets." },
+      tipImageRows: { title: "Keep image galleries on one row", desc: "Markdown images and raw HTML image groups inside p, div, or span containers can share a responsive row." },
+      tipWorkspaceRecovery: { title: "Recover workspaces safely", desc: "Canceling a scan resets the current tab. If a workspace moves, Open Workspace Again replaces its missing path in the same tab." },
     },
     issues: {
       title: "🐞 Report Issues & Get Help",
@@ -180,15 +207,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Bảng dữ liệu tương tác kiểu Excel",
-        desc: "Các bảng markdown tiêu chuẩn được tự động chuyển đổi thành bảng tương tác. Bạn có thể sắp xếp các cột bằng cách nhấp vào tiêu đề, sử dụng biểu tượng phễu để lọc các hàng theo giá trị và nhập vào thanh tìm kiếm phía trên bảng để tìm nội dung hàng.",
+        desc: "Các bảng Markdown tiêu chuẩn cũng như khối mã CSV và TSV được tự động chuyển đổi thành bảng tương tác. Bạn có thể sắp xếp các cột bằng cách nhấp vào tiêu đề, sử dụng biểu tượng phễu để lọc các hàng theo giá trị và nhập vào thanh tìm kiếm phía trên bảng để tìm nội dung hàng.",
       },
       charts: {
         title: "📊 Chuyển đổi bảng thành biểu đồ bằng một cú nhấp",
-        desc: "Đối với các bảng chứa cột số, một trình chuyển đổi chế độ xem sẽ xuất hiện. Nhấp vào các nút Cột, Đường hoặc Tròn để trực quan hóa dữ liệu bảng ngay lập tức dưới dạng biểu đồ Chart.js tương tác.",
+        desc: "Đối với bảng Markdown và các khối mã CSV hoặc TSV chứa cột số, một trình chuyển đổi chế độ xem sẽ xuất hiện. Nhấp vào các nút Cột, Đường hoặc Tròn để trực quan hóa dữ liệu bảng ngay lập tức dưới dạng biểu đồ Chart.js tương tác.",
       },
       highlight: {
         title: "🎨 Tô sáng cú pháp & Sơ đồ Mermaid",
         desc: "Trải nghiệm tô sáng cú pháp cao cấp, độ tương phản cao cho các khối mã (TypeScript, JavaScript, v.v.) với ghi đè tùy chỉnh cho chú thích và thuộc tính tùy chọn. Các sơ đồ trình tự, lưu đồ và sơ đồ lớp Mermaid được kết xuất cục bộ hoàn toàn an toàn ngoại tuyến.",
+      },
+      html: {
+        title: "🌐 Chế độ xem trước HTML tương tác & tài liệu",
+        desc: "Mở các tệp .html và .htm dưới dạng bản xem trước web tương tác cô lập hoặc chuyển đổi sang Markdown linh hoạt (bật/tắt bằng Ctrl+Alt+H). CSS và JS cục bộ được nhúng chạy an toàn theo chính sách cục bộ, các khối mã HTML render thành hộp cát iframe tương tác, và menu thẻ tài liệu có thêm tùy chọn 'Mở trong trình duyệt'.",
       },
       modal: {
         title: "🖼️ Cửa sổ đa phương tiện làm mờ nền",
@@ -222,7 +253,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "Thu nhỏ",
         zoomOutShortcut: "hoặc Cuộn chuột xuống",
       },
-      note: "Lưu ý: Bạn có thể thay đổi tất cả các phím tắt từ Cửa sổ cài đặt (nhấp nút cài đặt hoặc nhấn Ctrl+I).",
+      note: "Lưu ý: Bạn có thể thay đổi tất cả phím tắt trong cửa sổ Cài đặt.",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "Chuyển chế độ Tập trung và Tab", desc: "Dùng {shortcut} để chuyển nhanh giữa bố cục Tập trung không gây xao nhãng và các tab không gian làm việc." },
+      tipToggleHtmlPreview: { title: "Bật/tắt HTML tương tác tức thì", desc: "Dùng {shortcut} để chuyển tài liệu .html hoặc .htm đang hoạt động giữa Bản xem trước HTML và Chế độ Markdown." },
+      tipOpenContainingFolder: { title: "Mở thư mục của tài liệu hiện tại", desc: "Dùng {shortcut} trong ứng dụng Desktop để mở thư mục chứa tài liệu hiện tại bằng File Explorer, Finder hoặc trình quản lý tệp." },
+      tipSidebarActions: { title: "Khám phá thao tác tệp và thư mục", desc: "Di chuột lên tệp hoặc thư mục trong Thanh bên → Tệp rồi dùng nút ba chấm để mở các thao tác vị trí hệ thống." },
+      tipCsvPreview: { title: "Khám phá CSV và TSV như dữ liệu", desc: "Khối mã CSV và TSV có thể hiển thị thành bảng tương tác với sắp xếp, lọc, xuống dòng, biểu đồ và chuyển về mã nguồn." },
+      tipHtmlDocuments: { title: "Xem trước toàn bộ tài liệu HTML", desc: "Mở tệp .html hoặc .htm thành trang tương tác biệt lập, hoặc chuyển tab sang Markdown đã chuyển đổi để đọc." },
+      tipOpenHtmlBrowser: { title: "Mở HTML cục bộ trong trình duyệt", desc: "Dùng Mở trong trình duyệt từ tab tài liệu HTML để mở tệp cục bộ gốc cùng các tài nguyên tương đối." },
+      tipImageRows: { title: "Giữ bộ sưu tập ảnh trên cùng một hàng", desc: "Ảnh Markdown và nhóm ảnh HTML thô trong p, div hoặc span có thể hiển thị trên một hàng đáp ứng." },
+      tipWorkspaceRecovery: { title: "Khôi phục không gian làm việc an toàn", desc: "Hủy quét sẽ đặt lại tab hiện tại. Nếu thư mục bị di chuyển, Mở lại không gian làm việc sẽ thay đường dẫn thiếu trong cùng tab." },
     },
     issues: {
       title: "🐞 Báo cáo lỗi & Trợ giúp",
@@ -267,15 +309,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Tableaux de données interactifs style Excel",
-        desc: "Les tableaux markdown standard sont automatiquement convertis en tableaux interactifs. Vous pouvez trier les colonnes en cliquant sur leurs en-têtes, utiliser l'icône d'entonnoir pour filtrer les lignes par valeurs et rechercher dans les lignes via la barre de recherche au-dessus du tableau.",
+        desc: "Les tableaux Markdown standard ainsi que les blocs de code CSV et TSV sont automatiquement convertis en tableaux interactifs. Vous pouvez trier les colonnes en cliquant sur leurs en-têtes, utiliser l'icône d'entonnoir pour filtrer les lignes par valeurs et rechercher dans les lignes via la barre de recherche au-dessus du tableau.",
       },
       charts: {
         title: "📊 Convertisseur Tableau en Graphique en un clic",
-        desc: "Pour les tableaux contenant des colonnes numériques, un sélecteur de vue apparaît. Cliquez sur les boutons Barre, Ligne ou Camembert pour visualiser instantanément les données sous forme de graphique interactif Chart.js.",
+        desc: "Pour les tableaux Markdown et les blocs de code CSV ou TSV contenant des colonnes numériques, un sélecteur de vue apparaît. Cliquez sur les boutons Barre, Ligne ou Camembert pour visualiser instantanément les données sous forme de graphique interactif Chart.js.",
       },
       highlight: {
         title: "🎨 Coloration syntaxique & Diagrammes Mermaid",
         desc: "Profitez d'une coloration syntaxique premium à fort contraste pour les blocs de code (TypeScript, JavaScript, etc.) avec des surcharges personnalisées. Les diagrammes de séquence, de flux et de classes Mermaid s'affichent nativement en mode hors ligne strict.",
+      },
+      html: {
+        title: "🌐 Modes de prévisualisation HTML interactif et documents",
+        desc: "Ouvrez les fichiers .html et .htm sous forme d'aperçus web interactifs isolés ou convertis en Markdown (basculez avec Ctrl+Alt+H). Le CSS et JS locaux s'exécutent en toute sécurité, les blocs de code HTML deviennent des sandboxes iframe interactives et le menu d'onglet inclut 'Ouvrir dans le navigateur'.",
       },
       modal: {
         title: "🖼️ Visionneuse multimédia avec flou d'arrière-plan",
@@ -309,7 +355,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "Zoom arrière",
         zoomOutShortcut: "ou Molette vers le bas",
       },
-      note: "Note : Vous pouvez modifier tous les raccourcis depuis la fenêtre des paramètres (cliquez sur le bouton de configuration ou appuyez sur Ctrl+I).",
+      note: "Note : Vous pouvez modifier tous les raccourcis dans la fenêtre des paramètres.",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "Basculer entre Focus et Onglets", desc: "Utilisez {shortcut} pour passer du mode Focus sans distraction aux onglets d’espaces de travail sans ouvrir les paramètres." },
+      tipToggleHtmlPreview: { title: "Basculer instantanément le HTML interactif", desc: "Utilisez {shortcut} pour basculer le document .html ou .htm actif entre l’aperçu HTML et la vue Markdown." },
+      tipOpenContainingFolder: { title: "Ouvrir le dossier du document actif", desc: "Utilisez {shortcut} dans l’application Desktop pour ouvrir le dossier contenant le document dans l’explorateur système." },
+      tipSidebarActions: { title: "Découvrir les actions des fichiers", desc: "Survolez un fichier ou dossier dans Barre latérale → Fichiers et utilisez le bouton à trois points pour les actions système." },
+      tipCsvPreview: { title: "Explorer CSV et TSV comme données", desc: "Les blocs CSV et TSV deviennent des tableaux interactifs avec tri, filtres, retour à la ligne, graphiques et affichage source." },
+      tipHtmlDocuments: { title: "Prévisualiser des documents HTML complets", desc: "Ouvrez les fichiers .html ou .htm comme pages interactives isolées, ou affichez leur Markdown converti." },
+      tipOpenHtmlBrowser: { title: "Ouvrir le HTML local dans le navigateur", desc: "Depuis l’onglet HTML, Ouvrir dans le navigateur lance le fichier local original avec ses ressources relatives." },
+      tipImageRows: { title: "Conserver les galeries sur une ligne", desc: "Les images Markdown et les groupes HTML dans p, div ou span peuvent partager une ligne adaptative." },
+      tipWorkspaceRecovery: { title: "Récupérer les espaces en sécurité", desc: "Annuler une analyse réinitialise l’onglet. Ouvrir à nouveau l’espace remplace un chemin manquant dans ce même onglet." },
     },
     issues: {
       title: "🐞 Signaler un bug & Obtenir de l'aide",
@@ -354,15 +411,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Tablas de datos interactivas al estilo Excel",
-        desc: "Las tablas estándar de markdown se convierten automáticamente en tablas interactivas. Puede ordenar columnas haciendo clic en sus encabezados, usar el icono de embudo para filtrar filas y buscar en la tabla usando el buscador de arriba.",
+        desc: "Las tablas estándar de Markdown, así como los bloques de código CSV y TSV, se convierten automáticamente en tablas interactivas. Puede ordenar columnas haciendo clic en sus encabezados, usar el icono de embudo para filtrar filas y buscar en la tabla usando el buscador de arriba.",
       },
       charts: {
         title: "📊 Convertidor de Tabla a Gráfico en un clic",
-        desc: "Para tablas con columnas numéricas, aparecerá un selector. Haga clic en los botones de Barra, Línea o Torta para visualizar instantáneamente los datos con un gráfico interactivo de Chart.js.",
+        desc: "Para tablas Markdown y bloques de código CSV o TSV con columnas numéricas, aparecerá un selector. Haga clic en los botones de Barra, Línea o Torta para visualizar instantáneamente los datos con un gráfico interactivo de Chart.js.",
       },
       highlight: {
         title: "🎨 Resaltado de sintaxis y diagramas Mermaid",
         desc: "Disfrute de un resaltado de sintaxis premium y de alto contraste para bloques de código con personalizaciones. Los diagramas de secuencia, flujo y clases Mermaid se renderizan localmente de forma estricta sin conexión.",
+      },
+      html: {
+        title: "🌐 Modos de vista previa de HTML interactivo y documentos",
+        desc: "Abra archivos .html y .htm como vistas previas web interactivas aisladas o convertidas a Markdown sobre la marcha (active con Ctrl+Alt+H). El CSS y JS local se ejecutan de forma segura, los bloques de código HTML se renderizan como sandboxes iframe interactivos y el menú de pestañas incluye 'Abrir en el navegador'.",
       },
       modal: {
         title: "🖼️ Visor de imágenes con desenfoque de fondo",
@@ -396,7 +457,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "Alejar",
         zoomOutShortcut: "o Rueda abajo",
       },
-      note: "Nota: Puede cambiar todos los atajos de teclado desde el panel de ajustes (haga clic en el botón de ajustes o presione Ctrl+I).",
+      note: "Nota: Puede cambiar todos los atajos de teclado desde el panel de ajustes.",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "Alternar Enfoque y Pestañas", desc: "Usa {shortcut} para cambiar entre el diseño Enfoque y las pestañas de espacios de trabajo sin abrir Ajustes." },
+      tipToggleHtmlPreview: { title: "Alternar HTML interactivo al instante", desc: "Usa {shortcut} para alternar el documento .html o .htm activo entre la vista previa HTML y la vista Markdown." },
+      tipOpenContainingFolder: { title: "Abrir la carpeta del documento activo", desc: "Usa {shortcut} en la app de escritorio para abrir la carpeta contenedora en el explorador del sistema." },
+      tipSidebarActions: { title: "Descubrir acciones de archivos", desc: "Pasa el cursor por un archivo o carpeta en Barra lateral → Archivos y usa el botón de tres puntos para acciones nativas." },
+      tipCsvPreview: { title: "Explorar CSV y TSV como datos", desc: "Los bloques CSV y TSV pueden verse como tablas interactivas con orden, filtros, ajuste, gráficos y vista de código." },
+      tipHtmlDocuments: { title: "Previsualizar documentos HTML completos", desc: "Abre archivos .html o .htm como páginas interactivas aisladas o cambia a Markdown convertido." },
+      tipOpenHtmlBrowser: { title: "Abrir HTML local en el navegador", desc: "Desde una pestaña HTML, Abrir en el navegador inicia el archivo local original con sus recursos relativos." },
+      tipImageRows: { title: "Mantener galerías en una fila", desc: "Las imágenes Markdown y los grupos HTML dentro de p, div o span pueden compartir una fila adaptable." },
+      tipWorkspaceRecovery: { title: "Recuperar espacios con seguridad", desc: "Cancelar un escaneo restablece la pestaña. Abrir el espacio de nuevo reemplaza la ruta ausente en esa misma pestaña." },
     },
     issues: {
       title: "🐞 Informar problemas y obtener ayuda",
@@ -441,15 +513,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Excel 风格交互式数据表",
-        desc: "标准的 Markdown 数据表将自动转换为交互式表格。您可以通过单击表头对列进行排序，使用表头上的漏斗图标按数值过滤行，并在表格上方的搜索栏内输入内容以搜索行数据。",
+        desc: "标准的 Markdown 数据表以及 CSV 和 TSV 代码块将自动转换为交互式表格。您可以通过单击表头对列进行排序，使用表头上的漏斗图标按数值过滤行，并在表格上方的搜索栏内输入内容以搜索行数据。",
       },
       charts: {
         title: "📊 一键“表转图表”切换器",
-        desc: "对于包含数值列的表格，会出现一个视图切换按钮。单击柱状图、折线图或饼图按钮，即可将表格数据瞬间可视化为交互式 Chart.js 图表。",
+        desc: "对于包含数值列的 Markdown 表格以及 CSV 或 TSV 代码块，会出现一个视图切换按钮。单击柱状图、折线图或饼图按钮，即可将表格数据瞬间可视化为交互式 Chart.js 图表。",
       },
       highlight: {
         title: "🎨 代码高亮与 Mermaid 流程图",
         desc: "为代码块（TypeScript、JavaScript等）提供高对比度、优质的代码高亮显示，并对注释和可选属性进行了定制覆盖。Mermaid 时序图、流程图和类图在客户端原生渲染，具备 100% 严格的离线隔离。",
+      },
+      html: {
+        title: "🌐 交互式 HTML 与文档预览模式",
+        desc: "将 .html 和 .htm 文件作为隔离的交互式 Web 预览或即时转换为 Markdown 进行打开（按 Ctrl+Alt+H 切换）。嵌入的本地 CSS 和 JS 在本地策略下安全运行，HTML 代码块可渲染为交互式 iframe 沙盒，且文档标签页菜单包含“在浏览器中打开”。",
       },
       modal: {
         title: "🖼️ 可缩放的磨砂背景媒体窗口",
@@ -483,7 +559,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "缩小",
         zoomOutShortcut: "或滚轮向下",
       },
-      note: "提示：您可以在“设置窗口”中修改所有的键盘快捷键（单击设置按钮或按 Ctrl+I）。",
+      note: "提示：您可以在“设置窗口”中修改所有键盘快捷键。",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "切换专注视图与标签页", desc: "使用 {shortcut} 在无干扰的专注布局与工作区标签页之间快速切换，无需打开设置。" },
+      tipToggleHtmlPreview: { title: "即时切换交互式 HTML", desc: "使用 {shortcut} 在 HTML 预览和 Markdown 视图之间切换当前的 .html 或 .htm 文档。" },
+      tipOpenContainingFolder: { title: "打开当前文档所在文件夹", desc: "在桌面应用中使用 {shortcut}，通过资源管理器、Finder 或文件管理器打开当前文档所在文件夹。" },
+      tipSidebarActions: { title: "发现文件与文件夹操作", desc: "将鼠标悬停在侧边栏 → 文件中的项目上，点击三点按钮即可使用系统位置操作。" },
+      tipCsvPreview: { title: "以数据方式查看 CSV 和 TSV", desc: "CSV 与 TSV 代码块可切换为支持排序、筛选、换行、图表和源码视图的交互式表格。" },
+      tipHtmlDocuments: { title: "预览完整 HTML 文档", desc: "将 .html 或 .htm 文件作为隔离的交互页面打开，或切换为转换后的 Markdown 阅读。" },
+      tipOpenHtmlBrowser: { title: "在浏览器中打开本地 HTML", desc: "在 HTML 文档标签页使用“在浏览器中打开”，可启动原始本地文件并解析相对资源。" },
+      tipImageRows: { title: "让图片画廊保持同一行", desc: "Markdown 图片及 p、div 或 span 中的原始 HTML 图片组可在响应式同一行显示。" },
+      tipWorkspaceRecovery: { title: "安全恢复工作区", desc: "取消扫描会重置当前标签页。工作区移动后，“重新打开工作区”会在同一标签页替换失效路径。" },
     },
     issues: {
       title: "🐞 报告问题与获取帮助",
@@ -528,15 +615,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Excel-lignende interaktive datatabeller",
-        desc: "Standard markdown-tabeller konverteres automatisk til interaktive tabeller. Du kan sortere kolonner ved å klikke på kolonneoverskriftene, bruke traktikonet til å filtrere rader, og søke etter radinnhold i søkefeltet over tabellen.",
+        desc: "Standard Markdown-tabeller samt CSV- og TSV-kodeblokker konverteres automatisk til interaktive tabeller. Du kan sortere kolonner ved å klikke på kolonneoverskriftene, bruke traktikonet til å filtrere rader, og søke etter radinnhold i søkefeltet over tabellen.",
       },
       charts: {
         title: "📊 Tabell-til-diagram-veksler med ett klikk",
-        desc: "For tabeller med numeriske kolonner vil en diagramveksler vises. Klikk på Stolpe-, Linje- eller Kakestykke-knappene for å visualisere dataene som et interaktivt Chart.js-diagram.",
+        desc: "For Markdown-tabeller og CSV- eller TSV-kodeblokker med numeriske kolonner vil en diagramveksler vises. Klikk på Stolpe-, Linje- eller Kakestykke-knappene for å visualisere dataene som et interaktivt Chart.js-diagram.",
       },
       highlight: {
         title: "🎨 Syntaksutheving & Mermaid-diagrammer",
         desc: "Utheving med høy kontrast for kodeblokker med tilpassede overstyringer for kommentarer. Mermaid-sekvens-, flyt- og klassediagrammer rendres lokalt uten eksterne avhengigheter.",
+      },
+      html: {
+        title: "🌐 Interaktive HTML- og dokumentforhåndsvisningsmoduser",
+        desc: "Åpne .html- og .htm-filer som isolerte interaktive nettsideforhåndsvisninger eller konvertert til Markdown (bytt med Ctrl+Alt+H). Innebygd lokal CSS og JS kjører sikkert under lokale retningslinjer, HTML-kodeblokker rendres som interaktive iframe-sandkasser, og fane-menyer inkluderer 'Åpne i nettleser'.",
       },
       modal: {
         title: "🖼️ Zoombar medievisning med uskarp bakgrunn",
@@ -570,7 +661,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "Zoom ut",
         zoomOutShortcut: "eller Rull ned",
       },
-      note: "Merk: Du kan endre tastatursnarveiene i innstillingene (klikk på tannhjulet eller trykk på Ctrl+I).",
+      note: "Merk: Du kan endre alle tastatursnarveiene i innstillingene.",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "Bytt mellom Fokus og Faner", desc: "Bruk {shortcut} for å bytte mellom Fokus og arbeidsområdefaner uten å åpne Innstillinger." },
+      tipToggleHtmlPreview: { title: "Bytt interaktiv HTML umiddelbart", desc: "Bruk {shortcut} for å bytte det aktive .html- eller .htm-dokumentet mellom HTML-forhåndsvisning og Markdown-visning." },
+      tipOpenContainingFolder: { title: "Åpne mappen til aktivt dokument", desc: "Bruk {shortcut} i skrivebordsappen for å åpne dokumentets mappe i systemets filbehandler." },
+      tipSidebarActions: { title: "Oppdag fil- og mappehandlinger", desc: "Hold over et element i Sidepanel → Filer og bruk treprikk-knappen for systemhandlinger." },
+      tipCsvPreview: { title: "Utforsk CSV og TSV som data", desc: "CSV- og TSV-blokker kan vises som interaktive tabeller med sortering, filtre, bryting, diagrammer og kildevisning." },
+      tipHtmlDocuments: { title: "Forhåndsvis komplette HTML-dokumenter", desc: "Åpne .html- eller .htm-filer som isolerte interaktive sider, eller bytt til konvertert Markdown." },
+      tipOpenHtmlBrowser: { title: "Åpne lokal HTML i nettleseren", desc: "Bruk Åpne i nettleser fra en HTML-fane for å starte originalfilen med relative ressurser." },
+      tipImageRows: { title: "Behold bildegallerier på én rad", desc: "Markdown-bilder og HTML-bildegrupper i p, div eller span kan dele en responsiv rad." },
+      tipWorkspaceRecovery: { title: "Gjenopprett arbeidsområder trygt", desc: "Avbryt skanning nullstiller fanen. Åpne arbeidsområdet igjen erstatter en manglende sti i samme fane." },
     },
     issues: {
       title: "🐞 Rapporter feil & Få hjelp",
@@ -615,15 +717,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Excel 風のインタラクティブデータ表",
-        desc: "標準の Markdown 表は自動的にインタラクティブな表に変換されます。ヘッダーをクリックして列を並べ替えたり、漏斗アイコンで値をフィルタリングしたり、表の上の検索バーに入力して行の内容を検索できます。",
+        desc: "標準の Markdown 表および CSV/TSV コードブロックは自動的にインタラクティブな表に変換されます。ヘッダーをクリックして列を並べ替えたり、漏斗アイコンで値をフィルタリングしたり、表の上の検索バーに入力して行の内容を検索できます。",
       },
       charts: {
         title: "📊 ワンクリックの表からチャートへの切り替え",
-        desc: "数値列を含む表の場合、ビュー切り替えボタンが表示されます。「棒」「折れ線」または「円」ボタンをクリックすると、データをインタラクティブな Chart.js チャートとして即座に可視化できます。",
+        desc: "数値列を含む Markdown 表や CSV/TSV コードブロックの場合、ビュー切り替えボタンが表示されます。「棒」「折れ線」または「円」ボタンをクリックすると、データをインタラクティブな Chart.js チャートとして即座に可視化できます。",
       },
       highlight: {
         title: "🎨 構文ハイライトと Mermaid 図",
         desc: "コードブロック（TypeScript、JavaScriptなど）には、高コントラストでプレミアムな構文ハイライトが適用されます。Mermaid のシーケンス、フローチャート、クラス図は、厳密なオフライン環境でクライアント側でネイティブにレンダリングされます。",
+      },
+      html: {
+        title: "🌐 インタラクティブ HTML およびドキュメントプレビューモード",
+        desc: ".html および .htm ファイルを分離されたインタラクティブな Web プレビューまたは変換された Markdown として即座に開きます（Ctrl+Alt+H で切替）。埋め込まれたローカル CSS/JS はローカルポリシーの下で安全に動作し、HTML 代码ブロックは iframe サンドボックスとして描画され、タブメニューから「ブラウザで開く」を実行できます。",
       },
       modal: {
         title: "🖼️ 背景ぼかし付きのズーム可能なメディアビューア",
@@ -657,7 +763,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "縮小",
         zoomOutShortcut: "またはホイール下にスクロール",
       },
-      note: "注：すべてのキーボードショートカットは、設定画面（設定ボタンをクリックするか、Ctrl+I を押す）から変更できます。",
+      note: "注：すべてのキーボードショートカットは設定画面から変更できます。",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "フォーカスとタブを切り替える", desc: "{shortcut} で、設定を開かずにフォーカス表示とワークスペースタブを切り替えられます。" },
+      tipToggleHtmlPreview: { title: "インタラクティブ HTML を即時切替", desc: "{shortcut} で現在の .html または .htm ドキュメントを HTML プレビューと Markdown ビューの間で切り替えます。" },
+      tipOpenContainingFolder: { title: "現在のドキュメントのフォルダーを開く", desc: "デスクトップ版で {shortcut} を使うと、現在のドキュメントを含むフォルダーをファイル管理アプリで開けます。" },
+      tipSidebarActions: { title: "ファイル操作を見つける", desc: "サイドバー → ファイルの項目にカーソルを合わせ、三点ボタンからシステムの場所操作を利用できます。" },
+      tipCsvPreview: { title: "CSV と TSV をデータとして調べる", desc: "CSV/TSV ブロックは、並べ替え、フィルター、折り返し、グラフ、ソース表示を備えた表に切り替えられます。" },
+      tipHtmlDocuments: { title: "完全な HTML ドキュメントをプレビュー", desc: " .html/.htm を隔離された対話ページとして開くか、変換済み Markdown に切り替えて読めます。" },
+      tipOpenHtmlBrowser: { title: "ローカル HTML をブラウザーで開く", desc: "HTML タブの「ブラウザーで開く」で、相対リソースを含む元のローカルファイルを起動します。" },
+      tipImageRows: { title: "画像ギャラリーを同じ行に保つ", desc: "Markdown 画像と p、div、span 内の HTML 画像グループはレスポンシブな同一行に表示できます。" },
+      tipWorkspaceRecovery: { title: "ワークスペースを安全に復元", desc: "スキャンをキャンセルするとタブがリセットされます。再度開くと同じタブで見つからないパスを置換します。" },
     },
     issues: {
       title: "🐞 バグ報告とサポート",
@@ -702,7 +819,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Excel 스타일 대화형 데이터 표",
-        desc: "표준 마크다운 표가 대화형 표로 자동 변환됩니다. 헤더를 클릭하여 열을 정렬하고, 필터 아이콘으로 값을 필터링하며, 표 위의 검색 창에서 행 내용을 검색할 수 있습니다.",
+        desc: "표준 마크다운 표뿐만 아니라 CSV 및 TSV 코드 블록도 대화형 표로 자동 변환됩니다. 헤더를 클릭하여 열을 정렬하고, 필터 아이콘으로 값을 필터링하며, 표 위의 검색 창에서 행 내용을 검색할 수 있습니다.",
       },
       charts: {
         title: "📊 원클릭 표-차트 변환",
@@ -711,6 +828,10 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       highlight: {
         title: "🎨 구문 강조 및 Mermaid 다이어그램",
         desc: "코드 블록에 고대비 프리미엄 구문 강조가 적용됩니다. Mermaid의 시퀀스, 플로우차트, 클래스 다이어그램은 완벽한 오프라인 환경인 클라이언트 측에서 기본으로 렌더링됩니다.",
+      },
+      html: {
+        title: "🌐 대화형 HTML 및 문서 미리보기 모드",
+        desc: ".html 및 .htm 파일을 격리된 대화형 웹 미리보기 또는 마크다운으로 즉시 변환하여 엽니다(Ctrl+Alt+H로 전환). 임베디드 로컬 CSS/JS는 로컬 정책에 따라 안전하게 실행되고, HTML 코드 블록은 대화형 iframe 샌드박스로 렌더링되며, 문서 탭 메뉴에서 '브라우저에서 열기'를 지원합니다.",
       },
       modal: {
         title: "🖼️ 배경 흐림 기능이 있는 미디어 뷰어",
@@ -744,7 +865,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "축소",
         zoomOutShortcut: "또는 휠 아래로",
       },
-      note: "참고: 설정 창(설정 버튼 클릭 또는 Ctrl+I 입력)에서 모든 키보드 단축키를 변경할 수 있습니다.",
+      note: "참고: 설정 창에서 모든 키보드 단축키를 변경할 수 있습니다.",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "포커스와 탭 보기 전환", desc: "{shortcut}으로 설정을 열지 않고 포커스 레이아웃과 작업 공간 탭을 전환하세요." },
+      tipToggleHtmlPreview: { title: "대화형 HTML 즉시 전환", desc: "{shortcut}으로 활성 .html 또는 .htm 문서를 HTML 미리보기와 Markdown 보기 사이에서 전환하세요." },
+      tipOpenContainingFolder: { title: "현재 문서 폴더 열기", desc: "데스크톱 앱에서 {shortcut}을 사용해 현재 문서가 있는 폴더를 시스템 파일 관리자에서 여세요." },
+      tipSidebarActions: { title: "파일 및 폴더 작업 찾기", desc: "사이드바 → 파일 항목에 마우스를 올리고 세 점 버튼에서 시스템 위치 작업을 사용하세요." },
+      tipCsvPreview: { title: "CSV와 TSV를 데이터로 탐색", desc: "CSV/TSV 블록을 정렬, 필터, 줄바꿈, 차트, 소스 보기가 있는 대화형 표로 전환할 수 있습니다." },
+      tipHtmlDocuments: { title: "전체 HTML 문서 미리보기", desc: " .html/.htm 파일을 격리된 대화형 페이지로 열거나 변환된 Markdown 보기로 전환하세요." },
+      tipOpenHtmlBrowser: { title: "로컬 HTML을 브라우저에서 열기", desc: "HTML 탭의 브라우저에서 열기를 사용해 상대 리소스가 포함된 원본 로컬 파일을 실행하세요." },
+      tipImageRows: { title: "이미지 갤러리를 한 줄에 유지", desc: "Markdown 이미지와 p, div, span 안의 HTML 이미지 그룹을 반응형 한 줄로 표시할 수 있습니다." },
+      tipWorkspaceRecovery: { title: "작업 공간 안전 복구", desc: "스캔 취소는 현재 탭을 초기화합니다. 다시 열기는 같은 탭에서 누락된 경로를 교체합니다." },
     },
     issues: {
       title: "🐞 버그 보고 및 지원",
@@ -789,15 +921,19 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       },
       tables: {
         title: "📋 Интерактивные таблицы данных в стиле Excel",
-        desc: "Стандартные таблицы markdown автоматически преобразуются в интерактивные. Вы можете сортировать столбцы при нажатии на их заголовки, использовать значок воронки для фильтрации строк и искать по содержимому в строке поиска над таблицей.",
+        desc: "Стандартные таблицы Markdown, а также блоки кода CSV и TSV автоматически преобразуются в интерактивные. Вы можете сортировать столбцы при нажатии на их заголовки, использовать значок воронки для фильтрации строк и искать по содержимому в строке поиска над таблицей.",
       },
       charts: {
         title: "📊 Преобразование таблицы в интерактивный график",
-        desc: "Для таблиц с числовыми столбцами появится переключатель видов. Нажмите кнопку гистограммы, линейного или кругового графика для мгновенной визуализации данных с помощью Chart.js.",
+        desc: "Для таблиц Markdown и блоков кода CSV или TSV с числовыми столбцами появится переключатель видов. Нажмите кнопку гистограммы, линейного или кругового графика для мгновенной визуализации данных с помощью Chart.js.",
       },
       highlight: {
         title: "🎨 Подсветка синтаксиса и диаграммы Mermaid",
         desc: "Высококонтрастная премиум-подсветка синтаксиса для блоков кода с кастомными стилями для комментариев. Диаграммы последовательностей, блок-схемы и диаграммы классов Mermaid отображаются локально в строгом автономном режиме.",
+      },
+      html: {
+        title: "🌐 Интерактивные режимы просмотра HTML и документов",
+        desc: "Открывайте файлы .html и .htm как изолированные интерактивные веб-превью или преобразованный Markdown (переключение по Ctrl+Alt+H). Встроенные локальные CSS и JS безопасно исполняются в рамках локальной политики, блоки HTML-кода отображаются как песочницы iframe, а контекстное меню вкладок включает 'Открыть в браузере'.",
       },
       modal: {
         title: "🖼️ Масштабируемый просмотрщик медиа с размытием фона",
@@ -831,7 +967,18 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         zoomOut: "Уменьшить",
         zoomOutShortcut: "или прокрутка колесика вниз",
       },
-      note: "Примечание: Вы можете изменить сочетания клавиш в окне настроек (нажмите кнопку настроек или Ctrl+I).",
+      note: "Примечание: Все сочетания клавиш можно изменить в окне настроек.",
+    },
+    tips: {
+      tipToggleDesktopView: { title: "Переключать Фокус и Вкладки", desc: "Используйте {shortcut}, чтобы переключать режим Фокуса и вкладки рабочих областей без открытия Настроек." },
+      tipToggleHtmlPreview: { title: "Мгновенно переключать интерактивный HTML", desc: "Используйте {shortcut}, чтобы переключать активный документ .html или .htm между HTML-предпросмотром и режимом Markdown." },
+      tipOpenContainingFolder: { title: "Открыть папку активного документа", desc: "В Desktop-приложении используйте {shortcut}, чтобы открыть содержащую папку в системном файловом менеджере." },
+      tipSidebarActions: { title: "Найти действия файлов и папок", desc: "Наведите курсор на элемент в Боковая панель → Файлы и нажмите кнопку с тремя точками для системных действий." },
+      tipCsvPreview: { title: "Исследовать CSV и TSV как данные", desc: "Блоки CSV/TSV можно открыть как интерактивные таблицы с сортировкой, фильтрами, переносом, диаграммами и исходником." },
+      tipHtmlDocuments: { title: "Предпросмотр полных HTML-документов", desc: "Открывайте .html/.htm как изолированные интерактивные страницы или переключайтесь на преобразованный Markdown." },
+      tipOpenHtmlBrowser: { title: "Открыть локальный HTML в браузере", desc: "Команда «Открыть в браузере» запускает исходный локальный файл HTML вместе с относительными ресурсами." },
+      tipImageRows: { title: "Сохранять галереи в одной строке", desc: "Изображения Markdown и HTML-группы внутри p, div или span могут отображаться в адаптивной строке." },
+      tipWorkspaceRecovery: { title: "Безопасно восстановить рабочую область", desc: "Отмена сканирования сбрасывает вкладку. Повторное открытие заменяет отсутствующий путь в той же вкладке." },
     },
     issues: {
       title: "🐞 Сообщить об ошибке и получить помощь",

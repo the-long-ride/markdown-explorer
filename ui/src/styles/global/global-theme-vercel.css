@@ -126,3 +126,11 @@
 [data-theme-style="vercel"] .tree-file.is-active {
   border-color: transparent;
 }
+
+/* More Actions button icon size override for Vercel theme */
+[data-theme-style="vercel"] .toolbar-action-menu .topbar__action-btn svg,
+[data-theme-style="vercel"] .toolbar-action-menu .topbar__action-btn .btn-icon svg {
+  width: 18px;
+  height: 18px;
+  transform: scale(1.15);
+}

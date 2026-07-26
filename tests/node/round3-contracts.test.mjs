@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const read = (file) => readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
-const OPEN_BROWSER_PATH_PREFIX = 'M116.56,3.69l-3.84,53.76l-17.69-15c-19.5,8.72-29.96,23.99-30.51,43.77c-17.95-26.98-7.46-50.4,12.46-65.97';
+const OPEN_BROWSER_PATH_PREFIX = 'M71.89,100.56q-3.86,3.82-8.37,7.63';
 
 test('Evolved Glass tooltips and dropdown panels use opaque backgrounds without fading contents', async () => {
   const [tooltipCss, toolbarCss] = await Promise.all([

@@ -42,32 +42,7 @@
     --txc: #2563eb;
   }
 
-  [data-theme-style="pet-shiba"][data-theme="auto"] {
-    --accent: #c05621;
-    --accent-dim: rgba(192, 86, 33, 0.13);
-    --accent-text: #9a3412;
-    --txc: #0e7490;
-  }
 
-  [data-theme-style="pet-shiba-memes"][data-theme="auto"] {
-    --bg: #f5f7f6;
-    --bg-s: #ffffff;
-    --bg-e: #edf2f1;
-    --bg-h: #e1e9e8;
-    --bg-a: #d3dedf;
-    --bg-code: #f8faf9;
-    --tx: #101820;
-    --tx2: #465461;
-    --txm: #6f7d89;
-    --tx3: #7f8c98;
-    --accent: #111827;
-    --accent-dim: rgba(17, 24, 39, 0.11);
-    --accent-text: #111827;
-    --txc: #0284c7;
-    --chart-1: #111827;
-    --chart-2: #0284c7;
-    --chart-3: #ca8a04;
-  }
 
   [data-theme-style="pet-k-ink"][data-theme="auto"] {
     --bg: #f7f5f2;

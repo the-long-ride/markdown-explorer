@@ -141,6 +141,9 @@ export class MarkdownDocsPanel {
               await getVscode().env.openExternal(getVscode().Uri.parse(msg.url));
             }
             break;
+          case 'readWorkspaceTextResource':
+            await this._readWorkspaceTextResource(msg);
+            break;
           case 'openHtmlPreview':
             if (typeof msg.documentHtml === 'string' && msg.documentHtml.trim()) {
               await this._htmlPreviewServer.open(msg.documentHtml);
@@ -280,9 +283,13 @@ export class MarkdownDocsPanel {
     }
 
     let raw = '';
+    let sourceDocumentText: string | null = null;
     let previewInfo: DocumentPreviewInfo | null = null;
+    const isHtmlDocument = /\.html?$/i.test(this._currentFile);
     try {
-      if (isMarkdownFilePath(this._currentFile)) {
+      if (isHtmlDocument) {
+        sourceDocumentText = WorkspaceScanner.readFile(this._currentFile);
+      } else if (isMarkdownFilePath(this._currentFile)) {
         raw = WorkspaceScanner.readFile(this._currentFile);
       } else {
         await this._sendLoading(
@@ -295,8 +302,8 @@ export class MarkdownDocsPanel {
       }
     } catch (err) {
       console.error('Failed to prepare file preview:', this._currentFile, err);
-      raw = createFailureMarkdown(this._currentFile, err);
-      previewInfo = isExtraDocumentFilePath(this._currentFile)
+      raw = isHtmlDocument ? '' : createFailureMarkdown(this._currentFile, err);
+      previewInfo = !isHtmlDocument && isExtraDocumentFilePath(this._currentFile)
         ? {
             kind: 'converted',
             sourceExtension: path.extname(this._currentFile).toLowerCase(),
@@ -320,6 +327,7 @@ export class MarkdownDocsPanel {
       command: 'renderContent',
       html: rewrittenHtml,
       markdownSource: raw,
+      sourceDocumentText,
       frontmatter,
       toc,
       filePath: this._currentFile,
@@ -459,6 +467,57 @@ export class MarkdownDocsPanel {
   private _readDocumentConversionEnabled(): boolean {
     const config = getVscode().workspace.getConfiguration('markdownExplorer');
     return config.get<boolean>('documentConversion') === true;
+  }
+
+  private async _readWorkspaceTextResource(msg: {
+    requestId: string;
+    documentPath: string;
+    resourcePath: string;
+  }): Promise<void> {
+    const respond = (payload: Record<string, unknown>) => this._panel.webview.postMessage({
+      command: 'workspaceTextResourceResult',
+      requestId: msg.requestId,
+      ...payload,
+    });
+    const workspaceRoot = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceRoot || !msg.documentPath || !msg.resourcePath) {
+      await respond({ ok: false, reason: 'unsupported' });
+      return;
+    }
+    const reference = String(msg.resourcePath).split(/[?#]/, 1)[0];
+    if (!reference || /^(?:https?:|data:|blob:|javascript:)/i.test(reference)) {
+      await respond({ ok: false, reason: 'unsupported' });
+      return;
+    }
+    try {
+      let resolvedPath: string;
+      if (/^file:\/\//i.test(reference)) {
+        resolvedPath = getVscode().Uri.parse(reference).fsPath;
+      } else if (reference.startsWith('/')) {
+        resolvedPath = path.resolve(workspaceRoot, `.${reference}`);
+      } else {
+        resolvedPath = path.isAbsolute(reference)
+          ? path.normalize(reference)
+          : path.resolve(path.dirname(msg.documentPath), reference);
+      }
+      if (!/\.(?:css|js|mjs|cjs)$/i.test(resolvedPath) || !this._isSameOrInsidePath(workspaceRoot, resolvedPath)) {
+        await respond({ ok: false, reason: 'outside-workspace' });
+        return;
+      }
+      if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
+        await respond({ ok: false, reason: 'missing' });
+        return;
+      }
+      const workspaceReal = fs.realpathSync(workspaceRoot);
+      const targetReal = fs.realpathSync(resolvedPath);
+      if (!this._isSameOrInsidePath(workspaceReal, targetReal)) {
+        await respond({ ok: false, reason: 'outside-workspace' });
+        return;
+      }
+      await respond({ ok: true, content: fs.readFileSync(targetReal, 'utf8'), resolvedPath: targetReal });
+    } catch {
+      await respond({ ok: false, reason: 'unreadable' });
+    }
   }
 
   private async _setDocumentConversion(enabled: boolean): Promise<void> {

@@ -22,6 +22,18 @@ import type {
 export const SETTINGS_EXPORT_KIND = 'markdown-explorer-settings';
 export const SETTINGS_EXPORT_SCHEMA_VERSION = 1;
 
+export type SettingsImportErrorCode = 'invalidJson' | 'missingData' | 'wrongFile' | 'unknownSchema';
+
+export class SettingsImportError extends Error {
+  readonly code: SettingsImportErrorCode;
+
+  constructor(code: SettingsImportErrorCode, message: string) {
+    super(message);
+    this.name = 'SettingsImportError';
+    this.code = code;
+  }
+}
+
 export interface SettingsExportEnvelope {
   readonly kind: typeof SETTINGS_EXPORT_KIND;
   readonly schemaVersion: number;
@@ -133,6 +145,10 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
   return {
     showTitle: raw.showTitle === true,
     defaultHtmlPreview: raw.defaultHtmlPreview !== false,
+    defaultHtmlCodeBlockPreview: typeof raw.defaultHtmlCodeBlockPreview === 'boolean'
+      ? raw.defaultHtmlCodeBlockPreview
+      : raw.defaultHtmlPreview !== false,
+    defaultCsvPreview: raw.defaultCsvPreview !== false,
     fileTabs: raw.fileTabs === true,
     documentConversion: raw.documentConversion === true,
     scopeFocus: normalizeScopeFocus(raw.scopeFocus),
@@ -183,19 +199,19 @@ export function parseSettingsImport(rawText: string, isDesktop: boolean): Import
   try {
     parsed = JSON.parse(rawText);
   } catch {
-    throw new Error('The selected file is not valid JSON.');
+    throw new SettingsImportError('invalidJson', 'The selected file is not valid JSON.');
   }
 
   if (!parsed || typeof parsed !== 'object') {
-    throw new Error('The selected file does not contain settings data.');
+    throw new SettingsImportError('missingData', 'The selected file does not contain settings data.');
   }
   const envelope = parsed as Record<string, unknown>;
   if (envelope.kind !== SETTINGS_EXPORT_KIND) {
-    throw new Error('This is not a Markdown Explorer settings file.');
+    throw new SettingsImportError('wrongFile', 'This is not a Markdown Explorer settings file.');
   }
   const schemaVersion = Number(envelope.schemaVersion);
   if (!Number.isFinite(schemaVersion) || schemaVersion < 1) {
-    throw new Error('This settings file uses an unknown schema version.');
+    throw new SettingsImportError('unknownSchema', 'This settings file uses an unknown schema version.');
   }
 
   const payload = envelope.payload && typeof envelope.payload === 'object'

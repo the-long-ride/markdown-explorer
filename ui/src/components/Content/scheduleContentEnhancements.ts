@@ -1,4 +1,5 @@
 import { getChart, getHighlightJs, getKatex, getMermaid } from "../../lib/renderLibs";
+import { enhanceRawHtmlImageRows } from "../../markdown/rawHtmlImageRows";
 
 interface ScheduleArgs {
   body: HTMLElement;
@@ -19,6 +20,8 @@ export function scheduleContentEnhancements({
     const rafId = requestAnimationFrame(() => {
       void (async () => {
         if (cancelled) return;
+
+        enhanceRawHtmlImageRows(body);
 
         const codeBlocks = [
           ...body.querySelectorAll<HTMLElement>("pre code:not(.is-custom-highlighted)"),

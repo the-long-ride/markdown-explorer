@@ -461,10 +461,21 @@ describe('Topbar render', () => {
     expect(tooltip).not.toBeInTheDocument();
   });
 
-  it('renders divider elements between button groups', () => {
+  it('places a crumb separator between More actions and desktop window controls', () => {
+    (window as any).electronAPI = {};
     const { container } = render(React.createElement(Topbar, defaultProps));
-    const dividers = container.querySelectorAll('.topbar__divider');
-    expect(dividers.length).toBeGreaterThanOrEqual(2);
+    const actions = container.querySelector('.topbar__actions')!;
+    const children = Array.from(actions.children);
+    const documentActions = container.querySelector('.header-action-group')!;
+    const moreActions = screen.getByTestId('toolbar-action-menu');
+    const separator = container.querySelector('.topbar__crumb-separator--window-controls')!;
+    const windowControls = container.querySelector('.topbar__window-controls')!;
+
+    expect(children.indexOf(documentActions)).toBeLessThan(children.indexOf(moreActions));
+    expect(children.indexOf(moreActions)).toBeLessThan(children.indexOf(separator));
+    expect(children.indexOf(separator)).toBeLessThan(children.indexOf(windowControls));
+    expect(separator).toHaveTextContent('|');
+    expect(separator).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('renders breadcrumb container element', () => {

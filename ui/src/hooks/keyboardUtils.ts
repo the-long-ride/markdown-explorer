@@ -57,8 +57,10 @@ export type KeyboardAction =
   | { type: 'toggle-theme' }
   | { type: 'toggle-toc' }
   | { type: 'locate-file' }
+  | { type: 'open-current-document-location' }
   | { type: 'toggle-focus-mode' }
   | { type: 'toggle-desktop-view-mode' }
+  | { type: 'toggle-active-html-document-preview' }
   | { type: 'toggle-fullscreen' }
   | { type: 'close-content-tab' }
   | { type: 'close-all-content-tabs' }
@@ -89,8 +91,11 @@ export interface KeyboardState {
   hasOnWelcome: boolean;
   hasOnToggleToc: boolean;
   hasOnLocateFile: boolean;
+  hasOnOpenCurrentDocumentLocation?: boolean;
   hasOnToggleFocusMode: boolean;
   hasOnToggleDesktopViewMode: boolean;
+  activeHtmlDocument?: boolean;
+  onToggleActiveHtmlDocumentPreview?: boolean;
   hasOnToggleFullscreen: boolean;
   hasOnFindClose: boolean;
   isRepeat: boolean;
@@ -203,6 +208,15 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     return { type: 'locate-file' };
   }
 
+  if (
+    state.isDesktop &&
+    state.hasOnOpenCurrentDocumentLocation &&
+    !state.isEditableTarget &&
+    matchesShortcut(e, state.keybindings.openCurrentDocumentLocation)
+  ) {
+    return { type: 'open-current-document-location' };
+  }
+
   if (state.hasOnToggleFocusMode && matchesShortcut(e, state.keybindings.toggleFocusMode)) {
     if (state.isRepeat) return null;
     return { type: 'toggle-focus-mode' };
@@ -211,6 +225,11 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
   if (state.isDesktop && state.hasOnToggleDesktopViewMode && matchesShortcut(e, state.keybindings.toggleDesktopViewMode)) {
     if (state.isRepeat) return null;
     return { type: 'toggle-desktop-view-mode' };
+  }
+
+  if (state.activeHtmlDocument && state.onToggleActiveHtmlDocumentPreview && matchesShortcut(e, state.keybindings.toggleHtmlPreview)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-active-html-document-preview' };
   }
 
   if (matchesShortcut(e, state.keybindings.workspaceSelection)) {

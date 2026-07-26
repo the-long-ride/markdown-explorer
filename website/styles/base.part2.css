@@ -91,6 +91,26 @@
   padding: clamp(4rem, 8vw, 7rem) 0;
 }
 
+.latest-features {
+  padding-bottom: clamp(3.5rem, 7vw, 6rem);
+}
+
+.latest-feature-grid .feature-card {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, var(--surface), var(--surface-2));
+}
+
+.latest-feature-grid .feature-card img {
+  aspect-ratio: 16 / 10;
+  height: auto;
+  min-height: 0;
+}
+
+.latest-feature-grid .feature-card > div {
+  flex: 1;
+}
+
 /* ── Capabilities section ──────────────────────────────────── */
 .capabilities-section {
   border-bottom: 1px solid var(--line);

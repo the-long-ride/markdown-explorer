@@ -2,6 +2,8 @@ import type { PlatformBridge } from '../platform/bridge';
 import type { AppRuntime } from '../types';
 import type { Translations } from '../contexts/translations';
 import { buildHtmlPreviewDocument, type HtmlPreviewTarget } from '../markdown/htmlPreviewDocument';
+import { pathToFileUrl } from './localFileUrl';
+export { pathToFileUrl } from './localFileUrl';
 
 export type PreviewActionLabels = Translations['previewActions'];
 
@@ -51,16 +53,12 @@ export function getHtmlPreviewDocument(
   return iframe.getAttribute('srcdoc') || iframe.srcdoc || null;
 }
 
-function pathToFileUrl(path: string): string | null {
-  const trimmed = path.trim();
-  if (!trimmed) return null;
-  if (/^file:/i.test(trimmed)) return trimmed;
-  if (/^[a-zA-Z]:[\\/]/.test(trimmed)) {
-    const normalized = trimmed.replace(/\\/g, '/');
-    return `file:///${encodeURI(normalized)}`;
-  }
-  if (trimmed.startsWith('/')) return `file://${encodeURI(trimmed)}`;
-  return null;
+
+export function openLocalFileInBrowser(bridge: PlatformBridge, filePath: string): boolean {
+  const url = pathToFileUrl(filePath);
+  if (!url) return false;
+  bridge.postMessage({ command: 'openExternal', url });
+  return true;
 }
 
 export function documentBaseHref(currentFile: string | null | undefined): string | null {
@@ -107,7 +105,10 @@ export function injectBaseHref(documentHtml: string, baseHref: string | null): s
   if (/<head\b[^>]*>/i.test(withoutExisting)) {
     return withoutExisting.replace(/<head\b[^>]*>/i, (head) => `${head}\n${base}`);
   }
-  return withoutExisting.replace(/<html\b[^>]*>/i, (html) => `${html}\n<head>${base}</head>`);
+  if (/<html\b[^>]*>/i.test(withoutExisting)) {
+    return withoutExisting.replace(/<html\b[^>]*>/i, (html) => `${html}\n<head>${base}</head>`);
+  }
+  return `<!doctype html><html><head>${base}</head><body>${withoutExisting}</body></html>`;
 }
 
 
@@ -132,7 +133,21 @@ export function applyPreviewActionTranslations(root: ParentNode, labels: Preview
     const tooltip = element.querySelector<HTMLElement>('.tooltip-text');
     if (tooltip) tooltip.textContent = label;
   });
-  root.querySelectorAll<HTMLElement>('.mdn-toggle-preview-btn').forEach((button) => {
+  root.querySelectorAll<HTMLElement>('[data-i18n-content-key]').forEach((element) => {
+    const key = element.dataset.i18nContentKey as keyof PreviewActionLabels | undefined;
+    if (!key || typeof labels[key] !== 'string') return;
+    element.textContent = labels[key];
+  });
+  root.querySelectorAll<HTMLElement>('.mdn-codeblock-lang[data-i18n-preview-key]').forEach((element) => {
+    const key = element.dataset.i18nPreviewKey as keyof PreviewActionLabels | undefined;
+    if (!key || typeof labels[key] !== 'string') return;
+    const translated = labels[key];
+    element.dataset.translatedPreviewLabel = translated;
+    if (element.closest<HTMLElement>('.mdn-codeblock')?.dataset.mode === 'preview') {
+      element.textContent = translated;
+    }
+  });
+  root.querySelectorAll<HTMLElement>('.mdn-toggle-preview-btn, .mdn-toggle-csv-btn').forEach((button) => {
     button.dataset.labelShowCode = labels.showCode;
     button.dataset.labelShowPreview = labels.showPreview;
   });

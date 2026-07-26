@@ -411,12 +411,29 @@ impl Dispatcher {
                 state.flat_list.clone(),
             )
         };
-        let result = converter.read_markdown(&file_path_str, doc_conv);
+        let is_html_document = current_file
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("html") || ext.eq_ignore_ascii_case("htm"));
+        let source_document_text = if is_html_document {
+            std::fs::read_to_string(&current_file).ok()
+        } else {
+            None
+        };
+        let result = if is_html_document {
+            None
+        } else {
+            Some(converter.read_markdown(&file_path_str, doc_conv))
+        };
         if !self.is_workspace_request_current(&request) {
             return;
         }
-        let raw = result.markdown;
-        let preview_info = result.preview_info;
+        let raw = if is_html_document {
+            String::new()
+        } else {
+            result.as_ref().map(|value| value.markdown.clone()).unwrap_or_default()
+        };
+        let preview_info = result.and_then(|value| value.preview_info);
 
         let file_info = flat_list.iter().find(|file| file.fs_path == file_path_str);
         let relative_path = file_info
@@ -432,6 +449,7 @@ impl Dispatcher {
         let mut extra = serde_json::Map::new();
         extra.insert("html".into(), "".into());
         extra.insert("markdownSource".into(), raw.into());
+        extra.insert("sourceDocumentText".into(), source_document_text.into());
         extra.insert("frontmatter".into(), json!({}));
         extra.insert("toc".into(), json!([]));
         extra.insert("filePath".into(), file_path_str.into());

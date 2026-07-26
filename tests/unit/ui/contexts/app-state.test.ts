@@ -167,6 +167,7 @@ describe('createInitialState', () => {
       themeStyle: 'glass',
       showTitle: true,
       defaultHtmlPreview: false,
+      defaultCsvPreview: false,
       fileTabs: true,
       documentConversion: true,
       scopeFocus: { ws: ['/a.md'] },
@@ -503,6 +504,27 @@ describe('reducer', () => {
       expect(next.renderVersion).toBe(1);
     });
 
+    test('applies an explicit HTML preview intent while loading an unopened file', () => {
+      const state = makeState({
+        settings: { ...initialState.settings, fileTabs: true, defaultHtmlPreview: true },
+      });
+      const next = reducer(state, {
+        type: 'RENDER_CONTENT',
+        htmlPreviewOverride: false,
+        msg: {
+          filePath: '/docs/page.html',
+          html: '<p>rendered markdown view</p>',
+          sourceDocumentText: '<!doctype html><html><body>Page</body></html>',
+          frontmatter: {},
+          toc: [],
+          relativePath: 'page.html',
+        } as any,
+      });
+
+      expect(next.currentHtmlPreviewOverride).toBe(false);
+      expect(next.contentTabs[0].htmlPreviewOverride).toBe(false);
+    });
+
     test('with markdownSource renders client-side', () => {
       const state = makeState({ settings: { ...initialState.settings, fileTabs: true } });
       const next = reducer(state, { type: 'RENDER_CONTENT', msg: { filePath: '/a.md', markdownSource: '# Hello', html: '', frontmatter: {}, toc: [], relativePath: 'a.md' } as any });
@@ -550,6 +572,45 @@ describe('reducer', () => {
       const state = makeState({ contentTabs: [] });
       const next = reducer(state, { type: 'ACTIVATE_CONTENT_TAB', filePath: '/a.md' });
       expect(next).toEqual(state);
+    });
+  });
+
+  describe('SET_CONTENT_TAB_HTML_PREVIEW', () => {
+    test('updates the current HTML view when file tabs are disabled', () => {
+      const state = makeState({
+        currentFile: '/docs/page.html',
+        currentHtmlPreviewOverride: undefined,
+        contentTabs: [],
+        settings: { ...initialState.settings, fileTabs: false },
+      });
+
+      const next = reducer(state, {
+        type: 'SET_CONTENT_TAB_HTML_PREVIEW',
+        filePath: '/docs/page.html',
+        enabled: false,
+      });
+
+      expect(next.currentHtmlPreviewOverride).toBe(false);
+      expect(next.contentTabs).toEqual([]);
+      expect(next.renderVersion).toBe(state.renderVersion + 1);
+    });
+
+    test('preserves the current override while updating a matching tab', () => {
+      const tab = makeTab('/docs/page.html', { htmlPreviewOverride: true });
+      const state = makeState({
+        currentFile: '/docs/page.html',
+        currentHtmlPreviewOverride: true,
+        contentTabs: [tab],
+      });
+
+      const next = reducer(state, {
+        type: 'SET_CONTENT_TAB_HTML_PREVIEW',
+        filePath: '/docs/page.html',
+        enabled: false,
+      });
+
+      expect(next.currentHtmlPreviewOverride).toBe(false);
+      expect(next.contentTabs[0].htmlPreviewOverride).toBe(false);
     });
   });
 
@@ -788,6 +849,28 @@ describe('reducer', () => {
       const next = reducer(state, { type: 'UPDATE_SETTINGS', settings: { fileTabs: true } });
       expect(next).not.toBe(state);
       expect(next.settings.fileTabs).toBe(true);
+    });
+
+    test('fileTabs creation uses the newly selected CSV preview mode', () => {
+      const state = makeState({
+        currentFile: '/docs/downloads.md',
+        contentHtml: '<p>stale preview</p>',
+        markdownSource: '```csv\nname,count\nDesktop,10\n```',
+        frontmatter: {},
+        toc: [],
+        relativePath: 'downloads.md',
+        settings: { ...initialState.settings, fileTabs: false, defaultCsvPreview: true },
+      });
+
+      const next = reducer(state, {
+        type: 'UPDATE_SETTINGS',
+        settings: { fileTabs: true, defaultCsvPreview: false },
+      });
+
+      expect(next.contentHtml).toContain('mdn-csv-preview-wrap');
+      expect(next.contentHtml).toContain('data-mode="code"');
+      expect(next.contentTabs).toHaveLength(1);
+      expect(next.contentTabs[0].contentHtml).toContain('data-mode="code"');
     });
 
     test('customThemes normalization', () => {

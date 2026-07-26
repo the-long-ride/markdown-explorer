@@ -23,6 +23,7 @@ export interface DesktopTab {
   currentFile: string | null;
   contentHtml: string;
   markdownSource: string | null;
+  sourceDocumentText?: string | null;
   frontmatter: Frontmatter;
   toc: TocEntry[];
   previewInfo: DocumentPreviewInfo | null;

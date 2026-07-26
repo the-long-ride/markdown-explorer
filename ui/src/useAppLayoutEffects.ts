@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useKeyboard } from "./hooks/useKeyboard";
 import { useResize } from "./hooks/useResize";
+import { requestShellLocation, supportsShellLocation } from "./desktop/shellLocation";
 
 interface AppLayoutEffectsArgs {
   state: any;
@@ -29,6 +30,8 @@ interface AppLayoutEffectsArgs {
   toggleToc: () => void;
   toggleFocusMode: () => void;
   toggleDesktopViewMode: () => void;
+  activeHtmlDocument: boolean;
+  onToggleActiveHtmlDocumentPreview: () => void;
   toggleFullscreen: () => void;
 }
 
@@ -59,6 +62,8 @@ export function useAppLayoutEffects({
   toggleToc,
   toggleFocusMode,
   toggleDesktopViewMode,
+  activeHtmlDocument,
+  onToggleActiveHtmlDocumentPreview,
   toggleFullscreen,
 }: AppLayoutEffectsArgs) {
   const themeOnboardingOpen = termsAccepted && !themeOnboardingComplete;
@@ -228,8 +233,13 @@ export function useAppLayoutEffects({
     onLocateFile: () => {
       window.dispatchEvent(new CustomEvent('locate-active-file'));
     },
+    onOpenCurrentDocumentLocation: supportsShellLocation(state.appRuntime) && state.currentFile
+      ? () => requestShellLocation(bridge, state.currentFile, 'open-parent-directory')
+      : undefined,
     onToggleFocusMode: toggleFocusMode,
     onToggleDesktopViewMode: toggleDesktopViewMode,
+    activeHtmlDocument,
+    onToggleActiveHtmlDocumentPreview,
     onToggleFullscreen: toggleFullscreen,
     onWorkspaceSelection: requestWorkspaceSelection,
   });

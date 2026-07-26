@@ -5,6 +5,8 @@ import {
   collapseAll,
   setHtmlMode,
   toggleHtmlMode,
+  setCsvMode,
+  toggleCsvMode,
   triggerToggleCodeCollapse,
   initGlobalHandlers,
 } from '../../../../ui/src/dom/globalHandlers';
@@ -83,7 +85,7 @@ describe('globalHandlers pure functions', () => {
       wrap.innerHTML = `
         <span class="mdn-codeblock-lang">HTML</span>
         <div class="mdn-html-preview-body" style="display: none"></div>
-        <div class="mdn-codeblock-body" style="display: flex"></div>
+        <div class="mdn-code-source" style="display: flex"><div class="mdn-codeblock-body"></div></div>
         <button class="mdn-toggle-preview-btn"><span class="tooltip-text">Show Preview</span></button>
       `;
       document.body.appendChild(wrap);
@@ -92,7 +94,7 @@ describe('globalHandlers pure functions', () => {
       expect(wrap.dataset.mode).toBe('preview');
       expect(wrap.querySelector('.mdn-codeblock-lang')!.textContent).toBe('HTML Preview');
       expect((wrap.querySelector('.mdn-html-preview-body') as HTMLElement).style.display).toBe('');
-      expect((wrap.querySelector('.mdn-codeblock-body') as HTMLElement).style.display).toBe('none');
+      expect((wrap.querySelector('.mdn-code-source') as HTMLElement).style.display).toBe('none');
       expect(wrap.querySelector('.tooltip-text')!.textContent).toBe('Show Code');
     });
 
@@ -102,7 +104,7 @@ describe('globalHandlers pure functions', () => {
       wrap.innerHTML = `
         <span class="mdn-codeblock-lang">HTML</span>
         <div class="mdn-html-preview-body"></div>
-        <div class="mdn-codeblock-body"></div>
+        <div class="mdn-code-source"><div class="mdn-codeblock-body"></div></div>
         <button class="mdn-toggle-preview-btn"><span class="tooltip-text">Show Preview</span></button>
       `;
       document.body.appendChild(wrap);
@@ -111,7 +113,7 @@ describe('globalHandlers pure functions', () => {
       expect(wrap.dataset.mode).toBe('code');
       expect(wrap.querySelector('.mdn-codeblock-lang')!.textContent).toBe('HTML');
       expect((wrap.querySelector('.mdn-html-preview-body') as HTMLElement).style.display).toBe('none');
-      expect((wrap.querySelector('.mdn-codeblock-body') as HTMLElement).style.display).toBe('flex');
+      expect((wrap.querySelector('.mdn-code-source') as HTMLElement).style.display).toBe('');
       expect(wrap.querySelector('.tooltip-text')!.textContent).toBe('Show Preview');
     });
 
@@ -170,6 +172,57 @@ describe('globalHandlers pure functions', () => {
 
       toggleHtmlMode(btn);
       expect(document.querySelector('.mdn-codeblock')).toBeNull();
+    });
+  });
+
+  describe('CSV preview mode', () => {
+    it('shows the parsed table and hides the code source in preview mode', () => {
+      document.body.innerHTML = `
+        <div class="mdn-codeblock mdn-csv-preview-wrap" data-mode="code">
+          <span class="mdn-codeblock-lang" data-code-label="CSV" data-preview-label="CSV Preview">CSV</span>
+          <div class="mdn-csv-preview-body" style="display:none"></div>
+          <div class="mdn-code-source"></div>
+          <button class="mdn-toggle-csv-btn" data-label-show-code="Show Code" data-label-show-preview="Show Preview"><span class="tooltip-text"></span><svg></svg></button>
+        </div>
+      `;
+      const wrap = document.querySelector('.mdn-csv-preview-wrap') as HTMLElement;
+
+      setCsvMode(wrap, 'preview');
+
+      expect(wrap.dataset.mode).toBe('preview');
+      expect(document.querySelector('.mdn-codeblock-lang')?.textContent).toBe('CSV Preview');
+      expect((document.querySelector('.mdn-csv-preview-body') as HTMLElement).style.display).toBe('');
+      expect((document.querySelector('.mdn-code-source') as HTMLElement).style.display).toBe('none');
+      expect(document.querySelector('.mdn-toggle-csv-btn')?.getAttribute('aria-label')).toBe('Show Code');
+    });
+
+    it('shows source code and hides the parsed table in code mode', () => {
+      document.body.innerHTML = `
+        <div class="mdn-codeblock mdn-csv-preview-wrap" data-mode="preview">
+          <span class="mdn-codeblock-lang" data-code-label="TSV" data-preview-label="TSV Preview">TSV Preview</span>
+          <div class="mdn-csv-preview-body"></div>
+          <div class="mdn-code-source" style="display:none"></div>
+          <button class="mdn-toggle-csv-btn" data-label-show-code="Show Code" data-label-show-preview="Show Preview"><span class="tooltip-text"></span><svg></svg></button>
+        </div>
+      `;
+      const wrap = document.querySelector('.mdn-csv-preview-wrap') as HTMLElement;
+
+      setCsvMode(wrap, 'code');
+
+      expect(document.querySelector('.mdn-codeblock-lang')?.textContent).toBe('TSV');
+      expect((document.querySelector('.mdn-csv-preview-body') as HTMLElement).style.display).toBe('none');
+      expect((document.querySelector('.mdn-code-source') as HTMLElement).style.display).toBe('');
+      expect(document.querySelector('.mdn-toggle-csv-btn')?.getAttribute('aria-label')).toBe('Show Preview');
+    });
+
+    it('toggles the nearest CSV preview block', () => {
+      document.body.innerHTML = `
+        <div class="mdn-csv-preview-wrap" data-mode="preview">
+          <button class="mdn-toggle-csv-btn"></button>
+        </div>
+      `;
+      toggleCsvMode(document.querySelector('.mdn-toggle-csv-btn') as HTMLElement);
+      expect((document.querySelector('.mdn-csv-preview-wrap') as HTMLElement).dataset.mode).toBe('code');
     });
   });
 
@@ -244,6 +297,12 @@ describe('globalHandlers pure functions', () => {
     it('registers toggleHtmlMode on UI', () => {
       initGlobalHandlers();
       expect(typeof (window as any).UI.toggleHtmlMode).toBe('function');
+    });
+
+    it('registers CSV preview handlers on UI', () => {
+      initGlobalHandlers();
+      expect(typeof (window as any).UI.setCsvMode).toBe('function');
+      expect(typeof (window as any).UI.toggleCsvMode).toBe('function');
     });
 
     it('registers Sidebar namespace on window', () => {

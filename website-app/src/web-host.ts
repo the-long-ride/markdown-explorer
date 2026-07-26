@@ -109,6 +109,26 @@ function extractWorkspaceName(path: string) {
   return path.split('/').pop() || 'Workspace';
 }
 
+
+function resolveWorkspaceTextResourcePath(documentPath: string, resourcePath: string): string | null {
+  const reference = resourcePath.split(/[?#]/, 1)[0];
+  if (!reference || /^(?:https?:|data:|blob:|javascript:|file:)/i.test(reference)) return null;
+  const baseParts = reference.startsWith('/')
+    ? []
+    : documentPath.split('/').slice(0, -1).filter(Boolean);
+  for (const part of reference.replace(/^\/+/, '').split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      if (!baseParts.length) return null;
+      baseParts.pop();
+    } else {
+      baseParts.push(part);
+    }
+  }
+  const resolved = baseParts.join('/');
+  return /\.(?:css|js|mjs|cjs)$/i.test(resolved) ? resolved : null;
+}
+
 function findFileInfo(list: MdFile[], rel: string): { relativePath: string; title: string } {
   return (
     list.find(f => f.relativePath === rel) ?? {
@@ -234,6 +254,10 @@ bus.addEventListener('webview-message', async (e: Event) => {
         await sendTestReady();
         break;
       }
+      case 'readWorkspaceTextResource': {
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: false, reason: 'unsupported' });
+        break;
+      }
       case 'openExternal': {
         if (typeof msg.url === 'string' && /^(?:https?|file):\/\//i.test(msg.url)) {
           window.open(msg.url as string, '_blank');
@@ -278,9 +302,22 @@ bus.addEventListener('webview-message', async (e: Event) => {
       try {
         const handle = msg.handle ?? (await pickDirectory());
         if (!isWorkspaceOperationCurrent(operation)) break;
+        if (!handle) {
+          send({ command: 'workspaceOpenCancelled', ...operation });
+          clearWorkspaceOperation();
+          break;
+        }
+        if (msg.replaceRecentWorkspacePath && msg.replaceRecentWorkspacePath !== handle.name) {
+          await BrowserRecentWorkspaces.remove(msg.replaceRecentWorkspacePath);
+        }
+        if (!isWorkspaceOperationCurrent(operation)) break;
         await loadHandleWorkspace(handle, msg.openFirstFile !== false);
       } catch (err) {
         console.warn('Folder selection cancelled or failed:', err);
+        if (isWorkspaceOperationCurrent(operation)) {
+          send({ command: 'workspaceOpenCancelled', ...operation });
+          clearWorkspaceOperation();
+        }
       }
       break;
     }
@@ -530,6 +567,21 @@ bus.addEventListener('webview-message', async (e: Event) => {
 
     case 'indexWorkspaceSearchItems': {
       if (searchIndex) searchIndex.prime(msg.items || []);
+      break;
+    }
+
+    case 'readWorkspaceTextResource': {
+      const resolvedPath = resolveWorkspaceTextResourcePath(String(msg.documentPath || ''), String(msg.resourcePath || ''));
+      if (!activeHandle || !resolvedPath) {
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: false, reason: 'outside-workspace' });
+        break;
+      }
+      try {
+        const content = await readTextFile(activeHandle, resolvedPath);
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: true, content, resolvedPath });
+      } catch {
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: false, reason: 'missing' });
+      }
       break;
     }
 

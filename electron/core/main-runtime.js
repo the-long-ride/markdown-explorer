@@ -109,6 +109,7 @@ function createDesktopRuntime(deps) {
     sendInitialContent,
     sendContent,
     sendWelcome,
+    readWorkspaceTextResource,
     cancelWorkspaceScan,
     cancelAllWorkspaceScans
   } = workspaceHandlers;
@@ -306,6 +307,7 @@ function createDesktopRuntime(deps) {
     handleCloseWorkspace,
     handleCancelWorkspaceScan,
     handleCancelAllWorkspaceScans,
+    readWorkspaceTextResource,
     clampAppZoom,
     refreshActiveWorkspace,
     refreshActiveWorkspaceFromWatch,

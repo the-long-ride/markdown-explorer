@@ -5,7 +5,13 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import type { FolderNode, MdFile } from '../../types';
-import { FolderIcon, FolderChevronIcon } from '../shared/icons';
+import { FolderIcon, FolderChevronIcon, MoreVerticalIcon } from '../shared/icons';
+
+export interface SidebarItemMenuTarget {
+  kind: 'file' | 'folder';
+  path: string;
+  anchor: HTMLElement;
+}
 
 export interface ScopeFocusTreeProps {
   editing: boolean;
@@ -85,11 +91,19 @@ export function FileNode({
   scopeFocus,
   cursorMode = false,
   cursorItemId = null,
+  onRequestItemMenu,
+  canRequestItemMenu,
+  openMenuPath = null,
+  itemActionsLabel,
 }: {
   file: MdFile;
   scopeFocus?: ScopeFocusTreeProps;
   cursorMode?: boolean;
   cursorItemId?: string | null;
+  onRequestItemMenu?: (target: SidebarItemMenuTarget) => void;
+  canRequestItemMenu?: (target: Pick<SidebarItemMenuTarget, 'kind' | 'path'>) => boolean;
+  openMenuPath?: string | null;
+  itemActionsLabel?: string;
 }) {
   const { state, navigate } = useAppState();
   const isActive = state.currentFile === file.fsPath;
@@ -114,6 +128,22 @@ export function FileNode({
       aria-selected={isCursor || isActive}
     >
       <span className="tree-file__name">{displayName}</span>
+      {onRequestItemMenu && itemActionsLabel && (canRequestItemMenu?.({ kind: 'file', path: file.fsPath }) ?? true) && (
+        <button
+          type="button"
+          className={`sidebar-tree-item__menu-button${openMenuPath === file.fsPath ? ' is-open' : ''}`}
+          aria-label={itemActionsLabel.replace('{name}', displayName)}
+          title={itemActionsLabel.replace('{name}', displayName)}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRequestItemMenu({ kind: 'file', path: file.fsPath, anchor: event.currentTarget });
+          }}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <MoreVerticalIcon />
+        </button>
+      )}
       {scopeFocus?.editing && (
         <ScopeCheckbox
           checked={isChecked}
@@ -131,12 +161,20 @@ export function FolderNodeView({
   scopeFocus,
   cursorMode = false,
   cursorItemId = null,
+  onRequestItemMenu,
+  canRequestItemMenu,
+  openMenuPath = null,
+  itemActionsLabel,
 }: {
   node: FolderNode;
   filter: string;
   scopeFocus: ScopeFocusTreeProps;
   cursorMode?: boolean;
   cursorItemId?: string | null;
+  onRequestItemMenu?: (target: SidebarItemMenuTarget) => void;
+  canRequestItemMenu?: (target: Pick<SidebarItemMenuTarget, 'kind' | 'path'>) => boolean;
+  openMenuPath?: string | null;
+  itemActionsLabel?: string;
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const toggle = useCallback(() => setIsOpen((v) => !v), []);
@@ -213,6 +251,22 @@ export function FolderNodeView({
         <span className="tree-folder__name">
           {node.name}
         </span>
+        {onRequestItemMenu && itemActionsLabel && (canRequestItemMenu?.({ kind: 'folder', path: node.path }) ?? true) && (
+          <button
+            type="button"
+            className={`sidebar-tree-item__menu-button${openMenuPath === node.path ? ' is-open' : ''}`}
+            aria-label={itemActionsLabel.replace('{name}', node.name)}
+            title={itemActionsLabel.replace('{name}', node.name)}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onRequestItemMenu({ kind: 'folder', path: node.path, anchor: event.currentTarget });
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <MoreVerticalIcon />
+          </button>
+        )}
         {scopeFocus.editing && (
           <ScopeCheckbox
             checked={folderChecked}
@@ -231,6 +285,10 @@ export function FolderNodeView({
               scopeFocus={scopeFocus}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
+              onRequestItemMenu={onRequestItemMenu}
+              canRequestItemMenu={canRequestItemMenu}
+              openMenuPath={openMenuPath}
+              itemActionsLabel={itemActionsLabel}
             />
           ))}
           {visibleChildren.map((child) => (
@@ -241,6 +299,10 @@ export function FolderNodeView({
               scopeFocus={scopeFocus}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
+              onRequestItemMenu={onRequestItemMenu}
+              canRequestItemMenu={canRequestItemMenu}
+              openMenuPath={openMenuPath}
+              itemActionsLabel={itemActionsLabel}
             />
           ))}
         </div>

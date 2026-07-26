@@ -140,6 +140,31 @@ function isWorkspaceOperationCurrent(operation: WorkspaceOperationMetadata): boo
   return activeWorkspaceOperationId === operationId && activeWorkspaceTabId === tabId;
 }
 
+function clearWorkspaceOperation(): void {
+  activeWorkspaceOperationId = null;
+  activeWorkspaceTabId = null;
+}
+
+
+function resolveWorkspaceTextResourcePath(documentPath: string, resourcePath: string): string | null {
+  const reference = resourcePath.split(/[?#]/, 1)[0];
+  if (!reference || /^(?:https?:|data:|blob:|javascript:|file:)/i.test(reference)) return null;
+  const baseParts = reference.startsWith('/')
+    ? []
+    : documentPath.split('/').slice(0, -1).filter(Boolean);
+  for (const part of reference.replace(/^\/+/, '').split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      if (!baseParts.length) return null;
+      baseParts.pop();
+    } else {
+      baseParts.push(part);
+    }
+  }
+  const resolved = baseParts.join('/');
+  return /\.(?:css|js|mjs|cjs)$/i.test(resolved) ? resolved : null;
+}
+
 export function sendToWebview(msg: any) {
   bus.dispatchEvent(new CustomEvent("host-message", {
     detail: { ...currentWorkspaceOperationMetadata(), ...msg },
@@ -312,6 +337,7 @@ async function sendContent(
     command: "renderContent",
     html: rewrittenHtml,
     markdownSource: raw,
+    sourceDocumentText: /\.html?$/i.test(requestedFile) ? raw : null,
     frontmatter,
     toc,
     filePath: requestedFile,
@@ -376,6 +402,15 @@ bus.addEventListener("webview-message", async (e: Event) => {
       try {
         const handle = msg.handle || (await pickDirectory());
         if (!isWorkspaceOperationCurrent(operation)) break;
+        if (!handle) {
+          sendToWebview({ command: "workspaceOpenCancelled", ...operation });
+          clearWorkspaceOperation();
+          break;
+        }
+        if (msg.replaceRecentWorkspacePath && msg.replaceRecentWorkspacePath !== handle.name) {
+          await BrowserRecentWorkspaces.remove(msg.replaceRecentWorkspacePath);
+        }
+        if (!isWorkspaceOperationCurrent(operation)) break;
         activeHandle = handle;
         searchIndex = null;
         activeWorkspaceName = handle.name;
@@ -400,6 +435,10 @@ bus.addEventListener("webview-message", async (e: Event) => {
         }
       } catch (err) {
         console.warn("Folder selection cancelled or failed:", err);
+        if (isWorkspaceOperationCurrent(operation)) {
+          sendToWebview({ command: "workspaceOpenCancelled", ...operation });
+          clearWorkspaceOperation();
+        }
       }
       break;
     }
@@ -599,6 +638,21 @@ bus.addEventListener("webview-message", async (e: Event) => {
     case "indexWorkspaceSearchItems": {
       if (searchIndex) {
         searchIndex.prime(msg.items || []);
+      }
+      break;
+    }
+
+    case "readWorkspaceTextResource": {
+      const resolvedPath = resolveWorkspaceTextResourcePath(String(msg.documentPath || ""), String(msg.resourcePath || ""));
+      if (!activeHandle || !resolvedPath) {
+        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: false, reason: "outside-workspace" });
+        break;
+      }
+      try {
+        const content = await readTextFile(activeHandle, resolvedPath);
+        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: true, content, resolvedPath });
+      } catch {
+        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: false, reason: "missing" });
       }
       break;
     }

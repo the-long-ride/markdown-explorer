@@ -1,3 +1,6 @@
+const path = require("path");
+const SHELL_LOCATION_MODES = new Set(["open-directory", "reveal-file", "open-parent-directory"]);
+
 function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, shell, platform = process.platform }) {
   ipcMain.on("webview-message", async (_event, msg) => {
     switch (msg.command) {
@@ -61,6 +64,16 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "openInEditor":
         if (msg.path && fs.existsSync(msg.path)) shell.openPath(msg.path);
         break;
+      case "openShellLocation": {
+        if (!SHELL_LOCATION_MODES.has(msg.mode) || !msg.path || !fs.existsSync(msg.path)) break;
+        if (msg.mode === "reveal-file") {
+          shell.showItemInFolder(msg.path);
+          break;
+        }
+        const targetPath = msg.mode === "open-parent-directory" ? path.dirname(msg.path) : msg.path;
+        if (fs.existsSync(targetPath)) await shell.openPath(targetPath);
+        break;
+      }
       case "copyCode":
         clipboard.writeText(msg.text);
         break;
@@ -68,6 +81,9 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         if (typeof msg.url === "string" && /^(?:https?|file):\/\//i.test(msg.url)) {
           shell.openExternal(msg.url);
         }
+        break;
+      case "readWorkspaceTextResource":
+        handlers.readWorkspaceTextResource(msg);
         break;
       case "openHtmlPreview":
         if (typeof msg.documentHtml === "string" && msg.documentHtml.trim()) {

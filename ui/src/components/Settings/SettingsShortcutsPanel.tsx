@@ -1,4 +1,3 @@
-import { getDefaultKeybindings } from '../../contexts/appStateConstants';
 import type { AppState } from '../../contexts/appStateReducer';
 import { formatShortcutLabel } from '../../utils/shortcuts';
 
@@ -25,6 +24,7 @@ type SettingsShortcutsPanelProps = {
   getUpdateErrorText: () => string;
   onOpenChangelog: () => void;
   onDownloadUpdate: () => void;
+  onRequestReset: () => void;
 };
 
 export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
@@ -34,7 +34,7 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
     updateSettings, showUpdateCard, updateVersionLabel, updateCheck,
     hostUpdateState, isUpdateDownloading, isUpdateScheduled, isUpdateApplying,
     isUpdateDownloaded, updateStatus, getUpdateErrorText, onOpenChangelog,
-    onDownloadUpdate,
+    onDownloadUpdate, onRequestReset,
   } = props;
   return (
 <>
@@ -140,12 +140,7 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
     <button
       type="button"
       className="settings-reset-shortcuts-btn"
-      onClick={() =>
-        updateSettings({
-          keybindings: getDefaultKeybindings(isDesktop),
-          disabledKeybindings: {},
-        })
-      }
+      onClick={onRequestReset}
     >
       {t.resetShortcuts}
     </button>

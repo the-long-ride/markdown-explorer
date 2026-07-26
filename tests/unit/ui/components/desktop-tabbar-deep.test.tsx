@@ -86,6 +86,7 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
         fileTabs: true,
         showTitle: false,
         defaultHtmlPreview: true,
+        defaultCsvPreview: true,
         documentConversion: false,
         scopeFocus: {},
         searchScopeFocus: {},
@@ -107,8 +108,8 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
       recentWorkspaces: [],
       isMaximized: false,
       appVersion: '1.0.0',
-      appRuntime: 'electron' as const,
-      hostPlatform: 'win32' as const,
+      appRuntime: 'desktop' as const,
+      hostPlatform: 'windows' as const,
       hostArch: 'x64',
       focusMode: false,
       updateState: { status: 'idle' as const },
@@ -163,6 +164,12 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       edit: 'Edit in editor',
       settings: 'Settings',
       settingsUpdate: 'Settings (update available)',
+      goBack: 'Back',
+      goForward: 'Forward',
+      refresh: 'Refresh',
+      collapseAll: 'Collapse all',
+      expandAll: 'Expand all',
+      copy: 'Copy file content',
     },
     tooltips: {
       closeTab: 'Close tab',
@@ -182,6 +189,10 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       closeTabsToRight: 'Close to right',
       closeOtherTabs: 'Close others',
       closeAllTabs: 'Close all',
+      showInFileExplorer: 'Show in File Explorer',
+      openInFinder: 'Open in Finder',
+      revealInFinder: 'Reveal in Finder',
+      showInFileManager: 'Show in File Manager',
     },
   }),
 }));
@@ -195,6 +206,7 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
     capturedOnClose = onClose;
     return (
       <div data-testid="tab-context-menu">
+        <button data-testid="ctx-open-location" onClick={() => onAction('openLocation')}>Open location</button>
         <button data-testid="ctx-close-this" disabled={disabled?.closeThisTab} onClick={() => onAction('closeThisTab')}>Close</button>
         <button data-testid="ctx-close-right" disabled={disabled?.closeTabsToRight} onClick={() => onAction('closeTabsToRight')}>Close right</button>
         <button data-testid="ctx-close-others" disabled={disabled?.closeOtherTabs} onClick={() => onAction('closeOtherTabs')}>Close others</button>
@@ -228,7 +240,14 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
+  ChevronLeftIcon: () => <span>back-icon</span>,
+  ChevronRightIcon: () => <span>forward-icon</span>,
+  CollapseIcon: () => <span>collapse-icon</span>,
+  CopyIcon: () => <span>copy-icon</span>,
+  ExpandIcon: () => <span>expand-icon</span>,
+  RefreshIcon: () => <span>refresh-icon</span>,
   CloseIcon: () => <span>close-icon</span>,
+  OpenFolderLocationIcon: () => <span>open-folder-icon</span>,
   PlusIcon: () => <span>plus-icon</span>,
 }));
 
@@ -261,6 +280,14 @@ function renderTabBar(tabOverrides: Partial<Parameters<typeof DesktopTabBar>[0]>
     onThemeToggle: mockOnThemeToggle,
     onSettingsOpen: mockOnSettingsOpen,
     onSidebarToggle: mockOnSidebarToggle,
+    onBack: vi.fn(),
+    onForward: vi.fn(),
+    onRefresh: vi.fn(),
+    canGoBack: true,
+    canGoForward: true,
+    onCollapseAll: vi.fn(),
+    onExpandAll: vi.fn(),
+    onCopyFile: vi.fn(),
     onReorderTabs: mockOnReorderTabs,
     isDark: false,
     isMaximized: false,
@@ -326,6 +353,17 @@ describe('DesktopTabBar deep', () => {
       const wsTab = tabButtons.find(b => b.textContent?.includes('close-icon')) || tabButtons[0];
       fireEvent.contextMenu(wsTab, { clientX: 100, clientY: 200 });
       expect(screen.getByTestId('tab-context-menu')).toBeInTheDocument();
+    });
+
+    it('opens the workspace directory from the context menu', () => {
+      renderTabBar();
+      fireEvent.contextMenu(screen.getAllByRole('tab')[0], { clientX: 10, clientY: 10 });
+      fireEvent.click(screen.getByTestId('ctx-open-location'));
+      expect(mockPostMessage).toHaveBeenCalledWith({
+        command: 'openShellLocation',
+        path: '/path/ws1',
+        mode: 'open-directory',
+      });
     });
 
     it('closeThisTab action calls onCloseTab', () => {

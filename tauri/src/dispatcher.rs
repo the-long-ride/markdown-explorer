@@ -22,7 +22,7 @@ use std::sync::{
     Arc, Mutex,
 };
 use std::time::Duration;
-use tauri::{AppHandle, Listener, Manager};
+use tauri::{AppHandle, Listener, Manager, Url};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_opener::OpenerExt;
 
@@ -131,7 +131,7 @@ mod settings;
 // "searchAcrossWorkspaces" =>, "searchWorkspace" =>, "indexWorkspaceSearchItems" =>,
 // "loadWorkspaceSearchIndexes" =>, "confirmOpenPath" =>, "openRecentWorkspace" =>,
 // "deleteRecentWorkspace" =>, "replaceRecentWorkspaces" =>, "closeWorkspace" =>,
-// "zoom-out" =>, "openInEditor" =>, "copyCode" =>, "openExternal" =>, "openHtmlPreview" =>,
+// "zoom-out" =>, "openInEditor" =>, "openShellLocation" =>, "copyCode" =>, "openExternal" =>, "openHtmlPreview" =>,
 // "refresh" =>, "setDocumentConversion" =>, "downloadUpdate" =>,
 // "scheduleDownloadedUpdate" =>, "restartAndApplyUpdate" =>, "window-minimize" =>,
 // "window-maximize" => { window.set_fullscreen(false); window.is_fullscreen(); host_message::emit_fullscreen_changed(&self.app, false); window.is_maximized() },

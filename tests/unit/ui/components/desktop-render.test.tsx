@@ -19,6 +19,8 @@ let mockState: any = {
   fileList: [],
   contentTabs: [],
   activeContentTabPath: null,
+  appRuntime: 'desktop',
+  hostPlatform: 'windows',
 };
 
 const mockOpenInEditor = vi.fn();
@@ -75,6 +77,10 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       closeTabsToRight: 'Close to right',
       closeOtherTabs: 'Close others',
       closeAllTabs: 'Close all',
+      showInFileExplorer: 'Show in File Explorer',
+      openInFinder: 'Open in Finder',
+      revealInFinder: 'Reveal in Finder',
+      showInFileManager: 'Show in File Manager',
     },
     actions: {
       toggleSidebar: 'Sidebar',
@@ -133,6 +139,8 @@ vi.mock('../../../../ui/src/components/shared/icons', () => {
     CopyIcon: () => e('span', { 'data-testid': 'copy-icon' }, 'copy'),
     ExpandIcon: () => e('span', { 'data-testid': 'expand-icon' }, 'exp'),
     RefreshIcon: () => e('span', { 'data-testid': 'refresh-icon' }, 'ref'),
+    OpenFolderLocationIcon: () => e('span', { 'data-testid': 'open-folder-location-icon' }, 'folder'),
+    RevealFileLocationIcon: () => e('span', { 'data-testid': 'reveal-file-location-icon' }, 'file'),
   };
 });
 
@@ -170,6 +178,7 @@ describe('DesktopTabBar', () => {
     onSelectTab: vi.fn(),
     onNewTab: vi.fn(),
     onCloseTab: vi.fn(),
+    onReorderTabs: vi.fn(),
     onCloseTabsToRight: vi.fn(),
     onCloseOtherTabs: vi.fn(),
     onCloseAllTabs: vi.fn(),
@@ -177,6 +186,14 @@ describe('DesktopTabBar', () => {
     onThemeToggle: vi.fn(),
     onSettingsOpen: vi.fn(),
     onSidebarToggle: vi.fn(),
+    onBack: vi.fn(),
+    onForward: vi.fn(),
+    onRefresh: vi.fn(),
+    canGoBack: true,
+    canGoForward: true,
+    onCollapseAll: vi.fn(),
+    onExpandAll: vi.fn(),
+    onCopyFile: vi.fn(),
     isDark: true,
     isMaximized: false,
   };
@@ -290,6 +307,52 @@ describe('DesktopTabBar', () => {
   it('renders toolbar action menu', () => {
     render(React.createElement(DesktopTabBar, defaultTabBarProps));
     expect(screen.getByTestId('toolbar-action-menu')).toBeInTheDocument();
+  });
+
+
+  it('renders the requested Tabs-view header order with two crumb separators', () => {
+    const { container } = render(React.createElement(DesktopTabBar, defaultTabBarProps));
+    const header = container.querySelector('.desktop-tabbar')!;
+    const children = Array.from(header.children);
+    const brand = container.querySelector('.desktop-tabbar__brand')!;
+    const navigationSeparator = container.querySelector('.desktop-tabbar__navigation-separator')!;
+    const navigation = container.querySelector('.desktop-tabbar__navigation-actions')!;
+    const tabs = container.querySelector('.desktop-tabbar__tabs-wrap')!;
+    const newWorkspace = container.querySelector('.desktop-tabbar__new')!;
+    const documentActions = container.querySelector('.desktop-tabbar__document-actions')!;
+    const moreActions = screen.getByTestId('toolbar-action-menu');
+    const windowSeparator = container.querySelector('.desktop-tabbar__window-separator')!;
+    const windowControls = container.querySelector('.desktop-tabbar__window-controls')!;
+
+    expect(children.indexOf(brand)).toBeLessThan(children.indexOf(navigationSeparator));
+    expect(children.indexOf(navigationSeparator)).toBeLessThan(children.indexOf(navigation));
+    expect(children.indexOf(navigation)).toBeLessThan(children.indexOf(tabs));
+    expect(children.indexOf(tabs)).toBeLessThan(children.indexOf(newWorkspace));
+    expect(children.indexOf(newWorkspace)).toBeLessThan(children.indexOf(documentActions));
+    expect(children.indexOf(documentActions)).toBeLessThan(children.indexOf(moreActions));
+    expect(children.indexOf(moreActions)).toBeLessThan(children.indexOf(windowSeparator));
+    expect(children.indexOf(windowSeparator)).toBeLessThan(children.indexOf(windowControls));
+    expect(container.querySelectorAll('.topbar__crumb-separator')).toHaveLength(2);
+    expect(navigationSeparator).toHaveTextContent('|');
+    expect(windowSeparator).toHaveTextContent('|');
+  });
+
+  it('wires all six moved header actions to the existing handlers', () => {
+    render(React.createElement(DesktopTabBar, defaultTabBarProps));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse all' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Expand all' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+
+    expect(defaultTabBarProps.onBack).toHaveBeenCalled();
+    expect(defaultTabBarProps.onForward).toHaveBeenCalled();
+    expect(defaultTabBarProps.onRefresh).toHaveBeenCalled();
+    expect(defaultTabBarProps.onCollapseAll).toHaveBeenCalled();
+    expect(defaultTabBarProps.onExpandAll).toHaveBeenCalled();
+    expect(defaultTabBarProps.onCopyFile).toHaveBeenCalled();
   });
 
   it('shows context menu on right-click of tab', () => {

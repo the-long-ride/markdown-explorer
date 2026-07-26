@@ -7,3 +7,91 @@
 .shortcut-keys-wrapper, .shortcut-keys-wrapper__part { display: inline-flex; align-items: center; gap: 4px; }
 .shortcut-keys-wrapper__plus { color: var(--tx3); font-weight: 500; }
 .shortcut-keys-wrapper kbd { margin: 0; }
+
+.html-document-view__iframe {
+  display: block;
+  width: 100%;
+  min-height: max(68vh, 540px);
+  border: 1px solid var(--bd);
+  border-radius: var(--radius-lg, 10px);
+  background: var(--bg);
+}
+
+.html-document-view__markdown { min-width: 0; }
+.html-document-view__error {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--danger, #c73d4a);
+  border-radius: var(--radius-md, 7px);
+}
+
+.html-document-view__loading {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  color: var(--tx2);
+}
+
+.html-local-first-warning-backdrop {
+  position: fixed;
+  z-index: 12000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.html-local-first-warning {
+  position: relative;
+  width: min(520px, calc(100vw - 40px));
+  max-height: min(680px, calc(100vh - 40px));
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid var(--bd-x);
+  border-radius: var(--radius-lg, 10px);
+  background: var(--bg-e);
+  box-shadow: var(--sh-lg);
+  color: var(--tx);
+}
+
+.html-local-first-warning h2 {
+  margin: 0 32px 8px 0;
+  font-size: 17px;
+}
+
+.html-local-first-warning p,
+.html-local-first-warning ul {
+  color: var(--tx2);
+  line-height: 1.55;
+}
+
+.html-local-first-warning ul {
+  margin: 12px 0 18px;
+  padding-left: 20px;
+}
+
+.html-local-first-warning__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 7px);
+  background: transparent;
+  color: var(--tx2);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.html-local-first-warning__close:hover,
+.html-local-first-warning__close:focus-visible {
+  border-color: var(--bd);
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}

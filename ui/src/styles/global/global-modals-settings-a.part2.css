@@ -493,3 +493,19 @@
   vertical-align: middle;
 }
 
+
+.settings-panel-heading--secondary {
+  border-top: 0;
+}
+
+.settings-reset-shortcuts-confirm {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--bd));
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-h));
+  color: var(--tx);
+  box-shadow: none;
+}
+
+.settings-theme-style-section {
+  border-top: 0;
+  padding-top: 0;
+}

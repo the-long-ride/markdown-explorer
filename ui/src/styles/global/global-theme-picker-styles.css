@@ -126,19 +126,14 @@
   color: var(--tx2);
 }
 
+.theme-style-option--tokyo-night .theme-style-option__swatch span:first-child {
+  background: linear-gradient(135deg, #bb9af7 0%, #7dcfff 100%);
+  border-color: rgba(187, 154, 247, 0.5);
+}
+
 .theme-style-option--pet-white-shiba,
 .pet-theme-menu__option--pet-white-shiba {
   --pet-paw: url("../../assets/themes/pets/paws/white-shiba-paw.svg");
-}
-
-.theme-style-option--pet-shiba,
-.pet-theme-menu__option--pet-shiba {
-  --pet-paw: url("../../assets/themes/pets/paws/shiba-paw.svg");
-}
-
-.theme-style-option--pet-shiba-memes,
-.pet-theme-menu__option--pet-shiba-memes {
-  --pet-paw: url("../../assets/themes/pets/paws/shiba-memes-paw.svg");
 }
 
 .theme-style-option--pet-k-ink,

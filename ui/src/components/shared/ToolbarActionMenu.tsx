@@ -269,7 +269,7 @@ export function ToolbarActionMenu({
       className={`toolbar-action-menu${open ? " is-open" : ""}`}
     >
       <TooltipButton
-        className={`btn btn--icon${hasUpdate ? " has-update" : ""}`}
+        className={`topbar__action-btn btn btn--icon${hasUpdate ? " has-update" : ""}`}
         onClick={() => setOpen((value) => !value)}
         tooltip={triggerTooltip}
         tooltipAlign={triggerAlign}

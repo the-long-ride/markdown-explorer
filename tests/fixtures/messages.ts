@@ -149,6 +149,16 @@ export const webviewMessages = {
     openFirstFile: true,
     ...overrides,
   }),
+  openShellLocation: (
+    path: string,
+    mode: 'open-directory' | 'reveal-file' | 'open-parent-directory' = 'open-directory',
+    overrides = {},
+  ) => ({
+    command: 'openShellLocation' as const,
+    path,
+    mode,
+    ...overrides,
+  }),
   activateWorkspace: (workspacePath: string, overrides = {}) => ({
     command: 'activateWorkspace' as const,
     workspacePath,

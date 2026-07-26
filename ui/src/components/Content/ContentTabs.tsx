@@ -4,10 +4,19 @@ import { getTranslations } from "../../contexts/translations";
 import {
   TabContextMenu,
   type TabContextMenuAction,
+  type TabContextMenuItem,
 } from "../shared/TabContextMenu";
-import { CloseIcon } from "../shared/icons";
+import {
+  CloseIcon, OpenFolderLocationIcon, InternetIcon, CloseTabIcon, CloseRightIcon,
+  CloseOthersIcon, CloseAllIcon, HtmlPreviewIcon, MarkdownViewIcon,
+} from "../shared/icons";
 import { useCssVars } from "../../utils/useCssVars";
 import { getEnabledShortcut } from "../../utils/shortcuts";
+import { usePlatform } from "../../contexts/PlatformContext";
+import { getShellLocationLabel, requestShellLocation, supportsShellLocation } from "../../desktop/shellLocation";
+import { openLocalFileInBrowser } from "../../dom/htmlPreviewActions";
+import { supportsLocalFileBrowserOpen } from "../../dom/localFileBrowserSupport";
+import { isHtmlDocumentPath } from "./HtmlDocumentView";
 import {
   CONTENT_TAB_CLOSE_REQUEST_EVENT,
   type ContentTabCloseRequest,
@@ -28,9 +37,11 @@ export function ContentTabs() {
     closeContentTabsToRight,
     closeOtherContentTabs,
     closeAllContentTabs,
+    setContentTabHtmlPreview,
   } = useAppState();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
+  const bridge = usePlatform();
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const scrollbarTrackRef = useRef<HTMLDivElement>(null);
   const scrollbarThumbRef = useRef<HTMLDivElement>(null);
@@ -284,6 +295,26 @@ export function ContentTabs() {
     (action: TabContextMenuAction) => {
       if (!contextMenu) return;
       switch (action) {
+        case "openInBrowser":
+          if (!openLocalFileInBrowser(bridge, contextMenu.filePath)) {
+            window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', {
+              detail: t.previewActions.openError,
+            }));
+          }
+          break;
+        case "toggleHtmlDocumentView": {
+          const tab = state.contentTabs.find((item) => item.filePath === contextMenu.filePath);
+          if (tab) {
+            const current = tab.htmlPreviewOverride ?? state.settings.defaultHtmlPreview;
+            setContentTabHtmlPreview(tab.filePath, !current);
+          }
+          break;
+        }
+        case "openLocation":
+          if (supportsShellLocation(state.appRuntime)) {
+            requestShellLocation(bridge, contextMenu.filePath, 'open-parent-directory');
+          }
+          break;
         case "closeThisTab":
           requestTabClose([contextMenu.filePath], () => closeContentTab(contextMenu.filePath));
           break;
@@ -310,13 +341,18 @@ export function ContentTabs() {
       }
     },
     [
+      bridge,
       closeAllContentTabs,
       closeContentTab,
       closeContentTabsToRight,
       closeOtherContentTabs,
       contextMenu,
       requestTabClose,
+      setContentTabHtmlPreview,
+      state.appRuntime,
       state.contentTabs,
+      state.settings.defaultHtmlPreview,
+      t.previewActions.openError,
     ],
   );
 
@@ -362,9 +398,39 @@ export function ContentTabs() {
 
   if (!state.settings.fileTabs || state.contentTabs.length === 0) return null;
 
+  const toggleHtmlPreviewShortcut = getEnabledShortcut(state.settings, 'toggleHtmlPreview');
+
   const contextMenuTabIndex = contextMenu
     ? state.contentTabs.findIndex((tab) => tab.filePath === contextMenu.filePath)
     : -1;
+
+  const contextMenuTab = contextMenuTabIndex >= 0 ? state.contentTabs[contextMenuTabIndex] : null;
+  const contextMenuIsHtml = isHtmlDocumentPath(contextMenuTab?.filePath);
+  const contextMenuHtmlPreview = contextMenuTab
+    ? contextMenuTab.htmlPreviewOverride ?? state.settings.defaultHtmlPreview
+    : state.settings.defaultHtmlPreview;
+  const contextMenuItems: readonly TabContextMenuItem[] = contextMenuTab ? [
+    ...(contextMenuIsHtml && supportsLocalFileBrowserOpen(state.appRuntime) ? [
+      { action: 'openInBrowser' as const, label: t.openInBrowser, icon: <InternetIcon /> },
+    ] : []),
+    ...(contextMenuIsHtml ? [{
+      action: 'toggleHtmlDocumentView' as const,
+      label: contextMenuHtmlPreview ? t.showMarkdownView : t.showHtmlPreview,
+      icon: contextMenuHtmlPreview ? <MarkdownViewIcon /> : <HtmlPreviewIcon />,
+      shortcut: toggleHtmlPreviewShortcut,
+    }] : []),
+    ...(supportsShellLocation(state.appRuntime) ? [{
+      action: 'openLocation' as const,
+      label: getShellLocationLabel(t, state.hostPlatform, 'folder'),
+      icon: <OpenFolderLocationIcon />,
+      shortcut: getEnabledShortcut(state.settings, 'openCurrentDocumentLocation'),
+      dividerBefore: contextMenuIsHtml,
+    }] : []),
+    { action: 'closeThisTab' as const, label: t.tabContextMenu.closeThisTab, icon: <CloseTabIcon />, shortcut: getEnabledShortcut(state.settings, 'closeContentTab'), primary: true, disabled: contextMenuTabIndex === -1 },
+    { action: 'closeTabsToRight' as const, label: t.tabContextMenu.closeTabsToRight, icon: <CloseRightIcon />, shortcut: getEnabledShortcut(state.settings, 'closeContentTabsToRight'), disabled: contextMenuTabIndex === -1 || contextMenuTabIndex >= state.contentTabs.length - 1 },
+    { action: 'closeOtherTabs' as const, label: t.tabContextMenu.closeOtherTabs, icon: <CloseOthersIcon />, shortcut: getEnabledShortcut(state.settings, 'closeOtherContentTabs'), disabled: state.contentTabs.length <= 1 },
+    { action: 'closeAllTabs' as const, label: t.tabContextMenu.closeAllTabs, icon: <CloseAllIcon />, shortcut: getEnabledShortcut(state.settings, 'closeAllContentTabs'), disabled: state.contentTabs.length === 0 },
+  ] : [];
 
   return (
     <div className="content-tabs-wrap">
@@ -494,21 +560,8 @@ export function ContentTabs() {
         <TabContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          labels={t.tabContextMenu}
-          shortcuts={{
-            closeThisTab: getEnabledShortcut(state.settings, 'closeContentTab'),
-            closeTabsToRight: getEnabledShortcut(state.settings, 'closeContentTabsToRight'),
-            closeOtherTabs: getEnabledShortcut(state.settings, 'closeOtherContentTabs'),
-            closeAllTabs: getEnabledShortcut(state.settings, 'closeAllContentTabs'),
-          }}
-          disabled={{
-            closeThisTab: contextMenuTabIndex === -1,
-            closeTabsToRight:
-              contextMenuTabIndex === -1 ||
-              contextMenuTabIndex >= state.contentTabs.length - 1,
-            closeOtherTabs: state.contentTabs.length <= 1,
-            closeAllTabs: state.contentTabs.length === 0,
-          }}
+          items={contextMenuItems}
+          ariaLabel={t.tabContextMenu.menuLabel}
           onAction={handleContextMenuAction}
           onClose={() => setContextMenu(null)}
         />

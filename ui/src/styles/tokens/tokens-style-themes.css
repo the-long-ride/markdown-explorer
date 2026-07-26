@@ -301,4 +301,103 @@
   }
 }
 
+/* Tokyo Night Theme: layout & rhythm overrides */
+[data-theme-style="tokyo-night"] {
+  --topbar-h: 46px;
+  --topbar-gap: 10px;
+  --topbar-pad-x: 14px;
+  --control-h: 28px;
+  --control-pad-x: 10px;
+  --control-gap: 6px;
+  --content-pad-y: 24px;
+  --content-pad-x: 20px;
+  --section-gap: 14px;
+  --section-header-gap: 8px;
+  --section-header-pad-y: 10px;
+  --section-header-pad-x: 14px;
+  --section-body-pad-y: 14px;
+  --section-body-pad-x: 16px;
+  --table-cell-pad-y: 7px;
+  --table-cell-pad-x: 13px;
+  --stroke-w: 1px;
+  --r: 8px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --surface-blur: none;
+  --accent-hover: #c0caf5;
+}
+
+/* Tokyo Night Theme: dark and auto-dark (Obsidian Tokyo Night Palette) */
+[data-theme-style="tokyo-night"][data-theme="dark"],
+[data-theme-style="tokyo-night"][data-theme="auto"] {
+  --bg: #1a1b26;
+  --bg-s: #16161e;
+  --bg-e: #24283b;
+  --bg-h: #292e42;
+  --bg-a: #414868;
+  --bg-code: #121218;
+  --bd: rgba(41, 46, 66, 0.6);
+  --bd-s: #292e42;
+  --bd-x: #414868;
+  --tx: #c0caf5;
+  --tx2: #a9b1d6;
+  --txm: #565f89;
+  --tx3: #414868;
+  --txc: #7dcfff;
+  --accent: #7dcfff;
+  --accent-dim: rgba(125, 207, 255, 0.16);
+  --accent-text: #7dcfff;
+  --accent-hover: #bb9af7;
+  --sh-sm: 0 4px 16px rgba(18, 18, 24, 0.5);
+  --sh-md: 0 8px 24px rgba(18, 18, 24, 0.6);
+  --sh-lg: 0 16px 40px rgba(12, 12, 18, 0.7);
+  --section-shadow: 0 4px 20px rgba(18, 18, 24, 0.4);
+  --modal-bg: rgba(22, 22, 30, 0.95);
+  --modal-fg: #c0caf5;
+  --chart-1: #ff757f;
+  --chart-2: #e0af68;
+  --chart-3: #9ece6a;
+  --chart-4: #7dcfff;
+  --chart-5: #7aa2f7;
+  --chart-6: #bb9af7;
+  --chart-7: #ff9e64;
+  --chart-8: #1abc9c;
+}
+
+/* Tokyo Night Theme: light */
+[data-theme-style="tokyo-night"][data-theme="light"] {
+  --bg: #d5d6db;
+  --bg-s: #cbccd1;
+  --bg-e: #c3c5c9;
+  --bg-h: #dcdee2;
+  --bg-a: #bcbdc2;
+  --bg-code: #cbccd1;
+  --bd: rgba(150, 153, 163, 0.3);
+  --bd-s: rgba(150, 153, 163, 0.5);
+  --bd-x: rgba(52, 59, 88, 0.4);
+  --tx: #343b58;
+  --tx2: #272e4b;
+  --txm: #9699a3;
+  --tx3: #9699a3;
+  --txc: #0f4b6e;
+  --accent: #0f4b6e;
+  --accent-dim: rgba(15, 75, 110, 0.14);
+  --accent-text: #0f4b6e;
+  --accent-hover: #5a4a78;
+  --sh-sm: 0 4px 12px rgba(52, 59, 88, 0.08);
+  --sh-md: 0 8px 20px rgba(52, 59, 88, 0.12);
+  --sh-lg: 0 16px 36px rgba(52, 59, 88, 0.16);
+  --section-shadow: 0 4px 16px rgba(52, 59, 88, 0.06);
+  --modal-bg: rgba(213, 214, 219, 0.95);
+  --modal-fg: #343b58;
+  --chart-1: #8c4351;
+  --chart-2: #8f5e15;
+  --chart-3: #33635c;
+  --chart-4: #0f4b6e;
+  --chart-5: #34548a;
+  --chart-6: #5a4a78;
+  --chart-7: #965027;
+  --chart-8: #166775;
+}
+
 

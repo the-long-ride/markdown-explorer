@@ -29,6 +29,15 @@ import type {
   RenderContentMessage,
 } from '../types';
 
+export interface NavigateOptions {
+  htmlPreviewOverride?: boolean;
+}
+
+export interface PendingHtmlPreviewNavigation {
+  filePath: string;
+  enabled: boolean;
+}
+
 export interface AppState {
   fileList: MdFile[];
   tree: FolderNode | null;
@@ -44,6 +53,8 @@ export interface AppState {
   tocCollapsed: boolean;
   contentHtml: string;
   markdownSource: string | null;
+  sourceDocumentText: string | null;
+  currentHtmlPreviewOverride?: boolean;
   frontmatter: Frontmatter;
   toc: TocEntry[];
   relativePath: string;
@@ -98,7 +109,7 @@ export type Action =
       type: 'RECENT_WORKSPACES_CHANGED';
       recentWorkspaces: readonly RecentWorkspace[];
     }
-  | { type: 'RENDER_CONTENT'; msg: RenderContentMessage }
+  | { type: 'RENDER_CONTENT'; msg: RenderContentMessage; htmlPreviewOverride?: boolean }
   | {
       type: 'WORKSPACE_FILES_CHANGED';
       fileList: MdFile[];
@@ -115,6 +126,7 @@ export type Action =
   | { type: 'CLOSE_CONTENT_TABS_TO_RIGHT'; filePath: string }
   | { type: 'CLOSE_OTHER_CONTENT_TABS'; filePath: string }
   | { type: 'CLOSE_ALL_CONTENT_TABS' }
+  | { type: 'SET_CONTENT_TAB_HTML_PREVIEW'; filePath: string; enabled: boolean | undefined }
   | {
       type: 'WORKSPACE_UNAVAILABLE';
       workspacePath: string;
@@ -168,6 +180,8 @@ export const initialState: AppState = {
   tocCollapsed: false,
   contentHtml: '',
   markdownSource: null,
+  sourceDocumentText: null,
+  currentHtmlPreviewOverride: undefined,
   frontmatter: {},
   toc: [],
   relativePath: '',
@@ -184,6 +198,8 @@ export const initialState: AppState = {
   settings: {
     showTitle: false,
     defaultHtmlPreview: true,
+    defaultHtmlCodeBlockPreview: true,
+    defaultCsvPreview: true,
     fileTabs: false,
     documentConversion: false,
     scopeFocus: {},
@@ -244,6 +260,8 @@ export function createInitialState(
       ...initialState.settings,
       showTitle: saved.showTitle === true,
       defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+      defaultHtmlCodeBlockPreview: saved.defaultHtmlCodeBlockPreview ?? saved.defaultHtmlPreview !== false,
+      defaultCsvPreview: saved.defaultCsvPreview !== false,
       fileTabs: saved.fileTabs === true,
       documentConversion: saved.documentConversion === true,
       scopeFocus: saved.scopeFocus ?? {},

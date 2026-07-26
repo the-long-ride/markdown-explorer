@@ -75,7 +75,7 @@ export function createElectronMock(overrides: Record<string, any> = {}) {
   };
 
   const clipboard = { writeText: vi.fn(), readText: vi.fn(() => '') };
-  const shell = { openPath: vi.fn(), openExternal: vi.fn() };
+  const shell = { openPath: vi.fn(), openExternal: vi.fn(), showItemInFolder: vi.fn() };
   const dialog = {
     showOpenDialogSync: vi.fn(() => null),
     showMessageBox: vi.fn(() => Promise.resolve({})),

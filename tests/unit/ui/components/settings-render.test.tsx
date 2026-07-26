@@ -21,6 +21,7 @@ function getMockState() {
       showTitle: false,
       fileTabs: true,
       defaultHtmlPreview: false,
+      defaultCsvPreview: false,
       documentConversion: false,
       desktopViewMode: 'focus',
       keybindings: {},
@@ -49,8 +50,11 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, icon, ...props }: any) => (
-    <button onClick={onClick} {...props}>{icon}{children}</button>
+  TooltipButton: ({ onClick, children, icon, tooltip, label, onlyIcon = true, ...props }: any) => (
+    <button onClick={onClick} aria-label={label || tooltip} {...props}>
+      {icon}{!onlyIcon && label}{children}
+      {tooltip && <span className="tooltip-text">{tooltip}</span>}
+    </button>
   ),
 }));
 
@@ -93,10 +97,16 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
     documentConversionDesc: 'Convert docs.',
     htmlPreview: 'HTML Preview',
     htmlPreviewDesc: 'HTML preview default.',
+    csvPreview: 'CSV Preview',
+    csvPreviewDesc: 'CSV preview default.',
+    importJson: 'Import JSON',
+    exportJson: 'Export JSON',
+    importJsonTooltip: 'Import all user settings from JSON',
+    exportJsonTooltip: 'Export all user settings to JSON',
     shortcuts: 'Keyboard Shortcuts',
     shortcutsHint: 'Click to record.',
     resetShortcuts: 'Reset to Default Shortcuts',
-    closeSettings: 'Close Settings [Esc]',
+    closeSettings: 'Close Settings - (Esc)',
     actions: {
       findCurrentFile: 'Find in file',
       searchCurrent: 'Search workspace',
@@ -128,6 +138,17 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       zoomIn: 'Zoom In',
       zoomOut: 'Zoom Out',
       resetZoom: 'Reset Zoom',
+    },
+    settingsData: {
+      groupLabel: 'Settings data',
+      imported: 'Imported settings and workspace history.',
+      importFailed: 'Import failed.',
+      invalidJson: 'The selected file is not valid JSON.',
+      missingData: 'The selected file does not contain settings data.',
+      wrongFile: 'This is not a Markdown Explorer settings file.',
+      unknownSchema: 'This settings file uses an unknown schema version.',
+      exported: 'Settings exported.',
+      exportFailed: 'Export failed.',
     },
     update: {
       availableTitle: 'New version {version}',
@@ -182,6 +203,7 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
 }));
 
 vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({
+  SettingsImportError: class SettingsImportError extends Error {},
   createSettingsExport: () => '{}',
   parseSettingsImport: () => { throw new Error('Invalid'); },
   restoreLocalUiSettings: () => {},
@@ -278,7 +300,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
-    const radioGroup = screen.getByRole('radiogroup', { name: 'Color mode' });
+    const radioGroup = screen.getByRole('radiogroup', { name: 'Color Mode' });
     expect(radioGroup).toBeInTheDocument();
     expect(screen.getByText('Auto')).toBeInTheDocument();
     expect(screen.getByText('Light')).toBeInTheDocument();
@@ -380,6 +402,22 @@ describe('SettingsModal', () => {
       />,
     );
     expect(screen.getByText('HTML Preview')).toBeInTheDocument();
+  });
+
+  it('renders CSV Preview toggle', () => {
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    expect(screen.getByText('CSV Preview')).toBeInTheDocument();
   });
 
   it('renders Keyboard Shortcuts section', () => {
@@ -713,7 +751,9 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
-    expect(screen.getByLabelText('Export all user settings to JSON')).toBeInTheDocument();
+    const exportButton = screen.getByRole('button', { name: 'Export JSON' });
+    expect(exportButton).toBeInTheDocument();
+    expect(exportButton.querySelector('.tooltip-text')).toHaveTextContent('Export all user settings to JSON');
   });
 
   it('renders Import JSON button', () => {
@@ -729,7 +769,9 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
-    expect(screen.getByLabelText('Import all user settings from JSON')).toBeInTheDocument();
+    const importButton = screen.getByRole('button', { name: 'Import JSON' });
+    expect(importButton).toBeInTheDocument();
+    expect(importButton.querySelector('.tooltip-text')).toHaveTextContent('Import all user settings from JSON');
   });
 
   it('renders ThemeRemixModal when style picker triggers it', () => {
@@ -803,5 +845,7 @@ describe('SettingsModal', () => {
     expect(ACTIONS_LIST.some(a => a.id === 'toggleTheme')).toBe(true);
     expect(ACTIONS_LIST.find(a => a.id === 'workspaceSelection')?.scope).toBe('both');
     expect(ACTIONS_LIST.find(a => a.id === 'toggleDesktopViewMode')?.scope).toBe('electron');
+    expect(ACTIONS_LIST.find(a => a.id === 'openCurrentDocumentLocation')?.scope).toBe('electron');
   });
+
 });

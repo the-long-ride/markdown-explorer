@@ -28,30 +28,28 @@ test('clearing a matching operation rejects its late messages', () => {
   assert.equal(acceptsWorkspaceHostMessage({ command: 'workspaceScanProgress', ...operation }), false);
 });
 
-test('cancelled scan falls back to the rightmost ready workspace', async () => {
-  const { resolveWorkspaceCancellationFallback } = await import('../../ui/src/desktop/workspaceOperations.ts');
+test('cancelled scan resets the same tab to a new idle workspace selection tab', async () => {
+  const { resetCancelledWorkspaceTab } = await import('../../ui/src/desktop/workspaceOperations.ts');
   const tabs = [
     { id: 'home', kind: 'home', workspaceLoadState: 'idle' },
-    { id: 'a', kind: 'workspace', workspacePath: '/a', workspaceLoadState: 'loading' },
+    { id: 'a', kind: 'workspace', workspacePath: '/a', workspaceLoadState: 'loading', contentHtml: '<h1>A</h1>' },
     { id: 'b', kind: 'workspace', workspacePath: '/b', workspaceLoadState: 'ready' },
-    { id: 'c', kind: 'workspace', workspacePath: '/c', workspaceLoadState: 'ready' },
   ];
 
-  const result = resolveWorkspaceCancellationFallback(tabs, 'a');
-  assert.deepEqual(result.remainingTabs.map((tab) => tab.id), ['home', 'b', 'c']);
-  assert.equal(result.readyWorkspaceTabId, 'c');
-  assert.equal(result.homeTabId, 'home');
+  const result = resetCancelledWorkspaceTab(
+    tabs,
+    'a',
+    (id) => ({ id, kind: 'new', workspaceLoadState: 'idle' }),
+  );
+
+  assert.deepEqual(result.map((tab) => tab.id), ['home', 'a', 'b']);
+  assert.deepEqual(result[1], { id: 'a', kind: 'new', workspaceLoadState: 'idle' });
+  assert.equal(result[2], tabs[2]);
 });
 
-test('cancelled scan falls back to Home when no completed workspace remains', async () => {
-  const { resolveWorkspaceCancellationFallback } = await import('../../ui/src/desktop/workspaceOperations.ts');
-  const tabs = [
-    { id: 'a', kind: 'workspace', workspacePath: '/a', workspaceLoadState: 'loading' },
-    { id: 'b', kind: 'workspace', workspacePath: '/b', workspaceLoadState: 'loading' },
-  ];
-
-  const result = resolveWorkspaceCancellationFallback(tabs, 'a');
-  assert.deepEqual(result.remainingTabs.map((tab) => tab.id), ['b']);
-  assert.equal(result.readyWorkspaceTabId, null);
-  assert.equal(result.homeTabId, null);
+test('cancelled scan reset leaves other tabs untouched when the target is missing', async () => {
+  const { resetCancelledWorkspaceTab } = await import('../../ui/src/desktop/workspaceOperations.ts');
+  const tabs = [{ id: 'home', kind: 'home', workspaceLoadState: 'idle' }];
+  const result = resetCancelledWorkspaceTab(tabs, 'missing', (id) => ({ id, kind: 'new' }));
+  assert.deepEqual(result, tabs);
 });

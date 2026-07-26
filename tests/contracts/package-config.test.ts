@@ -56,7 +56,8 @@ describe('package configuration contracts', () => {
 
     async function readWorkspacePackages() {
       const yaml = await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8');
-      return yaml
+      const packageLines = yaml.match(/^packages:\s*\n((?:\s+-\s+.*(?:\n|$))*)/m)?.[1] ?? '';
+      return packageLines
         .split('\n')
         .filter((line) => line.trim().startsWith('- '))
         .map((line) => line.trim().slice(2).trim().replace(/^['"]|['"]$/g, ''));
@@ -150,8 +151,8 @@ describe('package configuration contracts', () => {
       const pkg = await readJson('vscode/package.json');
       const styleConfig = pkg.contributes.configuration.properties['markdownExplorer.themeStyle'];
       expect(styleConfig.enum).toEqual([
-        'default', 'glass', 'bento',
-        'pet-white-shiba', 'pet-shiba', 'pet-shiba-memes',
+        'default', 'glass', 'bento', 'vercel', 'tokyo-night',
+        'pet-white-shiba',
         'pet-k-ink', 'pet-cat', 'pet-hamster', 'pet-corgi',
       ]);
     });

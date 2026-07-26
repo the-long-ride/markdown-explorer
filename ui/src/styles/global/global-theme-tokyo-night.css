@@ -1,0 +1,14 @@
+/* ============================================================
+   Tokyo Night Theme Layout & Background Spec
+   ============================================================ */
+
+
+/* Panel surface borders, border-radius, and shadows for Tokyo Night */
+[data-theme-style="tokyo-night"] .topbar,
+[data-theme-style="tokyo-night"] .sidebar,
+[data-theme-style="tokyo-night"] .toc-panel {
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-s);
+  box-shadow: var(--sh-sm);
+}

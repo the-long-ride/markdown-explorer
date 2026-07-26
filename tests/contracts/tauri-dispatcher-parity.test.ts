@@ -35,7 +35,7 @@ const topbarCssPath = path.join(repoRoot, 'ui/src/styles/global/global-topbar-ta
 const topbarCssSrc = fs.readFileSync(topbarCssPath, 'utf8');
 
 const REQUIRED_DESKTOP_WEBVIEW_COMMANDS = [
-  'ready', 'navigate', 'openFolder', 'openFile', 'openPath',
+  'ready', 'navigate', 'openFolder', 'openFile', 'openPath', 'openShellLocation',
   'activateWorkspace', 'searchAcrossWorkspaces', 'searchWorkspace',
   'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
   'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
@@ -54,7 +54,7 @@ describe('tauri dispatcher parity', () => {
   for (const cmd of REQUIRED_DESKTOP_WEBVIEW_COMMANDS) {
     test(`${cmd} is handled by tauri dispatcher`, () => {
       const pattern = new RegExp(`"${escapeRegex(cmd)}"\\s*=>`);
-      expect(dispatcherSrc).toMatch(pattern);
+      expect(`${dispatcherSrc}\n${dispatcherCommandsSrc}`).toMatch(pattern);
     });
   }
 
@@ -108,7 +108,7 @@ describe('tauri dispatcher parity', () => {
     const activateBlock = dispatcherCommandsSrc.slice(activateStart, activateEnd);
     expect(activateBlock).toContain('self.send_workspace_data(open_first_file);');
     expect(activateBlock).not.toContain('self.send_initial_content');
-    expect(dispatcherIncrementalSrc).toContain('dispatcher.send_initial_content(open_first_file);');
+    expect(dispatcherIncrementalSrc).toContain('dispatcher.send_initial_content_for_scan(');
   });
 
   test('Tauri exposes current and all workspace scan cancellation', () => {

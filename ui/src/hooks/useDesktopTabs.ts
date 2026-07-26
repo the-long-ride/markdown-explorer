@@ -16,7 +16,7 @@ import {
   beginWorkspaceOperation,
   clearWorkspaceOperation,
   getActiveWorkspaceOperation,
-  resolveWorkspaceCancellationFallback,
+  resetCancelledWorkspaceTab,
   type WorkspaceOperationContext,
 } from '../desktop/workspaceOperations';
 import type {
@@ -67,6 +67,7 @@ export function useDesktopTabs({
   const pendingWorkspaceTabIdRef = useRef<string | null>(null);
   const restoredDesktopTabsRef = useRef(false);
   const requestedWorkspaceIndexesRef = useRef<Set<string>>(new Set());
+  const pendingWorkspaceReplacementRef = useRef<{ workspaceOperationId: string; oldPath: string } | null>(null);
   const tabsRef = useRef(tabs);
 
   const [pendingDroppedPath, setPendingDroppedPath] = useState<string | null>(null);
@@ -132,6 +133,11 @@ export function useDesktopTabs({
       workspaceName: '',
       workspacePath: undefined,
       recentWorkspaces: state.recentWorkspaces,
+    });
+    dispatch({
+      type: 'WORKSPACE_SCAN_PROGRESS',
+      scannedFiles: 0,
+      active: false,
     });
   }, [dispatch, state.defaultExpanded, state.recentWorkspaces, state.theme, state.themeStyle]);
 
@@ -209,6 +215,7 @@ export function useDesktopTabs({
             command: 'renderContent',
             html: tab.contentHtml,
             markdownSource: tab.markdownSource,
+            sourceDocumentText: tab.sourceDocumentText,
             frontmatter: tab.frontmatter,
             toc: tab.toc,
             previewInfo: tab.previewInfo,
@@ -281,6 +288,25 @@ export function useDesktopTabs({
       : active.id;
     return beginOperationForTab(targetTabId);
   }, [beginOperationForTab, createNewWorkspaceTab, isTabView, tabs]);
+
+  const reopenUnavailableWorkspace = useCallback((oldPath: string) => {
+    if (!oldPath) return;
+    const operation = isTabView
+      ? beginOperationForTab(activeTabIdRef.current)
+      : undefined;
+    if (operation) {
+      pendingWorkspaceReplacementRef.current = {
+        workspaceOperationId: operation.workspaceOperationId,
+        oldPath,
+      };
+    }
+    bridge.postMessage({
+      command: 'openFolder',
+      openFirstFile: isTabView,
+      replaceRecentWorkspacePath: oldPath,
+      ...operation,
+    });
+  }, [beginOperationForTab, bridge, isTabView]);
 
   const openDroppedPath = useCallback((droppedPath: string) => {
     if (!droppedPath) return;
@@ -454,6 +480,40 @@ export function useDesktopTabs({
 
   useEffect(() => {
     return bridge.onMessage((msg) => {
+      const pendingReplacement = pendingWorkspaceReplacementRef.current;
+      if (msg.command === 'workspaceOpenCancelled') {
+        const activeOperation = getActiveWorkspaceOperation();
+        const matchesActiveOperation = Boolean(
+          activeOperation
+          && msg.workspaceOperationId === activeOperation.workspaceOperationId
+          && msg.workspaceTabId === activeOperation.workspaceTabId,
+        );
+        const matchesReplacement = Boolean(
+          pendingReplacement
+          && msg.workspaceOperationId === pendingReplacement.workspaceOperationId,
+        );
+        if (!matchesActiveOperation && !matchesReplacement) return;
+
+        const cancelledTabId = msg.workspaceTabId ?? activeOperation?.workspaceTabId;
+        if (matchesReplacement) pendingWorkspaceReplacementRef.current = null;
+        clearWorkspaceOperation(msg.workspaceOperationId);
+        pendingWorkspaceTabIdRef.current = null;
+        if (cancelledTabId) {
+          setTabs((currentTabs) => currentTabs.map((tab) => {
+            if (tab.id !== cancelledTabId) return tab;
+            return {
+              ...tab,
+              workspaceOperationId: undefined,
+              workspaceLoadState: tab.workspacePath ? 'ready' : 'idle',
+            };
+          }));
+        }
+        return;
+      }
+      if (msg.command === 'readyAck' && pendingReplacement
+        && msg.workspaceOperationId === pendingReplacement.workspaceOperationId) {
+        pendingWorkspaceReplacementRef.current = null;
+      }
       if (msg.workspaceOperationId && msg.workspaceTabId) {
         const activeOperation = getActiveWorkspaceOperation();
         if (activeOperation
@@ -524,31 +584,20 @@ export function useDesktopTabs({
     clearWorkspaceOperation(operation.workspaceOperationId);
     pendingWorkspaceTabIdRef.current = null;
 
-    const fallback = resolveWorkspaceCancellationFallback(
-      tabsRef.current,
+    setTabs((currentTabs) => resetCancelledWorkspaceTab(
+      currentTabs,
       operation.workspaceTabId,
-    );
-    const readyWorkspace = fallback.readyWorkspaceTabId
-      ? fallback.remainingTabs.find((tab) => tab.id === fallback.readyWorkspaceTabId)
-      : undefined;
-    const homeTab = (fallback.homeTabId
-      ? fallback.remainingTabs.find((tab) => tab.id === fallback.homeTabId)
-      : undefined) ?? createEmptyTab('home', 'home');
-    const nextTabs = readyWorkspace
-      ? fallback.remainingTabs
-      : fallback.homeTabId
-        ? fallback.remainingTabs
-        : [homeTab, ...fallback.remainingTabs];
-    setTabs(nextTabs.length ? nextTabs : [homeTab]);
-    if (!readyWorkspace) {
-      dispatchEmptyWorkspace();
-      setActiveTabId(homeTab.id);
-      setNavigationScope(isTabView ? homeTab.id : 'focus');
-      bridge.postMessage({ command: 'closeWorkspace' });
-      return;
-    }
-    window.setTimeout(() => activateTab(readyWorkspace.id), 0);
-  }, [activateTab, bridge, dispatchEmptyWorkspace, isTabView, setNavigationScope]);
+      (tabId) => ({
+        ...createEmptyTab(tabId, 'new'),
+        workspaceLoadState: 'idle',
+        workspaceOperationId: undefined,
+      }),
+    ));
+    setActiveTabId(operation.workspaceTabId);
+    setNavigationScope(isTabView ? operation.workspaceTabId : 'focus');
+    dispatchEmptyWorkspace();
+    bridge.postMessage({ command: 'closeWorkspace' });
+  }, [bridge, dispatchEmptyWorkspace, isTabView, setNavigationScope]);
 
   const isIndexingAcrossTabs = useMemo(() => {
     if (!isTabView) return false;
@@ -565,6 +614,7 @@ export function useDesktopTabs({
     activateTab,
     createNewWorkspaceTab,
     prepareWorkspaceOpen,
+    reopenUnavailableWorkspace,
     openDroppedPath,
     pendingDroppedPath,
     setPendingDroppedPath,

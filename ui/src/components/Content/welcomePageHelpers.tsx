@@ -1,3 +1,13 @@
+import { formatShortcutLabel } from '../../utils/shortcuts';
+import {
+  ChartIcon,
+  FolderIcon,
+  LightbulbIcon,
+  ModalIcon,
+  SearchIcon,
+  WrenchIcon,
+} from './WelcomePageIcons';
+
 export const getTipIcon = (index: number) => {
   switch (index) {
     case 0: return <SearchIcon className="tip-icon" />;
@@ -11,24 +21,15 @@ export const getTipIcon = (index: number) => {
 
 export const renderShortcutKeys = (shortcutStr: string) => {
   if (!shortcutStr) return null;
-  const parts = shortcutStr.split('+');
+  const parts = formatShortcutLabel(shortcutStr).split('+');
   return (
     <span className="shortcut-keys-wrapper">
-      {parts.map((part, idx) => (
-        <span className="shortcut-keys-wrapper__part" key={idx}>
-          {idx > 0 && <span className="shortcut-keys-wrapper__plus">+</span>}
+      {parts.map((part, index) => (
+        <span className="shortcut-keys-wrapper__part" key={`${part}-${index}`}>
+          {index > 0 && <span className="shortcut-keys-wrapper__plus">+</span>}
           <kbd>{part}</kbd>
         </span>
       ))}
     </span>
   );
 };
-
-import {
-  ChartIcon,
-  FolderIcon,
-  LightbulbIcon,
-  ModalIcon,
-  SearchIcon,
-  WrenchIcon,
-} from './WelcomePageIcons';

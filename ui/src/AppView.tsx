@@ -18,7 +18,6 @@ const SettingsModal = lazy(() => import("./components/Settings/SettingsModal").t
 const ThemeOnboardingModal = lazy(() => import("./components/Modal/ThemeOnboardingModal").then((m) => ({ default: m.ThemeOnboardingModal })));
 const SwitchWorkspaceModal = lazy(() => import("./components/Modal/SwitchWorkspaceModal").then((m) => ({ default: m.SwitchWorkspaceModal })));
 const WorkspaceSelectionConfirmModal = lazy(() => import("./components/Modal/WorkspaceSelectionConfirmModal").then((m) => ({ default: m.WorkspaceSelectionConfirmModal })));
-const FloatingTabToolbar = lazy(() => import("./components/Desktop/FloatingTabToolbar").then((m) => ({ default: m.FloatingTabToolbar })));
 
 
 export function AppView(props: any) {
@@ -46,6 +45,7 @@ export function AppView(props: any) {
   isFullscreen,
   toggleFullscreen,
   prepareWorkspaceOpen,
+  reopenUnavailableWorkspace,
   workspaceAliases,
   updateWorkspaceAlias,
   scrollRef,
@@ -92,8 +92,6 @@ export function AppView(props: any) {
   closeWorkspaceToSelection,
   toggleFocusMode,
   isDragging,
-  toolbarPosition,
-  setToolbarPosition,
   onImageClick
   } = props;
 
@@ -115,6 +113,14 @@ export function AppView(props: any) {
           onThemeToggle={toggleTheme}
           onSettingsOpen={() => setSettingsOpen(true)}
           onSidebarToggle={toggleSidebar}
+          onBack={back}
+          onForward={forward}
+          onRefresh={refresh}
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          onCollapseAll={collapseAll}
+          onExpandAll={expandAll}
+          onCopyFile={copyCurrentFileContent}
           isDark={isDark}
           isMaximized={state.isMaximized}
           hasUpdate={updateCheck.hasUpdate}
@@ -191,6 +197,7 @@ export function AppView(props: any) {
                   scrollRef={scrollRef}
                   suppressWelcome={isTabView}
                   onCancelWorkspaceScan={isTabView ? cancelCurrentWorkspaceScan : undefined}
+                  onOpenWorkspaceAgain={reopenUnavailableWorkspace}
                 />
                 {/* Scroll to top button */}
                 <TooltipButton
@@ -202,21 +209,7 @@ export function AppView(props: any) {
                   icon={<ChevronUpIcon />}
                 />
               </div>
-              {isTabView && (
-                <Suspense fallback={null}><FloatingTabToolbar
-                  position={toolbarPosition}
-                  onPositionChange={setToolbarPosition}
-                  onExpandAll={expandAll}
-                  onCollapseAll={collapseAll}
-                  onCopyFile={copyCurrentFileContent}
-                  onRefresh={refresh}
-                  onBack={back}
-                  onForward={forward}
-                  canGoBack={canGoBack}
-                  canGoForward={canGoForward}
-                  canEdit={!!state.currentFile}
-                /></Suspense>
-              )}
+
             </div>
             {state.toc.length > 0 && (
               <>

@@ -7,6 +7,12 @@ packages:
   - tauri/sidecar/mdthem-sidecar
   - website-app
 
+overrides:
+  brace-expansion@<=5.0.7: ^5.0.8
+  dompurify: 3.4.12
+  fast-uri: 3.1.4
+  fast-xml-parser: 5.10.1
+
 allowBuilds:
   esbuild: true
   '@vscode/vsce-sign': true
@@ -15,3 +21,8 @@ allowBuilds:
   tesseract.js: true
 
 shamefullyHoist: true
+
+minimumReleaseAgeExclude:
+  - brace-expansion@1.1.16 || 2.1.2 || 5.0.8
+  - tar@7.5.21
+  - postcss@8.5.18

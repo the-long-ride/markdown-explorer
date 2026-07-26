@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ResolvedLink } from '../../dom/linkContextMenu';
+import { useCssVars } from '../../utils/useCssVars';
 import { OpenInBrowserIcon } from './icons';
 
 export interface LinkContextMenuState {
@@ -30,7 +31,11 @@ export function LinkContextMenu({
   onClose,
 }: LinkContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
-  const position = useMemo(() => ({ left: state.x, top: state.y }), [state.x, state.y]);
+  const menuCssVariables = useMemo(() => ({
+    '--link-context-menu-left': `${state.x}px`,
+    '--link-context-menu-top': `${state.y}px`,
+  }), [state.x, state.y]);
+  useCssVars(menuRef, menuCssVariables);
 
   useEffect(() => {
     const menu = menuRef.current;
@@ -38,8 +43,8 @@ export function LinkContextMenu({
     const rect = menu.getBoundingClientRect();
     const left = Math.max(8, Math.min(state.x, window.innerWidth - rect.width - 8));
     const top = Math.max(8, Math.min(state.y, window.innerHeight - rect.height - 8));
-    menu.style.left = `${left}px`;
-    menu.style.top = `${top}px`;
+    menu.style.setProperty('--link-context-menu-left', `${left}px`);
+    menu.style.setProperty('--link-context-menu-top', `${top}px`);
     menu.querySelector<HTMLElement>('button:not([disabled])')?.focus();
 
     const close = (event: Event) => {
@@ -79,7 +84,6 @@ export function LinkContextMenu({
       className="mdn-link-context-menu"
       role="menu"
       aria-label={menuLabel}
-      style={position}
     >
       <button
         type="button"

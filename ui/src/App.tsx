@@ -26,9 +26,19 @@ export function App() {
   // AppView owns the root class: state.appRuntime === 'tauri' ? ' app--tauri' : ''.
   // Register global DOM handlers after first paint (not needed for initial render)
   useEffect(() => { initGlobalHandlers(); }, []);
-  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, toggleDesktopViewMode, dispatch, navigate, refresh } = useAppState();
+  const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, toggleDesktopViewMode, setContentTabHtmlPreview, dispatch, navigate, refresh } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const activeHtmlTab = state.contentTabs.find((tab) => tab.filePath === state.activeContentTabPath);
+  const activeHtmlDocument = /\.html?$/i.test(state.currentFile || '') && Boolean(activeHtmlTab || state.sourceDocumentText !== null);
+  const handleToggleActiveHtmlDocumentPreview = useCallback(() => {
+    if (!activeHtmlDocument || !state.currentFile) return;
+    const currentEnabled = activeHtmlTab?.htmlPreviewOverride ?? state.settings.defaultHtmlPreview;
+    setContentTabHtmlPreview(state.currentFile, !currentEnabled);
+    window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', {
+      detail: currentEnabled ? t.htmlPreviewDisabled : t.htmlPreviewEnabled,
+    }));
+  }, [activeHtmlDocument, activeHtmlTab?.htmlPreviewOverride, setContentTabHtmlPreview, state.currentFile, state.settings.defaultHtmlPreview, t.htmlPreviewDisabled, t.htmlPreviewEnabled]);
 
   const bridge = usePlatform();
   const {
@@ -83,11 +93,10 @@ export function App() {
     activeTabId,
     tabs,
     workspaceAliases,
-    toolbarPosition,
-    setToolbarPosition,
     activateTab,
     createNewWorkspaceTab,
     prepareWorkspaceOpen,
+    reopenUnavailableWorkspace,
     openDroppedPath,
     pendingDroppedPath,
     setPendingDroppedPath,
@@ -261,6 +270,8 @@ export function App() {
     toggleToc,
     toggleFocusMode,
     toggleDesktopViewMode,
+    activeHtmlDocument,
+    onToggleActiveHtmlDocumentPreview: handleToggleActiveHtmlDocumentPreview,
     toggleFullscreen,
   });
 
@@ -375,6 +386,7 @@ export function App() {
       isFullscreen={isFullscreen}
       toggleFullscreen={toggleFullscreen}
       prepareWorkspaceOpen={prepareWorkspaceOpen}
+      reopenUnavailableWorkspace={reopenUnavailableWorkspace}
       workspaceAliases={workspaceAliases}
       updateWorkspaceAlias={updateWorkspaceAlias}
       scrollRef={scrollRef}
@@ -423,8 +435,6 @@ export function App() {
        focusMode={state.focusMode}
       toggleFocusMode={toggleFocusMode}
       isDragging={isDragging}
-      toolbarPosition={toolbarPosition}
-      setToolbarPosition={setToolbarPosition}
       onImageClick={onImageClick}
     />
   );

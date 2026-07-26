@@ -187,6 +187,7 @@ describe('TableOfContents', () => {
     it('removes active TOC and refresh-banner rails while retaining pet paw hooks', () => {
       const themeStyles = [
         'ui/src/styles/global/global-theme-vercel.css',
+        'ui/src/styles/global/global-theme-tokyo-night.css',
         'ui/src/styles/global/global-theme-glass-bento.css',
         'ui/src/styles/global/global-theme-pets-a.css',
       ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
@@ -226,17 +227,17 @@ describe('TableOfContents', () => {
       );
     });
 
-    it('defines a secondary heading level badge that appears on heading hover', () => {
+    it('defines a right-side square heading badge that appears on heading hover or focus', () => {
       const sectionStyles = readFileSync(
-        resolve(process.cwd(), 'ui/src/styles/global/global-tables-a.css'),
+        resolve(process.cwd(), 'ui/src/styles/global/global-markdown-base.css'),
         'utf8',
       );
 
       expect(sectionStyles).toMatch(
-        /\.mdn-section-heading-level\s*\{[^}]*color:\s*var\(--tx2\);[^}]*visibility:\s*hidden;/s,
+        /\.mdn-heading-level\s*\{[^}]*left:\s*calc\(100% \+ 8px\);[^}]*aspect-ratio:\s*1;[^}]*border:[^}]*visibility:\s*hidden;/s,
       );
       expect(sectionStyles).toMatch(
-        /\.mdn-section-header:hover\s+\.mdn-section-heading-level[^}]*visibility:\s*visible;/s,
+        /\.mdn-section-header:hover \.mdn-heading-level,[\s\S]*\.mdn-section-header:focus-within \.mdn-heading-level\s*\{[^}]*visibility:\s*visible;[^}]*opacity:\s*1;/s,
       );
     });
 
@@ -244,6 +245,7 @@ describe('TableOfContents', () => {
       const sidebarStyles = [
         'ui/src/styles/global/global-layout-sidebar.css',
         'ui/src/styles/global/global-theme-vercel.css',
+        'ui/src/styles/global/global-theme-tokyo-night.css',
         'ui/src/styles/global/global-theme-glass-bento.css',
         'ui/src/styles/global/global-theme-pets-a.css',
       ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');

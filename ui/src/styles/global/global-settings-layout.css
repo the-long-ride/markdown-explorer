@@ -1,3 +1,7 @@
+:root {
+  --settings-tooltip-opacity: 0.98;
+}
+
 .settings-card__column--preferences,
 .settings-card__column--shortcuts {
   display: flex;
@@ -129,5 +133,107 @@
 }
 
 .settings-modal { display: flex; }
-.settings-card__body--settings { display: flex; gap: 16px; margin-top: 7px; }
+.settings-card__body--settings { display: flex; gap: 16px; margin-top: 7px; overflow: hidden; }
+.settings-appearance-scroll {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
+}
+.settings-appearance-scroll > .settings-card__column--preferences {
+  min-height: min-content;
+  overflow: visible;
+}
 .settings-card__divider { align-self: stretch; width: 1px; background: var(--bd); }
+
+.settings-card__column--preferences {
+  position: relative;
+}
+
+.settings-preference-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 52px;
+  padding: 10px 0;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.settings-preference-row.settings-field {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-preference-row .settings-item__info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.settings-preference-row > .switch-toggle {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-block: auto;
+}
+
+.settings-preference-row:focus-visible {
+  border-radius: var(--r);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+.settings-preference-description-panel {
+  position: fixed;
+  z-index: 10000;
+  top: var(--preference-tooltip-top);
+  left: var(--preference-tooltip-left);
+  width: min(280px, calc(100vw - 20px));
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--bg-e) 98%, transparent);
+  box-shadow: var(--sh-md);
+  color: var(--tx2);
+  font-size: 11px;
+  line-height: 1.45;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+  backdrop-filter: blur(10px);
+}
+
+.settings-preference-description-panel.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.settings-appearance-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.settings-appearance-controls .settings-preference-row {
+  min-height: 50px;
+  align-items: center;
+}
+
+.settings-appearance-controls > :first-child {
+  border-bottom: 0;
+}
+
+.settings-appearance-controls > .settings-preference-row:first-child + .settings-preference-row {
+  border-top: 0;
+}

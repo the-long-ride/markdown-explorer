@@ -135,6 +135,7 @@ function createAppBootstrap({
           downloadUpdate: runtimeImpl.handleDownloadUpdate,
           scheduleDownloadedUpdate: runtimeImpl.handleScheduleDownloadedUpdate,
           restartAndApplyUpdate: runtimeImpl.handleRestartAndApplyUpdate,
+          readWorkspaceTextResource: runtimeImpl.readWorkspaceTextResource,
           openHtmlPreview: (documentHtml) => htmlPreviewServer.open(
             documentHtml,
             (url) => shellImpl.openExternal(url),

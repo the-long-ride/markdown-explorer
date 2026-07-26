@@ -6,10 +6,16 @@ import type { ScopeFocusTreeProps } from '../../../../ui/src/components/Sidebar/
 const mockNavigate = vi.fn();
 const mockUpdateSettings = vi.fn();
 
-let mockState: any = {
+const createMockState = (overrides: Record<string, unknown> = {}) => ({
   currentFile: null,
+  workspacePath: '/docs',
+  appRuntime: 'vscode',
+  hostPlatform: 'unknown',
   settings: { showTitle: true, language: 'en' },
-};
+  ...overrides,
+});
+
+let mockState: any = createMockState();
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({ state: mockState, navigate: mockNavigate, updateSettings: mockUpdateSettings }),
@@ -18,6 +24,9 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
   FolderIcon: () => <span>folder-icon</span>,
   FolderChevronIcon: () => <span>chevron-icon</span>,
+  OpenFolderLocationIcon: () => <span>open-folder-icon</span>,
+  RevealFileLocationIcon: () => <span>reveal-file-icon</span>,
+  MoreVerticalIcon: () => <span>more-icon</span>,
 }));
 
 const baseFile = {
@@ -37,7 +46,7 @@ const defaultScopeFocus: ScopeFocusTreeProps = {
 
 describe('FileNode', () => {
   beforeEach(() => {
-    mockState = { currentFile: null, settings: { showTitle: true, language: 'en' } };
+    mockState = createMockState();
     mockNavigate.mockClear();
   });
 
@@ -156,6 +165,45 @@ describe('FileNode', () => {
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
 
+  it('does not render the three-dot action button without a menu callback', () => {
+    render(<FileNode file={baseFile} scopeFocus={defaultScopeFocus} />);
+    expect(screen.queryByLabelText('Actions for Readme')).not.toBeInTheDocument();
+  });
+
+  it('requests the file action menu from the three-dot button', () => {
+    const onRequestItemMenu = vi.fn();
+    render(
+      <FileNode
+        file={baseFile}
+        scopeFocus={defaultScopeFocus}
+        onRequestItemMenu={onRequestItemMenu}
+        itemActionsLabel="Actions for {name}"
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Actions for Readme'));
+
+    expect(onRequestItemMenu).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'file',
+      path: '/docs/readme.md',
+      anchor: expect.any(HTMLElement),
+    }));
+  });
+
+  it('hides the file action button when canRequestItemMenu rejects the target', () => {
+    render(
+      <FileNode
+        file={baseFile}
+        scopeFocus={defaultScopeFocus}
+        onRequestItemMenu={vi.fn()}
+        canRequestItemMenu={() => false}
+        itemActionsLabel="Actions for {name}"
+      />,
+    );
+
+    expect(screen.queryByLabelText('Actions for Readme')).not.toBeInTheDocument();
+  });
+
   it('stops propagation on checkbox click and keydown', () => {
     const editingScope = { ...defaultScopeFocus, editing: true };
     render(<FileNode file={baseFile} scopeFocus={editingScope} />);
@@ -175,13 +223,35 @@ describe('FolderNodeView', () => {
   };
 
   beforeEach(() => {
-    mockState = { currentFile: null, settings: { showTitle: true, language: 'en' } };
+    mockState = createMockState();
     mockNavigate.mockClear();
   });
 
   it('renders folder name', () => {
     render(<FolderNodeView node={simpleNode} filter="" scopeFocus={defaultScopeFocus} />);
     expect(screen.getByText('guides')).toBeInTheDocument();
+  });
+
+  it('requests the folder action menu from the three-dot button', () => {
+    const onRequestItemMenu = vi.fn();
+    const relativeNode = { ...simpleNode, path: 'guides' };
+    render(
+      <FolderNodeView
+        node={relativeNode}
+        filter=""
+        scopeFocus={defaultScopeFocus}
+        onRequestItemMenu={onRequestItemMenu}
+        itemActionsLabel="Actions for {name}"
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Actions for guides'));
+
+    expect(onRequestItemMenu).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'folder',
+      path: 'guides',
+      anchor: expect.any(HTMLElement),
+    }));
   });
 
   it('renders folder with is-open class by default', () => {

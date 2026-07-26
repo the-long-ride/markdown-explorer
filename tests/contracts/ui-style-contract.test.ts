@@ -103,7 +103,9 @@ describe('UI style contract', () => {
       'utf8',
     );
     const fadeBlock = css.match(/\.content-tab\.is-closing--fade\s*\{([^}]*)\}/s)?.[1] ?? '';
-    const collapseBlock = css.match(/\.content-tab\.is-closing--collapse\s*\{([^}]*)\}/s)?.[1] ?? '';
+    const collapseBlock = [...css.matchAll(/\.content-tab\.is-closing--collapse\s*\{([^}]*)\}/gs)]
+      .map((match) => match[1])
+      .find((block) => block.includes('width: 0;')) ?? '';
     expect(fadeBlock).toContain('opacity 90ms ease');
     expect(collapseBlock).toContain('width 140ms ease');
     expect(css).toMatch(/\.content-tab\.is-active\.is-closing--collapse\s*\{[^}]*flex-basis:\s*0;/s);

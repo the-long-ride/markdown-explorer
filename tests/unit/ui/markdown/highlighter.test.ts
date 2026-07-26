@@ -270,6 +270,48 @@ describe('markdown/highlighter', () => {
     });
   });
 
+  describe('xml fragments', () => {
+    it('highlights XML tags, attributes, values, and text without a declaration', () => {
+      const result = highlight('<catalog id="main"><book available="true">Markdown</book></catalog>', 'xml');
+
+      expect(result).toContain('<span class="hl-tag">catalog</span>');
+      expect(result).toContain('<span class="hl-tag">book</span>');
+      expect(result).toContain('<span class="hl-attr">id</span>');
+      expect(result).toContain('<span class="hl-str">"main"</span>');
+      expect(result).toContain('<span class="hl-val">Markdown</span>');
+      expect(result).not.toContain('&lt;?xml');
+    });
+
+    it('highlights namespace-prefixed names and self-closing tags', () => {
+      const result = highlight('<xsl:template xmlns:xsl="urn:xsl"><ui:item data-id="42" /></xsl:template>', 'xhtml');
+
+      expect(result).toContain('<span class="hl-tag">xsl:template</span>');
+      expect(result).toContain('<span class="hl-attr">xmlns:xsl</span>');
+      expect(result).toContain('<span class="hl-tag">ui:item</span>');
+      expect(result).toContain('<span class="hl-attr">data-id</span>');
+    });
+
+    it('keeps greater-than characters inside quoted attribute values inside the tag', () => {
+      const result = highlight('<rule expression="count > 10">active</rule>', 'xml');
+
+      expect(result).toContain('<span class="hl-str">"count &gt; 10"</span>');
+      expect(result).toContain('<span class="hl-val">active</span>');
+      expect(result.match(/hl-tag/g)).toHaveLength(2);
+    });
+
+    it('highlights comments, CDATA, processing instructions, doctype, and entities', () => {
+      const result = highlight(
+        '<?xml version="1.0"?><!DOCTYPE note [<!ELEMENT note (#PCDATA)>]><!-- hi --><note><![CDATA[a < b]]>&amp;</note>',
+        'svg',
+      );
+
+      expect(result).toContain('hl-kw');
+      expect(result).toContain('hl-cm');
+      expect(result).toContain('hl-str');
+      expect(result).toContain('<span class="hl-num">&amp;amp;</span>');
+    });
+  });
+
   describe('sql', () => {
     it('highlights SELECT FROM', () => {
       const result = highlight('SELECT * FROM users;', 'sql');

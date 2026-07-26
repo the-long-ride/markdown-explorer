@@ -18,6 +18,7 @@
 @import './global/global-theme-glass-bento.css';
 @import './global/global-theme-pets-a.css';
 @import './global/global-theme-vercel.css';
+@import './global/global-theme-tokyo-night.css';
 @import './global/global-modals-settings-a.css';
 @import './global/global-settings-responsive.css';
 @import './global/global-theme-picker-settings.css';
@@ -27,6 +28,7 @@
 @import './global/global-theme-picker-remix.css';
 @import './global/global-switch-tooltip-diff.css';
 @import './global/global-electron-workspace.css';
+@import './global/global-dialog-surfaces.css';
 
 .sidebar__tab-indicator { transition: transform 0.2s ease; }
 .sidebar__tab-indicator.is-search { transform: translateX(100%); }
@@ -55,3 +57,51 @@
   z-index: 99999;
 }
 
+
+
+/* Full-document HTML preview uses the complete reader viewport. */
+.content__scroll.content__scroll--html-preview {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.mdn-body.mdn-body--html-preview {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+
+.mdn-body--html-preview .html-document-view__iframe {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+.html-preview-experience-banner {
+  position: fixed;
+  z-index: 11000;
+  top: calc(var(--topbar-h, 42px) + 12px);
+  left: 50%;
+  width: min(720px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  border: 1px solid var(--bd-x);
+  border-radius: var(--radius-md, 7px);
+  background: color-mix(in srgb, var(--bg-e) 94%, var(--accent));
+  box-shadow: var(--sh-lg);
+  color: var(--tx);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}

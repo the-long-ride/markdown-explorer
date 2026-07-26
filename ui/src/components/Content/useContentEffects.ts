@@ -231,7 +231,17 @@ export function useContentEffects({
           return;
         }
 
-        // 5. Code block collapse toggle button (Show More / Show Less)
+        // 5. CSV/TSV data preview toggle
+        const toggleCsvBtn = target.closest(".mdn-toggle-csv-btn") as HTMLElement | null;
+        if (toggleCsvBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const win = window as any;
+          if (win.UI?.toggleCsvMode) win.UI.toggleCsvMode(toggleCsvBtn);
+          return;
+        }
+
+        // 6. Code block collapse toggle button (Show More / Show Less)
         const codeblockToggleBtn = target.closest(".mdn-codeblock-toggle-btn") as HTMLElement | null;
         if (codeblockToggleBtn) {
           e.preventDefault();

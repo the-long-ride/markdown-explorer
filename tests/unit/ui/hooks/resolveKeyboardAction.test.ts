@@ -18,6 +18,7 @@ const defaultBindings: Record<string, string> = {
   toggleTheme: 'ctrl+shift+t',
   toggleToc: 'ctrl+shift+u',
   locateFile: 'ctrl+shift+l',
+  openCurrentDocumentLocation: 'shift+alt+r',
   toggleFocusMode: 'ctrl+shift+f',
   toggleDesktopViewMode: 'ctrl+alt+t',
   sidebarCursorMode: 'ctrl+shift+s',
@@ -51,6 +52,7 @@ function defaultState(overrides: Partial<KeyboardState> = {}): KeyboardState {
     hasOnWelcome: false,
     hasOnToggleToc: true,
     hasOnLocateFile: true,
+    hasOnOpenCurrentDocumentLocation: true,
     hasOnToggleFocusMode: true,
     hasOnToggleDesktopViewMode: false,
     hasOnFindClose: true,
@@ -61,6 +63,20 @@ function defaultState(overrides: Partial<KeyboardState> = {}): KeyboardState {
 }
 
 describe('resolveKeyboardAction', () => {
+  describe('open current document location', () => {
+    it('returns desktop shell-location action for Shift+Alt+R', () => {
+      const event = mkEvent({ key: 'r', shiftKey: true, altKey: true });
+      expect(resolveKeyboardAction(event, defaultState({ isDesktop: true }))).toEqual({
+        type: 'open-current-document-location',
+      });
+    });
+
+    it('does not expose the action outside desktop runtimes', () => {
+      const event = mkEvent({ key: 'r', shiftKey: true, altKey: true });
+      expect(resolveKeyboardAction(event, defaultState({ isDesktop: false }))).toBeNull();
+    });
+  });
+
   describe('zoom in', () => {
     it('returns zoom-in on custom keybinding match', () => {
       const e = mkEvent({ key: '=', ctrlKey: true });

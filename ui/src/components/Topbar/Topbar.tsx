@@ -5,14 +5,11 @@
 import { useAppState } from '../../contexts/AppStateContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { TooltipButton } from '../shared/TooltipButton';
+import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
-import {
-  ChevronLeftIcon, ChevronRightIcon,
-  ExpandIcon, CollapseIcon, CopyIcon,
-  RefreshIcon,
-} from '../shared/icons';
+
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 
@@ -205,7 +202,7 @@ export function Topbar({
         </div>
       </div>
 
-      <span className="topbar__crumb-separator">
+      <span className="topbar__crumb-separator" aria-hidden="true">
         |
       </span>
 
@@ -230,37 +227,15 @@ export function Topbar({
         />
       )}
 
-      <div className="topbar__divider" />
+      <span className="topbar__crumb-separator" aria-hidden="true">|</span>
 
-      {/* Back / Forward */}
-      <div className="topbar__nav-actions">
-        <TooltipButton
-          className="btn btn--icon"
-          onClick={back}
-          disabled={!canGoBack}
-          tooltip={t.topbar.goBack}
-          shortcut={getEnabledShortcut(state.settings, 'back')}
-          icon={<ChevronLeftIcon />}
-        />
-        <TooltipButton
-          className="btn btn--icon"
-          onClick={forward}
-          disabled={!canGoForward}
-          tooltip={t.topbar.goForward}
-          shortcut={getEnabledShortcut(state.settings, 'forward')}
-          icon={<ChevronRightIcon />}
-        />
-      </div>
-
-      <div className="topbar__divider" />
-
-      {/* Refresh */}
-      <TooltipButton
-        className="btn btn--icon"
-        onClick={refresh}
-        tooltip={t.topbar.refresh}
-        shortcut={getEnabledShortcut(state.settings, 'refresh')}
-        icon={<RefreshIcon />}
+      <NavigationHeaderActions
+        onBack={back}
+        onForward={forward}
+        onRefresh={refresh}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        className="topbar__nav-actions"
       />
 
       {/* Breadcrumb */}
@@ -285,26 +260,11 @@ export function Topbar({
       {/* Actions */}
       <div className="topbar__actions">
 
-        <TooltipButton
-          className="btn"
-          onClick={onExpandAll}
-          tooltip={t.topbar.expandAll}
-          shortcut={getEnabledShortcut(state.settings, 'expandAll')}
-          icon={<ExpandIcon />}
-        />
-        <TooltipButton
-          className="btn"
-          onClick={onCollapseAll}
-          tooltip={t.topbar.collapseAll}
-          shortcut={getEnabledShortcut(state.settings, 'collapseAll')}
-          icon={<CollapseIcon />}
-        />
-        <TooltipButton
-          className="btn btn--icon"
-          onClick={(event) => onCopyFile(event.currentTarget)}
-          tooltip={t.topbar.copy}
-          disabled={!state.currentFile}
-          icon={<CopyIcon />}
+        <DocumentHeaderActions
+          onCollapseAll={onCollapseAll}
+          onExpandAll={onExpandAll}
+          onCopyFile={onCopyFile}
+          canCopyFile={!!state.currentFile}
         />
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
@@ -352,7 +312,12 @@ export function Topbar({
 
         {isDesktop && (
           <>
-            <div className="topbar__divider topbar__divider--actions" />
+            <span
+              className="topbar__crumb-separator topbar__crumb-separator--window-controls"
+              aria-hidden="true"
+            >
+              |
+            </span>
             <div className="window-controls topbar__window-controls">
               <TooltipButton
                 className="btn btn--icon window-control-btn"
