@@ -132,7 +132,7 @@ window.LANGS.en = {
     galleryCaption1:
       "Readable code blocks with language labels, line numbers, copy controls, and strong contrast.",
     galleryCaption2: "LaTeX math renders directly in the document flow.",
-    galleryCaption3: "Interactive HTML sandboxes run in isolated previews.",
+    galleryCaption3: "Have you ever played a game in your Markdown file? Interactive HTML sandboxes run live in your workspace.",
     galleryCaption4:
       "Zoom and inspect images or diagrams in a focused media modal.",
     galleryCaption5:

@@ -125,7 +125,7 @@ window.LANGS.vi = {
     galleryCaption2:
       "Toán học LaTeX kết xuất trực tiếp trong luồng tài liệu.",
     galleryCaption3:
-      "Sandbox HTML tương tác chạy trong bản xem trước biệt lập.",
+      "Bạn đã bao giờ chơi game ngay trong file Markdown chưa? Sandbox HTML tương tác chạy trực tiếp trong không gian làm việc của bạn.",
     galleryCaption4:
       "Phóng to và kiểm tra hình ảnh hoặc sơ đồ trong modal phương tiện tập trung.",
     galleryCaption5:
@@ -220,4 +220,19 @@ window.LANGS.vi = {
     modalStep3: "Mở trình duyệt và truy cập trang quản lý tiện ích:",
     modalStep4: "Bật công tắc Chế độ dành cho nhà phát triển (thường ở góc trên bên phải).",
     modalStep5: "Nhấp vào nút Tải tiện ích đã giải nén và chọn thư mục tiện ích.",
+    latestEyebrow: "Có gì mới",
+    latestTitle: "Phương thức mới để đọc HTML, dữ liệu và không gian làm việc lớn",
+    latestSubtitle: "Bản phát hành hiện tại bổ sung các chế độ tài liệu HTML ưu tiên cục bộ, xem trước dữ liệu CSV và TSV, thao tác workspace an toàn hơn và tự động hóa phát hành cửa hàng ứng dụng.",
+    latestHtmlKicker: "Tài liệu HTML",
+    latestHtmlTitle: "Xem trước, chuyển đổi hoặc mở HTML trong trình duyệt",
+    latestHtmlBody: "Chuyển đổi từng thẻ HTML giữa bản xem trước cục bộ biệt lập và Markdown đã chuyển đổi, mở file gốc trong trình duyệt hệ thống và giữ cài đặt xem trước độc lập.",
+    latestDataKicker: "CSV & TSV",
+    latestDataTitle: "Biến các khối mã phân tách thành chế độ xem dữ liệu",
+    latestDataBody: "Các khối mã CSV và TSV có thể chuyển từ mã nguồn được tô sáng sang bảng có thể sắp xếp, lọc dữ liệu với ngắt dòng, nhãn cột tự động và điều khiển biểu đồ.",
+    latestWorkspaceKicker: "Quản lý workspace",
+    latestWorkspaceTitle: "Mở vị trí, khôi phục workspace và hủy quét dữ liệu",
+    latestWorkspaceBody: "Menu ngữ cảnh hiển thị các hành động vị trí gốc. Quá trình quét kéo dài có thể được hủy bỏ an toàn mà không để lại trạng thái tải dở dang.",
+    latestStoresKicker: "Phân phối ứng dụng",
+    latestStoresTitle: "Bản phát hành Tauri sẵn sàng cho cửa hàng ứng dụng",
+    latestStoresBody: "Tự động hóa phát hành chuẩn bị các bản dựng Tauri cho Microsoft Store và Ubuntu App Center: bộ cài đặt Windows có chữ ký số và gói Linux Snap.",
 };
