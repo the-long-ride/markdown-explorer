@@ -396,6 +396,24 @@ describe('DocumentConverter cache', () => {
     expect(result.previewInfo!.fromCache).toBe(false);
     expect(mockedGenerateMarkdown).toHaveBeenCalledTimes(2);
   });
+
+  test('PPTX files are passed to the bundled conversion runtime', async () => {
+    const filePath = path.resolve('tests/fixtures/sample-presentation.pptx');
+    mockedGenerateMarkdown.mockResolvedValue('PowerPoint preview body');
+
+    const converter = new DocumentConverter();
+    const result = await converter.readMarkdown(filePath);
+
+    expect(mockedGenerateMarkdown).toHaveBeenCalledWith(filePath);
+    expect(result.markdown).toContain('# sample-presentation');
+    expect(result.markdown).toContain('PowerPoint preview body');
+    expect(result.previewInfo).toMatchObject({
+      kind: 'converted',
+      sourceExtension: '.pptx',
+      sourceLabel: 'PPTX',
+      fromCache: false,
+    });
+  });
 });
 
 describe('getMarkdownThem bundled path', () => {

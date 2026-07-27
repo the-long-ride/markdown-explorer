@@ -27,6 +27,8 @@ apps:
     command: usr/bin/markdown-explorer
     desktop: usr/share/applications/markdown-explorer.desktop
     extensions: [gnome]
+    environment:
+      MARKDOWN_EXPLORER_DOCUMENT_SIDECAR_DIR: $SNAP/usr/lib/markdown-explorer/document-sidecar
     plugs:
       - home
       - removable-media
@@ -39,8 +41,11 @@ parts:
     source: snap/local
     organize:
       markdown-explorer: usr/bin/markdown-explorer
+      markdown-them-node: usr/bin/markdown-them-node
       markdown-explorer.desktop: usr/share/applications/markdown-explorer.desktop
       icon.png: usr/share/icons/hicolor/512x512/apps/markdown-explorer.png
+      document-sidecar: usr/lib/markdown-explorer/document-sidecar
     override-prime: |
       craftctl default
       chmod 0755 "$CRAFT_PRIME/usr/bin/markdown-explorer"
+      chmod 0755 "$CRAFT_PRIME/usr/bin/markdown-them-node"

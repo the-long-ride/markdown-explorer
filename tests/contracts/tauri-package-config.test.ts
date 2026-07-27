@@ -49,6 +49,72 @@ describe('tauri package config', () => {
     expect(workspace).toContain('tauri/sidecar/mdthem-sidecar');
   });
 
+  test('tauri sidecar source path is compiled in instead of relying on runtime Cargo env', () => {
+    const sidecar = fs.readFileSync(
+      path.join(repoRoot, 'tauri/src/render/sidecar.rs'),
+      'utf8',
+    );
+    expect(sidecar).toContain('env!("CARGO_MANIFEST_DIR")');
+    expect(sidecar).not.toContain('std::env::var("CARGO_MANIFEST_DIR")');
+  });
+
+  test('tauri routes every convertible document through the markdown-them child process', () => {
+    const cargo = fs.readFileSync(path.join(repoRoot, 'tauri/Cargo.toml'), 'utf8');
+    const renderModules = fs.readFileSync(
+      path.join(repoRoot, 'tauri/src/render/mod.rs'),
+      'utf8',
+    );
+    const converter = fs.readFileSync(
+      path.join(repoRoot, 'tauri/src/render/document_converter.rs'),
+      'utf8',
+    );
+    const sidecar = fs.readFileSync(
+      path.join(repoRoot, 'tauri/sidecar/mdthem-sidecar/index.mjs'),
+      'utf8',
+    );
+
+    expect(cargo).not.toMatch(/^quick-xml\s*=/m);
+    expect(cargo).not.toMatch(/^zip\s*=/m);
+    expect(renderModules).not.toContain('pub mod pptx;');
+    expect(converter).toContain('sidecar::convert_file(file_path)');
+    expect(converter).not.toContain('ext == ".pptx"');
+    expect(sidecar).toContain("from '@the-long-ride/markdown-them'");
+    expect(sidecar).toContain('generateMarkdown');
+  });
+
+  test('tauri packages the document child process as application resources', () => {
+    const conf = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'tauri/tauri.conf.json'), 'utf8'),
+    );
+    const tauriPackage = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'tauri/package.json'), 'utf8'),
+    );
+    const bootstrap = fs.readFileSync(
+      path.join(repoRoot, 'tauri/src/core/bootstrap.rs'),
+      'utf8',
+    );
+
+    expect(conf.build?.beforeBuildCommand).toEqual({
+      script: 'pnpm run prepare:document-sidecar',
+      cwd: '.',
+    });
+    expect(conf.build?.beforeDevCommand).toEqual({
+      script: 'pnpm run prepare:document-sidecar',
+      cwd: '.',
+      wait: true,
+    });
+    expect(conf.bundle?.resources?.['sidecar/mdthem-sidecar/dist/']).toBe(
+      'document-sidecar/',
+    );
+    expect(conf.bundle?.externalBin).toEqual([
+      'binaries/markdown-them-node',
+    ]);
+    expect(tauriPackage.scripts['prepare:document-sidecar']).toBe(
+      'node scripts/prepare-document-sidecar.mjs',
+    );
+    expect(bootstrap).toContain('configure_resource_dir');
+  });
+
   test('tauri Cargo.toml exists', () => {
     expect(
       fs.existsSync(path.join(repoRoot, 'tauri/Cargo.toml')),

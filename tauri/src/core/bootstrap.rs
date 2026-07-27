@@ -60,6 +60,9 @@ pub fn boot() {
         .register_uri_scheme_protocol("local-file", crate::local_file::handle_local_file)
         .manage(state)
         .setup(move |app| {
+            if let Ok(resource_dir) = app.path().resource_dir() {
+                crate::render::sidecar::configure_resource_dir(resource_dir);
+            }
             state_for_dispatch.inner.read().perf.mark("tauri:ready");
             let app_handle = app.handle().clone();
             crate::dispatcher::Dispatcher::mount(&app_handle, state_for_dispatch.clone());

@@ -3,6 +3,7 @@
   "version": "1.6.0",
   "private": true,
   "scripts": {
+    "prepare:document-sidecar": "node scripts/prepare-document-sidecar.mjs",
     "dev": "node scripts/run-with-global-cache.mjs dev",
     "build": "node scripts/run-with-global-cache.mjs build"
   }

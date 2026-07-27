@@ -39,6 +39,7 @@ describe('chrome-host bus command handlers', () => {
       expect(readyAck.workspaceName).toBe('');
       expect(readyAck.appVersion).toBe('1.0.0');
       expect(readyAck.appRuntime).toBe('chrome');
+      expect(readyAck.documentConversionEnabled).toBe(false);
     });
 
     it('only handles ready once (second ready is ignored)', async () => {

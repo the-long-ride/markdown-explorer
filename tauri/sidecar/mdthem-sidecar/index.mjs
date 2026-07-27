@@ -1,38 +1,21 @@
-import { generateMarkdown } from "@the-long-ride/markdown-them";
-import { createInterface } from "node:readline";
+import { generateMarkdown } from '@the-long-ride/markdown-them';
+import { pathToFileURL } from 'node:url';
+import { runProtocol } from './protocol.mjs';
 
-const rl = createInterface({ input: process.stdin });
+export async function main({
+  input = process.stdin,
+  output = process.stdout,
+  errorOutput = process.stderr,
+  convert = generateMarkdown,
+} = {}) {
+  await runProtocol({ input, output, errorOutput, convert });
+}
 
-rl.on("line", async (line) => {
-  let request;
-  try {
-    request = JSON.parse(line.trim());
-  } catch {
-    console.error("[sidecar] invalid json line:", line);
-    return;
-  }
-
-  const { id, command, path } = request;
-  if (!id || command !== "convert") {
-    console.error("[sidecar] unknown request:", request);
-    return;
-  }
-
-  try {
-    const markdown = await generateMarkdown(path);
-    process.stdout.write(
-      JSON.stringify({ id, ok: true, markdown }) + "\n"
-    );
-  } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
-    process.stdout.write(
-      JSON.stringify({ id, ok: false, error }) + "\n"
-    );
-  }
-});
-
-rl.on("close", () => {
-  process.exit(0);
-});
-
-console.error("[sidecar] markdown-them sidecar ready");
+const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : '';
+if (import.meta.url === entryUrl) {
+  main().catch((error) => {
+    const message = error instanceof Error ? error.stack || error.message : String(error);
+    process.stderr.write(`[sidecar] fatal: ${message}\n`);
+    process.exitCode = 1;
+  });
+}

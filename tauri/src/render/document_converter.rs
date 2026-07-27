@@ -135,7 +135,11 @@ impl DocumentConverter {
         )
     }
 
-    pub fn read_markdown(&self, file_path: &str, sidecar_available: bool) -> ReadMarkdownResult {
+    pub fn read_markdown(
+        &self,
+        file_path: &str,
+        document_conversion_enabled: bool,
+    ) -> ReadMarkdownResult {
         let ext = get_extension(file_path);
         let kind = self.classify_extension(&ext);
 
@@ -219,75 +223,60 @@ impl DocumentConverter {
                     }
                 }
 
-                if sidecar_available {
-                    let started = std::time::Instant::now();
-                    match crate::render::sidecar::convert_file(file_path) {
-                        Ok(converted) => {
-                            let duration_ms = started.elapsed().as_millis() as u64;
-                            let markdown = normalize_preview_markdown(&converted, file_path);
-                            {
-                                let mut cache = self.cache.lock();
-                                cache.insert(
-                                    file_path.to_string(),
-                                    CacheEntry {
-                                        mtime_ms,
-                                        size,
-                                        markdown: markdown.clone(),
-                                        duration_ms,
-                                    },
-                                );
-                            }
-                            ReadMarkdownResult {
-                                markdown,
-                                preview_info: Some(DocumentPreviewInfo {
-                                    kind: "converted".to_string(),
-                                    source_extension: ext,
-                                    source_label: get_file_type_label(file_path),
-                                    duration_ms: Some(duration_ms),
-                                    from_cache: Some(false),
-                                    quality_warning: Some(
-                                        "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file."
-                                            .to_string(),
-                                    ),
-                                }),
-                            }
+                let started = std::time::Instant::now();
+                let conversion = if !document_conversion_enabled {
+                    Err("Document conversion is not enabled.".to_string())
+                } else {
+                    crate::render::sidecar::convert_file(file_path)
+                };
+
+                match conversion {
+                    Ok(converted) => {
+                        let duration_ms = started.elapsed().as_millis() as u64;
+                        let markdown = normalize_preview_markdown(&converted, file_path);
+                        {
+                            let mut cache = self.cache.lock();
+                            cache.insert(
+                                file_path.to_string(),
+                                CacheEntry {
+                                    mtime_ms,
+                                    size,
+                                    markdown: markdown.clone(),
+                                    duration_ms,
+                                },
+                            );
                         }
-                        Err(err) => {
-                            let markdown = self.create_failure_markdown(file_path, &err);
-                            ReadMarkdownResult {
-                                markdown,
-                                preview_info: Some(DocumentPreviewInfo {
-                                    kind: "converted".to_string(),
-                                    source_extension: ext,
-                                    source_label: get_file_type_label(file_path),
-                                    duration_ms: None,
-                                    from_cache: None,
-                                    quality_warning: Some(
-                                        "Markdown Explorer could not convert this file. The details are shown below."
-                                            .to_string(),
-                                    ),
-                                }),
-                            }
+                        ReadMarkdownResult {
+                            markdown,
+                            preview_info: Some(DocumentPreviewInfo {
+                                kind: "converted".to_string(),
+                                source_extension: ext,
+                                source_label: get_file_type_label(file_path),
+                                duration_ms: Some(duration_ms),
+                                from_cache: Some(false),
+                                quality_warning: Some(
+                                    "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file."
+                                        .to_string(),
+                                ),
+                            }),
                         }
                     }
-                } else {
-                    let markdown = self.create_failure_markdown(
-                        file_path,
-                        "Document conversion sidecar is not available.",
-                    );
-                    ReadMarkdownResult {
-                        markdown,
-                        preview_info: Some(DocumentPreviewInfo {
-                            kind: "converted".to_string(),
-                            source_extension: ext,
-                            source_label: get_file_type_label(file_path),
-                            duration_ms: None,
-                            from_cache: None,
-                            quality_warning: Some(
-                                "Markdown Explorer could not convert this file. The details are shown below."
-                                    .to_string(),
-                            ),
-                        }),
+                    Err(err) => {
+                        let markdown = self.create_failure_markdown(file_path, &err);
+                        ReadMarkdownResult {
+                            markdown,
+                            preview_info: Some(DocumentPreviewInfo {
+                                kind: "converted".to_string(),
+                                source_extension: ext,
+                                source_label: get_file_type_label(file_path),
+                                duration_ms: None,
+                                from_cache: None,
+                                quality_warning: Some(
+                                    "Markdown Explorer could not convert this file. The details are shown below."
+                                        .to_string(),
+                                ),
+                            }),
+                        }
                     }
                 }
             }
@@ -380,17 +369,35 @@ mod tests {
     }
 
     #[test]
-    fn read_convertible_no_sidecar_returns_failure() {
+    fn read_convertible_when_conversion_disabled_returns_failure() {
         let conv = DocumentConverter::new();
         let dir = std::env::temp_dir();
         let file = dir.join("test_doc.docx");
         fs::write(&file, "fake doc").unwrap();
         let result = conv.read_markdown(&file.to_string_lossy(), false);
-        assert!(result.markdown.contains("sidecar is not available"));
+        assert!(result.markdown.contains("Document conversion is not enabled"));
         assert!(result.preview_info.is_some());
         let info = result.preview_info.unwrap();
         assert_eq!(info.kind, "converted");
         assert_eq!(info.source_extension, ".docx");
+    }
+
+    #[test]
+    fn read_pptx_respects_disabled_conversion_setting() {
+        let conv = DocumentConverter::new();
+        let file = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("tests")
+            .join("fixtures")
+            .join("sample-presentation.pptx");
+
+        let result = conv.read_markdown(&file.to_string_lossy(), false);
+
+        assert!(result.markdown.contains("Document conversion is not enabled"));
+        let info = result.preview_info.expect("preview info");
+        assert_eq!(info.kind, "converted");
+        assert_eq!(info.source_extension, ".pptx");
+        assert_eq!(info.from_cache, None);
     }
 
     #[test]

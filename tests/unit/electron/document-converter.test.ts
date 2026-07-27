@@ -331,6 +331,26 @@ describe('createDocumentConverter', () => {
     expect(mockGenerateMarkdown).toHaveBeenCalledTimes(1);
   });
 
+  test('readMarkdown sends PPTX files through the conversion runtime', async () => {
+    const filePath = path.resolve('tests/fixtures/sample-presentation.pptx');
+    const mockGenerateMarkdown = vi.fn(() => Promise.resolve('PowerPoint preview body'));
+    const converter = createDocumentConverter({
+      getMarkdownThem: () => ({ generateMarkdown: mockGenerateMarkdown }),
+    });
+
+    const result = await converter.readMarkdown(filePath);
+
+    expect(mockGenerateMarkdown).toHaveBeenCalledWith(filePath);
+    expect(result.markdown).toContain('# sample-presentation');
+    expect(result.markdown).toContain('PowerPoint preview body');
+    expect(result.previewInfo).toMatchObject({
+      kind: 'converted',
+      sourceExtension: '.pptx',
+      sourceLabel: 'PPTX',
+      fromCache: false,
+    });
+  });
+
   test('readMarkdown cache misses when size changes', async () => {
     const dir = makeTempDir('dc-size-');
     const filePath = path.join(dir, 'report.doc');
