@@ -191,10 +191,10 @@
 
 .settings-preference-description-panel {
   position: fixed;
-  z-index: 10000;
+  z-index: 200000;
   top: var(--preference-tooltip-top);
   left: var(--preference-tooltip-left);
-  width: min(280px, calc(100vw - 20px));
+  width: min(320px, calc(100vw - 24px));
   padding: 10px 12px;
   box-sizing: border-box;
   border: var(--stroke-w) solid var(--bd-x);
@@ -207,15 +207,42 @@
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-4px);
+  transform: translateY(-4px);
   transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
   backdrop-filter: blur(10px);
+}
+
+.settings-preference-description-panel::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: color-mix(in srgb, var(--bg-e) 98%, transparent);
+  border: var(--stroke-w) solid var(--bd-x);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.settings-preference-description-panel--top::after {
+  bottom: -4px;
+  left: var(--preference-tooltip-arrow-left, 24px);
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(45deg);
+}
+
+.settings-preference-description-panel--bottom::after {
+  top: -4px;
+  left: var(--preference-tooltip-arrow-left, 24px);
+  border-bottom: 0;
+  border-right: 0;
+  transform: rotate(45deg);
 }
 
 .settings-preference-description-panel.is-visible {
   opacity: 1;
   visibility: visible;
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
 .settings-appearance-controls {
@@ -230,10 +257,8 @@
   align-items: center;
 }
 
-.settings-appearance-controls > :first-child {
-  border-bottom: 0;
-}
-
-.settings-appearance-controls > .settings-preference-row:first-child + .settings-preference-row {
+.settings-appearance-controls > .settings-preference-row:first-child,
+.settings-appearance-controls > [data-row-id="desktop-view"] + .settings-preference-row {
   border-top: 0;
 }
+

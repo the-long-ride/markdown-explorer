@@ -37,6 +37,14 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 | macOS desktop | [Download `.dmg` for arm64 or x64](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size). First launch notes: [macOS guide](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md) |
 | Chromium extension | [Download `.zip` release](https://github.com/the-long-ride/markdown-explorer/releases/latest). Setup guide: [Chromium guide](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/chromium-install.md) |
 
+## VS Code Extension Tutorial
+
+After installing the extension, open a folder containing Markdown files in VS Code. In the **Explorer** view, use the Markdown Explorer button in the workspace header (alongside the New File, Refresh, and Collapse All actions) to open the full documentation viewer.
+
+You can also open it from the Command Palette with **Markdown Explorer: Open Docs Viewer**, or use `Ctrl+Shift+M` (`Cmd+Shift+M` on macOS). To preview the currently active `.md` or `.mdx` file, use **Markdown Explorer: Toggle Docs Viewer** or `Ctrl+Alt+V` / `Cmd+Alt+V`. You can right-click a Markdown file in Explorer and choose **Markdown Explorer: Preview This File**.
+
+The Explorer header icon automatically uses the high-contrast stroke for the current VS Code color theme. If it does not appear after installing or updating, run **Developer: Reload Window** (or restart the Extension Development Host while debugging).
+
 ## Features
 
 <p align="center">

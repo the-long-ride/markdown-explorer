@@ -7,63 +7,55 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ## [Unreleased]
 
 ### Added
-- Added an independent **Default HTML Code Block Preview** preference alongside the `.html` document preview default.
-- Added **Open in Browser** and preview/Markdown mode actions to `.html` and `.htm` file menus in the Files sidebar.
-- Added a localized five-second notice that explains the embedded HTML preview differs from a full browser and points users to browser-opening actions.
-- Added workspace-local CSS and JavaScript embedding for local-first HTML previews, with one consolidated resource-policy notice per document session.
-- Added confirmation before **Reset to Default Shortcuts** restores customized or disabled shortcuts.
+- **In-process Tauri document conversion**: local Rust converter handles DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF — no Node sidecar required — with localized best-effort warnings for legacy formats.
+- **Grouped themes & new styles**: built-in themes, Pet themes, and custom themes are now grouped; new Aurora Glass, Neon Voltage, and Raw Grid styling variants added.
+- **Default HTML Code Block Preview** preference: independent toggle alongside the `.html`/`.htm` document preview default.
+- **Open in Browser & HTML mode actions**: `.html` and `.htm` file menus in the Files sidebar expose Open in Browser and preview/Markdown mode actions.
+- **Local-first HTML preview notice**: localized five-second notice that explains the embedded HTML preview differs from a full browser.
+- **Workspace-local CSS/JS embedding**: local-first HTML previews embed workspace CSS and JavaScript with one consolidated resource-policy notice per document session.
+- **Reset Shortcuts confirmation**: a confirmation dialog is shown before Reset to Default Shortcuts restores any customized or disabled shortcuts.
+- **CSV/TSV previews**: code fences switch between syntax-colored source and interactive data tables with delimiter detection, header inference, sorting, filtering, and chart controls.
+- **XML fragment highlighting**: XML tags, attributes, values, comments, CDATA, entities, and namespaces are highlighted even without an XML declaration.
+- **Desktop location actions**: workspace tabs, document tabs, and sidebar files/folders expose native Explorer, Finder, and file-manager actions including a configurable active-document shortcut.
+- **HTML document modes**: `.html`/`.htm` tabs render isolated interactive HTML or converted Markdown, and open the original file in the system browser.
+- **Sidebar row action menus**: file and folder rows reveal a keyboard-accessible three-dot action button with viewport-aware placement.
+- **Responsive image rows**: same-paragraph Markdown images stay together in responsive rows while preserving authored widths.
+- **Interactive HTML sandbox sample**: `test-code.md` includes a self-contained Snake game demonstrating isolated CSS, JavaScript, forms, canvas animation, and keyboard input.
+- **VS Code external-file-change banner**: saving a Markdown file outside the panel re-scans the sidebar and emits `currentFileChanged` so the renderer shows the refresh banner.
+- **Chromium extension external-file-change banner**: lightweight polling watcher so external edits show the same refresh-banner behavior as desktop and VS Code.
+- **View Preferences tooltips**: tooltips appear above the hovered option with a directional arrow indicator, flipping below when the option is near the modal's top edge.
+- **Keyboard Shortcuts grouping**: shortcuts in Settings modal and Homepage Shortcuts tab reordered into 6 functional groups — Navigation, Search, View & Themes, Structure, Tabs, and General.
+- **Workspace Selection scoping**: the workspace selection screen and its keyboard shortcut are available in web and Chromium extension runtimes but excluded from the VS Code extension.
 
 ### Changed
+- Tauri no longer packages or launches a Node document-conversion sidecar; Electron and VS Code continue using `@the-long-ride/markdown-them`.
+- Glass, Bento Grids, Vercel, and Tokyo Night align Tabs-view headers with Focus-view headers; Tokyo Night also spaces the sidebar and table of contents below the app header.
 - HTML Markdown View now converts the original HTML source in the shared UI pipeline across Tauri, Electron, VS Code, Chromium, and web variants.
-- `Ctrl + Alt + H` now toggles only the active HTML document between preview and Markdown view.
+- `Ctrl + Alt + H` toggles only the active HTML document between preview and Markdown view.
 - Electron and Tauri use `Ctrl + ,` as the default Open Settings shortcut.
-- Tips & Practices are grouped by common use cases, and shortcut key names use consistent uppercase formatting.
-- HTML document previews now fill the available content width and remaining viewport height.
-- Left and right shortcut keys are displayed as `←` and `→`; the Settings close tooltip now follows the `Close Settings - (Esc)` format in every supported language.
-- Settings import and **Close All Tabs** now use the supplied theme-aware SVG artwork, and Reset Shortcuts confirmation styling follows the active theme instead of using a bright hard-coded treatment.
-
-### Fixed
-- Fixed dialog content surfaces remaining translucent in glass and custom themes; dialogs now use a fully opaque theme background.
-- Fixed local-first HTML sandbox content inheriting Markdown Explorer typography or theme colors.
-- Fixed Sidebar action-menu alignment and settings border/icon inconsistencies.
-- Fixed the sidebar action-menu tests to match the parent-owned menu architecture, including unopened-file preview navigation intent, which addresses the locally reproducible PR test mismatch.
-- Fixed vulnerable transitive dependency resolutions by overriding DOMPurify to `3.4.12`, fast-uri to `3.1.4`, and fast-xml-parser to `5.10.1` from `pnpm-workspace.yaml`.
-
-### Tests
-- Added regression coverage for shortcut glyphs, full-size HTML preview layout, the five-second notice, sidebar HTML actions, pending preview navigation, supplied icons, theme styling, localization completeness, and secure pnpm overrides.
-
-
-### Added
-- **CSV/TSV previews**: code fences can switch between syntax-colored source and interactive data tables with delimiter detection, header inference, generated Excel-style column labels, sorting, filtering, wrapping, and chart controls.
-- **XML fragment highlighting**: XML tags, attributes, values, comments, CDATA, entities, and namespaces are highlighted even when no XML declaration is present.
-- **Desktop location actions**: workspace tabs, document tabs, and sidebar files/folders expose native Explorer, Finder, and file-manager actions, including the configurable active-document shortcut.
-- **HTML document modes**: `.html` and `.htm` tabs can render isolated interactive HTML or converted Markdown, open the original file in the system browser, and use a per-tab mode override.
-- **HTML document preview shortcut**: `Ctrl+Alt+H` toggles the active `.html` or `.htm` document between interactive preview and converted Markdown.
-- **Sidebar row action menus**: file and folder rows reveal a keyboard-accessible three-dot action button with viewport-aware menu placement.
-- **Responsive image rows**: same-paragraph Markdown images and image-only raw HTML `p`, `div`, or `span` groups stay together in responsive rows while preserving authored widths.
-- **Tips & Practices guidance**: all supported languages now surface commonly missed HTML, CSV/TSV, navigation, workspace recovery, sidebar action, and image-layout features with current shortcut bindings.
-- **Interactive HTML sandbox sample**: `test-code.md` now includes a self-contained Snake game that demonstrates isolated CSS, JavaScript, forms, canvas animation, and keyboard input.
-- **VS Code external-file-change banner**: saving a Markdown file outside the panel now re-scans the sidebar and emits `currentFileChanged` so the renderer shows the refresh banner instead of silently replacing the open document.
-- **Chromium extension external-file-change banner**: added a lightweight polling watcher so external edits show the same refresh-banner behavior as desktop and VS Code.
-
-### Changed
-- **Header action layout**: navigation actions, workspace tabs, New Workspace, collapse/expand, copy, More Actions, separators, and window controls now use the approved Focus/Tab grouping and shared visual treatment.
-- **Settings experience**: View Preferences use compact grouped rows, vertically centered and higher-opacity descriptions, dynamic shortcut text, corrected scroll ownership, and refreshed language/browser icons.
-- **HTML preview defaults**: full HTML documents and fenced HTML code blocks now use separate default-preview preferences.
+- Tips & Practices are grouped by common use cases; shortcut key names use consistent uppercase formatting.
+- HTML document previews fill the available content width and remaining viewport height.
+- Left and right shortcut keys display as `←` and `→`; the Settings close tooltip follows the `Close Settings - (Esc)` format in every supported language.
+- Settings import and **Close All Tabs** use theme-aware SVG artwork; Reset Shortcuts confirmation styling follows the active theme.
+- **Header action layout**: navigation actions, workspace tabs, New Workspace, collapse/expand, copy, More Actions, separators, and window controls use the approved Focus/Tab grouping.
+- **Settings experience**: View Preferences use compact grouped rows, vertically centered descriptions, dynamic shortcut text, corrected scroll ownership, and refreshed language/browser icons.
 - **Document tab menus**: every action has a semantic icon, the containing-folder action shows its binding, and HTML tabs gain browser and view-mode actions.
-- **Markdown presentation**: HTML comment sections use a pressed inset treatment, heading-level badges appear beside headings on hover/focus, plain-text blocks use the `PLAIN TEXT` label, and dragged tabs use dashed primary borders.
-- **Workspace recovery flow**: canceling a scan keeps and resets the current tab, while reopening a missing workspace replaces its saved path and removes the obsolete recent entry.
+- **Markdown presentation**: HTML comment sections use a pressed inset treatment, heading-level badges appear beside headings on hover/focus, and dragged tabs use dashed primary borders.
+- **Workspace recovery flow**: canceling a scan keeps and resets the current tab; reopening a missing workspace replaces its saved path and removes the obsolete recent entry.
+- **Raw Grid theme**: zero-radius styling extended to keyboard-shortcut toggle switches, More Actions dropdown items, and homepage content; homepage now renders as a solid document panel over the graph-paper grid background.
+- **Scrollbars**: all scrollable areas (settings panel, modal body, search overlay, code blocks, sidebar, TOC, and menus) use the `--bd-s` secondary border color via universal webkit scrollbar rules.
 
 ### Fixed
+- **Dialog surfaces**: dialog content no longer remains translucent in glass and custom themes — dialogs use a fully opaque theme background.
+- **HTML sandbox isolation**: local-first HTML sandbox content no longer inherits Markdown Explorer typography or theme colors.
+- **Sidebar action-menu alignment**: fixed menu positioning and settings border/icon inconsistencies.
+- **Vulnerable dependencies**: overrode DOMPurify to `3.4.12`, fast-uri to `3.1.4`, and fast-xml-parser to `5.10.1` from `pnpm-workspace.yaml`.
 - **Workspace scan cancellation**: canceled operations no longer leave an endless, non-interactive loading screen or reactivate stale tab state.
-- **Missing workspace reopening**: choosing a replacement folder now loads it into the unavailable tab and persists the new path correctly.
+- **Missing workspace reopening**: choosing a replacement folder loads it into the unavailable tab and persists the new path correctly.
 - **Frontmatter after comments**: YAML properties render when one or more leading HTML comments appear before the frontmatter block.
-- **Settings layout and tooltips**: fixed overlapping controls, nested scrollbar displacement, tooltip clipping/stacking, and option-center alignment in desktop and web builds.
-- **HTML comment/property ordering**: Properties remain rendered and responsive when a comment section appears first.
-- **VS Code promise typing**: adapted VS Code `Thenable` results for extension and Electron compilation and removed an unused watcher import.
+- **Settings layout and tooltips**: fixed overlapping controls, nested scrollbar displacement, tooltip clipping/stacking, and option-center alignment.
 - **Tauri opener paths**: converted native paths to accepted string values before calling the opener plugin.
-- **Tauri subdirectory file-change refresh banner**: watcher events now retain paths relative to the workspace so nested edits match the active document.
-- **Localization coverage**: workspace-unavailable, preview, shell action, settings, shortcut, and discovery strings now exist in every supported language.
+- **Localization coverage**: workspace-unavailable, preview, shell action, settings, shortcut, and discovery strings exist in every supported language.
 
 ---
 
@@ -95,7 +87,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ### Fixed
 - **Focus-view external opens**: bridge message handling now remains active outside Tab view so native file and folder opens replace the current Focus workspace correctly.
 - **Search Flush**: Fixed incremental title-match search results not being flushed to the UI promptly during workspace-wide search.
-- **Check for update**: now launched by Markdown Explorer’s native updater helper, never browser.
+- **Check for update**: now launched by Markdown Explorer's native updater helper, never browser.
 
 ### Removed
 - **New Feature Guide**: Removed the new feature guide overlay component, all associated translation keys, and supporting data files from the Welcome page.
@@ -106,6 +98,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 - **Release Version Bump**: Updated workspace, UI, desktop, VS Code, Chromium extension, Tauri, and manifest metadata to `1.6.0`.
 
 ---
+
 
 ## [1.5.9] — 2026-07-14
 

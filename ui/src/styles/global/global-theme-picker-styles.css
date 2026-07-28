@@ -6,6 +6,8 @@
 
 .theme-style-option {
   width: 100%;
+  height: auto;
+  align-self: start;
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr);
   align-items: center;
@@ -154,4 +156,203 @@
 .theme-style-option--pet-corgi,
 .pet-theme-menu__option--pet-corgi {
   --pet-paw: url("../../assets/themes/pets/paws/corgi-paw.svg");
+}
+
+/* Grouped built-in theme menu */
+.theme-style-option--themes {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.theme-group-dropdown {
+  width: calc(100% - 68px);
+  min-width: 0;
+  margin-left: 68px;
+  position: relative;
+  z-index: 20;
+}
+
+.theme-group-dropdown.is-open {
+  z-index: 20;
+}
+
+.theme-group-select {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--tx);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.theme-group-select:hover,
+.theme-group-select:focus-visible {
+  background: var(--bg-h);
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.theme-group-select__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.theme-group-dropdown.is-open .pet-theme-select__chevron {
+  transform: rotate(180deg);
+}
+
+.theme-group-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 5px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: min(320px, 52vh);
+  overflow-y: auto;
+  padding: 5px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r-md);
+  background: var(--bg-s);
+  color: var(--tx);
+  box-shadow: var(--sh-lg);
+  z-index: 21;
+}
+
+.theme-group-menu[hidden] {
+  display: none;
+}
+
+.theme-group-menu__option {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: calc(var(--r) - 2px);
+  background: transparent;
+  color: var(--tx2);
+  font-family: var(--font-ui);
+  text-align: left;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.theme-group-menu__option:hover,
+.theme-group-menu__option:focus-visible {
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}
+
+
+.theme-group-menu[hidden] {
+  display: none;
+}
+
+.theme-group-menu__option {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: calc(var(--r) - 2px);
+  background: transparent;
+  color: var(--tx2);
+  font-family: var(--font-ui);
+  text-align: left;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.theme-group-menu__option:hover,
+.theme-group-menu__option:focus-visible {
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}
+
+.theme-group-menu__option.is-selected {
+  background: var(--accent-dim);
+  color: var(--accent-text);
+}
+
+.theme-swatch-main {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.theme-group-menu__swatch {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: var(--stroke-w) solid var(--bd-s);
+  background: var(--bg-e);
+  color: var(--tx);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.theme-group-menu__option .theme-group-menu__swatch {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-e));
+  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+  color: var(--accent);
+}
+
+.theme-group-menu__option:hover .theme-group-menu__swatch {
+  transform: scale(1.08);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg-e));
+  color: var(--accent);
+}
+
+.theme-group-menu__option.is-selected .theme-group-menu__swatch {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 24%, var(--bg-e));
+  color: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.theme-group-menu__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-group-menu__label {
+  font-size: 11px;
+  font-weight: 800;
+  color: inherit;
+}
+
+.theme-group-menu__desc {
+  font-size: 9.5px;
+  line-height: 1.3;
+  color: var(--tx2);
 }

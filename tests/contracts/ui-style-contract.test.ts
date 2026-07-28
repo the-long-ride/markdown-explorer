@@ -48,7 +48,7 @@ function findStyleViolations(filePath: string): StyleViolation[] {
 }
 
 describe('UI style contract', () => {
-  test('uses near-opaque Evolved Glass tooltip and dropdown surfaces', () => {
+  test('uses near-opaque Aurora Glass tooltip and dropdown surfaces', () => {
     const tooltipCss = fs.readFileSync(
       path.join(uiRoot, 'styles/global/global-switch-tooltip-diff.css'),
       'utf8',
@@ -64,6 +64,36 @@ describe('UI style contract', () => {
     );
     expect(menuCss).toMatch(/background:\s*rgb\(22 24 31\);/);
     expect(menuCss).toMatch(/background:\s*rgb\(250 250 252\);/);
+  });
+
+
+  test('registers Neon Voltage and Raw Grid with auto-light tokens and header parity', () => {
+    const globalCss = fs.readFileSync(path.join(uiRoot, 'styles/global.css'), 'utf8');
+    const themeTokens = fs.readFileSync(
+      path.join(uiRoot, 'styles/tokens/tokens-style-themes.css'),
+      'utf8',
+    );
+    const autoLightTokens = fs.readFileSync(
+      path.join(uiRoot, 'styles/tokens/tokens-pet-auto-light.css'),
+      'utf8',
+    );
+    const themeFiles = [
+      'global-theme-glass-bento.css',
+      'global-theme-vercel.css',
+      'global-theme-tokyo-night.css',
+    ].map((file) => fs.readFileSync(path.join(uiRoot, 'styles/global', file), 'utf8'));
+    const tokyo = themeFiles[2];
+
+    expect(globalCss).toContain('global-theme-neon-voltage.css');
+    expect(globalCss).toContain('global-theme-raw-grid.css');
+    for (const id of ['neon-voltage', 'raw-grid']) {
+      expect(themeTokens).toContain(`[data-theme-style="${id}"][data-theme="dark"]`);
+      expect(themeTokens).toContain(`[data-theme-style="${id}"][data-theme="light"]`);
+      expect(autoLightTokens).toContain(`[data-theme-style="${id}"][data-theme="auto"]`);
+    }
+    for (const css of themeFiles) expect(css).toContain('.app--tab-view .desktop-tabbar');
+    expect(tokyo).toContain('--theme-header-gap: 8px');
+    expect(tokyo).toMatch(/\.sidebar,[\s\S]*\.toc-panel\s*\{[^}]*margin-top:\s*var\(--theme-header-gap\)/);
   });
 
   test('does not underline the workspace Show More button', () => {

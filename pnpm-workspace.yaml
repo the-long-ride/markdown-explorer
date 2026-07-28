@@ -4,7 +4,6 @@ packages:
   - electron
   - chromium-xtension
   - tauri
-  - tauri/sidecar/mdthem-sidecar
   - website-app
 
 overrides:

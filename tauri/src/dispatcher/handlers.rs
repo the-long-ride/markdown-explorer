@@ -420,19 +420,23 @@ impl Dispatcher {
         } else {
             None
         };
-        let result = if is_html_document {
+        let native_html_conversion = current_file
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("html"));
+        let conversion_enabled = if is_html_document { true } else { doc_conv };
+        let result = if is_html_document && !native_html_conversion {
             None
         } else {
-            Some(converter.read_markdown(&file_path_str, doc_conv))
+            Some(converter.read_markdown(&file_path_str, conversion_enabled))
         };
         if !self.is_workspace_request_current(&request) {
             return;
         }
-        let raw = if is_html_document {
-            String::new()
-        } else {
-            result.as_ref().map(|value| value.markdown.clone()).unwrap_or_default()
-        };
+        let raw = result
+            .as_ref()
+            .map(|value| value.markdown.clone())
+            .unwrap_or_default();
         let preview_info = result.and_then(|value| value.preview_info);
 
         let file_info = flat_list.iter().find(|file| file.fs_path == file_path_str);

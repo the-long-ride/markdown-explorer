@@ -336,7 +336,7 @@ describe('App render', () => {
   });
 
   it('renders WorkspaceSelection when no workspace name and terms accepted', async () => {
-    mockState = createMockState({ workspaceName: '' });
+    mockState = createMockState({ workspaceName: '', appRuntime: 'desktop' });
     render(createElement(App));
     await waitFor(() => {
       expect(screen.getByTestId('workspace-selection')).toBeInTheDocument();
@@ -652,5 +652,12 @@ describe('App render', () => {
       expect(screen.getByTitle('Exit Focus Mode')).toBeInTheDocument();
     });
     expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
+  });
+
+  it('never renders WorkspaceSelection in VS Code extension when workspaceName is empty', () => {
+    mockState = createMockState({ appRuntime: 'vscode', workspaceName: '' });
+    render(createElement(App));
+    expect(screen.queryByTestId('workspace-selection')).not.toBeInTheDocument();
+    expect(screen.getByTestId('welcome-page')).toBeInTheDocument();
   });
 });

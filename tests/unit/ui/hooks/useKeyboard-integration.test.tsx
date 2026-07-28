@@ -21,7 +21,7 @@ const defaultKeybindings: Record<string, string> = {
   collapseAll: 'ctrl+shift+c',
   expandAll: 'ctrl+shift+e',
   workspaceSelection: 'ctrl+shift+w',
-  toggleSidebar: 'ctrl+b',
+  toggleSidebar: 'alt+a',
 };
 
 const defaultProps = {
@@ -382,23 +382,22 @@ describe('useKeyboard hook integration', () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it('calls toggleSidebar on Ctrl+B when desktop-like', () => {
-    (window as any).__chromeExtBus = {};
+  it('calls toggleSidebar on Alt+A (universal binding)', () => {
     renderHook(() => useKeyboard(defaultProps));
-    fireKeyDown({ key: 'b', ctrlKey: true });
+    fireKeyDown({ key: 'a', altKey: true });
     expect(mockToggleSidebar).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call toggleSidebar on Ctrl+B when not desktop-like', () => {
-    renderHook(() => useKeyboard(defaultProps));
-    fireKeyDown({ key: 'b', ctrlKey: true });
-    expect(mockToggleSidebar).not.toHaveBeenCalled();
-  });
-
-  it('does not call toggleSidebar on repeated Ctrl+B', () => {
+  it('calls toggleSidebar on Alt+A when desktop-like', () => {
     (window as any).__chromeExtBus = {};
     renderHook(() => useKeyboard(defaultProps));
-    fireKeyDown({ key: 'b', ctrlKey: true, repeat: true });
+    fireKeyDown({ key: 'a', altKey: true });
+    expect(mockToggleSidebar).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call toggleSidebar on repeated Alt+A', () => {
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'a', altKey: true, repeat: true });
     expect(mockToggleSidebar).not.toHaveBeenCalled();
   });
 

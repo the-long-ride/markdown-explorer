@@ -28,24 +28,24 @@
         "command": "markdownExplorer.open",
         "title": "Markdown Explorer: Open Docs Viewer",
         "icon": {
-          "light": "./ui/assets/icons/markdown-manifier-light.svg",
-          "dark": "./ui/assets/icons/markdown-manifier-dark.svg"
+          "light": "./ui/assets/icons/markdown-explorer-dark-stroke.svg",
+          "dark": "./ui/assets/icons/markdown-explorer-light-stroke.svg"
         }
       },
       {
         "command": "markdownExplorer.openFile",
         "title": "Markdown Explorer: Preview This File",
         "icon": {
-          "light": "./ui/assets/icons/markdown-manifier-light.svg",
-          "dark": "./ui/assets/icons/markdown-manifier-dark.svg"
+          "light": "./ui/assets/icons/markdown-explorer-dark-stroke.svg",
+          "dark": "./ui/assets/icons/markdown-explorer-light-stroke.svg"
         }
       },
       {
         "command": "markdownExplorer.toggle",
         "title": "Markdown Explorer: Toggle Docs Viewer",
         "icon": {
-          "light": "./ui/assets/icons/markdown-manifier-light.svg",
-          "dark": "./ui/assets/icons/markdown-manifier-dark.svg"
+          "light": "./ui/assets/icons/markdown-explorer-dark-stroke.svg",
+          "dark": "./ui/assets/icons/markdown-explorer-light-stroke.svg"
         }
       },
       {
@@ -66,6 +66,13 @@
         {
           "command": "markdownExplorer.openFile",
           "when": "resourceExtname == .md || resourceExtname == .mdx",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "markdownExplorer.open",
+          "when": "view == workbench.explorer.fileView",
           "group": "navigation"
         }
       ]
@@ -101,10 +108,11 @@
           "default": "default",
           "enum": [
             "default",
-            "glass",
             "bento",
             "vercel",
             "tokyo-night",
+            "neon-voltage",
+            "raw-grid",
             "pet-white-shiba",
             "pet-k-ink",
             "pet-cat",
@@ -113,10 +121,11 @@
           ],
           "enumDescriptions": [
             "Original compact Markdown Explorer styling.",
-            "Evolved glassmorphism with translucent layered surfaces.",
             "Bento grids with modular panels and stronger structure.",
             "High-contrast monochrome, sharp borders, and geometric focus.",
             "Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast.",
+            "Deep black surfaces with electric coral, teal, and purple glow.",
+            "Visible grids, asymmetric panels, and stripped-back mechanical borders.",
             "Pets theme: white Shiba mascot with cute anime PNG background pets.",
             "Pets theme: K-Ink (app author's dog) with expressive anime PNG background pets.",
             "Pets theme: cat mascot with whiskers and cute anime PNG background pets.",
@@ -150,24 +159,6 @@
           "description": "Expand all sections by default"
         }
       }
-    },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "markdownExplorer",
-          "title": "Markdown Explorer",
-          "icon": "ui/assets/icons/markdown-manifier-light.svg"
-        }
-      ]
-    },
-    "views": {
-      "markdownExplorer": [
-        {
-          "id": "markdownExplorerSidebar",
-          "name": "Markdown Explorer",
-          "type": "webview"
-        }
-      ]
     }
   },
   "scripts": {

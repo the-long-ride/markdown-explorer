@@ -232,6 +232,8 @@ export interface UpdateAppearanceMessage {
     | 'bento'
     | 'vercel'
     | 'tokyo-night'
+    | 'neon-voltage'
+    | 'raw-grid'
     | 'pet-white-shiba'
     | 'pet-k-ink'
     | 'pet-cat'

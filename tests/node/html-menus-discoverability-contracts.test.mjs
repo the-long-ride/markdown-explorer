@@ -110,7 +110,7 @@ test('Settings use compact grouping, Language icon, dynamic shortcut description
   assert.doesNotMatch(icons, /GlobeIcon = LanguageIcon/);
   assert.match(tooltip, /ResizeObserver/);
   assert.match(tooltip, /tooltipRef/);
-  assert.match(tooltip, /rect\.top \+ rect\.height \/ 2/);
+  assert.match(tooltip, /rect\.top - tooltipHeight/);
   assert.match(styles, /\.settings-appearance-controls/);
 });
 

@@ -1,2 +1,2 @@
 pub mod document_converter;
-pub mod sidecar;
+pub mod native_document_converter;

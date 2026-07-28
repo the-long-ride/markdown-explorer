@@ -145,7 +145,13 @@ export function AppView(props: any) {
           </div>
         </main>
       ) : !state.workspaceName ? (
-        isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
+        state.appRuntime === 'vscode' ? (
+          <main className="tab-home">
+            <div className="content__scroll" id="homeContentScroll">
+              <WelcomePage />
+            </div>
+          </main>
+        ) : isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
           <main className="tab-loading">
             <div className="state-screen state-screen--tab-loading">
               <div className="spinner" />

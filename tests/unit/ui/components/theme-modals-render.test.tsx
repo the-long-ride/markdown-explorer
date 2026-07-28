@@ -53,8 +53,11 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
   ],
   THEME_STYLE_OPTIONS: [
     { id: 'default', label: 'Default', description: 'Default style' },
-    { id: 'glass', label: 'Glass', description: 'Glass style' },
     { id: 'bento', label: 'Bento', description: 'Bento style' },
+    { id: 'vercel', label: 'Vercel', description: 'Vercel style' },
+    { id: 'tokyo-night', label: 'Tokyo Night', description: 'Tokyo style' },
+    { id: 'neon-voltage', label: 'Neon Voltage', description: 'Neon style' },
+    { id: 'raw-grid', label: 'Raw Grid', description: 'Raw style' },
   ],
   PET_THEME_STYLE_OPTIONS: [
     { id: 'pet-white-shiba', label: 'White Shiba', description: 'White Shiba style' },
@@ -66,14 +69,36 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     themeStyles: {
+      themesLabel: 'Themes',
+      themesDesc: 'Built-in styles',
+      themesMenuLabel: 'Built-in themes',
+      chooseTheme: 'Choose theme',
       defaultLabel: 'Default',
       defaultDesc: 'Default style',
-      glassLabel: 'Glass',
-      glassDesc: 'Glass style',
       bentoLabel: 'Bento',
       bentoDesc: 'Bento style',
-      petsLabel: 'Pets',
+      vercelLabel: 'Vercel',
+      vercelDesc: 'Vercel style',
+      tokyoNightLabel: 'Tokyo Night',
+      tokyoNightDesc: 'Tokyo style',
+      neonVoltageLabel: 'Neon Voltage',
+      neonVoltageDesc: 'Neon style',
+      rawGridLabel: 'Raw Grid',
+      rawGridDesc: 'Raw style',
+      petsLabel: 'Pet themes',
       petsDesc: 'Pets style',
+      petsMenuLabel: 'Pet themes',
+      choosePetTheme: 'Choose pet theme',
+      whiteShibaLabel: 'White Shiba',
+      kInkLabel: "K-Ink (app author's dog)",
+      catLabel: 'Cat',
+      hamsterLabel: 'Hamster',
+      corgiLabel: 'Corgi',
+      customThemesLabel: 'Your custom themes',
+      customThemesDesc: 'Saved themes',
+      customThemesMenuLabel: 'Custom themes',
+      chooseCustomTheme: 'Choose custom theme',
+      themeRemixLabel: 'Theme Remix',
     },
     topbar: { switchToLightMode: 'Light', switchToDarkMode: 'Dark' },
   }),
@@ -368,67 +393,75 @@ describe('ThemeStylePicker', () => {
     };
   });
 
-  it('renders default style option', () => {
-    render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    expect(screen.getByText('Default')).toBeInTheDocument();
+  it('renders exactly Themes and Pet themes groups without custom themes', () => {
+    const { container } = render(<ThemeStylePicker value="default" onChange={() => {}} />);
+    expect(container.querySelectorAll('[data-theme-group]')).toHaveLength(2);
+    expect(screen.getByText('Themes')).toBeInTheDocument();
+    expect(screen.getByText('Pet themes')).toBeInTheDocument();
   });
 
-  it('renders glass style option', () => {
+  it('opens the translated built-in themes listbox with every built-in option', () => {
     render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    expect(screen.getByText('Glass')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    const listbox = screen.getByRole('listbox', { name: 'Built-in themes' });
+    expect(listbox).toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(6);
+    expect(screen.queryByRole('option', { name: /Aurora Glass/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Neon Voltage/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Raw Grid/i })).toBeInTheDocument();
   });
 
-  it('renders bento style option', () => {
-    render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    expect(screen.getByText('Bento')).toBeInTheDocument();
+  it('marks Themes group active for a built-in theme', () => {
+    const { container } = render(<ThemeStylePicker value="default" onChange={() => {}} />);
+    expect(container.querySelector('[data-theme-group="themes"]')).toHaveClass('is-active');
   });
 
-  it('renders pets style option', () => {
-    render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    expect(screen.getByText('Pets')).toBeInTheDocument();
-  });
-
-  it('marks the active style with is-active class', () => {
-    render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    const defaultBtn = screen.getAllByRole('button').find((b) => b.className.includes('theme-style-option--default'));
-    expect(defaultBtn!.className).toContain('is-active');
-  });
-
-  it('calls onChange when a style option is clicked', () => {
+  it('selects a built-in theme from the listbox', () => {
     const onChange = vi.fn();
     render(<ThemeStylePicker value="default" onChange={onChange} />);
-    const glassBtn = screen.getAllByRole('button').find((b) => b.className.includes('theme-style-option--glass'));
-    fireEvent.click(glassBtn!);
-    expect(onChange).toHaveBeenCalledWith('glass');
+    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Bento/i }));
+    expect(onChange).toHaveBeenCalledWith('bento');
   });
 
-  it('renders pet theme dropdown toggle', () => {
-    render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    const petSelect = screen.getAllByRole('button').find((b) => b.className.includes('pet-theme-select'));
-    expect(petSelect).toBeTruthy();
-  });
-
-  it('opens pet theme menu on dropdown click', () => {
-    render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    const petSelect = screen.getAllByRole('button').find((b) => b.className.includes('pet-theme-select'));
-    fireEvent.click(petSelect!);
-    expect(screen.getByRole('listbox', { name: 'Pet sub-theme' })).toBeInTheDocument();
-  });
-
-  it('selects pet sub-theme on menu click', () => {
+  it('opens the translated pet listbox and selects a pet theme', () => {
     const onChange = vi.fn();
     render(<ThemeStylePicker value="default" onChange={onChange} />);
-    const petSelect = screen.getAllByRole('button').find((b) => b.className.includes('pet-theme-select'));
+    const petSelect = screen.getAllByRole('button').find((button) => button.className.includes('pet-theme-select'));
     fireEvent.click(petSelect!);
-    const shibaOption = screen.getAllByRole('option').find((b) => b.textContent?.includes('White Shiba'));
-    fireEvent.click(shibaOption!);
+    expect(screen.getByRole('listbox', { name: 'Pet themes' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('option', { name: 'White Shiba' }));
     expect(onChange).toHaveBeenCalledWith('pet-white-shiba');
   });
 
-  it('marks pets option as active when pet theme is selected', () => {
-    render(<ThemeStylePicker value="pet-white-shiba" onChange={() => {}} />);
-    const petsOption = document.querySelector('.theme-style-option--pets');
-    expect(petsOption!.className).toContain('is-active');
+  it('marks Pet themes group active when a pet theme is selected', () => {
+    const { container } = render(<ThemeStylePicker value="pet-white-shiba" onChange={() => {}} />);
+    expect(container.querySelector('[data-theme-group="pets"]')).toHaveClass('is-active');
+  });
+
+  it('renders exactly three groups when custom themes exist', () => {
+    mockState.settings.customThemes = [{
+      id: 'c1', name: 'Custom 1', baseStyle: 'default', colorMode: 'auto',
+      createdAt: Date.now(), updatedAt: Date.now(), colors: { dark: {}, light: {} },
+      layout: { density: 'comfortable', radius: 8, strokeWidth: 1, contentPadding: 36, sectionGap: 14 },
+      background: { type: 'none', opacity: 0.16, fit: 'cover', position: 'center', blur: 0 },
+    }];
+    const { container } = render(<ThemeStylePicker value="default" onChange={() => {}} showCustomThemes />);
+    expect(container.querySelectorAll('[data-theme-group]')).toHaveLength(3);
+    expect(screen.getByText('Your custom themes')).toBeInTheDocument();
+  });
+
+  it('opens custom theme dropdown and activates the selected custom theme', () => {
+    mockState.settings.customThemes = [{
+      id: 'c1', name: 'Custom 1', baseStyle: 'default', colorMode: 'auto',
+      createdAt: Date.now(), updatedAt: Date.now(), colors: { dark: {}, light: {} },
+      layout: { density: 'comfortable', radius: 8, strokeWidth: 1, contentPadding: 36, sectionGap: 14 },
+      background: { type: 'none', opacity: 0.16, fit: 'cover', position: 'center', blur: 0 },
+    }];
+    render(<ThemeStylePicker value="default" onChange={() => {}} showCustomThemes />);
+    fireEvent.click(screen.getByRole('button', { name: /Choose custom theme/i }));
+    fireEvent.click(screen.getByRole('option', { name: 'Custom 1' }));
+    expect(mockSelectCustomTheme).toHaveBeenCalledWith('c1');
   });
 
   it('keeps selected menu styling without left rails', () => {
@@ -437,77 +470,37 @@ describe('ThemeStylePicker', () => {
       'ui/src/styles/global/global-theme-picker-pets.css',
       'ui/src/styles/global/global-theme-picker-remix.css',
       'ui/src/styles/global/global-theme-picker-custom.css',
+      'ui/src/styles/global/global-theme-picker-styles.css',
       'ui/src/styles/global/global-modals-settings-a.css',
       'ui/src/styles/global/global-theme-glass-bento.css',
     ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
-
-    expect(styles).toMatch(/\.mdn-table-view-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);
     expect(styles).toMatch(/\.pet-theme-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);
-    expect(styles).toMatch(/\.theme-remix-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);
-    expect(styles).not.toMatch(/\.mdn-table-view-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
+    expect(styles).toMatch(/\.theme-group-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);
     expect(styles).not.toMatch(/\.pet-theme-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
-    expect(styles).not.toMatch(/\.theme-remix-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
     expect(styles).not.toMatch(/\.custom-theme-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
-    expect(styles).not.toMatch(/\.settings-language-menu__option\.is-selected\s*\{[^}]*box-shadow:\s*inset 3px 0 0/s);
-    expect(styles).not.toMatch(/\[data-theme-style="bento"\] \.mdn-section--h1 > \.mdn-section-header\s*\{[^}]*box-shadow:\s*inset 4px 0 0/s);
-    expect(styles).not.toMatch(/\[data-theme-style="bento"\] \.mdn-section--h2 > \.mdn-section-header\s*\{[^}]*box-shadow:\s*inset 4px 0 0/s);
-    expect(styles).toContain('.theme-remix-menu__option.is-selected .theme-remix-menu__mark');
   });
 
-  it('renders custom themes section when showCustomThemes is true and custom themes exist', () => {
-    mockState.settings.customThemes = [{
-      id: 'c1',
-      name: 'Custom 1',
-      baseStyle: 'default',
-      colorMode: 'auto',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      colors: { dark: {}, light: {} },
-      layout: { density: 'comfortable', radius: 8, strokeWidth: 1, contentPadding: 36, sectionGap: 14 },
-      background: { type: 'none', opacity: 0.16, fit: 'cover', position: 'center', blur: 0 },
-    }];
-    render(<ThemeStylePicker value="default" onChange={() => {}} showCustomThemes={true} />);
-    expect(screen.getByText('Custom themes')).toBeInTheDocument();
-  });
-
-  it('opens custom theme dropdown on click', () => {
-    mockState.settings.customThemes = [{
-      id: 'c1',
-      name: 'Custom 1',
-      baseStyle: 'default',
-      colorMode: 'auto',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      colors: { dark: {}, light: {} },
-      layout: { density: 'comfortable', radius: 8, strokeWidth: 1, contentPadding: 36, sectionGap: 14 },
-      background: { type: 'none', opacity: 0.16, fit: 'cover', position: 'center', blur: 0 },
-    }];
-    render(<ThemeStylePicker value="default" onChange={() => {}} showCustomThemes={true} />);
-    const customSelect = screen.getAllByRole('button').find((b) => b.className.includes('custom-theme-select'));
-    fireEvent.click(customSelect!);
-    expect(screen.getByRole('listbox', { name: 'Custom themes' })).toBeInTheDocument();
-  });
-
-  it('renders Theme Remix button when onOpenThemeRemix is provided', () => {
+  it('renders and invokes translated Theme Remix action', () => {
     const onOpenThemeRemix = vi.fn();
     render(<ThemeStylePicker value="default" onChange={() => {}} onOpenThemeRemix={onOpenThemeRemix} />);
-    expect(screen.getByText('Theme Remix')).toBeInTheDocument();
-  });
-
-  it('calls onOpenThemeRemix on Theme Remix button click', () => {
-    const onOpenThemeRemix = vi.fn();
-    render(<ThemeStylePicker value="default" onChange={() => {}} onOpenThemeRemix={onOpenThemeRemix} />);
-    fireEvent.click(screen.getByText('Theme Remix'));
+    fireEvent.click(screen.getByRole('button', { name: 'Theme Remix' }));
     expect(onOpenThemeRemix).toHaveBeenCalled();
   });
 
-  it('closes pet menu on Escape', () => {
-    const { container } = render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    const petSelect = screen.getAllByRole('button').find((b) => b.className.includes('pet-theme-select'));
-    fireEvent.click(petSelect!);
-    expect(screen.getByRole('listbox', { name: 'Pet sub-theme' })).toBeInTheDocument();
+  it('closes the open group on Escape', () => {
+    render(<ThemeStylePicker value="default" onChange={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    expect(screen.getByRole('listbox', { name: 'Built-in themes' })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('listbox', { name: 'Pet sub-theme' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('listbox', { name: 'Built-in themes' })).not.toBeInTheDocument();
+  });
+
+  it('closes the open group on outside pointer input', () => {
+    render(<ThemeStylePicker value="default" onChange={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    expect(screen.getByRole('listbox', { name: 'Built-in themes' })).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole('listbox', { name: 'Built-in themes' })).not.toBeInTheDocument();
   });
 
   it('renders with custom className', () => {
@@ -601,6 +594,6 @@ describe('ThemeOnboardingModal', () => {
 
   it('renders ThemeStylePicker component', () => {
     render(<ThemeOnboardingModal isOpen={true} onComplete={() => {}} />);
-    expect(screen.getByText('Default')).toBeInTheDocument();
+    expect(screen.getByText('Themes')).toBeInTheDocument();
   });
 });

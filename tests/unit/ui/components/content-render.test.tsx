@@ -34,6 +34,7 @@ vi.mock("../../../../ui/src/contexts/translations", () => ({
       convertedTitle: "Converted: {sourceLabel}",
       textTitle: "Text: {sourceLabel}",
       convertedWarning: "Converted warning",
+      legacyBestEffortWarning: "Legacy best-effort warning",
       textWarning: "Text warning",
       conversionFailedWarning: "Conversion failed",
       durationMeta: "{status} in {duration}",
@@ -447,6 +448,21 @@ describe("Content rendering", () => {
     });
     expect(screen.getByText("Converted: report.docx")).toBeInTheDocument();
     expect(screen.getByText("Converted warning")).toBeInTheDocument();
+  });
+
+  it("renders the localized legacy best-effort warning", () => {
+    setup({
+      currentFile: "/legacy.xls",
+      contentHtml: "<h1>Legacy</h1>",
+      previewInfo: {
+        kind: "converted",
+        sourceLabel: "legacy.xls",
+        qualityCode: "legacy-best-effort",
+        qualityWarning: "host fallback",
+      },
+    });
+    expect(screen.getByText("Legacy best-effort warning")).toBeInTheDocument();
+    expect(screen.queryByText("host fallback")).not.toBeInTheDocument();
   });
 
   it("renders text preview info notice", () => {

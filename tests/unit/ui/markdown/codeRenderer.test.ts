@@ -140,6 +140,13 @@ describe('markdown/codeRenderer', () => {
     const html = renderCodeBlock({ type: 'code', lang: 'JavaScript', content: 'const x = 1;' }, 'auto');
     expect(html).toContain('mdn-codeblock');
   });
+
+  it('renders YAML aliases with syntax highlighting', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'yml', content: 'title: Explorer\nenabled: true' }, 'auto');
+    expect(html).toContain('language-yaml');
+    expect(html).toContain('hl-attr');
+    expect(html).toContain('hl-kw');
+  });
 });
 
 describe('HTML preview action toolbar', () => {

@@ -24,6 +24,8 @@ pub struct DocumentPreviewInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub from_cache: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub quality_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub quality_warning: Option<String>,
 }
 
@@ -39,6 +41,7 @@ struct CacheEntry {
     size: u64,
     markdown: String,
     duration_ms: u64,
+    quality: crate::render::native_document_converter::ConversionQuality,
 }
 
 #[derive(Clone)]
@@ -166,6 +169,7 @@ impl DocumentConverter {
                         source_label: get_file_type_label(file_path),
                         duration_ms: None,
                         from_cache: None,
+                        quality_code: None,
                         quality_warning: None,
                     }),
                 }
@@ -184,6 +188,7 @@ impl DocumentConverter {
                                 source_label: get_file_type_label(file_path),
                                 duration_ms: None,
                                 from_cache: None,
+                                quality_code: Some("conversion-failed".to_string()),
                                 quality_warning: Some(
                                     "Markdown Explorer could not convert this file. The details are shown below."
                                         .to_string(),
@@ -213,6 +218,7 @@ impl DocumentConverter {
                                     source_label: get_file_type_label(file_path),
                                     duration_ms: Some(entry.duration_ms),
                                     from_cache: Some(true),
+                                    quality_code: Some(entry.quality.quality_code().to_string()),
                                     quality_warning: Some(
                                         "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file."
                                             .to_string(),
@@ -227,13 +233,15 @@ impl DocumentConverter {
                 let conversion = if !document_conversion_enabled {
                     Err("Document conversion is not enabled.".to_string())
                 } else {
-                    crate::render::sidecar::convert_file(file_path)
+                    crate::render::native_document_converter::convert_file(path_buf)
+                        .map_err(|error| error.to_string())
                 };
 
                 match conversion {
                     Ok(converted) => {
                         let duration_ms = started.elapsed().as_millis() as u64;
-                        let markdown = normalize_preview_markdown(&converted, file_path);
+                        let quality = converted.quality;
+                        let markdown = normalize_preview_markdown(&converted.markdown, file_path);
                         {
                             let mut cache = self.cache.lock();
                             cache.insert(
@@ -243,6 +251,7 @@ impl DocumentConverter {
                                     size,
                                     markdown: markdown.clone(),
                                     duration_ms,
+                                    quality,
                                 },
                             );
                         }
@@ -254,6 +263,7 @@ impl DocumentConverter {
                                 source_label: get_file_type_label(file_path),
                                 duration_ms: Some(duration_ms),
                                 from_cache: Some(false),
+                                quality_code: Some(quality.quality_code().to_string()),
                                 quality_warning: Some(
                                     "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file."
                                         .to_string(),
@@ -271,6 +281,7 @@ impl DocumentConverter {
                                 source_label: get_file_type_label(file_path),
                                 duration_ms: None,
                                 from_cache: None,
+                                quality_code: Some("conversion-failed".to_string()),
                                 quality_warning: Some(
                                     "Markdown Explorer could not convert this file. The details are shown below."
                                         .to_string(),
@@ -380,6 +391,7 @@ mod tests {
         let info = result.preview_info.unwrap();
         assert_eq!(info.kind, "converted");
         assert_eq!(info.source_extension, ".docx");
+        assert_eq!(info.quality_code.as_deref(), Some("conversion-failed"));
     }
 
     #[test]
@@ -466,6 +478,7 @@ mod tests {
             source_label: "TXT".to_string(),
             duration_ms: Some(100),
             from_cache: Some(false),
+            quality_code: None,
             quality_warning: None,
         };
         let json = serde_json::to_string(&info).unwrap();
@@ -486,11 +499,47 @@ mod tests {
         assert_eq!(conv.classify_extension(".html"), DocumentKind::Convertible);
         assert_eq!(conv.classify_extension(".xls"), DocumentKind::Convertible);
         assert_eq!(conv.classify_extension(".xlsx"), DocumentKind::Convertible);
+        assert_eq!(conv.classify_extension(".xlm"), DocumentKind::Convertible);
         assert_eq!(conv.classify_extension(".pptx"), DocumentKind::Convertible);
         assert_eq!(conv.classify_extension(".odt"), DocumentKind::Convertible);
+        assert_eq!(conv.classify_extension(".odp"), DocumentKind::Convertible);
+        assert_eq!(conv.classify_extension(".ods"), DocumentKind::Convertible);
         assert_eq!(conv.classify_extension(".rtf"), DocumentKind::Convertible);
         assert_eq!(conv.classify_extension(".xyz"), DocumentKind::Unsupported);
         assert_eq!(conv.classify_extension(""), DocumentKind::Unsupported);
+    }
+
+    #[test]
+    fn cached_legacy_conversion_keeps_legacy_quality_code() {
+        let conv = DocumentConverter::new();
+        let file = std::env::temp_dir().join(format!(
+            "markdown-explorer-cache-{}-legacy.xls",
+            std::process::id()
+        ));
+        fs::write(&file, b"legacy").unwrap();
+        let metadata = fs::metadata(&file).unwrap();
+        let mtime_ms = metadata
+            .modified()
+            .unwrap()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+        conv.cache.lock().insert(
+            file.to_string_lossy().to_string(),
+            CacheEntry {
+                mtime_ms,
+                size: metadata.len(),
+                markdown: "# Legacy".to_string(),
+                duration_ms: 7,
+                quality: crate::render::native_document_converter::ConversionQuality::BestEffortLegacy,
+            },
+        );
+
+        let result = conv.read_markdown(&file.to_string_lossy(), true);
+        let info = result.preview_info.expect("preview info");
+        assert_eq!(info.from_cache, Some(true));
+        assert_eq!(info.quality_code.as_deref(), Some("legacy-best-effort"));
+        let _ = fs::remove_file(file);
     }
 
     #[test]

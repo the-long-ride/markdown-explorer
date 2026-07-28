@@ -106,6 +106,10 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
     shortcuts: 'Keyboard Shortcuts',
     shortcutsHint: 'Click to record.',
     resetShortcuts: 'Reset to Default Shortcuts',
+    resetShortcutsConfirmTitle: 'Reset keyboard shortcuts?',
+    resetShortcutsConfirmBody: 'Confirm reset',
+    confirmResetShortcuts: 'Reset Shortcuts',
+    cancelResetShortcuts: 'Cancel',
     closeSettings: 'Close Settings - (Esc)',
     actions: {
       findCurrentFile: 'Find in file',
@@ -191,6 +195,9 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   FolderIcon: () => <span>folder-icon</span>,
   GlobeIcon: () => <span>globe-icon</span>,
   AlertTriangleIcon: ({ size }: any) => <span>alert-icon</span>,
+  ImportSettingsIcon: () => <span>import-icon</span>,
+  ExportSettingsIcon: () => <span>export-icon</span>,
+  LanguageIcon: () => <span>lang-icon</span>,
 }));
 
 vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
@@ -211,6 +218,7 @@ vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({
 
 vi.mock('../../../../ui/src/utils/shortcuts', () => ({
   formatShortcutLabel: (s: string) => s,
+  getEnabledShortcut: (settings: any, key: string) => settings?.keybindings?.[key] ?? null,
 }));
 
 describe('SettingsModal', () => {
@@ -526,7 +534,7 @@ describe('SettingsModal', () => {
     delete (window as any).electronAPI;
   });
 
-  it('does not render keyboard shortcut search outside desktop app', () => {
+  it('renders keyboard shortcut search across all platform variants', () => {
     delete (window as any).electronAPI;
 
     render(
@@ -542,11 +550,12 @@ describe('SettingsModal', () => {
       />,
     );
 
-    expect(screen.queryByPlaceholderText('Search keyboard shortcuts...')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search keyboard shortcuts...')).toBeInTheDocument();
   });
 
   it('renders Desktop View segmented control with exactly two options', () => {
     (window as any).electronAPI = {};
+    mockState = { ...getMockState(), appRuntime: 'desktop' };
 
     render(
       <SettingsModal
@@ -561,7 +570,7 @@ describe('SettingsModal', () => {
       />,
     );
 
-    const control = screen.getByRole('radiogroup', { name: 'Desktop view mode' });
+    const control = screen.getByRole('radiogroup', { name: 'Desktop View' });
     expect(control).toHaveClass('segmented-control--two');
     expect(control.querySelectorAll('.segmented-option')).toHaveLength(2);
 
@@ -643,6 +652,7 @@ describe('SettingsModal', () => {
       />,
     );
     fireEvent.click(screen.getByText('Reset to Default Shortcuts'));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset Shortcuts' }));
     expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K' }, disabledKeybindings: {} });
   });
 
@@ -660,7 +670,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
-    const closeBtn = screen.getByText('×');
+    const closeBtn = screen.getByRole('button', { name: 'Close Settings - (Esc)' });
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalled();
   });
@@ -843,7 +853,7 @@ describe('SettingsModal', () => {
     expect(ACTIONS_LIST.length).toBeGreaterThan(0);
     expect(ACTIONS_LIST.some(a => a.id === 'settings')).toBe(true);
     expect(ACTIONS_LIST.some(a => a.id === 'toggleTheme')).toBe(true);
-    expect(ACTIONS_LIST.find(a => a.id === 'workspaceSelection')?.scope).toBe('both');
+    expect(ACTIONS_LIST.find(a => a.id === 'workspaceSelection')?.scope).toBe('non-vscode');
     expect(ACTIONS_LIST.find(a => a.id === 'toggleDesktopViewMode')?.scope).toBe('electron');
     expect(ACTIONS_LIST.find(a => a.id === 'openCurrentDocumentLocation')?.scope).toBe('electron');
   });

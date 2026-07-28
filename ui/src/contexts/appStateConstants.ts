@@ -13,12 +13,12 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   collapseAll: 'Ctrl+Shift+x',
   expandAll: 'Ctrl+Shift+e',
   workspaceSelection: 'Ctrl+Alt+W',
-  toggleSidebar: 'Ctrl+Shift+p',
-  toggleToc: 'Ctrl+T',
-  sidebarCursorMode: 'Alt+S',
+  toggleSidebar: 'Alt+A',
+  toggleToc: 'Alt+C',
+  sidebarCursorMode: 'Alt+Z',
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
-  locateFile: 'Ctrl+Q',
+  locateFile: 'Alt+Q',
   toggleFocusMode: 'Ctrl+Alt+F',
   toggleHtmlPreview: 'Ctrl+Alt+H',
 };
@@ -68,11 +68,6 @@ export const THEME_STYLE_OPTIONS: readonly {
     description: 'Compact reader surfaces with the original Markdown Explorer balance.',
   },
   {
-    id: 'glass',
-    label: 'Evolved Glass',
-    description: 'Layered translucent panels, softer strokes, and airy document rhythm.',
-  },
-  {
     id: 'bento',
     label: 'Bento Grids',
     description: 'Modular blocks, stronger structure, and denser scan-friendly spacing.',
@@ -87,6 +82,16 @@ export const THEME_STYLE_OPTIONS: readonly {
     label: 'Tokyo Night',
     description: 'Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast.',
   },
+  {
+    id: 'neon-voltage',
+    label: 'Neon Voltage',
+    description: 'Deep black surfaces with electric coral, teal, and purple glow.',
+  },
+  {
+    id: 'raw-grid',
+    label: 'Raw Grid',
+    description: 'Visible structure, asymmetric panels, and mechanical borders.',
+  },
 ];
 
 export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-white-shiba';
@@ -97,14 +102,14 @@ export const PET_THEME_STYLE_OPTIONS: readonly {
   description: string;
 }[] = [
   {
-    id: 'pet-white-shiba',
-    label: 'White Shiba',
-    description: 'Snowy fur, warm ears, and a calm little desk buddy.',
-  },
-  {
     id: 'pet-k-ink',
     label: "K-Ink (app author's dog)",
     description: 'A personal K-Ink theme with expressive ears, warm amber eyes, and anime sticker energy.',
+  },
+  {
+    id: 'pet-white-shiba',
+    label: 'White Shiba',
+    description: 'Snowy fur, warm ears, and a calm little desk buddy.',
   },
   {
     id: 'pet-cat',

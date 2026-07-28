@@ -16,6 +16,17 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--bd-s) transparent;
 }
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--bd-s);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
 .app {
   display: flex;
   flex-direction: column;

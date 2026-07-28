@@ -271,6 +271,17 @@ Website App,720,false
 
 ---
 
+## YAML Configuration (Alias Highlighting)
+
+```yml
+workspace:
+  title: Markdown Explorer
+  enabled: true
+  retries: 3
+```
+
+---
+
 ## XML Fragment without Declaration
 
 ```xml

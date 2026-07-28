@@ -4,6 +4,7 @@
 
 /* Panel styles: borders, background, shadow, and radius overrides */
 [data-theme-style="vercel"] .topbar,
+[data-theme-style="vercel"] .app--tab-view .desktop-tabbar,
 [data-theme-style="vercel"] .sidebar,
 [data-theme-style="vercel"] .toc-panel {
   border: var(--stroke-w) solid var(--bd-s);
@@ -12,8 +13,15 @@
   box-shadow: none;
 }
 
-[data-theme-style="vercel"] .topbar {
+[data-theme-style="vercel"] .topbar,
+[data-theme-style="vercel"] .app--tab-view .desktop-tabbar {
   margin: 8px 10px 0;
+  width: calc(100% - 20px);
+}
+
+[data-theme-style="vercel"] .app--tab-view .desktop-tabbar {
+  height: var(--topbar-h);
+  flex-basis: var(--topbar-h);
 }
 
 [data-theme-style="vercel"] .body {

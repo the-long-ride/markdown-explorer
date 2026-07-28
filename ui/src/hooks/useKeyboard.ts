@@ -115,6 +115,7 @@ export function useKeyboard({
       const action = resolveKeyboardAction(e, {
         isDesktop,
         isDesktopLike,
+        isVscode: state.appRuntime === 'vscode',
         isTermsOpen,
         isModalOpen,
         isSearchOpen,

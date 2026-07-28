@@ -46,26 +46,27 @@ export function WelcomePage() {
   const tipGroups: WelcomeTipGroup[] = useMemo(() => {
     const shortcut = (action: string) =>
       formatShortcutLabel(getEnabledShortcut(state.settings, action as any) || '');
-    const replaceShortcut = (value: string, action: string) =>
-      value.replace('{shortcut}', shortcut(action));
+    const replaceShortcut = (value: string | undefined, action: string) =>
+      value ? value.replace('{shortcut}', shortcut(action)) : '';
     const base = TIPS_CONTENT[currentLang] || TIPS_CONTENT.en;
     const labelsForLanguage = TIP_GROUP_LABELS[currentLang] || TIP_GROUP_LABELS.en;
+    const tips = wt?.tips;
     const groups: Record<TipGroupId, Array<TipItem>> = {
       navigateAndOrganize: [
         base[0], base[2], base[5], base[6], base[8],
-        { ...wt.tips.tipToggleDesktopView, desc: replaceShortcut(wt.tips.tipToggleDesktopView.desc, 'toggleDesktopViewMode') },
-        { ...wt.tips.tipOpenContainingFolder, desc: replaceShortcut(wt.tips.tipOpenContainingFolder.desc, 'openCurrentDocumentLocation') },
-        wt.tips.tipSidebarActions,
-        wt.tips.tipWorkspaceRecovery,
-      ].filter(Boolean),
+        tips?.tipToggleDesktopView ? { ...tips.tipToggleDesktopView, desc: replaceShortcut(tips.tipToggleDesktopView.desc, 'toggleDesktopViewMode') } : undefined,
+        tips?.tipOpenContainingFolder ? { ...tips.tipOpenContainingFolder, desc: replaceShortcut(tips.tipOpenContainingFolder.desc, 'openCurrentDocumentLocation') } : undefined,
+        tips?.tipSidebarActions,
+        tips?.tipWorkspaceRecovery,
+      ].filter(Boolean) as TipItem[],
       previewStructuredContent: [
         base[1], base[3],
-        { ...wt.tips.tipToggleHtmlPreview, desc: replaceShortcut(wt.tips.tipToggleHtmlPreview.desc, 'toggleHtmlPreview') },
-        wt.tips.tipCsvPreview,
-        wt.tips.tipHtmlDocuments,
-      ].filter(Boolean),
-      workWithRichDocuments: [base[4], wt.tips.tipOpenHtmlBrowser, wt.tips.tipImageRows].filter(Boolean),
-      personalizeMarkdownExplorer: [base[7]].filter(Boolean),
+        tips?.tipToggleHtmlPreview ? { ...tips.tipToggleHtmlPreview, desc: replaceShortcut(tips.tipToggleHtmlPreview.desc, 'toggleHtmlPreview') } : undefined,
+        tips?.tipCsvPreview,
+        tips?.tipHtmlDocuments,
+      ].filter(Boolean) as TipItem[],
+      workWithRichDocuments: [base[4], tips?.tipOpenHtmlBrowser, tips?.tipImageRows].filter(Boolean) as TipItem[],
+      personalizeMarkdownExplorer: [base[7]].filter(Boolean) as TipItem[],
     };
     return (Object.keys(groups) as Array<TipGroupId>).map((id) => ({
       id,
@@ -204,119 +205,135 @@ export function WelcomePage() {
           <div className="features-grid">
 
             {/* Feature 1: Navigation Tree */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <FolderIcon className="card-icon" />
-                {cleanTitle(wt.features.tree.title)}
-              </div>
-              <div className="feature-card-desc">
-                {wt.features.tree.desc}
-              </div>
-            </div>
-
-            {/* Feature 2: Quick Search */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <SearchIcon className="card-icon" />
-                {cleanTitle(wt.features.search.title)}
-              </div>
-              <div className="feature-card-desc">
-                {wt.features.search.desc}
-          <div className="welcome-spacer--small">
-                  <strong>
-                    {isDesktop ? (
-                      <>
-                        <kbd>F</kbd> · <kbd>Ctrl+F</kbd> · <kbd>Ctrl+Shift+F</kbd>
-                      </>
-                    ) : (
-                      <>
-                        <kbd>K</kbd> · <kbd>Ctrl+K</kbd> · <kbd>Ctrl+Shift+K</kbd>
-                      </>
-                    )}
-                  </strong>
+            {wt?.features?.tree && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <FolderIcon className="card-icon" />
+                  {cleanTitle(wt.features.tree.title)}
+                </div>
+                <div className="feature-card-desc">
+                  {wt.features.tree.desc}
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Feature 2: Quick Search */}
+            {wt?.features?.search && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <SearchIcon className="card-icon" />
+                  {cleanTitle(wt.features.search.title)}
+                </div>
+                <div className="feature-card-desc">
+                  {wt.features.search.desc}
+                  <div className="welcome-spacer--small">
+                    <strong>
+                      {renderShortcutKeys(getEnabledShortcut(state.settings, 'findCurrentFile') || (isDesktop ? 'F' : 'K'))}
+                      {' · '}
+                      {renderShortcutKeys(getEnabledShortcut(state.settings, 'searchCurrent') || (isDesktop ? 'Ctrl+F' : 'Ctrl+K'))}
+                      {isDesktop && (
+                        <>
+                          {' · '}
+                          {renderShortcutKeys(getEnabledShortcut(state.settings, 'searchAllTabs') || 'Ctrl+Shift+F')}
+                        </>
+                      )}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Feature 3: Interactive Tables */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <TableIcon className="card-icon" />
-                {cleanTitle(wt.features.tables.title)}
+            {wt?.features?.tables && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <TableIcon className="card-icon" />
+                  {cleanTitle(wt.features.tables.title)}
+                </div>
+                <div className="feature-card-desc">
+                  {wt.features.tables.desc}
+                </div>
               </div>
-              <div className="feature-card-desc">
-                {wt.features.tables.desc}
-              </div>
-            </div>
+            )}
 
             {/* Feature 4: Table-to-Chart */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <ChartIcon className="card-icon" />
-                {cleanTitle(wt.features.charts.title)}
+            {wt?.features?.charts && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <ChartIcon className="card-icon" />
+                  {cleanTitle(wt.features.charts.title)}
+                </div>
+                <div className="feature-card-desc">
+                  {wt.features.charts.desc}
+                </div>
               </div>
-              <div className="feature-card-desc">
-                {wt.features.charts.desc}
-              </div>
-            </div>
+            )}
 
             {/* Feature 5: Syntax Highlighting & Mermaid */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <HighlightIcon className="card-icon" />
-                {cleanTitle(wt.features.highlight.title)}
+            {wt?.features?.highlight && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <HighlightIcon className="card-icon" />
+                  {cleanTitle(wt.features.highlight.title)}
+                </div>
+                <div className="feature-card-desc">
+                  {wt.features.highlight.desc}
+                </div>
               </div>
-              <div className="feature-card-desc">
-                {wt.features.highlight.desc}
-              </div>
-            </div>
+            )}
 
             {/* Feature 6: Interactive HTML & Document Previews */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <GlobeIcon className="card-icon" />
-                {cleanTitle(wt.features.html.title)}
+            {wt?.features?.html && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <GlobeIcon className="card-icon" />
+                  {cleanTitle(wt.features.html.title)}
+                </div>
+                <div className="feature-card-desc">
+                  {wt.features.html.desc}
+                </div>
               </div>
-              <div className="feature-card-desc">
-                {wt.features.html.desc}
-              </div>
-            </div>
+            )}
 
             {/* Feature 7: Media Modal */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <ModalIcon className="card-icon" />
-                {cleanTitle(wt.features.modal.title).replace(/Media Modal/g, 'Media Viewer')}
+            {wt?.features?.modal && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <ModalIcon className="card-icon" />
+                  {cleanTitle(wt.features.modal.title).replace(/Media Modal/g, 'Media Viewer')}
+                </div>
+                <div className="feature-card-desc">
+                  {wt.features.modal.desc}
+                </div>
               </div>
-              <div className="feature-card-desc">
-                {wt.features.modal.desc}
-              </div>
-            </div>
+            )}
 
-            {/* Feature 7: Keyboard Shortcuts Guide Card */}
-            <div className="feature-card">
-              <div className="feature-card-title">
-                <KeyboardIcon className="card-icon" />
-                {cleanTitle(wt.features.shortcuts.title)}
+            {/* Feature 8: Keyboard Shortcuts Guide Card */}
+            {wt?.features?.shortcuts && (
+              <div className="feature-card">
+                <div className="feature-card-title">
+                  <KeyboardIcon className="card-icon" />
+                  {cleanTitle(wt.features.shortcuts.title)}
+                </div>
+                <div className="feature-card-desc">
+                  {!isDesktop && (
+                    <div className="welcome-feature-card__detail">
+                      {wt.features.shortcuts.vscodeDesc}
+                    </div>
+                  )}
+                  {wt.features.shortcuts.desc}
+                </div>
+                <div className="feature-card-action">
+                  <button
+                    className="card-action-btn"
+                    onClick={() => setActiveTab('shortcuts')}
+                  >
+                    {cleanTitle(labels.viewShortcuts)}
+                    <ArrowRightIcon className="action-btn-icon" />
+                  </button>
+                </div>
               </div>
-              <div className="feature-card-desc">
-                {!isDesktop && (
-          <div className="welcome-spacer--medium">
-                    {wt.features.shortcuts.vscodeDesc}
-                  </div>
-                )}
-                {wt.features.shortcuts.desc}
-              </div>
-              <div className="feature-card-action">
-                <button
-                  className="card-action-btn"
-                  onClick={() => setActiveTab('shortcuts')}
-                >
-                  {cleanTitle(labels.viewShortcuts)}
-                  <ArrowRightIcon className="action-btn-icon" />
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -341,10 +358,11 @@ export function WelcomePage() {
               <tbody>
                 {ACTIONS_LIST.filter((act) =>
                   act.scope === 'both' ||
+                  (act.scope === 'non-vscode' && state.appRuntime !== 'vscode') ||
                   (act.scope === 'desktop' && isDesktopLike) ||
                   (act.scope === 'electron' && isDesktop),
                 ).map((act) => {
-                  const val = state.settings.keybindings?.[act.id] || "";
+                  const val = getEnabledShortcut(state.settings, act.id) ?? state.settings.keybindings?.[act.id] ?? "";
                   return (
                     <tr key={act.id}>
                       <td>{t.actions[act.id as keyof typeof t.actions] || act.label}</td>

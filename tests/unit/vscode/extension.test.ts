@@ -82,12 +82,9 @@ describe('_doActivate', () => {
     overrideVscodeForTest(null);
   });
 
-  test('registers sidebar webview provider', () => {
+  test('does not register an obsolete sidebar webview provider', () => {
     _doActivate(context as any, vscode as any);
-    expect(vscode.window.registerWebviewViewProvider).toHaveBeenCalledWith(
-      'markdownExplorerSidebar',
-      expect.any(Object),
-    );
+    expect(vscode.window.registerWebviewViewProvider).not.toHaveBeenCalled();
   });
 
   test('registers markdownExplorer.open command', () => {

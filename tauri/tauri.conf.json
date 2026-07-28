@@ -4,16 +4,7 @@
   "version": "1.6.0",
   "identifier": "com.the-long-ride.markdown-explorer",
   "build": {
-    "frontendDist": "../ui/dist",
-    "beforeBuildCommand": {
-      "script": "pnpm run prepare:document-sidecar",
-      "cwd": "."
-    },
-    "beforeDevCommand": {
-      "script": "pnpm run prepare:document-sidecar",
-      "cwd": ".",
-      "wait": true
-    }
+    "frontendDist": "../ui/dist"
   },
   "app": {
     "withGlobalTauri": true,
@@ -41,16 +32,10 @@
       "icons/icon.ico",
       "icons/icon.icns"
     ],
-    "externalBin": [
-      "binaries/markdown-them-node"
-    ],
     "windows": {
       "nsis": {
         "installerHooks": "./windows/explorer-hooks.nsh"
       }
-    },
-    "resources": {
-      "sidecar/mdthem-sidecar/dist/": "document-sidecar/"
     }
   },
   "plugins": {

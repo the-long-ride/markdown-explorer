@@ -1,0 +1,35 @@
+/* Neon Voltage layout */
+[data-theme-style="neon-voltage"] .topbar,
+[data-theme-style="neon-voltage"] .desktop-tabbar,
+[data-theme-style="neon-voltage"] .sidebar,
+[data-theme-style="neon-voltage"] .toc-panel {
+  border: var(--stroke-w) solid var(--bd-s);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 38%),
+    var(--bg-s);
+  box-shadow: var(--sh-sm);
+}
+
+[data-theme-style="neon-voltage"] .topbar,
+[data-theme-style="neon-voltage"] .desktop-tabbar {
+  border-bottom-color: color-mix(in srgb, var(--chart-2) 44%, var(--bd-s));
+}
+
+[data-theme-style="neon-voltage"] .content {
+  background:
+    radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 28%),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--chart-3) 10%, transparent), transparent 30%),
+    var(--bg);
+}
+
+[data-theme-style="neon-voltage"] .mdn-section,
+[data-theme-style="neon-voltage"] .mdn-codeblock,
+[data-theme-style="neon-voltage"] .mdn-table-scroll {
+  border-color: color-mix(in srgb, var(--chart-2) 28%, var(--bd-s));
+  box-shadow: var(--section-shadow);
+}
+
+[data-theme-style="neon-voltage"] :focus-visible {
+  outline: 2px solid var(--chart-2);
+  outline-offset: 2px;
+}

@@ -53,12 +53,13 @@
 }
 .theme-onboarding-card {
   width: min(560px, calc(100vw - 32px));
-  height: calc(100vh - var(--topbar-h) - 32px);
+  height: auto;
   max-height: calc(100vh - var(--topbar-h) - 32px);
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .theme-onboarding-card__header {
   min-height: 0;
@@ -75,13 +76,12 @@
   overflow: visible;
 }
 .theme-onboarding-card__section--styles {
-  overflow: hidden;
+  overflow: visible;
 }
 .theme-onboarding-card__styles {
   min-height: 0;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  height: auto;
+  overflow: visible;
   padding-right: 2px;
 }
 .theme-onboarding-card__actions {
@@ -159,7 +159,7 @@
   .theme-onboarding-card {
     width: min(560px, calc(100vw - 20px));
     max-width: calc(100vw - 20px);
-    height: calc(100vh - var(--topbar-h) - 20px);
+    height: auto;
     max-height: calc(100vh - var(--topbar-h) - 20px);
     padding: 18px;
   }

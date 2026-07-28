@@ -52,7 +52,7 @@ describe('package configuration contracts', () => {
   });
 
   describe('workspace membership', () => {
-    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension', 'tauri', 'tauri/sidecar/mdthem-sidecar', 'website-app'];
+    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension', 'tauri', 'website-app'];
 
     async function readWorkspacePackages() {
       const yaml = await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8');
@@ -151,7 +151,7 @@ describe('package configuration contracts', () => {
       const pkg = await readJson('vscode/package.json');
       const styleConfig = pkg.contributes.configuration.properties['markdownExplorer.themeStyle'];
       expect(styleConfig.enum).toEqual([
-        'default', 'glass', 'bento', 'vercel', 'tokyo-night',
+        'default', 'glass', 'bento', 'vercel', 'tokyo-night', 'neon-voltage', 'raw-grid',
         'pet-white-shiba',
         'pet-k-ink', 'pet-cat', 'pet-hamster', 'pet-corgi',
       ]);

@@ -5,7 +5,7 @@ import test from 'node:test';
 const read = (file) => readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
 const OPEN_BROWSER_PATH_PREFIX = 'M71.89,100.56q-3.86,3.82-8.37,7.63';
 
-test('Evolved Glass tooltips and dropdown panels use opaque backgrounds without fading contents', async () => {
+test('Aurora Glass tooltips and dropdown panels use opaque backgrounds without fading contents', async () => {
   const [tooltipCss, toolbarCss] = await Promise.all([
     read('ui/src/styles/global/global-switch-tooltip-diff.css'),
     read('ui/src/styles/global/global-topbar-tabs.part1.css'),

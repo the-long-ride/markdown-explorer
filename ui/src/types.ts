@@ -40,6 +40,7 @@ export interface DocumentPreviewInfo {
   readonly sourceLabel: string;
   readonly durationMs?: number;
   readonly fromCache?: boolean;
+  readonly qualityCode?: 'converted-preview' | 'legacy-best-effort' | 'conversion-failed';
   readonly qualityWarning?: string;
 }
 

@@ -38,6 +38,7 @@ function PreferenceRow({
     <>
       <div
         ref={rowRef}
+        data-row-id={id}
         className={`settings-preference-row ${field ? 'settings-field' : 'settings-item'} settings-item--separated`}
         tabIndex={0}
         aria-describedby={tooltipId}

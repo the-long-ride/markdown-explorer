@@ -35,13 +35,12 @@ test('Tauri opener receives owned strings instead of Path references', async () 
   assert.doesNotMatch(shellBlock, /open_path\(parent\s*,/);
 });
 
-test('View Preferences tooltip portals into the active Settings modal stacking context', async () => {
+test('View Preferences tooltip portals into body with high z-index stacking context', async () => {
   const [tooltip, css] = await Promise.all([
     read('ui/src/components/Settings/PreferenceDescriptionTooltip.tsx'),
     read('ui/src/styles/global/global-settings-layout.css'),
   ]);
 
-  assert.match(tooltip, /closest\(['"]\.settings-modal['"]\)/);
   assert.match(tooltip, /createPortal\([\s\S]*portalTarget/);
   assert.match(css, /\.settings-preference-description-panel\s*\{[\s\S]*z-index:\s*\d+/);
 });

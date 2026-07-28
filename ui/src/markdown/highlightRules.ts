@@ -83,6 +83,13 @@ export const RULES: Record<string, Rule[]> = {
     [/\b(true|false|null)\b/g, 'kw'],
     [/\b(\d+\.?\d*(?:e[+-]?\d+)?)\b/g, 'num'],
   ],
+  yaml: [
+    [/(#[^\n]*)/g, 'cm'],
+    [/^\s*([A-Za-z_][\w.-]*)(?=\s*:)/gm, 'attr'],
+    [/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, 'str'],
+    [/\b(true|false|null|yes|no|on|off)\b/gi, 'kw'],
+    [/\b(\d+(?:\.\d+)?)\b/g, 'num'],
+  ],
   css: [
     [/(\/\*[\s\S]*?\*\/)/g, 'cm'],
     [/([.#:[\w-]+(?:\([^)]*\))?)\s*(?=\{)/g, '<span class="hl-sel">$1</span>'],
@@ -283,3 +290,5 @@ RULES.kt = RULES.kotlin;
 RULES.ex = RULES.elixir;
 RULES.exs = RULES.elixir;
 RULES.pl = RULES.perl;
+RULES.yml = RULES.yaml;
+RULES.jsonc = RULES.json;

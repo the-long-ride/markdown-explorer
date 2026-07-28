@@ -16,7 +16,7 @@ const defaultBindings: Record<string, string> = {
   welcome: 'alt+home',
   settings: 'ctrl+,',
   toggleTheme: 'ctrl+shift+t',
-  toggleToc: 'ctrl+shift+u',
+  toggleToc: 'alt+c',
   locateFile: 'ctrl+shift+l',
   openCurrentDocumentLocation: 'shift+alt+r',
   toggleFocusMode: 'ctrl+shift+f',
@@ -26,7 +26,7 @@ const defaultBindings: Record<string, string> = {
   collapseAll: 'ctrl+shift+c',
   expandAll: 'ctrl+shift+e',
   workspaceSelection: 'ctrl+n',
-  toggleSidebar: 'ctrl+b',
+  toggleSidebar: 'alt+a',
   closeContentTab: 'ctrl+w',
   closeAllContentTabs: 'ctrl+shift+w',
   closeContentTabsToRight: 'ctrl+alt+w',
@@ -37,6 +37,7 @@ function defaultState(overrides: Partial<KeyboardState> = {}): KeyboardState {
   return {
     isDesktop: false,
     isDesktopLike: false,
+    isVscode: false,
     isTermsOpen: false,
     isModalOpen: false,
     isSearchOpen: false,
@@ -462,7 +463,7 @@ describe('resolveKeyboardAction', () => {
 
   describe('toggle TOC', () => {
     it('returns toggle-toc when callback exists and keybinding matches', () => {
-      const e = mkEvent({ key: 'u', ctrlKey: true, shiftKey: true });
+      const e = mkEvent({ key: 'c', altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ hasOnToggleToc: true }));
       expect(result).toEqual({ type: 'toggle-toc' });
     });
@@ -580,7 +581,7 @@ describe('resolveKeyboardAction', () => {
     });
 
     it('toggle-sidebar: returns toggle-sidebar on keybinding match', () => {
-      const e = mkEvent({ key: 'b', ctrlKey: true });
+      const e = mkEvent({ key: 'a', altKey: true });
       const result = resolveKeyboardAction(e, desktopState());
       expect(result).toEqual({ type: 'toggle-sidebar' });
     });
@@ -642,22 +643,22 @@ describe('resolveKeyboardAction', () => {
       expect(result).toEqual({ type: 'workspace-selection' });
     });
 
-    it('toggle-sidebar returns null when not isDesktopLike', () => {
-      const e = mkEvent({ key: 'b', ctrlKey: true });
+    it('toggle-sidebar works on all platforms with Alt+A', () => {
+      const e = mkEvent({ key: 'a', altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktopLike: false }));
-      expect(result).toBeNull();
+      expect(result).toEqual({ type: 'toggle-sidebar' });
     });
   });
 
   describe('e.repeat guard', () => {
     it('toggle-sidebar returns null on repeat', () => {
-      const e = mkEvent({ key: 'b', ctrlKey: true });
+      const e = mkEvent({ key: 'a', altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktopLike: true, isRepeat: true }));
       expect(result).toBeNull();
     });
 
     it('toggle-sidebar returns action on first press', () => {
-      const e = mkEvent({ key: 'b', ctrlKey: true });
+      const e = mkEvent({ key: 'a', altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktopLike: true, isRepeat: false }));
       expect(result).toEqual({ type: 'toggle-sidebar' });
     });

@@ -93,6 +93,8 @@ describe('normalizeCustomThemes', () => {
   test('baseStyle normalized via normalizeThemeStyle', () => {
     const result = normalizeCustomThemes([{ id: 'a', baseStyle: 'glass' }]);
     expect(result[0].baseStyle).toBe('glass');
+    expect(normalizeCustomThemes([{ id: 'neon', baseStyle: 'neon-voltage' }])[0].baseStyle).toBe('neon-voltage');
+    expect(normalizeCustomThemes([{ id: 'raw', baseStyle: 'raw-grid' }])[0].baseStyle).toBe('raw-grid');
     const result2 = normalizeCustomThemes([{ id: 'a', baseStyle: 'invalid' }]);
     expect(result2[0].baseStyle).toBe('default');
   });

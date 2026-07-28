@@ -4,11 +4,33 @@
 
 
 /* Panel surface borders, border-radius, and shadows for Tokyo Night */
+[data-theme-style="tokyo-night"] {
+  --theme-header-gap: 8px;
+}
+
 [data-theme-style="tokyo-night"] .topbar,
+[data-theme-style="tokyo-night"] .app--tab-view .desktop-tabbar,
 [data-theme-style="tokyo-night"] .sidebar,
 [data-theme-style="tokyo-night"] .toc-panel {
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r);
   background: var(--bg-s);
   box-shadow: var(--sh-sm);
+}
+
+
+[data-theme-style="tokyo-night"] .topbar,
+[data-theme-style="tokyo-night"] .app--tab-view .desktop-tabbar {
+  margin: var(--theme-header-gap) 10px 0;
+  width: calc(100% - 20px);
+}
+
+[data-theme-style="tokyo-night"] .app--tab-view .desktop-tabbar {
+  height: var(--topbar-h);
+  flex-basis: var(--topbar-h);
+}
+
+[data-theme-style="tokyo-night"] .sidebar,
+[data-theme-style="tokyo-night"] .toc-panel {
+  margin-top: var(--theme-header-gap);
 }

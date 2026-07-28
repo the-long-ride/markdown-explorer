@@ -97,7 +97,7 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/components/Settings/SettingsModal.tsx': ['tests/unit/ui/components/content.test.tsx'],
   'ui/src/components/Settings/keyboardShortcutSearch.ts': ['tests/unit/ui/components/keyboard-shortcut-search.test.ts'],
   'ui/src/components/Settings/ThemeRemixModal.tsx': ['tests/unit/ui/custom-themes.test.ts'],
-  'ui/src/components/Settings/ThemeStylePicker.tsx': ['tests/unit/ui/custom-themes.test.ts'],
+  'ui/src/components/Settings/ThemeStylePicker.tsx': ['tests/unit/ui/components/theme-modals-render.test.tsx'],
   'ui/src/components/Sidebar/Sidebar.tsx': ['tests/unit/ui/components/content.test.tsx'],
   'ui/src/components/Sidebar/SidebarItemMenu.tsx': ['tests/node/html-menus-discoverability-contracts.test.mjs'],
   'ui/src/components/Sidebar/sidebarItemMenuPosition.ts': ['tests/node/html-menu-behavior.test.mjs'],

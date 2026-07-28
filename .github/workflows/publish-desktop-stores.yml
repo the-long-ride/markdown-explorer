@@ -312,11 +312,6 @@ jobs:
           set -euo pipefail
           mkdir -p snap/local
           install -m 0755 tauri/target/release/markdown-explorer-tauri snap/local/markdown-explorer
-          sidecar_binary="$(find tauri/binaries -maxdepth 1 -type f -name 'markdown-them-node-*' -print -quit)"
-          test -n "$sidecar_binary"
-          install -m 0755 "$sidecar_binary" snap/local/markdown-them-node
-          rm -rf snap/local/document-sidecar
-          cp -a tauri/sidecar/mdthem-sidecar/dist snap/local/document-sidecar
           install -m 0644 snap/gui/markdown-explorer.desktop snap/local/markdown-explorer.desktop
           install -m 0644 ui/assets/logos/logo-512.png snap/local/icon.png
           sed -i "s/^version: .*/version: '$TAURI_VERSION'/" snap/snapcraft.yaml

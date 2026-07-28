@@ -238,8 +238,6 @@
    Maximized state offset on Windows to prevent titlebar hidden cutoff
    ============================================================ */
 .is-windows .desktop-tabbar {
-  padding-top: 9px !important;
-  padding-bottom: 6px !important;
   height: 46px !important;
   flex: 0 0 46px !important;
 }
@@ -248,8 +246,6 @@
 }
 
 .is-maximized-windows .desktop-tabbar {
-  padding-top: 13px !important;
-  padding-bottom: 6px !important;
   height: 50px !important;
   flex: 0 0 50px !important;
 }

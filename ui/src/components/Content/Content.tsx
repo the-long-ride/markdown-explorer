@@ -116,12 +116,17 @@ export function Content({
   const workspaceUnavailablePath = state.workspaceUnavailablePath;
   const activeContentTab = state.contentTabs.find((tab) => tab.filePath === state.activeContentTabPath);
   const sourceDocumentText = activeContentTab?.sourceDocumentText ?? state.sourceDocumentText;
+  const hostHtmlMarkdownSource = activeContentTab?.markdownSource ?? state.markdownSource;
+  const hostHtmlMarkdownHtml = activeContentTab?.contentHtml ?? state.contentHtml;
   const htmlPreviewOverride = activeContentTab?.htmlPreviewOverride ?? state.currentHtmlPreviewOverride;
   const isHtmlDocument = isHtmlDocumentPath(state.currentFile) && sourceDocumentText !== null;
   const htmlDocumentPreviewEnabled = htmlPreviewOverride ?? state.settings.defaultHtmlPreview;
   const isFullHtmlPreview = isHtmlDocument && htmlDocumentPreviewEnabled;
   const htmlMarkdownRender = useMemo(() => {
     if (!isHtmlDocument || sourceDocumentText === null) return { html: '', error: null as string | null };
+    if (hostHtmlMarkdownSource) {
+      return { html: hostHtmlMarkdownHtml, error: null as string | null };
+    }
     try {
       const markdown = convertHtmlSourceToMarkdown(sourceDocumentText);
       return {
@@ -131,7 +136,15 @@ export function Content({
     } catch {
       return { html: '', error: t.htmlDocumentPreviewError };
     }
-  }, [isHtmlDocument, sourceDocumentText, state.currentFile, state.settings, t.htmlDocumentPreviewError]);
+  }, [
+    hostHtmlMarkdownHtml,
+    hostHtmlMarkdownSource,
+    isHtmlDocument,
+    sourceDocumentText,
+    state.currentFile,
+    state.settings,
+    t.htmlDocumentPreviewError,
+  ]);
   const [htmlLocalFirstWarning, setHtmlLocalFirstWarning] = useState<HtmlLocalFirstPolicyReport | null>(null);
   const [showHtmlPreviewExperienceBanner, setShowHtmlPreviewExperienceBanner] = useState(false);
   const htmlPreviewExperienceKeyRef = useRef<string | null>(null);
@@ -189,14 +202,19 @@ export function Content({
       )
     : "";
   const previewWarning =
+    previewInfo?.qualityCode === "conversion-failed" ||
     previewInfo?.qualityWarning === DEFAULT_CONVERSION_FAILURE_WARNING
       ? previewCopy.conversionFailedWarning
-      : previewInfo?.qualityWarning &&
-          previewInfo.qualityWarning !== DEFAULT_CONVERSION_WARNING
-        ? previewInfo.qualityWarning
-        : previewInfo?.kind === "converted"
+      : previewInfo?.qualityCode === "legacy-best-effort"
+        ? previewCopy.legacyBestEffortWarning
+        : previewInfo?.qualityCode === "converted-preview"
           ? previewCopy.convertedWarning
-          : previewCopy.textWarning;
+          : previewInfo?.qualityWarning &&
+              previewInfo.qualityWarning !== DEFAULT_CONVERSION_WARNING
+            ? previewInfo.qualityWarning
+            : previewInfo?.kind === "converted"
+              ? previewCopy.convertedWarning
+              : previewCopy.textWarning;
   const previewMeta = previewInfo && previewDuration
     ? formatTemplate(previewCopy.durationMeta, {
         status: previewInfo.fromCache

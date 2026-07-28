@@ -2,6 +2,7 @@
    Theme Style Surface Treatments
    ============================================================ */
 [data-theme-style="glass"] .topbar,
+[data-theme-style="glass"] .app--tab-view .desktop-tabbar,
 [data-theme-style="glass"] .sidebar,
 [data-theme-style="glass"] .toc-panel,
 [data-theme-style="glass"] .toc-panel__header,
@@ -24,11 +25,18 @@
   -webkit-backdrop-filter: var(--surface-blur);
 }
 
-[data-theme-style="glass"] .topbar {
+[data-theme-style="glass"] .topbar,
+[data-theme-style="glass"] .app--tab-view .desktop-tabbar {
   margin: 8px 10px 0;
+  width: calc(100% - 20px);
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r-lg);
   box-shadow: var(--sh-md);
+}
+
+[data-theme-style="glass"] .app--tab-view .desktop-tabbar {
+  height: var(--topbar-h);
+  flex-basis: var(--topbar-h);
 }
 
 [data-theme-style="glass"] .body {
@@ -170,6 +178,7 @@
 }
 
 [data-theme-style="bento"] .topbar,
+[data-theme-style="bento"] .app--tab-view .desktop-tabbar,
 [data-theme-style="bento"] .sidebar,
 [data-theme-style="bento"] .toc-panel {
   border: var(--stroke-w) solid var(--bd-s);
@@ -177,8 +186,15 @@
   box-shadow: var(--sh-sm);
 }
 
-[data-theme-style="bento"] .topbar {
+[data-theme-style="bento"] .topbar,
+[data-theme-style="bento"] .app--tab-view .desktop-tabbar {
   margin: 10px 12px 0;
+  width: calc(100% - 24px);
+}
+
+[data-theme-style="bento"] .app--tab-view .desktop-tabbar {
+  height: var(--topbar-h);
+  flex-basis: var(--topbar-h);
 }
 
 [data-theme-style="bento"] .sidebar,

@@ -12,7 +12,7 @@
       "outFiles": [
         "${workspaceFolder}/vscode/out/**/*.js"
       ],
-      "preLaunchTask": "watch",
+      "preLaunchTask": "compile",
       "presentation": {
         "group": "debug",
         "order": 1

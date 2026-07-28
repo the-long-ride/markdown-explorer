@@ -76,7 +76,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **View-as-Chart**: Automatically convert numeric table columns into interactive Bar, Line, or Pie charts.
 
 - **Converted Document Previews**
-  - **Multi-Format Local Conversion**: Opt-in previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
+  - **Multi-Format Local Conversion**: Opt-in previews for DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files. Tauri performs conversion in-process with local Rust adapters; Electron and VS Code retain `@the-long-ride/markdown-them`. See [Native document conversion](docs/native-document-conversion.md).
   - **Smart Caching**: Fast re-views using file timestamp and size caching.
 
 - **Search & Discovery**
@@ -84,7 +84,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Jump-to-Result**: Click search excerpts to jump directly to exact matches.
 
 - **Customization & Platform Support**
-  - **Theme Remix**: Create, edit, import, and export custom themes with color, density, spacing, and background image controls.
+  - **Built-in Theme Families & Theme Remix**: Choose grouped built-in themes—including Aurora Glass, Neon Voltage, and Raw Grid—pet themes, or create, edit, import, and export custom themes with color, density, spacing, and background image controls.
   - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
   - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
   - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.

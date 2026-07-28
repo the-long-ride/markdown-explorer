@@ -87,6 +87,14 @@ describe('renderCodeBlock', () => {
       const html = renderCodeBlock(token, 'auto');
       expect(html).not.toContain('mdn-codeblock-gutter');
     });
+
+    test('normalizes YAML aliases before rendering highlighted code', () => {
+      const token = { type: 'code' as const, lang: 'yml', content: 'title: Explorer\nenabled: true' };
+      const html = renderCodeBlock(token, 'auto');
+      expect(html).toContain('language-yaml');
+      expect(html).toContain('hl-attr');
+      expect(html).toContain('hl-kw');
+    });
   });
 
   describe('code block collapse', () => {

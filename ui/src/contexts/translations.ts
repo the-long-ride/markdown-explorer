@@ -63,6 +63,10 @@ export interface Translations {
   htmlDocumentPreviewError: string;
   htmlPreviewExperienceNotice: string;
   themeStyles: {
+    themesLabel: string;
+    themesDesc: string;
+    themesMenuLabel: string;
+    chooseTheme: string;
     defaultLabel: string;
     defaultDesc: string;
     glassLabel: string;
@@ -73,8 +77,24 @@ export interface Translations {
     vercelDesc: string;
     tokyoNightLabel: string;
     tokyoNightDesc: string;
+    neonVoltageLabel: string;
+    neonVoltageDesc: string;
+    rawGridLabel: string;
+    rawGridDesc: string;
     petsLabel: string;
     petsDesc: string;
+    petsMenuLabel: string;
+    choosePetTheme: string;
+    whiteShibaLabel: string;
+    kInkLabel: string;
+    catLabel: string;
+    hamsterLabel: string;
+    corgiLabel: string;
+    customThemesLabel: string;
+    customThemesDesc: string;
+    customThemesMenuLabel: string;
+    chooseCustomTheme: string;
+    themeRemixLabel: string;
   };
   actions: {
     searchCurrent: string;
@@ -185,6 +205,7 @@ export interface Translations {
     convertedTitle: string;
     textTitle: string;
     convertedWarning: string;
+    legacyBestEffortWarning: string;
     conversionFailedWarning: string;
     textWarning: string;
     preparedLocally: string;
@@ -340,18 +361,38 @@ let _TRANSLATIONS: Record<string, Translations> = {
     htmlDocumentPreviewError: "Unable to render this HTML document preview.",
     htmlPreviewExperienceNotice: "HTML Preview may not match the full browser experience. For the best result, right-click the document tab or use the file’s three-dot menu in Files, then choose Open in Browser.",
     themeStyles: {
+      themesLabel: "Themes",
+      themesDesc: "Built-in visual systems for the whole workspace",
+      themesMenuLabel: "Built-in themes",
+      chooseTheme: "Choose theme",
       defaultLabel: "Default",
       defaultDesc: "Compact reader surfaces with the original Markdown Explorer balance",
-      glassLabel: "Evolved Glass",
-      glassDesc: "Layered translucent panels, softer strokes, and airy document rhythm",
+      glassLabel: "Aurora Glass",
+      glassDesc: "Translucent panels, soft blur, and layered pastel light",
       bentoLabel: "Bento Grids",
       bentoDesc: "Modular blocks, stronger structure, and denser scan-friendly spacing",
       vercelLabel: "Vercel",
       vercelDesc: "High-contrast monochrome, sharp borders, and geometric focus",
       tokyoNightLabel: "Tokyo Night",
       tokyoNightDesc: "Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast",
-      petsLabel: "Pets",
-      petsDesc: "Anime PNG pet companions, playful background buddies, and soft animated reading surfaces",
+      neonVoltageLabel: "Neon Voltage",
+      neonVoltageDesc: "Deep black surfaces with electric coral, teal, and purple glow",
+      rawGridLabel: "Raw Grid",
+      rawGridDesc: "Visible structure, asymmetric panels, and mechanical borders",
+      petsLabel: "Pet themes",
+      petsDesc: "Anime PNG companions and playful reading surfaces",
+      petsMenuLabel: "Pet themes",
+      choosePetTheme: "Choose pet theme",
+      whiteShibaLabel: "White Shiba",
+      kInkLabel: "K-Ink (app author's dog)",
+      catLabel: "Cat",
+      hamsterLabel: "Hamster",
+      corgiLabel: "Corgi",
+      customThemesLabel: "Your custom themes",
+      customThemesDesc: "Saved remixes and personal visual systems",
+      customThemesMenuLabel: "Custom themes",
+      chooseCustomTheme: "Choose custom theme",
+      themeRemixLabel: "Theme Remix",
     },
     actions: {
       searchCurrent: "Search current workspace",
@@ -462,6 +503,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       convertedTitle: "Converted {sourceLabel} preview",
       textTitle: "{sourceLabel} preview",
       convertedWarning: "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file.",
+      legacyBestEffortWarning: "This legacy document uses best-effort conversion. Some content, formatting, formulas, or embedded objects may be missing.",
       conversionFailedWarning: "Markdown Explorer could not convert this file. The details are shown below.",
       textWarning: "Plain text is rendered through Markdown Explorer, so Markdown-like syntax may be formatted.",
       preparedLocally: "Prepared locally",

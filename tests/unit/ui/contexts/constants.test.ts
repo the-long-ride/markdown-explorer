@@ -74,11 +74,13 @@ describe('appStateConstants', () => {
   });
 
   test('normalizeThemeStyle valid', () => {
-    expect(normalizeThemeStyle('glass')).toBe('glass');
+    expect(normalizeThemeStyle('glass')).toBe('default');
     expect(normalizeThemeStyle('default')).toBe('default');
     expect(normalizeThemeStyle('bento')).toBe('bento');
     expect(normalizeThemeStyle('vercel')).toBe('vercel');
     expect(normalizeThemeStyle('tokyo-night')).toBe('tokyo-night');
+    expect(normalizeThemeStyle('neon-voltage')).toBe('neon-voltage');
+    expect(normalizeThemeStyle('raw-grid')).toBe('raw-grid');
   });
 
   test('normalizeThemeStyle invalid falls back to default', () => {
@@ -104,6 +106,8 @@ describe('appStateConstants', () => {
     expect(isPetThemeStyle('bento')).toBe(false);
     expect(isPetThemeStyle('vercel')).toBe(false);
     expect(isPetThemeStyle('tokyo-night')).toBe(false);
+    expect(isPetThemeStyle('neon-voltage')).toBe(false);
+    expect(isPetThemeStyle('raw-grid')).toBe(false);
   });
 
   test('THEME_MODE_OPTIONS has 3 entries', () => {

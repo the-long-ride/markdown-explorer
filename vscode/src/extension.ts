@@ -30,12 +30,6 @@ export function _doActivate(
 ): void {
   console.log('Markdown Explorer activated');
 
-  // Register sidebar webview provider
-  const provider = new MarkdownExplorerSidebarProvider(context);
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(MarkdownExplorerSidebarProvider.viewType, provider),
-  );
-
   // Open the full docs viewer (all .md files)
   context.subscriptions.push(
     vscode.commands.registerCommand('markdownExplorer.open', () => {
@@ -120,94 +114,4 @@ export function _doActivate(
   });
   watcher.onDidDelete(() => MarkdownDocsPanel.currentPanel?.refresh());
   context.subscriptions.push(watcher);
-}
-
-type VscodeWebviewViewProvider = import('vscode').WebviewViewProvider;
-
-class MarkdownExplorerSidebarProvider implements VscodeWebviewViewProvider {
-  public static readonly viewType = 'markdownExplorerSidebar';
-  constructor(private readonly _context: import('vscode').ExtensionContext) {}
-
-  public resolveWebviewView(
-    webviewView: import('vscode').WebviewView,
-    _context: import('vscode').WebviewViewResolveContext,
-    _token: import('vscode').CancellationToken,
-  ) {
-    webviewView.webview.options = {
-      enableScripts: true,
-      localResourceRoots: [this._context.extensionUri]
-    };
-
-    webviewView.webview.html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body {
-            padding: 20px;
-            color: var(--vscode-foreground);
-            font-family: var(--vscode-font-family);
-            font-size: var(--vscode-font-size);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-            gap: 12px;
-          }
-          button {
-            background-color: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-          }
-          button:hover {
-            background-color: var(--vscode-button-hoverBackground);
-          }
-        </style>
-      </head>
-      <body>
-        <div style="font-size: 32px;">🔍</div>
-        <h3>Markdown Explorer</h3>
-        <p>Click the button below to open the interactive Docs Viewer.</p>
-        <button id="openBtn">Open Markdown Explorer</button>
-        <script>
-          const vscode = acquireVsCodeApi();
-          document.getElementById('openBtn').addEventListener('click', () => {
-            vscode.postMessage({ command: 'open' });
-          });
-          // Automatically trigger opening on load
-          vscode.postMessage({ command: 'open' });
-        </script>
-      </body>
-      </html>
-    `;
-
-    const openAndClose = () => {
-      getVscode().commands.executeCommand('markdownExplorer.open');
-      getVscode().commands.executeCommand('workbench.action.closeSidebar');
-    };
-
-    // If visible on load, trigger open immediately
-    if (webviewView.visible) {
-      openAndClose();
-    }
-
-    // Also trigger whenever visibility changes to visible
-    webviewView.onDidChangeVisibility(() => {
-      if (webviewView.visible) {
-        openAndClose();
-      }
-    });
-
-    webviewView.webview.onDidReceiveMessage(message => {
-      if (message.command === 'open') {
-        openAndClose();
-      }
-    });
-  }
 }

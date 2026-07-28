@@ -76,6 +76,7 @@ export type KeyboardAction =
 export interface KeyboardState {
   isDesktop: boolean;
   isDesktopLike: boolean;
+  isVscode: boolean;
   isTermsOpen: boolean;
   isModalOpen: boolean;
   isSearchOpen: boolean;
@@ -232,8 +233,13 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     return { type: 'toggle-active-html-document-preview' };
   }
 
-  if (matchesShortcut(e, state.keybindings.workspaceSelection)) {
+  if (!state.isVscode && matchesShortcut(e, state.keybindings.workspaceSelection)) {
     return { type: 'workspace-selection' };
+  }
+
+  if (matchesShortcut(e, state.keybindings.toggleSidebar)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-sidebar' };
   }
 
   if (state.isDesktopLike) {
@@ -245,10 +251,6 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     }
     if (matchesShortcut(e, state.keybindings.expandAll)) {
       return { type: 'expand-all' };
-    }
-    if (matchesShortcut(e, state.keybindings.toggleSidebar)) {
-      if (state.isRepeat) return null;
-      return { type: 'toggle-sidebar' };
     }
   }
 

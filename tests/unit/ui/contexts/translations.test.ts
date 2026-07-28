@@ -81,6 +81,21 @@ describe('translations', () => {
     }
   });
 
+
+  test('all supported languages match the English theme and preview translation shapes', () => {
+    const english = TRANSLATIONS.en;
+    const themeKeys = Object.keys(english.themeStyles).sort();
+    const previewKeys = Object.keys(english.documentPreview).sort();
+
+    for (const option of LANGUAGE_OPTIONS) {
+      const locale = TRANSLATIONS[option.id];
+      expect(Object.keys(locale.themeStyles).sort()).toEqual(themeKeys);
+      expect(Object.keys(locale.documentPreview).sort()).toEqual(previewKeys);
+      for (const value of Object.values(locale.themeStyles)) expect(value.trim()).not.toBe('');
+      for (const value of Object.values(locale.documentPreview)) expect(value.trim()).not.toBe('');
+    }
+  });
+
   test('AppLanguage type is derived from LANGUAGE_OPTIONS ids', () => {
     const ids = LANGUAGE_OPTIONS.map(o => o.id);
     expect(ids).toEqual(['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru']);

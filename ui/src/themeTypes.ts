@@ -9,7 +9,14 @@ export type PetThemeStyle =
   | 'pet-hamster'
   | 'pet-corgi';
 
-export type ThemeStyle = 'default' | 'glass' | 'bento' | 'vercel' | 'tokyo-night' | PetThemeStyle;
+export type ThemeStyle =
+  | 'default'
+  | 'bento'
+  | 'vercel'
+  | 'tokyo-night'
+  | 'neon-voltage'
+  | 'raw-grid'
+  | PetThemeStyle;
 
 export type CustomThemeScheme = 'light' | 'dark';
 

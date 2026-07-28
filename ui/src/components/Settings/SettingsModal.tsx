@@ -136,6 +136,7 @@ export function SettingsModal({
   const visibleActions = ACTIONS_LIST.filter(
     (act) =>
       act.scope === "both" ||
+      (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
       (act.scope === "desktop" && isDesktopLike) ||
       (act.scope === "electron" && isDesktop),
   );

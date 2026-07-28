@@ -388,6 +388,13 @@ describe('Topbar render', () => {
     expect(closeFolders).toHaveLength(0);
   });
 
+  it('renders only one crumb separator in topbar when in VS Code extension', () => {
+    mockState.appRuntime = 'vscode';
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    const separators = container.querySelectorAll('.topbar__crumb-separator');
+    expect(separators).toHaveLength(1);
+  });
+
   it('dispatches READY_ACK and sends closeWorkspace on Close Folder click', () => {
     mockState.appRuntime = 'desktop';
     const { container } = render(React.createElement(Topbar, defaultProps));

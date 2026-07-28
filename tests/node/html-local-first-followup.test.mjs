@@ -8,7 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const read = (relativePath) => readFile(path.join(repoRoot, relativePath), 'utf8');
 const locales = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'];
 
-test('HTML documents convert original source to Markdown in the shared UI pipeline', async () => {
+test('HTML documents use host Markdown when available and retain the shared source fallback', async () => {
   const [content, view, converter, tauri, electron, vscode] = await Promise.all([
     read('ui/src/components/Content/Content.tsx'),
     read('ui/src/components/Content/HtmlDocumentView.tsx'),
@@ -20,9 +20,12 @@ test('HTML documents convert original source to Markdown in the shared UI pipeli
   assert.match(converter, /convertHtmlSourceToMarkdown/);
   assert.match(converter, /DOMParser/);
   assert.match(content, /convertHtmlSourceToMarkdown\(sourceDocumentText\)/);
+  assert.match(content, /if \(hostHtmlMarkdownSource\)/);
   assert.match(view, /markdownHtml/);
   assert.match(tauri, /is_html_document/);
-  assert.match(tauri, /let raw = if is_html_document/);
+  assert.match(tauri, /source_document_text = if is_html_document/);
+  assert.match(tauri, /native_html_conversion/);
+  assert.match(tauri, /Some\(converter\.read_markdown/);
   assert.match(electron, /isHtmlDocument.*sourceDocumentText/s);
   assert.match(vscode, /isHtmlDocument.*sourceDocumentText/s);
 });
@@ -105,7 +108,7 @@ test('HTML previews do not inherit Markdown Explorer typography or theme styles'
 });
 
 test('settings confirm shortcut reset, use requested icons, and remove requested borders', async () => {
-  const [shortcuts, dialogs, icons, modal, cssA, cssLayout, prefs, contentCss] = await Promise.all([
+  const [shortcuts, dialogs, icons, modal, cssA, cssLayout, prefs, contentCss, rawGridCss] = await Promise.all([
     read('ui/src/components/Settings/SettingsShortcutsPanel.tsx'),
     read('ui/src/components/Settings/SettingsModalDialogs.tsx'),
     read('ui/src/components/shared/icons.tsx'),
@@ -114,6 +117,7 @@ test('settings confirm shortcut reset, use requested icons, and remove requested
     read('ui/src/styles/global/global-settings-layout.css'),
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
     read('ui/src/styles/global/global-content-layout.css'),
+    read('ui/src/styles/global/global-theme-raw-grid.css'),
   ]);
   assert.match(shortcuts, /onRequestReset/);
   assert.match(dialogs, /resetShortcutsConfirmTitle/);
@@ -122,12 +126,18 @@ test('settings confirm shortcut reset, use requested icons, and remove requested
   assert.match(icons, /export const ExportSettingsIcon/);
   assert.match(modal, /ImportSettingsIcon/);
   assert.match(modal, /ExportSettingsIcon/);
-  assert.match(cssLayout, /\.settings-appearance-controls\s*>\s*:first-child[^}]*border-bottom:\s*0/s);
-  assert.match(cssLayout, /\.settings-appearance-controls\s*>\s*\.settings-preference-row:first-child\s*\+\s*\.settings-preference-row[^}]*border-top:\s*0/s);
+  assert.doesNotMatch(cssLayout, /\.settings-appearance-controls\s*>\s*:first-child/);
+  assert.match(cssLayout, /\.settings-appearance-controls\s*>\s*\.settings-preference-row:first-child[^}]*border-top:\s*0/s);
+  assert.match(cssLayout, /\[data-row-id="desktop-view"\]\s*\+\s*\.settings-preference-row[^}]*border-top:\s*0/s);
+  assert.match(prefs, /data-row-id=\{id\}/);
   assert.match(cssA, /settings-panel-heading--secondary[^}]*border-top:\s*0/s);
   assert.match(prefs, /settings-theme-style-section/);
   assert.match(cssA, /settings-theme-style-section[^}]*border-top:\s*0/s);
   assert.match(contentCss, /html-local-first-warning-backdrop/);
+  assert.match(rawGridCss, /\[data-theme-style="raw-grid"\]\s*\[role="switch"\]/);
+  assert.match(rawGridCss, /\[data-theme-style="raw-grid"\]\s*\.settings-shortcut-toggle/);
+  assert.match(rawGridCss, /\[data-theme-style="raw-grid"\]\s*\.toolbar-action-menu__switch/);
+  assert.match(rawGridCss, /\[data-theme-style="raw-grid"\]\s*\.welcome-container[^}]*background:/s);
 });
 
 test('sidebar menu aligns to the three-dot button and shortcut labels use parentheses and uppercase keys', async () => {

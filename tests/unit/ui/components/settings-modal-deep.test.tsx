@@ -189,6 +189,10 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
     bannedShortcutTitle: 'Banned Shortcut',
     bannedShortcutDismiss: 'Dismiss',
     bannedShortcutImeMessage: 'Ctrl+Space is IME.',
+    resetShortcutsConfirmTitle: 'Reset keyboard shortcuts?',
+    resetShortcutsConfirmBody: 'Confirm reset',
+    confirmResetShortcuts: 'Reset Shortcuts',
+    cancelResetShortcuts: 'Cancel',
     themeStyles: {
       defaultLabel: 'Default',
       defaultDesc: 'Default style',
@@ -212,6 +216,9 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   FolderIcon: () => <span>folder-icon</span>,
   GlobeIcon: () => <span>globe-icon</span>,
   AlertTriangleIcon: ({ size }: any) => <span>alert-icon</span>,
+  ImportSettingsIcon: () => <span>import-icon</span>,
+  ExportSettingsIcon: () => <span>export-icon</span>,
+  LanguageIcon: () => <span>lang-icon</span>,
 }));
 
 vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
@@ -232,6 +239,7 @@ vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({
 
 vi.mock('../../../../ui/src/utils/shortcuts', () => ({
   formatShortcutLabel: (s: string) => s,
+  getEnabledShortcut: (settings: any, key: string) => settings?.keybindings?.[key] ?? null,
 }));
 
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/*.png', () => ({
@@ -290,7 +298,7 @@ describe('SettingsModal deep', () => {
     it('close button calls onClose', () => {
       const onClose = vi.fn();
       renderModal({ onClose });
-      fireEvent.click(screen.getByText('×'));
+      fireEvent.click(screen.getByRole('button', { name: 'Close Settings - (Esc)' }));
       expect(onClose).toHaveBeenCalled();
     });
 
@@ -412,7 +420,7 @@ describe('SettingsModal deep', () => {
       expect(shortcutSwitch).toHaveAttribute('aria-checked', 'true');
       fireEvent.click(shortcutSwitch);
       expect(mockUpdateSettings).toHaveBeenCalledWith({
-        disabledKeybindings: expect.objectContaining({ findCurrentFile: true }),
+        disabledKeybindings: expect.objectContaining({ welcome: true }),
       });
     });
 
@@ -462,6 +470,7 @@ describe('SettingsModal deep', () => {
     it('Reset to Default Shortcuts calls updateSettings with defaults', () => {
       renderModal();
       fireEvent.click(screen.getByText('Reset to Default Shortcuts'));
+      fireEvent.click(screen.getByRole('button', { name: 'Reset Shortcuts' }));
       expect(mockUpdateSettings).toHaveBeenCalledWith({
         keybindings: { searchCurrent: 'Ctrl+K' },
         disabledKeybindings: {},
@@ -884,7 +893,7 @@ describe('SettingsModal deep', () => {
 
   describe('ACTIONS_LIST', () => {
     it('contains expected number of actions', () => {
-      expect(ACTIONS_LIST.length).toBe(25);
+      expect(ACTIONS_LIST.length).toBe(26);
     });
 
     it('contains findCurrentFile action', () => {
