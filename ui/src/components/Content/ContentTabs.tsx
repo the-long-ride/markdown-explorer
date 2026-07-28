@@ -249,6 +249,7 @@ export function ContentTabs() {
     if (closeInProgressRef.current || filePaths.length === 0) return;
 
     const prefersReducedMotion = typeof window === 'undefined'
+      || (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
       || (typeof window.matchMedia === 'function'
         && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     if (prefersReducedMotion) {
@@ -262,8 +263,8 @@ export function ContentTabs() {
       const measuredWidth = Math.max(
         element.getBoundingClientRect().width,
         element.offsetWidth,
-        1,
       );
+      if (measuredWidth <= 0) return false;
       element.style.setProperty('--content-tab-close-width', `${measuredWidth}px`);
       return true;
     });
@@ -298,7 +299,7 @@ export function ContentTabs() {
         case "openInBrowser":
           if (!openLocalFileInBrowser(bridge, contextMenu.filePath)) {
             window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', {
-              detail: t.previewActions.openError,
+              detail: t?.previewActions?.openError ?? 'Unable to open file in browser',
             }));
           }
           break;
@@ -352,7 +353,7 @@ export function ContentTabs() {
       state.appRuntime,
       state.contentTabs,
       state.settings.defaultHtmlPreview,
-      t.previewActions.openError,
+      t?.previewActions?.openError,
     ],
   );
 

@@ -164,7 +164,7 @@ describe('createInitialState', () => {
   test('with saved state', () => {
     const saved = {
       theme: 'dark',
-      themeStyle: 'glass',
+      themeStyle: 'bento',
       showTitle: true,
       defaultHtmlPreview: false,
       defaultCsvPreview: false,
@@ -181,7 +181,7 @@ describe('createInitialState', () => {
     const state = createInitialState(saved as any, true);
     expect(state.theme).toBe('dark');
     expect(state.hasThemePreference).toBe(true);
-    expect(state.themeStyle).toBe('glass');
+    expect(state.themeStyle).toBe('bento');
     expect(state.hasThemeStylePreference).toBe(true);
     expect(state.settings.showTitle).toBe(true);
     expect(state.settings.defaultHtmlPreview).toBe(false);

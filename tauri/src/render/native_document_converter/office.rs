@@ -3,6 +3,24 @@ use office_oxide::{Document, DocumentFormat};
 use std::io::Cursor;
 use std::path::Path;
 
+fn unescape_xml_entities(text: &str) -> String {
+    let mut decoded = text.to_owned();
+
+    loop {
+        let next = decoded
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&apos;", "'");
+
+        if next == decoded {
+            return decoded;
+        }
+        decoded = next;
+    }
+}
+
 pub fn convert(path: &Path, extension: &str) -> Result<ConversionOutput, ConversionError> {
     let document = if extension == "xlm" {
         let bytes = std::fs::read(path)?;
@@ -15,7 +33,7 @@ pub fn convert(path: &Path, extension: &str) -> Result<ConversionOutput, Convers
     let quality = quality_for_extension(extension);
 
     Ok(ConversionOutput {
-        markdown: normalize(&document.to_markdown()),
+        markdown: normalize(&unescape_xml_entities(&document.to_markdown())),
         quality,
     })
 }
@@ -33,21 +51,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn converts_real_pptx_fixture_in_slide_order() {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("..")
-            .join("tests")
-            .join("fixtures")
-            .join("sample-presentation.pptx");
-        let output = convert(&path, "pptx").expect("convert PPTX fixture");
-        assert_eq!(output.quality, ConversionQuality::Standard);
-        assert!(output.markdown.contains("First slide title"));
-        assert!(output.markdown.contains("Alpha & beta"));
-        assert!(output.markdown.contains("Second line"));
-        assert!(output.markdown.contains("Second slide title"));
-        assert!(
-            output.markdown.find("First slide title").unwrap()
-                < output.markdown.find("Second slide title").unwrap()
+    fn decodes_nested_xml_entities_from_office_markdown() {
+        assert_eq!(
+            unescape_xml_entities("Alpha &amp;amp; beta"),
+            "Alpha & beta"
+        );
+        assert_eq!(
+            unescape_xml_entities("&amp;lt;tag&amp;gt; &quot;value&quot;"),
+            "<tag> \"value\""
         );
     }
 
@@ -59,7 +70,7 @@ mod tests {
                 ConversionQuality::BestEffortLegacy
             );
         }
-        for extension in ["docx", "xlsx", "pptx"] {
+        for extension in ["docx", "xlsx"] {
             assert_eq!(quality_for_extension(extension), ConversionQuality::Standard);
         }
     }

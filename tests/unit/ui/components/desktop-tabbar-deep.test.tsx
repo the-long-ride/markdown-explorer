@@ -239,17 +239,21 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
   ),
 }));
 
-vi.mock('../../../../ui/src/components/shared/icons', () => ({
-  ChevronLeftIcon: () => <span>back-icon</span>,
-  ChevronRightIcon: () => <span>forward-icon</span>,
-  CollapseIcon: () => <span>collapse-icon</span>,
-  CopyIcon: () => <span>copy-icon</span>,
-  ExpandIcon: () => <span>expand-icon</span>,
-  RefreshIcon: () => <span>refresh-icon</span>,
-  CloseIcon: () => <span>close-icon</span>,
-  OpenFolderLocationIcon: () => <span>open-folder-icon</span>,
-  PlusIcon: () => <span>plus-icon</span>,
-}));
+vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    ChevronLeftIcon: () => <span>back-icon</span>,
+    ChevronRightIcon: () => <span>forward-icon</span>,
+    CollapseIcon: () => <span>collapse-icon</span>,
+    CopyIcon: () => <span>copy-icon</span>,
+    ExpandIcon: () => <span>expand-icon</span>,
+    RefreshIcon: () => <span>refresh-icon</span>,
+    CloseIcon: () => <span>close-icon</span>,
+    OpenFolderLocationIcon: () => <span>open-folder-icon</span>,
+    PlusIcon: () => <span>plus-icon</span>,
+  };
+});
 
 vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
   getTabLabel: (tab: any) => tab.alias || tab.workspaceName || (tab.kind === 'home' ? 'Home' : 'New'),

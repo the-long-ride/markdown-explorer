@@ -1,10 +1,19 @@
+fn clean_line(line: &str) -> &str {
+    let trimmed = line.trim_end();
+    if !trimmed.is_empty() && line[trimmed.len()..].starts_with("  ") {
+        &line[..trimmed.len() + 2]
+    } else {
+        trimmed
+    }
+}
+
 pub fn normalize(markdown: &str) -> String {
     let normalized = markdown.replace("\r\n", "\n").replace('\r', "\n");
     let mut output = String::with_capacity(normalized.len());
     let mut blank_lines = 0usize;
 
     for line in normalized.lines() {
-        let clean = line.trim_end();
+        let clean = clean_line(line);
         if clean.is_empty() {
             blank_lines += 1;
             if blank_lines <= 2 && !output.is_empty() {

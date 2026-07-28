@@ -207,7 +207,7 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
 
 vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
   TabContextMenu: ({ onAction, onClose, disabled, shortcuts }: any) => (
-    <div data-testid="tab-context-menu" data-shortcuts={shortcuts ? 'present' : 'absent'}>
+    <div data-testid="tab-context-menu" data-shortcuts={shortcuts && Object.values(shortcuts).some(Boolean) ? 'present' : 'absent'}>
       <button data-testid="ctx-close-this" disabled={disabled?.closeThisTab} onClick={() => onAction('closeThisTab')}>Close</button>
       <button data-testid="ctx-close-right" disabled={disabled?.closeTabsToRight} onClick={() => onAction('closeTabsToRight')}>Close right</button>
       <button data-testid="ctx-close-others" disabled={disabled?.closeOtherTabs} onClick={() => onAction('closeOtherTabs')}>Close others</button>
@@ -217,17 +217,21 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
   ),
 }));
 
-vi.mock('../../../../ui/src/components/shared/icons', () => ({
-  ChevronLeftIcon: () => <span>back-icon</span>,
-  ChevronRightIcon: () => <span>forward-icon</span>,
-  CollapseIcon: () => <span>collapse-icon</span>,
-  CopyIcon: () => <span>copy-icon</span>,
-  ExpandIcon: () => <span>expand-icon</span>,
-  RefreshIcon: () => <span>refresh-icon</span>,
-  CloseIcon: () => <span>close-icon</span>,
-  OpenFolderLocationIcon: () => <span>open-folder-icon</span>,
-  PlusIcon: () => <span>plus-icon</span>,
-}));
+vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    ChevronLeftIcon: () => <span>back-icon</span>,
+    ChevronRightIcon: () => <span>forward-icon</span>,
+    CollapseIcon: () => <span>collapse-icon</span>,
+    CopyIcon: () => <span>copy-icon</span>,
+    ExpandIcon: () => <span>expand-icon</span>,
+    RefreshIcon: () => <span>refresh-icon</span>,
+    CloseIcon: () => <span>close-icon</span>,
+    OpenFolderLocationIcon: () => <span>open-folder-icon</span>,
+    PlusIcon: () => <span>plus-icon</span>,
+  };
+});
 
 vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
   getTabLabel: (tab: any) => tab.alias || tab.workspaceName || (tab.kind === 'home' ? 'Home' : 'New'),
@@ -352,6 +356,7 @@ describe('DesktopTabBar interactions', () => {
 
   it('fades then collapses a closing workspace tab before invoking the callback', () => {
     vi.useFakeTimers();
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
     try {
       (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
       renderTabBar();
@@ -369,12 +374,14 @@ describe('DesktopTabBar interactions', () => {
       act(() => vi.advanceTimersByTime(140));
       expect(props.onCloseTab).toHaveBeenCalledWith('ws2');
     } finally {
+      spy.mockRestore();
       vi.useRealTimers();
     }
   });
 
   it('animates every tab removed by a bulk close action', () => {
     vi.useFakeTimers();
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
     try {
       (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
       const ws3 = makeDesktopTab('ws3', 'workspace', { workspaceName: 'API' });
@@ -389,12 +396,14 @@ describe('DesktopTabBar interactions', () => {
       act(() => vi.advanceTimersByTime(230));
       expect(props.onCloseTabsToRight).toHaveBeenCalledWith('ws1');
     } finally {
+      spy.mockRestore();
       vi.useRealTimers();
     }
   });
 
   it('animates every tab removed by close-other-tabs', () => {
     vi.useFakeTimers();
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
     try {
       (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
       const ws3 = makeDesktopTab('ws3', 'workspace', { workspaceName: 'API' });
@@ -410,12 +419,14 @@ describe('DesktopTabBar interactions', () => {
       act(() => vi.advanceTimersByTime(230));
       expect(props.onCloseOtherTabs).toHaveBeenCalledWith('ws2');
     } finally {
+      spy.mockRestore();
       vi.useRealTimers();
     }
   });
 
   it('animates every tab removed by close-all-tabs', () => {
     vi.useFakeTimers();
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
     try {
       (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
       const ws3 = makeDesktopTab('ws3', 'workspace', { workspaceName: 'API' });
@@ -429,6 +440,7 @@ describe('DesktopTabBar interactions', () => {
       act(() => vi.advanceTimersByTime(230));
       expect(props.onCloseAllTabs).toHaveBeenCalledTimes(1);
     } finally {
+      spy.mockRestore();
       vi.useRealTimers();
     }
   });

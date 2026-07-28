@@ -28,6 +28,13 @@ let mockState: any = {
   },
 };
 
+vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
+  usePlatform: () => ({
+    postMessage: vi.fn(),
+    onMessage: vi.fn(() => () => {}),
+  }),
+}));
+
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
     state: mockState,

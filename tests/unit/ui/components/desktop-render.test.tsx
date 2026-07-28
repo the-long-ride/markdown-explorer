@@ -128,9 +128,11 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
   TabContextMenu: (props: any) => MockTabContextMenu(props),
 }));
 
-vi.mock('../../../../ui/src/components/shared/icons', () => {
+vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => {
+  const actual = await importOriginal<any>();
   const e = React.createElement;
   return {
+    ...actual,
     CloseIcon: () => e('span', { 'data-testid': 'close-icon' }, '\u00d7'),
     PlusIcon: () => e('span', { 'data-testid': 'plus-icon' }, '+'),
     ChevronLeftIcon: () => e('span', { 'data-testid': 'chevron-left' }, '<'),

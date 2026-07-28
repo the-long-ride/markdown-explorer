@@ -151,7 +151,7 @@ describe('package configuration contracts', () => {
       const pkg = await readJson('vscode/package.json');
       const styleConfig = pkg.contributes.configuration.properties['markdownExplorer.themeStyle'];
       expect(styleConfig.enum).toEqual([
-        'default', 'glass', 'bento', 'vercel', 'tokyo-night', 'neon-voltage', 'raw-grid',
+        'default', 'bento', 'vercel', 'tokyo-night', 'neon-voltage', 'raw-grid',
         'pet-white-shiba',
         'pet-k-ink', 'pet-cat', 'pet-hamster', 'pet-corgi',
       ]);
@@ -177,12 +177,10 @@ describe('package configuration contracts', () => {
       expect(pkg.publisher).toBe('the-long-ride');
     });
 
-    test('declares webview sidebar view', async () => {
+    test('does not declare sidebar view or view container', async () => {
       const pkg = await readJson('vscode/package.json');
-      const views = pkg.contributes.views['markdownExplorer'];
-      expect(views).toHaveLength(1);
-      expect(views[0].type).toBe('webview');
-      expect(views[0].id).toBe('markdownExplorerSidebar');
+      expect(pkg.contributes.views).toBeUndefined();
+      expect(pkg.contributes.viewsContainers).toBeUndefined();
     });
   });
 
@@ -295,12 +293,6 @@ describe('package configuration contracts', () => {
           expect(existsSync(resolve(root, 'vscode', cmd.icon.dark))).toBe(true);
         }
       }
-    });
-
-    test.skipIf(!builtAssetsExist)('VS Code activity bar icon exists', async () => {
-      const pkg = await readJson('vscode/package.json');
-      const container = pkg.contributes.viewsContainers.activitybar[0];
-      expect(existsSync(resolve(root, 'vscode', container.icon))).toBe(true);
     });
   });
 });

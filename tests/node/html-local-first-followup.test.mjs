@@ -89,6 +89,7 @@ test('local-first HTML preparation embeds workspace local CSS and JS while repor
   assert.match(view, /onPolicyReport/);
   assert.match(content, /htmlLocalFirstWarning/);
   assert.match(content, /htmlPreviewWarningSeenRef/);
+  assert.match(content, /htmlPreviewExperienceNoticeSeenRef/);
   assert.match(content, /warningSessionKey/);
   assert.match(content, /state\.renderVersion/);
 });
@@ -211,4 +212,13 @@ test('workspace-local resource readers resolve root-relative paths and keep file
   assert.match(tauri, /to_file_path\(\)/);
   assert.match(web, /reference\.startsWith\('\/'\)/);
   assert.match(chrome, /reference\.startsWith\('\/'\)/);
+});
+
+test('local-first HTML dialog is shown 1 time per file and experience banner is shown 1 time total per app opening session', async () => {
+  const content = await read('ui/src/components/Content/Content.tsx');
+  assert.match(content, /htmlPreviewWarningSeenRef\.current\.has\(state\.currentFile\)/);
+  assert.match(content, /htmlPreviewWarningSeenRef\.current\.add\(state\.currentFile\)/);
+  assert.doesNotMatch(content, /htmlPreviewWarningSeenRef\.current\.delete/);
+  assert.match(content, /htmlPreviewExperienceNoticeSeenRef\.current/);
+  assert.match(content, /if\s*\(htmlPreviewExperienceNoticeSeenRef\.current\)\s*return;/);
 });

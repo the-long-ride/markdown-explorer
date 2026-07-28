@@ -20,7 +20,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 - **Read workspaces, not loose files**: file tree, table of contents, section cards, copy buttons, recent workspaces, and desktop tabs.
 - **Preview more document types**: opt in to local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files, with an in-app note that converted previews may lose layout or formatting quality.
 - **Search where you need**: current file, current workspace, or every open desktop tab, with content excerpts and exact jump-to-result behavior.
-- **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+S`, arrow keys, Enter, and Esc.
+- **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+Z`, arrow keys, Enter, and Esc.
 - **Shape the workspace**: file tabs, Scope Focus, Theme Remix, and settings import/export keep large doc sets personal without changing project files.
 - **Render rich Markdown**: Mermaid, LaTeX math, images, streaming video, MDX, HTML sandboxes, callouts, frontmatter, and code blocks.
 - **Use data inside docs**: sort, filter, multi-select table filters, collapse large tables, and switch tables into Bar, Line, or Pie charts.
@@ -58,8 +58,8 @@ The Explorer header icon automatically uses the high-contrast stroke for the cur
   - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
   - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
   - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
-  - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Ctrl+Q` / `Cmd+Q` shortcut.
-  - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+S`) with arrow keys, `Enter`, and `Esc`.
+  - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
+  - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
   - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
   - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
   - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
@@ -174,28 +174,30 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Open Markdown Explorer | N/A | `Ctrl+Shift+M` / `Cmd+Shift+M` | N/A |
 | Toggle preview for current Markdown file | N/A | `Ctrl+Alt+V` / `Cmd+Alt+V` | N/A |
 | Search current workspace | `Ctrl+F` | `Ctrl+K` / `Cmd+K` | `Ctrl+K` / `Cmd+K` |
-| Search all open workspace tabs | `Ctrl+Shift+F` | N/A | N/A |
+| Search all open workspace tabs | `Ctrl+Shift+F` | `Ctrl+Shift+K` / `Cmd+Shift+K` | `Ctrl+Shift+K` / `Cmd+Shift+K` |
 | Find in current file | `F` | `K` | `K` |
 | Back to previous file | `Ctrl+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back |
 | Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
-| Open settings | `Ctrl+I` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
+| Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
 | Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
 | Refresh workspace | `F5` | `F5` | `Alt+R` |
 | Collapse all heading sections | `Ctrl+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` |
 | Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
 | Go to workspace selection | `Ctrl+N` | `Ctrl+Alt+W` / `Cmd+Alt+W` | `Ctrl+Alt+W` / `Cmd+Alt+W` |
-| Toggle sidebar | `Ctrl+B` | `Ctrl+Shift+P` / `Cmd+Shift+P` | `Ctrl+Shift+P` / `Cmd+Shift+P` |
-| Toggle table of contents | `Ctrl+T` | `Ctrl+T` / `Cmd+T` | `Ctrl+T` / `Cmd+T` |
-| Locate current file | `Ctrl+Q` | `Ctrl+Q` / `Cmd+Q` | `Ctrl+Q` / `Cmd+Q` |
+| Open current document folder | `Shift+Alt+R` | N/A | N/A |
+| Toggle sidebar | `Ctrl+B` | `Alt+A` | `Alt+A` |
+| Toggle table of contents | `Alt+C` | `Alt+C` | `Alt+C` |
+| Locate current file | `Alt+Q` | `Alt+Q` | `Alt+Q` |
 | Toggle Focus mode | `Ctrl+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` |
+| Toggle active HTML document view | `Ctrl+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` |
 | Toggle desktop Tabs/Focus view | `Ctrl+Alt+T` | N/A | N/A |
 | Close current content tab | `Ctrl+W` | N/A | N/A |
 | Close all content tabs | `Ctrl+Shift+W` | N/A | N/A |
 | Close content tabs to the right | `Ctrl+Alt+W` | N/A | N/A |
 | Close other content tabs | `Ctrl+Alt+O` | N/A | N/A |
 | Toggle fullscreen | `F11` | N/A | N/A |
-| Sidebar cursor mode | `Alt+S` | `Alt+S` | `Alt+S` |
+| Sidebar cursor mode | `Alt+Z` | `Alt+Z` | `Alt+Z` |
 | Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom | Use browser zoom |
 | Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom | Use browser zoom |
 

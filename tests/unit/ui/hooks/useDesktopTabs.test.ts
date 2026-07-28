@@ -420,7 +420,6 @@ describe('useDesktopTabs', () => {
         kind: 'new',
         workspaceLoadState: 'idle',
         workspaceOperationId: undefined,
-        workspacePath: undefined,
         isLoading: false,
       }));
       expect(result.current.activeTabId).toBe(scanningTabId);

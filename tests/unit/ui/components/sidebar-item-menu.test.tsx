@@ -21,9 +21,6 @@ function createConnectedElement(rect: Partial<DOMRect> = {}): HTMLElement {
 }
 
 describe('SidebarItemMenu', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
 
   it('renders an ordered list of actions with icons, shortcuts, and separators', () => {
     const anchor = createConnectedElement();

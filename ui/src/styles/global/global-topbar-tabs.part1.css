@@ -315,7 +315,7 @@ body {
 .desktop-tabbar__home,
 .desktop-tab,
 .desktop-tabbar__new {
-  height: 30px;
+  height: var(--control-h, 28px);
   border: var(--stroke-w) solid var(--bd-s);
   background: var(--bg-e);
   color: var(--tx2);
@@ -556,11 +556,12 @@ body {
   -webkit-app-region: no-drag;
 }
 
+.header-action-group .btn,
 .desktop-tabbar__navigation-actions .btn,
 .desktop-tabbar__document-actions .btn {
-  min-width: 30px;
-  width: 30px;
-  height: 30px;
+  min-width: var(--control-h, 28px);
+  width: var(--control-h, 28px);
+  height: var(--control-h, 28px);
 }
 
 @media (max-width: 1120px) {
@@ -571,23 +572,4 @@ body {
   .desktop-tabbar__brand {
     min-width: auto;
   }
-}
-
-.topbar__action-btn,
-.topbar__new-workspace-btn {
-  width: var(--control-h, 30px);
-  height: var(--control-h, 30px);
-  border: var(--stroke-w) solid var(--bd-s);
-  border-radius: var(--r);
-  background: var(--bg-e);
-  color: var(--tx2);
-}
-
-.topbar__action-btn:hover,
-.topbar__action-btn:focus-visible,
-.topbar__new-workspace-btn:hover,
-.topbar__new-workspace-btn:focus-visible {
-  border-color: var(--bd-x);
-  background: var(--bg-h);
-  color: var(--tx);
 }

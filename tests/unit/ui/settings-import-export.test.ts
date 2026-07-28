@@ -190,7 +190,7 @@ describe('parseSettingsImport', () => {
     exportedAt: new Date().toISOString(),
     payload: {
       theme: 'dark',
-      themeStyle: 'glass',
+      themeStyle: 'bento',
       settings: {},
       recentWorkspaces: [],
     },
@@ -245,7 +245,7 @@ describe('parseSettingsImport', () => {
   test('valid import returns normalized theme, themeStyle, settings, recentWorkspaces, localUi', () => {
     const result = parseSettingsImport(JSON.stringify(validEnvelope), false);
     expect(result.theme).toBe('dark');
-    expect(result.themeStyle).toBe('glass');
+    expect(result.themeStyle).toBe('bento');
     expect(result.settings).toBeDefined();
     expect(result.recentWorkspaces).toEqual([]);
   });

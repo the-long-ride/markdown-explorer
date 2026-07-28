@@ -142,26 +142,55 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
-  TabContextMenu: ({ onAction, onClose, disabled, x, y, labels }: any) => {
+  TabContextMenu: ({ onAction, onClose, disabled, x, y, labels, items }: any) => {
     capturedOnAction = onAction;
     capturedOnClose = onClose;
+    const getItemDisabled = (actionName: string) => {
+      if (items) {
+        const item = items.find((i: any) => i.action === actionName);
+        return item ? Boolean(item.disabled) : true;
+      }
+      return disabled?.[actionName];
+    };
+    const hasItem = (actionName: string) => {
+      if (items) return items.some((i: any) => i.action === actionName);
+      if (actionName === 'openLocation') return Boolean(labels?.openLocation);
+      return true;
+    };
+    const handleAction = (actionName: string) => {
+      if (items) {
+        const item = items.find((i: any) => i.action === actionName);
+        if (item && item.onClick) {
+          item.onClick();
+          return;
+        }
+      }
+      if (onAction) onAction(actionName);
+    };
+
     return (
       <div data-testid="tab-context-menu" data-x={x} data-y={y}>
-        {labels?.openLocation && <button data-testid="ctx-open-location" onClick={() => onAction('openLocation')}>Open location</button>}
-        <button data-testid="ctx-close-this" disabled={disabled?.closeThisTab} onClick={() => onAction('closeThisTab')}>Close</button>
-        <button data-testid="ctx-close-right" disabled={disabled?.closeTabsToRight} onClick={() => onAction('closeTabsToRight')}>Close to right</button>
-        <button data-testid="ctx-close-others" disabled={disabled?.closeOtherTabs} onClick={() => onAction('closeOtherTabs')}>Close others</button>
-        <button data-testid="ctx-close-all" disabled={disabled?.closeAllTabs} onClick={() => onAction('closeAllTabs')}>Close all</button>
+        {hasItem('openLocation') && (
+          <button data-testid="ctx-open-location" disabled={getItemDisabled('openLocation')} onClick={() => handleAction('openLocation')}>Open location</button>
+        )}
+        <button data-testid="ctx-close-this" disabled={getItemDisabled('closeThisTab')} onClick={() => handleAction('closeThisTab')}>Close</button>
+        <button data-testid="ctx-close-right" disabled={getItemDisabled('closeTabsToRight')} onClick={() => handleAction('closeTabsToRight')}>Close to right</button>
+        <button data-testid="ctx-close-others" disabled={getItemDisabled('closeOtherTabs')} onClick={() => handleAction('closeOtherTabs')}>Close others</button>
+        <button data-testid="ctx-close-all" disabled={getItemDisabled('closeAllTabs')} onClick={() => handleAction('closeAllTabs')}>Close all</button>
         <button data-testid="ctx-dismiss" onClick={onClose}>Dismiss</button>
       </div>
     );
   },
 }));
 
-vi.mock('../../../../ui/src/components/shared/icons', () => ({
-  CloseIcon: () => '×',
-  RevealFileLocationIcon: () => 'reveal-file-icon',
-}));
+vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    CloseIcon: () => '×',
+    RevealFileLocationIcon: () => 'reveal-file-icon',
+  };
+});
 
 import { ContentTabs } from '../../../../ui/src/components/Content/ContentTabs';
 
@@ -201,7 +230,7 @@ describe('ContentTabs deep', () => {
       expect(mockPostMessage).toHaveBeenCalledWith({
         command: 'openShellLocation',
         path: '/a.md',
-        mode: 'reveal-file',
+        mode: 'open-parent-directory',
       });
     });
 

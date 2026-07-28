@@ -1,3 +1,23 @@
+.topbar__action-btn,
+.topbar__new-workspace-btn {
+  min-width: var(--control-h, 28px);
+  width: var(--control-h, 28px);
+  height: var(--control-h, 28px);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--tx2);
+}
+
+.topbar__action-btn:hover,
+.topbar__action-btn:focus-visible,
+.topbar__new-workspace-btn:hover,
+.topbar__new-workspace-btn:focus-visible {
+  border-color: var(--bd-x);
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
 .tab-context-menu {
   position: fixed;
   width: 280px;
@@ -82,7 +102,7 @@
 
 .desktop-tabbar__search {
   width: min(280px, 24vw);
-  height: 30px;
+  height: var(--control-h, 28px);
   min-width: 180px;
   display: inline-flex;
   align-items: center;

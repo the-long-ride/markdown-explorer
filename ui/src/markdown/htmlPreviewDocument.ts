@@ -89,8 +89,12 @@ export function buildHtmlPreviewDocument(
 </script>`
     : '';
 
+  const themeAttr = options.theme && options.theme !== 'auto'
+    ? ` data-theme="${escapeAttribute(options.theme)}"`
+    : '';
+
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en"${themeAttr}>
 <head>
 <meta charset="UTF-8" />
 ${baseTag}<meta name="viewport" content="width=device-width, initial-scale=1" />

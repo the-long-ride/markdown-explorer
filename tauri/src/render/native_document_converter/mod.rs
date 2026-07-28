@@ -5,6 +5,7 @@ mod markdown;
 mod odf;
 mod office;
 mod pdf;
+mod pptx;
 mod rtf;
 mod spreadsheet;
 
@@ -49,9 +50,8 @@ pub fn convert_file(path: &Path) -> Result<ConversionOutput, ConversionError> {
         .to_ascii_lowercase();
 
     match extension.as_str() {
-        "doc" | "docx" | "xls" | "xlsx" | "xlm" | "pptx" => {
-            office::convert(path, &extension)
-        }
+        "doc" | "docx" | "xls" | "xlsx" | "xlm" => office::convert(path, &extension),
+        "pptx" => pptx::convert(path),
         "pdf" => pdf::convert(path),
         "html" => html::convert(path),
         "rtf" => rtf::convert(path),

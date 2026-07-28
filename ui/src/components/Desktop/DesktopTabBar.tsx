@@ -169,8 +169,8 @@ export function DesktopTabBar({
       const measuredWidth = Math.max(
         element.getBoundingClientRect().width,
         element.offsetWidth,
-        1,
       );
+      if (measuredWidth <= 0) return false;
       element.style.setProperty('--desktop-tab-close-width', `${measuredWidth}px`);
       return true;
     });

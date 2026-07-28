@@ -142,10 +142,14 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
   TabContextMenu: () => null,
 }));
 
-vi.mock('../../../../ui/src/components/shared/icons', () => ({
-  CloseIcon: () => '×',
-  RevealFileLocationIcon: () => 'reveal-file-icon',
-}));
+vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    CloseIcon: () => '×',
+    RevealFileLocationIcon: () => 'reveal-file-icon',
+  };
+});
 
 import { ContentTabs } from '../../../../ui/src/components/Content/ContentTabs';
 

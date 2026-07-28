@@ -62,15 +62,16 @@
 .mdn-section-title .mdn-heading-text {
   max-width: calc(100% - 36px);
 }
-.mdn-section-copy-btn {
+.mdn-section-copy-btn,
+.mdn-section-chevron {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 22px;
+  width: var(--control-h, 28px);
+  height: var(--control-h, 28px);
   padding: 0;
   border: var(--stroke-w) solid var(--bd-s);
-  border-radius: 4px;
+  border-radius: var(--r);
   background: var(--bg-e);
   color: var(--txm);
   cursor: pointer;
@@ -80,11 +81,14 @@
     opacity 0.12s,
     color 0.12s,
     border-color 0.12s,
-    background 0.12s;
+    background 0.12s,
+    transform 0.2s ease;
 }
 .mdn-section-header:hover .mdn-section-copy-btn,
+.mdn-section-header:hover .mdn-section-chevron,
 .mdn-section-copy-btn:hover,
-.mdn-section-copy-btn:focus-visible {
+.mdn-section-copy-btn:focus-visible,
+.mdn-section-chevron:hover {
   opacity: 1;
   color: var(--tx);
   border-color: var(--bd-x);
@@ -98,13 +102,6 @@
   border-color: var(--success);
   background: color-mix(in srgb, var(--success) 12%, var(--bg-e));
   opacity: 1;
-}
-.mdn-section-chevron {
-  color: var(--txm);
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-  display: flex;
-  align-items: center;
 }
 .mdn-section[data-expanded="true"] > .mdn-section-header .mdn-section-chevron {
   transform: rotate(180deg);

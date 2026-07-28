@@ -41,7 +41,13 @@ describe('AppStateProvider integration', () => {
     it('does not enter loading state or post refresh when there is no current file', () => {
       const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
 
+      act(() => {
+        result.current.dispatch({ type: 'NAV_NOT_FOUND', href: '' });
+      });
+
       expect(result.current.state.currentFile).toBeNull();
+      expect(result.current.state.isLoading).toBe(false);
+
       act(() => { result.current.refresh(); });
 
       expect(result.current.state.isLoading).toBe(false);

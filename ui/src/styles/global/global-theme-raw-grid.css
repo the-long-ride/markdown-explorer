@@ -44,9 +44,6 @@
   border-bottom: 0;
 }
 
-[data-theme-style="raw-grid"] .mdn-section:nth-child(even) {
-  transform: translateX(6px);
-}
 
 [data-theme-style="raw-grid"] .btn,
 [data-theme-style="raw-grid"] input,

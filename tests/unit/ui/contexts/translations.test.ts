@@ -73,6 +73,7 @@ describe('translations', () => {
       'openInBrowser', 'openAsModal', 'showCode', 'showPreview', 'copyCode',
       'modalTitle', 'closeModal', 'openError', 'linkMenu', 'copyLink',
       'linkCopied', 'unableToOpenLink', 'copyFailed',
+      'csvMalformedQuote', 'csvPreviewTitle', 'csvUnevenRows', 'plainText', 'tsvPreviewTitle',
     ];
     for (const option of LANGUAGE_OPTIONS) {
       const group = TRANSLATIONS[option.id].previewActions as Record<string, string>;

@@ -147,44 +147,27 @@ export function Content({
   ]);
   const [htmlLocalFirstWarning, setHtmlLocalFirstWarning] = useState<HtmlLocalFirstPolicyReport | null>(null);
   const [showHtmlPreviewExperienceBanner, setShowHtmlPreviewExperienceBanner] = useState(false);
-  const htmlPreviewExperienceKeyRef = useRef<string | null>(null);
+  const htmlPreviewExperienceNoticeSeenRef = useRef(false);
   const htmlPreviewWarningSeenRef = useRef<Set<string>>(new Set());
-  const warningSessionKey = state.currentFile
-    ? `${state.currentFile}::${state.renderVersion}`
-    : '';
+  const warningSessionKey = state.currentFile ?? '';
   const handleHtmlPolicyReport = useCallback((report: HtmlLocalFirstPolicyReport) => {
     if (!warningSessionKey || !hasHtmlLocalFirstPolicyNotice(report)) return;
     if (htmlPreviewWarningSeenRef.current.has(warningSessionKey)) return;
     htmlPreviewWarningSeenRef.current.add(warningSessionKey);
     setHtmlLocalFirstWarning(report);
   }, [warningSessionKey]);
-  useEffect(() => {
-    const openHtmlPaths = new Set(
-      state.contentTabs
-        .filter((tab) => isHtmlDocumentPath(tab.filePath))
-        .map((tab) => tab.filePath),
-    );
-    for (const sessionKey of htmlPreviewWarningSeenRef.current) {
-      const separatorIndex = sessionKey.lastIndexOf('::');
-      const filePath = separatorIndex >= 0 ? sessionKey.slice(0, separatorIndex) : sessionKey;
-      if (!openHtmlPaths.has(filePath) && filePath !== state.currentFile) {
-        htmlPreviewWarningSeenRef.current.delete(sessionKey);
-      }
-    }
-  }, [state.contentTabs, state.currentFile]);
-  useEffect(() => {
-    setHtmlLocalFirstWarning(null);
-  }, [warningSessionKey]);
 
   useEffect(() => {
-    const experienceKey = isFullHtmlPreview && state.currentFile ? state.currentFile : null;
-    if (!experienceKey) {
-      htmlPreviewExperienceKeyRef.current = null;
+    setHtmlLocalFirstWarning(null);
+  }, [state.currentFile]);
+
+  useEffect(() => {
+    if (!isFullHtmlPreview || !state.currentFile) {
       setShowHtmlPreviewExperienceBanner(false);
       return;
     }
-    if (htmlPreviewExperienceKeyRef.current === experienceKey) return;
-    htmlPreviewExperienceKeyRef.current = experienceKey;
+    if (htmlPreviewExperienceNoticeSeenRef.current) return;
+    htmlPreviewExperienceNoticeSeenRef.current = true;
     setShowHtmlPreviewExperienceBanner(true);
     const timer = window.setTimeout(() => setShowHtmlPreviewExperienceBanner(false), 5_000);
     return () => window.clearTimeout(timer);
