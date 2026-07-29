@@ -51,4 +51,27 @@ if (fs.existsSync(cargoPath)) {
   }
 }
 
+// 4. Sync website/index.html
+const indexHtmlPath = path.join(rootDir, 'website/index.html');
+if (fs.existsSync(indexHtmlPath)) {
+  let content = fs.readFileSync(indexHtmlPath, 'utf8');
+  const updated = content.replace(/"softwareVersion":\s*"[^"]*"/, `"softwareVersion": "${version}"`);
+  if (content !== updated) {
+    fs.writeFileSync(indexHtmlPath, updated, 'utf8');
+    console.log(`Synced: website/index.html -> ${version}`);
+  }
+}
+
+// 5. Sync website/llm.txt
+const llmTxtPath = path.join(rootDir, 'website/llm.txt');
+if (fs.existsSync(llmTxtPath)) {
+  let content = fs.readFileSync(llmTxtPath, 'utf8');
+  const updated = content.replace(/- Current version:\s*\d+\.\d+\.\d+/, `- Current version: ${version}`);
+  if (content !== updated) {
+    fs.writeFileSync(llmTxtPath, updated, 'utf8');
+    console.log(`Synced: website/llm.txt -> ${version}`);
+  }
+}
+
 console.log('Version synchronization complete.');
+

@@ -47,9 +47,9 @@ window.LANGS.en = {
     latestWorkspaceKicker: "Workspace control",
     latestWorkspaceTitle: "Open locations, recover workspaces, and cancel scans",
     latestWorkspaceBody: "File, folder, workspace-tab, and document-tab menus expose native location actions. Long scans can be cancelled without leaving stale loading state, and missing workspaces can be replaced safely.",
-    latestStoresKicker: "Desktop distribution",
-    latestStoresTitle: "Store-ready Tauri releases",
-    latestStoresBody: "Release automation prepares Tauri builds for Microsoft Store and Ubuntu App Center: a signed Windows installer and a Linux Snap. GitHub Releases remains the direct download source until each listing is enabled.",
+    latestStoresKicker: "Workspace history",
+    latestStoresTitle: "Reopen recent workspaces",
+    latestStoresBody: "Manage saved folders and return to recent workspace locations. Run Markdown Explorer on Windows, macOS, and Linux.",
     capBadge: "COMPLETE DOCUMENTATION TOOLKIT",
     capTitle: "Engineered for agent memory, runbooks & dense docs",
     capDesc: "Markdown Explorer transforms local Markdown and document folders into an interactive, searchable documentation app.",
@@ -97,7 +97,7 @@ window.LANGS.en = {
     cap12Desc: "High-contrast syntax highlighting across 25+ programming languages with line numbers, language badges, and quick code block copy buttons.",
     featuresSectionTitle: "Features & capabilities",
     featuresSectionSubtitle: "Explore the powerful tools built into Markdown Explorer to make local documentation interactive and comfortable.",
-    featuresEyebrow: "Built for agent-era Markdown",
+    featuresEyebrow: "Built for documents, notes & modern Markdown",
     featuresTitle: "Your docs become an app",
     featuresSubtitle:
       "Markdown Explorer keeps files local while making big Markdown and document workspaces easier to scan, search, understand, and present.",
@@ -117,10 +117,10 @@ window.LANGS.en = {
     featureDiagramsTitle: "Mermaid diagrams render cleanly",
     featureDiagramsBody:
       "Flowcharts, timelines, git graphs, architecture diagrams, and more render inside your local Markdown reader.",
-    featureMediaKicker: "Media",
-    featureMediaTitle: "Markdown can carry video too",
+    featureMediaKicker: "Presentation",
+    featureMediaTitle: "Present your documents",
     featureMediaBody:
-      "Embed local video or supported streaming links without turning your documentation into a separate website.",
+      "Use fullscreen focus mode to turn any document into a clean presentation.",
     featureMediaModalKicker: "Media Viewer",
     featureMediaModalTitle: "Zoom and inspect images & diagrams",
     featureMediaModalBody:
@@ -132,21 +132,40 @@ window.LANGS.en = {
     galleryCaption1:
       "Readable code blocks with language labels, line numbers, copy controls, and strong contrast.",
     galleryCaption2: "LaTeX math renders directly in the document flow.",
-    galleryCaption3: "Have you ever played a game in your Markdown file? Interactive HTML sandboxes run live in your workspace.",
+    galleryCaption3Title: "Isolated HTML Sandboxes",
+    galleryCaption3:
+      "Run scripts safely in isolated HTML previews inside your workspace.",
     galleryCaption4:
       "Zoom and inspect images or diagrams in a focused media modal.",
     galleryCaption5:
       "Desktop mode remembers recent workspaces and opens folders quickly.",
+    gallerySearchFile:
+      "Find text instantly inside your active document with jump-to-match highlighting.",
+    gallerySearchWorkspace:
+      "Search across all files in your workspace with live excerpts.",
+    galleryShortcuts:
+      "Customizable keyboard shortcuts for fast, mouse-free workspace control.",
+    galleryFocusMode:
+      "Turn any document into a clean fullscreen presentation layout.",
+    galleryThemes:
+      "Theme Remix and settings import/export help teams keep personal reading preferences portable.",
     privacyEyebrow: "Private by default",
+    privacyBadge: "100% OFFLINE & PRIVATE BY DEFAULT",
     privacyTitle: "Offline, local, and comfortable for real project folders",
     privacyBody:
       "Markdown Explorer does not upload Markdown content. It scans and renders locally, making it useful for private notes, agent memory folders, engineering docs, runbooks, and project knowledge bases.",
+    pillar1Title: "Zero Cloud Uploads",
+    pillar1Desc: "Your documents never leave your disk. Local indexing ensures instant search without remote servers.",
+    pillar2Title: "Zero Telemetry & Tracking",
+    pillar2Desc: "No analytics, no data harvesting, and no tracking scripts. 100% private open-source software.",
+    pillar3Title: "Agent & Runbook Ready",
+    pillar3Desc: "Designed for AI agent memory folders, internal wiki repos, and sensitive engineering runbooks.",
     langsEyebrow: "Global & Accessible",
     langsTitle: "Documentation in your native language",
     langsBody:
       "Markdown Explorer is built for global teams. The entire reader interface is fully localized, allowing you to seamlessly navigate, search, and manage your documentation workspaces in your preferred language.",
-    downloadEyebrow: "Get Markdown Explorer",
-    downloadTitle: "Install the extension or download the desktop app",
+    downloadEyebrow: "Get Markdown Explorer - Current version - <span data-version-text>v1.6.0</span>",
+    downloadTitle: "Install the desktop app or extension",
     downloadSubtitle:
       "The desktop app goes beyond the VS Code extension with Tabs view, multiple workspaces open at the same time, more keyboard shortcuts, and extra features. Lightweight variants are powered by Tauri for a minimal resource footprint and faster performance, while standard builds use Electron for battle-tested stability across all platforms.",
     dlVscodeTitle: "VS Code Marketplace",
@@ -237,4 +256,20 @@ window.LANGS.en = {
     modalStep3: "Open your browser and navigate to the extensions management page:",
     modalStep4: "Turn on the Developer mode switch (usually found in the top-right corner).",
     modalStep5: "Click the Load unpacked button (usually in the top-left) and select the extracted extension folder.",
-  };
+    featureViewerKicker: "Workspace viewer",
+    featureDocsKicker: "Document previews",
+    featureDocsTitle: "Read DOCX, PDF, Office, web, and text files",
+    featureDocsBody: "Enable local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files. Markdown Explorer converts on open, caches repeat previews, and clearly marks best-effort rendering quality.",
+    featureKbKicker: "Keyboard navigation",
+    featureKbTitle: "Move through the sidebar with Alt+S",
+    featureKbBody: "Enter Sidebar Cursor mode, move with Up and Down, press Enter to expand folders or open files, and exit with Esc, Alt+S, or an outside click.",
+    featureThemeKicker: "Theme Remix",
+    featureThemeTitle: "Build custom reading themes",
+    featureThemeBody: "Create, duplicate, edit, import, and export custom themes with colors, density, spacing, layout style, and optional background images.",
+    pillar4Title: "Live Auto-Refresh",
+    pillar4Desc: "Native filesystem watcher detects file changes instantly and re-renders without manual reload — no polling, no cloud sync.",
+    footerMit: "MIT licensed.",
+    langSwitchTitle: "Switch language",
+    themeToggleTitle: "Toggle color theme",
+    modalCloseLabel: "Close modal",
+};

@@ -1,7 +1,7 @@
 /* Global Reset for Mobile Overflow Prevention */
 html, body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Hero viewport caps */
@@ -163,6 +163,8 @@ html, body {
     border-right: 0;
     border-bottom: 1px solid var(--line);
     height: 300px;
+    object-fit: cover;
+    object-position: top left;
   }
 
   .split {
@@ -175,11 +177,12 @@ html, body {
   }
 
   .gallery-item.large {
-    grid-row: span 2;
+    grid-column: span 2;
+    grid-row: span 1;
   }
 
   .gallery-item.large img {
-    min-height: 380px;
+    min-height: 320px;
   }
 
   .gallery-item.large img,

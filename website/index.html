@@ -204,6 +204,8 @@
           class="ctrl-btn"
           aria-label="Switch language"
           title="Switch language"
+          data-i18n-aria-label="langSwitchTitle"
+          data-i18n-title="langSwitchTitle"
         >
           <svg
             width="18"
@@ -245,6 +247,8 @@
           class="ctrl-btn"
           aria-label="Toggle colour theme"
           title="Toggle colour theme"
+          data-i18n-aria-label="themeToggleTitle"
+          data-i18n-title="themeToggleTitle"
         >
           <svg
             class="icon-sun"
@@ -387,77 +391,7 @@
         </div>
       </section>
 
-      <div class="section-divider" aria-hidden="true"></div>
 
-      <section class="section latest-features" id="latest-features" aria-labelledby="latest-features-title">
-        <div class="section-heading">
-          <p class="eyebrow" data-i18n="latestEyebrow">What’s new</p>
-          <h2 id="latest-features-title" data-i18n="latestTitle">New ways to read HTML, data, and large workspaces</h2>
-          <p data-i18n="latestSubtitle">The current release adds local-first HTML document modes, CSV and TSV data previews, safer workspace operations, and release automation for desktop app stores.</p>
-        </div>
-
-        <div class="feature-grid latest-feature-grid">
-          <article class="feature-card">
-            <img
-              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Supported-HTML-File-Preview.png"
-              alt="Interactive HTML preview in Markdown Explorer"
-              width="1200"
-              height="750"
-              loading="lazy"
-            />
-            <div>
-              <p class="card-kicker" data-i18n="latestHtmlKicker">HTML documents</p>
-              <h3 data-i18n="latestHtmlTitle">Preview, convert, or open HTML in your browser</h3>
-              <p data-i18n="latestHtmlBody">Switch each HTML tab between an isolated local-first preview and converted Markdown, open the original file in the system browser, and keep code-block preview defaults independent.</p>
-            </div>
-          </article>
-
-          <article class="feature-card">
-            <img
-              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/chart-for datatable-and-CSV-TSV_2.png"
-              alt="Interactive data table rendered from Markdown content"
-              width="1200"
-              height="750"
-              loading="lazy"
-            />
-            <div>
-              <p class="card-kicker" data-i18n="latestDataKicker">CSV & TSV</p>
-              <h3 data-i18n="latestDataTitle">Turn delimited code fences into data views</h3>
-              <p data-i18n="latestDataBody">CSV and TSV code fences can switch from highlighted source to sortable, filterable tables with wrapping, generated column labels, delimiter detection, and chart controls.</p>
-            </div>
-          </article>
-
-          <article class="feature-card">
-            <img
-              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/VS-Code-style-mutli-workspace-multi-document-tabs.png"
-              alt="Keyboard navigation and file actions in the Markdown Explorer sidebar"
-              width="1200"
-              height="750"
-              loading="lazy"
-            />
-            <div>
-              <p class="card-kicker" data-i18n="latestWorkspaceKicker">Workspace control</p>
-              <h3 data-i18n="latestWorkspaceTitle">Open locations, recover workspaces, and cancel scans</h3>
-              <p data-i18n="latestWorkspaceBody">File, folder, workspace-tab, and document-tab menus expose native location actions. Long scans can be cancelled without leaving stale loading state, and missing workspaces can be replaced safely.</p>
-            </div>
-          </article>
-
-          <article class="feature-card">
-            <img
-              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png"
-              alt="Recent workspace selection in Markdown Explorer"
-              width="1200"
-              height="750"
-              loading="lazy"
-            />
-            <div>
-              <p class="card-kicker" data-i18n="latestStoresKicker">Desktop distribution</p>
-              <h3 data-i18n="latestStoresTitle">Store-ready Tauri releases</h3>
-              <p data-i18n="latestStoresBody">Release automation prepares Tauri builds for Microsoft Store and Ubuntu App Center: a signed Windows installer and a Linux Snap. GitHub Releases remains the direct download source until each listing is enabled.</p>
-            </div>
-          </article>
-        </div>
-      </section>
 
       <div class="section-divider" aria-hidden="true"></div>
 
@@ -494,7 +428,11 @@
           </button>
         </div>
 
-        <div class="capabilities-grid">
+        <div class="capabilities-carousel-wrap">
+          <button class="cap-nav-btn prev" aria-label="Scroll left" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div class="capabilities-grid" id="capabilities-grid" role="region" aria-label="Capabilities carousel" tabindex="0">
           <!-- Card 1: Document Previews (Feature) -->
           <article class="cap-card" data-category="docs">
             <div class="cap-card-header">
@@ -650,8 +588,13 @@
               <span>Tauri Lightweight</span><span>Electron</span><span>Windows/Linux/macOS</span>
             </div>
           </article>
+          </div>
+          <button class="cap-nav-btn next" aria-label="Scroll right" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
       </section>
+
 
       <section class="section" id="features" aria-labelledby="features-title">
         <div class="section-heading">
@@ -667,13 +610,73 @@
         </div>
 
         <div class="feature-grid">
+          <article class="feature-card">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Supported-HTML-File-Preview.png"
+              alt="Interactive HTML preview in Markdown Explorer"
+              width="1200"
+              height="750"
+              loading="lazy"
+            />
+            <div>
+              <p class="card-kicker" data-i18n="latestHtmlKicker">HTML documents</p>
+              <h3 data-i18n="latestHtmlTitle">Preview, convert, or open HTML in your browser</h3>
+              <p data-i18n="latestHtmlBody">Switch each HTML tab between an isolated local-first preview and converted Markdown, open the original file in the system browser, and keep code-block preview defaults independent.</p>
+            </div>
+          </article>
+
+          <article class="feature-card">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/chart-for datatable-and-CSV-TSV_2.png"
+              alt="Interactive data table rendered from Markdown content"
+              width="1200"
+              height="750"
+              loading="lazy"
+            />
+            <div>
+              <p class="card-kicker" data-i18n="latestDataKicker">CSV & TSV</p>
+              <h3 data-i18n="latestDataTitle">Turn delimited code fences into data views</h3>
+              <p data-i18n="latestDataBody">CSV and TSV code fences can switch from highlighted source to sortable, filterable tables with wrapping, generated column labels, delimiter detection, and chart controls.</p>
+            </div>
+          </article>
+
+          <article class="feature-card">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/VS-Code-style-mutli-workspace-multi-document-tabs.png"
+              alt="Keyboard navigation and file actions in the Markdown Explorer sidebar"
+              width="1200"
+              height="750"
+              loading="lazy"
+            />
+            <div>
+              <p class="card-kicker" data-i18n="latestWorkspaceKicker">Workspace control</p>
+              <h3 data-i18n="latestWorkspaceTitle">Open locations, recover workspaces, and cancel scans</h3>
+              <p data-i18n="latestWorkspaceBody">File, folder, workspace-tab, and document-tab menus expose native location actions. Long scans can be cancelled without leaving stale loading state, and missing workspaces can be replaced safely.</p>
+            </div>
+          </article>
+
+          <article class="feature-card">
+            <img
+              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png"
+              alt="Recent workspace selection in Markdown Explorer"
+              width="1200"
+              height="750"
+              loading="lazy"
+            />
+            <div>
+              <p class="card-kicker" data-i18n="latestStoresKicker">Workspace history</p>
+              <h3 data-i18n="latestStoresTitle">Reopen recent workspaces</h3>
+              <p data-i18n="latestStoresBody">Manage saved folders and return to recent workspace locations. Run Markdown Explorer on Windows, macOS, and Linux.</p>
+            </div>
+          </article>
+
           <article class="feature-card wide">
             <img
               src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Better-reading-markdown-files-exp.png"
               alt="Markdown Explorer welcome workspace layout"
             />
             <div>
-              <p class="card-kicker">Workspace viewer</p>
+              <p class="card-kicker" data-i18n="featureViewerKicker">Workspace viewer</p>
               <h3 data-i18n="featuresTitle">Your docs become an app</h3>
               <p data-i18n="featuresSubtitle">
                 Markdown Explorer keeps files local while making big Markdown and document
@@ -705,9 +708,9 @@
               alt="Converted document preview with best-effort quality notice"
             />
             <div>
-              <p class="card-kicker">Document previews</p>
-              <h3>Read DOCX, PDF, Office, web, and text files</h3>
-              <p>
+              <p class="card-kicker" data-i18n="featureDocsKicker">Document previews</p>
+              <h3 data-i18n="featureDocsTitle">Read DOCX, PDF, Office, web, and text files</h3>
+              <p data-i18n="featureDocsBody">
                 Enable local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT,
                 ODP, ODS, RTF, and TXT files. Markdown Explorer converts on
                 open, caches repeat previews, and clearly marks best-effort
@@ -721,9 +724,9 @@
               alt="Scope Focus mode highlighting the active folder in the tree"
             />
             <div>
-              <p class="card-kicker">Keyboard navigation</p>
-              <h3>Move through the sidebar with Alt+S</h3>
-              <p>
+              <p class="card-kicker" data-i18n="featureKbKicker">Keyboard navigation</p>
+              <h3 data-i18n="featureKbTitle">Move through the sidebar with Alt+S</h3>
+              <p data-i18n="featureKbBody">
                 Enter Sidebar Cursor mode, move with Up and Down, press Enter
                 to expand folders or open files, and exit with Esc, Alt+S, or
                 an outside click.
@@ -736,9 +739,9 @@
               alt="Theme Remix custom theme editor"
             />
             <div>
-              <p class="card-kicker">Theme Remix</p>
-              <h3>Build custom reading themes</h3>
-              <p>
+              <p class="card-kicker" data-i18n="featureThemeKicker">Theme Remix</p>
+              <h3 data-i18n="featureThemeTitle">Build custom reading themes</h3>
+              <p data-i18n="featureThemeBody">
                 Create, duplicate, edit, import, and export custom themes with
                 colors, density, spacing, layout style, and optional background
                 images.
@@ -859,7 +862,7 @@
               src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-current-opened-file.png"
               alt="Search in currently opened Markdown file"
             />
-            <figcaption>
+            <figcaption data-i18n="gallerySearchFile">
               Find text instantly inside your active document with jump-to-match highlighting.
             </figcaption>
           </figure>
@@ -868,7 +871,7 @@
               src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Search-in-current-workspace.png"
               alt="Search current workspace content"
             />
-            <figcaption>
+            <figcaption data-i18n="gallerySearchWorkspace">
               Search across all files in your workspace with live excerpts.
             </figcaption>
           </figure>
@@ -895,53 +898,72 @@
               src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/custom-keyboard-shortcuts-binding.png"
               alt="Custom keyboard shortcuts binding in Markdown Explorer"
             />
-            <figcaption>
+            <figcaption data-i18n="galleryShortcuts">
               Customizable keyboard shortcuts for fast, mouse-free workspace control.
             </figcaption>
           </figure>
-          <figure class="gallery-item">
-            <img
-              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png"
-              alt="Desktop workspace selection with recent folders"
-            />
-            <figcaption data-i18n="galleryCaption5">
-              Desktop mode remembers recent workspaces and opens folders
-              quickly.
-            </figcaption>
-          </figure>
-          <figure class="gallery-item">
-            <img
-              src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Your-Explorer-Your-Themes.png"
-              alt="Theme Remix modal with color, layout, and background controls"
-            />
-            <figcaption>
-              Theme Remix and settings import/export help teams keep personal
-              reading preferences portable.
-            </figcaption>
-          </figure>
+
+
+
+
         </div>
       </section>
 
-      <section class="section band" aria-labelledby="privacy-title">
-        <div class="split">
-          <div>
-            <p class="eyebrow" data-i18n="privacyEyebrow">Private by default</p>
-            <h2 id="privacy-title" data-i18n="privacyTitle">
-              Offline, local, and comfortable for real project folders
-            </h2>
-          </div>
+      <section class="section privacy-section" aria-labelledby="privacy-title">
+        <div class="section-heading">
+          <h2 id="privacy-title" class="eyebrow" data-i18n="privacyEyebrow">Private by default</h2>
           <p data-i18n="privacyBody">
             Markdown Explorer does not upload Markdown content. It scans and
             renders locally, making it useful for private notes, agent memory
             folders, engineering docs, runbooks, and project knowledge bases.
           </p>
         </div>
+
+        <div class="privacy-cards-grid">
+          <div class="privacy-card">
+            <div class="privacy-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="privacy-card-body">
+              <h3 data-i18n="pillar1Title">Zero Cloud Uploads</h3>
+              <p data-i18n="pillar1Desc">Your files never leave your machine. All parsing, indexing, and rendering happens 100% locally — no accounts required.</p>
+            </div>
+          </div>
+          <div class="privacy-card">
+            <div class="privacy-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            </div>
+            <div class="privacy-card-body">
+              <h3 data-i18n="pillar2Title">Zero Telemetry &amp; Tracking</h3>
+              <p data-i18n="pillar2Desc">No analytics, no crash reporters, no usage data collection. Markdown Explorer respects your workspace as your own.</p>
+            </div>
+          </div>
+          <div class="privacy-card">
+            <div class="privacy-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div class="privacy-card-body">
+              <h3 data-i18n="pillar3Title">Agent &amp; Runbook Ready</h3>
+              <p data-i18n="pillar3Desc">Point at agent memory folders, engineering runbooks, or knowledge bases. Works offline and air-gapped, no internet dependency.</p>
+            </div>
+          </div>
+          <div class="privacy-card">
+            <div class="privacy-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="privacy-card-body">
+              <h3 data-i18n="pillar4Title">Live Auto-Refresh</h3>
+              <p data-i18n="pillar4Desc">Native filesystem watcher detects file changes instantly and re-renders without manual reload — no polling, no cloud sync.</p>
+            </div>
+          </div>
+        </div>
       </section>
+
 
       <section class="section" id="download" aria-labelledby="download-title">
         <div class="section-heading">
           <p class="eyebrow" data-i18n="downloadEyebrow">
-            Get Markdown Explorer
+            Get Markdown Explorer - Current version - <span data-version-text>v1.6.0</span>
           </p>
           <h2 id="download-title" data-i18n="downloadTitle">
             Install the extension or download the desktop app
@@ -1230,7 +1252,7 @@
         <span data-i18n="footerBy">Markdown Explorer by</span>
         <a href="https://github.com/the-long-ride" rel="noopener"
           >@the-long-ride</a
-        >. MIT licensed.
+        >. <span data-i18n="footerMit">MIT licensed.</span>
       </p>
       <nav aria-label="Footer links">
         <a
@@ -1259,7 +1281,7 @@
       <div class="modal-card">
         <header class="modal-header">
           <h3 data-i18n="modalTitle">Extension Install Guide</h3>
-          <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">&times;</button>
+          <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close modal" data-i18n-aria-label="modalCloseLabel">&times;</button>
         </header>
         <div class="modal-body">
           <p data-i18n="modalIntro">Follow these steps to load the unpacked extension in any Chromium-based browser (Chrome, Brave, Edge, etc.):</p>

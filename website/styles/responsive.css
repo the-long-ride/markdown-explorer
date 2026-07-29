@@ -4,7 +4,7 @@
 
 @media (max-width: 580px) {
   html, body {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .site-header {
@@ -102,7 +102,6 @@
 
   /* Less Content & Compact Cards in Capabilities Section */
   .capabilities-grid {
-    grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 

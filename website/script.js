@@ -57,6 +57,14 @@
         }
       }
     });
+    document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-title");
+      if (t[key] !== undefined) el.setAttribute("title", t[key]);
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-aria-label");
+      if (t[key] !== undefined) el.setAttribute("aria-label", t[key]);
+    });
     // Mark active in menu
     document.querySelectorAll(".lang-menu button[data-lang]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.lang === lang);
@@ -155,25 +163,7 @@
     });
   }
 
-  /* ── Capabilities category tabs filtering ──────────────────────── */
-  const capTabs = document.querySelectorAll(".cap-tab-btn");
-  const capCards = document.querySelectorAll(".cap-card");
-  if (capTabs.length > 0 && capCards.length > 0) {
-    capTabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        const category = tab.getAttribute("data-category");
-        capTabs.forEach((t) => {
-          t.classList.toggle("active", t === tab);
-          t.setAttribute("aria-selected", t === tab ? "true" : "false");
-        });
-        capCards.forEach((card) => {
-          const cardCategory = card.getAttribute("data-category");
-          const matches = category === "all" || cardCategory === category;
-          card.classList.toggle("hidden", !matches);
-        });
-      });
-    });
-  }
+  /* ── Capabilities tab filtering logic delegates to site-effects.js ── */
 
   const releaseUrl =
     "https://github.com/the-long-ride/markdown-explorer/releases/latest";
@@ -237,6 +227,7 @@
     setFallback,
     setReleaseNote,
     syncButtonDecorations,
+    updateVersionTexts,
   } = (window.MdeSiteDownloadRendering || (() => ({
     applyMarketplaceCounts: () => {},
     getTranslatedLabel: (button) => button.textContent.trim(),
@@ -245,6 +236,7 @@
     setFallback: () => {},
     setReleaseNote: () => {},
     syncButtonDecorations: () => {},
+    updateVersionTexts: () => {},
   })))({
     DOWNLOAD_ICON_SVG,
     releaseButtons,
@@ -270,11 +262,41 @@
       marketplaceApiUrl,
     });
 
+  const rawGitHubPackageUrl =
+    "https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/package.json";
+
+  const fetchGitHubVersionFallback = async () => {
+    try {
+      const res = await fetch(rawGitHubPackageUrl);
+      if (res.ok) {
+        const pkg = await res.json();
+        if (pkg && pkg.version) {
+          return pkg.version;
+        }
+      }
+    } catch (_) {}
+    return "";
+  };
+
   syncButtonDecorations();
 
   if (note || buttons.length > 0) {
     Promise.allSettled([
-      Promise.all([fetchJson(latestApiUrl), fetchReleasePages()]),
+      Promise.all([
+        fetchJson(latestApiUrl).catch(async (err) => {
+          const rawVersion = await fetchGitHubVersionFallback();
+          if (rawVersion) {
+            return {
+              tag_name: `v${rawVersion}`,
+              name: `v${rawVersion}`,
+              assets: [],
+              html_url: releaseUrl,
+            };
+          }
+          throw err;
+        }),
+        fetchReleasePages().catch(() => []),
+      ]),
       fetchMarketplaceDownloadStats(),
     ])
       .then(([releaseResult, marketplaceResult]) => {
@@ -299,18 +321,7 @@
 
         const liveVersion = releaseVersion.replace(/^v/i, "");
         if (liveVersion) {
-          try {
-            const ldScript = document.querySelector(
-              `script[type="application/ld+json"]`,
-            );
-            if (ldScript) {
-              const data = JSON.parse(ldScript.textContent);
-              data.softwareVersion = liveVersion;
-              ldScript.textContent = JSON.stringify(data, null, 2);
-            }
-          } catch (_) {
-            // non-critical — ignore parse errors
-          }
+          updateVersionTexts(liveVersion);
         }
 
         releaseButtons.forEach((button) => {
@@ -325,7 +336,7 @@
           const asset = pickAsset(latestAssets, platform);
           const card = button.closest(".download-card");
           const countLabel = card ? downloadCountLabels.get(card) : null;
-          renderReleaseButton(button, baseLabel, liveVersion);
+          renderReleaseButton(button, baseLabel);
           if (countLabel && !countedKeys.has(countKey)) {
             setDownloadCountLabel(countLabel, downloads);
             countedKeys.add(countKey);
@@ -358,10 +369,12 @@
           selectedDesktopDownloads,
         );
       })
-      .catch(() => {
-        setFallback(t().releaseApiFail);
+      .catch(async () => {
+        const rawVersion = await fetchGitHubVersionFallback();
+        setFallback(t().releaseApiFail, rawVersion);
       });
   }
+
 })();
 
 

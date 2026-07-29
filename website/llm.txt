@@ -15,7 +15,7 @@ local — nothing is uploaded.
 - Homepage: https://the-long-ride.github.io/markdown-explorer/
 - Repository: https://github.com/the-long-ride/markdown-explorer
 - License: MIT
-- Current version: 1.5.5
+- Current version: 1.6.0
 - Languages: English, Tiếng Việt, Français, Español, 中文, Norsk, 日本語, 한국어, Русский
 
 ## Platforms

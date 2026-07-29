@@ -10,7 +10,9 @@ window.MdeSiteDownloadRendering = ({
   changelogUrl,
   t,
 }) => {
-const getTranslatedLabel = (button) => {
+  let activeVersion = "";
+
+  const getTranslatedLabel = (button) => {
     const key = button.getAttribute("data-i18n");
     return (
       (key && t()[key]) ||
@@ -19,7 +21,7 @@ const getTranslatedLabel = (button) => {
     );
   };
 
-  const renderReleaseButton = (button, label, version = "") => {
+  const renderReleaseButton = (button, label) => {
     button.textContent = "";
     button.classList.add("download-button");
 
@@ -32,19 +34,46 @@ const getTranslatedLabel = (button) => {
     labelSpan.textContent = label;
     row.append(labelSpan);
     button.append(row);
-
-    if (!version) return;
-    const versionSpan = document.createElement("span");
-    versionSpan.className = "download-button-version";
-    versionSpan.textContent = version;
-    button.append(versionSpan);
   };
 
-  function syncButtonDecorations() {
+  function syncButtonDecorations(version = "") {
+    if (version) activeVersion = version.replace(/^v/i, "");
     releaseButtons.forEach((button) => {
       renderReleaseButton(button, getTranslatedLabel(button));
     });
+    if (activeVersion) {
+      updateVersionTexts(activeVersion);
+    }
   }
+
+  const updateVersionTexts = (version = "") => {
+    if (!version) return;
+    const cleanVersion = version.replace(/^v/i, "");
+    const taggedVersion = version.startsWith("v") ? version : `v${cleanVersion}`;
+    activeVersion = cleanVersion;
+
+    try {
+      const ldScript = document.querySelector(
+        `script[type="application/ld+json"]`,
+      );
+      if (ldScript) {
+        const data = JSON.parse(ldScript.textContent);
+        data.softwareVersion = cleanVersion;
+        ldScript.textContent = JSON.stringify(data, null, 2);
+      }
+    } catch (_) {
+      // non-critical
+    }
+
+    document.querySelectorAll("[data-version-text], .version-text").forEach((el) => {
+      const fmt = el.dataset.versionFormat;
+      if (fmt === "raw" || fmt === "clean") {
+        el.textContent = cleanVersion;
+      } else {
+        el.textContent = taggedVersion;
+      }
+    });
+  };
 
   const appendHighlightedDownloads = (target, count, suffix) => {
     const number = document.createElement("strong");
@@ -102,7 +131,8 @@ const getTranslatedLabel = (button) => {
     note.append(link);
   };
 
-  const setFallback = (message) => {
+  const setFallback = (message, fallbackVersion = "") => {
+    if (fallbackVersion) activeVersion = fallbackVersion.replace(/^v/i, "");
     releaseButtons.forEach((button) => {
       const baseLabel = getTranslatedLabel(button);
       button.href = releaseUrl;
@@ -116,7 +146,22 @@ const getTranslatedLabel = (button) => {
       label.textContent = "";
     });
     setReleaseNote(message);
+    if (activeVersion) {
+      updateVersionTexts(activeVersion);
+    }
   };
-  return { getTranslatedLabel, renderReleaseButton, syncButtonDecorations, appendHighlightedDownloads, setDownloadCountLabel, applyMarketplaceCounts, setReleaseNote, setFallback };
+
+  return {
+    getTranslatedLabel,
+    renderReleaseButton,
+    syncButtonDecorations,
+    updateVersionTexts,
+    appendHighlightedDownloads,
+    setDownloadCountLabel,
+    applyMarketplaceCounts,
+    setReleaseNote,
+    setFallback,
+  };
 };
+
 

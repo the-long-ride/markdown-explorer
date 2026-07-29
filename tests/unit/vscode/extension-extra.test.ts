@@ -121,104 +121,10 @@ describe('MarkdownExplorerSidebarProvider', () => {
     overrideVscodeForTest(vscode);
   });
 
-  test('registers sidebar provider with correct view type', () => {
+  test('does not register obsolete sidebar webview provider', () => {
     const context = { subscriptions: makeSubscriptionArray() };
     _doActivate(context as any, vscode as any);
 
-    expect(vscode.window.registerWebviewViewProvider).toHaveBeenCalledWith(
-      'markdownExplorerSidebar',
-      expect.any(Object),
-    );
-  });
-
-  test('sidebar provider resolveWebviewView sets webview options', () => {
-    const context = { subscriptions: makeSubscriptionArray(), extensionUri: { fsPath: '/ext' } };
-    _doActivate(context as any, vscode as any);
-
-    const provider = vscode.window.registerWebviewViewProvider.mock.calls[0][1];
-    const mockWebviewView = {
-      webview: {
-        options: {},
-        html: '',
-        onDidReceiveMessage: vi.fn((fn: any) => {
-          fn({ command: 'open' });
-          return { dispose: vi.fn() };
-        }),
-      },
-      visible: true,
-      onDidChangeVisibility: vi.fn(),
-    };
-
-    provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
-
-    expect(mockWebviewView.webview.options.enableScripts).toBe(true);
-    expect(mockWebviewView.webview.html).toContain('Markdown Explorer');
-  });
-
-  test('sidebar provider calls executeCommand when visible on load', () => {
-    const context = { subscriptions: makeSubscriptionArray(), extensionUri: { fsPath: '/ext' } };
-    _doActivate(context as any, vscode as any);
-
-    const provider = vscode.window.registerWebviewViewProvider.mock.calls[0][1];
-    const mockWebviewView = {
-      webview: {
-        options: {},
-        html: '',
-        onDidReceiveMessage: vi.fn(),
-      },
-      visible: true,
-      onDidChangeVisibility: vi.fn(),
-    };
-
-    provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
-
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith('markdownExplorer.open');
-  });
-
-  test('sidebar provider registers visibility change handler', () => {
-    const context = { subscriptions: makeSubscriptionArray(), extensionUri: { fsPath: '/ext' } };
-    _doActivate(context as any, vscode as any);
-
-    const provider = vscode.window.registerWebviewViewProvider.mock.calls[0][1];
-    const mockWebviewView = {
-      webview: {
-        options: {},
-        html: '',
-        onDidReceiveMessage: vi.fn(),
-      },
-      visible: false,
-      onDidChangeVisibility: vi.fn(),
-    };
-
-    provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
-
-    expect(mockWebviewView.onDidChangeVisibility).toHaveBeenCalled();
-  });
-
-  test('sidebar provider triggers open on webview message', () => {
-    const context = { subscriptions: makeSubscriptionArray(), extensionUri: { fsPath: '/ext' } };
-    _doActivate(context as any, vscode as any);
-
-    const provider = vscode.window.registerWebviewViewProvider.mock.calls[0][1];
-    const msgHandler = vi.fn();
-    const mockWebviewView = {
-      webview: {
-        options: {},
-        html: '',
-        onDidReceiveMessage: vi.fn((fn: any) => {
-          msgHandler(fn);
-          return { dispose: vi.fn() };
-        }),
-      },
-      visible: false,
-      onDidChangeVisibility: vi.fn(),
-    };
-
-    provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
-
-    const innerHandler = msgHandler.mock.calls[0][0];
-    innerHandler({ command: 'open' });
-
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith('markdownExplorer.open');
+    expect(vscode.window.registerWebviewViewProvider).not.toHaveBeenCalled();
   });
 });

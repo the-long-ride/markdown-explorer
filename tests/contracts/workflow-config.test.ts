@@ -105,7 +105,7 @@ describe('GitHub Actions workflow contracts', () => {
     const release = readWorkflow('release.yml');
     const stores = readWorkflow('publish-desktop-stores.yml');
     const desktopStoresJob = release.match(
-      /  desktop-stores:\n([\s\S]*?)(?=\n  [\w-]+:\n|\n*$)/,
+      /  desktop-stores:\r?\n([\s\S]*?)(?=\r?\n  [\w-]+:\r?\n|\r?\n*$)/,
     )?.[1];
 
     expect(release).toContain('publish-release:');

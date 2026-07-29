@@ -45,14 +45,48 @@
     requestAnimationFrame(tick);
   }
 
-  document.querySelectorAll(".feature-card img, .gallery-item img, .hero-media img").forEach((img) => {
+  const normalizeImageText = (value) => value?.replace(/\s+/g, " ").trim() || "";
+  const getImageFeature = (img) => {
+    const card = img.closest(".feature-card");
+    const figure = img.closest("figure");
+    const heroPreview = img.closest(".hero-product-preview");
+    const title = normalizeImageText(
+      card?.querySelector(".card-kicker")?.textContent ||
+      card?.querySelector("h3")?.textContent ||
+      heroPreview?.querySelector(".hero-preview-kicker")?.textContent ||
+      (figure ? "Gallery" : "Image"),
+    );
+    const description = normalizeImageText(
+      card?.querySelector("p:not(.card-kicker)")?.textContent ||
+      figure?.querySelector("figcaption")?.textContent ||
+      heroPreview?.querySelector(".hero-preview-caption")?.textContent ||
+      img.alt,
+    );
+    return { title, description };
+  };
+
+  document.querySelectorAll("img").forEach((img, index) => {
+    img.dataset.imageName = `Image #${index + 1}`;
+    img.dataset.imagePath = img.currentSrc || img.getAttribute("src") || "Unknown image path";
     img.style.cursor = "zoom-in";
     img.addEventListener("click", () => {
-      const modal = document.createElement("div"), modalImg = document.createElement("img");
+      const modal = document.createElement("div");
+      const modalImg = document.createElement("img");
+      const description = document.createElement("aside");
       modal.className = "lightbox-modal";
       modalImg.src = img.src;
       modalImg.alt = img.alt || "Zoomed image";
+      description.className = "lightbox-description";
+      const feature = getImageFeature(img);
+      const title = document.createElement("strong");
+      const descriptionText = document.createElement("p");
+      title.className = "lightbox-description-title";
+      descriptionText.className = "lightbox-description-text";
+      title.textContent = feature.title;
+      descriptionText.textContent = feature.description;
+      description.append(title, descriptionText);
       modal.appendChild(modalImg);
+      modal.appendChild(description);
       document.body.appendChild(modal);
       modal.getBoundingClientRect();
       modal.classList.add("active");
@@ -73,5 +107,138 @@
     modalCloseBtn.addEventListener("click", closeModal);
     guideModal.addEventListener("click", (e) => { if (e.target === guideModal) closeModal(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && guideModal.style.display === "flex") closeModal(); });
+  }
+
+  /* ── Capabilities Grab & Release Horizontal Carousel Loop ── */
+  const capGrid = document.getElementById("capabilities-grid");
+  const capTabs = document.querySelectorAll(".cap-tab-btn");
+  const capCards = document.querySelectorAll(".cap-card");
+  const capPrevBtn = document.querySelector(".cap-nav-btn.prev");
+  const capNextBtn = document.querySelector(".cap-nav-btn.next");
+
+  if (capTabs.length > 0 && capCards.length > 0) {
+    capTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const category = tab.getAttribute("data-category");
+        capTabs.forEach((t) => {
+          t.classList.toggle("active", t === tab);
+          t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        });
+        capCards.forEach((card) => {
+          const cardCategory = card.getAttribute("data-category");
+          const matches = category === "all" || cardCategory === category;
+          card.classList.toggle("hidden", !matches);
+        });
+        if (capGrid) {
+          capGrid.scrollTo({ left: 0, behavior: "smooth" });
+        }
+      });
+    });
+  }
+
+  if (capGrid) {
+    let isDragging = false, startX = 0, scrollLeft = 0, velocity = 0, lastX = 0, animationFrameId = null;
+
+    function checkLoop() {
+      const maxScroll = capGrid.scrollWidth - capGrid.clientWidth;
+      if (maxScroll <= 10) return;
+      if (capGrid.scrollLeft >= maxScroll - 2) {
+        capGrid.scrollLeft = 4;
+        if (isDragging) {
+          scrollLeft = 4;
+          startX = lastX;
+        }
+      } else if (capGrid.scrollLeft <= 2) {
+        const newPos = maxScroll - 6;
+        capGrid.scrollLeft = newPos;
+        if (isDragging) {
+          scrollLeft = newPos;
+          startX = lastX;
+        }
+      }
+    }
+
+    const startDrag = (pageX) => {
+      isDragging = true;
+      capGrid.classList.add("is-dragging");
+      startX = pageX;
+      scrollLeft = capGrid.scrollLeft;
+      lastX = pageX;
+      velocity = 0;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+
+    const moveDrag = (pageX) => {
+      if (!isDragging) return;
+      const walk = (pageX - startX) * 1.35;
+      capGrid.scrollLeft = scrollLeft - walk;
+      velocity = pageX - lastX;
+      lastX = pageX;
+      checkLoop();
+    };
+
+    const stopDragging = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      capGrid.classList.remove("is-dragging");
+      if (Math.abs(velocity) > 0.8) {
+        let currentVel = velocity * 8;
+        const coast = () => {
+          if (Math.abs(currentVel) < 0.4 || isDragging) return;
+          capGrid.scrollLeft -= currentVel;
+          currentVel *= 0.92;
+          checkLoop();
+          animationFrameId = requestAnimationFrame(coast);
+        };
+        coast();
+      }
+    };
+
+    capGrid.addEventListener("mousedown", (e) => {
+      startDrag(e.pageX);
+    });
+
+    window.addEventListener("mouseup", stopDragging);
+    capGrid.addEventListener("mouseleave", stopDragging);
+
+    capGrid.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      moveDrag(e.pageX);
+    });
+
+    capGrid.addEventListener("touchstart", (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      startDrag(e.touches[0].pageX);
+    }, { passive: true });
+
+    capGrid.addEventListener("touchmove", (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      moveDrag(e.touches[0].pageX);
+    }, { passive: true });
+
+    capGrid.addEventListener("touchend", stopDragging, { passive: true });
+    capGrid.addEventListener("touchcancel", stopDragging, { passive: true });
+
+    capGrid.addEventListener("scroll", checkLoop, { passive: true });
+
+    if (capPrevBtn) {
+      capPrevBtn.addEventListener("click", () => {
+        const maxScroll = capGrid.scrollWidth - capGrid.clientWidth;
+        if (capGrid.scrollLeft <= 10) {
+          capGrid.scrollLeft = maxScroll - 10;
+        }
+        capGrid.scrollBy({ left: -340, behavior: "smooth" });
+      });
+    }
+    if (capNextBtn) {
+      capNextBtn.addEventListener("click", () => {
+        const maxScroll = capGrid.scrollWidth - capGrid.clientWidth;
+        if (capGrid.scrollLeft >= maxScroll - 10) {
+          capGrid.scrollLeft = 10;
+        }
+        capGrid.scrollBy({ left: 340, behavior: "smooth" });
+      });
+    }
   }
 })();

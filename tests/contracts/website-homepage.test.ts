@@ -52,24 +52,20 @@ describe('website homepage positioning', () => {
     expect(base).toContain('.hero-proof-list');
     expect(responsive).toContain('.hero-product-preview');
   });
+
   test('documents the latest HTML, data, workspace, and store work with screenshots', () => {
     const html = read('website/index.html');
     const english = read('website/i18n/en.js');
     const readme = read('README.md');
-    const latestStyles = read('website/styles/base.part2.css');
 
-    expect(html).toContain('id="latest-features"');
     expect(html).toContain('data-i18n="latestHtmlTitle"');
     expect(html).toContain('data-i18n="latestDataTitle"');
     expect(html).toContain('data-i18n="latestWorkspaceTitle"');
     expect(html).toContain('data-i18n="latestStoresTitle"');
     expect(html).toContain('Supported-HTML-File-Preview.png');
-    expect(html).toContain('View-data-table-easier-than-ever.png');
+    expect(html).toContain('chart-for datatable-and-CSV-TSV_2.png');
     expect(html).toContain('VS-Code-style-mutli-workspace-multi-document-tabs.png');
-    expect(english).toContain('Microsoft Store and Ubuntu App Center');
-    expect(latestStyles).toMatch(
-      /\.latest-feature-grid \.feature-card img \{[\s\S]*height: auto;/,
-    );
+    expect(english).toContain('Run Markdown Explorer on Windows, macOS, and Linux.');
 
     expect(readme).toContain('## Features');
     expect(readme).toContain('CSV and TSV Code Fences');
@@ -78,4 +74,19 @@ describe('website homepage positioning', () => {
     expect(readme).toContain('media/demo/chart-for datatable-and-CSV-TSV.png');
   });
 
+  test('queries GitHub for real version first and updates all version texts', () => {
+    const html = read('website/index.html');
+    const script = read('website/script.js');
+    const rendering = read('website/site-download-rendering.js');
+    const pkg = JSON.parse(read('package.json'));
+
+    expect(html).toContain(`"softwareVersion": "${pkg.version}"`);
+    expect(script).toContain('fetchGitHubVersionFallback');
+    expect(script).toContain('raw.githubusercontent.com');
+    expect(rendering).toContain('updateVersionTexts');
+    expect(rendering).toContain('data-version-text');
+    expect(rendering).toContain('activeVersion');
+    expect(read('website/i18n/en.js')).toContain('Get Markdown Explorer - Current version - <span data-version-text>');
+    expect(rendering).not.toContain('download-button-version');
+  });
 });
