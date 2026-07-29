@@ -18,12 +18,12 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 ## Why It Feels Different
 
 - **Read workspaces, not loose files**: file tree, table of contents, section cards, copy buttons, recent workspaces, and desktop tabs.
-- **Preview more document types**: opt in to local conversion for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files, with an in-app note that converted previews may lose layout or formatting quality.
+- **Preview more document types**: open `.html` and `.htm` files as interactive previews or converted Markdown (`Ctrl+Alt+H`), plus opt in to local conversion for DOCX, PDF, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
 - **Search where you need**: current file, current workspace, or every open desktop tab, with content excerpts and exact jump-to-result behavior.
-- **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+S`, arrow keys, Enter, and Esc.
+- **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+Z`, arrow keys, Enter, and Esc.
 - **Shape the workspace**: file tabs, Scope Focus, Theme Remix, and settings import/export keep large doc sets personal without changing project files.
 - **Render rich Markdown**: Mermaid, LaTeX math, images, streaming video, MDX, HTML sandboxes, callouts, frontmatter, and code blocks.
-- **Use data inside docs**: sort, filter, multi-select table filters, collapse large tables, and switch tables into Bar, Line, or Pie charts.
+- **Use data inside docs**: CSV and TSV code fences, row sorting, multi-select table filters, collapsible datasets, and automatic Bar, Line, or Pie charts.
 - **Stay private**: rendering and indexing are local. No telemetry, no file uploads.
 
 ## Installation
@@ -36,13 +36,14 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 | Linux desktop | [Download `.AppImage` or `.deb`](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size) |
 | macOS desktop | [Download `.dmg` for arm64 or x64](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size). First launch notes: [macOS guide](docs/macos-install.md) |
 | Chromium extension | [Download `.zip` release](https://github.com/the-long-ride/markdown-explorer/releases/latest). Setup guide: [Chromium guide](docs/chromium-install.md) |
+| Microsoft Store and Ubuntu App Center | Automated Tauri publishing is prepared; use [GitHub Releases](https://github.com/the-long-ride/markdown-explorer/releases/latest) until the store listings are enabled. |
 
 ## Features
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Converted-Document-Preview.png" width="32%" alt="Converted DOCX preview with best-effort quality notice" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Sidebar-Cursor-Mode.png" width="32%" alt="Sidebar Cursor mode highlighting the file tree" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Theme-Remix-Settings.png" width="32%" alt="Theme Remix settings for custom Markdown Explorer themes" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/VS-Code-style-mutli-workspace-multi-document-tabs.png" width="32%" alt="Multi-workspace and document tabs" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Your-Explorer-Your-Themes.png" width="32%" alt="Theme Remix settings for custom Markdown Explorer themes" />
 </p>
 
 - **Workspace Navigation & Organization**
@@ -50,13 +51,17 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
   - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
   - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
-  - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Ctrl+Q` / `Cmd+Q` shortcut.
-  - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+S`) with arrow keys, `Enter`, and `Esc`.
+  - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
+  - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
   - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
+  - **Safer Workspace Operations**: Cancel running scans, reveal files and folders in native file manager, replace missing recent workspaces, and avoid stale scan results reopening old content.
+  - **Richer Context & Row Menus**: Sidebar, document-tab, and workspace-tab menus expose context-aware actions and shortcuts.
   - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
   - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
 
 - **Document Previews & Rich Media**
+  - **HTML Document Modes**: Open `.html` and `.htm` files as isolated interactive previews or converted Markdown, switch active tab with `Ctrl+Alt+H`, and use **Open in Browser** when full browser behavior is needed (with embedded local CSS/JS support).
+  - **Responsive Image Rows**: Same-paragraph Markdown images stay together across viewport sizes.
   - **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
   - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, etc.) and KaTeX math formulas.
   - **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
@@ -65,12 +70,13 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Video Embedding**: Support for local video files and YouTube/streaming video embeds.
 
 - **Data Tables & Charts**
+  - **CSV and TSV Code Fences**: Switch highlighted delimited text into interactive tables with delimiter detection, header inference, Excel-style column labels, sorting, filtering, wrapping, and chart controls.
   - **Interactive Filtering & Sorting**: Multi-select column filters, row sorting, and text wrap/unwrap controls.
   - **Collapsible Datasets**: Compact view for large datasets (1000+ rows).
   - **View-as-Chart**: Automatically convert numeric table columns into interactive Bar, Line, or Pie charts.
 
 - **Converted Document Previews**
-  - **Multi-Format Local Conversion**: Opt-in previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
+  - **Multi-Format Local Conversion**: Opt-in previews for DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files. Tauri performs conversion in-process with local Rust adapters; Electron and VS Code retain `@the-long-ride/markdown-them`. See [Native document conversion](docs/native-document-conversion.md).
   - **Smart Caching**: Fast re-views using file timestamp and size caching.
 
 - **Search & Discovery**
@@ -78,8 +84,9 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Jump-to-Result**: Click search excerpts to jump directly to exact matches.
 
 - **Customization & Platform Support**
-  - **Theme Remix**: Create, edit, import, and export custom themes with color, density, spacing, and background image controls.
+  - **Built-in Theme Families & Theme Remix**: Choose grouped built-in themes—including Aurora Glass, Neon Voltage, and Raw Grid—pet themes, or create, edit, import, and export custom themes with color, density, spacing, and background image controls.
   - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
+  - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
   - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
   - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
   - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
@@ -100,8 +107,8 @@ Markdown tables become real data views: search rows, sort columns, multi-select 
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/View-data-table-easier-than-ever.png" width="32%" alt="Markdown table rendered as an easier data view" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Suport-interact-with-large-data-table.png" width="32%" alt="Large table with multi-select filters and sorted rows" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/View-as-chart-instead-with-datatable.png" width="32%" alt="Markdown table rendered as an interactive chart" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/chart-for datatable-and-CSV-TSV.png" width="32%" alt="Data table rendered as an interactive chart" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/chart-for datatable-and-CSV-TSV_2.png" width="32%" alt="Alternative chart view for data tables and CSV/TSV" />
 </p>
 
 ## Diagrams, Math, Code, Media
@@ -109,19 +116,19 @@ Markdown tables become real data views: search rows, sort columns, multi-select 
 Mermaid diagrams render offline, LaTeX math is readable, code blocks are highlighted, and Markdown can include local or streaming video.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Adapt-all-kind-of-mermaid-diagram.png" width="49%" alt="Many Mermaid diagram types rendered in Markdown Explorer" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-all-kinds-of-Mermaid-diagram.png" width="49%" alt="Many Mermaid diagram types rendered in Markdown Explorer" />
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Math-formular-display.png" width="49%" alt="LaTeX math formulas rendered in Markdown Explorer" />
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format.png" width="31%" alt="Syntax-highlighted code block with line numbers" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format_1.png" width="31%" alt="Markdown Explorer code block formatting example" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format_2.png" width="31%" alt="Markdown Explorer highlighted programming language sample" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-display-25-programming-languages-with-beauti-format_2.png" width="31%" alt="Syntax-highlighted code block with line numbers" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/custom-keyboard-shortcuts-binding.png" width="31%" alt="Custom keyboard shortcuts binding" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Better-reading-markdown-files-exp.png" width="31%" alt="Optimized Markdown reading experience" />
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-Streaming-Video.png" width="49%" alt="YouTube video embedded inside a Markdown document" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-Streaming-Video_1.png" width="49%" alt="Streaming video preview inside a Markdown document" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Supported-HTML-File-Preview.png" width="49%" alt="Supported HTML file preview" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/support-focus-and-full-screen-mode-turn-your-document-to-presentation.png" width="49%" alt="Focus and fullscreen mode for documents" />
 </p>
 
 ## HTML And Media Tools
@@ -129,13 +136,12 @@ Mermaid diagrams render offline, LaTeX math is readable, code blocks are highlig
 Use isolated HTML previews for interactive examples, and inspect images or diagrams in a zoomable media modal.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Interactive-HTML-sandbox_1.png" width="49%" alt="Interactive HTML sandbox in Markdown Explorer" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Interactive-HTML-sandbox_2.png" width="49%" alt="Rendered output from an interactive HTML sandbox" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Interactive-HTML-sandbox.png" width="49%" alt="Interactive HTML sandbox in Markdown Explorer" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Supported-HTML-File-Preview.png" width="49%" alt="Supported HTML preview in Markdown Explorer" />
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View.png" width="49%" alt="Zoomable media modal for images and Mermaid diagrams" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View_1.jpg" width="49%" alt="Image modal preview with zoom controls" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Mermaid-and-Image-Modal-View_1.png" width="90%" alt="Zoomable media modal for images and Mermaid diagrams" />
 </p>
 
 ## Windows File Explorer
@@ -148,7 +154,7 @@ The desktop app opens recent folders quickly, supports drag-and-drop opening, ca
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection.png" width="32%" alt="Desktop workspace selection screen" />
-  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Workspace-Selection-Search-Recently-one.png" width="32%" alt="Desktop workspace selection with recent folders" />
+  <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/VS-Code-style-mutli-workspace-multi-document-tabs.png" width="32%" alt="Desktop workspace multi-document tabs view" />
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png" width="32%" alt="Markdown Explorer welcome page with help section" />
 </p>
 
@@ -167,28 +173,30 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Open Markdown Explorer | N/A | `Ctrl+Shift+M` / `Cmd+Shift+M` | N/A |
 | Toggle preview for current Markdown file | N/A | `Ctrl+Alt+V` / `Cmd+Alt+V` | N/A |
 | Search current workspace | `Ctrl+F` | `Ctrl+K` / `Cmd+K` | `Ctrl+K` / `Cmd+K` |
-| Search all open workspace tabs | `Ctrl+Shift+F` | N/A | N/A |
+| Search all open workspace tabs | `Ctrl+Shift+F` | `Ctrl+Shift+K` / `Cmd+Shift+K` | `Ctrl+Shift+K` / `Cmd+Shift+K` |
 | Find in current file | `F` | `K` | `K` |
 | Back to previous file | `Ctrl+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back |
 | Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
-| Open settings | `Ctrl+I` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
+| Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
 | Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
 | Refresh workspace | `F5` | `F5` | `Alt+R` |
 | Collapse all heading sections | `Ctrl+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` |
 | Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
 | Go to workspace selection | `Ctrl+N` | `Ctrl+Alt+W` / `Cmd+Alt+W` | `Ctrl+Alt+W` / `Cmd+Alt+W` |
-| Toggle sidebar | `Ctrl+B` | `Ctrl+Shift+P` / `Cmd+Shift+P` | `Ctrl+Shift+P` / `Cmd+Shift+P` |
-| Toggle table of contents | `Ctrl+T` | `Ctrl+T` / `Cmd+T` | `Ctrl+T` / `Cmd+T` |
-| Locate current file | `Ctrl+Q` | `Ctrl+Q` / `Cmd+Q` | `Ctrl+Q` / `Cmd+Q` |
+| Open current document folder | `Shift+Alt+R` | N/A | N/A |
+| Toggle sidebar | `Ctrl+B` | `Alt+A` | `Alt+A` |
+| Toggle table of contents | `Alt+C` | `Alt+C` | `Alt+C` |
+| Locate current file | `Alt+Q` | `Alt+Q` | `Alt+Q` |
 | Toggle Focus mode | `Ctrl+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` |
+| Toggle active HTML document view | `Ctrl+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` |
 | Toggle desktop Tabs/Focus view | `Ctrl+Alt+T` | N/A | N/A |
 | Close current content tab | `Ctrl+W` | N/A | N/A |
 | Close all content tabs | `Ctrl+Shift+W` | N/A | N/A |
 | Close content tabs to the right | `Ctrl+Alt+W` | N/A | N/A |
 | Close other content tabs | `Ctrl+Alt+O` | N/A | N/A |
 | Toggle fullscreen | `F11` | N/A | N/A |
-| Sidebar cursor mode | `Alt+S` | `Alt+S` | `Alt+S` |
+| Sidebar cursor mode | `Alt+Z` | `Alt+Z` | `Alt+Z` |
 | Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom | Use browser zoom |
 | Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom | Use browser zoom |
 

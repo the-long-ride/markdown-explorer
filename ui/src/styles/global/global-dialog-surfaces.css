@@ -1,0 +1,14 @@
+:root {
+  /* Dialog content must remain fully opaque even when the active theme uses glass surfaces. */
+  --dialog-surface: linear-gradient(var(--bg-e), var(--bg-e)), var(--bg);
+}
+
+:is(:root, :root[data-theme][data-theme-style]) :is(
+  .settings-card,
+  .search-overlay-card,
+  .find-in-file-panel,
+  .mdn-html-modal,
+  .html-local-first-warning
+) {
+  background: var(--dialog-surface) !important;
+}

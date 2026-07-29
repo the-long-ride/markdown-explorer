@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDesktopTabs } from '../../../../ui/src/hooks/useDesktopTabs';
+import { clearWorkspaceOperation } from '../../../../ui/src/desktop/workspaceOperations';
 
 let nextTabId = 0;
 
@@ -125,6 +126,7 @@ describe('useDesktopTabs', () => {
   beforeEach(() => {
     nextTabId = 0;
     localStorage.clear();
+    clearWorkspaceOperation();
     vi.useFakeTimers();
   });
 
@@ -394,6 +396,121 @@ describe('useDesktopTabs', () => {
       act(() => { result.current.prepareWorkspaceOpen(); });
 
       expect(result.current.tabs.length).toBe(countBefore);
+    });
+  });
+
+  describe('workspace scan cancellation', () => {
+    it('keeps the scanning tab and resets it to an empty workspace-selection tab', () => {
+      const { result, bridge, dispatch } = setupHook({ isTabView: true });
+      let operation: any;
+
+      act(() => {
+        operation = result.current.prepareWorkspaceOpen();
+      });
+      const scanningTabId = operation.workspaceTabId;
+      expect(result.current.activeTabId).toBe(scanningTabId);
+
+      act(() => {
+        result.current.cancelCurrentWorkspaceScan();
+      });
+
+      const resetTab = result.current.tabs.find((tab: any) => tab.id === scanningTabId);
+      expect(resetTab).toEqual(expect.objectContaining({
+        id: scanningTabId,
+        kind: 'new',
+        workspaceLoadState: 'idle',
+        workspaceOperationId: undefined,
+        isLoading: false,
+      }));
+      expect(result.current.activeTabId).toBe(scanningTabId);
+      expect(bridge.postMessage).toHaveBeenCalledWith({
+        command: 'cancelWorkspaceScan',
+        workspaceOperationId: operation.workspaceOperationId,
+      });
+      expect(bridge.postMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'READY_ACK',
+        workspaceName: '',
+        workspacePath: undefined,
+      }));
+      expect(dispatch).toHaveBeenCalledWith({
+        type: 'WORKSPACE_SCAN_PROGRESS',
+        scannedFiles: 0,
+        active: false,
+      });
+    });
+
+    it('ignores late loading messages from a cancelled scan', () => {
+      const { result, bridge } = setupHook({ isTabView: true });
+      let operation: any;
+      act(() => { operation = result.current.prepareWorkspaceOpen(); });
+      act(() => { result.current.cancelCurrentWorkspaceScan(); });
+
+      act(() => {
+        bridge._fireMessage({
+          command: 'setLoading',
+          message: 'late',
+          workspaceOperationId: operation.workspaceOperationId,
+          workspaceTabId: operation.workspaceTabId,
+        });
+      });
+
+      expect(result.current.tabs.find((tab: any) => tab.id === operation.workspaceTabId)?.workspaceLoadState).toBe('idle');
+    });
+  });
+
+  describe('workspace unavailable recovery', () => {
+    it('reuses the active tab and supplies the old recent path to the host', () => {
+      const { result, bridge } = setupHook({ isTabView: true });
+      let tabId = '';
+      act(() => { tabId = result.current.createNewWorkspaceTab(); });
+      bridge.postMessage.mockClear();
+
+      act(() => { result.current.reopenUnavailableWorkspace('/missing/workspace'); });
+
+      expect(result.current.activeTabId).toBe(tabId);
+      expect(bridge.postMessage).toHaveBeenCalledWith(expect.objectContaining({
+        command: 'openFolder',
+        openFirstFile: true,
+        replaceRecentWorkspacePath: '/missing/workspace',
+        workspaceTabId: tabId,
+        workspaceOperationId: expect.any(String),
+      }));
+      expect(result.current.tabs).toHaveLength(2);
+    });
+
+    it('preserves the unavailable workspace when the replacement picker is cancelled', () => {
+      const unavailableState = makeState({
+        workspaceName: 'Missing workspace',
+        workspacePath: '/missing/workspace',
+        workspaceUnavailablePath: '/missing/workspace',
+        workspaceUnavailableReason: 'missing',
+        renderVersion: 2,
+      });
+      const { result, bridge } = setupHook({ state: unavailableState, isTabView: true });
+      const unavailableTab = result.current.tabs.find((tab: any) => tab.workspacePath === '/missing/workspace');
+      expect(unavailableTab).toBeDefined();
+
+      act(() => { result.current.reopenUnavailableWorkspace('/missing/workspace'); });
+      const openMessage = bridge.postMessage.mock.calls.find((call: any[]) => call[0].command === 'openFolder')?.[0];
+
+      act(() => {
+        bridge._fireMessage({
+          command: 'workspaceOpenCancelled',
+          workspaceOperationId: openMessage.workspaceOperationId,
+          workspaceTabId: openMessage.workspaceTabId,
+        });
+      });
+
+      const preservedTab = result.current.tabs.find((tab: any) => tab.id === unavailableTab.id);
+      expect(preservedTab).toEqual(expect.objectContaining({
+        workspacePath: '/missing/workspace',
+        workspaceUnavailablePath: '/missing/workspace',
+        workspaceUnavailableReason: 'missing',
+        workspaceLoadState: 'ready',
+        workspaceOperationId: undefined,
+      }));
+      expect(result.current.activeTabId).toBe(unavailableTab.id);
     });
   });
 

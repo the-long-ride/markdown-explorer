@@ -8,6 +8,7 @@ import {
   useContext,
   useMemo,
   useReducer,
+  useRef,
 } from 'react';
 import { usePlatform } from './PlatformContext';
 import type {
@@ -20,6 +21,8 @@ import { useAppStateEffects } from './useAppStateEffects';
 import {
   type AppState,
   type Action,
+  type NavigateOptions,
+  type PendingHtmlPreviewNavigation,
   reducer as appReducer,
   createInitialState as appCreateInitialState,
   normalizePathKey,
@@ -50,7 +53,7 @@ function reducer(state: AppState, action: Action): AppState {
 interface AppStateContextValue {
   state: AppState;
   dispatch: React.Dispatch<Action>;
-  navigate: (fsPath: string | null) => void;
+  navigate: (fsPath: string | null, options?: NavigateOptions) => void;
   activateContentTab: (fsPath: string) => void;
   reorderContentTabs: (sourcePath: string, targetPath: string) => void;
   closeContentTab: (fsPath: string) => void;
@@ -69,6 +72,8 @@ interface AppStateContextValue {
   toggleToc: () => void;
   toggleFocusMode: () => void;
   toggleDesktopViewMode: () => void;
+  toggleDefaultHtmlPreview: () => void;
+  setContentTabHtmlPreview: (filePath: string, enabled: boolean | undefined) => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }
 
@@ -82,8 +87,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     appCreateInitialState(bridge.getState<PersistedState>(), isDesktop),
   );
+  const pendingHtmlPreviewNavigationRef = useRef<PendingHtmlPreviewNavigation | null>(null);
 
-  useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldLogPerf });
+  useAppStateEffects({
+    bridge,
+    dispatch,
+    state,
+    isDesktop,
+    shouldLogPerf,
+    pendingHtmlPreviewNavigationRef,
+  });
 
   const getCachedContentTabPath = useCallback(
     (fsPath: string) => {
@@ -103,12 +116,28 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   const navigate = useCallback(
-    (fsPath: string | null) => {
+    (fsPath: string | null, options?: NavigateOptions) => {
       const targetPath = fsPath ?? '';
+      if (targetPath && options?.htmlPreviewOverride !== undefined) {
+        pendingHtmlPreviewNavigationRef.current = {
+          filePath: targetPath,
+          enabled: options.htmlPreviewOverride,
+        };
+      } else {
+        pendingHtmlPreviewNavigationRef.current = null;
+      }
       if (targetPath) {
         const cachedPath = getCachedContentTabPath(targetPath);
         if (cachedPath) {
           dispatch({ type: 'ACTIVATE_CONTENT_TAB', filePath: cachedPath });
+          if (options?.htmlPreviewOverride !== undefined) {
+            dispatch({
+              type: 'SET_CONTENT_TAB_HTML_PREVIEW',
+              filePath: cachedPath,
+              enabled: options.htmlPreviewOverride,
+            });
+            pendingHtmlPreviewNavigationRef.current = null;
+          }
           bridge.postMessage({ command: 'navigate', path: cachedPath });
           return;
         }
@@ -122,6 +151,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const activateContentTab = useCallback(
     (fsPath: string) => {
       if (!fsPath) return;
+      pendingHtmlPreviewNavigationRef.current = null;
       dispatch({ type: 'ACTIVATE_CONTENT_TAB', filePath: fsPath });
       bridge.postMessage({ command: 'navigate', path: fsPath });
     },
@@ -199,9 +229,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [bridge, state.currentFile]);
 
   const refresh = useCallback(() => {
+    if (!state.currentFile) return;
     dispatch({ type: 'SET_LOADING' });
     bridge.postMessage({ command: 'refresh' });
-  }, [bridge]);
+  }, [bridge, state.currentFile]);
 
   const toggleTheme = useCallback(() => {
     const next: ThemeMode =
@@ -286,6 +317,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
   }, [state.settings.desktopViewMode, updateSettings]);
 
+
+  const toggleDefaultHtmlPreview = useCallback(() => {
+    updateSettings({ defaultHtmlPreview: !state.settings.defaultHtmlPreview });
+  }, [state.settings.defaultHtmlPreview, updateSettings]);
+
+  const setContentTabHtmlPreview = useCallback((filePath: string, enabled: boolean | undefined) => {
+    dispatch({ type: 'SET_CONTENT_TAB_HTML_PREVIEW', filePath, enabled });
+  }, []);
+
   const value = useMemo<AppStateContextValue>(
     () => ({
       state,
@@ -309,6 +349,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       toggleToc,
       toggleFocusMode,
       toggleDesktopViewMode,
+      toggleDefaultHtmlPreview,
+      setContentTabHtmlPreview,
       updateSettings,
     }),
     [
@@ -332,6 +374,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       toggleToc,
       toggleFocusMode,
       toggleDesktopViewMode,
+      toggleDefaultHtmlPreview,
+      setContentTabHtmlPreview,
       updateSettings,
     ],
   );

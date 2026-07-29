@@ -1,4 +1,3 @@
-import { getDefaultKeybindings } from '../../contexts/appStateConstants';
 import type { AppState } from '../../contexts/appStateReducer';
 import { formatShortcutLabel } from '../../utils/shortcuts';
 
@@ -25,16 +24,17 @@ type SettingsShortcutsPanelProps = {
   getUpdateErrorText: () => string;
   onOpenChangelog: () => void;
   onDownloadUpdate: () => void;
+  onRequestReset: () => void;
 };
 
 export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
   const {
-    state, t, isDesktop, shortcutSearchQuery, setShortcutSearchQuery,
+    state, t, shortcutSearchQuery, setShortcutSearchQuery,
     filteredActions, recordingAction, setRecordingAction, handleKeyDown,
     updateSettings, showUpdateCard, updateVersionLabel, updateCheck,
     hostUpdateState, isUpdateDownloading, isUpdateScheduled, isUpdateApplying,
     isUpdateDownloaded, updateStatus, getUpdateErrorText, onOpenChangelog,
-    onDownloadUpdate,
+    onDownloadUpdate, onRequestReset,
   } = props;
   return (
 <>
@@ -51,29 +51,27 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
       {t.shortcutsHint}
     </div>
   </div>
-  {isDesktop && (
-    <div
-      className="settings-shortcuts-search"
+  <div
+    className="settings-shortcuts-search"
+  >
+    <input
+      className="settings-shortcuts-search-input"
+      type="text"
+      value={shortcutSearchQuery}
+      onChange={(event) => setShortcutSearchQuery(event.target.value)}
+      placeholder="Search keyboard shortcuts..."
+      aria-label="Search keyboard shortcuts"
+    />
+    <button
+      className="settings-shortcuts-search-clear"
+      type="button"
+      onClick={() => setShortcutSearchQuery("")}
+      aria-label="Clear keyboard shortcut search"
+      disabled={!shortcutSearchQuery}
     >
-      <input
-        className="settings-shortcuts-search-input"
-        type="text"
-        value={shortcutSearchQuery}
-        onChange={(event) => setShortcutSearchQuery(event.target.value)}
-        placeholder="Search keyboard shortcuts..."
-        aria-label="Search keyboard shortcuts"
-      />
-      <button
-        className="settings-shortcuts-search-clear"
-        type="button"
-        onClick={() => setShortcutSearchQuery("")}
-        aria-label="Clear keyboard shortcut search"
-        disabled={!shortcutSearchQuery}
-      >
-        &times;
-      </button>
-    </div>
-  )}
+      &times;
+    </button>
+  </div>
   <div
     className="settings-shortcuts-list"
   >
@@ -140,12 +138,7 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
     <button
       type="button"
       className="settings-reset-shortcuts-btn"
-      onClick={() =>
-        updateSettings({
-          keybindings: getDefaultKeybindings(isDesktop),
-          disabledKeybindings: {},
-        })
-      }
+      onClick={onRequestReset}
     >
       {t.resetShortcuts}
     </button>

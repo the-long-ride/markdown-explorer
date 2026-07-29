@@ -1,7 +1,13 @@
 use super::*;
+use crate::host_message::WorkspaceOperationMetadata;
 
 impl Dispatcher {
     pub(super) async fn handle_ready(&self, msg: &Value) {
+        let requested_operation = WorkspaceOperationMetadata::from_parts(
+            msg.get("workspaceOperationId").and_then(Value::as_str),
+            msg.get("workspaceTabId").and_then(Value::as_str),
+        );
+        let operation = requested_operation.or_else(|| host_message::current_workspace_operation(&self.app));
         if let Some(enabled) = msg
             .get("documentConversionEnabled")
             .and_then(Value::as_bool)
@@ -42,7 +48,7 @@ impl Dispatcher {
             &package_info.version.to_string(),
         );
         if let Some(object) = ack.as_object() {
-            host_message::emit(&self.app, "readyAck", object.clone());
+            host_message::emit_scoped(&self.app, "readyAck", object.clone(), operation.as_ref());
         }
         let external_open_path = self.state.inner.write().external_open_path.take();
         if let Some(path) = external_open_path {
@@ -51,12 +57,21 @@ impl Dispatcher {
         self.state.inner.read().perf.mark("tauri:readyAck");
 
         if workspace_path.is_some() {
-            host_message::emit_loading(&self.app, "Loading workspace...", None);
+            host_message::emit_loading_scoped(
+                &self.app,
+                "Loading workspace...",
+                None,
+                operation.as_ref(),
+            );
             self.ensure_workspace_watch();
             self.bind_watch();
-            self.send_workspace_data();
+            self.send_workspace_data(false);
         } else {
-            self.send_welcome();
+            host_message::emit_render_content_empty_welcome_scoped(
+                &self.app,
+                json!([]),
+                operation.as_ref(),
+            );
         }
     }
 }

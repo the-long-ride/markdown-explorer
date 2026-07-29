@@ -8,12 +8,14 @@ const mockCloseContentTabsToRight = vi.fn();
 const mockCloseOtherContentTabs = vi.fn();
 const mockCloseAllContentTabs = vi.fn();
 const mockReorderContentTabs = vi.fn();
+const mockPostMessage = vi.fn();
 
 const baseSettings = {
   language: 'en',
   fileTabs: true,
   showTitle: false,
   defaultHtmlPreview: true,
+  defaultCsvPreview: true,
   documentConversion: false,
   scopeFocus: {},
   searchScopeFocus: {},
@@ -109,6 +111,16 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => mockAppState,
 }));
 
+vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
+  usePlatform: () => ({
+    postMessage: mockPostMessage,
+    onMessage: vi.fn(() => () => {}),
+    getState: vi.fn(),
+    setState: vi.fn(),
+    copyToClipboard: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     fileTabs: 'File tabs',
@@ -118,6 +130,10 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       closeTabsToRight: 'Close to right',
       closeOtherTabs: 'Close others',
       closeAllTabs: 'Close all',
+      showInFileExplorer: 'Show in File Explorer',
+      openInFinder: 'Open in Finder',
+      revealInFinder: 'Reveal in Finder',
+      showInFileManager: 'Show in File Manager',
     },
   }),
 }));
@@ -126,9 +142,14 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
   TabContextMenu: () => null,
 }));
 
-vi.mock('../../../../ui/src/components/shared/icons', () => ({
-  CloseIcon: () => '×',
-}));
+vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    CloseIcon: () => '×',
+    RevealFileLocationIcon: () => 'reveal-file-icon',
+  };
+});
 
 import { ContentTabs } from '../../../../ui/src/components/Content/ContentTabs';
 

@@ -51,7 +51,7 @@ export function createWebBridge(): PlatformBridge {
     },
 
     copyToClipboard(text: string) {
-      navigator.clipboard.writeText(text).catch(() => {});
+      return navigator.clipboard.writeText(text);
     },
   };
 }

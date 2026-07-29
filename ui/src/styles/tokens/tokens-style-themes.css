@@ -47,7 +47,7 @@
   --surface-blur: none;
 }
 
-/* Evolved Glassmorphism: dark and auto-dark */
+/* Aurora Glassmorphism: dark and auto-dark */
 [data-theme-style="glass"][data-theme="dark"],
 [data-theme-style="glass"][data-theme="auto"] {
   --bg: linear-gradient(135deg, #0d1117 0%, #101820 48%, #18151f 100%);
@@ -83,7 +83,7 @@
   --chart-8: #38bdf8;
 }
 
-/* Evolved Glassmorphism: light */
+/* Aurora Glassmorphism: light */
 [data-theme-style="glass"][data-theme="light"] {
   --bg: linear-gradient(135deg, #f8fbff 0%, #f5f7f2 52%, #fff7f2 100%);
   --bg-s: rgba(255, 255, 255, 0.72);
@@ -301,4 +301,291 @@
   }
 }
 
+/* Tokyo Night Theme: layout & rhythm overrides */
+[data-theme-style="tokyo-night"] {
+  --topbar-h: 46px;
+  --topbar-gap: 10px;
+  --topbar-pad-x: 14px;
+  --control-h: 28px;
+  --control-pad-x: 10px;
+  --control-gap: 6px;
+  --content-pad-y: 24px;
+  --content-pad-x: 20px;
+  --section-gap: 14px;
+  --section-header-gap: 8px;
+  --section-header-pad-y: 10px;
+  --section-header-pad-x: 14px;
+  --section-body-pad-y: 14px;
+  --section-body-pad-x: 16px;
+  --table-cell-pad-y: 7px;
+  --table-cell-pad-x: 13px;
+  --stroke-w: 1px;
+  --r: 8px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --surface-blur: none;
+  --accent-hover: #c0caf5;
+}
 
+/* Tokyo Night Theme: dark and auto-dark (Obsidian Tokyo Night Palette) */
+[data-theme-style="tokyo-night"][data-theme="dark"],
+[data-theme-style="tokyo-night"][data-theme="auto"] {
+  --bg: #1a1b26;
+  --bg-s: #16161e;
+  --bg-e: #24283b;
+  --bg-h: #292e42;
+  --bg-a: #414868;
+  --bg-code: #121218;
+  --bd: rgba(41, 46, 66, 0.6);
+  --bd-s: #292e42;
+  --bd-x: #414868;
+  --tx: #c0caf5;
+  --tx2: #a9b1d6;
+  --txm: #565f89;
+  --tx3: #414868;
+  --txc: #7dcfff;
+  --accent: #7dcfff;
+  --accent-dim: rgba(125, 207, 255, 0.16);
+  --accent-text: #7dcfff;
+  --accent-hover: #bb9af7;
+  --sh-sm: 0 4px 16px rgba(18, 18, 24, 0.5);
+  --sh-md: 0 8px 24px rgba(18, 18, 24, 0.6);
+  --sh-lg: 0 16px 40px rgba(12, 12, 18, 0.7);
+  --section-shadow: 0 4px 20px rgba(18, 18, 24, 0.4);
+  --modal-bg: rgba(22, 22, 30, 0.95);
+  --modal-fg: #c0caf5;
+  --chart-1: #ff757f;
+  --chart-2: #e0af68;
+  --chart-3: #9ece6a;
+  --chart-4: #7dcfff;
+  --chart-5: #7aa2f7;
+  --chart-6: #bb9af7;
+  --chart-7: #ff9e64;
+  --chart-8: #1abc9c;
+}
+
+/* Tokyo Night Theme: light */
+[data-theme-style="tokyo-night"][data-theme="light"] {
+  --bg: #d5d6db;
+  --bg-s: #cbccd1;
+  --bg-e: #c3c5c9;
+  --bg-h: #dcdee2;
+  --bg-a: #bcbdc2;
+  --bg-code: #cbccd1;
+  --bd: rgba(150, 153, 163, 0.3);
+  --bd-s: rgba(150, 153, 163, 0.5);
+  --bd-x: rgba(52, 59, 88, 0.4);
+  --tx: #343b58;
+  --tx2: #272e4b;
+  --txm: #9699a3;
+  --tx3: #9699a3;
+  --txc: #0f4b6e;
+  --accent: #0f4b6e;
+  --accent-dim: rgba(15, 75, 110, 0.14);
+  --accent-text: #0f4b6e;
+  --accent-hover: #5a4a78;
+  --sh-sm: 0 4px 12px rgba(52, 59, 88, 0.08);
+  --sh-md: 0 8px 20px rgba(52, 59, 88, 0.12);
+  --sh-lg: 0 16px 36px rgba(52, 59, 88, 0.16);
+  --section-shadow: 0 4px 16px rgba(52, 59, 88, 0.06);
+  --modal-bg: rgba(213, 214, 219, 0.95);
+  --modal-fg: #343b58;
+  --chart-1: #8c4351;
+  --chart-2: #8f5e15;
+  --chart-3: #33635c;
+  --chart-4: #0f4b6e;
+  --chart-5: #34548a;
+  --chart-6: #5a4a78;
+  --chart-7: #965027;
+  --chart-8: #166775;
+}
+
+
+
+/* Neon Voltage: deep black with electric coral, teal, and violet */
+[data-theme-style="neon-voltage"] {
+  --topbar-h: 48px;
+  --topbar-gap: 9px;
+  --topbar-pad-x: 14px;
+  --control-h: 29px;
+  --control-pad-x: 10px;
+  --control-gap: 6px;
+  --content-pad-y: 28px;
+  --content-pad-x: 20px;
+  --section-gap: 16px;
+  --section-header-gap: 9px;
+  --section-header-pad-y: 11px;
+  --section-header-pad-x: 15px;
+  --section-body-pad-y: 16px;
+  --section-body-pad-x: 18px;
+  --table-cell-pad-y: 8px;
+  --table-cell-pad-x: 13px;
+  --stroke-w: 1px;
+  --r: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --surface-blur: blur(18px) saturate(150%);
+}
+
+[data-theme-style="neon-voltage"][data-theme="dark"],
+[data-theme-style="neon-voltage"][data-theme="auto"] {
+  --bg: #050507;
+  --bg-s: #0b0b11;
+  --bg-e: #12121b;
+  --bg-h: #1b1a28;
+  --bg-a: #26233a;
+  --bg-code: #08080d;
+  --bd: rgba(111, 241, 226, 0.1);
+  --bd-s: rgba(111, 241, 226, 0.22);
+  --bd-x: rgba(255, 107, 107, 0.52);
+  --tx: #f8f7ff;
+  --tx2: #aaa7be;
+  --txm: #6f6b82;
+  --tx3: #817d96;
+  --txc: #67f5e4;
+  --accent: #ff6b6b;
+  --accent-dim: rgba(255, 107, 107, 0.16);
+  --accent-text: #ff8e84;
+  --sh-sm: 0 0 18px rgba(40, 231, 212, 0.08), 0 10px 26px rgba(0, 0, 0, 0.42);
+  --sh-md: 0 0 32px rgba(183, 92, 255, 0.11), 0 20px 48px rgba(0, 0, 0, 0.5);
+  --sh-lg: 0 0 54px rgba(255, 107, 107, 0.1), 0 30px 80px rgba(0, 0, 0, 0.58);
+  --section-shadow: 0 0 24px rgba(40, 231, 212, 0.06), 0 18px 42px rgba(0, 0, 0, 0.38);
+  --modal-bg: rgba(5, 5, 7, 0.92);
+  --modal-fg: #f8f7ff;
+  --chart-1: #ff6b6b;
+  --chart-2: #28e7d4;
+  --chart-3: #b75cff;
+  --chart-4: #ffcf5a;
+  --chart-5: #6c8cff;
+  --chart-6: #40f28a;
+  --chart-7: #ff69c9;
+  --chart-8: #55d6ff;
+}
+
+[data-theme-style="neon-voltage"][data-theme="light"] {
+  --bg: #f8f7ff;
+  --bg-s: #ffffff;
+  --bg-e: #f1effb;
+  --bg-h: #e9e5f7;
+  --bg-a: #ddd7f0;
+  --bg-code: #f5f3fb;
+  --bd: rgba(38, 29, 64, 0.09);
+  --bd-s: rgba(38, 29, 64, 0.18);
+  --bd-x: rgba(255, 91, 91, 0.52);
+  --tx: #1c1728;
+  --tx2: #554e66;
+  --txm: #7c748e;
+  --tx3: #716982;
+  --txc: #007f76;
+  --accent: #e64655;
+  --accent-dim: rgba(230, 70, 85, 0.13);
+  --accent-text: #c32941;
+  --sh-sm: 0 10px 28px rgba(57, 44, 89, 0.11);
+  --sh-md: 0 20px 52px rgba(57, 44, 89, 0.15);
+  --sh-lg: 0 30px 78px rgba(57, 44, 89, 0.2);
+  --section-shadow: 0 16px 38px rgba(57, 44, 89, 0.11);
+  --modal-bg: rgba(248, 247, 255, 0.94);
+  --modal-fg: #1c1728;
+  --chart-1: #e64655;
+  --chart-2: #008f85;
+  --chart-3: #8b3fd1;
+  --chart-4: #b97800;
+  --chart-5: #4569dc;
+  --chart-6: #148a4b;
+  --chart-7: #c82d91;
+  --chart-8: #007aa8;
+}
+
+/* Raw Grid: visible structure and mechanical anti-design */
+[data-theme-style="raw-grid"] {
+  --topbar-h: 46px;
+  --topbar-gap: 8px;
+  --topbar-pad-x: 12px;
+  --control-h: 28px;
+  --control-pad-x: 9px;
+  --control-gap: 5px;
+  --content-pad-y: 24px;
+  --content-pad-x: 18px;
+  --section-gap: 12px;
+  --section-header-gap: 7px;
+  --section-header-pad-y: 10px;
+  --section-header-pad-x: 12px;
+  --section-body-pad-y: 13px;
+  --section-body-pad-x: 14px;
+  --table-cell-pad-y: 7px;
+  --table-cell-pad-x: 10px;
+  --stroke-w: 1px;
+  --r: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --surface-blur: none;
+}
+
+[data-theme-style="raw-grid"][data-theme="dark"],
+[data-theme-style="raw-grid"][data-theme="auto"] {
+  --bg: #101010;
+  --bg-s: #151515;
+  --bg-e: #1c1c1c;
+  --bg-h: #242424;
+  --bg-a: #303030;
+  --bg-code: #0c0c0c;
+  --bd: #292929;
+  --bd-s: #393939;
+  --bd-x: #6a6a6a;
+  --tx: #f4f1ec;
+  --tx2: #aaa6a0;
+  --txm: #74716d;
+  --tx3: #88837d;
+  --txc: #ff8a4c;
+  --accent: #ff6a22;
+  --accent-dim: rgba(255, 106, 34, 0.16);
+  --accent-text: #ff8a4c;
+  --sh-sm: none;
+  --sh-md: none;
+  --sh-lg: 10px 10px 0 rgba(0, 0, 0, 0.48);
+  --section-shadow: none;
+  --modal-bg: rgba(16, 16, 16, 0.96);
+  --modal-fg: #f4f1ec;
+  --chart-1: #ff6a22;
+  --chart-2: #f4f1ec;
+  --chart-3: #7bc8ff;
+  --chart-4: #ffe066;
+  --chart-5: #b7ff79;
+  --chart-6: #ff8fb3;
+  --chart-7: #b39bff;
+  --chart-8: #79f2d0;
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] {
+  --bg: #f2efe9;
+  --bg-s: #fffdf8;
+  --bg-e: #ece8df;
+  --bg-h: #e2ddd2;
+  --bg-a: #d5cfc2;
+  --bg-code: #f7f4ed;
+  --bd: #d4cec2;
+  --bd-s: #aaa398;
+  --bd-x: #56514c;
+  --tx: #181614;
+  --tx2: #5c5751;
+  --txm: #817a72;
+  --tx3: #716b64;
+  --txc: #b33d00;
+  --accent: #d84b00;
+  --accent-dim: rgba(216, 75, 0, 0.12);
+  --accent-text: #a63800;
+  --sh-sm: none;
+  --sh-md: none;
+  --sh-lg: 10px 10px 0 rgba(24, 22, 20, 0.16);
+  --section-shadow: none;
+  --modal-bg: rgba(242, 239, 233, 0.97);
+  --modal-fg: #181614;
+  --chart-1: #d84b00;
+  --chart-2: #181614;
+  --chart-3: #006da3;
+  --chart-4: #9a7100;
+  --chart-5: #3f7d16;
+  --chart-6: #b12d61;
+  --chart-7: #654bb5;
+  --chart-8: #007c68;
+}

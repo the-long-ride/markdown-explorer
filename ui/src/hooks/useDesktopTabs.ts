@@ -12,6 +12,13 @@ import {
 } from '../desktop/desktopTabs';
 import { snapshotDesktopTab } from '../desktop/desktopTabSnapshot';
 import { FLOATING_TOOLBAR_STORAGE_KEY } from '../desktop/constants';
+import {
+  beginWorkspaceOperation,
+  clearWorkspaceOperation,
+  getActiveWorkspaceOperation,
+  resetCancelledWorkspaceTab,
+  type WorkspaceOperationContext,
+} from '../desktop/workspaceOperations';
 import type {
   CrossTabSearchItem,
   DesktopTab,
@@ -60,6 +67,7 @@ export function useDesktopTabs({
   const pendingWorkspaceTabIdRef = useRef<string | null>(null);
   const restoredDesktopTabsRef = useRef(false);
   const requestedWorkspaceIndexesRef = useRef<Set<string>>(new Set());
+  const pendingWorkspaceReplacementRef = useRef<{ workspaceOperationId: string; oldPath: string } | null>(null);
   const tabsRef = useRef(tabs);
 
   const [pendingDroppedPath, setPendingDroppedPath] = useState<string | null>(null);
@@ -93,16 +101,26 @@ export function useDesktopTabs({
 
   useEffect(() => {
     if (!isTabView || !state.workspaceName) return;
-    const requestedTabId = pendingWorkspaceTabIdRef.current ?? activeTabIdRef.current;
+    const activeOperation = getActiveWorkspaceOperation();
+    const requestedTabId = activeOperation?.workspaceTabId
+      ?? pendingWorkspaceTabIdRef.current
+      ?? activeTabIdRef.current;
     const targetTabId = requestedTabId === 'home' ? createTabId() : requestedTabId;
     pendingWorkspaceTabIdRef.current = null;
     setActiveTabId(targetTabId);
     setTabs((currentTabs) => {
       const exists = currentTabs.some((tab) => tab.id === targetTabId);
       const nextTabs = exists ? currentTabs : [...currentTabs, createEmptyTab(targetTabId, 'new')];
-      return nextTabs.map((tab) => (tab.id === targetTabId ? snapshotCurrentState(tab) : tab));
+      return nextTabs.map((tab) => {
+        if (tab.id !== targetTabId) return tab;
+        return {
+          ...snapshotCurrentState(tab),
+          workspaceOperationId: activeOperation?.workspaceOperationId ?? tab.workspaceOperationId,
+          workspaceLoadState: state.isLoading || state.isWorkspaceScanning ? 'loading' : 'ready',
+        };
+      });
     });
-  }, [isTabView, snapshotCurrentState, state.renderVersion, state.workspaceName]);
+  }, [isTabView, snapshotCurrentState, state.isLoading, state.isWorkspaceScanning, state.renderVersion, state.workspaceName]);
 
   const dispatchEmptyWorkspace = useCallback(() => {
     dispatch({
@@ -116,7 +134,40 @@ export function useDesktopTabs({
       workspacePath: undefined,
       recentWorkspaces: state.recentWorkspaces,
     });
+    dispatch({
+      type: 'WORKSPACE_SCAN_PROGRESS',
+      scannedFiles: 0,
+      active: false,
+    });
   }, [dispatch, state.defaultExpanded, state.recentWorkspaces, state.theme, state.themeStyle]);
+
+  const markCancelledOperationIdle = useCallback((operation: WorkspaceOperationContext | null) => {
+    if (!operation) return;
+    setTabs((currentTabs) => currentTabs.map((tab) =>
+      tab.id === operation.workspaceTabId && tab.workspaceLoadState === 'loading'
+        ? { ...tab, workspaceLoadState: 'idle', workspaceOperationId: undefined }
+        : tab,
+    ));
+  }, []);
+
+  const beginOperationForTab = useCallback((tabId: string): WorkspaceOperationContext => {
+    const previous = getActiveWorkspaceOperation();
+    if (previous && previous.workspaceTabId !== tabId) {
+      bridge.postMessage({
+        command: 'cancelWorkspaceScan',
+        workspaceOperationId: previous.workspaceOperationId,
+      });
+      markCancelledOperationIdle(previous);
+    }
+    const operation = beginWorkspaceOperation(tabId);
+    pendingWorkspaceTabIdRef.current = tabId;
+    setTabs((currentTabs) => currentTabs.map((tab) =>
+      tab.id === tabId
+        ? { ...tab, workspaceOperationId: operation.workspaceOperationId }
+        : tab,
+    ));
+    return operation;
+  }, [bridge, markCancelledOperationIdle]);
 
   const activateTab = useCallback(
     (tabId: string, targetFilePath?: string) => {
@@ -126,11 +177,19 @@ export function useDesktopTabs({
       setNavigationScope(isTabView ? tabId : 'focus');
 
       if (tab.kind !== 'workspace' || !tab.workspacePath) {
+        const activeOperation = getActiveWorkspaceOperation();
+        if (activeOperation) {
+          bridge.postMessage({ command: 'cancelWorkspaceScan', workspaceOperationId: activeOperation.workspaceOperationId });
+          markCancelledOperationIdle(activeOperation);
+        }
+        clearWorkspaceOperation();
+        pendingWorkspaceTabIdRef.current = null;
         dispatchEmptyWorkspace();
         bridge.postMessage({ command: 'closeWorkspace' });
         return;
       }
 
+      const operation = beginOperationForTab(tabId);
       const fileToOpen = targetFilePath !== undefined ? targetFilePath : tab.currentFile;
 
       dispatch({
@@ -156,6 +215,7 @@ export function useDesktopTabs({
             command: 'renderContent',
             html: tab.contentHtml,
             markdownSource: tab.markdownSource,
+            sourceDocumentText: tab.sourceDocumentText,
             frontmatter: tab.frontmatter,
             toc: tab.toc,
             previewInfo: tab.previewInfo,
@@ -173,13 +233,16 @@ export function useDesktopTabs({
         workspacePath: tab.workspacePath,
         filePath: fileToOpen ?? undefined,
         openFirstFile: isTabView && !fileToOpen,
+        ...operation,
       });
     },
     [
+      beginOperationForTab,
       bridge,
       dispatch,
       dispatchEmptyWorkspace,
       isTabView,
+      markCancelledOperationIdle,
       setNavigationScope,
       state.defaultExpanded,
       state.recentWorkspaces,
@@ -201,29 +264,57 @@ export function useDesktopTabs({
   }, [activateTab, activeTabId, isTabView, state.isLoading, tabs]);
 
   const createNewWorkspaceTab = useCallback(() => {
+    const activeOperation = getActiveWorkspaceOperation();
+    if (activeOperation) {
+      bridge.postMessage({ command: 'cancelWorkspaceScan', workspaceOperationId: activeOperation.workspaceOperationId });
+      markCancelledOperationIdle(activeOperation);
+    }
+    clearWorkspaceOperation();
+    pendingWorkspaceTabIdRef.current = null;
+    bridge.postMessage({ command: 'closeWorkspace' });
     const id = createTabId();
     setTabs((currentTabs) => [...currentTabs, createEmptyTab(id, 'new')]);
     setActiveTabId(id);
     setNavigationScope(isTabView ? id : 'focus');
     dispatchEmptyWorkspace();
     return id;
-  }, [dispatchEmptyWorkspace, isTabView, setNavigationScope]);
+  }, [bridge, dispatchEmptyWorkspace, isTabView, markCancelledOperationIdle, setNavigationScope]);
 
-  const prepareWorkspaceOpen = useCallback(() => {
-    if (!isTabView) return;
+  const prepareWorkspaceOpen = useCallback((): WorkspaceOperationContext | undefined => {
+    if (!isTabView) return undefined;
     const active = tabs.find((tab) => tab.id === activeTabIdRef.current);
-    pendingWorkspaceTabIdRef.current = !active || active.kind === 'home'
+    const targetTabId = !active || active.kind === 'home'
       ? createNewWorkspaceTab()
       : active.id;
-  }, [createNewWorkspaceTab, isTabView, tabs]);
+    return beginOperationForTab(targetTabId);
+  }, [beginOperationForTab, createNewWorkspaceTab, isTabView, tabs]);
+
+  const reopenUnavailableWorkspace = useCallback((oldPath: string) => {
+    if (!oldPath) return;
+    const operation = isTabView
+      ? beginOperationForTab(activeTabIdRef.current)
+      : undefined;
+    if (operation) {
+      pendingWorkspaceReplacementRef.current = {
+        workspaceOperationId: operation.workspaceOperationId,
+        oldPath,
+      };
+    }
+    bridge.postMessage({
+      command: 'openFolder',
+      openFirstFile: isTabView,
+      replaceRecentWorkspacePath: oldPath,
+      ...operation,
+    });
+  }, [beginOperationForTab, bridge, isTabView]);
 
   const openDroppedPath = useCallback((droppedPath: string) => {
     if (!droppedPath) return;
     if (isTabView) {
       const active = tabs.find((tab) => tab.id === activeTabIdRef.current);
-      pendingWorkspaceTabIdRef.current =
-        active?.kind === 'new' ? active.id : createNewWorkspaceTab();
-      bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true });
+      const targetTabId = active?.kind === 'new' ? active.id : createNewWorkspaceTab();
+      const operation = beginOperationForTab(targetTabId);
+      bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true, ...operation });
       return;
     }
 
@@ -233,7 +324,7 @@ export function useDesktopTabs({
     }
 
     bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true });
-  }, [bridge, createNewWorkspaceTab, isTabView, tabs]);
+  }, [beginOperationForTab, bridge, createNewWorkspaceTab, isTabView, tabs]);
 
   const confirmSwitchWorkspace = useCallback(() => {
     if (pendingDroppedPath) {
@@ -242,8 +333,20 @@ export function useDesktopTabs({
     }
   }, [bridge, pendingDroppedPath]);
 
+  const cancelOperationForTabs = useCallback((tabIds: Iterable<string>) => {
+    const operation = getActiveWorkspaceOperation();
+    if (!operation || !new Set(tabIds).has(operation.workspaceTabId)) return;
+    bridge.postMessage({
+      command: 'cancelWorkspaceScan',
+      workspaceOperationId: operation.workspaceOperationId,
+    });
+    clearWorkspaceOperation(operation.workspaceOperationId);
+    pendingWorkspaceTabIdRef.current = null;
+  }, [bridge]);
+
   const closeTab = useCallback(
     (tabId: string) => {
+      cancelOperationForTabs([tabId]);
       setTabs((currentTabs) => {
         const tabIndex = currentTabs.findIndex((tab) => tab.id === tabId);
         if (tabIndex === -1) return currentTabs;
@@ -255,7 +358,7 @@ export function useDesktopTabs({
         return nextTabs.length ? nextTabs : [createEmptyTab('home', 'home')];
       });
     },
-    [activateTab],
+    [activateTab, cancelOperationForTabs],
   );
 
   const reorderTabs = useCallback((sourceTabId: string, targetTabId: string) => {
@@ -265,6 +368,11 @@ export function useDesktopTabs({
 
   const closeTabsToRight = useCallback(
     (tabId: string) => {
+      const currentWorkspaceTabs = tabsRef.current.filter((tab) => tab.kind !== 'home');
+      const targetIndex = currentWorkspaceTabs.findIndex((tab) => tab.id === tabId);
+      if (targetIndex >= 0) {
+        cancelOperationForTabs(currentWorkspaceTabs.slice(targetIndex + 1).map((tab) => tab.id));
+      }
       setTabs((currentTabs) => {
         const workspaceTabs = currentTabs.filter((tab) => tab.kind !== 'home');
         const workspaceIndex = workspaceTabs.findIndex((tab) => tab.id === tabId);
@@ -284,11 +392,12 @@ export function useDesktopTabs({
         return nextTabs.length ? nextTabs : [createEmptyTab('home', 'home')];
       });
     },
-    [activateTab],
+    [activateTab, cancelOperationForTabs],
   );
 
   const closeOtherTabs = useCallback(
     (tabId: string) => {
+      cancelOperationForTabs(tabsRef.current.filter((tab) => tab.kind !== 'home' && tab.id !== tabId).map((tab) => tab.id));
       setTabs((currentTabs) => {
         const targetTab = currentTabs.find((tab) => tab.id === tabId);
         if (!targetTab || targetTab.kind === 'home') return currentTabs;
@@ -299,10 +408,13 @@ export function useDesktopTabs({
         return nextTabs.length ? nextTabs : [createEmptyTab('home', 'home')];
       });
     },
-    [activateTab],
+    [activateTab, cancelOperationForTabs],
   );
 
   const closeAllTabs = useCallback(() => {
+    clearWorkspaceOperation();
+    pendingWorkspaceTabIdRef.current = null;
+    bridge.postMessage({ command: 'cancelAllWorkspaceScans' });
     setTabs((currentTabs) => {
       const homeTab = currentTabs.find((tab) => tab.kind === 'home') ?? createEmptyTab('home', 'home');
       window.setTimeout(() => {
@@ -368,10 +480,62 @@ export function useDesktopTabs({
 
   useEffect(() => {
     return bridge.onMessage((msg) => {
+      const pendingReplacement = pendingWorkspaceReplacementRef.current;
+      if (msg.command === 'workspaceOpenCancelled') {
+        const activeOperation = getActiveWorkspaceOperation();
+        const matchesActiveOperation = Boolean(
+          activeOperation
+          && msg.workspaceOperationId === activeOperation.workspaceOperationId
+          && msg.workspaceTabId === activeOperation.workspaceTabId,
+        );
+        const matchesReplacement = Boolean(
+          pendingReplacement
+          && msg.workspaceOperationId === pendingReplacement.workspaceOperationId,
+        );
+        if (!matchesActiveOperation && !matchesReplacement) return;
+
+        const cancelledTabId = msg.workspaceTabId ?? activeOperation?.workspaceTabId;
+        if (matchesReplacement) pendingWorkspaceReplacementRef.current = null;
+        clearWorkspaceOperation(msg.workspaceOperationId);
+        pendingWorkspaceTabIdRef.current = null;
+        if (cancelledTabId) {
+          setTabs((currentTabs) => currentTabs.map((tab) => {
+            if (tab.id !== cancelledTabId) return tab;
+            return {
+              ...tab,
+              workspaceOperationId: undefined,
+              workspaceLoadState: tab.workspacePath ? 'ready' : 'idle',
+            };
+          }));
+        }
+        return;
+      }
+      if (msg.command === 'readyAck' && pendingReplacement
+        && msg.workspaceOperationId === pendingReplacement.workspaceOperationId) {
+        pendingWorkspaceReplacementRef.current = null;
+      }
+      if (msg.workspaceOperationId && msg.workspaceTabId) {
+        const activeOperation = getActiveWorkspaceOperation();
+        if (activeOperation
+          && activeOperation.workspaceOperationId === msg.workspaceOperationId
+          && activeOperation.workspaceTabId === msg.workspaceTabId) {
+          if (msg.command === 'setLoading' || (msg.command === 'workspaceScanProgress' && msg.active)) {
+            setTabs((currentTabs) => currentTabs.map((tab) =>
+              tab.id === msg.workspaceTabId ? { ...tab, workspaceLoadState: 'loading' } : tab,
+            ));
+          } else if (msg.command === 'workspaceScanProgress' && !msg.active) {
+            setTabs((currentTabs) => currentTabs.map((tab) =>
+              tab.id === msg.workspaceTabId ? { ...tab, workspaceLoadState: 'ready' } : tab,
+            ));
+          }
+        }
+      }
       if (msg.command === 'externalOpenPath') {
         if (isTabView) {
           const targetTabId = createNewWorkspaceTab();
-          pendingWorkspaceTabIdRef.current = targetTabId;
+          const operation = beginOperationForTab(targetTabId);
+          bridge.postMessage({ command: 'openPath', path: msg.path, openFirstFile: false, ...operation });
+          return;
         }
         bridge.postMessage({ command: 'openPath', path: msg.path, openFirstFile: false });
         return;
@@ -391,7 +555,7 @@ export function useDesktopTabs({
         }),
       );
     });
-  }, [bridge, createNewWorkspaceTab, isTabView]);
+  }, [beginOperationForTab, bridge, createNewWorkspaceTab, isTabView]);
 
   useEffect(() => {
     if (!isTabView || state.isLoading) return;
@@ -410,6 +574,31 @@ export function useDesktopTabs({
     return () => window.clearTimeout(handle);
   }, [bridge, isTabView, state.isLoading]);
 
+  const cancelCurrentWorkspaceScan = useCallback(() => {
+    const operation = getActiveWorkspaceOperation();
+    if (!operation) return;
+    bridge.postMessage({
+      command: 'cancelWorkspaceScan',
+      workspaceOperationId: operation.workspaceOperationId,
+    });
+    clearWorkspaceOperation(operation.workspaceOperationId);
+    pendingWorkspaceTabIdRef.current = null;
+
+    setTabs((currentTabs) => resetCancelledWorkspaceTab(
+      currentTabs,
+      operation.workspaceTabId,
+      (tabId) => ({
+        ...createEmptyTab(tabId, 'new'),
+        workspaceLoadState: 'idle',
+        workspaceOperationId: undefined,
+      }),
+    ));
+    setActiveTabId(operation.workspaceTabId);
+    setNavigationScope(isTabView ? operation.workspaceTabId : 'focus');
+    dispatchEmptyWorkspace();
+    bridge.postMessage({ command: 'closeWorkspace' });
+  }, [bridge, dispatchEmptyWorkspace, isTabView, setNavigationScope]);
+
   const isIndexingAcrossTabs = useMemo(() => {
     if (!isTabView) return false;
     return tabs.some((tab) => tab.kind === 'workspace' && tab.workspacePath && !tab.isIndexed && tab.fileList.length === 0);
@@ -425,6 +614,7 @@ export function useDesktopTabs({
     activateTab,
     createNewWorkspaceTab,
     prepareWorkspaceOpen,
+    reopenUnavailableWorkspace,
     openDroppedPath,
     pendingDroppedPath,
     setPendingDroppedPath,
@@ -434,6 +624,7 @@ export function useDesktopTabs({
     closeTabsToRight,
     closeOtherTabs,
     closeAllTabs,
+    cancelCurrentWorkspaceScan,
     updateTabAlias,
     updateWorkspaceAlias,
     crossTabSearchItems,

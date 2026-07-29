@@ -42,6 +42,9 @@ export interface ButtonOptions {
   disabled?: boolean;
   tooltipPos?: 'above' | 'below';
   onKeyDown?: string;
+  title?: string;
+  ariaLabel?: string;
+  dataI18nKey?: string;
 }
 
 export function renderButton(options: ButtonOptions): string {
@@ -49,6 +52,11 @@ export function renderButton(options: ButtonOptions): string {
   const disabledAttr = options.disabled ? ' disabled' : '';
   const keyDownAttr = options.onKeyDown ? ` onkeydown="${options.onKeyDown}"` : '';
   const tooltipText = options.tooltip || options.label;
+  const titleText = options.title || tooltipText;
+  const ariaLabel = options.ariaLabel || options.label;
+  const titleAttr = ` title="${escHtml(titleText)}"`;
+  const ariaAttr = ` aria-label="${escHtml(ariaLabel)}"`;
+  const i18nAttr = options.dataI18nKey ? ` data-i18n-key="${escHtml(options.dataI18nKey)}"` : '';
 
   const classes = options.className ? options.className.split(' ') : [];
   classes.push('tooltip-container');
@@ -64,7 +72,7 @@ export function renderButton(options: ButtonOptions): string {
     ? (options.iconHtml || '')
     : `${iconHtml}${iconHtml && labelHtml ? ' ' : ''}${labelHtml}`;
 
-  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${keyDownAttr}${disabledAttr}${tooltipPosAttr}>
+  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${keyDownAttr}${disabledAttr}${tooltipPosAttr}${titleAttr}${ariaAttr}${i18nAttr}>
   ${content}
   <span class="tooltip-text">${escHtml(tooltipText)}</span>
 </button>`;

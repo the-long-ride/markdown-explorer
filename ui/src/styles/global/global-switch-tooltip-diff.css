@@ -89,6 +89,18 @@
   transform: translateX(-50%) translateY(0);
 }
 
+[data-theme-style="glass"] .tooltip-text {
+  background: rgb(22 24 31);
+}
+
+[data-theme-style="glass"][data-theme="light"] .tooltip-text {
+  background: rgb(250 250 252);
+}
+
+[data-theme-style="glass"] .tooltip-container:hover .tooltip-text {
+  opacity: 1;
+}
+
 /* Tooltip Right Alignment (avoids window overflow/clipping on far right edges) */
 .tooltip-container[data-tooltip-align="right"] .tooltip-text {
   left: auto;

@@ -70,6 +70,7 @@ describe('renderInline', () => {
     test('renders internal .md link with Nav.go', () => {
       const result = renderInline('[doc](guide.md)');
       expect(result).toContain('onclick="Nav.go');
+      expect(result).toContain('data-mdn-target=');
       expect(result).toContain('guide.md');
     });
 

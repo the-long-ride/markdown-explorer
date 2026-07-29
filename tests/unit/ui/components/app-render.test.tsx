@@ -73,6 +73,7 @@ function createMockState(overrides: Record<string, unknown> = {}) {
       fileTabs: true,
       showTitle: false,
       defaultHtmlPreview: true,
+      defaultCsvPreview: true,
       documentConversion: false,
       scopeFocus: {},
       searchScopeFocus: {},
@@ -335,7 +336,7 @@ describe('App render', () => {
   });
 
   it('renders WorkspaceSelection when no workspace name and terms accepted', async () => {
-    mockState = createMockState({ workspaceName: '' });
+    mockState = createMockState({ workspaceName: '', appRuntime: 'desktop' });
     render(createElement(App));
     await waitFor(() => {
       expect(screen.getByTestId('workspace-selection')).toBeInTheDocument();
@@ -543,7 +544,7 @@ describe('App render', () => {
     });
   });
 
-  it('renders floating tab toolbar in tab view with workspace and non-home tab active', async () => {
+  it('does not render the floating toolbar in tab view', async () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.setItem('markdown-explorer-terms-accepted', 'true');
     localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
@@ -557,8 +558,9 @@ describe('App render', () => {
     };
     render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTestId('floating-tab-toolbar')).toBeInTheDocument();
+      expect(screen.getByTestId('desktop-tab-bar')).toBeInTheDocument();
     });
+    expect(screen.queryByTestId('floating-tab-toolbar')).not.toBeInTheDocument();
   });
 
   it('renders drop overlay when isDragging', async () => {
@@ -650,5 +652,12 @@ describe('App render', () => {
       expect(screen.getByTitle('Exit Focus Mode')).toBeInTheDocument();
     });
     expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
+  });
+
+  it('never renders WorkspaceSelection in VS Code extension when workspaceName is empty', () => {
+    mockState = createMockState({ appRuntime: 'vscode', workspaceName: '' });
+    render(createElement(App));
+    expect(screen.queryByTestId('workspace-selection')).not.toBeInTheDocument();
+    expect(screen.getByTestId('welcome-page')).toBeInTheDocument();
   });
 });

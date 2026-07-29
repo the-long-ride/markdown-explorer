@@ -1,6 +1,8 @@
 (() => {
   /* ── i18n dictionary ───────────────────────────────────────────── */
   const LANGS = window.LANGS;
+  const getTranslations = (lang) =>
+    window.MdeI18n?.get(lang) || LANGS[lang] || LANGS.en || {};
 
   /* ── State ────────────────────────────────────────────────────── */
   const LS_THEME = "mde-site-theme";
@@ -40,7 +42,7 @@
   const applyLang = (lang) => {
     currentLang = lang;
     localStorage.setItem(LS_LANG, lang);
-    const t = LANGS[lang];
+    const t = getTranslations(lang);
     if (!t) return;
     langLabel.textContent = t.label;
     html.setAttribute("lang", lang);
@@ -48,7 +50,7 @@
       const key = el.getAttribute("data-i18n");
       if (t[key] !== undefined) {
         const val = t[key];
-        if (val.includes("`") || val.includes("<br>")) {
+        if (val.includes("`") || val.includes("<br") || val.includes("<span")) {
           el.innerHTML = formatText(val);
         } else {
           el.textContent = val;
@@ -225,7 +227,7 @@
     getPlatformAssets,
     pickAsset,
   } = downloadHelpers;
-  const t = () => LANGS[currentLang] || LANGS.en;
+  const t = () => getTranslations(currentLang);
 
   const {
     applyMarketplaceCounts,
@@ -253,7 +255,7 @@
     note,
     releaseUrl,
     changelogUrl,
-    t: () => LANGS[currentLang] || LANGS.en,
+    t: () => getTranslations(currentLang),
   });
 
   const { fetchJson, fetchMarketplaceDownloadStats, fetchReleasePages } =

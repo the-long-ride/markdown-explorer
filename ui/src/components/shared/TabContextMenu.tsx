@@ -1,18 +1,33 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useCssVars } from "../../utils/useCssVars";
 import { formatShortcutLabel } from "../../utils/shortcuts";
 
 export type TabContextMenuAction =
+  | "openInBrowser"
+  | "toggleHtmlDocumentView"
+  | "openLocation"
   | "closeThisTab"
   | "closeTabsToRight"
   | "closeOtherTabs"
   | "closeAllTabs";
 
 export interface TabContextMenuLabels {
+  openLocation?: string;
   closeThisTab: string;
   closeTabsToRight: string;
   closeOtherTabs: string;
   closeAllTabs: string;
+}
+
+export interface TabContextMenuItem {
+  action: TabContextMenuAction;
+  label: string;
+  icon?: ReactNode;
+  shortcut?: string;
+  disabled?: boolean;
+  hidden?: boolean;
+  dividerBefore?: boolean;
+  primary?: boolean;
 }
 
 export type TabContextMenuShortcuts = Partial<Record<TabContextMenuAction, string>>;
@@ -20,37 +35,74 @@ export type TabContextMenuShortcuts = Partial<Record<TabContextMenuAction, strin
 interface TabContextMenuProps {
   x: number;
   y: number;
-  labels: TabContextMenuLabels;
+  items?: readonly TabContextMenuItem[];
+  labels?: TabContextMenuLabels;
   shortcuts?: TabContextMenuShortcuts;
   disabled?: Partial<Record<TabContextMenuAction, boolean>>;
   onAction: (action: TabContextMenuAction) => void;
+  openLocationIcon?: ReactNode;
+  closeThisTabIcon?: ReactNode;
+  closeTabsToRightIcon?: ReactNode;
+  closeOtherTabsIcon?: ReactNode;
+  closeAllTabsIcon?: ReactNode;
+  ariaLabel?: string;
   onClose: () => void;
 }
 
-const MENU_WIDTH = 280;
-const MENU_HEIGHT = 142;
+const MENU_WIDTH = 300;
 const MENU_MARGIN = 8;
 
 function clampPosition(value: number, max: number, size: number): number {
-  return Math.max(MENU_MARGIN, Math.min(value, max - size - MENU_MARGIN));
+  return Math.max(MENU_MARGIN, Math.min(value, Math.max(MENU_MARGIN, max - size - MENU_MARGIN)));
 }
 
 export function TabContextMenu({
   x,
   y,
+  items,
   labels,
   shortcuts,
   disabled,
   onAction,
+  openLocationIcon,
+  closeThisTabIcon,
+  closeTabsToRightIcon,
+  closeOtherTabsIcon,
+  closeAllTabsIcon,
+  ariaLabel = "Tab actions",
   onClose,
 }: TabContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const resolvedItems = useMemo<readonly TabContextMenuItem[]>(() => {
+    if (items) return items.filter((item) => !item.hidden);
+    if (!labels) return [];
+    return [
+      ...(labels.openLocation && openLocationIcon
+        ? [{ action: "openLocation" as const, label: labels.openLocation, icon: openLocationIcon }]
+        : []),
+      { action: "closeThisTab", label: labels.closeThisTab, icon: closeThisTabIcon, shortcut: shortcuts?.closeThisTab, primary: true },
+      { action: "closeTabsToRight", label: labels.closeTabsToRight, icon: closeTabsToRightIcon, shortcut: shortcuts?.closeTabsToRight },
+      { action: "closeOtherTabs", label: labels.closeOtherTabs, icon: closeOtherTabsIcon, shortcut: shortcuts?.closeOtherTabs },
+      { action: "closeAllTabs", label: labels.closeAllTabs, icon: closeAllTabsIcon, shortcut: shortcuts?.closeAllTabs },
+    ];
+  }, [
+    closeAllTabsIcon,
+    closeOtherTabsIcon,
+    closeTabsToRightIcon,
+    closeThisTabIcon,
+    items,
+    labels,
+    openLocationIcon,
+    shortcuts,
+  ]);
+
   const left = typeof window === "undefined"
     ? x
     : clampPosition(x, window.innerWidth || MENU_WIDTH + MENU_MARGIN * 2, MENU_WIDTH);
+  const estimatedHeight = Math.max(48, resolvedItems.length * 36 + 16);
   const top = typeof window === "undefined"
     ? y
-    : clampPosition(y, window.innerHeight || MENU_HEIGHT + MENU_MARGIN * 2, MENU_HEIGHT);
+    : clampPosition(y, window.innerHeight || estimatedHeight + MENU_MARGIN * 2, estimatedHeight);
   useCssVars(menuRef, { '--menu-left': `${left}px`, '--menu-top': `${top}px` });
 
   useEffect(() => {
@@ -75,35 +127,33 @@ export function TabContextMenu({
     };
   }, [onClose]);
 
-  const items: readonly { action: TabContextMenuAction; label: string; shortcut?: string }[] = [
-    { action: "closeThisTab", label: labels.closeThisTab, shortcut: shortcuts?.closeThisTab },
-    { action: "closeTabsToRight", label: labels.closeTabsToRight, shortcut: shortcuts?.closeTabsToRight },
-    { action: "closeOtherTabs", label: labels.closeOtherTabs, shortcut: shortcuts?.closeOtherTabs },
-    { action: "closeAllTabs", label: labels.closeAllTabs, shortcut: shortcuts?.closeAllTabs },
-  ];
-
   return (
     <div
       ref={menuRef}
       className="tab-context-menu"
       role="menu"
-      aria-label="Tab actions"
+      aria-label={ariaLabel}
       onContextMenu={(event) => event.preventDefault()}
     >
-      {items.map((item) => (
+      {resolvedItems.map((item) => (
         <button
           key={item.action}
           type="button"
           role="menuitem"
-          className={`tab-context-menu__item${item.action === "closeThisTab" ? " is-primary" : ""}`}
-          disabled={disabled?.[item.action]}
+          className={`tab-context-menu__item${item.primary ? " is-primary" : ""}${item.dividerBefore ? " has-divider-before" : ""}`}
+          disabled={item.disabled ?? disabled?.[item.action]}
           onClick={() => {
             onAction(item.action);
             onClose();
           }}
         >
-          <span>{item.label}</span>
-          {item.shortcut ? <kbd>{formatShortcutLabel(item.shortcut, ' + ')}</kbd> : null}
+          <span className="tab-context-menu__item-icon">{item.icon}</span>
+          <span className="tab-context-menu__item-label">{item.label}</span>
+          {item.shortcut ? (
+            <kbd className="tab-context-menu__item-shortcut">
+              {formatShortcutLabel(item.shortcut, ' + ')}
+            </kbd>
+          ) : null}
         </button>
       ))}
     </div>

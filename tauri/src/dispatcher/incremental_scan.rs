@@ -1,4 +1,5 @@
 use super::*;
+use crate::host_message::WorkspaceOperationMetadata;
 
 const WORKSPACE_SCAN_REVEAL_DELAY: Duration = Duration::from_secs(3);
 const WORKSPACE_SCAN_BATCH_SIZE: usize = 32;
@@ -34,6 +35,7 @@ fn publish_incremental_workspace_snapshot(
     scan_generation: u64,
     discovered: &Arc<Mutex<Vec<MdFile>>>,
     last_published_count: &AtomicUsize,
+    operation: Option<&WorkspaceOperationMetadata>,
 ) -> bool {
     let document_conversion_enabled = {
         let inner = state.inner.read();
@@ -69,19 +71,20 @@ fn publish_incremental_workspace_snapshot(
         }
     }
     let tree = build_tree(&flat);
-    host_message::emit_workspace_files_changed(
+    host_message::emit_workspace_files_changed_scoped(
         app,
         json!(flat),
         json!(tree),
         &workspace_name(workspace_path),
         &workspace_path.to_string_lossy(),
         document_conversion_enabled,
+        operation,
     );
     true
 }
 
 impl Dispatcher {
-    pub(super) fn send_workspace_data(&self) {
+    pub(super) fn send_workspace_data(&self, open_first_file: bool) {
         let workspace_path = self.state.inner.read().workspace_path.clone();
         let Some(workspace_path) = workspace_path else {
             return;
@@ -95,12 +98,17 @@ impl Dispatcher {
             return;
         }
 
-        let (document_conversion_enabled, scan_generation) = {
+        let (document_conversion_enabled, scan_generation, operation) = {
             let mut inner = self.state.inner.write();
             inner.workspace_scan_generation = inner.workspace_scan_generation.wrapping_add(1);
+            let operation = WorkspaceOperationMetadata::from_parts(
+                inner.workspace_operation_id.as_deref(),
+                inner.workspace_tab_id.as_deref(),
+            );
             (
                 inner.document_conversion_enabled,
                 inner.workspace_scan_generation,
+                operation,
             )
         };
         let app = self.app.clone();
@@ -109,7 +117,7 @@ impl Dispatcher {
         let threshold_elapsed = Arc::new(AtomicBool::new(false));
         let revealed = Arc::new(AtomicBool::new(false));
         let last_published_count = Arc::new(AtomicUsize::new(0));
-        host_message::emit_workspace_scan_progress(&app, 0, true);
+        host_message::emit_workspace_scan_progress_scoped(&app, 0, true, operation.as_ref());
 
         let reveal_app = app.clone();
         let reveal_state = state.clone();
@@ -118,6 +126,7 @@ impl Dispatcher {
         let reveal_threshold_elapsed = threshold_elapsed.clone();
         let reveal_revealed = revealed.clone();
         let reveal_last_published_count = last_published_count.clone();
+        let reveal_operation = operation.clone();
         std::thread::spawn(move || {
             std::thread::sleep(WORKSPACE_SCAN_REVEAL_DELAY);
             reveal_threshold_elapsed.store(true, Ordering::Release);
@@ -144,6 +153,7 @@ impl Dispatcher {
                     scan_generation,
                     &reveal_discovered,
                     &reveal_last_published_count,
+                    reveal_operation.as_ref(),
                 );
             }
         });
@@ -159,20 +169,27 @@ impl Dispatcher {
             let callback_threshold_elapsed = threshold_elapsed.clone();
             let callback_revealed = revealed.clone();
             let callback_last_published_count = last_published_count.clone();
-            let result = scan_with_callbacks(
+            let progress_operation = operation.clone();
+            let callback_operation = operation.clone();
+            let cancel_state = state.clone();
+            let cancel_workspace_path = workspace_path.clone();
+            let result = scan_with_callbacks_and_cancel(
                 &workspace_path,
                 ScanOptions {
                     document_conversion_enabled,
                 },
                 move |scanned_files| {
-                    let inner = progress_state.inner.read();
-                    if inner.workspace_path.as_deref() == Some(&progress_workspace_path)
-                        && inner.workspace_scan_generation == scan_generation
-                    {
-                        host_message::emit_workspace_scan_progress(
+                    let is_current = {
+                        let inner = progress_state.inner.read();
+                        inner.workspace_path.as_deref() == Some(&progress_workspace_path)
+                            && inner.workspace_scan_generation == scan_generation
+                    };
+                    if is_current {
+                        host_message::emit_workspace_scan_progress_scoped(
                             &progress_app,
                             scanned_files,
                             true,
+                            progress_operation.as_ref(),
                         );
                     }
                 },
@@ -203,19 +220,32 @@ impl Dispatcher {
                             scan_generation,
                             &callback_discovered,
                             &callback_last_published_count,
+                            callback_operation.as_ref(),
                         );
                     }
+                },
+                move || {
+                    let inner = cancel_state.inner.read();
+                    inner.workspace_path.as_deref() != Some(&cancel_workspace_path)
+                        || inner.workspace_scan_generation != scan_generation
                 },
             );
             let result = match result {
                 Ok(result) => result,
                 Err(err) => {
                     eprintln!("Failed to scan workspace: {err}");
-                    let inner = state.inner.read();
-                    if inner.workspace_path.as_deref() == Some(&workspace_path)
-                        && inner.workspace_scan_generation == scan_generation
-                    {
-                        host_message::emit_workspace_scan_progress(&app, 0, false);
+                    let is_current = {
+                        let inner = state.inner.read();
+                        inner.workspace_path.as_deref() == Some(&workspace_path)
+                            && inner.workspace_scan_generation == scan_generation
+                    };
+                    if is_current {
+                        host_message::emit_workspace_scan_progress_scoped(
+                            &app,
+                            0,
+                            false,
+                            operation.as_ref(),
+                        );
                     }
                     return;
                 }
@@ -232,16 +262,27 @@ impl Dispatcher {
             };
             dispatcher.ensure_search_index().prime(&flat);
             state.inner.write().runtime_state = RuntimeState::Ready;
-            host_message::emit_workspace_files_changed(
+            host_message::emit_workspace_files_changed_scoped(
                 &app,
                 json!(flat),
                 json!(result.tree),
                 &workspace_name(&workspace_path),
                 &workspace_path.to_string_lossy(),
                 document_conversion_enabled,
+                operation.as_ref(),
             );
-            host_message::emit_workspace_scan_progress(&app, result.flat.len(), false);
-            dispatcher.send_initial_content(true);
+            host_message::emit_workspace_scan_progress_scoped(
+                &app,
+                result.flat.len(),
+                false,
+                operation.as_ref(),
+            );
+            dispatcher.send_initial_content_for_scan(
+                open_first_file,
+                &workspace_path,
+                scan_generation,
+                operation.as_ref(),
+            );
         });
     }
 }

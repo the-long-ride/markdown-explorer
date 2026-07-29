@@ -37,6 +37,24 @@ describe('AppStateProvider integration', () => {
     vi.restoreAllMocks();
   });
 
+  describe('refresh', () => {
+    it('does not enter loading state or post refresh when there is no current file', () => {
+      const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
+
+      act(() => {
+        result.current.dispatch({ type: 'NAV_NOT_FOUND', href: '' });
+      });
+
+      expect(result.current.state.currentFile).toBeNull();
+      expect(result.current.state.isLoading).toBe(false);
+
+      act(() => { result.current.refresh(); });
+
+      expect(result.current.state.isLoading).toBe(false);
+      expect(mockBridge.postMessage).not.toHaveBeenCalledWith({ command: 'refresh' });
+    });
+  });
+
   describe('navigate', () => {
     it('dispatches SET_LOADING and sends empty path when called with null', () => {
       const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
@@ -98,6 +116,107 @@ describe('AppStateProvider integration', () => {
       expect(mockBridge.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({ command: 'navigate', path: '/not/cached.md' }),
       );
+    });
+
+    it('applies HTML preview intent after an unopened file finishes loading', () => {
+      let hostMessageHandler: ((message: any) => void) | undefined;
+      const bridge = {
+        ...mockBridge,
+        getState: vi.fn(() => ({ fileTabs: true, defaultHtmlPreview: true })),
+        postMessage: vi.fn(),
+        onMessage: vi.fn((handler: (message: any) => void) => {
+          hostMessageHandler = handler;
+          return vi.fn();
+        }),
+        setState: vi.fn(),
+        copyToClipboard: vi.fn(),
+      } as unknown as PlatformBridge;
+      const { result } = renderHook(() => useAppState(), { wrapper: createWrapper(bridge) });
+
+      act(() => {
+        result.current.navigate('/docs/page.html', { htmlPreviewOverride: false });
+      });
+      act(() => {
+        hostMessageHandler?.({
+          command: 'renderContent',
+          filePath: '/docs/page.html',
+          html: '<p>Page</p>',
+          sourceDocumentText: '<!doctype html><html><body>Page</body></html>',
+          frontmatter: {},
+          toc: [],
+          relativePath: 'page.html',
+        });
+      });
+
+      expect(result.current.state.currentFile).toBe('/docs/page.html');
+      expect(result.current.state.currentHtmlPreviewOverride).toBe(false);
+      expect(result.current.state.contentTabs[0].htmlPreviewOverride).toBe(false);
+    });
+
+    it('clears pending HTML preview intent when navigation fails', () => {
+      let hostMessageHandler: ((message: any) => void) | undefined;
+      const bridge = {
+        ...mockBridge,
+        getState: vi.fn(() => ({ fileTabs: true, defaultHtmlPreview: true })),
+        postMessage: vi.fn(),
+        onMessage: vi.fn((handler: (message: any) => void) => {
+          hostMessageHandler = handler;
+          return vi.fn();
+        }),
+        setState: vi.fn(),
+        copyToClipboard: vi.fn(),
+      } as unknown as PlatformBridge;
+      const { result } = renderHook(() => useAppState(), { wrapper: createWrapper(bridge) });
+
+      act(() => {
+        result.current.navigate('/docs/missing.html', { htmlPreviewOverride: false });
+        hostMessageHandler?.({ command: 'navNotFound', href: '/docs/missing.html' });
+        hostMessageHandler?.({
+          command: 'renderContent',
+          filePath: '/docs/missing.html',
+          html: '<p>Later</p>',
+          sourceDocumentText: '<!doctype html><html><body>Later</body></html>',
+          frontmatter: {},
+          toc: [],
+          relativePath: 'missing.html',
+        });
+      });
+
+      expect(result.current.state.currentHtmlPreviewOverride).toBeUndefined();
+    });
+
+    it('updates a cached HTML tab with navigation preview intent', () => {
+      const bridge = {
+        ...mockBridge,
+        getState: vi.fn(() => ({ fileTabs: true, defaultHtmlPreview: true })),
+        postMessage: vi.fn(),
+        onMessage: vi.fn(() => vi.fn()),
+        setState: vi.fn(),
+        copyToClipboard: vi.fn(),
+      } as unknown as PlatformBridge;
+      const { result } = renderHook(() => useAppState(), { wrapper: createWrapper(bridge) });
+
+      act(() => {
+        result.current.dispatch({
+          type: 'RENDER_CONTENT',
+          msg: {
+            command: 'renderContent',
+            filePath: '/docs/page.html',
+            html: '<p>Page</p>',
+            sourceDocumentText: '<!doctype html><html><body>Page</body></html>',
+            frontmatter: {},
+            toc: [],
+            relativePath: 'page.html',
+            title: 'Page',
+          } as any,
+        });
+      });
+      act(() => {
+        result.current.navigate('/docs/page.html', { htmlPreviewOverride: false });
+      });
+
+      expect(result.current.state.currentHtmlPreviewOverride).toBe(false);
+      expect(result.current.state.contentTabs[0].htmlPreviewOverride).toBe(false);
     });
 
     it('sends navigate message with the target path', () => {

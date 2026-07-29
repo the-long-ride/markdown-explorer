@@ -43,6 +43,13 @@ let currentFile: string | null = null;
 let flatList: MdFile[] = [];
 let workspaceTree: FolderNode | null = null;
 let readyHandled = false;
+let activeWorkspaceOperationId: string | null = null;
+let activeWorkspaceTabId: string | null = null;
+
+type WorkspaceOperationMetadata = {
+  workspaceOperationId?: string;
+  workspaceTabId?: string;
+};
 
 // ── File-mode state ───────────────────────────────────────────────────────────
 
@@ -54,8 +61,35 @@ let singleFileHandle: FileSystemFileHandle | null = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function currentWorkspaceOperationMetadata(): WorkspaceOperationMetadata {
+  return activeWorkspaceOperationId && activeWorkspaceTabId
+    ? { workspaceOperationId: activeWorkspaceOperationId, workspaceTabId: activeWorkspaceTabId }
+    : {};
+}
+
+function applyWorkspaceOperation(msg: any) {
+  activeWorkspaceOperationId = typeof msg?.workspaceOperationId === 'string'
+    ? msg.workspaceOperationId
+    : null;
+  activeWorkspaceTabId = typeof msg?.workspaceTabId === 'string'
+    ? msg.workspaceTabId
+    : null;
+}
+
+function isWorkspaceOperationCurrent(operation: WorkspaceOperationMetadata): boolean {
+  return activeWorkspaceOperationId === (operation.workspaceOperationId || null)
+    && activeWorkspaceTabId === (operation.workspaceTabId || null);
+}
+
+function clearWorkspaceOperation() {
+  activeWorkspaceOperationId = null;
+  activeWorkspaceTabId = null;
+}
+
 function send(msg: unknown) {
-  bus.dispatchEvent(new CustomEvent('host-message', { detail: msg }));
+  bus.dispatchEvent(new CustomEvent('host-message', {
+    detail: { ...currentWorkspaceOperationMetadata(), ...(msg as Record<string, unknown>) },
+  }));
 }
 
 function sendLoading(label: string, detail?: string) {
@@ -73,6 +107,26 @@ function hostInfo() {
 
 function extractWorkspaceName(path: string) {
   return path.split('/').pop() || 'Workspace';
+}
+
+
+function resolveWorkspaceTextResourcePath(documentPath: string, resourcePath: string): string | null {
+  const reference = resourcePath.split(/[?#]/, 1)[0];
+  if (!reference || /^(?:https?:|data:|blob:|javascript:|file:)/i.test(reference)) return null;
+  const baseParts = reference.startsWith('/')
+    ? []
+    : documentPath.split('/').slice(0, -1).filter(Boolean);
+  for (const part of reference.replace(/^\/+/, '').split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      if (!baseParts.length) return null;
+      baseParts.pop();
+    } else {
+      baseParts.push(part);
+    }
+  }
+  const resolved = baseParts.join('/');
+  return /\.(?:css|js|mjs|cjs)$/i.test(resolved) ? resolved : null;
 }
 
 function findFileInfo(list: MdFile[], rel: string): { relativePath: string; title: string } {
@@ -126,6 +180,7 @@ const fileModeHandlers = createFileModeHandlers({
   hostInfo,
   findFileInfo,
   extractWorkspaceName,
+  getWorkspaceOperationMetadata: currentWorkspaceOperationMetadata,
 });
 const {
   resetFileState,
@@ -135,6 +190,8 @@ const {
   sendSingleFileContent,
   sendFileRecentWorkspacesChanged,
   sendWorkspaceUnavailable,
+  cancelWorkspaceScan,
+  cancelAllWorkspaceScans,
 } = fileModeHandlers;
 
 // ── Test-mode helpers moved to web-test-search.ts
@@ -197,8 +254,12 @@ bus.addEventListener('webview-message', async (e: Event) => {
         await sendTestReady();
         break;
       }
+      case 'readWorkspaceTextResource': {
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: false, reason: 'unsupported' });
+        break;
+      }
       case 'openExternal': {
-        if (typeof msg.url === 'string' && /^https?:\/\//i.test(msg.url)) {
+        if (typeof msg.url === 'string' && /^(?:https?|file):\/\//i.test(msg.url)) {
           window.open(msg.url as string, '_blank');
         }
         break;
@@ -236,18 +297,37 @@ bus.addEventListener('webview-message', async (e: Event) => {
     }
 
     case 'openFolder': {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
       try {
         const handle = msg.handle ?? (await pickDirectory());
+        if (!isWorkspaceOperationCurrent(operation)) break;
+        if (!handle) {
+          send({ command: 'workspaceOpenCancelled', ...operation });
+          clearWorkspaceOperation();
+          break;
+        }
+        if (msg.replaceRecentWorkspacePath && msg.replaceRecentWorkspacePath !== handle.name) {
+          await BrowserRecentWorkspaces.remove(msg.replaceRecentWorkspacePath);
+        }
+        if (!isWorkspaceOperationCurrent(operation)) break;
         await loadHandleWorkspace(handle, msg.openFirstFile !== false);
       } catch (err) {
         console.warn('Folder selection cancelled or failed:', err);
+        if (isWorkspaceOperationCurrent(operation)) {
+          send({ command: 'workspaceOpenCancelled', ...operation });
+          clearWorkspaceOperation();
+        }
       }
       break;
     }
 
     case 'openFile': {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
       try {
         const handle = await pickFile();
+        if (!isWorkspaceOperationCurrent(operation)) break;
         if (handle && handle.kind === 'file') {
           await loadSingleFileWorkspace(handle);
         }
@@ -258,8 +338,11 @@ bus.addEventListener('webview-message', async (e: Event) => {
     }
 
     case 'openFileHandle': {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
       try {
         const handle = msg.handle;
+        if (!isWorkspaceOperationCurrent(operation)) break;
         if (handle && handle.kind === 'file') {
           await loadSingleFileWorkspace(handle);
         }
@@ -270,15 +353,55 @@ bus.addEventListener('webview-message', async (e: Event) => {
     }
 
     case 'openRecentWorkspace': {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
       const folderPath: string = msg.path;
       const handle = await BrowserRecentWorkspaces.getHandle(folderPath);
-      if (!handle) { sendWorkspaceUnavailable(folderPath, 'missing'); return; }
+      if (!isWorkspaceOperationCurrent(operation)) break;
+      if (!handle) { sendWorkspaceUnavailable(folderPath, 'missing'); break; }
 
       sendLoading('Checking permission…');
       const ok = await verifyPermission(handle);
-      if (!ok) { sendWorkspaceUnavailable(folderPath, 'locked'); return; }
+      if (!isWorkspaceOperationCurrent(operation)) break;
+      if (!ok) { sendWorkspaceUnavailable(folderPath, 'locked'); break; }
 
       await loadHandleWorkspace(handle, msg.openFirstFile !== false);
+      break;
+    }
+
+    case 'activateWorkspace': {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
+      const folderPath: string = msg.workspacePath;
+      const handle = await BrowserRecentWorkspaces.getHandle(folderPath);
+      if (!isWorkspaceOperationCurrent(operation)) break;
+      if (!handle) { sendWorkspaceUnavailable(folderPath, 'missing'); break; }
+      const ok = await verifyPermission(handle);
+      if (!isWorkspaceOperationCurrent(operation)) break;
+      if (!ok) { sendWorkspaceUnavailable(folderPath, 'locked'); break; }
+      const completed = await loadHandleWorkspace(handle, msg.filePath ? false : msg.openFirstFile !== false);
+      if (completed && msg.filePath && isWorkspaceOperationCurrent(operation)) {
+        currentFile = msg.filePath;
+        await sendFileContent(msg.filePath);
+      }
+      break;
+    }
+
+    case 'cancelWorkspaceScan': {
+      if (activeWorkspaceOperationId && msg.workspaceOperationId === activeWorkspaceOperationId) {
+        const operation = currentWorkspaceOperationMetadata();
+        cancelWorkspaceScan();
+        bus.dispatchEvent(new CustomEvent('host-message', {
+          detail: { command: 'workspaceScanProgress', scannedFiles: flatList.length, active: false, ...operation },
+        }));
+        clearWorkspaceOperation();
+      }
+      break;
+    }
+
+    case 'cancelAllWorkspaceScans': {
+      cancelAllWorkspaceScans();
+      clearWorkspaceOperation();
       break;
     }
 
@@ -289,8 +412,10 @@ bus.addEventListener('webview-message', async (e: Event) => {
     }
 
     case 'closeWorkspace': {
+      const operation = currentWorkspaceOperationMetadata();
       readyHandled = false;
       resetFileState();
+      clearWorkspaceOperation();
       revokeAll();
       const recents = await BrowserRecentWorkspaces.load();
       send({
@@ -305,6 +430,7 @@ bus.addEventListener('webview-message', async (e: Event) => {
         recentWorkspaces: recents,
         documentConversionEnabled: false,
         ...hostInfo(),
+        ...operation,
       });
       break;
     }
@@ -444,8 +570,23 @@ bus.addEventListener('webview-message', async (e: Event) => {
       break;
     }
 
+    case 'readWorkspaceTextResource': {
+      const resolvedPath = resolveWorkspaceTextResourcePath(String(msg.documentPath || ''), String(msg.resourcePath || ''));
+      if (!activeHandle || !resolvedPath) {
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: false, reason: 'outside-workspace' });
+        break;
+      }
+      try {
+        const content = await readTextFile(activeHandle, resolvedPath);
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: true, content, resolvedPath });
+      } catch {
+        send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: false, reason: 'missing' });
+      }
+      break;
+    }
+
     case 'openExternal': {
-      if (typeof msg.url === 'string' && /^https?:\/\//i.test(msg.url)) {
+      if (typeof msg.url === 'string' && /^(?:https?|file):\/\//i.test(msg.url)) {
         window.open(msg.url as string, '_blank');
       }
       break;

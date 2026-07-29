@@ -22,7 +22,7 @@
   "bundle": {
     "active": true,
     "publisher": "the-long-ride",
-    "copyright": "Copyright © 2026 the-long-ride",
+    "copyright": "Copyright \u00a9 2026 the-long-ride",
     "targets": [
       "msi",
       "nsis"
@@ -32,7 +32,6 @@
       "icons/icon.ico",
       "icons/icon.icns"
     ],
-    "externalBin": [],
     "windows": {
       "nsis": {
         "installerHooks": "./windows/explorer-hooks.nsh"

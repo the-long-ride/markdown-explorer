@@ -8,6 +8,7 @@ const mockCloseContentTabsToRight = vi.fn();
 const mockCloseOtherContentTabs = vi.fn();
 const mockCloseAllContentTabs = vi.fn();
 const mockReorderContentTabs = vi.fn();
+const mockPostMessage = vi.fn();
 
 let capturedOnAction: ((action: any) => void) | null = null;
 let capturedOnClose: (() => void) | null = null;
@@ -17,6 +18,7 @@ const baseSettings = {
   fileTabs: true,
   showTitle: false,
   defaultHtmlPreview: true,
+  defaultCsvPreview: true,
   documentConversion: false,
   scopeFocus: {},
   searchScopeFocus: {},
@@ -112,6 +114,16 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => mockAppState,
 }));
 
+vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
+  usePlatform: () => ({
+    postMessage: mockPostMessage,
+    onMessage: vi.fn(() => () => {}),
+    getState: vi.fn(),
+    setState: vi.fn(),
+    copyToClipboard: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     fileTabs: 'File tabs',
@@ -121,29 +133,64 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       closeTabsToRight: 'Close to right',
       closeOtherTabs: 'Close others',
       closeAllTabs: 'Close all',
+      showInFileExplorer: 'Show in File Explorer',
+      openInFinder: 'Open in Finder',
+      revealInFinder: 'Reveal in Finder',
+      showInFileManager: 'Show in File Manager',
     },
   }),
 }));
 
 vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
-  TabContextMenu: ({ onAction, onClose, disabled, x, y, labels }: any) => {
+  TabContextMenu: ({ onAction, onClose, disabled, x, y, labels, items }: any) => {
     capturedOnAction = onAction;
     capturedOnClose = onClose;
+    const getItemDisabled = (actionName: string) => {
+      if (items) {
+        const item = items.find((i: any) => i.action === actionName);
+        return item ? Boolean(item.disabled) : true;
+      }
+      return disabled?.[actionName];
+    };
+    const hasItem = (actionName: string) => {
+      if (items) return items.some((i: any) => i.action === actionName);
+      if (actionName === 'openLocation') return Boolean(labels?.openLocation);
+      return true;
+    };
+    const handleAction = (actionName: string) => {
+      if (items) {
+        const item = items.find((i: any) => i.action === actionName);
+        if (item && item.onClick) {
+          item.onClick();
+          return;
+        }
+      }
+      if (onAction) onAction(actionName);
+    };
+
     return (
       <div data-testid="tab-context-menu" data-x={x} data-y={y}>
-        <button data-testid="ctx-close-this" disabled={disabled?.closeThisTab} onClick={() => onAction('closeThisTab')}>Close</button>
-        <button data-testid="ctx-close-right" disabled={disabled?.closeTabsToRight} onClick={() => onAction('closeTabsToRight')}>Close to right</button>
-        <button data-testid="ctx-close-others" disabled={disabled?.closeOtherTabs} onClick={() => onAction('closeOtherTabs')}>Close others</button>
-        <button data-testid="ctx-close-all" disabled={disabled?.closeAllTabs} onClick={() => onAction('closeAllTabs')}>Close all</button>
+        {hasItem('openLocation') && (
+          <button data-testid="ctx-open-location" disabled={getItemDisabled('openLocation')} onClick={() => handleAction('openLocation')}>Open location</button>
+        )}
+        <button data-testid="ctx-close-this" disabled={getItemDisabled('closeThisTab')} onClick={() => handleAction('closeThisTab')}>Close</button>
+        <button data-testid="ctx-close-right" disabled={getItemDisabled('closeTabsToRight')} onClick={() => handleAction('closeTabsToRight')}>Close to right</button>
+        <button data-testid="ctx-close-others" disabled={getItemDisabled('closeOtherTabs')} onClick={() => handleAction('closeOtherTabs')}>Close others</button>
+        <button data-testid="ctx-close-all" disabled={getItemDisabled('closeAllTabs')} onClick={() => handleAction('closeAllTabs')}>Close all</button>
         <button data-testid="ctx-dismiss" onClick={onClose}>Dismiss</button>
       </div>
     );
   },
 }));
 
-vi.mock('../../../../ui/src/components/shared/icons', () => ({
-  CloseIcon: () => '×',
-}));
+vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    CloseIcon: () => '×',
+    RevealFileLocationIcon: () => 'reveal-file-icon',
+  };
+});
 
 import { ContentTabs } from '../../../../ui/src/components/Content/ContentTabs';
 
@@ -167,6 +214,24 @@ describe('ContentTabs deep', () => {
       expect(screen.getByTestId('tab-context-menu')).toBeInTheDocument();
       expect(screen.getByTestId('tab-context-menu').dataset.x).toBe('100');
       expect(screen.getByTestId('tab-context-menu').dataset.y).toBe('200');
+      expect(screen.queryByTestId('ctx-open-location')).not.toBeInTheDocument();
+    });
+
+    it('reveals the document from the desktop context menu', () => {
+      mockAppState = createMockAppState({
+        appRuntime: 'desktop',
+        hostPlatform: 'windows',
+        contentTabs: [makeTab('/a.md', 'a.md', 'A')],
+        activeContentTabPath: '/a.md',
+      });
+      render(createElement(ContentTabs));
+      fireEvent.contextMenu(screen.getByRole('tab'), { clientX: 10, clientY: 10 });
+      fireEvent.click(screen.getByTestId('ctx-open-location'));
+      expect(mockPostMessage).toHaveBeenCalledWith({
+        command: 'openShellLocation',
+        path: '/a.md',
+        mode: 'open-parent-directory',
+      });
     });
 
     it('context menu closeThisTab action calls closeContentTab', () => {

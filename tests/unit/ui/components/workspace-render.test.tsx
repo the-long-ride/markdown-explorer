@@ -142,6 +142,13 @@ describe('WorkspaceSelection', () => {
     delete (window as any).electronAPI;
   });
 
+  it('prevents F5 from refreshing while the workspace selection screen is mounted', () => {
+    render(React.createElement(WorkspaceSelection));
+    const event = new KeyboardEvent('keydown', { key: 'F5', bubbles: true, cancelable: true });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
   it('renders the workspace selection container with title', () => {
     render(React.createElement(WorkspaceSelection));
     expect(screen.getByText('Markdown Explorer')).toBeInTheDocument();

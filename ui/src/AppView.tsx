@@ -18,7 +18,6 @@ const SettingsModal = lazy(() => import("./components/Settings/SettingsModal").t
 const ThemeOnboardingModal = lazy(() => import("./components/Modal/ThemeOnboardingModal").then((m) => ({ default: m.ThemeOnboardingModal })));
 const SwitchWorkspaceModal = lazy(() => import("./components/Modal/SwitchWorkspaceModal").then((m) => ({ default: m.SwitchWorkspaceModal })));
 const WorkspaceSelectionConfirmModal = lazy(() => import("./components/Modal/WorkspaceSelectionConfirmModal").then((m) => ({ default: m.WorkspaceSelectionConfirmModal })));
-const FloatingTabToolbar = lazy(() => import("./components/Desktop/FloatingTabToolbar").then((m) => ({ default: m.FloatingTabToolbar })));
 
 
 export function AppView(props: any) {
@@ -36,6 +35,7 @@ export function AppView(props: any) {
   closeTabsToRight,
   closeOtherTabs,
   closeAllTabs,
+  cancelCurrentWorkspaceScan,
   updateTabAlias,
   toggleTheme,
   setSettingsOpen,
@@ -45,6 +45,7 @@ export function AppView(props: any) {
   isFullscreen,
   toggleFullscreen,
   prepareWorkspaceOpen,
+  reopenUnavailableWorkspace,
   workspaceAliases,
   updateWorkspaceAlias,
   scrollRef,
@@ -91,19 +92,12 @@ export function AppView(props: any) {
   closeWorkspaceToSelection,
   toggleFocusMode,
   isDragging,
-  toolbarPosition,
-  setToolbarPosition,
   onImageClick
   } = props;
 
   return (
     <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.appRuntime === 'tauri' ? ' app--tauri' : ''}${isFullscreen ? ' app--fullscreen' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
-      {state.isWorkspaceScanning && (
-        <div className="workspace-scan-progress" role="status" aria-live="polite">
-          Scanning {state.scannedFiles.toLocaleString()} files…
-        </div>
-      )}
       {isTabView && (
         <DesktopTabBar
           tabs={tabs}
@@ -119,12 +113,30 @@ export function AppView(props: any) {
           onThemeToggle={toggleTheme}
           onSettingsOpen={() => setSettingsOpen(true)}
           onSidebarToggle={toggleSidebar}
+          onBack={back}
+          onForward={forward}
+          onRefresh={refresh}
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          onCollapseAll={collapseAll}
+          onExpandAll={expandAll}
+          onCopyFile={copyCurrentFileContent}
           isDark={isDark}
           isMaximized={state.isMaximized}
           hasUpdate={updateCheck.hasUpdate}
           isFullscreen={isFullscreen}
           onFullscreenToggle={toggleFullscreen}
         />
+      )}
+      {state.isWorkspaceScanning && (
+        <div className="workspace-scan-progress" role="status" aria-live="polite">
+          <span>Scanning {state.scannedFiles.toLocaleString()} files…</span>
+          {isTabView && (
+            <button type="button" className="workspace-scan-progress__cancel" onClick={cancelCurrentWorkspaceScan}>
+              {t.tooltips.cancelScan}
+            </button>
+          )}
+        </div>
       )}
       {isTabView && activeTabId === 'home' ? (
         <main className="tab-home">
@@ -133,12 +145,36 @@ export function AppView(props: any) {
           </div>
         </main>
       ) : !state.workspaceName ? (
-        <WorkspaceSelection
-          onBeforeOpenWorkspace={prepareWorkspaceOpen}
-          embeddedInTabs={isTabView}
-          workspaceAliases={workspaceAliases}
-          onWorkspaceAliasChange={updateWorkspaceAlias}
-        />
+        state.appRuntime === 'vscode' ? (
+          <main className="tab-home">
+            <div className="content__scroll" id="homeContentScroll">
+              <WelcomePage />
+            </div>
+          </main>
+        ) : isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
+          <main className="tab-loading">
+            <div className="state-screen state-screen--tab-loading">
+              <div className="spinner" />
+              <div className="state-screen__title">{state.loadingLabel || 'Loading docs...'}</div>
+              {state.isWorkspaceScanning && (
+                <div className="state-screen__sub">
+                  Scanning {state.scannedFiles.toLocaleString()} files…
+                </div>
+              )}
+              {state.loadingDetail && <div className="state-screen__sub">{state.loadingDetail}</div>}
+              <button type="button" className="btn state-screen__cancel" onClick={cancelCurrentWorkspaceScan}>
+                {t.tooltips.cancelScan}
+              </button>
+            </div>
+          </main>
+        ) : (
+          <WorkspaceSelection
+            onBeforeOpenWorkspace={prepareWorkspaceOpen}
+            embeddedInTabs={isTabView}
+            workspaceAliases={workspaceAliases}
+            onWorkspaceAliasChange={updateWorkspaceAlias}
+          />
+        )
       ) : (
         <>
           {!isTabView && (
@@ -166,6 +202,8 @@ export function AppView(props: any) {
                   onImageClick={onImageClick}
                   scrollRef={scrollRef}
                   suppressWelcome={isTabView}
+                  onCancelWorkspaceScan={isTabView ? cancelCurrentWorkspaceScan : undefined}
+                  onOpenWorkspaceAgain={reopenUnavailableWorkspace}
                 />
                 {/* Scroll to top button */}
                 <TooltipButton
@@ -177,21 +215,7 @@ export function AppView(props: any) {
                   icon={<ChevronUpIcon />}
                 />
               </div>
-              {isTabView && (
-                <Suspense fallback={null}><FloatingTabToolbar
-                  position={toolbarPosition}
-                  onPositionChange={setToolbarPosition}
-                  onExpandAll={expandAll}
-                  onCollapseAll={collapseAll}
-                  onCopyFile={copyCurrentFileContent}
-                  onRefresh={refresh}
-                  onBack={back}
-                  onForward={forward}
-                  canGoBack={canGoBack}
-                  canGoForward={canGoForward}
-                  canEdit={!!state.currentFile}
-                /></Suspense>
-              )}
+
             </div>
             {state.toc.length > 0 && (
               <>

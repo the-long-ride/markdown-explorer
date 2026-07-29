@@ -204,3 +204,18 @@ Our automated GitHub Actions release workflow packages deployment targets in par
 ### 3. Global Scope and TDZ (Temporal Dead Zone) Risks
 *   Because the frontend styles and libraries (like `Chart.js` and `Mermaid`) execute in a unified global context, declare layout components and helpers above other referencing scripts inside HTML outputs to avoid Temporal Dead Zone (TDZ) reference errors.
 *   Always ensure shared state controls (e.g., sort, search, folding toggles) are registered under the global `window.UI` and `window.Table` scopes.
+
+## Native Document Conversion
+
+- Keep Tauri conversion in-process under `tauri/src/render/native_document_converter/`; do not add Node sidecars, external binaries, shell commands, telemetry, or network conversion.
+- Keep Electron and VS Code on `@the-long-ride/markdown-them` unless a separately approved cross-runtime migration is designed.
+- New converter dependencies must be MIT, Apache-2.0, or dual MIT/Apache-2.0. Update `docs/native-document-conversion.md` and license checks when dependency versions change.
+- Preserve the stable preview quality codes `converted-preview`, `legacy-best-effort`, and `conversion-failed`; legacy DOC/XLS/XLM conversion must remain visibly best-effort.
+- Add generated/minimal fixtures and malformed-input tests without committing large office documents or runtime binaries.
+
+## Theme Groups
+
+- Settings may render at most three theme groups: built-in Themes, Pet themes, and Your custom themes.
+- Keep persisted theme ID `glass` compatible even though its user-visible name is Aurora Glass.
+- Add every user-visible theme/group string to all supported locales and keep locale object shapes identical.
+- When a theme changes the Focus header surface, apply the same treatment to `.app--tab-view .desktop-tabbar` and add a contract test.

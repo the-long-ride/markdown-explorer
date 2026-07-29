@@ -42,6 +42,13 @@ let workspaceTree: FolderNode | null = null;
 let searchIndex: BrowserSearchIndex | null = null;
 let readyHandled = false;
 let workspaceScanGeneration = 0;
+let activeWorkspaceOperationId: string | null = null;
+let activeWorkspaceTabId: string | null = null;
+
+type WorkspaceOperationMetadata = {
+  workspaceOperationId?: string;
+  workspaceTabId?: string;
+};
 
 export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS };
 
@@ -82,7 +89,7 @@ export function filterSearchIndexTabs(
 }
 
 export function isValidExternalUrl(url: unknown): boolean {
-  return typeof url === "string" && /^https?:\/\//i.test(url);
+  return typeof url === "string" && /^(?:https?|file):\/\//i.test(url);
 }
 
 export function extractWorkspaceName(workspacePath: string): string {
@@ -109,8 +116,59 @@ export function shouldOpenFirstFile(
   return openFirstFile !== false && !currentFile && flatList.length > 0 ? flatList[0].relativePath : currentFile;
 }
 
+function currentWorkspaceOperationMetadata(): WorkspaceOperationMetadata {
+  return activeWorkspaceOperationId && activeWorkspaceTabId
+    ? {
+        workspaceOperationId: activeWorkspaceOperationId,
+        workspaceTabId: activeWorkspaceTabId,
+      }
+    : {};
+}
+
+function applyWorkspaceOperation(msg: any) {
+  activeWorkspaceOperationId = typeof msg?.workspaceOperationId === 'string'
+    ? msg.workspaceOperationId
+    : null;
+  activeWorkspaceTabId = typeof msg?.workspaceTabId === 'string'
+    ? msg.workspaceTabId
+    : null;
+}
+
+function isWorkspaceOperationCurrent(operation: WorkspaceOperationMetadata): boolean {
+  const operationId = operation.workspaceOperationId || null;
+  const tabId = operation.workspaceTabId || null;
+  return activeWorkspaceOperationId === operationId && activeWorkspaceTabId === tabId;
+}
+
+function clearWorkspaceOperation(): void {
+  activeWorkspaceOperationId = null;
+  activeWorkspaceTabId = null;
+}
+
+
+function resolveWorkspaceTextResourcePath(documentPath: string, resourcePath: string): string | null {
+  const reference = resourcePath.split(/[?#]/, 1)[0];
+  if (!reference || /^(?:https?:|data:|blob:|javascript:|file:)/i.test(reference)) return null;
+  const baseParts = reference.startsWith('/')
+    ? []
+    : documentPath.split('/').slice(0, -1).filter(Boolean);
+  for (const part of reference.replace(/^\/+/, '').split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      if (!baseParts.length) return null;
+      baseParts.pop();
+    } else {
+      baseParts.push(part);
+    }
+  }
+  const resolved = baseParts.join('/');
+  return /\.(?:css|js|mjs|cjs)$/i.test(resolved) ? resolved : null;
+}
+
 export function sendToWebview(msg: any) {
-  bus.dispatchEvent(new CustomEvent("host-message", { detail: msg }));
+  bus.dispatchEvent(new CustomEvent("host-message", {
+    detail: { ...currentWorkspaceOperationMetadata(), ...msg },
+  }));
 }
 
 export function sendLoading(label: string, detail?: string) {
@@ -135,9 +193,11 @@ export function resetWorkspaceState(): void {
   flatList = [];
   workspaceTree = null;
   searchIndex = null;
+  activeWorkspaceOperationId = null;
+  activeWorkspaceTabId = null;
 }
 
-function sendWorkspaceUnavailable(workspacePath: string, reason = "missing") {
+function sendWorkspaceUnavailable(workspacePath: string, reason = "missing", operation = currentWorkspaceOperationMetadata()) {
   resetWorkspaceState();
 
   BrowserRecentWorkspaces.load().then((recents) => {
@@ -148,25 +208,27 @@ function sendWorkspaceUnavailable(workspacePath: string, reason = "missing") {
       reason,
       recentWorkspaces: recents,
       ...getHostInfo(),
+      ...operation,
     });
   });
 }
 
-async function sendWorkspaceData() {
-  if (!activeHandle) return;
+async function sendWorkspaceData(): Promise<boolean> {
+  if (!activeHandle) return false;
+  const operation = currentWorkspaceOperationMetadata();
+  const handle = activeHandle;
+  const scanGeneration = ++workspaceScanGeneration;
+  const workspacePath = activeWorkspacePath;
+  const workspaceName = activeWorkspaceName;
 
   try {
-    const handle = activeHandle;
-    const scanGeneration = ++workspaceScanGeneration;
-    const workspacePath = activeWorkspacePath;
-    const workspaceName = activeWorkspaceName;
     const recentsPromise = BrowserRecentWorkspaces.load();
-    sendToWebview({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
+    sendToWebview({ command: 'workspaceScanProgress', scannedFiles: 0, active: true, ...operation });
     const result = await scanWorkspaceIncrementally({
       handle,
       isCurrent: () => activeHandle === handle && scanGeneration === workspaceScanGeneration,
       onProgress(scannedFiles) {
-        sendToWebview({ command: 'workspaceScanProgress', scannedFiles, active: true });
+        sendToWebview({ command: 'workspaceScanProgress', scannedFiles, active: true, ...operation });
       },
       async onReveal(next) {
         const recentWorkspaces = await recentsPromise;
@@ -176,17 +238,17 @@ async function sendWorkspaceData() {
         sendToWebview({
           command: 'readyAck', ...next, theme: 'dark', themeStyle: 'default',
           defaultExpanded: true, workspaceName, workspacePath, recentWorkspaces,
-          documentConversionEnabled: false, ...getHostInfo(),
+          documentConversionEnabled: false, ...getHostInfo(), ...operation,
         });
       },
       onChanged(next) {
         flatList = next.fileList;
         workspaceTree = next.tree;
         sendToWebview({ command: 'workspaceFilesChanged', ...next, workspaceName, workspacePath,
-          documentConversionEnabled: false });
+          documentConversionEnabled: false, ...operation });
       },
     });
-    if (!result) return;
+    if (!result) return false;
     const { tree, flat } = result;
     flatList = flat;
     workspaceTree = tree;
@@ -196,58 +258,99 @@ async function sendWorkspaceData() {
     }
     searchIndex.prime(flat);
 
-    sendToWebview({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false });
+    sendToWebview({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false, ...operation });
+    return true;
   } catch (err) {
     console.error("Failed to scan workspace:", err);
-    sendWorkspaceUnavailable(activeWorkspacePath, "missing");
+    if (
+      activeHandle === handle
+      && scanGeneration === workspaceScanGeneration
+      && isWorkspaceOperationCurrent(operation)
+    ) {
+      sendWorkspaceUnavailable(workspacePath, "missing", operation);
+    }
+    return false;
   }
+}
+
+type WorkspaceRequestSnapshot = {
+  handle: FileSystemDirectoryHandle | null;
+  generation: number;
+  operation: WorkspaceOperationMetadata;
+};
+
+function captureWorkspaceRequest(): WorkspaceRequestSnapshot {
+  return {
+    handle: activeHandle,
+    generation: workspaceScanGeneration,
+    operation: currentWorkspaceOperationMetadata(),
+  };
+}
+
+function isWorkspaceRequestCurrent(request: WorkspaceRequestSnapshot): boolean {
+  return activeHandle === request.handle && workspaceScanGeneration === request.generation;
 }
 
 async function sendInitialContent(openFirstFile = false) {
+  const request = captureWorkspaceRequest();
   const resolvedFile = shouldOpenFirstFile(currentFile, openFirstFile, flatList);
   if (resolvedFile && resolvedFile !== currentFile) {
     currentFile = resolvedFile;
-    startCurrentFileWatcher(activeHandle, currentFile, (p) => sendToWebview({ command: "currentFileChanged", filePath: p }));
+    startCurrentFileWatcher(activeHandle, currentFile, (p) => {
+      if (isWorkspaceRequestCurrent(request)) {
+        sendToWebview({ command: "currentFileChanged", filePath: p, ...request.operation });
+      }
+    });
   }
 
+  if (!isWorkspaceRequestCurrent(request)) return;
   if (currentFile) {
-    await sendContent();
+    await sendContent(request, currentFile);
   } else {
-    await sendWelcome();
+    await sendWelcome(request);
   }
 }
 
-async function sendContent() {
-  if (!currentFile || !activeHandle) return;
+async function sendContent(
+  request: WorkspaceRequestSnapshot = captureWorkspaceRequest(),
+  requestedFile: string | null = currentFile,
+) {
+  const handle = request.handle;
+  if (!requestedFile || !handle || !isWorkspaceRequestCurrent(request)) return;
 
   let raw = "";
   try {
-    raw = await readTextFile(activeHandle, currentFile);
+    raw = await readTextFile(handle, requestedFile);
   } catch (err) {
-    console.error("Failed to read file:", currentFile, err);
-    raw = `# File Not Found\n\nCould not read file: **${currentFile}**`;
+    console.error("Failed to read file:", requestedFile, err);
+    raw = `# File Not Found\n\nCould not read file: **${requestedFile}**`;
   }
+  if (!isWorkspaceRequestCurrent(request)) return;
 
-  const { html, frontmatter, toc } = renderMarkdown(currentFile, raw);
-  const rewrittenHtml = await rewriteMediaUrls(activeHandle, html, currentFile);
+  const { html, frontmatter, toc } = renderMarkdown(requestedFile, raw);
+  const rewrittenHtml = await rewriteMediaUrls(handle, html, requestedFile);
+  if (!isWorkspaceRequestCurrent(request)) return;
 
-  const fileInfo = findFileInfo(flatList, currentFile);
+  const fileInfo = findFileInfo(flatList, requestedFile);
 
   sendToWebview({
     command: "renderContent",
     html: rewrittenHtml,
     markdownSource: raw,
+    sourceDocumentText: /\.html?$/i.test(requestedFile) ? raw : null,
     frontmatter,
     toc,
-    filePath: currentFile, // Match filePath parameter name expected by UI
+    filePath: requestedFile,
     relativePath: fileInfo.relativePath,
     title: fileInfo.title,
     fileList: flatList,
     previewInfo: null,
+    ...request.operation,
   });
 }
 
-async function sendWelcome() {
+async function sendWelcome(request: WorkspaceRequestSnapshot = captureWorkspaceRequest()) {
+  if (!isWorkspaceRequestCurrent(request)) return;
   sendToWebview({
     command: "renderContent",
     html: "",
@@ -259,6 +362,7 @@ async function sendWelcome() {
     title: "Welcome",
     fileList: flatList,
     previewInfo: null,
+    ...request.operation,
   });
 }
 
@@ -293,12 +397,28 @@ bus.addEventListener("webview-message", async (e: Event) => {
     }
 
     case "openFolder": {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
       try {
         const handle = msg.handle || (await pickDirectory());
+        if (!isWorkspaceOperationCurrent(operation)) break;
+        if (!handle) {
+          sendToWebview({ command: "workspaceOpenCancelled", ...operation });
+          clearWorkspaceOperation();
+          break;
+        }
+        if (msg.replaceRecentWorkspacePath && msg.replaceRecentWorkspacePath !== handle.name) {
+          await BrowserRecentWorkspaces.remove(msg.replaceRecentWorkspacePath);
+        }
+        if (!isWorkspaceOperationCurrent(operation)) break;
         activeHandle = handle;
+        searchIndex = null;
         activeWorkspaceName = handle.name;
         activeWorkspacePath = handle.name; // In browser, name is path prefix
-        currentFile = null; stopCurrentFileWatcher();
+        currentFile = null;
+        flatList = [];
+        workspaceTree = null;
+        stopCurrentFileWatcher();
 
         sendLoading("Loading workspace...");
         await BrowserRecentWorkspaces.save(
@@ -306,33 +426,50 @@ bus.addEventListener("webview-message", async (e: Event) => {
           activeWorkspacePath,
           handle,
         );
-        await sendWorkspaceData();
-        await sendInitialContent(msg.openFirstFile !== false);
+        if (!isWorkspaceOperationCurrent(operation) || activeHandle !== handle) break;
+        await sendRecentWorkspacesChanged();
+        if (!isWorkspaceOperationCurrent(operation) || activeHandle !== handle) break;
+        const completed = await sendWorkspaceData();
+        if (completed && isWorkspaceOperationCurrent(operation)) {
+          await sendInitialContent(msg.openFirstFile !== false);
+        }
       } catch (err) {
         console.warn("Folder selection cancelled or failed:", err);
+        if (isWorkspaceOperationCurrent(operation)) {
+          sendToWebview({ command: "workspaceOpenCancelled", ...operation });
+          clearWorkspaceOperation();
+        }
       }
       break;
     }
 
     case "openRecentWorkspace": {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
       const folderPath = msg.path;
       const handle = await BrowserRecentWorkspaces.getHandle(folderPath);
+      if (!isWorkspaceOperationCurrent(operation)) break;
       if (!handle) {
-        sendWorkspaceUnavailable(folderPath, "missing");
-        return;
+        sendWorkspaceUnavailable(folderPath, "missing", operation);
+        break;
       }
 
       sendLoading("Checking permission...");
       const hasPermission = await verifyPermission(handle);
+      if (!isWorkspaceOperationCurrent(operation)) break;
       if (!hasPermission) {
-        sendWorkspaceUnavailable(folderPath, "locked");
-        return;
+        sendWorkspaceUnavailable(folderPath, "locked", operation);
+        break;
       }
 
       activeHandle = handle;
+      searchIndex = null;
       activeWorkspaceName = handle.name;
       activeWorkspacePath = folderPath;
-      currentFile = null; stopCurrentFileWatcher();
+      currentFile = null;
+      flatList = [];
+      workspaceTree = null;
+      stopCurrentFileWatcher();
 
       sendLoading("Loading workspace...");
       await BrowserRecentWorkspaces.save(
@@ -340,8 +477,66 @@ bus.addEventListener("webview-message", async (e: Event) => {
         activeWorkspacePath,
         handle,
       );
-      await sendWorkspaceData();
-      await sendInitialContent(msg.openFirstFile !== false);
+      if (!isWorkspaceOperationCurrent(operation) || activeHandle !== handle) break;
+      await sendRecentWorkspacesChanged();
+      if (!isWorkspaceOperationCurrent(operation) || activeHandle !== handle) break;
+      const completed = await sendWorkspaceData();
+      if (completed && isWorkspaceOperationCurrent(operation)) {
+        await sendInitialContent(msg.openFirstFile !== false);
+      }
+      break;
+    }
+
+    case "activateWorkspace": {
+      applyWorkspaceOperation(msg);
+      const operation = currentWorkspaceOperationMetadata();
+      const folderPath = msg.workspacePath;
+      const handle = await BrowserRecentWorkspaces.getHandle(folderPath);
+      if (!isWorkspaceOperationCurrent(operation)) break;
+      if (!handle) {
+        sendWorkspaceUnavailable(folderPath, "missing", operation);
+        break;
+      }
+      const hasPermission = await verifyPermission(handle);
+      if (!isWorkspaceOperationCurrent(operation)) break;
+      if (!hasPermission) {
+        sendWorkspaceUnavailable(folderPath, "locked", operation);
+        break;
+      }
+      activeHandle = handle;
+      searchIndex = null;
+      activeWorkspaceName = handle.name;
+      activeWorkspacePath = folderPath;
+      currentFile = msg.filePath || null;
+      flatList = [];
+      workspaceTree = null;
+      stopCurrentFileWatcher();
+      sendLoading("Loading workspace...");
+      const completed = await sendWorkspaceData();
+      if (completed && isWorkspaceOperationCurrent(operation)) {
+        await sendInitialContent(msg.openFirstFile !== false);
+      }
+      break;
+    }
+
+    case "cancelWorkspaceScan": {
+      if (!activeWorkspaceOperationId || msg.workspaceOperationId !== activeWorkspaceOperationId) break;
+      const operation = currentWorkspaceOperationMetadata();
+      workspaceScanGeneration += 1;
+      stopCurrentFileWatcher();
+      bus.dispatchEvent(new CustomEvent("host-message", {
+        detail: { command: "workspaceScanProgress", scannedFiles: flatList.length, active: false, ...operation },
+      }));
+      activeWorkspaceOperationId = null;
+      activeWorkspaceTabId = null;
+      break;
+    }
+
+    case "cancelAllWorkspaceScans": {
+      workspaceScanGeneration += 1;
+      stopCurrentFileWatcher();
+      activeWorkspaceOperationId = null;
+      activeWorkspaceTabId = null;
       break;
     }
 
@@ -352,6 +547,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
     }
 
     case "closeWorkspace": {
+      const operation = currentWorkspaceOperationMetadata();
       readyHandled = false;
       resetWorkspaceState();
       revokeAll();
@@ -369,6 +565,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
         recentWorkspaces: recents,
         documentConversionEnabled: false,
         ...getHostInfo(),
+        ...operation,
       });
       break;
     }
@@ -376,6 +573,8 @@ bus.addEventListener("webview-message", async (e: Event) => {
     case "navigate": {
       if (!msg.path) {
         currentFile = null;
+        flatList = [];
+        workspaceTree = null;
         stopCurrentFileWatcher();
         await sendWelcome();
         return;
@@ -389,7 +588,8 @@ bus.addEventListener("webview-message", async (e: Event) => {
     case "refresh": {
       if (activeHandle) {
         sendLoading("Refreshing workspace...");
-        await sendWorkspaceData();
+        const completed = await sendWorkspaceData();
+        if (!completed) break;
         if (currentFile) {
           await sendContent();
         } else {
@@ -438,6 +638,21 @@ bus.addEventListener("webview-message", async (e: Event) => {
     case "indexWorkspaceSearchItems": {
       if (searchIndex) {
         searchIndex.prime(msg.items || []);
+      }
+      break;
+    }
+
+    case "readWorkspaceTextResource": {
+      const resolvedPath = resolveWorkspaceTextResourcePath(String(msg.documentPath || ""), String(msg.resourcePath || ""));
+      if (!activeHandle || !resolvedPath) {
+        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: false, reason: "outside-workspace" });
+        break;
+      }
+      try {
+        const content = await readTextFile(activeHandle, resolvedPath);
+        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: true, content, resolvedPath });
+      } catch {
+        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: false, reason: "missing" });
       }
       break;
     }

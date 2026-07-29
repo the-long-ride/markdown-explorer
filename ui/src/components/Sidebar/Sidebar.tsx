@@ -7,16 +7,35 @@ import {
   useEffect,
 } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
-import { CheckIcon, CloseIcon, SearchIcon, LocateIcon, FolderIcon } from "../shared/icons";
+import { normalizePathKey } from "../../contexts/appStateReducer";
+import {
+  CheckIcon,
+  CloseIcon,
+  SearchIcon,
+  LocateIcon,
+  FolderIcon,
+  OpenFolderLocationIcon,
+  RevealFileLocationIcon,
+  InternetIcon,
+  HtmlPreviewIcon,
+  MarkdownViewIcon,
+} from "../shared/icons";
 import { TooltipButton } from "../shared/TooltipButton";
 import { FileNode, FolderNodeView } from "./TreeNode";
-import type { ScopeFocusTreeProps } from "./TreeNode";
+import type { ScopeFocusTreeProps, SidebarItemMenuTarget } from "./TreeNode";
+import { SidebarItemMenu } from "./SidebarItemMenu";
+import type { SidebarItemMenuItem } from "./SidebarItemMenu";
+import { usePlatform } from "../../contexts/PlatformContext";
+import { getShellLocationLabel, requestShellLocation, resolveWorkspaceFolderPath, supportsShellLocation } from "../../desktop/shellLocation";
 import { getTranslations } from "../../contexts/translations";
 import type { FolderNode, MdFile } from "../../types";
 import { SidebarSearch } from "./SidebarSearch";
 import type { SidebarSearchStatus } from "./SidebarSearch";
 import { useSidebarCursorNavigation } from "./useSidebarCursorNavigation";
 import { getEnabledShortcut } from "../../utils/shortcuts";
+import { openLocalFileInBrowser } from "../../dom/htmlPreviewActions";
+import { supportsLocalFileBrowserOpen } from "../../dom/localFileBrowserSupport";
+import { isHtmlDocumentPath } from "../Content/HtmlDocumentView";
 
 function getWorkspaceScopeKey(
   workspacePath: string | undefined,
@@ -58,7 +77,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps) {
-  const { state, updateSettings, dispatch } = useAppState();
+  const { state, updateSettings, dispatch, navigate } = useAppState();
+  const bridge = usePlatform();
   const [filter, setFilter] = useState("");
   const [scopeFocusEditing, setScopeFocusEditing] = useState(false);
   const currentLang = state.settings.language || "en";
@@ -68,6 +88,9 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   const treeRef = useRef<HTMLDivElement>(null);
   const scrollPosRef = useRef(0);
   const lastWorkspaceRef = useRef(state.workspaceName);
+  const [itemMenu, setItemMenu] = useState<SidebarItemMenuTarget | null>(null);
+  const canOpenItemLocations = supportsShellLocation(state.appRuntime);
+  const canOpenHtmlInBrowser = supportsLocalFileBrowserOpen(state.appRuntime);
 
   // Search status reported by SidebarSearch
   const [searchStatus, setSearchStatus] = useState<SidebarSearchStatus>({
@@ -80,8 +103,21 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     setSearchStatus(status);
   }, []);
 
+  const handleRequestItemMenu = useCallback((target: SidebarItemMenuTarget) => {
+    setItemMenu((current) => current?.path === target.path ? null : target);
+  }, []);
+
+  const canRequestItemMenu = useCallback(
+    (target: Pick<SidebarItemMenuTarget, "kind" | "path">) =>
+      canOpenItemLocations || (target.kind === "file" && isHtmlDocumentPath(target.path)),
+    [canOpenItemLocations],
+  );
+
   const isFiles = state.sidebarActiveTab === "files";
   const isSearch = state.sidebarActiveTab === "search";
+  useEffect(() => {
+    if (!isFiles || (itemMenu && !canRequestItemMenu(itemMenu))) setItemMenu(null);
+  }, [canRequestItemMenu, isFiles, itemMenu]);
   const tabIndicatorRef = useRef<HTMLSpanElement>(null);
 
   const scrollToActiveFile = useCallback(() => {
@@ -241,6 +277,95 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     }
   }, [state.tree, state.workspaceName, isFiles]);
 
+  const itemMenuItems = useMemo<readonly SidebarItemMenuItem[]>(() => {
+    if (!itemMenu) return [];
+    const items: SidebarItemMenuItem[] = [];
+    const itemIsHtml = itemMenu.kind === "file" && isHtmlDocumentPath(itemMenu.path);
+
+    if (itemIsHtml) {
+      const targetPathKey = normalizePathKey(itemMenu.path);
+      const matchingTab = state.contentTabs.find(
+        (tab) => normalizePathKey(tab.filePath) === targetPathKey,
+      );
+      const currentOverride =
+        normalizePathKey(state.currentFile ?? "") === targetPathKey
+          ? state.currentHtmlPreviewOverride
+          : undefined;
+      const htmlPreviewEnabled =
+        matchingTab?.htmlPreviewOverride
+        ?? currentOverride
+        ?? state.settings.defaultHtmlPreview;
+
+      if (canOpenHtmlInBrowser) {
+        items.push({
+          id: "open-in-browser",
+          label: t.openInBrowser,
+          icon: <InternetIcon />,
+          onSelect: () => {
+            if (!openLocalFileInBrowser(bridge, itemMenu.path)) {
+              window.dispatchEvent(new CustomEvent("markdown-explorer-action-notice", {
+                detail: t.previewActions.openError,
+              }));
+            }
+          },
+        });
+      }
+
+      items.push({
+        id: "toggle-html-preview",
+        label: htmlPreviewEnabled ? t.showMarkdownView : t.showHtmlPreview,
+        icon: htmlPreviewEnabled ? <MarkdownViewIcon /> : <HtmlPreviewIcon />,
+        shortcut: getEnabledShortcut(state.settings, "toggleHtmlPreview"),
+        onSelect: () =>
+          navigate(itemMenu.path, { htmlPreviewOverride: !htmlPreviewEnabled }),
+      });
+    }
+
+    if (canOpenItemLocations) {
+      items.push({
+        id: "open-location",
+        label: getShellLocationLabel(t, state.hostPlatform, itemMenu.kind),
+        icon: itemMenu.kind === "file"
+          ? <RevealFileLocationIcon />
+          : <OpenFolderLocationIcon />,
+        shortcut: itemMenu.kind === "file"
+          ? getEnabledShortcut(state.settings, "openCurrentDocumentLocation")
+          : undefined,
+        dividerBefore: items.length > 0,
+        onSelect: () => {
+          if (itemMenu.kind === "file") {
+            requestShellLocation(bridge, itemMenu.path, "reveal-file");
+          } else {
+            requestShellLocation(
+              bridge,
+              resolveWorkspaceFolderPath(
+                state.workspacePath || "",
+                itemMenu.path,
+                state.hostPlatform,
+              ),
+              "open-directory",
+            );
+          }
+        },
+      });
+    }
+
+    return items;
+  }, [
+    bridge,
+    canOpenHtmlInBrowser,
+    canOpenItemLocations,
+    itemMenu,
+    navigate,
+    state.contentTabs,
+    state.currentFile,
+    state.currentHtmlPreviewOverride,
+    state.hostPlatform,
+    state.settings,
+    state.workspacePath,
+    t,
+  ]);
+
   if (!state.tree) return null;
 
   return (
@@ -380,6 +505,10 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
               scopeFocus={scopeFocusTree}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
+              onRequestItemMenu={handleRequestItemMenu}
+              canRequestItemMenu={canRequestItemMenu}
+              openMenuPath={itemMenu?.path ?? null}
+              itemActionsLabel={t.sidebarItemActions}
             />
           ))}
           {visibleRootChildren.map((child) => (
@@ -390,6 +519,10 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
               scopeFocus={scopeFocusTree}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
+              onRequestItemMenu={handleRequestItemMenu}
+              canRequestItemMenu={canRequestItemMenu}
+              openMenuPath={itemMenu?.path ?? null}
+              itemActionsLabel={t.sidebarItemActions}
             />
           ))}
           {!hasVisibleTreeItems && (
@@ -405,6 +538,18 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
       >
         <SidebarSearch isVisible={isSearch} onStatusChange={handleSearchStatus} />
       </div>
+      {itemMenu && navRef.current && itemMenuItems.length > 0 && (
+        <SidebarItemMenu
+          anchor={itemMenu.anchor}
+          sidebar={navRef.current}
+          menuLabel={t.sidebarItemActions.replace(
+            "{name}",
+            itemMenu.path.split(/[\\/]/).filter(Boolean).pop() ?? itemMenu.path,
+          )}
+          items={itemMenuItems}
+          onClose={() => setItemMenu(null)}
+        />
+      )}
     </nav>
   );
 }

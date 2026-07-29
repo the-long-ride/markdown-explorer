@@ -11,6 +11,22 @@ vi.mock("../../../../ui/src/contexts/PlatformContext");
 
 vi.mock("../../../../ui/src/contexts/translations", () => ({
   getTranslations: () => ({
+    tooltips: { cancelScan: 'Cancel scan' },
+    previewActions: {
+      openInBrowser: 'Open in browser', openAsModal: 'Open as modal', showCode: 'Show code', showPreview: 'Show preview',
+      copyCode: 'Copy code', plainText: 'Plain text', csvPreviewTitle: 'CSV Preview', tsvPreviewTitle: 'TSV Preview',
+      csvMalformedQuote: 'Malformed CSV', csvUnevenRows: 'Uneven rows', modalTitle: 'HTML preview', closeModal: 'Close',
+      openError: 'Unable to open', linkMenu: 'Link actions', copyLink: 'Copy link', linkCopied: 'Link copied',
+      unableToOpenLink: 'Unable to open link', copyFailed: 'Unable to copy link',
+    },
+    workspaceUnavailable: {
+      title: 'Workspace not found',
+      description: 'The current path no longer exists or is locked. Please open the workspace again.',
+      tabHint: 'Tab view: choose a replacement folder to reuse this tab.',
+      openAgain: 'Open Workspace Again',
+      deleteHistory: 'Delete from History',
+      removedHistory: 'Removed from History',
+    },
     documentPreview: {
       currentFileChangedOnDisk: "Current file changed on disk",
       refreshCurrentFile: "Refresh",
@@ -18,6 +34,7 @@ vi.mock("../../../../ui/src/contexts/translations", () => ({
       convertedTitle: "Converted: {sourceLabel}",
       textTitle: "Text: {sourceLabel}",
       convertedWarning: "Converted warning",
+      legacyBestEffortWarning: "Legacy best-effort warning",
       textWarning: "Text warning",
       conversionFailedWarning: "Conversion failed",
       durationMeta: "{status} in {duration}",
@@ -134,7 +151,7 @@ function setup(overrides: Record<string, unknown> = {}) {
 
 function setupWithProps(
   overrides: Record<string, unknown> = {},
-  props: { suppressWelcome?: boolean } = {}
+  props: { suppressWelcome?: boolean; onOpenWorkspaceAgain?: (oldPath: string) => void; onCancelWorkspaceScan?: () => void } = {}
 ) {
   vi.mocked(useAppState).mockReturnValue({
     state: makeState(overrides),
@@ -153,6 +170,8 @@ function setupWithProps(
       onImageClick={onImageClick}
       scrollRef={scrollRef}
       suppressWelcome={props.suppressWelcome}
+      onOpenWorkspaceAgain={props.onOpenWorkspaceAgain}
+      onCancelWorkspaceScan={props.onCancelWorkspaceScan}
     />
   );
 }
@@ -228,7 +247,21 @@ describe("Content rendering", () => {
     expect(mockPostMessage).toHaveBeenCalledWith({
       command: "openFolder",
       openFirstFile: false,
+      replaceRecentWorkspacePath: "/gone/workspace",
     });
+  });
+
+  it("uses the tab-scoped recovery callback when provided", () => {
+    const onOpenWorkspaceAgain = vi.fn();
+    setupWithProps(
+      { workspaceUnavailablePath: "/gone/workspace", recentWorkspaces: [] },
+      { onOpenWorkspaceAgain },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Open Workspace Again/i }));
+
+    expect(onOpenWorkspaceAgain).toHaveBeenCalledWith("/gone/workspace");
+    expect(mockPostMessage).not.toHaveBeenCalledWith(expect.objectContaining({ command: "openFolder" }));
   });
 
   it("sends deleteRecentWorkspace when delete button is clicked", () => {
@@ -415,6 +448,21 @@ describe("Content rendering", () => {
     });
     expect(screen.getByText("Converted: report.docx")).toBeInTheDocument();
     expect(screen.getByText("Converted warning")).toBeInTheDocument();
+  });
+
+  it("renders the localized legacy best-effort warning", () => {
+    setup({
+      currentFile: "/legacy.xls",
+      contentHtml: "<h1>Legacy</h1>",
+      previewInfo: {
+        kind: "converted",
+        sourceLabel: "legacy.xls",
+        qualityCode: "legacy-best-effort",
+        qualityWarning: "host fallback",
+      },
+    });
+    expect(screen.getByText("Legacy best-effort warning")).toBeInTheDocument();
+    expect(screen.queryByText("host fallback")).not.toBeInTheDocument();
   });
 
   it("renders text preview info notice", () => {

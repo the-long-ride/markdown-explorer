@@ -35,6 +35,12 @@ export const hostMessages = {
     detail: '',
     ...overrides,
   }),
+  workspaceScanProgress: (overrides = {}) => ({
+    command: 'workspaceScanProgress' as const,
+    scannedFiles: 0,
+    active: true,
+    ...overrides,
+  }),
   workspaceFilesChanged: (overrides = {}) => ({
     command: 'workspaceFilesChanged' as const,
     fileList: [],
@@ -132,10 +138,25 @@ export const webviewMessages = {
     command: 'openFile' as const,
     ...overrides,
   }),
+  openFileHandle: (overrides = {}) => ({
+    command: 'openFileHandle' as const,
+    handle: undefined,
+    ...overrides,
+  }),
   openPath: (path: string, overrides = {}) => ({
     command: 'openPath' as const,
     path,
     openFirstFile: true,
+    ...overrides,
+  }),
+  openShellLocation: (
+    path: string,
+    mode: 'open-directory' | 'reveal-file' | 'open-parent-directory' = 'open-directory',
+    overrides = {},
+  ) => ({
+    command: 'openShellLocation' as const,
+    path,
+    mode,
     ...overrides,
   }),
   activateWorkspace: (workspacePath: string, overrides = {}) => ({
@@ -193,6 +214,15 @@ export const webviewMessages = {
     command: 'closeWorkspace' as const,
     ...overrides,
   }),
+  cancelWorkspaceScan: (workspaceOperationId = 'operation-1', overrides = {}) => ({
+    command: 'cancelWorkspaceScan' as const,
+    workspaceOperationId,
+    ...overrides,
+  }),
+  cancelAllWorkspaceScans: (overrides = {}) => ({
+    command: 'cancelAllWorkspaceScans' as const,
+    ...overrides,
+  }),
   zoomIn: (overrides = {}) => ({
     command: 'zoom-in' as const,
     ...overrides,
@@ -214,6 +244,11 @@ export const webviewMessages = {
   openExternal: (url: string, overrides = {}) => ({
     command: 'openExternal' as const,
     url,
+    ...overrides,
+  }),
+  openHtmlPreview: (documentHtml = '<!doctype html><p>Preview</p>', overrides = {}) => ({
+    command: 'openHtmlPreview' as const,
+    documentHtml,
     ...overrides,
   }),
   refresh: (overrides = {}) => ({
@@ -255,6 +290,10 @@ export const webviewMessages = {
   }),
   windowClose: (overrides = {}) => ({
     command: 'window-close' as const,
+    ...overrides,
+  }),
+  toggleFullscreen: (overrides = {}) => ({
+    command: 'toggle-fullscreen' as const,
     ...overrides,
   }),
 };

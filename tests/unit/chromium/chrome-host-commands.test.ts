@@ -39,6 +39,7 @@ describe('chrome-host bus command handlers', () => {
       expect(readyAck.workspaceName).toBe('');
       expect(readyAck.appVersion).toBe('1.0.0');
       expect(readyAck.appRuntime).toBe('chrome');
+      expect(readyAck.documentConversionEnabled).toBe(false);
     });
 
     it('only handles ready once (second ready is ignored)', async () => {
@@ -194,6 +195,17 @@ describe('chrome-host bus command handlers', () => {
       await new Promise((r) => setTimeout(r, 50));
 
       expect(openSpy).toHaveBeenCalledWith('http://example.com', '_blank');
+      openSpy.mockRestore();
+    });
+
+
+    it('opens valid file URL in a new tab', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      sendWebviewMessage({ command: 'openExternal', url: 'file:///tmp/readme.md' });
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(openSpy).toHaveBeenCalledWith('file:///tmp/readme.md', '_blank');
       openSpy.mockRestore();
     });
 

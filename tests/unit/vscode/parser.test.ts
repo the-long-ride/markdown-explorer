@@ -83,6 +83,16 @@ describe('parse', () => {
       const result = parse('```ts.include\nconst x = 1;\n```');
       expect((result.tokens[0] as any).lang).toBe('ts.include');
     });
+
+    test('preserves CSV fence metadata for delimiter and header overrides', () => {
+      const result = parse('```tsv noheader delimiter=pipe\nA|B\n```');
+      expect(result.tokens[0]).toEqual({
+        type: 'code',
+        lang: 'tsv',
+        meta: 'noheader delimiter=pipe',
+        content: 'A|B',
+      });
+    });
   });
 
   describe('math blocks', () => {

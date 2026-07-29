@@ -12,18 +12,18 @@
   },
   "dependencies": {
     "@mermaid-js/mermaid-zenuml": "^0.2.3",
-    "chart.js": "^4.4.9",
+    "chart.js": "^4.5.1",
     "highlight.js": "^11.11.1",
-    "katex": "^0.16.25",
-    "mermaid": "^11.6.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "katex": "^0.16.47",
+    "mermaid": "^11.16.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@types/react": "^19.1.4",
-    "@types/react-dom": "^19.1.5",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
     "typescript": "~5.8.3",
-    "vite": "^8.0.16"
+    "vite": "^8.1.3"
   }
 }

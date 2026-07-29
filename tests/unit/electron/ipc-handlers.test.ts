@@ -8,7 +8,11 @@ describe('registerIpcHandlers', () => {
   let ipcMain: { on: ReturnType<typeof vi.fn> };
   let handlers: Record<string, ReturnType<typeof vi.fn>>;
   let getMainWindow: ReturnType<typeof vi.fn>;
-  let shell: { openExternal: ReturnType<typeof vi.fn>; openPath: ReturnType<typeof vi.fn> };
+  let shell: {
+    openExternal: ReturnType<typeof vi.fn>;
+    openPath: ReturnType<typeof vi.fn>;
+    showItemInFolder: ReturnType<typeof vi.fn>;
+  };
   let clipboard: { writeText: ReturnType<typeof vi.fn> };
   let fs: { existsSync: ReturnType<typeof vi.fn> };
   let registeredHandler: Function;
@@ -46,9 +50,10 @@ describe('registerIpcHandlers', () => {
       downloadUpdate: vi.fn(() => Promise.resolve()),
       scheduleDownloadedUpdate: vi.fn(() => Promise.resolve()),
       restartAndApplyUpdate: vi.fn(() => Promise.resolve()),
+      openHtmlPreview: vi.fn(() => Promise.resolve()),
     };
     getMainWindow = vi.fn();
-    shell = { openExternal: vi.fn(), openPath: vi.fn() };
+    shell = { openExternal: vi.fn(), openPath: vi.fn(), showItemInFolder: vi.fn() };
     clipboard = { writeText: vi.fn() };
     fs = { existsSync: vi.fn() };
 
@@ -67,14 +72,22 @@ describe('registerIpcHandlers', () => {
   });
 
   describe('openFolder', () => {
-    test('passes openFirstFile flag', () => {
-      registeredHandler(null, { command: 'openFolder', openFirstFile: true });
-      expect(handlers.openFolder).toHaveBeenCalledWith(true);
+    test('passes the flag and workspace replacement metadata', () => {
+      const message = {
+        command: 'openFolder',
+        openFirstFile: true,
+        workspaceOperationId: 'operation-1',
+        workspaceTabId: 'tab-1',
+        replaceRecentWorkspacePath: '/missing/project',
+      };
+      registeredHandler(null, message);
+      expect(handlers.openFolder).toHaveBeenCalledWith(true, message);
     });
 
-    test('passes false when flag missing', () => {
-      registeredHandler(null, { command: 'openFolder' });
-      expect(handlers.openFolder).toHaveBeenCalledWith(false);
+    test('passes false and the original message when the flag is missing', () => {
+      const message = { command: 'openFolder' };
+      registeredHandler(null, message);
+      expect(handlers.openFolder).toHaveBeenCalledWith(false, message);
     });
   });
 
@@ -87,20 +100,81 @@ describe('registerIpcHandlers', () => {
 
   describe('openPath', () => {
     test('passes path and openFirstFile', () => {
-      registeredHandler(null, { command: 'openPath', path: '/some/path', openFirstFile: true });
-      expect(handlers.openPath).toHaveBeenCalledWith('/some/path', true);
+      const message = { command: 'openPath', path: '/some/path', openFirstFile: true };
+      registeredHandler(null, message);
+      expect(handlers.openPath).toHaveBeenCalledWith('/some/path', true, message);
+    });
+  });
+
+  describe('openShellLocation', () => {
+    test('reveals an existing file in the native file manager', async () => {
+      fs.existsSync.mockReturnValue(true);
+
+      await registeredHandler(null, {
+        command: 'openShellLocation',
+        path: '/workspace/readme.md',
+        mode: 'reveal-file',
+      });
+
+      expect(shell.showItemInFolder).toHaveBeenCalledWith('/workspace/readme.md');
+      expect(shell.openPath).not.toHaveBeenCalled();
+    });
+
+    test('opens an existing workspace or folder directly', async () => {
+      fs.existsSync.mockReturnValue(true);
+
+      await registeredHandler(null, {
+        command: 'openShellLocation',
+        path: '/workspace/docs',
+        mode: 'open-directory',
+      });
+
+      expect(shell.openPath).toHaveBeenCalledWith('/workspace/docs');
+      expect(shell.showItemInFolder).not.toHaveBeenCalled();
+    });
+
+    test('opens only the parent folder for the keyboard shortcut mode', async () => {
+      fs.existsSync.mockReturnValue(true);
+
+      await registeredHandler(null, {
+        command: 'openShellLocation',
+        path: '/workspace/docs/readme.md',
+        mode: 'open-parent-directory',
+      });
+
+      expect(shell.openPath).toHaveBeenCalledWith('/workspace/docs');
+      expect(shell.showItemInFolder).not.toHaveBeenCalled();
+    });
+
+    test('ignores unsupported modes and unavailable paths', async () => {
+      fs.existsSync.mockReturnValue(false);
+
+      await registeredHandler(null, {
+        command: 'openShellLocation',
+        path: '/missing/readme.md',
+        mode: 'reveal-file',
+      });
+      await registeredHandler(null, {
+        command: 'openShellLocation',
+        path: '/workspace/readme.md',
+        mode: 'unsupported',
+      });
+
+      expect(shell.openPath).not.toHaveBeenCalled();
+      expect(shell.showItemInFolder).not.toHaveBeenCalled();
     });
   });
 
   describe('activateWorkspace', () => {
     test('passes workspacePath, filePath, openFirstFile', () => {
-      registeredHandler(null, {
+      const message = {
         command: 'activateWorkspace',
         workspacePath: '/ws',
         filePath: '/ws/file.md',
         openFirstFile: false,
-      });
-      expect(handlers.activateWorkspace).toHaveBeenCalledWith('/ws', '/ws/file.md', false);
+      };
+      registeredHandler(null, message);
+      expect(handlers.activateWorkspace).toHaveBeenCalledWith('/ws', '/ws/file.md', false, message);
     });
   });
 
@@ -243,7 +317,12 @@ describe('registerIpcHandlers', () => {
       expect(shell.openExternal).not.toHaveBeenCalled();
     });
 
-    test('rejects non-HTTP URL', () => {
+    test('opens local file URLs', () => {
+      registeredHandler(null, { command: 'openExternal', url: 'file:///tmp/readme.md' });
+      expect(shell.openExternal).toHaveBeenCalledWith('file:///tmp/readme.md');
+    });
+
+    test('rejects unsupported URL schemes', () => {
       registeredHandler(null, { command: 'openExternal', url: 'ftp://example.com' });
       expect(shell.openExternal).not.toHaveBeenCalled();
     });
@@ -251,6 +330,18 @@ describe('registerIpcHandlers', () => {
     test('rejects empty URL', () => {
       registeredHandler(null, { command: 'openExternal', url: '' });
       expect(shell.openExternal).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('openHtmlPreview', () => {
+    test('passes non-empty HTML to the in-memory preview server handler', async () => {
+      await registeredHandler(null, { command: 'openHtmlPreview', documentHtml: '<!doctype html><p>Preview</p>' });
+      expect(handlers.openHtmlPreview).toHaveBeenCalledWith('<!doctype html><p>Preview</p>');
+    });
+
+    test('rejects empty preview documents', async () => {
+      await registeredHandler(null, { command: 'openHtmlPreview', documentHtml: '   ' });
+      expect(handlers.openHtmlPreview).not.toHaveBeenCalled();
     });
   });
 

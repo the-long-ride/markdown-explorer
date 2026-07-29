@@ -1,5 +1,4 @@
 import type { FolderNode, MdFile } from "../types";
-import type { WorkspaceScanner } from "./scanner";
 import { scanWorkspaceIncrementally } from "./incrementalScan";
 import { normalizePanelPath } from "./panelNavigation";
 
@@ -8,7 +7,7 @@ export interface RefreshFromWatchHost {
   readonly scanGeneration: number;
   readonly currentFile: string | null;
   readonly workspaceName: string;
-  postMessage: (msg: unknown) => Promise<void> | void;
+  postMessage: (msg: unknown) => PromiseLike<unknown> | void;
   bumpScanGeneration: () => number;
   isCurrentScan: (gen: number) => boolean;
   setFlat: (flat: MdFile[]) => void;

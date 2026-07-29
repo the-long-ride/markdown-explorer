@@ -11,6 +11,13 @@ import type {
 import { normalizePathKey } from './appStateModel';
 import type { AppState } from './appStateModel';
 
+export function resolveContentTabHtmlPreview(
+  tab: Pick<ContentTab, 'htmlPreviewOverride'> | null | undefined,
+  defaultEnabled: boolean,
+): boolean {
+  return tab?.htmlPreviewOverride ?? defaultEnabled;
+}
+
 export function getWorkspaceScopeKey(workspacePath: string | undefined, workspaceName: string): string {
   return workspacePath || workspaceName || 'default';
 }
@@ -65,12 +72,18 @@ export function renderMarkdownClientSide(
   markdownSource: string | null | undefined,
   filePath: string | null,
   isMdx?: boolean,
+  previewSettings?: Pick<AppState['settings'], 'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview'>,
 ): RenderedMarkdown {
   const empty = { html: '', frontmatter: {}, toc: [] };
   if (!markdownSource) return empty;
   try {
     const result = parse(markdownSource, isMdx ?? false);
-    const renderer = new HtmlRenderer({ theme: 'auto', isMdx: isMdx ?? false });
+    const renderer = new HtmlRenderer({
+      theme: 'auto',
+      isMdx: isMdx ?? false,
+      defaultHtmlPreview: previewSettings?.defaultHtmlCodeBlockPreview !== false,
+      defaultCsvPreview: previewSettings?.defaultCsvPreview !== false,
+    });
     const rendered = renderer.render(result.tokens);
     const html = rewriteRelativeMediaUrls(rendered.html, filePath ?? '');
     return { html, frontmatter: result.frontmatter, toc: rendered.toc };
@@ -83,6 +96,7 @@ export function renderMarkdownClientSide(
 export function createContentTabFromMessage(
   msg: RenderContentMessage,
   fileList: readonly MdFile[],
+  previewSettings?: Pick<AppState['settings'], 'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview'>,
 ): ContentTab {
   const fileInfo = findFileInfo(fileList, msg.filePath);
   const relativePath = msg.relativePath || fileInfo?.relativePath || getPathFileName(msg.filePath);
@@ -90,7 +104,7 @@ export function createContentTabFromMessage(
   const title = msg.title || fileInfo?.title || stripMarkdownExtension(fileName);
   const isMdx = msg.filePath ? msg.filePath.endsWith('.mdx') : false;
   const rendered = msg.markdownSource
-    ? renderMarkdownClientSide(msg.markdownSource, msg.filePath, isMdx)
+    ? renderMarkdownClientSide(msg.markdownSource, msg.filePath, isMdx, previewSettings)
     : { html: msg.html, frontmatter: msg.frontmatter, toc: msg.toc };
   return {
     filePath: msg.filePath,
@@ -99,6 +113,7 @@ export function createContentTabFromMessage(
     title,
     contentHtml: rendered.html,
     markdownSource: msg.markdownSource ?? null,
+    sourceDocumentText: msg.sourceDocumentText ?? null,
     frontmatter: rendered.frontmatter,
     toc: rendered.toc,
     previewInfo: msg.previewInfo ?? null,
@@ -117,6 +132,8 @@ export function createContentTabFromState(state: AppState): ContentTab | null {
     title: fileInfo?.title || stripMarkdownExtension(fileName),
     contentHtml: state.contentHtml,
     markdownSource: state.markdownSource,
+    sourceDocumentText: state.sourceDocumentText,
+    htmlPreviewOverride: state.currentHtmlPreviewOverride,
     frontmatter: state.frontmatter,
     toc: state.toc,
     previewInfo: state.previewInfo,
@@ -129,6 +146,8 @@ export function applyContentTab(state: AppState, tab: ContentTab, tabs = state.c
     currentFile: tab.filePath,
     contentHtml: tab.contentHtml,
     markdownSource: tab.markdownSource,
+    sourceDocumentText: tab.sourceDocumentText ?? null,
+    currentHtmlPreviewOverride: tab.htmlPreviewOverride,
     frontmatter: tab.frontmatter,
     toc: tab.toc,
     relativePath: tab.relativePath,
@@ -151,6 +170,8 @@ export function clearContentTabs(state: AppState): AppState {
     currentFile: null,
     contentHtml: '',
     markdownSource: null,
+    sourceDocumentText: null,
+    currentHtmlPreviewOverride: undefined,
     frontmatter: {},
     toc: [],
     previewInfo: null,

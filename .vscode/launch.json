@@ -12,7 +12,7 @@
       "outFiles": [
         "${workspaceFolder}/vscode/out/**/*.js"
       ],
-      "preLaunchTask": "watch",
+      "preLaunchTask": "compile",
       "presentation": {
         "group": "debug",
         "order": 1
@@ -54,22 +54,6 @@
       "presentation": {
         "group": "debug",
         "order": 3
-      }
-    },
-    {
-      "name": "Tauri Desktop App (live UI)",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "run",
-        "start:tauri:live"
-      ],
-      "console": "integratedTerminal",
-      "presentation": {
-        "group": "debug",
-        "order": 4
       }
     },
     {

@@ -62,6 +62,7 @@ export interface RenderContentMessage {
   readonly command: 'renderContent';
   readonly html: string;
   readonly markdownSource?: string;
+  readonly sourceDocumentText?: string | null;
   readonly frontmatter: Frontmatter;
   readonly toc: TocEntry[];
   readonly filePath: string;
@@ -229,18 +230,33 @@ export interface UpdateAppearanceMessage {
     | 'default'
     | 'glass'
     | 'bento'
+    | 'vercel'
+    | 'tokyo-night'
+    | 'neon-voltage'
+    | 'raw-grid'
     | 'pet-white-shiba'
-    | 'pet-shiba'
-    | 'pet-shiba-memes'
     | 'pet-k-ink'
     | 'pet-cat'
     | 'pet-hamster'
     | 'pet-corgi';
 }
 
+
+export interface ReadWorkspaceTextResourceMessage {
+  readonly command: 'readWorkspaceTextResource';
+  readonly requestId: string;
+  readonly documentPath: string;
+  readonly resourcePath: string;
+}
+
 export interface OpenExternalMessage {
   readonly command: 'openExternal';
   readonly url: string;
+}
+
+export interface OpenHtmlPreviewMessage {
+  readonly command: 'openHtmlPreview';
+  readonly documentHtml: string;
 }
 
 export interface SetDocumentConversionMessage {
@@ -249,6 +265,7 @@ export interface SetDocumentConversionMessage {
 }
 
 export type WebviewMessage =
+  | ReadWorkspaceTextResourceMessage
   | NavigateMessage
   | OpenInEditorMessage
   | WebviewReadyMessage
@@ -266,4 +283,5 @@ export type WebviewMessage =
   | ZoomOutMessage
   | UpdateAppearanceMessage
   | OpenExternalMessage
+  | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage;

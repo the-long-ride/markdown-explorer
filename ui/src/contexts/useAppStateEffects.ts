@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type MutableRefObject } from 'react';
 import {
   normalizeDesktopViewMode,
   normalizeKeybindings,
@@ -12,7 +12,13 @@ import {
   normalizeCustomThemes,
 } from '../theme/customThemes';
 import type { HostMessage, PersistedState, WebviewMessage } from '../types';
-import type { Action, AppState } from './appStateReducer';
+import {
+  normalizePathKey,
+  type Action,
+  type AppState,
+  type PendingHtmlPreviewNavigation,
+} from './appStateReducer';
+import { acceptsWorkspaceHostMessage } from '../desktop/workspaceOperations';
 
 type AppStateEffectsArgs = {
   bridge: {
@@ -25,9 +31,17 @@ type AppStateEffectsArgs = {
   state: AppState;
   isDesktop: boolean;
   shouldLogPerf: boolean;
+  pendingHtmlPreviewNavigationRef: MutableRefObject<PendingHtmlPreviewNavigation | null>;
 };
 
-export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldLogPerf }: AppStateEffectsArgs) {
+export function useAppStateEffects({
+  bridge,
+  dispatch,
+  state,
+  isDesktop,
+  shouldLogPerf,
+  pendingHtmlPreviewNavigationRef,
+}: AppStateEffectsArgs) {
   // Load persisted settings on mount
   useEffect(() => {
     const saved = bridge.getState<PersistedState>();
@@ -39,6 +53,7 @@ export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldL
         settings: {
           showTitle: saved.showTitle === true,
           defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+          defaultCsvPreview: saved.defaultCsvPreview !== false,
           fileTabs: saved.fileTabs === true,
           documentConversion: saved.documentConversion === true,
           scopeFocus: saved.scopeFocus ?? {},
@@ -68,6 +83,18 @@ export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldL
   // Listen for host messages
   useEffect(() => {
     const unsub = bridge.onMessage((msg) => {
+      const workspaceScopedCommands = new Set([
+        'readyAck',
+        'workspaceFilesChanged',
+        'currentFileChanged',
+        'renderContent',
+        'workspaceUnavailable',
+        'setLoading',
+        'workspaceScanProgress',
+      ]);
+      if (workspaceScopedCommands.has(msg.command) && !acceptsWorkspaceHostMessage(msg)) {
+        return;
+      }
       switch (msg.command) {
         case 'readyAck':
           // Check saved appearance state because mount effects can race host ready.
@@ -110,13 +137,27 @@ export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldL
             recentWorkspaces: msg.recentWorkspaces,
           });
           break;
-        case 'renderContent':
-          dispatch({ type: 'RENDER_CONTENT', msg });
+        case 'renderContent': {
+          const pendingHtmlPreview = pendingHtmlPreviewNavigationRef.current;
+          const matchesPendingPreview = Boolean(
+            pendingHtmlPreview &&
+            msg.filePath &&
+            normalizePathKey(pendingHtmlPreview.filePath) === normalizePathKey(msg.filePath),
+          );
+          dispatch({
+            type: 'RENDER_CONTENT',
+            msg,
+            htmlPreviewOverride: matchesPendingPreview ? pendingHtmlPreview?.enabled : undefined,
+          });
+          if (matchesPendingPreview) pendingHtmlPreviewNavigationRef.current = null;
           break;
+        }
         case 'navNotFound':
+          pendingHtmlPreviewNavigationRef.current = null;
           dispatch({ type: 'NAV_NOT_FOUND', href: msg.href });
           break;
         case 'workspaceUnavailable':
+          pendingHtmlPreviewNavigationRef.current = null;
           dispatch({
             type: 'WORKSPACE_UNAVAILABLE',
             workspacePath: msg.workspacePath,
@@ -164,7 +205,7 @@ export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldL
     });
 
     return unsub;
-  }, [bridge, shouldLogPerf]);
+  }, [bridge, pendingHtmlPreviewNavigationRef, shouldLogPerf]);
 
   // Sync theme to document
   useEffect(() => {
@@ -192,6 +233,7 @@ export function useAppStateEffects({ bridge, dispatch, state, isDesktop, shouldL
     bridge.setState<PersistedState>({
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
+      defaultCsvPreview: state.settings.defaultCsvPreview,
       fileTabs: state.settings.fileTabs,
       documentConversion: state.settings.documentConversion,
       scopeFocus: state.settings.scopeFocus,

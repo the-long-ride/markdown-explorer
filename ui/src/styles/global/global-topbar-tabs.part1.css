@@ -132,6 +132,17 @@ body {
   z-index: 300000;
 }
 
+[data-theme-style="glass"] .toolbar-action-menu__panel {
+  background: rgb(22 24 31);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+[data-theme-style="glass"][data-theme="light"] .toolbar-action-menu__panel {
+  background: rgb(250 250 252);
+}
+
+
 .toolbar-action-menu__item {
   width: 100%;
   min-width: max-content;
@@ -304,7 +315,7 @@ body {
 .desktop-tabbar__home,
 .desktop-tab,
 .desktop-tabbar__new {
-  height: 30px;
+  height: var(--control-h, 28px);
   border: var(--stroke-w) solid var(--bd-s);
   background: var(--bg-e);
   color: var(--tx2);
@@ -433,6 +444,8 @@ body {
 .desktop-tab.is-dragging {
   opacity: 0.58;
   cursor: grabbing;
+  border-color: var(--accent);
+  border-style: dashed;
 }
 
 .desktop-tab.is-drop-target {
@@ -445,6 +458,42 @@ body {
 
 .desktop-tabbar__tabs .desktop-tab:only-child {
   max-width: 80ch;
+}
+
+.desktop-tab.is-closing--fade,
+.desktop-tab.is-closing--collapse {
+  box-sizing: border-box;
+  width: var(--desktop-tab-close-width);
+  min-width: var(--desktop-tab-close-width);
+  max-width: var(--desktop-tab-close-width);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.desktop-tab.is-closing--fade {
+  opacity: 0;
+  transition: opacity 90ms ease;
+}
+
+.desktop-tab.is-closing--collapse {
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  gap: 0;
+  margin-right: -6px;
+  padding-left: 0;
+  padding-right: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+  opacity: 0;
+  transition:
+    width 140ms ease,
+    min-width 140ms ease,
+    max-width 140ms ease,
+    gap 140ms ease,
+    margin-right 140ms ease,
+    padding 140ms ease,
+    border-width 140ms ease;
 }
 
 .desktop-tab__label {
@@ -486,4 +535,41 @@ body {
   font-weight: 700;
   padding: 0 6px;
   outline: none;
+}
+
+/* Shared header actions in desktop Tabs view. */
+.header-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.desktop-tabbar__navigation-actions,
+.desktop-tabbar__document-actions {
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__navigation-separator,
+.desktop-tabbar__window-separator {
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+}
+
+.header-action-group .btn,
+.desktop-tabbar__navigation-actions .btn,
+.desktop-tabbar__document-actions .btn {
+  min-width: var(--control-h, 28px);
+  width: var(--control-h, 28px);
+  height: var(--control-h, 28px);
+}
+
+@media (max-width: 1120px) {
+  .desktop-tabbar__brand .topbar__logo-subtitle {
+    display: none;
+  }
+
+  .desktop-tabbar__brand {
+    min-width: auto;
+  }
 }

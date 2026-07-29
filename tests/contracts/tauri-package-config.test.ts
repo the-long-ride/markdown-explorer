@@ -45,8 +45,37 @@ describe('tauri package config', () => {
     expect(workspace).toContain('- tauri');
   });
 
-  test('pnpm workspace includes sidecar', () => {
-    expect(workspace).toContain('tauri/sidecar/mdthem-sidecar');
+
+  test('tauri routes convertible documents through the in-process Rust converter', () => {
+    const renderModules = fs.readFileSync(
+      path.join(repoRoot, 'tauri/src/render/mod.rs'),
+      'utf8',
+    );
+    const converter = fs.readFileSync(
+      path.join(repoRoot, 'tauri/src/render/document_converter.rs'),
+      'utf8',
+    );
+    const nativeConverter = fs.readFileSync(
+      path.join(repoRoot, 'tauri/src/render/native_document_converter/mod.rs'),
+      'utf8',
+    );
+    const conf = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'tauri/tauri.conf.json'), 'utf8'),
+    );
+    const tauriPackage = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'tauri/package.json'), 'utf8'),
+    );
+
+    expect(renderModules).toContain('pub mod native_document_converter;');
+    expect(converter).toContain('native_document_converter::convert_file');
+    expect(nativeConverter).toContain('pub enum ConversionQuality');
+    expect(nativeConverter).toContain('BestEffortLegacy');
+    expect(conf.bundle?.externalBin).toBeUndefined();
+    expect(conf.bundle?.resources).toBeUndefined();
+    expect(conf.build?.beforeBuildCommand).toBeUndefined();
+    expect(conf.build?.beforeDevCommand).toBeUndefined();
+    expect(tauriPackage.scripts['prepare:document-sidecar']).toBeUndefined();
+    expect(workspace).not.toContain('mdthem-sidecar');
   });
 
   test('tauri Cargo.toml exists', () => {
@@ -219,4 +248,38 @@ describe('tauri package config', () => {
     );
     expect(releaseWorkflow).toContain("new Set(['.deb', '.AppImage', '.dmg', '.exe', '.msi'])");
   });
+
+  test('Microsoft Store Tauri config uses the offline WebView2 installer', () => {
+    const conf = JSON.parse(
+      fs.readFileSync(
+        path.join(repoRoot, 'tauri/tauri.microsoft-store.conf.json'),
+        'utf8',
+      ),
+    );
+    expect(conf.bundle?.targets).toEqual(['nsis']);
+    expect(conf.bundle?.windows?.webviewInstallMode?.type).toBe(
+      'offlineInstaller',
+    );
+  });
+
+  test('Snapcraft packages the Tauri binary for Ubuntu App Center', () => {
+    const snapcraft = fs.readFileSync(
+      path.join(repoRoot, 'snap/snapcraft.yaml'),
+      'utf8',
+    );
+    const desktop = fs.readFileSync(
+      path.join(repoRoot, 'snap/gui/markdown-explorer.desktop'),
+      'utf8',
+    );
+
+    expect(snapcraft).toContain('name: markdown-explorer');
+    expect(snapcraft).toContain('base: core24');
+    expect(snapcraft).toContain('confinement: strict');
+    expect(snapcraft).toContain('extensions: [gnome]');
+    expect(snapcraft).toContain('plugin: dump');
+    expect(snapcraft).toContain('command: usr/bin/markdown-explorer');
+    expect(desktop).toContain('Exec=markdown-explorer %F');
+    expect(desktop).toContain('MimeType=text/markdown;');
+  });
+
 });

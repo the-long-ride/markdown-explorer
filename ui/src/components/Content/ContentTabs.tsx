@@ -4,12 +4,29 @@ import { getTranslations } from "../../contexts/translations";
 import {
   TabContextMenu,
   type TabContextMenuAction,
+  type TabContextMenuItem,
 } from "../shared/TabContextMenu";
-import { CloseIcon } from "../shared/icons";
+import {
+  CloseIcon, OpenFolderLocationIcon, InternetIcon, CloseTabIcon, CloseRightIcon,
+  CloseOthersIcon, CloseAllIcon, HtmlPreviewIcon, MarkdownViewIcon,
+} from "../shared/icons";
 import { useCssVars } from "../../utils/useCssVars";
 import { getEnabledShortcut } from "../../utils/shortcuts";
+import { usePlatform } from "../../contexts/PlatformContext";
+import { getShellLocationLabel, requestShellLocation, supportsShellLocation } from "../../desktop/shellLocation";
+import { openLocalFileInBrowser } from "../../dom/htmlPreviewActions";
+import { supportsLocalFileBrowserOpen } from "../../dom/localFileBrowserSupport";
+import { isHtmlDocumentPath } from "./HtmlDocumentView";
+import {
+  CONTENT_TAB_CLOSE_REQUEST_EVENT,
+  type ContentTabCloseRequest,
+} from "./contentTabCloseEvents";
 
 const SCROLLBAR_TRACK_INLINE_INSET = 16;
+export const CONTENT_TAB_CLOSE_FADE_MS = 90;
+export const CONTENT_TAB_CLOSE_COLLAPSE_MS = 140;
+
+type TabClosePhase = 'idle' | 'fade' | 'collapse';
 
 export function ContentTabs() {
   const {
@@ -20,9 +37,11 @@ export function ContentTabs() {
     closeContentTabsToRight,
     closeOtherContentTabs,
     closeAllContentTabs,
+    setContentTabHtmlPreview,
   } = useAppState();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
+  const bridge = usePlatform();
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const scrollbarTrackRef = useRef<HTMLDivElement>(null);
   const scrollbarThumbRef = useRef<HTMLDivElement>(null);
@@ -50,6 +69,11 @@ export function ContentTabs() {
   const draggedTabPathRef = useRef<string | null>(null);
   const didDragRef = useRef(false);
   const [draggedTabPath, setDraggedTabPath] = useState<string | null>(null);
+  const [closingTabPaths, setClosingTabPaths] = useState<Set<string>>(() => new Set());
+  const [closingPhase, setClosingPhase] = useState<TabClosePhase>('idle');
+  const tabElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const closeTimersRef = useRef<number[]>([]);
+  const closeInProgressRef = useRef(false);
   const ghostRef = useRef<HTMLDivElement>(null);
   const [ghostLabel, setGhostLabel] = useState<string>("");
 
@@ -215,38 +239,199 @@ export function ContentTabs() {
     };
   }, []);
 
+  useEffect(() => () => {
+    closeTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    closeTimersRef.current = [];
+    closeInProgressRef.current = false;
+  }, []);
+
+  const requestTabClose = useCallback((filePaths: string[], commitClose: () => void) => {
+    if (closeInProgressRef.current || filePaths.length === 0) return;
+
+    const prefersReducedMotion = typeof window === 'undefined'
+      || (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+      || (typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (prefersReducedMotion) {
+      commitClose();
+      return;
+    }
+
+    const renderedPaths = filePaths.filter((filePath) => {
+      const element = tabElementsRef.current.get(filePath);
+      if (!element) return false;
+      const measuredWidth = Math.max(
+        element.getBoundingClientRect().width,
+        element.offsetWidth,
+      );
+      if (measuredWidth <= 0) return false;
+      element.style.setProperty('--content-tab-close-width', `${measuredWidth}px`);
+      return true;
+    });
+
+    if (renderedPaths.length === 0) {
+      commitClose();
+      return;
+    }
+
+    closeInProgressRef.current = true;
+    setClosingTabPaths(new Set(renderedPaths));
+    setClosingPhase('fade');
+
+    const fadeTimer = window.setTimeout(() => {
+      setClosingPhase('collapse');
+      const collapseTimer = window.setTimeout(() => {
+        setClosingTabPaths(new Set());
+        setClosingPhase('idle');
+        closeInProgressRef.current = false;
+        closeTimersRef.current = [];
+        commitClose();
+      }, CONTENT_TAB_CLOSE_COLLAPSE_MS);
+      closeTimersRef.current.push(collapseTimer);
+    }, CONTENT_TAB_CLOSE_FADE_MS);
+    closeTimersRef.current = [fadeTimer];
+  }, []);
+
   const handleContextMenuAction = useCallback(
     (action: TabContextMenuAction) => {
       if (!contextMenu) return;
       switch (action) {
+        case "openInBrowser":
+          if (!openLocalFileInBrowser(bridge, contextMenu.filePath)) {
+            window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', {
+              detail: t?.previewActions?.openError ?? 'Unable to open file in browser',
+            }));
+          }
+          break;
+        case "toggleHtmlDocumentView": {
+          const tab = state.contentTabs.find((item) => item.filePath === contextMenu.filePath);
+          if (tab) {
+            const current = tab.htmlPreviewOverride ?? state.settings.defaultHtmlPreview;
+            setContentTabHtmlPreview(tab.filePath, !current);
+          }
+          break;
+        }
+        case "openLocation":
+          if (supportsShellLocation(state.appRuntime)) {
+            requestShellLocation(bridge, contextMenu.filePath, 'open-parent-directory');
+          }
+          break;
         case "closeThisTab":
-          closeContentTab(contextMenu.filePath);
+          requestTabClose([contextMenu.filePath], () => closeContentTab(contextMenu.filePath));
           break;
-        case "closeTabsToRight":
-          closeContentTabsToRight(contextMenu.filePath);
+        case "closeTabsToRight": {
+          const targetIndex = state.contentTabs.findIndex((tab) => tab.filePath === contextMenu.filePath);
+          requestTabClose(
+            state.contentTabs.slice(targetIndex + 1).map((tab) => tab.filePath),
+            () => closeContentTabsToRight(contextMenu.filePath),
+          );
           break;
+        }
         case "closeOtherTabs":
-          closeOtherContentTabs(contextMenu.filePath);
+          requestTabClose(
+            state.contentTabs.filter((tab) => tab.filePath !== contextMenu.filePath).map((tab) => tab.filePath),
+            () => closeOtherContentTabs(contextMenu.filePath),
+          );
           break;
         case "closeAllTabs":
-          closeAllContentTabs();
+          requestTabClose(
+            state.contentTabs.map((tab) => tab.filePath),
+            closeAllContentTabs,
+          );
           break;
       }
     },
     [
+      bridge,
       closeAllContentTabs,
       closeContentTab,
       closeContentTabsToRight,
       closeOtherContentTabs,
       contextMenu,
+      requestTabClose,
+      setContentTabHtmlPreview,
+      state.appRuntime,
+      state.contentTabs,
+      state.settings.defaultHtmlPreview,
+      t?.previewActions?.openError,
     ],
   );
 
+  useEffect(() => {
+    const handleRequestedClose = (event: Event) => {
+      const detail = (event as CustomEvent<ContentTabCloseRequest>).detail;
+      if (!detail) return;
+      event.preventDefault();
+      switch (detail.action) {
+        case 'closeThisTab':
+          requestTabClose([detail.filePath], () => closeContentTab(detail.filePath));
+          break;
+        case 'closeTabsToRight': {
+          const targetIndex = state.contentTabs.findIndex((tab) => tab.filePath === detail.filePath);
+          if (targetIndex < 0) return;
+          requestTabClose(
+            state.contentTabs.slice(targetIndex + 1).map((tab) => tab.filePath),
+            () => closeContentTabsToRight(detail.filePath),
+          );
+          break;
+        }
+        case 'closeOtherTabs':
+          requestTabClose(
+            state.contentTabs.filter((tab) => tab.filePath !== detail.filePath).map((tab) => tab.filePath),
+            () => closeOtherContentTabs(detail.filePath),
+          );
+          break;
+        case 'closeAllTabs':
+          requestTabClose(state.contentTabs.map((tab) => tab.filePath), closeAllContentTabs);
+          break;
+      }
+    };
+    window.addEventListener(CONTENT_TAB_CLOSE_REQUEST_EVENT, handleRequestedClose);
+    return () => window.removeEventListener(CONTENT_TAB_CLOSE_REQUEST_EVENT, handleRequestedClose);
+  }, [
+    closeAllContentTabs,
+    closeContentTab,
+    closeContentTabsToRight,
+    closeOtherContentTabs,
+    requestTabClose,
+    state.contentTabs,
+  ]);
+
   if (!state.settings.fileTabs || state.contentTabs.length === 0) return null;
+
+  const toggleHtmlPreviewShortcut = getEnabledShortcut(state.settings, 'toggleHtmlPreview');
 
   const contextMenuTabIndex = contextMenu
     ? state.contentTabs.findIndex((tab) => tab.filePath === contextMenu.filePath)
     : -1;
+
+  const contextMenuTab = contextMenuTabIndex >= 0 ? state.contentTabs[contextMenuTabIndex] : null;
+  const contextMenuIsHtml = isHtmlDocumentPath(contextMenuTab?.filePath);
+  const contextMenuHtmlPreview = contextMenuTab
+    ? contextMenuTab.htmlPreviewOverride ?? state.settings.defaultHtmlPreview
+    : state.settings.defaultHtmlPreview;
+  const contextMenuItems: readonly TabContextMenuItem[] = contextMenuTab ? [
+    ...(contextMenuIsHtml && supportsLocalFileBrowserOpen(state.appRuntime) ? [
+      { action: 'openInBrowser' as const, label: t.openInBrowser, icon: <InternetIcon /> },
+    ] : []),
+    ...(contextMenuIsHtml ? [{
+      action: 'toggleHtmlDocumentView' as const,
+      label: contextMenuHtmlPreview ? t.showMarkdownView : t.showHtmlPreview,
+      icon: contextMenuHtmlPreview ? <MarkdownViewIcon /> : <HtmlPreviewIcon />,
+      shortcut: toggleHtmlPreviewShortcut,
+    }] : []),
+    ...(supportsShellLocation(state.appRuntime) ? [{
+      action: 'openLocation' as const,
+      label: getShellLocationLabel(t, state.hostPlatform, 'folder'),
+      icon: <OpenFolderLocationIcon />,
+      shortcut: getEnabledShortcut(state.settings, 'openCurrentDocumentLocation'),
+      dividerBefore: contextMenuIsHtml,
+    }] : []),
+    { action: 'closeThisTab' as const, label: t.tabContextMenu.closeThisTab, icon: <CloseTabIcon />, shortcut: getEnabledShortcut(state.settings, 'closeContentTab'), primary: true, disabled: contextMenuTabIndex === -1 },
+    { action: 'closeTabsToRight' as const, label: t.tabContextMenu.closeTabsToRight, icon: <CloseRightIcon />, shortcut: getEnabledShortcut(state.settings, 'closeContentTabsToRight'), disabled: contextMenuTabIndex === -1 || contextMenuTabIndex >= state.contentTabs.length - 1 },
+    { action: 'closeOtherTabs' as const, label: t.tabContextMenu.closeOtherTabs, icon: <CloseOthersIcon />, shortcut: getEnabledShortcut(state.settings, 'closeOtherContentTabs'), disabled: state.contentTabs.length <= 1 },
+    { action: 'closeAllTabs' as const, label: t.tabContextMenu.closeAllTabs, icon: <CloseAllIcon />, shortcut: getEnabledShortcut(state.settings, 'closeAllContentTabs'), disabled: state.contentTabs.length === 0 },
+  ] : [];
 
   return (
     <div className="content-tabs-wrap">
@@ -260,10 +445,19 @@ export function ContentTabs() {
         {state.contentTabs.map((tab) => {
           const active = state.activeContentTabPath === tab.filePath;
           const label = state.settings.showTitle ? tab.title || tab.fileName : tab.fileName;
+          const closePhaseClass = closingTabPaths.has(tab.filePath)
+            ? closingPhase === 'collapse'
+              ? ' is-closing--collapse'
+              : ' is-closing--fade'
+            : '';
           return (
             <div
               key={tab.filePath}
-              className={`content-tab${active ? " is-active" : ""}${draggedTabPath === tab.filePath ? " is-dragging" : ""}`}
+              ref={(element) => {
+                if (element) tabElementsRef.current.set(tab.filePath, element);
+                else tabElementsRef.current.delete(tab.filePath);
+              }}
+              className={`content-tab${active ? " is-active" : ""}${draggedTabPath === tab.filePath ? " is-dragging" : ""}${closePhaseClass}`}
               role="tab"
               aria-selected={active}
               tabIndex={0}
@@ -329,7 +523,7 @@ export function ContentTabs() {
               onAuxClick={(event) => {
                 if (event.button !== 1) return;
                 event.preventDefault();
-                closeContentTab(tab.filePath);
+                requestTabClose([tab.filePath], () => closeContentTab(tab.filePath));
               }}
             >
               <span className="content-tab__label">{label}</span>
@@ -340,7 +534,7 @@ export function ContentTabs() {
                 title={t.tooltips.closeTab}
                 onClick={(event) => {
                   event.stopPropagation();
-                  closeContentTab(tab.filePath);
+                  requestTabClose([tab.filePath], () => closeContentTab(tab.filePath));
                 }}
               >
                 <CloseIcon size={11} />
@@ -367,21 +561,8 @@ export function ContentTabs() {
         <TabContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          labels={t.tabContextMenu}
-          shortcuts={{
-            closeThisTab: getEnabledShortcut(state.settings, 'closeContentTab'),
-            closeTabsToRight: getEnabledShortcut(state.settings, 'closeContentTabsToRight'),
-            closeOtherTabs: getEnabledShortcut(state.settings, 'closeOtherContentTabs'),
-            closeAllTabs: getEnabledShortcut(state.settings, 'closeAllContentTabs'),
-          }}
-          disabled={{
-            closeThisTab: contextMenuTabIndex === -1,
-            closeTabsToRight:
-              contextMenuTabIndex === -1 ||
-              contextMenuTabIndex >= state.contentTabs.length - 1,
-            closeOtherTabs: state.contentTabs.length <= 1,
-            closeAllTabs: state.contentTabs.length === 0,
-          }}
+          items={contextMenuItems}
+          ariaLabel={t.tabContextMenu.menuLabel}
           onAction={handleContextMenuAction}
           onClose={() => setContextMenu(null)}
         />

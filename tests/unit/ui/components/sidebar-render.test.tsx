@@ -4,14 +4,19 @@ import { Sidebar } from '../../../../ui/src/components/Sidebar/Sidebar';
 
 const mockDispatch = vi.fn();
 const mockUpdateSettings = vi.fn();
+const mockNavigate = vi.fn();
 
 let mockState: any = {
   sidebarActiveTab: 'files',
   sidebarCollapsed: false,
   workspacePath: '/docs',
   workspaceName: 'Docs',
-  settings: { language: 'en', scopeFocus: {}, keybindings: {} },
+  settings: { language: 'en', scopeFocus: {}, keybindings: {}, defaultHtmlPreview: true },
   currentFile: null,
+  currentHtmlPreviewOverride: undefined,
+  contentTabs: [],
+  appRuntime: 'vscode',
+  hostPlatform: 'unknown',
   fileList: [
     { fsPath: '/docs/readme.md', relativePath: 'readme.md', fileName: 'readme.md', title: 'Readme' },
   ],
@@ -23,8 +28,20 @@ let mockState: any = {
   },
 };
 
+vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
+  usePlatform: () => ({
+    postMessage: vi.fn(),
+    onMessage: vi.fn(() => () => {}),
+  }),
+}));
+
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
-  useAppState: () => ({ state: mockState, dispatch: mockDispatch, updateSettings: mockUpdateSettings }),
+  useAppState: () => ({
+    state: mockState,
+    dispatch: mockDispatch,
+    updateSettings: mockUpdateSettings,
+    navigate: mockNavigate,
+  }),
 }));
 
 vi.mock('../../../../ui/src/components/Sidebar/SidebarSearch', () => ({
@@ -73,8 +90,12 @@ describe('Sidebar render', () => {
       sidebarCollapsed: false,
       workspacePath: '/docs',
       workspaceName: 'Docs',
-      settings: { language: 'en', scopeFocus: {}, keybindings: {} },
+      settings: { language: 'en', scopeFocus: {}, keybindings: {}, defaultHtmlPreview: true },
       currentFile: null,
+      currentHtmlPreviewOverride: undefined,
+      contentTabs: [],
+      appRuntime: 'vscode',
+      hostPlatform: 'unknown',
       fileList: [
         { fsPath: '/docs/readme.md', relativePath: 'readme.md', fileName: 'readme.md', title: 'Readme' },
       ],
@@ -87,6 +108,7 @@ describe('Sidebar render', () => {
     };
     mockDispatch.mockClear();
     mockUpdateSettings.mockClear();
+    mockNavigate.mockClear();
   });
 
   it('renders the sidebar nav element', () => {

@@ -12,8 +12,6 @@
 
 type PetKey =
   | 'pet-white-shiba'
-  | 'pet-shiba'
-  | 'pet-shiba-memes'
   | 'pet-k-ink'
   | 'pet-cat'
   | 'pet-hamster'
@@ -26,14 +24,6 @@ const PET_MAP: Record<PetKey, { dir: string; expressions: Partial<Record<PetExpr
   'pet-white-shiba': {
     dir: 'white-shiba',
     expressions: { happy: 'white-shiba-happy.png', wink: 'white-shiba-wink.png', blep: 'white-shiba-blep.png' },
-  },
-  'pet-shiba': {
-    dir: 'shiba',
-    expressions: { happy: 'shiba-happy.png', wink: 'shiba-wink.png', blep: 'shiba-blep.png' },
-  },
-  'pet-shiba-memes': {
-    dir: 'shiba-memes',
-    expressions: { happy: 'shiba-memes-happy.png', wink: 'shiba-memes-wink.png', blep: 'shiba-memes-blep.png' },
   },
   'pet-k-ink': {
     dir: 'k-ink',

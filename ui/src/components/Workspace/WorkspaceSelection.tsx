@@ -4,6 +4,7 @@ import { usePlatform } from '../../contexts/PlatformContext';
 import { FolderIcon } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 import type { RecentWorkspace } from '../../types';
+import type { WorkspaceOperationContext } from '../../desktop/workspaceOperations';
 import { RecentWorkspaceItem } from './RecentWorkspaceItem';
 import { RecentWorkspacesModal } from './RecentWorkspacesModal';
 import { WorkspaceWindowControls } from './WorkspaceWindowControls';
@@ -12,7 +13,7 @@ import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
 import { useCssVars } from '../../utils/useCssVars';
 
 interface WorkspaceSelectionProps {
-  onBeforeOpenWorkspace?: () => void;
+  onBeforeOpenWorkspace?: () => WorkspaceOperationContext | undefined;
   embeddedInTabs?: boolean;
   workspaceAliases?: Record<string, string>;
   onWorkspaceAliasChange?: (workspacePath: string, alias: string, fallbackName?: string) => void;
@@ -37,23 +38,34 @@ export function WorkspaceSelection({
   const isWebFileMode = isWebDemo && new URLSearchParams(window.location.search).get('mode') === 'file';
 
   const handleOpenFolder = () => {
-    onBeforeOpenWorkspace?.();
-    bridge.postMessage({ command: 'openFolder', openFirstFile: embeddedInTabs });
+    const operation = onBeforeOpenWorkspace?.();
+    bridge.postMessage({ command: 'openFolder', openFirstFile: embeddedInTabs, ...operation });
   };
 
   const handleOpenFile = () => {
-    onBeforeOpenWorkspace?.();
-    bridge.postMessage({ command: 'openFile' });
+    const operation = onBeforeOpenWorkspace?.();
+    bridge.postMessage({ command: 'openFile', ...operation });
   };
 
   const handleOpenRecent = (path: string) => {
-    onBeforeOpenWorkspace?.();
-    bridge.postMessage({ command: 'openRecentWorkspace', path, openFirstFile: embeddedInTabs });
+    const operation = onBeforeOpenWorkspace?.();
+    bridge.postMessage({ command: 'openRecentWorkspace', path, openFirstFile: embeddedInTabs, ...operation });
   };
 
   const handleDeleteRecent = (path: string) => {
     bridge.postMessage({ command: 'deleteRecentWorkspace', path });
   };
+
+  useEffect(() => {
+    const preventRefresh = (event: KeyboardEvent) => {
+      if (event.key !== 'F5') return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    document.addEventListener('keydown', preventRefresh, true);
+    return () => document.removeEventListener('keydown', preventRefresh, true);
+  }, []);
 
   useEffect(() => {
     let rafId = 0;

@@ -4,14 +4,19 @@ export type ThemeMode = 'auto' | 'light' | 'dark';
 export type DesktopViewMode = 'focus' | 'tabs';
 export type PetThemeStyle =
   | 'pet-white-shiba'
-  | 'pet-shiba'
-  | 'pet-shiba-memes'
   | 'pet-k-ink'
   | 'pet-cat'
   | 'pet-hamster'
   | 'pet-corgi';
 
-export type ThemeStyle = 'default' | 'glass' | 'bento' | 'vercel' | PetThemeStyle;
+export type ThemeStyle =
+  | 'default'
+  | 'bento'
+  | 'vercel'
+  | 'tokyo-night'
+  | 'neon-voltage'
+  | 'raw-grid'
+  | PetThemeStyle;
 
 export type CustomThemeScheme = 'light' | 'dark';
 
@@ -71,6 +76,8 @@ export interface CustomTheme {
 export interface AppSettings {
   showTitle: boolean;
   defaultHtmlPreview: boolean;
+  defaultHtmlCodeBlockPreview: boolean;
+  defaultCsvPreview: boolean;
   fileTabs: boolean;
   documentConversion: boolean;
   scopeFocus?: Record<string, string[]>;
@@ -86,6 +93,8 @@ export interface AppSettings {
 export interface PersistedState {
   showTitle?: boolean;
   defaultHtmlPreview?: boolean;
+  defaultHtmlCodeBlockPreview?: boolean;
+  defaultCsvPreview?: boolean;
   fileTabs?: boolean;
   documentConversion?: boolean;
   scopeFocus?: Record<string, string[]>;

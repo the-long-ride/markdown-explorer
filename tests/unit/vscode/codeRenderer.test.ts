@@ -87,6 +87,14 @@ describe('renderCodeBlock', () => {
       const html = renderCodeBlock(token, 'auto');
       expect(html).not.toContain('mdn-codeblock-gutter');
     });
+
+    test('normalizes YAML aliases before rendering highlighted code', () => {
+      const token = { type: 'code' as const, lang: 'yml', content: 'title: Explorer\nenabled: true' };
+      const html = renderCodeBlock(token, 'auto');
+      expect(html).toContain('language-yaml');
+      expect(html).toContain('hl-attr');
+      expect(html).toContain('hl-kw');
+    });
   });
 
   describe('code block collapse', () => {
@@ -171,5 +179,28 @@ describe('renderCodeBlock', () => {
       const html = renderCodeBlock(token, 'auto');
       expect(html).not.toContain('is-custom-highlighted');
     });
+  });
+});
+
+describe('HTML preview action toolbar', () => {
+  test('renders four icon-only actions in browser, modal, toggle, copy order', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<p>hello</p>' }, 'auto');
+    const positions = [
+      'mdn-open-browser-btn',
+      'mdn-open-modal-btn',
+      'mdn-toggle-preview-btn',
+      'mdn-copy-btn',
+    ].map((className) => html.indexOf(className));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(html).not.toContain('class="btn-label"');
+  });
+
+  test('adds translated-label hooks and accessible English fallbacks', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<p>hello</p>' }, 'auto');
+    expect(html).toContain('data-i18n-key="openInBrowser"');
+    expect(html).toContain('data-i18n-key="openAsModal"');
+    expect(html).toContain('title="Open in browser"');
+    expect(html).toContain('aria-label="Open in browser"');
   });
 });

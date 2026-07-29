@@ -33,14 +33,9 @@ impl Dispatcher {
             },
             None,
         );
-        self.send_workspace_data();
         if !self.is_current_file_still_available() {
             self.state.inner.write().current_file = None;
         }
-        if self.state.inner.read().current_file.is_some() {
-            self.send_content();
-        } else {
-            self.send_welcome();
-        }
+        self.send_workspace_data(false);
     }
 }

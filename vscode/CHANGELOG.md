@@ -4,6 +4,54 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Keyboard Shortcut Search**: search field in the keyboard shortcuts section of the Settings modal for fast shortcut discovery.
+- **Keyboard Shortcuts — Close Tabs**: configurable shortcuts to close the current tab, close tabs to the right, close other tabs, and close all tabs.
+- **Keyboard Shortcuts — Toggle Active State**: shortcuts to toggle the sidebar, table of contents, and focus mode from the keyboard.
+- **Keyboard Shortcuts grouping**: shortcuts in Settings modal and Homepage Shortcuts tab reordered into 6 functional groups — Navigation, Search, View & Themes, Structure, Tabs, and General.
+- **CSV/TSV previews**: code fences switch between syntax-colored source and interactive data tables with delimiter detection, header inference, sorting, filtering, and chart controls.
+- **XML fragment highlighting**: XML tags, attributes, values, comments, CDATA, entities, and namespaces are highlighted even without an XML declaration.
+- **HTML document modes**: `.html` and `.htm` tabs can render isolated interactive HTML or converted Markdown, and open the original file in the system browser.
+- **HTML document preview shortcut**: `Ctrl+Alt+H` toggles the active `.html` or `.htm` document between interactive preview and Markdown view.
+- **Sidebar row action menus**: file and folder rows reveal a keyboard-accessible three-dot action button with viewport-aware menu placement.
+- **Desktop location actions**: workspace tabs, document tabs, and sidebar files/folders expose native file-manager actions including a configurable active-document shortcut.
+- **Responsive image rows**: same-paragraph Markdown images stay together in responsive rows while preserving authored widths.
+- **Tips & Practices (9 languages)**: 9 multilingual Tips & Practices cards on the Welcome home page — English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
+- **Terminal code fence highlighting**: syntax highlighting for `bash`, `sh`, `terminal`, `console`, `cmd`, `powershell`, and `zsh` fences.
+- **VS Code external-file-change banner**: saving a Markdown file outside the VS Code panel now re-scans the sidebar and emits `currentFileChanged` so the renderer shows the refresh banner.
+- **View Preferences tooltips**: tooltips appear above the hovered option with a directional arrow indicator, flipping below when the option is near the modal's top edge.
+- **Reset Shortcuts confirmation**: a confirmation dialog is shown before Reset to Default Shortcuts restores any customized or disabled shortcuts.
+- **Three-surface shortcut documentation**: synchronized shortcut tables across the Desktop app, VS Code extension, and Chromium extension.
+
+### Changed
+- **Keyboard Shortcut Search** is now available on all platforms (no longer desktop-only).
+- **Settings experience**: View Preferences use compact grouped rows, vertically centered descriptions, dynamic shortcut text, corrected scroll ownership, and refreshed language/browser icons.
+- **Document tab menus**: every action has a semantic icon, the containing-folder action shows its binding, and HTML tabs gain browser and view-mode actions.
+- **Markdown presentation**: HTML comment sections use a pressed inset treatment, heading-level badges appear beside headings on hover/focus, and dragged tabs use dashed primary borders.
+- **Settings Modal Width**: increased by 10% for improved readability.
+- **Switch Toggle Contrast**: improved contrast of switch/toggle button circles in the Settings modal keyboard shortcuts section.
+- **Left/right shortcut glyphs**: displayed as `←` and `→`; Settings close tooltip follows the `Close Settings - (Esc)` format in every supported language.
+- **Scrollbars**: all scrollable areas (settings panel, modal body, search overlay, code blocks, and menus) use the `--bd-s` secondary border color for a consistent appearance.
+- **Workspace Selection**: the workspace selection screen and its keyboard shortcut are available in the web and Chromium extension runtimes — excluded from the VS Code extension to avoid conflicts with VS Code's own workspace management.
+
+### Fixed
+- **Workspace scan cancellation**: canceled operations no longer leave an endless, non-interactive loading screen or reactivate stale tab state.
+- **Missing workspace reopening**: choosing a replacement folder loads it into the unavailable tab and persists the new path correctly.
+- **Frontmatter after comments**: YAML properties render when one or more leading HTML comments appear before the frontmatter block.
+- **Settings layout and tooltips**: fixed overlapping controls, nested scrollbar displacement, tooltip clipping/stacking, and option-center alignment.
+- **VS Code promise typing**: adapted VS Code `Thenable` results for extension and Electron compilation; removed an unused watcher import.
+- **Localization coverage**: workspace-unavailable, preview, shell action, settings, shortcut, and discovery strings exist in every supported language.
+- **Search Flush**: fixed incremental title-match results not being flushed to the UI promptly during workspace-wide search.
+- **HTML comment/property ordering**: YAML properties remain rendered and responsive when a comment section appears first.
+- **Vulnerable dependencies**: overrode DOMPurify to `3.4.12`, fast-uri to `3.1.4`, and fast-xml-parser to `5.10.1`.
+
+### Removed
+- **New Feature Guide**: removed the new feature guide overlay component, all associated translation keys, and supporting data files from the Welcome page.
+
+---
+
 ## [1.5.9] — 2026-07-14
 
 ### Fixed

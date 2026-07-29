@@ -39,7 +39,9 @@ impl Dispatcher {
         }
 
         if preserve_current_content {
-            self.send_workspace_files_changed();
+            if !self.send_workspace_files_changed() {
+                return;
+            }
             let current_file_still_available = self.is_current_file_still_available();
             let current_file = self.state.inner.read().current_file.clone();
             let cf_str = current_file.as_ref().and_then(|p| p.to_str());
@@ -55,18 +57,10 @@ impl Dispatcher {
             return;
         }
 
-        self.send_workspace_data();
-
         if !self.is_current_file_still_available() {
             self.state.inner.write().current_file = None;
         }
-
-        let has_current = self.state.inner.read().current_file.is_some();
-        if has_current {
-            self.send_content();
-        } else {
-            self.send_welcome();
-        }
+        self.send_workspace_data(false);
     }
 
     pub(super) async fn handle_refresh(&self) {

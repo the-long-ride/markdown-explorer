@@ -26,11 +26,47 @@ export interface Translations {
   documentConversionDesc: string;
   htmlPreview: string;
   htmlPreviewDesc: string;
+  htmlCodeBlockPreview: string;
+  htmlCodeBlockPreviewDesc: string;
+  htmlLocalFirstWarningTitle: string;
+  htmlLocalFirstWarningBody: string;
+  htmlLocalFirstWarningOk: string;
+  htmlLocalFirstBlockedRemoteStyles: string;
+  htmlLocalFirstBlockedRemoteScripts: string;
+  htmlLocalFirstAllowedRemoteImages: string;
+  htmlLocalFirstAllowedRemoteFonts: string;
+  htmlLocalFirstAllowedRemoteMedia: string;
+  htmlLocalFirstBlockedNetworkApis: string;
+  htmlLocalFirstBlockedLocalReferences: string;
+  htmlLocalFirstMissingLocalReferences: string;
+  resetShortcutsConfirmTitle: string;
+  resetShortcutsConfirmBody: string;
+  cancelResetShortcuts: string;
+  confirmResetShortcuts: string;
+  csvPreview: string;
+  csvPreviewDesc: string;
+  importJson: string;
+  exportJson: string;
+  importJsonTooltip: string;
+  exportJsonTooltip: string;
   shortcuts: string;
   shortcutsHint: string;
   resetShortcuts: string;
   closeSettings: string;
+  openInBrowser: string;
+  showHtmlPreview: string;
+  showMarkdownView: string;
+  openContainingFolder: string;
+  sidebarItemActions: string;
+  htmlPreviewEnabled: string;
+  htmlPreviewDisabled: string;
+  htmlDocumentPreviewError: string;
+  htmlPreviewExperienceNotice: string;
   themeStyles: {
+    themesLabel: string;
+    themesDesc: string;
+    themesMenuLabel: string;
+    chooseTheme: string;
     defaultLabel: string;
     defaultDesc: string;
     glassLabel: string;
@@ -39,8 +75,26 @@ export interface Translations {
     bentoDesc: string;
     vercelLabel: string;
     vercelDesc: string;
+    tokyoNightLabel: string;
+    tokyoNightDesc: string;
+    neonVoltageLabel: string;
+    neonVoltageDesc: string;
+    rawGridLabel: string;
+    rawGridDesc: string;
     petsLabel: string;
     petsDesc: string;
+    petsMenuLabel: string;
+    choosePetTheme: string;
+    whiteShibaLabel: string;
+    kInkLabel: string;
+    catLabel: string;
+    hamsterLabel: string;
+    corgiLabel: string;
+    customThemesLabel: string;
+    customThemesDesc: string;
+    customThemesMenuLabel: string;
+    chooseCustomTheme: string;
+    themeRemixLabel: string;
   };
   actions: {
     searchCurrent: string;
@@ -52,6 +106,7 @@ export interface Translations {
     welcome: string;
     settings: string;
     toggleTheme: string;
+    toggleHtmlPreview: string;
     refresh: string;
     collapseAll: string;
     expandAll: string;
@@ -62,6 +117,7 @@ export interface Translations {
     zoomOut: string;
     locateFile: string;
     toggleDesktopViewMode: string;
+    openCurrentDocumentLocation: string;
     toggleFocusMode?: string;
     toggleFullscreen: string;
     toggleFullscreenTooltip: string;
@@ -110,19 +166,46 @@ export interface Translations {
     closeTab: string;
     openChangelog: string;
     locateFile: string;
+    cancelScan: string;
+  };
+  previewActions: {
+    openInBrowser: string;
+    openAsModal: string;
+    showCode: string;
+    showPreview: string;
+    copyCode: string;
+    plainText: string;
+    csvPreviewTitle: string;
+    tsvPreviewTitle: string;
+    csvMalformedQuote: string;
+    csvUnevenRows: string;
+    modalTitle: string;
+    closeModal: string;
+    openError: string;
+    linkMenu: string;
+    copyLink: string;
+    linkCopied: string;
+    unableToOpenLink: string;
+    copyFailed: string;
   };
   tabContextMenu: {
+    menuLabel: string;
     moveTabLeft: string;
     moveTabRight: string;
     closeThisTab: string;
     closeTabsToRight: string;
     closeOtherTabs: string;
     closeAllTabs: string;
+    showInFileExplorer: string;
+    openInFinder: string;
+    revealInFinder: string;
+    showInFileManager: string;
   };
   documentPreview: {
     convertedTitle: string;
     textTitle: string;
     convertedWarning: string;
+    legacyBestEffortWarning: string;
     conversionFailedWarning: string;
     textWarning: string;
     preparedLocally: string;
@@ -138,6 +221,25 @@ export interface Translations {
     searchPlaceholder: string;
     noWorkspaces: string;
     lastOpened: string;
+  };
+  workspaceUnavailable: {
+    title: string;
+    description: string;
+    tabHint: string;
+    openAgain: string;
+    deleteHistory: string;
+    removedHistory: string;
+  };
+  settingsData: {
+    groupLabel: string;
+    imported: string;
+    importFailed: string;
+    invalidJson: string;
+    missingData: string;
+    wrongFile: string;
+    unknownSchema: string;
+    exported: string;
+    exportFailed: string;
   };
   sidebar: {
     files: string;
@@ -200,7 +302,7 @@ export type AppLanguage = (typeof LANGUAGE_OPTIONS)[number]["id"];
 let _TRANSLATIONS: Record<string, Translations> = {
   en: {
     settings: "Settings",
-    subtitle: "Customize your Markdown Explorer view preferences",
+    subtitle: "Customize your Markdown Explorer experience",
     appearance: "Appearance",
     colorMode: "Color Mode",
     colorModeDesc: "Choose automatic, light, or dark rendering.",
@@ -211,7 +313,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
     themeStyleDesc: "Pick the surface language for panels, spacing, and strokes.",
     viewPrefs: "View Preferences",
     desktopView: "Desktop View",
-    desktopViewDesc: "Focus keeps the current single-workspace layout. Tabs lets each workspace live in its own tab.",
+    desktopViewDesc: "Switch between Focus and workspace Tabs. Toggle anytime with {shortcut}.",
     focus: "Focus",
     tabs: "Tabs",
     sidebarLabels: "Sidebar File Labels",
@@ -220,23 +322,77 @@ let _TRANSLATIONS: Record<string, Translations> = {
     fileTabsDesc: "When enabled, opening a file creates or activates a document tab. When disabled, it replaces the current panel.",
     documentConversion: "Read DOCX, PDF, Office, and text files",
     documentConversionDesc: "Converts DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF to Markdown for preview. Converted previews can lose layout or formatting quality.",
-    htmlPreview: "Default HTML Code Block View",
-    htmlPreviewDesc: "Show HTML code blocks as interactive previews by default. Otherwise, shows the raw HTML code.",
+    htmlPreview: "Default HTML Preview",
+    htmlPreviewDesc: "Open .html and .htm documents as interactive previews by default. Toggle the active HTML document with ({shortcut}).",
+    htmlCodeBlockPreview: "Default HTML Code Block Preview",
+    htmlCodeBlockPreviewDesc: "Open fenced HTML code blocks as interactive previews by default.",
+    htmlLocalFirstWarningTitle: "Local-first HTML preview",
+    htmlLocalFirstWarningBody: "Markdown Explorer prepared this HTML document using local-first rules. Remote CSS and scripts, script-initiated network requests, and unsafe local references were ignored; allowed remote media may still load.",
+    htmlLocalFirstWarningOk: "OK",
+    htmlLocalFirstBlockedRemoteStyles: "Blocked remote stylesheets",
+    htmlLocalFirstBlockedRemoteScripts: "Blocked remote scripts",
+    htmlLocalFirstAllowedRemoteImages: "Allowed remote images",
+    htmlLocalFirstAllowedRemoteFonts: "Allowed remote fonts",
+    htmlLocalFirstAllowedRemoteMedia: "Allowed remote audio or video",
+    htmlLocalFirstBlockedNetworkApis: "Blocked script network APIs",
+    htmlLocalFirstBlockedLocalReferences: "Blocked local references outside the workspace",
+    htmlLocalFirstMissingLocalReferences: "Missing or unreadable local references",
+    resetShortcutsConfirmTitle: "Reset keyboard shortcuts?",
+    resetShortcutsConfirmBody: "Every customized and disabled shortcut will be restored to its default value.",
+    cancelResetShortcuts: "Cancel",
+    confirmResetShortcuts: "Reset Shortcuts",
+    csvPreview: "Default CSV Code Block View",
+    csvPreviewDesc: "Show CSV and TSV code blocks as interactive data tables by default. Otherwise, show the source code.",
+    importJson: "Import JSON",
+    exportJson: "Export JSON",
+    importJsonTooltip: "Import all user settings from JSON",
+    exportJsonTooltip: "Export all user settings to JSON",
     shortcuts: "Keyboard Shortcuts",
     shortcutsHint: "Click a field and press your new keys.",
     resetShortcuts: "Reset to Default Shortcuts",
-    closeSettings: "Close Settings [Esc]",
+    closeSettings: "Close Settings - (Esc)",
+    openInBrowser: "Open in Browser",
+    showHtmlPreview: "Show HTML Preview",
+    showMarkdownView: "Show Markdown View",
+    openContainingFolder: "Open containing folder",
+    sidebarItemActions: "Actions for {name}",
+    htmlPreviewEnabled: "HTML Preview shown",
+    htmlPreviewDisabled: "Markdown View shown",
+    htmlDocumentPreviewError: "Unable to render this HTML document preview.",
+    htmlPreviewExperienceNotice: "HTML Preview may not match the full browser experience. For the best result, right-click the document tab or use the file’s three-dot menu in Files, then choose Open in Browser.",
     themeStyles: {
+      themesLabel: "Themes",
+      themesDesc: "Built-in visual systems for the whole workspace",
+      themesMenuLabel: "Built-in themes",
+      chooseTheme: "Choose theme",
       defaultLabel: "Default",
       defaultDesc: "Compact reader surfaces with the original Markdown Explorer balance",
-      glassLabel: "Evolved Glass",
-      glassDesc: "Layered translucent panels, softer strokes, and airy document rhythm",
+      glassLabel: "Aurora Glass",
+      glassDesc: "Translucent panels, soft blur, and layered pastel light",
       bentoLabel: "Bento Grids",
       bentoDesc: "Modular blocks, stronger structure, and denser scan-friendly spacing",
       vercelLabel: "Vercel",
       vercelDesc: "High-contrast monochrome, sharp borders, and geometric focus",
-      petsLabel: "Pets",
-      petsDesc: "Anime PNG pet companions, playful background buddies, and soft animated reading surfaces",
+      tokyoNightLabel: "Tokyo Night",
+      tokyoNightDesc: "Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast",
+      neonVoltageLabel: "Neon Voltage",
+      neonVoltageDesc: "Deep black surfaces with electric coral, teal, and purple glow",
+      rawGridLabel: "Raw Grid",
+      rawGridDesc: "Visible structure, asymmetric panels, and mechanical borders",
+      petsLabel: "Pet themes",
+      petsDesc: "Anime PNG companions and playful reading surfaces",
+      petsMenuLabel: "Pet themes",
+      choosePetTheme: "Choose pet theme",
+      whiteShibaLabel: "White Shiba",
+      kInkLabel: "K-Ink (app author's dog)",
+      catLabel: "Cat",
+      hamsterLabel: "Hamster",
+      corgiLabel: "Corgi",
+      customThemesLabel: "Your custom themes",
+      customThemesDesc: "Saved remixes and personal visual systems",
+      customThemesMenuLabel: "Custom themes",
+      chooseCustomTheme: "Choose custom theme",
+      themeRemixLabel: "Theme Remix",
     },
     actions: {
       searchCurrent: "Search current workspace",
@@ -248,6 +404,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       welcome: "Go to welcome page",
       settings: "Toggle settings modal",
       toggleTheme: "Toggle light/dark mode",
+      toggleHtmlPreview: "Toggle active HTML document view",
       refresh: "Refresh current file",
       collapseAll: "Collapse all headings",
       expandAll: "Expand all headings",
@@ -258,6 +415,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       zoomOut: "Zoom out",
       locateFile: "Locate current file",
       toggleDesktopViewMode: "Toggle Tabs/Focus view",
+      openCurrentDocumentLocation: "Open current document folder",
       toggleFocusMode: "Toggle focus mode",
       toggleFullscreen: "Show full screen",
       toggleFullscreenTooltip: "Toggle native full screen window",
@@ -302,23 +460,50 @@ let _TRANSLATIONS: Record<string, Translations> = {
       showToolbar: "Show toolbar actions",
       minimizeToolbar: "Minimize toolbar actions",
       moveToolbar: "Move toolbar",
-      closeModal: "Close modal [Esc]",
+      closeModal: "Close modal (Esc)",
       closeTab: "Close Tab",
       openChangelog: "Click to open the change logs",
       locateFile: "Locate file",
+      cancelScan: "Cancel scan",
+    },
+    previewActions: {
+      openInBrowser: "Open in browser",
+      openAsModal: "Open as modal",
+      showCode: "Show code",
+      showPreview: "Show preview",
+      copyCode: "Copy code",
+      plainText: "Plain text",
+      csvPreviewTitle: "CSV Preview",
+      tsvPreviewTitle: "TSV Preview",
+      csvMalformedQuote: "Some quoted fields are malformed. Review the source code.",
+      csvUnevenRows: "Some rows have a different number of columns.",
+      modalTitle: "HTML preview",
+      closeModal: "Close HTML preview",
+      openError: "Unable to open HTML preview",
+      linkMenu: "Link actions",
+      copyLink: "Copy link",
+      linkCopied: "Link copied",
+      unableToOpenLink: "Unable to open link",
+      copyFailed: "Unable to copy link",
     },
     tabContextMenu: {
+      menuLabel: "Document tab actions",
       moveTabLeft: "Move tab left",
       moveTabRight: "Move tab right",
       closeThisTab: "Close this tab",
       closeTabsToRight: "Close tabs to the right",
       closeOtherTabs: "Close other tabs",
       closeAllTabs: "Close all tabs",
+      showInFileExplorer: "Show in File Explorer",
+      openInFinder: "Open in Finder",
+      revealInFinder: "Reveal in Finder",
+      showInFileManager: "Show in File Manager",
     },
     documentPreview: {
       convertedTitle: "Converted {sourceLabel} preview",
       textTitle: "{sourceLabel} preview",
       convertedWarning: "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file.",
+      legacyBestEffortWarning: "This legacy document uses best-effort conversion. Some content, formatting, formulas, or embedded objects may be missing.",
       conversionFailedWarning: "Markdown Explorer could not convert this file. The details are shown below.",
       textWarning: "Plain text is rendered through Markdown Explorer, so Markdown-like syntax may be formatted.",
       preparedLocally: "Prepared locally",
@@ -334,6 +519,25 @@ let _TRANSLATIONS: Record<string, Translations> = {
       searchPlaceholder: "Search workspaces by name or path...",
       noWorkspaces: "No matching workspaces found",
       lastOpened: "Last opened",
+    },
+    workspaceUnavailable: {
+      title: "Workspace not found",
+      description: "The current path no longer exists or is locked. Please open the workspace again.",
+      tabHint: "Tab view: choose a replacement folder to reuse this tab.",
+      openAgain: "Open Workspace Again",
+      deleteHistory: "Delete from History",
+      removedHistory: "Removed from History",
+    },
+    settingsData: {
+      groupLabel: "Settings data",
+      imported: "Imported settings and workspace history.",
+      importFailed: "Import failed.",
+      invalidJson: "The selected file is not valid JSON.",
+      missingData: "The selected file does not contain settings data.",
+      wrongFile: "This is not a Markdown Explorer settings file.",
+      unknownSchema: "This settings file uses an unknown schema version.",
+      exported: "Settings exported.",
+      exportFailed: "Export failed.",
     },
     sidebar: {
       files: "Files",

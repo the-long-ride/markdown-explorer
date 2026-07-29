@@ -90,3 +90,50 @@
   color: var(--tx2);
   font-size: 13px;
 }
+
+.tab-loading {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: var(--bg);
+}
+
+.state-screen--tab-loading {
+  position: static;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx);
+  background: var(--bg);
+}
+
+.state-screen__cancel {
+  margin-top: 14px;
+  min-width: 108px;
+}
+
+.workspace-scan-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workspace-scan-progress__cancel {
+  border: 0;
+  border-radius: 5px;
+  padding: 3px 7px;
+  background: var(--bg-a);
+  color: var(--tx);
+  font: inherit;
+  cursor: pointer;
+}
+
+.workspace-scan-progress__cancel:hover,
+.workspace-scan-progress__cancel:focus-visible {
+  background: var(--accent);
+  color: #fff;
+  outline: none;
+}

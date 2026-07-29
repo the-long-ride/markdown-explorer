@@ -23,6 +23,7 @@ const REQUIRED_HOST_COMMANDS = [
   'navNotFound',
   'workspaceUnavailable',
   'setLoading',
+  'workspaceScanProgress',
   'updateStateChanged',
   'window-state-changed',
   'crossTabSearchResults',
@@ -62,6 +63,15 @@ describe('tauri host-message parity', () => {
       expect(src).toContain('"workspacePath"');
       expect(src).toContain('"workspaceName"');
       expect(src).toContain('"reason"');
+    });
+
+
+    test('workspace-scoped messages include operation and tab identifiers', () => {
+      const src = readSrc('tauri/src/host_message.rs');
+      expect(src).toContain('workspaceOperationId');
+      expect(src).toContain('workspaceTabId');
+      expect(src).toContain('workspace_operation_id');
+      expect(src).toContain('workspace_tab_id');
     });
 
     test('workspaceSearchResults has requestId, results', () => {

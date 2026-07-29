@@ -73,4 +73,15 @@ describe('content-notice', () => {
     expect(toolbarCss).toMatch(/\.toolbar-action-menu__panel\s*{[^}]*max-width:\s*calc\(100vw - 16px\);/s);
     expect(toolbarCss).toMatch(/\.toolbar-action-menu__item \.btn-label\s*{[^}]*white-space:\s*nowrap;/s);
   });
+
+  test('HTML local-first warning dialog shows 1 time per file and experience banner shows 1 time in app opening time', async () => {
+    const content = await read(contentPath);
+
+    expect(content).toMatch(/const warningSessionKey = state\.currentFile \?\? '';/);
+    expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.has\(warningSessionKey\)/);
+    expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.add\(warningSessionKey\)/);
+    expect(content).not.toMatch(/htmlPreviewWarningSeenRef\.current\.delete/);
+    expect(content).toMatch(/htmlPreviewExperienceNoticeSeenRef\.current/);
+    expect(content).toMatch(/if\s*\(htmlPreviewExperienceNoticeSeenRef\.current\)\s*return;/);
+  });
 });

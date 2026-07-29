@@ -55,7 +55,7 @@ local — nothing is uploaded.
 ### Workspace navigation
 - Open any local folder as a documentation workspace
 - File tree sidebar with expand/collapse, file icons by type
-- **Sidebar Cursor mode** (Alt+S): keyboard-first file tree navigation with Up/Down, Enter to open, Esc to exit
+- **Sidebar Cursor mode** (Alt+Z): keyboard-first file tree navigation with Up/Down, Enter to open, Esc to exit
 - **Content File Tabs**: open multiple files as tabs (desktop only)
 - **Scope Focus**: filter the sidebar to show only the current file's folder siblings
 - **Workspace aliases**: rename workspace tabs to custom labels
@@ -88,15 +88,17 @@ local — nothing is uploaded.
 
 ## Keyboard shortcuts
 
-| Action | Default binding |
-|---|---|
-| Settings | `Ctrl+,` |
-| Toggle theme | `Ctrl+T` |
-| Toggle sidebar | `Ctrl+B` |
-| Toggle TOC | `Ctrl+Shift+T` |
-| Toggle focus mode | `Ctrl+Shift+F` |
-| Welcome page | `Ctrl+Shift+W` |
-| Sidebar cursor mode | `Alt+S` |
+| Action | Desktop app | VS Code extension / Webview |
+|---|---|---|
+| Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` |
+| Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
+| Toggle sidebar | `Ctrl+B` | `Alt+A` |
+| Toggle TOC | `Alt+C` | `Alt+C` |
+| Toggle focus mode | `Ctrl+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` |
+| Welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` |
+| Locate current file | `Alt+Q` | `Alt+Q` |
+| Sidebar cursor mode | `Alt+Z` | `Alt+Z` |
+| Toggle active HTML document view | `Ctrl+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` |
 
 ## Demo
 

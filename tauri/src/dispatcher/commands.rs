@@ -3,6 +3,20 @@ use super::*;
 impl Dispatcher {
     pub async fn handle(self, msg: Value) -> Result<(), String> {
         let cmd = msg.get("command").and_then(|v| v.as_str()).unwrap_or("");
+        if matches!(
+            cmd,
+            "openFolder" | "openFile" | "openPath" | "activateWorkspace" | "openRecentWorkspace"
+        ) {
+            let mut state = self.state.inner.write();
+            state.workspace_operation_id = msg
+                .get("workspaceOperationId")
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned);
+            state.workspace_tab_id = msg
+                .get("workspaceTabId")
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned);
+        }
         match cmd {
             // ── B1 handlers ──
             "openFolder" => {
@@ -10,8 +24,28 @@ impl Dispatcher {
                     .get("openFirstFile")
                     .and_then(Value::as_bool)
                     .unwrap_or(false);
+                let operation = host_message::current_workspace_operation(&self.app);
                 if let Some(path) = self.pick_folder() {
+                    if let Some(old_path) = msg
+                        .get("replaceRecentWorkspacePath")
+                        .and_then(Value::as_str)
+                        .filter(|old_path| Path::new(old_path) != path.as_path())
+                    {
+                        let store = self.recents_store();
+                        store.remove(Path::new(old_path));
+                        host_message::emit_recent_workspaces_changed(&self.app, store.load());
+                    }
                     self.handle_open_path(&path, open_first_file);
+                } else {
+                    host_message::emit_scoped(
+                        &self.app,
+                        "workspaceOpenCancelled",
+                        serde_json::Map::new(),
+                        operation.as_ref(),
+                    );
+                    let mut state = self.state.inner.write();
+                    state.workspace_operation_id = None;
+                    state.workspace_tab_id = None;
                 }
             }
             "openFile" => {
@@ -47,13 +81,12 @@ impl Dispatcher {
                         );
                     } else {
                         let current_file = file_path.filter(|p| p.exists());
-                        self.recents_store().save(&path);
+                        self.save_recent_workspace(&path);
                         self.set_workspace(path, current_file);
                         self.ensure_workspace_watch();
                         self.bind_watch();
                         host_message::emit_loading(&self.app, "Loading workspace...", None);
-                        self.send_workspace_data();
-                        self.send_initial_content(open_first_file);
+                        self.send_workspace_data(open_first_file);
                     }
                 }
             }
@@ -67,17 +100,74 @@ impl Dispatcher {
                 }
             }
             "closeWorkspace" => {
-                {
+                let operation = {
                     let mut state = self.state.inner.write();
+                    let operation = host_message::WorkspaceOperationMetadata::from_parts(
+                        state.workspace_operation_id.as_deref(),
+                        state.workspace_tab_id.as_deref(),
+                    );
                     state.workspace_path = None;
                     state.current_file = None;
                     state.flat_list.clear();
                     state.ready_handled = false;
+                    state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
+                    state.workspace_operation_id = None;
+                    state.workspace_tab_id = None;
                     if let Some(ref wc) = state.watch_controller {
                         wc.dispose();
                     }
+                    operation
+                };
+                let ready_message = operation
+                    .as_ref()
+                    .map(|operation| {
+                        json!({
+                            "workspaceOperationId": operation.operation_id.clone(),
+                            "workspaceTabId": operation.tab_id.clone(),
+                        })
+                    })
+                    .unwrap_or_else(|| json!({}));
+                self.handle_ready(&ready_message).await;
+            }
+            "cancelWorkspaceScan" => {
+                let requested_operation = msg
+                    .get("workspaceOperationId")
+                    .and_then(Value::as_str);
+                let cancelled = {
+                    let mut state = self.state.inner.write();
+                    let matches = requested_operation.is_some()
+                        && state.workspace_operation_id.as_deref() == requested_operation;
+                    if !matches {
+                        None
+                    } else {
+                        let operation = host_message::WorkspaceOperationMetadata::from_parts(
+                            state.workspace_operation_id.as_deref(),
+                            state.workspace_tab_id.as_deref(),
+                        );
+                        state.workspace_scan_generation =
+                            state.workspace_scan_generation.wrapping_add(1);
+                        state.runtime_state = RuntimeState::Ready;
+                        let scanned_files = state.flat_list.len();
+                        state.workspace_operation_id = None;
+                        state.workspace_tab_id = None;
+                        Some((scanned_files, operation))
+                    }
+                };
+                if let Some((scanned_files, operation)) = cancelled {
+                    host_message::emit_workspace_scan_progress_scoped(
+                        &self.app,
+                        scanned_files,
+                        false,
+                        operation.as_ref(),
+                    );
                 }
-                self.handle_ready(&json!({})).await;
+            }
+            "cancelAllWorkspaceScans" => {
+                let mut state = self.state.inner.write();
+                state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
+                state.runtime_state = RuntimeState::Ready;
+                state.workspace_operation_id = None;
+                state.workspace_tab_id = None;
             }
             "confirmOpenPath" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {
@@ -159,6 +249,137 @@ impl Dispatcher {
                     }
                 }
             }
+            "readWorkspaceTextResource" => {
+                let request_id = msg
+                    .get("requestId")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let mut extra = serde_json::Map::new();
+                extra.insert("requestId".into(), request_id.into());
+                let document_path = msg.get("documentPath").and_then(Value::as_str);
+                let resource_path = msg.get("resourcePath").and_then(Value::as_str);
+                let workspace_path = self.state.inner.read().workspace_path.clone();
+                let result = (|| -> Result<(String, String), &'static str> {
+                    let document_path = document_path.ok_or("unsupported")?;
+                    let resource_path = resource_path.ok_or("unsupported")?;
+                    let workspace_path = workspace_path.ok_or("missing")?;
+                    let workspace_base = if workspace_path.is_file() {
+                        workspace_path.parent().unwrap_or(workspace_path.as_path()).to_path_buf()
+                    } else {
+                        workspace_path
+                    };
+                    let reference = resource_path
+                        .split(|character| character == '?' || character == '#')
+                        .next()
+                        .unwrap_or("");
+                    if reference.is_empty()
+                        || reference.starts_with("http://")
+                        || reference.starts_with("https://")
+                        || reference.starts_with("//")
+                        || reference.starts_with("data:")
+                        || reference.starts_with("blob:")
+                        || reference.starts_with("javascript:")
+                    {
+                        return Err("unsupported");
+                    }
+                    let resolved = if reference.starts_with("file://") {
+                        Url::parse(reference)
+                            .map_err(|_| "unsupported")?
+                            .to_file_path()
+                            .map_err(|_| "unsupported")?
+                    } else if reference.starts_with('/') {
+                        workspace_base.join(reference.trim_start_matches('/'))
+                    } else {
+                        let reference_path = Path::new(reference);
+                        if reference_path.is_absolute() {
+                            reference_path.to_path_buf()
+                        } else {
+                            Path::new(document_path)
+                                .parent()
+                                .unwrap_or(workspace_base.as_path())
+                                .join(reference_path)
+                        }
+                    };
+                    let allowed = resolved
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .map_or(false, |ext| matches!(ext.to_ascii_lowercase().as_str(), "css" | "js" | "mjs" | "cjs"));
+                    if !allowed {
+                        return Err("outside-workspace");
+                    }
+                    let canonical_workspace = workspace_base.canonicalize().map_err(|_| "missing")?;
+                    let canonical_target = resolved.canonicalize().map_err(|_| "missing")?;
+                    if !canonical_target.starts_with(&canonical_workspace) || !canonical_target.is_file() {
+                        return Err("outside-workspace");
+                    }
+                    let content = std::fs::read_to_string(&canonical_target).map_err(|_| "unreadable")?;
+                    Ok((content, canonical_target.to_string_lossy().into_owned()))
+                })();
+                match result {
+                    Ok((content, resolved_path)) => {
+                        extra.insert("ok".into(), true.into());
+                        extra.insert("content".into(), content.into());
+                        extra.insert("resolvedPath".into(), resolved_path.into());
+                    }
+                    Err(reason) => {
+                        extra.insert("ok".into(), false.into());
+                        extra.insert("reason".into(), reason.into());
+                    }
+                }
+                host_message::emit(&self.app, "workspaceTextResourceResult", extra);
+            }
+            "openShellLocation" => {
+                if let (Some(path_str), Some(mode)) = (
+                    msg.get("path").and_then(Value::as_str),
+                    msg.get("mode").and_then(Value::as_str),
+                ) {
+                    let source = Path::new(path_str);
+                    if source.exists() {
+                        match mode {
+                            "open-directory" => {
+                                let _ = self.app.opener().open_path(
+                                    source.to_string_lossy().into_owned(),
+                                    None::<&str>,
+                                );
+                            }
+                            "open-parent-directory" => {
+                                if let Some(parent) = source.parent() {
+                                    let _ = self.app.opener().open_path(
+                                        parent.to_string_lossy().into_owned(),
+                                        None::<&str>,
+                                    );
+                                }
+                            }
+                            "reveal-file" => {
+                                #[cfg(target_os = "windows")]
+                                {
+                                    let _ = std::process::Command::new("explorer")
+                                        .arg(format!("/select,{}", source.display()))
+                                        .spawn();
+                                }
+                                #[cfg(target_os = "macos")]
+                                {
+                                    let _ = std::process::Command::new("open")
+                                        .arg("-R")
+                                        .arg(source)
+                                        .spawn();
+                                }
+                                #[cfg(target_os = "linux")]
+                                {
+                                    if let Some(parent) = source.parent() {
+                                        let _ = self.app.opener().open_path(
+                                            parent.to_string_lossy().into_owned(),
+                                            None::<&str>,
+                                        );
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
             "copyCode" => {
                 let text = msg.get("text").and_then(Value::as_str).unwrap_or("");
                 let _ = self.app.clipboard().write_text(text);
@@ -166,9 +387,19 @@ impl Dispatcher {
             "openExternal" => {
                 if let Some(url) = msg.get("url").and_then(Value::as_str) {
                     let url_lower = url.to_lowercase();
-                    if url_lower.starts_with("http://") || url_lower.starts_with("https://") {
+                    if url_lower.starts_with("http://")
+                        || url_lower.starts_with("https://")
+                        || url_lower.starts_with("file://")
+                    {
                         let _ = self.app.opener().open_url(url, None::<&str>);
                     }
+                }
+            }
+            "openHtmlPreview" => {
+                if let Some(document_html) = msg.get("documentHtml").and_then(Value::as_str) {
+                    crate::runtime::html_preview::open(&self.app, document_html)
+                        .await
+                        .map_err(|error| error.to_string())?;
                 }
             }
             "setDocumentConversion" => {

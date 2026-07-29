@@ -60,6 +60,8 @@ describe('createAppBootstrap', () => {
   let debugToolsImpl: any;
   let createMainWindowFn: ReturnType<typeof vi.fn>;
   let result: ReturnType<typeof createAppBootstrap>;
+  let htmlPreviewServer: { open: ReturnType<typeof vi.fn>; dispose: ReturnType<typeof vi.fn> };
+  let createHtmlPreviewServerFn: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     appImpl = makeAppMock();
@@ -95,6 +97,8 @@ describe('createAppBootstrap', () => {
       applyPendingUpdateOnQuit: vi.fn(),
     }));
     registerIpcHandlersFn = vi.fn();
+    htmlPreviewServer = { open: vi.fn(() => Promise.resolve('http://127.0.0.1/preview/test')), dispose: vi.fn(() => Promise.resolve()) };
+    createHtmlPreviewServerFn = vi.fn(() => htmlPreviewServer);
     runtimeImpl = {
       handleReady: vi.fn(),
       handleOpenFolder: vi.fn(),
@@ -157,6 +161,7 @@ describe('createAppBootstrap', () => {
       ipcMainImpl: {},
       clipboardImpl: {},
       shellImpl: { openExternal: vi.fn() },
+      createHtmlPreviewServerFn,
     });
   });
 
@@ -215,6 +220,7 @@ describe('createAppBootstrap', () => {
         ipcMainImpl: {},
         clipboardImpl: {},
         shellImpl: { openExternal: vi.fn() },
+        createHtmlPreviewServerFn,
       });
       await Promise.resolve();
     });
@@ -262,6 +268,7 @@ describe('createAppBootstrap', () => {
       expect(call.handlers.downloadUpdate).toBe(runtimeImpl.handleDownloadUpdate);
       expect(call.handlers.scheduleDownloadedUpdate).toBe(runtimeImpl.handleScheduleDownloadedUpdate);
       expect(call.handlers.restartAndApplyUpdate).toBe(runtimeImpl.handleRestartAndApplyUpdate);
+      expect(call.handlers.openHtmlPreview).toEqual(expect.any(Function));
     });
 
     test('registers activate event listener', async () => {
@@ -315,6 +322,7 @@ describe('createAppBootstrap', () => {
       await Promise.resolve();
       appImpl._trigger('before-quit');
       expect(runtimeImpl.dispose).toHaveBeenCalled();
+      expect(htmlPreviewServer.dispose).toHaveBeenCalled();
     });
 
     test('applies pending update when updateManager exists', async () => {
@@ -333,6 +341,7 @@ describe('createAppBootstrap', () => {
         ipcMainImpl: {},
         clipboardImpl: {},
         shellImpl: { openExternal: vi.fn() },
+        createHtmlPreviewServerFn,
       });
       await Promise.resolve();
       appImpl._trigger('before-quit');
@@ -354,10 +363,12 @@ describe('createAppBootstrap', () => {
         ipcMainImpl: {},
         clipboardImpl: {},
         shellImpl: { openExternal: vi.fn() },
+        createHtmlPreviewServerFn,
       });
       await Promise.resolve();
       appImpl._trigger('before-quit');
       expect(runtimeImpl.dispose).toHaveBeenCalled();
+      expect(htmlPreviewServer.dispose).toHaveBeenCalled();
     });
   });
 
@@ -393,6 +404,7 @@ describe('createAppBootstrap', () => {
       fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
       recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
       TrayConstructor: vi.fn(), ipcMainImpl: {}, clipboardImpl: {}, shellImpl: { openExternal: vi.fn() },
+      createHtmlPreviewServerFn,
       externalOpenQueue,
     });
     await Promise.resolve();

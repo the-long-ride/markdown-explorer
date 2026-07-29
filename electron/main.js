@@ -86,11 +86,12 @@ const runtime = createDesktopRuntime({
       canInstallUpdates: isInstallerUpdateSupported({ platform: process.platform, app }),
     };
   },
-  sendLoading(label, detail) {
+  sendLoading(label, detail, operation = {}) {
     mainWindow?.webContents.send("host-message", {
       command: "setLoading",
       label,
       detail,
+      ...operation,
     });
   },
   sendRecentWorkspacesChanged() {
@@ -109,7 +110,7 @@ const runtime = createDesktopRuntime({
     let tree = null;
     let flat = [];
     if (isCurrent()) mainWindow?.webContents.send("host-message", {
-      command: "workspaceScanProgress", scannedFiles: 0, active: true,
+      command: "workspaceScanProgress", scannedFiles: 0, active: true, ...(options.operation || {}),
     });
 
     try {
@@ -124,6 +125,7 @@ const runtime = createDesktopRuntime({
         }
       } else {
         const result = await DesktopScanner.scan(wsPath, {
+          isCurrent,
           documentConversionEnabled: runtime.state.documentConversionEnabled,
           onProgress(scannedFiles) {
             if (!isCurrent()) return;
@@ -131,6 +133,7 @@ const runtime = createDesktopRuntime({
               command: "workspaceScanProgress",
               scannedFiles,
               active: true,
+              ...(options.operation || {}),
             });
           },
           onFile(file, scannedFiles) {
@@ -145,7 +148,7 @@ const runtime = createDesktopRuntime({
     }
 
     if (isCurrent()) mainWindow?.webContents.send("host-message", {
-      command: "workspaceScanProgress", scannedFiles: flat.length, active: false,
+      command: "workspaceScanProgress", scannedFiles: flat.length, active: false, ...(options.operation || {}),
     });
     return { tree, flat };
   },

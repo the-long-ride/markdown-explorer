@@ -1,0 +1,102 @@
+/* Raw Grid layout, inspired by visible documentation grids without copied branding */
+[data-theme-style="raw-grid"] .app,
+[data-theme-style="raw-grid"] .content {
+  background-image:
+    linear-gradient(var(--bd) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bd) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+[data-theme-style="raw-grid"] .topbar,
+[data-theme-style="raw-grid"] .desktop-tabbar,
+[data-theme-style="raw-grid"] .sidebar,
+[data-theme-style="raw-grid"] .toc-panel,
+[data-theme-style="raw-grid"] .mdn-section,
+[data-theme-style="raw-grid"] .mdn-codeblock,
+[data-theme-style="raw-grid"] .mdn-table-scroll,
+[data-theme-style="raw-grid"] .settings-card,
+[data-theme-style="raw-grid"] .modal {
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-theme-style="raw-grid"] .topbar,
+[data-theme-style="raw-grid"] .desktop-tabbar {
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+
+[data-theme-style="raw-grid"] .body {
+  gap: 0;
+  padding: 0;
+}
+
+[data-theme-style="raw-grid"] .mdn-body {
+  background: var(--bg-s);
+}
+
+[data-theme-style="raw-grid"] .sidebar,
+[data-theme-style="raw-grid"] .toc-panel {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+
+[data-theme-style="raw-grid"] .btn,
+[data-theme-style="raw-grid"] input,
+[data-theme-style="raw-grid"] select,
+[data-theme-style="raw-grid"] textarea {
+  border-radius: 0;
+}
+
+[data-theme-style="raw-grid"] [role="switch"],
+[data-theme-style="raw-grid"] [role="switch"] span,
+[data-theme-style="raw-grid"] .settings-shortcut-toggle,
+[data-theme-style="raw-grid"] .settings-shortcut-toggle span,
+[data-theme-style="raw-grid"] .settings-shortcut-input,
+[data-theme-style="raw-grid"] .segmented-control,
+[data-theme-style="raw-grid"] .segmented-option,
+[data-theme-style="raw-grid"] .toolbar-action-menu__switch,
+[data-theme-style="raw-grid"] .toolbar-action-menu__switch-thumb,
+[data-theme-style="raw-grid"] .toolbar-action-menu__item,
+[data-theme-style="raw-grid"] .switch-slider,
+[data-theme-style="raw-grid"] .switch-slider::before,
+[data-theme-style="raw-grid"] .scroll-to-top-btn,
+[data-theme-style="raw-grid"] .settings-language-btn,
+[data-theme-style="raw-grid"] .settings-language-menu,
+[data-theme-style="raw-grid"] .settings-language-menu__option,
+[data-theme-style="raw-grid"] .search-overlay-card,
+[data-theme-style="raw-grid"] .search-overlay-input,
+[data-theme-style="raw-grid"] .search-overlay-result {
+  border-radius: 0 !important;
+}
+
+[data-theme-style="raw-grid"] :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Welcome / Homepage ── */
+/* Give the welcome page a solid panel so text isn't over the grid lines */
+[data-theme-style="raw-grid"] .welcome-container {
+  background: var(--bg);
+  border: var(--stroke-w) solid var(--bd-s);
+  padding: 24px;
+  max-width: 900px;
+}
+
+/* Flatten pill/rounded shapes to match the angular theme */
+[data-theme-style="raw-grid"] .tabs-bar,
+[data-theme-style="raw-grid"] .tab-btn,
+[data-theme-style="raw-grid"] .feature-card,
+[data-theme-style="raw-grid"] .shortcuts-card,
+[data-theme-style="raw-grid"] .privacy-card,
+[data-theme-style="raw-grid"] .homepage-link,
+[data-theme-style="raw-grid"] .card-action-btn,
+[data-theme-style="raw-grid"] .desktop-recommendation {
+  border-radius: 0 !important;
+}
+

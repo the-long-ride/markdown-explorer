@@ -1,0 +1,79 @@
+diff --git a/tauri/src/render/native_document_converter/office.rs b/tauri/src/render/native_document_converter/office.rs
+index 6ceeffd..0153f42 100644
+--- a/tauri/src/render/native_document_converter/office.rs
++++ b/tauri/src/render/native_document_converter/office.rs
+@@ -4,11 +4,21 @@ use std::io::Cursor;
+ use std::path::Path;
+ 
+ fn unescape_xml_entities(text: &str) -> String {
+-    text.replace("&amp;", "&")
+-        .replace("&lt;", "<")
+-        .replace("&gt;", ">")
+-        .replace("&quot;", "\"")
+-        .replace("&apos;", "'")
++    let mut decoded = text.to_owned();
++
++    loop {
++        let next = decoded
++            .replace("&amp;", "&")
++            .replace("&lt;", "<")
++            .replace("&gt;", ">")
++            .replace("&quot;", "\"")
++            .replace("&apos;", "'");
++
++        if next == decoded {
++            return decoded;
++        }
++        decoded = next;
++    }
+ }
+ 
+ pub fn convert(path: &Path, extension: &str) -> Result<ConversionOutput, ConversionError> {
+@@ -40,6 +50,18 @@ fn quality_for_extension(extension: &str) -> ConversionQuality {
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn decodes_nested_xml_entities_from_office_markdown() {
++        assert_eq!(
++            unescape_xml_entities("Alpha &amp;amp; beta"),
++            "Alpha & beta"
++        );
++        assert_eq!(
++            unescape_xml_entities("&amp;lt;tag&amp;gt; &quot;value&quot;"),
++            "<tag> \"value\""
++        );
++    }
++
+     #[test]
+     fn converts_real_pptx_fixture_in_slide_order() {
+         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+@@ -50,7 +72,11 @@ mod tests {
+         let output = convert(&path, "pptx").expect("convert PPTX fixture");
+         assert_eq!(output.quality, ConversionQuality::Standard);
+         assert!(output.markdown.contains("First slide title"));
+-        assert!(output.markdown.contains("Alpha & beta"));
++        assert!(
++            output.markdown.contains("Alpha & beta"),
++            "converted PPTX markdown did not decode entities: {:?}",
++            output.markdown
++        );
+         assert!(output.markdown.contains("Second line"));
+         assert!(output.markdown.contains("Second slide title"));
+         assert!(
+diff --git a/tests/unit/ui/components/content.test.tsx b/tests/unit/ui/components/content.test.tsx
+index f98474e..fdda9c8 100644
+--- a/tests/unit/ui/components/content.test.tsx
++++ b/tests/unit/ui/components/content.test.tsx
+@@ -77,8 +77,9 @@ describe('content-notice', () => {
+   test('HTML local-first warning dialog shows 1 time per file and experience banner shows 1 time in app opening time', async () => {
+     const content = await read(contentPath);
+ 
+-    expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.has\(state\.currentFile\)/);
+-    expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.add\(state\.currentFile\)/);
++    expect(content).toMatch(/const warningSessionKey = state\.currentFile \?\? '';/);
++    expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.has\(warningSessionKey\)/);
++    expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.add\(warningSessionKey\)/);
+     expect(content).not.toMatch(/htmlPreviewWarningSeenRef\.current\.delete/);
+     expect(content).toMatch(/htmlPreviewExperienceNoticeSeenRef\.current/);
+     expect(content).toMatch(/if\s*\(htmlPreviewExperienceNoticeSeenRef\.current\)\s*return;/);

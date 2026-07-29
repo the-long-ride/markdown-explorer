@@ -56,12 +56,28 @@ describe('markdown/renderer', () => {
         expect(html).toContain('mdn-subheading');
       });
 
-      it('adds anchor links', () => {
+      it('assigns unique ids to duplicate heading text', () => {
+        const renderer = new HtmlRenderer();
+        const { html, toc } = renderer.render([
+          { type: 'heading', level: 1, text: 'Fixed' },
+          { type: 'heading', level: 3, text: 'Fixed' },
+          { type: 'heading', level: 2, text: 'Fixed' },
+        ] as BlockToken[]);
+
+        expect(toc.map((entry) => entry.id)).toEqual(['fixed', 'fixed-1', 'fixed-2']);
+        expect(html).toContain('id="fixed"');
+        expect(html).toContain('id="fixed-1"');
+        expect(html).toContain('id="fixed-2"');
+      });
+
+      it('keeps heading ids without rendering visible hash anchors', () => {
         const tokens = tokenize('# My Title');
         const renderer = new HtmlRenderer();
         const { html } = renderer.render(tokens);
-        expect(html).toContain('mdn-anchor');
-        expect(html).toContain('#my-title');
+        expect(html).toContain('id="my-title"');
+        expect(html).not.toContain('mdn-anchor');
+        expect(html).not.toContain('href="#my-title"');
+        expect(html).not.toContain('>#</a>');
       });
 
       it('renders copy button in section', () => {
@@ -71,17 +87,27 @@ describe('markdown/renderer', () => {
         expect(html).toContain('mdn-section-copy-btn');
       });
 
-      it('renders the heading level immediately before the section copy button', () => {
+      it('renders the heading badge after text and before the section copy button', () => {
         const tokens = tokenize('# Title\n## Subheading');
         const renderer = new HtmlRenderer();
         const { html } = renderer.render(tokens);
 
         expect(html).toMatch(
-          /<span class="mdn-section-heading-level" aria-hidden="true">H1<\/span>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
+          /<span class="mdn-heading-text">Title<span class="mdn-heading-level" aria-hidden="true">H1<\/span><\/span>\s*<\/h1>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
         );
         expect(html).toMatch(
-          /<span class="mdn-section-heading-level" aria-hidden="true">H2<\/span>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
+          /<span class="mdn-heading-text">Subheading<span class="mdn-heading-level" aria-hidden="true">H2<\/span><\/span>\s*<\/h2>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
         );
+      });
+
+      it('renders absolute heading-level labels for H1 through H6', () => {
+        const tokens = tokenize('# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6');
+        const renderer = new HtmlRenderer();
+        const { html } = renderer.render(tokens);
+
+        for (let level = 1; level <= 6; level += 1) {
+          expect(html).toContain(`mdn-heading-level" aria-hidden="true">H${level}`);
+        }
       });
 
       it('renders chevron in section header', () => {
@@ -425,4 +451,42 @@ describe('markdown/renderer', () => {
       });
     });
   });
+    it('renders image-only paragraphs as equal-width image rows', () => {
+      const renderer = new HtmlRenderer();
+      const { html } = renderer.render(tokenize('![First](first.png) ![Second](second.png)'));
+      expect(html).toContain('class="mdn-image-row"');
+      expect(html).toContain('--mdn-image-count:2');
+      expect(html.match(/mdn-image-row__item/g)).toHaveLength(2);
+    });
+
+    it('renders linked images in the same image row', () => {
+      const renderer = new HtmlRenderer();
+      const { html } = renderer.render(tokenize('[![First](first.png)](https://example.com) ![Second](second.png)'));
+      expect(html).toContain('class="mdn-image-row"');
+      expect(html).toContain('<a href="https://example.com"');
+    });
+
+    it('keeps mixed prose and images in normal paragraph flow', () => {
+      const renderer = new HtmlRenderer();
+      const { html } = renderer.render(tokenize('Before ![First](first.png) after'));
+      expect(html).not.toContain('mdn-image-row');
+      expect(html).toMatch(/^<p>/);
+    });
+
+    it('renders separate image rows when blank lines split paragraphs', () => {
+      const renderer = new HtmlRenderer();
+      const { html } = renderer.render(tokenize('![A](a.png) ![B](b.png)\n\n![C](c.png) ![D](d.png)'));
+      expect(html.match(/class="mdn-image-row"/g)).toHaveLength(2);
+    });
+
+    it('places square H-level badges after heading text for H1 through H6', () => {
+      const renderer = new HtmlRenderer();
+      const { html } = renderer.render(tokenize('# One\n\n## Two\n\n### Three\n\n#### Four\n\n##### Five\n\n###### Six'));
+      for (let level = 1; level <= 6; level += 1) {
+        expect(html).toContain(`class="mdn-heading-level" aria-hidden="true">H${level}</span>`);
+      }
+      expect(html).not.toContain('mdn-subheading-level');
+      expect(html).not.toContain('mdn-section-heading-level');
+    });
+
 });

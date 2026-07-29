@@ -1,7 +1,16 @@
 const { registerRuntimeUpdateHandlers } = require("./runtime-update-handlers");
 
 function registerRuntimeCommandHandlers(context) {
-  const { state, deps, pathApi, fs, dialog, getMainWindow, sendHostMessage, getHostInfo, sendLoading, sendRecentWorkspacesChanged, recentWorkspacesStore, createStartupReadyAck, deferWorkspaceLoad, ensureHeavyModules, scanWorkspaceData, perf, appQuit, isSupportedFilePathLite, isExtraDocumentFilePathLite, getOpenDialogFiltersLite, ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, bindWorkspaceWatch, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome, refreshActiveWorkspace, resolveNavigationPath, setAppZoomLevel, ZOOM_LEVEL_STEP, isAccessDeniedError, decodeNavigationPath, stripNavigationFragment, isRootRelativeWorkspaceHref, isSameOrInsidePath } = context;
+  const { state, deps, pathApi, fs, dialog, getMainWindow, sendHostMessage, getHostInfo, sendLoading, sendRecentWorkspacesChanged, recentWorkspacesStore, createStartupReadyAck, deferWorkspaceLoad, ensureHeavyModules, scanWorkspaceData, perf, appQuit, isSupportedFilePathLite, isExtraDocumentFilePathLite, getOpenDialogFiltersLite, ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, bindWorkspaceWatch, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome, refreshActiveWorkspace, resolveNavigationPath, setAppZoomLevel, ZOOM_LEVEL_STEP, isAccessDeniedError, decodeNavigationPath, stripNavigationFragment, isRootRelativeWorkspaceHref, isSameOrInsidePath, cancelWorkspaceScan, cancelAllWorkspaceScans } = context;
+
+  function applyWorkspaceOperation(message = {}) {
+    if (typeof message.workspaceOperationId === 'string') {
+      state.workspaceOperationId = message.workspaceOperationId;
+    }
+    if (typeof message.workspaceTabId === 'string') {
+      state.workspaceTabId = message.workspaceTabId;
+    }
+  }
 
   async function handleReady(msg = {}) {
     if (typeof msg.documentConversionEnabled === "boolean") {
@@ -18,7 +27,8 @@ function registerRuntimeCommandHandlers(context) {
       documentConversionEnabled: state.documentConversionEnabled,
       hostInfo: getHostInfo(),
     });
-    sendHostMessage(ackMsg);
+    const workspaceOperationMetadata = msg.workspaceOperationMetadata || {};
+    sendHostMessage({ ...ackMsg, ...workspaceOperationMetadata });
     perf.mark("host:ready-ack");
     perf.measure("host ready to readyAck", "host:ready", "host:ready-ack");
     perf.printSummary();
@@ -37,23 +47,38 @@ function registerRuntimeCommandHandlers(context) {
     }
   }
 
-  function handleOpenFolder(openFirstFile = false) {
+  function handleOpenFolder(openFirstFile = false, operation = {}) {
+    applyWorkspaceOperation(operation);
     ensureHeavyModules();
     const folders = dialog.showOpenDialogSync(getMainWindow(), {
       properties: ["openDirectory"],
     });
-    if (folders && folders.length > 0) {
-      const selectedFolder = folders[0];
-      recentWorkspacesStore.save(selectedFolder);
-      state.workspacePath = selectedFolder;
-      state.currentFile = null;
-      bindWorkspaceWatch();
-      sendLoading("Loading workspace...");
-      sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
+    if (!folders || folders.length === 0) {
+      sendHostMessage({
+        command: "workspaceOpenCancelled",
+        workspaceOperationId: operation.workspaceOperationId,
+        workspaceTabId: operation.workspaceTabId,
+      });
+      state.workspaceOperationId = null;
+      state.workspaceTabId = null;
+      return;
     }
+
+    const selectedFolder = folders[0];
+    if (operation.replaceRecentWorkspacePath && operation.replaceRecentWorkspacePath !== selectedFolder) {
+      recentWorkspacesStore.remove(operation.replaceRecentWorkspacePath);
+    }
+    recentWorkspacesStore.save(selectedFolder);
+    sendRecentWorkspacesChanged();
+    state.workspacePath = selectedFolder;
+    state.currentFile = null;
+    bindWorkspaceWatch();
+    sendLoading("Loading workspace...");
+    sendWorkspaceData().then((completed) => completed && sendInitialContent(openFirstFile));
   }
 
-  function handleOpenFile() {
+  function handleOpenFile(operation = {}) {
+    applyWorkspaceOperation(operation);
     ensureHeavyModules();
     const files = dialog.showOpenDialogSync(getMainWindow(), {
       properties: ["openFile"],
@@ -63,17 +88,19 @@ function registerRuntimeCommandHandlers(context) {
       const selectedFile = files[0];
       const folder = pathApi.dirname(selectedFile);
       recentWorkspacesStore.save(folder);
+      sendRecentWorkspacesChanged();
       state.workspacePath = folder;
       state.currentFile = selectedFile;
       bindWorkspaceWatch();
       sendLoading(
         isExtraDocumentFilePathLite(selectedFile) ? "Preparing document preview..." : "Loading docs...",
       );
-      sendWorkspaceData().then(() => sendContent());
+      sendWorkspaceData().then((completed) => completed && sendContent());
     }
   }
 
-  function handleOpenPath(filePath, openFirstFile = false) {
+  function handleOpenPath(filePath, openFirstFile = false, operation = {}) {
+    applyWorkspaceOperation(operation);
     ensureHeavyModules();
     const status = getWorkspacePathStatus(filePath);
     if (!status.ok) {
@@ -104,12 +131,14 @@ function registerRuntimeCommandHandlers(context) {
     }
 
     recentWorkspacesStore.save(state.workspacePath);
+    sendRecentWorkspacesChanged();
     bindWorkspaceWatch();
     sendLoading("Loading workspace...");
-    sendWorkspaceData().then(() => sendInitialContent(openFirstFile && !isFile));
+    sendWorkspaceData().then((completed) => completed && sendInitialContent(openFirstFile && !isFile));
   }
 
-  function handleActivateWorkspace(wsPath, filePath, openFirstFile = false) {
+  function handleActivateWorkspace(wsPath, filePath, openFirstFile = false, operation = {}) {
+    applyWorkspaceOperation(operation);
     const status = getWorkspacePathStatus(wsPath);
     if (!status.ok) {
       sendWorkspaceUnavailable(wsPath, status.reason);
@@ -124,6 +153,7 @@ function registerRuntimeCommandHandlers(context) {
         ? filePath
         : null;
     recentWorkspacesStore.save(state.workspacePath);
+    sendRecentWorkspacesChanged();
     deferWorkspaceLoad({
       ensureHeavyModules,
       bindWorkspaceWatch,
@@ -264,7 +294,8 @@ function registerRuntimeCommandHandlers(context) {
     }
   }
 
-  function handleOpenRecent(folderPath, openFirstFile = false) {
+  function handleOpenRecent(folderPath, openFirstFile = false, operation = {}) {
+    applyWorkspaceOperation(operation);
     ensureHeavyModules();
     const status = getWorkspacePathStatus(folderPath);
     if (!status.ok) {
@@ -273,15 +304,16 @@ function registerRuntimeCommandHandlers(context) {
     }
 
     recentWorkspacesStore.save(folderPath);
+    sendRecentWorkspacesChanged();
     state.workspacePath = folderPath;
     bindWorkspaceWatch();
     sendLoading("Loading workspace...");
     if (status.stat.isFile()) {
       state.currentFile = folderPath;
-      sendWorkspaceData().then(() => sendInitialContent(false));
+      sendWorkspaceData().then((completed) => completed && sendInitialContent(false));
     } else {
       state.currentFile = null;
-      sendWorkspaceData().then(() => sendInitialContent(openFirstFile));
+      sendWorkspaceData().then((completed) => completed && sendInitialContent(openFirstFile));
     }
   }
 
@@ -355,7 +387,8 @@ function registerRuntimeCommandHandlers(context) {
     if (!state.workspacePath) return;
 
     sendLoading(nextEnabled ? "Finding supported documents..." : "Refreshing Markdown files...");
-    await sendWorkspaceData();
+    const completed = await sendWorkspaceData();
+    if (!completed) return;
 
     if (state.currentFile && !isSupportedFilePathLite(state.currentFile, state.documentConversionEnabled)) {
       state.currentFile = null;
@@ -370,6 +403,14 @@ function registerRuntimeCommandHandlers(context) {
     }
   }
 
+  function handleCancelWorkspaceScan(workspaceOperationId) {
+    cancelWorkspaceScan(workspaceOperationId);
+  }
+
+  function handleCancelAllWorkspaceScans() {
+    cancelAllWorkspaceScans();
+  }
+
   const {
     handleDownloadUpdate,
     handleScheduleDownloadedUpdate,
@@ -379,7 +420,7 @@ function registerRuntimeCommandHandlers(context) {
 
 
 
-  return { handleReady, handleOpenFolder, handleOpenFile, handleOpenPath, handleActivateWorkspace, handleSearchAcrossWorkspaces, handleSearchWorkspace, handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes, handleConfirmOpenPath, handleOpenRecent, handleDeleteRecentWorkspace, handleReplaceRecentWorkspaces, handleZoomIn, handleZoomOut, handleNavigate, handleRefresh, handleSetDocumentConversion, handleDownloadUpdate, handleScheduleDownloadedUpdate, handleRestartAndApplyUpdate, handleCloseWorkspace };
+  return { handleReady, handleOpenFolder, handleOpenFile, handleOpenPath, handleActivateWorkspace, handleSearchAcrossWorkspaces, handleSearchWorkspace, handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes, handleConfirmOpenPath, handleOpenRecent, handleDeleteRecentWorkspace, handleReplaceRecentWorkspaces, handleZoomIn, handleZoomOut, handleNavigate, handleRefresh, handleSetDocumentConversion, handleDownloadUpdate, handleScheduleDownloadedUpdate, handleRestartAndApplyUpdate, handleCloseWorkspace, handleCancelWorkspaceScan, handleCancelAllWorkspaceScans };
 }
 
 module.exports = { registerRuntimeCommandHandlers };

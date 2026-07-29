@@ -23,6 +23,7 @@ export interface DesktopTab {
   currentFile: string | null;
   contentHtml: string;
   markdownSource: string | null;
+  sourceDocumentText?: string | null;
   frontmatter: Frontmatter;
   toc: TocEntry[];
   previewInfo: DocumentPreviewInfo | null;
@@ -34,6 +35,8 @@ export interface DesktopTab {
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
   isIndexed?: boolean;
+  workspaceOperationId?: string;
+  workspaceLoadState?: 'idle' | 'loading' | 'ready';
 }
 
 export interface FloatingToolbarPosition {

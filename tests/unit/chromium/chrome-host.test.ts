@@ -116,23 +116,28 @@ describe('chrome-host bus communication', () => {
 
 describe('openExternal url validation', () => {
   it('accepts http URLs', () => {
-    expect(/^https?:\/\//i.test('http://example.com')).toBe(true);
+    expect(/^(?:https?|file):\/\//i.test('http://example.com')).toBe(true);
   });
 
   it('accepts https URLs', () => {
-    expect(/^https?:\/\//i.test('https://example.com')).toBe(true);
+    expect(/^(?:https?|file):\/\//i.test('https://example.com')).toBe(true);
+  });
+
+
+  it('accepts file URLs', () => {
+    expect(/^(?:https?|file):\/\//i.test('file:///tmp/readme.md')).toBe(true);
   });
 
   it('rejects non-http URLs', () => {
-    expect(/^https?:\/\//i.test('ftp://example.com')).toBe(false);
+    expect(/^(?:https?|file):\/\//i.test('ftp://example.com')).toBe(false);
   });
 
   it('rejects javascript: URLs', () => {
-    expect(/^https?:\/\//i.test('javascript:alert(1)')).toBe(false);
+    expect(/^(?:https?|file):\/\//i.test('javascript:alert(1)')).toBe(false);
   });
 
   it('rejects data: URLs', () => {
-    expect(/^https?:\/\//i.test('data:text/html,test')).toBe(false);
+    expect(/^(?:https?|file):\/\//i.test('data:text/html,test')).toBe(false);
   });
 });
 

@@ -5,6 +5,7 @@ import {
   LANGUAGE_OPTIONS,
 } from '../../../../ui/src/contexts/translations';
 import type { Translations } from '../../../../ui/src/contexts/translations';
+import { TRANSLATIONS } from '../../../../ui/src/contexts/translationsData';
 
 describe('translations', () => {
   test('getTranslations("en") returns English translations with all required keys', () => {
@@ -57,12 +58,42 @@ describe('translations', () => {
       'sidebarLabels', 'sidebarLabelsDesc', 'fileTabs', 'fileTabsDesc',
       'documentConversion', 'documentConversionDesc', 'htmlPreview', 'htmlPreviewDesc',
       'shortcuts', 'shortcutsHint', 'resetShortcuts', 'closeSettings',
-      'themeStyles', 'actions', 'topbar', 'tooltips', 'tabContextMenu',
+      'themeStyles', 'actions', 'topbar', 'tooltips', 'previewActions', 'tabContextMenu',
       'documentPreview', 'recentWorkspaces', 'sidebar', 'toc', 'update',
       'bannedShortcutTitle', 'bannedShortcutDismiss', 'bannedShortcutImeMessage',
     ];
     for (const key of requiredKeys) {
       expect(t[key]).toBeDefined();
+    }
+  });
+
+
+  test('all supported languages contain every preview action translation', () => {
+    const keys = [
+      'openInBrowser', 'openAsModal', 'showCode', 'showPreview', 'copyCode',
+      'modalTitle', 'closeModal', 'openError', 'linkMenu', 'copyLink',
+      'linkCopied', 'unableToOpenLink', 'copyFailed',
+      'csvMalformedQuote', 'csvPreviewTitle', 'csvUnevenRows', 'plainText', 'tsvPreviewTitle',
+    ];
+    for (const option of LANGUAGE_OPTIONS) {
+      const group = TRANSLATIONS[option.id].previewActions as Record<string, string>;
+      expect(Object.keys(group).sort()).toEqual([...keys].sort());
+      for (const key of keys) expect(group[key].trim()).not.toBe('');
+    }
+  });
+
+
+  test('all supported languages match the English theme and preview translation shapes', () => {
+    const english = TRANSLATIONS.en;
+    const themeKeys = Object.keys(english.themeStyles).sort();
+    const previewKeys = Object.keys(english.documentPreview).sort();
+
+    for (const option of LANGUAGE_OPTIONS) {
+      const locale = TRANSLATIONS[option.id];
+      expect(Object.keys(locale.themeStyles).sort()).toEqual(themeKeys);
+      expect(Object.keys(locale.documentPreview).sort()).toEqual(previewKeys);
+      for (const value of Object.values(locale.themeStyles)) expect(value.trim()).not.toBe('');
+      for (const value of Object.values(locale.documentPreview)) expect(value.trim()).not.toBe('');
     }
   });
 

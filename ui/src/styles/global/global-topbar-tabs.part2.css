@@ -1,3 +1,23 @@
+.topbar__action-btn,
+.topbar__new-workspace-btn {
+  min-width: var(--control-h, 28px);
+  width: var(--control-h, 28px);
+  height: var(--control-h, 28px);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--tx2);
+}
+
+.topbar__action-btn:hover,
+.topbar__action-btn:focus-visible,
+.topbar__new-workspace-btn:hover,
+.topbar__new-workspace-btn:focus-visible {
+  border-color: var(--bd-x);
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
 .tab-context-menu {
   position: fixed;
   width: 280px;
@@ -20,8 +40,10 @@
   width: 100%;
   min-width: 0;
   min-height: 30px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
   align-items: center;
+  column-gap: 10px;
   border: 0;
   border-radius: calc(var(--r) - 2px);
   background: transparent;
@@ -65,8 +87,8 @@
   color: var(--txm);
 }
 
-.tab-context-menu__item kbd {
-  margin-left: auto;
+.tab-context-menu__item-shortcut {
+  margin-left: 0;
   color: var(--tx3);
   font: 600 10px/1 var(--font-ui);
   letter-spacing: 0.02em;
@@ -80,7 +102,7 @@
 
 .desktop-tabbar__search {
   width: min(280px, 24vw);
-  height: 30px;
+  height: var(--control-h, 28px);
   min-width: 180px;
   display: inline-flex;
   align-items: center;
@@ -236,8 +258,6 @@
    Maximized state offset on Windows to prevent titlebar hidden cutoff
    ============================================================ */
 .is-windows .desktop-tabbar {
-  padding-top: 9px !important;
-  padding-bottom: 6px !important;
   height: 46px !important;
   flex: 0 0 46px !important;
 }
@@ -246,11 +266,28 @@
 }
 
 .is-maximized-windows .desktop-tabbar {
-  padding-top: 13px !important;
-  padding-bottom: 6px !important;
   height: 50px !important;
   flex: 0 0 50px !important;
 }
 .is-maximized-windows.app--tab-view .workspace-selection {
   min-height: calc(100vh - 50px) !important;
+}
+
+.tab-context-menu__item-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+
+.tab-context-menu__item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  color: currentColor;
+}
+
+.tab-context-menu__item.has-divider-before {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 9px;
 }

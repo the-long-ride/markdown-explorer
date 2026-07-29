@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Markdown Explorer
+Comment=Explore private Markdown workspaces and technical documentation
+Exec=markdown-explorer %F
+Icon=${SNAP}/usr/share/icons/hicolor/512x512/apps/markdown-explorer.png
+Terminal=false
+Type=Application
+Categories=Development;Utility;TextEditor;
+MimeType=text/markdown;text/x-markdown;
+StartupWMClass=markdown-explorer
+Keywords=Markdown;Documentation;Notes;Mermaid;Developer;

@@ -1,2 +1,22 @@
 @import url("./WelcomePage.part1.css");
 @import url("./WelcomePage.part2.css");
+
+.tips-use-cases {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.tips-use-case {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tips-use-case__title {
+  margin: 0;
+  color: var(--tx);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}

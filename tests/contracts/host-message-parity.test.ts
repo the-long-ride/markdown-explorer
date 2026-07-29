@@ -14,7 +14,7 @@ type VscodeWebviewMessage = typeof vscodeTypes.WebviewMessage;
 
 const UI_HOST_COMMANDS: (UiHostMessage extends { command: infer C }[] ? C : never)[] = [
   'renderContent', 'readyAck', 'workspaceFilesChanged', 'currentFileChanged',
-  'recentWorkspacesChanged', 'navNotFound', 'workspaceUnavailable', 'setLoading',
+  'recentWorkspacesChanged', 'navNotFound', 'workspaceUnavailable', 'setLoading', 'workspaceScanProgress',
   'updateStateChanged', 'window-state-changed', 'crossTabSearchResults',
   'workspaceSearchResults', 'workspaceSearchIndexLoaded',
 ] as string[] as never[];
@@ -27,22 +27,22 @@ const VSCODE_HOST_COMMANDS: string[] = [
 const CHROMIUM_HOST_COMMANDS: string[] = [
   'readyAck', 'renderContent', 'setLoading', 'workspaceFilesChanged',
   'recentWorkspacesChanged', 'workspaceUnavailable', 'workspaceSearchResults',
-  'workspaceSearchIndexLoaded', 'currentFileChanged',
+  'workspaceSearchIndexLoaded', 'currentFileChanged', 'workspaceScanProgress',
 ];
 
 const DESKTOP_WEBVIEW_COMMANDS: string[] = [
-  'ready', 'navigate', 'openFolder', 'openFile', 'openPath',
+  'ready', 'navigate', 'openFolder', 'openFile', 'openPath', 'openShellLocation',
   'activateWorkspace', 'searchAcrossWorkspaces', 'searchWorkspace',
   'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
   'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
-  'closeWorkspace', 'zoom-in', 'zoom-out', 'openInEditor', 'copyCode',
-  'openExternal', 'refresh', 'setDocumentConversion', 'downloadUpdate',
+  'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'openInEditor', 'copyCode',
+  'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'downloadUpdate',
   'scheduleDownloadedUpdate', 'restartAndApplyUpdate', 'window-minimize',
-  'window-maximize', 'window-close',
+  'window-maximize', 'window-close', 'toggle-fullscreen',
 ];
 
 const VSCODE_WEBVIEW_COMMANDS: string[] = [
-  'navigate', 'openInEditor', 'ready', 'copyCode', 'openExternal',
+  'navigate', 'openInEditor', 'ready', 'copyCode', 'openExternal', 'openHtmlPreview',
   'refresh', 'setDocumentConversion', 'searchWorkspace', 'updateAppearance',
   'openFolder', 'openFile', 'openPath', 'confirmOpenPath',
   'openRecentWorkspace', 'closeWorkspace', 'deleteRecentWorkspace',
@@ -50,8 +50,8 @@ const VSCODE_WEBVIEW_COMMANDS: string[] = [
 ];
 
 const CHROMIUM_WEBVIEW_COMMANDS: string[] = [
-  'ready', 'openFolder', 'openRecentWorkspace', 'deleteRecentWorkspace',
-  'closeWorkspace', 'navigate', 'refresh', 'searchWorkspace',
+  'ready', 'openFolder', 'openRecentWorkspace', 'activateWorkspace', 'deleteRecentWorkspace',
+  'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'navigate', 'refresh', 'searchWorkspace',
   'loadWorkspaceSearchIndexes', 'indexWorkspaceSearchItems', 'openExternal',
 ];
 
@@ -67,14 +67,14 @@ describe('host-message parity', () => {
 
   describe('fixture covers every UI WebviewMessage discriminant', () => {
     const UI_WEBVIEW_COMMANDS = [
-      'ready', 'navigate', 'openFolder', 'openFile', 'openPath',
+      'ready', 'navigate', 'openFolder', 'openFile', 'openFileHandle', 'openPath', 'openShellLocation',
       'activateWorkspace', 'searchWorkspace', 'searchAcrossWorkspaces',
       'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
       'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
-      'closeWorkspace', 'zoom-in', 'zoom-out', 'openInEditor', 'copyCode',
-      'openExternal', 'refresh', 'setDocumentConversion', 'updateAppearance',
+      'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'openInEditor', 'copyCode',
+      'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'updateAppearance',
       'downloadUpdate', 'scheduleDownloadedUpdate', 'restartAndApplyUpdate',
-      'window-minimize', 'window-maximize', 'window-close',
+      'window-minimize', 'window-maximize', 'window-close', 'toggle-fullscreen',
     ];
 
     for (const cmd of UI_WEBVIEW_COMMANDS) {
@@ -84,6 +84,7 @@ describe('host-message parity', () => {
           : cmd === 'window-minimize' ? 'windowMinimize'
           : cmd === 'window-maximize' ? 'windowMaximize'
           : cmd === 'window-close' ? 'windowClose'
+          : cmd === 'toggle-fullscreen' ? 'toggleFullscreen'
           : cmd;
         expect(typeof webviewMessages[key as keyof typeof webviewMessages]).toBe('function');
       });
@@ -130,6 +131,7 @@ describe('host-message parity', () => {
         'window-state-changed',
         'workspaceSearchIndexLoaded',
         'workspaceUnavailable',
+        'workspaceScanProgress',
       ].sort());
     });
   });
@@ -139,9 +141,12 @@ describe('host-message parity', () => {
     test('VSCode omits desktop/chromium-only webview messages', () => {
       expect(VSCODE_EXCLUDED_WEBVIEW.sort()).toEqual([
         'activateWorkspace',
+        'cancelAllWorkspaceScans',
+        'cancelWorkspaceScan',
         'downloadUpdate',
         'indexWorkspaceSearchItems',
         'loadWorkspaceSearchIndexes',
+        'openShellLocation',
         'replaceRecentWorkspaces',
         'restartAndApplyUpdate',
         'scheduleDownloadedUpdate',
@@ -149,6 +154,7 @@ describe('host-message parity', () => {
         'window-close',
         'window-maximize',
         'window-minimize',
+        'toggle-fullscreen',
       ].sort());
     });
 
@@ -162,13 +168,14 @@ describe('host-message parity', () => {
     const CHROMIUM_EXCLUDED = DESKTOP_WEBVIEW_COMMANDS.filter(c => !CHROMIUM_WEBVIEW_COMMANDS.includes(c));
     test('Chromium omits desktop/vscode-only webview messages', () => {
       expect(CHROMIUM_EXCLUDED.sort()).toEqual([
-        'activateWorkspace',
         'confirmOpenPath',
         'copyCode',
         'downloadUpdate',
         'openFile',
+        'openHtmlPreview',
         'openInEditor',
         'openPath',
+        'openShellLocation',
         'replaceRecentWorkspaces',
         'restartAndApplyUpdate',
         'scheduleDownloadedUpdate',
@@ -177,6 +184,7 @@ describe('host-message parity', () => {
         'window-close',
         'window-maximize',
         'window-minimize',
+        'toggle-fullscreen',
         'zoom-in',
         'zoom-out',
       ].sort());
@@ -198,15 +206,19 @@ describe('host-message parity', () => {
         ready: () => webviewMessages.ready(),
         refresh: () => webviewMessages.refresh(),
         closeWorkspace: () => webviewMessages.closeWorkspace(),
+        cancelWorkspaceScan: () => webviewMessages.cancelWorkspaceScan(),
+        cancelAllWorkspaceScans: () => webviewMessages.cancelAllWorkspaceScans(),
         zoomIn: () => webviewMessages.zoomIn(),
         zoomOut: () => webviewMessages.zoomOut(),
         windowMinimize: () => webviewMessages.windowMinimize(),
         windowMaximize: () => webviewMessages.windowMaximize(),
         windowClose: () => webviewMessages.windowClose(),
+        toggleFullscreen: () => webviewMessages.toggleFullscreen(),
         scheduleDownloadedUpdate: () => webviewMessages.scheduleDownloadedUpdate(),
         restartAndApplyUpdate: () => webviewMessages.restartAndApplyUpdate(),
         openFolder: () => webviewMessages.openFolder(),
         openFile: () => webviewMessages.openFile(),
+        openFileHandle: () => webviewMessages.openFileHandle(),
         setDocumentConversion: () => webviewMessages.setDocumentConversion(true),
         updateAppearance: () => webviewMessages.updateAppearance(),
         indexWorkspaceSearchItems: () => webviewMessages.indexWorkspaceSearchItems(),
@@ -215,6 +227,7 @@ describe('host-message parity', () => {
       const pathFactories: Record<string, () => any> = {
         navigate: () => webviewMessages.navigate('/test.md'),
         openPath: () => webviewMessages.openPath('/test.md'),
+        openShellLocation: () => webviewMessages.openShellLocation('/test.md', 'reveal-file'),
         activateWorkspace: () => webviewMessages.activateWorkspace('/ws'),
         searchWorkspace: () => webviewMessages.searchWorkspace('test'),
         searchAcrossWorkspaces: () => webviewMessages.searchAcrossWorkspaces('test'),
@@ -224,6 +237,7 @@ describe('host-message parity', () => {
         openInEditor: () => webviewMessages.openInEditor('/test.md'),
         copyCode: () => webviewMessages.copyCode('code'),
         openExternal: () => webviewMessages.openExternal('https://example.test'),
+        openHtmlPreview: () => webviewMessages.openHtmlPreview(),
         replaceRecentWorkspaces: () => webviewMessages.replaceRecentWorkspaces([]),
         downloadUpdate: () => webviewMessages.downloadUpdate(),
       };
@@ -278,9 +292,10 @@ describe('host-message parity', () => {
   });
 
   describe('openExternal URL validation is consistent', () => {
-    test('desktop and chromium both validate https?:// schema', () => {
+    test('desktop and chromium both validate safe browser URL schemas', () => {
       const desktopSrc = ipcHandlers.registerIpcHandlers.toString();
       expect(desktopSrc).toContain('https?');
+      expect(desktopSrc).toContain('file');
     });
   });
 });

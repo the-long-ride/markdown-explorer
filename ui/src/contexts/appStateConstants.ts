@@ -13,17 +13,19 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   collapseAll: 'Ctrl+Shift+x',
   expandAll: 'Ctrl+Shift+e',
   workspaceSelection: 'Ctrl+Alt+W',
-  toggleSidebar: 'Ctrl+Shift+p',
-  toggleToc: 'Ctrl+T',
-  sidebarCursorMode: 'Alt+S',
+  toggleSidebar: 'Alt+A',
+  toggleToc: 'Alt+C',
+  sidebarCursorMode: 'Alt+Z',
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
-  locateFile: 'Ctrl+Q',
+  locateFile: 'Alt+Q',
   toggleFocusMode: 'Ctrl+Alt+F',
+  toggleHtmlPreview: 'Ctrl+Alt+H',
 };
 
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   ...DEFAULT_KEYBINDINGS,
+  settings: 'Ctrl+,',
   searchCurrent: 'Ctrl+F',
   searchAllTabs: 'Ctrl+Shift+F',
   findCurrentFile: 'F',
@@ -31,6 +33,7 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleSidebar: 'Ctrl+B',
   workspaceSelection: 'Ctrl+N',
   toggleDesktopViewMode: 'Ctrl+Alt+T',
+  openCurrentDocumentLocation: 'Shift+Alt+R',
   closeContentTab: 'Ctrl+W',
   closeAllContentTabs: 'Ctrl+Shift+W',
   closeContentTabsToRight: 'Ctrl+Alt+W',
@@ -65,11 +68,6 @@ export const THEME_STYLE_OPTIONS: readonly {
     description: 'Compact reader surfaces with the original Markdown Explorer balance.',
   },
   {
-    id: 'glass',
-    label: 'Evolved Glass',
-    description: 'Layered translucent panels, softer strokes, and airy document rhythm.',
-  },
-  {
     id: 'bento',
     label: 'Bento Grids',
     description: 'Modular blocks, stronger structure, and denser scan-friendly spacing.',
@@ -79,9 +77,24 @@ export const THEME_STYLE_OPTIONS: readonly {
     label: 'Vercel',
     description: 'High-contrast monochrome, sharp borders, and geometric focus.',
   },
+  {
+    id: 'tokyo-night',
+    label: 'Tokyo Night',
+    description: 'Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast.',
+  },
+  {
+    id: 'neon-voltage',
+    label: 'Neon Voltage',
+    description: 'Deep black surfaces with electric coral, teal, and purple glow.',
+  },
+  {
+    id: 'raw-grid',
+    label: 'Raw Grid',
+    description: 'Visible structure, asymmetric panels, and mechanical borders.',
+  },
 ];
 
-export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-shiba';
+export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-white-shiba';
 
 export const PET_THEME_STYLE_OPTIONS: readonly {
   id: PetThemeStyle;
@@ -89,24 +102,14 @@ export const PET_THEME_STYLE_OPTIONS: readonly {
   description: string;
 }[] = [
   {
-    id: 'pet-white-shiba',
-    label: 'White Shiba',
-    description: 'Snowy fur, warm ears, and a calm little desk buddy.',
-  },
-  {
-    id: 'pet-shiba',
-    label: 'Normal Shiba',
-    description: 'Toasted orange, curled-tail energy with cheerful paw trails.',
-  },
-  {
-    id: 'pet-shiba-memes',
-    label: 'Black Shiba',
-    description: 'A dark Shiba theme with inky fur, bright eyes, and cheerful desk-buddy energy.',
-  },
-  {
     id: 'pet-k-ink',
     label: "K-Ink (app author's dog)",
     description: 'A personal K-Ink theme with expressive ears, warm amber eyes, and anime sticker energy.',
+  },
+  {
+    id: 'pet-white-shiba',
+    label: 'White Shiba',
+    description: 'Snowy fur, warm ears, and a calm little desk buddy.',
   },
   {
     id: 'pet-cat',
@@ -151,6 +154,8 @@ export function normalizeThemeMode(value: unknown): ThemeMode {
 }
 
 export function normalizeThemeStyle(value: unknown): ThemeStyle {
+  if (value === 'pet-shiba-memes') return 'tokyo-night';
+  if (value === 'pet-shiba') return 'pet-white-shiba';
   return ALL_THEME_STYLE_OPTIONS.some((option) => option.id === value)
     ? (value as ThemeStyle)
     : 'default';

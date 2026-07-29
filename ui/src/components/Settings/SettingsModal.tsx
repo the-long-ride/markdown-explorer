@@ -11,20 +11,19 @@ import { SettingsShortcutsPanel } from "./SettingsShortcutsPanel";
 import { SettingsPreferencesPanel } from "./SettingsPreferencesPanel";
 import { ThemeRemixModal } from "./ThemeRemixModal";
 import { LANGUAGE_OPTIONS, getTranslations, Translations } from "../../contexts/translations";
-import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings } from "../../settings/settingsImportExport";
+import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings, SettingsImportError } from "../../settings/settingsImportExport";
 import { usePlatform } from "../../contexts/PlatformContext";
-import { CopyIcon, FolderIcon, GlobeIcon } from "../shared/icons";
+import { ExportSettingsIcon, ImportSettingsIcon, LanguageIcon } from "../shared/icons";
 import {
   filterKeyboardShortcutActions,
 } from "./keyboardShortcutSearch";
-import { BannedShortcutDialog, DownloadedUpdateDialog } from "./SettingsModalDialogs";
+import { BannedShortcutDialog, DownloadedUpdateDialog, ResetShortcutsConfirmDialog } from "./SettingsModalDialogs";
 import { ACTIONS_LIST } from "./settingsActions";
+import { getDefaultKeybindings } from "../../contexts/appStateConstants";
 
 export { ACTIONS_LIST };
 
 import whiteShibaBlep from "../../assets/themes/pets/backgrounds/white-shiba-blep.png";
-import shibaBlep from "../../assets/themes/pets/backgrounds/shiba-blep.png";
-import blackShibaBlep from "../../assets/themes/pets/backgrounds/shiba-memes-blep.png";
 import kInkSurprise from "../../assets/themes/pets/backgrounds/k-ink-surprise.png";
 import catBlep from "../../assets/themes/pets/backgrounds/cat-blep.png";
 import hamsterBlep from "../../assets/themes/pets/backgrounds/hamster-blep.png";
@@ -32,8 +31,6 @@ import corgiBlep from "../../assets/themes/pets/backgrounds/corgi-blep.png";
 
 const PET_BLEP_URLS = {
   "pet-white-shiba": whiteShibaBlep,
-  "pet-shiba": shibaBlep,
-  "pet-shiba-memes": blackShibaBlep,
   "pet-k-ink": kInkSurprise,
   "pet-cat": catBlep,
   "pet-hamster": hamsterBlep,
@@ -81,6 +78,7 @@ export function SettingsModal({
   const [settingsDataStatus, setSettingsDataStatus] = useState("");
   const [bannedShortcutError, setBannedShortcutError] = useState<string | null>(null);
   const [shortcutSearchQuery, setShortcutSearchQuery] = useState("");
+  const [resetShortcutsConfirmOpen, setResetShortcutsConfirmOpen] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -117,7 +115,7 @@ export function SettingsModal({
     setLangMenuOpen(false);
   };
 
-  const isDesktop = typeof (window as any).electronAPI !== "undefined";
+  const isDesktop = typeof (window as any).electronAPI !== "undefined" || state.appRuntime === "tauri";
   const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
   const isDesktopLike = isDesktop || isChrome;
   const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
@@ -138,6 +136,7 @@ export function SettingsModal({
   const visibleActions = ACTIONS_LIST.filter(
     (act) =>
       act.scope === "both" ||
+      (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
       (act.scope === "desktop" && isDesktopLike) ||
       (act.scope === "electron" && isDesktop),
   );
@@ -228,7 +227,7 @@ export function SettingsModal({
     anchor.download = `markdown-explorer-settings-${new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
-    setSettingsDataStatus("Exported settings JSON.");
+    setSettingsDataStatus(t.settingsData.exported);
   };
 
   const importSettingsFile = (file: File | undefined) => {
@@ -262,9 +261,13 @@ export function SettingsModal({
           });
         }
         restoreLocalUiSettings(imported.localUi);
-        setSettingsDataStatus("Imported settings and workspace history.");
+        setSettingsDataStatus(t.settingsData.imported);
       } catch (err) {
-        setSettingsDataStatus(err instanceof Error ? err.message : "Import failed.");
+        setSettingsDataStatus(
+          err instanceof SettingsImportError
+            ? t.settingsData[err.code]
+            : t.settingsData.importFailed,
+        );
       } finally {
         if (importInputRef.current) importInputRef.current.value = "";
       }
@@ -301,27 +304,25 @@ export function SettingsModal({
               <span className="tooltip-text">{t.tooltips.openChangelog}</span>
             </a>
           )}
-          <div className="settings-data-actions" role="group" aria-label="Settings data">
-            <button
-              type="button"
+          <div className="settings-data-actions" role="group" aria-label={t.settingsData.groupLabel}>
+            <TooltipButton
               className="settings-data-btn"
               onClick={() => importInputRef.current?.click()}
-              aria-label="Import all user settings from JSON"
-              title="Import all user settings from JSON"
-            >
-              <FolderIcon size={13} />
-              Import JSON
-            </button>
-            <button
-              type="button"
+              tooltip={t.importJsonTooltip}
+              tooltipPos="below"
+              icon={<ImportSettingsIcon size={13} />}
+              label={t.importJson}
+              onlyIcon={false}
+            />
+            <TooltipButton
               className="settings-data-btn"
               onClick={exportSettings}
-              aria-label="Export all user settings to JSON"
-              title="Export all user settings to JSON"
-            >
-              <CopyIcon size={13} />
-              Export JSON
-            </button>
+              tooltip={t.exportJsonTooltip}
+              tooltipPos="below"
+              icon={<ExportSettingsIcon size={13} />}
+              label={t.exportJson}
+              onlyIcon={false}
+            />
             <input
               ref={importInputRef}
               type="file"
@@ -341,7 +342,7 @@ export function SettingsModal({
               onClick={() => setLangMenuOpen((open) => !open)}
               tooltip={t.tooltips.switchLanguage}
               tooltipPos="below"
-              icon={<GlobeIcon size={16} />}
+              icon={<LanguageIcon size={16} />}
             />
             {langMenuOpen && (
               <div className="settings-language-menu" role="listbox" aria-label="Languages">
@@ -380,15 +381,17 @@ export function SettingsModal({
         <div
           className="settings-card__body settings-card__body--settings"
         >
-          <SettingsPreferencesPanel
-            state={state}
-            t={t}
-            isDesktop={isDesktop}
-            setTheme={setTheme}
-            setThemeStyle={setThemeStyle}
-            updateSettings={updateSettings}
-            onOpenThemeRemix={() => setThemeRemixOpen(true)}
-          />
+          <div className="settings-appearance-scroll">
+            <SettingsPreferencesPanel
+              state={state}
+              t={t}
+              isDesktop={isDesktop}
+              setTheme={setTheme}
+              setThemeStyle={setThemeStyle}
+              updateSettings={updateSettings}
+              onOpenThemeRemix={() => setThemeRemixOpen(true)}
+            />
+          </div>
 
           {/* Vertical Divider */}
           <div
@@ -419,6 +422,7 @@ export function SettingsModal({
             getUpdateErrorText={getUpdateErrorText}
             onOpenChangelog={onOpenChangelog}
             onDownloadUpdate={onDownloadUpdate}
+            onRequestReset={() => setResetShortcutsConfirmOpen(true)}
           />
 
         </div>
@@ -428,7 +432,20 @@ export function SettingsModal({
         onClose={() => setThemeRemixOpen(false)}
       />
       {isUpdateDownloaded && <DownloadedUpdateDialog t={t} version={updateVersionLabel || ""} onSchedule={onScheduleUpdateOnExit} onRestart={onRestartAndApplyUpdate} />}
-      {bannedShortcutError && <BannedShortcutDialog t={t} error={bannedShortcutError} mascot={state.themeStyle.startsWith("pet-") ? PET_BLEP_URLS[state.themeStyle as keyof typeof PET_BLEP_URLS] || shibaBlep : ""} onClose={() => setBannedShortcutError(null)} />}
+      {bannedShortcutError && <BannedShortcutDialog t={t} error={bannedShortcutError} mascot={state.themeStyle.startsWith("pet-") ? PET_BLEP_URLS[state.themeStyle as keyof typeof PET_BLEP_URLS] || whiteShibaBlep : ""} onClose={() => setBannedShortcutError(null)} />}
+      {resetShortcutsConfirmOpen && (
+        <ResetShortcutsConfirmDialog
+          t={t}
+          onCancel={() => setResetShortcutsConfirmOpen(false)}
+          onConfirm={() => {
+            updateSettings({
+              keybindings: getDefaultKeybindings(isDesktop),
+              disabledKeybindings: {},
+            });
+            setResetShortcutsConfirmOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

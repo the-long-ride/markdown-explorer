@@ -53,6 +53,29 @@ describe('parser', () => {
       const result = parse('---\nkey: value\n---\nText');
       expect(result.frontmatter).toEqual({ key: 'value' });
     });
+
+    it('extracts frontmatter after leading HTML comments and preserves the comments', () => {
+      const result = parse('<!-- This is comment section -->\n---\nid: 12345\nname: I am a freak\n---\nThe rest');
+      expect(result.frontmatter).toEqual({ id: '12345', name: 'I am a freak' });
+      expect(result.tokens[0]).toEqual({ type: 'html-comment', content: ' This is comment section ' });
+      expect(result.tokens[1]).toEqual({ type: 'paragraph', text: 'The rest' });
+    });
+
+    it('supports multiple comments and blank lines before frontmatter', () => {
+      const result = parse('\n<!-- first -->\n\n<!-- second\nline -->\n\n---\nid: 1\n---\nBody');
+      expect(result.frontmatter).toEqual({ id: '1' });
+      expect(result.tokens.filter((token) => token.type === 'html-comment')).toHaveLength(2);
+    });
+
+    it('does not treat frontmatter after prose as metadata', () => {
+      const result = parse('Intro\n\n---\nid: 1\n---\nBody');
+      expect(result.frontmatter).toEqual({});
+    });
+
+    it('does not treat frontmatter after an unclosed leading comment as metadata', () => {
+      const result = parse('<!-- broken\n---\nid: 1\n---\nBody');
+      expect(result.frontmatter).toEqual({});
+    });
   });
 
   describe('MDX mode', () => {
@@ -175,6 +198,16 @@ describe('parser', () => {
     it('parses fenced code with lang suffixes like .tsx', () => {
       const result = parse('```tsx\nexport default () => <div/>\n```');
       expect((result.tokens[0] as CodeBlockToken).lang).toBe('tsx');
+    });
+
+    it('preserves CSV fence metadata for delimiter and header overrides', () => {
+      const result = parse('```csv noheader delimiter=tab\nA\tB\n```');
+      expect(result.tokens[0]).toEqual({
+        type: 'code',
+        lang: 'csv',
+        meta: 'noheader delimiter=tab',
+        content: 'A\tB',
+      });
     });
   });
 

@@ -5,6 +5,8 @@ import {
   collapseAll,
   setHtmlMode,
   toggleHtmlMode,
+  setCsvMode,
+  toggleCsvMode,
   triggerToggleCodeCollapse,
   initGlobalHandlers,
 } from '../../../../ui/src/dom/globalHandlers';
@@ -83,7 +85,7 @@ describe('globalHandlers', () => {
         <div class="mdn-codeblock" data-mode="code">
           <span class="mdn-codeblock-lang">HTML</span>
           <div class="mdn-html-preview-body" style="display:none"></div>
-          <div class="mdn-codeblock-body" style="display:flex"></div>
+          <div class="mdn-code-source" style="display:flex"><div class="mdn-codeblock-body"></div></div>
           <button class="mdn-toggle-preview-btn">
             <span class="tooltip-text"></span>
             <svg></svg>
@@ -95,7 +97,7 @@ describe('globalHandlers', () => {
       expect(wrap.dataset.mode).toBe('preview');
       expect(document.querySelector('.mdn-codeblock-lang')?.textContent).toBe('HTML Preview');
       expect((document.querySelector('.mdn-html-preview-body') as HTMLElement).style.display).toBe('');
-      expect((document.querySelector('.mdn-codeblock-body') as HTMLElement).style.display).toBe('none');
+      expect((document.querySelector('.mdn-code-source') as HTMLElement).style.display).toBe('none');
     });
 
     it('sets code mode correctly', () => {
@@ -103,7 +105,7 @@ describe('globalHandlers', () => {
         <div class="mdn-codeblock" data-mode="preview">
           <span class="mdn-codeblock-lang">HTML Preview</span>
           <div class="mdn-html-preview-body" style="display:block"></div>
-          <div class="mdn-codeblock-body" style="display:none"></div>
+          <div class="mdn-code-source" style="display:none"><div class="mdn-codeblock-body"></div></div>
           <button class="mdn-toggle-preview-btn">
             <span class="tooltip-text"></span>
             <svg></svg>
@@ -115,7 +117,7 @@ describe('globalHandlers', () => {
       expect(wrap.dataset.mode).toBe('code');
       expect(document.querySelector('.mdn-codeblock-lang')?.textContent).toBe('HTML');
       expect((document.querySelector('.mdn-html-preview-body') as HTMLElement).style.display).toBe('none');
-      expect((document.querySelector('.mdn-codeblock-body') as HTMLElement).style.display).toBe('flex');
+      expect((document.querySelector('.mdn-code-source') as HTMLElement).style.display).toBe('');
     });
   });
 
@@ -125,7 +127,7 @@ describe('globalHandlers', () => {
         <div class="mdn-codeblock" data-mode="preview">
           <span class="mdn-codeblock-lang">HTML Preview</span>
           <div class="mdn-html-preview-body" style="display:block"></div>
-          <div class="mdn-codeblock-body" style="display:none"></div>
+          <div class="mdn-code-source" style="display:none"><div class="mdn-codeblock-body"></div></div>
           <button class="mdn-toggle-preview-btn">
             <span class="tooltip-text"></span>
             <svg></svg>
@@ -143,7 +145,7 @@ describe('globalHandlers', () => {
         <div class="mdn-codeblock" data-mode="code">
           <span class="mdn-codeblock-lang">HTML</span>
           <div class="mdn-html-preview-body" style="display:none"></div>
-          <div class="mdn-codeblock-body" style="display:flex"></div>
+          <div class="mdn-code-source" style="display:flex"><div class="mdn-codeblock-body"></div></div>
           <button class="mdn-toggle-preview-btn">
             <span class="tooltip-text"></span>
             <svg></svg>
@@ -205,6 +207,8 @@ describe('globalHandlers', () => {
       expect(typeof win.UI.collapseAll).toBe('function');
       expect(typeof win.UI.setHtmlMode).toBe('function');
       expect(typeof win.UI.toggleHtmlMode).toBe('function');
+      expect(typeof win.UI.setCsvMode).toBe('function');
+      expect(typeof win.UI.toggleCsvMode).toBe('function');
       expect(typeof win.UI.refresh).toBe('function');
       expect(typeof win.Sidebar.toggleFolder).toBe('function');
       expect(typeof win.Nav.go).toBe('function');

@@ -1,3 +1,6 @@
+const path = require("path");
+const SHELL_LOCATION_MODES = new Set(["open-directory", "reveal-file", "open-parent-directory"]);
+
 function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, shell, platform = process.platform }) {
   ipcMain.on("webview-message", async (_event, msg) => {
     switch (msg.command) {
@@ -5,16 +8,16 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         await handlers.ready(msg);
         break;
       case "openFolder":
-        handlers.openFolder(Boolean(msg.openFirstFile));
+        handlers.openFolder(Boolean(msg.openFirstFile), msg);
         break;
       case "openFile":
-        handlers.openFile();
+        handlers.openFile(msg);
         break;
       case "openPath":
-        handlers.openPath(msg.path, Boolean(msg.openFirstFile));
+        handlers.openPath(msg.path, Boolean(msg.openFirstFile), msg);
         break;
       case "activateWorkspace":
-        handlers.activateWorkspace(msg.workspacePath, msg.filePath, Boolean(msg.openFirstFile));
+        handlers.activateWorkspace(msg.workspacePath, msg.filePath, Boolean(msg.openFirstFile), msg);
         break;
       case "searchAcrossWorkspaces":
         handlers.searchAcrossWorkspaces(msg);
@@ -32,7 +35,7 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         handlers.confirmOpenPath(msg.path);
         break;
       case "openRecentWorkspace":
-        handlers.openRecent(msg.path, Boolean(msg.openFirstFile));
+        handlers.openRecent(msg.path, Boolean(msg.openFirstFile), msg);
         break;
       case "deleteRecentWorkspace":
         handlers.deleteRecentWorkspace(msg.path);
@@ -42,6 +45,12 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         break;
       case "closeWorkspace":
         handlers.closeWorkspace();
+        break;
+      case "cancelWorkspaceScan":
+        handlers.cancelWorkspaceScan(msg.workspaceOperationId);
+        break;
+      case "cancelAllWorkspaceScans":
+        handlers.cancelAllWorkspaceScans();
         break;
       case "zoom-in":
         handlers.zoomIn();
@@ -55,12 +64,30 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "openInEditor":
         if (msg.path && fs.existsSync(msg.path)) shell.openPath(msg.path);
         break;
+      case "openShellLocation": {
+        if (!SHELL_LOCATION_MODES.has(msg.mode) || !msg.path || !fs.existsSync(msg.path)) break;
+        if (msg.mode === "reveal-file") {
+          shell.showItemInFolder(msg.path);
+          break;
+        }
+        const targetPath = msg.mode === "open-parent-directory" ? path.dirname(msg.path) : msg.path;
+        if (fs.existsSync(targetPath)) await shell.openPath(targetPath);
+        break;
+      }
       case "copyCode":
         clipboard.writeText(msg.text);
         break;
       case "openExternal":
-        if (typeof msg.url === "string" && /^https?:\/\//i.test(msg.url)) {
+        if (typeof msg.url === "string" && /^(?:https?|file):\/\//i.test(msg.url)) {
           shell.openExternal(msg.url);
+        }
+        break;
+      case "readWorkspaceTextResource":
+        handlers.readWorkspaceTextResource(msg);
+        break;
+      case "openHtmlPreview":
+        if (typeof msg.documentHtml === "string" && msg.documentHtml.trim()) {
+          await handlers.openHtmlPreview(msg.documentHtml);
         }
         break;
       case "refresh":

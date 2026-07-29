@@ -13,6 +13,7 @@ export class BrowserScanner {
     options: {
       onProgress?: (count: number) => void;
       onFile?: (file: MdFile, count: number) => void;
+      isCurrent?: () => boolean;
     } = {},
   ): Promise<{ tree: FolderNode; flat: MdFile[] }> {
     const flat: MdFile[] = [];
@@ -21,12 +22,15 @@ export class BrowserScanner {
       relativePath: string;
     }> = [];
     const excludes = ['.git', 'node_modules', '.vscode', 'out', 'dist'];
+    const isCurrent = options.isCurrent ?? (() => true);
 
     // Define traverse as a local recursive helper
     async function traverse(currentHandle: FileSystemDirectoryHandle, currentRelativePath: string) {
+      if (!isCurrent()) return;
       // Typecast values iterator since TS types for FileSystemDirectoryHandle might vary
       const entries = (currentHandle as any).values();
       for await (const entry of entries) {
+        if (!isCurrent()) return;
         if (excludes.includes(entry.name)) continue;
 
         const relativePath = currentRelativePath ? `${currentRelativePath}/${entry.name}` : entry.name;
@@ -43,16 +47,21 @@ export class BrowserScanner {
     }
 
     await traverse(rootHandle, '');
+    if (!isCurrent()) return { tree: BrowserScanner.buildTree([]), flat: [] };
     for (let index = 0; index < discovered.length; index += BrowserScanner.TITLE_CONCURRENCY) {
+      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat), flat };
       const batch = discovered.slice(index, index + BrowserScanner.TITLE_CONCURRENCY);
       await Promise.all(
         batch.map(async file => {
+          if (!isCurrent()) return null;
           const entry = await BrowserScanner.buildFileEntry(file.handle, file.relativePath);
+          if (!isCurrent()) return null;
           options.onFile?.(entry, flat.length + 1);
           flat.push(entry);
           return entry;
         }),
       );
+      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat), flat };
       options.onProgress?.(flat.length);
     }
     flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));

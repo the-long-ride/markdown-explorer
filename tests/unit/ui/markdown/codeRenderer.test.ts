@@ -140,4 +140,124 @@ describe('markdown/codeRenderer', () => {
     const html = renderCodeBlock({ type: 'code', lang: 'JavaScript', content: 'const x = 1;' }, 'auto');
     expect(html).toContain('mdn-codeblock');
   });
+
+  it('renders YAML aliases with syntax highlighting', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'yml', content: 'title: Explorer\nenabled: true' }, 'auto');
+    expect(html).toContain('language-yaml');
+    expect(html).toContain('hl-attr');
+    expect(html).toContain('hl-kw');
+  });
+});
+
+describe('HTML preview action toolbar', () => {
+  it('renders four icon-only actions in browser, modal, toggle, copy order', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<p>hello</p>' }, 'auto');
+    const classes = [
+      'mdn-open-browser-btn',
+      'mdn-open-modal-btn',
+      'mdn-toggle-preview-btn',
+      'mdn-copy-btn',
+    ];
+    const positions = classes.map((className) => html.indexOf(className));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(html).not.toContain('class="btn-label"');
+  });
+
+  it('adds translated-label hooks and accessible English fallbacks to HTML actions', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<p>hello</p>' }, 'auto');
+    expect(html).toContain('data-i18n-key="openInBrowser"');
+    expect(html).toContain('data-i18n-key="openAsModal"');
+    expect(html).toContain('title="Open in browser"');
+    expect(html).toContain('aria-label="Open in browser"');
+    expect(html).toContain('title="Open as modal"');
+    expect(html).toContain('aria-label="Open as modal"');
+  });
+});
+
+
+describe('CSV and TSV preview code blocks', () => {
+  it('renders CSV as an interactive data table by default', () => {
+    const html = renderCodeBlock({
+      type: 'code',
+      lang: 'csv',
+      content: 'Month,Desktop,Website\n2026-01,120,80\n2026-02,140,90',
+    }, { defaultCsvPreview: true });
+
+    expect(html).toContain('mdn-csv-preview-wrap');
+    expect(html).toContain('data-mode="preview"');
+    expect(html).toContain('mdn-table-wrap');
+    expect(html).toContain('<span class="mdn-th-text">Month</span>');
+    expect(html).toContain('<td>2026-01</td>');
+    expect(html).toContain('style="display:none"');
+  });
+
+  it('places the preview toggle immediately before the copy button', () => {
+    const html = renderCodeBlock({ type: 'code', lang: 'csv', content: 'A,B\n1,2' }, 'auto');
+    expect(html.indexOf('mdn-toggle-csv-btn')).toBeGreaterThan(-1);
+    expect(html.indexOf('mdn-toggle-csv-btn')).toBeLessThan(html.indexOf('mdn-copy-btn'));
+  });
+
+  it('renders source code by default when the CSV preference is disabled', () => {
+    const html = renderCodeBlock(
+      { type: 'code', lang: 'csv', content: 'A,B\n1,2' },
+      { defaultCsvPreview: false },
+    );
+
+    expect(html).toContain('data-mode="code"');
+    expect(html).toContain('mdn-csv-preview-body" style="display:none"');
+    expect(html).toContain('data-i18n-key="showPreview"');
+  });
+
+  it('uses TSV metadata, tab parsing, and the TSV translation key', () => {
+    const html = renderCodeBlock({
+      type: 'code',
+      lang: 'tsv',
+      meta: 'noheader',
+      content: 'January\t42\nFebruary\t57',
+    }, 'auto');
+
+    expect(html).toContain('data-code-label="TSV"');
+    expect(html).toContain('data-i18n-preview-key="tsvPreviewTitle"');
+    expect(html).toContain('<span class="mdn-th-text">A</span>');
+    expect(html).toContain('<span class="mdn-th-text">B</span>');
+    expect(html).toContain('<td>January</td>');
+  });
+
+  it('honors explicit delimiter and header metadata', () => {
+    const html = renderCodeBlock({
+      type: 'code',
+      lang: 'csv',
+      meta: 'delimiter=semicolon header',
+      content: 'Name;Count\nDesktop;100',
+    }, 'auto');
+
+    expect(html).toContain('<span class="mdn-th-text">Name</span>');
+    expect(html).toContain('<td>Desktop</td>');
+  });
+
+  it('keeps source available and renders a localized warning hook for malformed quotes', () => {
+    const html = renderCodeBlock({
+      type: 'code',
+      lang: 'csv',
+      content: 'Name,Description\nDesktop,"unterminated',
+    }, 'auto');
+
+    expect(html).toContain('data-i18n-content-key="csvMalformedQuote"');
+    expect(html).toContain('mdn-code-source');
+    expect(html).toContain('mdn-copy-btn');
+  });
+});
+
+describe('plain text code block label', () => {
+  it('uses PLAIN TEXT with a translation hook for text and untyped fences', () => {
+    const typed = renderCodeBlock({ type: 'code', lang: 'text', content: 'hello' }, 'auto');
+    const untyped = renderCodeBlock({ type: 'code', lang: '', content: 'hello' }, 'auto');
+
+    for (const html of [typed, untyped]) {
+      expect(html).toContain('data-i18n-content-key="plainText"');
+      expect(html).toContain('>PLAIN TEXT</span>');
+      expect(html).not.toContain('>TEXT</span>');
+    }
+  });
 });

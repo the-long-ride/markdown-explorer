@@ -55,12 +55,14 @@
     padding: 0 4px 16px 0;
     overscroll-behavior: contain;
   }
+  .settings-card--settings .settings-card__column--preferences,
   .settings-card__column--preferences,
   .settings-card__column--shortcuts {
     flex: none !important;
     width: 100% !important;
+    height: auto !important;
     max-height: none !important;
-    min-height: 0;
+    min-height: 0 !important;
     overflow: visible !important;
     padding-right: 0 !important;
   }
@@ -134,5 +136,32 @@
     min-height: 34px;
     text-align: left !important;
     letter-spacing: 0.04em !important;
+  }
+}
+
+@media (min-width: 901px) {
+  .settings-card--settings .settings-card__body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+
+  .settings-card__column--preferences {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 900px) {
+  .settings-card--settings .settings-appearance-scroll,
+  .settings-appearance-scroll {
+    flex: none !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    overscroll-behavior: auto !important;
+    padding-right: 0 !important;
   }
 }

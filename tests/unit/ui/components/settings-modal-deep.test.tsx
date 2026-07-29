@@ -20,6 +20,7 @@ function getMockState() {
       showTitle: false,
       fileTabs: true,
       defaultHtmlPreview: false,
+      defaultCsvPreview: false,
       documentConversion: true,
       desktopViewMode: 'focus',
       keybindings: { toggleTheme: 'Alt+T' },
@@ -64,9 +65,10 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, icon, tooltip, ...props }: any) => (
-    <button onClick={onClick} aria-label={tooltip} {...props}>
-      {icon}{children}
+  TooltipButton: ({ onClick, children, icon, tooltip, label, onlyIcon = true, ...props }: any) => (
+    <button onClick={onClick} aria-label={label || tooltip} {...props}>
+      {icon}{!onlyIcon && label}{children}
+      {tooltip && <span className="tooltip-text">{tooltip}</span>}
     </button>
   ),
 }));
@@ -111,10 +113,16 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
     documentConversionDesc: 'Convert docs.',
     htmlPreview: 'HTML Preview',
     htmlPreviewDesc: 'HTML preview default.',
+    csvPreview: 'CSV Preview',
+    csvPreviewDesc: 'CSV preview default.',
+    importJson: 'Import JSON',
+    exportJson: 'Export JSON',
+    importJsonTooltip: 'Import all user settings from JSON',
+    exportJsonTooltip: 'Export all user settings to JSON',
     shortcuts: 'Keyboard Shortcuts',
     shortcutsHint: 'Click to record.',
     resetShortcuts: 'Reset to Default Shortcuts',
-    closeSettings: 'Close Settings [Esc]',
+    closeSettings: 'Close Settings - (Esc)',
     actions: {
       findCurrentFile: 'Find in file',
       searchCurrent: 'Search workspace',
@@ -151,6 +159,17 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       zoomOut: 'Zoom Out',
       resetZoom: 'Reset Zoom',
     },
+    settingsData: {
+      groupLabel: 'Settings data',
+      imported: 'Imported settings and workspace history.',
+      importFailed: 'Import failed.',
+      invalidJson: 'The selected file is not valid JSON.',
+      missingData: 'The selected file does not contain settings data.',
+      wrongFile: 'This is not a Markdown Explorer settings file.',
+      unknownSchema: 'This settings file uses an unknown schema version.',
+      exported: 'Settings exported.',
+      exportFailed: 'Export failed.',
+    },
     update: {
       availableTitle: 'New version {version}',
       availableDescription: 'Current version {version}.',
@@ -170,6 +189,10 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
     bannedShortcutTitle: 'Banned Shortcut',
     bannedShortcutDismiss: 'Dismiss',
     bannedShortcutImeMessage: 'Ctrl+Space is IME.',
+    resetShortcutsConfirmTitle: 'Reset keyboard shortcuts?',
+    resetShortcutsConfirmBody: 'Confirm reset',
+    confirmResetShortcuts: 'Reset Shortcuts',
+    cancelResetShortcuts: 'Cancel',
     themeStyles: {
       defaultLabel: 'Default',
       defaultDesc: 'Default style',
@@ -193,6 +216,9 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   FolderIcon: () => <span>folder-icon</span>,
   GlobeIcon: () => <span>globe-icon</span>,
   AlertTriangleIcon: ({ size }: any) => <span>alert-icon</span>,
+  ImportSettingsIcon: () => <span>import-icon</span>,
+  ExportSettingsIcon: () => <span>export-icon</span>,
+  LanguageIcon: () => <span>lang-icon</span>,
 }));
 
 vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
@@ -205,6 +231,7 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
 }));
 
 vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({
+  SettingsImportError: class SettingsImportError extends Error {},
   createSettingsExport: () => '{}',
   parseSettingsImport: () => { throw new Error('Invalid'); },
   restoreLocalUiSettings: () => {},
@@ -212,6 +239,7 @@ vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({
 
 vi.mock('../../../../ui/src/utils/shortcuts', () => ({
   formatShortcutLabel: (s: string) => s,
+  getEnabledShortcut: (settings: any, key: string) => settings?.keybindings?.[key] ?? null,
 }));
 
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/*.png', () => ({
@@ -270,7 +298,7 @@ describe('SettingsModal deep', () => {
     it('close button calls onClose', () => {
       const onClose = vi.fn();
       renderModal({ onClose });
-      fireEvent.click(screen.getByText('×'));
+      fireEvent.click(screen.getByRole('button', { name: 'Close Settings - (Esc)' }));
       expect(onClose).toHaveBeenCalled();
     });
 
@@ -392,7 +420,7 @@ describe('SettingsModal deep', () => {
       expect(shortcutSwitch).toHaveAttribute('aria-checked', 'true');
       fireEvent.click(shortcutSwitch);
       expect(mockUpdateSettings).toHaveBeenCalledWith({
-        disabledKeybindings: expect.objectContaining({ findCurrentFile: true }),
+        disabledKeybindings: expect.objectContaining({ welcome: true }),
       });
     });
 
@@ -442,6 +470,7 @@ describe('SettingsModal deep', () => {
     it('Reset to Default Shortcuts calls updateSettings with defaults', () => {
       renderModal();
       fireEvent.click(screen.getByText('Reset to Default Shortcuts'));
+      fireEvent.click(screen.getByRole('button', { name: 'Reset Shortcuts' }));
       expect(mockUpdateSettings).toHaveBeenCalledWith({
         keybindings: { searchCurrent: 'Ctrl+K' },
         disabledKeybindings: {},
@@ -619,22 +648,51 @@ describe('SettingsModal deep', () => {
     });
   });
 
-  describe('import/export settings', () => {
-    it('renders Import JSON button', () => {
+  describe('CSV Preview toggle', () => {
+    it('renders the CSV preview preference description in the portal on hover', () => {
       renderModal();
-      expect(screen.getByLabelText('Import all user settings from JSON')).toBeInTheDocument();
+      expect(screen.getByText('CSV Preview')).toBeInTheDocument();
+      const row = screen.getByText('CSV Preview').closest('.settings-preference-row');
+      expect(row).not.toBeNull();
+      expect(row?.querySelector('.settings-preference-description-panel')).toBeNull();
+
+      fireEvent.mouseEnter(row!);
+
+      const tooltip = screen.getByRole('tooltip');
+      expect(tooltip).toHaveTextContent('CSV preview default.');
+      expect(tooltip.parentElement).toBe(document.body);
     });
 
-    it('renders Export JSON button', () => {
+    it('updates the independent CSV preview preference', () => {
       renderModal();
-      expect(screen.getByLabelText('Export all user settings to JSON')).toBeInTheDocument();
+      const csvRow = screen.getByText('CSV Preview').closest('.settings-preference-row');
+      const checkbox = csvRow?.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+      expect(checkbox).not.toBeNull();
+      fireEvent.click(checkbox!);
+      expect(mockUpdateSettings).toHaveBeenCalledWith({ defaultCsvPreview: true });
+    });
+  });
+
+  describe('import/export settings', () => {
+    it('renders Import JSON button with the shared tooltip', () => {
+      renderModal();
+      const button = screen.getByRole('button', { name: 'Import JSON' });
+      expect(button).toBeInTheDocument();
+      expect(button.querySelector('.tooltip-text')).toHaveTextContent('Import all user settings from JSON');
+    });
+
+    it('renders Export JSON button with the shared tooltip', () => {
+      renderModal();
+      const button = screen.getByRole('button', { name: 'Export JSON' });
+      expect(button).toBeInTheDocument();
+      expect(button.querySelector('.tooltip-text')).toHaveTextContent('Export all user settings to JSON');
     });
 
     it('export button creates downloadable blob and shows status', () => {
       renderModal();
-      const exportBtn = screen.getByLabelText('Export all user settings to JSON');
+      const exportBtn = screen.getByRole('button', { name: 'Export JSON' });
       fireEvent.click(exportBtn);
-      expect(screen.getByRole('status')).toHaveTextContent('Exported settings JSON.');
+      expect(screen.getByRole('status')).toHaveTextContent('Settings exported.');
     });
 
     it('import with invalid file shows error status', async () => {
@@ -644,7 +702,7 @@ describe('SettingsModal deep', () => {
       Object.defineProperty(importInput, 'files', { value: [file], configurable: true });
       fireEvent.change(importInput);
       await waitFor(() => {
-        expect(screen.getByRole('status')).toHaveTextContent('Invalid');
+        expect(screen.getByRole('status')).toHaveTextContent('Import failed.');
       });
     });
   });
@@ -835,7 +893,7 @@ describe('SettingsModal deep', () => {
 
   describe('ACTIONS_LIST', () => {
     it('contains expected number of actions', () => {
-      expect(ACTIONS_LIST.length).toBe(24);
+      expect(ACTIONS_LIST.length).toBe(26);
     });
 
     it('contains findCurrentFile action', () => {
@@ -845,11 +903,15 @@ describe('SettingsModal deep', () => {
     it('contains toggleFocusMode action', () => {
       expect(ACTIONS_LIST.find(a => a.id === 'toggleFocusMode')).toBeDefined();
     });
+
+    it('scopes open current document location to desktop apps', () => {
+      expect(ACTIONS_LIST.find(a => a.id === 'openCurrentDocumentLocation')?.scope).toBe('electron');
+    });
   });
 
   describe('pet theme mascot in banned shortcut dialog', () => {
     it('shows mascot when themeStyle starts with pet-', () => {
-      mockState = { ...getMockState(), themeStyle: 'pet-shiba' };
+      mockState = { ...getMockState(), themeStyle: 'pet-white-shiba' };
       renderModal();
       const inputs = document.querySelectorAll('.settings-shortcut-input') as NodeListOf<HTMLInputElement>;
       fireEvent.focus(inputs[0]);
@@ -868,4 +930,5 @@ describe('SettingsModal deep', () => {
       expect(icon).toBeInTheDocument();
     });
   });
+
 });

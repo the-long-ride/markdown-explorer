@@ -2,9 +2,10 @@
   "name": "markdown-explorer-workspace",
   "version": "1.6.0",
   "private": true,
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@11.17.0",
   "scripts": {
     "test": "vitest run",
+    "test:node": "node --experimental-strip-types --test tests/node/*.test.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:electron": "vitest run --project electron",
@@ -37,7 +38,6 @@
     "prebuild:chromium": "pnpm run sync-versions",
     "prebuild:website-app": "pnpm run sync-versions",
     "start:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run dev",
-    "start:tauri:live": "node scripts/start-tauri-dev.mjs",
     "build:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run build",
     "test:tauri": "cargo test --manifest-path tauri/Cargo.toml -- --test-threads=1",
     "test:desktop": "pnpm run test:electron && pnpm run test:tauri"

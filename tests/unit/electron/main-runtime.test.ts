@@ -311,19 +311,65 @@ describe('createDesktopRuntime', () => {
       expect(runtime.state.workspacePath).toBe('/my/project');
       expect(runtime.state.currentFile).toBeNull();
       expect(ctx.deps.recentWorkspacesStore.save).toHaveBeenCalledWith('/my/project');
-      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Loading workspace...');
+      expect(ctx.deps.sendRecentWorkspacesChanged).toHaveBeenCalled();
+      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Loading workspace...', undefined, {});
     });
 
-    test('does nothing when dialog cancelled', () => {
+    test('reports a tab-scoped cancellation and clears stale operation state when dialog is cancelled', () => {
       ctx.deps.dialog.showOpenDialogSync.mockReturnValue(null);
-      runtime.handleOpenFolder();
+      runtime.handleOpenFolder(false, {
+        workspaceOperationId: 'operation-1',
+        workspaceTabId: 'tab-1',
+      });
+
       expect(runtime.state.workspacePath).toBeNull();
+      expect(runtime.state.workspaceOperationId).toBeNull();
+      expect(runtime.state.workspaceTabId).toBeNull();
+      expect(ctx.sentMessages).toContainEqual({
+        command: 'workspaceOpenCancelled',
+        workspaceOperationId: 'operation-1',
+        workspaceTabId: 'tab-1',
+      });
     });
 
-    test('does nothing when dialog returns empty array', () => {
+    test('reports cancellation when dialog returns an empty array', () => {
       ctx.deps.dialog.showOpenDialogSync.mockReturnValue([]);
-      runtime.handleOpenFolder();
+      runtime.handleOpenFolder(false, {
+        workspaceOperationId: 'operation-2',
+        workspaceTabId: 'tab-2',
+      });
+
       expect(runtime.state.workspacePath).toBeNull();
+      expect(ctx.sentMessages).toContainEqual({
+        command: 'workspaceOpenCancelled',
+        workspaceOperationId: 'operation-2',
+        workspaceTabId: 'tab-2',
+      });
+    });
+
+    test('replaces the missing recent workspace only after a new folder is selected', () => {
+      ctx.deps.dialog.showOpenDialogSync.mockReturnValue(['/replacement/project']);
+      runtime.handleOpenFolder(true, {
+        workspaceOperationId: 'operation-3',
+        workspaceTabId: 'tab-3',
+        replaceRecentWorkspacePath: '/missing/project',
+      });
+
+      expect(ctx.deps.recentWorkspacesStore.remove).toHaveBeenCalledWith('/missing/project');
+      expect(ctx.deps.recentWorkspacesStore.save).toHaveBeenCalledWith('/replacement/project');
+      expect(runtime.state.workspacePath).toBe('/replacement/project');
+    });
+
+    test('keeps the missing recent workspace when replacement selection is cancelled', () => {
+      ctx.deps.dialog.showOpenDialogSync.mockReturnValue(null);
+      runtime.handleOpenFolder(true, {
+        workspaceOperationId: 'operation-4',
+        workspaceTabId: 'tab-4',
+        replaceRecentWorkspacePath: '/missing/project',
+      });
+
+      expect(ctx.deps.recentWorkspacesStore.remove).not.toHaveBeenCalled();
+      expect(ctx.deps.recentWorkspacesStore.save).not.toHaveBeenCalled();
     });
 
     test('keeps loading with no files, then reveals discovered files and refreshes at 32', async () => {
@@ -368,18 +414,19 @@ describe('createDesktopRuntime', () => {
       expect(runtime.state.workspacePath).toContain('project');
       expect(runtime.state.currentFile).toBe('/my/project/readme.md');
       expect(ctx.deps.recentWorkspacesStore.save).toHaveBeenCalled();
+      expect(ctx.deps.sendRecentWorkspacesChanged).toHaveBeenCalled();
     });
 
     test('shows preparing document message for extra doc types', () => {
       ctx.deps.dialog.showOpenDialogSync.mockReturnValue(['/my/project/report.docx']);
       runtime.handleOpenFile();
-      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Preparing document preview...');
+      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Preparing document preview...', undefined, {});
     });
 
     test('shows loading docs message for markdown files', () => {
       ctx.deps.dialog.showOpenDialogSync.mockReturnValue(['/my/project/readme.md']);
       runtime.handleOpenFile();
-      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Loading docs...');
+      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Loading docs...', undefined, {});
     });
 
     test('does nothing when dialog cancelled', () => {
@@ -715,7 +762,7 @@ describe('createDesktopRuntime', () => {
       ctx.deps.fs.statSync.mockReturnValue({ isFile: () => false });
       ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [] });
       await runtime.handleRefresh();
-      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Refreshing workspace...');
+      expect(ctx.deps.sendLoading).toHaveBeenCalledWith('Refreshing workspace...', undefined, {});
     });
   });
 

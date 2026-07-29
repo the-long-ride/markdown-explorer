@@ -25,11 +25,13 @@ function createAppBootstrap({
   ipcMainImpl = require("electron").ipcMain,
   clipboardImpl = require("electron").clipboard,
   shellImpl = require("electron").shell,
+  createHtmlPreviewServerFn = require("./html-preview-server").createHtmlPreviewServer,
   externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
   let trayRef = null;
   let updateManagerRef = null;
+  const htmlPreviewServer = createHtmlPreviewServerFn();
 
   function createWindow() {
     mainWindowRef = createMainWindowFn({ appDir: appDirImpl, debugTools: debugToolsImpl, clampAppZoom: runtimeImpl.clampAppZoom });
@@ -123,6 +125,8 @@ function createAppBootstrap({
           deleteRecentWorkspace: runtimeImpl.handleDeleteRecentWorkspace,
           replaceRecentWorkspaces: runtimeImpl.handleReplaceRecentWorkspaces,
           closeWorkspace: runtimeImpl.handleCloseWorkspace,
+          cancelWorkspaceScan: runtimeImpl.handleCancelWorkspaceScan,
+          cancelAllWorkspaceScans: runtimeImpl.handleCancelAllWorkspaceScans,
           zoomIn: runtimeImpl.handleZoomIn,
           zoomOut: runtimeImpl.handleZoomOut,
           navigate: runtimeImpl.handleNavigate,
@@ -131,6 +135,11 @@ function createAppBootstrap({
           downloadUpdate: runtimeImpl.handleDownloadUpdate,
           scheduleDownloadedUpdate: runtimeImpl.handleScheduleDownloadedUpdate,
           restartAndApplyUpdate: runtimeImpl.handleRestartAndApplyUpdate,
+          readWorkspaceTextResource: runtimeImpl.readWorkspaceTextResource,
+          openHtmlPreview: (documentHtml) => htmlPreviewServer.open(
+            documentHtml,
+            (url) => shellImpl.openExternal(url),
+          ),
         },
       });
     });
@@ -145,6 +154,7 @@ function createAppBootstrap({
 
   appImpl.on("before-quit", () => {
     runtimeImpl.dispose();
+    void htmlPreviewServer.dispose();
     if (updateManagerRef) {
       void updateManagerRef.applyPendingUpdateOnQuit();
     }
