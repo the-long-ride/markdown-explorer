@@ -4,7 +4,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
-## [Unreleased]
+## [v1.6.1] — 2026-07-29
 
 ### Added
 - **In-process Tauri document conversion**: local Rust converter handles DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF — no Node sidecar required — with localized best-effort warnings for legacy formats.
