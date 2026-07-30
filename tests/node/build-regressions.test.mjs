@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (relativePath) => readFile(path.join(repoRoot, relativePath), 'utf8');
+const read = readProjectSource;
 
 test('VS Code adapters accept native Thenable results without requiring Promise methods', async () => {
   const [previewServer, panelWatch] = await Promise.all([
@@ -43,4 +44,38 @@ test('View Preferences tooltip portals into body with high z-index stacking cont
 
   assert.match(tooltip, /createPortal\([\s\S]*portalTarget/);
   assert.match(css, /\.settings-preference-description-panel\s*\{[\s\S]*z-index:\s*\d+/);
+});
+
+test('Mermaid vendor chunk only captures third-party modules', async () => {
+  const config = await read('ui/vite.config.ts');
+
+  assert.match(config, /const normalizedId = id\.replace/);
+  assert.match(config, /isNodeModule\s*&&\s*normalizedId\.includes\('mermaid'\)/);
+  assert.doesNotMatch(config, /if \(id\.includes\('mermaid'\)\)/);
+});
+
+test('UI build contracts avoid unused hooks, unstable optional narrowing, and Node timer handles', async () => {
+  const [app, tableEnhancement, scheduler] = await Promise.all([
+    read('ui/src/App.tsx'),
+    read('ui/src/components/Content/enhancements/tableEnhancement.ts'),
+    read('ui/src/components/Content/contentEnhancementScheduler.ts'),
+  ]);
+
+  const reactImport = app.match(/import \{([^}]+)\} from 'react';/)?.[1] ?? '';
+  assert.doesNotMatch(reactImport, /\buseEffect\b/, 'App must not import an unused React hook');
+
+  assert.match(
+    tableEnhancement,
+    /const detectChartable = tableGlobals\?\.detectChartable;/,
+    'capture the optional callback once so TypeScript preserves its narrowing inside table iteration',
+  );
+  assert.match(tableEnhancement, /detectChartable\(table\.id\);/);
+
+  assert.doesNotMatch(
+    scheduler,
+    /ReturnType<typeof setTimeout>/,
+    'browser enhancement scheduling must not inherit NodeJS.Timeout from desktop ambient types',
+  );
+  assert.match(scheduler, /setDelay: \(callback: \(\) => void, delayMs: number\) => number;/);
+  assert.match(scheduler, /clearDelay: \(handle: number\) => void;/);
 });

@@ -1,0 +1,326 @@
+.app--tab-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app--tab-view .topbar {
+  display: none !important;
+}
+
+.app--tab-view .workspace-selection {
+  min-height: calc(100vh - 42px) !important;
+  padding-top: 56px !important;
+}
+
+.tab-home {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.desktop-tabbar {
+  height: 42px;
+  flex: 0 0 42px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-bottom: var(--stroke-w) solid var(--bd-s);
+  background: var(--bg-s);
+  box-shadow: var(--sh-sm);
+  z-index: 200000;
+  -webkit-app-region: drag;
+}
+
+.desktop-tabbar button,
+.desktop-tabbar input {
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__brand {
+  flex: 0 0 auto;
+  min-width: 150px;
+  max-width: 190px;
+  padding: 0 8px 0 2px;
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__brand .topbar__logo-title {
+  max-width: 138px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-tabbar__brand .topbar__logo-subtitle {
+  max-width: 142px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-tabbar__home,
+.desktop-tab,
+.desktop-tabbar__new {
+  height: var(--control-h, 28px);
+  border: var(--stroke-w) solid var(--bd-s);
+  background: var(--bg-e);
+  color: var(--tx2);
+  border-radius: var(--r);
+}
+
+.desktop-tabbar__home {
+  width: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.desktop-tabbar__home:hover,
+.desktop-tab:hover,
+.desktop-tabbar__new:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+  border-color: var(--bd-x);
+}
+
+.desktop-tabbar__home.is-active,
+.desktop-tab.is-active {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-e));
+  border-color: var(--accent);
+  color: var(--tx);
+}
+
+.desktop-tabbar__tabs-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  align-items: center;
+  -webkit-app-region: drag;
+}
+
+.desktop-tabbar__tabs {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-app-region: drag;
+}
+
+.desktop-tabbar__tabs::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.desktop-tabbar__scrollbar {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: -8px;
+  height: 6px;
+  z-index: 2;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__scrollbar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 2px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.desktop-tabbar__scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  height: 4px;
+  min-width: 44px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 12px var(--accent-dim);
+  cursor: grab;
+  -webkit-app-region: no-drag;
+  transition: background 0.12s ease, height 0.12s ease, top 0.12s ease;
+}
+
+.desktop-tabbar__scrollbar:hover .desktop-tabbar__scrollbar-thumb,
+.desktop-tabbar__scrollbar.is-dragging .desktop-tabbar__scrollbar-thumb {
+  top: 2px;
+  height: 3px;
+  background: var(--accent-text);
+}
+
+.desktop-tabbar__scrollbar.is-dragging,
+.desktop-tabbar__scrollbar.is-dragging .desktop-tabbar__scrollbar-thumb {
+  cursor: grabbing;
+}
+
+.desktop-tab {
+  flex: 0 0 auto;
+  max-width: 80ch;
+  min-width: 118px;
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 7px 0 10px;
+  cursor: pointer;
+  font: inherit;
+  user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tab.is-dragging {
+  opacity: 0.58;
+  cursor: grabbing;
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.desktop-tab.is-drop-target {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.desktop-tab.is-active {
+  max-width: 80ch;
+}
+
+.desktop-tabbar__tabs .desktop-tab:only-child {
+  max-width: 80ch;
+}
+
+.desktop-tab.is-closing--fade,
+.desktop-tab.is-closing--collapse {
+  box-sizing: border-box;
+  width: var(--desktop-tab-close-width);
+  min-width: var(--desktop-tab-close-width);
+  max-width: var(--desktop-tab-close-width);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.desktop-tab.is-closing--fade {
+  opacity: 0;
+  transition: opacity 90ms ease;
+}
+
+.desktop-tab.is-closing--collapse {
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  gap: 0;
+  margin-right: -6px;
+  padding-left: 0;
+  padding-right: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+  opacity: 0;
+  transition:
+    width 140ms ease,
+    min-width 140ms ease,
+    max-width 140ms ease,
+    gap 140ms ease,
+    margin-right 140ms ease,
+    padding 140ms ease,
+    border-width 140ms ease;
+}
+
+.desktop-tab__label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.desktop-tab__close {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0.72;
+}
+
+.desktop-tab__close:hover {
+  background: var(--bg-a);
+  opacity: 1;
+}
+
+.desktop-tab__alias-input {
+  min-width: 0;
+  width: 100%;
+  height: 22px;
+  border: var(--stroke-w) solid var(--accent);
+  border-radius: 5px;
+  background: var(--bg-s);
+  color: var(--tx);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 6px;
+  outline: none;
+}
+
+/* Shared header actions in desktop Tabs view. */
+.header-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.desktop-tabbar__navigation-actions,
+.desktop-tabbar__document-actions {
+  -webkit-app-region: no-drag;
+}
+
+.desktop-tabbar__navigation-separator,
+.desktop-tabbar__window-separator {
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+}
+
+.header-action-group .btn,
+.desktop-tabbar__navigation-actions .btn,
+.desktop-tabbar__document-actions .btn {
+  min-width: var(--control-h, 28px);
+  width: var(--control-h, 28px);
+  height: var(--control-h, 28px);
+}
+
+@media (max-width: 1120px) {
+  .desktop-tabbar__brand .topbar__logo-subtitle {
+    display: none;
+  }
+
+  .desktop-tabbar__brand {
+    min-width: auto;
+  }
+}

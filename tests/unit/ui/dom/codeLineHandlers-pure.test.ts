@@ -6,7 +6,6 @@ import {
   computeLineClasses,
   lineFromPosition,
   mergeLineRanges,
-  computeVisibleRows,
 } from '../../../../ui/src/dom/codeLineHandlers';
 
 describe('codeLineHandlers pure utilities', () => {
@@ -137,27 +136,4 @@ describe('codeLineHandlers pure utilities', () => {
     });
   });
 
-  describe('computeVisibleRows', () => {
-    it('filters hidden rows', () => {
-      const rows = [
-        { classList: { contains: () => false }, id: 'row1' },
-        { classList: { contains: () => true }, id: 'row2' },
-        { classList: { contains: () => false }, id: 'tbl-toggle-row' },
-        { classList: { contains: () => false }, id: 'row4' },
-      ];
-      const result = computeVisibleRows(rows as any, 'tbl', 50);
-      expect(result).toHaveLength(2);
-      expect(result[0].id).toBe('row1');
-      expect(result[1].id).toBe('row4');
-    });
-
-    it('respects maxRows limit', () => {
-      const rows = Array.from({ length: 10 }, (_, i) => ({
-        classList: { contains: () => false },
-        id: `row${i}`,
-      }));
-      const result = computeVisibleRows(rows as any, 'tbl', 5);
-      expect(result).toHaveLength(5);
-    });
-  });
 });

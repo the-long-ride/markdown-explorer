@@ -1,3 +1,6 @@
+import "highlight.js/styles/github-dark.css";
+import "katex/dist/katex.min.css";
+
 let highlightPromise: Promise<any> | null = null;
 let mermaidPromise: Promise<any> | null = null;
 let chartPromise: Promise<any> | null = null;
@@ -7,10 +10,20 @@ function getWindowObject() {
   return window as any;
 }
 
+function makeRetryable<T>(
+  load: () => Promise<T>,
+  reset: (promise: Promise<T>) => void,
+): Promise<T> {
+  const promise = load().catch((error) => {
+    reset(promise);
+    throw error;
+  });
+  return promise;
+}
+
 export function getHighlightJs() {
   if (!highlightPromise) {
-    highlightPromise = (async () => {
-      await import("highlight.js/styles/github-dark.css");
+    highlightPromise = makeRetryable(async () => {
       const [{ default: hljs }, ...languages] = await Promise.all([
         import("highlight.js/lib/core"),
         import("highlight.js/lib/languages/javascript"),
@@ -50,7 +63,9 @@ export function getHighlightJs() {
 
       getWindowObject().hljs = hljs;
       return hljs;
-    })();
+    }, (promise) => {
+      if (highlightPromise === promise) highlightPromise = null;
+    });
   }
 
   return highlightPromise;
@@ -58,19 +73,24 @@ export function getHighlightJs() {
 
 export function getMermaid() {
   if (!mermaidPromise) {
-    mermaidPromise = Promise.all([
-      import("mermaid"),
-      import("@mermaid-js/mermaid-zenuml"),
-    ]).then(async ([{ default: mermaid }, { default: zenuml }]) => {
-      try {
-        await mermaid.registerExternalDiagrams([zenuml]);
-      } catch (err) {
-        console.error("Failed to register ZenUML:", err);
-      }
+    mermaidPromise = makeRetryable(
+      () => Promise.all([
+        import("mermaid"),
+        import("@mermaid-js/mermaid-zenuml"),
+      ]).then(async ([{ default: mermaid }, { default: zenuml }]) => {
+        try {
+          await mermaid.registerExternalDiagrams([zenuml]);
+        } catch (err) {
+          console.error("Failed to register ZenUML:", err);
+        }
 
-      getWindowObject().mermaid = mermaid;
-      return mermaid;
-    });
+        getWindowObject().mermaid = mermaid;
+        return mermaid;
+      }),
+      (promise) => {
+        if (mermaidPromise === promise) mermaidPromise = null;
+      },
+    );
   }
 
   return mermaidPromise;
@@ -78,24 +98,29 @@ export function getMermaid() {
 
 export function getChart() {
   if (!chartPromise) {
-    chartPromise = import("chart.js").then((mod) => {
-      mod.Chart.register(
-        mod.ArcElement,
-        mod.BarController,
-        mod.BarElement,
-        mod.CategoryScale,
-        mod.DoughnutController,
-        mod.Legend,
-        mod.LineController,
-        mod.LineElement,
-        mod.LinearScale,
-        mod.PointElement,
-        mod.Tooltip,
-      );
+    chartPromise = makeRetryable(
+      () => import("chart.js").then((mod) => {
+        mod.Chart.register(
+          mod.ArcElement,
+          mod.BarController,
+          mod.BarElement,
+          mod.CategoryScale,
+          mod.DoughnutController,
+          mod.Legend,
+          mod.LineController,
+          mod.LineElement,
+          mod.LinearScale,
+          mod.PointElement,
+          mod.Tooltip,
+        );
 
-      getWindowObject().Chart = mod.Chart;
-      return mod.Chart;
-    });
+        getWindowObject().Chart = mod.Chart;
+        return mod.Chart;
+      }),
+      (promise) => {
+        if (chartPromise === promise) chartPromise = null;
+      },
+    );
   }
 
   return chartPromise;
@@ -103,10 +128,12 @@ export function getChart() {
 
 export function getKatex() {
   if (!katexPromise) {
-    katexPromise = Promise.all([
-      import("katex"),
-      import("katex/dist/katex.min.css"),
-    ]).then(([mod]) => mod.default);
+    katexPromise = makeRetryable(
+      () => import("katex").then((mod) => mod.default),
+      (promise) => {
+        if (katexPromise === promise) katexPromise = null;
+      },
+    );
   }
 
   return katexPromise;

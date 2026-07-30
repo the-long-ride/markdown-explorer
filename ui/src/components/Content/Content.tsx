@@ -2,13 +2,11 @@
 // components/Content/Content.tsx — Main content area (rendered HTML + effects)
 // =============================================================================
 
-import { useRef, useState, useCallback, useEffect, useMemo, memo, lazy, Suspense } from "react";
+import { memo, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { getTranslations } from "../../contexts/translations";
-import { WelcomePage } from "./WelcomePage";
-import { AlertTriangleIcon, FileNotFoundIcon, FolderIcon, TrashIcon } from "../shared/icons";
 import { useContentEffects } from "./useContentEffects";
 import { HtmlPreviewModal } from "../Modal/HtmlPreviewModal";
 import {
@@ -23,34 +21,14 @@ import {
 } from "../../dom/htmlPreviewActions";
 import type { ResolvedLink } from "../../dom/linkContextMenu";
 import { splitLeadingHtmlComments } from "./contentUtils";
-import { HtmlDocumentView, isHtmlDocumentPath } from "./HtmlDocumentView";
+import { isHtmlDocumentPath } from "./HtmlDocumentView";
 import { convertHtmlSourceToMarkdown } from "../../markdown/htmlToMarkdown";
 import { renderMarkdownClientSide } from "../../contexts/contentTabState";
 import { hasHtmlLocalFirstPolicyNotice, type HtmlLocalFirstPolicyReport } from "../../markdown/htmlLocalFirstPreview";
+import { ContentMainView } from "./ContentMainView";
 // Highlighting deliberately skips language-(txt|text|plain|plaintext) blocks.
 
 export { isWorkspaceNavigationHref } from "./contentUtils";
-
-const TableOfContents = lazy(() =>
-  import("../TOC/TableOfContents").then((m) => ({ default: m.TableOfContents }))
-);
-
-declare global {
-  interface Window {
-    hljs?: any;
-    mermaid?: any;
-    Table?: any;
-    Chart?: any;
-  }
-}
-
-// Memoize the raw HTML container so React does NOT re-apply dangerouslySetInnerHTML
-// when unrelated parent state (e.g. modalOpen) causes a re-render.
-// Without this, every App re-render would overwrite the DOM with the original HTML,
-// destroying SVGs that mermaid.run() injected asynchronously.
-const HtmlContent = memo(function HtmlContent({ html }: { html: string }) {
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
-});
 
 function buildRenderedDocumentSnapshot(
   contentHtml: string,
@@ -96,7 +74,7 @@ interface ContentProps {
   onOpenWorkspaceAgain?: (oldPath: string) => void;
 }
 
-export function Content({
+export const Content = memo(function Content({
   onImageClick,
   scrollRef,
   suppressWelcome = false,
@@ -323,215 +301,33 @@ export function Content({
 
   return (
     <>
-      <main className="content" id="mainContent">
-        <div className={`content__scroll${isFullHtmlPreview ? " content__scroll--html-preview" : ""}`} id="contentScroll" ref={scrollRef}>
-        {/* Loading */}
-        {state.isLoading && (
-          <div
-            className="state-screen state-screen--loading"
-            id="loadingScreen"
-          >
-            <div className="spinner" />
-            <div className="state-screen__title">{state.loadingLabel || "Loading docs..."}</div>
-            {state.loadingDetail && (
-              <div className="state-screen__sub">{state.loadingDetail}</div>
-            )}
-            {onCancelWorkspaceScan && (
-              <button
-                type="button"
-                className="btn state-screen__cancel"
-                onClick={onCancelWorkspaceScan}
-              >
-                {t.tooltips.cancelScan}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Workspace unavailable */}
-        {!state.isLoading && workspaceUnavailablePath && (
-          <div className="state-screen state-screen--workspace-unavailable">
-            <div className="state-screen__icon state-screen__icon--warning">
-              <AlertTriangleIcon size={34} />
-            </div>
-            <div className="state-screen__title">{t.workspaceUnavailable.title}</div>
-            <div className="state-screen__sub">
-              {t.workspaceUnavailable.description}
-            </div>
-            <div className="state-screen__path">{workspaceUnavailablePath}</div>
-            {isDesktopTabView && (
-              <div className="state-screen__hint">
-                {t.workspaceUnavailable.tabHint}
-              </div>
-            )}
-            <div className="state-screen__actions">
-              <button
-                type="button"
-                className="state-screen__button state-screen__button--primary"
-                onClick={handleOpenWorkspaceAgain}
-              >
-                <FolderIcon size={14} />
-                <span>{t.workspaceUnavailable.openAgain}</span>
-              </button>
-              <button
-                type="button"
-                className="state-screen__button state-screen__button--danger"
-                onClick={handleDeleteUnavailableWorkspace}
-                disabled={!isUnavailableWorkspaceInHistory}
-              >
-                <TrashIcon size={14} />
-                <span>
-                  {isUnavailableWorkspaceInHistory
-                    ? t.workspaceUnavailable.deleteHistory
-                    : t.workspaceUnavailable.removedHistory}
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Not Found */}
-        {!workspaceUnavailablePath && state.notFoundHref && (
-          <div className="state-screen">
-            <div className="state-screen__icon">⚠️</div>
-            <div className="state-screen__title">File not found</div>
-            <div
-              className="state-screen__sub state-screen__sub--path"
-            >
-              {state.notFoundHref}
-            </div>
-          </div>
-        )}
-
-        {/* Empty workspace */}
-        {!state.isLoading &&
-          !state.isWorkspaceScanning &&
-          !state.notFoundHref &&
-          !workspaceUnavailablePath &&
-          state.fileList.length === 0 &&
-          !state.contentHtml && (
-            <div className="state-screen">
-              <div className="state-screen__icon">
-                <FileNotFoundIcon />
-              </div>
-              <div className="state-screen__title">
-                {state.settings.documentConversion
-                  ? "No supported documents found"
-                  : "No Markdown, MDX, or TXT files found"}
-              </div>
-              <div className="state-screen__sub">
-                {state.settings.documentConversion
-                  ? "Add Markdown, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, or TXT files to this workspace."
-                  : "Add a .md, .mdx, or .txt file, or turn on document conversion to preview DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF files."}
-              </div>
-              {!state.settings.documentConversion && (
-                <button
-                  type="button"
-                  className="state-screen__button state-screen__button--primary"
-                  onClick={() => updateSettings({ documentConversion: true })}
-                >
-                  Enable document conversion
-                </button>
-              )}
-            </div>
-          )}
-
-        {/* Welcome Page */}
-        {!state.isLoading &&
-          !state.notFoundHref &&
-          !workspaceUnavailablePath &&
-          !suppressWelcome &&
-          !state.currentFile &&
-          state.fileList.length > 0 && <WelcomePage />}
-
-        {/* Content */}
-        {!state.isLoading &&
-          !state.notFoundHref &&
-          !workspaceUnavailablePath &&
-          state.currentFile &&
-          hasRenderableDocumentContent && (
-            <div
-              className={`mdn-body${isFullHtmlPreview ? " mdn-body--html-preview" : ""}`}
-              id="mdBody"
-              ref={bodyRef}
-              aria-live="polite"
-            >
-              {state.staleContentFilePath === state.currentFile && (
-                <div className="document-preview-notice current-file-change-notice" role="status">
-                  <AlertTriangleIcon size={16} />
-                  <div className="document-preview-notice__body current-file-change-notice__body">
-                    <span>{previewCopy.currentFileChangedOnDisk}</span>
-                    <button
-                      type="button"
-                      className="btn current-file-change-notice__button"
-                      onClick={refresh}
-                    >
-                      {previewCopy.refreshCurrentFile}
-                    </button>
-                    <span>{previewCopy.currentFileChangedSuffix}</span>
-                  </div>
-                </div>
-              )}
-              {isHtmlDocument && sourceDocumentText !== null ? (
-                <HtmlDocumentView
-                  filePath={state.currentFile}
-                  htmlSource={sourceDocumentText}
-                  markdownHtml={htmlMarkdownRender.html}
-                  previewEnabled={htmlDocumentPreviewEnabled}
-                  title={state.relativePath || state.currentFile}
-                  conversionError={htmlMarkdownRender.error}
-                  onPolicyReport={handleHtmlPolicyReport}
-                />
-              ) : (
-                <>
-                  {previewInfo && (
-                    <div
-                      className={`document-preview-notice document-preview-notice--${previewInfo.kind}`}
-                      role="note"
-                    >
-                      <AlertTriangleIcon size={16} />
-                      <div className="document-preview-notice__body">
-                        <div className="document-preview-notice__title">{previewTitle}</div>
-                        <div className="document-preview-notice__text">{previewWarning}</div>
-                        {previewMeta && <div className="document-preview-notice__meta">{previewMeta}</div>}
-                      </div>
-                    </div>
-                  )}
-                  {state.toc.length > 0 && !state.tocCollapsed && (
-                    <Suspense fallback={null}>
-                      <TableOfContents variant="compact" />
-                    </Suspense>
-                  )}
-                  {renderedContentParts.leadingCommentsHtml && (
-                    <HtmlContent html={renderedContentParts.leadingCommentsHtml} />
-                  )}
-                  {fmEntries.length > 0 && (
-                    <details className="mdn-frontmatter" open aria-label="Document properties">
-                      <summary className="mdn-frontmatter-summary">
-                        <span>Properties</span>
-                        <span className="mdn-frontmatter-count">
-                          {fmEntries.length} {fmEntries.length === 1 ? "property" : "properties"}
-                        </span>
-                      </summary>
-                      <div className="mdn-frontmatter-grid">
-                        {fmEntries.map(([key, value]) => (
-                          <div className="mdn-frontmatter-field" key={key}>
-                            <span className="mdn-frontmatter-key">{key}</span>
-                            <span className={`mdn-frontmatter-value${value ? "" : " is-empty"}`}>
-                              {value || "\u00a0"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                  )}
-                  <HtmlContent html={renderedContentParts.bodyHtml} />
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </main>
+      <ContentMainView
+        state={state}
+        translations={t}
+        scrollRef={scrollRef}
+        bodyRef={bodyRef}
+        isFullHtmlPreview={isFullHtmlPreview}
+        workspaceUnavailablePath={workspaceUnavailablePath}
+        isDesktopTabView={isDesktopTabView}
+        isUnavailableWorkspaceInHistory={isUnavailableWorkspaceInHistory}
+        suppressWelcome={suppressWelcome}
+        hasRenderableDocumentContent={hasRenderableDocumentContent}
+        isHtmlDocument={isHtmlDocument}
+        sourceDocumentText={sourceDocumentText}
+        htmlMarkdownRender={htmlMarkdownRender}
+        htmlDocumentPreviewEnabled={htmlDocumentPreviewEnabled}
+        previewTitle={previewTitle}
+        previewWarning={previewWarning}
+        previewMeta={previewMeta}
+        frontmatterEntries={fmEntries}
+        renderedContentParts={renderedContentParts}
+        onCancelWorkspaceScan={onCancelWorkspaceScan}
+        onOpenWorkspaceAgain={handleOpenWorkspaceAgain}
+        onDeleteUnavailableWorkspace={handleDeleteUnavailableWorkspace}
+        onUpdateSettings={updateSettings}
+        onRefresh={refresh}
+        onHtmlPolicyReport={handleHtmlPolicyReport}
+      />
       {htmlModal && (
         <HtmlPreviewModal
           documentHtml={htmlModal.documentHtml}
@@ -587,4 +383,4 @@ export function Content({
       {actionNotice && <div className="mdn-action-notice" role="status">{actionNotice}</div>}
     </>
   );
-}
+});

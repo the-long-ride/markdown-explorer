@@ -73,6 +73,16 @@ describe('HtmlRenderer', () => {
       expect(html).toContain('<strong>bold</strong>');
     });
 
+
+    test('uses CSP-safe delegated heading controls', () => {
+      const { html } = new HtmlRenderer().render([heading(1, 'Title')]);
+      expect(html).toContain('class="mdn-section-header"');
+      expect(html).toContain('role="button"');
+      expect(html).toContain('aria-expanded="true"');
+      expect(html).not.toContain('onclick="UI.toggleSection');
+      expect(html).not.toContain('onkeydown="if(event.key');
+    });
+
     test('H2 nests under preceding H1 section (H2 section class still present in HTML)', () => {
       const r = new HtmlRenderer();
       const { html } = r.render([heading(1, 'Top'), heading(2, 'Sub')]);

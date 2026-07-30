@@ -14,8 +14,6 @@ const MODIFIER_LABELS: Record<string, string> = {
   shift: 'Shift',
 };
 
-export const NON_MODIFIER = /^(?!ctrl$|control$|cmd$|command$|meta$|alt$|option$|shift$).+/i;
-
 function normalizeShortcutPart(part: string): string {
   const trimmed = part.trim();
   if (!trimmed) return '';

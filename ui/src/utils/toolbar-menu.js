@@ -15,37 +15,3 @@ export function buildShortcutTooltip(tooltip, shortcut) {
   if (!baseLabel || !shortcutLabel) return baseLabel;
   return `${baseLabel} - (${shortcutLabel})`;
 }
-
-export function createToolbarMenuItems({
-  labels,
-  tooltips,
-  shortcuts = {},
-  canEdit = true,
-}) {
-  return [
-    {
-      id: "home",
-      label: labels.home,
-      tooltip: buildShortcutTooltip(tooltips.home, shortcuts.home),
-      disabled: false,
-    },
-    {
-      id: "theme",
-      label: labels.theme,
-      tooltip: buildShortcutTooltip(tooltips.theme, shortcuts.theme),
-      disabled: false,
-    },
-    {
-      id: "edit",
-      label: labels.edit,
-      tooltip: buildShortcutTooltip(tooltips.edit, shortcuts.edit),
-      disabled: !canEdit,
-    },
-    {
-      id: "settings",
-      label: labels.settings,
-      tooltip: buildShortcutTooltip(tooltips.settings, shortcuts.settings),
-      disabled: false,
-    },
-  ];
-}

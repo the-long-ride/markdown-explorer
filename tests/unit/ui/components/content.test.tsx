@@ -1,28 +1,39 @@
 import { describe, expect, test } from 'vitest';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const contentPath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'Content.tsx');
-const translationsTypePath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'contexts', 'translations.ts');
+const contentPaths = [
+  path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'Content.tsx'),
+  path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'ContentMainView.tsx'),
+].filter(existsSync);
+const translationsTypePath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'contexts', 'translationTypes.ts');
 const translationsDataPath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'contexts', 'translationsData.ts');
-const cssPath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'styles', 'global', 'global-markdown-base.css');
+const cssPaths = [
+  'global-markdown-foundation.css',
+  'global-markdown-structures.css',
+].map((fileName) => path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'styles', 'global', fileName));
 
 async function read(filePath: string) {
   return readFile(filePath, 'utf8');
 }
 
+async function readContentSources() {
+  return (await Promise.all(contentPaths.map(read))).join('\n');
+}
+
 describe('content-notice', () => {
   test('skips txt code blocks during Highlight.js post-processing', async () => {
-    const content = await read(contentPath);
+    const content = await readContentSources();
 
     expect(content).toMatch(/language-\(txt\|text\|plain\|plaintext\)/);
   });
 
   test('stale current-file notice uses translation keys instead of hardcoded copy', async () => {
-    const content = await read(contentPath);
+    const content = await readContentSources();
 
     expect(content).toMatch(/previewCopy\.currentFileChangedOnDisk/);
     expect(content).toMatch(/previewCopy\.refreshCurrentFile/);
@@ -57,7 +68,7 @@ describe('content-notice', () => {
   });
 
   test('stale current-file notice stays sticky and theme-aware', async () => {
-    const css = await read(cssPath);
+    const css = (await Promise.all(cssPaths.map(read))).join('\n');
 
     expect(css).toMatch(/\.current-file-change-notice\s*{[^}]*position:\s*sticky;/s);
     expect(css).toMatch(/\.current-file-change-notice\s*{[^}]*top:\s*0/s);
@@ -75,7 +86,7 @@ describe('content-notice', () => {
   });
 
   test('HTML local-first warning dialog shows 1 time per file and experience banner shows 1 time in app opening time', async () => {
-    const content = await read(contentPath);
+    const content = await readContentSources();
 
     expect(content).toMatch(/const warningSessionKey = state\.currentFile \?\? '';/);
     expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.has\(warningSessionKey\)/);

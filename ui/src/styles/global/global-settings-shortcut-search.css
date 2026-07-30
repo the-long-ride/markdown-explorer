@@ -1,0 +1,115 @@
+/* Integrated shortcut search field: one surface, no nested native focus border. */
+.settings-shortcuts-search {
+  position: relative;
+  isolation: isolate;
+  outline: 0;
+  box-sizing: border-box;
+  min-height: 36px;
+  gap: 8px;
+  padding: 0 8px 0 11px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r-md);
+  background: var(--bg-s);
+  color: var(--tx2);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--tx) 4%, transparent);
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease,
+    transform 0.14s ease;
+}
+.settings-shortcuts-search:hover {
+  border-color: var(--bd-x);
+  background: color-mix(in srgb, var(--accent) 3%, var(--bg-s));
+}
+.settings-shortcuts-search:focus-within {
+  border-color: var(--accent);
+  background: var(--bg);
+  box-shadow: var(--focus-ring), 0 8px 22px color-mix(in srgb, var(--accent) 10%, transparent);
+  transform: translateY(-1px);
+}
+.settings-shortcuts-search-icon {
+  flex: 0 0 auto;
+  color: var(--tx3);
+  pointer-events: none;
+  transition: color 0.14s ease, transform 0.14s ease;
+}
+.settings-shortcuts-search:focus-within .settings-shortcuts-search-icon {
+  color: var(--accent);
+  transform: scale(1.05);
+}
+.settings-shortcuts-search-input {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--tx);
+  font: 600 11.5px/1 var(--font-ui);
+  appearance: none;
+  -webkit-appearance: none;
+  outline: 0;
+  box-shadow: none;
+}
+.settings-shortcuts-search-input:focus,
+.settings-shortcuts-search-input:focus-visible {
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+.settings-shortcuts-search-input::placeholder {
+  color: var(--tx3);
+  opacity: 0.9;
+  font-weight: 500;
+}
+.settings-shortcuts-search-clear {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--tx3);
+  cursor: pointer;
+  font: 800 15px/1 var(--font-ui);
+  outline: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    opacity 0.14s ease,
+    transform 0.14s ease;
+}
+.settings-shortcuts-search-clear.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+.settings-shortcuts-search-clear:hover:not(:disabled) {
+  background: var(--bg-h);
+  color: var(--tx);
+}
+.settings-shortcuts-search-clear:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.settings-shortcuts-search-clear:disabled {
+  cursor: default;
+}
+[data-theme-style="glass"] .settings-shortcuts-search {
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+}
+[data-theme-style="bento"] .settings-shortcuts-search {
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+}
+[data-theme-style^="pet-"] .settings-shortcuts-search {
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-s));
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--bd-s));
+}

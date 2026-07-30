@@ -1,0 +1,7 @@
+@import url("./global-sections-table-core.css");
+@import url("./global-table-view-controls.css");
+
+/* Keep the public selector contract visible at the entrypoint. */
+.mdn-table-view-menu__option.is-selected {
+  background: var(--accent-dim);
+}

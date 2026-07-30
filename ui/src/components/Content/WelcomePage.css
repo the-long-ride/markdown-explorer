@@ -1,5 +1,5 @@
-@import url("./WelcomePage.part1.css");
-@import url("./WelcomePage.part2.css");
+@import url("./WelcomePageOverview.css");
+@import url("./WelcomePageSupport.css");
 
 .tips-use-cases {
   display: flex;

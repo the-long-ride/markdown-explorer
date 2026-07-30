@@ -161,6 +161,9 @@ export function registerTableHandlers(win: any) {
   const getTableDataRows = (table: HTMLTableElement) => (
     [...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]
   ).filter((row) => row.id !== `${table.id}-toggle-row` && !row.dataset.toggle);
+  const getMatchedTableRows = (table: HTMLTableElement) => (
+    getTableDataRows(table).filter((row) => row.dataset.mdnFilterMatch !== 'false')
+  );
   const syncFilterButtons = (table: HTMLTableElement, state: TableState) => {
     table.querySelectorAll<HTMLElement>('.mdn-table-filter-btn').forEach((button) => {
       const th = button.closest('.mdn-th') as HTMLElement | null;
@@ -247,6 +250,7 @@ export function registerTableHandlers(win: any) {
       });
 
       const isMatched = matchesSearch && matchesColumnFilters;
+      row.dataset.mdnFilterMatch = isMatched ? 'true' : 'false';
       row.classList.toggle('is-hidden', !isMatched);
       if (!isMatched) {
         row.classList.remove('is-collapsed-row');
@@ -411,5 +415,5 @@ export function registerTableHandlers(win: any) {
     if (countEl) countEl.textContent = `${total} rows`;
   };
 
-  registerTableChartHandlers(win, getTableDataRows, syncWrapState);
+  registerTableChartHandlers(win, getTableDataRows, getMatchedTableRows, syncWrapState);
 }

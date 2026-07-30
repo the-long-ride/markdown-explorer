@@ -7,8 +7,6 @@ let useDesktopTabsReturn = {
   activeTabId: 'home' as string,
   tabs: [] as any[],
   workspaceAliases: {} as Record<string, string>,
-  toolbarPosition: { x: 36, y: 36 },
-  setToolbarPosition: vi.fn(),
   activateTab: vi.fn(),
   createNewWorkspaceTab: vi.fn(),
   prepareWorkspaceOpen: vi.fn(),
@@ -222,9 +220,6 @@ vi.mock('../../../../ui/src/components/Modal/SwitchWorkspaceModal', () => ({
 vi.mock('../../../../ui/src/components/Desktop/DesktopTabBar', () => ({
   DesktopTabBar: () => createElement('div', { 'data-testid': 'desktop-tab-bar' }),
 }));
-vi.mock('../../../../ui/src/components/Desktop/FloatingTabToolbar', () => ({
-  FloatingTabToolbar: () => createElement('div', { 'data-testid': 'floating-tab-toolbar' }),
-}));
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
   TooltipButton: ({ onClick, tooltip, className }: any) =>
     createElement('button', { onClick, title: tooltip, className, 'data-testid': 'tooltip-btn' }, tooltip || 'btn'),
@@ -290,8 +285,6 @@ describe('App render', () => {
       activeTabId: 'home',
       tabs: [],
       workspaceAliases: {},
-      toolbarPosition: { x: 36, y: 36 },
-      setToolbarPosition: vi.fn(),
       activateTab: vi.fn(),
       createNewWorkspaceTab: vi.fn(),
       prepareWorkspaceOpen: vi.fn(),

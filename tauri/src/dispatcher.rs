@@ -116,6 +116,10 @@ fn resolve_search_items(items: Option<Value>, flat_list: &[MdFile]) -> Vec<MdFil
 }
 
 mod commands;
+mod commands_external;
+mod commands_window_update;
+mod commands_workspace;
+mod content_handlers;
 mod handlers;
 mod incremental_scan;
 #[path = "dispatcher/navigation.rs"]

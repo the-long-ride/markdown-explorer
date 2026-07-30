@@ -1,3 +1,5 @@
+const { createRuntimeWorkspaceSearchHelpers } = require("./runtime-workspace-search");
+const { createWorkspaceTextResourceReader } = require("./runtime-workspace-resources");
 const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
 const WORKSPACE_SCAN_BATCH_SIZE = 32;
 
@@ -22,61 +24,8 @@ function registerRuntimeWorkspaceHandlers(context) {
     return true;
   }
 
-  function ensureSearchIndex() {
-    if (!state.searchIndex) state.searchIndex = createSearchIndex();
-    return state.searchIndex;
-  }
-
-  function buildWorkspaceTree(flat) {
-    const root = { name: "root", path: "", children: [], files: [] };
-    for (const file of flat) {
-      let node = root;
-      const dirs = file.parts.slice(0, -1);
-      for (let index = 0; index < dirs.length; index += 1) {
-        const name = dirs[index];
-        let child = node.children.find((item) => item.name === name);
-        if (!child) {
-          child = { name, path: dirs.slice(0, index + 1).join("/"), children: [], files: [] };
-          node.children.push(child);
-        }
-        node = child;
-      }
-      node.files.push(file);
-    }
-    return root;
-  }
-
-  function ensureCrossTabSearchWorker() {
-    if (state.crossTabSearchWorker) return state.crossTabSearchWorker;
-    state.crossTabSearchWorker = createSearchWorkerController({
-      onMessage(message) {
-        const win = getMainWindow();
-        if (!win || win.isDestroyed()) return;
-        if (message.type === "batch") {
-          sendHostMessage({
-            command: "crossTabSearchResults",
-            requestId: message.requestId,
-            results: message.results,
-            done: false,
-          });
-          return;
-        }
-        if (message.type === "done" || message.type === "error") {
-          sendHostMessage({
-            command: "crossTabSearchResults",
-            requestId: message.requestId,
-            results: [],
-            done: true,
-            total: message.total || 0,
-            truncated: Boolean(message.truncated),
-            cancelled: Boolean(message.cancelled),
-            error: message.type === "error" ? message.message : undefined,
-          });
-        }
-      },
-    });
-    return state.crossTabSearchWorker;
-  }
+  const { ensureSearchIndex, buildWorkspaceTree, ensureCrossTabSearchWorker } =
+    createRuntimeWorkspaceSearchHelpers({ state, createSearchIndex, createSearchWorkerController, getMainWindow, sendHostMessage });
 
   function getWorkspacePathStatus(wsPath) {
     if (!wsPath || typeof wsPath !== "string") {
@@ -396,59 +345,9 @@ function registerRuntimeWorkspaceHandlers(context) {
   }
 
 
-  function readWorkspaceTextResource(message = {}) {
-    const requestId = String(message.requestId || "");
-    const respond = (payload) => sendHostMessage({
-      command: "workspaceTextResourceResult",
-      requestId,
-      ...payload,
-    });
-    if (!requestId || !message.documentPath || !message.resourcePath) {
-      respond({ ok: false, reason: "unsupported" });
-      return;
-    }
-    const baseDir = getWorkspaceBaseDir();
-    if (!baseDir) {
-      respond({ ok: false, reason: "missing" });
-      return;
-    }
-    const reference = String(message.resourcePath).split(/[?#]/, 1)[0];
-    if (!reference || /^(?:https?:|data:|blob:|javascript:)/i.test(reference)) {
-      respond({ ok: false, reason: "unsupported" });
-      return;
-    }
-    let resolvedPath;
-    try {
-      if (/^file:\/\//i.test(reference)) {
-        const url = new URL(reference);
-        resolvedPath = decodeURIComponent(url.pathname.replace(/^\/(?:([A-Za-z]:))/, "$1"));
-      } else if (reference.startsWith("/")) {
-        resolvedPath = pathApi.resolve(baseDir, `.${reference}`);
-      } else {
-        resolvedPath = pathApi.isAbsolute(reference)
-          ? pathApi.normalize(reference)
-          : pathApi.resolve(pathApi.dirname(String(message.documentPath)), reference);
-      }
-      const allowedExtension = /\.(?:css|js|mjs|cjs)$/i.test(resolvedPath);
-      if (!allowedExtension || !isSameOrInsidePath(baseDir, resolvedPath, pathApi)) {
-        respond({ ok: false, reason: "outside-workspace" });
-        return;
-      }
-      if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
-        respond({ ok: false, reason: "missing" });
-        return;
-      }
-      const workspaceReal = fs.realpathSync(baseDir);
-      const targetReal = fs.realpathSync(resolvedPath);
-      if (!isSameOrInsidePath(workspaceReal, targetReal, pathApi)) {
-        respond({ ok: false, reason: "outside-workspace" });
-        return;
-      }
-      respond({ ok: true, content: fs.readFileSync(targetReal, "utf8"), resolvedPath: targetReal });
-    } catch {
-      respond({ ok: false, reason: "unreadable" });
-    }
-  }
+  const readWorkspaceTextResource = createWorkspaceTextResourceReader({
+    fs, pathApi, sendHostMessage, isSameOrInsidePath, getWorkspaceBaseDir,
+  });
 
   async function sendWelcome(request = captureWorkspaceRequest(null)) {
     if (request.workspacePath !== state.workspacePath

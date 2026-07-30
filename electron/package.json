@@ -61,7 +61,7 @@
       "window/**/*.js",
       "workspace/**/*.js",
       "search/**/*.js",
-      "render/**/*.js",
+      "render/document-converter.js",
       "update/**/*.js",
       "preload/**/*.js",
       "perf/**/*.js",

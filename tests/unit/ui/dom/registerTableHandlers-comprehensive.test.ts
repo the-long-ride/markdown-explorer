@@ -383,6 +383,40 @@ describe('registerTableHandlers comprehensive coverage', () => {
       expect(callArgs[1].data.datasets[0].data).toEqual([10, 20, 30]);
     });
 
+    it('charts every matched row even when the table is visually collapsed', () => {
+      const ChartMock = vi.fn();
+      win.Chart = ChartMock;
+
+      const rows = Array.from({ length: 1000 }, (_, index) => (
+        `<tr class="${index >= 15 ? 'is-collapsed-row' : ''}" data-mdn-filter-match="true"><td>Row ${index + 1}</td><td>${index + 1}</td></tr>`
+      )).join('');
+      document.body.innerHTML = `
+        <table id="large-chart-table">
+          <thead><tr><th>Name</th><th>Value</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <canvas id="large-chart-table-chart-canvas"></canvas>
+      `;
+
+      const canvas = document.getElementById('large-chart-table-chart-canvas') as HTMLCanvasElement;
+      vi.spyOn(canvas, 'getContext').mockReturnValue({} as any);
+
+      registerTableHandlers(win);
+      const state = win.Table.initState('large-chart-table');
+      state.chartable = true;
+      state.labelColIdx = 0;
+      state.dataColIdxs = [1];
+
+      win.Table.renderChart('large-chart-table', 'line');
+
+      const config = ChartMock.mock.calls[0][1];
+      expect(config.data.labels).toHaveLength(1000);
+      expect(config.data.datasets[0].data).toHaveLength(1000);
+      expect(config.data.datasets[0].data[999]).toBe(1000);
+      expect(config.options.animation).toBe(false);
+      expect(config.options.elements.point.radius).toBe(0);
+    });
+
     it('renders pie chart with doughnut type', () => {
       const ChartMock = vi.fn();
       win.Chart = ChartMock;

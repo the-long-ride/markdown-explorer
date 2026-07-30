@@ -39,7 +39,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 
 ## VS Code Extension Tutorial
 
-Open any folder containing Markdown files in VS Code to get started:
+Open any folder containing Markdown files in VS Code to get started. Use the Markdown Explorer button in the workspace header, or open the Command Palette:
 
 | Goal | Command / Action | Access Point | Shortcut (Win/Linux) | Shortcut (macOS) |
 | --- | --- | --- | --- | --- |

@@ -7,69 +7,28 @@ import {
   useEffect,
 } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
-import { normalizePathKey } from "../../contexts/appStateReducer";
 import {
   CheckIcon,
   CloseIcon,
   SearchIcon,
   LocateIcon,
   FolderIcon,
-  OpenFolderLocationIcon,
-  RevealFileLocationIcon,
-  InternetIcon,
-  HtmlPreviewIcon,
-  MarkdownViewIcon,
 } from "../shared/icons";
 import { TooltipButton } from "../shared/TooltipButton";
 import { FileNode, FolderNodeView } from "./TreeNode";
 import type { ScopeFocusTreeProps, SidebarItemMenuTarget } from "./TreeNode";
 import { SidebarItemMenu } from "./SidebarItemMenu";
-import type { SidebarItemMenuItem } from "./SidebarItemMenu";
 import { usePlatform } from "../../contexts/PlatformContext";
-import { getShellLocationLabel, requestShellLocation, resolveWorkspaceFolderPath, supportsShellLocation } from "../../desktop/shellLocation";
+import { supportsShellLocation } from "../../desktop/shellLocation";
 import { getTranslations } from "../../contexts/translations";
-import type { FolderNode, MdFile } from "../../types";
 import { SidebarSearch } from "./SidebarSearch";
 import type { SidebarSearchStatus } from "./SidebarSearch";
 import { useSidebarCursorNavigation } from "./useSidebarCursorNavigation";
 import { getEnabledShortcut } from "../../utils/shortcuts";
-import { openLocalFileInBrowser } from "../../dom/htmlPreviewActions";
 import { supportsLocalFileBrowserOpen } from "../../dom/localFileBrowserSupport";
 import { isHtmlDocumentPath } from "../Content/HtmlDocumentView";
-
-function getWorkspaceScopeKey(
-  workspacePath: string | undefined,
-  workspaceName: string,
-): string {
-  return workspacePath || workspaceName || "default";
-}
-
-function matchesFileSearch(file: MdFile, filter: string): boolean {
-  const q = filter.toLowerCase().trim();
-  if (!q) return true;
-  return (
-    file.title.toLowerCase().includes(q) ||
-    file.relativePath.toLowerCase().includes(q)
-  );
-}
-
-function folderHasVisibleContent(
-  node: FolderNode,
-  filter: string,
-  hideUnselected: boolean,
-  selectedFilePaths: Set<string>,
-): boolean {
-  return (
-    node.files.some(
-      (file) =>
-        matchesFileSearch(file, filter) &&
-        (!hideUnselected || selectedFilePaths.has(file.fsPath)),
-    ) ||
-    node.children.some((child) =>
-      folderHasVisibleContent(child, filter, hideUnselected, selectedFilePaths),
-    )
-  );
-}
+import { buildSidebarItemMenuItems } from "./sidebarItemMenuItems";
+import { folderHasVisibleContent, getWorkspaceScopeKey, matchesFileSearch } from "./sidebarTreeFiltering";
 
 interface SidebarProps {
   cursorMode?: boolean;
@@ -277,94 +236,10 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     }
   }, [state.tree, state.workspaceName, isFiles]);
 
-  const itemMenuItems = useMemo<readonly SidebarItemMenuItem[]>(() => {
-    if (!itemMenu) return [];
-    const items: SidebarItemMenuItem[] = [];
-    const itemIsHtml = itemMenu.kind === "file" && isHtmlDocumentPath(itemMenu.path);
-
-    if (itemIsHtml) {
-      const targetPathKey = normalizePathKey(itemMenu.path);
-      const matchingTab = state.contentTabs.find(
-        (tab) => normalizePathKey(tab.filePath) === targetPathKey,
-      );
-      const currentOverride =
-        normalizePathKey(state.currentFile ?? "") === targetPathKey
-          ? state.currentHtmlPreviewOverride
-          : undefined;
-      const htmlPreviewEnabled =
-        matchingTab?.htmlPreviewOverride
-        ?? currentOverride
-        ?? state.settings.defaultHtmlPreview;
-
-      if (canOpenHtmlInBrowser) {
-        items.push({
-          id: "open-in-browser",
-          label: t.openInBrowser,
-          icon: <InternetIcon />,
-          onSelect: () => {
-            if (!openLocalFileInBrowser(bridge, itemMenu.path)) {
-              window.dispatchEvent(new CustomEvent("markdown-explorer-action-notice", {
-                detail: t.previewActions.openError,
-              }));
-            }
-          },
-        });
-      }
-
-      items.push({
-        id: "toggle-html-preview",
-        label: htmlPreviewEnabled ? t.showMarkdownView : t.showHtmlPreview,
-        icon: htmlPreviewEnabled ? <MarkdownViewIcon /> : <HtmlPreviewIcon />,
-        shortcut: getEnabledShortcut(state.settings, "toggleHtmlPreview"),
-        onSelect: () =>
-          navigate(itemMenu.path, { htmlPreviewOverride: !htmlPreviewEnabled }),
-      });
-    }
-
-    if (canOpenItemLocations) {
-      items.push({
-        id: "open-location",
-        label: getShellLocationLabel(t, state.hostPlatform, itemMenu.kind),
-        icon: itemMenu.kind === "file"
-          ? <RevealFileLocationIcon />
-          : <OpenFolderLocationIcon />,
-        shortcut: itemMenu.kind === "file"
-          ? getEnabledShortcut(state.settings, "openCurrentDocumentLocation")
-          : undefined,
-        dividerBefore: items.length > 0,
-        onSelect: () => {
-          if (itemMenu.kind === "file") {
-            requestShellLocation(bridge, itemMenu.path, "reveal-file");
-          } else {
-            requestShellLocation(
-              bridge,
-              resolveWorkspaceFolderPath(
-                state.workspacePath || "",
-                itemMenu.path,
-                state.hostPlatform,
-              ),
-              "open-directory",
-            );
-          }
-        },
-      });
-    }
-
-    return items;
-  }, [
-    bridge,
-    canOpenHtmlInBrowser,
-    canOpenItemLocations,
-    itemMenu,
-    navigate,
-    state.contentTabs,
-    state.currentFile,
-    state.currentHtmlPreviewOverride,
-    state.hostPlatform,
-    state.settings,
-    state.workspacePath,
-    t,
-  ]);
+  const itemMenuItems = useMemo(() => buildSidebarItemMenuItems({
+    state, target: itemMenu, canOpenHtmlInBrowser, canOpenItemLocations,
+    translations: t, bridge, navigate,
+  }), [bridge, canOpenHtmlInBrowser, canOpenItemLocations, itemMenu, navigate, state, t]);
 
   if (!state.tree) return null;
 

@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
-const read = (file) => readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = readProjectSource;
 
 test('CSV code blocks expose interactive preview and code modes with localized actions', async () => {
   const source = await read('ui/src/markdown/codeRenderer.ts');
@@ -77,14 +78,14 @@ test('workspace recovery removes the old recent entry only after a replacement o
     assert.ok(source.includes('replaceRecentWorkspacePath'), `${name} replacement path support missing`);
     assert.ok(source.includes('workspaceOpenCancelled'), `${name} picker-cancel message missing`);
     assert.ok(
-      source.includes('clearWorkspaceOperation') || source.includes('workspace_operation_id = None') || source.includes('state.workspaceOperationId = null'),
+      source.includes('clearWorkspaceOperation') || source.includes('workspaceOperation.clear()') || source.includes('workspace_operation_id = None') || source.includes('state.workspaceOperationId = null'),
       `${name} picker cancellation must clear stale operation state`,
     );
   }
 });
 
 test('HTML comments have no rail, use an inset treatment, and preserve Properties width', async () => {
-  const css = await read('ui/src/styles/global/global-markdown-base.css');
+  const css = await read('ui/src/styles/global/global-markdown-foundation.css');
   const block = css.match(/\.mdn-html-comment\s*\{([^}]*)\}/s)?.[1] ?? '';
   const frontmatter = css.match(/\.mdn-frontmatter\s*\{([^}]*)\}/s)?.[1] ?? '';
   assert.doesNotMatch(block, /border-left\s*:/);
@@ -98,7 +99,7 @@ test('HTML comments have no rail, use an inset treatment, and preserve Propertie
 test('headings render hover/focus level labels without visible hash anchors', async () => {
   const [renderer, css] = await Promise.all([
     read('ui/src/markdown/renderer.ts'),
-    read('ui/src/styles/global/global-markdown-base.css'),
+    read('ui/src/styles/global/global-markdown-foundation.css'),
   ]);
   assert.doesNotMatch(renderer, /class="mdn-anchor"[^>]*>#<\/a>/);
   assert.match(renderer, /mdn-heading-level/);
@@ -140,8 +141,8 @@ test('settings JSON actions use shared tooltips and localized labels', async () 
 
 test('dragged workspace and content tabs use dashed primary borders', async () => {
   const [desktopCss, contentCss] = await Promise.all([
-    read('ui/src/styles/global/global-topbar-tabs.part1.css'),
-    read('ui/src/styles/global/global-layout-sidebar.part2.css'),
+    read('ui/src/styles/global/global-topbar-tabs.css'),
+    read('ui/src/styles/global/global-content-tabs-focus-search.css'),
   ]);
   for (const [name, css] of Object.entries({ desktopCss, contentCss })) {
     assert.match(css, /is-dragging/);
@@ -194,14 +195,14 @@ test('browser workspace replacement rechecks operation ownership after removing 
     const replacement = source.match(/if \(msg\.replaceRecentWorkspacePath[\s\S]*?BrowserRecentWorkspaces\.remove\(msg\.replaceRecentWorkspacePath\);([\s\S]*?)(?:activeHandle = handle|await loadHandleWorkspace\(handle)/)?.[1] ?? '';
     assert.match(
       replacement,
-      /isWorkspaceOperationCurrent\(operation\)/,
+      /(?:isWorkspaceOperationCurrent\(operation\)|workspaceOperation\.isCurrent\(operation\))/,
       `${name} must reject a stale replacement operation after the async recent-workspace removal`,
     );
   }
 });
 
 test('CSV preview does not clip interactive table menus', async () => {
-  const css = await read('ui/src/styles/global/global-code.css');
+  const css = await read('ui/src/styles/global/global-code-blocks.css');
   const block = css.match(/\.mdn-csv-preview-body\s*\{([^}]*)\}/s)?.[1] ?? '';
   assert.match(block, /overflow:\s*visible/);
 });

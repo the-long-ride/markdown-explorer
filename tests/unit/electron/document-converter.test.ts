@@ -15,7 +15,6 @@ const {
   isKnownSupportedFilePath,
   stripKnownExtension,
   getFileTypeLabel,
-  getOpenDialogFilters,
   createDocumentConverter,
   getMarkdownThem,
   normalizePreviewMarkdown,
@@ -23,7 +22,6 @@ const {
   readMarkdownFile,
   getCachedConversionResult,
   classifyExtension,
-  CONVERSION_QUALITY_WARNING,
   MARKDOWN_EXTENSIONS,
   TEXT_DOCUMENT_EXTENSIONS,
   CONVERTIBLE_DOCUMENT_EXTENSIONS,
@@ -76,10 +74,6 @@ describe('document-converter constants', () => {
     expect(ALL_SUPPORTED_EXTENSIONS.has('.doc')).toBe(true);
   });
 
-  test('CONVERSION_QUALITY_WARNING is a non-empty string', () => {
-    expect(typeof CONVERSION_QUALITY_WARNING).toBe('string');
-    expect(CONVERSION_QUALITY_WARNING.length).toBeGreaterThan(0);
-  });
 });
 
 describe('getExtension', () => {
@@ -186,22 +180,6 @@ describe('getFileTypeLabel', () => {
 
   test('returns Document for no extension', () => {
     expect(getFileTypeLabel('README')).toBe('Document');
-  });
-});
-
-describe('getOpenDialogFilters', () => {
-  test('returns basic filters when conversion disabled', () => {
-    const filters = getOpenDialogFilters(false);
-    expect(filters.length).toBe(3);
-    expect(filters[0].name).toBe('Supported Files');
-    expect(filters[0].extensions).toEqual(['md', 'mdx', 'txt']);
-  });
-
-  test('returns extended filters when conversion enabled', () => {
-    const filters = getOpenDialogFilters(true);
-    expect(filters.length).toBe(4);
-    expect(filters[0].name).toBe('Supported Documents');
-    expect(filters[0].extensions).toContain('doc');
   });
 });
 

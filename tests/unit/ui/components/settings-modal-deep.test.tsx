@@ -214,7 +214,6 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
   CopyIcon: () => <span>copy-icon</span>,
   FolderIcon: () => <span>folder-icon</span>,
-  GlobeIcon: () => <span>globe-icon</span>,
   AlertTriangleIcon: ({ size }: any) => <span>alert-icon</span>,
   ImportSettingsIcon: () => <span>import-icon</span>,
   ExportSettingsIcon: () => <span>export-icon</span>,

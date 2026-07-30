@@ -1,5 +1,6 @@
 import type { AppState } from '../../contexts/appStateReducer';
 import { formatShortcutLabel } from '../../utils/shortcuts';
+import { SearchIcon } from '../shared/icons';
 
 type SettingsShortcutsPanelProps = {
   state: AppState;
@@ -52,8 +53,9 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
     </div>
   </div>
   <div
-    className="settings-shortcuts-search"
+    className={`settings-shortcuts-search${shortcutSearchQuery ? " has-value" : ""}`}
   >
+    <SearchIcon className="settings-shortcuts-search-icon" size={14} aria-hidden="true" />
     <input
       className="settings-shortcuts-search-input"
       type="text"
@@ -63,7 +65,7 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
       aria-label="Search keyboard shortcuts"
     />
     <button
-      className="settings-shortcuts-search-clear"
+      className={`settings-shortcuts-search-clear${shortcutSearchQuery ? " is-visible" : ""}`}
       type="button"
       onClick={() => setShortcutSearchQuery("")}
       aria-label="Clear keyboard shortcut search"

@@ -26,9 +26,6 @@ const ALL_SUPPORTED_EXTENSIONS = new Set([
   ...EXTRA_DOCUMENT_EXTENSIONS,
 ]);
 
-const CONVERSION_QUALITY_WARNING =
-  "This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file.";
-
 let markdownThem = null;
 
 function getMarkdownThem() {
@@ -71,56 +68,6 @@ function stripKnownExtension(fileName) {
 function getFileTypeLabel(filePath) {
   const ext = getExtension(filePath);
   return ext ? ext.slice(1).toUpperCase() : "Document";
-}
-
-function getOpenDialogFilters(documentConversionEnabled = false) {
-  return documentConversionEnabled
-    ? [
-        {
-          name: "Supported Documents",
-          extensions: [
-            "md",
-            "mdx",
-            "doc",
-            "docx",
-            "pdf",
-            "html",
-            "xls",
-            "xlsx",
-            "xlm",
-            "pptx",
-            "odt",
-            "odp",
-            "ods",
-            "rtf",
-            "txt",
-          ],
-        },
-        { name: "Markdown and Text Files", extensions: ["md", "mdx", "txt"] },
-        { name: "Markdown Files", extensions: ["md", "mdx"] },
-        {
-          name: "Converted Document Files",
-          extensions: [
-            "doc",
-            "docx",
-            "pdf",
-            "html",
-            "xls",
-            "xlsx",
-            "xlm",
-            "pptx",
-            "odt",
-            "odp",
-            "ods",
-            "rtf",
-          ],
-        },
-      ]
-    : [
-        { name: "Supported Files", extensions: ["md", "mdx", "txt"] },
-        { name: "Markdown Files", extensions: ["md", "mdx"] },
-        { name: "Text Files", extensions: ["txt"] },
-      ];
 }
 
 function normalizePreviewMarkdown(markdown, filePath) {
@@ -245,14 +192,12 @@ module.exports = {
   EXTRA_DOCUMENT_EXTENSIONS,
   MARKDOWN_EXTENSIONS,
   TEXT_DOCUMENT_EXTENSIONS,
-  CONVERSION_QUALITY_WARNING,
   classifyExtension,
   createDocumentConverter,
   createFailureMarkdown,
   getExtension,
   getFileTypeLabel,
   getMarkdownThem,
-  getOpenDialogFilters,
   isConvertibleDocumentFilePath,
   isExtraDocumentFilePath,
   isKnownSupportedFilePath,

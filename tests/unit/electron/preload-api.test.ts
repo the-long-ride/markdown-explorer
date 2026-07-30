@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createPreloadApi } = require('../../../electron/preload/preload-api.js');
+const { createPreloadApi, exposePreloadApi } = require('../../../electron/preload/preload.js');
 
 describe('createPreloadApi', () => {
   test('postMessage calls ipcRenderer.send with webview-message channel', () => {
@@ -76,4 +76,26 @@ describe('createPreloadApi', () => {
     const result = api.getPathForFile(undefined);
     expect(result).toBeUndefined();
   });
+
+  test('exposes the same API created by createPreloadApi', () => {
+    const exposeInMainWorld = vi.fn();
+    const ipcRenderer = { send: vi.fn(), on: vi.fn(), removeListener: vi.fn() };
+    const webUtils = { getPathForFile: vi.fn() };
+
+    exposePreloadApi({
+      contextBridgeInstance: { exposeInMainWorld },
+      ipcRendererInstance: ipcRenderer,
+      webUtilsInstance: webUtils,
+    });
+
+    expect(exposeInMainWorld).toHaveBeenCalledWith(
+      'electronAPI',
+      expect.objectContaining({
+        postMessage: expect.any(Function),
+        onMessage: expect.any(Function),
+        getPathForFile: expect.any(Function),
+      }),
+    );
+  });
+
 });

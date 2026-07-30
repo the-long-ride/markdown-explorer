@@ -226,21 +226,24 @@ describe('renderMarkdownClientSide', () => {
 describe('createContentTabFromMessage', () => {
   test('with host-rendered HTML', () => {
     const msg = { filePath: '/docs/a.md', html: '<p>host</p>', frontmatter: { title: 'A' }, toc: [], relativePath: 'a.md', title: 'A Doc' } as any;
-    const tab = createContentTabFromMessage(msg, sampleFileList);
+    const rendered = { html: msg.html, frontmatter: msg.frontmatter, toc: msg.toc };
+    const tab = createContentTabFromMessage(msg, sampleFileList, rendered);
     expect(tab.filePath).toBe('/docs/a.md');
     expect(tab.contentHtml).toBe('<p>host</p>');
   });
 
   test('with markdownSource renders client-side', () => {
     const msg = { filePath: '/docs/a.md', markdownSource: '# Title', html: '', frontmatter: {}, toc: [], relativePath: 'a.md' } as any;
-    const tab = createContentTabFromMessage(msg, sampleFileList);
+    const rendered = renderMarkdownClientSide(msg.markdownSource, msg.filePath, false);
+    const tab = createContentTabFromMessage(msg, sampleFileList, rendered);
     expect(tab.contentHtml).toContain('Title');
     expect(tab.markdownSource).toBe('# Title');
   });
 
   test('derives title from fileInfo when msg.title missing', () => {
     const msg = { filePath: 'readme.md', html: '<p>test</p>', frontmatter: {}, toc: [], relativePath: '' } as any;
-    const tab = createContentTabFromMessage(msg, sampleFileList);
+    const rendered = { html: msg.html, frontmatter: msg.frontmatter, toc: msg.toc };
+    const tab = createContentTabFromMessage(msg, sampleFileList, rendered);
     expect(tab.title).toBe('Readme');
   });
 });
@@ -529,6 +532,25 @@ describe('reducer', () => {
       const state = makeState({ settings: { ...initialState.settings, fileTabs: true } });
       const next = reducer(state, { type: 'RENDER_CONTENT', msg: { filePath: '/a.md', markdownSource: '# Hello', html: '', frontmatter: {}, toc: [], relativePath: 'a.md' } as any });
       expect(next.contentHtml).toContain('Hello');
+    });
+
+    test('reuses one rendered document for active state and the tab cache', () => {
+      const state = makeState({ settings: { ...initialState.settings, fileTabs: true } });
+      const next = reducer(state, {
+        type: 'RENDER_CONTENT',
+        msg: {
+          filePath: '/a.md',
+          markdownSource: '# Shared',
+          html: '',
+          frontmatter: {},
+          toc: [],
+          relativePath: 'a.md',
+        } as any,
+      });
+
+      expect(next.contentHtml).toBe(next.contentTabs[0].contentHtml);
+      expect(next.frontmatter).toBe(next.contentTabs[0].frontmatter);
+      expect(next.toc).toBe(next.contentTabs[0].toc);
     });
   });
 

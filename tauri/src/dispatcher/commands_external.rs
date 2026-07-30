@@ -1,0 +1,174 @@
+use super::*;
+
+impl Dispatcher {
+    pub(super) async fn handle_external_command(&self, cmd: &str, msg: &Value) -> Result<bool, String> {
+        match cmd {
+            // ── C5: Clipboard / External / Editor ──
+            "openInEditor" => {
+                if let Some(path_str) = msg.get("path").and_then(Value::as_str) {
+                    if Path::new(path_str).exists() {
+                        let _ = self.app.opener().open_path(path_str, None::<&str>);
+                    }
+                }
+            }
+            "readWorkspaceTextResource" => {
+                let request_id = msg
+                    .get("requestId")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let mut extra = serde_json::Map::new();
+                extra.insert("requestId".into(), request_id.into());
+                let document_path = msg.get("documentPath").and_then(Value::as_str);
+                let resource_path = msg.get("resourcePath").and_then(Value::as_str);
+                let workspace_path = self.state.inner.read().workspace_path.clone();
+                let result = (|| -> Result<(String, String), &'static str> {
+                    let document_path = document_path.ok_or("unsupported")?;
+                    let resource_path = resource_path.ok_or("unsupported")?;
+                    let workspace_path = workspace_path.ok_or("missing")?;
+                    let workspace_base = if workspace_path.is_file() {
+                        workspace_path.parent().unwrap_or(workspace_path.as_path()).to_path_buf()
+                    } else {
+                        workspace_path
+                    };
+                    let reference = resource_path
+                        .split(|character| character == '?' || character == '#')
+                        .next()
+                        .unwrap_or("");
+                    if reference.is_empty()
+                        || reference.starts_with("http://")
+                        || reference.starts_with("https://")
+                        || reference.starts_with("//")
+                        || reference.starts_with("data:")
+                        || reference.starts_with("blob:")
+                        || reference.starts_with("javascript:")
+                    {
+                        return Err("unsupported");
+                    }
+                    let resolved = if reference.starts_with("file://") {
+                        Url::parse(reference)
+                            .map_err(|_| "unsupported")?
+                            .to_file_path()
+                            .map_err(|_| "unsupported")?
+                    } else if reference.starts_with('/') {
+                        workspace_base.join(reference.trim_start_matches('/'))
+                    } else {
+                        let reference_path = Path::new(reference);
+                        if reference_path.is_absolute() {
+                            reference_path.to_path_buf()
+                        } else {
+                            Path::new(document_path)
+                                .parent()
+                                .unwrap_or(workspace_base.as_path())
+                                .join(reference_path)
+                        }
+                    };
+                    let allowed = resolved
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .map_or(false, |ext| matches!(ext.to_ascii_lowercase().as_str(), "css" | "js" | "mjs" | "cjs"));
+                    if !allowed {
+                        return Err("outside-workspace");
+                    }
+                    let canonical_workspace = workspace_base.canonicalize().map_err(|_| "missing")?;
+                    let canonical_target = resolved.canonicalize().map_err(|_| "missing")?;
+                    if !canonical_target.starts_with(&canonical_workspace) || !canonical_target.is_file() {
+                        return Err("outside-workspace");
+                    }
+                    let content = std::fs::read_to_string(&canonical_target).map_err(|_| "unreadable")?;
+                    Ok((content, canonical_target.to_string_lossy().into_owned()))
+                })();
+                match result {
+                    Ok((content, resolved_path)) => {
+                        extra.insert("ok".into(), true.into());
+                        extra.insert("content".into(), content.into());
+                        extra.insert("resolvedPath".into(), resolved_path.into());
+                    }
+                    Err(reason) => {
+                        extra.insert("ok".into(), false.into());
+                        extra.insert("reason".into(), reason.into());
+                    }
+                }
+                host_message::emit(&self.app, "workspaceTextResourceResult", extra);
+            }
+            "openShellLocation" => {
+                if let (Some(path_str), Some(mode)) = (
+                    msg.get("path").and_then(Value::as_str),
+                    msg.get("mode").and_then(Value::as_str),
+                ) {
+                    let source = Path::new(path_str);
+                    if source.exists() {
+                        match mode {
+                            "open-directory" => {
+                                let _ = self.app.opener().open_path(
+                                    source.to_string_lossy().into_owned(),
+                                    None::<&str>,
+                                );
+                            }
+                            "open-parent-directory" => {
+                                if let Some(parent) = source.parent() {
+                                    let _ = self.app.opener().open_path(
+                                        parent.to_string_lossy().into_owned(),
+                                        None::<&str>,
+                                    );
+                                }
+                            }
+                            "reveal-file" => {
+                                #[cfg(target_os = "windows")]
+                                {
+                                    let _ = std::process::Command::new("explorer")
+                                        .arg(format!("/select,{}", source.display()))
+                                        .spawn();
+                                }
+                                #[cfg(target_os = "macos")]
+                                {
+                                    let _ = std::process::Command::new("open")
+                                        .arg("-R")
+                                        .arg(source)
+                                        .spawn();
+                                }
+                                #[cfg(target_os = "linux")]
+                                {
+                                    if let Some(parent) = source.parent() {
+                                        let _ = self.app.opener().open_path(
+                                            parent.to_string_lossy().into_owned(),
+                                            None::<&str>,
+                                        );
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+            "copyCode" => {
+                let text = msg.get("text").and_then(Value::as_str).unwrap_or("");
+                let _ = self.app.clipboard().write_text(text);
+            }
+            "openExternal" => {
+                if let Some(url) = msg.get("url").and_then(Value::as_str) {
+                    let url_lower = url.to_lowercase();
+                    if url_lower.starts_with("http://")
+                        || url_lower.starts_with("https://")
+                        || url_lower.starts_with("file://")
+                    {
+                        let _ = self.app.opener().open_url(url, None::<&str>);
+                    }
+                }
+            }
+            "openHtmlPreview" => {
+                if let Some(document_html) = msg.get("documentHtml").and_then(Value::as_str) {
+                    crate::runtime::html_preview::open(&self.app, document_html)
+                        .await
+                        .map_err(|error| error.to_string())?;
+                }
+            }
+            "setDocumentConversion" => {
+                self.handle_set_document_conversion(&msg).await;
+            }
+            _ => return Ok(false),
+        }
+        Ok(true)
+    }
+}

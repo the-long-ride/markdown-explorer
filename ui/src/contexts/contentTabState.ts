@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { normalizePathKey } from './appStateModel';
 import type { AppState } from './appStateModel';
+import type { RenderedDocument } from './renderedDocument';
 
 export function resolveContentTabHtmlPreview(
   tab: Pick<ContentTab, 'htmlPreviewOverride'> | null | undefined,
@@ -62,11 +63,7 @@ export function reorderContentTabs(
   return nextTabs;
 }
 
-export interface RenderedMarkdown {
-  html: string;
-  frontmatter: Record<string, string>;
-  toc: Array<{ level: number; text: string; id: string }>;
-}
+export type RenderedMarkdown = RenderedDocument;
 
 export function renderMarkdownClientSide(
   markdownSource: string | null | undefined,
@@ -96,16 +93,12 @@ export function renderMarkdownClientSide(
 export function createContentTabFromMessage(
   msg: RenderContentMessage,
   fileList: readonly MdFile[],
-  previewSettings?: Pick<AppState['settings'], 'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview'>,
+  rendered: RenderedDocument,
 ): ContentTab {
   const fileInfo = findFileInfo(fileList, msg.filePath);
   const relativePath = msg.relativePath || fileInfo?.relativePath || getPathFileName(msg.filePath);
   const fileName = fileInfo?.fileName || getPathFileName(relativePath || msg.filePath);
   const title = msg.title || fileInfo?.title || stripMarkdownExtension(fileName);
-  const isMdx = msg.filePath ? msg.filePath.endsWith('.mdx') : false;
-  const rendered = msg.markdownSource
-    ? renderMarkdownClientSide(msg.markdownSource, msg.filePath, isMdx, previewSettings)
-    : { html: msg.html, frontmatter: msg.frontmatter, toc: msg.toc };
   return {
     filePath: msg.filePath,
     relativePath,

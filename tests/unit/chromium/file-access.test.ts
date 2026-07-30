@@ -4,7 +4,6 @@ import {
   loadHandlesFromIDB,
   deleteHandleFromIDB,
   resolveFileHandle,
-  resolveDirectoryHandle,
   verifyPermission,
   pickDirectory,
   readTextFile,
@@ -216,36 +215,5 @@ describe('readBlobUrl', () => {
       getFileHandle: async () => { throw new DOMException('Not found', 'NotFoundError'); },
     };
     await expect(readBlobUrl(root, 'missing.md')).rejects.toThrow('File not found');
-  });
-});
-describe('resolveDirectoryHandle', () => {
-  it('resolves a subdirectory', async () => {
-    const subDir = { kind: 'directory', name: 'src' };
-    const root: any = {
-      getDirectoryHandle: async () => subDir,
-    };
-    const handle = await resolveDirectoryHandle(root as any, 'src');
-    expect(handle).not.toBeNull();
-    expect(handle!.name).toBe('src');
-  });
-
-  it('returns null when getDirectoryHandle throws', async () => {
-    const root: any = {
-      getDirectoryHandle: async () => { throw new DOMException('Not found', 'NotFoundError'); },
-    };
-    const handle = await resolveDirectoryHandle(root as any, 'nonexistent');
-    expect(handle).toBeNull();
-  });
-
-  it('resolves nested directories', async () => {
-    const deepDir = { kind: 'directory', name: 'inner' };
-    const midDir: any = {
-      getDirectoryHandle: async () => deepDir,
-    };
-    const root: any = {
-      getDirectoryHandle: async () => midDir,
-    };
-    const handle = await resolveDirectoryHandle(root as any, 'outer/inner');
-    expect(handle).not.toBeNull();
   });
 });

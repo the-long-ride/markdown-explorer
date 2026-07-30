@@ -5,6 +5,10 @@ import { describe, expect, test } from 'vitest';
 const repoRoot = path.resolve(__dirname, '../..');
 const uiRoot = path.join(repoRoot, 'ui/src');
 
+function readCssFiles(...relativePaths: string[]): string {
+  return relativePaths.map((relativePath) => fs.readFileSync(path.join(uiRoot, relativePath), 'utf8')).join('\n');
+}
+
 function collectSourceFiles(directory: string): string[] {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const filePath = path.join(directory, entry.name);
@@ -53,9 +57,10 @@ describe('UI style contract', () => {
       path.join(uiRoot, 'styles/global/global-switch-tooltip-diff.css'),
       'utf8',
     );
-    const menuCss = fs.readFileSync(
-      path.join(uiRoot, 'styles/global/global-topbar-tabs.part1.css'),
-      'utf8',
+    const menuCss = readCssFiles(
+      'styles/global/global-topbar-actions.css',
+      'styles/global/global-workspace-tabs.css',
+      'styles/global/global-tab-actions-menus.css',
     );
     expect(tooltipCss).toMatch(/background:\s*rgb\(22 24 31\);/);
     expect(tooltipCss).toMatch(/background:\s*rgb\(250 250 252\);/);
@@ -69,9 +74,9 @@ describe('UI style contract', () => {
 
   test('registers Neon Voltage and Raw Grid with auto-light tokens and header parity', () => {
     const globalCss = fs.readFileSync(path.join(uiRoot, 'styles/global.css'), 'utf8');
-    const themeTokens = fs.readFileSync(
-      path.join(uiRoot, 'styles/tokens/tokens-style-themes.css'),
-      'utf8',
+    const themeTokens = readCssFiles(
+      'styles/tokens/tokens-style-foundation.css',
+      'styles/tokens/tokens-style-vivid.css',
     );
     const autoLightTokens = fs.readFileSync(
       path.join(uiRoot, 'styles/tokens/tokens-pet-auto-light.css'),
@@ -107,9 +112,10 @@ describe('UI style contract', () => {
   });
 
   test('keeps both workspace tab close animation phases under 200ms', () => {
-    const css = fs.readFileSync(
-      path.join(uiRoot, 'styles/global/global-topbar-tabs.part1.css'),
-      'utf8',
+    const css = readCssFiles(
+      'styles/global/global-topbar-actions.css',
+      'styles/global/global-workspace-tabs.css',
+      'styles/global/global-tab-actions-menus.css',
     );
     const fadeBlock = css.match(/\.desktop-tab\.is-closing--fade\s*\{([^}]*)\}/s)?.[1] ?? '';
     const collapseBlock = [...css.matchAll(/\.desktop-tab\.is-closing--collapse\s*\{([^}]*)\}/gs)]
@@ -129,7 +135,7 @@ describe('UI style contract', () => {
 
   test('keeps both document tab close animation phases under 200ms', () => {
     const css = fs.readFileSync(
-      path.join(uiRoot, 'styles/global/global-layout-sidebar.part2.css'),
+      path.join(uiRoot, 'styles/global/global-content-tabs-focus-search.css'),
       'utf8',
     );
     const fadeBlock = css.match(/\.content-tab\.is-closing--fade\s*\{([^}]*)\}/s)?.[1] ?? '';
@@ -146,9 +152,9 @@ describe('UI style contract', () => {
   });
 
   test('removes the Properties accent rail', () => {
-    const css = fs.readFileSync(
-      path.join(uiRoot, 'styles/global/global-markdown-base.css'),
-      'utf8',
+    const css = readCssFiles(
+      'styles/global/global-markdown-foundation.css',
+      'styles/global/global-markdown-structures.css',
     );
     const block = css.match(/\.mdn-frontmatter\s*\{([^}]*)\}/s)?.[1] ?? '';
     expect(block).not.toMatch(/border-left\s*:/);

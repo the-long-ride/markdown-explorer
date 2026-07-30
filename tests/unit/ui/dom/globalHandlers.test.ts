@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   toggleSection,
   expandAll,
@@ -7,8 +7,8 @@ import {
   toggleHtmlMode,
   setCsvMode,
   toggleCsvMode,
-  triggerToggleCodeCollapse,
   initGlobalHandlers,
+  HEADING_SECTION_STATE_CHANGE_EVENT,
 } from '../../../../ui/src/dom/globalHandlers';
 
 describe('globalHandlers pure functions', () => {
@@ -26,9 +26,13 @@ describe('globalHandlers pure functions', () => {
       section.appendChild(header);
       document.body.appendChild(section);
 
+      const onChange = vi.fn();
+      window.addEventListener(HEADING_SECTION_STATE_CHANGE_EVENT, onChange, { once: true });
+
       toggleSection(header);
       expect(section.dataset.expanded).toBe('false');
       expect(header.getAttribute('aria-expanded')).toBe('false');
+      expect(onChange).toHaveBeenCalledTimes(1);
     });
 
     it('toggles collapsed section to expanded', () => {
@@ -55,12 +59,13 @@ describe('globalHandlers pure functions', () => {
   describe('expandAll', () => {
     it('expands all sections', () => {
       document.body.innerHTML = `
-        <div class="mdn-section" data-expanded="false"></div>
-        <div class="mdn-section" data-expanded="false"></div>
+        <div class="mdn-section" data-expanded="false"><div class="mdn-section-header" aria-expanded="false"></div></div>
+        <div class="mdn-section" data-expanded="false"><div class="mdn-section-header" aria-expanded="false"></div></div>
       `;
       expandAll();
       document.querySelectorAll('.mdn-section').forEach((s) => {
         expect((s as HTMLElement).dataset.expanded).toBe('true');
+        expect(s.querySelector('.mdn-section-header')?.getAttribute('aria-expanded')).toBe('true');
       });
     });
   });
@@ -68,12 +73,13 @@ describe('globalHandlers pure functions', () => {
   describe('collapseAll', () => {
     it('collapses all sections', () => {
       document.body.innerHTML = `
-        <div class="mdn-section" data-expanded="true"></div>
-        <div class="mdn-section" data-expanded="true"></div>
+        <div class="mdn-section" data-expanded="true"><div class="mdn-section-header" aria-expanded="true"></div></div>
+        <div class="mdn-section" data-expanded="true"><div class="mdn-section-header" aria-expanded="true"></div></div>
       `;
       collapseAll();
       document.querySelectorAll('.mdn-section').forEach((s) => {
         expect((s as HTMLElement).dataset.expanded).toBe('false');
+        expect(s.querySelector('.mdn-section-header')?.getAttribute('aria-expanded')).toBe('false');
       });
     });
   });
@@ -223,40 +229,6 @@ describe('globalHandlers pure functions', () => {
       `;
       toggleCsvMode(document.querySelector('.mdn-toggle-csv-btn') as HTMLElement);
       expect((document.querySelector('.mdn-csv-preview-wrap') as HTMLElement).dataset.mode).toBe('code');
-    });
-  });
-
-  describe('triggerToggleCodeCollapse', () => {
-    it('toggles from collapsed to expanded', () => {
-      const wrap = document.createElement('div');
-      wrap.className = 'mdn-codeblock';
-      wrap.dataset.collapsed = 'true';
-      const btn = document.createElement('button');
-      wrap.appendChild(btn);
-      document.body.appendChild(wrap);
-
-      triggerToggleCodeCollapse(btn);
-      expect(wrap.dataset.collapsed).toBe('false');
-      expect(btn.textContent).toBe('Show Less');
-    });
-
-    it('toggles from expanded to collapsed', () => {
-      const wrap = document.createElement('div');
-      wrap.className = 'mdn-codeblock';
-      wrap.dataset.collapsed = 'false';
-      const btn = document.createElement('button');
-      wrap.appendChild(btn);
-      document.body.appendChild(wrap);
-
-      triggerToggleCodeCollapse(btn);
-      expect(wrap.dataset.collapsed).toBe('true');
-      expect(btn.textContent).toBe('Show More');
-    });
-
-    it('does nothing when not inside codeblock', () => {
-      const btn = document.createElement('button');
-      document.body.appendChild(btn);
-      expect(() => triggerToggleCodeCollapse(btn)).not.toThrow();
     });
   });
 

@@ -38,4 +38,4 @@ try {
   console.error('[preload] Failed to expose electronAPI:', err);
 }
 
-module.exports = { exposePreloadApi };
+module.exports = { createPreloadApi, exposePreloadApi };

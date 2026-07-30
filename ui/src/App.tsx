@@ -2,7 +2,7 @@
 // App.tsx — Root component
 // =============================================================================
 
-import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
+import { useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
@@ -15,17 +15,16 @@ import type { PendingSearchJump, SearchScope } from './desktop/types';
 import { initGlobalHandlers } from './dom/globalHandlers';
 import { useDesktopTabs } from './hooks/useDesktopTabs';
 import { useFileDropOpen } from './hooks/useFileDropOpen';
-import { useScrollVisibility } from './hooks/useScrollVisibility';
 import { useUpdateCheck } from './hooks/useUpdateCheck';
 import { formatShortcutLabel, getEnabledShortcut } from './utils/shortcuts';
 import { AppView } from './AppView';
 import { useAppSearchEffects } from './useAppSearchEffects';
 import { useAppLayoutEffects } from './useAppLayoutEffects';
+import { useAppUpdateActions } from './useAppUpdateActions';
+import { createMediaGallery, type MediaGallery } from './components/Modal/mediaGallery';
 
 export function App() {
   // AppView owns the root class: state.appRuntime === 'tauri' ? ' app--tauri' : ''.
-  // Register global DOM handlers after first paint (not needed for initial render)
-  useEffect(() => { initGlobalHandlers(); }, []);
   const { state, toggleTheme, toggleSidebar, toggleToc, toggleFocusMode, toggleDesktopViewMode, setContentTabHtmlPreview, dispatch, navigate, refresh } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
@@ -55,8 +54,8 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [workspaceSelectionConfirmOpen, setWorkspaceSelectionConfirmOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalTarget, setModalTarget] = useState<HTMLElement | null>(null);
+  const [mediaGallery, setMediaGallery] = useState<MediaGallery | null>(null);
+  const modalOpen = mediaGallery !== null;
   const [sidebarCursorMode, setSidebarCursorMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -79,11 +78,6 @@ export function App() {
   );
   const findShortcutLabel = formatShortcutLabel(
     getEnabledShortcut(state.settings, 'findCurrentFile') ?? (isDesktopLike ? '' : 'K'),
-  );
-  const { isVisible: scrollTopVisible, scrollToTop } = useScrollVisibility(
-    scrollRef,
-    200,
-    state.workspaceName,
   );
   const isDark =
     state.theme === 'dark' ||
@@ -198,43 +192,14 @@ export function App() {
     setThemeOnboardingComplete(true);
   }, []);
 
-  const openExternalUrl = useCallback((url: string) => {
-    if (!url) return;
-    bridge.postMessage({ command: 'openExternal', url });
-  }, [bridge]);
-
-  const downloadUpdate = useCallback(() => {
-    if (state.canInstallUpdates && updateCheck.canInstallUpdate && updateCheck.downloadUrl) {
-      bridge.postMessage({
-        command: 'downloadUpdate',
-        version: updateCheck.latestVersion,
-        url: updateCheck.downloadUrl,
-      });
-      return;
-    }
-    openExternalUrl(updateCheck.downloadUrl);
-  }, [
+  const { openExternalUrl, downloadUpdate, scheduleUpdateOnExit, restartAndApplyUpdate, openUpdateChangelog } = useAppUpdateActions({
     bridge,
-    openExternalUrl,
-    state.canInstallUpdates,
-    updateCheck.canInstallUpdate,
-    updateCheck.downloadUrl,
-    updateCheck.latestVersion,
-  ]);
-
-  const scheduleUpdateOnExit = useCallback(() => {
-    if (!state.canInstallUpdates) return;
-    bridge.postMessage({ command: 'scheduleDownloadedUpdate' });
-  }, [bridge, state.canInstallUpdates]);
-
-  const restartAndApplyUpdate = useCallback(() => {
-    if (!state.canInstallUpdates) return;
-    bridge.postMessage({ command: 'restartAndApplyUpdate' });
-  }, [bridge, state.canInstallUpdates]);
-
-  const openUpdateChangelog = useCallback(() => {
-    openExternalUrl(updateCheck.changelogUrl);
-  }, [openExternalUrl, updateCheck.changelogUrl]);
+    canInstallUpdates: state.canInstallUpdates,
+    canInstallUpdate: updateCheck.canInstallUpdate,
+    downloadUrl: updateCheck.downloadUrl,
+    latestVersion: updateCheck.latestVersion,
+    changelogUrl: updateCheck.changelogUrl,
+  });
 
   const {
     themeOnboardingOpen,
@@ -279,8 +244,8 @@ export function App() {
 
   // Image click → open media modal
   const onImageClick = useCallback((el: HTMLElement) => {
-    setModalTarget(el);
-    setModalOpen(true);
+    const gallery = createMediaGallery(el);
+    if (gallery) setMediaGallery(gallery);
   }, []);
 
   if (!termsAccepted && isDesktopLike) {
@@ -390,8 +355,6 @@ export function App() {
       workspaceAliases={workspaceAliases}
       updateWorkspaceAlias={updateWorkspaceAlias}
       scrollRef={scrollRef}
-      scrollTopVisible={scrollTopVisible}
-      scrollToTop={scrollToTop}
       t={t}
       expandAll={expandAll}
       collapseAll={collapseAll}
@@ -415,10 +378,8 @@ export function App() {
       findOpen={findOpen}
       closeFind={closeFind}
       findShortcutLabel={findShortcutLabel}
-      modalOpen={modalOpen}
-      setModalOpen={setModalOpen}
-      modalTarget={modalTarget}
-      setModalTarget={setModalTarget}
+      mediaGallery={mediaGallery}
+      setMediaGallery={setMediaGallery}
       settingsOpen={settingsOpen}
       downloadUpdate={downloadUpdate}
       scheduleUpdateOnExit={scheduleUpdateOnExit}

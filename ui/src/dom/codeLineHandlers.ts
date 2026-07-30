@@ -46,16 +46,6 @@ export function mergeLineRanges(
   return { start: Math.min(offsetRange.start, rectRange.start), end: Math.max(offsetRange.end, rectRange.end) };
 }
 
-export function computeVisibleRows(
-  rows: { classList: { contains(s: string): boolean }; id: string }[],
-  tableId: string,
-  maxRows = 50,
-) {
-  return rows
-    .filter(row => !row.classList.contains('is-hidden') && row.id !== tableId + '-toggle-row')
-    .slice(0, maxRows);
-}
-
 export function registerCodeLineHandlers() {
   const getCodeLineNumbers = (block: HTMLElement): HTMLElement[] =>
     Array.from(block.querySelectorAll('.mdn-codeblock-gutter span')) as HTMLElement[];

@@ -1,5 +1,5 @@
 use serde_json::{json, Value};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 
 use crate::workspace::open::WorkspaceUnavailableReason;
 use crate::workspace::recents::RecentWorkspace;
@@ -28,6 +28,19 @@ pub fn current_workspace_operation(app: &AppHandle) -> Option<WorkspaceOperation
     )
 }
 
+fn dispatch_native_host_message(app: &AppHandle, payload: &Value) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    let Ok(payload_json) = serde_json::to_string(payload) else {
+        return;
+    };
+    let script = format!(
+        "window.__markdownExplorerHandleHostMessage?.({payload_json});"
+    );
+    let _ = window.eval(script);
+}
+
 pub fn emit_scoped(
     app: &AppHandle,
     command: &str,
@@ -46,69 +59,12 @@ pub fn emit_scoped(
         );
         payload.insert("workspaceTabId".into(), operation.tab_id.clone().into());
     }
-    let _ = app.emit("host-message", json!(payload));
+    dispatch_native_host_message(app, &Value::Object(payload));
 }
 
 pub fn emit(app: &AppHandle, command: &str, extra: serde_json::Map<String, Value>) {
     let operation = current_workspace_operation(app);
     emit_scoped(app, command, extra, operation.as_ref());
-}
-
-pub fn emit_ready_ack(
-    app: &AppHandle,
-    file_list: Value,
-    tree: Value,
-    theme: &str,
-    default_expanded: Value,
-    workspace_name: &str,
-) {
-    let mut extra = serde_json::Map::new();
-    extra.insert("fileList".into(), file_list);
-    extra.insert("tree".into(), tree);
-    extra.insert("theme".into(), theme.into());
-    extra.insert("defaultExpanded".into(), default_expanded);
-    extra.insert("workspaceName".into(), workspace_name.into());
-    emit(app, "readyAck", extra);
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn emit_ready_ack_full(
-    app: &AppHandle,
-    file_list: Value,
-    tree: Value,
-    workspace_name: &str,
-    workspace_path: Option<&str>,
-    recent_workspaces: Vec<RecentWorkspace>,
-    document_conversion_enabled: bool,
-) {
-    let mut extra = serde_json::Map::new();
-    extra.insert("fileList".into(), file_list);
-    extra.insert("tree".into(), tree);
-    extra.insert("theme".into(), "dark".into());
-    extra.insert("themeStyle".into(), "default".into());
-    extra.insert("defaultExpanded".into(), true.into());
-    extra.insert("workspaceName".into(), workspace_name.into());
-    if let Some(wp) = workspace_path {
-        extra.insert("workspacePath".into(), wp.into());
-    }
-    extra.insert("recentWorkspaces".into(), json!(recent_workspaces));
-    extra.insert(
-        "documentConversionEnabled".into(),
-        document_conversion_enabled.into(),
-    );
-    extra.insert("appRuntime".into(), "tauri".into());
-    extra.insert(
-        "appVersion".into(),
-        app.package_info().version.to_string().into(),
-    );
-    extra.insert("hostPlatform".into(), std::env::consts::OS.into());
-    extra.insert("hostArch".into(), std::env::consts::ARCH.into());
-    extra.insert(
-        "canInstallUpdates".into(),
-        crate::update::manager::can_install_updates().into(),
-    );
-    extra.insert("isMaximized".into(), false.into());
-    emit(app, "readyAck", extra);
 }
 
 pub fn emit_loading_scoped(
@@ -140,11 +96,6 @@ pub fn emit_workspace_scan_progress_scoped(
     extra.insert("scannedFiles".into(), scanned_files.into());
     extra.insert("active".into(), active.into());
     emit_scoped(app, "workspaceScanProgress", extra, operation);
-}
-
-pub fn emit_workspace_scan_progress(app: &AppHandle, scanned_files: usize, active: bool) {
-    let operation = current_workspace_operation(app);
-    emit_workspace_scan_progress_scoped(app, scanned_files, active, operation.as_ref());
 }
 
 pub fn emit_recent_workspaces_changed(app: &AppHandle, recent_workspaces: Vec<RecentWorkspace>) {
@@ -194,22 +145,6 @@ pub fn emit_workspace_unavailable_scoped(
     emit_scoped(app, "workspaceUnavailable", extra, operation);
 }
 
-pub fn emit_workspace_unavailable(
-    app: &AppHandle,
-    workspace_path: &str,
-    reason: WorkspaceUnavailableReason,
-    recent_workspaces: Vec<RecentWorkspace>,
-) {
-    let operation = current_workspace_operation(app);
-    emit_workspace_unavailable_scoped(
-        app,
-        workspace_path,
-        reason,
-        recent_workspaces,
-        operation.as_ref(),
-    );
-}
-
 pub fn emit_render_content_empty_welcome_scoped(
     app: &AppHandle,
     file_list: Value,
@@ -226,11 +161,6 @@ pub fn emit_render_content_empty_welcome_scoped(
     extra.insert("fileList".into(), file_list);
     extra.insert("previewInfo".into(), Value::Null);
     emit_scoped(app, "renderContent", extra, operation);
-}
-
-pub fn emit_render_content_empty_welcome(app: &AppHandle, file_list: Value) {
-    let operation = current_workspace_operation(app);
-    emit_render_content_empty_welcome_scoped(app, file_list, operation.as_ref());
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -253,26 +183,6 @@ pub fn emit_workspace_files_changed_scoped(
         document_conversion_enabled.into(),
     );
     emit_scoped(app, "workspaceFilesChanged", extra, operation);
-}
-
-pub fn emit_workspace_files_changed(
-    app: &AppHandle,
-    file_list: Value,
-    tree: Value,
-    workspace_name: &str,
-    workspace_path: &str,
-    document_conversion_enabled: bool,
-) {
-    let operation = current_workspace_operation(app);
-    emit_workspace_files_changed_scoped(
-        app,
-        file_list,
-        tree,
-        workspace_name,
-        workspace_path,
-        document_conversion_enabled,
-        operation.as_ref(),
-    );
 }
 
 pub fn emit_current_file_changed(app: &AppHandle, file_path: &str) {

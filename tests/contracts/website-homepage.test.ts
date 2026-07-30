@@ -45,7 +45,7 @@ describe('website homepage positioning', () => {
   });
 
   test('includes responsive styles for the product preview and proof row', () => {
-    const base = read('website/styles/base.part1.css');
+    const base = read('website/styles/homepage-hero.css');
     const responsive = read('website/styles/responsive.css');
 
     expect(base).toContain('.hero-product-preview');

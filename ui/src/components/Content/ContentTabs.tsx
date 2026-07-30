@@ -1,28 +1,21 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { getTranslations } from "../../contexts/translations";
 import {
   TabContextMenu,
   type TabContextMenuAction,
-  type TabContextMenuItem,
 } from "../shared/TabContextMenu";
-import {
-  CloseIcon, OpenFolderLocationIcon, InternetIcon, CloseTabIcon, CloseRightIcon,
-  CloseOthersIcon, CloseAllIcon, HtmlPreviewIcon, MarkdownViewIcon,
-} from "../shared/icons";
-import { useCssVars } from "../../utils/useCssVars";
-import { getEnabledShortcut } from "../../utils/shortcuts";
 import { usePlatform } from "../../contexts/PlatformContext";
-import { getShellLocationLabel, requestShellLocation, supportsShellLocation } from "../../desktop/shellLocation";
+import { requestShellLocation, supportsShellLocation } from "../../desktop/shellLocation";
 import { openLocalFileInBrowser } from "../../dom/htmlPreviewActions";
-import { supportsLocalFileBrowserOpen } from "../../dom/localFileBrowserSupport";
-import { isHtmlDocumentPath } from "./HtmlDocumentView";
 import {
   CONTENT_TAB_CLOSE_REQUEST_EVENT,
   type ContentTabCloseRequest,
 } from "./contentTabCloseEvents";
+import { ContentTabItem } from "./ContentTabItem";
+import { buildContentTabContextMenuItems } from "./contentTabContextMenuItems";
+import { useContentTabsScrollbar } from "./useContentTabsScrollbar";
 
-const SCROLLBAR_TRACK_INLINE_INSET = 16;
 export const CONTENT_TAB_CLOSE_FADE_MS = 90;
 export const CONTENT_TAB_CLOSE_COLLAPSE_MS = 140;
 
@@ -42,25 +35,11 @@ export function ContentTabs() {
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
   const bridge = usePlatform();
-  const tabsScrollRef = useRef<HTMLDivElement>(null);
-  const scrollbarTrackRef = useRef<HTMLDivElement>(null);
-  const scrollbarThumbRef = useRef<HTMLDivElement>(null);
-  const scrollbarDragRef = useRef<{
-    startX: number;
-    startScrollLeft: number;
-    maxScrollLeft: number;
-    maxThumbLeft: number;
-  } | null>(null);
-  const [scrollbarMetrics, setScrollbarMetrics] = useState({
-    visible: false,
-    thumbLeft: 0,
-    thumbWidth: 0,
-  });
-  useCssVars(scrollbarThumbRef, {
-    '--scrollbar-thumb-width': `${scrollbarMetrics.thumbWidth}px`,
-    '--scrollbar-thumb-left': `${scrollbarMetrics.thumbLeft}px`,
-  });
-  const [isScrollbarDragging, setIsScrollbarDragging] = useState(false);
+  const {
+    tabsScrollRef, scrollbarTrackRef, scrollbarThumbRef, scrollbarMetrics,
+    isScrollbarDragging, updateScrollbarMetrics, beginScrollbarDrag,
+    handleScrollbarTrackPointerDown,
+  } = useContentTabsScrollbar(state.activeContentTabPath, state.contentTabs);
   const [contextMenu, setContextMenu] = useState<{
     filePath: string;
     x: number;
@@ -75,150 +54,7 @@ export function ContentTabs() {
   const closeTimersRef = useRef<number[]>([]);
   const closeInProgressRef = useRef(false);
   const ghostRef = useRef<HTMLDivElement>(null);
-  const [ghostLabel, setGhostLabel] = useState<string>("");
-
-  const updateScrollbarMetrics = useCallback(() => {
-    const el = tabsScrollRef.current;
-    if (!el) return;
-
-    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-    if (maxScrollLeft <= 1) {
-      setScrollbarMetrics((current) =>
-        current.visible ? { visible: false, thumbLeft: 0, thumbWidth: 0 } : current,
-      );
-      return;
-    }
-
-    const track = scrollbarTrackRef.current;
-    const trackWidth =
-      track?.clientWidth ?? Math.max(0, el.clientWidth - SCROLLBAR_TRACK_INLINE_INSET);
-    const thumbWidth = Math.min(
-      trackWidth,
-      Math.max(44, (el.clientWidth / el.scrollWidth) * trackWidth),
-    );
-    const maxThumbLeft = Math.max(0, trackWidth - thumbWidth);
-    const thumbLeft =
-      maxThumbLeft === 0 ? 0 : (el.scrollLeft / maxScrollLeft) * maxThumbLeft;
-
-    setScrollbarMetrics((current) => {
-      const next = {
-        visible: true,
-        thumbLeft,
-        thumbWidth,
-      };
-      if (
-        current.visible === next.visible &&
-        Math.abs(current.thumbLeft - next.thumbLeft) < 0.5 &&
-        Math.abs(current.thumbWidth - next.thumbWidth) < 0.5
-      ) {
-        return current;
-      }
-      return next;
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    const handle = requestAnimationFrame(updateScrollbarMetrics);
-    return () => cancelAnimationFrame(handle);
-  }, [state.activeContentTabPath, state.contentTabs, updateScrollbarMetrics]);
-
-  useEffect(() => {
-    const el = tabsScrollRef.current;
-    if (!el) return;
-
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(updateScrollbarMetrics)
-        : null;
-    resizeObserver?.observe(el);
-
-    window.addEventListener("resize", updateScrollbarMetrics);
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", updateScrollbarMetrics);
-    };
-  }, [updateScrollbarMetrics]);
-
-  const beginScrollbarDrag = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      const el = tabsScrollRef.current;
-      const track = scrollbarTrackRef.current;
-      if (!el || !track || !scrollbarMetrics.visible) return;
-
-      const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-      const maxThumbLeft = Math.max(0, track.clientWidth - scrollbarMetrics.thumbWidth);
-      if (maxScrollLeft <= 0 || maxThumbLeft <= 0) return;
-
-      scrollbarDragRef.current = {
-        startX: event.clientX,
-        startScrollLeft: el.scrollLeft,
-        maxScrollLeft,
-        maxThumbLeft,
-      };
-      setIsScrollbarDragging(true);
-      event.preventDefault();
-      event.stopPropagation();
-    },
-    [scrollbarMetrics.thumbWidth, scrollbarMetrics.visible],
-  );
-
-  const handleScrollbarTrackPointerDown = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      const el = tabsScrollRef.current;
-      const track = scrollbarTrackRef.current;
-      if (!el || !track || !scrollbarMetrics.visible) return;
-
-      const trackRect = track.getBoundingClientRect();
-      const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-      const maxThumbLeft = Math.max(0, track.clientWidth - scrollbarMetrics.thumbWidth);
-      if (maxScrollLeft <= 0 || maxThumbLeft <= 0) return;
-
-      const nextThumbLeft = Math.min(
-        maxThumbLeft,
-        Math.max(0, event.clientX - trackRect.left - scrollbarMetrics.thumbWidth / 2),
-      );
-      el.scrollLeft = (nextThumbLeft / maxThumbLeft) * maxScrollLeft;
-      updateScrollbarMetrics();
-      beginScrollbarDrag(event);
-    },
-    [
-      beginScrollbarDrag,
-      scrollbarMetrics.thumbWidth,
-      scrollbarMetrics.visible,
-      updateScrollbarMetrics,
-    ],
-  );
-
-  useEffect(() => {
-    if (!isScrollbarDragging) return;
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const el = tabsScrollRef.current;
-      const drag = scrollbarDragRef.current;
-      if (!el || !drag) return;
-
-      const deltaX = event.clientX - drag.startX;
-      const nextScrollLeft =
-        drag.startScrollLeft + (deltaX / drag.maxThumbLeft) * drag.maxScrollLeft;
-      el.scrollLeft = Math.min(drag.maxScrollLeft, Math.max(0, nextScrollLeft));
-      updateScrollbarMetrics();
-    };
-
-    const handlePointerUp = () => {
-      scrollbarDragRef.current = null;
-      setIsScrollbarDragging(false);
-      updateScrollbarMetrics();
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerUp);
-    };
-  }, [isScrollbarDragging, updateScrollbarMetrics]);
+  const [ghostLabel, setGhostLabel] = useState('');
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -399,39 +235,10 @@ export function ContentTabs() {
 
   if (!state.settings.fileTabs || state.contentTabs.length === 0) return null;
 
-  const toggleHtmlPreviewShortcut = getEnabledShortcut(state.settings, 'toggleHtmlPreview');
-
   const contextMenuTabIndex = contextMenu
     ? state.contentTabs.findIndex((tab) => tab.filePath === contextMenu.filePath)
     : -1;
-
-  const contextMenuTab = contextMenuTabIndex >= 0 ? state.contentTabs[contextMenuTabIndex] : null;
-  const contextMenuIsHtml = isHtmlDocumentPath(contextMenuTab?.filePath);
-  const contextMenuHtmlPreview = contextMenuTab
-    ? contextMenuTab.htmlPreviewOverride ?? state.settings.defaultHtmlPreview
-    : state.settings.defaultHtmlPreview;
-  const contextMenuItems: readonly TabContextMenuItem[] = contextMenuTab ? [
-    ...(contextMenuIsHtml && supportsLocalFileBrowserOpen(state.appRuntime) ? [
-      { action: 'openInBrowser' as const, label: t.openInBrowser, icon: <InternetIcon /> },
-    ] : []),
-    ...(contextMenuIsHtml ? [{
-      action: 'toggleHtmlDocumentView' as const,
-      label: contextMenuHtmlPreview ? t.showMarkdownView : t.showHtmlPreview,
-      icon: contextMenuHtmlPreview ? <MarkdownViewIcon /> : <HtmlPreviewIcon />,
-      shortcut: toggleHtmlPreviewShortcut,
-    }] : []),
-    ...(supportsShellLocation(state.appRuntime) ? [{
-      action: 'openLocation' as const,
-      label: getShellLocationLabel(t, state.hostPlatform, 'folder'),
-      icon: <OpenFolderLocationIcon />,
-      shortcut: getEnabledShortcut(state.settings, 'openCurrentDocumentLocation'),
-      dividerBefore: contextMenuIsHtml,
-    }] : []),
-    { action: 'closeThisTab' as const, label: t.tabContextMenu.closeThisTab, icon: <CloseTabIcon />, shortcut: getEnabledShortcut(state.settings, 'closeContentTab'), primary: true, disabled: contextMenuTabIndex === -1 },
-    { action: 'closeTabsToRight' as const, label: t.tabContextMenu.closeTabsToRight, icon: <CloseRightIcon />, shortcut: getEnabledShortcut(state.settings, 'closeContentTabsToRight'), disabled: contextMenuTabIndex === -1 || contextMenuTabIndex >= state.contentTabs.length - 1 },
-    { action: 'closeOtherTabs' as const, label: t.tabContextMenu.closeOtherTabs, icon: <CloseOthersIcon />, shortcut: getEnabledShortcut(state.settings, 'closeOtherContentTabs'), disabled: state.contentTabs.length <= 1 },
-    { action: 'closeAllTabs' as const, label: t.tabContextMenu.closeAllTabs, icon: <CloseAllIcon />, shortcut: getEnabledShortcut(state.settings, 'closeAllContentTabs'), disabled: state.contentTabs.length === 0 },
-  ] : [];
+  const contextMenuItems = buildContentTabContextMenuItems(state, t, contextMenuTabIndex);
 
   return (
     <div className="content-tabs-wrap">
@@ -446,101 +253,16 @@ export function ContentTabs() {
           const active = state.activeContentTabPath === tab.filePath;
           const label = state.settings.showTitle ? tab.title || tab.fileName : tab.fileName;
           const closePhaseClass = closingTabPaths.has(tab.filePath)
-            ? closingPhase === 'collapse'
-              ? ' is-closing--collapse'
-              : ' is-closing--fade'
+            ? closingPhase === 'collapse' ? ' is-closing--collapse' : ' is-closing--fade'
             : '';
-          return (
-            <div
-              key={tab.filePath}
-              ref={(element) => {
-                if (element) tabElementsRef.current.set(tab.filePath, element);
-                else tabElementsRef.current.delete(tab.filePath);
-              }}
-              className={`content-tab${active ? " is-active" : ""}${draggedTabPath === tab.filePath ? " is-dragging" : ""}${closePhaseClass}`}
-              role="tab"
-              aria-selected={active}
-              tabIndex={0}
-              title={tab.relativePath}
-              onPointerDown={(event) => {
-                if (event.button !== 0 || (event.target as HTMLElement).closest('.content-tab__close')) return;
-                draggedTabPathRef.current = tab.filePath;
-                didDragRef.current = false;
-                setDraggedTabPath(tab.filePath);
-                setGhostLabel(label);
-
-                const handlePointerMove = (moveEvent: PointerEvent) => {
-                  if (ghostRef.current) {
-                    ghostRef.current.style.transform = `translate3d(${moveEvent.clientX + 10}px, ${moveEvent.clientY + 10}px, 0)`;
-                    ghostRef.current.style.display = 'flex';
-                  }
-                };
-
-                document.addEventListener('pointermove', handlePointerMove);
-
-                const cleanUpMove = () => {
-                  document.removeEventListener('pointermove', handlePointerMove);
-                  document.removeEventListener('pointerup', cleanUpMove);
-                  document.removeEventListener('pointercancel', cleanUpMove);
-                  if (ghostRef.current) {
-                    ghostRef.current.style.display = 'none';
-                  }
-                };
-                document.addEventListener('pointerup', cleanUpMove);
-                document.addEventListener('pointercancel', cleanUpMove);
-              }}
-              onPointerEnter={() => {
-                if (draggedTabPathRef.current && draggedTabPathRef.current !== tab.filePath) {
-                  reorderContentTabs(draggedTabPathRef.current, tab.filePath);
-                  didDragRef.current = true;
-                }
-              }}
-              onClick={(event) => {
-                if (didDragRef.current) {
-                  event.preventDefault();
-                  didDragRef.current = false;
-                  return;
-                }
-                activateContentTab(tab.filePath);
-              }}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                setContextMenu({
-                  filePath: tab.filePath,
-                  x: event.clientX,
-                  y: event.clientY,
-                });
-              }}
-              onKeyDown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                activateContentTab(tab.filePath);
-              }}
-              onMouseDown={(event) => {
-                if (event.button === 1) event.preventDefault();
-              }}
-              onAuxClick={(event) => {
-                if (event.button !== 1) return;
-                event.preventDefault();
-                requestTabClose([tab.filePath], () => closeContentTab(tab.filePath));
-              }}
-            >
-              <span className="content-tab__label">{label}</span>
-              <button
-                type="button"
-                className="content-tab__close"
-                aria-label={t.tooltips.closeTab}
-                title={t.tooltips.closeTab}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  requestTabClose([tab.filePath], () => closeContentTab(tab.filePath));
-                }}
-              >
-                <CloseIcon size={11} />
-              </button>
-            </div>
-          );
+          return <ContentTabItem key={tab.filePath} tab={tab} active={active} label={label}
+            closePhaseClass={closePhaseClass} dragged={draggedTabPath === tab.filePath}
+            closeLabel={t.tooltips.closeTab} draggedTabPathRef={draggedTabPathRef}
+            didDragRef={didDragRef} ghostRef={ghostRef} tabElementsRef={tabElementsRef}
+            onSetDraggedPath={setDraggedTabPath} onSetGhostLabel={setGhostLabel}
+            onReorder={reorderContentTabs} onActivate={activateContentTab}
+            onOpenContextMenu={setContextMenu}
+            onClose={(path) => requestTabClose([path], () => closeContentTab(path))} />;
         })}
       </div>
       {scrollbarMetrics.visible && (

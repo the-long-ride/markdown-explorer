@@ -15,9 +15,13 @@ describe('Windows Explorer installer integration', () => {
 
     const electronHooks = readFileSync(electronHooksPath, 'utf8');
     expect(electronConfig.build.nsis.createDesktopShortcut).toBe(false);
+    expect(electronConfig.build.nsis.createStartMenuShortcut).toBe(false);
     expect(electronHooks).toContain('!macro customPageAfterChangeDir');
     expect(electronHooks).toContain('!ifndef BUILD_UNINSTALLER');
     expect(electronHooks).toContain('Create desktop shortcut');
+    expect(electronHooks).toContain('Add Markdown Explorer to Start menu');
+    expect(electronHooks).toContain('${NSD_Check} $ME_StartMenuShortcutCheckbox');
+    expect(electronHooks).not.toContain('${NSD_Check} $ME_DesktopShortcutCheckbox');
     expect(electronHooks).toContain('Add Markdown Explorer to .md and .mdx context menus');
     expect(electronHooks).toContain('Add Open Folder in Markdown Explorer to File Explorer');
     expect(electronHooks).toContain('SystemFileAssociations\\.md\\shell\\MarkdownExplorer');
@@ -31,7 +35,9 @@ describe('Windows Explorer installer integration', () => {
     // explicitly invokes it.
     expect(hooks).not.toContain('!macro NSIS_CUSTOM_PAGES');
     expect(hooks).toContain('Page custom MarkdownExplorerOptions MarkdownExplorerOptionsLeave');
-    expect(hooks).toContain('${NSD_Check} $ME_DesktopShortcutCheckbox');
+    expect(hooks).not.toContain('${NSD_Check} $ME_DesktopShortcutCheckbox');
+    expect(hooks).toContain('Add Markdown Explorer to Start menu');
+    expect(hooks).toContain('${NSD_Check} $ME_StartMenuShortcutCheckbox');
     expect(hooks).toContain('${NSD_Check} $ME_MarkdownContextCheckbox');
     expect(hooks).toContain('${NSD_Check} $ME_FolderContextCheckbox');
   });
@@ -39,6 +45,7 @@ describe('Windows Explorer installer integration', () => {
   test('reads choices when leaving the page instead of showing a dialog during installation', () => {
     expect(hooks).toContain('nsDialogs::Show');
     expect(hooks).toContain('${NSD_GetState} $ME_DesktopShortcutCheckbox $ME_CreateDesktopShortcut');
+    expect(hooks).toContain('${NSD_GetState} $ME_StartMenuShortcutCheckbox $ME_CreateStartMenuShortcut');
     expect(hooks).toContain('${NSD_GetState} $ME_MarkdownContextCheckbox $ME_AddMarkdownContext');
     expect(hooks).toContain('${NSD_GetState} $ME_FolderContextCheckbox $ME_AddFolderContext');
     expect(hooks).not.toContain('StrCpy $ME_CreateDesktopShortcut ${BST_CHECKED}');

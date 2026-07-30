@@ -3,28 +3,20 @@ import { TooltipButton } from '../shared/TooltipButton';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import {
-  CloseIcon,
-  CloseAllIcon,
-  CloseOthersIcon,
-  CloseRightIcon,
-  CloseTabIcon,
-  OpenFolderLocationIcon,
   PlusIcon,
 } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
-import { getTabLabel } from '../../desktop/desktopTabs';
 import type { DesktopTab } from '../../desktop/types';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
-import {
-  TabContextMenu,
-  type TabContextMenuAction,
-} from '../shared/TabContextMenu';
+import type { TabContextMenuAction } from '../shared/TabContextMenu';
 import { useTabBarScrollbar } from './useTabBarScrollbar';
 import { useCssVars } from '../../utils/useCssVars';
 import { getEnabledShortcut } from '../../utils/shortcuts';
-import { getShellLocationLabel, requestShellLocation, supportsShellLocation } from '../../desktop/shellLocation';
+import { requestShellLocation, supportsShellLocation } from '../../desktop/shellLocation';
+import { DesktopTabItem } from './DesktopTabItem';
+import { DesktopTabContextMenu } from './DesktopTabContextMenu';
 
 const TAB_CLOSE_FADE_MS = 90;
 const TAB_CLOSE_COLLAPSE_MS = 140;
@@ -301,121 +293,18 @@ export function DesktopTabBar({
           onScroll={updateScrollbarMetrics}
         >
           {workspaceTabs.map((tab) => {
-            const active = tab.id === activeTabId;
-            const editing = editingTabId === tab.id;
-            const label = getTabLabel(tab);
             const closePhaseClass = closingTabIds.has(tab.id)
-              ? closingPhase === 'collapse'
-                ? ' is-closing--collapse'
-                : ' is-closing--fade'
+              ? closingPhase === 'collapse' ? ' is-closing--collapse' : ' is-closing--fade'
               : '';
-            return (
-              <button
-                key={tab.id}
-                ref={(element) => {
-                  if (element) tabElementsRef.current.set(tab.id, element);
-                  else tabElementsRef.current.delete(tab.id);
-                }}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                className={`desktop-tab${active ? ' is-active' : ''}${draggedTabId === tab.id ? ' is-dragging' : ''}${closePhaseClass}`}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setContextMenu({
-                    tabId: tab.id,
-                    x: event.clientX,
-                    y: event.clientY,
-                  });
-                }}
-                onMouseDown={(event) => {
-                  if (event.button === 1) event.preventDefault();
-                }}
-                onAuxClick={(event) => {
-                  if (event.button !== 1) return;
-                  event.preventDefault();
-                  event.stopPropagation();
-                  requestTabClose([tab.id], () => onCloseTab(tab.id));
-                }}
-                onDoubleClick={() => startEditing(tab)}
-                title={tab.workspacePath ?? label}
-                onPointerDown={(event) => {
-                  if (editing || event.button !== 0 || (event.target as HTMLElement).closest('.desktop-tab__close')) return;
-                  draggedTabIdRef.current = tab.id;
-                  didDragRef.current = false;
-                  setDraggedTabId(tab.id);
-                  setGhostLabel(label);
-
-                  const handlePointerMove = (moveEvent: PointerEvent) => {
-                    if (ghostRef.current) {
-                      ghostRef.current.style.transform = `translate3d(${moveEvent.clientX + 10}px, ${moveEvent.clientY + 10}px, 0)`;
-                      ghostRef.current.style.display = 'flex';
-                    }
-                  };
-
-                  document.addEventListener('pointermove', handlePointerMove);
-
-                  const cleanUpMove = () => {
-                    document.removeEventListener('pointermove', handlePointerMove);
-                    document.removeEventListener('pointerup', cleanUpMove);
-                    document.removeEventListener('pointercancel', cleanUpMove);
-                    if (ghostRef.current) {
-                      ghostRef.current.style.display = 'none';
-                    }
-                  };
-                  document.addEventListener('pointerup', cleanUpMove);
-                  document.addEventListener('pointercancel', cleanUpMove);
-                }}
-                onPointerEnter={() => {
-                  if (draggedTabIdRef.current && draggedTabIdRef.current !== tab.id) {
-                    onReorderTabs(draggedTabIdRef.current, tab.id);
-                    didDragRef.current = true;
-                  }
-                }}
-                onClick={(event) => {
-                  if (didDragRef.current) {
-                    event.preventDefault();
-                    didDragRef.current = false;
-                    return;
-                  }
-                  onSelectTab(tab.id);
-                }}
-              >
-                {editing ? (
-                  <input
-                    className="desktop-tab__alias-input"
-                    value={draftAlias}
-                    autoFocus
-                    onChange={(event) => setDraftAlias(event.target.value)}
-                    onClick={(event) => event.stopPropagation()}
-                    onBlur={commitAlias}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') commitAlias();
-                      if (event.key === 'Escape') {
-                        setEditingTabId(null);
-                        setDraftAlias('');
-                      }
-                    }}
-                  />
-                ) : (
-                  <span className="desktop-tab__label">{getTabLabel(tab)}</span>
-                )}
-                <span
-                  className="desktop-tab__close"
-                  role="button"
-                  tabIndex={-1}
-                  aria-label="Close tab"
-                  title={t.tooltips.closeTab}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    requestTabClose([tab.id], () => onCloseTab(tab.id));
-                  }}
-                >
-                  <CloseIcon size={11} />
-                </span>
-              </button>
-            );
+            return <DesktopTabItem key={tab.id} tab={tab} active={tab.id === activeTabId}
+              editing={editingTabId === tab.id} dragged={draggedTabId === tab.id}
+              closePhaseClass={closePhaseClass} draftAlias={draftAlias} closeLabel={t.tooltips.closeTab}
+              draggedTabIdRef={draggedTabIdRef} didDragRef={didDragRef} ghostRef={ghostRef}
+              tabElementsRef={tabElementsRef} onDraftAliasChange={setDraftAlias}
+              onCommitAlias={commitAlias} onCancelAlias={() => { setEditingTabId(null); setDraftAlias(''); }}
+              onStartEditing={startEditing} onSetDraggedTabId={setDraggedTabId} onSetGhostLabel={setGhostLabel}
+              onReorder={onReorderTabs} onSelect={onSelectTab} onContextMenu={setContextMenu}
+              onClose={(tabId) => requestTabClose([tabId], () => onCloseTab(tabId))} />;
           })}
         </div>
         {scrollbarMetrics.visible && (
@@ -434,38 +323,9 @@ export function DesktopTabBar({
         )}
       </div>
       {contextMenu && (
-        <TabContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          labels={{
-            ...t.tabContextMenu,
-            openLocation: supportsShellLocation(state.appRuntime)
-              ? getShellLocationLabel(t, state.hostPlatform, 'folder')
-              : undefined,
-          }}
-          openLocationIcon={<OpenFolderLocationIcon />}
-          closeThisTabIcon={<CloseTabIcon />}
-          closeTabsToRightIcon={<CloseRightIcon />}
-          closeOtherTabsIcon={<CloseOthersIcon />}
-          closeAllTabsIcon={<CloseAllIcon />}
-          shortcuts={{
-            closeThisTab: getEnabledShortcut(state.settings, 'closeContentTab'),
-            closeTabsToRight: getEnabledShortcut(state.settings, 'closeContentTabsToRight'),
-            closeOtherTabs: getEnabledShortcut(state.settings, 'closeOtherContentTabs'),
-            closeAllTabs: getEnabledShortcut(state.settings, 'closeAllContentTabs'),
-          }}
-          ariaLabel={t.tabContextMenu.menuLabel}
-          disabled={{
-            closeThisTab: contextMenuTabIndex === -1,
-            closeTabsToRight:
-              contextMenuTabIndex === -1 ||
-              contextMenuTabIndex >= workspaceTabs.length - 1,
-            closeOtherTabs: workspaceTabs.length <= 1,
-            closeAllTabs: workspaceTabs.length === 0,
-          }}
-          onAction={handleContextMenuAction}
-          onClose={() => setContextMenu(null)}
-        />
+        <DesktopTabContextMenu state={state} translations={t}
+          position={contextMenu} tabIndex={contextMenuTabIndex} tabCount={workspaceTabs.length}
+          onAction={handleContextMenuAction} onClose={() => setContextMenu(null)} />
       )}
       <TooltipButton
         className="btn btn--icon desktop-tabbar__new topbar__new-workspace-btn topbar__action-btn"

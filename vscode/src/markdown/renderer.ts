@@ -162,8 +162,7 @@ export class HtmlRenderer {
     });
 
     return `<section class="mdn-section mdn-section--h${level}" id="${id}" data-expanded="true">
-  <div class="mdn-section-header" onclick="UI.toggleSection(this)" role="button" tabindex="0" aria-expanded="true"
-       onkeydown="if(event.key==='Enter'||event.key===' ')UI.toggleSection(this)">
+  <div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true">
     <${`h${level}`} class="mdn-section-title">
       <span class="mdn-heading-text">${headingHtml}<span class="mdn-heading-level" aria-hidden="true">H${level}</span></span>
     </${`h${level}`}>

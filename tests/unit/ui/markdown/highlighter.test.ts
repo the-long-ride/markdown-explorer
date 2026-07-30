@@ -162,7 +162,7 @@ describe('markdown/highlighter', () => {
 
     it('defines a dedicated muted terminal color for K-Ink syntax', () => {
       const codeStyles = readFileSync(
-        resolve(process.cwd(), 'ui/src/styles/global/global-code.css'),
+        resolve(process.cwd(), 'ui/src/styles/global/global-code-syntax.css'),
         'utf8',
       );
       const themeStyles = readFileSync(

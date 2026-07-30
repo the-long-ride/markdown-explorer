@@ -28,7 +28,7 @@ describe('lazy workspace loading parity', () => {
       read('chromium-xtension/src/chrome-host.ts'),
       read('website-app/src/web-file-mode.ts'),
       tauri,
-    ]) expect(host).toMatch(/workspaceFilesChanged|emit_workspace_files_changed/);
+    ]) expect(host).toMatch(/workspaceFilesChanged|emit_workspace_files_changed_scoped/);
   });
 
   test('reports scan progress in every scanner implementation', () => {
@@ -44,7 +44,7 @@ describe('lazy workspace loading parity', () => {
   });
 
   test('uses the shared nonblocking progress protocol from host through UI', () => {
-    expect(read('ui/src/types.ts')).toContain("command: 'workspaceScanProgress'");
+    expect(read('ui/src/types/hostMessages.ts')).toContain("command: 'workspaceScanProgress'");
     expect(read('ui/src/contexts/useAppStateEffects.ts')).toContain("case 'workspaceScanProgress'");
     expect(read('ui/src/AppView.tsx')).toContain('Scanning {state.scannedFiles.toLocaleString()} files');
   });
