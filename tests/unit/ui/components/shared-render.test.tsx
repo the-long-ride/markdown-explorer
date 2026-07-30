@@ -403,10 +403,13 @@ describe('ToolbarActionMenu', () => {
     expect(container.querySelector('.toolbar-action-menu__panel')).not.toBeInTheDocument();
   });
 
-  it('adds has-update class to trigger when hasUpdate is true', () => {
+  it('adds has-update class to trigger and settings item when hasUpdate is true', () => {
     render(React.createElement(ToolbarActionMenu, { ...defaultProps, hasUpdate: true }));
     const trigger = screen.getByRole('button', { name: /more/i });
     expect(trigger.className).toContain('has-update');
+    fireEvent.click(trigger);
+    const settingsItem = screen.getByText('Settings').closest('.toolbar-action-menu__item');
+    expect(settingsItem?.className).toContain('has-update');
   });
 
   it('calls onSidebarToggle when sidebar item clicked', () => {

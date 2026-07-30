@@ -242,10 +242,11 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     return { type: 'toggle-sidebar' };
   }
 
+  if (!state.isEditableTarget && matchesShortcut(e, state.keybindings.refresh)) {
+    return { type: 'refresh' };
+  }
+
   if (state.isDesktopLike) {
-    if (matchesShortcut(e, state.keybindings.refresh)) {
-      return { type: 'refresh' };
-    }
     if (matchesShortcut(e, state.keybindings.collapseAll)) {
       return { type: 'collapse-all' };
     }

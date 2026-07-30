@@ -4,7 +4,22 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
-## [Unreleased]
+## [v1.6.2] — 2026-07-30
+
+### Added
+- **VS Code Open Folder Context Menu**: Added right-click context menu option `Open Folder in Markdown Explorer` (`markdownExplorer.openFolder`) for any folder in the VS Code Explorer file tree.
+- **Settings Update Notification Badge**: Added an update notification dot badge to the Settings option button inside the More Actions menu when a new release version is available.
+- **Customizable Refresh & TOC Keyboard Shortcuts**: Refresh action is now customizable in Settings modal and listed in Homepage > Shortcuts tab across all runtimes (`F5` on Desktop app, `R` on Web Demo, VS Code extension, and Chromium extension; `Ctrl+T` for Toggle TOC in Desktop app).
+
+### Changed
+- **Default Keybindings**: Updated default keyboard shortcut for Toggle TOC in Desktop app to `Ctrl+T`. Optimized HTML document, CSV/TSV table views, and workspace scan controls.
+
+### Fixed
+- **VS Code Extension VSIX Runtime Packaging**: Unignored compiled `out/` and `ui/dist/` assets in `vscode/.vscodeignore` and added `verify-package-runtime.js` to ensure runtime entrypoint (`extension.js`) is included in `.vsix` packages, resolving `command 'markdownExplorer.open' not found`.
+- **Table of Contents Top Alignment**: Adjusted `TableOfContents.tsx` and `useContentEffects.ts` jump scrolling so clicked TOC items and hash anchors scroll with `block: 'start'`, aligning section titles to the top of `content__scroll`.
+- **Table Toolbar UI Alignment**: Standardized `height: var(--control-h, 26px)`, `box-sizing: border-box`, padding, and vertical alignment across table search input, row count, wrap button, and display type dropdown switcher.
+
+## [v1.6.1] — 2026-07-29
 
 ### Added
 - **Keyboard Shortcut Search**: search field in the keyboard shortcuts section of the Settings modal for fast shortcut discovery.

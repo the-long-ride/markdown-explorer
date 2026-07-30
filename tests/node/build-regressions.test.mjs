@@ -28,7 +28,7 @@ test('VS Code adapters accept native Thenable results without requiring Promise 
 
 test('Tauri opener receives owned strings instead of Path references', async () => {
   const commands = await read('tauri/src/dispatcher/commands.rs');
-  const shellBlock = commands.match(/"openShellLocation"\s*=>\s*\{([\s\S]*?)\n\s*\}\n\s*"copyCode"/)?.[1] ?? '';
+  const shellBlock = commands.match(/"openShellLocation"\s*=>\s*\{([\s\S]*?)\r?\n\s*\}\r?\n\s*"copyCode"/)?.[1] ?? '';
 
   assert.match(shellBlock, /path_to_opener_string|to_string_lossy\(\)\.into_owned\(\)/);
   assert.doesNotMatch(shellBlock, /open_path\(source\s*,/);

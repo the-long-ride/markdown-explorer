@@ -289,7 +289,7 @@ export function ToolbarActionMenu({
               type="button"
               role="menuitemcheckbox"
               aria-checked={typeof item.toggleState === "boolean" ? item.toggleState : undefined}
-              className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}${typeof item.toggleState === "boolean" ? " is-toggle" : ""}`}
+              className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}${item.id === "settings" && hasUpdate ? " has-update" : ""}${typeof item.toggleState === "boolean" ? " is-toggle" : ""}`}
               onClick={() => handleAction(item)}
               tooltip={item.tooltip}
               icon={getItemIcon(item.id, isDark, isFocusMode)}

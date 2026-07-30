@@ -1,11 +1,12 @@
 {
   "name": "markdown-explorer-workspace",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "private": true,
   "packageManager": "pnpm@11.17.0",
   "scripts": {
     "test": "vitest run",
     "test:node": "node --experimental-strip-types --test tests/node/*.test.mjs",
+    "test:update-contracts": "node --test tests/node/packaged-runtime-contract.test.mjs tests/node/tauri-updater-contract.test.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:electron": "vitest run --project electron",

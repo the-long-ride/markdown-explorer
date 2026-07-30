@@ -111,7 +111,10 @@ describe('TableOfContents', () => {
     render(<TableOfContents />);
     const h2Item = document.querySelector('.toc-item--h2') as HTMLElement;
     fireEvent.click(h2Item);
-    expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    expect(mockScrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
     getByIdSpy.mockRestore();
   });
 

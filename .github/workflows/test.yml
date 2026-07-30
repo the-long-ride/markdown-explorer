@@ -53,6 +53,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:contracts
+      - run: pnpm run test:node
+      - run: pnpm run test:update-contracts
 
   ui:
     runs-on: ubuntu-latest

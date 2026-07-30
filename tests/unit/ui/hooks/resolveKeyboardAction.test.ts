@@ -615,12 +615,21 @@ describe('resolveKeyboardAction', () => {
     });
   });
 
-  describe('desktop-only shortcuts return null when not isDesktopLike', () => {
-    it('refresh returns null when not isDesktopLike', () => {
-      const e = mkEvent({ key: 'r', ctrlKey: true });
-      const result = resolveKeyboardAction(e, defaultState({ isDesktopLike: false }));
+  describe('refresh shortcut', () => {
+    it('refresh returns refresh when not isDesktopLike', () => {
+      const e = mkEvent({ key: 'r' });
+      const result = resolveKeyboardAction(e, defaultState({ isDesktopLike: false, keybindings: { refresh: 'r' } }));
+      expect(result).toEqual({ type: 'refresh' });
+    });
+
+    it('refresh returns null when in an editable target', () => {
+      const e = mkEvent({ key: 'r' });
+      const result = resolveKeyboardAction(e, defaultState({ isEditableTarget: true, keybindings: { refresh: 'r' } }));
       expect(result).toBeNull();
     });
+  });
+
+  describe('desktop-only shortcuts return null when not isDesktopLike', () => {
 
     it('collapse-all returns null when not isDesktopLike', () => {
       const e = mkEvent({ key: 'c', ctrlKey: true, shiftKey: true });

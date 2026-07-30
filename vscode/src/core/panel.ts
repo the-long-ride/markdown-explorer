@@ -262,6 +262,22 @@ export class MarkdownDocsPanel {
 
   private async _sendContent(): Promise<void> {
     if (!this._currentFile) return;
+
+    if (fs.existsSync(this._currentFile) && fs.statSync(this._currentFile).isDirectory()) {
+      const normFolder = normalizePanelPath(this._currentFile);
+      const child = this._flat.find(f => {
+        const normChild = normalizePanelPath(f.fsPath);
+        return normChild === normFolder || normChild.startsWith(normFolder + '/');
+      });
+      if (child) {
+        this._currentFile = child.fsPath;
+      } else {
+        this._currentFile = null;
+        await this._sendWelcome();
+        return;
+      }
+    }
+
     if (!isSupportedFilePath(this._currentFile, this._documentConversionEnabled)) {
       this._currentFile = null;
       await this._sendWelcome();
@@ -423,6 +439,22 @@ export class MarkdownDocsPanel {
     }
 
     const resolvedPath = this._resolveNavigationPath(href);
+
+    if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
+      const normFolder = normalizePanelPath(resolvedPath);
+      const child = this._flat.find(f => {
+        const normChild = normalizePanelPath(f.fsPath);
+        return normChild === normFolder || normChild.startsWith(normFolder + '/');
+      });
+      if (child) {
+        this._currentFile = child.fsPath;
+        await this._sendContent();
+      } else {
+        this._currentFile = null;
+        await this._sendWelcome();
+      }
+      return;
+    }
 
     // Check if the resolved file actually exists on disk
     if (

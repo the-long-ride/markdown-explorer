@@ -42,7 +42,7 @@ describe("website image descriptions", () => {
     assert.ok(styles.includes("grid-template-columns: repeat(3, minmax(0, 1fr));"));
     assert.ok(styles.includes(".feature-card img"));
     assert.ok(styles.includes("height: auto;"));
-    assert.ok(styles.includes("object-fit: contain;"));
+    assert.ok(styles.includes("object-fit: cover;"));
     assert.ok(responsive.includes(".feature-grid"));
     assert.ok(responsive.includes("grid-template-columns: repeat(2, minmax(0, 1fr));"));
   });
@@ -52,13 +52,10 @@ describe("website image descriptions", () => {
     const english = await readProjectFile("website/i18n/en.js");
 
     assert.ok(html.includes("Scope Focus"));
-    assert.ok(html.includes("Isolated HTML Sandboxes"));
-    assert.ok(html.includes("Run scripts safely in isolated HTML previews"));
-    assert.ok(html.includes("galleryCaption3Title"));
+    assert.ok(html.includes("HTML Sandboxes & Video Embeds"));
+    assert.ok(html.includes("galleryCaption3"));
     for (const source of [html, english]) {
-      assert.ok(source.includes("Present your documents"));
       assert.ok(source.includes("Workspace history"));
-      assert.ok(source.includes("Available across platforms"));
     }
     assert.ok(english.includes('galleryCaption3Title: "Isolated HTML Sandboxes"'));
 

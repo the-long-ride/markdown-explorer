@@ -41,7 +41,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 
 After installing the extension, open a folder containing Markdown files in VS Code. In the **Explorer** view, use the Markdown Explorer button in the workspace header (alongside the New File, Refresh, and Collapse All actions) to open the full documentation viewer.
 
-You can also open it from the Command Palette with **Markdown Explorer: Open Docs Viewer**, or use `Ctrl+Shift+M` (`Cmd+Shift+M` on macOS). To preview the currently active `.md` or `.mdx` file, use **Markdown Explorer: Toggle Docs Viewer** or `Ctrl+Alt+V` / `Cmd+Alt+V`. You can right-click a Markdown file in Explorer and choose **Markdown Explorer: Preview This File**.
+You can also open it from the Command Palette with **Markdown Explorer: Open Docs Viewer**, or use `Ctrl+Shift+M` (`Cmd+Shift+M` on macOS). To preview the currently active `.md` or `.mdx` file, use **Markdown Explorer: Toggle Docs Viewer** or `Ctrl+Alt+V` / `Cmd+Alt+V`. You can right-click a Markdown file in Explorer and choose **Markdown Explorer: Preview This File**, or right-click any folder in the file tree and choose **Open Folder in Markdown Explorer**.
 
 The Explorer header icon automatically uses the high-contrast stroke for the current VS Code color theme. If it does not appear after installing or updating, run **Developer: Reload Window** (or restart the Extension Development Host while debugging).
 

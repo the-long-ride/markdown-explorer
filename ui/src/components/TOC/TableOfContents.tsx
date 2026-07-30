@@ -89,7 +89,11 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
       parent.dataset.expanded = 'true';
       parent = (parent.parentElement?.closest('.mdn-section') as HTMLElement | null) ?? null;
     }
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    el.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
   }, []);
 
   const scrollToTop = useCallback(() => {

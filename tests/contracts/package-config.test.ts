@@ -89,14 +89,15 @@ describe('package configuration contracts', () => {
   });
 
   describe('VS Code extension manifest', () => {
-    test('declares exactly 4 commands', async () => {
+    test('declares exactly 5 commands', async () => {
       const pkg = await readJson('vscode/package.json');
       const commands = pkg.contributes.commands;
-      expect(commands).toHaveLength(4);
+      expect(commands).toHaveLength(5);
       const ids = commands.map((c: any) => c.command).sort();
       expect(ids).toEqual([
         'markdownExplorer.open',
         'markdownExplorer.openFile',
+        'markdownExplorer.openFolder',
         'markdownExplorer.refresh',
         'markdownExplorer.toggle',
       ].sort());
@@ -109,14 +110,14 @@ describe('package configuration contracts', () => {
       }
     });
 
-    test('menus gate on .md or .mdx extensions', async () => {
+    test('menus gate on .md/.mdx extensions or folder context', async () => {
       const pkg = await readJson('vscode/package.json');
       const menus = pkg.contributes.menus;
       const editorTitle = menus['editor/title'];
       const explorerContext = menus['explorer/context'];
-      for (const item of [...editorTitle, ...explorerContext]) {
-        expect(item.when).toMatch(/resourceExtname == \.m[dxx]/);
-      }
+      expect(editorTitle[0].when).toMatch(/resourceExtname == \.m[dx]/);
+      expect(explorerContext.find((c: any) => c.command === 'markdownExplorer.openFile')?.when).toMatch(/resourceExtname == \.m[dx]/);
+      expect(explorerContext.find((c: any) => c.command === 'markdownExplorer.openFolder')?.when).toBe('explorerResourceIsFolder');
     });
 
     test('declares 2 keybindings', async () => {

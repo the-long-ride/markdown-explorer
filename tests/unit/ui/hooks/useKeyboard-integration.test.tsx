@@ -369,17 +369,19 @@ describe('useKeyboard hook integration', () => {
     expect(mockToggleTheme).not.toHaveBeenCalled();
   });
 
-  it('calls refresh on Ctrl+R when desktop-like', () => {
-    (window as any).__chromeExtBus = {};
+  it('calls refresh on matching keybinding across runtimes', () => {
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: 'r', ctrlKey: true });
     expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call refresh on Ctrl+R when not desktop-like', () => {
+  it('does not call refresh when typing in an editable target', () => {
     renderHook(() => useKeyboard(defaultProps));
-    fireKeyDown({ key: 'r', ctrlKey: true });
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    fireKeyDown({ key: 'r', target: input });
     expect(mockRefresh).not.toHaveBeenCalled();
+    document.body.removeChild(input);
   });
 
   it('calls toggleSidebar on Alt+A (universal binding)', () => {

@@ -426,9 +426,10 @@ export function useContentEffects({
             section.setAttribute("data-expanded", "true");
             section = section.parentElement?.closest<HTMLElement>(".mdn-section") ?? null;
           }
+          const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
           targetEl.scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-            block: "center",
+            behavior: prefersReducedMotion ? "auto" : "smooth",
+            block: "start",
           });
         }
       }

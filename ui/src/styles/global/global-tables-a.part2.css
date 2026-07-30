@@ -1,6 +1,9 @@
 .mdn-table-view-switcher button {
-  padding: 3px 8px;
+  height: var(--control-h, 26px);
+  padding: 0 8px;
+  box-sizing: border-box;
   font-size: 11px;
+  line-height: normal;
   border-radius: var(--r);
   border: var(--stroke-w) solid var(--bd-s);
   background: var(--bg-e);
@@ -31,6 +34,9 @@
   justify-content: space-between;
   gap: 7px;
   min-width: 105px;
+  height: var(--control-h, 26px);
+  padding: 0 8px;
+  box-sizing: border-box;
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r);
   background: var(--bg-e);
@@ -38,7 +44,7 @@
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 8px;
+  line-height: normal;
   cursor: pointer;
   outline: none;
   box-shadow: 0 1px 0 color-mix(in srgb, var(--bd-x) 28%, transparent);

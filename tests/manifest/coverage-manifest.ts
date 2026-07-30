@@ -53,8 +53,9 @@ export const coverageManifest: Record<string, string[]> = {
   'electron/workspace/workspace-watch.js': ['tests/unit/electron/workspace-watch.test.ts'],
   'electron/youtube/youtube-headers.js': ['tests/unit/electron/youtube-headers.test.ts'],
 
-  'vscode/scripts/bundle-markdown-them.js': ['tests/unit/build/copy-ui.test.ts'],
+  'vscode/scripts/bundle-markdown-them.js': ['tests/unit/build/copy-ui.test.ts', 'tests/unit/build/vscode-runtime-scripts.test.ts'],
   'vscode/scripts/copy-ui.js': ['tests/unit/build/copy-ui.test.ts'],
+  'vscode/scripts/verify-package-runtime.js': ['tests/unit/build/vscode-runtime-scripts.test.ts'],
   'vscode/src/core/documentConversion.ts': ['tests/unit/vscode/documentConversion.test.ts'],
   'vscode/src/core/incrementalScan.ts': ['tests/unit/vscode/panel.test.ts'],
   'vscode/src/core/htmlPreviewServer.ts': ['tests/node/html-preview-content.test.mjs'],

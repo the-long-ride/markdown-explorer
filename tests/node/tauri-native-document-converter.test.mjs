@@ -16,6 +16,7 @@ function collectTextFiles(rootRelativePath) {
   const chunks = [];
   const visit = (current) => {
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'target') continue;
       const absolute = path.join(current, entry.name);
       if (entry.isDirectory()) visit(absolute);
       else if (entry.isFile() && /\.(?:rs|json|ya?ml|toml|mjs|js)$/.test(entry.name)) {

@@ -122,6 +122,13 @@ describe('_doActivate', () => {
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, '/test/page.md');
   });
 
+  test('markdownExplorer.openFolder uses folder URI fsPath', () => {
+    _doActivate(context as any, vscode as any);
+    const openFolderFn = vscode._registeredCommands['markdownExplorer.openFolder'];
+    openFolderFn({ fsPath: '/test/docs-folder' });
+    expect(Panel.createOrShow).toHaveBeenCalledWith(context, '/test/docs-folder');
+  });
+
   test('markdownExplorer.openFile falls back to editor when no URI', () => {
     vscode.window.activeTextEditor = {
       document: { languageId: 'markdown', fileName: '/test/doc.md' },
@@ -244,7 +251,7 @@ describe('_doActivate', () => {
 
   test('registerCommand calls return disposables pushed to context', () => {
     _doActivate(context as any, vscode as any);
-    expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(4);
+    expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(5);
   });
 
   test('onDidSaveTextDocument called with handler', () => {

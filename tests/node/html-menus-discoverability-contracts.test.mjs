@@ -24,7 +24,7 @@ test('document tab menu has semantic icons, HTML actions, and containing-folder 
   assert.match(tabs, /toggleHtmlDocumentView/);
   assert.match(tabs, /openCurrentDocumentLocation/);
   assert.match(tabs, /open-parent-directory/);
-  assert.match(tabs, /previewActions\.openError/);
+  assert.match(tabs, /previewActions(?:\?\.)?openError/);
   for (const prop of ['closeThisTabIcon', 'closeTabsToRightIcon', 'closeOtherTabsIcon', 'closeAllTabsIcon']) {
     assert.match(workspaceTabs, new RegExp(`${prop}=`), `${prop} missing from workspace menu`);
   }

@@ -64,6 +64,17 @@ export function _doActivate(
     }),
   );
 
+  // Open folder in Markdown Explorer
+  context.subscriptions.push(
+    vscode.commands.registerCommand('markdownExplorer.openFolder', (uri?: import('vscode').Uri) => {
+      let folderPath: string | null = null;
+      if (uri?.fsPath) {
+        folderPath = uri.fsPath;
+      }
+      MarkdownDocsPanel.createOrShow(context, folderPath);
+    }),
+  );
+
   // Toggle Docs Viewer
   context.subscriptions.push(
     vscode.commands.registerCommand('markdownExplorer.toggle', () => {

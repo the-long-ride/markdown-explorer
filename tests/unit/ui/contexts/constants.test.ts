@@ -30,6 +30,7 @@ describe('appStateConstants', () => {
     expect(DESKTOP_DEFAULT_KEYBINDINGS.findCurrentFile).toBe('F');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleTheme).toBe('Ctrl+L');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleSidebar).toBe('Ctrl+B');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleToc).toBe('Ctrl+T');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.refresh).toBe('F5');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleDesktopViewMode).toBe('Ctrl+Alt+T');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.openCurrentDocumentLocation).toBe('Shift+Alt+R');
@@ -48,7 +49,7 @@ describe('appStateConstants', () => {
   test('getDefaultKeybindings(false) with __chromeExtBus returns Chrome keybindings', () => {
     (window as any).__chromeExtBus = {};
     const kb = getDefaultKeybindings(false);
-    expect(kb.refresh).toBe('Alt+R');
+    expect(kb.refresh).toBe('R');
     delete (window as any).__chromeExtBus;
   });
 

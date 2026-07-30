@@ -9,7 +9,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   welcome: 'Ctrl+h',
   settings: 'Ctrl+i',
   toggleTheme: 'Ctrl+Shift+l',
-  refresh: 'F5',
+  refresh: 'R',
   collapseAll: 'Ctrl+Shift+x',
   expandAll: 'Ctrl+Shift+e',
   workspaceSelection: 'Ctrl+Alt+W',
@@ -25,12 +25,14 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   ...DEFAULT_KEYBINDINGS,
+  refresh: 'F5',
   settings: 'Ctrl+,',
   searchCurrent: 'Ctrl+F',
   searchAllTabs: 'Ctrl+Shift+F',
   findCurrentFile: 'F',
   toggleTheme: 'Ctrl+L',
   toggleSidebar: 'Ctrl+B',
+  toggleToc: 'Ctrl+T',
   workspaceSelection: 'Ctrl+N',
   toggleDesktopViewMode: 'Ctrl+Alt+T',
   openCurrentDocumentLocation: 'Shift+Alt+R',
@@ -41,13 +43,6 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
 };
 
 export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
-  const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  if (isChrome) {
-    return {
-      ...DEFAULT_KEYBINDINGS,
-      refresh: 'Alt+R',
-    };
-  }
   return isDesktop ? DESKTOP_DEFAULT_KEYBINDINGS : DEFAULT_KEYBINDINGS;
 }
 

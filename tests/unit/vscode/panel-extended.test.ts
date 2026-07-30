@@ -191,6 +191,31 @@ describe('Panel integration: navigation', () => {
     expect(renderMsg).toBeDefined();
     expect(panel._currentFile).toBe(mdPath);
   });
+
+  test('navigate to directory path selects first matching child file', async () => {
+    const subFolder = path.join(tempDir, 'subfolder');
+    if (!fs.existsSync(subFolder)) fs.mkdirSync(subFolder, { recursive: true });
+    const childPath = path.join(subFolder, 'nested.md');
+    fs.writeFileSync(childPath, '# Nested Doc');
+
+    const flat = [{
+      fsPath: childPath,
+      relativePath: 'subfolder/nested.md',
+      parts: ['subfolder', 'nested.md'],
+      fileName: 'nested.md',
+      title: 'Nested Doc',
+    }];
+    const panel = createPanel([{ name: 'test', uri: { fsPath: tempDir } }]);
+    panel._flat = flat;
+
+    (WorkspaceScanner.readFile as any).mockReturnValue('# Nested Doc');
+
+    await panel._navigateTo(subFolder);
+
+    expect(panel._currentFile).toBe(childPath);
+    const renderMsg = mockPostMessage.mock.calls.find((c: any) => c[0].command === 'renderContent');
+    expect(renderMsg).toBeDefined();
+  });
 });
 
 describe('Panel integration: _resolveNavigationPath', () => {

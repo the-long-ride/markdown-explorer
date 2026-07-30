@@ -157,7 +157,9 @@
   background: var(--bg-e);
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r);
-  padding: 3px 8px;
+  height: var(--control-h, 26px);
+  padding: 0 8px;
+  box-sizing: border-box;
   flex: 1;
   max-width: 220px;
   transition: border-color 0.12s;
@@ -172,12 +174,16 @@
 }
 .mdn-table-input {
   flex: 1;
+  height: 100%;
+  box-sizing: border-box;
   background: none;
   border: none;
   outline: none;
   color: var(--tx);
   font-size: 11.5px;
   font-family: var(--font-ui);
+  padding: 0;
+  line-height: normal;
 }
 .mdn-table-input::placeholder {
   color: var(--txm);
@@ -186,6 +192,9 @@
   font-size: 10.5px;
   color: var(--txm);
   white-space: nowrap;
+  line-height: var(--control-h, 26px);
+  display: inline-flex;
+  align-items: center;
 }
 .mdn-table-toolbar-actions {
   margin-left: auto;
@@ -196,8 +205,11 @@
   flex-wrap: wrap;
 }
 .mdn-table-wrap-toggle {
-  padding: 3px 8px;
+  height: var(--control-h, 26px);
+  padding: 0 8px;
+  box-sizing: border-box;
   font-size: 11px;
+  line-height: normal;
   border-radius: var(--r);
   border: var(--stroke-w) solid var(--bd-s);
   background: var(--bg-e);

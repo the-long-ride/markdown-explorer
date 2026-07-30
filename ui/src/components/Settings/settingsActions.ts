@@ -6,7 +6,7 @@ export const ACTIONS_LIST = [
   { id: 'forward', label: 'Go to next file', scope: 'both' },
   { id: 'locateFile', label: 'Locate current open file in sidebar', scope: 'both' },
   { id: 'openCurrentDocumentLocation', label: 'Open current document folder', scope: 'electron' },
-  { id: 'refresh', label: 'Refresh current file', scope: 'desktop' },
+  { id: 'refresh', label: 'Refresh current file', scope: 'both' },
 
   // Search & Find
   { id: 'findCurrentFile', label: 'Find in current file', scope: 'both' },

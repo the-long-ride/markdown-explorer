@@ -2,7 +2,7 @@
   "name": "vscode-extension-markdown-explorer",
   "displayName": "Markdown Explorer in VS Code",
   "description": "Markdown for AI agents, Markdown Explorer for human. View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "license": "MIT",
   "publisher": "the-long-ride",
   "icon": "ui/assets/logos/logo-500.png",
@@ -41,6 +41,14 @@
         }
       },
       {
+        "command": "markdownExplorer.openFolder",
+        "title": "Open Folder in Markdown Explorer",
+        "icon": {
+          "light": "./ui/assets/icons/markdown-explorer-dark-stroke.svg",
+          "dark": "./ui/assets/icons/markdown-explorer-light-stroke.svg"
+        }
+      },
+      {
         "command": "markdownExplorer.toggle",
         "title": "Markdown Explorer: Toggle Docs Viewer",
         "icon": {
@@ -66,6 +74,11 @@
         {
           "command": "markdownExplorer.openFile",
           "when": "resourceExtname == .md || resourceExtname == .mdx",
+          "group": "navigation"
+        },
+        {
+          "command": "markdownExplorer.openFolder",
+          "when": "explorerResourceIsFolder",
           "group": "navigation"
         }
       ],
@@ -164,7 +177,8 @@
   "scripts": {
     "compile": "tsc -p ./ && node scripts/bundle-markdown-them.js && cd ../ui && pnpm run build && cd ../vscode && node scripts/copy-ui.js",
     "watch": "tsc -watch -p ./",
-    "package": "pnpm run compile && pnpm exec vsce package --no-dependencies"
+    "package": "pnpm run compile && node scripts/verify-package-runtime.js && pnpm exec vsce package --no-dependencies",
+    "typecheck": "tsc -p ./ --noEmit"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

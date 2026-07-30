@@ -216,8 +216,8 @@ test('workspace-local resource readers resolve root-relative paths and keep file
 
 test('local-first HTML dialog is shown 1 time per file and experience banner is shown 1 time total per app opening session', async () => {
   const content = await read('ui/src/components/Content/Content.tsx');
-  assert.match(content, /htmlPreviewWarningSeenRef\.current\.has\(state\.currentFile\)/);
-  assert.match(content, /htmlPreviewWarningSeenRef\.current\.add\(state\.currentFile\)/);
+  assert.match(content, /htmlPreviewWarningSeenRef\.current\.has\((?:state\.currentFile|warningSessionKey)\)/);
+  assert.match(content, /htmlPreviewWarningSeenRef\.current\.add\((?:state\.currentFile|warningSessionKey)\)/);
   assert.doesNotMatch(content, /htmlPreviewWarningSeenRef\.current\.delete/);
   assert.match(content, /htmlPreviewExperienceNoticeSeenRef\.current/);
   assert.match(content, /if\s*\(htmlPreviewExperienceNoticeSeenRef\.current\)\s*return;/);

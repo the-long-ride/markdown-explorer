@@ -162,10 +162,25 @@ body {
   justify-content: flex-start;
   padding: 0 8px;
   cursor: pointer;
+  position: relative;
   transition:
     background 0.12s,
     color 0.12s,
     transform 0.12s;
+}
+
+.toolbar-action-menu__item.has-update::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border: 2px solid var(--bg-e);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
 .toolbar-action-menu__item .tooltip-text {
