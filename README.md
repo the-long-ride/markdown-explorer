@@ -180,13 +180,13 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
 | Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
 | Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
-| Refresh workspace | `F5` | `F5` | `Alt+R` |
+| Refresh workspace | `F5` | `R` | `R` |
 | Collapse all heading sections | `Ctrl+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` |
 | Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
 | Go to workspace selection | `Ctrl+N` | `Ctrl+Alt+W` / `Cmd+Alt+W` | `Ctrl+Alt+W` / `Cmd+Alt+W` |
 | Open current document folder | `Shift+Alt+R` | N/A | N/A |
 | Toggle sidebar | `Ctrl+B` | `Alt+A` | `Alt+A` |
-| Toggle table of contents | `Alt+C` | `Alt+C` | `Alt+C` |
+| Toggle table of contents | `Ctrl+T` | `Alt+C` | `Alt+C` |
 | Locate current file | `Alt+Q` | `Alt+Q` | `Alt+Q` |
 | Toggle Focus mode | `Ctrl+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` |
 | Toggle active HTML document view | `Ctrl+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` |

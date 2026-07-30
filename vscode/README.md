@@ -39,11 +39,18 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 
 ## VS Code Extension Tutorial
 
-After installing the extension, open a folder containing Markdown files in VS Code. In the **Explorer** view, use the Markdown Explorer button in the workspace header (alongside the New File, Refresh, and Collapse All actions) to open the full documentation viewer.
+Open any folder containing Markdown files in VS Code to get started:
 
-You can also open it from the Command Palette with **Markdown Explorer: Open Docs Viewer**, or use `Ctrl+Shift+M` (`Cmd+Shift+M` on macOS). To preview the currently active `.md` or `.mdx` file, use **Markdown Explorer: Toggle Docs Viewer** or `Ctrl+Alt+V` / `Cmd+Alt+V`. You can right-click a Markdown file in Explorer and choose **Markdown Explorer: Preview This File**, or right-click any folder in the file tree and choose **Open Folder in Markdown Explorer**.
+| Goal | Command / Action | Access Point | Shortcut (Win/Linux) | Shortcut (macOS) |
+| --- | --- | --- | --- | --- |
+| **Open Docs Viewer** | `Markdown Explorer: Open Docs Viewer` | Explorer Header Icon / Command Palette | `Ctrl+Shift+M` | `Cmd+Shift+M` |
+| **Toggle Active File Preview** | `Markdown Explorer: Toggle Docs Viewer` | Editor Title Icon / Command Palette | `Ctrl+Alt+V` | `Cmd+Alt+V` |
+| **Preview Selected File** | `Markdown Explorer: Preview This File` | Right-click `.md`/`.mdx` in File Explorer | Context Menu | Context Menu |
+| **Open Folder Workspace** | `Open Folder in Markdown Explorer` | Right-click folder in File Explorer | Context Menu | Context Menu |
+| **Refresh Workspace** | `Markdown Explorer: Refresh` | Webview Header / Command Palette | `R` | `R` |
 
-The Explorer header icon automatically uses the high-contrast stroke for the current VS Code color theme. If it does not appear after installing or updating, run **Developer: Reload Window** (or restart the Extension Development Host while debugging).
+> [!TIP]
+> **Icon Missing?** The Explorer header icon adapts automatically to your VS Code color theme. If it does not appear after installing or updating, run **Developer: Reload Window** in the Command Palette.
 
 ## Features
 
@@ -181,13 +188,13 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
 | Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
 | Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
-| Refresh workspace | `F5` | `F5` | `Alt+R` |
+| Refresh workspace | `F5` | `R` | `R` |
 | Collapse all heading sections | `Ctrl+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` | `Ctrl+Shift+X` / `Cmd+Shift+X` |
 | Expand all heading sections | `Ctrl+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` | `Ctrl+Shift+E` / `Cmd+Shift+E` |
 | Go to workspace selection | `Ctrl+N` | `Ctrl+Alt+W` / `Cmd+Alt+W` | `Ctrl+Alt+W` / `Cmd+Alt+W` |
 | Open current document folder | `Shift+Alt+R` | N/A | N/A |
 | Toggle sidebar | `Ctrl+B` | `Alt+A` | `Alt+A` |
-| Toggle table of contents | `Alt+C` | `Alt+C` | `Alt+C` |
+| Toggle table of contents | `Ctrl+T` | `Alt+C` | `Alt+C` |
 | Locate current file | `Alt+Q` | `Alt+Q` | `Alt+Q` |
 | Toggle Focus mode | `Ctrl+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` |
 | Toggle active HTML document view | `Ctrl+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` |
