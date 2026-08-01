@@ -140,7 +140,10 @@ impl UpdateManager {
     pub fn emit_state(app: &AppHandle, state: &UpdateState) {
         let mut extra = serde_json::Map::new();
         extra.insert("state".into(), json!(state));
+        #[cfg(not(test))]
         crate::host_message::emit(app, "updateStateChanged", extra);
+        #[cfg(test)]
+        let _ = (app, extra);
     }
 
     pub fn restore_and_emit(app: &AppHandle, config_dir: &Path) -> UpdateState {

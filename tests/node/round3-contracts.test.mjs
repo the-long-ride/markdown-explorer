@@ -187,7 +187,7 @@ test('workspace close acknowledgements keep the operation that was closed', asyn
   assert.match(chromium, /case "closeWorkspace":[\s\S]*const operation = currentWorkspaceOperationMetadata\(\)[\s\S]*\.\.\.operation/);
   assert.match(website, /case 'closeWorkspace':[\s\S]*const operation = workspaceOperation\.current\(\)[\s\S]*\.\.\.operation/);
   assert.match(tauri, /"closeWorkspace" => \{[\s\S]*WorkspaceOperationMetadata::from_parts[\s\S]*handle_ready\(&ready_message\)/);
-  assert.match(tauriReady, /emit_scoped\(&self\.app, "readyAck",[\s\S]*operation\.as_ref\(\)\)/);
+  assert.match(tauriReady, /emit_ready_ack_scoped\(&self\.app, &ack, operation\.as_ref\(\)\)/);
   assert.match(tauriReady, /emit_render_content_empty_welcome_scoped\([\s\S]*operation\.as_ref\(\)/);
 });
 

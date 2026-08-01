@@ -67,6 +67,37 @@ pub fn emit(app: &AppHandle, command: &str, extra: serde_json::Map<String, Value
     emit_scoped(app, command, extra, operation.as_ref());
 }
 
+pub fn emit_ready_ack_scoped(
+    app: &AppHandle,
+    ready_ack: &Value,
+    operation: Option<&WorkspaceOperationMetadata>,
+) {
+    const READY_ACK_FIELDS: &[&str] = &[
+        "fileList",
+        "tree",
+        "theme",
+        "themeStyle",
+        "defaultExpanded",
+        "workspaceName",
+        "workspacePath",
+        "recentWorkspaces",
+        "documentConversionEnabled",
+        "appRuntime",
+        "appVersion",
+        "hostPlatform",
+        "hostArch",
+        "isMaximized",
+    ];
+
+    let mut extra = serde_json::Map::new();
+    for field in READY_ACK_FIELDS {
+        if let Some(value) = ready_ack.get(*field) {
+            extra.insert((*field).into(), value.clone());
+        }
+    }
+    emit_scoped(app, "readyAck", extra, operation);
+}
+
 pub fn emit_loading_scoped(
     app: &AppHandle,
     label: &str,

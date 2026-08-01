@@ -29,10 +29,28 @@
   transform: translateY(-1px);
 }
 .settings-shortcuts-search-icon {
+  position: relative;
+  box-sizing: border-box;
   flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 1.6px solid currentColor;
+  border-radius: 50%;
   color: var(--tx3);
   pointer-events: none;
   transition: color 0.14s ease, transform 0.14s ease;
+}
+.settings-shortcuts-search-icon::after {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
+  width: 5px;
+  height: 1.6px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+  transform: rotate(45deg);
+  transform-origin: left center;
 }
 .settings-shortcuts-search:focus-within .settings-shortcuts-search-icon {
   color: var(--accent);

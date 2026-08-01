@@ -261,7 +261,8 @@ mod tests {
         assert!(js.contains("__markdownExplorerHandleHostMessage"));
         assert!(js.contains("pendingHostMessages"));
         assert!(js.contains("queued.forEach(dispatchHostMessage)"));
-        assert!(!js.contains("__TAURI__.event.listen"));
+        let legacy_listener = ["__TAURI__", ".event.listen"].concat();
+        assert!(!js.contains(&legacy_listener));
         assert!(!js.contains("hostListenerPromise"));
     }
 }

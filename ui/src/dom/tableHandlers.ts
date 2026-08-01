@@ -162,7 +162,10 @@ export function registerTableHandlers(win: any) {
     [...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]
   ).filter((row) => row.id !== `${table.id}-toggle-row` && !row.dataset.toggle);
   const getMatchedTableRows = (table: HTMLTableElement) => (
-    getTableDataRows(table).filter((row) => row.dataset.mdnFilterMatch !== 'false')
+    getTableDataRows(table).filter((row) => (
+      row.dataset.mdnFilterMatch !== 'false'
+      && !row.classList.contains('is-hidden')
+    ))
   );
   const syncFilterButtons = (table: HTMLTableElement, state: TableState) => {
     table.querySelectorAll<HTMLElement>('.mdn-table-filter-btn').forEach((button) => {
