@@ -34,7 +34,7 @@ tauri/target/
 tauri/debug-*.txt
 desktop-tauri/src-tauri/target*/
 
-/docs
+/docs/superpowers
 
 # Coverage
 coverage/
