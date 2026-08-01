@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (relativePath) => readFile(path.join(repoRoot, relativePath), 'utf8');
+const read = readProjectSource;
 const locales = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'];
 
 test('HTML documents use host Markdown when available and retain the shared source fallback', async () => {
@@ -114,7 +115,7 @@ test('settings confirm shortcut reset, use requested icons, and remove requested
     read('ui/src/components/Settings/SettingsModalDialogs.tsx'),
     read('ui/src/components/shared/icons.tsx'),
     read('ui/src/components/Settings/SettingsModal.tsx'),
-    read('ui/src/styles/global/global-modals-settings-a.part2.css'),
+    read('ui/src/styles/global/global-settings-actions-dialogs.css'),
     read('ui/src/styles/global/global-settings-layout.css'),
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
     read('ui/src/styles/global/global-content-layout.css'),
@@ -151,7 +152,6 @@ test('sidebar menu aligns to the three-dot button and shortcut labels use parent
   ]);
   assert.match(position, /anchorRect\.right\s*-\s*menuWidth/);
   assert.doesNotMatch(position, /sidebarRect\.right\s*-\s*menuWidth/);
-  assert.match(shortcuts, /NON_MODIFIER/);
   assert.match(shortcuts, /toUpperCase\(\)/);
   assert.doesNotMatch(tips, /\[[A-Za-z]*(?:\+[^\]]+)?\]/);
   assert.doesNotMatch(welcome, /<kbd>(?:Up|Down|Enter|Esc)<\/kbd>/);

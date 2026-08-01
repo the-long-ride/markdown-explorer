@@ -1,15 +1,10 @@
 import {
   DESKTOP_TABS_STORAGE_KEY,
-  FALLBACK_FLOATING_TOOLBAR_SIZE,
-  FLOATING_TOOLBAR_STORAGE_KEY,
-  FLOATING_TOOLBAR_VIEWPORT_MARGIN,
   WORKSPACE_ALIASES_STORAGE_KEY,
 } from './constants';
 import type {
   DesktopTab,
   DesktopTabKind,
-  FloatingToolbarPosition,
-  FloatingToolbarSize,
   InitialDesktopState,
   PersistedDesktopTabsState,
   WorkspaceAliasMap,
@@ -39,11 +34,6 @@ export function createEmptyTab(id: string, kind: DesktopTabKind): DesktopTab {
   };
 }
 
-export function getWorkspaceNameFromPath(workspacePath: string): string {
-  const parts = workspacePath.split(/[\\/]/).filter(Boolean);
-  return parts[parts.length - 1] || workspacePath;
-}
-
 export function getTabLabel(tab: DesktopTab): string {
   const alias = tab.alias?.trim();
   if (alias) return alias;
@@ -65,42 +55,6 @@ export function reorderDesktopTabs(tabs: readonly DesktopTab[], sourceId: string
   return nextTabs;
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-export function clampFloatingToolbarPosition(
-  position: FloatingToolbarPosition,
-  size: FloatingToolbarSize = FALLBACK_FLOATING_TOOLBAR_SIZE,
-): FloatingToolbarPosition {
-  if (typeof window === 'undefined') return position;
-
-  const margin = FLOATING_TOOLBAR_VIEWPORT_MARGIN;
-  const viewportWidth = Math.max(window.innerWidth, margin * 2);
-  const viewportHeight = Math.max(window.innerHeight, margin * 2);
-  const safeWidth = Math.min(Math.max(size.width, 1), viewportWidth - margin * 2);
-  const safeHeight = Math.min(Math.max(size.height, 1), viewportHeight - margin * 2);
-
-  return {
-    x: clamp(position.x, margin, Math.max(margin, viewportWidth - safeWidth - margin)),
-    y: clamp(position.y, margin, Math.max(margin, viewportHeight - safeHeight - margin)),
-  };
-}
-
-export function readToolbarPosition(): FloatingToolbarPosition {
-  try {
-    const stored = localStorage.getItem(FLOATING_TOOLBAR_STORAGE_KEY);
-    if (!stored) return { x: 36, y: 36 };
-    const parsed = JSON.parse(stored);
-    const position = {
-      x: Number(parsed?.x) || 36,
-      y: Number(parsed?.y) || 36,
-    };
-    return clampFloatingToolbarPosition(position);
-  } catch {
-    return { x: 36, y: 36 };
-  }
-}
 
 export function readWorkspaceAliases(): WorkspaceAliasMap {
   try {

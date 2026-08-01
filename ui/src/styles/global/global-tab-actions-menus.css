@@ -1,0 +1,185 @@
+.topbar__action-btn,
+.topbar__new-workspace-btn {
+  min-width: var(--control-h, 28px);
+  width: var(--control-h, 28px);
+  height: var(--control-h, 28px);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--tx2);
+}
+
+.topbar__action-btn:hover,
+.topbar__action-btn:focus-visible,
+.topbar__new-workspace-btn:hover,
+.topbar__new-workspace-btn:focus-visible {
+  border-color: var(--bd-x);
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
+.tab-context-menu {
+  position: fixed;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r-md);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--bg-s)), var(--bg-s) 45%),
+    var(--bg-s);
+  color: var(--tx);
+  box-shadow: var(--sh-lg);
+  z-index: 400000;
+  -webkit-app-region: no-drag;
+}
+
+.tab-context-menu__item {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  border: 0;
+  border-radius: calc(var(--r) - 2px);
+  background: transparent;
+  color: var(--tx2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+  -webkit-app-region: no-drag;
+}
+
+.tab-context-menu__item:hover,
+.tab-context-menu__item:focus-visible {
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}
+
+.tab-context-menu__item.is-primary {
+  color: var(--tx);
+}
+
+.tab-context-menu__item:disabled {
+  color: var(--txm);
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.tab-context-menu__item:disabled:hover,
+.tab-context-menu__item:disabled:focus-visible {
+  background: transparent;
+  color: var(--txm);
+}
+
+.tab-context-menu__item-shortcut {
+  margin-left: 0;
+  color: var(--tx3);
+  font: 600 10px/1 var(--font-ui);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.desktop-tabbar__spacer {
+  flex: 0 0 8px;
+  min-width: 8px;
+}
+
+.desktop-tabbar__search {
+  width: min(280px, 24vw);
+  height: var(--control-h, 28px);
+  min-width: 180px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--txm);
+  font: inherit;
+  font-size: 12px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.desktop-tabbar__search span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-tabbar__search:hover {
+  color: var(--tx);
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+}
+
+.desktop-tabbar__window-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  -webkit-app-region: no-drag;
+}
+
+.app--tauri.app--fullscreen .topbar,
+.app--tauri.app--fullscreen .topbar *,
+.app--tauri.app--fullscreen .desktop-tabbar,
+.app--tauri.app--fullscreen .desktop-tabbar *,
+.app--tauri.app--fullscreen .desktop-tabbar__tabs-wrap,
+.app--tauri.app--fullscreen .desktop-tabbar__tabs {
+  -webkit-app-region: no-drag !important;
+}
+
+/* ============================================================
+   Maximized state offset on Windows to prevent titlebar hidden cutoff
+   ============================================================ */
+.is-windows .desktop-tabbar {
+  height: 46px !important;
+  flex: 0 0 46px !important;
+}
+.is-windows.app--tab-view .workspace-selection {
+  min-height: calc(100vh - 46px) !important;
+}
+
+.is-maximized-windows .desktop-tabbar {
+  height: 50px !important;
+  flex: 0 0 50px !important;
+}
+.is-maximized-windows.app--tab-view .workspace-selection {
+  min-height: calc(100vh - 50px) !important;
+}
+
+.tab-context-menu__item-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+
+.tab-context-menu__item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  color: currentColor;
+}
+
+.tab-context-menu__item.has-divider-before {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 9px;
+}

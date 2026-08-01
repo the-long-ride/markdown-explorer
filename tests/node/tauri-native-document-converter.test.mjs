@@ -3,12 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { readProjectSourceSync } from './read-refactored-source.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
-function read(relativePath) {
-  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
-}
+const read = readProjectSourceSync;
+
 
 function collectTextFiles(rootRelativePath) {
   const root = path.join(repoRoot, rootRelativePath);

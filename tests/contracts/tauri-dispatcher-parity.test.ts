@@ -5,8 +5,12 @@ import path from 'node:path';
 const repoRoot = path.resolve(__dirname, '../..');
 const dispatcherPath = path.join(repoRoot, 'tauri/src/dispatcher.rs');
 const dispatcherSrc = fs.readFileSync(dispatcherPath, 'utf8');
-const dispatcherCommandsPath = path.join(repoRoot, 'tauri/src/dispatcher/commands.rs');
-const dispatcherCommandsSrc = fs.readFileSync(dispatcherCommandsPath, 'utf8');
+const dispatcherCommandsDir = path.join(repoRoot, 'tauri/src/dispatcher');
+const dispatcherCommandsSrc = fs.readdirSync(dispatcherCommandsDir)
+  .filter((fileName) => /^commands(?:_.+)?\.rs$/.test(fileName))
+  .sort()
+  .map((fileName) => fs.readFileSync(path.join(dispatcherCommandsDir, fileName), 'utf8'))
+  .join('\n');
 const dispatcherHandlersPath = path.join(repoRoot, 'tauri/src/dispatcher/handlers.rs');
 const dispatcherHandlersSrc = fs.readFileSync(dispatcherHandlersPath, 'utf8');
 const dispatcherIncrementalPath = path.join(repoRoot, 'tauri/src/dispatcher/incremental_scan.rs');
@@ -27,8 +31,8 @@ const toolbarActionMenuPath = path.join(repoRoot, 'ui/src/components/shared/Tool
 const toolbarActionMenuSrc = fs.readFileSync(toolbarActionMenuPath, 'utf8');
 const welcomePagePath = path.join(repoRoot, 'ui/src/components/Content/WelcomePage.tsx');
 const welcomePageSrc = fs.readFileSync(welcomePagePath, 'utf8');
-const translationsPath = path.join(repoRoot, 'ui/src/contexts/translations.ts');
-const translationsSrc = fs.readFileSync(translationsPath, 'utf8');
+const translationTypesPath = path.join(repoRoot, 'ui/src/contexts/translationTypes.ts');
+const translationTypesSrc = fs.readFileSync(translationTypesPath, 'utf8');
 const translationsDataPath = path.join(repoRoot, 'ui/src/contexts/translationsData.ts');
 const translationsDataSrc = fs.readFileSync(translationsDataPath, 'utf8');
 const topbarCssPath = path.join(repoRoot, 'ui/src/styles/global/global-topbar-tabs.css');
@@ -48,6 +52,14 @@ const REQUIRED_DESKTOP_WEBVIEW_COMMANDS = [
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function commandBlock(source: string, command: string, nextCommand: string): string {
+  const start = source.indexOf(`"${command}" =>`);
+  const end = source.indexOf(`"${nextCommand}" =>`, start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  return source.slice(start, end);
 }
 
 describe('tauri dispatcher parity', () => {
@@ -115,6 +127,34 @@ describe('tauri dispatcher parity', () => {
     expect(dispatcherCommandsSrc).toContain('"cancelWorkspaceScan" =>');
     expect(dispatcherCommandsSrc).toContain('"cancelAllWorkspaceScans" =>');
     expect(dispatcherCommandsSrc).toContain('workspace_scan_generation.wrapping_add(1)');
+  });
+
+  test('targeted workspace scan cancellation only clears the matching operation', () => {
+    const block = commandBlock(
+      dispatcherCommandsSrc,
+      'cancelWorkspaceScan',
+      'cancelAllWorkspaceScans',
+    );
+
+    expect(block).toContain('state.workspace_operation_id.as_deref() == requested_operation');
+    expect(block).toContain('workspace_scan_generation.wrapping_add(1)');
+    expect(block).toContain('state.runtime_state = RuntimeState::Ready');
+    expect(block).toContain('state.workspace_operation_id = None');
+    expect(block).toContain('state.workspace_tab_id = None');
+    expect(block).toContain('emit_workspace_scan_progress_scoped');
+  });
+
+  test('cancel-all invalidates every active workspace scan', () => {
+    const block = commandBlock(
+      dispatcherCommandsSrc,
+      'cancelAllWorkspaceScans',
+      'confirmOpenPath',
+    );
+
+    expect(block).toContain('workspace_scan_generation.wrapping_add(1)');
+    expect(block).toContain('state.runtime_state = RuntimeState::Ready');
+    expect(block).toContain('state.workspace_operation_id = None');
+    expect(block).toContain('state.workspace_tab_id = None');
   });
 
   test('navigate does not read "filePath" key', () => {
@@ -209,8 +249,8 @@ describe('tauri dispatcher parity', () => {
   });
 
   test('fullscreen menu and homepage shortcut labels come from translations', () => {
-    expect(translationsSrc).toContain('toggleFullscreen: string;');
-    expect(translationsSrc).toContain('toggleFullscreenTooltip: string;');
+    expect(translationTypesSrc).toContain('toggleFullscreen: string;');
+    expect(translationTypesSrc).toContain('toggleFullscreenTooltip: string;');
     expect(translationsDataSrc.match(/toggleFullscreen:/g)?.length).toBe(9);
     expect(translationsDataSrc.match(/toggleFullscreenTooltip:/g)?.length).toBe(9);
 

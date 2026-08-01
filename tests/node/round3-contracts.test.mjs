@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
-const read = (file) => readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
+const read = readProjectSource;
 const OPEN_BROWSER_PATH_PREFIX = 'M71.89,100.56q-3.86,3.82-8.37,7.63';
 
 test('Aurora Glass tooltips and dropdown panels use opaque backgrounds without fading contents', async () => {
   const [tooltipCss, toolbarCss] = await Promise.all([
     read('ui/src/styles/global/global-switch-tooltip-diff.css'),
-    read('ui/src/styles/global/global-topbar-tabs.part1.css'),
+    read('ui/src/styles/global/global-topbar-tabs.css'),
   ]);
   const dark = tooltipCss.match(/\[data-theme-style="glass"\] \.tooltip-text\s*\{([^}]*)\}/s)?.[1] ?? '';
   const light = tooltipCss.match(/\[data-theme-style="glass"\]\[data-theme="light"\] \.tooltip-text\s*\{([^}]*)\}/s)?.[1] ?? '';
@@ -24,7 +25,7 @@ test('Aurora Glass tooltips and dropdown panels use opaque backgrounds without f
 test('document tabs have both close phases under 200ms and active tabs can collapse to zero', async () => {
   const [component, css, keyboard, events] = await Promise.all([
     read('ui/src/components/Content/ContentTabs.tsx'),
-    read('ui/src/styles/global/global-layout-sidebar.part2.css'),
+    read('ui/src/styles/global/global-content-tabs-focus-search.css'),
     read('ui/src/hooks/useKeyboard.ts'),
     read('ui/src/components/Content/contentTabCloseEvents.ts'),
   ]);
@@ -53,10 +54,11 @@ test('workspace operation metadata is attached to every folder/file open path in
 
 test('scan cancellation commands and operation metadata are represented in the shared protocol', async () => {
   const types = await read('ui/src/types.ts');
-  assert.match(types, /interface OpenFileHandleMessage\s*\{[^}]*workspaceOperationId\?: string;[^}]*workspaceTabId\?: string;/s);
+  assert.match(types, /interface OpenFileHandleMessage extends WorkspaceOperationMetadata/);
+  assert.match(types, /interface WorkspaceOperationMetadata\s*\{[^}]*workspaceOperationId\?: string;[^}]*workspaceTabId\?: string;/s);
   assert.match(types, /command:\s*'cancelWorkspaceScan'/);
   assert.match(types, /command:\s*'cancelAllWorkspaceScans'/);
-  assert.match(types, /interface WorkspaceScanProgressMessage\s*\{[^}]*workspaceOperationId\?: string;[^}]*workspaceTabId\?: string;/s);
+  assert.match(types, /interface WorkspaceScanProgressMessage extends WorkspaceOperationMetadata/);
 });
 
 test('loading UI remains after the desktop header and exposes current-scan cancellation', async () => {
@@ -78,7 +80,7 @@ test('Close All cancels all workspace jobs before returning Home', async () => {
 
 test('Properties has no accent rail and Settings displays View Preferences before Theme Style', async () => {
   const [css, settings] = await Promise.all([
-    read('ui/src/styles/global/global-markdown-base.css'),
+    read('ui/src/styles/global/global-markdown-foundation.css'),
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
   ]);
   const frontmatter = css.match(/\.mdn-frontmatter\s*\{([^}]*)\}/s)?.[1] ?? '';
@@ -133,8 +135,9 @@ test('browser hosts gate async workspace continuations with the operation that s
   assert.match(chromium, /function isWorkspaceOperationCurrent/);
   assert.match(chromium, /const operation = currentWorkspaceOperationMetadata\(\);[\s\S]*await pickDirectory\(\)[\s\S]*if \(!isWorkspaceOperationCurrent\(operation\)\) break;/);
   assert.match(chromium, /catch \(err\)[\s\S]*scanGeneration === workspaceScanGeneration[\s\S]*isWorkspaceOperationCurrent\(operation\)/);
-  assert.match(website, /function isWorkspaceOperationCurrent/);
-  assert.match(website, /await BrowserRecentWorkspaces\.getHandle\(folderPath\);[\s\S]*if \(!isWorkspaceOperationCurrent\(operation\)\) break;/);
+  assert.match(website, /createWorkspaceOperationState/);
+  assert.match(website, /workspaceOperation\.isCurrent\(operation\)/);
+  assert.match(website, /await BrowserRecentWorkspaces\.getHandle\(folderPath\);[\s\S]*if \(!workspaceOperation\.isCurrent\(operation\)\) break;/);
   assert.match(electron, /function captureWorkspaceRequest/);
   assert.match(electron, /if \(!isWorkspaceRequestCurrent\(request\)\) return;/);
 });
@@ -182,9 +185,9 @@ test('workspace close acknowledgements keep the operation that was closed', asyn
   assert.match(electronUpdate, /const operation = \{[\s\S]*workspaceOperationId[\s\S]*handleReady\(\{ workspaceOperationMetadata: operation \}\)/);
   assert.match(electronCommands, /workspaceOperationMetadata[\s\S]*sendHostMessage\(\{ \.\.\.ackMsg, \.\.\.workspaceOperationMetadata \}\)/);
   assert.match(chromium, /case "closeWorkspace":[\s\S]*const operation = currentWorkspaceOperationMetadata\(\)[\s\S]*\.\.\.operation/);
-  assert.match(website, /case 'closeWorkspace':[\s\S]*const operation = currentWorkspaceOperationMetadata\(\)[\s\S]*\.\.\.operation/);
+  assert.match(website, /case 'closeWorkspace':[\s\S]*const operation = workspaceOperation\.current\(\)[\s\S]*\.\.\.operation/);
   assert.match(tauri, /"closeWorkspace" => \{[\s\S]*WorkspaceOperationMetadata::from_parts[\s\S]*handle_ready\(&ready_message\)/);
-  assert.match(tauriReady, /emit_scoped\(&self\.app, "readyAck",[\s\S]*operation\.as_ref\(\)\)/);
+  assert.match(tauriReady, /emit_ready_ack_scoped\(&self\.app, &ack, operation\.as_ref\(\)\)/);
   assert.match(tauriReady, /emit_render_content_empty_welcome_scoped\([\s\S]*operation\.as_ref\(\)/);
 });
 

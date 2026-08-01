@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (relativePath) => readFile(path.join(repoRoot, relativePath), 'utf8');
+const read = readProjectSource;
 
 const locales = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'];
 
@@ -15,7 +16,7 @@ test('document tab menu has semantic icons, HTML actions, and containing-folder 
     read('ui/src/components/Content/ContentTabs.tsx'),
     read('ui/src/components/Desktop/DesktopTabBar.tsx'),
     read('ui/src/components/shared/icons.tsx'),
-    read('ui/src/styles/global/global-topbar-tabs.part2.css'),
+    read('ui/src/styles/global/global-tab-actions-menus.css'),
   ]);
   assert.match(menu, /TabContextMenuItem/);
   assert.match(menu, /tab-context-menu__item-icon/);
@@ -40,7 +41,7 @@ test('sidebar file tree uses hover three-dot actions and anchored right-aligned 
     read('ui/src/components/Sidebar/TreeNode.tsx'),
     read('ui/src/components/Sidebar/SidebarItemMenu.tsx'),
     read('ui/src/components/Sidebar/sidebarItemMenuPosition.ts'),
-    read('ui/src/styles/global/global-layout-sidebar.part3.css'),
+    read('ui/src/styles/global/global-sidebar-search-menus.css'),
   ]);
   assert.match(tree, /MoreVerticalIcon/);
   assert.match(tree, /sidebar-tree-item__menu-button/);
@@ -83,7 +84,7 @@ test('raw HTML p div and span image groups become same-row image layouts', async
   const [helper, effects, css] = await Promise.all([
     read('ui/src/markdown/rawHtmlImageRows.ts'),
     read('ui/src/components/Content/scheduleContentEnhancements.ts'),
-    read('ui/src/styles/global/global-markdown-base.css'),
+    read('ui/src/styles/global/global-markdown-foundation.css'),
   ]);
   assert.match(helper, /p, div, span/);
   assert.match(helper, /mdn-image-row--html/);
@@ -106,8 +107,6 @@ test('Settings use compact grouping, Language icon, dynamic shortcut description
   assert.match(panel, /toggleHtmlPreview/);
   assert.match(modal, /LanguageIcon/);
   assert.match(icons, /export const LanguageIcon/);
-  assert.match(icons, /export const GlobeIcon = \(/);
-  assert.doesNotMatch(icons, /GlobeIcon = LanguageIcon/);
   assert.match(tooltip, /ResizeObserver/);
   assert.match(tooltip, /tooltipRef/);
   assert.match(tooltip, /rect\.top - tooltipHeight/);
@@ -198,7 +197,6 @@ test('new production helpers are registered in the coverage manifest', async () 
     'ui/src/components/Sidebar/sidebarItemMenuPosition.ts',
     'ui/src/components/shared/HeaderActionGroups.tsx',
     'ui/src/components/shared/LinkContextMenu.tsx',
-    'ui/src/components/shared/ShellLocationContextMenu.tsx',
     'ui/src/desktop/shellLocation.ts',
     'ui/src/desktop/workspaceOperations.ts',
     'ui/src/dom/htmlPreviewActions.ts',

@@ -378,6 +378,79 @@ describe("Content rendering", () => {
     expect(container.querySelector(".mdn-body")).toBeInTheDocument();
   });
 
+
+  it("toggles heading sections through delegated click handling", () => {
+    const { container } = setup({
+      currentFile: "/readme.md",
+      contentHtml: '<section class="mdn-section" id="title" data-expanded="true"><div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true"><h1>Title</h1></div><div class="mdn-section-body">Body</div></section>',
+    });
+    const section = container.querySelector<HTMLElement>(".mdn-section")!;
+    const header = container.querySelector<HTMLElement>(".mdn-section-header")!;
+
+    fireEvent.click(header);
+
+    expect(section.dataset.expanded).toBe("false");
+    expect(header).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("toggles heading sections when the chevron SVG is clicked", () => {
+    const { container } = setup({
+      currentFile: "/readme.md",
+      contentHtml: '<section class="mdn-section" id="title" data-expanded="true"><div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true"><h1>Title</h1><span class="mdn-section-chevron"><svg><path d="M0 0"></path></svg></span></div><div class="mdn-section-body">Body</div></section>',
+    });
+    const section = container.querySelector<HTMLElement>(".mdn-section")!;
+    const path = container.querySelector<SVGPathElement>(".mdn-section-chevron path")!;
+
+    fireEvent.click(path);
+
+    expect(section.dataset.expanded).toBe("false");
+  });
+
+  it("toggles heading sections with Enter", () => {
+    const { container } = setup({
+      currentFile: "/readme.md",
+      contentHtml: '<section class="mdn-section" id="title" data-expanded="true"><div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true"><h1>Title</h1></div><div class="mdn-section-body">Body</div></section>',
+    });
+    const section = container.querySelector<HTMLElement>(".mdn-section")!;
+    const header = container.querySelector<HTMLElement>(".mdn-section-header")!;
+
+    fireEvent.keyDown(header, { key: "Enter" });
+
+    expect(section.dataset.expanded).toBe("false");
+    expect(header).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("preserves a heading state across content rerenders", () => {
+    let currentState = makeState({
+      currentFile: "/readme.md",
+      contentHtml: '<section class="mdn-section" id="title" data-expanded="true"><div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true"><h1>Title</h1></div><div class="mdn-section-body">One</div></section>',
+    });
+    vi.mocked(useAppState).mockImplementation(() => ({
+      state: currentState,
+      navigate: mockNavigate,
+      refresh: mockRefresh,
+      updateSettings: mockUpdateSettings,
+    }));
+    vi.mocked(useNavigation).mockReturnValue({ push: mockPush });
+    vi.mocked(usePlatform).mockReturnValue({ postMessage: mockPostMessage });
+    const scrollRef = { current: null } as React.RefObject<HTMLDivElement | null>;
+    const onImageClick = vi.fn();
+    const view = render(<Content onImageClick={onImageClick} scrollRef={scrollRef} />);
+
+    fireEvent.click(view.container.querySelector<HTMLElement>(".mdn-section-header")!);
+    expect(view.container.querySelector<HTMLElement>(".mdn-section")!.dataset.expanded).toBe("false");
+
+    currentState = makeState({
+      currentFile: "/readme.md",
+      renderVersion: 2,
+      contentHtml: '<section class="mdn-section" id="title" data-expanded="true"><div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true"><h1>Title</h1></div><div class="mdn-section-body">Two</div></section>',
+    });
+    view.rerender(<Content onImageClick={onImageClick} scrollRef={scrollRef} />);
+
+    expect(view.container.querySelector<HTMLElement>(".mdn-section")!.dataset.expanded).toBe("false");
+    expect(view.container.querySelector<HTMLElement>(".mdn-section-header")).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("renders stale file notice when staleContentFilePath matches currentFile", () => {
     setup({
       currentFile: "/readme.md",

@@ -466,12 +466,12 @@ describe('ThemeStylePicker', () => {
 
   it('keeps selected menu styling without left rails', () => {
     const styles = [
-      'ui/src/styles/global/global-tables-a.css',
+      'ui/src/styles/global/global-document-sections-tables.css',
       'ui/src/styles/global/global-theme-picker-pets.css',
       'ui/src/styles/global/global-theme-picker-remix.css',
       'ui/src/styles/global/global-theme-picker-custom.css',
       'ui/src/styles/global/global-theme-picker-styles.css',
-      'ui/src/styles/global/global-modals-settings-a.css',
+      'ui/src/styles/global/global-media-settings-dialogs.css',
       'ui/src/styles/global/global-theme-glass-bento.css',
     ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
     expect(styles).toMatch(/\.pet-theme-menu__option\.is-selected\s*\{[^}]*background:\s*var\(--accent-dim\);/s);

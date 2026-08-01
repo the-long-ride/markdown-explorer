@@ -59,7 +59,7 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     topbar: { switchToLightMode: 'Light', switchToDarkMode: 'Dark', home: 'Home', settings: 'Settings', welcomePage: 'Welcome', moreActions: 'More', editLabel: 'Edit', edit: 'Edit', settingsUpdate: 'Update' },
-    tooltips: { minimize: 'Min', maximize: 'Max', restore: 'Restore', closeApp: 'Close', close: 'Close', moveToolbar: 'Move', showToolbar: 'Show', minimizeToolbar: 'Minimize', removeFromRecents: 'Remove', newTab: 'New tab', closeTab: 'Close tab' },
+    tooltips: { minimize: 'Min', maximize: 'Max', restore: 'Restore', closeApp: 'Close', close: 'Close', removeFromRecents: 'Remove', newTab: 'New tab', closeTab: 'Close tab' },
     recentWorkspaces: { title: 'Recent', subtitle: 'Workspaces', searchPlaceholder: 'Search...', noWorkspaces: 'None', lastOpened: 'Last' },
     actions: { toggleSidebar: 'Sidebar', toggleToc: 'TOC', toggleFocusMode: 'Focus' },
     tabContextMenu: { closeThisTab: 'Close', closeTabsToRight: 'Close right', closeOtherTabs: 'Close others', closeAllTabs: 'Close all' },

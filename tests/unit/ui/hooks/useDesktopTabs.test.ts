@@ -66,14 +66,10 @@ vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
     ],
     activeTabId: 'home',
   }),
-  readToolbarPosition: () => ({ x: 36, y: 36 }),
   writePersistedDesktopTabs: vi.fn(),
   writeWorkspaceAliases: vi.fn(),
 }));
 
-vi.mock('../../../../ui/src/desktop/constants', () => ({
-  FLOATING_TOOLBAR_STORAGE_KEY: 'markdown-explorer-tab-toolbar-position',
-}));
 
 import { writePersistedDesktopTabs, writeWorkspaceAliases } from '../../../../ui/src/desktop/desktopTabs';
 
@@ -167,11 +163,6 @@ describe('useDesktopTabs', () => {
       expect(result.current.activeTabId).toBe('home');
       expect(result.current.tabs).toHaveLength(1);
       expect(result.current.tabs[0].kind).toBe('home');
-    });
-
-    it('initializes toolbar position from readToolbarPosition', () => {
-      const { result } = setupHook();
-      expect(result.current.toolbarPosition).toEqual({ x: 36, y: 36 });
     });
 
     it('initializes workspaceAliases from readInitialDesktopState', () => {
@@ -1038,21 +1029,6 @@ describe('useDesktopTabs', () => {
     it('returns false when not tab view', () => {
       const { result } = setupHook({ isTabView: false });
       expect(result.current.isIndexingAcrossTabs).toBe(false);
-    });
-  });
-
-  describe('toolbar position', () => {
-    it('persists to localStorage on change', () => {
-      const { result } = setupHook();
-
-      act(() => {
-        result.current.setToolbarPosition({ x: 100, y: 200 });
-      });
-
-      const stored = JSON.parse(
-        localStorage.getItem('markdown-explorer-tab-toolbar-position')!,
-      );
-      expect(stored).toEqual({ x: 100, y: 200 });
     });
   });
 

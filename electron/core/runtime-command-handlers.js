@@ -1,3 +1,4 @@
+const { createRuntimeCommandSearchHandlers } = require("./runtime-command-search-handlers");
 const { registerRuntimeUpdateHandlers } = require("./runtime-update-handlers");
 
 function registerRuntimeCommandHandlers(context) {
@@ -165,91 +166,10 @@ function registerRuntimeCommandHandlers(context) {
     });
   }
 
-  function handleSearchAcrossWorkspaces(msg) {
-    ensureHeavyModules();
-    ensureCrossTabSearchWorker().search({
-      requestId: msg.requestId,
-      query: String(msg.query || "").trim().toLowerCase(),
-    });
-  }
-
-  function handleSearchWorkspace(msg) {
-    ensureHeavyModules();
-    const idx = ensureSearchIndex();
-    const query = String(msg.query || "").trim().toLowerCase();
-    const requestId = msg.requestId;
-    const items = Array.isArray(msg.items) && msg.items.length > 0 ? msg.items : state.flatList;
-    sendHostMessage({
-      command: "workspaceSearchResults",
-      requestId,
-      results: idx.search(query, items, 10000),
-    });
-  }
-
-  function handleIndexWorkspaceSearchItems(msg) {
-    ensureHeavyModules();
-    ensureCrossTabSearchWorker().setItems(Array.isArray(msg.items) ? msg.items : []);
-  }
-
-  function handleLoadWorkspaceSearchIndexes(msg) {
-    ensureHeavyModules();
-    const tabRequests = Array.isArray(msg.tabs) ? msg.tabs : [];
-    if (tabRequests.length === 0) return;
-
-    let index = 0;
-
-    async function processNext() {
-      if (index >= tabRequests.length) return;
-
-      const tab = tabRequests[index];
-      const tabId = String(tab?.tabId || "");
-      const wsPath = String(tab?.workspacePath || "");
-
-      if (tabId && wsPath) {
-        if (fs.existsSync(wsPath)) {
-          try {
-            const { tree, flat } = await scanWorkspaceData(wsPath);
-            const idx = ensureSearchIndex();
-            idx.prime(flat);
-            sendHostMessage({
-              command: "workspaceSearchIndexLoaded",
-              tabs: [{
-                tabId,
-                workspacePath: wsPath,
-                fileList: flat,
-                tree,
-              }],
-            });
-          } catch (err) {
-            sendHostMessage({
-              command: "workspaceSearchIndexLoaded",
-              tabs: [{
-                tabId,
-                workspacePath: wsPath,
-                fileList: [],
-                tree: null,
-              }],
-            });
-          }
-        } else {
-          sendHostMessage({
-            command: "workspaceSearchIndexLoaded",
-            tabs: [{
-              tabId,
-              workspacePath: wsPath,
-              fileList: [],
-              tree: null,
-            }],
-          });
-        }
-      }
-
-      index += 1;
-      setTimeout(processNext, 150);
-    }
-
-    setTimeout(processNext, 50);
-  }
+  const { handleSearchAcrossWorkspaces, handleSearchWorkspace,
+    handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes } =
+    createRuntimeCommandSearchHandlers({ state, fs, ensureHeavyModules, ensureSearchIndex,
+      ensureCrossTabSearchWorker, scanWorkspaceData, sendHostMessage });
 
   async function handleConfirmOpenPath(filePath) {
     if (!fs.existsSync(filePath)) return;

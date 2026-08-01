@@ -42,7 +42,6 @@ const runtimeExclude = [
 
   // ── Icon / asset manifests ───────────────────────────────────────────────
   'ui/src/components/shared/icons.tsx',
-  'ui/src/lib/petImages.ts',
 
   // ── Static / generated data ─────────────────────────────────────────────
   'ui/src/contexts/translationsData.ts',

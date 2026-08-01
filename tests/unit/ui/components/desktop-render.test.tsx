@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DesktopTabBar } from '../../../../ui/src/components/Desktop/DesktopTabBar';
-import { FloatingTabToolbar } from '../../../../ui/src/components/Desktop/FloatingTabToolbar';
 
 const mockPostMessage = vi.fn();
 const mockBridge = { postMessage: mockPostMessage, getState: vi.fn(() => ({})), onMessage: vi.fn(() => vi.fn()) };
@@ -68,9 +67,6 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       closeTab: 'Close tab',
       close: 'Close',
       newTab: 'New tab',
-      moveToolbar: 'Move',
-      showToolbar: 'Show toolbar',
-      minimizeToolbar: 'Minimize toolbar',
     },
     tabContextMenu: {
       closeThisTab: 'Close',
@@ -92,14 +88,8 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
 
 vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
   getTabLabel: (tab: any) => tab.alias || tab.workspaceName || (tab.kind === 'home' ? 'Home' : 'New'),
-  clampFloatingToolbarPosition: (pos: any) => pos,
 }));
 
-vi.mock('../../../../ui/src/desktop/constants', () => ({
-  FALLBACK_FLOATING_TOOLBAR_SIZE: { width: 320, height: 52 },
-  FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY: 'test-key',
-  FLOATING_TOOLBAR_VIEWPORT_MARGIN: 8,
-}));
 
 function MockTooltipButton({ onClick, children, tooltip, disabled, ...props }: any) {
   return React.createElement('button', { onClick, disabled, 'aria-label': tooltip, 'data-tooltip': tooltip, ...props }, children);
@@ -370,139 +360,5 @@ describe('DesktopTabBar', () => {
     fireEvent.contextMenu(tab);
     fireEvent.click(screen.getByText('Close Tab'));
     expect(defaultTabBarProps.onCloseTab).toHaveBeenCalledWith('tab1');
-  });
-});
-
-describe('FloatingTabToolbar', () => {
-  const defaultFloatingProps = {
-    position: { x: 36, y: 36 },
-    onPositionChange: vi.fn(),
-    onExpandAll: vi.fn(),
-    onCollapseAll: vi.fn(),
-    onCopyFile: vi.fn(),
-    onRefresh: vi.fn(),
-    onBack: vi.fn(),
-    onForward: vi.fn(),
-    canGoBack: true,
-    canGoForward: true,
-    canEdit: true,
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    localStorage.clear();
-  });
-
-  it('renders toolbar container', () => {
-    const { container } = render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    const toolbar = container.querySelector('.tab-floating-toolbar');
-    expect(toolbar).toBeInTheDocument();
-  });
-
-  it('renders drag handle button', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    expect(screen.getByLabelText('Move toolbar')).toBeInTheDocument();
-  });
-
-  it('renders back button', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    expect(screen.getByLabelText('Back')).toBeInTheDocument();
-  });
-
-  it('renders forward button', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    expect(screen.getByLabelText('Forward')).toBeInTheDocument();
-  });
-
-  it('renders refresh button', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    expect(screen.getByLabelText('Refresh')).toBeInTheDocument();
-  });
-
-  it('renders expand all button', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    expect(screen.getByLabelText('Expand all')).toBeInTheDocument();
-  });
-
-  it('renders collapse all button', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    expect(screen.getByLabelText('Collapse all')).toBeInTheDocument();
-  });
-
-  it('renders copy button', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    expect(screen.getByLabelText('Copy')).toBeInTheDocument();
-  });
-
-  it('disables back button when canGoBack is false', () => {
-    render(React.createElement(FloatingTabToolbar, { ...defaultFloatingProps, canGoBack: false }));
-    expect(screen.getByLabelText('Back')).toBeDisabled();
-  });
-
-  it('disables forward button when canGoForward is false', () => {
-    render(React.createElement(FloatingTabToolbar, { ...defaultFloatingProps, canGoForward: false }));
-    expect(screen.getByLabelText('Forward')).toBeDisabled();
-  });
-
-  it('disables copy button when canEdit is false', () => {
-    render(React.createElement(FloatingTabToolbar, { ...defaultFloatingProps, canEdit: false }));
-    expect(screen.getByLabelText('Copy')).toBeDisabled();
-  });
-
-  it('calls onBack when back button clicked', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    fireEvent.click(screen.getByLabelText('Back'));
-    expect(defaultFloatingProps.onBack).toHaveBeenCalled();
-  });
-
-  it('calls onForward when forward button clicked', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    fireEvent.click(screen.getByLabelText('Forward'));
-    expect(defaultFloatingProps.onForward).toHaveBeenCalled();
-  });
-
-  it('calls onRefresh when refresh button clicked', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    fireEvent.click(screen.getByLabelText('Refresh'));
-    expect(defaultFloatingProps.onRefresh).toHaveBeenCalled();
-  });
-
-  it('calls onExpandAll when expand button clicked', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    fireEvent.click(screen.getByLabelText('Expand all'));
-    expect(defaultFloatingProps.onExpandAll).toHaveBeenCalled();
-  });
-
-  it('calls onCollapseAll when collapse button clicked', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    fireEvent.click(screen.getByLabelText('Collapse all'));
-    expect(defaultFloatingProps.onCollapseAll).toHaveBeenCalled();
-  });
-
-  it('renders toggle button for collapsing actions', () => {
-    const { container } = render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    const toggleBtn = container.querySelector('.tab-floating-toolbar__toggle');
-    expect(toggleBtn).toBeInTheDocument();
-  });
-
-  it('adds is-actions-collapsed class when toggle clicked', () => {
-    const { container } = render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    const toggleBtn = container.querySelector('.tab-floating-toolbar__toggle') as HTMLElement;
-    fireEvent.click(toggleBtn);
-    const toolbar = container.querySelector('.tab-floating-toolbar');
-    expect(toolbar?.className).toContain('is-actions-collapsed');
-  });
-
-  it('sets position CSS variables from props', () => {
-    const { container } = render(React.createElement(FloatingTabToolbar, { ...defaultFloatingProps, position: { x: 100, y: 200 } }));
-    const toolbar = container.querySelector('.tab-floating-toolbar') as HTMLElement;
-    expect(toolbar.style.getPropertyValue('--toolbar-right')).toBe('100px');
-    expect(toolbar.style.getPropertyValue('--toolbar-bottom')).toBe('200px');
-  });
-
-  it('calls onCopyFile when copy button clicked', () => {
-    render(React.createElement(FloatingTabToolbar, defaultFloatingProps));
-    fireEvent.click(screen.getByLabelText('Copy'));
-    expect(defaultFloatingProps.onCopyFile).toHaveBeenCalled();
   });
 });

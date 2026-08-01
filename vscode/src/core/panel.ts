@@ -39,10 +39,13 @@ import type {
   WebviewMessage,
   WorkspaceSearchResult,
 } from '../types';
-import { normalizePanelPath, resolvePanelNavigationPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath } from './panelNavigation';
+import { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath } from './panelNavigation';
 import { buildWebviewShell } from './panelShell';
 import { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
 import { HtmlPreviewServer } from './htmlPreviewServer';
+import { rewritePanelMediaUrls } from './panelMedia';
+import { navigatePanel } from './panelNavigationHandler';
+import { readPanelWorkspaceTextResource } from './panelWorkspaceResources';
 
 export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
 export { buildWebviewShell } from './panelShell';
@@ -337,7 +340,8 @@ export class MarkdownDocsPanel {
     const { html, toc } = renderer.render(tokens);
 
     // Rewrite local image/video paths to Webview URIs.
-    const rewrittenHtml = this._rewriteRelativeMediaUrls(html);
+    const rewrittenHtml = rewritePanelMediaUrls(html, this._currentFile!, (absolutePath) =>
+      this._panel.webview.asWebviewUri(getVscode().Uri.file(absolutePath)).toString());
 
     const msg: RenderContentMessage = {
       command: 'renderContent',
@@ -375,43 +379,11 @@ export class MarkdownDocsPanel {
     return 'unknown' as const;
   }
 
-  private _shouldKeepResourceUrl(src: string): boolean {
-    return /^(https?:|data:|blob:|vscode-webview:|#)/i.test(src);
-  }
 
-  private _toWebviewResourceUri(src: string): string {
-    if (this._shouldKeepResourceUrl(src)) return src;
-    const fileDir = path.dirname(this._currentFile!);
-    const absolutePath = path.resolve(fileDir, src);
-    return this._panel.webview.asWebviewUri(getVscode().Uri.file(absolutePath)).toString();
-  }
-
-  private _rewriteRelativeMediaUrls(html: string): string {
-    const srcAttrRegex = /(<(?:img|video|source|track)\b[^>]*?\bsrc\s*=\s*)(["'])([^"']+)(\2)/gi;
-    const posterAttrRegex = /(<video\b[^>]*?\bposter\s*=\s*)(["'])([^"']+)(\2)/gi;
-
-    const rewriteAttr = (match: string, prefix: string, quote: string, src: string, suffix: string) => {
-      try {
-        return `${prefix}${quote}${this._toWebviewResourceUri(src)}${suffix}`;
-      } catch (err) {
-        console.error('Failed to resolve relative media path:', src, err);
-        return match;
-      }
-    };
-
-    return html
-      .replace(srcAttrRegex, rewriteAttr)
-      .replace(posterAttrRegex, rewriteAttr);
-  }
 
   // ---------------------------------------------------------------------------
   // Private: navigation
   // ---------------------------------------------------------------------------
-
-  private _resolveNavigationPath(href: string): string {
-    const rootPath = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
-    return resolvePanelNavigationPath(href, this._currentFile, rootPath);
-  }
 
   _makeSearchExcerpt(text: string, index: number, matchLength: number) {
     return makeSearchExcerpt(text, index, matchLength);
@@ -432,52 +404,14 @@ export class MarkdownDocsPanel {
   _buildShell() { return buildWebviewShell(this._extensionPath, this._panel, getVscode()); }
 
   private async _navigateTo(href: string | null): Promise<void> {
-    if (!href) {
-      this._currentFile = null;
-      await this._sendWelcome();
-      return;
-    }
-
-    const resolvedPath = this._resolveNavigationPath(href);
-
-    if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
-      const normFolder = normalizePanelPath(resolvedPath);
-      const child = this._flat.find(f => {
-        const normChild = normalizePanelPath(f.fsPath);
-        return normChild === normFolder || normChild.startsWith(normFolder + '/');
-      });
-      if (child) {
-        this._currentFile = child.fsPath;
-        await this._sendContent();
-      } else {
-        this._currentFile = null;
-        await this._sendWelcome();
-      }
-      return;
-    }
-
-    // Check if the resolved file actually exists on disk
-    if (
-      fs.existsSync(resolvedPath) &&
-      fs.statSync(resolvedPath).isFile() &&
-      isSupportedFilePath(resolvedPath, this._documentConversionEnabled)
-    ) {
-      this._currentFile = resolvedPath;
-      await this._sendContent();
-      return;
-    }
-
-    const normHref = normalizePanelPath(resolvedPath);
-    const found = this._flat.find(
-      f => normalizePanelPath(f.fsPath) === normHref || normalizePanelPath(f.relativePath) === normHref,
-    );
-
-    if (found) {
-      this._currentFile = found.fsPath;
-      await this._sendContent();
-    } else {
-      await this._panel.webview.postMessage({ command: 'navNotFound', href: resolvedPath });
-    }
+    const workspaceRoot = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+    await navigatePanel({
+      href, currentFile: this._currentFile, workspaceRoot, files: this._flat,
+      documentConversionEnabled: this._documentConversionEnabled,
+      setCurrentFile: (filePath) => { this._currentFile = filePath; },
+      sendContent: () => this._sendContent(), sendWelcome: () => this._sendWelcome(),
+      sendNotFound: (resolvedHref) => this._panel.webview.postMessage({ command: 'navNotFound', href: resolvedHref }),
+    });
   }
 
   private async _sendWelcome(): Promise<void> {
@@ -501,55 +435,12 @@ export class MarkdownDocsPanel {
     return config.get<boolean>('documentConversion') === true;
   }
 
-  private async _readWorkspaceTextResource(msg: {
-    requestId: string;
-    documentPath: string;
-    resourcePath: string;
-  }): Promise<void> {
-    const respond = (payload: Record<string, unknown>) => this._panel.webview.postMessage({
-      command: 'workspaceTextResourceResult',
-      requestId: msg.requestId,
-      ...payload,
-    });
-    const workspaceRoot = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (!workspaceRoot || !msg.documentPath || !msg.resourcePath) {
-      await respond({ ok: false, reason: 'unsupported' });
-      return;
-    }
-    const reference = String(msg.resourcePath).split(/[?#]/, 1)[0];
-    if (!reference || /^(?:https?:|data:|blob:|javascript:)/i.test(reference)) {
-      await respond({ ok: false, reason: 'unsupported' });
-      return;
-    }
-    try {
-      let resolvedPath: string;
-      if (/^file:\/\//i.test(reference)) {
-        resolvedPath = getVscode().Uri.parse(reference).fsPath;
-      } else if (reference.startsWith('/')) {
-        resolvedPath = path.resolve(workspaceRoot, `.${reference}`);
-      } else {
-        resolvedPath = path.isAbsolute(reference)
-          ? path.normalize(reference)
-          : path.resolve(path.dirname(msg.documentPath), reference);
-      }
-      if (!/\.(?:css|js|mjs|cjs)$/i.test(resolvedPath) || !this._isSameOrInsidePath(workspaceRoot, resolvedPath)) {
-        await respond({ ok: false, reason: 'outside-workspace' });
-        return;
-      }
-      if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
-        await respond({ ok: false, reason: 'missing' });
-        return;
-      }
-      const workspaceReal = fs.realpathSync(workspaceRoot);
-      const targetReal = fs.realpathSync(resolvedPath);
-      if (!this._isSameOrInsidePath(workspaceReal, targetReal)) {
-        await respond({ ok: false, reason: 'outside-workspace' });
-        return;
-      }
-      await respond({ ok: true, content: fs.readFileSync(targetReal, 'utf8'), resolvedPath: targetReal });
-    } catch {
-      await respond({ ok: false, reason: 'unreadable' });
-    }
+  private async _readWorkspaceTextResource(msg: { requestId: string; documentPath: string; resourcePath: string }): Promise<void> {
+    await readPanelWorkspaceTextResource(
+      msg, getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath,
+      (uri) => getVscode().Uri.parse(uri).fsPath,
+      (payload) => this._panel.webview.postMessage({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ...payload }),
+    );
   }
 
   private async _setDocumentConversion(enabled: boolean): Promise<void> {

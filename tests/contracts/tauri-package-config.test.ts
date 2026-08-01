@@ -176,13 +176,14 @@ describe('tauri package config', () => {
     expect(bootstrap).toContain('WebviewWindowBuilder');
   });
 
-  test('preload shim retries when __TAURI__ is not ready', () => {
+  test('preload receives host messages through the native Rust bridge', () => {
     const api = fs.readFileSync(
       path.join(repoRoot, 'tauri/src/preload/api.rs'),
       'utf8',
     );
-    expect(api).toContain('setTimeout(ensureHostListener');
-    expect(api).toContain('__TAURI__');
+    expect(api).toContain('__markdownExplorerHandleHostMessage');
+    expect(api).toContain('pendingHostMessages');
+    expect(api).not.toContain('__TAURI__.event.listen');
   });
 
   test('preload shim converts file:/// URLs to local-file:// via MutationObserver', () => {

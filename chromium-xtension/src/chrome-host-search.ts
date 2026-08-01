@@ -1,0 +1,52 @@
+import type { FolderNode, MdFile } from '../../ui/src/types';
+import type { BrowserSearchIndex } from './search-index';
+import { filterSearchIndexTabs, isValidExternalUrl, normalizeSearchQuery, resolveWorkspaceTextResourcePath } from './chrome-host-utils';
+
+interface ChromeHostSearchContext {
+  searchIndex: BrowserSearchIndex | null;
+  flatList: MdFile[];
+  workspaceTree: FolderNode | null;
+  activeWorkspacePath: string;
+  activeHandle: FileSystemDirectoryHandle | null;
+  send: (message: any) => void;
+  readText: (handle: FileSystemDirectoryHandle, path: string) => Promise<string>;
+}
+
+export async function handleChromeHostUtilityCommand(message: any, context: ChromeHostSearchContext): Promise<boolean> {
+  switch (message.command) {
+    case 'searchWorkspace': {
+      const results = context.searchIndex
+        ? await context.searchIndex.search(normalizeSearchQuery(message.query), context.flatList, 80) : [];
+      context.send({ command: 'workspaceSearchResults', requestId: message.requestId, results });
+      return true;
+    }
+    case 'loadWorkspaceSearchIndexes': {
+      const tabs = filterSearchIndexTabs(message.tabs, context.activeWorkspacePath)
+        .map((tab) => ({ ...tab, fileList: context.flatList, tree: context.workspaceTree }));
+      if (tabs.length) context.send({ command: 'workspaceSearchIndexLoaded', tabs });
+      return true;
+    }
+    case 'indexWorkspaceSearchItems':
+      context.searchIndex?.prime(message.items || []);
+      return true;
+    case 'readWorkspaceTextResource': {
+      const resolvedPath = resolveWorkspaceTextResourcePath(String(message.documentPath || ''), String(message.resourcePath || ''));
+      if (!context.activeHandle || !resolvedPath) {
+        context.send({ command: 'workspaceTextResourceResult', requestId: message.requestId, ok: false, reason: 'outside-workspace' });
+        return true;
+      }
+      try {
+        const content = await context.readText(context.activeHandle, resolvedPath);
+        context.send({ command: 'workspaceTextResourceResult', requestId: message.requestId, ok: true, content, resolvedPath });
+      } catch {
+        context.send({ command: 'workspaceTextResourceResult', requestId: message.requestId, ok: false, reason: 'missing' });
+      }
+      return true;
+    }
+    case 'openExternal':
+      if (isValidExternalUrl(message.url)) window.open(message.url as string, '_blank');
+      return true;
+    default:
+      return false;
+  }
+}

@@ -1,26 +1,13 @@
 import { registerCodeLineHandlers } from './codeLineHandlers';
 import { registerCopyHandlers } from './copyHandlers';
 import { registerTableHandlers } from './tableHandlers';
-
-export function toggleSection(headerEl: HTMLElement) {
-  const section = headerEl.closest('.mdn-section') as HTMLElement | null;
-  if (!section) return;
-  const expanded = section.dataset.expanded === 'true';
-  section.dataset.expanded = expanded ? 'false' : 'true';
-  headerEl.setAttribute('aria-expanded', String(!expanded));
-}
-
-export function expandAll() {
-  document.querySelectorAll('.mdn-section').forEach((s) => {
-    (s as HTMLElement).dataset.expanded = 'true';
-  });
-}
-
-export function collapseAll() {
-  document.querySelectorAll('.mdn-section').forEach((s) => {
-    (s as HTMLElement).dataset.expanded = 'false';
-  });
-}
+import { collapseAll, expandAll, toggleSection } from './headingSectionHandlers';
+export {
+  HEADING_SECTION_STATE_CHANGE_EVENT,
+  collapseAll,
+  expandAll,
+  toggleSection,
+} from './headingSectionHandlers';
 
 export function setHtmlMode(wrap: HTMLElement, mode: string) {
   wrap.dataset.mode = mode;
@@ -103,14 +90,6 @@ export function toggleCsvMode(btn: HTMLElement) {
   const wrap = btn.closest<HTMLElement>('.mdn-csv-preview-wrap');
   if (!wrap) return;
   setCsvMode(wrap, wrap.dataset.mode === 'preview' ? 'code' : 'preview');
-}
-
-export function triggerToggleCodeCollapse(btn: HTMLElement) {
-  const wrap = btn.closest('.mdn-codeblock') as HTMLElement | null;
-  if (!wrap) return;
-  const isCollapsed = wrap.dataset.collapsed === 'true';
-  wrap.dataset.collapsed = isCollapsed ? 'false' : 'true';
-  btn.textContent = isCollapsed ? 'Show Less' : 'Show More';
 }
 
 export function initGlobalHandlers() {

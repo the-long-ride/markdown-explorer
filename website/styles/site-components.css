@@ -1,0 +1,344 @@
+.legal-section a {
+  color: var(--accent-2);
+  font-weight: 800;
+  text-underline-offset: 0.18em;
+}
+
+.legal-list {
+  display: grid;
+  gap: 0.7rem;
+  padding-left: 1.2rem;
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem clamp(1rem, 4vw, 4rem);
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  background: var(--footer-bg);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.site-footer nav a {
+  white-space: nowrap;
+}
+
+/* ── Modal & Actions ───────────────────────────────────────── */
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: auto;
+}
+
+.download-card .button {
+  margin-top: 0;
+  width: 100%;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 1rem;
+  animation: modalOverlayFade 200ms ease;
+}
+
+.modal-card {
+  position: relative;
+  width: min(580px, 100%);
+  max-height: min(650px, 85vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: modalFadeIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 850;
+  color: var(--text);
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.modal-body p {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.modal-body ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.modal-body li {
+  line-height: 1.5;
+}
+
+.modal-body code {
+  font-family: monospace;
+  background: rgba(127, 127, 127, 0.18);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.88em;
+  color: var(--text);
+}
+
+.modal-body strong {
+  color: var(--text);
+}
+
+.modal-body ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style-type: disc;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+}
+
+@keyframes modalOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Capabilities Horizontal Carousel Track & Nav ──────────── */
+.capabilities-carousel-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 -0.5rem;
+}
+
+.capabilities-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.75rem 0.5rem 1.25rem 0.5rem;
+  cursor: grab;
+  user-select: none;
+  width: 100%;
+  box-shadow: 36px 0 28px -20px var(--bg), -36px 0 28px -20px var(--bg);
+}
+
+.capabilities-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.capabilities-grid.is-dragging {
+  cursor: grabbing !important;
+  scroll-behavior: auto !important;
+}
+
+.capabilities-grid.is-dragging .cap-card {
+  pointer-events: none;
+}
+
+.cap-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transition: all 200ms ease;
+  opacity: 0.9;
+}
+
+.cap-nav-btn:hover {
+  background: var(--accent-2);
+  color: #fff;
+  border-color: var(--accent-2);
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.cap-nav-btn.prev {
+  left: -20px;
+}
+
+.cap-nav-btn.next {
+  right: -20px;
+}
+
+/* ── Privacy Cards Grid ─────────────────────────────────────── */
+.privacy-section {
+  padding: clamp(3rem, 6vw, 5rem) 0;
+}
+
+.privacy-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+@media (max-width: 1000px) {
+  .privacy-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .privacy-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.privacy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.privacy-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(255, 142, 48, 0.15);
+}
+
+[data-theme="light"] .privacy-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 142, 48, 0.25);
+}
+
+.privacy-card-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 12px;
+  background: rgba(255, 142, 48, 0.12);
+  border: 1px solid rgba(255, 142, 48, 0.22);
+  color: var(--accent-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 220ms ease;
+}
+
+.privacy-card:hover .privacy-card-icon {
+  background: rgba(255, 142, 48, 0.2);
+}
+
+.privacy-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.privacy-card h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.privacy-card p {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 0;
+}

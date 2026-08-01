@@ -1,5 +1,5 @@
-@import url("./global-theme-picker-remix.part1.css");
-@import url("./global-theme-picker-remix.part2.css");
+@import url("./global-theme-remix-dialog.css");
+@import url("./global-theme-remix-controls.css");
 
 .pet-theme-menu__option.is-selected,
 .theme-remix-menu__option.is-selected {

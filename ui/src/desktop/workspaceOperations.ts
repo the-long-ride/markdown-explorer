@@ -23,10 +23,6 @@ export function beginWorkspaceOperation(workspaceTabId: string): WorkspaceOperat
   return operation;
 }
 
-export function setActiveWorkspaceOperation(operation: WorkspaceOperationContext | null): void {
-  activeOperation = operation;
-}
-
 export function getActiveWorkspaceOperation(): WorkspaceOperationContext | null {
   return activeOperation ? { ...activeOperation } : null;
 }

@@ -61,7 +61,7 @@
       "window/**/*.js",
       "workspace/**/*.js",
       "search/**/*.js",
-      "render/**/*.js",
+      "render/document-converter.js",
       "update/**/*.js",
       "preload/**/*.js",
       "perf/**/*.js",
@@ -137,7 +137,7 @@
       "shortcutName": "Markdown Explorer",
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,
-      "createStartMenuShortcut": true,
+      "createStartMenuShortcut": false,
       "createDesktopShortcut": false,
       "artifactName": "${productName} Setup.${ext}",
       "runAfterFinish": false

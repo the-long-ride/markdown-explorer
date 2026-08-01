@@ -12,8 +12,6 @@ import {
 
 import {
   DESKTOP_TABS_STORAGE_KEY,
-  FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY,
-  FLOATING_TOOLBAR_STORAGE_KEY,
   WORKSPACE_ALIASES_STORAGE_KEY,
 } from '../../../ui/src/desktop/constants';
 
@@ -162,24 +160,10 @@ describe('createSettingsExport', () => {
     expect(result.payload.localUi.desktopTabs).toEqual([{ id: 'tab1' }]);
   });
 
-  test('reads floatingToolbarPosition from localStorage', () => {
-    localStorage.setItem(FLOATING_TOOLBAR_STORAGE_KEY, JSON.stringify({ x: 10, y: 20 }));
-    const result = createSettingsExport(baseParams);
-    expect(result.payload.localUi.floatingToolbarPosition).toEqual({ x: 10, y: 20 });
-  });
-
-  test('reads floatingToolbarCollapsed from localStorage', () => {
-    localStorage.setItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY, 'true');
-    const result = createSettingsExport(baseParams);
-    expect(result.payload.localUi.floatingToolbarCollapsed).toBe('true');
-  });
-
   test('localStorage values unset yield undefined', () => {
     const result = createSettingsExport(baseParams);
     expect(result.payload.localUi.workspaceAliases).toBeUndefined();
     expect(result.payload.localUi.desktopTabs).toBeUndefined();
-    expect(result.payload.localUi.floatingToolbarPosition).toBeUndefined();
-    expect(result.payload.localUi.floatingToolbarCollapsed).toBeUndefined();
   });
 });
 
@@ -323,22 +307,10 @@ describe('restoreLocalUiSettings', () => {
     expect(JSON.parse(localStorage.getItem(DESKTOP_TABS_STORAGE_KEY)!)).toEqual(tabs);
   });
 
-  test('writeJsonStorage: valid object writes floatingToolbarPosition', () => {
-    const pos = { x: 100, y: 200 };
-    restoreLocalUiSettings({ floatingToolbarPosition: pos });
-    expect(JSON.parse(localStorage.getItem(FLOATING_TOOLBAR_STORAGE_KEY)!)).toEqual(pos);
-  });
-
   test('writeJsonStorage: oversized object skipped', () => {
     const huge = { data: 'x'.repeat(400_000) };
     restoreLocalUiSettings({ workspaceAliases: huge });
     expect(localStorage.getItem(WORKSPACE_ALIASES_STORAGE_KEY)).toBeNull();
-  });
-
-  test('writeJsonStorage: oversized floatingToolbarPosition (limit 20k) skipped', () => {
-    const huge = { data: 'x'.repeat(25_000) };
-    restoreLocalUiSettings({ floatingToolbarPosition: huge });
-    expect(localStorage.getItem(FLOATING_TOOLBAR_STORAGE_KEY)).toBeNull();
   });
 
   test('writeJsonStorage: invalid value ignored', () => {
@@ -351,20 +323,6 @@ describe('restoreLocalUiSettings', () => {
     expect(localStorage.getItem(WORKSPACE_ALIASES_STORAGE_KEY)).toBeNull();
   });
 
-  test('floatingToolbarCollapsed "true" written', () => {
-    restoreLocalUiSettings({ floatingToolbarCollapsed: 'true' });
-    expect(localStorage.getItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY)).toBe('true');
-  });
-
-  test('floatingToolbarCollapsed "false" written', () => {
-    restoreLocalUiSettings({ floatingToolbarCollapsed: 'false' });
-    expect(localStorage.getItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY)).toBe('false');
-  });
-
-  test('floatingToolbarCollapsed other value ignored', () => {
-    restoreLocalUiSettings({ floatingToolbarCollapsed: 'yes' });
-    expect(localStorage.getItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY)).toBeNull();
-  });
 });
 
 describe('parseSettingsImport - normalizeSettings branches', () => {
@@ -524,4 +482,27 @@ describe('parseSettingsImport - normalizeSettings branches', () => {
     })), true);
     expect(result.settings.desktopViewMode).toBe('focus');
   });
+});
+
+test('ignores obsolete floating-toolbar fields from imported settings', () => {
+  const payload = {
+    kind: SETTINGS_EXPORT_KIND,
+    schemaVersion: SETTINGS_EXPORT_SCHEMA_VERSION,
+    payload: {
+      theme: 'light',
+      themeStyle: 'default',
+      settings: {},
+      recentWorkspaces: [],
+      localUi: {
+        floatingToolbarPosition: { x: 10, y: 20 },
+        floatingToolbarCollapsed: 'true',
+      },
+    },
+  };
+
+  const imported = parseSettingsImport(JSON.stringify(payload), true);
+  expect(imported.localUi).toEqual({});
+  restoreLocalUiSettings(imported.localUi);
+  expect(localStorage.getItem('markdown-explorer-tab-toolbar-position')).toBeNull();
+  expect(localStorage.getItem('markdown-explorer-tab-toolbar-actions-collapsed')).toBeNull();
 });

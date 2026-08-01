@@ -80,7 +80,7 @@ describe('TableOfContents', () => {
 
     expect(document.querySelectorAll('.toc-item__marker')).toHaveLength(4);
     const styles = readFileSync(
-      resolve(process.cwd(), 'ui/src/styles/global/global-tables-b.css'),
+      resolve(process.cwd(), 'ui/src/styles/global/global-toc-panel.css'),
       'utf8',
     );
     expect(styles).toMatch(
@@ -180,7 +180,7 @@ describe('TableOfContents', () => {
 
     it('does not define a decorative left rail for the compact toggle', () => {
       const styles = readFileSync(
-        resolve(process.cwd(), 'ui/src/styles/global/global-tables-b.css'),
+        resolve(process.cwd(), 'ui/src/styles/global/global-toc-panel.css'),
         'utf8',
       );
 
@@ -192,12 +192,12 @@ describe('TableOfContents', () => {
         'ui/src/styles/global/global-theme-vercel.css',
         'ui/src/styles/global/global-theme-tokyo-night.css',
         'ui/src/styles/global/global-theme-glass-bento.css',
-        'ui/src/styles/global/global-theme-pets-a.css',
+        'ui/src/styles/global/global-pet-theme-backgrounds.css',
       ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
-      const markdownStyles = readFileSync(
-        resolve(process.cwd(), 'ui/src/styles/global/global-markdown-base.css'),
-        'utf8',
-      );
+      const markdownStyles = [
+        'ui/src/styles/global/global-markdown-foundation.css',
+        'ui/src/styles/global/global-markdown-structures.css',
+      ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
 
       expect(themeStyles).not.toMatch(/\.toc-item\.is-active[^}]*box-shadow/);
       expect(markdownStyles).not.toContain('border-left-color: color-mix(in srgb, var(--accent) 72%');
@@ -212,12 +212,12 @@ describe('TableOfContents', () => {
     });
 
     it('removes preview-notice and pet heading rails', () => {
-      const markdownStyles = readFileSync(
-        resolve(process.cwd(), 'ui/src/styles/global/global-markdown-base.css'),
-        'utf8',
-      );
+      const markdownStyles = [
+        'ui/src/styles/global/global-markdown-foundation.css',
+        'ui/src/styles/global/global-markdown-structures.css',
+      ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
       const petStyles = readFileSync(
-        resolve(process.cwd(), 'ui/src/styles/global/global-theme-pets-a.css'),
+        resolve(process.cwd(), 'ui/src/styles/global/global-pet-theme-backgrounds.css'),
         'utf8',
       );
 
@@ -231,10 +231,10 @@ describe('TableOfContents', () => {
     });
 
     it('defines a right-side square heading badge that appears on heading hover or focus', () => {
-      const sectionStyles = readFileSync(
-        resolve(process.cwd(), 'ui/src/styles/global/global-markdown-base.css'),
-        'utf8',
-      );
+      const sectionStyles = [
+        'ui/src/styles/global/global-markdown-foundation.css',
+        'ui/src/styles/global/global-markdown-structures.css',
+      ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
 
       expect(sectionStyles).toMatch(
         /\.mdn-heading-level\s*\{[^}]*left:\s*calc\(100% \+ 8px\);[^}]*aspect-ratio:\s*1;[^}]*border:[^}]*visibility:\s*hidden;/s,
@@ -250,7 +250,7 @@ describe('TableOfContents', () => {
         'ui/src/styles/global/global-theme-vercel.css',
         'ui/src/styles/global/global-theme-tokyo-night.css',
         'ui/src/styles/global/global-theme-glass-bento.css',
-        'ui/src/styles/global/global-theme-pets-a.css',
+        'ui/src/styles/global/global-pet-theme-backgrounds.css',
       ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
 
       expect(sidebarStyles).not.toMatch(/\.tree-file\.is-active[^}]*box-shadow\s*:/s);

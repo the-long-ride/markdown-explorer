@@ -52,18 +52,6 @@ pub fn open_devtools_if_debug(window: &tauri::WebviewWindow) -> bool {
     true
 }
 
-pub fn toggle_devtools_if_debug(window: &tauri::WebviewWindow) -> bool {
-    if !is_debug_mode() {
-        return false;
-    }
-    if window.is_devtools_open() {
-        window.close_devtools();
-    } else {
-        window.open_devtools();
-    }
-    true
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

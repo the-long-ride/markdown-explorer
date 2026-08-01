@@ -1,9 +1,26 @@
 #![allow(dead_code)]
 
-use tauri::{image::Image, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{image::Image, DragDropEvent, Manager, WebviewEvent, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_window_state::StateFlags;
 
 const APP_ICON_PNG: &[u8] = include_bytes!("../../icons/icon.png");
+
+fn dispatch_native_drop_event(window: &WebviewWindow, event_type: &str, paths: &[std::path::PathBuf]) {
+    let payload = serde_json::json!({
+        "type": event_type,
+        "paths": paths
+            .iter()
+            .map(|path| path.to_string_lossy().into_owned())
+            .collect::<Vec<_>>(),
+    });
+    let Ok(payload_json) = serde_json::to_string(&payload) else {
+        return;
+    };
+    let script = format!(
+        "window.__markdownExplorerHandleNativeDrop?.({payload_json});"
+    );
+    let _ = window.eval(script);
+}
 
 fn handle_external_open_path(app: &tauri::AppHandle, path: std::path::PathBuf) {
     let state = app.state::<crate::app_state::AppState>();
@@ -91,6 +108,28 @@ pub fn boot() {
             if auto_open_devtools {
                 crate::debug_tools::open_devtools_if_debug(&window);
             }
+
+            let win_for_drop = window.clone();
+            window.on_webview_event(move |event| {
+                let WebviewEvent::DragDrop(drop_event) = event else {
+                    return;
+                };
+                match drop_event {
+                    DragDropEvent::Enter { paths, .. } => {
+                        dispatch_native_drop_event(&win_for_drop, "over", paths);
+                    }
+                    DragDropEvent::Over { .. } => {
+                        dispatch_native_drop_event(&win_for_drop, "over", &[]);
+                    }
+                    DragDropEvent::Drop { paths, .. } => {
+                        dispatch_native_drop_event(&win_for_drop, "drop", paths);
+                    }
+                    DragDropEvent::Leave => {
+                        dispatch_native_drop_event(&win_for_drop, "leave", &[]);
+                    }
+                    _ => {}
+                }
+            });
 
             let win_for_event = window.clone();
             let app_for_event = app_handle.clone();

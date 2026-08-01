@@ -116,6 +116,16 @@ describe('markdown/renderer', () => {
         const { html } = renderer.render(tokens);
         expect(html).toContain('mdn-section-chevron');
       });
+
+
+      it('uses CSP-safe delegated heading controls', () => {
+        const { html } = new HtmlRenderer().render(tokenize('# Title'));
+        expect(html).toContain('class="mdn-section-header"');
+        expect(html).toContain('role="button"');
+        expect(html).toContain('aria-expanded="true"');
+        expect(html).not.toContain('onclick="UI.toggleSection');
+        expect(html).not.toContain('onkeydown="if(event.key');
+      });
     });
 
     describe('section grouping', () => {

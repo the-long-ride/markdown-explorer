@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
-const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
+const read = readProjectSource;
 
 test('theme picker exposes at most three translated group cards', async () => {
   const [picker, translations] = await Promise.all([
@@ -47,7 +48,7 @@ test('new CSS themes and tabs/focus header parity are present', async () => {
     read('ui/src/styles/global/global-theme-glass-bento.css'),
     read('ui/src/styles/global/global-theme-vercel.css'),
     read('ui/src/styles/global/global-theme-tokyo-night.css'),
-    read('ui/src/styles/tokens/tokens-style-themes.css'),
+    read('ui/src/styles/tokens/tokens-style-foundation.css'),
     read('ui/src/styles/tokens/tokens-pet-auto-light.css'),
   ]);
   assert.match(globalCss, /global-theme-neon-voltage\.css/);

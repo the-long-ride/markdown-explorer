@@ -1,15 +1,12 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 
 import {
-  clampFloatingToolbarPosition,
   createEmptyTab,
   createTabId,
   getDroppedFilePath,
   getTabLabel,
-  getWorkspaceNameFromPath,
   readInitialDesktopState,
   readPersistedDesktopTabs,
-  readToolbarPosition,
   readWorkspaceAliases,
   writePersistedDesktopTabs,
   writeWorkspaceAliases,
@@ -39,16 +36,6 @@ describe('desktopTabs', () => {
     });
   });
 
-  describe('getWorkspaceNameFromPath', () => {
-    test('extracts last segment from forward-slash path', () => {
-      expect(getWorkspaceNameFromPath('C:/Users/test/docs')).toBe('docs');
-    });
-
-    test('extracts last segment from backslash path', () => {
-      expect(getWorkspaceNameFromPath('C:\\Users\\test\\docs')).toBe('docs');
-    });
-  });
-
   describe('getTabLabel', () => {
     test('prefers alias over workspaceName', () => {
       expect(getTabLabel({ alias: 'My Project', workspaceName: 'docs', kind: 'workspace', id: '1' } as any)).toBe('My Project');
@@ -70,46 +57,6 @@ describe('desktopTabs', () => {
   describe('createTabId', () => {
     test('starts with tab-', () => {
       expect(createTabId()).toMatch(/^tab-/);
-    });
-  });
-
-  describe('clampFloatingToolbarPosition', () => {
-    test('clamps position to viewport with margin', () => {
-      const pos = clampFloatingToolbarPosition({ x: -100, y: -100 }, { width: 320, height: 52 });
-      expect(pos.x).toBe(8);
-      expect(pos.y).toBe(8);
-    });
-
-    test('respects size for clamping', () => {
-      const pos = clampFloatingToolbarPosition({ x: 99999, y: 99999 }, { width: 320, height: 52 });
-      expect(pos.x).toBeLessThanOrEqual(window.innerWidth - 320 - 8);
-      expect(pos.y).toBeLessThanOrEqual(window.innerHeight - 52 - 8);
-    });
-
-    test('SSR (no window) returns position as-is', () => {
-      const originalWindow = globalThis.window;
-      (globalThis as any).window = undefined;
-      const pos = clampFloatingToolbarPosition({ x: 50, y: 50 }, { width: 320, height: 52 });
-      expect(pos).toEqual({ x: 50, y: 50 });
-      (globalThis as any).window = originalWindow;
-    });
-  });
-
-  describe('readToolbarPosition', () => {
-    beforeEach(() => { localStorage.clear(); });
-
-    test('missing key returns default', () => {
-      expect(readToolbarPosition()).toEqual({ x: 36, y: 36 });
-    });
-
-    test('reads stored values', () => {
-      localStorage.setItem('markdown-explorer-tab-toolbar-position', JSON.stringify({ x: 100, y: 200 }));
-      expect(readToolbarPosition()).toEqual({ x: 100, y: 200 });
-    });
-
-    test('invalid JSON returns default', () => {
-      localStorage.setItem('markdown-explorer-tab-toolbar-position', '{bad');
-      expect(readToolbarPosition()).toEqual({ x: 36, y: 36 });
     });
   });
 

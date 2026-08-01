@@ -7,7 +7,6 @@ import {
   toggleHtmlMode,
   setCsvMode,
   toggleCsvMode,
-  triggerToggleCodeCollapse,
   initGlobalHandlers,
 } from '../../../../ui/src/dom/globalHandlers';
 
@@ -161,39 +160,6 @@ describe('globalHandlers', () => {
     it('does nothing if no wrap found', () => {
       const btn = document.createElement('button');
       expect(() => toggleHtmlMode(btn)).not.toThrow();
-    });
-  });
-
-  describe('triggerToggleCodeCollapse', () => {
-    it('toggles collapsed state off to on', () => {
-      document.body.innerHTML = `
-        <div class="mdn-codeblock" data-collapsed="false">
-          <button class="mdn-codeblock-toggle-btn">Show More</button>
-        </div>
-      `;
-      const btn = document.querySelector('.mdn-codeblock-toggle-btn') as HTMLElement;
-      triggerToggleCodeCollapse(btn);
-      const wrap = document.querySelector('.mdn-codeblock') as HTMLElement;
-      expect(wrap.dataset.collapsed).toBe('true');
-      expect(btn.textContent).toBe('Show More');
-    });
-
-    it('toggles collapsed state on to off', () => {
-      document.body.innerHTML = `
-        <div class="mdn-codeblock" data-collapsed="true">
-          <button class="mdn-codeblock-toggle-btn">Show Less</button>
-        </div>
-      `;
-      const btn = document.querySelector('.mdn-codeblock-toggle-btn') as HTMLElement;
-      triggerToggleCodeCollapse(btn);
-      const wrap = document.querySelector('.mdn-codeblock') as HTMLElement;
-      expect(wrap.dataset.collapsed).toBe('false');
-      expect(btn.textContent).toBe('Show Less');
-    });
-
-    it('does nothing if no wrap found', () => {
-      const btn = document.createElement('button');
-      expect(() => triggerToggleCodeCollapse(btn)).not.toThrow();
     });
   });
 

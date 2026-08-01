@@ -8,7 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 
 test('Theme Remix portal menus use their computed viewport position', async () => {
   const css = await readFile(
-    path.join(repoRoot, 'ui/src/styles/global/global-theme-picker-remix.part1.css'),
+    path.join(repoRoot, 'ui/src/styles/global/global-theme-remix-dialog.css'),
     'utf8',
   );
   const portalRule = css.match(/\.theme-remix-menu--portal\s*\{[\s\S]*?\}/)?.[0] ?? '';

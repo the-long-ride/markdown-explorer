@@ -88,11 +88,13 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: (id) => {
-            if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) return 'vendor-react';
-            if (id.includes('mermaid')) return 'vendor-mermaid';
-            if (id.includes('chart.js')) return 'vendor-chart';
-            if (id.includes('highlight.js')) return 'vendor-hljs';
-            if (id.includes('/katex/') || id.includes('\\katex\\')) return 'katex';
+            const normalizedId = id.replace(/\\/g, '/');
+            const isNodeModule = normalizedId.includes('/node_modules/');
+            if (isNodeModule && (normalizedId.includes('/react-dom/') || normalizedId.includes('/react/'))) return 'vendor-react';
+            if (isNodeModule && normalizedId.includes('mermaid')) return 'vendor-mermaid';
+            if (isNodeModule && normalizedId.includes('chart.js')) return 'vendor-chart';
+            if (isNodeModule && normalizedId.includes('highlight.js')) return 'vendor-hljs';
+            if (isNodeModule && normalizedId.includes('/katex/')) return 'katex';
           },
           entryFileNames: 'assets/[name].js',
           chunkFileNames: 'assets/[name].js',

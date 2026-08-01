@@ -4,6 +4,7 @@ import { detectColumnTypes, truncateLabel } from './tableHandlers';
 export function registerTableChartHandlers(
   win: any,
   getTableDataRows: (table: HTMLTableElement) => HTMLTableRowElement[],
+  getMatchedTableRows: (table: HTMLTableElement) => HTMLTableRowElement[],
   syncWrapState: (tableId: string, state: TableState) => void,
 ) {
   win.Table.detectChartable = (tableId: string) => {
@@ -117,7 +118,22 @@ export function registerTableChartHandlers(
       if (toggleBtn) toggleBtn.style.display = 'none';
       if (toggleRow) toggleRow.classList.add('is-hidden');
       if (chartContainer) chartContainer.style.display = 'block';
-      win.Table.renderChart(tableId, view);
+
+      const renderSelectedChart = () => {
+        const latestState = win.Table.initState(tableId);
+        if (latestState.currentView === view) win.Table.renderChart(tableId, view);
+      };
+      const ensureChartLibrary = win.Table.ensureChartLibrary;
+      if (typeof win.Chart === 'undefined' && typeof ensureChartLibrary === 'function') {
+        chartContainer?.classList.add('is-loading');
+        void Promise.resolve()
+          .then(() => ensureChartLibrary())
+          .then(renderSelectedChart)
+          .catch((error) => console.error('Chart.js load error:', error))
+          .finally(() => chartContainer?.classList.remove('is-loading'));
+      } else {
+        renderSelectedChart();
+      }
     }
   };
 
@@ -193,9 +209,7 @@ export function registerTableChartHandlers(
     const table = document.getElementById(tableId) as HTMLTableElement | null;
     if (!table) return;
 
-    const rows = ([...table.querySelectorAll('tbody tr')] as HTMLTableRowElement[]).filter(
-      row => !row.classList.contains('is-hidden') && row.id !== tableId + '-toggle-row'
-    );
+    const rows = getMatchedTableRows(table);
 
     if (rows.length === 0) {
       const ctx = canvas.getContext('2d');
@@ -209,8 +223,7 @@ export function registerTableChartHandlers(
       return;
     }
 
-    const MAX_CHART_ROWS = 50;
-    const chartRows = rows.slice(0, MAX_CHART_ROWS);
+    const chartRows = rows;
 
     const labels = chartRows.map(row => {
       const text = row.cells[state.labelColIdx]?.textContent?.trim() ?? '';
@@ -263,6 +276,11 @@ export function registerTableChartHandlers(
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: false,
+          normalized: true,
+          elements: viewType === 'line' && chartRows.length > 200
+            ? { point: { radius: 0, hoverRadius: 3 } }
+            : undefined,
           plugins: {
             legend: {
               display: true,

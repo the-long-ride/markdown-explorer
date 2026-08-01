@@ -1,6 +1,7 @@
 @import './fonts.css';
 @import './tokens/tokens-base-themes.css';
-@import './tokens/tokens-style-themes.css';
+@import './tokens/tokens-style-foundation.css';
+@import './tokens/tokens-style-vivid.css';
 @import './tokens/tokens-pet-themes.css';
 @import './tokens/tokens-pet-auto-light.css';
 @import './tokens/tokens-app-shell.css';

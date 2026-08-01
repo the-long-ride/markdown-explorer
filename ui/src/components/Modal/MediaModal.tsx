@@ -8,44 +8,22 @@ import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIc
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { useCssVars } from '../../utils/useCssVars';
-
-interface MediaItem {
-  type: 'img' | 'svg';
-  src?: string;
-  html?: string;
-}
+import type { MediaGallery } from './mediaGallery';
 
 interface MediaModalProps {
-  isOpen: boolean;
+  gallery: MediaGallery | null;
   onClose: () => void;
-  /** The clicked element — used to find all media in the content */
-  clickedElement: HTMLElement | null;
 }
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 20;
 
-function getClickableMedia(): { type: 'img' | 'svg'; element: HTMLElement; src?: string; html?: string }[] {
-  const media: { type: 'img' | 'svg'; element: HTMLElement; src?: string; html?: string }[] = [];
-  document.querySelectorAll<HTMLElement>('.mdn-body img, .mdn-body .mdn-mermaid-wrap').forEach((el) => {
-    if (el.tagName.toLowerCase() === 'img') {
-      media.push({ type: 'img', element: el, src: (el as HTMLImageElement).src });
-    } else if (el.classList.contains('mdn-mermaid-wrap')) {
-      const svg = el.querySelector('svg');
-      if (svg) {
-        media.push({ type: 'svg', element: el, html: svg.outerHTML });
-      }
-    }
-  });
-  return media;
-}
-
-export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps) {
+export function MediaModal({ gallery, onClose }: MediaModalProps) {
   const { state } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const items = gallery?.items ?? [];
 
-  const [items, setItems] = useState<MediaItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -59,47 +37,10 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
   useCssVars(mediaSvgRef, transformVars);
 
   useEffect(() => {
-    if (!isOpen) {
-      setItems([]);
-      setCurrentIndex(0);
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      return;
-    }
-    if (!clickedElement) return;
-
-    const tryBuild = () => {
-      const allMedia = getClickableMedia();
-      if (allMedia.length === 0) return false;
-
-      let idx = allMedia.findIndex((m) => m.element === clickedElement);
-      if (idx === -1 && clickedElement) {
-        const clickedSrc = (clickedElement as HTMLImageElement).src;
-        const clickedTagName = clickedElement.tagName.toLowerCase();
-        idx = allMedia.findIndex((m) => {
-          if (m.type === 'img' && clickedTagName === 'img') {
-            return m.src === clickedSrc;
-          }
-          if (m.type === 'svg' && clickedTagName !== 'img') {
-            return m.element.className === clickedElement.className && m.element.textContent === clickedElement.textContent;
-          }
-          return false;
-        });
-      }
-
-      setItems(allMedia.map(({ type, src, html }) => ({ type, src, html })));
-      setCurrentIndex(idx >= 0 ? idx : 0);
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      return true;
-    };
-
-    if (!tryBuild()) {
-      // SVG not ready yet — retry after mermaid.run() has had time to resolve
-      const t = setTimeout(() => tryBuild(), 250);
-      return () => clearTimeout(t);
-    }
-  }, [isOpen, clickedElement]);
+    setCurrentIndex(gallery?.currentIndex ?? 0);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [gallery]);
 
   const zoomIn = useCallback(() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25)), []);
   const zoomOut = useCallback(() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25)), []);
@@ -115,21 +56,19 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
     setZoom(1); setPan({ x: 0, y: 0 });
   }, [items.length]);
 
-  // Keyboard
   useEffect(() => {
-    if (!isOpen) return;
+    if (!gallery) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') prev();
-      if (e.key === 'ArrowRight') next();
+      if (e.key === 'ArrowLeft' && items.length > 1) prev();
+      if (e.key === 'ArrowRight' && items.length > 1) next();
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [isOpen, onClose, prev, next]);
+  }, [gallery, items.length, onClose, prev, next]);
 
-  // Scroll zoom
   useEffect(() => {
-    if (!isOpen || !modalRef.current) return;
+    if (!gallery || !modalRef.current) return;
     const handler = (e: WheelEvent) => {
       e.preventDefault();
       setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + (e.deltaY < 0 ? 0.15 : -0.15))));
@@ -137,10 +76,10 @@ export function MediaModal({ isOpen, onClose, clickedElement }: MediaModalProps)
     const modal = modalRef.current;
     modal.addEventListener('wheel', handler, { passive: false });
     return () => modal.removeEventListener('wheel', handler);
-  }, [isOpen, items.length]);
+  }, [gallery, items.length]);
 
-  if (!isOpen || items.length === 0) return null;
-  const item = items[currentIndex];
+  if (!gallery || items.length === 0) return null;
+  const item = items[Math.min(currentIndex, items.length - 1)];
 
   const onMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();

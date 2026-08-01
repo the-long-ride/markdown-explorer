@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (relativePath) => readFile(path.join(repoRoot, relativePath), 'utf8');
+const read = readProjectSource;
 const locales = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'];
 
 test('left and right arrow shortcuts use glyph labels', async () => {
@@ -77,7 +78,7 @@ test('settings and close-all actions use the supplied theme-aware SVG artwork', 
 });
 
 test('reset shortcut confirmation uses theme styling instead of a bright hard-coded red', async () => {
-  const css = await read('ui/src/styles/global/global-modals-settings-a.part2.css');
+  const css = await read('ui/src/styles/global/global-settings-actions-dialogs.css');
   const block = css.match(/\.settings-reset-shortcuts-confirm\s*\{[\s\S]*?\}/)?.[0] ?? '';
   assert.match(block, /var\(--/);
   assert.doesNotMatch(block, /#dc2626/i);

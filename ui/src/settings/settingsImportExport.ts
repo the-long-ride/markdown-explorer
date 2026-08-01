@@ -1,7 +1,5 @@
 import {
   DESKTOP_TABS_STORAGE_KEY,
-  FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY,
-  FLOATING_TOOLBAR_STORAGE_KEY,
   WORKSPACE_ALIASES_STORAGE_KEY,
 } from '../desktop/constants';
 import {
@@ -49,8 +47,6 @@ export interface SettingsExportEnvelope {
       readonly tocWidth?: string;
       readonly workspaceAliases?: unknown;
       readonly desktopTabs?: unknown;
-      readonly floatingToolbarPosition?: unknown;
-      readonly floatingToolbarCollapsed?: string;
     };
   };
 }
@@ -187,8 +183,6 @@ export function createSettingsExport(params: {
         tocWidth: normalizeStorageNumber(localStorage.getItem('markdown-explorer-toc-width')),
         workspaceAliases: readLocalStorageJson(WORKSPACE_ALIASES_STORAGE_KEY),
         desktopTabs: readLocalStorageJson(DESKTOP_TABS_STORAGE_KEY),
-        floatingToolbarPosition: readLocalStorageJson(FLOATING_TOOLBAR_STORAGE_KEY),
-        floatingToolbarCollapsed: localStorage.getItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY) ?? undefined,
       },
     },
   };
@@ -222,9 +216,17 @@ export function parseSettingsImport(rawText: string, isDesktop: boolean): Import
     themeStyle: normalizeThemeStyle(payload.themeStyle),
     settings: normalizeSettings(payload.settings, isDesktop),
     recentWorkspaces: normalizeRecentWorkspaces(payload.recentWorkspaces),
-    localUi: payload.localUi && typeof payload.localUi === 'object'
-      ? payload.localUi as SettingsExportEnvelope['payload']['localUi']
-      : {},
+    localUi: (() => {
+      const rawLocalUi = payload.localUi && typeof payload.localUi === 'object'
+        ? payload.localUi as Record<string, unknown>
+        : {};
+      return {
+        sidebarWidth: typeof rawLocalUi.sidebarWidth === 'string' ? rawLocalUi.sidebarWidth : undefined,
+        tocWidth: typeof rawLocalUi.tocWidth === 'string' ? rawLocalUi.tocWidth : undefined,
+        workspaceAliases: rawLocalUi.workspaceAliases,
+        desktopTabs: rawLocalUi.desktopTabs,
+      };
+    })(),
   };
 }
 
@@ -241,8 +243,4 @@ export function restoreLocalUiSettings(localUi: ImportedSettingsPayload['localUi
   }
   writeJsonStorage(WORKSPACE_ALIASES_STORAGE_KEY, localUi.workspaceAliases);
   writeJsonStorage(DESKTOP_TABS_STORAGE_KEY, localUi.desktopTabs);
-  writeJsonStorage(FLOATING_TOOLBAR_STORAGE_KEY, localUi.floatingToolbarPosition, 20_000);
-  if (localUi.floatingToolbarCollapsed === 'true' || localUi.floatingToolbarCollapsed === 'false') {
-    localStorage.setItem(FLOATING_TOOLBAR_ACTIONS_STORAGE_KEY, localUi.floatingToolbarCollapsed);
-  }
 }

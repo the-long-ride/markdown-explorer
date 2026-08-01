@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const read = (relativePath) => readFile(path.join(repoRoot, relativePath), 'utf8');
+const read = readProjectSource;
 
 test('test-code fixture covers XML declaration, XML fragment, and headerless CSV', async () => {
   const source = await read('test/test-code.md');
@@ -25,7 +26,7 @@ test('CSV source mode decorates field text with four repeating column classes', 
   const [delimited, renderer, css] = await Promise.all([
     read('ui/src/markdown/delimitedText.ts'),
     read('ui/src/markdown/codeRenderer.ts'),
-    read('ui/src/styles/global/global-code.css'),
+    read('ui/src/styles/global/global-code-blocks.css'),
   ]);
   assert.match(delimited, /tokenizeDelimitedSource/);
   assert.match(renderer, /code-delimited-column--\$\{segment\.columnIndex % 4\}/);
@@ -39,7 +40,7 @@ test('CSV source mode decorates field text with four repeating column classes', 
 test('Markdown image-only paragraphs render as equal-width rows and heading badges sit to the right', async () => {
   const [renderer, css] = await Promise.all([
     read('ui/src/markdown/renderer.ts'),
-    read('ui/src/styles/global/global-markdown-base.css'),
+    read('ui/src/styles/global/global-markdown-foundation.css'),
   ]);
   assert.match(renderer, /renderImageRowParagraph/);
   assert.match(renderer, /mdn-image-row/);
@@ -78,7 +79,6 @@ test('Tabs view places navigation before workspace tabs and document actions bef
   const moreActionsIndex = tabbar.indexOf('<ToolbarActionMenu');
   assert.ok(navigationIndex >= 0 && navigationIndex < tablistIndex);
   assert.ok(documentActionsIndex >= 0 && documentActionsIndex < moreActionsIndex);
-  assert.doesNotMatch(appView, /<FloatingTabToolbar/);
 });
 
 test('desktop shell-location command supports directory, reveal-file, and parent-directory modes', async () => {

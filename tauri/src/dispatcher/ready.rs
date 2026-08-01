@@ -47,9 +47,7 @@ impl Dispatcher {
             is_maximized,
             &package_info.version.to_string(),
         );
-        if let Some(object) = ack.as_object() {
-            host_message::emit_scoped(&self.app, "readyAck", object.clone(), operation.as_ref());
-        }
+        host_message::emit_ready_ack_scoped(&self.app, &ack, operation.as_ref());
         let external_open_path = self.state.inner.write().external_open_path.take();
         if let Some(path) = external_open_path {
             host_message::emit_external_open_path(&self.app, &path.to_string_lossy());

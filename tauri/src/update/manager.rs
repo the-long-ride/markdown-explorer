@@ -1,10 +1,10 @@
-use crate::update::{UpdateState, UpdateStatus};
+use crate::update::UpdateState;
 use serde_json::json;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tauri::{AppHandle, Emitter};
+use tauri::AppHandle;
 
 const MANIFEST_FILE: &str = "pending-update.json";
 
@@ -138,20 +138,12 @@ impl UpdateManager {
     }
 
     pub fn emit_state(app: &AppHandle, state: &UpdateState) {
-        let _ = app.emit(
-            "host-message",
-            json!({
-                "command": "updateStateChanged",
-                "state": state,
-            }),
-        );
-    }
-
-    pub fn send_current_state(app: &AppHandle, persisted: Option<&UpdateState>) {
-        let state = persisted.cloned().unwrap_or_default();
-        if state.status != UpdateStatus::Idle {
-            Self::emit_state(app, &state);
-        }
+        let mut extra = serde_json::Map::new();
+        extra.insert("state".into(), json!(state));
+        #[cfg(not(test))]
+        crate::host_message::emit(app, "updateStateChanged", extra);
+        #[cfg(test)]
+        let _ = (app, extra);
     }
 
     pub fn restore_and_emit(app: &AppHandle, config_dir: &Path) -> UpdateState {
@@ -310,6 +302,7 @@ impl UpdateManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::update::UpdateStatus;
 
     #[test]
     fn state_transitions() {

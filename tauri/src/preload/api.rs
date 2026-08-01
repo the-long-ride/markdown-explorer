@@ -16,9 +16,7 @@ pub fn electron_api_shim_js() -> &'static str {
     }
   }, true);
   const listeners = new Set();
-  let unlistenHost = null;
-  let dropListenerStarted = false;
-  let unlistenDrop = null;
+  const pendingHostMessages = [];
   let droppedPaths = [];
   let tauriFullscreenDragLocked = false;
 
@@ -69,87 +67,47 @@ pub fn electron_api_shim_js() -> &'static str {
     }));
   }
 
-  function ensureHostListener() {
-    if (unlistenHost) return;
-    if (!window.__TAURI__ || !window.__TAURI__.event) {
-      setTimeout(ensureHostListener, 50);
+  function dispatchHostMessage(payload) {
+    if (!payload || typeof payload !== 'object') return;
+    if (payload.command === 'fullscreenChanged') {
+      setTauriFullscreenDragLocked(payload.isFullscreen);
+    }
+    if (listeners.size === 0) {
+      pendingHostMessages.push(payload);
+      if (pendingHostMessages.length > 100) pendingHostMessages.shift();
       return;
     }
-    const dereg = window.__TAURI__.event.listen('host-message', function (e) {
-      const payload = e && e.payload;
-      if (!payload) return;
-      if (payload.command === 'fullscreenChanged') {
-        setTauriFullscreenDragLocked(payload.isFullscreen);
-      }
-      listeners.forEach(function (cb) { try { cb(payload); } catch (err) { console.error('host-message listener threw:', err); } });
+    listeners.forEach(function (cb) {
+      try { cb(payload); } catch (err) { console.error('host-message listener threw:', err); }
     });
-    if (dereg && typeof dereg.then === 'function') {
-      dereg.then(function (fn) { unlistenHost = fn; });
-    } else {
-      unlistenHost = dereg;
-    }
   }
 
-  function ensureDropListener() {
-    if (dropListenerStarted || unlistenDrop) return;
-    if (!window.__TAURI__) {
-      setTimeout(ensureDropListener, 50);
-      return;
-    }
+  window.__markdownExplorerHandleHostMessage = dispatchHostMessage;
 
-    var webview = window.__TAURI__.webview;
-    var webviewWindow = window.__TAURI__.webviewWindow;
-    var windowApi = window.__TAURI__.window;
-    var currentWebview = webview && typeof webview.getCurrentWebview === 'function'
-      ? webview.getCurrentWebview()
-      : webviewWindow && typeof webviewWindow.getCurrentWebviewWindow === 'function'
-        ? webviewWindow.getCurrentWebviewWindow()
-        : windowApi && typeof windowApi.getCurrentWindow === 'function'
-          ? windowApi.getCurrentWindow()
-          : null;
-    if (currentWebview && typeof currentWebview.onDragDropEvent === 'function') {
-      dropListenerStarted = true;
-      var dereg = currentWebview.onDragDropEvent(function (e) {
-        var payload = e && e.payload;
-        if (payload && payload.type === 'over') {
-          dispatchTauriFileDropState('over');
-        } else if (payload && payload.type === 'drop' && Array.isArray(payload.paths)) {
-          droppedPaths = payload.paths.slice();
-          dispatchTauriFileDropState('drop', droppedPaths);
-          window.dispatchEvent(new CustomEvent('markdown-explorer-tauri-file-drop', { detail: droppedPaths.slice() }));
-        } else if (payload && (payload.type === 'cancel' || payload.type === 'leave')) {
-          droppedPaths = [];
-          dispatchTauriFileDropState(payload.type);
-        }
-      });
-      if (dereg && typeof dereg.then === 'function') {
-        dereg.then(function (fn) { unlistenDrop = fn; });
-      } else {
-        unlistenDrop = dereg;
-      }
-      return;
-    }
+  window.__markdownExplorerHandleNativeDrop = function (event) {
+    var detail = event && typeof event === 'object' ? event : {};
+    var type = typeof detail.type === 'string' ? detail.type : '';
+    var paths = Array.isArray(detail.paths) ? detail.paths.slice() : [];
 
-    if (!window.__TAURI__.event || typeof window.__TAURI__.event.listen !== 'function') {
-      setTimeout(ensureDropListener, 50);
+    if (type === 'over' || type === 'enter') {
+      dispatchTauriFileDropState('over', paths);
       return;
     }
-    dropListenerStarted = true;
-    window.__TAURI__.event.listen('tauri://drag-enter', function () {
-      dispatchTauriFileDropState('over');
-    });
-    window.__TAURI__.event.listen('tauri://drag-leave', function () {
-      dispatchTauriFileDropState('leave');
-    });
-    window.__TAURI__.event.listen('tauri://file-drop', function (e) {
-      var paths = e && e.payload;
-      droppedPaths = Array.isArray(paths) ? paths.slice() : [];
+    if (type === 'drop') {
+      droppedPaths = paths;
+      dispatchTauriFileDropState('drop', droppedPaths);
       if (droppedPaths.length) {
-        dispatchTauriFileDropState('drop', droppedPaths);
-        window.dispatchEvent(new CustomEvent('markdown-explorer-tauri-file-drop', { detail: droppedPaths.slice() }));
+        window.dispatchEvent(new CustomEvent('markdown-explorer-tauri-file-drop', {
+          detail: droppedPaths.slice()
+        }));
       }
-    }).then(function (fn) { unlistenDrop = fn; });
-  }
+      return;
+    }
+    if (type === 'cancel' || type === 'leave') {
+      droppedPaths = [];
+      dispatchTauriFileDropState(type);
+    }
+  };
 
   window.electronAPI = {
     postMessage: function (msg) {
@@ -164,27 +122,25 @@ pub fn electron_api_shim_js() -> &'static str {
       }
     },
     onMessage: function (cb) {
-      ensureHostListener();
+      const wasEmpty = listeners.size === 0;
       listeners.add(cb);
+      if (wasEmpty && pendingHostMessages.length > 0) {
+        const queued = pendingHostMessages.splice(0, pendingHostMessages.length);
+        queued.forEach(dispatchHostMessage);
+      }
       return function () {
         listeners.delete(cb);
-        if (listeners.size === 0 && unlistenHost) {
-          try { unlistenHost(); } catch (e) {}
-          unlistenHost = null;
-        }
       };
     },
     getPathForFile: function (file) {
       return file && file.path;
     },
     consumeDroppedPaths: function () {
-      ensureDropListener();
       var paths = droppedPaths.slice();
       droppedPaths = [];
       return paths;
     }
   };
-  ensureDropListener();
 
   function fileSrcToAsset(url) {
     if (!url || typeof url !== 'string') return url;
@@ -288,19 +244,25 @@ mod tests {
     }
 
     #[test]
-    fn test_electron_api_shim_js_contains_drag_drop_bridge() {
+    fn test_electron_api_shim_js_contains_native_drag_drop_bridge() {
         let js = electron_api_shim_js();
-        assert!(js.contains("onDragDropEvent"));
-        assert!(js.contains("getCurrentWebview"));
-        assert!(js.contains("getCurrentWebviewWindow"));
-        assert!(js.contains("getCurrentWindow"));
-        assert!(js.contains("payload.paths"));
+        assert!(js.contains("__markdownExplorerHandleNativeDrop"));
         assert!(js.contains("dispatchTauriFileDropState"));
         assert!(js.contains("markdown-explorer-tauri-file-drop-state"));
         assert!(js.contains("consumeDroppedPaths"));
         assert!(js.contains("markdown-explorer-tauri-file-drop"));
-        assert!(js.contains("tauri://drag-enter"));
-        assert!(js.contains("tauri://drag-leave"));
-        assert!(js.contains("tauri://file-drop"));
+        assert!(!js.contains("onDragDropEvent"));
+        assert!(!js.contains("tauri://drag-enter"));
+    }
+
+    #[test]
+    fn test_electron_api_shim_uses_native_host_message_bridge() {
+        let js = electron_api_shim_js();
+        assert!(js.contains("__markdownExplorerHandleHostMessage"));
+        assert!(js.contains("pendingHostMessages"));
+        assert!(js.contains("queued.forEach(dispatchHostMessage)"));
+        let legacy_listener = ["__TAURI__", ".event.listen"].concat();
+        assert!(!js.contains(&legacy_listener));
+        assert!(!js.contains("hostListenerPromise"));
     }
 }

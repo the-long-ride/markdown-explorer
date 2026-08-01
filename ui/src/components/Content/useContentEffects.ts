@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { useContentNavigationEffects } from "./useContentNavigationEffects";
+import { useContentScrollMemory } from "./useContentScrollMemory";
 import { isWorkspaceNavigationHref } from "./contentUtils";
 import { scheduleContentEnhancements } from "./scheduleContentEnhancements";
 import {
@@ -8,6 +10,8 @@ import {
   type PreviewActionLabels,
 } from "../../dom/htmlPreviewActions";
 import { resolveRenderedLink } from "../../dom/linkContextMenu";
+import { createHeadingSectionInteractions } from "./headingSectionInteractions";
+import type { HeadingSectionState } from "./enhancements/headingSectionState";
 import type { LinkContextMenuState } from "../shared/LinkContextMenu";
 
 interface ContentEffectsArgs {
@@ -37,58 +41,30 @@ export function useContentEffects({
   onOpenLinkMenu,
   onActionError,
 }: ContentEffectsArgs) {
-  const scrollPositionsRef = useRef<Record<string, number>>({});
-  const lastFileRef = useRef<string | null>(null);
+  const scrollPositionsRef = useContentScrollMemory(state.currentFile, scrollRef);
   const lastRestoredFileRef = useRef<string | null>(null);
   const lastRestoredVersionRef = useRef<number | null>(null);
   const mermaidRunIdRef = useRef(0);
+  const headingStateByFileRef = useRef<Map<string, HeadingSectionState>>(new Map());
 
-  // Save scroll position of previous file before switching
-  useEffect(() => {
-    if (lastFileRef.current && scrollRef.current) {
-      scrollPositionsRef.current[lastFileRef.current] =
-        scrollRef.current.scrollTop;
-    }
-    lastFileRef.current = state.currentFile;
-  }, [state.currentFile, scrollRef]);
-
-  // Push to navigation history when file changes
-  useEffect(() => {
-    if (state.currentFile) push(state.currentFile);
-  }, [state.currentFile, push]);
-
-  useEffect(() => {
-    const win = window as any;
-    if (!win.UI) win.UI = {};
-    win.UI.currentMarkdownSource = state.markdownSource;
-    return () => {
-      if (win.UI?.currentMarkdownSource === state.markdownSource) {
-        win.UI.currentMarkdownSource = null;
-      }
-    };
-  }, [state.markdownSource]);
-
-  useEffect(() => {
-    const win = window as any;
-    if (!win.Nav) win.Nav = {};
-    const previousGo = win.Nav.go;
-    const go = (fsPath: string | null) => {
-      if (!fsPath) return;
-      navigate(String(fsPath));
-    };
-
-    win.Nav.go = go;
-    return () => {
-      if (win.Nav?.go === go) {
-        win.Nav.go = previousGo;
-      }
-    };
-  }, [navigate]);
+  useContentNavigationEffects({
+    currentFile: state.currentFile,
+    markdownSource: state.markdownSource,
+    navigate,
+    push,
+  });
 
   // Post-render effects: highlight, mermaid, table init, click handlers, sticky header
   useEffect(() => {
     const body = bodyRef.current;
     if (!body || state.isLoading || state.notFoundHref || state.workspaceUnavailablePath) return;
+
+    const headingSections = createHeadingSectionInteractions({
+      body,
+      currentFile: state.currentFile,
+      defaultExpanded: state.defaultExpanded !== false,
+      stateByFile: headingStateByFileRef.current,
+    });
 
     applyPreviewActionTranslations(body, previewLabels);
 
@@ -177,7 +153,7 @@ export function useContentEffects({
         return;
       }
 
-      // Chromium Extension Manifest V3 CSP Event Delegation for inline handlers
+      // Chromium Extension Manifest V3 CSP Event Delegation for remaining inline handlers
       const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
       if (isChrome) {
         // 1. Copy Section button
@@ -200,21 +176,6 @@ export function useContentEffects({
           const win = window as any;
           if (win.UI?.copyCode) {
             win.UI.copyCode(copyCodeBtn);
-          }
-          return;
-        }
-
-        // 3. Section header toggle (Expand/Collapse)
-        const sectionHeader = target.closest(".mdn-section-header") as HTMLElement | null;
-        if (sectionHeader) {
-          if (target.closest(".mdn-anchor") || target.closest(".mdn-section-copy-btn")) {
-            return;
-          }
-          e.preventDefault();
-          e.stopPropagation();
-          const win = window as any;
-          if (win.UI?.toggleSection) {
-            win.UI.toggleSection(sectionHeader);
           }
           return;
         }
@@ -421,11 +382,7 @@ export function useContentEffects({
         const targetEl = document.getElementById(targetId);
         if (targetEl) {
           // Expand collapsed sections if needed
-          let section = targetEl.closest<HTMLElement>(".mdn-section");
-          while (section) {
-            section.setAttribute("data-expanded", "true");
-            section = section.parentElement?.closest<HTMLElement>(".mdn-section") ?? null;
-          }
+          headingSections.expandAncestors(targetEl);
           const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
           targetEl.scrollIntoView({
             behavior: prefersReducedMotion ? "auto" : "smooth",
@@ -462,26 +419,13 @@ export function useContentEffects({
       stopEnhancements();
       body.removeEventListener("click", handleClick);
       body.removeEventListener("contextmenu", handleContextMenu);
+      headingSections.dispose();
       if (scrollContainer) {
         scrollContainer.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [
-    state.renderVersion,
-    state.theme,
-    state.themeStyle,
-    state.isLoading,
-    state.notFoundHref,
-    state.workspaceUnavailablePath,
-    onImageClick,
-    navigate,
-    scrollRef,
-    bridge,
-    previewLabels,
-    onOpenHtmlModal,
-    onOpenLinkMenu,
-    onActionError,
-    state.currentFile,
-    state.appRuntime,
-  ]);
+  }, [state.renderVersion, state.theme, state.themeStyle, state.isLoading, state.notFoundHref,
+    state.workspaceUnavailablePath, onImageClick, navigate, scrollRef, bridge, previewLabels,
+    onOpenHtmlModal, onOpenLinkMenu, onActionError, state.currentFile, state.appRuntime,
+    state.defaultExpanded]);
 }

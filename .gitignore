@@ -50,3 +50,5 @@ plan-ignore-from-commit.md
 snap/local/
 *.snap
 tauri/tauri.microsoft-store.ci.conf.json
+
+!electron\build\installer.nsh

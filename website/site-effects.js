@@ -45,57 +45,7 @@
     requestAnimationFrame(tick);
   }
 
-  const normalizeImageText = (value) => value?.replace(/\s+/g, " ").trim() || "";
-  const getImageFeature = (img) => {
-    const card = img.closest(".feature-card");
-    const figure = img.closest("figure");
-    const heroPreview = img.closest(".hero-product-preview");
-    const title = normalizeImageText(
-      card?.querySelector(".card-kicker")?.textContent ||
-      card?.querySelector("h3")?.textContent ||
-      heroPreview?.querySelector(".hero-preview-kicker")?.textContent ||
-      (figure ? "Gallery" : "Image"),
-    );
-    const description = normalizeImageText(
-      card?.querySelector("p:not(.card-kicker)")?.textContent ||
-      figure?.querySelector("figcaption")?.textContent ||
-      heroPreview?.querySelector(".hero-preview-caption")?.textContent ||
-      img.alt,
-    );
-    return { title, description };
-  };
-
-  document.querySelectorAll("img").forEach((img, index) => {
-    img.dataset.imageName = `Image #${index + 1}`;
-    img.dataset.imagePath = img.currentSrc || img.getAttribute("src") || "Unknown image path";
-    img.style.cursor = "zoom-in";
-    img.addEventListener("click", () => {
-      const modal = document.createElement("div");
-      const modalImg = document.createElement("img");
-      const description = document.createElement("aside");
-      modal.className = "lightbox-modal";
-      modalImg.src = img.src;
-      modalImg.alt = img.alt || "Zoomed image";
-      description.className = "lightbox-description";
-      const feature = getImageFeature(img);
-      const title = document.createElement("strong");
-      const descriptionText = document.createElement("p");
-      title.className = "lightbox-description-title";
-      descriptionText.className = "lightbox-description-text";
-      title.textContent = feature.title;
-      descriptionText.textContent = feature.description;
-      description.append(title, descriptionText);
-      modal.appendChild(modalImg);
-      modal.appendChild(description);
-      document.body.appendChild(modal);
-      modal.getBoundingClientRect();
-      modal.classList.add("active");
-      const close = () => { modal.classList.remove("active"); setTimeout(() => modal.remove(), 200); };
-      modal.addEventListener("click", close);
-      const handleEscape = (e) => { if (e.key === "Escape") { close(); document.removeEventListener("keydown", handleEscape); } };
-      document.addEventListener("keydown", handleEscape);
-    });
-  });
+  window.MarkdownExplorerImageViewer?.init();
 
   const guideBtn = document.getElementById("guide-btn");
   const guideModal = document.getElementById("guide-modal");

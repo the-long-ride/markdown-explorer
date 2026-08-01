@@ -33,6 +33,19 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).not.toContain('Swatinem/rust-cache@v2');
   });
 
+  test('tauri tests run on Linux, Windows, and macOS', () => {
+    const workflow = readWorkflow('test.yml');
+    const tauriJob = workflow.slice(
+      workflow.indexOf('\n  tauri:'),
+      workflow.indexOf('\n  tauri-coverage:'),
+    );
+
+    expect(tauriJob).toMatch(/os:\s*\[ubuntu-latest, windows-latest, macos-latest\]/);
+    expect(tauriJob).toContain("if: runner.os == 'Linux'");
+    expect(tauriJob).toContain('pnpm run build:ui:electron');
+    expect(tauriJob).toContain('pnpm run test:tauri');
+  });
+
   test('tauri CI jobs build frontend dist before cargo compiles', () => {
     const workflow = readWorkflow('test.yml');
     const uiBuilds = workflow.match(/pnpm run build:ui:electron/g) ?? [];

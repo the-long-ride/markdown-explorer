@@ -15,13 +15,8 @@ import {
   KeyboardIcon, LightbulbIcon, LockIcon, ModalIcon, SearchIcon, SparklesIcon,
   TableIcon,
 } from './WelcomePageIcons';
-import { TIP_GROUP_LABELS, TIPS_CONTENT, type TipGroupId, type TipItem } from './welcomeTipsContent';
-
-type WelcomeTipGroup = {
-  id: TipGroupId;
-  title: string;
-  items: TipItem[];
-};
+import { buildWelcomeTipGroups } from './welcomeTipGroups';
+import { WelcomeHero } from './WelcomeHero';
 
 // =============================================================================
 // Helper Utilities & Localized Labels (Emoji-free)
@@ -30,7 +25,7 @@ type WelcomeTipGroup = {
 import { cleanTitle, TAB_LABELS } from './welcomeLabels';
 import { renderWelcomeDescription } from './renderWelcomeDescription';
 import { getTipIcon, renderShortcutKeys } from './welcomePageHelpers';
-import { formatShortcutLabel, getEnabledShortcut } from '../../utils/shortcuts';
+import { getEnabledShortcut } from '../../utils/shortcuts';
 
 export function WelcomePage() {
   const isDesktop = typeof (window as any).electronAPI !== 'undefined';
@@ -40,132 +35,21 @@ export function WelcomePage() {
   const currentLang = state.settings.language || 'en';
   const wt = getWelcomeTranslations(currentLang);
   const t = getTranslations(currentLang);
-  
+
   const [activeTab, setActiveTab] = useState<'features' | 'shortcuts' | 'privacy' | 'tips'>('features');
   const labels = TAB_LABELS[currentLang] || TAB_LABELS.en;
-  const tipGroups: WelcomeTipGroup[] = useMemo(() => {
-    const shortcut = (action: string) =>
-      formatShortcutLabel(getEnabledShortcut(state.settings, action as any) || '');
-    const replaceShortcut = (value: string | undefined, action: string) =>
-      value ? value.replace('{shortcut}', shortcut(action)) : '';
-    const base = TIPS_CONTENT[currentLang] || TIPS_CONTENT.en;
-    const labelsForLanguage = TIP_GROUP_LABELS[currentLang] || TIP_GROUP_LABELS.en;
-    const tips = wt?.tips;
-    const groups: Record<TipGroupId, Array<TipItem>> = {
-      navigateAndOrganize: [
-        base[0], base[2], base[5], base[6], base[8],
-        tips?.tipToggleDesktopView ? { ...tips.tipToggleDesktopView, desc: replaceShortcut(tips.tipToggleDesktopView.desc, 'toggleDesktopViewMode') } : undefined,
-        tips?.tipOpenContainingFolder ? { ...tips.tipOpenContainingFolder, desc: replaceShortcut(tips.tipOpenContainingFolder.desc, 'openCurrentDocumentLocation') } : undefined,
-        tips?.tipSidebarActions,
-        tips?.tipWorkspaceRecovery,
-      ].filter(Boolean) as TipItem[],
-      previewStructuredContent: [
-        base[1], base[3],
-        tips?.tipToggleHtmlPreview ? { ...tips.tipToggleHtmlPreview, desc: replaceShortcut(tips.tipToggleHtmlPreview.desc, 'toggleHtmlPreview') } : undefined,
-        tips?.tipCsvPreview,
-        tips?.tipHtmlDocuments,
-      ].filter(Boolean) as TipItem[],
-      workWithRichDocuments: [base[4], tips?.tipOpenHtmlBrowser, tips?.tipImageRows].filter(Boolean) as TipItem[],
-      personalizeMarkdownExplorer: [base[7]].filter(Boolean) as TipItem[],
-    };
-    return (Object.keys(groups) as Array<TipGroupId>).map((id) => ({
-      id,
-      title: labelsForLanguage[id],
-      items: groups[id],
-    }));
-  }, [currentLang, state.settings, wt.tips]);
-  
+  const tipGroups = useMemo(
+    () => buildWelcomeTipGroups(currentLang, state.settings, wt.tips),
+    [currentLang, state.settings, wt.tips],
+  );
+
 
 
   return (
     <div className="welcome-container">
       <InteractiveBackground />
       <div className="welcome-animate-wrapper">
-        {/* Hero Section */}
-        <div className="hero-section">
-        <h1 className="hero-title">
-          {wt.hero.title}
-        </h1>
-        <p className="hero-subtitle">
-          {isDesktop ? wt.hero.descDesktop : wt.hero.descVSCode}
-        </p>
-        <div className="hero-meta">
-          {wt.hero.createdBy}{' '}
-          <a
-            href="https://github.com/the-long-ride"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            the-long-ride
-          </a>{' '}
-          with ❤️ - {wt.hero.repository}:{' '}
-          <a
-            href="https://github.com/the-long-ride/markdown-explorer"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            markdown-explorer
-          </a>{' '}
-          - {wt.hero.license}:{' '}
-          <a
-            href="https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            MIT
-          </a>
-        </div>
-        <div className="homepage-link-container">
-          <a
-            href="https://the-long-ride.github.io/markdown-explorer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="homepage-link"
-          >
-            <GlobeIcon className="link-icon" />
-            <span>https://the-long-ride.github.io/markdown-explorer</span>
-          </a>
-          <a
-            href="https://the-long-ride.github.io/markdown-them"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="homepage-link"
-          >
-            <GlobeIcon className="link-icon" />
-            <span>Markdown Them - privacy-first document to markdown</span>
-          </a>
-          {isDesktop && state.hostPlatform === 'macos' && (
-            <a
-              href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="homepage-link"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="link-icon"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-              <span>{wt.hero.macosInstallBtn}</span>
-            </a>
-          )}
-          {!isDesktop && (
-            <div className="desktop-recommendation">
-              {wt.hero.desktopRecommendation}
-            </div>
-          )}
-        </div>
-      </div>
+        <WelcomeHero copy={wt.hero} isDesktop={isDesktop} hostPlatform={state.hostPlatform} />
 
       {/* Tabs Bar */}
       <div className="tabs-bar">

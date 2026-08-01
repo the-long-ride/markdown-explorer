@@ -1,0 +1,406 @@
+/* ============================================================
+   Media Modal Viewer
+   ============================================================ */
+.mdn-modal {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--modal-fg);
+  user-select: none;
+}
+.mdn-modal-close {
+  position: absolute !important;
+  top: calc(var(--topbar-h) + 12px);
+  right: 24px;
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--bd-s);
+  color: var(--tx2);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2010;
+  transition: all 0.15s;
+  outline: none;
+}
+.mdn-modal-close:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+  transform: scale(1.05);
+}
+.mdn-modal-close:active {
+  transform: scale(0.95);
+}
+.mdn-modal-nav {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 2005;
+}
+.mdn-modal-btn {
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--bd-s);
+  color: var(--tx2);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.15s;
+  outline: none;
+}
+.mdn-modal-btn:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+  border-color: var(--bd-x);
+  transform: scale(1.05);
+}
+.mdn-modal-btn:active {
+  transform: scale(0.96);
+}
+.mdn-modal-content-wrap {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: grab;
+}
+.mdn-modal-media-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 92vw;
+  height: 82vh;
+  perspective: 1000px;
+}
+.mdn-modal-content-img,
+.mdn-modal-content-svg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.05s ease-out;
+  transform-origin: center center;
+}
+.mdn-modal-content-svg {
+  background: #fff;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  max-width: 90vw;
+  max-height: 80vh;
+  min-width: min(80vw, 800px);
+  min-height: min(60vh, 500px);
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mdn-modal-content-svg svg {
+  width: 100% !important;
+  height: auto !important;
+  max-height: calc(80vh - 48px);
+}
+[data-theme="dark"] .mdn-modal-content-svg,
+[data-theme="auto"] .mdn-modal-content-svg {
+  background: #1e1e24;
+}
+.mdn-modal-toolbar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-s);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--sh-lg);
+  z-index: 2010;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.mdn-modal-tool {
+  background: none;
+  border: none;
+  color: var(--tx2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition:
+    color 0.15s,
+    background 0.12s;
+  outline: none;
+}
+.mdn-modal-tool:hover {
+  color: var(--tx);
+  background: var(--bg-h);
+}
+.mdn-modal-zoom-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--tx);
+  min-width: 40px;
+  text-align: center;
+}
+/* ============================================================
+   Settings Modal & Switch Toggle
+   ============================================================ */
+.settings-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  border: var(--stroke-w) solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--r-lg);
+  width: 420px;
+  max-width: 90%;
+  box-shadow: var(--sh-lg);
+  padding: 24px;
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.settings-modal {
+  background: var(--bg);
+}
+.settings-modal,
+.theme-onboarding-modal {
+  justify-content: flex-start;
+  padding: calc(var(--topbar-h) + 16px) 16px 16px;
+  overflow: hidden;
+}
+.settings-card--settings {
+  width: min(1003px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  height: min(720px, calc(100vh - var(--topbar-h) - 32px));
+  max-height: calc(100vh - var(--topbar-h) - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.settings-card--settings .settings-card__header {
+  flex-shrink: 0;
+}
+.settings-card--settings .settings-card__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+.settings-card__column {
+  min-width: 0;
+}
+.settings-card__column--preferences {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.settings-card__column--shortcuts {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+.settings-shortcuts-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.settings-shortcuts-title {
+  color: var(--tx);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.settings-shortcuts-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  padding-bottom: 8px;
+}
+.settings-shortcuts-footer {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px !important;
+  padding-top: 12px;
+  border-top: var(--stroke-w) solid var(--bd);
+  position: relative;
+  z-index: 1;
+}
+.settings-shortcuts-hint {
+  margin-left: auto;
+  color: var(--tx3);
+  font-size: 10.5px;
+  line-height: 1.35;
+  text-align: right;
+}
+.settings-shortcut-row {
+  min-width: 0;
+}
+.settings-shortcut-label {
+  min-width: 0;
+}
+.settings-shortcut-input {
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+}
+.settings-reset-shortcuts-btn {
+  --reset-warning: #f59e0b;
+  --reset-warning-strong: #d97706;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: var(--stroke-w) solid
+    color-mix(in srgb, var(--reset-warning) 56%, var(--bd-s));
+  border-radius: var(--r-md);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--reset-warning) 14%, var(--bg-s)),
+    color-mix(in srgb, var(--reset-warning) 8%, var(--bg-e))
+  );
+  color: color-mix(in srgb, var(--reset-warning-strong) 90%, var(--tx));
+  cursor: pointer;
+  font: 800 11px/1 var(--font-ui);
+  outline: none;
+  padding: 0 11px;
+  text-decoration: none;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--reset-warning) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease,
+    transform 0.12s ease,
+    box-shadow 0.14s ease;
+}
+.settings-reset-shortcuts-btn::before {
+  content: "!";
+  width: 14px;
+  height: 14px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--reset-warning) 22%, var(--bg-s));
+  color: var(--reset-warning-strong);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+.settings-reset-shortcuts-btn:hover {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--reset-warning) 20%, var(--bg-s)),
+    color-mix(in srgb, var(--reset-warning) 12%, var(--bg-h))
+  );
+  border-color: color-mix(in srgb, var(--reset-warning) 76%, var(--bd-s));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--reset-warning) 15%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.settings-reset-shortcuts-btn:focus-visible {
+  box-shadow:
+    var(--focus-ring),
+    0 0 0 3px color-mix(in srgb, var(--reset-warning) 18%, transparent);
+}
+.settings-reset-shortcuts-btn:active {
+  transform: translateY(1px);
+}
+[data-theme="dark"] .settings-reset-shortcuts-btn,
+[data-theme="auto"] .settings-reset-shortcuts-btn {
+  --reset-warning: #fbbf24;
+  --reset-warning-strong: #f59e0b;
+}
+[data-theme-style="glass"] .settings-reset-shortcuts-btn {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--reset-warning) 12%, var(--bg-s)),
+    color-mix(in srgb, var(--reset-warning) 8%, var(--bg-e))
+  );
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  box-shadow:
+    var(--sh-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+[data-theme-style="bento"] .settings-reset-shortcuts-btn {
+  border-left-width: 4px;
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+}
+[data-theme-style^="pet-"] .settings-reset-shortcuts-btn {
+  --reset-warning: var(--txc);
+  --reset-warning-strong: var(--accent);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--reset-warning) 16%, var(--bg-s)),
+    color-mix(in srgb, var(--accent) 8%, var(--bg-e))
+  );
+  border-color: color-mix(in srgb, var(--reset-warning) 52%, var(--bd-s));
+  color: color-mix(in srgb, var(--reset-warning-strong) 82%, var(--tx));
+}
+[data-theme-style^="pet-"] .settings-reset-shortcuts-btn::before {
+  content: "";
+  background: var(--pet-paw) center / contain no-repeat;
+  border-radius: 0;
+  filter: drop-shadow(
+    0 1px 1px color-mix(in srgb, var(--accent) 35%, transparent)
+  );
+}
+.settings-update-card {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: var(--stroke-w) solid
+    color-mix(in srgb, var(--accent) 45%, var(--bd-s));
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-s));
+  color: var(--tx);
+}
+
+/* The Appearance wrapper is the single left-pane scroll owner. */
+.settings-card--settings .settings-appearance-scroll {
+  overflow-y: auto;
+}
+.settings-card--settings .settings-card__column--preferences {
+  overflow: visible;
+  max-height: none;
+  padding-right: 0;
+}

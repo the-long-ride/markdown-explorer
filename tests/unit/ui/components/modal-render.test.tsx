@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MediaModal } from '../../../../ui/src/components/Modal/MediaModal';
+import { createMediaGallery } from '../../../../ui/src/components/Modal/mediaGallery';
 import { TermsModal } from '../../../../ui/src/components/Modal/TermsModal';
 import { SwitchWorkspaceModal } from '../../../../ui/src/components/Modal/SwitchWorkspaceModal';
 import { WorkspaceSelectionConfirmModal } from '../../../../ui/src/components/Modal/WorkspaceSelectionConfirmModal';
@@ -43,59 +44,32 @@ describe('MediaModal', () => {
     document.body.innerHTML = '';
   });
 
-  it('returns null when isOpen is false', () => {
-    const { container } = render(<MediaModal isOpen={false} onClose={() => {}} clickedElement={null} />);
+  it('returns null when gallery is null', () => {
+    const { container } = render(<MediaModal gallery={null} onClose={() => {}} />);
     expect(container.innerHTML).toBe('');
   });
 
-  it('returns null when isOpen is true but no media found', () => {
-    const { container } = render(<MediaModal isOpen={true} onClose={() => {}} clickedElement={null} />);
+  it('returns null when gallery has no items', () => {
+    const { container } = render(<MediaModal gallery={{ items: [], currentIndex: 0 }} onClose={() => {}} />);
     expect(container.innerHTML).toBe('');
   });
 
-  it('renders when isOpen is true and media is available', () => {
-    const img = document.createElement('img');
-    img.src = 'https://example.com/image.png';
-    const body = document.createElement('div');
-    body.className = 'mdn-body';
-    body.appendChild(img);
-    document.body.appendChild(body);
-
+  it('renders an image snapshot', () => {
     const onClose = vi.fn();
-    render(<MediaModal isOpen={true} onClose={onClose} clickedElement={img} />);
+    render(<MediaModal gallery={{ items: [{ type: 'img', src: 'https://example.com/image.png' }], currentIndex: 0 }} onClose={onClose} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const modalImg = document.querySelector('.mdn-modal-content-img') as HTMLImageElement;
+    expect(modalImg.src).toBe('https://example.com/image.png');
   });
 
   it('calls onClose when close button is clicked', () => {
-    const img = document.createElement('img');
-    img.src = 'https://example.com/image.png';
-    const body = document.createElement('div');
-    body.className = 'mdn-body';
-    body.appendChild(img);
-    document.body.appendChild(body);
-
     const onClose = vi.fn();
-    render(<MediaModal isOpen={true} onClose={onClose} clickedElement={img} />);
-    const closeBtn = screen.getByLabelText('Close modal');
-    fireEvent.click(closeBtn);
+    render(<MediaModal gallery={{ items: [{ type: 'img', src: 'https://example.com/image.png' }], currentIndex: 0 }} onClose={onClose} />);
+    fireEvent.click(screen.getByLabelText('Close modal'));
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('renders the image with correct src', () => {
-    const img = document.createElement('img');
-    img.src = 'https://example.com/test.png';
-    const body = document.createElement('div');
-    body.className = 'mdn-body';
-    body.appendChild(img);
-    document.body.appendChild(body);
-
-    render(<MediaModal isOpen={true} onClose={() => {}} clickedElement={img} />);
-    const modalImg = document.querySelector('.mdn-modal-content-img') as HTMLImageElement;
-    expect(modalImg).toBeTruthy();
-    expect(modalImg.src).toBe('https://example.com/test.png');
-  });
-
-  it('renders SVG type media correctly', () => {
+  it('renders a captured Mermaid SVG after the source DOM is replaced', () => {
     const wrapper = document.createElement('div');
     wrapper.className = 'mdn-mermaid-wrap';
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -106,25 +80,24 @@ describe('MediaModal', () => {
     body.appendChild(wrapper);
     document.body.appendChild(body);
 
-    render(<MediaModal isOpen={true} onClose={() => {}} clickedElement={wrapper} />);
+    const gallery = createMediaGallery(wrapper);
+    expect(gallery).not.toBeNull();
+    body.innerHTML = '<pre>raw mermaid source</pre>';
+
+    render(<MediaModal gallery={gallery} onClose={() => {}} />);
     const svgContainer = document.querySelector('.mdn-modal-content-svg');
-    expect(svgContainer).toBeTruthy();
+    expect(svgContainer?.querySelector('svg')).toBeTruthy();
   });
 
-  it('renders navigation when multiple items exist', () => {
-    const img1 = document.createElement('img');
-    img1.src = 'https://example.com/a.png';
-    const img2 = document.createElement('img');
-    img2.src = 'https://example.com/b.png';
-    const body = document.createElement('div');
-    body.className = 'mdn-body';
-    body.appendChild(img1);
-    body.appendChild(img2);
-    document.body.appendChild(body);
-
-    render(<MediaModal isOpen={true} onClose={() => {}} clickedElement={img1} />);
-    const nav = document.querySelector('.mdn-modal-nav');
-    expect(nav).toBeTruthy();
+  it('renders navigation when multiple snapshots exist', () => {
+    render(<MediaModal gallery={{
+      items: [
+        { type: 'img', src: 'https://example.com/a.png' },
+        { type: 'img', src: 'https://example.com/b.png' },
+      ],
+      currentIndex: 0,
+    }} onClose={() => {}} />);
+    expect(document.querySelector('.mdn-modal-nav')).toBeTruthy();
   });
 });
 

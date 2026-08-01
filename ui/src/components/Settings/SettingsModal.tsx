@@ -10,7 +10,7 @@ import { TooltipButton } from "../shared/TooltipButton";
 import { SettingsShortcutsPanel } from "./SettingsShortcutsPanel";
 import { SettingsPreferencesPanel } from "./SettingsPreferencesPanel";
 import { ThemeRemixModal } from "./ThemeRemixModal";
-import { LANGUAGE_OPTIONS, getTranslations, Translations } from "../../contexts/translations";
+import { LANGUAGE_OPTIONS, getTranslations } from "../../contexts/translations";
 import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings, SettingsImportError } from "../../settings/settingsImportExport";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { ExportSettingsIcon, ImportSettingsIcon, LanguageIcon } from "../shared/icons";
@@ -23,20 +23,7 @@ import { getDefaultKeybindings } from "../../contexts/appStateConstants";
 
 export { ACTIONS_LIST };
 
-import whiteShibaBlep from "../../assets/themes/pets/backgrounds/white-shiba-blep.png";
-import kInkSurprise from "../../assets/themes/pets/backgrounds/k-ink-surprise.png";
-import catBlep from "../../assets/themes/pets/backgrounds/cat-blep.png";
-import hamsterBlep from "../../assets/themes/pets/backgrounds/hamster-blep.png";
-import corgiBlep from "../../assets/themes/pets/backgrounds/corgi-blep.png";
-
-const PET_BLEP_URLS = {
-  "pet-white-shiba": whiteShibaBlep,
-  "pet-k-ink": kInkSurprise,
-  "pet-cat": catBlep,
-  "pet-hamster": hamsterBlep,
-  "pet-corgi": corgiBlep,
-};
-
+import { BANNED_SHORTCUTS, formatCurrentVersion, PET_BLEP_URLS } from "./settingsModalData";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -49,16 +36,6 @@ interface SettingsModalProps {
   onOpenChangelog: () => void;
 }
 
-
-function formatCurrentVersion(version: string) {
-  const match = version.trim().match(/^v?(\d+)\.(\d+)\.(\d+)/i);
-  return match ? `v${match[1]}.${match[2]}.${match[3]}` : "";
-}
-
-// Shortcuts that are reserved by the browser/OS and cannot be registered.
-const BANNED_SHORTCUTS: Record<string, keyof Translations> = {
-  "Ctrl+Space": "bannedShortcutImeMessage",
-};
 
 export function SettingsModal({
   isOpen,
@@ -396,7 +373,7 @@ export function SettingsModal({
           {/* Vertical Divider */}
           <div
             className="settings-card__divider"
-            
+
           />
 
           <SettingsShortcutsPanel
@@ -432,7 +409,7 @@ export function SettingsModal({
         onClose={() => setThemeRemixOpen(false)}
       />
       {isUpdateDownloaded && <DownloadedUpdateDialog t={t} version={updateVersionLabel || ""} onSchedule={onScheduleUpdateOnExit} onRestart={onRestartAndApplyUpdate} />}
-      {bannedShortcutError && <BannedShortcutDialog t={t} error={bannedShortcutError} mascot={state.themeStyle.startsWith("pet-") ? PET_BLEP_URLS[state.themeStyle as keyof typeof PET_BLEP_URLS] || whiteShibaBlep : ""} onClose={() => setBannedShortcutError(null)} />}
+      {bannedShortcutError && <BannedShortcutDialog t={t} error={bannedShortcutError} mascot={state.themeStyle.startsWith("pet-") ? PET_BLEP_URLS[state.themeStyle as keyof typeof PET_BLEP_URLS] || PET_BLEP_URLS['pet-white-shiba'] : ""} onClose={() => setBannedShortcutError(null)} />}
       {resetShortcutsConfirmOpen && (
         <ResetShortcutsConfirmDialog
           t={t}

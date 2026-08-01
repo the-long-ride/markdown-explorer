@@ -7,18 +7,16 @@ import {
   startCurrentFileWatcher,
   stopCurrentFileWatcher,
 } from "./current-file-watcher";
-import {
-  scanWorkspaceIncrementally,
-  WORKSPACE_SCAN_BATCH_SIZE,
-  WORKSPACE_SCAN_REVEAL_DELAY_MS,
-} from "./incremental-workspace-scan";
+import { scanWorkspaceIncrementally } from "./incremental-workspace-scan";
 import { renderMarkdown } from "./markdown-renderer";
 import { BrowserSearchIndex } from "./search-index";
 import { BrowserRecentWorkspaces } from "./recent-workspaces";
 import { rewriteMediaUrls, revokeAll } from "./media-resolver";
 import type { MdFile, FolderNode } from "../../ui/src/types";
+import { createEmptyWorkspaceReadyAck, createWelcomeMessage, extractWorkspaceName, findFileInfo, getHostInfo, shouldOpenFirstFile } from "./chrome-host-utils";
+import { handleChromeHostUtilityCommand } from "./chrome-host-search";
+import { createWorkspaceOperationState, type WorkspaceOperationMetadata } from "./workspace-operation-state";
 
-declare const chrome: { runtime: { getManifest(): { version: string } } };
 
 declare global {
   interface Window {
@@ -42,128 +40,13 @@ let workspaceTree: FolderNode | null = null;
 let searchIndex: BrowserSearchIndex | null = null;
 let readyHandled = false;
 let workspaceScanGeneration = 0;
-let activeWorkspaceOperationId: string | null = null;
-let activeWorkspaceTabId: string | null = null;
+const workspaceOperation = createWorkspaceOperationState();
 
-type WorkspaceOperationMetadata = {
-  workspaceOperationId?: string;
-  workspaceTabId?: string;
-};
+function currentWorkspaceOperationMetadata(): WorkspaceOperationMetadata { return workspaceOperation.current(); }
+function applyWorkspaceOperation(msg: any) { workspaceOperation.apply(msg); }
+function isWorkspaceOperationCurrent(operation: WorkspaceOperationMetadata): boolean { return workspaceOperation.isCurrent(operation); }
+function clearWorkspaceOperation(): void { workspaceOperation.clear(); }
 
-export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS };
-
-export function getHostInfo() {
-  return {
-    appVersion: chrome.runtime.getManifest().version,
-    appRuntime: "chrome" as const,
-    hostPlatform: "unknown" as const,
-    hostArch: "unknown",
-  };
-}
-
-export function normalizeSearchQuery(query: unknown): string {
-  return String(query || "")
-    .trim()
-    .toLowerCase();
-}
-
-export function filterSearchIndexTabs(
-  tabRequests: unknown[],
-  activeWorkspacePath: string,
-): Array<{ tabId: string; workspacePath: string; fileList: MdFile[]; tree: FolderNode | null }> {
-  return (Array.isArray(tabRequests) ? tabRequests : []).flatMap((tab: any) => {
-    const tabId = String(tab?.tabId || "");
-    const workspacePath = String(tab?.workspacePath || "");
-    if (!tabId || !workspacePath || workspacePath !== activeWorkspacePath)
-      return [];
-
-    return [
-      {
-        tabId,
-        workspacePath: activeWorkspacePath,
-        fileList: [] as MdFile[],
-        tree: null as FolderNode | null,
-      },
-    ];
-  });
-}
-
-export function isValidExternalUrl(url: unknown): boolean {
-  return typeof url === "string" && /^(?:https?|file):\/\//i.test(url);
-}
-
-export function extractWorkspaceName(workspacePath: string): string {
-  return workspacePath.split("/").pop() || "Workspace";
-}
-
-export function findFileInfo(
-  flatList: MdFile[],
-  relativePath: string,
-): { relativePath: string; title: string } {
-  return (
-    flatList.find((f) => f.relativePath === relativePath) || {
-      relativePath,
-      title: relativePath.split("/").pop() || "Untitled",
-    }
-  );
-}
-
-export function shouldOpenFirstFile(
-  currentFile: string | null,
-  openFirstFile: boolean | undefined,
-  flatList: MdFile[],
-): string | null {
-  return openFirstFile !== false && !currentFile && flatList.length > 0 ? flatList[0].relativePath : currentFile;
-}
-
-function currentWorkspaceOperationMetadata(): WorkspaceOperationMetadata {
-  return activeWorkspaceOperationId && activeWorkspaceTabId
-    ? {
-        workspaceOperationId: activeWorkspaceOperationId,
-        workspaceTabId: activeWorkspaceTabId,
-      }
-    : {};
-}
-
-function applyWorkspaceOperation(msg: any) {
-  activeWorkspaceOperationId = typeof msg?.workspaceOperationId === 'string'
-    ? msg.workspaceOperationId
-    : null;
-  activeWorkspaceTabId = typeof msg?.workspaceTabId === 'string'
-    ? msg.workspaceTabId
-    : null;
-}
-
-function isWorkspaceOperationCurrent(operation: WorkspaceOperationMetadata): boolean {
-  const operationId = operation.workspaceOperationId || null;
-  const tabId = operation.workspaceTabId || null;
-  return activeWorkspaceOperationId === operationId && activeWorkspaceTabId === tabId;
-}
-
-function clearWorkspaceOperation(): void {
-  activeWorkspaceOperationId = null;
-  activeWorkspaceTabId = null;
-}
-
-
-function resolveWorkspaceTextResourcePath(documentPath: string, resourcePath: string): string | null {
-  const reference = resourcePath.split(/[?#]/, 1)[0];
-  if (!reference || /^(?:https?:|data:|blob:|javascript:|file:)/i.test(reference)) return null;
-  const baseParts = reference.startsWith('/')
-    ? []
-    : documentPath.split('/').slice(0, -1).filter(Boolean);
-  for (const part of reference.replace(/^\/+/, '').split('/')) {
-    if (!part || part === '.') continue;
-    if (part === '..') {
-      if (!baseParts.length) return null;
-      baseParts.pop();
-    } else {
-      baseParts.push(part);
-    }
-  }
-  const resolved = baseParts.join('/');
-  return /\.(?:css|js|mjs|cjs)$/i.test(resolved) ? resolved : null;
-}
 
 export function sendToWebview(msg: any) {
   bus.dispatchEvent(new CustomEvent("host-message", {
@@ -193,8 +76,7 @@ export function resetWorkspaceState(): void {
   flatList = [];
   workspaceTree = null;
   searchIndex = null;
-  activeWorkspaceOperationId = null;
-  activeWorkspaceTabId = null;
+  workspaceOperation.clear();
 }
 
 function sendWorkspaceUnavailable(workspacePath: string, reason = "missing", operation = currentWorkspaceOperationMetadata()) {
@@ -350,20 +232,7 @@ async function sendContent(
 }
 
 async function sendWelcome(request: WorkspaceRequestSnapshot = captureWorkspaceRequest()) {
-  if (!isWorkspaceRequestCurrent(request)) return;
-  sendToWebview({
-    command: "renderContent",
-    html: "",
-    markdownSource: "",
-    frontmatter: {},
-    toc: [],
-    filePath: "",
-    relativePath: "Welcome Page",
-    title: "Welcome",
-    fileList: flatList,
-    previewInfo: null,
-    ...request.operation,
-  });
+  if (isWorkspaceRequestCurrent(request)) sendToWebview(createWelcomeMessage(flatList, request.operation));
 }
 
 // Subscribe to messages from Webview
@@ -371,25 +240,15 @@ bus.addEventListener("webview-message", async (e: Event) => {
   const msg = (e as CustomEvent).detail;
   if (!msg) return;
 
+  if (await handleChromeHostUtilityCommand(msg, { searchIndex, flatList, workspaceTree, activeWorkspacePath, activeHandle, send: sendToWebview, readText: readTextFile })) return;
+
   switch (msg.command) {
     case "ready": {
       if (readyHandled) return;
       readyHandled = true;
       const recents = await BrowserRecentWorkspaces.load();
       if (!activeHandle) {
-        sendToWebview({
-          command: "readyAck",
-          fileList: [],
-          tree: null,
-          theme: "dark",
-          themeStyle: "default",
-          defaultExpanded: true,
-          workspaceName: "",
-          workspacePath: undefined,
-          recentWorkspaces: recents,
-          documentConversionEnabled: false,
-          ...getHostInfo(),
-        });
+        sendToWebview(createEmptyWorkspaceReadyAck(recents));
       } else {
         await sendWorkspaceData();
       }
@@ -520,23 +379,21 @@ bus.addEventListener("webview-message", async (e: Event) => {
     }
 
     case "cancelWorkspaceScan": {
-      if (!activeWorkspaceOperationId || msg.workspaceOperationId !== activeWorkspaceOperationId) break;
+      if (!workspaceOperation.matches(msg.workspaceOperationId)) break;
       const operation = currentWorkspaceOperationMetadata();
       workspaceScanGeneration += 1;
       stopCurrentFileWatcher();
       bus.dispatchEvent(new CustomEvent("host-message", {
         detail: { command: "workspaceScanProgress", scannedFiles: flatList.length, active: false, ...operation },
       }));
-      activeWorkspaceOperationId = null;
-      activeWorkspaceTabId = null;
+      workspaceOperation.clear();
       break;
     }
 
     case "cancelAllWorkspaceScans": {
       workspaceScanGeneration += 1;
       stopCurrentFileWatcher();
-      activeWorkspaceOperationId = null;
-      activeWorkspaceTabId = null;
+      workspaceOperation.clear();
       break;
     }
 
@@ -553,20 +410,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
       revokeAll();
 
       const recents = await BrowserRecentWorkspaces.load();
-      sendToWebview({
-        command: "readyAck",
-        fileList: [],
-        tree: null,
-        theme: "dark",
-        themeStyle: "default",
-        defaultExpanded: true,
-        workspaceName: "",
-        workspacePath: undefined,
-        recentWorkspaces: recents,
-        documentConversionEnabled: false,
-        ...getHostInfo(),
-        ...operation,
-      });
+      sendToWebview(createEmptyWorkspaceReadyAck(recents, operation));
       break;
     }
 
@@ -599,69 +443,6 @@ bus.addEventListener("webview-message", async (e: Event) => {
       break;
     }
 
-    case "searchWorkspace": {
-      const query = normalizeSearchQuery(msg.query);
-      const requestId = msg.requestId;
-      if (searchIndex) {
-        const results = await searchIndex.search(query, flatList, 80);
-        sendToWebview({
-          command: "workspaceSearchResults",
-          requestId,
-          results,
-        });
-      } else {
-        sendToWebview({
-          command: "workspaceSearchResults",
-          requestId,
-          results: [],
-        });
-      }
-      break;
-    }
 
-    case "loadWorkspaceSearchIndexes": {
-      const tabs = filterSearchIndexTabs(msg.tabs, activeWorkspacePath).map((tab) => ({
-        ...tab,
-        fileList: flatList,
-        tree: workspaceTree,
-      }));
-
-      if (tabs.length > 0) {
-        sendToWebview({
-          command: "workspaceSearchIndexLoaded",
-          tabs,
-        });
-      }
-      break;
-    }
-
-    case "indexWorkspaceSearchItems": {
-      if (searchIndex) {
-        searchIndex.prime(msg.items || []);
-      }
-      break;
-    }
-
-    case "readWorkspaceTextResource": {
-      const resolvedPath = resolveWorkspaceTextResourcePath(String(msg.documentPath || ""), String(msg.resourcePath || ""));
-      if (!activeHandle || !resolvedPath) {
-        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: false, reason: "outside-workspace" });
-        break;
-      }
-      try {
-        const content = await readTextFile(activeHandle, resolvedPath);
-        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: true, content, resolvedPath });
-      } catch {
-        sendToWebview({ command: "workspaceTextResourceResult", requestId: msg.requestId, ok: false, reason: "missing" });
-      }
-      break;
-    }
-
-    case "openExternal": {
-      if (isValidExternalUrl(msg.url)) {
-        window.open(msg.url as string, "_blank");
-      }
-      break;
-    }
   }
 });

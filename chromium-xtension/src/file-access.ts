@@ -109,22 +109,6 @@ export async function resolveFileHandle(
 /**
  * Resolves a relative path to a directory handle, or null if not found.
  */
-export async function resolveDirectoryHandle(
-  root: FileSystemDirectoryHandle,
-  relativePath: string
-): Promise<FileSystemDirectoryHandle | null> {
-  try {
-    const parts = relativePath.split('/').filter(Boolean);
-    let currentDir = root;
-    for (const part of parts) {
-      currentDir = await currentDir.getDirectoryHandle(part);
-    }
-    return currentDir;
-  } catch (err) {
-    return null;
-  }
-}
-
 export async function readTextFile(root: FileSystemDirectoryHandle, relativePath: string): Promise<string> {
   const fileHandle = await resolveFileHandle(root, relativePath);
   if (!fileHandle) {

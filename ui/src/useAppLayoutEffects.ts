@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useKeyboard } from "./hooks/useKeyboard";
 import { useResize } from "./hooks/useResize";
 import { requestShellLocation, supportsShellLocation } from "./desktop/shellLocation";
+import { collapseAll as collapseAllHeadingSections, expandAll as expandAllHeadingSections } from './dom/globalHandlers';
 
 interface AppLayoutEffectsArgs {
   state: any;
@@ -159,15 +160,11 @@ export function useAppLayoutEffects({
 
   // Expand / Collapse all sections
   const expandAll = useCallback(() => {
-    document.querySelectorAll('.mdn-section').forEach((s) => {
-      (s as HTMLElement).dataset.expanded = 'true';
-    });
+    expandAllHeadingSections();
   }, []);
 
   const collapseAll = useCallback(() => {
-    document.querySelectorAll('.mdn-section').forEach((s) => {
-      (s as HTMLElement).dataset.expanded = 'false';
-    });
+    collapseAllHeadingSections();
   }, []);
 
   const closeWorkspaceToSelection = useCallback(() => {

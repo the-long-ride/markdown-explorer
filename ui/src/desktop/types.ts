@@ -39,15 +39,6 @@ export interface DesktopTab {
   workspaceLoadState?: 'idle' | 'loading' | 'ready';
 }
 
-export interface FloatingToolbarPosition {
-  x: number;
-  y: number;
-}
-
-export interface FloatingToolbarSize {
-  width: number;
-  height: number;
-}
 
 export interface PendingSearchJump {
   filePath: string;

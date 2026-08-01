@@ -52,8 +52,9 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
     </div>
   </div>
   <div
-    className="settings-shortcuts-search"
+    className={`settings-shortcuts-search${shortcutSearchQuery ? " has-value" : ""}`}
   >
+    <span className="settings-shortcuts-search-icon" aria-hidden="true" />
     <input
       className="settings-shortcuts-search-input"
       type="text"
@@ -63,7 +64,7 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
       aria-label="Search keyboard shortcuts"
     />
     <button
-      className="settings-shortcuts-search-clear"
+      className={`settings-shortcuts-search-clear${shortcutSearchQuery ? " is-visible" : ""}`}
       type="button"
       onClick={() => setShortcutSearchQuery("")}
       aria-label="Clear keyboard shortcut search"

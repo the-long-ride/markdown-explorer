@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
 import { TooltipButton } from "./components/shared/TooltipButton";
 import { DesktopTabBar } from "./components/Desktop/DesktopTabBar";
-import { ChevronUpIcon, MinimizeIcon } from "./components/shared/icons";
+import { MinimizeIcon } from "./components/shared/icons";
+import { ScrollToTopButton } from "./components/shared/ScrollToTopButton";
 import { Topbar } from "./components/Topbar/Topbar";
 import { getEnabledShortcut } from "./utils/shortcuts";
 
@@ -49,8 +50,6 @@ export function AppView(props: any) {
   workspaceAliases,
   updateWorkspaceAlias,
   scrollRef,
-  scrollTopVisible,
-  scrollToTop,
   t,
   expandAll,
   collapseAll,
@@ -73,10 +72,8 @@ export function AppView(props: any) {
   findOpen,
   closeFind,
   findShortcutLabel,
-  modalOpen,
-  setModalOpen,
-  modalTarget,
-  setModalTarget,
+  mediaGallery,
+  setMediaGallery,
   settingsOpen,
   downloadUpdate,
   scheduleUpdateOnExit,
@@ -206,13 +203,11 @@ export function AppView(props: any) {
                   onOpenWorkspaceAgain={reopenUnavailableWorkspace}
                 />
                 {/* Scroll to top button */}
-                <TooltipButton
-                  className={`scroll-to-top-btn${scrollTopVisible ? ' is-visible' : ''}${state.toc.length > 0 && !state.tocCollapsed && !state.focusMode ? ' scroll-to-top-btn--with-toc' : ''}`}
-                  onClick={scrollToTop}
+                <ScrollToTopButton
+                  scrollRef={scrollRef}
+                  observeKey={state.workspaceName}
                   tooltip={t.tooltips.scrollToTop}
-                  tooltipPos="above"
-                  tooltipAlign="right"
-                  icon={<ChevronUpIcon />}
+                  withToc={state.toc.length > 0 && !state.tocCollapsed && !state.focusMode}
                 />
               </div>
 
@@ -251,7 +246,7 @@ export function AppView(props: any) {
         renderVersion={state.renderVersion}
         shortcutLabel={findShortcutLabel}
       />
-      <MediaModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setModalTarget(null); }} clickedElement={modalTarget} />
+      <MediaModal gallery={mediaGallery} onClose={() => setMediaGallery(null)} />
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
