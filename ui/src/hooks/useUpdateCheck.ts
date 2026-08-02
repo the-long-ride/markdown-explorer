@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AppRuntime, HostPlatform } from '../types';
+import {
+  CHANGELOG_URL,
+  RELEASE_API_URL,
+  RELEASE_FALLBACK_URL,
+  VSCODE_MARKETPLACE_URL,
+} from '../constants/urls';
 
-const RELEASE_API_URL = 'https://api.github.com/repos/the-long-ride/markdown-explorer/releases/latest';
-export const CHANGELOG_URL = 'https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md';
-export const VSCODE_MARKETPLACE_URL = 'https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer';
-const RELEASE_FALLBACK_URL = 'https://github.com/the-long-ride/markdown-explorer/releases/latest';
+export { CHANGELOG_URL, VSCODE_MARKETPLACE_URL } from '../constants/urls';
+
 
 interface GitHubReleaseAsset {
   readonly name?: string;

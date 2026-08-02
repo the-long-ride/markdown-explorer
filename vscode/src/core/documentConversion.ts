@@ -50,9 +50,6 @@ export const ALL_SUPPORTED_EXTENSIONS = new Set([
   ...EXTRA_DOCUMENT_EXTENSIONS,
 ]);
 
-export const CONVERSION_QUALITY_WARNING =
-  'This preview was converted to Markdown. Layout, images, tables, and styling may not perfectly match the original file.';
-
 let markdownThem: typeof import('@the-long-ride/markdown-them') | null = null;
 
 function getMarkdownThem(): typeof import('@the-long-ride/markdown-them') {

@@ -17,7 +17,7 @@ export function filterSearchIndexTabs(tabRequests: unknown[], activeWorkspacePat
   return (Array.isArray(tabRequests) ? tabRequests : []).flatMap((tab: any) => {
     const tabId = String(tab?.tabId || '');
     const workspacePath = String(tab?.workspacePath || '');
-    return !tabId || workspacePath !== activeWorkspacePath ? []
+    return !tabId || !workspacePath || !activeWorkspacePath || workspacePath !== activeWorkspacePath ? []
       : [{ tabId, workspacePath: activeWorkspacePath, fileList: [], tree: null }];
   });
 }

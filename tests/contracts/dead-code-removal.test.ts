@@ -11,6 +11,7 @@ const obsoleteFiles = [
   'ui/src/hooks/useIsDark.ts',
   'ui/src/hooks/usePlatform.ts',
   'ui/src/lib/petImages.ts',
+  'ui/src/desktop/constants.ts',
   'electron/preload/preload-api.js',
   'electron/render/markdown-renderer.js',
   'scripts/validate-website-app.mjs',
@@ -41,6 +42,8 @@ const deadSymbols = [
   'resolveDirectoryHandle',
   'CONVERSION_QUALITY_WARNING',
   'getOpenDialogFilters',
+  'resolveContentTabHtmlPreview',
+  'setWorkspaceContextForTest',
 ];
 
 const deadRustWrappers = [
@@ -63,7 +66,7 @@ describe('confirmed dead-code removal', () => {
   test('floating-toolbar markers are absent outside changelog and design history', () => {
     const files = [
       'ui/src/hooks/useDesktopTabs.ts',
-      'ui/src/desktop/constants.ts',
+      'ui/src/constants/storage.ts',
       'ui/src/desktop/types.ts',
       'ui/src/desktop/desktopTabs.ts',
       'ui/src/settings/settingsImportExport.ts',
@@ -94,6 +97,9 @@ describe('confirmed dead-code removal', () => {
       'ui/src/desktop/workspaceOperations.ts',
       'chromium-xtension/src/file-access.ts',
       'electron/render/document-converter.js',
+      'ui/src/contexts/contentTabState.ts',
+      'vscode/src/core/documentConversion.ts',
+      'vscode/src/core/scanner.ts',
     ];
     const text = files.filter((path) => existsSync(join(root, path))).map(read).join('\n');
     for (const symbol of deadSymbols) expect(text, symbol).not.toMatch(new RegExp(`\\b${symbol}\\b`));

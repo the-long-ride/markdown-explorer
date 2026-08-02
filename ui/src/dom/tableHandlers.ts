@@ -1,3 +1,8 @@
+import {
+  TABLE_COLLAPSE_LIMIT,
+  TABLE_MAX_WRAPPED_COLUMN_CHARS,
+  TABLE_MIN_WRAPPED_COLUMN_CHARS,
+} from '../constants/limits';
 import { registerTableChartHandlers } from './tableChartHandlers';
 
 type TableFilterValue = string | string[] | null | undefined;
@@ -14,9 +19,6 @@ export type TableState = {
   dataColIdxs: number[];
 };
 
-const TABLE_COLLAPSE_LIMIT = 15;
-const MIN_WRAPPED_COLUMN_CHARS = 10;
-const MAX_WRAPPED_COLUMN_CHARS = 28;
 
 export function normalizeFilterValues(value: TableFilterValue): string[] {
   if (Array.isArray(value)) return value.map(String).filter(Boolean);
@@ -113,9 +115,9 @@ export function getWrappedColumnPercentages(table: HTMLTableElement): number[] {
         ? 13
         : isNumericColumn
           ? 11
-          : MIN_WRAPPED_COLUMN_CHARS;
+          : TABLE_MIN_WRAPPED_COLUMN_CHARS;
     return Math.min(
-      MAX_WRAPPED_COLUMN_CHARS,
+      TABLE_MAX_WRAPPED_COLUMN_CHARS,
       Math.max(minimumLength, averageLength, headerLength),
     );
   });

@@ -1,7 +1,21 @@
 import {
   DESKTOP_TABS_STORAGE_KEY,
+  SETTINGS_EXPORT_KIND,
+  SETTINGS_EXPORT_SCHEMA_VERSION,
+  SIDEBAR_WIDTH_STORAGE_KEY,
+  TOC_WIDTH_STORAGE_KEY,
   WORKSPACE_ALIASES_STORAGE_KEY,
-} from '../desktop/constants';
+} from '../constants/storage';
+import {
+  IMPORTED_KEYBINDING_MAX_LENGTH,
+  IMPORTED_LANGUAGE_MAX_LENGTH,
+  IMPORTED_LOCAL_UI_MAX_SERIALIZED_LENGTH,
+  RECENT_WORKSPACES_MAX_COUNT,
+  RECENT_WORKSPACE_NAME_MAX_LENGTH,
+  SCOPE_PATH_MAX_LENGTH,
+  SCOPE_PATHS_MAX_COUNT,
+  SCOPE_WORKSPACE_KEY_MAX_LENGTH,
+} from '../constants/limits';
 import {
   normalizeDesktopViewMode,
   normalizeKeybindings,
@@ -17,8 +31,7 @@ import type {
   ThemeStyle,
 } from '../types';
 
-export const SETTINGS_EXPORT_KIND = 'markdown-explorer-settings';
-export const SETTINGS_EXPORT_SCHEMA_VERSION = 1;
+export { SETTINGS_EXPORT_KIND, SETTINGS_EXPORT_SCHEMA_VERSION } from '../constants/storage';
 
 export type SettingsImportErrorCode = 'invalidJson' | 'missingData' | 'wrongFile' | 'unknownSchema';
 
@@ -74,7 +87,11 @@ function normalizeStorageNumber(value: string | null): string | undefined {
   return Number.isFinite(parsed) && parsed > 0 ? String(Math.round(parsed)) : undefined;
 }
 
-function writeJsonStorage(key: string, value: unknown, maxLength = 350_000) {
+function writeJsonStorage(
+  key: string,
+  value: unknown,
+  maxLength = IMPORTED_LOCAL_UI_MAX_SERIALIZED_LENGTH,
+) {
   if (!value || typeof value !== 'object') return;
   try {
     const serialized = JSON.stringify(value);
@@ -96,7 +113,7 @@ export function normalizeRecentWorkspaces(value: unknown): RecentWorkspace[] {
     seen.add(path);
     const pathParts = path.split(/[\\/]/).filter(Boolean);
     const name = typeof raw.name === 'string' && raw.name.trim()
-      ? raw.name.trim().slice(0, 120)
+      ? raw.name.trim().slice(0, RECENT_WORKSPACE_NAME_MAX_LENGTH)
       : pathParts[pathParts.length - 1] ?? path;
     const lastOpened = Number(raw.lastOpened);
     return [{
@@ -104,14 +121,14 @@ export function normalizeRecentWorkspaces(value: unknown): RecentWorkspace[] {
       path,
       lastOpened: Number.isFinite(lastOpened) ? lastOpened : Date.now(),
     }];
-  }).slice(0, 100);
+  }).slice(0, RECENT_WORKSPACES_MAX_COUNT);
 }
 
 function normalizeKeybindingsForImport(value: unknown): Record<string, string> | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const entries = Object.entries(value as Record<string, unknown>).flatMap(([key, shortcut]) => {
     if (typeof key !== 'string' || typeof shortcut !== 'string') return [];
-    const normalizedShortcut = shortcut.trim().slice(0, 48);
+    const normalizedShortcut = shortcut.trim().slice(0, IMPORTED_KEYBINDING_MAX_LENGTH);
     return normalizedShortcut ? [[key, normalizedShortcut] as const] : [];
   });
   return entries.length ? Object.fromEntries(entries) : undefined;
@@ -124,12 +141,12 @@ function normalizeScopeFocus(value: unknown): Record<string, string[]> {
     const seen = new Set<string>();
     const normalizedPaths = paths.flatMap((path) => {
       if (typeof path !== 'string') return [];
-      const normalizedPath = path.trim().slice(0, 1_000);
+      const normalizedPath = path.trim().slice(0, SCOPE_PATH_MAX_LENGTH);
       if (!normalizedPath || seen.has(normalizedPath)) return [];
       seen.add(normalizedPath);
       return [normalizedPath];
-    }).slice(0, 10_000);
-    return [[workspaceKey.trim().slice(0, 1_000), normalizedPaths] as const];
+    }).slice(0, SCOPE_PATHS_MAX_COUNT);
+    return [[workspaceKey.trim().slice(0, SCOPE_WORKSPACE_KEY_MAX_LENGTH), normalizedPaths] as const];
   });
   return Object.fromEntries(entries);
 }
@@ -151,7 +168,7 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
     desktopViewMode: normalizeDesktopViewMode(raw.desktopViewMode),
     keybindings: normalizeKeybindings(normalizeKeybindingsForImport(raw.keybindings), isDesktop),
     language: typeof raw.language === 'string' && raw.language.trim()
-      ? raw.language.trim().slice(0, 12)
+      ? raw.language.trim().slice(0, IMPORTED_LANGUAGE_MAX_LENGTH)
       : 'en',
     customThemes,
     activeCustomThemeId,
@@ -179,8 +196,8 @@ export function createSettingsExport(params: {
       },
       recentWorkspaces: normalizeRecentWorkspaces(params.recentWorkspaces),
       localUi: {
-        sidebarWidth: normalizeStorageNumber(localStorage.getItem('markdown-explorer-sidebar-width')),
-        tocWidth: normalizeStorageNumber(localStorage.getItem('markdown-explorer-toc-width')),
+        sidebarWidth: normalizeStorageNumber(localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY)),
+        tocWidth: normalizeStorageNumber(localStorage.getItem(TOC_WIDTH_STORAGE_KEY)),
         workspaceAliases: readLocalStorageJson(WORKSPACE_ALIASES_STORAGE_KEY),
         desktopTabs: readLocalStorageJson(DESKTOP_TABS_STORAGE_KEY),
       },
@@ -234,11 +251,11 @@ export function restoreLocalUiSettings(localUi: ImportedSettingsPayload['localUi
   const sidebarWidth = normalizeStorageNumber(localUi.sidebarWidth ?? null);
   const tocWidth = normalizeStorageNumber(localUi.tocWidth ?? null);
   if (sidebarWidth) {
-    localStorage.setItem('markdown-explorer-sidebar-width', sidebarWidth);
+    localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, sidebarWidth);
     document.documentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
   }
   if (tocWidth) {
-    localStorage.setItem('markdown-explorer-toc-width', tocWidth);
+    localStorage.setItem(TOC_WIDTH_STORAGE_KEY, tocWidth);
     document.documentElement.style.setProperty('--toc-width', `${tocWidth}px`);
   }
   writeJsonStorage(WORKSPACE_ALIASES_STORAGE_KEY, localUi.workspaceAliases);

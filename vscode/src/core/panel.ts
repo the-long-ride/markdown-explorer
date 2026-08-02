@@ -23,23 +23,9 @@ import { scanWorkspaceIncrementally } from './incrementalScan';
 import { refreshPanelFromWatch } from './panelWatch';
 import { parse } from '../markdown/parser';
 import { HtmlRenderer } from '../markdown/renderer';
-import {
-  createFailureMarkdown,
-  DocumentConverter,
-  getFileTypeLabel,
-  isExtraDocumentFilePath,
-  isMarkdownFilePath,
-  isSupportedFilePath,
-  stripKnownExtension,
-} from './documentConversion';
-import type {
-  DocumentPreviewInfo,
-  MdFile,
-  RenderContentMessage,
-  WebviewMessage,
-  WorkspaceSearchResult,
-} from '../types';
-import { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath } from './panelNavigation';
+import { createFailureMarkdown, DocumentConverter, getFileTypeLabel, isExtraDocumentFilePath, isMarkdownFilePath, isSupportedFilePath, stripKnownExtension } from './documentConversion';
+import type { DocumentPreviewInfo, MdFile, RenderContentMessage, WebviewMessage, WorkspaceSearchResult } from '../types';
+import { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
 import { buildWebviewShell } from './panelShell';
 import { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
 import { HtmlPreviewServer } from './htmlPreviewServer';
@@ -457,9 +443,17 @@ export class MarkdownDocsPanel {
     await this._render();
   }
 
-  // ---------------------------------------------------------------------------
-  // Dispose
-  // ---------------------------------------------------------------------------
+  _shouldKeepResourceUrl(url: string): boolean { return /^(https?:|data:|blob:|vscode-webview:|#)/i.test(url); }
+  _toWebviewResourceUri(resourcePath: string): string {
+    if (this._shouldKeepResourceUrl(resourcePath) || !this._currentFile) return resourcePath;
+    return this._panel.webview.asWebviewUri(getVscode().Uri.file(path.resolve(path.dirname(this._currentFile), resourcePath))).toString();
+  }
+  _rewriteRelativeMediaUrls(html: string): string {
+    return this._currentFile ? rewritePanelMediaUrls(html, this._currentFile, (abs) => this._panel.webview.asWebviewUri(getVscode().Uri.file(abs)).toString()) : html;
+  }
+  _resolveNavigationPath(rawHref: string): string {
+    return resolvePanelNavigationPath(rawHref, this._currentFile, getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath ?? '');
+  }
 
   dispose(): void {
     MarkdownDocsPanel.currentPanel = undefined;

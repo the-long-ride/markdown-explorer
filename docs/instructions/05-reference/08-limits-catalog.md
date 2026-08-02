@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T02:13:00+07:00'
 name: Limits and Thresholds Catalog
 topic: Operational, validation, performance, and security limits
 document_type: reference
@@ -11,14 +11,20 @@ related_docs:
 - 06-supported-files-and-conversion.md
 - 07-storage-catalog.md
 source_scope:
+- ui/src/constants/limits.ts
+- vscode/src/constants/workspace.ts
+- vscode/src/core/incrementalScan.ts
 - electron/workspace/scanner.js
 - electron/search/search-worker-controller.js
 - ui/src/components/Content/scheduleContentEnhancements.ts
+- ui/src/components/Content/enhancements/tableEnhancement.ts
 - ui/src/components/Modal/MediaModal.tsx
 - ui/src/settings/settingsImportExport.ts
 - ui/src/theme/customThemes.ts
 - tauri/src/local_file.rs
 test_scope:
+- tests/node/product-constants.test.mjs
+- tests/node/vscode-scanner-dependency-injection.test.mjs
 - tests/node/performance-table-tauri-contracts.test.mjs
 - tests/node/content-enhancement-scheduler.test.mjs
 - tests/unit/ui/settings-import-export.test.ts
@@ -93,13 +99,19 @@ Limits are product contracts only where active source enforces them. Changes req
 
 | Kind | Path | Purpose |
 |---|---|---|
+| Implementation | `ui/src/constants/limits.ts` | Shared UI product limits |
+| Implementation | `vscode/src/constants/workspace.ts` | VS Code scan limits and glob defaults |
+| Implementation | `vscode/src/core/incrementalScan.ts` | Applies reveal delay and scan batch limits |
 | Implementation | `electron/workspace/scanner.js` | Active behavior or contract |
 | Implementation | `electron/search/search-worker-controller.js` | Active behavior or contract |
 | Implementation | `ui/src/components/Content/scheduleContentEnhancements.ts` | Active behavior or contract |
+| Implementation | `ui/src/components/Content/enhancements/tableEnhancement.ts` | Applies table collapse limit |
 | Implementation | `ui/src/components/Modal/MediaModal.tsx` | Active behavior or contract |
 | Implementation | `ui/src/settings/settingsImportExport.ts` | Active behavior or contract |
 | Implementation | `ui/src/theme/customThemes.ts` | Active behavior or contract |
 | Implementation | `tauri/src/local_file.rs` | Active behavior or contract |
+| Verification | `tests/node/product-constants.test.mjs` | UI limits match the active catalog |
+| Verification | `tests/node/vscode-scanner-dependency-injection.test.mjs` | Scanner context isolation and title behavior |
 | Verification | `tests/node/performance-table-tauri-contracts.test.mjs` | Automated expectation |
 | Verification | `tests/node/content-enhancement-scheduler.test.mjs` | Automated expectation |
 | Verification | `tests/unit/ui/settings-import-export.test.ts` | Automated expectation |

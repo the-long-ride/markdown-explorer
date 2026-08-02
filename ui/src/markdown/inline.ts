@@ -3,6 +3,7 @@
 // ============================================================
 
 import { escHtml, escAttr } from './utils';
+import { YOUTUBE_ORIGIN, YOUTUBE_WIDGET_REFERRER } from '../constants/urls';
 
 /**
  * Safe inline HTML tags that are passed through as-is.
@@ -12,8 +13,6 @@ const SAFE_HTML_TAG_RE = /(<\/?(kbd|sub|sup|mark|abbr|u|s|img|video|source|track
 const MDX_SAFE_HTML_TAG_RE = /(<\/?([A-Za-z][A-Za-z0-9-]*)\b[^>]*>|<br\s*\/?>)/gi;
 const VIDEO_SOURCE_RE = /\.(mp4|m4v|webm|ogv|ogg|mov|mkv|m3u8)(?:[?#].*)?$/i;
 const YOUTUBE_HOST_RE = /(^|\.)youtube(?:-nocookie)?\.com$|^youtu\.be$/i;
-const YOUTUBE_WIDGET_REFERRER = 'https://the-long-ride.github.io/markdown-explorer/';
-const YOUTUBE_ORIGIN = 'https://the-long-ride.github.io';
 
 function normalizeInlineCode(code: string): string {
   return code.replace(/[ \t]*\n[ \t]*/g, '');

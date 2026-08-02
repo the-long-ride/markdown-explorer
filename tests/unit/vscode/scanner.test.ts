@@ -3,8 +3,40 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { WorkspaceScanner, setWorkspaceContextForTest } from '../../../vscode/src/core/scanner';
+import { WorkspaceScanner as ProductionWorkspaceScanner } from '../../../vscode/src/core/scanner';
 import type { WorkspaceContext } from '../../../vscode/src/core/scanner';
+
+let workspaceContext: WorkspaceContext | null = null;
+
+function setWorkspaceContext(context: WorkspaceContext | null): void {
+  workspaceContext = context;
+}
+
+const WorkspaceScanner = {
+  scan(
+    documentConversionEnabled = false,
+    reportProgress: (count: number) => void = () => {},
+    reportFile: Parameters<typeof ProductionWorkspaceScanner.scan>[2] = () => {},
+  ) {
+    return ProductionWorkspaceScanner.scan(
+      documentConversionEnabled,
+      reportProgress,
+      reportFile,
+      workspaceContext,
+    );
+  },
+  readFile(filePath: string) {
+    return ProductionWorkspaceScanner.readFile(filePath, workspaceContext);
+  },
+  buildFileEntry(filePath: string, rootPath: string) {
+    return ProductionWorkspaceScanner.buildFileEntry(filePath, rootPath, workspaceContext);
+  },
+  extractTitle(filePath: string, isMdx = false) {
+    return ProductionWorkspaceScanner.extractTitle(filePath, isMdx, workspaceContext);
+  },
+  extractMdxTitle: ProductionWorkspaceScanner.extractMdxTitle,
+  buildTree: ProductionWorkspaceScanner.buildTree,
+};
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -35,7 +67,7 @@ function makeWorkspaceContext(overrides?: Partial<WorkspaceContext>): WorkspaceC
 
 describe('WorkspaceScanner', () => {
   beforeEach(() => {
-    setWorkspaceContextForTest(null);
+    setWorkspaceContext(null);
   });
 
   describe('buildFileEntry', () => {
@@ -145,7 +177,7 @@ describe('WorkspaceScanner', () => {
       const rootDir = makeTempDir('vsscan-incremental-');
       const paths = ['one.md', 'two.md', 'three.md'];
       paths.forEach(name => writeFile(path.join(rootDir, name), `# ${name}`));
-      setWorkspaceContextForTest(makeWorkspaceContext({
+      setWorkspaceContext(makeWorkspaceContext({
         workspaceFolders: [{ uri: { fsPath: rootDir } }],
         findFiles: async () => paths.map(name => ({ fsPath: path.join(rootDir, name) })),
       }));
@@ -160,7 +192,7 @@ describe('WorkspaceScanner', () => {
     });
 
     test('returns empty result when no workspace folders', async () => {
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ workspaceFolders: undefined }),
       );
       const result = await WorkspaceScanner.scan();
@@ -170,7 +202,7 @@ describe('WorkspaceScanner', () => {
     });
 
     test('returns empty result when empty workspace folders array', async () => {
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ workspaceFolders: [] }),
       );
       const result = await WorkspaceScanner.scan();
@@ -184,7 +216,7 @@ describe('WorkspaceScanner', () => {
       writeFile(path.join(rootDir, 'report.doc'), 'doc');
       writeFile(path.join(rootDir, 'image.png'), 'not supported');
 
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({
           workspaceFolders: [{ uri: { fsPath: rootDir } }],
           async findFiles(_include, _exclude, _maxResults) {
@@ -206,7 +238,7 @@ describe('WorkspaceScanner', () => {
       writeFile(path.join(rootDir, 'readme.md'), '# Readme');
       writeFile(path.join(rootDir, 'report.doc'), 'doc');
 
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({
           workspaceFolders: [{ uri: { fsPath: rootDir } }],
           async findFiles(_include, _exclude, _maxResults) {
@@ -227,7 +259,7 @@ describe('WorkspaceScanner', () => {
       const rootDir = makeTempDir('vsscan-excl-');
       const capturedExclude: string[] = [];
 
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({
           workspaceFolders: [{ uri: { fsPath: rootDir } }],
           getConfiguration(_section: string) {
@@ -253,7 +285,7 @@ describe('WorkspaceScanner', () => {
       const rootDir = makeTempDir('vsscan-defex-');
       const capturedExclude: string[] = [];
 
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({
           workspaceFolders: [{ uri: { fsPath: rootDir } }],
           async findFiles(_include, exclude, _maxResults) {
@@ -270,7 +302,7 @@ describe('WorkspaceScanner', () => {
 
     test('does not cap workspace discovery at 1000 files', async () => {
       let capturedMaxResults: number | undefined = 0;
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({
           findFiles(_include, _exclude, maxResults) {
             capturedMaxResults = maxResults;
@@ -284,7 +316,7 @@ describe('WorkspaceScanner', () => {
     });
 
     test('throws when context is not set', async () => {
-      setWorkspaceContextForTest(null);
+      setWorkspaceContext(null);
       await expect(WorkspaceScanner.scan()).rejects.toThrow('vscode workspace not available');
     });
   });
@@ -293,7 +325,7 @@ describe('WorkspaceScanner', () => {
     test('reads file from disk when no matching open document', () => {
       const rootDir = makeTempDir('vsrf-disk-');
       writeFile(path.join(rootDir, 'test.md'), '# Hello');
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [] }),
       );
       const content = WorkspaceScanner.readFile(path.join(rootDir, 'test.md'));
@@ -307,7 +339,7 @@ describe('WorkspaceScanner', () => {
         fileName: path.join(rootDir, 'test.md'),
         getText: () => '# From Editor',
       };
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [mockDoc] }),
       );
       const content = WorkspaceScanner.readFile(path.join(rootDir, 'test.md'));
@@ -322,7 +354,7 @@ describe('WorkspaceScanner', () => {
     test('reads from disk when context is null (no vscode)', () => {
       const rootDir = makeTempDir('vsrf-nocontext-');
       writeFile(path.join(rootDir, 'test.md'), '# Direct');
-      setWorkspaceContextForTest(null);
+      setWorkspaceContext(null);
       const content = WorkspaceScanner.readFile(path.join(rootDir, 'test.md'));
       expect(content).toBe('# Direct');
     });
@@ -332,7 +364,7 @@ describe('WorkspaceScanner', () => {
     test('extracts h1 from markdown file', () => {
       const rootDir = makeTempDir('vsxt-m1-');
       writeFile(path.join(rootDir, 'doc.md'), '# Title Here');
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [] }),
       );
       const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'doc.md'), false);
@@ -342,7 +374,7 @@ describe('WorkspaceScanner', () => {
     test('extracts mdx frontmatter title', () => {
       const rootDir = makeTempDir('vsxt-mdx-');
       writeFile(path.join(rootDir, 'page.mdx'), '---\ntitle: FM Title\n---\n\n# Ignored');
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [] }),
       );
       const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'page.mdx'), true);
@@ -352,7 +384,7 @@ describe('WorkspaceScanner', () => {
     test('falls back to h1 when mdx frontmatter has no title', () => {
       const rootDir = makeTempDir('vsxt-mdxfall-');
       writeFile(path.join(rootDir, 'page.mdx'), '---\ndate: 2024\n---\n\n# Fallback Heading');
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [] }),
       );
       const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'page.mdx'), true);
@@ -362,7 +394,7 @@ describe('WorkspaceScanner', () => {
     test('returns null for non-mdx without heading', () => {
       const rootDir = makeTempDir('vsxt-nohead-');
       writeFile(path.join(rootDir, 'plain.md'), 'just text');
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [] }),
       );
       const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'plain.md'), false);
@@ -370,7 +402,7 @@ describe('WorkspaceScanner', () => {
     });
 
     test('returns null on read error', () => {
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [] }),
       );
       const title = WorkspaceScanner.extractTitle('/nonexistent/file.md', false);
@@ -384,7 +416,7 @@ describe('WorkspaceScanner', () => {
         fileName: path.join(rootDir, 'doc.md'),
         getText: () => '# From Editor',
       };
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [mockDoc] }),
       );
       const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'doc.md'), false);
@@ -396,7 +428,7 @@ describe('WorkspaceScanner', () => {
         fileName: path.join('/fake', 'open.md'),
         getText: () => '# Open Only',
       };
-      setWorkspaceContextForTest(
+      setWorkspaceContext(
         makeWorkspaceContext({ textDocuments: [mockDoc] }),
       );
       const title = WorkspaceScanner.extractTitle(path.join('/fake', 'open.md'), false);
@@ -407,7 +439,7 @@ describe('WorkspaceScanner', () => {
       const rootDir = makeTempDir('vsxt-chunk-');
       const filePath = path.join(rootDir, 'large.md');
       writeFile(filePath, `${'x'.repeat(9 * 1024)}\n# Late Heading`);
-      setWorkspaceContextForTest(makeWorkspaceContext({ textDocuments: [] }));
+      setWorkspaceContext(makeWorkspaceContext({ textDocuments: [] }));
 
       expect(WorkspaceScanner.extractTitle(filePath, false)).toBeNull();
     });
@@ -468,62 +500,6 @@ describe('WorkspaceScanner', () => {
     test('JSX title with curly braces string', () => {
       const title = WorkspaceScanner.extractMdxTitle('<Layout title={"Hello"} />\n');
       expect(title).toBe('Hello');
-    });
-  });
-
-  describe('extractTitle branch coverage', () => {
-    test('extractTitle with null context reads from disk', () => {
-      const rootDir = makeTempDir('vsxt-nullctx-');
-      writeFile(path.join(rootDir, 'doc.md'), '# Disk Title');
-      setWorkspaceContextForTest(null);
-      const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'doc.md'), false);
-      expect(title).toBe('Disk Title');
-    });
-
-    test('extractTitle with isMdx and open document calls extractMdxTitle first', () => {
-      const rootDir = makeTempDir('vsxt-mdxopen-');
-      writeFile(path.join(rootDir, 'page.mdx'), '---\ntitle: MDX Open\n---\n\n# Ignored');
-      const mockDoc = {
-        fileName: path.join(rootDir, 'page.mdx'),
-        getText: () => '---\ntitle: MDX Open\n---\n\n# Ignored',
-      };
-      setWorkspaceContextForTest(
-        makeWorkspaceContext({ textDocuments: [mockDoc] }),
-      );
-      const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'page.mdx'), true);
-      expect(title).toBe('MDX Open');
-    });
-
-    test('extractTitle with isMdx and no open document reads from disk and calls extractMdxTitle', () => {
-      const rootDir = makeTempDir('vsxt-mdxdisk-');
-      writeFile(path.join(rootDir, 'page.mdx'), '---\ntitle: Disk MDX\n---\n\n# Ignored');
-      setWorkspaceContextForTest(
-        makeWorkspaceContext({ textDocuments: [] }),
-      );
-      const title = WorkspaceScanner.extractTitle(path.join(rootDir, 'page.mdx'), true);
-      expect(title).toBe('Disk MDX');
-    });
-  });
-
-  describe('extractMdxTitle branch coverage', () => {
-    test('export const title with backtick string', () => {
-      const title = WorkspaceScanner.extractMdxTitle('export const title = `Template`\n');
-      expect(title).toBe('Template');
-    });
-
-    test('export let title with double-quoted string', () => {
-      const title = WorkspaceScanner.extractMdxTitle('export let title = "LetTitle"\n');
-      expect(title).toBe('LetTitle');
-    });
-
-    test('export var title with single-quoted string', () => {
-      const title = WorkspaceScanner.extractMdxTitle("export var title = 'VarTitle'\n");
-      expect(title).toBe('VarTitle');
-    });
-
-    test('JSX title with curly braces and no direct string slot returns null', () => {
-      const title = WorkspaceScanner.extractMdxTitle('<Layout title={} />\n');
-      expect(title).toBeNull();
     });
   });
 

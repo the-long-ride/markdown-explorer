@@ -7,6 +7,10 @@ import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
 import { getTranslations } from './contexts/translations';
+import {
+  TERMS_ACCEPTED_STORAGE_KEY,
+  THEME_ONBOARDING_COMPLETE_STORAGE_KEY,
+} from './constants/storage';
 
 const TermsModal = lazy(() => import('./components/Modal/TermsModal').then(m => ({ default: m.TermsModal })));
 import { TooltipButton } from './components/shared/TooltipButton';
@@ -168,24 +172,24 @@ export function App() {
 
   const [termsAccepted, setTermsAccepted] = useState(() => {
     if (!isDesktopLike) return true;
-    return localStorage.getItem('markdown-explorer-terms-accepted') === 'true';
+    return localStorage.getItem(TERMS_ACCEPTED_STORAGE_KEY) === 'true';
   });
   const [themeOnboardingComplete, setThemeOnboardingComplete] = useState(() => {
     try {
-      return localStorage.getItem('markdown-explorer-theme-onboarding-complete') === 'true';
+      return localStorage.getItem(THEME_ONBOARDING_COMPLETE_STORAGE_KEY) === 'true';
     } catch {
       return false;
     }
   });
 
   const handleAgreeTerms = useCallback(() => {
-    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem(TERMS_ACCEPTED_STORAGE_KEY, 'true');
     setTermsAccepted(true);
   }, []);
 
   const handleThemeOnboardingComplete = useCallback(() => {
     try {
-      localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+      localStorage.setItem(THEME_ONBOARDING_COMPLETE_STORAGE_KEY, 'true');
     } catch {
       // Ignore storage failures; the user can still continue.
     }

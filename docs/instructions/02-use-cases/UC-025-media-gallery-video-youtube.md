@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T02:13:00+07:00'
 name: View Images, Diagrams, Video, and YouTube Media
 topic: Use case UC-025
 document_type: use-case
@@ -9,6 +9,9 @@ parent_docs:
 - ../00-foundation/06-coverage-matrix.md
 related_docs: []
 source_scope:
+- ui/src/constants/limits.ts
+- ui/src/constants/urls.ts
+- ui/src/markdown/inline.ts
 - ui/src/markdown/mediaUrls.ts
 - ui/src/markdown/rawHtmlImageRows.ts
 - ui/src/components/Modal/MediaModal.tsx
@@ -17,6 +20,7 @@ source_scope:
 - tauri/src/local_file.rs
 - electron/youtube/youtube-headers.js
 test_scope:
+- tests/node/product-constants.test.mjs
 - tests/unit/ui/markdown/mediaUrls.test.ts
 - tests/unit/ui/components/modal-render.test.tsx
 - tests/node/website-image-viewer.test.mjs
@@ -170,6 +174,9 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 | Kind | Path | Purpose |
 |---|---|---|
+| Implementation | `ui/src/constants/limits.ts` | Shared media limits |
+| Implementation | `ui/src/constants/urls.ts` | Approved YouTube embed endpoints |
+| Implementation | `ui/src/markdown/inline.ts` | YouTube URL classification and embed generation |
 | Implementation | `ui/src/markdown/mediaUrls.ts` | Active behavior or contract |
 | Implementation | `ui/src/markdown/rawHtmlImageRows.ts` | Active behavior or contract |
 | Implementation | `ui/src/components/Modal/MediaModal.tsx` | Active behavior or contract |
@@ -177,6 +184,7 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `ui/src/dom/localFileUrl.ts` | Active behavior or contract |
 | Implementation | `tauri/src/local_file.rs` | Active behavior or contract |
 | Implementation | `electron/youtube/youtube-headers.js` | Active behavior or contract |
+| Verification | `tests/node/product-constants.test.mjs` | Shared constant contracts |
 | Verification | `tests/unit/ui/markdown/mediaUrls.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/components/modal-render.test.tsx` | Automated expectation |
 | Verification | `tests/node/website-image-viewer.test.mjs` | Automated expectation |

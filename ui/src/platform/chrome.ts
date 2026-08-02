@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { PlatformBridge } from './bridge';
+import { CHROMIUM_APP_STATE_STORAGE_KEY } from '../constants/storage';
 import type { HostMessage, WebviewMessage } from '../types';
 
 declare global {
@@ -16,8 +17,6 @@ export function createChromeBridge(): PlatformBridge {
   if (!bus) {
     throw new Error('__chromeExtBus is not available on window. Are you sure you are running in the Chromium extension?');
   }
-
-  const STATE_KEY = 'markdown-explorer-chrome-state';
 
   return {
     postMessage(msg: WebviewMessage) {
@@ -37,7 +36,7 @@ export function createChromeBridge(): PlatformBridge {
 
     getState<T>(): T | undefined {
       try {
-        const val = localStorage.getItem(STATE_KEY);
+        const val = localStorage.getItem(CHROMIUM_APP_STATE_STORAGE_KEY);
         return val ? (JSON.parse(val) as T) : undefined;
       } catch (err) {
         console.error('Failed to get Chrome state from localStorage:', err);
@@ -47,7 +46,7 @@ export function createChromeBridge(): PlatformBridge {
 
     setState<T>(state: T): void {
       try {
-        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        localStorage.setItem(CHROMIUM_APP_STATE_STORAGE_KEY, JSON.stringify(state));
       } catch (err) {
         console.error('Failed to set Chrome state in localStorage:', err);
       }

@@ -12,13 +12,6 @@ import { normalizePathKey } from './appStateModel';
 import type { AppState } from './appStateModel';
 import type { RenderedDocument } from './renderedDocument';
 
-export function resolveContentTabHtmlPreview(
-  tab: Pick<ContentTab, 'htmlPreviewOverride'> | null | undefined,
-  defaultEnabled: boolean,
-): boolean {
-  return tab?.htmlPreviewOverride ?? defaultEnabled;
-}
-
 export function getWorkspaceScopeKey(workspacePath: string | undefined, workspaceName: string): string {
   return workspacePath || workspaceName || 'default';
 }

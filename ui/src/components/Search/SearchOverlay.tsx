@@ -10,8 +10,8 @@ import { usePlatform } from '../../contexts/PlatformContext';
 import { SearchIcon } from '../shared/icons';
 import { normalizeForSearch, unicodeIndexOf } from '../../utils/unicodeSearch';
 import type { MdFile, WorkspaceSearchResult } from '../../types';
+import { CROSS_TAB_RESULT_PAGE_SIZE } from '../../constants/limits';
 
-const CROSS_TAB_RESULT_PAGE_SIZE = 100;
 
 export function renderHighlightedExcerpt(excerpt: string, query: string) {
   const needle = query.trim().replace(/\s+/g, ' ');

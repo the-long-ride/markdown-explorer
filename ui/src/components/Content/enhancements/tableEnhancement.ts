@@ -1,3 +1,5 @@
+import { TABLE_COLLAPSE_LIMIT } from '../../../constants/limits.ts';
+
 interface TableGlobals {
   states?: Record<string, { chartInstance?: { destroy(): void } }>;
   detectChartable?(tableId: string): void;
@@ -10,7 +12,6 @@ export interface TableEnhancementOptions {
   documentRoot?: Document;
 }
 
-const COLLAPSED_ROW_LIMIT = 15;
 const MAX_RENDER_ATTEMPTS = 3;
 
 export async function enhanceTables(
@@ -38,12 +39,12 @@ export async function enhanceTables(
 
       rows.forEach((row, index) => {
         row.dataset.mdnFilterMatch = 'true';
-        row.classList.toggle('is-collapsed-row', index >= COLLAPSED_ROW_LIMIT);
+        row.classList.toggle('is-collapsed-row', index >= TABLE_COLLAPSE_LIMIT);
       });
 
       const button = documentRoot.getElementById(`${table.id}-toggle-btn`);
       if (button) {
-        button.style.display = rows.length > COLLAPSED_ROW_LIMIT ? '' : 'none';
+        button.style.display = rows.length > TABLE_COLLAPSE_LIMIT ? '' : 'none';
         button.textContent = 'Show More';
       }
 

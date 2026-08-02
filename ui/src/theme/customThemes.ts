@@ -1,3 +1,19 @@
+import {
+  CUSTOM_THEME_BACKGROUND_BLUR_MAX,
+  CUSTOM_THEME_BACKGROUND_OPACITY_MAX,
+  CUSTOM_THEME_BACKGROUND_POSITION_MAX_LENGTH,
+  CUSTOM_THEME_CONTENT_PADDING_MAX,
+  CUSTOM_THEME_CONTENT_PADDING_MIN,
+  CUSTOM_THEME_ID_MAX_LENGTH,
+  CUSTOM_THEME_NAME_MAX_LENGTH,
+  CUSTOM_THEME_RADIUS_MAX,
+  CUSTOM_THEME_SECTION_GAP_MAX,
+  CUSTOM_THEME_SECTION_GAP_MIN,
+  CUSTOM_THEME_STROKE_WIDTH_MAX,
+  MAX_BACKGROUND_DATA_URL_LENGTH,
+  MAX_CUSTOM_THEMES,
+} from '../constants/limits';
+
 import { normalizeThemeMode, normalizeThemeStyle } from '../contexts/appStateConstants';
 import type {
   AppSettings,
@@ -10,8 +26,7 @@ import type {
   ThemeMode,
 } from '../types';
 
-export const MAX_CUSTOM_THEMES = 24;
-export const MAX_BACKGROUND_DATA_URL_LENGTH = 900_000;
+export { MAX_BACKGROUND_DATA_URL_LENGTH, MAX_CUSTOM_THEMES } from '../constants/limits';
 
 export const CUSTOM_THEME_COLOR_OPTIONS: readonly {
   key: CustomThemeColorKey;
@@ -107,10 +122,18 @@ function normalizeLayout(value: unknown): CustomThemeLayout | undefined {
     raw.density === 'compact' || raw.density === 'spacious' ? raw.density : 'comfortable';
   const layout: CustomThemeLayout = {
     density,
-    radius: clampNumber(raw.radius, 0, 18),
-    strokeWidth: clampNumber(raw.strokeWidth, 0, 3),
-    contentPadding: clampNumber(raw.contentPadding, 16, 64),
-    sectionGap: clampNumber(raw.sectionGap, 4, 28),
+    radius: clampNumber(raw.radius, 0, CUSTOM_THEME_RADIUS_MAX),
+    strokeWidth: clampNumber(raw.strokeWidth, 0, CUSTOM_THEME_STROKE_WIDTH_MAX),
+    contentPadding: clampNumber(
+      raw.contentPadding,
+      CUSTOM_THEME_CONTENT_PADDING_MIN,
+      CUSTOM_THEME_CONTENT_PADDING_MAX,
+    ),
+    sectionGap: clampNumber(
+      raw.sectionGap,
+      CUSTOM_THEME_SECTION_GAP_MIN,
+      CUSTOM_THEME_SECTION_GAP_MAX,
+    ),
   };
   return layout;
 }
@@ -129,12 +152,12 @@ function normalizeBackground(value: unknown): CustomThemeBackground | undefined 
   return {
     type: type === 'image' && imageDataUrl ? 'image' : 'none',
     imageDataUrl,
-    opacity: clampNumber(raw.opacity, 0, 0.5) ?? 0.16,
+    opacity: clampNumber(raw.opacity, 0, CUSTOM_THEME_BACKGROUND_OPACITY_MAX) ?? 0.16,
     fit: raw.fit === 'contain' ? 'contain' : 'cover',
     position: typeof raw.position === 'string' && raw.position.trim()
-      ? raw.position.trim().slice(0, 48)
+      ? raw.position.trim().slice(0, CUSTOM_THEME_BACKGROUND_POSITION_MAX_LENGTH)
       : 'center',
-    blur: clampNumber(raw.blur, 0, 18) ?? 0,
+    blur: clampNumber(raw.blur, 0, CUSTOM_THEME_BACKGROUND_BLUR_MAX) ?? 0,
   };
 }
 
@@ -146,12 +169,12 @@ export function normalizeCustomThemes(value: unknown): CustomTheme[] {
   return value.flatMap((item) => {
     if (!item || typeof item !== 'object') return [];
     const raw = item as Record<string, unknown>;
-    const id = typeof raw.id === 'string' ? raw.id.trim().slice(0, 64) : '';
+    const id = typeof raw.id === 'string' ? raw.id.trim().slice(0, CUSTOM_THEME_ID_MAX_LENGTH) : '';
     if (!id || seen.has(id)) return [];
     seen.add(id);
 
     const name = typeof raw.name === 'string' && raw.name.trim()
-      ? raw.name.trim().slice(0, 48)
+      ? raw.name.trim().slice(0, CUSTOM_THEME_NAME_MAX_LENGTH)
       : 'Custom theme';
     const dark = normalizeColorOverrides((raw.colors as Record<string, unknown> | undefined)?.dark);
     const light = normalizeColorOverrides((raw.colors as Record<string, unknown> | undefined)?.light);

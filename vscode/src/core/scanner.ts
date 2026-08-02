@@ -11,6 +11,13 @@ import {
   isSupportedFilePath,
   stripKnownExtension,
 } from './documentConversion';
+import {
+  CONVERTIBLE_WORKSPACE_INCLUDE_GLOB,
+  DEFAULT_WORKSPACE_EXCLUDE_PATTERNS,
+  MARKDOWN_WORKSPACE_INCLUDE_GLOB,
+  WORKSPACE_SCAN_PROGRESS_BATCH_SIZE,
+  WORKSPACE_TITLE_CHUNK_BYTES,
+} from '../constants/workspace';
 
 export interface WorkspaceContext {
   workspaceFolders: Array<{ uri: { fsPath: string } }> | undefined;
@@ -37,29 +44,27 @@ function getDefaultWorkspaceContext(): WorkspaceContext | null {
   }
 }
 
-let _defaultContext: WorkspaceContext | null | undefined;
+let defaultWorkspaceContext: WorkspaceContext | null | undefined;
 
-function getContext(): WorkspaceContext | null {
-  if (_defaultContext === undefined) {
-    _defaultContext = getDefaultWorkspaceContext();
+function resolveWorkspaceContext(
+  context?: WorkspaceContext | null,
+): WorkspaceContext | null {
+  if (context !== undefined) return context;
+  if (defaultWorkspaceContext === undefined) {
+    defaultWorkspaceContext = getDefaultWorkspaceContext();
   }
-  return _defaultContext;
-}
-
-export function setWorkspaceContextForTest(ctx: WorkspaceContext | null): void {
-  _defaultContext = ctx;
+  return defaultWorkspaceContext;
 }
 
 export class WorkspaceScanner {
-  private static readonly TITLE_CHUNK_BYTES = 8 * 1024;
-
   /** Scan workspace for all .md files, return tree + flat list */
   static async scan(
     documentConversionEnabled = false,
     reportProgress: (count: number) => void = () => {},
     reportFile: (file: MdFile, count: number) => void = () => {},
+    context?: WorkspaceContext | null,
   ): Promise<ScanResult> {
-    const ctx = getContext();
+    const ctx = resolveWorkspaceContext(context);
     if (!ctx) throw new Error('vscode workspace not available');
 
     const folders = ctx.workspaceFolders;
@@ -68,12 +73,13 @@ export class WorkspaceScanner {
     if (!folders?.length) return emptyResult;
 
     const config = ctx.getConfiguration('markdownExplorer');
-    const excludePatterns: string[] = config.get('excludePatterns') ?? ['**/node_modules/**', '**/.git/**'];
+    const excludePatterns: readonly string[] =
+      config.get('excludePatterns') ?? DEFAULT_WORKSPACE_EXCLUDE_PATTERNS;
     const excludeGlob = `{${excludePatterns.join(',')}}`;
 
     const includeGlob = documentConversionEnabled
-      ? '**/*.{md,mdx,doc,docx,pdf,html,xls,xlsx,xlm,pptx,odt,odp,ods,rtf,txt}'
-      : '**/*.{md,mdx,txt}';
+      ? CONVERTIBLE_WORKSPACE_INCLUDE_GLOB
+      : MARKDOWN_WORKSPACE_INCLUDE_GLOB;
     const uris = (await ctx.findFiles(includeGlob, excludeGlob))
       .filter(uri => isSupportedFilePath(uri.fsPath, documentConversionEnabled));
     uris.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
@@ -81,10 +87,10 @@ export class WorkspaceScanner {
     const rootPath = folders[0].uri.fsPath;
     const flat: MdFile[] = [];
     for (const uri of uris) {
-      const file = WorkspaceScanner.buildFileEntry(uri.fsPath, rootPath);
+      const file = WorkspaceScanner.buildFileEntry(uri.fsPath, rootPath, ctx);
       flat.push(file);
       reportFile(file, flat.length);
-      if (flat.length % 100 === 0) {
+      if (flat.length % WORKSPACE_SCAN_PROGRESS_BATCH_SIZE === 0) {
         reportProgress(flat.length);
         await new Promise<void>(resolve => setTimeout(resolve, 0));
       }
@@ -96,9 +102,12 @@ export class WorkspaceScanner {
   }
 
   /** Safely read a file's contents */
-  static readFile(fsPath: string): string {
+  static readFile(
+    fsPath: string,
+    context?: WorkspaceContext | null,
+  ): string {
     try {
-      const ctx = getContext();
+      const ctx = resolveWorkspaceContext(context);
       if (ctx) {
         const openDoc = ctx.textDocuments.find(
           doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
@@ -115,7 +124,11 @@ export class WorkspaceScanner {
 
   // ── Helpers ────────────────────────────────────────
 
-  static buildFileEntry(fsPath: string, rootPath: string): MdFile {
+  static buildFileEntry(
+    fsPath: string,
+    rootPath: string,
+    context?: WorkspaceContext | null,
+  ): MdFile {
     const relativePath = path.relative(rootPath, fsPath);
     const parts = relativePath.split(path.sep);
     const fileName = parts[parts.length - 1];
@@ -123,15 +136,19 @@ export class WorkspaceScanner {
     const isMarkdown = isMarkdownFilePath(fileName);
     const isMdx = ext === '.mdx';
     const title = isMarkdown
-      ? WorkspaceScanner.extractTitle(fsPath, isMdx) ?? stripKnownExtension(fileName)
+      ? WorkspaceScanner.extractTitle(fsPath, isMdx, context) ?? stripKnownExtension(fileName)
       : stripKnownExtension(fileName);
     const documentKind = isMarkdown ? 'markdown' : 'document';
     return Object.freeze({ fsPath, relativePath, parts, fileName, title, extension: ext, documentKind });
   }
 
-  static extractTitle(fsPath: string, isMdx = false): string | null {
+  static extractTitle(
+    fsPath: string,
+    isMdx = false,
+    context?: WorkspaceContext | null,
+  ): string | null {
     try {
-      const ctx = getContext();
+      const ctx = resolveWorkspaceContext(context);
       if (ctx) {
         const openDoc = ctx.textDocuments.find(
           doc => doc.fileName && path.normalize(doc.fileName) === path.normalize(fsPath)
@@ -194,7 +211,7 @@ export class WorkspaceScanner {
   private static readTitleChunk(fsPath: string): string {
     const fd = fs.openSync(fsPath, 'r');
     try {
-      const buffer = Buffer.allocUnsafe(WorkspaceScanner.TITLE_CHUNK_BYTES);
+      const buffer = Buffer.allocUnsafe(WORKSPACE_TITLE_CHUNK_BYTES);
       const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, 0);
       return buffer.toString('utf8', 0, bytesRead);
     } finally {

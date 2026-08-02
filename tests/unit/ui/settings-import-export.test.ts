@@ -13,7 +13,7 @@ import {
 import {
   DESKTOP_TABS_STORAGE_KEY,
   WORKSPACE_ALIASES_STORAGE_KEY,
-} from '../../../ui/src/desktop/constants';
+} from '../../../ui/src/constants/storage';
 
 afterEach(() => {
   localStorage.clear();

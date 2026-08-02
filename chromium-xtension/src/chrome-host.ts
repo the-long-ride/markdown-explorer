@@ -17,6 +17,9 @@ import { createEmptyWorkspaceReadyAck, createWelcomeMessage, extractWorkspaceNam
 import { handleChromeHostUtilityCommand } from "./chrome-host-search";
 import { createWorkspaceOperationState, type WorkspaceOperationMetadata } from "./workspace-operation-state";
 
+export { getHostInfo, normalizeSearchQuery, filterSearchIndexTabs, isValidExternalUrl, extractWorkspaceName, findFileInfo, shouldOpenFirstFile } from "./chrome-host-utils";
+export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS } from "./incremental-workspace-scan";
+
 
 declare global {
   interface Window {

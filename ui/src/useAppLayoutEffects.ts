@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from "react";
+import { SIDEBAR_WIDTH_STORAGE_KEY, TOC_WIDTH_STORAGE_KEY } from './constants/storage';
 import { useKeyboard } from "./hooks/useKeyboard";
 import { useResize } from "./hooks/useResize";
 import { requestShellLocation, supportsShellLocation } from "./desktop/shellLocation";
@@ -132,7 +133,7 @@ export function useAppLayoutEffects({
 
   // Initialize sidebar width from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('markdown-explorer-sidebar-width');
+    const stored = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
     if (stored) {
       document.documentElement.style.setProperty('--sidebar-width', `${stored}px`);
     }
@@ -140,7 +141,7 @@ export function useAppLayoutEffects({
 
   // Initialize TOC width from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('markdown-explorer-toc-width');
+    const stored = localStorage.getItem(TOC_WIDTH_STORAGE_KEY);
     if (stored) {
       document.documentElement.style.setProperty('--toc-width', `${stored}px`);
     }
@@ -154,7 +155,7 @@ export function useAppLayoutEffects({
     min: 180,
     max: 360,
     cssVar: '--toc-width',
-    storageKey: 'markdown-explorer-toc-width',
+    storageKey: TOC_WIDTH_STORAGE_KEY,
     direction: 'rtl',
   });
 

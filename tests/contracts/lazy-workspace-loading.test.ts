@@ -16,7 +16,7 @@ describe('lazy workspace loading parity', () => {
       read('chromium-xtension/src/incremental-workspace-scan.ts'),
       read('website-app/src/web-file-mode.ts'),
     ]) {
-      expect(source).toContain('3000');
+      expect(source).toMatch(/3000|WORKSPACE_SCAN_REVEAL_DELAY_MS/);
       expect(source).toContain('WORKSPACE_SCAN_BATCH_SIZE');
     }
     const tauri = read('tauri/src/dispatcher/incremental_scan.rs');

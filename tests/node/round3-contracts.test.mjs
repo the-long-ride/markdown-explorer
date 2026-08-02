@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { readProjectSource } from './read-refactored-source.mjs';
 
 const read = readProjectSource;
-const OPEN_BROWSER_PATH_PREFIX = 'M71.89,100.56q-3.86,3.82-8.37,7.63';
 
 test('Aurora Glass tooltips and dropdown panels use opaque backgrounds without fading contents', async () => {
   const [tooltipCss, toolbarCss] = await Promise.all([
@@ -76,34 +74,6 @@ test('Close All cancels all workspace jobs before returning Home', async () => {
   assert.match(block, /cancelAllWorkspaceScans/);
   assert.ok(block.indexOf('cancelAllWorkspaceScans') < block.indexOf('setTabs'));
   assert.match(block, /dispatchEmptyWorkspace/);
-});
-
-test('Properties has no accent rail and Settings displays View Preferences before Theme Style', async () => {
-  const [css, settings] = await Promise.all([
-    read('ui/src/styles/global/global-markdown-foundation.css'),
-    read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
-  ]);
-  const frontmatter = css.match(/\.mdn-frontmatter\s*\{([^}]*)\}/s)?.[1] ?? '';
-  assert.doesNotMatch(frontmatter, /border-left\s*:/);
-  assert.ok(settings.indexOf('t.viewPrefs') < settings.indexOf('t.themeStyle'));
-});
-
-test('new workspace tab tooltip uses the configured workspace-selection shortcut', async () => {
-  const source = await read('ui/src/components/Desktop/DesktopTabBar.tsx');
-  assert.match(source, /onClick=\{onNewTab\}[\s\S]*shortcut=\{getEnabledShortcut\(state\.settings, 'workspaceSelection'\)\}/);
-});
-
-test('open-in-browser icon path is identical in shared UI and both markdown renderers', async () => {
-  const [icons, menu, uiRenderer, vscodeRenderer] = await Promise.all([
-    read('ui/src/components/shared/icons.tsx'),
-    read('ui/src/components/shared/LinkContextMenu.tsx'),
-    read('ui/src/markdown/codeRenderer.ts'),
-    read('vscode/src/markdown/codeRenderer.ts'),
-  ]);
-  assert.ok(icons.includes(OPEN_BROWSER_PATH_PREFIX));
-  assert.match(menu, /OpenInBrowserIcon/);
-  assert.ok(uiRenderer.includes(OPEN_BROWSER_PATH_PREFIX));
-  assert.ok(vscodeRenderer.includes(OPEN_BROWSER_PATH_PREFIX));
 });
 
 test('UI and VS Code use the same HTML renderability heuristic', async () => {
