@@ -1,3 +1,5 @@
+import { CONTENT_ENHANCEMENT_RETRY_DELAYS_MS } from '../../constants/limits.ts';
+
 export interface EnhancementObserver {
   observe(target: Node, options: MutationObserverInit): void;
   disconnect(): void;
@@ -15,7 +17,6 @@ export interface ContentEnhancementSchedulerOptions {
   clearDelay: (handle: number) => void;
 }
 
-const RETRY_DELAYS_MS = [60, 180, 500, 1000, 2000] as const;
 
 export interface ContentEnhancementScheduler {
   dispose(): void;
@@ -52,8 +53,8 @@ export function createContentEnhancementScheduler(
   };
 
   const requestRetry = () => {
-    if (disposed || retryIndex >= RETRY_DELAYS_MS.length || delayHandle !== null) return;
-    const delay = RETRY_DELAYS_MS[retryIndex++];
+    if (disposed || retryIndex >= CONTENT_ENHANCEMENT_RETRY_DELAYS_MS.length || delayHandle !== null) return;
+    const delay = CONTENT_ENHANCEMENT_RETRY_DELAYS_MS[retryIndex++];
     delayHandle = options.setDelay(() => {
       delayHandle = null;
       requestRun();

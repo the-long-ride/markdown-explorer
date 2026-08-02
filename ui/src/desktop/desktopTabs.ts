@@ -1,7 +1,7 @@
 import {
   DESKTOP_TABS_STORAGE_KEY,
   WORKSPACE_ALIASES_STORAGE_KEY,
-} from './constants';
+} from '../constants/storage';
 import type {
   DesktopTab,
   DesktopTabKind,

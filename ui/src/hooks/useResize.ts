@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { useEffect } from 'react';
+import { SIDEBAR_WIDTH_STORAGE_KEY } from '../constants/storage';
 
 interface ResizeOptions {
   min?: number;
@@ -22,7 +23,7 @@ export function useResize(
     const min = options.min ?? 180;
     const max = options.max ?? 480;
     const cssVar = options.cssVar ?? '--sidebar-width';
-    const storageKey = options.storageKey ?? 'markdown-explorer-sidebar-width';
+    const storageKey = options.storageKey ?? SIDEBAR_WIDTH_STORAGE_KEY;
     const direction = options.direction ?? 'ltr';
 
     let disposed = false;

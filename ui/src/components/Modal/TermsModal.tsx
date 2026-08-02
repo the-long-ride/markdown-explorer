@@ -4,6 +4,7 @@
 
 import { useState, type MouseEvent } from "react";
 import logoUrl from "../../assets/logos/logo-500.png?inline";
+import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from "../../constants/urls";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -11,10 +12,6 @@ interface TermsModalProps {
   onOpenExternal?: (url: string) => void;
 }
 
-const PRIVACY_POLICY_URL =
-  "https://the-long-ride.github.io/markdown-explorer/privacy.html";
-const TERMS_OF_SERVICE_URL =
-  "https://the-long-ride.github.io/markdown-explorer/terms.html";
 
 export function TermsModal({
   isOpen,

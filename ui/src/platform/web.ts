@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { PlatformBridge } from './bridge';
+import { WEB_APP_STATE_STORAGE_KEY } from '../constants/storage';
 import type { HostMessage, WebviewMessage } from '../types';
 
 declare global {
@@ -16,8 +17,6 @@ export function createWebBridge(): PlatformBridge {
   if (!bus) {
     throw new Error('__webDemoBus is not available. Web demo host not initialized.');
   }
-
-  const STATE_KEY = 'markdown-explorer-web-state';
 
   return {
     postMessage(msg: WebviewMessage) {
@@ -37,7 +36,7 @@ export function createWebBridge(): PlatformBridge {
 
     getState<T>(): T | undefined {
       try {
-        const val = localStorage.getItem(STATE_KEY);
+        const val = localStorage.getItem(WEB_APP_STATE_STORAGE_KEY);
         return val ? (JSON.parse(val) as T) : undefined;
       } catch {
         return undefined;
@@ -46,7 +45,7 @@ export function createWebBridge(): PlatformBridge {
 
     setState<T>(state: T): void {
       try {
-        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        localStorage.setItem(WEB_APP_STATE_STORAGE_KEY, JSON.stringify(state));
       } catch {}
     },
 

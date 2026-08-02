@@ -1,3 +1,4 @@
+import { TOC_COLLAPSED_STORAGE_KEY } from '../../constants/storage';
 import { createEmptyUpdateState, type Action, type AppState } from '../appStateModel';
 import { normalizeActiveCustomThemeId, normalizeCustomThemes } from '../../theme/customThemes';
 import { createContentTabFromState, renderMarkdownClientSide, upsertContentTab } from '../contentTabState';
@@ -26,7 +27,7 @@ export function reduceSettingsUiAction(
       const nextCollapsed = !state.tocCollapsed;
       if (writeTocStorage) {
         try {
-          writeTocStorage('markdown-explorer-toc-collapsed', String(nextCollapsed));
+          writeTocStorage(TOC_COLLAPSED_STORAGE_KEY, String(nextCollapsed));
         } catch {}
       }
       return { ...state, tocCollapsed: nextCollapsed };

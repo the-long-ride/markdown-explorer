@@ -1,3 +1,4 @@
+import { TOC_COLLAPSED_STORAGE_KEY } from '../constants/storage';
 import {
   normalizeActiveCustomThemeId,
   normalizeCustomThemes,
@@ -230,7 +231,7 @@ export function createInitialState(
   storage?: Storage | { getItem(k: string): string | null },
 ): AppState {
   const tocCollapsed = storage
-    ? storage.getItem('markdown-explorer-toc-collapsed') === 'true'
+    ? storage.getItem(TOC_COLLAPSED_STORAGE_KEY) === 'true'
     : false;
   const defaultKeybindings = getDefaultKeybindings(isDesktop);
   if (!saved) {

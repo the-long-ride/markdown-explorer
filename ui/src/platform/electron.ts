@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { PlatformBridge } from './bridge';
+import { ELECTRON_APP_STATE_STORAGE_KEY } from '../constants/storage';
 import type { HostMessage, WebviewMessage } from '../types';
 
 interface ElectronApi {
@@ -24,8 +25,6 @@ export function createElectronBridge(): PlatformBridge {
     throw new Error('electronAPI is not available on window. Are you sure you are running in Electron?');
   }
 
-  const STATE_KEY = 'markdown-explorer-ui-state';
-
   return {
     postMessage(msg: WebviewMessage) {
       api.postMessage(msg);
@@ -37,7 +36,7 @@ export function createElectronBridge(): PlatformBridge {
 
     getState<T>(): T | undefined {
       try {
-        const val = localStorage.getItem(STATE_KEY);
+        const val = localStorage.getItem(ELECTRON_APP_STATE_STORAGE_KEY);
         return val ? (JSON.parse(val) as T) : undefined;
       } catch (err) {
         console.error('Failed to get Electron state from localStorage:', err);
@@ -47,7 +46,7 @@ export function createElectronBridge(): PlatformBridge {
 
     setState<T>(state: T): void {
       try {
-        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        localStorage.setItem(ELECTRON_APP_STATE_STORAGE_KEY, JSON.stringify(state));
       } catch (err) {
         console.error('Failed to set Electron state in localStorage:', err);
       }

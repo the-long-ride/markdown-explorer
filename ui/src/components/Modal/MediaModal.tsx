@@ -8,6 +8,12 @@ import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIc
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { useCssVars } from '../../utils/useCssVars';
+import {
+  MEDIA_ZOOM_BUTTON_STEP,
+  MEDIA_ZOOM_MAX,
+  MEDIA_ZOOM_MIN,
+  MEDIA_ZOOM_WHEEL_STEP,
+} from '../../constants/limits';
 import type { MediaGallery } from './mediaGallery';
 
 interface MediaModalProps {
@@ -15,8 +21,6 @@ interface MediaModalProps {
   onClose: () => void;
 }
 
-const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 20;
 
 export function MediaModal({ gallery, onClose }: MediaModalProps) {
   const { state } = useAppState();
@@ -42,8 +46,8 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     setPan({ x: 0, y: 0 });
   }, [gallery]);
 
-  const zoomIn = useCallback(() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25)), []);
-  const zoomOut = useCallback(() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25)), []);
+  const zoomIn = useCallback(() => setZoom((z) => Math.min(MEDIA_ZOOM_MAX, z + MEDIA_ZOOM_BUTTON_STEP)), []);
+  const zoomOut = useCallback(() => setZoom((z) => Math.max(MEDIA_ZOOM_MIN, z - MEDIA_ZOOM_BUTTON_STEP)), []);
   const reset = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, []);
 
   const prev = useCallback(() => {
@@ -71,7 +75,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     if (!gallery || !modalRef.current) return;
     const handler = (e: WheelEvent) => {
       e.preventDefault();
-      setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + (e.deltaY < 0 ? 0.15 : -0.15))));
+      setZoom((z) => Math.min(MEDIA_ZOOM_MAX, Math.max(MEDIA_ZOOM_MIN, z + (e.deltaY < 0 ? MEDIA_ZOOM_WHEEL_STEP : -MEDIA_ZOOM_WHEEL_STEP))));
     };
     const modal = modalRef.current;
     modal.addEventListener('wheel', handler, { passive: false });

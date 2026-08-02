@@ -1,0 +1,36 @@
+/** Product limits shared by UI features. Keep aligned with docs/instructions/05-reference/08-limits-catalog.md. */
+export const CONTENT_ENHANCEMENT_RETRY_DELAYS_MS = [60, 180, 500, 1000, 2000] as const;
+
+export const CROSS_TAB_RESULT_PAGE_SIZE = 100;
+
+export const TABLE_COLLAPSE_LIMIT = 15;
+export const TABLE_MIN_WRAPPED_COLUMN_CHARS = 10;
+export const TABLE_MAX_WRAPPED_COLUMN_CHARS = 28;
+
+export const MEDIA_ZOOM_MIN = 0.25;
+export const MEDIA_ZOOM_MAX = 20;
+export const MEDIA_ZOOM_BUTTON_STEP = 0.25;
+export const MEDIA_ZOOM_WHEEL_STEP = 0.15;
+
+export const RECENT_WORKSPACES_MAX_COUNT = 100;
+export const RECENT_WORKSPACE_NAME_MAX_LENGTH = 120;
+export const SCOPE_WORKSPACE_KEY_MAX_LENGTH = 1000;
+export const SCOPE_PATH_MAX_LENGTH = 1000;
+export const SCOPE_PATHS_MAX_COUNT = 10_000;
+export const IMPORTED_KEYBINDING_MAX_LENGTH = 48;
+export const IMPORTED_LANGUAGE_MAX_LENGTH = 12;
+export const IMPORTED_LOCAL_UI_MAX_SERIALIZED_LENGTH = 350_000;
+
+export const MAX_CUSTOM_THEMES = 24;
+export const MAX_BACKGROUND_DATA_URL_LENGTH = 900_000;
+export const CUSTOM_THEME_ID_MAX_LENGTH = 64;
+export const CUSTOM_THEME_NAME_MAX_LENGTH = 48;
+export const CUSTOM_THEME_BACKGROUND_POSITION_MAX_LENGTH = 48;
+export const CUSTOM_THEME_RADIUS_MAX = 18;
+export const CUSTOM_THEME_STROKE_WIDTH_MAX = 3;
+export const CUSTOM_THEME_CONTENT_PADDING_MIN = 16;
+export const CUSTOM_THEME_CONTENT_PADDING_MAX = 64;
+export const CUSTOM_THEME_SECTION_GAP_MIN = 4;
+export const CUSTOM_THEME_SECTION_GAP_MAX = 28;
+export const CUSTOM_THEME_BACKGROUND_OPACITY_MAX = 0.5;
+export const CUSTOM_THEME_BACKGROUND_BLUR_MAX = 18;

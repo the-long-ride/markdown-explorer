@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T02:13:00+07:00'
 name: Download, Schedule, and Apply Application Updates
 topic: Use case UC-027
 document_type: use-case
@@ -9,6 +9,7 @@ parent_docs:
 - ../00-foundation/06-coverage-matrix.md
 related_docs: []
 source_scope:
+- ui/src/constants/urls.ts
 - ui/src/hooks/useUpdateCheck.ts
 - ui/src/useAppUpdateActions.ts
 - electron/update/update-manager.js
@@ -17,6 +18,7 @@ source_scope:
 - tauri/src/update/manager.rs
 - tauri/src/dispatcher/commands_window_update.rs
 test_scope:
+- tests/node/product-constants.test.mjs
 - tests/unit/ui/hooks/useUpdateCheck.test.ts
 - tests/unit/electron/update-manager.test.ts
 - tests/unit/electron/update-helper.test.ts
@@ -170,6 +172,7 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 | Kind | Path | Purpose |
 |---|---|---|
+| Implementation | `ui/src/constants/urls.ts` | Shared product constants |
 | Implementation | `ui/src/hooks/useUpdateCheck.ts` | Active behavior or contract |
 | Implementation | `ui/src/useAppUpdateActions.ts` | Active behavior or contract |
 | Implementation | `electron/update/update-manager.js` | Active behavior or contract |
@@ -177,6 +180,7 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `electron/update/update-helper.js` | Active behavior or contract |
 | Implementation | `tauri/src/update/manager.rs` | Active behavior or contract |
 | Implementation | `tauri/src/dispatcher/commands_window_update.rs` | Active behavior or contract |
+| Verification | `tests/node/product-constants.test.mjs` | Shared constant contracts |
 | Verification | `tests/unit/ui/hooks/useUpdateCheck.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/update-manager.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/update-helper.test.ts` | Automated expectation |

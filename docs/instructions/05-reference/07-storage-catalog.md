@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T02:13:00+07:00'
 name: Storage Catalog
 topic: Exact bridge, local-storage, and IndexedDB keys and ownership
 document_type: reference
@@ -11,14 +11,19 @@ related_docs:
 - 03-settings-catalog.md
 - 08-limits-catalog.md
 source_scope:
+- ui/src/constants/storage.ts
+- ui/src/App.tsx
 - ui/src/platform/electron.ts
 - ui/src/platform/chrome.ts
 - ui/src/platform/web.ts
-- ui/src/desktop/constants.ts
 - ui/src/useAppLayoutEffects.ts
+- ui/src/hooks/useResize.ts
+- ui/src/contexts/appStateModel.ts
+- ui/src/contexts/reducers/settingsUiReducer.ts
 - ui/src/settings/settingsImportExport.ts
 - chromium-xtension/src/file-access.ts
 test_scope:
+- tests/node/product-constants.test.mjs
 - tests/unit/ui/settings-import-export.test.ts
 - tests/unit/chromium/file-access.test.ts
 - tests/unit/ui/desktop-tabs.test.ts
@@ -58,13 +63,18 @@ keywords:
 
 | Kind | Path | Purpose |
 |---|---|---|
+| Implementation | `ui/src/constants/storage.ts` | Stable storage and export identifiers |
+| Implementation | `ui/src/App.tsx` | First-run storage consumers |
 | Implementation | `ui/src/platform/electron.ts` | Active behavior or contract |
 | Implementation | `ui/src/platform/chrome.ts` | Active behavior or contract |
 | Implementation | `ui/src/platform/web.ts` | Active behavior or contract |
-| Implementation | `ui/src/desktop/constants.ts` | Active behavior or contract |
-| Implementation | `ui/src/useAppLayoutEffects.ts` | Active behavior or contract |
+| Implementation | `ui/src/useAppLayoutEffects.ts` | Restores persisted layout widths |
+| Implementation | `ui/src/hooks/useResize.ts` | Persists resized layout widths |
+| Implementation | `ui/src/contexts/appStateModel.ts` | Restores TOC collapsed state |
+| Implementation | `ui/src/contexts/reducers/settingsUiReducer.ts` | Persists TOC collapsed state |
 | Implementation | `ui/src/settings/settingsImportExport.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/file-access.ts` | Active behavior or contract |
+| Verification | `tests/node/product-constants.test.mjs` | Stable storage identifiers |
 | Verification | `tests/unit/ui/settings-import-export.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/file-access.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/desktop-tabs.test.ts` | Automated expectation |

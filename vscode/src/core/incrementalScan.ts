@@ -1,8 +1,14 @@
 import type { FolderNode, MdFile, ScanResult } from '../types';
+import {
+  WORKSPACE_SCAN_BATCH_SIZE,
+  WORKSPACE_SCAN_REVEAL_DELAY_MS,
+} from '../constants/workspace';
 import { WorkspaceScanner } from './scanner';
 
-export const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
-export const WORKSPACE_SCAN_BATCH_SIZE = 32;
+export {
+  WORKSPACE_SCAN_BATCH_SIZE,
+  WORKSPACE_SCAN_REVEAL_DELAY_MS,
+} from '../constants/workspace';
 
 interface Snapshot {
   fileList: MdFile[];

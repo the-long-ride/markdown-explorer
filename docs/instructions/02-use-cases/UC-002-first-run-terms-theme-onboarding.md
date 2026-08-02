@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T02:13:00+07:00'
 name: First-Run Terms and Theme Onboarding
 topic: Use case UC-002
 document_type: use-case
@@ -9,11 +9,13 @@ parent_docs:
 - ../00-foundation/06-coverage-matrix.md
 related_docs: []
 source_scope:
+- ui/src/constants/storage.ts
 - ui/src/components/Modal/TermsModal.tsx
 - ui/src/components/Modal/ThemeOnboardingModal.tsx
 - ui/src/contexts/AppStateContext.tsx
 - ui/src/themeTypes.ts
 test_scope:
+- tests/node/product-constants.test.mjs
 - tests/unit/ui/components/modal-render.test.tsx
 - tests/node/theme-onboarding-dropdown-visibility.test.mjs
 - tests/unit/ui/components/theme-modals-render.test.tsx
@@ -161,10 +163,12 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 | Kind | Path | Purpose |
 |---|---|---|
+| Implementation | `ui/src/constants/storage.ts` | Shared product constants |
 | Implementation | `ui/src/components/Modal/TermsModal.tsx` | Active behavior or contract |
 | Implementation | `ui/src/components/Modal/ThemeOnboardingModal.tsx` | Active behavior or contract |
 | Implementation | `ui/src/contexts/AppStateContext.tsx` | Active behavior or contract |
 | Implementation | `ui/src/themeTypes.ts` | Active behavior or contract |
+| Verification | `tests/node/product-constants.test.mjs` | Shared constant contracts |
 | Verification | `tests/unit/ui/components/modal-render.test.tsx` | Automated expectation |
 | Verification | `tests/node/theme-onboarding-dropdown-visibility.test.mjs` | Automated expectation |
 | Verification | `tests/unit/ui/components/theme-modals-render.test.tsx` | Automated expectation |
