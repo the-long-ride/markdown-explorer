@@ -21,7 +21,7 @@ test('search overlay remains a bounded modal with three resizable information co
   assert.match(component, /search-overlay-workspaces/);
   assert.match(component, /search-overlay-results-panel/);
   assert.match(component, /search-overlay-preview/);
-  assert.match(css, /width:\s*min\(1120px, calc\(100vw - 64px\)\)/);
+  assert.match(css, /width:\s*min\(1560px, calc\(100vw - 64px\)\)/);
   assert.match(css, /grid-template-columns:[\s\S]*var\(--search-workspaces-width\)[\s\S]*minmax\(300px, 1fr\)[\s\S]*var\(--search-preview-width\)/);
   assert.equal((await read('ui/src/components/Search/SearchOverlay.tsx')).match(/className="search-overlay-resize-handle/g)?.length, 2);
 });
@@ -40,7 +40,7 @@ test('all search surfaces expose one Match case toggle and forward matchCase', a
     read('ui/src/components/Search/FindInFilePanel.tsx'),
     read('ui/src/components/Sidebar/SidebarSearch.tsx'),
   ]);
-  assert.match(overlay, /aria-label=\{t\.search\.matchCase\}/);
+  assert.match(overlay, /search-overlay-case-toggle/);
   assert.match(overlay, /command: 'searchWorkspace'[\s\S]*matchCase/);
   assert.match(overlay, /command: 'searchAcrossWorkspaces'[\s\S]*matchCase/);
   assert.match(find, /highlightFindMatches\(query, matchCase\)/);
@@ -70,7 +70,7 @@ test('search preview defaults on, hides row open buttons, and requests full docu
     read('ui/src/components/Search/SearchOverlayResults.tsx'),
     read('ui/src/components/Search/SearchDocumentPreview.tsx'),
   ]);
-  assert.match(overlay, /const \[previewEnabled, setPreviewEnabled\] = useState\(true\)/);
+  assert.match(overlay, /useState\(persistentSearchPreviewEnabled\)/);
   assert.match(overlay, /className=\{`search-overlay-preview-toggle/);
   assert.match(results, /previewEnabled\s*\?\s*null\s*:/s);
   assert.match(preview, /command:\s*'loadSearchPreview'/);

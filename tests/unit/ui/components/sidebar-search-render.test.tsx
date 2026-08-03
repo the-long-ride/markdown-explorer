@@ -287,7 +287,7 @@ describe('SidebarSearch', () => {
 it('sends matchCase for workspace searches', () => {
   vi.useFakeTimers();
   render(<SidebarSearch isVisible={true} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Match case' }));
+  fireEvent.click(screen.getByRole('button', { name: /Match case/ }));
   fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Read' } });
   act(() => { vi.advanceTimersByTime(300); });
   expect(mockPostMessage).toHaveBeenCalledWith(

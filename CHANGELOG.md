@@ -6,6 +6,9 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ## [v1.6.3] — Unreleased
 
+### Added
+- **Cross-Workspace Search & Live Document Preview**: Full Markdown and HTML document preview panel integrated directly into the Search Overlay modal with support for syntax highlighting, math, diagrams, CSV/TSV table views, and workspace scan scoping.
+
 ### Changed
 - **Search Overlay — Theme-consistent UI**: Standardized all search overlay button border radii (`border-radius: var(--r)`) to match the active theme across all variants. The close modal button is now borderless. Search result rows also use `var(--r)` to align with the theme's rounding style.
 - **Search Overlay — Unified input row height**: Standardized `.search-overlay-input`, case-toggle, and preview-toggle button heights to `32px` across all themes for a uniform input row.

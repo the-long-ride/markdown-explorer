@@ -211,7 +211,7 @@ it('filters current-file matches by case when Match case is enabled', () => {
   fireEvent.change(input, { target: { value: 'Alpha' } });
   act(() => { vi.advanceTimersByTime(50); });
   expect(mdBody.querySelectorAll('mark.mdn-find-mark')).toHaveLength(3);
-  fireEvent.click(screen.getByRole('button', { name: 'Match case' }));
+  fireEvent.click(screen.getByRole('button', { name: /Match case/ }));
   act(() => { vi.advanceTimersByTime(50); });
   expect(mdBody.querySelectorAll('mark.mdn-find-mark')).toHaveLength(1);
 });

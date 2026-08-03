@@ -1,18 +1,35 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchOverlay } from '../../../../ui/src/components/Search/SearchOverlay';
 
-const { postMessage, messageHandlers, onMessage, navigate, scrollPreviewToMatch } = vi.hoisted(() => {
+const { postMessage, messageHandlers, navigate, scrollPreviewToMatch, bridge, appState } = vi.hoisted(() => {
   const handlers = new Set<(message: any) => void>();
+  const postMessageMock = vi.fn();
+  // Keep subscription behavior outside Vitest's mock lifecycle. The project enables
+  // restoreMocks globally, so a vi.fn implementation can be restored/reset between
+  // tests before SearchOverlay registers its message listener.
+  const onMessageHandler = (handler: (message: any) => void) => {
+    handlers.add(handler);
+    return () => handlers.delete(handler);
+  };
   return {
-    postMessage: vi.fn(),
+    postMessage: postMessageMock,
     messageHandlers: handlers,
-    onMessage: vi.fn((handler: (message: any) => void) => {
-      handlers.add(handler);
-      return () => handlers.delete(handler);
-    }),
     navigate: vi.fn(),
     scrollPreviewToMatch: vi.fn(),
+    // Context hooks must return stable references. SearchOverlay effects depend on
+    // bridge and state.fileList; recreating either on every render causes an
+    // effect -> setState -> render loop that eventually exhausts the worker heap.
+    bridge: { postMessage: postMessageMock, onMessage: onMessageHandler },
+    appState: {
+      theme: 'light',
+      settings: { language: 'en', showTitle: true },
+      workspaceName: 'Docs',
+      workspacePath: '/docs',
+      fileList: [
+        { fsPath: '/docs/Alpha.md', relativePath: 'Alpha.md', fileName: 'Alpha.md', title: 'Alpha' },
+      ],
+    },
   };
 });
 
@@ -21,21 +38,11 @@ function emitHostMessage(message: any) {
 }
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
-  useAppState: () => ({
-    state: {
-      settings: { language: 'en', showTitle: true },
-      workspaceName: 'Docs',
-      workspacePath: '/docs',
-      fileList: [
-        { fsPath: '/docs/Alpha.md', relativePath: 'Alpha.md', fileName: 'Alpha.md', title: 'Alpha' },
-      ],
-    },
-    navigate,
-  }),
+  useAppState: () => ({ state: appState, navigate }),
 }));
 
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
-  usePlatform: () => ({ postMessage, onMessage }),
+  usePlatform: () => bridge,
 }));
 
 vi.mock('../../../../ui/src/contexts/contentTabState', () => ({
@@ -72,6 +79,13 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   FolderIcon: () => <span>folder</span>, SearchIcon: () => <span>search</span>,
 }));
 
+// Keep SearchDocumentPreview real because these tests verify preview loading,
+// rendered content, and heading interactions. Stub only the enhancement scheduler,
+// whose dependency graph includes the expensive Markdown enhancement libraries.
+vi.mock('../../../../ui/src/components/Content/scheduleContentEnhancements', () => ({
+  scheduleContentEnhancements: () => () => {},
+}));
+
 const alphaResult = {
   fsPath: '/docs/Alpha.md', relativePath: 'Alpha.md', fileName: 'Alpha.md', title: 'Alpha',
   excerpt: 'Alpha alpha', matchIndex: 0, matchOrdinal: 0,
@@ -92,13 +106,14 @@ describe('SearchOverlay interactions', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     postMessage.mockClear();
-    onMessage.mockClear();
     navigate.mockClear();
     scrollPreviewToMatch.mockClear();
     messageHandlers.clear();
   });
 
   afterEach(() => {
+    cleanup();
+    document.body.innerHTML = '';
     vi.useRealTimers();
   });
 
@@ -106,7 +121,7 @@ describe('SearchOverlay interactions', () => {
     const onWorkspaceSelect = vi.fn();
     render(<SearchOverlay isOpen onClose={vi.fn()} onWorkspaceSelect={onWorkspaceSelect} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Match case' }));
+    fireEvent.click(screen.getByRole('button', { name: /Match case/ }));
     const request = runCurrentWorkspaceSearch();
     expect(request).toEqual(expect.objectContaining({ query: 'Alpha', matchCase: true }));
 
@@ -132,7 +147,7 @@ describe('SearchOverlay interactions', () => {
   });
 
   it('collapses and expands heading sections when clicking heading section headers in preview body', () => {
-    const { container } = render(<SearchOverlay isOpen onClose={vi.fn()} />);
+    render(<SearchOverlay isOpen onClose={vi.fn()} />);
     runCurrentWorkspaceSearch();
 
     const previewRequest = postMessage.mock.calls.find(([message]) => message.command === 'loadSearchPreview')?.[0];
@@ -141,32 +156,39 @@ describe('SearchOverlay interactions', () => {
       filePath: '/docs/Alpha.md', markdownSource: 'Alpha Section',
     }));
 
-    const header = container.querySelector('.mdn-section-header') as HTMLElement;
-    const section = container.querySelector('.mdn-section') as HTMLElement;
+    const header = document.body.querySelector('.mdn-section-header') as HTMLElement;
+    const section = document.body.querySelector('.mdn-section') as HTMLElement;
     expect(header).toBeTruthy();
     expect(section).toBeTruthy();
-    expect(section.classList.contains('is-collapsed')).toBe(false);
+    expect(section).toHaveAttribute('data-expanded', 'true');
+    expect(header).toHaveAttribute('aria-expanded', 'true');
 
     fireEvent.click(header);
-    expect(section.classList.contains('is-collapsed')).toBe(true);
+    expect(section).toHaveAttribute('data-expanded', 'false');
+    expect(header).toHaveAttribute('aria-expanded', 'false');
 
     fireEvent.click(header);
-    expect(section.classList.contains('is-collapsed')).toBe(false);
+    expect(section).toHaveAttribute('data-expanded', 'true');
+    expect(header).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('hides the preview and exposes per-result tooltip buttons when Preview is off', () => {
     const onWorkspaceSelect = vi.fn();
-    const { container } = render(<SearchOverlay isOpen onClose={vi.fn()} onWorkspaceSelect={onWorkspaceSelect} />);
+    render(<SearchOverlay isOpen onClose={vi.fn()} onWorkspaceSelect={onWorkspaceSelect} />);
     runCurrentWorkspaceSearch();
 
-    expect(container.querySelector('.search-overlay-preview')).not.toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
-    expect(container.querySelector('.search-overlay-preview')).toBeNull();
+    expect(document.body.querySelector('.search-overlay-preview')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Preview - On' }));
+    expect(document.body.querySelector('.search-overlay-preview')).toBeNull();
 
     const openButtons = screen.getAllByRole('button', { name: 'Open result' });
     expect(openButtons).toHaveLength(1);
     fireEvent.click(openButtons[0]);
     expect(onWorkspaceSelect).toHaveBeenCalledWith(expect.objectContaining({ fsPath: '/docs/Alpha.md' }), 'Alpha', false);
+
+    // SearchOverlay persists this toggle at module scope. Restore it so later preview
+    // tests do not inherit Preview=false from this test.
+    fireEvent.click(screen.getByRole('button', { name: 'Preview - Off' }));
   });
 
   it('keeps the active query when workspace indexes change and enables newly added workspaces', () => {
@@ -225,13 +247,14 @@ describe('SearchOverlay preview stability during scan', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     postMessage.mockClear();
-    onMessage.mockClear();
     navigate.mockClear();
     scrollPreviewToMatch.mockClear();
     messageHandlers.clear();
   });
 
   afterEach(() => {
+    cleanup();
+    document.body.innerHTML = '';
     vi.useRealTimers();
   });
 
@@ -246,16 +269,14 @@ describe('SearchOverlay preview stability during scan', () => {
     expect(request).toBeTruthy();
     postMessage.mockClear();
 
-    // First result batch arrives → selectedResult stabilizes via useDeferredValue
+    // First result batch arrives → selectedResult stabilizes via useMemo
     act(() => emitHostMessage({
       command: 'workspaceSearchResults',
       requestId: request.requestId,
       results: [alphaResult],
     }));
 
-    // useDeferredValue defers updates; run pending microtasks/timers to let it flush
-    act(() => { vi.runAllTicks(); });
-    act(() => { vi.advanceTimersByTime(0); });
+    act(() => { vi.advanceTimersByTime(50); });
 
     // Should have fired exactly ONE loadSearchPreview for the selected file
     const previewCalls = postMessage.mock.calls.filter(([msg]) => msg.command === 'loadSearchPreview');
@@ -283,8 +304,7 @@ describe('SearchOverlay preview stability during scan', () => {
       requestId: searchRequest.requestId,
       results: [itemA],
     }));
-    act(() => { vi.runAllTicks(); });
-    act(() => { vi.advanceTimersByTime(0); });
+    act(() => { vi.advanceTimersByTime(50); });
 
     // Batch 2: second result arrives while scan still running
     act(() => emitHostMessage({
@@ -292,8 +312,7 @@ describe('SearchOverlay preview stability during scan', () => {
       requestId: searchRequest.requestId,
       results: [itemB],
     }));
-    act(() => { vi.runAllTicks(); });
-    act(() => { vi.advanceTimersByTime(0); });
+    act(() => { vi.advanceTimersByTime(50); });
 
     // Scan done
     act(() => emitHostMessage({
@@ -302,8 +321,7 @@ describe('SearchOverlay preview stability during scan', () => {
       done: true,
       results: [],
     }));
-    act(() => { vi.runAllTicks(); });
-    act(() => { vi.advanceTimersByTime(0); });
+    act(() => { vi.advanceTimersByTime(50); });
 
     // Preview must have been requested at most once per unique selected item,
     // not once per batch. With stable deferral only 1 loadSearchPreview fires
@@ -318,9 +336,6 @@ describe('SearchOverlay preview stability during scan', () => {
       excerpt: 'Beta beta', matchIndex: 0, matchOrdinal: 0,
     };
 
-    // Mock two results in the file list for current workspace search
-    vi.mocked(vi.importActual).mockResolvedValue({});
-
     render(<SearchOverlay isOpen onClose={vi.fn()} />);
     fireEvent.change(screen.getByRole('textbox', { name: 'Search query' }), { target: { value: 'Alpha' } });
     act(() => { vi.advanceTimersByTime(200); });
@@ -331,15 +346,14 @@ describe('SearchOverlay preview stability during scan', () => {
       requestId: request.requestId,
       results: [alphaResult, betaResult],
     }));
-    act(() => { vi.runAllTicks(); act(() => { vi.advanceTimersByTime(0); }); });
+    act(() => { vi.advanceTimersByTime(50); });
     postMessage.mockClear();
 
     // Manually click the Beta result row to switch selection
     const options = screen.getAllByRole('option');
     if (options.length > 1) {
       fireEvent.click(options[1]);
-      act(() => { vi.runAllTicks(); });
-      act(() => { vi.advanceTimersByTime(0); });
+      act(() => { vi.advanceTimersByTime(50); });
 
       // A new loadSearchPreview must fire for Beta
       const newPreviewCalls = postMessage.mock.calls.filter(([msg]) => msg.command === 'loadSearchPreview');

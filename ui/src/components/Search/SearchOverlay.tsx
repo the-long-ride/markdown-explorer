@@ -265,7 +265,7 @@ export function SearchOverlay({
       command: 'searchAcrossWorkspaces', requestId, query, matchCase, tabIds: enabledWorkspaceIds,
     }), 160);
     return () => window.clearTimeout(handle);
-  }, [bridge, crossTabItems, enabledWorkspaceIds, enabledWorkspaceKey, hasCrossTabSearch, isOpen, matchCase, query, trimmedQuery.length]);
+  }, [bridge, crossTabItems, enabledWorkspaceKey, hasCrossTabSearch, isOpen, matchCase, query, trimmedQuery.length]);
 
   useEffect(() => {
     if (!isOpen || !hasCrossTabSearch || !crossTabItems?.length) return;
