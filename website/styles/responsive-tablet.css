@@ -160,11 +160,16 @@ html, body {
   }
 
   .feature-card.wide img {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
     height: 300px;
     object-fit: cover;
     object-position: top left;
+  }
+
+  .feature-card.wide div,
+  .feature-card.wide .feature-card-desc {
+    padding: 1rem 0.6rem 0.85rem;
+    border-left: 0;
+    border-top: 0;
   }
 
   .split {
@@ -346,5 +351,24 @@ html, body {
     box-sizing: border-box;
     padding: 0.65rem 0.75rem;
     font-size: 0.88rem;
+  }
+
+  /* Single-Column Full-Width Vertical Stacking */
+  .feature-grid,
+  .gallery-grid,
+  .download-grid,
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-item.large {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .gallery-item.large img,
+  .gallery-item img {
+    height: auto;
+    min-height: 0;
   }
 }

@@ -26,15 +26,17 @@
       const accentColor = getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim() || "#ff8e30";
       const hex = accentColor.startsWith("#") ? accentColor.slice(1) : "ff8e30";
       const [r, g, b] = [0, 2, 4].map((start) => parseInt(hex.substring(start, start + 2), 16) || [255, 142, 48][start / 2]);
-      const gap = 36, cols = Math.ceil(pageCanvas.width / gap) + 1, rows = Math.ceil(pageCanvas.height / gap) + 1;
+      const isMobile = window.innerWidth <= 768;
+      const gap = isMobile ? 48 : 36;
+      const cols = Math.ceil(pageCanvas.width / gap) + 1, rows = Math.ceil(pageCanvas.height / gap) + 1;
       for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
         const x0 = i * gap, y0 = j * gap, dx = mouse.x - x0, dy = mouse.y - y0, dist = Math.sqrt(dx * dx + dy * dy);
-        const activeRadius = 150 + mouse.speed * 80;
+        const activeRadius = isMobile ? 80 : 150 + mouse.speed * 80;
         const factor = mouse.hasMoved && dist < activeRadius ? (activeRadius - dist) / activeRadius : 0;
-        const pull = factor * 5.5 * (1 + mouse.speed * 0.8);
+        const pull = factor * (isMobile ? 1.5 : 5.5) * (1 + mouse.speed * 0.8);
         const shiftX = factor ? (dx / dist) * pull : 0, shiftY = factor ? (dy / dist) * pull : 0;
-        const size = 1 + factor * 2 * (1 + mouse.speed * 0.5);
-        const alpha = 0.05 + factor * 0.25 * (1 + mouse.speed * 0.6);
+        const size = 1 + factor * (isMobile ? 0.8 : 2) * (1 + mouse.speed * 0.5);
+        const alpha = (isMobile ? 0.035 : 0.05) + factor * (isMobile ? 0.1 : 0.25) * (1 + mouse.speed * 0.6);
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
         ctx.beginPath();
         ctx.arc(x0 + shiftX, y0 + shiftY, size, 0, Math.PI * 2);
@@ -120,7 +122,7 @@
 
     const moveDrag = (pageX) => {
       if (!isDragging) return;
-      const walk = (pageX - startX) * 1.35;
+      const walk = (pageX - startX) * 1.0;
       capGrid.scrollLeft = scrollLeft - walk;
       velocity = pageX - lastX;
       lastX = pageX;
@@ -131,12 +133,13 @@
       if (!isDragging) return;
       isDragging = false;
       capGrid.classList.remove("is-dragging");
-      if (Math.abs(velocity) > 0.8) {
-        let currentVel = velocity * 8;
+      if (Math.abs(velocity) > 0.6) {
+        const clampedVel = Math.max(-14, Math.min(14, velocity * 2.6));
+        let currentVel = clampedVel;
         const coast = () => {
           if (Math.abs(currentVel) < 0.4 || isDragging) return;
           capGrid.scrollLeft -= currentVel;
-          currentVel *= 0.92;
+          currentVel *= 0.88;
           checkLoop();
           animationFrameId = requestAnimationFrame(coast);
         };

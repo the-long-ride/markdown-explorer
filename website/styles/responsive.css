@@ -103,6 +103,11 @@
   /* Less Content & Compact Cards in Capabilities Section */
   .capabilities-grid {
     gap: 0.75rem;
+    box-shadow: none;
+  }
+
+  .cap-nav-btn {
+    display: none !important;
   }
 
   .cap-card {
@@ -182,6 +187,7 @@
   }
 
   .gallery-item.large {
+    grid-column: auto;
     grid-row: auto;
   }
 
