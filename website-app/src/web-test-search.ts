@@ -20,8 +20,13 @@ export function makeExcerpt(text: string, index: number, matchLength: number): s
   return parts.join(' ').trim();
 }
 
-export function searchVirtualFiles(query: string, limit = 80): unknown[] {
-  const q = query.trim().toLowerCase();
+export function searchVirtualFiles(
+  query: string,
+  limit = 80,
+  options: { matchCase?: boolean } = {},
+): unknown[] {
+  const matchCase = options.matchCase === true;
+  const q = matchCase ? query.trim() : query.trim().toLowerCase();
   if (!q || q.length < 2) return [];
 
   const results: Array<{
@@ -35,25 +40,30 @@ export function searchVirtualFiles(query: string, limit = 80): unknown[] {
 
   for (const file of virtualFiles) {
     const raw = getVirtualContent(file.relativePath) ?? '';
-    const haystack = prepareHaystack(raw);
-    const titleScore = normalizeForSearch(file.title).includes(q) ? 5 : 0;
-    const fileScore = normalizeForSearch(file.fileName).includes(q) ? 4 : 0;
+    const haystack = matchCase ? null : prepareHaystack(raw);
+    const titleValue = matchCase ? file.title : normalizeForSearch(file.title);
+    const fileValue = matchCase ? file.fileName : normalizeForSearch(file.fileName);
+    const titleScore = titleValue.includes(q) ? 5 : 0;
+    const fileScore = fileValue.includes(q) ? 4 : 0;
     let ordinal = 0;
     let nextNormIndex = 0;
 
     while (results.length < limit * 2) {
-      const result = haystack.indexOfNormalized(q, nextNormIndex);
-      if (!result) break;
+      const exactIndex = matchCase ? raw.indexOf(q, nextNormIndex) : -1;
+      const normalizedResult = matchCase ? null : haystack?.indexOfNormalized(q, nextNormIndex);
+      if (matchCase ? exactIndex < 0 : !normalizedResult) break;
+      const matchIndex = matchCase ? exactIndex : normalizedResult!.match.index;
+      const matchLength = matchCase ? q.length : normalizedResult!.match.matchLength;
       results.push({
         file,
         score: titleScore + fileScore + 3 - Math.min(ordinal, 20) / 100,
-        excerpt: makeExcerpt(raw, result.match.index, result.match.matchLength),
-        matchIndex: result.match.index,
-        matchLength: result.match.matchLength,
+        excerpt: makeExcerpt(raw, matchIndex, matchLength),
+        matchIndex,
+        matchLength,
         matchOrdinal: ordinal,
       });
       ordinal++;
-      nextNormIndex = result.nextNormIndex;
+      nextNormIndex = matchCase ? matchIndex + matchLength : normalizedResult!.nextNormIndex;
       if (ordinal >= 8) break;
     }
 

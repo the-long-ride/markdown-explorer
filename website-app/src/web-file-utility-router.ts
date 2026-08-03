@@ -19,6 +19,7 @@ async function searchSingleFile(
   query: string,
   handle: FileSystemFileHandle,
   item: MdFile,
+  matchCase = false,
 ): Promise<unknown[]> {
   const file = await handle.getFile();
   const raw = await file.text();
@@ -27,27 +28,33 @@ async function searchSingleFile(
   const title = item.title;
   const fileName = item.fileName;
   const relativePath = item.relativePath;
-  const titleScore = normalizeForSearch(title).includes(query) ? 5 : 0;
-  const fileNameScore = normalizeForSearch(fileName).includes(query) ? 4 : 0;
+  const includesNeedle = (value: string) => matchCase
+    ? value.includes(query)
+    : normalizeForSearch(value).includes(query);
+  const titleScore = includesNeedle(title) ? 5 : 0;
+  const fileNameScore = includesNeedle(fileName) ? 4 : 0;
   const baseScore = titleScore + fileNameScore;
-  let nextNormIndex = 0;
+  let nextSearchIndex = 0;
   let ordinal = 0;
 
   while (results.length < 8) {
-    const result = haystack.indexOfNormalized(query, nextNormIndex);
-    if (!result) break;
+    const rawIndex = matchCase ? raw.indexOf(query, nextSearchIndex) : -1;
+    const normalizedResult = matchCase ? null : haystack.indexOfNormalized(query, nextSearchIndex);
+    if (matchCase ? rawIndex === -1 : !normalizedResult) break;
+    const matchIndex = matchCase ? rawIndex : normalizedResult!.match.index;
+    const matchLength = matchCase ? query.length : normalizedResult!.match.matchLength;
     results.push({
       ...item,
       title,
       fileName,
       relativePath,
-      excerpt: makeExcerpt(raw, result.match.index, result.match.matchLength),
-      matchIndex: result.match.index,
+      excerpt: makeExcerpt(raw, matchIndex, matchLength),
+      matchIndex,
       matchOrdinal: ordinal,
-      matchLength: result.match.matchLength,
+      matchLength,
     });
     ordinal += 1;
-    nextNormIndex = result.nextNormIndex;
+    nextSearchIndex = matchCase ? matchIndex + matchLength : normalizedResult!.nextNormIndex;
   }
 
   if (results.length === 0 && baseScore > 0) {
@@ -73,15 +80,17 @@ export async function handleWebFileUtilityMessage(
 
   switch (msg.command) {
     case 'searchWorkspace': {
-      const query = String(msg.query || '').trim().toLowerCase();
+      const rawQuery = String(msg.query || '').trim();
+      const matchCase = Boolean(msg.matchCase);
+      const query = matchCase ? rawQuery : normalizeForSearch(rawQuery);
       const searchIndex = deps.getSearchIndex();
       const singleFileHandle = deps.getSingleFileHandle();
       if (searchIndex) {
-        const results = await searchIndex.search(query, flatList, 80);
+        const results = await searchIndex.search(query, flatList, 80, { matchCase });
         deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results });
       } else if (singleFileHandle && flatList.length > 0) {
         try {
-          const results = await searchSingleFile(query, singleFileHandle, flatList[0]);
+          const results = await searchSingleFile(query, singleFileHandle, flatList[0], matchCase);
           deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results });
         } catch (error) {
           console.error('Failed to search single file:', error);
@@ -89,6 +98,28 @@ export async function handleWebFileUtilityMessage(
         }
       } else {
         deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results: [] });
+      }
+      return true;
+    }
+    case 'loadSearchPreview': {
+      const item = flatList.find((candidate) => candidate.fsPath === String(msg.filePath || ''));
+      if (!item) {
+        deps.send({ command: 'searchPreviewResult', requestId: msg.requestId, ok: false, filePath: msg.filePath, reason: 'outside-workspace' });
+        return true;
+      }
+      try {
+        const searchIndex = deps.getSearchIndex();
+        const singleFileHandle = deps.getSingleFileHandle();
+        const markdownSource = searchIndex
+          ? await searchIndex.read(item.relativePath)
+          : singleFileHandle && flatList[0]?.fsPath === item.fsPath
+            ? await (await singleFileHandle.getFile()).text()
+            : null;
+        deps.send(markdownSource === null
+          ? { command: 'searchPreviewResult', requestId: msg.requestId, ok: false, filePath: item.fsPath, reason: 'missing' }
+          : { command: 'searchPreviewResult', requestId: msg.requestId, ok: true, filePath: item.fsPath, markdownSource });
+      } catch {
+        deps.send({ command: 'searchPreviewResult', requestId: msg.requestId, ok: false, filePath: item.fsPath, reason: 'missing' });
       }
       return true;
     }

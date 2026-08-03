@@ -675,7 +675,7 @@ describe('createSearchIndex', () => {
       relativePath: 'test.md',
       title: 'Test',
     }]);
-    expect(results.length).toBe(1);
+    expect(results.length).toBe(0);
   });
 
   test('search with valid query enters else of !query check', () => {

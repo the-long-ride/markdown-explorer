@@ -166,7 +166,7 @@ function registerRuntimeCommandHandlers(context) {
     });
   }
 
-  const { handleSearchAcrossWorkspaces, handleSearchWorkspace,
+  const { handleSearchAcrossWorkspaces, handleSearchWorkspace, handleLoadSearchPreview,
     handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes } =
     createRuntimeCommandSearchHandlers({ state, fs, ensureHeavyModules, ensureSearchIndex,
       ensureCrossTabSearchWorker, scanWorkspaceData, sendHostMessage });
@@ -340,7 +340,7 @@ function registerRuntimeCommandHandlers(context) {
 
 
 
-  return { handleReady, handleOpenFolder, handleOpenFile, handleOpenPath, handleActivateWorkspace, handleSearchAcrossWorkspaces, handleSearchWorkspace, handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes, handleConfirmOpenPath, handleOpenRecent, handleDeleteRecentWorkspace, handleReplaceRecentWorkspaces, handleZoomIn, handleZoomOut, handleNavigate, handleRefresh, handleSetDocumentConversion, handleDownloadUpdate, handleScheduleDownloadedUpdate, handleRestartAndApplyUpdate, handleCloseWorkspace, handleCancelWorkspaceScan, handleCancelAllWorkspaceScans };
+  return { handleReady, handleOpenFolder, handleOpenFile, handleOpenPath, handleActivateWorkspace, handleSearchAcrossWorkspaces, handleSearchWorkspace, handleLoadSearchPreview, handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes, handleConfirmOpenPath, handleOpenRecent, handleDeleteRecentWorkspace, handleReplaceRecentWorkspaces, handleZoomIn, handleZoomOut, handleNavigate, handleRefresh, handleSetDocumentConversion, handleDownloadUpdate, handleScheduleDownloadedUpdate, handleRestartAndApplyUpdate, handleCloseWorkspace, handleCancelWorkspaceScan, handleCancelAllWorkspaceScans };
 }
 
 module.exports = { registerRuntimeCommandHandlers };

@@ -15,8 +15,9 @@ export interface OpenFileMessage extends WorkspaceOperationMetadata { readonly c
 export interface OpenFileHandleMessage extends WorkspaceOperationMetadata { readonly command: 'openFileHandle'; readonly handle?: any; }
 export interface OpenPathMessage extends WorkspaceOperationMetadata { readonly command: 'openPath'; readonly path: string; readonly openFirstFile?: boolean; }
 export interface ActivateWorkspaceMessage extends WorkspaceOperationMetadata { readonly command: 'activateWorkspace'; readonly workspacePath: string; readonly filePath?: string; readonly openFirstFile?: boolean; }
-export interface CrossTabSearchMessage { readonly command: 'searchAcrossWorkspaces'; readonly requestId: string; readonly query: string; readonly items?: readonly CrossTabSearchResult[]; }
-export interface WorkspaceSearchMessage { readonly command: 'searchWorkspace'; readonly requestId: string; readonly query: string; readonly items: readonly WorkspaceSearchResult[]; }
+export interface CrossTabSearchMessage { readonly command: 'searchAcrossWorkspaces'; readonly requestId: string; readonly query: string; readonly matchCase?: boolean; readonly tabIds?: readonly string[]; readonly items?: readonly CrossTabSearchResult[]; }
+export interface SearchPreviewRequestMessage { readonly command: 'loadSearchPreview'; readonly requestId: string; readonly filePath: string; readonly tabId?: string; }
+export interface WorkspaceSearchMessage { readonly command: 'searchWorkspace'; readonly requestId: string; readonly query: string; readonly matchCase?: boolean; readonly items: readonly WorkspaceSearchResult[]; }
 export interface IndexWorkspaceSearchItemsMessage { readonly command: 'indexWorkspaceSearchItems'; readonly items?: readonly CrossTabSearchResult[]; }
 export interface LoadWorkspaceSearchIndexesMessage { readonly command: 'loadWorkspaceSearchIndexes'; readonly tabs: readonly { readonly tabId: string; readonly workspacePath: string }[]; }
 export interface ConfirmOpenPathMessage { readonly command: 'confirmOpenPath'; readonly path: string; }
@@ -45,7 +46,7 @@ export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage
   | CopyCodeMessage | RefreshMessage | OpenFolderMessage | OpenFileMessage
   | OpenFileHandleMessage | OpenPathMessage | ActivateWorkspaceMessage | CrossTabSearchMessage
-  | WorkspaceSearchMessage | IndexWorkspaceSearchItemsMessage | LoadWorkspaceSearchIndexesMessage
+  | SearchPreviewRequestMessage | WorkspaceSearchMessage | IndexWorkspaceSearchItemsMessage | LoadWorkspaceSearchIndexesMessage
   | ConfirmOpenPathMessage | OpenRecentWorkspaceMessage | CloseWorkspaceMessage
   | CancelWorkspaceScanMessage | CancelAllWorkspaceScansMessage | DeleteRecentWorkspaceMessage
   | ReplaceRecentWorkspacesMessage | ZoomInMessage | ZoomOutMessage | WindowMinimizeMessage

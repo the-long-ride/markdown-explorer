@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T12:01:00+07:00'
 name: Test Strategy
 topic: Test layers, ownership, and regression expectations
 document_type: quality
@@ -48,6 +48,7 @@ keywords:
 - Security changes require negative tests for blocked path/scheme/network behavior.
 - Race/cancellation fixes require stale-result regression tests.
 - UI tests assert semantics and behavior, not fragile visual snapshots alone.
+- Search changes require coverage for default insensitive matching, exact-case propagation, full-file preview loading/positioning, Preview toggle behavior, workspace checkbox filtering, separator resizing contracts, tooltip arrow navigation, and translated labels.
 
 ## Verification order
 
@@ -55,6 +56,20 @@ keywords:
 2. Relevant project suite.
 3. Contract tests.
 4. Full suite/build for release changes.
+
+## Search regression matrix
+
+Dependency-light contracts: `tests/node/search-case-runtime.test.mjs`, `tests/node/search-ui-contracts.test.mjs`, `tests/node/search-preview-runtime.test.mjs`, and `tests/node/search-preview-host-contracts.test.mjs`.
+
+| Boundary | Required proof |
+|---|---|
+| Current file | Toggle changes highlighted DOM match count and navigation. |
+| Current workspace | `matchCase` reaches host search and exact metadata/content results. |
+| Cross-tab | Worker receives original query casing plus checked `tabIds`, and excludes unchecked workspaces. |
+| Preview runtime | Every host validates the indexed path and returns full Markdown/text source or a bounded failure. |
+| Modal interaction | Row click selects; Preview defaults on and positions the rendered file; visible tooltip arrow opens. |
+| Layout | Both separators expose translated labels and preserve bounded modal columns; active result has no rail. |
+| Localization | Every key in the shared `search` domain exists for all nine locales. |
 
 ## Source traceability
 

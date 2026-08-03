@@ -7,25 +7,67 @@ function createRuntimeCommandSearchHandlers({
   scanWorkspaceData,
   sendHostMessage,
 }) {
+  const indexedSearchPaths = new Set();
+
   function handleSearchAcrossWorkspaces(msg) {
     ensureHeavyModules();
-    ensureCrossTabSearchWorker().search({
+    const request = {
       requestId: msg.requestId,
-      query: String(msg.query || "").trim().toLowerCase(),
-    });
+      query: String(msg.query || "").trim(),
+      matchCase: Boolean(msg.matchCase),
+    };
+    if (Array.isArray(msg.tabIds)) request.tabIds = msg.tabIds.map(String);
+    ensureCrossTabSearchWorker().search(request);
   }
 
   function handleSearchWorkspace(msg) {
     ensureHeavyModules();
     const idx = ensureSearchIndex();
-    const query = String(msg.query || "").trim().toLowerCase();
+    const query = String(msg.query || "").trim();
     const items = Array.isArray(msg.items) && msg.items.length > 0 ? msg.items : state.flatList;
-    sendHostMessage({ command: "workspaceSearchResults", requestId: msg.requestId, results: idx.search(query, items, 10000) });
+    sendHostMessage({
+      command: "workspaceSearchResults",
+      requestId: msg.requestId,
+      results: idx.search(query, items, 10000, { matchCase: Boolean(msg.matchCase) }),
+    });
   }
 
   function handleIndexWorkspaceSearchItems(msg) {
     ensureHeavyModules();
-    ensureCrossTabSearchWorker().setItems(Array.isArray(msg.items) ? msg.items : []);
+    const items = Array.isArray(msg.items) ? msg.items : [];
+    indexedSearchPaths.clear();
+    for (const item of items) {
+      if (item?.fsPath) indexedSearchPaths.add(String(item.fsPath));
+    }
+    ensureSearchIndex().prime(items);
+    ensureCrossTabSearchWorker().setItems(items);
+  }
+
+  function handleLoadSearchPreview(msg) {
+    ensureHeavyModules();
+    const requestId = String(msg.requestId || '');
+    const filePath = String(msg.filePath || '');
+    const respond = (payload) => sendHostMessage({
+      command: 'searchPreviewResult',
+      requestId,
+      filePath,
+      ...payload,
+    });
+    const isCurrentWorkspaceFile = state.flatList.some((item) => String(item?.fsPath || '') === filePath);
+    if (!requestId || !filePath || (!isCurrentWorkspaceFile && !indexedSearchPaths.has(filePath))) {
+      respond({ ok: false, reason: 'outside-workspace' });
+      return;
+    }
+    try {
+      const markdownSource = ensureSearchIndex().read(filePath);
+      if (markdownSource === null) {
+        respond({ ok: false, reason: fs.existsSync(filePath) ? 'unsupported' : 'missing' });
+        return;
+      }
+      respond({ ok: true, markdownSource });
+    } catch {
+      respond({ ok: false, reason: 'unreadable' });
+    }
   }
 
   function handleLoadWorkspaceSearchIndexes(msg) {
@@ -57,7 +99,7 @@ function createRuntimeCommandSearchHandlers({
     setTimeout(processNext, 50);
   }
 
-  return { handleSearchAcrossWorkspaces, handleSearchWorkspace,
+  return { handleSearchAcrossWorkspaces, handleSearchWorkspace, handleLoadSearchPreview,
     handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes };
 }
 

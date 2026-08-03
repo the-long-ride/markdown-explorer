@@ -125,6 +125,15 @@ export interface WorkspaceSearchResultsMessage {
   readonly results: readonly WorkspaceSearchResult[];
 }
 
+export interface SearchPreviewResultMessage {
+  readonly command: 'searchPreviewResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly filePath: string;
+  readonly markdownSource?: string;
+  readonly reason?: 'outside-workspace' | 'missing' | 'unreadable' | 'unsupported' | 'too-large';
+}
+
 export interface WorkspaceFilesChangedMessage {
   readonly command: 'workspaceFilesChanged';
   readonly fileList: MdFile[];
@@ -145,6 +154,7 @@ export type HostMessage =
   | NavNotFoundMessage
   | SetLoadingMessage
   | WorkspaceSearchResultsMessage
+  | SearchPreviewResultMessage
   | WorkspaceFilesChangedMessage
   | CurrentFileChangedMessage;
 
@@ -174,10 +184,18 @@ export interface RefreshMessage {
   readonly command: 'refresh';
 }
 
+export interface SearchPreviewRequestMessage {
+  readonly command: 'loadSearchPreview';
+  readonly requestId: string;
+  readonly filePath: string;
+  readonly tabId?: string;
+}
+
 export interface WorkspaceSearchMessage {
   readonly command: 'searchWorkspace';
   readonly requestId: string;
   readonly query: string;
+  readonly matchCase?: boolean;
   readonly items?: readonly WorkspaceSearchResult[];
 }
 
@@ -271,6 +289,7 @@ export type WebviewMessage =
   | WebviewReadyMessage
   | CopyCodeMessage
   | RefreshMessage
+  | SearchPreviewRequestMessage
   | WorkspaceSearchMessage
   | OpenFolderMessage
   | OpenFileMessage

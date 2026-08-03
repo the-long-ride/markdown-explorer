@@ -282,7 +282,7 @@
 }
 .mdn-pre::-webkit-scrollbar-thumb {
   background: var(--bd-s);
-  border-radius: 2px;
+  border-radius: var(--r-s, var(--r));
 }
 .mdn-pre code {
   display: block;

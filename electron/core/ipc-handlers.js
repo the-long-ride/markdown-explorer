@@ -25,6 +25,9 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "searchWorkspace":
         handlers.searchWorkspace(msg);
         break;
+      case "loadSearchPreview":
+        handlers.loadSearchPreview(msg);
+        break;
       case "indexWorkspaceSearchItems":
         handlers.indexWorkspaceSearchItems(msg);
         break;

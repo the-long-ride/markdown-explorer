@@ -22,7 +22,7 @@ body {
 }
 *::-webkit-scrollbar-thumb {
   background: var(--bd-s);
-  border-radius: 3px;
+  border-radius: var(--r-s, var(--r));
 }
 *::-webkit-scrollbar-track {
   background: transparent;

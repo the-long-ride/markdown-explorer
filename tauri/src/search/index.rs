@@ -73,22 +73,56 @@ fn should_skip_search_item(item: &MdFile) -> bool {
         || !is_known_supported_file_path(&item.fs_path)
 }
 
-fn score_item_name(title: &str, file_name: &str, relative_path: &str, query: &str) -> i32 {
-    let title_score = if normalize_for_search(title).contains(query) {
-        5
+fn resolve_search_needle(query: &str, match_case: bool) -> Option<String> {
+    let trimmed = query.trim();
+    if trimmed.chars().count() < 2 {
+        return None;
+    }
+    let needle = if match_case {
+        trimmed.to_string()
     } else {
-        0
+        normalize_for_search(trimmed)
     };
-    let file_name_score = if normalize_for_search(file_name).contains(query) {
-        4
+    (!needle.is_empty()).then_some(needle)
+}
+
+fn contains_search_value(value: &str, needle: &str, match_case: bool) -> bool {
+    if match_case {
+        value.contains(needle)
     } else {
-        0
-    };
-    let path_score = if normalize_for_search(relative_path).contains(query) {
-        2
-    } else {
-        0
-    };
+        normalize_for_search(value).contains(needle)
+    }
+}
+
+fn find_next_match(
+    entry: &SearchEntry,
+    needle: &str,
+    match_case: bool,
+    from_index: usize,
+) -> Option<(usize, usize, usize)> {
+    if match_case {
+        let relative = entry.raw.get(from_index..)?.find(needle)?;
+        let index = from_index + relative;
+        return Some((index, needle.len(), index + needle.len()));
+    }
+    let result = entry.haystack.index_of_normalized(needle, from_index)?;
+    Some((
+        result.hit.index,
+        result.hit.match_length,
+        result.next_norm_index,
+    ))
+}
+
+fn score_item_name(
+    title: &str,
+    file_name: &str,
+    relative_path: &str,
+    query: &str,
+    match_case: bool,
+) -> i32 {
+    let title_score = if contains_search_value(title, query, match_case) { 5 } else { 0 };
+    let file_name_score = if contains_search_value(file_name, query, match_case) { 4 } else { 0 };
+    let path_score = if contains_search_value(relative_path, query, match_case) { 2 } else { 0 };
     title_score + file_name_score + path_score
 }
 
@@ -183,6 +217,10 @@ impl SearchIndex {
         Some(entry)
     }
 
+    pub fn read(&self, file_path: &str) -> Option<String> {
+        self.get_entry(file_path).map(|entry| entry.raw)
+    }
+
     pub fn prime(&self, items: &[MdFile]) {
         let paths = items
             .iter()
@@ -203,14 +241,19 @@ impl SearchIndex {
         items: &[MdFile],
         limit: usize,
     ) -> Vec<WorkspaceSearchResult> {
-        let norm_query = if query.len() < 2 {
+        self.search_with_case(query, items, limit, false)
+    }
+
+    pub fn search_with_case(
+        &self,
+        query: &str,
+        items: &[MdFile],
+        limit: usize,
+        match_case: bool,
+    ) -> Vec<WorkspaceSearchResult> {
+        let Some(needle) = resolve_search_needle(query, match_case) else {
             return vec![];
-        } else {
-            normalize_for_search(query)
         };
-        if norm_query.is_empty() {
-            return vec![];
-        }
         let mut scored = Vec::new();
         for item in items {
             if should_skip_search_item(item) {
@@ -234,14 +277,14 @@ impl SearchIndex {
             } else {
                 item.title.clone()
             };
-            let base_score = score_item_name(&title, &file_name, &relative_path, &norm_query);
+            let base_score = score_item_name(&title, &file_name, &relative_path, &needle, match_case);
             if can_search_file_contents(&item.fs_path) {
                 if let Some(entry) = self.get_entry(&item.fs_path) {
                     let mut next_index = 0;
                     let mut found_any = false;
                     for ordinal in 0..MAX_SYNC_MATCHES_PER_FILE {
-                        let Some(match_result) =
-                            entry.haystack.index_of_normalized(&norm_query, next_index)
+                        let Some((match_index, match_length, next_search_index)) =
+                            find_next_match(&entry, &needle, match_case, next_index)
                         else {
                             break;
                         };
@@ -249,19 +292,19 @@ impl SearchIndex {
                         let mut result = make_result(item, &title, &file_name, &relative_path);
                         result.excerpt = Some(make_search_excerpt(
                             &entry.raw,
-                            match_result.hit.index,
-                            match_result.hit.match_length,
+                            match_index,
+                            match_length,
                         ));
-                        result.match_index = Some(match_result.hit.index);
+                        result.match_index = Some(match_index);
                         result.match_ordinal = Some(ordinal);
-                        result.match_length = Some(match_result.hit.match_length);
+                        result.match_length = Some(match_length);
                         result.line_number =
-                            Some(entry.raw[..match_result.hit.index].split('\n').count());
+                            Some(entry.raw[..match_index].split('\n').count());
                         scored.push(ScoredResult {
                             result,
                             score: base_score as f64 + 3.0 - (ordinal.min(20) as f64) / 100.0,
                         });
-                        next_index = match_result.next_norm_index;
+                        next_index = next_search_index;
                     }
                     if found_any {
                         continue;

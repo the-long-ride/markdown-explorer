@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T12:01:00+07:00'
 name: Find in the Current Document
 topic: Use case UC-012
 document_type: use-case
@@ -30,7 +30,7 @@ keywords:
 
 ## Purpose
 
-Search visible rendered text with Unicode-aware matching, keyboard traversal, wrapping, and automatic expansion of hidden sections.
+Search visible rendered text with optional case-sensitive matching, keyboard traversal, wrapping, and automatic expansion of hidden sections.
 
 | Property | Specification |
 |---|---|
@@ -67,7 +67,8 @@ flowchart LR
 | Step | User or event | System processing | Observable result |
 |---:|---|---|---|
 | 1 | Open find panel | Focus query field without losing document state. | Find controls appear. |
-| 2 | Type query | Walk eligible rendered text nodes and normalize Unicode matching. | Match count updates. |
+| 2 | Type query | Walk eligible rendered text nodes using case-insensitive Unicode matching by default. | Match count updates. |
+| 2a | Toggle **Match case** | Re-run the same DOM search with exact casing. | Only exact-case occurrences remain highlighted. |
 | 3 | Select first/current match | Create highlights and selected marker. | Match scrolls into view. |
 | 4 | Press Enter | Advance; wrap after last match. | Next match selected. |
 | 5 | Press Shift+Enter | Move backward; wrap before first. | Previous match selected. |
@@ -86,7 +87,8 @@ flowchart LR
 ## Validation and business rules
 
 - Exclude controls, scripts, styles, iframe, SVG, canvas, line numbers, and table toolbars.
-- Use Unicode-aware comparison.
+- Use Unicode-aware comparison by default.
+- A single **Match case** toggle switches to exact-case comparison without changing the query.
 - Enter and Shift+Enter wrap.
 - Find is local UI behavior and does not search source files.
 
@@ -116,13 +118,14 @@ flowchart LR
 ## Accessibility, security, and performance
 
 - Keep keyboard focus on the active control or newly opened content.
-- Announce asynchronous status through an `aria-live` region.
+- Give every find control a translated accessible name.
 - Reject stale host responses whose operation or request ID no longer matches.
 
 
 ## Acceptance criteria
 
 - [ ] Unicode text is matched consistently.
+- [ ] Match-case mode counts and navigates only exact-case occurrences.
 - [ ] Excluded UI labels do not inflate counts.
 - [ ] Traversal wraps in both directions.
 - [ ] A match in a collapsed section becomes visible.

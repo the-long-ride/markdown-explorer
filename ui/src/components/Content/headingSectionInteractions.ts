@@ -28,11 +28,17 @@ export function createHeadingSectionInteractions({
   stateByFile,
 }: HeadingSectionInteractionOptions): HeadingSectionInteractions {
   const stateKey = currentFile || '__current-document__';
+
+  // Apply initial state without triggering the CSS transform transition.
+  // We briefly mark the body with a flag that disables transitions, then
+  // restore it in the next animation frame so only user-initiated toggles animate.
+  body.classList.add('no-section-transition');
   applyHeadingSectionState(
     body,
     stateByFile.get(stateKey) ?? new Map(),
     defaultExpanded,
   );
+  requestAnimationFrame(() => body.classList.remove('no-section-transition'));
 
   const remember = () => {
     stateByFile.set(stateKey, captureHeadingSectionState(body));

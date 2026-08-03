@@ -7,14 +7,13 @@ impl SearchIndex {
         items: Vec<MdFile>,
         options: IncrementalOptions,
     ) -> IncrementalSummary {
-        let norm_query = normalize_for_search(query);
-        if norm_query.is_empty() || query.len() < 2 {
+        let Some(needle) = resolve_search_needle(query, options.match_case) else {
             return IncrementalSummary {
                 total: 0,
                 truncated: false,
                 cancelled: false,
             };
-        }
+        };
 
         let mut batch = Vec::with_capacity(options.batch_size);
         let mut total = 0;
@@ -51,16 +50,15 @@ impl SearchIndex {
             } else {
                 item.title.clone()
             };
-            let base_score = score_item_name(&title, &file_name, &relative_path, &norm_query);
+            let base_score = score_item_name(&title, &file_name, &relative_path, &needle, options.match_case);
             let mut found_any = false;
 
             if can_search_file_contents(&item.fs_path) {
                 if let Some(entry) = self.get_entry(&item.fs_path) {
-                    let mut next_norm_index = 0;
+                    let mut next_search_index = 0;
                     for ordinal in 0..options.max_matches_per_file {
-                        let Some(result) = entry
-                            .haystack
-                            .index_of_normalized(&norm_query, next_norm_index)
+                        let Some((match_index, match_length, next_index)) =
+                            find_next_match(&entry, &needle, options.match_case, next_search_index)
                         else {
                             break;
                         };
@@ -68,20 +66,20 @@ impl SearchIndex {
                         let mut result_item = make_result(item, &title, &file_name, &relative_path);
                         result_item.excerpt = Some(make_search_excerpt(
                             &entry.raw,
-                            result.hit.index,
-                            result.hit.match_length,
+                            match_index,
+                            match_length,
                         ));
-                        result_item.match_index = Some(result.hit.index);
+                        result_item.match_index = Some(match_index);
                         result_item.match_ordinal = Some(ordinal);
-                        result_item.match_length = Some(result.hit.match_length);
+                        result_item.match_length = Some(match_length);
                         result_item.line_number =
-                            Some(entry.raw[..result.hit.index].split('\n').count());
+                            Some(entry.raw[..match_index].split('\n').count());
                         batch.push(ScoredResult {
                             result: result_item,
                             score: base_score as f64 + 3.0 - (ordinal.min(20) as f64) / 100.0,
                         });
                         total += 1;
-                        next_norm_index = result.next_norm_index;
+                        next_search_index = next_index;
                         if total >= options.max_results {
                             truncated = true;
                             break;
@@ -138,6 +136,7 @@ pub struct IncrementalOptions {
     pub max_results: usize,
     pub max_matches_per_file: usize,
     pub yield_every: usize,
+    pub match_case: bool,
     pub should_cancel: Box<dyn Fn() -> bool + Send + Sync>,
     pub on_batch: Box<dyn Fn(Vec<WorkspaceSearchResult>) + Send + Sync>,
 }
@@ -149,6 +148,7 @@ impl Default for IncrementalOptions {
             max_results: 2000,
             max_matches_per_file: 200,
             yield_every: 25,
+            match_case: false,
             should_cancel: Box::new(|| false),
             on_batch: Box::new(|_| {}),
         }
@@ -355,6 +355,28 @@ mod tests {
             .as_ref()
             .unwrap()
             .contains("stra\u{00DF}e"));
+    }
+
+    #[test]
+    fn search_with_case_matches_only_exact_content_and_metadata() {
+        let root = temp_dir("search-match-case");
+        let file = root.join("ReleaseNotes.md");
+        write(&file, "Alpha alpha ALPHA");
+        let items = vec![make_item(&file, "ReleaseNotes")];
+        let idx = SearchIndex::default();
+
+        let exact = idx.search_with_case("Alpha", &items, 10000, true);
+        assert_eq!(exact.len(), 1);
+        assert_eq!(exact[0].match_index, Some(0));
+
+        let wrong_content_case = idx.search_with_case("alpha", &items, 10000, true);
+        assert_eq!(wrong_content_case.len(), 1);
+        assert_eq!(wrong_content_case[0].match_index, Some(6));
+
+        let exact_name = idx.search_with_case("Release", &items, 10000, true);
+        assert!(!exact_name.is_empty());
+        let wrong_name_case = idx.search_with_case("release", &items, 10000, true);
+        assert!(wrong_name_case.is_empty());
     }
 
     #[test]

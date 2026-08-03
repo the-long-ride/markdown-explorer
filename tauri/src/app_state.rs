@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use parking_lot::RwLock;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Default)]
@@ -17,6 +18,7 @@ pub struct AppStateInner {
     pub flat_list: Vec<crate::workspace::scanner::MdFile>,
     pub search_index: Option<crate::search::index::SearchIndex>,
     pub search_worker: Option<crate::search::worker::SearchWorkerHandle>,
+    pub search_preview_paths: HashSet<String>,
     pub watch_controller: Option<crate::workspace::watch::WorkspaceWatchController>,
     pub runtime_state: RuntimeState,
     pub workspace_scan_generation: u64,

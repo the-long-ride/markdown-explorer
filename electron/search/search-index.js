@@ -33,16 +33,45 @@ function shouldSkipSearchItem(item) {
   return (!item.fsPath || !fs.existsSync(item.fsPath)) || !isKnownSupportedFilePath(item.fsPath);
 }
 
-function scoreItemName(title, fileName, relativePath, normQuery) {
-  const titleScore = normalizeForSearch(String(title)).includes(normQuery) ? 5 : 0;
-  const fileNameScore = normalizeForSearch(String(fileName)).includes(normQuery) ? 4 : 0;
-  const pathScore = normalizeForSearch(String(relativePath)).includes(normQuery) ? 2 : 0;
+function resolveSearchNeedle(query, matchCase = false) {
+  const trimmedQuery = String(query || "").trim();
+  if (trimmedQuery.length < 2) return null;
+  return matchCase ? trimmedQuery : normalizeForSearch(trimmedQuery);
+}
+
+function includesSearchValue(value, needle, matchCase = false) {
+  const candidate = String(value || "");
+  return matchCase
+    ? candidate.includes(needle)
+    : normalizeForSearch(candidate).includes(needle);
+}
+
+function findNextContentMatch(entry, needle, matchCase, fromIndex) {
+  if (matchCase) {
+    const index = entry.raw.indexOf(needle, fromIndex);
+    if (index === -1) return null;
+    return {
+      match: { index, matchLength: needle.length },
+      nextSearchIndex: index + needle.length,
+    };
+  }
+
+  const result = entry.haystack.indexOfNormalized(needle, fromIndex);
+  if (!result) return null;
+  return { match: result.match, nextSearchIndex: result.nextNormIndex };
+}
+
+function scoreItemName(title, fileName, relativePath, needle, matchCase = false) {
+  const titleScore = includesSearchValue(title, needle, matchCase) ? 5 : 0;
+  const fileNameScore = includesSearchValue(fileName, needle, matchCase) ? 4 : 0;
+  const pathScore = includesSearchValue(relativePath, needle, matchCase) ? 2 : 0;
   return titleScore + fileNameScore + pathScore;
 }
 
-function searchItems(query, items, getEntry, limit) {
-  const normQuery = (!query || query.length < 2) ? null : normalizeForSearch(query);
-  if (!normQuery) return [];
+function searchItems(query, items, getEntry, limit, options = {}) {
+  const matchCase = Boolean(options.matchCase);
+  const needle = resolveSearchNeedle(query, matchCase);
+  if (!needle) return [];
 
   const results = [];
   const maxMatchesPerFile = 10000;
@@ -52,21 +81,21 @@ function searchItems(query, items, getEntry, limit) {
     const fileName = item.fileName || path.basename(item.fsPath);
     const relativePath = item.relativePath || fileName;
     const title = item.title || stripKnownExtension(fileName);
-    const baseScore = scoreItemName(title, fileName, relativePath, normQuery);
+    const baseScore = scoreItemName(title, fileName, relativePath, needle, matchCase);
     const contentMatches = [];
 
     try {
       if (canSearchFileContents(item.fsPath)) {
         const entry = getEntry(item.fsPath);
         if (!entry) continue;
-        
-        let nextNormIndex = 0;
+
+        let nextSearchIndex = 0;
         let ordinal = 0;
-        
+
         while (contentMatches.length < maxMatchesPerFile) {
-          const result = entry.haystack.indexOfNormalized(normQuery, nextNormIndex);
+          const result = findNextContentMatch(entry, needle, matchCase, nextSearchIndex);
           if (!result) break;
-          
+
           const textBefore = entry.raw.slice(0, result.match.index);
           const lineNumber = textBefore.split("\n").length;
 
@@ -77,9 +106,9 @@ function searchItems(query, items, getEntry, limit) {
             matchLength: result.match.matchLength,
             lineNumber,
           });
-          
+
           ordinal += 1;
-          nextNormIndex = result.nextNormIndex;
+          nextSearchIndex = result.nextSearchIndex;
         }
       }
     } catch (err) {
@@ -138,10 +167,11 @@ async function searchItemsIncremental(query, items, getEntry, options = {}) {
     yieldEvery = 25,
     shouldCancel = () => false,
     onBatch = () => {},
+    matchCase = false,
   } = options;
 
-  const normQuery = (!query || query.length < 2) ? null : normalizeForSearch(query);
-  if (!normQuery) {
+  const needle = resolveSearchNeedle(query, matchCase);
+  if (!needle) {
     return { total: 0, truncated: false, cancelled: false };
   }
 
@@ -181,20 +211,20 @@ async function searchItemsIncremental(query, items, getEntry, options = {}) {
     const fileName = item.fileName || path.basename(item.fsPath);
     const relativePath = item.relativePath || fileName;
     const title = item.title || stripKnownExtension(fileName);
-    const baseScore = scoreItemName(title, fileName, relativePath, normQuery);
+    const baseScore = scoreItemName(title, fileName, relativePath, needle, matchCase);
     let matchCount = 0;
 
     try {
       if (canSearchFileContents(item.fsPath)) {
         const entry = getEntry(item.fsPath);
         if (entry) {
-          let nextNormIndex = 0;
+          let nextSearchIndex = 0;
           let ordinal = 0;
           let lineNumber = 1;
           let lineCursor = 0;
 
           while (matchCount < maxMatchesPerFile) {
-            const result = entry.haystack.indexOfNormalized(normQuery, nextNormIndex);
+            const result = findNextContentMatch(entry, needle, matchCase, nextSearchIndex);
             if (!result) break;
 
             let nextLineBreak = entry.raw.indexOf("\n", lineCursor);
@@ -221,7 +251,7 @@ async function searchItemsIncremental(query, items, getEntry, options = {}) {
 
             matchCount += 1;
             ordinal += 1;
-            nextNormIndex = result.nextNormIndex;
+            nextSearchIndex = result.nextSearchIndex;
 
             if (await yieldAndCheckCancellation()) {
               flushBatch(pushState.batch, onBatch);
@@ -311,14 +341,19 @@ function createSearchIndex() {
     primeIndex(paths, getEntry, PRIME_BATCH_SIZE, setTimeout);
   }
 
-  function search(query, items, limit = 10000) {
-    return searchItems(query, items, getEntry, limit);
+  function search(query, items, limit = 10000, options = {}) {
+    return searchItems(query, items, getEntry, limit, options);
   }
 
   async function searchIncremental(query, items, options = {}) {
     return searchItemsIncremental(query, items, getEntry, options);
   }
-  return { prime, search, searchIncremental };
+
+  function read(filePath) {
+    return getEntry(filePath)?.raw ?? null;
+  }
+
+  return { prime, search, searchIncremental, read };
 }
 
-module.exports = { createSearchIndex, canSearchFileContents, makeSearchExcerpt, shouldSkipSearchItem, scoreItemName, searchItems, searchItemsIncremental, flushBatch, pushSearchResult, primeIndex };
+module.exports = { createSearchIndex, canSearchFileContents, makeSearchExcerpt, shouldSkipSearchItem, resolveSearchNeedle, includesSearchValue, findNextContentMatch, scoreItemName, searchItems, searchItemsIncremental, flushBatch, pushSearchResult, primeIndex };

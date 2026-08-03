@@ -16,8 +16,25 @@ export async function handleChromeHostUtilityCommand(message: any, context: Chro
   switch (message.command) {
     case 'searchWorkspace': {
       const results = context.searchIndex
-        ? await context.searchIndex.search(normalizeSearchQuery(message.query), context.flatList, 80) : [];
+        ? await context.searchIndex.search(
+            normalizeSearchQuery(message.query, Boolean(message.matchCase)),
+            context.flatList,
+            80,
+            { matchCase: Boolean(message.matchCase) },
+          ) : [];
       context.send({ command: 'workspaceSearchResults', requestId: message.requestId, results });
+      return true;
+    }
+    case 'loadSearchPreview': {
+      const item = context.flatList.find((candidate) => candidate.fsPath === String(message.filePath || ''));
+      if (!item || !context.searchIndex) {
+        context.send({ command: 'searchPreviewResult', requestId: message.requestId, ok: false, filePath: message.filePath, reason: 'outside-workspace' });
+        return true;
+      }
+      const markdownSource = await context.searchIndex.read(item.relativePath);
+      context.send(markdownSource === null
+        ? { command: 'searchPreviewResult', requestId: message.requestId, ok: false, filePath: item.fsPath, reason: 'missing' }
+        : { command: 'searchPreviewResult', requestId: message.requestId, ok: true, filePath: item.fsPath, markdownSource });
       return true;
     }
     case 'loadWorkspaceSearchIndexes': {

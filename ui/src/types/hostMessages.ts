@@ -86,6 +86,15 @@ export interface WorkspaceSearchResultsMessage {
   readonly results: readonly WorkspaceSearchResult[];
 }
 
+export interface SearchPreviewResultMessage {
+  readonly command: 'searchPreviewResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly filePath: string;
+  readonly markdownSource?: string;
+  readonly reason?: 'outside-workspace' | 'missing' | 'unreadable' | 'unsupported' | 'too-large';
+}
+
 export interface WorkspaceSearchIndexLoadedMessage {
   readonly command: 'workspaceSearchIndexLoaded';
   readonly tabs: readonly { readonly tabId: string; readonly workspacePath: string; readonly fileList: MdFile[]; readonly tree: FolderNode | null }[];
@@ -136,5 +145,5 @@ export type HostMessage =
   | WorkspaceUnavailableMessage | SetLoadingMessage | WorkspaceScanProgressMessage
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
   | FullscreenStateChangedMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
-  | WorkspaceSearchResultsMessage | WorkspaceSearchIndexLoadedMessage
+  | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
   | WorkspaceTextResourceResultMessage;

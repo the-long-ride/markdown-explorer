@@ -111,7 +111,7 @@ export function _selectMatchIndex(
     const targetOffset = matchIndex;
     let closestDistance = Infinity;
     let selected = 0;
-    
+
     for (let i = 0; i < matches.length; i++) {
       const distance = Math.abs(matches[i].cumulativeTextOffset - targetOffset);
       if (distance < closestDistance) {
@@ -136,12 +136,30 @@ function expandSectionAncestors(element: HTMLElement) {
 }
 
 export function scrollToRenderedSearchMatch(
-  query: string, 
+  query: string,
   matchOrdinal?: number,
   matchIndex?: number,
-  rawMarkdownSource?: string | null
+  rawMarkdownSource?: string | null,
+  matchCase = false,
 ): boolean {
-  const root = getSearchJumpRoot();
+  return scrollToRenderedSearchMatchInRoot(
+    getSearchJumpRoot(),
+    query,
+    matchOrdinal,
+    matchIndex,
+    rawMarkdownSource,
+    matchCase,
+  );
+}
+
+export function scrollToRenderedSearchMatchInRoot(
+  root: HTMLElement | null,
+  query: string,
+  matchOrdinal?: number,
+  matchIndex?: number,
+  rawMarkdownSource?: string | null,
+  matchCase = false,
+): boolean {
   clearSearchJumpMarks(root);
   if (!root) return false;
 
@@ -172,21 +190,24 @@ export function scrollToRenderedSearchMatch(
     const text = node.nodeValue ?? '';
     textNodesInfo.push({ node, text });
     let fromIndex = 0;
-    
+
     while (fromIndex < text.length) {
-      const result = unicodeIndexOf(text, needle, fromIndex);
-      if (!result) break;
-      
+      const exactIndex = matchCase ? text.indexOf(needle, fromIndex) : -1;
+      const result = matchCase ? null : unicodeIndexOf(text, needle, fromIndex);
+      if (matchCase ? exactIndex < 0 : !result) break;
+      const index = matchCase ? exactIndex : result!.index;
+      const matchLength = matchCase ? needle.length : result!.matchLength;
+
       matches.push({
         node,
-        index: result.index,
-        matchLength: result.matchLength,
-        cumulativeTextOffset: cumulativeTextOffset + result.index
+        index,
+        matchLength,
+        cumulativeTextOffset: cumulativeTextOffset + index,
       });
-      
-      fromIndex = result.index + result.matchLength;
+
+      fromIndex = index + matchLength;
     }
-    
+
     cumulativeTextOffset += text.length;
     node = walker.nextNode() as Text | null;
   }
@@ -241,7 +262,7 @@ export function scrollToRenderedSearchMatch(
 
       const mark = document.createElement('mark');
       mark.textContent = text.slice(match.index, match.index + match.matchLength);
-      
+
       if (match.globalIndex === selectedMatchIndex) {
         mark.className = SEARCH_JUMP_MARK_CLASS;
         activeMark = mark;
@@ -265,7 +286,7 @@ export function scrollToRenderedSearchMatch(
 
     // Helper: check if the mark is reasonably centred in the scroll viewport
     const isMarkVisible = (mark: HTMLElement): boolean => {
-      const scrollContainer = mark.closest('.content__scroll');
+      const scrollContainer = mark.closest<HTMLElement>('[data-search-scroll-container], .content__scroll');
       if (!scrollContainer) return false;
       const markRect = mark.getBoundingClientRect();
       const containerRect = scrollContainer.getBoundingClientRect();

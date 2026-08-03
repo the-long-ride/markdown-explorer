@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronUpIcon, CloseIcon, SearchIcon } from '../shared/icons';
 import { unicodeIndexOf } from '../../utils/unicodeSearch';
+import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
+import { TooltipButton } from '../shared/TooltipButton';
 
 const FIND_MARK_CLASS = 'mdn-find-mark';
 const FIND_ACTIVE_CLASS = 'is-active';
@@ -48,7 +51,7 @@ function shouldSkipTextNode(node: Text): boolean {
   ].join(','));
 }
 
-function highlightFindMatches(query: string): HTMLElement[] {
+function highlightFindMatches(query: string, matchCase = false): HTMLElement[] {
   const root = getFindRoot();
   clearFindMarks(root);
   if (!root) return [];
@@ -70,17 +73,18 @@ function highlightFindMatches(query: string): HTMLElement[] {
 
   textNodes.forEach((node) => {
     const text = node.nodeValue || '';
-    
-    let result = unicodeIndexOf(text, needle, 0);
-    if (!result) return;
+
+    let exactIndex = matchCase ? text.indexOf(needle) : -1;
+    let result = matchCase ? null : unicodeIndexOf(text, needle, 0);
+    if (matchCase ? exactIndex < 0 : !result) return;
 
     const fragment = document.createDocumentFragment();
     let cursor = 0;
 
-    while (result) {
-      const index = result.index;
-      const matchLength = result.matchLength;
-      
+    while (matchCase ? exactIndex >= 0 : result) {
+      const index = matchCase ? exactIndex : result!.index;
+      const matchLength = matchCase ? needle.length : result!.matchLength;
+
       if (index > cursor) {
         fragment.appendChild(document.createTextNode(text.slice(cursor, index)));
       }
@@ -91,7 +95,8 @@ function highlightFindMatches(query: string): HTMLElement[] {
       fragment.appendChild(mark);
 
       cursor = index + matchLength;
-      result = unicodeIndexOf(text, needle, cursor);
+      exactIndex = matchCase ? text.indexOf(needle, cursor) : -1;
+      result = matchCase ? null : unicodeIndexOf(text, needle, cursor);
     }
 
     if (cursor < text.length) {
@@ -128,7 +133,10 @@ export function FindInFilePanel({
   renderVersion,
   shortcutLabel,
 }: FindInFilePanelProps) {
+  const { state } = useAppState();
+  const t = getTranslations(state.settings.language || 'en');
   const [query, setQuery] = useState('');
+  const [matchCase, setMatchCase] = useState(false);
   const [count, setCount] = useState(0);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -137,6 +145,7 @@ export function FindInFilePanel({
   useEffect(() => {
     if (!isOpen) {
       setQuery('');
+      setMatchCase(false);
       setCount(0);
       setActiveIndex(-1);
       matchesRef.current = [];
@@ -152,7 +161,7 @@ export function FindInFilePanel({
     if (!isOpen) return;
 
     const frame = window.requestAnimationFrame(() => {
-      const matches = highlightFindMatches(query);
+      const matches = highlightFindMatches(query, matchCase);
       matchesRef.current = matches;
       setCount(matches.length);
 
@@ -166,7 +175,7 @@ export function FindInFilePanel({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [isOpen, query, renderVersion]);
+  }, [isOpen, query, matchCase, renderVersion]);
 
   useEffect(() => () => clearFindMarks(), []);
 
@@ -188,7 +197,7 @@ export function FindInFilePanel({
     <div
       className="find-in-file-panel"
       role="dialog"
-      aria-label="Find in current file"
+      aria-label={t.search.findDialogLabel}
     >
       <SearchIcon size={15} />
       <input
@@ -206,19 +215,29 @@ export function FindInFilePanel({
             move(event.shiftKey ? -1 : 1);
           }
         }}
-        placeholder={`Find in current file... (${shortcutLabel})`}
-        aria-label="Find text in current file"
+        placeholder={t.search.findPlaceholder.replace('{shortcut}', shortcutLabel)}
+        aria-label={t.search.findInputLabel}
       />
+      <TooltipButton
+        type="button"
+        className={`find-in-file-panel__case${matchCase ? ' is-active' : ''}`}
+        onClick={() => setMatchCase((value) => !value)}
+        tooltip={`${t.search.matchCase} - ${matchCase ? (t.search.statusOn || 'On') : (t.search.statusOff || 'Off')}`}
+        tooltipPos="below"
+        aria-pressed={matchCase}
+      >
+        Aa
+      </TooltipButton>
       <span className="find-in-file-panel__count">
         {query ? `${activeIndex >= 0 ? activeIndex + 1 : 0}/${count}` : '0/0'}
       </span>
-      <button type="button" onClick={() => move(-1)} disabled={count === 0} aria-label="Previous match">
+      <button type="button" onClick={() => move(-1)} disabled={count === 0} aria-label={t.search.previousMatch}>
         <ChevronUpIcon size={14} />
       </button>
-      <button type="button" onClick={() => move(1)} disabled={count === 0} aria-label="Next match">
+      <button type="button" onClick={() => move(1)} disabled={count === 0} aria-label={t.search.nextMatch}>
         <ChevronUpIcon size={14} className="find-in-file-panel__next-icon" />
       </button>
-      <button type="button" onClick={onClose} aria-label="Close find in file">
+      <button type="button" onClick={onClose} aria-label={t.search.closeFind}>
         <CloseIcon size={14} />
       </button>
     </div>,

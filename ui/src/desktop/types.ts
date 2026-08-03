@@ -45,6 +45,7 @@ export interface PendingSearchJump {
   query: string;
   matchOrdinal?: number;
   matchIndex?: number;
+  matchCase?: boolean;
   token: number;
 }
 

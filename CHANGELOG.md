@@ -4,14 +4,44 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [v1.6.3] — Unreleased
+
+### Added
+- **Cross-Workspace Search & Live Document Preview**: Full Markdown and HTML document preview panel integrated directly into the Search Overlay modal with support for syntax highlighting, math, diagrams, CSV/TSV table views, and workspace scan scoping.
+
+### Changed
+- **Search Overlay — Theme-consistent UI**: Standardized all search overlay button border radii (`border-radius: var(--r)`) to match the active theme across all variants. The close modal button is now borderless. Search result rows also use `var(--r)` to align with the theme's rounding style.
+- **Search Overlay — Unified input row height**: Standardized `.search-overlay-input`, case-toggle, and preview-toggle button heights to `32px` across all themes for a uniform input row.
+- **Scrollbars — Theme-consistent radius**: All app scrollbar thumbs (sidebar, TOC, code blocks, search overlay, settings) now use `var(--r-s, var(--r))` for border-radius, matching the active theme. The Raw Grid theme forces square `0px` scrollbar thumbs via `!important` overrides.
+- **Heading section chevron — 3D Vertical Flip animation**: The collapse/expand chevron button now performs a vertical 3D flip (`rotateX(180deg)` with `cubic-bezier(0.25, 0.46, 0.45, 0.94)`) along the horizontal X-axis on toggle instead of spinning in 2D space. Initial state is applied without a CSS transition to prevent a spin-on-load artifact.
+
+### Fixed
+- **Search Overlay — Preview renders only once per scan**: The `SearchDocumentPreview` component was re-fetching the preview on every incremental search batch because the `item` object reference changed each time the results array was rebuilt. Fixed by:
+  - Memoizing `selectedResult` in `SearchOverlay` keyed on `selectedResultKey` so the object reference is stable across batches.
+  - Removing `item` from the fetch `useEffect` dependency array in `SearchDocumentPreview`, accessing it via a ref so only `itemKey` (the file path) triggers a new fetch.
+  - Wrapping `SearchDocumentPreview` with `React.memo` to shield it from parent re-renders entirely.
+
+---
+
 ## [v1.6.2] — 2026-07-30
 
 ### Added
+- **Case-Sensitive Search & Full Document Preview in Search Modal**:
+  - Added case-sensitive search toggle (`Aa`) across Search Overlay, Sidebar Search, and Find in File panel with dynamic status tooltips (`Match case - Off` / `Match case - On`).
+  - Integrated side-by-side full Markdown document preview panel in Search Overlay with 100% feature parity to full document opening (syntax highlighting, KaTeX math rendering, Mermaid diagrams, interactive table controls/sorting, heading section collapse/expand, copy code buttons, and anchor navigation).
+  - Added persistent preview state so the Search Preview panel toggle remembers its enabled/disabled state across modal open/close cycles.
+  - Added resizable workspace and preview sidebars in Search Overlay with mouse dragging controls.
 - **VS Code Open Folder Context Menu**: Added right-click context menu option `Open Folder in Markdown Explorer` (`markdownExplorer.openFolder`) for any folder in the VS Code Explorer file tree.
 - **Settings Update Notification Badge**: Added an update notification dot badge to the Settings option button inside the More Actions menu when a new release version is available.
 - **Customizable Refresh & TOC Keyboard Shortcuts**: Refresh action is now customizable in Settings modal and listed in Homepage > Shortcuts tab across all runtimes (`F5` on Desktop app, `R` on Web Demo, VS Code extension, and Chromium extension; `Ctrl+T` for Toggle TOC in Desktop app).
 
 ### Changed
+- **Search Modal UX & Typography**:
+  - Expanded search modal maximum bounds (`width: min(1560px, calc(100vw - 64px))`, `height: min(860px, calc(100vh - 80px))`) so the overlay scales cleanly on larger screens and when zooming out.
+  - Standardized search input placeholder and value font size to `11.5px` (`font-family: var(--font-ui)`), matching sidebar search typography.
+  - Reused `.scope-focus-checkbox` styling across Search Overlay workspace selection lists for consistent UI contracts.
+  - Styled Search Overlay results list scrollbar to `scrollbar-width: thin` with custom scrollbar thumb styling.
+  - Formatted modal close button tooltip as `Close modal - (Esc)` across all 9 supported languages.
 - **Default Keybindings**: Updated default keyboard shortcut for Toggle TOC in Desktop app to `Ctrl+T`. Optimized HTML document, CSV/TSV table views, and workspace scan controls.
 
 ### Fixed

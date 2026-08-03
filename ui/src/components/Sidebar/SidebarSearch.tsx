@@ -33,6 +33,7 @@ export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps)
   const bridge = usePlatform();
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [matchCase, setMatchCase] = useState(false);
   const [results, setResults] = useState<WorkspaceSearchResult[]>([]);
   const [scopeFocusEditing, setScopeFocusEditing] = useState(false);
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(new Set());
@@ -209,12 +210,13 @@ export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps)
         command: 'searchWorkspace',
         requestId,
         query,
+        matchCase,
         items: itemsToSearch,
       });
     }, 250);
 
     return () => window.clearTimeout(handle);
-  }, [bridge, query, state.fileList, selectedSearchFilePathsStr]);
+  }, [bridge, query, matchCase, state.fileList, selectedSearchFilePathsStr]);
 
   // Focus event listener
   useEffect(() => {
@@ -269,12 +271,24 @@ export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps)
           <input
             ref={inputRef}
             type="text"
-            placeholder={t.sidebar.filterPlaceholder ? "Search files..." : "Search..."}
+            placeholder={t.search.sidebarPlaceholder}
             autoComplete="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search files"
+            aria-label={t.search.sidebarInputLabel}
           />
+          <TooltipButton
+            type="button"
+            className={`sidebar__search-case${matchCase ? ' is-active' : ''}`}
+            onClick={() => setMatchCase((value) => !value)}
+            tooltip={`${t.search.matchCase} - ${matchCase ? (t.search.statusOn || 'On') : (t.search.statusOff || 'Off')}`}
+            aria-label={t.search.matchCase}
+            tooltipPos="below"
+            tooltipAlign="right"
+            aria-pressed={matchCase}
+          >
+            Aa
+          </TooltipButton>
         </div>
         <div className="sidebar__scope">
           <button
@@ -335,17 +349,17 @@ export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps)
         >
           {query.trim().length < 2 && (
             <div className="sidebar__empty-scope sidebar__search-empty">
-              Enter at least 2 characters to search.
+              {t.search.minimumCharacters}
             </div>
           )}
           {query.trim().length >= 2 && isSearching && results.length === 0 && (
             <div className="sidebar__empty-scope sidebar__search-empty">
-              Searching workspace content...
+              {t.search.searchingWorkspace}
             </div>
           )}
           {query.trim().length >= 2 && !isSearching && results.length === 0 && (
             <div className="sidebar__empty-scope sidebar__search-empty">
-              No matches found.
+              {t.search.noMatches}
             </div>
           )}
           {query.trim().length >= 2 && hasVisibleTreeItems && (
@@ -355,6 +369,7 @@ export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps)
                   key={file.fsPath}
                   file={file}
                   query={query}
+                  matchCase={matchCase}
                   collapsedPaths={collapsedPaths}
                   togglePath={togglePath}
                 />
@@ -364,6 +379,7 @@ export function SidebarSearch({ isVisible, onStatusChange }: SidebarSearchProps)
                   key={child.path}
                   node={child}
                   query={query}
+                  matchCase={matchCase}
                   collapsedPaths={collapsedPaths}
                   togglePath={togglePath}
                 />

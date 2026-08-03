@@ -59,3 +59,10 @@ describe('SearchOverlay pure functions', () => {
     });
   });
 });
+
+it('highlights only exact-case matches when match case is enabled', () => {
+  const result = renderHighlightedExcerpt('Alpha alpha ALPHA', 'Alpha', true) as any[];
+  const strongs = result.filter((piece: any) => piece.type === 'strong');
+  expect(strongs).toHaveLength(1);
+  expect(strongs[0].props.children).toBe('Alpha');
+});
