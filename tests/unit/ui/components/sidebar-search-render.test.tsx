@@ -35,6 +35,14 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
 
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
+    search: {
+      sidebarPlaceholder: 'Search files...',
+      sidebarInputLabel: 'Search files',
+      matchCase: 'Match case',
+      minimumCharacters: 'Enter at least 2 characters to search.',
+      searchingWorkspace: 'Searching workspace content...',
+      noMatches: 'No matches found.',
+    },
     sidebar: {
       filterPlaceholder: 'Search...',
       scopeFocus: 'Scope',
@@ -274,4 +282,16 @@ describe('SidebarSearch', () => {
     const checkboxes = document.querySelectorAll('.scope-focus-checkbox');
     expect(checkboxes.length).toBeGreaterThan(0);
   });
+});
+
+it('sends matchCase for workspace searches', () => {
+  vi.useFakeTimers();
+  render(<SidebarSearch isVisible={true} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Match case' }));
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Read' } });
+  act(() => { vi.advanceTimersByTime(300); });
+  expect(mockPostMessage).toHaveBeenCalledWith(
+    expect.objectContaining({ command: 'searchWorkspace', query: 'Read', matchCase: true }),
+  );
+  vi.useRealTimers();
 });

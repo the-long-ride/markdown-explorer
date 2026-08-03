@@ -128,6 +128,7 @@ body:not(.is-resizing) .sidebar {
   border-color: var(--bd-x);
 }
 .sidebar__search {
+  position: relative;
   margin-top: 5px;
   display: flex;
   align-items: center;
@@ -232,7 +233,7 @@ body:not(.is-resizing) .sidebar {
 }
 .sidebar__tree::-webkit-scrollbar-thumb {
   background: var(--bd-s);
-  border-radius: 2px;
+  border-radius: var(--r-s, var(--r));
 }
 
 /* Tree nodes */
@@ -461,4 +462,35 @@ body.is-dragging-files .mdn-html-preview-iframe {
   height: 2px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.sidebar__search-case {
+  position: relative;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-s, var(--r));
+  outline: 0;
+  background: transparent;
+  color: var(--tx2);
+  font: 700 8.5px var(--font-ui);
+  cursor: pointer;
+}
+
+.sidebar__search-case:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
+.sidebar__search-case:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.sidebar__search-case.is-active,
+.sidebar__search-case[aria-pressed="true"] {
+  border: 0;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
 }

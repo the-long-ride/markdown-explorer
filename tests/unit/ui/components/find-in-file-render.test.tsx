@@ -4,6 +4,24 @@ import { FindInFilePanel } from '../../../../ui/src/components/Search/FindInFile
 
 let mdBody: HTMLDivElement;
 
+vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
+  useAppState: () => ({ state: { settings: { language: 'en' } } }),
+}));
+
+vi.mock('../../../../ui/src/contexts/translations', () => ({
+  getTranslations: () => ({
+    search: {
+      findDialogLabel: 'Find in current file',
+      findPlaceholder: 'Find in current file... ({shortcut})',
+      findInputLabel: 'Find text in current file',
+      matchCase: 'Match case',
+      previousMatch: 'Previous match',
+      nextMatch: 'Next match',
+      closeFind: 'Close find in file',
+    },
+  }),
+}));
+
 beforeEach(() => {
   vi.useFakeTimers();
   window.matchMedia = vi.fn().mockReturnValue({ matches: false, addListener: vi.fn(), removeListener: vi.fn() } as any);
@@ -15,11 +33,13 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  document.querySelectorAll('#mdBody').forEach((node) => node.remove());
   vi.useRealTimers();
 });
 
+const defaultOnClose = vi.fn();
+
 describe('FindInFilePanel', () => {
-  const defaultOnClose = vi.fn();
 
   it('returns null when isOpen is false', () => {
     const { container } = render(<FindInFilePanel isOpen={false} onClose={defaultOnClose} renderVersion={0} shortcutLabel="Ctrl+F" />);
@@ -182,4 +202,16 @@ describe('FindInFilePanel', () => {
     const marks = document.querySelectorAll('mark.mdn-find-mark');
     expect(marks.length).toBeGreaterThan(0);
   });
+});
+
+it('filters current-file matches by case when Match case is enabled', () => {
+  mdBody.textContent = 'Alpha alpha ALPHA';
+  render(<FindInFilePanel isOpen={true} onClose={defaultOnClose} renderVersion={0} shortcutLabel="Ctrl+F" />);
+  const input = screen.getByRole('textbox');
+  fireEvent.change(input, { target: { value: 'Alpha' } });
+  act(() => { vi.advanceTimersByTime(50); });
+  expect(mdBody.querySelectorAll('mark.mdn-find-mark')).toHaveLength(3);
+  fireEvent.click(screen.getByRole('button', { name: 'Match case' }));
+  act(() => { vi.advanceTimersByTime(50); });
+  expect(mdBody.querySelectorAll('mark.mdn-find-mark')).toHaveLength(1);
 });

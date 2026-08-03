@@ -1,12 +1,13 @@
 use crate::search::index::{IncrementalOptions, SearchIndex, WorkspaceSearchResult};
 use crate::workspace::scanner::MdFile;
 use parking_lot::RwLock;
+use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
 pub enum SearchWorkerCommand {
     SetItems(Vec<MdFile>),
-    Search { request_id: String, query: String },
+    Search { request_id: String, query: String, match_case: bool, tab_ids: Option<Vec<String>> },
     Cancel,
     Dispose,
 }
@@ -47,11 +48,20 @@ where
                     items = new_items;
                     index.prime(&items);
                 }
-                SearchWorkerCommand::Search { request_id, query } => {
+                SearchWorkerCommand::Search { request_id, query, match_case, tab_ids } => {
                     *active_request_id.write() = request_id.clone();
 
                     let index = index.clone();
-                    let items = items.clone();
+                    let items = match tab_ids {
+                        Some(tab_ids) => {
+                            let enabled = tab_ids.into_iter().collect::<HashSet<_>>();
+                            items.iter()
+                                .filter(|item| item.tab_id.as_ref().map(|tab_id| enabled.contains(tab_id)).unwrap_or(false))
+                                .cloned()
+                                .collect()
+                        }
+                        None => items.clone(),
+                    };
                     let active_id = active_request_id.clone();
                     let req_id = request_id.clone();
                     let on_msg = on_message.clone();
@@ -80,6 +90,7 @@ where
                             &query,
                             items,
                             IncrementalOptions {
+                                match_case,
                                 should_cancel: Box::new(should_cancel),
                                 on_batch: Box::new(on_batch),
                                 ..Default::default()
@@ -114,9 +125,26 @@ impl SearchWorkerHandle {
     }
 
     pub fn search(&self, request_id: String, query: String) {
-        let _ = self
-            .tx
-            .send(SearchWorkerCommand::Search { request_id, query });
+        self.search_with_case(request_id, query, false);
+    }
+
+    pub fn search_with_case(&self, request_id: String, query: String, match_case: bool) {
+        self.search_with_case_and_tabs(request_id, query, match_case, None);
+    }
+
+    pub fn search_with_case_and_tabs(
+        &self,
+        request_id: String,
+        query: String,
+        match_case: bool,
+        tab_ids: Option<Vec<String>>,
+    ) {
+        let _ = self.tx.send(SearchWorkerCommand::Search {
+            request_id,
+            query,
+            match_case,
+            tab_ids,
+        });
     }
 
     pub fn cancel(&self) {
@@ -273,4 +301,46 @@ mod tests {
         // but worker task should exit
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
+
+    #[tokio::test]
+    async fn checked_tab_ids_limit_cross_tab_results() {
+        let (msg_tx, mut msg_rx) = mpsc::unbounded_channel::<SearchWorkerMessage>();
+        let handle = create_search_worker(move |msg| {
+            let _ = msg_tx.send(msg);
+        });
+
+        handle.set_items(vec![
+            make_tab_file("a", "tab-1", "Workspace A"),
+            make_tab_file("b", "tab-2", "Workspace B"),
+        ]);
+        handle.search_with_case_and_tabs(
+            "req-tabs".into(),
+            "test".into(),
+            false,
+            Some(vec!["tab-1".into()]),
+        );
+
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+        let mut saw_result = false;
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(Duration::from_millis(500), msg_rx.recv()).await {
+                Ok(Some(SearchWorkerMessage::Batch { request_id, results })) => {
+                    assert_eq!(request_id, "req-tabs");
+                    for result in results {
+                        assert_eq!(result.tab_id.as_deref(), Some("tab-1"));
+                        saw_result = true;
+                    }
+                }
+                Ok(Some(SearchWorkerMessage::Done { request_id, total, .. })) => {
+                    assert_eq!(request_id, "req-tabs");
+                    assert!(total > 0);
+                    break;
+                }
+                _ => {}
+            }
+        }
+        handle.dispose();
+        assert!(saw_result);
+    }
+
 }

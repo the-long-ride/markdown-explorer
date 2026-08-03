@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-03T12:01:00+07:00'
 name: UI-to-Host Command Catalog
 topic: Exact active `WebviewMessage` command catalog
 document_type: reference
@@ -26,7 +26,7 @@ keywords:
 
 ## Contract count
 
-**36 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
+**37 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
 
 | Command | Interface and payload |
 |---|---|
@@ -39,6 +39,7 @@ keywords:
 | `deleteRecentWorkspace` | `DeleteRecentWorkspaceMessage` — path: string |
 | `downloadUpdate` | `DownloadUpdateMessage` — version: string, url: string |
 | `indexWorkspaceSearchItems` | `IndexWorkspaceSearchItemsMessage` — items?: readonly CrossTabSearchResult[] |
+| `loadSearchPreview` | `SearchPreviewRequestMessage` — requestId: string, filePath: string, tabId?: string |
 | `loadWorkspaceSearchIndexes` | `LoadWorkspaceSearchIndexesMessage` — tabs: readonly { readonly tabId: string; readonly workspacePath: string }[] |
 | `navigate` | `NavigateMessage` — path: string |
 | `openExternal` | `OpenExternalMessage` — url: string |
@@ -56,8 +57,8 @@ keywords:
 | `replaceRecentWorkspaces` | `ReplaceRecentWorkspacesMessage` — recentWorkspaces: readonly RecentWorkspace[] |
 | `restartAndApplyUpdate` | `RestartAndApplyUpdateMessage` — No payload |
 | `scheduleDownloadedUpdate` | `ScheduleDownloadedUpdateMessage` — No payload |
-| `searchAcrossWorkspaces` | `CrossTabSearchMessage` — requestId: string, query: string, items?: readonly CrossTabSearchResult[] |
-| `searchWorkspace` | `WorkspaceSearchMessage` — requestId: string, query: string, items: readonly WorkspaceSearchResult[] |
+| `searchAcrossWorkspaces` | `CrossTabSearchMessage` — requestId: string, query: string, matchCase?: boolean, tabIds?: readonly string[], items?: readonly CrossTabSearchResult[] |
+| `searchWorkspace` | `WorkspaceSearchMessage` — requestId: string, query: string, matchCase?: boolean, items: readonly WorkspaceSearchResult[] |
 | `setDocumentConversion` | `SetDocumentConversionMessage` — enabled: boolean |
 | `toggle-fullscreen` | `ToggleFullscreenMessage` — No payload |
 | `updateAppearance` | `UpdateAppearanceMessage` — theme: ThemeMode, themeStyle: ThemeStyle |
@@ -72,6 +73,7 @@ keywords:
 - Command names and payload fields are case-sensitive.
 - Workspace operations preserve `workspaceOperationId` and `workspaceTabId` when supplied.
 - Search/resource requests preserve `requestId`.
+- Search requests preserve original query casing; `matchCase: true` selects exact-case metadata/content matching.
 - A runtime implements only capabilities it exposes; unsupported UI controls remain hidden or disabled.
 - Adding/removing a command requires parity review and this generated catalog update.
 

@@ -52,6 +52,15 @@
   border-radius: 0;
 }
 
+[data-theme-style="raw-grid"] {
+  --r: 0px;
+  --r-s: 0px;
+  --r-m: 0px;
+  --r-l: 0px;
+  --radius-lg: 0px;
+  --radius-md: 0px;
+}
+
 [data-theme-style="raw-grid"] [role="switch"],
 [data-theme-style="raw-grid"] [role="switch"] span,
 [data-theme-style="raw-grid"] .settings-shortcut-toggle,
@@ -70,7 +79,10 @@
 [data-theme-style="raw-grid"] .settings-language-menu__option,
 [data-theme-style="raw-grid"] .search-overlay-card,
 [data-theme-style="raw-grid"] .search-overlay-input,
-[data-theme-style="raw-grid"] .search-overlay-result {
+[data-theme-style="raw-grid"] .search-overlay-result,
+[data-theme-style="raw-grid"] *::-webkit-scrollbar-thumb,
+[data-theme-style="raw-grid"] .content-tabs__scrollbar-thumb,
+[data-theme-style="raw-grid"] .desktop-tabbar__scrollbar-thumb {
   border-radius: 0 !important;
 }
 

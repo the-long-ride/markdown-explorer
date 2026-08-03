@@ -135,6 +135,16 @@ describe('BrowserSearchIndex.search', () => {
     getEntrySpy.mockRestore();
   });
 
+  it('reads raw Markdown for search preview', async () => {
+    getEntrySpy.mockResolvedValue(makeEntry('# Preview source'));
+    await expect(index.read('preview.md')).resolves.toBe('# Preview source');
+  });
+
+  it('returns null when a preview file cannot be read', async () => {
+    getEntrySpy.mockResolvedValue(null);
+    await expect(index.read('missing.md')).resolves.toBeNull();
+  });
+
   it('returns empty for query shorter than 2 characters', async () => {
     const result = await index.search('a', [], 10);
     expect(result).toEqual([]);
@@ -299,6 +309,22 @@ describe('BrowserSearchIndex.search', () => {
     ];
     const result = await index.search('broken', items);
     expect(result).toHaveLength(1);
+  });
+
+  it('matches exact metadata and content casing when matchCase is enabled', async () => {
+    getEntrySpy.mockResolvedValue(makeEntry('Alpha alpha ALPHA'));
+    const items = [
+      makeItem({ relativePath: 'ReleaseNotes.md', fileName: 'ReleaseNotes.md', title: 'ReleaseNotes' }),
+    ];
+
+    const exactContent = await index.search('Alpha', items, 80, { matchCase: true });
+    expect(exactContent.filter((result: any) => result.matchIndex !== undefined)).toHaveLength(1);
+    expect(exactContent.find((result: any) => result.matchIndex !== undefined)?.matchIndex).toBe(0);
+
+    const exactName = await index.search('Release', items, 80, { matchCase: true });
+    expect(exactName.length).toBeGreaterThan(0);
+    const wrongNameCase = await index.search('release', items, 80, { matchCase: true });
+    expect(wrongNameCase).toHaveLength(0);
   });
 
   it('query is trimmed and lowercased', async () => {

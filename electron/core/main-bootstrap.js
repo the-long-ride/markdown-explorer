@@ -118,6 +118,7 @@ function createAppBootstrap({
           activateWorkspace: runtimeImpl.handleActivateWorkspace,
           searchAcrossWorkspaces: runtimeImpl.handleSearchAcrossWorkspaces,
           searchWorkspace: runtimeImpl.handleSearchWorkspace,
+          loadSearchPreview: runtimeImpl.handleLoadSearchPreview,
           indexWorkspaceSearchItems: runtimeImpl.handleIndexWorkspaceSearchItems,
           loadWorkspaceSearchIndexes: runtimeImpl.handleLoadWorkspaceSearchIndexes,
           confirmOpenPath: runtimeImpl.handleConfirmOpenPath,

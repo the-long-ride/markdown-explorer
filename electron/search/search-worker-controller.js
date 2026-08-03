@@ -28,6 +28,8 @@ function createSearchWorkerController({
     search({
       requestId,
       query,
+      matchCase = false,
+      tabIds,
       batchSize = 100,
       maxResults = 2000,
       maxMatchesPerFile = 200,
@@ -38,6 +40,8 @@ function createSearchWorkerController({
         type: "search",
         requestId,
         query,
+        matchCase,
+        tabIds: Array.isArray(tabIds) ? tabIds : undefined,
         batchSize,
         maxResults,
         maxMatchesPerFile,

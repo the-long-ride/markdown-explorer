@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { scrollToRenderedSearchMatch, clearSearchJumpMarks } from '../../../ui/src/utils/searchJump';
+import { scrollToRenderedSearchMatch, scrollToRenderedSearchMatchInRoot, clearSearchJumpMarks } from '../../../ui/src/utils/searchJump';
 
 describe('scrollToRenderedSearchMatch', () => {
   let root: HTMLElement;
@@ -207,4 +207,18 @@ describe('clearSearchJumpMarks integration', () => {
     expect(root.querySelectorAll('mark').length).toBe(0);
     expect(root.querySelector('p')!.textContent).toBe('highlight this word');
   });
+});
+
+it('jumps only to an exact-case rendered match when match case is enabled', () => {
+  const previewRoot = document.createElement('div');
+  previewRoot.textContent = 'alpha Alpha';
+  document.body.appendChild(previewRoot);
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+
+  const result = scrollToRenderedSearchMatchInRoot(previewRoot, 'Alpha', 0, undefined, undefined, true);
+  expect(result).toBe(true);
+  const active = previewRoot.querySelector('mark.mdn-search-jump-mark');
+  expect(active?.textContent).toBe('Alpha');
+
+  previewRoot.remove();
 });

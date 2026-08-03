@@ -70,6 +70,10 @@ export class BrowserSearchIndex {
     }
   }
 
+  public async read(relativePath: string): Promise<string | null> {
+    return (await this.getEntry(relativePath))?.raw ?? null;
+  }
+
   public prime(items: MdFile[]): void {
     const markdownItems = items.filter(item => {
       const lower = item.fileName.toLowerCase();
@@ -90,9 +94,17 @@ export class BrowserSearchIndex {
     step();
   }
 
-  public async search(query: string, items: MdFile[], limit = 80): Promise<any[]> {
-    const trimmedQuery = query.trim().toLowerCase();
-    if (!trimmedQuery || trimmedQuery.length < 2) return [];
+  public async search(
+    query: string,
+    items: MdFile[],
+    limit = 80,
+    options: { matchCase?: boolean } = {},
+  ): Promise<any[]> {
+    const rawQuery = String(query || '').trim();
+    if (rawQuery.length < 2) return [];
+    const matchCase = Boolean(options.matchCase);
+    const searchNeedle = matchCase ? rawQuery : normalizeForSearch(rawQuery);
+    if (!searchNeedle) return [];
 
     const results: any[] = [];
     const maxMatchesPerFile = 8;
@@ -102,31 +114,41 @@ export class BrowserSearchIndex {
       const relativePath = item.relativePath;
       const title = item.title || stripKnownExtension(fileName);
 
-      const titleScore = normalizeForSearch(title).includes(trimmedQuery) ? 5 : 0;
-      const fileNameScore = normalizeForSearch(fileName).includes(trimmedQuery) ? 4 : 0;
-      const pathScore = normalizeForSearch(relativePath).includes(trimmedQuery) ? 2 : 0;
+      const includesNeedle = (value: string) => matchCase
+        ? value.includes(searchNeedle)
+        : normalizeForSearch(value).includes(searchNeedle);
+      const titleScore = includesNeedle(title) ? 5 : 0;
+      const fileNameScore = includesNeedle(fileName) ? 4 : 0;
+      const pathScore = includesNeedle(relativePath) ? 2 : 0;
       const baseScore = titleScore + fileNameScore + pathScore;
       const contentMatches: Array<{ index: number; ordinal: number; excerpt: string; matchLength: number }> = [];
 
       try {
         const entry = await this.getEntry(item.relativePath);
         if (entry) {
-          let nextNormIndex = 0;
+          let nextSearchIndex = 0;
           let ordinal = 0;
-          
+
           while (contentMatches.length < maxMatchesPerFile) {
-            const result = entry.haystack.indexOfNormalized(trimmedQuery, nextNormIndex);
-            if (!result) break;
-            
+            const rawIndex = matchCase ? entry.raw.indexOf(searchNeedle, nextSearchIndex) : -1;
+            const normalizedResult = matchCase
+              ? null
+              : entry.haystack.indexOfNormalized(searchNeedle, nextSearchIndex);
+            if (matchCase ? rawIndex === -1 : !normalizedResult) break;
+
+            const index = matchCase ? rawIndex : normalizedResult!.match.index;
+            const matchLength = matchCase ? searchNeedle.length : normalizedResult!.match.matchLength;
             contentMatches.push({
-              index: result.match.index,
+              index,
               ordinal,
-              excerpt: makeSearchExcerpt(entry.raw, result.match.index, result.match.matchLength),
-              matchLength: result.match.matchLength
+              excerpt: makeSearchExcerpt(entry.raw, index, matchLength),
+              matchLength
             });
-            
+
             ordinal++;
-            nextNormIndex = result.nextNormIndex;
+            nextSearchIndex = matchCase
+              ? index + matchLength
+              : normalizedResult!.nextNormIndex;
           }
         }
       } catch (err) {

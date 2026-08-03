@@ -520,10 +520,10 @@ describe('createDesktopRuntime', () => {
       );
     });
 
-    test('trims and lowercases query', () => {
+    test('trims query and passes matchCase', () => {
       runtime.handleSearchAcrossWorkspaces({ requestId: 'r1', query: '  TEST  ' });
       expect(ctx.mockSearchWorker.search).toHaveBeenCalledWith(
-        expect.objectContaining({ query: 'test' }),
+        expect.objectContaining({ query: 'TEST', matchCase: false }),
       );
     });
 
@@ -548,14 +548,14 @@ describe('createDesktopRuntime', () => {
       runtime.state.flatList = [{ fsPath: '/a.md' }];
       ctx.mockSearchIndex.search.mockReturnValue([]);
       runtime.handleSearchWorkspace({ requestId: 'r1', query: 'test', items: [] });
-      expect(ctx.mockSearchIndex.search).toHaveBeenCalledWith('test', [{ fsPath: '/a.md' }], 10000);
+      expect(ctx.mockSearchIndex.search).toHaveBeenCalledWith('test', [{ fsPath: '/a.md' }], 10000, { matchCase: false });
     });
 
     test('uses provided items when non-empty', () => {
       const items = [{ fsPath: '/b.md' }];
       ctx.mockSearchIndex.search.mockReturnValue([]);
       runtime.handleSearchWorkspace({ requestId: 'r1', query: 'test', items });
-      expect(ctx.mockSearchIndex.search).toHaveBeenCalledWith('test', items, 10000);
+      expect(ctx.mockSearchIndex.search).toHaveBeenCalledWith('test', items, 10000, { matchCase: false });
     });
   });
 

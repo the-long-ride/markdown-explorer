@@ -53,7 +53,8 @@ export function useAppSearchEffects({
         pendingSearchJump.query,
         pendingSearchJump.matchOrdinal,
         pendingSearchJump.matchIndex,
-        state.markdownSource
+        state.markdownSource,
+        pendingSearchJump.matchCase === true,
       );
       if (!success && retries < 4) {
         retries++;
@@ -71,7 +72,7 @@ export function useAppSearchEffects({
   }, [pendingSearchJump, state.currentFile, state.renderVersion, state.markdownSource]);
 
   const queueSearchJump = useCallback(
-    (filePath: string, query: string, matchOrdinal?: number, matchIndex?: number) => {
+    (filePath: string, query: string, matchOrdinal?: number, matchIndex?: number, matchCase = false) => {
       const trimmedQuery = query.trim();
       if (!filePath || !trimmedQuery) return;
       setPendingSearchJump({
@@ -79,6 +80,7 @@ export function useAppSearchEffects({
         query: trimmedQuery,
         matchOrdinal,
         matchIndex,
+        matchCase,
         token: Date.now() + Math.random(),
       });
     },
@@ -97,26 +99,26 @@ export function useAppSearchEffects({
 
   useEffect(() => {
     const handleJump = (e: CustomEvent) => {
-      const { filePath, query, matchOrdinal, matchIndex } = e.detail;
-      queueSearchJump(filePath, query, matchOrdinal, matchIndex);
+      const { filePath, query, matchOrdinal, matchIndex, matchCase } = e.detail;
+      queueSearchJump(filePath, query, matchOrdinal, matchIndex, matchCase === true);
     };
     window.addEventListener('search-jump', handleJump as any);
     return () => window.removeEventListener('search-jump', handleJump as any);
   }, [queueSearchJump]);
 
   const handleWorkspaceSearchSelect = useCallback(
-    (item: { fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string) => {
-      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex);
+    (item: { fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string, matchCase = false) => {
+      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex, matchCase);
       navigate(item.fsPath);
     },
     [navigate, queueSearchJump],
   );
 
   const handleCrossTabSelect = useCallback(
-    (item: { tabId: string; fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string) => {
+    (item: { tabId: string; fsPath: string; matchOrdinal?: number; matchIndex?: number }, query: string, matchCase = false) => {
       const tab = tabs.find((entry) => entry.id === item.tabId);
       if (!tab) return;
-      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex);
+      queueSearchJump(item.fsPath, query, item.matchOrdinal, item.matchIndex, matchCase);
       activateTab(item.tabId, item.fsPath);
     },
     [activateTab, queueSearchJump, tabs],

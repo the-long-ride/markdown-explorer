@@ -7,8 +7,9 @@ export function getHostInfo() {
     hostPlatform: 'unknown' as const, hostArch: 'unknown' };
 }
 
-export function normalizeSearchQuery(query: unknown): string {
-  return String(query || '').trim().toLowerCase();
+export function normalizeSearchQuery(query: unknown, matchCase = false): string {
+  const trimmed = String(query || '').trim();
+  return matchCase ? trimmed : trimmed.toLowerCase();
 }
 
 export function filterSearchIndexTabs(tabRequests: unknown[], activeWorkspacePath: string): Array<{

@@ -28,6 +28,7 @@ import type { DocumentPreviewInfo, MdFile, RenderContentMessage, WebviewMessage,
 import { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
 import { buildWebviewShell } from './panelShell';
 import { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
+import { loadPanelSearchPreview } from './panelSearchPreview';
 import { HtmlPreviewServer } from './htmlPreviewServer';
 import { rewritePanelMediaUrls } from './panelMedia';
 import { navigatePanel } from './panelNavigationHandler';
@@ -144,11 +145,16 @@ export class MarkdownDocsPanel {
           case 'setDocumentConversion':
             await this._setDocumentConversion(Boolean(msg.enabled));
             break;
+          case 'loadSearchPreview':
+            await this._panel.webview.postMessage(await loadPanelSearchPreview(msg, this._flat));
+            break;
           case 'searchWorkspace':
             await this._panel.webview.postMessage({
               command: 'workspaceSearchResults',
               requestId: msg.requestId,
-              results: searchMarkdownItems(msg.query, msg.items, this._flat),
+              results: searchMarkdownItems(msg.query, msg.items, this._flat, 80, {
+                matchCase: Boolean(msg.matchCase),
+              }),
             });
             break;
           case 'updateAppearance': {

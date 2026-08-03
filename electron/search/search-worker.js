@@ -28,7 +28,13 @@ function handleWorkerMessage(message, { searchIndex, items, activeRequestId, pos
   const query = resolveQuery(message);
   activeRequestId.value = requestId;
 
-  void searchIndex.searchIncremental(query, items.value, {
+  const selectedTabIds = Array.isArray(message.tabIds) ? new Set(message.tabIds.map(String)) : null;
+  const searchItems = selectedTabIds
+    ? items.value.filter((item) => selectedTabIds.has(String(item?.tabId || '')))
+    : items.value;
+
+  void searchIndex.searchIncremental(query, searchItems, {
+    matchCase: Boolean(message.matchCase),
     batchSize: message.batchSize,
     maxResults: message.maxResults,
     maxMatchesPerFile: message.maxMatchesPerFile,

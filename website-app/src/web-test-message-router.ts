@@ -1,5 +1,6 @@
 import type { MdFile } from '../../ui/src/types';
 import { searchVirtualFiles } from './web-test-search';
+import { getVirtualContent } from './virtual-workspace';
 
 interface TestMessageRouterDeps {
   getReadyHandled: () => boolean;
@@ -44,12 +45,20 @@ export async function handleWebTestMessage(msg: any, deps: TestMessageRouterDeps
       await deps.sendTestReady();
       break;
     case 'searchWorkspace': {
-      const query = String(msg.query || '').trim().toLowerCase();
+      const query = String(msg.query || '').trim();
       deps.send({
         command: 'workspaceSearchResults',
         requestId: msg.requestId,
-        results: searchVirtualFiles(query),
+        results: searchVirtualFiles(query, 80, { matchCase: msg.matchCase === true }),
       });
+      break;
+    }
+    case 'loadSearchPreview': {
+      const item = deps.getFlatList().find((candidate) => candidate.fsPath === String(msg.filePath || ''));
+      const markdownSource = item ? getVirtualContent(item.relativePath) : null;
+      deps.send(markdownSource === null
+        ? { command: 'searchPreviewResult', requestId: msg.requestId, ok: false, filePath: msg.filePath, reason: 'outside-workspace' }
+        : { command: 'searchPreviewResult', requestId: msg.requestId, ok: true, filePath: item!.fsPath, markdownSource });
       break;
     }
     case 'closeWorkspace':

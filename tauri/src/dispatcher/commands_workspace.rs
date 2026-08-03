@@ -94,6 +94,7 @@ impl Dispatcher {
                     state.workspace_path = None;
                     state.current_file = None;
                     state.flat_list.clear();
+                    state.search_preview_paths.clear();
                     state.ready_handled = false;
                     state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
                     state.workspace_operation_id = None;
@@ -203,7 +204,11 @@ impl Dispatcher {
                     .unwrap_or("")
                     .to_string();
                 let items = msg.get("items").cloned();
-                self.handle_search_workspace(&request_id, &query, items);
+                let match_case = msg
+                    .get("matchCase")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                self.handle_search_workspace(&request_id, &query, items, match_case);
             }
             "searchAcrossWorkspaces" => {
                 let request_id = msg
@@ -216,7 +221,19 @@ impl Dispatcher {
                     .and_then(Value::as_str)
                     .unwrap_or("")
                     .to_string();
-                self.handle_search_across_workspaces(&request_id, &query);
+                let match_case = msg
+                    .get("matchCase")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let tab_ids = msg.get("tabIds").and_then(Value::as_array).map(|values| {
+                    values.iter().filter_map(Value::as_str).map(ToOwned::to_owned).collect()
+                });
+                self.handle_search_across_workspaces(&request_id, &query, match_case, tab_ids);
+            }
+            "loadSearchPreview" => {
+                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
+                let file_path = msg.get("filePath").and_then(Value::as_str).unwrap_or("");
+                self.handle_load_search_preview(request_id, file_path);
             }
             "indexWorkspaceSearchItems" => {
                 let items = msg.get("items").cloned();

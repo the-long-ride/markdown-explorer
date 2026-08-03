@@ -124,7 +124,7 @@
 .toc-panel__list::-webkit-scrollbar-thumb,
 .toc-compact__menu::-webkit-scrollbar-thumb {
   background: var(--bd-s);
-  border-radius: 4px;
+  border-radius: var(--r-s, var(--r));
 }
 .toc-item {
   --toc-indent: 0px;
