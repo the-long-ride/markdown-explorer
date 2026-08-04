@@ -12,9 +12,16 @@ source_scope:
 - ui/src/components/Sidebar/Sidebar.tsx
 - ui/src/components/Sidebar/SidebarSearch.tsx
 - ui/src/components/Sidebar/TreeNode.tsx
+- ui/src/components/Sidebar/SidebarFilesActions.tsx
+- ui/src/components/Sidebar/SidebarSortMenu.tsx
 - ui/src/components/Sidebar/sidebarTreeFiltering.ts
+- ui/src/components/Sidebar/sidebarTreeOrdering.ts
+- ui/src/components/Sidebar/sidebarPinIcons.tsx
+- ui/src/components/Sidebar/sidebarWorkspacePreferences.ts
 - ui/src/components/Sidebar/useSidebarCursorNavigation.ts
 test_scope:
+- tests/node/sidebar-pinning-sorting.test.mjs
+- tests/unit/ui/components/sidebar-tree-ordering.test.ts
 - tests/unit/ui/components/sidebar-search-render.test.tsx
 - tests/unit/ui/components/sidebar-search-pure.test.ts
 - tests/unit/ui/components/sidebar-render.test.tsx

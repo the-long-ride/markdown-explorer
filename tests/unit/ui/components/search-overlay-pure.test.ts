@@ -66,3 +66,25 @@ it('highlights only exact-case matches when match case is enabled', () => {
   expect(strongs).toHaveLength(1);
   expect(strongs[0].props.children).toBe('Alpha');
 });
+
+describe('buildCurrentTabResults', () => {
+  it('keeps the best 20 metadata matches without sorting the whole workspace', async () => {
+    const { buildCurrentTabResults } = await import('../../../../ui/src/components/Search/searchOverlayModel');
+    const files = Array.from({ length: 100 }, (_, index) => ({
+      fsPath: `/workspace/file-${index}.md`,
+      relativePath: index < 25 ? `needle/file-${index}.md` : `other/file-${index}.md`,
+      parts: ['other', `file-${index}.md`],
+      fileName: index < 10 ? `needle-${index}.md` : `file-${index}.md`,
+      title: index < 5 ? `Needle ${index}` : `File ${index}`,
+    }));
+
+    const results = buildCurrentTabResults(files, 'needle', false);
+
+    expect(results).toHaveLength(20);
+    expect(results.slice(0, 5).every((result) => result.score === 6)).toBe(true);
+    expect(results.map((result) => result.item.fsPath)).toEqual([
+      ...files.slice(0, 10).map((file) => file.fsPath),
+      ...files.slice(10, 20).map((file) => file.fsPath),
+    ]);
+  });
+});

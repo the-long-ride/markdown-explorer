@@ -30,6 +30,7 @@ import type {
   RenderContentMessage,
 } from '../types';
 
+import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 export interface NavigateOptions {
   htmlPreviewOverride?: boolean;
 }
@@ -204,6 +205,10 @@ export const initialState: AppState = {
     fileTabs: false,
     documentConversion: false,
     scopeFocus: {},
+    searchScopeFocus: {},
+    sidebarPinnedItems: {},
+    sidebarSortModes: {},
+    maxPinnedItems: 10,
     desktopViewMode: 'focus',
     keybindings: DEFAULT_KEYBINDINGS,
     disabledKeybindings: {},
@@ -245,6 +250,9 @@ export function createInitialState(
         keybindings: defaultKeybindings,
         disabledKeybindings: {},
         searchScopeFocus: {},
+        sidebarPinnedItems: {},
+        sidebarSortModes: {},
+        maxPinnedItems: 10,
       },
     };
   }
@@ -267,6 +275,9 @@ export function createInitialState(
       documentConversion: saved.documentConversion === true,
       scopeFocus: saved.scopeFocus ?? {},
       searchScopeFocus: saved.searchScopeFocus ?? {},
+      sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
+      sidebarSortModes: saved.sidebarSortModes ?? {},
+      maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
       disabledKeybindings: saved.disabledKeybindings ?? {},

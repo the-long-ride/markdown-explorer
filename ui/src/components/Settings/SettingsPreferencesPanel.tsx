@@ -5,6 +5,7 @@ import { THEME_MODE_OPTIONS } from '../../contexts/appStateConstants';
 import { ThemeStylePicker } from './ThemeStylePicker';
 import { PreferenceDescriptionTooltip } from './PreferenceDescriptionTooltip';
 import { getEnabledShortcut, formatShortcutLabel } from '../../utils/shortcuts';
+import { normalizeMaxPinnedItems } from '../Sidebar/sidebarWorkspacePreferences';
 
 type SettingsPreferencesPanelProps = {
   state: AppState;
@@ -107,100 +108,118 @@ export function SettingsPreferencesPanel({
 
       <div className="settings-appearance-controls">
         {isDesktop && (
-        <PreferenceRow
-          id="desktop-view"
-          title={t.desktopView}
-          description={withShortcut(t.desktopViewDesc, toggleDesktopViewMode)}
-          field
-        >
-          <div className="segmented-control segmented-control--two" role="radiogroup" aria-label={t.desktopView}>
-            {(['focus', 'tabs'] as const).map((id) => (
-              <button
-                key={id}
-                type="button"
-                className={`segmented-option${(state.settings.desktopViewMode ?? 'focus') === id ? ' is-active' : ''}`}
-                aria-pressed={(state.settings.desktopViewMode ?? 'focus') === id}
-                onClick={() => updateSettings({ desktopViewMode: id })}
-              >
-                {id === 'focus' ? t.focus : t.tabs}
-              </button>
-            ))}
-          </div>
-        </PreferenceRow>
-      )}
+          <PreferenceRow
+            id="desktop-view"
+            title={t.desktopView}
+            description={withShortcut(t.desktopViewDesc, toggleDesktopViewMode)}
+            field
+          >
+            <div className="segmented-control segmented-control--two" role="radiogroup" aria-label={t.desktopView}>
+              {(['focus', 'tabs'] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`segmented-option${(state.settings.desktopViewMode ?? 'focus') === id ? ' is-active' : ''}`}
+                  aria-pressed={(state.settings.desktopViewMode ?? 'focus') === id}
+                  onClick={() => updateSettings({ desktopViewMode: id })}
+                >
+                  {id === 'focus' ? t.focus : t.tabs}
+                </button>
+              ))}
+            </div>
+          </PreferenceRow>
+        )}
 
-      <PreferenceRow id="sidebar-labels" title={t.sidebarLabels} description={t.sidebarLabelsDesc}>
-        <label className="switch-toggle" aria-label={t.sidebarLabels}>
-          <input
-            type="checkbox"
-            checked={state.settings.showTitle}
-            onChange={(event) => updateSettings({ showTitle: event.target.checked })}
-          />
-          <span className="switch-slider" />
-        </label>
-      </PreferenceRow>
-
-      <PreferenceRow id="file-tabs" title={t.fileTabs} description={t.fileTabsDesc}>
-        <label className="switch-toggle" aria-label={t.fileTabs}>
-          <input
-            type="checkbox"
-            checked={state.settings.fileTabs}
-            onChange={(event) => updateSettings({ fileTabs: event.target.checked })}
-          />
-          <span className="switch-slider" />
-        </label>
-      </PreferenceRow>
-
-      {isDesktop && (
-        <PreferenceRow
-          id="document-conversion"
-          title={t.documentConversion}
-          description={t.documentConversionDesc}
-        >
-          <label className="switch-toggle" aria-label={t.documentConversion}>
+        <PreferenceRow id="sidebar-labels" title={t.sidebarLabels} description={t.sidebarLabelsDesc}>
+          <label className="switch-toggle" aria-label={t.sidebarLabels}>
             <input
               type="checkbox"
-              checked={state.settings.documentConversion}
-              onChange={(event) => updateSettings({ documentConversion: event.target.checked })}
+              checked={state.settings.showTitle}
+              onChange={(event) => updateSettings({ showTitle: event.target.checked })}
             />
             <span className="switch-slider" />
           </label>
         </PreferenceRow>
-      )}
 
-      <PreferenceRow id="html-preview" title={t.htmlPreview} description={withShortcut(t.htmlPreviewDesc, toggleHtmlPreview)}>
-        <label className="switch-toggle" aria-label={t.htmlPreview}>
+        <PreferenceRow id="file-tabs" title={t.fileTabs} description={t.fileTabsDesc}>
+          <label className="switch-toggle" aria-label={t.fileTabs}>
+            <input
+              type="checkbox"
+              checked={state.settings.fileTabs}
+              onChange={(event) => updateSettings({ fileTabs: event.target.checked })}
+            />
+            <span className="switch-slider" />
+          </label>
+        </PreferenceRow>
+
+        {isDesktop && (
+          <PreferenceRow
+            id="document-conversion"
+            title={t.documentConversion}
+            description={t.documentConversionDesc}
+          >
+            <label className="switch-toggle" aria-label={t.documentConversion}>
+              <input
+                type="checkbox"
+                checked={state.settings.documentConversion}
+                onChange={(event) => updateSettings({ documentConversion: event.target.checked })}
+              />
+              <span className="switch-slider" />
+            </label>
+          </PreferenceRow>
+        )}
+
+        <PreferenceRow id="html-preview" title={t.htmlPreview} description={withShortcut(t.htmlPreviewDesc, toggleHtmlPreview)}>
+          <label className="switch-toggle" aria-label={t.htmlPreview}>
+            <input
+              type="checkbox"
+              checked={state.settings.defaultHtmlPreview}
+              onChange={(event) => updateSettings({ defaultHtmlPreview: event.target.checked })}
+            />
+            <span className="switch-slider" />
+          </label>
+        </PreferenceRow>
+
+        <PreferenceRow id="html-code-block-preview" title={t.htmlCodeBlockPreview} description={t.htmlCodeBlockPreviewDesc}>
+          <label className="switch-toggle" aria-label={t.htmlCodeBlockPreview}>
+            <input
+              type="checkbox"
+              checked={state.settings.defaultHtmlCodeBlockPreview}
+              onChange={(event) => updateSettings({ defaultHtmlCodeBlockPreview: event.target.checked })}
+            />
+            <span className="switch-slider" />
+          </label>
+        </PreferenceRow>
+
+        <PreferenceRow id="csv-preview" title={t.csvPreview} description={t.csvPreviewDesc}>
+          <label className="switch-toggle" aria-label={t.csvPreview}>
+            <input
+              type="checkbox"
+              checked={state.settings.defaultCsvPreview}
+              onChange={(event) => updateSettings({ defaultCsvPreview: event.target.checked })}
+            />
+            <span className="switch-slider" />
+          </label>
+        </PreferenceRow>
+
+        <PreferenceRow
+          id="max-pinned-items"
+          title={t.maxPinnedItems}
+          description={t.maxPinnedItemsDesc}
+        >
           <input
-            type="checkbox"
-            checked={state.settings.defaultHtmlPreview}
-            onChange={(event) => updateSettings({ defaultHtmlPreview: event.target.checked })}
+            type="number"
+            className="settings-number-input"
+            min={1}
+            max={15}
+            step={1}
+            value={normalizeMaxPinnedItems(state.settings.maxPinnedItems)}
+            aria-label={t.maxPinnedItems}
+            onChange={(event) => updateSettings({
+              maxPinnedItems: normalizeMaxPinnedItems(event.target.value),
+            })}
           />
-          <span className="switch-slider" />
-        </label>
-      </PreferenceRow>
-
-      <PreferenceRow id="html-code-block-preview" title={t.htmlCodeBlockPreview} description={t.htmlCodeBlockPreviewDesc}>
-        <label className="switch-toggle" aria-label={t.htmlCodeBlockPreview}>
-          <input
-            type="checkbox"
-            checked={state.settings.defaultHtmlCodeBlockPreview}
-            onChange={(event) => updateSettings({ defaultHtmlCodeBlockPreview: event.target.checked })}
-          />
-          <span className="switch-slider" />
-        </label>
-      </PreferenceRow>
-
-      <PreferenceRow id="csv-preview" title={t.csvPreview} description={t.csvPreviewDesc}>
-        <label className="switch-toggle" aria-label={t.csvPreview}>
-          <input
-            type="checkbox"
-            checked={state.settings.defaultCsvPreview}
-            onChange={(event) => updateSettings({ defaultCsvPreview: event.target.checked })}
-          />
-          <span className="switch-slider" />
-        </label>
-      </PreferenceRow>
-
+        </PreferenceRow>
       </div>
 
       <div className="settings-field settings-field--separated settings-theme-style-section">

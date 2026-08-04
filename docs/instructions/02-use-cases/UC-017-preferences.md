@@ -11,10 +11,12 @@ related_docs: []
 source_scope:
 - ui/src/components/Settings/SettingsModal.tsx
 - ui/src/components/Settings/SettingsPreferencesPanel.tsx
+- ui/src/components/Sidebar/sidebarWorkspacePreferences.ts
 - ui/src/contexts/reducers/settingsUiReducer.ts
 - ui/src/themeTypes.ts
 - ui/src/contexts/AppStateContext.tsx
 test_scope:
+- tests/node/sidebar-pinning-sorting.test.mjs
 - tests/unit/ui/components/settings-modal-deep.test.tsx
 - tests/unit/ui/components/settings-render.test.tsx
 - tests/unit/ui/contexts/state-utils.test.ts

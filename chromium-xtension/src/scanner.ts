@@ -78,8 +78,10 @@ export class BrowserScanner {
     const isMdx = ext === '.mdx';
 
     let title = '';
+    let modifiedAt = 0;
     try {
       const file = await fileHandle.getFile();
+      modifiedAt = Number.isFinite(file.lastModified) ? file.lastModified : 0;
       const titleSource = typeof file.slice === 'function'
         ? file.slice(0, BrowserScanner.TITLE_CHUNK_BYTES)
         : file;
@@ -96,7 +98,8 @@ export class BrowserScanner {
       fileName,
       title,
       extension: ext,
-      documentKind: 'markdown'
+      documentKind: 'markdown',
+      modifiedAt
     };
   }
 
@@ -148,20 +151,30 @@ export class BrowserScanner {
   }
 
   static buildTree(flat: MdFile[]): FolderNode {
-    const root: FolderNode = { name: 'root', path: '', children: [], files: [] };
+    const root: FolderNode = { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
+    const childIndexes = new WeakMap<FolderNode, Map<string, FolderNode>>();
 
     for (const file of flat) {
       let node = root;
+      const modifiedAt = file.modifiedAt ?? 0;
+      node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
       const dirs = file.parts.slice(0, -1);
 
       for (let i = 0; i < dirs.length; i++) {
         const name = dirs[i];
-        let child = node.children.find(c => c.name === name);
+        let childIndex = childIndexes.get(node);
+        if (!childIndex) {
+          childIndex = new Map<string, FolderNode>();
+          childIndexes.set(node, childIndex);
+        }
+        let child = childIndex.get(name);
         if (!child) {
-          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [] };
+          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [], modifiedAt: 0 };
           node.children.push(child);
+          childIndex.set(name, child);
         }
         node = child;
+        node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
       }
 
       node.files.push(file);

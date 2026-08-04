@@ -96,6 +96,7 @@ function runCurrentWorkspaceSearch() {
   act(() => { vi.advanceTimersByTime(200); });
   const request = postMessage.mock.calls.find(([message]) => message.command === 'searchWorkspace')?.[0];
   expect(request).toBeTruthy();
+  expect(request).not.toHaveProperty('items');
   act(() => emitHostMessage({
     command: 'workspaceSearchResults', requestId: request.requestId, results: [alphaResult],
   }));

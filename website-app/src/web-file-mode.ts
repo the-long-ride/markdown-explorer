@@ -4,6 +4,7 @@ import { BrowserSearchIndex } from '../../chromium-xtension/src/search-index';
 import { BrowserRecentWorkspaces } from '../../chromium-xtension/src/recent-workspaces';
 import { rewriteMediaUrls } from '../../chromium-xtension/src/media-resolver';
 import { readTextFile } from '../../chromium-xtension/src/file-access';
+import { nextIncrementalPublishCount } from '../../chromium-xtension/src/incremental-publish';
 import type { MdFile, FolderNode } from '../../ui/src/types';
 
 type WorkspaceOperationMetadata = {
@@ -143,7 +144,7 @@ async function loadHandleWorkspace(
       if (!isWorkspaceScanCurrent(request)) return;
       discovered.push(file);
       if (thresholdElapsed && !revealStarted) startReveal();
-      else if (revealed && scannedFiles % WORKSPACE_SCAN_BATCH_SIZE === 0) publishChanged();
+      else if (revealed && scannedFiles >= nextIncrementalPublishCount(lastPublishedCount, WORKSPACE_SCAN_BATCH_SIZE)) publishChanged();
     },
   });
   const revealTimer = globalThis.setTimeout(() => {
@@ -243,7 +244,7 @@ async function sendFileContent(relativePath: string, request?: WorkspaceScanRequ
 
 // ── File-mode: single dropped file (FileSystemFileHandle) ──────────────────────
 
-function buildMdFileFromName(fileName: string): MdFile {
+function buildMdFileFromName(fileName: string, modifiedAt = 0): MdFile {
   const dot = fileName.lastIndexOf('.');
   const ext = dot !== -1 ? fileName.slice(dot).toLowerCase() : '';
   const base = dot !== -1 ? fileName.slice(0, dot) : fileName;
@@ -255,6 +256,7 @@ function buildMdFileFromName(fileName: string): MdFile {
     title: base || fileName,
     extension: ext,
     documentKind: 'markdown',
+    modifiedAt,
   };
 }
 
@@ -268,9 +270,11 @@ async function loadSingleFileWorkspace(handle: FileSystemFileHandle) {
   state.activeWorkspacePath = fileName;
   state.currentFile = fileName;
 
-  const entry = buildMdFileFromName(fileName);
+  let modifiedAt = 0;
+  try { modifiedAt = (await handle.getFile()).lastModified || 0; } catch {}
+  const entry = buildMdFileFromName(fileName, modifiedAt);
   state.flatList = [entry];
-  state.workspaceTree = { name: fileName, path: '', children: [], files: [entry] };
+  state.workspaceTree = { name: fileName, path: '', children: [], files: [entry], modifiedAt };
 
   send({ command: 'setLoading', label: 'Loading file…', ...operation });
   const recents = await BrowserRecentWorkspaces.load();

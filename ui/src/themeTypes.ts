@@ -1,3 +1,5 @@
+import type { SidebarPinnedItem, SidebarSortMode } from './types/files';
+
 // ── UI state ────────────────────────────────────────────────────────────────
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
@@ -82,6 +84,9 @@ export interface AppSettings {
   documentConversion: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
+  sidebarPinnedItems?: Record<string, SidebarPinnedItem[]>;
+  sidebarSortModes?: Record<string, SidebarSortMode>;
+  maxPinnedItems?: number;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   disabledKeybindings?: Record<string, boolean>;
@@ -99,6 +104,9 @@ export interface PersistedState {
   documentConversion?: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
+  sidebarPinnedItems?: Record<string, SidebarPinnedItem[]>;
+  sidebarSortModes?: Record<string, SidebarSortMode>;
+  maxPinnedItems?: number;
   desktopViewMode?: DesktopViewMode;
   keybindings?: Record<string, string>;
   disabledKeybindings?: Record<string, boolean>;

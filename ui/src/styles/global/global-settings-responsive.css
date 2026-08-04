@@ -128,7 +128,7 @@
     border-bottom: var(--stroke-w) solid color-mix(in srgb, var(--bd) 78%, transparent);
   }
   .settings-shortcut-label {
-    color: var(--tx2) !important;
+    color: var(--tx) !important;
     line-height: 1.35;
   }
   .settings-shortcut-input {

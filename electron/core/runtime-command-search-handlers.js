@@ -24,7 +24,7 @@ function createRuntimeCommandSearchHandlers({
     ensureHeavyModules();
     const idx = ensureSearchIndex();
     const query = String(msg.query || "").trim();
-    const items = Array.isArray(msg.items) && msg.items.length > 0 ? msg.items : state.flatList;
+    const items = Array.isArray(msg.items) ? msg.items : state.flatList;
     sendHostMessage({
       command: "workspaceSearchResults",
       requestId: msg.requestId,

@@ -12,15 +12,22 @@ function createRuntimeWorkspaceSearchHelpers({
 
   function buildWorkspaceTree(flat) {
     const root = { name: "root", path: "", children: [], files: [] };
+    const childIndexes = new WeakMap();
     for (const file of flat) {
       let node = root;
       const dirs = file.parts.slice(0, -1);
       for (let index = 0; index < dirs.length; index += 1) {
         const name = dirs[index];
-        let child = node.children.find((item) => item.name === name);
+        let childIndex = childIndexes.get(node);
+        if (!childIndex) {
+          childIndex = new Map();
+          childIndexes.set(node, childIndex);
+        }
+        let child = childIndex.get(name);
         if (!child) {
           child = { name, path: dirs.slice(0, index + 1).join("/"), children: [], files: [] };
           node.children.push(child);
+          childIndex.set(name, child);
         }
         node = child;
       }

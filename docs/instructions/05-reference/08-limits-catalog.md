@@ -78,6 +78,8 @@ keywords:
 | Limit | Value |
 |---|---:|
 | Recent workspaces | 100 |
+| Default max pinned items | 10 |
+| Workspace max pinned items user limit | 1 to 15 |
 | Scope workspace key/path length | 1000 characters |
 | Scope paths per workspace | 10,000 |
 | Keybinding imported length | 48 characters |

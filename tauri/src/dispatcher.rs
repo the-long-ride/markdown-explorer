@@ -74,6 +74,7 @@ fn md_file_from_search_payload(item: &Value) -> Option<MdFile> {
         } else {
             DocumentKind::Document
         },
+        modified_at: item.get("modifiedAt").and_then(Value::as_u64).unwrap_or(0),
         tab_id: item
             .get("tabId")
             .and_then(Value::as_str)
@@ -252,6 +253,9 @@ mod tests {
             title: "My Title".into(),
             extension: Some(".md".into()),
             document_kind: crate::workspace::scanner::DocumentKind::Markdown,
+            modified_at: 0,
+            tab_id: None,
+            tab_label: None,
         }];
 
         let items = resolve_search_items(Some(val), &flat_list);
@@ -322,6 +326,9 @@ mod tests {
             title: "My Title".into(),
             extension: Some(".md".into()),
             document_kind: crate::workspace::scanner::DocumentKind::Markdown,
+            modified_at: 0,
+            tab_id: None,
+            tab_label: None,
         }];
 
         let items = resolve_search_items(Some(val), &flat_list);

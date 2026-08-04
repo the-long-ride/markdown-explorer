@@ -13,6 +13,7 @@ export interface MdFile {
   readonly title: string;
   readonly extension?: string;
   readonly documentKind?: 'markdown' | 'document';
+  readonly modifiedAt?: number;
 }
 
 /** Folder node in the sidebar tree */
@@ -22,6 +23,7 @@ export interface FolderNode {
   readonly path: string;
   readonly children: FolderNode[];
   readonly files: MdFile[];
+  modifiedAt?: number;
 }
 
 /** Root result from WorkspaceScanner */

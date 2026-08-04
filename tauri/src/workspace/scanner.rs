@@ -11,6 +11,8 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
+use super::tree_builder;
+
 const TITLE_CHUNK_BYTES: usize = 8 * 1024;
 const DEFAULT_IGNORED_FOLDERS: &[&str] = &[
     ".git",
@@ -71,6 +73,8 @@ pub struct MdFile {
     pub title: String,
     pub extension: String,
     pub document_kind: DocumentKind,
+    #[serde(default)]
+    pub modified_at: u64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tab_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -85,11 +89,14 @@ pub enum DocumentKind {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct FolderNode {
     pub name: String,
     pub path: String,
     pub children: Vec<FolderNode>,
     pub files: Vec<MdFile>,
+    #[serde(default)]
+    pub modified_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -209,6 +216,12 @@ pub fn build_file_entry_lite(fs_path: &Path, root_path: &Path, placeholder_title
         } else {
             DocumentKind::Document
         },
+        modified_at: fs::metadata(fs_path)
+            .and_then(|metadata| metadata.modified())
+            .ok()
+            .and_then(|modified| modified.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|duration| duration.as_millis() as u64)
+            .unwrap_or(0),
         tab_id: None,
         tab_label: None,
     }
@@ -230,39 +243,7 @@ pub fn build_file_entry(fs_path: &Path, root_path: &Path) -> MdFile {
 }
 
 pub fn build_tree(flat: &[MdFile]) -> FolderNode {
-    let mut root = FolderNode {
-        name: "root".into(),
-        path: String::new(),
-        children: vec![],
-        files: vec![],
-    };
-    for file in flat {
-        insert_file(&mut root, file, 0);
-    }
-    root
-}
-
-fn insert_file(node: &mut FolderNode, file: &MdFile, depth: usize) {
-    if depth + 1 >= file.parts.len() {
-        node.files.push(file.clone());
-        return;
-    }
-    let name = &file.parts[depth];
-    let idx = node
-        .children
-        .iter()
-        .position(|child| &child.name == name)
-        .unwrap_or_else(|| {
-            let path = file.parts[..=depth].join("/");
-            node.children.push(FolderNode {
-                name: name.clone(),
-                path,
-                children: vec![],
-                files: vec![],
-            });
-            node.children.len() - 1
-        });
-    insert_file(&mut node.children[idx], file, depth + 1);
+    tree_builder::build_tree(flat)
 }
 
 pub fn scan(root_path: &Path, options: ScanOptions) -> HostResult<ScanResult> {

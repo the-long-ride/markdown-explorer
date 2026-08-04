@@ -43,12 +43,14 @@ keywords:
 | `keybindings` | `Record<string,string>` | runtime defaults | Custom shortcut map |
 | `disabledKeybindings` | `Record<string,boolean>` | `{}` | Disabled action map |
 | `language` | `string` | `en` | Application locale |
+| `maxPinnedItems` | `number` | `10` | Limit pinned files and folders per workspace (1–15) |
 | `customThemes` | `CustomTheme[]` | `[]` | Validated custom remixes |
 | `activeCustomThemeId` | `string?` | unset | Selected custom theme |
 
 ## Normalization
 
 - Boolean defaults are applied field-by-field; invalid values never replace the entire settings object.
+- `maxPinnedItems` is normalized via `normalizeMaxPinnedItems` to an integer clamped between `1` and `15` (default `10`).
 - `desktopViewMode` accepts `tabs`; every other value normalizes to `focus`.
 - `language` import is trimmed and limited; unsupported locale presentation falls back to English.
 - Scope keys and paths are trimmed, deduplicated, capped, and reconciled to current workspaces.

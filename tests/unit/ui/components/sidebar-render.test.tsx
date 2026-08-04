@@ -50,12 +50,26 @@ vi.mock('../../../../ui/src/components/Sidebar/SidebarSearch', () => ({
 
 vi.mock('../../../../ui/src/components/Sidebar/TreeNode', () => ({
   FileNode: ({ file }: any) => <div data-testid="file-node">{file.title}</div>,
-  FolderNodeView: ({ node }: any) => <div data-testid="folder-node">{node.name}</div>,
+  FolderNodeView: ({ node, expansionCommand }: any) => (
+    <div
+      data-testid="folder-node"
+      data-expansion-version={expansionCommand?.version ?? 0}
+      data-expansion-expanded={String(expansionCommand?.expanded ?? true)}
+    >
+      {node.name}
+    </div>
+  ),
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, ...props }: any) => (
-    <button onClick={onClick} {...props}>{children}</button>
+  TooltipButton: ({ onClick, children, icon, label, tooltip, ...props }: any) => (
+    <button
+      onClick={onClick}
+      aria-label={label || tooltip}
+      {...props}
+    >
+      {icon}{children}
+    </button>
   ),
 }));
 
@@ -68,6 +82,8 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       filterAriaLabel: 'Filter files',
       scopeFocus: 'Scope',
       clearScopeFocus: 'Clear',
+      collapseAllFolders: 'Collapse all folders',
+      expandAllFolders: 'Expand all folders',
       noFiles: 'No files',
       noScopeFiles: 'No matching files',
     },
@@ -81,6 +97,8 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   SearchIcon: () => <span>search-icon</span>,
   LocateIcon: () => <span>locate-icon</span>,
   FolderIcon: () => <span>folder-icon</span>,
+  CollapseIcon: () => <span>collapse-icon</span>,
+  ExpandIcon: () => <span>expand-icon</span>,
 }));
 
 describe('Sidebar render', () => {
@@ -430,22 +448,26 @@ describe('Sidebar render', () => {
     expect(countEl).toHaveTextContent('2');
   });
 
-  it('renders locate button when currentFile is set', () => {
+  it('renders enabled locate action when currentFile is set', () => {
     mockState.currentFile = '/docs/readme.md';
     render(<Sidebar />);
-    const locateBtn = screen.getAllByRole('button').find((btn) =>
-      btn.className.includes('sidebar__locate-btn'),
-    );
-    expect(locateBtn).toBeTruthy();
+    const locateBtn = screen.getByRole('button', { name: 'Locate' });
+    expect(locateBtn).toHaveClass('sidebar__files-action--locate');
+    expect(locateBtn).toBeEnabled();
   });
 
-  it('does not render locate button when currentFile is null', () => {
+  it('keeps locate action visible but disabled when currentFile is null', () => {
     mockState.currentFile = null;
     render(<Sidebar />);
-    const locateBtn = screen.getAllByRole('button').find((btn) =>
-      btn.className.includes('sidebar__locate-btn'),
-    );
-    expect(locateBtn).toBeFalsy();
+    const locateBtn = screen.getByRole('button', { name: 'Locate' });
+    expect(locateBtn).toHaveClass('sidebar__files-action--locate');
+    expect(locateBtn).toBeDisabled();
+  });
+
+  it('does not render locate inside the title actions', () => {
+    mockState.currentFile = '/docs/readme.md';
+    render(<Sidebar />);
+    expect(document.querySelector('.sidebar__title-actions .sidebar__files-action--locate')).toBeNull();
   });
 
   it('sets aria-label with cursor mode text when cursorMode is true', () => {
@@ -531,7 +553,38 @@ describe('Sidebar render', () => {
     const headerFields = document.querySelector('.sidebar__header-fields');
     expect(headerFields).toBeInTheDocument();
     expect(document.querySelector('.sidebar__search')).toBeInTheDocument();
+    expect(document.querySelector('.sidebar__files-actions')).toBeInTheDocument();
     expect(document.querySelector('.sidebar__scope')).toBeInTheDocument();
+  });
+
+  it('renders locate, collapse, expand, sort, and clear-pins actions in one Files toolbar', () => {
+    render(<Sidebar />);
+    const toolbar = document.querySelector('.sidebar__files-actions');
+    expect(toolbar).toBeInTheDocument();
+    expect(toolbar?.querySelectorAll('.sidebar__files-action')).toHaveLength(5);
+    expect(screen.getByRole('button', { name: 'Collapse all folders' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand all folders' })).toBeInTheDocument();
+  });
+
+  it('issues versioned collapse and expand commands to folder nodes', () => {
+    mockState.tree = {
+      name: 'Docs',
+      path: '/docs',
+      files: [],
+      children: [{ name: 'guides', path: '/docs/guides', files: [], children: [] }],
+    };
+    render(<Sidebar />);
+    const folder = screen.getByTestId('folder-node');
+    expect(folder).toHaveAttribute('data-expansion-version', '0');
+    expect(folder).toHaveAttribute('data-expansion-expanded', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse all folders' }));
+    expect(folder).toHaveAttribute('data-expansion-version', '1');
+    expect(folder).toHaveAttribute('data-expansion-expanded', 'false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand all folders' }));
+    expect(folder).toHaveAttribute('data-expansion-version', '2');
+    expect(folder).toHaveAttribute('data-expansion-expanded', 'true');
   });
 
   it('marks scope button as active when scope entry exists', () => {

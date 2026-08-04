@@ -18,6 +18,8 @@ export interface Translations {
   sidebarLabelsDesc: string;
   fileTabs: string;
   fileTabsDesc: string;
+  maxPinnedItems: string;
+  maxPinnedItemsDesc: string;
   documentConversion: string;
   documentConversionDesc: string;
   htmlPreview: string;
@@ -284,6 +286,18 @@ export interface Translations {
     clearScopeFocus: string;
     checkAll: string;
     uncheckAll: string;
+    collapseAllFolders: string;
+    expandAllFolders: string;
+    clearPinnedItems: string;
+    sortFiles: string;
+    sortNameAsc: string;
+    sortNameDesc: string;
+    sortModifiedDesc: string;
+    sortModifiedAsc: string;
+    pinThisFile: string;
+    pinThisFolder: string;
+    unpinItem: string;
+    pinned: string;
     noScopeFiles: string;
     noFiles: string;
   };

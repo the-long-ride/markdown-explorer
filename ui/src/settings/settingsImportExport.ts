@@ -23,12 +23,18 @@ import {
   normalizeThemeStyle,
 } from '../contexts/appStateConstants';
 import { normalizeActiveCustomThemeId, normalizeCustomThemes } from '../theme/customThemes';
+import {
+  isSidebarSortMode,
+  normalizeMaxPinnedItems,
+} from '../components/Sidebar/sidebarWorkspacePreferences';
 import type {
   AppSettings,
   CustomTheme,
   RecentWorkspace,
   ThemeMode,
   ThemeStyle,
+  SidebarPinnedItem,
+  SidebarSortMode,
 } from '../types';
 
 export { SETTINGS_EXPORT_KIND, SETTINGS_EXPORT_SCHEMA_VERSION } from '../constants/storage';
@@ -151,10 +157,46 @@ function normalizeScopeFocus(value: unknown): Record<string, string[]> {
   return Object.fromEntries(entries);
 }
 
+
+export function normalizeSidebarPinnedItems(
+  value: unknown,
+  maxPinnedItems = 10,
+): Record<string, SidebarPinnedItem[]> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const limit = normalizeMaxPinnedItems(maxPinnedItems);
+  const entries = Object.entries(value as Record<string, unknown>).flatMap(([workspaceKey, pins]) => {
+    if (!workspaceKey.trim() || !Array.isArray(pins)) return [];
+    const seen = new Set<string>();
+    const normalized = pins.flatMap((pin) => {
+      if (!pin || typeof pin !== 'object') return [];
+      const raw = pin as Record<string, unknown>;
+      const kind = raw.kind === 'file' || raw.kind === 'folder' ? raw.kind : null;
+      const path = typeof raw.path === 'string' ? raw.path.trim().slice(0, SCOPE_PATH_MAX_LENGTH) : '';
+      if (!kind || !path) return [];
+      const key = `${kind}:${path}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{ kind, path } satisfies SidebarPinnedItem];
+    }).slice(0, limit);
+    return [[workspaceKey.trim().slice(0, SCOPE_WORKSPACE_KEY_MAX_LENGTH), normalized] as const];
+  });
+  return Object.fromEntries(entries);
+}
+
+export function normalizeSidebarSortModes(value: unknown): Record<string, SidebarSortMode> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>).flatMap(([key, mode]) =>
+    key.trim() && isSidebarSortMode(mode)
+      ? [[key.trim().slice(0, SCOPE_WORKSPACE_KEY_MAX_LENGTH), mode] as const]
+      : [],
+  ));
+}
+
 function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
   const raw = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   const customThemes = normalizeCustomThemes(raw.customThemes);
   const activeCustomThemeId = normalizeActiveCustomThemeId(raw.activeCustomThemeId, customThemes);
+  const maxPinnedItems = normalizeMaxPinnedItems(raw.maxPinnedItems);
   return {
     showTitle: raw.showTitle === true,
     defaultHtmlPreview: raw.defaultHtmlPreview !== false,
@@ -165,6 +207,10 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
     fileTabs: raw.fileTabs === true,
     documentConversion: raw.documentConversion === true,
     scopeFocus: normalizeScopeFocus(raw.scopeFocus),
+    searchScopeFocus: normalizeScopeFocus(raw.searchScopeFocus),
+    sidebarPinnedItems: normalizeSidebarPinnedItems(raw.sidebarPinnedItems, maxPinnedItems),
+    sidebarSortModes: normalizeSidebarSortModes(raw.sidebarSortModes),
+    maxPinnedItems,
     desktopViewMode: normalizeDesktopViewMode(raw.desktopViewMode),
     keybindings: normalizeKeybindings(normalizeKeybindingsForImport(raw.keybindings), isDesktop),
     language: typeof raw.language === 'string' && raw.language.trim()

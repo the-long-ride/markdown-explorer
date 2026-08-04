@@ -43,11 +43,13 @@ class DesktopScanner {
     );
 
     const dirQueue = [rootPath];
+    let dirQueueIndex = 0;
     let filesSinceYield = 0;
     let titleBatch = []; // collect markdown files needing title extraction
+    const metadataBatch = [];
 
-    while (dirQueue.length > 0 && isCurrent()) {
-      const currentDir = dirQueue.shift();
+    while (dirQueueIndex < dirQueue.length && isCurrent()) {
+      const currentDir = dirQueue[dirQueueIndex++];
       let entries;
       try {
         entries = await fsp.readdir(currentDir, { withFileTypes: true });
@@ -73,6 +75,7 @@ class DesktopScanner {
               _needsTitle: isMarkdown ? isMdx : false,
             };
             flat.push(entryObj);
+            metadataBatch.push(entryObj);
             if (onFile) onFile(entryObj, flat.length);
             if (!isCurrent()) break;
             if (onProgress && flat.length % 100 === 0) onProgress(flat.length);
@@ -85,6 +88,21 @@ class DesktopScanner {
       // Yield to event loop periodically to keep UI responsive
       if (filesSinceYield >= YIELD_EVERY) {
         filesSinceYield = 0;
+        await new Promise(resolve => setImmediate(resolve));
+      }
+    }
+
+    for (let i = 0; i < metadataBatch.length && isCurrent(); i += titleConcurrency * 2) {
+      const batch = metadataBatch.slice(i, i + titleConcurrency * 2);
+      await Promise.all(batch.map(async (entry) => {
+        try {
+          const stat = await fsp.stat(entry.fsPath);
+          entry.modifiedAt = Number.isFinite(stat.mtimeMs) ? stat.mtimeMs : 0;
+        } catch {
+          entry.modifiedAt = 0;
+        }
+      }));
+      if (i + titleConcurrency * 2 < metadataBatch.length) {
         await new Promise(resolve => setImmediate(resolve));
       }
     }
@@ -125,7 +143,7 @@ class DesktopScanner {
   }
 
   // Lightweight file entry builder (used during scan, title filled later)
-  static buildFileEntryLite(fsPath, rootPath, placeholderTitle) {
+  static buildFileEntryLite(fsPath, rootPath, placeholderTitle, modifiedAt = 0) {
     const relativePath = path.relative(rootPath, fsPath);
     const parts = relativePath.split(path.sep);
     const fileName = parts[parts.length - 1];
@@ -133,7 +151,7 @@ class DesktopScanner {
     const isMarkdown = isMarkdownFilePath(fileName);
     const title = placeholderTitle || stripKnownExtension(fileName);
     const documentKind = isMarkdown ? 'markdown' : 'document';
-    return { fsPath, relativePath, parts, fileName, title, extension: ext, documentKind };
+    return { fsPath, relativePath, parts, fileName, title, extension: ext, documentKind, modifiedAt };
   }
 
   // Async title extraction — reads the first 64 KB and extracts H1 / frontmatter.
@@ -174,7 +192,9 @@ class DesktopScanner {
       ? DesktopScanner.extractTitle(fsPath, isMdx) ?? stripKnownExtension(fileName)
       : stripKnownExtension(fileName);
     const documentKind = isMarkdown ? 'markdown' : 'document';
-    return { fsPath, relativePath, parts, fileName, title, extension: ext, documentKind };
+    let modifiedAt = 0;
+    try { modifiedAt = fs.statSync(fsPath).mtimeMs || 0; } catch {}
+    return { fsPath, relativePath, parts, fileName, title, extension: ext, documentKind, modifiedAt };
   }
 
   static extractTitle(fsPath, isMdx = false) {
@@ -237,20 +257,30 @@ class DesktopScanner {
   }
 
   static buildTree(flat) {
-    const root = { name: 'root', path: '', children: [], files: [] };
+    const root = { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
+    const childIndexes = new WeakMap();
 
     for (const file of flat) {
       let node = root;
+      const modifiedAt = file.modifiedAt || 0;
+      node.modifiedAt = Math.max(node.modifiedAt || 0, modifiedAt);
       const dirs = file.parts.slice(0, -1);
 
       for (let i = 0; i < dirs.length; i++) {
         const name = dirs[i];
-        let child = node.children.find(c => c.name === name);
+        let childIndex = childIndexes.get(node);
+        if (!childIndex) {
+          childIndex = new Map();
+          childIndexes.set(node, childIndex);
+        }
+        let child = childIndex.get(name);
         if (!child) {
-          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [] };
+          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [], modifiedAt: 0 };
           node.children.push(child);
+          childIndex.set(name, child);
         }
         node = child;
+        node.modifiedAt = Math.max(node.modifiedAt || 0, modifiedAt);
       }
 
       node.files.push(file);

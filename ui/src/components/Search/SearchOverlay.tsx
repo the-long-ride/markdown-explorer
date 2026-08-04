@@ -20,7 +20,6 @@ import {
   buildWorkspaceChoices,
   isCrossTabItem,
   resultKey,
-  toWorkspaceSearchResult,
   type CrossTabSearchItem,
   type SearchResultItem,
   type WorkspaceChoice,
@@ -285,7 +284,7 @@ export function SearchOverlay({
     setIsWorkspaceSearching(true);
     setSelectedResultKey(null);
     const handle = window.setTimeout(() => bridge.postMessage({
-      command: 'searchWorkspace', requestId, query, matchCase, items: state.fileList.map(toWorkspaceSearchResult),
+      command: 'searchWorkspace', requestId, query, matchCase,
     }), 160);
     return () => window.clearTimeout(handle);
   }, [bridge, currentWorkspaceEnabled, hasCrossTabSearch, isOpen, matchCase, query, state.fileList, trimmedQuery.length]);

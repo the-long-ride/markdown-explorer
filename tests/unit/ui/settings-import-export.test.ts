@@ -6,6 +6,8 @@ import {
   SettingsImportError,
   createSettingsExport,
   normalizeRecentWorkspaces,
+  normalizeSidebarPinnedItems,
+  normalizeSidebarSortModes,
   parseSettingsImport,
   restoreLocalUiSettings,
 } from '../../../ui/src/settings/settingsImportExport';
@@ -91,6 +93,32 @@ describe('normalizeRecentWorkspaces', () => {
 
   test('non-object item filtered', () => {
     expect(normalizeRecentWorkspaces([42, 'string', null, true])).toEqual([]);
+  });
+});
+
+describe('sidebar pin and sort import normalization', () => {
+  test('deduplicates pins, rejects invalid entries, and clamps to the configured limit', () => {
+    expect(normalizeSidebarPinnedItems({
+      workspace: [
+        { kind: 'file', path: '/a.md' },
+        { kind: 'file', path: '/a.md' },
+        { kind: 'folder', path: 'docs' },
+        { kind: 'unknown', path: '/bad' },
+      ],
+    }, 2)).toEqual({
+      workspace: [
+        { kind: 'file', path: '/a.md' },
+        { kind: 'folder', path: 'docs' },
+      ],
+    });
+  });
+
+  test('keeps only supported sort modes', () => {
+    expect(normalizeSidebarSortModes({
+      a: 'name-desc',
+      b: 'modified-asc',
+      c: 'random',
+    })).toEqual({ a: 'name-desc', b: 'modified-asc' });
   });
 });
 

@@ -52,17 +52,25 @@ export function buildCurrentTabResults(
   matchCase: boolean,
 ): Array<{ item: WorkspaceSearchResult; score: number }> {
   if (query.length < 2) return [];
-  return files
-    .map((file) => ({
-      item: toWorkspaceSearchResult(file),
-      score:
-        (metadataIncludes(file.title, query, matchCase) ? 3 : 0) +
-        (metadataIncludes(file.fileName, query, matchCase) ? 2 : 0) +
-        (metadataIncludes(file.relativePath, query, matchCase) ? 1 : 0),
-    }))
-    .filter((result) => result.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 20);
+
+  const resultLimit = 20;
+  const scoreBuckets: Array<Array<{ item: WorkspaceSearchResult; score: number }>> =
+    Array.from({ length: 7 }, () => []);
+  for (const file of files) {
+    const score =
+      (metadataIncludes(file.title, query, matchCase) ? 3 : 0) +
+      (metadataIncludes(file.fileName, query, matchCase) ? 2 : 0) +
+      (metadataIncludes(file.relativePath, query, matchCase) ? 1 : 0);
+    if (score > 0 && scoreBuckets[score].length < resultLimit) {
+      scoreBuckets[score].push({ item: toWorkspaceSearchResult(file), score });
+    }
+  }
+
+  const results: Array<{ item: WorkspaceSearchResult; score: number }> = [];
+  for (let score = scoreBuckets.length - 1; score > 0 && results.length < resultLimit; score -= 1) {
+    results.push(...scoreBuckets[score].slice(0, resultLimit - results.length));
+  }
+  return results;
 }
 
 function findExcerptMatch(

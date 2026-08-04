@@ -252,20 +252,41 @@ describe('_searchMarkdownItems with rawItems parameter', () => {
     expect(results[0].fsPath).toBe(mdFile);
   });
 
-  it('falls back to _flat when rawItems is empty array', () => {
-    const panel = ensurePanel();
-    panel._flat = [];
+  it('keeps an explicit empty rawItems scope empty', () => {
+    const mdFile = path.join(tempDir, 'resident.md');
+    writeFile(mdFile, '# Resident Doc\n\nUnique scoped content.');
+    (WorkspaceScanner.readFile as any).mockReturnValue('# Resident Doc\n\nUnique scoped content.');
 
-    const results = panel._searchMarkdownItems('test', []);
+    const panel = ensurePanel([{ name: 'ws', uri: { fsPath: tempDir } }]);
+    panel._flat = [{
+      fsPath: mdFile,
+      relativePath: 'resident.md',
+      parts: ['resident.md'],
+      fileName: 'resident.md',
+      title: 'Resident Doc',
+    }];
+
+    const results = panel._searchMarkdownItems('scoped', []);
     expect(results).toEqual([]);
   });
 
   it('falls back to _flat when rawItems is undefined', () => {
-    const panel = ensurePanel();
-    panel._flat = [];
+    const mdFile = path.join(tempDir, 'resident.md');
+    writeFile(mdFile, '# Resident Doc\n\nUnique workspace content.');
+    (WorkspaceScanner.readFile as any).mockReturnValue('# Resident Doc\n\nUnique workspace content.');
 
-    const results = panel._searchMarkdownItems('test', undefined);
-    expect(results).toEqual([]);
+    const panel = ensurePanel([{ name: 'ws', uri: { fsPath: tempDir } }]);
+    panel._flat = [{
+      fsPath: mdFile,
+      relativePath: 'resident.md',
+      parts: ['resident.md'],
+      fileName: 'resident.md',
+      title: 'Resident Doc',
+    }];
+
+    const results = panel._searchMarkdownItems('workspace', undefined);
+    expect(results).toHaveLength(1);
+    expect(results[0].fsPath).toBe(mdFile);
   });
 
   it('skips items where fsPath does not exist on disk', () => {

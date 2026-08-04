@@ -101,6 +101,22 @@ describe('UI style contract', () => {
     expect(tokyo).toMatch(/\.sidebar,[\s\S]*\.toc-panel\s*\{[^}]*margin-top:\s*var\(--theme-header-gap\)/);
   });
 
+  test('uses primary theme text for keyboard shortcut names', () => {
+    const layoutCss = fs.readFileSync(
+      path.join(uiRoot, 'styles/global/global-settings-layout.css'),
+      'utf8',
+    );
+    const responsiveCss = fs.readFileSync(
+      path.join(uiRoot, 'styles/global/global-settings-responsive.css'),
+      'utf8',
+    );
+    const layoutBlock = layoutCss.match(/\.settings-shortcut-label\s*\{([^}]*)\}/s)?.[1] ?? '';
+    const responsiveBlock = responsiveCss.match(/\.settings-shortcut-label\s*\{([^}]*)\}/s)?.[1] ?? '';
+
+    expect(layoutBlock).toMatch(/color:\s*var\(--tx\);/);
+    expect(responsiveBlock).toMatch(/color:\s*var\(--tx\)\s*!important;/);
+  });
+
   test('does not underline the workspace Show More button', () => {
     const css = fs.readFileSync(
       path.join(uiRoot, 'styles/global/global-workspace-selection-screen.css'),

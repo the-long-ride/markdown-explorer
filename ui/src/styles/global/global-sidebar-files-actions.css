@@ -1,0 +1,53 @@
+/* Files-tab action toolbar */
+.sidebar__files-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.sidebar__files-action {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+  color: var(--tx2);
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+}
+
+.sidebar__files-action:hover:not(:disabled) {
+  background: var(--bg-h);
+  color: var(--tx);
+  border-color: var(--bd-x);
+}
+
+.sidebar__files-action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 58%, transparent);
+  outline-offset: 1px;
+}
+
+.sidebar__files-action:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.sidebar__files-action.is-open {
+  color: var(--accent-text);
+  background: var(--accent-dim);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--bd-s));
+}
+
+.sidebar-pin-clear-icon__x {
+  color: var(--danger);
+}

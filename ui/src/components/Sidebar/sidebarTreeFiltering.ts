@@ -15,6 +15,7 @@ export function folderHasVisibleContent(
   hideUnselected: boolean,
   selectedFilePaths: Set<string>,
 ): boolean {
+  if (!filter.trim() && !hideUnselected) return true;
   return node.files.some((file) => matchesFileSearch(file, filter)
       && (!hideUnselected || selectedFilePaths.has(file.fsPath)))
     || node.children.some((child) => folderHasVisibleContent(child, filter, hideUnselected, selectedFilePaths));

@@ -544,10 +544,17 @@ describe('createDesktopRuntime', () => {
       expect(msg.requestId).toBe('r1');
     });
 
-    test('uses flatList when items are empty array', () => {
+    test('keeps an explicit empty items scope empty', () => {
       runtime.state.flatList = [{ fsPath: '/a.md' }];
       ctx.mockSearchIndex.search.mockReturnValue([]);
       runtime.handleSearchWorkspace({ requestId: 'r1', query: 'test', items: [] });
+      expect(ctx.mockSearchIndex.search).toHaveBeenCalledWith('test', [], 10000, { matchCase: false });
+    });
+
+    test('uses flatList when items are omitted', () => {
+      runtime.state.flatList = [{ fsPath: '/a.md' }];
+      ctx.mockSearchIndex.search.mockReturnValue([]);
+      runtime.handleSearchWorkspace({ requestId: 'r1', query: 'test' });
       expect(ctx.mockSearchIndex.search).toHaveBeenCalledWith('test', [{ fsPath: '/a.md' }], 10000, { matchCase: false });
     });
 

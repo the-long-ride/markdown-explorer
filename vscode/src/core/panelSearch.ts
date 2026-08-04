@@ -23,7 +23,7 @@ export function searchMarkdownItems(
   if (trimmedQuery.length < 2) return [];
   const matchCase = Boolean(options.matchCase);
   const query = matchCase ? trimmedQuery : normalizeForSearch(trimmedQuery);
-  const items = rawItems?.length ? rawItems : flat;
+  const items = Array.isArray(rawItems) ? rawItems : flat;
   const results: Array<WorkspaceSearchResult & { score: number }> = [];
   for (const item of items) {
     if (!item.fsPath || !fs.existsSync(item.fsPath) || !isKnownSupportedFilePath(item.fsPath)) continue;

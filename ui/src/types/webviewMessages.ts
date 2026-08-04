@@ -17,7 +17,7 @@ export interface OpenPathMessage extends WorkspaceOperationMetadata { readonly c
 export interface ActivateWorkspaceMessage extends WorkspaceOperationMetadata { readonly command: 'activateWorkspace'; readonly workspacePath: string; readonly filePath?: string; readonly openFirstFile?: boolean; }
 export interface CrossTabSearchMessage { readonly command: 'searchAcrossWorkspaces'; readonly requestId: string; readonly query: string; readonly matchCase?: boolean; readonly tabIds?: readonly string[]; readonly items?: readonly CrossTabSearchResult[]; }
 export interface SearchPreviewRequestMessage { readonly command: 'loadSearchPreview'; readonly requestId: string; readonly filePath: string; readonly tabId?: string; }
-export interface WorkspaceSearchMessage { readonly command: 'searchWorkspace'; readonly requestId: string; readonly query: string; readonly matchCase?: boolean; readonly items: readonly WorkspaceSearchResult[]; }
+export interface WorkspaceSearchMessage { readonly command: 'searchWorkspace'; readonly requestId: string; readonly query: string; readonly matchCase?: boolean; readonly items?: readonly WorkspaceSearchResult[]; }
 export interface IndexWorkspaceSearchItemsMessage { readonly command: 'indexWorkspaceSearchItems'; readonly items?: readonly CrossTabSearchResult[]; }
 export interface LoadWorkspaceSearchIndexesMessage { readonly command: 'loadWorkspaceSearchIndexes'; readonly tabs: readonly { readonly tabId: string; readonly workspacePath: string }[]; }
 export interface ConfirmOpenPathMessage { readonly command: 'confirmOpenPath'; readonly path: string; }

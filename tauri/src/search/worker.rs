@@ -177,6 +177,7 @@ mod tests {
             title: name.to_string(),
             extension: "md".to_string(),
             document_kind: crate::workspace::scanner::DocumentKind::Markdown,
+            modified_at: 0,
             tab_id: None,
             tab_label: None,
         }

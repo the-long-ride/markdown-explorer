@@ -44,6 +44,7 @@ keywords:
 
 - Shared navigation, search, settings, workspace, content, errors, dialogs, welcome, and theme labels.
 - The `search` translation domain covers modal columns, Preview state/loading/failure, workspace inclusion checkboxes, resizer labels, match-case controls, tooltip arrow-open actions, current-file find controls, and sidebar workspace search.
+- Sidebar pinning, sorting, and maximum pinned items preference keys (`maxPinnedItems`, `maxPinnedItemsDesc`, `clearPinnedItems`, `sortFiles`, `sortNameAsc`, `sortNameDesc`, `sortModifiedDesc`, `sortModifiedAsc`, `pinThisFile`, `pinThisFolder`, `unpinItem`, `pinned`) are strictly typed as non-optional in `translationTypes.ts` and fully translated across all 9 supported locales.
 - Welcome tips use a dedicated translation model/fallback.
 - OS-native picker/file manager wording may be supplied by host/OS.
 

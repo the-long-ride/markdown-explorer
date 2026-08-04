@@ -1,6 +1,7 @@
 import type { FolderNode, MdFile } from '../../ui/src/types';
 import type { BrowserSearchIndex } from './search-index';
 import { filterSearchIndexTabs, isValidExternalUrl, normalizeSearchQuery, resolveWorkspaceTextResourcePath } from './chrome-host-utils';
+import { resolveWorkspaceSearchItems } from './workspace-search-items';
 
 interface ChromeHostSearchContext {
   searchIndex: BrowserSearchIndex | null;
@@ -18,7 +19,7 @@ export async function handleChromeHostUtilityCommand(message: any, context: Chro
       const results = context.searchIndex
         ? await context.searchIndex.search(
             normalizeSearchQuery(message.query, Boolean(message.matchCase)),
-            context.flatList,
+            resolveWorkspaceSearchItems(message.items, context.flatList),
             80,
             { matchCase: Boolean(message.matchCase) },
           ) : [];
