@@ -7,15 +7,16 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ## [v1.6.3] — 2026-08-04
 
 ### Added
-- **Featured Random Tip Card on All Files Closed**: When all document files or tabs are closed, a featured **Random Tip Card** from the Tips & Practices collection is randomly selected and rendered prominently in the center of `content__scroll`, complete with 3D keycaps and interactive shuffle controls.
+- **Featured Random Tip Card in Active Workspace**: When a user has an active workspace open but closes all document tabs/files, a featured **Random Tip Card** from the Tips & Practices collection is randomly chosen and displayed prominently in the center of `content__scroll`, complete with 3D keycaps and interactive shuffle controls.
 - **Dynamic 3D Keycaps & Theme Synchronization**: All keyboard shortcuts rendered in tooltips, Settings Modal, and the Welcome Page ("Tips & Practices" tab) now render as 3D keycaps with bevel depth, top lighting gradient, and 3D drop shadow.
 - **Theme-Adaptive Keycap Styling**: Keycap surface colors (`color-mix` of `--bg-e` & `--accent`), drop shadows, and corner rounding (`border-radius: clamp(0px, var(--r, 6px), 10px)`) dynamically adapt to match the active theme (e.g., sharp technical keycaps in Raw Grid, rounded keycaps in Bento/Pet themes, translucent glass keycaps in Glass).
-- **Embedded Tooltip Shortcut Parsing**: Paragraph tooltips (e.g., Preference description tooltips) and multiline descriptions now parse embedded shortcuts like `(Ctrl+Alt+H)` into inline 3D keycaps while preserving full accessibility and test compatibility.
+- **Embedded Tooltip Shortcut & Continuous Text Layout**: Tooltip descriptions parse embedded shortcuts (wrapped or bare like `Ctrl+Alt+T`) and format keycaps inline with `display: inline` sentence text flow without right-margin displacement.
 - **Cross-Workspace Search & Live Document Preview**: Full Markdown and HTML document preview panel integrated directly into the Search Overlay modal with support for syntax highlighting, math, diagrams, CSV/TSV table views, and workspace scan scoping.
 
 ### Changed
+- **Vercel & Tokyo Night Theme Sidebar Alignment**: Left sidebar (`.sidebar`) and right TOC sidebar (`.toc-panel`) padding in Vercel and Tokyo Night themes updated to `padding: 8px 10px 10px 10px` with a floating `10px` bottom margin inset, matching topbar header left/right alignment.
+- **K-Ink Wolf & Pet Theme Rail Markers**: Renamed `ui/src/assets/themes/pets/paws/` to `ui/src/assets/themes/pets/rail-markers/` with species-tailored SVGs (Cat with longer curved claws, K-Ink wolf with neat short claws, Hamster, Corgi, White Shiba).
 - **Shortcut Label Typography**: Increased font weight (`font-weight: 600`, `12.5px`) and color contrast for shortcut action labels in Settings Modal for clear, effortless legibility.
-- **Pet Theme Rail Markers Asset Directory**: Renamed `ui/src/assets/themes/pets/paws/` to `ui/src/assets/themes/pets/rail-markers/` with species-tailored SVGs (Cat with longer curved claws, Hamster, Corgi, White Shiba, K-Ink Wolf).
 - **Manual Tests Directory**: Renamed root `test/` folder to `manual-tests/` and updated virtual workspace import globs (`manual-tests/*.{md,mdx}`) and contract tests.
 - **Sidebar Pinning — Root Level Hoisting**: When a file or folder located inside a parent subfolder is pinned, it is now hoisted and displayed directly at the root level of the sidebar tree instead of remaining nested inside its subfolder.
 - **Unpinned Button Icon**: Updated unpinned item menu and clear-pins actions to use a dedicated dual-path SVG (`UnpinIcon`) with support for the active theme accent color (`var(--accent, #EF4136)`).
