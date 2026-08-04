@@ -26,7 +26,12 @@
 
 [data-theme-style="vercel"] .body {
   gap: 8px;
-  padding: 8px;
+  padding: 8px 10px 10px 10px;
+}
+
+[data-theme-style="vercel"] .sidebar,
+[data-theme-style="vercel"] .toc-panel {
+  margin-bottom: 2px;
 }
 
 /* Sizing and alignment constraints */

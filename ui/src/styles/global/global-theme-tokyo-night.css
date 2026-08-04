@@ -30,7 +30,12 @@
   flex-basis: var(--topbar-h);
 }
 
+[data-theme-style="tokyo-night"] .body {
+  gap: var(--theme-header-gap);
+  padding: 8px 10px 10px 10px;
+}
+
 [data-theme-style="tokyo-night"] .sidebar,
 [data-theme-style="tokyo-night"] .toc-panel {
-  margin-top: var(--theme-header-gap);
+  margin-bottom: 2px;
 }
