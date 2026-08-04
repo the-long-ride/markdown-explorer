@@ -14,7 +14,7 @@ export interface FolderNode {
   readonly path: string;
   readonly children: FolderNode[];
   readonly files: MdFile[];
-  readonly modifiedAt?: number;
+  modifiedAt?: number;
 }
 
 export interface RecentWorkspace {
