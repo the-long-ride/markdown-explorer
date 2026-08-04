@@ -278,6 +278,15 @@ describe("Content rendering", () => {
     });
   });
 
+  it("renders RandomTipCard when all document files are closed in an open workspace", () => {
+    setupWithProps(
+      { fileList: ["doc1.md", "doc2.md"], currentFile: null },
+      { suppressWelcome: true },
+    );
+    expect(screen.getByTestId("empty-workspace-random-tip")).toBeInTheDocument();
+    expect(screen.getByText("Tip & Practice of the Moment")).toBeInTheDocument();
+  });
+
   it("renders tab-view hint for unavailable workspace in desktop tab view", () => {
     (window as Record<string, unknown>).electronAPI = {};
     setup({

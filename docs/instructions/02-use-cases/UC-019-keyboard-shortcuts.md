@@ -88,6 +88,10 @@ flowchart LR
 - Do not consume typing inside editable controls unless action is intended.
 - Fixed host/browser safety keys remain protected.
 - Search in shortcut settings matches action labels and bindings.
+- All shortcuts rendered in tooltips, Settings Modal, and Welcome Page (Tips & Practices) display as styled 3D keycaps (`<ShortcutKeycaps size="sm">`) with lowered view angle perspective.
+- Keycaps dynamically inherit active theme tokens (`--bg-e`, `--bg-s`, `--accent`, `--bd-x`, `--bd-s`) and border radius (`border-radius: clamp(0px, var(--r, 6px), 10px)`).
+- Shortcut labels in Settings Modal render with high-contrast font weight (`font-weight: 600`) for clear legibility.
+- Tips & Practices tab automatically syncs shortcut descriptions with the user's active keybindings configuration.
 
 
 ## Protocol effects

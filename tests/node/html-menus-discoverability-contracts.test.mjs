@@ -152,7 +152,7 @@ test('all supported locales expose HTML menus, sidebar actions, renamed preview 
 
 test('Snake sandbox and Unreleased changelog cover the patch series', async () => {
   const [fixture, changelog] = await Promise.all([
-    read('test/test-code.md'),
+    read('manual-tests/test-code.md'),
     read('CHANGELOG.md'),
   ]);
   assert.match(fixture, /<canvas[^>]+id="snake/);

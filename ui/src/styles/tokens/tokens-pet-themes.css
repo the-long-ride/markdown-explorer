@@ -100,7 +100,7 @@
   --pet-bg-happy: url("../../assets/themes/pets/backgrounds/white-shiba-happy.png");
   --pet-bg-wink: url("../../assets/themes/pets/backgrounds/white-shiba-wink.png");
   --pet-bg-blep: url("../../assets/themes/pets/backgrounds/white-shiba-blep.png");
-  --pet-paw: url("../../assets/themes/pets/paws/white-shiba-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/white-shiba-paw.svg");
 }
 
 
@@ -108,28 +108,28 @@
   --pet-bg-happy: url("../../assets/themes/pets/backgrounds/k-ink-wolf.png");
   --pet-bg-wink: url("../../assets/themes/pets/backgrounds/k-ink-wating.png");
   --pet-bg-blep: url("../../assets/themes/pets/backgrounds/k-ink-surprise.png");
-  --pet-paw: url("../../assets/themes/pets/paws/k-ink-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/k-ink-paw.svg");
 }
 
 [data-theme-style="pet-cat"] {
   --pet-bg-happy: url("../../assets/themes/pets/backgrounds/cat-happy.png");
   --pet-bg-wink: url("../../assets/themes/pets/backgrounds/cat-wink.png");
   --pet-bg-blep: url("../../assets/themes/pets/backgrounds/cat-blep.png");
-  --pet-paw: url("../../assets/themes/pets/paws/cat-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/cat-paw.svg");
 }
 
 [data-theme-style="pet-hamster"] {
   --pet-bg-happy: url("../../assets/themes/pets/backgrounds/hamster-happy.png");
   --pet-bg-wink: url("../../assets/themes/pets/backgrounds/hamster-wink.png");
   --pet-bg-blep: url("../../assets/themes/pets/backgrounds/hamster-blep.png");
-  --pet-paw: url("../../assets/themes/pets/paws/hamster-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/hamster-paw.svg");
 }
 
 [data-theme-style="pet-corgi"] {
   --pet-bg-happy: url("../../assets/themes/pets/backgrounds/corgi-happy.png");
   --pet-bg-wink: url("../../assets/themes/pets/backgrounds/corgi-wink.png");
   --pet-bg-blep: url("../../assets/themes/pets/backgrounds/corgi-blep.png");
-  --pet-paw: url("../../assets/themes/pets/paws/corgi-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/corgi-paw.svg");
 }
 
 [data-theme-style="pet-white-shiba"][data-theme="dark"],

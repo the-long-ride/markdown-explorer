@@ -5,6 +5,7 @@ import { InteractiveBackground } from '../../../../ui/src/components/shared/Inte
 import { TabContextMenu } from '../../../../ui/src/components/shared/TabContextMenu';
 import { TooltipButton } from '../../../../ui/src/components/shared/TooltipButton';
 import { ToolbarActionMenu } from '../../../../ui/src/components/shared/ToolbarActionMenu';
+import { parseShortcutText } from '../../../../ui/src/components/shared/parseShortcutText';
 
 vi.mock('../../../../ui/src/utils/toolbar-menu.js', () => ({
   buildShortcutTooltip: (tooltip: string, shortcut?: string) => {
@@ -434,5 +435,30 @@ describe('ToolbarActionMenu', () => {
     fireEvent.click(screen.getByRole('button', { name: /more/i }));
     fireEvent.click(screen.getByText('Focus'));
     expect(onFocusModeToggle).toHaveBeenCalled();
+  });
+});
+
+describe('parseShortcutText', () => {
+  it('returns null for empty or undefined input', () => {
+    expect(parseShortcutText(undefined)).toBeNull();
+    expect(parseShortcutText('')).toBeNull();
+  });
+
+  it('returns plain string when no shortcuts are present', () => {
+    expect(parseShortcutText('Hello world')).toBe('Hello world');
+  });
+
+  it('parses parenthesized shortcuts into 3D keycaps with accessible hidden fallback', () => {
+    const res = parseShortcutText('Toggle with (Ctrl+Alt+H).');
+    const { container } = render(res as React.ReactElement);
+    expect(screen.getByText('Toggle with (Ctrl+Alt+H).')).toBeInTheDocument();
+    expect(container.querySelector('.keycap-3d')).toBeInTheDocument();
+  });
+
+  it('parses bare shortcuts like Ctrl+Alt+T into 3D keycaps', () => {
+    const res = parseShortcutText('Toggle anytime with Ctrl+Alt+T.');
+    const { container } = render(res as React.ReactElement);
+    expect(screen.getByText('Toggle anytime with Ctrl+Alt+T.')).toBeInTheDocument();
+    expect(container.querySelector('.keycap-3d')).toBeInTheDocument();
   });
 });

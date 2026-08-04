@@ -19,10 +19,10 @@ Use this file to verify internal workspace links and history navigation.
 
 These paths are root-relative when the repository is opened as the workspace.
 
-- [Basic rendering from workspace root](/test/test-basic.md)
-- [Diagrams from workspace root](/test/test-diagrams.md)
-- [Media from workspace root](/test/test-media.md)
-- [Tables from workspace root](/test/test-tables.md)
+- [Basic rendering from workspace root](/manual-tests/test-basic.md)
+- [Diagrams from workspace root](/manual-tests/test-diagrams.md)
+- [Media from workspace root](/manual-tests/test-media.md)
+- [Tables from workspace root](/manual-tests/test-tables.md)
 
 ## Parent Directory Links
 

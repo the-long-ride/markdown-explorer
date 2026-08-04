@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Cat paw">
+  <!-- Outer Fur & 4 Longer Curved Claws -->
+  <g fill="#4b5268" stroke="#151a28" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 4 Longer Curved Retractable Claws -->
+    <path d="M 5.0 9.2 C 3.2 5.0 2.0 3.2 1.8 2.8 C 3.4 4.5 5.8 7.2 7.0 9.2 Z" fill="#e2e8f0"/>
+    <path d="M 11.6 5.8 C 11.2 1.8 11.0 0.5 10.8 0.2 C 12.4 1.8 13.4 4.2 13.8 6.2 Z" fill="#e2e8f0"/>
+    <path d="M 20.4 5.8 C 20.8 1.8 21.0 0.5 21.2 0.2 C 19.6 1.8 18.6 4.2 18.2 6.2 Z" fill="#e2e8f0"/>
+    <path d="M 27.0 9.2 C 28.8 5.0 30.0 3.2 30.2 2.8 C 28.6 4.5 26.2 7.2 25.0 9.2 Z" fill="#e2e8f0"/>
+    
+    <!-- 4 Toe Beans (Fur Outlines) -->
+    <ellipse cx="6.2" cy="12.0" rx="2.7" ry="3.8" transform="rotate(-26 6.2 12.0)"/>
+    <ellipse cx="12.6" cy="8.6" rx="2.9" ry="4.2" transform="rotate(-8 12.6 8.6)"/>
+    <ellipse cx="19.4" cy="8.6" rx="2.9" ry="4.2" transform="rotate(8 19.4 8.6)"/>
+    <ellipse cx="25.8" cy="12.0" rx="2.7" ry="3.8" transform="rotate(26 25.8 12.0)"/>
+
+    <!-- 3-Lobed Cat Main Palm Pad -->
+    <path d="M 6.8 22.6 C 7.5 17.5, 11.2 14.6, 16 14.6 C 20.8 14.6, 24.5 17.5, 25.2 22.6 C 25.6 25.6, 23.2 27.8, 20.2 27.0 C 18.2 26.5, 17.5 25.6, 16 25.6 C 14.5 25.6, 13.8 26.5, 11.8 27.0 C 8.8 27.8, 6.4 25.6, 6.8 22.6 Z"/>
+  </g>
+
+  <!-- Pink Inner Toe Beans & Palm Pad -->
+  <g fill="#f0a9b8">
+    <ellipse cx="6.2" cy="12.0" rx="1.6" ry="2.4" transform="rotate(-26 6.2 12.0)"/>
+    <ellipse cx="12.6" cy="8.6" rx="1.7" ry="2.6" transform="rotate(-8 12.6 8.6)"/>
+    <ellipse cx="19.4" cy="8.6" rx="1.7" ry="2.6" transform="rotate(8 19.4 8.6)"/>
+    <ellipse cx="25.8" cy="12.0" rx="1.6" ry="2.4" transform="rotate(26 25.8 12.0)"/>
+    <path d="M 8.8 22.5 C 9.4 18.8, 12.0 16.5, 16 16.5 C 20.0 16.5, 22.6 18.8, 23.2 22.5 C 23.5 24.8, 21.6 26.2, 19.4 25.6 C 17.8 25.2, 17.2 24.5, 16 24.5 C 14.8 24.5, 14.2 25.2, 12.6 25.6 C 10.4 26.2, 8.5 24.8, 8.8 22.5 Z"/>
+  </g>
+
+  <!-- Glossy Highlights -->
+  <circle cx="11.8" cy="7.2" r="0.7" fill="#ffffff" opacity="0.6"/>
+  <circle cx="18.6" cy="7.2" r="0.7" fill="#ffffff" opacity="0.6"/>
+</svg>

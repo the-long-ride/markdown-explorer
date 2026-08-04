@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="White Shiba paw">
+  <!-- Cream White Fur & 4 Toe Beans -->
+  <g fill="#fffdfa" stroke="#383548" stroke-width="1.6" stroke-linejoin="round">
+    <ellipse cx="6.2" cy="11.8" rx="2.9" ry="4.0" transform="rotate(-26 6.2 11.8)"/>
+    <ellipse cx="12.6" cy="8.4" rx="3.0" ry="4.4" transform="rotate(-8 12.6 8.4)"/>
+    <ellipse cx="19.4" cy="8.4" rx="3.0" ry="4.4" transform="rotate(8 19.4 8.4)"/>
+    <ellipse cx="25.8" cy="11.8" rx="2.9" ry="4.0" transform="rotate(26 25.8 11.8)"/>
+    <path d="M 6.8 22.4 C 7.5 17.4, 11.2 14.4, 16 14.4 C 20.8 14.4, 24.5 17.4, 25.2 22.4 C 25.6 25.4, 23.2 27.6, 20.2 26.8 C 18.2 26.3, 17.5 25.4, 16 25.4 C 14.5 25.4, 13.8 26.3, 11.8 26.8 C 8.8 27.6, 6.4 25.4, 6.8 22.4 Z"/>
+  </g>
+
+  <!-- Sakura Pink inner toe beans for 4 fingers & palm pad -->
+  <g fill="#ffb3c6">
+    <ellipse cx="6.2" cy="11.8" rx="1.6" ry="2.3" transform="rotate(-26 6.2 11.8)"/>
+    <ellipse cx="12.6" cy="8.4" rx="1.7" ry="2.5" transform="rotate(-8 12.6 8.4)"/>
+    <ellipse cx="19.4" cy="8.4" rx="1.7" ry="2.5" transform="rotate(8 19.4 8.4)"/>
+    <ellipse cx="25.8" cy="11.8" rx="1.6" ry="2.3" transform="rotate(26 25.8 11.8)"/>
+    <ellipse cx="16.0" cy="21.5" rx="4.8" ry="3.5"/>
+  </g>
+</svg>

@@ -7,9 +7,16 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ## [v1.6.3] — 2026-08-04
 
 ### Added
+- **Featured Random Tip Card on All Files Closed**: When all document files or tabs are closed, a featured **Random Tip Card** from the Tips & Practices collection is randomly selected and rendered prominently in the center of `content__scroll`, complete with 3D keycaps and interactive shuffle controls.
+- **Dynamic 3D Keycaps & Theme Synchronization**: All keyboard shortcuts rendered in tooltips, Settings Modal, and the Welcome Page ("Tips & Practices" tab) now render as 3D keycaps with bevel depth, top lighting gradient, and 3D drop shadow.
+- **Theme-Adaptive Keycap Styling**: Keycap surface colors (`color-mix` of `--bg-e` & `--accent`), drop shadows, and corner rounding (`border-radius: clamp(0px, var(--r, 6px), 10px)`) dynamically adapt to match the active theme (e.g., sharp technical keycaps in Raw Grid, rounded keycaps in Bento/Pet themes, translucent glass keycaps in Glass).
+- **Embedded Tooltip Shortcut Parsing**: Paragraph tooltips (e.g., Preference description tooltips) and multiline descriptions now parse embedded shortcuts like `(Ctrl+Alt+H)` into inline 3D keycaps while preserving full accessibility and test compatibility.
 - **Cross-Workspace Search & Live Document Preview**: Full Markdown and HTML document preview panel integrated directly into the Search Overlay modal with support for syntax highlighting, math, diagrams, CSV/TSV table views, and workspace scan scoping.
 
 ### Changed
+- **Shortcut Label Typography**: Increased font weight (`font-weight: 600`, `12.5px`) and color contrast for shortcut action labels in Settings Modal for clear, effortless legibility.
+- **Pet Theme Rail Markers Asset Directory**: Renamed `ui/src/assets/themes/pets/paws/` to `ui/src/assets/themes/pets/rail-markers/` with species-tailored SVGs (Cat with longer curved claws, Hamster, Corgi, White Shiba, K-Ink Wolf).
+- **Manual Tests Directory**: Renamed root `test/` folder to `manual-tests/` and updated virtual workspace import globs (`manual-tests/*.{md,mdx}`) and contract tests.
 - **Sidebar Pinning — Root Level Hoisting**: When a file or folder located inside a parent subfolder is pinned, it is now hoisted and displayed directly at the root level of the sidebar tree instead of remaining nested inside its subfolder.
 - **Unpinned Button Icon**: Updated unpinned item menu and clear-pins actions to use a dedicated dual-path SVG (`UnpinIcon`) with support for the active theme accent color (`var(--accent, #EF4136)`).
 - **Search Overlay — Theme-consistent UI**: Standardized all search overlay button border radii (`border-radius: var(--r)`) to match the active theme across all variants. The close modal button is now borderless. Search result rows also use `var(--r)` to align with the theme's rounding style.

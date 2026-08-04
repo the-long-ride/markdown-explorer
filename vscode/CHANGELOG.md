@@ -5,11 +5,29 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ## [v1.6.3] — 2026-08-04
 
 ### Added
+- **Featured Random Tip Card on All Files Closed**: When all document files or tabs are closed, a featured **Random Tip Card** from the Tips & Practices collection is randomly selected and rendered prominently in the center of `content__scroll`, complete with 3D keycaps and interactive shuffle controls.
+- **Dynamic 3D Keycaps & Theme Synchronization**: All keyboard shortcuts rendered in tooltips, Settings Modal, and the Welcome Page ("Tips & Practices" tab) now render as 3D keycaps with bevel depth, top lighting gradient, and 3D drop shadow.
+- **Theme-Adaptive Keycap Styling**: Keycap surface colors (`color-mix` of `--bg-e` & `--accent`), drop shadows, and corner rounding (`border-radius: clamp(0px, var(--r, 6px), 10px)`) dynamically adapt to match the active theme (e.g., sharp technical keycaps in Raw Grid, rounded keycaps in Bento/Pet themes, translucent glass keycaps in Glass).
+- **Embedded Tooltip Shortcut Parsing**: Paragraph tooltips (e.g., Preference description tooltips) and multiline descriptions now parse embedded shortcuts like `(Ctrl+Alt+H)` into inline 3D keycaps while preserving full accessibility and test compatibility.
 - **Cross-Workspace Search & Live Document Preview**: Full Markdown and HTML document preview panel integrated directly into the Search Overlay modal with support for syntax highlighting, math, diagrams, CSV/TSV table views, and workspace scan scoping.
-- **Left Sidebar Scope Controls & Sorting**: Active folder tracking, scope filtering, pin sorting, and folder expansion controls.
 
 ### Changed
-- **Search Overlay & Scrollbars UI**: Standardized button border radii and input row height across search overlay and scrollbars.
+- **Shortcut Label Typography**: Increased font weight (`font-weight: 600`, `12.5px`) and color contrast for shortcut action labels in Settings Modal for clear, effortless legibility.
+- **Pet Theme Rail Markers Asset Directory**: Renamed `ui/src/assets/themes/pets/paws/` to `ui/src/assets/themes/pets/rail-markers/` with species-tailored SVGs (Cat with longer curved claws, Hamster, Corgi, White Shiba, K-Ink Wolf).
+- **Manual Tests Directory**: Renamed root `test/` folder to `manual-tests/` and updated virtual workspace import globs (`manual-tests/*.{md,mdx}`) and contract tests.
+- **Sidebar Pinning — Root Level Hoisting**: When a file or folder located inside a parent subfolder is pinned, it is now hoisted and displayed directly at the root level of the sidebar tree instead of remaining nested inside its subfolder.
+- **Unpinned Button Icon**: Updated unpinned item menu and clear-pins actions to use a dedicated dual-path SVG (`UnpinIcon`) with support for the active theme accent color (`var(--accent, #EF4136)`).
+- **Search Overlay — Theme-consistent UI**: Standardized all search overlay button border radii (`border-radius: var(--r)`) to match the active theme across all variants. The close modal button is now borderless. Search result rows also use `var(--r)` to align with the theme's rounding style.
+- **Search Overlay — Unified input row height**: Standardized `.search-overlay-input`, case-toggle, and preview-toggle button heights to `32px` across all themes for a uniform input row.
+- **Scrollbars — Theme-consistent radius**: All app scrollbar thumbs (sidebar, TOC, code blocks, search overlay, settings) now use `var(--r-s, var(--r))` for border-radius, matching the active theme. The Raw Grid theme forces square `0px` scrollbar thumbs via `!important` overrides.
+- **Heading section chevron — 3D Vertical Flip animation**: The collapse/expand chevron button now performs a vertical 3D flip (`rotateX(180deg)` with `cubic-bezier(0.25, 0.46, 0.45, 0.94)`) along the horizontal X-axis on toggle instead of spinning in 2D space. Initial state is applied without a CSS transition to prevent a spin-on-load artifact.
+
+### Fixed
+- **Electron Builder NSIS Script Compilation**: Added `!include "MUI2.nsh"` in `electron/build/installer.nsh` to resolve missing `MUI_HEADER_TEXT` macro error during `pnpm run build:electron` installer packaging.
+- **Search Overlay — Preview renders only once per scan**: The `SearchDocumentPreview` component was re-fetching the preview on every incremental search batch because the `item` object reference changed each time the results array was rebuilt. Fixed by:
+  - Memoizing `selectedResult` in `SearchOverlay` keyed on `selectedResultKey` so the object reference is stable across batches.
+  - Removing `item` from the fetch `useEffect` dependency array in `SearchDocumentPreview`, accessing it via a ref so only `itemKey` (the file path) triggers a new fetch.
+  - Wrapping `SearchDocumentPreview` with `React.memo` to shield it from parent re-renders entirely.
 
 ---
 

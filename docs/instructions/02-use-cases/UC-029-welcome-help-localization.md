@@ -85,6 +85,7 @@ flowchart LR
 - Do not translate paths, commands, code, identifiers, or user documents.
 - Welcome shortcuts reflect effective binding where implemented.
 - Language changes do not reset other settings.
+- When all document files/tabs are closed, a featured **Random Tip Card** from the Tips & Practices collection is randomly selected and rendered in the center of `content__scroll` with full 3D keycap formatting and shuffle controls.
 
 
 ## Protocol effects

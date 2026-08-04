@@ -9,7 +9,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const read = readProjectSource;
 
 test('test-code fixture covers XML declaration, XML fragment, and headerless CSV', async () => {
-  const source = await read('test/test-code.md');
+  const source = await read('manual-tests/test-code.md');
   assert.match(source, /```xml\s*\n<\?xml version="1\.0" encoding="UTF-8"\?>/);
   assert.match(source, /```xml\s*\n<catalog[\s>]/);
   assert.match(source, /```csv noheader\s*\nDesktop,1250,true/);
@@ -110,4 +110,20 @@ test('desktop context menus and shortcut expose localized file-manager actions',
     assert.ok(translations.includes(key), `${key} missing from translation interface`);
     assert.ok(data.includes(key), `${key} missing from translation data`);
   }
+});
+
+test('pet theme rail-markers directory assets and shortcut label font-weight styles are present', async () => {
+  const [petTokens, catPaw, kInkPaw, settingsCss] = await Promise.all([
+    read('ui/src/styles/tokens/tokens-pet-themes.css'),
+    read('ui/src/assets/themes/pets/rail-markers/cat-paw.svg'),
+    read('ui/src/assets/themes/pets/rail-markers/k-ink-paw.svg'),
+    read('ui/src/styles/global/global-settings-layout.css'),
+  ]);
+  assert.match(petTokens, /rail-markers\/cat-paw\.svg/);
+  assert.match(petTokens, /rail-markers\/corgi-paw\.svg/);
+  assert.match(catPaw, /aria-label="Cat paw"/);
+  assert.match(catPaw, /fill="#e2e8f0"/); // Retractable claws
+  assert.match(kInkPaw, /aria-label="K-Ink wolf paw"/);
+  assert.match(kInkPaw, /L 4\.5 7\.2/); // Shorter claw tips
+  assert.match(settingsCss, /\.settings-shortcut-label[\s\S]*?font-weight:\s*600;/);
 });

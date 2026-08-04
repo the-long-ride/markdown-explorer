@@ -43,8 +43,6 @@ export function WelcomePage() {
     [currentLang, state.settings, wt.tips],
   );
 
-
-
   return (
     <div className="welcome-container">
       <InteractiveBackground />

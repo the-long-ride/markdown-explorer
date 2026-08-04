@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { WelcomePage } from "../../../../ui/src/components/Content/WelcomePage";
+import { RandomTipCard } from "../../../../ui/src/components/Content/RandomTipCard";
 import { useAppState } from "../../../../ui/src/contexts/AppStateContext";
 
 vi.mock("../../../../ui/src/contexts/AppStateContext");
@@ -328,5 +329,18 @@ describe("WelcomePage rendering", () => {
     expect(featuresBtn?.className).toContain("active");
     fireEvent.click(screen.getByText("Tips & Practices"));
     expect(featuresBtn?.className).not.toContain("active");
+  });
+
+  it("renders featured random tip card with shuffle button", () => {
+    setup();
+    render(<RandomTipCard />);
+    const card = screen.getByTestId("empty-workspace-random-tip");
+    expect(card).toBeInTheDocument();
+    expect(screen.getByText("Tip & Practice of the Moment")).toBeInTheDocument();
+
+    const shuffleBtn = screen.getByText("🎲 Another Tip");
+    expect(shuffleBtn).toBeInTheDocument();
+    fireEvent.click(shuffleBtn);
+    expect(card).toBeInTheDocument();
   });
 });

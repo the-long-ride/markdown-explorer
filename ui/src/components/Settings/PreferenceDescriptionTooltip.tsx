@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCssVars } from '../../utils/useCssVars';
+import { parseShortcutText } from '../shared/parseShortcutText';
 
 interface PreferenceDescriptionTooltipProps {
   id: string;
@@ -111,7 +112,7 @@ export function PreferenceDescriptionTooltip({
       className={`settings-preference-description-panel ${position ? 'is-visible' : ''} settings-preference-description-panel--${position?.placement || 'top'}`}
       role="tooltip"
     >
-      {description}
+      {parseShortcutText(description)}
     </div>,
     portalTarget,
   );

@@ -170,8 +170,8 @@ test('navigation and document actions use the shared compact focus-mode button t
 
 test('sample documents include external links and a 20-row CSV download fixture', async () => {
   const [navigation, code] = await Promise.all([
-    read('test/test-navigation.md'),
-    read('test/test-code.md'),
+    read('manual-tests/test-navigation.md'),
+    read('manual-tests/test-code.md'),
   ]);
   assert.match(navigation, /https:\/\/github\.com\/the-long-ride\/markdown-explorer/);
   assert.match(navigation, /https:\/\/the-long-ride\.github\.io\/markdown-explorer\//);

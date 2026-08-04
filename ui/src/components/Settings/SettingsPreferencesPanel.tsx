@@ -76,7 +76,8 @@ export function SettingsPreferencesPanel({
 }: SettingsPreferencesPanelProps) {
   const toggleDesktopViewMode = formatShortcutLabel(getEnabledShortcut(state.settings, 'toggleDesktopViewMode') || '');
   const toggleHtmlPreview = formatShortcutLabel(getEnabledShortcut(state.settings, 'toggleHtmlPreview') || '');
-  const withShortcut = (description: string, shortcut: string) => description.replace('{shortcut}', shortcut);
+  const withShortcut = (description: string, shortcut: string) =>
+    shortcut ? description.replace('{shortcut}', `(${shortcut})`) : description.replace('{shortcut}', '');
 
   return (
     <div className="settings-card__column settings-card__column--preferences">
