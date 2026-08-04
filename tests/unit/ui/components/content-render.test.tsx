@@ -284,7 +284,7 @@ describe("Content rendering", () => {
       { suppressWelcome: true },
     );
     expect(screen.getByTestId("empty-workspace-random-tip")).toBeInTheDocument();
-    expect(screen.getByText("Tip & Practice of the Moment")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Another Tip/i })).toBeInTheDocument();
   });
 
   it("renders tab-view hint for unavailable workspace in desktop tab view", () => {

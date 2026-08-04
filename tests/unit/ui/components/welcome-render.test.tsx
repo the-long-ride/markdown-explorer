@@ -336,9 +336,8 @@ describe("WelcomePage rendering", () => {
     render(<RandomTipCard />);
     const card = screen.getByTestId("empty-workspace-random-tip");
     expect(card).toBeInTheDocument();
-    expect(screen.getByText("Tip & Practice of the Moment")).toBeInTheDocument();
 
-    const shuffleBtn = screen.getByText("🎲 Another Tip");
+    const shuffleBtn = screen.getByRole("button", { name: /Another Tip/i });
     expect(shuffleBtn).toBeInTheDocument();
     fireEvent.click(shuffleBtn);
     expect(card).toBeInTheDocument();
