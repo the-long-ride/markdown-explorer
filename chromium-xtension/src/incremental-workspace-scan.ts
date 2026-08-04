@@ -1,5 +1,6 @@
 import type { FolderNode, MdFile } from '../../ui/src/types';
 import { BrowserScanner } from './scanner';
+import { nextIncrementalPublishCount } from './incremental-publish';
 
 export const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
 export const WORKSPACE_SCAN_BATCH_SIZE = 32;
@@ -63,7 +64,7 @@ export async function scanWorkspaceIncrementally({
       if (!isCurrent()) return;
       discovered.push(file);
       if (thresholdElapsed && !revealStarted) startReveal();
-      else if (revealed && count % WORKSPACE_SCAN_BATCH_SIZE === 0) publishChanged();
+      else if (revealed && count >= nextIncrementalPublishCount(lastPublishedCount, WORKSPACE_SCAN_BATCH_SIZE)) publishChanged();
     },
   });
   const revealTimer = globalThis.setTimeout(() => {

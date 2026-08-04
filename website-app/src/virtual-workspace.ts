@@ -55,6 +55,7 @@ function buildFileEntry(globKey: string, raw: string): MdFile {
     title,
     extension: ext,
     documentKind: 'markdown',
+    modifiedAt: 0,
   };
 }
 
@@ -64,6 +65,7 @@ function buildTree(flat: MdFile[]): FolderNode {
     path: '',
     children: [],
     files: [...flat],
+    modifiedAt: Math.max(0, ...flat.map((file) => file.modifiedAt ?? 0)),
   };
 }
 

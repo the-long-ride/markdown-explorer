@@ -79,3 +79,28 @@ test('UI build contracts avoid unused hooks, unstable optional narrowing, and No
   assert.match(scheduler, /setDelay: \(callback: \(\) => void, delayMs: number\) => number;/);
   assert.match(scheduler, /clearDelay: \(handle: number\) => void;/);
 });
+
+test('sidebar search tree imports every referenced workspace search type', async () => {
+  const source = await read('ui/src/components/Sidebar/sidebarSearchTree.tsx');
+
+  assert.match(
+    source,
+    /import type \{ WorkspaceSearchResult \} from '\.\.\/\.\.\/types';/,
+    'sidebarSearchTree must import WorkspaceSearchResult before using it in handler annotations',
+  );
+});
+
+test('sidebar search narrows its nullable result tree before JSX dereferences', async () => {
+  const source = await read('ui/src/components/Sidebar/SidebarSearch.tsx');
+
+  assert.match(
+    source,
+    /const visibleSearchResultTree = searchResultTree &&[\s\S]*?\? searchResultTree[\s\S]*?: null;/,
+    'capture the non-null search tree so TypeScript preserves narrowing in JSX',
+  );
+  assert.match(
+    source,
+    /visibleSearchResultTree && \([\s\S]*visibleSearchResultTree\.files\.map[\s\S]*visibleSearchResultTree\.children\.map/,
+    'render through the narrowed tree reference instead of the nullable memo result',
+  );
+});

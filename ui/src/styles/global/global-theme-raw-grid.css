@@ -4,7 +4,7 @@
   background-image:
     linear-gradient(var(--bd) 1px, transparent 1px),
     linear-gradient(90deg, var(--bd) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-size: 48px 48px;
   background-position: -1px -1px;
 }
 
@@ -34,8 +34,16 @@
   padding: 0;
 }
 
+[data-theme-style="raw-grid"] .content__scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 12px 16px 20px;
+}
+
 [data-theme-style="raw-grid"] .mdn-body {
   background: var(--bg-s);
+  padding: 20px 24px;
 }
 
 [data-theme-style="raw-grid"] .sidebar,
@@ -91,13 +99,22 @@
   outline-offset: 2px;
 }
 
-/* ── Welcome / Homepage ── */
-/* Give the welcome page a solid panel so text isn't over the grid lines */
 [data-theme-style="raw-grid"] .welcome-container {
   background: var(--bg);
   border: var(--stroke-w) solid var(--bd-s);
   padding: 24px;
   max-width: 900px;
+}
+
+[data-theme-style="raw-grid"] .state-screen:not(.state-screen--loading) {
+  background: var(--bg);
+  border: var(--stroke-w) solid var(--bd-s);
+  padding: 24px 28px;
+  max-width: 600px;
+  width: 100%;
+  height: fit-content;
+  min-height: auto;
+  margin: auto;
 }
 
 /* Flatten pill/rounded shapes to match the angular theme */

@@ -1,19 +1,8 @@
 import { useAppState } from '../../contexts/AppStateContext';
 import { FolderChevronIcon, FolderIcon } from '../shared/icons';
 import { unicodeIndexOf } from '../../utils/unicodeSearch';
-import type { FolderNode, WorkspaceSearchResult } from '../../types';
-
-export interface SearchResultFileNode { kind: 'file'; fsPath: string; fileName: string; relativePath: string; title: string; matches: WorkspaceSearchResult[]; }
-export interface SearchResultFolderNode { kind: 'folder'; name: string; path: string; children: SearchResultFolderNode[]; files: SearchResultFileNode[]; }
-
-export function buildSearchResultTree(node: FolderNode, fileMap: Map<string, WorkspaceSearchResult[]>): SearchResultFolderNode | null {
-  const files = node.files.flatMap((file) => {
-    const matches = fileMap.get(file.fsPath);
-    return matches ? [{ kind: 'file' as const, fsPath: file.fsPath, fileName: file.fileName, relativePath: file.relativePath, title: file.title, matches }] : [];
-  });
-  const children = node.children.flatMap((child) => { const tree = buildSearchResultTree(child, fileMap); return tree ? [tree] : []; });
-  return files.length || children.length ? { kind: 'folder', name: node.name, path: node.path, children, files } : null;
-}
+import type { WorkspaceSearchResult } from '../../types';
+import type { SearchResultFileNode, SearchResultFolderNode } from './sidebarSearchResultTree';
 
 export function renderHighlightedExcerpt(excerpt: string, query: string, matchCase = false) {
   const needle = query.trim().replace(/\s+/g, ' ');

@@ -61,6 +61,7 @@ flowchart LR
 - Import is atomic: validate and normalize before applying any field.
 - Export includes the complete serializable settings object.
 - Active import restores core preferences, browsing scope, keybinding values, language, and custom themes; it currently preserves the existing `searchScopeFocus` and `disabledKeybindings` maps rather than importing them.
+- **Maximum Pinned Items (`maxPinnedItems`)**: User preference to limit pinned items per workspace between `1` and `15` (default `10`). Rendered as a numeric input (`min={1} max={15}`) at the last position of the View Preferences section in `SettingsPreferencesPanel.tsx`. Fully localized across all 9 supported languages (`en`, `vi`, `fr`, `es`, `zh`, `no`, `ja`, `ko`, `ru`).
 
 See the Settings Catalog and Storage Catalog for exact keys and limits.
 

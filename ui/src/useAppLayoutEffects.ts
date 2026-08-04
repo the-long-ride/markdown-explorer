@@ -148,7 +148,11 @@ export function useAppLayoutEffects({
   }, []);
 
   // Sidebar resize handle
-  useResize('sidebarResize', 'sidebar', state.workspaceName, { min: 245 });
+  useResize('sidebarResize', 'sidebar', state.workspaceName, {
+    min: 245,
+    mode: 'synchronized',
+    freezeContentId: 'sidebarTree',
+  });
 
   // Table of contents resize handle
   useResize('tocResize', 'tocPanel', `${state.workspaceName}:${state.toc.length}`, {

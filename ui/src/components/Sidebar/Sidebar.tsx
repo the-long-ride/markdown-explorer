@@ -7,16 +7,10 @@ import {
   useEffect,
 } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
-import {
-  CheckIcon,
-  CloseIcon,
-  SearchIcon,
-  LocateIcon,
-  FolderIcon,
-} from "../shared/icons";
-import { TooltipButton } from "../shared/TooltipButton";
+import { SearchIcon, FolderIcon } from "../shared/icons";
 import { FileNode, FolderNodeView } from "./TreeNode";
-import type { ScopeFocusTreeProps, SidebarItemMenuTarget } from "./TreeNode";
+import type { SidebarItemMenuTarget } from "./TreeNode";
+import type { TreeOrderingProps } from "./TreeNode";
 import { SidebarItemMenu } from "./SidebarItemMenu";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { supportsShellLocation } from "../../desktop/shellLocation";
@@ -26,9 +20,16 @@ import type { SidebarSearchStatus } from "./SidebarSearch";
 import { useSidebarCursorNavigation } from "./useSidebarCursorNavigation";
 import { getEnabledShortcut } from "../../utils/shortcuts";
 import { supportsLocalFileBrowserOpen } from "../../dom/localFileBrowserSupport";
-import { isHtmlDocumentPath } from "../Content/HtmlDocumentView";
 import { buildSidebarItemMenuItems } from "./sidebarItemMenuItems";
 import { folderHasVisibleContent, getWorkspaceScopeKey, matchesFileSearch } from "./sidebarTreeFiltering";
+import { getActiveFolderPaths } from "./sidebarActiveFolders";
+import { useLocateActiveFile } from "./useLocateActiveFile";
+import { SidebarFilesActions } from "./SidebarFilesActions";
+import { useFolderExpansionCommand } from "./useFolderExpansionCommand";
+import { orderSidebarLevel } from "./sidebarTreeOrdering";
+import { useSidebarPinnedSorting } from "./useSidebarPinnedSorting";
+import { useSidebarScopeFocus } from "./useSidebarScopeFocus";
+import { SidebarScopeControls } from "./SidebarScopeControls";
 
 interface SidebarProps {
   cursorMode?: boolean;
@@ -40,6 +41,8 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   const bridge = usePlatform();
   const [filter, setFilter] = useState("");
   const [scopeFocusEditing, setScopeFocusEditing] = useState(false);
+  const { folderExpansionCommand, collapseAllFolders, expandAllFolders } =
+    useFolderExpansionCommand();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
 
@@ -66,17 +69,13 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     setItemMenu((current) => current?.path === target.path ? null : target);
   }, []);
 
-  const canRequestItemMenu = useCallback(
-    (target: Pick<SidebarItemMenuTarget, "kind" | "path">) =>
-      canOpenItemLocations || (target.kind === "file" && isHtmlDocumentPath(target.path)),
-    [canOpenItemLocations],
-  );
+  const canRequestItemMenu = useCallback(() => true, []);
 
   const isFiles = state.sidebarActiveTab === "files";
   const isSearch = state.sidebarActiveTab === "search";
   useEffect(() => {
-    if (!isFiles || (itemMenu && !canRequestItemMenu(itemMenu))) setItemMenu(null);
-  }, [canRequestItemMenu, isFiles, itemMenu]);
+    if (!isFiles) setItemMenu(null);
+  }, [isFiles]);
   const tabIndicatorRef = useRef<HTMLSpanElement>(null);
 
   const scrollToActiveFile = useCallback(() => {
@@ -84,22 +83,7 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     window.dispatchEvent(new CustomEvent("locate-active-file"));
   }, [state.currentFile]);
 
-  // Listen for locate-active-file event (dispatched by button OR keyboard shortcut)
-  // and scroll the tree to the active item after folders have had a chance to expand.
-  useEffect(() => {
-    const handleLocateScroll = () => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const activeEl = treeRef.current?.querySelector(".tree-file.is-active");
-          if (activeEl) {
-            activeEl.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        });
-      });
-    };
-    window.addEventListener("locate-active-file", handleLocateScroll);
-    return () => window.removeEventListener("locate-active-file", handleLocateScroll);
-  }, []);
+  const locateRequest = useLocateActiveFile(treeRef);
 
   const onFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setFilter(e.target.value),
@@ -107,22 +91,41 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   );
 
   const scopeKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
-  const scopeFocusMap = state.settings.scopeFocus ?? {};
-  const hasScopeEntry = Object.prototype.hasOwnProperty.call(scopeFocusMap, scopeKey);
-  const allFilePaths = useMemo(
-    () => state.fileList.map((file) => file.fsPath),
-    [state.fileList],
+  const {
+    pinnedKeys,
+    sortMode,
+    hasPins,
+    pinLimitReached,
+    clearPins,
+    togglePin,
+    setSortMode,
+  } = useSidebarPinnedSorting({
+    tree: state.tree,
+    workspaceKey: scopeKey,
+    settings: state.settings,
+    updateSettings,
+  });
+  const treeOrdering = useMemo<TreeOrderingProps>(
+    () => ({ pinnedKeys, sortMode }),
+    [pinnedKeys, sortMode],
   );
-  const allFilePathSet = useMemo(() => new Set(allFilePaths), [allFilePaths]);
-  const storedScopePaths = scopeFocusMap[scopeKey] ?? [];
-  const selectedFilePaths = useMemo(() => {
-    if (!hasScopeEntry) return new Set(allFilePaths);
-    return new Set(storedScopePaths.filter((filePath) => allFilePathSet.has(filePath)));
-  }, [allFilePathSet, allFilePaths, hasScopeEntry, storedScopePaths]);
-  const hideUnselected =
-    hasScopeEntry &&
-    !scopeFocusEditing &&
-    selectedFilePaths.size < allFilePaths.length;
+  const {
+    allFilePaths,
+    selectedFilePaths,
+    hideUnselected,
+    hasScopeEntry,
+    count: scopeFocusCount,
+    allSelected: allFilesSelected,
+    clear: clearScopeFocus,
+    toggleAll: toggleAllScopeFiles,
+    treeProps: scopeFocusTree,
+  } = useSidebarScopeFocus({
+    fileList: state.fileList,
+    settings: state.settings,
+    workspaceKey: scopeKey,
+    editing: scopeFocusEditing,
+    updateSettings,
+  });
   const cursorItemId = useSidebarCursorNavigation({
     cursorMode,
     currentFile: state.currentFile,
@@ -133,92 +136,26 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     selectedFilePaths,
     onCursorModeClose,
   });
-  const scopeFocusCount = hasScopeEntry ? selectedFilePaths.size : allFilePaths.length;
-  const allFilesSelected = allFilePaths.length > 0 && selectedFilePaths.size === allFilePaths.length;
-  const bulkScopeActionLabel = allFilesSelected
-    ? t.sidebar.uncheckAll || "Uncheck all"
-    : t.sidebar.checkAll || "Check all";
-
-  const updateScopeFocusPaths = useCallback(
-    (nextPaths: Iterable<string>) => {
-      const normalized = [...new Set(nextPaths)].filter((filePath) =>
-        allFilePathSet.has(filePath),
-      );
-      const nextScopeFocus = { ...(state.settings.scopeFocus ?? {}) };
-      if (normalized.length >= allFilePaths.length) {
-        delete nextScopeFocus[scopeKey];
-      } else {
-        nextScopeFocus[scopeKey] = normalized;
-      }
-      updateSettings({ scopeFocus: nextScopeFocus });
-    },
-    [
-      allFilePathSet,
-      allFilePaths.length,
-      scopeKey,
-      state.settings.scopeFocus,
-      updateSettings,
-    ],
-  );
-
-  const handleScopeFileChange = useCallback(
-    (filePath: string, checked: boolean) => {
-      const nextSelection = new Set(hasScopeEntry ? selectedFilePaths : allFilePaths);
-      if (checked) nextSelection.add(filePath);
-      else nextSelection.delete(filePath);
-      updateScopeFocusPaths(nextSelection);
-    },
-    [allFilePaths, hasScopeEntry, selectedFilePaths, updateScopeFocusPaths],
-  );
-
-  const handleScopeFolderChange = useCallback(
-    (filePaths: readonly string[], checked: boolean) => {
-      const nextSelection = new Set(hasScopeEntry ? selectedFilePaths : allFilePaths);
-      for (const filePath of filePaths) {
-        if (checked) nextSelection.add(filePath);
-        else nextSelection.delete(filePath);
-      }
-      updateScopeFocusPaths(nextSelection);
-    },
-    [allFilePaths, hasScopeEntry, selectedFilePaths, updateScopeFocusPaths],
-  );
-
-  const clearScopeFocus = useCallback(() => {
-    const nextScopeFocus = { ...(state.settings.scopeFocus ?? {}) };
-    delete nextScopeFocus[scopeKey];
-    updateSettings({ scopeFocus: nextScopeFocus });
-  }, [scopeKey, state.settings.scopeFocus, updateSettings]);
-
-  const toggleAllScopeFiles = useCallback(() => {
-    updateScopeFocusPaths(allFilesSelected ? [] : allFilePaths);
-  }, [allFilePaths, allFilesSelected, updateScopeFocusPaths]);
-
-  const scopeFocusTree = useMemo<ScopeFocusTreeProps>(
-    () => ({
-      editing: scopeFocusEditing,
-      hideUnselected,
-      selectedFilePaths,
-      onFileChange: handleScopeFileChange,
-      onFolderChange: handleScopeFolderChange,
-    }),
-    [
-      handleScopeFileChange,
-      handleScopeFolderChange,
-      hideUnselected,
-      scopeFocusEditing,
-      selectedFilePaths,
-    ],
+  const activeFolderPaths = useMemo(
+    () => getActiveFolderPaths(state.currentFile, state.fileList),
+    [state.currentFile, state.fileList],
   );
 
   const visibleRootFiles = state.tree?.files.filter(
-    (file) =>
-      matchesFileSearch(file, filter) &&
-      (!hideUnselected || selectedFilePaths.has(file.fsPath)),
+    (file) => matchesFileSearch(file, filter)
+      && (!hideUnselected || selectedFilePaths.has(file.fsPath)),
   ) ?? [];
   const visibleRootChildren = state.tree?.children.filter((child) =>
     folderHasVisibleContent(child, filter, hideUnselected, selectedFilePaths),
   ) ?? [];
-  const hasVisibleTreeItems = visibleRootFiles.length > 0 || visibleRootChildren.length > 0;
+  const orderedRootItems = useMemo(
+    () => orderSidebarLevel(visibleRootFiles, visibleRootChildren, {
+      ...treeOrdering,
+      showTitle: state.settings.showTitle,
+    }),
+    [state.settings.showTitle, treeOrdering, visibleRootChildren, visibleRootFiles],
+  );
+  const hasVisibleTreeItems = orderedRootItems.length > 0;
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     scrollPosRef.current = e.currentTarget.scrollTop;
@@ -237,9 +174,28 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   }, [state.tree, state.workspaceName, isFiles]);
 
   const itemMenuItems = useMemo(() => buildSidebarItemMenuItems({
-    state, target: itemMenu, canOpenHtmlInBrowser, canOpenItemLocations,
-    translations: t, bridge, navigate,
-  }), [bridge, canOpenHtmlInBrowser, canOpenItemLocations, itemMenu, navigate, state, t]);
+    state,
+    target: itemMenu,
+    canOpenHtmlInBrowser,
+    canOpenItemLocations,
+    translations: t,
+    bridge,
+    navigate,
+    isPinned: itemMenu ? pinnedKeys.has(`${itemMenu.kind}:${itemMenu.path}`) : false,
+    pinLimitReached,
+    onTogglePin: togglePin,
+  }), [
+    bridge,
+    canOpenHtmlInBrowser,
+    canOpenItemLocations,
+    itemMenu,
+    navigate,
+    pinLimitReached,
+    pinnedKeys,
+    state,
+    t,
+    togglePin,
+  ]);
 
   if (!state.tree) return null;
 
@@ -284,18 +240,6 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
         {/* Fading title actions — keyed to trigger animation on tab switch */}
         {isFiles ? (
           <div className="sidebar__title-actions" key="files-actions">
-            {state.currentFile && (
-              <TooltipButton
-                type="button"
-                className="sidebar__locate-btn"
-                onClick={scrollToActiveFile}
-                tooltip={t.tooltips.locateFile}
-                shortcut={getEnabledShortcut(state.settings, 'locateFile')}
-                tooltipPos="below"
-                tooltipAlign="right"
-                icon={<LocateIcon size={12} />}
-              />
-            )}
             <span className="sidebar__count" id="fileCount">
               {state.fileList.length}
             </span>
@@ -328,43 +272,42 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
               aria-label={t.sidebar.filterAriaLabel}
             />
           </div>
-          <div className="sidebar__scope">
-            <button
-              type="button"
-              className={`sidebar__scope-btn${scopeFocusEditing || hasScopeEntry ? " is-active" : ""}`}
-              onClick={() => setScopeFocusEditing((editing) => !editing)}
-              aria-pressed={scopeFocusEditing}
-            >
-              <span>{t.sidebar.scopeFocus}</span>
-              <span className="sidebar__scope-count">
-                {scopeFocusCount}/{allFilePaths.length}
-              </span>
-            </button>
-            {scopeFocusEditing && allFilePaths.length > 0 && (
-              <TooltipButton
-                type="button"
-                className="sidebar__scope-toggle-all"
-                onClick={toggleAllScopeFiles}
-                tooltip={bulkScopeActionLabel}
-                label={bulkScopeActionLabel}
-                aria-label={bulkScopeActionLabel}
-                tooltipPos="below"
-                tooltipAlign="right"
-                icon={allFilesSelected ? <CloseIcon size={13} /> : <CheckIcon size={13} />}
-              />
-            )}
-            {hasScopeEntry && (
-              <TooltipButton
-                type="button"
-                className="sidebar__scope-clear"
-                onClick={clearScopeFocus}
-                tooltip={t.sidebar.clearScopeFocus}
-                tooltipPos="below"
-                tooltipAlign="right"
-                icon={<CloseIcon size={12} />}
-              />
-            )}
-          </div>
+          <SidebarFilesActions
+            canLocate={Boolean(state.currentFile)}
+            hasPins={hasPins}
+            locateLabel={t.tooltips.locateFile}
+            clearPinsLabel={t.sidebar.clearPinnedItems || "Clear all pinned items"}
+            sortLabel={t.sidebar.sortFiles || "Sort files and folders"}
+            sortNameAscLabel={t.sidebar.sortNameAsc || "Name: A–Z"}
+            sortNameDescLabel={t.sidebar.sortNameDesc || "Name: Z–A"}
+            sortModifiedDescLabel={t.sidebar.sortModifiedDesc || "Last modified: newest first"}
+            sortModifiedAscLabel={t.sidebar.sortModifiedAsc || "Last modified: oldest first"}
+            collapseLabel={t.sidebar.collapseAllFolders}
+            expandLabel={t.sidebar.expandAllFolders}
+            locateShortcut={getEnabledShortcut(state.settings, 'locateFile')}
+            sortMode={sortMode}
+            onLocate={scrollToActiveFile}
+            onClearPins={clearPins}
+            onSortChange={setSortMode}
+            onCollapseAll={collapseAllFolders}
+            onExpandAll={expandAllFolders}
+          />
+          <SidebarScopeControls
+            editing={scopeFocusEditing}
+            hasEntry={hasScopeEntry}
+            count={scopeFocusCount}
+            total={allFilePaths.length}
+            allSelected={allFilesSelected}
+            labels={{
+              focus: t.sidebar.scopeFocus,
+              clear: t.sidebar.clearScopeFocus,
+              checkAll: t.sidebar.checkAll || "Check all",
+              uncheckAll: t.sidebar.uncheckAll || "Uncheck all",
+            }}
+            onToggleEditing={() => setScopeFocusEditing((editing) => !editing)}
+            onToggleAll={toggleAllScopeFiles}
+            onClear={clearScopeFocus}
+          />
         </div>
         <div
           className="sidebar__tree sidebar__tree--from-left"
@@ -373,31 +316,37 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
           ref={treeRef}
           onScroll={handleScroll}
         >
-          {visibleRootFiles.map((f) => (
+          {orderedRootItems.map((item) => item.kind === "file" ? (
             <FileNode
-              key={f.fsPath}
-              file={f}
+              key={item.key}
+              file={item.file}
               scopeFocus={scopeFocusTree}
+              ordering={treeOrdering}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
               onRequestItemMenu={handleRequestItemMenu}
               canRequestItemMenu={canRequestItemMenu}
               openMenuPath={itemMenu?.path ?? null}
               itemActionsLabel={t.sidebarItemActions}
+              pinnedLabel={t.sidebar.pinned || "Pinned"}
             />
-          ))}
-          {visibleRootChildren.map((child) => (
+          ) : (
             <FolderNodeView
-              key={child.path}
-              node={child}
+              key={item.key}
+              node={item.folder}
               filter={filter}
               scopeFocus={scopeFocusTree}
+              ordering={treeOrdering}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
               onRequestItemMenu={handleRequestItemMenu}
               canRequestItemMenu={canRequestItemMenu}
               openMenuPath={itemMenu?.path ?? null}
               itemActionsLabel={t.sidebarItemActions}
+              pinnedLabel={t.sidebar.pinned || "Pinned"}
+              activeFolderPaths={activeFolderPaths}
+              locateRequest={locateRequest}
+              expansionCommand={folderExpansionCommand}
             />
           ))}
           {!hasVisibleTreeItems && (
@@ -411,7 +360,10 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
       <div
         className={`sidebar__tab-panel${!isSearch ? " is-hidden" : ""}`}
       >
-        <SidebarSearch isVisible={isSearch} onStatusChange={handleSearchStatus} />
+        <SidebarSearch
+          isVisible={isSearch}
+          onStatusChange={handleSearchStatus}
+        />
       </div>
       {itemMenu && navRef.current && itemMenuItems.length > 0 && (
         <SidebarItemMenu

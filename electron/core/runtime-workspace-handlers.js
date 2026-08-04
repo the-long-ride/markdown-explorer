@@ -1,5 +1,6 @@
 const { createRuntimeWorkspaceSearchHelpers } = require("./runtime-workspace-search");
 const { createWorkspaceTextResourceReader } = require("./runtime-workspace-resources");
+const { nextIncrementalPublishCount } = require("../workspace/incremental-publish");
 const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
 const WORKSPACE_SCAN_BATCH_SIZE = 32;
 
@@ -220,7 +221,7 @@ function registerRuntimeWorkspaceHandlers(context) {
         if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
         discovered.push(file);
         if (thresholdElapsed && !displayedWorkspace) publishReveal();
-        else if (displayedWorkspace && scannedFiles % WORKSPACE_SCAN_BATCH_SIZE === 0) publishChanged();
+        else if (displayedWorkspace && scannedFiles >= nextIncrementalPublishCount(lastPublishedCount, WORKSPACE_SCAN_BATCH_SIZE)) publishChanged();
       },
     });
     clearTimeout(revealTimer);

@@ -1,3 +1,4 @@
+!include "LogicLib.nsh"
 !include "nsDialogs.nsh"
 
 !ifndef BUILD_UNINSTALLER
@@ -5,25 +6,16 @@ Var ME_CreateDesktopShortcut
 Var ME_CreateStartMenuShortcut
 Var ME_AddMarkdownContext
 Var ME_AddFolderContext
-
 Var ME_DesktopShortcutCheckbox
 Var ME_StartMenuShortcutCheckbox
 Var ME_MarkdownContextCheckbox
 Var ME_FolderContextCheckbox
 
-!macro customInit
-  ; Defaults used by silent installs and before the options page is shown.
-  StrCpy $ME_CreateDesktopShortcut ${BST_UNCHECKED}
-  StrCpy $ME_CreateStartMenuShortcut ${BST_CHECKED}
-  StrCpy $ME_AddMarkdownContext ${BST_CHECKED}
-  StrCpy $ME_AddFolderContext ${BST_CHECKED}
-!macroend
-
-!macro customPageAfterChangeDir
-  Page custom MarkdownExplorerOptions MarkdownExplorerOptionsLeave
-!macroend
-
 Function MarkdownExplorerOptions
+  IfSilent 0 +2
+    Abort
+
+  !insertmacro MUI_HEADER_TEXT "Markdown Explorer options" "Choose the shortcuts and File Explorer integration to install."
   nsDialogs::Create 1018
   Pop $0
 
@@ -52,104 +44,60 @@ Function MarkdownExplorerOptionsLeave
   ${NSD_GetState} $ME_FolderContextCheckbox $ME_AddFolderContext
 FunctionEnd
 
+!macro customInit
+  StrCpy $ME_CreateDesktopShortcut ${BST_UNCHECKED}
+  StrCpy $ME_CreateStartMenuShortcut ${BST_CHECKED}
+  StrCpy $ME_AddMarkdownContext ${BST_CHECKED}
+  StrCpy $ME_AddFolderContext ${BST_CHECKED}
+!macroend
+
+!macro customPageAfterChangeDir
+  Page custom MarkdownExplorerOptions MarkdownExplorerOptionsLeave
+!macroend
+
 !macro customInstall
-  ${If} $ME_CreateDesktopShortcut == ${BST_CHECKED}
-    CreateShortCut "$DESKTOP\${PRODUCT_FILENAME}.lnk" "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
-  ${Else}
-    Delete "$DESKTOP\${PRODUCT_FILENAME}.lnk"
-  ${EndIf}
+  ${ifNot} ${isUpdated}
+    ${If} $ME_CreateDesktopShortcut == ${BST_CHECKED}
+      CreateShortCut "$DESKTOP\Markdown Explorer.lnk" "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+    ${Else}
+      Delete "$DESKTOP\Markdown Explorer.lnk"
+    ${EndIf}
 
-  ${If} $ME_CreateStartMenuShortcut == ${BST_CHECKED}
-    CreateDirectory "$SMPROGRAMS\${PRODUCT_FILENAME}"
-    CreateShortCut \
-      "$SMPROGRAMS\${PRODUCT_FILENAME}\${PRODUCT_FILENAME}.lnk" \
-      "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
-  ${Else}
-    Delete "$SMPROGRAMS\${PRODUCT_FILENAME}\${PRODUCT_FILENAME}.lnk"
-    RMDir "$SMPROGRAMS\${PRODUCT_FILENAME}"
-  ${EndIf}
+    ${If} $ME_CreateStartMenuShortcut == ${BST_CHECKED}
+      CreateDirectory "$SMPROGRAMS\Markdown Explorer"
+      CreateShortCut "$SMPROGRAMS\Markdown Explorer\Markdown Explorer.lnk" "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+    ${Else}
+      Delete "$SMPROGRAMS\Markdown Explorer\Markdown Explorer.lnk"
+      RMDir "$SMPROGRAMS\Markdown Explorer"
+    ${EndIf}
 
-  ${If} $ME_AddMarkdownContext == ${BST_CHECKED}
-    WriteRegStr HKCU \
-      "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer" \
-      "" \
-      "Open with Markdown Explorer"
+    ${If} $ME_AddMarkdownContext == ${BST_CHECKED}
+      WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer" "" "Open with Markdown Explorer"
+      WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer" "Icon" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
+      WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+      WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer" "" "Open with Markdown Explorer"
+      WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer" "Icon" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
+      WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+    ${EndIf}
 
-    WriteRegStr HKCU \
-      "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer" \
-      "Icon" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
-
-    WriteRegStr HKCU \
-      "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer\command" \
-      "" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
-
-    WriteRegStr HKCU \
-      "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer" \
-      "" \
-      "Open with Markdown Explorer"
-
-    WriteRegStr HKCU \
-      "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer" \
-      "Icon" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
-
-    WriteRegStr HKCU \
-      "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer\command" \
-      "" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
-  ${EndIf}
-
-  ${If} $ME_AddFolderContext == ${BST_CHECKED}
-    WriteRegStr HKCU \
-      "Software\Classes\Directory\shell\MarkdownExplorer" \
-      "" \
-      "Open Folder in Markdown Explorer"
-
-    WriteRegStr HKCU \
-      "Software\Classes\Directory\shell\MarkdownExplorer" \
-      "Icon" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
-
-    WriteRegStr HKCU \
-      "Software\Classes\Directory\shell\MarkdownExplorer\command" \
-      "" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
-
-    WriteRegStr HKCU \
-      "Software\Classes\Directory\Background\shell\MarkdownExplorer" \
-      "" \
-      "Open Folder in Markdown Explorer"
-
-    WriteRegStr HKCU \
-      "Software\Classes\Directory\Background\shell\MarkdownExplorer" \
-      "Icon" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
-
-    WriteRegStr HKCU \
-      "Software\Classes\Directory\Background\shell\MarkdownExplorer\command" \
-      "" \
-      '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%V"'
-  ${EndIf}
+    ${If} $ME_AddFolderContext == ${BST_CHECKED}
+      WriteRegStr HKCU "Software\Classes\Directory\shell\MarkdownExplorer" "" "Open Folder in Markdown Explorer"
+      WriteRegStr HKCU "Software\Classes\Directory\shell\MarkdownExplorer" "Icon" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
+      WriteRegStr HKCU "Software\Classes\Directory\shell\MarkdownExplorer\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+      WriteRegStr HKCU "Software\Classes\Directory\Background\shell\MarkdownExplorer" "" "Open Folder in Markdown Explorer"
+      WriteRegStr HKCU "Software\Classes\Directory\Background\shell\MarkdownExplorer" "Icon" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0'
+      WriteRegStr HKCU "Software\Classes\Directory\Background\shell\MarkdownExplorer\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%V"'
+    ${EndIf}
+  ${endIf}
 !macroend
 !endif
 
 !macro customUnInstall
-  Delete "$DESKTOP\${PRODUCT_FILENAME}.lnk"
-
-  Delete "$SMPROGRAMS\${PRODUCT_FILENAME}\${PRODUCT_FILENAME}.lnk"
-  RMDir "$SMPROGRAMS\${PRODUCT_FILENAME}"
-
-  DeleteRegKey HKCU \
-    "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer"
-
-  DeleteRegKey HKCU \
-    "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer"
-
-  DeleteRegKey HKCU \
-    "Software\Classes\Directory\shell\MarkdownExplorer"
-
-  DeleteRegKey HKCU \
-    "Software\Classes\Directory\Background\shell\MarkdownExplorer"
+  Delete "$DESKTOP\Markdown Explorer.lnk"
+  Delete "$SMPROGRAMS\Markdown Explorer\Markdown Explorer.lnk"
+  RMDir "$SMPROGRAMS\Markdown Explorer"
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer"
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer"
+  DeleteRegKey HKCU "Software\Classes\Directory\shell\MarkdownExplorer"
+  DeleteRegKey HKCU "Software\Classes\Directory\Background\shell\MarkdownExplorer"
 !macroend

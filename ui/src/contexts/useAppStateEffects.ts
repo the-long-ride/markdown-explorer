@@ -19,6 +19,7 @@ import {
   type PendingHtmlPreviewNavigation,
 } from './appStateReducer';
 import { acceptsWorkspaceHostMessage } from '../desktop/workspaceOperations';
+import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 
 type AppStateEffectsArgs = {
   bridge: {
@@ -58,6 +59,9 @@ export function useAppStateEffects({
           documentConversion: saved.documentConversion === true,
           scopeFocus: saved.scopeFocus ?? {},
           searchScopeFocus: saved.searchScopeFocus ?? {},
+          sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
+          sidebarSortModes: saved.sidebarSortModes ?? {},
+          maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
           disabledKeybindings: saved.disabledKeybindings ?? {},
@@ -238,6 +242,9 @@ export function useAppStateEffects({
       documentConversion: state.settings.documentConversion,
       scopeFocus: state.settings.scopeFocus,
       searchScopeFocus: state.settings.searchScopeFocus,
+      sidebarPinnedItems: state.settings.sidebarPinnedItems,
+      sidebarSortModes: state.settings.sidebarSortModes,
+      maxPinnedItems: normalizeMaxPinnedItems(state.settings.maxPinnedItems),
       desktopViewMode: state.settings.desktopViewMode,
       keybindings: state.settings.keybindings,
       disabledKeybindings: state.settings.disabledKeybindings,

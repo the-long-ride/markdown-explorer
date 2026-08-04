@@ -4,6 +4,7 @@ import {
   WORKSPACE_SCAN_REVEAL_DELAY_MS,
 } from '../constants/workspace';
 import { WorkspaceScanner } from './scanner';
+import { nextIncrementalPublishCount } from './incrementalPublish';
 
 export {
   WORKSPACE_SCAN_BATCH_SIZE,
@@ -59,7 +60,7 @@ export async function scanWorkspaceIncrementally({
       if (!isCurrent()) return;
       discovered.push(file);
       if (thresholdElapsed && !revealed) publishReveal();
-      else if (revealed && count % WORKSPACE_SCAN_BATCH_SIZE === 0) publishChanged();
+      else if (revealed && count >= nextIncrementalPublishCount(lastPublishedCount, WORKSPACE_SCAN_BATCH_SIZE)) publishChanged();
     },
   );
   const revealTimer = setTimeout(() => {

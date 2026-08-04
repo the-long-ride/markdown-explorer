@@ -285,4 +285,22 @@ export const coverageManifest: Record<string, string[]> = {
   'vscode/src/core/panelMedia.ts': ['tests/unit/vscode/panel.test.ts'],
   'vscode/src/core/panelNavigationHandler.ts': ['tests/unit/vscode/panel.test.ts'],
   'vscode/src/core/panelWorkspaceResources.ts': ['tests/unit/vscode/panel.test.ts'],
+  'vscode/src/core/incrementalPublish.ts': ['tests/unit/vscode/panel.test.ts'],
+
+  'chromium-xtension/src/incremental-publish.ts': ['tests/unit/chromium/incremental-workspace-scan.test.ts'],
+  'chromium-xtension/src/workspace-search-items.ts': ['tests/unit/chromium/workspace-search-items.test.ts'],
+  'electron/workspace/incremental-publish.js': ['tests/unit/electron/scanner.test.ts'],
+
+  'ui/src/components/Sidebar/SidebarFilesActions.tsx': ['tests/node/sidebar-pinning-sorting.test.mjs'],
+  'ui/src/components/Sidebar/SidebarScopeControls.tsx': ['tests/node/sidebar-files-performance-contract.test.mjs'],
+  'ui/src/components/Sidebar/SidebarSortMenu.tsx': ['tests/node/sidebar-pinning-sorting.test.mjs'],
+  'ui/src/components/Sidebar/sidebarActiveFolders.ts': ['tests/unit/ui/components/sidebar-render.test.tsx'],
+  'ui/src/components/Sidebar/sidebarPinIcons.tsx': ['tests/node/sidebar-pinning-sorting.test.mjs'],
+  'ui/src/components/Sidebar/sidebarSearchResultTree.ts': ['tests/unit/ui/components/sidebar-search-pure.test.ts'],
+  'ui/src/components/Sidebar/sidebarTreeOrdering.ts': ['tests/unit/ui/components/sidebar-tree-ordering.test.ts'],
+  'ui/src/components/Sidebar/sidebarWorkspacePreferences.ts': ['tests/unit/ui/components/sidebar-tree-ordering.test.ts'],
+  'ui/src/components/Sidebar/useFolderExpansionCommand.ts': ['tests/unit/ui/components/sidebar-render.test.tsx'],
+  'ui/src/components/Sidebar/useLocateActiveFile.ts': ['tests/unit/ui/components/sidebar-render.test.tsx'],
+  'ui/src/components/Sidebar/useSidebarPinnedSorting.ts': ['tests/node/sidebar-pinning-sorting.test.mjs'],
+  'ui/src/components/Sidebar/useSidebarScopeFocus.ts': ['tests/node/sidebar-files-performance-contract.test.mjs'],
 };

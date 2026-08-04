@@ -4,8 +4,10 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
-import type { FolderNode, MdFile } from '../../types';
+import type { FolderNode, MdFile, SidebarSortMode } from '../../types';
 import { FolderIcon, FolderChevronIcon, MoreVerticalIcon } from '../shared/icons';
+import { PinIcon } from './sidebarPinIcons';
+import { orderSidebarLevel } from './sidebarTreeOrdering';
 
 export interface SidebarItemMenuTarget {
   kind: 'file' | 'folder';
@@ -21,12 +23,25 @@ export interface ScopeFocusTreeProps {
   onFolderChange: (filePaths: readonly string[], checked: boolean) => void;
 }
 
+export interface TreeOrderingProps {
+  pinnedKeys: ReadonlySet<string>;
+  sortMode: SidebarSortMode;
+}
+
+export const DEFAULT_TREE_ORDERING: TreeOrderingProps = {
+  pinnedKeys: new Set(),
+  sortMode: 'name-asc',
+};
+
+export interface FolderExpansionCommand {
+  version: number;
+  expanded: boolean;
+}
+
 function matchesFileSearch(file: MdFile, q: string): boolean {
   if (!q) return true;
-  return (
-    file.title.toLowerCase().includes(q) ||
-    file.relativePath.toLowerCase().includes(q)
-  );
+  return file.title.toLowerCase().includes(q)
+    || file.relativePath.toLowerCase().includes(q);
 }
 
 function getFolderFilePaths(node: FolderNode): string[] {
@@ -36,12 +51,26 @@ function getFolderFilePaths(node: FolderNode): string[] {
   ];
 }
 
+function getFolderSelectionState(
+  node: FolderNode,
+  selectedFilePaths: ReadonlySet<string>,
+): { totalCount: number; selectedCount: number } {
+  let totalCount = node.files.length;
+  let selectedCount = node.files.reduce(
+    (count, file) => count + (selectedFilePaths.has(file.fsPath) ? 1 : 0),
+    0,
+  );
+  for (const child of node.children) {
+    const childState = getFolderSelectionState(child, selectedFilePaths);
+    totalCount += childState.totalCount;
+    selectedCount += childState.selectedCount;
+  }
+  return { totalCount, selectedCount };
+}
+
 function isFileVisible(file: MdFile, q: string, scopeFocus: ScopeFocusTreeProps): boolean {
   if (!matchesFileSearch(file, q)) return false;
-  if (scopeFocus.hideUnselected && !scopeFocus.selectedFilePaths.has(file.fsPath)) {
-    return false;
-  }
-  return true;
+  return !scopeFocus.hideUnselected || scopeFocus.selectedFilePaths.has(file.fsPath);
 }
 
 function folderHasVisibleContent(
@@ -49,10 +78,9 @@ function folderHasVisibleContent(
   q: string,
   scopeFocus: ScopeFocusTreeProps,
 ): boolean {
-  return (
-    node.files.some((file) => isFileVisible(file, q, scopeFocus)) ||
-    node.children.some((child) => folderHasVisibleContent(child, q, scopeFocus))
-  );
+  if (!q && !scopeFocus.hideUnselected) return true;
+  return node.files.some((file) => isFileVisible(file, q, scopeFocus))
+    || node.children.some((child) => folderHasVisibleContent(child, q, scopeFocus));
 }
 
 function ScopeCheckbox({
@@ -89,31 +117,36 @@ function ScopeCheckbox({
 export function FileNode({
   file,
   scopeFocus,
+  ordering = DEFAULT_TREE_ORDERING,
   cursorMode = false,
   cursorItemId = null,
   onRequestItemMenu,
   canRequestItemMenu,
   openMenuPath = null,
   itemActionsLabel,
+  pinnedLabel = 'Pinned',
 }: {
   file: MdFile;
   scopeFocus?: ScopeFocusTreeProps;
+  ordering: TreeOrderingProps;
   cursorMode?: boolean;
   cursorItemId?: string | null;
   onRequestItemMenu?: (target: SidebarItemMenuTarget) => void;
   canRequestItemMenu?: (target: Pick<SidebarItemMenuTarget, 'kind' | 'path'>) => boolean;
   openMenuPath?: string | null;
   itemActionsLabel?: string;
+  pinnedLabel?: string;
 }) {
   const { state, navigate } = useAppState();
   const isActive = state.currentFile === file.fsPath;
   const isCursor = cursorMode && cursorItemId === file.fsPath;
   const displayName = state.settings.showTitle ? file.title : file.fileName;
   const isChecked = scopeFocus?.selectedFilePaths.has(file.fsPath) ?? true;
+  const isPinned = ordering.pinnedKeys.has(`file:${file.fsPath}`);
 
   return (
     <div
-      className={`tree-file${isActive ? ' is-active' : ''}${isCursor ? ' is-cursor' : ''}${scopeFocus?.editing ? ' is-scope-editing' : ''}`}
+      className={`tree-file${isActive ? ' is-active' : ''}${isCursor ? ' is-cursor' : ''}${isPinned ? ' is-pinned' : ''}${scopeFocus?.editing ? ' is-scope-editing' : ''}`}
       data-path={file.fsPath}
       data-title={file.title}
       data-filename={file.fileName}
@@ -121,14 +154,20 @@ export function FileNode({
       data-sidebar-kind="file"
       data-sidebar-id={file.fsPath}
       onClick={() => navigate(file.fsPath)}
-      onKeyDown={(e) => { if (e.key === 'Enter') navigate(file.fsPath); }}
+      onKeyDown={(event) => { if (event.key === 'Enter') navigate(file.fsPath); }}
       title={file.relativePath}
       role="treeitem"
       tabIndex={0}
       aria-selected={isCursor || isActive}
     >
       <span className="tree-file__name">{displayName}</span>
-      {onRequestItemMenu && itemActionsLabel && (canRequestItemMenu?.({ kind: 'file', path: file.fsPath }) ?? true) && (
+      {isPinned && (
+        <span className="sidebar-tree-item__pin" title={pinnedLabel} aria-label={pinnedLabel}>
+          <PinIcon size={10} />
+        </span>
+      )}
+      {onRequestItemMenu && itemActionsLabel
+        && (canRequestItemMenu?.({ kind: 'file', path: file.fsPath }) ?? true) && (
         <button
           type="button"
           className={`sidebar-tree-item__menu-button${openMenuPath === file.fsPath ? ' is-open' : ''}`}
@@ -159,33 +198,48 @@ export function FolderNodeView({
   node,
   filter,
   scopeFocus,
+  ordering = DEFAULT_TREE_ORDERING,
   cursorMode = false,
   cursorItemId = null,
   onRequestItemMenu,
   canRequestItemMenu,
   openMenuPath = null,
   itemActionsLabel,
+  pinnedLabel = 'Pinned',
+  activeFolderPaths,
+  locateRequest = 0,
+  expansionCommand,
 }: {
   node: FolderNode;
   filter: string;
   scopeFocus: ScopeFocusTreeProps;
+  ordering: TreeOrderingProps;
   cursorMode?: boolean;
   cursorItemId?: string | null;
   onRequestItemMenu?: (target: SidebarItemMenuTarget) => void;
   canRequestItemMenu?: (target: Pick<SidebarItemMenuTarget, 'kind' | 'path'>) => boolean;
   openMenuPath?: string | null;
   itemActionsLabel?: string;
+  pinnedLabel?: string;
+  activeFolderPaths?: ReadonlySet<string>;
+  locateRequest?: number;
+  expansionCommand?: FolderExpansionCommand;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
-  const toggle = useCallback(() => setIsOpen((v) => !v), []);
+  const [isOpen, setIsOpen] = useState(() => expansionCommand?.expanded ?? true);
+  const toggle = useCallback(() => setIsOpen((value) => !value), []);
   const { state } = useAppState();
   const q = filter.toLowerCase().trim();
-
-  const descendantFilePaths = getFolderFilePaths(node);
+  const containsActiveFile = activeFolderPaths?.has(node.path) ?? false;
   const lastExpandedFileRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (state.currentFile && descendantFilePaths.includes(state.currentFile)) {
+    if (expansionCommand && expansionCommand.version > 0) {
+      setIsOpen(expansionCommand.expanded);
+    }
+  }, [expansionCommand]);
+
+  useEffect(() => {
+    if (state.currentFile && containsActiveFile) {
       if (lastExpandedFileRef.current !== state.currentFile) {
         lastExpandedFileRef.current = state.currentFile;
         setIsOpen(true);
@@ -193,39 +247,45 @@ export function FolderNodeView({
     } else {
       lastExpandedFileRef.current = null;
     }
-  }, [state.currentFile, descendantFilePaths]);
+  }, [containsActiveFile, state.currentFile]);
 
   useEffect(() => {
-    const handleLocate = () => {
-      if (state.currentFile && descendantFilePaths.includes(state.currentFile)) {
-        setIsOpen(true);
-      }
-    };
-    window.addEventListener('locate-active-file', handleLocate);
-    return () => window.removeEventListener('locate-active-file', handleLocate);
-  }, [state.currentFile, descendantFilePaths]);
-  const selectedDescendantCount = descendantFilePaths.filter((filePath) =>
-    scopeFocus.selectedFilePaths.has(filePath),
-  ).length;
-  const folderChecked =
-    descendantFilePaths.length > 0 &&
-    selectedDescendantCount === descendantFilePaths.length;
-  const folderIndeterminate =
-    selectedDescendantCount > 0 &&
-    selectedDescendantCount < descendantFilePaths.length;
+    if (locateRequest > 0 && containsActiveFile) setIsOpen(true);
+  }, [containsActiveFile, locateRequest]);
 
-  const visibleFiles = node.files.filter((file) => isFileVisible(file, q, scopeFocus));
-  const visibleChildren = node.children.filter((child) =>
-    folderHasVisibleContent(child, q, scopeFocus),
-  );
+  const folderSelectionState = scopeFocus.editing
+    ? getFolderSelectionState(node, scopeFocus.selectedFilePaths)
+    : { totalCount: 0, selectedCount: 0 };
+  const folderChecked = folderSelectionState.totalCount > 0
+    && folderSelectionState.selectedCount === folderSelectionState.totalCount;
+  const folderIndeterminate = folderSelectionState.selectedCount > 0
+    && folderSelectionState.selectedCount < folderSelectionState.totalCount;
+  const hasVisibilityFilter = Boolean(q) || scopeFocus.hideUnselected;
+  if (hasVisibilityFilter && !folderHasVisibleContent(node, q, scopeFocus)) return null;
+
+  const visibleFiles = !isOpen
+    ? []
+    : hasVisibilityFilter
+      ? node.files.filter((file) => isFileVisible(file, q, scopeFocus))
+      : node.files;
+  const visibleChildren = !isOpen
+    ? []
+    : hasVisibilityFilter
+      ? node.children.filter((child) => folderHasVisibleContent(child, q, scopeFocus))
+      : node.children;
+  const orderedItems = isOpen
+    ? orderSidebarLevel(visibleFiles, visibleChildren, {
+      ...ordering,
+      showTitle: state.settings.showTitle,
+    })
+    : [];
   const folderCursorId = `folder:${node.path}`;
   const isCursor = cursorMode && cursorItemId === folderCursorId;
-
-  if (!folderHasVisibleContent(node, q, scopeFocus)) return null;
+  const isPinned = ordering.pinnedKeys.has(`folder:${node.path}`);
 
   return (
     <div
-      className={`tree-folder${isOpen ? ' is-open' : ''}${scopeFocus.editing ? ' is-scope-editing' : ''}`}
+      className={`tree-folder${isOpen ? ' is-open' : ''}${isPinned ? ' is-pinned' : ''}${scopeFocus.editing ? ' is-scope-editing' : ''}`}
       role="treeitem"
     >
       <div
@@ -244,14 +304,16 @@ export function FolderNodeView({
         data-sidebar-kind="folder"
         data-sidebar-id={folderCursorId}
       >
-        <span className="tree-folder__chevron" aria-hidden="true">
-          <FolderChevronIcon />
-        </span>
+        <span className="tree-folder__chevron" aria-hidden="true"><FolderChevronIcon /></span>
         <FolderIcon />
-        <span className="tree-folder__name">
-          {node.name}
-        </span>
-        {onRequestItemMenu && itemActionsLabel && (canRequestItemMenu?.({ kind: 'folder', path: node.path }) ?? true) && (
+        <span className="tree-folder__name">{node.name}</span>
+        {isPinned && (
+          <span className="sidebar-tree-item__pin" title={pinnedLabel} aria-label={pinnedLabel}>
+            <PinIcon size={10} />
+          </span>
+        )}
+        {onRequestItemMenu && itemActionsLabel
+          && (canRequestItemMenu?.({ kind: 'folder', path: node.path }) ?? true) && (
           <button
             type="button"
             className={`sidebar-tree-item__menu-button${openMenuPath === node.path ? ' is-open' : ''}`}
@@ -272,37 +334,43 @@ export function FolderNodeView({
             checked={folderChecked}
             indeterminate={folderIndeterminate}
             label={`Show ${node.name}`}
-            onChange={(checked) => scopeFocus.onFolderChange(descendantFilePaths, checked)}
+            onChange={(checked) => scopeFocus.onFolderChange(getFolderFilePaths(node), checked)}
           />
         )}
       </div>
       {isOpen && (
         <div className="tree-folder__children" role="group">
-          {visibleFiles.map((f) => (
+          {orderedItems.map((item) => item.kind === 'file' ? (
             <FileNode
-              key={f.fsPath}
-              file={f}
+              key={item.key}
+              file={item.file}
               scopeFocus={scopeFocus}
+              ordering={ordering}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
               onRequestItemMenu={onRequestItemMenu}
               canRequestItemMenu={canRequestItemMenu}
               openMenuPath={openMenuPath}
               itemActionsLabel={itemActionsLabel}
+              pinnedLabel={pinnedLabel}
             />
-          ))}
-          {visibleChildren.map((child) => (
+          ) : (
             <FolderNodeView
-              key={child.path}
-              node={child}
+              key={item.key}
+              node={item.folder}
               filter={filter}
               scopeFocus={scopeFocus}
+              ordering={ordering}
               cursorMode={cursorMode}
               cursorItemId={cursorItemId}
               onRequestItemMenu={onRequestItemMenu}
               canRequestItemMenu={canRequestItemMenu}
               openMenuPath={openMenuPath}
               itemActionsLabel={itemActionsLabel}
+              pinnedLabel={pinnedLabel}
+              activeFolderPaths={activeFolderPaths}
+              locateRequest={locateRequest}
+              expansionCommand={expansionCommand}
             />
           ))}
         </div>

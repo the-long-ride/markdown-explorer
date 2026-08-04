@@ -95,7 +95,7 @@
   height: 18px;
   padding: 0 6px;
   border: var(--stroke-w) solid var(--bd);
-  border-radius: 999px;
+  border-radius: var(--r-s, var(--r));
   background: var(--bg-e);
   color: var(--tx2);
   font-size: 10px;

@@ -191,6 +191,7 @@ mod tests {
             title: title.to_string(),
             extension: extension(path.to_string_lossy().as_ref()),
             document_kind: DocumentKind::Markdown,
+            modified_at: 0,
             tab_id: None,
             tab_label: None,
         }

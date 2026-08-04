@@ -11,10 +11,17 @@ related_docs: []
 source_scope:
 - ui/src/components/Sidebar/Sidebar.tsx
 - ui/src/components/Sidebar/TreeNode.tsx
+- ui/src/components/Sidebar/SidebarFilesActions.tsx
+- ui/src/components/Sidebar/SidebarSortMenu.tsx
 - ui/src/components/Sidebar/sidebarTreeFiltering.ts
+- ui/src/components/Sidebar/sidebarTreeOrdering.ts
+- ui/src/components/Sidebar/sidebarPinIcons.tsx
+- ui/src/components/Sidebar/sidebarWorkspacePreferences.ts
 - ui/src/components/Sidebar/useSidebarCursorNavigation.ts
 - ui/src/hooks/useResize.ts
 test_scope:
+- tests/node/sidebar-pinning-sorting.test.mjs
+- tests/unit/ui/components/sidebar-tree-ordering.test.ts
 - tests/unit/ui/components/sidebar-render.test.tsx
 - tests/unit/ui/components/sidebar-search-pure.test.ts
 - tests/unit/ui/hooks/useResize.test.ts
@@ -59,6 +66,14 @@ flowchart LR
 - File and folder context menus are built from target type and host capability.
 - Filter matching is case/Unicode aware through shared utilities where applicable.
 - Scope maps are reconciled when files/folders disappear.
+
+### Tree ordering, sorting, and pin controls
+
+- **Folders-first Ordering**: By default (`name-asc`), unpinned folders are always listed before files at each directory level, with items within each group sorted alphabetically ascending (A-Z).
+- **Revocable Sorting**: Clicking the currently active sort mode in `SidebarSortMenu` revokes active sorting and resets the workspace sort mode back to `DEFAULT_SIDEBAR_SORT_MODE` (`name-asc`).
+- **Toolbar Actions Sequence**: Sidebar toolbar buttons are arranged in exact sequence: `Sort` (left), `Clear Pins`, `Locate`, `Collapse All`, `Expand All` (right).
+- **Pin & Unpin Icons**: Unpin actions (in item context menus and toolbar Clear Pins) display the `ClearPinsIcon` SVG featuring a scaled 2/3 size X-mark with `strokeWidth="14"`.
+- **Scope Focus Badge**: The scope focus count badge (`.sidebar__scope-count`) and TOC count badge (`.toc-panel__count`) utilize theme-aware border radius `border-radius: var(--r-s, var(--r));`.
 
 ### Scope separation
 

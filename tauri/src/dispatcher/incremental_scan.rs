@@ -3,6 +3,20 @@ use crate::host_message::WorkspaceOperationMetadata;
 
 const WORKSPACE_SCAN_REVEAL_DELAY: Duration = Duration::from_secs(3);
 const WORKSPACE_SCAN_BATCH_SIZE: usize = 32;
+const WORKSPACE_SCAN_MAX_BATCH_SIZE: usize = 1024;
+
+fn next_incremental_publish_count(last_published_count: usize) -> usize {
+    if last_published_count < WORKSPACE_SCAN_BATCH_SIZE {
+        return WORKSPACE_SCAN_BATCH_SIZE;
+    }
+
+    let ratio = last_published_count / WORKSPACE_SCAN_BATCH_SIZE;
+    let growth_steps = usize::BITS - 1 - ratio.leading_zeros();
+    let batch_size = WORKSPACE_SCAN_BATCH_SIZE
+        .saturating_mul(1usize << growth_steps)
+        .min(WORKSPACE_SCAN_MAX_BATCH_SIZE);
+    last_published_count.saturating_add(batch_size)
+}
 
 fn workspace_name(workspace_path: &Path) -> String {
     workspace_path
@@ -210,8 +224,11 @@ impl Dispatcher {
                         && callback_revealed
                             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                             .is_ok();
+                    let next_publish_count = next_incremental_publish_count(
+                        callback_last_published_count.load(Ordering::Acquire),
+                    );
                     let batch_refresh = callback_revealed.load(Ordering::Acquire)
-                        && scanned_files % WORKSPACE_SCAN_BATCH_SIZE == 0;
+                        && scanned_files >= next_publish_count;
                     if first_reveal || batch_refresh {
                         publish_incremental_workspace_snapshot(
                             &callback_app,
@@ -290,6 +307,13 @@ impl Dispatcher {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn grows_incremental_publish_batches_to_the_maximum() {
+        let counts = [0, 32, 64, 128, 256, 512, 1024, 2048];
+        let next_counts = counts.map(next_incremental_publish_count);
+        assert_eq!(next_counts, [32, 64, 128, 256, 512, 1024, 2048, 3072]);
+    }
 
     #[test]
     fn stores_current_scan_without_retaining_the_state_lock() {

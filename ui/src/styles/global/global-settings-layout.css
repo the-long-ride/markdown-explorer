@@ -61,7 +61,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--tx2);
+  color: var(--tx);
 }
 
 .settings-shortcut-toggle {
@@ -262,3 +262,22 @@
   border-top: 0;
 }
 
+
+.settings-number-input {
+  width: 64px;
+  min-height: 30px;
+  box-sizing: border-box;
+  padding: 4px 7px;
+  color: var(--tx);
+  font: 600 12px/1 var(--font-ui);
+  text-align: center;
+  background: var(--bg-s);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  outline: none;
+}
+
+.settings-number-input:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
+}

@@ -1,4 +1,5 @@
 import type { AppState } from '../../contexts/appStateModel';
+import type { SidebarPinnedItem } from '../../types';
 import { normalizePathKey } from '../../contexts/appStateReducer';
 import type { Translations } from '../../contexts/translations';
 import { getShellLocationLabel, requestShellLocation, resolveWorkspaceFolderPath } from '../../desktop/shellLocation';
@@ -9,6 +10,7 @@ import { HtmlPreviewIcon, InternetIcon, MarkdownViewIcon, OpenFolderLocationIcon
 import { isHtmlDocumentPath } from '../Content/HtmlDocumentView';
 import type { SidebarItemMenuItem } from './SidebarItemMenu';
 import type { SidebarItemMenuTarget } from './TreeNode';
+import { ClearPinsIcon, PinIcon } from './sidebarPinIcons';
 
 interface SidebarItemMenuOptions {
   state: AppState;
@@ -18,13 +20,36 @@ interface SidebarItemMenuOptions {
   translations: Translations;
   bridge: PlatformBridge;
   navigate: (path: string, options?: { htmlPreviewOverride?: boolean }) => void;
+  isPinned: boolean;
+  pinLimitReached: boolean;
+  onTogglePin: (item: SidebarPinnedItem) => void;
 }
 
 export function buildSidebarItemMenuItems({
   state, target, canOpenHtmlInBrowser, canOpenItemLocations, translations: t, bridge, navigate,
+  isPinned, pinLimitReached, onTogglePin,
 }: SidebarItemMenuOptions): readonly SidebarItemMenuItem[] {
   if (!target) return [];
   const items: SidebarItemMenuItem[] = [];
+  const pinItem: SidebarPinnedItem = { kind: target.kind, path: target.path };
+  if (isPinned) {
+    items.push({
+      id: 'unpin',
+      label: t.sidebar.unpinItem || 'Unpin',
+      icon: <ClearPinsIcon />,
+      onSelect: () => onTogglePin(pinItem),
+    });
+  } else {
+    items.push({
+      id: target.kind === 'file' ? 'pin-this-file' : 'pin-this-folder',
+      label: target.kind === 'file'
+        ? (t.sidebar.pinThisFile || 'Pin this file')
+        : (t.sidebar.pinThisFolder || 'Pin this folder'),
+      icon: <PinIcon />,
+      disabled: pinLimitReached,
+      onSelect: () => onTogglePin(pinItem),
+    });
+  }
   if (target.kind === 'file' && isHtmlDocumentPath(target.path)) {
     const targetPathKey = normalizePathKey(target.path);
     const matchingTab = state.contentTabs.find((tab) => normalizePathKey(tab.filePath) === targetPathKey);
@@ -32,13 +57,13 @@ export function buildSidebarItemMenuItems({
       ? state.currentHtmlPreviewOverride : undefined;
     const htmlPreviewEnabled = matchingTab?.htmlPreviewOverride ?? currentOverride ?? state.settings.defaultHtmlPreview;
     if (canOpenHtmlInBrowser) {
-      items.push({ id: 'open-in-browser', label: t.openInBrowser, icon: <InternetIcon />, onSelect: () => {
+      items.push({ id: 'open-in-browser', label: t.openInBrowser, icon: <InternetIcon />, dividerBefore: items.length > 0, onSelect: () => {
         if (!openLocalFileInBrowser(bridge, target.path)) {
           window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', { detail: t.previewActions.openError }));
         }
       }});
     }
-    items.push({ id: 'toggle-html-preview', label: htmlPreviewEnabled ? t.showMarkdownView : t.showHtmlPreview,
+    items.push({ id: 'toggle-html-preview', dividerBefore: items.length === 1, label: htmlPreviewEnabled ? t.showMarkdownView : t.showHtmlPreview,
       icon: htmlPreviewEnabled ? <MarkdownViewIcon /> : <HtmlPreviewIcon />,
       shortcut: getEnabledShortcut(state.settings, 'toggleHtmlPreview'),
       onSelect: () => navigate(target.path, { htmlPreviewOverride: !htmlPreviewEnabled }) });

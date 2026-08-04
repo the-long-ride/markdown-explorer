@@ -4,6 +4,7 @@ import type { BrowserSearchIndex } from '../../chromium-xtension/src/search-inde
 import { readTextFile } from '../../chromium-xtension/src/file-access';
 import { resolveWorkspaceTextResourcePath } from '../../chromium-xtension/src/chrome-host-utils';
 import { makeExcerpt } from './web-test-search';
+import { resolveWorkspaceSearchItems } from '../../chromium-xtension/src/workspace-search-items';
 
 interface FileUtilityRouterDeps {
   getSearchIndex: () => BrowserSearchIndex | null;
@@ -84,13 +85,14 @@ export async function handleWebFileUtilityMessage(
       const matchCase = Boolean(msg.matchCase);
       const query = matchCase ? rawQuery : normalizeForSearch(rawQuery);
       const searchIndex = deps.getSearchIndex();
+      const searchItems = resolveWorkspaceSearchItems(msg.items, flatList);
       const singleFileHandle = deps.getSingleFileHandle();
       if (searchIndex) {
-        const results = await searchIndex.search(query, flatList, 80, { matchCase });
+        const results = await searchIndex.search(query, searchItems, 80, { matchCase });
         deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results });
-      } else if (singleFileHandle && flatList.length > 0) {
+      } else if (singleFileHandle && searchItems.length > 0) {
         try {
-          const results = await searchSingleFile(query, singleFileHandle, flatList[0], matchCase);
+          const results = await searchSingleFile(query, singleFileHandle, searchItems[0], matchCase);
           deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results });
         } catch (error) {
           console.error('Failed to search single file:', error);
@@ -109,6 +111,7 @@ export async function handleWebFileUtilityMessage(
       }
       try {
         const searchIndex = deps.getSearchIndex();
+      const searchItems = resolveWorkspaceSearchItems(msg.items, flatList);
         const singleFileHandle = deps.getSingleFileHandle();
         const markdownSource = searchIndex
           ? await searchIndex.read(item.relativePath)

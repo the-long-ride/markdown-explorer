@@ -139,7 +139,9 @@ export class WorkspaceScanner {
       ? WorkspaceScanner.extractTitle(fsPath, isMdx, context) ?? stripKnownExtension(fileName)
       : stripKnownExtension(fileName);
     const documentKind = isMarkdown ? 'markdown' : 'document';
-    return Object.freeze({ fsPath, relativePath, parts, fileName, title, extension: ext, documentKind });
+    let modifiedAt = 0;
+    try { modifiedAt = fs.statSync(fsPath).mtimeMs || 0; } catch {}
+    return Object.freeze({ fsPath, relativePath, parts, fileName, title, extension: ext, documentKind, modifiedAt });
   }
 
   static extractTitle(
@@ -221,19 +223,29 @@ export class WorkspaceScanner {
 
   static buildTree(flat: MdFile[]): FolderNode {
     const root = WorkspaceScanner.emptyRoot();
+    const childIndexes = new WeakMap<FolderNode, Map<string, FolderNode>>();
 
     for (const file of flat) {
       let node = root;
-      const dirs = file.parts.slice(0, -1); // all but filename
+      const modifiedAt = file.modifiedAt ?? 0;
+      node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
+      const dirs = file.parts.slice(0, -1);
 
       for (let i = 0; i < dirs.length; i++) {
         const name = dirs[i];
-        let child = node.children.find(c => c.name === name);
+        let childIndex = childIndexes.get(node);
+        if (!childIndex) {
+          childIndex = new Map<string, FolderNode>();
+          childIndexes.set(node, childIndex);
+        }
+        let child = childIndex.get(name);
         if (!child) {
-          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [] };
+          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [], modifiedAt: 0 };
           node.children.push(child);
+          childIndex.set(name, child);
         }
         node = child;
+        node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
       }
 
       node.files.push(file);
@@ -241,8 +253,7 @@ export class WorkspaceScanner {
 
     return root;
   }
-
   private static emptyRoot(): FolderNode {
-    return { name: 'root', path: '', children: [], files: [] };
+    return { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
   }
 }

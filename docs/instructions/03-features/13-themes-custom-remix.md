@@ -58,6 +58,12 @@ flowchart LR
 
 `glass` stylesheets/tests do not make `glass` a valid current `ThemeStyle`. Unknown values normalize to `default`. Legacy `pet-shiba-memes` maps to `tokyo-night`; `pet-shiba` maps to `pet-white-shiba`.
 
+### Raw Grid Theme specific layout
+
+- **Background Grid**: Grid background size set to `48px 48px`.
+- **Content Padding**: Outer `.content__scroll` padding set to `12px 16px 20px`; inner `.mdn-body` padding set to `20px 24px`.
+- **State Screen Panels**: Empty/state screens (`.state-screen:not(.state-screen--loading)`, such as `No supported documents found`) render inside a solid panel with background `var(--bg)`, border `var(--stroke-w) solid var(--bd-s)`, `max-width: 600px`, `height: fit-content`, `padding: 24px 28px`, and centered vertically and horizontally in `.content__scroll` via flex column layout and `margin: auto` (matching `.welcome-container` presentation).
+
 ### Custom limits
 
 - Maximum 24 custom themes.

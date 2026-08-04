@@ -373,7 +373,65 @@ describe('FolderNodeView', () => {
     expect(checkboxes[0]).not.toBeChecked();
   });
 
-  it('expands folder when locate-active-file event fires', () => {
+  it('applies versioned collapse and expand commands', () => {
+    const { rerender } = render(
+      <FolderNodeView
+        node={simpleNode}
+        filter=""
+        scopeFocus={defaultScopeFocus}
+        expansionCommand={{ version: 0, expanded: true }}
+      />,
+    );
+    expect(document.querySelector('.tree-folder')).toHaveClass('is-open');
+
+    rerender(
+      <FolderNodeView
+        node={simpleNode}
+        filter=""
+        scopeFocus={defaultScopeFocus}
+        expansionCommand={{ version: 1, expanded: false }}
+      />,
+    );
+    expect(document.querySelector('.tree-folder')).not.toHaveClass('is-open');
+
+    rerender(
+      <FolderNodeView
+        node={simpleNode}
+        filter=""
+        scopeFocus={defaultScopeFocus}
+        expansionCommand={{ version: 2, expanded: true }}
+      />,
+    );
+    expect(document.querySelector('.tree-folder')).toHaveClass('is-open');
+  });
+
+  it('initializes newly mounted descendants from the latest collapse command', () => {
+    const nestedNode = {
+      name: 'docs',
+      path: '/docs',
+      files: [],
+      children: [simpleNode],
+    };
+    render(
+      <FolderNodeView
+        node={nestedNode}
+        filter=""
+        scopeFocus={defaultScopeFocus}
+        expansionCommand={{ version: 1, expanded: false }}
+      />,
+    );
+
+    const rootHeader = screen.getByRole('button', { name: /docs/ });
+    expect(document.querySelectorAll('.tree-folder')).toHaveLength(1);
+    fireEvent.click(rootHeader);
+
+    const folders = document.querySelectorAll('.tree-folder');
+    expect(folders).toHaveLength(2);
+    expect(folders[0]).toHaveClass('is-open');
+    expect(folders[1]).not.toHaveClass('is-open');
+  });
+
+  it('expands an active ancestor when the locate request changes', () => {
     const nodeWithInternalFile = {
       name: 'guides',
       path: '/docs/guides',
@@ -381,11 +439,28 @@ describe('FolderNodeView', () => {
       children: [],
     };
     mockState.currentFile = '/docs/guides/readme.md';
-    render(<FolderNodeView node={nodeWithInternalFile} filter="" scopeFocus={defaultScopeFocus} />);
+    const activeFolderPaths = new Set(['/docs/guides']);
+    const { rerender } = render(
+      <FolderNodeView
+        node={nodeWithInternalFile}
+        filter=""
+        scopeFocus={defaultScopeFocus}
+        activeFolderPaths={activeFolderPaths}
+        locateRequest={0}
+      />,
+    );
     const header = screen.getByRole('button');
     fireEvent.click(header);
     expect(document.querySelector('.tree-folder')!.className).not.toContain('is-open');
-    mockState.currentFile = '/docs/guides/readme.md';
-    act(() => { window.dispatchEvent(new CustomEvent('locate-active-file')); });
+    rerender(
+      <FolderNodeView
+        node={nodeWithInternalFile}
+        filter=""
+        scopeFocus={defaultScopeFocus}
+        activeFolderPaths={activeFolderPaths}
+        locateRequest={1}
+      />,
+    );
+    expect(document.querySelector('.tree-folder')!.className).toContain('is-open');
   });
 });

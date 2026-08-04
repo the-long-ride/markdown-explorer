@@ -33,6 +33,13 @@ body:not(.is-resizing) .sidebar {
     border-color 180ms ease,
     background 180ms ease;
 }
+.sidebar.is-resize-committing,
+.sidebar.is-resizing-shell {
+  transition: none !important;
+}
+.sidebar.is-resizing-shell {
+  will-change: width;
+}
 .sidebar.is-collapsed {
   width: 0;
 }
@@ -103,29 +110,6 @@ body:not(.is-resizing) .sidebar {
   color: var(--tx2);
   font-weight: 600;
   box-sizing: border-box;
-}
-.sidebar__locate-btn {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: var(--stroke-w) solid var(--bd-s);
-  border-radius: var(--r);
-  background: var(--bg-e);
-  color: var(--tx2);
-  cursor: pointer;
-  padding: 0;
-  transition:
-    background 0.12s,
-    color 0.12s,
-    border-color 0.12s;
-  box-sizing: border-box;
-}
-.sidebar__locate-btn:hover {
-  background: var(--bg-h);
-  color: var(--tx);
-  border-color: var(--bd-x);
 }
 .sidebar__search {
   position: relative;
@@ -205,7 +189,7 @@ body:not(.is-resizing) .sidebar {
 }
 .sidebar__scope-count {
   flex: 0 0 auto;
-  border-radius: 999px;
+  border-radius: var(--r-s, var(--r));
   background: var(--bg-a);
   color: var(--txm);
   font-size: 9.5px;
@@ -225,8 +209,13 @@ body:not(.is-resizing) .sidebar {
 }
 .sidebar__tree {
   flex: 1;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 4px 0;
+}
+.sidebar__tree.is-resize-width-locked {
+  flex: 1 0 auto;
+  max-width: none;
 }
 .sidebar__tree::-webkit-scrollbar {
   width: 3px;
@@ -239,6 +228,11 @@ body:not(.is-resizing) .sidebar {
 /* Tree nodes */
 .tree-folder {
   user-select: none;
+}
+.tree-file,
+.tree-folder__header {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 24px;
 }
 .tree-folder__header {
   display: flex;
@@ -363,7 +357,6 @@ body:not(.is-resizing) .sidebar {
   margin: 0;
   background: transparent;
   cursor: col-resize;
-  transition: all 0.15s;
   flex-shrink: 0;
   z-index: 50;
   position: relative;
@@ -385,6 +378,14 @@ body:not(.is-resizing) .sidebar {
 }
 .sidebar-resize:hover::after {
   background: var(--accent);
+}
+.sidebar-resize.is-resize-guide {
+  transition: none;
+  will-change: transform;
+}
+.sidebar-resize.is-resize-guide::after {
+  background: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 /* Drag resizing modifiers */
@@ -493,4 +494,19 @@ body.is-dragging-files .mdn-html-preview-iframe {
   border: 0;
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: var(--accent);
+}
+
+.sidebar-tree-item__pin {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-text);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.tree-file.is-pinned,
+.tree-folder.is-pinned > .tree-folder__header {
+  color: var(--tx);
 }
