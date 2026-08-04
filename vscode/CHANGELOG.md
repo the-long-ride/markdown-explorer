@@ -2,6 +2,15 @@
 
 All notable changes to the **Markdown Explorer** extension will be documented in this file.
 
+## [v1.6.3] — 2026-08-04
+
+### Added
+- **Cross-Workspace Search & Live Document Preview**: Full Markdown and HTML document preview panel integrated directly into the Search Overlay modal with support for syntax highlighting, math, diagrams, CSV/TSV table views, and workspace scan scoping.
+- **Left Sidebar Scope Controls & Sorting**: Active folder tracking, scope filtering, pin sorting, and folder expansion controls.
+
+### Changed
+- **Search Overlay & Scrollbars UI**: Standardized button border radii and input row height across search overlay and scrollbars.
+
 ---
 
 ## [v1.6.2] — 2026-07-30
