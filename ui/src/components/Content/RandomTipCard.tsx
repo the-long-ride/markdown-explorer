@@ -9,7 +9,30 @@ import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
 import { buildWelcomeTipGroups } from './welcomeTipGroups';
 import { getTipIcon } from './welcomePageHelpers';
 import { renderWelcomeDescription } from './renderWelcomeDescription';
-import { LightbulbIcon } from './WelcomePageIcons';
+
+function DiceIcon({ className, size = 14 }: { className?: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect width="18" height="18" x="3" y="3" rx="3" ry="3" />
+      <circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" />
+      <circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" />
+      <circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" />
+      <circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
 
 export function RandomTipCard() {
   const { state } = useAppState();
@@ -53,36 +76,30 @@ export function RandomTipCard() {
 
   return (
     <div className="empty-workspace-tip-screen" data-testid="empty-workspace-random-tip">
-      <div className="welcome-random-tip-card">
-        <div className="welcome-random-tip-header">
-          <div className="welcome-random-tip-tag">
-            <LightbulbIcon className="card-icon" />
-            <span>Tip & Practice of the Moment</span>
+      <div className="tip-card welcome-random-tip-card">
+        <div className="tip-card-header">
+          <h3 className="tip-card-title">
+            {getTipIcon(selectedRandomTip.globalIndex)}
+            {selectedRandomTip.item.title}
+          </h3>
+          <div className="tip-card-header-actions">
             {selectedRandomTip.item.badge && (
-              <span className="welcome-random-tip-badge">{selectedRandomTip.item.badge}</span>
+              <span className="tip-card-badge">{selectedRandomTip.item.badge}</span>
             )}
-          </div>
-          <div className="welcome-random-tip-actions">
             <button
               type="button"
               className="welcome-random-tip-shuffle-btn"
               onClick={handleShuffleTip}
-              title="Shuffle Another Tip"
+              title="Another Tip"
+              aria-label="Another Tip"
             >
-              <span>🎲 Another Tip</span>
+              <DiceIcon size={14} />
+              <span>Another Tip</span>
             </button>
           </div>
         </div>
-        <div className="welcome-random-tip-body">
-          <div className="welcome-random-tip-icon">
-            {getTipIcon(selectedRandomTip.globalIndex)}
-          </div>
-          <div className="welcome-random-tip-content">
-            <h3 className="welcome-random-tip-title">{selectedRandomTip.item.title}</h3>
-            <div className="welcome-random-tip-desc">
-              {renderWelcomeDescription(selectedRandomTip.item.desc)}
-            </div>
-          </div>
+        <div className="tip-card-desc tip-card-desc--multiline">
+          {renderWelcomeDescription(selectedRandomTip.item.desc)}
         </div>
       </div>
     </div>

@@ -63,79 +63,38 @@
 }
 
 /* Centered Random Tip Card on All Files Closed */
-.welcome-random-tip-wrapper {
+.empty-workspace-tip-screen {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  margin: 16px auto 24px auto;
-  width: 100%;
-  max-width: 680px;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px 20px;
+  box-sizing: border-box;
 }
 
 .welcome-random-tip-card {
   width: 100%;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--bg-e) 95%, var(--accent) 5%) 0%, var(--bg-s) 100%);
-  border: 1.5px solid color-mix(in srgb, var(--bd-x) 75%, var(--accent) 25%);
-  border-radius: clamp(8px, var(--r, 12px), 14px);
-  padding: 18px 22px;
-  box-sizing: border-box;
-  box-shadow: 
-    0 4px 14px rgba(0, 0, 0, 0.12),
-    0 1px 3px rgba(0, 0, 0, 0.08);
-  position: relative;
-  transition: all 0.2s ease;
+  max-width: 640px;
+  margin: 0 auto;
 }
 
-.welcome-random-tip-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--bd-x) 50%);
-  box-shadow: 
-    0 6px 20px rgba(0, 0, 0, 0.18),
-    0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.welcome-random-tip-header {
+.tip-card-header-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.welcome-random-tip-tag {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.welcome-random-tip-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  color: var(--accent-text, var(--accent));
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-}
-
-.welcome-random-tip-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .welcome-random-tip-shuffle-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 3px 10px;
   font-size: 11px;
   font-weight: 600;
   color: var(--tx2);
-  background: var(--bg-s);
+  background: var(--bg-e);
   border: 1px solid var(--bd-s);
   border-radius: var(--r, 6px);
   cursor: pointer;
@@ -145,72 +104,7 @@
 .welcome-random-tip-shuffle-btn:hover {
   color: var(--tx);
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-s));
-}
-
-.welcome-random-tip-body {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.welcome-random-tip-icon {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: clamp(6px, var(--r, 8px), 10px);
-  background: color-mix(in srgb, var(--accent) 15%, var(--bg-e));
-  color: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
-}
-
-.welcome-random-tip-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.welcome-random-tip-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--tx);
-  margin: 0 0 6px 0;
-  line-height: 1.35;
-}
-
-.welcome-random-tip-desc {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--tx2);
-}
-
-.welcome-random-tip-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--bd-s);
-}
-
-.welcome-random-tip-view-all-btn {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: opacity 0.15s ease;
-}
-
-.welcome-random-tip-view-all-btn:hover {
-  text-decoration: underline;
-  opacity: 0.85;
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-e));
 }
 
 /* Tips & Best Practices Tab */
