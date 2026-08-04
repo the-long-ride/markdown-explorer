@@ -7,10 +7,11 @@ packages:
   - website-app
 
 overrides:
-  brace-expansion@<=5.0.7: ^5.0.8
+  brace-expansion: ^5.0.9
   dompurify: 3.4.12
-  fast-uri: 3.1.4
+  fast-uri: ^3.1.5
   fast-xml-parser: 5.10.1
+  undici: ^7.29.0
 
 allowBuilds:
   esbuild: true
