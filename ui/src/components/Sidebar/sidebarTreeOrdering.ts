@@ -61,3 +61,40 @@ export function orderSidebarLevel(
     return left.kind.localeCompare(right.kind);
   });
 }
+
+export function collectHoistedPinnedItems(
+  tree: FolderNode,
+  pinnedKeys: ReadonlySet<string>,
+): { hoistedFiles: MdFile[]; hoistedFolders: FolderNode[] } {
+  if (pinnedKeys.size === 0) return { hoistedFiles: [], hoistedFolders: [] };
+
+  const rootFileKeys = new Set(tree.files.map((file) => `file:${file.fsPath}`));
+  const rootFolderKeys = new Set(tree.children.map((child) => `folder:${child.path}`));
+
+  const hoistedFiles: MdFile[] = [];
+  const hoistedFolders: FolderNode[] = [];
+  const seenFiles = new Set<string>();
+  const seenFolders = new Set<string>();
+
+  const traverse = (node: FolderNode) => {
+    for (const file of node.files) {
+      const key = `file:${file.fsPath}`;
+      if (pinnedKeys.has(key) && !rootFileKeys.has(key) && !seenFiles.has(key)) {
+        seenFiles.add(key);
+        hoistedFiles.push(file);
+      }
+    }
+    for (const child of node.children) {
+      const key = `folder:${child.path}`;
+      if (pinnedKeys.has(key) && !rootFolderKeys.has(key) && !seenFolders.has(key)) {
+        seenFolders.add(key);
+        hoistedFolders.push(child);
+      }
+      traverse(child);
+    }
+  };
+
+  traverse(tree);
+
+  return { hoistedFiles, hoistedFolders };
+}

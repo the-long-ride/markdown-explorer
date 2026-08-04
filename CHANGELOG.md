@@ -10,12 +10,15 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 - **Cross-Workspace Search & Live Document Preview**: Full Markdown and HTML document preview panel integrated directly into the Search Overlay modal with support for syntax highlighting, math, diagrams, CSV/TSV table views, and workspace scan scoping.
 
 ### Changed
+- **Sidebar Pinning — Root Level Hoisting**: When a file or folder located inside a parent subfolder is pinned, it is now hoisted and displayed directly at the root level of the sidebar tree instead of remaining nested inside its subfolder.
+- **Unpinned Button Icon**: Updated unpinned item menu and clear-pins actions to use a dedicated dual-path SVG (`UnpinIcon`) with support for the active theme accent color (`var(--accent, #EF4136)`).
 - **Search Overlay — Theme-consistent UI**: Standardized all search overlay button border radii (`border-radius: var(--r)`) to match the active theme across all variants. The close modal button is now borderless. Search result rows also use `var(--r)` to align with the theme's rounding style.
 - **Search Overlay — Unified input row height**: Standardized `.search-overlay-input`, case-toggle, and preview-toggle button heights to `32px` across all themes for a uniform input row.
 - **Scrollbars — Theme-consistent radius**: All app scrollbar thumbs (sidebar, TOC, code blocks, search overlay, settings) now use `var(--r-s, var(--r))` for border-radius, matching the active theme. The Raw Grid theme forces square `0px` scrollbar thumbs via `!important` overrides.
 - **Heading section chevron — 3D Vertical Flip animation**: The collapse/expand chevron button now performs a vertical 3D flip (`rotateX(180deg)` with `cubic-bezier(0.25, 0.46, 0.45, 0.94)`) along the horizontal X-axis on toggle instead of spinning in 2D space. Initial state is applied without a CSS transition to prevent a spin-on-load artifact.
 
 ### Fixed
+- **Electron Builder NSIS Script Compilation**: Added `!include "MUI2.nsh"` in `electron/build/installer.nsh` to resolve missing `MUI_HEADER_TEXT` macro error during `pnpm run build:electron` installer packaging.
 - **Search Overlay — Preview renders only once per scan**: The `SearchDocumentPreview` component was re-fetching the preview on every incremental search batch because the `item` object reference changed each time the results array was rebuilt. Fixed by:
   - Memoizing `selectedResult` in `SearchOverlay` keyed on `selectedResultKey` so the object reference is stable across batches.
   - Removing `item` from the fetch `useEffect` dependency array in `SearchDocumentPreview`, accessing it via a ref so only `itemKey` (the file path) triggers a new fetch.

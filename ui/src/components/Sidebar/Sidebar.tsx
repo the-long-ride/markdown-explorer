@@ -26,7 +26,7 @@ import { getActiveFolderPaths } from "./sidebarActiveFolders";
 import { useLocateActiveFile } from "./useLocateActiveFile";
 import { SidebarFilesActions } from "./SidebarFilesActions";
 import { useFolderExpansionCommand } from "./useFolderExpansionCommand";
-import { orderSidebarLevel } from "./sidebarTreeOrdering";
+import { collectHoistedPinnedItems, orderSidebarLevel } from "./sidebarTreeOrdering";
 import { useSidebarPinnedSorting } from "./useSidebarPinnedSorting";
 import { useSidebarScopeFocus } from "./useSidebarScopeFocus";
 import { SidebarScopeControls } from "./SidebarScopeControls";
@@ -141,13 +141,33 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
     [state.currentFile, state.fileList],
   );
 
-  const visibleRootFiles = state.tree?.files.filter(
-    (file) => matchesFileSearch(file, filter)
-      && (!hideUnselected || selectedFilePaths.has(file.fsPath)),
-  ) ?? [];
-  const visibleRootChildren = state.tree?.children.filter((child) =>
-    folderHasVisibleContent(child, filter, hideUnselected, selectedFilePaths),
-  ) ?? [];
+  const { hoistedFiles, hoistedFolders } = useMemo(
+    () => (state.tree ? collectHoistedPinnedItems(state.tree, pinnedKeys) : { hoistedFiles: [], hoistedFolders: [] }),
+    [state.tree, pinnedKeys],
+  );
+
+  const visibleRootFiles = useMemo(() => {
+    const direct = state.tree?.files.filter(
+      (file) => matchesFileSearch(file, filter)
+        && (!hideUnselected || selectedFilePaths.has(file.fsPath)),
+    ) ?? [];
+    const hoisted = hoistedFiles.filter(
+      (file) => matchesFileSearch(file, filter)
+        && (!hideUnselected || selectedFilePaths.has(file.fsPath)),
+    );
+    return [...direct, ...hoisted];
+  }, [state.tree, hoistedFiles, filter, hideUnselected, selectedFilePaths]);
+
+  const visibleRootChildren = useMemo(() => {
+    const direct = state.tree?.children.filter((child) =>
+      folderHasVisibleContent(child, filter, hideUnselected, selectedFilePaths),
+    ) ?? [];
+    const hoisted = hoistedFolders.filter((child) =>
+      folderHasVisibleContent(child, filter, hideUnselected, selectedFilePaths),
+    );
+    return [...direct, ...hoisted];
+  }, [state.tree, hoistedFolders, filter, hideUnselected, selectedFilePaths]);
+
   const orderedRootItems = useMemo(
     () => orderSidebarLevel(visibleRootFiles, visibleRootChildren, {
       ...treeOrdering,

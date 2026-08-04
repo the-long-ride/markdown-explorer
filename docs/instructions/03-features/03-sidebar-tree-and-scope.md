@@ -70,9 +70,10 @@ flowchart LR
 ### Tree ordering, sorting, and pin controls
 
 - **Folders-first Ordering**: By default (`name-asc`), unpinned folders are always listed before files at each directory level, with items within each group sorted alphabetically ascending (A-Z).
+- **Root Level Pin Hoisting**: When a file or folder located inside a parent folder is pinned, it is hoisted and displayed at the root level of the sidebar tree instead of remaining inside its parent folder.
 - **Revocable Sorting**: Clicking the currently active sort mode in `SidebarSortMenu` revokes active sorting and resets the workspace sort mode back to `DEFAULT_SIDEBAR_SORT_MODE` (`name-asc`).
 - **Toolbar Actions Sequence**: Sidebar toolbar buttons are arranged in exact sequence: `Sort` (left), `Clear Pins`, `Locate`, `Collapse All`, `Expand All` (right).
-- **Pin & Unpin Icons**: Unpin actions (in item context menus and toolbar Clear Pins) display the `ClearPinsIcon` SVG featuring a scaled 2/3 size X-mark with `strokeWidth="14"`.
+- **Pin & Unpin Icons**: Unpin actions (in item context menus and toolbar Clear Pins) display the `UnpinIcon` SVG which dynamically inherits the current theme accent color (`var(--accent, #EF4136)`).
 - **Scope Focus Badge**: The scope focus count badge (`.sidebar__scope-count`) and TOC count badge (`.toc-panel__count`) utilize theme-aware border radius `border-radius: var(--r-s, var(--r));`.
 
 ### Scope separation

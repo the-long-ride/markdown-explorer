@@ -263,16 +263,19 @@ export function FolderNodeView({
   const hasVisibilityFilter = Boolean(q) || scopeFocus.hideUnselected;
   if (hasVisibilityFilter && !folderHasVisibleContent(node, q, scopeFocus)) return null;
 
+  const unpinnedFiles = node.files.filter((file) => !ordering.pinnedKeys.has(`file:${file.fsPath}`));
+  const unpinnedChildren = node.children.filter((child) => !ordering.pinnedKeys.has(`folder:${child.path}`));
+
   const visibleFiles = !isOpen
     ? []
-    : hasVisibilityFilter
-      ? node.files.filter((file) => isFileVisible(file, q, scopeFocus))
-      : node.files;
+    : (hasVisibilityFilter
+      ? unpinnedFiles.filter((file) => isFileVisible(file, q, scopeFocus))
+      : unpinnedFiles);
   const visibleChildren = !isOpen
     ? []
-    : hasVisibilityFilter
-      ? node.children.filter((child) => folderHasVisibleContent(child, q, scopeFocus))
-      : node.children;
+    : (hasVisibilityFilter
+      ? unpinnedChildren.filter((child) => folderHasVisibleContent(child, q, scopeFocus))
+      : unpinnedChildren);
   const orderedItems = isOpen
     ? orderSidebarLevel(visibleFiles, visibleChildren, {
       ...ordering,

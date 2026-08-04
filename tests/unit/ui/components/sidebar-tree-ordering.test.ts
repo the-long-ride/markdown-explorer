@@ -46,6 +46,37 @@ describe('orderSidebarLevel', () => {
   });
 });
 
+describe('collectHoistedPinnedItems', () => {
+  test('hoists non-root pinned files and folders to root level', async () => {
+    const { collectHoistedPinnedItems } = await import('../../../../ui/src/components/Sidebar/sidebarTreeOrdering');
+    const subFile: MdFile = {
+      fsPath: '/sub/doc.md', relativePath: 'sub/doc.md', parts: ['sub', 'doc.md'], fileName: 'doc.md',
+      title: 'Doc', extension: '.md', documentKind: 'markdown', modifiedAt: 5,
+    };
+    const subFolder: FolderNode = {
+      name: 'nested', path: 'sub/nested', files: [], children: [], modifiedAt: 8,
+    };
+    const tree: FolderNode = {
+      name: 'root',
+      path: '',
+      files: files,
+      children: [
+        {
+          name: 'sub',
+          path: 'sub',
+          files: [subFile],
+          children: [subFolder],
+          modifiedAt: 15,
+        },
+      ],
+    };
+    const pinnedKeys = new Set(['file:/sub/doc.md', 'folder:sub/nested']);
+    const { hoistedFiles, hoistedFolders } = collectHoistedPinnedItems(tree, pinnedKeys);
+    expect(hoistedFiles).toEqual([subFile]);
+    expect(hoistedFolders).toEqual([subFolder]);
+  });
+});
+
 describe('workspace pin helpers', () => {
   test('enforces the limit but still permits unpinning', () => {
     let state = {};

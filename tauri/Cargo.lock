@@ -2382,7 +2382,7 @@ dependencies = [
 
 [[package]]
 name = "markdown-explorer-tauri"
-version = "1.6.2"
+version = "1.6.3"
 dependencies = [
  "anyhow",
  "calamine",
