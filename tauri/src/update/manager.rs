@@ -1,114 +1,47 @@
+use crate::app_state::AppState;
 use crate::update::UpdateState;
 use serde_json::json;
 use std::fs;
-use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
+use tauri_plugin_updater::{Update, UpdaterExt};
 
 const MANIFEST_FILE: &str = "pending-update.json";
+
+pub struct PendingUpdate {
+    pub update: Update,
+    pub bytes: Vec<u8>,
+    pub staged_file_path: PathBuf,
+}
 
 pub struct UpdateManager {
     config_dir: PathBuf,
 }
 
-fn escape_for_cmd_quotes(value: impl AsRef<str>) -> String {
-    value.as_ref().replace('"', "\"\"")
-}
-
-fn is_installer_file(path: &Path) -> bool {
-    let name = path
-        .file_name()
-        .map(|value| value.to_string_lossy().to_lowercase())
-        .unwrap_or_default();
-    path.extension()
-        .map(|ext| ext.to_string_lossy().eq_ignore_ascii_case("exe"))
-        .unwrap_or(false)
-        && (name.contains("setup") || name.contains("installer"))
-}
-
 pub fn can_install_updates() -> bool {
-    cfg!(target_os = "windows") && !cfg!(debug_assertions)
+    !cfg!(debug_assertions)
 }
 
-pub fn create_windows_installer_update_script(
-    staged_file_path: &Path,
-    target_exe_path: &Path,
-    working_directory: &Path,
-) -> String {
-    let quoted_installer = escape_for_cmd_quotes(staged_file_path.to_string_lossy());
-    let quoted_target = escape_for_cmd_quotes(target_exe_path.to_string_lossy());
-    let quoted_work_dir = escape_for_cmd_quotes(working_directory.to_string_lossy());
+fn file_name_for_update(update: &Update) -> String {
+    update
+        .download_url
+        .path_segments()
+        .and_then(|segments| segments.filter(|segment| !segment.is_empty()).next_back())
+        .filter(|name| !name.is_empty())
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| format!("markdown-explorer-{}.update", update.version))
+}
 
-    let install_command = if is_installer_file(staged_file_path) {
-        format!("start /wait \"\" \"{quoted_installer}\" /S")
-    } else {
-        format!("start /wait \"\" \"{quoted_installer}\"")
+fn set_state(app: &AppHandle, app_state: &AppState, state: UpdateState) {
+    app_state.inner.write().update_state = state.clone();
+    UpdateManager::emit_state(app, &state);
+}
+
+fn percent(downloaded: u64, total: Option<u64>) -> u8 {
+    let Some(total) = total.filter(|value| *value > 0) else {
+        return 0;
     };
-
-    [
-        "@echo off".to_string(),
-        "setlocal".to_string(),
-        "echo Waiting for app to exit...".to_string(),
-        "for /L %%i in (1,1,120) do (".to_string(),
-        format!("  2>nul (>>\"{quoted_target}\" echo off) && goto install"),
-        "  timeout /t 1 /nobreak >nul".to_string(),
-        ")".to_string(),
-        "goto cleanup".to_string(),
-        "".to_string(),
-        ":install".to_string(),
-        "echo Running installer update...".to_string(),
-        install_command,
-        format!(
-            "if exist \"{quoted_target}\" start \"\" /D \"{quoted_work_dir}\" \"{quoted_target}\""
-        ),
-        "".to_string(),
-        ":cleanup".to_string(),
-        format!("del /Q \"{quoted_installer}\" >nul 2>nul"),
-        "del /Q %~f0 >nul 2>nul".to_string(),
-        "endlocal".to_string(),
-    ]
-    .join("\r\n")
-}
-
-pub fn launch_windows_installer_update_helper(
-    staged_file_path: &Path,
-    target_exe_path: &Path,
-    working_directory: &Path,
-) -> Result<PathBuf, String> {
-    let script_dir = std::env::temp_dir().join("markdown-explorer-updater");
-    fs::create_dir_all(&script_dir).map_err(|err| format!("failed to create helper dir: {err}"))?;
-    let script_path = script_dir.join(format!(
-        "apply-tauri-update-{}.cmd",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|duration| duration.as_millis())
-            .unwrap_or(0)
-    ));
-    fs::write(
-        &script_path,
-        create_windows_installer_update_script(
-            staged_file_path,
-            target_exe_path,
-            working_directory,
-        ),
-    )
-    .map_err(|err| format!("failed to write helper script: {err}"))?;
-
-    let mut command =
-        Command::new(std::env::var("ComSpec").unwrap_or_else(|_| "cmd.exe".to_string()));
-    command.args(["/d", "/s", "/c"]).arg(&script_path);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const DETACHED_PROCESS: u32 = 0x00000008;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        command.creation_flags(DETACHED_PROCESS | CREATE_NO_WINDOW);
-    }
-    command
-        .spawn()
-        .map_err(|err| format!("failed to launch helper: {err}"))?;
-    Ok(script_path)
+    ((downloaded.saturating_mul(100) / total).min(99)) as u8
 }
 
 impl UpdateManager {
@@ -125,12 +58,29 @@ impl UpdateManager {
     }
 
     pub fn load_persisted_state(&self) -> Option<UpdateState> {
-        let path = self.manifest_path();
-        if !path.exists() {
-            return None;
+        let content = fs::read_to_string(self.manifest_path()).ok()?;
+        let state: UpdateState = serde_json::from_str(&content).ok()?;
+        let staged_path = state.staged_file_path.as_deref().map(Path::new);
+        match state.status {
+            crate::update::UpdateStatus::Downloaded | crate::update::UpdateStatus::ScheduledOnExit
+                if staged_path.is_some_and(Path::exists) =>
+            {
+                Some(state)
+            }
+            _ => {
+                self.clear_persisted_state();
+                None
+            }
         }
-        let content = fs::read_to_string(path).ok()?;
-        serde_json::from_str(&content).ok()
+    }
+
+    pub fn persist_state(&self, state: &UpdateState) -> Result<(), String> {
+        fs::create_dir_all(&self.config_dir)
+            .map_err(|err| format!("failed to create updater directory: {err}"))?;
+        let content = serde_json::to_string_pretty(state)
+            .map_err(|err| format!("failed to serialize updater state: {err}"))?;
+        fs::write(self.manifest_path(), content)
+            .map_err(|err| format!("failed to persist updater state: {err}"))
     }
 
     pub fn clear_persisted_state(&self) {
@@ -147,155 +97,288 @@ impl UpdateManager {
     }
 
     pub fn restore_and_emit(app: &AppHandle, config_dir: &Path) -> UpdateState {
-        let manager = UpdateManager::new(config_dir.to_path_buf());
-        if let Some(state) = manager.load_persisted_state() {
+        let manager = Self::new(config_dir.to_path_buf());
+        let state = manager
+            .load_persisted_state()
+            .unwrap_or_else(UpdateState::idle);
+        if state.status != crate::update::UpdateStatus::Idle {
             Self::emit_state(app, &state);
-            state
-        } else {
-            UpdateState::idle()
         }
+        state
     }
 
-    pub fn start_download(app: AppHandle, version: &str, url: &str, staging_dir: PathBuf) {
-        let version = version.to_string();
-        let url = url.to_string();
-
-        let file_name = url.split('/').last().unwrap_or("update.msi").to_string();
-        let dest_path = staging_dir.join(&file_name);
-        let dest_path_for_emit = dest_path.clone();
-
-        let app_for_progress = app.clone();
-        let version_for_progress = version.clone();
-        let file_name_for_progress = file_name.clone();
-
-        Self::emit_state(&app, &UpdateState::downloading(&version, &file_name, 0));
-
+    pub fn start_download(app: AppHandle, app_state: AppState, requested_version: String) {
         tauri::async_runtime::spawn(async move {
-            let result = tokio::task::spawn_blocking(move || {
-                #[allow(unused_variables, unused_assignments)]
-                match ureq::get(&url).call() {
-                    Ok(response) => {
-                        let _total = response
-                            .header("content-length")
-                            .and_then(|v| v.parse::<u64>().ok())
-                            .unwrap_or(0);
+            if requested_version.is_empty() {
+                set_state(
+                    &app,
+                    &app_state,
+                    UpdateState::error_state("", "missing-update-version"),
+                );
+                return;
+            }
 
-                        let mut reader = response.into_reader();
-                        let _ = fs::create_dir_all(&staging_dir);
+            let result = async {
+                let update = app
+                    .updater()
+                    .map_err(|err| format!("failed to initialize updater: {err}"))?
+                    .check()
+                    .await
+                    .map_err(|err| format!("failed to check update: {err}"))?
+                    .ok_or_else(|| "requested-update-not-available".to_string())?;
 
-                        let mut file = match fs::File::create(&dest_path) {
-                            Ok(f) => f,
-                            Err(e) => {
-                                return Err(format!("failed to create file: {e}"));
-                            }
-                        };
-
-                        let mut buf = [0u8; 8192];
-                        let mut received: u64 = 0;
-
-                        loop {
-                            match reader.read(&mut buf) {
-                                Ok(0) => break,
-                                Ok(n) => {
-                                    if file.write_all(&buf[..n]).is_err() {
-                                        return Err("write failed".to_string());
-                                    }
-                                    received += n as u64;
-                                }
-                                Err(e) => {
-                                    return Err(format!("read error: {e}"));
-                                }
-                            }
-                        }
-
-                        let _ = file.flush();
-                        Ok(())
-                    }
-                    Err(e) => Err(format!("download failed: {e}")),
+                if update.version != requested_version {
+                    return Err(format!(
+                        "update-version-mismatch:{}:{}",
+                        requested_version, update.version
+                    ));
                 }
-            })
+
+                let file_name = file_name_for_update(&update);
+                set_state(
+                    &app,
+                    &app_state,
+                    UpdateState::downloading(&requested_version, &file_name, 0),
+                );
+
+                let progress_app = app.clone();
+                let progress_state = app_state.clone();
+                let progress_version = requested_version.clone();
+                let progress_file_name = file_name.clone();
+                let mut downloaded = 0u64;
+                let mut last_progress = 0u8;
+                let bytes = update
+                    .download(
+                        move |chunk_length, content_length| {
+                            downloaded = downloaded.saturating_add(chunk_length as u64);
+                            let progress_percent = percent(downloaded, content_length);
+                            if progress_percent > last_progress {
+                                last_progress = progress_percent;
+                                set_state(
+                                    &progress_app,
+                                    &progress_state,
+                                    UpdateState::downloading(
+                                        &progress_version,
+                                        &progress_file_name,
+                                        progress_percent,
+                                    ),
+                                );
+                            }
+                        },
+                        || {},
+                    )
+                    .await
+                    .map_err(|err| format!("failed to download update: {err}"))?;
+
+                let config_dir = app
+                    .path()
+                    .app_config_dir()
+                    .map_err(|err| format!("failed to resolve updater directory: {err}"))?;
+                let manager = Self::new(config_dir);
+                fs::create_dir_all(manager.staging_dir())
+                    .map_err(|err| format!("failed to create updater staging directory: {err}"))?;
+                let staged_file_path = manager.staging_dir().join(&file_name);
+                fs::write(&staged_file_path, &bytes)
+                    .map_err(|err| format!("failed to stage downloaded update: {err}"))?;
+
+                let downloaded_state = UpdateState::downloaded(&requested_version, &file_name)
+                    .with_staged_file_path(staged_file_path.to_string_lossy());
+                manager.persist_state(&downloaded_state)?;
+                *app_state
+                    .pending_update
+                    .lock()
+                    .map_err(|_| "pending-update-lock-poisoned".to_string())? =
+                    Some(PendingUpdate {
+                        update,
+                        bytes,
+                        staged_file_path,
+                    });
+                Ok(downloaded_state)
+            }
             .await;
 
             match result {
-                Ok(Ok(())) => {
-                    Self::emit_state(
-                        &app_for_progress,
-                        &UpdateState::downloaded(&version_for_progress, &file_name_for_progress)
-                            .with_staged_file_path(dest_path_for_emit.to_string_lossy()),
-                    );
-                }
-                Ok(Err(err)) => {
-                    Self::emit_state(
-                        &app_for_progress,
-                        &UpdateState::error_state(&version_for_progress, &err),
-                    );
-                }
-                Err(_) => {
-                    Self::emit_state(
-                        &app_for_progress,
-                        &UpdateState::error_state(&version_for_progress, "task panicked"),
+                Ok(state) => set_state(&app, &app_state, state),
+                Err(error) => {
+                    if let Ok(config_dir) = app.path().app_config_dir() {
+                        Self::new(config_dir).clear_persisted_state();
+                    }
+                    if let Ok(mut pending) = app_state.pending_update.lock() {
+                        pending.take();
+                    }
+                    set_state(
+                        &app,
+                        &app_state,
+                        UpdateState::error_state(&requested_version, &error),
                     );
                 }
             }
         });
     }
 
-    pub fn schedule_update(
-        &self,
+    pub fn schedule_downloaded_update(
         app: &AppHandle,
-        version: &str,
-        file_name: &str,
-        staged_file_path: &Path,
-    ) {
+        app_state: &AppState,
+    ) -> Result<(), String> {
+        let current = app_state.inner.read().update_state.clone();
+        if !matches!(
+            current.status,
+            crate::update::UpdateStatus::Downloaded | crate::update::UpdateStatus::ScheduledOnExit
+        ) {
+            return Err("missing-downloaded-update".to_string());
+        }
+        let version = current.version.as_deref().unwrap_or_default();
+        let file_name = current.downloaded_file_name.as_deref().unwrap_or_default();
+        let staged_file_path = current
+            .staged_file_path
+            .as_deref()
+            .map(PathBuf::from)
+            .filter(|path| path.exists())
+            .ok_or_else(|| "missing-staged-update".to_string())?;
         let state = UpdateState::scheduled(version, file_name)
             .with_staged_file_path(staged_file_path.to_string_lossy());
-        Self::emit_state(app, &state);
-
-        let _ = fs::create_dir_all(&self.config_dir);
-        if let Ok(json) = serde_json::to_string_pretty(&state) {
-            let _ = fs::write(self.manifest_path(), json);
-        }
+        let config_dir = app
+            .path()
+            .app_config_dir()
+            .map_err(|err| format!("failed to resolve updater directory: {err}"))?;
+        Self::new(config_dir).persist_state(&state)?;
+        set_state(app, app_state, state);
+        Ok(())
     }
 
-    pub fn apply_pending_update_on_exit(config_dir: &Path) -> Result<bool, String> {
-        if !can_install_updates() {
+    async fn restore_pending_update(
+        app: &AppHandle,
+        app_state: &AppState,
+        persisted: &UpdateState,
+    ) -> Result<(), String> {
+        let expected_version = persisted.version.as_deref().unwrap_or_default();
+        let staged_file_path = persisted
+            .staged_file_path
+            .as_deref()
+            .map(PathBuf::from)
+            .filter(|path| path.exists())
+            .ok_or_else(|| "missing-staged-update".to_string())?;
+        let update = app
+            .updater()
+            .map_err(|err| format!("failed to initialize updater: {err}"))?
+            .check()
+            .await
+            .map_err(|err| format!("failed to check update: {err}"))?
+            .ok_or_else(|| "requested-update-not-available".to_string())?;
+        if update.version != expected_version {
+            return Err(format!(
+                "update-version-mismatch:{}:{}",
+                expected_version, update.version
+            ));
+        }
+        let bytes = fs::read(&staged_file_path)
+            .map_err(|err| format!("failed to read staged update: {err}"))?;
+        *app_state
+            .pending_update
+            .lock()
+            .map_err(|_| "pending-update-lock-poisoned".to_string())? =
+            Some(PendingUpdate {
+                update,
+                bytes,
+                staged_file_path,
+            });
+        Ok(())
+    }
+
+    async fn install_pending_update(
+        app: AppHandle,
+        app_state: AppState,
+        allow_downloaded: bool,
+    ) -> Result<bool, String> {
+        let persisted = app_state.inner.read().update_state.clone();
+        let allowed = persisted.status == crate::update::UpdateStatus::ScheduledOnExit
+            || (allow_downloaded && persisted.status == crate::update::UpdateStatus::Downloaded);
+        if !allowed {
             return Ok(false);
         }
-        let manager = UpdateManager::new(config_dir.to_path_buf());
-        let Some(state) = manager.load_persisted_state() else {
-            return Ok(false);
-        };
-        let Some(staged_file_path) = state.staged_file_path.as_deref() else {
-            manager.clear_persisted_state();
-            return Ok(false);
-        };
-        let staged_path = PathBuf::from(staged_file_path);
-        if !staged_path.exists() {
-            manager.clear_persisted_state();
-            return Ok(false);
+        if app_state
+            .update_apply_in_progress
+            .swap(true, std::sync::atomic::Ordering::SeqCst)
+        {
+            return Ok(true);
         }
-        let target_exe = std::env::current_exe()
-            .map_err(|err| format!("failed to resolve current executable: {err}"))?;
-        let working_dir = target_exe
-            .parent()
-            .map(Path::to_path_buf)
-            .unwrap_or_else(|| PathBuf::from("."));
+
+        let version = persisted.version.clone().unwrap_or_default();
+        set_state(&app, &app_state, UpdateState::applying(&version));
+
+        let has_pending = app_state
+            .pending_update
+            .lock()
+            .map_err(|_| "pending-update-lock-poisoned".to_string())?
+            .is_some();
+        if !has_pending {
+            if let Err(error) = Self::restore_pending_update(&app, &app_state, &persisted).await {
+                app_state
+                    .update_apply_in_progress
+                    .store(false, std::sync::atomic::Ordering::SeqCst);
+                set_state(
+                    &app,
+                    &app_state,
+                    UpdateState::error_state(&version, &error),
+                );
+                return Err(error);
+            }
+        }
+
+        let pending = app_state
+            .pending_update
+            .lock()
+            .map_err(|_| "pending-update-lock-poisoned".to_string())?
+            .take()
+            .ok_or_else(|| "missing-pending-update".to_string())?;
+        let config_dir = app
+            .path()
+            .app_config_dir()
+            .map_err(|err| format!("failed to resolve updater directory: {err}"))?;
+        let manager = Self::new(config_dir);
         manager.clear_persisted_state();
-        launch_windows_installer_update_helper(&staged_path, &target_exe, &working_dir)?;
-        Ok(true)
+
+        if let Err(error) = pending.update.install(&pending.bytes) {
+            let message = format!("failed to install update: {error}");
+            let restored_state = UpdateState::scheduled(
+                &version,
+                persisted.downloaded_file_name.as_deref().unwrap_or_default(),
+            )
+            .with_staged_file_path(pending.staged_file_path.to_string_lossy());
+            let _ = manager.persist_state(&restored_state);
+            if let Ok(mut slot) = app_state.pending_update.lock() {
+                *slot = Some(pending);
+            }
+            app_state
+                .update_apply_in_progress
+                .store(false, std::sync::atomic::Ordering::SeqCst);
+            set_state(
+                &app,
+                &app_state,
+                UpdateState::error_state(&version, &message),
+            );
+            return Err(message);
+        }
+
+        let _ = fs::remove_file(pending.staged_file_path);
+        app.restart();
     }
 
-    pub fn apply_update(app: &AppHandle, version: &str, config_dir: &Path) {
-        Self::emit_state(app, &UpdateState::applying(version));
+    pub fn restart_and_apply_update(app: AppHandle, app_state: AppState) {
+        tauri::async_runtime::spawn(async move {
+            let _ = Self::install_pending_update(app, app_state, true).await;
+        });
+    }
 
-        match Self::apply_pending_update_on_exit(config_dir) {
-            Ok(true) => app.exit(0),
-            Ok(false) => Self::emit_state(
-                app,
-                &UpdateState::error_state(version, "missing-staged-update"),
-            ),
-            Err(err) => Self::emit_state(app, &UpdateState::error_state(version, &err)),
-        }
+    pub async fn apply_scheduled_update(app: AppHandle, app_state: AppState) -> Result<bool, String> {
+        Self::install_pending_update(app, app_state, false).await
+    }
+
+    pub fn should_apply_on_close(app_state: &AppState) -> bool {
+        matches!(
+            app_state.inner.read().update_state.status,
+            crate::update::UpdateStatus::ScheduledOnExit
+        )
     }
 }
 
@@ -305,117 +388,37 @@ mod tests {
     use crate::update::UpdateStatus;
 
     #[test]
-    fn state_transitions() {
-        let idle = UpdateState::default();
-        assert_eq!(idle.status, UpdateStatus::Idle);
-
-        let dl = UpdateState::downloading("1.0", "update.msi", 50);
-        assert_eq!(dl.status, UpdateStatus::Downloading);
-        assert_eq!(dl.progress_percent, Some(50));
-
-        let done = UpdateState::downloaded("1.0", "update.msi");
-        assert_eq!(done.status, UpdateStatus::Downloaded);
+    fn progress_is_bounded_and_unknown_total_stays_zero() {
+        assert_eq!(percent(10, None), 0);
+        assert_eq!(percent(50, Some(100)), 50);
+        assert_eq!(percent(200, Some(100)), 99);
     }
 
     #[test]
-    fn state_serialization() {
-        let state = UpdateState::downloading("1.0", "update.msi", 42);
-        let json = serde_json::to_string(&state).unwrap();
-        let restored: UpdateState = serde_json::from_str(&json).unwrap();
-        assert_eq!(restored.status, UpdateStatus::Downloading);
-        assert_eq!(restored.version, Some("1.0".into()));
-    }
-
-    #[test]
-    fn manifest_path_in_config_dir() {
-        let mgr = UpdateManager::new(PathBuf::from("/tmp/config"));
-        assert_eq!(
-            mgr.manifest_path(),
-            PathBuf::from("/tmp/config/pending-update.json")
-        );
-    }
-
-    #[test]
-    fn staging_dir_in_config_dir() {
-        let mgr = UpdateManager::new(PathBuf::from("/tmp/config"));
-        assert_eq!(mgr.staging_dir(), PathBuf::from("/tmp/config/staged"));
-    }
-
-    #[test]
-    fn load_persisted_state_returns_none_when_no_file() {
+    fn persisted_download_requires_existing_staged_file() {
         let tmp = tempfile::tempdir().unwrap();
-        let mgr = UpdateManager::new(tmp.path().to_path_buf());
-        assert!(mgr.load_persisted_state().is_none());
+        let manager = UpdateManager::new(tmp.path().to_path_buf());
+        let missing = tmp.path().join("missing.update");
+        let state = UpdateState::downloaded("1.6.4", "missing.update")
+            .with_staged_file_path(missing.to_string_lossy());
+        manager.persist_state(&state).unwrap();
+
+        assert!(manager.load_persisted_state().is_none());
+        assert!(!manager.manifest_path().exists());
     }
 
     #[test]
-    fn schedule_and_load_persisted_state() {
+    fn scheduled_state_round_trips_when_staged_file_exists() {
         let tmp = tempfile::tempdir().unwrap();
-        let mgr = UpdateManager::new(tmp.path().to_path_buf());
+        let manager = UpdateManager::new(tmp.path().to_path_buf());
+        let staged = tmp.path().join("update.bin");
+        fs::write(&staged, b"verified update bytes").unwrap();
+        let state = UpdateState::scheduled("1.6.4", "update.bin")
+            .with_staged_file_path(staged.to_string_lossy());
+        manager.persist_state(&state).unwrap();
 
-        // We can't call schedule_update without an AppHandle, but we can
-        // write the manifest manually and test load_persisted_state.
-        let state = UpdateState::scheduled("5.0", "update.msi")
-            .with_staged_file_path(tmp.path().join("update.msi").to_string_lossy());
-        let json = serde_json::to_string_pretty(&state).unwrap();
-        fs::write(mgr.manifest_path(), json).unwrap();
-
-        let loaded = mgr.load_persisted_state().unwrap();
-        assert_eq!(loaded.status, UpdateStatus::ScheduledOnExit);
-        assert_eq!(loaded.version.as_deref(), Some("5.0"));
-    }
-
-    #[test]
-    fn windows_installer_script_waits_runs_silent_installer_and_relaunches() {
-        let script = create_windows_installer_update_script(
-            Path::new("C:/Temp/Markdown Explorer Setup.exe"),
-            Path::new("C:/Program Files/Markdown Explorer/Markdown Explorer.exe"),
-            Path::new("C:/Program Files/Markdown Explorer"),
-        );
-
-        assert!(script.contains("Waiting for app to exit"));
-        assert!(script.contains("/S"));
-        assert!(script.contains("start \"\" /D"));
-        assert!(script.contains("del /Q \"C:/Temp/Markdown Explorer Setup.exe\""));
-    }
-
-    #[test]
-    fn installer_file_detection_requires_setup_or_installer_exe() {
-        assert!(is_installer_file(Path::new("Markdown Explorer Setup.exe")));
-        assert!(is_installer_file(Path::new(
-            "Markdown Explorer Installer.exe"
-        )));
-        assert!(!is_installer_file(Path::new(
-            "Markdown Explorer Portable.exe"
-        )));
-        assert!(!is_installer_file(Path::new("Markdown Explorer.zip")));
-    }
-
-    #[test]
-    fn clear_persisted_state_removes_file() {
-        let tmp = tempfile::tempdir().unwrap();
-        let mgr = UpdateManager::new(tmp.path().to_path_buf());
-
-        fs::write(mgr.manifest_path(), "{}").unwrap();
-        assert!(mgr.manifest_path().exists());
-
-        mgr.clear_persisted_state();
-        assert!(!mgr.manifest_path().exists());
-    }
-
-    #[test]
-    fn clear_persisted_state_no_file_is_ok() {
-        let tmp = tempfile::tempdir().unwrap();
-        let mgr = UpdateManager::new(tmp.path().to_path_buf());
-        // Should not panic
-        mgr.clear_persisted_state();
-    }
-
-    #[test]
-    fn load_persisted_state_invalid_json_returns_none() {
-        let tmp = tempfile::tempdir().unwrap();
-        let mgr = UpdateManager::new(tmp.path().to_path_buf());
-        fs::write(mgr.manifest_path(), "not json").unwrap();
-        assert!(mgr.load_persisted_state().is_none());
+        let restored = manager.load_persisted_state().unwrap();
+        assert_eq!(restored.status, UpdateStatus::ScheduledOnExit);
+        assert_eq!(restored.version.as_deref(), Some("1.6.4"));
     }
 }

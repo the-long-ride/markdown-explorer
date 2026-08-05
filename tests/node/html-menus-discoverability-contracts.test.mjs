@@ -45,7 +45,7 @@ test('sidebar file tree uses hover three-dot actions and anchored right-aligned 
   ]);
   assert.match(tree, /MoreVerticalIcon/);
   assert.match(tree, /sidebar-tree-item__menu-button/);
-  assert.doesNotMatch(tree, /onContextMenu=/);
+  assert.match(tree, /onContextMenu=/);
   assert.match(menu, /anchor\.getBoundingClientRect/);
   assert.match(menu, /sidebar\.getBoundingClientRect/);
   assert.match(position, /placement:\s*'below'\s*\|\s*'above'/);

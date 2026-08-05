@@ -58,6 +58,7 @@ pub fn boot() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             let args: Vec<String> = argv.into_iter().collect();
             let Some(path) = crate::runtime::external_open::parse_external_open_path(&args) else {
@@ -159,16 +160,24 @@ pub fn boot() {
                         _ => {}
                     }
                 }
-                tauri::WindowEvent::CloseRequested { .. } => {
+                tauri::WindowEvent::CloseRequested { api, .. } => {
                     tauri::async_runtime::spawn(crate::runtime::html_preview::shutdown());
-                    if let Ok(config_dir) = app_for_event.path().app_config_dir() {
-                        if let Err(err) =
-                            crate::update::manager::UpdateManager::apply_pending_update_on_exit(
-                                &config_dir,
-                            )
-                        {
-                            eprintln!("warning: failed to launch pending update: {err}");
-                        }
+                    if crate::update::manager::UpdateManager::should_apply_on_close(&state_for_event)
+                    {
+                        api.prevent_close();
+                        let app = app_for_event.clone();
+                        let state = state_for_event.clone();
+                        tauri::async_runtime::spawn(async move {
+                            if let Err(error) =
+                                crate::update::manager::UpdateManager::apply_scheduled_update(
+                                    app,
+                                    state,
+                                )
+                                .await
+                            {
+                                eprintln!("warning: failed to apply scheduled update: {error}");
+                            }
+                        });
                     }
                 }
                 _ => {}
