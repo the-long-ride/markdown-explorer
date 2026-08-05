@@ -26,6 +26,9 @@ import { convertHtmlSourceToMarkdown } from "../../markdown/htmlToMarkdown";
 import { renderMarkdownClientSide } from "../../contexts/contentTabState";
 import { hasHtmlLocalFirstPolicyNotice, type HtmlLocalFirstPolicyReport } from "../../markdown/htmlLocalFirstPreview";
 import { ContentMainView } from "./ContentMainView";
+import { BookmarkSelectionMenu } from "../Bookmarks/BookmarkSelectionMenu";
+import { useBookmarkSelection } from "./useBookmarkSelection";
+import { ACTION_NOTICE_EVENT, normalizeActionNoticeDetail, type ActionNoticeDetail, type ActionNoticeTone } from "../../utils/actionNotice.ts";
 // Highlighting deliberately skips language-(txt|text|plain|plaintext) blocks.
 
 export { isWorkspaceNavigationHref } from "./contentUtils";
@@ -89,7 +92,7 @@ export const Content = memo(function Content({
   const bodyRef = useRef<HTMLDivElement>(null);
   const [htmlModal, setHtmlModal] = useState<{ documentHtml: string; trigger: HTMLElement } | null>(null);
   const [linkMenu, setLinkMenu] = useState<LinkContextMenuState | null>(null);
-  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<ActionNoticeDetail | null>(null);
   const actionNoticeTimerRef = useRef<number | null>(null);
   const workspaceUnavailablePath = state.workspaceUnavailablePath;
   const activeContentTab = state.contentTabs.find((tab) => tab.filePath === state.activeContentTabPath);
@@ -191,8 +194,8 @@ export const Content = memo(function Content({
     ? state.recentWorkspaces.some((item) => item.path === workspaceUnavailablePath)
     : false;
 
-  const showActionNotice = useCallback((message: string) => {
-    setActionNotice(message);
+  const showActionNotice = useCallback((message: string, tone: ActionNoticeTone = 'neutral') => {
+    setActionNotice({ message, tone });
     if (actionNoticeTimerRef.current !== null) window.clearTimeout(actionNoticeTimerRef.current);
     actionNoticeTimerRef.current = window.setTimeout(() => setActionNotice(null), 2600);
   }, []);
@@ -203,11 +206,11 @@ export const Content = memo(function Content({
 
   useEffect(() => {
     const handleNotice = (event: Event) => {
-      const message = (event as CustomEvent<string>).detail;
-      if (message) showActionNotice(message);
+      const detail = normalizeActionNoticeDetail((event as CustomEvent<unknown>).detail);
+      if (detail) showActionNotice(detail.message, detail.tone);
     };
-    window.addEventListener('markdown-explorer-action-notice', handleNotice);
-    return () => window.removeEventListener('markdown-explorer-action-notice', handleNotice);
+    window.addEventListener(ACTION_NOTICE_EVENT, handleNotice);
+    return () => window.removeEventListener(ACTION_NOTICE_EVENT, handleNotice);
   }, [showActionNotice]);
 
   useEffect(() => {
@@ -264,6 +267,18 @@ export const Content = memo(function Content({
     }
   }, [bridge, showActionNotice, t.previewActions.copyFailed, t.previewActions.linkCopied]);
 
+
+  const { bookmarkSelection, closeBookmarkSelection, handleBookmarkContextMenu, openBookmarkDialogForElement } = useBookmarkSelection({
+    enabled: state.settings.bookmarksEnabled,
+    currentFile: state.currentFile,
+    renderVersion: state.renderVersion,
+    isFullHtmlPreview,
+    markdownSource: hostHtmlMarkdownSource,
+    sourceDocumentText,
+    bodyRef,
+    closeLinkMenu: () => setLinkMenu(null),
+  });
+
   useContentEffects({
     state,
     bodyRef,
@@ -275,6 +290,7 @@ export const Content = memo(function Content({
     previewLabels: t.previewActions,
     onOpenHtmlModal: handleOpenHtmlModal,
     onOpenLinkMenu: setLinkMenu,
+    onBookmarkContextMenu: handleBookmarkContextMenu,
     onActionError: showActionNotice,
   });
   // Frontmatter header
@@ -337,14 +353,27 @@ export const Content = memo(function Content({
           onClose={() => setHtmlModal(null)}
         />
       )}
+      <BookmarkSelectionMenu
+        state={bookmarkSelection}
+        workspaceName={state.workspaceName}
+        workspacePath={state.workspacePath}
+        filePath={state.currentFile}
+        translations={t.bookmarks}
+        onClose={closeBookmarkSelection}
+      />
       {linkMenu && (
         <LinkContextMenu
           state={linkMenu}
           menuLabel={t.previewActions.linkMenu}
           openLabel={t.previewActions.openInBrowser}
           copyLabel={t.previewActions.copyLink}
+          bookmarkLabel={state.settings.bookmarksEnabled ? t.bookmarks.addSelection : undefined}
           onOpen={handleOpenResolvedLink}
           onCopy={handleCopyResolvedLink}
+          onBookmark={state.settings.bookmarksEnabled ? () => {
+            const opened = openBookmarkDialogForElement(linkMenu.bookmarkTarget, linkMenu.x, linkMenu.y);
+            if (!opened) showActionNotice(t.bookmarks.targetUnavailable, 'error');
+          } : undefined}
           onClose={() => setLinkMenu(null)}
         />
       )}
@@ -380,7 +409,7 @@ export const Content = memo(function Content({
           {t.htmlPreviewExperienceNotice}
         </div>
       )}
-      {actionNotice && <div className="mdn-action-notice" role="status">{actionNotice}</div>}
+      {actionNotice && <div className={`mdn-action-notice mdn-action-notice--${actionNotice.tone}`} role={actionNotice.tone === 'error' ? 'alert' : 'status'}>{actionNotice.message}</div>}
     </>
   );
 });

@@ -404,3 +404,33 @@
   max-height: none;
   padding-right: 0;
 }
+
+.settings-reset-shortcuts-btn,
+[data-theme="dark"] .settings-reset-shortcuts-btn,
+[data-theme="auto"] .settings-reset-shortcuts-btn,
+[data-theme-style="glass"] .settings-reset-shortcuts-btn,
+[data-theme-style="bento"] .settings-reset-shortcuts-btn,
+[data-theme-style^="pet-"] .settings-reset-shortcuts-btn {
+  --reset-warning: var(--warning, #d79b32);
+  --reset-warning-strong: color-mix(in srgb, var(--warning, #d79b32) 82%, #000);
+  border-color: color-mix(in srgb, var(--warning, #d79b32) 74%, var(--bd-x));
+  background: var(--warning, #d79b32);
+  color: #17120a;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--warning, #d79b32) 34%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.settings-reset-shortcuts-btn::before,
+[data-theme-style^="pet-"] .settings-reset-shortcuts-btn::before {
+  content: "!";
+  background: color-mix(in srgb, #000 18%, transparent);
+  color: currentColor;
+  filter: none;
+}
+
+.settings-reset-shortcuts-btn:hover {
+  background: color-mix(in srgb, var(--warning, #d79b32) 88%, #fff);
+  border-color: var(--warning, #d79b32);
+  color: #17120a;
+}
