@@ -7,7 +7,10 @@ import {
   useEffect,
 } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
-import { SearchIcon, FolderIcon } from "../shared/icons";
+import { SearchIcon } from "../shared/icons";
+import { BookmarksPanel } from "../Bookmarks/BookmarksPanel";
+import type { BookmarkRecord, OpenBookmarkWorkspace } from "../../bookmarks/types.ts";
+import { useBookmarks } from "../../bookmarks/useBookmarks.ts";
 import { FileNode, FolderNodeView } from "./TreeNode";
 import type { SidebarItemMenuTarget } from "./TreeNode";
 import type { TreeOrderingProps } from "./TreeNode";
@@ -30,15 +33,28 @@ import { collectHoistedPinnedItems, orderSidebarLevel } from "./sidebarTreeOrder
 import { useSidebarPinnedSorting } from "./useSidebarPinnedSorting";
 import { useSidebarScopeFocus } from "./useSidebarScopeFocus";
 import { SidebarScopeControls } from "./SidebarScopeControls";
+import { SidebarTabsHeader } from "./SidebarTabsHeader";
 
 interface SidebarProps {
   cursorMode?: boolean;
   onCursorModeClose?: () => void;
+  bookmarkViewMode?: 'focus' | 'tabs';
+  bookmarkWorkspaces?: readonly OpenBookmarkWorkspace[];
+  activeBookmarkWorkspaceKey?: string;
+  onBookmarkNavigate?: (bookmark: BookmarkRecord) => void;
 }
 
-export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps) {
+export function Sidebar({
+  cursorMode = false,
+  onCursorModeClose,
+  bookmarkViewMode = 'focus',
+  bookmarkWorkspaces = [],
+  activeBookmarkWorkspaceKey = '',
+  onBookmarkNavigate = () => {},
+}: SidebarProps) {
   const { state, updateSettings, dispatch, navigate } = useAppState();
   const bridge = usePlatform();
+  const bookmarkDocument = useBookmarks();
   const [filter, setFilter] = useState("");
   const [scopeFocusEditing, setScopeFocusEditing] = useState(false);
   const { folderExpansionCommand, collapseAllFolders, expandAllFolders } =
@@ -73,10 +89,34 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
 
   const isFiles = state.sidebarActiveTab === "files";
   const isSearch = state.sidebarActiveTab === "search";
+  const isBookmarks = state.sidebarActiveTab === "bookmarks";
+  const bookmarkCount = bookmarkViewMode === 'tabs'
+    ? bookmarkDocument.items.filter((item) => bookmarkWorkspaces.some((workspace) => workspace.workspaceKey === item.workspaceKey)).length
+    : bookmarkDocument.items.filter((item) => item.workspaceKey === activeBookmarkWorkspaceKey).length;
+  type SidebarTab = 'files' | 'search' | 'bookmarks';
+  const prevTabRef = useRef<SidebarTab>(state.sidebarActiveTab);
+  const [slideDirection, setSlideDirection] = useState<'from-right' | 'from-left'>('from-right');
+
+  useEffect(() => {
+    const prevTab = prevTabRef.current;
+    const currentTab = state.sidebarActiveTab;
+    if (currentTab !== prevTab) {
+      const tabIndices: Record<SidebarTab, number> = { files: 0, search: 1, bookmarks: 2 };
+      const prevIdx = tabIndices[prevTab] ?? 0;
+      const currIdx = tabIndices[currentTab] ?? 0;
+      setSlideDirection(currIdx < prevIdx ? 'from-right' : 'from-left');
+      prevTabRef.current = currentTab;
+    }
+  }, [state.sidebarActiveTab]);
+
   useEffect(() => {
     if (!isFiles) setItemMenu(null);
   }, [isFiles]);
-  const tabIndicatorRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!state.settings.bookmarksEnabled && isBookmarks) {
+      dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "files" });
+    }
+  }, [dispatch, isBookmarks, state.settings.bookmarksEnabled]);
 
   const scrollToActiveFile = useCallback(() => {
     if (!state.currentFile) return;
@@ -222,63 +262,27 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
   return (
     <nav
       ref={navRef}
-      className={`sidebar${state.sidebarCollapsed ? " is-collapsed" : ""}${cursorMode ? " is-cursor-mode" : ""}`}
+      className={`sidebar${state.sidebarCollapsed ? " is-collapsed" : ""}${cursorMode ? " is-cursor-mode" : ""}${state.settings.bookmarksEnabled ? " has-bookmarks-feature" : ""}`}
       id="sidebar"
       aria-label={
         cursorMode ? "File navigation, cursor mode active" : "File navigation"
       }
     >
-      {/* Shared title row — always rendered for smooth indicator slide */}
-      <div className="sidebar__title-row">
-        <div className="sidebar__tab-strip">
-          <button
-            type="button"
-            className={`sidebar__tab-btn sidebar__tab-btn--files${isFiles ? " is-active" : ""}`}
-            onClick={() =>
-              dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "files" })
-            }
-          >
-            <FolderIcon size={14} />
-            <span>{t.sidebar.files}</span>
-          </button>
-          <button
-            type="button"
-            className={`sidebar__tab-btn${isSearch ? " is-active" : ""}`}
-            onClick={() =>
-              dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "search" })
-            }
-          >
-            <SearchIcon size={14} />
-            <span>{t.sidebar.search || "Search"}</span>
-          </button>
-          <span
-            className={`sidebar__tab-indicator${isSearch ? ' is-search' : ''}`}
-            ref={tabIndicatorRef}
-          />
-        </div>
-
-        {/* Fading title actions — keyed to trigger animation on tab switch */}
-        {isFiles ? (
-          <div className="sidebar__title-actions" key="files-actions">
-            <span className="sidebar__count" id="fileCount">
-              {state.fileList.length}
-            </span>
-          </div>
-        ) : (
-          <div className="sidebar__title-actions" key="search-actions">
-            {searchStatus.isSearching && (
-              <div className="spinner sidebar__search-spinner" />
-            )}
-            {searchStatus.showCount && (
-              <span className="sidebar__count">{searchStatus.resultCount}</span>
-            )}
-          </div>
-        )}
-      </div>
+      <SidebarTabsHeader
+        activeTab={state.sidebarActiveTab}
+        bookmarksEnabled={state.settings.bookmarksEnabled}
+        fileCount={state.fileList.length}
+        bookmarkCount={bookmarkCount}
+        searchStatus={searchStatus}
+        filesLabel={t.sidebar.files}
+        searchLabel={t.sidebar.search || 'Search'}
+        bookmarksLabel={t.bookmarks?.tab || 'Bookmarks'}
+        onSelect={(tab) => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab })}
+      />
 
       {/* Tab content — directional slide animation */}
       <div
-        className={`sidebar__tab-panel${!isFiles ? " is-hidden" : ""}`}
+        className={`sidebar__tab-panel${isFiles ? ` is-active is-${slideDirection}` : " is-hidden"}`}
       >
         <div className="sidebar__header-fields">
           <div className="sidebar__search">
@@ -290,6 +294,24 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
               value={filter}
               onChange={onFilterChange}
               aria-label={t.sidebar.filterAriaLabel}
+            />
+          </div>
+          <div className="sidebar__files-second-row">
+            <SidebarScopeControls
+              editing={scopeFocusEditing}
+              hasEntry={hasScopeEntry}
+              count={scopeFocusCount}
+              total={allFilePaths.length}
+              allSelected={allFilesSelected}
+              labels={{
+                focus: t.sidebar.scopeFocus,
+                clear: t.sidebar.clearScopeFocus,
+                checkAll: t.sidebar.checkAll || "Check all",
+                uncheckAll: t.sidebar.uncheckAll || "Uncheck all",
+              }}
+              onToggleEditing={() => setScopeFocusEditing((editing) => !editing)}
+              onToggleAll={toggleAllScopeFiles}
+              onClear={clearScopeFocus}
             />
           </div>
           <SidebarFilesActions
@@ -311,22 +333,6 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
             onSortChange={setSortMode}
             onCollapseAll={collapseAllFolders}
             onExpandAll={expandAllFolders}
-          />
-          <SidebarScopeControls
-            editing={scopeFocusEditing}
-            hasEntry={hasScopeEntry}
-            count={scopeFocusCount}
-            total={allFilePaths.length}
-            allSelected={allFilesSelected}
-            labels={{
-              focus: t.sidebar.scopeFocus,
-              clear: t.sidebar.clearScopeFocus,
-              checkAll: t.sidebar.checkAll || "Check all",
-              uncheckAll: t.sidebar.uncheckAll || "Uncheck all",
-            }}
-            onToggleEditing={() => setScopeFocusEditing((editing) => !editing)}
-            onToggleAll={toggleAllScopeFiles}
-            onClear={clearScopeFocus}
           />
         </div>
         <div
@@ -378,11 +384,24 @@ export function Sidebar({ cursorMode = false, onCursorModeClose }: SidebarProps)
       </div>
 
       <div
-        className={`sidebar__tab-panel${!isSearch ? " is-hidden" : ""}`}
+        className={`sidebar__tab-panel${isSearch ? ` is-active is-${slideDirection}` : " is-hidden"}`}
       >
         <SidebarSearch
           isVisible={isSearch}
+          selectedFilePaths={selectedFilePaths}
+          hasScopeEntry={hasScopeEntry}
           onStatusChange={handleSearchStatus}
+        />
+      </div>
+
+      <div className={`sidebar__tab-panel${isBookmarks ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
+        <BookmarksPanel
+          visible={isBookmarks}
+          viewMode={bookmarkViewMode}
+          workspaces={bookmarkWorkspaces}
+          activeWorkspaceKey={activeBookmarkWorkspaceKey}
+          translations={t.bookmarks}
+          onNavigate={onBookmarkNavigate}
         />
       </div>
       {itemMenu && navRef.current && itemMenuItems.length > 0 && (

@@ -155,6 +155,14 @@ export function FileNode({
       data-sidebar-id={file.fsPath}
       onClick={() => navigate(file.fsPath)}
       onKeyDown={(event) => { if (event.key === 'Enter') navigate(file.fsPath); }}
+      onContextMenu={(event) => {
+        if (onRequestItemMenu && (canRequestItemMenu?.({ kind: 'file', path: file.fsPath }) ?? true)) {
+          event.preventDefault();
+          event.stopPropagation();
+          const target = (event.currentTarget as HTMLElement).querySelector('.sidebar-tree-item__menu-button') as HTMLElement | null;
+          onRequestItemMenu({ kind: 'file', path: file.fsPath, anchor: target || (event.currentTarget as HTMLElement) });
+        }
+      }}
       title={file.relativePath}
       role="treeitem"
       tabIndex={0}
@@ -263,21 +271,24 @@ export function FolderNodeView({
   const hasVisibilityFilter = Boolean(q) || scopeFocus.hideUnselected;
   if (hasVisibilityFilter && !folderHasVisibleContent(node, q, scopeFocus)) return null;
 
-  const unpinnedFiles = node.files.filter((file) => !ordering.pinnedKeys.has(`file:${file.fsPath}`));
-  const unpinnedChildren = node.children.filter((child) => !ordering.pinnedKeys.has(`folder:${child.path}`));
-
   const visibleFiles = !isOpen
     ? []
-    : (hasVisibilityFilter
-      ? unpinnedFiles.filter((file) => isFileVisible(file, q, scopeFocus))
-      : unpinnedFiles);
+    : hasVisibilityFilter
+      ? node.files.filter((file) => isFileVisible(file, q, scopeFocus))
+      : node.files;
   const visibleChildren = !isOpen
     ? []
-    : (hasVisibilityFilter
-      ? unpinnedChildren.filter((child) => folderHasVisibleContent(child, q, scopeFocus))
-      : unpinnedChildren);
+    : hasVisibilityFilter
+      ? node.children.filter((child) => folderHasVisibleContent(child, q, scopeFocus))
+      : node.children;
+  const unpinnedFiles = ordering.pinnedKeys.size
+    ? visibleFiles.filter((file) => !ordering.pinnedKeys.has(`file:${file.fsPath}`))
+    : visibleFiles;
+  const unpinnedChildren = ordering.pinnedKeys.size
+    ? visibleChildren.filter((child) => !ordering.pinnedKeys.has(`folder:${child.path}`))
+    : visibleChildren;
   const orderedItems = isOpen
-    ? orderSidebarLevel(visibleFiles, visibleChildren, {
+    ? orderSidebarLevel(unpinnedFiles, unpinnedChildren, {
       ...ordering,
       showTitle: state.settings.showTitle,
     })
@@ -298,6 +309,14 @@ export function FolderNodeView({
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             toggle();
+          }
+        }}
+        onContextMenu={(event) => {
+          if (onRequestItemMenu && (canRequestItemMenu?.({ kind: 'folder', path: node.path }) ?? true)) {
+            event.preventDefault();
+            event.stopPropagation();
+            const target = (event.currentTarget as HTMLElement).querySelector('.sidebar-tree-item__menu-button') as HTMLElement | null;
+            onRequestItemMenu({ kind: 'folder', path: node.path, anchor: target || (event.currentTarget as HTMLElement) });
           }
         }}
         role="button"

@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ResolvedLink } from '../../dom/linkContextMenu';
 import { useCssVars } from '../../utils/useCssVars';
+import { AddBookmarkIcon } from '../Bookmarks/BookmarkIcons';
 import { OpenInBrowserIcon } from './icons';
 
 export interface LinkContextMenuState {
   x: number;
   y: number;
   anchor: HTMLAnchorElement;
+  bookmarkTarget: Element;
   link: ResolvedLink;
 }
 
@@ -16,8 +18,10 @@ interface LinkContextMenuProps {
   menuLabel: string;
   openLabel: string;
   copyLabel: string;
+  bookmarkLabel?: string;
   onOpen: (link: ResolvedLink) => void;
   onCopy: (link: ResolvedLink) => void;
+  onBookmark?: () => void;
   onClose: () => void;
 }
 
@@ -26,8 +30,10 @@ export function LinkContextMenu({
   menuLabel,
   openLabel,
   copyLabel,
+  bookmarkLabel,
   onOpen,
   onCopy,
+  onBookmark,
   onClose,
 }: LinkContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -105,6 +111,12 @@ export function LinkContextMenu({
         </svg>
         <span>{copyLabel}</span>
       </button>
+      {onBookmark && bookmarkLabel && (
+        <button type="button" role="menuitem" onClick={onBookmark}>
+          <AddBookmarkIcon size={14} />
+          <span>{bookmarkLabel}</span>
+        </button>
+      )}
     </div>,
     document.body,
   );
