@@ -57,7 +57,7 @@ local — nothing is uploaded.
 - File tree sidebar with expand/collapse, file icons by type
 - **Sidebar Cursor mode** (Alt+Z): keyboard-first file tree navigation with Up/Down, Enter to open, Esc to exit
 - **Content File Tabs**: open multiple files as tabs (desktop only)
-- **Scope Focus**: filter the sidebar to show only the current file's folder siblings
+- **Scope Focus**: filter the sidebar and focus-aware workspace search; changing focus reruns an existing query so unfocused files are excluded
 - **Workspace aliases**: rename workspace tabs to custom labels
 - Recent workspaces remembered across sessions
 - Workspace file-watcher: live refresh when files change on disk
@@ -67,6 +67,20 @@ local — nothing is uploaded.
 - Results show focused excerpts with match highlighting
 - Click a result to jump to the exact line in the document
 - Cross-tab search across all open workspace tabs (desktop)
+
+### Bookmarks
+- Opt-in **Enable Bookmark feature** setting; saved bookmarks persist independently from settings
+- Bookmark one mixed-format, multi-line selection across plain text, bold/italic/strikethrough, inline or fenced code, punctuation, and symbols such as `$`, `@`, and `&`
+- Right-click complete LaTeX formulas, Mermaid diagrams, images, or links to save the exact rendered object; image/link actions open one naming dialog directly, normal link left-click behavior is unchanged, and Mermaid entrypoint nodes provide default names
+- Version-2 source anchors retain exact source range, occurrence, context, fingerprint, and object identity so repeated text such as the third of ten `Hello` values resolves correctly
+- Edited documents are relocated only with high confidence; uncertain targets show **Target changed** instead of jumping to the wrong match
+- Bookmarks use verified persistence for save and rename, with a translated green success toast or red error toast; the sidebar supports workspace grouping, search, sorting, expand/collapse, individual actions, selection mode, and batch deletion
+
+### In-app User manual
+- The second Home tab is a searchable, task-oriented guide available in all nine supported languages
+- Progressive sections cover Start here, Reading, Finding, Bookmarks, Customization, and Troubleshooting
+- Direct action cards open a workspace, Search, Bookmarks, or Settings where the runtime supports the action
+- Platform-aware keycaps show the correct Desktop, VS Code, Chromium, or Web shortcut
 
 ### Custom theming
 - **Theme Remix**: build, duplicate, edit, import, and export custom themes
@@ -99,6 +113,7 @@ local — nothing is uploaded.
 | Locate current file | `Alt+Q` | `Alt+Q` |
 | Sidebar cursor mode | `Alt+Z` | `Alt+Z` |
 | Toggle active HTML document view | `Ctrl+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` |
+| Open Bookmarks | `Ctrl+Shift+B` | `Alt+Shift+B` |
 
 ## Demo
 
@@ -147,6 +162,8 @@ Markdown Explorer is designed for the agent era:
 - Rich rendering of Mermaid diagrams and LaTeX math produced by code-generation agents
 - Syntax-highlighted code blocks make agent output readable
 - Interactive tables help inspect structured agent output
+- Source-anchored bookmarks preserve exact passages, formulas, diagrams, images, and links inside long agent-generated documents
+- The searchable User manual provides quick in-app guidance without leaving the local workspace
 - Privacy-first: agent memory stays local, not uploaded
 
 ## Links
