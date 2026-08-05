@@ -37,5 +37,5 @@
 
 [data-theme-style="tokyo-night"] .sidebar,
 [data-theme-style="tokyo-night"] .toc-panel {
-  margin-bottom: 2px;
+  margin: var(--theme-header-gap) 0 2px;
 }

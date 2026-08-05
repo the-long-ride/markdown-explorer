@@ -17,6 +17,7 @@ export const KEYBOARD_SHORTCUT_ENGLISH_LABELS: Record<string, string> = {
   expandAll: 'Expand all headings',
   workspaceSelection: 'Go to workspace selection',
   toggleSidebar: 'Toggle sidebar visibility',
+  openBookmarks: 'Open Bookmarks tab',
   toggleToc: 'Toggle table of contents panel',
   toggleFocusMode: 'Toggle focus mode',
   sidebarCursorMode: 'Sidebar cursor mode',

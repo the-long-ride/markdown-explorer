@@ -14,8 +14,40 @@ const MDX_SAFE_HTML_TAG_RE = /(<\/?([A-Za-z][A-Za-z0-9-]*)\b[^>]*>|<br\s*\/?>)/g
 const VIDEO_SOURCE_RE = /\.(mp4|m4v|webm|ogv|ogg|mov|mkv|m3u8)(?:[?#].*)?$/i;
 const YOUTUBE_HOST_RE = /(^|\.)youtube(?:-nocookie)?\.com$|^youtu\.be$/i;
 
+function bookmarkAttrs(kind: 'code' | 'math' | 'image' | 'link', identity: Record<string, string> = {}): string {
+  const attrs = [`data-mdn-bookmark-kind="${kind}"`];
+  for (const [name, value] of Object.entries(identity)) {
+    if (value) attrs.push(`data-mdn-${name}="${escAttr(encodeURIComponent(value))}"`);
+  }
+  return attrs.join(' ');
+}
+
 function normalizeInlineCode(code: string): string {
   return code.replace(/[ \t]*\n[ \t]*/g, '');
+}
+
+function htmlAttribute(tag: string, name: string): string {
+  const match = new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(tag);
+  return match?.[1] ?? match?.[2] ?? match?.[3] ?? '';
+}
+
+function decorateSafeHtmlBookmarkTag(tag: string): string {
+  if (/^<\//.test(tag) || /data-mdn-bookmark-kind=/i.test(tag)) return tag;
+  const tagName = /^<([A-Za-z][A-Za-z0-9-]*)\b/.exec(tag)?.[1].toLowerCase();
+  let attrs = '';
+  if (tagName === 'img') {
+    const url = htmlAttribute(tag, 'src');
+    if (!url) return tag;
+    attrs = bookmarkAttrs('image', { 'bookmark-url': url, 'bookmark-alt': htmlAttribute(tag, 'alt') });
+  } else if (tagName === 'a') {
+    const url = htmlAttribute(tag, 'href');
+    if (!url) return tag;
+    attrs = bookmarkAttrs('link', { 'bookmark-url': url });
+  } else {
+    return tag;
+  }
+  const close = tag.endsWith('/>') ? '/>' : '>';
+  return `${tag.slice(0, -close.length).trimEnd()} ${attrs}${close}`;
 }
 
 function isVideoSource(src: string): boolean {
@@ -127,7 +159,7 @@ export function renderInline(text: string, isMdx = false): string {
   const renderMath = (source: string) => {
     const math = source.trim();
     return stashHtml(
-      `<span class="mdn-math mdn-math-inline" data-math="${encodeURIComponent(math)}">${escHtml(math)}</span>`,
+      `<span class="mdn-math mdn-math-inline" ${bookmarkAttrs('math', { 'math-source': math })} data-math="${encodeURIComponent(math)}">${escHtml(math)}</span>`,
     );
   };
   const regex = isMdx ? MDX_SAFE_HTML_TAG_RE : SAFE_HTML_TAG_RE;
@@ -156,6 +188,8 @@ export function renderInline(text: string, isMdx = false): string {
         return `${attrName}="${escAttr(trimmedVal)}"`;
       });
 
+      finalTag = decorateSafeHtmlBookmarkTag(finalTag);
+
       // 2. Convert self-closing tags to explicit closing tags
       if (finalTag.endsWith('/>')) {
         const tagMatch = /^<([A-Za-z][A-Za-z0-9-]*)\b([\s\S]*?)\/>$/.exec(finalTag);
@@ -179,12 +213,14 @@ export function renderInline(text: string, isMdx = false): string {
           }
         }
       }
+    } else {
+      finalTag = decorateSafeHtmlBookmarkTag(finalTag);
     }
     return stashHtml(finalTag);
   });
 
   const protectedText = stashed
-    .replace(/`([^`]+)`/g, (_full, code) => stashHtml(`<code class="mdn-inline-code">${escHtml(normalizeInlineCode(code))}</code>`))
+    .replace(/`([^`]+)`/g, (_full, code) => stashHtml(`<code class="mdn-inline-code" ${bookmarkAttrs('code')}>${escHtml(normalizeInlineCode(code))}</code>`))
     .replace(/\\\(([\s\S]+?)\\\)/g, (_full, math) => renderMath(math))
     .replace(/(^|[^\\])\$([^\s$](?:[^$\n]*?[^\s$])?)\$/g, (_full, prefix, math) => `${prefix}${renderMath(math)}`);
 
@@ -214,7 +250,7 @@ export function renderInline(text: string, isMdx = false): string {
       } else if (isVideoSource(src)) {
         stash.push(renderVideo(src, alt));
       } else {
-        stash.push(`<img alt="${alt}" src="${src}" class="mdn-img" loading="lazy" />`);
+        stash.push(`<img alt="${alt}" src="${src}" class="mdn-img" loading="lazy" ${bookmarkAttrs('image', { 'bookmark-alt': alt, 'bookmark-url': src })} />`);
       }
       return `\u0001${stash.length - 1}\u0001`;
     },
@@ -229,9 +265,9 @@ export function renderInline(text: string, isMdx = false): string {
     } else if (isVideoSource(href)) {
       linkHtml = renderVideo(href, label);
     } else if (href.endsWith('.md') || href.includes('.md#')) {
-      linkHtml = `<a href="#" class="mdn-link mdn-link--internal" data-mdn-target="${escHtml(href)}" onclick="Nav.go('${escAttr(href)}');return false;">${label}</a>`;
+      linkHtml = `<a href="#" class="mdn-link mdn-link--internal" ${bookmarkAttrs('link', { 'bookmark-label': label, 'bookmark-url': href })} data-mdn-target="${escHtml(href)}" onclick="Nav.go('${escAttr(href)}');return false;">${label}</a>`;
     } else {
-      linkHtml = `<a href="${href}" class="mdn-link" target="_blank" rel="noopener noreferrer">${label}</a>`;
+      linkHtml = `<a href="${href}" class="mdn-link" ${bookmarkAttrs('link', { 'bookmark-label': label, 'bookmark-url': href })} target="_blank" rel="noopener noreferrer">${label}</a>`;
     }
     stash.push(linkHtml);
     return `\u0001${stash.length - 1}\u0001`;
@@ -245,7 +281,7 @@ export function renderInline(text: string, isMdx = false): string {
         ? renderYouTubeEmbed(href, href)
         : isVideoSource(href)
         ? renderVideo(href, href)
-        : `<a href="${href}" class="mdn-link" target="_blank" rel="noopener noreferrer">${href}</a>`
+        : `<a href="${href}" class="mdn-link" ${bookmarkAttrs('link', { 'bookmark-label': href, 'bookmark-url': href })} target="_blank" rel="noopener noreferrer">${href}</a>`
     ),
   );
 

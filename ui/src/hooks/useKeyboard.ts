@@ -30,6 +30,7 @@ interface UseKeyboardOptions {
   isTermsOpen: boolean;
   onToggleToc?: () => void;
   onLocateFile?: () => void;
+  onBookmarksOpen?: () => void;
   onOpenCurrentDocumentLocation?: () => void;
   onToggleFocusMode?: () => void;
   onToggleDesktopViewMode?: () => void;
@@ -68,6 +69,7 @@ export function useKeyboard({
   isTermsOpen,
   onToggleToc,
   onLocateFile,
+  onBookmarksOpen,
   onOpenCurrentDocumentLocation,
   onToggleFocusMode,
   onToggleDesktopViewMode,
@@ -131,6 +133,7 @@ export function useKeyboard({
         hasOnWelcome: !!onWelcome,
         hasOnToggleToc: !!onToggleToc,
         hasOnLocateFile: !!onLocateFile,
+        hasOnOpenBookmarks: !!onBookmarksOpen,
         hasOnOpenCurrentDocumentLocation: !!onOpenCurrentDocumentLocation,
         hasOnToggleFocusMode: !!onToggleFocusMode,
         hasOnToggleDesktopViewMode: !!onToggleDesktopViewMode,
@@ -218,6 +221,9 @@ export function useKeyboard({
           break;
         case 'locate-file':
           onLocateFile?.();
+          break;
+        case 'open-bookmarks':
+          onBookmarksOpen?.();
           break;
         case 'open-current-document-location':
           onOpenCurrentDocumentLocation?.();
@@ -353,6 +359,7 @@ export function useKeyboard({
     isTermsOpen,
     onToggleToc,
     onLocateFile,
+  onBookmarksOpen,
     onOpenCurrentDocumentLocation,
     onToggleDesktopViewMode,
     activeHtmlDocument,

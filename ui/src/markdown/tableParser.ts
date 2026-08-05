@@ -1,4 +1,4 @@
-import type { ListItem, TableToken } from './parser';
+import type { ListItem, TableToken } from './parser.ts';
 export interface ListMarkerInfo {
   type: "ol" | "ul";
   start?: number;

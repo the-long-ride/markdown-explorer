@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AppSettings, ThemeMode, ThemeStyle } from '../../types';
 import type { AppState } from '../../contexts/appStateReducer';
 import { THEME_MODE_OPTIONS } from '../../contexts/appStateConstants';
@@ -34,6 +34,16 @@ function PreferenceRow({
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const tooltipId = `${id}-description`;
+
+  useEffect(() => {
+    if (id !== 'bookmarks-enabled') return;
+    const focusBookmarkSetting = () => {
+      rowRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      rowRef.current?.focus({ preventScroll: true });
+    };
+    window.addEventListener('focus-bookmark-setting', focusBookmarkSetting);
+    return () => window.removeEventListener('focus-bookmark-setting', focusBookmarkSetting);
+  }, [id]);
 
   return (
     <>
@@ -148,6 +158,17 @@ export function SettingsPreferencesPanel({
               type="checkbox"
               checked={state.settings.fileTabs}
               onChange={(event) => updateSettings({ fileTabs: event.target.checked })}
+            />
+            <span className="switch-slider" />
+          </label>
+        </PreferenceRow>
+
+        <PreferenceRow id="bookmarks-enabled" title={t.bookmarksEnabled} description={t.bookmarksEnabledDesc}>
+          <label className="switch-toggle" aria-label={t.bookmarksEnabled}>
+            <input
+              type="checkbox"
+              checked={state.settings.bookmarksEnabled}
+              onChange={(event) => updateSettings({ bookmarksEnabled: event.target.checked })}
             />
             <span className="switch-slider" />
           </label>

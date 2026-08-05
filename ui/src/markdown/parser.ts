@@ -10,7 +10,8 @@ import {
   parseListItem,
   parseTable,
   parseTabTable,
-} from './tableParser';
+} from './tableParser.ts';
+import { extractFrontmatter, mapBodyOffsetToSource, scanFrontmatterPreamble } from './sourceMapping.ts';
 
 export type BlockToken =
   | HeadingToken
@@ -23,43 +24,49 @@ export type BlockToken =
   | ListToken
   | HrToken;
 
-export interface HeadingToken {
+interface SourceRangedToken {
+  sourceStart?: number;
+  sourceEnd?: number;
+  sourceText?: string;
+}
+
+export interface HeadingToken extends SourceRangedToken {
   type: "heading";
   level: number;
   text: string;
 }
-export interface ParagraphToken {
+export interface ParagraphToken extends SourceRangedToken {
   type: "paragraph";
   text: string;
   isJsx?: boolean;
 }
-export interface HtmlCommentToken {
+export interface HtmlCommentToken extends SourceRangedToken {
   type: "html-comment";
   content: string;
 }
-export interface HrToken {
+export interface HrToken extends SourceRangedToken {
   type: "hr";
 }
 
-export interface CodeBlockToken {
+export interface CodeBlockToken extends SourceRangedToken {
   type: "code";
   lang: string;
   meta?: string;
   content: string;
 }
 
-export interface MathBlockToken {
+export interface MathBlockToken extends SourceRangedToken {
   type: "math";
   content: string;
 }
 
-export interface BlockquoteToken {
+export interface BlockquoteToken extends SourceRangedToken {
   type: "blockquote";
   /** Raw lines with `>` stripped */
   lines: string[];
 }
 
-export interface TableToken {
+export interface TableToken extends SourceRangedToken {
   type: "table";
   headers: string[];
   /** Alignment per column: 'left' | 'center' | 'right' | null */
@@ -74,7 +81,7 @@ export interface ListItem {
   nestedMarkdown?: string;
 }
 
-export interface ListToken {
+export interface ListToken extends SourceRangedToken {
   type: "list";
   ordered: boolean;
   start?: number;
@@ -90,7 +97,7 @@ export interface ParseResult {
 
 export function parse(markdown: string, isMdx = false): ParseResult {
   const normalized = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  const { body: afterFm, frontmatter } = extractFrontmatter(normalized);
+  const { body: afterFm, frontmatter, sourceSegments } = extractFrontmatter(normalized);
 
   let body = afterFm;
   if (isMdx) {
@@ -105,64 +112,36 @@ export function parse(markdown: string, isMdx = false): ParseResult {
 
   const lines = body.split("\n");
   const tokens = tokenize(lines, isMdx);
+  for (const token of tokens) {
+    if (token.sourceStart === undefined || token.sourceEnd === undefined) continue;
+    token.sourceStart = mapBodyOffsetToSource(token.sourceStart, sourceSegments);
+    token.sourceEnd = mapBodyOffsetToSource(token.sourceEnd, sourceSegments);
+  }
   return { tokens, frontmatter };
 }
 
-// ── Frontmatter ────────────────────────────────────────────
-
-function scanFrontmatterPreamble(text: string): number {
-  let index = 0;
-
-  const skipBlankLines = () => {
-    while (index < text.length) {
-      const match = /^[ \t]*(?:\n|$)/.exec(text.slice(index));
-      if (!match || match[0] === '') break;
-      index += match[0].length;
-      if (!match[0].endsWith('\n')) break;
-    }
-  };
-
-  skipBlankLines();
-  while (text.startsWith('<!--', index)) {
-    const closingIndex = text.indexOf('-->', index + 4);
-    if (closingIndex === -1) return -1;
-    index = closingIndex + 3;
-    if (text[index] === '\r' && text[index + 1] === '\n') index += 2;
-    else if (text[index] === '\n' || text[index] === '\r') index += 1;
-    skipBlankLines();
-  }
-
-  return index;
-}
-
-function extractFrontmatter(text: string): {
-  body: string;
-  frontmatter: Record<string, string>;
-} {
-  const frontmatterStart = scanFrontmatterPreamble(text);
-  if (frontmatterStart < 0) return { body: text, frontmatter: {} };
-  const match = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text.slice(frontmatterStart));
-  if (!match) return { body: text, frontmatter: {} };
-
-  const frontmatter: Record<string, string> = {};
-  for (const line of match[1].split("\n")) {
-    const sep = line.indexOf(":");
-    if (sep > 0) {
-      const key = line.slice(0, sep).trim();
-      const val = line.slice(sep + 1).trim();
-      frontmatter[key] = val;
-    }
-  }
-
-  const preservedPreamble = text.slice(0, frontmatterStart);
-  const bodyAfterFrontmatter = text.slice(frontmatterStart + match[0].length);
-  return { body: `${preservedPreamble}${bodyAfterFrontmatter}`, frontmatter };
-}
+// Frontmatter source mapping lives in sourceMapping.ts.
+void scanFrontmatterPreamble;
 
 // ── Block tokenizer ────────────────────────────────────────
 
 function tokenize(lines: string[], isMdx = false): BlockToken[] {
   const tokens: BlockToken[] = [];
+  const lineOffsets: number[] = [];
+  let bodyLength = 0;
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    lineOffsets.push(bodyLength);
+    bodyLength += lines[lineIndex].length + (lineIndex < lines.length - 1 ? 1 : 0);
+  }
+  const ranged = <T extends BlockToken>(token: T, startLine: number, endLineExclusive: number): T => {
+    const lastLine = Math.max(startLine, endLineExclusive - 1);
+    return {
+      ...token,
+      sourceStart: lineOffsets[Math.max(0, startLine)] ?? 0,
+      sourceEnd: (lineOffsets[lastLine] ?? bodyLength) + (lines[lastLine]?.length ?? 0),
+      sourceText: lines.slice(startLine, endLineExclusive).join('\n'),
+    };
+  };
   let i = 0;
 
   while (i < lines.length) {
@@ -196,10 +175,10 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
       if (closingIndex !== -1) {
         const source = commentLines.join("\n");
         const trailingText = source.slice(closingIndex + "-->".length);
-        tokens.push({
+        tokens.push(ranged({
           type: "html-comment",
           content: source.slice(source.indexOf("<!--") + 4, closingIndex),
-        });
+        }, startIndex, endIndex));
         if (trailingText) {
           lines[endIndex - 1] = trailingText;
           i = endIndex - 1;
@@ -220,7 +199,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         i++;
       }
       if (i < lines.length) i++; // consume closing fence
-      tokens.push({ type: "math", content: mathLines.join("\n") });
+      tokens.push(ranged({ type: "math", content: mathLines.join("\n") }, startIndex, i));
       continue;
     }
 
@@ -231,11 +210,11 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         jsxLines.push(lines[i]);
         i++;
       }
-      tokens.push({
+      tokens.push(ranged({
         type: "paragraph",
         text: jsxLines.join("\n"),
         isJsx: true,
-      });
+      }, startIndex, i));
       continue;
     }
 
@@ -252,19 +231,19 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         i++;
       }
       i++; // consume closing fence
-      tokens.push({ type: "code", lang, ...(meta ? { meta } : {}), content: codeLines.join("\n") });
+      tokens.push(ranged({ type: "code", lang, ...(meta ? { meta } : {}), content: codeLines.join("\n") }, startIndex, i));
       continue;
     }
 
     // ATX heading
     const headingMatch = /^(#{1,6})\s+(.+?)(?:\s+#+)?$/.exec(line);
     if (headingMatch) {
-      tokens.push({
+      i++;
+      tokens.push(ranged({
         type: "heading",
         level: headingMatch[1].length,
         text: headingMatch[2].trim(),
-      });
-      i++;
+      }, startIndex, i));
       continue;
     }
 
@@ -272,21 +251,21 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
     if (i + 1 < lines.length) {
       const next = lines[i + 1];
       if (/^=+$/.test(next.trim()) && line.trim()) {
-        tokens.push({ type: "heading", level: 1, text: line.trim() });
         i += 2;
+        tokens.push(ranged({ type: "heading", level: 1, text: line.trim() }, startIndex, i));
         continue;
       }
       if (/^-+$/.test(next.trim()) && line.trim() && !line.match(/^[-*+]\s/)) {
-        tokens.push({ type: "heading", level: 2, text: line.trim() });
         i += 2;
+        tokens.push(ranged({ type: "heading", level: 2, text: line.trim() }, startIndex, i));
         continue;
       }
     }
 
     // Horizontal rule
     if (/^[-*_]{3,}$/.test(line.trim())) {
-      tokens.push({ type: "hr" });
       i++;
+      tokens.push(ranged({ type: "hr" }, startIndex, i));
       continue;
     }
 
@@ -297,7 +276,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         bqLines.push(lines[i].slice(1).trimStart());
         i++;
       }
-      tokens.push({ type: "blockquote", lines: bqLines });
+      tokens.push(ranged({ type: "blockquote", lines: bqLines }, startIndex, i));
       continue;
     }
 
@@ -316,7 +295,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         i++;
       }
       const table = parseTable(tableLines);
-      if (table) tokens.push(table);
+      if (table) tokens.push(ranged(table, startIndex, i));
       continue;
     }
 
@@ -336,7 +315,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         i++;
       }
       const table = parseTabTable(tableLines);
-      if (table) tokens.push(table);
+      if (table) tokens.push(ranged(table, startIndex, i));
       continue;
     }
 
@@ -405,12 +384,12 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
         }
       }
 
-      tokens.push({
+      tokens.push(ranged({
         type: "list",
         ordered: listType === "ol",
         start: listStart,
         items,
-      });
+      }, startIndex, i));
       continue;
     }
 
@@ -427,13 +406,13 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
       i++;
     }
     if (paraLines.length) {
-      tokens.push({ type: "paragraph", text: paraLines.join(" ") });
+      tokens.push(ranged({ type: "paragraph", text: paraLines.join(" ") }, startIndex, i));
     }
 
     // Safety fallback: if no tokenizer consumed the line, consume it as a paragraph to prevent infinite loops.
     if (i === startIndex) {
-      tokens.push({ type: "paragraph", text: lines[i] });
       i++;
+      tokens.push(ranged({ type: "paragraph", text: lines[startIndex] }, startIndex, i));
     }
   }
 

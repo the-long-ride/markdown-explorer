@@ -81,6 +81,7 @@ export interface AppSettings {
   defaultHtmlCodeBlockPreview: boolean;
   defaultCsvPreview: boolean;
   fileTabs: boolean;
+  bookmarksEnabled: boolean;
   documentConversion: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
@@ -101,6 +102,7 @@ export interface PersistedState {
   defaultHtmlCodeBlockPreview?: boolean;
   defaultCsvPreview?: boolean;
   fileTabs?: boolean;
+  bookmarksEnabled?: boolean;
   documentConversion?: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
