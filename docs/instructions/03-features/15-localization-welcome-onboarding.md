@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T13:14:00+07:00'
 name: Localization, Welcome, Terms, and Onboarding
 topic: Localization, Welcome, Terms, and Onboarding
 document_type: specification
@@ -11,13 +11,16 @@ related_docs: []
 source_scope:
 - ui/src/contexts/translationsData.ts
 - ui/src/contexts/welcomeTranslations.ts
+- ui/src/contexts/userManualTranslations.ts
 - ui/src/components/Content/welcomeTipsContent.ts
+- ui/src/components/Content/UserManualTab.tsx
 - ui/src/components/Modal/TermsModal.tsx
 - ui/src/components/Modal/ThemeOnboardingModal.tsx
 test_scope:
 - tests/unit/ui/contexts/translations.test.ts
 - tests/unit/ui/components/welcome-render.test.tsx
 - tests/node/theme-onboarding-dropdown-visibility.test.mjs
+- tests/node/user-manual-home.test.mjs
 runtime_scope:
 - all
 - os-dialogs
@@ -37,7 +40,7 @@ Define supported locales, translation fallback, welcome content, first-run terms
 |---|---|---|
 | Localization | Translate application labels for nine supported languages. | UI is understandable to broader users. |
 | Fallback | Use canonical English when key/locale is unavailable. | No blank labels. |
-| Welcome | Group local tips and entry actions. | Features are discoverable. |
+| Welcome | Features, searchable User manual, shortcuts, tips, and entry actions. | Tasks are discoverable without leaving the app. |
 | Terms | Require first-run acknowledgement where configured. | Local-file/security expectations are visible. |
 | Theme onboarding | Guide first visual selection once. | New users get a coherent appearance. |
 
@@ -62,13 +65,22 @@ Commands, settings keys, filesystem paths, URLs, code, source document content, 
 First-run completion uses separate local-storage flags for terms acceptance and theme onboarding.
 
 
+## User manual contract
+
+- The second homepage tab is **User manual**.
+- One local case-insensitive search filters progressive sections: Start here, Reading, Finding, Bookmarks, Customization, and Troubleshooting.
+- Task cards may dispatch direct actions for workspace selection, Search, Bookmarks, and Settings.
+- Effective shortcut labels come from current settings rather than hard-coded display text.
+- Manual copy exists in `en`, `vi`, `fr`, `es`, `zh`, `no`, `ja`, `ko`, and `ru`.
+- No-results state and all action labels are keyboard accessible and theme-driven.
+
 ## States and failure behavior
 
 | State | Required presentation | Exit condition |
 |---|---|---|
 | First terms | Blocking acknowledgement | Accept |
 | Theme onboarding | Style preview/finish | Complete |
-| Welcome | Tips/actions | Open workspace/document |
+| Welcome | Features/manual/shortcuts/tips/actions | Open workspace/document |
 | Localized UI | Selected locale | Change/fallback |
 
 ## Runtime behavior
@@ -91,6 +103,7 @@ First-run completion uses separate local-storage flags for terms acceptance and 
 - [ ] Missing translations fall back instead of blanking.
 - [ ] Completed first-run steps do not repeat.
 - [ ] Changing locale does not alter user document text.
+- [x] The searchable User manual renders as the second tab with nine-locale copy and working direct actions.
 ## UI reference implementation
 
 The sample shows the interaction boundary, not a replacement for the React implementation.
@@ -132,13 +145,16 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Kind | Path | Purpose |
 |---|---|---|
 | Implementation | `ui/src/contexts/translationsData.ts` | Active behavior or contract |
-| Implementation | `ui/src/contexts/welcomeTranslations.ts` | Active behavior or contract |
+| Implementation | `ui/src/contexts/welcomeTranslations.ts` | Existing welcome content |
+| Implementation | `ui/src/contexts/userManualTranslations.ts` | User Manual translation model |
+| Implementation | `ui/src/components/Content/UserManualTab.tsx` | Manual search and task cards |
 | Implementation | `ui/src/components/Content/welcomeTipsContent.ts` | Active behavior or contract |
 | Implementation | `ui/src/components/Modal/TermsModal.tsx` | Active behavior or contract |
 | Implementation | `ui/src/components/Modal/ThemeOnboardingModal.tsx` | Active behavior or contract |
 | Verification | `tests/unit/ui/contexts/translations.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/components/welcome-render.test.tsx` | Automated expectation |
 | Verification | `tests/node/theme-onboarding-dropdown-visibility.test.mjs` | Automated expectation |
+| Verification | `tests/node/user-manual-home.test.mjs` | Manual placement, action, and localization contract |
 
 ---
 

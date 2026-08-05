@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Settings Catalog
 topic: Exact active application settings, defaults, normalization, and effects
 document_type: reference
@@ -16,10 +16,12 @@ source_scope:
 - ui/src/contexts/appStateConstants.ts
 - ui/src/contexts/appStateModel.ts
 - ui/src/settings/settingsImportExport.ts
+- ui/src/components/Settings/SettingsPreferencesPanel.tsx
 test_scope:
 - tests/unit/ui/contexts/constants.test.ts
 - tests/unit/ui/settings-import-export.test.ts
 - tests/unit/ui/contexts/state-utils.test.ts
+- tests/node/bookmarks.test.mjs
 runtime_scope:
 - shared
 keywords:
@@ -36,6 +38,7 @@ keywords:
 | `defaultHtmlCodeBlockPreview` | `boolean` | `true` | Default HTML fences to preview |
 | `defaultCsvPreview` | `boolean` | `true` | Default delimited data to table preview |
 | `fileTabs` | `boolean` | `false` | Enable document content tabs |
+| `bookmarksEnabled` | `boolean` | `false` | **Enable Bookmark feature**: show mixed-text/object capture actions and the Bookmarks tab; disabling preserves stored records |
 | `documentConversion` | `boolean` | `false` | Include/convert supported binary documents |
 | `scopeFocus` | `Record<string,string[]>` | `{}` | Browsing focus paths by workspace |
 | `searchScopeFocus` | `Record<string,string[]>` | `{}` | Search focus paths by workspace |
@@ -59,7 +62,7 @@ keywords:
 
 ## Import coverage
 
-The active importer restores core booleans, `scopeFocus`, `desktopViewMode`, `keybindings`, `language`, custom themes, and active custom-theme ID. It does not currently return imported `searchScopeFocus` or `disabledKeybindings`; the reducer merge therefore preserves their existing values.
+The active importer restores core booleans including `bookmarksEnabled`, `scopeFocus`, `desktopViewMode`, `keybindings`, `language`, custom themes, and active custom-theme ID. It does not currently return imported `searchScopeFocus` or `disabledKeybindings`; the reducer merge therefore preserves their existing values.
 
 ## Persistence
 
@@ -73,9 +76,11 @@ Settings persist through the selected `PlatformBridge` state adapter. Local layo
 | Implementation | `ui/src/contexts/appStateConstants.ts` | Active behavior or contract |
 | Implementation | `ui/src/contexts/appStateModel.ts` | Active behavior or contract |
 | Implementation | `ui/src/settings/settingsImportExport.ts` | Active behavior or contract |
+| Implementation | `ui/src/components/Settings/SettingsPreferencesPanel.tsx` | Bookmark preference switch |
 | Verification | `tests/unit/ui/contexts/constants.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/settings-import-export.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/contexts/state-utils.test.ts` | Automated expectation |
+| Verification | `tests/node/bookmarks.test.mjs` | Bookmark setting, import, UI, and localization contract |
 
 ---
 

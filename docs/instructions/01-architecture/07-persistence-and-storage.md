@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Persistence Architecture
 topic: Bridge state, local storage, and browser handle persistence
 document_type: specification
@@ -15,6 +15,7 @@ source_scope:
 - ui/src/platform/bridge.ts
 - ui/src/settings/settingsImportExport.ts
 - ui/src/desktop/desktopTabSnapshot.ts
+- ui/src/bookmarks/bookmarkStore.ts
 - chromium-xtension/src/file-access.ts
 - chromium-xtension/src/recent-workspaces.ts
 test_scope:
@@ -33,7 +34,7 @@ keywords: []
 | Class | Examples | Owner |
 |---|---|---|
 | Bridge state | settings, theme, scope focus | Runtime adapter |
-| Local storage | onboarding, pane widths, desktop tabs, aliases, collapsed TOC | Shared UI |
+| Local storage | onboarding, pane widths, desktop tabs, aliases, collapsed TOC, versioned bookmarks | Shared UI |
 | IndexedDB | Chromium workspace directory handles | Chromium host |
 | Host-native recents | Paths and metadata | Electron/Tauri/VS Code host |
 
@@ -44,7 +45,8 @@ keywords: []
 - Invalid persisted values are normalized to current defaults.
 - Theme migrations map retired styles to active styles.
 - Imported settings are schema-versioned and size-limited.
-- Workspace aliases and desktop-tab snapshots are best-effort; corrupt values fall back safely.
+- Workspace aliases, desktop-tab snapshots, and bookmark documents are best-effort; corrupt values fall back safely.
+- Bookmarks persist separately from settings, so disabling the feature only hides its UI.
 
 See Storage Catalog for exact keys.
 
@@ -55,6 +57,7 @@ See Storage Catalog for exact keys.
 | Implementation | `ui/src/platform/bridge.ts` | Active behavior or contract |
 | Implementation | `ui/src/settings/settingsImportExport.ts` | Active behavior or contract |
 | Implementation | `ui/src/desktop/desktopTabSnapshot.ts` | Active behavior or contract |
+| Implementation | `ui/src/bookmarks/bookmarkStore.ts` | Versioned bookmark persistence |
 | Implementation | `chromium-xtension/src/file-access.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/recent-workspaces.ts` | Active behavior or contract |
 | Verification | `tests/unit/ui/settings-import-export.test.ts` | Automated expectation |

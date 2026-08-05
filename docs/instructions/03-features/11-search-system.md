@@ -17,6 +17,8 @@ source_scope:
 - ui/src/components/Search/useSearchOverlayResize.ts
 - ui/src/components/Search/searchOverlayModel.tsx
 - ui/src/useAppSearchEffects.ts
+- ui/src/components/Sidebar/SidebarSearch.tsx
+- ui/src/components/Sidebar/sidebarSearchScope.ts
 - electron/search/search-index.js
 - electron/search/search-worker-controller.js
 - tauri/src/search/index.rs
@@ -31,6 +33,7 @@ test_scope:
 - tests/unit/ui/components/search-overlay-interaction.test.tsx
 - tests/unit/ui/components/find-in-file-render.test.tsx
 - tests/node/search-case-runtime.test.mjs
+- tests/node/sidebar-focus-search-layout.test.mjs
 - tests/unit/vscode/panel-search-case.test.ts
 - tests/unit/vscode/panel-search-preview.test.ts
 - tests/unit/electron/search-index.test.ts
@@ -57,7 +60,7 @@ Define the three distinct search modes, indexing boundaries, Unicode behavior, c
 | Find in document | Search eligible rendered DOM text, optionally matching exact case, and wrap navigation. | Immediate current-page lookup. |
 | Workspace search | Search title/name/path and bounded Markdown/text contents with one case toggle. | Repository lookup. |
 | Cross-tab search | Stream case-aware results from open desktop workspace indexes. | Multi-project lookup. |
-| Scoped search | Apply `searchScopeFocus` independently from browsing scope. | Relevant folders only. |
+| Scoped search | Apply the active sidebar focus set to workspace search results and rerun when focus changes. | Unfocused files are excluded without clearing the query. |
 | Result modal | Keep workspace checkboxes, result selection, and full rendered preview inside a bounded modal with two resizable separators. | Search context stays visible. |
 | Preview mode | Default on; render the selected source and scroll to its result position. | Users inspect the complete file before opening it. |
 | Result navigation | Preview-on uses the header arrow; preview-off uses tooltip row arrows, preserving the same case-aware match ordinal. | Search leads to exact context. |
@@ -158,6 +161,10 @@ root.querySelector('[data-action]').addEventListener('click', () => {
   status.textContent = 'Request sent';
 });
 ```
+## Focus-aware sidebar workspace search
+
+The sidebar sends the normal host workspace-search request, then filters returned paths through the active focus set. A deterministic focus revision participates in the request effect dependency list. Therefore, changing focus with an existing two-or-more-character query reruns focus-aware search immediately and refreshes the visible result tree. Focus disabled means all host results remain eligible.
+
 ## Source traceability
 
 | Kind | Path | Purpose |

@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-03T02:13:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Download, Schedule, and Apply Application Updates
 topic: Use case UC-027
 document_type: use-case
@@ -17,12 +17,17 @@ source_scope:
 - electron/update/update-helper.js
 - tauri/src/update/manager.rs
 - tauri/src/dispatcher/commands_window_update.rs
+- tauri/src/core/bootstrap.rs
+- tauri/tauri.conf.json
+- scripts/configure-tauri-updater.mjs
+- .github/workflows/release.yml
 test_scope:
 - tests/node/product-constants.test.mjs
 - tests/unit/ui/hooks/useUpdateCheck.test.ts
 - tests/unit/electron/update-manager.test.ts
 - tests/unit/electron/update-helper.test.ts
 - tests/node/packaged-runtime-contract.test.mjs
+- tests/node/tauri-updater-contract.test.mjs
 runtime_scope:
 - electron-installed-packaged-windows
 - tauri
@@ -49,7 +54,7 @@ Expose update availability only on capable packaged installations, report progre
 
 ## Real-world scenario
 
-An installed Windows user downloads a new release, schedules it for exit, then later chooses Restart and Apply.
+A supported Electron or signed Tauri desktop build downloads a verified release, then the user chooses Update on Close or Restart Now.
 
 ```mermaid
 flowchart LR
@@ -73,7 +78,7 @@ flowchart LR
 | 1 | Receive capability/state | Ready state reports updater support and current update state. | Update UI appears only when valid. |
 | 2 | Start download | Send `downloadUpdate` with version and URL. | State becomes downloading. |
 | 3 | Report progress | Host emits `updateStateChanged`. | Progress indicator updates. |
-| 4 | Finish download | Host validates/stages artifact. | State becomes downloaded. |
+| 4 | Finish download | Host verifies and stages the signed artifact; Tauri persists verified bytes and metadata. | State becomes downloaded. |
 | 5 | Choose schedule or apply | Send schedule or restart command. | State becomes scheduled-on-exit or applying. |
 | 6 | Exit/restart | Host invokes trusted installer/update flow. | New version installs or error is reported. |
 
@@ -91,6 +96,8 @@ flowchart LR
 - Update statuses are exact enum values.
 - In-app installation is limited to supported packaged installations.
 - UI never executes arbitrary downloaded file paths.
+- Tauri uses `tauri-plugin-updater`; `Update::download` verifies the release signature before bytes are staged.
+- Requested version must match the updater endpoint response.
 - Progress and errors originate from host state.
 
 
@@ -109,14 +116,14 @@ flowchart LR
 |---|---|
 | `UpdateState` | idle/downloading/downloaded/scheduled-on-exit/applying/error. |
 | `canInstallUpdates` | Host capability gate. |
-| `staged artifact metadata` | Host-owned validated paths/names. |
+| `staged artifact metadata` | Host-owned validated paths/names; Tauri persists `pending-update.json` beside staged verified bytes. |
 
 ## Runtime-specific behavior
 
 | Runtime | Rule |
 |---|---|
 | Electron installed packaged Windows | In-app update eligible; portable excluded. |
-| Tauri | Updater support depends on valid deployment configuration/signing. |
+| Tauri | Official updater/process plugins provide signed download, progress, persisted downloaded/scheduled state, apply-on-close, install-and-restart, and restoration after relaunch. |
 | VS Code/Chromium/Website | Distribution channel owns updates; app installer controls hidden. |
 
 ## Accessibility, security, and performance
@@ -132,6 +139,8 @@ flowchart LR
 - [ ] Progress/state transitions match host events.
 - [ ] A failed update leaves current app usable.
 - [ ] Schedule and immediate apply are distinguishable.
+- [ ] Tauri restores downloaded/scheduled state only when the staged artifact still exists.
+- [ ] Release workflow uploads each updater artifact with its `.sig` companion.
 ## UI reference implementation
 
 The sample shows the interaction boundary, not a replacement for the React implementation.
@@ -180,11 +189,16 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `electron/update/update-helper.js` | Active behavior or contract |
 | Implementation | `tauri/src/update/manager.rs` | Active behavior or contract |
 | Implementation | `tauri/src/dispatcher/commands_window_update.rs` | Active behavior or contract |
+| Implementation | `tauri/src/core/bootstrap.rs` | Plugin setup and close-time apply interception |
+| Implementation | `tauri/tauri.conf.json` | Updater endpoint, public-key sentinel, signed artifact flag |
+| Implementation | `scripts/configure-tauri-updater.mjs` | Release-time updater key injection |
+| Implementation | `.github/workflows/release.yml` | Signing and paired artifact publication |
 | Verification | `tests/node/product-constants.test.mjs` | Shared constant contracts |
 | Verification | `tests/unit/ui/hooks/useUpdateCheck.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/update-manager.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/update-helper.test.ts` | Automated expectation |
 | Verification | `tests/node/packaged-runtime-contract.test.mjs` | Automated expectation |
+| Verification | `tests/node/tauri-updater-contract.test.mjs` | Tauri state, plugin, close/restart, and signing workflow contract |
 
 ---
 

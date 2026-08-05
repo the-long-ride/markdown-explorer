@@ -10,6 +10,9 @@ parent_docs:
 related_docs: []
 source_scope:
 - ui/src/components/Sidebar/Sidebar.tsx
+- ui/src/components/Sidebar/SidebarSearch.tsx
+- ui/src/components/Sidebar/SidebarTabsHeader.tsx
+- ui/src/components/Sidebar/sidebarSearchScope.ts
 - ui/src/components/Sidebar/TreeNode.tsx
 - ui/src/components/Sidebar/SidebarFilesActions.tsx
 - ui/src/components/Sidebar/SidebarSortMenu.tsx
@@ -19,12 +22,14 @@ source_scope:
 - ui/src/components/Sidebar/sidebarWorkspacePreferences.ts
 - ui/src/components/Sidebar/useSidebarCursorNavigation.ts
 - ui/src/hooks/useResize.ts
+- ui/src/styles/global/global-sidebar-search-controls.css
 test_scope:
 - tests/node/sidebar-pinning-sorting.test.mjs
 - tests/unit/ui/components/sidebar-tree-ordering.test.ts
 - tests/unit/ui/components/sidebar-render.test.tsx
 - tests/unit/ui/components/sidebar-search-pure.test.ts
 - tests/unit/ui/hooks/useResize.test.ts
+- tests/node/sidebar-focus-search-layout.test.mjs
 runtime_scope:
 - all
 - native/editor-hosts
@@ -46,7 +51,7 @@ Specify hierarchical file navigation, search/filter rendering, cursor navigation
 | Tree | Render folder/file hierarchy and active item. | Workspace structure is understandable. |
 | Filter | Retain matching descendants and required ancestors. | Large trees are narrowed without losing context. |
 | Cursor mode | Move, expand, collapse, and open by keyboard. | Tree is usable without pointer. |
-| Scope focus | Limit navigation/search to selected folders per workspace. | Users concentrate on relevant documentation. |
+| Scope focus | Limit navigation and workspace search to selected files/folders per workspace. | Users concentrate on relevant documentation. |
 | Resize | Persist bounded sidebar width. | Layout matches reader preference. |
 
 ## Interaction and processing flow
@@ -153,6 +158,14 @@ root.querySelector('[data-action]').addEventListener('click', () => {
   status.textContent = 'Request sent';
 });
 ```
+## Sidebar header and focus-aware search contract
+
+- Files, Search, and Bookmarks tabs size to their icon and translated label; no fixed minimum tab width is imposed.
+- One measured indicator animates to the active tab, and all three bodies use the same reduced-motion-aware transition.
+- Each tab uses the same search-field height. Files keeps the search field on row one and scope-focus controls on row two.
+- Workspace search filters host results against the current focus set. Unfocused files never appear.
+- Changing focus while a non-empty search query exists changes the scope revision and reruns focus-aware search, so newly focused files appear and newly unfocused files disappear without editing the query.
+
 ## Source traceability
 
 | Kind | Path | Purpose |

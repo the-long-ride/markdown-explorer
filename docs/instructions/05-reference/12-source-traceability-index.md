@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Source Traceability Index
 topic: Active implementation ownership by product domain
 document_type: reference
@@ -36,6 +36,8 @@ keywords:
 | Workspace | components/desktop contexts | workspace scanner/watch/recents | workspace modules | scanner/incremental/watch | file access/scanner/file mode |
 | Rendering | `ui/src/markdown/*`, Content | source/converter handlers | render/converter | `vscode/src/markdown/*` | host renderer paths |
 | Search | Search components/effects | search index/worker | search modules | panel search | search index/test search |
+| Bookmarks | `ui/src/bookmarks/*`, `markdown/sourceMapping.ts`, Bookmark components/navigation/jump | shared UI Tabs | shared UI Tabs | shared UI Focus mode | shared UI Focus mode |
+| User manual | Welcome/UserManual components and `userManualTranslations.ts` | shared UI | shared UI | shared UI | shared UI |
 | HTML/resources | HTML preview modules | preview server/resource handler | local file/HTML preview | preview server/resources | in-page sandbox |
 | Settings/themes | Settings, contexts, theme | bridge persistence | preload/dispatcher settings | webview state/config | chrome/web state |
 | Desktop lifecycle | Desktop components | window/tray/update/startup | window/update/bootstrap | host-owned | not applicable |
