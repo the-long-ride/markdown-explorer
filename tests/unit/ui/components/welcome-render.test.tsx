@@ -16,6 +16,7 @@ vi.mock("../../../../ui/src/contexts/welcomeTranslations", () => ({
       repository: "Repository",
       license: "License",
       desktopRecommendation: "Try the desktop app for more features",
+      desktopAppLinkText: "desktop app",
       macosInstallBtn: "Install on macOS",
     },
     privacy: {

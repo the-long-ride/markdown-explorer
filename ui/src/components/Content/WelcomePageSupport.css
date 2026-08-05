@@ -181,3 +181,15 @@
   color: var(--tx3);
 }
 
+.desktop-recommendation__link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.15s;
+}
+
+.desktop-recommendation__link:hover {
+  text-decoration-color: var(--accent);
+}
+

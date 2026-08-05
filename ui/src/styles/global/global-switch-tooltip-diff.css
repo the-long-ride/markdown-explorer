@@ -89,6 +89,21 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* Viewport-clamped center tooltip for More Actions dropdown items */
+.toolbar-action-menu__panel .tooltip-container .tooltip-text {
+  /* Center on the button, clamped so tooltip never bleeds outside the panel */
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) translateY(4px);
+  /* Allow tooltip to escape panel horizontally but stay inside viewport */
+  max-width: min(260px, calc(100vw - 24px));
+}
+.toolbar-action-menu__panel .tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 [data-theme-style="glass"] .tooltip-text {
   background: rgb(22 24 31);
 }
@@ -329,80 +344,36 @@ kbd,
   font-size: 0.82em;
   font-weight: 600;
   line-height: 1;
-  color: var(--tx, #eceff4);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-e, #2d313b) 82%, var(--accent, #6d5ef0) 18%) 0%,
-    color-mix(in srgb, var(--bg-s, #21252b) 92%, var(--bg-e, #2d313b) 8%) 100%
-  );
-  border: var(--stroke-w, 1px) solid color-mix(in srgb, var(--bd-x, #4b505c) 75%, var(--accent, #6d5ef0) 25%);
-  border-bottom: calc(var(--stroke-w, 1px) + 1.5px) solid color-mix(in srgb, var(--bd-s, #3b404d) 70%, black 30%);
-  border-radius: clamp(0px, var(--r, 6px), 10px);
-  box-shadow: 
-    0 2.5px 0 color-mix(in srgb, var(--bg-s, #181a1f) 80%, black 20%),
-    0 3.5px 6px -1px color-mix(in srgb, var(--accent, #6d5ef0) 25%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 25%, transparent);
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--bg, #181a1f) 80%, black 20%);
+  color: var(--tx2);
+  background: var(--bg-e);
+  border: 1px solid var(--bd-x);
+  border-bottom: 2px solid var(--bd-s);
+  border-radius: clamp(2px, var(--r, 4px), 6px);
+  box-shadow: none;
+  text-shadow: none;
   white-space: nowrap;
   vertical-align: middle;
   user-select: none;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, border-color 0.15s ease, border-radius 0.15s ease;
-}
-
-[data-theme="light"] kbd,
-[data-theme="light"] .keycap-3d {
-  color: var(--tx, #1e293b);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-e, #ffffff) 90%, white 10%) 0%,
-    color-mix(in srgb, var(--bg-s, #f1f5f9) 95%, var(--accent, #6d5ef0) 5%) 100%
-  );
-  border-color: color-mix(in srgb, var(--bd-x, #cbd2e1) 85%, var(--accent, #6d5ef0) 15%);
-  border-bottom-color: color-mix(in srgb, var(--bd-s, #a3b0c9) 75%, #64748b 25%);
-  box-shadow: 
-    0 2.5px 0 color-mix(in srgb, var(--bd-s, #a3b0c9) 60%, #94a3b8 40%),
-    0 3px 5px -1px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 0.08s ease, border-color 0.12s ease;
 }
 
 kbd:active,
 .keycap-3d:active {
-  transform: translateY(1.5px);
+  transform: translateY(1px);
   border-bottom-width: 1px;
-  box-shadow: 
-    0 1px 0 color-mix(in srgb, var(--bg-s, #181a1f) 70%, black 30%),
-    0 1.5px 3px rgba(0, 0, 0, 0.2),
-    inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Raw Grid Theme: Sharp technical keycaps */
+/* Raw Grid Theme: fully square keycaps */
 [data-theme-style="raw-grid"] kbd,
 [data-theme-style="raw-grid"] .keycap-3d {
-  border-radius: 1px !important;
-  border-width: 1px;
-  border-bottom-width: 2px;
+  border-radius: 0 !important;
 }
 
-/* Glassmorphism Theme: Translucent frosted glass keycaps */
+/* Glass Theme: subtle translucency */
 [data-theme-style="glass"] kbd,
 [data-theme-style="glass"] .keycap-3d {
-  border-radius: var(--r, 8px);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-e, rgba(39, 47, 62, 0.58)) 65%, var(--accent, #6d5ef0) 35%) 0%,
-    color-mix(in srgb, var(--bg-s, rgba(22, 27, 36, 0.72)) 80%, transparent 20%) 100%
-  );
-  backdrop-filter: var(--surface-blur, blur(16px));
-  border-color: color-mix(in srgb, var(--bd-s, rgba(255, 255, 255, 0.18)) 70%, white 30%);
-}
-
-/* Bento & Pet Themes: Smooth rounded keycaps matching --r */
-[data-theme-style="bento"] kbd,
-[data-theme-style="bento"] .keycap-3d,
-[data-theme-style^="pet-"] kbd,
-[data-theme-style^="pet-"] .keycap-3d {
-  border-radius: var(--r, 8px);
+  background: color-mix(in srgb, var(--bg-e) 70%, transparent);
+  backdrop-filter: var(--surface-blur, blur(8px));
 }
 
 .shortcut-keycaps-container {
@@ -518,45 +489,3 @@ kbd:active,
   pointer-events: none;
   z-index: 9999;
 }
-
-/* ============================================================
-   Electron Frameless Drag Region & Window Controls
-   ============================================================ */
-body.is-electron .topbar {
-  -webkit-app-region: drag;
-  z-index: 200000;
-}
-
-body.is-electron .topbar__logo,
-body.is-electron .btn,
-body.is-electron .toolbar-action-menu,
-body.is-electron .toolbar-action-menu__panel,
-body.is-electron .search-bar,
-body.is-electron .topbar__divider,
-body.is-electron .topbar__breadcrumb-container,
-body.is-electron .window-controls,
-body.is-electron .sidebar-resize {
-  -webkit-app-region: no-drag;
-}
-
-.window-control-btn {
-  border: none !important;
-  background: transparent !important;
-  color: var(--tx2) !important;
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 4px !important;
-  opacity: 0.75;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.window-control-btn:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: var(--tx) !important;
-  opacity: 1;
-}
-.window-control-btn--close:hover {
-  background: #f43f5e !important;
-  color: #ffffff !important;
-}
-
