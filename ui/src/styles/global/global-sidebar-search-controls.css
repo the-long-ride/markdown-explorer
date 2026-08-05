@@ -1,0 +1,12 @@
+/* Sidebar file focus controls live on a second row below the shared search field. */
+.sidebar__files-second-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  margin-top: 4px;
+}
+
+.sidebar__files-second-row .sidebar__scope {
+  width: 100%;
+  margin-top: 0;
+}

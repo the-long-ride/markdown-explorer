@@ -1,0 +1,325 @@
+.bookmarks-panel {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  font-family: var(--font-ui);
+}
+
+.bookmarks-panel__toolbar {
+  display: flex;
+  gap: 5px;
+  padding: 6px 10px;
+  border-bottom: var(--stroke-w) solid var(--bd);
+}
+
+.bookmarks-panel__search {
+  flex: 1;
+  min-width: 0;
+}
+
+.bookmarks-panel__actions {
+  position: relative;
+  display: flex;
+  gap: 3px;
+}
+
+.bookmarks-sort-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  display: grid;
+  width: 190px;
+  padding: 4px;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r-s, 6px);
+  background: var(--bg-e);
+  box-shadow: var(--sh-lg);
+}
+
+.bookmarks-sort-menu button {
+  border: 0;
+  border-radius: var(--r-s, 5px);
+  padding: 7px 9px;
+  background: transparent;
+  color: var(--tx);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bookmarks-sort-menu button:hover,
+.bookmarks-sort-menu button[aria-checked="true"] {
+  background: var(--bg-h);
+}
+
+.bookmarks-panel__list {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 6px;
+}
+
+.bookmark-group {
+  margin-bottom: 5px;
+}
+
+.bookmark-group__header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--r-s, 5px);
+  padding: 6px 7px;
+  background: transparent;
+  color: var(--tx2);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bookmark-group.is-active > .bookmark-group__header,
+.bookmark-group__header:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
+.bookmark-group__name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-group__items {
+  padding-left: 8px;
+}
+
+.bookmark-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: var(--r-s, var(--r));
+  padding: 6px 4px 6px 8px;
+  color: var(--tx2);
+  cursor: default;
+}
+
+.bookmark-item:hover,
+.bookmark-item:focus-visible {
+  outline: none;
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
+.bookmark-item__copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.bookmark-item__name,
+.bookmark-item__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-item__name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bookmark-item__text {
+  color: var(--txm);
+  font-size: 10px;
+}
+
+.bookmark-item__menu {
+  visibility: hidden;
+  border: 0;
+  border-radius: var(--r-s, var(--r));
+  padding: 3px 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bookmark-item:hover .bookmark-item__menu,
+.bookmark-item:focus-within .bookmark-item__menu {
+  visibility: visible;
+}
+
+.bookmarks-panel__empty {
+  padding: 24px 12px;
+  color: var(--txm);
+  font-size: 12px;
+  text-align: center;
+}
+
+.bookmark-dialog-backdrop {
+  position: fixed;
+  z-index: 12000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 38%);
+}
+
+.bookmark-dialog {
+  display: grid;
+  width: min(380px, 100%);
+  gap: 10px;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r-lg, var(--r));
+  padding: 18px;
+  background: var(--bg-e);
+  box-shadow: var(--sh-lg);
+}
+
+.bookmark-dialog h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.bookmark-dialog label {
+  color: var(--tx2);
+  font-size: 12px;
+}
+
+.bookmark-dialog input {
+  min-width: 0;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r-s, 6px);
+  padding: 9px 10px;
+  background: var(--bg);
+  color: var(--tx);
+}
+
+.bookmark-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bookmark-selection-menu {
+  min-width: 210px;
+  max-width: calc(100vw - 16px);
+}
+
+.bookmark-selection-menu button {
+  white-space: nowrap;
+}
+
+.bookmark-selection-menu svg {
+  flex: 0 0 auto;
+}
+
+.sidebar.has-bookmarks-feature:not(.is-collapsed) {
+  min-width: 300px;
+}
+
+
+.bookmarks-panel__toolbar {
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bookmarks-panel__search-row,
+.bookmarks-panel__action-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.bookmarks-panel__search-row .sidebar__search {
+  width: 100%;
+  margin-top: 0;
+  box-sizing: border-box;
+}
+
+.bookmarks-panel__action-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.bookmarks-panel__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.bookmarks-panel__actions .btn--icon {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0;
+}
+
+.bookmarks-panel__actions .btn--icon.is-active {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--bd-s));
+  background: var(--accent-dim);
+  color: var(--accent-text);
+}
+
+.bookmarks-panel__delete-selected:not(:disabled) {
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 48%, var(--bd-s));
+  color: color-mix(in srgb, var(--danger, #ef4444) 82%, var(--tx));
+}
+
+.bookmark-group__chevron {
+  flex: 0 0 auto;
+  transition: transform 120ms ease;
+}
+
+.bookmark-group__chevron.is-expanded {
+  transform: rotate(90deg);
+}
+
+.bookmark-item > input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.bookmark-item.is-selected {
+  background: var(--accent-dim);
+  color: var(--accent-text);
+}
+
+.bookmark-delete-dialog p {
+  margin: 0;
+  color: var(--tx2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.bookmark-delete-dialog__confirm {
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 70%, var(--bd-x));
+  background: var(--danger, #ef4444);
+  color: #fff;
+}
+
+.mdn-bookmark-jump-target {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--r-s, 5px);
+}
+
+.mdn-bookmark-jump-mark,
+::highlight(mdn-bookmark-jump) {
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
+  color: inherit;
+}
