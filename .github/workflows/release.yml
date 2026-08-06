@@ -51,7 +51,7 @@ jobs:
         run: pnpm run package
 
       - name: Upload VSIX Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: vscode-extension
           path: vscode/*.vsix
@@ -98,14 +98,14 @@ jobs:
 
       - name: Upload Desktop Artifact (Windows)
         if: matrix.platform == 'windows'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: desktop-app-windows
           path: electron/dist/*.exe
 
       - name: Upload Desktop Artifact (Linux)
         if: matrix.platform == 'linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: desktop-app-linux
           path: |
@@ -113,7 +113,7 @@ jobs:
             electron/dist/*.AppImage
       - name: Upload Desktop Artifact (macOS)
         if: matrix.platform == 'mac'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: desktop-app-macos
           path: |
@@ -262,7 +262,7 @@ jobs:
 
       - name: Upload Tauri Artifact (Windows)
         if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: tauri-desktop-windows
           if-no-files-found: error
@@ -272,7 +272,7 @@ jobs:
 
       - name: Upload Tauri Artifact (Linux)
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: tauri-desktop-linux
           if-no-files-found: error
@@ -284,7 +284,7 @@ jobs:
 
       - name: Upload Tauri Artifact (macOS)
         if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: tauri-desktop-macos
           if-no-files-found: error
@@ -325,7 +325,7 @@ jobs:
           zip -r ../markdown-explorer-chromium.zip .
 
       - name: Upload Chromium Extension Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: chromium-extension
           path: chromium-xtension/markdown-explorer-chromium.zip
@@ -339,49 +339,49 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download VSIX Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: vscode-extension
           path: ./release-artifacts/vscode
 
       - name: Download Electron Windows Desktop Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: desktop-app-windows
           path: ./release-artifacts/electron-windows
 
       - name: Download Electron Linux Desktop Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: desktop-app-linux
           path: ./release-artifacts/electron-linux
 
       - name: Download Electron macOS Desktop Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: desktop-app-macos
           path: ./release-artifacts/electron-macos
 
       - name: Download Tauri Windows Desktop Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: tauri-desktop-windows
           path: ./release-artifacts/tauri-windows
 
       - name: Download Tauri Linux Desktop Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: tauri-desktop-linux
           path: ./release-artifacts/tauri-linux
 
       - name: Download Tauri macOS Desktop Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: tauri-desktop-macos
           path: ./release-artifacts/tauri-macos
 
       - name: Download Chromium Extension Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: chromium-extension
           path: ./release-artifacts/chromium

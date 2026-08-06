@@ -159,7 +159,7 @@ jobs:
             --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs" \
             --lcov --output-path lcov.info -- --test-threads=1
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: tauri-coverage
           path: lcov.info

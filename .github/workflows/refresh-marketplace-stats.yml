@@ -26,7 +26,7 @@ jobs:
         run: node scripts/fetch-marketplace-stats.mjs
 
       - name: Upload Stats as Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: marketplace-stats
           path: website/marketplace-stats.json
