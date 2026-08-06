@@ -60,18 +60,18 @@ export function SidebarTabsHeader({
   return (
     <div className="sidebar__title-row">
       <div className="sidebar__tab-strip" ref={stripRef}>
-        <button ref={(node) => { tabRefs.current.files = node; }} type="button" className={`sidebar__tab-btn${isFiles ? ' is-active' : ''}`} onClick={() => onSelect('files')}>
+        <button ref={(node) => { tabRefs.current.files = node; }} type="button" className={`sidebar__tab-btn sidebar__tab-btn--files${isFiles ? ' is-active' : ''}`} onClick={() => onSelect('files')}>
           <FolderIcon size={14} /><span>{filesLabel}</span>
         </button>
-        <button ref={(node) => { tabRefs.current.search = node; }} type="button" className={`sidebar__tab-btn${isSearch ? ' is-active' : ''}`} onClick={() => onSelect('search')}>
+        <button ref={(node) => { tabRefs.current.search = node; }} type="button" className={`sidebar__tab-btn sidebar__tab-btn--search${isSearch ? ' is-active' : ''}`} onClick={() => onSelect('search')}>
           <SearchIcon size={14} /><span>{searchLabel}</span>
         </button>
         {bookmarksEnabled && (
-          <button ref={(node) => { tabRefs.current.bookmarks = node; }} type="button" className={`sidebar__tab-btn${isBookmarks ? ' is-active' : ''}`} onClick={() => onSelect('bookmarks')}>
+          <button ref={(node) => { tabRefs.current.bookmarks = node; }} type="button" className={`sidebar__tab-btn sidebar__tab-btn--bookmarks${isBookmarks ? ' is-active' : ''}`} onClick={() => onSelect('bookmarks')}>
             <BookmarkIcon size={14} /><span>{bookmarksLabel}</span>
           </button>
         )}
-        <span className="sidebar__tab-indicator" ref={indicatorRef} />
+        <span className={`sidebar__tab-indicator${isSearch ? ' is-search' : isBookmarks ? ' is-bookmarks' : ''}`} ref={indicatorRef} />
       </div>
       {isFiles ? (
         <div className="sidebar__title-actions" key="files-actions"><span className="sidebar__count" id="fileCount">{fileCount}</span></div>

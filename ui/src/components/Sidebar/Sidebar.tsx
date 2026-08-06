@@ -394,16 +394,18 @@ export function Sidebar({
         />
       </div>
 
-      <div className={`sidebar__tab-panel${isBookmarks ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
-        <BookmarksPanel
-          visible={isBookmarks}
-          viewMode={bookmarkViewMode}
-          workspaces={bookmarkWorkspaces}
-          activeWorkspaceKey={activeBookmarkWorkspaceKey}
-          translations={t.bookmarks}
-          onNavigate={onBookmarkNavigate}
-        />
-      </div>
+      {state.settings.bookmarksEnabled && (
+        <div className={`sidebar__tab-panel${isBookmarks ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
+          <BookmarksPanel
+            visible={isBookmarks}
+            viewMode={bookmarkViewMode}
+            workspaces={bookmarkWorkspaces}
+            activeWorkspaceKey={activeBookmarkWorkspaceKey}
+            translations={t.bookmarks}
+            onNavigate={onBookmarkNavigate}
+          />
+        </div>
+      )}
       {itemMenu && navRef.current && itemMenuItems.length > 0 && (
         <SidebarItemMenu
           anchor={itemMenu.anchor}

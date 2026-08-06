@@ -252,9 +252,9 @@ describe("WelcomePage rendering", () => {
 
   it("renders desktop recommendation when not on desktop", () => {
     setup();
-    expect(
-      screen.getByText("Try the desktop app for more features")
-    ).toBeInTheDocument();
+    expect(document.querySelector('.desktop-recommendation')).toHaveTextContent(
+      "Try the desktop app for more features",
+    );
   });
 
   it("hides desktop recommendation when on desktop", () => {

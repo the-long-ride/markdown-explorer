@@ -16,12 +16,12 @@ import {
 } from '../../../../ui/src/contexts/appStateConstants';
 
 describe('appStateConstants', () => {
-  test('DEFAULT_KEYBINDINGS has 20 entries', () => {
-    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(20);
+  test('DEFAULT_KEYBINDINGS has 21 entries', () => {
+    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(21);
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 26 entries', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(26);
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 27 entries', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(27);
   });
 
   test('DESKTOP_DEFAULT_KEYBINDINGS overrides 5 from defaults', () => {

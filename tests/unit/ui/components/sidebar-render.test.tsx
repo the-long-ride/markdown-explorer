@@ -62,7 +62,7 @@ vi.mock('../../../../ui/src/components/Sidebar/TreeNode', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, icon, label, tooltip, ...props }: any) => (
+  TooltipButton: ({ onClick, children, icon, label, tooltip, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
     <button
       onClick={onClick}
       aria-label={label || tooltip}

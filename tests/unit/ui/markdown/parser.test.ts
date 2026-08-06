@@ -2,11 +2,23 @@ import { describe, it, expect } from 'vitest';
 import { parse } from '../../../../ui/src/markdown/parser';
 import type { BlockToken, HeadingToken, ParagraphToken, CodeBlockToken, MathBlockToken, BlockquoteToken, TableToken, ListToken, HrToken } from '../../../../ui/src/markdown/parser';
 
+function stripSourceRange(token: BlockToken): Record<string, unknown> {
+  const rest = { ...token } as Record<string, unknown>;
+  delete rest.sourceStart;
+  delete rest.sourceEnd;
+  delete rest.sourceText;
+  return rest;
+}
+
+function stripSourceRanges(tokens: BlockToken[]): Record<string, unknown>[] {
+  return tokens.map(stripSourceRange);
+}
+
 describe('parser', () => {
   describe('parse', () => {
     it('normalizes CRLF to LF', () => {
       const result = parse('# Hello\r\nWorld');
-      expect(result.tokens).toEqual([
+      expect(stripSourceRanges(result.tokens)).toEqual([
         { type: 'heading', level: 1, text: 'Hello' },
         { type: 'paragraph', text: 'World' },
       ]);
@@ -14,7 +26,7 @@ describe('parser', () => {
 
     it('normalizes CR to LF', () => {
       const result = parse('# Hello\rWorld');
-      expect(result.tokens).toEqual([
+      expect(stripSourceRanges(result.tokens)).toEqual([
         { type: 'heading', level: 1, text: 'Hello' },
         { type: 'paragraph', text: 'World' },
       ]);
@@ -22,13 +34,13 @@ describe('parser', () => {
 
     it('returns empty tokens for empty input', () => {
       const result = parse('');
-      expect(result.tokens).toEqual([]);
+      expect(stripSourceRanges(result.tokens)).toEqual([]);
       expect(result.frontmatter).toEqual({});
     });
 
     it('returns empty tokens for whitespace-only input', () => {
       const result = parse('   \n\n  \n');
-      expect(result.tokens).toEqual([]);
+      expect(stripSourceRanges(result.tokens)).toEqual([]);
     });
   });
 
@@ -36,7 +48,7 @@ describe('parser', () => {
     it('extracts simple frontmatter', () => {
       const result = parse('---\ntitle: Test\nauthor: Me\n---\n# Hello');
       expect(result.frontmatter).toEqual({ title: 'Test', author: 'Me' });
-      expect(result.tokens[0]).toEqual({ type: 'heading', level: 1, text: 'Hello' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'heading', level: 1, text: 'Hello' });
     });
 
     it('returns empty frontmatter when no delimiters', () => {
@@ -57,8 +69,8 @@ describe('parser', () => {
     it('extracts frontmatter after leading HTML comments and preserves the comments', () => {
       const result = parse('<!-- This is comment section -->\n---\nid: 12345\nname: I am a freak\n---\nThe rest');
       expect(result.frontmatter).toEqual({ id: '12345', name: 'I am a freak' });
-      expect(result.tokens[0]).toEqual({ type: 'html-comment', content: ' This is comment section ' });
-      expect(result.tokens[1]).toEqual({ type: 'paragraph', text: 'The rest' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'html-comment', content: ' This is comment section ' });
+      expect(stripSourceRange(result.tokens[1])).toEqual({ type: 'paragraph', text: 'The rest' });
     });
 
     it('supports multiple comments and blank lines before frontmatter', () => {
@@ -81,22 +93,22 @@ describe('parser', () => {
   describe('MDX mode', () => {
     it('strips import statements in MDX mode', () => {
       const result = parse("import Foo from './ Foo'\n\n# Hello", true);
-      expect(result.tokens).toEqual([{ type: 'heading', level: 1, text: 'Hello' }]);
+      expect(stripSourceRanges(result.tokens)).toEqual([{ type: 'heading', level: 1, text: 'Hello' }]);
     });
 
     it('strips export statements in MDX mode', () => {
       const result = parse("export const x = 1\n\n# Hello", true);
-      expect(result.tokens).toEqual([{ type: 'heading', level: 1, text: 'Hello' }]);
+      expect(stripSourceRanges(result.tokens)).toEqual([{ type: 'heading', level: 1, text: 'Hello' }]);
     });
 
     it('preserves non-import/export lines in MDX mode', () => {
       const result = parse("const x = 1\n\n# Hello", true);
-      expect(result.tokens).toContainEqual({ type: 'paragraph', text: 'const x = 1' });
+      expect(stripSourceRanges(result.tokens)).toContainEqual({ type: 'paragraph', text: 'const x = 1' });
     });
 
     it('parses JSX blocks in MDX mode', () => {
       const result = parse('<MyComponent\n  prop="val"\n/>', true);
-      expect(result.tokens).toEqual([
+      expect(stripSourceRanges(result.tokens)).toEqual([
         { type: 'paragraph', text: '<MyComponent\n  prop="val"\n/>', isJsx: true },
       ]);
     });
@@ -107,13 +119,13 @@ describe('parser', () => {
       for (let level = 1; level <= 6; level++) {
         const hashes = '#'.repeat(level);
         const result = parse(`${hashes} Heading ${level}`);
-        expect(result.tokens[0]).toEqual({ type: 'heading', level, text: `Heading ${level}` });
+        expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'heading', level, text: `Heading ${level}` });
       }
     });
 
     it('strips trailing # from heading text', () => {
       const result = parse('# Heading ##');
-      expect(result.tokens[0]).toEqual({ type: 'heading', level: 1, text: 'Heading' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'heading', level: 1, text: 'Heading' });
     });
 
     it('preserves mid-line # in heading text', () => {
@@ -125,12 +137,12 @@ describe('parser', () => {
   describe('setext headings', () => {
     it('parses setext h1 with = underline', () => {
       const result = parse('Heading\n===');
-      expect(result.tokens[0]).toEqual({ type: 'heading', level: 1, text: 'Heading' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'heading', level: 1, text: 'Heading' });
     });
 
     it('parses setext h2 with - underline', () => {
       const result = parse('Heading\n---');
-      expect(result.tokens[0]).toEqual({ type: 'heading', level: 2, text: 'Heading' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'heading', level: 2, text: 'Heading' });
     });
 
     it('does not confuse list marker with setext h2', () => {
@@ -142,29 +154,29 @@ describe('parser', () => {
   describe('horizontal rule', () => {
     it('parses --- as hr', () => {
       const result = parse('---');
-      expect(result.tokens[0]).toEqual({ type: 'hr' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'hr' });
     });
 
     it('parses *** as hr', () => {
       const result = parse('***');
-      expect(result.tokens[0]).toEqual({ type: 'hr' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'hr' });
     });
 
     it('parses ___ as hr', () => {
       const result = parse('___');
-      expect(result.tokens[0]).toEqual({ type: 'hr' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'hr' });
     });
   });
 
   describe('paragraphs', () => {
     it('collects contiguous non-blank lines as paragraph', () => {
       const result = parse('Line one\nLine two');
-      expect(result.tokens[0]).toEqual({ type: 'paragraph', text: 'Line one Line two' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'paragraph', text: 'Line one Line two' });
     });
 
     it('separates paragraphs with blank lines', () => {
       const result = parse('Para 1\n\nPara 2');
-      expect(result.tokens).toEqual([
+      expect(stripSourceRanges(result.tokens)).toEqual([
         { type: 'paragraph', text: 'Para 1' },
         { type: 'paragraph', text: 'Para 2' },
       ]);
@@ -174,7 +186,7 @@ describe('parser', () => {
   describe('code blocks', () => {
     it('parses fenced code with backticks', () => {
       const result = parse('```js\nconsole.log("hi")\n```');
-      expect(result.tokens[0]).toEqual({
+      expect(stripSourceRange(result.tokens[0])).toEqual({
         type: 'code',
         lang: 'js',
         content: 'console.log("hi")',
@@ -183,7 +195,7 @@ describe('parser', () => {
 
     it('parses fenced code with tildes', () => {
       const result = parse('~~~python\nprint("hi")\n~~~');
-      expect(result.tokens[0]).toEqual({
+      expect(stripSourceRange(result.tokens[0])).toEqual({
         type: 'code',
         lang: 'python',
         content: 'print("hi")',
@@ -192,7 +204,7 @@ describe('parser', () => {
 
     it('parses fenced code with no language', () => {
       const result = parse('```\ncode\n```');
-      expect(result.tokens[0]).toEqual({ type: 'code', lang: '', content: 'code' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'code', lang: '', content: 'code' });
     });
 
     it('parses fenced code with lang suffixes like .tsx', () => {
@@ -202,7 +214,7 @@ describe('parser', () => {
 
     it('preserves CSV fence metadata for delimiter and header overrides', () => {
       const result = parse('```csv noheader delimiter=tab\nA\tB\n```');
-      expect(result.tokens[0]).toEqual({
+      expect(stripSourceRange(result.tokens[0])).toEqual({
         type: 'code',
         lang: 'csv',
         meta: 'noheader delimiter=tab',
@@ -214,29 +226,29 @@ describe('parser', () => {
   describe('display math', () => {
     it('parses $$ math block', () => {
       const result = parse('$$\nE = mc^2\n$$');
-      expect(result.tokens[0]).toEqual({ type: 'math', content: 'E = mc^2' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'math', content: 'E = mc^2' });
     });
 
     it('parses \\[ math block', () => {
       const result = parse('\\[\nE = mc^2\n\\]');
-      expect(result.tokens[0]).toEqual({ type: 'math', content: 'E = mc^2' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'math', content: 'E = mc^2' });
     });
 
     it('handles unclosed math block gracefully', () => {
       const result = parse('$$\nE = mc^2');
-      expect(result.tokens[0]).toEqual({ type: 'math', content: 'E = mc^2' });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'math', content: 'E = mc^2' });
     });
   });
 
   describe('blockquote', () => {
     it('parses blockquote with > prefix', () => {
       const result = parse('> Hello\n> World');
-      expect(result.tokens[0]).toEqual({ type: 'blockquote', lines: ['Hello', 'World'] });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'blockquote', lines: ['Hello', 'World'] });
     });
 
     it('strips leading space after >', () => {
       const result = parse('>  Indented');
-      expect(result.tokens[0]).toEqual({ type: 'blockquote', lines: ['Indented'] });
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'blockquote', lines: ['Indented'] });
     });
   });
 

@@ -23,6 +23,11 @@ test('bookmark sidebar exposes count, wider layout, and two-row controls', async
   assert.match(tabsStyles, /\.sidebar__tab-btn\s*\{[\s\S]*?flex:\s*0 0 auto/);
   assert.match(header, /offsetLeft/);
   assert.match(header, /offsetWidth/);
+  assert.match(header, /sidebar__tab-btn--files/);
+  assert.match(header, /sidebar__tab-btn--search/);
+  assert.match(header, /sidebar__tab-btn--bookmarks/);
+  assert.match(header, /is-search/);
+  assert.match(header, /is-bookmarks/);
 });
 
 test('bookmark panel supports selection mode, select all, and atomic batch delete', async () => {

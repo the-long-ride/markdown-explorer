@@ -10,7 +10,7 @@ import { TooltipButton } from '../shared/TooltipButton';
 import { getTranslations } from '../../contexts/translations';
 import { SearchResultFileView, SearchResultFolderView } from './sidebarSearchTree';
 import { buildSearchResultTree } from './sidebarSearchResultTree';
-import { filterWorkspaceSearchResultsByScope, getScopeSearchRevision } from './sidebarSearchScope';
+import { EMPTY_SELECTED_FILE_PATHS, filterWorkspaceSearchResultsByScope, getScopeSearchRevision } from './sidebarSearchScope';
 import type { WorkspaceSearchResult } from '../../types';
 
 export interface SidebarSearchStatus {
@@ -19,17 +19,18 @@ export interface SidebarSearchStatus {
   showCount: boolean;
 }
 
+
 interface SidebarSearchProps {
   isVisible: boolean;
-  selectedFilePaths: ReadonlySet<string>;
-  hasScopeEntry: boolean;
+  selectedFilePaths?: ReadonlySet<string>;
+  hasScopeEntry?: boolean;
   onStatusChange?: (status: SidebarSearchStatus) => void;
 }
 
 export function SidebarSearch({
   isVisible,
-  selectedFilePaths,
-  hasScopeEntry,
+  selectedFilePaths = EMPTY_SELECTED_FILE_PATHS,
+  hasScopeEntry = false,
   onStatusChange,
 }: SidebarSearchProps) {
   const { state } = useAppState();

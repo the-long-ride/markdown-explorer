@@ -18,6 +18,7 @@ describe('Windows Explorer installer integration', () => {
     expect(electronConfig.build.nsis.createStartMenuShortcut).toBe(false);
     expect(electronHooks).toContain('!macro customPageAfterChangeDir');
     expect(electronHooks).toContain('!ifndef BUILD_UNINSTALLER');
+    expect(electronHooks).toContain('!include "MUI2.nsh"');
     expect(electronHooks).toContain('Create desktop shortcut');
     expect(electronHooks).toContain('Add Markdown Explorer to Start menu');
     expect(electronHooks).toContain('${NSD_Check} $ME_StartMenuShortcutCheckbox');

@@ -18,7 +18,7 @@ test('Tauri initializes official updater and process plugins', () => {
 });
 
 test('Tauri updater uses signed plugin download and install APIs with progress', () => {
-  assert.match(manager, /use tauri_plugin_updater::(?:UpdaterExt|\{[^}]*UpdaterExt[^}]*\})/);
+  assert.match(manager, /tauri_plugin_updater::[^;]*UpdaterExt/);
   assert.match(manager, /\.updater\(\)/);
   assert.match(manager, /\.check\(\)\s*\.await/);
   assert.match(manager, /\.download\(/);

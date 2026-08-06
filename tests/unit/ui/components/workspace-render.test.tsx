@@ -52,7 +52,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, ...props }: any) =>
+  TooltipButton: ({ onClick, children, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) =>
     React.createElement('button', { onClick, ...props }, children),
 }));
 

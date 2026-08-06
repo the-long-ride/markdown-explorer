@@ -7,6 +7,10 @@ function tokenize(md: string): BlockToken[] {
   return parse(md).tokens;
 }
 
+function stripBookmarkMetadata(html: string): string {
+  return html.replace(/\s+data-mdn-(?:source-start|source-end|bookmark-kind|math-source|mermaid-source|bookmark-alt|bookmark-url)="[^"]*"/g, '');
+}
+
 function heading(level: number, text: string): BlockToken {
   return { type: 'heading', level, text };
 }
@@ -116,7 +120,7 @@ describe('HtmlRenderer', () => {
     test('renders paragraph with inline markdown', () => {
       const r = new HtmlRenderer();
       const { html } = r.render([paragraph('**bold** text')]);
-      expect(html).toContain('<p>');
+      expect(stripBookmarkMetadata(html)).toContain('<p>');
       expect(html).toContain('<strong>bold</strong>');
     });
 
@@ -175,7 +179,7 @@ describe('HtmlRenderer', () => {
     test('renders normal blockquote', () => {
       const r = new HtmlRenderer();
       const { html } = r.render([blockquote(['quoted text'])]);
-      expect(html).toContain('<blockquote class="mdn-blockquote">');
+      expect(stripBookmarkMetadata(html)).toContain('<blockquote class="mdn-blockquote">');
     });
 
     test('renders NOTE callout', () => {
@@ -362,7 +366,7 @@ describe('HtmlRenderer', () => {
         heading(1, 'Main'),
         paragraph('body'),
       ]);
-      expect(html).toContain('<p>intro</p>');
+      expect(stripBookmarkMetadata(html)).toContain('<p>intro</p>');
     });
   });
 
@@ -486,7 +490,7 @@ describe('HtmlRenderer', () => {
       const r = new HtmlRenderer();
       const token = { type: 'list' as const, ordered: true, start: 1, items: [{ text: 'item', isTask: false, checked: false }] };
       const { html } = r.render([token]);
-      expect(html).not.toContain('start=');
+      expect(html).not.toMatch(/\sstart="/);
     });
   });
     test('renders image-only paragraphs as equal-width image rows', () => {
@@ -508,7 +512,7 @@ describe('HtmlRenderer', () => {
       const renderer = new HtmlRenderer();
       const { html } = renderer.render(tokenize('Before ![First](first.png) after'));
       expect(html).not.toContain('mdn-image-row');
-      expect(html).toMatch(/^<p>/);
+      expect(stripBookmarkMetadata(html)).toMatch(/^<p>/);
     });
 
     test('renders separate image rows when blank lines split paragraphs', () => {

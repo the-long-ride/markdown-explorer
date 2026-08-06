@@ -7,6 +7,10 @@ function tokenize(md: string): BlockToken[] {
   return parse(md).tokens;
 }
 
+function stripBookmarkMetadata(html: string): string {
+  return html.replace(/\s+data-mdn-(?:source-start|source-end|bookmark-kind|math-source|mermaid-source|bookmark-alt|bookmark-url)="[^"]*"/g, '');
+}
+
 describe('markdown/renderer', () => {
   describe('HtmlRenderer', () => {
     it('renders empty token array', () => {
@@ -26,7 +30,7 @@ describe('markdown/renderer', () => {
       it('uses default isMdx=false', () => {
         const renderer = new HtmlRenderer();
         const { html } = renderer.render([{ type: 'paragraph', text: 'hello' }]);
-        expect(html).toContain('<p>hello</p>');
+        expect(stripBookmarkMetadata(html)).toContain('<p>hello</p>');
       });
     });
 
@@ -92,10 +96,10 @@ describe('markdown/renderer', () => {
         const renderer = new HtmlRenderer();
         const { html } = renderer.render(tokens);
 
-        expect(html).toMatch(
+        expect(stripBookmarkMetadata(html)).toMatch(
           /<span class="mdn-heading-text">Title<span class="mdn-heading-level" aria-hidden="true">H1<\/span><\/span>\s*<\/h1>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
         );
-        expect(html).toMatch(
+        expect(stripBookmarkMetadata(html)).toMatch(
           /<span class="mdn-heading-text">Subheading<span class="mdn-heading-level" aria-hidden="true">H2<\/span><\/span>\s*<\/h2>\s*<button[^>]*class="mdn-section-copy-btn[^\"]*"/s,
         );
       });
@@ -150,7 +154,7 @@ describe('markdown/renderer', () => {
         const tokens = tokenize('Intro text\n\n# Heading');
         const renderer = new HtmlRenderer();
         const { html } = renderer.render(tokens);
-        expect(html).toContain('<p>');
+        expect(stripBookmarkMetadata(html)).toContain('<p>');
       });
     });
 
@@ -159,7 +163,7 @@ describe('markdown/renderer', () => {
         const tokens = tokenize('Hello world');
         const renderer = new HtmlRenderer();
         const { html } = renderer.render(tokens);
-        expect(html).toContain('<p>Hello world</p>');
+        expect(stripBookmarkMetadata(html)).toContain('<p>Hello world</p>');
       });
 
       it('detects video paragraph and renders without <p> wrapper', () => {
@@ -406,7 +410,7 @@ describe('markdown/renderer', () => {
         const tokens: BlockToken[] = [{ type: 'list', ordered: true, start: 1, items: [{ text: 'first', isTask: false, checked: false }] }];
         const renderer = new HtmlRenderer();
         const { html } = renderer.render(tokens);
-        expect(html).not.toContain('start=');
+        expect(html).not.toMatch(/\sstart="/);
       });
 
       it('renders task list with checked item', () => {
@@ -480,7 +484,7 @@ describe('markdown/renderer', () => {
       const renderer = new HtmlRenderer();
       const { html } = renderer.render(tokenize('Before ![First](first.png) after'));
       expect(html).not.toContain('mdn-image-row');
-      expect(html).toMatch(/^<p>/);
+      expect(stripBookmarkMetadata(html)).toMatch(/^<p>/);
     });
 
     it('renders separate image rows when blank lines split paragraphs', () => {

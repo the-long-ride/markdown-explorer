@@ -73,7 +73,7 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).toContain('os: [windows-latest, ubuntu-latest, macos-latest]');
     expect(workflow).toContain('cargo tauri build --bundles nsis');
     expect(workflow).toContain('cargo tauri build --bundles appimage,deb');
-    expect(workflow).toContain('cargo tauri build --bundles dmg');
+    expect(workflow).toContain('cargo tauri build --bundles app,dmg');
   });
 
   test('release workflow generates grouped download notes', () => {

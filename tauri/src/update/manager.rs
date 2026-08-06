@@ -1,13 +1,14 @@
-use crate::app_state::AppState;
+#[cfg(not(test))]
+use {crate::app_state::AppState, tauri::Manager, tauri_plugin_updater::{Update, UpdaterExt}};
 use crate::update::UpdateState;
 use serde_json::json;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager};
-use tauri_plugin_updater::{Update, UpdaterExt};
+use tauri::AppHandle;
 
 const MANIFEST_FILE: &str = "pending-update.json";
 
+#[cfg(not(test))]
 pub struct PendingUpdate {
     pub update: Update,
     pub bytes: Vec<u8>,
@@ -22,6 +23,7 @@ pub fn can_install_updates() -> bool {
     !cfg!(debug_assertions)
 }
 
+#[cfg(not(test))]
 fn file_name_for_update(update: &Update) -> String {
     update
         .download_url
@@ -32,6 +34,7 @@ fn file_name_for_update(update: &Update) -> String {
         .unwrap_or_else(|| format!("markdown-explorer-{}.update", update.version))
 }
 
+#[cfg(not(test))]
 fn set_state(app: &AppHandle, app_state: &AppState, state: UpdateState) {
     app_state.inner.write().update_state = state.clone();
     UpdateManager::emit_state(app, &state);
@@ -107,6 +110,7 @@ impl UpdateManager {
         state
     }
 
+    #[cfg(not(test))]
     pub fn start_download(app: AppHandle, app_state: AppState, requested_version: String) {
         tauri::async_runtime::spawn(async move {
             if requested_version.is_empty() {
@@ -216,6 +220,7 @@ impl UpdateManager {
         });
     }
 
+    #[cfg(not(test))]
     pub fn schedule_downloaded_update(
         app: &AppHandle,
         app_state: &AppState,
@@ -246,6 +251,7 @@ impl UpdateManager {
         Ok(())
     }
 
+    #[cfg(not(test))]
     async fn restore_pending_update(
         app: &AppHandle,
         app_state: &AppState,
@@ -285,6 +291,7 @@ impl UpdateManager {
         Ok(())
     }
 
+    #[cfg(not(test))]
     async fn install_pending_update(
         app: AppHandle,
         app_state: AppState,
@@ -364,16 +371,19 @@ impl UpdateManager {
         app.restart();
     }
 
+    #[cfg(not(test))]
     pub fn restart_and_apply_update(app: AppHandle, app_state: AppState) {
         tauri::async_runtime::spawn(async move {
             let _ = Self::install_pending_update(app, app_state, true).await;
         });
     }
 
+    #[cfg(not(test))]
     pub async fn apply_scheduled_update(app: AppHandle, app_state: AppState) -> Result<bool, String> {
         Self::install_pending_update(app, app_state, false).await
     }
 
+    #[cfg(not(test))]
     pub fn should_apply_on_close(app_state: &AppState) -> bool {
         matches!(
             app_state.inner.read().update_state.status,
