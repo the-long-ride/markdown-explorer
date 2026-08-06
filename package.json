@@ -45,6 +45,7 @@
     "test:desktop": "pnpm run test:electron && pnpm run test:tauri"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

@@ -22,7 +22,7 @@
   "bundle": {
     "active": true,
     "publisher": "the-long-ride",
-    "copyright": "Copyright \u00a9 2026 the-long-ride",
+    "copyright": "Copyright © 2026 the-long-ride",
     "targets": [
       "msi",
       "nsis"
