@@ -11,6 +11,8 @@ related_docs: []
 source_scope:
 - ui/src/components/Content/Content.tsx
 - ui/src/components/Content/ContentTabs.tsx
+- ui/src/components/Content/ContentMainView.tsx
+- ui/src/components/Content/RandomTipCard.tsx
 - ui/src/components/shared/HeaderActionGroups.tsx
 - ui/src/components/Content/useContentScrollMemory.ts
 - ui/src/contexts/contentTabState.ts
@@ -64,6 +66,11 @@ stateDiagram-v2
     Stale --> Closed: close action
 ```
 
+### Toolbar actions & tooltips
+
+- **Section Collapse/Expand Tooltips**: Section toggle controls in document title bar and welcome page expose localized tooltips (`Collapse section` / `Expand section`) matching active collapse state.
+- **Tooltip Centering**: `More Actions` dropdown menu tooltips and action bar controls use measured target-centered alignment with viewport overflow fallback.
+
 ### Cleanup
 
 On close or workspace disposal, remove scroll records, chart instances, media listeners, pending enhancement timers, find highlights, and stale markers belonging to the document.
@@ -77,6 +84,7 @@ On close or workspace disposal, remove scroll records, chart instances, media li
 | Rendered | Document and toolbar | Stale/close |
 | Stale | Visible stale state and refresh | Refresh/close |
 | Preview override | Source or HTML preview selected | Toggle/reset |
+| All closed | Centered `RandomTipCard` with shuffled tips and keyboard hint | Open document |
 
 ## Runtime behavior
 
@@ -141,6 +149,8 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 |---|---|---|
 | Implementation | `ui/src/components/Content/Content.tsx` | Active behavior or contract |
 | Implementation | `ui/src/components/Content/ContentTabs.tsx` | Active behavior or contract |
+| Implementation | `ui/src/components/Content/ContentMainView.tsx` | Content viewport and empty-state routing |
+| Implementation | `ui/src/components/Content/RandomTipCard.tsx` | Centered tip card when all documents are closed |
 | Implementation | `ui/src/components/shared/HeaderActionGroups.tsx` | Active behavior or contract |
 | Implementation | `ui/src/components/Content/useContentScrollMemory.ts` | Active behavior or contract |
 | Implementation | `ui/src/contexts/contentTabState.ts` | Active behavior or contract |

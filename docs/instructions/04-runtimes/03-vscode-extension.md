@@ -14,6 +14,7 @@ source_scope:
 - vscode/src/core/panelNavigation.ts
 - vscode/src/core/panelNavigationHandler.ts
 - vscode/src/core/panelSearch.ts
+- vscode/src/core/panelSearchPreview.ts
 - vscode/src/core/panelShell.ts
 - vscode/src/core/panelWatch.ts
 - vscode/src/core/panelWorkspaceResources.ts
@@ -79,6 +80,7 @@ The extension compiles shared/copied UI assets and packages according to `vscode
 | Implementation | `vscode/src/core/panelNavigation.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelNavigationHandler.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelSearch.ts` | Active behavior or contract |
+| Implementation | `vscode/src/core/panelSearchPreview.ts` | Search document preview routing |
 | Implementation | `vscode/src/core/panelShell.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelWatch.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelWorkspaceResources.ts` | Active behavior or contract |

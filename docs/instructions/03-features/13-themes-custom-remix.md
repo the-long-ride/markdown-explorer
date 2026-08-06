@@ -58,6 +58,15 @@ flowchart LR
 
 `glass` stylesheets/tests do not make `glass` a valid current `ThemeStyle`. Unknown values normalize to `default`. Legacy `pet-shiba-memes` maps to `tokyo-night`; `pet-shiba` maps to `pet-white-shiba`.
 
+### Pet Theme Rail Markers
+
+Pet theme indicator markers use species-tailored SVG assets in `ui/src/assets/themes/pets/rail-markers/`:
+- `cat-paw.svg` (Cat paw with retractable claw vector elements and `aria-label="Cat paw"`)
+- `corgi-paw.svg` (`aria-label="Corgi paw"`)
+- `hamster-paw.svg` (`aria-label="Hamster paw"`)
+- `k-ink-paw.svg` (`aria-label="K-Ink wolf paw"` with shorter claw tip path)
+- `white-shiba-paw.svg` (`aria-label="White shiba paw"`)
+
 ### Raw Grid Theme specific layout
 
 - **Background Grid**: Grid background size set to `48px 48px`.

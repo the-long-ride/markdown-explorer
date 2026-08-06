@@ -12,6 +12,7 @@ source_scope:
 - electron/main.js
 - electron/core/main-bootstrap.js
 - electron/core/main-runtime.js
+- electron/core/ipc-handlers.js
 - electron/window/window.js
 - electron/window/tray.js
 - electron/workspace/scanner.js
@@ -85,6 +86,7 @@ Title enrichment uses up to 32 concurrent reads, 250 ms per read, 1500 ms total 
 | Implementation | `electron/main.js` | Active behavior or contract |
 | Implementation | `electron/core/main-bootstrap.js` | Active behavior or contract |
 | Implementation | `electron/core/main-runtime.js` | Active behavior or contract |
+| Implementation | `electron/core/ipc-handlers.js` | Shell location and IPC command routing |
 | Implementation | `electron/window/window.js` | Active behavior or contract |
 | Implementation | `electron/window/tray.js` | Active behavior or contract |
 | Implementation | `electron/workspace/scanner.js` | Active behavior or contract |

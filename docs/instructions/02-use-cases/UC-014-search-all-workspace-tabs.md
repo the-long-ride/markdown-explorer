@@ -15,6 +15,7 @@ source_scope:
 - ui/src/components/Search/SearchOverlayWorkspaceList.tsx
 - ui/src/components/Search/SearchOverlayResults.tsx
 - ui/src/components/Search/SearchDocumentPreview.tsx
+- ui/src/components/Search/searchOverlayModel.tsx
 - ui/src/components/Search/useSearchOverlayResize.ts
 - electron/search/search-worker-controller.js
 - electron/search/search-worker.js
@@ -196,6 +197,7 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `ui/src/components/Search/SearchOverlay.tsx` | Checked-tab dispatch, preview mode, and modal orchestration |
 | Implementation | `ui/src/components/Search/SearchOverlayWorkspaceList.tsx` | Per-workspace inclusion controls |
 | Implementation | `ui/src/components/Search/SearchDocumentPreview.tsx` | Rendered source preview at selected match |
+| Implementation | `ui/src/components/Search/searchOverlayModel.tsx` | Overlay state model and type definitions |
 | Implementation | `ui/src/components/Search/useSearchOverlayResize.ts` | Workspace/result/preview column resizing |
 | Implementation | `electron/search/search-worker-controller.js` | Active behavior or contract |
 | Implementation | `electron/search/search-worker.js` | Active behavior or contract |

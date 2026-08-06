@@ -13,6 +13,12 @@ source_scope:
 - ui/src/contexts/welcomeTranslations.ts
 - ui/src/contexts/userManualTranslations.ts
 - ui/src/components/Content/welcomeTipsContent.ts
+- ui/src/components/Content/welcomeTipGroups.ts
+- ui/src/components/Content/welcomeLabels.ts
+- ui/src/components/Content/RandomTipCard.tsx
+- ui/src/components/Content/WelcomePage.tsx
+- ui/src/components/Content/WelcomeHero.tsx
+- ui/src/components/Content/WelcomePageIcons.tsx
 - ui/src/components/Content/UserManualTab.tsx
 - ui/src/components/Modal/TermsModal.tsx
 - ui/src/components/Modal/ThemeOnboardingModal.tsx
@@ -41,6 +47,8 @@ Define supported locales, translation fallback, welcome content, first-run terms
 | Localization | Translate application labels for nine supported languages. | UI is understandable to broader users. |
 | Fallback | Use canonical English when key/locale is unavailable. | No blank labels. |
 | Welcome | Features, searchable User manual, shortcuts, tips, and entry actions. | Tasks are discoverable without leaving the app. |
+| Random Tip Card | Display a centered, shuffled tip card when all documents are closed. | Users discover features without opening a document. |
+| Desktop App link | Welcome hero includes a Desktop App download hyperlink for web/browser users. | Browser users discover the native application. |
 | Terms | Require first-run acknowledgement where configured. | Local-file/security expectations are visible. |
 | Theme onboarding | Guide first visual selection once. | New users get a coherent appearance. |
 
@@ -149,6 +157,12 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `ui/src/contexts/userManualTranslations.ts` | User Manual translation model |
 | Implementation | `ui/src/components/Content/UserManualTab.tsx` | Manual search and task cards |
 | Implementation | `ui/src/components/Content/welcomeTipsContent.ts` | Active behavior or contract |
+| Implementation | `ui/src/components/Content/welcomeTipGroups.ts` | Tip card content groups |
+| Implementation | `ui/src/components/Content/welcomeLabels.ts` | Welcome page section labels |
+| Implementation | `ui/src/components/Content/RandomTipCard.tsx` | Centered tip card for empty state |
+| Implementation | `ui/src/components/Content/WelcomePage.tsx` | Welcome page layout and tabs |
+| Implementation | `ui/src/components/Content/WelcomeHero.tsx` | Welcome hero with Desktop App link |
+| Implementation | `ui/src/components/Content/WelcomePageIcons.tsx` | Welcome page section icons |
 | Implementation | `ui/src/components/Modal/TermsModal.tsx` | Active behavior or contract |
 | Implementation | `ui/src/components/Modal/ThemeOnboardingModal.tsx` | Active behavior or contract |
 | Verification | `tests/unit/ui/contexts/translations.test.ts` | Automated expectation |

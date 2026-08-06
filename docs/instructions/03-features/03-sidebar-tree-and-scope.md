@@ -16,11 +16,16 @@ source_scope:
 - ui/src/components/Sidebar/TreeNode.tsx
 - ui/src/components/Sidebar/SidebarFilesActions.tsx
 - ui/src/components/Sidebar/SidebarSortMenu.tsx
+- ui/src/components/Sidebar/SidebarScopeControls.tsx
+- ui/src/components/Sidebar/sidebarItemMenuItems.tsx
 - ui/src/components/Sidebar/sidebarTreeFiltering.ts
 - ui/src/components/Sidebar/sidebarTreeOrdering.ts
 - ui/src/components/Sidebar/sidebarPinIcons.tsx
 - ui/src/components/Sidebar/sidebarWorkspacePreferences.ts
+- ui/src/components/Sidebar/sidebarActiveFolders.ts
 - ui/src/components/Sidebar/useSidebarCursorNavigation.ts
+- ui/src/components/Sidebar/useSidebarPinnedSorting.ts
+- ui/src/components/Sidebar/useSidebarScopeFocus.ts
 - ui/src/hooks/useResize.ts
 - ui/src/styles/global/global-sidebar-search-controls.css
 test_scope:
@@ -75,6 +80,7 @@ flowchart LR
 ### Tree ordering, sorting, and pin controls
 
 - **Folders-first Ordering**: By default (`name-asc`), unpinned folders are always listed before files at each directory level, with items within each group sorted alphabetically ascending (A-Z).
+- **Sort Modes**: `SidebarSortMenu` offers three sort modes: `name-asc` (A-Z, default), `name-desc` (Z-A), and `modified-desc` (recently modified first).
 - **Root Level Pin Hoisting**: When a file or folder located inside a parent folder is pinned, it is hoisted and displayed at the root level of the sidebar tree instead of remaining inside its parent folder.
 - **Revocable Sorting**: Clicking the currently active sort mode in `SidebarSortMenu` revokes active sorting and resets the workspace sort mode back to `DEFAULT_SIDEBAR_SORT_MODE` (`name-asc`).
 - **Toolbar Actions Sequence**: Sidebar toolbar buttons are arranged in exact sequence: `Sort` (left), `Clear Pins`, `Locate`, `Collapse All`, `Expand All` (right).
@@ -172,8 +178,13 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 |---|---|---|
 | Implementation | `ui/src/components/Sidebar/Sidebar.tsx` | Active behavior or contract |
 | Implementation | `ui/src/components/Sidebar/TreeNode.tsx` | Active behavior or contract |
+| Implementation | `ui/src/components/Sidebar/SidebarScopeControls.tsx` | Scope focus controls |
+| Implementation | `ui/src/components/Sidebar/sidebarItemMenuItems.tsx` | Right-click context menu items |
 | Implementation | `ui/src/components/Sidebar/sidebarTreeFiltering.ts` | Active behavior or contract |
+| Implementation | `ui/src/components/Sidebar/sidebarActiveFolders.ts` | Active folder tracking |
 | Implementation | `ui/src/components/Sidebar/useSidebarCursorNavigation.ts` | Active behavior or contract |
+| Implementation | `ui/src/components/Sidebar/useSidebarPinnedSorting.ts` | Pinned item sort ordering |
+| Implementation | `ui/src/components/Sidebar/useSidebarScopeFocus.ts` | Per-workspace scope focus |
 | Implementation | `ui/src/hooks/useResize.ts` | Active behavior or contract |
 | Verification | `tests/unit/ui/components/sidebar-render.test.tsx` | Automated expectation |
 | Verification | `tests/unit/ui/components/sidebar-search-pure.test.ts` | Automated expectation |
