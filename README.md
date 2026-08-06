@@ -59,6 +59,14 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
   - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
 
+- **Pin & Bookmarks**
+  - **Sidebar Pinning**: Pin any file or folder to the top of the sidebar for fast one-click access. Pinned items inside subfolders are hoisted and displayed at the root level of the file tree.
+  - **Persistent Bookmarks**: Save named bookmarks from selected document text. Jump back to the exact location with search-style highlighting, and manage items through rename, delete, and three-dot or right-click menus.
+  - **Source-Anchored Targets**: Bookmarks store the exact Markdown source range and a fingerprint so they survive edits and relocate contextually. Multi-line, mixed-format, LaTeX, Mermaid, image, and link selections are all supported. Repeated content resolves to the saved occurrence; edited targets report **Target changed** instead of jumping incorrectly.
+  - **Bookmark Sidebar Tab**: Dedicated sidebar tab with live saved-count badge, sort controls, and instant search. Tab View groups bookmarks by workspace; Focus View shows only the current workspace.
+  - **Batch Management**: Checkbox selection mode with confirmed batch deletion (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Chromium / Web).
+  - **Fully Localized**: All pin and bookmark labels, dialogs, empty/error states, and actions are available in English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
+
 - **Document Previews & Rich Media**
   - **HTML Document Modes**: Open `.html` and `.htm` files as isolated interactive previews or converted Markdown, switch active tab with `Ctrl+Alt+H`, and use **Open in Browser** when full browser behavior is needed (with embedded local CSS/JS support).
   - **Responsive Image Rows**: Same-paragraph Markdown images stay together across viewport sizes.

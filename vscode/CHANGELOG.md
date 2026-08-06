@@ -2,6 +2,8 @@
 
 All notable changes to the **Markdown Explorer** extension will be documented in this file.
 
+> **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
+
 ## [v1.6.3] — 2026-08-04
 
 ### Added
