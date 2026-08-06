@@ -297,7 +297,7 @@ export function ToolbarActionMenu({
               onlyIcon={false}
               disabled={item.disabled}
               tooltipPos="above"
-              tooltipAlign="left"
+              tooltipAlign="center"
             >
               {typeof item.toggleState === "boolean" && (
                 <span

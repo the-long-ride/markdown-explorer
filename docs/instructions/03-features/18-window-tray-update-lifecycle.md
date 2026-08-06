@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Desktop Window, Tray, Startup, and Update Lifecycle
 topic: Desktop Window, Tray, Startup, and Update Lifecycle
 document_type: specification
@@ -16,11 +16,16 @@ source_scope:
 - electron/update/update-manager.js
 - tauri/tauri.conf.json
 - tauri/src/core/bootstrap.rs
+- tauri/src/update/manager.rs
+- tauri/src/dispatcher/commands_window_update.rs
+- scripts/configure-tauri-updater.mjs
+- .github/workflows/release.yml
 test_scope:
 - tests/unit/electron/main.test.ts
 - tests/unit/electron/tray.test.ts
 - tests/unit/electron/window.test.ts
 - tests/node/packaged-runtime-contract.test.mjs
+- tests/node/tauri-updater-contract.test.mjs
 runtime_scope:
 - electron
 - tauri
@@ -43,7 +48,7 @@ Define single-instance startup, external-path queue, frameless controls, native 
 | Window controls | Minimize, maximize, close, fullscreen, zoom. | Frameless desktop remains controllable. |
 | Tray | Open/focus and explicit Quit. | Desktop app can remain accessible. |
 | Platform lifecycle | Apply macOS vs non-mac window-close behavior. | OS conventions are respected. |
-| Updater | Gate download/schedule/apply by package capability. | Supported installations update safely. |
+| Updater | Gate download/schedule/apply by package capability; preserve matching Electron/Tauri choices and states. | Supported installations update safely. |
 
 ## Interaction and processing flow
 
@@ -68,6 +73,17 @@ flowchart LR
 
 1280×800 default, 720×480 minimum, frameless, restored state, single-instance/file-drop integration, and configured updater support only when deployment keys/endpoints are valid.
 
+
+## Tauri signed updater lifecycle
+
+- Initialize `tauri-plugin-updater` and `tauri-plugin-process` during bootstrap.
+- Check endpoint metadata and require an exact requested-version match.
+- Download through the plugin so signatures are verified before staging.
+- Emit bounded progress and persist downloaded/scheduled state with staged bytes.
+- **Update on Close** intercepts the close request, installs the scheduled artifact, then restarts.
+- **Restart Now** installs a downloaded artifact immediately, then restarts.
+- After relaunch, reconstruct the `Update` descriptor from the endpoint and reuse persisted verified bytes.
+- Failed installation restores retryable staged state and leaves the current app usable.
 
 ## States and failure behavior
 
@@ -146,11 +162,16 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `electron/window/tray.js` | Active behavior or contract |
 | Implementation | `electron/update/update-manager.js` | Active behavior or contract |
 | Implementation | `tauri/tauri.conf.json` | Active behavior or contract |
-| Implementation | `tauri/src/core/bootstrap.rs` | Active behavior or contract |
+| Implementation | `tauri/src/core/bootstrap.rs` | Plugin setup and close interception |
+| Implementation | `tauri/src/update/manager.rs` | Verified download, persistence, install, restart |
+| Implementation | `tauri/src/dispatcher/commands_window_update.rs` | Electron-compatible updater commands |
+| Implementation | `scripts/configure-tauri-updater.mjs` | Public-key release configuration |
+| Implementation | `.github/workflows/release.yml` | Signed updater artifacts and signatures |
 | Verification | `tests/unit/electron/main.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/tray.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/window.test.ts` | Automated expectation |
 | Verification | `tests/node/packaged-runtime-contract.test.mjs` | Automated expectation |
+| Verification | `tests/node/tauri-updater-contract.test.mjs` | Official plugin, state parity, and artifact-signing contract |
 
 ---
 

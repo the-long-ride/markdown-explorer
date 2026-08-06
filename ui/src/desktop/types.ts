@@ -1,3 +1,4 @@
+import type { BookmarkRecord } from '../bookmarks/types.ts';
 import type {
   FolderNode,
   Frontmatter,
@@ -46,6 +47,8 @@ export interface PendingSearchJump {
   matchOrdinal?: number;
   matchIndex?: number;
   matchCase?: boolean;
+  failureMessage?: string;
+  bookmark?: BookmarkRecord;
   token: number;
 }
 

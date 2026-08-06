@@ -10,7 +10,7 @@ import { HtmlPreviewIcon, InternetIcon, MarkdownViewIcon, OpenFolderLocationIcon
 import { isHtmlDocumentPath } from '../Content/HtmlDocumentView';
 import type { SidebarItemMenuItem } from './SidebarItemMenu';
 import type { SidebarItemMenuTarget } from './TreeNode';
-import { ClearPinsIcon, PinIcon } from './sidebarPinIcons';
+import { PinIcon, UnpinIcon } from './sidebarPinIcons';
 
 interface SidebarItemMenuOptions {
   state: AppState;
@@ -36,7 +36,7 @@ export function buildSidebarItemMenuItems({
     items.push({
       id: 'unpin',
       label: t.sidebar.unpinItem || 'Unpin',
-      icon: <ClearPinsIcon />,
+      icon: <UnpinIcon />,
       onSelect: () => onTogglePin(pinItem),
     });
   } else {

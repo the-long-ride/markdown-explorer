@@ -345,32 +345,30 @@
 /* Sidebar Tab Strip */
 .sidebar__tab-strip {
   display: flex;
-  flex-shrink: 0;
+  min-width: 0;
+  flex: 0 1 auto;
+  gap: 2px;
   position: relative;
 }
 
 .sidebar__tab-btn {
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: none;
   border: none;
+  padding: 2px 7px 6px;
+  background: none;
   color: var(--txm);
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px 6px;
   cursor: pointer;
-  transition: color 0.18s ease;
+  transition: color 0.18s ease, background 0.18s ease;
   text-transform: none;
   white-space: nowrap;
-  min-width: 96px;
-}
-
-.sidebar__tab-btn--files {
-  min-width: 72px;
 }
 
 .sidebar__tab-btn svg {
@@ -379,10 +377,7 @@
 
 .sidebar__tab-btn span {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
-
 
 .sidebar__tab-btn:hover {
   color: var(--tx);
@@ -396,52 +391,53 @@
   position: absolute;
   bottom: 0;
   left: 0;
+  width: 0;
   height: 2px;
-  width: 50%;
-  background: var(--accent);
   border-radius: 1px;
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--accent);
+  transform: translateX(0);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), width 0.22s ease;
   pointer-events: none;
 }
 
-/* Sidebar Tab Panel — directional slide */
-@keyframes sidebar-slide-from-right {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
+/* Every sidebar tab enters through directional smooth slide transition. */
+@keyframes sidebar-panel-enter-from-right {
+  from { opacity: 0; transform: translate3d(20px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-@keyframes sidebar-slide-from-left {
-  from { opacity: 0; transform: translateX(-20px); }
-  to   { opacity: 1; transform: translateX(0); }
+
+@keyframes sidebar-panel-enter-from-left {
+  from { opacity: 0; transform: translate3d(-20px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
+
 .sidebar__tab-panel {
   display: flex;
-  flex-direction: column;
-  flex: 1;
   min-height: 0;
+  flex: 1;
+  flex-direction: column;
   overflow: hidden;
 }
+
+.sidebar__tab-panel.is-active {
+  animation: sidebar-panel-enter-from-right 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sidebar__tab-panel.is-active.is-from-right {
+  animation: sidebar-panel-enter-from-right 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sidebar__tab-panel.is-active.is-from-left {
+  animation: sidebar-panel-enter-from-left 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .sidebar__tab-panel.is-hidden {
   display: none !important;
-}
-@keyframes sidebar-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.sidebar__header-fields {
-  animation: sidebar-fade-in 0.22s ease-out both;
-}
-.sidebar__tree--from-right {
-  animation: sidebar-slide-from-right 0.22s ease-out both;
-}
-.sidebar__tree--from-left {
-  animation: sidebar-slide-from-left 0.22s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar__tab-indicator { transition: none; }
-  .sidebar__header-fields,
-  .sidebar__tree--from-right,
-  .sidebar__tree--from-left { animation: none; }
+  .sidebar__tab-panel.is-active { animation: none; }
   .sidebar__title-actions { animation: none; }
 }
 

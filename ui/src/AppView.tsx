@@ -29,6 +29,9 @@ export function AppView(props: any) {
   state,
   activeTabId,
   tabs,
+  bookmarkWorkspaces,
+  activeBookmarkWorkspaceKey,
+  handleBookmarkNavigate,
   activateTab,
   createNewWorkspaceTab,
   closeTab,
@@ -189,6 +192,10 @@ export function AppView(props: any) {
             <Sidebar
               cursorMode={sidebarCursorMode}
               onCursorModeClose={closeSidebarCursorMode}
+              bookmarkViewMode={isTabView ? 'tabs' : 'focus'}
+              bookmarkWorkspaces={bookmarkWorkspaces}
+              activeBookmarkWorkspaceKey={activeBookmarkWorkspaceKey}
+              onBookmarkNavigate={handleBookmarkNavigate}
             />
             <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
             <div className="content-shell">

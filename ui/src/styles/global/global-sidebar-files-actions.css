@@ -2,14 +2,44 @@
 .sidebar__files-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 6px;
   margin-top: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.sidebar__files-action-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.sidebar__sort-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx2);
+  user-select: none;
+}
+
+.sidebar__sort-status svg {
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.sidebar__sort-status-icon-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 .sidebar__files-action {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 24px;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -42,12 +72,14 @@
   cursor: default;
 }
 
-.sidebar__files-action.is-open {
+.sidebar__files-action.is-open,
+.sidebar__files-action.is-active {
   color: var(--accent-text);
   background: var(--accent-dim);
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--bd-s));
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--bd-s));
 }
 
 .sidebar-pin-clear-icon__x {
   color: var(--danger);
 }
+

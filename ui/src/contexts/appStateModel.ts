@@ -83,7 +83,7 @@ export interface AppState {
   canInstallUpdates: boolean;
   focusMode: boolean;
   updateState: UpdateState;
-  sidebarActiveTab: 'files' | 'search';
+  sidebarActiveTab: 'files' | 'search' | 'bookmarks';
 }
 
 export type Action =
@@ -153,7 +153,7 @@ export type Action =
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean }
   | { type: 'TOGGLE_FOCUS_MODE' }
-  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: 'files' | 'search' }
+  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: 'files' | 'search' | 'bookmarks' }
   | { type: 'SET_SIDEBAR_COLLAPSED'; collapsed: boolean };
 
 export function createEmptyUpdateState(): UpdateState {
@@ -203,6 +203,7 @@ export const initialState: AppState = {
     defaultHtmlCodeBlockPreview: true,
     defaultCsvPreview: true,
     fileTabs: false,
+    bookmarksEnabled: false,
     documentConversion: false,
     scopeFocus: {},
     searchScopeFocus: {},
@@ -272,6 +273,7 @@ export function createInitialState(
       defaultHtmlCodeBlockPreview: saved.defaultHtmlCodeBlockPreview ?? saved.defaultHtmlPreview !== false,
       defaultCsvPreview: saved.defaultCsvPreview !== false,
       fileTabs: saved.fileTabs === true,
+      bookmarksEnabled: saved.bookmarksEnabled === true,
       documentConversion: saved.documentConversion === true,
       scopeFocus: saved.scopeFocus ?? {},
       searchScopeFocus: saved.searchScopeFocus ?? {},

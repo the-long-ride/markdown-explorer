@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Application Coverage Matrix
 topic: Complete use-case, feature, protocol, runtime, and quality coverage
 document_type: specification
@@ -31,7 +31,7 @@ keywords:
 
 ## Coverage declaration
 
-This matrix covers **30 end-to-end use cases**, **20 feature specifications**, **5 product runtimes plus parity**, **36 UI→host commands**, and **18 host→UI messages** from the active source tree.
+This matrix covers **31 end-to-end use cases**, **21 feature specifications**, **5 product runtimes plus parity**, **36 UI→host commands**, and **18 host→UI messages** from the active source tree.
 
 Coverage means the behavior has:
 
@@ -76,6 +76,7 @@ Coverage means the behavior has:
 | [UC-028: Recover from Errors and Unavailable Workspaces](../02-use-cases/UC-028-errors-recovery-unavailable.md) | [Feature](../03-features/19-errors-recovery-observability.md) | `refresh`, `deleteRecentWorkspace`, `openFolder` | Source + test traced |
 | [UC-029: Use Welcome, Help, and Localization](../02-use-cases/UC-029-welcome-help-localization.md) | [Feature](../03-features/15-localization-welcome-onboarding.md) | `openExternal` | Source + test traced |
 | [UC-030: Copy, Edit, Open in Browser, and Export Content](../02-use-cases/UC-030-copy-edit-browser-snapshot.md) | [Feature](../03-features/07-code-blocks-and-copy.md) | `copyCode`, `openInEditor`, `openHtmlPreview`, `openExternal` | Source + test traced |
+| [UC-031: Save and Navigate Source-Anchored Bookmarks](../02-use-cases/UC-031-manage-bookmarks.md) | [Feature](../03-features/21-bookmarks.md) | Mixed Markdown/object capture, v2 local store, exact open-workspace navigation | Source + test traced |
 
 ## Cross-cutting coverage
 

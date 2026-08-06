@@ -182,4 +182,4 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 ---
 
-[← Use Welcome, Help, and Localization](UC-029-welcome-help-localization.md) · [Documentation index](../README.md) · [Workspace Selection and Application Shell →](../03-features/01-workspace-selection-shell.md)
+[← Use Welcome, Help, and Localization](UC-029-welcome-help-localization.md) · [Documentation index](../README.md) · [Save and Navigate Document Bookmarks →](UC-031-manage-bookmarks.md)

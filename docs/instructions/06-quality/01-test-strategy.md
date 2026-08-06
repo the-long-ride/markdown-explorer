@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-03T12:01:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Test Strategy
 topic: Test layers, ownership, and regression expectations
 document_type: quality
@@ -70,6 +70,20 @@ Dependency-light contracts: `tests/node/search-case-runtime.test.mjs`, `tests/no
 | Modal interaction | Row click selects; Preview defaults on and positions the rendered file; visible tooltip arrow opens. |
 | Layout | Both separators expose translated labels and preserve bounded modal columns; active result has no rail. |
 | Localization | Every key in the shared `search` domain exists for all nine locales. |
+
+## Bookmark and updater regression matrix
+
+| Boundary | Required proof |
+|---|---|
+| Bookmark model | v1→v2 migration, exact source anchors, mixed multiline fragments, repeated occurrence, edit relocation, object identity, ambiguity protection. |
+| Persistence | Add/rename/delete/reload, verified write/read-back, silent storage failure, atomic batch delete, and corrupt/unknown version-2 fallback. |
+| Renderer/capture | Block source metadata plus mixed DOM Range, LaTeX, Mermaid, image, code, and link capture. |
+| UI wiring | Natural-width tabs, shared transition, equal search rows, active count, two-row controls, batch selection, supplied icons/tooltips, translated green success/red error toast feedback, and nine locales. |
+| Navigation | Workspace/file validation, exact source/object lookup, transient highlight, and target-changed no-jump behavior. |
+| User manual | Second welcome tab, search, task sections, action events, platform shortcut labels, and nine-locale copy. |
+| Tauri updater | Official plugin initialization, verified download/install, progress, deferred restore, close apply, restart apply, signed artifact workflow. |
+
+Dependency-light suites: `tests/node/bookmarks.test.mjs`, `tests/node/bookmark-*.test.mjs`, `tests/node/bookmark-save-feedback.test.mjs`, `tests/node/sidebar-focus-search-layout.test.mjs`, `tests/node/user-manual-home.test.mjs`, and `tests/node/tauri-updater-contract.test.mjs`. The focus-aware search suite proves that changing scope with an existing query reruns search and excludes unfocused files.
 
 ## Source traceability
 

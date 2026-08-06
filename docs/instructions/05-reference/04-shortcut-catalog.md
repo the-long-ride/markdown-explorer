@@ -18,6 +18,7 @@ test_scope:
 - tests/unit/ui/hooks/useKeyboard.test.ts
 - tests/unit/ui/hooks/resolveKeyboardAction.test.ts
 - tests/unit/ui/utils/shortcuts.test.ts
+- tests/node/bookmark-shortcut-settings.test.mjs
 runtime_scope:
 - shared
 keywords:
@@ -42,6 +43,7 @@ keywords:
 | `expandAll` | Ctrl+Shift+E | Same |
 | `workspaceSelection` | Ctrl+Alt+W | Ctrl+N |
 | `toggleSidebar` | Alt+A | Ctrl+B |
+| `openBookmarks` | Alt+Shift+B | Ctrl+Shift+B |
 | `toggleToc` | Alt+C | Ctrl+T |
 | `sidebarCursorMode` | Alt+Z | Same |
 | `zoomIn` | Ctrl+= | Same |
@@ -64,6 +66,7 @@ keywords:
 - `Ctrl+Space` is not an acceptable custom binding because it conflicts with IME input.
 - Editable inputs/textareas/selects/contenteditable retain normal typing unless a specific guarded action applies.
 - User bindings override defaults; `disabledKeybindings[actionId]` removes the action binding.
+- `openBookmarks` selects the Bookmarks tab when enabled; otherwise it opens Settings focused on **Enable Bookmark feature**.
 
 ## Source traceability
 
@@ -76,6 +79,7 @@ keywords:
 | Verification | `tests/unit/ui/hooks/useKeyboard.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/hooks/resolveKeyboardAction.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/utils/shortcuts.test.ts` | Automated expectation |
+| Verification | `tests/node/bookmark-shortcut-settings.test.mjs` | Bookmark defaults, routing, setting focus, and reset warning style |
 
 ---
 

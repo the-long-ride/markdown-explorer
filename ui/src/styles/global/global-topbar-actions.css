@@ -184,7 +184,9 @@ body {
 }
 
 .toolbar-action-menu__item .tooltip-text {
-  z-index: 99999999;
+  z-index: 400000;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .toolbar-action-menu__item:hover,

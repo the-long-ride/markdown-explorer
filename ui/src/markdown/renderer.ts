@@ -28,7 +28,14 @@ const YOUTUBE_PARAGRAPH_RE = /https?:\/\/(?:www\.)?(?:youtube(?:-nocookie)?\.com
 
 const IMAGE_ONLY_MARKDOWN_RE = /\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)|!\[[^\]]*\]\([^)]+\)/g;
 
-function renderImageRowParagraph(text: string, isMdx: boolean): string | null {
+function sourceAttributes(token: BlockToken, kind: 'text' | 'math' = 'text'): string {
+  const start = token.sourceStart ?? 0;
+  const end = token.sourceEnd ?? start;
+  return `data-mdn-source-start="${start}" data-mdn-source-end="${end}" data-mdn-bookmark-kind="${kind}"`;
+}
+
+function renderImageRowParagraph(token: Extract<BlockToken, { type: 'paragraph' }>, isMdx: boolean): string | null {
+  const text = token.text;
   const matches = Array.from(text.matchAll(IMAGE_ONLY_MARKDOWN_RE));
   if (matches.length < 2) return null;
 
@@ -43,7 +50,7 @@ function renderImageRowParagraph(text: string, isMdx: boolean): string | null {
   const items = matches.map((match) =>
     `<span class="mdn-image-row__item">${renderInline(match[0], isMdx)}</span>`,
   ).join('');
-  return `<div class="mdn-image-row" style="--mdn-image-count:${matches.length}">${items}</div>`;
+  return `<div class="mdn-image-row" ${sourceAttributes(token)} style="--mdn-image-count:${matches.length}">${items}</div>`;
 }
 
 export interface HtmlRendererOptions {
@@ -164,7 +171,7 @@ export class HtmlRenderer {
     return `<section class="mdn-section mdn-section--h${level}" id="${id}" data-expanded="true">
   <div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true">
     <${`h${level}`} class="mdn-section-title">
-      <span class="mdn-heading-text">${headingHtml}<span class="mdn-heading-level" aria-hidden="true">H${level}</span></span>
+      <span class="mdn-heading-text" ${sourceAttributes(section.heading)}>${headingHtml}<span class="mdn-heading-level" aria-hidden="true">H${level}</span></span>
     </${`h${level}`}>
     ${copyBtnHtml}
     <span class="mdn-section-chevron" aria-hidden="true">
@@ -182,13 +189,13 @@ export class HtmlRenderer {
       case 'heading':    return this.renderSubHeading(token);
       case 'paragraph':
         if (token.isJsx || (this.isMdx && /^\s*</.test(token.text))) {
-          return renderInline(token.text, true);
+          return `<div class="mdn-mdx-block" ${sourceAttributes(token)}>${renderInline(token.text, true)}</div>`;
         }
         if (this.isVideoParagraph(token.text)) {
-          return renderInline(token.text, this.isMdx);
+          return `<div class="mdn-media-paragraph" ${sourceAttributes(token)}>${renderInline(token.text, this.isMdx)}</div>`;
         }
-        return renderImageRowParagraph(token.text, this.isMdx)
-          ?? `<p>${renderInline(token.text, this.isMdx)}</p>`;
+        return renderImageRowParagraph(token, this.isMdx)
+          ?? `<p ${sourceAttributes(token)}>${renderInline(token.text, this.isMdx)}</p>`;
       case 'html-comment': return this.renderHtmlComment(token);
       case 'math':       return this.renderMath(token);
       case 'code':       return renderCodeBlock(token, {
@@ -200,7 +207,7 @@ export class HtmlRenderer {
       case 'blockquote': return this.renderBlockquote(token);
       case 'table':      return this.renderTable(token);
       case 'list':       return this.renderList(token);
-      case 'hr':         return '<hr class="mdn-divider" />';
+      case 'hr':         return `<hr class="mdn-divider" ${sourceAttributes(token)} />`;
     }
   }
 
@@ -209,7 +216,7 @@ export class HtmlRenderer {
     const html = renderInline(token.text, this.isMdx);
     this.toc.push({ level: token.level, text: token.text, id });
     return `<h${token.level} class="mdn-subheading" id="${id}" tabindex="-1">
-  <span class="mdn-heading-text">${html}<span class="mdn-heading-level" aria-hidden="true">H${token.level}</span></span>
+  <span class="mdn-heading-text" ${sourceAttributes(token)}>${html}<span class="mdn-heading-level" aria-hidden="true">H${token.level}</span></span>
 </h${token.level}>`;
 }
 
@@ -224,11 +231,11 @@ export class HtmlRenderer {
 
   private renderMath(token: MathBlockToken): string {
     const source = token.content.trim();
-    return `<div class="mdn-math mdn-math-block" data-math="${encodeURIComponent(source)}"><pre>${escHtml(source)}</pre></div>`;
+    return `<div class="mdn-math mdn-math-block" ${sourceAttributes(token, 'math')} data-mdn-math-source="${encodeURIComponent(source)}" data-math="${encodeURIComponent(source)}"><pre>${escHtml(source)}</pre></div>`;
   }
 
   private renderHtmlComment(token: HtmlCommentToken): string {
-    return `<div class="mdn-html-comment" role="note"><code>${escHtml(token.content)}</code></div>`;
+    return `<div class="mdn-html-comment" ${sourceAttributes(token)} role="note"><code>${escHtml(token.content)}</code></div>`;
   }
 
   private renderBlockquote(token: BlockquoteToken): string {
@@ -254,7 +261,7 @@ export class HtmlRenderer {
         bodyHtml = bodyTokens.map(b => this.renderBlock(b)).join('');
       }
 
-      return `<div class="mdn-callout mdn-callout--${type}" role="note">
+      return `<div class="mdn-callout mdn-callout--${type}" ${sourceAttributes(token)} role="note">
   <div class="mdn-callout-header">
     <span class="mdn-callout-icon" aria-hidden="true">${ICONS[type] ?? '📌'}</span>
     <span class="mdn-callout-label">${callout[1].toUpperCase()}</span>
@@ -263,15 +270,15 @@ export class HtmlRenderer {
 </div>`;
     }
 
-    return `<blockquote class="mdn-blockquote">${renderInline(token.lines.join('\n'), this.isMdx)}</blockquote>`;
+    return `<blockquote class="mdn-blockquote" ${sourceAttributes(token)}>${renderInline(token.lines.join('\n'), this.isMdx)}</blockquote>`;
   }
 
   private renderTable(token: TableToken): string {
-    return renderInteractiveTable({
+    return `<div class="mdn-table-source" ${sourceAttributes(token)}>${renderInteractiveTable({
       headers: token.headers,
       rows: token.rows,
       align: token.align,
-    }, this.isMdx);
+    }, this.isMdx)}</div>`;
   }
 
   private renderList(token: ListToken): string {
@@ -292,7 +299,7 @@ export class HtmlRenderer {
       }
       return `<li class="mdn-list-item">${renderInline(item.text, this.isMdx)}${nestedContent}</li>`;
     }).join('');
-    return `<${tag}${startAttr} class="${cls}">${items}</${tag}>`;
+    return `<${tag}${startAttr} class="${cls}" ${sourceAttributes(token)}>${items}</${tag}>`;
   }
 
   private renderNestedMarkdown(markdown: string): string {

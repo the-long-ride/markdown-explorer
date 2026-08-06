@@ -87,6 +87,7 @@ flowchart LR
 - Custom themes are capped at 24.
 - Background accepts png/jpeg/webp/gif data URLs within configured size.
 - Layout numeric values are clamped to documented ranges.
+- Pet theme rail markers are organized in `ui/src/assets/themes/pets/rail-markers/` with species-tailored SVG designs (`cat-paw.svg`, `hamster-paw.svg`, `corgi-paw.svg`, `white-shiba-paw.svg`, `k-ink-paw.svg`).
 
 
 ## Protocol effects

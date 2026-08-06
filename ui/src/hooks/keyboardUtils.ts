@@ -71,6 +71,7 @@ export type KeyboardAction =
   | { type: 'expand-all' }
   | { type: 'workspace-selection' }
   | { type: 'toggle-sidebar' }
+  | { type: 'open-bookmarks' }
   | null;
 
 export interface KeyboardState {
@@ -92,6 +93,7 @@ export interface KeyboardState {
   hasOnWelcome: boolean;
   hasOnToggleToc: boolean;
   hasOnLocateFile: boolean;
+  hasOnOpenBookmarks: boolean;
   hasOnOpenCurrentDocumentLocation?: boolean;
   hasOnToggleFocusMode: boolean;
   hasOnToggleDesktopViewMode: boolean;
@@ -207,6 +209,11 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
 
   if (state.hasOnLocateFile && !state.isEditableTarget && matchesShortcut(e, state.keybindings.locateFile)) {
     return { type: 'locate-file' };
+  }
+
+  if (state.hasOnOpenBookmarks && !state.isEditableTarget && matchesShortcut(e, state.keybindings.openBookmarks)) {
+    if (state.isRepeat) return null;
+    return { type: 'open-bookmarks' };
   }
 
   if (

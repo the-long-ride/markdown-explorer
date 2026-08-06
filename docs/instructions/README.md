@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Markdown Explorer Application Specification
 topic: Documentation index and agent reading entry point
 document_type: specification
@@ -91,6 +91,7 @@ This folder is a source-derived specification of the active application. It is o
 - [Recover from Errors and Unavailable Workspaces](02-use-cases/UC-028-errors-recovery-unavailable.md) — Use case UC-028
 - [Use Welcome, Help, and Localization](02-use-cases/UC-029-welcome-help-localization.md) — Use case UC-029
 - [Copy, Edit, Open in Browser, and Export Content](02-use-cases/UC-030-copy-edit-browser-snapshot.md) — Use case UC-030
+- [Save and Navigate Source-Anchored Bookmarks](02-use-cases/UC-031-manage-bookmarks.md) — Use case UC-031
 
 ### Features
 - [Workspace Selection and Application Shell](03-features/01-workspace-selection-shell.md) — Workspace Selection and Application Shell
@@ -113,6 +114,7 @@ This folder is a source-derived specification of the active application. It is o
 - [Desktop Window, Tray, Startup, and Update Lifecycle](03-features/18-window-tray-update-lifecycle.md) — Desktop Window, Tray, Startup, and Update Lifecycle
 - [Errors, Recovery, Status, and Observability](03-features/19-errors-recovery-observability.md) — Errors, Recovery, Status, and Observability
 - [Performance, Incremental Work, and Enhancement Scheduling](03-features/20-performance-enhancement-scheduling.md) — Performance, Incremental Work, and Enhancement Scheduling
+- [Source-Anchored Document Bookmarks](03-features/21-bookmarks.md) — Mixed Markdown/object capture, exact occurrences, batch management, and safe relocation
 
 ### Runtimes
 - [Electron Desktop Runtime](04-runtimes/01-electron-desktop.md) — Electron host behavior, services, packaging, and Windows/macOS/Linux lifecycle

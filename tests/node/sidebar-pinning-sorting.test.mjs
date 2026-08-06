@@ -36,7 +36,7 @@ test('sidebar toolbar exposes clear pins and sort controls', async () => {
   assert.match(`${sidebar}\n${pinsHook}`, /sidebarPinnedItems/);
   assert.match(`${sidebar}\n${pinsHook}`, /sidebarSortModes/);
   assert.match(icons, /fill="currentColor"/);
-  assert.match(icons, /sidebar-pin-clear-icon__x/);
+  assert.match(icons, /UnpinIcon/);
 });
 
 test('sidebar sort menu revokes active sort back to default when clicked', async () => {
@@ -58,14 +58,14 @@ test('sidebar toolbar places buttons in order 3, 2, 1, 4, 5 (sort, clear-pins, l
   assert.ok(collapseIndex < expandIndex, 'collapse should be before expand');
 });
 
-test('sidebar icons and unpin item menu utilize enlarged ClearPinsIcon', async () => {
+test('sidebar icons and unpin item menu utilize UnpinIcon', async () => {
   const [iconsSource, itemMenuSource] = await Promise.all([
     read('ui/src/components/Sidebar/sidebarPinIcons.tsx'),
     read('ui/src/components/Sidebar/sidebarItemMenuItems.tsx'),
   ]);
-  assert.match(iconsSource, /strokeWidth="14"/);
-  assert.match(iconsSource, /M25 25l64 64/);
-  assert.match(itemMenuSource, /id:\s*'unpin'[\s\S]*icon:\s*<ClearPinsIcon \/>/);
+  assert.match(iconsSource, /viewBox="0 0 512 512"/);
+  assert.match(iconsSource, /var\(--accent, #EF4136\)/);
+  assert.match(itemMenuSource, /id:\s*'unpin'[\s\S]*icon:\s*<UnpinIcon \/>/);
 });
 
 test('settings persist workspace pins sort modes and maximum pin count', async () => {

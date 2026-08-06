@@ -12,6 +12,7 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "rewriteRelativeImportExtensions": true,
     "sourceMap": true,
     "declaration": true
   },

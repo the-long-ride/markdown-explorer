@@ -82,7 +82,7 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, disabled, tooltip, children, className, shortcut, icon, ...props }: any) =>
+  TooltipButton: ({ onClick, disabled, tooltip, children, className, shortcut, icon, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) =>
     React.createElement(
       'button',
       { onClick, disabled, title: tooltip, className, 'data-shortcut': shortcut, ...props },

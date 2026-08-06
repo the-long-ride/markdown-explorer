@@ -160,7 +160,7 @@ test('sidebar menu aligns to the three-dot button and shortcut labels use parent
 
 test('examples, grouped tips, translations, and changelog cover the follow-up', async () => {
   const [fixture, tips, welcome, translations, changelog] = await Promise.all([
-    read('test/test-code.md'),
+    read('manual-tests/test-code.md'),
     read('ui/src/components/Content/welcomeTipsContent.ts'),
     read('ui/src/components/Content/WelcomePage.tsx'),
     read('ui/src/contexts/translationsData.ts'),

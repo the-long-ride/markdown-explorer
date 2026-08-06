@@ -9,7 +9,7 @@ describe('markdown/inline', () => {
   describe('inline code', () => {
     it('wraps backtick code in <code>', () => {
       const result = renderInline('Use `x` here');
-      expect(result).toContain('<code class="mdn-inline-code">x</code>');
+      expect(result).toMatch(/<code class="mdn-inline-code"[^>]*>x<\/code>/);
     });
 
     it('escapes HTML in inline code', () => {

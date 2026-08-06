@@ -103,4 +103,4 @@ Title enrichment uses up to 32 concurrent reads, 250 ms per read, 1500 ms total 
 
 ---
 
-[← Performance, Incremental Work, and Enhancement Scheduling](../03-features/20-performance-enhancement-scheduling.md) · [Documentation index](../README.md) · [Tauri Desktop Runtime →](02-tauri-desktop.md)
+[← Persistent Document Bookmarks](../03-features/21-bookmarks.md) · [Documentation index](../README.md) · [Tauri Desktop Runtime →](02-tauri-desktop.md)

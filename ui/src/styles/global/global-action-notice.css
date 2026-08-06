@@ -1,0 +1,25 @@
+/* Shared operation feedback, including bookmark save and rename results. */
+.mdn-action-notice {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.mdn-action-notice--success {
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--bd-x));
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-e));
+  color: var(--tx);
+  box-shadow:
+    var(--sh-lg),
+    0 0 0 2px color-mix(in srgb, var(--accent) 26%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.mdn-action-notice--error {
+  border-color: color-mix(in srgb, var(--danger, #dc2626) 82%, #450a0a);
+  background: color-mix(in srgb, #991b1b 28%, var(--bg-e));
+  color: var(--tx);
+  box-shadow:
+    var(--sh-lg),
+    0 0 0 2px color-mix(in srgb, #7f1d1d 38%, transparent),
+    0 0 18px color-mix(in srgb, #450a0a 40%, transparent);
+}
+

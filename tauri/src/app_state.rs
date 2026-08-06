@@ -2,11 +2,26 @@
 
 use parking_lot::RwLock;
 use std::collections::HashSet;
-use std::sync::Arc;
+use std::sync::{
+    atomic::AtomicBool,
+    Arc, Mutex,
+};
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct AppState {
     pub inner: Arc<RwLock<AppStateInner>>,
+    pub pending_update: Arc<Mutex<Option<crate::update::manager::PendingUpdate>>>,
+    pub update_apply_in_progress: Arc<AtomicBool>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            inner: Arc::new(RwLock::new(AppStateInner::default())),
+            pending_update: Arc::new(Mutex::new(None)),
+            update_apply_in_progress: Arc::new(AtomicBool::new(false)),
+        }
+    }
 }
 
 #[derive(Default)]

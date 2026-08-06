@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Runtime Parity and Capability Matrix
 topic: Common contracts, supported capabilities, and intentional runtime differences
 document_type: runtime
@@ -39,11 +39,12 @@ keywords:
 | Native watcher | Yes | Yes | Yes | Poll | Browser-dependent |
 | Workspace search | Yes | Yes | Yes | Yes | Yes |
 | Cross-workspace desktop search | Yes | Parity path | Limited by shell | No desktop tabs | No desktop tabs |
+| Persistent bookmarks | Focus + Tabs grouping | Focus + Tabs grouping | Focus view | Focus view | Focus view |
 | Document conversion | Yes | Yes, native | Yes | No | No native conversion |
 | Native shell/editor | Yes | Yes | Editor/OS | No | No |
 | Standalone HTML preview | Yes | Yes | Yes | In-page | In-page |
 | Tray/native window | Yes | Yes window | No | No | No |
-| Installer updater | Installed packaged support | Config-dependent | Marketplace | Store | Deployment |
+| Installer updater | Installed packaged support | Signed plugin artifacts; download/defer/restart parity | Marketplace | Store | Deployment |
 
 ## Common protocol requirement
 
@@ -56,6 +57,8 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 - Paths use runtime-safe canonicalization.
 - Workspace operation/request correlation is preserved.
 - Tests cover protocol union and dispatcher parity.
+- Shared bookmarks stay host-independent; Tabs mode groups only workspaces already open in the desktop shell.
+- Tauri updater state names and user choices match Electron even though installation is implemented by the official signed updater plugin.
 
 ## Source traceability
 

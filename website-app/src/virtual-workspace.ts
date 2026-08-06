@@ -1,14 +1,14 @@
 // =============================================================================
 // website-app/src/virtual-workspace.ts
 // Builds a virtual MdFile[] + FolderNode tree from bundled test markdown files.
-// Vite's import.meta.glob with ?raw imports all test/*.md files as strings.
+// Vite's import.meta.glob with ?raw imports all manual-tests/*.md files as strings.
 // =============================================================================
 
 import type { MdFile, FolderNode } from '../../ui/src/types';
 
-// Vite glob import — all .md and .mdx files in the test directory, as raw strings.
-// The keys are relative paths like '../../test/test-basic.md'
-const rawTestFiles = import.meta.glob('../../test/*.{md,mdx}', {
+// Vite glob import — all .md and .mdx files in the manual-tests directory, as raw strings.
+// The keys are relative paths like '../../manual-tests/test-basic.md'
+const rawTestFiles = import.meta.glob('../../manual-tests/*.{md,mdx}', {
   eager: true,
   query: '?raw',
   import: 'default',

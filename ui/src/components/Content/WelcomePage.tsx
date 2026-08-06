@@ -17,6 +17,7 @@ import {
 } from './WelcomePageIcons';
 import { buildWelcomeTipGroups } from './welcomeTipGroups';
 import { WelcomeHero } from './WelcomeHero';
+import { UserManualTab } from './UserManualTab';
 
 // =============================================================================
 // Helper Utilities & Localized Labels (Emoji-free)
@@ -36,14 +37,12 @@ export function WelcomePage() {
   const wt = getWelcomeTranslations(currentLang);
   const t = getTranslations(currentLang);
 
-  const [activeTab, setActiveTab] = useState<'features' | 'shortcuts' | 'privacy' | 'tips'>('features');
+  const [activeTab, setActiveTab] = useState<'features' | 'manual' | 'shortcuts' | 'privacy' | 'tips'>('features');
   const labels = TAB_LABELS[currentLang] || TAB_LABELS.en;
   const tipGroups = useMemo(
     () => buildWelcomeTipGroups(currentLang, state.settings, wt.tips),
     [currentLang, state.settings, wt.tips],
   );
-
-
 
   return (
     <div className="welcome-container">
@@ -59,6 +58,13 @@ export function WelcomePage() {
         >
           <SparklesIcon className="tab-icon" />
           {labels.features}
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'manual' ? 'active' : ''}`}
+          onClick={() => setActiveTab('manual')}
+        >
+          <LightbulbIcon className="tab-icon" />
+          {labels.manual}
         </button>
         <button
           className={`tab-btn ${activeTab === 'shortcuts' ? 'active' : ''}`}
@@ -219,6 +225,10 @@ export function WelcomePage() {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'manual' && (
+          <UserManualTab language={currentLang} settings={state.settings} />
         )}
 
         {activeTab === 'shortcuts' && (

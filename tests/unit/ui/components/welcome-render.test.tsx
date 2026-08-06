@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { WelcomePage } from "../../../../ui/src/components/Content/WelcomePage";
+import { RandomTipCard } from "../../../../ui/src/components/Content/RandomTipCard";
 import { useAppState } from "../../../../ui/src/contexts/AppStateContext";
 
 vi.mock("../../../../ui/src/contexts/AppStateContext");
@@ -15,6 +16,7 @@ vi.mock("../../../../ui/src/contexts/welcomeTranslations", () => ({
       repository: "Repository",
       license: "License",
       desktopRecommendation: "Try the desktop app for more features",
+      desktopAppLinkText: "desktop app",
       macosInstallBtn: "Install on macOS",
     },
     privacy: {
@@ -250,9 +252,9 @@ describe("WelcomePage rendering", () => {
 
   it("renders desktop recommendation when not on desktop", () => {
     setup();
-    expect(
-      screen.getByText("Try the desktop app for more features")
-    ).toBeInTheDocument();
+    expect(document.querySelector('.desktop-recommendation')).toHaveTextContent(
+      "Try the desktop app for more features",
+    );
   });
 
   it("hides desktop recommendation when on desktop", () => {
@@ -328,5 +330,17 @@ describe("WelcomePage rendering", () => {
     expect(featuresBtn?.className).toContain("active");
     fireEvent.click(screen.getByText("Tips & Practices"));
     expect(featuresBtn?.className).not.toContain("active");
+  });
+
+  it("renders featured random tip card with shuffle button", () => {
+    setup();
+    render(<RandomTipCard />);
+    const card = screen.getByTestId("empty-workspace-random-tip");
+    expect(card).toBeInTheDocument();
+
+    const shuffleBtn = screen.getByRole("button", { name: /Another Tip/i });
+    expect(shuffleBtn).toBeInTheDocument();
+    fireEvent.click(shuffleBtn);
+    expect(card).toBeInTheDocument();
   });
 });

@@ -25,6 +25,7 @@ describe('welcomeTranslations', () => {
       expect(t.hero.repository).toBeTruthy();
       expect(t.hero.license).toBeTruthy();
       expect(t.hero.desktopRecommendation).toBeTruthy();
+      expect(t.hero.desktopAppLinkText).toBeTruthy();
       expect(t.hero.macosInstallBtn).toBeTruthy();
     }
   });

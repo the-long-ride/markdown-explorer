@@ -135,27 +135,27 @@
 
 .theme-style-option--pet-white-shiba,
 .pet-theme-menu__option--pet-white-shiba {
-  --pet-paw: url("../../assets/themes/pets/paws/white-shiba-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/white-shiba-paw.svg");
 }
 
 .theme-style-option--pet-k-ink,
 .pet-theme-menu__option--pet-k-ink {
-  --pet-paw: url("../../assets/themes/pets/paws/k-ink-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/k-ink-paw.svg");
 }
 
 .theme-style-option--pet-cat,
 .pet-theme-menu__option--pet-cat {
-  --pet-paw: url("../../assets/themes/pets/paws/cat-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/cat-paw.svg");
 }
 
 .theme-style-option--pet-hamster,
 .pet-theme-menu__option--pet-hamster {
-  --pet-paw: url("../../assets/themes/pets/paws/hamster-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/hamster-paw.svg");
 }
 
 .theme-style-option--pet-corgi,
 .pet-theme-menu__option--pet-corgi {
-  --pet-paw: url("../../assets/themes/pets/paws/corgi-paw.svg");
+  --pet-paw: url("../../assets/themes/pets/rail-markers/corgi-paw.svg");
 }
 
 /* Grouped built-in theme menu */

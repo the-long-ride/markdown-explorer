@@ -45,7 +45,7 @@ test('sidebar file tree uses hover three-dot actions and anchored right-aligned 
   ]);
   assert.match(tree, /MoreVerticalIcon/);
   assert.match(tree, /sidebar-tree-item__menu-button/);
-  assert.doesNotMatch(tree, /onContextMenu=/);
+  assert.match(tree, /onContextMenu=/);
   assert.match(menu, /anchor\.getBoundingClientRect/);
   assert.match(menu, /sidebar\.getBoundingClientRect/);
   assert.match(position, /placement:\s*'below'\s*\|\s*'above'/);
@@ -152,7 +152,7 @@ test('all supported locales expose HTML menus, sidebar actions, renamed preview 
 
 test('Snake sandbox and Unreleased changelog cover the patch series', async () => {
   const [fixture, changelog] = await Promise.all([
-    read('test/test-code.md'),
+    read('manual-tests/test-code.md'),
     read('CHANGELOG.md'),
   ]);
   assert.match(fixture, /<canvas[^>]+id="snake/);

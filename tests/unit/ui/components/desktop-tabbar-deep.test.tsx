@@ -218,7 +218,7 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, tooltip, icon, children, ...props }: any) => (
+  TooltipButton: ({ onClick, tooltip, icon, children, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
     <button onClick={onClick} aria-label={tooltip} data-tooltip={tooltip} {...props}>
       {icon}{children}
     </button>

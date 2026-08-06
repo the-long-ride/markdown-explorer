@@ -25,6 +25,7 @@ interface ContentEffectsArgs {
   previewLabels: PreviewActionLabels;
   onOpenHtmlModal: (documentHtml: string, trigger: HTMLElement) => void;
   onOpenLinkMenu: (state: LinkContextMenuState) => void;
+  onBookmarkContextMenu?: (event: MouseEvent) => boolean;
   onActionError: (message: string) => void;
 }
 
@@ -39,6 +40,7 @@ export function useContentEffects({
   previewLabels,
   onOpenHtmlModal,
   onOpenLinkMenu,
+  onBookmarkContextMenu,
   onActionError,
 }: ContentEffectsArgs) {
   const scrollPositionsRef = useContentScrollMemory(state.currentFile, scrollRef);
@@ -69,6 +71,7 @@ export function useContentEffects({
     applyPreviewActionTranslations(body, previewLabels);
 
     const handleContextMenu = (event: MouseEvent) => {
+      if (onBookmarkContextMenu?.(event)) return;
       if (!(event.target instanceof Element)) return;
       const anchor = event.target.closest<HTMLAnchorElement>("a[href], a[data-mdn-target]");
       if (!anchor || !body.contains(anchor)) return;
@@ -78,6 +81,7 @@ export function useContentEffects({
         x: event.clientX,
         y: event.clientY,
         anchor,
+        bookmarkTarget: event.target.closest('[data-mdn-bookmark-kind="image"]') ?? anchor,
         link: resolveRenderedLink(anchor, state.currentFile || ""),
       });
     };
@@ -426,6 +430,6 @@ export function useContentEffects({
     };
   }, [state.renderVersion, state.theme, state.themeStyle, state.isLoading, state.notFoundHref,
     state.workspaceUnavailablePath, onImageClick, navigate, scrollRef, bridge, previewLabels,
-    onOpenHtmlModal, onOpenLinkMenu, onActionError, state.currentFile, state.appRuntime,
+    onOpenHtmlModal, onOpenLinkMenu, onBookmarkContextMenu, onActionError, state.currentFile, state.appRuntime,
     state.defaultExpanded]);
 }

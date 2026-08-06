@@ -58,6 +58,15 @@ keywords:
 | `legacy-best-effort` | Output exists with reduced fidelity warning |
 | `conversion-failed` | Explanatory failure preview; not blank content |
 
+## Bookmark save and rename
+
+| Reason/code | Meaning | Required behavior |
+|---|---|---|
+| `target-unavailable` | The selected rendered target cannot be mapped to a valid source-anchored record | Keep the naming state available and show a translated red error toast |
+| `storage-unavailable` | Bookmark persistence threw or failed read-back verification | Keep the previous in-memory snapshot and show a translated red error toast |
+| `bookmark-persist-failed` | Internal store read-back did not match the serialized write | Convert to `storage-unavailable`; never announce success |
+| verified success | Saved or renamed record is present in the read-back snapshot | Show a translated green success toast |
+
 ## Update state
 
 `idle`, `downloading`, `downloaded`, `scheduled-on-exit`, `applying`, `error`.

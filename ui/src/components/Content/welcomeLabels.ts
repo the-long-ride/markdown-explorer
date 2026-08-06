@@ -7,6 +7,7 @@ export const TAB_LABELS: Record<
   string,
   {
     features: string;
+    manual: string;
     shortcuts: string;
     privacy: string;
     tips: string;
@@ -15,6 +16,7 @@ export const TAB_LABELS: Record<
 > = {
   en: {
     features: "Features",
+    manual: "User manual",
     shortcuts: "Shortcuts",
     privacy: "Privacy",
     tips: "Tips & Practices",
@@ -22,6 +24,7 @@ export const TAB_LABELS: Record<
   },
   vi: {
     features: "Tính năng",
+    manual: "Hướng dẫn",
     shortcuts: "Phím tắt",
     privacy: "Riêng tư",
     tips: "Mẹo & Thực hành",
@@ -29,6 +32,7 @@ export const TAB_LABELS: Record<
   },
   fr: {
     features: "Fonctionnalités",
+    manual: "Manuel",
     shortcuts: "Raccourcis",
     privacy: "Confidentialité",
     tips: "Conseils",
@@ -36,6 +40,7 @@ export const TAB_LABELS: Record<
   },
   es: {
     features: "Funciones",
+    manual: "Manual",
     shortcuts: "Atajos",
     privacy: "Privacidad",
     tips: "Consejos",
@@ -43,6 +48,7 @@ export const TAB_LABELS: Record<
   },
   zh: {
     features: "功能特性",
+    manual: "用户手册",
     shortcuts: "快捷键",
     privacy: "隐私",
     tips: "技巧与实践",
@@ -50,6 +56,7 @@ export const TAB_LABELS: Record<
   },
   no: {
     features: "Funksjoner",
+    manual: "Brukerhåndbok",
     shortcuts: "Snarveier",
     privacy: "Personvern",
     tips: "Tips",
@@ -57,6 +64,7 @@ export const TAB_LABELS: Record<
   },
   ja: {
     features: "功能一覧",
+    manual: "ユーザーマニュアル",
     shortcuts: "ショートカット",
     privacy: "プライバシー",
     tips: "ヒントとコツ",
@@ -64,6 +72,7 @@ export const TAB_LABELS: Record<
   },
   ko: {
     features: "기능 소개",
+    manual: "사용자 설명서",
     shortcuts: "단축키",
     privacy: "개인정보",
     tips: "팁 및 가이드",
@@ -71,6 +80,7 @@ export const TAB_LABELS: Record<
   },
   ru: {
     features: "Возможности",
+    manual: "Руководство",
     shortcuts: "Сочетания клавиш",
     privacy: "Конфиденциальность",
     tips: "Советы",

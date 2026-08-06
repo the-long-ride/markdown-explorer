@@ -39,6 +39,18 @@
   transform: translateX(18px);
   background-color: #fff;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ============================================================
    Tooltips
    ============================================================ */
@@ -84,6 +96,21 @@
   transform: translateX(-50%) translateY(-4px);
 }
 .tooltip-container[data-tooltip-pos="below"]:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Viewport-clamped center tooltip for More Actions dropdown items */
+.toolbar-action-menu__panel .tooltip-container .tooltip-text {
+  /* Center on the button, clamped so tooltip never bleeds outside the panel */
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) translateY(4px);
+  /* Allow tooltip to escape panel horizontally but stay inside viewport */
+  max-width: min(260px, calc(100vw - 24px));
+}
+.toolbar-action-menu__panel .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
   transform: translateX(-50%) translateY(0);
@@ -316,24 +343,107 @@
 /* ============================================================
    Kbd & Miscellaneous
    ============================================================ */
-kbd {
+kbd,
+.keycap-3d {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 1px 5px;
-  min-width: 18px;
-  font-family: var(--font-mono);
-  font-size: 0.8em;
-  font-style: normal;
+  padding: 2px 7px;
+  min-width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 0.82em;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--tx2);
   background: var(--bg-e);
-  color: var(--tx);
-  border: var(--stroke-w) solid var(--bd-x);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  line-height: 1.4;
-  box-shadow: 0 1px 0 var(--bd-x);
+  border: 1px solid var(--bd-x);
+  border-bottom: 2px solid var(--bd-s);
+  border-radius: clamp(2px, var(--r, 4px), 6px);
+  box-shadow: none;
+  text-shadow: none;
   white-space: nowrap;
-  vertical-align: baseline;
+  vertical-align: middle;
+  user-select: none;
+  transition: transform 0.08s ease, border-color 0.12s ease;
+}
+
+kbd:active,
+.keycap-3d:active {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+}
+
+/* Raw Grid Theme: fully square keycaps */
+[data-theme-style="raw-grid"] kbd,
+[data-theme-style="raw-grid"] .keycap-3d {
+  border-radius: 0 !important;
+}
+
+/* Glass Theme: subtle translucency */
+[data-theme-style="glass"] kbd,
+[data-theme-style="glass"] .keycap-3d {
+  background: color-mix(in srgb, var(--bg-e) 70%, transparent);
+  backdrop-filter: var(--surface-blur, blur(8px));
+}
+
+.shortcut-keycaps-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+  margin: 0 3px;
+  white-space: nowrap;
+}
+
+.shortcut-keycap-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.keycap-plus {
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--tx3, #8f96a3);
+  margin: 0 2px;
+  opacity: 0.85;
+}
+
+.shortcut-keycaps-container--sm .keycap-3d {
+  padding: 1px 5px;
+  min-width: 17px;
+  height: 18px;
+  font-size: 9.5px;
+  border-radius: clamp(0px, var(--r, 4px), 6px);
+  border-bottom-width: 2px;
+  box-shadow:
+    0 1.5px 0 color-mix(in srgb, var(--bg-s, #181a1f) 70%, black 30%),
+    0 2px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.shortcut-keycaps-container--md .keycap-3d {
+  padding: 2px 7px;
+  min-width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.tooltip-content-wrap {
+  display: inline;
+}
+
+.tooltip-button .tooltip-content-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tooltip-shortcut-sep {
+  opacity: 0.5;
+  margin: 0 1px;
 }
 /* ============================================================
    MDX Interactive Components
@@ -391,45 +501,3 @@ kbd {
   pointer-events: none;
   z-index: 9999;
 }
-
-/* ============================================================
-   Electron Frameless Drag Region & Window Controls
-   ============================================================ */
-body.is-electron .topbar {
-  -webkit-app-region: drag;
-  z-index: 200000;
-}
-
-body.is-electron .topbar__logo,
-body.is-electron .btn,
-body.is-electron .toolbar-action-menu,
-body.is-electron .toolbar-action-menu__panel,
-body.is-electron .search-bar,
-body.is-electron .topbar__divider,
-body.is-electron .topbar__breadcrumb-container,
-body.is-electron .window-controls,
-body.is-electron .sidebar-resize {
-  -webkit-app-region: no-drag;
-}
-
-.window-control-btn {
-  border: none !important;
-  background: transparent !important;
-  color: var(--tx2) !important;
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 4px !important;
-  opacity: 0.75;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.window-control-btn:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: var(--tx) !important;
-  opacity: 1;
-}
-.window-control-btn--close:hover {
-  background: #f43f5e !important;
-  color: #ffffff !important;
-}
-

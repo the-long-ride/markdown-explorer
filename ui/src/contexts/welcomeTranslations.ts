@@ -11,6 +11,7 @@ export interface WelcomeTranslations {
     repository: string;
     license: string;
     desktopRecommendation: string;
+    desktopAppLinkText: string;
     macosInstallBtn: string;
   };
   privacy: {
@@ -82,6 +83,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "Repository",
       license: "License",
       desktopRecommendation: "For the best experience, we recommend using the Desktop App.",
+      desktopAppLinkText: "Desktop App",
       macosInstallBtn: "Install Guide",
     },
     privacy: {
@@ -184,6 +186,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "Kho lưu trữ",
       license: "Giấy phép",
       desktopRecommendation: "Để có trải nghiệm tốt nhất, chúng tôi khuyên bạn nên sử dụng ứng dụng Desktop.",
+      desktopAppLinkText: "ứng dụng Desktop",
       macosInstallBtn: "Hướng dẫn cài đặt",
     },
     privacy: {
@@ -286,6 +289,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "Dépôt",
       license: "Licence",
       desktopRecommendation: "Pour la meilleure expérience, nous vous recommandons d'utiliser l'application Bureau.",
+      desktopAppLinkText: "l'application Bureau",
       macosInstallBtn: "Guide d'installation",
     },
     privacy: {
@@ -388,6 +392,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "Repositorio",
       license: "Licencia",
       desktopRecommendation: "Para obtener la mejor experiencia, recomendamos utilizar la aplicación de Escritorio.",
+      desktopAppLinkText: "la aplicación de Escritorio",
       macosInstallBtn: "Guía de instalación",
     },
     privacy: {
@@ -490,6 +495,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "开源仓库",
       license: "开源协议",
       desktopRecommendation: "为获得最佳体验，建议使用桌面客户端。",
+      desktopAppLinkText: "桌面客户端",
       macosInstallBtn: "安装指南",
     },
     privacy: {
@@ -592,6 +598,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "Kildekode",
       license: "Lisens",
       desktopRecommendation: "For den beste opplevelsen, anbefaler vi å bruke skrivebordsappen.",
+      desktopAppLinkText: "skrivebordsappen",
       macosInstallBtn: "Installeringsveiledning",
     },
     privacy: {
@@ -694,6 +701,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "リポジトリ",
       license: "ライセンス",
       desktopRecommendation: "最高の体験を得るために、デスクトップアプリの使用をお勧めします。",
+      desktopAppLinkText: "デスクトップアプリ",
       macosInstallBtn: "インストールガイド",
     },
     privacy: {
@@ -796,6 +804,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "저장소",
       license: "라이선스",
       desktopRecommendation: "최상의 경험을 위해 데스크톱 앱을 사용하는 것을 권장합니다.",
+      desktopAppLinkText: "데스크톱 앱",
       macosInstallBtn: "설치 가이드",
     },
     privacy: {
@@ -898,6 +907,7 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       repository: "Репозиторий",
       license: "Лицензия",
       desktopRecommendation: "Для наилучшего удобства рекомендуем использовать приложение для ПК.",
+      desktopAppLinkText: "приложение для ПК",
       macosInstallBtn: "Руководство по установке",
     },
     privacy: {

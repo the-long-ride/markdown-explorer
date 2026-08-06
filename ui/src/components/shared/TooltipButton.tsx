@@ -1,9 +1,10 @@
 // =============================================================================
-// components/shared/TooltipButton.tsx — Reusable button with tooltip
+// components/shared/TooltipButton.tsx — Reusable button with tooltip & 3D keycaps
 // =============================================================================
 
 import type { ReactNode, ButtonHTMLAttributes } from 'react';
 import { buildShortcutTooltip } from '../../utils/toolbar-menu.js';
+import { parseShortcutText } from './parseShortcutText';
 
 interface TooltipButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
@@ -13,6 +14,11 @@ interface TooltipButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
   label?: string;
   onlyIcon?: boolean;
+}
+
+export function parseTooltipContent(tooltipText?: string, _shortcutProp?: string) {
+  if (!tooltipText) return null;
+  return parseShortcutText(tooltipText);
 }
 
 export function TooltipButton({
@@ -47,7 +53,11 @@ export function TooltipButton({
         </>
       )}
       {children}
-      {tooltipText && <span className="tooltip-text">{tooltipText}</span>}
+      {tooltipText && (
+        <span className="tooltip-text">
+          {parseTooltipContent(tooltipText, shortcut)}
+        </span>
+      )}
     </button>
   );
 }

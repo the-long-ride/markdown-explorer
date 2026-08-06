@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Build and Release Specification
 topic: Build commands, version synchronization, release artifacts, and verification
 document_type: quality
@@ -11,12 +11,14 @@ related_docs: []
 source_scope:
 - package.json
 - scripts/sync-versions.mjs
+- scripts/configure-tauri-updater.mjs
 - .github/scripts/release-notes.mjs
 - .github/workflows/release.yml
 test_scope:
 - tests/contracts/package-config.test.ts
 - tests/contracts/release-notes.test.ts
 - tests/node/build-regressions.test.mjs
+- tests/node/tauri-updater-contract.test.mjs
 runtime_scope:
 - all
 keywords:
@@ -47,6 +49,14 @@ keywords:
 
 `prebuild`, `precompile`, and runtime prebuild scripts invoke `scripts/sync-versions.mjs`. A release must keep root and runtime package/config versions consistent.
 
+## Signed Tauri updater artifacts
+
+- Release jobs require `TAURI_UPDATER_PUBLIC_KEY`, `TAURI_SIGNING_PRIVATE_KEY`, and its password.
+- `scripts/configure-tauri-updater.mjs` replaces the public-key sentinel before build and rejects missing/placeholder input.
+- `bundle.createUpdaterArtifacts=true` creates updater signatures.
+- Windows uploads NSIS `.exe` plus `.exe.sig`; Linux uploads AppImage plus `.AppImage.sig`; macOS builds `app,dmg` and uploads `.app.tar.gz` plus `.sig`.
+- Artifact renaming moves a companion signature with its installer so release pairs stay addressable. Missing updater outputs fail the upload step.
+
 ## Release verification
 
 1. Clean install from lockfile.
@@ -63,11 +73,13 @@ keywords:
 |---|---|---|
 | Implementation | `package.json` | Active behavior or contract |
 | Implementation | `scripts/sync-versions.mjs` | Active behavior or contract |
+| Implementation | `scripts/configure-tauri-updater.mjs` | Validates and injects Tauri updater public key |
 | Implementation | `.github/scripts/release-notes.mjs` | Active behavior or contract |
 | Implementation | `.github/workflows/release.yml` | Active behavior or contract |
 | Verification | `tests/contracts/package-config.test.ts` | Automated expectation |
 | Verification | `tests/contracts/release-notes.test.ts` | Automated expectation |
 | Verification | `tests/node/build-regressions.test.mjs` | Automated expectation |
+| Verification | `tests/node/tauri-updater-contract.test.mjs` | Signed updater workflow and runtime contract |
 
 ---
 

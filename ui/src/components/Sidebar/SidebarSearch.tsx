@@ -10,6 +10,7 @@ import { TooltipButton } from '../shared/TooltipButton';
 import { getTranslations } from '../../contexts/translations';
 import { SearchResultFileView, SearchResultFolderView } from './sidebarSearchTree';
 import { buildSearchResultTree } from './sidebarSearchResultTree';
+import { EMPTY_SELECTED_FILE_PATHS, filterWorkspaceSearchResultsByScope, getScopeSearchRevision } from './sidebarSearchScope';
 import type { WorkspaceSearchResult } from '../../types';
 
 export interface SidebarSearchStatus {
@@ -18,13 +19,18 @@ export interface SidebarSearchStatus {
   showCount: boolean;
 }
 
+
 interface SidebarSearchProps {
   isVisible: boolean;
+  selectedFilePaths?: ReadonlySet<string>;
+  hasScopeEntry?: boolean;
   onStatusChange?: (status: SidebarSearchStatus) => void;
 }
 
 export function SidebarSearch({
   isVisible,
+  selectedFilePaths = EMPTY_SELECTED_FILE_PATHS,
+  hasScopeEntry = false,
   onStatusChange,
 }: SidebarSearchProps) {
   const { state } = useAppState();
@@ -32,7 +38,7 @@ export function SidebarSearch({
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [matchCase, setMatchCase] = useState(false);
-  const [results, setResults] = useState<WorkspaceSearchResult[]>([]);
+  const [rawResults, setRawResults] = useState<WorkspaceSearchResult[]>([]);
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(new Set());
 
   const currentLang = state.settings.language || 'en';
@@ -41,6 +47,11 @@ export function SidebarSearch({
   const requestIdRef = useRef('');
   const resultsTreeRef = useRef<HTMLDivElement>(null);
   const resultsScrollPosRef = useRef(0);
+  const scopeRevision = `${hasScopeEntry ? 'focused' : 'all'}:${getScopeSearchRevision(selectedFilePaths)}`;
+  const results = useMemo(
+    () => filterWorkspaceSearchResultsByScope(rawResults, hasScopeEntry, selectedFilePaths),
+    [hasScopeEntry, rawResults, scopeRevision, selectedFilePaths],
+  );
 
   const handleResultsScroll = (event: React.UIEvent<HTMLDivElement>) => {
     resultsScrollPosRef.current = event.currentTarget.scrollTop;
@@ -72,7 +83,7 @@ export function SidebarSearch({
         message.command === 'workspaceSearchResults' &&
         message.requestId === requestIdRef.current
       ) {
-        setResults(message.results as WorkspaceSearchResult[]);
+        setRawResults(message.results as WorkspaceSearchResult[]);
         setIsSearching(false);
       }
     });
@@ -80,7 +91,7 @@ export function SidebarSearch({
 
   useEffect(() => {
     if (query.trim().length < 2) {
-      setResults([]);
+      setRawResults([]);
       setIsSearching(false);
       return;
     }
@@ -99,7 +110,7 @@ export function SidebarSearch({
     }, 250);
 
     return () => window.clearTimeout(handle);
-  }, [bridge, query, matchCase]);
+  }, [bridge, query, matchCase, scopeRevision]);
 
   useEffect(() => {
     const focusInput = () => {

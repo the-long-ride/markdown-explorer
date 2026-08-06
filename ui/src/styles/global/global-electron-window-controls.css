@@ -1,0 +1,41 @@
+/* ============================================================
+   Electron Frameless Drag Region & Window Controls
+   ============================================================ */
+body.is-electron .topbar {
+  -webkit-app-region: drag;
+  z-index: 200000;
+}
+
+body.is-electron .topbar__logo,
+body.is-electron .btn,
+body.is-electron .toolbar-action-menu,
+body.is-electron .toolbar-action-menu__panel,
+body.is-electron .search-bar,
+body.is-electron .topbar__divider,
+body.is-electron .topbar__breadcrumb-container,
+body.is-electron .window-controls,
+body.is-electron .sidebar-resize {
+  -webkit-app-region: no-drag;
+}
+
+.window-control-btn {
+  border: none !important;
+  background: transparent !important;
+  color: var(--tx2) !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 4px !important;
+  opacity: 0.75;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.window-control-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--tx) !important;
+  opacity: 1;
+}
+.window-control-btn--close:hover {
+  background: #f43f5e !important;
+  color: #ffffff !important;
+}
+

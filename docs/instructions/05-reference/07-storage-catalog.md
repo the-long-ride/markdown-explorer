@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-03T02:13:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Storage Catalog
 topic: Exact bridge, local-storage, and IndexedDB keys and ownership
 document_type: reference
@@ -21,12 +21,14 @@ source_scope:
 - ui/src/contexts/appStateModel.ts
 - ui/src/contexts/reducers/settingsUiReducer.ts
 - ui/src/settings/settingsImportExport.ts
+- ui/src/bookmarks/bookmarkStore.ts
 - chromium-xtension/src/file-access.ts
 test_scope:
 - tests/node/product-constants.test.mjs
 - tests/unit/ui/settings-import-export.test.ts
 - tests/unit/chromium/file-access.test.ts
 - tests/unit/ui/desktop-tabs.test.ts
+- tests/node/bookmarks.test.mjs
 runtime_scope:
 - shared
 keywords:
@@ -48,6 +50,7 @@ keywords:
 | `markdown-explorer-toc-collapsed` | Shared local storage | TOC panel collapsed flag |
 | `markdown-explorer-desktop-tabs-v1` | Shared desktop storage | Desktop workspace-tab snapshot |
 | `markdown-explorer-workspace-aliases-v1` | Shared desktop storage | Canonical workspace identity to alias map |
+| `markdown-explorer-bookmarks-v1` | Shared local storage | Version-2 source-anchored text/object bookmarks; version-1 records migrate in place |
 | IndexedDB `markdown-explorer-db` / `workspaces` | Chromium | Directory/file handles and recent browser workspaces |
 
 ## Storage rules
@@ -58,6 +61,7 @@ keywords:
 - Browser handles are never serialized into plain local storage.
 - Clearing onboarding flags repeats onboarding only; it must not erase workspace files.
 - Versioned key suffixes permit future migration without ambiguous shapes.
+- Unknown/corrupt bookmark documents load as `{ version: 2, items: [] }`; version-1 items migrate deterministically; disabling Bookmarks preserves the key.
 
 ## Source traceability
 
@@ -73,11 +77,13 @@ keywords:
 | Implementation | `ui/src/contexts/appStateModel.ts` | Restores TOC collapsed state |
 | Implementation | `ui/src/contexts/reducers/settingsUiReducer.ts` | Persists TOC collapsed state |
 | Implementation | `ui/src/settings/settingsImportExport.ts` | Active behavior or contract |
+| Implementation | `ui/src/bookmarks/bookmarkStore.ts` | Bookmark CRUD, parsing, and persistence |
 | Implementation | `chromium-xtension/src/file-access.ts` | Active behavior or contract |
 | Verification | `tests/node/product-constants.test.mjs` | Stable storage identifiers |
 | Verification | `tests/unit/ui/settings-import-export.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/file-access.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/desktop-tabs.test.ts` | Automated expectation |
+| Verification | `tests/node/bookmarks.test.mjs` | Bookmark persistence and corrupt-data recovery |
 
 ---
 

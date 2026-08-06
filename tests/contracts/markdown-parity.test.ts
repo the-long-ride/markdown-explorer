@@ -27,6 +27,19 @@ function sanitizeTocEntry(entry: { level: number; text: string; id: string }) {
   return { level: entry.level, text: entry.text, id: entry.id };
 }
 
+
+function stripBookmarkMetadata(html: string): string {
+  return html.replace(/\s+data-mdn-(?:source-start|source-end|bookmark-kind|math-source|mermaid-source|bookmark-alt|bookmark-url)="[^"]*"/g, '');
+}
+
+function stripSourceRange(token: Record<string, unknown>): Record<string, unknown> {
+  const rest = { ...token };
+  delete rest.sourceStart;
+  delete rest.sourceEnd;
+  delete rest.sourceText;
+  return rest;
+}
+
 function stripShortIds(html: string): string {
   return html.replace(/tbl_[a-z0-9]{2,8}/g, 'tbl_XXXXXX')
     .replace(/id_[a-z0-9]{2,8}/g, 'id_XXXXXX')
@@ -40,14 +53,8 @@ describe('markdown parity', () => {
         const uiResult = parseUi(fixture.markdown, fixture.isMdx);
         const vscodeResult = parseVsCode(fixture.markdown, fixture.isMdx);
 
-        const uiTokens = uiResult.tokens.map((t: any) => {
-          const { ...rest } = t;
-          return rest;
-        });
-        const vscodeTokens = vscodeResult.tokens.map((t: any) => {
-          const { ...rest } = t;
-          return rest;
-        });
+        const uiTokens = uiResult.tokens.map((token) => stripSourceRange(token as unknown as Record<string, unknown>));
+        const vscodeTokens = vscodeResult.tokens.map((token) => stripSourceRange(token as unknown as Record<string, unknown>));
 
         expect(uiTokens).toEqual(vscodeTokens);
         expect(uiResult.frontmatter).toEqual(vscodeResult.frontmatter);
@@ -60,7 +67,7 @@ describe('markdown parity', () => {
       const vscodeParsed = parseVsCode(markdown, false);
 
       expect(vscodeParsed.tokens).toEqual(uiParsed.tokens);
-      expect(uiParsed.tokens).toEqual([
+      expect(uiParsed.tokens.map((token) => stripSourceRange(token as unknown as Record<string, unknown>))).toEqual([
         { type: 'paragraph', text: '<!-- unclosed' },
       ]);
     });
@@ -109,11 +116,12 @@ describe('markdown parity', () => {
       const uiHtml = new UiRenderer({ theme: 'dark', isMdx: false }).render(uiParsed.tokens).html;
       const vscodeHtml = new VsCodeRenderer({ theme: 'dark', isMdx: false }).render(vscodeParsed.tokens).html;
 
-      expect(uiParsed.tokens).toEqual(expectedTokens);
-      expect(vscodeParsed.tokens).toEqual(expectedTokens);
-      expect(uiHtml).toContain('<p>text</p>');
+      expect(uiParsed.tokens.map((token) => stripSourceRange(token as unknown as Record<string, unknown>))).toEqual(expectedTokens);
+      expect(vscodeParsed.tokens.map((token) => stripSourceRange(token as unknown as Record<string, unknown>))).toEqual(expectedTokens);
+      expect(stripBookmarkMetadata(uiHtml)).toContain('<p>text</p>');
       expect(uiHtml).toContain('class="mdn-html-comment"');
-      expect(uiHtml.indexOf('<p>text</p>')).toBeLessThan(uiHtml.indexOf('mdn-html-comment'));
+      const normalizedUiHtml = stripBookmarkMetadata(uiHtml);
+      expect(normalizedUiHtml.indexOf('<p>text</p>')).toBeLessThan(normalizedUiHtml.indexOf('mdn-html-comment'));
       expect(vscodeHtml).toBe(uiHtml);
     });
 
@@ -123,8 +131,8 @@ describe('markdown parity', () => {
       const uiParsed = parseUi(markdown, false);
       const vscodeParsed = parseVsCode(markdown, false);
 
-      expect(uiParsed.tokens).toEqual([{ type: 'html-comment', content: expectedContent }]);
-      expect(vscodeParsed.tokens).toEqual([{ type: 'html-comment', content: expectedContent }]);
+      expect(uiParsed.tokens.map((token) => stripSourceRange(token as unknown as Record<string, unknown>))).toEqual([{ type: 'html-comment', content: expectedContent }]);
+      expect(vscodeParsed.tokens.map((token) => stripSourceRange(token as unknown as Record<string, unknown>))).toEqual([{ type: 'html-comment', content: expectedContent }]);
     });
 
     test('HTML comment closing-line text is preserved in parsed and rendered output', () => {
@@ -168,7 +176,7 @@ describe('markdown parity', () => {
         const renderer = new UiRenderer({ theme: 'dark', isMdx: fixture.isMdx });
         const rendered = renderer.render(parsed.tokens);
         for (const invariant of fixture.expectedHtmlInvariants!) {
-          expect(rendered.html).toContain(invariant);
+          expect(stripBookmarkMetadata(rendered.html)).toContain(invariant);
         }
       });
     }

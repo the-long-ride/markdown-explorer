@@ -160,4 +160,4 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 ---
 
-[← Errors, Recovery, Status, and Observability](19-errors-recovery-observability.md) · [Documentation index](../README.md) · [Electron Desktop Runtime →](../04-runtimes/01-electron-desktop.md)
+[← Errors, Recovery, Status, and Observability](19-errors-recovery-observability.md) · [Documentation index](../README.md) · [Persistent Document Bookmarks →](21-bookmarks.md)

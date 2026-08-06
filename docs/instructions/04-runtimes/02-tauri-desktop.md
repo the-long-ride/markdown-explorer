@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-08-05T06:40:23+07:00'
 name: Tauri Desktop Runtime
 topic: Rust host, local protocols, native conversion, window lifecycle, and updater configuration
 document_type: runtime
@@ -28,6 +28,7 @@ test_scope:
 - tests/contracts/tauri-host-message-parity.test.ts
 - tests/node/tauri-native-document-converter.test.mjs
 - tests/contracts/tauri-package-config.test.ts
+- tests/node/tauri-updater-contract.test.mjs
 runtime_scope:
 - tauri
 keywords:
@@ -68,9 +69,17 @@ keywords:
 
 Modules cover HTML, Markdown/text, ODF, Office, PDF, PPTX, RTF, and spreadsheet content. PPTX/archive XML members are bounded to 32 MiB. Preview quality uses `converted-preview`, `legacy-best-effort`, or `conversion-failed`.
 
-## Deployment condition
+## Signed update lifecycle
 
-Updater operation is valid only after real endpoints/signing configuration replace deployment placeholders. The UI must rely on `canInstallUpdates`, not assume updater readiness from runtime name.
+- Production initializes `tauri-plugin-updater` and `tauri-plugin-process`; debug builds report updater installation unavailable.
+- Release configuration injects a real updater public key and signs generated updater artifacts.
+- Download checks the configured endpoint, validates the requested version, verifies the signature, stages bytes, emits progress, and persists resumable state.
+- Downloaded state supports **Update on Close** and **Restart Now**, matching Electron UI behavior.
+- Close interception installs only `scheduled-on-exit`; immediate apply also accepts `downloaded`.
+- A relaunch reconstructs the update descriptor from the endpoint before installing persisted verified bytes.
+- Windows `.exe`, Linux `.AppImage`, and macOS `.app.tar.gz` updater files publish with their `.sig` companions.
+
+Updater operation is valid only after real endpoint/signing secrets replace deployment placeholders. UI capability remains controlled by `canInstallUpdates`.
 
 ## Source traceability
 
@@ -94,6 +103,7 @@ Updater operation is valid only after real endpoints/signing configuration repla
 | Verification | `tests/contracts/tauri-host-message-parity.test.ts` | Automated expectation |
 | Verification | `tests/node/tauri-native-document-converter.test.mjs` | Automated expectation |
 | Verification | `tests/contracts/tauri-package-config.test.ts` | Automated expectation |
+| Verification | `tests/node/tauri-updater-contract.test.mjs` | Signed updater lifecycle and release artifact contract |
 
 ---
 

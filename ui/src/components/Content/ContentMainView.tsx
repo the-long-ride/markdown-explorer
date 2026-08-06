@@ -6,6 +6,7 @@ import type { AppSettings } from '../../types';
 import { AlertTriangleIcon, FileNotFoundIcon, FolderIcon, TrashIcon } from '../shared/icons';
 import { HtmlDocumentView } from './HtmlDocumentView';
 import { WelcomePage } from './WelcomePage';
+import { RandomTipCard } from './RandomTipCard';
 
 const TableOfContents = lazy(() =>
   import('../TOC/TableOfContents').then((module) => ({ default: module.TableOfContents })),
@@ -136,6 +137,7 @@ export function ContentMainView({
         )}
 
         {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && !suppressWelcome && !state.currentFile && state.fileList.length > 0 && <WelcomePage />}
+        {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && suppressWelcome && !state.currentFile && state.fileList.length > 0 && <RandomTipCard />}
 
         {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && state.currentFile && hasRenderableDocumentContent && (
           <div className={`mdn-body${isFullHtmlPreview ? ' mdn-body--html-preview' : ''}`} id="mdBody" ref={bodyRef} aria-live="polite">

@@ -100,7 +100,6 @@
   color: var(--tx2);
   font-size: 10px;
   font-weight: 700;
-  line-height: 1;
 }
 .toc-panel__current {
   margin-top: 7px;

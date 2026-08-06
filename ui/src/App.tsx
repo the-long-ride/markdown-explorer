@@ -7,10 +7,7 @@ import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
 import { getTranslations } from './contexts/translations';
-import {
-  TERMS_ACCEPTED_STORAGE_KEY,
-  THEME_ONBOARDING_COMPLETE_STORAGE_KEY,
-} from './constants/storage';
+import { TERMS_ACCEPTED_STORAGE_KEY, THEME_ONBOARDING_COMPLETE_STORAGE_KEY } from './constants/storage';
 
 const TermsModal = lazy(() => import('./components/Modal/TermsModal').then(m => ({ default: m.TermsModal })));
 import { TooltipButton } from './components/shared/TooltipButton';
@@ -26,6 +23,8 @@ import { useAppSearchEffects } from './useAppSearchEffects';
 import { useAppLayoutEffects } from './useAppLayoutEffects';
 import { useAppUpdateActions } from './useAppUpdateActions';
 import { createMediaGallery, type MediaGallery } from './components/Modal/mediaGallery';
+import { useBookmarkNavigation } from './hooks/useBookmarkNavigation';
+import { useUserManualActions } from './hooks/useUserManualActions';
 
 export function App() {
   // AppView owns the root class: state.appRuntime === 'tauri' ? ' app--tauri' : ''.
@@ -51,10 +50,8 @@ export function App() {
     canGoForward,
     setScope: setNavigationScope,
   } = useNavigation();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchScope, setSearchScope] = useState<SearchScope>('current');
-  const [findOpen, setFindOpen] = useState(false);
-  const [pendingSearchJump, setPendingSearchJump] = useState<PendingSearchJump | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false); const [searchScope, setSearchScope] = useState<SearchScope>('current');
+  const [findOpen, setFindOpen] = useState(false); const [pendingSearchJump, setPendingSearchJump] = useState<PendingSearchJump | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [workspaceSelectionConfirmOpen, setWorkspaceSelectionConfirmOpen] = useState(false);
@@ -63,8 +60,7 @@ export function App() {
   const [sidebarCursorMode, setSidebarCursorMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isDesktop = typeof (window as any).electronAPI !== 'undefined';
-  const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
+  const isDesktop = typeof (window as any).electronAPI !== 'undefined'; const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
   const isWebFileMode = typeof (window as any).__webDemoBus !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'file';
   const isDesktopLike = isDesktop || isChrome;
   const isTabView = isDesktop && state.settings.desktopViewMode === 'tabs';
@@ -157,6 +153,7 @@ export function App() {
     openSidebarSearch,
     handleWorkspaceSearchSelect,
     handleCrossTabSelect,
+    queueBookmarkJump,
   } = useAppSearchEffects({
     bridge,
     state,
@@ -168,6 +165,16 @@ export function App() {
     activateTab,
     toggleSidebar,
     dispatch,
+  });
+
+  const { activeBookmarkWorkspaceKey, bookmarkWorkspaces, handleBookmarkNavigate } = useBookmarkNavigation({
+    state,
+    tabs,
+    isTabView,
+    translations: t.bookmarks,
+    activateTab,
+    navigate,
+    queueBookmarkJump,
   });
 
   const [termsAccepted, setTermsAccepted] = useState(() => {
@@ -211,6 +218,7 @@ export function App() {
     closeSidebarCursorMode,
     expandAll,
     collapseAll,
+    openSidebarBookmarks,
     copyCurrentFileContent,
   } = useAppLayoutEffects({
     state,
@@ -242,6 +250,15 @@ export function App() {
     activeHtmlDocument,
     onToggleActiveHtmlDocumentPreview: handleToggleActiveHtmlDocumentPreview,
     toggleFullscreen,
+  });
+
+  useUserManualActions({
+    isTabView,
+    createNewWorkspaceTab,
+    closeWorkspaceToSelection,
+    openSidebarSearch,
+    openSidebarBookmarks,
+    openSettings: useCallback(() => setSettingsOpen(true), []),
   });
 
   const isAllTabsSearch = isTabView && searchScope === 'all-tabs';
@@ -338,6 +355,9 @@ export function App() {
       state={state}
       activeTabId={activeTabId}
       tabs={tabs}
+      bookmarkWorkspaces={bookmarkWorkspaces}
+      activeBookmarkWorkspaceKey={activeBookmarkWorkspaceKey}
+      handleBookmarkNavigate={handleBookmarkNavigate}
       activateTab={activateTab}
       createNewWorkspaceTab={createNewWorkspaceTab}
       closeTab={closeTab}

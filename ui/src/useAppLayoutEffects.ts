@@ -149,7 +149,7 @@ export function useAppLayoutEffects({
 
   // Sidebar resize handle
   useResize('sidebarResize', 'sidebar', state.workspaceName, {
-    min: 245,
+    min: 235,
     mode: 'synchronized',
     freezeContentId: 'sidebarTree',
   });
@@ -198,6 +198,16 @@ export function useAppLayoutEffects({
     closeWorkspaceToSelection();
   }, [closeWorkspaceToSelection, createNewWorkspaceTab, isTabView, state.workspaceName]);
 
+  const openSidebarBookmarks = useCallback(() => {
+    if (!state.settings.bookmarksEnabled) {
+      setSettingsOpen(true);
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent('focus-bookmark-setting')), 80);
+      return;
+    }
+    if (state.sidebarCollapsed) toggleSidebar();
+    dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'bookmarks' });
+  }, [dispatch, setSettingsOpen, state.settings.bookmarksEnabled, state.sidebarCollapsed, toggleSidebar]);
+
   const copyCurrentFileContent = useCallback((button?: HTMLElement | null) => {
     if (state.currentFile && state.markdownSource !== null) {
       bridge.copyToClipboard(state.markdownSource);
@@ -235,6 +245,7 @@ export function useAppLayoutEffects({
     onLocateFile: () => {
       window.dispatchEvent(new CustomEvent('locate-active-file'));
     },
+    onBookmarksOpen: openSidebarBookmarks,
     onOpenCurrentDocumentLocation: supportsShellLocation(state.appRuntime) && state.currentFile
       ? () => requestShellLocation(bridge, state.currentFile, 'open-parent-directory')
       : undefined,
@@ -254,6 +265,7 @@ export function useAppLayoutEffects({
     expandAll,
     collapseAll,
     requestWorkspaceSelection,
+    openSidebarBookmarks,
     copyCurrentFileContent,
   };
 }

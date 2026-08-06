@@ -70,63 +70,39 @@ impl Dispatcher {
                 let version = msg
                     .get("version")
                     .and_then(Value::as_str)
-                    .unwrap_or("")
+                    .unwrap_or_default()
                     .to_string();
-                let url = msg
-                    .get("url")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_string();
-                if !version.is_empty() && !url.is_empty() {
-                    let file_name = url.split('/').last().unwrap_or("update.msi").to_string();
-                    let staging_dir = self
-                        .app
-                        .path()
-                        .app_data_dir()
-                        .unwrap_or_default()
-                        .join("staged");
-                    let staged_file_path = staging_dir.join(&file_name);
-                    let new_state =
-                        crate::update::UpdateState::downloading(&version, &file_name, 0)
-                            .with_staged_file_path(staged_file_path.to_string_lossy());
-                    {
-                        self.state.inner.write().update_state = new_state.clone();
-                    }
-                    crate::update::manager::UpdateManager::emit_state(&self.app, &new_state);
-
-                    crate::update::manager::UpdateManager::start_download(
-                        self.app.clone(),
-                        &version,
-                        &url,
-                        staging_dir,
-                    );
-                }
+                crate::update::manager::UpdateManager::start_download(
+                    self.app.clone(),
+                    self.state.clone(),
+                    version,
+                );
             }
             "scheduleDownloadedUpdate" => {
-                let state = self.state.inner.read().update_state.clone();
-                let staged_file_path = state.staged_file_path.as_deref().map(PathBuf::from);
-                if let Some(staged_file_path) = staged_file_path.filter(|path| path.exists()) {
-                    let version = state.version.clone().unwrap_or_default();
-                    let file_name = state.downloaded_file_name.clone().unwrap_or_default();
-                    let config_dir = self.app.path().app_config_dir().unwrap_or_default();
-                    let manager = crate::update::manager::UpdateManager::new(config_dir);
-                    manager.schedule_update(&self.app, &version, &file_name, &staged_file_path);
-                    self.state.inner.write().update_state =
-                        crate::update::UpdateState::scheduled(&version, &file_name)
-                            .with_staged_file_path(staged_file_path.to_string_lossy());
+                if let Err(error) =
+                    crate::update::manager::UpdateManager::schedule_downloaded_update(
+                        &self.app,
+                        &self.state,
+                    )
+                {
+                    let version = self
+                        .state
+                        .inner
+                        .read()
+                        .update_state
+                        .version
+                        .clone()
+                        .unwrap_or_default();
+                    let error_state = crate::update::UpdateState::error_state(&version, &error);
+                    self.state.inner.write().update_state = error_state.clone();
+                    crate::update::manager::UpdateManager::emit_state(&self.app, &error_state);
                 }
             }
             "restartAndApplyUpdate" => {
-                let state = self.state.inner.read().update_state.clone();
-                let version = state.version.clone().unwrap_or_default();
-                let config_dir = self.app.path().app_config_dir().unwrap_or_default();
-                crate::update::manager::UpdateManager::apply_update(
-                    &self.app,
-                    &version,
-                    &config_dir,
+                crate::update::manager::UpdateManager::restart_and_apply_update(
+                    self.app.clone(),
+                    self.state.clone(),
                 );
-                self.state.inner.write().update_state =
-                    crate::update::UpdateState::applying(&version);
             }
             "updateAppearance" => {}
             _ => return Ok(false),

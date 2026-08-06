@@ -35,7 +35,25 @@ export function WelcomeHero({ copy, isDesktop, hostPlatform }: WelcomeHeroProps)
             <span>{copy.macosInstallBtn}</span>
           </a>
         )}
-        {!isDesktop && <div className="desktop-recommendation">{copy.desktopRecommendation}</div>}
+        {!isDesktop && (() => {
+          const DOWNLOAD_URL = 'https://the-long-ride.github.io/markdown-explorer/#download';
+          const { desktopRecommendation, desktopAppLinkText } = copy;
+          const idx = desktopRecommendation.indexOf(desktopAppLinkText);
+          if (idx === -1) {
+            return <div className="desktop-recommendation">{desktopRecommendation}</div>;
+          }
+          const prefix = desktopRecommendation.slice(0, idx);
+          const suffix = desktopRecommendation.slice(idx + desktopAppLinkText.length);
+          return (
+            <div className="desktop-recommendation">
+              {prefix}
+              <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="desktop-recommendation__link">
+                {desktopAppLinkText}
+              </a>
+              {suffix}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
