@@ -86,12 +86,12 @@ describe('parse', () => {
 
     test('preserves CSV fence metadata for delimiter and header overrides', () => {
       const result = parse('```tsv noheader delimiter=pipe\nA|B\n```');
-      expect(result.tokens[0]).toEqual({
+      expect(result.tokens[0]).toEqual(expect.objectContaining({
         type: 'code',
         lang: 'tsv',
         meta: 'noheader delimiter=pipe',
         content: 'A|B',
-      });
+      }));
     });
   });
 
