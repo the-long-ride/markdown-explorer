@@ -151,6 +151,12 @@ function createDesktopRuntime(deps) {
     win.webContents.setZoomLevel(nextZoom);
   }
 
+  function resetAppZoom() {
+    const win = getMainWindow();
+    if (!win) return;
+    win.webContents.setZoomLevel(0);
+  }
+
   function clampAppZoom() {
     const win = getMainWindow();
     if (!win) return;
@@ -189,6 +195,7 @@ function createDesktopRuntime(deps) {
     refreshActiveWorkspace,
     resolveNavigationPath,
     setAppZoomLevel,
+    resetAppZoom,
     ZOOM_LEVEL_STEP,
     isAccessDeniedError,
     decodeNavigationPath,
@@ -216,9 +223,13 @@ function createDesktopRuntime(deps) {
     handleReplaceRecentWorkspaces,
     handleZoomIn,
     handleZoomOut,
+    handleZoomReset,
     handleNavigate,
     handleRefresh,
     handleSetDocumentConversion,
+    handleListDesktopFonts,
+    handleImportDesktopFonts,
+    handleRemoveImportedDesktopFont,
     handleDownloadUpdate,
     handleScheduleDownloadedUpdate,
     handleRestartAndApplyUpdate,
@@ -300,9 +311,13 @@ function createDesktopRuntime(deps) {
     handleReplaceRecentWorkspaces,
     handleZoomIn,
     handleZoomOut,
+    handleZoomReset,
     handleNavigate,
     handleRefresh,
     handleSetDocumentConversion,
+    handleListDesktopFonts,
+    handleImportDesktopFonts,
+    handleRemoveImportedDesktopFont,
     handleDownloadUpdate,
     handleScheduleDownloadedUpdate,
     handleRestartAndApplyUpdate,

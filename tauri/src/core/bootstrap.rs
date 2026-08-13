@@ -86,7 +86,7 @@ pub fn boot() {
                 WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                     .title("Markdown Explorer")
                     .inner_size(1280.0, 800.0)
-                    .min_inner_size(720.0, 480.0)
+                    .min_inner_size(800.0, 480.0)
                     .resizable(true)
                     .fullscreen(false)
                     .decorations(false)

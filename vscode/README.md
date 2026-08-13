@@ -95,6 +95,7 @@ Open any folder containing Markdown files in VS Code to get started. Use the Mar
 - **Customization & Platform Support**
   - **Theme Remix**: Create, edit, import, and export custom themes with color, density, spacing, and background image controls.
   - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
+  - **Typography**: Choose installed system fonts or import `.ttf`/`.otf` files for Markdown Explorer App UI, Body, Heading, Quote, and Code roles. Imports live in extension global storage and do not change VS Code editor fonts.
   - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
   - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
   - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
@@ -207,6 +208,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Sidebar cursor mode | `Alt+Z` | `Alt+Z` | `Alt+Z` |
 | Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom | Use browser zoom |
 | Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom | Use browser zoom |
+| Reset zoom | `Ctrl+Alt+Z` | Use editor/webview zoom | Use browser zoom |
 
 ## Privacy
 

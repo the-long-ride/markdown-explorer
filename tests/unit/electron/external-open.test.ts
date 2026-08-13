@@ -19,6 +19,12 @@ describe('external Explorer launches', () => {
     expect(findExternalOpenPath(['Markdown Explorer.exe', 'C:/Docs/report.txt'], fs)).toBeNull();
   });
 
+  test('ignores app entry point in unpackaged dev launches', () => {
+    const fs = fsFor({ '.': 'directory', 'C:/Docs/guide.md': 'file' });
+    expect(findExternalOpenPath(['electron.exe', '.', 'C:/Docs/guide.md'], fs, { isPackaged: false })).toBe('C:/Docs/guide.md');
+    expect(findExternalOpenPath(['electron.exe', '.'], fs, { isPackaged: false })).toBeNull();
+  });
+
   test('queues newest launch until renderer becomes ready and delivers it once', () => {
     const queue = createExternalOpenQueue();
     queue.push('C:/Docs/first.md');

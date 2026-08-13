@@ -43,7 +43,7 @@ const REQUIRED_DESKTOP_WEBVIEW_COMMANDS = [
   'activateWorkspace', 'searchAcrossWorkspaces', 'searchWorkspace',
   'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
   'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
-  'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'openInEditor', 'copyCode',
+  'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'zoom-reset', 'openInEditor', 'copyCode',
   'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'downloadUpdate',
   'scheduleDownloadedUpdate', 'restartAndApplyUpdate', 'window-minimize',
   'window-maximize', 'window-close', 'updateAppearance',

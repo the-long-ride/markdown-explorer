@@ -1,8 +1,69 @@
 use super::*;
 
 impl Dispatcher {
+    fn emit_desktop_fonts_result(
+        &self,
+        request_id: &str,
+        imported_id: Option<String>,
+        explicit_error: Option<String>,
+    ) {
+        let mut extra = serde_json::Map::new();
+        extra.insert("requestId".into(), request_id.into());
+        let catalog = self
+            .app
+            .path()
+            .app_data_dir()
+            .map_err(|error| error.to_string())
+            .and_then(|path| crate::fonts::list_fonts(&path));
+        match catalog {
+            Ok(fonts) => {
+                extra.insert(
+                    "fonts".into(),
+                    serde_json::to_value(fonts).unwrap_or_else(|_| json!([])),
+                );
+            }
+            Err(error) => {
+                extra.insert("fonts".into(), json!([]));
+                extra.insert("error".into(), error.into());
+            }
+        }
+        if let Some(id) = imported_id {
+            extra.insert("importedId".into(), id.into());
+        }
+        if let Some(error) = explicit_error {
+            extra.insert("error".into(), error.into());
+        }
+        host_message::emit(&self.app, "desktopFontsResult", extra);
+    }
     pub(super) async fn handle_external_command(&self, cmd: &str, msg: &Value) -> Result<bool, String> {
         match cmd {
+            "listDesktopFonts" => {
+                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
+                self.emit_desktop_fonts_result(request_id, None, None);
+            }
+            "importDesktopFonts" => {
+                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
+                let path = self.pick_font_file();
+                if let Some(path) = path {
+                    let app_data = self.app.path().app_data_dir().map_err(|error| error.to_string())?;
+                    match crate::fonts::import_font_files(&app_data, &[path]) {
+                        Ok(font) => self.emit_desktop_fonts_result(request_id, Some(font.id), None),
+                        Err(error) => self.emit_desktop_fonts_result(request_id, None, Some(error)),
+                    }
+                } else {
+                    self.emit_desktop_fonts_result(request_id, None, None);
+                }
+            }
+            "removeImportedDesktopFont" => {
+                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
+                let app_data = self.app.path().app_data_dir().map_err(|error| error.to_string())?;
+                let result = msg
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| "Missing font id".to_string())
+                    .and_then(|id| crate::fonts::remove_imported_font(&app_data, id));
+                self.emit_desktop_fonts_result(request_id, None, result.err());
+            }
             // ── C5: Clipboard / External / Editor ──
             "openInEditor" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {

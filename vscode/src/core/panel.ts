@@ -33,6 +33,7 @@ import { HtmlPreviewServer } from './htmlPreviewServer';
 import { rewritePanelMediaUrls } from './panelMedia';
 import { navigatePanel } from './panelNavigationHandler';
 import { readPanelWorkspaceTextResource } from './panelWorkspaceResources';
+import { createPanelFontBridge, getGlobalStorageUri } from '../fonts/panelFontBridge';
 
 export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
 export { buildWebviewShell } from './panelShell';
@@ -54,6 +55,7 @@ export class MarkdownDocsPanel {
   private readonly _documentConverter = new DocumentConverter();
   private readonly _disposables: import('vscode').Disposable[] = [];
   private readonly _htmlPreviewServer: HtmlPreviewServer;
+  private readonly _fontBridge: ReturnType<typeof createPanelFontBridge>;
 
   // ---------------------------------------------------------------------------
   // Factory
@@ -77,6 +79,7 @@ export class MarkdownDocsPanel {
         retainContextWhenHidden: true,
         localResourceRoots: [
           getVscode().Uri.file(path.join(context.extensionPath, 'ui')),
+          getGlobalStorageUri(context, getVscode()),
           ...(getVscode().workspace.workspaceFolders?.map(f => f.uri) ?? []),
         ],
       },
@@ -102,11 +105,13 @@ export class MarkdownDocsPanel {
     this._htmlPreviewServer = new HtmlPreviewServer((url) =>
       getVscode().env.openExternal(getVscode().Uri.parse(url)),
     );
+    this._fontBridge = createPanelFontBridge(this._panel.webview, _context, getVscode());
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
     this._panel.webview.onDidReceiveMessage(
       async (msg: WebviewMessage) => {
+        if (await this._fontBridge.handle(msg)) return;
         switch (msg.command) {
           case 'navigate':
             await this._navigateTo(msg.path);
