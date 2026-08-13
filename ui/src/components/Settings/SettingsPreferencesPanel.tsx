@@ -6,11 +6,16 @@ import { ThemeStylePicker } from './ThemeStylePicker';
 import { PreferenceDescriptionTooltip } from './PreferenceDescriptionTooltip';
 import { getEnabledShortcut, formatShortcutLabel } from '../../utils/shortcuts';
 import { normalizeMaxPinnedItems } from '../Sidebar/sidebarWorkspacePreferences';
+import { DesktopTypographySettings } from './DesktopTypographySettings';
+
+export type SettingsPreferencesSection = 'appearance' | 'typography' | 'theme';
 
 type SettingsPreferencesPanelProps = {
+  section?: SettingsPreferencesSection;
   state: AppState;
   t: any;
   isDesktop: boolean;
+  supportsTypography: boolean;
   setTheme: (theme: ThemeMode) => void;
   setThemeStyle: (themeStyle: ThemeStyle) => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
@@ -76,9 +81,11 @@ function PreferenceRow({
 }
 
 export function SettingsPreferencesPanel({
+  section = 'appearance',
   state,
   t,
   isDesktop,
+  supportsTypography,
   setTheme,
   setThemeStyle,
   updateSettings,
@@ -90,8 +97,13 @@ export function SettingsPreferencesPanel({
     shortcut ? description.replace('{shortcut}', `(${shortcut})`) : description.replace('{shortcut}', '');
 
   return (
-    <div className="settings-card__column settings-card__column--preferences">
-      <div className="settings-panel-heading">{t.appearance}</div>
+    <div className="settings-card__column settings-card__column--preferences settings-card__column--section">
+      {section === 'appearance' && (
+        <section className="settings-section-panel settings-appearance-section">
+          <div className="settings-section-panel__header">
+            <h3>{t.appearance}</h3>
+            <p>{t.subtitle}</p>
+          </div>
       <div className="settings-field">
         <div className="settings-item__info">
           <div className="settings-item__title">{t.colorMode}</div>
@@ -115,7 +127,6 @@ export function SettingsPreferencesPanel({
         </div>
       </div>
 
-      <div className="settings-panel-heading settings-panel-heading--secondary">{t.viewPrefs}</div>
 
       <div className="settings-appearance-controls">
         {isDesktop && (
@@ -244,18 +255,25 @@ export function SettingsPreferencesPanel({
         </PreferenceRow>
       </div>
 
-      <div className="settings-field settings-field--separated settings-theme-style-section">
-        <div className="settings-item__info">
-          <div className="settings-item__title">{t.themeStyle}</div>
-          <div className="settings-item__desc">{t.themeStyleDesc}</div>
-        </div>
-        <ThemeStylePicker
-          value={state.themeStyle}
-          onChange={setThemeStyle}
-          showCustomThemes
-          onOpenThemeRemix={onOpenThemeRemix}
-        />
-      </div>
+        </section>
+      )}
+      {section === 'typography' && supportsTypography && (
+        <DesktopTypographySettings state={state} t={t} updateSettings={updateSettings} />
+      )}
+      {section === 'theme' && (
+        <section className="settings-section-panel settings-theme-style-section">
+          <div className="settings-section-panel__header">
+            <h3>{t.themeStyle}</h3>
+            <p>{t.themeStyleDesc}</p>
+          </div>
+          <ThemeStylePicker
+            value={state.themeStyle}
+            onChange={setThemeStyle}
+            showCustomThemes
+            onOpenThemeRemix={onOpenThemeRemix}
+          />
+        </section>
+      )}
     </div>
   );
 }

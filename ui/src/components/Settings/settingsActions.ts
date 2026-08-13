@@ -1,3 +1,5 @@
+import type { Translations } from '../../contexts/translationTypes';
+
 export const ACTIONS_LIST = [
   // Navigation & Workspace
   { id: 'welcome', label: 'Go to welcome page', scope: 'both' },
@@ -21,8 +23,9 @@ export const ACTIONS_LIST = [
   { id: 'sidebarCursorMode', label: 'Sidebar cursor mode', scope: 'both' },
   { id: 'toggleDesktopViewMode', label: 'Toggle Tabs/Focus view', scope: 'electron' },
   { id: 'toggleHtmlPreview', label: 'Toggle default HTML preview', scope: 'both' },
-  { id: 'zoomIn', label: 'Zoom in', scope: 'desktop' },
-  { id: 'zoomOut', label: 'Zoom out', scope: 'desktop' },
+  { id: 'zoomIn', label: 'Zoom in', scope: 'electron' },
+  { id: 'zoomOut', label: 'Zoom out', scope: 'electron' },
+  { id: 'resetZoom', label: 'Reset zoom', scope: 'electron' },
 
   // Headings & Structure
   { id: 'collapseAll', label: 'Collapse all headings', scope: 'desktop' },
@@ -35,6 +38,31 @@ export const ACTIONS_LIST = [
   { id: 'closeAllContentTabs', label: 'Close all document tabs', scope: 'electron' },
 
   // General & Settings
+  { id: 'editCurrentDocument', label: 'Edit current document', scope: 'editor' },
   { id: 'settings', label: 'Toggle settings modal', scope: 'both' },
   { id: 'toggleTheme', label: 'Toggle light/dark mode', scope: 'both' },
 ];
+
+
+export function getLocalizedShortcutActionLabel(
+  t: Translations,
+  actionId: string,
+  fallback: string,
+): string {
+  switch (actionId) {
+    case 'sidebarCursorMode': return t.ui.sidebarCursorMode;
+    case 'resetZoom': return t.tooltips.resetZoom;
+    case 'closeContentTab': return t.tabContextMenu.closeThisTab;
+    case 'closeContentTabsToRight': return t.tabContextMenu.closeTabsToRight;
+    case 'closeOtherContentTabs': return t.tabContextMenu.closeOtherTabs;
+    case 'closeAllContentTabs': return t.tabContextMenu.closeAllTabs;
+    default:
+      return (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+  }
+}
+
+export function getLocalizedShortcutActionLabels(t: Translations): Record<string, string> {
+  return Object.fromEntries(
+    ACTIONS_LIST.map((action) => [action.id, getLocalizedShortcutActionLabel(t, action.id, action.label)]),
+  );
+}

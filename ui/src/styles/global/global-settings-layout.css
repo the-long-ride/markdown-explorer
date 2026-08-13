@@ -326,3 +326,56 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }
+
+.settings-theme-style-section {
+  width: min(100%, 420px);
+  margin-inline: auto;
+}
+.settings-outline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 5px 9px;
+  color: var(--tx);
+  background: transparent;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease, color .14s ease;
+}
+.settings-outline-button:hover:not(:disabled),
+.settings-outline-button:focus-visible:not(:disabled) {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+  outline: none;
+}
+.settings-outline-button:disabled {
+  cursor: default;
+  opacity: .55;
+}
+.settings-outline-button--icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+.settings-outline-button .btn-icon,
+.settings-outline-button .btn-label {
+  display: inline-flex;
+  align-items: center;
+}
+.settings-data-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+@media (max-width: 720px) {
+  .desktop-font-binding-row__controls { align-items: stretch; flex-direction: column; }
+}
+.font-search-menu__option.is-keyboard-active {
+  outline: var(--stroke-w) solid var(--accent);
+  outline-offset: -1px;
+  background: var(--bg-h);
+}

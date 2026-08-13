@@ -18,8 +18,6 @@
     overflow: hidden;
   }
   .settings-card--settings {
-    width: min(520px, calc(100vw - 16px));
-    max-width: calc(100vw - 16px);
     height: calc(100dvh - var(--topbar-h) - 16px);
     max-height: calc(100dvh - var(--topbar-h) - 16px);
     padding: 16px;

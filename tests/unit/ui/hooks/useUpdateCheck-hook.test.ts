@@ -223,4 +223,19 @@ describe('useUpdateCheck hook', () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
+  it('checkNow bypasses the startup delay', async () => {
+    mockFetch({ json: () => Promise.resolve({ tag_name: 'v1.0.0' }) });
+    const { result } = renderHook(() =>
+      useUpdateCheck({ currentVersion: '1.0.0', runtime: 'desktop', hostPlatform: 'windows', hostArch: 'x64' }),
+    );
+
+    act(() => result.current.checkNow());
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+      await Promise.resolve();
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalled();
+  });
+
 });

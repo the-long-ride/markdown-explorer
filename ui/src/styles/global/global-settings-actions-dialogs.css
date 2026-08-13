@@ -509,3 +509,34 @@
   border-top: 0;
   padding-top: 0;
 }
+
+.update-available-card {
+  width: min(560px, calc(100vw - 32px));
+  padding: 22px;
+}
+.update-available-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-inline-end: 26px;
+}
+.update-available-card__header h3 { font-size: 18px; }
+.update-available-card__header p { margin-top: 5px; color: var(--tx2); }
+.update-available-card__changelog {
+  justify-self: start;
+  margin-top: 12px;
+}
+.update-available-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.update-available-card__skip { color: var(--tx2); }
+
+.update-available-card__icon { display: inline-flex; flex: 0 0 auto; color: var(--accent); }
+.update-available-card__copy { min-width: 0; }
+.update-available-card__header .update-available-card__changelog { display: inline-flex; width: fit-content; margin-top: 10px; }
+.update-available-card__actions .settings-outline-button { min-height: 34px; }
+.update-available-card__skip { color: var(--tx2); }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AppRuntime, HostPlatform } from '../types';
 import {
   CHANGELOG_URL,
@@ -23,6 +23,7 @@ interface GitHubRelease {
 }
 
 export interface UpdateCheckState {
+  readonly checkNow: () => void;
   readonly status: 'idle' | 'checking' | 'current' | 'available' | 'error';
   readonly currentVersion: string;
   readonly latestVersion: string;
@@ -194,7 +195,7 @@ export function useUpdateCheck({
   hostPlatform,
   hostArch,
 }: UseUpdateCheckParams): UpdateCheckState {
-  const initialState = useMemo<UpdateCheckState>(() => ({
+  const initialState = useMemo<Omit<UpdateCheckState, 'checkNow'>>(() => ({
     status: currentVersion ? 'checking' : 'idle',
     currentVersion,
     latestVersion: '',
@@ -205,7 +206,9 @@ export function useUpdateCheck({
     hasUpdate: false,
   }), [currentVersion, runtime]);
 
-  const [state, setState] = useState<UpdateCheckState>(initialState);
+  const [state, setState] = useState<Omit<UpdateCheckState, 'checkNow'>>(initialState);
+  const [checkNonce, setCheckNonce] = useState(0);
+  const checkNow = useCallback(() => setCheckNonce((value: number) => value + 1), []);
 
   useEffect(() => {
     if (!currentVersion) {
@@ -217,7 +220,7 @@ export function useUpdateCheck({
     setState(initialState);
 
     // Delay update check to avoid competing with first paint
-    const delayMs = 8000;
+    const delayMs = checkNonce > 0 ? 0 : 8000;
     const timer = setTimeout(() => {
       if (controller.signal.aborted) return;
       fetch(RELEASE_API_URL, {
@@ -263,7 +266,7 @@ export function useUpdateCheck({
     }, delayMs);
 
     return () => { controller.abort(); clearTimeout(timer); };
-  }, [currentVersion, hostArch, hostPlatform, initialState, runtime]);
+  }, [checkNonce, currentVersion, hostArch, hostPlatform, initialState, runtime]);
 
-  return state;
+  return { ...state, checkNow };
 }
