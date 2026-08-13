@@ -4,10 +4,13 @@ import {
   ALL_THEME_STYLE_OPTIONS,
   DEFAULT_KEYBINDINGS,
   DESKTOP_DEFAULT_KEYBINDINGS,
+  VSCODE_DEFAULT_KEYBINDINGS,
   PET_THEME_STYLE_OPTIONS,
   THEME_MODE_OPTIONS,
   THEME_STYLE_OPTIONS,
   getDefaultKeybindings,
+  getDefaultKeybindingsForRuntime,
+  normalizeKeybindingsForRuntime,
   isPetThemeStyle,
   normalizeDesktopViewMode,
   normalizeKeybindings,
@@ -16,12 +19,21 @@ import {
 } from '../../../../ui/src/contexts/appStateConstants';
 
 describe('appStateConstants', () => {
-  test('DEFAULT_KEYBINDINGS has 21 entries', () => {
-    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(21);
+  test('DEFAULT_KEYBINDINGS has 19 entries without app-owned zoom', () => {
+    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(19);
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 27 entries', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(27);
+  test('VSCODE_DEFAULT_KEYBINDINGS adds the editor action only for VS Code', () => {
+    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(20);
+    expect(VSCODE_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(VSCODE_DEFAULT_KEYBINDINGS.zoomIn).toBeUndefined();
+    expect(VSCODE_DEFAULT_KEYBINDINGS.zoomOut).toBeUndefined();
+  });
+
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 29 entries including Edit and desktop reset zoom', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(29);
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+E');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.resetZoom).toBe('Ctrl+Alt+Z');
   });
 
   test('DESKTOP_DEFAULT_KEYBINDINGS overrides 5 from defaults', () => {
@@ -41,16 +53,31 @@ describe('appStateConstants', () => {
     expect(kb.searchCurrent).toBe('Ctrl+F');
   });
 
-  test('getDefaultKeybindings(false) returns default keybindings', () => {
+  test('getDefaultKeybindings(false) returns VS Code-compatible keybindings before host handshake', () => {
     const kb = getDefaultKeybindings(false);
     expect(kb.searchCurrent).toBe('Ctrl+K');
+    expect(kb.editCurrentDocument).toBe('Ctrl+Alt+E');
   });
 
-  test('getDefaultKeybindings(false) with __chromeExtBus returns Chrome keybindings', () => {
-    (window as any).__chromeExtBus = {};
-    const kb = getDefaultKeybindings(false);
-    expect(kb.refresh).toBe('R');
-    delete (window as any).__chromeExtBus;
+  test('getDefaultKeybindingsForRuntime keeps Edit host-specific', () => {
+    expect(getDefaultKeybindingsForRuntime('desktop').editCurrentDocument).toBe('Ctrl+E');
+    expect(getDefaultKeybindingsForRuntime('tauri').editCurrentDocument).toBe('Ctrl+E');
+    expect(getDefaultKeybindingsForRuntime('vscode').editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(getDefaultKeybindingsForRuntime('chrome').editCurrentDocument).toBeUndefined();
+  });
+
+  test('normalizeKeybindingsForRuntime strips imported Edit binding in Chromium', () => {
+    const kb = normalizeKeybindingsForRuntime({ editCurrentDocument: 'Ctrl+Shift+E' }, 'chrome');
+    expect(kb.editCurrentDocument).toBeUndefined();
+  });
+
+  test('normalizeKeybindingsForRuntime strips reset zoom outside desktop apps', () => {
+    expect(normalizeKeybindingsForRuntime({ zoomIn: 'Ctrl+=', zoomOut: 'Ctrl+-', resetZoom: 'Ctrl+Alt+Z' }, 'vscode')).not.toHaveProperty('zoomIn');
+    expect(normalizeKeybindingsForRuntime({ zoomIn: 'Ctrl+=', zoomOut: 'Ctrl+-', resetZoom: 'Ctrl+Alt+Z' }, 'vscode')).not.toHaveProperty('zoomOut');
+    expect(normalizeKeybindingsForRuntime({ resetZoom: 'Ctrl+Alt+Z' }, 'vscode').resetZoom).toBeUndefined();
+    expect(normalizeKeybindingsForRuntime({ resetZoom: 'Ctrl+Alt+Z' }, 'chrome').resetZoom).toBeUndefined();
+    expect(normalizeKeybindingsForRuntime(undefined, 'desktop').resetZoom).toBe('Ctrl+Alt+Z');
+    expect(normalizeKeybindingsForRuntime(undefined, 'tauri').resetZoom).toBe('Ctrl+Alt+Z');
   });
 
   test('normalizeKeybindings merges saved over defaults', () => {

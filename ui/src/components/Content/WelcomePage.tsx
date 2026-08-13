@@ -7,6 +7,7 @@ import { useAppState } from '../../contexts/AppStateContext';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
 import { getTranslations } from '../../contexts/translations';
 import { ACTIONS_LIST } from '../Settings/SettingsModal';
+import { getLocalizedShortcutActionLabel } from '../Settings/settingsActions';
 import { InteractiveBackground } from '../shared/InteractiveBackground';
 import './WelcomePage.css';
 
@@ -48,7 +49,7 @@ export function WelcomePage() {
     <div className="welcome-container">
       <InteractiveBackground />
       <div className="welcome-animate-wrapper">
-        <WelcomeHero copy={wt.hero} isDesktop={isDesktop} hostPlatform={state.hostPlatform} />
+        <WelcomeHero copy={wt.hero} isDesktop={isDesktop} hostPlatform={state.hostPlatform} markdownThemLabel={t.ui.markdownThemLinkLabel} />
 
       {/* Tabs Bar */}
       <div className="tabs-bar">
@@ -259,7 +260,7 @@ export function WelcomePage() {
                   const val = getEnabledShortcut(state.settings, act.id) ?? state.settings.keybindings?.[act.id] ?? "";
                   return (
                     <tr key={act.id}>
-                      <td>{t.actions[act.id as keyof typeof t.actions] || act.label}</td>
+                      <td>{getLocalizedShortcutActionLabel(t, act.id, act.label)}</td>
                       <td>
                         {renderShortcutKeys(val)}
                       </td>
@@ -278,9 +279,10 @@ export function WelcomePage() {
                   <td><kbd>{wt.shortcutsTable.rows.zoomModalShortcut}</kbd></td>
                 </tr>
                 <tr>
-                  <td>Sidebar cursor mode details</td>
+                  <td>{t.ui.sidebarCursorDetails}</td>
                   <td>
-                    Use <kbd>UP</kbd> / <kbd>DOWN</kbd> to move, <kbd>ENTER</kbd> to expand/open, <kbd>ESC</kbd> to leave
+                    {t.ui.sidebarCursorUse} <kbd>UP</kbd> / <kbd>DOWN</kbd> {t.ui.sidebarCursorToMove}{' '}
+                    <kbd>ENTER</kbd> {t.ui.sidebarCursorToExpandOpen} <kbd>ESC</kbd> {t.ui.sidebarCursorToLeave}
                   </td>
                 </tr>
               </tbody>
@@ -368,4 +370,3 @@ export function WelcomePage() {
     </div>
   );
 }
-

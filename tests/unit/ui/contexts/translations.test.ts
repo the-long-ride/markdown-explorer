@@ -54,7 +54,7 @@ describe('translations', () => {
     const requiredKeys: (keyof Translations)[] = [
       'settings', 'subtitle', 'appearance', 'colorMode', 'colorModeDesc',
       'auto', 'light', 'dark', 'themeStyle', 'themeStyleDesc',
-      'viewPrefs', 'desktopView', 'desktopViewDesc', 'focus', 'tabs',
+      'desktopView', 'desktopViewDesc', 'focus', 'tabs',
       'sidebarLabels', 'sidebarLabelsDesc', 'fileTabs', 'fileTabsDesc',
       'documentConversion', 'documentConversionDesc', 'htmlPreview', 'htmlPreviewDesc',
       'shortcuts', 'shortcutsHint', 'resetShortcuts', 'closeSettings',

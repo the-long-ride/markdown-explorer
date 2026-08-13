@@ -32,6 +32,7 @@ keywords:
 |---|---|
 | `crossTabSearchResults` | `CrossTabSearchResultsMessage` — requestId: string, results: readonly CrossTabSearchResult[], done?: boolean, total?: number, truncated?: boolean, cancelled?: boolean, error?: string |
 | `currentFileChanged` | `CurrentFileChangedMessage` — workspaceOperationId?: string, workspaceTabId?: string, filePath: string |
+| `desktopFontsResult` | `DesktopFontsResultMessage` — requestId: string, fonts: readonly DesktopFontFamily[], importedId?: string, error?: string |
 | `externalOpenPath` | `ExternalOpenPathMessage` — path: string |
 | `fullscreenChanged` | `FullscreenStateChangedMessage` — isFullscreen: boolean |
 | `navNotFound` | `NavNotFoundMessage` — href: string |
@@ -48,6 +49,10 @@ keywords:
 | `workspaceSearchResults` | `WorkspaceSearchResultsMessage` — requestId: string, results: readonly WorkspaceSearchResult[] |
 | `workspaceTextResourceResult` | `WorkspaceTextResourceResultMessage` — requestId: string, ok: boolean, content?: string, resolvedPath?: string, reason?: 'outside-workspace' \| 'missing' \| 'unreadable' \| 'unsupported' |
 | `workspaceUnavailable` | `WorkspaceUnavailableMessage` — workspaceOperationId?: string, workspaceTabId?: string, workspacePath: string, workspaceName: string, reason: WorkspaceUnavailableReason, recentWorkspaces?: readonly RecentWorkspace[], appVersion?: string, appRuntime?: AppRuntime, hostPlatform?: HostPlatform, hostArch?: string, canInstallUpdates?: boolean, isMaximized?: boolean |
+
+## Desktop-font response rules
+
+`desktopFontsResult` is correlated by `requestId`. A successful `importDesktopFonts` response may also include `importedId`; the renderer uses it only when the response matches the pending role-specific import request, then selects that family in the corresponding local typography draft. Each family reports normalized source/id/family plus available variants and host-approved URLs for imported faces only. Failures are non-fatal and may return an error with any successfully discovered families.
 
 ## Handling requirements
 

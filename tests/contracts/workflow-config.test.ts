@@ -42,19 +42,19 @@ describe('GitHub Actions workflow contracts', () => {
 
     expect(tauriJob).toMatch(/os:\s*\[ubuntu-latest, windows-latest, macos-latest\]/);
     expect(tauriJob).toContain("if: runner.os == 'Linux'");
-    expect(tauriJob).toContain('pnpm run build:ui:electron');
+    expect(tauriJob).toContain('pnpm run build:ui:tauri');
     expect(tauriJob).toContain('pnpm run test:tauri');
   });
 
   test('tauri CI jobs build frontend dist before cargo compiles', () => {
     const workflow = readWorkflow('test.yml');
-    const uiBuilds = workflow.match(/pnpm run build:ui:electron/g) ?? [];
+    const uiBuilds = workflow.match(/pnpm run build:ui:tauri/g) ?? [];
     expect(uiBuilds).toHaveLength(2);
     expect(workflow).toMatch(
-      /pnpm run build:ui:electron[\s\S]*pnpm run test:tauri/,
+      /pnpm run build:ui:tauri[\s\S]*pnpm run test:tauri/,
     );
     expect(workflow).toMatch(
-      /pnpm run build:ui:electron[\s\S]*cargo llvm-cov/,
+      /pnpm run build:ui:tauri[\s\S]*cargo llvm-cov/,
     );
   });
 

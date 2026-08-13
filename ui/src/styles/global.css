@@ -2,6 +2,8 @@
 @import './global/global-content-layout.css';
 @import './global/global-app-shell.css';
 @import './global/global-settings-layout.css';
+@import './global/global-settings-typography.css';
+@import './global/global-settings-navigation.css';
 @import './global/global-terms-modal.css';
 @import './global/global-workspace-selection.css';
 @import './global/global-recent-workspaces.css';
@@ -31,6 +33,7 @@
 @import './global/global-theme-picker-custom.css';
 @import './global/global-theme-picker-remix.css';
 @import './global/global-switch-tooltip-diff.css';
+@import './global/global-mermaid-rendering.css';
 @import './global/global-electron-workspace.css';
 @import './global/global-electron-window-controls.css';
 @import './global/global-dialog-surfaces.css';

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_KEYBINDINGS } from '../../../ui/src/contexts/appStateConstants';
+import {
+  DEFAULT_KEYBINDINGS,
+  DESKTOP_DEFAULT_KEYBINDINGS,
+  VSCODE_DEFAULT_KEYBINDINGS,
+  getDefaultKeybindingsForRuntime,
+} from '../../../ui/src/contexts/appStateConstants';
 import { ACTIONS_LIST } from '../../../ui/src/components/Settings/settingsActions';
 import { resolveKeyboardAction } from '../../../ui/src/hooks/keyboardUtils';
 
@@ -19,6 +24,37 @@ describe('VS Code and Chromium shortcut bindings contract', () => {
     expect(toggleSidebar?.scope).toBe('both');
     expect(searchAllTabs?.scope).toBe('desktop');
     expect(workspaceSelection?.scope).toBe('non-vscode');
+  });
+
+  it('scopes Edit to editor-capable hosts and assigns host-specific defaults', () => {
+    const edit = ACTIONS_LIST.find((a) => a.id === 'editCurrentDocument');
+    expect(edit?.scope).toBe('editor');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+E');
+    expect(VSCODE_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(getDefaultKeybindingsForRuntime('chrome').editCurrentDocument).toBeUndefined();
+  });
+
+  it('resolves the VS Code Edit shortcut only when editor capability is exposed', () => {
+    const event = { key: 'e', ctrlKey: true, altKey: true, shiftKey: false, metaKey: false } as KeyboardEvent;
+    const state = {
+      isDesktop: false,
+      isDesktopLike: false,
+      isVscode: true,
+      isTermsOpen: false,
+      isModalOpen: false,
+      isSearchOpen: false,
+      isFindOpen: false,
+      isSettingsOpen: false,
+      isSidebarCursorMode: false,
+      activeSearchScope: 'current' as const,
+      keybindings: { editCurrentDocument: 'Ctrl+Alt+E' },
+      hasOnEditCurrentDocument: true,
+      isEditableTarget: false,
+      isRepeat: false,
+    } as any;
+
+    expect(resolveKeyboardAction(event, state)).toEqual({ type: 'edit-current-document' });
+    expect(resolveKeyboardAction(event, { ...state, hasOnEditCurrentDocument: false })).toBeNull();
   });
 
   it('resolves workspaceSelection on Web demo and Chrome extension runtimes', () => {

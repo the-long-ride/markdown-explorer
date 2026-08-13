@@ -40,6 +40,8 @@ keywords:
 | `downloadUpdate` | `DownloadUpdateMessage` — version: string, url: string |
 | `indexWorkspaceSearchItems` | `IndexWorkspaceSearchItemsMessage` — items?: readonly CrossTabSearchResult[] |
 | `loadSearchPreview` | `SearchPreviewRequestMessage` — requestId: string, filePath: string, tabId?: string |
+| `importDesktopFonts` | `ImportDesktopFontsMessage` — requestId: string |
+| `listDesktopFonts` | `ListDesktopFontsMessage` — requestId: string |
 | `loadWorkspaceSearchIndexes` | `LoadWorkspaceSearchIndexesMessage` — tabs: readonly { readonly tabId: string; readonly workspacePath: string }[] |
 | `navigate` | `NavigateMessage` — path: string |
 | `openExternal` | `OpenExternalMessage` — url: string |
@@ -54,6 +56,7 @@ keywords:
 | `readWorkspaceTextResource` | `ReadWorkspaceTextResourceMessage` — requestId: string, documentPath: string, resourcePath: string |
 | `ready` | `WebviewReadyMessage` — documentConversionEnabled?: boolean |
 | `refresh` | `RefreshMessage` — No payload |
+| `removeImportedDesktopFont` | `RemoveImportedDesktopFontMessage` — requestId: string, id: string |
 | `replaceRecentWorkspaces` | `ReplaceRecentWorkspacesMessage` — recentWorkspaces: readonly RecentWorkspace[] |
 | `restartAndApplyUpdate` | `RestartAndApplyUpdateMessage` — No payload |
 | `scheduleDownloadedUpdate` | `ScheduleDownloadedUpdateMessage` — No payload |
@@ -67,6 +70,10 @@ keywords:
 | `window-minimize` | `WindowMinimizeMessage` — No payload |
 | `zoom-in` | `ZoomInMessage` — No payload |
 | `zoom-out` | `ZoomOutMessage` — No payload |
+
+## Desktop-font request rules
+
+`listDesktopFonts`, `importDesktopFonts`, and `removeImportedDesktopFont` are desktop-only. Import opens the native multi-file picker and never accepts an arbitrary renderer-supplied filesystem path. Responses use `desktopFontsResult` with the same `requestId`.
 
 ## Dispatch requirements
 

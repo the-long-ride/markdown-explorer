@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { THEME_MODE_OPTIONS } from "../../contexts/appStateConstants";
 import { useAppState } from "../../contexts/AppStateContext";
+import { getTranslations } from "../../contexts/translations";
 import { CUSTOM_THEME_COLOR_OPTIONS } from "../../theme/customThemes";
 import type {
   CustomThemeScheme,
@@ -12,12 +12,10 @@ import { TooltipButton } from "../shared/TooltipButton";
 import { ThemeRemixDropdown } from './ThemeRemixDropdown';
 import { useThemeRemixActions } from './useThemeRemixActions';
 import { useThemeRemixStatus } from './useThemeRemixStatus';
-import { BASE_STYLE_OPTIONS, DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS, DENSITY_OPTIONS, IMAGE_FIT_OPTIONS, formatRangeValue } from './themeRemixModel';
+import { BASE_STYLE_OPTIONS, DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS, formatRangeValue } from './themeRemixModel';
+import { getThemeRemixBaseStyleLabels, getThemeRemixColorLabels, getThemeRemixDensityOptions, getThemeRemixImageFitOptions, getThemeRemixModeOptions } from './themeRemixTranslations';
 
-interface ThemeRemixModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+interface ThemeRemixModalProps { isOpen: boolean; onClose: () => void; }
 
 export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
   const {
@@ -26,6 +24,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
     selectCustomTheme,
     updateSettings,
   } = useAppState();
+  const t = getTranslations(state.settings.language);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(
     state.settings.activeCustomThemeId ?? state.settings.customThemes?.[0]?.id ?? null,
@@ -34,6 +33,11 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
   const { status, statusKey, showStatus } = useThemeRemixStatus(isOpen);
 
   const customThemes = state.settings.customThemes ?? [];
+  const baseStyleLabels = getThemeRemixBaseStyleLabels(t);
+  const themeModeOptions = getThemeRemixModeOptions(t);
+  const densityOptions = getThemeRemixDensityOptions(t);
+  const imageFitOptions = getThemeRemixImageFitOptions(t);
+  const colorLabels = getThemeRemixColorLabels(t);
   const selectedTheme = customThemes.find((theme) => theme.id === selectedThemeId) ?? null;
 
   useEffect(() => {
@@ -54,7 +58,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
     handleColorChange,
     handleBackgroundFile,
     patchSelectedTheme,
-  } = useThemeRemixActions({ state, customThemes, selectedTheme, selectedThemeId, setSelectedThemeId, selectCustomTheme, updateSettings, setThemeStyle, scheme, showStatus });
+  } = useThemeRemixActions({ state, customThemes, selectedTheme, selectedThemeId, setSelectedThemeId, selectCustomTheme, updateSettings, setThemeStyle, scheme, showStatus, copy: t.themeRemix });
 
   const schemeColors = useMemo(
     () => ({
@@ -79,7 +83,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
         <TooltipButton
           className="settings-card__close"
           onClick={onClose}
-          tooltip="Close Theme Remix"
+          tooltip={t.themeRemix.close}
           tooltipPos="below"
           tooltipAlign="right"
         >
@@ -87,8 +91,8 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
         </TooltipButton>
         <div className="theme-remix-header">
           <div>
-            <h2>Theme Remix</h2>
-            <p>Mix built-in layouts, colors, spacing, and background images into custom themes.</p>
+            <h2>{t.themeRemix.title}</h2>
+            <p>{t.themeRemix.description}</p>
           </div>
         </div>
 
@@ -101,7 +105,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
               disabled={!canCreateTheme}
             >
               <PlusIcon size={15} />
-              New Theme
+              {t.themeRemix.newTheme}
             </button>
           </div>
         ) : (
@@ -114,7 +118,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                 disabled={!canCreateTheme}
               >
                 <PlusIcon size={14} />
-                New Theme
+                {t.themeRemix.newTheme}
               </button>
               <div className="theme-remix-list__items">
                 {customThemes.map((theme) => (
@@ -130,11 +134,11 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                       <span className="theme-remix-list__name" title={theme.name}>{theme.name}</span>
                       <span className="theme-remix-list__meta" title={theme.baseStyle}>{theme.baseStyle}</span>
                     </button>
-                    <div className="theme-remix-list__actions" role="group" aria-label={`${theme.name} actions`}>
+                    <div className="theme-remix-list__actions" role="group" aria-label={`${theme.name}: ${t.themeRemix.duplicate} / ${t.themeRemix.delete}`}>
                       <TooltipButton
                         type="button"
                         className="theme-remix-list__icon-btn"
-                        tooltip="Duplicate"
+                        tooltip={t.themeRemix.duplicate}
                         tooltipPos="below"
                         tooltipAlign="right"
                         onClick={() => handleDuplicateTheme(theme)}
@@ -144,7 +148,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                       <TooltipButton
                         type="button"
                         className="theme-remix-list__icon-btn theme-remix-list__icon-btn--danger"
-                        tooltip="Delete"
+                        tooltip={t.themeRemix.delete}
                         tooltipPos="below"
                         tooltipAlign="right"
                         onClick={() => handleDeleteTheme(theme)}
@@ -161,7 +165,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                 <>
                 <div className="theme-remix-section theme-remix-section--identity">
                   <label className="theme-remix-field">
-                    <span>Name</span>
+                    <span>{t.themeRemix.name}</span>
                     <input
                       type="text"
                       value={selectedTheme.name}
@@ -172,11 +176,11 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                     />
                   </label>
                   <div className="theme-remix-field">
-                    <span>Base layout</span>
+                    <span>{t.themeRemix.baseLayout}</span>
                     <ThemeRemixDropdown
-                      ariaLabel="Base layout"
+                      ariaLabel={t.themeRemix.baseLayout}
                       value={selectedTheme.baseStyle}
-                      options={BASE_STYLE_OPTIONS.map((option) => ({ value: option.id, label: option.label }))}
+                      options={BASE_STYLE_OPTIONS.map((option) => ({ value: option.id, label: baseStyleLabels[option.id] ?? option.id }))}
                       onChange={(value) =>
                         patchSelectedTheme((theme) => ({
                           ...theme,
@@ -186,11 +190,11 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                     />
                   </div>
                   <div className="theme-remix-field">
-                    <span>Color mode</span>
+                    <span>{t.themeRemix.colorMode}</span>
                     <ThemeRemixDropdown
-                      ariaLabel="Color mode"
+                      ariaLabel={t.themeRemix.colorMode}
                       value={selectedTheme.colorMode ?? "auto"}
-                      options={THEME_MODE_OPTIONS.map((option) => ({ value: option.id, label: option.label }))}
+                      options={themeModeOptions}
                       onChange={(value) =>
                         patchSelectedTheme((theme) => ({
                           ...theme,
@@ -200,20 +204,20 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                     />
                   </div>
                   <button type="button" className="theme-remix-btn theme-remix-btn--accent" onClick={handleApplySelectedTheme}>
-                    Apply Theme
+                    {t.themeRemix.applyTheme}
                   </button>
                 </div>
 
                 <div className="theme-remix-layout-background">
                   <div className="theme-remix-section theme-remix-section--panel">
-                    <div className="theme-remix-section__title">Layout</div>
+                    <div className="theme-remix-section__title">{t.themeRemix.layout}</div>
                     <div className="theme-remix-controls theme-remix-controls--stack">
                       <div className="theme-remix-field">
-                        <span>Density</span>
+                        <span>{t.themeRemix.density}</span>
                         <ThemeRemixDropdown
-                          ariaLabel="Density"
+                          ariaLabel={t.themeRemix.density}
                           value={selectedTheme.layout?.density ?? "comfortable"}
-                          options={DENSITY_OPTIONS}
+                          options={densityOptions}
                           onChange={(value) =>
                             patchSelectedTheme((theme) => ({
                               ...theme,
@@ -226,10 +230,10 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                         />
                       </div>
                       {([
-                        { key: "radius", label: "Radius", min: 0, max: 18, unit: "px" },
-                        { key: "strokeWidth", label: "Stroke", min: 0, max: 3, unit: "px" },
-                        { key: "contentPadding", label: "Content padding", min: 16, max: 64, unit: "px" },
-                        { key: "sectionGap", label: "Section gap", min: 4, max: 28, unit: "px" },
+                        { key: "radius", label: t.themeRemix.radius, min: 0, max: 18, unit: "px" },
+                        { key: "strokeWidth", label: t.themeRemix.stroke, min: 0, max: 3, unit: "px" },
+                        { key: "contentPadding", label: t.themeRemix.contentPadding, min: 16, max: 64, unit: "px" },
+                        { key: "sectionGap", label: t.themeRemix.sectionGap, min: 4, max: 28, unit: "px" },
                       ] as const).map(({ key, label, min, max, unit }) => {
                         const value = Number(selectedTheme.layout?.[key] ?? min);
                         return (
@@ -260,11 +264,11 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                   </div>
 
                   <div className="theme-remix-section theme-remix-section--panel">
-                    <div className="theme-remix-section__title">Background</div>
+                    <div className="theme-remix-section__title">{t.themeRemix.background}</div>
                     <div className="theme-remix-background">
                       <button type="button" className="theme-remix-btn" onClick={() => backgroundInputRef.current?.click()}>
                         <FolderIcon size={14} />
-                        Choose Image
+                        {t.themeRemix.chooseImage}
                       </button>
                       <button
                         type="button"
@@ -282,7 +286,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                           }))
                         }
                       >
-                        Remove Image
+                        {t.themeRemix.removeImage}
                       </button>
                       <input
                         ref={backgroundInputRef}
@@ -296,7 +300,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                       <div className="theme-remix-background-preview">
                         <img
                           src={selectedTheme.background.imageDataUrl}
-                          alt={`${selectedTheme.name} background preview`}
+                          alt={t.themeRemix.backgroundPreview.replace("{name}", selectedTheme.name)}
                           className={`theme-remix-background-preview__image theme-remix-background-preview__image--${selectedTheme.background.fit ?? "cover"}`}
                         />
                       </div>
@@ -304,7 +308,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                     <div className="theme-remix-controls theme-remix-controls--stack">
                       <label className="theme-remix-field theme-remix-field--range theme-remix-field--image-opacity">
                         <span className="theme-remix-range-label">
-                          <span>Image opacity</span>
+                          <span>{t.themeRemix.imageOpacity}</span>
                           <output>{formatRangeValue(selectedTheme.background?.opacity ?? 0.16, "%")}</output>
                         </span>
                         <input
@@ -322,11 +326,11 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                         />
                       </label>
                       <div className="theme-remix-field">
-                        <span>Image fit</span>
+                        <span>{t.themeRemix.imageFit}</span>
                         <ThemeRemixDropdown
-                          ariaLabel="Image fit"
+                          ariaLabel={t.themeRemix.imageFit}
                           value={selectedTheme.background?.fit ?? "cover"}
-                          options={IMAGE_FIT_OPTIONS}
+                          options={imageFitOptions}
                           onChange={(value) =>
                             patchSelectedTheme((theme) => ({
                               ...theme,
@@ -337,7 +341,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                       </div>
                       <label className="theme-remix-field theme-remix-field--range">
                         <span className="theme-remix-range-label">
-                          <span>Blur</span>
+                          <span>{t.themeRemix.blur}</span>
                           <output>{formatRangeValue(selectedTheme.background?.blur ?? 0, "px")}</output>
                         </span>
                         <input
@@ -358,8 +362,8 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                 </div>
 
                 <div className="theme-remix-section">
-                  <div className="theme-remix-section__title">Colors</div>
-                  <div className="theme-remix-tabs" role="tablist" aria-label="Color schemes">
+                  <div className="theme-remix-section__title">{t.themeRemix.colors}</div>
+                  <div className="theme-remix-tabs" role="tablist" aria-label={t.themeRemix.colorSchemes}>
                     {(["dark", "light"] as const).map((option) => (
                       <button
                         key={option}
@@ -367,14 +371,14 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                         className={scheme === option ? "is-active" : ""}
                         onClick={() => setScheme(option)}
                       >
-                        {option}
+                        {option === "dark" ? t.dark : t.light}
                       </button>
                     ))}
                   </div>
                   <div className="theme-remix-color-grid">
                     {CUSTOM_THEME_COLOR_OPTIONS.map((option) => (
                       <label className="theme-remix-color" key={option.key}>
-                        <span>{option.label}</span>
+                        <span>{colorLabels[option.key] ?? option.key}</span>
                         <input
                           type="color"
                           value={schemeColors[option.key] ?? "#ffffff"}
@@ -387,7 +391,7 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                 </>
               ) : (
                 <div className="theme-remix-empty theme-remix-empty--editor">
-                  Create a custom theme to unlock remix controls.
+                  {t.themeRemix.unlockPrompt}
                 </div>
               )}
             </section>

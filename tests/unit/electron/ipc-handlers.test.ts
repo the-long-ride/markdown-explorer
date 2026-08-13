@@ -44,6 +44,7 @@ describe('registerIpcHandlers', () => {
       closeWorkspace: vi.fn(),
       zoomIn: vi.fn(),
       zoomOut: vi.fn(),
+      zoomReset: vi.fn(),
       navigate: vi.fn(() => Promise.resolve()),
       refresh: vi.fn(() => Promise.resolve()),
       setDocumentConversion: vi.fn(() => Promise.resolve()),
@@ -394,6 +395,11 @@ describe('registerIpcHandlers', () => {
     test('zoom-out', () => {
       registeredHandler(null, { command: 'zoom-out' });
       expect(handlers.zoomOut).toHaveBeenCalled();
+    });
+
+    test('zoom-reset', () => {
+      registeredHandler(null, { command: 'zoom-reset' });
+      expect(handlers.zoomReset).toHaveBeenCalled();
     });
 
     test('navigate', () => {

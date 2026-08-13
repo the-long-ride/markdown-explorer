@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
 
 interface WorkspaceSelectionConfirmModalProps {
   isOpen: boolean;
@@ -11,6 +13,8 @@ export function WorkspaceSelectionConfirmModal({
   onClose,
   onConfirm,
 }: WorkspaceSelectionConfirmModalProps) {
+  const { state } = useAppState();
+  const t = getTranslations(state.settings.language || 'en');
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -34,26 +38,22 @@ export function WorkspaceSelectionConfirmModal({
       }}
     >
       <div className="settings-card workspace-selection-confirm-card">
-        <h3 id="workspace-selection-confirm-title">
-          Return to workspace selection?
-        </h3>
-        <div className="workspace-selection-confirm-card__body">
-          Close the current workspace and choose another one?
-        </div>
+        <h3 id="workspace-selection-confirm-title">{t.workspaceSelection.confirmTitle}</h3>
+        <div className="workspace-selection-confirm-card__body">{t.workspaceSelection.confirmBody}</div>
         <div className="workspace-selection-confirm-card__actions">
           <button
             type="button"
             className="workspace-selection-confirm-button workspace-selection-confirm-button--outline"
             onClick={onClose}
           >
-            Cancel
+            {t.workspaceSelection.cancel}
           </button>
           <button
             type="button"
             className="workspace-selection-confirm-button"
             onClick={onConfirm}
           >
-            Confirm
+            {t.workspaceSelection.confirm}
           </button>
         </div>
       </div>

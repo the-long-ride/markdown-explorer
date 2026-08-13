@@ -6,8 +6,10 @@ function isMarkdownFile(filePath) {
   return MARKDOWN_EXTENSIONS.has(path.extname(filePath).toLowerCase());
 }
 
-function findExternalOpenPath(argv, fs) {
-  for (const value of Array.isArray(argv) ? argv.slice(1) : []) {
+function findExternalOpenPath(argv, fs, options = {}) {
+  const isPackaged = typeof options === 'boolean' ? options : (options?.isPackaged ?? true);
+  const startIndex = isPackaged ? 1 : 2;
+  for (const value of Array.isArray(argv) ? argv.slice(startIndex) : []) {
     if (!value || value.startsWith('-') || !fs.existsSync(value)) continue;
     const stat = fs.statSync(value);
     if (stat.isDirectory() || (stat.isFile() && isMarkdownFile(value))) return value;

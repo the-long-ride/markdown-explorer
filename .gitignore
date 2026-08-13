@@ -52,3 +52,6 @@ snap/local/
 tauri/tauri.microsoft-store.ci.conf.json
 
 !electron/build/installer.nsh
+
+# Git
+*.patch

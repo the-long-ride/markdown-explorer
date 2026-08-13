@@ -211,7 +211,7 @@
   --r-md: 6px;
   --r-lg: 12px;
   --font-ui: "Geist Sans", "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Cascadia Code", "CascadiaCode", "Fira Code", monospace;
+  --font-mono: "Geist Mono", "JetBrains Mono", "Fira Code", Consolas, monospace;
   --accent-hover: #0059ec;
 }
 

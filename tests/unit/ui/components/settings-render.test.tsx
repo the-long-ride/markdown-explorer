@@ -31,6 +31,11 @@ function getMockState() {
     theme: 'dark',
     themeStyle: 'default',
     appVersion: '1.0.0',
+    appRuntime: 'vscode',
+    currentFile: '/workspace/readme.md',
+    desktopFonts: [],
+    desktopFontsResult: null,
+    desktopFontError: null,
     recentWorkspaces: [],
   };
 }
@@ -50,8 +55,8 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, icon, tooltip, label, onlyIcon = true, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
-    <button onClick={onClick} aria-label={label || tooltip} {...props}>
+  TooltipButton: ({ onClick, children, icon, tooltip, shortcut, label, onlyIcon = true, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
+    <button onClick={onClick} aria-label={label || tooltip} data-shortcut={shortcut || undefined} {...props}>
       {icon}{!onlyIcon && label}{children}
       {tooltip && <span className="tooltip-text">{tooltip}</span>}
     </button>
@@ -72,123 +77,144 @@ vi.mock('../../../../ui/src/components/Settings/ThemeRemixModal', () => ({
     isOpen ? <div data-testid="theme-remix-modal"><button onClick={onClose}>close-remix</button></div> : null,
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    settings: 'Settings',
-    subtitle: 'Customize your view',
-    appearance: 'Appearance',
-    colorMode: 'Color Mode',
-    colorModeDesc: 'Choose color mode.',
-    auto: 'Auto',
-    light: 'Light',
-    dark: 'Dark',
-    themeStyle: 'Theme Style',
-    themeStyleDesc: 'Pick style.',
-    viewPrefs: 'View Preferences',
-    desktopView: 'Desktop View',
-    desktopViewDesc: 'Desktop view mode.',
-    focus: 'Focus',
-    tabs: 'Tabs',
-    sidebarLabels: 'Sidebar Labels',
-    sidebarLabelsDesc: 'Show titles.',
-    fileTabs: 'File Tabs',
-    fileTabsDesc: 'Open files in tabs.',
-    documentConversion: 'Document Conversion',
-    documentConversionDesc: 'Convert docs.',
-    htmlPreview: 'HTML Preview',
-    htmlPreviewDesc: 'HTML preview default.',
-    csvPreview: 'CSV Preview',
-    csvPreviewDesc: 'CSV preview default.',
-    importJson: 'Import JSON',
-    exportJson: 'Export JSON',
-    importJsonTooltip: 'Import all user settings from JSON',
-    exportJsonTooltip: 'Export all user settings to JSON',
-    shortcuts: 'Keyboard Shortcuts',
-    shortcutsHint: 'Click to record.',
-    resetShortcuts: 'Reset to Default Shortcuts',
-    resetShortcutsConfirmTitle: 'Reset keyboard shortcuts?',
-    resetShortcutsConfirmBody: 'Confirm reset',
-    confirmResetShortcuts: 'Reset Shortcuts',
-    cancelResetShortcuts: 'Cancel',
-    closeSettings: 'Close Settings - (Esc)',
-    actions: {
-      findCurrentFile: 'Find in file',
-      searchCurrent: 'Search workspace',
-      searchAllTabs: 'Search all tabs',
-      back: 'Back',
-      forward: 'Forward',
-      welcome: 'Welcome',
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
       settings: 'Settings',
-      toggleTheme: 'Toggle theme',
-      refresh: 'Refresh',
-      collapseAll: 'Collapse',
-      expandAll: 'Expand',
-      workspaceSelection: 'Workspace',
-      toggleSidebar: 'Sidebar',
-      toggleToc: 'TOC',
-      zoomIn: 'Zoom in',
-      zoomOut: 'Zoom out',
-      locateFile: 'Locate',
-      toggleFocusMode: 'Focus mode',
-      toggleDesktopViewMode: 'Toggle Tabs/Focus view',
-    },
-    tooltips: {
-      switchLanguage: 'Switch Language',
-      openChangelog: 'Open changelog',
-      closeModal: 'Close modal [Esc]',
-      close: 'Close',
-      previous: 'Previous',
-      next: 'Next',
-      zoomIn: 'Zoom In',
-      zoomOut: 'Zoom Out',
-      resetZoom: 'Reset Zoom',
-    },
-    settingsData: {
-      groupLabel: 'Settings data',
-      imported: 'Imported settings and workspace history.',
-      importFailed: 'Import failed.',
-      invalidJson: 'The selected file is not valid JSON.',
-      missingData: 'The selected file does not contain settings data.',
-      wrongFile: 'This is not a Markdown Explorer settings file.',
-      unknownSchema: 'This settings file uses an unknown schema version.',
-      exported: 'Settings exported.',
-      exportFailed: 'Export failed.',
-    },
-    update: {
-      availableTitle: 'New version {version}',
-      availableDescription: 'Current version {version}.',
-      viewChangelog: 'see changelog',
-      downloadButton: 'Download',
-      downloading: 'Downloading... {progress}%',
-      applying: 'Applying...',
-      scheduled: 'Scheduled.',
-      updateOnExit: 'Update on Exit',
-      restartAndUpdate: 'Restart and Update',
-      restartPromptTitle: 'Install update',
-      restartPromptBody: 'Version {version} ready.',
-      downloadFailed: 'Download failed.',
-      installFailed: 'Install failed.',
-      stagedMissing: 'Staged missing.',
-    },
-    bannedShortcutTitle: 'Banned Shortcut',
-    bannedShortcutDismiss: 'Dismiss',
-    bannedShortcutImeMessage: 'Ctrl+Space is IME.',
-    themeStyles: {
-      defaultLabel: 'Default',
-      defaultDesc: 'Default style',
-      glassLabel: 'Glass',
-      glassDesc: 'Glass style',
-      bentoLabel: 'Bento',
-      bentoDesc: 'Bento style',
-      petsLabel: 'Pets',
-      petsDesc: 'Pets style',
-    },
-  }),
-  LANGUAGE_OPTIONS: [
-    { id: 'en', label: 'English' },
-    { id: 'vi', label: 'Tiếng Việt' },
-  ],
-}));
+      subtitle: 'Customize your view',
+      appearance: 'Appearance',
+      colorMode: 'Color Mode',
+      colorModeDesc: 'Choose color mode.',
+      auto: 'Auto',
+      light: 'Light',
+      dark: 'Dark',
+      themeStyle: 'Theme Style',
+      themeStyleDesc: 'Pick style.',
+      desktopView: 'Desktop View',
+      desktopViewDesc: 'Desktop view mode.',
+      focus: 'Focus',
+      tabs: 'Tabs',
+      sidebarLabels: 'Sidebar Labels',
+      sidebarLabelsDesc: 'Show titles.',
+      fileTabs: 'File Tabs',
+      fileTabsDesc: 'Open files in tabs.',
+      documentConversion: 'Document Conversion',
+      documentConversionDesc: 'Convert docs.',
+      htmlPreview: 'HTML Preview',
+      htmlPreviewDesc: 'HTML preview default.',
+      csvPreview: 'CSV Preview',
+      csvPreviewDesc: 'CSV preview default.',
+      importJson: 'Import JSON',
+      exportJson: 'Export JSON',
+      importJsonTooltip: 'Import all user settings from JSON',
+      exportJsonTooltip: 'Export all user settings to JSON',
+      shortcuts: 'Keyboard Shortcuts',
+      shortcutsHint: 'Click to record.',
+      resetShortcuts: 'Reset to Default Shortcuts',
+      resetShortcutsConfirmTitle: 'Reset keyboard shortcuts?',
+      resetShortcutsConfirmBody: 'Confirm reset',
+      confirmResetShortcuts: 'Reset Shortcuts',
+      cancelResetShortcuts: 'Cancel',
+      closeSettings: 'Close Settings',
+      typography: 'Typography',
+      typographyDesc: 'Bind fonts by role.',
+      updateBackup: 'Update & Backup',
+      updateBackupDesc: 'Updates and portable settings.',
+      applicationUpdate: 'Application update',
+      checkForUpdate: 'Check for update',
+      latestVersionStatus: 'Latest version',
+      newerVersionStatus: 'New version',
+      settingsBackup: 'Settings backup',
+      settingsBackupDesc: 'Import or export settings.',
+      actions: {
+        ...en.actions,
+        findCurrentFile: 'Find in file',
+        searchCurrent: 'Search workspace',
+        searchAllTabs: 'Search all tabs',
+        back: 'Back',
+        forward: 'Forward',
+        welcome: 'Welcome',
+        editCurrentDocument: 'Open current file in editor',
+        settings: 'Settings',
+        toggleTheme: 'Toggle theme',
+        refresh: 'Refresh',
+        collapseAll: 'Collapse',
+        expandAll: 'Expand',
+        workspaceSelection: 'Workspace',
+        toggleSidebar: 'Sidebar',
+        toggleToc: 'TOC',
+        zoomIn: 'Zoom in',
+        zoomOut: 'Zoom out',
+        locateFile: 'Locate',
+        toggleFocusMode: 'Focus mode',
+        toggleDesktopViewMode: 'Toggle Tabs/Focus view',
+      },
+      tooltips: {
+        ...en.tooltips,
+        switchLanguage: 'Switch Language',
+        openChangelog: 'Open changelog',
+        closeModal: 'Close modal [Esc]',
+        close: 'Close',
+        previous: 'Previous',
+        next: 'Next',
+        zoomIn: 'Zoom In',
+        zoomOut: 'Zoom Out',
+        resetZoom: 'Reset Zoom',
+      },
+      settingsData: {
+        ...en.settingsData,
+        groupLabel: 'Settings data',
+        imported: 'Imported settings and workspace history.',
+        importFailed: 'Import failed.',
+        invalidJson: 'The selected file is not valid JSON.',
+        missingData: 'The selected file does not contain settings data.',
+        wrongFile: 'This is not a Markdown Explorer settings file.',
+        unknownSchema: 'This settings file uses an unknown schema version.',
+        exported: 'Settings exported.',
+        exportFailed: 'Export failed.',
+      },
+      update: {
+        ...en.update,
+        availableTitle: 'New version {version}',
+        availableDescription: 'Current version {version}.',
+        viewChangelog: 'see changelog',
+        downloadButton: 'Download',
+        downloading: 'Downloading... {progress}%',
+        applying: 'Applying...',
+        scheduled: 'Scheduled.',
+        updateOnExit: 'Update on Exit',
+        restartAndUpdate: 'Restart and Update',
+        restartPromptTitle: 'Install update',
+        restartPromptBody: 'Version {version} ready.',
+        downloadFailed: 'Download failed.',
+        installFailed: 'Install failed.',
+        stagedMissing: 'Staged missing.',
+      },
+      bannedShortcutTitle: 'Banned Shortcut',
+      bannedShortcutDismiss: 'Dismiss',
+      bannedShortcutImeMessage: 'Ctrl+Space is IME.',
+      themeStyles: {
+        ...en.themeStyles,
+        defaultLabel: 'Default',
+        defaultDesc: 'Default style',
+        glassLabel: 'Glass',
+        glassDesc: 'Glass style',
+        bentoLabel: 'Bento',
+        bentoDesc: 'Bento style',
+        petsLabel: 'Pets',
+        petsDesc: 'Pets style',
+      },
+    }),
+    LANGUAGE_OPTIONS: [
+      { id: 'en', label: 'English' },
+      { id: 'vi', label: 'Tiếng Việt' },
+    ],
+  };
+});
 
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
   CopyIcon: () => <span>copy-icon</span>,
@@ -196,6 +222,14 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   AlertTriangleIcon: ({ size }: any) => <span>alert-icon</span>,
   ImportSettingsIcon: () => <span>import-icon</span>,
   ExportSettingsIcon: () => <span>export-icon</span>,
+  CheckForUpdateIcon: () => <span>update-icon</span>,
+  SettingsAppearanceIcon: () => <span>appearance-icon</span>,
+  SettingsTypographyIcon: () => <span>typography-icon</span>,
+  SettingsThemeStyleIcon: () => <span>theme-style-icon</span>,
+  SettingsShortcutsIcon: () => <span>shortcuts-icon</span>,
+  SettingsUpdateBackupIcon: () => <span>update-backup-icon</span>,
+  RefreshIcon: () => <span>refresh-icon</span>,
+  OpenInBrowserIcon: () => <span>browser-icon</span>,
   LanguageIcon: () => <span>lang-icon</span>,
 }));
 
@@ -205,7 +239,8 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
     { id: 'light', label: 'Light' },
     { id: 'dark', label: 'Dark' },
   ],
-  getDefaultKeybindings: () => ({ searchCurrent: 'Ctrl+K' }),
+  getDefaultKeybindings: () => ({ searchCurrent: 'Ctrl+K', editCurrentDocument: 'Ctrl+Alt+E' }),
+  getDefaultKeybindingsForRuntime: (runtime: string) => runtime === 'chrome' ? { searchCurrent: 'Ctrl+K' } : { searchCurrent: 'Ctrl+K', editCurrentDocument: runtime === 'vscode' ? 'Ctrl+Alt+E' : 'Ctrl+E' },
 }));
 
 vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({
@@ -278,6 +313,43 @@ describe('SettingsModal', () => {
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Settings');
   });
 
+  it('renders Esc as the close-button shortcut instead of translation text', () => {
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    const close = screen.getByRole('button', { name: 'Close Settings' });
+    expect(close).toHaveAttribute('data-shortcut', 'Esc');
+    expect(close).not.toHaveTextContent('(Esc)');
+  });
+
+  it('renders icons before the visible Settings navigation labels', () => {
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    expect(screen.getByText('appearance-icon')).toBeInTheDocument();
+    expect(screen.getByText('theme-style-icon')).toBeInTheDocument();
+    expect(screen.getByText('shortcuts-icon')).toBeInTheDocument();
+    expect(screen.getByText('update-backup-icon')).toBeInTheDocument();
+  });
+
   it('renders Appearance section', () => {
     render(
       <SettingsModal
@@ -291,7 +363,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
-    expect(screen.getByText('Appearance')).toBeInTheDocument();
+    expect(screen.getAllByText('Appearance').length).toBeGreaterThan(0);
   });
 
   it('renders Color Mode section with segmented controls', () => {
@@ -344,23 +416,8 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Theme Style'));
     expect(screen.getByTestId('theme-style-picker')).toBeInTheDocument();
-  });
-
-  it('renders View Preferences section', () => {
-    render(
-      <SettingsModal
-        isOpen={true}
-        onClose={() => {}}
-        updateCheck={defaultUpdateCheck}
-        hostUpdateState={defaultHostUpdateState}
-        onDownloadUpdate={() => {}}
-        onScheduleUpdateOnExit={() => {}}
-        onRestartAndApplyUpdate={() => {}}
-        onOpenChangelog={() => {}}
-      />,
-    );
-    expect(screen.getByText('View Preferences')).toBeInTheDocument();
   });
 
   it('renders Sidebar Labels toggle', () => {
@@ -443,8 +500,31 @@ describe('SettingsModal', () => {
     expect(screen.getByText('Keyboard Shortcuts')).toBeInTheDocument();
   });
 
+  it('shows Edit in VS Code shortcuts and hides it in Chromium', () => {
+    const modalProps = {
+      isOpen: true,
+      onClose: () => {},
+      updateCheck: defaultUpdateCheck,
+      hostUpdateState: defaultHostUpdateState,
+      onDownloadUpdate: () => {},
+      onScheduleUpdateOnExit: () => {},
+      onRestartAndApplyUpdate: () => {},
+      onOpenChangelog: () => {},
+    };
+    const { unmount } = render(<SettingsModal {...modalProps} />);
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+    expect(screen.getByText('Open current file in editor')).toBeInTheDocument();
+    unmount();
+
+    mockState = { ...getMockState(), appRuntime: 'chrome' };
+    render(<SettingsModal {...modalProps} />);
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+    expect(screen.queryByText('Open current file in editor')).not.toBeInTheDocument();
+  });
+
   it('lists workspace selection shortcut on non-desktop platforms', () => {
     delete (window as any).electronAPI;
+    mockState = { ...getMockState(), appRuntime: 'chrome' };
     render(
       <SettingsModal
         isOpen={true}
@@ -457,11 +537,13 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
     expect(screen.getByText('Workspace')).toBeInTheDocument();
   });
 
   it('allows workspace selection binding to be recorded on non-desktop platforms', () => {
-    mockState = { ...getMockState(), settings: { ...getMockState().settings, keybindings: { workspaceSelection: 'Ctrl+Alt+W' } } };
+    mockState = { ...getMockState(), appRuntime: 'chrome', settings: { ...getMockState().settings, keybindings: { workspaceSelection: 'Ctrl+Alt+W' } } };
+    delete (window as any).electronAPI;
     const { container } = render(
       <SettingsModal
         isOpen={true}
@@ -474,6 +556,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
     const row = screen.getByText('Workspace').closest('.settings-shortcut-row');
     const input = row?.querySelector('input');
     expect(input).toHaveValue('Ctrl+Alt+W');
@@ -496,6 +579,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
     const shortcutRows = document.querySelectorAll('.settings-shortcut-row');
     expect(shortcutRows.length).toBeGreaterThan(0);
   });
@@ -516,7 +600,9 @@ describe('SettingsModal', () => {
       />,
     );
 
-    const search = screen.getByPlaceholderText('Search keyboard shortcuts...');
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+
+    const search = screen.getByPlaceholderText('Search keyboard shortcuts…');
     expect(search).toBeInTheDocument();
     expect(search).toHaveClass('settings-shortcuts-search-input');
     expect(screen.getByRole('button', { name: 'Clear keyboard shortcut search' })).toHaveClass(
@@ -549,7 +635,9 @@ describe('SettingsModal', () => {
       />,
     );
 
-    expect(screen.getByPlaceholderText('Search keyboard shortcuts...')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+
+    expect(screen.getByPlaceholderText('Search keyboard shortcuts…')).toBeInTheDocument();
   });
 
   it('renders Desktop View segmented control with exactly two options', () => {
@@ -597,6 +685,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
     const row = screen.getByText('Toggle Tabs/Focus view').closest('.settings-shortcut-row');
     expect(row).toBeInTheDocument();
     expect(row?.querySelector('input')).toHaveValue('Ctrl+Alt+T');
@@ -634,6 +723,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
     expect(screen.getByText('Reset to Default Shortcuts')).toBeInTheDocument();
   });
 
@@ -650,9 +740,10 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
     fireEvent.click(screen.getByText('Reset to Default Shortcuts'));
     fireEvent.click(screen.getByRole('button', { name: 'Reset Shortcuts' }));
-    expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K' }, disabledKeybindings: {} });
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K', editCurrentDocument: 'Ctrl+Alt+E' }, disabledKeybindings: {} });
   });
 
   it('calls onClose when close button is clicked', () => {
@@ -669,7 +760,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
-    const closeBtn = screen.getByRole('button', { name: 'Close Settings - (Esc)' });
+    const closeBtn = screen.getByRole('button', { name: 'Close Settings' });
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalled();
   });
@@ -748,6 +839,7 @@ describe('SettingsModal', () => {
   });
 
   it('renders Export JSON button', () => {
+    (window as any).electronAPI = {};
     render(
       <SettingsModal
         isOpen={true}
@@ -760,12 +852,14 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Update & Backup'));
     const exportButton = screen.getByRole('button', { name: 'Export JSON' });
     expect(exportButton).toBeInTheDocument();
-    expect(exportButton.querySelector('.tooltip-text')).toHaveTextContent('Export all user settings to JSON');
+    expect(exportButton.querySelector('.tooltip-text')).toHaveTextContent('Export JSON');
   });
 
   it('renders Import JSON button', () => {
+    (window as any).electronAPI = {};
     render(
       <SettingsModal
         isOpen={true}
@@ -778,9 +872,10 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Update & Backup'));
     const importButton = screen.getByRole('button', { name: 'Import JSON' });
     expect(importButton).toBeInTheDocument();
-    expect(importButton.querySelector('.tooltip-text')).toHaveTextContent('Import all user settings from JSON');
+    expect(importButton.querySelector('.tooltip-text')).toHaveTextContent('Import JSON');
   });
 
   it('renders ThemeRemixModal when style picker triggers it', () => {
@@ -796,6 +891,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Theme Style'));
     fireEvent.click(screen.getByText('open-remix'));
     expect(screen.getByTestId('theme-remix-modal')).toBeInTheDocument();
   });
@@ -817,6 +913,8 @@ describe('SettingsModal', () => {
   });
 
   it('renders update card when update is available', () => {
+    mockState = { ...getMockState(), appRuntime: 'desktop' };
+    (window as any).electronAPI = {};
     render(
       <SettingsModal
         isOpen={true}
@@ -829,10 +927,13 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Update & Backup'));
     expect(screen.getByText('Download')).toBeInTheDocument();
   });
 
   it('renders downloaded update restart modal when update is downloaded', () => {
+    mockState = { ...getMockState(), appRuntime: 'desktop' };
+    (window as any).electronAPI = {};
     render(
       <SettingsModal
         isOpen={true}
@@ -845,6 +946,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
+    fireEvent.click(screen.getByText('Update & Backup'));
     expect(screen.getByText('Install update')).toBeInTheDocument();
   });
 

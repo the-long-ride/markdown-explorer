@@ -19,6 +19,23 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     tooltips: { closeModal: 'Close modal [Esc]', close: 'Close', previous: 'Previous', next: 'Next', zoomIn: 'Zoom In', zoomOut: 'Zoom Out', resetZoom: 'Reset Zoom' },
     update: { restartPromptTitle: 'Install update', restartPromptBody: 'Update ready', updateOnExit: 'Update on Exit', restartAndUpdate: 'Restart and Update' },
+    terms: {
+      logoAlt: 'Markdown Explorer',
+      welcomeTitle: 'Welcome to Markdown Explorer',
+      introBefore: 'Please read the',
+      privacyPolicy: 'Privacy Policy',
+      conjunction: 'and the',
+      termsOfService: 'Terms of Service',
+      introAfter: 'before continuing.',
+      agreement: 'I agree',
+      continue: 'Continue',
+    },
+    workspaceSelection: {
+      confirmTitle: 'Confirm',
+      confirmBody: 'Proceed with the selected workspace?',
+      cancel: 'Cancel',
+      confirm: 'Confirm',
+    },
   }),
 }));
 
@@ -65,7 +82,7 @@ describe('MediaModal', () => {
   it('calls onClose when close button is clicked', () => {
     const onClose = vi.fn();
     render(<MediaModal gallery={{ items: [{ type: 'img', src: 'https://example.com/image.png' }], currentIndex: 0 }} onClose={onClose} />);
-    fireEvent.click(screen.getByLabelText('Close modal'));
+    fireEvent.click(screen.getByLabelText(/Close modal/));
     expect(onClose).toHaveBeenCalled();
   });
 

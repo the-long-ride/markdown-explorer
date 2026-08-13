@@ -41,10 +41,10 @@ test('bookmark shortcut opens the tab or focuses the disabled feature setting', 
 });
 
 
-test('reset shortcuts uses a solid theme warning treatment', async () => {
+test('reset shortcuts uses an outline warning treatment', async () => {
   const styles = await read('ui/src/styles/global/global-media-viewer-settings-shell.css');
-  const solidOverride = styles.slice(styles.lastIndexOf('.settings-reset-shortcuts-btn,'));
-  assert.match(solidOverride, /background:\s*var\(--warning,\s*#d79b32\)/);
-  assert.match(solidOverride, /border-color:\s*color-mix\([^;]*var\(--warning/);
-  assert.doesNotMatch(solidOverride.split('.settings-reset-shortcuts-btn:hover')[0], /linear-gradient/);
+  const outlineOverride = styles.slice(styles.lastIndexOf('.settings-reset-shortcuts-btn,'));
+  assert.match(outlineOverride, /background:\s*transparent/);
+  assert.match(outlineOverride, /border:[^;]*var\(--warning/);
+  assert.match(outlineOverride, /box-shadow:\s*none/);
 });

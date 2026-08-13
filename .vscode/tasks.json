@@ -31,7 +31,12 @@
       "label": "dev: website-app",
       "type": "shell",
       "command": "pnpm",
-      "args": ["--filter", "./website-app", "run", "dev"],
+      "args": [
+        "--filter",
+        "./website-app",
+        "run",
+        "dev"
+      ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -45,6 +50,17 @@
         "kind": "build",
         "isDefault": false
       }
+    },
+    {
+      "label": "compile:tauri",
+      "type": "shell",
+      "command": "pnpm run build:ui:tauri",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "build"
     }
   ]
 }

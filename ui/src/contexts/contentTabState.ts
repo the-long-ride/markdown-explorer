@@ -62,7 +62,7 @@ export function renderMarkdownClientSide(
   markdownSource: string | null | undefined,
   filePath: string | null,
   isMdx?: boolean,
-  previewSettings?: Pick<AppState['settings'], 'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview'>,
+  previewSettings?: Pick<AppState['settings'], 'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview' | 'language'>,
 ): RenderedMarkdown {
   const empty = { html: '', frontmatter: {}, toc: [] };
   if (!markdownSource) return empty;
@@ -73,6 +73,7 @@ export function renderMarkdownClientSide(
       isMdx: isMdx ?? false,
       defaultHtmlPreview: previewSettings?.defaultHtmlCodeBlockPreview !== false,
       defaultCsvPreview: previewSettings?.defaultCsvPreview !== false,
+      language: previewSettings?.language,
     });
     const rendered = renderer.render(result.tokens);
     const html = rewriteRelativeMediaUrls(rendered.html, filePath ?? '');

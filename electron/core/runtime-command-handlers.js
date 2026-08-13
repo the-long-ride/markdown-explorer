@@ -2,7 +2,7 @@ const { createRuntimeCommandSearchHandlers } = require("./runtime-command-search
 const { registerRuntimeUpdateHandlers } = require("./runtime-update-handlers");
 
 function registerRuntimeCommandHandlers(context) {
-  const { state, deps, pathApi, fs, dialog, getMainWindow, sendHostMessage, getHostInfo, sendLoading, sendRecentWorkspacesChanged, recentWorkspacesStore, createStartupReadyAck, deferWorkspaceLoad, ensureHeavyModules, scanWorkspaceData, perf, appQuit, isSupportedFilePathLite, isExtraDocumentFilePathLite, getOpenDialogFiltersLite, ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, bindWorkspaceWatch, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome, refreshActiveWorkspace, resolveNavigationPath, setAppZoomLevel, ZOOM_LEVEL_STEP, isAccessDeniedError, decodeNavigationPath, stripNavigationFragment, isRootRelativeWorkspaceHref, isSameOrInsidePath, cancelWorkspaceScan, cancelAllWorkspaceScans } = context;
+  const { state, deps, pathApi, fs, dialog, getMainWindow, sendHostMessage, getHostInfo, sendLoading, sendRecentWorkspacesChanged, recentWorkspacesStore, createStartupReadyAck, deferWorkspaceLoad, ensureHeavyModules, scanWorkspaceData, perf, appQuit, isSupportedFilePathLite, isExtraDocumentFilePathLite, getOpenDialogFiltersLite, ensureSearchIndex, ensureCrossTabSearchWorker, getWorkspacePathStatus, sendWorkspaceUnavailable, bindWorkspaceWatch, sendWorkspaceData, sendInitialContent, sendContent, sendWelcome, refreshActiveWorkspace, resolveNavigationPath, setAppZoomLevel, resetAppZoom, ZOOM_LEVEL_STEP, isAccessDeniedError, decodeNavigationPath, stripNavigationFragment, isRootRelativeWorkspaceHref, isSameOrInsidePath, cancelWorkspaceScan, cancelAllWorkspaceScans } = context;
 
   function applyWorkspaceOperation(message = {}) {
     if (typeof message.workspaceOperationId === 'string') {
@@ -258,16 +258,16 @@ function registerRuntimeCommandHandlers(context) {
   function handleZoomIn() {
     const win = getMainWindow();
     if (!win) return;
-    const currentZoom = win.webContents.getZoomLevel();
-    setAppZoomLevel(currentZoom + ZOOM_LEVEL_STEP);
+    setAppZoomLevel(win.webContents.getZoomLevel() + ZOOM_LEVEL_STEP);
   }
 
   function handleZoomOut() {
     const win = getMainWindow();
     if (!win) return;
-    const currentZoom = win.webContents.getZoomLevel();
-    setAppZoomLevel(currentZoom - ZOOM_LEVEL_STEP);
+    setAppZoomLevel(win.webContents.getZoomLevel() - ZOOM_LEVEL_STEP);
   }
+
+  const handleZoomReset = resetAppZoom;
 
   async function handleNavigate(filePath) {
     ensureHeavyModules();
@@ -331,6 +331,53 @@ function registerRuntimeCommandHandlers(context) {
     cancelAllWorkspaceScans();
   }
 
+  async function sendDesktopFontsResult(requestId, importedId, error) {
+    let fonts = [];
+    let finalError = error;
+    try {
+      fonts = await deps.fontService.listFonts();
+    } catch (fontError) {
+      finalError = finalError || String(fontError?.message || fontError);
+    }
+    sendHostMessage({
+      command: 'desktopFontsResult',
+      requestId: typeof requestId === 'string' ? requestId : '',
+      fonts,
+      ...(importedId ? { importedId } : {}),
+      ...(finalError ? { error: finalError } : {}),
+    });
+  }
+
+  async function handleListDesktopFonts(message = {}) {
+    await sendDesktopFontsResult(message.requestId);
+  }
+
+  async function handleImportDesktopFonts(message = {}) {
+    const files = dialog.showOpenDialogSync(getMainWindow(), {
+      properties: ['openFile'],
+      filters: [{ name: 'Fonts', extensions: ['ttf', 'otf'] }],
+    });
+    if (!files?.length) {
+      await sendDesktopFontsResult(message.requestId);
+      return;
+    }
+    try {
+      const imported = await deps.fontService.importFontFiles(files);
+      await sendDesktopFontsResult(message.requestId, imported.id);
+    } catch (error) {
+      await sendDesktopFontsResult(message.requestId, undefined, String(error?.message || error));
+    }
+  }
+
+  async function handleRemoveImportedDesktopFont(message = {}) {
+    try {
+      await deps.fontService.removeImportedFont(message.id);
+      await sendDesktopFontsResult(message.requestId);
+    } catch (error) {
+      await sendDesktopFontsResult(message.requestId, undefined, String(error?.message || error));
+    }
+  }
+
   const {
     handleDownloadUpdate,
     handleScheduleDownloadedUpdate,
@@ -340,7 +387,7 @@ function registerRuntimeCommandHandlers(context) {
 
 
 
-  return { handleReady, handleOpenFolder, handleOpenFile, handleOpenPath, handleActivateWorkspace, handleSearchAcrossWorkspaces, handleSearchWorkspace, handleLoadSearchPreview, handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes, handleConfirmOpenPath, handleOpenRecent, handleDeleteRecentWorkspace, handleReplaceRecentWorkspaces, handleZoomIn, handleZoomOut, handleNavigate, handleRefresh, handleSetDocumentConversion, handleDownloadUpdate, handleScheduleDownloadedUpdate, handleRestartAndApplyUpdate, handleCloseWorkspace, handleCancelWorkspaceScan, handleCancelAllWorkspaceScans };
+  return { handleReady, handleOpenFolder, handleOpenFile, handleOpenPath, handleActivateWorkspace, handleSearchAcrossWorkspaces, handleSearchWorkspace, handleLoadSearchPreview, handleIndexWorkspaceSearchItems, handleLoadWorkspaceSearchIndexes, handleConfirmOpenPath, handleOpenRecent, handleDeleteRecentWorkspace, handleReplaceRecentWorkspaces, handleZoomIn, handleZoomOut, handleZoomReset, handleNavigate, handleRefresh, handleSetDocumentConversion, handleListDesktopFonts, handleImportDesktopFonts, handleRemoveImportedDesktopFont, handleDownloadUpdate, handleScheduleDownloadedUpdate, handleRestartAndApplyUpdate, handleCloseWorkspace, handleCancelWorkspaceScan, handleCancelAllWorkspaceScans };
 }
 
 module.exports = { registerRuntimeCommandHandlers };

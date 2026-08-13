@@ -71,7 +71,7 @@ flowchart LR
 
 ### Tauri window baseline
 
-1280×800 default, 720×480 minimum, frameless, restored state, single-instance/file-drop integration, and configured updater support only when deployment keys/endpoints are valid.
+1280×800 default, 800×480 minimum, frameless, restored state, single-instance/file-drop integration, and configured updater support only when deployment keys/endpoints are valid.
 
 
 ## Tauri signed updater lifecycle

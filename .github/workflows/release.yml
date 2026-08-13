@@ -165,7 +165,7 @@ jobs:
         run: cargo install tauri-cli --locked --version '^2'
 
       - name: Build shared UI bundle
-        run: pnpm run build:ui:electron
+        run: pnpm run build:ui:tauri
 
       - name: Configure signed Tauri updater
         env:

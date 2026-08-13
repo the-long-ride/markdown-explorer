@@ -716,6 +716,19 @@ describe('createDesktopRuntime', () => {
     });
   });
 
+  describe('handleZoomReset', () => {
+    test('resets zoom level to 100%', () => {
+      runtime.handleZoomReset();
+      expect(ctx.mockWindow.webContents.setZoomLevel).toHaveBeenCalledWith(0);
+    });
+
+    test('does nothing when no main window', () => {
+      ctx.deps.getMainWindow.mockReturnValue(null);
+      runtime.handleZoomReset();
+      expect(ctx.mockWindow.webContents.setZoomLevel).not.toHaveBeenCalled();
+    });
+  });
+
   describe('handleNavigate', () => {
     test('shows welcome when filePath is empty', async () => {
       await runtime.handleNavigate('');

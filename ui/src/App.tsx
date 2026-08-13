@@ -25,6 +25,7 @@ import { useAppUpdateActions } from './useAppUpdateActions';
 import { createMediaGallery, type MediaGallery } from './components/Modal/mediaGallery';
 import { useBookmarkNavigation } from './hooks/useBookmarkNavigation';
 import { useUserManualActions } from './hooks/useUserManualActions';
+import { useUpdateNotificationState } from './hooks/useUpdateNotificationState';
 
 export function App() {
   // AppView owns the root class: state.appRuntime === 'tauri' ? ' app--tauri' : ''.
@@ -52,10 +53,8 @@ export function App() {
   } = useNavigation();
   const [searchOpen, setSearchOpen] = useState(false); const [searchScope, setSearchScope] = useState<SearchScope>('current');
   const [findOpen, setFindOpen] = useState(false); const [pendingSearchJump, setPendingSearchJump] = useState<PendingSearchJump | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [workspaceSelectionConfirmOpen, setWorkspaceSelectionConfirmOpen] = useState(false);
-  const [mediaGallery, setMediaGallery] = useState<MediaGallery | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false); const [isFullscreen, setIsFullscreen] = useState(false);
+  const [workspaceSelectionConfirmOpen, setWorkspaceSelectionConfirmOpen] = useState(false); const [mediaGallery, setMediaGallery] = useState<MediaGallery | null>(null);
   const modalOpen = mediaGallery !== null;
   const [sidebarCursorMode, setSidebarCursorMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -212,6 +211,8 @@ export function App() {
     changelogUrl: updateCheck.changelogUrl,
   });
 
+  const updateNotification = useUpdateNotificationState(updateCheck, downloadUpdate);
+
   const {
     themeOnboardingOpen,
     closeWorkspaceToSelection,
@@ -333,11 +334,11 @@ export function App() {
       <div className="state-screen state-screen--initial-loading">
         <div className="spinner" />
         <div className="state-screen__title">
-          {state.loadingLabel || 'Loading docs...'}
+          {state.loadingLabel || t.ui.loadingDocs}
         </div>
         {state.isWorkspaceScanning && (
           <div className="state-screen__sub">
-            Scanning {state.scannedFiles.toLocaleString()} files…
+            {t.ui.scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(currentLang))}
           </div>
         )}
         {state.loadingDetail && (
@@ -372,6 +373,7 @@ export function App() {
       toggleSidebar={toggleSidebar}
       isDark={isDark}
       updateCheck={updateCheck}
+      updateNotification={updateNotification}
       isFullscreen={isFullscreen}
       toggleFullscreen={toggleFullscreen}
       prepareWorkspaceOpen={prepareWorkspaceOpen}
@@ -417,7 +419,7 @@ export function App() {
       workspaceSelectionConfirmOpen={workspaceSelectionConfirmOpen}
       setWorkspaceSelectionConfirmOpen={setWorkspaceSelectionConfirmOpen}
       closeWorkspaceToSelection={closeWorkspaceToSelection}
-       focusMode={state.focusMode}
+      focusMode={state.focusMode}
       toggleFocusMode={toggleFocusMode}
       isDragging={isDragging}
       onImageClick={onImageClick}
@@ -426,6 +428,3 @@ export function App() {
 }
 
 initGlobalHandlers();
-
-
-

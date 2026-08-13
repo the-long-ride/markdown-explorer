@@ -45,6 +45,9 @@ export interface ButtonOptions {
   title?: string;
   ariaLabel?: string;
   dataI18nKey?: string;
+  copiedLabel?: string;
+  labelShowCode?: string;
+  labelShowPreview?: string;
 }
 
 export function renderButton(options: ButtonOptions): string {
@@ -57,6 +60,9 @@ export function renderButton(options: ButtonOptions): string {
   const titleAttr = ` title="${escHtml(titleText)}"`;
   const ariaAttr = ` aria-label="${escHtml(ariaLabel)}"`;
   const i18nAttr = options.dataI18nKey ? ` data-i18n-key="${escHtml(options.dataI18nKey)}"` : '';
+  const copiedAttr = options.copiedLabel ? ` data-copied-label="${escHtml(options.copiedLabel)}"` : '';
+  const showCodeAttr = options.labelShowCode ? ` data-label-show-code="${escHtml(options.labelShowCode)}"` : '';
+  const showPreviewAttr = options.labelShowPreview ? ` data-label-show-preview="${escHtml(options.labelShowPreview)}"` : '';
 
   const classes = options.className ? options.className.split(' ') : [];
   classes.push('tooltip-container');
@@ -72,7 +78,7 @@ export function renderButton(options: ButtonOptions): string {
     ? (options.iconHtml || '')
     : `${iconHtml}${iconHtml && labelHtml ? ' ' : ''}${labelHtml}`;
 
-  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${keyDownAttr}${disabledAttr}${tooltipPosAttr}${titleAttr}${ariaAttr}${i18nAttr}>
+  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${keyDownAttr}${disabledAttr}${tooltipPosAttr}${titleAttr}${ariaAttr}${i18nAttr}${copiedAttr}${showCodeAttr}${showPreviewAttr}>
   ${content}
   <span class="tooltip-text">${escHtml(tooltipText)}</span>
 </button>`;

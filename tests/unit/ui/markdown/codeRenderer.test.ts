@@ -55,7 +55,7 @@ describe('markdown/codeRenderer', () => {
   it('sets code mode when HTML only has scripts/styles', () => {
     const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<script>alert(1)</script>' }, 'auto');
     expect(html).toContain('data-mode="code"');
-    expect(html).toContain('Show Preview');
+    expect(html).toContain('Show preview');
   });
 
   it('renders HTML block with theme in srcdoc', () => {
@@ -256,7 +256,7 @@ describe('plain text code block label', () => {
 
     for (const html of [typed, untyped]) {
       expect(html).toContain('data-i18n-content-key="plainText"');
-      expect(html).toContain('>PLAIN TEXT</span>');
+      expect(html).toContain('>Plain text</span>');
       expect(html).not.toContain('>TEXT</span>');
     }
   });

@@ -65,6 +65,9 @@ impl Dispatcher {
             "zoom-out" => {
                 self.handle_zoom(-1);
             }
+            "zoom-reset" => {
+                self.handle_reset_zoom();
+            }
             // ── C3: Update ──
             "downloadUpdate" => {
                 let version = msg

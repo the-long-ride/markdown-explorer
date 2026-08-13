@@ -356,3 +356,18 @@
   line-height: 1.3;
   color: var(--tx2);
 }
+
+/* Menus render in a body portal so Settings overflow cannot clip them. */
+.theme-picker-menu--portal {
+  position: fixed;
+  top: var(--menu-top, auto);
+  bottom: var(--menu-bottom, auto);
+  left: var(--menu-left, auto);
+  width: var(--menu-width, auto);
+  max-height: var(--menu-max-height, none);
+  right: auto !important;
+  z-index: 10000030 !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+

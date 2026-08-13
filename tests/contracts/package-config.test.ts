@@ -225,6 +225,17 @@ describe('package configuration contracts', () => {
   });
 
   describe('desktop (Electron) build configuration', () => {
+    test('Electron workspace uses the root Electron runtime and builder versions', async () => {
+      const [root, desktop] = await Promise.all([
+        readJson('package.json'),
+        readJson('electron/package.json'),
+      ]);
+
+      expect(desktop.devDependencies.electron).toBe(root.devDependencies.electron);
+      expect(desktop.devDependencies['electron-builder']).toBe(root.devDependencies['electron-builder']);
+      expect(desktop.build.electronVersion).toBe(root.devDependencies.electron);
+    });
+
     test('appId is com.thelongride.markdownexplorer', async () => {
       const pkg = await readJson('electron/package.json');
       expect(pkg.build.appId).toBe('com.thelongride.markdownexplorer');

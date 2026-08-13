@@ -35,7 +35,7 @@ export function buildSidebarItemMenuItems({
   if (isPinned) {
     items.push({
       id: 'unpin',
-      label: t.sidebar.unpinItem || 'Unpin',
+      label: t.sidebar.unpinItem,
       icon: <UnpinIcon />,
       onSelect: () => onTogglePin(pinItem),
     });
@@ -43,8 +43,8 @@ export function buildSidebarItemMenuItems({
     items.push({
       id: target.kind === 'file' ? 'pin-this-file' : 'pin-this-folder',
       label: target.kind === 'file'
-        ? (t.sidebar.pinThisFile || 'Pin this file')
-        : (t.sidebar.pinThisFolder || 'Pin this folder'),
+        ? t.sidebar.pinThisFile
+        : t.sidebar.pinThisFolder,
       icon: <PinIcon />,
       disabled: pinLimitReached,
       onSelect: () => onTogglePin(pinItem),

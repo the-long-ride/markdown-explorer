@@ -10,6 +10,7 @@ describe('useKeyboard pure functions', () => {
   const keyboardState = (isDesktop: boolean, workspaceSelection: string) => ({
     isDesktop,
     isDesktopLike: isDesktop,
+    isVscode: false,
     isTermsOpen: false,
     isModalOpen: false,
     isSearchOpen: false,
@@ -23,9 +24,13 @@ describe('useKeyboard pure functions', () => {
     hasOnSidebarCursorModeToggle: false,
     hasOnSidebarCursorModeClose: false,
     hasOnWelcome: false,
+    hasOnEditCurrentDocument: false,
     hasOnToggleToc: false,
     hasOnLocateFile: false,
+    hasOnOpenBookmarks: false,
     hasOnToggleFocusMode: false,
+    hasOnToggleDesktopViewMode: false,
+    hasOnToggleFullscreen: false,
     hasOnFindClose: false,
     isRepeat: false,
     isEditableTarget: false,
@@ -47,6 +52,27 @@ describe('useKeyboard pure functions', () => {
   it('resolves non-desktop Ctrl+Alt+W to workspace selection', () => {
     expect(resolveKeyboardAction(new KeyboardEvent('keydown', { key: 'w', ctrlKey: true, altKey: true }), keyboardState(false, 'Ctrl+Alt+W')))
       .toEqual({ type: 'workspace-selection' });
+  });
+
+  it('resolves Edit only when the host exposes openInEditor', () => {
+    const state = {
+      ...keyboardState(true, 'Ctrl+N'),
+      keybindings: { editCurrentDocument: 'Ctrl+E' },
+      hasOnEditCurrentDocument: true,
+    };
+    const event = new KeyboardEvent('keydown', { key: 'e', ctrlKey: true });
+    expect(resolveKeyboardAction(event, state)).toEqual({ type: 'edit-current-document' });
+    expect(resolveKeyboardAction(event, { ...state, hasOnEditCurrentDocument: false })).toBeNull();
+  });
+
+  it('does not intercept Edit while typing in an editable target', () => {
+    const state = {
+      ...keyboardState(false, 'Ctrl+Alt+W'),
+      keybindings: { editCurrentDocument: 'Ctrl+Alt+E' },
+      hasOnEditCurrentDocument: true,
+      isEditableTarget: true,
+    };
+    expect(resolveKeyboardAction(new KeyboardEvent('keydown', { key: 'e', ctrlKey: true, altKey: true }), state)).toBeNull();
   });
 
   describe('matchesShortcut', () => {

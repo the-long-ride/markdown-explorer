@@ -79,7 +79,7 @@ flowchart LR
 | 3 | Arrange image-only row | Calculate equal presentation for sibling images. | Gallery-like row appears. |
 | 4 | Activate image/diagram | Build gallery from document media items. | Media modal opens. |
 | 5 | Zoom/pan/navigate | Clamp zoom and update transform/selected item. | User inspects details. |
-| 6 | Play video | Use supported video element or YouTube embed policy. | Playback controls appear. |
+| 6 | Play video | Use supported video element or YouTube embed policy and active-locale renderer labels. | Playback controls and localized fallback links appear. |
 | 7 | Close modal | Dispose listeners/media state and restore focus. | Document returns. |
 
 ## Alternate and failure flows
@@ -97,6 +97,7 @@ flowchart LR
 - Supported local video includes mp4, m4v, webm, ogv, ogg, mov, mkv, and m3u8.
 - Tauri local reads enforce containment/range bounds.
 - Modal is keyboard reachable and restores focus.
+- Generated fallback labels (`Video`, open-video action, YouTube title/link) come from the active `rendererUi` locale rather than hard-coded English.
 
 
 ## Protocol effects
@@ -134,6 +135,7 @@ flowchart LR
 - [ ] Zoom cannot exceed bounds.
 - [ ] Keyboard can close and navigate media.
 - [ ] A failed media item does not break surrounding document.
+- [x] Video and YouTube fallback controls use the active application locale.
 ## UI reference implementation
 
 The sample shows the interaction boundary, not a replacement for the React implementation.
@@ -188,6 +190,7 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Verification | `tests/unit/ui/markdown/mediaUrls.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/components/modal-render.test.tsx` | Automated expectation |
 | Verification | `tests/node/website-image-viewer.test.mjs` | Automated expectation |
+| Verification | `tests/node/localization-settings-doc-sync-contract.test.mjs` | Generated-media localization guard |
 | Verification | `tests/unit/electron/youtube-headers.test.ts` | Automated expectation |
 
 ---

@@ -150,6 +150,27 @@ export interface CurrentFileChangedMessage {
   readonly filePath: string;
 }
 
+export interface DesktopFontsResultMessage {
+  readonly command: 'desktopFontsResult';
+  readonly requestId: string;
+  readonly fonts: readonly {
+    readonly id: string;
+    readonly family: string;
+    readonly source: 'system' | 'imported';
+    readonly cssFamily: string;
+    readonly available: boolean;
+    readonly faces: readonly {
+      readonly style: 'normal' | 'italic';
+      readonly minWeight: number;
+      readonly maxWeight: number;
+      readonly variable: boolean;
+      readonly cssUrl?: string;
+    }[];
+  }[];
+  readonly importedId?: string;
+  readonly error?: string;
+}
+
 export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
@@ -158,7 +179,8 @@ export type HostMessage =
   | WorkspaceSearchResultsMessage
   | SearchPreviewResultMessage
   | WorkspaceFilesChangedMessage
-  | CurrentFileChangedMessage;
+  | CurrentFileChangedMessage
+  | DesktopFontsResultMessage;
 
 // ── Webview message types (webview → host) ──────────────────
 
@@ -235,14 +257,6 @@ export interface DeleteRecentWorkspaceMessage {
   readonly path: string;
 }
 
-export interface ZoomInMessage {
-  readonly command: 'zoom-in';
-}
-
-export interface ZoomOutMessage {
-  readonly command: 'zoom-out';
-}
-
 export interface UpdateAppearanceMessage {
   readonly command: 'updateAppearance';
   readonly theme: 'auto' | 'light' | 'dark';
@@ -284,6 +298,22 @@ export interface SetDocumentConversionMessage {
   readonly enabled: boolean;
 }
 
+export interface ListDesktopFontsMessage {
+  readonly command: 'listDesktopFonts';
+  readonly requestId: string;
+}
+
+export interface ImportDesktopFontsMessage {
+  readonly command: 'importDesktopFonts';
+  readonly requestId: string;
+}
+
+export interface RemoveImportedDesktopFontMessage {
+  readonly command: 'removeImportedDesktopFont';
+  readonly requestId: string;
+  readonly id: string;
+}
+
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage
   | NavigateMessage
@@ -300,9 +330,10 @@ export type WebviewMessage =
   | OpenRecentWorkspaceMessage
   | CloseWorkspaceMessage
   | DeleteRecentWorkspaceMessage
-  | ZoomInMessage
-  | ZoomOutMessage
   | UpdateAppearanceMessage
   | OpenExternalMessage
   | OpenHtmlPreviewMessage
-  | SetDocumentConversionMessage;
+  | SetDocumentConversionMessage
+  | ListDesktopFontsMessage
+  | ImportDesktopFontsMessage
+  | RemoveImportedDesktopFontMessage;

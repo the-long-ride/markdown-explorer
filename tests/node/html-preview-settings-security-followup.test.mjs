@@ -84,15 +84,16 @@ test('reset shortcut confirmation uses theme styling instead of a bright hard-co
   assert.doesNotMatch(block, /#dc2626/i);
 });
 
-test('all locales include the HTML experience notice and dash-formatted close-settings tooltip', async () => {
+test('all locales include the HTML experience notice and close-settings text without baked shortcut syntax', async () => {
   const [types, data] = await Promise.all([
     read('ui/src/contexts/translations.ts'),
     read('ui/src/contexts/translationsData.ts'),
   ]);
   assert.match(types, /htmlPreviewExperienceNotice:\s*string/);
   assert.equal(data.match(/htmlPreviewExperienceNotice:/g)?.length ?? 0, locales.length);
-  assert.equal(data.match(/closeSettings:\s*["'][^"']+\s-\s\(Esc\)["']/g)?.length ?? 0, locales.length);
-  assert.match(data, /closeSettings:\s*"Close Settings - \(Esc\)"/);
+  assert.equal(data.match(/closeSettings:/g)?.length ?? 0, locales.length);
+  assert.doesNotMatch(data, /closeSettings:\s*["'][^"']*\(Esc\)/);
+  assert.match(data, /closeSettings:\s*"Close Settings"/);
 });
 
 test('reported vulnerable transitive dependencies are overridden from the pnpm workspace', async () => {

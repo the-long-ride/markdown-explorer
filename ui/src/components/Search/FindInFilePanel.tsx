@@ -222,7 +222,7 @@ export function FindInFilePanel({
         type="button"
         className={`find-in-file-panel__case${matchCase ? ' is-active' : ''}`}
         onClick={() => setMatchCase((value) => !value)}
-        tooltip={`${t.search.matchCase} - ${matchCase ? (t.search.statusOn || 'On') : (t.search.statusOff || 'Off')}`}
+        tooltip={`${t.search.matchCase} - ${matchCase ? (t.search.statusOn) : (t.search.statusOff)}`}
         tooltipPos="below"
         aria-pressed={matchCase}
       >

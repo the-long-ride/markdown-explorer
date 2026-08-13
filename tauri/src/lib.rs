@@ -6,6 +6,7 @@ pub mod debug_tools;
 #[cfg(not(test))]
 pub mod dispatcher;
 pub mod error;
+pub mod fonts;
 #[cfg(not(test))]
 pub mod host_message;
 pub mod local_file;

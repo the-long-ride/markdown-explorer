@@ -96,6 +96,14 @@ export function reducer(
       };
     }
 
+    case 'SET_DESKTOP_FONTS':
+      return {
+        ...state,
+        desktopFonts: [...action.fonts],
+        desktopFontError: action.error ?? null,
+        desktopFontsResult: { requestId: action.requestId, importedId: action.importedId },
+      };
+
     case 'RECENT_WORKSPACES_CHANGED':
       return {
         ...state,
@@ -336,7 +344,7 @@ export function reducer(
       return {
         ...state,
         isLoading: true,
-        loadingLabel: action.label || 'Loading docs...',
+        loadingLabel: action.label || '',
         loadingDetail: action.detail || '',
         staleContentFilePath: null,
         notFoundHref: null,

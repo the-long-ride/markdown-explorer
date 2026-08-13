@@ -16,12 +16,12 @@ const UI_HOST_COMMANDS: (UiHostMessage extends { command: infer C }[] ? C : neve
   'renderContent', 'readyAck', 'workspaceFilesChanged', 'currentFileChanged',
   'recentWorkspacesChanged', 'navNotFound', 'workspaceUnavailable', 'setLoading', 'workspaceScanProgress',
   'updateStateChanged', 'window-state-changed', 'crossTabSearchResults',
-  'workspaceSearchResults', 'workspaceSearchIndexLoaded',
+  'workspaceSearchResults', 'workspaceSearchIndexLoaded', 'desktopFontsResult',
 ] as string[] as never[];
 
 const VSCODE_HOST_COMMANDS: string[] = [
   'renderContent', 'readyAck', 'navNotFound', 'setLoading', 'workspaceSearchResults',
-  'workspaceFilesChanged', 'currentFileChanged',
+  'workspaceFilesChanged', 'currentFileChanged', 'desktopFontsResult',
 ];
 
 const CHROMIUM_HOST_COMMANDS: string[] = [
@@ -35,8 +35,8 @@ const DESKTOP_WEBVIEW_COMMANDS: string[] = [
   'activateWorkspace', 'searchAcrossWorkspaces', 'searchWorkspace',
   'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
   'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
-  'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'openInEditor', 'copyCode',
-  'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'downloadUpdate',
+  'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'zoom-reset', 'openInEditor', 'copyCode',
+  'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont', 'downloadUpdate',
   'scheduleDownloadedUpdate', 'restartAndApplyUpdate', 'window-minimize',
   'window-maximize', 'window-close', 'toggle-fullscreen',
 ];
@@ -46,7 +46,7 @@ const VSCODE_WEBVIEW_COMMANDS: string[] = [
   'refresh', 'setDocumentConversion', 'searchWorkspace', 'updateAppearance',
   'openFolder', 'openFile', 'openPath', 'confirmOpenPath',
   'openRecentWorkspace', 'closeWorkspace', 'deleteRecentWorkspace',
-  'zoom-in', 'zoom-out',
+  'listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont',
 ];
 
 const CHROMIUM_WEBVIEW_COMMANDS: string[] = [
@@ -71,8 +71,8 @@ describe('host-message parity', () => {
       'activateWorkspace', 'searchWorkspace', 'searchAcrossWorkspaces',
       'indexWorkspaceSearchItems', 'loadWorkspaceSearchIndexes', 'confirmOpenPath',
       'openRecentWorkspace', 'deleteRecentWorkspace', 'replaceRecentWorkspaces',
-      'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'openInEditor', 'copyCode',
-      'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'updateAppearance',
+      'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'zoom-in', 'zoom-out', 'zoom-reset', 'openInEditor', 'copyCode',
+      'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont', 'updateAppearance',
       'downloadUpdate', 'scheduleDownloadedUpdate', 'restartAndApplyUpdate',
       'window-minimize', 'window-maximize', 'window-close', 'toggle-fullscreen',
     ];
@@ -81,6 +81,7 @@ describe('host-message parity', () => {
       test(`${cmd} has fixture factory`, () => {
         const key = cmd === 'zoom-in' ? 'zoomIn'
           : cmd === 'zoom-out' ? 'zoomOut'
+          : cmd === 'zoom-reset' ? 'zoomReset'
           : cmd === 'window-minimize' ? 'windowMinimize'
           : cmd === 'window-maximize' ? 'windowMaximize'
           : cmd === 'window-close' ? 'windowClose'
@@ -155,6 +156,9 @@ describe('host-message parity', () => {
         'window-maximize',
         'window-minimize',
         'toggle-fullscreen',
+        'zoom-in',
+        'zoom-out',
+        'zoom-reset',
       ].sort());
     });
 
@@ -171,11 +175,14 @@ describe('host-message parity', () => {
         'confirmOpenPath',
         'copyCode',
         'downloadUpdate',
+        'importDesktopFonts',
+        'listDesktopFonts',
         'openFile',
         'openHtmlPreview',
         'openInEditor',
         'openPath',
         'openShellLocation',
+        'removeImportedDesktopFont',
         'replaceRecentWorkspaces',
         'restartAndApplyUpdate',
         'scheduleDownloadedUpdate',
@@ -187,6 +194,7 @@ describe('host-message parity', () => {
         'toggle-fullscreen',
         'zoom-in',
         'zoom-out',
+        'zoom-reset',
       ].sort());
     });
   });
@@ -210,6 +218,7 @@ describe('host-message parity', () => {
         cancelAllWorkspaceScans: () => webviewMessages.cancelAllWorkspaceScans(),
         zoomIn: () => webviewMessages.zoomIn(),
         zoomOut: () => webviewMessages.zoomOut(),
+        zoomReset: () => webviewMessages.zoomReset(),
         windowMinimize: () => webviewMessages.windowMinimize(),
         windowMaximize: () => webviewMessages.windowMaximize(),
         windowClose: () => webviewMessages.windowClose(),
@@ -220,6 +229,9 @@ describe('host-message parity', () => {
         openFile: () => webviewMessages.openFile(),
         openFileHandle: () => webviewMessages.openFileHandle(),
         setDocumentConversion: () => webviewMessages.setDocumentConversion(true),
+        listDesktopFonts: () => webviewMessages.listDesktopFonts(),
+        importDesktopFonts: () => webviewMessages.importDesktopFonts(),
+        removeImportedDesktopFont: () => webviewMessages.removeImportedDesktopFont(),
         updateAppearance: () => webviewMessages.updateAppearance(),
         indexWorkspaceSearchItems: () => webviewMessages.indexWorkspaceSearchItems(),
         loadWorkspaceSearchIndexes: () => webviewMessages.loadWorkspaceSearchIndexes(),

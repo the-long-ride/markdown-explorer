@@ -66,43 +66,49 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
   isPetThemeStyle: (value: string) => value.startsWith('pet-'),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    themeStyles: {
-      themesLabel: 'Themes',
-      themesDesc: 'Built-in styles',
-      themesMenuLabel: 'Built-in themes',
-      chooseTheme: 'Choose theme',
-      defaultLabel: 'Default',
-      defaultDesc: 'Default style',
-      bentoLabel: 'Bento',
-      bentoDesc: 'Bento style',
-      vercelLabel: 'Vercel',
-      vercelDesc: 'Vercel style',
-      tokyoNightLabel: 'Tokyo Night',
-      tokyoNightDesc: 'Tokyo style',
-      neonVoltageLabel: 'Neon Voltage',
-      neonVoltageDesc: 'Neon style',
-      rawGridLabel: 'Raw Grid',
-      rawGridDesc: 'Raw style',
-      petsLabel: 'Pet themes',
-      petsDesc: 'Pets style',
-      petsMenuLabel: 'Pet themes',
-      choosePetTheme: 'Choose pet theme',
-      whiteShibaLabel: 'White Shiba',
-      kInkLabel: "K-Ink (app author's dog)",
-      catLabel: 'Cat',
-      hamsterLabel: 'Hamster',
-      corgiLabel: 'Corgi',
-      customThemesLabel: 'Your custom themes',
-      customThemesDesc: 'Saved themes',
-      customThemesMenuLabel: 'Custom themes',
-      chooseCustomTheme: 'Choose custom theme',
-      themeRemixLabel: 'Theme Remix',
-    },
-    topbar: { switchToLightMode: 'Light', switchToDarkMode: 'Dark' },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      themeStyles: { ...en.themeStyles,
+        themesLabel: 'Themes',
+        themesDesc: 'Built-in styles',
+        themesMenuLabel: 'Built-in themes',
+        chooseTheme: 'Choose theme',
+        defaultLabel: 'Default',
+        defaultDesc: 'Default style',
+        bentoLabel: 'Bento',
+        bentoDesc: 'Bento style',
+        vercelLabel: 'Vercel',
+        vercelDesc: 'Vercel style',
+        tokyoNightLabel: 'Tokyo Night',
+        tokyoNightDesc: 'Tokyo style',
+        neonVoltageLabel: 'Neon Voltage',
+        neonVoltageDesc: 'Neon style',
+        rawGridLabel: 'Raw Grid',
+        rawGridDesc: 'Raw style',
+        petsLabel: 'Pet themes',
+        petsDesc: 'Pets style',
+        petsMenuLabel: 'Pet themes',
+        choosePetTheme: 'Choose pet theme',
+        whiteShibaLabel: 'White Shiba',
+        kInkLabel: "K-Ink (app author's dog)",
+        catLabel: 'Cat',
+        hamsterLabel: 'Hamster',
+        corgiLabel: 'Corgi',
+        customThemesLabel: 'Your custom themes',
+        customThemesDesc: 'Saved themes',
+        customThemesMenuLabel: 'Custom themes',
+        chooseCustomTheme: 'Choose custom theme',
+        themeRemixLabel: 'Theme Remix',
+      },
+      topbar: { ...en.topbar, switchToLightMode: 'Light', switchToDarkMode: 'Dark' },
+    }),
+  };
+});
 
 vi.mock('../../../../ui/src/theme/customThemes', () => ({
   CUSTOM_THEME_COLOR_OPTIONS: [
@@ -339,8 +345,8 @@ describe('ThemeRemixModal', () => {
     }];
     render(<ThemeRemixModal isOpen={true} onClose={() => {}} />);
     expect(screen.getByRole('tablist')).toBeInTheDocument();
-    expect(screen.getByText('dark')).toBeInTheDocument();
-    expect(screen.getByText('light')).toBeInTheDocument();
+    expect(screen.getByText('Dark')).toBeInTheDocument();
+    expect(screen.getByText('Light')).toBeInTheDocument();
   });
 
   it('switches color scheme tab on click', () => {
@@ -356,7 +362,7 @@ describe('ThemeRemixModal', () => {
       background: { type: 'none', opacity: 0.16, fit: 'cover', position: 'center', blur: 0 },
     }];
     render(<ThemeRemixModal isOpen={true} onClose={() => {}} />);
-    fireEvent.click(screen.getByText('light'));
+    fireEvent.click(screen.getByText('Light'));
   });
 
   it('shows theme limit error when 24 custom themes exist', () => {

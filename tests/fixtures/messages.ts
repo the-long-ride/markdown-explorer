@@ -116,6 +116,12 @@ export const hostMessages = {
     tabs: [],
     ...overrides,
   }),
+  desktopFontsResult: (overrides = {}) => ({
+    command: 'desktopFontsResult' as const,
+    requestId: 'fonts-1',
+    fonts: [],
+    ...overrides,
+  }),
 };
 
 export const webviewMessages = {
@@ -231,6 +237,10 @@ export const webviewMessages = {
     command: 'zoom-out' as const,
     ...overrides,
   }),
+  zoomReset: (overrides = {}) => ({
+    command: 'zoom-reset' as const,
+    ...overrides,
+  }),
   openInEditor: (path: string, overrides = {}) => ({
     command: 'openInEditor' as const,
     path,
@@ -258,6 +268,22 @@ export const webviewMessages = {
   setDocumentConversion: (enabled: boolean, overrides = {}) => ({
     command: 'setDocumentConversion' as const,
     enabled,
+    ...overrides,
+  }),
+  listDesktopFonts: (overrides = {}) => ({
+    command: 'listDesktopFonts' as const,
+    requestId: 'fonts-list-1',
+    ...overrides,
+  }),
+  importDesktopFonts: (overrides = {}) => ({
+    command: 'importDesktopFonts' as const,
+    requestId: 'fonts-import-1',
+    ...overrides,
+  }),
+  removeImportedDesktopFont: (id = 'font_test', overrides = {}) => ({
+    command: 'removeImportedDesktopFont' as const,
+    requestId: 'fonts-remove-1',
+    id,
     ...overrides,
   }),
   updateAppearance: (overrides = {}) => ({

@@ -82,7 +82,7 @@ describe('globalHandlers', () => {
     it('sets preview mode correctly', () => {
       document.body.innerHTML = `
         <div class="mdn-codeblock" data-mode="code">
-          <span class="mdn-codeblock-lang">HTML</span>
+          <span class="mdn-codeblock-lang" data-preview-label="HTML Preview">HTML</span>
           <div class="mdn-html-preview-body" style="display:none"></div>
           <div class="mdn-code-source" style="display:flex"><div class="mdn-codeblock-body"></div></div>
           <button class="mdn-toggle-preview-btn">

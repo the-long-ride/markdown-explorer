@@ -89,7 +89,7 @@ export function DesktopTabItem({
           onClick={(event) => event.stopPropagation()} onBlur={onCommitAlias}
           onKeyDown={(event) => { if (event.key === 'Enter') onCommitAlias(); if (event.key === 'Escape') onCancelAlias(); }} />
       ) : <span className="desktop-tab__label">{label}</span>}
-      <span className="desktop-tab__close" role="button" tabIndex={-1} aria-label="Close tab" title={closeLabel}
+      <span className="desktop-tab__close" role="button" tabIndex={-1} aria-label={closeLabel} title={closeLabel}
         onClick={(event) => { event.stopPropagation(); onClose(tab.id); }}>
         <CloseIcon size={11} />
       </span>

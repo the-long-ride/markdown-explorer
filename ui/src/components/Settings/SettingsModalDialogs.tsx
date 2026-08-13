@@ -26,9 +26,9 @@ export function BannedShortcutDialog({ t, error, mascot, onClose }: { t: any; er
   return (
     <div className="mdn-modal banned-shortcut-modal settings-modal-dialog" role="dialog" aria-modal="true" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="settings-card banned-shortcut-card">
-        <button type="button" className="settings-card__close" onClick={onClose} aria-label="Close warning">&times;</button>
+        <button type="button" className="settings-card__close" onClick={onClose} aria-label={t.ui.closeWarning}>&times;</button>
         <div className="banned-shortcut-header">
-          {mascot ? <div className="banned-shortcut-mascot"><img src={mascot} alt="Warning Mascot" draggable={false} /></div> : <div className="banned-shortcut-icon"><AlertTriangleIcon size={38} /></div>}
+          {mascot ? <div className="banned-shortcut-mascot"><img src={mascot} alt={t.ui.warningMascotAlt} draggable={false} /></div> : <div className="banned-shortcut-icon"><AlertTriangleIcon size={38} /></div>}
           <h3>{t.bannedShortcutTitle}</h3>
         </div>
         <div className="banned-shortcut-body"><p>{error}</p></div>

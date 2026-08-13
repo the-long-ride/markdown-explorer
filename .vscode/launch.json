@@ -6,12 +6,8 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/vscode"
-      ],
-      "outFiles": [
-        "${workspaceFolder}/vscode/out/**/*.js"
-      ],
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/vscode"],
+      "outFiles": ["${workspaceFolder}/vscode/out/**/*.js"],
       "preLaunchTask": "compile",
       "presentation": {
         "group": "debug",
@@ -27,18 +23,17 @@
       "windows": {
         "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
       },
-      "args": [
-        "."
-      ],
+      "args": ["."],
       "console": "integratedTerminal",
-      "outFiles": [
-        "${workspaceFolder}/vscode/out/**/*.js"
-      ],
+      "autoAttachChildProcesses": false,
+      "outFiles": ["${workspaceFolder}/vscode/out/**/*.js"],
       "preLaunchTask": "compile",
       "presentation": {
         "group": "debug",
         "order": 2
-      }
+      },
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**"]
     },
     {
       "name": "Tauri Desktop App",
@@ -46,15 +41,13 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "run",
-        "start:tauri"
-      ],
+      "runtimeArgs": ["run", "start:tauri"],
       "console": "integratedTerminal",
       "presentation": {
         "group": "debug",
         "order": 3
-      }
+      },
+      "preLaunchTask": "compile:tauri"
     },
     {
       "name": "Web Demo",

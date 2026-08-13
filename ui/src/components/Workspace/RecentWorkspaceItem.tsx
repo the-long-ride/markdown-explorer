@@ -72,7 +72,7 @@ export function RecentWorkspaceItem({
           <span className="recent-workspace-item__path">{item.path}</span>
           {item.lastOpened && (
             <span className="recent-workspace-item__last-opened">
-              {t.recentWorkspaces.lastOpened}: {formatLastOpened(item.lastOpened)}
+              {t.recentWorkspaces.lastOpened}: {formatLastOpened(item.lastOpened, currentLang)}
             </span>
           )}
         </div>
@@ -89,7 +89,7 @@ export function RecentWorkspaceItem({
               setIsEditing(true);
             }}
             className={`recent-workspace-delete-btn${modal ? ' recent-workspace-delete-btn--modal' : ''}`}
-            tooltip="Rename workspace"
+            tooltip={t.ui.renameWorkspace}
             tooltipPos="above"
             tooltipAlign="right"
           >

@@ -33,6 +33,7 @@ export interface WindowCloseMessage { readonly command: 'window-close'; }
 export interface ToggleFullscreenMessage { readonly command: 'toggle-fullscreen'; }
 export interface ZoomInMessage { readonly command: 'zoom-in'; }
 export interface ZoomOutMessage { readonly command: 'zoom-out'; }
+export interface ZoomResetMessage { readonly command: 'zoom-reset'; }
 export interface UpdateAppearanceMessage { readonly command: 'updateAppearance'; readonly theme: ThemeMode; readonly themeStyle: ThemeStyle; }
 export interface OpenShellLocationMessage { readonly command: 'openShellLocation'; readonly path: string; readonly mode: ShellLocationMode; }
 export interface OpenExternalMessage { readonly command: 'openExternal'; readonly url: string; }
@@ -41,6 +42,9 @@ export interface SetDocumentConversionMessage { readonly command: 'setDocumentCo
 export interface DownloadUpdateMessage { readonly command: 'downloadUpdate'; readonly version: string; readonly url: string; }
 export interface ScheduleDownloadedUpdateMessage { readonly command: 'scheduleDownloadedUpdate'; }
 export interface RestartAndApplyUpdateMessage { readonly command: 'restartAndApplyUpdate'; }
+export interface ListDesktopFontsMessage { readonly command: 'listDesktopFonts'; readonly requestId: string; }
+export interface ImportDesktopFontsMessage { readonly command: 'importDesktopFonts'; readonly requestId: string; }
+export interface RemoveImportedDesktopFontMessage { readonly command: 'removeImportedDesktopFont'; readonly requestId: string; readonly id: string; }
 
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage
@@ -49,8 +53,9 @@ export type WebviewMessage =
   | SearchPreviewRequestMessage | WorkspaceSearchMessage | IndexWorkspaceSearchItemsMessage | LoadWorkspaceSearchIndexesMessage
   | ConfirmOpenPathMessage | OpenRecentWorkspaceMessage | CloseWorkspaceMessage
   | CancelWorkspaceScanMessage | CancelAllWorkspaceScansMessage | DeleteRecentWorkspaceMessage
-  | ReplaceRecentWorkspacesMessage | ZoomInMessage | ZoomOutMessage | WindowMinimizeMessage
+  | ReplaceRecentWorkspacesMessage | ZoomInMessage | ZoomOutMessage | ZoomResetMessage | WindowMinimizeMessage
   | WindowMaximizeMessage | WindowCloseMessage | ToggleFullscreenMessage | UpdateAppearanceMessage
   | OpenShellLocationMessage | OpenExternalMessage | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage | DownloadUpdateMessage | ScheduleDownloadedUpdateMessage
-  | RestartAndApplyUpdateMessage;
+  | RestartAndApplyUpdateMessage | ListDesktopFontsMessage | ImportDesktopFontsMessage
+  | RemoveImportedDesktopFontMessage;

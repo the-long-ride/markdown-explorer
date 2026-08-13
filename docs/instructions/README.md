@@ -131,6 +131,7 @@ This folder is a source-derived specification of the active application. It is o
 - [Keyboard Shortcut Catalog](05-reference/04-shortcut-catalog.md) — Shared and Electron desktop default shortcut catalog
 - [Theme Catalog](05-reference/05-theme-catalog.md) — Valid modes, styles, custom theme model, migrations, and limits
 - [Supported Files and Conversion Catalog](05-reference/06-supported-files-and-conversion.md) — Base document, media, HTML, and convertible extension support
+- [Current Application State](05-reference/07-current-app-state.md) — Unreleased synchronized runtime, Settings, typography, shortcut, and localization snapshot
 - [Storage Catalog](05-reference/07-storage-catalog.md) — Exact bridge, local-storage, and IndexedDB keys and ownership
 - [Limits and Thresholds Catalog](05-reference/08-limits-catalog.md) — Operational, validation, performance, and security limits
 - [Error and Reason Catalog](05-reference/09-error-and-reason-catalog.md) — Typed failure states, reason codes, and required recovery

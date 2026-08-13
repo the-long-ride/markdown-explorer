@@ -9,45 +9,27 @@ type SettingsShortcutsPanelProps = {
   shortcutSearchQuery: string;
   setShortcutSearchQuery: (query: string) => void;
   filteredActions: any[];
+  actionLabels: Record<string, string>;
   recordingAction: string | null;
   setRecordingAction: React.Dispatch<React.SetStateAction<string | null>>;
   handleKeyDown: (actionId: string, event: React.KeyboardEvent<HTMLInputElement>) => void;
   updateSettings: (patch: any) => void;
-  showUpdateCard: boolean;
-  updateVersionLabel: string;
-  updateCheck: any;
-  hostUpdateState: any;
-  isUpdateDownloading: boolean;
-  isUpdateScheduled: boolean;
-  isUpdateApplying: boolean;
-  isUpdateDownloaded: boolean;
-  updateStatus: string;
-  getUpdateErrorText: () => string;
-  onOpenChangelog: () => void;
-  onDownloadUpdate: () => void;
   onRequestReset: () => void;
 };
 
 export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
   const {
     state, t, shortcutSearchQuery, setShortcutSearchQuery,
-    filteredActions, recordingAction, setRecordingAction, handleKeyDown,
-    updateSettings, showUpdateCard, updateVersionLabel, updateCheck,
-    hostUpdateState, isUpdateDownloading, isUpdateScheduled, isUpdateApplying,
-    isUpdateDownloaded, updateStatus, getUpdateErrorText, onOpenChangelog,
-    onDownloadUpdate, onRequestReset,
+    filteredActions, actionLabels, recordingAction, setRecordingAction, handleKeyDown,
+    updateSettings, onRequestReset,
   } = props;
   return (
     <>
       {/* Right Column: Shortcuts Customizer */}
       <div className="settings-card__column settings-card__column--shortcuts">
-        <div className="settings-shortcuts-header">
-          <div className="settings-shortcuts-title">
-            {t.shortcuts}
-          </div>
-          <div className="settings-shortcuts-hint">
-            {t.shortcutsHint}
-          </div>
+        <div className="settings-section-panel__header">
+          <h3>{t.shortcuts}</h3>
+          <p>{t.shortcutsHint}</p>
         </div>
         <div className={`settings-shortcuts-search${shortcutSearchQuery ? " has-value" : ""}`}>
           <span className="settings-shortcuts-search-icon" aria-hidden="true" />
@@ -56,14 +38,14 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
             type="text"
             value={shortcutSearchQuery}
             onChange={(event) => setShortcutSearchQuery(event.target.value)}
-            placeholder="Search keyboard shortcuts..."
-            aria-label="Search keyboard shortcuts"
+            placeholder={t.ui.shortcutSearchPlaceholder}
+            aria-label={t.ui.shortcutSearchLabel}
           />
           <button
             className={`settings-shortcuts-search-clear${shortcutSearchQuery ? " is-visible" : ""}`}
             type="button"
             onClick={() => setShortcutSearchQuery("")}
-            aria-label="Clear keyboard shortcut search"
+            aria-label={t.ui.shortcutSearchClear}
             disabled={!shortcutSearchQuery}
           >
             &times;
@@ -78,14 +60,14 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
             return (
               <div className="settings-shortcut-row" key={act.id}>
                 <div className="settings-shortcut-label">
-                  <span>{t.actions[act.id as keyof typeof t.actions] || act.label}</span>
+                  <span>{actionLabels[act.id]}</span>
                 </div>
                 <button
                   type="button"
                   className={`settings-shortcut-toggle${isEnabled ? " is-enabled" : ""}`}
                   role="switch"
                   aria-checked={isEnabled}
-                  aria-label={`${isEnabled ? "Disable" : "Enable"} ${act.label}`}
+                  aria-label={(isEnabled ? t.ui.shortcutDisable : t.ui.shortcutEnable).replace('{action}', actionLabels[act.id])}
                   onClick={() => updateSettings({
                     disabledKeybindings: {
                       ...state.settings.disabledKeybindings,
@@ -99,11 +81,11 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
                   <input
                     type="text"
                     readOnly
-                    placeholder="Click to record..."
+                    placeholder={t.ui.shortcutRecordPlaceholder}
                     disabled={!isEnabled}
                     value={
                       isRecording
-                        ? "Press keys..."
+                        ? t.ui.shortcutPressKeys
                         : formatShortcutLabel(val, " + ")
                     }
                     onFocus={() => setRecordingAction(act.id)}
@@ -137,59 +119,6 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
           >
             {t.resetShortcuts}
           </button>
-          {showUpdateCard && (
-            <div className="settings-update-card" role="status">
-              <div className="settings-update-card__title">
-                {t.update.availableTitle.replace("{version}", updateVersionLabel || "")}
-              </div>
-              <div className="settings-update-card__desc">
-                {t.update.availableDescription.replace(
-                  "{version}",
-                  updateCheck.currentVersion || state.appVersion,
-                )}{" "}
-                <button
-                  type="button"
-                  className="settings-update-card__link"
-                  onClick={onOpenChangelog}
-                >
-                  {t.update.viewChangelog}
-                </button>
-                .
-              </div>
-              {isUpdateDownloading ? (
-                <div className="settings-update-card__desc">
-                  {t.update.downloading.replace(
-                    "{progress}",
-                    String(hostUpdateState.progressPercent ?? 0),
-                  )}
-                </div>
-              ) : null}
-              {isUpdateScheduled ? (
-                <div className="settings-update-card__desc">
-                  {t.update.scheduled}
-                </div>
-              ) : null}
-              {isUpdateApplying ? (
-                <div className="settings-update-card__desc">
-                  {t.update.applying}
-                </div>
-              ) : null}
-              {updateStatus === "error" ? (
-                <div className="settings-update-card__desc">
-                  {getUpdateErrorText()}
-                </div>
-              ) : null}
-              {!isUpdateDownloading && !isUpdateScheduled && !isUpdateApplying && !isUpdateDownloaded ? (
-                <button
-                  type="button"
-                  className="settings-download-update-btn"
-                  onClick={onDownloadUpdate}
-                >
-                  {t.update.downloadButton}
-                </button>
-              ) : null}
-            </div>
-          )}
         </div>
       </div>
     </>

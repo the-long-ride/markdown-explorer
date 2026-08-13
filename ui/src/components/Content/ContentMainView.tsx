@@ -80,7 +80,7 @@ export function ContentMainView({
         {state.isLoading && (
           <div className="state-screen state-screen--loading" id="loadingScreen">
             <div className="spinner" />
-            <div className="state-screen__title">{state.loadingLabel || 'Loading docs...'}</div>
+            <div className="state-screen__title">{state.loadingLabel || t.ui.loadingDocs}</div>
             {state.loadingDetail && <div className="state-screen__sub">{state.loadingDetail}</div>}
             {onCancelWorkspaceScan && (
               <button type="button" className="btn state-screen__cancel" onClick={onCancelWorkspaceScan}>
@@ -112,7 +112,7 @@ export function ContentMainView({
         {!workspaceUnavailablePath && state.notFoundHref && (
           <div className="state-screen">
             <div className="state-screen__icon">⚠️</div>
-            <div className="state-screen__title">File not found</div>
+            <div className="state-screen__title">{t.ui.fileNotFound}</div>
             <div className="state-screen__sub state-screen__sub--path">{state.notFoundHref}</div>
           </div>
         )}
@@ -121,16 +121,16 @@ export function ContentMainView({
           <div className="state-screen">
             <div className="state-screen__icon"><FileNotFoundIcon /></div>
             <div className="state-screen__title">
-              {state.settings.documentConversion ? 'No supported documents found' : 'No Markdown, MDX, or TXT files found'}
+              {state.settings.documentConversion ? t.ui.noSupportedDocuments : t.ui.noMarkdownDocuments}
             </div>
             <div className="state-screen__sub">
               {state.settings.documentConversion
-                ? 'Add Markdown, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, or TXT files to this workspace.'
-                : 'Add a .md, .mdx, or .txt file, or turn on document conversion to preview DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF files.'}
+                ? t.ui.addSupportedDocuments
+                : t.ui.addMarkdownDocuments}
             </div>
             {!state.settings.documentConversion && (
               <button type="button" className="state-screen__button state-screen__button--primary" onClick={() => onUpdateSettings({ documentConversion: true })}>
-                Enable document conversion
+                {t.ui.enableDocumentConversion}
               </button>
             )}
           </div>
@@ -176,10 +176,10 @@ export function ContentMainView({
                 {state.toc.length > 0 && !state.tocCollapsed && <Suspense fallback={null}><TableOfContents variant="compact" /></Suspense>}
                 {renderedContentParts.leadingCommentsHtml && <HtmlContent html={renderedContentParts.leadingCommentsHtml} />}
                 {frontmatterEntries.length > 0 && (
-                  <details className="mdn-frontmatter" open aria-label="Document properties">
+                  <details className="mdn-frontmatter" open aria-label={t.ui.documentProperties}>
                     <summary className="mdn-frontmatter-summary">
-                      <span>Properties</span>
-                      <span className="mdn-frontmatter-count">{frontmatterEntries.length} {frontmatterEntries.length === 1 ? 'property' : 'properties'}</span>
+                      <span>{t.ui.properties}</span>
+                      <span className="mdn-frontmatter-count">{frontmatterEntries.length} {frontmatterEntries.length === 1 ? t.ui.propertySingular : t.ui.propertyPlural}</span>
                     </summary>
                     <div className="mdn-frontmatter-grid">
                       {frontmatterEntries.map(([key, value]) => (

@@ -53,6 +53,7 @@ export type KeyboardAction =
   | { type: 'back' }
   | { type: 'forward' }
   | { type: 'welcome' }
+  | { type: 'edit-current-document' }
   | { type: 'settings-toggle' }
   | { type: 'toggle-theme' }
   | { type: 'toggle-toc' }
@@ -91,6 +92,7 @@ export interface KeyboardState {
   hasOnSidebarCursorModeToggle: boolean;
   hasOnSidebarCursorModeClose: boolean;
   hasOnWelcome: boolean;
+  hasOnEditCurrentDocument?: boolean;
   hasOnToggleToc: boolean;
   hasOnLocateFile: boolean;
   hasOnOpenBookmarks: boolean;
@@ -113,7 +115,7 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     const isZoomOut =
       matchesShortcut(e, state.keybindings.zoomOut) ||
       ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_' || e.key === 'Subtract'));
-    const isZoomReset = (e.ctrlKey || e.metaKey) && e.key === '0';
+    const isZoomReset = matchesShortcut(e, state.keybindings.resetZoom);
 
     if (isZoomIn) return { type: 'zoom-in' };
     if (isZoomOut) return { type: 'zoom-out' };
@@ -191,6 +193,14 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
 
   if (matchesShortcut(e, state.keybindings.welcome)) {
     return { type: 'welcome' };
+  }
+
+  if (
+    state.hasOnEditCurrentDocument &&
+    !state.isEditableTarget &&
+    matchesShortcut(e, state.keybindings.editCurrentDocument)
+  ) {
+    return { type: 'edit-current-document' };
   }
 
   if (matchesShortcut(e, state.keybindings.settings)) {

@@ -1,4 +1,6 @@
-export interface Translations {
+import type { AuditedUiTranslationDomains } from './auditedUiTranslationTypes';
+
+export interface Translations extends AuditedUiTranslationDomains {
   settings: string;
   subtitle: string;
   appearance: string;
@@ -9,9 +11,28 @@ export interface Translations {
   dark: string;
   themeStyle: string;
   themeStyleDesc: string;
-  viewPrefs: string;
   desktopView: string;
   desktopViewDesc: string;
+  typography: string;
+  typographyDesc: string;
+  appUiFont: string;
+  bodyFont: string;
+  headingFont: string;
+  quoteFont: string;
+  codeFont: string;
+  fontDefault: string;
+  fontDefaultDescription: string;
+  fontSystem: string;
+  fontImported: string;
+  fontImport: string;
+  fontRemove: string;
+  fontApply: string; fontApplyConfirmTitle: string; fontApplyConfirmBody: string; fontApplyChanges: string;
+  fontSearchPlaceholder: string;
+  fontNoResults: string;
+  fontVariant: string;
+  fontResetRole: string;
+  fontNormal: string;
+  fontItalic: string;
   focus: string;
   tabs: string;
   sidebarLabels: string;
@@ -87,6 +108,17 @@ export interface Translations {
   exportJson: string;
   importJsonTooltip: string;
   exportJsonTooltip: string;
+  updateBackup: string;
+  updateBackupDesc: string;
+  applicationUpdate: string;
+  checkForUpdate: string;
+  settingsBackup: string;
+  settingsBackupDesc: string;
+  latestVersionStatus: string;
+  newerVersionStatus: string;
+  updateLater: string;
+  updateSkipVersion: string;
+  updateChecking: string;
   shortcuts: string;
   shortcutsHint: string;
   resetShortcuts: string;
@@ -135,12 +167,12 @@ export interface Translations {
     themeRemixLabel: string;
   };
   actions: {
+    editCurrentDocument: string;
     searchCurrent: string;
     searchAllTabs: string;
     loadMore: string;
     findCurrentFile: string;
-    back: string;
-    forward: string;
+    back: string; forward: string;
     welcome: string;
     settings: string;
     toggleTheme: string;
@@ -157,7 +189,7 @@ export interface Translations {
     locateFile: string;
     toggleDesktopViewMode: string;
     openCurrentDocumentLocation: string;
-    toggleFocusMode?: string;
+    toggleFocusMode: string;
     toggleFullscreen: string;
     toggleFullscreenTooltip: string;
   };

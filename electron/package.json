@@ -22,14 +22,14 @@
     "dist:linux": "electron-builder --linux"
   },
   "devDependencies": {
-    "electron": "^42.5.2",
-    "electron-builder": "^26.15.3"
+    "electron": "43.2.0",
+    "electron-builder": "26.15.7"
   },
   "build": {
     "appId": "com.thelongride.markdownexplorer",
     "productName": "Markdown Explorer",
     "copyright": "Copyright © 2026 the-long-ride",
-    "electronVersion": "42.2.0",
+    "electronVersion": "43.2.0",
     "directories": {
       "output": "dist"
     },
@@ -58,6 +58,7 @@
       "main.js",
       "package.json",
       "core/**/*.js",
+      "fonts/**/*.js",
       "window/**/*.js",
       "workspace/**/*.js",
       "search/**/*.js",

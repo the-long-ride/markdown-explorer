@@ -26,6 +26,7 @@ const {
 } = require("./core/startup-workspace");
 const { findExternalOpenPath, createExternalOpenQueue } = require('./core/external-open');
 const { createDesktopRuntime } = require('./core/main-runtime');
+const { createFontService } = require('./fonts/font-service');
 const { isInstallerUpdateSupported } = require("./update/update-manager");
 const {
   isWatchChangeRelevant,
@@ -49,7 +50,8 @@ let crossTabSearchWorker = null;
 const debugTools = createDebugTools({ isPackaged: app.isPackaged });
 const recentWorkspacesStore = createRecentWorkspacesStore(app);
 const externalOpenQueue = createExternalOpenQueue();
-const startupExternalPath = findExternalOpenPath(process.argv, fs);
+const startupExternalPath = findExternalOpenPath(process.argv, fs, { isPackaged: app.isPackaged });
+const fontService = createFontService({ appDataDir: app.getPath('userData') });
 if (startupExternalPath) externalOpenQueue.push(startupExternalPath);
 
 if (!app.requestSingleInstanceLock()) {
@@ -72,6 +74,7 @@ const runtime = createDesktopRuntime({
   setTimeout,
   clearTimeout,
   dialog,
+  fontService,
   getMainWindow: () => mainWindow,
   sendHostMessage(message) {
     mainWindow?.webContents.send("host-message", message);
@@ -227,7 +230,7 @@ const bootstrap = createAppBootstrap({
 });
 
 app.on('second-instance', (_event, argv) => {
-  const externalPath = findExternalOpenPath(argv, fs);
+  const externalPath = findExternalOpenPath(argv, fs, { isPackaged: app.isPackaged });
   if (!externalPath) return;
   const window = bootstrap.getMainWindow();
   if (!window) {

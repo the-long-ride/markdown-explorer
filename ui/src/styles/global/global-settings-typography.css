@@ -1,0 +1,363 @@
+/* Desktop typography controls and font pickers. */
+.desktop-typography-settings {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  gap: 14px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+
+.desktop-typography-settings__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.desktop-typography-settings__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.desktop-typography-settings__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.desktop-font-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: calc(var(--r) + 2px);
+  background: color-mix(in srgb, var(--bg-e) 80%, transparent);
+  box-shadow: var(--sh-sm);
+}
+
+.desktop-font-card.is-error {
+  border-color: color-mix(in srgb, var(--danger, #c43d3d) 40%, var(--bd-s));
+}
+
+.desktop-font-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.desktop-font-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: var(--stroke-w) solid var(--bd-s);
+  background: color-mix(in srgb, var(--bg-s) 84%, transparent);
+  color: var(--tx2);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.desktop-font-card__family {
+  font-size: 12px;
+  color: var(--tx);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.desktop-font-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 30px;
+}
+
+.desktop-font-card__remove {
+  min-height: 30px;
+}
+
+.desktop-font-setting {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-font-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 30px 7px 10px;
+  color: var(--tx);
+  background: var(--bg-s);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  font: inherit;
+}
+
+.desktop-font-setting__variants {
+  overflow-wrap: anywhere;
+}
+
+.desktop-font-setting__variants.is-error,
+.desktop-typography-settings__error {
+  color: var(--danger, #c43d3d);
+}
+
+.desktop-typography-settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.desktop-typography-settings__apply {
+  min-width: 92px;
+}
+
+@media (max-width: 720px) {
+  .desktop-typography-settings__header {
+    flex-direction: column;
+  }
+
+  .desktop-typography-settings__header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .desktop-typography-settings__header-actions > button {
+    flex: 1 1 180px;
+  }
+
+  .desktop-typography-settings__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.desktop-typography-settings__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
+}
+.desktop-typography-settings__scroll .desktop-typography-settings__error {
+  margin-top: 10px;
+}
+
+/* Role-based desktop typography */
+.desktop-font-bindings { display: grid; gap: 10px; }
+.desktop-font-binding-row {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--bg-e) 74%, transparent);
+}
+.desktop-font-binding-row__heading,
+.desktop-font-binding-row__header-actions,
+.desktop-font-binding-row__controls,
+.desktop-font-binding-row__actions { display: flex; align-items: center; gap: 8px; }
+.desktop-font-binding-row__heading { justify-content: space-between; }
+.desktop-font-binding-row__header-actions { flex: 0 0 auto; justify-content: flex-end; }
+.desktop-font-binding-row__controls > * { min-width: 0; flex: 1 1 0; }
+.desktop-font-binding-row__actions { justify-content: flex-end; }
+.font-search-dropdown { min-width: 0; }
+.font-search-dropdown__trigger,
+.font-variant-dropdown__trigger {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  color: var(--tx);
+  background: var(--bg-s);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  font: inherit;
+}
+.font-search-dropdown__trigger,
+.font-variant-dropdown__trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+.font-variant-dropdown { min-width: 0; }
+.font-variant-dropdown__trigger:disabled { cursor: default; opacity: .6; }
+.font-dropdown-chevron { flex: 0 0 auto; transition: transform .14s ease; }
+.font-dropdown-chevron.is-open { transform: rotate(180deg); }
+.font-search-menu {
+  position: fixed;
+  top: var(--menu-top, auto);
+  left: var(--menu-left, auto);
+  width: var(--menu-width, auto);
+  max-height: var(--menu-max-height, none);
+  z-index: 10000020;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  overflow: hidden;
+  color: var(--tx);
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r);
+  box-shadow: var(--sh-lg);
+}
+.font-search-menu__search { display: flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 9px; border: var(--stroke-w) solid var(--bd-s); border-radius: var(--r); background: var(--bg-s); }
+.font-search-menu__search:focus-within { border-color: var(--bd-s); box-shadow: none; outline: none; }
+.font-search-dropdown.is-open .font-search-dropdown__trigger:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.font-search-menu__search input { min-width: 0; flex: 1; border: 0; outline: 0; color: var(--tx); background: transparent; font: inherit; }
+.font-search-menu__results { overflow: auto; padding-top: 6px; }
+.font-search-menu__group-label { padding: 7px 8px 4px; color: var(--txm); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.font-search-menu__option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: var(--r); color: var(--tx); background: transparent; text-align: left; font-family: var(--font-preview-family, inherit); }
+.font-search-menu__option:hover, .font-search-menu__option.is-selected { background: var(--bg-h); }
+.font-search-menu__source { color: var(--txm); font: 10px var(--font-ui); }
+.font-search-menu__empty { padding: 16px 8px; color: var(--tx2); text-align: center; }
+.font-variant-menu {
+  position: fixed;
+  top: var(--menu-top, auto);
+  left: var(--menu-left, auto);
+  width: var(--menu-width, auto);
+  max-height: var(--menu-max-height, none);
+  z-index: 10000020;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--tx);
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r);
+  box-shadow: var(--sh-lg);
+}
+.font-variant-menu__option {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: var(--r);
+  color: var(--tx);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.font-variant-menu__option:hover,
+.font-variant-menu__option.is-selected,
+.font-variant-menu__option.is-keyboard-active { background: var(--bg-h); }
+.font-variant-menu__option.is-keyboard-active {
+  outline: var(--stroke-w) solid var(--accent);
+  outline-offset: -1px;
+}
+
+.desktop-typography-settings__apply,
+.desktop-typography-confirm-dialog__apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+/* Action icon dimensions are component-owned so themes cannot resize Apply. */
+.desktop-typography-action-icon {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  flex: 0 0 14px !important;
+}
+
+.desktop-typography-settings__apply:disabled {
+  cursor: default;
+  opacity: 0.46;
+  transform: none;
+}
+
+.desktop-typography-confirm-modal {
+  z-index: 10000120;
+}
+
+.desktop-typography-confirm-dialog {
+  position: relative;
+  width: min(560px, calc(100vw - 32px));
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.desktop-typography-confirm-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-inline-end: 24px;
+}
+
+.desktop-typography-confirm-dialog__header h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.desktop-typography-confirm-dialog__header p {
+  margin: 5px 0 0;
+  color: var(--tx2);
+}
+
+.desktop-typography-confirm-dialog__icon {
+  display: inline-flex;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.desktop-typography-confirm-dialog__changes {
+  display: grid;
+  gap: 8px;
+  max-height: min(320px, 48vh);
+  overflow-y: auto;
+}
+
+.desktop-typography-confirm-dialog__change {
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--bg-e) 76%, transparent);
+}
+
+.desktop-typography-confirm-dialog__role {
+  color: var(--tx);
+  font-weight: 800;
+}
+
+.desktop-typography-confirm-dialog__values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--tx2);
+  font-size: 11px;
+}
+
+.desktop-typography-confirm-dialog__values strong {
+  color: var(--tx);
+}
+
+.desktop-typography-confirm-dialog__arrow {
+  color: var(--txm);
+}
+
+.desktop-typography-confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

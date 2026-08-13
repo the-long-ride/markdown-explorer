@@ -4,6 +4,7 @@ import {
   TABLE_MIN_WRAPPED_COLUMN_CHARS,
 } from '../constants/limits';
 import { registerTableChartHandlers } from './tableChartHandlers';
+import { DEFAULT_TABLE_UI_LABELS, formatUiLabel, getTableUiLabels, type TableUiLabels } from './tableUiLabels';
 
 type TableFilterValue = string | string[] | null | undefined;
 type TableFilterMap = Record<string, TableFilterValue>;
@@ -47,10 +48,15 @@ export function compareRows(at: string, bt: string, asc: boolean): number {
   return asc ? at.localeCompare(bt) : bt.localeCompare(at);
 }
 
-export function formatRowCount(matchedCount: number, totalRows: number, isFiltered: boolean): string {
+export function formatRowCount(
+  matchedCount: number,
+  totalRows: number,
+  isFiltered: boolean,
+  labels: TableUiLabels = DEFAULT_TABLE_UI_LABELS,
+): string {
   return isFiltered || matchedCount < totalRows
-    ? `${matchedCount} / ${totalRows} rows`
-    : `${totalRows} rows`;
+    ? formatUiLabel(labels.filteredRowsCount, { matched: matchedCount, total: totalRows })
+    : formatUiLabel(labels.rowsCount, { count: totalRows });
 }
 
 export function truncateLabel(text: string, maxLength = 25): string {
@@ -153,7 +159,9 @@ export function registerTableHandlers(win: any) {
     if (!wrap) return;
     const isCollapsed = wrap.dataset.collapsed === 'true';
     wrap.dataset.collapsed = isCollapsed ? 'false' : 'true';
-    btn.textContent = isCollapsed ? 'Show Less' : 'Show More';
+    btn.textContent = isCollapsed
+      ? btn.dataset.labelShowLess ?? DEFAULT_TABLE_UI_LABELS.showLess
+      : btn.dataset.labelShowMore ?? DEFAULT_TABLE_UI_LABELS.showMore;
   };
 
   // Table object (for inline onclick handlers)
@@ -202,16 +210,17 @@ export function registerTableHandlers(win: any) {
     syncWrappedColumnWidths(tableId, state.wrapped);
 
     if (button) {
+      const labels = getTableUiLabels(tableId);
       button.hidden = state.currentView !== 'table';
       button.classList.toggle('is-active', state.wrapped);
       button.setAttribute('aria-pressed', String(state.wrapped));
-      button.setAttribute('title', state.wrapped ? 'Unwrap table text' : 'Wrap table text');
+      button.setAttribute('title', state.wrapped ? labels.unwrapTableText : labels.wrapTableText);
 
       const label = button.querySelector('.mdn-table-wrap-toggle__label');
       if (label) {
-        label.textContent = state.wrapped ? 'Unwrap' : 'Wrap';
+        label.textContent = state.wrapped ? labels.unwrap : labels.wrap;
       } else {
-        button.lastChild?.replaceWith(document.createTextNode(state.wrapped ? ' Unwrap' : ' Wrap'));
+        button.lastChild?.replaceWith(document.createTextNode(` ${state.wrapped ? labels.unwrap : labels.wrap}`));
       }
     }
   };
@@ -270,13 +279,14 @@ export function registerTableHandlers(win: any) {
     const countEl = document.getElementById(tableId + '-count');
     if (countEl) {
       const filtered = searchQ || activeFilters.length > 0;
-      countEl.textContent = formatRowCount(matchedCount, rows.length, filtered);
+      countEl.textContent = formatRowCount(matchedCount, rows.length, filtered, getTableUiLabels(tableId));
     }
 
     const toggleBtn = document.getElementById(tableId + '-toggle-btn');
     if (toggleBtn) {
       toggleBtn.style.display = matchedCount > TABLE_COLLAPSE_LIMIT ? '' : 'none';
-      toggleBtn.textContent = state.expanded ? 'Show Less' : 'Show More';
+      const labels = getTableUiLabels(tableId);
+      toggleBtn.textContent = state.expanded ? labels.showLess : labels.showMore;
     }
     syncFilterButtons(table, state);
 
@@ -310,12 +320,13 @@ export function registerTableHandlers(win: any) {
 
     const header = document.createElement('div');
     header.className = 'mdn-filter-dropdown-header';
-    header.textContent = 'Filter Values';
+    const labels = getTableUiLabels(tableId);
+    header.textContent = labels.filterValues;
     dropdown.appendChild(header);
 
     const allItem = document.createElement('div');
     allItem.className = `mdn-filter-item${normalizeFilterValues(state.filters[colIndex]).length === 0 ? ' is-active' : ''}`;
-    allItem.textContent = '(All)';
+    allItem.textContent = labels.all;
     allItem.onclick = () => {
       setColumnFilterValues(state, colIndex, []);
       syncMenu();
@@ -367,7 +378,7 @@ export function registerTableHandlers(win: any) {
     if (uniqueValues.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'mdn-filter-empty';
-      empty.textContent = 'No values';
+      empty.textContent = labels.noValues;
       dropdown.appendChild(empty);
     }
 
@@ -375,16 +386,16 @@ export function registerTableHandlers(win: any) {
     syncMenu();
     const rect = buttonEl.getBoundingClientRect();
     dropdown.style.top = `${rect.bottom + 4}px`;
-    
+
     const dropdownWidth = dropdown.offsetWidth || 160;
     const viewportWidth = window.innerWidth;
     let leftPos = rect.left;
-    
+
     if (rect.left + dropdownWidth > viewportWidth) {
       leftPos = rect.right - dropdownWidth;
     }
     leftPos = Math.max(12, Math.min(leftPos, viewportWidth - dropdownWidth - 12));
-    
+
     dropdown.style.left = `${leftPos}px`;
 
     const outsideClickListener = (e: MouseEvent) => {
@@ -417,7 +428,7 @@ export function registerTableHandlers(win: any) {
     if (!table) return;
     const total = getTableDataRows(table).length;
     const countEl = document.getElementById(tableId + '-count');
-    if (countEl) countEl.textContent = `${total} rows`;
+    if (countEl) countEl.textContent = formatUiLabel(getTableUiLabels(tableId).rowsCount, { count: total });
   };
 
   registerTableChartHandlers(win, getTableDataRows, getMatchedTableRows, syncWrapState);

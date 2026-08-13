@@ -164,3 +164,8 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 ---
 
 [← Settings, Preferences, and Import/Export](12-settings-preferences-import-export.md) · [Documentation index](../README.md) · [Keyboard, Accessibility, Focus, and Responsive Behavior →](14-keyboard-accessibility-responsive.md)
+
+
+## Localization
+
+Theme Remix presentation strings—including modal controls, dropdown labels, color names, background-image validation, create/duplicate/delete/apply feedback, and accessibility labels—resolve through the `themeRemix` translation domain in all nine supported locales. Internal theme IDs and CSS variable names remain stable technical values.

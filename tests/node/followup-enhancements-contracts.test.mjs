@@ -53,17 +53,20 @@ test('Markdown image-only paragraphs render as equal-width rows and heading badg
 });
 
 test('Settings Appearance uses one scroll owner and preference tooltips render through a portal', async () => {
-  const [panel, tooltip, modal, css] = await Promise.all([
+  const [panel, tooltip, modal, navigationCss, layoutCss] = await Promise.all([
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
     read('ui/src/components/Settings/PreferenceDescriptionTooltip.tsx'),
     read('ui/src/components/Settings/SettingsModal.tsx'),
+    read('ui/src/styles/global/global-settings-navigation.css'),
     read('ui/src/styles/global/global-settings-layout.css'),
   ]);
+  const css = `${navigationCss}
+${layoutCss}`;
   assert.match(panel, /PreferenceDescriptionTooltip/);
   assert.match(tooltip, /createPortal/);
-  assert.match(modal, /settings-appearance-scroll/);
-  assert.match(css, /\.settings-appearance-scroll/);
-  assert.match(css, /overflow-y:\s*auto/);
+  assert.match(modal, /settings-navigation__content/);
+  assert.match(css, /\.settings-navigation__content/);
+  assert.match(css, /overflow:\s*auto/);
   assert.match(css, /\.settings-preference-row[\s\S]*align-items:\s*center/);
   assert.match(css, /--settings-tooltip-opacity:\s*0\.(?:9[2-9]|[1-9]\d)/);
 });

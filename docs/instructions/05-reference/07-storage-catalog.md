@@ -51,7 +51,12 @@ keywords:
 | `markdown-explorer-desktop-tabs-v1` | Shared desktop storage | Desktop workspace-tab snapshot |
 | `markdown-explorer-workspace-aliases-v1` | Shared desktop storage | Canonical workspace identity to alias map |
 | `markdown-explorer-bookmarks-v1` | Shared local storage | Version-2 source-anchored text/object bookmarks; version-1 records migrate in place |
+| `<app-data>/fonts/` | Electron/Tauri native font service | Validated imported `.ttf`/`.otf` copies grouped by managed family id |
 | IndexedDB `markdown-explorer-db` / `workspaces` | Chromium | Directory/file handles and recent browser workspaces |
+
+## Managed font storage
+
+Desktop font imports are copied into app data and are independent of the original chosen file path. Settings/export JSON stores only normalized font references. The Tauri `local-file://` protocol may read only canonical files beneath this managed font root (plus its existing active-workspace scope).
 
 ## Storage rules
 

@@ -5,6 +5,8 @@
 import { useState, type MouseEvent } from "react";
 import logoUrl from "../../assets/logos/logo-500.png?inline";
 import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from "../../constants/urls";
+import { useAppState } from "../../contexts/AppStateContext";
+import { getTranslations } from "../../contexts/translations";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -19,6 +21,8 @@ export function TermsModal({
   onOpenExternal,
 }: TermsModalProps) {
   const [checked, setChecked] = useState(false);
+  const { state } = useAppState();
+  const t = getTranslations(state.settings.language || "en");
 
   if (!isOpen) return null;
 
@@ -48,14 +52,12 @@ export function TermsModal({
             src={logoUrl}
             width="56"
             height="56"
-            alt="Markdown Explorer Logo"
+            alt={t.terms.logoAlt}
             className="terms-logo"
           />
-          <h2>
-            Welcome to Markdown Explorer
-          </h2>
+          <h2>{t.terms.welcomeTitle}</h2>
           <p>
-            Please review and accept our{" "}
+            {t.terms.introBefore}{" "}
             <a
               href={PRIVACY_POLICY_URL}
               target="_blank"
@@ -63,9 +65,9 @@ export function TermsModal({
               onClick={openExternal(PRIVACY_POLICY_URL)}
               className="terms-link"
             >
-              Privacy Policy
+              {t.terms.privacyPolicy}
             </a>{" "}
-            and{" "}
+            {t.terms.conjunction}{" "}
             <a
               href={TERMS_OF_SERVICE_URL}
               target="_blank"
@@ -73,9 +75,9 @@ export function TermsModal({
               onClick={openExternal(TERMS_OF_SERVICE_URL)}
               className="terms-link"
             >
-              Terms of Service
+              {t.terms.termsOfService}
             </a>{" "}
-            to continue.
+            {t.terms.introAfter}
           </p>
         </div>
 
@@ -88,10 +90,7 @@ export function TermsModal({
               onChange={(e) => setChecked(e.target.checked)}
               className="terms-checkbox"
             />
-            <span>
-              I have read and agreed to the Privacy Policy and Terms of
-              Service.
-            </span>
+            <span>{t.terms.agreement}</span>
           </label>
 
           {/* Action Button */}
@@ -100,7 +99,7 @@ export function TermsModal({
             onClick={onAgree}
             className={`btn terms-continue${checked ? " is-enabled" : ""}`}
           >
-            Continue
+            {t.terms.continue}
           </button>
         </div>
       </div>

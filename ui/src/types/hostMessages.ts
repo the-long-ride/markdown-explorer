@@ -1,6 +1,7 @@
 import type { FolderNode, MdFile, RecentWorkspace } from './files';
 import type { RenderContentMessage, WorkspaceOperationMetadata } from './content';
 import type { AppRuntime, HostPlatform, UpdateState, WorkspaceUnavailableReason } from './settings';
+import type { DesktopFontFamily } from '../desktop/fonts/fontModel';
 
 export interface ReadyAckMessage extends WorkspaceOperationMetadata {
   readonly command: 'readyAck';
@@ -130,6 +131,14 @@ export interface WorkspaceUnavailableMessage extends WorkspaceOperationMetadata 
   readonly isMaximized?: boolean;
 }
 
+export interface DesktopFontsResultMessage {
+  readonly command: 'desktopFontsResult';
+  readonly requestId: string;
+  readonly fonts: readonly DesktopFontFamily[];
+  readonly importedId?: string;
+  readonly error?: string;
+}
+
 export interface WorkspaceTextResourceResultMessage {
   readonly command: 'workspaceTextResourceResult';
   readonly requestId: string;
@@ -146,4 +155,4 @@ export type HostMessage =
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
   | FullscreenStateChangedMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
-  | WorkspaceTextResourceResultMessage;
+  | WorkspaceTextResourceResultMessage | DesktopFontsResultMessage;

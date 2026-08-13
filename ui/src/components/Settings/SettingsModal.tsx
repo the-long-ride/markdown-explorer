@@ -8,18 +8,26 @@ import type { UpdateCheckState } from "../../hooks/useUpdateCheck";
 import type { UpdateState } from "../../types";
 import { TooltipButton } from "../shared/TooltipButton";
 import { SettingsShortcutsPanel } from "./SettingsShortcutsPanel";
-import { SettingsPreferencesPanel } from "./SettingsPreferencesPanel";
+import { SettingsUpdateBackupPanel } from "./SettingsUpdateBackupPanel";
+import { SettingsPreferencesPanel, type SettingsPreferencesSection } from "./SettingsPreferencesPanel";
 import { ThemeRemixModal } from "./ThemeRemixModal";
 import { LANGUAGE_OPTIONS, getTranslations } from "../../contexts/translations";
 import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings, SettingsImportError } from "../../settings/settingsImportExport";
 import { usePlatform } from "../../contexts/PlatformContext";
-import { ExportSettingsIcon, ImportSettingsIcon, LanguageIcon } from "../shared/icons";
+import {
+  LanguageIcon,
+  SettingsAppearanceIcon,
+  SettingsShortcutsIcon,
+  SettingsThemeStyleIcon,
+  SettingsTypographyIcon,
+  SettingsUpdateBackupIcon,
+} from "../shared/icons";
 import {
   filterKeyboardShortcutActions,
 } from "./keyboardShortcutSearch";
 import { BannedShortcutDialog, DownloadedUpdateDialog, ResetShortcutsConfirmDialog } from "./SettingsModalDialogs";
-import { ACTIONS_LIST } from "./settingsActions";
-import { getDefaultKeybindings } from "../../contexts/appStateConstants";
+import { ACTIONS_LIST, getLocalizedShortcutActionLabels } from "./settingsActions";
+import { getDefaultKeybindingsForRuntime } from "../../contexts/appStateConstants";
 
 export { ACTIONS_LIST };
 
@@ -34,6 +42,7 @@ interface SettingsModalProps {
   onScheduleUpdateOnExit: () => void;
   onRestartAndApplyUpdate: () => void;
   onOpenChangelog: () => void;
+  hasUpdateAttention?: boolean;
 }
 
 
@@ -46,6 +55,7 @@ export function SettingsModal({
   onScheduleUpdateOnExit,
   onRestartAndApplyUpdate,
   onOpenChangelog,
+  hasUpdateAttention = false,
 }: SettingsModalProps) {
   const { state, dispatch, setTheme, setThemeStyle, updateSettings } = useAppState();
   const bridge = usePlatform();
@@ -53,6 +63,7 @@ export function SettingsModal({
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [themeRemixOpen, setThemeRemixOpen] = useState(false);
   const [settingsDataStatus, setSettingsDataStatus] = useState("");
+  const [activeSection, setActiveSection] = useState<SettingsPreferencesSection | 'shortcuts' | 'update'>('appearance');
   const [bannedShortcutError, setBannedShortcutError] = useState<string | null>(null);
   const [shortcutSearchQuery, setShortcutSearchQuery] = useState("");
   const [resetShortcutsConfirmOpen, setResetShortcutsConfirmOpen] = useState(false);
@@ -94,43 +105,26 @@ export function SettingsModal({
 
   const isDesktop = typeof (window as any).electronAPI !== "undefined" || state.appRuntime === "tauri";
   const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
+  const supportsTypography = isDesktop || state.appRuntime === "vscode";
   const isDesktopLike = isDesktop || isChrome;
-  const updateAvailable = updateCheck.status === "available" && updateCheck.hasUpdate;
+  const supportsEditor = isDesktop || state.appRuntime === "vscode";
   const updateStatus = hostUpdateState.status;
-  const isUpdateDownloading = updateStatus === "downloading";
   const isUpdateDownloaded = updateStatus === "downloaded";
-  const isUpdateScheduled = updateStatus === "scheduled-on-exit";
-  const isUpdateApplying = updateStatus === "applying";
-  const updateErrorCode = updateStatus === "error" ? hostUpdateState.error || "" : "";
   const updateVersionLabel = hostUpdateState.downloadedVersion || updateCheck.latestVersion;
-  const showUpdateCard =
-    updateAvailable ||
-    isUpdateDownloading ||
-    isUpdateDownloaded ||
-    isUpdateScheduled ||
-    isUpdateApplying ||
-    updateStatus === "error";
   const visibleActions = ACTIONS_LIST.filter(
     (act) =>
       act.scope === "both" ||
       (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
       (act.scope === "desktop" && isDesktopLike) ||
-      (act.scope === "electron" && isDesktop),
+      (act.scope === "electron" && isDesktop) ||
+      (act.scope === "editor" && supportsEditor),
   );
+  const shortcutActionLabels = getLocalizedShortcutActionLabels(t);
   const filteredActions = filterKeyboardShortcutActions(
     visibleActions,
     shortcutSearchQuery,
-    t.actions,
+    shortcutActionLabels,
   );
-
-  const getUpdateErrorText = () => {
-    if (!updateErrorCode) return "";
-    return updateErrorCode === "missing-staged-update"
-      ? t.update.stagedMissing
-      : updateErrorCode.includes("download")
-        ? t.update.downloadFailed
-        : t.update.installFailed;
-  };
 
   const handleKeyDown = (
     actionId: string,
@@ -173,7 +167,7 @@ export function SettingsModal({
         existingActionId !== actionId && existingShortcut.toLowerCase() === shortcutStr.toLowerCase(),
     );
     if (duplicateAction) {
-      setBannedShortcutError(`\"${shortcutStr}\" is already assigned to another command.`);
+      setBannedShortcutError(t.ui.shortcutAlreadyAssigned.replace('{shortcut}', shortcutStr));
       setRecordingAction(null);
       (e.target as HTMLInputElement).blur();
       return;
@@ -252,6 +246,14 @@ export function SettingsModal({
     reader.readAsText(file);
   };
 
+  const settingsSections = [
+    { id: 'appearance' as const, label: t.appearance, icon: <SettingsAppearanceIcon size={14} /> },
+    ...(supportsTypography ? [{ id: 'typography' as const, label: t.typography, icon: <SettingsTypographyIcon size={14} /> }] : []),
+    { id: 'theme' as const, label: t.themeStyle, icon: <SettingsThemeStyleIcon size={14} /> },
+    { id: 'shortcuts' as const, label: t.shortcuts, icon: <SettingsShortcutsIcon size={14} /> },
+    { id: 'update' as const, label: t.updateBackup, icon: <SettingsUpdateBackupIcon size={14} />, attention: hasUpdateAttention },
+  ];
+
   return (
     <div
       id="settingsModal"
@@ -262,57 +264,14 @@ export function SettingsModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        className="settings-card settings-card--settings"
-      >
-        <div className="settings-card__top-actions">
-          {currentVersionLabel && (
-            <a
-              className="settings-current-version tooltip-container"
-              href={updateCheck.changelogUrl || "#"}
-              onClick={(event) => {
-                event.preventDefault();
-                onOpenChangelog();
-              }}
-              aria-label={t.tooltips.openChangelog}
-              data-tooltip-pos="below"
-            >
-              {currentVersionLabel}
-              <span className="tooltip-text">{t.tooltips.openChangelog}</span>
-            </a>
-          )}
-          <div className="settings-data-actions" role="group" aria-label={t.settingsData.groupLabel}>
-            <TooltipButton
-              className="settings-data-btn"
-              onClick={() => importInputRef.current?.click()}
-              tooltip={t.importJsonTooltip}
-              tooltipPos="below"
-              icon={<ImportSettingsIcon size={13} />}
-              label={t.importJson}
-              onlyIcon={false}
-            />
-            <TooltipButton
-              className="settings-data-btn"
-              onClick={exportSettings}
-              tooltip={t.exportJsonTooltip}
-              tooltipPos="below"
-              icon={<ExportSettingsIcon size={13} />}
-              label={t.exportJson}
-              onlyIcon={false}
-            />
-            <input
-              ref={importInputRef}
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={(event) => importSettingsFile(event.currentTarget.files?.[0])}
-            />
+      <div className="settings-card settings-card--settings settings-card--navigation">
+        <header className="settings-navigation-header">
+          <div className="settings-navigation-header__copy">
+            <h2>{t.settings}</h2>
+            <p>{t.subtitle}</p>
           </div>
-          {settingsDataStatus && (
-            <span className="settings-data-status" role="status">
-              {settingsDataStatus}
-            </span>
-          )}
+        </header>
+        <div className="settings-card__top-actions">
           <div className="settings-language-dropdown" ref={langDropdownRef}>
             <TooltipButton
               className="settings-language-btn"
@@ -322,16 +281,14 @@ export function SettingsModal({
               icon={<LanguageIcon size={16} />}
             />
             {langMenuOpen && (
-              <div className="settings-language-menu" role="listbox" aria-label="Languages">
+              <div className="settings-language-menu" role="listbox" aria-label={t.ui.languages}>
                 {LANGUAGE_OPTIONS.map((option) => (
                   <button
                     key={option.id}
                     type="button"
                     role="option"
                     aria-selected={currentLang === option.id}
-                    className={`settings-language-menu__option${
-                      currentLang === option.id ? " is-selected" : ""
-                    }`}
+                    className={`settings-language-menu__option${currentLang === option.id ? " is-selected" : ""}`}
                     onClick={() => handleLanguageChange(option.id)}
                   >
                     {option.label}
@@ -340,85 +297,114 @@ export function SettingsModal({
               </div>
             )}
           </div>
-
           <TooltipButton
             className="settings-card__close"
             onClick={onClose}
             tooltip={t.closeSettings}
+            shortcut="Esc"
             tooltipPos="below"
             tooltipAlign="right"
           >
             &times;
           </TooltipButton>
         </div>
-        <div className="settings-card__header">
-          <h2>{t.settings}</h2>
-          <p>{t.subtitle}</p>
+
+        <div className="settings-navigation-layout">
+          <aside className="settings-navigation" aria-label={t.ui.settingsSections}>
+            <nav className="settings-navigation__items">
+              {settingsSections.map((section) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  className={`settings-navigation__item${activeSection === section.id ? ' is-active' : ''}`}
+                  aria-current={activeSection === section.id ? 'page' : undefined}
+                  onClick={() => setActiveSection(section.id)}
+                >
+                  <span className="settings-navigation__item-label">
+                    <span className="settings-navigation__item-icon" aria-hidden="true">{section.icon}</span>
+                    <span>{section.label}</span>
+                  </span>
+                  {section.attention && <span className="settings-nav-badge-dot" aria-label={t.ui.updateAvailable} />}
+                </button>
+              ))}
+            </nav>
+            {currentVersionLabel && (
+              <TooltipButton
+                type="button"
+                className="settings-navigation__version"
+                onClick={onOpenChangelog}
+                tooltip={t.tooltips.openChangelog}
+                tooltipPos="above"
+                tooltipAlign="left"
+              >
+                {currentVersionLabel}
+              </TooltipButton>
+            )}
+          </aside>
+
+          <main className={`settings-navigation__content${activeSection === 'typography' ? ' settings-navigation__content--typography' : ''}`}>
+            {(activeSection === 'appearance' || activeSection === 'typography' || activeSection === 'theme') && (
+              <SettingsPreferencesPanel
+                section={activeSection}
+                state={state}
+                t={t}
+                isDesktop={isDesktop}
+                supportsTypography={supportsTypography}
+                setTheme={setTheme}
+                setThemeStyle={setThemeStyle}
+                updateSettings={updateSettings}
+                onOpenThemeRemix={() => setThemeRemixOpen(true)}
+              />
+            )}
+            {activeSection === 'shortcuts' && (
+              <SettingsShortcutsPanel
+                state={state}
+                t={t}
+                isDesktop={isDesktop}
+                shortcutSearchQuery={shortcutSearchQuery}
+                setShortcutSearchQuery={setShortcutSearchQuery}
+                filteredActions={filteredActions}
+                actionLabels={shortcutActionLabels}
+                recordingAction={recordingAction}
+                setRecordingAction={setRecordingAction}
+                handleKeyDown={handleKeyDown}
+                updateSettings={updateSettings}
+                onRequestReset={() => setResetShortcutsConfirmOpen(true)}
+              />
+            )}
+            {activeSection === 'update' && (
+              <SettingsUpdateBackupPanel
+                state={state}
+                t={t}
+                updateCheck={updateCheck}
+                hostUpdateState={hostUpdateState}
+                settingsDataStatus={settingsDataStatus}
+                onImport={() => importInputRef.current?.click()}
+                onExport={exportSettings}
+                onOpenChangelog={onOpenChangelog}
+                onDownloadUpdate={onDownloadUpdate}
+              />
+            )}
+          </main>
         </div>
-        <div
-          className="settings-card__body settings-card__body--settings"
-        >
-          <div className="settings-appearance-scroll">
-            <SettingsPreferencesPanel
-              state={state}
-              t={t}
-              isDesktop={isDesktop}
-              setTheme={setTheme}
-              setThemeStyle={setThemeStyle}
-              updateSettings={updateSettings}
-              onOpenThemeRemix={() => setThemeRemixOpen(true)}
-            />
-          </div>
 
-          {/* Vertical Divider */}
-          <div
-            className="settings-card__divider"
-
-          />
-
-          <SettingsShortcutsPanel
-            state={state}
-            t={t}
-            isDesktop={isDesktop}
-            shortcutSearchQuery={shortcutSearchQuery}
-            setShortcutSearchQuery={setShortcutSearchQuery}
-            filteredActions={filteredActions}
-            recordingAction={recordingAction}
-            setRecordingAction={setRecordingAction}
-            handleKeyDown={handleKeyDown}
-            updateSettings={updateSettings}
-            showUpdateCard={showUpdateCard}
-            updateVersionLabel={updateVersionLabel}
-            updateCheck={updateCheck}
-            hostUpdateState={hostUpdateState}
-            isUpdateDownloading={isUpdateDownloading}
-            isUpdateScheduled={isUpdateScheduled}
-            isUpdateApplying={isUpdateApplying}
-            isUpdateDownloaded={isUpdateDownloaded}
-            updateStatus={updateStatus}
-            getUpdateErrorText={getUpdateErrorText}
-            onOpenChangelog={onOpenChangelog}
-            onDownloadUpdate={onDownloadUpdate}
-            onRequestReset={() => setResetShortcutsConfirmOpen(true)}
-          />
-
-        </div>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={(event) => importSettingsFile(event.currentTarget.files?.[0])}
+        />
       </div>
-      <ThemeRemixModal
-        isOpen={themeRemixOpen}
-        onClose={() => setThemeRemixOpen(false)}
-      />
-      {isUpdateDownloaded && <DownloadedUpdateDialog t={t} version={updateVersionLabel || ""} onSchedule={onScheduleUpdateOnExit} onRestart={onRestartAndApplyUpdate} />}
+      <ThemeRemixModal isOpen={themeRemixOpen} onClose={() => setThemeRemixOpen(false)} />
+      {state.appRuntime !== "vscode" && isUpdateDownloaded && <DownloadedUpdateDialog t={t} version={updateVersionLabel || ""} onSchedule={onScheduleUpdateOnExit} onRestart={onRestartAndApplyUpdate} />}
       {bannedShortcutError && <BannedShortcutDialog t={t} error={bannedShortcutError} mascot={state.themeStyle.startsWith("pet-") ? PET_BLEP_URLS[state.themeStyle as keyof typeof PET_BLEP_URLS] || PET_BLEP_URLS['pet-white-shiba'] : ""} onClose={() => setBannedShortcutError(null)} />}
       {resetShortcutsConfirmOpen && (
         <ResetShortcutsConfirmDialog
           t={t}
           onCancel={() => setResetShortcutsConfirmOpen(false)}
           onConfirm={() => {
-            updateSettings({
-              keybindings: getDefaultKeybindings(isDesktop),
-              disabledKeybindings: {},
-            });
+            updateSettings({ keybindings: getDefaultKeybindingsForRuntime(state.appRuntime), disabledKeybindings: {} });
             setResetShortcutsConfirmOpen(false);
           }}
         />

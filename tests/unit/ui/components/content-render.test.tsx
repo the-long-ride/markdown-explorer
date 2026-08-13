@@ -9,40 +9,20 @@ vi.mock("../../../../ui/src/contexts/AppStateContext");
 vi.mock("../../../../ui/src/contexts/NavigationContext");
 vi.mock("../../../../ui/src/contexts/PlatformContext");
 
-vi.mock("../../../../ui/src/contexts/translations", () => ({
-  getTranslations: () => ({
-    tooltips: { cancelScan: 'Cancel scan' },
-    previewActions: {
-      openInBrowser: 'Open in browser', openAsModal: 'Open as modal', showCode: 'Show code', showPreview: 'Show preview',
-      copyCode: 'Copy code', plainText: 'Plain text', csvPreviewTitle: 'CSV Preview', tsvPreviewTitle: 'TSV Preview',
-      csvMalformedQuote: 'Malformed CSV', csvUnevenRows: 'Uneven rows', modalTitle: 'HTML preview', closeModal: 'Close',
-      openError: 'Unable to open', linkMenu: 'Link actions', copyLink: 'Copy link', linkCopied: 'Link copied',
-      unableToOpenLink: 'Unable to open link', copyFailed: 'Unable to copy link',
-    },
-    workspaceUnavailable: {
-      title: 'Workspace not found',
-      description: 'The current path no longer exists or is locked. Please open the workspace again.',
-      tabHint: 'Tab view: choose a replacement folder to reuse this tab.',
-      openAgain: 'Open Workspace Again',
-      deleteHistory: 'Delete from History',
-      removedHistory: 'Removed from History',
-    },
-    documentPreview: {
-      currentFileChangedOnDisk: "Current file changed on disk",
-      refreshCurrentFile: "Refresh",
-      currentFileChangedSuffix: "Click to reload.",
-      convertedTitle: "Converted: {sourceLabel}",
-      textTitle: "Text: {sourceLabel}",
-      convertedWarning: "Converted warning",
-      legacyBestEffortWarning: "Legacy best-effort warning",
-      textWarning: "Text warning",
-      conversionFailedWarning: "Conversion failed",
-      durationMeta: "{status} in {duration}",
-      preparedLocally: "prepared locally",
-      loadedCachedConversion: "loaded from cache",
-    },
-  }),
-}));
+vi.mock("../../../../ui/src/contexts/translations", async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      tooltips: { ...en.tooltips, cancelScan: 'Cancel scan' },
+      previewActions: { ...en.previewActions, openInBrowser: 'Open in browser', openAsModal: 'Open as modal', showCode: 'Show code', showPreview: 'Show preview', copyCode: 'Copy code', plainText: 'Plain text', csvPreviewTitle: 'CSV Preview', tsvPreviewTitle: 'TSV Preview', csvMalformedQuote: 'Malformed CSV', csvUnevenRows: 'Uneven rows', modalTitle: 'HTML preview', closeModal: 'Close', openError: 'Unable to open', linkMenu: 'Link actions', copyLink: 'Copy link', linkCopied: 'Link copied', unableToOpenLink: 'Unable to open link', copyFailed: 'Unable to copy link' },
+      workspaceUnavailable: { ...en.workspaceUnavailable, title: 'Workspace not found', description: 'The current path no longer exists or is locked. Please open the workspace again.', tabHint: 'Tab view: choose a replacement folder to reuse this tab.', openAgain: 'Open Workspace Again', deleteHistory: 'Delete from History', removedHistory: 'Removed from History' },
+      documentPreview: { ...en.documentPreview, currentFileChangedOnDisk: "Current file changed on disk", refreshCurrentFile: "Refresh", currentFileChangedSuffix: "Click to reload.", convertedTitle: "Converted: {sourceLabel}", textTitle: "Text: {sourceLabel}", convertedWarning: "Converted warning", legacyBestEffortWarning: "Legacy best-effort warning", textWarning: "Text warning", conversionFailedWarning: "Conversion failed", durationMeta: "{status} in {duration}", preparedLocally: "prepared locally", loadedCachedConversion: "loaded from cache" },
+    }),
+  };
+});
 
 vi.mock("../../../../ui/src/lib/renderLibs", () => ({
   getChart: vi.fn(),
@@ -185,7 +165,7 @@ describe("Content rendering", () => {
   it("renders loading spinner when isLoading", () => {
     const { container } = setup({ isLoading: true });
     expect(container.querySelector(".spinner")).toBeInTheDocument();
-    expect(screen.getByText("Loading docs...")).toBeInTheDocument();
+    expect(screen.getByText("Loading docs…")).toBeInTheDocument();
   });
 
   it("renders custom loading label", () => {

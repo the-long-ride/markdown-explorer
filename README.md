@@ -51,6 +51,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
   - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
   - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
+  - **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Chromium/Web does not expose Edit.
   - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
   - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
   - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
@@ -71,7 +72,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **HTML Document Modes**: Open `.html` and `.htm` files as isolated interactive previews or converted Markdown, switch active tab with `Ctrl+Alt+H`, and use **Open in Browser** when full browser behavior is needed (with embedded local CSS/JS support).
   - **Responsive Image Rows**: Same-paragraph Markdown images stay together across viewport sizes.
   - **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
-  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, etc.) and KaTeX math formulas.
+  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) and KaTeX math formulas. Diagrams use the baseline Mermaid renderer and can be opened in the full media viewer for zoom and inspection.
   - **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
   - **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
   - **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
@@ -95,6 +96,9 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Built-in Theme Families & Theme Remix**: Choose grouped built-in themes—including Aurora Glass, Neon Voltage, and Raw Grid—pet themes, or create, edit, import, and export custom themes with color, density, spacing, and background image controls.
   - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
   - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
+  - **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
+  - **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, and Code** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Imported files are copied once into app-managed storage and can be reused by any role. Chromium/Web keeps bundled/web-safe fonts and leaves zoom/font discovery to the browser.
+  - **Update Notifications**: Desktop releases can show a new-version dialog at startup with Download, Later, changelog, and **Skip notify for this version** actions. Skipping suppresses only that release; a newer release is shown again.
   - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
   - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
   - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
@@ -121,7 +125,7 @@ Markdown tables become real data views: search rows, sort columns, multi-select 
 
 ## Diagrams, Math, Code, Media
 
-Mermaid diagrams render offline, LaTeX math is readable, code blocks are highlighted, and Markdown can include local or streaming video.
+Mermaid diagrams render offline through the baseline Mermaid renderer, and the media viewer remains available for zooming and inspection. LaTeX math is readable, code blocks are highlighted, and Markdown can include local or streaming video. Desktop builds use JetBrains Mono for code by default and expose independent App UI, Body, Heading, Quote, and Code font bindings in Settings.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-all-kinds-of-Mermaid-diagram.png" width="49%" alt="Many Mermaid diagram types rendered in Markdown Explorer" />
@@ -186,6 +190,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Back to previous file | `Ctrl+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back |
 | Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
+| Edit current document | `Ctrl+E` | `Ctrl+Alt+E` / `Cmd+Alt+E` | N/A |
 | Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
 | Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
 | Refresh workspace | `F5` | `R` | `R` |
@@ -207,6 +212,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Sidebar cursor mode | `Alt+Z` | `Alt+Z` | `Alt+Z` |
 | Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom | Use browser zoom |
 | Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom | Use browser zoom |
+| Reset zoom | `Ctrl+Alt+Z` | Use editor/webview zoom | Use browser zoom |
 
 ## Privacy
 

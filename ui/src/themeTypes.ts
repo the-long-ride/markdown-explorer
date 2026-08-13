@@ -1,4 +1,5 @@
 import type { SidebarPinnedItem, SidebarSortMode } from './types/files';
+import type { DesktopFontBindings, DesktopFontSelection } from './desktop/fonts/fontModel';
 
 // ── UI state ────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,7 @@ export interface AppSettings {
   sidebarSortModes?: Record<string, SidebarSortMode>;
   maxPinnedItems?: number;
   desktopViewMode?: DesktopViewMode;
+  fontBindings?: DesktopFontBindings;
   keybindings?: Record<string, string>;
   disabledKeybindings?: Record<string, boolean>;
   language?: string;
@@ -110,6 +112,9 @@ export interface PersistedState {
   sidebarSortModes?: Record<string, SidebarSortMode>;
   maxPinnedItems?: number;
   desktopViewMode?: DesktopViewMode;
+  fontBindings?: DesktopFontBindings;
+  appFont?: DesktopFontSelection;
+  codeFont?: DesktopFontSelection;
   keybindings?: Record<string, string>;
   disabledKeybindings?: Record<string, boolean>;
   theme?: ThemeMode;

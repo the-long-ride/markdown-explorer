@@ -116,6 +116,7 @@ describe('createAppBootstrap', () => {
       handleCloseWorkspace: vi.fn(),
       handleZoomIn: vi.fn(),
       handleZoomOut: vi.fn(),
+      handleZoomReset: vi.fn(),
       handleNavigate: vi.fn(),
       handleRefresh: vi.fn(),
       handleSetDocumentConversion: vi.fn(),
@@ -262,6 +263,7 @@ describe('createAppBootstrap', () => {
       expect(call.handlers.closeWorkspace).toBe(runtimeImpl.handleCloseWorkspace);
       expect(call.handlers.zoomIn).toBe(runtimeImpl.handleZoomIn);
       expect(call.handlers.zoomOut).toBe(runtimeImpl.handleZoomOut);
+      expect(call.handlers.zoomReset).toBe(runtimeImpl.handleZoomReset);
       expect(call.handlers.navigate).toBe(runtimeImpl.handleNavigate);
       expect(call.handlers.refresh).toBe(runtimeImpl.handleRefresh);
       expect(call.handlers.setDocumentConversion).toBe(runtimeImpl.handleSetDocumentConversion);

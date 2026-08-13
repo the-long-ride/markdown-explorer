@@ -16,6 +16,8 @@ fn content_type_for(ext: &str) -> &'static str {
         "js" | "mjs" => "application/javascript",
         "json" => "application/json",
         "pdf" => "application/pdf",
+        "ttf" => "font/ttf",
+        "otf" => "font/otf",
         _ => "application/octet-stream",
     }
 }
@@ -83,13 +85,23 @@ mod server {
         let workspace_path = {
             let state = ctx.app_handle().state::<AppState>();
             let inner = state.inner.read();
-            inner.workspace_path.clone()?
+            inner.workspace_path.clone()
         };
 
         let requested = Path::new(decoded_path);
         let canonical_req = requested.canonicalize().ok()?;
-        let canonical_ws = workspace_path.canonicalize().ok()?;
-        if canonical_req.starts_with(&canonical_ws) {
+        let workspace_allowed = workspace_path
+            .and_then(|path| path.canonicalize().ok())
+            .is_some_and(|root| canonical_req.starts_with(root));
+        let fonts_allowed = ctx
+            .app_handle()
+            .path()
+            .app_data_dir()
+            .ok()
+            .map(|root| root.join("fonts"))
+            .and_then(|root| root.canonicalize().ok())
+            .is_some_and(|root| canonical_req.starts_with(root));
+        if workspace_allowed || fonts_allowed {
             Some(canonical_req)
         } else {
             None
@@ -112,7 +124,7 @@ mod server {
                 return http::Response::builder()
                     .status(403)
                     .header("content-type", "text/plain")
-                    .body(b"Path is outside the active workspace".to_vec())
+                    .body(b"Path is outside the allowed local roots".to_vec())
                     .unwrap_or_default();
             }
         };

@@ -39,10 +39,11 @@
     "prebuild:electron": "pnpm run sync-versions",
     "prebuild:chromium": "pnpm run sync-versions",
     "prebuild:website-app": "pnpm run sync-versions",
-    "start:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run dev",
-    "build:tauri": "pnpm run build:ui:electron && pnpm --filter ./tauri run build",
+    "start:tauri": "pnpm run build:ui:tauri && pnpm --filter ./tauri run dev",
+    "build:tauri": "pnpm run build:ui:tauri && pnpm --filter ./tauri run build",
     "test:tauri": "cargo test --manifest-path tauri/Cargo.toml -- --test-threads=1",
-    "test:desktop": "pnpm run test:electron && pnpm run test:tauri"
+    "test:desktop": "pnpm run test:electron && pnpm run test:tauri",
+    "build:ui:tauri": "pnpm --filter ./ui run build:tauri"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",
@@ -53,6 +54,8 @@
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-istanbul": "^4.1.9",
     "@vitest/coverage-v8": "^4.1.9",
+    "electron": "43.2.0",
+    "electron-builder": "26.15.7",
     "fake-indexeddb": "^6.2.5",
     "fast-glob": "^3.3.3",
     "jsdom": "^29.1.1",

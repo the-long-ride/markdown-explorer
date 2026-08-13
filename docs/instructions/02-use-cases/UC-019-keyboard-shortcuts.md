@@ -80,13 +80,13 @@ flowchart LR
 | Binding disabled | Do nothing. | Keystroke remains native where possible. |
 | Conflict with another action | Show validation/conflict feedback. | Choose another binding. |
 | Banned IME binding `Ctrl+Space` | Reject assignment. | Use safe combination. |
-| Fixed F11/Ctrl-or-Cmd+0 | Execute fixed fullscreen/reset rule. | Cannot be shadowed incorrectly. |
+| Desktop fullscreen/reset shortcuts | F11 toggles fullscreen; desktop `Ctrl+Alt+Z` resets Markdown Explorer zoom. VS Code/Chromium/Web retain native zoom behavior. | Rebind configurable desktop actions in Settings; host-native zoom is not intercepted. |
 
 ## Validation and business rules
 
 - Shortcut matching is case/ordering normalized.
 - Do not consume typing inside editable controls unless action is intended.
-- Fixed host/browser safety keys remain protected.
+- Host/browser safety keys remain protected; non-desktop runtimes retain native zoom shortcuts.
 - Search in shortcut settings matches action labels and bindings.
 - All shortcuts rendered in tooltips, Settings Modal, and Welcome Page (Tips & Practices) display as styled 3D keycaps (`<ShortcutKeycaps size="sm">`) with lowered view angle perspective.
 - Keycaps dynamically inherit active theme tokens (`--bg-e`, `--bg-s`, `--accent`, `--bd-x`, `--bd-s`) and border radius (`border-radius: clamp(0px, var(--r, 6px), 10px)`).

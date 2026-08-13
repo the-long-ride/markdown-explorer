@@ -73,23 +73,30 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
   ),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    sidebar: {
-      files: 'Files',
-      search: 'Search',
-      filterPlaceholder: 'Filter...',
-      filterAriaLabel: 'Filter files',
-      scopeFocus: 'Scope',
-      clearScopeFocus: 'Clear',
-      collapseAllFolders: 'Collapse all folders',
-      expandAllFolders: 'Expand all folders',
-      noFiles: 'No files',
-      noScopeFiles: 'No matching files',
-    },
-    tooltips: { locateFile: 'Locate' },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      sidebar: {
+        ...en.sidebar,
+        files: 'Files',
+        search: 'Search',
+        filterPlaceholder: 'Filter...',
+        filterAriaLabel: 'Filter files',
+        scopeFocus: 'Scope',
+        clearScopeFocus: 'Clear',
+        collapseAllFolders: 'Collapse all folders',
+        expandAllFolders: 'Expand all folders',
+        noFiles: 'No files',
+        noScopeFiles: 'No matching files',
+      },
+      tooltips: { ...en.tooltips, locateFile: 'Locate' },
+    }),
+  };
+});
 
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
   CheckIcon: () => <span>check-icon</span>,

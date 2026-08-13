@@ -61,6 +61,9 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "zoom-out":
         handlers.zoomOut();
         break;
+      case "zoom-reset":
+        handlers.zoomReset();
+        break;
       case "navigate":
         await handlers.navigate(msg.path);
         break;
@@ -98,6 +101,15 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         break;
       case "setDocumentConversion":
         await handlers.setDocumentConversion(Boolean(msg.enabled));
+        break;
+      case "listDesktopFonts":
+        await handlers.listDesktopFonts(msg);
+        break;
+      case "importDesktopFonts":
+        await handlers.importDesktopFonts(msg);
+        break;
+      case "removeImportedDesktopFont":
+        await handlers.removeImportedDesktopFont(msg);
         break;
       case "downloadUpdate":
         await handlers.downloadUpdate(msg);

@@ -10,6 +10,7 @@ parent_docs:
 related_docs: []
 source_scope:
 - ui/src/contexts/translationsData.ts
+- ui/src/contexts/auditedUiTranslations.ts
 - ui/src/contexts/welcomeTranslations.ts
 - ui/src/contexts/userManualTranslations.ts
 - ui/src/components/Content/welcomeTipsContent.ts
@@ -27,6 +28,7 @@ test_scope:
 - tests/unit/ui/components/welcome-render.test.tsx
 - tests/node/theme-onboarding-dropdown-visibility.test.mjs
 - tests/node/user-manual-home.test.mjs
+- tests/node/localization-settings-doc-sync-contract.test.mjs
 runtime_scope:
 - all
 - os-dialogs
@@ -65,6 +67,12 @@ flowchart LR
 ### Supported language codes
 
 `en`, `vi`, `fr`, `es`, `zh`, `no`, `ja`, `ko`, `ru`.
+
+### Renderer localization boundary
+
+User-visible renderer copy must come from a typed translation domain. `auditedUiTranslations.ts` and `auditedUiTranslationTypes.ts` owns cross-cutting strings that were previously easy to strand in JSX: shell/Settings ARIA labels, Theme Remix controls and status feedback, Terms and onboarding copy, workspace-selection guidance, welcome cursor-mode instructions, generated Markdown table/code controls, chart/table switcher labels, video/YouTube fallback labels, initial loading/scanning text, sidebar navigation ARIA, copy feedback, and other shared presentation strings. `translations.ts` uses the English audited records for synchronous startup; `translationsData.ts` composes the matching audited record for every supported locale.
+
+A whole-renderer audit treats literal product/brand names, command/action IDs, paths, URLs, source code, key names, protocol discriminants, and browser flag values as intentional technical literals. Everything else that can be presented to the user must be localized. Shortcut labels use a shared resolver so desktop-only tab actions, sidebar cursor mode, and Reset zoom never fall back to English in a non-English locale. The `rendererUi` audited domain is serialized into interactive table markup and passed through inline Markdown rendering so DOM handlers and generated video/YouTube controls continue using the active locale after filtering, wrapping, chart switching, row-count updates, and media fallback rendering. Recent-workspace time labels use locale-aware `Intl` formatters instead of English `ago` suffixes.
 
 ### Non-translatable data
 
@@ -107,7 +115,10 @@ First-run completion uses separate local-storage flags for terms acceptance and 
 
 ## Acceptance criteria
 
-- [ ] All supported locale codes resolve core labels.
+- [x] All supported locale codes resolve core labels.
+- [x] Theme Remix, Settings accessibility copy, workspace-selection guidance, Terms/onboarding, welcome cursor instructions, and shared shortcut labels resolve in all nine locales.
+- [x] Renderer contract coverage rejects reintroduction of audited hard-coded English copy across React and generated Markdown/DOM surfaces.
+- [x] Sidebar navigation, initial loading/scanning, recent-workspace timestamps, and video/YouTube fallback controls honor the selected locale.
 - [ ] Missing translations fall back instead of blanking.
 - [ ] Completed first-run steps do not repeat.
 - [ ] Changing locale does not alter user document text.
@@ -153,6 +164,8 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Kind | Path | Purpose |
 |---|---|---|
 | Implementation | `ui/src/contexts/translationsData.ts` | Active behavior or contract |
+| Implementation | `ui/src/markdown/inline.ts` | Locale-aware generated video/YouTube controls |
+| Implementation | `ui/src/components/Workspace/workspaceSelectionUtils.ts` | Locale-aware recent-workspace timestamps |
 | Implementation | `ui/src/contexts/welcomeTranslations.ts` | Existing welcome content |
 | Implementation | `ui/src/contexts/userManualTranslations.ts` | User Manual translation model |
 | Implementation | `ui/src/components/Content/UserManualTab.tsx` | Manual search and task cards |

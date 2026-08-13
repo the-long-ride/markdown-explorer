@@ -12,6 +12,7 @@ related_docs:
 source_scope:
 - ui/src/contexts/translations.ts
 - ui/src/contexts/translationsData.ts
+- ui/src/contexts/auditedUiTranslations.ts
 - ui/src/contexts/welcomeTranslations.ts
 - ui/src/contexts/userManualTranslations.ts
 - ui/src/contexts/translationTypes.ts
@@ -22,6 +23,7 @@ test_scope:
 - tests/unit/ui/welcomeTranslations.test.ts
 - tests/node/bookmarks.test.mjs
 - tests/node/user-manual-home.test.mjs
+- tests/node/localization-settings-doc-sync-contract.test.mjs
 runtime_scope:
 - shared
 keywords:
@@ -46,6 +48,11 @@ keywords:
 ## Translation domains
 
 - Shared navigation, search, settings, workspace, content, errors, dialogs, welcome, and theme labels.
+- `auditedUiTranslations.ts` and `auditedUiTranslationTypes.ts` provide the `ui`, `themeRemix`, `terms`, `onboarding`, `workspaceSelection`, and `rendererUi` domains for all nine locales. These cover renderer/ARIA copy, initial loading/scanning and sidebar navigation, Theme Remix controls/statuses, Terms/onboarding, workspace-selection instructions, welcome cursor-mode guidance, interactive Markdown table/code controls and chart labels, video/YouTube fallback labels, copy feedback, and cross-cutting presentation labels.
+- Shortcut presentation must resolve through localized labels. The shared shortcut-label resolver maps sidebar cursor mode and desktop-only zoom/tab actions to localized domains instead of exposing the English metadata in `settingsActions.ts`.
+- Search `statusOn`/`statusOff` values are localized per locale; renderer controls do not contain English On/Off fallbacks.
+- Recent-workspace relative timestamps use `Intl.RelativeTimeFormat` and older absolute timestamps use `Intl.DateTimeFormat`, both with the selected application locale; the renderer does not hard-code English `ago` phrases.
+- User-visible component code should resolve typed translation keys directly rather than adding local `|| 'English fallback'` literals. Canonical English fallback belongs at locale resolution boundaries, not presentation call sites.
 - The `search` translation domain covers modal columns, Preview state/loading/failure, workspace inclusion checkboxes, resizer labels, match-case controls, tooltip arrow-open actions, current-file find controls, and sidebar workspace search.
 - The `bookmarks` domain covers **Enable Bookmark feature**, tab/count, search/sort/group controls, icon tooltips, selection/batch-delete actions, add/edit dialogs, object/link capture, empty states, target-changed notices, and verified-operation feedback across all nine locales. Required feedback keys are `savedSuccess`, `saveFailed`, `renamedSuccess`, `renameFailed`, and `storageUnavailable`.
 - `userManualTranslations.ts` supplies the searchable User Manual sections, task cards, direct actions, no-results state, and bookmark guidance for all nine locales.
@@ -68,7 +75,10 @@ Unknown locale or missing key uses the canonical fallback, normally English. A l
 | Kind | Path | Purpose |
 |---|---|---|
 | Implementation | `ui/src/contexts/translations.ts` | Active behavior or contract |
-| Implementation | `ui/src/contexts/translationsData.ts` | Active behavior or contract |
+| Implementation | `ui/src/contexts/translationsData.ts` | Composes full records for all nine locales |
+| Implementation | `ui/src/contexts/auditedUiTranslations.ts` | Audited cross-cutting UI, renderer/media, Theme Remix, Terms/onboarding, and workspace strings |
+| Implementation | `ui/src/markdown/inline.ts` | Localized video and YouTube fallback labels in generated Markdown |
+| Implementation | `ui/src/components/Workspace/workspaceSelectionUtils.ts` | Locale-aware recent-workspace relative/absolute time formatting |
 | Implementation | `ui/src/contexts/welcomeTranslations.ts` | Welcome tips and existing welcome tabs |
 | Implementation | `ui/src/contexts/userManualTranslations.ts` | Searchable User Manual copy for nine locales |
 | Implementation | `ui/src/contexts/translationTypes.ts` | Active behavior or contract |
@@ -79,6 +89,7 @@ Unknown locale or missing key uses the canonical fallback, normally English. A l
 | Verification | `tests/node/bookmarks.test.mjs` | All nine bookmark translation records and visible wiring |
 | Verification | `tests/node/bookmark-save-feedback.test.mjs` | All nine save/rename success, failure, and storage messages |
 | Verification | `tests/node/user-manual-home.test.mjs` | All nine User Manual records and action wiring |
+| Verification | `tests/node/localization-settings-doc-sync-contract.test.mjs` | Renderer hard-coded-copy guard and nine-locale audited-domain coverage |
 
 ---
 

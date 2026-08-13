@@ -56,15 +56,21 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
     React.createElement('button', { onClick, ...props }, children),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    topbar: { switchToLightMode: 'Light', switchToDarkMode: 'Dark', home: 'Home', settings: 'Settings', welcomePage: 'Welcome', moreActions: 'More', editLabel: 'Edit', edit: 'Edit', settingsUpdate: 'Update' },
-    tooltips: { minimize: 'Min', maximize: 'Max', restore: 'Restore', closeApp: 'Close', close: 'Close', removeFromRecents: 'Remove', newTab: 'New tab', closeTab: 'Close tab' },
-    recentWorkspaces: { title: 'Recent', subtitle: 'Workspaces', searchPlaceholder: 'Search...', noWorkspaces: 'None', lastOpened: 'Last' },
-    actions: { toggleSidebar: 'Sidebar', toggleToc: 'TOC', toggleFocusMode: 'Focus' },
-    tabContextMenu: { closeThisTab: 'Close', closeTabsToRight: 'Close right', closeOtherTabs: 'Close others', closeAllTabs: 'Close all' },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      topbar: { ...en.topbar, switchToLightMode: 'Light', switchToDarkMode: 'Dark', home: 'Home', settings: 'Settings', welcomePage: 'Welcome', moreActions: 'More', editLabel: 'Edit', edit: 'Edit', settingsUpdate: 'Update' },
+      tooltips: { ...en.tooltips, minimize: 'Min', maximize: 'Max', restore: 'Restore', closeApp: 'Close', close: 'Close', removeFromRecents: 'Remove', newTab: 'New tab', closeTab: 'Close tab' },
+      recentWorkspaces: { ...en.recentWorkspaces, title: 'Recent', subtitle: 'Workspaces', searchPlaceholder: 'Search...', noWorkspaces: 'None', lastOpened: 'Last' },
+      actions: { ...en.actions, toggleSidebar: 'Sidebar', toggleToc: 'TOC', toggleFocusMode: 'Focus' },
+      tabContextMenu: { ...en.tabContextMenu, closeThisTab: 'Close', closeTabsToRight: 'Close right', closeOtherTabs: 'Close others', closeAllTabs: 'Close all' },
+    }),
+  };
+});
 
 vi.mock('../../../../ui/src/contexts/welcomeTranslations', () => ({
   getWelcomeTranslations: () => ({ hero: { macosInstallBtn: 'Install' } }),
@@ -196,7 +202,7 @@ describe('WorkspaceSelection', () => {
       { name: 'A', path: '/a' },
     ];
     render(React.createElement(WorkspaceSelection));
-    expect(screen.getByRole('button', { name: 'Show More...' })).toHaveClass('workspace-selection__show-more');
+    expect(screen.getByRole('button', { name: 'Show More…' })).toHaveClass('workspace-selection__show-more');
   });
 
   it('opens modal when Show More clicked', () => {
@@ -207,7 +213,7 @@ describe('WorkspaceSelection', () => {
       { name: 'D', path: '/d' },
     ];
     render(React.createElement(WorkspaceSelection));
-    fireEvent.click(screen.getByText('Show More...'));
+    fireEvent.click(screen.getByText('Show More…'));
     expect(screen.getByTestId('workspaces-modal')).toBeInTheDocument();
   });
 

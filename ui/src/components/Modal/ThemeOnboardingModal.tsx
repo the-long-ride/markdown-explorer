@@ -5,6 +5,7 @@
 import { useAppState } from "../../contexts/AppStateContext";
 import { THEME_MODE_OPTIONS } from "../../contexts/appStateConstants";
 import { ThemeStylePicker } from "../Settings/ThemeStylePicker";
+import { getTranslations } from "../../contexts/translations";
 
 interface ThemeOnboardingModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export function ThemeOnboardingModal({
   onComplete,
 }: ThemeOnboardingModalProps) {
   const { state, setTheme, setThemeStyle } = useAppState();
+  const t = getTranslations(state.settings.language || "en");
 
   if (!isOpen) return null;
 
@@ -28,16 +30,16 @@ export function ThemeOnboardingModal({
     >
       <div className="settings-card theme-onboarding-card">
         <div className="settings-card__header theme-onboarding-card__header">
-          <h2 id="themeOnboardingTitle">Choose Your Theme</h2>
-          <p>You can change this later from Settings.</p>
+          <h2 id="themeOnboardingTitle">{t.onboarding.title}</h2>
+          <p>{t.onboarding.description}</p>
         </div>
 
         <div className="theme-onboarding-card__section theme-onboarding-card__section--mode">
-          <div className="settings-item__title">Color Mode</div>
+          <div className="settings-item__title">{t.colorMode}</div>
           <div
             className="segmented-control"
             role="radiogroup"
-            aria-label="Color mode"
+            aria-label={t.colorMode}
           >
             {THEME_MODE_OPTIONS.map((option) => (
               <button
@@ -49,14 +51,14 @@ export function ThemeOnboardingModal({
                 aria-pressed={state.theme === option.id}
                 onClick={() => setTheme(option.id)}
               >
-                {option.label}
+                {option.id === 'auto' ? t.auto : option.id === 'light' ? t.light : t.dark}
               </button>
             ))}
           </div>
         </div>
 
         <div className="theme-onboarding-card__section theme-onboarding-card__section--styles">
-          <div className="settings-item__title">Theme Style</div>
+          <div className="settings-item__title">{t.themeStyle}</div>
           <ThemeStylePicker
             className="theme-onboarding-card__styles"
             value={state.themeStyle}
@@ -70,14 +72,14 @@ export function ThemeOnboardingModal({
             className="btn theme-onboarding-card__skip"
             onClick={onComplete}
           >
-            Skip
+            {t.onboarding.skip}
           </button>
           <button
             type="button"
             className="btn btn--accent theme-onboarding-card__continue"
             onClick={onComplete}
           >
-            Continue
+            {t.terms.continue}
           </button>
         </div>
       </div>

@@ -31,6 +31,7 @@ import type {
 } from '../types';
 
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
+import { migrateDesktopFontBindings, type DesktopFontFamily } from '../desktop/fonts/fontModel';
 export interface NavigateOptions {
   htmlPreviewOverride?: boolean;
 }
@@ -71,6 +72,9 @@ export interface AppState {
   workspaceUnavailablePath: string | null;
   workspaceUnavailableReason: WorkspaceUnavailableReason | null;
   settings: AppSettings;
+  desktopFonts: DesktopFontFamily[];
+  desktopFontError: string | null;
+  desktopFontsResult: { requestId: string; importedId?: string } | null;
   renderVersion: number;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
@@ -151,6 +155,7 @@ export type Action =
   | { type: 'SET_THEME_STYLE'; themeStyle: ThemeStyle }
   | { type: 'SELECT_CUSTOM_THEME'; themeId: string | undefined }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
+  | { type: 'SET_DESKTOP_FONTS'; fonts: readonly DesktopFontFamily[]; requestId: string; importedId?: string; error?: string }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean }
   | { type: 'TOGGLE_FOCUS_MODE' }
   | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: 'files' | 'search' | 'bookmarks' }
@@ -188,7 +193,7 @@ export const initialState: AppState = {
   toc: [],
   relativePath: '',
   isLoading: true,
-  loadingLabel: 'Loading docs...',
+  loadingLabel: '',
   loadingDetail: '',
   isWorkspaceScanning: false,
   scannedFiles: 0,
@@ -211,11 +216,15 @@ export const initialState: AppState = {
     sidebarSortModes: {},
     maxPinnedItems: 10,
     desktopViewMode: 'focus',
+    fontBindings: migrateDesktopFontBindings(undefined),
     keybindings: DEFAULT_KEYBINDINGS,
     disabledKeybindings: {},
     language: 'en',
     customThemes: [],
   },
+  desktopFonts: [],
+  desktopFontError: null,
+  desktopFontsResult: null,
   renderVersion: 0,
   contentTabs: [],
   activeContentTabPath: null,
@@ -281,6 +290,7 @@ export function createInitialState(
       sidebarSortModes: saved.sidebarSortModes ?? {},
       maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+      fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
       disabledKeybindings: saved.disabledKeybindings ?? {},
       language: saved.language || 'en',

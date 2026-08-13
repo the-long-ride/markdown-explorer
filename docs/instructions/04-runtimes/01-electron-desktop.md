@@ -52,6 +52,10 @@ keywords:
 | HTML preview | preview server | Bounded standalone local preview lifecycle |
 | Update | manager/helper/state | Installed packaged Windows only; portable excluded |
 
+## Native window constraints
+
+The restored/non-maximized Electron window has a minimum width of **800 px** and retains the existing **480 px** minimum height. Markdown Explorer owns desktop zoom controls here; Reset zoom uses `Ctrl+Alt+Z` and restores the web contents to 100%.
+
 ## Startup and close lifecycle
 
 ```mermaid
@@ -72,6 +76,13 @@ stateDiagram-v2
 Ignored directories include `.git`, `node_modules`, `.vscode`, `dist`, `out`, `build`, `coverage`, `.next`, `.nuxt`, `.turbo`, `.cache`, `vendor`, `target`, `bin`, and `obj`. Root `.markdown-explorer-ignore` adds exact-name entries; comments/blank lines are ignored.
 
 Title enrichment uses up to 32 concurrent reads, 250 ms per read, 1500 ms total enrichment deadline, and 8 KiB source prefix. Partial reveal occurs around 3 seconds with cumulative batches of 32.
+
+## Native font service
+
+Electron owns system-font discovery, SFNT metadata inspection, managed font imports, and removal. Discovery covers machine-wide and per-user font directories on Windows/macOS/Linux, including `.ttc`/`.otc` TrueType/OpenType collection files for system-family detection. The renderer cannot submit arbitrary CSS font paths: imports arrive through the native picker and accepted files are copied beneath the app-data `fonts/` directory.
+
+The desktop mono default is JetBrains Mono. Packaging includes only `JetBrainsMono-VariableFont_wght.ttf` and `JetBrainsMono-Italic-VariableFont_wght.ttf`; Cascadia Code and the static JetBrains family are excluded.
+Typography settings enumerate installed fonts on Windows, macOS, and Linux, discover available variants, and copy individually imported `.ttf`/`.otf` files into app-managed storage. Renderer settings store normalized references only; the original selected filesystem path is never persisted.
 
 ## Packaging
 

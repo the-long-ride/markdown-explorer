@@ -8,6 +8,7 @@ function mkEvent(opts: Partial<KeyboardEventInit> & { key: string }): KeyboardEv
 const defaultBindings: Record<string, string> = {
   zoomIn: 'ctrl+=',
   zoomOut: 'ctrl+-',
+  resetZoom: 'ctrl+alt+z',
   searchAllTabs: 'ctrl+shift+k',
   searchCurrent: 'ctrl+k',
   findCurrentFile: 'f',
@@ -137,20 +138,20 @@ describe('resolveKeyboardAction', () => {
   });
 
   describe('zoom reset', () => {
-    it('returns zoom-reset on Ctrl+0', () => {
-      const e = mkEvent({ key: '0', ctrlKey: true });
+    it('returns zoom-reset on desktop Ctrl+Alt+Z', () => {
+      const e = mkEvent({ key: 'z', ctrlKey: true, altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktop: true, isDesktopLike: true }));
       expect(result).toEqual({ type: 'zoom-reset' });
     });
 
-    it('returns null for Ctrl+0 when not desktop', () => {
-      const e = mkEvent({ key: '0', ctrlKey: true });
+    it('returns null for Ctrl+Alt+Z when not desktop', () => {
+      const e = mkEvent({ key: 'z', ctrlKey: true, altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktop: false, isDesktopLike: false }));
       expect(result).toBeNull();
     });
 
-    it('returns null for 0 without ctrl', () => {
-      const e = mkEvent({ key: '0' });
+    it('does not intercept native Ctrl+0', () => {
+      const e = mkEvent({ key: '0', ctrlKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktop: true, isDesktopLike: true }));
       expect(result).toBeNull();
     });
@@ -815,8 +816,8 @@ describe('resolveKeyboardAction', () => {
       expect(result).toEqual({ type: 'zoom-out' });
     });
 
-    it('zoom-reset matches with metaKey', () => {
-      const e = mkEvent({ key: '0', metaKey: true });
+    it('zoom-reset matches the desktop binding with metaKey', () => {
+      const e = mkEvent({ key: 'z', metaKey: true, altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktop: true, isDesktopLike: true }));
       expect(result).toEqual({ type: 'zoom-reset' });
     });

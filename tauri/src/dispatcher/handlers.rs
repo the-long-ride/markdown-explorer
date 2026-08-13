@@ -97,6 +97,14 @@ impl Dispatcher {
             .and_then(|p| p.into_path().ok())
     }
 
+    pub(super) fn pick_font_file(&self) -> Option<PathBuf> {
+        tauri_plugin_dialog::DialogExt::dialog(&self.app)
+            .file()
+            .add_filter("Fonts", &["ttf", "otf"])
+            .blocking_pick_file()
+            .and_then(|path| path.into_path().ok())
+    }
+
     pub(super) fn ensure_search_index(&self) -> SearchIndex {
         {
             let state = self.state.inner.read();
