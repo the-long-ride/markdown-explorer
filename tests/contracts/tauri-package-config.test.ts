@@ -21,12 +21,12 @@ const rustToolchain = fs.readFileSync(
 
 describe('tauri package config', () => {
   test('root package exposes start:tauri script', () => {
-    expect(pkg.scripts['start:tauri']).toContain('build:ui:electron');
+    expect(pkg.scripts['start:tauri']).toContain('build:ui:tauri');
     expect(pkg.scripts['start:tauri']).toContain('tauri');
   });
 
   test('root package exposes build:tauri script', () => {
-    expect(pkg.scripts['build:tauri']).toContain('build:ui:electron');
+    expect(pkg.scripts['build:tauri']).toContain('build:ui:tauri');
     expect(pkg.scripts['build:tauri']).toContain('tauri');
   });
 

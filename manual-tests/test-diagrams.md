@@ -116,6 +116,23 @@ gantt
     Production Release : 2026-05-26, 1d
 ```
 
+### 8b. Wide Deployment Schedule (readability regression)
+```
+gantt
+    title Wide Deployment Schedule
+    dateFormat  YYYY-MM-DD
+    section Preparation
+    Product discovery & stakeholder alignment :done, 2026-05-18, 3d
+    Architecture and release planning          :done, 2026-05-20, 3d
+    Coding, integration & regression tests      :active, 2026-05-22, 4d
+    section Deployment
+    Staging environment deployment              : 2026-05-24, 2d
+    UAT testing and acceptance sign-off          : 2026-05-25, 3d
+    Production Release                           :crit, milestone, 2026-05-28, 0d
+    section Follow-up
+    Production monitoring and rollback window    : 2026-05-28, 3d
+```
+
 ---
 
 ## 9. Pie Chart (`pie`)

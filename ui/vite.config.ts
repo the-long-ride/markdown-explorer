@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
       },
 
       // Copy bundled fonts to dist so critical inline @font-face in index.html can find them.
-      // Electron needs the TTF files at dist/assets/fonts/ for fast first-paint font loading.
+      // Existing UI fonts remain available to every runtime; JetBrains Mono is desktop-only.
       {
         name: 'copy-fonts',
         enforce: 'post',
@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => {
           function copyDir(src, dest) {
             mkdirSync(dest, { recursive: true });
             for (const entry of readdirSync(src, { withFileTypes: true })) {
+              if (!isDesktop && entry.name === 'JetBrainsMono') continue;
               const srcPath = resolve(src, entry.name);
               const destPath = resolve(dest, entry.name);
               if (entry.isDirectory()) copyDir(srcPath, destPath);
@@ -56,6 +57,9 @@ export default defineConfig(({ mode }) => {
         name: 'html-optimizations',
         enforce: 'post',
         transformIndexHtml(html) {
+          if (!isDesktop) {
+            html = html.replace(/@font-face\s*\{[^{}]*font-family:\s*[\"']JetBrains Mono[\"'][^{}]*\}/g, '');
+          }
           // Make CSS non-blocking so the browser can paint before stylesheets arrive.
           // Critical inline styles in index.html provide the initial frame.
           html = html.replace(

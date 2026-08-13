@@ -175,6 +175,16 @@
   .tooltip-text {
   transform: translateX(0) translateY(0);
 }
+/* Settings tooltips sit above portal dropdowns and stay inside edge controls. */
+.settings-card--settings .tooltip-text {
+  z-index: 10000050;
+  max-width: min(280px, calc(100vw - 24px));
+}
+.settings-navigation__version .tooltip-text {
+  left: 0;
+  right: auto;
+}
+
 /* ============================================================
    Diff Highlighting
    ============================================================ */
@@ -500,4 +510,17 @@ kbd:active,
   position: fixed;
   pointer-events: none;
   z-index: 9999;
+}
+
+/* Viewport-level tooltip used by controls that can be clipped by shell overflow. */
+.tooltip-portal {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  z-index: 2147483000;
+  visibility: visible;
+  opacity: 1;
+  transform: none !important;
+  max-width: min(320px, calc(100vw - 16px));
+  pointer-events: none;
 }

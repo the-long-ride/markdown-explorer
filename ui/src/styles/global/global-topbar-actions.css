@@ -175,8 +175,8 @@ body {
   top: 50%;
   right: 8px;
   transform: translateY(-50%);
-  width: 7px;
-  height: 7px;
+  width: 11px;
+  height: 11px;
   border: 2px solid var(--bg-e);
   border-radius: 999px;
   background: var(--accent);

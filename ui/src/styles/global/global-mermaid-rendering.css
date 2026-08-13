@@ -1,0 +1,82 @@
+/* Preserve connector clarity after viewport fitting. */
+.content .mdn-body .mermaid svg {
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
+}
+.content .mdn-body .mermaid .edgePath path,
+.content .mdn-body .mermaid .flowchart-link,
+.content .mdn-body .mermaid .messageLine0,
+.content .mdn-body .mermaid .messageLine1,
+.content .mdn-body .mermaid .loopLine,
+.content .mdn-body .mermaid .relation,
+.content .mdn-body .mermaid .branch,
+.content .mdn-body .mermaid .commit-branch,
+.content .mdn-body .mermaid marker path {
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gitGraph"] .mermaid,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="class"] .mermaid,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid {
+  text-rendering: geometricPrecision;
+}
+
+/* Diagram-family contrast tuning: preserve author inline styles, but improve Mermaid defaults. */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="timeline"] .mermaid .timeline-axis,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="timeline"] .mermaid path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gitGraph"] .mermaid path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="class"] .mermaid .relation,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine0,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine1,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid path {
+  stroke-width: max(1.6px, var(--stroke-w));
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="timeline"] .mermaid svg,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gitGraph"] .mermaid svg,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid svg,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid svg {
+  overflow: visible !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid .messageText,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid .relationLabel,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid .relationshipLabel {
+  paint-order: stroke fill;
+  stroke: var(--bg-s);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  font-weight: 600;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid text {
+  text-rendering: geometricPrecision;
+}
+/* Gantt is readability-first: Mermaid compact mode is intentionally not used. */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] {
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid {
+  justify-content: flex-start;
+  min-width: 920px;
+  width: max-content;
+  max-width: none;
+  max-height: none;
+  overflow: visible !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid svg {
+  min-width: 920px;
+  max-width: none !important;
+  max-height: none !important;
+  margin-inline: 0 !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid .tick text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid .sectionTitle,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid .taskText,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid .taskTextOutsideRight,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid .taskTextOutsideLeft {
+  font-size: 13px;
+  text-rendering: geometricPrecision;
+}

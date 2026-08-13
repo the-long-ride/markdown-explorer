@@ -272,6 +272,8 @@
   padding: var(--section-body-pad-y) var(--section-body-pad-x);
   overflow-x: auto;
   font-family: var(--font-mono);
+  font-style: var(--font-mono-style);
+  font-weight: var(--font-mono-weight);
   font-size: 12px;
   line-height: 1.6;
   tab-size: 2;
@@ -291,4 +293,15 @@
   padding: 0;
   color: var(--tx);
   line-height: inherit;
+  font-family: inherit;
+}
+.mdn-pre code,
+.mdn-pre code *,
+.mdn-inline-code,
+.mdn-inline-code *,
+.workspace-selection__guide code,
+.workspace-selection__guide code *,
+.mdn-html-comment code,
+.mdn-html-comment code * {
+  font-family: inherit;
 }

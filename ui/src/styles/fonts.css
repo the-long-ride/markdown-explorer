@@ -31,23 +31,16 @@
 }
 
 @font-face {
-  font-family: "Cascadia Code";
-  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Regular.ttf") format("truetype");
-  font-weight: 400;
+  font-family: "JetBrains Mono";
+  src: url("../../assets/fonts/JetBrainsMono/JetBrainsMono-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 800;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Cascadia Code";
-  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Italic.ttf") format("truetype");
-  font-weight: 400;
+  font-family: "JetBrains Mono";
+  src: url("../../assets/fonts/JetBrainsMono/JetBrainsMono-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 800;
   font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Cascadia Code";
-  src: url("../../assets/fonts/CascadiaCode/CascadiaCode-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
   font-display: swap;
 }

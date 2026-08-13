@@ -285,6 +285,27 @@
 }
 
 /* Focus mode */
+.app--focus-mode .topbar,
+.app--focus-mode .desktop-tabbar,
+.app--focus-mode .sidebar,
+.app--focus-mode .sidebar-resize,
+.app--focus-mode .toc-panel,
+.app--focus-mode .toc-resize,
+.app--focus-mode .content-tabs-wrap {
+  display: none !important;
+}
+
+.app--focus-mode .body,
+.app--focus-mode .content-shell,
+.app--focus-mode .content-shell__main {
+  width: 100%;
+  max-width: none;
+}
+
+.app--focus-mode .content-shell {
+  flex: 1 1 auto;
+}
+
 .focus-mode-btn {
   position: fixed !important;
   top: calc(var(--topbar-h) + 12px);

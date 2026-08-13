@@ -114,7 +114,7 @@ test('settings confirm shortcut reset, use requested icons, and remove requested
     read('ui/src/components/Settings/SettingsShortcutsPanel.tsx'),
     read('ui/src/components/Settings/SettingsModalDialogs.tsx'),
     read('ui/src/components/shared/icons.tsx'),
-    read('ui/src/components/Settings/SettingsModal.tsx'),
+    read('ui/src/components/Settings/SettingsUpdateBackupPanel.tsx'),
     read('ui/src/styles/global/global-settings-actions-dialogs.css'),
     read('ui/src/styles/global/global-settings-layout.css'),
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),

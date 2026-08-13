@@ -37,9 +37,14 @@ export function detectBridge(win: any = window) {
   if (typeof win.acquireVsCodeApi === 'function') {
     return createVsCodeBridge();
   }
+  // Tauri desktop exposes __TAURI__ and also a compatibility electronAPI shim.
+  if (typeof win.__TAURI__ !== 'undefined' || typeof win.__TAURI_INTERNALS__ !== 'undefined') {
+    document.body.classList.add('is-desktop', 'is-tauri');
+    return createElectronBridge();
+  }
   // Electron provides window.electronAPI via preload.js
   if (typeof win.electronAPI !== 'undefined') {
-    document.body.classList.add('is-electron');
+    document.body.classList.add('is-desktop', 'is-electron');
     return createElectronBridge();
   }
 // Chromium Extension provides window.__chromeExtBus

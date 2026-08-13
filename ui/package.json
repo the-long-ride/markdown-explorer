@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "build:vscode": "tsc -b && vite build --mode vscode",
     "build:electron": "tsc -b && vite build --mode electron",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:tauri": "tsc -b && vite build --mode tauri"
   },
   "dependencies": {
     "@mermaid-js/mermaid-zenuml": "^0.2.3",

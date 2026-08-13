@@ -12,7 +12,8 @@ test('CSV code blocks expose interactive preview and code modes with localized a
   assert.match(source, /UI\.toggleCsvMode\(this\)/);
   assert.match(source, /dataI18nKey:\s*showCodeByDefault \? 'showPreview' : 'showCode'/);
   assert.match(source, /dataI18nKey:\s*'copyCode'/);
-  assert.match(source, /const previewLabel = `\$\{language\} Preview`/);
+  assert.match(source, /const previewLabel = language === 'TSV' \? options\.labels\.previewActions\.tsvPreviewTitle : options\.labels\.previewActions\.csvPreviewTitle/);
+  assert.match(source, /data-i18n-preview-key="\$\{language === 'TSV' \? 'tsvPreviewTitle' : 'csvPreviewTitle'\}"/);
 });
 
 test('HTML and CSV default preview preferences are independent and default on', async () => {
@@ -131,12 +132,13 @@ test('View Preferences descriptions are hover or focus panels while Theme Style 
   assert.match(component, /t\.themeStyleDesc/);
 });
 
-test('settings JSON actions use shared tooltips and localized labels', async () => {
-  const modal = await read('ui/src/components/Settings/SettingsModal.tsx');
-  assert.match(modal, /TooltipButton[\s\S]*t\.importJsonTooltip/);
-  assert.match(modal, /TooltipButton[\s\S]*t\.exportJsonTooltip/);
-  assert.match(modal, /t\.importJson/);
-  assert.match(modal, /t\.exportJson/);
+test('settings JSON actions live in Update & Backup with localized labels and shared icons', async () => {
+  const panel = await read('ui/src/components/Settings/SettingsUpdateBackupPanel.tsx');
+  assert.match(panel, /ImportSettingsIcon/);
+  assert.match(panel, /ExportSettingsIcon/);
+  assert.match(panel, /t\.importJson/);
+  assert.match(panel, /t\.exportJson/);
+  assert.match(panel, /t\.settingsBackup/);
 });
 
 test('dragged workspace and content tabs use dashed primary borders', async () => {
