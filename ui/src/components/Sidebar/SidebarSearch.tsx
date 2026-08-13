@@ -166,7 +166,7 @@ export function SidebarSearch({
             type="button"
             className={`sidebar__search-case${matchCase ? ' is-active' : ''}`}
             onClick={() => setMatchCase((value) => !value)}
-            tooltip={`${t.search.matchCase} - ${matchCase ? (t.search.statusOn || 'On') : (t.search.statusOff || 'Off')}`}
+            tooltip={`${t.search.matchCase} - ${matchCase ? (t.search.statusOn) : (t.search.statusOff)}`}
             aria-label={t.search.matchCase}
             tooltipPos="below"
             tooltipAlign="right"

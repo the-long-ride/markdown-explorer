@@ -4,12 +4,15 @@ import { escHtml, renderButton, shortId } from './utils';
 import { buildHtmlPreviewDocument, hasRenderableHtmlContent } from './htmlPreviewDocument';
 import { parseDelimitedFenceInfo, parseDelimitedText, tokenizeDelimitedSource } from './delimitedText';
 import { renderInteractiveTable } from './tableRenderer';
+import { getTranslations } from '../contexts/translations';
+import type { Translations } from '../contexts/translationTypes';
 
 export interface CodeRendererOptions {
   theme?: string;
   isMdx?: boolean;
   defaultHtmlPreview?: boolean;
   defaultCsvPreview?: boolean;
+  labels?: Pick<Translations, 'rendererUi' | 'previewActions'>;
 }
 
 const EYE_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -43,6 +46,7 @@ function normalizeOptions(themeOrOptions: string | CodeRendererOptions): Require
       isMdx: false,
       defaultHtmlPreview: true,
       defaultCsvPreview: true,
+      labels: getTranslations('en'),
     };
   }
   return {
@@ -50,24 +54,27 @@ function normalizeOptions(themeOrOptions: string | CodeRendererOptions): Require
     isMdx: themeOrOptions.isMdx || false,
     defaultHtmlPreview: themeOrOptions.defaultHtmlPreview !== false,
     defaultCsvPreview: themeOrOptions.defaultCsvPreview !== false,
+    labels: themeOrOptions.labels ?? getTranslations('en'),
   };
 }
 
-function renderCopyButton(): string {
+function renderCopyButton(options: Required<CodeRendererOptions>): string {
+  const label = options.labels.previewActions.copyCode;
   return renderButton({
     className: 'mdn-copy-btn',
     onClick: 'UI.copyCode(this)',
-    label: 'Copy code',
-    tooltip: 'Copy code',
-    title: 'Copy code',
-    ariaLabel: 'Copy code',
+    label,
+    tooltip: label,
+    title: label,
+    ariaLabel: label,
     dataI18nKey: 'copyCode',
+    copiedLabel: options.labels.rendererUi.copied,
     iconHtml: COPY_ICON,
   });
 }
 
-function renderPreviewToggle(className: string, handler: string, showCodeByDefault: boolean): string {
-  const label = showCodeByDefault ? 'Show Preview' : 'Show Code';
+function renderPreviewToggle(className: string, handler: string, showCodeByDefault: boolean, options: Required<CodeRendererOptions>): string {
+  const label = showCodeByDefault ? options.labels.previewActions.showPreview : options.labels.previewActions.showCode;
   return renderButton({
     className,
     onClick: handler,
@@ -76,6 +83,8 @@ function renderPreviewToggle(className: string, handler: string, showCodeByDefau
     title: label,
     ariaLabel: label,
     dataI18nKey: showCodeByDefault ? 'showPreview' : 'showCode',
+    labelShowCode: options.labels.previewActions.showCode,
+    labelShowPreview: options.labels.previewActions.showPreview,
     iconHtml: showCodeByDefault ? EYE_ICON : CODE_ICON,
   });
 }
@@ -85,6 +94,8 @@ function renderCodeBody(
   language: string,
   allowLineNumbers = true,
   highlightedOverride?: string,
+  showMoreLabel = getTranslations('en').rendererUi.showMore,
+  showLessLabel = getTranslations('en').rendererUi.showLess,
 ): {
   body: string;
   collapseButton: string;
@@ -103,7 +114,7 @@ function renderCodeBody(
     <pre class="mdn-pre" tabindex="0"><code class="language-${language}${customClass}">${highlighted}</code></pre>
   </div>`,
     collapseButton: totalLines > 20
-      ? '<button class="mdn-codeblock-toggle-btn" onclick="UI.toggleCodeCollapse(this)">Show More</button>'
+      ? `<button class="mdn-codeblock-toggle-btn" onclick="UI.toggleCodeCollapse(this)" data-label-show-more="${escHtml(showMoreLabel)}" data-label-show-less="${escHtml(showLessLabel)}">${escHtml(showMoreLabel)}</button>`
       : '',
     totalLines,
   };
@@ -117,33 +128,33 @@ function renderHtmlCodeBlock(token: CodeBlockToken, options: Required<CodeRender
     target: 'inline',
   });
   const showCodeByDefault = !options.defaultHtmlPreview || !hasRenderableHtmlContent(token.content);
-  const code = renderCodeBody(token, 'html');
+  const code = renderCodeBody(token, 'html', true, undefined, options.labels.rendererUi.showMore, options.labels.rendererUi.showLess);
   const openBrowser = renderButton({
     className: 'mdn-open-browser-btn',
     onClick: 'UI.openHtmlPreview(this)',
-    label: 'Open in browser',
-    tooltip: 'Open in browser',
-    title: 'Open in browser',
-    ariaLabel: 'Open in browser',
+    label: options.labels.previewActions.openInBrowser,
+    tooltip: options.labels.previewActions.openInBrowser,
+    title: options.labels.previewActions.openInBrowser,
+    ariaLabel: options.labels.previewActions.openInBrowser,
     dataI18nKey: 'openInBrowser',
     iconHtml: OPEN_BROWSER_ICON,
   });
   const openModal = renderButton({
     className: 'mdn-open-modal-btn',
     onClick: 'UI.openHtmlPreviewModal(this)',
-    label: 'Open as modal',
-    tooltip: 'Open as modal',
-    title: 'Open as modal',
-    ariaLabel: 'Open as modal',
+    label: options.labels.previewActions.openAsModal,
+    tooltip: options.labels.previewActions.openAsModal,
+    title: options.labels.previewActions.openAsModal,
+    ariaLabel: options.labels.previewActions.openAsModal,
     dataI18nKey: 'openAsModal',
     iconHtml: OPEN_MODAL_ICON,
   });
-  const toggle = renderPreviewToggle('mdn-toggle-preview-btn', 'UI.toggleHtmlMode(this)', showCodeByDefault);
+  const toggle = renderPreviewToggle('mdn-toggle-preview-btn', 'UI.toggleHtmlMode(this)', showCodeByDefault, options);
 
   return `<div class="mdn-codeblock mdn-html-preview-wrap" ${sourceAttributes(token, 'code')} data-preview-theme="${escHtml(options.theme)}" data-mode="${showCodeByDefault ? 'code' : 'preview'}"${code.totalLines > 20 ? ' data-collapsed="true"' : ''}>
   <div class="mdn-codeblock-header">
-    <span class="mdn-codeblock-lang" data-code-label="HTML" data-preview-label="HTML Preview">${showCodeByDefault ? 'HTML' : 'HTML Preview'}</span>
-    <div class="mdn-codeblock-actions">${openBrowser}${openModal}${toggle}${renderCopyButton()}</div>
+    <span class="mdn-codeblock-lang" data-code-label="HTML" data-preview-label="${escHtml(options.labels.previewActions.modalTitle)}">${showCodeByDefault ? 'HTML' : escHtml(options.labels.previewActions.modalTitle)}</span>
+    <div class="mdn-codeblock-actions">${openBrowser}${openModal}${toggle}${renderCopyButton(options)}</div>
   </div>
   <div class="mdn-html-preview-body" style="${showCodeByDefault ? 'display:none' : ''}">
     <iframe id="${iframeId}" class="mdn-html-preview-iframe" sandbox="allow-scripts" srcdoc="${escHtml(wrappedDocument)}"></iframe>
@@ -154,12 +165,12 @@ function renderHtmlCodeBlock(token: CodeBlockToken, options: Required<CodeRender
 </div>`;
 }
 
-function warningMarkup(warnings: readonly string[]): string {
+function warningMarkup(warnings: readonly string[], options: Required<CodeRendererOptions>): string {
   return warnings.map((warning) => {
     const key = warning === 'malformedQuote' ? 'csvMalformedQuote' : 'csvUnevenRows';
     const fallback = warning === 'malformedQuote'
-      ? 'Some quoted CSV fields are malformed. Review the source code.'
-      : 'Some CSV rows have a different number of columns.';
+      ? options.labels.previewActions.csvMalformedQuote
+      : options.labels.previewActions.csvUnevenRows;
     return `<div class="mdn-csv-warning" role="status" data-i18n-content-key="${key}">${fallback}</div>`;
   }).join('');
 }
@@ -174,18 +185,18 @@ function renderDelimitedCodeBlock(token: CodeBlockToken, options: Required<CodeR
       ? `<span class="code-delimited-column code-delimited-column--${segment.columnIndex % 4}">${escHtml(segment.text)}</span>`
       : escHtml(segment.text))
     .join('');
-  const code = renderCodeBody(token, language.toLowerCase(), true, decoratedSource);
-  const toggle = renderPreviewToggle('mdn-toggle-csv-btn', 'UI.toggleCsvMode(this)', showCodeByDefault);
-  const previewLabel = `${language} Preview`;
-  const table = renderInteractiveTable({ headers: parsed.headers, rows: parsed.rows }, options.isMdx);
+  const code = renderCodeBody(token, language.toLowerCase(), true, decoratedSource, options.labels.rendererUi.showMore, options.labels.rendererUi.showLess);
+  const toggle = renderPreviewToggle('mdn-toggle-csv-btn', 'UI.toggleCsvMode(this)', showCodeByDefault, options);
+  const previewLabel = language === 'TSV' ? options.labels.previewActions.tsvPreviewTitle : options.labels.previewActions.csvPreviewTitle;
+  const table = renderInteractiveTable({ headers: parsed.headers, rows: parsed.rows }, options.isMdx, options.labels.rendererUi);
 
   return `<div class="mdn-codeblock mdn-csv-preview-wrap" ${sourceAttributes(token, 'code')} data-mode="${showCodeByDefault ? 'code' : 'preview'}"${code.totalLines > 20 ? ' data-collapsed="true"' : ''}>
   <div class="mdn-codeblock-header">
-    <span class="mdn-codeblock-lang" data-code-label="${language}" data-preview-label="${previewLabel}" data-i18n-preview-key="${language === 'TSV' ? 'tsvPreviewTitle' : 'csvPreviewTitle'}">${showCodeByDefault ? language : previewLabel}</span>
-    <div class="mdn-codeblock-actions">${toggle}${renderCopyButton()}</div>
+    <span class="mdn-codeblock-lang" data-code-label="${language}" data-preview-label="${escHtml(previewLabel)}" data-i18n-preview-key="${language === 'TSV' ? 'tsvPreviewTitle' : 'csvPreviewTitle'}">${showCodeByDefault ? language : escHtml(previewLabel)}</span>
+    <div class="mdn-codeblock-actions">${toggle}${renderCopyButton(options)}</div>
   </div>
   <div class="mdn-csv-preview-body" style="${showCodeByDefault ? 'display:none' : ''}">
-    ${warningMarkup(parsed.warnings)}
+    ${warningMarkup(parsed.warnings, options)}
     ${table}
   </div>
   <div class="mdn-code-source" style="${showCodeByDefault ? '' : 'display:none'}">${code.body}</div>
@@ -217,12 +228,12 @@ export function renderCodeBlock(token: CodeBlockToken, themeOrOptions: string | 
   if (lowerLanguage === 'html') return renderHtmlCodeBlock(token, options);
   if (lowerLanguage === 'csv' || lowerLanguage === 'tsv') return renderDelimitedCodeBlock(token, options);
 
-  const code = renderCodeBody(token, lowerLanguage === 'text' ? 'text' : language, lowerLanguage !== 'text');
+  const code = renderCodeBody(token, lowerLanguage === 'text' ? 'text' : language, lowerLanguage !== 'text', undefined, options.labels.rendererUi.showMore, options.labels.rendererUi.showLess);
   const plainText = lowerLanguage === 'text' || !token.lang;
   return `<div class="mdn-codeblock" ${sourceAttributes(token, 'code')}${code.totalLines > 20 ? ' data-collapsed="true"' : ''}>
   <div class="mdn-codeblock-header">
-    <span class="mdn-codeblock-lang"${plainText ? ' data-i18n-content-key="plainText"' : ''}>${plainText ? 'PLAIN TEXT' : language}</span>
-    ${renderCopyButton()}
+    <span class="mdn-codeblock-lang"${plainText ? ' data-i18n-content-key="plainText"' : ''}>${plainText ? escHtml(options.labels.previewActions.plainText) : language}</span>
+    ${renderCopyButton(options)}
   </div>
   ${code.body}
   ${code.collapseButton}

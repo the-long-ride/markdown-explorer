@@ -133,7 +133,7 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
 
   if (variant === 'compact') {
     return (
-      <nav className={`toc-compact${compactOpen ? ' is-open' : ''}`} aria-label="Table of contents">
+      <nav className={`toc-compact${compactOpen ? ' is-open' : ''}`} aria-label={t.ui.tableOfContents}>
         <button
           type="button"
           className="toc-compact__toggle"
@@ -159,7 +159,7 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
   }
 
   return (
-    <aside className={`toc-panel${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocPanel" aria-label="Table of contents">
+    <aside className={`toc-panel${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocPanel" aria-label={t.ui.tableOfContents}>
       <div className="toc-panel__header">
         <div className="toc-panel__title-row">
           <div className="toc-panel__title-group">

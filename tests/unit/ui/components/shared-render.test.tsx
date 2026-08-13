@@ -240,6 +240,7 @@ describe('ToolbarActionMenu', () => {
     homeTooltip: 'Go home',
     themeTooltip: 'Toggle theme',
     editTooltip: 'Edit file',
+    editShortcut: 'Ctrl+E',
     settingsTooltip: 'Open settings',
     canEdit: true,
     isDark: false,
@@ -297,6 +298,14 @@ describe('ToolbarActionMenu', () => {
     fireEvent.click(screen.getByRole('button', { name: /more/i }));
     fireEvent.click(screen.getByText('Edit'));
     expect(defaultProps.onEdit).toHaveBeenCalled();
+  });
+
+  it('renders the Edit menu shortcut with keycap markup', () => {
+    render(React.createElement(ToolbarActionMenu, defaultProps));
+    fireEvent.click(screen.getByRole('button', { name: /more/i }));
+    const editButton = screen.getByRole('menuitemcheckbox', { name: 'Edit' });
+    expect(editButton.querySelector('.shortcut-keycaps-container')).toBeInTheDocument();
+    expect(editButton.querySelectorAll('.keycap-3d')).toHaveLength(2);
   });
 
   it('calls onSettings when settings item clicked', () => {
@@ -453,6 +462,15 @@ describe('parseShortcutText', () => {
     const { container } = render(res as React.ReactElement);
     expect(screen.getByText('Toggle with (Ctrl+Alt+H).')).toBeInTheDocument();
     expect(container.querySelector('.keycap-3d')).toBeInTheDocument();
+  });
+
+  it('renders a named Esc shortcut in parentheses as a shared keycap', () => {
+    const res = parseShortcutText('Close Settings - (Esc)');
+    const { container } = render(res as React.ReactElement);
+    expect(screen.getByText('Close Settings - (Esc)')).toBeInTheDocument();
+    const keycaps = container.querySelectorAll('.keycap-3d');
+    expect(keycaps).toHaveLength(1);
+    expect(keycaps[0]).toHaveTextContent('Esc');
   });
 
   it('parses bare shortcuts like Ctrl+Alt+T into 3D keycaps', () => {

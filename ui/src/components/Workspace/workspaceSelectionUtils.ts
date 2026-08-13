@@ -1,4 +1,4 @@
-export function formatLastOpened(timestamp?: number) {
+export function formatLastOpened(timestamp?: number, locale = 'en') {
   if (!timestamp) return '';
   const date = new Date(timestamp);
   const now = new Date();
@@ -7,13 +7,13 @@ export function formatLastOpened(timestamp?: number) {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'narrow' });
+  if (diffMins < 1) return relative.format(0, 'second');
+  if (diffMins < 60) return relative.format(-diffMins, 'minute');
+  if (diffHours < 24) return relative.format(-diffHours, 'hour');
+  if (diffDays < 7) return relative.format(-diffDays, 'day');
 
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
 export function isDesktopRuntime() {

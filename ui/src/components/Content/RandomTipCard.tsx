@@ -6,6 +6,7 @@
 import { useMemo, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
+import { getTranslations } from '../../contexts/translations';
 import { buildWelcomeTipGroups } from './welcomeTipGroups';
 import { getTipIcon } from './welcomePageHelpers';
 import { renderWelcomeDescription } from './renderWelcomeDescription';
@@ -38,6 +39,7 @@ export function RandomTipCard() {
   const { state } = useAppState();
   const currentLang = state.settings.language || 'en';
   const wt = getWelcomeTranslations(currentLang);
+  const t = getTranslations(currentLang);
 
   const tipGroups = useMemo(
     () => buildWelcomeTipGroups(currentLang, state.settings, wt.tips),
@@ -90,11 +92,11 @@ export function RandomTipCard() {
               type="button"
               className="welcome-random-tip-shuffle-btn"
               onClick={handleShuffleTip}
-              title="Another Tip"
-              aria-label="Another Tip"
+              title={t.ui.anotherTip}
+              aria-label={t.ui.anotherTip}
             >
               <DiceIcon size={14} />
-              <span>Another Tip</span>
+              <span>{t.ui.anotherTip}</span>
             </button>
           </div>
         </div>

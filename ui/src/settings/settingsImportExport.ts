@@ -23,6 +23,7 @@ import {
   normalizeThemeStyle,
 } from '../contexts/appStateConstants';
 import { normalizeActiveCustomThemeId, normalizeCustomThemes } from '../theme/customThemes';
+import { migrateDesktopFontBindings } from '../desktop/fonts/fontModel';
 import {
   isSidebarSortMode,
   normalizeMaxPinnedItems,
@@ -213,6 +214,7 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
     sidebarSortModes: normalizeSidebarSortModes(raw.sidebarSortModes),
     maxPinnedItems,
     desktopViewMode: normalizeDesktopViewMode(raw.desktopViewMode),
+    fontBindings: migrateDesktopFontBindings(raw.fontBindings, raw.appFont, raw.codeFont),
     keybindings: normalizeKeybindings(normalizeKeybindingsForImport(raw.keybindings), isDesktop),
     language: typeof raw.language === 'string' && raw.language.trim()
       ? raw.language.trim().slice(0, IMPORTED_LANGUAGE_MAX_LENGTH)

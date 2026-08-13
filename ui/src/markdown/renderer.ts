@@ -8,6 +8,8 @@ import { renderInline } from './inline';
 import { renderCodeBlock } from './codeRenderer';
 import { slugify, escHtml, renderButton } from './utils';
 import { renderInteractiveTable } from './tableRenderer';
+import { getTranslations } from '../contexts/translations';
+import type { Translations } from '../contexts/translationTypes';
 import type { TocEntry } from './types';
 
 interface RenderedOutput {
@@ -34,7 +36,7 @@ function sourceAttributes(token: BlockToken, kind: 'text' | 'math' = 'text'): st
   return `data-mdn-source-start="${start}" data-mdn-source-end="${end}" data-mdn-bookmark-kind="${kind}"`;
 }
 
-function renderImageRowParagraph(token: Extract<BlockToken, { type: 'paragraph' }>, isMdx: boolean): string | null {
+function renderImageRowParagraph(token: Extract<BlockToken, { type: 'paragraph' }>, isMdx: boolean, labels: Translations['rendererUi']): string | null {
   const text = token.text;
   const matches = Array.from(text.matchAll(IMAGE_ONLY_MARKDOWN_RE));
   if (matches.length < 2) return null;
@@ -48,7 +50,7 @@ function renderImageRowParagraph(token: Extract<BlockToken, { type: 'paragraph' 
   if (text.slice(cursor).trim() !== '') return null;
 
   const items = matches.map((match) =>
-    `<span class="mdn-image-row__item">${renderInline(match[0], isMdx)}</span>`,
+    `<span class="mdn-image-row__item">${renderInline(match[0], isMdx, labels)}</span>`,
   ).join('');
   return `<div class="mdn-image-row" ${sourceAttributes(token)} style="--mdn-image-count:${matches.length}">${items}</div>`;
 }
@@ -58,6 +60,7 @@ export interface HtmlRendererOptions {
   isMdx?: boolean;
   defaultHtmlPreview?: boolean;
   defaultCsvPreview?: boolean;
+  language?: string;
 }
 
 export class HtmlRenderer {
@@ -67,12 +70,14 @@ export class HtmlRenderer {
   private readonly isMdx: boolean;
   private readonly defaultHtmlPreview: boolean;
   private readonly defaultCsvPreview: boolean;
+  private readonly labels: Translations;
 
   constructor(options?: HtmlRendererOptions) {
     this.theme = options?.theme || 'auto';
     this.isMdx = options?.isMdx || false;
     this.defaultHtmlPreview = options?.defaultHtmlPreview !== false;
     this.defaultCsvPreview = options?.defaultCsvPreview !== false;
+    this.labels = getTranslations(options?.language);
   }
 
   render(tokens: BlockToken[]): RenderedOutput {
@@ -155,15 +160,16 @@ export class HtmlRenderer {
   private renderSection(section: Section): string {
     const { level, text } = section.heading;
     const id = this.nextHeadingId(text);
-    const headingHtml = renderInline(text, this.isMdx);
+    const headingHtml = renderInline(text, this.isMdx, this.labels.rendererUi);
 
     this.toc.push({ level, text, id });
     const inner = section.children.map(b => this.renderNode(b)).join('\n');
     const copyBtnHtml = renderButton({
       className: 'mdn-section-copy-btn',
       onClick: 'UI.copySection(this,event)',
-      label: 'Copy',
-      tooltip: 'Copy section content',
+      label: this.labels.rendererUi.copy,
+      tooltip: this.labels.rendererUi.copySectionContent,
+      copiedLabel: this.labels.rendererUi.copied,
       onKeyDown: 'event.stopPropagation()',
       iconHtml: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
     });
@@ -189,13 +195,13 @@ export class HtmlRenderer {
       case 'heading':    return this.renderSubHeading(token);
       case 'paragraph':
         if (token.isJsx || (this.isMdx && /^\s*</.test(token.text))) {
-          return `<div class="mdn-mdx-block" ${sourceAttributes(token)}>${renderInline(token.text, true)}</div>`;
+          return `<div class="mdn-mdx-block" ${sourceAttributes(token)}>${renderInline(token.text, true, this.labels.rendererUi)}</div>`;
         }
         if (this.isVideoParagraph(token.text)) {
-          return `<div class="mdn-media-paragraph" ${sourceAttributes(token)}>${renderInline(token.text, this.isMdx)}</div>`;
+          return `<div class="mdn-media-paragraph" ${sourceAttributes(token)}>${renderInline(token.text, this.isMdx, this.labels.rendererUi)}</div>`;
         }
-        return renderImageRowParagraph(token, this.isMdx)
-          ?? `<p ${sourceAttributes(token)}>${renderInline(token.text, this.isMdx)}</p>`;
+        return renderImageRowParagraph(token, this.isMdx, this.labels.rendererUi)
+          ?? `<p ${sourceAttributes(token)}>${renderInline(token.text, this.isMdx, this.labels.rendererUi)}</p>`;
       case 'html-comment': return this.renderHtmlComment(token);
       case 'math':       return this.renderMath(token);
       case 'code':       return renderCodeBlock(token, {
@@ -203,6 +209,7 @@ export class HtmlRenderer {
         isMdx: this.isMdx,
         defaultHtmlPreview: this.defaultHtmlPreview,
         defaultCsvPreview: this.defaultCsvPreview,
+        labels: this.labels,
       });
       case 'blockquote': return this.renderBlockquote(token);
       case 'table':      return this.renderTable(token);
@@ -213,7 +220,7 @@ export class HtmlRenderer {
 
   private renderSubHeading(token: HeadingToken): string {
     const id = this.nextHeadingId(token.text);
-    const html = renderInline(token.text, this.isMdx);
+    const html = renderInline(token.text, this.isMdx, this.labels.rendererUi);
     this.toc.push({ level: token.level, text: token.text, id });
     return `<h${token.level} class="mdn-subheading" id="${id}" tabindex="-1">
   <span class="mdn-heading-text" ${sourceAttributes(token)}>${html}<span class="mdn-heading-level" aria-hidden="true">H${token.level}</span></span>
@@ -270,7 +277,7 @@ export class HtmlRenderer {
 </div>`;
     }
 
-    return `<blockquote class="mdn-blockquote" ${sourceAttributes(token)}>${renderInline(token.lines.join('\n'), this.isMdx)}</blockquote>`;
+    return `<blockquote class="mdn-blockquote" ${sourceAttributes(token)}>${renderInline(token.lines.join('\n'), this.isMdx, this.labels.rendererUi)}</blockquote>`;
   }
 
   private renderTable(token: TableToken): string {
@@ -278,7 +285,7 @@ export class HtmlRenderer {
       headers: token.headers,
       rows: token.rows,
       align: token.align,
-    }, this.isMdx)}</div>`;
+    }, this.isMdx, this.labels.rendererUi)}</div>`;
   }
 
   private renderList(token: ListToken): string {
@@ -294,10 +301,10 @@ export class HtmlRenderer {
           : '';
         return `<li class="mdn-list-item mdn-task${checkedCls}">
   <span class="mdn-checkbox" aria-hidden="true">${checkSvg}</span>
-  <span>${renderInline(item.text, this.isMdx)}${nestedContent}</span>
+  <span>${renderInline(item.text, this.isMdx, this.labels.rendererUi)}${nestedContent}</span>
 </li>`;
       }
-      return `<li class="mdn-list-item">${renderInline(item.text, this.isMdx)}${nestedContent}</li>`;
+      return `<li class="mdn-list-item">${renderInline(item.text, this.isMdx, this.labels.rendererUi)}${nestedContent}</li>`;
     }).join('');
     return `<${tag}${startAttr} class="${cls}" ${sourceAttributes(token)}>${items}</${tag}>`;
   }

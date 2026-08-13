@@ -1,10 +1,11 @@
 import { lazy, Suspense } from "react";
 import { TooltipButton } from "./components/shared/TooltipButton";
 import { DesktopTabBar } from "./components/Desktop/DesktopTabBar";
-import { MinimizeIcon } from "./components/shared/icons";
+import { ExitFocusIcon } from "./components/shared/icons";
 import { ScrollToTopButton } from "./components/shared/ScrollToTopButton";
 import { Topbar } from "./components/Topbar/Topbar";
 import { getEnabledShortcut } from "./utils/shortcuts";
+import { AvailableUpdateDialog } from "./components/Settings/AvailableUpdateDialog";
 
 const Sidebar = lazy(() => import("./components/Sidebar/Sidebar").then((m) => ({ default: m.Sidebar })));
 const Content = lazy(() => import("./components/Content/Content").then((m) => ({ default: m.Content })));
@@ -46,6 +47,7 @@ export function AppView(props: any) {
   toggleSidebar,
   isDark,
   updateCheck,
+  updateNotification,
   isFullscreen,
   toggleFullscreen,
   prepareWorkspaceOpen,
@@ -123,14 +125,14 @@ export function AppView(props: any) {
           onCopyFile={copyCurrentFileContent}
           isDark={isDark}
           isMaximized={state.isMaximized}
-          hasUpdate={updateCheck.hasUpdate}
+          hasUpdate={updateNotification.attention}
           isFullscreen={isFullscreen}
           onFullscreenToggle={toggleFullscreen}
         />
       )}
       {state.isWorkspaceScanning && (
         <div className="workspace-scan-progress" role="status" aria-live="polite">
-          <span>Scanning {state.scannedFiles.toLocaleString()} files…</span>
+          <span>{t.ui.scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(state.settings.language || 'en'))}</span>
           {isTabView && (
             <button type="button" className="workspace-scan-progress__cancel" onClick={cancelCurrentWorkspaceScan}>
               {t.tooltips.cancelScan}
@@ -155,10 +157,10 @@ export function AppView(props: any) {
           <main className="tab-loading">
             <div className="state-screen state-screen--tab-loading">
               <div className="spinner" />
-              <div className="state-screen__title">{state.loadingLabel || 'Loading docs...'}</div>
+              <div className="state-screen__title">{state.loadingLabel || t.ui.loadingDocs}</div>
               {state.isWorkspaceScanning && (
                 <div className="state-screen__sub">
-                  Scanning {state.scannedFiles.toLocaleString()} files…
+                  {t.ui.scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(state.settings.language || 'en'))}
                 </div>
               )}
               {state.loadingDetail && <div className="state-screen__sub">{state.loadingDetail}</div>}
@@ -183,7 +185,7 @@ export function AppView(props: any) {
               onExpandAll={expandAll}
               onCollapseAll={collapseAll}
               onCopyFile={copyCurrentFileContent}
-              hasUpdate={updateCheck.hasUpdate}
+              hasUpdate={updateNotification.attention}
               isFullscreen={isFullscreen}
               onFullscreenToggle={toggleFullscreen}
             />
@@ -197,7 +199,7 @@ export function AppView(props: any) {
               activeBookmarkWorkspaceKey={activeBookmarkWorkspaceKey}
               onBookmarkNavigate={handleBookmarkNavigate}
             />
-            <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label="Resize sidebar" />
+            <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label={t.ui.resizeSidebar} />
             <div className="content-shell">
               <ContentTabs />
 
@@ -221,7 +223,7 @@ export function AppView(props: any) {
             </div>
             {state.toc.length > 0 && (
               <>
-                <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label="Resize table of contents" />
+                <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label={t.ui.resizeToc} />
                 <Suspense fallback={null}><TableOfContents variant="panel" /></Suspense>
               </>
             )}
@@ -263,7 +265,20 @@ export function AppView(props: any) {
         onScheduleUpdateOnExit={scheduleUpdateOnExit}
         onRestartAndApplyUpdate={restartAndApplyUpdate}
         onOpenChangelog={openUpdateChangelog}
+        hasUpdateAttention={updateNotification.attention}
       />
+      {updateNotification.promptOpen && (
+        <AvailableUpdateDialog
+          version={updateCheck.latestVersion}
+          currentVersion={updateCheck.currentVersion || state.appVersion}
+          t={t}
+          canDownloadUpdate={state.appRuntime !== 'vscode'}
+          onDownload={updateNotification.download}
+          onLater={updateNotification.later}
+          onSkipVersion={updateNotification.skipVersion}
+          onChangelog={openUpdateChangelog}
+        />
+      )}
       <ThemeOnboardingModal
         isOpen={themeOnboardingOpen}
         onComplete={handleThemeOnboardingComplete}
@@ -289,19 +304,19 @@ export function AppView(props: any) {
           type="button"
           className="exit-focus-btn focus-mode-btn"
           onClick={toggleFocusMode}
-          tooltip={t.actions.toggleFocusMode || "Exit Focus Mode"}
+          tooltip={t.actions.toggleFocusMode}
           shortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}
           tooltipPos="below"
           tooltipAlign="right"
-          icon={<MinimizeIcon size={12} />}
+          icon={<ExitFocusIcon size={12} />}
         />
       )}
 
       {isDragging && (
         <div className="drop-overlay">
-          <div className="drop-overlay__title">Drop folder or file to open</div>
+          <div className="drop-overlay__title">{t.ui.dropOpenTitle}</div>
           <div className="drop-overlay__detail">
-            Supports folders, DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, and RTF files
+            {t.ui.dropOpenSupported}
           </div>
         </div>
       )}

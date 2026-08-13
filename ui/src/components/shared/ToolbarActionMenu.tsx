@@ -8,8 +8,10 @@ import {
   SunIcon,
   SidebarIcon,
   TocIcon,
-  MinimizeIcon,
   MaximizeIcon,
+  ExitFocusIcon,
+  FullscreenMenuIcon,
+  ResetZoomMenuIcon,
 } from "./icons";
 import { TooltipButton } from "./TooltipButton";
 
@@ -26,6 +28,7 @@ interface ToolbarActionMenuProps {
   settingsTooltip: string;
   homeShortcut?: string;
   themeShortcut?: string;
+  editShortcut?: string;
   settingsShortcut?: string;
   canEdit: boolean;
   isDark: boolean;
@@ -60,6 +63,11 @@ interface ToolbarActionMenuProps {
   fullscreenShortcut?: string;
   isFullscreen?: boolean;
   onFullscreenToggle?: () => void;
+  showResetZoom?: boolean;
+  resetZoomLabel?: string;
+  resetZoomTooltip?: string;
+  resetZoomShortcut?: string;
+  onResetZoom?: () => void;
 }
 
 function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
@@ -75,9 +83,11 @@ function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
     case "toc":
       return <TocIcon size={14} />;
     case "focusMode":
-      return isFocusMode ? <MinimizeIcon size={12} /> : <MaximizeIcon size={12} />;
+      return isFocusMode ? <ExitFocusIcon size={12} /> : <MaximizeIcon size={12} />;
     case "fullscreen":
-      return <MaximizeIcon size={12} />;
+      return <FullscreenMenuIcon size={12} />;
+    case "resetZoom":
+      return <ResetZoomMenuIcon size={12} />;
     case "settings":
       return <SettingsIcon size={14} />;
     default:
@@ -98,6 +108,7 @@ export function ToolbarActionMenu({
   settingsTooltip,
   homeShortcut,
   themeShortcut,
+  editShortcut,
   settingsShortcut,
   canEdit,
   isDark,
@@ -129,6 +140,11 @@ export function ToolbarActionMenu({
   fullscreenShortcut,
   isFullscreen = false,
   onFullscreenToggle,
+  showResetZoom = false,
+  resetZoomLabel,
+  resetZoomTooltip,
+  resetZoomShortcut,
+  onResetZoom,
 }: ToolbarActionMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -182,7 +198,7 @@ export function ToolbarActionMenu({
     items.push({
       id: "edit",
       label: editLabel,
-      tooltip: buildShortcutTooltip(editTooltip),
+      tooltip: buildShortcutTooltip(editTooltip, editShortcut),
       disabled: !canEdit,
     });
   }
@@ -226,6 +242,15 @@ export function ToolbarActionMenu({
     });
   }
 
+  if (showResetZoom && onResetZoom && resetZoomLabel && resetZoomTooltip) {
+    items.push({
+      id: "resetZoom",
+      label: resetZoomLabel,
+      tooltip: buildShortcutTooltip(resetZoomTooltip, resetZoomShortcut),
+      disabled: false,
+    });
+  }
+
   items.push({
     id: "settings",
     label: settingsLabel,
@@ -256,6 +281,9 @@ export function ToolbarActionMenu({
         return;
       case "fullscreen":
         onFullscreenToggle?.();
+        return;
+      case "resetZoom":
+        onResetZoom?.();
         return;
       case "settings":
         onSettings();

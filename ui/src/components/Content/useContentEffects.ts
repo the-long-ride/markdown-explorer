@@ -428,7 +428,8 @@ export function useContentEffects({
         scrollContainer.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [state.renderVersion, state.theme, state.themeStyle, state.isLoading, state.notFoundHref,
+  }, [state.renderVersion, state.theme, state.themeStyle, state.settings.activeCustomThemeId,
+    state.settings.customThemes, state.settings.fontBindings, state.isLoading, state.notFoundHref,
     state.workspaceUnavailablePath, onImageClick, navigate, scrollRef, bridge, previewLabels,
     onOpenHtmlModal, onOpenLinkMenu, onBookmarkContextMenu, onActionError, state.currentFile, state.appRuntime,
     state.defaultExpanded]);

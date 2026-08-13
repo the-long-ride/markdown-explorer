@@ -9,7 +9,7 @@ export interface RenderedDocument {
 
 export type RenderPreviewSettings = Pick<
   AppSettings,
-  'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview'
+  'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview' | 'language'
 >;
 
 export function resolveRenderedDocument(

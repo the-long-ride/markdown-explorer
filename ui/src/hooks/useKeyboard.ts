@@ -84,6 +84,7 @@ export function useKeyboard({
     toggleTheme,
     toggleSidebar,
     navigate,
+    openInEditor,
     refresh,
     closeContentTab,
     closeAllContentTabs,
@@ -131,6 +132,7 @@ export function useKeyboard({
         hasOnSidebarCursorModeToggle: !!onSidebarCursorModeToggle,
         hasOnSidebarCursorModeClose: !!onSidebarCursorModeClose,
         hasOnWelcome: !!onWelcome,
+        hasOnEditCurrentDocument: (isDesktop || state.appRuntime === 'vscode') && !!state.currentFile,
         hasOnToggleToc: !!onToggleToc,
         hasOnLocateFile: !!onLocateFile,
         hasOnOpenBookmarks: !!onBookmarksOpen,
@@ -156,6 +158,7 @@ export function useKeyboard({
           bridge.postMessage({ command: 'zoom-out' });
           break;
         case 'zoom-reset':
+          bridge.postMessage({ command: 'zoom-reset' });
           break;
         case 'sidebar-cursor-mode-toggle':
           onSidebarCursorModeToggle?.();
@@ -205,6 +208,9 @@ export function useKeyboard({
           } else {
             navigate(null);
           }
+          break;
+        case 'edit-current-document':
+          openInEditor();
           break;
         case 'settings-toggle':
           if (isSettingsOpen) {
@@ -328,6 +334,7 @@ export function useKeyboard({
     back,
     forward,
     navigate,
+    openInEditor,
     refresh,
     toggleTheme,
     toggleSidebar,
@@ -359,14 +366,16 @@ export function useKeyboard({
     isTermsOpen,
     onToggleToc,
     onLocateFile,
-  onBookmarksOpen,
+    onBookmarksOpen,
     onOpenCurrentDocumentLocation,
+    onToggleFocusMode,
     onToggleDesktopViewMode,
     activeHtmlDocument,
     onToggleActiveHtmlDocumentPreview,
     onToggleFullscreen,
     onWorkspaceSelection,
     state.activeContentTabPath,
+    state.appRuntime,
     state.currentFile,
   ]);
 }

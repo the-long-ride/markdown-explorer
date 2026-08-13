@@ -92,12 +92,13 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
-  ToolbarActionMenu: ({ onHome, onTheme, onSettings, hasUpdate, isDark, ...props }: any) =>
+  ToolbarActionMenu: ({ onHome, onTheme, onEdit, onSettings, hasUpdate, isDark, canEdit, showEdit = true, editShortcut, ...props }: any) =>
     React.createElement(
       'div',
-      { 'data-testid': 'toolbar-action-menu', 'data-has-update': String(hasUpdate), 'data-is-dark': String(isDark) },
+      { 'data-testid': 'toolbar-action-menu', 'data-has-update': String(hasUpdate), 'data-is-dark': String(isDark), 'data-edit-shortcut': editShortcut || '' },
       React.createElement('button', { onClick: onHome, 'data-testid': 'menu-home' }, 'Home'),
       React.createElement('button', { onClick: onTheme, 'data-testid': 'menu-theme' }, 'Theme'),
+      showEdit ? React.createElement('button', { onClick: onEdit, disabled: !canEdit, 'data-testid': 'menu-edit' }, 'Edit') : null,
       React.createElement('button', { onClick: onSettings, 'data-testid': 'menu-settings' }, 'Settings'),
     ),
 }));
@@ -109,6 +110,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   CollapseIcon: () => React.createElement('span', { 'data-testid': 'collapse-icon' }),
   CopyIcon: () => React.createElement('span', { 'data-testid': 'copy-icon' }),
   RefreshIcon: () => React.createElement('span', { 'data-testid': 'refresh-icon' }),
+  EditIcon: () => React.createElement('span', { 'data-testid': 'edit-icon' }),
 }));
 
 vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({
@@ -135,7 +137,7 @@ describe('Topbar render', () => {
       relativePath: 'docs/guide/getting-started.md',
       currentFile: '/project/docs/guide/getting-started.md',
       appRuntime: 'web',
-      settings: { language: 'en', keybindings: { back: 'Alt+Left', forward: 'Alt+Right', refresh: 'F5', expandAll: 'Ctrl+E', collapseAll: 'Ctrl+Shift+E', toggleTheme: 'Ctrl+T', settings: 'Ctrl+,', toggleSidebar: 'Ctrl+B', toggleToc: 'Ctrl+Shift+T', toggleFocusMode: 'F9', welcome: 'Ctrl+H' } },
+      settings: { language: 'en', keybindings: { back: 'Alt+Left', forward: 'Alt+Right', refresh: 'F5', expandAll: 'Ctrl+E', collapseAll: 'Ctrl+Shift+E', toggleTheme: 'Ctrl+T', settings: 'Ctrl+,', toggleSidebar: 'Ctrl+B', toggleToc: 'Ctrl+Shift+T', toggleFocusMode: 'F9', welcome: 'Ctrl+H', editCurrentDocument: 'Ctrl+Alt+E' } },
       sidebarCollapsed: false,
       tocCollapsed: true,
       focusMode: false,
@@ -279,6 +281,50 @@ describe('Topbar render', () => {
     render(React.createElement(Topbar, defaultProps));
     fireEvent.click(screen.getByTestId('menu-settings'));
     expect(defaultProps.onSettingsOpen).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['/project/README.md', 'md'],
+    ['/project/docs/guide.mdx', 'mdx'],
+  ])('renders the dedicated VS Code Edit button for an open %s file', (filePath) => {
+    mockState.appRuntime = 'vscode';
+    mockState.currentFile = filePath;
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    const edit = container.querySelector('.topbar__edit-action') as HTMLButtonElement;
+    expect(edit).toBeEnabled();
+    expect(edit).toHaveAttribute('data-shortcut', 'Ctrl+Alt+E');
+    expect(screen.queryByTestId('menu-edit')).not.toBeInTheDocument();
+  });
+
+  it('dispatches openInEditor from the dedicated VS Code Edit action', () => {
+    mockState.appRuntime = 'vscode';
+    mockState.currentFile = '/project/docs/guide.mdx';
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    fireEvent.click(container.querySelector('.topbar__edit-action') as HTMLButtonElement);
+    expect(mockOpenInEditor).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the dedicated VS Code Edit button disabled when no file is open', () => {
+    mockState.appRuntime = 'vscode';
+    mockState.currentFile = null;
+    mockState.relativePath = 'Welcome Page';
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    expect(container.querySelector('.topbar__edit-action')).toBeDisabled();
+  });
+
+  it('keeps Desktop Edit inside More actions with Ctrl+E', () => {
+    mockState.appRuntime = 'desktop';
+    mockState.settings.keybindings.editCurrentDocument = 'Ctrl+E';
+    render(React.createElement(Topbar, defaultProps));
+    expect(screen.getByTestId('menu-edit')).toBeEnabled();
+    expect(screen.getByTestId('toolbar-action-menu')).toHaveAttribute('data-edit-shortcut', 'Ctrl+E');
+  });
+
+  it.each(['chrome', 'web'])('does not expose Edit in %s runtime', (runtime) => {
+    mockState.appRuntime = runtime;
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    expect(container.querySelector('.topbar__edit-action')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('menu-edit')).not.toBeInTheDocument();
   });
 
   it('calls navigate(null) via action menu home button', () => {

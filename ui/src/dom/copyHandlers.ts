@@ -1,3 +1,4 @@
+import { DEFAULT_TABLE_UI_LABELS } from './tableUiLabels';
 export function slugifyHeading(text: string) {
   return text
     .toLowerCase()
@@ -63,7 +64,7 @@ export function markdownSectionFromSource(
   return '';
 }
 
-export const markCopied = (btn: HTMLElement | null | undefined, resetText: string) => {
+export const markCopied = (btn: HTMLElement | null | undefined, resetText?: string) => {
   if (!btn) return;
   const feedbackBtn = btn as HTMLElement & { __copyResetTimer?: number };
   if (feedbackBtn.__copyResetTimer) {
@@ -72,10 +73,11 @@ export const markCopied = (btn: HTMLElement | null | undefined, resetText: strin
 
   btn.classList.add('is-copied');
   const tooltip = btn.querySelector('.tooltip-text');
-  if (tooltip) tooltip.textContent = 'Copied!';
+  const resetLabel = resetText ?? tooltip?.textContent ?? '';
+  if (tooltip) tooltip.textContent = btn.dataset.copiedLabel ?? DEFAULT_TABLE_UI_LABELS.copied;
   feedbackBtn.__copyResetTimer = window.setTimeout(() => {
     btn.classList.remove('is-copied');
-    if (tooltip) tooltip.textContent = resetText;
+    if (tooltip) tooltip.textContent = resetLabel;
     feedbackBtn.__copyResetTimer = undefined;
   }, 2000);
 };
@@ -129,7 +131,7 @@ export function registerCopyHandlers(win: any) {
       const occurrence = computeSectionOccurrence(sameIdSections, section);
       const markdownSource = markdownSectionFromSource(win.UI.currentMarkdownSource, section.id, occurrence);
       copyText(markdownSource || textFromElement(body));
-      markCopied(btn, 'Copy section content');
+      markCopied(btn);
     } catch (err) {
       console.warn('Failed to copy section to clipboard:', err);
     }
@@ -140,7 +142,7 @@ export function registerCopyHandlers(win: any) {
     if (!body) return;
     try {
       copyText(textFromElement(body));
-      markCopied(btn, 'Copy file content');
+      markCopied(btn);
     } catch (err) {
       console.warn('Failed to copy document to clipboard:', err);
     }
@@ -156,7 +158,7 @@ export function registerCopyHandlers(win: any) {
     } catch (err) {
       console.warn('Failed to copy code to clipboard:', err);
     }
-    markCopied(btn, 'Copy code');
+    markCopied(btn);
   };
   win.UI_copyCode = win.UI.copyCode;
 }

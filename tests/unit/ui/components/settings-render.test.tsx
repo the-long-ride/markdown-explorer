@@ -31,6 +31,11 @@ function getMockState() {
     theme: 'dark',
     themeStyle: 'default',
     appVersion: '1.0.0',
+    appRuntime: 'vscode',
+    currentFile: '/workspace/readme.md',
+    desktopFonts: [],
+    desktopFontsResult: null,
+    desktopFontError: null,
     recentWorkspaces: [],
   };
 }
@@ -50,8 +55,8 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, icon, tooltip, label, onlyIcon = true, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
-    <button onClick={onClick} aria-label={label || tooltip} {...props}>
+  TooltipButton: ({ onClick, children, icon, tooltip, shortcut, label, onlyIcon = true, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
+    <button onClick={onClick} aria-label={label || tooltip} data-shortcut={shortcut || undefined} {...props}>
       {icon}{!onlyIcon && label}{children}
       {tooltip && <span className="tooltip-text">{tooltip}</span>}
     </button>
@@ -110,7 +115,17 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
     resetShortcutsConfirmBody: 'Confirm reset',
     confirmResetShortcuts: 'Reset Shortcuts',
     cancelResetShortcuts: 'Cancel',
-    closeSettings: 'Close Settings - (Esc)',
+    closeSettings: 'Close Settings',
+    typography: 'Typography',
+    typographyDesc: 'Bind fonts by role.',
+    updateBackup: 'Update & Backup',
+    updateBackupDesc: 'Updates and portable settings.',
+    applicationUpdate: 'Application update',
+    checkForUpdate: 'Check for update',
+    latestVersionStatus: 'Latest version',
+    newerVersionStatus: 'New version',
+    settingsBackup: 'Settings backup',
+    settingsBackupDesc: 'Import or export settings.',
     actions: {
       findCurrentFile: 'Find in file',
       searchCurrent: 'Search workspace',
@@ -118,6 +133,7 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
       back: 'Back',
       forward: 'Forward',
       welcome: 'Welcome',
+      editCurrentDocument: 'Open current file in editor',
       settings: 'Settings',
       toggleTheme: 'Toggle theme',
       refresh: 'Refresh',
@@ -196,6 +212,14 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   AlertTriangleIcon: ({ size }: any) => <span>alert-icon</span>,
   ImportSettingsIcon: () => <span>import-icon</span>,
   ExportSettingsIcon: () => <span>export-icon</span>,
+  CheckForUpdateIcon: () => <span>update-icon</span>,
+  SettingsAppearanceIcon: () => <span>appearance-icon</span>,
+  SettingsTypographyIcon: () => <span>typography-icon</span>,
+  SettingsThemeStyleIcon: () => <span>theme-style-icon</span>,
+  SettingsShortcutsIcon: () => <span>shortcuts-icon</span>,
+  SettingsUpdateBackupIcon: () => <span>update-backup-icon</span>,
+  RefreshIcon: () => <span>refresh-icon</span>,
+  OpenInBrowserIcon: () => <span>browser-icon</span>,
   LanguageIcon: () => <span>lang-icon</span>,
 }));
 
@@ -205,7 +229,8 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
     { id: 'light', label: 'Light' },
     { id: 'dark', label: 'Dark' },
   ],
-  getDefaultKeybindings: () => ({ searchCurrent: 'Ctrl+K' }),
+  getDefaultKeybindings: () => ({ searchCurrent: 'Ctrl+K', editCurrentDocument: 'Ctrl+Alt+E' }),
+  getDefaultKeybindingsForRuntime: (runtime: string) => runtime === 'chrome' ? { searchCurrent: 'Ctrl+K' } : { searchCurrent: 'Ctrl+K', editCurrentDocument: runtime === 'vscode' ? 'Ctrl+Alt+E' : 'Ctrl+E' },
 }));
 
 vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({
@@ -276,6 +301,43 @@ describe('SettingsModal', () => {
       />,
     );
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Settings');
+  });
+
+  it('renders Esc as the close-button shortcut instead of translation text', () => {
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    const close = screen.getByRole('button', { name: 'Close Settings' });
+    expect(close).toHaveAttribute('data-shortcut', 'Esc');
+    expect(close).not.toHaveTextContent('(Esc)');
+  });
+
+  it('renders icons before the visible Settings navigation labels', () => {
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    expect(screen.getByText('appearance-icon')).toBeInTheDocument();
+    expect(screen.getByText('theme-style-icon')).toBeInTheDocument();
+    expect(screen.getByText('shortcuts-icon')).toBeInTheDocument();
+    expect(screen.getByText('update-backup-icon')).toBeInTheDocument();
   });
 
   it('renders Appearance section', () => {
@@ -441,6 +503,28 @@ describe('SettingsModal', () => {
       />,
     );
     expect(screen.getByText('Keyboard Shortcuts')).toBeInTheDocument();
+  });
+
+  it('shows Edit in VS Code shortcuts and hides it in Chromium', () => {
+    const modalProps = {
+      isOpen: true,
+      onClose: () => {},
+      updateCheck: defaultUpdateCheck,
+      hostUpdateState: defaultHostUpdateState,
+      onDownloadUpdate: () => {},
+      onScheduleUpdateOnExit: () => {},
+      onRestartAndApplyUpdate: () => {},
+      onOpenChangelog: () => {},
+    };
+    const { unmount } = render(<SettingsModal {...modalProps} />);
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+    expect(screen.getByText('Open current file in editor')).toBeInTheDocument();
+    unmount();
+
+    mockState = { ...getMockState(), appRuntime: 'chrome' };
+    render(<SettingsModal {...modalProps} />);
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+    expect(screen.queryByText('Open current file in editor')).not.toBeInTheDocument();
   });
 
   it('lists workspace selection shortcut on non-desktop platforms', () => {
@@ -652,7 +736,7 @@ describe('SettingsModal', () => {
     );
     fireEvent.click(screen.getByText('Reset to Default Shortcuts'));
     fireEvent.click(screen.getByRole('button', { name: 'Reset Shortcuts' }));
-    expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K' }, disabledKeybindings: {} });
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ keybindings: { searchCurrent: 'Ctrl+K', editCurrentDocument: 'Ctrl+Alt+E' }, disabledKeybindings: {} });
   });
 
   it('calls onClose when close button is clicked', () => {
@@ -669,7 +753,7 @@ describe('SettingsModal', () => {
         onOpenChangelog={() => {}}
       />,
     );
-    const closeBtn = screen.getByRole('button', { name: 'Close Settings - (Esc)' });
+    const closeBtn = screen.getByRole('button', { name: 'Close Settings' });
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalled();
   });

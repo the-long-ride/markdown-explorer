@@ -135,7 +135,7 @@ export function ContentTabs() {
         case "openInBrowser":
           if (!openLocalFileInBrowser(bridge, contextMenu.filePath)) {
             window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', {
-              detail: t?.previewActions?.openError ?? 'Unable to open file in browser',
+              detail: t.previewActions.openError,
             }));
           }
           break;

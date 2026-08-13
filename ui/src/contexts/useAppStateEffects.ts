@@ -2,6 +2,7 @@ import { useEffect, type MutableRefObject } from 'react';
 import {
   normalizeDesktopViewMode,
   normalizeKeybindings,
+  normalizeKeybindingsForRuntime,
   normalizeThemeMode,
   normalizeThemeStyle,
 } from './appStateConstants';
@@ -20,6 +21,8 @@ import {
 } from './appStateReducer';
 import { acceptsWorkspaceHostMessage } from '../desktop/workspaceOperations';
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
+import { applyDesktopTypography } from '../desktop/fonts/applyDesktopTypography';
+import { migrateDesktopFontBindings } from '../desktop/fonts/fontModel';
 
 type AppStateEffectsArgs = {
   bridge: {
@@ -64,6 +67,7 @@ export function useAppStateEffects({
           sidebarSortModes: saved.sidebarSortModes ?? {},
           maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+          fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
           disabledKeybindings: saved.disabledKeybindings ?? {},
           language: saved.language || 'en',
@@ -187,6 +191,9 @@ export function useAppStateEffects({
             active: msg.active,
           });
           break;
+        case 'desktopFontsResult':
+          dispatch({ type: 'SET_DESKTOP_FONTS', fonts: msg.fonts, requestId: msg.requestId, importedId: msg.importedId, error: msg.error });
+          break;
         case 'updateStateChanged':
           dispatch({ type: 'SET_UPDATE_STATE', updateState: msg.state });
           break;
@@ -248,6 +255,7 @@ export function useAppStateEffects({
       sidebarSortModes: state.settings.sidebarSortModes,
       maxPinnedItems: normalizeMaxPinnedItems(state.settings.maxPinnedItems),
       desktopViewMode: state.settings.desktopViewMode,
+      fontBindings: migrateDesktopFontBindings(state.settings.fontBindings),
       keybindings: state.settings.keybindings,
       disabledKeybindings: state.settings.disabledKeybindings,
       theme: state.theme,
@@ -257,6 +265,28 @@ export function useAppStateEffects({
       activeCustomThemeId: state.settings.activeCustomThemeId,
     });
   }, [bridge, state.settings, state.theme, state.themeStyle]);
+
+  useEffect(() => {
+    const normalized = normalizeKeybindingsForRuntime(state.settings.keybindings, state.appRuntime);
+    if (JSON.stringify(normalized) === JSON.stringify(state.settings.keybindings)) return;
+    dispatch({ type: 'UPDATE_SETTINGS', settings: { keybindings: normalized } });
+  }, [dispatch, state.appRuntime, state.settings.keybindings]);
+
+  useEffect(() => {
+    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
+    if (!typographyRuntime) return;
+    bridge.postMessage({ command: 'listDesktopFonts', requestId: `startup-${Date.now()}` });
+  }, [bridge, state.appRuntime]);
+
+  useEffect(() => {
+    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
+    applyDesktopTypography(
+      document,
+      { fontBindings: state.settings.fontBindings },
+      state.desktopFonts,
+      typographyRuntime,
+    );
+  }, [state.appRuntime, state.desktopFonts, state.settings.fontBindings]);
 
   // Actions
 

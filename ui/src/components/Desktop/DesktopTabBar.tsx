@@ -289,7 +289,7 @@ export function DesktopTabBar({
           ref={tabsScrollRef}
           className="desktop-tabbar__tabs"
           role="tablist"
-          aria-label="Workspace tabs"
+          aria-label={t.ui.workspaceTabs}
           onScroll={updateScrollbarMetrics}
         >
           {workspaceTabs.map((tab) => {
@@ -353,6 +353,7 @@ export function DesktopTabBar({
         settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
         homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
         themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
+        editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
         settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
         canEdit={!!state.currentFile}
         isDark={isDark}
@@ -373,8 +374,8 @@ export function DesktopTabBar({
         tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
         tocToggleDisabled={!state.currentFile || state.toc.length === 0}
         onTocToggle={toggleToc}
-        focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
-        focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
+        focusModeLabel={t.actions.toggleFocusMode}
+        focusModeTooltip={t.actions.toggleFocusMode}
         focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}
         isFocusMode={state.focusMode}
         onFocusModeToggle={toggleFocusMode}
@@ -384,6 +385,11 @@ export function DesktopTabBar({
         fullscreenShortcut="F11"
         isFullscreen={isFullscreen}
         onFullscreenToggle={onFullscreenToggle}
+        showResetZoom
+        resetZoomLabel={t.tooltips.resetZoom}
+        resetZoomTooltip={t.tooltips.resetZoom}
+        resetZoomShortcut={getEnabledShortcut(state.settings, 'resetZoom')}
+        onResetZoom={() => bridge.postMessage({ command: 'zoom-reset' })}
       />
       <span
         className="topbar__crumb-separator desktop-tabbar__window-separator"

@@ -211,7 +211,7 @@ export function useAppLayoutEffects({
   const copyCurrentFileContent = useCallback((button?: HTMLElement | null) => {
     if (state.currentFile && state.markdownSource !== null) {
       bridge.copyToClipboard(state.markdownSource);
-      (window as any).UI?.markCopyButtonCopied?.(button, 'Copy file content');
+      (window as any).UI?.markCopyButtonCopied?.(button);
       return;
     }
 

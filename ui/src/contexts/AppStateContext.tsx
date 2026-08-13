@@ -35,10 +35,12 @@ export {
   DEFAULT_KEYBINDINGS,
   DEFAULT_PET_THEME_STYLE,
   DESKTOP_DEFAULT_KEYBINDINGS,
+  VSCODE_DEFAULT_KEYBINDINGS,
   PET_THEME_STYLE_OPTIONS,
   THEME_MODE_OPTIONS,
   THEME_STYLE_OPTIONS,
   getDefaultKeybindings,
+  getDefaultKeybindingsForRuntime,
   isPetThemeStyle,
 } from './appStateConstants';
 

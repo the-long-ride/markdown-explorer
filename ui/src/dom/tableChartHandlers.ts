@@ -1,5 +1,7 @@
 import type { TableState } from './tableHandlers';
 import { detectColumnTypes, truncateLabel } from './tableHandlers';
+import { getTableUiLabels, formatUiLabel } from './tableUiLabels';
+import { escHtml } from '../markdown/utils';
 
 export function registerTableChartHandlers(
   win: any,
@@ -32,36 +34,37 @@ export function registerTableChartHandlers(
         if (switcher) {
           // Always re-populate switcher (clear first to handle re-renders)
           const currentView = state.currentView || 'table';
+          const labels = getTableUiLabels(tableId);
           const formattedLabels: Record<string, string> = {
-            table: 'Table',
-            bar: 'Bar Chart',
-            line: 'Line Chart',
-            pie: 'Pie Chart'
+            table: labels.table,
+            bar: labels.barChart,
+            line: labels.lineChart,
+            pie: labels.pieChart,
           };
-          const activeLabel = formattedLabels[currentView] || 'Table';
+          const activeLabel = formattedLabels[currentView] || labels.table;
 
           switcher.innerHTML = `
             <div class="mdn-table-view-dropdown" id="${tableId}-view-dropdown">
               <button type="button" class="mdn-table-view-select" aria-haspopup="listbox" aria-expanded="false">
-                <span class="mdn-table-view-select__label">${activeLabel}</span>
+                <span class="mdn-table-view-select__label">${escHtml(activeLabel)}</span>
                 <span class="mdn-table-view-select__chevron" aria-hidden="true">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </span>
               </button>
-              <div class="mdn-table-view-menu" role="listbox" aria-label="Table view type" hidden>
+              <div class="mdn-table-view-menu" role="listbox" aria-label="${escHtml(labels.tableViewType)}" hidden>
                 <button type="button" role="option" data-value="table" aria-selected="${currentView === 'table' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'table' ? ' is-selected' : ''}">
-                  <span class="mdn-table-view-menu__label">Table</span>
+                  <span class="mdn-table-view-menu__label">${escHtml(labels.table)}</span>
                 </button>
                 <button type="button" role="option" data-value="bar" aria-selected="${currentView === 'bar' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'bar' ? ' is-selected' : ''}">
-                  <span class="mdn-table-view-menu__label">Bar Chart</span>
+                  <span class="mdn-table-view-menu__label">${escHtml(labels.barChart)}</span>
                 </button>
                 <button type="button" role="option" data-value="line" aria-selected="${currentView === 'line' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'line' ? ' is-selected' : ''}">
-                  <span class="mdn-table-view-menu__label">Line Chart</span>
+                  <span class="mdn-table-view-menu__label">${escHtml(labels.lineChart)}</span>
                 </button>
                 <button type="button" role="option" data-value="pie" aria-selected="${currentView === 'pie' ? 'true' : 'false'}" class="mdn-table-view-menu__option${currentView === 'pie' ? ' is-selected' : ''}">
-                  <span class="mdn-table-view-menu__label">Pie Chart</span>
+                  <span class="mdn-table-view-menu__label">${escHtml(labels.pieChart)}</span>
                 </button>
               </div>
             </div>
@@ -81,11 +84,12 @@ export function registerTableChartHandlers(
     if (dropdown) {
       const labelEl = dropdown.querySelector('.mdn-table-view-select__label');
       if (labelEl) {
+        const labels = getTableUiLabels(tableId);
         const formattedLabels: Record<string, string> = {
-          table: 'Table',
-          bar: 'Bar Chart',
-          line: 'Line Chart',
-          pie: 'Pie Chart'
+          table: labels.table,
+          bar: labels.barChart,
+          line: labels.lineChart,
+          pie: labels.pieChart,
         };
         labelEl.textContent = formattedLabels[view] || view;
       }
@@ -218,7 +222,7 @@ export function registerTableChartHandlers(
         ctx.font = '13px sans-serif';
         ctx.fillStyle = 'var(--txm)';
         ctx.textAlign = 'center';
-        ctx.fillText('No data to display in chart', canvas.width / 2, canvas.height / 2);
+        ctx.fillText(getTableUiLabels(tableId).noDataForChart, canvas.width / 2, canvas.height / 2);
       }
       return;
     }
@@ -234,7 +238,7 @@ export function registerTableChartHandlers(
     const colors = win.Table.getChartColors(state.dataColIdxs.length);
 
     const datasets = state.dataColIdxs.map((colIdx: number, dsIdx: number) => {
-      const headerText = table.querySelectorAll('thead th')[colIdx]?.querySelector('.mdn-th-text')?.textContent?.trim() ?? `Series ${dsIdx + 1}`;
+      const headerText = table.querySelectorAll('thead th')[colIdx]?.querySelector('.mdn-th-text')?.textContent?.trim() ?? formatUiLabel(getTableUiLabels(tableId).series, { index: dsIdx + 1 });
       const data = chartRows.map(row => {
         const text = row.cells[colIdx]?.textContent?.trim() ?? '0';
         const clean = text.replace(/[\$,%]/g, '').trim();
@@ -306,4 +310,3 @@ export function registerTableChartHandlers(
     }
   };
 }
-

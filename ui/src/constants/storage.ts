@@ -5,6 +5,7 @@ export const WEB_APP_STATE_STORAGE_KEY = 'markdown-explorer-web-state';
 
 export const TERMS_ACCEPTED_STORAGE_KEY = 'markdown-explorer-terms-accepted';
 export const THEME_ONBOARDING_COMPLETE_STORAGE_KEY = 'markdown-explorer-theme-onboarding-complete';
+export const SKIPPED_UPDATE_VERSION_STORAGE_KEY = 'markdown-explorer-skipped-update-version';
 export const SIDEBAR_WIDTH_STORAGE_KEY = 'markdown-explorer-sidebar-width';
 export const TOC_WIDTH_STORAGE_KEY = 'markdown-explorer-toc-width';
 export const TOC_COLLAPSED_STORAGE_KEY = 'markdown-explorer-toc-collapsed';

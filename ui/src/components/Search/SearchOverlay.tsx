@@ -322,9 +322,9 @@ export function SearchOverlay({
           <input ref={inputRef} type="text" className="search-overlay-input" placeholder={placeholder} value={query}
             onChange={(event) => setQuery(event.target.value)} disabled={isIndexing} aria-label={t.search.queryLabel} />
           <TooltipButton type="button" className={`search-overlay-case-toggle${matchCase ? ' is-active' : ''}`}
-            onClick={() => setMatchCase((value) => !value)} tooltip={`${t.search.matchCase} - ${matchCase ? (t.search.statusOn || 'On') : (t.search.statusOff || 'Off')}`} tooltipPos="below" aria-pressed={matchCase}>Aa</TooltipButton>
+            onClick={() => setMatchCase((value) => !value)} tooltip={`${t.search.matchCase} - ${matchCase ? t.search.statusOn : t.search.statusOff}`} tooltipPos="below" aria-pressed={matchCase}>Aa</TooltipButton>
           <TooltipButton type="button" className={`search-overlay-preview-toggle${previewEnabled ? ' is-active' : ''}`}
-            onClick={() => setPreviewEnabled((value) => !value)} tooltip={`${t.search.preview} - ${previewEnabled ? (t.search.statusOn || 'On') : (t.search.statusOff || 'Off')}`} tooltipPos="below" aria-pressed={previewEnabled}>{t.search.preview}</TooltipButton>
+            onClick={() => setPreviewEnabled((value) => !value)} tooltip={`${t.search.preview} - ${previewEnabled ? t.search.statusOn : t.search.statusOff}`} tooltipPos="below" aria-pressed={previewEnabled}>{t.search.preview}</TooltipButton>
         </div>
 
         <div className={`search-overlay-layout${previewEnabled ? '' : ' is-preview-hidden'}`}>

@@ -4,6 +4,8 @@
 
 import { escHtml, escAttr } from './utils';
 import { YOUTUBE_ORIGIN, YOUTUBE_WIDGET_REFERRER } from '../constants/urls';
+import { AUDITED_UI_TRANSLATIONS } from '../contexts/auditedUiTranslations';
+import type { AuditedUiTranslationDomains } from '../contexts/auditedUiTranslationTypes';
 
 /**
  * Safe inline HTML tags that are passed through as-is.
@@ -106,31 +108,31 @@ function stripTags(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
 }
 
-function renderVideo(src: string, label: string): string {
+function renderVideo(src: string, label: string, labels: AuditedUiTranslationDomains['rendererUi']): string {
   const cleanSrc = src.trim();
   const safeSrc = escHtml(cleanSrc);
   const caption = label.trim();
-  const ariaLabel = escHtml(stripTags(caption) || 'Video');
+  const ariaLabel = escHtml(stripTags(caption) || labels.video);
   const captionHtml = caption ? `<figcaption class="mdn-video-caption">${caption}</figcaption>` : '';
 
   return `<figure class="mdn-video-wrap">
   <video class="mdn-video" controls preload="metadata" playsinline aria-label="${ariaLabel}">
     <source src="${safeSrc}" type="${videoMimeType(cleanSrc)}" />
-    <a href="${safeSrc}" class="mdn-link" target="_blank" rel="noopener noreferrer">Open video</a>
+    <a href="${safeSrc}" class="mdn-link" target="_blank" rel="noopener noreferrer">${escHtml(labels.openVideo)}</a>
   </video>
   ${captionHtml}
 </figure>`;
 }
 
-function renderYouTubeEmbed(src: string, label: string): string {
+function renderYouTubeEmbed(src: string, label: string, labels: AuditedUiTranslationDomains['rendererUi']): string {
   const embedSrc = getYouTubeEmbedSrc(src);
   if (!embedSrc) {
     return `<a href="${escHtml(src)}" class="mdn-link" target="_blank" rel="noopener noreferrer">${label}</a>`;
   }
 
   const caption = label.trim();
-  const title = escHtml(stripTags(caption) || 'YouTube video');
-  const sourceLink = `<a href="${escHtml(src)}" class="mdn-link" target="_blank" rel="noopener noreferrer">Watch on YouTube</a>`;
+  const title = escHtml(stripTags(caption) || labels.youtubeVideo);
+  const sourceLink = `<a href="${escHtml(src)}" class="mdn-link" target="_blank" rel="noopener noreferrer">${escHtml(labels.watchOnYouTube)}</a>`;
   const captionHtml = `<figcaption class="mdn-video-caption">${caption ? `${caption} · ` : ''}${sourceLink}</figcaption>`;
 
   return `<figure class="mdn-video-wrap mdn-video-wrap--embed">
@@ -147,7 +149,11 @@ function renderYouTubeEmbed(src: string, label: string): string {
  *           images, links (internal .md and external), auto-links,
  *           and safe HTML passthrough (kbd, sub, sup, mark, br, …).
  */
-export function renderInline(text: string, isMdx = false): string {
+export function renderInline(
+  text: string,
+  isMdx = false,
+  labels: AuditedUiTranslationDomains['rendererUi'] = AUDITED_UI_TRANSLATIONS.en.rendererUi,
+): string {
   if (!text) return '';
 
   // ── Step 0: Stash safe HTML tags so escHtml() can't destroy them ──
@@ -246,9 +252,9 @@ export function renderInline(text: string, isMdx = false): string {
     /!\[([^\]]*)\]\(([^)]+)\)/g,
     (_, alt, src) => {
       if (isYouTubeSource(src)) {
-        stash.push(renderYouTubeEmbed(src, alt));
+        stash.push(renderYouTubeEmbed(src, alt, labels));
       } else if (isVideoSource(src)) {
-        stash.push(renderVideo(src, alt));
+        stash.push(renderVideo(src, alt, labels));
       } else {
         stash.push(`<img alt="${alt}" src="${src}" class="mdn-img" loading="lazy" ${bookmarkAttrs('image', { 'bookmark-alt': alt, 'bookmark-url': src })} />`);
       }
@@ -261,9 +267,9 @@ export function renderInline(text: string, isMdx = false): string {
   t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_full, label, href) => {
     let linkHtml = '';
     if (isYouTubeSource(href)) {
-      linkHtml = renderYouTubeEmbed(href, label);
+      linkHtml = renderYouTubeEmbed(href, label, labels);
     } else if (isVideoSource(href)) {
-      linkHtml = renderVideo(href, label);
+      linkHtml = renderVideo(href, label, labels);
     } else if (href.endsWith('.md') || href.includes('.md#')) {
       linkHtml = `<a href="#" class="mdn-link mdn-link--internal" ${bookmarkAttrs('link', { 'bookmark-label': label, 'bookmark-url': href })} data-mdn-target="${escHtml(href)}" onclick="Nav.go('${escAttr(href)}');return false;">${label}</a>`;
     } else {
@@ -278,9 +284,9 @@ export function renderInline(text: string, isMdx = false): string {
     /(https?:\/\/[^\s<>"]+)/g,
     (_full, href) => (
       isYouTubeSource(href)
-        ? renderYouTubeEmbed(href, href)
+        ? renderYouTubeEmbed(href, href, labels)
         : isVideoSource(href)
-        ? renderVideo(href, href)
+        ? renderVideo(href, href, labels)
         : `<a href="${href}" class="mdn-link" ${bookmarkAttrs('link', { 'bookmark-label': href, 'bookmark-url': href })} target="_blank" rel="noopener noreferrer">${href}</a>`
     ),
   );

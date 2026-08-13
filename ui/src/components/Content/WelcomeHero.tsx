@@ -8,9 +8,10 @@ interface WelcomeHeroProps {
   copy: WelcomeHeroCopy;
   isDesktop: boolean;
   hostPlatform: HostPlatform;
+  markdownThemLabel: string;
 }
 
-export function WelcomeHero({ copy, isDesktop, hostPlatform }: WelcomeHeroProps) {
+export function WelcomeHero({ copy, isDesktop, hostPlatform, markdownThemLabel }: WelcomeHeroProps) {
   return (
     <div className="hero-section">
       <h1 className="hero-title">{copy.title}</h1>
@@ -25,7 +26,7 @@ export function WelcomeHero({ copy, isDesktop, hostPlatform }: WelcomeHeroProps)
           <GlobeIcon className="link-icon" /><span>https://the-long-ride.github.io/markdown-explorer</span>
         </a>
         <a href="https://the-long-ride.github.io/markdown-them" target="_blank" rel="noopener noreferrer" className="homepage-link">
-          <GlobeIcon className="link-icon" /><span>Markdown Them - privacy-first document to markdown</span>
+          <GlobeIcon className="link-icon" /><span>{markdownThemLabel}</span>
         </a>
         {isDesktop && hostPlatform === 'macos' && (
           <a href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md" target="_blank" rel="noopener noreferrer" className="homepage-link">

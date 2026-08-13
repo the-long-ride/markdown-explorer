@@ -10,6 +10,7 @@ import { RecentWorkspacesModal } from './RecentWorkspacesModal';
 import { WorkspaceWindowControls } from './WorkspaceWindowControls';
 import { InteractiveBackground } from '../shared/InteractiveBackground';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
+import { getTranslations } from '../../contexts/translations';
 import { useCssVars } from '../../utils/useCssVars';
 
 interface WorkspaceSelectionProps {
@@ -27,6 +28,7 @@ export function WorkspaceSelection({
 }: WorkspaceSelectionProps = {}) {
   const { state, toggleTheme } = useAppState();
   const bridge = usePlatform();
+  const t = getTranslations(state.settings.language || 'en');
   const [modalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [workspaceScale, setWorkspaceScale] = useState(1);
@@ -132,7 +134,7 @@ export function WorkspaceSelection({
         <div className="workspace-selection__brand">
           <img className="workspace-selection__brand-logo" src={logoUrl} width="64" height="64" alt="Markdown Explorer" />
           <h1>Markdown Explorer</h1>
-          <p>Documentation viewer & navigator</p>
+          <p>{t.workspaceSelection.subtitle}</p>
         </div>
 
         <div className="workspace-selection__actions">
@@ -142,7 +144,7 @@ export function WorkspaceSelection({
               className="workspace-selection__open-button"
             >
               <FolderIcon size={16} />
-              Open Folder
+              {t.workspaceSelection.openFolder}
             </button>
           )}
 
@@ -152,7 +154,7 @@ export function WorkspaceSelection({
               className={`${isWebFileMode ? 'workspace-selection__open-button' : 'workspace-selection__open-file'}`}
             >
               <svg className="workspace-selection__tip-icon" width={isWebFileMode ? "16" : "14"} height={isWebFileMode ? "16" : "14"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-              Open File
+              {t.workspaceSelection.openFile}
             </button>
           )}
 
@@ -171,16 +173,16 @@ export function WorkspaceSelection({
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <span>{isWebFileMode ? "Tip: You can also drag & drop a file here to open it" : "Tip: You can also drag & drop a folder or file here to open it"}</span>
+            <span>{isWebFileMode ? t.workspaceSelection.dragFileTip : t.workspaceSelection.dragFolderOrFileTip}</span>
           </div>
         </div>
 
         {recents.length > 0 && (
           <div className="workspace-selection__recents">
-            <h3>Workspaces</h3>
+            <h3>{t.workspaceSelection.workspaces}</h3>
             {embeddedInTabs && isDesktop && (
               <p className="workspace-selection__recents-note">
-                Tip: Double-click a workspace tab in Tab view to rename it.
+                {t.workspaceSelection.renameTip}
               </p>
             )}
             <div className="workspace-selection__recent-list">
@@ -204,7 +206,7 @@ export function WorkspaceSelection({
                 }}
                 className="workspace-selection__show-more"
               >
-                Show More...
+                {t.workspaceSelection.showMore}
               </button>
             )}
           </div>
@@ -214,15 +216,15 @@ export function WorkspaceSelection({
           <div className="workspace-selection__guide">
             <div className="workspace-selection__guide-title">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-              <span>Browser Configuration Guide</span>
+              <span>{t.workspaceSelection.browserConfigTitle}</span>
             </div>
             <span className="workspace-selection__guide-copy">
-              To open local folders in the browser, the File System Access API is required. If folder selection fails, configure your browser flags:
+              {t.workspaceSelection.browserConfigIntro}
             </span>
             <div className="workspace-selection__guide-list">
-              <div>1. Open a new tab and visit: <code>chrome://flags</code> or <code>brave://flags</code></div>
-              <div>2. Search for: <strong>File System Access API</strong></div>
-              <div>3. Set it to <strong>Enabled</strong> and relaunch your browser.</div>
+              <div>1. {t.workspaceSelection.browserConfigOpen} <code>chrome://flags</code> {t.workspaceSelection.browserConfigOr} <code>brave://flags</code></div>
+              <div>2. {t.workspaceSelection.browserConfigSearch} <strong>File System Access API</strong></div>
+              <div>3. {t.workspaceSelection.browserConfigEnable}</div>
             </div>
           </div>
         )}
@@ -231,10 +233,10 @@ export function WorkspaceSelection({
           <div className="workspace-selection__guide workspace-selection__guide--mac">
             <div className="workspace-selection__guide-title">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
-              <span>macOS Installation & Security</span>
+              <span>{t.workspaceSelection.macosInstallTitle}</span>
             </div>
             <span className="workspace-selection__guide-copy">
-              If you run into security blocks or permission issues, check the installation guide:
+              {t.workspaceSelection.macosInstallBody}
             </span>
             <a
               href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"

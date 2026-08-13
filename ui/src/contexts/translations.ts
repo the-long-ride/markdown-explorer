@@ -3,23 +3,12 @@
 // =============================================================================
 
 import type { Translations } from './translationTypes';
+import { DESKTOP_TYPOGRAPHY_EN } from './desktopTypographyTranslations';
+import { AUDITED_UI_TRANSLATIONS } from './auditedUiTranslations';
+import type { AppLanguage } from './languageOptions';
+export { LANGUAGE_OPTIONS } from './languageOptions';
+export type { AppLanguage } from './languageOptions';
 export type { Translations } from './translationTypes';
-
-
-
-export const LANGUAGE_OPTIONS = [
-  { id: "en", label: "English" },
-  { id: "vi", label: "Tiếng Việt" },
-  { id: "fr", label: "Français" },
-  { id: "es", label: "Español" },
-  { id: "zh", label: "中文" },
-  { id: "no", label: "Norsk" },
-  { id: "ja", label: "日本語" },
-  { id: "ko", label: "한국어" },
-  { id: "ru", label: "Русский" },
-] as const;
-
-export type AppLanguage = (typeof LANGUAGE_OPTIONS)[number]["id"];
 
 
 // ── Inline English translations for instant first-render availability ────
@@ -30,6 +19,13 @@ let _TRANSLATIONS: Record<string, Translations> = {
   en: {
     settings: "Settings",
     subtitle: "Customize your Markdown Explorer experience",
+    ui: AUDITED_UI_TRANSLATIONS.en.ui,
+    themeRemix: AUDITED_UI_TRANSLATIONS.en.themeRemix,
+
+    rendererUi: AUDITED_UI_TRANSLATIONS.en.rendererUi,
+    terms: AUDITED_UI_TRANSLATIONS.en.terms,
+    onboarding: AUDITED_UI_TRANSLATIONS.en.onboarding,
+    workspaceSelection: AUDITED_UI_TRANSLATIONS.en.workspaceSelection,
     appearance: "Appearance",
     colorMode: "Color Mode",
     colorModeDesc: "Choose automatic, light, or dark rendering.",
@@ -38,9 +34,9 @@ let _TRANSLATIONS: Record<string, Translations> = {
     dark: "Dark",
     themeStyle: "Theme Style",
     themeStyleDesc: "Pick the surface language for panels, spacing, and strokes.",
-    viewPrefs: "View Preferences",
     desktopView: "Desktop View",
     desktopViewDesc: "Switch between Focus and workspace Tabs. Toggle anytime with {shortcut}.",
+    ...DESKTOP_TYPOGRAPHY_EN,
     focus: "Focus",
     tabs: "Tabs",
     sidebarLabels: "Sidebar File Labels",
@@ -116,10 +112,14 @@ let _TRANSLATIONS: Record<string, Translations> = {
     exportJson: "Export JSON",
     importJsonTooltip: "Import all user settings from JSON",
     exportJsonTooltip: "Export all user settings to JSON",
+    updateBackup: "Update & Backup", updateBackupDesc: "Keep Markdown Explorer current and move your preferences between installations.", applicationUpdate: "Application update", checkForUpdate: "Check for update",
+    settingsBackup: "Settings backup", settingsBackupDesc: "Import or export settings, themes, shortcuts, and supported desktop workspace preferences as JSON.",
+    latestVersionStatus: "You are using version {current} - latest version.", newerVersionStatus: "You are using version {current} - current latest version is {latest}",
+    updateLater: "Later", updateSkipVersion: "Skip notify for this version", updateChecking: "Checking for updates…",
     shortcuts: "Keyboard Shortcuts",
     shortcutsHint: "Click a field and press your new keys.",
     resetShortcuts: "Reset to Default Shortcuts",
-    closeSettings: "Close Settings - (Esc)",
+    closeSettings: "Close Settings",
     openInBrowser: "Open in Browser",
     showHtmlPreview: "Show HTML Preview",
     showMarkdownView: "Show Markdown View",
@@ -164,6 +164,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       themeRemixLabel: "Theme Remix",
     },
     actions: {
+      editCurrentDocument: "Open current file in editor",
       searchCurrent: "Search current workspace",
       searchAllTabs: "Search all tabs",
       loadMore: "Load more",
@@ -229,7 +230,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       newTab: "New workspace tab",
       closeModal: "Close modal",
       closeTab: "Close Tab",
-      openChangelog: "Click to open the change logs",
+      openChangelog: "Open the changelog on GitHub in your browser",
       locateFile: "Locate file",
       cancelScan: "Cancel scan",
     },
@@ -379,7 +380,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
     update: {
       availableTitle: "New version {version} available",
       availableDescription: "Current version {version}. Release notes:",
-      viewChangelog: "see changelog on GitHub",
+      viewChangelog: "See changelog on GitHub",
       downloadButton: "Download new version",
       downloading: "Downloading update... {progress}%",
       applying: "Applying update...",
@@ -405,7 +406,7 @@ import("./translationsData").then(m => {
   // Keep English-only fallback silently.
 });
 
-export function getTranslations(langCode: string): Translations {
+export function getTranslations(langCode?: string): Translations {
   const code = (langCode || "en").toLowerCase() as AppLanguage;
   return _TRANSLATIONS[code] || _TRANSLATIONS["en"];
 }

@@ -106,7 +106,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
       <button
         className="mdn-modal-close tooltip-container"
         onClick={onClose}
-        aria-label="Close modal"
+        aria-label={t.tooltips.closeModal}
         data-tooltip-pos="below"
         data-tooltip-align="right"
       >

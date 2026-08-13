@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useAppState } from "../../contexts/AppStateContext";
+import { getTranslations } from "../../contexts/translations";
 import { useCssVars } from "../../utils/useCssVars";
 import { formatShortcutLabel } from "../../utils/shortcuts";
 
@@ -69,9 +71,11 @@ export function TabContextMenu({
   closeTabsToRightIcon,
   closeOtherTabsIcon,
   closeAllTabsIcon,
-  ariaLabel = "Tab actions",
+  ariaLabel,
   onClose,
 }: TabContextMenuProps) {
+  const { state } = useAppState();
+  const t = getTranslations(state.settings.language);
   const menuRef = useRef<HTMLDivElement>(null);
   const resolvedItems = useMemo<readonly TabContextMenuItem[]>(() => {
     if (items) return items.filter((item) => !item.hidden);
@@ -132,7 +136,7 @@ export function TabContextMenu({
       ref={menuRef}
       className="tab-context-menu"
       role="menu"
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? t.ui.tabActions}
       onContextMenu={(event) => event.preventDefault()}
     >
       {resolvedItems.map((item) => (

@@ -1,4 +1,5 @@
 import { TABLE_COLLAPSE_LIMIT } from '../../../constants/limits.ts';
+import { formatUiLabel, getTableUiLabels } from '../../../dom/tableUiLabels.ts';
 
 interface TableGlobals {
   states?: Record<string, { chartInstance?: { destroy(): void } }>;
@@ -35,7 +36,8 @@ export async function enhanceTables(
       const rows = [...table.querySelectorAll<HTMLElement>('tbody tr')]
         .filter((row) => !row.dataset.toggle);
       const count = documentRoot.getElementById(`${table.id}-count`);
-      if (count) count.textContent = `${rows.length} rows`;
+      const labels = getTableUiLabels(table.id, documentRoot);
+      if (count) count.textContent = formatUiLabel(labels.rowsCount, { count: rows.length });
 
       rows.forEach((row, index) => {
         row.dataset.mdnFilterMatch = 'true';
@@ -45,7 +47,7 @@ export async function enhanceTables(
       const button = documentRoot.getElementById(`${table.id}-toggle-btn`);
       if (button) {
         button.style.display = rows.length > TABLE_COLLAPSE_LIMIT ? '' : 'none';
-        button.textContent = 'Show More';
+        button.textContent = labels.showMore;
       }
 
       const oldState = tableGlobals?.states?.[table.id];

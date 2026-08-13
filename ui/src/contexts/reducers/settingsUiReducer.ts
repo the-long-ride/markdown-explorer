@@ -86,7 +86,7 @@ export function reduceSettingsUiAction(
           activeCustomThemeId,
         },
       };
-      const previewDefaultsChanged = 'defaultHtmlCodeBlockPreview' in action.settings || 'defaultCsvPreview' in action.settings;
+      const previewDefaultsChanged = 'defaultHtmlCodeBlockPreview' in action.settings || 'defaultCsvPreview' in action.settings || 'language' in action.settings;
       if (previewDefaultsChanged) {
         const rerenderTab = (tab: AppState['contentTabs'][number]) => {
           if (!tab.markdownSource) return tab;

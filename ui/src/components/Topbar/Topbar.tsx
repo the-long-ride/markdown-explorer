@@ -5,6 +5,7 @@
 import { useAppState } from '../../contexts/AppStateContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { TooltipButton } from '../shared/TooltipButton';
+import { EditIcon } from '../shared/icons';
 import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import { getTranslations } from '../../contexts/translations';
@@ -156,7 +157,7 @@ export function Topbar({
   const { back, forward, canGoBack, canGoForward } = useNavigation();
   const bridge = usePlatform();
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
-  const isDesktop = isElectron;
+  const isDesktop = isElectron || state.appRuntime === 'tauri';
 
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
@@ -268,6 +269,17 @@ export function Topbar({
           onCopyFile={onCopyFile}
           canCopyFile={!!state.currentFile}
         />
+        {state.appRuntime === 'vscode' && (
+          <TooltipButton
+            className="topbar__edit-action topbar__action-btn btn btn--icon"
+            onClick={openInEditor}
+            disabled={!state.currentFile}
+            tooltip={t.topbar.edit}
+            shortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
+            portalTooltip
+            icon={<EditIcon size={13} />}
+          />
+        )}
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
           homeLabel={t.topbar.home}
@@ -280,8 +292,10 @@ export function Topbar({
           settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
           homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
           themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
+          editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
           settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
-          canEdit={(state.appRuntime === 'desktop' || state.appRuntime === 'tauri') && !!state.currentFile}
+          canEdit={(state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode') && !!state.currentFile}
+          showEdit={state.appRuntime === 'desktop' || state.appRuntime === 'tauri'}
           isDark={isDark}
           hasUpdate={hasUpdate}
           onHome={() => navigate(null)}
@@ -299,8 +313,8 @@ export function Topbar({
           tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
           tocToggleDisabled={!state.currentFile || state.toc.length === 0}
           onTocToggle={toggleToc}
-          focusModeLabel={t.actions.toggleFocusMode || "Toggle focus mode"}
-          focusModeTooltip={t.actions.toggleFocusMode || "Toggle focus mode"}
+          focusModeLabel={t.actions.toggleFocusMode}
+          focusModeTooltip={t.actions.toggleFocusMode}
           focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}
           isFocusMode={state.focusMode}
           onFocusModeToggle={toggleFocusMode}
@@ -310,6 +324,11 @@ export function Topbar({
           fullscreenShortcut="F11"
           isFullscreen={isFullscreen}
           onFullscreenToggle={onFullscreenToggle}
+          showResetZoom={isDesktop}
+          resetZoomLabel={t.tooltips.resetZoom}
+          resetZoomTooltip={t.tooltips.resetZoom}
+          resetZoomShortcut={getEnabledShortcut(state.settings, 'resetZoom')}
+          onResetZoom={() => bridge.postMessage({ command: 'zoom-reset' })}
         />
 
         {isDesktop && (
@@ -360,5 +379,3 @@ export function Topbar({
     </header>
   );
 }
-
-

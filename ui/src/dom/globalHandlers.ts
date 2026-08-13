@@ -18,11 +18,11 @@ export function setHtmlMode(wrap: HTMLElement, mode: string) {
   const toggleBtn = wrap.querySelector('.mdn-toggle-preview-btn') as HTMLElement | null;
   const tooltipText = wrap.querySelector('.mdn-toggle-preview-btn .tooltip-text') as HTMLElement | null;
   if (mode === 'preview') {
-    const previewLabel = langLabel?.dataset.translatedPreviewLabel || langLabel?.dataset.previewLabel || 'HTML Preview';
+    const previewLabel = langLabel?.dataset.translatedPreviewLabel || langLabel?.dataset.previewLabel || '';
     if (langLabel) langLabel.textContent = previewLabel;
     if (previewBody) previewBody.style.display = '';
     if (codeSource) codeSource.style.display = 'none';
-    const showCodeLabel = toggleBtn?.dataset.labelShowCode || 'Show Code';
+    const showCodeLabel = toggleBtn?.dataset.labelShowCode || toggleBtn?.getAttribute('title') || '';
     if (tooltipText) tooltipText.textContent = showCodeLabel;
     if (toggleBtn) {
       toggleBtn.title = showCodeLabel;
@@ -37,7 +37,7 @@ export function setHtmlMode(wrap: HTMLElement, mode: string) {
     if (langLabel) langLabel.textContent = 'HTML';
     if (previewBody) previewBody.style.display = 'none';
     if (codeSource) codeSource.style.display = '';
-    const showPreviewLabel = toggleBtn?.dataset.labelShowPreview || 'Show Preview';
+    const showPreviewLabel = toggleBtn?.dataset.labelShowPreview || toggleBtn?.getAttribute('title') || '';
     if (tooltipText) tooltipText.textContent = showPreviewLabel;
     if (toggleBtn) {
       toggleBtn.title = showPreviewLabel;
@@ -67,15 +67,15 @@ export function setCsvMode(wrap: HTMLElement, mode: string) {
   const toggleBtn = wrap.querySelector<HTMLElement>('.mdn-toggle-csv-btn');
   const tooltipText = toggleBtn?.querySelector<HTMLElement>('.tooltip-text');
   const codeLabel = langLabel?.dataset.codeLabel || 'CSV';
-  const previewLabel = langLabel?.dataset.translatedPreviewLabel || langLabel?.dataset.previewLabel || 'CSV Preview';
+  const previewLabel = langLabel?.dataset.translatedPreviewLabel || langLabel?.dataset.previewLabel || '';
   const preview = mode === 'preview';
   if (langLabel) langLabel.textContent = preview ? previewLabel : codeLabel;
   if (previewBody) previewBody.style.display = preview ? '' : 'none';
   if (codeSource) codeSource.style.display = preview ? 'none' : '';
   if (!toggleBtn) return;
   const nextLabel = preview
-    ? toggleBtn.dataset.labelShowCode || 'Show Code'
-    : toggleBtn.dataset.labelShowPreview || 'Show Preview';
+    ? toggleBtn.dataset.labelShowCode || toggleBtn.getAttribute('title') || ''
+    : toggleBtn.dataset.labelShowPreview || toggleBtn.getAttribute('title') || '';
   toggleBtn.title = nextLabel;
   toggleBtn.setAttribute('aria-label', nextLabel);
   toggleBtn.dataset.i18nKey = preview ? 'showCode' : 'showPreview';

@@ -28,7 +28,9 @@ export function parseShortcutText(text?: string) {
             key = part.slice(1, -1);
           } else if (part.startsWith('(') && part.endsWith(')')) {
             const inner = part.slice(1, -1);
+            const isNamedKey = /^(?:Esc(?:ape)?|Enter|Tab|Space|Backspace|Delete|Home|End|PageUp|PageDown|ArrowUp|ArrowDown|ArrowLeft|ArrowRight)$/i.test(inner);
             if (
+              isNamedKey ||
               /^(?:Ctrl|Cmd|Alt|Shift|Meta|F\d+|[A-Z0-9,/\\;:'`\[\]=-])(?:\+[A-Za-z0-9,/\\;:'`\[\]=-]+)*$/i.test(inner) ||
               inner.includes('+')
             ) {

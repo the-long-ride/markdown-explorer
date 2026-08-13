@@ -265,7 +265,7 @@ export function Sidebar({
       className={`sidebar${state.sidebarCollapsed ? " is-collapsed" : ""}${cursorMode ? " is-cursor-mode" : ""}${state.settings.bookmarksEnabled ? " has-bookmarks-feature" : ""}`}
       id="sidebar"
       aria-label={
-        cursorMode ? "File navigation, cursor mode active" : "File navigation"
+        cursorMode ? t.ui.fileNavigationCursorMode : t.ui.fileNavigation
       }
     >
       <SidebarTabsHeader
@@ -275,8 +275,8 @@ export function Sidebar({
         bookmarkCount={bookmarkCount}
         searchStatus={searchStatus}
         filesLabel={t.sidebar.files}
-        searchLabel={t.sidebar.search || 'Search'}
-        bookmarksLabel={t.bookmarks?.tab || 'Bookmarks'}
+        searchLabel={t.sidebar.search}
+        bookmarksLabel={t.bookmarks.tab}
         onSelect={(tab) => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab })}
       />
 
@@ -306,8 +306,8 @@ export function Sidebar({
               labels={{
                 focus: t.sidebar.scopeFocus,
                 clear: t.sidebar.clearScopeFocus,
-                checkAll: t.sidebar.checkAll || "Check all",
-                uncheckAll: t.sidebar.uncheckAll || "Uncheck all",
+                checkAll: t.sidebar.checkAll,
+                uncheckAll: t.sidebar.uncheckAll,
               }}
               onToggleEditing={() => setScopeFocusEditing((editing) => !editing)}
               onToggleAll={toggleAllScopeFiles}
@@ -318,12 +318,12 @@ export function Sidebar({
             canLocate={Boolean(state.currentFile)}
             hasPins={hasPins}
             locateLabel={t.tooltips.locateFile}
-            clearPinsLabel={t.sidebar.clearPinnedItems || "Clear all pinned items"}
-            sortLabel={t.sidebar.sortFiles || "Sort files and folders"}
-            sortNameAscLabel={t.sidebar.sortNameAsc || "Name: A–Z"}
-            sortNameDescLabel={t.sidebar.sortNameDesc || "Name: Z–A"}
-            sortModifiedDescLabel={t.sidebar.sortModifiedDesc || "Last modified: newest first"}
-            sortModifiedAscLabel={t.sidebar.sortModifiedAsc || "Last modified: oldest first"}
+            clearPinsLabel={t.sidebar.clearPinnedItems}
+            sortLabel={t.sidebar.sortFiles}
+            sortNameAscLabel={t.sidebar.sortNameAsc}
+            sortNameDescLabel={t.sidebar.sortNameDesc}
+            sortModifiedDescLabel={t.sidebar.sortModifiedDesc}
+            sortModifiedAscLabel={t.sidebar.sortModifiedAsc}
             collapseLabel={t.sidebar.collapseAllFolders}
             expandLabel={t.sidebar.expandAllFolders}
             locateShortcut={getEnabledShortcut(state.settings, 'locateFile')}
@@ -354,7 +354,7 @@ export function Sidebar({
               canRequestItemMenu={canRequestItemMenu}
               openMenuPath={itemMenu?.path ?? null}
               itemActionsLabel={t.sidebarItemActions}
-              pinnedLabel={t.sidebar.pinned || "Pinned"}
+              pinnedLabel={t.sidebar.pinned}
             />
           ) : (
             <FolderNodeView
@@ -369,7 +369,7 @@ export function Sidebar({
               canRequestItemMenu={canRequestItemMenu}
               openMenuPath={itemMenu?.path ?? null}
               itemActionsLabel={t.sidebarItemActions}
-              pinnedLabel={t.sidebar.pinned || "Pinned"}
+              pinnedLabel={t.sidebar.pinned}
               activeFolderPaths={activeFolderPaths}
               locateRequest={locateRequest}
               expansionCommand={folderExpansionCommand}

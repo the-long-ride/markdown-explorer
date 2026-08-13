@@ -5,6 +5,7 @@ import { useKeyboard } from '../../../../ui/src/hooks/useKeyboard';
 const defaultKeybindings: Record<string, string> = {
   zoomIn: 'ctrl+=',
   zoomOut: 'ctrl+-',
+  resetZoom: 'ctrl+alt+z',
   searchAllTabs: 'ctrl+shift+k',
   searchCurrent: 'ctrl+k',
   findCurrentFile: 'f',
@@ -483,7 +484,14 @@ describe('useKeyboard hook integration', () => {
     expect(mockPostMessage).toHaveBeenCalledWith({ command: 'zoom-in' });
   });
 
-  it('handles zoom-reset on Ctrl+0 when desktop without dispatching message', () => {
+  it('dispatches zoom-reset on Ctrl+Alt+Z when desktop', () => {
+    (window as any).electronAPI = {};
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'z', ctrlKey: true, altKey: true });
+    expect(mockPostMessage).toHaveBeenCalledWith({ command: 'zoom-reset' });
+  });
+
+  it('does not intercept native Ctrl+0', () => {
     (window as any).electronAPI = {};
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: '0', ctrlKey: true });

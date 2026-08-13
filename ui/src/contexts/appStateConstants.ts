@@ -1,4 +1,4 @@
-import type { DesktopViewMode, PetThemeStyle, ThemeMode, ThemeStyle } from '../types';
+import type { AppRuntime, DesktopViewMode, PetThemeStyle, ThemeMode, ThemeStyle } from '../types';
 
 export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   searchCurrent: 'Ctrl+K',
@@ -17,15 +17,22 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   openBookmarks: 'Alt+Shift+B',
   toggleToc: 'Alt+C',
   sidebarCursorMode: 'Alt+Z',
-  zoomIn: 'Ctrl+=',
-  zoomOut: 'Ctrl+-',
   locateFile: 'Alt+Q',
   toggleFocusMode: 'Ctrl+Alt+F',
   toggleHtmlPreview: 'Ctrl+Alt+H',
 };
 
+export const VSCODE_DEFAULT_KEYBINDINGS: Record<string, string> = {
+  ...DEFAULT_KEYBINDINGS,
+  editCurrentDocument: 'Ctrl+Alt+E',
+};
+
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   ...DEFAULT_KEYBINDINGS,
+  editCurrentDocument: 'Ctrl+E',
+  zoomIn: 'Ctrl+=',
+  zoomOut: 'Ctrl+-',
+  resetZoom: 'Ctrl+Alt+Z',
   refresh: 'F5',
   settings: 'Ctrl+,',
   searchCurrent: 'Ctrl+F',
@@ -45,7 +52,13 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
 };
 
 export function getDefaultKeybindings(isDesktop: boolean): Record<string, string> {
-  return isDesktop ? DESKTOP_DEFAULT_KEYBINDINGS : DEFAULT_KEYBINDINGS;
+  return isDesktop ? DESKTOP_DEFAULT_KEYBINDINGS : VSCODE_DEFAULT_KEYBINDINGS;
+}
+
+export function getDefaultKeybindingsForRuntime(runtime: AppRuntime): Record<string, string> {
+  if (runtime === 'desktop' || runtime === 'tauri') return DESKTOP_DEFAULT_KEYBINDINGS;
+  if (runtime === 'vscode') return VSCODE_DEFAULT_KEYBINDINGS;
+  return DEFAULT_KEYBINDINGS;
 }
 
 export const THEME_MODE_OPTIONS: readonly { id: ThemeMode; label: string }[] = [
@@ -142,6 +155,23 @@ export function normalizeKeybindings(
     ...getDefaultKeybindings(isDesktop),
     ...(saved ?? {}),
   };
+}
+
+export function normalizeKeybindingsForRuntime(
+  saved: Record<string, string> | undefined,
+  runtime: AppRuntime,
+): Record<string, string> {
+  const normalized = {
+    ...getDefaultKeybindingsForRuntime(runtime),
+    ...(saved ?? {}),
+  };
+  if (runtime === 'chrome') delete normalized.editCurrentDocument;
+  if (runtime !== 'desktop' && runtime !== 'tauri') {
+    delete normalized.zoomIn;
+    delete normalized.zoomOut;
+    delete normalized.resetZoom;
+  }
+  return normalized;
 }
 
 export function normalizeThemeMode(value: unknown): ThemeMode {

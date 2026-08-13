@@ -1,5 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { useAppState } from '../../contexts/AppStateContext';
+import { getTranslations } from '../../contexts/translations';
 import { readWorkspaceTextResource } from '../../platform/bridge';
 import {
   prepareLocalFirstHtmlPreview,
@@ -31,6 +33,8 @@ export const HtmlDocumentView = memo(function HtmlDocumentView({
   onPolicyReport,
 }: HtmlDocumentViewProps) {
   const bridge = usePlatform();
+  const { state } = useAppState();
+  const t = getTranslations(state.settings.language || 'en');
   const [srcDoc, setSrcDoc] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
@@ -77,7 +81,7 @@ export const HtmlDocumentView = memo(function HtmlDocumentView({
   }
 
   if (!srcDoc) {
-    return <div className="html-document-view__loading" role="status">Preparing local HTML preview…</div>;
+    return <div className="html-document-view__loading" role="status">{t.ui.preparingHtmlPreview}</div>;
   }
 
   return (
