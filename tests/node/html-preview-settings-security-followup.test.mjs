@@ -104,18 +104,24 @@ test('reported vulnerable transitive dependencies are overridden from the pnpm w
   ]);
 
   assert.doesNotMatch(manifest, /"pnpm"\s*:\s*\{[\s\S]*?"overrides"/);
-  assert.match(workspace, /overrides:[\s\S]*dompurify:\s*3\.4\.12/);
+  assert.match(workspace, /overrides:[\s\S]*dompurify:\s*3\.4\.13/);
+  assert.match(workspace, /overrides:[\s\S]*js-yaml:\s*4\.3\.1/);
   assert.match(workspace, /overrides:[\s\S]*fast-uri:\s*\^?3\.1\.5/);
   assert.match(workspace, /overrides:[\s\S]*fast-xml-parser:\s*5\.10\.1/);
 
   assert.match(lock, /^overrides:\s*$/m);
-  assert.match(lock, /dompurify:\s*3\.4\.12/);
+  assert.match(lock, /dompurify:\s*3\.4\.13/);
+  assert.match(lock, /js-yaml:\s*4\.3\.1/);
   assert.match(lock, /fast-uri:\s*\^?3\.1\.5/);
   assert.match(lock, /fast-xml-parser:\s*5\.10\.1/);
-  assert.match(lock, /dompurify@3\.4\.12/);
+  assert.match(lock, /dompurify@3\.4\.13/);
+  assert.match(lock, /js-yaml@4\.3\.1/);
+  assert.match(lock, /pdfjs-dist@6\.2\.108/);
   assert.match(lock, /fast-uri@3\.1\.5/);
   assert.match(lock, /fast-xml-parser@5\.10\.1/);
-  assert.doesNotMatch(lock, /dompurify@3\.4\.11/);
+  assert.doesNotMatch(lock, /dompurify@3\.4\.12/);
+  assert.doesNotMatch(lock, /js-yaml@4\.3\.0/);
   assert.doesNotMatch(lock, /fast-uri@3\.1\.3/);
   assert.doesNotMatch(lock, /fast-xml-parser@5\.9\.3/);
+  assert.doesNotMatch(lock, /pdfjs-dist@6\.1\.200/);
 });
