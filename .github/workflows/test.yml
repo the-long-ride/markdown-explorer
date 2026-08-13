@@ -107,7 +107,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Build shared UI bundle
-        run: pnpm run build:ui:electron
+        run: pnpm run build:ui:tauri
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
@@ -129,7 +129,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Build shared UI bundle
-        run: pnpm run build:ui:electron
+        run: pnpm run build:ui:tauri
       - name: Install Linux dependencies
         run: |
           sudo apt-get update

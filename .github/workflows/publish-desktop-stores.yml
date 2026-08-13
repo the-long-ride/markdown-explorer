@@ -117,7 +117,7 @@ jobs:
         run: cargo install tauri-cli --locked --version '^2'
 
       - name: Build shared UI bundle
-        run: pnpm run build:ui:electron
+        run: pnpm run build:ui:tauri
 
       - name: Import Windows code-signing certificate
         if: env.DRY_RUN != 'true' && env.SHOULD_PUBLISH == 'true'
@@ -300,7 +300,7 @@ jobs:
         run: cargo install tauri-cli --locked --version '^2'
 
       - name: Build shared UI bundle
-        run: pnpm run build:ui:electron
+        run: pnpm run build:ui:tauri
 
       - name: Build Tauri Linux binary
         working-directory: tauri
