@@ -515,10 +515,12 @@ kbd:active,
 /* Viewport-level tooltip used by controls that can be clipped by shell overflow. */
 .tooltip-portal {
   position: fixed;
+  left: var(--portal-left, 0);
+  top: var(--portal-top, 0);
+  visibility: var(--portal-visibility, hidden);
   right: auto;
   bottom: auto;
   z-index: 2147483000;
-  visibility: visible;
   opacity: 1;
   transform: none !important;
   max-width: min(320px, calc(100vw - 16px));

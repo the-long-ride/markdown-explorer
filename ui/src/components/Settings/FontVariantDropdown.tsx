@@ -8,6 +8,7 @@ import {
   type DesktopFontStyle,
 } from '../../desktop/fonts/fontModel';
 import { ChevronDownIcon } from '../shared/icons';
+import { useCssVars } from '../../utils/useCssVars';
 
 const MAX_VISIBLE_VARIANTS = 7;
 
@@ -141,6 +142,15 @@ export function FontVariantDropdown({
 
   const activeOption = options[activeIndex];
 
+  useCssVars(menuRef, position
+    ? {
+        '--menu-top': `${position.top}px`,
+        '--menu-left': `${position.left}px`,
+        '--menu-width': `${position.width}px`,
+        '--menu-max-height': `${position.maxHeight}px`,
+      }
+    : {});
+
   return (
     <div className="font-variant-dropdown" ref={rootRef}>
       <button
@@ -166,7 +176,6 @@ export function FontVariantDropdown({
           aria-label={t.fontVariant}
           aria-activedescendant={activeOption ? optionId(activeOption.style, activeOption.weight) : undefined}
           onKeyDown={handleMenuKeyDown}
-          style={{ position: 'fixed', top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
         >
           {options.map((option, index) => {
             const selected = option.style === value.style && option.weight === value.weight;

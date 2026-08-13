@@ -33,13 +33,19 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
   ),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    recentWorkspaces: { title: 'Recent', subtitle: 'Workspaces', searchPlaceholder: 'Search...', noWorkspaces: 'None', lastOpened: 'Last' },
-    tooltips: { minimize: 'Min', maximize: 'Max', restore: 'Restore', closeApp: 'Close', close: 'Close', removeFromRecents: 'Remove' },
-    topbar: { switchToLightMode: 'Light', switchToDarkMode: 'Dark' },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      recentWorkspaces: { ...en.recentWorkspaces, title: 'Recent', subtitle: 'Workspaces', searchPlaceholder: 'Search...', noWorkspaces: 'None', lastOpened: 'Last' },
+      tooltips: { ...en.tooltips, minimize: 'Min', maximize: 'Max', restore: 'Restore', closeApp: 'Close', close: 'Close', removeFromRecents: 'Remove' },
+      topbar: { ...en.topbar, switchToLightMode: 'Light', switchToDarkMode: 'Dark' },
+    }),
+  };
+});
 
 vi.mock('../../../../ui/src/components/Workspace/workspaceSelectionUtils', () => ({
   isDesktopRuntime: () => false,

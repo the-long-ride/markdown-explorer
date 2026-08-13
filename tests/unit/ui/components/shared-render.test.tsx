@@ -7,6 +7,10 @@ import { TooltipButton } from '../../../../ui/src/components/shared/TooltipButto
 import { ToolbarActionMenu } from '../../../../ui/src/components/shared/ToolbarActionMenu';
 import { parseShortcutText } from '../../../../ui/src/components/shared/parseShortcutText';
 
+vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
+  useAppState: () => ({ state: { settings: { language: 'en' } } }),
+}));
+
 vi.mock('../../../../ui/src/utils/toolbar-menu.js', () => ({
   buildShortcutTooltip: (tooltip: string, shortcut?: string) => {
     if (!tooltip) return '';
@@ -28,6 +32,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => {
     TocIcon: () => span('toc-icon', 'toc'),
     MinimizeIcon: () => span('minimize-icon', 'minimize'),
     MaximizeIcon: () => span('maximize-icon', 'maximize'),
+    FullscreenMenuIcon: () => span('fullscreen-icon', 'fullscreen'),
   };
 });
 

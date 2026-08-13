@@ -5,6 +5,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import { createPortal } from 'react-dom';
 import { buildShortcutTooltip } from '../../utils/toolbar-menu.js';
+import { useCssVars } from '../../utils/useCssVars';
 import { parseShortcutText } from './parseShortcutText';
 
 interface TooltipButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -87,6 +88,12 @@ export function TooltipButton({
     if (portalTooltip) setPortalOpen(false);
   };
 
+  useCssVars(tooltipRef, {
+    '--portal-left': `${portalPosition.left}px`,
+    '--portal-top': `${portalPosition.top}px`,
+    '--portal-visibility': portalPosition.ready ? 'visible' : 'hidden',
+  });
+
   return (
     <>
       <button
@@ -120,7 +127,6 @@ export function TooltipButton({
         <span
           ref={tooltipRef}
           className="tooltip-text tooltip-portal"
-          style={{ left: portalPosition.left, top: portalPosition.top, visibility: portalPosition.ready ? 'visible' : 'hidden' }}
           aria-hidden="true"
         >
           {parseTooltipContent(tooltipText, shortcut)}

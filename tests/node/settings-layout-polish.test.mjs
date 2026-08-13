@@ -46,13 +46,19 @@ test('More Actions keeps standard control size while update dots are enlarged', 
 });
 
 test('Theme Style menus use a fixed portal with collision-aware vertical placement', async () => {
-  const source = await read('ui/src/components/Settings/ThemeStylePicker.tsx');
+  const [source, css] = await Promise.all([
+    read('ui/src/components/Settings/ThemeStylePicker.tsx'),
+    read('ui/src/styles/global/global-theme-picker-styles.css'),
+  ]);
   assert.match(source, /createPortal/);
   assert.match(source, /useLayoutEffect/);
   assert.match(source, /roomBelow/);
   assert.match(source, /roomAbove/);
   assert.match(source, /openUp/);
-  assert.match(source, /position:\s*['"]fixed['"]/);
+  const portalRule = css.match(/\.theme-picker-menu--portal\s*\{[\s\S]*?\}/)?.[0] ?? '';
+  assert.match(portalRule, /position\s*:\s*fixed/);
+  assert.match(portalRule, /top\s*:\s*var\(--menu-top(?:,[^)]*)?\)/);
+  assert.match(portalRule, /bottom\s*:\s*var\(--menu-bottom(?:,[^)]*)?\)/);
 });
 
 

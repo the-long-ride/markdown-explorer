@@ -52,34 +52,41 @@ vi.mock("../../../../ui/src/contexts/welcomeTranslations", () => ({
   }),
 }));
 
-vi.mock("../../../../ui/src/contexts/translations", () => ({
-  getTranslations: () => ({
-    actions: {
-      findCurrentFile: "Find in current file",
-      searchCurrent: "Search current workspace",
-      searchAllTabs: "Search all tabs",
-      back: "Back",
-      forward: "Forward",
-      welcome: "Welcome",
-      settings: "Settings",
-      toggleTheme: "Toggle theme",
-      refresh: "Refresh",
-      collapseAll: "Collapse all",
-      expandAll: "Expand all",
-      workspaceSelection: "Workspace selection",
-      toggleSidebar: "Toggle sidebar",
-      toggleToc: "Toggle TOC",
-      zoomIn: "Zoom in",
-      zoomOut: "Zoom out",
-      locateFile: "Locate file",
-      toggleFocusMode: "Toggle focus mode",
-      toggleDesktopViewMode: "Toggle Tabs/Focus view",
-      toggleFullscreen: "Show full screen",
-      toggleFullscreenTooltip: "Toggle native full screen window",
-      sidebarCursorMode: "Sidebar cursor mode",
-    },
-  }),
-}));
+vi.mock("../../../../ui/src/contexts/translations", async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      actions: {
+        ...en.actions,
+        findCurrentFile: "Find in current file",
+        searchCurrent: "Search current workspace",
+        searchAllTabs: "Search all tabs",
+        back: "Back",
+        forward: "Forward",
+        welcome: "Welcome",
+        settings: "Settings",
+        toggleTheme: "Toggle theme",
+        refresh: "Refresh",
+        collapseAll: "Collapse all",
+        expandAll: "Expand all",
+        workspaceSelection: "Workspace selection",
+        toggleSidebar: "Toggle sidebar",
+        toggleToc: "Toggle TOC",
+        zoomIn: "Zoom in",
+        zoomOut: "Zoom out",
+        locateFile: "Locate file",
+        toggleFocusMode: "Toggle focus mode",
+        toggleDesktopViewMode: "Toggle Tabs/Focus view",
+        toggleFullscreen: "Show full screen",
+        toggleFullscreenTooltip: "Toggle native full screen window",
+        sidebarCursorMode: "Sidebar cursor mode",
+      },
+    }),
+  };
+});
 
 vi.mock("../../../../ui/src/components/Settings/SettingsModal", () => ({
   ACTIONS_LIST: [

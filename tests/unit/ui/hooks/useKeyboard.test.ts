@@ -10,7 +10,7 @@ describe('useKeyboard pure functions', () => {
   const keyboardState = (isDesktop: boolean, workspaceSelection: string) => ({
     isDesktop,
     isDesktopLike: isDesktop,
-    isVscode: !isDesktop,
+    isVscode: false,
     isTermsOpen: false,
     isModalOpen: false,
     isSearchOpen: false,

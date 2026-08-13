@@ -150,31 +150,7 @@ vi.mock('../../../../ui/src/contexts/NavigationContext', () => ({
   useNavigation: () => mockNav,
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    topbar: { switchToLightMode: 'Light mode', switchToDarkMode: 'Dark mode', closeFolder: 'Close Folder' },
-    tooltips: {
-      minimize: 'Minimize',
-      maximize: 'Maximize',
-      restore: 'Restore',
-      closeApp: 'Close',
-      scrollToTop: 'Scroll to top',
-      closeTab: 'Close tab',
-    },
-    actions: {
-      toggleFocusMode: 'Exit Focus Mode',
-      searchAllTabs: 'Search all tabs',
-      searchCurrent: 'Search current',
-    },
-    fileTabs: 'File tabs',
-    tabContextMenu: {
-      closeThisTab: 'Close',
-      closeTabsToRight: 'Close to right',
-      closeOtherTabs: 'Close others',
-      closeAllTabs: 'Close all',
-    },
-  }),
-}));
+
 
 vi.mock('../../../../ui/src/components/Sidebar/Sidebar', () => ({
   Sidebar: () => createElement('div', { 'data-testid': 'sidebar' }),
@@ -234,6 +210,7 @@ vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
   ChevronUpIcon: () => createElement('svg', { 'data-testid': 'chevron-up-icon' }),
   MinimizeIcon: () => createElement('svg', { 'data-testid': 'minimize-icon' }),
+  ExitFocusIcon: () => createElement('svg', { 'data-testid': 'exit-focus-icon' }),
 }));
 vi.mock('../../../../ui/src/dom/globalHandlers', () => ({
   initGlobalHandlers: vi.fn(),
@@ -376,7 +353,7 @@ describe('App render', () => {
       expect(screen.getByTitle('Minimize')).toBeInTheDocument();
     });
     expect(screen.getByTitle('Maximize')).toBeInTheDocument();
-    expect(screen.getByTitle('Close')).toBeInTheDocument();
+    expect(screen.getByTitle('Close App')).toBeInTheDocument();
   });
 
   it('does not show window controls when Chrome ext only (not isElectron) in terms screen', async () => {
@@ -418,9 +395,9 @@ describe('App render', () => {
     localStorage.removeItem('markdown-explorer-terms-accepted');
     render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTitle('Close')).toBeInTheDocument();
+      expect(screen.getByTitle('Close App')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTitle('Close'));
+    fireEvent.click(screen.getByTitle('Close App'));
     expect(mockBridge.postMessage).toHaveBeenCalledWith({ command: 'window-close' });
   });
 
@@ -449,15 +426,15 @@ describe('App render', () => {
     mockState = createMockState({ focusMode: true });
     render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTitle('Exit Focus Mode')).toBeInTheDocument();
+      expect(screen.getByTitle('Toggle focus mode')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTitle('Exit Focus Mode'));
+    fireEvent.click(screen.getByTitle('Toggle focus mode'));
     expect(mockToggleFocusMode).toHaveBeenCalled();
   });
 
   it('does not render focus mode exit button when focusMode is false', async () => {
     render(createElement(App));
-    expect(screen.queryByTitle('Exit Focus Mode')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Toggle focus mode')).not.toBeInTheDocument();
   });
 
   it('renders ContentTabs component', async () => {
@@ -611,7 +588,7 @@ describe('App render', () => {
     mockState = createMockState({ focusMode: true, appRuntime: 'tauri' });
     const { rerender } = render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTitle('Exit Focus Mode')).toBeInTheDocument();
+      expect(screen.getByTitle('Toggle focus mode')).toBeInTheDocument();
     });
     expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
 
@@ -642,7 +619,7 @@ describe('App render', () => {
     mockState = createMockState({ focusMode: true, appRuntime: 'chrome' });
     render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTitle('Exit Focus Mode')).toBeInTheDocument();
+      expect(screen.getByTitle('Toggle focus mode')).toBeInTheDocument();
     });
     expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
   });

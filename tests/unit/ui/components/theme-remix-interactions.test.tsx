@@ -59,21 +59,27 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
   isPetThemeStyle: (value: string) => value.startsWith('pet-'),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    themeStyles: {
-      defaultLabel: 'Default',
-      defaultDesc: 'Default style',
-      glassLabel: 'Glass',
-      glassDesc: 'Glass style',
-      bentoLabel: 'Bento',
-      bentoDesc: 'Bento style',
-      petsLabel: 'Pets',
-      petsDesc: 'Pets style',
-    },
-    topbar: { switchToLightMode: 'Light', switchToDarkMode: 'Dark' },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      themeStyles: { ...en.themeStyles,
+        defaultLabel: 'Default',
+        defaultDesc: 'Default style',
+        glassLabel: 'Glass',
+        glassDesc: 'Glass style',
+        bentoLabel: 'Bento',
+        bentoDesc: 'Bento style',
+        petsLabel: 'Pets',
+        petsDesc: 'Pets style',
+      },
+      topbar: { ...en.topbar, switchToLightMode: 'Light', switchToDarkMode: 'Dark' },
+    }),
+  };
+});
 
 vi.mock('../../../../ui/src/theme/customThemes', () => ({
   CUSTOM_THEME_COLOR_OPTIONS: [
@@ -164,7 +170,7 @@ describe('ThemeRemixModal interactions', () => {
     mockState.settings.customThemes = [makeTheme()];
     render(<ThemeRemixModal isOpen={true} onClose={() => {}} />);
     openDropdownFor('Base layout');
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Base layout' })).getByText('Glass'));
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Base layout' })).getByText('glass'));
     expect(mockUpdateSettings).toHaveBeenCalled();
     const lastCall = mockUpdateSettings.mock.calls[mockUpdateSettings.mock.calls.length - 1][0];
     expect(lastCall.customThemes[0].baseStyle).toBe('glass');

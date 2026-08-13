@@ -11,11 +11,17 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({ state: mockState }),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    toc: { onThisPage: 'On This Page', returnToTop: 'Return to top', sections: 'Sections' },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      toc: { ...en.toc, onThisPage: 'On This Page', returnToTop: 'Return to top', sections: 'Sections' },
+    }),
+  };
+});
 
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
   ChevronUpIcon: ({ size, className }: any) => <span className={className}>chevron-up-icon</span>,

@@ -55,24 +55,30 @@ vi.mock('../../../../ui/src/utils/searchJump', () => ({
   scrollToRenderedSearchMatchInRoot: (...args: any[]) => scrollPreviewToMatch(...args),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    actions: { loadMore: 'Load more' },
-    tooltips: { closeModal: 'Close modal' },
-    search: {
-      dialogLabel: 'Search documents', modalTitleCurrent: 'Search current workspace', modalTitleAllTabs: 'Search all workspaces',
-      queryLabel: 'Search query', currentWorkspacePlaceholder: 'Search current workspace…', allWorkspacesPlaceholder: 'Search all workspaces…',
-      indexingPlaceholder: 'Indexing other workspaces…', workspaces: 'Workspaces', allWorkspaces: 'All workspaces', results: 'Results',
-      preview: 'Preview', matchCase: 'Match case', searchingContents: 'Searching file contents…', noMatches: 'No matches found.',
-      openResult: 'Open result', previewEmptyTitle: 'Select a result', previewEmptyBody: 'Choose a search result.',
-      matchPreview: 'Match preview', fileNameOrPathMatch: 'File name or path match', minimumCharacters: 'Enter at least 2 characters to search.',
-      includeWorkspace: 'Include {workspace} in search', excludeWorkspace: 'Exclude {workspace} from search',
-      checkAllWorkspaces: 'Search all workspaces', uncheckAllWorkspaces: 'Exclude all workspaces',
-      resizeWorkspaces: 'Resize workspace list', resizePreview: 'Resize preview',
-      loadingPreview: 'Loading preview…', previewUnavailable: 'Preview unavailable.',
-    },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      actions: { ...en.actions, loadMore: 'Load more' },
+      tooltips: { ...en.tooltips, closeModal: 'Close modal' },
+      search: { ...en.search,
+        dialogLabel: 'Search documents', modalTitleCurrent: 'Search current workspace', modalTitleAllTabs: 'Search all workspaces',
+        queryLabel: 'Search query', currentWorkspacePlaceholder: 'Search current workspace…', allWorkspacesPlaceholder: 'Search all workspaces…',
+        indexingPlaceholder: 'Indexing other workspaces…', workspaces: 'Workspaces', allWorkspaces: 'All workspaces', results: 'Results',
+        preview: 'Preview', matchCase: 'Match case', searchingContents: 'Searching file contents…', noMatches: 'No matches found.',
+        openResult: 'Open result', previewEmptyTitle: 'Select a result', previewEmptyBody: 'Choose a search result.',
+        matchPreview: 'Match preview', fileNameOrPathMatch: 'File name or path match', minimumCharacters: 'Enter at least 2 characters to search.',
+        includeWorkspace: 'Include {workspace} in search', excludeWorkspace: 'Exclude {workspace} from search',
+        checkAllWorkspaces: 'Search all workspaces', uncheckAllWorkspaces: 'Exclude all workspaces',
+        resizeWorkspaces: 'Resize workspace list', resizePreview: 'Resize preview',
+        loadingPreview: 'Loading preview…', previewUnavailable: 'Preview unavailable.',
+      },
+    }),
+  };
+});
 
 vi.mock('../../../../ui/src/components/shared/icons', () => ({
   ChevronRightIcon: () => <span>arrow</span>, CloseIcon: () => <span>close</span>,

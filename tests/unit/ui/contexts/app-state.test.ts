@@ -773,10 +773,10 @@ describe('reducer', () => {
     expect(next.loadingDetail).toBe('file.md');
   });
 
-  test('SET_LOADING without label defaults', () => {
+  test('SET_LOADING without label leaves label empty', () => {
     const state = makeState();
     const next = reducer(state, { type: 'SET_LOADING' });
-    expect(next.loadingLabel).toBe('Loading docs...');
+    expect(next.loadingLabel).toBe('');
     expect(next.loadingDetail).toBe('');
   });
 

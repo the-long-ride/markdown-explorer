@@ -89,10 +89,10 @@ describe('globalHandlers pure functions', () => {
       const wrap = document.createElement('div');
       wrap.className = 'mdn-codeblock';
       wrap.innerHTML = `
-        <span class="mdn-codeblock-lang">HTML</span>
+        <span class="mdn-codeblock-lang" data-preview-label="HTML Preview">HTML</span>
         <div class="mdn-html-preview-body" style="display: none"></div>
         <div class="mdn-code-source" style="display: flex"><div class="mdn-codeblock-body"></div></div>
-        <button class="mdn-toggle-preview-btn"><span class="tooltip-text">Show Preview</span></button>
+        <button class="mdn-toggle-preview-btn" data-label-show-code="Show Code"><span class="tooltip-text">Show Preview</span></button>
       `;
       document.body.appendChild(wrap);
 
@@ -108,10 +108,10 @@ describe('globalHandlers pure functions', () => {
       const wrap = document.createElement('div');
       wrap.className = 'mdn-codeblock';
       wrap.innerHTML = `
-        <span class="mdn-codeblock-lang">HTML</span>
+        <span class="mdn-codeblock-lang" data-preview-label="HTML Preview">HTML</span>
         <div class="mdn-html-preview-body"></div>
         <div class="mdn-code-source"><div class="mdn-codeblock-body"></div></div>
-        <button class="mdn-toggle-preview-btn"><span class="tooltip-text">Show Preview</span></button>
+        <button class="mdn-toggle-preview-btn" data-label-show-preview="Show Preview"><span class="tooltip-text">Show Preview</span></button>
       `;
       document.body.appendChild(wrap);
 

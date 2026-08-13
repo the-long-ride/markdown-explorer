@@ -195,6 +195,11 @@
 .font-dropdown-chevron { flex: 0 0 auto; transition: transform .14s ease; }
 .font-dropdown-chevron.is-open { transform: rotate(180deg); }
 .font-search-menu {
+  position: fixed;
+  top: var(--menu-top, auto);
+  left: var(--menu-left, auto);
+  width: var(--menu-width, auto);
+  max-height: var(--menu-max-height, none);
   z-index: 10000020;
   display: flex;
   flex-direction: column;
@@ -215,11 +220,16 @@
 .font-search-menu__search input { min-width: 0; flex: 1; border: 0; outline: 0; color: var(--tx); background: transparent; font: inherit; }
 .font-search-menu__results { overflow: auto; padding-top: 6px; }
 .font-search-menu__group-label { padding: 7px 8px 4px; color: var(--txm); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
-.font-search-menu__option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: var(--r); color: var(--tx); background: transparent; text-align: left; }
+.font-search-menu__option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: var(--r); color: var(--tx); background: transparent; text-align: left; font-family: var(--font-preview-family, inherit); }
 .font-search-menu__option:hover, .font-search-menu__option.is-selected { background: var(--bg-h); }
 .font-search-menu__source { color: var(--txm); font: 10px var(--font-ui); }
 .font-search-menu__empty { padding: 16px 8px; color: var(--tx2); text-align: center; }
 .font-variant-menu {
+  position: fixed;
+  top: var(--menu-top, auto);
+  left: var(--menu-left, auto);
+  width: var(--menu-width, auto);
+  max-height: var(--menu-max-height, none);
   z-index: 10000020;
   display: flex;
   flex-direction: column;

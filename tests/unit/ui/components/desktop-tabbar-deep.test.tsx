@@ -152,50 +152,56 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
   }),
 }));
 
-vi.mock('../../../../ui/src/contexts/translations', () => ({
-  getTranslations: () => ({
-    topbar: {
-      switchToLightMode: 'Switch to light',
-      switchToDarkMode: 'Switch to dark',
-      moreActions: 'More',
-      home: 'Home',
-      welcomePage: 'Welcome',
-      editLabel: 'Edit',
-      edit: 'Edit in editor',
-      settings: 'Settings',
-      settingsUpdate: 'Settings (update available)',
-      goBack: 'Back',
-      goForward: 'Forward',
-      refresh: 'Refresh',
-      collapseAll: 'Collapse all',
-      expandAll: 'Expand all',
-      copy: 'Copy file content',
-    },
-    tooltips: {
-      closeTab: 'Close tab',
-      minimize: 'Minimize',
-      maximize: 'Maximize',
-      restore: 'Restore',
-      closeApp: 'Close',
-      newTab: 'New tab',
-    },
-    actions: {
-      toggleSidebar: 'Toggle sidebar',
-      toggleToc: 'Toggle table of contents',
-      toggleFocusMode: 'Toggle focus mode',
-    },
-    tabContextMenu: {
-      closeThisTab: 'Close',
-      closeTabsToRight: 'Close to right',
-      closeOtherTabs: 'Close others',
-      closeAllTabs: 'Close all',
-      showInFileExplorer: 'Show in File Explorer',
-      openInFinder: 'Open in Finder',
-      revealInFinder: 'Reveal in Finder',
-      showInFileManager: 'Show in File Manager',
-    },
-  }),
-}));
+vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../ui/src/contexts/translations')>();
+  const en = actual.getTranslations('en');
+  return {
+    ...actual,
+    getTranslations: () => ({
+      ...en,
+      topbar: { ...en.topbar,
+        switchToLightMode: 'Switch to light',
+        switchToDarkMode: 'Switch to dark',
+        moreActions: 'More',
+        home: 'Home',
+        welcomePage: 'Welcome',
+        editLabel: 'Edit',
+        edit: 'Edit in editor',
+        settings: 'Settings',
+        settingsUpdate: 'Settings (update available)',
+        goBack: 'Back',
+        goForward: 'Forward',
+        refresh: 'Refresh',
+        collapseAll: 'Collapse all',
+        expandAll: 'Expand all',
+        copy: 'Copy file content',
+      },
+      tooltips: { ...en.tooltips,
+        closeTab: 'Close tab',
+        minimize: 'Minimize',
+        maximize: 'Maximize',
+        restore: 'Restore',
+        closeApp: 'Close',
+        newTab: 'New tab',
+      },
+      actions: { ...en.actions,
+        toggleSidebar: 'Toggle sidebar',
+        toggleToc: 'Toggle table of contents',
+        toggleFocusMode: 'Toggle focus mode',
+      },
+      tabContextMenu: { ...en.tabContextMenu,
+        closeThisTab: 'Close',
+        closeTabsToRight: 'Close to right',
+        closeOtherTabs: 'Close others',
+        closeAllTabs: 'Close all',
+        showInFileExplorer: 'Show in File Explorer',
+        openInFinder: 'Open in Finder',
+        revealInFinder: 'Reveal in Finder',
+        showInFileManager: 'Show in File Manager',
+      },
+    }),
+  };
+});
 
 let capturedOnAction: ((action: any) => void) | null = null;
 let capturedOnClose: (() => void) | null = null;

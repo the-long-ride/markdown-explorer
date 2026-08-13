@@ -4,6 +4,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useCssVars } from "../../utils/useCssVars";
 import {
   DEFAULT_PET_THEME_STYLE,
   PET_THEME_STYLE_OPTIONS,
@@ -276,6 +277,8 @@ export function ThemeStylePicker({
     setOpenGroup(null);
   };
 
+  useCssVars(menuRef, menuPosition ? { '--menu-top': menuPosition.top !== undefined ? `${menuPosition.top}px` : undefined, '--menu-bottom': menuPosition.bottom !== undefined ? `${menuPosition.bottom}px` : undefined, '--menu-left': `${menuPosition.left}px`, '--menu-width': `${menuPosition.width}px`, '--menu-max-height': `${menuPosition.maxHeight}px` } : {});
+
   const selectPet = (themeStyle: PetThemeStyle) => {
     onChange(themeStyle);
     setOpenGroup(null);
@@ -382,14 +385,6 @@ export function ThemeStylePicker({
           className={`${openGroup === "themes" ? "theme-group-menu" : openGroup === "pets" ? "pet-theme-menu" : "custom-theme-menu"} theme-picker-menu--portal`}
           role="listbox"
           aria-label={openGroup === "themes" ? t.themeStyles.themesMenuLabel : openGroup === "pets" ? t.themeStyles.petsMenuLabel : t.themeStyles.customThemesMenuLabel}
-          style={{
-            position: "fixed",
-            top: menuPosition.top !== undefined ? menuPosition.top : "auto",
-            bottom: menuPosition.bottom !== undefined ? menuPosition.bottom : "auto",
-            left: menuPosition.left,
-            width: menuPosition.width,
-            maxHeight: menuPosition.maxHeight,
-          }}
         >
           {openGroup === "themes" && THEME_STYLE_OPTIONS.map((option) => {
             const copy = getThemeCopy(option.id);

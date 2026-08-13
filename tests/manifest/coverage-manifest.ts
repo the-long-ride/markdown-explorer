@@ -324,6 +324,47 @@ export const coverageManifest: Record<string, string[]> = {
   'chromium-xtension/src/incremental-publish.ts': ['tests/unit/chromium/incremental-workspace-scan.test.ts'],
   'chromium-xtension/src/workspace-search-items.ts': ['tests/unit/chromium/workspace-search-items.test.ts'],
   'electron/workspace/incremental-publish.js': ['tests/unit/electron/scanner.test.ts'],
+  'electron/fonts/font-service.js': [
+    'tests/node/electron-font-service.test.mjs',
+    'tests/node/electron-font-runtime-contract.test.mjs',
+  ],
+  'ui/src/components/Settings/DesktopTypographySettings.tsx': [
+    'tests/node/desktop-typography-translations.test.mjs',
+    'tests/node/desktop-typography-ui-contract.test.mjs',
+    'tests/node/settings-ux-followup-contract.test.mjs',
+    'tests/node/typography-apply-confirmation-contract.test.mjs',
+    'tests/node/localization-settings-doc-sync-contract.test.mjs',
+  ],
+  'ui/src/components/Settings/FontSearchDropdown.tsx': ['tests/node/desktop-typography-ui-contract.test.mjs'],
+  'ui/src/components/Settings/FontVariantDropdown.tsx': ['tests/node/desktop-typography-ui-contract.test.mjs'],
+  'ui/src/components/Settings/SettingsOutlineButton.tsx': [
+    'tests/node/settings-ux-followup-contract.test.mjs',
+    'tests/node/settings-layout-polish.test.mjs',
+    'tests/node/update-dialog-runtime-contract.test.mjs',
+  ],
+  'ui/src/components/Settings/desktopTypographyChanges.ts': ['tests/node/typography-apply-confirmation-contract.test.mjs'],
+  'ui/src/components/Settings/themeRemixTranslations.ts': ['tests/node/ui-typescript-build-regression.test.mjs'],
+  'ui/src/contexts/auditedUiTranslationTypes.ts': ['tests/node/localization-settings-doc-sync-contract.test.mjs'],
+  'ui/src/contexts/auditedUiTranslations.ts': [
+    'tests/unit/ui/contexts/translations.test.ts',
+    'tests/node/localization-settings-doc-sync-contract.test.mjs',
+  ],
+  'ui/src/contexts/desktopTypographyTranslations.ts': [
+    'tests/unit/ui/contexts/translations.test.ts',
+    'tests/node/desktop-typography-translations.test.mjs',
+    'tests/node/desktop-typography-ui-contract.test.mjs',
+  ],
+  'ui/src/contexts/languageOptions.ts': ['tests/unit/ui/contexts/translations.test.ts'],
+  'ui/src/desktop/fonts/applyDesktopTypography.ts': [
+    'tests/node/desktop-typography-contract.test.mjs',
+    'tests/node/desktop-typography-ui-contract.test.mjs',
+    'tests/node/focus-fonts-zoom-settings-followup-contract.test.mjs',
+  ],
+  'ui/src/desktop/fonts/fontModel.ts': [
+    'tests/node/desktop-font-model-behavior.test.mjs',
+    'tests/node/desktop-font-model-contract.test.mjs',
+  ],
+  'ui/src/dom/tableUiLabels.ts': ['tests/node/ui-typescript-build-regression.test.mjs'],
 
   'ui/src/components/Sidebar/SidebarFilesActions.tsx': ['tests/node/sidebar-pinning-sorting.test.mjs'],
   'ui/src/components/Sidebar/SidebarScopeControls.tsx': ['tests/node/sidebar-files-performance-contract.test.mjs'],

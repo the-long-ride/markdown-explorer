@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { Translations } from '../../contexts/translationTypes';
 import type { DesktopFontBinding, DesktopFontFamily, DesktopFontSelection } from '../../desktop/fonts/fontModel';
 import { findDesktopFontFamily } from '../../desktop/fonts/fontModel';
+import { useCssVars } from '../../utils/useCssVars';
 import { ChevronDownIcon, SearchIcon } from '../shared/icons';
 
 type SearchChoice = {
@@ -14,6 +15,41 @@ type SearchChoice = {
 
 function optionId(id: string) {
   return `font-search-option-${id.replace(/[^a-z0-9_-]/gi, '-')}`;
+}
+
+function FontSearchOption({
+  id,
+  font,
+  active,
+  keyboardActive,
+  onPointerMove,
+  onChoose,
+  children,
+}: {
+  id: string;
+  font: DesktopFontFamily;
+  active: boolean;
+  keyboardActive: boolean;
+  onPointerMove: () => void;
+  onChoose: () => void;
+  children?: ReactNode;
+}) {
+  const ref = useRef<HTMLButtonElement>(null);
+  useCssVars(ref, { '--font-preview-family': font.cssFamily });
+  return (
+    <button
+      ref={ref}
+      id={id}
+      type="button"
+      role="option"
+      aria-selected={active}
+      className={`font-search-menu__option${active ? ' is-selected' : ''}${keyboardActive ? ' is-keyboard-active' : ''}`}
+      onPointerMove={onPointerMove}
+      onClick={onChoose}
+    >
+      {children}
+    </button>
+  );
 }
 
 export function FontSearchDropdown({
@@ -136,28 +172,35 @@ export function FontSearchDropdown({
         const choiceIndex = choices.findIndex((choice) => choice.id === font.id);
         const active = value.source === font.source && (font.source === 'imported' ? value.id === font.id : value.family === font.family);
         return (
-          <button
+          <FontSearchOption
             id={optionId(font.id)}
             key={font.id}
-            type="button"
-            role="option"
-            aria-selected={active}
-            className={`font-search-menu__option${active ? ' is-selected' : ''}${choiceIndex === activeIndex ? ' is-keyboard-active' : ''}`}
-            style={{ fontFamily: font.cssFamily }}
+            font={font}
+            active={active}
+            keyboardActive={choiceIndex === activeIndex}
             onPointerMove={() => setActiveIndex(choiceIndex)}
-            onClick={() => choose(font.source === 'system'
+            onChoose={() => choose(font.source === 'system'
               ? { source: 'system', family: font.family }
               : { source: 'imported', family: font.family, id: font.id })}
           >
             <span>{font.family}</span>
             <span className="font-search-menu__source">{font.source === 'system' ? t.fontSystem : t.fontImported}</span>
-          </button>
+          </FontSearchOption>
         );
       })}
     </div>
   );
 
   const activeChoice = choices[activeIndex];
+
+  useCssVars(menuRef, position
+    ? {
+        '--menu-top': `${position.top}px`,
+        '--menu-left': `${position.left}px`,
+        '--menu-width': `${position.width}px`,
+        '--menu-max-height': `${position.maxHeight}px`,
+      }
+    : {});
 
   return (
     <div className={`font-search-dropdown${open ? ' is-open' : ''}`} ref={rootRef}>
@@ -177,7 +220,6 @@ export function FontSearchDropdown({
           ref={menuRef}
           className="font-search-menu"
           role="listbox"
-          style={{ position: 'fixed', top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
         >
           <label className="font-search-menu__search">
             <SearchIcon size={13} />

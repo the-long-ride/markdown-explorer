@@ -46,6 +46,8 @@ describe('lazy workspace loading parity', () => {
   test('uses the shared nonblocking progress protocol from host through UI', () => {
     expect(read('ui/src/types/hostMessages.ts')).toContain("command: 'workspaceScanProgress'");
     expect(read('ui/src/contexts/useAppStateEffects.ts')).toContain("case 'workspaceScanProgress'");
-    expect(read('ui/src/AppView.tsx')).toContain('Scanning {state.scannedFiles.toLocaleString()} files');
+    expect(read('ui/src/AppView.tsx')).toContain(
+      "scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(state.settings.language || 'en'))",
+    );
   });
 });
