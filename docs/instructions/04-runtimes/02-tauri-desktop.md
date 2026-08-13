@@ -53,7 +53,7 @@ keywords:
 
 ## Window configuration
 
-- Default 1280×800; minimum 720×480.
+- Default 1280×800; minimum 800×480.
 - Frameless shell uses shared UI controls.
 - Window state is restored through host state.
 - Single-instance and file-drop paths route through normal workspace operations.
@@ -64,6 +64,13 @@ keywords:
 - Support byte ranges for media playback.
 - Reject unrestricted full reads above 256 MiB.
 - Return safe errors for invalid/escaped paths.
+
+## Native font service
+
+Tauri mirrors Electron's `listDesktopFonts`, `importDesktopFonts`, and `removeImportedDesktopFont` contracts. Rust inspects SFNT metadata, enumerates machine-wide and per-user font locations on Windows/macOS/Linux (including `.ttc`/`.otc` collection files for system-family detection), and copies accepted `.ttf`/`.otf` imports into `<app_data_dir>/fonts`.
+Required Regular/Bold/Italic coverage is derived from static faces or variable-font axes; `ital`/`slnt` variable axes can satisfy italic coverage from one file, while weight-only variable fonts still require an italic companion.
+
+The `local-file://` protocol may serve canonical `.ttf`/`.otf` files inside that managed fonts directory in addition to active-workspace resources. This exception is narrowly scoped to app-managed fonts and uses font MIME types; arbitrary paths outside the workspace/managed font roots remain forbidden.
 
 ## Native conversion
 

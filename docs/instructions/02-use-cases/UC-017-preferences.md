@@ -92,6 +92,14 @@ flowchart LR
 - Changing one preference must not reset unrelated fields.
 
 
+## Typography preferences
+
+Electron, Tauri, and VS Code expose five independent typography roles: **App UI**, **Body**, **Heading**, **Quote**, and **Code**. Each accepts Default, a detected system family, or an imported family plus an explicit supported style/weight. Imported `.ttf`/`.otf` files are selected through the host picker and copied into app-managed storage (VS Code extension global storage in the extension runtime) so later source-file moves do not break the preference.
+
+Typography edits remain in a local draft. **Apply** is disabled while that draft matches persisted `fontBindings`; changing a family, variant, reset state, or imported-font binding enables it. Selecting Apply opens a confirmation dialog that lists only the **changed roles** and shows each role's old value → new value. Cancel preserves the draft, while **Apply changes** persists the complete draft.
+
+Persisted font settings contain only normalized source/family/id/style/weight references; font bytes and original paths are never exported. If a persisted system/imported family is unavailable, the application falls back to the corresponding default and remains readable. Chromium and website runtimes do not expose native font discovery/import controls. VS Code enumerates installed fonts and serves managed imports to its webview without changing the editor font.
+
 ## Protocol effects
 
 | Contract | Direction | Purpose |

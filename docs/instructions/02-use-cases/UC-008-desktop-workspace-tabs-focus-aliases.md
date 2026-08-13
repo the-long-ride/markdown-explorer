@@ -110,6 +110,10 @@ flowchart LR
 | `markdown-explorer-workspace-aliases-v1` | Workspace display aliases. |
 | `desktopViewMode` | `focus` or `tabs`. |
 
+## Application focus mode
+
+The shared Focus mode toggle is presentation state, not OS-window minimize state. Entering it hides the top/tab chrome, sidebar and resize handles, TOC panel/resizer, and content tab strip so the document occupies the available shell. A dedicated exit-focus control remains visible and toggles the same state off; it never uses or triggers the window-minimize command.
+
 ## Runtime-specific behavior
 
 | Runtime | Rule |

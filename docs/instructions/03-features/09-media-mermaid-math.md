@@ -67,6 +67,12 @@ flowchart LR
 Zoom clamps to 0.25–20. Buttons adjust by 0.25; wheel adjusts approximately 0.15. Panning is enabled only when zoomed and must not trap keyboard focus.
 
 
+### Compact Mermaid viewport fitting
+
+Mermaid initializes with compact flowchart spacing (`nodeSpacing: 28`, `rankSpacing: 34`), linear connectors, and bounded diagram padding. After render, Markdown Explorer centers each diagram, tightens its SVG to the actual content bounds, and recalculates the intrinsic width/height from those fitted bounds while retaining `max-width: 100%` and `height: auto` for responsive scaling.
+
+When the SVG graphics API exposes finite content bounds, the renderer tightens `viewBox` to those bounds plus controlled padding. If `getBBox()` is unavailable or throws, the generated Mermaid viewBox is preserved while responsive sizing is still applied. Diagrams are never cropped to force compactness; the existing media viewer remains the detailed zoom/pan path.
+
 ## States and failure behavior
 
 | State | Required presentation | Exit condition |

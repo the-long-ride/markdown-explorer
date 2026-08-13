@@ -22,6 +22,7 @@ keywords: []
 | Reader goal | Start here | Continue with |
 |---|---|---|
 | Understand product | Product Scope | System Context, Use Cases |
+| Understand current unreleased behavior | Current Application State | Matching feature, runtime, and reference catalogs |
 | Implement UI behavior | Relevant use case | Matching feature, protocol, settings |
 | Implement a host | Runtime Architecture | Bridge Protocol, runtime specification, parity |
 | Debug a failure | Error and Recovery | Error Codes, related use case |

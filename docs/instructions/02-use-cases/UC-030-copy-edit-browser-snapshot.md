@@ -74,6 +74,10 @@ flowchart LR
 | 5 | Open HTML preview/browser | Build safe preview and send `openHtmlPreview` or browser action. | Preview destination opens. |
 | 6 | Restore control state | Reset temporary copied label/timer. | Action can repeat. |
 
+## VS Code Edit capability
+
+When a `.md` or `.mdx` document is active in the VS Code runtime, More → **Edit** is enabled and sends the existing `openInEditor` command with the current canonical file path. The VS Code host opens/reveals that source in a text editor. The action is disabled when there is no current file, including the Welcome page. Desktop runtimes retain their existing editor/shell behavior.
+
 ## Alternate and failure flows
 
 | Condition | Required behavior | Recovery |

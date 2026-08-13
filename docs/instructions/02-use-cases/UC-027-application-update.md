@@ -124,7 +124,8 @@ flowchart LR
 |---|---|
 | Electron installed packaged Windows | In-app update eligible; portable excluded. |
 | Tauri | Official updater/process plugins provide signed download, progress, persisted downloaded/scheduled state, apply-on-close, install-and-restart, and restoration after relaunch. |
-| VS Code/Chromium/Website | Distribution channel owns updates; app installer controls hidden. |
+| VS Code | Shared update checking may report availability, but VS Code owns extension download/install; Markdown Explorer download/install controls are hidden. |
+| Chromium/Website | Distribution channel owns updates; app installer controls hidden. |
 
 ## Accessibility, security, and performance
 

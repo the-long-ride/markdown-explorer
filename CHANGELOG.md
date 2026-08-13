@@ -4,6 +4,32 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Settings navigation shell**: Reorganized Settings into Appearance, desktop Typography, Theme Style, Keyboard Shortcuts, and Update & Backup navigation sections with larger targets and update attention badges.
+- **Version-aware update notification**: Desktop users are proactively notified when a newer release is found, can open the changelog, defer the prompt, or skip notifications for only that release version.
+
+### Changed
+- **Appearance settings cleanup**: Removed the redundant **View Preferences** secondary heading so Appearance controls sit directly below the section title and description.
+- **Typography icon consistency**: Locked the action-level Apply/Apply Changes circle-check icon to a component-owned 14 px square so theme CSS cannot resize it.
+- **Nine-locale renderer localization audit**: Audited the recent Settings/shortcut/focus/zoom/update work and then the full `ui/src` presentation surface. Settings, Theme Remix, Welcome/onboarding, workspace selection, initial loading/scanning, sidebar navigation, search status, recent-workspace timestamps, generated Markdown table/code controls, video/YouTube fallbacks, tooltips, placeholders, and accessibility copy now resolve through the nine-locale UI boundary while technical identifiers and brand names remain literal where required.
+- **Specification synchronization**: Added an Unreleased Current Application State reference and refreshed Settings, runtime parity, localization, Theme Remix, catalogs, and reading-map documentation to match the active source.
+- **Tauri UI build path**: Added a dedicated `build:ui:tauri` pipeline and switched local launchers, CI, release, and desktop-store packaging flows to build the Tauri UI bundle with Tauri-specific Vite mode instead of reusing the Electron mode.
+- **Settings UX polish**: Narrowed the Settings modal, moved its title/subtitle into the header, made secondary actions outline-style, kept More Actions at normal toolbar size, enlarged only update dots, and made Theme Style menus collision-aware.
+- **Regression coverage**: Preserved HTML document preview, CSV/TSV rendering, the interactive Snake sandbox fixture, and workspace scan behavior while refactoring Settings and typography.
+- **Role-based Desktop Typography**: Desktop typography now binds App UI, Body, Heading, Quote, and Code independently, with searchable system/imported family selection, explicit style/weight variants, single-file imports, reusable managed fonts, and icon-only per-role reset actions.
+
+### Fixed
+- **Theme Style dropdown positioning**: Computed menu height dynamically based on item count and anchored upward-opening menus flush against trigger buttons with `bottom` placement, eliminating large blank gaps above theme cards.
+- **Electron dev-launch workspace tabs**: Updated external open path resolution to account for `isPackaged`, ignoring the `.` entry directory argument in unpackaged development runs (`electron .`) and preventing redundant empty workspace tabs from opening on launch.
+- **UI TypeScript build compatibility**: Preserved Theme Remix density/image-fit literal unions through translated option helpers and replaced `String.prototype.replaceAll` in renderer label formatting so the UI compiles cleanly against the project's ES2020 TypeScript target.
+- **Localized renderer fallbacks**: Removed remaining user-visible English fallbacks found by the full renderer audit, including Search On/Off state, sidebar labels/ARIA text, initial loading/scanning copy, Theme Remix status messages, shortcut labels, workspace/onboarding copy, recent-workspace relative dates, video/YouTube fallback links, interactive table filters/wrapping/counts, chart switcher labels, code-preview actions, and copy feedback.
+- **Tauri desktop font routing**: Tauri now receives desktop runtime classes and JetBrains Mono desktop font defaults the same way as Electron, preventing fallback monospace mismatches in code and typography settings.
+- **Mermaid rendering rollback**: Removed the recent application-specific Mermaid theming, diagram-family layout rules, Gantt/timeline/architecture post-processing, and related styling so Mermaid is back on the baseline renderer while rendering/error/media-viewer behavior remains intact.
+
+---
+
 ## [v1.6.3] — 2026-08-04
 
 ### Added

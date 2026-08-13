@@ -10,6 +10,7 @@ parent_docs:
 related_docs: []
 source_scope:
 - ui/src/components/Workspace/RecentWorkspaceItem.tsx
+- ui/src/components/Workspace/workspaceSelectionUtils.ts
 - ui/src/components/Workspace/RecentWorkspacesModal.tsx
 - electron/workspace/recents.js
 - tauri/src/workspace/recents.rs
@@ -104,6 +105,10 @@ flowchart LR
 | `markdown-explorer-workspace-aliases-v1` | Display aliases. |
 | `workspaceOperationId` | Open correlation. |
 
+### Localized last-opened time
+
+Recent entries format short relative ages with `Intl.RelativeTimeFormat` and older timestamps with `Intl.DateTimeFormat`, using the selected Markdown Explorer locale. Presentation code does not append English-only `ago` text.
+
 ## Runtime-specific behavior
 
 | Runtime | Rule |
@@ -166,6 +171,7 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Kind | Path | Purpose |
 |---|---|---|
 | Implementation | `ui/src/components/Workspace/RecentWorkspaceItem.tsx` | Active behavior or contract |
+| Implementation | `ui/src/components/Workspace/workspaceSelectionUtils.ts` | Locale-aware last-opened formatting |
 | Implementation | `ui/src/components/Workspace/RecentWorkspacesModal.tsx` | Active behavior or contract |
 | Implementation | `electron/workspace/recents.js` | Active behavior or contract |
 | Implementation | `tauri/src/workspace/recents.rs` | Active behavior or contract |

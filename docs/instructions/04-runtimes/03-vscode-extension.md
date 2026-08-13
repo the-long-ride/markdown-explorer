@@ -63,6 +63,14 @@ Explorer/editor menus and keybindings invoke these commands through extension AP
 - HTML standalone preview uses an extension-host server/document builder.
 - Document conversion is opt-in through extension configuration and shared settings.
 
+### More → Edit parity
+
+For an active Markdown/MDX source file, VS Code renders a dedicated icon-only **Edit** button immediately left of More actions and sends `openInEditor`. Its default shortcut is `Ctrl+Alt+E`, and the tooltip is rendered in a viewport-level portal so host-shell overflow cannot clip the text or keycaps. The extension reveals that source in a normal VS Code editor. Welcome/no-file state keeps the action disabled.
+
+The shared updater may check release metadata and report that a newer Markdown Explorer version exists, but the VS Code variant does not offer app-owned download/install controls. VS Code's extension update mechanism owns installation.
+
+Markdown Explorer Typography is available in the VS Code runtime. The extension host enumerates installed OS fonts, accepts imported `.ttf`/`.otf` files into extension global storage, and exposes managed files to the webview through `asWebviewUri` plus an explicit font CSP/resource root. These choices affect Markdown Explorer only; the user’s VS Code editor font settings are never modified. VS Code owns zooming and extension installation, so Markdown Explorer does not expose app-owned zoom/reset or download/install actions there.
+
 ## Configuration
 
 Configuration covers theme, theme style, auto refresh, document conversion, exclude rules, and default expansion. Runtime values must normalize before reaching shared state.
@@ -77,6 +85,8 @@ The extension compiles shared/copied UI assets and packages according to `vscode
 |---|---|---|
 | Implementation | `vscode/src/extension.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panel.ts` | Active behavior or contract |
+| Implementation | `vscode/src/fonts/fontService.ts` | System-font discovery and managed font import for the webview |
+| Implementation | `vscode/src/fonts/panelFontBridge.ts` | Webview font list/import/remove message bridge and managed-resource URL mapping |
 | Implementation | `vscode/src/core/panelNavigation.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelNavigationHandler.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelSearch.ts` | Active behavior or contract |
@@ -89,6 +99,8 @@ The extension compiles shared/copied UI assets and packages according to `vscode
 | Implementation | `vscode/package.json` | Active behavior or contract |
 | Verification | `tests/unit/vscode/extension.test.ts` | Automated expectation |
 | Verification | `tests/unit/vscode/panel.test.ts` | Automated expectation |
+| Verification | `tests/node/vscode-font-service.test.mjs` | Managed VS Code font import/list/remove behavior |
+| Verification | `tests/node/focus-fonts-zoom-settings-followup-contract.test.mjs` | Runtime gating, resource bridge, Settings, focus, and zoom contracts |
 | Verification | `tests/unit/vscode/panelWatch.test.ts` | Automated expectation |
 | Verification | `tests/unit/vscode/documentConversion.test.ts` | Automated expectation |
 | Verification | `tests/unit/build/vscode-runtime-scripts.test.ts` | Automated expectation |

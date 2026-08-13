@@ -115,7 +115,7 @@ flowchart LR
 
 | Runtime | Rule |
 |---|---|
-| Electron | Single-instance lock, argv/file association, queued external paths. |
+| Electron | Single-instance lock, argv/file association, queued external paths. Unpackaged dev launches (`electron .`) ignore the entry argument `.` and only route explicit external CLI paths. |
 | Tauri | Single-instance and file-drop events. |
 | VS Code | Explorer/editor commands supply URI. |
 | Chromium/Website | File System Access handles from drop/picker where browser permits. |

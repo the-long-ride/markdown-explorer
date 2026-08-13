@@ -86,7 +86,7 @@ flowchart LR
 ## Validation and business rules
 
 - UI does not infer maximized/fullscreen state; host events are authoritative.
-- F11 toggles fullscreen; Ctrl/Cmd+0 resets zoom through fixed behavior.
+- F11 toggles fullscreen; desktop `Ctrl+Alt+Z` resets Markdown Explorer zoom to 100%. VS Code/Chromium/Website leave zoom to the host.
 - Tray Quit must terminate, not only hide.
 - Window close behavior is platform-specific and documented.
 
@@ -100,7 +100,8 @@ flowchart LR
 | `window-close` | UI → host | Request window close. |
 | `toggle-fullscreen` | UI → host | Toggle native fullscreen. |
 | `zoom-in` | UI → host | Increase zoom. |
-| `zoom-out` | UI → host | Decrease zoom. |
+| `zoom-out` | UI → host | Decrease desktop-app zoom. |
+| `zoom-reset` | UI → host | Reset desktop-app zoom to 100%. |
 | `window-state-changed` | Host → UI | Report maximized state. |
 | `fullscreenChanged` | Host → UI | Report fullscreen state. |
 
@@ -116,9 +117,9 @@ flowchart LR
 
 | Runtime | Rule |
 |---|---|
-| Electron | Frameless window, tray Open/Quit, single instance; non-mac quits on all windows closed; mac activate recreates. |
-| Tauri | Frameless 1280×800, minimum 720×480, restored window state, native commands. |
-| VS Code/Chromium/Website | Native application window controls absent; browser/editor owns lifecycle. |
+| Electron | Frameless window with 800px minimum width, tray Open/Quit, single instance; non-mac quits on all windows closed; mac activate recreates. |
+| Tauri | Frameless 1280×800, minimum 800×480, restored window state, native commands. |
+| VS Code/Chromium/Website | Native application window controls absent; browser/editor owns lifecycle and zoom. Markdown Explorer does not intercept zoom/reset shortcuts. |
 
 ## Accessibility, security, and performance
 
