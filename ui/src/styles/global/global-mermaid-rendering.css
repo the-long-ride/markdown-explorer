@@ -30,7 +30,7 @@
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="class"] .mermaid .relation,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine0,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine1,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid path.edge,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid path {
   stroke-width: max(1.6px, var(--stroke-w));
 }
@@ -39,6 +39,11 @@
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid svg,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid svg {
   overflow: visible !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid foreignObject * {
+  font-family: var(--font-mermaid) !important;
 }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid .messageText,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="c4"] .mermaid .relationLabel,
@@ -49,25 +54,71 @@
   stroke-linejoin: round;
   font-weight: 600;
 }
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid path.edge,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid .edge {
+  stroke-width: max(1.8px, var(--stroke-w, 2px));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid polygon.arrow,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid .arrow {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid g.architecture-groups rect.node-bkg,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid .architecture-groups rect {
+  stroke-dasharray: 8 5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid text {
+  font-family: var(--font-mermaid) !important;
+  text-rendering: geometricPrecision;
+}
+/* Service and group labels appear BELOW/BESIDE icons on a white SVG background —
+   they must be dark regardless of Mermaid's theme-driven default (which can be white). */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid .architecture-service-label text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid .architecture-service-label tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid .architecture-group-label text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid .architecture-group-label tspan {
+  fill: var(--tx) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid text[data-mdn-architecture-label-shifted="true"],
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="architecture"] .mermaid foreignObject[data-mdn-architecture-label-shifted="true"] {
+  overflow: visible;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="block"] .mermaid .edgeLabel,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="block"] .mermaid .label {
+  background: var(--bg-s, var(--bg, transparent));
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="block"] .mermaid text {
+  font-family: var(--font-mermaid) !important;
   text-rendering: geometricPrecision;
 }
 /* Gantt is readability-first: Mermaid compact mode is intentionally not used. */
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: flex-start;
   overflow-x: auto;
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid {
   justify-content: flex-start;
-  min-width: 920px;
+  min-width: var(--mdn-mermaid-intrinsic-width, 920px);
   width: max-content;
   max-width: none;
   max-height: none;
   overflow: visible !important;
 }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid svg {
-  min-width: 920px;
+  min-width: var(--mdn-mermaid-intrinsic-width, 920px);
   max-width: none !important;
   max-height: none !important;
   margin-inline: 0 !important;
@@ -80,3 +131,171 @@
   font-size: 13px;
   text-rendering: geometricPrecision;
 }
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid .exclude-range,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="gantt"] .mermaid rect.exclude-range {
+  fill: color-mix(in srgb, var(--tx) 4%, transparent) !important;
+  opacity: 1 !important;
+}
+
+/* Sankey keeps an intrinsic layout width; the document wrapper owns horizontal scrolling. */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sankey"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  max-height: none;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sankey"] .mermaid {
+  justify-content: flex-start;
+  width: max-content;
+  min-width: var(--mdn-mermaid-intrinsic-width, 760px);
+  max-width: none;
+  max-height: none;
+  overflow: visible !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sankey"] .mermaid svg {
+  width: var(--mdn-mermaid-intrinsic-width, 760px) !important;
+  min-width: var(--mdn-mermaid-intrinsic-width, 760px) !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin-inline: 0 !important;
+  overflow: visible !important;
+}
+
+/* ZenUML owns complex nested fragments; keep the full generated SVG visible in document view. */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] {
+  max-height: none;
+  overflow: auto;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid svg {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Sequence diagrams: fit-contain in center of container within max-height */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: calc(var(--mermaid-max-h) + 32px);
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  max-height: var(--mermaid-max-h);
+  overflow: hidden !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid svg {
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  max-height: var(--mermaid-max-h) !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  object-fit: contain;
+}
+/* Sequence typography: apply custom Mermaid font everywhere */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid tspan {
+  font-family: var(--font-mermaid) !important;
+  text-rendering: geometricPrecision;
+}
+/* Actor boxes & man icons */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid rect.actor {
+  fill: var(--bg-s, #ffffff) !important;
+  stroke: var(--accent, #3b82f6) !important;
+  rx: 6px;
+  ry: 6px;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-man circle,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-man line {
+  stroke: var(--accent, #3b82f6) !important;
+  fill: var(--bg-s, #ffffff) !important;
+}
+/* Sequence text: ensure high-contrast foreground across both light and dark modes */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text.actor,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text.actor tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-man text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageText,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .labelText,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .labelText > tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .loopText,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .loopText > tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .sectionTitle,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .sectionTitle > tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .noteText,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .noteText > tspan {
+  fill: var(--tx) !important;
+}
+/* Lifelines, message lines, loops, and arrowheads */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-line {
+  stroke: var(--bd-s, #cccccc) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine0,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine1,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .loopLine {
+  stroke: var(--accent, #3b82f6) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid [id$="-arrowhead"] path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid [id$="-crosshead"] path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid marker path {
+  fill: var(--accent, #3b82f6) !important;
+  stroke: var(--accent, #3b82f6) !important;
+}
+/* Group frames, alt/loop boxes, and notes */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .labelBox,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .note {
+  fill: var(--bg-s, #ffffff) !important;
+  stroke: var(--bd-s, #cccccc) !important;
+  rx: 4px;
+  ry: 4px;
+}
+
+/* ER diagrams: harmonious dark/light zebra rows and high-contrast text */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-odd path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-odd rect {
+  fill: var(--bg-s) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-even path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-even rect {
+  fill: var(--bg-e, var(--bg)) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .outer-path path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .outer-path rect,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .entityBox {
+  fill: var(--bg-s) !important;
+  stroke: var(--bd-s) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid tspan {
+  fill: var(--tx) !important;
+  font-family: var(--font-mermaid) !important;
+  text-rendering: geometricPrecision;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .relationshipLine {
+  stroke: var(--accent) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid marker path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .marker {
+  stroke: var(--accent) !important;
+  fill: var(--accent) !important;
+}
+
+

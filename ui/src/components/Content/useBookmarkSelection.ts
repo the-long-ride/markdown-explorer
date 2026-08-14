@@ -67,7 +67,7 @@ export function useBookmarkSelection({
       }
     }
     if (!(event.target instanceof Element)) return false;
-    const object = event.target.closest('[data-mdn-bookmark-kind="math"], [data-mdn-bookmark-kind="mermaid"], [data-mdn-bookmark-kind="image"], [data-mdn-bookmark-kind="code"]');
+    const object = event.target.closest('[data-mdn-bookmark-kind="math"], [data-mdn-bookmark-kind="code"]');
     if (object && body.contains(object) && openCapture(object, event.clientX, event.clientY)) {
       event.preventDefault();
       event.stopPropagation();

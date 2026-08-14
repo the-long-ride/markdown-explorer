@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useContentNavigationEffects } from "./useContentNavigationEffects";
 import { useContentScrollMemory } from "./useContentScrollMemory";
-import { isWorkspaceNavigationHref } from "./contentUtils";
+import { isWorkspaceNavigationHref, syncStickyTableHeaders } from "./contentUtils";
 import { scheduleContentEnhancements } from "./scheduleContentEnhancements";
+import { subscribeToAutoMermaidTheme, syncMermaidAppearance } from "./enhancements/mermaidAppearance";
+import { createMermaidRerenderLifecycle } from "./enhancements/mermaidRerenderLifecycle";
 import {
   applyPreviewActionTranslations,
   getHtmlPreviewDocument,
@@ -47,6 +49,7 @@ export function useContentEffects({
   const lastRestoredFileRef = useRef<string | null>(null);
   const lastRestoredVersionRef = useRef<number | null>(null);
   const mermaidRunIdRef = useRef(0);
+  const lastMermaidAppearanceKeyRef = useRef<string | null>(null);
   const headingStateByFileRef = useRef<Map<string, HeadingSectionState>>(new Map());
 
   useContentNavigationEffects({
@@ -61,6 +64,10 @@ export function useContentEffects({
     const body = bodyRef.current;
     if (!body || state.isLoading || state.notFoundHref || state.workspaceUnavailablePath) return;
 
+    const mermaidAppearance = syncMermaidAppearance(lastMermaidAppearanceKeyRef.current, state);
+    const appearanceChanged = mermaidAppearance.changed;
+    lastMermaidAppearanceKeyRef.current = mermaidAppearance.key;
+
     const headingSections = createHeadingSectionInteractions({
       body,
       currentFile: state.currentFile,
@@ -74,51 +81,36 @@ export function useContentEffects({
       if (onBookmarkContextMenu?.(event)) return;
       if (!(event.target instanceof Element)) return;
       const anchor = event.target.closest<HTMLAnchorElement>("a[href], a[data-mdn-target]");
-      if (!anchor || !body.contains(anchor)) return;
+      const img = event.target.closest<HTMLImageElement>("img");
+      const mermaidWrap = event.target.closest<HTMLElement>(".mdn-mermaid-wrap");
+      const svg = event.target.closest<SVGElement>("svg");
+      const imageTarget = (img && body.contains(img))
+        ? img
+        : (mermaidWrap && body.contains(mermaidWrap))
+        ? mermaidWrap
+        : (svg && body.contains(svg))
+        ? (svg.closest<HTMLElement>(".mdn-mermaid-wrap") || svg)
+        : null;
+
+      const validAnchor = anchor && body.contains(anchor) ? anchor : null;
+      if (!validAnchor && !imageTarget) return;
+
       event.preventDefault();
       event.stopPropagation();
       onOpenLinkMenu({
         x: event.clientX,
         y: event.clientY,
-        anchor,
-        bookmarkTarget: event.target.closest('[data-mdn-bookmark-kind="image"]') ?? anchor,
-        link: resolveRenderedLink(anchor, state.currentFile || ""),
+        anchor: validAnchor ?? undefined,
+        bookmarkTarget: event.target.closest('[data-mdn-bookmark-kind="image"], [data-mdn-bookmark-kind="mermaid"]') ?? validAnchor ?? imageTarget,
+        link: validAnchor ? resolveRenderedLink(validAnchor, state.currentFile || "") : undefined,
+        imageTarget: (imageTarget as HTMLElement | SVGElement) ?? undefined,
       });
     };
 
     // Sticky table header (JS-based, because overflow-x:auto blocks native sticky)
     const scrollContainer = scrollRef.current;
-    const handleScroll = () => {
-      if (!scrollContainer) return;
-      const rectScroll = scrollContainer.getBoundingClientRect();
-      const stickyTop = rectScroll.top;
-
-      scrollContainer
-        .querySelectorAll<HTMLTableElement>(".mdn-table")
-        .forEach((table) => {
-          const thead = table.querySelector<HTMLElement>("thead");
-          if (!thead) return;
-          const rectTable = table.getBoundingClientRect();
-          const offsetPast = stickyTop - rectTable.top;
-          if (offsetPast > 0) {
-            const maxTranslate = table.offsetHeight - thead.offsetHeight;
-            const translateY = Math.min(offsetPast, maxTranslate);
-            thead.style.transform = `translateY(${translateY}px)`;
-            thead.style.position = "relative";
-            thead.style.zIndex = "10";
-          } else {
-            thead.style.transform = "";
-            thead.style.position = "";
-            thead.style.zIndex = "";
-          }
-        });
-    };
-
-    if (scrollContainer) {
-      scrollContainer.addEventListener("scroll", handleScroll, {
-        passive: true,
-      });
-    }
+    const handleScroll = () => syncStickyTableHeaders(scrollContainer);
+    if (scrollContainer) scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
 
     // Image / mermaid click → media modal
     const handleClick = (e: Event) => {
@@ -398,13 +390,15 @@ export function useContentEffects({
     body.addEventListener("click", handleClick);
     body.addEventListener("contextmenu", handleContextMenu);
 
-    const stopEnhancements = scheduleContentEnhancements({
-      body,
-      state,
-      scrollRef,
-      handleScroll,
-      mermaidRunIdRef,
+    const startEnhancements = () => scheduleContentEnhancements({
+      body, state, scrollRef, handleScroll, mermaidRunIdRef,
     });
+    const mermaidRerender = createMermaidRerenderLifecycle(body, startEnhancements, {
+      theme: state.theme,
+      runIdRef: mermaidRunIdRef,
+    });
+    if (appearanceChanged) mermaidRerender.schedule();
+    const unsubscribeAutoTheme = subscribeToAutoMermaidTheme(state.theme, mermaidRerender.schedule);
     // Restore or reset scroll position only when file/version changes
     if (
       scrollRef.current &&
@@ -420,7 +414,8 @@ export function useContentEffects({
     }
 
     return () => {
-      stopEnhancements();
+      unsubscribeAutoTheme();
+      mermaidRerender.dispose();
       body.removeEventListener("click", handleClick);
       body.removeEventListener("contextmenu", handleContextMenu);
       headingSections.dispose();

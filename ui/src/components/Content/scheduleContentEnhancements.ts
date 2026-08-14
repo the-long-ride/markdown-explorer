@@ -12,7 +12,7 @@ interface ScheduleArgs {
 const PENDING_ENHANCEMENT_SELECTOR = [
   'pre code:not(.is-custom-highlighted):not([data-mdn-highlighted]):not([data-mdn-render-error])',
   '.mdn-math[data-math]:not(.is-rendered):not([data-mdn-render-error])',
-  '.mermaid:not([data-mdn-rendered]):not([data-mdn-render-error])',
+  '.mermaid:not([data-mdn-rendered]):not([data-mdn-render-error]):not([data-mdn-rerender-queued])',
   '.mdn-table:not([data-mdn-enhanced]):not([data-mdn-render-error])',
 ].join(',');
 
