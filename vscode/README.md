@@ -73,7 +73,7 @@ Open any folder containing Markdown files in VS Code to get started. Use the Mar
 
 - **Document Previews & Rich Media**
   - **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
-  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, etc.) and KaTeX math formulas.
+  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) use the current Markdown Explorer theme, family-aware spacing, and clean vector SVG output while preserving authored semantic styling. Theme and light/dark changes re-render visible diagrams, and wide Gantt diagrams scroll instead of being compressed. KaTeX renders math formulas.
   - **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
   - **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
   - **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
@@ -95,7 +95,7 @@ Open any folder containing Markdown files in VS Code to get started. Use the Mar
 - **Customization & Platform Support**
   - **Theme Remix**: Create, edit, import, and export custom themes with color, density, spacing, and background image controls.
   - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
-  - **Typography**: Choose installed system fonts or import `.ttf`/`.otf` files for Markdown Explorer App UI, Body, Heading, Quote, and Code roles. Imports live in extension global storage and do not change VS Code editor fonts.
+  - **Typography**: Choose installed system fonts or import `.ttf`/`.otf` files for Markdown Explorer App UI, Body, Heading, Quote, Code, and Mermaid roles. Imports live in extension global storage and do not change VS Code editor fonts.
   - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
   - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
   - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
@@ -122,7 +122,7 @@ Markdown tables become real data views: search rows, sort columns, multi-select 
 
 ## Diagrams, Math, Code, Media
 
-Mermaid diagrams render offline, LaTeX math is readable, code blocks are highlighted, and Markdown can include local or streaming video.
+Mermaid diagrams render offline using the current Markdown Explorer theme with family-aware spacing and vector-safe SVG polish. Changing the theme, light/dark mode, or Mermaid font re-renders visible diagrams in the current document. LaTeX math is readable, code blocks are highlighted, and Markdown can include local or streaming video.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-all-kinds-of-Mermaid-diagram.png" width="49%" alt="Many Mermaid diagram types rendered in Markdown Explorer" />
