@@ -11,6 +11,8 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 - **Version-aware update notification**: Desktop users are proactively notified when a newer release is found, can open the changelog, defer the prompt, or skip notifications for only that release version.
 
 ### Changed
+- **Mermaid diagram readability**: Added neutral-first theme mapping with guaranteed label, shape, and connector contrast, pre-layout adaptive-width Gantt scrolling, complete C4 font binding, and architecture service-label collision repair across light, dark, and custom themes.
+- **Mermaid renderer fixtures**: Expanded every diagram family in `manual-tests/test-diagrams.md` into a richer readability stress case and added an installed-environment parser validation command for the Mermaid 11.16.1 workspace dependency.
 - **Appearance settings cleanup**: Removed the redundant **View Preferences** secondary heading so Appearance controls sit directly below the section title and description.
 - **Typography icon consistency**: Locked the action-level Apply/Apply Changes circle-check icon to a component-owned 14 px square so theme CSS cannot resize it.
 - **Nine-locale renderer localization audit**: Audited the recent Settings/shortcut/focus/zoom/update work and then the full `ui/src` presentation surface. Settings, Theme Remix, Welcome/onboarding, workspace selection, initial loading/scanning, sidebar navigation, search status, recent-workspace timestamps, generated Markdown table/code controls, video/YouTube fallbacks, tooltips, placeholders, and accessibility copy now resolve through the nine-locale UI boundary while technical identifiers and brand names remain literal where required.

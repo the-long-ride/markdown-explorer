@@ -72,7 +72,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **HTML Document Modes**: Open `.html` and `.htm` files as isolated interactive previews or converted Markdown, switch active tab with `Ctrl+Alt+H`, and use **Open in Browser** when full browser behavior is needed (with embedded local CSS/JS support).
   - **Responsive Image Rows**: Same-paragraph Markdown images stay together across viewport sizes.
   - **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
-  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) and KaTeX math formulas. Diagrams use the baseline Mermaid renderer and can be opened in the full media viewer for zoom and inspection.
+  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) and KaTeX math formulas. Mermaid uses the current Markdown Explorer theme, family-aware layout profiles, and vector-safe SVG polish while preserving authored semantic styling; theme and light/dark changes re-render visible diagrams, and wide Gantt diagrams scroll before labels become unreadable. Diagrams can also be opened in the full media viewer for zoom and inspection.
   - **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
   - **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
   - **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
@@ -97,7 +97,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
   - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
   - **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
-  - **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, and Code** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Imported files are copied once into app-managed storage and can be reused by any role. Chromium/Web keeps bundled/web-safe fonts and leaves zoom/font discovery to the browser.
+  - **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, Code, and Mermaid** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Imported files are copied once into app-managed storage and can be reused by any role. Chromium/Web keeps bundled/web-safe fonts and leaves zoom/font discovery to the browser.
   - **Update Notifications**: Desktop releases can show a new-version dialog at startup with Download, Later, changelog, and **Skip notify for this version** actions. Skipping suppresses only that release; a newer release is shown again.
   - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
   - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
@@ -125,7 +125,7 @@ Markdown tables become real data views: search rows, sort columns, multi-select 
 
 ## Diagrams, Math, Code, Media
 
-Mermaid diagrams render offline through the baseline Mermaid renderer, and the media viewer remains available for zooming and inspection. LaTeX math is readable, code blocks are highlighted, and Markdown can include local or streaming video. Desktop builds use JetBrains Mono for code by default and expose independent App UI, Body, Heading, Quote, and Code font bindings in Settings.
+Mermaid diagrams render offline using the current Markdown Explorer theme with family-aware spacing and clean vector SVG output. Authored semantic colors remain intact, while default decorative colors follow the active theme; switching theme or light/dark mode re-renders visible diagrams, and wide Gantt diagrams scroll instead of being compressed. The media viewer remains available for zooming and inspection. LaTeX math is readable, code blocks are highlighted, and Markdown can include local or streaming video. Desktop/VS Code Typography exposes independent App UI, Body, Heading, Quote, Code, and Mermaid font bindings; code defaults to JetBrains Mono, and changing the Mermaid font re-renders diagrams in the current document.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Support-all-kinds-of-Mermaid-diagram.png" width="49%" alt="Many Mermaid diagram types rendered in Markdown Explorer" />
