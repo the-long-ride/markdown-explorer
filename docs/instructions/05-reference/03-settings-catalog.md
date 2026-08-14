@@ -54,12 +54,12 @@ keywords:
 | `language` | `string` | `en` | Application locale |
 | `maxPinnedItems` | `number` | `10` | Limit pinned files and folders per workspace (1–15) |
 | `customThemes` | `CustomTheme[]` | `[]` | Validated custom remixes |
-| `fontBindings` | `DesktopFontBindings?` | role defaults | Electron/Tauri/VS Code App UI, Body, Heading, Quote, and Code font family/style/weight bindings |
+| `fontBindings` | `DesktopFontBindings?` | role defaults | Electron/Tauri/VS Code App UI, Body, Heading, Quote, Code, and Mermaid font family/style/weight bindings |
 | `activeCustomThemeId` | `string?` | unset | Selected custom theme |
 
 ## Typography font bindings
 
-A `DesktopFontBinding` stores `source: default | system | imported`, bounded optional `family`/`id`, `style: normal | italic`, and a numeric `weight`. `DesktopFontBindings` contains `appUi`, `body`, `heading`, `quote`, and `code`. Font import is role-targeted in the UI draft: a correlated `desktopFontsResult.importedId` updates only the role that initiated the request, and persistence does not occur until Apply writes `fontBindings`. Unknown sources, unavailable variants, or malformed values normalize to that role's default. Legacy `appFont`/`codeFont` fields are read only for migration.
+A `DesktopFontBinding` stores `source: default | system | imported`, bounded optional `family`/`id`, `style: normal | italic`, and a numeric `weight`. `DesktopFontBindings` contains `appUi`, `body`, `heading`, `quote`, `code`, and `mermaid`. The Mermaid role is independent from App UI and Code; applying it re-renders visible Mermaid diagrams so text layout is recalculated. Font import is role-targeted in the UI draft: a correlated `desktopFontsResult.importedId` updates only the role that initiated the request, and persistence does not occur until Apply writes `fontBindings`. Unknown sources, unavailable variants, or malformed values normalize to that role's default. Legacy `appFont`/`codeFont` fields are read only for migration.
 
 ## Settings modal interaction
 

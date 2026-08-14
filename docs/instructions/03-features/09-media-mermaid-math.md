@@ -67,11 +67,18 @@ flowchart LR
 Zoom clamps to 0.25–20. Buttons adjust by 0.25; wheel adjusts approximately 0.15. Panning is enabled only when zoomed and must not trap keyboard focus.
 
 
-### Compact Mermaid viewport fitting
+### Responsive Mermaid Viewport Fitting and Quality Polish
 
-Mermaid initializes with compact flowchart spacing (`nodeSpacing: 28`, `rankSpacing: 34`), linear connectors, and bounded diagram padding. After render, Markdown Explorer centers each diagram, tightens its SVG to the actual content bounds, and recalculates the intrinsic width/height from those fitted bounds while retaining `max-width: 100%` and `height: auto` for responsive scaling.
+Mermaid diagrams render with layout profiles tailored to each diagram family:
+- **Container constraints**: Rendered diagram wrappers (`.mdn-mermaid-wrap`) cap height at `--mermaid-max-h: min(65vh, 720px)` and center-align diagrams with `object-fit: contain` so tall diagrams fit cleanly within the reading view without vertical overflow.
+- **Sequence diagrams**: Preserve Mermaid's computed layout geometry (`fitSequenceSvg`) and style all actors, lifelines, message text, and loop annotations with high contrast `var(--tx)` theme tokens.
+- **Architecture diagrams**: Apply adaptive fillet curvature (`curveArchitectureEdgePath`) to turn sharp polyline waypoints into smooth curves, pad bounding group rectangles with rounded corners (`rx: 8px`), and render high-contrast centered service labels with surface halos.
+- **ER diagrams**: Apply theme-aware zebra striping using surface and canvas background tokens (`rowOdd` / `rowEven`), clean table borders, and high-contrast typography bound to `var(--tx)`.
+- **Gantt charts**: Render non-working day and weekend exclusions ("candles") with dark-mode friendly translucent tint (`excludeBkgColor`), readable task labels, and adaptive intrinsic width with horizontal body scrolling.
+- **Block & C4 diagrams**: Use 1.5× expanded node and rank spacing (`nodeSpacing: 75`, `rankSpacing: 75`) to prevent edge overlaps.
+- **Image & Diagram Copying**: Context menu and toolbar actions support copying rendered Mermaid diagrams directly as raster PNG images to the clipboard with full font embedding.
 
-When the SVG graphics API exposes finite content bounds, the renderer tightens `viewBox` to those bounds plus controlled padding. If `getBBox()` is unavailable or throws, the generated Mermaid viewBox is preserved while responsive sizing is still applied. Diagrams are never cropped to force compactness; the existing media viewer remains the detailed zoom/pan path.
+When the SVG graphics API exposes finite content bounds, standard flowchart and state diagrams tighten their `viewBox` with controlled padding. Sequence, Architecture, ZenUML, and Sankey diagrams preserve their native calculated canvas coordinate systems. Diagrams can be clicked to open in the full-featured Media Modal viewer with pan and zoom.
 
 ## States and failure behavior
 

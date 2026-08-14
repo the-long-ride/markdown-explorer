@@ -9,7 +9,8 @@
     "build:vscode": "tsc -b && vite build --mode vscode",
     "build:electron": "tsc -b && vite build --mode electron",
     "preview": "vite preview",
-    "build:tauri": "tsc -b && vite build --mode tauri"
+    "build:tauri": "tsc -b && vite build --mode tauri",
+    "validate:mermaid-fixtures": "node scripts/validate-mermaid-manual.mjs"
   },
   "dependencies": {
     "@mermaid-js/mermaid-zenuml": "^0.2.3",

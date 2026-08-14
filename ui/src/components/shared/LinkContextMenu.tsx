@@ -3,14 +3,15 @@ import { createPortal } from 'react-dom';
 import type { ResolvedLink } from '../../dom/linkContextMenu';
 import { useCssVars } from '../../utils/useCssVars';
 import { AddBookmarkIcon } from '../Bookmarks/BookmarkIcons';
-import { OpenInBrowserIcon } from './icons';
+import { CopyIcon, OpenInBrowserIcon } from './icons';
 
 export interface LinkContextMenuState {
   x: number;
   y: number;
-  anchor: HTMLAnchorElement;
-  bookmarkTarget: Element;
-  link: ResolvedLink;
+  anchor?: HTMLAnchorElement | null;
+  bookmarkTarget?: Element | null;
+  link?: ResolvedLink | null;
+  imageTarget?: HTMLElement | SVGElement | null;
 }
 
 interface LinkContextMenuProps {
@@ -18,9 +19,11 @@ interface LinkContextMenuProps {
   menuLabel: string;
   openLabel: string;
   copyLabel: string;
+  copyImageLabel?: string;
   bookmarkLabel?: string;
-  onOpen: (link: ResolvedLink) => void;
-  onCopy: (link: ResolvedLink) => void;
+  onOpen?: (link: ResolvedLink) => void;
+  onCopy?: (link: ResolvedLink) => void;
+  onCopyImage?: (target: HTMLElement | SVGElement) => void;
   onBookmark?: () => void;
   onClose: () => void;
 }
@@ -30,9 +33,11 @@ export function LinkContextMenu({
   menuLabel,
   openLabel,
   copyLabel,
+  copyImageLabel,
   bookmarkLabel,
   onOpen,
   onCopy,
+  onCopyImage,
   onBookmark,
   onClose,
 }: LinkContextMenuProps) {
@@ -80,7 +85,7 @@ export function LinkContextMenu({
       document.removeEventListener('keydown', keydown, true);
       window.removeEventListener('resize', close, true);
       window.removeEventListener('scroll', close, true);
-      if (state.anchor.isConnected) state.anchor.focus({ preventScroll: true });
+      if (state.anchor?.isConnected) state.anchor.focus({ preventScroll: true });
     };
   }, [onClose, state]);
 
@@ -91,26 +96,38 @@ export function LinkContextMenu({
       role="menu"
       aria-label={menuLabel}
     >
-      <button
-        type="button"
-        role="menuitem"
-        disabled={!state.link.openable}
-        onClick={() => onOpen(state.link)}
-      >
-        <OpenInBrowserIcon size={14} />
-        <span>{openLabel}</span>
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        disabled={!state.link.copyable}
-        onClick={() => { void onCopy(state.link); }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-        </svg>
-        <span>{copyLabel}</span>
-      </button>
+      {state.imageTarget && onCopyImage && copyImageLabel && (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => onCopyImage(state.imageTarget!)}
+        >
+          <CopyIcon size={14} />
+          <span>{copyImageLabel}</span>
+        </button>
+      )}
+      {state.link && onOpen && (
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!state.link.openable}
+          onClick={() => onOpen(state.link!)}
+        >
+          <OpenInBrowserIcon size={14} />
+          <span>{openLabel}</span>
+        </button>
+      )}
+      {state.link && onCopy && (
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!state.link.copyable}
+          onClick={() => { void onCopy(state.link!); }}
+        >
+          <CopyIcon size={14} />
+          <span>{copyLabel}</span>
+        </button>
+      )}
       {onBookmark && bookmarkLabel && (
         <button type="button" role="menuitem" onClick={onBookmark}>
           <AddBookmarkIcon size={14} />

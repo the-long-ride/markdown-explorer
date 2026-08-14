@@ -68,13 +68,15 @@ See the Settings Catalog and Storage Catalog for exact keys and limits.
 
 ### Host typography
 
-Electron, Tauri, and VS Code expose the Typography section with independent **App UI**, **Body**, **Heading**, **Quote**, and **Code** bindings. `AppSettings.fontBindings` stores one normalized `DesktopFontBinding` per role. Each binding records the font source (`default`, `system`, or `imported`), family/import ID when needed, plus the explicitly selected `style` and numeric `weight`.
+Electron, Tauri, and VS Code expose the Typography section with independent **App UI**, **Body**, **Heading**, **Quote**, **Code**, and **Mermaid** bindings. `AppSettings.fontBindings` stores one normalized `DesktopFontBinding` per role. Each binding records the font source (`default`, `system`, or `imported`), family/import ID when needed, plus the explicitly selected `style` and numeric `weight`.
+
+The Mermaid binding controls diagram text independently from App UI and Code. Applying a Mermaid font change triggers a full re-render of Mermaid diagrams in the current document so Mermaid recalculates label measurements and layout. Theme, custom-theme, and light/dark changes use the same full re-render path.
 
 The family picker is a searchable keyboard-accessible dropdown grouped by System and Imported families. The variant/weight picker is also a custom keyboard-accessible listbox, uses only styles/weights supported by the selected family, and scrolls when its option set exceeds the visible menu limit. Variable fonts expose common in-range weights plus their discovered endpoints. Each row places **Import font file** to the left of an icon-only Reset action with a tooltip; Reset changes only that role. The Apply action uses the circle-check icon, remains disabled until the draft differs from persisted bindings, and opens a confirmation summary containing only the changed roles before persistence.
 
 `listDesktopFonts` requests the normalized native catalog. Each `importDesktopFonts` action selects a **single `.ttf` or `.otf` file**, copies it into app-managed storage, and returns an `importedId` correlated by `requestId`. The renderer binds that imported family to the role that initiated the matching request **in the local typography draft only**; the user must still choose Apply to persist `fontBindings`. Imported files do not need to contain Regular, Bold, and Italic together. `removeImportedDesktopFont` removes the managed item and any persisted role using it falls back through normal settings validation. Import/export persists only normalized references and variants, never font binaries or original filesystem paths.
 
-Legacy persisted `appFont` and `codeFont` references are accepted during migration and converted into `fontBindings`; new persistence writes `fontBindings`.
+Legacy persisted `appFont` and `codeFont` references are accepted during migration and converted into `fontBindings`; settings that predate the Mermaid role receive its default binding, and new persistence writes the complete `fontBindings`.
 
 VS Code uses the same normalized font protocol as desktop: the extension host enumerates OS font files, stores imported fonts under extension global storage, converts managed paths with `asWebviewUri`, and grants those resources through the panel CSP/local-resource roots. Chromium/Web does not enumerate system fonts or import font binaries.
 

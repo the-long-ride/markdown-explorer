@@ -5,10 +5,10 @@ import test from 'node:test';
 const root = new URL('../../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 const keys = [
-  'typography', 'typographyDesc', 'appUiFont', 'bodyFont', 'headingFont', 'quoteFont', 'codeFont',
+  'typography', 'typographyDesc', 'appUiFont', 'bodyFont', 'headingFont', 'quoteFont', 'codeFont', 'mermaidFont',
   'fontDefault', 'fontDefaultDescription', 'fontSystem', 'fontImported',
   'fontImport', 'fontRemove', 'fontApply', 'fontSearchPlaceholder', 'fontNoResults',
-  'fontVariant', 'fontResetRole', 'fontNormal', 'fontItalic',
+  'fontVariant', 'fontResetRole', 'fontResetAll', 'fontNormal', 'fontItalic',
 ];
 
 test('desktop typography strings exist in the translation type and all supported locale catalogs', async () => {

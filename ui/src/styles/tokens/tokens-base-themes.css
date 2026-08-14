@@ -24,6 +24,7 @@
   --font-body: var(--font-ui);
   --font-heading: var(--font-ui);
   --font-quote: var(--font-ui);
+  --font-mermaid: var(--font-ui);
   --font-ui-style: normal;
   --font-ui-weight: 400;
   --font-body-style: normal;
@@ -34,6 +35,8 @@
   --font-quote-weight: 400;
   --font-mono-style: normal;
   --font-mono-weight: 400;
+  --font-mermaid-style: normal;
+  --font-mermaid-weight: 400;
   --sidebar-w: 245px;
   --toc-w: 224px;
   --topbar-h: 44px;

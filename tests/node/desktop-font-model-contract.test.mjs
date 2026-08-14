@@ -11,7 +11,7 @@ test('shared desktop font model defines role bindings and explicit variants', as
   const source = await read('ui/src/desktop/fonts/fontModel.ts');
   assert.match(source, /export interface DesktopFontBinding/);
   assert.match(source, /export interface DesktopFontBindings/);
-  for (const role of ['appUi', 'body', 'heading', 'quote', 'code']) assert.match(source, new RegExp(`${role}:`));
+  for (const role of ['appUi', 'body', 'heading', 'quote', 'code', 'mermaid']) assert.match(source, new RegExp(`${role}:`));
   assert.match(source, /normalizeDesktopFontBinding/);
   assert.match(source, /migrateDesktopFontBindings/);
   assert.match(source, /getDesktopFontVariantOptions/);

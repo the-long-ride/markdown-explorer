@@ -241,7 +241,7 @@
    Mermaid Diagrams
    ============================================================ */
 .mdn-mermaid-wrap {
-  --mermaid-max-h: min(72vh, 720px);
+  --mermaid-max-h: min(65vh, 720px);
   background: transparent;
   border: var(--stroke-w) solid var(--bd);
   border-radius: var(--r-lg);
@@ -259,7 +259,9 @@
   opacity: 0.95;
 }
 .mermaid {
-  font-family: var(--font-ui) !important;
+  font-family: var(--font-mermaid);
+  font-style: var(--font-mermaid-style);
+  font-weight: var(--font-mermaid-weight);
   background: transparent !important;
   width: 100%;
   max-width: 100%;

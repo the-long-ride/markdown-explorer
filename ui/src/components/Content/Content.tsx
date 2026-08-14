@@ -15,12 +15,12 @@ import {
 } from "../shared/LinkContextMenu";
 import {
   documentBaseHref,
-  injectBaseHref,
   openHtmlPreviewInBrowser,
   prepareStandaloneHtmlPreview,
 } from "../../dom/htmlPreviewActions";
 import type { ResolvedLink } from "../../dom/linkContextMenu";
-import { splitLeadingHtmlComments } from "./contentUtils";
+import { copyElementImageToClipboard } from "../../dom/copyImage";
+import { splitLeadingHtmlComments, buildRenderedDocumentSnapshot } from "./contentUtils";
 import { isHtmlDocumentPath } from "./HtmlDocumentView";
 import { convertHtmlSourceToMarkdown } from "../../markdown/htmlToMarkdown";
 import { renderMarkdownClientSide } from "../../contexts/contentTabState";
@@ -32,24 +32,6 @@ import { ACTION_NOTICE_EVENT, normalizeActionNoticeDetail, type ActionNoticeDeta
 // Highlighting deliberately skips language-(txt|text|plain|plaintext) blocks.
 
 export { isWorkspaceNavigationHref } from "./contentUtils";
-
-function buildRenderedDocumentSnapshot(
-  contentHtml: string,
-  title: string,
-  baseHref: string | null,
-  fragment: string,
-): string {
-  const safeTitle = title.replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[character] || character);
-  const hash = fragment.startsWith('#') ? fragment : '';
-  const scriptHash = JSON.stringify(hash)
-    .replace(/</g, '\\u003c')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
-  const snapshot = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><style>html{scroll-behavior:smooth}body{max-width:960px;margin:0 auto;padding:32px;font:16px/1.6 system-ui,sans-serif;color:#202124;background:#fff}img,video,svg{max-width:100%;height:auto}pre{overflow:auto;padding:16px;border-radius:8px;background:#f5f5f5}table{border-collapse:collapse;max-width:100%}th,td{border:1px solid #d7d7d7;padding:6px 10px}@media(prefers-color-scheme:dark){body{color:#eceff4;background:#181a1f}pre{background:#24272e}th,td{border-color:#4b505c}}</style></head><body>${contentHtml}<script>window.addEventListener('load',function(){var hash=${scriptHash};if(hash){location.hash=hash;var target=document.getElementById(decodeURIComponent(hash.slice(1)));if(target)target.scrollIntoView({block:'center'});}});<\/script></body></html>`;
-  return injectBaseHref(snapshot, baseHref);
-}
 
 export function formatPreviewDuration(durationMs: number | undefined): string {
   if (!Number.isFinite(durationMs) || !durationMs) return "";
@@ -267,6 +249,21 @@ export const Content = memo(function Content({
     }
   }, [bridge, showActionNotice, t.previewActions.copyFailed, t.previewActions.linkCopied]);
 
+  const handleCopyImage = useCallback(async (target: HTMLElement | SVGElement) => {
+    try {
+      const ok = await copyElementImageToClipboard(target);
+      setLinkMenu(null);
+      if (ok) {
+        showActionNotice(t.previewActions.imageCopied);
+      } else {
+        showActionNotice(t.previewActions.copyFailed);
+      }
+    } catch {
+      setLinkMenu(null);
+      showActionNotice(t.previewActions.copyFailed);
+    }
+  }, [showActionNotice, t.previewActions.copyFailed, t.previewActions.imageCopied]);
+
 
   const { bookmarkSelection, closeBookmarkSelection, handleBookmarkContextMenu, openBookmarkDialogForElement } = useBookmarkSelection({
     enabled: state.settings.bookmarksEnabled,
@@ -367,11 +364,13 @@ export const Content = memo(function Content({
           menuLabel={t.previewActions.linkMenu}
           openLabel={t.previewActions.openInBrowser}
           copyLabel={t.previewActions.copyLink}
+          copyImageLabel={t.previewActions.copyImage}
           bookmarkLabel={state.settings.bookmarksEnabled ? t.bookmarks.addSelection : undefined}
           onOpen={handleOpenResolvedLink}
           onCopy={handleCopyResolvedLink}
-          onBookmark={state.settings.bookmarksEnabled ? () => {
-            const opened = openBookmarkDialogForElement(linkMenu.bookmarkTarget, linkMenu.x, linkMenu.y);
+          onCopyImage={handleCopyImage}
+          onBookmark={state.settings.bookmarksEnabled && linkMenu.bookmarkTarget ? () => {
+            const opened = linkMenu.bookmarkTarget ? openBookmarkDialogForElement(linkMenu.bookmarkTarget, linkMenu.x, linkMenu.y) : false;
             if (!opened) showActionNotice(t.bookmarks.targetUnavailable, 'error');
           } : undefined}
           onClose={() => setLinkMenu(null)}

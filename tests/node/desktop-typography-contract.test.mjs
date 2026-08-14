@@ -88,10 +88,10 @@ test('desktop typography exposes independent role variables and markdown selecto
     read('ui/src/styles/global/global-markdown-foundation.css'),
     read('ui/src/styles/tokens/tokens-base-themes.css'),
   ]);
-  for (const variable of ['--font-ui', '--font-body', '--font-heading', '--font-quote', '--font-mono']) {
+  for (const variable of ['--font-ui', '--font-body', '--font-heading', '--font-quote', '--font-mono', '--font-mermaid']) {
     assert.match(apply, new RegExp(variable));
   }
-  for (const variable of ['--font-ui-weight', '--font-body-weight', '--font-heading-weight', '--font-quote-weight', '--font-mono-weight']) {
+  for (const variable of ['--font-ui-weight', '--font-body-weight', '--font-heading-weight', '--font-quote-weight', '--font-mono-weight', '--font-mermaid-weight']) {
     assert.match(apply, new RegExp(variable));
   }
   assert.match(markdown, /\.mdn-body\s*\{[\s\S]*font-family:\s*var\(--font-body\)/);
@@ -100,4 +100,5 @@ test('desktop typography exposes independent role variables and markdown selecto
   assert.match(tokens, /--font-body:/);
   assert.match(tokens, /--font-heading:/);
   assert.match(tokens, /--font-quote:/);
+  assert.match(tokens, /--font-mermaid:/);
 });

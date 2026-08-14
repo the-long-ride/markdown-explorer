@@ -115,9 +115,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .mdn-modal-content-svg svg {
   width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   height: auto !important;
   max-height: calc(80vh - 48px);
 }

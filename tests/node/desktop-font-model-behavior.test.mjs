@@ -28,9 +28,14 @@ test('legacy app/code selections migrate only when new bindings are absent', () 
   assert.equal(migrated.code.family, 'Fira Code');
   assert.deepEqual(migrated.heading, DEFAULT_DESKTOP_FONT_BINDINGS.heading);
   assert.deepEqual(migrated.quote, DEFAULT_DESKTOP_FONT_BINDINGS.quote);
+  assert.deepEqual(migrated.mermaid, DEFAULT_DESKTOP_FONT_BINDINGS.mermaid);
 
   const explicit = migrateDesktopFontBindings({ body: { source: 'system', family: 'Georgia', style: 'normal', weight: 400 } }, { source: 'system', family: 'Inter' }, undefined);
   assert.equal(explicit.body.family, 'Georgia');
+
+  const explicitMermaid = migrateDesktopFontBindings({ mermaid: { source: 'system', family: 'Atkinson Hyperlegible', style: 'normal', weight: 500 } });
+  assert.equal(explicitMermaid.mermaid.family, 'Atkinson Hyperlegible');
+  assert.equal(explicitMermaid.mermaid.weight, 500);
 });
 
 test('variable font variant options expose common supported weights for each style', () => {

@@ -94,7 +94,9 @@ flowchart LR
 
 ## Typography preferences
 
-Electron, Tauri, and VS Code expose five independent typography roles: **App UI**, **Body**, **Heading**, **Quote**, and **Code**. Each accepts Default, a detected system family, or an imported family plus an explicit supported style/weight. Imported `.ttf`/`.otf` files are selected through the host picker and copied into app-managed storage (VS Code extension global storage in the extension runtime) so later source-file moves do not break the preference.
+Electron, Tauri, and VS Code expose six independent typography roles: **App UI**, **Body**, **Heading**, **Quote**, **Code**, and **Mermaid**. Each accepts Default, a detected system family, or an imported family plus an explicit supported style/weight. Imported `.ttf`/`.otf` files are selected through the host picker and copied into app-managed storage (VS Code extension global storage in the extension runtime) so later source-file moves do not break the preference.
+
+The Mermaid role controls diagram label typography independently from app text and code blocks. Applying a Mermaid font change re-renders Mermaid diagrams already visible in the current document so text measurement and layout use the new font.
 
 Typography edits remain in a local draft. **Apply** is disabled while that draft matches persisted `fontBindings`; changing a family, variant, reset state, or imported-font binding enables it. Selecting Apply opens a confirmation dialog that lists only the **changed roles** and shows each role's old value → new value. Cancel preserves the draft, while **Apply changes** persists the complete draft.
 

@@ -72,7 +72,7 @@ describe('translations', () => {
     const keys = [
       'openInBrowser', 'openAsModal', 'showCode', 'showPreview', 'copyCode',
       'modalTitle', 'closeModal', 'openError', 'linkMenu', 'copyLink',
-      'linkCopied', 'unableToOpenLink', 'copyFailed',
+      'copyImage', 'linkCopied', 'imageCopied', 'unableToOpenLink', 'copyFailed',
       'csvMalformedQuote', 'csvPreviewTitle', 'csvUnevenRows', 'plainText', 'tsvPreviewTitle',
     ];
     for (const option of LANGUAGE_OPTIONS) {
