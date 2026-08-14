@@ -13,16 +13,19 @@
 
 .desktop-typography-settings__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
 .desktop-typography-settings__header-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
   gap: 8px;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .desktop-typography-settings__grid {
@@ -121,16 +124,18 @@
 
 @media (max-width: 720px) {
   .desktop-typography-settings__header {
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
   }
 
   .desktop-typography-settings__header-actions {
-    width: 100%;
-    justify-content: stretch;
+    width: auto;
+    justify-content: flex-end;
+    flex-shrink: 0;
   }
 
   .desktop-typography-settings__header-actions > button {
-    flex: 1 1 180px;
+    flex: initial;
   }
 
   .desktop-typography-settings__grid {

@@ -120,3 +120,17 @@ test('font imports are single-role draft updates and import action is placed bef
   assert.match(component, /desktop-font-binding-row__header-actions[\s\S]*?onImport[\s\S]*?desktop-font-binding-row__reset/);
   assert.match(translations, /fontImport:\s*'Import font file'/);
 });
+
+test('Typography header exposes draft-only Reset all as an outline icon action', async () => {
+  const component = await read('ui/src/components/Settings/DesktopTypographySettings.tsx');
+  assert.match(component, /desktop-typography-settings__header-actions/);
+  assert.match(component, /SettingsOutlineButton[\s\S]*?desktop-typography-settings__reset-all/);
+  assert.match(component, /tooltip=\{t\.fontResetAll\}/);
+  assert.match(component, /iconOnly/);
+  assert.match(component, /<RefreshIcon/);
+  assert.match(component, /disabled=\{!canResetAll\}/);
+  assert.match(
+    component,
+    /const resetAllFonts = \(\) => setDraft\(migrateDesktopFontBindings\(DEFAULT_DESKTOP_FONT_BINDINGS\)\);/
+  );
+});

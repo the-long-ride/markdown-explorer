@@ -1,6 +1,6 @@
 export type DesktopFontSource = 'default' | 'system' | 'imported';
 export type DesktopFontStyle = 'normal' | 'italic';
-export type DesktopFontUsageRole = 'appUi' | 'body' | 'heading' | 'quote' | 'code';
+export type DesktopFontUsageRole = 'appUi' | 'body' | 'heading' | 'quote' | 'code' | 'mermaid';
 
 export interface DesktopFontSelection {
   readonly source: DesktopFontSource;
@@ -19,6 +19,7 @@ export interface DesktopFontBindings {
   readonly heading: DesktopFontBinding;
   readonly quote: DesktopFontBinding;
   readonly code: DesktopFontBinding;
+  readonly mermaid: DesktopFontBinding;
 }
 
 export interface DesktopFontFace {
@@ -53,6 +54,7 @@ export const DEFAULT_DESKTOP_FONT_BINDINGS: DesktopFontBindings = {
   heading: { source: 'default', style: 'normal', weight: 700 },
   quote: { source: 'default', style: 'italic', weight: 400 },
   code: { source: 'default', style: 'normal', weight: 400 },
+  mermaid: { source: 'default', style: 'normal', weight: 400 },
 };
 
 function clean(value: unknown, max = 128): string | undefined {
@@ -122,6 +124,9 @@ export function migrateDesktopFontBindings(
     code: raw.code !== undefined
       ? normalizeDesktopFontBinding(raw.code, 'code')
       : bindingFromLegacy(legacyCodeFont, 'code'),
+    mermaid: raw.mermaid !== undefined
+      ? normalizeDesktopFontBinding(raw.mermaid, 'mermaid')
+      : { ...DEFAULT_DESKTOP_FONT_BINDINGS.mermaid },
   };
 }
 

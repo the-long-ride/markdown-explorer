@@ -78,9 +78,9 @@ Settings is organized into **Appearance**, **Typography**, **Theme Style**, **Ke
 
 ### Typography
 
-Electron, Tauri, and VS Code expose role-based Typography for **App UI, Body, Heading, Quote, and Code**. Each role stores source/family/import ID, style, and explicit numeric weight.
+Electron, Tauri, and VS Code expose role-based Typography for **App UI, Body, Heading, Quote, Code, and Mermaid**. Each role stores source/family/import ID, style, and explicit numeric weight.
 
-- System and imported fonts are searchable; `.ttf` and `.otf` imports bind to the initiating role's draft.
+- System and imported fonts are searchable; `.ttf` and `.otf` imports bind to the initiating role's draft. Applying the Mermaid role re-renders visible Mermaid diagrams in the current document.
 - Typography's header and Apply action remain fixed while the role list owns its scrolling region.
 - The Apply action is disabled until the draft differs from persisted bindings.
 - Applying opens a confirmation dialog listing only changed roles as old → new values; Cancel leaves the draft untouched.

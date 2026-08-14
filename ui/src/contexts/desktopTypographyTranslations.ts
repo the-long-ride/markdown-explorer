@@ -1,16 +1,16 @@
 import type { Translations } from './translationTypes';
 
 type DesktopTypographyTranslationKey =
-  | 'typography' | 'typographyDesc' | 'appUiFont' | 'bodyFont' | 'headingFont' | 'quoteFont' | 'codeFont'
+  | 'typography' | 'typographyDesc' | 'appUiFont' | 'bodyFont' | 'headingFont' | 'quoteFont' | 'codeFont' | 'mermaidFont'
   | 'fontDefault' | 'fontDefaultDescription' | 'fontSystem' | 'fontImported'
   | 'fontImport' | 'fontRemove'
   | 'fontApply' | 'fontApplyConfirmTitle' | 'fontApplyConfirmBody' | 'fontApplyChanges' | 'fontSearchPlaceholder' | 'fontNoResults'
-  | 'fontVariant' | 'fontResetRole' | 'fontNormal' | 'fontItalic';
+  | 'fontVariant' | 'fontResetRole' | 'fontResetAll' | 'fontNormal' | 'fontItalic';
 
 export const DESKTOP_TYPOGRAPHY_EN: Pick<Translations, DesktopTypographyTranslationKey> = {
   typography: 'Typography',
   typographyDesc: 'Desktop and VS Code. Bind a system or imported font and explicit variant to each app and content role.',
-  appUiFont: 'App UI', bodyFont: 'Body', headingFont: 'Heading', quoteFont: 'Quote', codeFont: 'Code', fontDefault: 'Default',
+  appUiFont: 'App UI', bodyFont: 'Body', headingFont: 'Heading', quoteFont: 'Quote', codeFont: 'Code', mermaidFont: 'Mermaid', fontDefault: 'Default',
   fontDefaultDescription: 'Uses the Markdown Explorer default.',
   fontSystem: 'System fonts', fontImported: 'Imported fonts',
   fontImport: 'Import font file',
@@ -19,6 +19,6 @@ export const DESKTOP_TYPOGRAPHY_EN: Pick<Translations, DesktopTypographyTranslat
   fontApplyConfirmBody: 'Review the changed roles before applying them.',
   fontApplyChanges: 'Apply changes',
   fontSearchPlaceholder: 'Search fonts…', fontNoResults: 'No matching fonts',
-  fontVariant: 'Variant', fontResetRole: 'Reset this font role to default',
+  fontVariant: 'Variant', fontResetRole: 'Reset this font role to default', fontResetAll: 'Reset all fonts to defaults',
   fontNormal: 'Normal', fontItalic: 'Italic',
 };

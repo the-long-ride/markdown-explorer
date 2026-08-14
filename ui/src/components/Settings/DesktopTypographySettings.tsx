@@ -24,8 +24,8 @@ function createRequestId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const ROLE_LABELS: Record<DesktopFontUsageRole, keyof Pick<Translations, 'appUiFont' | 'bodyFont' | 'headingFont' | 'quoteFont' | 'codeFont'>> = {
-  appUi: 'appUiFont', body: 'bodyFont', heading: 'headingFont', quote: 'quoteFont', code: 'codeFont',
+const ROLE_LABELS: Record<DesktopFontUsageRole, keyof Pick<Translations, 'appUiFont' | 'bodyFont' | 'headingFont' | 'quoteFont' | 'codeFont' | 'mermaidFont'>> = {
+  appUi: 'appUiFont', body: 'bodyFont', heading: 'headingFont', quote: 'quoteFont', code: 'codeFont', mermaid: 'mermaidFont',
 };
 
 function formatTypographyChangeValue(value: DesktopTypographyChangeValue, t: Translations): string {
@@ -176,6 +176,7 @@ export function DesktopTypographySettings({
   }, [pendingImport, state.desktopFonts, state.desktopFontsResult]);
 
   const changed = !desktopTypographyBindingsEqual(savedBindings, draft);
+  const canResetAll = !desktopTypographyBindingsEqual(draft, DEFAULT_DESKTOP_FONT_BINDINGS);
   const typographyChanges = useMemo(
     () => getDesktopTypographyChanges(savedBindings, draft, state.desktopFonts, t.fontDefault),
     [draft, savedBindings, state.desktopFonts, t.fontDefault],
@@ -196,6 +197,7 @@ export function DesktopTypographySettings({
     bridge.postMessage({ command: 'removeImportedDesktopFont', requestId: createRequestId('remove-font'), id });
   };
 
+  const resetAllFonts = () => setDraft(migrateDesktopFontBindings(DEFAULT_DESKTOP_FONT_BINDINGS));
   const cancelApply = () => setFontApplyConfirmOpen(false);
   const confirmApply = () => {
     updateSettings({ fontBindings: draft });
@@ -210,15 +212,27 @@ export function DesktopTypographySettings({
             <h3>{t.typography}</h3>
             <p>{t.typographyDesc}</p>
           </div>
-          <button
-            type="button"
-            className="banned-shortcut-close-btn desktop-typography-settings__apply"
-            disabled={!changed}
-            onClick={() => setFontApplyConfirmOpen(true)}
-          >
-            <TypographyApplyIcon className="desktop-typography-action-icon" size={14} />
-            <span>{t.fontApply}</span>
-          </button>
+          <div className="desktop-typography-settings__header-actions">
+            <SettingsOutlineButton
+              type="button"
+              className="desktop-typography-settings__reset-all"
+              tooltip={t.fontResetAll}
+              tooltipAlign="right"
+              iconOnly
+              disabled={!canResetAll}
+              icon={<RefreshIcon size={14} />}
+              onClick={resetAllFonts}
+            />
+            <button
+              type="button"
+              className="banned-shortcut-close-btn desktop-typography-settings__apply"
+              disabled={!changed}
+              onClick={() => setFontApplyConfirmOpen(true)}
+            >
+              <TypographyApplyIcon className="desktop-typography-action-icon" size={14} />
+              <span>{t.fontApply}</span>
+            </button>
+          </div>
         </div>
         <div className="desktop-typography-settings__scroll">
           <div className="desktop-font-bindings">
@@ -227,6 +241,7 @@ export function DesktopTypographySettings({
             <FontRoleRow role="heading" binding={draft.heading} fonts={state.desktopFonts} t={t} onChange={(binding) => setRole('heading', binding)} onImport={() => importFont('heading')} onRemove={removeImported} />
             <FontRoleRow role="quote" binding={draft.quote} fonts={state.desktopFonts} t={t} onChange={(binding) => setRole('quote', binding)} onImport={() => importFont('quote')} onRemove={removeImported} />
             <FontRoleRow role="code" binding={draft.code} fonts={state.desktopFonts} t={t} onChange={(binding) => setRole('code', binding)} onImport={() => importFont('code')} onRemove={removeImported} />
+            <FontRoleRow role="mermaid" binding={draft.mermaid} fonts={state.desktopFonts} t={t} onChange={(binding) => setRole('mermaid', binding)} onImport={() => importFont('mermaid')} onRemove={removeImported} />
           </div>
           {state.desktopFontError && <div className="settings-item__desc desktop-typography-settings__error" role="status">{state.desktopFontError}</div>}
         </div>

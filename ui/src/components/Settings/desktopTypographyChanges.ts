@@ -7,7 +7,7 @@ import {
   type DesktopFontUsageRole,
 } from '../../desktop/fonts/fontModel';
 
-const ROLES: readonly DesktopFontUsageRole[] = ['appUi', 'body', 'heading', 'quote', 'code'];
+const ROLES: readonly DesktopFontUsageRole[] = ['appUi', 'body', 'heading', 'quote', 'code', 'mermaid'];
 
 export interface DesktopTypographyChangeValue {
   readonly family: string;

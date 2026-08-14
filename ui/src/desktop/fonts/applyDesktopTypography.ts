@@ -95,6 +95,7 @@ const ROLE_VARIABLES = {
   heading: ['--font-heading', '--font-heading-style', '--font-heading-weight'],
   quote: ['--font-quote', '--font-quote-style', '--font-quote-weight'],
   code: ['--font-mono', '--font-mono-style', '--font-mono-weight'],
+  mermaid: ['--font-mermaid', '--font-mermaid-style', '--font-mermaid-weight'],
 } as const;
 
 export function applyDesktopTypography(
@@ -118,6 +119,7 @@ export function applyDesktopTypography(
     heading: resolveBinding(bindings.heading, families, DEFAULT_UI, DEFAULT_DESKTOP_FONT_BINDINGS.heading),
     quote: resolveBinding(bindings.quote, families, DEFAULT_UI, DEFAULT_DESKTOP_FONT_BINDINGS.quote),
     code: resolveBinding(bindings.code, families, DEFAULT_MONO, DEFAULT_DESKTOP_FONT_BINDINGS.code),
+    mermaid: resolveBinding(bindings.mermaid, families, DEFAULT_UI, DEFAULT_DESKTOP_FONT_BINDINGS.mermaid),
   };
 
   registerImported(

@@ -31,6 +31,9 @@ test('Typography apply opens a per-role confirmation dialog before persisting', 
   assert.match(typography, /fontApplyChanges/);
   assert.match(typography, /updateSettings\(\{ fontBindings: draft \}\)/);
   assert.doesNotMatch(typography, /onClick=\{\(\) => updateSettings\(\{ fontBindings: draft \}\)\}/);
+  assert.match(typography, /role="mermaid"/);
+  const changes = read('ui/src/components/Settings/desktopTypographyChanges.ts');
+  assert.match(changes, /['"]mermaid['"]/);
 });
 
 test('VS Code Edit opts into a portal tooltip that preserves shortcut keycaps', () => {
@@ -47,4 +50,14 @@ test('preference docs describe dirty Apply and confirmation summary', () => {
   assert.match(docsPreferences, /changed roles/i);
   assert.match(docsSettings, /confirmation/i);
   assert.match(docsSettings, /Typography/i);
+});
+
+test('Typography Reset all changes draft bindings only and Apply remains the persistence path', () => {
+  assert.match(
+    typography,
+    /const resetAllFonts = \(\) => setDraft\(migrateDesktopFontBindings\(DEFAULT_DESKTOP_FONT_BINDINGS\)\);/
+  );
+  assert.match(typography, /DEFAULT_DESKTOP_FONT_BINDINGS/);
+  assert.match(typography, /disabled=\{!canResetAll\}/);
+  assert.match(typography, /updateSettings\(\{ fontBindings: draft \}\)/);
 });
