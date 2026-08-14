@@ -44,3 +44,40 @@ describe('resolveRenderedLink', () => {
     expect(result.copyable).toBe(false);
   });
 });
+
+describe('copyImage module', () => {
+  test('prepareStandaloneSvgForRasterization inlines dimensions and xmlns namespaces', async () => {
+    const { prepareStandaloneSvgForRasterization } = await import('../../../../ui/src/dom/copyImage');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 400 300');
+    const { svgXml, width, height } = prepareStandaloneSvgForRasterization(svg);
+    expect(svgXml).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svgXml).toContain('width="400"');
+    expect(svgXml).toContain('height="300"');
+    expect(width).toBe(400);
+    expect(height).toBe(300);
+  });
+
+  test('writeBlobToClipboard invokes navigator.clipboard.write with PNG ClipboardItem', async () => {
+    const { writeBlobToClipboard } = await import('../../../../ui/src/dom/copyImage');
+    let writtenItems: any[] = [];
+    (globalThis as any).ClipboardItem = class MockClipboardItem {
+      types: string[];
+      constructor(public data: Record<string, Blob>) {
+        this.types = Object.keys(data);
+      }
+    };
+    (navigator as any).clipboard = {
+      write: async (items: any[]) => {
+        writtenItems = items;
+      },
+    };
+
+    const blob = new Blob(['png-binary-data'], { type: 'image/png' });
+    const ok = await writeBlobToClipboard(blob);
+    expect(ok).toBe(true);
+    expect(writtenItems.length).toBe(1);
+    expect(writtenItems[0].types).toContain('image/png');
+  });
+});
+
