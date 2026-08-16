@@ -76,6 +76,10 @@ The `local-file://` protocol may serve canonical `.ttf`/`.otf` files inside that
 
 Modules cover HTML, Markdown/text, ODF, Office, PDF, PPTX, RTF, and spreadsheet content. PPTX/archive XML members are bounded to 32 MiB. Preview quality uses `converted-preview`, `legacy-best-effort`, or `conversion-failed`.
 
+## Native PNG chart export
+
+Tauri handles `saveChartPng` commands in `commands_external.rs`. Base64-encoded PNG data URLs are validated (verifying signature `\x89PNG\r\n\x1a\n`), decoded via `png_export.rs`, sanitized to safe filenames, and saved via `tauri-plugin-dialog` blocking file picker.
+
 ## Signed update lifecycle
 
 - Production initializes `tauri-plugin-updater` and `tauri-plugin-process`; debug builds report updater installation unavailable.
@@ -98,6 +102,8 @@ Updater operation is valid only after real endpoint/signing secrets replace depl
 | Implementation | `tauri/src/dispatcher.rs` | Active behavior or contract |
 | Implementation | `tauri/src/dispatcher/ready.rs` | Active behavior or contract |
 | Implementation | `tauri/src/dispatcher/commands.rs` | Active behavior or contract |
+| Implementation | `tauri/src/dispatcher/commands_external.rs` | External & PNG export commands |
+| Implementation | `tauri/src/runtime/png_export.rs` | PNG data URL decoding & file name normalization |
 | Implementation | `tauri/src/local_file.rs` | Active behavior or contract |
 | Implementation | `tauri/src/workspace/scanner.rs` | Active behavior or contract |
 | Implementation | `tauri/src/workspace/watch.rs` | Active behavior or contract |

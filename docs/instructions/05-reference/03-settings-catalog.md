@@ -54,7 +54,7 @@ keywords:
 | `language` | `string` | `en` | Application locale |
 | `maxPinnedItems` | `number` | `10` | Limit pinned files and folders per workspace (1–15) |
 | `customThemes` | `CustomTheme[]` | `[]` | Validated custom remixes |
-| `fontBindings` | `DesktopFontBindings?` | role defaults | Electron/Tauri/VS Code App UI, Body, Heading, Quote, Code, and Mermaid font family/style/weight bindings |
+| `fontBindings` | `DesktopFontBindings?` | role defaults | Electron/Tauri/VS Code/Chromium/Web App UI, Body, Heading, Quote, Code, and Mermaid font family/style/weight bindings |
 | `activeCustomThemeId` | `string?` | unset | Selected custom theme |
 
 ## Typography font bindings
@@ -67,7 +67,7 @@ Settings navigation shows an icon before each section label. The **Appearance** 
 
 The close control renders `Esc` as a keycap in its tooltip. **Update & Backup** reuses its cloud icon on **Check for update**.
 
-Electron/Tauri and VS Code expose Typography. VS Code uses extension global storage for imported fonts and `asWebviewUri` for webview-safe font resources; Chromium/Web does not enumerate/import native fonts.
+Electron, Tauri, VS Code, and Chromium/Web expose Typography. VS Code uses extension global storage for imported fonts and `asWebviewUri` for webview-safe font resources; Chromium and Web runtimes store imported font files in IndexedDB (`markdown-explorer-browser-fonts`) and activate them with Blob URLs via the FontFace API.
 
 ## Normalization
 

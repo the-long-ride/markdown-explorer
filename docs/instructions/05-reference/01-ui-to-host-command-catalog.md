@@ -26,7 +26,7 @@ keywords:
 
 ## Contract count
 
-**37 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
+**38 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
 
 | Command | Interface and payload |
 |---|---|
@@ -59,6 +59,7 @@ keywords:
 | `removeImportedDesktopFont` | `RemoveImportedDesktopFontMessage` — requestId: string, id: string |
 | `replaceRecentWorkspaces` | `ReplaceRecentWorkspacesMessage` — recentWorkspaces: readonly RecentWorkspace[] |
 | `restartAndApplyUpdate` | `RestartAndApplyUpdateMessage` — No payload |
+| `saveChartPng` | `SaveChartPngMessage` — fileName: string, dataUrl: string |
 | `scheduleDownloadedUpdate` | `ScheduleDownloadedUpdateMessage` — No payload |
 | `searchAcrossWorkspaces` | `CrossTabSearchMessage` — requestId: string, query: string, matchCase?: boolean, tabIds?: readonly string[], items?: readonly CrossTabSearchResult[] |
 | `searchWorkspace` | `WorkspaceSearchMessage` — requestId: string, query: string, matchCase?: boolean, items: readonly WorkspaceSearchResult[] |
