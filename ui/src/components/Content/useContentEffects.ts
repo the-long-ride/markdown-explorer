@@ -263,7 +263,20 @@ export function useContentEffects({
           return;
         }
 
-        // 9. Table view switcher dropdown triggers
+        // 9. Table column visibility menu (inline handlers are blocked by MV3 CSP)
+        const columnsToggle = target.closest(".mdn-table-columns-toggle") as HTMLElement | null;
+        if (columnsToggle) {
+          e.preventDefault();
+          e.stopPropagation();
+          const tableId = columnsToggle.id.replace("-columns-toggle", "");
+          const win = window as any;
+          if (win.Table?.toggleColumnMenu) {
+            win.Table.toggleColumnMenu(tableId, e);
+          }
+          return;
+        }
+
+        // 10. Table view switcher dropdown triggers
         const selectBtn = target.closest(".mdn-table-view-select") as HTMLElement | null;
         if (selectBtn) {
           e.preventDefault();
@@ -279,7 +292,7 @@ export function useContentEffects({
           return;
         }
 
-        // 9b. Table view switcher option clicks
+        // 10b. Table view switcher option clicks
         const optionBtn = target.closest(".mdn-table-view-menu__option") as HTMLElement | null;
         if (optionBtn) {
           e.preventDefault();
@@ -299,7 +312,7 @@ export function useContentEffects({
           return;
         }
 
-        // 10. Internal document link clicks
+        // 11. Internal document link clicks
         const internalLink = target.closest(".mdn-link--internal") as HTMLElement | null;
         if (internalLink) {
           e.preventDefault();
@@ -313,7 +326,7 @@ export function useContentEffects({
           return;
         }
 
-        // 11. Anchor hashtag copy-link clicks
+        // 12. Anchor hashtag copy-link clicks
         const anchorLink = target.closest(".mdn-anchor") as HTMLElement | null;
         if (anchorLink) {
           e.stopPropagation();

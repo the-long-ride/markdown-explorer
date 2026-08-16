@@ -2,6 +2,14 @@
 // dom/copyImage.ts — Image and Mermaid SVG PNG clipboard copying
 // =============================================================================
 
+export async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  try {
+    return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+  } catch {
+    return null;
+  }
+}
+
 export async function writeBlobToClipboard(blob: Blob): Promise<boolean> {
   if (
     typeof navigator === 'undefined'

@@ -1,0 +1,64 @@
+/* Theme-independent shell control geometry. Visual colors/radii still come from the active theme. */
+:root {
+  --shell-action-size: 28px;
+  --shell-action-icon-size: 14px;
+  --shell-window-glyph-size: 10px;
+}
+
+:is(
+  .header-action-group .btn,
+  .topbar__action-btn,
+  .topbar__new-workspace-btn,
+  .desktop-tabbar__new,
+  .sidebar__files-action,
+  .bookmarks-panel__actions .btn--icon,
+  .window-control-btn
+) {
+  width: var(--shell-action-size) !important;
+  min-width: var(--shell-action-size) !important;
+  height: var(--shell-action-size) !important;
+  min-height: var(--shell-action-size) !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+:is(
+  .header-action-group .btn,
+  .topbar__action-btn,
+  .topbar__new-workspace-btn,
+  .desktop-tabbar__new,
+  .sidebar__files-action,
+  .bookmarks-panel__actions .btn--icon
+) :is(svg, .btn-icon svg) {
+  width: var(--shell-action-icon-size) !important;
+  height: var(--shell-action-icon-size) !important;
+  transform: none !important;
+}
+
+.window-control-btn svg {
+  width: var(--shell-window-glyph-size) !important;
+  height: var(--shell-window-glyph-size) !important;
+  transform: none !important;
+}
+
+/* Text tabs remain content-sized; freeze their geometry and glyphs across all theme packs. */
+.sidebar__tab-btn {
+  gap: 6px;
+  padding: 2px 7px 6px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.sidebar__tab-btn svg {
+  width: var(--shell-action-icon-size) !important;
+  height: var(--shell-action-icon-size) !important;
+  transform: none !important;
+}
+
+.sidebar__files-action-group,
+.bookmarks-panel__actions,
+.header-action-group,
+.topbar__window-controls,
+.desktop-tabbar__window-controls {
+  column-gap: 3px;
+}

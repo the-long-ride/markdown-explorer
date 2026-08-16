@@ -110,7 +110,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
         data-tooltip-pos="below"
         data-tooltip-align="right"
       >
-        <CloseIcon size={18} />
+        <CloseIcon size={16} />
         <span className="tooltip-text">{t.tooltips.closeModal}</span>
       </button>
 
@@ -149,11 +149,13 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
         </div>
       </div>
 
-      <div className="mdn-modal-toolbar">
-        <TooltipButton className="mdn-modal-tool" onClick={zoomIn} tooltip={t.tooltips.zoomIn} tooltipPos="above" icon={<ZoomInIcon />} />
-        <span className="mdn-modal-zoom-text">{Math.round(zoom * 100)}%</span>
-        <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip={t.tooltips.zoomOut} tooltipPos="above" icon={<ZoomOutIcon />} />
-        <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip={t.tooltips.resetZoom} tooltipPos="above" icon={<ResetZoomIcon />} />
+      <div className="mdn-modal-footer media-modal__footer">
+        <div className="mdn-modal-toolbar">
+          <TooltipButton className="mdn-modal-tool" onClick={zoomIn} tooltip={t.tooltips.zoomIn} tooltipPos="above" icon={<ZoomInIcon />} />
+          <span className="mdn-modal-zoom-text">{Math.round(zoom * 100)}%</span>
+          <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip={t.tooltips.zoomOut} tooltipPos="above" icon={<ZoomOutIcon />} />
+          <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip={t.tooltips.resetZoom} tooltipPos="above" icon={<ResetZoomIcon />} />
+        </div>
       </div>
     </div>
   );

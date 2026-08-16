@@ -65,10 +65,18 @@ export function renderInteractiveTable(
     </label>
     <span class="mdn-row-count" id="${id}-count"></span>
     <div class="mdn-table-toolbar-actions">
-      <button class="mdn-table-wrap-toggle" id="${id}-wrap-toggle" onclick="Table.toggleWrap('${id}', this)" aria-pressed="false" title="${escHtml(labels.wrapTableText)}">
+      <button class="mdn-table-wrap-toggle tooltip-container" data-tooltip-pos="above" id="${id}-wrap-toggle" onclick="Table.toggleWrap('${id}', this)" aria-pressed="false" aria-label="${escHtml(labels.wrapTableText)}">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7h16"/><path d="M4 12h10a4 4 0 0 1 0 8H9"/><path d="m12 17-3 3 3 3"/></svg><span class="mdn-table-wrap-toggle__label">${escHtml(labels.wrap)}</span>
+        <span class="tooltip-text">${escHtml(labels.wrapTableText)}</span>
       </button>
       <div class="mdn-table-view-switcher" id="${id}-switcher"></div>
+      <div class="mdn-table-columns" id="${id}-columns">
+        <button type="button" class="mdn-table-columns-toggle tooltip-container" data-tooltip-pos="above" data-tooltip-align="right" id="${id}-columns-toggle" onclick="Table.toggleColumnMenu('${id}', event)" aria-haspopup="menu" aria-expanded="false" aria-label="${escHtml(labels.columns)}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="16" rx="1"/><rect x="17" y="4" width="4" height="16" rx="1"/></svg>
+          <span class="tooltip-text">${escHtml(labels.columns)}</span>
+        </button>
+        <div class="mdn-table-columns-menu" id="${id}-columns-menu" role="menu" aria-label="${escHtml(labels.columns)}" hidden></div>
+      </div>
     </div>
   </div>
   <div class="mdn-table-scroll" id="${id}-scroll">

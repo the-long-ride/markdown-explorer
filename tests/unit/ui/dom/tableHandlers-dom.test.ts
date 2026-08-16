@@ -89,6 +89,8 @@ describe('dom/tableHandlers registerTableHandlers', () => {
         chartable: false,
         labelColIdx: 0,
         dataColIdxs: [],
+        scatterColIdxs: [],
+        hiddenColumnIdxs: [],
       });
     });
 
