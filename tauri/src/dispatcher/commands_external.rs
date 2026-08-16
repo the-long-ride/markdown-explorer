@@ -64,6 +64,25 @@ impl Dispatcher {
                     .and_then(|id| crate::fonts::remove_imported_font(&app_data, id));
                 self.emit_desktop_fonts_result(request_id, None, result.err());
             }
+            "saveChartPng" => {
+                let file_name = crate::runtime::png_export::normalize_png_file_name(
+                    msg.get("fileName").and_then(Value::as_str).unwrap_or("chart.png"),
+                );
+                let data_url = msg
+                    .get("dataUrl")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| "Missing PNG data".to_string())?;
+                let bytes = crate::runtime::png_export::decode_png_data_url(data_url)?;
+                let selected_path = tauri_plugin_dialog::DialogExt::dialog(&self.app)
+                    .file()
+                    .add_filter("PNG", &["png"])
+                    .set_file_name(file_name)
+                    .blocking_save_file()
+                    .and_then(|path| path.into_path().ok());
+                if let Some(path) = selected_path {
+                    std::fs::write(path, bytes).map_err(|error| error.to_string())?;
+                }
+            }
             // ── C5: Clipboard / External / Editor ──
             "openInEditor" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {

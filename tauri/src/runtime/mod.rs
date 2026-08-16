@@ -3,3 +3,5 @@ pub mod navigation;
 pub mod refresh;
 pub mod startup;
 pub mod html_preview;
+
+pub mod png_export;
