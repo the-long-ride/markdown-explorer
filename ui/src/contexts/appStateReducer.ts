@@ -1,10 +1,12 @@
 import { normalizePathKey, type AppState, type Action } from './appStateModel';
-import type { RecentWorkspace } from '../types';
+import type { MdFile, RecentWorkspace } from '../types';
 import {
   applyContentTab,
   applyContentTabsFallback,
   clearContentTabs,
   createContentTabFromMessage,
+  createPlaceholderContentTab,
+  findFileInfo,
   getWorkspaceScopeKey,
   reconcileScopeFocusSetting,
   reorderContentTabs,
@@ -244,6 +246,32 @@ export function reducer(
     case 'REORDER_CONTENT_TABS': {
       const contentTabs = reorderContentTabs(state.contentTabs, action.sourcePath, action.targetPath);
       return contentTabs === state.contentTabs ? state : { ...state, contentTabs };
+    }
+
+    case 'RESTORE_CONTENT_TABS': {
+      if (state.fileList.length === 0 || action.filePaths.length === 0) return state;
+      const currentFile = state.currentFile;
+      const placeholders = action.filePaths
+        .map((filePath) => findFileInfo(state.fileList, filePath))
+        .filter((fileInfo): fileInfo is MdFile => Boolean(fileInfo))
+        .map((fileInfo) => createPlaceholderContentTab(fileInfo));
+      if (placeholders.length === 0) return state;
+      let contentTabs = placeholders;
+      if (currentFile) {
+        const activeKey = normalizePathKey(currentFile);
+        const activeExists = placeholders.some(
+          (tab) => normalizePathKey(tab.filePath) === activeKey,
+        );
+        if (!activeExists) {
+          const activeInfo = findFileInfo(state.fileList, currentFile);
+          if (activeInfo) contentTabs = [...placeholders, createPlaceholderContentTab(activeInfo)];
+        }
+      }
+      return {
+        ...state,
+        contentTabs,
+        activeContentTabPath: currentFile ?? placeholders[0].filePath,
+      };
     }
 
     case 'SET_CONTENT_TAB_HTML_PREVIEW': {

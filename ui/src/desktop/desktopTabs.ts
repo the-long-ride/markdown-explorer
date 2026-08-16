@@ -95,6 +95,11 @@ export function readPersistedDesktopTabs(workspaceAliases: WorkspaceAliasMap): {
       restored.workspacePath = tab.workspacePath;
       restored.currentFile = tab.currentFile ?? null;
       restored.workspaceLoadState = tab.kind === 'workspace' ? 'ready' : 'idle';
+      if (Array.isArray(tab.contentTabs) && tab.contentTabs.length > 0) {
+        restored.restoredContentTabPaths = tab.contentTabs.filter(
+          (path): path is string => typeof path === 'string' && path.length > 0,
+        );
+      }
       if (restored.workspacePath) {
         restored.alias = workspaceAliases[restored.workspacePath] ?? restored.alias;
       }
@@ -128,6 +133,8 @@ export function writePersistedDesktopTabs(tabs: DesktopTab[], activeTabId: strin
         workspaceName: tab.workspaceName,
         workspacePath: tab.workspacePath,
         currentFile: tab.currentFile,
+        contentTabs: tab.contentTabs.map((contentTab) => contentTab.filePath),
+        activeContentTabPath: tab.activeContentTabPath ?? tab.currentFile,
       })),
     };
     localStorage.setItem(DESKTOP_TABS_STORAGE_KEY, JSON.stringify(payload));

@@ -28,7 +28,7 @@ export function createHeadingSectionInteractions({
   defaultExpanded,
   stateByFile,
   onRemember,
-}: HeadingSectionInteractionOptions) {
+}: HeadingSectionInteractionOptions): HeadingSectionInteractions {
   const stateKey = currentFile || '__current-document__';
 
   // Apply initial state without triggering the CSS transform transition.
