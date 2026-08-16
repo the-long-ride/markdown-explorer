@@ -36,6 +36,7 @@ export interface AuditedUiTranslationDomains {
     filterValues: string; all: string; noValues: string; rowsCount: string; filteredRowsCount: string; columns: string; showAllColumns: string;
     table: string; barChart: string; horizontalBarChart: string; lineChart: string; areaChart: string; scatterChart: string; radarChart: string; polarAreaChart: string; pieChart: string; doughnutChart: string; tableViewType: string; noDataForChart: string; series: string;
     chartViewTitle: string; chartFit: string; chartZoom: string; copyChartImage: string; saveChartPng: string; closeChartView: string;
+    chartSaveSuccess: string; chartSaveFailed: string;
     video: string; openVideo: string; youtubeVideo: string; watchOnYouTube: string;
   };
 }

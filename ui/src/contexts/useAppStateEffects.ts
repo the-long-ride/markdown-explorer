@@ -23,6 +23,8 @@ import { acceptsWorkspaceHostMessage } from '../desktop/workspaceOperations';
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 import { applyDesktopTypography } from '../desktop/fonts/applyDesktopTypography';
 import { migrateDesktopFontBindings } from '../desktop/fonts/fontModel';
+import { dispatchActionNotice } from '../utils/actionNotice';
+import { getTranslations } from './translations';
 
 type AppStateEffectsArgs = {
   bridge: {
@@ -194,6 +196,15 @@ export function useAppStateEffects({
         case 'desktopFontsResult':
           dispatch({ type: 'SET_DESKTOP_FONTS', fonts: msg.fonts, requestId: msg.requestId, importedId: msg.importedId, error: msg.error });
           break;
+        case 'chartPngSaveResult': {
+          // The onMessage closure intentionally avoids state deps, so read the
+          // persisted language preference — same pattern as savedAppearance.
+          const savedNotice = bridge.getState<PersistedState>();
+          const labels = getTranslations(savedNotice?.language || 'en').rendererUi;
+          if (msg.ok) dispatchActionNotice(labels.chartSaveSuccess, 'success');
+          else dispatchActionNotice(labels.chartSaveFailed, 'error');
+          break;
+        }
         case 'updateStateChanged':
           dispatch({ type: 'SET_UPDATE_STATE', updateState: msg.state });
           break;
