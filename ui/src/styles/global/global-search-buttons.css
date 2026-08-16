@@ -286,8 +286,8 @@ span.topbar__breadcrumb-part {
   position: absolute;
   top: 5px;
   right: 5px;
-  width: 11px;
-  height: 11px;
+  width: var(--update-attention-dot-size);
+  height: var(--update-attention-dot-size);
   border: 2px solid var(--bg-e);
   border-radius: 999px;
   background: var(--accent);

@@ -14,6 +14,7 @@ import {
   ResetZoomMenuIcon,
 } from "./icons";
 import { TooltipButton } from "./TooltipButton";
+import { SwitchButton } from "./SwitchButton";
 
 interface ToolbarActionMenuProps {
   triggerTooltip: string;
@@ -311,32 +312,54 @@ export function ToolbarActionMenu({
           role="menu"
           aria-label={triggerTooltip}
         >
-          {items.map((item) => (
-            <TooltipButton
-              key={item.id}
-              type="button"
-              role="menuitemcheckbox"
-              aria-checked={typeof item.toggleState === "boolean" ? item.toggleState : undefined}
-              className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}${item.id === "settings" && hasUpdate ? " has-update" : ""}${typeof item.toggleState === "boolean" ? " is-toggle" : ""}`}
-              onClick={() => handleAction(item)}
-              tooltip={item.tooltip}
-              icon={getItemIcon(item.id, isDark, isFocusMode)}
-              label={item.label}
-              onlyIcon={false}
-              disabled={item.disabled}
-              tooltipPos="above"
-              tooltipAlign="center"
-            >
-              {typeof item.toggleState === "boolean" && (
-                <span
-                  className={`toolbar-action-menu__switch${item.toggleState ? " is-on" : ""}${item.disabled ? " is-disabled" : ""}`}
-                  aria-hidden="true"
+          {items.map((item) => {
+            if (typeof item.toggleState === "boolean") {
+              return (
+                <div
+                  key={item.id}
+                  className={`toolbar-action-menu__item is-toggle${item.disabled ? " is-disabled" : ""}`}
+                  role="none"
                 >
-                  <span className="toolbar-action-menu__switch-thumb" />
-                </span>
-              )}
-            </TooltipButton>
-          ))}
+                  <TooltipButton
+                    type="button"
+                    role="menuitem"
+                    className="toolbar-action-menu__toggle-action"
+                    onClick={() => handleAction(item)}
+                    tooltip={item.tooltip}
+                    icon={getItemIcon(item.id, isDark, isFocusMode)}
+                    label={item.label}
+                    onlyIcon={false}
+                    disabled={item.disabled}
+                    tooltipPos="above"
+                    tooltipAlign="center"
+                  />
+                  <SwitchButton
+                    checked={item.toggleState}
+                    label={item.label}
+                    className="toolbar-action-menu__switch"
+                    disabled={item.disabled}
+                    onClick={() => handleAction(item)}
+                  />
+                </div>
+              );
+            }
+            return (
+              <TooltipButton
+                key={item.id}
+                type="button"
+                role="menuitem"
+                className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}${item.id === "settings" && hasUpdate ? " has-update" : ""}`}
+                onClick={() => handleAction(item)}
+                tooltip={item.tooltip}
+                icon={getItemIcon(item.id, isDark, isFocusMode)}
+                label={item.label}
+                onlyIcon={false}
+                disabled={item.disabled}
+                tooltipPos="above"
+                tooltipAlign="center"
+              />
+            );
+          })}
         </div>
       )}
     </div>

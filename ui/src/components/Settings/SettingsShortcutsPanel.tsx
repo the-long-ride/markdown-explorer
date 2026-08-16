@@ -1,6 +1,7 @@
 import type { AppState } from '../../contexts/appStateReducer';
 import { formatShortcutLabel } from '../../utils/shortcuts';
 import { ShortcutKeycaps } from '../shared/ShortcutKeycaps';
+import { SwitchButton } from '../shared/SwitchButton';
 
 type SettingsShortcutsPanelProps = {
   state: AppState;
@@ -62,21 +63,17 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
                 <div className="settings-shortcut-label">
                   <span>{actionLabels[act.id]}</span>
                 </div>
-                <button
-                  type="button"
-                  className={`settings-shortcut-toggle${isEnabled ? " is-enabled" : ""}`}
-                  role="switch"
-                  aria-checked={isEnabled}
-                  aria-label={(isEnabled ? t.ui.shortcutDisable : t.ui.shortcutEnable).replace('{action}', actionLabels[act.id])}
+                <SwitchButton
+                  checked={isEnabled}
+                  className="settings-shortcut-toggle"
+                  label={(isEnabled ? t.ui.shortcutDisable : t.ui.shortcutEnable).replace('{action}', actionLabels[act.id])}
                   onClick={() => updateSettings({
                     disabledKeybindings: {
                       ...state.settings.disabledKeybindings,
                       [act.id]: isEnabled,
                     },
                   })}
-                >
-                  <span aria-hidden="true" />
-                </button>
+                />
                 <div className="settings-shortcut-field">
                   <input
                     type="text"
