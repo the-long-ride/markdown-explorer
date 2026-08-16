@@ -359,15 +359,15 @@
 
 /* Menus render in a body portal so Settings overflow cannot clip them. */
 .theme-picker-menu--portal {
-  position: fixed;
-  top: var(--menu-top, auto);
-  bottom: var(--menu-bottom, auto);
-  left: var(--menu-left, auto);
-  width: var(--menu-width, auto);
-  max-height: var(--menu-max-height, none);
+  position: fixed !important;
+  top: var(--menu-top, auto) !important;
+  bottom: var(--menu-bottom, auto) !important;
+  left: var(--menu-left, auto) !important;
+  width: var(--menu-width, auto) !important;
+  max-height: var(--menu-max-height, none) !important;
   right: auto !important;
-  z-index: 10000030 !important;
-  overflow-y: auto;
+  z-index: 2147483646 !important;
+  overflow-y: auto !important;
   overscroll-behavior: contain;
 }
 

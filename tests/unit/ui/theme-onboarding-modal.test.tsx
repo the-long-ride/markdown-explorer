@@ -32,9 +32,11 @@ describe('ThemeOnboardingModal', () => {
 
   test('shows language selector with all locale options', () => {
     renderModal();
-    const select = screen.getByLabelText(/language/i) as HTMLSelectElement;
-    expect(select).not.toBeNull();
-    expect(select.options.length).toBe(9);
+    const trigger = screen.getByRole('button', { name: /language/i });
+    expect(trigger).not.toBeNull();
+    fireEvent.click(trigger);
+    const options = screen.getAllByRole('option');
+    expect(options.length).toBe(9);
   });
 
   test('shows settings hint and open-settings button', () => {

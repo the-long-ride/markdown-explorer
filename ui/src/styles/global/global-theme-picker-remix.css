@@ -1,6 +1,3 @@
-@import url("./global-theme-remix-dialog.css");
-@import url("./global-theme-remix-controls.css");
-
 .pet-theme-menu__option.is-selected,
 .theme-remix-menu__option.is-selected {
   background: var(--accent-dim);

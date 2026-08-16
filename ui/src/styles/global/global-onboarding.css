@@ -1,17 +1,59 @@
+.theme-onboarding-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--topbar-h, 42px) + 16px) 16px 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background: var(--modal-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
 .theme-onboarding-card {
-  width: min(560px, calc(100vw - 32px));
-  height: auto;
-  max-height: calc(100vh - var(--topbar-h) - 32px);
+  position: relative;
+  width: min(560px, 100%);
+  max-width: 560px;
+  max-height: min(720px, calc(100dvh - 32px));
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  padding: 24px;
+  border-radius: var(--r-lg);
+  background: var(--dialog-surface, var(--bg-e));
+  border: var(--stroke-w) solid var(--bd-s);
+  box-shadow: var(--sh-lg);
+  box-sizing: border-box;
+  margin: auto;
   overflow: hidden;
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .theme-onboarding-card__header {
   flex: 0 0 auto;
   min-height: 0;
-  margin-bottom: 0;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: var(--stroke-w) solid var(--bd);
 }
+
+.theme-onboarding-card__header h2 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: -0.01em;
+}
+
+.theme-onboarding-card__header p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--tx2);
+}
+
 /* Header and actions stay fixed; all sections scroll inside the body so the
  * Open Settings hint can never overlap the theme picker on short viewports. */
 .theme-onboarding-card__body {
@@ -19,70 +61,288 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
 }
+
 .theme-onboarding-card__section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 0;
-  min-height: 0;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 100%;
+  min-height: auto;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: var(--bg-s);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r-md);
 }
+
+.theme-onboarding-card__section .settings-item__title {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: 0.02em;
+  margin: 0;
+  user-select: none;
+}
+
+.theme-onboarding-card__section--language {
+  position: relative;
+  overflow: visible;
+}
+
+.theme-onboarding-language-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.theme-onboarding-card__select-btn {
+  width: 100%;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--tx);
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.theme-onboarding-card__select-btn:hover {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+}
+
+.theme-onboarding-card__select-btn:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.theme-onboarding-card__select-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tx);
+}
+
+.theme-onboarding-card__select-chevron {
+  flex: 0 0 auto;
+  color: var(--txm);
+  transition: transform 0.14s ease;
+}
+
+.theme-onboarding-card__select-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.theme-onboarding-card__select-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 10000020;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  background: var(--bg-e);
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-lg);
+  box-sizing: border-box;
+  animation: modalFadeIn 0.12s ease-out;
+}
+
+.theme-onboarding-card__select-option {
+  width: 100%;
+  min-height: 30px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: calc(var(--r) - 2px);
+  background: transparent;
+  color: var(--tx2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s;
+  box-sizing: border-box;
+}
+
+.theme-onboarding-card__select-option:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}
+
+.theme-onboarding-card__select-option.is-selected {
+  background: var(--accent-dim);
+  color: var(--accent-text, var(--tx));
+  font-weight: 600;
+}
+
 .theme-onboarding-card__section--mode {
   overflow: visible;
 }
+
+.theme-onboarding-card__section--mode .segmented-control {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .theme-onboarding-card__section--styles {
   overflow: visible;
 }
+
 .theme-onboarding-card__styles {
+  width: 100%;
   min-height: 0;
   height: auto;
   overflow: visible;
   padding-right: 2px;
+  box-sizing: border-box;
 }
-.theme-onboarding-card__actions {
-  flex: 0 0 auto;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: var(--stroke-w) solid var(--bd);
+
+.theme-onboarding-card__section--view {
+  overflow: visible;
 }
-.theme-onboarding-card__skip {
-  min-width: 82px;
-}
-.theme-onboarding-card__continue {
-  min-width: 104px;
-}
-.theme-onboarding-card__select {
+
+.theme-onboarding-card__section--view .segmented-control {
   width: 100%;
-  min-height: 32px;
-  padding: 4px 8px;
-  color: var(--tx);
-  background: var(--bg-s);
-  border: var(--stroke-w) solid var(--bd-s);
-  border-radius: var(--r);
-  font: inherit;
+  box-sizing: border-box;
 }
+
 .theme-onboarding-card__section-desc {
-  margin: 0;
-  color: var(--txm);
+  margin: 2px 0 0 0;
+  color: var(--tx2);
   font-size: 11px;
+  line-height: 1.35;
 }
+
 .theme-onboarding-card__hint {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 4px;
-  padding: 10px 12px;
-  border-radius: var(--r);
-  background: var(--bg-s);
-  color: var(--txm);
-  font-size: 12px;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--bg-s) 60%, transparent);
+  border: var(--stroke-w) dashed var(--bd);
+  color: var(--tx2);
+  font-size: 11.5px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
+
 .theme-onboarding-card__open-settings {
-  flex: 0 0 auto;
+  flex-shrink: 0;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--r);
+  border: var(--stroke-w) solid var(--bd-s);
+  background: var(--bg-e);
+  color: var(--tx);
+  cursor: pointer;
+  transition: all 0.12s ease;
 }
+
+.theme-onboarding-card__open-settings:hover {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+}
+
+.theme-onboarding-card__actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  margin-top: 2px;
+  border-top: var(--stroke-w) solid var(--bd);
+  box-sizing: border-box;
+}
+
+.theme-onboarding-card__skip {
+  min-width: 82px;
+  height: 34px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--r);
+  border: var(--stroke-w) solid var(--bd-s);
+  background: transparent;
+  color: var(--tx2);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.theme-onboarding-card__skip:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+  border-color: var(--bd-x);
+}
+
+.theme-onboarding-card__continue {
+  min-width: 104px;
+  height: 34px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--r);
+  border: var(--stroke-w) solid transparent;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-dim);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.theme-onboarding-card__continue:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 4px 14px var(--accent-dim);
+}
+
+@media (max-height: 600px), (max-width: 520px) {
+  .theme-onboarding-modal {
+    padding: 8px;
+    align-items: flex-start;
+  }
+  .theme-onboarding-card {
+    padding: 16px;
+    max-height: calc(100dvh - 16px);
+  }
+  .theme-onboarding-card__header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+  .theme-onboarding-card__body {
+    gap: 8px;
+  }
+  .theme-onboarding-card__section {
+    padding: 10px 12px;
+  }
+}
+

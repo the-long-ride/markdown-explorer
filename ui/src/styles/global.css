@@ -1,3 +1,6 @@
+@import './global/global-topbar-actions.css';
+@import './global/global-workspace-tabs.css';
+@import './global/global-tab-actions-menus.css';
 @import './global/global-topbar-tabs.css';
 @import './global/global-content-layout.css';
 @import './global/global-app-shell.css';
@@ -13,11 +16,17 @@
 @import './global/global-workspace-selection-screen.css';
 @import './global/global-dynamic-layout.css';
 @import './global/global-search-buttons.css';
+@import './global/global-sidebar-tree-layout.css';
+@import './global/global-sidebar-files-actions.css';
+@import './global/global-content-tabs-focus-search.css';
+@import './global/global-sidebar-search-menus.css';
 @import './global/global-layout-sidebar.css';
 @import './global/global-markdown-foundation.css';
 @import './global/global-markdown-structures.css';
 @import './global/global-code-blocks.css';
 @import './global/global-code-syntax.css';
+@import './global/global-sections-table-core.css';
+@import './global/global-table-view-controls.css';
 @import './global/global-document-sections-tables.css';
 @import './global/global-table-chart-viewer.css';
 @import './global/global-toc-panel.css';
@@ -27,12 +36,19 @@
 @import './global/global-theme-tokyo-night.css';
 @import './global/global-theme-neon-voltage.css';
 @import './global/global-theme-raw-grid.css';
+@import './global/global-media-viewer-settings-shell.css';
+@import './global/global-settings-shortcut-search.css';
+@import './global/global-onboarding.css';
+@import './global/global-settings-actions-dialogs.css';
+@import './global/global-settings-warning-animation.css';
 @import './global/global-media-settings-dialogs.css';
 @import './global/global-settings-responsive.css';
 @import './global/global-theme-picker-settings.css';
 @import './global/global-theme-picker-styles.css';
 @import './global/global-theme-picker-pets.css';
 @import './global/global-theme-picker-custom.css';
+@import './global/global-theme-remix-dialog.css';
+@import './global/global-theme-remix-controls.css';
 @import './global/global-theme-picker-remix.css';
 @import './global/global-switch-tooltip-diff.css';
 @import './global/global-mermaid-rendering.css';
@@ -43,6 +59,14 @@
 @import './global/global-action-notice.css';
 @import './global/global-sidebar-search-controls.css';
 @import './global/global-shell-control-sizing.css';
+
+/* Global focus outline reset for text inputs */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none;
+}
 
 .sidebar__search-spinner { width: 10px; height: 10px; border-width: 1.5px; }
 

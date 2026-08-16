@@ -37,6 +37,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   FolderIcon: () => <span>folder-icon</span>,
   PlusIcon: () => <span>plus-icon</span>,
   TrashIcon: () => <span>trash-icon</span>,
+  ChevronDownIcon: () => <span>chevron-down-icon</span>,
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({

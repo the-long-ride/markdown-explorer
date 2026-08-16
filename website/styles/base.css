@@ -1,7 +1,7 @@
-@import url("./site-foundation.css");
-@import url("./homepage-hero.css");
-@import url("./site-typography.css");
-@import url("./homepage-sections.css");
-@import url("./legal-pages.css");
-@import url("./site-components.css");
+@import './site-foundation.css';
+@import './homepage-hero.css';
+@import './site-typography.css';
+@import './homepage-sections.css';
+@import './legal-pages.css';
+@import './site-components.css';
 
