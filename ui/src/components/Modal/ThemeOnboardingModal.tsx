@@ -39,7 +39,8 @@ export function ThemeOnboardingModal({
           <p>{t.onboarding.description}</p>
         </div>
 
-        <div className="theme-onboarding-card__section theme-onboarding-card__section--language">
+        <div className="theme-onboarding-card__body">
+          <div className="theme-onboarding-card__section theme-onboarding-card__section--language">
           <label className="settings-item__title" htmlFor="themeOnboardingLanguage">
             {t.onboarding.language}
           </label>
@@ -113,15 +114,16 @@ export function ThemeOnboardingModal({
           </div>
         )}
 
-        <div className="theme-onboarding-card__hint">
-          <span>{t.onboarding.settingsHint}</span>
-          <button
-            type="button"
-            className="btn theme-onboarding-card__open-settings"
-            onClick={onOpenSettings}
-          >
-            {t.onboarding.openSettings}
-          </button>
+          <div className="theme-onboarding-card__hint">
+            <span>{t.onboarding.settingsHint}</span>
+            <button
+              type="button"
+              className="btn theme-onboarding-card__open-settings"
+              onClick={onOpenSettings}
+            >
+              {t.onboarding.openSettings}
+            </button>
+          </div>
         </div>
 
         <div className="theme-onboarding-card__actions">

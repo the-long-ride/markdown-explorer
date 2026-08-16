@@ -5,12 +5,23 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 .theme-onboarding-card__header {
+  flex: 0 0 auto;
   min-height: 0;
   margin-bottom: 0;
+}
+/* Header and actions stay fixed; all sections scroll inside the body so the
+ * Open Settings hint can never overlap the theme picker on short viewports. */
+.theme-onboarding-card__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .theme-onboarding-card__section {
   display: flex;
@@ -32,6 +43,7 @@
   padding-right: 2px;
 }
 .theme-onboarding-card__actions {
+  flex: 0 0 auto;
   display: flex;
   justify-content: flex-end;
   gap: 10px;

@@ -17,10 +17,10 @@ vi.mock('../../../ui/src/contexts/AppStateContext', () => ({
 function renderModal() {
   const onComplete = vi.fn();
   const onOpenSettings = vi.fn();
-  render(
+  const view = render(
     <ThemeOnboardingModal isOpen onComplete={onComplete} onOpenSettings={onOpenSettings} />,
   );
-  return { onComplete, onOpenSettings };
+  return { ...view, onComplete, onOpenSettings };
 }
 
 describe('ThemeOnboardingModal', () => {
@@ -53,5 +53,27 @@ describe('ThemeOnboardingModal', () => {
     currentState = { ...createInitialState(undefined, false), appRuntime: 'desktop' as const };
     renderModal();
     expect(screen.queryByRole('radiogroup', { name: /desktop layout/i })).not.toBeNull();
+  });
+
+  test('sections and settings hint live inside the scrollable card body', () => {
+    currentState = { ...createInitialState(undefined, false), appRuntime: 'desktop' as const };
+    const { container } = renderModal();
+    const card = container.querySelector('.theme-onboarding-card')!;
+    const body = card.querySelector('.theme-onboarding-card__body')!;
+    expect(body).not.toBeNull();
+    // All scrollable content sections are inside the body…
+    for (const selector of [
+      '.theme-onboarding-card__section--language',
+      '.theme-onboarding-card__section--mode',
+      '.theme-onboarding-card__section--styles',
+      '.theme-onboarding-card__section--view',
+      '.theme-onboarding-card__hint',
+    ]) {
+      expect(body.querySelector(selector), selector).not.toBeNull();
+      expect(card.querySelector(selector)).toBe(body.querySelector(selector));
+    }
+    // …while the header and action buttons stay outside it.
+    expect(body.querySelector('.theme-onboarding-card__header')).toBeNull();
+    expect(body.querySelector('.theme-onboarding-card__actions')).toBeNull();
   });
 });
