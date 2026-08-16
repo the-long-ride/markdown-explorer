@@ -14,6 +14,7 @@ interface HeadingSectionInteractionOptions {
   currentFile?: string | null;
   defaultExpanded: boolean;
   stateByFile: Map<string, HeadingSectionState>;
+  onRemember?: (state: ReadonlyMap<string, boolean>) => void;
 }
 
 export interface HeadingSectionInteractions {
@@ -26,7 +27,8 @@ export function createHeadingSectionInteractions({
   currentFile,
   defaultExpanded,
   stateByFile,
-}: HeadingSectionInteractionOptions): HeadingSectionInteractions {
+  onRemember,
+}: HeadingSectionInteractionOptions) {
   const stateKey = currentFile || '__current-document__';
 
   // Apply initial state without triggering the CSS transform transition.
@@ -41,7 +43,9 @@ export function createHeadingSectionInteractions({
   requestAnimationFrame(() => body.classList.remove('no-section-transition'));
 
   const remember = () => {
-    stateByFile.set(stateKey, captureHeadingSectionState(body));
+    const captured = captureHeadingSectionState(body);
+    stateByFile.set(stateKey, captured);
+    onRemember?.(captured);
   };
   const handleStateChange = (event: Event) => {
     const section = (event as CustomEvent<{ section?: HTMLElement }>).detail?.section;

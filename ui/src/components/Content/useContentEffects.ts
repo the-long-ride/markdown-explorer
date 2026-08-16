@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useContentNavigationEffects } from "./useContentNavigationEffects";
 import { useContentScrollMemory } from "./useContentScrollMemory";
 import { isWorkspaceNavigationHref, syncStickyTableHeaders } from "./contentUtils";
@@ -15,6 +15,14 @@ import { resolveRenderedLink } from "../../dom/linkContextMenu";
 import { createHeadingSectionInteractions } from "./headingSectionInteractions";
 import type { HeadingSectionState } from "./enhancements/headingSectionState";
 import type { LinkContextMenuState } from "../shared/LinkContextMenu";
+import { getWorkspaceScopeKey } from "../../contexts/contentTabState";
+import {
+  flushReadingProgress,
+  getHeadingState,
+  getScrollPosition,
+  rememberHeadingState,
+  rememberScrollPosition,
+} from "../../readingProgress/readingProgressStore";
 
 interface ContentEffectsArgs {
   state: any;
@@ -45,12 +53,33 @@ export function useContentEffects({
   onBookmarkContextMenu,
   onActionError,
 }: ContentEffectsArgs) {
-  const scrollPositionsRef = useContentScrollMemory(state.currentFile, scrollRef);
+  const workspaceKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
+  const workspaceKeyRef = useRef(workspaceKey);
+  useEffect(() => { workspaceKeyRef.current = workspaceKey; }, [workspaceKey]);
+
+  const handleScrollCaptured = useCallback((filePath: string, scrollTop: number) => {
+    rememberScrollPosition(workspaceKeyRef.current, filePath, scrollTop);
+  }, []);
+
+  const scrollPositionsRef = useContentScrollMemory(state.currentFile, scrollRef, handleScrollCaptured);
   const lastRestoredFileRef = useRef<string | null>(null);
   const lastRestoredVersionRef = useRef<number | null>(null);
   const mermaidRunIdRef = useRef(0);
   const lastMermaidAppearanceKeyRef = useRef<string | null>(null);
   const headingStateByFileRef = useRef<Map<string, HeadingSectionState>>(new Map());
+
+  // Reading Progress Memory: flush pending writes when the app is hidden or
+  // unloaded; final flush on unmount.
+  useEffect(() => {
+    const flush = () => flushReadingProgress();
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", flush);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", flush);
+      flushReadingProgress();
+    };
+  }, []);
 
   useContentNavigationEffects({
     currentFile: state.currentFile,
@@ -68,11 +97,20 @@ export function useContentEffects({
     const appearanceChanged = mermaidAppearance.changed;
     lastMermaidAppearanceKeyRef.current = mermaidAppearance.key;
 
+    const headingStateKey = state.currentFile || '__current-document__';
+    if (state.currentFile && !headingStateByFileRef.current.has(headingStateKey)) {
+      const storedHeadingState = getHeadingState(workspaceKey, state.currentFile);
+      if (storedHeadingState) headingStateByFileRef.current.set(headingStateKey, storedHeadingState);
+    }
+
     const headingSections = createHeadingSectionInteractions({
       body,
       currentFile: state.currentFile,
       defaultExpanded: state.defaultExpanded !== false,
       stateByFile: headingStateByFileRef.current,
+      onRemember: (captured) => {
+        if (state.currentFile) rememberHeadingState(workspaceKey, state.currentFile, captured);
+      },
     });
 
     applyPreviewActionTranslations(body, previewLabels);
@@ -109,7 +147,15 @@ export function useContentEffects({
 
     // Sticky table header (JS-based, because overflow-x:auto blocks native sticky)
     const scrollContainer = scrollRef.current;
-    const handleScroll = () => syncStickyTableHeaders(scrollContainer);
+    let lastPersistedScrollAt = 0;
+    const handleScroll = () => {
+      syncStickyTableHeaders(scrollContainer);
+      const now = Date.now();
+      if (scrollContainer && state.currentFile && now - lastPersistedScrollAt > 400) {
+        lastPersistedScrollAt = now;
+        rememberScrollPosition(workspaceKey, state.currentFile, scrollContainer.scrollTop);
+      }
+    };
     if (scrollContainer) scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
 
     // Image / mermaid click → media modal
@@ -419,8 +465,12 @@ export function useContentEffects({
         lastRestoredVersionRef.current !== state.renderVersion)
     ) {
       const savedScroll = state.currentFile
-        ? scrollPositionsRef.current[state.currentFile]
+        ? (scrollPositionsRef.current[state.currentFile]
+          ?? getScrollPosition(workspaceKey, state.currentFile))
         : 0;
+      if (state.currentFile && scrollPositionsRef.current[state.currentFile] === undefined && savedScroll) {
+        scrollPositionsRef.current[state.currentFile] = savedScroll;
+      }
       scrollRef.current.scrollTop = savedScroll || 0;
       lastRestoredFileRef.current = state.currentFile;
       lastRestoredVersionRef.current = state.renderVersion;

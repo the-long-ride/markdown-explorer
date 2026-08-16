@@ -127,3 +127,16 @@ export function getHeadingState(workspaceKey: string, filePath: string): Map<str
   }
   return map;
 }
+
+export function resetReadingProgressForTests(): void {
+  if (writeTimer) {
+    clearTimeout(writeTimer);
+    writeTimer = null;
+  }
+  cached = null;
+  try {
+    localStorage.removeItem(READING_PROGRESS_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
