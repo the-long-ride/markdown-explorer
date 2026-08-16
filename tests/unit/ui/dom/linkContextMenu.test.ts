@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { resolveRenderedLink } from '../../../../ui/src/dom/linkContextMenu';
 
 describe('resolveRenderedLink', () => {
@@ -79,5 +79,27 @@ describe('copyImage module', () => {
     expect(writtenItems.length).toBe(1);
     expect(writtenItems[0].types).toContain('image/png');
   });
+
+  test('saveBlobAsFile triggers browser anchor download or PlatformBridge in Tauri', async () => {
+    const { saveBlobAsFile } = await import('../../../../ui/src/dom/copyImage');
+    let clicked = false;
+    let downloadAttr = '';
+    const origCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+      const el = origCreateElement(tagName);
+      if (tagName === 'a') {
+        el.click = () => { clicked = true; downloadAttr = (el as HTMLAnchorElement).download; };
+      }
+      return el;
+    });
+
+    const blob = new Blob(['test-png-data'], { type: 'image/png' });
+    const ok = await saveBlobAsFile(blob, 'diagram.png');
+    expect(ok).toBe(true);
+    expect(clicked).toBe(true);
+    expect(downloadAttr).toBe('diagram.png');
+    vi.restoreAllMocks();
+  });
 });
+
 

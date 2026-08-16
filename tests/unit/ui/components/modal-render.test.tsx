@@ -18,6 +18,7 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     tooltips: { closeModal: 'Close modal [Esc]', close: 'Close', previous: 'Previous', next: 'Next', zoomIn: 'Zoom In', zoomOut: 'Zoom Out', resetZoom: 'Reset Zoom' },
+    previewActions: { copyImage: 'Copy image to clipboard', saveImagePng: 'Save as image (.PNG)', imageSaved: 'Image saved.', imageSaveFailed: 'Failed to save image.', copyFailed: 'Unable to copy' },
     update: { restartPromptTitle: 'Install update', restartPromptBody: 'Update ready', updateOnExit: 'Update on Exit', restartAndUpdate: 'Restart and Update' },
     terms: {
       logoAlt: 'Markdown Explorer',
@@ -52,6 +53,8 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   ResetZoomIcon: () => <span>reset-zoom-icon</span>,
   ChevronLeftIcon: () => <span>chevron-left-icon</span>,
   ChevronRightIcon: () => <span>chevron-right-icon</span>,
+  CopyIcon: () => <span>copy-icon</span>,
+  SaveImageIcon: () => <span>save-image-icon</span>,
 }));
 
 vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({ default: 'logo.png' }));

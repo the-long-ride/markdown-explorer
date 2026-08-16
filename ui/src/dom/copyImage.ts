@@ -372,3 +372,85 @@ export async function copyElementImageToClipboard(
 
   return false;
 }
+
+export function isTauriRuntime(): boolean {
+  const runtimeWindow = typeof window !== 'undefined' ? (window as any) : {};
+  return typeof runtimeWindow.__TAURI__ !== 'undefined' || typeof runtimeWindow.__TAURI_INTERNALS__ !== 'undefined';
+}
+
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function saveBlobAsFile(blob: Blob, fileName: string): Promise<boolean> {
+  if (isTauriRuntime() && (window as any).PlatformBridge?.postMessage) {
+    try {
+      const dataUrl = await blobToDataUrl(blob);
+      (window as any).PlatformBridge.postMessage({
+        command: 'saveChartPng',
+        fileName,
+        dataUrl,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  if (typeof document === 'undefined') return false;
+  try {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.hidden = true;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function saveSvgElementAsPng(svg: SVGSVGElement, fileName = 'diagram.png'): Promise<boolean> {
+  const blob = await rasterizeSvgToPngBlob(svg);
+  if (!blob) return false;
+  return await saveBlobAsFile(blob, fileName);
+}
+
+export async function saveImageElementAsPng(img: HTMLImageElement, fileName = 'image.png'): Promise<boolean> {
+  const blob = await rasterizeImageToPngBlob(img);
+  if (!blob) return false;
+  return await saveBlobAsFile(blob, fileName);
+}
+
+export async function saveElementImageAsPng(
+  target: HTMLElement | SVGElement,
+  fileName = 'diagram.png',
+): Promise<boolean> {
+  const img = target instanceof HTMLImageElement
+    ? target
+    : target.querySelector?.<HTMLImageElement>('img');
+
+  if (img) {
+    return await saveImageElementAsPng(img, fileName.endsWith('.png') ? fileName : `${fileName}.png`);
+  }
+
+  const svg = target instanceof SVGSVGElement
+    ? target
+    : target.querySelector?.<SVGSVGElement>('svg');
+
+  if (svg) {
+    return await saveSvgElementAsPng(svg, fileName.endsWith('.png') ? fileName : `${fileName}.png`);
+  }
+
+  return false;
+}
+

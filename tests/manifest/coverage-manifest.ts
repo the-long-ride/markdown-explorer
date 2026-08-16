@@ -127,7 +127,7 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/components/Workspace/workspaceSelectionUtils.ts': ['tests/unit/ui/desktop-tabs.test.ts'],
   'ui/src/components/shared/HeaderActionGroups.tsx': ['tests/node/header-layout-contracts.test.mjs'],
   'ui/src/components/shared/InteractiveBackground.tsx': ['tests/unit/ui/components/content.test.tsx'],
-  'ui/src/components/shared/LinkContextMenu.tsx': ['tests/unit/ui/dom/linkContextMenu.test.ts'],
+  'ui/src/components/shared/LinkContextMenu.tsx': ['tests/unit/ui/dom/linkContextMenu.test.ts', 'tests/unit/ui/components/link-context-menu-render.test.tsx'],
   'ui/src/components/shared/ScrollToTopButton.tsx': ['tests/unit/ui/hooks/useScrollVisibility.test.ts'],
   'ui/src/components/shared/TabContextMenu.tsx': ['tests/unit/ui/components/content.test.tsx'],
   'ui/src/components/shared/ToolbarActionMenu.tsx': ['tests/unit/ui/components/content.test.tsx'],

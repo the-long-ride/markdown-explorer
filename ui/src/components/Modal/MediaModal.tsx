@@ -4,10 +4,12 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { TooltipButton } from '../shared/TooltipButton';
-import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from '../shared/icons';
+import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, CopyIcon, SaveImageIcon } from '../shared/icons';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { useCssVars } from '../../utils/useCssVars';
+import { copyElementImageToClipboard, saveElementImageAsPng } from '../../dom/copyImage';
+import { dispatchActionNotice } from '../../utils/actionNotice';
 import {
   MEDIA_ZOOM_BUTTON_STEP,
   MEDIA_ZOOM_MAX,
@@ -59,6 +61,39 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     setCurrentIndex((i) => (i + 1) % items.length);
     setZoom(1); setPan({ x: 0, y: 0 });
   }, [items.length]);
+
+  const handleCopy = useCallback(async () => {
+    const item = items[Math.min(currentIndex, items.length - 1)];
+    const target = item?.type === 'svg' ? mediaSvgRef.current : mediaImageRef.current;
+    if (!target) return;
+    try {
+      const ok = await copyElementImageToClipboard(target);
+      if (ok) {
+        dispatchActionNotice(t.previewActions.imageCopied, 'success');
+      } else {
+        dispatchActionNotice(t.previewActions.copyFailed, 'error');
+      }
+    } catch {
+      dispatchActionNotice(t.previewActions.copyFailed, 'error');
+    }
+  }, [currentIndex, items, t.previewActions.copyFailed, t.previewActions.imageCopied]);
+
+  const handleSave = useCallback(async () => {
+    const item = items[Math.min(currentIndex, items.length - 1)];
+    const target = item?.type === 'svg' ? mediaSvgRef.current : mediaImageRef.current;
+    if (!target) return;
+    try {
+      const fileName = item?.type === 'svg' ? 'diagram.png' : 'image.png';
+      const ok = await saveElementImageAsPng(target, fileName);
+      if (ok) {
+        dispatchActionNotice(t.previewActions.imageSaved || 'Image saved.', 'success');
+      } else {
+        dispatchActionNotice(t.previewActions.imageSaveFailed || 'Failed to save image.', 'error');
+      }
+    } catch {
+      dispatchActionNotice(t.previewActions.imageSaveFailed || 'Failed to save image.', 'error');
+    }
+  }, [currentIndex, items, t.previewActions.imageSaveFailed, t.previewActions.imageSaved]);
 
   useEffect(() => {
     if (!gallery) return;
@@ -155,6 +190,8 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
           <span className="mdn-modal-zoom-text">{Math.round(zoom * 100)}%</span>
           <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip={t.tooltips.zoomOut} tooltipPos="above" icon={<ZoomOutIcon />} />
           <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip={t.tooltips.resetZoom} tooltipPos="above" icon={<ResetZoomIcon />} />
+          <TooltipButton className="mdn-modal-tool" onClick={handleCopy} tooltip={t.previewActions.copyImage} tooltipPos="above" icon={<CopyIcon size={14} />} />
+          <TooltipButton className="mdn-modal-tool" onClick={handleSave} tooltip={t.previewActions.saveImagePng} tooltipPos="above" icon={<SaveImageIcon size={14} />} />
         </div>
       </div>
     </div>

@@ -76,6 +76,7 @@ export interface Translations extends AuditedUiTranslationDomains {
     openInBrowser: string; openAsModal: string; showCode: string; showPreview: string; copyCode: string; plainText: string;
     csvPreviewTitle: string; tsvPreviewTitle: string; csvMalformedQuote: string; csvUnevenRows: string;
     modalTitle: string; closeModal: string; openError: string; linkMenu: string; copyLink: string; copyImage: string;
+    saveImagePng: string; imageSaved: string; imageSaveFailed: string;
     linkCopied: string; imageCopied: string; unableToOpenLink: string; copyFailed: string;
   };
   tabContextMenu: {

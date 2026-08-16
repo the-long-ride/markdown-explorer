@@ -19,7 +19,7 @@ import {
   prepareStandaloneHtmlPreview,
 } from "../../dom/htmlPreviewActions";
 import type { ResolvedLink } from "../../dom/linkContextMenu";
-import { copyElementImageToClipboard } from "../../dom/copyImage";
+import { copyElementImageToClipboard, saveElementImageAsPng } from "../../dom/copyImage";
 import { splitLeadingHtmlComments, buildRenderedDocumentSnapshot } from "./contentUtils";
 import { isHtmlDocumentPath } from "./HtmlDocumentView";
 import { convertHtmlSourceToMarkdown } from "../../markdown/htmlToMarkdown";
@@ -264,6 +264,24 @@ export const Content = memo(function Content({
     }
   }, [showActionNotice, t.previewActions.copyFailed, t.previewActions.imageCopied]);
 
+  const handleSaveImage = useCallback(async (target: HTMLElement | SVGElement) => {
+    try {
+      const isMermaid = target.getAttribute?.('data-mdn-bookmark-kind') === 'mermaid'
+        || Boolean(target.closest?.('.mdn-mermaid-wrap'));
+      const fileName = isMermaid ? 'mermaid-diagram.png' : 'diagram.png';
+      const ok = await saveElementImageAsPng(target, fileName);
+      setLinkMenu(null);
+      if (ok) {
+        showActionNotice(t.previewActions.imageSaved || 'Image saved.');
+      } else {
+        showActionNotice(t.previewActions.imageSaveFailed || 'Failed to save image.', 'error');
+      }
+    } catch {
+      setLinkMenu(null);
+      showActionNotice(t.previewActions.imageSaveFailed || 'Failed to save image.', 'error');
+    }
+  }, [showActionNotice, t.previewActions.imageSaveFailed, t.previewActions.imageSaved]);
+
 
   const { bookmarkSelection, closeBookmarkSelection, handleBookmarkContextMenu, openBookmarkDialogForElement } = useBookmarkSelection({
     enabled: state.settings.bookmarksEnabled,
@@ -315,60 +333,34 @@ export const Content = memo(function Content({
   return (
     <>
       <ContentMainView
-        state={state}
-        translations={t}
-        scrollRef={scrollRef}
-        bodyRef={bodyRef}
-        isFullHtmlPreview={isFullHtmlPreview}
-        workspaceUnavailablePath={workspaceUnavailablePath}
-        isDesktopTabView={isDesktopTabView}
-        isUnavailableWorkspaceInHistory={isUnavailableWorkspaceInHistory}
-        suppressWelcome={suppressWelcome}
-        hasRenderableDocumentContent={hasRenderableDocumentContent}
-        isHtmlDocument={isHtmlDocument}
-        sourceDocumentText={sourceDocumentText}
-        htmlMarkdownRender={htmlMarkdownRender}
-        htmlDocumentPreviewEnabled={htmlDocumentPreviewEnabled}
-        previewTitle={previewTitle}
-        previewWarning={previewWarning}
-        previewMeta={previewMeta}
-        frontmatterEntries={fmEntries}
-        renderedContentParts={renderedContentParts}
-        onCancelWorkspaceScan={onCancelWorkspaceScan}
-        onOpenWorkspaceAgain={handleOpenWorkspaceAgain}
-        onDeleteUnavailableWorkspace={handleDeleteUnavailableWorkspace}
-        onUpdateSettings={updateSettings}
-        onRefresh={refresh}
-        onHtmlPolicyReport={handleHtmlPolicyReport}
+        state={state} translations={t} scrollRef={scrollRef} bodyRef={bodyRef}
+        isFullHtmlPreview={isFullHtmlPreview} workspaceUnavailablePath={workspaceUnavailablePath}
+        isDesktopTabView={isDesktopTabView} isUnavailableWorkspaceInHistory={isUnavailableWorkspaceInHistory}
+        suppressWelcome={suppressWelcome} hasRenderableDocumentContent={hasRenderableDocumentContent}
+        isHtmlDocument={isHtmlDocument} sourceDocumentText={sourceDocumentText}
+        htmlMarkdownRender={htmlMarkdownRender} htmlDocumentPreviewEnabled={htmlDocumentPreviewEnabled}
+        previewTitle={previewTitle} previewWarning={previewWarning} previewMeta={previewMeta}
+        frontmatterEntries={fmEntries} renderedContentParts={renderedContentParts}
+        onCancelWorkspaceScan={onCancelWorkspaceScan} onOpenWorkspaceAgain={handleOpenWorkspaceAgain}
+        onDeleteUnavailableWorkspace={handleDeleteUnavailableWorkspace} onUpdateSettings={updateSettings}
+        onRefresh={refresh} onHtmlPolicyReport={handleHtmlPolicyReport}
       />
       {htmlModal && (
         <HtmlPreviewModal
-          documentHtml={htmlModal.documentHtml}
-          title={t.previewActions.modalTitle}
-          closeLabel={t.previewActions.closeModal}
-          trigger={htmlModal.trigger}
-          onClose={() => setHtmlModal(null)}
+          documentHtml={htmlModal.documentHtml} title={t.previewActions.modalTitle}
+          closeLabel={t.previewActions.closeModal} trigger={htmlModal.trigger} onClose={() => setHtmlModal(null)}
         />
       )}
       <BookmarkSelectionMenu
-        state={bookmarkSelection}
-        workspaceName={state.workspaceName}
-        workspacePath={state.workspacePath}
-        filePath={state.currentFile}
-        translations={t.bookmarks}
-        onClose={closeBookmarkSelection}
+        state={bookmarkSelection} workspaceName={state.workspaceName} workspacePath={state.workspacePath}
+        filePath={state.currentFile} translations={t.bookmarks} onClose={closeBookmarkSelection}
       />
       {linkMenu && (
         <LinkContextMenu
-          state={linkMenu}
-          menuLabel={t.previewActions.linkMenu}
-          openLabel={t.previewActions.openInBrowser}
-          copyLabel={t.previewActions.copyLink}
-          copyImageLabel={t.previewActions.copyImage}
+          state={linkMenu} menuLabel={t.previewActions.linkMenu} openLabel={t.previewActions.openInBrowser}
+          copyLabel={t.previewActions.copyLink} copyImageLabel={t.previewActions.copyImage} saveImageLabel={t.previewActions.saveImagePng}
           bookmarkLabel={state.settings.bookmarksEnabled ? t.bookmarks.addSelection : undefined}
-          onOpen={handleOpenResolvedLink}
-          onCopy={handleCopyResolvedLink}
-          onCopyImage={handleCopyImage}
+          onOpen={handleOpenResolvedLink} onCopy={handleCopyResolvedLink} onCopyImage={handleCopyImage} onSaveImage={handleSaveImage}
           onBookmark={state.settings.bookmarksEnabled && linkMenu.bookmarkTarget ? () => {
             const opened = linkMenu.bookmarkTarget ? openBookmarkDialogForElement(linkMenu.bookmarkTarget, linkMenu.x, linkMenu.y) : false;
             if (!opened) showActionNotice(t.bookmarks.targetUnavailable, 'error');
