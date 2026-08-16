@@ -7,6 +7,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 ## [Unreleased]
 
 ### Added
+- **Save Rendered SVG Diagrams and Images as PNG**: Added a **"Save as image (.PNG)"** option to the context menu for rendered SVG diagrams (such as Mermaid diagrams) and images, as well as dedicated copy and save buttons to the Media Modal viewer toolbar. Exports use high-resolution rasterization with transparency support, saving via Tauri's native file dialog or standard browser download across all 9 supported languages.
 - **Reading Progress Memory**: The app now remembers your exact reading position for every document. Scroll offsets and collapsed-heading state are persisted per workspace and file (localStorage-backed, capped to the 100 most recently read files per workspace) and restored across app restarts in every runtime. Desktop tabs view also restores each workspace tab's full open-file tab strip and the last active file, filtered to files that still exist.
 - **First-run onboarding enhancements**: The theme onboarding dialog now includes a language picker (applies live across all nine locales), a desktop layout choice between **Focus** and **Tabs** with per-option descriptions on Electron/Tauri, and a footer hint with an **Open Settings** shortcut that completes onboarding and jumps straight into settings.
 - **Chart save toast**: Saving a chart as an image now confirms the outcome with a localized toast — success when the PNG is written, an error notice if the write fails, and silence when the native save dialog is cancelled. Tauri reports the native save outcome through the new `chartPngSaveResult` host message; Web/Electron/VS Code downloads confirm immediately after the download starts.
@@ -16,6 +17,8 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 - **Tauri chart export feedback**: The native `saveChartPng` export is no longer fire-and-forget; it reports success (with the saved path) or failure back to the UI.
 
 ### Fixed
+- **Onboarding modal layout & zoom responsiveness**: Redesigned the onboarding modal layout with clean structured option blocks, prevented header overlap at high zoom levels, unified input focus styling, and integrated the custom language switcher dropdown for visual consistency with Settings.
+- **Portal dropdown stacking above modals**: Elevated theme picker, typography, and theme remix portal menus to `z-index: 2147483646` with fixed viewport coordinates, ensuring dropdown option lists are always fully visible above modal backdrops and onboarding cards.
 - **Sidebar pins lost on restart**: Pinned files and folders are no longer wiped on cold start. Pin reconciliation previously ran against an empty workspace tree while the workspace scan was still loading, pruning every pin and persisting the empty result before the tree arrived; an unloaded tree is now treated as "unknown" rather than "empty".
 - **Font dropdown shrinking while scrolling**: The typography font dropdown no longer collapses progressively when you scroll inside it. The menu re-read its own constrained `scrollHeight` on every capture-phase scroll event and re-applied it as the max height, losing sub-pixel height on scaled displays with each event; it now measures its natural content height once per open and ignores scroll events that originate inside the menu.
 
