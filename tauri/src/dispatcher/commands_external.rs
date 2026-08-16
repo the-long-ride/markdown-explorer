@@ -79,8 +79,21 @@ impl Dispatcher {
                     .set_file_name(file_name)
                     .blocking_save_file()
                     .and_then(|path| path.into_path().ok());
+                // A cancelled dialog emits nothing; outcomes feed the UI toast.
                 if let Some(path) = selected_path {
-                    std::fs::write(path, bytes).map_err(|error| error.to_string())?;
+                    let mut extra = serde_json::Map::new();
+                    match std::fs::write(&path, bytes) {
+                        Ok(()) => {
+                            extra.insert("ok".into(), true.into());
+                            extra.insert("path".into(), path.to_string_lossy().to_string().into());
+                            host_message::emit(&self.app, "chartPngSaveResult", extra);
+                        }
+                        Err(error) => {
+                            extra.insert("ok".into(), false.into());
+                            extra.insert("error".into(), error.to_string().into());
+                            host_message::emit(&self.app, "chartPngSaveResult", extra);
+                        }
+                    }
                 }
             }
             // ── C5: Clipboard / External / Editor ──
