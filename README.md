@@ -46,62 +46,93 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Your-Explorer-Your-Themes.png" width="32%" alt="Theme Remix settings for custom Markdown Explorer themes" />
 </p>
 
-- **Workspace Navigation & Organization**
-  - **Workspaces & Folders**: Open local folders, manage recent workspaces, and navigate multi-workspace desktop tabs.
-  - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
-  - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
-  - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
-  - **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Chromium/Web does not expose Edit.
-  - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
-  - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
-  - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
-  - **Safer Workspace Operations**: Cancel running scans, reveal files and folders in native file manager, replace missing recent workspaces, and avoid stale scan results reopening old content.
-  - **Richer Context & Row Menus**: Sidebar, document-tab, and workspace-tab menus expose context-aware actions and shortcuts.
-  - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
-  - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
+<details>
+<summary><b>Workspace Navigation & Organization</b></summary>
 
-- **Pin & Bookmarks**
-  - **Sidebar Pinning**: Pin any file or folder to the top of the sidebar for fast one-click access. Pinned items inside subfolders are hoisted and displayed at the root level of the file tree.
-  - **Persistent Bookmarks**: Save named bookmarks from selected document text. Jump back to the exact location with search-style highlighting, and manage items through rename, delete, and three-dot or right-click menus.
-  - **Source-Anchored Targets**: Bookmarks store the exact Markdown source range and a fingerprint so they survive edits and relocate contextually. Multi-line, mixed-format, LaTeX, Mermaid, image, and link selections are all supported. Repeated content resolves to the saved occurrence; edited targets report **Target changed** instead of jumping incorrectly.
-  - **Bookmark Sidebar Tab**: Dedicated sidebar tab with live saved-count badge, sort controls, and instant search. Tab View groups bookmarks by workspace; Focus View shows only the current workspace.
-  - **Batch Management**: Checkbox selection mode with confirmed batch deletion (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Chromium / Web).
-  - **Fully Localized**: All pin and bookmark labels, dialogs, empty/error states, and actions are available in English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
+- **Workspaces & Folders**: Open local folders, manage recent workspaces, and navigate multi-workspace desktop tabs.
+- **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
+- **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
+- **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
+- **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Chromium/Web does not expose Edit.
+- **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
+- **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
+- **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
+- **Safer Workspace Operations**: Cancel running scans, reveal files and folders in native file manager, replace missing recent workspaces, and avoid stale scan results reopening old content.
+- **Richer Context & Row Menus**: Sidebar, document-tab, and workspace-tab menus expose context-aware actions and shortcuts.
+- **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
+- **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
 
-- **Document Previews & Rich Media**
-  - **HTML Document Modes**: Open `.html` and `.htm` files as isolated interactive previews or converted Markdown, switch active tab with `Ctrl+Alt+H`, and use **Open in Browser** when full browser behavior is needed (with embedded local CSS/JS support).
-  - **Responsive Image Rows**: Same-paragraph Markdown images stay together across viewport sizes.
-  - **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
-  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) and KaTeX math formulas. Mermaid uses the current Markdown Explorer theme, family-aware layout profiles, and vector-safe SVG polish while preserving authored semantic styling; theme and light/dark changes re-render visible diagrams, and wide Gantt diagrams scroll before labels become unreadable. Diagrams can also be opened in the full media viewer for zoom and inspection.
-  - **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
-  - **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
-  - **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
-  - **Video Embedding**: Support for local video files and YouTube/streaming video embeds.
+</details>
 
-- **Data Tables & Charts**
-  - **CSV and TSV Code Fences**: Switch highlighted delimited text into interactive tables with delimiter detection, header inference, Excel-style column labels, sorting, filtering, wrapping, and chart controls.
-  - **Interactive Filtering & Sorting**: Multi-select column filters, row sorting, and text wrap/unwrap controls.
-  - **Collapsible Datasets**: Compact view for large datasets (1000+ rows).
-  - **View-as-Chart**: Automatically convert numeric table columns into interactive Bar, Line, or Pie charts.
+<details>
+<summary><b>Pin & Bookmarks</b></summary>
 
-- **Converted Document Previews**
-  - **Multi-Format Local Conversion**: Opt-in previews for DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files. Tauri performs conversion in-process with local Rust adapters; Electron and VS Code retain `@the-long-ride/markdown-them`. See [Native document conversion](docs/native-document-conversion.md).
-  - **Smart Caching**: Fast re-views using file timestamp and size caching.
+- **Sidebar Pinning**: Pin any file or folder to the top of the sidebar for fast one-click access. Pinned items inside subfolders are hoisted and displayed at the root level of the file tree.
+- **Persistent Bookmarks**: Save named bookmarks from selected document text. Jump back to the exact location with search-style highlighting, and manage items through rename, delete, and three-dot or right-click menus.
+- **Source-Anchored Targets**: Bookmarks store the exact Markdown source range and a fingerprint so they survive edits and relocate contextually. Multi-line, mixed-format, LaTeX, Mermaid, image, and link selections are all supported. Repeated content resolves to the saved occurrence; edited targets report **Target changed** instead of jumping incorrectly.
+- **Bookmark Sidebar Tab**: Dedicated sidebar tab with live saved-count badge, sort controls, and instant search. Tab View groups bookmarks by workspace; Focus View shows only the current workspace.
+- **Batch Management**: Checkbox selection mode with confirmed batch deletion (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Chromium / Web).
+- **Fully Localized**: All pin and bookmark labels, dialogs, empty/error states, and actions are available in English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
 
-- **Search & Discovery**
-  - **Flexible Search Scopes**: Search inside current file, current workspace, or across all open desktop tabs.
-  - **Jump-to-Result**: Click search excerpts to jump directly to exact matches.
+</details>
 
-- **Customization & Platform Support**
-  - **Built-in Theme Families & Theme Remix**: Choose grouped built-in themes—including Aurora Glass, Neon Voltage, and Raw Grid—pet themes, or create, edit, import, and export custom themes with color, density, spacing, and background image controls.
-  - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
-  - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
-  - **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
-  - **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, Code, and Mermaid** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Imported files are copied once into app-managed storage and can be reused by any role. Chromium/Web keeps bundled/web-safe fonts and leaves zoom/font discovery to the browser.
-  - **Update Notifications**: Desktop releases can show a new-version dialog at startup with Download, Later, changelog, and **Skip notify for this version** actions. Skipping suppresses only that release; a newer release is shown again.
-  - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
-  - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
-  - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
+<details>
+<summary><b>Document Previews & Rich Media</b></summary>
+
+- **HTML Document Modes**: Open `.html` and `.htm` files as isolated interactive previews or converted Markdown, switch active tab with `Ctrl+Alt+H`, and use **Open in Browser** when full browser behavior is needed (with embedded local CSS/JS support).
+- **Responsive Image Rows**: Same-paragraph Markdown images stay together across viewport sizes.
+- **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
+- **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) and KaTeX math formulas. Mermaid uses the current Markdown Explorer theme, family-aware layout profiles, and vector-safe SVG polish while preserving authored semantic styling; theme and light/dark changes re-render visible diagrams, and wide Gantt diagrams scroll before labels become unreadable. Diagrams can also be opened in the full media viewer for zoom and inspection.
+- **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
+- **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
+- **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
+- **Video Embedding**: Support for local video files and YouTube/streaming video embeds.
+
+</details>
+
+<details>
+<summary><b>Data Tables & Charts</b></summary>
+
+- **CSV and TSV Code Fences**: Switch highlighted delimited text into interactive tables with delimiter detection, header inference, Excel-style column labels, sorting, filtering, wrapping, and chart controls.
+- **Interactive Filtering & Sorting**: Multi-select column filters, row sorting, and text wrap/unwrap controls.
+- **Interactive Column Visibility**: Per-table Columns dropdown menu with accessible switch toggles, **Show all**, and last-visible-column guard.
+- **Collapsible Datasets**: Compact view for large datasets (1000+ rows).
+- **Expanded Chart Visualizations**: Automatically convert numeric table data into 9 interactive chart types: **Bar**, **Horizontal Bar**, **Line**, **Area**, **Scatter** (with multi-numeric X/Y point mapping), **Radar**, **Polar Area**, **Pie**, and **Doughnut**.
+- **Fullscreen Chart Modal Viewer**: Dedicated chart inspection viewer with 50%–1000% continuous zoom, mouse/touch pan, fit/reset, on-the-fly chart type switching, and image copy/save PNG.
+- **Native Chart PNG Export**: Native file dialog and direct PNG binary export for charts on desktop runtimes.
+
+</details>
+
+<details>
+<summary><b>Converted Document Previews</b></summary>
+
+- **Multi-Format Local Conversion**: Opt-in previews for DOC, DOCX, PDF, HTML, XLS, XLSX, XLM, PPTX, ODT, ODP, ODS, RTF, and TXT files. Tauri performs conversion in-process with local Rust adapters; Electron and VS Code retain `@the-long-ride/markdown-them`. See [Native document conversion](docs/native-document-conversion.md).
+- **Smart Caching**: Fast re-views using file timestamp and size caching.
+
+</details>
+
+<details>
+<summary><b>Search & Discovery</b></summary>
+
+- **Flexible Search Scopes**: Search inside current file, current workspace, or across all open desktop tabs.
+- **Jump-to-Result**: Click search excerpts to jump directly to exact matches.
+
+</details>
+
+<details>
+<summary><b>Customization & Platform Support</b></summary>
+
+- **Built-in Theme Families & Theme Remix**: Choose grouped built-in themes—including Aurora Glass, Neon Voltage, and Raw Grid—pet themes, or create, edit, import, and export custom themes with color, density, spacing, and background image controls.
+- **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
+- **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
+- **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
+- **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, Code, and Mermaid** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Chromium and Web runtimes persist imported `.ttf`/`.otf`/`.woff`/`.woff2` fonts in IndexedDB and activate them via the `FontFace` API.
+- **Update Notifications**: Desktop releases can show a new-version dialog at startup with Download, Later, changelog, and **Skip notify for this version** actions. Skipping suppresses only that release; a newer release is shown again.
+- **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
+- **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
+- **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
+
+</details>
 
 ## Search Modes
 
@@ -180,6 +211,9 @@ Turn on **Read DOCX, PDF, Office, and text files** in Settings. The app scans th
 
 Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly defaults inside the webview.
 
+<details>
+<summary><b>View Keyboard Shortcuts</b></summary>
+
 | Action | Desktop app | VS Code extension | Chromium extension |
 | --- | --- | --- | --- |
 | Open Markdown Explorer | N/A | `Ctrl+Shift+M` / `Cmd+Shift+M` | N/A |
@@ -213,6 +247,8 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom | Use browser zoom |
 | Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom | Use browser zoom |
 | Reset zoom | `Ctrl+Alt+Z` | Use editor/webview zoom | Use browser zoom |
+
+</details>
 
 ## Privacy
 

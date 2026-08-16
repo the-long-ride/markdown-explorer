@@ -34,6 +34,7 @@ export function WelcomePage() {
   const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
   const isDesktopLike = isDesktop || isChrome;
   const { state } = useAppState();
+  const supportsEditor = isDesktop || state.appRuntime === 'vscode';
   const currentLang = state.settings.language || 'en';
   const wt = getWelcomeTranslations(currentLang);
   const t = getTranslations(currentLang);
@@ -255,7 +256,8 @@ export function WelcomePage() {
                   act.scope === 'both' ||
                   (act.scope === 'non-vscode' && state.appRuntime !== 'vscode') ||
                   (act.scope === 'desktop' && isDesktopLike) ||
-                  (act.scope === 'electron' && isDesktop),
+                  (act.scope === 'electron' && isDesktop) ||
+                  (act.scope === 'editor' && supportsEditor),
                 ).map((act) => {
                   const val = getEnabledShortcut(state.settings, act.id) ?? state.settings.keybindings?.[act.id] ?? "";
                   return (

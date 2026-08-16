@@ -60,45 +60,73 @@ Open any folder containing Markdown files in VS Code to get started. Use the Mar
   <img src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Your-Explorer-Your-Themes.png" width="32%" alt="Theme Remix settings for custom Markdown Explorer themes" />
 </p>
 
-- **Workspace Navigation & Organization**
-  - **Workspaces & Folders**: Open local folders, manage recent workspaces, and navigate multi-workspace desktop tabs.
-  - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
-  - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
-  - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
-  - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
-  - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
-  - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
-  - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
-  - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
+<details>
+<summary><b>Workspace Navigation & Organization</b></summary>
 
-- **Document Previews & Rich Media**
-  - **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
-  - **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) use the current Markdown Explorer theme, family-aware spacing, and clean vector SVG output while preserving authored semantic styling. Theme and light/dark changes re-render visible diagrams, and wide Gantt diagrams scroll instead of being compressed. KaTeX renders math formulas.
-  - **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
-  - **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
-  - **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
-  - **Video Embedding**: Support for local video files and YouTube/streaming video embeds.
+- **Workspaces & Folders**: Open local folders, manage recent workspaces, and navigate multi-workspace desktop tabs.
+- **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
+- **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
+- **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
+- **Edit from preview**: VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab.
+- **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
+- **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
+- **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
+- **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
+- **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
 
-- **Data Tables & Charts**
-  - **Interactive Filtering & Sorting**: Multi-select column filters, row sorting, and text wrap/unwrap controls.
-  - **Collapsible Datasets**: Compact view for large datasets (1000+ rows).
-  - **View-as-Chart**: Automatically convert numeric table columns into interactive Bar, Line, or Pie charts.
+</details>
 
-- **Converted Document Previews**
-  - **Multi-Format Local Conversion**: Opt-in previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
-  - **Smart Caching**: Fast re-views using file timestamp and size caching.
+<details>
+<summary><b>Document Previews & Rich Media</b></summary>
 
-- **Search & Discovery**
-  - **Flexible Search Scopes**: Search inside current file, current workspace, or across all open desktop tabs.
-  - **Jump-to-Result**: Click search excerpts to jump directly to exact matches.
+- **GFM & GitHub Callouts**: Full GFM support with callout boxes (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`).
+- **Diagrams & Math**: Offline Mermaid diagrams (flowchart, sequence, ER, mindmap, Gantt, timeline, etc.) use the current Markdown Explorer theme, family-aware spacing, and clean vector SVG output while preserving authored semantic styling. Theme and light/dark changes re-render visible diagrams, and wide Gantt diagrams scroll instead of being compressed. KaTeX renders math formulas.
+- **Image & Mermaid Diagram Modal View**: Fullscreen, zoomable media modal to pan, zoom, and inspect images and Mermaid diagrams in detail.
+- **Syntax Highlighting & Fences**: 25+ programming languages highlighted with line numbers, copy buttons, and terminal command fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
+- **Interactive HTML Sandboxes**: Isolated HTML iframe previews for interactive code examples.
+- **Video Embedding**: Support for local video files and YouTube/streaming video embeds.
 
-- **Customization & Platform Support**
-  - **Theme Remix**: Create, edit, import, and export custom themes with color, density, spacing, and background image controls.
-  - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
-  - **Typography**: Choose installed system fonts or import `.ttf`/`.otf` files for Markdown Explorer App UI, Body, Heading, Quote, Code, and Mermaid roles. Imports live in extension global storage and do not change VS Code editor fonts.
-  - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
-  - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
-  - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
+</details>
+
+<details>
+<summary><b>Data Tables & Charts</b></summary>
+
+- **CSV and TSV Code Fences**: Switch highlighted delimited text into interactive tables with delimiter detection, header inference, Excel-style column labels, sorting, filtering, wrapping, and chart controls.
+- **Interactive Filtering & Sorting**: Multi-select column filters, row sorting, and text wrap/unwrap controls.
+- **Interactive Column Visibility**: Per-table Columns dropdown menu with accessible switch toggles, **Show all**, and last-visible-column guard.
+- **Collapsible Datasets**: Compact view for large datasets (1000+ rows).
+- **Expanded Chart Visualizations**: Automatically convert numeric table data into 9 interactive chart types: **Bar**, **Horizontal Bar**, **Line**, **Area**, **Scatter** (with multi-numeric X/Y point mapping), **Radar**, **Polar Area**, **Pie**, and **Doughnut**.
+- **Fullscreen Chart Modal Viewer**: Dedicated chart inspection viewer with 50%–1000% continuous zoom, mouse/touch pan, fit/reset, on-the-fly chart type switching, and image copy/save PNG.
+
+</details>
+
+<details>
+<summary><b>Converted Document Previews</b></summary>
+
+- **Multi-Format Local Conversion**: Opt-in previews for DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
+- **Smart Caching**: Fast re-views using file timestamp and size caching.
+
+</details>
+
+<details>
+<summary><b>Search & Discovery</b></summary>
+
+- **Flexible Search Scopes**: Search inside current file, current workspace, or across all open desktop tabs.
+- **Jump-to-Result**: Click search excerpts to jump directly to exact matches.
+
+</details>
+
+<details>
+<summary><b>Customization & Platform Support</b></summary>
+
+- **Theme Remix**: Create, edit, import, and export custom themes with color, density, spacing, and background image controls.
+- **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
+- **Typography**: Choose installed system fonts or import `.ttf`/`.otf` files for Markdown Explorer App UI, Body, Heading, Quote, Code, and Mermaid roles. Imports live in extension global storage and do not change VS Code editor fonts.
+- **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
+- **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
+- **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
+
+</details>
 
 ## Search Modes
 
@@ -177,6 +205,9 @@ Turn on **Read DOCX, PDF, Office, and text files** in Settings. The app scans th
 
 Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly defaults inside the webview.
 
+<details>
+<summary><b>View Keyboard Shortcuts</b></summary>
+
 | Action | Desktop app | VS Code extension | Chromium extension |
 | --- | --- | --- | --- |
 | Open Markdown Explorer | N/A | `Ctrl+Shift+M` / `Cmd+Shift+M` | N/A |
@@ -187,6 +218,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Back to previous file | `Ctrl+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back |
 | Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
+| Edit current document | `Ctrl+E` | `Ctrl+Alt+E` / `Cmd+Alt+E` | N/A |
 | Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
 | Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
 | Refresh workspace | `F5` | `R` | `R` |
@@ -209,6 +241,8 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Zoom in | `Ctrl+=`, `Ctrl+Plus`, or `Ctrl+MouseWheelUp` | Use editor/webview zoom | Use browser zoom |
 | Zoom out | `Ctrl+-` or `Ctrl+MouseWheelDown` | Use editor/webview zoom | Use browser zoom |
 | Reset zoom | `Ctrl+Alt+Z` | Use editor/webview zoom | Use browser zoom |
+
+</details>
 
 ## Privacy
 

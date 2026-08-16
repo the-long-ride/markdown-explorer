@@ -4,6 +4,30 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 > **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
 
+## [v1.6.4] — 2026-08-16
+
+### Added
+- **Expanded interactive table chart suite**: Added six new chart visualizations alongside Bar and Line charts: **Horizontal Bar Chart**, **Area Chart**, **Scatter Chart**, **Radar Chart**, **Polar Area Chart**, and **Doughnut Chart**. Scatter charts intelligently map the first numeric column to the X-axis and remaining numeric columns as separate Y series datasets.
+- **Table column visibility management**: Added a dedicated per-table **Columns** toolbar dropdown menu with accessible switch toggles to show/hide individual columns, a **Show All** shortcut, and a last-visible-column guard preventing accidental hiding of all columns.
+- **Interactive chart modal viewer**: Built a fullscreen modal viewer for interactive table charts featuring **50% to 1000% continuous zoom**, mouse drag and touch pan navigation, **Fit to Screen**, **Reset Zoom**, an in-modal chart type switcher, **Copy as Image** (raster PNG clipboard copy), and **Save as Image (.PNG)** via browser download.
+- **Shared accessible switch component**: Added a reusable `SwitchButton` component (`app-switch`) with full ARIA switch semantics, unifying switch controls across Settings Shortcuts, Toolbar Action Menu toggles, and Table Column visibility menus.
+- **Edit Current Document Shortcut**: Added `Ctrl+Alt+E` / `Cmd+Alt+E` keyboard shortcut to open the active previewed file directly in a normal VS Code editor tab.
+
+### Changed
+- **ToolbarActionMenu accessibility & structure**: Split composite menu items into discrete action buttons (`role="menuitem"`) and switch toggles (`role="switch"`), eliminating `menuitemcheckbox` ambiguity for screen readers and keyboard users.
+- **Table view dropdown dynamic sizing**: Implemented an offscreen sizer element for `.mdn-table-view-dropdown` to dynamically compute minimum trigger width based on the widest localized chart type option, preventing label truncation across locales.
+- **Font search dropdown position calculation**: Added boundary-aware viewport and scroll-container calculation in `FontSearchDropdown` to smoothly flip upward or downward flush to the anchor without offscreen clipping or gaps.
+- **Standardized update attention indicator token**: Unified update attention dot sizing across topbar action menus and Settings navigation rail using `--update-attention-dot-size: 11px`.
+- **Media modal layout refinement**: Polished media viewer footer layout, container structure, and standardized close button icon sizing to 16 px.
+- **Nine-locale table & chart translations**: Added comprehensive translations for all new chart types, column controls, and chart modal viewer actions across English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
+
+### Fixed
+- **Chart.js controller registration**: Expanded Chart.js bundle initialization in `renderLibs.ts` to register `Filler`, `PieController`, `PolarAreaController`, `RadarController`, `RadialLinearScale`, and `ScatterController` with zero lazy-loading regressions.
+- **Table chart wrap and column toggle tooltips**: Added localized aria-labels and app tooltips to table wrap toggle and column toggle buttons.
+- **Theme Style dropdown positioning**: Computed menu height dynamically based on item count and anchored upward-opening menus flush against trigger buttons with `bottom` placement, eliminating large blank gaps above theme cards.
+
+---
+
 ## [v1.6.3] — 2026-08-04
 
 ### Added

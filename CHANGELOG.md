@@ -4,7 +4,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
-## [Unreleased]
+## [v1.6.4] — 2026-08-16
 
 ### Added
 - **Expanded interactive table chart suite**: Added six new chart visualizations alongside Bar and Line charts: **Horizontal Bar Chart**, **Area Chart**, **Scatter Chart**, **Radar Chart**, **Polar Area Chart**, and **Doughnut Chart**. Scatter charts intelligently map the first numeric column to the X-axis and remaining numeric columns as separate Y series datasets.

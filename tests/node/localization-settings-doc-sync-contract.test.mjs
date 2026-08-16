@@ -168,9 +168,9 @@ test('Unreleased changelog and current-state specs describe this synchronized st
   const changelog = read('CHANGELOG.md');
   const currentState = read('docs/instructions/05-reference/07-current-app-state.md');
   const settingsSpec = read('docs/instructions/03-features/12-settings-preferences-import-export.md');
-  assert.match(changelog, /## \[Unreleased\][\s\S]*Appearance[^\n]*View Preferences/i);
-  assert.match(changelog, /## \[Unreleased\][\s\S]*localization/i);
-  assert.match(changelog, /## \[Unreleased\][\s\S]*Typography[^\n]*icon/i);
+  assert.match(changelog, /## \[(?:Unreleased|v1\.6\.4)\][\s\S]*Appearance[^\n]*View Preferences/i);
+  assert.match(changelog, /## \[(?:Unreleased|v1\.6\.4)\][\s\S]*localization/i);
+  assert.match(changelog, /## \[(?:Unreleased|v1\.6\.4)\][\s\S]*Typography[^\n]*icon/i);
   assert.match(currentState, /Electron[\s\S]*Tauri[\s\S]*VS Code[\s\S]*Chromium/i);
   assert.match(currentState, /800 px/);
   assert.match(currentState, /Ctrl\+Alt\+Z/);
