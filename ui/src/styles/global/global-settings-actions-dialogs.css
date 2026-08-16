@@ -97,6 +97,36 @@
 .theme-onboarding-card__continue {
   min-width: 104px;
 }
+.theme-onboarding-card__select {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  color: var(--tx);
+  background: var(--bg-s);
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  font: inherit;
+}
+.theme-onboarding-card__section-desc {
+  margin: 0;
+  color: var(--txm);
+  font-size: 11px;
+}
+.theme-onboarding-card__hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  background: var(--bg-s);
+  color: var(--txm);
+  font-size: 12px;
+}
+.theme-onboarding-card__open-settings {
+  flex: 0 0 auto;
+}
 @media (max-width: 900px) {
   .settings-modal,
   .theme-onboarding-modal {

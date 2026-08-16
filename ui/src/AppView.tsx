@@ -282,6 +282,10 @@ export function AppView(props: any) {
       <ThemeOnboardingModal
         isOpen={themeOnboardingOpen}
         onComplete={handleThemeOnboardingComplete}
+        onOpenSettings={() => {
+          handleThemeOnboardingComplete();
+          setSettingsOpen(true);
+        }}
       />
       <SwitchWorkspaceModal
         isOpen={pendingDroppedPath !== null}

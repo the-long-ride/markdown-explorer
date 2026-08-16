@@ -15,7 +15,12 @@ export interface AuditedUiTranslationDomains {
   terms: {
     logoAlt: string; welcomeTitle: string; introBefore: string; privacyPolicy: string; conjunction: string; termsOfService: string; introAfter: string; agreement: string; continue: string;
   };
-  onboarding: { title: string; description: string; skip: string; };
+  onboarding: {
+    title: string; description: string; skip: string;
+    language: string;
+    viewMode: string; viewModeFocusDesc: string; viewModeTabsDesc: string;
+    settingsHint: string; openSettings: string;
+  };
   workspaceSelection: {
     subtitle: string; openFolder: string; openFile: string; dragFileTip: string; dragFolderOrFileTip: string; workspaces: string; renameTip: string; showMore: string;
     browserConfigTitle: string; browserConfigIntro: string; browserConfigOpen: string; browserConfigOr: string; browserConfigSearch: string; browserConfigEnable: string;
