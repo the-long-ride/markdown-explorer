@@ -106,11 +106,17 @@ export function getChart() {
           mod.BarElement,
           mod.CategoryScale,
           mod.DoughnutController,
+          mod.Filler,
           mod.Legend,
           mod.LineController,
           mod.LineElement,
           mod.LinearScale,
+          mod.PieController,
           mod.PointElement,
+          mod.PolarAreaController,
+          mod.RadarController,
+          mod.RadialLinearScale,
+          mod.ScatterController,
           mod.Tooltip,
         );
 

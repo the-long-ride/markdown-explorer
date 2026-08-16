@@ -41,7 +41,7 @@ keywords:
 
 # Current Application State
 
-This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-08-13. Feature, runtime, protocol, and catalog documents remain the normative detailed specifications; this page is the compact cross-product map used to detect documentation drift.
+This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-08-16. Feature, runtime, protocol, and catalog documents remain the normative detailed specifications; this page is the compact cross-product map used to detect documentation drift.
 
 ## Supported runtimes
 
@@ -51,11 +51,11 @@ Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code*
 |---|---|---|---|---|
 | Workspace/folder browsing | Native desktop bridge | Native Tauri bridge | VS Code workspace APIs | Browser File System Access API where available |
 | Edit current document | `Ctrl+E`, action in More Actions | `Ctrl+E`, action in More Actions | `Ctrl+Alt+E`, icon beside More Actions | Not exposed |
-| Typography font sources | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | Bundled/web-safe fonts only |
+| Typography font sources | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | Imported `.ttf`/`.otf`/`.woff`/`.woff2` via IndexedDB & FontFace API |
 | App-owned zoom | Yes | Yes | No; host/native zoom | No; host/native zoom |
 | Update installation | Markdown Explorer desktop updater | Signed Tauri updater | VS Code owns installation; Markdown Explorer checks/reports only | Store/deployment owned |
 
-VS Code imported fonts are copied to extension global storage and served to the webview with a webview-safe URI. They customize Markdown Explorer only and do not mutate the user's VS Code editor font settings.
+VS Code imported fonts are copied to extension global storage and served to the webview with a webview-safe URI. Chromium extension and Web demo store imported font files in IndexedDB (`markdown-explorer-browser-fonts`) and activate them via blob URLs and the FontFace API. They customize Markdown Explorer only and do not mutate host editor or browser settings.
 
 ## Window, shell, and focus behavior
 
@@ -63,7 +63,8 @@ VS Code imported fonts are copied to extension global storage and served to the 
 - Desktop Settings uses `width: min(800px, 100vw - 32px)` so it stays bounded on narrow windows.
 - Focus mode is an application-layout state, not an OS minimize operation. Entering focus mode hides the normal application chrome while retaining a dedicated exit control; toggling it restores the previous shell state.
 - Desktop Tabs and Focus views preserve workspace/document navigation, content-tab state, aliases, and scroll memory according to the desktop workspace specifications.
-- More Actions uses the compact menu-item density. Desktop fullscreen uses the dedicated fullscreen icon.
+- More Actions uses the compact menu-item density and splits toggle rows into discrete `menuitem` and `switch` elements. Desktop fullscreen uses the dedicated fullscreen icon.
+- Update attention dots across navigation and action triggers are standardized to `--update-attention-dot-size: 11px`.
 - **Reset zoom** is Markdown Explorer-owned only in Electron/Tauri desktop and defaults to **`Ctrl+Alt+Z`**. VS Code, Chromium, and Web use native host zooming and expose no Markdown Explorer reset-zoom action.
 
 ## Settings and preferences
@@ -78,9 +79,10 @@ Settings is organized into **Appearance**, **Typography**, **Theme Style**, **Ke
 
 ### Typography
 
-Electron, Tauri, and VS Code expose role-based Typography for **App UI, Body, Heading, Quote, Code, and Mermaid**. Each role stores source/family/import ID, style, and explicit numeric weight.
+Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for **App UI, Body, Heading, Quote, Code, and Mermaid**. Each role stores source/family/import ID, style, and explicit numeric weight.
 
-- System and imported fonts are searchable; `.ttf` and `.otf` imports bind to the initiating role's draft. Applying the Mermaid role re-renders visible Mermaid diagrams in the current document.
+- System and imported fonts are searchable; `.ttf`, `.otf`, `.woff`, and `.woff2` imports bind to the initiating role's draft. Applying the Mermaid role re-renders visible Mermaid diagrams in the current document.
+- `FontSearchDropdown` calculates boundary-aware positioning against scroll containers and viewport edges to flip upward or downward flush against trigger buttons without gaps or clipping.
 - Typography's header and Apply action remain fixed while the role list owns its scrolling region.
 - The Apply action is disabled until the draft differs from persisted bindings.
 - Applying opens a confirmation dialog listing only changed roles as old → new values; Cancel leaves the draft untouched.
@@ -97,6 +99,7 @@ Electron, Tauri, and VS Code expose role-based Typography for **App UI, Body, He
 ### Keyboard Shortcuts
 
 - Shortcut controls show active bindings with shared keycap rendering in tooltips and Settings.
+- Shortcut enabling/disabling utilizes the shared accessible `SwitchButton` component (`app-switch`).
 - The Settings close tooltip renders **Esc as the shared keycap component**, not literal `(Esc)` text.
 - Edit is runtime-specific: Electron/Tauri default to `Ctrl+E`; VS Code defaults to `Ctrl+Alt+E`; Chromium/Web expose no Edit action.
 - Reset zoom defaults to `Ctrl+Alt+Z` only on Electron/Tauri desktop.
@@ -109,7 +112,7 @@ Electron, Tauri, and VS Code expose role-based Typography for **App UI, Body, He
 - The update-available dialog uses the glow icon, shows the changelog link below the version in the header, and uses shared outline actions for Later/Skip.
 - Import/Export JSON remains the settings portability mechanism for supported persisted preferences.
 
-## Documents and navigation
+## Documents, tables, and navigation
 
 - Markdown/MDX is the core document surface, with local rendering, code blocks, math, Mermaid, media handling, links, heading navigation, table of contents, and collapsible sections.
 - Supported file/conversion behavior is defined by the Supported Files and Conversion catalog and is capability-gated by runtime.
@@ -117,11 +120,22 @@ Electron, Tauri, and VS Code expose role-based Typography for **App UI, Body, He
 - Search covers the current document/current workspace and desktop cross-tab modes where supported; status labels and accessibility text are localized.
 - Desktop document tabs preserve active document and scroll state; context actions and their shortcut labels use translated copy. Recent-workspace `last opened` values use `Intl.RelativeTimeFormat`/`Intl.DateTimeFormat` with the selected application locale.
 
+### Interactive tables, filters, and charts
+
+Interactive tables in rendered Markdown and delimited files support sorting, searching, column value filtering, text wrapping, column visibility management, and rich chart visualizations:
+
+- **9 Chart view types**: **Table**, **Bar Chart**, **Horizontal Bar Chart**, **Line Chart**, **Area Chart**, **Scatter Chart**, **Radar Chart**, **Polar Area Chart**, **Pie Chart**, and **Doughnut Chart**.
+- **Scatter Charts**: Require at least two visible numeric columns; the first numeric column is mapped to the X-axis while subsequent numeric columns become independent Y series.
+- **Column Visibility**: Per-table **Columns** dropdown menu with switch toggles for each column, a **Show all** action, and a guard preventing the last visible column from being hidden.
+- **Dynamic Sizing**: The table view selector intrinsically sizes to the widest localized option via an offscreen sizer element.
+- **Fullscreen Chart Modal Viewer**: Click-to-enlarge chart modal with **50% to 1000% continuous zoom**, mouse drag & touch pan, **Fit to Screen**, **Reset Zoom**, modal type switcher, **Copy as Image** (raster PNG clipboard copy with font rendering), and **Save as Image (.PNG)** via native host dialog (`saveChartPng` on Tauri) or browser download.
+- **CSP Event Delegation**: Chromium extension delegates table column toggle and view selection clicks in `useContentEffects` and `SearchDocumentPreview` to comply with Manifest V3 Content Security Policy restrictions.
+
 ## Onboarding, welcome, and localization
 
 Markdown Explorer currently ships **nine supported locales**: English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
 
-The localization boundary covers normal visible text plus accessibility labels, placeholders, dialog copy, tooltip copy, status feedback, shortcut action names, onboarding/terms, workspace selection, Theme Remix, Welcome/Tips, initial loading/scanning states, sidebar navigation, recent-workspace time formatting, search On/Off state, and Settings shell text. The audited translation domains are `ui`, `terms`, `onboarding`, `workspaceSelection`, `themeRemix`, and `rendererUi` in `auditedUiTranslations.ts`, while established feature-specific groups remain in the main translation catalog. `rendererUi` also travels through Markdown rendering so table filtering, row counts, wrapping, chart switching, copy feedback, code/preview controls, and video/YouTube fallback labels stay in the selected locale after DOM updates.
+The localization boundary covers normal visible text plus accessibility labels, placeholders, dialog copy, tooltip copy, status feedback, shortcut action names, onboarding/terms, workspace selection, Theme Remix, Welcome/Tips, initial loading/scanning states, sidebar navigation, recent-workspace time formatting, search On/Off state, and Settings shell text. The audited translation domains are `ui`, `terms`, `onboarding`, `workspaceSelection`, `themeRemix`, and `rendererUi` in `auditedUiTranslations.ts`, while established feature-specific groups remain in the main translation catalog. `rendererUi` also travels through Markdown rendering so table filtering, row counts, wrapping, column visibility, chart switching, chart modal viewer actions, copy feedback, code/preview controls, and video/YouTube fallback labels stay in the selected locale after DOM updates.
 
 The dependency-free localization contract guards audited user-facing literals across React and generated Markdown/DOM code so new component-owned English fallbacks are caught before release. Technical identifiers remain intentionally literal when translation would change their meaning: commands, key IDs, CSS variables, URLs, `chrome://flags`, `brave://flags`, `File System Access API`, file extensions, and product/project brand names.
 
@@ -130,7 +144,7 @@ The dependency-free localization contract guards audited user-facing literals ac
 - Settings, recent workspaces, themes, bookmarks, tabs, and runtime-owned handles use the persistence layer documented in the Storage Catalog.
 - Browser file handles stay browser-owned; desktop filesystem access stays behind native bridges.
 - External navigation and local HTML/media access follow the runtime security boundaries instead of granting arbitrary renderer filesystem access.
-- Imported font files are managed within the owning desktop/VS Code runtime rather than exposing unrestricted renderer paths.
+- Imported font files are managed within the owning desktop/VS Code runtime or browser IndexedDB rather than exposing unrestricted renderer paths.
 
 ## Documentation synchronization rule
 
@@ -138,6 +152,7 @@ When an implementation change alters a capability, default shortcut, Settings be
 
 ## Primary source-of-truth documents
 
+- [Tables, Filters, Sorting, and Charts](../03-features/08-tables-filters-charts.md)
 - [Settings and Preferences](../03-features/12-settings-preferences-import-export.md)
 - [Settings Catalog](03-settings-catalog.md)
 - [Keyboard Shortcut Catalog](04-shortcut-catalog.md)
@@ -145,3 +160,4 @@ When an implementation change alters a capability, default shortcut, Settings be
 - [Runtime Parity](../04-runtimes/06-runtime-parity.md)
 - [Localization, Welcome, and Onboarding](../03-features/15-localization-welcome-onboarding.md)
 - [Source Traceability Index](12-source-traceability-index.md)
+

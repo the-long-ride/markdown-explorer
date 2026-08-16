@@ -48,7 +48,7 @@ keywords:
 ## Translation domains
 
 - Shared navigation, search, settings, workspace, content, errors, dialogs, welcome, and theme labels.
-- `auditedUiTranslations.ts` and `auditedUiTranslationTypes.ts` provide the `ui`, `themeRemix`, `terms`, `onboarding`, `workspaceSelection`, and `rendererUi` domains for all nine locales. These cover renderer/ARIA copy, initial loading/scanning and sidebar navigation, Theme Remix controls/statuses, Terms/onboarding, workspace-selection instructions, welcome cursor-mode guidance, interactive Markdown table/code controls and chart labels, video/YouTube fallback labels, copy feedback, and cross-cutting presentation labels.
+- `auditedUiTranslations.ts` and `auditedUiTranslationTypes.ts` provide the `ui`, `themeRemix`, `terms`, `onboarding`, `workspaceSelection`, and `rendererUi` domains for all nine locales. These cover renderer/ARIA copy, initial loading/scanning and sidebar navigation, Theme Remix controls/statuses, Terms/onboarding, workspace-selection instructions, welcome cursor-mode guidance, interactive Markdown table/code controls, column visibility controls (`columns`, `showAllColumns`), expanded chart types (`horizontalBarChart`, `areaChart`, `scatterChart`, `radarChart`, `polarAreaChart`, `doughnutChart`), fullscreen chart modal viewer actions (`chartViewTitle`, `chartFit`, `chartZoom`, `copyChartImage`, `saveChartPng`, `closeChartView`), video/YouTube fallback labels, copy feedback, and cross-cutting presentation labels.
 - Shortcut presentation must resolve through localized labels. The shared shortcut-label resolver maps sidebar cursor mode and desktop-only zoom/tab actions to localized domains instead of exposing the English metadata in `settingsActions.ts`.
 - Search `statusOn`/`statusOff` values are localized per locale; renderer controls do not contain English On/Off fallbacks.
 - Recent-workspace relative timestamps use `Intl.RelativeTimeFormat` and older absolute timestamps use `Intl.DateTimeFormat`, both with the selected application locale; the renderer does not hard-code English `ago` phrases.
@@ -89,6 +89,7 @@ Unknown locale or missing key uses the canonical fallback, normally English. A l
 | Verification | `tests/node/bookmarks.test.mjs` | All nine bookmark translation records and visible wiring |
 | Verification | `tests/node/bookmark-save-feedback.test.mjs` | All nine save/rename success, failure, and storage messages |
 | Verification | `tests/node/user-manual-home.test.mjs` | All nine User Manual records and action wiring |
+| Verification | `tests/node/table-renderer-translations-contract.test.mjs` | Table and chart nine-locale translation verification |
 | Verification | `tests/node/localization-settings-doc-sync-contract.test.mjs` | Renderer hard-coded-copy guard and nine-locale audited-domain coverage |
 
 ---

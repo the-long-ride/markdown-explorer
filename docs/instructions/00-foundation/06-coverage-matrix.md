@@ -31,7 +31,7 @@ keywords:
 
 ## Coverage declaration
 
-This matrix covers **31 end-to-end use cases**, **21 feature specifications**, **5 product runtimes plus parity**, **36 UI→host commands**, and **18 host→UI messages** from the active source tree.
+This matrix covers **31 end-to-end use cases**, **21 feature specifications**, **5 product runtimes plus parity**, **38 UI→host commands**, and **18 host→UI messages** from the active source tree.
 
 Coverage means the behavior has:
 
@@ -69,7 +69,7 @@ Coverage means the behavior has:
 | [UC-021: Render Markdown, MDX, and Text Documents](../02-use-cases/UC-021-render-markdown-mdx-text.md) | [Feature](../03-features/05-markdown-mdx-parser-renderer.md) | `navigate` | Source + test traced |
 | [UC-022: Preview HTML Safely](../02-use-cases/UC-022-html-preview-browser.md) | [Feature](../03-features/10-html-preview-and-browser.md) | `readWorkspaceTextResource`, `openHtmlPreview` | Source + test traced |
 | [UC-023: Convert Supported Documents to Markdown Preview](../02-use-cases/UC-023-document-conversion.md) | [Feature](../03-features/16-document-conversion.md) | `setDocumentConversion`, `navigate` | Source + test traced |
-| [UC-024: Interact with Tables and Charts](../02-use-cases/UC-024-tables-charts.md) | [Feature](../03-features/08-tables-filters-charts.md) | Local UI | Source + test traced |
+| [UC-024: Interact with Tables and Charts](../02-use-cases/UC-024-tables-charts.md) | [Feature](../03-features/08-tables-filters-charts.md) | Local UI, `saveChartPng` | Source + test traced |
 | [UC-025: View Images, Diagrams, Video, and YouTube Media](../02-use-cases/UC-025-media-gallery-video-youtube.md) | [Feature](../03-features/09-media-mermaid-math.md) | Local UI | Source + test traced |
 | [UC-026: Control Window, Tray, Fullscreen, Zoom, and Quit](../02-use-cases/UC-026-window-tray-fullscreen-zoom-quit.md) | [Feature](../03-features/18-window-tray-update-lifecycle.md) | `window-minimize`, `window-maximize`, `window-close`, `toggle-fullscreen`, `zoom-in`, `zoom-out` | Source + test traced |
 | [UC-027: Download, Schedule, and Apply Application Updates](../02-use-cases/UC-027-application-update.md) | [Feature](../03-features/18-window-tray-update-lifecycle.md) | `downloadUpdate`, `scheduleDownloadedUpdate`, `restartAndApplyUpdate` | Source + test traced |

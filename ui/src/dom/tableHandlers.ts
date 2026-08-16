@@ -4,6 +4,7 @@ import {
   TABLE_MIN_WRAPPED_COLUMN_CHARS,
 } from '../constants/limits';
 import { registerTableChartHandlers } from './tableChartHandlers';
+import { registerTableColumnHandlers } from './tableColumnHandlers';
 import { DEFAULT_TABLE_UI_LABELS, formatUiLabel, getTableUiLabels, type TableUiLabels } from './tableUiLabels';
 
 type TableFilterValue = string | string[] | null | undefined;
@@ -18,6 +19,8 @@ export type TableState = {
   chartable: boolean;
   labelColIdx: number;
   dataColIdxs: number[];
+  scatterColIdxs: number[];
+  hiddenColumnIdxs: number[];
 };
 
 
@@ -197,7 +200,9 @@ export function registerTableHandlers(win: any) {
         wrapped: false,
         chartable: false,
         labelColIdx: 0,
-        dataColIdxs: []
+        dataColIdxs: [],
+        scatterColIdxs: [],
+        hiddenColumnIdxs: []
       };
     }
     return win.Table.states[tableId];
@@ -214,7 +219,10 @@ export function registerTableHandlers(win: any) {
       button.hidden = state.currentView !== 'table';
       button.classList.toggle('is-active', state.wrapped);
       button.setAttribute('aria-pressed', String(state.wrapped));
-      button.setAttribute('title', state.wrapped ? labels.unwrapTableText : labels.wrapTableText);
+      const wrapTooltip = state.wrapped ? labels.unwrapTableText : labels.wrapTableText;
+      button.setAttribute('aria-label', wrapTooltip);
+      const tooltip = button.querySelector('.tooltip-text');
+      if (tooltip) tooltip.textContent = wrapTooltip;
 
       const label = button.querySelector('.mdn-table-wrap-toggle__label');
       if (label) {
@@ -224,6 +232,7 @@ export function registerTableHandlers(win: any) {
       }
     }
   };
+
 
   win.Table.sort = (tableId: string, colIndex: number) => {
     const table = document.getElementById(tableId) as HTMLTableElement | null;
@@ -431,5 +440,6 @@ export function registerTableHandlers(win: any) {
     if (countEl) countEl.textContent = formatUiLabel(getTableUiLabels(tableId).rowsCount, { count: total });
   };
 
+  registerTableColumnHandlers(win, syncWrappedColumnWidths);
   registerTableChartHandlers(win, getTableDataRows, getMatchedTableRows, syncWrapState);
 }

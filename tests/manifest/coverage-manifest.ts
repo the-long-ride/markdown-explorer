@@ -346,7 +346,11 @@ export const coverageManifest: Record<string, string[]> = {
     'tests/node/typography-apply-confirmation-contract.test.mjs',
     'tests/node/localization-settings-doc-sync-contract.test.mjs',
   ],
-  'ui/src/components/Settings/FontSearchDropdown.tsx': ['tests/node/desktop-typography-ui-contract.test.mjs'],
+  'ui/src/components/Settings/FontSearchDropdown.tsx': [
+    'tests/unit/ui/components/font-search-dropdown-render.test.tsx',
+    'tests/node/font-dropdown-position-contract.test.mjs',
+    'tests/node/desktop-typography-ui-contract.test.mjs',
+  ],
   'ui/src/components/Settings/FontVariantDropdown.tsx': ['tests/node/desktop-typography-ui-contract.test.mjs'],
   'ui/src/components/Settings/SettingsOutlineButton.tsx': [
     'tests/node/settings-ux-followup-contract.test.mjs',
@@ -389,4 +393,46 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/components/Sidebar/useLocateActiveFile.ts': ['tests/unit/ui/components/sidebar-render.test.tsx'],
   'ui/src/components/Sidebar/useSidebarPinnedSorting.ts': ['tests/node/sidebar-pinning-sorting.test.mjs'],
   'ui/src/components/Sidebar/useSidebarScopeFocus.ts': ['tests/node/sidebar-files-performance-contract.test.mjs'],
+
+  'chromium-xtension/src/browser-font-host.ts': [
+    'tests/node/browser-font-service-behavior.test.mjs',
+    'tests/node/browser-typography-contract.test.mjs',
+  ],
+  'chromium-xtension/src/browser-font-service.ts': [
+    'tests/node/browser-font-service-behavior.test.mjs',
+    'tests/node/browser-typography-contract.test.mjs',
+  ],
+  'ui/src/components/shared/SwitchButton.tsx': [
+    'tests/unit/ui/components/shared-render.test.tsx',
+    'tests/node/chart-modal-switch-native-save-contract.test.mjs',
+  ],
+  'ui/src/dom/tableChartConfig.ts': [
+    'tests/node/table-chart-types-contract.test.mjs',
+    'tests/unit/ui/dom/tableHandlers.test.ts',
+  ],
+  'ui/src/dom/tableChartImageActions.ts': [
+    'tests/node/chart-modal-switch-native-save-contract.test.mjs',
+    'tests/unit/ui/dom/tableHandlers.test.ts',
+  ],
+  'ui/src/dom/tableChartViewer.ts': [
+    'tests/node/chart-modal-switch-native-save-contract.test.mjs',
+    'tests/node/chart-viewer-toolbar-refinement-contract.test.mjs',
+  ],
+  'ui/src/dom/tableChartViewerChart.ts': [
+    'tests/node/chart-modal-switch-native-save-contract.test.mjs',
+    'tests/node/chart-zoom-legend-grid-followup-contract.test.mjs',
+  ],
+  'ui/src/dom/tableChartViewerLegend.ts': [
+    'tests/node/chart-invisible-scrollbar-legend-followup-contract.test.mjs',
+    'tests/node/chart-zoom-legend-grid-followup-contract.test.mjs',
+  ],
+  'ui/src/dom/tableChartViews.ts': [
+    'tests/node/table-chart-types-contract.test.mjs',
+    'tests/node/table-chart-view-followup-contract.test.mjs',
+  ],
+  'ui/src/dom/tableColumnHandlers.ts': [
+    'tests/node/table-columns-contract.test.mjs',
+    'tests/unit/ui/dom/tableHandlers-dom.test.ts',
+  ],
 };
+

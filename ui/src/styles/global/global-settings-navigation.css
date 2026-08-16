@@ -89,8 +89,8 @@
   background: color-mix(in srgb, var(--accent) 12%, var(--bg-e));
 }
 .settings-nav-badge-dot {
-  width: 13px;
-  height: 13px;
+  width: var(--update-attention-dot-size);
+  height: var(--update-attention-dot-size);
   flex: 0 0 auto;
   border-radius: 999px;
   background: var(--accent);

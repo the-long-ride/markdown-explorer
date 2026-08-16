@@ -165,6 +165,17 @@ function SearchDocumentPreviewInner({
         return;
       }
 
+      const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
+      const columnsToggle = target.closest('.mdn-table-columns-toggle') as HTMLElement | null;
+      if (isChrome && columnsToggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        const tableId = columnsToggle.id.replace('-columns-toggle', '');
+        const win = window as any;
+        if (win.Table?.toggleColumnMenu) win.Table.toggleColumnMenu(tableId, e);
+        return;
+      }
+
       const selectBtn = target.closest('.mdn-table-view-select') as HTMLElement | null;
       if (selectBtn) {
         e.preventDefault();

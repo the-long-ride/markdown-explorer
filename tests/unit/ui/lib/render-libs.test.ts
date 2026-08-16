@@ -50,11 +50,17 @@ vi.mock('chart.js', () => ({
   BarElement: { id: 'BarElement' },
   CategoryScale: { id: 'CategoryScale' },
   DoughnutController: { id: 'DoughnutController' },
+  Filler: { id: 'Filler' },
   Legend: { id: 'Legend' },
   LineController: { id: 'LineController' },
   LineElement: { id: 'LineElement' },
   LinearScale: { id: 'LinearScale' },
+  PieController: { id: 'PieController' },
   PointElement: { id: 'PointElement' },
+  PolarAreaController: { id: 'PolarAreaController' },
+  RadarController: { id: 'RadarController' },
+  RadialLinearScale: { id: 'RadialLinearScale' },
+  ScatterController: { id: 'ScatterController' },
   Tooltip: { id: 'Tooltip' },
 }));
 
@@ -308,12 +314,12 @@ describe('renderLibs', () => {
       expect((window as any).Chart).toBe(mockChart);
     });
 
-    it('registers 11 components', async () => {
+    it('registers 17 components', async () => {
       const { getChart } = await loadModule();
       await getChart();
       expect(chartRegister).toHaveBeenCalledTimes(1);
       const registeredComponents = chartRegister.mock.calls[0];
-      expect(registeredComponents).toHaveLength(11);
+      expect(registeredComponents).toHaveLength(17);
     });
 
     it('registers the correct components in order', async () => {
@@ -328,11 +334,17 @@ describe('renderLibs', () => {
         'BarElement',
         'CategoryScale',
         'DoughnutController',
+        'Filler',
         'Legend',
         'LineController',
         'LineElement',
         'LinearScale',
+        'PieController',
         'PointElement',
+        'PolarAreaController',
+        'RadarController',
+        'RadialLinearScale',
+        'ScatterController',
         'Tooltip',
       ]);
     });

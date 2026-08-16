@@ -34,6 +34,8 @@ describe('registerTableHandlers', () => {
         chartable: false,
         labelColIdx: 0,
         dataColIdxs: [],
+        scatterColIdxs: [],
+        hiddenColumnIdxs: [],
       });
     });
 

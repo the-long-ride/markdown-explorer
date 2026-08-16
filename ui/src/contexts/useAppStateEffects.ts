@@ -273,13 +273,13 @@ export function useAppStateEffects({
   }, [dispatch, state.appRuntime, state.settings.keybindings]);
 
   useEffect(() => {
-    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
+    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'chrome';
     if (!typographyRuntime) return;
     bridge.postMessage({ command: 'listDesktopFonts', requestId: `startup-${Date.now()}` });
   }, [bridge, state.appRuntime]);
 
   useEffect(() => {
-    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
+    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'chrome';
     applyDesktopTypography(
       document,
       { fontBindings: state.settings.fontBindings },

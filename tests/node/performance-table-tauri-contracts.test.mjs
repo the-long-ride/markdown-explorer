@@ -34,16 +34,17 @@ test('Tauri host messages use a native bridge without frontend listen IPC', asyn
 });
 
 test('table operations and charts use every matching data row, not only collapsed-page rows', async () => {
-  const [handlers, chartHandlers] = await Promise.all([
+  const [handlers, chartHandlers, chartConfig] = await Promise.all([
     read('ui/src/dom/tableHandlers.ts'),
     read('ui/src/dom/tableChartHandlers.ts'),
+    read('ui/src/dom/tableChartConfig.ts'),
   ]);
 
   assert.match(handlers, /row\.dataset\.mdnFilterMatch = isMatched \? 'true' : 'false'/);
   assert.match(chartHandlers, /getMatchedTableRows/);
   assert.doesNotMatch(chartHandlers, /MAX_CHART_ROWS/);
   assert.doesNotMatch(chartHandlers, /rows\.slice\(0,/);
-  assert.match(chartHandlers, /animation:\s*false/);
+  assert.match(chartConfig, /animation:\s*false/);
 });
 
 test('UpdateStatus is imported only in Rust tests', async () => {

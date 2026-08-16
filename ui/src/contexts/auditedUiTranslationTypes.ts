@@ -33,8 +33,9 @@ export interface AuditedUiTranslationDomains {
   rendererUi: {
     copy: string; copySectionContent: string; copied: string; showMore: string; showLess: string;
     filterByValues: string; searchTable: string; filterRows: string; wrapTableText: string; unwrapTableText: string; wrap: string; unwrap: string;
-    filterValues: string; all: string; noValues: string; rowsCount: string; filteredRowsCount: string;
-    table: string; barChart: string; lineChart: string; pieChart: string; tableViewType: string; noDataForChart: string; series: string;
+    filterValues: string; all: string; noValues: string; rowsCount: string; filteredRowsCount: string; columns: string; showAllColumns: string;
+    table: string; barChart: string; horizontalBarChart: string; lineChart: string; areaChart: string; scatterChart: string; radarChart: string; polarAreaChart: string; pieChart: string; doughnutChart: string; tableViewType: string; noDataForChart: string; series: string;
+    chartViewTitle: string; chartFit: string; chartZoom: string; copyChartImage: string; saveChartPng: string; closeChartView: string;
     video: string; openVideo: string; youtubeVideo: string; watchOnYouTube: string;
   };
 }

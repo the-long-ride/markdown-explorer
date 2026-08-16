@@ -48,12 +48,15 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 | Current-file watcher | Poll around 3000 ms for active source changes |
 | Search index | Index browser-readable workspace metadata/content |
 | Media resolver | Create safe browser URLs for workspace media |
+| Browser font host | Store imported `.ttf`/`.otf`/`.woff`/`.woff2` fonts in IndexedDB `markdown-explorer-browser-fonts` and activate via Blob URLs |
 | Recents | Store/reopen handles without exposing native paths |
 
 ## Capability differences
 
 - Document conversion is disabled.
 - Native shell reveal, tray, installer updater, and OS window controls are unavailable.
+- Custom fonts are managed in-browser using IndexedDB storage and the standard `FontFace` API.
+- Interactive table controls (column toggles and chart switchers) utilize delegated event listeners in `useContentEffects` and `SearchDocumentPreview` to comply with Manifest V3 Content Security Policy rules.
 - Scanner is limited to browser-readable supported types, principally Markdown/MDX.
 - Handle permission can expire and must be requested again rather than treated as permanent missing data.
 - Bridge state key is `markdown-explorer-chrome-state`.
@@ -64,6 +67,8 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 |---|---|---|
 | Implementation | `ui/src/platform/chrome.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/chrome-host.ts` | Active behavior or contract |
+| Implementation | `chromium-xtension/src/browser-font-host.ts` | Font host command router |
+| Implementation | `chromium-xtension/src/browser-font-service.ts` | IndexedDB font persistence and FontFace loading |
 | Implementation | `chromium-xtension/src/file-access.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/scanner.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/incremental-workspace-scan.ts` | Active behavior or contract |
@@ -73,6 +78,8 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 | Implementation | `chromium-xtension/src/recent-workspaces.ts` | Active behavior or contract |
 | Verification | `tests/unit/chromium/chrome-bridge.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/chrome-host.test.ts` | Automated expectation |
+| Verification | `tests/node/browser-font-service-behavior.test.mjs` | Browser font service tests |
+| Verification | `tests/node/browser-typography-contract.test.mjs` | Browser typography contract |
 | Verification | `tests/unit/chromium/file-access.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/incremental-workspace-scan.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/search-index.test.ts` | Automated expectation |

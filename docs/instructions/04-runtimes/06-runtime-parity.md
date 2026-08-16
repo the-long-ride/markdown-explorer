@@ -44,7 +44,7 @@ keywords:
 | Native shell/editor | Yes | Yes | Editor/OS | No | No |
 | Standalone HTML preview | Yes | Yes | Yes | In-page | In-page |
 | Tray/native window | Yes | Yes window | No | No | No |
-| Typography: system + imported fonts | Yes | Yes | Yes, extension global storage | No; bundled/web-safe | No; bundled/web-safe |
+| Typography: system + imported fonts | Yes | Yes | Yes, extension global storage | Yes, IndexedDB fonts | Yes, IndexedDB fonts |
 | Markdown Explorer zoom controls | Yes | Yes | No, host-native | No, browser-native | No, browser-native |
 | Installer updater | Installed packaged support | Signed plugin artifacts; download/defer/restart parity | Check/report only; VS Code installs | Store | Deployment |
 
@@ -62,7 +62,7 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 - Shared bookmarks stay host-independent; Tabs mode groups only workspaces already open in the desktop shell.
 - Tauri updater state names and user choices match Electron even though installation is implemented by the official signed updater plugin.
 - Electron/Tauri own desktop zoom and expose Reset zoom at `Ctrl+Alt+Z`; VS Code/Chromium/Website leave zoom to the host.
-- Electron/Tauri/VS Code expose Markdown Explorer Typography with system and imported font families; Chromium/Website keep bundled/web-safe fonts.
+- Electron/Tauri/VS Code/Chromium/Website expose Markdown Explorer Typography; desktop and VS Code use system/filesystem fonts while Chromium and Web store custom font files in IndexedDB (`markdown-explorer-browser-fonts`).
 - Electron and Tauri restored windows have an 800 px minimum width; browser/extension hosts own their outer window constraints.
 
 ## Source traceability

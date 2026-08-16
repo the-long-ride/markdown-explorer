@@ -105,7 +105,7 @@ export function SettingsModal({
 
   const isDesktop = typeof (window as any).electronAPI !== "undefined" || state.appRuntime === "tauri";
   const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
-  const supportsTypography = isDesktop || state.appRuntime === "vscode";
+  const supportsTypography = isDesktop || state.appRuntime === "vscode" || state.appRuntime === "chrome";
   const isDesktopLike = isDesktop || isChrome;
   const supportsEditor = isDesktop || state.appRuntime === "vscode";
   const updateStatus = hostUpdateState.status;

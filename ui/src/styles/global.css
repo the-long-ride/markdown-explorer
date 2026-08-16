@@ -1,6 +1,7 @@
 @import './global/global-topbar-tabs.css';
 @import './global/global-content-layout.css';
 @import './global/global-app-shell.css';
+@import './global/global-switch-button.css';
 @import './global/global-settings-layout.css';
 @import './global/global-settings-typography.css';
 @import './global/global-settings-navigation.css';
@@ -18,6 +19,7 @@
 @import './global/global-code-blocks.css';
 @import './global/global-code-syntax.css';
 @import './global/global-document-sections-tables.css';
+@import './global/global-table-chart-viewer.css';
 @import './global/global-toc-panel.css';
 @import './global/global-theme-glass-bento.css';
 @import './global/global-pet-theme-backgrounds.css';
@@ -40,6 +42,7 @@
 @import './global/global-bookmarks.css';
 @import './global/global-action-notice.css';
 @import './global/global-sidebar-search-controls.css';
+@import './global/global-shell-control-sizing.css';
 
 .sidebar__search-spinner { width: 10px; height: 10px; border-width: 1.5px; }
 
@@ -114,4 +117,3 @@
   line-height: 1.5;
   text-align: center;
 }
-

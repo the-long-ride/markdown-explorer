@@ -308,7 +308,7 @@ describe('ToolbarActionMenu', () => {
   it('renders the Edit menu shortcut with keycap markup', () => {
     render(React.createElement(ToolbarActionMenu, defaultProps));
     fireEvent.click(screen.getByRole('button', { name: /more/i }));
-    const editButton = screen.getByRole('menuitemcheckbox', { name: 'Edit' });
+    const editButton = screen.getByRole('menuitem', { name: 'Edit' });
     expect(editButton.querySelector('.shortcut-keycaps-container')).toBeInTheDocument();
     expect(editButton.querySelectorAll('.keycap-3d')).toHaveLength(2);
   });
@@ -397,7 +397,7 @@ describe('ToolbarActionMenu', () => {
       onFullscreenToggle: vi.fn(),
     }));
     fireEvent.click(screen.getByRole('button', { name: /more/i }));
-    expect(screen.getByRole('menuitemcheckbox', { name: /show full screen/i })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: /show full screen/i })).toHaveAttribute('aria-checked', 'false');
 
     rerender(React.createElement(ToolbarActionMenu, {
       ...defaultProps,
@@ -407,7 +407,7 @@ describe('ToolbarActionMenu', () => {
       isFullscreen: true,
       onFullscreenToggle: vi.fn(),
     }));
-    expect(screen.getByRole('menuitemcheckbox', { name: /show full screen/i })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: /show full screen/i })).toHaveAttribute('aria-checked', 'true');
   });
 
   it('closes on Escape keydown', () => {

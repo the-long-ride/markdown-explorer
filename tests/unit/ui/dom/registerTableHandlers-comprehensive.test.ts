@@ -417,7 +417,7 @@ describe('registerTableHandlers comprehensive coverage', () => {
       expect(config.options.elements.point.radius).toBe(0);
     });
 
-    it('renders pie chart with doughnut type', () => {
+    it('renders pie chart with pie type', () => {
       const ChartMock = vi.fn();
       win.Chart = ChartMock;
 
@@ -446,7 +446,7 @@ describe('registerTableHandlers comprehensive coverage', () => {
 
       expect(ChartMock).toHaveBeenCalled();
       const callArgs = ChartMock.mock.calls[0];
-      expect(callArgs[1].type).toBe('doughnut');
+      expect(callArgs[1].type).toBe('pie');
     });
 
     it('destroys previous chart instance before creating new one', () => {
