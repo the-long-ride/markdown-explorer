@@ -9,6 +9,7 @@ import { createFileModeHandlers } from './web-file-mode';
 import { handleWebTestMessage } from './web-test-message-router';
 import { handleWebFileUtilityMessage } from './web-file-utility-router';
 import { createWorkspaceOperationState } from '../../chromium-xtension/src/workspace-operation-state';
+import { handleBrowserFontHostCommand } from '../../chromium-xtension/src/browser-font-host';
 
 // The bus must be set up before ui/src/main.tsx runs so detectBridge() can
 // find window.__webDemoBus. This module is imported before main.tsx.
@@ -129,6 +130,8 @@ const {
 bus.addEventListener('webview-message', async (e: Event) => {
   const msg = (e as CustomEvent).detail;
   if (!msg) return;
+
+  if (await handleBrowserFontHostCommand(msg, send)) return;
 
   if (mode === 'test') {
     await handleWebTestMessage(msg, {

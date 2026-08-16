@@ -24,7 +24,7 @@ function approvedManagedUrl(value?: string) {
   if (!value) return undefined;
   try {
     const parsed = new URL(value);
-    if (parsed.protocol === 'file:' || parsed.protocol === 'local-file:' || parsed.protocol === 'vscode-resource:' || parsed.protocol === 'vscode-webview-resource:') return value;
+    if (parsed.protocol === 'file:' || parsed.protocol === 'local-file:' || parsed.protocol === 'vscode-resource:' || parsed.protocol === 'vscode-webview-resource:' || parsed.protocol === 'blob:') return value;
     if (parsed.protocol === 'https:' && /(?:^|\.)vscode-resource\.vscode-cdn\.net$/i.test(parsed.hostname)) return value;
     return undefined;
   } catch {
@@ -82,9 +82,11 @@ function registerImported(doc: Document, families: readonly DesktopFontFamily[])
     const weight = face.minWeight === face.maxWeight
       ? String(face.minWeight)
       : `${face.minWeight} ${face.maxWeight}`;
-    const format = url.toLowerCase().includes('.otf') ? 'opentype' : 'truetype';
+    const formatHint = url.startsWith('blob:')
+      ? ''
+      : ` format("${url.toLowerCase().includes('.otf') ? 'opentype' : 'truetype'}")`;
     return [
-      `@font-face{font-family:${cssString(family.cssFamily)};src:url("${safeUrl}") format("${format}");font-style:${face.style};font-weight:${weight};font-display:swap;}`,
+      `@font-face{font-family:${cssString(family.cssFamily)};src:url("${safeUrl}")${formatHint};font-style:${face.style};font-weight:${weight};font-display:swap;}`,
     ];
   })).join('\n');
 }

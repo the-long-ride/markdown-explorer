@@ -98,19 +98,28 @@ export function FontSearchDropdown({
   useEffect(() => setActiveIndex(0), [query, open]);
 
   const updatePosition = () => {
-    const rect = buttonRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const button = buttonRef.current;
+    const menu = menuRef.current;
+    if (!button || !menu) return;
+    const rect = button.getBoundingClientRect();
+    const settingsCard = button.closest('.settings-card--settings') as HTMLElement | null;
+    const boundary = settingsCard?.getBoundingClientRect() ?? { top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0 };
     const margin = 8;
-    const desiredHeight = 340;
-    const width = Math.max(280, rect.width);
-    const roomBelow = window.innerHeight - rect.bottom - margin;
-    const roomAbove = rect.top - margin;
-    const maxHeight = Math.max(180, Math.min(desiredHeight, Math.max(roomBelow, roomAbove)));
-    const openUp = roomBelow < Math.min(260, desiredHeight) && roomAbove > roomBelow;
+    const gap = 5;
+    const desiredHeight = Math.min(340, Math.max(1, menu.scrollHeight));
+    const roomBelow = Math.max(0, boundary.bottom - rect.bottom - gap - margin);
+    const roomAbove = Math.max(0, rect.top - boundary.top - gap - margin);
+    const openUp = desiredHeight > roomBelow && roomAbove > roomBelow;
+    const availableHeight = openUp ? roomAbove : roomBelow;
+    const maxHeight = Math.max(1, Math.min(desiredHeight, availableHeight || desiredHeight));
+    const maxWidth = Math.max(1, boundary.right - boundary.left - margin * 2);
+    const width = Math.min(Math.max(280, rect.width), maxWidth);
+    const minLeft = Math.max(margin, boundary.left + margin);
+    const maxLeft = Math.max(minLeft, Math.min(window.innerWidth - width - margin, boundary.right - width - margin));
+    const left = Math.min(Math.max(minLeft, rect.left), maxLeft);
     const top = openUp
-      ? Math.max(margin, rect.top - maxHeight - 5)
-      : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 5);
-    const left = Math.min(Math.max(margin, rect.left), Math.max(margin, window.innerWidth - width - margin));
+      ? Math.max(boundary.top + margin, rect.top - maxHeight - gap)
+      : rect.bottom + gap;
     setPosition({ top, left, width, maxHeight });
   };
 
@@ -125,7 +134,7 @@ export function FontSearchDropdown({
       window.removeEventListener('resize', onViewport);
       window.removeEventListener('scroll', onViewport, true);
     };
-  }, [open]);
+  }, [open, choices.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -192,6 +201,10 @@ export function FontSearchDropdown({
   );
 
   const activeChoice = choices[activeIndex];
+  const toggleOpen = () => {
+    if (!open) setPosition(null);
+    setOpen((current) => !current);
+  };
 
   useCssVars(menuRef, position
     ? {
@@ -199,8 +212,9 @@ export function FontSearchDropdown({
         '--menu-left': `${position.left}px`,
         '--menu-width': `${position.width}px`,
         '--menu-max-height': `${position.maxHeight}px`,
+        '--menu-visibility': 'visible',
       }
-    : {});
+    : { '--menu-visibility': 'hidden' });
 
   return (
     <div className={`font-search-dropdown${open ? ' is-open' : ''}`} ref={rootRef}>
@@ -210,12 +224,12 @@ export function FontSearchDropdown({
         className="font-search-dropdown__trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        onClick={toggleOpen}
       >
         <span>{selected?.family ?? t.fontDefault}</span>
         <ChevronDownIcon size={11} className={`font-dropdown-chevron${open ? ' is-open' : ''}`} />
       </button>
-      {open && position && createPortal(
+      {open && createPortal(
         <div
           ref={menuRef}
           className="font-search-menu"

@@ -16,6 +16,7 @@ import type { MdFile, FolderNode } from "../../ui/src/types";
 import { createEmptyWorkspaceReadyAck, createWelcomeMessage, extractWorkspaceName, findFileInfo, getHostInfo, shouldOpenFirstFile } from "./chrome-host-utils";
 import { handleChromeHostUtilityCommand } from "./chrome-host-search";
 import { createWorkspaceOperationState, type WorkspaceOperationMetadata } from "./workspace-operation-state";
+import { handleBrowserFontHostCommand } from "./browser-font-host";
 
 export { getHostInfo, normalizeSearchQuery, filterSearchIndexTabs, isValidExternalUrl, extractWorkspaceName, findFileInfo, shouldOpenFirstFile } from "./chrome-host-utils";
 export { WORKSPACE_SCAN_BATCH_SIZE, WORKSPACE_SCAN_REVEAL_DELAY_MS } from "./incremental-workspace-scan";
@@ -243,6 +244,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
   const msg = (e as CustomEvent).detail;
   if (!msg) return;
 
+  if (await handleBrowserFontHostCommand(msg, sendToWebview)) return;
   if (await handleChromeHostUtilityCommand(msg, { searchIndex, flatList, workspaceTree, activeWorkspacePath, activeHandle, send: sendToWebview, readText: readTextFile })) return;
 
   switch (msg.command) {

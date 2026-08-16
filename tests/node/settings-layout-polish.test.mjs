@@ -33,16 +33,19 @@ test('settings secondary actions are outline buttons while primary update remain
   assert.match(css, /settings-reset-shortcuts-btn[\s\S]*?box-shadow:\s*none/);
 });
 
-test('More Actions keeps standard control size while update dots are enlarged', async () => {
-  const [topbarCss, searchCss, navigationCss] = await Promise.all([
+test('More Actions keeps standard control size while update dots share one size token', async () => {
+  const [topbarCss, searchCss, navigationCss, tokens] = await Promise.all([
     read('ui/src/styles/global/global-topbar-actions.css'),
     read('ui/src/styles/global/global-search-buttons.css'),
     read('ui/src/styles/global/global-settings-navigation.css'),
+    read('ui/src/styles/tokens/tokens-base-themes.css'),
   ]);
   assert.doesNotMatch(topbarCss, /toolbar-action-menu\s*>\s*\.topbar__action-btn\s*\{[\s\S]*?38px/);
-  assert.match(searchCss, /\.btn\.has-update::after\s*\{[\s\S]*?width:\s*11px;[\s\S]*?height:\s*11px;/);
-  assert.match(topbarCss, /toolbar-action-menu__item\.has-update::after\s*\{[\s\S]*?width:\s*11px;[\s\S]*?height:\s*11px;/);
-  assert.match(navigationCss, /settings-nav-badge-dot\s*\{[\s\S]*?width:\s*13px;[\s\S]*?height:\s*13px;/);
+  assert.match(tokens, /--update-attention-dot-size:\s*11px/);
+  for (const css of [searchCss, topbarCss, navigationCss]) {
+    assert.match(css, /width:\s*var\(--update-attention-dot-size\)/);
+    assert.match(css, /height:\s*var\(--update-attention-dot-size\)/);
+  }
 });
 
 test('Theme Style menus use a fixed portal with collision-aware vertical placement', async () => {
