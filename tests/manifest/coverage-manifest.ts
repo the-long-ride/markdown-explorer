@@ -148,6 +148,8 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/constants/storage.ts': ['tests/node/product-constants.test.mjs'],
   'ui/src/constants/urls.ts': ['tests/node/product-constants.test.mjs'],
   'ui/src/desktop/desktopTabs.ts': ['tests/unit/ui/desktop-tabs.test.ts'],
+  'ui/src/readingProgress/readingProgressStore.ts': ['tests/unit/ui/reading-progress-store.test.ts', 'tests/unit/ui/reading-progress-restore.test.ts'],
+  'ui/src/components/Content/useReadingProgressPersistence.ts': ['tests/unit/ui/reading-progress-restore.test.ts', 'tests/unit/ui/components/content-render.test.tsx'],
   'ui/src/desktop/shellLocation.ts': ['tests/node/shell-location.test.mjs'],
   'ui/src/desktop/workspaceOperations.ts': ['tests/node/workspace-operations.test.mjs'],
   'ui/src/dom/codeLineHandlers.ts': ['tests/unit/ui/dom/copyHandlers.test.ts'],

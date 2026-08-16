@@ -83,3 +83,12 @@ export function buildRenderedDocumentSnapshot(
   const snapshot = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><style>html{scroll-behavior:smooth}body{max-width:960px;margin:0 auto;padding:32px;font:16px/1.6 system-ui,sans-serif;color:#202124;background:#fff}img,video,svg{max-width:100%;height:auto}pre{overflow:auto;padding:16px;border-radius:8px;background:#f5f5f5}table{border-collapse:collapse;max-width:100%}th,td{border:1px solid #d7d7d7;padding:6px 10px}@media(prefers-color-scheme:dark){body{color:#eceff4;background:#181a1f}pre{background:#24272e}th,td{border-color:#4b505c}}</style></head><body>${contentHtml}<script>window.addEventListener('load',function(){var hash=${scriptHash};if(hash){location.hash=hash;var target=document.getElementById(decodeURIComponent(hash.slice(1)));if(target)target.scrollIntoView({block:'center'});}});<\/script></body></html>`;
   return injectBaseHref(snapshot, baseHref);
 }
+
+export function attachContentScrollHandler(
+  scrollContainer: HTMLElement | null,
+  onScroll: () => void,
+): (() => void) | null {
+  if (!scrollContainer) return null;
+  scrollContainer.addEventListener('scroll', onScroll, { passive: true });
+  return () => scrollContainer.removeEventListener('scroll', onScroll);
+}
