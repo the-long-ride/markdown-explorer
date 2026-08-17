@@ -123,7 +123,7 @@ export function useContentEffects({
     const persistScroll = createScrollPersistHandler(scrollRef, workspaceKey, state.currentFile);
     const handleScroll = () => {
       syncStickyTableHeaders(scrollContainer);
-      persistScroll();
+      persistScroll.persist();
     };
     const detachScrollHandler = attachContentScrollHandler(scrollContainer, handleScroll);
 
@@ -440,6 +440,7 @@ export function useContentEffects({
       body.removeEventListener("contextmenu", handleContextMenu);
       headingSections.dispose();
       detachScrollHandler?.();
+      persistScroll.flush();
     };
   }, [state.renderVersion, state.theme, state.themeStyle, state.settings.activeCustomThemeId,
     state.settings.customThemes, state.settings.fontBindings, state.isLoading, state.notFoundHref,

@@ -199,6 +199,11 @@ export function useAppStateEffects({
         case 'chartPngSaveResult': {
           // The onMessage closure intentionally avoids state deps, so read the
           // persisted language preference — same pattern as savedAppearance.
+          // Image-save callers pass a requestId and await this event to drive
+          // their own notice; skip their events so the host outcome shows up
+          // exactly once. Events without a requestId come from the chart
+          // context-menu save and are toasted here as before.
+          if (msg.requestId) break;
           const savedNotice = bridge.getState<PersistedState>();
           const labels = getTranslations(savedNotice?.language || 'en').rendererUi;
           if (msg.ok) dispatchActionNotice(labels.chartSaveSuccess, 'success');

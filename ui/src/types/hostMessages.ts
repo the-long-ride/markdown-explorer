@@ -153,6 +153,7 @@ export interface ChartPngSaveResultMessage {
   readonly ok: boolean;
   readonly path?: string;
   readonly error?: string;
+  readonly requestId?: string;
 }
 
 export type HostMessage =

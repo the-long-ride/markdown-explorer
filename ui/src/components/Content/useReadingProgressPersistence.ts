@@ -62,15 +62,29 @@ export function createScrollPersistHandler(
   scrollRef: RefObject<HTMLDivElement | null>,
   workspaceKey: string,
   currentFile: string | null,
-) {
+): { persist: () => void; flush: () => void } {
   let lastPersistedScrollAt = 0;
-  return () => {
+  let pendingScrollTop: number | null = null;
+  const persist = () => {
     const now = Date.now();
     if (scrollRef.current && currentFile && now - lastPersistedScrollAt > 400) {
       lastPersistedScrollAt = now;
+      pendingScrollTop = null;
       rememberScrollPosition(workspaceKey, currentFile, scrollRef.current.scrollTop);
+    } else if (scrollRef.current && currentFile) {
+      // Throttled: hold onto the latest position so lifecycle cleanup can
+      // flush it, otherwise the final offset before hide/close/unmount is
+      // lost and the document reopens at a stale position.
+      pendingScrollTop = scrollRef.current.scrollTop;
     }
   };
+  const flush = () => {
+    if (pendingScrollTop === null || !currentFile) return;
+    const position = pendingScrollTop;
+    pendingScrollTop = null;
+    rememberScrollPosition(workspaceKey, currentFile, position);
+  };
+  return { persist, flush };
 }
 
 export function restoreScrollPosition(args: {

@@ -2,6 +2,8 @@
 // dom/copyImage.ts — Image and Mermaid SVG PNG clipboard copying
 // =============================================================================
 
+import { saveBlobViaTauriHost } from './saveTauriImage';
+
 export async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
   try {
     return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -389,17 +391,7 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
 
 export async function saveBlobAsFile(blob: Blob, fileName: string): Promise<boolean> {
   if (isTauriRuntime() && (window as any).PlatformBridge?.postMessage) {
-    try {
-      const dataUrl = await blobToDataUrl(blob);
-      (window as any).PlatformBridge.postMessage({
-        command: 'saveChartPng',
-        fileName,
-        dataUrl,
-      });
-      return true;
-    } catch {
-      return false;
-    }
+    return await saveBlobViaTauriHost(blob, fileName);
   }
 
   if (typeof document === 'undefined') return false;
