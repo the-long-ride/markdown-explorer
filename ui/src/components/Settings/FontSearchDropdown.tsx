@@ -71,6 +71,7 @@ export function FontSearchDropdown({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const naturalHeightRef = useRef(0);
   const selected = findDesktopFontFamily(value, fonts);
 
   const filtered = useMemo(() => {
@@ -106,7 +107,13 @@ export function FontSearchDropdown({
     const boundary = settingsCard?.getBoundingClientRect() ?? { top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0 };
     const margin = 8;
     const gap = 5;
-    const desiredHeight = Math.min(340, Math.max(1, menu.scrollHeight));
+    // scrollHeight equals the constrained height once max-height is applied
+    // (the menu is a flex column with overflow hidden), so only trust it as
+    // the natural content height the first time, while unconstrained.
+    if (!naturalHeightRef.current && menu.scrollHeight > 0) {
+      naturalHeightRef.current = menu.scrollHeight;
+    }
+    const desiredHeight = Math.min(340, Math.max(1, naturalHeightRef.current || menu.scrollHeight));
     const roomBelow = Math.max(0, boundary.bottom - rect.bottom - gap - margin);
     const roomAbove = Math.max(0, rect.top - boundary.top - gap - margin);
     const openUp = desiredHeight > roomBelow && roomAbove > roomBelow;
@@ -125,8 +132,16 @@ export function FontSearchDropdown({
 
   useLayoutEffect(() => {
     if (!open) return;
+    // Re-measure naturally on (re)open and when the option count changes:
+    // lift the height constraint first so scrollHeight is the content height.
+    menuRef.current?.style.setProperty('--menu-max-height', 'none');
+    naturalHeightRef.current = 0;
     updatePosition();
-    const onViewport = () => updatePosition();
+    const onViewport = (event?: Event) => {
+      // Scrolling inside the menu itself cannot move the anchor button.
+      if (event && event.target instanceof Node && menuRef.current?.contains(event.target)) return;
+      updatePosition();
+    };
     window.addEventListener('resize', onViewport);
     window.addEventListener('scroll', onViewport, true);
     requestAnimationFrame(() => inputRef.current?.focus());

@@ -4,6 +4,28 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Save Rendered SVG Diagrams and Images as PNG**: Added a **"Save as image (.PNG)"** option to the context menu for rendered SVG diagrams (such as Mermaid diagrams) and images, as well as dedicated copy and save buttons to the Media Modal viewer toolbar. Exports use high-resolution rasterization with transparency support, saving via Tauri's native file dialog or standard browser download across all 9 supported languages.
+- **Reading Progress Memory**: The app now remembers your exact reading position for every document. Scroll offsets and collapsed-heading state are persisted per workspace and file (localStorage-backed, capped to the 100 most recently read files per workspace) and restored across app restarts in every runtime. Desktop tabs view also restores each workspace tab's full open-file tab strip and the last active file, filtered to files that still exist.
+- **First-run onboarding enhancements**: The theme onboarding dialog now includes a language picker (applies live across all nine locales), a desktop layout choice between **Focus** and **Tabs** with per-option descriptions on Electron/Tauri, and a footer hint with an **Open Settings** shortcut that completes onboarding and jumps straight into settings.
+- **Chart save toast**: Saving a chart as an image now confirms the outcome with a localized toast — success when the PNG is written, an error notice if the write fails, and silence when the native save dialog is cancelled. Tauri reports the native save outcome through the new `chartPngSaveResult` host message; Web/Electron/VS Code downloads confirm immediately after the download starts.
+
+### Changed
+- **Desktop tab session format**: `markdown-explorer-desktop-tabs-v1` now also stores each workspace tab's open content-tab file paths and last active file, so tab-view sessions reopen exactly where you left off.
+- **Tauri chart export feedback**: The native `saveChartPng` export is no longer fire-and-forget; it reports success (with the saved path) or failure back to the UI.
+
+### Fixed
+- **Onboarding modal layout & zoom responsiveness**: Redesigned the onboarding modal layout with clean structured option blocks, prevented header overlap at high zoom levels, unified input focus styling, and integrated the custom language switcher dropdown for visual consistency with Settings.
+- **Portal dropdown stacking above modals**: Elevated theme picker, typography, and theme remix portal menus to `z-index: 2147483646` with fixed viewport coordinates, ensuring dropdown option lists are always fully visible above modal backdrops and onboarding cards.
+- **Sidebar pins lost on restart**: Pinned files and folders are no longer wiped on cold start. Pin reconciliation previously ran against an empty workspace tree while the workspace scan was still loading, pruning every pin and persisting the empty result before the tree arrived; an unloaded tree is now treated as "unknown" rather than "empty".
+- **Font dropdown shrinking while scrolling**: The typography font dropdown no longer collapses progressively when you scroll inside it. The menu re-read its own constrained `scrollHeight` on every capture-phase scroll event and re-applied it as the max height, losing sub-pixel height on scaled displays with each event; it now measures its natural content height once per open and ignores scroll events that originate inside the menu.
+- **False success on Tauri image save cancel/failure**: The **Save as Image (.PNG)** flow in Content and the Media Modal no longer reports success before the native save dialog resolves. `saveBlobAsFile` now awaits a `chartPngSaveResult` host message keyed by a `requestId` and resolves `false` on cancel or write failure, so success and error notices reflect the actual outcome. The await never times out: a dialog may stay open arbitrarily long, and a fallback timer previously reported a false failure (and discarded the later success result) when the user picked a destination after a minute. Callers that pass a `requestId` drive their own notice; the legacy chart context-menu save (no `requestId`) still toasts through the global listener, which now skips `requestId`-tagged events to eliminate the duplicate success/contradictory failure that previously followed a premature success notice.
+- **Final scroll position dropped on close/hide**: Reading progress is no longer lost when you scroll and then immediately close or hide the app. The 400 ms scroll throttle previously dropped the trailing position while lifecycle cleanup flushed only a stale debounced value; the throttle now buffers the latest position and the Content effect's cleanup flushes it before the document is torn down, so the exact offset is restored on reopen.
+
+---
+
 ## [v1.6.4] — 2026-08-16
 
 ### Added

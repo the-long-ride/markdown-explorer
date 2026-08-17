@@ -226,8 +226,7 @@
 .settings-modal {
   background: var(--bg);
 }
-.settings-modal,
-.theme-onboarding-modal {
+.settings-modal {
   justify-content: flex-start;
   padding: calc(var(--topbar-h) + 16px) 16px 16px;
   overflow: hidden;

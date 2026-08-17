@@ -15,7 +15,12 @@ export interface AuditedUiTranslationDomains {
   terms: {
     logoAlt: string; welcomeTitle: string; introBefore: string; privacyPolicy: string; conjunction: string; termsOfService: string; introAfter: string; agreement: string; continue: string;
   };
-  onboarding: { title: string; description: string; skip: string; };
+  onboarding: {
+    title: string; description: string; skip: string;
+    language: string;
+    viewMode: string; viewModeFocusDesc: string; viewModeTabsDesc: string;
+    settingsHint: string; openSettings: string;
+  };
   workspaceSelection: {
     subtitle: string; openFolder: string; openFile: string; dragFileTip: string; dragFolderOrFileTip: string; workspaces: string; renameTip: string; showMore: string;
     browserConfigTitle: string; browserConfigIntro: string; browserConfigOpen: string; browserConfigOr: string; browserConfigSearch: string; browserConfigEnable: string;
@@ -36,6 +41,7 @@ export interface AuditedUiTranslationDomains {
     filterValues: string; all: string; noValues: string; rowsCount: string; filteredRowsCount: string; columns: string; showAllColumns: string;
     table: string; barChart: string; horizontalBarChart: string; lineChart: string; areaChart: string; scatterChart: string; radarChart: string; polarAreaChart: string; pieChart: string; doughnutChart: string; tableViewType: string; noDataForChart: string; series: string;
     chartViewTitle: string; chartFit: string; chartZoom: string; copyChartImage: string; saveChartPng: string; closeChartView: string;
+    chartSaveSuccess: string; chartSaveFailed: string;
     video: string; openVideo: string; youtubeVideo: string; watchOnYouTube: string;
   };
 }

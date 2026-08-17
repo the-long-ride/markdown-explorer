@@ -42,6 +42,22 @@ export function upsertContentTab(tabs: readonly ContentTab[], tab: ContentTab): 
   return tabs.map((item, index) => (index === existingIndex ? tab : item));
 }
 
+// Minimal tab used when restoring a session: real content loads lazily via
+// the normal RENDER_CONTENT flow once the tab is activated.
+export function createPlaceholderContentTab(fileInfo: MdFile): ContentTab {
+  return {
+    filePath: fileInfo.fsPath,
+    relativePath: fileInfo.relativePath,
+    fileName: fileInfo.fileName,
+    title: fileInfo.title,
+    contentHtml: '',
+    markdownSource: null,
+    frontmatter: {},
+    toc: [],
+    previewInfo: null,
+  };
+}
+
 export function reorderContentTabs(
   tabs: readonly ContentTab[],
   sourcePath: string,

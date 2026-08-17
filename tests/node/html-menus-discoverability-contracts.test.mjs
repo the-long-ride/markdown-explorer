@@ -165,9 +165,10 @@ test('Snake sandbox and Unreleased changelog cover the patch series', async () =
   assert.match(unreleased, /### Added/);
   assert.match(unreleased, /### Changed/);
   assert.match(unreleased, /### Fixed/);
-  assert.match(unreleased, /HTML document/i);
-  assert.match(unreleased, /CSV\/TSV/i);
-  assert.match(unreleased, /workspace scan/i);
+  assert.match(unreleased, /Reading Progress/i);
+  assert.match(unreleased, /onboarding/i);
+  assert.match(unreleased, /chart/i);
+  assert.match(unreleased, /pin/i);
 });
 
 test('raw HTML source survives every host and desktop workspace-tab cache path', async () => {

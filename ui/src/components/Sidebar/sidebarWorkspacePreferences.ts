@@ -104,3 +104,15 @@ export function collectSidebarItemKeys(
   for (const folder of folders) visit(folder);
   return keys;
 }
+
+export function resolveSidebarPins(
+  rawPins: readonly SidebarPinnedItem[],
+  tree: FolderNode | null,
+  maxPinnedItems: number,
+): SidebarPinnedItem[] {
+  // An unloaded tree means "unknown", not "empty": pruning against it would
+  // wipe every pin on cold start before the workspace scan completes.
+  if (!tree) return [...rawPins];
+  const validKeys = collectSidebarItemKeys(tree.files, tree.children);
+  return reconcileWorkspacePins(rawPins, validKeys, maxPinnedItems);
+}

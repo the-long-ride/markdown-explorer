@@ -23,6 +23,8 @@ import { acceptsWorkspaceHostMessage } from '../desktop/workspaceOperations';
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 import { applyDesktopTypography } from '../desktop/fonts/applyDesktopTypography';
 import { migrateDesktopFontBindings } from '../desktop/fonts/fontModel';
+import { dispatchActionNotice } from '../utils/actionNotice';
+import { getTranslations } from './translations';
 
 type AppStateEffectsArgs = {
   bridge: {
@@ -194,6 +196,20 @@ export function useAppStateEffects({
         case 'desktopFontsResult':
           dispatch({ type: 'SET_DESKTOP_FONTS', fonts: msg.fonts, requestId: msg.requestId, importedId: msg.importedId, error: msg.error });
           break;
+        case 'chartPngSaveResult': {
+          // The onMessage closure intentionally avoids state deps, so read the
+          // persisted language preference — same pattern as savedAppearance.
+          // Image-save callers pass a requestId and await this event to drive
+          // their own notice; skip their events so the host outcome shows up
+          // exactly once. Events without a requestId come from the chart
+          // context-menu save and are toasted here as before.
+          if (msg.requestId) break;
+          const savedNotice = bridge.getState<PersistedState>();
+          const labels = getTranslations(savedNotice?.language || 'en').rendererUi;
+          if (msg.ok) dispatchActionNotice(labels.chartSaveSuccess, 'success');
+          else dispatchActionNotice(labels.chartSaveFailed, 'error');
+          break;
+        }
         case 'updateStateChanged':
           dispatch({ type: 'SET_UPDATE_STATE', updateState: msg.state });
           break;

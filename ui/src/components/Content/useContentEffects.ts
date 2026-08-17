@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useContentNavigationEffects } from "./useContentNavigationEffects";
 import { useContentScrollMemory } from "./useContentScrollMemory";
-import { isWorkspaceNavigationHref, syncStickyTableHeaders } from "./contentUtils";
+import { attachContentScrollHandler, attachScrollFlushOnHide, isWorkspaceNavigationHref, syncStickyTableHeaders } from "./contentUtils";
 import { scheduleContentEnhancements } from "./scheduleContentEnhancements";
 import { subscribeToAutoMermaidTheme, syncMermaidAppearance } from "./enhancements/mermaidAppearance";
 import { createMermaidRerenderLifecycle } from "./enhancements/mermaidRerenderLifecycle";
@@ -12,9 +12,15 @@ import {
   type PreviewActionLabels,
 } from "../../dom/htmlPreviewActions";
 import { resolveRenderedLink } from "../../dom/linkContextMenu";
-import { createHeadingSectionInteractions } from "./headingSectionInteractions";
 import type { HeadingSectionState } from "./enhancements/headingSectionState";
 import type { LinkContextMenuState } from "../shared/LinkContextMenu";
+import { getWorkspaceScopeKey } from "../../contexts/contentTabState";
+import {
+  createScrollPersistHandler,
+  createTrackedHeadingSections,
+  restoreScrollPosition,
+  useReadingProgressPersistence,
+} from "./useReadingProgressPersistence";
 
 interface ContentEffectsArgs {
   state: any;
@@ -45,7 +51,10 @@ export function useContentEffects({
   onBookmarkContextMenu,
   onActionError,
 }: ContentEffectsArgs) {
-  const scrollPositionsRef = useContentScrollMemory(state.currentFile, scrollRef);
+  const workspaceKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
+  const { handleScrollCaptured, rememberHeadingsFor } = useReadingProgressPersistence(workspaceKey);
+
+  const scrollPositionsRef = useContentScrollMemory(state.currentFile, scrollRef, handleScrollCaptured);
   const lastRestoredFileRef = useRef<string | null>(null);
   const lastRestoredVersionRef = useRef<number | null>(null);
   const mermaidRunIdRef = useRef(0);
@@ -68,11 +77,13 @@ export function useContentEffects({
     const appearanceChanged = mermaidAppearance.changed;
     lastMermaidAppearanceKeyRef.current = mermaidAppearance.key;
 
-    const headingSections = createHeadingSectionInteractions({
+    const headingSections = createTrackedHeadingSections({
       body,
       currentFile: state.currentFile,
       defaultExpanded: state.defaultExpanded !== false,
       stateByFile: headingStateByFileRef.current,
+      workspaceKey,
+      onPersist: rememberHeadingsFor,
     });
 
     applyPreviewActionTranslations(body, previewLabels);
@@ -109,8 +120,10 @@ export function useContentEffects({
 
     // Sticky table header (JS-based, because overflow-x:auto blocks native sticky)
     const scrollContainer = scrollRef.current;
-    const handleScroll = () => syncStickyTableHeaders(scrollContainer);
-    if (scrollContainer) scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+    const persistScroll = createScrollPersistHandler(scrollRef, workspaceKey, state.currentFile);
+    const handleScroll = () => { syncStickyTableHeaders(scrollContainer); persistScroll.persist(); };
+    const detachScrollHandler = attachContentScrollHandler(scrollContainer, handleScroll);
+    const detachScrollFlushOnHide = attachScrollFlushOnHide(persistScroll.flush);
 
     // Image / mermaid click → media modal
     const handleClick = (e: Event) => {
@@ -412,19 +425,11 @@ export function useContentEffects({
     });
     if (appearanceChanged) mermaidRerender.schedule();
     const unsubscribeAutoTheme = subscribeToAutoMermaidTheme(state.theme, mermaidRerender.schedule);
-    // Restore or reset scroll position only when file/version changes
-    if (
-      scrollRef.current &&
-      (lastRestoredFileRef.current !== state.currentFile ||
-        lastRestoredVersionRef.current !== state.renderVersion)
-    ) {
-      const savedScroll = state.currentFile
-        ? scrollPositionsRef.current[state.currentFile]
-        : 0;
-      scrollRef.current.scrollTop = savedScroll || 0;
-      lastRestoredFileRef.current = state.currentFile;
-      lastRestoredVersionRef.current = state.renderVersion;
-    }
+    restoreScrollPosition({
+      scrollRef, positions: scrollPositionsRef.current, workspaceKey,
+      currentFile: state.currentFile, renderVersion: state.renderVersion,
+      lastFileRef: lastRestoredFileRef, lastVersionRef: lastRestoredVersionRef,
+    });
 
     return () => {
       unsubscribeAutoTheme();
@@ -432,9 +437,8 @@ export function useContentEffects({
       body.removeEventListener("click", handleClick);
       body.removeEventListener("contextmenu", handleContextMenu);
       headingSections.dispose();
-      if (scrollContainer) {
-        scrollContainer.removeEventListener("scroll", handleScroll);
-      }
+      detachScrollHandler?.(); detachScrollFlushOnHide?.();
+      persistScroll.flush();
     };
   }, [state.renderVersion, state.theme, state.themeStyle, state.settings.activeCustomThemeId,
     state.settings.customThemes, state.settings.fontBindings, state.isLoading, state.notFoundHref,

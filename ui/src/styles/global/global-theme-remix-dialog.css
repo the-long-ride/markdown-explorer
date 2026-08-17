@@ -419,7 +419,7 @@
   top: var(--menu-top);
   left: var(--menu-left);
   width: var(--menu-width);
-  z-index: 310000;
+  z-index: 2147483646;
 }
 
 .theme-remix-menu[hidden] {

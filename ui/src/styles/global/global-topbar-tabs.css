@@ -1,7 +1,3 @@
-@import url("./global-topbar-actions.css");
-@import url("./global-workspace-tabs.css");
-@import url("./global-tab-actions-menus.css");
-
 /* Contract anchors for the split fullscreen drag-lock rules. */
 /* .app--tauri.app--fullscreen { -webkit-app-region: no-drag !important; } */
 /* .app--tauri.app--fullscreen .desktop-tabbar { -webkit-app-region: no-drag !important; } */

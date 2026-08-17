@@ -73,14 +73,46 @@ impl Dispatcher {
                     .and_then(Value::as_str)
                     .ok_or_else(|| "Missing PNG data".to_string())?;
                 let bytes = crate::runtime::png_export::decode_png_data_url(data_url)?;
+                // Image-save callers pass a requestId and await this event to drive
+                // their own notice; the legacy chart-save path omits it and keeps
+                // relying on the global chartPngSaveResult listener.
+                let request_id = msg
+                    .get("requestId")
+                    .and_then(Value::as_str)
+                    .map(|s| s.to_string());
                 let selected_path = tauri_plugin_dialog::DialogExt::dialog(&self.app)
                     .file()
                     .add_filter("PNG", &["png"])
                     .set_file_name(file_name)
                     .blocking_save_file()
                     .and_then(|path| path.into_path().ok());
-                if let Some(path) = selected_path {
-                    std::fs::write(path, bytes).map_err(|error| error.to_string())?;
+                let mut extra = serde_json::Map::new();
+                if let Some(id) = &request_id {
+                    extra.insert("requestId".into(), id.clone().into());
+                }
+                match selected_path {
+                    Some(path) => match std::fs::write(&path, bytes) {
+                        Ok(()) => {
+                            extra.insert("ok".into(), true.into());
+                            extra.insert("path".into(), path.to_string_lossy().to_string().into());
+                            host_message::emit(&self.app, "chartPngSaveResult", extra);
+                        }
+                        Err(error) => {
+                            extra.insert("ok".into(), false.into());
+                            extra.insert("error".into(), error.to_string().into());
+                            host_message::emit(&self.app, "chartPngSaveResult", extra);
+                        }
+                    },
+                    None => {
+                        // Cancelled dialog. Emit a failure only when a requestId is
+                        // present so the image-save awaiter resolves truthfully; the
+                        // chart-save path (no requestId) stays silent on cancel, as
+                        // it did before.
+                        if request_id.is_some() {
+                            extra.insert("ok".into(), false.into());
+                            host_message::emit(&self.app, "chartPngSaveResult", extra);
+                        }
+                    }
                 }
             }
             // ── C5: Clipboard / External / Editor ──

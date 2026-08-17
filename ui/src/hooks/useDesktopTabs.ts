@@ -84,6 +84,19 @@ export function useDesktopTabs({
     if (isDesktop) writePersistedDesktopTabs(tabs, activeTabId);
   }, [activeTabId, isDesktop, tabs]);
 
+  // Reading Progress Memory: once the host delivers the workspace file list,
+  // rebuild the persisted content-tab strip (filtered to files that still
+  // exist) for the active restored workspace tab.
+  useEffect(() => {
+    if (!isTabView || state.fileList.length === 0) return;
+    const activeTab = tabs.find((tab) => tab.id === activeTabId);
+    if (!activeTab?.restoredContentTabPaths?.length) return;
+    dispatch({ type: 'RESTORE_CONTENT_TABS', filePaths: activeTab.restoredContentTabPaths });
+    setTabs((currentTabs) => currentTabs.map((tab) =>
+      tab.id === activeTabId ? { ...tab, restoredContentTabPaths: undefined } : tab,
+    ));
+  }, [activeTabId, dispatch, isTabView, state.fileList, tabs]);
+
   useEffect(() => {
     setNavigationScope(isTabView ? activeTabId : 'focus');
   }, [activeTabId, isTabView, setNavigationScope]);

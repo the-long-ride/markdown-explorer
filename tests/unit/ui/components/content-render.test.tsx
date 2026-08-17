@@ -4,6 +4,9 @@ import { Content } from "../../../../ui/src/components/Content/Content";
 import { useAppState } from "../../../../ui/src/contexts/AppStateContext";
 import { useNavigation } from "../../../../ui/src/contexts/NavigationContext";
 import { usePlatform } from "../../../../ui/src/contexts/PlatformContext";
+import { resetReadingProgressForTests } from "../../../../ui/src/readingProgress/readingProgressStore";
+import { rememberHeadingState } from "../../../../ui/src/readingProgress/readingProgressStore";
+import { getWorkspaceScopeKey } from "../../../../ui/src/contexts/contentTabState";
 
 vi.mock("../../../../ui/src/contexts/AppStateContext");
 vi.mock("../../../../ui/src/contexts/NavigationContext");
@@ -159,6 +162,7 @@ function setupWithProps(
 beforeEach(() => {
   vi.clearAllMocks();
   delete (window as Record<string, unknown>).electronAPI;
+  resetReadingProgressForTests();
 });
 
 describe("Content rendering", () => {
@@ -367,6 +371,20 @@ describe("Content rendering", () => {
     expect(container.querySelector(".mdn-body")).toBeInTheDocument();
   });
 
+
+  it("restores persisted heading collapse from the reading progress store", () => {
+    rememberHeadingState(
+      getWorkspaceScopeKey("/test", "test"),
+      "/readme.md",
+      new Map([["title", false]]),
+    );
+    const { container } = setup({
+      currentFile: "/readme.md",
+      contentHtml: '<section class="mdn-section" id="title" data-expanded="true"><div class="mdn-section-header" role="button" tabindex="0" aria-expanded="true"><h1>Title</h1></div><div class="mdn-section-body">Body</div></section>',
+    });
+    const section = container.querySelector<HTMLElement>(".mdn-section")!;
+    expect(section.dataset.expanded).toBe("false");
+  });
 
   it("toggles heading sections through delegated click handling", () => {
     const { container } = setup({

@@ -1,3 +1,4 @@
+
 .settings-update-card__title {
   color: var(--tx);
   font-size: 12px;
@@ -51,55 +52,8 @@
 .settings-download-update-btn:active {
   transform: translateY(1px);
 }
-.theme-onboarding-card {
-  width: min(560px, calc(100vw - 32px));
-  height: auto;
-  max-height: calc(100vh - var(--topbar-h) - 32px);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-.theme-onboarding-card__header {
-  min-height: 0;
-  margin-bottom: 0;
-}
-.theme-onboarding-card__section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 0;
-  min-height: 0;
-}
-.theme-onboarding-card__section--mode {
-  overflow: visible;
-}
-.theme-onboarding-card__section--styles {
-  overflow: visible;
-}
-.theme-onboarding-card__styles {
-  min-height: 0;
-  height: auto;
-  overflow: visible;
-  padding-right: 2px;
-}
-.theme-onboarding-card__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: var(--stroke-w) solid var(--bd);
-}
-.theme-onboarding-card__skip {
-  min-width: 82px;
-}
-.theme-onboarding-card__continue {
-  min-width: 104px;
-}
 @media (max-width: 900px) {
-  .settings-modal,
-  .theme-onboarding-modal {
+  .settings-modal {
     padding: calc(var(--topbar-h) + 10px) 10px 10px;
   }
   .settings-card--settings {
@@ -155,13 +109,6 @@
   }
   .settings-shortcuts-hint {
     margin-left: auto;
-  }
-  .theme-onboarding-card {
-    width: min(560px, calc(100vw - 20px));
-    max-width: calc(100vw - 20px);
-    height: auto;
-    max-height: calc(100vh - var(--topbar-h) - 20px);
-    padding: 18px;
   }
 }
 

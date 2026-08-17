@@ -127,6 +127,7 @@ export type Action =
   | { type: 'CURRENT_FILE_CHANGED'; filePath: string }
   | { type: 'NAV_NOT_FOUND'; href: string }
   | { type: 'ACTIVATE_CONTENT_TAB'; filePath: string }
+  | { type: 'RESTORE_CONTENT_TABS'; filePaths: string[] }
   | { type: 'REORDER_CONTENT_TABS'; sourcePath: string; targetPath: string }
   | { type: 'CLOSE_CONTENT_TAB'; filePath: string }
   | { type: 'CLOSE_CONTENT_TABS_TO_RIGHT'; filePath: string }

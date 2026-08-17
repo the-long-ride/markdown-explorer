@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo } from 'react';
 import type { AppSettings, FolderNode, SidebarPinnedItem, SidebarSortMode } from '../../types';
 import {
   clearWorkspacePins,
-  collectSidebarItemKeys,
   getSidebarPinnedItemKey,
   getWorkspacePins,
   getWorkspaceSortMode,
   normalizeMaxPinnedItems,
-  reconcileWorkspacePins,
+  resolveSidebarPins,
   setWorkspacePins,
   toggleWorkspacePin,
 } from './sidebarWorkspacePreferences';
@@ -36,13 +35,9 @@ export function useSidebarPinnedSorting({
     () => getWorkspacePins(settings.sidebarPinnedItems, workspaceKey),
     [settings.sidebarPinnedItems, workspaceKey],
   );
-  const validKeys = useMemo(
-    () => collectSidebarItemKeys(tree?.files ?? [], tree?.children ?? []),
-    [tree],
-  );
   const pins = useMemo(
-    () => reconcileWorkspacePins(rawPins, validKeys, maxPinnedItems),
-    [maxPinnedItems, rawPins, validKeys],
+    () => resolveSidebarPins(rawPins, tree, maxPinnedItems),
+    [maxPinnedItems, rawPins, tree],
   );
   const pinnedKeys = useMemo(
     () => new Set(pins.map(getSidebarPinnedItemKey)),

@@ -8,7 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 
 test('onboarding theme menus are not clipped by their section', async () => {
   const css = await readFile(
-    path.join(repoRoot, 'ui/src/styles/global/global-settings-actions-dialogs.css'),
+    path.join(repoRoot, 'ui/src/styles/global/global-onboarding.css'),
     'utf8',
   );
   const stylesSection = css.match(/\.theme-onboarding-card__section--styles\s*\{[\s\S]*?\}/)?.[0] ?? '';

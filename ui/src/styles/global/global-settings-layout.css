@@ -347,7 +347,6 @@
   .desktop-font-binding-row__controls { align-items: stretch; flex-direction: column; }
 }
 .font-search-menu__option.is-keyboard-active {
-  outline: var(--stroke-w) solid var(--accent);
-  outline-offset: -1px;
+  outline: none;
   background: var(--bg-h);
 }

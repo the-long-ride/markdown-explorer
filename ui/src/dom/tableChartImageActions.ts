@@ -1,5 +1,6 @@
 import { canvasToPngBlob, writeBlobToClipboard } from './copyImage';
 import { getTableUiLabels } from './tableUiLabels';
+import { dispatchActionNotice } from '../utils/actionNotice';
 
 type CanvasSource = HTMLCanvasElement | (() => HTMLCanvasElement | null);
 
@@ -23,7 +24,12 @@ function isTauriRuntime(): boolean {
   return typeof runtimeWindow.__TAURI__ !== 'undefined' || typeof runtimeWindow.__TAURI_INTERNALS__ !== 'undefined';
 }
 
-async function saveCanvasPng(canvas: HTMLCanvasElement, tableId: string, viewType: string) {
+async function saveCanvasPng(
+  canvas: HTMLCanvasElement,
+  tableId: string,
+  viewType: string,
+  labels: ReturnType<typeof getTableUiLabels>,
+) {
   const fileName = `${safeFilePart(tableId)}-${safeFilePart(viewType)}.png`;
   if (isTauriRuntime() && (window as any).PlatformBridge?.postMessage) {
     (window as any).PlatformBridge.postMessage({
@@ -35,7 +41,10 @@ async function saveCanvasPng(canvas: HTMLCanvasElement, tableId: string, viewTyp
   }
 
   const blob = await canvasToPngBlob(canvas);
-  if (!blob) return;
+  if (!blob) {
+    dispatchActionNotice(labels.chartSaveFailed, 'error');
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -45,6 +54,7 @@ async function saveCanvasPng(canvas: HTMLCanvasElement, tableId: string, viewTyp
   anchor.click();
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 0);
+  dispatchActionNotice(labels.chartSaveSuccess, 'success');
 }
 
 export function showChartContextMenu(source: CanvasSource, tableId: string, viewType: string, event: MouseEvent) {
@@ -82,7 +92,7 @@ export function showChartContextMenu(source: CanvasSource, tableId: string, view
   });
   addAction(labels.saveChartPng, SAVE_ICON, async () => {
     const canvas = resolveCanvas(source);
-    if (canvas) await saveCanvasPng(canvas, tableId, viewType);
+    if (canvas) await saveCanvasPng(canvas, tableId, viewType, labels);
   });
   document.body.appendChild(menu);
 

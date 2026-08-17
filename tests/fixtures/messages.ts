@@ -122,6 +122,12 @@ export const hostMessages = {
     fonts: [],
     ...overrides,
   }),
+  chartPngSaveResult: (overrides = {}) => ({
+    command: 'chartPngSaveResult' as const,
+    ok: true,
+    path: '/tmp/chart.png',
+    ...overrides,
+  }),
 };
 
 export const webviewMessages = {

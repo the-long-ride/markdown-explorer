@@ -17,6 +17,7 @@ const UI_HOST_COMMANDS: (UiHostMessage extends { command: infer C }[] ? C : neve
   'recentWorkspacesChanged', 'navNotFound', 'workspaceUnavailable', 'setLoading', 'workspaceScanProgress',
   'updateStateChanged', 'window-state-changed', 'crossTabSearchResults',
   'workspaceSearchResults', 'workspaceSearchIndexLoaded', 'desktopFontsResult',
+  'chartPngSaveResult',
 ] as string[] as never[];
 
 const VSCODE_HOST_COMMANDS: string[] = [
@@ -126,6 +127,7 @@ describe('host-message parity', () => {
     const VSCODE_EXCLUDED_HOST = UI_HOST_COMMANDS.filter(c => !VSCODE_HOST_COMMANDS.includes(c));
     test('VSCode omits desktop/chromium-only host messages', () => {
       expect(VSCODE_EXCLUDED_HOST.sort()).toEqual([
+        'chartPngSaveResult',
         'crossTabSearchResults',
         'recentWorkspacesChanged',
         'updateStateChanged',

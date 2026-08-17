@@ -35,6 +35,7 @@ export interface DesktopTab {
   workspaceUnavailableReason: WorkspaceUnavailableReason | null;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
+  restoredContentTabPaths?: string[];
   isIndexed?: boolean;
   workspaceOperationId?: string;
   workspaceLoadState?: 'idle' | 'loading' | 'ready';
@@ -59,6 +60,8 @@ export interface PersistedDesktopTab {
   workspaceName?: string;
   workspacePath?: string;
   currentFile?: string | null;
+  contentTabs?: string[];
+  activeContentTabPath?: string | null;
 }
 
 export interface PersistedDesktopTabsState {

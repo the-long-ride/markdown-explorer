@@ -148,6 +148,14 @@ export interface WorkspaceTextResourceResultMessage {
   readonly reason?: 'outside-workspace' | 'missing' | 'unreadable' | 'unsupported';
 }
 
+export interface ChartPngSaveResultMessage {
+  readonly command: 'chartPngSaveResult';
+  readonly ok: boolean;
+  readonly path?: string;
+  readonly error?: string;
+  readonly requestId?: string;
+}
+
 export type HostMessage =
   | RenderContentMessage | ReadyAckMessage | WorkspaceFilesChangedMessage
   | CurrentFileChangedMessage | RecentWorkspacesChangedMessage | NavNotFoundMessage
@@ -155,4 +163,4 @@ export type HostMessage =
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
   | FullscreenStateChangedMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
-  | WorkspaceTextResourceResultMessage | DesktopFontsResultMessage;
+  | WorkspaceTextResourceResultMessage | DesktopFontsResultMessage | ChartPngSaveResultMessage;

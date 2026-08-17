@@ -1,7 +1,3 @@
-@import url("./global-sidebar-tree-layout.css");
-@import url("./global-sidebar-files-actions.css");
-@import url("./global-content-tabs-focus-search.css");
-@import url("./global-sidebar-search-menus.css");
 .sidebar__search-empty { font-size: 11px; }
 .tree-folder__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .toc-panel__title-group { display: flex; align-items: center; min-width: 0; gap: 8px; }

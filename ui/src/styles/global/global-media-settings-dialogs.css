@@ -1,4 +1,2 @@
-@import url("./global-media-viewer-settings-shell.css");
-@import url("./global-settings-shortcut-search.css");
-@import url("./global-settings-actions-dialogs.css");
-@import url("./global-settings-warning-animation.css");
+/* Media, settings, and dialogs styles are imported directly in global.css */
+

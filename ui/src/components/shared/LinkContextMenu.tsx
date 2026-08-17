@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { ResolvedLink } from '../../dom/linkContextMenu';
 import { useCssVars } from '../../utils/useCssVars';
 import { AddBookmarkIcon } from '../Bookmarks/BookmarkIcons';
-import { CopyIcon, OpenInBrowserIcon } from './icons';
+import { CopyIcon, OpenInBrowserIcon, SaveImageIcon } from './icons';
 
 export interface LinkContextMenuState {
   x: number;
@@ -20,10 +20,12 @@ interface LinkContextMenuProps {
   openLabel: string;
   copyLabel: string;
   copyImageLabel?: string;
+  saveImageLabel?: string;
   bookmarkLabel?: string;
   onOpen?: (link: ResolvedLink) => void;
   onCopy?: (link: ResolvedLink) => void;
   onCopyImage?: (target: HTMLElement | SVGElement) => void;
+  onSaveImage?: (target: HTMLElement | SVGElement) => void;
   onBookmark?: () => void;
   onClose: () => void;
 }
@@ -34,10 +36,12 @@ export function LinkContextMenu({
   openLabel,
   copyLabel,
   copyImageLabel,
+  saveImageLabel,
   bookmarkLabel,
   onOpen,
   onCopy,
   onCopyImage,
+  onSaveImage,
   onBookmark,
   onClose,
 }: LinkContextMenuProps) {
@@ -104,6 +108,16 @@ export function LinkContextMenu({
         >
           <CopyIcon size={14} />
           <span>{copyImageLabel}</span>
+        </button>
+      )}
+      {state.imageTarget && onSaveImage && saveImageLabel && (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => onSaveImage(state.imageTarget!)}
+        >
+          <SaveImageIcon size={14} />
+          <span>{saveImageLabel}</span>
         </button>
       )}
       {state.link && onOpen && (

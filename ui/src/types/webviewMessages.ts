@@ -45,7 +45,7 @@ export interface RestartAndApplyUpdateMessage { readonly command: 'restartAndApp
 export interface ListDesktopFontsMessage { readonly command: 'listDesktopFonts'; readonly requestId: string; }
 export interface ImportDesktopFontsMessage { readonly command: 'importDesktopFonts'; readonly requestId: string; }
 export interface RemoveImportedDesktopFontMessage { readonly command: 'removeImportedDesktopFont'; readonly requestId: string; readonly id: string; }
-export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonly fileName: string; readonly dataUrl: string; }
+export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonly fileName: string; readonly dataUrl: string; readonly requestId?: string; }
 
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage
