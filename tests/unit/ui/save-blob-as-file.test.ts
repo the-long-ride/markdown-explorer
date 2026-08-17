@@ -46,8 +46,7 @@ describe('saveBlobAsFile Tauri result handling', () => {
     env.remove();
   });
 
-  // Settle microtasks (FileReader read + onMessage subscription) without
-  // firing the 60s fallback timeout that saveBlobAsFile arms as a safety net.
+  // Settle microtasks (FileReader read + onMessage subscription).
   const settleMicrotasks = () => vi.advanceTimersByTimeAsync(50);
 
   test('resolves true only after the host reports a successful write', async () => {
@@ -124,16 +123,28 @@ describe('saveBlobAsFile Tauri result handling', () => {
     await expect(pending).resolves.toBe(true);
   });
 
-  test('sizes a fallback timeout so a missing host response does not hang', async () => {
+  test('stays pending past any fallback window and honors the delayed success', async () => {
     const { saveBlobAsFile } = await importCopyImage();
     const blob = new Blob([new Uint8Array([1])], { type: 'image/png' });
 
     const pending = saveBlobAsFile(blob, 'image.png');
     await settleMicrotasks();
+    const { requestId } = env.posted[0];
 
-    // No host dispatch: the 60s fallback timeout must resolve false.
-    await vi.advanceTimersByTimeAsync(60000);
-    await expect(pending).resolves.toBe(false);
+    // Simulate a dialog deliberation longer than the former 60s fallback
+    // timeout: the promise must not resolve while the host may still respond.
+    await vi.advanceTimersByTimeAsync(120000);
+
+    const probe = { resolved: false, value: undefined as boolean | undefined };
+    pending.then((v) => { probe.resolved = true; probe.value = v; });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(probe.resolved).toBe(false);
+
+    // The user finally picks a destination; the host writes and reports
+    // success. No false failure may have been emitted meanwhile.
+    env.dispatch({ command: 'chartPngSaveResult', ok: true, requestId });
+    await expect(pending).resolves.toBe(true);
   });
 
   test('non-Tauri path falls back to anchor download and resolves true', async () => {
