@@ -222,7 +222,7 @@ export const coverageManifest: Record<string, string[]> = {
   'electron/update/update-state.js': ['tests/unit/electron/update-manager.test.ts'],
   'ui/src/AppView.tsx': ['tests/unit/ui/components/content.test.tsx'],
   'ui/src/components/Content/WelcomePageIcons.tsx': ['tests/unit/ui/components/content.test.tsx'],
-  'ui/src/components/Content/contentUtils.ts': ['tests/unit/ui/components/content.test.tsx'],
+  'ui/src/components/Content/contentUtils.ts': ['tests/unit/ui/components/content.test.tsx', 'tests/unit/ui/scroll-flush-on-hide.test.ts'],
   'ui/src/components/Content/enhancementTasks.ts': ['tests/node/content-enhancements-idempotence.test.mjs'],
   'ui/src/components/Content/headingSectionInteractions.ts': ['tests/node/content-enhancements-idempotence.test.mjs'],
   'ui/src/components/Content/renderWelcomeDescription.tsx': ['tests/unit/ui/components/content.test.tsx'],

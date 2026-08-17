@@ -92,3 +92,20 @@ export function attachContentScrollHandler(
   scrollContainer.addEventListener('scroll', onScroll, { passive: true });
   return () => scrollContainer.removeEventListener('scroll', onScroll);
 }
+
+// Flush the throttled scroll buffer on hide/close even when React teardown
+// does not run first (window minimize/close, tab foreground switch): the
+// 400ms throttle holds the latest offset in the handler only, and the
+// lifecycle hook flushes just the progress store.
+export function attachScrollFlushOnHide(flush: () => void): () => void {
+  const flushOnUnload = () => flush();
+  const flushOnVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') flush();
+  };
+  window.addEventListener('beforeunload', flushOnUnload);
+  document.addEventListener('visibilitychange', flushOnVisibilityChange);
+  return () => {
+    window.removeEventListener('beforeunload', flushOnUnload);
+    document.removeEventListener('visibilitychange', flushOnVisibilityChange);
+  };
+}

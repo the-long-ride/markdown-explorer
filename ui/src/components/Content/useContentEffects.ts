@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useContentNavigationEffects } from "./useContentNavigationEffects";
 import { useContentScrollMemory } from "./useContentScrollMemory";
-import { attachContentScrollHandler, isWorkspaceNavigationHref, syncStickyTableHeaders } from "./contentUtils";
+import { attachContentScrollHandler, attachScrollFlushOnHide, isWorkspaceNavigationHref, syncStickyTableHeaders } from "./contentUtils";
 import { scheduleContentEnhancements } from "./scheduleContentEnhancements";
 import { subscribeToAutoMermaidTheme, syncMermaidAppearance } from "./enhancements/mermaidAppearance";
 import { createMermaidRerenderLifecycle } from "./enhancements/mermaidRerenderLifecycle";
@@ -121,11 +121,9 @@ export function useContentEffects({
     // Sticky table header (JS-based, because overflow-x:auto blocks native sticky)
     const scrollContainer = scrollRef.current;
     const persistScroll = createScrollPersistHandler(scrollRef, workspaceKey, state.currentFile);
-    const handleScroll = () => {
-      syncStickyTableHeaders(scrollContainer);
-      persistScroll.persist();
-    };
+    const handleScroll = () => { syncStickyTableHeaders(scrollContainer); persistScroll.persist(); };
     const detachScrollHandler = attachContentScrollHandler(scrollContainer, handleScroll);
+    const detachScrollFlushOnHide = attachScrollFlushOnHide(persistScroll.flush);
 
     // Image / mermaid click → media modal
     const handleClick = (e: Event) => {
@@ -439,7 +437,7 @@ export function useContentEffects({
       body.removeEventListener("click", handleClick);
       body.removeEventListener("contextmenu", handleContextMenu);
       headingSections.dispose();
-      detachScrollHandler?.();
+      detachScrollHandler?.(); detachScrollFlushOnHide?.();
       persistScroll.flush();
     };
   }, [state.renderVersion, state.theme, state.themeStyle, state.settings.activeCustomThemeId,
