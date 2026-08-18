@@ -66,6 +66,10 @@ flowchart LR
 
 Zoom clamps to 0.25–20. Buttons adjust by 0.25; wheel adjusts approximately 0.15. Panning is enabled only when zoomed and must not trap keyboard focus.
 
+- **Light/Dark Theme Toggle**: A dedicated SunIcon/MoonIcon button in the modal footer toolbar (between Reset Zoom and Copy) flips the global app theme. The re-render is a one-shot themed pass through `renderMermaidToSvg` that defers to a `queueMicrotask` so the parent `useAppStateEffects` theme-sync effect has applied `document.documentElement.dataset.theme` and the new CSS custom properties before the helper reads them via `getComputedStyle`. The re-render effect MUST NOT call `setZoom` / `setPan` — the override SVG swaps in place via `innerHTML` on the existing transform container, preserving `--zoom` / `--pan-x` / `--pan-y`.
+- **Snapshot Preservation on Initial Open**: The themed re-render effect skips the first dep-change for each NEW gallery open (tracked via `prevGalleryRef`). `createMediaGallery` already captured the snapshot from the content body's fully-laid-out SVG, so overwriting it on the new gallery's first effect tick would flicker or regress when the off-DOM helper mis-sizes layout-sensitive kinds.
+- **In-DOM Scratch Host**: `renderMermaidToSvg` appends its scratch `<div class="mermaid">` to a hidden off-screen host on `document.body` (`position: absolute; left: -9999px; visibility: hidden; aria-hidden: true`) before `mermaid.run()` and removes it via `finally`. A detached scratch node returns 0 for every `getBoundingClientRect` / `getComputedTextLength` measurement, producing degenerate SVGs for layout-sensitive kinds (sequence, packet, kanban, pie, quadrant, xychart, zenuml, sankey) — visible as an empty square box until the user triggers a zoom/pan.
+
 
 ### Responsive Mermaid Viewport Fitting and Quality Polish
 

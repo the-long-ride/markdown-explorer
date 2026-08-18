@@ -66,6 +66,10 @@ flowchart LR
 
 Do not intercept keystrokes owned by editable controls. Reject `Ctrl+Space` custom binding to protect IME behavior.
 
+### Modal gate exception
+
+The Media Modal mutes global shortcuts so navigation and zoom bindings inside the modal do not collide with document-level actions. One exception: `toggleTheme` fires through the modal gate so users can flip light/dark mode while inspecting an image or Mermaid SVG. The matcher is lifted above `isModalOpen` in `resolveKeyboardAction`; all other global shortcuts remain muted while the modal is open. The terms dialog still captures the same shortcut (the matcher sits below `isTermsOpen`), so the lift is scoped strictly to the media modal.
+
 
 ## States and failure behavior
 

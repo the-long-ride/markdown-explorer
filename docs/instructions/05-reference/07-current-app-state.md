@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-13T04:36:00+07:00'
+timestamp: '2026-08-18T17:30:00+07:00'
 name: Current Application State
 topic: Unreleased synchronized product and runtime snapshot
 document_type: reference
@@ -41,7 +41,7 @@ keywords:
 
 # Current Application State
 
-This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-08-16. Feature, runtime, protocol, and catalog documents remain the normative detailed specifications; this page is the compact cross-product map used to detect documentation drift.
+This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-08-18. Feature, runtime, protocol, and catalog documents remain the normative detailed specifications; this page is the compact cross-product map used to detect documentation drift.
 
 ## Supported runtimes
 
@@ -117,8 +117,10 @@ Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for **Ap
 - Markdown/MDX is the core document surface, with local rendering, code blocks, math, Mermaid, media handling, links, heading navigation, table of contents, and collapsible sections.
 - Supported file/conversion behavior is defined by the Supported Files and Conversion catalog and is capability-gated by runtime.
 - Sidebar navigation includes Files, Search, and opt-in Bookmarks with filtering, sorting, pinning, cursor-mode keyboard navigation, current-file location, and workspace scoping. Sidebar navigation ARIA text and pin/sort/search status labels come from the active locale without component-owned English fallbacks.
+- The per-row pinned-item indicator uses the stroke-only `PinIcon` (Lucide thumbtack, size 12). Both unpin affordances — the per-item context-menu entry and the toolbar Clear Pins button — render the same `UnpinIcon` (Lucide thumbtack + diagonal slash overlay); `ClearPinsIcon` delegates to `UnpinIcon` so the slash stays in sync without SVG-path duplication.
 - Search covers the current document/current workspace and desktop cross-tab modes where supported; status labels and accessibility text are localized.
 - Desktop document tabs preserve active document and scroll state; context actions and their shortcut labels use translated copy. Recent-workspace `last opened` values use `Intl.RelativeTimeFormat`/`Intl.DateTimeFormat` with the selected application locale.
+- The Media Modal viewer exposes a light/dark theme toggle in its footer toolbar that re-renders the displayed Mermaid diagram with the new theme palette while preserving the current zoom/pan transform. The toggle's keyboard shortcut (`toggleTheme`) fires through the modal's keyboard gate; all other global shortcuts remain muted while the modal is open.
 
 ### Interactive tables, filters, and charts
 

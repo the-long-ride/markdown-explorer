@@ -4,6 +4,23 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 > **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
 
+## [Unreleased]
+
+### Added
+- **Media Modal Light/Dark Theme Toggle**: Added a SunIcon/MoonIcon button to the Media Modal viewer footer toolbar that flips the global app theme and re-renders the displayed Mermaid diagram with the new palette without disturbing zoom/pan state. The re-render `useEffect` defers the helper call to a `queueMicrotask` so the parent `useAppStateEffects` theme-sync has already applied `dataset.theme` and the new CSS custom properties before the helper reads them.
+- **Mermaid Categorical Soft-Fill Palettes**: Mermaid theme now builds soft categorical fills cycling `chart1`..`chart6` tokens with surface mixing for consistent low-saturation series backgrounds across flowchart classes, pie slices, and quadrant zones.
+- **Sidebar Pinned-Icon Tap Target & Unpin Affordance**: The per-row pin button grows from 10 to 12 for tap-target parity, and the unpin affordance is rewritten as a dedicated `UnpinIcon` (Lucide thumbtack + diagonal slash) inheriting the active theme accent via `currentColor`.
+
+### Changed
+- **Unified Unpin Icon Design**: The sidebar toolbar's "clear all pins" button now delegates to `UnpinIcon` so both unpin affordances (per-item menu and clear-all toolbar) render the same Lucide thumbtack + diagonal slash. Replaces the prior 512×512 filled silhouette with the red `#EF4136` accent.
+
+### Fixed
+- **Mermaid empty box on modal open until zoom/pan**: `renderMermaidToSvg` now appends its scratch node to a hidden off-screen host on `document.body` before `mermaid.run()` so layout-sensitive diagram kinds (sequence, packet, kanban, pie, quadrant, xychart, zenuml, sankey) measure correctly. The modal also skips the first dep-change per new gallery open, preserving the good `createMediaGallery` snapshot.
+- **Mermaid did not recolor on theme flip inside media modal**: The re-render effect wraps the helper call in `queueMicrotask` so `useAppStateEffects` has applied `dataset.theme` before the helper reads CSS custom properties; a narrowed `const source = current.source` is captured before the closure for TypeScript narrowing.
+- **Toggle-theme keyboard shortcut muted inside media modal**: The `toggle-theme` keyboard matcher is now lifted above the `isModalOpen` guard so users can flip light/dark while the image/SVG modal is open. Other global shortcuts remain muted; the terms dialog still captures the same shortcut.
+
+---
+
 ## [v1.6.4] — 2026-08-16
 
 ### Added
