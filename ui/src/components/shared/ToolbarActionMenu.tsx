@@ -12,6 +12,7 @@ import {
   ExitFocusIcon,
   FullscreenMenuIcon,
   ResetZoomMenuIcon,
+  SaveImageIcon,
 } from "./icons";
 import { TooltipButton } from "./TooltipButton";
 import { SwitchButton } from "./SwitchButton";
@@ -23,10 +24,12 @@ interface ToolbarActionMenuProps {
   themeLabel: string;
   editLabel: string;
   settingsLabel: string;
+  exportLabel?: string;
   homeTooltip: string;
   themeTooltip: string;
   editTooltip: string;
   settingsTooltip: string;
+  exportTooltip?: string;
   homeShortcut?: string;
   themeShortcut?: string;
   editShortcut?: string;
@@ -39,6 +42,7 @@ interface ToolbarActionMenuProps {
   onTheme: () => void;
   onEdit: () => void;
   onSettings: () => void;
+  onExport?: () => void;
 
   sidebarLabel?: string;
   sidebarTooltip?: string;
@@ -89,6 +93,8 @@ function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
       return <FullscreenMenuIcon size={12} />;
     case "resetZoom":
       return <ResetZoomMenuIcon size={12} />;
+    case "export":
+      return <SaveImageIcon size={13} />;
     case "settings":
       return <SettingsIcon size={14} />;
     default:
@@ -103,10 +109,12 @@ export function ToolbarActionMenu({
   themeLabel,
   editLabel,
   settingsLabel,
+  exportLabel,
   homeTooltip,
   themeTooltip,
   editTooltip,
   settingsTooltip,
+  exportTooltip,
   homeShortcut,
   themeShortcut,
   editShortcut,
@@ -119,6 +127,7 @@ export function ToolbarActionMenu({
   onTheme,
   onEdit,
   onSettings,
+  onExport,
   sidebarLabel,
   sidebarTooltip,
   sidebarShortcut,
@@ -252,6 +261,15 @@ export function ToolbarActionMenu({
     });
   }
 
+  if (onExport && exportLabel) {
+    items.push({
+      id: "export",
+      label: exportLabel,
+      tooltip: exportTooltip || exportLabel,
+      disabled: false,
+    });
+  }
+
   items.push({
     id: "settings",
     label: settingsLabel,
@@ -285,6 +303,9 @@ export function ToolbarActionMenu({
         return;
       case "resetZoom":
         onResetZoom?.();
+        return;
+      case "export":
+        onExport?.();
         return;
       case "settings":
         onSettings();
@@ -365,4 +386,3 @@ export function ToolbarActionMenu({
     </div>
   );
 }
-
