@@ -9,6 +9,7 @@ import { usePlatform } from "../../contexts/PlatformContext";
 import { getTranslations } from "../../contexts/translations";
 import { useContentEffects } from "./useContentEffects";
 import { HtmlPreviewModal } from "../Modal/HtmlPreviewModal";
+import { ScopeViewModal } from "../Modal/ScopeViewModal";
 import {
   LinkContextMenu,
   type LinkContextMenuState,
@@ -20,6 +21,7 @@ import {
 } from "../../dom/htmlPreviewActions";
 import type { ResolvedLink } from "../../dom/linkContextMenu";
 import { copyElementImageToClipboard, saveElementImageAsPng } from "../../dom/copyImage";
+import { findScopeFile } from "../../export/documentSnapshot";
 import { splitLeadingHtmlComments, buildRenderedDocumentSnapshot } from "./contentUtils";
 import { isHtmlDocumentPath } from "./HtmlDocumentView";
 import { convertHtmlSourceToMarkdown } from "../../markdown/htmlToMarkdown";
@@ -74,6 +76,7 @@ export const Content = memo(function Content({
   const bodyRef = useRef<HTMLDivElement>(null);
   const [htmlModal, setHtmlModal] = useState<{ documentHtml: string; trigger: HTMLElement } | null>(null);
   const [linkMenu, setLinkMenu] = useState<LinkContextMenuState | null>(null);
+  const [scopeFile, setScopeFile] = useState<(typeof state.fileList)[number] | null>(null);
   const [actionNotice, setActionNotice] = useState<ActionNoticeDetail | null>(null);
   const actionNoticeTimerRef = useRef<number | null>(null);
   const workspaceUnavailablePath = state.workspaceUnavailablePath;
@@ -198,6 +201,7 @@ export const Content = memo(function Content({
   useEffect(() => {
     setLinkMenu(null);
     setHtmlModal(null);
+    setScopeFile(null);
   }, [state.currentFile, state.renderVersion]);
 
   const handleOpenHtmlModal = useCallback((documentHtml: string, trigger: HTMLElement) => {
@@ -330,6 +334,8 @@ export const Content = memo(function Content({
     bridge.postMessage({ command: "deleteRecentWorkspace", path: workspaceUnavailablePath });
   };
 
+  const scopeTarget = linkMenu?.link ? findScopeFile(linkMenu.link, state.fileList) : null;
+
   return (
     <>
       <ContentMainView
@@ -351,6 +357,7 @@ export const Content = memo(function Content({
           closeLabel={t.previewActions.closeModal} trigger={htmlModal.trigger} onClose={() => setHtmlModal(null)}
         />
       )}
+      <ScopeViewModal initialFile={scopeFile} files={state.fileList} onClose={() => setScopeFile(null)} />
       <BookmarkSelectionMenu
         state={bookmarkSelection} workspaceName={state.workspaceName} workspacePath={state.workspacePath}
         filePath={state.currentFile} translations={t.bookmarks} onClose={closeBookmarkSelection}
@@ -360,6 +367,11 @@ export const Content = memo(function Content({
           state={linkMenu} menuLabel={t.previewActions.linkMenu} openLabel={t.previewActions.openInBrowser}
           copyLabel={t.previewActions.copyLink} copyImageLabel={t.previewActions.copyImage} saveImageLabel={t.previewActions.saveImagePng}
           bookmarkLabel={state.settings.bookmarksEnabled ? t.bookmarks.addSelection : undefined}
+          scopeLabel={scopeTarget ? 'Open as scope' : undefined}
+          onOpenScope={scopeTarget ? () => {
+            setScopeFile(scopeTarget);
+            setLinkMenu(null);
+          } : undefined}
           onOpen={handleOpenResolvedLink} onCopy={handleCopyResolvedLink} onCopyImage={handleCopyImage} onSaveImage={handleSaveImage}
           onBookmark={state.settings.bookmarksEnabled && linkMenu.bookmarkTarget ? () => {
             const opened = linkMenu.bookmarkTarget ? openBookmarkDialogForElement(linkMenu.bookmarkTarget, linkMenu.x, linkMenu.y) : false;
