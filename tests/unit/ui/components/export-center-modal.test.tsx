@@ -60,11 +60,11 @@ describe('ExportCenterModal', () => {
     render(<ExportCenterModal isOpen onClose={() => {}} />);
 
     expect(screen.getByRole('dialog', { name: 'Export Center' })).toBeTruthy();
-    expect(screen.getByLabelText('Current document')).toBeChecked();
-    expect(screen.getByLabelText('HTML')).toBeChecked();
-    expect(screen.getByLabelText('Separate outputs')).toBeChecked();
-    expect(screen.getByLabelText('Document only')).toBeChecked();
-    expect(screen.getByLabelText('Full Explorer layout')).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Current document' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^HTML\b/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Separate outputs' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^Document only\b/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^Full Explorer layout\b/ })).not.toBeChecked();
   });
 
   it('offers exactly HTML, PDF, and Static Website formats', () => {
@@ -79,11 +79,11 @@ describe('ExportCenterModal', () => {
   it('supports selected documents and recursive folder selection', () => {
     render(<ExportCenterModal isOpen onClose={() => {}} />);
 
-    fireEvent.click(screen.getByLabelText('Selected documents'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Selected documents' }));
     expect(screen.getByLabelText('guide/a.md')).toBeTruthy();
     expect(screen.getByLabelText('guide/deep/b.md')).toBeTruthy();
 
-    fireEvent.click(screen.getByLabelText('Folder'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Folder' }));
     const folder = screen.getByLabelText('Folder to export') as HTMLSelectElement;
     expect(Array.from(folder.options).map((option) => option.value)).toContain('guide');
     expect(Array.from(folder.options).map((option) => option.value)).toContain('guide/deep');
