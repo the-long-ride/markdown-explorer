@@ -68,6 +68,28 @@ export async function renderMermaidToSvg(args: RenderMermaidToSvgArgs): Promise<
   scratchNode.dataset.originalCode = args.source;
   scratchNode.textContent = args.source;
 
+  // Attach the scratch node to a hidden off-screen host on the document body
+  // so mermaid.run() can measure text/containers via getBoundingClientRect /
+  // getComputedTextLength. For layout-sensitive kinds (sequence, packet,
+  // kanban, pie, quadrant, xychart, zenuml, sankey) a detached scratch node
+  // returns 0 for every measurement → degenerate SVGs (empty/0×0 boxes) that
+  // match the symptom "diagram shows empty box until user interacts with
+  // zoom/pan". Hosting the render in-DOM fixes both the initial re-render and
+  // the theme-flip recolor paths. The host is removed in `finally` so the
+  // user never sees it.
+  const host = doc.createElement('div');
+  host.setAttribute('aria-hidden', 'true');
+  host.style.position = 'absolute';
+  host.style.left = '-9999px';
+  host.style.top = '0';
+  host.style.width = `${doc.documentElement?.clientWidth || 1024}px`;
+  host.style.height = '0';
+  host.style.overflow = 'visible';
+  host.style.pointerEvents = 'none';
+  host.style.visibility = 'hidden';
+  host.appendChild(scratchNode);
+  doc.body.appendChild(host);
+
   const { getMermaid } = await import('../../../lib/renderLibs.ts');
   const mermaid = await getMermaid();
   if (typeof mermaid.run !== 'function') throw new Error('renderMermaidToSvg: mermaid.run unavailable');
@@ -80,7 +102,11 @@ export async function renderMermaidToSvg(args: RenderMermaidToSvgArgs): Promise<
     fontFamily,
     ...layoutConfig,
   });
-  await mermaid.run({ nodes: [scratchNode] });
+  try {
+    await mermaid.run({ nodes: [scratchNode] });
+  } finally {
+    host.remove();
+  }
 
   const svg = scratchNode.querySelector('svg');
   if (!svg) throw new Error('renderMermaidToSvg: mermaid produced no svg');

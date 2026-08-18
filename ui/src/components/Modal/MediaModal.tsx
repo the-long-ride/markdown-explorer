@@ -51,25 +51,62 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     setPan({ x: 0, y: 0 });
   }, [gallery]);
 
-  // Re-render the displayed mermaid diagram with the current theme palette when
-  // the user flips theme, navigates between gallery items, or the gallery
-  // changes. Preserves zoom & pan: this effect MUST NOT touch setZoom/setPan
+  // Re-render the displayed mermaid diagram with the current theme palette
+  // when the user flips theme or navigates between gallery items on the SAME
+  // gallery. Preserves zoom & pan: this effect MUST NOT touch setZoom/setPan
   // (the override SVG swaps in place via innerHTML on the existing transform
   // container that already reflects --zoom / --pan-x / --pan-y via useCssVars).
+  //
+  // Skip the FIRST dep-change for each NEW gallery opening: a snapshot was
+  // already captured from the content body's properly-laid-out SVG by
+  // createMediaGallery, so overwriting it on the new gallery's first effect
+  // tick would either (a) flicker as the helper re-renders or (b) regress
+  // when the off-DOM helper mis-sizes layout-sensitive kinds (the historical
+  // source of "empty box until zoom" reports). MediaModal stays mounted
+  // across closes/reopens (it returns null when gallery is null at line 182),
+  // so a one-shot useRef(true) would NOT reset between opens — we track the
+  // previously-seen gallery reference instead and skip only when the gallery
+  // IDENTITY changed on this tick. From the second dep-change onward (theme
+  // flips, navigation), the helper attaches its scratch node to the DOM so it
+  // has proper measurement context.
+  const prevGalleryRef = useRef<MediaGallery | null>(null);
   useEffect(() => {
     if (!gallery) return;
     const current = gallery.items[Math.min(currentIndex, gallery.items.length - 1)];
     if (!current || current.type !== 'svg' || !current.source) return;
+    // Capture the narrowed `source` (`string`) before entering the microtask
+    // closure — TS does not carry control-flow narrowing across the closure
+    // boundary, so referencing `current.source` inside queueMicrotask widens it
+    // back to `string | undefined`.
+    const source = current.source;
+    // Skip the first dep-change for each new gallery open — the snapshot baked
+    // by createMediaGallery is already correct (drawn from the content body's
+    // fully-laid-out SVG). Subsequent theme flips / navigation on the SAME
+    // gallery trigger a fresh recolor.
+    const isNewGallery = gallery !== prevGalleryRef.current;
+    prevGalleryRef.current = gallery;
+    if (isNewGallery) return;
     let cancelled = false;
-    renderMermaidToSvg({ source: current.source, isDark: isDarkNow })
-      .then(({ svgHtml }) => {
-        if (!cancelled && mediaSvgRef.current) {
-          mediaSvgRef.current.innerHTML = svgHtml;
-        }
-      })
-      .catch(() => { /* ignore render errors during theme flip */ });
+    // Defer the helper call to the next microtask so the higher-up
+    // useAppStateEffects theme-sync effect (in AppStateProvider, which fires
+    // AFTER this child effect due to React's child-before-parent ordering) has
+    // already applied `document.documentElement.dataset.theme` and the new CSS
+    // custom properties. Without this defer, readMermaidThemeTokens would read
+    // STALE tokens from getComputedStyle(documentElement) and the re-rendered
+    // SVG would silently keep the previous theme's palette.
+    queueMicrotask(() => {
+      if (cancelled) return;
+      renderMermaidToSvg({ source, isDark: isDarkNow })
+        .then(({ svgHtml }) => {
+          if (!cancelled && mediaSvgRef.current) {
+            mediaSvgRef.current.innerHTML = svgHtml;
+          }
+        })
+        .catch(() => { /* ignore render errors during theme flip */ });
+    });
     return () => { cancelled = true; };
   }, [state.theme, currentIndex, gallery, isDarkNow]);
+
 
   const zoomIn = useCallback(() => setZoom((z) => Math.min(MEDIA_ZOOM_MAX, z + MEDIA_ZOOM_BUTTON_STEP)), []);
   const zoomOut = useCallback(() => setZoom((z) => Math.max(MEDIA_ZOOM_MIN, z - MEDIA_ZOOM_BUTTON_STEP)), []);

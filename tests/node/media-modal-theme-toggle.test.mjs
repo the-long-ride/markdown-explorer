@@ -56,6 +56,56 @@ test('MediaModal supports a light/dark theme toggle that re-renders mermaid with
   assert.match(modal, /\.source/);
   assert.match(modal, /renderMermaidToSvg\(/);
 
+  // ── Bug-fix regression guard: the helper call must be deferred to the next
+  //    microtask so it reads CSS custom properties AFTER the AppStateProvider
+  //    theme-sync effect (which runs in the same commit's passive pass, but as
+  //    a PARENT useEffect and therefore AFTER this child effect) has updated
+  //    document.documentElement.dataset.theme. Without this defer the re-render
+  //    silently keeps the previous palette. Find the theme effect body and
+  //    assert it wraps the helper call in queueMicrotask(...).
+  const deferredThemeEffect = themeEffects.find((src) =>
+    /queueMicrotask\(/.test(src) && /renderMermaidToSvg\(/.test(src),
+  );
+  assert.ok(
+    deferredThemeEffect,
+    'expected the theme re-render useEffect to wrap renderMermaidToSvg in queueMicrotask so CSS custom properties are read after the parent theme sync has run',
+  );
+  // The cancelled flag must be scoped at the outer effect body (its cleanup
+  // returns () => { cancelled = true; }) and consulted INSIDE the microtask.
+  assert.match(
+    deferredThemeEffect,
+    /let cancelled = false/,
+    'outer effect must declare `let cancelled = false;` for cleanup coordination',
+  );
+  assert.match(
+    deferredThemeEffect,
+    /queueMicrotask\(\(\)\s*=>\s*\{[^]*?if \(cancelled\) return/,
+    'the queueMicrotask body must early-return when `cancelled` is set (cleanup race protection)',
+  );
+
+  // ── Bug B contract: the modal effect must skip the first dep-change after a
+  //    NEW gallery opens so the snapshot baked by createMediaGallery (drawn
+  //    from the content body's fully-laid-out SVG) is preserved on initial
+  //    open. Re-rendering the snapshot on the new gallery's first tick would
+  //    either flicker or regress when the off-DOM helper mis-sizes layout-
+  //    sensitive kinds — the historical "empty box until user interacts with
+  //    zoom/pan" symptom. MediaModal stays mounted across closes/reopens (it
+  //    returns null when gallery is null), so a one-shot useRef(true) would
+  //    NOT reset between opens — the modal must track the previously-seen
+  //    gallery reference instead and skip only when the gallery IDENTITY
+  //    changed on this tick.
+  assert.match(modal, /prevGalleryRef/, 'modal must declare a prevGalleryRef to track previously-seen gallery identity');
+  assert.match(
+    deferredThemeEffect,
+    /isNewGallery\s*=\s*gallery\s*!==\s*prevGalleryRef\.current/,
+    'modal effect must compute isNewGallery = gallery !== prevGalleryRef.current',
+  );
+  assert.match(
+    deferredThemeEffect,
+    /if \(isNewGallery\)\s*return/,
+    'modal effect must early-return when isNewGallery is true (preserve the snapshot from createMediaGallery)',
+  );
+
   // ── Helper exports ──────────────────────────────────────────────────────
   assert.match(themeMode, /export function resolveThemeMode/);
   assert.match(snapshot, /export function snapshotSvgHtml/);
@@ -73,4 +123,17 @@ test('mermaidRenderToSvg uses off-DOM render with a scratch node and does not mu
   assert.match(source, /scratchNode/);
   assert.match(source, /\.textContent\s*=\s*args\.source/);
   assert.match(source, /dataset\.originalCode/);
+
+  // ── Bug B contract: the scratch node must be attached to a hidden off-screen
+  //    host appended to document.body so mermaid.run() can measure text via
+  //    getBoundingClientRect / getComputedTextLength. A detached scratch node
+  //    returns 0 for every measurement → degenerate SVGs for layout-sensitive
+  //    kinds (sequence, packet, kanban, pie, quadrant, xychart, zenuml, sankey)
+  //    that present as "empty box until user interacts with zoom/pan".
+  //    The host must be removed via `finally` so the document body is left
+  //    clean even if mermaid.run rejects.
+  assert.match(source, /doc\.body\.appendChild\(host\)/, 'helper must append the host to doc.body so mermaid has measurement context');
+  assert.match(source, /try\s*\{[^]*?finally\s*\{[^]*?host\.remove\(\)/, 'helper must remove the host in a `finally` block so it is cleaned up even when mermaid.run rejects');
+  assert.match(source, /host\.style\.position\s*=\s*['"]absolute['"]/, 'host must be positioned off-screen so it is never painted');
+  assert.match(source, /host\.style\.visibility\s*=\s*['"]hidden['"]/, 'host must be invisible so the user never sees the scratch render');
 });
