@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
-import { buildStandaloneExportHtml, rewriteExportLinks } from '../../../../ui/src/export/exportHtml';
+import { buildStandaloneExportHtml, exportHtmlPath, rewriteExportLinks } from '../../../../ui/src/export/exportHtml';
 
 function file(relativePath: string): MdFile {
   return {
     fsPath: `/workspace/${relativePath}`, relativePath, parts: relativePath.split('/'),
     fileName: relativePath.split('/').at(-1) || relativePath,
-    title: relativePath.replace(/\.mdx?$/, ''), extension: '.md', documentKind: 'markdown',
+    title: relativePath.replace(/\.mdx?$/, ''), extension: relativePath.endsWith('.mdx') ? '.mdx' : '.md', documentKind: 'markdown',
   };
 }
 
@@ -22,6 +22,17 @@ describe('rewriteExportLinks', () => {
   it('preserves external, data, mail and fragment links', () => {
     const html = '<a href="https://example.com">A</a><a href="mailto:x@y.z">B</a><a href="data:text/plain,x">C</a><a href="#local">D</a>';
     expect(rewriteExportLinks(html, source, [source, target])).toBe(html);
+  });
+
+  it('disambiguates same-stem documents with different extensions', () => {
+    const markdown = file('guide/topic.md');
+    const mdx = file('guide/topic.mdx');
+    const exported = [markdown, mdx];
+
+    expect(exportHtmlPath(markdown, exported)).toBe('guide/topic.md.html');
+    expect(exportHtmlPath(mdx, exported)).toBe('guide/topic.mdx.html');
+    expect(rewriteExportLinks('<a href="./topic.mdx">MDX</a>', markdown, exported))
+      .toContain('href="topic.mdx.html"');
   });
 });
 
@@ -43,7 +54,24 @@ describe('buildStandaloneExportHtml', () => {
     expect(html).toContain('mdn-export-topbar');
     expect(html).toContain('mdn-export-sidebar');
     expect(html).toContain('mdn-export-toc');
-    expect(html).toContain('doc-guide-intro');
-    expect(html).toContain('doc-reference-api');
+    expect(html).toContain('doc-guide-intro-md');
+    expect(html).toContain('doc-reference-api-md');
+  });
+
+  it('uses unique merged section IDs for same-stem documents', () => {
+    const markdown = file('guide/topic.md');
+    const mdx = file('guide/topic.mdx');
+    const html = buildStandaloneExportHtml({
+      pages: [
+        { file: markdown, html: '<p>Markdown</p>' },
+        { file: mdx, html: '<p>MDX</p>' },
+      ],
+      layout: 'explorer',
+      title: 'Topics',
+      themeCss: '',
+    });
+
+    expect(html).toContain('id="doc-guide-topic-md"');
+    expect(html).toContain('id="doc-guide-topic-mdx"');
   });
 });
