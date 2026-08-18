@@ -45,7 +45,8 @@ describe('buildStandaloneExportHtml', () => {
   it('builds document-only output without Explorer chrome', () => {
     const html = buildStandaloneExportHtml({ pages: [pages[0]], layout: 'document', title: 'Intro', themeCss: ':root{--accent:#f00}' });
     expect(html).toContain('class="mdn-body mdn-export-page"');
-    expect(html).not.toContain('mdn-export-sidebar');
+    expect(html).not.toContain('<nav class="mdn-export-sidebar"');
+    expect(html).not.toContain('<aside class="mdn-export-toc"');
     expect(html).toContain('--accent:#f00');
   });
 
