@@ -10,6 +10,7 @@ import { enforceZenUmlFont, repairZenUmlTitle } from './mermaidZenUml.ts';
 import {
   applySankeyIntrinsicWidth,
   estimateSankeyIntrinsicWidth,
+  raiseSankeyLabels,
   repairSankeyLabelCollisions,
 } from './mermaidSankey.ts';
 import {
@@ -17,6 +18,7 @@ import {
   buildMermaidThemeVariables,
   readMermaidThemeTokens,
   type MermaidThemeTokens,
+  type MermaidThemeVariableOptions,
 } from './mermaidTheme.ts';
 
 export { enforceMermaidSvgContrast, chooseNeutralMermaidForeground } from './mermaidContrast.ts';
@@ -30,6 +32,7 @@ export { enforceZenUmlFont, repairZenUmlTitle } from './mermaidZenUml.ts';
 export {
   applySankeyIntrinsicWidth,
   estimateSankeyIntrinsicWidth,
+  raiseSankeyLabels,
   repairSankeyLabelCollisions,
 } from './mermaidSankey.ts';
 
@@ -52,6 +55,41 @@ const MERMAID_RESET_SELECTOR = '.mermaid[data-original-code], .mermaid[data-mdn-
 const MAX_RENDER_ATTEMPTS = 2;
 const MERMAID_VIEWBOX_PADDING = 12;
 
+function countPieSections(source: string): number {
+  // Mermaid pie syntax: one slice per line of the form "<label>" : <value>.
+  // Skip frontmatter, comments, directives, and the header/title lines.
+  const lines = source.split(/\r?\n/);
+  let count = 0;
+  let inFrontmatter = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('%%')) continue;
+    if (trimmed === '---') {
+      inFrontmatter = !inFrontmatter;
+      continue;
+    }
+    if (inFrontmatter) continue;
+    if (/^(?:pie|title|showData|accTitle|accDescr)\b/i.test(trimmed)) continue;
+    if (/^["'][^"']+['"]\s*:\s*\d+/i.test(trimmed)) count += 1;
+  }
+  return count;
+}
+
+export function resolveMermaidThemeOptions(
+  kind: MermaidDiagramKind,
+  source: string,
+): MermaidThemeVariableOptions {
+  if (kind === 'pie') {
+    const sectionCount = countPieSections(source);
+    return sectionCount > 4
+      ? { categoricalFills: true, softFillCount: Math.max(sectionCount, 6) }
+      : {};
+  }
+  if (kind === 'quadrant') return { categoricalFills: true, softFillCount: 4 };
+  if (kind === 'xychart') return { categoricalFills: true, softFillCount: 6 };
+  return {};
+}
+
 export function enforceC4Font(svg: SVGSVGElement, fontFamily: string): void {
   if (typeof svg.querySelectorAll !== 'function') return;
   svg.querySelectorAll<any>('text, tspan, foreignObject *').forEach((element: any) => {
@@ -61,7 +99,7 @@ export function enforceC4Font(svg: SVGSVGElement, fontFamily: string): void {
   });
 }
 
-function resolveMermaidFontFamily(doc: Pick<Document, 'documentElement' | 'defaultView'> | undefined): string {
+export function resolveMermaidFontFamily(doc: Pick<Document, 'documentElement' | 'defaultView'> | undefined): string {
   const style = doc?.defaultView?.getComputedStyle(doc.documentElement);
   return style?.getPropertyValue('--font-mermaid').trim() || 'var(--font-mermaid)';
 }
@@ -90,6 +128,7 @@ export function polishMermaidSvg(svg: SVGSVGElement, kind?: MermaidDiagramKind):
       element.setAttribute('stroke-linejoin', 'round');
     }
   });
+  if (kind === 'sankey') raiseSankeyLabels(svg);
 }
 
 export function fitMermaidSvg(svg: SVGSVGElement, padding = MERMAID_VIEWBOX_PADDING): void {
@@ -157,7 +196,7 @@ export function applyGanttIntrinsicWidth(
   return width;
 }
 
-function prepareMermaidSvg(
+export function prepareMermaidSvg(
   svg: SVGSVGElement,
   kind: ReturnType<typeof detectMermaidDiagramKind>,
   source: string,
@@ -168,14 +207,14 @@ function prepareMermaidSvg(
   polishMermaidSvg(svg, kind);
   if (kind === 'c4') enforceC4Font(svg, fontFamily);
   // Diagrams that produce correct intrinsic dimensions themselves — don't refit their viewBox.
-  // Architecture: has its own icon/label system.
-  // ZenUML/Sankey: sized by special helpers.
+  // Architecture/ZenUML/Sankey/Packet/Kanban: Mermaid manages their canvas coordinates.
   // Sequence: getBBox() on the first <g> only sees one actor, clipping the rest.
-  const preserveNativeCanvas = kind === 'zenuml' || kind === 'sankey' || kind === 'architecture';
+  const preserveNativeCanvas = kind === 'zenuml' || kind === 'sankey' || kind === 'architecture' || kind === 'packet' || kind === 'kanban';
   const skipFitSvg = preserveNativeCanvas || kind === 'sequence';
-  // Architecture and sequence diagrams have their own dedicated SVG styles and theme colors;
-  // running the generic contrast pass over them causes labels to turn dark/invisible in dark mode.
-  if (kind !== 'architecture' && kind !== 'sequence') {
+  // Diagrams with dedicated styles and theme colors (architecture, sequence, zenuml, packet, kanban)
+  // manage their own text contrast via CSS; running generic heuristic contrast pass on them causes label artifacts.
+  const hasDedicatedThemeStyles = kind === 'architecture' || kind === 'sequence' || kind === 'zenuml' || kind === 'packet' || kind === 'kanban';
+  if (!hasDedicatedThemeStyles) {
     enforceMermaidSvgContrast(svg, tokens, { regionAware: !preserveNativeCanvas });
   }
   if (kind === 'zenuml') {
@@ -187,8 +226,8 @@ function prepareMermaidSvg(
     repairSankeyLabelCollisions(svg);
   }
   if (kind === 'architecture') repairArchitectureLabelCollisions(svg);
-  if (kind === 'sequence') fitSequenceSvg(svg);
-  if (!skipFitSvg) fitMermaidSvg(svg);
+  if (skipFitSvg) fitSequenceSvg(svg);
+  else fitMermaidSvg(svg);
   if (kind === 'gantt') applyGanttIntrinsicWidth(svg, wrapper, source);
 }
 
@@ -251,7 +290,6 @@ export async function enhanceMermaid(
   const nodes = getPendingNodes(root, options.nodes);
   const doc = options.document ?? (typeof document !== 'undefined' ? document : undefined);
   const themeTokens = readMermaidThemeTokens(doc, options.isDark);
-  const themeVariables = buildMermaidThemeVariables(themeTokens, options.isDark);
   const fontFamily = resolveMermaidFontFamily(doc);
 
   for (const node of nodes) {
@@ -279,6 +317,11 @@ export async function enhanceMermaid(
     if (kind === 'c4' && layoutConfig.c4) {
       Object.assign(layoutConfig.c4, buildMermaidC4ThemeConfig(themeTokens));
     }
+    const themeVariables = buildMermaidThemeVariables(
+      themeTokens,
+      options.isDark,
+      resolveMermaidThemeOptions(kind, originalCode),
+    );
     mermaid.initialize({
       startOnLoad: false,
       securityLevel: 'loose',

@@ -167,6 +167,23 @@
   overflow: visible !important;
 }
 
+/* Sankey diagrams: preserve vibrant flow ribbon colors and disable multiply blending in dark mode */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sankey"] .mermaid .link,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sankey"] .mermaid path.link,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sankey"] .link,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sankey"] path.link {
+  mix-blend-mode: normal !important;
+  stroke-opacity: 0.75 !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sankey"] .mermaid .sankey-label-fg,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sankey"] .sankey-label-fg {
+  fill: var(--tx) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sankey"] .mermaid .sankey-label-bg,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sankey"] .sankey-label-bg {
+  stroke: var(--bg) !important;
+}
+
 /* ZenUML owns complex nested fragments; keep the full generated SVG visible in document view. */
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] {
   max-height: none;
@@ -211,57 +228,55 @@
 }
 /* Sequence typography: apply custom Mermaid font everywhere */
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid tspan {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text.actor,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageText,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] text,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] tspan,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] text.actor,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .messageText {
   font-family: var(--font-mermaid) !important;
   text-rendering: geometricPrecision;
+  fill: var(--tx) !important;
 }
 /* Actor boxes & man icons */
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid rect.actor {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid rect.actor,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] rect.actor {
   fill: var(--bg-s, #ffffff) !important;
   stroke: var(--accent, #3b82f6) !important;
   rx: 6px;
   ry: 6px;
 }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-man circle,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-man line {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-man line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .actor-man circle,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .actor-man line {
   stroke: var(--accent, #3b82f6) !important;
   fill: var(--bg-s, #ffffff) !important;
 }
-/* Sequence text: ensure high-contrast foreground across both light and dark modes */
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid tspan,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text.actor,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid text.actor tspan,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-man text,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageText,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .labelText,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .labelText > tspan,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .loopText,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .loopText > tspan,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .sectionTitle,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .sectionTitle > tspan,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .noteText,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .noteText > tspan {
-  fill: var(--tx) !important;
-}
 /* Lifelines, message lines, loops, and arrowheads */
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-line {
-  stroke: var(--bd-s, #cccccc) !important;
-}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .actor-line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .actor-line { stroke: var(--bd-s, #cccccc) !important; }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine0,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .messageLine1,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .loopLine {
-  stroke: var(--accent, #3b82f6) !important;
-}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .loopLine,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .messageLine0,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .messageLine1,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .loopLine { stroke: var(--accent, #3b82f6) !important; }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid [id$="-arrowhead"] path,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid [id$="-crosshead"] path,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid marker path {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid marker path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] [id$="-arrowhead"] path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] [id$="-crosshead"] path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] marker path {
   fill: var(--accent, #3b82f6) !important;
   stroke: var(--accent, #3b82f6) !important;
 }
 /* Group frames, alt/loop boxes, and notes */
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .labelBox,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .note {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="sequence"] .mermaid .note,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .labelBox,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="sequence"] .note {
   fill: var(--bg-s, #ffffff) !important;
   stroke: var(--bd-s, #cccccc) !important;
   rx: 4px;
@@ -270,32 +285,238 @@
 
 /* ER diagrams: harmonious dark/light zebra rows and high-contrast text */
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-odd path,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-odd rect {
-  fill: var(--bg-s) !important;
-}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-odd rect,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .row-rect-odd path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .row-rect-odd rect { fill: var(--bg-s) !important; }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-even path,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-even rect {
-  fill: var(--bg-e, var(--bg)) !important;
-}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .row-rect-even rect,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .row-rect-even path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .row-rect-even rect { fill: var(--bg-e, var(--bg)) !important; }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .outer-path path,
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .outer-path rect,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .entityBox {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .entityBox,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .outer-path path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .outer-path rect,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .entityBox {
   fill: var(--bg-s) !important;
   stroke: var(--bd-s) !important;
 }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid text,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid tspan {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid tspan,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] text,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] tspan {
   fill: var(--tx) !important;
   font-family: var(--font-mermaid) !important;
   text-rendering: geometricPrecision;
 }
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .relationshipLine {
-  stroke: var(--accent) !important;
-}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .relationshipLine,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .relationshipLine { stroke: var(--accent) !important; }
 .content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid marker path,
-.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .marker {
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="er"] .mermaid .marker,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] marker path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="er"] .marker {
   stroke: var(--accent) !important;
   fill: var(--accent) !important;
 }
 
+/* Packet diagrams: dark surface background for shapes and light contrast text in dark mode */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="packet"] .mermaid rect.packetBlock,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="packet"] rect.packetBlock {
+  fill: var(--bg-s) !important;
+  stroke: var(--bd-s) !important;
+  rx: 4px;
+  ry: 4px;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="packet"] .mermaid text.packetLabel,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="packet"] text.packetLabel {
+  fill: var(--tx) !important;
+  font-family: var(--font-mermaid) !important;
+  font-weight: 500;
+  text-rendering: geometricPrecision;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="packet"] .mermaid text.packetByte,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="packet"] text.packetByte {
+  fill: var(--tx2) !important;
+  font-family: var(--font-mono, var(--font-mermaid)) !important;
+  text-rendering: geometricPrecision;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="packet"] .mermaid text.packetTitle,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="packet"] text.packetTitle {
+  fill: var(--tx) !important;
+  font-family: var(--font-mermaid) !important;
+  font-weight: 600;
+  text-rendering: geometricPrecision;
+}
 
+/* ZenUML diagrams: theme-aware background, light shapes, arrows, and high-contrast typography */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid rect.frame-border-inner,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] rect.frame-border-inner {
+  fill: var(--bg-s, #ffffff) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid rect.frame-border-outer,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid line.frame-header-line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] rect.frame-border-outer,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] line.frame-header-line {
+  fill: var(--bd-s, #cccccc) !important;
+  stroke: var(--bd-s, #cccccc) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid line.lifeline,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .lifeline line,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .lifeline,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] line.lifeline,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .lifeline line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .lifeline {
+  stroke: var(--accent, #3b82f6) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid rect.participant-box,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .participant rect,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .participant-box,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid rect.occurrence,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .occurrence rect,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .occurrence,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] rect.participant-box,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .participant rect,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .participant-box,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] rect.occurrence,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .occurrence rect,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .occurrence {
+  fill: var(--bg-s) !important;
+  stroke: var(--accent, #3b82f6) !important;
+  rx: 4px;
+  ry: 4px;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .participant-icon *,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .participant svg *,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .participant-icon *,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .participant svg * {
+  stroke: var(--accent, #3b82f6) !important;
+  fill: var(--accent, #3b82f6) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid line.message-line,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid line.return-line,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid line.fragment-separator,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .message line,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .return line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] line.message-line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] line.return-line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] line.fragment-separator,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .message line,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .return line { stroke: var(--tx) !important; }
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .message path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .message polygon,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .return path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .return polygon,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .arrow-head path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .arrow-head polygon,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .arrow-open path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .self-call path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .fragment svg path,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .fragment svg circle,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .fragment svg polygon,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .message path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .message polygon,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .return path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .return polygon,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .arrow-head path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .arrow-head polygon,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .arrow-open path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .self-call path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .fragment svg path,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .fragment svg circle,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .fragment svg polygon {
+  stroke: var(--tx) !important;
+  fill: var(--tx) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid .self-call path.self-call-arc,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] .self-call path.self-call-arc { fill: none !important; }
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid rect.fragment-border,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] rect.fragment-border {
+  stroke: var(--tx2, #888888) !important;
+  fill: transparent !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid rect.fragment-header,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] rect.fragment-header {
+  fill: var(--bg-e, var(--bg-s)) !important;
+  stroke: var(--tx2, #888888) !important;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid tspan,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.message-label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.return-label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.fragment-label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.fragment-condition,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.fragment-section-label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.participant-label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.frame-title,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] tspan,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.message-label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.return-label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.fragment-label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.fragment-condition,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.fragment-section-label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.participant-label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.frame-title {
+  fill: var(--tx) !important;
+  color: var(--tx) !important;
+  font-family: var(--font-mermaid) !important;
+  text-rendering: geometricPrecision;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="zenuml"] .mermaid text.seq-number,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="zenuml"] text.seq-number {
+  fill: var(--tx2) !important;
+  font-family: var(--font-mono, var(--font-mermaid)) !important;
+}
+
+/* Kanban board: theme-aware column headers, cards, and high-contrast text in dark & light mode */
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .cluster-label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .cluster-label text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .cluster text,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .cluster-label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .cluster-label text,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .cluster text {
+  fill: var(--tx) !important;
+  color: var(--tx) !important;
+  font-family: var(--font-mermaid) !important;
+  font-weight: 600;
+  text-rendering: geometricPrecision;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .cluster rect,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .cluster rect {
+  fill: color-mix(in srgb, var(--bg-s) 40%, transparent) !important;
+  stroke: var(--bd-s) !important;
+  rx: 6px;
+  ry: 6px;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .node rect,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .node .basic,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .node rect,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .node .basic {
+  fill: var(--bg-s) !important;
+  stroke: var(--bd) !important;
+  rx: 4px;
+  ry: 4px;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .node text,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .node .label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .node foreignObject,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .kanban-label,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .kanban-item-title,
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .kanban-item-desc,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .node text,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .node .label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .node foreignObject,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .kanban-label,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .kanban-item-title,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .kanban-item-desc {
+  fill: var(--tx) !important;
+  color: var(--tx) !important;
+  font-family: var(--font-mermaid) !important;
+  text-rendering: geometricPrecision;
+}
+.content .mdn-body .mdn-mermaid-wrap[data-mdn-mermaid-kind="kanban"] .mermaid .kanban-ticket-link,
+.mdn-modal-content-svg[data-mdn-mermaid-kind="kanban"] .kanban-ticket-link {
+  fill: var(--tx2) !important;
+  color: var(--tx2) !important;
+  font-family: var(--font-mono, var(--font-mermaid)) !important;
+}

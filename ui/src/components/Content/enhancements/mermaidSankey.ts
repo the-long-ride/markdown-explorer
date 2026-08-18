@@ -149,10 +149,18 @@ function expandViewBoxForLabels(svg: SVGSVGElement, labels: LogicalLabel[], view
   svg.setAttribute('viewBox', `${viewBox.x} ${top} ${viewBox.width} ${bottom - top}`);
 }
 
+export function raiseSankeyLabels(svg: SVGSVGElement): void {
+  const nodeLabels = typeof svg.querySelector === 'function' ? svg.querySelector<SVGGElement>('g.node-labels') : null;
+  if (nodeLabels && nodeLabels.parentElement) {
+    nodeLabels.parentElement.appendChild(nodeLabels);
+  }
+}
+
 export function repairSankeyLabelCollisions(
   svg: SVGSVGElement,
   options: SankeyLabelRepairOptions = {},
 ): number {
+  raiseSankeyLabels(svg);
   const labels = collectLogicalLabels(svg);
   if (labels.length < 2) return 0;
 

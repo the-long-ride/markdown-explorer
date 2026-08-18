@@ -79,7 +79,13 @@ test('Mermaid diagram family detection covers layout-sensitive families', async 
     ['mindmap\n root((Root))', 'mindmap'],
     ['sankey-beta\nA,B,10', 'sankey'],
     ['zenuml\nA->B: call', 'zenuml'],
-    ['pie\ntitle Share\n"A" : 1', 'other'],
+    ['packet-beta\n0-3: "Version"', 'packet'],
+    ['packet\n0-3: "Version"', 'packet'],
+    ['kanban\nBacklog\n[Task]', 'kanban'],
+    ['pie\ntitle Share\n"A" : 1', 'pie'],
+    ['quadrantChart\n  title Reach and engagement\n  x-axis Low Reach --> High Reach\n  y-axis Low Engagement --> High Engagement\n  quadrant-1 Improve Engagement\n  quadrant-2 Expand Reach\n  quadrant-3 Re-evaluate\n  quadrant-4 Maintain', 'quadrant'],
+    ['xychart-beta\n  title "Sales"\n  x-axis "Month" ["Jan", "Feb", "Mar"]\n  y-axis "Revenue" 0 --> 100\n  bar [10, 40, 80]', 'xychart'],
+    ['xychart\n  title "Sales"\n  x-axis "Month" ["Jan", "Feb", "Mar"]\n  y-axis "Revenue" 0 --> 100\n  bar [10, 40, 80]', 'xychart'],
   ];
   for (const [source, expected] of cases) assert.equal(detectMermaidDiagramKind(source), expected, source);
 });
@@ -235,3 +241,162 @@ test('Mermaid pie defaults stay neutral and keep section text readable', async (
     assert.ok(theme.mermaidContrastRatio(variables.pieSectionTextColor, fill) >= 4.5, `pie text must be readable on ${fill}`);
   }
 });
+
+test('Mermaid categorical palette builder mixes anchors with surface and rotates when fills exceed anchor count', async () => {
+  const { buildSoftCategoricalFills } = await loadTheme();
+  const tokens = {
+    surface: '#191b20',
+    chart1: '#ff9130', chart2: '#34d399', chart3: '#f87171',
+    chart4: '#60a5fa', chart5: '#fbbf24', chart6: '#ec4899',
+  };
+  // Sanity: 0 / negative counts return empty.
+  assert.equal(buildSoftCategoricalFills(tokens, 0).length, 0);
+  assert.equal(buildSoftCategoricalFills(tokens, -1).length, 0);
+
+  // 6 pairwise-distinct anchors yield 6 distinct soft fills.
+  const fills = buildSoftCategoricalFills(tokens, 6);
+  assert.equal(fills.length, 6);
+  assert.equal(new Set(fills).size, 6, `expected 6 distinct soft fills; got: ${fills.join(', ')}`);
+
+  // Mix is half-and-half: each fill must differ from surface and from every pure anchor.
+  assert.ok(fills.every((f) => f !== tokens.surface));
+  assert.ok(fills.every((f) => !Object.values(tokens).includes(f)));
+
+  // Spot-check the first fill: surface rgb(25,27,32) + chart1 rgb(255,145,48) at 0.5 = rgb(140,86,40) = #8c5628.
+  assert.equal(fills[0], '#8c5628');
+
+  // Cycles past 6: index 6 wraps back to 0.
+  const over = buildSoftCategoricalFills(tokens, 8);
+  assert.equal(over.length, 8);
+  assert.equal(over[6], over[0]);
+  assert.equal(over[7], over[1]);
+});
+
+test('Mermaid categorical palette builder dedupes repeated anchor hues', async () => {
+  const { buildSoftCategoricalFills } = await loadTheme();
+  const tokens = {
+    surface: '#191b20',
+    chart1: '#ff9130', chart2: '#ff9130', chart3: '#34d399',
+    chart4: '#34d399', chart5: '#60a5fa', chart6: '#60a5fa',
+  };
+  // 6 anchor slots collapse to 3 unique hues after dedupe; the fills rotate across those 3.
+  const fills = buildSoftCategoricalFills(tokens, 6);
+  assert.equal(fills.length, 6);
+  assert.equal(new Set(fills).size, 3);
+  assert.equal(fills[3], fills[0]);
+  assert.equal(fills[4], fills[1]);
+  assert.equal(fills[5], fills[2]);
+});
+
+test('Mermaid categorical fills unlock pie/quadrant/xy fills when categoricalFills is true', async () => {
+  const { buildMermaidThemeVariables, buildSoftCategoricalFills } = await loadTheme();
+  const tokens = {
+    background: '#101114', surface: '#191b20', text: '#f5f7fa', mutedText: '#a8b0bd', border: '#434956',
+    accent: '#8b5cf6', success: '#22c55e', danger: '#ef4444',
+    chart1: '#ff9130', chart2: '#34d399', chart3: '#f87171', chart4: '#60a5fa',
+    chart5: '#fbbf24', chart6: '#ec4899',
+  };
+  const soft = buildSoftCategoricalFills(tokens, 6);
+  const variables = buildMermaidThemeVariables(tokens, true, { categoricalFills: true });
+
+  assert.equal(variables.pie1, soft[0]);
+  assert.equal(variables.pie2, soft[1]);
+  assert.equal(variables.pie3, soft[2]);
+  assert.equal(variables.pie4, soft[3]);
+  assert.equal(variables.pie5, soft[4]);
+  assert.equal(variables.pie6, soft[5]);
+
+  assert.equal(variables.quadrant1Fill, soft[0]);
+  assert.equal(variables.quadrant4Fill, soft[3]);
+
+  // XY chart palette expands to 6 entries (single-token hex per fill so the comma-split parser stays well-formed).
+  const xyPalette = variables.xyChart.plotColorPalette.split(',');
+  assert.equal(xyPalette.length, 6);
+
+  // Default opts: fills stay neutral and quadrant keys stay absent.
+  const def = buildMermaidThemeVariables(tokens, true);
+  const defPie = [def.pie1, def.pie2, def.pie3, def.pie4, def.pie5, def.pie6];
+  assert.ok(defPie.every((f) => !soft.includes(f)), 'default pie fills should not be soft categorical');
+  assert.equal(Object.prototype.hasOwnProperty.call(def, 'quadrant1Fill'), false, 'quadrant1Fill must not be set when categoricalFills is unset');
+  assert.equal(def.xyChart.plotColorPalette.split(',').length, 3, 'default xyChart palette stays at 3 entries');
+});
+
+test('Mermaid per-kind theme options turn categorical for pie>4 sections, quadrant, and xychart', async () => {
+  const { resolveMermaidThemeOptions } = await import('../../ui/src/components/Content/enhancements/mermaidRendering.ts');
+
+  // Pie with up to 4 sections stays neutral.
+  assert.deepEqual(
+    resolveMermaidThemeOptions('pie', 'pie showData\n"A": 1\n"B": 2\n"C": 3\n"D": 4'),
+    {},
+  );
+
+  // Pie with >4 sections flips categorical and stretches the fill count to match the slice count.
+  const over = resolveMermaidThemeOptions('pie', 'pie\n"A": 1\n"B": 2\n"C": 3\n"D": 4\n"E": 5\n"F": 6');
+  assert.equal(over.categoricalFills, true);
+  assert.equal(over.softFillCount, 6);
+
+  // Quadrant always categorical with 4 fills (one per quadrant).
+  const quadrant = resolveMermaidThemeOptions('quadrant', 'quadrantChart\nx-axis Low Reach --> High Reach');
+  assert.equal(quadrant.categoricalFills, true);
+  assert.equal(quadrant.softFillCount, 4);
+
+  // xychart gets a 6-color palette for multi-series.
+  const xychart = resolveMermaidThemeOptions('xychart', 'xychart-beta\nx-axis [1,2,3]\nbar [1,2,3]');
+  assert.equal(xychart.categoricalFills, true);
+  assert.equal(xychart.softFillCount, 6);
+
+  // Gantt stays neutral (the categorical palette is not applied to gantt sections).
+  assert.deepEqual(resolveMermaidThemeOptions('gantt', 'gantt\nsection A\ntask1 :a, 1d\nsection B\ntask2 :b, 1d'), {});
+
+  // Neutral kinds still get an empty options bag.
+  assert.deepEqual(resolveMermaidThemeOptions('flowchart', 'flowchart TD\nA-->B'), {});
+});
+
+test('Mermaid diagram detection handles frontmatter, comments, and untagged sources', async () => {
+  const { detectMermaidDiagramKind } = await loadLayout();
+  assert.equal(detectMermaidDiagramKind('%% comment\nflowchart TD\nA-->B'), 'flowchart');
+  assert.equal(detectMermaidDiagramKind('---\nconfig:\n  theme: dark\n---\nsequenceDiagram\nA->>B: hi'), 'sequence');
+  assert.equal(detectMermaidDiagramKind('%%{init: {"theme": "base"}}%%\nkanban\nBacklog\n[Task]'), 'kanban');
+  assert.equal(detectMermaidDiagramKind('zenuml\nUser->Preview: Click'), 'zenuml');
+  assert.equal(detectMermaidDiagramKind('packet-beta\n0-15: "Port"'), 'packet');
+  assert.equal(detectMermaidDiagramKind('architecture-beta\ngroup app(cloud)'), 'architecture');
+  assert.equal(detectMermaidDiagramKind('architecture\ngroup app(cloud)'), 'architecture');
+});
+
+test('MediaGallery accurately resolves items when clicking on nested SVG elements', async () => {
+  const { createMediaGallery } = await import('../../ui/src/components/Modal/mediaGallery.ts');
+  const img1 = { tagName: 'IMG', currentSrc: 'img1.png', src: 'img1.png', closest: () => null };
+  const svg1 = { tagName: 'svg', outerHTML: '<svg id="zen1"></svg>', getAttribute: () => null };
+  const zenWrap = {
+    tagName: 'DIV',
+    dataset: { mdnMermaidKind: 'zenuml' },
+    querySelector: (sel) => (sel === 'svg' ? svg1 : null),
+    closest: (sel) => (sel.includes('mdn-mermaid-wrap') ? zenWrap : null),
+    contains: (el) => el === zenWrap || el === zenText,
+  };
+  const zenText = {
+    tagName: 'TEXT',
+    closest: (sel) => (sel.includes('mdn-mermaid-wrap') ? zenWrap : null),
+    contains: () => false,
+  };
+  const svg2 = { tagName: 'svg', outerHTML: '<svg id="kan1"></svg>', getAttribute: () => null };
+  const kanWrap = {
+    tagName: 'DIV',
+    dataset: { mdnMermaidKind: 'kanban' },
+    querySelector: (sel) => (sel === 'svg' ? svg2 : null),
+    closest: (sel) => (sel.includes('mdn-mermaid-wrap') ? kanWrap : null),
+    contains: (el) => el === kanWrap,
+  };
+
+  const fakeRoot = {
+    querySelectorAll: () => [img1, zenWrap, kanWrap],
+  };
+
+  const gallery = createMediaGallery(zenText, fakeRoot);
+  assert.ok(gallery, 'Gallery should be created');
+  assert.equal(gallery.items.length, 3, 'Should find 1 image and 2 diagrams');
+  assert.equal(gallery.currentIndex, 1, 'Clicking on nested text in 1st diagram should select index 1');
+  assert.equal(gallery.items[1].kind, 'zenuml');
+  assert.equal(gallery.items[2].kind, 'kanban');
+});
+

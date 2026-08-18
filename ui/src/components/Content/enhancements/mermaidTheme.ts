@@ -11,6 +11,10 @@ export interface MermaidThemeTokens {
   readonly chart2: string;
   readonly chart3: string;
   readonly chart4: string;
+  /** Optional fifth categorical anchor; resolves from `--chart-5` when the theme exposes it. */
+  readonly chart5?: string;
+  /** Optional sixth categorical anchor; resolves from `--chart-6` when the theme exposes it. */
+  readonly chart6?: string;
 }
 
 
@@ -176,6 +180,8 @@ const DARK_FALLBACK: MermaidThemeTokens = {
   chart2: '#34d399',
   chart3: '#f59e0b',
   chart4: '#60a5fa',
+  chart5: '#fbbf24',
+  chart6: '#ec4899',
 };
 
 const LIGHT_FALLBACK: MermaidThemeTokens = {
@@ -191,11 +197,13 @@ const LIGHT_FALLBACK: MermaidThemeTokens = {
   chart2: '#0f9f8f',
   chart3: '#d97706',
   chart4: '#2563eb',
+  chart5: '#f59e0b',
+  chart6: '#db2777',
 };
 
-function resolved(style: CSSStyleDeclaration, name: string, fallback: string): string {
+function resolved(style: CSSStyleDeclaration, name: string, fallback: string | undefined): string {
   const value = style.getPropertyValue(name).trim();
-  return value || fallback;
+  return value || fallback || '';
 }
 
 export function readMermaidThemeTokens(
@@ -219,6 +227,8 @@ export function readMermaidThemeTokens(
     chart2: resolved(style, '--chart-2', fallback.chart2),
     chart3: resolved(style, '--chart-3', fallback.chart3),
     chart4: resolved(style, '--chart-4', fallback.chart4),
+    chart5: resolved(style, '--chart-5', fallback.chart5),
+    chart6: resolved(style, '--chart-6', fallback.chart6),
   };
 }
 
@@ -232,13 +242,17 @@ interface MermaidAccessiblePalette {
   readonly neutralFills: readonly string[];
 }
 
+function channelToHex(channel: number): string {
+  return Math.min(255, Math.max(0, channel)).toString(16).padStart(2, '0');
+}
+
 function mixMermaidColors(base: string, toward: string, amount: number): string {
   const baseColor = resolveOpaqueColor(base);
   const towardColor = resolveOpaqueColor(toward);
   if (!baseColor || !towardColor) return base;
   const ratio = Math.min(1, Math.max(0, amount));
   const channel = (from: number, to: number) => Math.round(from + (to - from) * ratio);
-  return `rgb(${channel(baseColor.r, towardColor.r)}, ${channel(baseColor.g, towardColor.g)}, ${channel(baseColor.b, towardColor.b)})`;
+  return `#${channelToHex(channel(baseColor.r, towardColor.r))}${channelToHex(channel(baseColor.g, towardColor.g))}${channelToHex(channel(baseColor.b, towardColor.b))}`;
 }
 
 function buildReadableNeutralFills(surface: string, text: string): string[] {
@@ -248,6 +262,32 @@ function buildReadableNeutralFills(surface: string, text: string): string[] {
     fills.push(mermaidContrastRatio(text, candidate) >= 4.5 ? candidate : fills[fills.length - 1]);
   }
   return fills;
+}
+
+/** Soft categorical palette for legend-heavy diagrams: mix each chart anchor with surface at 50% so every fill shares the surface luminance (one section-text color stays readable across the palette, with region-aware contrast pass fixing any local misses). */
+const SOFT_CATEGORICAL_ANCHORS: Array<keyof MermaidThemeTokens> = [
+  'chart1', 'chart2', 'chart3', 'chart4', 'chart5', 'chart6',
+];
+
+export function buildSoftCategoricalFills(tokens: MermaidThemeTokens, count: number): string[] {
+  const uniqueAnchors: string[] = [];
+  for (const key of SOFT_CATEGORICAL_ANCHORS) {
+    const value = tokens[key];
+    if (value && !uniqueAnchors.includes(value)) uniqueAnchors.push(value);
+  }
+  if (uniqueAnchors.length === 0 || count <= 0) return [];
+  const fills: string[] = [];
+  for (let index = 0; index < count; index += 1) {
+    fills.push(mixMermaidColors(tokens.surface, uniqueAnchors[index % uniqueAnchors.length], 0.5));
+  }
+  return fills;
+}
+
+export interface MermaidThemeVariableOptions {
+  /** When true, replace the monochrome neutral fills used by pie/quadrant with the soft categorical palette. */
+  readonly categoricalFills?: boolean;
+  /** How many soft fills to generate when `categoricalFills` is true. Defaults to 6. */
+  readonly softFillCount?: number;
 }
 
 function buildAccessiblePalette(tokens: MermaidThemeTokens): MermaidAccessiblePalette {
@@ -296,11 +336,34 @@ function buildAccessiblePalette(tokens: MermaidThemeTokens): MermaidAccessiblePa
 export function buildMermaidThemeVariables(
   tokens: MermaidThemeTokens,
   isDark: boolean,
+  options: MermaidThemeVariableOptions = {},
 ): Record<string, any> {
   const labelBackground = tokens.background;
   const sectionAlt = tokens.background;
   const accessible = buildAccessiblePalette(tokens);
   const [neutral1, neutral2, neutral3, neutral4, neutral5, neutral6] = accessible.neutralFills;
+  const softFillCount = options.softFillCount ?? 6;
+  const softFills = options.categoricalFills ? buildSoftCategoricalFills(tokens, Math.max(softFillCount, 6)) : [];
+  const pickSoft = (index: number, fallback: string): string => softFills[index] ?? fallback;
+  const categoricalOverlay: Record<string, any> = options.categoricalFills ? {
+    pie1: pickSoft(0, neutral1),
+    pie2: pickSoft(1, neutral2),
+    pie3: pickSoft(2, neutral3),
+    pie4: pickSoft(3, neutral4),
+    pie5: pickSoft(4, neutral5),
+    pie6: pickSoft(5, neutral6),
+    quadrant1Fill: pickSoft(0, sectionAlt),
+    quadrant2Fill: pickSoft(1, sectionAlt),
+    quadrant3Fill: pickSoft(2, sectionAlt),
+    quadrant4Fill: pickSoft(3, sectionAlt),
+    quadrant1TextFill: accessible.backgroundText,
+    quadrant2TextFill: accessible.backgroundText,
+    quadrant3TextFill: accessible.backgroundText,
+    quadrant4TextFill: accessible.backgroundText,
+  } : {};
+  const xyPalette = (options.categoricalFills && softFills.length > 0)
+    ? softFills.join(', ')
+    : [accessible.structureAccent, accessible.backgroundBorder, accessible.backgroundText].join(', ');
   return {
     background: tokens.background, mainBkg: tokens.surface,
     primaryColor: tokens.surface, primaryTextColor: accessible.surfaceText, primaryBorderColor: accessible.surfaceBorder,
@@ -335,8 +398,9 @@ export function buildMermaidThemeVariables(
       backgroundColor: tokens.background, titleColor: accessible.backgroundText, dataLabelColor: accessible.backgroundText,
       xAxisLabelColor: accessible.backgroundText, xAxisTitleColor: accessible.backgroundText, xAxisTickColor: accessible.backgroundBorder, xAxisLineColor: accessible.backgroundBorder,
       yAxisLabelColor: accessible.backgroundText, yAxisTitleColor: accessible.backgroundText, yAxisTickColor: accessible.backgroundBorder, yAxisLineColor: accessible.backgroundBorder,
-      plotColorPalette: [accessible.structureAccent, accessible.backgroundBorder, accessible.backgroundText].join(', '),
+      plotColorPalette: xyPalette,
     },
+    ...categoricalOverlay,
   };
 }
 

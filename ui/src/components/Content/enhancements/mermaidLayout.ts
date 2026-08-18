@@ -13,6 +13,11 @@ export type MermaidDiagramKind =
   | 'mindmap'
   | 'sankey'
   | 'zenuml'
+  | 'packet'
+  | 'kanban'
+  | 'pie'
+  | 'quadrant'
+  | 'xychart'
   | 'other';
 
 function firstMeaningfulLine(source: string): string {
@@ -49,13 +54,18 @@ export function detectMermaidDiagramKind(source: string): MermaidDiagramKind {
   if (/^gitGraph\b/i.test(first)) return 'gitGraph';
   if (/^classDiagram\b/i.test(first)) return 'class';
   if (/^stateDiagram(?:-v2)?\b/i.test(first)) return 'state';
-  if (/^architecture-beta\b/i.test(first)) return 'architecture';
+  if (/^architecture(?:-beta)?\b/i.test(first)) return 'architecture';
   if (/^block(?:-beta)?\b/i.test(first)) return 'block';
   if (/^C4(?:Context|Container|Component|Dynamic|Deployment)\b/i.test(first)) return 'c4';
   if (/^erDiagram\b/i.test(first)) return 'er';
   if (/^mindmap\b/i.test(first)) return 'mindmap';
   if (/^sankey(?:-beta)?\b/i.test(first)) return 'sankey';
   if (/^zenuml\b/i.test(first)) return 'zenuml';
+  if (/^packet(?:-beta)?\b/i.test(first)) return 'packet';
+  if (/^kanban\b/i.test(first)) return 'kanban';
+  if (/^pie\b/i.test(first)) return 'pie';
+  if (/^quadrantChart\b/i.test(first)) return 'quadrant';
+  if (/^xychart(?:-beta)?\b/i.test(first)) return 'xychart';
   return 'other';
 }
 
