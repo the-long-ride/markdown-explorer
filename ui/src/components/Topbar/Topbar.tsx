@@ -16,6 +16,7 @@ import { getEnabledShortcut } from '../../utils/shortcuts';
 
 interface TopbarProps {
   onSettingsOpen: () => void;
+  onExportOpen: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
   onCopyFile: (button?: HTMLElement | null) => void;
@@ -60,7 +61,6 @@ export function getBreadcrumbItems(relativePath: string, welcomePageLabel: strin
     return items.reduce((sum, item) => sum + item.text.length, 0) + (items.length - 1) * 3;
   };
 
-  // Tier 1: Full path (if it fits)
   const fullItems: BreadcrumbItem[] = parts.map((p, idx) => ({
     text: p,
     isBold: idx === N - 1
@@ -69,7 +69,6 @@ export function getBreadcrumbItems(relativePath: string, welcomePageLabel: strin
     return fullItems;
   }
 
-  // Tier 2: root / sub-root / ... / parent / file.md (for N >= 4)
   if (N >= 4) {
     const items = [
       { text: parts[0] },
@@ -83,7 +82,6 @@ export function getBreadcrumbItems(relativePath: string, welcomePageLabel: strin
     }
   }
 
-  // Tier 3: root / ... / parent / file.md (for N >= 3)
   if (N >= 3) {
     const items = [
       { text: parts[0] },
@@ -96,7 +94,6 @@ export function getBreadcrumbItems(relativePath: string, welcomePageLabel: strin
     }
   }
 
-  // Tier 4: ... / parent / file.md (for N >= 2)
   if (N >= 2) {
     const parent = parts[N - 2];
     const items = [
@@ -108,7 +105,6 @@ export function getBreadcrumbItems(relativePath: string, welcomePageLabel: strin
       return items;
     }
 
-    // Try truncating parent if it's too long
     const truncatedParent = parent.length > 28 ? parent.slice(0, 25) + '...' : parent;
     const itemsTruncatedParent = [
       { text: '...', isEllipsis: true },
@@ -120,22 +116,21 @@ export function getBreadcrumbItems(relativePath: string, welcomePageLabel: strin
     }
   }
 
-  // Tier 5: ... / truncated_filename.md (or just truncated_filename.md if N == 1)
   const truncatedFile = truncateFilename(filename, 48);
   if (N >= 2) {
     return [
       { text: '...', isEllipsis: true },
       { text: truncatedFile, isBold: true }
     ];
-  } else {
-    return [
-      { text: truncatedFile, isBold: true }
-    ];
   }
+  return [
+    { text: truncatedFile, isBold: true }
+  ];
 }
 
 export function Topbar({
   onSettingsOpen,
+  onExportOpen,
   onExpandAll,
   onCollapseAll,
   onCopyFile,
@@ -176,7 +171,6 @@ export function Topbar({
 
   return (
     <header className="topbar">
-      {/* Logo */}
       <div className="topbar__logo">
         <span className="topbar__logo-icon">
           <img
@@ -205,10 +199,7 @@ export function Topbar({
 
       {(state.appRuntime === 'desktop' || state.appRuntime === 'chrome' || state.appRuntime === 'tauri') && (
         <>
-          <span className="topbar__crumb-separator" aria-hidden="true">
-            |
-          </span>
-
+          <span className="topbar__crumb-separator" aria-hidden="true">|</span>
           <TooltipButton
             className="btn btn--icon"
             onClick={() => {
@@ -231,7 +222,6 @@ export function Topbar({
       )}
 
       <span className="topbar__crumb-separator" aria-hidden="true">|</span>
-
       <NavigationHeaderActions
         onBack={back}
         onForward={forward}
@@ -241,14 +231,13 @@ export function Topbar({
         className="topbar__nav-actions"
       />
 
-      {/* Breadcrumb */}
       <div className="topbar__breadcrumb-container">
         <div className="topbar__breadcrumb" id="breadcrumb">
           {breadcrumbItems.map((item, idx) => (
             <span key={idx}>
               {idx > 0 && <span className="sep">/</span>}
               <span
-                  className={`topbar__breadcrumb-part${item.isBold ? ' topbar__breadcrumb-part--bold' : ''}${item.isEllipsis ? ' topbar__breadcrumb-part--ellipsis' : ''}`}
+                className={`topbar__breadcrumb-part${item.isBold ? ' topbar__breadcrumb-part--bold' : ''}${item.isEllipsis ? ' topbar__breadcrumb-part--ellipsis' : ''}`}
               >
                 {item.text}
               </span>
@@ -260,9 +249,7 @@ export function Topbar({
         )}
       </div>
 
-      {/* Actions */}
       <div className="topbar__actions">
-
         <DocumentHeaderActions
           onCollapseAll={onCollapseAll}
           onExpandAll={onExpandAll}
@@ -286,10 +273,12 @@ export function Topbar({
           themeLabel={themeToggleLabel}
           editLabel={t.topbar.editLabel}
           settingsLabel={t.topbar.settings}
+          exportLabel="Export Center"
           homeTooltip={t.topbar.welcomePage}
           themeTooltip={themeToggleLabel}
           editTooltip={t.topbar.edit}
           settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
+          exportTooltip="Export documents"
           homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
           themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
           editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
@@ -302,6 +291,7 @@ export function Topbar({
           onTheme={toggleTheme}
           onEdit={openInEditor}
           onSettings={onSettingsOpen}
+          onExport={onExportOpen}
           sidebarLabel={t.actions.toggleSidebar}
           sidebarTooltip={t.actions.toggleSidebar}
           sidebarShortcut={getEnabledShortcut(state.settings, 'toggleSidebar')}
@@ -333,12 +323,7 @@ export function Topbar({
 
         {isDesktop && (
           <>
-            <span
-              className="topbar__crumb-separator topbar__crumb-separator--window-controls"
-              aria-hidden="true"
-            >
-              |
-            </span>
+            <span className="topbar__crumb-separator topbar__crumb-separator--window-controls" aria-hidden="true">|</span>
             <div className="window-controls topbar__window-controls">
               <TooltipButton
                 className="btn btn--icon window-control-btn"
@@ -349,11 +334,8 @@ export function Topbar({
               <TooltipButton
                 className="btn btn--icon window-control-btn"
                 onClick={() => {
-                  if (shouldExitTauriFullscreenOnRestore) {
-                    onFullscreenToggle?.();
-                  } else {
-                    bridge.postMessage({ command: 'window-maximize' });
-                  }
+                  if (shouldExitTauriFullscreenOnRestore) onFullscreenToggle?.();
+                  else bridge.postMessage({ command: 'window-maximize' });
                 }}
                 tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize}
                 icon={showsRestoreControl ? (
