@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { getTranslations, LANGUAGE_OPTIONS } from '../../ui/src/contexts/translations';
 import { TRANSLATIONS } from '../../ui/src/contexts/translationsData';
+import { AUDITED_UI_TRANSLATIONS } from '../../ui/src/contexts/auditedUiTranslations';
+import { WELCOME_TRANSLATIONS } from '../../ui/src/contexts/welcomeTranslations';
+import { USER_MANUAL_TRANSLATIONS } from '../../ui/src/contexts/userManualTranslations';
+import { DESKTOP_TYPOGRAPHY_EN } from '../../ui/src/contexts/desktopTypographyTranslations';
 
 function verifyObjectKeysRecursive(
   reference: Record<string, unknown>,
@@ -29,7 +33,7 @@ function verifyObjectKeysRecursive(
 }
 
 describe('translation coverage across all supported languages', () => {
-  const expectedLanguages = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'];
+  const expectedLanguages = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'] as const;
 
   test('LANGUAGE_OPTIONS covers all 9 expected languages', () => {
     const languageIds = LANGUAGE_OPTIONS.map((opt) => opt.id);
@@ -43,6 +47,48 @@ describe('translation coverage across all supported languages', () => {
       const localeTranslations = TRANSLATIONS[lang] as unknown as Record<string, unknown>;
       expect(localeTranslations, `Translations block for "${lang}" must exist`).toBeDefined();
       verifyObjectKeysRecursive(englishTemplate, localeTranslations, lang);
+    }
+  });
+
+  test('AUDITED_UI_TRANSLATIONS contains all keys across all supported languages', () => {
+    const englishTemplate = AUDITED_UI_TRANSLATIONS.en as unknown as Record<string, unknown>;
+
+    for (const lang of expectedLanguages) {
+      const localeTranslations = AUDITED_UI_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `Audited UI block for "${lang}" must exist`).toBeDefined();
+      verifyObjectKeysRecursive(englishTemplate, localeTranslations, `auditedUi.${lang}`);
+    }
+  });
+
+  test('WELCOME_TRANSLATIONS contains all keys across all supported languages', () => {
+    const englishTemplate = WELCOME_TRANSLATIONS.en as unknown as Record<string, unknown>;
+
+    for (const lang of expectedLanguages) {
+      const localeTranslations = WELCOME_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `Welcome block for "${lang}" must exist`).toBeDefined();
+      verifyObjectKeysRecursive(englishTemplate, localeTranslations, `welcome.${lang}`);
+    }
+  });
+
+  test('USER_MANUAL_TRANSLATIONS contains all keys across all supported languages', () => {
+    const englishTemplate = USER_MANUAL_TRANSLATIONS.en as unknown as Record<string, unknown>;
+
+    for (const lang of expectedLanguages) {
+      const localeTranslations = USER_MANUAL_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `User manual block for "${lang}" must exist`).toBeDefined();
+      verifyObjectKeysRecursive(englishTemplate, localeTranslations, `userManual.${lang}`);
+    }
+  });
+
+  test('DESKTOP_TYPOGRAPHY keys exist in TRANSLATIONS across all supported languages', () => {
+    for (const lang of expectedLanguages) {
+      const localeTranslations = TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `Translations block for "${lang}" must exist`).toBeDefined();
+      for (const key of Object.keys(DESKTOP_TYPOGRAPHY_EN)) {
+        expect(localeTranslations, `Missing typography key "${key}" in language "${lang}"`).toHaveProperty(key);
+        expect(typeof localeTranslations[key], `Typography key "${key}" in "${lang}" should be a string`).toBe('string');
+        expect((localeTranslations[key] as string).trim(), `Typography key "${key}" in "${lang}" should not be empty`).not.toBe('');
+      }
     }
   });
 

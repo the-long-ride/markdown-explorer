@@ -4,7 +4,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
-## [Unreleased]
+## [v1.6.5] — 2026-08-18
 
 ### Added
 - **Media Modal Light/Dark Theme Toggle**: Added a SunIcon/MoonIcon button to the Media Modal viewer footer toolbar (between Reset Zoom and Copy) that flips the global app theme and re-renders the displayed Mermaid diagram with the new palette without disturbing the current zoom/pan state. A new `renderMermaidToSvg` helper runs a single-shot themed re-render of a captured mermaid source; the modal's re-render `useEffect` defers the helper call to a `queueMicrotask` so the parent `useAppStateEffects` theme-sync effect has already applied `document.documentElement.dataset.theme` and the new CSS custom properties before the helper reads them. Theme-aware recolor helpers and source capture are extracted from the content render loop so the modal does not hold shared state with the batched enhancement scheduler.

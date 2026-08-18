@@ -1,6 +1,6 @@
 {
   "name": "markdown-explorer-workspace",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "private": true,
   "packageManager": "pnpm@11.18.0",
   "scripts": {

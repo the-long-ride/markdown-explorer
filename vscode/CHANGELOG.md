@@ -4,7 +4,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 > **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
 
-## [Unreleased]
+## [v1.6.5] — 2026-08-18
 
 ### Added
 - **Media Modal Light/Dark Theme Toggle**: Added a SunIcon/MoonIcon button to the Media Modal viewer footer toolbar that flips the global app theme and re-renders the displayed Mermaid diagram with the new palette without disturbing zoom/pan state. The re-render `useEffect` defers the helper call to a `queueMicrotask` so the parent `useAppStateEffects` theme-sync has already applied `dataset.theme` and the new CSS custom properties before the helper reads them.
