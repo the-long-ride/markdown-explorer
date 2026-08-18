@@ -21,10 +21,17 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
   }),
 }));
 
-vi.mock('../../../../ui/src/export/documentSnapshot', async () => {
-  const actual = await vi.importActual<any>('../../../../ui/src/export/documentSnapshot');
-  return { ...actual, loadDocumentSnapshot: mocks.loadDocumentSnapshot };
-});
+vi.mock('../../../../ui/src/export/documentSnapshot', () => ({
+  loadDocumentSnapshot: mocks.loadDocumentSnapshot,
+  findScopeFile: (link: { resolved?: string }, candidates: readonly MdFile[]) => {
+    if (!link.resolved) return null;
+    const target = decodeURIComponent(link.resolved)
+      .replace(/^file:\/\//, '')
+      .replace(/[?#].*$/, '')
+      .replace(/\\/g, '/');
+    return candidates.find((candidate) => candidate.fsPath.replace(/\\/g, '/') === target) ?? null;
+  },
+}));
 
 vi.mock('../../../../ui/src/components/Content/scheduleContentEnhancements', () => ({
   scheduleContentEnhancements: () => () => {},
