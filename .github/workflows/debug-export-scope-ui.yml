@@ -48,3 +48,18 @@ jobs:
       - name: More Actions export
         continue-on-error: true
         run: pnpm exec vitest run --project ui tests/unit/ui/components/toolbar-action-menu-export.test.tsx
+      - name: existing shared render
+        continue-on-error: true
+        run: pnpm exec vitest run --project ui tests/unit/ui/components/shared-render.test.tsx
+      - name: existing topbar render
+        continue-on-error: true
+        run: pnpm exec vitest run --project ui tests/unit/ui/components/topbar-render.test.tsx
+      - name: existing desktop render
+        continue-on-error: true
+        run: pnpm exec vitest run --project ui tests/unit/ui/components/desktop-render.test.tsx
+      - name: existing desktop tabbar deep
+        continue-on-error: true
+        run: pnpm exec vitest run --project ui tests/unit/ui/components/desktop-tabbar-deep.test.tsx
+      - name: existing desktop tabbar interactions
+        continue-on-error: true
+        run: pnpm exec vitest run --project ui tests/unit/ui/components/desktop-tabbar-interactions.test.tsx
