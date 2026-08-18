@@ -121,17 +121,18 @@ function localAssetUrl(raw: string, documentPath: string): string | null {
   }
 }
 
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error || new Error('Unable to read export asset'));
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.readAsDataURL(blob);
-  });
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    const chunk = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length));
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
 }
 
 export async function embedExportLocalAssets(html: string, documentPath: string): Promise<string> {
-  if (typeof DOMParser === 'undefined' || typeof fetch !== 'function' || typeof FileReader === 'undefined') return html;
+  if (typeof DOMParser === 'undefined' || typeof fetch !== 'function' || typeof btoa !== 'function') return html;
   const parsed = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
   const targets: Array<{ element: Element; attribute: string }> = [];
   parsed.body.querySelectorAll('img[src],source[src],audio[src]').forEach((element) => targets.push({ element, attribute: 'src' }));
@@ -145,8 +146,9 @@ export async function embedExportLocalAssets(html: string, documentPath: string)
     try {
       const response = await fetch(url);
       if (!response.ok) return;
-      const dataUrl = await blobToDataUrl(await response.blob());
-      if (dataUrl) element.setAttribute(attribute, dataUrl);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const contentType = response.headers.get('content-type')?.split(';', 1)[0]?.trim() || 'application/octet-stream';
+      element.setAttribute(attribute, `data:${contentType};base64,${bytesToBase64(bytes)}`);
     } catch {
       // Export stays usable even if a local asset cannot be embedded.
     }
