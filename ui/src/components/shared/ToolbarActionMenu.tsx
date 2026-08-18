@@ -17,6 +17,8 @@ import {
 import { TooltipButton } from "./TooltipButton";
 import { SwitchButton } from "./SwitchButton";
 
+export const EXPORT_CENTER_OPEN_EVENT = 'mdn-export-center-open';
+
 interface ToolbarActionMenuProps {
   triggerTooltip: string;
   triggerAlign?: "left" | "right";
@@ -109,7 +111,7 @@ export function ToolbarActionMenu({
   themeLabel,
   editLabel,
   settingsLabel,
-  exportLabel,
+  exportLabel = "Export Center",
   homeTooltip,
   themeTooltip,
   editTooltip,
@@ -261,14 +263,12 @@ export function ToolbarActionMenu({
     });
   }
 
-  if (onExport && exportLabel) {
-    items.push({
-      id: "export",
-      label: exportLabel,
-      tooltip: exportTooltip || exportLabel,
-      disabled: false,
-    });
-  }
+  items.push({
+    id: "export",
+    label: exportLabel,
+    tooltip: exportTooltip || exportLabel,
+    disabled: false,
+  });
 
   items.push({
     id: "settings",
@@ -305,7 +305,8 @@ export function ToolbarActionMenu({
         onResetZoom?.();
         return;
       case "export":
-        onExport?.();
+        if (onExport) onExport();
+        else window.dispatchEvent(new Event(EXPORT_CENTER_OPEN_EVENT));
         return;
       case "settings":
         onSettings();
