@@ -6,6 +6,8 @@ import { loadDocumentSnapshot, type DocumentSnapshot } from '../../export/docume
 import {
   buildStandaloneExportHtml,
   captureExportThemeCss,
+  embedExportLocalAssets,
+  escapeExportHtml,
   exportHtmlPath,
   rewriteExportLinks,
   type ExportPage,
@@ -64,8 +66,11 @@ function pagesFromSnapshots(snapshots: readonly DocumentSnapshot[]): ExportPage[
 }
 
 function buildSiteIndex(files: readonly MdFile[], title: string, themeCss: string): string {
-  const links = files.map((file) => `<li><a href="${exportHtmlPath(file)}">${file.relativePath}</a></li>`).join('');
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${themeCss}</style></head><body><main class="mdn-body mdn-export-page"><h1>${title}</h1><ul>${links}</ul></main></body></html>`;
+  const safeTitle = escapeExportHtml(title);
+  const links = files
+    .map((file) => `<li><a href="${escapeExportHtml(exportHtmlPath(file))}">${escapeExportHtml(file.relativePath)}</a></li>`)
+    .join('');
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><style>${themeCss}</style></head><body><main class="mdn-body mdn-export-page"><h1>${safeTitle}</h1><ul>${links}</ul></main></body></html>`;
 }
 
 export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
@@ -165,9 +170,15 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
       return;
     }
 
+    const portableSnapshots = await Promise.all(
+      snapshots.map(async (snapshot) => ({
+        ...snapshot,
+        html: await embedExportLocalAssets(snapshot.html, snapshot.file.fsPath),
+      })),
+    );
     const themeCss = captureExportThemeCss();
-    const baseName = safeBaseName(state.workspaceName || snapshots[0].file.title || 'export');
-    const pages = pagesFromSnapshots(snapshots);
+    const baseName = safeBaseName(state.workspaceName || portableSnapshots[0].file.title || 'export');
+    const pages = pagesFromSnapshots(portableSnapshots);
 
     try {
       if (job.format === 'html') {
@@ -177,10 +188,10 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
           const ok = await saveBlobAsFile(htmlBlob(html), fileName);
           if (!ok) throw new Error('The HTML file could not be saved.');
           nextResults.push({ path: fileName, status: 'success' });
-        } else if (snapshots.length === 1) {
-          const snapshot = snapshots[0];
+        } else if (portableSnapshots.length === 1) {
+          const snapshot = portableSnapshots[0];
           const html = buildStandaloneExportHtml({
-            pages: [{ file: snapshot.file, html: rewriteExportLinks(snapshot.html, snapshot.file, snapshots.map((item) => item.file)) }],
+            pages: [{ file: snapshot.file, html: rewriteExportLinks(snapshot.html, snapshot.file, portableSnapshots.map((item) => item.file)) }],
             layout: job.layout,
             title: snapshot.file.title,
             themeCss,
@@ -190,14 +201,15 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
           if (!ok) throw new Error('The HTML file could not be saved.');
           nextResults.push({ path: fileName, status: 'success' });
         } else {
-          const exportedFiles = snapshots.map((item) => item.file);
-          const entries = snapshots.map((snapshot) => ({
+          const exportedFiles = portableSnapshots.map((item) => item.file);
+          const entries = portableSnapshots.map((snapshot) => ({
             path: exportHtmlPath(snapshot.file),
             data: encoder.encode(buildStandaloneExportHtml({
               pages: [{ file: snapshot.file, html: rewriteExportLinks(snapshot.html, snapshot.file, exportedFiles) }],
               layout: job.layout,
               title: snapshot.file.title,
               themeCss,
+              navigationFiles: exportedFiles,
             })),
           }));
           const fileName = `${baseName}-html.zip`;
@@ -206,7 +218,7 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
           entries.forEach((entry) => nextResults.push({ path: entry.path, status: 'success' }));
         }
       } else if (job.format === 'site') {
-        const exportedFiles = snapshots.map((item) => item.file);
+        const exportedFiles = portableSnapshots.map((item) => item.file);
         const entries: { path: string; data: Uint8Array }[] = [];
         if (job.batchMode === 'merged') {
           entries.push({
@@ -220,7 +232,7 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
           });
         } else {
           entries.push({ path: 'index.html', data: encoder.encode(buildSiteIndex(exportedFiles, state.workspaceName || 'Markdown Explorer Export', themeCss)) });
-          for (const snapshot of snapshots) {
+          for (const snapshot of portableSnapshots) {
             entries.push({
               path: exportHtmlPath(snapshot.file),
               data: encoder.encode(buildStandaloneExportHtml({
@@ -228,6 +240,7 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
                 layout: job.layout,
                 title: snapshot.file.title,
                 themeCss,
+                navigationFiles: exportedFiles,
               })),
             });
           }
@@ -242,7 +255,7 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         if (printResult !== 'printed') throw new Error('PDF printing was cancelled or unavailable.');
         nextResults.push({ path: `${baseName}-merged.pdf`, status: 'success' });
       } else {
-        const documents = snapshots.map((snapshot) => ({
+        const documents = portableSnapshots.map((snapshot) => ({
           html: buildStandaloneExportHtml({ pages: [{ file: snapshot.file, html: snapshot.html }], layout: job.layout, title: snapshot.file.title, themeCss }),
           title: snapshot.file.title,
         }));
@@ -250,7 +263,7 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         if (printed !== documents.length) {
           nextResults.push({ path: 'PDF batch', status: 'error', message: `${printed} of ${documents.length} print jobs completed.` });
         } else {
-          snapshots.forEach((snapshot) => nextResults.push({ path: `${safeBaseName(snapshot.file.title)}.pdf`, status: 'success' }));
+          portableSnapshots.forEach((snapshot) => nextResults.push({ path: `${safeBaseName(snapshot.file.title)}.pdf`, status: 'success' }));
         }
       }
 
