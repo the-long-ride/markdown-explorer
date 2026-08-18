@@ -12,7 +12,6 @@ import {
   ExitFocusIcon,
   FullscreenMenuIcon,
   ResetZoomMenuIcon,
-  SaveImageIcon,
 } from "./icons";
 import { TooltipButton } from "./TooltipButton";
 import { SwitchButton } from "./SwitchButton";
@@ -96,7 +95,14 @@ function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
     case "resetZoom":
       return <ResetZoomMenuIcon size={12} />;
     case "export":
-      return <SaveImageIcon size={13} />;
+      return (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 3v12" />
+          <path d="m8 11 4 4 4-4" />
+          <path d="M5 21h14a2 2 0 0 0 2-2v-3" />
+          <path d="M3 16v3a2 2 0 0 0 2 2" />
+        </svg>
+      );
     case "settings":
       return <SettingsIcon size={14} />;
     default:
