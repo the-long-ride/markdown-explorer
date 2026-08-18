@@ -1,4 +1,5 @@
 import { getMermaid } from '../../../lib/renderLibs';
+import { resolveThemeMode, type AppThemeMode } from '../../../utils/themeMode.ts';
 import { createDeferredMermaidRerender } from './deferredMermaidRerender.ts';
 import { createMermaidRerenderQueue } from './mermaidRerenderQueue.ts';
 import {
@@ -15,14 +16,6 @@ export interface MermaidRerenderLifecycle {
 interface MermaidRerenderLifecycleOptions {
   theme: string;
   runIdRef: { current: number };
-}
-
-function resolveDarkTheme(theme: string): boolean {
-  return theme === 'dark' || (
-    theme === 'auto'
-    && typeof window !== 'undefined'
-    && window.matchMedia?.('(prefers-color-scheme: dark)').matches === true
-  );
 }
 
 export function createMermaidRerenderLifecycle(
@@ -46,7 +39,7 @@ export function createMermaidRerenderLifecycle(
     try {
       await enhanceMermaid(root, {
         getLibrary: getMermaid,
-        isDark: resolveDarkTheme(options.theme),
+        isDark: resolveThemeMode(options.theme as AppThemeMode) === 'dark',
         isCancelled: () => disposed || isCancelled(),
         runIdRef: options.runIdRef,
         nodes: [node],
