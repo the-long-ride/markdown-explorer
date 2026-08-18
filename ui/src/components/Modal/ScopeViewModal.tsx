@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
-import { resolveRenderedLink } from '../../dom/linkContextMenu';
+import { resolveRenderedLink, type ResolvedLink } from '../../dom/linkContextMenu';
 import { findScopeFile, loadDocumentSnapshot } from '../../export/documentSnapshot';
 import type { MdFile } from '../../types/files';
 import { scheduleContentEnhancements } from '../Content/scheduleContentEnhancements';
+import { LinkContextMenu } from '../shared/LinkContextMenu';
 import { ChevronLeftIcon, ChevronRightIcon } from '../shared/icons';
 import {
   MAX_SCOPE_DEPTH,
@@ -21,6 +22,14 @@ interface ScopeViewModalProps {
   onClose: () => void;
 }
 
+interface ScopeContextMenuState {
+  x: number;
+  y: number;
+  anchor: HTMLAnchorElement;
+  link: ResolvedLink;
+  target: MdFile;
+}
+
 export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalProps) {
   const { state } = useAppState();
   const bridge = usePlatform();
@@ -30,18 +39,21 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<ScopeContextMenuState | null>(null);
 
   useEffect(() => {
     if (!initialFile) {
       setHistory(null);
       setError(null);
       setNotice(null);
+      setContextMenu(null);
       return;
     }
     let active = true;
     setLoading(true);
     setError(null);
     setNotice(null);
+    setContextMenu(null);
     void loadDocumentSnapshot(bridge, initialFile, state.settings)
       .then((snapshot) => {
         if (!active) return;
@@ -61,12 +73,16 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
     if (!initialFile) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
+      if (contextMenu) {
+        setContextMenu(null);
+        return;
+      }
       event.preventDefault();
       onClose();
     };
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [initialFile, onClose]);
+  }, [contextMenu, initialFile, onClose]);
 
   const current = history?.entries[history.index] ?? null;
 
@@ -84,8 +100,14 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
 
   const openNestedScope = useCallback(async (target: MdFile) => {
     if (!history) return;
+    if (history.entries.slice(0, history.index + 1).length >= MAX_SCOPE_DEPTH) {
+      setNotice('Maximum scope depth reached');
+      setContextMenu(null);
+      return;
+    }
     setNotice(null);
     setError(null);
+    setContextMenu(null);
     setLoading(true);
     try {
       const snapshot = await loadDocumentSnapshot(bridge, target, state.settings);
@@ -140,8 +162,30 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
       }
     };
 
+    const handleContextMenu = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const anchor = target?.closest<HTMLAnchorElement>('a[href], a[data-mdn-target]');
+      if (!anchor || !body.contains(anchor)) return;
+      const link = resolveRenderedLink(anchor, current.file.fsPath);
+      const scopeFile = findScopeFile(link, files);
+      if (!scopeFile) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        anchor,
+        link,
+        target: scopeFile,
+      });
+    };
+
     body.addEventListener('click', handleClick);
-    return () => body.removeEventListener('click', handleClick);
+    body.addEventListener('contextmenu', handleContextMenu);
+    return () => {
+      body.removeEventListener('click', handleClick);
+      body.removeEventListener('contextmenu', handleContextMenu);
+    };
   }, [bridge, current, files, openNestedScope]);
 
   if (!initialFile) return null;
@@ -221,6 +265,18 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
 
         {notice && <div className="scope-view__notice" role="status">{notice}</div>}
       </section>
+
+      {contextMenu && (
+        <LinkContextMenu
+          state={{ x: contextMenu.x, y: contextMenu.y, anchor: contextMenu.anchor, link: contextMenu.link }}
+          menuLabel="Scope link menu"
+          openLabel="Open in browser"
+          copyLabel="Copy link"
+          scopeLabel="Open as scope"
+          onOpenScope={() => { void openNestedScope(contextMenu.target); }}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 }
