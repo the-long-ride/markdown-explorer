@@ -14,9 +14,9 @@ const source = file('guide/intro.md');
 const target = file('reference/api.md');
 
 describe('rewriteExportLinks', () => {
-  it('rewrites exported markdown links to relative html targets and keeps fragments', () => {
+  it('rewrites exported markdown links to extension-preserving html targets and keeps fragments', () => {
     const html = '<p><a href="../reference/api.md#methods">API</a></p>';
-    expect(rewriteExportLinks(html, source, [source, target])).toContain('href="../reference/api.html#methods"');
+    expect(rewriteExportLinks(html, source, [source, target])).toContain('href="../reference/api.md.html#methods"');
   });
 
   it('preserves external, data, mail and fragment links', () => {
