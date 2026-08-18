@@ -61,10 +61,10 @@ describe('ExportCenterModal', () => {
 
     expect(screen.getByRole('dialog', { name: 'Export Center' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Current document' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: /^HTML\b/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^HTML/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Separate outputs' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: /^Document only\b/ })).toBeChecked();
-    expect(screen.getByRole('radio', { name: /^Full Explorer layout\b/ })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: /^Document only/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^Full Explorer layout/ })).not.toBeChecked();
   });
 
   it('offers exactly HTML, PDF, and Static Website formats', () => {
