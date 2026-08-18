@@ -50,8 +50,17 @@ function dirname(value: string): string {
   return index < 0 ? '' : normalized.slice(0, index);
 }
 
-function outputPath(file: MdFile): string {
-  return normalizeRelativePath(file.relativePath).replace(/\.[^./]+$/, '') + '.html';
+function extensionlessPath(file: MdFile): string {
+  return normalizeRelativePath(file.relativePath).replace(/\.[^./]+$/, '');
+}
+
+function outputPath(file: MdFile, exported: readonly MdFile[] = [file]): string {
+  const normalized = normalizeRelativePath(file.relativePath);
+  const stem = extensionlessPath(file);
+  const collides = exported.some((candidate) =>
+    candidate.fsPath !== file.fsPath && extensionlessPath(candidate) === stem,
+  );
+  return collides ? `${normalized}.html` : `${stem}.html`;
 }
 
 function relativePath(fromFile: string, toFile: string): string {
@@ -66,7 +75,6 @@ function relativePath(fromFile: string, toFile: string): string {
 
 function documentId(file: MdFile): string {
   const slug = normalizeRelativePath(file.relativePath)
-    .replace(/\.[^./]+$/, '')
     .replace(/[^a-zA-Z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .toLowerCase();
@@ -93,7 +101,7 @@ export function rewriteExportLinks(html: string, source: MdFile, exported: reado
   return html.replace(/\bhref=(['"])([^'"]+)\1/gi, (full, quote: string, href: string) => {
     const target = resolveInternalTarget(href, source, exported);
     if (!target) return full;
-    const rewritten = `${relativePath(outputPath(source), outputPath(target.file))}${target.hash}`;
+    const rewritten = `${relativePath(outputPath(source, exported), outputPath(target.file, exported))}${target.hash}`;
     return `href=${quote}${rewritten}${quote}`;
   });
 }
@@ -201,7 +209,9 @@ export function buildStandaloneExportHtml(args: {
   const currentFile = !merged && args.pages.length === 1 ? args.pages[0].file : null;
   const navigation = navigationFiles.map((file) => {
     const href = currentFile
-      ? (file.fsPath === currentFile.fsPath ? `#${documentId(currentFile)}` : relativePath(outputPath(currentFile), outputPath(file)))
+      ? (file.fsPath === currentFile.fsPath
+          ? `#${documentId(currentFile)}`
+          : relativePath(outputPath(currentFile, navigationFiles), outputPath(file, navigationFiles)))
       : `#${documentId(file)}`;
     return `<a href="${escapeExportHtml(href)}">${escapeExportHtml(file.title || file.relativePath)}</a>`;
   }).join('');
@@ -213,6 +223,6 @@ export function buildStandaloneExportHtml(args: {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeExportHtml(args.title)}</title><style>${args.themeCss}\n${EXPORT_BASE_CSS}</style></head><body>${body}</body></html>`;
 }
 
-export function exportHtmlPath(file: MdFile): string {
-  return outputPath(file);
+export function exportHtmlPath(file: MdFile, exported: readonly MdFile[] = [file]): string {
+  return outputPath(file, exported);
 }
