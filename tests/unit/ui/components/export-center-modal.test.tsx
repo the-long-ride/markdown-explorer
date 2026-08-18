@@ -2,11 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 
-const files: MdFile[] = [
-  { fsPath: '/docs/readme.md', relativePath: 'readme.md', parts: ['readme.md'], fileName: 'readme.md', title: 'Readme', extension: '.md', documentKind: 'markdown' },
-  { fsPath: '/docs/guide/a.md', relativePath: 'guide/a.md', parts: ['guide', 'a.md'], fileName: 'a.md', title: 'A', extension: '.md', documentKind: 'markdown' },
-  { fsPath: '/docs/guide/deep/b.md', relativePath: 'guide/deep/b.md', parts: ['guide', 'deep', 'b.md'], fileName: 'b.md', title: 'B', extension: '.md', documentKind: 'markdown' },
-];
+const fixtures = vi.hoisted(() => ({
+  files: [
+    { fsPath: '/docs/readme.md', relativePath: 'readme.md', parts: ['readme.md'], fileName: 'readme.md', title: 'Readme', extension: '.md', documentKind: 'markdown' },
+    { fsPath: '/docs/guide/a.md', relativePath: 'guide/a.md', parts: ['guide', 'a.md'], fileName: 'a.md', title: 'A', extension: '.md', documentKind: 'markdown' },
+    { fsPath: '/docs/guide/deep/b.md', relativePath: 'guide/deep/b.md', parts: ['guide', 'deep', 'b.md'], fileName: 'b.md', title: 'B', extension: '.md', documentKind: 'markdown' },
+  ] as MdFile[],
+}));
 
 const mocks = vi.hoisted(() => ({
   saveBlobAsFile: vi.fn(async () => true),
@@ -19,7 +21,7 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
     state: {
       currentFile: '/docs/readme.md',
-      fileList: files,
+      fileList: fixtures.files,
       workspaceName: 'Docs',
       settings: { language: 'en' },
     },
