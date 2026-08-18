@@ -50,17 +50,8 @@ function dirname(value: string): string {
   return index < 0 ? '' : normalized.slice(0, index);
 }
 
-function extensionlessPath(file: MdFile): string {
-  return normalizeRelativePath(file.relativePath).replace(/\.[^./]+$/, '');
-}
-
-function outputPath(file: MdFile, exported: readonly MdFile[] = [file]): string {
-  const normalized = normalizeRelativePath(file.relativePath);
-  const stem = extensionlessPath(file);
-  const collides = exported.some((candidate) =>
-    candidate.fsPath !== file.fsPath && extensionlessPath(candidate) === stem,
-  );
-  return collides ? `${normalized}.html` : `${stem}.html`;
+function outputPath(file: MdFile): string {
+  return `${normalizeRelativePath(file.relativePath)}.html`;
 }
 
 function relativePath(fromFile: string, toFile: string): string {
@@ -101,7 +92,7 @@ export function rewriteExportLinks(html: string, source: MdFile, exported: reado
   return html.replace(/\bhref=(['"])([^'"]+)\1/gi, (full, quote: string, href: string) => {
     const target = resolveInternalTarget(href, source, exported);
     if (!target) return full;
-    const rewritten = `${relativePath(outputPath(source, exported), outputPath(target.file, exported))}${target.hash}`;
+    const rewritten = `${relativePath(outputPath(source), outputPath(target.file))}${target.hash}`;
     return `href=${quote}${rewritten}${quote}`;
   });
 }
@@ -211,7 +202,7 @@ export function buildStandaloneExportHtml(args: {
     const href = currentFile
       ? (file.fsPath === currentFile.fsPath
           ? `#${documentId(currentFile)}`
-          : relativePath(outputPath(currentFile, navigationFiles), outputPath(file, navigationFiles)))
+          : relativePath(outputPath(currentFile), outputPath(file)))
       : `#${documentId(file)}`;
     return `<a href="${escapeExportHtml(href)}">${escapeExportHtml(file.title || file.relativePath)}</a>`;
   }).join('');
@@ -223,6 +214,6 @@ export function buildStandaloneExportHtml(args: {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeExportHtml(args.title)}</title><style>${args.themeCss}\n${EXPORT_BASE_CSS}</style></head><body>${body}</body></html>`;
 }
 
-export function exportHtmlPath(file: MdFile, exported: readonly MdFile[] = [file]): string {
-  return outputPath(file, exported);
+export function exportHtmlPath(file: MdFile, _exported: readonly MdFile[] = [file]): string {
+  return outputPath(file);
 }
