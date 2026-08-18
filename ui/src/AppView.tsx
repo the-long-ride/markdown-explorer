@@ -1,5 +1,6 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { TooltipButton } from "./components/shared/TooltipButton";
+import { EXPORT_CENTER_OPEN_EVENT } from "./components/shared/ToolbarActionMenu";
 import { DesktopTabBar } from "./components/Desktop/DesktopTabBar";
 import { ExitFocusIcon } from "./components/shared/icons";
 import { ScrollToTopButton } from "./components/shared/ScrollToTopButton";
@@ -99,6 +100,12 @@ export function AppView(props: any) {
   onImageClick
   } = props;
 
+  useEffect(() => {
+    const openExportCenter = () => setExportCenterOpen(true);
+    window.addEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
+    return () => window.removeEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
+  }, []);
+
   return (
     <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.appRuntime === 'tauri' ? ' app--tauri' : ''}${isFullscreen ? ' app--fullscreen' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
@@ -116,7 +123,6 @@ export function AppView(props: any) {
           onAliasChange={updateTabAlias}
           onThemeToggle={toggleTheme}
           onSettingsOpen={() => setSettingsOpen(true)}
-          onExportOpen={() => setExportCenterOpen(true)}
           onSidebarToggle={toggleSidebar}
           onBack={back}
           onForward={forward}
@@ -215,7 +221,6 @@ export function AppView(props: any) {
                   onCancelWorkspaceScan={isTabView ? cancelCurrentWorkspaceScan : undefined}
                   onOpenWorkspaceAgain={reopenUnavailableWorkspace}
                 />
-                {/* Scroll to top button */}
                 <ScrollToTopButton
                   scrollRef={scrollRef}
                   observeKey={state.workspaceName}
@@ -235,7 +240,6 @@ export function AppView(props: any) {
         </>
       )}
 
-      {/* Overlays — lazy-loaded components, Suspense fallback is a no-op (invisible when closed) */}
       <Suspense fallback={null}>
       <SearchOverlay
         isOpen={searchOpen}
