@@ -32,12 +32,11 @@ function renderMenu(onExport = vi.fn()) {
 describe('ToolbarActionMenu Export Center item', () => {
   it('shows Export Center before Settings and invokes the export action', () => {
     const onExport = renderMenu();
-    const items = screen.getAllByRole('menuitem');
-    const labels = items.map((item) => item.textContent?.trim());
-    expect(labels.indexOf('Export Center')).toBeGreaterThan(-1);
-    expect(labels.indexOf('Export Center')).toBeLessThan(labels.indexOf('Settings'));
+    const exportItem = screen.getByRole('menuitem', { name: 'Export Center' });
+    const settingsItem = screen.getByRole('menuitem', { name: 'Settings' });
 
-    fireEvent.click(screen.getByText('Export Center'));
+    expect(exportItem.compareDocumentPosition(settingsItem) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    fireEvent.click(exportItem);
     expect(onExport).toHaveBeenCalledTimes(1);
   });
 });
