@@ -15,12 +15,19 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: package UI script
-        continue-on-error: true
-        run: pnpm run test:ui
-      - name: direct UI runner
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui
-      - name: package UI script four workers
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui --maxWorkers=4
+      - name: Capture full UI JSON report
+        shell: bash
+        run: |
+          set +e
+          pnpm exec vitest run --project ui --reporter=json --outputFile=vitest-ui.json
+          code=$?
+          echo "$code" > vitest-ui-exit-code.txt
+          exit 0
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: vitest-ui-report
+          path: |
+            vitest-ui.json
+            vitest-ui-exit-code.txt
+          if-no-files-found: warn
