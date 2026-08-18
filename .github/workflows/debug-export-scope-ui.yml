@@ -15,30 +15,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: root UI tests
+      - name: full UI default workers
         continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/*.test.ts tests/unit/ui/*.test.tsx
-      - name: components UI tests
+        run: pnpm exec vitest run --project ui
+      - name: full UI four workers
         continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/components
-      - name: contexts UI tests
+        run: pnpm exec vitest run --project ui --maxWorkers=4
+      - name: full UI two workers
         continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/contexts
-      - name: dom UI tests
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/dom
-      - name: hooks UI tests
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/hooks
-      - name: lib UI tests
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/lib
-      - name: markdown UI tests
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/markdown
-      - name: export UI tests
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/export
-      - name: utils UI tests
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui tests/unit/ui/utils
+        run: pnpm exec vitest run --project ui --maxWorkers=2
