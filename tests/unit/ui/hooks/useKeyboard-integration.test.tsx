@@ -370,6 +370,18 @@ describe('useKeyboard hook integration', () => {
     expect(mockToggleTheme).not.toHaveBeenCalled();
   });
 
+  it('calls toggleTheme on Ctrl+Shift+T even when isModalOpen is true (theme shortcut bypasses the media-modal gate)', () => {
+    renderHook(() => useKeyboard({ ...defaultProps, isModalOpen: true }));
+    fireKeyDown({ key: 't', ctrlKey: true, shiftKey: true });
+    expect(mockToggleTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call toggleTheme when isTermsOpen is true (terms screen still mutes it)', () => {
+    renderHook(() => useKeyboard({ ...defaultProps, isTermsOpen: true }));
+    fireKeyDown({ key: 't', ctrlKey: true, shiftKey: true });
+    expect(mockToggleTheme).not.toHaveBeenCalled();
+  });
+
   it('calls refresh on matching keybinding across runtimes', () => {
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: 'r', ctrlKey: true });

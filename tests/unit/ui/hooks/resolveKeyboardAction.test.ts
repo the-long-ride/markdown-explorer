@@ -183,6 +183,12 @@ describe('resolveKeyboardAction', () => {
       const result = resolveKeyboardAction(e, defaultState({ isModalOpen: false, isDesktopLike: true }));
       expect(result).toEqual({ type: 'current-search-toggle' });
     });
+
+    it('still mutes other shortcuts (e.g. search) when modal is open', () => {
+      const e = mkEvent({ key: 'k', ctrlKey: true });
+      const result = resolveKeyboardAction(e, defaultState({ isModalOpen: true, isDesktopLike: true }));
+      expect(result).toBeNull();
+    });
   });
 
   describe('sidebar cursor mode toggle', () => {
@@ -459,6 +465,18 @@ describe('resolveKeyboardAction', () => {
       const e = mkEvent({ key: 't', ctrlKey: true, shiftKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isRepeat: false }));
       expect(result).toEqual({ type: 'toggle-theme' });
+    });
+
+    it('returns toggle-theme even when a modal is open (Ctrl+Shift+L works inside the media modal)', () => {
+      const e = mkEvent({ key: 't', ctrlKey: true, shiftKey: true });
+      const result = resolveKeyboardAction(e, defaultState({ isModalOpen: true }));
+      expect(result).toEqual({ type: 'toggle-theme' });
+    });
+
+    it('returns null when terms screen is open (terms still mutes toggle-theme)', () => {
+      const e = mkEvent({ key: 't', ctrlKey: true, shiftKey: true, repeat: false });
+      const result = resolveKeyboardAction(e, defaultState({ isTermsOpen: true }));
+      expect(result).toBeNull();
     });
   });
 
