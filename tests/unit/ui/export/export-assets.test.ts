@@ -2,12 +2,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { embedExportLocalAssets } from '../../../../ui/src/export/exportHtml';
 
 describe('embedExportLocalAssets', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
   it('embeds relative local images as data URLs when the runtime can read them', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
       expect(url).toContain('/workspace/docs/images/pic.png');
-      return new Response(new Blob(['png-bytes'], { type: 'image/png' }), { status: 200 });
+      return new Response('png-bytes', {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+      });
     }));
 
     const html = await embedExportLocalAssets(
