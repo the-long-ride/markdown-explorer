@@ -102,14 +102,12 @@
   transform-origin: center center;
 }
 .mdn-modal-content-svg {
-  background: #fff;
+  background: var(--bg);
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r-lg);
   padding: 24px;
   max-width: 90vw;
   max-height: 80vh;
-  min-width: min(80vw, 800px);
-  min-height: min(60vh, 500px);
   width: auto;
   height: auto;
   display: flex;
@@ -119,15 +117,22 @@
   box-sizing: border-box;
 }
 .mdn-modal-content-svg svg {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
+  display: block !important;
+  width: auto !important;
   height: auto !important;
-  max-height: calc(80vh - 48px);
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: calc(80vh - 48px) !important;
+  object-fit: contain;
+  margin: 0 auto !important;
 }
-[data-theme="dark"] .mdn-modal-content-svg,
-[data-theme="auto"] .mdn-modal-content-svg {
-  background: #1e1e24;
+/* Fallback: snapshots captured before layout (or from mermaid "responsive" renderers)
+   can still carry width="100%" with no height. Give them a full-width box instead of
+   letting the flex chain collapse them to 0. */
+.mdn-modal-content-svg svg[width="100%"] {
+  width: 100% !important;
+  height: auto !important;
 }
 .mdn-modal-footer {
   background: var(--bg-s);

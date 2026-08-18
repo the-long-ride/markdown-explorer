@@ -171,7 +171,7 @@ export function FileNode({
       <span className="tree-file__name">{displayName}</span>
       {isPinned && (
         <span className="sidebar-tree-item__pin" title={pinnedLabel} aria-label={pinnedLabel}>
-          <PinIcon size={10} />
+          <PinIcon size={12} />
         </span>
       )}
       {onRequestItemMenu && itemActionsLabel
@@ -331,7 +331,7 @@ export function FolderNodeView({
         <span className="tree-folder__name">{node.name}</span>
         {isPinned && (
           <span className="sidebar-tree-item__pin" title={pinnedLabel} aria-label={pinnedLabel}>
-            <PinIcon size={10} />
+            <PinIcon size={12} />
           </span>
         )}
         {onRequestItemMenu && itemActionsLabel

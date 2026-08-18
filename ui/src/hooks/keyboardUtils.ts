@@ -123,6 +123,13 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
   }
 
   if (state.isTermsOpen) return null;
+  // Allow the toggleTheme keybinding to fire through the media-modal gate: the
+  // user expects to flip light/dark mode while the image/SVG modal is open.
+  // All other global shortcuts remain muted inside the modal.
+  if (matchesShortcut(e, state.keybindings.toggleTheme)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-theme' };
+  }
   if (state.isModalOpen) return null;
 
   if (state.isDesktop && state.hasOnToggleFullscreen && e.key === 'F11') {
@@ -205,11 +212,6 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
 
   if (matchesShortcut(e, state.keybindings.settings)) {
     return { type: 'settings-toggle' };
-  }
-
-  if (matchesShortcut(e, state.keybindings.toggleTheme)) {
-    if (state.isRepeat) return null;
-    return { type: 'toggle-theme' };
   }
 
   if (state.hasOnToggleToc && matchesShortcut(e, state.keybindings.toggleToc)) {

@@ -199,6 +199,7 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/utils/toolbar-menu.js': ['tests/unit/ui/utils.test.ts'],
   'ui/src/utils/unicodeSearch.ts': ['tests/unit/ui/utils.test.ts'],
   'ui/src/utils/useCssVars.ts': ['tests/unit/ui/components/content.test.tsx'],
+  'ui/src/utils/themeMode.ts': ['tests/unit/ui/utils/themeMode.test.ts'],
   'ui/vite.config.ts': ['tests/unit/build/copy-ui.test.ts'],
 
   'chromium-xtension/src/chrome-host.ts': ['tests/unit/chromium/chrome-host.test.ts'],
@@ -301,6 +302,8 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/components/Content/enhancements/mermaidRerenderQueue.ts': ['tests/node/mermaid-rendering-quality.test.mjs'],
   'ui/src/components/Content/enhancements/mermaidSankey.ts': ['tests/node/mermaid-rendering-quality.test.mjs'],
   'ui/src/components/Content/enhancements/mermaidTheme.ts': ['tests/node/mermaid-rendering-quality.test.mjs'],
+  'ui/src/components/Content/enhancements/mermaidRenderToSvg.ts': ['tests/unit/ui/lib/render-mermaid-to-svg.test.ts'],
+  'ui/src/components/Content/enhancements/mermaidSvgSnapshot.ts': ['tests/node/performance-table-tauri-contracts.test.mjs'],
   'ui/src/components/Content/enhancements/mermaidZenUml.ts': ['tests/node/mermaid-rendering-quality.test.mjs'],
   'ui/src/components/Content/enhancements/syntaxHighlighting.ts': ['tests/node/content-enhancements-idempotence.test.mjs'],
   'ui/src/components/Content/enhancements/tableEnhancement.ts': ['tests/node/content-enhancements-idempotence.test.mjs'],

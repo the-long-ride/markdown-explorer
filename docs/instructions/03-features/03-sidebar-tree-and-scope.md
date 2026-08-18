@@ -84,7 +84,7 @@ flowchart LR
 - **Root Level Pin Hoisting**: When a file or folder located inside a parent folder is pinned, it is hoisted and displayed at the root level of the sidebar tree instead of remaining inside its parent folder.
 - **Revocable Sorting**: Clicking the currently active sort mode in `SidebarSortMenu` revokes active sorting and resets the workspace sort mode back to `DEFAULT_SIDEBAR_SORT_MODE` (`name-asc`).
 - **Toolbar Actions Sequence**: Sidebar toolbar buttons are arranged in exact sequence: `Sort` (left), `Clear Pins`, `Locate`, `Collapse All`, `Expand All` (right).
-- **Pin & Unpin Icons**: Unpin actions (in item context menus and toolbar Clear Pins) display the `UnpinIcon` SVG which dynamically inherits the current theme accent color (`var(--accent, #EF4136)`).
+- **Pin & Unpin Icons**: The per-row pinned-item indicator uses the stroke-only `PinIcon` (Lucide thumbtack, size 12 for tap-target parity). Both unpin affordances — the per-item context-menu entry and the toolbar Clear Pins button — render the same `UnpinIcon` SVG (Lucide thumbtack + diagonal slash overlay, path `M3 3L18 18`) so users see one consistent "remove pin" affordance regardless of scope. `ClearPinsIcon` is kept as a named export (so the toolbar call-site reads as "clear all pins") but delegates to `UnpinIcon`; both inherit `currentColor` from the parent button.
 - **Scope Focus Badge**: The scope focus count badge (`.sidebar__scope-count`) and TOC count badge (`.toc-panel__count`) utilize theme-aware border radius `border-radius: var(--r-s, var(--r));`.
 
 ### Scope separation

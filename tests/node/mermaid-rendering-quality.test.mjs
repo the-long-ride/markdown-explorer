@@ -1148,12 +1148,37 @@ test('Sankey polish preserves native butt-ended ribbon strokes', () => {
     setAttribute() {},
     querySelectorAll() { return [ribbon]; },
   };
-
   rendering.polishMermaidSvg(svg, 'sankey');
 
   assert.equal(ribbon.getAttribute('vector-effect'), null, 'Sankey ribbon width should scale natively');
   assert.equal(ribbon.getAttribute('stroke-linecap'), null, 'default butt linecap prevents circular ribbon ends');
   assert.equal(ribbon.getAttribute('stroke-linejoin'), null);
+});
+
+test('Sankey raise labels places text on the highest layer above links and nodes', () => {
+  assert.equal(typeof rendering.raiseSankeyLabels, 'function');
+  const parent = {
+    children: [],
+    appendChild(child) {
+      const idx = this.children.indexOf(child);
+      if (idx >= 0) this.children.splice(idx, 1);
+      this.children.push(child);
+    },
+  };
+  const nodesGroup = { name: 'nodes', parentElement: parent };
+  const labelsGroup = { name: 'node-labels', parentElement: parent };
+  const linksGroup = { name: 'links', parentElement: parent };
+  parent.children = [nodesGroup, labelsGroup, linksGroup];
+
+  const svg = {
+    querySelector(sel) {
+      if (sel === 'g.node-labels') return labelsGroup;
+      return null;
+    },
+  };
+
+  rendering.raiseSankeyLabels(svg);
+  assert.equal(parent.children[parent.children.length - 1], labelsGroup, 'node-labels must be the last child to render on top');
 });
 
 test('ZenUML custom Mermaid font applies to every rendered text surface', () => {
@@ -1268,11 +1293,16 @@ test('Sankey document view exposes intrinsic-width overflow through an internal 
   assert.match(css, /data-mdn-mermaid-kind="sankey"[^}]*\.mermaid svg\s*\{[^}]*max-width:\s*none\s*!important/s);
 });
 
-test('Sankey modal clears document intrinsic min-width so the SVG stays contained at zoom 100%', () => {
+test('Media modal SVG sizing preserves diagram aspect ratio and matches document background', () => {
   const css = fs.readFileSync(new URL('../../ui/src/styles/global/global-media-viewer-settings-shell.css', import.meta.url), 'utf8');
+  assert.match(css, /\.mdn-modal-content-svg\s*\{[^}]*background:\s*var\(--bg\)/s);
   assert.match(css, /\.mdn-modal-content-svg\s*\{[^}]*overflow:\s*hidden/s);
+  assert.doesNotMatch(css, /\.mdn-modal-content-svg\s*\{[^}]*min-width:/s);
+  assert.doesNotMatch(css, /\.mdn-modal-content-svg\s*\{[^}]*min-height:/s);
+  assert.match(css, /\.mdn-modal-content-svg svg\s*\{[^}]*width:\s*auto\s*!important/s);
   assert.match(css, /\.mdn-modal-content-svg svg\s*\{[^}]*min-width:\s*0\s*!important/s);
   assert.match(css, /\.mdn-modal-content-svg svg\s*\{[^}]*max-width:\s*100%\s*!important/s);
+  assert.match(css, /\.mdn-modal-content-svg svg\s*\{[^}]*max-height:\s*calc\(80vh - 48px\)\s*!important/s);
 });
 
 test('Architecture edge curving transforms sharp 3-point kinks into smooth quadratic curves', () => {
@@ -1361,6 +1391,38 @@ test('ER diagram and Gantt CSS enforce dark-mode friendly zebra and exclude rang
   assert.match(css, /data-mdn-mermaid-kind="er"[^}]*\.row-rect-odd[^}]*fill:\s*var\(--bg-s\)/s);
   assert.match(css, /data-mdn-mermaid-kind="er"[^}]*\.row-rect-even[^}]*fill:\s*var\(--bg-e/s);
   assert.match(css, /data-mdn-mermaid-kind="er"[^}]*text[^}]*fill:\s*var\(--tx\)/s);
+});
+
+test('Packet diagram CSS enforces theme surface background for shapes and high contrast text', () => {
+  const css = fs.readFileSync(new URL('../../ui/src/styles/global/global-mermaid-rendering.css', import.meta.url), 'utf8');
+  assert.match(css, /data-mdn-mermaid-kind="packet"[^}]*rect\.packetBlock[^}]*fill:\s*var\(--bg-s\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="packet"[^}]*text\.packetLabel[^}]*fill:\s*var\(--tx\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="packet"[^}]*text\.packetByte[^}]*fill:\s*var\(--tx2\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="packet"[^}]*text\.packetTitle[^}]*fill:\s*var\(--tx\)/s);
+});
+
+test('ZenUML diagram CSS enforces theme surface background for body and high contrast text', () => {
+  const css = fs.readFileSync(new URL('../../ui/src/styles/global/global-mermaid-rendering.css', import.meta.url), 'utf8');
+  assert.match(css, /data-mdn-mermaid-kind="zenuml"[^}]*rect\.frame-border-inner[^}]*fill:\s*var\(--bg-s/s);
+  assert.match(css, /data-mdn-mermaid-kind="zenuml"[^}]*rect\.participant-box[^}]*fill:\s*var\(--bg-s/s);
+  assert.match(css, /data-mdn-mermaid-kind="zenuml"[^}]*line\.message-line[^}]*stroke:\s*var\(--tx\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="zenuml"[^}]*line\.return-line[^}]*stroke:\s*var\(--tx\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="zenuml"[^}]*text\.message-label[^}]*fill:\s*var\(--tx\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="zenuml"[^}]*text\.return-label[^}]*fill:\s*var\(--tx\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="zenuml"[^}]*text\.participant-label[^}]*fill:\s*var\(--tx\)/s);
+});
+
+test('Sankey diagram CSS preserves vibrant flow ribbon colors without dark mode multiply darkening', () => {
+  const css = fs.readFileSync(new URL('../../ui/src/styles/global/global-mermaid-rendering.css', import.meta.url), 'utf8');
+  assert.match(css, /data-mdn-mermaid-kind="sankey"[^}]*\.link[^}]*mix-blend-mode:\s*normal/s);
+  assert.match(css, /data-mdn-mermaid-kind="sankey"[^}]*\.sankey-label-fg[^}]*fill:\s*var\(--tx\)/s);
+});
+
+test('Kanban board CSS enforces theme surface background for cards and high contrast text', () => {
+  const css = fs.readFileSync(new URL('../../ui/src/styles/global/global-mermaid-rendering.css', import.meta.url), 'utf8');
+  assert.match(css, /data-mdn-mermaid-kind="kanban"[^}]*\.cluster-label[^}]*fill:\s*var\(--tx\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="kanban"[^}]*\.node rect[^}]*fill:\s*var\(--bg-s\)/s);
+  assert.match(css, /data-mdn-mermaid-kind="kanban"[^}]*\.node text[^}]*fill:\s*var\(--tx\)/s);
 });
 
 

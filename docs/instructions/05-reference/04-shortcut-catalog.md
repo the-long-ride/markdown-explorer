@@ -75,6 +75,7 @@ keywords:
 - Editable inputs/textareas/selects/contenteditable retain normal typing unless a specific guarded action applies.
 - User bindings override defaults; `disabledKeybindings[actionId]` removes the action binding.
 - `openBookmarks` selects the Bookmarks tab when enabled; otherwise it opens Settings focused on **Enable Bookmark feature**.
+- **Media modal gate exception**: `toggleTheme` fires through the media modal's keyboard gate (the matcher is lifted above `isModalOpen` in `resolveKeyboardAction`) so users can flip light/dark while the image/SVG modal is open. All other global shortcuts remain muted inside the modal. The terms dialog still captures the same shortcut (the matcher sits below `isTermsOpen`).
 
 ## Source traceability
 

@@ -112,7 +112,7 @@
   padding: 0;
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r-lg);
-  background: var(--bg-code);
+  background: var(--bg);
   box-shadow: var(--sh-lg);
   cursor: grab;
   overscroll-behavior: contain;

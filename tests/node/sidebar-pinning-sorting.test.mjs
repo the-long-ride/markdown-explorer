@@ -58,14 +58,32 @@ test('sidebar toolbar places buttons in order 3, 2, 1, 4, 5 (sort, clear-pins, l
   assert.ok(collapseIndex < expandIndex, 'collapse should be before expand');
 });
 
-test('sidebar icons and unpin item menu utilize UnpinIcon', async () => {
-  const [iconsSource, itemMenuSource] = await Promise.all([
+test('sidebar icons and unpin item menu share the UnpinIcon design', async () => {
+  const [iconsSource, itemMenuSource, toolbarSource] = await Promise.all([
     read('ui/src/components/Sidebar/sidebarPinIcons.tsx'),
     read('ui/src/components/Sidebar/sidebarItemMenuItems.tsx'),
+    read('ui/src/components/Sidebar/SidebarFilesActions.tsx'),
   ]);
-  assert.match(iconsSource, /viewBox="0 0 512 512"/);
-  assert.match(iconsSource, /var\(--accent, #EF4136\)/);
+  // Both "unpin" affordances — the per-item context-menu item and the
+  // clear-all-pins toolbar button — render the same Lucide thumbtack with a
+  // diagonal slash overlay (`M3 3L18 18`) so users see one consistent
+  // "remove pin" affordance regardless of scope. ClearPinsIcon is kept as a
+  // named export (preserves the self-documenting call-site) but delegates to
+  // UnpinIcon so the slash stays in sync without SVG-path duplication.
+  assert.match(iconsSource, /export function UnpinIcon/);
+  assert.match(iconsSource, /export function ClearPinsIcon/);
+  assert.match(iconsSource, /M3 3L18 18/, 'UnpinIcon must carry the diagonal slash overlay path');
+  // ClearPinsIcon must render UnpinIcon (rather than its own standalone SVG)
+  // so visual identity between the toolbar and per-item menu is guaranteed.
+  assert.match(
+    iconsSource,
+    /export function ClearPinsIcon[\s\S]*?<UnpinIcon\s+size=\{size\}\s*\/>/,
+    'ClearPinsIcon must delegate to UnpinIcon so both unpin affordances share one design',
+  );
+  // Per-item unpin menu item uses UnpinIcon directly.
   assert.match(itemMenuSource, /id:\s*'unpin'[\s\S]*icon:\s*<UnpinIcon \/>/);
+  // The toolbar "clear all pins" button uses ClearPinsIcon.
+  assert.match(toolbarSource, /<ClearPinsIcon/);
 });
 
 test('settings persist workspace pins sort modes and maximum pin count', async () => {

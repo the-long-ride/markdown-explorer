@@ -127,7 +127,9 @@ export function useContentEffects({
 
     // Image / mermaid click → media modal
     const handleClick = (e: Event) => {
-      const target = e.target as HTMLElement;
+      const rawTarget = e.target as (Node | null);
+      const target = (rawTarget instanceof Element ? rawTarget : rawTarget?.parentElement) as HTMLElement | null;
+      if (!target) return;
 
       const openBrowserBtn = target.closest(".mdn-open-browser-btn") as HTMLElement | null;
       if (openBrowserBtn) {
@@ -350,66 +352,55 @@ export function useContentEffects({
       // Table view switcher dropdown (runs in all environments: Electron + Chrome)
       const selectBtn = target.closest(".mdn-table-view-select") as HTMLElement | null;
       if (selectBtn) {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         const dropdownEl = selectBtn.closest(".mdn-table-view-dropdown") as HTMLElement | null;
-        if (dropdownEl && dropdownEl.id) {
-          const tableId = dropdownEl.id.replace("-view-dropdown", "");
-          const win = window as any;
-          if (win.Table?.toggleViewDropdown) {
-            win.Table.toggleViewDropdown(tableId, e);
-          }
-        }
+        if (dropdownEl?.id) (window as any).Table?.toggleViewDropdown?.(dropdownEl.id.replace("-view-dropdown", ""), e);
         return;
       }
 
       // Table view switcher menu option clicks (runs in all environments)
       const optionBtn = target.closest(".mdn-table-view-menu__option") as HTMLElement | null;
       if (optionBtn) {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         const dropdownEl = optionBtn.closest(".mdn-table-view-dropdown") as HTMLElement | null;
         const val = optionBtn.getAttribute("data-value");
-        if (dropdownEl && dropdownEl.id && val) {
+        if (dropdownEl?.id && val) {
           const tableId = dropdownEl.id.replace("-view-dropdown", "");
           const win = window as any;
-          if (win.Table?.switchView) win.Table.switchView(tableId, val);
-          if (win.Table?.closeViewDropdown) win.Table.closeViewDropdown(tableId);
+          win.Table?.switchView?.(tableId, val);
+          win.Table?.closeViewDropdown?.(tableId);
         }
         return;
       }
 
-      const img = target.closest(".mdn-body img") as HTMLElement | null;
-      if (img) {
+      const img = target.closest(".mdn-body img, img.mdn-img, img") as HTMLElement | null;
+      if (img && (img.closest('.mdn-body') || img.classList.contains('mdn-img'))) {
         onImageClick(img);
         return;
       }
       const mermaidWrap = target.closest(
-        ".mdn-body .mdn-mermaid-wrap",
+        ".mdn-body .mdn-mermaid-wrap, .mdn-body .mermaid, .mdn-mermaid-wrap, .mermaid, svg",
       ) as HTMLElement | null;
-      if (mermaidWrap) {
-        onImageClick(mermaidWrap);
+      if (mermaidWrap && (mermaidWrap.closest('.mdn-body') || mermaidWrap.classList.contains('mdn-mermaid-wrap') || mermaidWrap.classList.contains('mermaid') || mermaidWrap.tagName.toLowerCase() === 'svg')) {
+        const wrap = (mermaidWrap.closest<HTMLElement>('.mdn-mermaid-wrap')
+          ?? mermaidWrap.closest<HTMLElement>('.mermaid')
+          ?? mermaidWrap) as HTMLElement;
+        onImageClick(wrap);
         return;
       }
       const link = target.closest<HTMLAnchorElement>(".mdn-body a[href]");
       const href = link?.getAttribute("href") ?? "";
       if (link && isWorkspaceNavigationHref(href)) {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         navigate(href);
       } else if (link && href.startsWith("#") && href.length > 1) {
-        // Hash anchor: prevent default top-scroll and center the target instead
         e.preventDefault();
         const targetId = decodeURIComponent(href.slice(1));
         const targetEl = document.getElementById(targetId);
         if (targetEl) {
-          // Expand collapsed sections if needed
           headingSections.expandAncestors(targetEl);
           const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-          targetEl.scrollIntoView({
-            behavior: prefersReducedMotion ? "auto" : "smooth",
-            block: "start",
-          });
+          targetEl.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
         }
       }
     };

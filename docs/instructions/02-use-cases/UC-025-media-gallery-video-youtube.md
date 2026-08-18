@@ -79,8 +79,9 @@ flowchart LR
 | 3 | Arrange image-only row | Calculate equal presentation for sibling images. | Gallery-like row appears. |
 | 4 | Activate image/diagram | Build gallery from document media items. | Media modal opens. |
 | 5 | Zoom/pan/navigate | Clamp zoom and update transform/selected item. | User inspects details. |
-| 6 | Play video | Use supported video element or YouTube embed policy and active-locale renderer labels. | Playback controls and localized fallback links appear. |
-| 7 | Close modal | Dispose listeners/media state and restore focus. | Document returns. |
+| 6 | Toggle light/dark (optional) | Re-render the displayed Mermaid diagram with the new theme palette via `renderMermaidToSvg`; preserve current zoom/pan CSS vars. | Diagram recolors in place; zoom & pan state are untouched. |
+| 7 | Play video | Use supported video element or YouTube embed policy and active-locale renderer labels. | Playback controls and localized fallback links appear. |
+| 8 | Close modal | Dispose listeners/media state and restore focus. | Document returns. |
 
 ## Alternate and failure flows
 

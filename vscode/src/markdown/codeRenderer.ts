@@ -1,9 +1,9 @@
-import type { CodeBlockToken } from './parser';
-import { highlight } from './highlighter';
-import { escHtml, renderButton, shortId } from '../utils';
-import { buildHtmlPreviewDocument, hasRenderableHtmlContent } from './htmlPreviewDocument';
-import { parseDelimitedFenceInfo, parseDelimitedText, tokenizeDelimitedSource } from './delimitedText';
-import { renderInteractiveTable } from './tableRenderer';
+import type { CodeBlockToken } from './parser.ts';
+import { highlight } from './highlighter.ts';
+import { escHtml, renderButton, shortId } from '../utils.ts';
+import { buildHtmlPreviewDocument, hasRenderableHtmlContent } from './htmlPreviewDocument.ts';
+import { parseDelimitedFenceInfo, parseDelimitedText, tokenizeDelimitedSource } from './delimitedText.ts';
+import { renderInteractiveTable } from './tableRenderer.ts';
 
 export interface CodeRendererOptions {
   theme?: string;
@@ -183,22 +183,38 @@ function renderDelimitedCodeBlock(token: CodeBlockToken, options: Required<CodeR
 </div>`;
 }
 
+function isUntaggedMermaidCode(content: string): boolean {
+  const lines = content.replace(/^\uFEFF/, '').split(/\r?\n/);
+  let inFrontmatter = false;
+  let checkedFrontmatter = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (!checkedFrontmatter) {
+      checkedFrontmatter = true;
+      if (line === '---') {
+        inFrontmatter = true;
+        continue;
+      }
+    }
+    if (inFrontmatter) {
+      if (line === '---') inFrontmatter = false;
+      continue;
+    }
+    if (line.startsWith('%%')) continue;
+    return /^(?:graph|flowchart|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|quadrantChart|xychart(?:-beta)?|mindmap|timeline|gitGraph|sankey(?:-beta)?|block(?:-beta)?|packet(?:-beta)?|kanban|architecture(?:-beta)?|zenuml|requirementDiagram|info|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment)\b/i.test(line);
+  }
+  return false;
+}
+
 export function renderCodeBlock(token: CodeBlockToken, themeOrOptions: string | CodeRendererOptions): string {
   const options = normalizeOptions(themeOrOptions);
   const rawLanguage = token.lang || 'text';
   const lowerLanguage = LANGUAGE_ALIASES[rawLanguage.toLowerCase()] ?? rawLanguage.toLowerCase();
   const language = escHtml(lowerLanguage);
-  const firstWord = token.content.trim().split(/[\s\n\r]/)[0];
-  const mermaidKeywords = [
-    'graph', 'flowchart', 'sequenceDiagram', 'classDiagram', 'stateDiagram',
-    'stateDiagram-v2', 'erDiagram', 'journey', 'gantt', 'pie', 'quadrantChart',
-    'xychart-beta', 'mindmap', 'timeline', 'gitGraph', 'sankey-beta',
-    'block', 'block-beta', 'packet', 'packet-beta', 'kanban', 'architecture', 'architecture-beta',
-    'zenuml', 'requirementDiagram', 'info', 'C4Context', 'C4Container', 'C4Component',
-    'C4Dynamic', 'C4Deployment',
-  ];
   const isMermaid = lowerLanguage === 'mermaid'
-    || ((!token.lang || lowerLanguage === 'text') && mermaidKeywords.includes(firstWord));
+    || ((!token.lang || lowerLanguage === 'text') && isUntaggedMermaidCode(token.content));
   if (isMermaid) {
     return `<div class="mdn-mermaid-wrap">
   <div class="mermaid">${token.content}</div>

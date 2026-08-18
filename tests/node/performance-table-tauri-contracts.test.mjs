@@ -73,13 +73,14 @@ test('Tauri file-drop bridge uses native Rust webview events without frontend ev
 });
 
 test('media modal snapshots rendered diagrams before opening and content is memoized', async () => {
-  const [app, appView, content, contentView, modal, gallery] = await Promise.all([
+  const [app, appView, content, contentView, modal, gallery, snapshot] = await Promise.all([
     read('ui/src/App.tsx'),
     read('ui/src/AppView.tsx'),
     read('ui/src/components/Content/Content.tsx'),
     read('ui/src/components/Content/ContentMainView.tsx'),
     read('ui/src/components/Modal/MediaModal.tsx'),
     read('ui/src/components/Modal/mediaGallery.ts'),
+    read('ui/src/components/Content/enhancements/mermaidSvgSnapshot.ts'),
   ]);
 
   assert.match(app, /createMediaGallery/);
@@ -90,7 +91,9 @@ test('media modal snapshots rendered diagrams before opening and content is memo
   assert.match(contentView, /memo\(/);
   assert.doesNotMatch(modal, /document\.querySelectorAll/);
   assert.doesNotMatch(modal, /clickedElement/);
-  assert.match(gallery, /svg\.outerHTML/);
+  assert.match(gallery, /snapshotSvgHtml/);
+  assert.match(snapshot, /export function snapshotSvgHtml/);
+  assert.match(snapshot, /outerHTML/);
 });
 
 test('keyboard shortcut search uses one focus-within surface with an icon and integrated clear action', async () => {
