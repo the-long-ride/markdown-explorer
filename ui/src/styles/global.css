@@ -57,6 +57,7 @@
 @import './global/global-dialog-surfaces.css';
 @import './global/global-bookmarks.css';
 @import './global/global-action-notice.css';
+@import './global/global-scope-view.css';
 @import './global/global-sidebar-search-controls.css';
 @import './global/global-shell-control-sizing.css';
 
