@@ -15,12 +15,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: full UI default workers
+      - name: package UI script
+        continue-on-error: true
+        run: pnpm run test:ui
+      - name: direct UI runner
         continue-on-error: true
         run: pnpm exec vitest run --project ui
-      - name: full UI four workers
+      - name: package UI script four workers
         continue-on-error: true
         run: pnpm exec vitest run --project ui --maxWorkers=4
-      - name: full UI two workers
-        continue-on-error: true
-        run: pnpm exec vitest run --project ui --maxWorkers=2
