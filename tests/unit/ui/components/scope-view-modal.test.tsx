@@ -83,6 +83,16 @@ describe('ScopeViewModal', () => {
     expect(mocks.postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ command: 'navigate' }));
   });
 
+  it('offers Open as scope when an internal link is right-clicked inside Scope View', async () => {
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    await screen.findByText('Doc 1');
+
+    fireEvent.contextMenu(screen.getByText('Open 2'), { clientX: 24, clientY: 30 });
+    expect(await screen.findByText('Open as scope')).toBeTruthy();
+    fireEvent.click(screen.getByText('Open as scope'));
+    await screen.findByText('Doc 2');
+  });
+
   it('blocks the eleventh nested scope and keeps level ten active', async () => {
     const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Doc 1');
