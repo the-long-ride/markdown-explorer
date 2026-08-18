@@ -1,3 +1,4 @@
+import { pathToFileUrl } from '../dom/localFileUrl';
 import type { MdFile } from '../types/files';
 import type { ExportLayout } from './exportModel';
 
@@ -27,7 +28,7 @@ body{font-family:var(--font-body,system-ui,sans-serif)}
 @media print{.mdn-export-shell{display:block}.mdn-export-topbar,.mdn-export-sidebar,.mdn-export-toc{display:none!important}.mdn-export-page{width:100%;max-width:none;padding:0}.mdn-export-document-section{break-before:page}.mdn-export-document-section:first-child{break-before:auto}.mdn-copy-btn,.mdn-section-copy-btn,.mdn-table-controls,.mdn-table-filter-btn,.mdn-table-columns-toggle,.mdn-table-view-dropdown{display:none!important}pre,table,svg,img,video{max-width:100%!important}pre{white-space:pre-wrap;overflow-wrap:anywhere}}
 `;
 
-function escapeHtml(value: string): string {
+export function escapeExportHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   })[character] || character);
@@ -105,8 +106,57 @@ function rewriteMergedLinks(html: string, source: MdFile, exported: readonly MdF
   });
 }
 
+function localAssetUrl(raw: string, documentPath: string): string | null {
+  const value = raw.trim();
+  if (!value || value.startsWith('#') || /^(?:data|https?|mailto|tel|javascript):/i.test(value)) return null;
+  if (/^blob:/i.test(value)) return value;
+  if (/^file:/i.test(value)) return value;
+  const base = pathToFileUrl(documentPath);
+  if (!base) return null;
+  try {
+    const resolved = new URL(value, base);
+    return resolved.protocol === 'file:' ? resolved.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error || new Error('Unable to read export asset'));
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function embedExportLocalAssets(html: string, documentPath: string): Promise<string> {
+  if (typeof DOMParser === 'undefined' || typeof fetch !== 'function' || typeof FileReader === 'undefined') return html;
+  const parsed = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const targets: Array<{ element: Element; attribute: string }> = [];
+  parsed.body.querySelectorAll('img[src],source[src],audio[src]').forEach((element) => targets.push({ element, attribute: 'src' }));
+  parsed.body.querySelectorAll('video[poster]').forEach((element) => targets.push({ element, attribute: 'poster' }));
+
+  await Promise.all(targets.map(async ({ element, attribute }) => {
+    const raw = element.getAttribute(attribute);
+    if (!raw) return;
+    const url = localAssetUrl(raw, documentPath);
+    if (!url) return;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return;
+      const dataUrl = await blobToDataUrl(await response.blob());
+      if (dataUrl) element.setAttribute(attribute, dataUrl);
+    } catch {
+      // Export stays usable even if a local asset cannot be embedded.
+    }
+  }));
+
+  return parsed.body.innerHTML;
+}
+
 export function captureExportThemeCss(root?: HTMLElement): string {
-  if (typeof document === 'undefined') return EXPORT_BASE_CSS;
+  if (typeof document === 'undefined') return '';
   const target = root ?? document.documentElement;
   const computed = typeof getComputedStyle === 'function' ? getComputedStyle(target) : null;
   const variables: string[] = [];
@@ -128,7 +178,7 @@ export function captureExportThemeCss(root?: HTMLElement): string {
     }
   }
 
-  return `:root{${variables.join('')}}\n${rules.join('\n')}\n${EXPORT_BASE_CSS}`;
+  return `:root{${variables.join('')}}\n${rules.join('\n')}`;
 }
 
 export function buildStandaloneExportHtml(args: {
@@ -136,6 +186,7 @@ export function buildStandaloneExportHtml(args: {
   layout: ExportLayout;
   title: string;
   themeCss: string;
+  navigationFiles?: readonly MdFile[];
 }): string {
   const files = args.pages.map((page) => page.file);
   const merged = args.pages.length > 1;
@@ -143,13 +194,21 @@ export function buildStandaloneExportHtml(args: {
     const html = merged ? rewriteMergedLinks(page.html, page.file, files) : page.html;
     return `<section id="${documentId(page.file)}" class="mdn-export-document-section"><article class="mdn-body mdn-export-page">${html}</article></section>`;
   }).join('\n');
-  const navigation = args.pages.map((page) => `<a href="#${documentId(page.file)}">${escapeHtml(page.file.title || page.file.relativePath)}</a>`).join('');
+
+  const navigationFiles = args.navigationFiles?.length ? args.navigationFiles : files;
+  const currentFile = !merged && args.pages.length === 1 ? args.pages[0].file : null;
+  const navigation = navigationFiles.map((file) => {
+    const href = currentFile
+      ? (file.fsPath === currentFile.fsPath ? `#${documentId(currentFile)}` : relativePath(outputPath(currentFile), outputPath(file)))
+      : `#${documentId(file)}`;
+    return `<a href="${escapeExportHtml(href)}">${escapeExportHtml(file.title || file.relativePath)}</a>`;
+  }).join('');
 
   const body = args.layout === 'explorer'
-    ? `<div class="mdn-export-shell"><header class="mdn-export-topbar">Markdown Explorer · ${escapeHtml(args.title)}</header><nav class="mdn-export-sidebar" aria-label="Documents">${navigation}</nav><main class="mdn-export-main">${pageMarkup}</main><aside class="mdn-export-toc" aria-label="Contents">${navigation}</aside></div>`
+    ? `<div class="mdn-export-shell"><header class="mdn-export-topbar">Markdown Explorer · ${escapeExportHtml(args.title)}</header><nav class="mdn-export-sidebar" aria-label="Documents">${navigation}</nav><main class="mdn-export-main">${pageMarkup}</main><aside class="mdn-export-toc" aria-label="Contents">${navigation}</aside></div>`
     : `<main class="mdn-export-document">${pageMarkup}</main>`;
 
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(args.title)}</title><style>${args.themeCss}\n${EXPORT_BASE_CSS}</style></head><body>${body}</body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeExportHtml(args.title)}</title><style>${args.themeCss}\n${EXPORT_BASE_CSS}</style></head><body>${body}</body></html>`;
 }
 
 export function exportHtmlPath(file: MdFile): string {
