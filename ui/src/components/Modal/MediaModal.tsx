@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { TooltipButton } from '../shared/TooltipButton';
-import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, CopyIcon, SaveImageIcon } from '../shared/icons';
+import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, CopyIcon, SaveImageIcon, SunIcon, MoonIcon } from '../shared/icons';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { useCssVars } from '../../utils/useCssVars';
@@ -17,6 +17,8 @@ import {
   MEDIA_ZOOM_WHEEL_STEP,
 } from '../../constants/limits';
 import type { MediaGallery } from './mediaGallery';
+import { renderMermaidToSvg } from '../Content/enhancements/mermaidRenderToSvg';
+import { resolveThemeMode } from '../../utils/themeMode';
 
 interface MediaModalProps {
   gallery: MediaGallery | null;
@@ -25,10 +27,11 @@ interface MediaModalProps {
 
 
 export function MediaModal({ gallery, onClose }: MediaModalProps) {
-  const { state } = useAppState();
+  const { state, setTheme } = useAppState();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
   const items = gallery?.items ?? [];
+  const isDarkNow = resolveThemeMode(state.theme) === 'dark';
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [zoom, setZoom] = useState(1);
@@ -48,9 +51,33 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     setPan({ x: 0, y: 0 });
   }, [gallery]);
 
+  // Re-render the displayed mermaid diagram with the current theme palette when
+  // the user flips theme, navigates between gallery items, or the gallery
+  // changes. Preserves zoom & pan: this effect MUST NOT touch setZoom/setPan
+  // (the override SVG swaps in place via innerHTML on the existing transform
+  // container that already reflects --zoom / --pan-x / --pan-y via useCssVars).
+  useEffect(() => {
+    if (!gallery) return;
+    const current = gallery.items[Math.min(currentIndex, gallery.items.length - 1)];
+    if (!current || current.type !== 'svg' || !current.source) return;
+    let cancelled = false;
+    renderMermaidToSvg({ source: current.source, isDark: isDarkNow })
+      .then(({ svgHtml }) => {
+        if (!cancelled && mediaSvgRef.current) {
+          mediaSvgRef.current.innerHTML = svgHtml;
+        }
+      })
+      .catch(() => { /* ignore render errors during theme flip */ });
+    return () => { cancelled = true; };
+  }, [state.theme, currentIndex, gallery, isDarkNow]);
+
   const zoomIn = useCallback(() => setZoom((z) => Math.min(MEDIA_ZOOM_MAX, z + MEDIA_ZOOM_BUTTON_STEP)), []);
   const zoomOut = useCallback(() => setZoom((z) => Math.max(MEDIA_ZOOM_MIN, z - MEDIA_ZOOM_BUTTON_STEP)), []);
   const reset = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(isDarkNow ? 'light' : 'dark');
+  }, [setTheme, isDarkNow]);
 
   const prev = useCallback(() => {
     setCurrentIndex((i) => (i - 1 + items.length) % items.length);
@@ -177,6 +204,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
           {item.type === 'svg' && (
             <div
               className="mdn-modal-content-svg media-modal__transform"
+              data-mdn-mermaid-kind={item.kind}
               ref={mediaSvgRef}
               dangerouslySetInnerHTML={{ __html: item.html ?? '' }}
             />
@@ -190,6 +218,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
           <span className="mdn-modal-zoom-text">{Math.round(zoom * 100)}%</span>
           <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip={t.tooltips.zoomOut} tooltipPos="above" icon={<ZoomOutIcon />} />
           <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip={t.tooltips.resetZoom} tooltipPos="above" icon={<ResetZoomIcon />} />
+          <TooltipButton className="mdn-modal-tool" onClick={toggleTheme} tooltip={t.topbar.theme} tooltipPos="above" icon={isDarkNow ? <SunIcon /> : <MoonIcon />} />
           <TooltipButton className="mdn-modal-tool" onClick={handleCopy} tooltip={t.previewActions.copyImage} tooltipPos="above" icon={<CopyIcon size={14} />} />
           <TooltipButton className="mdn-modal-tool" onClick={handleSave} tooltip={t.previewActions.saveImagePng} tooltipPos="above" icon={<SaveImageIcon size={14} />} />
         </div>

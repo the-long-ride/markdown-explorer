@@ -7,17 +7,19 @@ import { SwitchWorkspaceModal } from '../../../../ui/src/components/Modal/Switch
 import { WorkspaceSelectionConfirmModal } from '../../../../ui/src/components/Modal/WorkspaceSelectionConfirmModal';
 
 const mockState: any = {
+  theme: 'dark',
   settings: { language: 'en' },
   workspaceName: 'MyProject',
 };
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
-  useAppState: () => ({ state: mockState }),
+  useAppState: () => ({ state: mockState, setTheme: () => {} }),
 }));
 
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     tooltips: { closeModal: 'Close modal [Esc]', close: 'Close', previous: 'Previous', next: 'Next', zoomIn: 'Zoom In', zoomOut: 'Zoom Out', resetZoom: 'Reset Zoom' },
+    topbar: { theme: 'Toggle light/dark mode', switchToDarkMode: 'Switch to Dark mode', switchToLightMode: 'Switch to Light mode' },
     previewActions: { copyImage: 'Copy image to clipboard', saveImagePng: 'Save as image (.PNG)', imageSaved: 'Image saved.', imageSaveFailed: 'Failed to save image.', copyFailed: 'Unable to copy' },
     update: { restartPromptTitle: 'Install update', restartPromptBody: 'Update ready', updateOnExit: 'Update on Exit', restartAndUpdate: 'Restart and Update' },
     terms: {
@@ -55,6 +57,8 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   ChevronRightIcon: () => <span>chevron-right-icon</span>,
   CopyIcon: () => <span>copy-icon</span>,
   SaveImageIcon: () => <span>save-image-icon</span>,
+  SunIcon: () => <span>sun-icon</span>,
+  MoonIcon: () => <span>moon-icon</span>,
 }));
 
 vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({ default: 'logo.png' }));
@@ -92,6 +96,7 @@ describe('MediaModal', () => {
   it('renders a captured Mermaid SVG after the source DOM is replaced', () => {
     const wrapper = document.createElement('div');
     wrapper.className = 'mdn-mermaid-wrap';
+    wrapper.dataset.mdnMermaidKind = 'sequence';
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.innerHTML = '<circle cx="50" cy="50" r="40" />';
     wrapper.appendChild(svg);
@@ -102,11 +107,13 @@ describe('MediaModal', () => {
 
     const gallery = createMediaGallery(wrapper);
     expect(gallery).not.toBeNull();
+    expect(gallery?.items[0].kind).toBe('sequence');
     body.innerHTML = '<pre>raw mermaid source</pre>';
 
     render(<MediaModal gallery={gallery} onClose={() => {}} />);
-    const svgContainer = document.querySelector('.mdn-modal-content-svg');
+    const svgContainer = document.querySelector('.mdn-modal-content-svg') as HTMLElement | null;
     expect(svgContainer?.querySelector('svg')).toBeTruthy();
+    expect(svgContainer?.getAttribute('data-mdn-mermaid-kind')).toBe('sequence');
   });
 
   it('renders navigation when multiple snapshots exist', () => {
@@ -118,6 +125,79 @@ describe('MediaModal', () => {
       currentIndex: 0,
     }} onClose={() => {}} />);
     expect(document.querySelector('.mdn-modal-nav')).toBeTruthy();
+  });
+
+  it('captures explicit pixel dimensions for svgs rendered with width="100%"', () => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mdn-mermaid-wrap';
+    wrapper.dataset.mdnMermaidKind = 'packet';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('viewBox', '0 0 640 80');
+    svg.innerHTML = '<rect x="0" y="0" width="640" height="80" />';
+    wrapper.appendChild(svg);
+    const body = document.createElement('div');
+    body.className = 'mdn-body';
+    body.appendChild(wrapper);
+    document.body.appendChild(body);
+
+    // jsdom measures 0×0 by default — emulate the rendered layout width/height.
+    const rectSpy = vi.spyOn(svg, 'getBoundingClientRect');
+    rectSpy.mockReturnValue({
+      width: 1128, height: 141, x: 0, y: 0,
+      top: 0, left: 0, right: 1128, bottom: 141,
+      toJSON: () => ({}),
+    });
+
+    const gallery = createMediaGallery(wrapper);
+    const html = gallery?.items[0]?.html ?? '';
+    expect(html).toContain('width="1128"');
+    expect(html).toContain('height="141"');
+
+    render(<MediaModal gallery={gallery} onClose={() => {}} />);
+    const injected = document.querySelector('.mdn-modal-content-svg svg');
+    expect(injected?.getAttribute('width')).toBe('1128');
+    expect(injected?.getAttribute('height')).toBe('141');
+
+    rectSpy.mockRestore();
+  });
+
+  it('falls back to viewBox ratio when the svg has no rendered size', () => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mdn-mermaid-wrap';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('viewBox', '0 0 640 320');
+    svg.innerHTML = '<rect x="0" y="0" width="640" height="320" />';
+    wrapper.appendChild(svg);
+    const body = document.createElement('div');
+    body.className = 'mdn-body';
+    body.appendChild(wrapper);
+    document.body.appendChild(body);
+
+    const gallery = createMediaGallery(wrapper);
+    const html = gallery?.items[0]?.html ?? '';
+    expect(html).toContain('width="900"');
+    expect(html).toContain('height="450"');
+  });
+
+  it('keeps existing pixel attributes when no rendered size is available', () => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mdn-mermaid-wrap';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '512');
+    svg.setAttribute('height', '256');
+    svg.innerHTML = '<rect x="0" y="0" width="512" height="256" />';
+    wrapper.appendChild(svg);
+    const body = document.createElement('div');
+    body.className = 'mdn-body';
+    body.appendChild(wrapper);
+    document.body.appendChild(body);
+
+    const gallery = createMediaGallery(wrapper);
+    const html = gallery?.items[0]?.html ?? '';
+    expect(html).toContain('width="512"');
+    expect(html).toContain('height="256"');
   });
 });
 
