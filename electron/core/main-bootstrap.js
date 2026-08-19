@@ -83,13 +83,19 @@ function createAppBootstrap({
     deliverExternalOpenPath(externalOpenQueue?.take());
   }
 
-  function deliverExternalOpenPath(externalPath) {
-    if (externalPath) {
+  function deliverExternalOpenPath(externalRequest) {
+    if (!externalRequest) return;
+    if (typeof externalRequest === 'string') {
       mainWindowRef?.webContents.send('host-message', {
         command: 'externalOpenPath',
-        path: externalPath,
+        path: externalRequest,
       });
+      return;
     }
+    mainWindowRef?.webContents.send('host-message', {
+      command: 'externalOpenRequest',
+      request: externalRequest,
+    });
   }
 
   appImpl.whenReady().then(() => {

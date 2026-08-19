@@ -3,6 +3,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { getTabLabel } from '../desktop/desktopTabs';
 import { clearWorkspaceOperation, getActiveWorkspaceOperation, type WorkspaceOperationContext } from '../desktop/workspaceOperations';
 import type { CrossTabSearchItem, DesktopTab } from '../desktop/types';
+import type { ExternalOpenRequest } from '../types/hostMessages';
 
 interface DesktopTabSearchSyncOptions {
   tabs: DesktopTab[];
@@ -16,6 +17,25 @@ interface DesktopTabSearchSyncOptions {
   isLoading: boolean;
   createNewWorkspaceTab: () => string;
   beginOperationForTab: (tabId: string) => WorkspaceOperationContext;
+}
+
+export function createExternalOpenCommand(request: ExternalOpenRequest, operation?: WorkspaceOperationContext) {
+  const metadata = operation ?? {};
+  if (request.mode === 'file-with-parent-workspace') {
+    return {
+      command: 'activateWorkspace',
+      workspacePath: request.folderPath,
+      filePath: request.filePath,
+      openFirstFile: false,
+      ...metadata,
+    };
+  }
+  return {
+    command: 'openPath',
+    path: request.mode === 'file' ? request.filePath : request.folderPath,
+    openFirstFile: false,
+    ...metadata,
+  };
 }
 
 export function useDesktopTabSearchSync({
@@ -55,6 +75,15 @@ export function useDesktopTabSearchSync({
           setTabs((currentTabs) => currentTabs.map((tab) => tab.id === msg.workspaceTabId ? { ...tab, workspaceLoadState: 'ready' } : tab));
         }
       }
+    }
+    if (msg.command === 'externalOpenRequest') {
+      let operation: WorkspaceOperationContext | undefined;
+      if (isTabView) {
+        const targetTabId = createNewWorkspaceTab();
+        operation = beginOperationForTab(targetTabId);
+      }
+      bridge.postMessage(createExternalOpenCommand(msg.request, operation));
+      return;
     }
     if (msg.command === 'externalOpenPath') {
       if (isTabView) {
