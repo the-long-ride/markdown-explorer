@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 
-const fixtures = vi.hoisted(() => ({
-  file: {
+const fixtures = vi.hoisted(() => {
+  const file = {
     fsPath: '/docs/readme.md',
     relativePath: 'readme.md',
     parts: ['readme.md'],
@@ -11,8 +11,9 @@ const fixtures = vi.hoisted(() => ({
     title: 'Readme',
     extension: '.md',
     documentKind: 'markdown',
-  } as MdFile,
-}));
+  } as MdFile;
+  return { file, files: [file] as MdFile[] };
+});
 
 const mocks = vi.hoisted(() => ({
   loadDocumentSnapshot: vi.fn(),
@@ -23,7 +24,7 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
     state: {
       currentFile: '/docs/readme.md',
-      fileList: [fixtures.file],
+      fileList: fixtures.files,
       workspaceName: 'Docs',
       appRuntime: 'desktop',
       settings: { language: 'en' },
@@ -71,7 +72,7 @@ describe('ExportCenterModal close and PDF options', () => {
     expect(mocks.saveBlobAsFile).not.toHaveBeenCalled();
   });
 
-  it.skip('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
+  it('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
     mocks.loadDocumentSnapshot.mockResolvedValue({ file: fixtures.file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
     render(<ExportCenterModal isOpen onClose={() => {}} />);
 
