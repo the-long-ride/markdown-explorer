@@ -29,6 +29,7 @@ function createAppBootstrap({
   createHtmlPreviewServerFn = require("./html-preview-server").createHtmlPreviewServer,
   createPdfExporterFn = require("./pdf-export").createPdfExporter,
   createExportResourceHandlersFn = require("./runtime-export-resources").createExportResourceHandlers,
+  createExportSaveHandlerFn = require("./runtime-export-save").createExportSaveHandler,
   externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
@@ -73,6 +74,13 @@ function createAppBootstrap({
     pathApi: pathImpl,
     sendHostMessage,
     getWorkspaceBaseDir,
+  });
+  const saveExportFile = createExportSaveHandlerFn({
+    dialog: dialogImpl,
+    fs: fsImpl,
+    pathApi: pathImpl,
+    getMainWindow,
+    sendHostMessage,
   });
 
   function getUpdateManager() {
@@ -175,6 +183,7 @@ function createAppBootstrap({
           readWorkspaceTextResource: runtimeImpl.readWorkspaceTextResource,
           listWorkspaceExportResources: exportResourceHandlers.listWorkspaceExportResources,
           readWorkspaceExportResource: exportResourceHandlers.readWorkspaceExportResource,
+          saveExportFile,
           openHtmlPreview: (documentHtml) => htmlPreviewServer.open(
             documentHtml,
             (url) => shellImpl.openExternal(url),

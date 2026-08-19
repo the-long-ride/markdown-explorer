@@ -67,12 +67,13 @@ export function saveExportArtifact(
       resolve(result);
     };
     const unsubscribe = bridge.onMessage((message) => {
-      if (message.command !== 'exportFileSaveResult' || message.requestId !== requestId) return;
+      const result = message as any;
+      if (result.command !== 'exportFileSaveResult' || result.requestId !== requestId) return;
       finish({
-        ok: Boolean(message.ok),
-        ...(message.cancelled ? { cancelled: true } : {}),
-        ...(message.path ? { path: message.path } : {}),
-        ...(message.error ? { error: message.error } : {}),
+        ok: Boolean(result.ok),
+        ...(result.cancelled ? { cancelled: true } : {}),
+        ...(result.path ? { path: result.path } : {}),
+        ...(result.error ? { error: result.error } : {}),
       });
     });
     const timer = globalThis.setTimeout(
@@ -81,13 +82,16 @@ export function saveExportArtifact(
     );
 
     try {
-      bridge.postMessage({
+      const dataBase64 = bytesToBase64(artifact.bytes);
+      const message = {
         command: 'saveExportFile',
         requestId,
         fileName: artifact.fileName,
         mimeType: artifact.mimeType,
-        dataBase64: bytesToBase64(artifact.bytes),
-      });
+        dataBase64,
+        ...(runtime === 'tauri' ? { dataUrl: `data:${artifact.mimeType};base64,${dataBase64}` } : {}),
+      } as any;
+      bridge.postMessage(message);
     } catch (error) {
       finish({ ok: false, error: error instanceof Error ? error.message : 'Unable to request export save' });
     }

@@ -2,6 +2,7 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'chromium-xtension/src/chrome-host-export.ts': ['tests/unit/chromium/chrome-host-export.test.ts'],
   'electron/core/pdf-export.js': ['tests/unit/electron/pdf-export.test.ts'],
   'electron/core/runtime-export-resources.js': ['tests/unit/electron/export-resources.test.ts'],
+  'electron/core/runtime-export-save.js': ['tests/unit/electron/export-save.test.ts'],
   'ui/src/components/Export/ExportCenterModal.tsx': [
     'tests/unit/ui/components/export-center-modal.test.tsx',
     'tests/unit/ui/components/export-center-close.test.tsx',
@@ -14,7 +15,9 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/export/exportHtml.ts': ['tests/unit/ui/export/export-html.test.ts'],
   'ui/src/export/exportModel.ts': ['tests/unit/ui/export/export-model.test.ts'],
   'ui/src/export/exportResources.ts': ['tests/unit/ui/export/export-resources.test.ts'],
+  'ui/src/export/exportSave.ts': ['tests/unit/ui/export/export-save.test.ts'],
   'ui/src/export/pdfExport.ts': ['tests/unit/ui/export/pdf-export-host.test.ts'],
   'ui/src/export/zipStore.ts': ['tests/unit/ui/export/zip-store.test.ts'],
   'vscode/src/core/panelExportResources.ts': ['tests/unit/vscode/panel-export-resources.test.ts'],
+  'vscode/src/core/panelExportSave.ts': ['tests/unit/vscode/panel-export-save.test.ts'],
 };
