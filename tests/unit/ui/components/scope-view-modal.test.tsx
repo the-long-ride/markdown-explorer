@@ -5,19 +5,18 @@ import type { MdFile } from '../../../../ui/src/types/files';
 const mocks = vi.hoisted(() => ({
   loadDocumentSnapshot: vi.fn(),
   postMessage: vi.fn(),
+  appState: {
+    theme: 'light',
+    settings: {
+      language: 'en',
+      keybindings: { back: 'Alt+Left', forward: 'Alt+Right' },
+      disabledKeybindings: {},
+    },
+  },
 }));
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
-  useAppState: () => ({
-    state: {
-      theme: 'light',
-      settings: {
-        language: 'en',
-        keybindings: { back: 'Alt+Left', forward: 'Alt+Right' },
-        disabledKeybindings: {},
-      },
-    },
-  }),
+  useAppState: () => ({ state: mocks.appState }),
 }));
 
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
