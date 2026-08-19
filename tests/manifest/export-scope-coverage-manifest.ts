@@ -5,6 +5,7 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
     'tests/unit/ui/components/export-center-close.test.tsx',
   ],
   'ui/src/components/Export/ExportCenterSourcePanel.tsx': ['tests/unit/ui/components/export-center-modal.test.tsx'],
+  'ui/src/components/Export/exportSelectionModel.ts': ['tests/unit/ui/export/export-selection-model.test.ts'],
   'ui/src/components/Modal/ScopeViewModal.tsx': ['tests/unit/ui/components/scope-view-modal.test.tsx'],
   'ui/src/components/Modal/scopeHistory.ts': ['tests/unit/ui/components/scope-history.test.ts'],
   'ui/src/export/documentSnapshot.ts': ['tests/unit/ui/export/document-snapshot.test.ts'],
