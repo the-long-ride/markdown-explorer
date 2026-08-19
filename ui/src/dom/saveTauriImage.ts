@@ -1,5 +1,5 @@
 // =============================================================================
-// dom/saveTauriImage.ts — Tauri native save-dialog bridge for PNG blobs
+// dom/saveTauriImage.ts — Tauri native save-dialog bridge for blobs
 // =============================================================================
 
 function isTauriRuntime(): boolean {
@@ -20,35 +20,45 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-// The host shows a native save dialog and writes the file asynchronously,
-// emitting chartPngSaveResult {ok,requestId} for every outcome (write
-// success, write failure, or cancelled dialog). Await it so the resolved
-// boolean reflects the actual outcome, and never time out: the dialog may
-// stay open arbitrarily long, and a fallback timer would report a false
-// failure the instant the user returns to pick a destination.
+function saveDataUrlViaTauriHost(
+  dataUrl: string,
+  fileName: string,
+  command: 'saveChartPng' | 'saveExportFile',
+  resultCommand: 'chartPngSaveResult' | 'exportFileSaveResult',
+): Promise<boolean> {
+  const requestId = `save-file-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return new Promise<boolean>((resolve) => {
+    const unsubscribe = (window as any).PlatformBridge.onMessage((msg: any) => {
+      if (msg?.command !== resultCommand || msg.requestId !== requestId) return;
+      unsubscribe();
+      resolve(Boolean(msg.ok));
+    });
+    try {
+      (window as any).PlatformBridge.postMessage({
+        command,
+        fileName,
+        dataUrl,
+        requestId,
+      });
+    } catch (err) {
+      unsubscribe();
+      console.warn(`Tauri ${command} postMessage failed:`, err);
+      resolve(false);
+    }
+  });
+}
+
+// PNG saves keep the existing image-specific host path. Other blobs use the
+// generic file-save command so HTML/ZIP exports do not get rejected by the
+// PNG decoder and leave the caller waiting forever.
 export async function saveBlobViaTauriHost(blob: Blob, fileName: string): Promise<boolean> {
   try {
     const dataUrl = await blobToDataUrl(blob);
-    const requestId = `save-image-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    return await new Promise<boolean>((resolve) => {
-      const unsubscribe = (window as any).PlatformBridge.onMessage((msg: any) => {
-        if (msg?.command !== 'chartPngSaveResult' || msg.requestId !== requestId) return;
-        unsubscribe();
-        resolve(Boolean(msg.ok));
-      });
-      try {
-        (window as any).PlatformBridge.postMessage({
-          command: 'saveChartPng',
-          fileName,
-          dataUrl,
-          requestId,
-        });
-      } catch (err) {
-        unsubscribe();
-        console.warn('Tauri saveChartPng postMessage failed:', err);
-        resolve(false);
-      }
-    });
+    const isPng = /^image\/png(?:;|$)/i.test(blob.type) && /\.png$/i.test(fileName);
+    if (isPng) {
+      return await saveDataUrlViaTauriHost(dataUrl, fileName, 'saveChartPng', 'chartPngSaveResult');
+    }
+    return await saveDataUrlViaTauriHost(dataUrl, fileName, 'saveExportFile', 'exportFileSaveResult');
   } catch {
     return false;
   }
