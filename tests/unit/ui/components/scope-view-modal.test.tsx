@@ -8,7 +8,16 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
-  useAppState: () => ({ state: { theme: 'light', settings: { language: 'en' } } }),
+  useAppState: () => ({
+    state: {
+      theme: 'light',
+      settings: {
+        language: 'en',
+        keybindings: { back: 'Alt+Left', forward: 'Alt+Right' },
+        disabledKeybindings: {},
+      },
+    },
+  }),
 }));
 
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
@@ -88,6 +97,25 @@ describe('ScopeViewModal', () => {
     fireEvent.click(screen.getByLabelText('Next scope'));
     await screen.findByText('Doc 2');
     expect(mocks.postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ command: 'navigate' }));
+  });
+
+  it('routes configured keyboard and mouse back/forward inputs through the scope stack', async () => {
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    await screen.findByText('Doc 1');
+    fireEvent.click(screen.getByText('Open 2'));
+    await screen.findByText('Doc 2');
+
+    fireEvent.keyDown(window, { key: 'ArrowLeft', altKey: true });
+    await waitFor(() => expect(screen.getByText('Doc 1')).toBeTruthy());
+
+    fireEvent.mouseUp(window, { button: 4 });
+    await waitFor(() => expect(screen.getByText('Doc 2')).toBeTruthy());
+
+    fireEvent.mouseUp(window, { button: 3 });
+    await waitFor(() => expect(screen.getByText('Doc 1')).toBeTruthy());
+
+    fireEvent.keyDown(window, { key: 'ArrowRight', altKey: true });
+    await waitFor(() => expect(screen.getByText('Doc 2')).toBeTruthy());
   });
 
   it('offers Open as scope when an internal link is right-clicked inside Scope View', async () => {
