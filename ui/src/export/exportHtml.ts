@@ -50,18 +50,23 @@ function dirname(value: string): string {
   return index < 0 ? '' : normalized.slice(0, index);
 }
 
-function caseSignature(value: string): string {
-  const positions: string[] = [];
-  Array.from(value).forEach((character, index) => {
-    if (character.toLowerCase() !== character) positions.push(index.toString(36));
-  });
-  return positions.join('-');
+function portablePathSegment(value: string): string {
+  let encoded = '';
+  for (const character of Array.from(value)) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    const isUpperAscii = codePoint >= 0x41 && codePoint <= 0x5a;
+    if (character === '~' || isUpperAscii || codePoint > 0x7f) encoded += `~${codePoint.toString(16)}~`;
+    else encoded += character;
+  }
+  return encoded;
+}
+
+function portableRelativePath(value: string): string {
+  return normalizeRelativePath(value).split('/').map(portablePathSegment).join('/');
 }
 
 function outputPath(file: MdFile): string {
-  const normalized = normalizeRelativePath(file.relativePath);
-  const signature = caseSignature(normalized);
-  return `${normalized}${signature ? `--case-${signature}` : ''}.html`;
+  return `${portableRelativePath(file.relativePath)}.html`;
 }
 
 function relativePath(fromFile: string, toFile: string): string {
