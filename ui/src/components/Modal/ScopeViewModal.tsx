@@ -39,6 +39,8 @@ interface ScopeContextMenuState {
 export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalProps) {
   const { state } = useAppState();
   const bridge = usePlatform();
+  const bridgeRef = useRef(bridge);
+  const settingsRef = useRef(state.settings);
   const bodyRef = useRef<HTMLDivElement>(null);
   const mermaidRunIdRef = useRef(0);
   const [history, setHistory] = useState<ScopeHistoryState | null>(null);
@@ -46,6 +48,9 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<ScopeContextMenuState | null>(null);
+
+  bridgeRef.current = bridge;
+  settingsRef.current = state.settings;
 
   useEffect(() => {
     if (!initialFile) {
@@ -55,15 +60,16 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
       setContextMenu(null);
       return;
     }
+    const file = initialFile;
     let active = true;
     setLoading(true);
     setError(null);
     setNotice(null);
     setContextMenu(null);
-    void loadDocumentSnapshot(bridge, initialFile, state.settings)
+    void loadDocumentSnapshot(bridgeRef.current, file, settingsRef.current)
       .then((snapshot) => {
         if (!active) return;
-        setHistory(createScopeHistory({ file: initialFile, snapshot }));
+        setHistory(createScopeHistory({ file, snapshot }));
       })
       .catch((reason: unknown) => {
         if (!active) return;
@@ -73,7 +79,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [bridge, initialFile, state.settings]);
+  }, [initialFile?.fsPath]);
 
   useEffect(() => {
     if (!initialFile) return;
@@ -190,7 +196,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
     setContextMenu(null);
     setLoading(true);
     try {
-      const snapshot = await loadDocumentSnapshot(bridge, target, state.settings);
+      const snapshot = await loadDocumentSnapshot(bridgeRef.current, target, settingsRef.current);
       const result = pushScope(history, { file: target, snapshot });
       if (result.blocked) {
         setNotice('Maximum scope depth reached');
@@ -202,7 +208,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
     } finally {
       setLoading(false);
     }
-  }, [bridge, history, state.settings]);
+  }, [history]);
 
   useEffect(() => {
     const body = bodyRef.current;
@@ -232,7 +238,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
 
       if (link.kind === 'web' && link.openable) {
         event.preventDefault();
-        bridge.postMessage({ command: 'openExternal', url: link.resolved });
+        bridgeRef.current.postMessage({ command: 'openExternal', url: link.resolved });
         return;
       }
 
@@ -266,7 +272,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
       body.removeEventListener('click', handleClick);
       body.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [bridge, current, files, openNestedScope]);
+  }, [current, files, openNestedScope]);
 
   if (!initialFile) return null;
 
