@@ -156,6 +156,15 @@ export interface ChartPngSaveResultMessage {
   readonly requestId?: string;
 }
 
+export interface ExportPdfResultMessage {
+  readonly command: 'exportPdfResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly cancelled?: boolean;
+  readonly paths?: readonly string[];
+  readonly error?: string;
+}
+
 export type HostMessage =
   | RenderContentMessage | ReadyAckMessage | WorkspaceFilesChangedMessage
   | CurrentFileChangedMessage | RecentWorkspacesChangedMessage | NavNotFoundMessage
@@ -163,4 +172,5 @@ export type HostMessage =
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
   | FullscreenStateChangedMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
-  | WorkspaceTextResourceResultMessage | DesktopFontsResultMessage | ChartPngSaveResultMessage;
+  | WorkspaceTextResourceResultMessage | DesktopFontsResultMessage | ChartPngSaveResultMessage
+  | ExportPdfResultMessage;
