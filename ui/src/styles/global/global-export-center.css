@@ -1,5 +1,6 @@
 .export-center {
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   padding: calc(var(--topbar-h, 44px) + 10px) 12px 12px;
 }
 
