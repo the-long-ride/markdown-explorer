@@ -1,0 +1,194 @@
+import type { ExportWorkspaceResourceInfo } from '../types/hostMessages';
+import type { DocumentSnapshot } from './documentSnapshot';
+import type { ExportWorkspaceResourceReadResult } from './exportResources';
+
+export interface ExportAsset {
+  sourcePath: string;
+  outputPath: string;
+  bytes: Uint8Array;
+  mimeType: string;
+  kind: 'referenced' | 'extra';
+}
+
+export type ExportResourceReader = (
+  resourcePath: string,
+  options?: { documentPath?: string },
+) => Promise<ExportWorkspaceResourceReadResult>;
+
+export interface ReferencedAssetResult {
+  html: string;
+  assets: readonly ExportAsset[];
+  warnings: readonly string[];
+}
+
+const RESOURCE_PREFIX = '_assets';
+const EXTRA_PREFIX = '_extras';
+
+function normalizeRelativePath(value: string): string {
+  const normalized = value.replace(/\\/g, '/');
+  if (!normalized || normalized.startsWith('/') || /^[A-Za-z]:\//.test(normalized)) {
+    throw new Error(`Unsafe export resource path: ${value}`);
+  }
+  const parts = normalized.split('/').filter((part) => part && part !== '.');
+  if (parts.some((part) => part === '..')) throw new Error(`Unsafe export resource path: ${value}`);
+  return parts.join('/');
+}
+
+function portableSegment(value: string): string {
+  let encoded = '';
+  for (const character of Array.from(value)) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    const upperAscii = codePoint >= 0x41 && codePoint <= 0x5a;
+    if (character === '~' || upperAscii || codePoint > 0x7f) encoded += `~${codePoint.toString(16)}~`;
+    else encoded += character;
+  }
+  return encoded;
+}
+
+function portableResourcePath(value: string): string {
+  return normalizeRelativePath(value).split('/').map(portableSegment).join('/');
+}
+
+function dirname(value: string): string {
+  const normalized = value.replace(/\\/g, '/');
+  const index = normalized.lastIndexOf('/');
+  return index < 0 ? '' : normalized.slice(0, index);
+}
+
+function relativePath(fromFile: string, toFile: string): string {
+  const fromParts = dirname(fromFile).split('/').filter(Boolean);
+  const toParts = toFile.replace(/\\/g, '/').split('/').filter(Boolean);
+  let common = 0;
+  while (common < fromParts.length && common < toParts.length && fromParts[common] === toParts[common]) common += 1;
+  return [
+    ...Array.from({ length: fromParts.length - common }, () => '..'),
+    ...toParts.slice(common),
+  ].join('/') || './';
+}
+
+function isLocalReference(value: string): boolean {
+  const trimmed = value.trim();
+  return Boolean(trimmed) && !trimmed.startsWith('#') && !/^(?:data|blob|https?|mailto|tel|javascript):/i.test(trimmed);
+}
+
+function suffixForReference(value: string): string {
+  const index = value.search(/[?#]/);
+  return index >= 0 ? value.slice(index) : '';
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length)));
+  }
+  return globalThis.btoa(binary);
+}
+
+function dataUrl(asset: ExportAsset): string {
+  return `data:${asset.mimeType};base64,${bytesToBase64(asset.bytes)}`;
+}
+
+function referencedOutputPath(relativePath: string): string {
+  return `${RESOURCE_PREFIX}/${portableResourcePath(relativePath)}`;
+}
+
+function extraOutputPath(relativePath: string): string {
+  return `${EXTRA_PREFIX}/${portableResourcePath(relativePath)}`;
+}
+
+export async function collectReferencedExportAssets(args: {
+  snapshot: DocumentSnapshot;
+  readResource: ExportResourceReader;
+  mode: 'inline' | 'package';
+  pageOutputPath?: string;
+}): Promise<ReferencedAssetResult> {
+  if (typeof DOMParser === 'undefined') return { html: args.snapshot.html, assets: [], warnings: [] };
+  const parsed = new DOMParser().parseFromString(`<body>${args.snapshot.html}</body>`, 'text/html');
+  const targets: Array<{ element: Element; attribute: string }> = [];
+  parsed.body.querySelectorAll('img[src],source[src],audio[src],video[src]').forEach((element) => targets.push({ element, attribute: 'src' }));
+  parsed.body.querySelectorAll('video[poster]').forEach((element) => targets.push({ element, attribute: 'poster' }));
+  const assets = new Map<string, ExportAsset>();
+  const warnings: string[] = [];
+
+  for (const { element, attribute } of targets) {
+    const raw = element.getAttribute(attribute);
+    if (!raw || !isLocalReference(raw)) continue;
+    const result = await args.readResource(raw, { documentPath: args.snapshot.file.fsPath });
+    if (!result.ok) {
+      warnings.push(`Unable to include referenced asset "${raw}" from ${args.snapshot.file.relativePath}: ${result.reason}`);
+      continue;
+    }
+    const sourcePath = normalizeRelativePath(result.relativePath);
+    let asset = assets.get(sourcePath);
+    if (!asset) {
+      asset = {
+        sourcePath,
+        outputPath: referencedOutputPath(sourcePath),
+        bytes: result.bytes,
+        mimeType: result.mimeType,
+        kind: 'referenced',
+      };
+      assets.set(sourcePath, asset);
+    }
+    const suffix = suffixForReference(raw);
+    if (args.mode === 'inline') {
+      element.setAttribute(attribute, `${dataUrl(asset)}${suffix}`);
+    } else {
+      const pagePath = args.pageOutputPath ?? 'index.html';
+      element.setAttribute(attribute, `${relativePath(pagePath, asset.outputPath)}${suffix}`);
+    }
+  }
+
+  return { html: parsed.body.innerHTML, assets: [...assets.values()], warnings };
+}
+
+export function expandExplicitResourcePaths(
+  selectedPaths: readonly string[],
+  resources: readonly ExportWorkspaceResourceInfo[],
+): string[] {
+  const available = resources.map((resource) => normalizeRelativePath(resource.relativePath));
+  const expanded = new Set<string>();
+  for (const selectedRaw of selectedPaths) {
+    const selected = normalizeRelativePath(selectedRaw);
+    const exact = available.includes(selected);
+    const nested = available.filter((path) => path.startsWith(`${selected}/`));
+    if (exact) expanded.add(selected);
+    for (const path of nested) expanded.add(path);
+    if (!exact && nested.length === 0) expanded.add(selected);
+  }
+  return [...expanded].sort((left, right) => left.localeCompare(right));
+}
+
+export async function collectExplicitExportAssets(args: {
+  selectedPaths: readonly string[];
+  resources: readonly ExportWorkspaceResourceInfo[];
+  readResource: ExportResourceReader;
+}): Promise<readonly ExportAsset[]> {
+  const paths = expandExplicitResourcePaths(args.selectedPaths, args.resources);
+  const assets: ExportAsset[] = [];
+  for (const path of paths) {
+    const result = await args.readResource(path);
+    if (!result.ok) throw new Error(`Unable to include additional workspace file "${path}": ${result.reason}`);
+    const sourcePath = normalizeRelativePath(result.relativePath);
+    assets.push({
+      sourcePath,
+      outputPath: extraOutputPath(sourcePath),
+      bytes: result.bytes,
+      mimeType: result.mimeType,
+      kind: 'extra',
+    });
+  }
+  return assets;
+}
+
+export function mergeExportAssets(...groups: readonly (readonly ExportAsset[])[]): ExportAsset[] {
+  const bySource = new Map<string, ExportAsset>();
+  for (const group of groups) {
+    for (const asset of group) {
+      const key = normalizeRelativePath(asset.sourcePath);
+      if (!bySource.has(key)) bySource.set(key, asset);
+    }
+  }
+  return [...bySource.values()];
+}

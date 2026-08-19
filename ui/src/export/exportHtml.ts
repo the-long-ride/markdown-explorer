@@ -13,6 +13,8 @@ export interface ExportPage {
   html: string;
 }
 
+export type ExportScript = { inline: string } | { src: string };
+
 const EXPORT_BASE_CSS = `
 html{margin:0;min-height:100%;height:auto;overflow-y:auto!important;overflow-x:hidden;background:var(--bg,#fff);color:var(--tx,#202124)}
 body{margin:0;min-height:100%;height:auto;overflow-y:auto!important;overflow-x:hidden;background:transparent;color:inherit;font-family:var(--font-body,system-ui,sans-serif)}
@@ -199,6 +201,19 @@ export async function embedExportLocalAssets(html: string, documentPath: string)
 
 export function captureExportThemeCss(root?: HTMLElement): string {
   return renderExportThemeCss(captureExportThemeSnapshot(root));
+}
+
+function scriptMarkup(script: ExportScript): string {
+  if ('src' in script) return `<script src="${escapeExportHtml(script.src)}"></script>`;
+  const code = script.inline.replace(/<\/script/gi, '<\\/script');
+  return `<script>${code}</script>`;
+}
+
+export function injectExportScripts(html: string, scripts: readonly ExportScript[]): string {
+  if (scripts.length === 0) return html;
+  const markup = scripts.map(scriptMarkup).join('');
+  const index = html.lastIndexOf('</body>');
+  return index >= 0 ? `${html.slice(0, index)}${markup}${html.slice(index)}` : `${html}${markup}`;
 }
 
 export function buildStandaloneExportHtml(args: {
