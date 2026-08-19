@@ -48,6 +48,25 @@ describe('rewriteExportLinks', () => {
     const markerLike = file('guide/topic.md--case-0');
     expect(exportHtmlPath(upper, [upper, markerLike]).toLowerCase()).not.toBe(exportHtmlPath(markerLike, [upper, markerLike]).toLowerCase());
   });
+
+  it('encodes Windows-forbidden ASCII characters in portable export paths', () => {
+    const unsafe = file('guide/bad:<>"|?*.md');
+    expect(exportHtmlPath(unsafe)).toBe('guide/bad~3a~~3c~~3e~~22~~7c~~3f~~2a~.md.html');
+  });
+
+  it('encodes trailing dots and spaces in path segments', () => {
+    expect(exportHtmlPath(file('folder./readme.md'))).toBe('folder~2e~/readme.md.html');
+    expect(exportHtmlPath(file('folder /readme.md'))).toBe('folder~20~/readme.md.html');
+  });
+
+  it('escapes lowercase Windows device names including names with extensions', () => {
+    expect(exportHtmlPath(file('con/readme.md'))).toBe('~63~on/readme.md.html');
+    expect(exportHtmlPath(file('guide/con.md'))).toBe('guide/~63~on.md.html');
+    expect(exportHtmlPath(file('aux/readme.md'))).toBe('~61~ux/readme.md.html');
+    expect(exportHtmlPath(file('com1/readme.md'))).toBe('~63~om1/readme.md.html');
+    expect(exportHtmlPath(file('lpt9/readme.md'))).toBe('~6c~pt9/readme.md.html');
+    expect(exportHtmlPath(file('console/readme.md'))).toBe('console/readme.md.html');
+  });
 });
 
 describe('buildStandaloneExportHtml', () => {
