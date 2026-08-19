@@ -69,6 +69,7 @@ describe('ExportCenterModal close and PDF options', () => {
     expect(onClose).toHaveBeenCalledTimes(2);
 
     resolveSnapshot({ file: fixtures.file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
+    await waitFor(() => expect(mocks.saveBlobAsFile).toHaveBeenCalledTimes(1));
   });
 
   it('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
