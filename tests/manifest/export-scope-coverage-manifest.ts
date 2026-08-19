@@ -26,6 +26,7 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/export/exportTheme.ts': ['tests/unit/ui/export/export-theme.test.ts'],
   'ui/src/export/pdf/pdfComposer.ts': ['tests/unit/ui/export/pdf-composer.test.ts'],
   'ui/src/export/pdf/pdfFonts.ts': ['tests/unit/ui/export/pdf-composer.test.ts'],
+  'ui/src/export/pdf/pdfMakeLoader.ts': ['tests/unit/ui/export/pdf-loader.test.ts'],
   'ui/src/export/pdf/pdfSemantic.ts': ['tests/unit/ui/export/pdf-semantic.test.ts'],
   'ui/src/export/pdf/pdfVisualCapture.ts': ['tests/unit/ui/export/pdf-visual-capture.test.ts'],
   'ui/src/export/pdfExport.ts': ['tests/unit/ui/export/pdf-export-host.test.ts'],
