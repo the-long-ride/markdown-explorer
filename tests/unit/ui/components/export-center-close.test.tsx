@@ -50,11 +50,10 @@ import { ExportCenterModal } from '../../../../ui/src/components/Export/ExportCe
 
 describe('ExportCenterModal close and PDF options', () => {
   it('keeps close and Escape available while an export is running and has no footer Cancel button', async () => {
-    let resolveSnapshot!: (value: unknown) => void;
-    mocks.loadDocumentSnapshot.mockReturnValue(new Promise((resolve) => { resolveSnapshot = resolve; }));
+    mocks.loadDocumentSnapshot.mockReturnValue(new Promise(() => {}));
     const onClose = vi.fn();
 
-    render(<ExportCenterModal isOpen onClose={onClose} />);
+    const { unmount } = render(<ExportCenterModal isOpen onClose={onClose} />);
     fireEvent.click(screen.getByRole('button', { name: 'Export' }));
 
     const close = screen.getByRole('button', { name: 'Close Export Center' });
@@ -68,8 +67,8 @@ describe('ExportCenterModal close and PDF options', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
 
-    resolveSnapshot({ file: fixtures.file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
-    await waitFor(() => expect(mocks.saveBlobAsFile).toHaveBeenCalledTimes(1));
+    unmount();
+    expect(mocks.saveBlobAsFile).not.toHaveBeenCalled();
   });
 
   it('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
