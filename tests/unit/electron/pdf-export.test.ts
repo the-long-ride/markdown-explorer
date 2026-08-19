@@ -87,4 +87,27 @@ describe('native PDF exporter', () => {
     await h.exporter({ requestId: 'pdf-4', documents: [{ fileName: '../outside.pdf', html: '<p>A</p>' }] });
     expect(h.fs.writeFileSync).toHaveBeenCalledWith('/exports/outside.pdf', expect.any(Buffer));
   });
+
+  it('reserves case-insensitive unique names for separate PDF batches', async () => {
+    const h = makeHarness();
+    await h.exporter({
+      requestId: 'pdf-5',
+      documents: [
+        { fileName: 'Topic.pdf', html: '<p>Upper</p>' },
+        { fileName: 'topic.pdf', html: '<p>Lower</p>' },
+      ],
+    });
+
+    const pdfWrites = h.fs.writeFileSync.mock.calls
+      .filter(([target]) => String(target).startsWith('/exports/'))
+      .map(([target]) => String(target));
+    expect(pdfWrites).toHaveLength(2);
+    expect(new Set(pdfWrites.map((target) => target.toLowerCase())).size).toBe(2);
+    expect(h.sendHostMessage).toHaveBeenCalledWith(expect.objectContaining({
+      command: 'exportPdfResult',
+      requestId: 'pdf-5',
+      ok: true,
+      paths: pdfWrites,
+    }));
+  });
 });
