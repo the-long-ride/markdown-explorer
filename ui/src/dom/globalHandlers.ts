@@ -58,7 +58,6 @@ export function toggleHtmlMode(btn: HTMLElement) {
   setHtmlMode(wrap, currentMode === 'preview' ? 'code' : 'preview');
 }
 
-
 export function setCsvMode(wrap: HTMLElement, mode: string) {
   wrap.dataset.mode = mode;
   const langLabel = wrap.querySelector<HTMLElement>('.mdn-codeblock-lang');
@@ -92,24 +91,25 @@ export function toggleCsvMode(btn: HTMLElement) {
   setCsvMode(wrap, wrap.dataset.mode === 'preview' ? 'code' : 'preview');
 }
 
+export function applyHtmlPreviewResize(data: unknown): boolean {
+  if (!data || typeof data !== 'object') return false;
+  const message = data as { type?: unknown; id?: unknown; height?: unknown };
+  if (message.type !== 'resize-iframe' || typeof message.id !== 'string') return false;
+  if (typeof message.height !== 'number' || !Number.isFinite(message.height) || message.height <= 0) return false;
+  const iframe = document.getElementById(message.id) as HTMLIFrameElement | null;
+  if (!iframe) return false;
+  iframe.style.height = `${Math.ceil(message.height)}px`;
+  return true;
+}
+
 export function initGlobalHandlers() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const win = window as any;
 
-  // Listen for iframe resizing messages from HTML preview sandboxes
   window.addEventListener('message', (event) => {
-    const data = event.data;
-    if (data && data.type === 'resize-iframe') {
-      const iframe = document.getElementById(data.id) as HTMLIFrameElement | null;
-      if (iframe) {
-        const maxH = Math.max(640, window.innerHeight * 0.9);
-        const height = Math.min(data.height, maxH);
-        iframe.style.height = `${height}px`;
-      }
-    }
+    applyHtmlPreviewResize(event.data);
   });
 
-  // UI.toggleSection
   if (!win.UI) win.UI = {};
   win.UI.toggleSection = toggleSection;
   win.UI.expandAll = expandAll;
@@ -128,7 +128,6 @@ export function initGlobalHandlers() {
   registerCodeLineHandlers();
   registerTableHandlers(win);
 
-  // Sidebar.toggleFolder (for inline handlers)
   if (!win.Sidebar) win.Sidebar = {};
   win.Sidebar.toggleFolder = (el: HTMLElement) => {
     const folder = el.closest('.tree-folder') as HTMLElement | null;
@@ -138,7 +137,6 @@ export function initGlobalHandlers() {
     if (children) children.classList.toggle('is-hidden', !folder.classList.contains('is-open'));
   };
 
-  // Nav.go (for inline handlers)
   if (!win.Nav) win.Nav = {};
   win.Nav.go = (_fsPath: string | null) => {
     // Handled by React navigate - but provide fallback for rendered HTML links
