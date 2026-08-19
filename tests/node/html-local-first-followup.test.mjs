@@ -106,7 +106,10 @@ test('HTML previews do not inherit Markdown Explorer typography or theme styles'
   assert.doesNotMatch(documentBuilder, /font-family:\s*var\(--font-ui\)/);
   assert.match(documentBuilder, /data-mdn-network-guard/);
   assert.match(view, /sandbox="allow-scripts allow-forms"/);
-  assert.match(globalHandlers, /Math\.max\(640,\s*window\.innerHeight\s*\*\s*0\.9\)/);
+  assert.match(globalHandlers, /message\.height !== 'number'/);
+  assert.match(globalHandlers, /iframe\.style\.height = `\$\{Math\.ceil\(message\.height\)\}px`/);
+  assert.doesNotMatch(globalHandlers, /Math\.max\(640/);
+  assert.doesNotMatch(globalHandlers, /Math\.min\(1200/);
 });
 
 test('settings confirm shortcut reset, use requested icons, and remove requested borders', async () => {
