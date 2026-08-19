@@ -2,6 +2,16 @@ import type { MdFile } from '../../types/files';
 import type { DocumentSnapshot } from '../../export/documentSnapshot';
 
 export const MAX_SCOPE_DEPTH = 10;
+export const SCOPE_NAVIGATION_STATE_EVENT = 'mdn-scope-navigation-state';
+export const SCOPE_NAVIGATION_REQUEST_EVENT = 'mdn-scope-navigation-request';
+
+export interface ScopeNavigationStateDetail {
+  active: boolean;
+  canPrevious: boolean;
+  canNext: boolean;
+}
+
+export type ScopeNavigationDirection = 'previous' | 'next';
 
 export interface ScopeEntry {
   file: MdFile;
