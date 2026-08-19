@@ -1,6 +1,7 @@
 import { registerCodeLineHandlers } from './codeLineHandlers';
 import { registerCopyHandlers } from './copyHandlers';
 import { registerTableHandlers } from './tableHandlers';
+import { registerNativeChartPngSave } from './nativeChartPngSave';
 import { collapseAll, expandAll, toggleSection } from './headingSectionHandlers';
 export {
   HEADING_SECTION_STATE_CHANGE_EVENT,
@@ -127,6 +128,7 @@ export function initGlobalHandlers() {
   registerCopyHandlers(win);
   registerCodeLineHandlers();
   registerTableHandlers(win);
+  registerNativeChartPngSave(win);
 
   if (!win.Sidebar) win.Sidebar = {};
   win.Sidebar.toggleFolder = (el: HTMLElement) => {

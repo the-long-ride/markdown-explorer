@@ -1,6 +1,7 @@
 import { canvasToPngBlob, writeBlobToClipboard } from './copyImage';
 import { getTableUiLabels } from './tableUiLabels';
 import { dispatchActionNotice } from '../utils/actionNotice';
+import type { ChartPngHostSaver } from './nativeChartPngSave';
 
 type CanvasSource = HTMLCanvasElement | (() => HTMLCanvasElement | null);
 
@@ -19,11 +20,6 @@ export function closeChartContextMenu() {
   document.querySelector('.mdn-chart-context-menu')?.remove();
 }
 
-function isTauriRuntime(): boolean {
-  const runtimeWindow = window as any;
-  return typeof runtimeWindow.__TAURI__ !== 'undefined' || typeof runtimeWindow.__TAURI_INTERNALS__ !== 'undefined';
-}
-
 async function saveCanvasPng(
   canvas: HTMLCanvasElement,
   tableId: string,
@@ -31,14 +27,8 @@ async function saveCanvasPng(
   labels: ReturnType<typeof getTableUiLabels>,
 ) {
   const fileName = `${safeFilePart(tableId)}-${safeFilePart(viewType)}.png`;
-  if (isTauriRuntime() && (window as any).PlatformBridge?.postMessage) {
-    (window as any).PlatformBridge.postMessage({
-      command: 'saveChartPng',
-      fileName,
-      dataUrl: canvas.toDataURL('image/png'),
-    });
-    return;
-  }
+  const hostSaver = (window as any).Table?.saveChartPngToHost as ChartPngHostSaver | undefined;
+  if (typeof hostSaver === 'function' && hostSaver(canvas, fileName)) return;
 
   const blob = await canvasToPngBlob(canvas);
   if (!blob) {
