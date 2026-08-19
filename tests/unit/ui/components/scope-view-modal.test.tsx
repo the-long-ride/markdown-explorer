@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 
@@ -137,6 +137,40 @@ describe('ScopeViewModal', () => {
       await screen.findByText(`Doc ${i}`);
     }
     fireEvent.click(screen.getByText('Open 11'));
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Maximum scope depth reached'));
+    expect(container.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(10);
+    expect(screen.getByText('Doc 10')).toBeTruthy();
+  });
+
+  it('enforces the depth limit when two stale handlers resolve concurrently at level nine', async () => {
+    const docTenResolvers: Array<(value: ReturnType<typeof snapshot>) => void> = [];
+    mocks.loadDocumentSnapshot.mockImplementation(async (_bridge: unknown, target: MdFile) => {
+      if (target.fsPath !== files[9].fsPath) return snapshot(target);
+      return new Promise<ReturnType<typeof snapshot>>((resolve) => docTenResolvers.push(resolve));
+    });
+
+    const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    await screen.findByText('Doc 1');
+    for (let i = 2; i <= 9; i += 1) {
+      fireEvent.click(screen.getByText(`Open ${i}`));
+      await screen.findByText(`Doc ${i}`);
+    }
+
+    const openTen = screen.getByText('Open 10');
+    fireEvent.click(openTen);
+    fireEvent.click(openTen);
+    await waitFor(() => expect(docTenResolvers).toHaveLength(2));
+
+    await act(async () => {
+      docTenResolvers[0](snapshot(files[9]));
+      await Promise.resolve();
+    });
+    await screen.findByText('Doc 10');
+    await act(async () => {
+      docTenResolvers[1](snapshot(files[9]));
+      await Promise.resolve();
+    });
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Maximum scope depth reached'));
     expect(container.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(10);
