@@ -38,7 +38,7 @@ describe('Export Center source controls', () => {
     />);
 
     expect(screen.getByRole('radio', { name: 'Whole workspace' })).toBeChecked();
-    expect(screen.getByText('3 renderable documents')).toBeTruthy();
+    expect(screen.getByText('Renderable documents: 3')).toBeTruthy();
   });
 
   it('filters document rows and bulk-selects only visible matches with switches', () => {
