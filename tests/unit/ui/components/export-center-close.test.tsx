@@ -46,6 +46,9 @@ vi.mock('../../../../ui/src/dom/copyImage', () => ({ saveBlobAsFile: mocks.saveB
 vi.mock('../../../../ui/src/export/documentSnapshot', () => ({
   loadDocumentSnapshot: mocks.loadDocumentSnapshot,
 }));
+vi.mock('../../../../ui/src/export/exportResources', () => ({
+  listWorkspaceExportResources: vi.fn(async () => []),
+}));
 
 import { ExportCenterModal } from '../../../../ui/src/components/Export/ExportCenterModal';
 
@@ -72,13 +75,13 @@ describe('ExportCenterModal close and PDF options', () => {
     expect(mocks.saveBlobAsFile).not.toHaveBeenCalled();
   });
 
-  it('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
+  it('does not expose the removed PDF footer option or branding text', () => {
     mocks.loadDocumentSnapshot.mockResolvedValue({ file: fixtures.file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
     render(<ExportCenterModal isOpen onClose={() => {}} />);
 
     fireEvent.click(screen.getByRole('radio', { name: /^PDF/ }));
-    expect(screen.getByRole('checkbox', { name: 'Include PDF footer' })).toBeChecked();
-    expect(screen.getByText('Markdown Explorer - @the-long-ride')).toBeTruthy();
+    expect(screen.queryByRole('checkbox', { name: 'Include PDF footer' })).toBeNull();
+    expect(screen.queryByText('Markdown Explorer - @the-long-ride')).toBeNull();
     expect(screen.queryByText(/system print/i)).toBeNull();
   });
 });
