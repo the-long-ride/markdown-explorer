@@ -1,0 +1,6 @@
+{
+  "fixture": "additional-workspace-file",
+  "purpose": "Verify opt-in packaging for HTML and Static Website exports",
+  "mustNotBeImplicit": true,
+  "pdfAttachment": false
+}
