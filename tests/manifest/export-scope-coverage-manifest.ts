@@ -1,5 +1,6 @@
 export const exportScopeCoverageManifest: Record<string, string[]> = {
   'electron/core/pdf-export.js': ['tests/unit/electron/pdf-export.test.ts'],
+  'electron/core/runtime-export-resources.js': ['tests/unit/electron/export-resources.test.ts'],
   'ui/src/components/Export/ExportCenterModal.tsx': [
     'tests/unit/ui/components/export-center-modal.test.tsx',
     'tests/unit/ui/components/export-center-close.test.tsx',
