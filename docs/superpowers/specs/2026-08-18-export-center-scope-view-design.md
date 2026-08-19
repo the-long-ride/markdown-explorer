@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved on 2026-08-18.
+Approved on 2026-08-18 and refined from user testing on 2026-08-19.
 
 ## Goals
 
@@ -19,55 +19,35 @@ Both features share a non-navigating document snapshot pipeline so they render w
 - Scope View does not create content tabs or modify normal navigation history.
 - Exported pages do not execute unrestricted workspace HTML or arbitrary scripts.
 - The feature does not introduce cloud publishing or remote export services.
+- PDF export does not use or expose the operating system print center.
 
 ## Shared document snapshot pipeline
 
-Introduce a workspace-local request that loads a target document without navigating the application. The host validates that the requested path is inside the active workspace, reads the source, and returns a renderable snapshot payload. The UI uses the existing Markdown Explorer rendering path and current settings to produce the same document HTML used by Scope View and Export Center.
+Use the existing workspace-contained preview/read path to load a target document without navigating the application. The host validates that the requested path belongs to the active workspace and the UI renders the snapshot through Markdown Explorer's normal document renderer and current settings.
 
-The snapshot includes:
-
-- canonical workspace file path;
-- relative path and title;
-- source/markdown text needed by the existing renderer;
-- rendered HTML after normal Markdown Explorer rendering and enhancements;
-- enough metadata to resolve internal links and local assets safely.
-
-Requests outside the workspace, missing files, unsupported files, and unreadable resources fail closed with an explicit reason.
+The snapshot contains the workspace file metadata, source text required by the renderer, rendered HTML, and enough context to resolve internal links and local assets safely. Requests outside the workspace, missing files, unsupported files, and unreadable resources fail closed.
 
 ## Export Center
 
-### Entry point
+### Entry point and modal behavior
 
-Add **Export Center** to the existing More Actions menu. Selecting it opens a large modal.
+Add **Export Center** to the existing More Actions menu. Selecting it opens one shared modal in normal-topbar and desktop-tab layouts.
+
+The modal is compact and viewport-bounded rather than fixed to a large pixel size. It must remain usable when application/browser zoom is increased. Card and control corner radii use the active theme radius tokens rather than hard-coded radius values.
+
+The close control follows the Settings modal pattern: borderless, tooltip-enabled, and available at all times. Escape and backdrop click also close the modal. Closing is never blocked by an in-progress export; stale asynchronous results from a closed export must not overwrite a later reopened Export Center session. The footer contains only the primary Export action; there is no redundant Cancel button.
 
 ### Source selection
 
-The modal supports:
-
-- current document;
-- selected documents;
-- folder selection.
-
-Folder selection recursively includes supported documents under that folder. Selection is represented from the active workspace file/tree model rather than by unrestricted filesystem paths.
+The modal supports current document, selected documents, and recursive folder selection. Selection is represented from the active workspace file/tree model rather than unrestricted filesystem paths.
 
 ### Formats
 
-Supported formats are:
-
-- HTML;
-- PDF;
-- Static Website.
-
-DOCX and EPUB are intentionally excluded.
+Supported formats are **HTML**, **PDF**, and **Static Website**. DOCX and EPUB are intentionally excluded.
 
 ### Batch mode
 
-For applicable formats, users can choose:
-
-- **Separate outputs** — one exported output per source document;
-- **Merged output** — combine the selected documents in deterministic workspace order into one export.
-
-For a static website, the natural output is a site tree; separate-vs-merged controls whether each source remains its own page or the chosen sources become one combined page within the site package.
+Users can choose **Separate outputs** or **Merged output**. Static Website uses the same choice to decide whether sources remain separate pages or become a combined page.
 
 ### Visual layout
 
@@ -76,42 +56,33 @@ Visual layout is a user decision for each export job:
 - **Document only** — current Markdown Explorer theme, typography, content width, headings, code blocks, tables, Mermaid, media treatment, and document styling without application chrome.
 - **Full Explorer layout** — export-safe Markdown Explorer-style shell with topbar, sidebar/navigation and TOC presentation around the rendered document.
 
-Default is **Document only**.
-
-Both layouts use the resolved current theme, including current accent color and current custom font bindings where those resources can be safely embedded or referenced by the target runtime.
+Default is **Document only**. Both layouts use the resolved current theme, accent color, radius tokens, and current typography where those resources can be safely embedded or referenced.
 
 ### HTML output
 
-HTML export is a standalone document/package produced from rendered snapshots. Internal links between exported documents are rewritten to exported relative paths. Workspace-local assets referenced by exported documents are copied or embedded through host-mediated reads. Unsafe or external schemes are not rewritten.
+HTML export is a standalone document/package produced from rendered snapshots. Internal links between exported documents are rewritten to exported relative paths. Workspace-local assets are embedded best-effort. Unsafe or external schemes are not rewritten.
 
-Merged HTML places source documents in order with stable section boundaries and IDs so internal anchors remain usable.
+Separate page paths retain the source extension before `.html` so same-stem source formats remain unique. Merged HTML uses deterministic collision-safe section IDs so punctuation-equivalent paths cannot share an anchor.
 
 ### PDF output
 
-PDF is generated from the same styled export HTML rather than a separate renderer. This keeps visual parity with HTML/static-site output. The desktop host owns PDF file generation/saving. Print-specific CSS removes interactive controls that do not make sense on paper and keeps code/tables/media bounded to the page.
+PDF uses the same styled standalone export HTML, but the desktop host generates files directly without opening a print dialog. Clicking **Export** opens a directory picker once; after the user chooses a folder, Markdown Explorer renders the HTML in a hidden sandboxed desktop window, invokes the native PDF renderer, and writes the resulting PDF file(s) to that folder.
 
-Separate batch mode emits one PDF per document. Merged mode emits one book-style PDF containing all selected documents.
+Separate batch mode emits one PDF per document. Merged mode emits one book-style PDF. **Full Explorer layout remains visible in PDF output**; print media removes interactive-only controls but does not silently strip the chosen Explorer shell.
+
+PDF footer behavior is a user option. It is enabled by default and its only visible footer content is:
+
+`Markdown Explorer - @the-long-ride`
+
+Turning the option off disables PDF header/footer output completely. No default date, URL, title, page metadata, or system print footer is intentionally added.
 
 ### Static website output
 
-Static website export preserves the selected workspace hierarchy where possible and emits:
-
-- HTML pages;
-- shared export CSS/theme variables;
-- copied local assets;
-- rewritten internal document links;
-- optional Explorer-style navigation shell when Full Explorer layout is selected.
-
-The site must work from a local static server and should not require Markdown Explorer at runtime.
+Static website export preserves the selected workspace hierarchy where possible and emits HTML pages, current theme/CSS, embedded local assets where possible, rewritten internal document links, and the optional Explorer-style navigation shell. The package must work without Markdown Explorer at runtime.
 
 ### Progress and failure semantics
 
-Export Center shows job progress and per-document results.
-
-- In separate mode, one document failure does not cancel unrelated successful outputs.
-- In merged mode, failure to render a required source fails that merged artifact.
-- Cancellation stops pending work and does not report unfinished artifacts as successful.
-- Completion and errors use the existing application action-notice/toast language where appropriate.
+Export Center shows per-document results. In separate mode, one document failure does not cancel unrelated successful outputs. In merged mode, failure to render a required source fails that merged artifact. Closing the modal invalidates its active UI generation so stale asynchronous completion cannot reopen or corrupt a later session.
 
 ## Scope View
 
@@ -121,101 +92,51 @@ Right-click an internal workspace document hyperlink in rendered content and sho
 
 ### Modal behavior
 
-Opening as scope displays the target document in a large modal without changing the main content tab or navigation history.
-
-Internal document links inside Scope View can open another scope in the same modal. External links retain their existing external-link behavior. Fragment links navigate inside the active scoped document.
+Opening as scope displays the target document in a large modal without changing the main content tab or navigation history. Internal document links inside Scope View can open another scope in the same modal. External links retain their existing external-link behavior. Fragment links navigate inside the active scoped document.
 
 ### Stack/history model
 
-Scope View owns an isolated history model:
-
-```ts
-interface ScopeHistoryState {
-  entries: ScopeEntry[];
-  index: number;
-}
-```
-
-Rules:
-
-- maximum history depth is 10 entries;
-- opening a scope after going back truncates forward entries before pushing the new entry;
-- Previous and Next operate only on Scope View history;
-- pushing an 11th scope is blocked and surfaced to the user rather than silently dropping an older entry;
-- closing Scope View discards the modal history.
+Scope View owns an isolated history model with a maximum history depth of 10 entries. Opening a scope after going back truncates forward entries before pushing the new entry. Previous and Next operate only on Scope View history. Pushing an 11th scope is blocked and surfaced to the user. Closing Scope View discards the modal history.
 
 ### Header
 
-The Scope View header contains:
-
-- document title/path context;
-- Previous button;
-- Next button;
-- close control;
-- a ten-segment depth indicator.
-
-The depth indicator is exactly 10 rounded `div` segments. Segments up to the current depth use the current theme accent color. Remaining segments use a muted/translucent accent-derived treatment with a subtle border. The **currently active segment is visually larger than the other nine**. The indicator exposes an accessible label/tooltip such as `Scope level N of 10` while avoiding `N / 10` as the primary visual UI.
+The Scope View header contains document context, Previous, Next, close, and exactly ten rounded depth segments. Segments through current depth use the current theme accent treatment; remaining segments are muted. The currently active segment is visually larger than the other nine. The indicator exposes an accessible label such as `Scope level N of 10` without using `N / 10` as the primary visual UI.
 
 ### Rendering inside Scope View
 
-Scoped documents reuse Markdown Explorer document rendering/enhancement behavior needed for reading: typography, code highlighting, Mermaid, tables, media and current theme. Scope rendering must not write reading progress for the main active document or mutate its heading-collapse state.
+Scoped documents reuse Markdown Explorer reading behavior needed for typography, code highlighting, Mermaid, tables, media and current theme. Scope rendering must not write main-document reading progress or mutate normal navigation history.
 
 ## Architecture boundaries
 
 ### UI
 
-New focused modules should own:
-
-- snapshot request/client logic;
-- Scope View history and modal UI;
-- Export Center job model and modal UI;
-- export HTML/static-site composition and link rewriting;
-- export-specific CSS.
-
-Existing `ToolbarActionMenu` and `LinkContextMenu` gain minimal optional actions rather than feature-specific state.
+Focused modules own snapshot loading, Scope View history/modal UI, Export Center job state, HTML/static-site composition, direct-PDF bridge requests, and export CSS. Existing More Actions and link-context components gain minimal optional actions rather than feature-specific global state.
 
 ### Host protocol
 
-Add minimal typed messages for:
-
-- loading a non-navigating workspace document snapshot/source;
-- saving an export artifact/package;
-- generating/saving PDF where the runtime supports native PDF generation.
-
-Every runtime must either implement the operation or return an explicit unsupported result. Host-message parity tests must remain exhaustive.
+The desktop protocol includes a direct PDF export request/result pair. PDF requests contain prepared standalone HTML, desired output names, and footer preference. The host owns destination-folder selection, native PDF generation, safe output paths and completion results. Unsupported runtimes return an explicit unsupported result rather than opening a system print dialog.
 
 ### Security
 
-All workspace reads use canonical containment checks already used by workspace-resource operations. Export link rewriting never turns an unsupported/dangerous scheme into executable content. Scope View does not permit a link to escape the workspace and become a scoped document.
+Workspace reads use existing containment boundaries. Export paths reject traversal. Native PDF output sanitizes file names before joining them to the selected directory. Export link rewriting never turns an unsupported or dangerous scheme into executable content. Scope View cannot scope a document outside the active workspace.
 
 ## Testing
 
-Add coverage for:
-
-- workspace snapshot path containment and failure reasons;
-- Scope View push/back/forward behavior;
-- forward-history truncation;
-- hard 10-entry limit;
-- ten-segment indicator and enlarged active segment;
-- Open as scope context-menu eligibility;
-- Export Center source selection and folder expansion;
-- format, layout and separate/merged job options;
-- merged/separate failure semantics;
-- HTML link rewriting and asset handling;
-- PDF/static-site host protocol contracts;
-- More Actions integration;
-- translation coverage and coverage manifest updates;
-- existing UI, node, contract, desktop and build checks.
+Coverage includes snapshot loading, Scope history and max depth, depth indicator styling, context-menu eligibility, Export Center source/format/layout/batch options, close/Escape behavior while work is active, responsive/theme-radius contracts, HTML link/path/anchor collision handling, local assets, ZIP path safety, direct PDF request/result behavior, native Electron PDF generation/cancellation/footer/file-name sanitization, More Actions integration, translations, coverage manifests, and existing runtime/build checks.
 
 ## Acceptance criteria
 
 - Export Center is reachable from More Actions and can export current/selected/folder content to HTML, PDF and Static Website.
-- Visual Layout is user-selectable between Document only and Full Explorer layout, defaulting to Document only.
+- Export Center can always be closed and reopened; close, backdrop and Esc remain functional during export.
+- Export Center remains viewport-bounded at increased zoom and uses current theme radius tokens.
+- The footer contains no Cancel action.
+- Visual Layout is selectable between Document only and Full Explorer layout, defaulting to Document only.
 - Batch selection supports separate and merged output behavior where applicable.
-- Export visuals derive from the current Markdown Explorer theme/layout system.
+- Desktop PDF export chooses an output directory and writes PDF files directly without opening the system print center.
+- PDF footer defaults to `Markdown Explorer - @the-long-ride` and can be disabled to show no footer/header content.
+- Full Explorer PDF retains its selected Explorer chrome.
 - Right-clicking an eligible internal document link exposes Open as scope.
-- Scope View opens without changing the active main document/history.
-- Nested scope navigation works with Previous/Next and a hard maximum depth of 10.
-- Header shows ten rounded accent-aware segments and the current segment is larger.
-- All new protocol paths fail closed for outside-workspace/unsupported cases.
-- Tests, type checks and runtime parity checks remain green.
+- Scope View opens without changing main document/history, supports Previous/Next, and has a hard maximum depth of 10.
+- Scope header shows ten rounded accent-aware segments and the current segment is larger.
+- Exported page paths and merged IDs remain unique for colliding source names.
+- New protocol paths fail closed/safely, and normal CI remains green.
