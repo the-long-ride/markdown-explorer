@@ -14,7 +14,11 @@ import {
 } from '../../export/exportHtml';
 import {
   buildExportJob,
+  fileNameFromPath,
   filesInFolder,
+  folderOptions,
+  pdfOutputName,
+  safeBaseName,
   type ExportBatchMode,
   type ExportFormat,
   type ExportLayout,
@@ -37,32 +41,6 @@ type ExportResult = {
 };
 
 const encoder = new TextEncoder();
-
-function safeBaseName(value: string): string {
-  const sanitized = value.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
-  return sanitized || 'markdown-explorer';
-}
-
-function pdfOutputName(file: MdFile, multiple: boolean): string {
-  const source = multiple ? file.relativePath.replace(/\\/g, '/').replace(/\//g, '-') : file.title;
-  return `${safeBaseName(source)}.pdf`;
-}
-
-function fileNameFromPath(value: string): string {
-  const parts = value.split(/[\\/]/);
-  return parts[parts.length - 1] || value;
-}
-
-function folderOptions(files: readonly MdFile[]): string[] {
-  const folders = new Set<string>();
-  for (const file of files) {
-    const parts = file.relativePath.replace(/\\/g, '/').split('/').slice(0, -1);
-    for (let length = 1; length <= parts.length; length += 1) {
-      folders.add(parts.slice(0, length).join('/'));
-    }
-  }
-  return [...folders].sort((a, b) => a.localeCompare(b));
-}
 
 function htmlBlob(html: string): Blob {
   return new Blob([html], { type: 'text/html;charset=utf-8' });
