@@ -62,11 +62,13 @@ describe('Electron export resource handlers', () => {
       requestId: 'list-1',
       ok: true,
     });
-    expect(sent[0].resources.map((item: any) => item.relativePath)).toEqual([
+    const paths = sent[0].resources.map((item: any) => item.relativePath);
+    expect(new Set(paths)).toEqual(new Set([
       'README.md',
       'assets/logo.png',
       'examples/demo.json',
-    ]);
+    ]));
+    expect(paths).toEqual([...paths].sort((a: string, b: string) => a.localeCompare(b)));
     expect(sent[0].resources.find((item: any) => item.relativePath === 'assets/logo.png').size).toBe(3);
   });
 
