@@ -3,13 +3,14 @@ import type { MdFile } from '../types/files';
 export type ExportFormat = 'html' | 'pdf' | 'site';
 export type ExportLayout = 'document' | 'explorer';
 export type ExportBatchMode = 'separate' | 'merged';
-export type ExportSourceMode = 'current' | 'selected' | 'folder';
+export type ExportSourceMode = 'current' | 'selected' | 'folder' | 'workspace';
 
 export interface ExportJob {
   format: ExportFormat;
   layout: ExportLayout;
   batchMode: ExportBatchMode;
   files: MdFile[];
+  extraResourcePaths: string[];
 }
 
 function normalizeRelativePath(value: string): string {
@@ -56,15 +57,27 @@ export function buildExportJob(args: {
   layout: ExportLayout;
   batchMode: ExportBatchMode;
   files: readonly MdFile[];
+  extraResourcePaths?: readonly string[];
 }): ExportJob {
   const byPath = new Map<string, MdFile>();
   for (const file of args.files) byPath.set(file.fsPath, file);
   const files = [...byPath.values()].sort((a, b) => a.relativePath.localeCompare(b.relativePath));
   if (files.length === 0) throw new Error('Select at least one document');
+
+  const extraResourcePaths = [...new Set(
+    (args.extraResourcePaths ?? [])
+      .map(normalizeRelativePath)
+      .filter(Boolean),
+  )].sort((a, b) => a.localeCompare(b));
+  if (args.format === 'pdf' && extraResourcePaths.length > 0) {
+    throw new Error('Additional workspace files are not supported for PDF export');
+  }
+
   return {
     format: args.format,
     layout: args.layout,
     batchMode: args.batchMode,
     files,
+    extraResourcePaths,
   };
 }
