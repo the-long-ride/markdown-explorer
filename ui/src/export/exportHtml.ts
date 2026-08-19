@@ -50,8 +50,18 @@ function dirname(value: string): string {
   return index < 0 ? '' : normalized.slice(0, index);
 }
 
+function caseSignature(value: string): string {
+  const positions: string[] = [];
+  Array.from(value).forEach((character, index) => {
+    if (character.toLowerCase() !== character) positions.push(index.toString(36));
+  });
+  return positions.join('-');
+}
+
 function outputPath(file: MdFile): string {
-  return `${normalizeRelativePath(file.relativePath)}.html`;
+  const normalized = normalizeRelativePath(file.relativePath);
+  const signature = caseSignature(normalized);
+  return `${normalized}${signature ? `--case-${signature}` : ''}.html`;
 }
 
 function relativePath(fromFile: string, toFile: string): string {
@@ -85,8 +95,10 @@ function documentId(file: MdFile, exported: readonly MdFile[] = [file]): string 
   const base = documentIdBase(file);
   const collisions = exported.filter((candidate) => documentIdBase(candidate) === base);
   if (collisions.length <= 1) return base;
-  const exactPath = normalizeRelativePath(file.relativePath).toLowerCase();
-  return `${base}-${stablePathHash(exactPath)}`;
+  const exactPath = normalizeRelativePath(file.relativePath);
+  const collisionIndex = collisions.findIndex((candidate) => candidate.fsPath === file.fsPath);
+  const ordinal = collisionIndex >= 0 ? collisionIndex + 1 : 1;
+  return `${base}-${ordinal}-${stablePathHash(exactPath)}`;
 }
 
 function resolveInternalTarget(rawHref: string, source: MdFile, exported: readonly MdFile[]): { file: MdFile; hash: string } | null {
