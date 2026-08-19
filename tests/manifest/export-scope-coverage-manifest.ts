@@ -10,6 +10,5 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/export/exportHtml.ts': ['tests/unit/ui/export/export-html.test.ts'],
   'ui/src/export/exportModel.ts': ['tests/unit/ui/export/export-model.test.ts'],
   'ui/src/export/pdfExport.ts': ['tests/unit/ui/export/pdf-export-host.test.ts'],
-  'ui/src/export/printExport.ts': ['tests/unit/ui/export/print-export.test.ts'],
   'ui/src/export/zipStore.ts': ['tests/unit/ui/export/zip-store.test.ts'],
 };
