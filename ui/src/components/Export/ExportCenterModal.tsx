@@ -28,37 +28,22 @@ import { exportPdfViaHost, PDF_FOOTER_TEXT } from '../../export/pdfExport';
 import { createStoreZip } from '../../export/zipStore';
 import type { MdFile } from '../../types/files';
 import { TooltipButton } from '../shared/TooltipButton';
+import { ExportCenterSourcePanel } from './ExportCenterSourcePanel';
 
 interface ExportCenterModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type ExportResult = {
-  path: string;
-  status: 'success' | 'error';
-  message?: string;
-};
-
+type ExportResult = { path: string; status: 'success' | 'error'; message?: string };
 const encoder = new TextEncoder();
-
-function htmlBlob(html: string): Blob {
-  return new Blob([html], { type: 'text/html;charset=utf-8' });
-}
-
-function zipBlob(bytes: Uint8Array): Blob {
-  return new Blob([bytes], { type: 'application/zip' });
-}
-
-function pagesFromSnapshots(snapshots: readonly DocumentSnapshot[]): ExportPage[] {
-  return snapshots.map((snapshot) => ({ file: snapshot.file, html: snapshot.html }));
-}
+const htmlBlob = (html: string) => new Blob([html], { type: 'text/html;charset=utf-8' });
+const zipBlob = (bytes: Uint8Array) => new Blob([bytes], { type: 'application/zip' });
+const pagesFromSnapshots = (snapshots: readonly DocumentSnapshot[]): ExportPage[] => snapshots.map((snapshot) => ({ file: snapshot.file, html: snapshot.html }));
 
 function buildSiteIndex(files: readonly MdFile[], title: string, themeCss: string): string {
   const safeTitle = escapeExportHtml(title);
-  const links = files
-    .map((file) => `<li><a href="${escapeExportHtml(exportHtmlPath(file))}">${escapeExportHtml(file.relativePath)}</a></li>`)
-    .join('');
+  const links = files.map((file) => `<li><a href="${escapeExportHtml(exportHtmlPath(file))}">${escapeExportHtml(file.relativePath)}</a></li>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><style>${themeCss}</style></head><body><main class="mdn-body mdn-export-page"><h1>${safeTitle}</h1><ul>${links}</ul></main></body></html>`;
 }
 
@@ -331,39 +316,18 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         </header>
 
         <div className="export-center__body">
-          <section className="export-center__sources" aria-label="Export source">
-            <h3>Source</h3>
-            <div className="export-center__choice-row" role="radiogroup" aria-label="Source mode">
-              <label><input type="radio" name="export-source" checked={sourceMode === 'current'} onChange={() => setSourceMode('current')} disabled={!currentFile} /> Current document</label>
-              <label><input type="radio" name="export-source" checked={sourceMode === 'selected'} onChange={() => setSourceMode('selected')} /> Selected documents</label>
-              <label><input type="radio" name="export-source" checked={sourceMode === 'folder'} onChange={() => setSourceMode('folder')} disabled={folders.length === 0} /> Folder</label>
-            </div>
-
-            {sourceMode === 'current' && (
-              <div className="export-center__current-file">{currentFile?.relativePath || 'No current document'}</div>
-            )}
-
-            {sourceMode === 'selected' && (
-              <div className="export-center__file-list">
-                {state.fileList.map((file) => (
-                  <label key={file.fsPath} className="export-center__file-row">
-                    <input type="checkbox" checked={selectedPaths.has(file.fsPath)} onChange={() => toggleSelected(file.fsPath)} />
-                    <span>{file.relativePath}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {sourceMode === 'folder' && (
-              <div className="export-center__folder-picker">
-                <label htmlFor="export-center-folder">Folder to export</label>
-                <select id="export-center-folder" value={folder} onChange={(event) => setFolder(event.target.value)}>
-                  {folders.map((path) => <option key={path} value={path}>{path}</option>)}
-                </select>
-                <span>{folderFiles.length} document{folderFiles.length === 1 ? '' : 's'}</span>
-              </div>
-            )}
-          </section>
+          <ExportCenterSourcePanel
+            sourceMode={sourceMode}
+            setSourceMode={setSourceMode}
+            currentFile={currentFile}
+            files={state.fileList}
+            selectedPaths={selectedPaths}
+            onToggleSelected={toggleSelected}
+            folders={folders}
+            folder={folder}
+            setFolder={setFolder}
+            folderFileCount={folderFiles.length}
+          />
 
           <section className="export-center__options">
             <fieldset aria-label="Format">
