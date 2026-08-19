@@ -161,6 +161,7 @@ describe('ScopeViewModal', () => {
     fireEvent.click(openTen);
     fireEvent.click(openTen);
     await waitFor(() => expect(docTenResolvers).toHaveLength(2));
+    expect(mocks.loadDocumentSnapshot.mock.calls.filter((call) => (call[1] as MdFile)?.fsPath === files[9].fsPath)).toHaveLength(2);
 
     await act(async () => {
       docTenResolvers[0](snapshot(files[9]));
