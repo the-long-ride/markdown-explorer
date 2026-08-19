@@ -4,6 +4,7 @@ import {
   buildExportJob,
   fileNameFromPath,
   filesInFolder,
+  folderOptions,
   pdfOutputName,
   safeBaseName,
 } from '../../../../ui/src/export/exportModel';
@@ -41,6 +42,10 @@ describe('filesInFolder', () => {
   it('does not match a similarly-prefixed sibling folder', () => {
     const result = filesInFolder([...files, file('guidebook/readme.md')], 'guide');
     expect(result.some((item) => item.relativePath.startsWith('guidebook/'))).toBe(false);
+  });
+
+  it('builds sorted recursive folder choices from document paths', () => {
+    expect(folderOptions(files)).toEqual(['guide', 'guide/deep']);
   });
 });
 
