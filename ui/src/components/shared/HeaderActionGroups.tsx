@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { getEnabledShortcut } from '../../utils/shortcuts';
+import { SCOPE_NAVIGATION_STATE_EVENT, type ScopeNavigationStateDetail } from '../Modal/scopeHistory';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -30,13 +32,25 @@ export function NavigationHeaderActions({
 }: NavigationHeaderActionsProps) {
   const { state } = useAppState();
   const t = getTranslations(state.settings.language || 'en');
+  const [scopeActive, setScopeActive] = useState(
+    () => typeof document !== 'undefined' && Boolean(document.querySelector('.scope-view')),
+  );
+
+  useEffect(() => {
+    const handleScopeState = (event: Event) => {
+      const detail = (event as CustomEvent<ScopeNavigationStateDetail>).detail;
+      setScopeActive(Boolean(detail?.active));
+    };
+    window.addEventListener(SCOPE_NAVIGATION_STATE_EVENT, handleScopeState);
+    return () => window.removeEventListener(SCOPE_NAVIGATION_STATE_EVENT, handleScopeState);
+  }, []);
 
   return (
     <div className={`header-action-group header-action-group--navigation ${className}`.trim()}>
       <TooltipButton
         className="btn btn--icon"
         onClick={onBack}
-        disabled={!canGoBack}
+        disabled={scopeActive || !canGoBack}
         tooltip={t.topbar.goBack}
         shortcut={getEnabledShortcut(state.settings, 'back')}
         icon={<ChevronLeftIcon />}
@@ -44,7 +58,7 @@ export function NavigationHeaderActions({
       <TooltipButton
         className="btn btn--icon"
         onClick={onForward}
-        disabled={!canGoForward}
+        disabled={scopeActive || !canGoForward}
         tooltip={t.topbar.goForward}
         shortcut={getEnabledShortcut(state.settings, 'forward')}
         icon={<ChevronRightIcon />}
