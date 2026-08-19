@@ -47,6 +47,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   const bodyRef = useRef<HTMLDivElement>(null);
   const mermaidRunIdRef = useRef(0);
   const [history, setHistory] = useState<ScopeHistoryState | null>(null);
+  const historyRef = useRef<ScopeHistoryState | null>(history);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -55,9 +56,11 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   bridgeRef.current = bridge;
   settingsRef.current = state.settings;
   scopeTRef.current = scopeT;
+  historyRef.current = history;
 
   useEffect(() => {
     if (!initialFile) {
+      historyRef.current = null;
       setHistory(null);
       setError(null);
       setNotice(null);
@@ -73,7 +76,9 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
     void loadDocumentSnapshot(bridgeRef.current, file, settingsRef.current)
       .then((snapshot) => {
         if (!active) return;
-        setHistory(createScopeHistory({ file, snapshot }));
+        const nextHistory = createScopeHistory({ file, snapshot });
+        historyRef.current = nextHistory;
+        setHistory(nextHistory);
       })
       .catch((reason: unknown) => {
         if (!active) return;
@@ -105,8 +110,16 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   const canPrevious = Boolean(history && history.index > 0);
   const canNext = Boolean(history && history.index < history.entries.length - 1);
 
-  const goPrevious = useCallback(() => setHistory((value) => value ? previousScope(value) : value), []);
-  const goNext = useCallback(() => setHistory((value) => value ? nextScope(value) : value), []);
+  const goPrevious = useCallback(() => setHistory((value) => {
+    const next = value ? previousScope(value) : value;
+    historyRef.current = next;
+    return next;
+  }), []);
+  const goNext = useCallback(() => setHistory((value) => {
+    const next = value ? nextScope(value) : value;
+    historyRef.current = next;
+    return next;
+  }), []);
 
   useEffect(() => {
     const detail: ScopeNavigationStateDetail = { active: Boolean(initialFile), canPrevious, canNext };
@@ -161,8 +174,9 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   }, [current, state]);
 
   const openNestedScope = useCallback(async (target: MdFile) => {
-    if (!history) return;
-    if (history.entries.slice(0, history.index + 1).length >= MAX_SCOPE_DEPTH) {
+    const latestHistory = historyRef.current;
+    if (!latestHistory) return;
+    if (latestHistory.entries.slice(0, latestHistory.index + 1).length >= MAX_SCOPE_DEPTH) {
       setNotice(scopeTRef.current.maximumDepth);
       setContextMenu(null);
       return;
@@ -173,18 +187,21 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
     setLoading(true);
     try {
       const snapshot = await loadDocumentSnapshot(bridgeRef.current, target, settingsRef.current);
-      const result = pushScope(history, { file: target, snapshot });
+      const currentHistory = historyRef.current;
+      if (!currentHistory) return;
+      const result = pushScope(currentHistory, { file: target, snapshot });
       if (result.blocked) {
         setNotice(scopeTRef.current.maximumDepth);
         return;
       }
+      historyRef.current = result.state;
       setHistory(result.state);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : scopeTRef.current.unableOpen);
     } finally {
       setLoading(false);
     }
-  }, [history]);
+  }, []);
 
   useEffect(() => {
     const body = bodyRef.current;
