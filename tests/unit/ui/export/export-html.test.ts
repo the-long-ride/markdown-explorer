@@ -45,6 +45,15 @@ describe('rewriteExportLinks', () => {
     expect(rewriteExportLinks('<a href="./topic.md">lower</a>', upper, [upper, lower]))
       .toContain(`href="${lowerPath.split('/').at(-1)}"`);
   });
+
+  it('cannot collide with source names that mimic a generated case marker', () => {
+    const upper = file('guide/Topic.md');
+    const markerLike = file('guide/topic.md--case-0');
+    const upperPath = exportHtmlPath(upper, [upper, markerLike]);
+    const markerLikePath = exportHtmlPath(markerLike, [upper, markerLike]);
+
+    expect(upperPath.toLowerCase()).not.toBe(markerLikePath.toLowerCase());
+  });
 });
 
 describe('buildStandaloneExportHtml', () => {
