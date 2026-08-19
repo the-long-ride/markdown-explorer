@@ -76,6 +76,7 @@ pub fn parse_external_open_path(argv: &[String]) -> Option<PathBuf> {
     parse_external_open_request(argv).map(|request| request.primary_path().to_path_buf())
 }
 
+#[cfg(not(test))]
 pub fn emit_external_open_request(app: &tauri::AppHandle, request: &ExternalOpenRequest) {
     let mut extra = serde_json::Map::new();
     extra.insert("request".into(), request.to_json());
