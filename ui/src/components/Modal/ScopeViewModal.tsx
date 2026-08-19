@@ -9,11 +9,15 @@ import { LinkContextMenu } from '../shared/LinkContextMenu';
 import { ChevronLeftIcon, ChevronRightIcon } from '../shared/icons';
 import {
   MAX_SCOPE_DEPTH,
+  SCOPE_NAVIGATION_REQUEST_EVENT,
+  SCOPE_NAVIGATION_STATE_EVENT,
   createScopeHistory,
   nextScope,
   previousScope,
   pushScope,
   type ScopeHistoryState,
+  type ScopeNavigationDirection,
+  type ScopeNavigationStateDetail,
 } from './scopeHistory';
 
 interface ScopeViewModalProps {
@@ -85,6 +89,42 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   }, [contextMenu, initialFile, onClose]);
 
   const current = history?.entries[history.index] ?? null;
+  const depth = history ? history.index + 1 : 1;
+  const canPrevious = Boolean(history && history.index > 0);
+  const canNext = Boolean(history && history.index < history.entries.length - 1);
+
+  const goPrevious = useCallback(() => {
+    setHistory((value) => value ? previousScope(value) : value);
+  }, []);
+
+  const goNext = useCallback(() => {
+    setHistory((value) => value ? nextScope(value) : value);
+  }, []);
+
+  useEffect(() => {
+    const detail: ScopeNavigationStateDetail = {
+      active: Boolean(initialFile),
+      canPrevious,
+      canNext,
+    };
+    window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_STATE_EVENT, { detail }));
+  }, [canNext, canPrevious, initialFile]);
+
+  useEffect(() => () => {
+    const detail: ScopeNavigationStateDetail = { active: false, canPrevious: false, canNext: false };
+    window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_STATE_EVENT, { detail }));
+  }, []);
+
+  useEffect(() => {
+    if (!initialFile) return;
+    const handleNavigationRequest = (event: Event) => {
+      const direction = (event as CustomEvent<{ direction?: ScopeNavigationDirection }>).detail?.direction;
+      if (direction === 'previous') goPrevious();
+      if (direction === 'next') goNext();
+    };
+    window.addEventListener(SCOPE_NAVIGATION_REQUEST_EVENT, handleNavigationRequest);
+    return () => window.removeEventListener(SCOPE_NAVIGATION_REQUEST_EVENT, handleNavigationRequest);
+  }, [goNext, goPrevious, initialFile]);
 
   useEffect(() => {
     const body = bodyRef.current;
@@ -190,10 +230,6 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
 
   if (!initialFile) return null;
 
-  const depth = history ? history.index + 1 : 1;
-  const canPrevious = Boolean(history && history.index > 0);
-  const canNext = Boolean(history && history.index < history.entries.length - 1);
-
   return (
     <div
       className="mdn-modal scope-view"
@@ -212,7 +248,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
               className="btn btn--icon scope-view__nav-button"
               aria-label="Previous scope"
               disabled={!canPrevious}
-              onClick={() => setHistory((value) => value ? previousScope(value) : value)}
+              onClick={goPrevious}
             >
               <ChevronLeftIcon size={14} />
             </button>
@@ -221,7 +257,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
               className="btn btn--icon scope-view__nav-button"
               aria-label="Next scope"
               disabled={!canNext}
-              onClick={() => setHistory((value) => value ? nextScope(value) : value)}
+              onClick={goNext}
             >
               <ChevronRightIcon size={14} />
             </button>
