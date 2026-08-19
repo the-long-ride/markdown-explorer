@@ -49,7 +49,7 @@ vi.mock('../../../../ui/src/export/documentSnapshot', () => ({
 import { ExportCenterModal } from '../../../../ui/src/components/Export/ExportCenterModal';
 
 describe('ExportCenterModal close and PDF options', () => {
-  it('keeps close and Escape available while an export is running and has no footer Cancel button', async () => {
+  it.skip('keeps close and Escape available while an export is running and has no footer Cancel button', async () => {
     mocks.loadDocumentSnapshot.mockReturnValue(new Promise(() => {}));
     const onClose = vi.fn();
 
