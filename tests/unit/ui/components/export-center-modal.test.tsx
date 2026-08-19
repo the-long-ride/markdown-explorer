@@ -12,8 +12,6 @@ const fixtures = vi.hoisted(() => ({
 
 const mocks = vi.hoisted(() => ({
   saveBlobAsFile: vi.fn(async () => true),
-  printExportHtml: vi.fn(async () => 'printed'),
-  printExportBatch: vi.fn(async () => 1),
   loadDocumentSnapshot: vi.fn(),
 }));
 
@@ -23,6 +21,7 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
       currentFile: '/docs/readme.md',
       fileList: fixtures.files,
       workspaceName: 'Docs',
+      appRuntime: 'desktop',
       settings: { language: 'en' },
     },
   }),
@@ -33,10 +32,6 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 }));
 
 vi.mock('../../../../ui/src/dom/copyImage', () => ({ saveBlobAsFile: mocks.saveBlobAsFile }));
-vi.mock('../../../../ui/src/export/printExport', () => ({
-  printExportHtml: mocks.printExportHtml,
-  printExportBatch: mocks.printExportBatch,
-}));
 vi.mock('../../../../ui/src/export/documentSnapshot', () => ({
   loadDocumentSnapshot: mocks.loadDocumentSnapshot,
 }));
@@ -46,8 +41,6 @@ import { ExportCenterModal } from '../../../../ui/src/components/Export/ExportCe
 describe('ExportCenterModal', () => {
   beforeEach(() => {
     mocks.saveBlobAsFile.mockClear();
-    mocks.printExportHtml.mockClear();
-    mocks.printExportBatch.mockClear();
     mocks.loadDocumentSnapshot.mockReset();
     mocks.loadDocumentSnapshot.mockImplementation(async (_bridge: unknown, file: MdFile) => ({
       file,
