@@ -16,6 +16,21 @@ function normalizeRelativePath(value: string): string {
   return value.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+|\/+$/g, '');
 }
 
+export function safeBaseName(value: string): string {
+  const sanitized = value.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  return sanitized || 'markdown-explorer';
+}
+
+export function pdfOutputName(file: MdFile, multiple: boolean): string {
+  const source = multiple ? file.relativePath.replace(/\\/g, '/').replace(/\//g, '-') : file.title;
+  return `${safeBaseName(source)}.pdf`;
+}
+
+export function fileNameFromPath(value: string): string {
+  const parts = value.split(/[\\/]/);
+  return parts[parts.length - 1] || value;
+}
+
 export function filesInFolder(files: readonly MdFile[], folderPath: string): MdFile[] {
   const folder = normalizeRelativePath(folderPath);
   if (!folder) return [...files].sort((a, b) => a.relativePath.localeCompare(b.relativePath));
