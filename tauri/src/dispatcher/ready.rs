@@ -48,9 +48,9 @@ impl Dispatcher {
             &package_info.version.to_string(),
         );
         host_message::emit_ready_ack_scoped(&self.app, &ack, operation.as_ref());
-        let external_open_path = self.state.inner.write().external_open_path.take();
-        if let Some(path) = external_open_path {
-            host_message::emit_external_open_path(&self.app, &path.to_string_lossy());
+        let external_open_request = self.state.inner.write().external_open_request.take();
+        if let Some(request) = external_open_request {
+            crate::runtime::external_open::emit_external_open_request(&self.app, &request);
         }
         self.state.inner.read().perf.mark("tauri:readyAck");
 

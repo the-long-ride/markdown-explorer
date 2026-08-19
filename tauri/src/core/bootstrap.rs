@@ -22,12 +22,15 @@ fn dispatch_native_drop_event(window: &WebviewWindow, event_type: &str, paths: &
     let _ = window.eval(script);
 }
 
-fn handle_external_open_path(app: &tauri::AppHandle, path: std::path::PathBuf) {
+fn handle_external_open_request(
+    app: &tauri::AppHandle,
+    request: crate::runtime::external_open::ExternalOpenRequest,
+) {
     let state = app.state::<crate::app_state::AppState>();
     if state.inner.read().ready_handled {
-        crate::host_message::emit_external_open_path(app, &path.to_string_lossy());
+        crate::runtime::external_open::emit_external_open_request(app, &request);
     } else {
-        state.inner.write().external_open_path = Some(path);
+        state.inner.write().external_open_request = Some(request);
     }
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -37,8 +40,8 @@ fn handle_external_open_path(app: &tauri::AppHandle, path: std::path::PathBuf) {
 
 pub fn boot() {
     let state = crate::app_state::AppState::new();
-    state.inner.write().external_open_path =
-        crate::runtime::external_open::parse_external_open_path(
+    state.inner.write().external_open_request =
+        crate::runtime::external_open::parse_external_open_request(
             &std::env::args().collect::<Vec<_>>(),
         );
     state.inner.read().perf.mark("main:required");
@@ -61,14 +64,13 @@ pub fn boot() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             let args: Vec<String> = argv.into_iter().collect();
-            let Some(path) = crate::runtime::external_open::parse_external_open_path(&args) else {
+            let Some(request) = crate::runtime::external_open::parse_external_open_request(&args) else {
                 return;
             };
-            handle_external_open_path(app, path);
+            handle_external_open_request(app, request);
         }))
         .plugin(
             tauri_plugin_window_state::Builder::new()
-                // The custom title bar must remain custom, and fullscreen is transient.
                 .with_state_flags(
                     StateFlags::all() & !(StateFlags::FULLSCREEN | StateFlags::DECORATIONS),
                 )
@@ -191,8 +193,12 @@ pub fn boot() {
     app.run(|app, event| {
         #[cfg(target_os = "macos")]
         if let tauri::RunEvent::Opened { urls } = event {
-            if let Some(path) = urls.into_iter().find_map(|url| url.to_file_path().ok()) {
-                handle_external_open_path(app, path);
+            if let Some(request) = urls
+                .into_iter()
+                .find_map(|url| url.to_file_path().ok())
+                .and_then(|path| crate::runtime::external_open::request_for_path(&path))
+            {
+                handle_external_open_request(app, request);
             }
         }
 
