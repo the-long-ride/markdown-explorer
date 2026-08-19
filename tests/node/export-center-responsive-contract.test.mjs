@@ -4,6 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 
 const css = fs.readFileSync(path.resolve('ui/src/styles/global/global-export-center.css'), 'utf8');
+const modalSource = fs.readFileSync(path.resolve('ui/src/components/Export/ExportCenterModal.tsx'), 'utf8');
 
 test('Export Center stays viewport-bounded at app zoom and uses theme radii', () => {
   assert.doesNotMatch(css, /min-height:\s*520px/);
@@ -16,4 +17,8 @@ test('Export Center stays viewport-bounded at app zoom and uses theme radii', ()
 
 test('Export Center close control follows the borderless Settings modal pattern', () => {
   assert.match(css, /\.export-center__close\s*\{[\s\S]*?background:\s*none;[\s\S]*?border:\s*none;/);
+});
+
+test('Export Center avoids ES2022-only Array.at in the UI bundle', () => {
+  assert.doesNotMatch(modalSource, /\.at\s*\(/);
 });
