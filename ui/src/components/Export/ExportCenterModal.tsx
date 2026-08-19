@@ -49,7 +49,8 @@ function pdfOutputName(file: MdFile, multiple: boolean): string {
 }
 
 function fileNameFromPath(value: string): string {
-  return value.split(/[\\/]/).at(-1) || value;
+  const parts = value.split(/[\\/]/);
+  return parts[parts.length - 1] || value;
 }
 
 function folderOptions(files: readonly MdFile[]): string[] {
