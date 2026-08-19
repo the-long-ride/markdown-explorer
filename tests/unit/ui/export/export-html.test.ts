@@ -75,4 +75,24 @@ describe('buildStandaloneExportHtml', () => {
     expect(html).toContain('id="doc-guide-topic-md"');
     expect(html).toContain('id="doc-guide-topic-mdx"');
   });
+
+  it('disambiguates merged section IDs when punctuation normalizes to the same slug', () => {
+    const dotted = file('guide/a.b.md');
+    const dashed = file('guide/a-b.md');
+    const html = buildStandaloneExportHtml({
+      pages: [
+        { file: dotted, html: '<p>Dotted</p>' },
+        { file: dashed, html: '<p>Dashed</p>' },
+      ],
+      layout: 'explorer',
+      title: 'Collision',
+      themeCss: '',
+    });
+
+    const ids = [...html.matchAll(/<section id="([^"]+)"/g)].map((match) => match[1]);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+    expect(html).toContain(`href="#${ids[0]}"`);
+    expect(html).toContain(`href="#${ids[1]}"`);
+  });
 });
