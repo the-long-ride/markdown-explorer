@@ -63,8 +63,9 @@ describe('listWorkspaceExportResources', () => {
     try {
       const harness = bridgeHarness();
       const pending = listWorkspaceExportResources(harness.bridge, 25);
+      const rejected = expect(pending).rejects.toThrow('Workspace export resource listing timed out');
       await vi.advanceTimersByTimeAsync(25);
-      await expect(pending).rejects.toThrow('Workspace export resource listing timed out');
+      await rejected;
     } finally {
       vi.useRealTimers();
     }
