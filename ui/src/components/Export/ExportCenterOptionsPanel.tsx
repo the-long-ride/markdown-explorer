@@ -1,23 +1,15 @@
 import type { Dispatch, SetStateAction } from 'react';
-import type { ExportBatchMode, ExportFormat, ExportLayout } from '../../export/exportModel';
+import { exportArtifactLabel, type ExportBatchMode, type ExportFormat, type ExportLayout } from '../../export/exportModel';
 
 export interface ExportActivityResult {
   path: string;
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'warning' | 'progress';
   message?: string;
 }
 
 export function ExportCenterOptionsPanel({
-  format,
-  setFormat,
-  layout,
-  setLayout,
-  batchMode,
-  setBatchMode,
-  selectedCount,
-  extraCount,
-  summary,
-  results,
+  format, setFormat, layout, setLayout, batchMode, setBatchMode,
+  selectedCount, extraCount, summary, results,
 }: {
   format: ExportFormat;
   setFormat: Dispatch<SetStateAction<ExportFormat>>;
@@ -30,12 +22,7 @@ export function ExportCenterOptionsPanel({
   summary: string;
   results: readonly ExportActivityResult[];
 }) {
-  const artifactLabel = format === 'html'
-    ? (extraCount > 0 ? 'HTML package (.zip)' : 'HTML (.html)')
-    : format === 'site'
-      ? 'Static Website (.zip)'
-      : batchMode === 'separate' && selectedCount > 1 ? 'PDF files' : 'PDF (.pdf)';
-
+  const artifactLabel = exportArtifactLabel({ format, batchMode, documentCount: selectedCount, extraCount });
   return (
     <section className="export-center__options">
       <fieldset aria-label="Format">
@@ -46,7 +33,6 @@ export function ExportCenterOptionsPanel({
           <label className={format === 'site' ? 'is-selected' : ''}><input type="radio" name="export-format" value="site" checked={format === 'site'} onChange={() => setFormat('site')} /> <strong>Static Website</strong><span>Portable site ZIP with internal links</span></label>
         </div>
       </fieldset>
-
       <fieldset aria-label="Visual layout">
         <legend>Visual Layout</legend>
         <div className="export-center__cards">
@@ -54,7 +40,6 @@ export function ExportCenterOptionsPanel({
           <label className={layout === 'explorer' ? 'is-selected' : ''}><input type="radio" name="export-layout" checked={layout === 'explorer'} onChange={() => setLayout('explorer')} /> <strong>Full Explorer layout</strong><span>Export-safe topbar, document navigation and TOC shell</span></label>
         </div>
       </fieldset>
-
       <fieldset aria-label="Batch mode">
         <legend>Batch Output</legend>
         <div className="export-center__choice-row">
@@ -62,25 +47,14 @@ export function ExportCenterOptionsPanel({
           <label><input type="radio" name="export-batch" checked={batchMode === 'merged'} onChange={() => setBatchMode('merged')} /> Merged output</label>
         </div>
       </fieldset>
-
-      <div className="export-center__selection-summary">
-        <span>{selectedCount} document{selectedCount === 1 ? '' : 's'} selected</span>
-        <strong>{artifactLabel}</strong>
-      </div>
-
+      <div className="export-center__selection-summary"><span>{selectedCount} document{selectedCount === 1 ? '' : 's'} selected</span><strong>{artifactLabel}</strong></div>
       <div className="export-center__activity" aria-live="polite">
         <div className="export-center__activity-heading"><strong>Export activity</strong></div>
         {!summary && results.length === 0 && <div className="export-center__activity-empty">Export progress and saved outputs will appear here.</div>}
         {summary && <div className="export-center__activity-summary">{summary}</div>}
-        {results.length > 0 && (
-          <ul>
-            {results.map((result, index) => (
-              <li key={`${result.path}-${index}`} className={`is-${result.status}`}>
-                <span>{result.path}</span>{result.message && <small>{result.message}</small>}
-              </li>
-            ))}
-          </ul>
-        )}
+        {results.length > 0 && <ul>{results.map((item, index) => (
+          <li key={`${item.path}-${index}`} className={`is-${item.status}`}><span>{item.path}</span>{item.message && <small>{item.message}</small>}</li>
+        ))}</ul>}
       </div>
     </section>
   );

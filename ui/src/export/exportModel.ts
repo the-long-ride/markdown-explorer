@@ -32,13 +32,25 @@ export function fileNameFromPath(value: string): string {
   return parts[parts.length - 1] || value;
 }
 
+export function exportArtifactLabel(args: {
+  format: ExportFormat;
+  batchMode: ExportBatchMode;
+  documentCount: number;
+  extraCount?: number;
+}): string {
+  if (args.format === 'site') return 'Static Website (.zip)';
+  if (args.format === 'pdf') {
+    return args.batchMode === 'separate' && args.documentCount > 1 ? 'PDF files' : 'PDF (.pdf)';
+  }
+  const packaged = (args.extraCount ?? 0) > 0 || (args.batchMode === 'separate' && args.documentCount > 1);
+  return packaged ? 'HTML package (.zip)' : 'HTML (.html)';
+}
+
 export function folderOptions(files: readonly MdFile[]): string[] {
   const folders = new Set<string>();
   for (const file of files) {
     const parts = normalizeRelativePath(file.relativePath).split('/').slice(0, -1);
-    for (let length = 1; length <= parts.length; length += 1) {
-      folders.add(parts.slice(0, length).join('/'));
-    }
+    for (let length = 1; length <= parts.length; length += 1) folders.add(parts.slice(0, length).join('/'));
   }
   return [...folders].sort((a, b) => a.localeCompare(b));
 }
@@ -65,19 +77,10 @@ export function buildExportJob(args: {
   if (files.length === 0) throw new Error('Select at least one document');
 
   const extraResourcePaths = [...new Set(
-    (args.extraResourcePaths ?? [])
-      .map(normalizeRelativePath)
-      .filter(Boolean),
+    (args.extraResourcePaths ?? []).map(normalizeRelativePath).filter(Boolean),
   )].sort((a, b) => a.localeCompare(b));
   if (args.format === 'pdf' && extraResourcePaths.length > 0) {
     throw new Error('Additional workspace files are not supported for PDF export');
   }
-
-  return {
-    format: args.format,
-    layout: args.layout,
-    batchMode: args.batchMode,
-    files,
-    extraResourcePaths,
-  };
+  return { format: args.format, layout: args.layout, batchMode: args.batchMode, files, extraResourcePaths };
 }
