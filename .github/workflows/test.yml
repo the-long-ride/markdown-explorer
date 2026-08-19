@@ -78,7 +78,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec vitest run --project ui tests/unit/ui/components/export-center-close.test.tsx
+      - run: pnpm run test:ui
 
   electron:
     runs-on: ubuntu-latest
