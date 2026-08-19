@@ -10,6 +10,20 @@ function safePdfFileName(value) {
   return withExtension || 'document.pdf';
 }
 
+function reservePdfFileName(value, usedNames) {
+  const safeName = safePdfFileName(value);
+  const extension = safeName.toLowerCase().endsWith('.pdf') ? safeName.slice(-4) : '.pdf';
+  const stem = safeName.slice(0, -extension.length) || 'document';
+  let candidate = safeName;
+  let index = 2;
+  while (usedNames.has(candidate.toLowerCase())) {
+    candidate = `${stem}-${index}${extension}`;
+    index += 1;
+  }
+  usedNames.add(candidate.toLowerCase());
+  return candidate;
+}
+
 function footerTemplate(text) {
   const escaped = String(text || PDF_FOOTER_TEXT)
     .replace(/&/g, '&amp;')
@@ -59,6 +73,7 @@ function createPdfExporter({
     const outputDirectory = selection.filePaths[0];
     const temporaryDirectory = fs.mkdtempSync(pathApi.join(osApi.tmpdir(), 'markdown-explorer-pdf-'));
     const savedPaths = [];
+    const usedOutputNames = new Set();
     let renderer;
 
     try {
@@ -97,7 +112,8 @@ function createPdfExporter({
           },
         });
 
-        const outputPath = pathApi.join(outputDirectory, safePdfFileName(document.fileName));
+        const outputName = reservePdfFileName(document.fileName, usedOutputNames);
+        const outputPath = pathApi.join(outputDirectory, outputName);
         fs.writeFileSync(outputPath, pdfData);
         savedPaths.push(outputPath);
       }
@@ -122,4 +138,4 @@ function createPdfExporter({
   };
 }
 
-module.exports = { createPdfExporter, safePdfFileName, footerTemplate, PDF_FOOTER_TEXT };
+module.exports = { createPdfExporter, safePdfFileName, reservePdfFileName, footerTemplate, PDF_FOOTER_TEXT };
