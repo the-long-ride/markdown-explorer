@@ -52,7 +52,11 @@ describe('ExportCenterModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Export' }));
     await waitFor(() => expect(mocks.runExportJob).toHaveBeenCalled());
     const args = mocks.runExportJob.mock.calls.at(-1)?.[0];
-    expect(args.job.files.map((item: MdFile) => item.fsPath)).toEqual(fixtures.files.map((item) => item.fsPath));
+    expect(args.job.files.map((item: MdFile) => item.fsPath)).toEqual([
+      '/docs/guide/a.md',
+      '/docs/guide/deep/b.md',
+      '/docs/readme.md',
+    ]);
     expect(args.job.extraResourcePaths).toEqual([]);
   });
 });
