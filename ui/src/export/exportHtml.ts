@@ -64,12 +64,29 @@ function relativePath(fromFile: string, toFile: string): string {
   return result || './';
 }
 
-function documentId(file: MdFile): string {
+function documentIdBase(file: MdFile): string {
   const slug = normalizeRelativePath(file.relativePath)
     .replace(/[^a-zA-Z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .toLowerCase();
   return `doc-${slug || 'document'}`;
+}
+
+function stablePathHash(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function documentId(file: MdFile, exported: readonly MdFile[] = [file]): string {
+  const base = documentIdBase(file);
+  const collisions = exported.filter((candidate) => documentIdBase(candidate) === base);
+  if (collisions.length <= 1) return base;
+  const exactPath = normalizeRelativePath(file.relativePath).toLowerCase();
+  return `${base}-${stablePathHash(exactPath)}`;
 }
 
 function resolveInternalTarget(rawHref: string, source: MdFile, exported: readonly MdFile[]): { file: MdFile; hash: string } | null {
@@ -101,7 +118,7 @@ function rewriteMergedLinks(html: string, source: MdFile, exported: readonly MdF
   return html.replace(/\bhref=(['"])([^'"]+)\1/gi, (full, quote: string, href: string) => {
     const target = resolveInternalTarget(href, source, exported);
     if (!target) return full;
-    return `href=${quote}#${documentId(target.file)}${quote}`;
+    return `href=${quote}#${documentId(target.file, exported)}${quote}`;
   });
 }
 
@@ -193,7 +210,7 @@ export function buildStandaloneExportHtml(args: {
   const merged = args.pages.length > 1;
   const pageMarkup = args.pages.map((page) => {
     const html = merged ? rewriteMergedLinks(page.html, page.file, files) : page.html;
-    return `<section id="${documentId(page.file)}" class="mdn-export-document-section"><article class="mdn-body mdn-export-page">${html}</article></section>`;
+    return `<section id="${documentId(page.file, files)}" class="mdn-export-document-section"><article class="mdn-body mdn-export-page">${html}</article></section>`;
   }).join('\n');
 
   const navigationFiles = args.navigationFiles?.length ? args.navigationFiles : files;
@@ -201,9 +218,9 @@ export function buildStandaloneExportHtml(args: {
   const navigation = navigationFiles.map((file) => {
     const href = currentFile
       ? (file.fsPath === currentFile.fsPath
-          ? `#${documentId(currentFile)}`
+          ? `#${documentId(currentFile, files)}`
           : relativePath(outputPath(currentFile), outputPath(file)))
-      : `#${documentId(file)}`;
+      : `#${documentId(file, files)}`;
     return `<a href="${escapeExportHtml(href)}">${escapeExportHtml(file.title || file.relativePath)}</a>`;
   }).join('');
 
