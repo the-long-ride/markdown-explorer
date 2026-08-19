@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { saveBlobAsFile } from '../../dom/copyImage';
@@ -20,9 +20,10 @@ import {
   type ExportLayout,
   type ExportSourceMode,
 } from '../../export/exportModel';
-import { printExportBatch, printExportHtml } from '../../export/printExport';
+import { exportPdfViaHost, PDF_FOOTER_TEXT } from '../../export/pdfExport';
 import { createStoreZip } from '../../export/zipStore';
 import type { MdFile } from '../../types/files';
+import { TooltipButton } from '../shared/TooltipButton';
 
 interface ExportCenterModalProps {
   isOpen: boolean;
@@ -40,6 +41,15 @@ const encoder = new TextEncoder();
 function safeBaseName(value: string): string {
   const sanitized = value.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
   return sanitized || 'markdown-explorer';
+}
+
+function pdfOutputName(file: MdFile, multiple: boolean): string {
+  const source = multiple ? file.relativePath.replace(/\\/g, '/').replace(/\//g, '-') : file.title;
+  return `${safeBaseName(source)}.pdf`;
+}
+
+function fileNameFromPath(value: string): string {
+  return value.split(/[\\/]/).at(-1) || value;
 }
 
 function folderOptions(files: readonly MdFile[]): string[] {
@@ -80,12 +90,14 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
   const [format, setFormat] = useState<ExportFormat>('html');
   const [layout, setLayout] = useState<ExportLayout>('document');
   const [batchMode, setBatchMode] = useState<ExportBatchMode>('separate');
+  const [pdfFooterEnabled, setPdfFooterEnabled] = useState(true);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(() => new Set());
   const folders = useMemo(() => folderOptions(state.fileList), [state.fileList]);
   const [folder, setFolder] = useState('');
   const [running, setRunning] = useState(false);
   const [results, setResults] = useState<ExportResult[]>([]);
   const [summary, setSummary] = useState('');
+  const exportGeneration = useRef(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -94,22 +106,31 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
     setFormat('html');
     setLayout('document');
     setBatchMode('separate');
+    setPdfFooterEnabled(true);
     setSelectedPaths(new Set(current ? [current.fsPath] : []));
     setFolder(folders[0] || '');
+    setRunning(false);
     setResults([]);
     setSummary('');
   }, [folders, isOpen, state.currentFile, state.fileList]);
 
   useEffect(() => {
+    if (isOpen) return;
+    exportGeneration.current += 1;
+    setRunning(false);
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!isOpen) return;
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || running) return;
+      if (event.key !== 'Escape') return;
       event.preventDefault();
+      event.stopPropagation();
       onClose();
     };
     document.addEventListener('keydown', handleKey, true);
     return () => document.removeEventListener('keydown', handleKey, true);
-  }, [isOpen, onClose, running]);
+  }, [isOpen, onClose]);
 
   const currentFile = state.fileList.find((file) => file.fsPath === state.currentFile) ?? null;
   const selectedFiles = state.fileList.filter((file) => selectedPaths.has(file.fsPath));
@@ -140,47 +161,46 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
       return;
     }
 
-    setRunning(true);
-    const snapshotResults = await Promise.allSettled(
-      job.files.map((file) => loadDocumentSnapshot(bridge, file, state.settings)),
-    );
-    const snapshots: DocumentSnapshot[] = [];
+    const generation = ++exportGeneration.current;
+    const isCurrentGeneration = () => generation === exportGeneration.current;
     const nextResults: ExportResult[] = [];
-    snapshotResults.forEach((result, index) => {
-      const file = job.files[index];
-      if (result.status === 'fulfilled') snapshots.push(result.value);
-      else nextResults.push({
-        path: file.relativePath,
-        status: 'error',
-        message: result.reason instanceof Error ? result.reason.message : 'Unable to render document',
-      });
-    });
-
-    if (job.batchMode === 'merged' && nextResults.length > 0) {
-      setResults(nextResults);
-      setSummary('Merged export stopped because one or more documents could not be rendered.');
-      setRunning(false);
-      return;
-    }
-
-    if (snapshots.length === 0) {
-      setResults(nextResults);
-      setSummary('No documents could be exported.');
-      setRunning(false);
-      return;
-    }
-
-    const portableSnapshots = await Promise.all(
-      snapshots.map(async (snapshot) => ({
-        ...snapshot,
-        html: await embedExportLocalAssets(snapshot.html, snapshot.file.fsPath),
-      })),
-    );
-    const themeCss = captureExportThemeCss();
-    const baseName = safeBaseName(state.workspaceName || portableSnapshots[0].file.title || 'export');
-    const pages = pagesFromSnapshots(portableSnapshots);
+    setRunning(true);
 
     try {
+      const snapshotResults = await Promise.allSettled(
+        job.files.map((file) => loadDocumentSnapshot(bridge, file, state.settings)),
+      );
+      const snapshots: DocumentSnapshot[] = [];
+      snapshotResults.forEach((result, index) => {
+        const file = job.files[index];
+        if (result.status === 'fulfilled') snapshots.push(result.value);
+        else nextResults.push({
+          path: file.relativePath,
+          status: 'error',
+          message: result.reason instanceof Error ? result.reason.message : 'Unable to render document',
+        });
+      });
+
+      if (job.batchMode === 'merged' && nextResults.length > 0) {
+        if (isCurrentGeneration()) setSummary('Merged export stopped because one or more documents could not be rendered.');
+        return;
+      }
+
+      if (snapshots.length === 0) {
+        if (isCurrentGeneration()) setSummary('No documents could be exported.');
+        return;
+      }
+
+      const portableSnapshots = await Promise.all(
+        snapshots.map(async (snapshot) => ({
+          ...snapshot,
+          html: await embedExportLocalAssets(snapshot.html, snapshot.file.fsPath),
+        })),
+      );
+      const themeCss = captureExportThemeCss();
+      const baseName = safeBaseName(state.workspaceName || portableSnapshots[0].file.title || 'export');
+      const pages = pagesFromSnapshots(portableSnapshots);
+
       if (job.format === 'html') {
         if (job.batchMode === 'merged') {
           const html = buildStandaloneExportHtml({ pages, layout: job.layout, title: state.workspaceName || 'Markdown Explorer Export', themeCss });
@@ -249,24 +269,41 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         const ok = await saveBlobAsFile(zipBlob(createStoreZip(entries)), fileName);
         if (!ok) throw new Error('The static website archive could not be saved.');
         entries.forEach((entry) => nextResults.push({ path: entry.path, status: 'success' }));
-      } else if (job.batchMode === 'merged') {
-        const html = buildStandaloneExportHtml({ pages, layout: job.layout, title: state.workspaceName || 'Markdown Explorer Export', themeCss });
-        const printResult = await printExportHtml(html, state.workspaceName || 'Markdown Explorer Export');
-        if (printResult !== 'printed') throw new Error('PDF printing was cancelled or unavailable.');
-        nextResults.push({ path: `${baseName}-merged.pdf`, status: 'success' });
       } else {
-        const documents = portableSnapshots.map((snapshot) => ({
-          html: buildStandaloneExportHtml({ pages: [{ file: snapshot.file, html: snapshot.html }], layout: job.layout, title: snapshot.file.title, themeCss }),
-          title: snapshot.file.title,
-        }));
-        const printed = await printExportBatch(documents);
-        if (printed !== documents.length) {
-          nextResults.push({ path: 'PDF batch', status: 'error', message: `${printed} of ${documents.length} print jobs completed.` });
-        } else {
-          portableSnapshots.forEach((snapshot) => nextResults.push({ path: `${safeBaseName(snapshot.file.title)}.pdf`, status: 'success' }));
+        if (state.appRuntime !== 'desktop') {
+          throw new Error('Direct PDF export is currently available in the Markdown Explorer desktop runtime.');
         }
+
+        const documents = job.batchMode === 'merged'
+          ? [{
+              fileName: `${baseName}-merged.pdf`,
+              html: buildStandaloneExportHtml({
+                pages,
+                layout: job.layout,
+                title: state.workspaceName || 'Markdown Explorer Export',
+                themeCss,
+              }),
+            }]
+          : portableSnapshots.map((snapshot) => ({
+              fileName: pdfOutputName(snapshot.file, portableSnapshots.length > 1),
+              html: buildStandaloneExportHtml({
+                pages: [{ file: snapshot.file, html: snapshot.html }],
+                layout: job.layout,
+                title: snapshot.file.title,
+                themeCss,
+              }),
+            }));
+
+        const pdfResult = await exportPdfViaHost(bridge, { documents, footerEnabled: pdfFooterEnabled });
+        if (pdfResult.cancelled) {
+          if (isCurrentGeneration()) setSummary('PDF export cancelled.');
+          return;
+        }
+        if (!pdfResult.ok) throw new Error(pdfResult.error || 'The PDF files could not be saved.');
+        pdfResult.paths.forEach((path) => nextResults.push({ path: fileNameFromPath(path), status: 'success' }));
       }
 
+      if (!isCurrentGeneration()) return;
       const successCount = nextResults.filter((result) => result.status === 'success').length;
       const errorCount = nextResults.filter((result) => result.status === 'error').length;
       setSummary(errorCount > 0
@@ -274,10 +311,12 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         : `Export complete: ${successCount} output${successCount === 1 ? '' : 's'}.`);
     } catch (error) {
       nextResults.push({ path: 'Export', status: 'error', message: error instanceof Error ? error.message : 'Export failed' });
-      setSummary(error instanceof Error ? error.message : 'Export failed');
+      if (isCurrentGeneration()) setSummary(error instanceof Error ? error.message : 'Export failed');
     } finally {
-      setResults(nextResults);
-      setRunning(false);
+      if (isCurrentGeneration()) {
+        setResults(nextResults);
+        setRunning(false);
+      }
     }
   };
 
@@ -290,16 +329,26 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
       aria-modal="true"
       aria-label="Export Center"
       onClick={(event) => {
-        if (!running && event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <section className="export-center__card">
         <header className="export-center__header">
-          <div>
+          <div className="export-center__heading">
             <h2>Export Center</h2>
             <p>Export documents with the current Markdown Explorer theme and layout.</p>
           </div>
-          <button className="btn btn--icon" type="button" aria-label="Close Export Center" disabled={running} onClick={onClose}>×</button>
+          <TooltipButton
+            className="export-center__close"
+            type="button"
+            onClick={onClose}
+            tooltip="Close Export Center"
+            shortcut="Esc"
+            tooltipPos="below"
+            tooltipAlign="right"
+          >
+            &times;
+          </TooltipButton>
         </header>
 
         <div className="export-center__body">
@@ -342,7 +391,7 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
               <legend>Format</legend>
               <div className="export-center__cards export-center__cards--format">
                 <label className={format === 'html' ? 'is-selected' : ''}><input type="radio" name="export-format" value="html" checked={format === 'html'} onChange={() => setFormat('html')} /> <strong>HTML</strong><span>Standalone themed document</span></label>
-                <label className={format === 'pdf' ? 'is-selected' : ''}><input type="radio" name="export-format" value="pdf" checked={format === 'pdf'} onChange={() => setFormat('pdf')} /> <strong>PDF</strong><span>Print/save the themed document as PDF</span></label>
+                <label className={format === 'pdf' ? 'is-selected' : ''}><input type="radio" name="export-format" value="pdf" checked={format === 'pdf'} onChange={() => setFormat('pdf')} /> <strong>PDF</strong><span>Direct themed PDF export</span></label>
                 <label className={format === 'site' ? 'is-selected' : ''}><input type="radio" name="export-format" value="site" checked={format === 'site'} onChange={() => setFormat('site')} /> <strong>Static Website</strong><span>Portable site ZIP with internal links</span></label>
               </div>
             </fieldset>
@@ -364,7 +413,19 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
             </fieldset>
 
             {format === 'pdf' && (
-              <div className="export-center__hint">PDF opens the system print flow. Choose <strong>Save as PDF</strong> in the print dialog.</div>
+              <div className="export-center__pdf-options">
+                <span>Choose an output folder when you export. Markdown Explorer writes the PDF files directly.</span>
+                <label className="export-center__footer-toggle">
+                  <input
+                    type="checkbox"
+                    checked={pdfFooterEnabled}
+                    onChange={(event) => setPdfFooterEnabled(event.target.checked)}
+                    aria-label="Include PDF footer"
+                  />
+                  <span>Include footer</span>
+                  <small>{PDF_FOOTER_TEXT}</small>
+                </label>
+              </div>
             )}
 
             <div className="export-center__selection-summary">{sourceFiles.length} document{sourceFiles.length === 1 ? '' : 's'} selected</div>
@@ -387,7 +448,6 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         </div>
 
         <footer className="export-center__footer">
-          <button type="button" className="btn" disabled={running} onClick={onClose}>Cancel</button>
           <button type="button" className="btn btn--primary" disabled={running || sourceFiles.length === 0} onClick={() => { void runExport(); }}>
             {running ? 'Exporting…' : 'Export'}
           </button>
