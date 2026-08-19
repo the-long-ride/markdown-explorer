@@ -7,6 +7,7 @@ import {
   folderOptions,
   pdfOutputName,
   safeBaseName,
+  type ExportSourceMode,
 } from '../../../../ui/src/export/exportModel';
 
 function file(relativePath: string): MdFile {
@@ -63,12 +64,32 @@ describe('export output names', () => {
 });
 
 describe('buildExportJob', () => {
+  it('accepts whole workspace as a first-class source mode', () => {
+    const sourceMode: ExportSourceMode = 'workspace';
+    expect(sourceMode).toBe('workspace');
+  });
+
   it('deduplicates and sorts selected files', () => {
     const job = buildExportJob({
       format: 'html', layout: 'document', batchMode: 'separate',
       files: [files[0], files[1], files[0]],
     });
     expect(job.files.map((item) => item.relativePath)).toEqual(['guide/intro.md', 'z.md']);
+  });
+
+  it('normalizes, deduplicates, and sorts explicit extra resource paths', () => {
+    const job = buildExportJob({
+      format: 'html', layout: 'document', batchMode: 'separate', files: [files[1]],
+      extraResourcePaths: ['./examples/demo.json', 'downloads\\reference.pdf', 'examples/demo.json'],
+    });
+    expect(job.extraResourcePaths).toEqual(['downloads/reference.pdf', 'examples/demo.json']);
+  });
+
+  it('rejects explicit extra resources for PDF', () => {
+    expect(() => buildExportJob({
+      format: 'pdf', layout: 'document', batchMode: 'separate', files: [files[1]],
+      extraResourcePaths: ['examples/demo.json'],
+    })).toThrow('Additional workspace files are not supported for PDF export');
   });
 
   it('rejects an empty export selection', () => {
