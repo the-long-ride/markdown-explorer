@@ -28,6 +28,7 @@ function createAppBootstrap({
   shellImpl = require("electron").shell,
   createHtmlPreviewServerFn = require("./html-preview-server").createHtmlPreviewServer,
   createPdfExporterFn = require("./pdf-export").createPdfExporter,
+  createExportResourceHandlersFn = require("./runtime-export-resources").createExportResourceHandlers,
   externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
@@ -45,15 +46,33 @@ function createAppBootstrap({
     return mainWindowRef;
   }
 
+  function getWorkspaceBaseDir() {
+    const workspacePath = runtimeImpl.state?.workspacePath;
+    if (!workspacePath || !fsImpl.existsSync(workspacePath)) return null;
+    try {
+      return fsImpl.statSync(workspacePath).isFile() ? pathImpl.dirname(workspacePath) : workspacePath;
+    } catch {
+      return null;
+    }
+  }
+
+  const sendHostMessage = (message) => {
+    mainWindowRef?.webContents.send("host-message", message);
+  };
+
   const exportPdf = createPdfExporterFn({
     BrowserWindow: BrowserWindowImpl,
     dialog: dialogImpl,
     fs: fsImpl,
     path: pathImpl,
     getMainWindow,
-    sendHostMessage(message) {
-      mainWindowRef?.webContents.send("host-message", message);
-    },
+    sendHostMessage,
+  });
+  const exportResourceHandlers = createExportResourceHandlersFn({
+    fs: fsImpl,
+    pathApi: pathImpl,
+    sendHostMessage,
+    getWorkspaceBaseDir,
   });
 
   function getUpdateManager() {
@@ -154,6 +173,8 @@ function createAppBootstrap({
           scheduleDownloadedUpdate: runtimeImpl.handleScheduleDownloadedUpdate,
           restartAndApplyUpdate: runtimeImpl.handleRestartAndApplyUpdate,
           readWorkspaceTextResource: runtimeImpl.readWorkspaceTextResource,
+          listWorkspaceExportResources: exportResourceHandlers.listWorkspaceExportResources,
+          readWorkspaceExportResource: exportResourceHandlers.readWorkspaceExportResource,
           openHtmlPreview: (documentHtml) => htmlPreviewServer.open(
             documentHtml,
             (url) => shellImpl.openExternal(url),
