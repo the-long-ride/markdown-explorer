@@ -3,7 +3,9 @@ import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { resolveRenderedLink, type ResolvedLink } from '../../dom/linkContextMenu';
 import { findScopeFile, loadDocumentSnapshot } from '../../export/documentSnapshot';
+import { matchesShortcut } from '../../hooks/keyboardUtils';
 import type { MdFile } from '../../types/files';
+import { getEnabledShortcut } from '../../utils/shortcuts';
 import { scheduleContentEnhancements } from '../Content/scheduleContentEnhancements';
 import { LinkContextMenu } from '../shared/LinkContextMenu';
 import { ChevronLeftIcon, ChevronRightIcon } from '../shared/icons';
@@ -125,6 +127,44 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
     window.addEventListener(SCOPE_NAVIGATION_REQUEST_EVENT, handleNavigationRequest);
     return () => window.removeEventListener(SCOPE_NAVIGATION_REQUEST_EVENT, handleNavigationRequest);
   }, [goNext, goPrevious, initialFile]);
+
+  useEffect(() => {
+    if (!initialFile) return;
+    const backShortcut = getEnabledShortcut(state.settings, 'back') || '';
+    const forwardShortcut = getEnabledShortcut(state.settings, 'forward') || '';
+
+    const handleNavigationKey = (event: KeyboardEvent) => {
+      if (matchesShortcut(event, backShortcut)) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        goPrevious();
+        return;
+      }
+      if (matchesShortcut(event, forwardShortcut)) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        goNext();
+      }
+    };
+
+    const handleNavigationMouse = (event: MouseEvent) => {
+      if (event.button !== 3 && event.button !== 4) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      if (event.button === 3) goPrevious();
+      else goNext();
+    };
+
+    window.addEventListener('keydown', handleNavigationKey, true);
+    window.addEventListener('mouseup', handleNavigationMouse, true);
+    return () => {
+      window.removeEventListener('keydown', handleNavigationKey, true);
+      window.removeEventListener('mouseup', handleNavigationMouse, true);
+    };
+  }, [goNext, goPrevious, initialFile, state.settings]);
 
   useEffect(() => {
     const body = bodyRef.current;
