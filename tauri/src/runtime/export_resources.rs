@@ -282,7 +282,7 @@ mod tests {
         let dir = tempdir().unwrap();
         write(dir.path(), "README.md", b"# Docs");
         write(dir.path(), "assets/logo.png", &[1, 2, 3]);
-        write(dir.path(), "examples/demo.json", br#"{"ok":true}"#);
+        write(dir.path(), "examples/demo.json", br#"{\"ok\":true}"#);
         write(dir.path(), ".git/config", b"[core]");
         let resources = list_workspace_resources(dir.path()).unwrap();
         assert_eq!(resources.iter().map(|item| item.relative_path.as_str()).collect::<Vec<_>>(), vec!["README.md", "assets/logo.png", "examples/demo.json"]);
@@ -290,23 +290,26 @@ mod tests {
     }
 
     #[test]
-    fn reads_document_relative_binary_resource() {
+    fn reads_document_relative_and_workspace_root_relative_binary_resource() {
         let dir = tempdir().unwrap();
         let document = write(dir.path(), "docs/readme.md", b"# Readme");
         write(dir.path(), "assets/logo.png", &[1, 2, 3, 255]);
-        let result = read_workspace_resource(dir.path(), document.to_str(), "../assets/logo.png").unwrap();
-        assert_eq!(result.relative_path, "assets/logo.png");
-        assert_eq!(result.mime_type, "image/png");
-        assert_eq!(result.data_base64, "AQID/w==");
+        for reference in ["../assets/logo.png", "/assets/logo.png"] {
+            let result = read_workspace_resource(dir.path(), document.to_str(), reference).unwrap();
+            assert_eq!(result.relative_path, "assets/logo.png");
+            assert_eq!(result.mime_type, "image/png");
+            assert_eq!(result.data_base64, "AQID/w==");
+        }
     }
 
     #[test]
-    fn rejects_paths_outside_workspace() {
+    fn rejects_explicit_file_url_outside_workspace() {
         let workspace = tempdir().unwrap();
         let outside = tempdir().unwrap();
         let outside_file = write(outside.path(), "secret.txt", b"secret");
         let document = write(workspace.path(), "docs/readme.md", b"# Readme");
-        assert_eq!(read_workspace_resource(workspace.path(), document.to_str(), outside_file.to_str().unwrap()).unwrap_err(), "outside-workspace");
+        let outside_url = tauri::Url::from_file_path(&outside_file).unwrap().to_string();
+        assert_eq!(read_workspace_resource(workspace.path(), document.to_str(), &outside_url).unwrap_err(), "outside-workspace");
     }
 
     #[test]

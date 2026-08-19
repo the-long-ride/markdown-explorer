@@ -31,16 +31,24 @@ function resolveRequestedPath({ workspaceRoot, resourcePath, documentPath, pathA
   const raw = stripQueryAndFragment(String(resourcePath || '').trim());
   if (!raw || /^(?:data|blob|https?|javascript):/i.test(raw)) return { reason: 'unsupported' };
   let decoded = raw;
+  let explicitFilePath = false;
   if (/^file:/i.test(raw)) {
     try {
       decoded = decodeURIComponent(new URL(raw).pathname);
       if (/^\/[A-Za-z]:\//.test(decoded)) decoded = decoded.slice(1);
+      explicitFilePath = true;
     } catch {
       return { reason: 'unsupported' };
     }
   }
   const base = documentPath ? pathApi.dirname(documentPath) : workspaceRoot;
-  const target = pathApi.isAbsolute(decoded) ? pathApi.normalize(decoded) : pathApi.resolve(base, decoded);
+  const target = explicitFilePath
+    ? pathApi.normalize(decoded)
+    : decoded.startsWith('/')
+      ? pathApi.resolve(workspaceRoot, `.${decoded}`)
+      : pathApi.isAbsolute(decoded)
+        ? pathApi.normalize(decoded)
+        : pathApi.resolve(base, decoded);
   if (!isSameOrInside(workspaceRoot, target, pathApi)) return { reason: 'outside-workspace' };
   return { target };
 }

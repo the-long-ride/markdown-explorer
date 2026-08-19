@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -72,29 +73,36 @@ describe('Electron export resource handlers', () => {
     expect(sent[0].resources.find((item: any) => item.relativePath === 'assets/logo.png').size).toBe(3);
   });
 
-  it('reads binary document-relative assets and returns MIME plus base64', () => {
+  it('reads document-relative and workspace-root-relative binary assets', () => {
     const ws = workspace();
     const documentPath = ws.write('docs/readme.md', '# Readme');
     ws.write('assets/logo.png', new Uint8Array([1, 2, 3, 255]));
     const { sent, handlers } = harness(ws.root);
 
     handlers.readWorkspaceExportResource({
-      requestId: 'read-1',
+      requestId: 'relative',
       documentPath,
       resourcePath: '../assets/logo.png',
     });
-
-    expect(sent[0]).toEqual({
-      command: 'workspaceExportResourceResult',
-      requestId: 'read-1',
-      ok: true,
-      relativePath: 'assets/logo.png',
-      mimeType: 'image/png',
-      dataBase64: 'AQID/w==',
+    handlers.readWorkspaceExportResource({
+      requestId: 'root-relative',
+      documentPath,
+      resourcePath: '/assets/logo.png',
     });
+
+    for (const requestId of ['relative', 'root-relative']) {
+      expect(sent.find((message) => message.requestId === requestId)).toEqual({
+        command: 'workspaceExportResourceResult',
+        requestId,
+        ok: true,
+        relativePath: 'assets/logo.png',
+        mimeType: 'image/png',
+        dataBase64: 'AQID/w==',
+      });
+    }
   });
 
-  it('rejects absolute and traversal targets outside the workspace', () => {
+  it('rejects explicit file URLs and traversal targets outside the workspace', () => {
     const ws = workspace();
     const outside = mkdtempSync(join(tmpdir(), 'mdn-export-outside-'));
     roots.push(outside);
@@ -103,7 +111,7 @@ describe('Electron export resource handlers', () => {
     const documentPath = ws.write('docs/readme.md', '# Readme');
     const { sent, handlers } = harness(ws.root);
 
-    handlers.readWorkspaceExportResource({ requestId: 'absolute', resourcePath: outsideFile });
+    handlers.readWorkspaceExportResource({ requestId: 'absolute', resourcePath: pathToFileURL(outsideFile).href });
     handlers.readWorkspaceExportResource({
       requestId: 'traversal',
       documentPath,
