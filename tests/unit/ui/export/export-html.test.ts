@@ -73,16 +73,19 @@ describe('buildStandaloneExportHtml', () => {
 
   it('applies portable theme identity and gives the document page normal vertical scrolling', () => {
     const theme: ExportThemeSnapshot = {
-      attributes: { 'data-theme': 'dark', 'data-theme-style': 'raw-grid' },
-      css: ':root{--accent:#f00}.mdn-body{color:var(--tx)}',
+      rootAttributes: { 'data-theme': 'dark', 'data-theme-style': 'raw-grid' },
+      cssVariables: { '--accent': '#f00' },
+      cssText: '.mdn-body{color:var(--tx)}',
+      fontFaceCss: '@font-face{font-family:"Export Test";src:local("Export Test")}',
     };
     const html = buildStandaloneExportHtml({ pages: [pages[0]], layout: 'document', title: 'Intro', theme });
 
     expect(html).toContain('data-mdn-export="true"');
     expect(html).toContain('data-theme="dark"');
     expect(html).toContain('data-theme-style="raw-grid"');
+    expect(html).toContain('@font-face');
     expect(html).toContain('overflow-y:auto!important');
-    expect(html).toContain('body{margin:0;min-height:100%;overflow:visible!important');
+    expect(html).toContain('height:auto');
     expect(html).toContain('.mdn-html-preview-iframe{display:block;width:100%');
   });
 

@@ -3,6 +3,7 @@ import type { MdFile } from '../types/files';
 import type { ExportLayout } from './exportModel';
 import {
   captureExportThemeSnapshot,
+  renderExportThemeCss,
   serializeExportThemeAttributes,
   type ExportThemeSnapshot,
 } from './exportTheme';
@@ -13,13 +14,13 @@ export interface ExportPage {
 }
 
 const EXPORT_BASE_CSS = `
-html{margin:0;min-height:100%;overflow-y:auto!important;overflow-x:hidden;background:var(--bg,#fff);color:var(--tx,#202124)}
-body{margin:0;min-height:100%;overflow:visible!important;background:transparent;color:inherit;font-family:var(--font-body,system-ui,sans-serif)}
-.mdn-export-document{min-height:100vh;overflow:visible}
-.mdn-export-page{box-sizing:border-box;width:min(100%,980px);margin:0 auto;padding:36px 42px 72px;overflow:visible}
+html{margin:0;min-height:100%;height:auto;overflow-y:auto!important;overflow-x:hidden;background:var(--bg,#fff);color:var(--tx,#202124)}
+body{margin:0;min-height:100%;height:auto;overflow-y:auto!important;overflow-x:hidden;background:transparent;color:inherit;font-family:var(--font-body,system-ui,sans-serif)}
+.mdn-export-document{min-height:100vh;height:auto;overflow:visible}
+.mdn-export-page{box-sizing:border-box;width:min(100%,980px);height:auto;margin:0 auto;padding:36px 42px 72px;overflow:visible}
 .mdn-export-document-section{break-before:page;scroll-margin-top:58px}
 .mdn-export-document-section:first-child{break-before:auto}
-.mdn-export-shell{min-height:100vh;display:grid;grid-template-columns:220px minmax(0,1fr) 190px;grid-template-rows:46px minmax(0,1fr);overflow:visible}
+.mdn-export-shell{min-height:100vh;height:auto;display:grid;grid-template-columns:220px minmax(0,1fr) 190px;grid-template-rows:46px minmax(0,1fr);overflow:visible}
 .mdn-export-topbar{grid-column:1/-1;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--bd-x,#ddd);background:var(--bg-e,var(--bg,#fff));font-size:12px;font-weight:650;position:sticky;top:0;z-index:4}
 .mdn-export-sidebar,.mdn-export-toc{padding:16px 12px;position:sticky;top:46px;align-self:start;max-height:calc(100vh - 46px);overflow:auto;font-size:12px}
 .mdn-export-sidebar{border-right:1px solid var(--bd-x,#ddd)}
@@ -197,7 +198,7 @@ export async function embedExportLocalAssets(html: string, documentPath: string)
 }
 
 export function captureExportThemeCss(root?: HTMLElement): string {
-  return captureExportThemeSnapshot(root).css;
+  return renderExportThemeCss(captureExportThemeSnapshot(root));
 }
 
 export function buildStandaloneExportHtml(args: {
@@ -229,7 +230,7 @@ export function buildStandaloneExportHtml(args: {
   const body = args.layout === 'explorer'
     ? `<div class="mdn-export-shell"><header class="mdn-export-topbar">Markdown Explorer · ${escapeExportHtml(args.title)}</header><nav class="mdn-export-sidebar" aria-label="Documents">${navigation}</nav><main class="mdn-export-main">${pageMarkup}</main><aside class="mdn-export-toc" aria-label="Contents">${navigation}</aside></div>`
     : `<main class="mdn-export-document">${pageMarkup}</main>`;
-  const themeCss = args.theme?.css ?? args.themeCss ?? '';
+  const themeCss = args.theme ? renderExportThemeCss(args.theme) : (args.themeCss ?? '');
   const themeAttributes = args.theme ? serializeExportThemeAttributes(args.theme) : '';
   const rootAttributes = `data-mdn-export="true"${themeAttributes ? ` ${themeAttributes}` : ''}`;
 
