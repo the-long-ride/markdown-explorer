@@ -52,9 +52,15 @@ Electron and Tauri normalize startup/second-instance requests into the same stru
 
 Windows installer and shell verb text remains English because the installer has no project-wide runtime localization system and cannot read the active in-app language preference.
 
+## Scope View reconciliation
+
+Scope View keeps its own bounded navigation history without mutating the main document-navigation stack. Back/forward keyboard shortcuts and mouse buttons are routed through that scope history while the modal is active, and internal document links may open as another scope up to the ten-level limit.
+
+The depth limit is enforced against the latest history state, including when multiple asynchronous link handlers were created from an older render. The implementation keeps a current history reference so concurrent/stale handlers cannot each validate against an outdated depth and bypass the cap.
+
 ## Localization reconciliation
 
-All new **in-app** Export Center and Scope View UI labels are backed by the feature translation catalog for all nine supported application languages:
+All new **static in-app** Export Center and Scope View UI labels/status copy are backed by the feature translation catalog for all nine supported application languages:
 
 - English (`en`)
 - Vietnamese (`vi`)
@@ -69,6 +75,8 @@ All new **in-app** Export Center and Scope View UI labels are backed by the feat
 This covers Export Center title/description/actions, source modes, searchable selectors, switch labels, additional-file controls, format/layout/batch labels, artifact labels, progress summaries, the More Actions export entry, Scope View navigation/depth/status labels, and Open as scope link actions.
 
 The translation contract verifies every feature key for all nine locales and asserts that non-English locale sentinels are not silently falling back to English. Rendering tests verify Vietnamese Export Center and Scope View labels through the actual components.
+
+Workspace/file paths, user-authored document content, and raw host/library diagnostic payloads are treated as data and are not translated. Any Markdown Explorer-owned fallback/status text surrounding those payloads is localized.
 
 ## Test and verification mapping
 
@@ -86,6 +94,7 @@ Automated coverage includes:
 - HTML/site package composition;
 - hybrid PDF semantic and visual capture behavior;
 - removal of legacy Electron PDF/footer protocol;
+- Scope View history, keyboard/mouse navigation, nested-link actions, ten-level depth enforcement, and concurrent stale-handler depth races;
 - Electron/Tauri structured external-open parsing/routing;
 - both Windows installer verbs and uninstall symmetry;
 - all nine feature translation catalogs and representative localized rendering;
