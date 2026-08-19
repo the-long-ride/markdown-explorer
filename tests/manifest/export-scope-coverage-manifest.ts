@@ -27,6 +27,7 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/export/exportRuntimeAssets.ts': ['tests/unit/ui/export/export-runtime-assets.test.ts'],
   'ui/src/export/exportSave.ts': ['tests/unit/ui/export/export-save.test.ts'],
   'ui/src/export/exportSnapshot.ts': ['tests/unit/ui/export/export-snapshot.test.ts'],
+  'ui/src/export/exportTheme.ts': ['tests/unit/ui/export/export-theme.test.ts'],
   'ui/src/export/pdfExport.ts': ['tests/unit/ui/export/pdf-export-host.test.ts'],
   'ui/src/export/runtime/entry-charts.ts': ['tests/node/export-runtime-build.test.mjs'],
   'ui/src/export/runtime/entry-core.ts': ['tests/node/export-runtime-build.test.mjs'],

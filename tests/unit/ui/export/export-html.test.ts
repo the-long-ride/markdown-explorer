@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 import { buildStandaloneExportHtml, exportHtmlPath, rewriteExportLinks } from '../../../../ui/src/export/exportHtml';
+import type { ExportThemeSnapshot } from '../../../../ui/src/export/exportTheme';
 
 function file(relativePath: string): MdFile {
   return {
@@ -68,6 +69,21 @@ describe('buildStandaloneExportHtml', () => {
     expect(html).not.toContain('<nav class="mdn-export-sidebar"');
     expect(html).not.toContain('<aside class="mdn-export-toc"');
     expect(html).toContain('--accent:#f00');
+  });
+
+  it('applies portable theme identity and gives the document page normal vertical scrolling', () => {
+    const theme: ExportThemeSnapshot = {
+      attributes: { 'data-theme': 'dark', 'data-theme-style': 'raw-grid' },
+      css: ':root{--accent:#f00}.mdn-body{color:var(--tx)}',
+    };
+    const html = buildStandaloneExportHtml({ pages: [pages[0]], layout: 'document', title: 'Intro', theme });
+
+    expect(html).toContain('data-mdn-export="true"');
+    expect(html).toContain('data-theme="dark"');
+    expect(html).toContain('data-theme-style="raw-grid"');
+    expect(html).toContain('overflow-y:auto!important');
+    expect(html).toContain('body{margin:0;min-height:100%;overflow:visible!important');
+    expect(html).toContain('.mdn-html-preview-iframe{display:block;width:100%');
   });
 
   it('builds Explorer layout with topbar, sidebar and toc shell', () => {

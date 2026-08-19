@@ -1,6 +1,11 @@
 import { pathToFileUrl } from '../dom/localFileUrl';
 import type { MdFile } from '../types/files';
 import type { ExportLayout } from './exportModel';
+import {
+  captureExportThemeSnapshot,
+  serializeExportThemeAttributes,
+  type ExportThemeSnapshot,
+} from './exportTheme';
 
 export interface ExportPage {
   file: MdFile;
@@ -8,21 +13,22 @@ export interface ExportPage {
 }
 
 const EXPORT_BASE_CSS = `
-html,body{margin:0;min-height:100%;background:var(--bg,#fff);color:var(--tx,#202124)}
-body{font-family:var(--font-body,system-ui,sans-serif)}
-.mdn-export-document{min-height:100vh}
-.mdn-export-page{box-sizing:border-box;width:min(100%,980px);margin:0 auto;padding:36px 42px 72px}
+html{margin:0;min-height:100%;overflow-y:auto!important;overflow-x:hidden;background:var(--bg,#fff);color:var(--tx,#202124)}
+body{margin:0;min-height:100%;overflow:visible!important;background:transparent;color:inherit;font-family:var(--font-body,system-ui,sans-serif)}
+.mdn-export-document{min-height:100vh;overflow:visible}
+.mdn-export-page{box-sizing:border-box;width:min(100%,980px);margin:0 auto;padding:36px 42px 72px;overflow:visible}
 .mdn-export-document-section{break-before:page;scroll-margin-top:58px}
 .mdn-export-document-section:first-child{break-before:auto}
-.mdn-export-shell{min-height:100vh;display:grid;grid-template-columns:220px minmax(0,1fr) 190px;grid-template-rows:46px minmax(0,1fr)}
+.mdn-export-shell{min-height:100vh;display:grid;grid-template-columns:220px minmax(0,1fr) 190px;grid-template-rows:46px minmax(0,1fr);overflow:visible}
 .mdn-export-topbar{grid-column:1/-1;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--bd-x,#ddd);background:var(--bg-e,var(--bg,#fff));font-size:12px;font-weight:650;position:sticky;top:0;z-index:4}
 .mdn-export-sidebar,.mdn-export-toc{padding:16px 12px;position:sticky;top:46px;align-self:start;max-height:calc(100vh - 46px);overflow:auto;font-size:12px}
 .mdn-export-sidebar{border-right:1px solid var(--bd-x,#ddd)}
 .mdn-export-toc{border-left:1px solid var(--bd-x,#ddd)}
 .mdn-export-sidebar a,.mdn-export-toc a{display:block;color:var(--tx-m,var(--tx,#333));text-decoration:none;padding:5px 7px;border-radius:6px;overflow-wrap:anywhere}
 .mdn-export-sidebar a:hover,.mdn-export-toc a:hover{background:color-mix(in srgb,var(--accent,#666) 10%,transparent);color:var(--tx,#111)}
-.mdn-export-main{min-width:0}
+.mdn-export-main{min-width:0;overflow:visible}
 .mdn-export-shell .mdn-export-page{width:min(100%,980px)}
+.mdn-html-preview-iframe{display:block;width:100%;max-width:100%;border:0}
 @media(max-width:900px){.mdn-export-shell{grid-template-columns:180px minmax(0,1fr)}.mdn-export-toc{display:none}}
 @media(max-width:680px){.mdn-export-shell{display:block}.mdn-export-topbar{position:static}.mdn-export-sidebar{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--bd-x,#ddd)}.mdn-export-page{padding:24px 18px 48px}}
 @media print{.mdn-export-document .mdn-export-page{width:100%;max-width:none;padding:0}.mdn-export-shell{display:grid;min-height:auto;grid-template-columns:170px minmax(0,1fr) 140px;grid-template-rows:38px minmax(0,1fr)}.mdn-export-topbar{display:flex;position:static;padding:0 12px;font-size:10px}.mdn-export-sidebar,.mdn-export-toc{display:block;position:static;top:auto;max-height:none;padding:10px 8px;font-size:9px}.mdn-export-shell .mdn-export-page{width:100%;max-width:none;padding:12px 16px 28px}.mdn-export-document-section{break-before:page}.mdn-export-document-section:first-child{break-before:auto}.mdn-copy-btn,.mdn-section-copy-btn,.mdn-table-controls,.mdn-table-filter-btn,.mdn-table-columns-toggle,.mdn-table-view-dropdown{display:none!important}pre,table,svg,img,video{max-width:100%!important}pre{white-space:pre-wrap;overflow-wrap:anywhere}}
@@ -191,36 +197,15 @@ export async function embedExportLocalAssets(html: string, documentPath: string)
 }
 
 export function captureExportThemeCss(root?: HTMLElement): string {
-  if (typeof document === 'undefined') return '';
-  const target = root ?? document.documentElement;
-  const computed = typeof getComputedStyle === 'function' ? getComputedStyle(target) : null;
-  const variables: string[] = [];
-  if (computed) {
-    for (let index = 0; index < computed.length; index += 1) {
-      const name = computed.item(index);
-      if (!name.startsWith('--')) continue;
-      const value = computed.getPropertyValue(name).trim();
-      if (value) variables.push(`${name}:${value};`);
-    }
-  }
-
-  const rules: string[] = [];
-  for (const sheet of Array.from(document.styleSheets)) {
-    try {
-      for (const rule of Array.from(sheet.cssRules || [])) rules.push(rule.cssText);
-    } catch {
-      // Ignore cross-origin stylesheets; Markdown Explorer's own sheets are readable.
-    }
-  }
-
-  return `:root{${variables.join('')}}\n${rules.join('\n')}`;
+  return captureExportThemeSnapshot(root).css;
 }
 
 export function buildStandaloneExportHtml(args: {
   pages: readonly ExportPage[];
   layout: ExportLayout;
   title: string;
-  themeCss: string;
+  theme?: ExportThemeSnapshot;
+  themeCss?: string;
   navigationFiles?: readonly MdFile[];
 }): string {
   const files = args.pages.map((page) => page.file);
@@ -244,8 +229,11 @@ export function buildStandaloneExportHtml(args: {
   const body = args.layout === 'explorer'
     ? `<div class="mdn-export-shell"><header class="mdn-export-topbar">Markdown Explorer · ${escapeExportHtml(args.title)}</header><nav class="mdn-export-sidebar" aria-label="Documents">${navigation}</nav><main class="mdn-export-main">${pageMarkup}</main><aside class="mdn-export-toc" aria-label="Contents">${navigation}</aside></div>`
     : `<main class="mdn-export-document">${pageMarkup}</main>`;
+  const themeCss = args.theme?.css ?? args.themeCss ?? '';
+  const themeAttributes = args.theme ? serializeExportThemeAttributes(args.theme) : '';
+  const rootAttributes = `data-mdn-export="true"${themeAttributes ? ` ${themeAttributes}` : ''}`;
 
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeExportHtml(args.title)}</title><style>${args.themeCss}\n${EXPORT_BASE_CSS}</style></head><body>${body}</body></html>`;
+  return `<!doctype html><html ${rootAttributes}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeExportHtml(args.title)}</title><style>${themeCss}\n${EXPORT_BASE_CSS}</style></head><body>${body}</body></html>`;
 }
 
 export function exportHtmlPath(file: MdFile, _exported: readonly MdFile[] = [file]): string {
