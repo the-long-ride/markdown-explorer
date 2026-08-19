@@ -27,7 +27,6 @@ function createAppBootstrap({
   clipboardImpl = require("electron").clipboard,
   shellImpl = require("electron").shell,
   createHtmlPreviewServerFn = require("./html-preview-server").createHtmlPreviewServer,
-  createPdfExporterFn = require("./pdf-export").createPdfExporter,
   createExportResourceHandlersFn = require("./runtime-export-resources").createExportResourceHandlers,
   createExportSaveHandlerFn = require("./runtime-export-save").createExportSaveHandler,
   externalOpenQueue = null,
@@ -61,14 +60,6 @@ function createAppBootstrap({
     mainWindowRef?.webContents.send("host-message", message);
   };
 
-  const exportPdf = createPdfExporterFn({
-    BrowserWindow: BrowserWindowImpl,
-    dialog: dialogImpl,
-    fs: fsImpl,
-    path: pathImpl,
-    getMainWindow,
-    sendHostMessage,
-  });
   const exportResourceHandlers = createExportResourceHandlersFn({
     fs: fsImpl,
     pathApi: pathImpl,
@@ -188,7 +179,6 @@ function createAppBootstrap({
             documentHtml,
             (url) => shellImpl.openExternal(url),
           ),
-          exportPdf,
         },
       });
     });

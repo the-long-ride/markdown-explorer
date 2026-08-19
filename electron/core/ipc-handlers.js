@@ -105,9 +105,6 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
           await handlers.openHtmlPreview(msg.documentHtml);
         }
         break;
-      case "exportPdf":
-        await handlers.exportPdf(msg);
-        break;
       case "refresh":
         await handlers.refresh();
         break;

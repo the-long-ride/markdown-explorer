@@ -49,13 +49,6 @@ export interface ListDesktopFontsMessage { readonly command: 'listDesktopFonts';
 export interface ImportDesktopFontsMessage { readonly command: 'importDesktopFonts'; readonly requestId: string; }
 export interface RemoveImportedDesktopFontMessage { readonly command: 'removeImportedDesktopFont'; readonly requestId: string; readonly id: string; }
 export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonly fileName: string; readonly dataUrl: string; readonly requestId?: string; }
-export interface ExportPdfMessage {
-  readonly command: 'exportPdf';
-  readonly requestId: string;
-  readonly footerEnabled: boolean;
-  readonly footerText: string;
-  readonly documents: readonly { readonly fileName: string; readonly html: string }[];
-}
 
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | ListWorkspaceExportResourcesMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage
@@ -70,4 +63,4 @@ export type WebviewMessage =
   | OpenShellLocationMessage | OpenExternalMessage | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage | DownloadUpdateMessage | ScheduleDownloadedUpdateMessage
   | RestartAndApplyUpdateMessage | ListDesktopFontsMessage | ImportDesktopFontsMessage
-  | RemoveImportedDesktopFontMessage | SaveChartPngMessage | ExportPdfMessage;
+  | RemoveImportedDesktopFontMessage | SaveChartPngMessage;

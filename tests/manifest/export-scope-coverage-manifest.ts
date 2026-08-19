@@ -1,6 +1,5 @@
 export const exportScopeCoverageManifest: Record<string, string[]> = {
   'chromium-xtension/src/chrome-host-export.ts': ['tests/unit/chromium/chrome-host-export.test.ts'],
-  'electron/core/pdf-export.js': ['tests/unit/electron/pdf-export.test.ts'],
   'electron/core/runtime-export-resources.js': ['tests/unit/electron/export-resources.test.ts'],
   'electron/core/runtime-export-save.js': ['tests/unit/electron/export-save.test.ts'],
   'ui/src/components/Export/ExportAdditionalFilesPanel.tsx': ['tests/unit/ui/components/export-source-controls.test.tsx'],
@@ -30,7 +29,6 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/export/pdf/pdfMakeLoader.ts': ['tests/unit/ui/export/pdf-loader.test.ts'],
   'ui/src/export/pdf/pdfSemantic.ts': ['tests/unit/ui/export/pdf-semantic.test.ts'],
   'ui/src/export/pdf/pdfVisualCapture.ts': ['tests/unit/ui/export/pdf-visual-capture.test.ts'],
-  'ui/src/export/pdfExport.ts': ['tests/unit/ui/export/pdf-export-host.test.ts'],
   'ui/src/export/runtime/entry-charts.ts': ['tests/node/export-runtime-build.test.mjs'],
   'ui/src/export/runtime/entry-core.ts': ['tests/node/export-runtime-build.test.mjs'],
   'ui/src/export/runtime/entry-html-preview.ts': ['tests/node/export-runtime-build.test.mjs'],
