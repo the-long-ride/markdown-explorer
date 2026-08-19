@@ -15,12 +15,20 @@ export function ExportMultiSelect({
   selected,
   onChange,
   searchPlaceholder,
+  selectAllLabel = 'Select all',
+  unselectAllLabel = 'Unselect all',
+  noMatchesLabel = 'No matches',
+  includeLabel = (path: string) => `Include ${path}`,
 }: {
   ariaLabel: string;
   items: readonly ExportMultiSelectItem[];
   selected: ReadonlySet<string>;
   onChange: (selection: Set<string>) => void;
   searchPlaceholder: string;
+  selectAllLabel?: string;
+  unselectAllLabel?: string;
+  noMatchesLabel?: string;
+  includeLabel?: (path: string) => string;
 }) {
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => {
@@ -51,25 +59,24 @@ export function ExportMultiSelect({
           />
         </label>
         <div className="export-multi-select__bulk">
-          <button type="button" onClick={() => setVisible(true)} disabled={filtered.length === 0}>Select all</button>
-          <button type="button" onClick={() => setVisible(false)} disabled={filtered.length === 0}>Unselect all</button>
+          <button type="button" onClick={() => setVisible(true)} disabled={filtered.length === 0}>{selectAllLabel}</button>
+          <button type="button" onClick={() => setVisible(false)} disabled={filtered.length === 0}>{unselectAllLabel}</button>
         </div>
       </div>
       <div className="export-multi-select__rows">
-        {filtered.map((item) => (
-          <div className="export-multi-select__row" key={item.id}>
-            <div className="export-multi-select__identity">
-              <span>{item.label}</span>
-              {item.detail && item.detail !== item.label && <small>{item.detail}</small>}
+        {filtered.map((item) => {
+          const path = item.detail ?? item.label;
+          return (
+            <div className="export-multi-select__row" key={item.id}>
+              <div className="export-multi-select__identity">
+                <span>{item.label}</span>
+                {item.detail && item.detail !== item.label && <small>{item.detail}</small>}
+              </div>
+              <SwitchButton checked={selected.has(item.id)} label={includeLabel(path)} onClick={() => toggle(item.id)} />
             </div>
-            <SwitchButton
-              checked={selected.has(item.id)}
-              label={`Include ${item.detail ?? item.label}`}
-              onClick={() => toggle(item.id)}
-            />
-          </div>
-        ))}
-        {filtered.length === 0 && <div className="export-multi-select__empty">No matches</div>}
+          );
+        })}
+        {filtered.length === 0 && <div className="export-multi-select__empty">{noMatchesLabel}</div>}
       </div>
     </div>
   );

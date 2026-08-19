@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
+import { formatFeatureText, getExportScopeTranslations } from '../../contexts/exportScopeTranslations';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { resolveRenderedLink, type ResolvedLink } from '../../dom/linkContextMenu';
 import { findScopeFile, loadDocumentSnapshot } from '../../export/documentSnapshot';
@@ -38,9 +39,11 @@ interface ScopeContextMenuState {
 
 export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalProps) {
   const { state } = useAppState();
+  const scopeT = getExportScopeTranslations(state.settings.language).scopeView;
   const bridge = usePlatform();
   const bridgeRef = useRef(bridge);
   const settingsRef = useRef(state.settings);
+  const scopeTRef = useRef(scopeT);
   const bodyRef = useRef<HTMLDivElement>(null);
   const mermaidRunIdRef = useRef(0);
   const [history, setHistory] = useState<ScopeHistoryState | null>(null);
@@ -51,6 +54,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
 
   bridgeRef.current = bridge;
   settingsRef.current = state.settings;
+  scopeTRef.current = scopeT;
 
   useEffect(() => {
     if (!initialFile) {
@@ -73,7 +77,7 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
       })
       .catch((reason: unknown) => {
         if (!active) return;
-        setError(reason instanceof Error ? reason.message : 'Unable to open scope');
+        setError(reason instanceof Error ? reason.message : scopeTRef.current.unableOpen);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -101,20 +105,11 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   const canPrevious = Boolean(history && history.index > 0);
   const canNext = Boolean(history && history.index < history.entries.length - 1);
 
-  const goPrevious = useCallback(() => {
-    setHistory((value) => value ? previousScope(value) : value);
-  }, []);
-
-  const goNext = useCallback(() => {
-    setHistory((value) => value ? nextScope(value) : value);
-  }, []);
+  const goPrevious = useCallback(() => setHistory((value) => value ? previousScope(value) : value), []);
+  const goNext = useCallback(() => setHistory((value) => value ? nextScope(value) : value), []);
 
   useEffect(() => {
-    const detail: ScopeNavigationStateDetail = {
-      active: Boolean(initialFile),
-      canPrevious,
-      canNext,
-    };
+    const detail: ScopeNavigationStateDetail = { active: Boolean(initialFile), canPrevious, canNext };
     window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_STATE_EVENT, { detail }));
   }, [canNext, canPrevious, initialFile]);
 
@@ -138,32 +133,19 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
     if (!initialFile) return;
     const backShortcut = getEnabledShortcut(state.settings, 'back') || '';
     const forwardShortcut = getEnabledShortcut(state.settings, 'forward') || '';
-
     const handleNavigationKey = (event: KeyboardEvent) => {
       if (matchesShortcut(event, backShortcut)) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        goPrevious();
-        return;
+        event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); goPrevious(); return;
       }
       if (matchesShortcut(event, forwardShortcut)) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        goNext();
+        event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); goNext();
       }
     };
-
     const handleNavigationMouse = (event: MouseEvent) => {
       if (event.button !== 3 && event.button !== 4) return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      if (event.button === 3) goPrevious();
-      else goNext();
+      event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
+      if (event.button === 3) goPrevious(); else goNext();
     };
-
     window.addEventListener('keydown', handleNavigationKey, true);
     window.addEventListener('mouseup', handleNavigationMouse, true);
     return () => {
@@ -175,19 +157,13 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   useEffect(() => {
     const body = bodyRef.current;
     if (!body || !current) return;
-    return scheduleContentEnhancements({
-      body,
-      state,
-      scrollRef: { current: null },
-      handleScroll: () => {},
-      mermaidRunIdRef,
-    });
+    return scheduleContentEnhancements({ body, state, scrollRef: { current: null }, handleScroll: () => {}, mermaidRunIdRef });
   }, [current, state]);
 
   const openNestedScope = useCallback(async (target: MdFile) => {
     if (!history) return;
     if (history.entries.slice(0, history.index + 1).length >= MAX_SCOPE_DEPTH) {
-      setNotice('Maximum scope depth reached');
+      setNotice(scopeTRef.current.maximumDepth);
       setContextMenu(null);
       return;
     }
@@ -199,12 +175,12 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
       const snapshot = await loadDocumentSnapshot(bridgeRef.current, target, settingsRef.current);
       const result = pushScope(history, { file: target, snapshot });
       if (result.blocked) {
-        setNotice('Maximum scope depth reached');
+        setNotice(scopeTRef.current.maximumDepth);
         return;
       }
       setHistory(result.state);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to open scope');
+      setError(reason instanceof Error ? reason.message : scopeTRef.current.unableOpen);
     } finally {
       setLoading(false);
     }
@@ -213,12 +189,10 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   useEffect(() => {
     const body = bodyRef.current;
     if (!body || !current) return;
-
     const handleClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const anchor = target?.closest<HTMLAnchorElement>('a[href], a[data-mdn-target]');
       if (!anchor || !body.contains(anchor)) return;
-
       const link = resolveRenderedLink(anchor, current.file.fsPath);
       if (link.kind === 'fragment') {
         event.preventDefault();
@@ -227,27 +201,17 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
         body.querySelector<HTMLElement>(`#${CSS.escape(id)}`)?.scrollIntoView({ block: 'start' });
         return;
       }
-
       const scopeFile = findScopeFile(link, files);
       if (scopeFile) {
-        event.preventDefault();
-        event.stopPropagation();
-        void openNestedScope(scopeFile);
-        return;
+        event.preventDefault(); event.stopPropagation(); void openNestedScope(scopeFile); return;
       }
-
       if (link.kind === 'web' && link.openable) {
-        event.preventDefault();
-        bridgeRef.current.postMessage({ command: 'openExternal', url: link.resolved });
-        return;
+        event.preventDefault(); bridgeRef.current.postMessage({ command: 'openExternal', url: link.resolved }); return;
       }
-
       if (link.kind === 'file' || link.kind === 'relative') {
-        event.preventDefault();
-        setNotice('This link is outside the current scope workspace');
+        event.preventDefault(); setNotice(scopeTRef.current.outsideWorkspace);
       }
     };
-
     const handleContextMenu = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const anchor = target?.closest<HTMLAnchorElement>('a[href], a[data-mdn-target]');
@@ -255,17 +219,9 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
       const link = resolveRenderedLink(anchor, current.file.fsPath);
       const scopeFile = findScopeFile(link, files);
       if (!scopeFile) return;
-      event.preventDefault();
-      event.stopPropagation();
-      setContextMenu({
-        x: event.clientX,
-        y: event.clientY,
-        anchor,
-        link,
-        target: scopeFile,
-      });
+      event.preventDefault(); event.stopPropagation();
+      setContextMenu({ x: event.clientX, y: event.clientY, anchor, link, target: scopeFile });
     };
-
     body.addEventListener('click', handleClick);
     body.addEventListener('contextmenu', handleContextMenu);
     return () => {
@@ -275,86 +231,38 @@ export function ScopeViewModal({ initialFile, files, onClose }: ScopeViewModalPr
   }, [current, files, openNestedScope]);
 
   if (!initialFile) return null;
-
+  const levelLabel = formatFeatureText(scopeT.level, { depth, max: MAX_SCOPE_DEPTH });
   return (
-    <div
-      className="mdn-modal scope-view"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Scope view"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
+    <div className="mdn-modal scope-view" role="dialog" aria-modal="true" aria-label={scopeT.dialogLabel} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="scope-view__card">
         <header className="scope-view__header">
           <div className="scope-view__navigation">
-            <button
-              type="button"
-              className="btn btn--icon scope-view__nav-button"
-              aria-label="Previous scope"
-              disabled={!canPrevious}
-              onClick={goPrevious}
-            >
-              <ChevronLeftIcon size={14} />
-            </button>
-            <button
-              type="button"
-              className="btn btn--icon scope-view__nav-button"
-              aria-label="Next scope"
-              disabled={!canNext}
-              onClick={goNext}
-            >
-              <ChevronRightIcon size={14} />
-            </button>
+            <button type="button" className="btn btn--icon scope-view__nav-button" aria-label={scopeT.previous} disabled={!canPrevious} onClick={goPrevious}><ChevronLeftIcon size={14} /></button>
+            <button type="button" className="btn btn--icon scope-view__nav-button" aria-label={scopeT.next} disabled={!canNext} onClick={goNext}><ChevronRightIcon size={14} /></button>
           </div>
-
-          <div className="scope-view__identity">
-            <strong>{current ? `${current.file.title} — ${current.file.relativePath}` : initialFile.relativePath}</strong>
-          </div>
-
-          <div
-            className="scope-view__depth"
-            aria-label={`Scope level ${depth} of ${MAX_SCOPE_DEPTH}`}
-            title={`Scope level ${depth} of ${MAX_SCOPE_DEPTH}`}
-          >
+          <div className="scope-view__identity"><strong>{current ? `${current.file.title} — ${current.file.relativePath}` : initialFile.relativePath}</strong></div>
+          <div className="scope-view__depth" aria-label={levelLabel} title={levelLabel}>
             {Array.from({ length: MAX_SCOPE_DEPTH }, (_, index) => (
-              <div
-                key={index}
-                className={`scope-view__depth-segment${index < depth ? ' is-filled' : ''}${index === depth - 1 ? ' is-current' : ''}`}
-                aria-hidden="true"
-              />
+              <div key={index} className={`scope-view__depth-segment${index < depth ? ' is-filled' : ''}${index === depth - 1 ? ' is-current' : ''}`} aria-hidden="true" />
             ))}
           </div>
-
-          <button type="button" className="btn btn--icon scope-view__close" aria-label="Close scope" onClick={onClose}>×</button>
+          <button type="button" className="btn btn--icon scope-view__close" aria-label={scopeT.close} onClick={onClose}>×</button>
         </header>
-
         <div className="scope-view__content">
-          {loading && !current && <div className="scope-view__state"><div className="spinner" />Loading scope…</div>}
+          {loading && !current && <div className="scope-view__state"><div className="spinner" />{scopeT.loading}</div>}
           {error && <div className="scope-view__state scope-view__state--error" role="alert">{error}</div>}
-          {current && (
-            <div className="scope-view__scroll">
-              <div
-                ref={bodyRef}
-                className="mdn-body scope-view__document"
-                dangerouslySetInnerHTML={{ __html: current.snapshot.html }}
-              />
-            </div>
-          )}
+          {current && <div className="scope-view__scroll"><div ref={bodyRef} className="mdn-body scope-view__document" dangerouslySetInnerHTML={{ __html: current.snapshot.html }} /></div>}
           {loading && current && <div className="scope-view__loading-overlay"><div className="spinner" /></div>}
         </div>
-
         {notice && <div className="scope-view__notice" role="status">{notice}</div>}
       </section>
-
       {contextMenu && (
         <LinkContextMenu
           state={{ x: contextMenu.x, y: contextMenu.y, anchor: contextMenu.anchor, link: contextMenu.link }}
-          menuLabel="Scope link menu"
-          openLabel="Open in browser"
-          copyLabel="Copy link"
-          scopeLabel="Open as scope"
+          menuLabel={scopeT.linkMenu}
+          openLabel={scopeT.openInBrowser}
+          copyLabel={scopeT.copyLink}
+          scopeLabel={scopeT.openAsScope}
           onOpenScope={() => { void openNestedScope(contextMenu.target); }}
           onClose={() => setContextMenu(null)}
         />

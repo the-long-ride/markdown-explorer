@@ -13,6 +13,7 @@ export function SearchableSelect({
   options,
   onChange,
   searchPlaceholder = 'Search',
+  emptyLabel = 'No matches',
   disabled = false,
 }: {
   label: string;
@@ -20,6 +21,7 @@ export function SearchableSelect({
   options: readonly SearchableSelectOption[];
   onChange: (value: string) => void;
   searchPlaceholder?: string;
+  emptyLabel?: string;
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -118,7 +120,7 @@ export function SearchableSelect({
                 {option.detail && <small>{option.detail}</small>}
               </button>
             ))}
-            {filtered.length === 0 && <div className="searchable-select__empty">No matches</div>}
+            {filtered.length === 0 && <div className="searchable-select__empty">{emptyLabel}</div>}
           </div>
         </div>
       )}

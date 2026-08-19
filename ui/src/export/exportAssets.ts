@@ -23,6 +23,8 @@ export interface ReferencedAssetResult {
 
 const RESOURCE_PREFIX = '_assets';
 const EXTRA_PREFIX = '_extras';
+const WINDOWS_FORBIDDEN_SEGMENT_CHARACTERS = new Set(['<', '>', ':', '"', '|', '?', '*', '\\']);
+const WINDOWS_RESERVED_DEVICE_NAME = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
 function normalizeRelativePath(value: string): string {
   const normalized = value.replace(/\\/g, '/');
@@ -34,15 +36,35 @@ function normalizeRelativePath(value: string): string {
   return parts.join('/');
 }
 
+function isWindowsReservedDeviceSegment(value: string): boolean {
+  const stem = value.split('.', 1)[0].replace(/[ .]+$/g, '');
+  return WINDOWS_RESERVED_DEVICE_NAME.test(stem);
+}
+
 function portableSegment(value: string): string {
+  const characters = Array.from(value);
+  let trailingUnsafeStart = characters.length;
+  while (trailingUnsafeStart > 0) {
+    const character = characters[trailingUnsafeStart - 1];
+    if (character !== '.' && character !== ' ') break;
+    trailingUnsafeStart -= 1;
+  }
+  const forceEscapeFirst = isWindowsReservedDeviceSegment(value);
   let encoded = '';
-  for (const character of Array.from(value)) {
+  characters.forEach((character, index) => {
     const codePoint = character.codePointAt(0) ?? 0;
     const upperAscii = codePoint >= 0x41 && codePoint <= 0x5a;
-    if (character === '~' || upperAscii || codePoint > 0x7f) encoded += `~${codePoint.toString(16)}~`;
-    else encoded += character;
-  }
-  return encoded;
+    const trailingUnsafe = index >= trailingUnsafeStart && (character === '.' || character === ' ');
+    const mustEscape = character === '~'
+      || upperAscii
+      || codePoint < 0x20
+      || codePoint > 0x7e
+      || WINDOWS_FORBIDDEN_SEGMENT_CHARACTERS.has(character)
+      || trailingUnsafe
+      || (forceEscapeFirst && index === 0);
+    encoded += mustEscape ? `~${codePoint.toString(16)}~` : character;
+  });
+  return encoded || 'resource';
 }
 
 function portableResourcePath(value: string): string {

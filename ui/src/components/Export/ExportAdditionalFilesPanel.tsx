@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { EXPORT_SCOPE_TRANSLATIONS, formatFeatureText, type ExportCenterFeatureTranslations } from '../../contexts/exportScopeTranslations';
 import type { ExportWorkspaceResourceInfo } from '../../types/hostMessages';
 import { setFilteredSelection } from './exportSelectionModel';
 import { SwitchButton } from '../shared/SwitchButton';
@@ -12,26 +13,22 @@ function foldersFor(resources: readonly ExportWorkspaceResourceInfo[]): string[]
   const folders = new Set<string>();
   for (const resource of resources) {
     const parts = resource.relativePath.replace(/\\/g, '/').split('/').slice(0, -1);
-    for (let length = 1; length <= parts.length; length += 1) {
-      folders.add(parts.slice(0, length).join('/'));
-    }
+    for (let length = 1; length <= parts.length; length += 1) folders.add(parts.slice(0, length).join('/'));
   }
   return [...folders].sort((a, b) => a.localeCompare(b));
 }
 
 export function ExportAdditionalFilesPanel({
-  resources,
-  selectedPaths,
-  onChange,
-  loading = false,
-  error = '',
+  resources, selectedPaths, onChange, loading = false, error = '', translations,
 }: {
   resources: readonly ExportWorkspaceResourceInfo[];
   selectedPaths: ReadonlySet<string>;
   onChange: (selection: Set<string>) => void;
   loading?: boolean;
   error?: string;
+  translations?: ExportCenterFeatureTranslations['extras'];
 }) {
+  const t = translations ?? EXPORT_SCOPE_TRANSLATIONS.en.exportCenter.extras;
   const [query, setQuery] = useState('');
   const safeResources = useMemo(() => visibleResources(resources), [resources]);
   const folders = useMemo(() => foldersFor(safeResources), [safeResources]);
@@ -55,58 +52,44 @@ export function ExportAdditionalFilesPanel({
     onChange(setFilteredSelection(selectedPaths, paths, !checked));
   };
 
-  const toggleFile = (path: string) => {
-    onChange(setFilteredSelection(selectedPaths, [path], !selectedPaths.has(path)));
-  };
+  const toggleFile = (path: string) => onChange(setFilteredSelection(selectedPaths, [path], !selectedPaths.has(path)));
 
   return (
-    <section className="export-extra-files" aria-label="Additional workspace files">
+    <section className="export-extra-files" aria-label={t.title}>
       <div className="export-extra-files__heading">
-        <div><strong>Additional workspace files</strong><small>Optional files packaged with web exports</small></div>
-        <span>{selectedPaths.size} selected</span>
+        <div><strong>{t.title}</strong><small>{t.description}</small></div>
+        <span>{formatFeatureText(t.selectedCount, { count: selectedPaths.size })}</span>
       </div>
       <div className="export-multi-select__toolbar">
         <label className="export-multi-select__search">
           <SearchIcon size={12} />
-          <input
-            type="search"
-            value={query}
-            aria-label="Search workspace files"
-            placeholder="Search workspace files"
-            onChange={(event) => setQuery(event.target.value)}
-          />
+          <input type="search" value={query} aria-label={t.search} placeholder={t.search} onChange={(event) => setQuery(event.target.value)} />
         </label>
         <div className="export-multi-select__bulk">
-          <button type="button" onClick={() => setVisible(true)} disabled={loading}>Select all</button>
-          <button type="button" onClick={() => setVisible(false)} disabled={loading}>Unselect all</button>
+          <button type="button" onClick={() => setVisible(true)} disabled={loading}>{t.selectAll}</button>
+          <button type="button" onClick={() => setVisible(false)} disabled={loading}>{t.unselectAll}</button>
         </div>
       </div>
       <div className="export-extra-files__rows">
-        {loading && <div className="export-multi-select__empty">Loading workspace files…</div>}
+        {loading && <div className="export-multi-select__empty">{t.loading}</div>}
         {!loading && error && <div className="export-multi-select__empty is-error">{error}</div>}
         {!loading && !error && filteredFolders.map((folder) => {
           const paths = folderFiles(folder);
           const checked = paths.length > 0 && paths.every((path) => selectedPaths.has(path));
           return (
             <div className="export-multi-select__row is-folder" key={`folder:${folder}`}>
-              <div className="export-multi-select__identity"><span>{folder}</span><small>{paths.length} files</small></div>
-              <SwitchButton checked={checked} label={`Include folder ${folder}`} onClick={() => toggleFolder(folder)} />
+              <div className="export-multi-select__identity"><span>{folder}</span><small>{formatFeatureText(t.fileCount, { count: paths.length })}</small></div>
+              <SwitchButton checked={checked} label={formatFeatureText(t.includeFolder, { path: folder })} onClick={() => toggleFolder(folder)} />
             </div>
           );
         })}
         {!loading && !error && filteredFiles.map((resource) => (
           <div className="export-multi-select__row" key={resource.relativePath}>
-            <div className="export-multi-select__identity"><span>{resource.relativePath}</span><small>{resource.size.toLocaleString()} bytes</small></div>
-            <SwitchButton
-              checked={selectedPaths.has(resource.relativePath)}
-              label={`Include ${resource.relativePath}`}
-              onClick={() => toggleFile(resource.relativePath)}
-            />
+            <div className="export-multi-select__identity"><span>{resource.relativePath}</span><small>{formatFeatureText(t.bytes, { count: resource.size.toLocaleString() })}</small></div>
+            <SwitchButton checked={selectedPaths.has(resource.relativePath)} label={formatFeatureText(t.includeFile, { path: resource.relativePath })} onClick={() => toggleFile(resource.relativePath)} />
           </div>
         ))}
-        {!loading && !error && filteredFolders.length === 0 && filteredFiles.length === 0 && (
-          <div className="export-multi-select__empty">No matches</div>
-        )}
+        {!loading && !error && filteredFolders.length === 0 && filteredFiles.length === 0 && <div className="export-multi-select__empty">{t.noMatches}</div>}
       </div>
     </section>
   );

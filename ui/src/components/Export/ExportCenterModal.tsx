@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
+import { formatFeatureText, getExportScopeTranslations } from '../../contexts/exportScopeTranslations';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { runExportJob, type ExportActivityEvent } from '../../export/exportJobRunner';
 import {
@@ -30,6 +31,7 @@ function activityResult(event: ExportActivityEvent): ExportActivityResult {
 
 export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
   const { state } = useAppState();
+  const t = getExportScopeTranslations(state.settings.language).exportCenter;
   const bridge = usePlatform();
   const bridgeRef = useRef(bridge);
   bridgeRef.current = bridge;
@@ -74,10 +76,10 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
     setResourceError('');
     void listWorkspaceExportResources(bridgeRef.current)
       .then((next) => { if (active) setResources(next); })
-      .catch((error) => { if (active) setResourceError(error instanceof Error ? error.message : 'Unable to list workspace files'); })
+      .catch((error) => { if (active) setResourceError(error instanceof Error ? error.message : t.status.unableList); })
       .finally(() => { if (active) setResourceLoading(false); });
     return () => { active = false; };
-  }, [format, isOpen]);
+  }, [format, isOpen, t.status.unableList]);
 
   useEffect(() => {
     if (isOpen) return;
@@ -114,7 +116,9 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         extraResourcePaths: format === 'pdf' ? [] : [...extraResourcePaths],
       });
     } catch (error) {
-      setSummary(error instanceof Error ? error.message : 'Unable to create export job');
+      const message = error instanceof Error && error.message === 'Select at least one document'
+        ? t.status.selectAtLeastOne : t.status.unableCreate;
+      setSummary(message);
       return;
     }
     const generation = ++exportGeneration.current;
@@ -134,12 +138,12 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
         },
       });
       if (generation !== exportGeneration.current) return;
-      if (outcome.cancelled) setSummary('Export cancelled.');
-      else if (outcome.failureCount > 0 && outcome.successCount > 0) setSummary(`Export finished with ${outcome.successCount} successful output${outcome.successCount === 1 ? '' : 's'} and ${outcome.failureCount} error${outcome.failureCount === 1 ? '' : 's'}.`);
-      else if (outcome.failureCount > 0) setSummary(`Export failed with ${outcome.failureCount} error${outcome.failureCount === 1 ? '' : 's'}.`);
-      else setSummary(`Export complete: ${outcome.successCount} output${outcome.successCount === 1 ? '' : 's'}.`);
+      if (outcome.cancelled) setSummary(t.status.cancelled);
+      else if (outcome.failureCount > 0 && outcome.successCount > 0) setSummary(formatFeatureText(t.status.partial, { success: outcome.successCount, failure: outcome.failureCount }));
+      else if (outcome.failureCount > 0) setSummary(formatFeatureText(t.status.failedCount, { count: outcome.failureCount }));
+      else setSummary(formatFeatureText(t.status.complete, { count: outcome.successCount }));
     } catch (error) {
-      if (generation === exportGeneration.current) setSummary(error instanceof Error ? error.message : 'Export failed');
+      if (generation === exportGeneration.current) setSummary(error instanceof Error ? error.message : t.status.failed);
     } finally {
       if (generation === exportGeneration.current) setRunning(false);
     }
@@ -147,20 +151,20 @@ export function ExportCenterModal({ isOpen, onClose }: ExportCenterModalProps) {
 
   if (!isOpen) return null;
   return (
-    <div className="mdn-modal export-center" role="dialog" aria-modal="true" aria-label="Export Center" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="mdn-modal export-center" role="dialog" aria-modal="true" aria-label={t.title} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="export-center__card">
         <header className="export-center__header">
-          <div className="export-center__heading"><h2>Export Center</h2><p>Export documents with the current Markdown Explorer theme and layout.</p></div>
-          <TooltipButton className="export-center__close" type="button" onClick={onClose} tooltip="Close Export Center" shortcut="Esc" tooltipPos="below" tooltipAlign="right">&times;</TooltipButton>
+          <div className="export-center__heading"><h2>{t.title}</h2><p>{t.description}</p></div>
+          <TooltipButton className="export-center__close" type="button" onClick={onClose} tooltip={t.close} shortcut="Esc" tooltipPos="below" tooltipAlign="right">&times;</TooltipButton>
         </header>
         <div className="export-center__body">
           <div className="export-center__source-column">
-            <ExportCenterSourcePanel sourceMode={sourceMode} setSourceMode={setSourceMode} currentFile={currentFile} files={state.fileList} selectedPaths={selectedPaths} onSelectedPathsChange={setSelectedPaths} folders={folders} folder={folder} setFolder={setFolder} folderFileCount={folderFiles.length} />
-            {format !== 'pdf' && <ExportAdditionalFilesPanel resources={resources} selectedPaths={extraResourcePaths} onChange={setExtraResourcePaths} loading={resourceLoading} error={resourceError} />}
+            <ExportCenterSourcePanel sourceMode={sourceMode} setSourceMode={setSourceMode} currentFile={currentFile} files={state.fileList} selectedPaths={selectedPaths} onSelectedPathsChange={setSelectedPaths} folders={folders} folder={folder} setFolder={setFolder} folderFileCount={folderFiles.length} translations={t.source} commonTranslations={t.extras} />
+            {format !== 'pdf' && <ExportAdditionalFilesPanel resources={resources} selectedPaths={extraResourcePaths} onChange={setExtraResourcePaths} loading={resourceLoading} error={resourceError} translations={t.extras} />}
           </div>
-          <ExportCenterOptionsPanel format={format} setFormat={setFormat} layout={layout} setLayout={setLayout} batchMode={batchMode} setBatchMode={setBatchMode} selectedCount={sourceFiles.length} extraCount={format === 'pdf' ? 0 : extraResourcePaths.size} summary={summary} results={results} />
+          <ExportCenterOptionsPanel format={format} setFormat={setFormat} layout={layout} setLayout={setLayout} batchMode={batchMode} setBatchMode={setBatchMode} selectedCount={sourceFiles.length} extraCount={format === 'pdf' ? 0 : extraResourcePaths.size} summary={summary} results={results} translations={t.options} />
         </div>
-        <footer className="export-center__footer"><button type="button" className="btn btn--primary" disabled={running || sourceFiles.length === 0} onClick={() => { void runExport(); }}>{running ? 'Exporting…' : 'Export'}</button></footer>
+        <footer className="export-center__footer"><button type="button" className="btn btn--primary" disabled={running || sourceFiles.length === 0} onClick={() => { void runExport(); }}>{running ? t.exporting : t.export}</button></footer>
       </section>
     </div>
   );

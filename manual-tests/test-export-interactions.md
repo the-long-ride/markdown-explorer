@@ -127,3 +127,11 @@ Month,Electron,Tauri,VS Code,Chromium
 ## Workspace-package links
 
 For a multi-folder Whole workspace test, open `manual-tests/export-workspace` as the workspace and export the entire workspace. Its `extras/sample.json` file is intended to be selected explicitly through **Additional workspace files** for HTML or Static Website export.
+
+## Localization check
+
+Switch Markdown Explorer through each supported application language (`en`, `vi`, `fr`, `es`, `zh`, `no`, `ja`, `ko`, `ru`) and reopen Export Center and Scope View. Verify that source controls, search/bulk actions, format/layout labels, export action/status text, Scope View navigation, and **Open as scope** follow the selected language. Windows installer/File Explorer verbs remain English by design because they run outside the app language context.
+
+## Portable package-path check
+
+On a platform that can create Windows-invalid source names, add supporting files equivalent to `con.txt`, `report.`, and `a:b?.json`, select them under **Additional workspace files**, and export a web package. Inspect the ZIP and confirm `_assets`/`_extras` contain encoded portable names: no Windows-forbidden characters, trailing dot/space, or reserved DOS device segment should remain. Confirm document links still resolve to the encoded resource paths.
