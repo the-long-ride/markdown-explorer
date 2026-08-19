@@ -148,6 +148,36 @@ export interface WorkspaceTextResourceResultMessage {
   readonly reason?: 'outside-workspace' | 'missing' | 'unreadable' | 'unsupported';
 }
 
+export interface ExportWorkspaceResourceInfo {
+  readonly relativePath: string;
+  readonly size: number;
+}
+
+export type ExportWorkspaceResourceHostFailureReason =
+  | 'outside-workspace'
+  | 'missing'
+  | 'unreadable'
+  | 'unsupported'
+  | 'too-large';
+
+export interface WorkspaceExportResourcesResultMessage {
+  readonly command: 'workspaceExportResourcesResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly resources?: readonly ExportWorkspaceResourceInfo[];
+  readonly error?: string;
+}
+
+export interface WorkspaceExportResourceResultMessage {
+  readonly command: 'workspaceExportResourceResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly relativePath?: string;
+  readonly mimeType?: string;
+  readonly dataBase64?: string;
+  readonly reason?: ExportWorkspaceResourceHostFailureReason;
+}
+
 export interface ChartPngSaveResultMessage {
   readonly command: 'chartPngSaveResult';
   readonly ok: boolean;
@@ -172,5 +202,5 @@ export type HostMessage =
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
   | FullscreenStateChangedMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
-  | WorkspaceTextResourceResultMessage | DesktopFontsResultMessage | ChartPngSaveResultMessage
-  | ExportPdfResultMessage;
+  | WorkspaceTextResourceResultMessage | WorkspaceExportResourcesResultMessage | WorkspaceExportResourceResultMessage
+  | DesktopFontsResultMessage | ChartPngSaveResultMessage | ExportPdfResultMessage;
