@@ -92,6 +92,29 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:electron
 
+  host-variants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Test VS Code host
+        run: pnpm run test:vscode
+      - name: Test Chromium host
+        run: pnpm run test:chromium
+      - name: Build shared UI
+        run: pnpm run build:ui
+      - name: Build Electron UI variant
+        run: pnpm run build:ui:electron
+      - name: Build VS Code host
+        run: pnpm run build:vscode
+      - name: Build Chromium host
+        run: pnpm run build:chromium
+
   tauri:
     runs-on: ${{ matrix.os }}
     strategy:
