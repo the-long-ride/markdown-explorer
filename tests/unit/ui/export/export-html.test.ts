@@ -57,6 +57,7 @@ describe('buildStandaloneExportHtml', () => {
     expect(html).toContain('mdn-export-toc');
     expect(html).toContain('doc-guide-intro-md');
     expect(html).toContain('doc-reference-api-md');
+    expect(html).not.toContain('.mdn-export-topbar,.mdn-export-sidebar,.mdn-export-toc{display:none!important}');
   });
 
   it('uses unique merged section IDs for same-stem documents', () => {
