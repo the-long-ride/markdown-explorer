@@ -31,6 +31,17 @@ export function fileNameFromPath(value: string): string {
   return parts[parts.length - 1] || value;
 }
 
+export function folderOptions(files: readonly MdFile[]): string[] {
+  const folders = new Set<string>();
+  for (const file of files) {
+    const parts = normalizeRelativePath(file.relativePath).split('/').slice(0, -1);
+    for (let length = 1; length <= parts.length; length += 1) {
+      folders.add(parts.slice(0, length).join('/'));
+    }
+  }
+  return [...folders].sort((a, b) => a.localeCompare(b));
+}
+
 export function filesInFolder(files: readonly MdFile[], folderPath: string): MdFile[] {
   const folder = normalizeRelativePath(folderPath);
   if (!folder) return [...files].sort((a, b) => a.relativePath.localeCompare(b.relativePath));
