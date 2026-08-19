@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
-import { buildExportJob, filesInFolder } from '../../../../ui/src/export/exportModel';
+import {
+  buildExportJob,
+  fileNameFromPath,
+  filesInFolder,
+  pdfOutputName,
+  safeBaseName,
+} from '../../../../ui/src/export/exportModel';
 
 function file(relativePath: string): MdFile {
+  const parts = relativePath.split('/');
   return {
     fsPath: `/workspace/${relativePath}`,
     relativePath,
-    parts: relativePath.split('/'),
-    fileName: relativePath.split('/').at(-1) || relativePath,
+    parts,
+    fileName: parts[parts.length - 1] || relativePath,
     title: relativePath.replace(/\.mdx?$/, ''),
     extension: relativePath.endsWith('.mdx') ? '.mdx' : '.md',
     documentKind: 'markdown',
@@ -34,6 +41,19 @@ describe('filesInFolder', () => {
   it('does not match a similarly-prefixed sibling folder', () => {
     const result = filesInFolder([...files, file('guidebook/readme.md')], 'guide');
     expect(result.some((item) => item.relativePath.startsWith('guidebook/'))).toBe(false);
+  });
+});
+
+describe('export output names', () => {
+  it('sanitizes standalone base names and preserves a safe fallback', () => {
+    expect(safeBaseName(' Docs / API ')).toBe('Docs-API');
+    expect(safeBaseName('***')).toBe('markdown-explorer');
+  });
+
+  it('uses relative paths for batch PDF names and extracts host result leaf names', () => {
+    expect(pdfOutputName(file('guide/intro.md'), true)).toBe('guide-intro.md.pdf');
+    expect(fileNameFromPath('C:\\Exports\\guide-intro.md.pdf')).toBe('guide-intro.md.pdf');
+    expect(fileNameFromPath('/tmp/site.zip')).toBe('site.zip');
   });
 });
 
