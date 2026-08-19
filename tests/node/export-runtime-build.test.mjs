@@ -10,6 +10,11 @@ const execFileAsync = promisify(execFile);
 const repoRoot = resolve(import.meta.dirname, '..', '..');
 const script = resolve(repoRoot, 'ui', 'scripts', 'build-export-runtime.mjs');
 const files = ['core.js', 'html-preview.js', 'media.js', 'table.js', 'charts.js'];
+const offlineNamespaceUris = ['http://www.w3.org/2000/svg', 'http://www.w3.org/1999/xlink'];
+
+function stripOfflineNamespaceUris(code) {
+  return offlineNamespaceUris.reduce((result, uri) => result.split(uri).join(''), code);
+}
 
 test('builds deterministic feature-specific offline export runtimes', async () => {
   const outDir = await mkdtemp(join(tmpdir(), 'mdn-export-runtime-'));
@@ -25,7 +30,7 @@ test('builds deterministic feature-specific offline export runtimes', async () =
     for (const file of files) {
       const code = await readFile(join(outDir, file), 'utf8');
       assert.ok(code.length > 20, `${file} should contain runtime code`);
-      assert.doesNotMatch(code, /https?:\/\//i, `${file} must not contain network/CDN URLs`);
+      assert.doesNotMatch(stripOfflineNamespaceUris(code), /https?:\/\//i, `${file} must not contain network/CDN URLs`);
       assert.doesNotMatch(code, /(?:unpkg|jsdelivr|PlatformBridge)/i, `${file} must stay host/CDN independent`);
     }
     assert.match(await readFile(join(outDir, 'charts.js'), 'utf8'), /chart\.js-local/);
