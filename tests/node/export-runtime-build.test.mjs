@@ -12,8 +12,9 @@ const script = resolve(repoRoot, 'ui', 'scripts', 'build-export-runtime.mjs');
 const files = ['core.js', 'html-preview.js', 'media.js', 'table.js', 'charts.js'];
 const offlineNamespaceUris = ['http://www.w3.org/2000/svg', 'http://www.w3.org/1999/xlink'];
 
-function stripOfflineNamespaceUris(code) {
-  return offlineNamespaceUris.reduce((result, uri) => result.split(uri).join(''), code);
+function unexpectedNetworkUrls(code) {
+  const withoutNamespaces = offlineNamespaceUris.reduce((result, uri) => result.split(uri).join(''), code);
+  return [...new Set(withoutNamespaces.match(/https?:\/\/[^\s"'<>]+/gi) || [])].sort();
 }
 
 test('builds deterministic feature-specific offline export runtimes', async () => {
@@ -30,7 +31,7 @@ test('builds deterministic feature-specific offline export runtimes', async () =
     for (const file of files) {
       const code = await readFile(join(outDir, file), 'utf8');
       assert.ok(code.length > 20, `${file} should contain runtime code`);
-      assert.doesNotMatch(stripOfflineNamespaceUris(code), /https?:\/\//i, `${file} must not contain network/CDN URLs`);
+      assert.deepEqual(unexpectedNetworkUrls(code), [], `${file} must not contain network/CDN URLs`);
       assert.doesNotMatch(code, /(?:unpkg|jsdelivr|PlatformBridge)/i, `${file} must stay host/CDN independent`);
     }
     assert.match(await readFile(join(outDir, 'charts.js'), 'utf8'), /chart\.js-local/);
