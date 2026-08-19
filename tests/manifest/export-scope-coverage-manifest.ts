@@ -13,6 +13,7 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/components/shared/SearchableSelect.tsx': ['tests/unit/ui/components/export-source-controls.test.tsx'],
   'ui/src/dom/portableContentHandlers.ts': ['tests/unit/ui/dom/portable-runtime.test.ts'],
   'ui/src/dom/portableMediaViewer.ts': ['tests/unit/ui/dom/portable-runtime.test.ts'],
+  'ui/src/dom/switchButtonElement.ts': ['tests/unit/ui/dom/tableHandlers.test.ts'],
   'ui/src/export/documentSnapshot.ts': ['tests/unit/ui/export/document-snapshot.test.ts'],
   'ui/src/export/exportAssets.ts': ['tests/unit/ui/export/export-assets.test.ts'],
   'ui/src/export/exportHtml.ts': ['tests/unit/ui/export/export-html.test.ts'],
