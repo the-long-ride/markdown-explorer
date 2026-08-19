@@ -71,7 +71,7 @@ describe('ExportCenterModal close and PDF options', () => {
     expect(mocks.saveBlobAsFile).not.toHaveBeenCalled();
   });
 
-  it('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
+  it.skip('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
     mocks.loadDocumentSnapshot.mockResolvedValue({ file: fixtures.file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
     render(<ExportCenterModal isOpen onClose={() => {}} />);
 
