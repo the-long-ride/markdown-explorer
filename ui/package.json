@@ -4,12 +4,14 @@
   "version": "1.6.5",
   "type": "module",
   "scripts": {
+    "build:export-runtime": "node scripts/build-export-runtime.mjs",
+    "predev": "pnpm run build:export-runtime",
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:vscode": "tsc -b && vite build --mode vscode",
-    "build:electron": "tsc -b && vite build --mode electron",
+    "build": "pnpm run build:export-runtime && tsc -b && vite build",
+    "build:vscode": "pnpm run build:export-runtime && tsc -b && vite build --mode vscode",
+    "build:electron": "pnpm run build:export-runtime && tsc -b && vite build --mode electron",
     "preview": "vite preview",
-    "build:tauri": "tsc -b && vite build --mode tauri",
+    "build:tauri": "pnpm run build:export-runtime && tsc -b && vite build --mode tauri",
     "validate:mermaid-fixtures": "node scripts/validate-mermaid-manual.mjs"
   },
   "dependencies": {
