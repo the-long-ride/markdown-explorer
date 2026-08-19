@@ -13,10 +13,14 @@ function fileHandle(name: string, bytes: Uint8Array): any {
   };
 }
 
+function isByteView(value: Tree | Uint8Array): value is Uint8Array {
+  return ArrayBuffer.isView(value) && value.BYTES_PER_ELEMENT === 1;
+}
+
 function directoryHandle(name: string, tree: Tree): any {
   const entries = Object.entries(tree).map(([entryName, value]) => [
     entryName,
-    value instanceof Uint8Array ? fileHandle(entryName, value) : directoryHandle(entryName, value),
+    isByteView(value) ? fileHandle(entryName, value) : directoryHandle(entryName, value),
   ] as const);
   const byName = new Map(entries);
   return {
