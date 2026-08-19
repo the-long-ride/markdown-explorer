@@ -1,4 +1,5 @@
 export const exportScopeCoverageManifest: Record<string, string[]> = {
+  'chromium-xtension/src/chrome-host-export.ts': ['tests/unit/chromium/chrome-host-export.test.ts'],
   'electron/core/pdf-export.js': ['tests/unit/electron/pdf-export.test.ts'],
   'electron/core/runtime-export-resources.js': ['tests/unit/electron/export-resources.test.ts'],
   'ui/src/components/Export/ExportCenterModal.tsx': [
