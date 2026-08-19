@@ -34,6 +34,17 @@ describe('rewriteExportLinks', () => {
     expect(rewriteExportLinks('<a href="./topic.mdx">MDX</a>', markdown, exported))
       .toContain('href="topic.mdx.html"');
   });
+
+  it('makes case-distinct archive paths portable on case-insensitive filesystems', () => {
+    const upper = file('guide/Topic.md');
+    const lower = file('guide/topic.md');
+    const upperPath = exportHtmlPath(upper, [upper, lower]);
+    const lowerPath = exportHtmlPath(lower, [upper, lower]);
+
+    expect(upperPath.toLowerCase()).not.toBe(lowerPath.toLowerCase());
+    expect(rewriteExportLinks('<a href="./topic.md">lower</a>', upper, [upper, lower]))
+      .toContain(`href="${lowerPath.split('/').at(-1)}"`);
+  });
 });
 
 describe('buildStandaloneExportHtml', () => {
@@ -94,6 +105,25 @@ describe('buildStandaloneExportHtml', () => {
     expect(ids).toHaveLength(2);
     expect(new Set(ids).size).toBe(2);
     expect(html).toContain(`href="#${ids[0]}"`);
+    expect(html).toContain(`href="#${ids[1]}"`);
+  });
+
+  it('keeps case-only merged paths on distinct anchors', () => {
+    const upper = file('guide/A-B.md');
+    const lower = file('guide/a-b.md');
+    const html = buildStandaloneExportHtml({
+      pages: [
+        { file: upper, html: '<a href="./a-b.md">lower</a>' },
+        { file: lower, html: '<p>Lower</p>' },
+      ],
+      layout: 'explorer',
+      title: 'Case collision',
+      themeCss: '',
+    });
+
+    const ids = [...html.matchAll(/<section id="([^"]+)"/g)].map((match) => match[1]);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
     expect(html).toContain(`href="#${ids[1]}"`);
   });
 });
