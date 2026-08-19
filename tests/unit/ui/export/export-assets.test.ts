@@ -20,6 +20,15 @@ function ok(relativePath: string, mimeType = 'image/png', text = 'asset') {
   return { ok: true as const, relativePath, mimeType, bytes: new TextEncoder().encode(text) };
 }
 
+function expectWindowsPortablePath(path: string) {
+  const reserved = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
+  for (const segment of path.split('/')) {
+    expect(segment).not.toMatch(/[<>:"\\|?*\x00-\x1f]/);
+    expect(segment).not.toMatch(/[ .]$/);
+    expect(segment).not.toMatch(reserved);
+  }
+}
+
 describe('referenced export assets', () => {
   it('reads supported local references through the workspace resource reader and inlines them', async () => {
     const snapshot: DocumentSnapshot = {
@@ -98,5 +107,22 @@ describe('explicit export assets', () => {
     const merged = mergeExportAssets([referenced], [extra]);
     expect(merged).toHaveLength(1);
     expect(merged[0].outputPath).toBe('_assets/data/a.json');
+  });
+
+  it('encodes packaged resource paths so every segment is valid on Windows', async () => {
+    const unsafeResources = [
+      { relativePath: 'con.txt', size: 1 },
+      { relativePath: 'data/report.', size: 1 },
+      { relativePath: 'data/a:b?.json', size: 1 },
+    ];
+    const assets = await collectExplicitExportAssets({
+      selectedPaths: unsafeResources.map((item) => item.relativePath),
+      resources: unsafeResources,
+      readResource: async (path) => ok(path, 'application/octet-stream'),
+    });
+
+    expect(assets).toHaveLength(3);
+    assets.forEach((asset) => expectWindowsPortablePath(asset.outputPath));
+    expect(new Set(assets.map((asset) => asset.outputPath)).size).toBe(assets.length);
   });
 });

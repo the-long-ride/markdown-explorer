@@ -69,6 +69,7 @@ describe('ScopeViewModal', () => {
   beforeEach(() => {
     mocks.loadDocumentSnapshot.mockReset();
     mocks.postMessage.mockReset();
+    mocks.appState.settings.language = 'en';
     mocks.loadDocumentSnapshot.mockImplementation(async (_bridge: unknown, target: MdFile) => snapshot(target));
   });
 
@@ -140,5 +141,16 @@ describe('ScopeViewModal', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Maximum scope depth reached'));
     expect(container.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(10);
     expect(screen.getByText('Doc 10')).toBeTruthy();
+  });
+
+  it('renders Scope View navigation and link actions in the selected application language', async () => {
+    mocks.appState.settings.language = 'vi';
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    await screen.findByText('Doc 1');
+
+    expect(screen.getByRole('dialog', { name: 'Chế độ xem phạm vi' })).toBeTruthy();
+    expect(screen.getByLabelText('Phạm vi trước')).toBeTruthy();
+    fireEvent.contextMenu(screen.getByText('Open 2'), { clientX: 24, clientY: 30 });
+    expect(await screen.findByText('Mở dưới dạng phạm vi')).toBeTruthy();
   });
 });

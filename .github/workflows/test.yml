@@ -2,8 +2,9 @@ name: test
 
 on:
   workflow_call:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feat/export-center-scope-view]
     paths:
       - 'tests/**'
       - 'electron/**'

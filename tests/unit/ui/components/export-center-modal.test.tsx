@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppRuntime } from '../../../../ui/src/types/settings';
 import type { MdFile } from '../../../../ui/src/types/files';
 
 const fixtures = vi.hoisted(() => ({
   runtime: 'desktop' as AppRuntime,
+  language: 'en',
   files: [
     { fsPath: '/docs/readme.md', relativePath: 'readme.md', parts: ['readme.md'], fileName: 'readme.md', title: 'Readme', extension: '.md', documentKind: 'markdown' },
     { fsPath: '/docs/guide/a.md', relativePath: 'guide/a.md', parts: ['guide', 'a.md'], fileName: 'a.md', title: 'A', extension: '.md', documentKind: 'markdown' },
@@ -12,7 +13,7 @@ const fixtures = vi.hoisted(() => ({
   ] as MdFile[],
 }));
 const mocks = vi.hoisted(() => ({ runExportJob: vi.fn(async () => ({ savedPaths: ['export.html'], successCount: 1, failureCount: 0, warningCount: 0, cancelled: false })) }));
-vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({ useAppState: () => ({ state: { currentFile: '/docs/readme.md', fileList: fixtures.files, workspaceName: 'Docs', appRuntime: fixtures.runtime, settings: { language: 'en' } } }) }));
+vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({ useAppState: () => ({ state: { currentFile: '/docs/readme.md', fileList: fixtures.files, workspaceName: 'Docs', appRuntime: fixtures.runtime, settings: { language: fixtures.language } } }) }));
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({ usePlatform: () => ({ postMessage: vi.fn(), onMessage: () => () => {}, getState: () => undefined, setState: () => {}, copyToClipboard: () => {} }) }));
 vi.mock('../../../../ui/src/export/exportJobRunner', () => ({ runExportJob: mocks.runExportJob }));
 vi.mock('../../../../ui/src/export/exportResources', () => ({ listWorkspaceExportResources: vi.fn(async () => [{ relativePath: 'data/config.json', size: 10 }]) }));
@@ -20,6 +21,11 @@ vi.mock('../../../../ui/src/export/exportResources', () => ({ listWorkspaceExpor
 import { ExportCenterModal } from '../../../../ui/src/components/Export/ExportCenterModal';
 
 describe('ExportCenterModal', () => {
+  beforeEach(() => {
+    fixtures.runtime = 'desktop';
+    fixtures.language = 'en';
+  });
+
   it('defaults to current document, HTML, separate, and Document only layout', () => {
     render(<ExportCenterModal isOpen onClose={() => {}} />);
     expect(screen.getByRole('radio', { name: 'Current document' })).toBeChecked();
@@ -58,5 +64,14 @@ describe('ExportCenterModal', () => {
       '/docs/readme.md',
     ]);
     expect(args.job.extraResourcePaths).toEqual([]);
+  });
+
+  it('renders the Export Center controls in the selected application language', () => {
+    fixtures.language = 'vi';
+    render(<ExportCenterModal isOpen onClose={() => {}} />);
+
+    expect(screen.getByRole('dialog', { name: 'Trung tâm xuất' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Toàn bộ không gian làm việc' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Xuất' })).toBeTruthy();
   });
 });
