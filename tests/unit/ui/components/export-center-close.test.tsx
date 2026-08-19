@@ -2,28 +2,28 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 
-const file: MdFile = {
-  fsPath: '/docs/readme.md',
-  relativePath: 'readme.md',
-  parts: ['readme.md'],
-  fileName: 'readme.md',
-  title: 'Readme',
-  extension: '.md',
-  documentKind: 'markdown',
-};
+const fixtures = vi.hoisted(() => ({
+  file: {
+    fsPath: '/docs/readme.md',
+    relativePath: 'readme.md',
+    parts: ['readme.md'],
+    fileName: 'readme.md',
+    title: 'Readme',
+    extension: '.md',
+    documentKind: 'markdown',
+  } as MdFile,
+}));
 
 const mocks = vi.hoisted(() => ({
   loadDocumentSnapshot: vi.fn(),
   saveBlobAsFile: vi.fn(async () => true),
-  printExportHtml: vi.fn(async () => 'printed'),
-  printExportBatch: vi.fn(async () => 1),
 }));
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
     state: {
       currentFile: '/docs/readme.md',
-      fileList: [file],
+      fileList: [fixtures.file],
       workspaceName: 'Docs',
       appRuntime: 'desktop',
       settings: { language: 'en' },
@@ -42,10 +42,6 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 }));
 
 vi.mock('../../../../ui/src/dom/copyImage', () => ({ saveBlobAsFile: mocks.saveBlobAsFile }));
-vi.mock('../../../../ui/src/export/printExport', () => ({
-  printExportHtml: mocks.printExportHtml,
-  printExportBatch: mocks.printExportBatch,
-}));
 vi.mock('../../../../ui/src/export/documentSnapshot', () => ({
   loadDocumentSnapshot: mocks.loadDocumentSnapshot,
 }));
@@ -72,11 +68,11 @@ describe('ExportCenterModal close and PDF options', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
 
-    resolveSnapshot({ file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
+    resolveSnapshot({ file: fixtures.file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
   });
 
   it('offers an enabled-by-default PDF footer toggle with the exact footer text', () => {
-    mocks.loadDocumentSnapshot.mockResolvedValue({ file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
+    mocks.loadDocumentSnapshot.mockResolvedValue({ file: fixtures.file, markdownSource: '# Readme', html: '<h1>Readme</h1>' });
     render(<ExportCenterModal isOpen onClose={() => {}} />);
 
     fireEvent.click(screen.getByRole('radio', { name: /^PDF/ }));
