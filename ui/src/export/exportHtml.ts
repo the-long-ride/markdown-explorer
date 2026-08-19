@@ -37,6 +37,9 @@ body{margin:0;min-height:100%;height:auto;overflow-y:auto!important;overflow-x:h
 @media print{.mdn-export-document .mdn-export-page{width:100%;max-width:none;padding:0}.mdn-export-shell{display:grid;min-height:auto;grid-template-columns:170px minmax(0,1fr) 140px;grid-template-rows:38px minmax(0,1fr)}.mdn-export-topbar{display:flex;position:static;padding:0 12px;font-size:10px}.mdn-export-sidebar,.mdn-export-toc{display:block;position:static;top:auto;max-height:none;padding:10px 8px;font-size:9px}.mdn-export-shell .mdn-export-page{width:100%;max-width:none;padding:12px 16px 28px}.mdn-export-document-section{break-before:page}.mdn-export-document-section:first-child{break-before:auto}.mdn-copy-btn,.mdn-section-copy-btn,.mdn-table-controls,.mdn-table-filter-btn,.mdn-table-columns-toggle,.mdn-table-view-dropdown{display:none!important}pre,table,svg,img,video{max-width:100%!important}pre{white-space:pre-wrap;overflow-wrap:anywhere}}
 `;
 
+const WINDOWS_FORBIDDEN_SEGMENT_CHARACTERS = new Set(['<', '>', ':', '"', '|', '?', '*', '\\']);
+const WINDOWS_RESERVED_DEVICE_NAME = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
 export function escapeExportHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -59,15 +62,36 @@ function dirname(value: string): string {
   return index < 0 ? '' : normalized.slice(0, index);
 }
 
+function isWindowsReservedDeviceSegment(value: string): boolean {
+  const stem = value.split('.', 1)[0].replace(/[ .]+$/g, '');
+  return WINDOWS_RESERVED_DEVICE_NAME.test(stem);
+}
+
 function portablePathSegment(value: string): string {
+  const characters = Array.from(value);
+  let trailingUnsafeStart = characters.length;
+  while (trailingUnsafeStart > 0) {
+    const character = characters[trailingUnsafeStart - 1];
+    if (character !== '.' && character !== ' ') break;
+    trailingUnsafeStart -= 1;
+  }
+  const forceEscapeFirst = isWindowsReservedDeviceSegment(value);
+
   let encoded = '';
-  for (const character of Array.from(value)) {
+  characters.forEach((character, index) => {
     const codePoint = character.codePointAt(0) ?? 0;
     const isUpperAscii = codePoint >= 0x41 && codePoint <= 0x5a;
-    if (character === '~' || isUpperAscii || codePoint > 0x7f) encoded += `~${codePoint.toString(16)}~`;
-    else encoded += character;
-  }
-  return encoded;
+    const isTrailingWindowsUnsafe = index >= trailingUnsafeStart && (character === '.' || character === ' ');
+    const mustEscape = character === '~'
+      || isUpperAscii
+      || codePoint < 0x20
+      || codePoint > 0x7e
+      || WINDOWS_FORBIDDEN_SEGMENT_CHARACTERS.has(character)
+      || isTrailingWindowsUnsafe
+      || (forceEscapeFirst && index === 0);
+    encoded += mustEscape ? `~${codePoint.toString(16)}~` : character;
+  });
+  return encoded || 'document';
 }
 
 function portableRelativePath(value: string): string {
