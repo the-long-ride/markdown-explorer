@@ -11,6 +11,7 @@ const PORTABLE_SELECTOR_MARKERS = [
   '.mermaid',
   '.katex',
   '.hljs',
+  '.hl-',
   '.media-modal',
   '.tooltip-container',
   '.tooltip-text',

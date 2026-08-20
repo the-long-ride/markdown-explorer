@@ -14,6 +14,7 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/contexts/exportScopeTranslations.ts': ['tests/contracts/translations-coverage.test.ts', 'tests/unit/ui/components/export-center-modal.test.tsx', 'tests/unit/ui/components/scope-view-modal.test.tsx'],
   'ui/src/dom/nativeChartPngSave.ts': ['tests/node/chart-modal-switch-native-save-contract.test.mjs'],
   'ui/src/dom/portableContentHandlers.ts': ['tests/unit/ui/dom/portable-runtime.test.ts'],
+  'ui/src/dom/portableInteractionController.ts': ['tests/unit/ui/dom/portable-runtime.test.ts'],
   'ui/src/dom/portableMediaViewer.ts': ['tests/unit/ui/dom/portable-runtime.test.ts'],
   'ui/src/dom/switchButtonElement.ts': ['tests/unit/ui/dom/tableHandlers.test.ts'],
   'ui/src/export/documentSnapshot.ts': ['tests/unit/ui/export/document-snapshot.test.ts'],
