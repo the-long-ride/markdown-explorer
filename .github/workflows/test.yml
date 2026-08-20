@@ -4,7 +4,7 @@ on:
   workflow_call:
   workflow_dispatch:
   push:
-    branches: [main, feat/export-center-scope-view]
+    branches: [main, feat/export-center-scope-view, verify/export-static-site-followup]
     paths:
       - 'tests/**'
       - 'electron/**'

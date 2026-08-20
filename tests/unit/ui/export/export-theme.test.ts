@@ -38,6 +38,7 @@ describe('captureExportThemeSnapshot', () => {
       .mdn-body h1 { color: var(--accent); }
       [data-theme-style="raw-grid"] .mdn-section { border-width: 2px; }
       .hljs-keyword { font-weight: 700; }
+      .hl-kw { color: red; }
       .app-shell { overflow: hidden; }
       html, body { height: 100%; overflow: hidden; }
       [data-theme-style="raw-grid"] .settings-modal { color: red; }
@@ -55,6 +56,7 @@ describe('captureExportThemeSnapshot', () => {
     expect(snapshot.cssText).toContain('.mdn-body h1');
     expect(snapshot.cssText).toContain('.mdn-section');
     expect(snapshot.cssText).toContain('.hljs-keyword');
+    expect(snapshot.cssText).toContain('.hl-kw');
     expect(snapshot.cssText).toContain('@media');
     expect(snapshot.cssText).toContain('.mdn-codeblock');
     expect(snapshot.cssText).not.toContain('.app-shell');
