@@ -147,6 +147,19 @@ pub fn electron_api_shim_js() -> &'static str {
     if (!url.startsWith('file:///')) return url;
     var path = url.replace('file:///', '');
     var encoded = encodeURIComponent(path).replace(/%2F/g, '/');
+    // WebView2 (Windows) only routes custom protocols when they carry the
+    // http://<scheme>.localhost/ transport form — a raw local-file:// URL
+    // fails with ERR_UNKNOWN_URL_SCHEME before reaching the Rust handler.
+    // Prefer Tauri's own converter; fall back to the platform-correct form.
+    try {
+      var internals = window.__TAURI_INTERNALS__;
+      if (internals && typeof internals.convertFileSrc === 'function') {
+        return internals.convertFileSrc(path, 'local-file');
+      }
+    } catch (err) { /* fall through to manual form */ }
+    if (/Windows/i.test(navigator.userAgent)) {
+      return 'http://local-file.localhost/' + encoded;
+    }
     return 'local-file://' + encoded;
   }
 

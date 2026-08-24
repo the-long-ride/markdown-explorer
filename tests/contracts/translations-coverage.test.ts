@@ -5,6 +5,7 @@ import { AUDITED_UI_TRANSLATIONS } from '../../ui/src/contexts/auditedUiTranslat
 import { WELCOME_TRANSLATIONS } from '../../ui/src/contexts/welcomeTranslations';
 import { USER_MANUAL_TRANSLATIONS } from '../../ui/src/contexts/userManualTranslations';
 import { DESKTOP_TYPOGRAPHY_EN } from '../../ui/src/contexts/desktopTypographyTranslations';
+import { EXPORT_SCOPE_TRANSLATIONS } from '../../ui/src/contexts/exportScopeTranslations';
 
 function verifyObjectKeysRecursive(
   reference: Record<string, unknown>,
@@ -14,17 +15,11 @@ function verifyObjectKeysRecursive(
   for (const key of Object.keys(reference)) {
     const currentPath = path ? `${path}.${key}` : key;
     expect(target, `Missing key at path: ${currentPath}`).toHaveProperty(key);
-
     const refValue = reference[key];
     const targetValue = target[key];
-
     if (typeof refValue === 'object' && refValue !== null && !Array.isArray(refValue)) {
       expect(typeof targetValue, `Path ${currentPath} should be an object`).toBe('object');
-      verifyObjectKeysRecursive(
-        refValue as Record<string, unknown>,
-        targetValue as Record<string, unknown>,
-        currentPath,
-      );
+      verifyObjectKeysRecursive(refValue as Record<string, unknown>, targetValue as Record<string, unknown>, currentPath);
     } else if (typeof refValue === 'string') {
       expect(typeof targetValue, `Path ${currentPath} should be a string`).toBe('string');
       expect((targetValue as string).trim(), `Path ${currentPath} should not be empty`).not.toBe('');
@@ -42,7 +37,6 @@ describe('translation coverage across all supported languages', () => {
 
   test('all supported languages contain every translation key present in English template', () => {
     const englishTemplate = TRANSLATIONS.en as unknown as Record<string, unknown>;
-
     for (const lang of expectedLanguages) {
       const localeTranslations = TRANSLATIONS[lang] as unknown as Record<string, unknown>;
       expect(localeTranslations, `Translations block for "${lang}" must exist`).toBeDefined();
@@ -52,7 +46,6 @@ describe('translation coverage across all supported languages', () => {
 
   test('AUDITED_UI_TRANSLATIONS contains all keys across all supported languages', () => {
     const englishTemplate = AUDITED_UI_TRANSLATIONS.en as unknown as Record<string, unknown>;
-
     for (const lang of expectedLanguages) {
       const localeTranslations = AUDITED_UI_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
       expect(localeTranslations, `Audited UI block for "${lang}" must exist`).toBeDefined();
@@ -62,7 +55,6 @@ describe('translation coverage across all supported languages', () => {
 
   test('WELCOME_TRANSLATIONS contains all keys across all supported languages', () => {
     const englishTemplate = WELCOME_TRANSLATIONS.en as unknown as Record<string, unknown>;
-
     for (const lang of expectedLanguages) {
       const localeTranslations = WELCOME_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
       expect(localeTranslations, `Welcome block for "${lang}" must exist`).toBeDefined();
@@ -72,11 +64,27 @@ describe('translation coverage across all supported languages', () => {
 
   test('USER_MANUAL_TRANSLATIONS contains all keys across all supported languages', () => {
     const englishTemplate = USER_MANUAL_TRANSLATIONS.en as unknown as Record<string, unknown>;
-
     for (const lang of expectedLanguages) {
       const localeTranslations = USER_MANUAL_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
       expect(localeTranslations, `User manual block for "${lang}" must exist`).toBeDefined();
       verifyObjectKeysRecursive(englishTemplate, localeTranslations, `userManual.${lang}`);
+    }
+  });
+
+  test('EXPORT_SCOPE_TRANSLATIONS covers every Export Center and Scope View key in all supported languages', () => {
+    const englishTemplate = EXPORT_SCOPE_TRANSLATIONS.en as unknown as Record<string, unknown>;
+    for (const lang of expectedLanguages) {
+      const localeTranslations = EXPORT_SCOPE_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `Export/Scope block for "${lang}" must exist`).toBeDefined();
+      verifyObjectKeysRecursive(englishTemplate, localeTranslations, `exportScope.${lang}`);
+    }
+  });
+
+  test('Export Center and Scope View are actually translated outside English', () => {
+    for (const lang of expectedLanguages.filter((value) => value !== 'en')) {
+      expect(EXPORT_SCOPE_TRANSLATIONS[lang].exportCenter.title).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.exportCenter.title);
+      expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.dialogLabel).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.dialogLabel);
+      expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.openAsScope).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.openAsScope);
     }
   });
 

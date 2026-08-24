@@ -6,8 +6,9 @@ const read = (path) => readFile(path, 'utf8');
 
 
 test('shared app switch primitive is reused by shortcuts, columns, and More actions sidebar/TOC', async () => {
-  const [shared, shortcuts, columns, menu, switchCss, globalCss, settingsCss, topbarCss, tableCss] = await Promise.all([
+  const [shared, domSwitch, shortcuts, columns, menu, switchCss, globalCss, settingsCss, topbarCss, tableCss] = await Promise.all([
     read('ui/src/components/shared/SwitchButton.tsx'),
+    read('ui/src/dom/switchButtonElement.ts'),
     read('ui/src/components/Settings/SettingsShortcutsPanel.tsx'),
     read('ui/src/dom/tableColumnHandlers.ts'),
     read('ui/src/components/shared/ToolbarActionMenu.tsx'),
@@ -18,9 +19,11 @@ test('shared app switch primitive is reused by shortcuts, columns, and More acti
     read('ui/src/styles/global/global-table-view-controls.css'),
   ]);
   assert.match(shared, /export function SwitchButton/);
-  assert.match(shared, /export function createSwitchButtonElement/);
-  assert.match(shared, /app-switch/);
+  assert.match(shared, /switchButtonElement/);
+  assert.match(domSwitch, /export function createSwitchButtonElement/);
+  assert.match(domSwitch, /app-switch/);
   assert.match(shortcuts, /<SwitchButton/);
+  assert.match(columns, /from ['"]\.\/switchButtonElement['"]/);
   assert.match(columns, /createSwitchButtonElement/);
   assert.match(menu, /<SwitchButton/);
   assert.match(menu, /id:\s*['"]sidebar['"][\s\S]*?toggleState:\s*sidebarActive/);
@@ -69,10 +72,12 @@ test('chart viewer reuses media modal controls with icon-only Fit and fixed inte
 });
 
 
-test('Tauri chart PNG save uses native save dialog through the platform bridge', async () => {
-  const [viewer, imageActions, messages, dispatcher, pngExport, runtime] = await Promise.all([
+test('Tauri chart PNG save stays in the app adapter while portable table runtime uses a host-neutral hook', async () => {
+  const [viewer, imageActions, nativeSave, globalHandlers, messages, dispatcher, pngExport, runtime] = await Promise.all([
     read('ui/src/dom/tableChartViewer.ts'),
     read('ui/src/dom/tableChartImageActions.ts'),
+    read('ui/src/dom/nativeChartPngSave.ts'),
+    read('ui/src/dom/globalHandlers.ts'),
     read('ui/src/types/webviewMessages.ts'),
     read('tauri/src/dispatcher/commands_external.rs'),
     read('tauri/src/runtime/png_export.rs'),
@@ -81,9 +86,12 @@ test('Tauri chart PNG save uses native save dialog through the platform bridge',
   assert.match(messages, /SaveChartPngMessage/);
   assert.match(messages, /command:\s*['"]saveChartPng['"]/);
   assert.match(viewer, /tableChartImageActions/);
-  assert.match(imageActions, /__TAURI__/);
-  assert.match(imageActions, /PlatformBridge\.postMessage\(\{\s*command:\s*['"]saveChartPng['"]/s);
-  assert.match(imageActions, /canvas\.toDataURL\(['"]image\/png['"]\)/);
+  assert.match(imageActions, /saveChartPngToHost/);
+  assert.doesNotMatch(imageActions, /PlatformBridge|__TAURI__/);
+  assert.match(nativeSave, /__TAURI__/);
+  assert.match(nativeSave, /PlatformBridge\.postMessage\(\{\s*command:\s*['"]saveChartPng['"]/s);
+  assert.match(nativeSave, /canvas\.toDataURL\(['"]image\/png['"]\)/);
+  assert.match(globalHandlers, /registerNativeChartPngSave\(win\)/);
   assert.match(dispatcher, /['"]saveChartPng['"]\s*=>/);
   assert.match(dispatcher, /add_filter\(['"]PNG['"],\s*&\[['"]png['"]\]\)/);
   assert.match(dispatcher, /set_file_name/);

@@ -115,6 +115,55 @@ impl Dispatcher {
                     }
                 }
             }
+            "saveExportFile" => {
+                let request_id = msg
+                    .get("requestId")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                let file_name = crate::runtime::png_export::normalize_export_file_name(
+                    msg.get("fileName").and_then(Value::as_str).unwrap_or("export.bin"),
+                );
+                let mut extra = serde_json::Map::new();
+                extra.insert("requestId".into(), request_id.into());
+
+                let result = msg
+                    .get("dataUrl")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| "Missing export data".to_string())
+                    .and_then(crate::runtime::png_export::decode_data_url);
+
+                match result {
+                    Ok(bytes) => {
+                        let selected_path = tauri_plugin_dialog::DialogExt::dialog(&self.app)
+                            .file()
+                            .set_file_name(file_name)
+                            .blocking_save_file()
+                            .and_then(|path| path.into_path().ok());
+                        match selected_path {
+                            Some(path) => match std::fs::write(&path, bytes) {
+                                Ok(()) => {
+                                    extra.insert("ok".into(), true.into());
+                                    extra.insert("path".into(), path.to_string_lossy().to_string().into());
+                                }
+                                Err(error) => {
+                                    extra.insert("ok".into(), false.into());
+                                    extra.insert("error".into(), error.to_string().into());
+                                }
+                            },
+                            None => {
+                                extra.insert("ok".into(), false.into());
+                                extra.insert("cancelled".into(), true.into());
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        extra.insert("ok".into(), false.into());
+                        extra.insert("error".into(), error.into());
+                    }
+                }
+                host_message::emit(&self.app, "exportFileSaveResult", extra);
+            }
             // ── C5: Clipboard / External / Editor ──
             "openInEditor" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {

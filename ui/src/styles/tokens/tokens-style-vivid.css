@@ -1,6 +1,8 @@
 /* Tokyo Night Theme: layout & rhythm overrides */
 [data-theme-style="tokyo-night"] {
   --topbar-h: 46px;
+  /* Header floats with margin-top: var(--theme-header-gap). */
+  --app-header-offset: var(--theme-header-gap, 8px);
   --topbar-gap: 10px;
   --topbar-pad-x: 14px;
   --control-h: 28px;

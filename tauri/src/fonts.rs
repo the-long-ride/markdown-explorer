@@ -256,7 +256,15 @@ fn collect_system_font_paths() -> Vec<PathBuf> {
 }
 
 fn managed_url(path: &Path) -> String {
-    format!("local-file://{}", urlencoding::encode(path.to_string_lossy().as_ref()))
+    let lossy = path.to_string_lossy().into_owned();
+    let encoded = urlencoding::encode(&lossy);
+    // WebView2 (Windows) only routes custom protocols through the
+    // http://<scheme>.localhost/ transport form; a raw local-file:// URL fails
+    // with ERR_UNKNOWN_URL_SCHEME before reaching the protocol handler.
+    #[cfg(target_os = "windows")]
+    { format!("http://local-file.localhost/{encoded}") }
+    #[cfg(not(target_os = "windows"))]
+    { format!("local-file://{encoded}") }
 }
 
 fn group_faces(faces: Vec<ParsedFontFace>, source: &str, imported_id: Option<&str>) -> Vec<DesktopFontFamily> {

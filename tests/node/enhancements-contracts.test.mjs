@@ -159,7 +159,7 @@ test('navigation and document actions use the shared compact focus-mode button t
     read('ui/src/components/Desktop/DesktopTabBar.tsx'),
     read('ui/src/components/shared/HeaderActionGroups.tsx'),
   ]);
-  for (const action of ['onClick={onBack}', 'onClick={onForward}', 'onClick={onRefresh}', 'onClick={onExpandAll}', 'onClick={onCollapseAll}', 'onCopyFile']) {
+  for (const action of ['onClick={handleBack}', 'onClick={handleForward}', 'onClick={onRefresh}', 'onClick={onExpandAll}', 'onClick={onCollapseAll}', 'onCopyFile']) {
     assert.ok(shared.includes(action), `${action} action missing from shared header actions`);
   }
   const compactButtons = shared.match(/className="btn btn--icon"/g)?.length ?? 0;

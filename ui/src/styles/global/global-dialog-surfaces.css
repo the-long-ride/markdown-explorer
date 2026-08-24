@@ -1,6 +1,17 @@
 :root {
   /* Dialog content must remain fully opaque even when the active theme uses glass surfaces. */
   --dialog-surface: linear-gradient(var(--bg-e), var(--bg-e)), var(--bg);
+  /* Vertical offset added by themes that float the header bar (glass, bento,
+     vercel, tokyo-night inset the topbar with a top margin). Keeps dialogs
+     clear of the header bottom edge in every theme. */
+  --app-header-offset: 0px;
+  /* Live measurement of the rendered header bottom edge (set by useModalRegionAnchor).
+     Guarantees a visible gap below the header at any zoom level, even when the
+     real header renders taller than its --topbar-h token. */
+  --measured-header-bottom: 0px;
+  /* Dialogs anchor below whichever is lower-bound correct: the modeled header
+     geometry or the live measured header edge. */
+  --modal-region-top: max(calc(var(--topbar-h, 44px) + var(--app-header-offset)), var(--measured-header-bottom));
 }
 
 :is(:root, :root[data-theme][data-theme-style]) :is(
@@ -11,4 +22,51 @@
   .html-local-first-warning
 ) {
   background: var(--dialog-surface) !important;
+}
+
+/* Major application dialogs occupy only the viewport below the app header. */
+.mdn-app-modal-region {
+  top: var(--modal-region-top);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.mdn-app-modal-region.scope-view,
+.mdn-app-modal-region.export-center,
+.mdn-app-modal-region.settings-modal {
+  padding-top: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mdn-app-modal-region .scope-view__card {
+  height: min(680px, calc(100dvh - var(--modal-region-top) - 24px));
+  max-height: calc(100dvh - var(--modal-region-top) - 24px);
+}
+
+.mdn-app-modal-region .export-center__card {
+  height: min(720px, calc(100dvh - var(--modal-region-top) - 24px));
+  max-height: calc(100dvh - var(--modal-region-top) - 24px);
+}
+
+.mdn-app-modal-region .settings-card--settings {
+  height: min(720px, calc(100dvh - var(--modal-region-top) - 24px));
+  max-height: calc(100dvh - var(--modal-region-top) - 24px);
+}
+
+@media (max-width: 720px) {
+  .mdn-app-modal-region {
+    padding: 8px;
+  }
+
+  .mdn-app-modal-region .scope-view__card,
+  .mdn-app-modal-region .export-center__card,
+  .mdn-app-modal-region .settings-card--settings {
+    max-height: calc(100dvh - var(--modal-region-top) - 16px);
+  }
 }

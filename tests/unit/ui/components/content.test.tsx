@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const contentPaths = [
   path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'Content.tsx'),
   path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'ContentMainView.tsx'),
+  path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'enhancements', 'syntaxHighlighting.ts'),
 ].filter(existsSync);
 const translationsTypePath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'contexts', 'translationTypes.ts');
 const translationsDataPath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'contexts', 'translationsData.ts');

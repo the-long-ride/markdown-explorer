@@ -1,6 +1,8 @@
 import * as path from 'path';
 
 import type { WebviewMessage } from '../types';
+import { handlePanelExportResourceMessage } from '../core/panelExportResources';
+import { handlePanelExportSaveMessage } from '../core/panelExportSave';
 import { createVsCodeFontService, type VsCodeFontFamily } from './fontService';
 
 export function getGlobalStorageUri(
@@ -73,7 +75,17 @@ export function createPanelFontBridge(
         }
         return true;
       default:
-        return false;
+        if (await handlePanelExportSaveMessage(
+          message,
+          vscodeApi,
+          (payload) => webview.postMessage(payload),
+        )) return true;
+        return handlePanelExportResourceMessage(
+          message,
+          vscodeApi.workspace.workspaceFolders?.[0]?.uri.fsPath,
+          (uri) => vscodeApi.Uri.parse(uri).fsPath,
+          (payload) => webview.postMessage(payload),
+        );
     }
   }
 

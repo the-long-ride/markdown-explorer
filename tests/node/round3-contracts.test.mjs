@@ -85,7 +85,7 @@ test('UI and VS Code use the same HTML renderability heuristic', async () => {
   ]);
   const uiFunction = uiHelper.match(/export function hasRenderableHtmlContent[\s\S]*?\n\}/)?.[0];
   const vscodeFunction = vscodeHelper.match(/export function hasRenderableHtmlContent[\s\S]*?\n\}/)?.[0];
-  assert.equal(uiFunction, vscodeFunction);
+  assert.equal(uiFunction?.replace(/\r\n/g, '\n'), vscodeFunction?.replace(/\r\n/g, '\n'));
   assert.match(uiRenderer, /hasRenderableHtmlContent\(token\.content\)/);
   assert.match(vscodeRenderer, /hasRenderableHtmlContent\(token\.content\)/);
 });

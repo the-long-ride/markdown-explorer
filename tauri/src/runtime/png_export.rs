@@ -43,6 +43,16 @@ fn decode_base64(input: &str) -> Result<Vec<u8>, String> {
     Ok(output)
 }
 
+pub fn decode_data_url(data_url: &str) -> Result<Vec<u8>, String> {
+    let (metadata, encoded) = data_url
+        .split_once(',')
+        .ok_or_else(|| "Expected a base64 data URL".to_string())?;
+    if !metadata.starts_with("data:") || !metadata.to_ascii_lowercase().ends_with(";base64") {
+        return Err("Expected a base64 data URL".into());
+    }
+    decode_base64(encoded)
+}
+
 pub fn decode_png_data_url(data_url: &str) -> Result<Vec<u8>, String> {
     let encoded = data_url
         .strip_prefix(PNG_DATA_URL_PREFIX)
@@ -54,22 +64,28 @@ pub fn decode_png_data_url(data_url: &str) -> Result<Vec<u8>, String> {
     Ok(bytes)
 }
 
-pub fn normalize_png_file_name(file_name: &str) -> String {
+fn sanitize_leaf(file_name: &str, fallback: &str) -> String {
     let leaf = Path::new(file_name)
         .file_name()
         .and_then(|value| value.to_str())
-        .unwrap_or("chart.png")
+        .unwrap_or(fallback)
         .trim();
-    let mut safe = leaf
+    let safe = leaf
         .chars()
         .map(|character| match character {
             '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' => '-',
             other => other,
         })
         .collect::<String>();
-    if safe.is_empty() {
-        safe = "chart.png".into();
-    }
+    if safe.is_empty() { fallback.into() } else { safe }
+}
+
+pub fn normalize_export_file_name(file_name: &str) -> String {
+    sanitize_leaf(file_name, "export.bin")
+}
+
+pub fn normalize_png_file_name(file_name: &str) -> String {
+    let mut safe = sanitize_leaf(file_name, "chart.png");
     if !safe.to_ascii_lowercase().ends_with(".png") {
         safe.push_str(".png");
     }
@@ -89,6 +105,23 @@ mod tests {
     #[test]
     fn rejects_non_png_data() {
         assert!(decode_png_data_url("data:image/png;base64,SGVsbG8=").is_err());
+    }
+
+    #[test]
+    fn decodes_generic_base64_data_url() {
+        assert_eq!(decode_data_url("data:text/html;charset=utf-8;base64,SGVsbG8=").unwrap(), b"Hello");
+        assert_eq!(decode_data_url("data:application/zip;base64,WklQ").unwrap(), b"ZIP");
+    }
+
+    #[test]
+    fn rejects_non_base64_data_url() {
+        assert!(decode_data_url("data:text/plain,Hello").is_err());
+    }
+
+    #[test]
+    fn normalizes_export_file_name_without_forcing_png() {
+        assert_eq!(normalize_export_file_name("../Docs: export.html"), "Docs- export.html");
+        assert_eq!(normalize_export_file_name("site.zip"), "site.zip");
     }
 
     #[test]

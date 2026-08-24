@@ -9,6 +9,7 @@ dist/
 **/dist/
 tsconfig.tsbuildinfo
 **/tsconfig.tsbuildinfo
+ui/public/export-runtime/
 
 # Copied runtime directories (monorepo syncs)
 vscode/ui/

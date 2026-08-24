@@ -133,7 +133,6 @@ export function SettingsModal({
     e.preventDefault();
     e.stopPropagation();
 
-    // Do not record modifiers alone
     const modifierKeys = ["control", "shift", "alt", "meta"];
     if (modifierKeys.includes(e.key.toLowerCase())) {
       return;
@@ -146,14 +145,11 @@ export function SettingsModal({
 
     let keyName = e.key;
     if (keyName === " ") keyName = "Space";
-    // Standardize arrow names
-    // Standardize alphabet to uppercase
     if (keyName.length === 1) keyName = keyName.toUpperCase();
 
     parts.push(keyName);
     const shortcutStr = parts.join("+");
 
-    // Reject banned shortcuts — rollback and notify via dialog
     if (BANNED_SHORTCUTS[shortcutStr]) {
       const translationKey = BANNED_SHORTCUTS[shortcutStr];
       setBannedShortcutError(t[translationKey] as string);
@@ -179,7 +175,6 @@ export function SettingsModal({
     };
     updateSettings({ keybindings: nextBindings });
     setRecordingAction(null);
-    // Remove focus
     (e.target as HTMLInputElement).blur();
   };
 
@@ -257,7 +252,7 @@ export function SettingsModal({
   return (
     <div
       id="settingsModal"
-      className="mdn-modal settings-modal"
+      className="mdn-modal mdn-app-modal-region settings-modal"
       role="dialog"
       aria-modal="true"
       onClick={(e) => {

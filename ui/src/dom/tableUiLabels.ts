@@ -1,8 +1,56 @@
-import { AUDITED_UI_TRANSLATIONS } from '../contexts/auditedUiTranslations.ts';
 import type { AuditedUiTranslationDomains } from '../contexts/auditedUiTranslationTypes';
 
 export type TableUiLabels = AuditedUiTranslationDomains['rendererUi'];
-export const DEFAULT_TABLE_UI_LABELS: TableUiLabels = AUDITED_UI_TRANSLATIONS.en.rendererUi;
+
+// Portable table runtimes receive the active localized labels from each rendered
+// table's data-ui-labels attribute. Keep only a dependency-light English fallback
+// here so export bundles never pull the complete application translation catalog.
+export const DEFAULT_TABLE_UI_LABELS: TableUiLabels = {
+  copy: 'Copy',
+  copySectionContent: 'Copy section content',
+  copied: 'Copied!',
+  showMore: 'Show More',
+  showLess: 'Show Less',
+  filterByValues: 'Filter by values',
+  searchTable: 'Search table',
+  filterRows: 'Filter rows…',
+  wrapTableText: 'Wrap table text',
+  unwrapTableText: 'Unwrap table text',
+  wrap: 'Wrap',
+  unwrap: 'Unwrap',
+  filterValues: 'Filter Values',
+  all: '(All)',
+  noValues: 'No values',
+  rowsCount: '{count} rows',
+  filteredRowsCount: '{matched} / {total} rows',
+  columns: 'Columns',
+  showAllColumns: 'Show all',
+  table: 'Table',
+  barChart: 'Bar Chart',
+  horizontalBarChart: 'Horizontal Bar',
+  lineChart: 'Line Chart',
+  areaChart: 'Area Chart',
+  scatterChart: 'Scatter Plot',
+  radarChart: 'Radar Chart',
+  polarAreaChart: 'Polar Area',
+  pieChart: 'Pie Chart',
+  doughnutChart: 'Doughnut Chart',
+  tableViewType: 'Table view type',
+  noDataForChart: 'No data to display in chart',
+  series: 'Series {index}',
+  chartViewTitle: 'Chart view',
+  chartFit: 'Fit',
+  chartZoom: 'Zoom',
+  copyChartImage: 'Copy as image',
+  saveChartPng: 'Save as image (.PNG)',
+  closeChartView: 'Close chart view',
+  chartSaveSuccess: 'Chart image saved.',
+  chartSaveFailed: 'Failed to save chart image.',
+  video: 'Video',
+  openVideo: 'Open video',
+  youtubeVideo: 'YouTube video',
+  watchOnYouTube: 'Watch on YouTube',
+};
 
 export function formatUiLabel(template: string, values: Record<string, string | number>): string {
   return Object.entries(values).reduce(
