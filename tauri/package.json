@@ -1,6 +1,6 @@
 {
   "name": "@the-long-ride/markdown-explorer-tauri",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "private": true,
   "scripts": {
     "dev": "node scripts/run-with-global-cache.mjs dev",

@@ -6,6 +6,10 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ## [Unreleased]
 
+---
+
+## [v1.6.6] — 2026-08-24
+
 ### Added
 - **Export Center & Feature-Driven Offline Export Runtime**: Added an all-in-one Export Center supporting **HTML**, **Static Website (ZIP)**, and client-side hybrid **PDF** generation across Electron, Tauri, VS Code, Chromium extension, and Web runtimes.
   - **Source Scopes**: Export the *Current document*, *Selected files* (with instant search filtering and multi-select checkboxes), a *Folder*, or the *Whole workspace*.

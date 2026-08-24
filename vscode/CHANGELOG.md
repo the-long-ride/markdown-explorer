@@ -6,6 +6,10 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ## [Unreleased]
 
+---
+
+## [v1.6.6] — 2026-08-24
+
 ### Added
 - **Export Center & Feature-Driven Offline Export**: Integrated full Export Center modal supporting **HTML**, **Static Website (ZIP)**, and client-side hybrid **PDF** generation.
   - **Source Scopes**: Export Current Document, Selected Files (with search filtering & checkboxes), Folder, or Whole Workspace with automatic referenced asset resolution via `panelExportResources.ts` (`readWorkspaceExportResource`).
