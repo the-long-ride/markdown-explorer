@@ -1,3 +1,18 @@
+function configureApplicationMenu({ MenuImpl, platform } = {}) {
+  if (platform !== "darwin") {
+    MenuImpl.setApplicationMenu(null);
+    return null;
+  }
+
+  const menu = MenuImpl.buildFromTemplate([
+    { role: "appMenu" },
+    { role: "editMenu" },
+    { role: "windowMenu" },
+  ]);
+  MenuImpl.setApplicationMenu(menu);
+  return menu;
+}
+
 function createAppBootstrap({
   appImpl,
   BrowserWindowImpl,
@@ -5,6 +20,7 @@ function createAppBootstrap({
   MenuImpl,
   pathImpl,
   fsImpl,
+  dialogImpl,
   perfImpl,
   processImpl,
   setTimeoutImpl,
@@ -26,6 +42,8 @@ function createAppBootstrap({
   clipboardImpl = require("electron").clipboard,
   shellImpl = require("electron").shell,
   createHtmlPreviewServerFn = require("./html-preview-server").createHtmlPreviewServer,
+  createExportResourceHandlersFn = require("./runtime-export-resources").createExportResourceHandlers,
+  createExportSaveHandlerFn = require("./runtime-export-save").createExportSaveHandler,
   externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
@@ -43,6 +61,34 @@ function createAppBootstrap({
     return mainWindowRef;
   }
 
+  function getWorkspaceBaseDir() {
+    const workspacePath = runtimeImpl.state?.workspacePath;
+    if (!workspacePath || !fsImpl.existsSync(workspacePath)) return null;
+    try {
+      return fsImpl.statSync(workspacePath).isFile() ? pathImpl.dirname(workspacePath) : workspacePath;
+    } catch {
+      return null;
+    }
+  }
+
+  const sendHostMessage = (message) => {
+    mainWindowRef?.webContents.send("host-message", message);
+  };
+
+  const exportResourceHandlers = createExportResourceHandlersFn({
+    fs: fsImpl,
+    pathApi: pathImpl,
+    sendHostMessage,
+    getWorkspaceBaseDir,
+  });
+  const saveExportFile = createExportSaveHandlerFn({
+    dialog: dialogImpl,
+    fs: fsImpl,
+    pathApi: pathImpl,
+    getMainWindow,
+    sendHostMessage,
+  });
+
   function getUpdateManager() {
     return updateManagerRef;
   }
@@ -52,16 +98,23 @@ function createAppBootstrap({
     deliverExternalOpenPath(externalOpenQueue?.take());
   }
 
-  function deliverExternalOpenPath(externalPath) {
-    if (externalPath) {
+  function deliverExternalOpenPath(externalRequest) {
+    if (!externalRequest) return;
+    if (typeof externalRequest === 'string') {
       mainWindowRef?.webContents.send('host-message', {
         command: 'externalOpenPath',
-        path: externalPath,
+        path: externalRequest,
       });
+      return;
     }
+    mainWindowRef?.webContents.send('host-message', {
+      command: 'externalOpenRequest',
+      request: externalRequest,
+    });
   }
 
   appImpl.whenReady().then(() => {
+    configureApplicationMenu({ MenuImpl, platform: processImpl.platform });
     perfImpl.mark("electron:ready");
     perfImpl.measure("main require to electron ready", "main:required", "electron:ready");
     configureYouTubeEmbedHeadersFn(sessionImpl);
@@ -141,6 +194,8 @@ function createAppBootstrap({
           scheduleDownloadedUpdate: runtimeImpl.handleScheduleDownloadedUpdate,
           restartAndApplyUpdate: runtimeImpl.handleRestartAndApplyUpdate,
           readWorkspaceTextResource: runtimeImpl.readWorkspaceTextResource,
+          readWorkspaceExportResource: exportResourceHandlers.readWorkspaceExportResource,
+          saveExportFile,
           openHtmlPreview: (documentHtml) => htmlPreviewServer.open(
             documentHtml,
             (url) => shellImpl.openExternal(url),
@@ -168,4 +223,4 @@ function createAppBootstrap({
   return { createWindow, getMainWindow, getUpdateManager, deliverExternalOpenPath };
 }
 
-module.exports = { createAppBootstrap };
+module.exports = { createAppBootstrap, configureApplicationMenu };

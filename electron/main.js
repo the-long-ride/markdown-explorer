@@ -196,6 +196,7 @@ const bootstrap = createAppBootstrap({
   MenuImpl: Menu,
   pathImpl: path,
   fsImpl: fs,
+  dialogImpl: dialog,
   perfImpl: perf,
   processImpl: process,
   setTimeoutImpl: setTimeout,

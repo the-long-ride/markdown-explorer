@@ -91,6 +91,12 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "readWorkspaceTextResource":
         handlers.readWorkspaceTextResource(msg);
         break;
+      case "readWorkspaceExportResource":
+        handlers.readWorkspaceExportResource(msg);
+        break;
+      case "saveExportFile":
+        await handlers.saveExportFile(msg);
+        break;
       case "openHtmlPreview":
         if (typeof msg.documentHtml === "string" && msg.documentHtml.trim()) {
           await handlers.openHtmlPreview(msg.documentHtml);

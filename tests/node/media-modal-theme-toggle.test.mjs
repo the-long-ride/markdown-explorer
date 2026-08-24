@@ -135,5 +135,8 @@ test('mermaidRenderToSvg uses off-DOM render with a scratch node and does not mu
   assert.match(source, /doc\.body\.appendChild\(host\)/, 'helper must append the host to doc.body so mermaid has measurement context');
   assert.match(source, /try\s*\{[^]*?finally\s*\{[^]*?host\.remove\(\)/, 'helper must remove the host in a `finally` block so it is cleaned up even when mermaid.run rejects');
   assert.match(source, /host\.style\.position\s*=\s*['"]absolute['"]/, 'host must be positioned off-screen so it is never painted');
-  assert.match(source, /host\.style\.visibility\s*=\s*['"]hidden['"]/, 'host must be invisible so the user never sees the scratch render');
+  // visibility:hidden breaks dagre's edge-label measurement (translate(undefined,
+  // NaN)); the host is parked at left:-9999px instead and stays visible.
+  assert.match(source, /host\.style\.left\s*=\s*['"]-9999px['"]/, 'host must be parked off-screen so the user never sees the scratch render');
+  assert.doesNotMatch(source, /host\.style\.visibility\s*=\s*['"]hidden['"]/, 'host must stay visible: hidden subtrees break mermaid label measurements');
 });

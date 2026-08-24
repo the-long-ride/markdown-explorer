@@ -25,6 +25,8 @@ function approvedManagedUrl(value?: string) {
   try {
     const parsed = new URL(value);
     if (parsed.protocol === 'file:' || parsed.protocol === 'local-file:' || parsed.protocol === 'vscode-resource:' || parsed.protocol === 'vscode-webview-resource:' || parsed.protocol === 'blob:') return value;
+    // Tauri on Windows serves the local-file protocol via the .localhost transport.
+    if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname.toLowerCase() === 'local-file.localhost') return value;
     if (parsed.protocol === 'https:' && /(?:^|\.)vscode-resource\.vscode-cdn\.net$/i.test(parsed.hostname)) return value;
     return undefined;
   } catch {

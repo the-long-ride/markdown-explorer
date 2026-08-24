@@ -80,13 +80,16 @@ export async function renderMermaidToSvg(args: RenderMermaidToSvgArgs): Promise<
   const host = doc.createElement('div');
   host.setAttribute('aria-hidden', 'true');
   host.style.position = 'absolute';
+  // Parked off-screen but NOT visibility:hidden: dagre/mermaid measure edge
+  // labels through layout APIs while rendering, and a hidden subtree can yield
+  // undefined label sizes → "translate(undefined, NaN)" transform errors.
+  // Off-screen positioning alone keeps it invisible to the user.
   host.style.left = '-9999px';
   host.style.top = '0';
   host.style.width = `${doc.documentElement?.clientWidth || 1024}px`;
   host.style.height = '0';
   host.style.overflow = 'visible';
   host.style.pointerEvents = 'none';
-  host.style.visibility = 'hidden';
   host.appendChild(scratchNode);
   doc.body.appendChild(host);
 

@@ -44,6 +44,11 @@ export interface RecentWorkspacesChangedMessage {
 
 export interface WindowStateChangedMessage { readonly command: 'window-state-changed'; readonly isMaximized: boolean; }
 export interface FullscreenStateChangedMessage { readonly command: 'fullscreenChanged'; readonly isFullscreen: boolean; }
+export type ExternalOpenRequest =
+  | { readonly mode: 'file'; readonly filePath: string }
+  | { readonly mode: 'folder'; readonly folderPath: string }
+  | { readonly mode: 'file-with-parent-workspace'; readonly filePath: string; readonly folderPath: string };
+export interface ExternalOpenRequestMessage { readonly command: 'externalOpenRequest'; readonly request: ExternalOpenRequest; }
 export interface ExternalOpenPathMessage { readonly command: 'externalOpenPath'; readonly path: string; }
 
 export interface CrossTabSearchResult {
@@ -148,6 +153,23 @@ export interface WorkspaceTextResourceResultMessage {
   readonly reason?: 'outside-workspace' | 'missing' | 'unreadable' | 'unsupported';
 }
 
+export type ExportWorkspaceResourceHostFailureReason =
+  | 'outside-workspace'
+  | 'missing'
+  | 'unreadable'
+  | 'unsupported'
+  | 'too-large';
+
+export interface WorkspaceExportResourceResultMessage {
+  readonly command: 'workspaceExportResourceResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly relativePath?: string;
+  readonly mimeType?: string;
+  readonly dataBase64?: string;
+  readonly reason?: ExportWorkspaceResourceHostFailureReason;
+}
+
 export interface ChartPngSaveResultMessage {
   readonly command: 'chartPngSaveResult';
   readonly ok: boolean;
@@ -161,6 +183,7 @@ export type HostMessage =
   | CurrentFileChangedMessage | RecentWorkspacesChangedMessage | NavNotFoundMessage
   | WorkspaceUnavailableMessage | SetLoadingMessage | WorkspaceScanProgressMessage
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
-  | FullscreenStateChangedMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
+  | FullscreenStateChangedMessage | ExternalOpenRequestMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
-  | WorkspaceTextResourceResultMessage | DesktopFontsResultMessage | ChartPngSaveResultMessage;
+  | WorkspaceTextResourceResultMessage | WorkspaceExportResourceResultMessage
+  | DesktopFontsResultMessage | ChartPngSaveResultMessage;

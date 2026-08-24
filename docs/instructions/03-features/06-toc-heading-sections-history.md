@@ -37,7 +37,7 @@ Define generated TOC behavior, active-heading tracking, section collapse/expand,
 | TOC generation | Use render payload heading entries. | Document outline is available. |
 | Active heading | Track scroll position and highlight current section. | Reader knows location. |
 | Section collapse | Hide/reveal a heading section without losing targetability. | Long documents become manageable. |
-| History | Record logical document/fragment transitions. | Back/Forward works. |
+| History | Record logical document/fragment transitions with keyboard (`Ctrl+Left`/`Right`, `Alt+Left`/`Right`, `BrowserBack`/`Forward`), hardware mouse (buttons 3/4), and header navigation controls. | Back/Forward works predictably. |
 | Global collapse/expand | Apply action across document sections. | Reader controls density quickly. |
 
 ## Interaction and processing flow

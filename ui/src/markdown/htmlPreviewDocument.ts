@@ -62,30 +62,49 @@ export function buildHtmlPreviewDocument(
   try { Object.defineProperty(navigator, 'sendBeacon', { configurable: false, writable: false, value: blocked('sendBeacon') }); } catch (_) {}
 })();
 </script>`;
-  const resizeScript = target === 'inline' && options.iframeId
+  const iframeId = options.iframeId ? JSON.stringify(options.iframeId) : null;
+  const resizeScript = target === 'inline' && iframeId
     ? `<script data-mdn-inline-resize>
-  (function() {
-    function sendHeight() {
-      window.parent.postMessage({
-        type: 'resize-iframe',
-        id: '${options.iframeId}',
-        height: document.documentElement.scrollHeight || document.body.scrollHeight
-      }, '*');
-    }
-    window.addEventListener('load', sendHeight);
-    window.addEventListener('DOMContentLoaded', sendHeight);
-    let lastHeight = 0;
-    setInterval(function() {
-      const currentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-      if (currentHeight !== lastHeight) {
-        lastHeight = currentHeight;
-        sendHeight();
-      }
-    }, 100);
-    window.addEventListener('message', function(event) {
-      if (event.data && event.data.type === 'recalculate-height') sendHeight();
-    });
-  })();
+(function () {
+  const iframeId = ${iframeId};
+  let framePending = false;
+  function measureHeight() {
+    const root = document.documentElement;
+    const body = document.body;
+    return Math.ceil(Math.max(
+      root ? root.scrollHeight : 0,
+      root ? root.offsetHeight : 0,
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0
+    ));
+  }
+  function sendHeight() {
+    framePending = false;
+    const height = measureHeight();
+    if (!Number.isFinite(height) || height <= 0) return;
+    window.parent.postMessage({ type: 'resize-iframe', id: iframeId, height: height }, '*');
+  }
+  function scheduleHeight() {
+    if (framePending) return;
+    framePending = true;
+    requestAnimationFrame(sendHeight);
+  }
+  window.addEventListener('load', scheduleHeight);
+  window.addEventListener('DOMContentLoaded', scheduleHeight);
+  if (typeof ResizeObserver === 'function') {
+    const resizeObserver = new ResizeObserver(scheduleHeight);
+    resizeObserver.observe(document.documentElement);
+    if (document.body) resizeObserver.observe(document.body);
+  }
+  if (typeof MutationObserver === 'function') {
+    const mutationObserver = new MutationObserver(scheduleHeight);
+    mutationObserver.observe(document.documentElement, { childList: true, subtree: true, attributes: true, characterData: true });
+  }
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'recalculate-height') scheduleHeight();
+  });
+  scheduleHeight();
+})();
 </script>`
     : '';
 

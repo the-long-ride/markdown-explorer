@@ -4,6 +4,43 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Export Center & Feature-Driven Offline Export Runtime**: Added an all-in-one Export Center supporting **HTML**, **Static Website (ZIP)**, and client-side hybrid **PDF** generation across Electron, Tauri, VS Code, Chromium extension, and Web runtimes.
+  - **Source Scopes**: Export the *Current document*, *Selected files* (with instant search filtering and multi-select checkboxes), a *Folder*, or the *Whole workspace*.
+  - **Flexible Layouts**: Choose between clean **Document-only** layout or **Full Explorer** interactive viewport shell (including responsive sidebar tree, search, breadcrumbs, TOC, and theme switcher).
+  - **Batch Modes**: Export as separate standalone files or merge multiple documents into a single document with collision-safe headings and anchor rewriting.
+  - **Offline Local Runtimes**: Zero external CDN dependencies; exports package isolated local runtime bundles for core interactions, sandboxed HTML iframe previews with automatic height synchronization, media modal inspection, table filtering/sorting, and interactive Chart.js visualizations.
+  - **Hybrid PDF Composition**: Client-side PDF generation via `pdfmake` keeping textual content semantic, selectable, and searchable while capturing complex visual blocks (Mermaid diagrams, charts, and math) as high-resolution vector SVGs or raster images without opening the system print dialog.
+- **Scope View Modal**: Non-navigating workspace document snapshot preview modal for deep inspection of linked documents without losing active editor or content tab position.
+  - **Isolated Navigation History**: Dedicated 10-step history stack (`MAX_SCOPE_DEPTH=10`) with animated depth segment indicators, Prev/Next navigation, and a maximum-depth guard.
+  - **Open File Affordance**: Header features a dedicated **Open file** button (`OpenFileIcon`, 13px geometric precision external-open SVG) that navigates the main workspace to the previewed document via `navigate` and closes the modal.
+  - **Link Context Menu**: Right-click any document link and select **Open as scope** to inspect the document immediately in Scope View.
+  - **Full Interaction Parity**: Supports keyboard navigation (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`, `Escape`) and hardware mouse navigation (buttons 3 and 4).
+- **Universal Hardware & Browser Back/Forward Navigation**:
+  - Expanded `mouseHistoryNavigation` utility handling all DOM mouse delivery variants (`mousedown`, `pointerdown`, `mouseup`, `pointerup`, `auxclick`) with 40ms burst deduplication.
+  - Logitech and hardware mouse back/forward buttons (Mouse Buttons 3 and 4) work seamlessly across both the main document viewer and the Scope View modal.
+  - Fallback `BrowserBack`/`BrowserForward` key handling and universal `Alt+ArrowLeft`/`Alt+ArrowRight` navigation support across all platforms.
+- **macOS Native Application Menu & Tray Normalization**:
+  - Restored standard macOS native application menu with AppKit Edit-role commands (Undo, Redo, Cut, Copy, Paste, Select All) while keeping Windows/Linux application menu suppressed.
+  - Normalized the macOS menu bar tray icon to a crisp 16×16 template `NativeImage` (`markdown-explorerTemplate.png`), preventing oversized/pixelated tray icons on macOS menu bars.
+- **Windows File Explorer Workspace Integration**: Structured `externalOpenRequest` host message supporting `file`, `folder`, and `file-with-parent-workspace` modes, enabling Windows Explorer "Open with Markdown Explorer" context menu actions to open files directly within their parent folder workspace.
+
+### Changed
+- **Export Center — Streamlined Document-First Export**: Removed the **Additional workspace files** panel and host-level `listWorkspaceExportResources` enumeration in favor of automatic referenced asset packaging via `readWorkspaceExportResource`.
+- **Export Center — Multi-Select Flex Fill Layout**: The selected-documents `export-multi-select` fills the remaining height of its parent container (`sources:has(.export-multi-select)` flex column, `multi-select` `flex:1; min-height:0`, `rows` `flex:1; min-height:0; overflow:auto`) with responsive fallbacks for mobile and short viewports.
+- **Scope View — Header Styling & Close Button Unified**: Header close `×` button unified with Settings modal (`settings-card__close`, 22px, `opacity: 0.6` → `1` with `scale(1.1)` hover) with consistent header padding (`6px 24px 6px 10px`).
+- **Mermaid Lifecycle & Content Rendering Parity**: Clean separation of Content effects and Mermaid rendering lifecycle with offscreen scratch container attached to `document.body` during `mermaid.run()`, ensuring accurate dimensions for all diagram types.
+
+### Fixed
+- **Logitech & Hardware Mouse Navigation**: Fixed mouse back/forward buttons (buttons 3 and 4) failing to navigate history or triggering duplicate navigations across DOM event streams.
+- **macOS Edit Shortcuts & Clipboard Actions**: Fixed missing Edit menu shortcuts (Cmd+C, Cmd+V, Cmd+X, Cmd+A, Cmd+Z) on macOS Electron desktop (GitHub issue #42).
+- **macOS Menu Bar Tray Icon Scaling**: Fixed oversized tray icon on macOS menu bars by providing normalized 16×16 template images (GitHub issue #43).
+- **Mermaid Layout-Sensitive Diagram Rendering**: Fixed degenerate/zero-dimension rendering on initial load for layout-sensitive Mermaid diagrams (sequence, packet, kanban, pie, quadrant, xychart, zenuml, sankey).
+
+---
+
 ## [v1.6.5] — 2026-08-18
 
 ### Added

@@ -42,7 +42,8 @@ export interface PlatformBridge {
 
 - Every cross-boundary message has a literal `command` discriminant.
 - Workspace messages may carry `workspaceOperationId` and `workspaceTabId`.
-- Search/resource operations carry `requestId` and ignore mismatched responses.
+- Search/resource/export operations carry `requestId` and ignore mismatched responses.
+- Structured external open launches arrive via `externalOpenRequest` carrying target file/folder details.
 - UI state persistence is adapter-owned through `getState` and `setState`.
 - Clipboard behavior prefers host APIs and must report failure where relevant.
 - Unknown commands are ignored or rejected safely; they never execute arbitrary host operations.

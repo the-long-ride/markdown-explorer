@@ -113,7 +113,15 @@ mod server {
         request: http::Request<Vec<u8>>,
     ) -> http::Response<Vec<u8>> {
         let uri_str = request.uri().to_string();
-        let path_str = uri_str.strip_prefix("local-file://").unwrap_or("");
+        // Accept every transport form the webviews produce for this protocol:
+        // - `local-file://<path>` (macOS/Linux, and the historical JS shim form)
+        // - `http(s)://local-file.localhost/<path>` (WebView2 on Windows rewrites
+        //   custom schemes to the .localhost transport before they reach us)
+        let path_str = uri_str
+            .strip_prefix("local-file://")
+            .or_else(|| uri_str.strip_prefix("http://local-file.localhost/"))
+            .or_else(|| uri_str.strip_prefix("https://local-file.localhost/"))
+            .unwrap_or("");
 
         let decoded_path = urlencoding::decode(path_str).unwrap_or_else(|_| path_str.into());
         let decoded_path = strip_query_fragment(decoded_path.as_ref());

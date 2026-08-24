@@ -16,6 +16,8 @@ import {
 import { TooltipButton } from "./TooltipButton";
 import { SwitchButton } from "./SwitchButton";
 
+export const EXPORT_CENTER_OPEN_EVENT = 'mdn-export-center-open';
+
 interface ToolbarActionMenuProps {
   triggerTooltip: string;
   triggerAlign?: "left" | "right";
@@ -23,10 +25,12 @@ interface ToolbarActionMenuProps {
   themeLabel: string;
   editLabel: string;
   settingsLabel: string;
+  exportLabel?: string;
   homeTooltip: string;
   themeTooltip: string;
   editTooltip: string;
   settingsTooltip: string;
+  exportTooltip?: string;
   homeShortcut?: string;
   themeShortcut?: string;
   editShortcut?: string;
@@ -39,6 +43,7 @@ interface ToolbarActionMenuProps {
   onTheme: () => void;
   onEdit: () => void;
   onSettings: () => void;
+  onExport?: () => void;
 
   sidebarLabel?: string;
   sidebarTooltip?: string;
@@ -89,6 +94,15 @@ function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
       return <FullscreenMenuIcon size={12} />;
     case "resetZoom":
       return <ResetZoomMenuIcon size={12} />;
+    case "export":
+      return (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 3v12" />
+          <path d="m8 11 4 4 4-4" />
+          <path d="M5 21h14a2 2 0 0 0 2-2v-3" />
+          <path d="M3 16v3a2 2 0 0 0 2 2" />
+        </svg>
+      );
     case "settings":
       return <SettingsIcon size={14} />;
     default:
@@ -103,10 +117,12 @@ export function ToolbarActionMenu({
   themeLabel,
   editLabel,
   settingsLabel,
+  exportLabel = "Export Center",
   homeTooltip,
   themeTooltip,
   editTooltip,
   settingsTooltip,
+  exportTooltip,
   homeShortcut,
   themeShortcut,
   editShortcut,
@@ -119,6 +135,7 @@ export function ToolbarActionMenu({
   onTheme,
   onEdit,
   onSettings,
+  onExport,
   sidebarLabel,
   sidebarTooltip,
   sidebarShortcut,
@@ -253,6 +270,13 @@ export function ToolbarActionMenu({
   }
 
   items.push({
+    id: "export",
+    label: exportLabel,
+    tooltip: exportTooltip || exportLabel,
+    disabled: false,
+  });
+
+  items.push({
     id: "settings",
     label: settingsLabel,
     tooltip: buildShortcutTooltip(settingsTooltip, settingsShortcut),
@@ -285,6 +309,10 @@ export function ToolbarActionMenu({
         return;
       case "resetZoom":
         onResetZoom?.();
+        return;
+      case "export":
+        if (onExport) onExport();
+        else window.dispatchEvent(new Event(EXPORT_CENTER_OPEN_EVENT));
         return;
       case "settings":
         onSettings();
@@ -365,4 +393,3 @@ export function ToolbarActionMenu({
     </div>
   );
 }
-

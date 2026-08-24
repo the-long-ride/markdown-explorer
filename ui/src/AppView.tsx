@@ -1,10 +1,12 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { TooltipButton } from "./components/shared/TooltipButton";
+import { EXPORT_CENTER_OPEN_EVENT } from "./components/shared/ToolbarActionMenu";
 import { DesktopTabBar } from "./components/Desktop/DesktopTabBar";
 import { ExitFocusIcon } from "./components/shared/icons";
 import { ScrollToTopButton } from "./components/shared/ScrollToTopButton";
 import { Topbar } from "./components/Topbar/Topbar";
 import { getEnabledShortcut } from "./utils/shortcuts";
+import { useModalRegionAnchor } from "./utils/useModalRegionAnchor";
 import { AvailableUpdateDialog } from "./components/Settings/AvailableUpdateDialog";
 
 const Sidebar = lazy(() => import("./components/Sidebar/Sidebar").then((m) => ({ default: m.Sidebar })));
@@ -17,12 +19,14 @@ const SearchOverlay = lazy(() => import("./components/Search/SearchOverlay").the
 const FindInFilePanel = lazy(() => import("./components/Search/FindInFilePanel").then((m) => ({ default: m.FindInFilePanel })));
 const MediaModal = lazy(() => import("./components/Modal/MediaModal").then((m) => ({ default: m.MediaModal })));
 const SettingsModal = lazy(() => import("./components/Settings/SettingsModal").then((m) => ({ default: m.SettingsModal })));
+const ExportCenterModal = lazy(() => import("./components/Export/ExportCenterModal").then((m) => ({ default: m.ExportCenterModal })));
 const ThemeOnboardingModal = lazy(() => import("./components/Modal/ThemeOnboardingModal").then((m) => ({ default: m.ThemeOnboardingModal })));
 const SwitchWorkspaceModal = lazy(() => import("./components/Modal/SwitchWorkspaceModal").then((m) => ({ default: m.SwitchWorkspaceModal })));
 const WorkspaceSelectionConfirmModal = lazy(() => import("./components/Modal/WorkspaceSelectionConfirmModal").then((m) => ({ default: m.WorkspaceSelectionConfirmModal })));
 
 
 export function AppView(props: any) {
+  const [exportCenterOpen, setExportCenterOpen] = useState(false);
   const {
     isTabView,
     sidebarCursorMode,
@@ -96,6 +100,14 @@ export function AppView(props: any) {
   isDragging,
   onImageClick
   } = props;
+
+  useEffect(() => {
+    const openExportCenter = () => setExportCenterOpen(true);
+    window.addEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
+    return () => window.removeEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
+  }, []);
+
+  useModalRegionAnchor();
 
   return (
     <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.appRuntime === 'tauri' ? ' app--tauri' : ''}${isFullscreen ? ' app--fullscreen' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
@@ -182,6 +194,7 @@ export function AppView(props: any) {
           {!isTabView && (
             <Topbar
               onSettingsOpen={() => setSettingsOpen(true)}
+              onExportOpen={() => setExportCenterOpen(true)}
               onExpandAll={expandAll}
               onCollapseAll={collapseAll}
               onCopyFile={copyCurrentFileContent}
@@ -211,7 +224,6 @@ export function AppView(props: any) {
                   onCancelWorkspaceScan={isTabView ? cancelCurrentWorkspaceScan : undefined}
                   onOpenWorkspaceAgain={reopenUnavailableWorkspace}
                 />
-                {/* Scroll to top button */}
                 <ScrollToTopButton
                   scrollRef={scrollRef}
                   observeKey={state.workspaceName}
@@ -231,7 +243,6 @@ export function AppView(props: any) {
         </>
       )}
 
-      {/* Overlays — lazy-loaded components, Suspense fallback is a no-op (invisible when closed) */}
       <Suspense fallback={null}>
       <SearchOverlay
         isOpen={searchOpen}
@@ -256,6 +267,7 @@ export function AppView(props: any) {
         shortcutLabel={findShortcutLabel}
       />
       <MediaModal gallery={mediaGallery} onClose={() => setMediaGallery(null)} />
+      <ExportCenterModal isOpen={exportCenterOpen} onClose={() => setExportCenterOpen(false)} />
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}

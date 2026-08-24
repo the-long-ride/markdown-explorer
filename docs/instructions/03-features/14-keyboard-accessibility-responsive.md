@@ -70,6 +70,13 @@ Do not intercept keystrokes owned by editable controls. Reject `Ctrl+Space` cust
 
 The Media Modal mutes global shortcuts so navigation and zoom bindings inside the modal do not collide with document-level actions. One exception: `toggleTheme` fires through the modal gate so users can flip light/dark mode while inspecting an image or Mermaid SVG. The matcher is lifted above `isModalOpen` in `resolveKeyboardAction`; all other global shortcuts remain muted while the modal is open. The terms dialog still captures the same shortcut (the matcher sits below `isTermsOpen`), so the lift is scoped strictly to the media modal.
 
+### Scope View modal navigation & mouse navigation
+
+The Scope View modal traps focus and isolates navigation within its bounded 10-step history stack:
+- Keyboard shortcuts `Alt+Left`/`Alt+Right` and `BrowserBack`/`BrowserForward` navigate the modal's history stack.
+- Hardware mouse back/forward buttons (mouse buttons 3 and 4) navigate the scope stack when the modal is active, and document history when closed.
+- `Escape` dismisses the modal and restores focus.
+
 
 ## States and failure behavior
 

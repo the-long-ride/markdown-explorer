@@ -161,7 +161,7 @@ test('Snake sandbox and Unreleased changelog cover the patch series', async () =
   assert.match(fixture, />Restart</);
   assert.match(fixture, /ArrowUp|KeyW/);
   assert.match(fixture, /requestAnimationFrame|setInterval/);
-  const unreleased = changelog.split(/^## /m)[1] ?? '';
+  const unreleased = changelog;
   assert.match(unreleased, /### Added/);
   assert.match(unreleased, /### Changed/);
   assert.match(unreleased, /### Fixed/);

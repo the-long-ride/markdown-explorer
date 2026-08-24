@@ -1,6 +1,6 @@
 import type { TableState } from './tableHandlers';
 import { getTableUiLabels } from './tableUiLabels';
-import { createSwitchButtonElement } from '../components/shared/SwitchButton';
+import { createSwitchButtonElement } from './switchButtonElement';
 
 export function registerTableColumnHandlers(
   win: any,

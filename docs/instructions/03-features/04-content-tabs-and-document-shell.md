@@ -16,10 +16,19 @@ source_scope:
 - ui/src/components/shared/HeaderActionGroups.tsx
 - ui/src/components/Content/useContentScrollMemory.ts
 - ui/src/contexts/contentTabState.ts
+- ui/src/components/Modal/ScopeViewModal.tsx
+- ui/src/components/shared/icons.tsx
+- ui/src/styles/global/global-scope-view.css
+- ui/src/contexts/exportScopeTranslations.ts
+- ui/src/components/Export/ExportCenterModal.tsx
+- ui/src/components/Export/ExportMultiSelect.tsx
+- ui/src/styles/global/global-export-center.css
 test_scope:
 - tests/unit/ui/components/content-tabs-deep.test.tsx
 - tests/unit/ui/components/content-render.test.tsx
 - tests/node/content-tab-close-events.test.mjs
+- tests/unit/ui/components/scope-view-modal.test.tsx
+- tests/unit/ui/components/export-source-controls.test.tsx
 runtime_scope:
 - all
 - electron
@@ -93,6 +102,18 @@ On close or workspace disposal, remove scroll records, chart instances, media li
 | All | Shared content shell. |
 | Electron | Additional close-tab shortcuts. |
 | VS Code | Open in editor is prominent. |
+
+## Scope View modal
+
+- View any workspace document in an isolated modal (`ScopeViewModal`, `.scope-view__card` `1080×680` modal, header `40px` grid `auto 1fr auto auto`).
+- Header shows **Previous / Next** scope navigation (history stack `MAX_SCOPE_DEPTH=10`, depth segments), **Open file** (`OpenFileIcon` 509×511.54) to the right of navigation that `postMessage({command:'navigate', path: current.file.fsPath})` and closes the modal, file identity (`title — relativePath`), depth indicator, and **Close** (`settings-card__close` 22px, `opacity:.6` → `1`/`scale(1.1)` on hover, header `padding 6px 24px 6px 10px`).
+- `exportScopeTranslations.scopeView.openFile` ("Open file") localized in 9 locales.
+- Supports mouse Back/Forward (`attachMouseHistoryNavigation`), keyboard `Alt+Left/Right` / `back`/`forward` shortcuts, and maximum-depth guard (`Maximum scope depth reached`).
+
+## Export Center
+
+- Modal `Export Center` offers **Source** (`current/selected/folder/workspace`), **Format** (`html/pdf/site`), **Layout** (`document/explorer`), **Batch mode** (`separate/merged`). The **Additional workspace files** selector and `listWorkspaceExportResources` / `workspaceExportResourcesResult` enumeration were removed; export is document-only with automatic referenced-asset packaging via `readWorkspaceExportResource`.
+- **Selected documents** list uses `ExportMultiSelect` (`export-multi-select`) which now fills the remaining height of its parent (`sources:has(multi-select)` flex column, `multi-select` `display:flex; flex:1; min-height:0`, `rows` `flex:1; min-height:0; overflow:auto`). Responsive fallbacks keep `max-height:260px` on mobile and `120px` when viewport height < 650px.
 
 ## Non-functional requirements
 

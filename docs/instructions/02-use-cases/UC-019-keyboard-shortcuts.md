@@ -87,6 +87,9 @@ flowchart LR
 - Shortcut matching is case/ordering normalized.
 - Do not consume typing inside editable controls unless action is intended.
 - Host/browser safety keys remain protected; non-desktop runtimes retain native zoom shortcuts.
+- Universal hardware mouse navigation: Mouse buttons 3 and 4 (Logitech and standard hardware mice) trigger `back` and `forward` navigation through `attachMouseHistoryNavigation` with 40 ms burst deduplication.
+- Fallback navigation keys: `Alt+ArrowLeft`/`Alt+ArrowRight` and `BrowserBack`/`BrowserForward` provide fallback history navigation across all views and modals.
+- Scope View modal captures `Escape` to dismiss, `Alt+Left`/`Alt+Right` and `BrowserBack`/`BrowserForward` to navigate scope history, and mouse buttons 3/4 for back/forward.
 - Search in shortcut settings matches action labels and bindings.
 - All shortcuts rendered in tooltips, Settings Modal, and Welcome Page (Tips & Practices) display as styled 3D keycaps (`<ShortcutKeycaps size="sm">`) with lowered view angle perspective.
 - Keycaps dynamically inherit active theme tokens (`--bg-e`, `--bg-s`, `--accent`, `--bd-x`, `--bd-s`) and border radius (`border-radius: clamp(0px, var(--r, 6px), 10px)`).

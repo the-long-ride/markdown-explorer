@@ -299,6 +299,30 @@ describe('useKeyboard hook integration', () => {
     expect(mockForward).not.toHaveBeenCalled();
   });
 
+  it('calls back on BrowserBack key regardless of configured shortcut', () => {
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'BrowserBack' });
+    expect(mockBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls forward on BrowserForward key', () => {
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'BrowserForward' });
+    expect(mockForward).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls back on Alt+ArrowLeft as universal Logitech fallback', () => {
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'ArrowLeft', altKey: true });
+    expect(mockBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls forward on Alt+ArrowRight as universal fallback', () => {
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'ArrowRight', altKey: true });
+    expect(mockForward).toHaveBeenCalledTimes(1);
+  });
+
   it('dispatches zoom-in on pinching (ctrl+wheel up)', () => {
     (window as any).electronAPI = {};
     renderHook(() => useKeyboard(defaultProps));

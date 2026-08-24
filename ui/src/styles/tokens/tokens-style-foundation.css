@@ -1,6 +1,7 @@
 /* Visual theme styles: common rhythm overrides */
 [data-theme-style="glass"] {
   --topbar-h: 50px;
+  --app-header-offset: 8px; /* Header floats with margin-top: 8px. */
   --topbar-gap: 12px;
   --topbar-pad-x: 16px;
   --control-h: 30px;
@@ -25,6 +26,7 @@
 
 [data-theme-style="bento"] {
   --topbar-h: 48px;
+  --app-header-offset: 10px;
   --topbar-gap: 8px;
   --topbar-pad-x: 14px;
   --control-h: 28px;
@@ -191,6 +193,7 @@
 
 [data-theme-style="vercel"] {
   --topbar-h: 44px;
+  --app-header-offset: 8px; /* Header floats with margin-top: 8px. */
   --topbar-gap: 8px;
   --topbar-pad-x: 12px;
   --control-h: 26px;

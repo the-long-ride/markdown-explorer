@@ -16,6 +16,9 @@ source_scope:
 - ui/src/contexts/welcomeTranslations.ts
 - ui/src/contexts/userManualTranslations.ts
 - ui/src/contexts/translationTypes.ts
+- ui/src/contexts/exportScopeTranslations.ts
+- ui/src/components/Modal/ScopeViewModal.tsx
+- ui/src/components/Export/ExportCenterModal.tsx
 test_scope:
 - tests/unit/ui/contexts/translations.test.ts
 - tests/unit/ui/contexts/search-translations.test.ts
@@ -24,6 +27,8 @@ test_scope:
 - tests/node/bookmarks.test.mjs
 - tests/node/user-manual-home.test.mjs
 - tests/node/localization-settings-doc-sync-contract.test.mjs
+- tests/unit/ui/components/scope-view-modal.test.tsx
+- tests/contracts/translations-coverage.test.ts
 runtime_scope:
 - shared
 keywords:
@@ -57,6 +62,7 @@ keywords:
 - The `bookmarks` domain covers **Enable Bookmark feature**, tab/count, search/sort/group controls, icon tooltips, selection/batch-delete actions, add/edit dialogs, object/link capture, empty states, target-changed notices, and verified-operation feedback across all nine locales. Required feedback keys are `savedSuccess`, `saveFailed`, `renamedSuccess`, `renameFailed`, and `storageUnavailable`.
 - `userManualTranslations.ts` supplies the searchable User Manual sections, task cards, direct actions, no-results state, and bookmark guidance for all nine locales.
 - Sidebar pinning, sorting, and maximum pinned items preference keys (`maxPinnedItems`, `maxPinnedItemsDesc`, `clearPinnedItems`, `sortFiles`, `sortNameAsc`, `sortNameDesc`, `sortModifiedDesc`, `sortModifiedAsc`, `pinThisFile`, `pinThisFolder`, `unpinItem`, `pinned`) are strictly typed as non-optional in `translationTypes.ts` and fully translated across all 9 supported locales.
+- `exportScopeTranslations.ts` provides the `exportCenter` (`title`, `description`, `close`, `export`, `exporting`, `source` with `region/title/mode/current/selected/folder/workspace/noCurrent/documentsToExport/searchDocuments/folderToExport/searchFolders/documentCount/renderableCount/selectAll/unselectAll/noMatches/includeFile`, `options` with `format/htmlDescription/pdfDescription/staticWebsite/.../batchOutput/separateOutputs/mergedOutput/documentsSelected/activity/...`, `status` with `unableCreate/selectAtLeastOne/cancelled/partial/failedCount/complete/failed`) and `scopeView` (`dialogLabel`, `previous`, `next`, `level`, `close`, `loading`, `maximumDepth`, `unableOpen`, `outsideWorkspace`, `linkMenu`, `openInBrowser`, `copyLink`, `openAsScope`, `openFile`) domains for all nine locales. `openFile` ("Open file") is the Scope View header action that navigates the main workspace to the currently viewed scope file and closes the modal. The Export Center no longer exposes an "Additional workspace files" selector; the `extras` domain and its `listWorkspaceExportResources` enumeration were removed.
 - Welcome tips use a dedicated translation model/fallback.
 - OS-native picker/file manager wording may be supplied by host/OS.
 

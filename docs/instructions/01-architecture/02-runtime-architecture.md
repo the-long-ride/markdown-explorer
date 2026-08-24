@@ -45,17 +45,18 @@ The UI detects one bridge during startup and exposes it as `window.PlatformBridg
 ```mermaid
 flowchart TD
     App[React App] --> Contexts[State and Navigation Contexts]
-    Contexts --> Components[Workspace, Sidebar, Content, Search, Settings]
+    Contexts --> Components[Workspace, Sidebar, Content, Search, Settings, Export, ScopeModal]
     Components --> Bridge[PlatformBridge]
     Bridge --> Adapter[Runtime adapter]
     Adapter --> Handler[Host command handler]
-    Handler --> Service[Scanner, watcher, converter, search, updater]
+    Handler --> Service[Scanner, watcher, converter, search, updater, exportResources, exportSave]
 ```
 
 ## Parity model
 
 - Common commands and messages use identical discriminants.
 - Unsupported capabilities return safe behavior or remain hidden; they do not fake success.
+- Export runtime packages standalone offline bundles and interacts with host adapters via `readWorkspaceExportResource` and `saveExportFile`.
 - Runtime-specific features are documented in `04-runtimes`.
 - Contract tests prevent silent command drift.
 

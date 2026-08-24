@@ -92,6 +92,8 @@ The extension compiles shared/copied UI assets and packages according to `vscode
 | Implementation | `vscode/src/core/panelSearch.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelSearchPreview.ts` | Search document preview routing |
 | Implementation | `vscode/src/core/panelShell.ts` | Active behavior or contract |
+| Implementation | `vscode/src/core/panelExportResources.ts` | Export binary resource reading bridge |
+| Implementation | `vscode/src/core/panelExportSave.ts` | Export file saving bridge via VS Code save dialog |
 | Implementation | `vscode/src/core/panelWatch.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/panelWorkspaceResources.ts` | Active behavior or contract |
 | Implementation | `vscode/src/core/incrementalScan.ts` | Active behavior or contract |
@@ -99,11 +101,12 @@ The extension compiles shared/copied UI assets and packages according to `vscode
 | Implementation | `vscode/package.json` | Active behavior or contract |
 | Verification | `tests/unit/vscode/extension.test.ts` | Automated expectation |
 | Verification | `tests/unit/vscode/panel.test.ts` | Automated expectation |
+| Verification | `tests/unit/vscode/panel-export-resources.test.ts` | Export resource bridge tests |
+| Verification | `tests/unit/vscode/panel-export-save.test.ts` | Export save bridge tests |
 | Verification | `tests/node/vscode-font-service.test.mjs` | Managed VS Code font import/list/remove behavior |
 | Verification | `tests/node/focus-fonts-zoom-settings-followup-contract.test.mjs` | Runtime gating, resource bridge, Settings, focus, and zoom contracts |
 | Verification | `tests/unit/vscode/panelWatch.test.ts` | Automated expectation |
 | Verification | `tests/unit/vscode/documentConversion.test.ts` | Automated expectation |
-| Verification | `tests/unit/build/vscode-runtime-scripts.test.ts` | Automated expectation |
 
 ---
 
