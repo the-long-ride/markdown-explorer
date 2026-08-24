@@ -121,7 +121,7 @@ pub fn boot() {
                     .item(&edit_submenu)
                     .item(&window_submenu)
                     .build()?;
-                app.set_menu(Some(menu))?;
+                app.set_menu(menu)?;
             }
 
             let window =
