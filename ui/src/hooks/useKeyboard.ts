@@ -7,6 +7,8 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { useAppState } from '../contexts/AppStateContext';
 import { usePlatform } from '../contexts/PlatformContext';
 import { requestAnimatedContentTabClose } from '../components/Content/contentTabCloseEvents';
+import { getScopeNavigationStateSnapshot, requestScopeNavigation, useScopeNavigationState } from './useScopeNavigationState';
+import { attachMouseHistoryNavigation } from '../utils/mouseHistoryNavigation';
 
 interface UseKeyboardOptions {
   onSearchOpen: () => void;
@@ -42,6 +44,7 @@ interface UseKeyboardOptions {
 
 import {
   isEditableTarget,
+  matchesShortcut,
   resolveKeyboardAction,
 } from './keyboardUtils';
 
@@ -79,6 +82,7 @@ export function useKeyboard({
   onWorkspaceSelection,
 }: UseKeyboardOptions) {
   const { back, forward } = useNavigation();
+  useScopeNavigationState();
   const {
     state,
     toggleTheme,
@@ -108,11 +112,73 @@ export function useKeyboard({
   );
 
   useEffect(() => {
+    const routeBack = () => {
+      if (getScopeNavigationStateSnapshot().active) requestScopeNavigation('previous');
+      else back();
+    };
+    const routeForward = () => {
+      if (getScopeNavigationStateSnapshot().active) requestScopeNavigation('next');
+      else forward();
+    };
+
     const handler = (e: KeyboardEvent) => {
       if (!state.currentFile && e.key === 'F5') {
         e.preventDefault();
         e.stopPropagation();
         return;
+      }
+
+      // Logitech and many drivers emit BrowserBack/BrowserForward or Alt+Left/Right
+      // as universal browser navigation keys. Handle them independently of the
+      // configured shortcut so Logi mice always work.
+      const isBrowserBackFallback = e.key === 'BrowserBack'
+        || (e.altKey && e.key === 'ArrowLeft' && !e.ctrlKey && !e.metaKey && !e.shiftKey);
+      const isBrowserForwardFallback = e.key === 'BrowserForward'
+        || (e.altKey && e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey && !e.shiftKey);
+
+      // When terms screen is open history navigation is muted (mirrors mouse handler).
+      if (!isTermsOpen) {
+        if (getScopeNavigationStateSnapshot().active) {
+          if (isBrowserBackFallback) {
+            e.preventDefault();
+            requestScopeNavigation('previous');
+            return;
+          }
+          if (isBrowserForwardFallback) {
+            e.preventDefault();
+            requestScopeNavigation('next');
+            return;
+          }
+        }
+      }
+
+      // Scope View is itself a modal, so its configured history shortcuts must
+      // be routed before the normal modal shortcut gate suppresses globals.
+      if (getScopeNavigationStateSnapshot().active) {
+        if (matchesShortcut(e, keybindings.back)) {
+          e.preventDefault();
+          requestScopeNavigation('previous');
+          return;
+        }
+        if (matchesShortcut(e, keybindings.forward)) {
+          e.preventDefault();
+          requestScopeNavigation('next');
+          return;
+        }
+      }
+
+      // Universal fallback for non-scope navigation (scope-aware via routeBack/routeForward).
+      if (!isTermsOpen) {
+        if (isBrowserBackFallback) {
+          e.preventDefault();
+          routeBack();
+          return;
+        }
+        if (isBrowserForwardFallback) {
+          e.preventDefault();
+          routeForward();
+          return;
+        }
       }
 
       const action = resolveKeyboardAction(e, {
@@ -176,48 +242,33 @@ export function useKeyboard({
           onSettingsClose();
           break;
         case 'cross-tab-search-toggle':
-          if (isSearchOpen && activeSearchScope === 'all-tabs') {
-            onSearchClose();
-          } else {
-            onCrossTabSearchOpen?.();
-          }
+          if (isSearchOpen && activeSearchScope === 'all-tabs') onSearchClose();
+          else onCrossTabSearchOpen?.();
           break;
         case 'current-search-toggle':
-          if (isSearchOpen && activeSearchScope === 'current') {
-            onSearchClose();
-          } else {
-            onSearchOpen();
-          }
+          if (isSearchOpen && activeSearchScope === 'current') onSearchClose();
+          else onSearchOpen();
           break;
         case 'find-toggle':
-          if (isFindOpen && onFindClose) {
-            onFindClose();
-          } else {
-            onFindOpen?.();
-          }
+          if (isFindOpen && onFindClose) onFindClose();
+          else onFindOpen?.();
           break;
         case 'back':
-          back();
+          routeBack();
           break;
         case 'forward':
-          forward();
+          routeForward();
           break;
         case 'welcome':
-          if (onWelcome) {
-            onWelcome();
-          } else {
-            navigate(null);
-          }
+          if (onWelcome) onWelcome();
+          else navigate(null);
           break;
         case 'edit-current-document':
           openInEditor();
           break;
         case 'settings-toggle':
-          if (isSettingsOpen) {
-            onSettingsClose();
-          } else {
-            onSettingsOpen();
-          }
+          if (isSettingsOpen) onSettingsClose();
+          else onSettingsOpen();
           break;
         case 'toggle-theme':
           toggleTheme();
@@ -249,30 +300,22 @@ export function useKeyboard({
         case 'close-content-tab':
           if (state.activeContentTabPath) {
             const filePath = state.activeContentTabPath;
-            if (!requestAnimatedContentTabClose({ action: 'closeThisTab', filePath })) {
-              closeContentTab(filePath);
-            }
+            if (!requestAnimatedContentTabClose({ action: 'closeThisTab', filePath })) closeContentTab(filePath);
           }
           break;
         case 'close-all-content-tabs':
-          if (!requestAnimatedContentTabClose({ action: 'closeAllTabs' })) {
-            closeAllContentTabs();
-          }
+          if (!requestAnimatedContentTabClose({ action: 'closeAllTabs' })) closeAllContentTabs();
           break;
         case 'close-content-tabs-to-right':
           if (state.activeContentTabPath) {
             const filePath = state.activeContentTabPath;
-            if (!requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath })) {
-              closeContentTabsToRight(filePath);
-            }
+            if (!requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath })) closeContentTabsToRight(filePath);
           }
           break;
         case 'close-other-content-tabs':
           if (state.activeContentTabPath) {
             const filePath = state.activeContentTabPath;
-            if (!requestAnimatedContentTabClose({ action: 'closeOtherTabs', filePath })) {
-              closeOtherContentTabs(filePath);
-            }
+            if (!requestAnimatedContentTabClose({ action: 'closeOtherTabs', filePath })) closeOtherContentTabs(filePath);
           }
           break;
         case 'refresh':
@@ -294,41 +337,29 @@ export function useKeyboard({
       }
     };
 
-    const mouseHandler = (e: MouseEvent) => {
+    // Mouse Back/Forward arrive under different event names depending on the
+    // device, driver and webview; one helper covers every variant.
+    const detachMouseHistory = attachMouseHistoryNavigation((direction) => {
       if (isTermsOpen) return;
-      // e.button: 3 is back mouse button, 4 is forward mouse button
-      if (e.button === 3) {
-        e.preventDefault();
-        back();
-      } else if (e.button === 4) {
-        e.preventDefault();
-        forward();
-      }
-    };
+      if (direction === 'back') routeBack();
+      else routeForward();
+    });
 
     const wheelHandler = (e: WheelEvent) => {
       if (e.ctrlKey) {
         e.preventDefault();
-        if (e.deltaY < 0) {
-          bridge.postMessage({ command: 'zoom-in' });
-        } else if (e.deltaY > 0) {
-          bridge.postMessage({ command: 'zoom-out' });
-        }
+        if (e.deltaY < 0) bridge.postMessage({ command: 'zoom-in' });
+        else if (e.deltaY > 0) bridge.postMessage({ command: 'zoom-out' });
       }
     };
 
     document.addEventListener('keydown', handler, true);
-    window.addEventListener('mouseup', mouseHandler);
-    if (isDesktop) {
-      window.addEventListener('wheel', wheelHandler, { passive: false });
-    }
+    if (isDesktop) window.addEventListener('wheel', wheelHandler, { passive: false });
 
     return () => {
       document.removeEventListener('keydown', handler, true);
-      window.removeEventListener('mouseup', mouseHandler);
-      if (isDesktop) {
-        window.removeEventListener('wheel', wheelHandler);
-      }
+      detachMouseHistory();
+      if (isDesktop) window.removeEventListener('wheel', wheelHandler);
     };
   }, [
     back,
