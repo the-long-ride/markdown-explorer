@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" role="img" aria-labelledby="title desc">
+  <title id="title">Markdown Explorer export fixture</title>
+  <desc id="desc">A simple vector asset used to verify local image packaging and media viewing.</desc>
+  <rect width="640" height="320" rx="32" fill="#20242d"/>
+  <rect x="36" y="36" width="568" height="248" rx="22" fill="#f4f5f7"/>
+  <path d="M88 92h248v24H88zm0 52h392v18H88zm0 42h344v18H88zm0 42h220v18H88z" fill="#303846"/>
+  <circle cx="510" cy="106" r="42" fill="#8b7cf6"/>
+  <path d="M488 106l15 15 31-36" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
