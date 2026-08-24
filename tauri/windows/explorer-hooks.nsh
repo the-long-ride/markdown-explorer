@@ -65,12 +65,18 @@ FunctionEnd
     RMDir "$SMPROGRAMS\Markdown Explorer"
   ${EndIf}
   ${If} $ME_AddMarkdownContext == ${BST_CHECKED}
-    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer" "" "Open with Markdown Explorer"
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer" "" "Open in Markdown Explorer"
     WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer" "Icon" '"$INSTDIR\${MAINBINARYNAME}.exe",0'
     WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'
-    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer" "" "Open with Markdown Explorer"
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorerWithFolder" "" "Open in Markdown Explorer with this folder"
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorerWithFolder" "Icon" '"$INSTDIR\${MAINBINARYNAME}.exe",0'
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorerWithFolder\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" --open-with-folder "%1"'
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer" "" "Open in Markdown Explorer"
     WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer" "Icon" '"$INSTDIR\${MAINBINARYNAME}.exe",0'
     WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorerWithFolder" "" "Open in Markdown Explorer with this folder"
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorerWithFolder" "Icon" '"$INSTDIR\${MAINBINARYNAME}.exe",0'
+    WriteRegStr HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorerWithFolder\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" --open-with-folder "%1"'
   ${EndIf}
   ${If} $ME_AddFolderContext == ${BST_CHECKED}
     WriteRegStr HKCU "Software\Classes\Directory\shell\MarkdownExplorer" "" "Open Folder in Markdown Explorer"
@@ -87,7 +93,9 @@ FunctionEnd
   Delete "$SMPROGRAMS\Markdown Explorer\Markdown Explorer.lnk"
   RMDir "$SMPROGRAMS\Markdown Explorer"
   DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorer"
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.md\shell\MarkdownExplorerWithFolder"
   DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorer"
+  DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorerWithFolder"
   DeleteRegKey HKCU "Software\Classes\Directory\shell\MarkdownExplorer"
   DeleteRegKey HKCU "Software\Classes\Directory\Background\shell\MarkdownExplorer"
 !macroend
