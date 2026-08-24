@@ -104,7 +104,27 @@ export function resolveMermaidFontFamily(doc: Pick<Document, 'documentElement' |
   return style?.getPropertyValue('--font-mermaid').trim() || 'var(--font-mermaid)';
 }
 
+export function sanitizeMermaidTransforms(svg: SVGSVGElement): void {
+  if (typeof svg.querySelectorAll !== 'function') return;
+  // Mermaid/dagre can emit `transform="translate(undefined, NaN)"` when an
+  // edge label could not be measured. Chromium rejects the whole attribute,
+  // mispositioning the label group; drop or normalize such transforms so the
+  // diagram renders at a sane default position instead of a broken one.
+  svg.querySelectorAll<SVGElement>('[transform]').forEach((element) => {
+    const transform = element.getAttribute('transform');
+    if (!transform || !/undefined|NaN|Infinity/.test(transform)) return;
+    const translateMatch = /translate\(\s*([-\d.eE]+)\s*[,\s]\s*([-\d.eE]+)\s*\)/.exec(transform);
+    if (translateMatch && !/undefined|NaN|Infinity/.test(translateMatch[0])) {
+      // Only the surrounding list is broken — keep the valid translate.
+      element.setAttribute('transform', `translate(${translateMatch[1]}, ${translateMatch[2]})`);
+      return;
+    }
+    element.removeAttribute('transform');
+  });
+}
+
 export function polishMermaidSvg(svg: SVGSVGElement, kind?: MermaidDiagramKind): void {
+  sanitizeMermaidTransforms(svg);
   svg.setAttribute('shape-rendering', 'geometricPrecision');
   svg.setAttribute('text-rendering', 'geometricPrecision');
   if (svg.style) {

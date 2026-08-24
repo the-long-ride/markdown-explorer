@@ -56,13 +56,15 @@ describe('renderMermaidToSvg', () => {
     ).rejects.toThrowError(/svg/);
   });
 
-  // ── Bug B regression: the helper must attach a hidden off-screen host to
+  // ── Bug B regression: the helper must attach an off-screen host to
   //    document.body while mermaid.run executes so mermaid can measure text
   //    via getBoundingClientRect / getComputedTextLength (a detached scratch
   //    node returns 0 for every measurement → degenerate SVG for
-  //    layout-sensitive kinds like sequence / packet / kanban). The host must
-  //    be removed via `finally` after the render so document.body is left
-  //    clean even if mermaid.run rejects.
+  //    layout-sensitive kinds like sequence / packet / kanban). The host is
+  //    parked off-screen but kept visible: a visibility:hidden subtree breaks
+  //    dagre's edge-label measurement and produces translate(undefined, NaN).
+  //    The host must be removed via `finally` after the render so
+  //    document.body is left clean even if mermaid.run rejects.
   describe('Bug B: in-DOM scratch host', () => {
     // Snapshot body's child count BEFORE the helper runs — RTL/jsdom may have
     // left stray elements from earlier siblings, so compare relatively.
@@ -76,11 +78,11 @@ describe('renderMermaidToSvg', () => {
       Array.from(document.body.children).find(
         (el) =>
           el.tagName === 'DIV' &&
-          (el as HTMLElement).style?.visibility === 'hidden' &&
-          (el as HTMLElement).style?.position === 'absolute',
+          (el as HTMLElement).style?.position === 'absolute' &&
+          (el as HTMLElement).style?.left === '-9999px',
       ) as HTMLElement | undefined;
 
-    it('appends a hidden off-screen host to document.body while mermaid.run executes', async () => {
+    it('appends an off-screen host to document.body while mermaid.run executes', async () => {
       let bodyCountDuringRun: number | undefined;
       let hostDuringRun: HTMLElement | undefined;
       runMock.mockImplementationOnce(async ({ nodes }: { nodes: HTMLElement[] }) => {
@@ -95,10 +97,11 @@ describe('renderMermaidToSvg', () => {
 
       // While mermaid.run was in-flight, document.body had ONE extra child.
       expect(bodyCountDuringRun).toBe(bodyBaseline + 1);
-      // ...and that extra child was the hidden off-screen host.
+      // ...and that extra child was the off-screen host, visible so that
+      // dagre can measure edge labels without NaN positions.
       expect(hostDuringRun).toBeTruthy();
       expect(hostDuringRun!.style.position).toBe('absolute');
-      expect(hostDuringRun!.style.visibility).toBe('hidden');
+      expect(hostDuringRun!.style.visibility).not.toBe('hidden');
       expect(hostDuringRun!.style.left).toBe('-9999px');
       expect(hostDuringRun!.getAttribute('aria-hidden')).toBe('true');
     });

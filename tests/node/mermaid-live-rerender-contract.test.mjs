@@ -52,20 +52,22 @@ test('Mermaid appearance scheduler defers, coalesces, and cancels rerenders', as
   assert.equal(rerenders, 1, 'cancel prevents a pending rerender');
 });
 
-test('content effects defer rendered Mermaid invalidation until after appearance paint', async () => {
+test('content effects defer rendered Mermaid invalidation through the shared lifecycle', async () => {
   const effects = await read('ui/src/components/Content/useContentEffects.ts');
+  const contentLifecycle = await read('ui/src/components/Content/mermaidContentLifecycle.ts');
   const appearance = await read('ui/src/components/Content/enhancements/mermaidAppearance.ts');
   const lifecycle = await read('ui/src/components/Content/enhancements/mermaidRerenderLifecycle.ts');
-  const source = `${effects}\n${appearance}\n${lifecycle}`;
+  const source = `${effects}\n${contentLifecycle}\n${appearance}\n${lifecycle}`;
   assert.match(source, /createDeferredMermaidRerender/);
-  assert.match(effects, /createMermaidRerenderLifecycle/);
+  assert.match(effects, /installMermaidContentLifecycle/);
+  assert.match(contentLifecycle, /createMermaidRerenderLifecycle/);
   assert.match(source, /lastMermaidAppearanceKeyRef/);
   assert.match(source, /state\.theme/);
   assert.match(source, /state\.themeStyle/);
   assert.match(source, /activeCustomThemeId/);
   assert.match(source, /customThemes/);
   assert.match(source, /fontBindings\?\.mermaid|fontBindings\.mermaid/);
-  assert.match(effects, /appearanceChanged[\s\S]*mermaidRerender\.schedule\(\)/);
+  assert.match(contentLifecycle, /appearance\.changed[\s\S]*rerender\.schedule\(\)/);
   assert.match(source, /createMermaidRerenderQueue/);
   assert.match(source, /getMermaidRenderNodes\(root\)/);
   assert.match(source, /invalidateMermaidRendering\(node\)/);
@@ -73,18 +75,19 @@ test('content effects defer rendered Mermaid invalidation until after appearance
   assert.doesNotMatch(appearance, /syncMermaidAppearance[\s\S]*invalidateMermaidRenderings\(root\)/);
 });
 
-test('auto theme media changes use the same deferred Mermaid rerender scheduler', async () => {
+test('auto theme media changes use the same shared deferred Mermaid rerender scheduler', async () => {
   const effects = await read('ui/src/components/Content/useContentEffects.ts');
+  const contentLifecycle = await read('ui/src/components/Content/mermaidContentLifecycle.ts');
   const appearance = await read('ui/src/components/Content/enhancements/mermaidAppearance.ts');
   const lifecycle = await read('ui/src/components/Content/enhancements/mermaidRerenderLifecycle.ts');
-  const source = `${effects}\n${appearance}\n${lifecycle}`;
+  const source = `${effects}\n${contentLifecycle}\n${appearance}\n${lifecycle}`;
   assert.match(source, /theme\s*!==\s*["']auto["']/);
   assert.match(source, /matchMedia\(["']\(prefers-color-scheme: dark\)["']\)/);
   assert.match(source, /addEventListener\(["']change["']/);
-  assert.match(effects, /subscribeToAutoMermaidTheme[\s\S]*mermaidRerender\.schedule/);
+  assert.match(contentLifecycle, /subscribeToAutoMermaidTheme[\s\S]*rerender\.schedule/);
   assert.match(source, /removeEventListener\(["']change["']/);
   assert.match(source, /\.cancel\(\)/);
-  assert.match(effects, /mermaidRerender\.dispose\(\)/);
+  assert.match(contentLifecycle, /rerender\.dispose\(\)/);
 });
 
 test('Mermaid rerender queue orders visible, near-viewport, then off-screen diagrams', async () => {
