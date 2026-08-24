@@ -4,6 +4,33 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 > **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
 
+## [Unreleased]
+
+### Added
+- **Export Center & Feature-Driven Offline Export**: Integrated full Export Center modal supporting **HTML**, **Static Website (ZIP)**, and client-side hybrid **PDF** generation.
+  - **Source Scopes**: Export Current Document, Selected Files (with search filtering & checkboxes), Folder, or Whole Workspace with automatic referenced asset resolution via `panelExportResources.ts` (`readWorkspaceExportResource`).
+  - **Layout & Batch Modes**: Document-only vs. Full Explorer viewport shell; Separate files vs. Single merged document with collision-safe anchors.
+  - **Offline Runtimes**: Packaged feature runtimes for core interactions, sandboxed HTML iframe previews with auto-resizing, media modal viewer, table filtering/sorting, and interactive Chart.js visualizations.
+  - **File Saving**: Native file saving via VS Code save dialogs handled by `panelExportSave.ts` (`saveExportFile`).
+- **Scope View Modal**: Non-navigating workspace document snapshot preview modal for deep inspection of linked documents without losing current editor or tab position.
+  - **Isolated Navigation History**: 10-step history stack (`MAX_SCOPE_DEPTH=10`) with animated depth segment indicators, Prev/Next navigation, and maximum-depth guard.
+  - **Open File Button**: Dedicated **Open file** button (`OpenFileIcon`, 13px geometric precision external-open SVG) navigates the main workspace to the previewed document and closes the modal.
+  - **Link Context Menu**: Right-click any document link and select **Open as scope** to preview it immediately.
+- **Universal Hardware & Keyboard Navigation**:
+  - Logitech and hardware mouse back/forward buttons (buttons 3 and 4) along with `BrowserBack`/`BrowserForward` keys and `Alt+ArrowLeft`/`Alt+ArrowRight` shortcuts provide seamless history navigation in both the main document viewer and Scope View modal.
+
+### Changed
+- **Export Center — Streamlined Document-First Export**: Removed the **Additional workspace files** panel and host-level `listWorkspaceExportResources` enumeration (`listPanelExportResources` deleted, `readPanelExportResource` retained) in favor of automatic referenced asset packaging.
+- **Export Center — Multi-Select Flex Layout**: The selected-documents `export-multi-select` fills the remaining height of its parent container (`sources:has(.export-multi-select)` flex column, `multi-select` `flex:1; min-height:0`, `rows` `flex:1; min-height:0; overflow:auto`) with responsive fallbacks.
+- **Scope View — Header Styling & Close Button Unified**: Header close `×` button unified with Settings modal (`settings-card__close`, 22px, `opacity: 0.6` → `1` with `scale(1.1)` hover) with consistent header padding (`6px 24px 6px 10px`).
+- **Mermaid Lifecycle & Content Rendering Parity**: Clean separation of Content effects and Mermaid rendering lifecycle with offscreen scratch container attached to `document.body` during `mermaid.run()`, ensuring accurate dimensions for all diagram types.
+
+### Fixed
+- **Mouse Back/Forward Button Navigation**: Fixed mouse buttons 3 and 4 failing to navigate document history.
+- **Mermaid Layout-Sensitive Diagram Rendering**: Fixed degenerate/zero-dimension rendering on initial load for layout-sensitive Mermaid diagrams (sequence, packet, kanban, pie, quadrant, xychart, zenuml, sankey).
+
+---
+
 ## [v1.6.5] — 2026-08-18
 
 ### Added

@@ -133,6 +133,28 @@ Interactive tables in rendered Markdown and delimited files support sorting, sea
 - **Fullscreen Chart Modal Viewer**: Click-to-enlarge chart modal with **50% to 1000% continuous zoom**, mouse drag & touch pan, **Fit to Screen**, **Reset Zoom**, modal type switcher, **Copy as Image** (raster PNG clipboard copy with font rendering), and **Save as Image (.PNG)** via native host dialog (`saveChartPng` on Tauri) or browser download.
 - **CSP Event Delegation**: Chromium extension delegates table column toggle and view selection clicks in `useContentEffects` and `SearchDocumentPreview` to comply with Manifest V3 Content Security Policy restrictions.
 
+## Export Center and Scope View
+
+### Export Center
+- Modal Export Center supports **HTML**, **Static Website (ZIP)**, and client-side hybrid **PDF** output across all runtimes.
+- **Source Selection**: Current document, Selected documents (searchable multi-select with fill-height scrolling), Folder, or Whole workspace.
+- **Layout Modes**: Clean Document-only layout or Full Explorer interactive viewport shell (with tree, TOC, search, and theme switcher).
+- **Batch Modes**: Separate standalone files or single merged document with collision-safe anchor IDs.
+- **Offline Runtime Bundles**: Bundles isolated feature runtimes for core interactions, sandboxed HTML iframe previews with automatic height sync, media viewer, and table/chart interactions.
+- **Zero-Dialog PDF**: PDF generation uses `pdfmake` for semantic text and high-res vector/image capture for complex visual blocks, saving directly via `saveExportFile` without opening the system print center.
+
+### Scope View Modal
+- Deep inspection modal (`ScopeViewModal`) for exploring linked documents without disrupting main editor or content tab state.
+- **History Stack**: 10-step isolated history with animated depth segment indicators, Prev/Next navigation, and max-depth guards.
+- **Open File Action**: Dedicated **Open file** header button (`OpenFileIcon`) navigates the main workspace to the previewed document and closes the modal.
+- **Navigation Parity**: Full support for keyboard shortcuts (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`, `Escape`) and hardware mouse back/forward buttons (mouse buttons 3 and 4).
+
+## Platform and shell integrations
+
+- **Universal Hardware Mouse Navigation**: Mouse buttons 3 and 4 (Logitech and standard mice) navigate back and forward in document history and Scope View modal via `attachMouseHistoryNavigation` with 40 ms burst deduplication.
+- **macOS Native Edit Menu & Tray**: Restored standard AppKit Edit application menu (Undo, Redo, Cut, Copy, Paste, Select All) on macOS Electron desktop; normalized tray icon to a 16×16 template `NativeImage`.
+- **Windows File Explorer Context**: Structured `externalOpenRequest` host message (`file`, `folder`, `file-with-parent-workspace`) enables "Open with Markdown Explorer" to activate parent folder workspaces directly.
+
 ## Onboarding, welcome, and localization
 
 Markdown Explorer currently ships **nine supported locales**: English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.

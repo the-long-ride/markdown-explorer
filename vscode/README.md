@@ -67,12 +67,28 @@ Open any folder containing Markdown files in VS Code to get started. Use the Mar
 - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
 - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
 - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
+- **Universal Hardware Mouse Navigation**: Logitech and hardware mouse back/forward buttons (Mouse Buttons 3 and 4) along with `BrowserBack`/`BrowserForward` keys provide seamless history navigation.
 - **Edit from preview**: VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab.
 - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
 - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
 - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
 - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
 - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
+
+</details>
+
+<details>
+<summary><b>Export & Scope View</b></summary>
+
+- **All-in-One Export Center**: Export your documentation to **Standalone HTML**, **Static Website (ZIP)**, or client-side hybrid **PDF** directly from VS Code.
+- **Source Scopes**: Export Current Document, Selected Files (with search filtering & checkboxes), Folder, or Whole Workspace with automatic referenced asset resolution.
+- **Flexible Layouts & Batch Modes**: Document-only vs. Full Explorer viewport shell; Separate files vs. Single merged document with collision-safe anchors.
+- **Offline Feature Runtimes**: Zero CDN dependencies; exports package isolated local runtime bundles for core interactions, sandboxed HTML iframe previews with auto-resizing, media viewer, table filtering/sorting, and interactive Chart.js visualizations.
+- **Scope View Modal**: Deep-dive into linked documents in an isolated preview modal without losing current editor or tab position.
+  - **10-Step History Stack**: Bounded history stack (`MAX_SCOPE_DEPTH=10`) with animated depth indicators and Prev/Next navigation.
+  - **Open File Button**: Dedicated **Open file** header button (`OpenFileIcon`) navigates the main workspace to the previewed document and closes the modal.
+  - **Link Context Menu**: Right-click any Markdown link and select **Open as scope** to inspect it immediately.
+  - **Hardware Navigation Parity**: Full support for keyboard (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`, `Escape`) and hardware mouse back/forward buttons.
 
 </details>
 

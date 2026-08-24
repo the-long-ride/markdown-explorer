@@ -46,6 +46,9 @@ keywords:
 | Tray/native window | Yes | Yes window | No | No | No |
 | Typography: system + imported fonts | Yes | Yes | Yes, extension global storage | Yes, IndexedDB fonts | Yes, IndexedDB fonts |
 | Markdown Explorer zoom controls | Yes | Yes | No, host-native | No, browser-native | No, browser-native |
+| Export Center (HTML/PDF/Site) | Yes, native save | Yes, native save | Yes, VS Code save | Yes, browser download | Yes, browser download |
+| Scope View document modal | Yes | Yes | Yes | Yes | Yes |
+| Hardware mouse history navigation (3/4) | Yes | Yes | Yes | Yes | Yes |
 | Installer updater | Installed packaged support | Signed plugin artifacts; download/defer/restart parity | Check/report only; VS Code installs | Store | Deployment |
 
 ## Common protocol requirement
@@ -63,6 +66,8 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 - Tauri updater state names and user choices match Electron even though installation is implemented by the official signed updater plugin.
 - Electron/Tauri own desktop zoom and expose Reset zoom at `Ctrl+Alt+Z`; VS Code/Chromium/Website leave zoom to the host.
 - Electron/Tauri/VS Code/Chromium/Website expose Markdown Explorer Typography; desktop and VS Code use system/filesystem fonts while Chromium and Web store custom font files in IndexedDB (`markdown-explorer-browser-fonts`).
+- Export Center and Scope View operate across all runtimes, using native save dialogs on desktop/VS Code and standard browser file downloads on Chromium/Web.
+- Hardware mouse back/forward buttons (buttons 3/4) and `BrowserBack`/`BrowserForward` keys provide universal history navigation in all runtimes.
 - Electron and Tauri restored windows have an 800 px minimum width; browser/extension hosts own their outer window constraints.
 
 ## Source traceability

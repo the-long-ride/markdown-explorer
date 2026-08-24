@@ -67,6 +67,7 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 |---|---|---|
 | Implementation | `ui/src/platform/chrome.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/chrome-host.ts` | Active behavior or contract |
+| Implementation | `chromium-xtension/src/chrome-host-export.ts` | Export resource reading and browser download save bridge |
 | Implementation | `chromium-xtension/src/browser-font-host.ts` | Font host command router |
 | Implementation | `chromium-xtension/src/browser-font-service.ts` | IndexedDB font persistence and FontFace loading |
 | Implementation | `chromium-xtension/src/file-access.ts` | Active behavior or contract |
@@ -78,6 +79,7 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 | Implementation | `chromium-xtension/src/recent-workspaces.ts` | Active behavior or contract |
 | Verification | `tests/unit/chromium/chrome-bridge.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/chrome-host.test.ts` | Automated expectation |
+| Verification | `tests/unit/chromium/chrome-host-export.test.ts` | Export resource and save bridge tests |
 | Verification | `tests/node/browser-font-service-behavior.test.mjs` | Browser font service tests |
 | Verification | `tests/node/browser-typography-contract.test.mjs` | Browser typography contract |
 | Verification | `tests/unit/chromium/file-access.test.ts` | Automated expectation |

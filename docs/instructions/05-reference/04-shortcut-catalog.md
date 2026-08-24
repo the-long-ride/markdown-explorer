@@ -67,6 +67,8 @@ keywords:
 ## Fixed behavior
 
 - **Edit current document** (`editCurrentDocument`) exists only where the host can open the current file in an editor: Desktop uses `Ctrl+E`, VS Code uses `Ctrl+Alt+E`, and Chromium/Web exposes no Edit action or binding.
+- **Universal hardware mouse navigation**: Mouse back/forward buttons (mouse buttons 3 and 4, Logitech and standard mice) trigger `back` and `forward` navigation across all runtimes via `attachMouseHistoryNavigation`. The handler captures `mousedown`/`pointerdown` early to prevent browser navigation and dedupes `mouseup`/`pointerup`/`auxclick` within 40 ms. When the Scope View modal is open, mouse buttons route to the modal's isolated 10-step history stack; otherwise they route to main document navigation.
+- **Fallback navigation keys**: `Alt+ArrowLeft` / `BrowserBack` and `Alt+ArrowRight` / `BrowserForward` serve as universal fallback history navigation shortcuts in both main views and Scope View modal.
 - VS Code renders Edit as an icon-only toolbar action immediately before More actions; Desktop keeps Edit inside More actions.
 - Desktop F11 toggles fullscreen and ignores repeat events.
 - Desktop `Ctrl+Alt+Z` resets zoom to 100%. VS Code and Chromium/Web use native host zoom and expose no Markdown Explorer zoom/reset binding.
@@ -76,6 +78,7 @@ keywords:
 - User bindings override defaults; `disabledKeybindings[actionId]` removes the action binding.
 - `openBookmarks` selects the Bookmarks tab when enabled; otherwise it opens Settings focused on **Enable Bookmark feature**.
 - **Media modal gate exception**: `toggleTheme` fires through the media modal's keyboard gate (the matcher is lifted above `isModalOpen` in `resolveKeyboardAction`) so users can flip light/dark while the image/SVG modal is open. All other global shortcuts remain muted inside the modal. The terms dialog still captures the same shortcut (the matcher sits below `isTermsOpen`).
+- **Scope View modal shortcuts**: The Scope View modal traps focus and supports `Escape` to close, `Alt+Left`/`Alt+Right` and `BrowserBack`/`BrowserForward` to navigate its isolated history stack, and mouse buttons 3/4 for back/forward.
 
 ## Source traceability
 
@@ -83,6 +86,9 @@ keywords:
 |---|---|---|
 | Implementation | `ui/src/contexts/appStateConstants.ts` | Active behavior or contract |
 | Implementation | `ui/src/hooks/keyboardUtils.ts` | Active behavior or contract |
+| Implementation | `ui/src/hooks/useKeyboard.ts` | Active behavior or contract |
+| Implementation | `ui/src/utils/mouseHistoryNavigation.ts` | Hardware mouse back/forward button detection and deduplication |
+| Implementation | `ui/src/hooks/useScopeNavigationState.ts` | Scope modal history routing |
 | Implementation | `ui/src/hooks/useKeyboard.ts` | Active behavior or contract |
 | Implementation | `ui/src/utils/shortcuts.ts` | Active behavior or contract |
 | Implementation | `ui/src/components/Settings/settingsActions.ts` | Host-scoped Edit shortcut registration |

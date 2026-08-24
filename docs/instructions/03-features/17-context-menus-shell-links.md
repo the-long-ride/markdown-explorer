@@ -40,9 +40,9 @@ Define menu targets and actions, viewport placement, native path modes, internal
 | Sidebar menu | File/folder-specific open, reveal, copy, scope actions. | Navigation operations are close to target. |
 | Content-tab menu | Close current/others/right/all and file actions. | Tabs are manageable. |
 | Workspace-tab menu | Alias/close/reveal operations. | Desktop workspaces are manageable. |
-| Link menu | Open/copy/internal/external actions according to target. | Links are inspectable. |
+| Link menu | Open/copy/internal/external actions, plus **Open as scope** to inspect document in modal Scope View. | Links are inspectable without losing context. |
 | Toolbar menu | Overflow actions remain available on narrow layouts. | Responsive UI keeps functionality. |
-| Shell/editor | Use typed path mode or editor command. | Privileged behavior remains bounded. |
+| Shell/editor | Use typed path mode (`open-directory`, `reveal-file`, `open-parent-directory`) or structured external open (`file`, `folder`, `file-with-parent-workspace`). | Privileged behavior remains bounded. |
 
 ## Interaction and processing flow
 
@@ -61,6 +61,7 @@ flowchart LR
 | `open-directory` | Open target directory |
 | `reveal-file` | Select a file in Finder/File Explorer/File Manager |
 | `open-parent-directory` | Open parent when reveal is unavailable/unsuitable |
+| `file-with-parent-workspace` | External open: activate parent folder as workspace and focus target file |
 
 Menus close before action execution, remain inside viewport, support Escape/outside dismissal, and restore focus where practical. Links with dangerous schemes are blocked before host dispatch.
 

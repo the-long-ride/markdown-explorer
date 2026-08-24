@@ -65,6 +65,22 @@ keywords:
 | `BookmarkDocument` | Versioned `{ version: 2, items }` persistence envelope with v1 migration |
 | `OpenBookmarkWorkspace` | Open workspace group identity used by Focus/Tabs rendering |
 
+## Export Center and Scope View
+
+| Model | Required fields and role |
+|---|---|
+| `ExportJob` | `source`: `ExportSourceSelection`, `format`: `'html' \| 'pdf' \| 'site'`, `layout`: `'document' \| 'explorer'`, `batchMode`: `'separate' \| 'merged'` |
+| `ExportSourceSelection` | `scope`: `'current' \| 'selected' \| 'folder' \| 'workspace'`, optional `selectedPaths`, `folderPath` |
+| `ExportDocumentItem` | `file`: `MdFile`, `sourceText`: string, `renderedHtml`: string, `title`: string, `toc`: TocEntry[], `frontmatter`: Frontmatter |
+| `ScopeHistoryEntry` | `file`: `MdFile`, `title`: string, `sourceText`: string, `renderedHtml`: string, `toc`: TocEntry[] |
+| `ScopeHistoryState` | `entries`: `ScopeHistoryEntry[]` (max 10), `currentIndex`: number |
+
+## Shell and external launch
+
+| Model | Required fields and role |
+|---|---|
+| `ExternalOpenRequest` | `mode`: `'file' \| 'folder' \| 'file-with-parent-workspace'`, `filePath`?: string, `folderPath`?: string |
+
 ## Preview and updates
 
 | Model | Values |
@@ -87,9 +103,12 @@ Paths are identities; labels/titles/aliases are presentation. Do not substitute 
 | Implementation | `ui/src/types/settings.ts` | Active behavior or contract |
 | Implementation | `ui/src/themeTypes.ts` | Active behavior or contract |
 | Implementation | `ui/src/bookmarks/types.ts` | Bookmark persistence and workspace group models |
+| Implementation | `ui/src/export/exportModel.ts` | Export Center job, source, layout, and batch models |
+| Implementation | `ui/src/components/Modal/scopeHistory.ts` | Scope View bounded history model |
 | Verification | `tests/unit/ui/contexts/state-utils.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/components/content-tabs-pure.test.ts` | Automated expectation |
 | Verification | `tests/node/bookmarks.test.mjs` | Bookmark model behavior and persisted shape |
+| Verification | `tests/unit/ui/components/scope-history.test.ts` | Scope history model tests |
 
 ---
 

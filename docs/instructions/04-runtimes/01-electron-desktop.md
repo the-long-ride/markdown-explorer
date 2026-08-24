@@ -84,11 +84,22 @@ Electron owns system-font discovery, SFNT metadata inspection, managed font impo
 The desktop mono default is JetBrains Mono. Packaging includes only `JetBrainsMono-VariableFont_wght.ttf` and `JetBrainsMono-Italic-VariableFont_wght.ttf`; Cascadia Code and the static JetBrains family are excluded.
 Typography settings enumerate installed fonts on Windows, macOS, and Linux, discover available variants, and copy individually imported `.ttf`/`.otf` files into app-managed storage. Renderer settings store normalized references only; the original selected filesystem path is never persisted.
 
-## Packaging
+## Native macOS menu and tray service
 
-- File associations: Markdown/MDX according to package configuration.
-- Windows NSIS: per-user, assisted directory selection, Explorer integration; desktop/start-menu shortcuts are not forced by default.
-- Builds include installed NSIS, portable, Windows ZIP, macOS, and Linux variants.
+- **macOS Application Menu**: On macOS (`process.platform === 'darwin'`), `configureApplicationMenu` builds and installs an AppKit-compatible native application menu with `appMenu`, `editMenu` (`undo`, `redo`, `cut`, `copy`, `paste`, `selectAll`), and `windowMenu` roles. On Windows and Linux, the application menu is suppressed (`Menu.setApplicationMenu(null)`).
+- **macOS Menu Bar Tray Icon**: `createTrayIcon` normalizes the 128px icon to a crisp 16×16 template `NativeImage` (`setTemplateImage(true)`) on macOS so it automatically adapts to light and dark macOS menu bars without distortion. Windows and Linux retain standard path-based icon loading.
+
+## External open and shell integration
+
+Electron processes startup and second-instance CLI arguments into structured `externalOpenRequest` messages:
+- `{ mode: 'file', filePath }` for directly opened Markdown files.
+- `{ mode: 'folder', folderPath }` for opened directories.
+- `{ mode: 'file-with-parent-workspace', filePath, folderPath }` when launched with `--open-with-folder` via Windows Explorer context menus, directing the UI to open the parent folder as the workspace and focus the clicked file.
+
+## Export runtime bridges
+
+- `readWorkspaceExportResource`: Reads binary workspace-contained files requested by the UI during HTML and Static Website export packaging, returning base64 data.
+- `saveExportFile`: Prompts for a destination path via `dialog.showSaveDialog` and writes the generated HTML, ZIP, or PDF bytes directly to disk.
 
 ## Source traceability
 
@@ -98,15 +109,21 @@ Typography settings enumerate installed fonts on Windows, macOS, and Linux, disc
 | Implementation | `electron/core/main-bootstrap.js` | Active behavior or contract |
 | Implementation | `electron/core/main-runtime.js` | Active behavior or contract |
 | Implementation | `electron/core/ipc-handlers.js` | Shell location and IPC command routing |
+| Implementation | `electron/core/runtime-export-resources.js` | Export resource reading bridge |
+| Implementation | `electron/core/runtime-export-save.js` | Export file saving bridge |
+| Implementation | `electron/core/external-open.js` | Structured external open request parser |
 | Implementation | `electron/window/window.js` | Active behavior or contract |
-| Implementation | `electron/window/tray.js` | Active behavior or contract |
+| Implementation | `electron/window/tray.js` | Tray icon normalization and lifecycle |
 | Implementation | `electron/workspace/scanner.js` | Active behavior or contract |
 | Implementation | `electron/workspace/workspace-watch.js` | Active behavior or contract |
 | Implementation | `electron/search/search-worker-controller.js` | Active behavior or contract |
 | Implementation | `electron/render/document-converter.js` | Active behavior or contract |
 | Implementation | `electron/update/update-manager.js` | Active behavior or contract |
-| Implementation | `electron/build/installer.nsh` | Active behavior or contract |
 | Implementation | `electron/package.json` | Active behavior or contract |
+| Verification | `tests/unit/electron/macos-native-behavior.test.ts` | macOS menu and tray regression tests |
+| Verification | `tests/unit/electron/external-open.test.ts` | External open request parser tests |
+| Verification | `tests/unit/electron/export-resources.test.ts` | Export resource bridge tests |
+| Verification | `tests/unit/electron/export-save.test.ts` | Export save bridge tests |
 | Verification | `tests/unit/electron/main.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/window.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/tray.test.ts` | Automated expectation |

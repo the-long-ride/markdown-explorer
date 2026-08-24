@@ -37,6 +37,9 @@ keywords:
 | Rendering | `ui/src/markdown/*`, Content | source/converter handlers | render/converter | `vscode/src/markdown/*` | host renderer paths |
 | Search | Search components/effects | search index/worker | search modules | panel search | search index/test search |
 | Bookmarks | `ui/src/bookmarks/*`, `markdown/sourceMapping.ts`, Bookmark components/navigation/jump | shared UI Tabs | shared UI Tabs | shared UI Focus mode | shared UI Focus mode |
+| Export Center | `ui/src/export/*`, `ui/src/components/Export/*` | `runtime-export-resources.js`, `runtime-export-save.js` | `export_resources.rs`, native dialog save | `panelExportResources.ts`, `panelExportSave.ts` | `chrome-host-export.ts`, file-access / blob download |
+| Scope View | `ui/src/components/Modal/ScopeViewModal.tsx`, `scopeHistory.ts`, `useScopeNavigationState.ts` | shared UI modal | shared UI modal | shared UI modal | shared UI modal |
+| Navigation & Hardware | `ui/src/utils/mouseHistoryNavigation.ts`, `ui/src/hooks/useKeyboard.ts` | native menu / external open | dispatcher external open | webview navigation | chrome-host navigation |
 | User manual | Welcome/UserManual components and `userManualTranslations.ts` | shared UI | shared UI | shared UI | shared UI |
 | HTML/resources | HTML preview modules | preview server/resource handler | local file/HTML preview | preview server/resources | in-page sandbox |
 | Settings/themes | Settings, contexts, theme, `DesktopTypographySettings`, `AvailableUpdateDialog`, `TooltipButton` | bridge persistence/update | preload/dispatcher settings/update | webview state/config; VS Code-owned install | chrome/web state |

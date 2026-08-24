@@ -76,9 +76,18 @@ The `local-file://` protocol may serve canonical `.ttf`/`.otf` files inside that
 
 Modules cover HTML, Markdown/text, ODF, Office, PDF, PPTX, RTF, and spreadsheet content. PPTX/archive XML members are bounded to 32 MiB. Preview quality uses `converted-preview`, `legacy-best-effort`, or `conversion-failed`.
 
-## Native PNG chart export
+## Native PNG chart and file export
 
-Tauri handles `saveChartPng` commands in `commands_external.rs`. Base64-encoded PNG data URLs are validated (verifying signature `\x89PNG\r\n\x1a\n`), decoded via `png_export.rs`, sanitized to safe filenames, and saved via `tauri-plugin-dialog` blocking file picker.
+- **Chart PNG export**: Tauri handles `saveChartPng` commands in `commands_external.rs`. Base64-encoded PNG data URLs are validated (verifying signature `\x89PNG\r\n\x1a\n`), decoded via `png_export.rs`, sanitized to safe filenames, and saved via `tauri-plugin-dialog` blocking file picker.
+- **Export resource reading**: `readWorkspaceExportResource` commands are handled by `export_resources.rs` within workspace boundary constraints, returning base64 binary content.
+- **Save export file**: `saveExportFile` commands prompt the user via native OS save dialogs and write generated HTML, ZIP, or PDF bytes directly to disk.
+
+## External open and shell integration
+
+Tauri processes CLI and single-instance arguments into structured `externalOpenRequest` messages:
+- `{ mode: 'file', filePath }` for clicked Markdown documents.
+- `{ mode: 'folder', folderPath }` for opened folders.
+- `{ mode: 'file-with-parent-workspace', filePath, folderPath }` for Windows Explorer context actions.
 
 ## Signed update lifecycle
 
@@ -102,8 +111,10 @@ Updater operation is valid only after real endpoint/signing secrets replace depl
 | Implementation | `tauri/src/dispatcher.rs` | Active behavior or contract |
 | Implementation | `tauri/src/dispatcher/ready.rs` | Active behavior or contract |
 | Implementation | `tauri/src/dispatcher/commands.rs` | Active behavior or contract |
-| Implementation | `tauri/src/dispatcher/commands_external.rs` | External & PNG export commands |
+| Implementation | `tauri/src/dispatcher/commands_external.rs` | External & PNG/file export commands |
 | Implementation | `tauri/src/runtime/png_export.rs` | PNG data URL decoding & file name normalization |
+| Implementation | `tauri/src/runtime/export_resources.rs` | Export binary resource reading |
+| Implementation | `tauri/src/runtime/external_open.rs` | Structured external open request parser |
 | Implementation | `tauri/src/local_file.rs` | Active behavior or contract |
 | Implementation | `tauri/src/workspace/scanner.rs` | Active behavior or contract |
 | Implementation | `tauri/src/workspace/watch.rs` | Active behavior or contract |

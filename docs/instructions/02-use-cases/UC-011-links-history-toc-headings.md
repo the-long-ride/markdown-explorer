@@ -81,6 +81,17 @@ flowchart LR
 | External HTTPS URL | Route through validated external open. | Default browser opens on capable host. |
 | Collapsed target section | Expand it before scrolling. | Target becomes visible. |
 
+## Scope View modal navigation
+
+Users can right-click any Markdown link and select **Open as scope** to inspect the linked document in an isolated modal overlay (`ScopeViewModal`) without disrupting the main document viewer or content tabs:
+- The modal maintains an isolated 10-step history stack (`MAX_SCOPE_DEPTH=10`) with animated depth segment indicators.
+- Users can navigate backward and forward within the scope history using modal header buttons, keyboard shortcuts (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`), or hardware mouse back/forward buttons (buttons 3 and 4).
+- The header includes an **Open file** button (`OpenFileIcon`) that navigates the main workspace to the previewed document and closes the modal.
+
+## Hardware mouse history navigation
+
+Hardware mouse back and forward buttons (Mouse Buttons 3 and 4) trigger history navigation in both the main document viewer and the Scope View modal through `attachMouseHistoryNavigation`. Early `mousedown`/`pointerdown` capture prevents native browser navigation, and rapid duplicate events are debounced within a 40 ms window.
+
 ## Validation and business rules
 
 - Relative links resolve from current document path, not process working directory.

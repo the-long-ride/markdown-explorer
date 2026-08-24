@@ -95,6 +95,15 @@ When a `.md` or `.mdx` document is active in the VS Code runtime, More → **Edi
 - Timers/listeners are cleaned after feedback.
 
 
+## Export Center workflow
+
+The Export Center modal allows users to generate standalone **HTML**, **Static Website (ZIP)**, and client-side hybrid **PDF** packages:
+1. Select source scope: Current document, Selected files, Folder, or Whole workspace.
+2. Select format (`html`, `pdf`, `site`) and layout mode (`document` or `explorer`).
+3. Select batch mode (`separate` files or `merged` document with collision-safe anchors).
+4. Export Center bundles offline feature runtimes and resolves referenced binary assets via `readWorkspaceExportResource`.
+5. The generated file is saved via `saveExportFile` using host-native file dialogs or browser downloads.
+
 ## Protocol effects
 
 | Contract | Direction | Purpose |
@@ -103,6 +112,8 @@ When a `.md` or `.mdx` document is active in the VS Code runtime, More → **Edi
 | `openInEditor` | UI → host | Open canonical source path. |
 | `openHtmlPreview` | UI → host | Open bounded standalone preview. |
 | `openExternal` | UI → host | Open safe browser target. |
+| `readWorkspaceExportResource` | UI → host | Read workspace-contained binary asset for export packaging. |
+| `saveExportFile` | UI → host | Save generated HTML, ZIP, or PDF bytes via native save dialog / browser download. |
 
 ## State and persistence
 

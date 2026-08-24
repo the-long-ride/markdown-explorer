@@ -52,7 +52,9 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 - **Workspaces & Folders**: Open local folders, manage recent workspaces, and navigate multi-workspace desktop tabs.
 - **Desktop Tab & Focus Views**: Switch between multi-workspace **Tab View** for managing multiple workspaces simultaneously and **Focus View** for distraction-free single-workspace reading (`Ctrl+Alt+T` / `Ctrl+Alt+F`).
 - **Workspace Feature Aliases**: Assign custom alias names to workspaces for easier identification.
-- **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus.
+- **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus. On Windows, right-clicking a file to open with Markdown Explorer automatically sets the parent directory as the active workspace.
+- **Universal Hardware Mouse Navigation**: Logitech and all hardware mouse back/forward buttons (Mouse Buttons 3 and 4) along with `BrowserBack`/`BrowserForward` keys provide seamless history navigation across all runtimes.
+- **macOS Native Integration**: Standard AppKit Edit application menu (Undo, Redo, Cut, Copy, Paste, Select All) and normalized 16×16 template tray icon for macOS menu bar.
 - **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Chromium/Web does not expose Edit.
 - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
 - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
@@ -73,6 +75,23 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 - **Bookmark Sidebar Tab**: Dedicated sidebar tab with live saved-count badge, sort controls, and instant search. Tab View groups bookmarks by workspace; Focus View shows only the current workspace.
 - **Batch Management**: Checkbox selection mode with confirmed batch deletion (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Chromium / Web).
 - **Fully Localized**: All pin and bookmark labels, dialogs, empty/error states, and actions are available in English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
+
+</details>
+
+<details>
+<summary><b>Export & Scope View</b></summary>
+
+- **All-in-One Export Center**: Export your documentation to **Standalone HTML**, **Static Website (ZIP)**, or client-side hybrid **PDF** across all runtimes.
+- **Source Scopes**: Export the *Current document*, *Selected files* (with instant search filtering and multi-select checkboxes), a *Folder*, or the *Whole workspace*.
+- **Flexible Layouts**: Choose between clean **Document-only** layout or **Full Explorer** interactive viewport shell (including responsive sidebar tree, search, breadcrumbs, TOC, and theme switcher).
+- **Batch Modes**: Export as separate standalone files or merge multiple documents into a single document with collision-safe headings and anchor rewriting.
+- **100% Offline Local Runtimes**: Zero external CDN dependencies; exports package isolated local runtime bundles for core interactions, sandboxed HTML iframe previews with automatic height synchronization, media modal inspection, table filtering/sorting, and interactive Chart.js visualizations.
+- **Client-Side Hybrid PDF**: High-quality PDF generation via `pdfmake` that keeps textual content semantic, selectable, and searchable while capturing complex visual blocks (Mermaid diagrams, charts, and math) as crisp vector SVGs or raster images without opening the system print dialog.
+- **Scope View Modal**: Deep-dive into linked documents in an isolated preview modal without losing your current editor or tab position.
+  - **10-Step History Stack**: Bounded history stack (`MAX_SCOPE_DEPTH=10`) with animated depth indicators and Prev/Next navigation.
+  - **Open File Button**: Dedicated **Open file** header button (`OpenFileIcon`) navigates the main workspace to the previewed document and closes the modal.
+  - **Link Context Menu**: Right-click any Markdown link and select **Open as scope** to inspect it immediately.
+  - **Hardware Navigation Parity**: Full support for keyboard (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`, `Escape`) and hardware mouse back/forward buttons.
 
 </details>
 
