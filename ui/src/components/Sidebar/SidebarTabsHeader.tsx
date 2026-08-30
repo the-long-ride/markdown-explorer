@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { SidebarSearchStatus } from './SidebarSearch';
 import { SearchIcon, FolderIcon } from '../shared/icons';
 import { BookmarkIcon } from '../Bookmarks/BookmarkIcons';
+import { WorkspaceInsightsEntry } from '../Insights/WorkspaceInsightsEntry';
 
 type SidebarTab = 'files' | 'search' | 'bookmarks';
 
@@ -73,6 +74,7 @@ export function SidebarTabsHeader({
         )}
         <span className={`sidebar__tab-indicator${isSearch ? ' is-search' : isBookmarks ? ' is-bookmarks' : ''}`} ref={indicatorRef} />
       </div>
+      <WorkspaceInsightsEntry />
       {isFiles ? (
         <div className="sidebar__title-actions" key="files-actions"><span className="sidebar__count" id="fileCount">{fileCount}</span></div>
       ) : isSearch ? (

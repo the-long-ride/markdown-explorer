@@ -103,6 +103,24 @@ export function applyHtmlPreviewResize(data: unknown): boolean {
   return true;
 }
 
+export function handleWikiLinkClick(
+  event: MouseEvent,
+  navigate: (rawTarget: string, sourceDocumentPath: string) => void,
+): boolean {
+  const target = event.target;
+  if (!(target instanceof Element)) return false;
+  const anchor = target.closest<HTMLElement>('.mdn-wiki-link[data-mdn-wiki-target]');
+  if (!anchor) return false;
+
+  const wikiTarget = anchor.dataset.mdnWikiTarget ?? '';
+  const fragment = anchor.dataset.mdnWikiFragment;
+  const sourceDocumentPath = anchor.dataset.mdnSourceDocumentPath ?? '';
+  const rawTarget = fragment ? `${wikiTarget}#${fragment}` : wikiTarget;
+  event.preventDefault();
+  navigate(rawTarget, sourceDocumentPath);
+  return true;
+}
+
 export function initGlobalHandlers() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const win = window as any;
@@ -129,6 +147,17 @@ export function initGlobalHandlers() {
   registerCodeLineHandlers();
   registerTableHandlers(win);
   registerNativeChartPngSave(win);
+
+  if (!win.__mdnWikiLinkClickHandlerInstalled) {
+    document.addEventListener('click', (event) => {
+      handleWikiLinkClick(event, (rawTarget, sourceDocumentPath) => {
+        window.dispatchEvent(new CustomEvent('mdn-wiki-navigate', {
+          detail: { rawTarget, sourceDocumentPath },
+        }));
+      });
+    });
+    win.__mdnWikiLinkClickHandlerInstalled = true;
+  }
 
   if (!win.Sidebar) win.Sidebar = {};
   win.Sidebar.toggleFolder = (el: HTMLElement) => {

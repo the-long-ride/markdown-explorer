@@ -179,9 +179,10 @@ describe('ScopeViewModal', () => {
 
   it('offers Open as scope when an internal link is right-clicked inside Scope View', async () => {
     render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
-    await screen.findByText('Doc 1');
+    const link = await screen.findByRole('link', { name: 'Open 2' });
+    await waitFor(() => expect(mocks.scheduleEnhancements).toHaveBeenCalled());
 
-    fireEvent.contextMenu(screen.getByText('Open 2'), { clientX: 24, clientY: 30 });
+    fireEvent.contextMenu(link, { clientX: 24, clientY: 30 });
     expect(await screen.findByText('Open as scope')).toBeTruthy();
     fireEvent.click(screen.getByText('Open as scope'));
     await screen.findByText('Doc 2');
@@ -234,11 +235,12 @@ describe('ScopeViewModal', () => {
   it('renders Scope View navigation and link actions in the selected application language', async () => {
     mocks.appState.settings.language = 'vi';
     render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
-    await screen.findByText('Doc 1');
+    const link = await screen.findByRole('link', { name: 'Open 2' });
+    await waitFor(() => expect(mocks.scheduleEnhancements).toHaveBeenCalled());
 
     expect(screen.getByRole('dialog', { name: 'Chế độ xem phạm vi' })).toBeTruthy();
     expect(screen.getByLabelText('Phạm vi trước')).toBeTruthy();
-    fireEvent.contextMenu(screen.getByText('Open 2'), { clientX: 24, clientY: 30 });
+    fireEvent.contextMenu(link, { clientX: 24, clientY: 30 });
     expect(await screen.findByText('Mở dưới dạng phạm vi')).toBeTruthy();
   });
 
@@ -319,8 +321,9 @@ describe('ScopeViewModal', () => {
     window.addEventListener(ACTION_NOTICE_EVENT, onNotice);
     try {
       const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
-      await screen.findByText('Open self');
-      fireEvent.click(screen.getByText('Open self'));
+      const link = await screen.findByRole('link', { name: 'Open self' });
+      await waitFor(() => expect(mocks.scheduleEnhancements).toHaveBeenCalled());
+      fireEvent.click(link);
 
       await waitFor(() => expect(notices).toContain('You are currently viewing this document.'));
       expect(mocks.loadDocumentSnapshot).toHaveBeenCalledTimes(1);

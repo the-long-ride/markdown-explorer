@@ -6,7 +6,8 @@ import { parse } from './parser';
 import type { BlockToken, HeadingToken, ListToken, TableToken, BlockquoteToken, HtmlCommentToken, MathBlockToken } from './parser';
 import { renderInline } from './inline';
 import { renderCodeBlock } from './codeRenderer';
-import { slugify, escHtml, renderButton } from './utils';
+import { createHeadingIdAllocator } from './anchors';
+import { escHtml, renderButton } from './utils';
 import { renderInteractiveTable } from './tableRenderer';
 import { getTranslations } from '../contexts/translations';
 import type { Translations } from '../contexts/translationTypes';
@@ -65,7 +66,7 @@ export interface HtmlRendererOptions {
 
 export class HtmlRenderer {
   private readonly toc: TocEntry[] = [];
-  private readonly headingIdCounts = new Map<string, number>();
+  private readonly nextHeadingId = createHeadingIdAllocator();
   private readonly theme: string;
   private readonly isMdx: boolean;
   private readonly defaultHtmlPreview: boolean;
@@ -149,13 +150,6 @@ export class HtmlRenderer {
   }
 
   // ── Collapsible section ────────────────────────────────────
-
-  private nextHeadingId(text: string): string {
-    const baseId = slugify(text);
-    const duplicateIndex = this.headingIdCounts.get(baseId) ?? 0;
-    this.headingIdCounts.set(baseId, duplicateIndex + 1);
-    return duplicateIndex === 0 ? baseId : `${baseId}-${duplicateIndex}`;
-  }
 
   private renderSection(section: Section): string {
     const { level, text } = section.heading;

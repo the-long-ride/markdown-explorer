@@ -11,7 +11,7 @@
     "test:coverage": "vitest run --coverage",
     "test:electron": "vitest run --project electron",
     "test:vscode": "vitest run --project vscode",
-    "test:ui": "vitest run --project ui",
+    "test:ui": "vitest run --project ui --shard=1/4 && vitest run --project ui --shard=2/4 && vitest run --project ui --shard=3/4 && vitest run --project ui --shard=4/4",
     "test:chromium": "vitest run --project chromium",
     "test:contracts": "vitest run --project contracts --project manifest --project build",
     "test:translations": "vitest run tests/contracts/translations-coverage.test.ts",

@@ -2,6 +2,7 @@ import type { FolderNode, MdFile } from '../../ui/src/types';
 import type { BrowserSearchIndex } from './search-index';
 import { handleChromeExportHostCommand } from './chrome-host-export';
 import { filterSearchIndexTabs, isValidExternalUrl, normalizeSearchQuery, resolveWorkspaceTextResourcePath } from './chrome-host-utils';
+import { handleBrowserInsightsHostCommand } from './insights-host-router';
 import { resolveWorkspaceSearchItems } from './workspace-search-items';
 
 interface ChromeHostSearchContext {
@@ -15,6 +16,11 @@ interface ChromeHostSearchContext {
 }
 
 export async function handleChromeHostUtilityCommand(message: any, context: ChromeHostSearchContext): Promise<boolean> {
+  if (await handleBrowserInsightsHostCommand(message, {
+    activeHandle: context.activeHandle,
+    send: context.send,
+  })) return true;
+
   if (await handleChromeExportHostCommand(message, {
     activeHandle: context.activeHandle,
     send: context.send,

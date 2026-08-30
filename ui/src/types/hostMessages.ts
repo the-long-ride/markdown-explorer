@@ -2,6 +2,15 @@ import type { FolderNode, MdFile, RecentWorkspace } from './files';
 import type { RenderContentMessage, WorkspaceOperationMetadata } from './content';
 import type { AppRuntime, HostPlatform, UpdateState, WorkspaceUnavailableReason } from './settings';
 import type { DesktopFontFamily } from '../desktop/fonts/fontModel';
+import type {
+  ExternalLinkCheckResult,
+  InsightsFsDelta,
+  InsightsRuntimeCapabilities,
+  InsightsScanBatch,
+  InsightsScanComplete,
+  InsightsSourceResult,
+  WorkspaceResourceProbeResult,
+} from '../insights/contracts';
 
 export interface ReadyAckMessage extends WorkspaceOperationMetadata {
   readonly command: 'readyAck';
@@ -170,6 +179,31 @@ export interface WorkspaceExportResourceResultMessage {
   readonly reason?: ExportWorkspaceResourceHostFailureReason;
 }
 
+export interface InsightsScanBatchMessage extends InsightsScanBatch { readonly command: 'insightsScanBatch'; }
+export interface InsightsScanCompleteMessage extends InsightsScanComplete { readonly command: 'insightsScanComplete'; }
+export interface InsightsDocumentSourceResultMessage extends InsightsSourceResult { readonly command: 'insightsDocumentSourceResult'; }
+export interface WorkspaceResourceProbeResultMessage extends WorkspaceResourceProbeResult {
+  readonly command: 'workspaceResourceProbeResult';
+  readonly requestId: string;
+}
+export interface InsightsFsDeltaMessage {
+  readonly command: 'insightsFsDelta';
+  readonly requestId: string;
+  readonly workspaceOperationId?: string;
+  readonly deltas: readonly InsightsFsDelta[];
+}
+export interface InsightsRuntimeCapabilitiesMessage {
+  readonly command: 'insightsRuntimeCapabilities';
+  readonly requestId: string;
+  readonly capabilities: InsightsRuntimeCapabilities;
+}
+export interface ExternalLinkCheckResultMessage extends ExternalLinkCheckResult { readonly command: 'externalLinkCheckResult'; }
+export interface ExternalLinkCheckCompleteMessage {
+  readonly command: 'externalLinkCheckComplete';
+  readonly requestId: string;
+  readonly cancelled: boolean;
+}
+
 export interface ChartPngSaveResultMessage {
   readonly command: 'chartPngSaveResult';
   readonly ok: boolean;
@@ -186,4 +220,7 @@ export type HostMessage =
   | FullscreenStateChangedMessage | ExternalOpenRequestMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
   | WorkspaceTextResourceResultMessage | WorkspaceExportResourceResultMessage
+  | InsightsScanBatchMessage | InsightsScanCompleteMessage | InsightsDocumentSourceResultMessage
+  | WorkspaceResourceProbeResultMessage | InsightsFsDeltaMessage | InsightsRuntimeCapabilitiesMessage
+  | ExternalLinkCheckResultMessage | ExternalLinkCheckCompleteMessage
   | DesktopFontsResultMessage | ChartPngSaveResultMessage;

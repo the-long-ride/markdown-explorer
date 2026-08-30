@@ -6,16 +6,27 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
 } from 'react';
 import { useAppState } from './AppStateContext';
+import type { WikiResolution } from '../markdown/wikiLinks';
+
+export interface WikiNavigationResolver {
+  resolve: (
+    rawTarget: string,
+    sourceDocumentPath: string,
+  ) => WikiResolution | Promise<WikiResolution>;
+}
 
 interface NavigationContextValue {
   /** Push a new file to history (called when content renders) */
   push: (fsPath: string) => void;
   /** Select the history scope used by push/back/forward */
   setScope: (scopeId: string) => void;
+  /** Resolve a Wiki target and navigate only to a canonical resolved path. */
+  navigateWikiLink: (rawTarget: string, sourceDocumentPath: string) => Promise<WikiResolution>;
   /** Go back in history */
   back: () => void;
   /** Go forward in history */
@@ -35,7 +46,18 @@ interface HistoryState {
   isNavigatingHistory: boolean;
 }
 
-export function NavigationProvider({ children }: { children: React.ReactNode }) {
+interface WikiNavigateEventDetail {
+  rawTarget: string;
+  sourceDocumentPath: string;
+}
+
+export function NavigationProvider({
+  children,
+  wikiResolver,
+}: {
+  children: React.ReactNode;
+  wikiResolver?: WikiNavigationResolver;
+}) {
   const { navigate } = useAppState();
 
   const historiesRef = useRef<Record<string, HistoryState>>({});
@@ -88,6 +110,26 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     [forceUpdate, getHistory],
   );
 
+  const navigateWikiLink = useCallback(async (
+    rawTarget: string,
+    sourceDocumentPath: string,
+  ): Promise<WikiResolution> => {
+    if (!wikiResolver) return { status: 'missing' };
+    const resolution = await wikiResolver.resolve(rawTarget, sourceDocumentPath);
+    if (resolution.status === 'resolved') navigate(resolution.canonicalPath);
+    return resolution;
+  }, [navigate, wikiResolver]);
+
+  useEffect(() => {
+    const onWikiNavigate = (event: Event) => {
+      const detail = (event as CustomEvent<WikiNavigateEventDetail>).detail;
+      if (!detail || typeof detail.rawTarget !== 'string' || typeof detail.sourceDocumentPath !== 'string') return;
+      void navigateWikiLink(detail.rawTarget, detail.sourceDocumentPath);
+    };
+    window.addEventListener('mdn-wiki-navigate', onWikiNavigate);
+    return () => window.removeEventListener('mdn-wiki-navigate', onWikiNavigate);
+  }, [navigateWikiLink]);
+
   const back = useCallback(() => {
     const history = getHistory();
     if (history.index > 0) {
@@ -113,12 +155,13 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     return {
       push,
       setScope,
+      navigateWikiLink,
       back,
       forward,
       canGoBack: activeHistory.index > 0,
       canGoForward: activeHistory.index < activeHistory.stack.length - 1,
     };
-  }, [push, setScope, back, forward, getHistory, version]);
+  }, [push, setScope, navigateWikiLink, back, forward, getHistory, version]);
 
   return (
     <NavigationContext.Provider value={value}>

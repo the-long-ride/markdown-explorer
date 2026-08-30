@@ -20,6 +20,12 @@ impl Dispatcher {
         if self.handle_workspace_command(cmd, &msg).await? {
             return Ok(());
         }
+        if crate::insights_external_host::handle_command(&self.app, &self.state, cmd, &msg).await? {
+            return Ok(());
+        }
+        if crate::insights::handle_command(&self.app, &self.state, cmd, &msg).await? {
+            return Ok(());
+        }
         if crate::runtime::export_resources::handle_command(&self.app, &self.state, cmd, &msg)? {
             return Ok(());
         }

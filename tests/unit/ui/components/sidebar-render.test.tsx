@@ -48,6 +48,10 @@ vi.mock('../../../../ui/src/components/Sidebar/SidebarSearch', () => ({
   SidebarSearch: ({ isVisible }: any) => <div data-testid="sidebar-search" data-visible={isVisible} />,
 }));
 
+vi.mock('../../../../ui/src/components/Insights/WorkspaceInsightsEntry', () => ({
+  WorkspaceInsightsEntry: () => <button type="button" className="sidebar__insights-btn" aria-label="Workspace Insights" />,
+}));
+
 vi.mock('../../../../ui/src/components/Sidebar/TreeNode', () => ({
   FileNode: ({ file }: any) => <div data-testid="file-node">{file.title}</div>,
   FolderNodeView: ({ node, expansionCommand }: any) => (

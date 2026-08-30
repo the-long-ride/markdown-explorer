@@ -3,6 +3,7 @@
 // ============================================================
 
 import { escHtml, escAttr } from './utils';
+import { parseWikiLink } from './wikiLinks';
 import { YOUTUBE_ORIGIN, YOUTUBE_WIDGET_REFERRER } from '../constants/urls';
 import { AUDITED_UI_TRANSLATIONS } from '../contexts/auditedUiTranslations';
 import type { AuditedUiTranslationDomains } from '../contexts/auditedUiTranslationTypes';
@@ -143,11 +144,25 @@ function renderYouTubeEmbed(src: string, label: string, labels: AuditedUiTransla
 </figure>`;
 }
 
+function renderWikiSyntax(raw: string): string {
+  const token = parseWikiLink(raw);
+  if (!('kind' in token)) return raw;
+  const target = escAttr(token.target);
+  const fragmentAttr = token.fragment
+    ? ` data-mdn-wiki-fragment="${escAttr(token.fragment)}"`
+    : '';
+  const label = escHtml(token.label ?? (token.target || token.fragment || raw));
+  if (token.kind === 'embed') {
+    return `<span class="mdn-wiki-embed" data-mdn-wiki-kind="embed" data-mdn-wiki-target="${target}"${fragmentAttr}>${label}</span>`;
+  }
+  return `<a href="#" class="mdn-wiki-link" data-mdn-wiki-kind="link" data-mdn-wiki-target="${target}"${fragmentAttr}>${label}</a>`;
+}
+
 /**
  * Render inline markdown syntax to HTML.
  * Handles: bold, italic, bold+italic, strikethrough, inline-code,
- *           images, links (internal .md and external), auto-links,
- *           and safe HTML passthrough (kbd, sub, sup, mark, br, …).
+ *           images, links (internal .md and external), wiki links/embeds,
+ *           auto-links, and safe HTML passthrough (kbd, sub, sup, mark, br, …).
  */
 export function renderInline(
   text: string,
@@ -172,22 +187,15 @@ export function renderInline(
   const stashed = text.replace(regex, (tag) => {
     let finalTag = tag;
     if (isMdx) {
-      // Clean up self-closing JSX elements and curly braced attributes
-      // 1. Replace curly braces: attr={value} -> attr="value"
-      // and event handlers: onClick={() => code} -> onclick="code"
       finalTag = finalTag.replace(/([a-zA-Z0-9_-]+)\s*=\s*\{([^}]+)\}/g, (_, attrName, val) => {
         const trimmedVal = val.trim();
-        // Event handlers
         if (attrName.toLowerCase().startsWith('on')) {
-          // Check if it's an arrow function: () => ... or (e) => ...
           const arrowMatch = /^(?:\((?:[a-zA-Z0-9_,\s]*)\)|[a-zA-Z0-9_]+)\s*=>\s*([\s\S]+)$/.exec(trimmedVal);
           if (arrowMatch) {
             return `${attrName.toLowerCase()}="${escAttr(arrowMatch[1].trim())}"`;
           }
-          // Non-arrow function identifier
           return `${attrName.toLowerCase()}="${escAttr(trimmedVal)}(event)"`;
         }
-        // String literal in curly braces
         if (/^(['"])(.*)\1$/.test(trimmedVal)) {
           return `${attrName}="${escAttr(trimmedVal.slice(1, -1))}"`;
         }
@@ -196,7 +204,6 @@ export function renderInline(
 
       finalTag = decorateSafeHtmlBookmarkTag(finalTag);
 
-      // 2. Convert self-closing tags to explicit closing tags
       if (finalTag.endsWith('/>')) {
         const tagMatch = /^<([A-Za-z][A-Za-z0-9-]*)\b([\s\S]*?)\/>$/.exec(finalTag);
         if (tagMatch) {
@@ -206,7 +213,6 @@ export function renderInline(
           finalTag = `<${kebabTagName}${attrs}></${kebabTagName}>`;
         }
       } else {
-        // Convert regular opening/closing tags if they have uppercase letters
         const tagMatch = /^<\/?([A-Za-z][A-Za-z0-9-]*)\b([\s\S]*?)>$/.exec(finalTag);
         if (tagMatch) {
           const tagName = tagMatch[1];
@@ -227,27 +233,19 @@ export function renderInline(
 
   const protectedText = stashed
     .replace(/`([^`]+)`/g, (_full, code) => stashHtml(`<code class="mdn-inline-code" ${bookmarkAttrs('code')}>${escHtml(normalizeInlineCode(code))}</code>`))
+    .replace(/!?\[\[(?:\\.|[^\]])*\]\]/g, (raw) => stashHtml(renderWikiSyntax(raw)))
     .replace(/\\\(([\s\S]+?)\\\)/g, (_full, math) => renderMath(math))
     .replace(/(^|[^\\])\$([^\s$](?:[^$\n]*?[^\s$])?)\$/g, (_full, prefix, math) => `${prefix}${renderMath(math)}`);
 
-  // ── Step 1: Escape remaining HTML entities ──
   let t = escHtml(protectedText);
 
-  // ── Step 2: Bold + italic (*** ... ***) ──
   t = t.replace(/\*{3}(.+?)\*{3}/g, '<strong><em>$1</em></strong>');
-
-  // ── Step 3: Bold (** ... ** or __ ... __) ──
   t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   t = t.replace(/__(.+?)__/g, '<strong>$1</strong>');
-
-  // ── Step 4: Italic (* ... * or _ ... _) ──
   t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
   t = t.replace(/_(.+?)_/g, '<em>$1</em>');
-
-  // ── Step 5: Strikethrough (~~...~~) ──
   t = t.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
-  // ── Step 7: Images  ![alt](src) ──
   t = t.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
     (_, alt, src) => {
@@ -262,8 +260,6 @@ export function renderInline(
     },
   );
 
-  // ── Step 8: Links  [label](href) ──
-  //    Internal .md links → Nav.go(); external → new tab
   t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_full, label, href) => {
     let linkHtml = '';
     if (isYouTubeSource(href)) {
@@ -279,7 +275,6 @@ export function renderInline(
     return `\u0001${stash.length - 1}\u0001`;
   });
 
-  // ── Step 9: Bare URLs ──
   t = t.replace(
     /(https?:\/\/[^\s<>"]+)/g,
     (_full, href) => (
@@ -291,7 +286,6 @@ export function renderInline(
     ),
   );
 
-  // ── Step 10: Restore stashed safe HTML tags recursively ──
   let replaced = true;
   let depth = 0;
   while (t.includes('\u0001') && replaced && depth < 100) {
