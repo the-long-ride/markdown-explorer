@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { HostMessage, WebviewMessage } from '../types';
+import { createAsyncLimiter, type AsyncLimiter } from '../insights/concurrency';
 import type {
   ExternalLinkCheckRequest,
   ExternalLinkCheckResult,
@@ -104,6 +105,7 @@ export interface SetInsightsWatchStateRequest {
 
 const pendingScanCancels = new WeakMap<PlatformBridge, Map<string, () => void>>();
 const pendingExternalCancels = new WeakMap<PlatformBridge, Map<string, () => void>>();
+const insightsSourceReadLimiters = new WeakMap<PlatformBridge, AsyncLimiter>();
 
 function pendingMap(
   store: WeakMap<PlatformBridge, Map<string, () => void>>,
@@ -115,6 +117,15 @@ function pendingMap(
     store.set(bridge, map);
   }
   return map;
+}
+
+function insightsSourceReadLimiter(bridge: PlatformBridge): AsyncLimiter {
+  let limiter = insightsSourceReadLimiters.get(bridge);
+  if (!limiter) {
+    limiter = createAsyncLimiter();
+    insightsSourceReadLimiters.set(bridge, limiter);
+  }
+  return limiter;
 }
 
 export function scanInsightsWorkspace(
@@ -187,7 +198,7 @@ export function readInsightsDocumentSource(
   bridge: PlatformBridge,
   request: ReadInsightsDocumentSourceRequest,
 ): Promise<InsightsSourceResult> {
-  return new Promise((resolve) => {
+  return insightsSourceReadLimiter(bridge)(() => new Promise((resolve) => {
     const unsubscribe = bridge.onMessage((message) => {
       if (message.command !== 'insightsDocumentSourceResult' || message.requestId !== request.requestId) return;
       unsubscribe();
@@ -202,7 +213,7 @@ export function readInsightsDocumentSource(
       });
     });
     bridge.postMessage({ command: 'readInsightsDocumentSource', ...request });
-  });
+  }));
 }
 
 export function probeWorkspaceResource(

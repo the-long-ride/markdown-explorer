@@ -5,18 +5,16 @@ import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
 import { LintView } from '../../../../ui/src/components/Insights/LintView';
 import { DuplicatesView } from '../../../../ui/src/components/Insights/DuplicatesView';
 import { INSIGHTS_TRANSLATIONS } from '../../../../ui/src/contexts/insightsTranslations';
+import { INSIGHTS_UI_TRANSLATIONS } from '../../../../ui/src/contexts/insightsUiTranslations';
 
-function doc(path: string, source: string) {
-  return analyzeDocument({ path, source, revision: `${path}-1` });
-}
+function doc(path: string, source: string) { return analyzeDocument({ path, source, revision: `${path}-1` }); }
 
 describe('Insights Lint and Duplicates views', () => {
   it('filters lint findings and supports reversible finding suppression', async () => {
     const document = doc('guide.md', '# A  \n### C\n# A\n');
     const user = userEvent.setup();
     render(<LintView documents={[document]} />);
-
-    expect(screen.getByText(/heading level jumps/i)).toBeVisible();
+    expect(screen.getAllByText(INSIGHTS_UI_TRANSLATIONS.en.presentation.lintRules['heading/skipped-level']).length).toBeGreaterThan(0);
     await user.click(screen.getAllByRole('button', { name: INSIGHTS_TRANSLATIONS.en.suppress })[0]);
     expect(screen.getByRole('button', { name: INSIGHTS_TRANSLATIONS.en.showSuppressed })).toBeVisible();
     await user.click(screen.getByRole('button', { name: INSIGHTS_TRANSLATIONS.en.showSuppressed }));
@@ -29,7 +27,6 @@ describe('Insights Lint and Duplicates views', () => {
     const nearA = doc('near-a.md', '# Auth\nRefresh token rotation access token session authentication policy behavior.');
     const nearB = doc('near-b.md', '# Auth guide\nRefresh token rotation access token session authentication policy behavior details.');
     const user = userEvent.setup();
-
     render(<DuplicatesView documents={[exactA, exactB, nearA, nearB]} threshold={0.8} />);
     expect(screen.getByText(INSIGHTS_TRANSLATIONS.en.exactDuplicate)).toBeVisible();
     expect(screen.getByText(INSIGHTS_TRANSLATIONS.en.nearDuplicate)).toBeVisible();

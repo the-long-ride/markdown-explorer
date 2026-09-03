@@ -140,7 +140,13 @@ export function ContentMainView({
         {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && suppressWelcome && !state.currentFile && state.fileList.length > 0 && <RandomTipCard />}
 
         {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && state.currentFile && hasRenderableDocumentContent && (
-          <div className={`mdn-body${isFullHtmlPreview ? ' mdn-body--html-preview' : ''}`} id="mdBody" ref={bodyRef} aria-live="polite">
+          <div
+            className={`mdn-body${isFullHtmlPreview ? ' mdn-body--html-preview' : ''}`}
+            id="mdBody"
+            ref={bodyRef}
+            aria-live="polite"
+            data-mdn-source-document-path={state.relativePath || undefined}
+          >
             {state.staleContentFilePath === state.currentFile && (
               <div className="document-preview-notice current-file-change-notice" role="status">
                 <AlertTriangleIcon size={16} />

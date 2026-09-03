@@ -114,7 +114,9 @@ export function handleWikiLinkClick(
 
   const wikiTarget = anchor.dataset.mdnWikiTarget ?? '';
   const fragment = anchor.dataset.mdnWikiFragment;
-  const sourceDocumentPath = anchor.dataset.mdnSourceDocumentPath ?? '';
+  const sourceDocumentPath = anchor.dataset.mdnSourceDocumentPath
+    ?? anchor.closest<HTMLElement>('[data-mdn-source-document-path]')?.dataset.mdnSourceDocumentPath
+    ?? '';
   const rawTarget = fragment ? `${wikiTarget}#${fragment}` : wikiTarget;
   event.preventDefault();
   navigate(rawTarget, sourceDocumentPath);

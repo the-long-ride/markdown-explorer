@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { INSIGHTS_TRANSLATIONS, type InsightsTranslations } from '../../contexts/insightsTranslations';
+import type { InsightsTranslations } from '../../contexts/insightsTranslations';
+import { ensureInsightsUiTranslations, insightsStatusLabel, type InsightsUiTranslations } from '../../contexts/insightsUiTranslations';
 import type { AnalyzedDocument } from '../../insights/analyzeDocument';
 import type { WorkspaceResourceProbeResult } from '../../insights/contracts';
 
@@ -17,7 +18,7 @@ interface GalleryItem {
 
 export interface GalleryViewProps {
   readonly documents: readonly AnalyzedDocument[];
-  readonly labels?: InsightsTranslations;
+  readonly labels?: InsightsTranslations | InsightsUiTranslations;
   readonly probeResource?: (documentPath: string, resourcePath: string) => Promise<WorkspaceResourceProbeResult>;
 }
 
@@ -41,31 +42,17 @@ function collectItems(documents: readonly AnalyzedDocument[]): GalleryItem[] {
     for (const reference of document.references) {
       const category = categoryFor(reference.target);
       if (!category) continue;
-      items.push({
-        key: `${document.path}:${reference.sourceStart}:${reference.target}`,
-        documentPath: document.path,
-        target: reference.target,
-        label: reference.label || reference.target.split('/').pop() || reference.target,
-        category,
-        remote: reference.remote,
-      });
+      items.push({ key: `${document.path}:${reference.sourceStart}:${reference.target}`, documentPath: document.path, target: reference.target, label: reference.label || reference.target.split('/').pop() || reference.target, category, remote: reference.remote });
     }
     for (const diagram of document.diagrams) {
-      items.push({
-        key: `${document.path}:mermaid:${diagram.sourceStart}`,
-        documentPath: document.path,
-        target: `Mermaid · ${diagram.sourceStart}`,
-        label: `${document.path} · Mermaid`,
-        category: 'diagram',
-        remote: false,
-        status: diagram.status,
-      });
+      items.push({ key: `${document.path}:mermaid:${diagram.sourceStart}`, documentPath: document.path, target: `Mermaid · ${diagram.sourceStart}`, label: `${document.path} · Mermaid`, category: 'diagram', remote: false, status: diagram.status });
     }
   }
   return items;
 }
 
-export function GalleryView({ documents, labels = INSIGHTS_TRANSLATIONS.en, probeResource }: GalleryViewProps) {
+export function GalleryView({ documents, labels: suppliedLabels, probeResource }: GalleryViewProps) {
+  const labels = ensureInsightsUiTranslations(suppliedLabels);
   const items = useMemo(() => collectItems(documents), [documents]);
   const [probes, setProbes] = useState<Map<string, WorkspaceResourceProbeResult>>(() => new Map());
   const [loadedRemote, setLoadedRemote] = useState<Set<string>>(() => new Set());
@@ -90,25 +77,18 @@ export function GalleryView({ documents, labels = INSIGHTS_TRANSLATIONS.en, prob
       {items.map(item => {
         const loaded = loadedRemote.has(item.key);
         const probe = probes.get(item.key);
+        const category = labels.presentation.galleryCategories[item.category];
+        const status = item.status ? insightsStatusLabel(labels, item.status) : '';
         return (
           <article className="insights-card" key={item.key}>
             <div className="insights-card__meta">
-              <span>{item.category === 'diagram' ? `${item.category} · ${item.status ?? ''}` : item.category}</span>
-              {!item.remote && item.category !== 'diagram' && <span>{probe?.status ?? '…'}</span>}
+              <span>{item.category === 'diagram' ? `${category} · ${status}` : category}</span>
+              {!item.remote && item.category !== 'diagram' && <span>{probe ? insightsStatusLabel(labels, probe.status) : '…'}</span>}
               {item.remote && <span>{labels.remoteMedia}</span>}
             </div>
             <div className="insights-card__title">{item.label}</div>
             <div className="insights-card__target">{item.target}</div>
-            {item.remote && !loaded && (
-              <button
-                type="button"
-                className="btn btn--sm"
-                aria-label={`${labels.loadPreview}: ${item.label}`}
-                onClick={() => setLoadedRemote(current => new Set(current).add(item.key))}
-              >
-                {labels.loadPreview}
-              </button>
-            )}
+            {item.remote && !loaded && <button type="button" className="btn btn--sm" aria-label={`${labels.loadPreview}: ${item.label}`} onClick={() => setLoadedRemote(current => new Set(current).add(item.key))}>{labels.loadPreview}</button>}
             {item.remote && loaded && item.category === 'image' && <img src={item.target} alt={item.label} loading="lazy" />}
             {item.remote && loaded && item.category === 'video' && <video src={item.target} controls preload="metadata" aria-label={item.label} />}
             {item.remote && loaded && item.category === 'audio' && <audio src={item.target} controls preload="metadata" aria-label={item.label} />}

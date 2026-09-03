@@ -1,34 +1,104 @@
+import React, { type ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   NavigationProvider,
   useNavigation,
-  type WikiNavigationResolver,
+  type WikiResolver,
 } from '../../../ui/src/contexts/NavigationContext';
-import { handleWikiLinkClick } from '../../../ui/src/dom/globalHandlers';
 
 const mockNavigate = vi.fn();
+
 vi.mock('../../../ui/src/contexts/AppStateContext', () => ({
-  useAppState: () => ({ navigate: mockNavigate }),
+  useAppState: () => ({
+    navigate: mockNavigate,
+  }),
 }));
 
-describe('wiki navigation', () => {
-  it('resolves raw wiki targets before navigating to canonical paths', async () => {
-    mockNavigate.mockClear();
-    const resolver: WikiNavigationResolver = {
-      resolve: vi.fn(async (rawTarget, sourceDocumentPath) => {
-        expect(rawTarget).toBe('Guide#Install');
-        expect(sourceDocumentPath).toBe('docs/Start.md');
-        return {
-          status: 'resolved',
-          documentPath: 'docs/Guide.md',
-          canonicalPath: 'docs/Guide.md',
-          fragment: 'install',
-          caseMismatch: false,
-        };
-      }),
+describe('NavigationContext wiki links', () => {
+  beforeEach(() => {
+    mockNavigate.mockReset();
+  });
+
+  it('exposes resolver-backed wiki navigation without changing path navigation', async () => {
+    const resolver: WikiResolver = {
+      resolve: vi.fn(async (rawTarget, sourceDocumentPath) => ({
+        status: rawTarget === 'Ambiguous'
+          ? 'ambiguous'
+          : rawTarget === 'Missing'
+            ? 'missing'
+            : 'resolved',
+        canonicalPath: rawTarget === 'Resolved' ? 'docs/Resolved.md' : undefined,
+        fragment: rawTarget === 'Resolved' ? 'install' : '',
+        candidates: rawTarget === 'Ambiguous'
+          ? ['docs/Ambiguous.md', 'notes/Ambiguous.md']
+          : undefined,
+        sourceDocumentPath,
+      })),
     };
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <NavigationProvider wikiResolver={resolver}>{children}</NavigationProvider>
+    );
+    const { result } = renderHook(() => useNavigation(), { wrapper });
+
+    let ambiguous: Awaited<ReturnType<typeof result.current.navigateWikiLink>> | undefined;
+    await act(async () => {
+      ambiguous = await result.current.navigateWikiLink('Ambiguous', 'docs/Start.md');
+    });
+    expect(ambiguous?.status).toBe('ambiguous');
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    let missing: Awaited<ReturnType<typeof result.current.navigateWikiLink>> | undefined;
+    await act(async () => {
+      missing = await result.current.navigateWikiLink('Missing', 'docs/Start.md');
+    });
+    expect(missing?.status).toBe('missing');
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    let resolved: Awaited<ReturnType<typeof result.current.navigateWikiLink>> | undefined;
+    await act(async () => {
+      resolved = await result.current.navigateWikiLink('Resolved', 'docs/Start.md');
+    });
+    expect(resolved).toMatchObject({
+      status: 'resolved',
+      canonicalPath: 'docs/Resolved.md',
+      fragment: 'install',
+    });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to a missing result when no resolver is provided', async () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <NavigationProvider>{children}</NavigationProvider>
+    );
+    const { result } = renderHook(() => useNavigation(), { wrapper });
+
+    let resolution: Awaited<ReturnType<typeof result.current.navigateWikiLink>> | undefined;
+    await act(async () => {
+      resolution = await result.current.navigateWikiLink('Anything', 'docs/Start.md');
+    });
+
+    expect(resolution).toEqual({ status: 'missing' });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('reveals a resolved wiki fragment after the destination document renders', async () => {
+    document.body.innerHTML = '<div id="mdBody" data-mdn-source-document-path="docs/Start.md"></div>';
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    const resolver: WikiResolver = {
+      resolve: vi.fn(async () => ({
+        status: 'resolved',
+        canonicalPath: 'docs/Guide.md',
+        fragment: 'install',
+      })),
+    };
+    const wrapper = ({ children }: { children: ReactNode }) => (
       <NavigationProvider wikiResolver={resolver}>{children}</NavigationProvider>
     );
     const { result } = renderHook(() => useNavigation(), { wrapper });
@@ -36,34 +106,104 @@ describe('wiki navigation', () => {
     await act(async () => {
       await result.current.navigateWikiLink('Guide#Install', 'docs/Start.md');
     });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
 
-    expect(mockNavigate).toHaveBeenCalledWith('docs/Guide.md');
+    const body = document.createElement('div');
+    body.id = 'mdBody';
+    body.dataset.mdnSourceDocumentPath = 'docs/Guide.md';
+    const section = document.createElement('section');
+    section.className = 'mdn-section';
+    section.dataset.expanded = 'false';
+    const heading = document.createElement('h2');
+    heading.id = 'install';
+    section.append(heading);
+    body.append(section);
+    document.body.replaceChildren(body);
+
+    await vi.waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalled();
+      expect(section.dataset.expanded).toBe('true');
+    });
   });
 
-  it('does not navigate unresolved or ambiguous wiki targets', async () => {
-    mockNavigate.mockClear();
-    const resolver: WikiNavigationResolver = {
-      resolve: vi.fn(async () => ({ status: 'ambiguous', candidates: ['A.md', 'B.md'] })),
+  it('reveals same-document fragments without reopening the current file', async () => {
+    document.body.innerHTML = `
+      <div id="mdBody" data-mdn-source-document-path="docs/Guide.md">
+        <section class="mdn-section" data-expanded="false">
+          <h2 id="install">Install</h2>
+        </section>
+      </div>
+    `;
+    const heading = document.getElementById('install') as HTMLElement;
+    const section = heading.closest('.mdn-section') as HTMLElement;
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(heading, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    const resolver: WikiResolver = {
+      resolve: vi.fn(async () => ({
+        status: 'resolved',
+        canonicalPath: 'docs/Guide.md',
+        fragment: 'install',
+      })),
     };
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }) => (
       <NavigationProvider wikiResolver={resolver}>{children}</NavigationProvider>
     );
     const { result } = renderHook(() => useNavigation(), { wrapper });
+
     await act(async () => {
-      await result.current.navigateWikiLink('Guide', 'docs/Start.md');
+      await result.current.navigateWikiLink('#Install', 'docs/Guide.md');
     });
+
     expect(mockNavigate).not.toHaveBeenCalled();
+    expect(section.dataset.expanded).toBe('true');
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
   });
 
-  it('delegates rendered wiki-link clicks as raw target/source navigation requests', () => {
-    document.body.innerHTML = '<a class="mdn-wiki-link" data-mdn-wiki-target="Guide" data-mdn-wiki-fragment="Install" data-mdn-source-document-path="docs/Start.md">Guide</a>';
-    const anchor = document.querySelector('a')!;
-    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
-    Object.defineProperty(event, 'target', { value: anchor });
-    const navigate = vi.fn();
+  it('ignores a stale resolver completion superseded by a newer wiki navigation', async () => {
+    type Resolution = Awaited<ReturnType<WikiResolver['resolve']>>;
+    let resolveFirst!: (resolution: Resolution) => void;
+    const firstResolution = new Promise<Resolution>((resolve) => {
+      resolveFirst = resolve;
+    });
 
-    expect(handleWikiLinkClick(event, navigate)).toBe(true);
-    expect(event.defaultPrevented).toBe(true);
-    expect(navigate).toHaveBeenCalledWith('Guide#Install', 'docs/Start.md');
+    const resolver: WikiResolver = {
+      resolve: vi.fn((rawTarget) => rawTarget === 'First'
+        ? firstResolution
+        : Promise.resolve({
+            status: 'resolved',
+            canonicalPath: 'docs/Second.md',
+            fragment: '',
+          })),
+    };
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <NavigationProvider wikiResolver={resolver}>{children}</NavigationProvider>
+    );
+    const { result } = renderHook(() => useNavigation(), { wrapper });
+
+    let firstNavigation!: Promise<Resolution>;
+    act(() => {
+      firstNavigation = result.current.navigateWikiLink('First', 'docs/Start.md');
+    });
+
+    await act(async () => {
+      await result.current.navigateWikiLink('Second', 'docs/Start.md');
+    });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenLastCalledWith(expect.stringContaining('docs/Second.md'));
+
+    await act(async () => {
+      resolveFirst({
+        status: 'resolved',
+        canonicalPath: 'docs/First.md',
+        fragment: '',
+      });
+      await firstNavigation;
+    });
+
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
 });

@@ -111,6 +111,7 @@ export function createChromeInsightsHost(deps: ChromeInsightsHostDeps) {
   const clearIntervalImpl = deps.clearInterval ?? window.clearInterval.bind(window);
   let pollTimer: number | null = null;
   let pollGeneration = 0;
+  let pollInFlight = false;
   let previousPoll = new Map<string, { sizeBytes: number; mtimeMs: number; extension?: string }>();
 
   async function collectEntries(root: FileSystemDirectoryHandle, userPatterns: readonly string[] = [], requestId?: string) {
@@ -226,21 +227,27 @@ export function createChromeInsightsHost(deps: ChromeInsightsHostDeps) {
   }
 
   async function pollOnce(message: any, generation: number): Promise<void> {
+    if (pollInFlight) return;
     const root = deps.getActiveHandle();
     if (!root || generation !== pollGeneration) return;
-    const { entries } = await collectEntries(root);
-    if (generation !== pollGeneration) return;
-    const next = new Map(entries.map(entry => [entry.relativePath, entry]));
-    const deltas: any[] = [];
-    for (const [relativePath, entry] of next) {
-      const previous = previousPoll.get(relativePath);
-      if (!previous || previous.sizeBytes !== entry.sizeBytes || previous.mtimeMs !== entry.mtimeMs) {
-        deltas.push({ kind: previous ? 'update' : 'add', entry });
+    pollInFlight = true;
+    try {
+      const { entries } = await collectEntries(root);
+      if (generation !== pollGeneration) return;
+      const next = new Map(entries.map(entry => [entry.relativePath, entry]));
+      const deltas: any[] = [];
+      for (const [relativePath, entry] of next) {
+        const previous = previousPoll.get(relativePath);
+        if (!previous || previous.sizeBytes !== entry.sizeBytes || previous.mtimeMs !== entry.mtimeMs) {
+          deltas.push({ kind: previous ? 'update' : 'add', entry });
+        }
       }
+      for (const relativePath of previousPoll.keys()) if (!next.has(relativePath)) deltas.push({ kind: 'delete', relativePath });
+      previousPoll = next;
+      if (deltas.length) deps.send({ command: 'insightsFsDelta', requestId: message.requestId, workspaceOperationId: message.workspaceOperationId, deltas });
+    } finally {
+      pollInFlight = false;
     }
-    for (const relativePath of previousPoll.keys()) if (!next.has(relativePath)) deltas.push({ kind: 'delete', relativePath });
-    previousPoll = next;
-    if (deltas.length) deps.send({ command: 'insightsFsDelta', requestId: message.requestId, workspaceOperationId: message.workspaceOperationId, deltas });
   }
 
   function setInsightsWatchState(message: any): void {
