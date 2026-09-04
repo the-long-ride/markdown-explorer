@@ -120,4 +120,64 @@ describe('portable export interactions', () => {
     image.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.querySelector('.mdn-export-media-viewer')).not.toBeNull();
   });
+
+  it('handles html and csv mode toggles and section/document copy with clean text', () => {
+    const writeText = vi.fn(async () => {});
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+
+    document.body.innerHTML = `
+      <div class="mdn-export-document">
+        <section class="mdn-section" data-expanded="false">
+          <header class="mdn-section-header">
+            <button id="copy-section" class="mdn-section-copy-btn">Copy</button>
+          </header>
+          <div class="mdn-section-body">
+            <p>Section body content</p>
+            <span class="tooltip-text">Hidden tip</span>
+          </div>
+        </section>
+        <div class="mdn-html-preview-wrap" data-mode="code">
+          <span class="mdn-codeblock-lang" data-code-label="HTML" data-preview-label="Preview">HTML</span>
+          <button class="mdn-toggle-preview-btn" data-label-show-code="Code" data-label-show-preview="Preview"><span class="tooltip-text">Preview</span></button>
+          <div class="mdn-code-source"><code>&lt;div&gt;Hello&lt;/div&gt;</code></div>
+          <div class="mdn-html-preview-body" style="display: none"></div>
+        </div>
+        <div class="mdn-csv-preview-wrap" data-mode="code">
+          <span class="mdn-codeblock-lang" data-code-label="CSV" data-preview-label="Table">CSV</span>
+          <button class="mdn-toggle-csv-btn" data-label-show-code="Code" data-label-show-preview="Preview"><span class="tooltip-text">Preview</span></button>
+          <div class="mdn-code-source"><code>a,b</code></div>
+          <div class="mdn-csv-preview-body" style="display: none"></div>
+        </div>
+      </div>
+    `;
+
+    installPortableContentHandlers(document, window);
+    const ui = (window as any).UI;
+
+    // Toggle HTML mode
+    const htmlToggle = document.querySelector('.mdn-toggle-preview-btn') as HTMLElement;
+    ui.toggleHtmlMode(htmlToggle);
+    const htmlWrap = document.querySelector('.mdn-html-preview-wrap') as HTMLElement;
+    expect(htmlWrap.dataset.mode).toBe('preview');
+
+    // Toggle CSV mode
+    const csvToggle = document.querySelector('.mdn-toggle-csv-btn') as HTMLElement;
+    ui.toggleCsvMode(csvToggle);
+    const csvWrap = document.querySelector('.mdn-csv-preview-wrap') as HTMLElement;
+    expect(csvWrap.dataset.mode).toBe('preview');
+
+    // Copy Section
+    const sectionCopyBtn = document.getElementById('copy-section') as HTMLElement;
+    ui.copySection(sectionCopyBtn);
+    expect(writeText).toHaveBeenCalledWith('Section body content');
+
+    // Copy Document
+    writeText.mockClear();
+    ui.copyDocument();
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Section body content'));
+
+    // Expand All
+    ui.expandAll();
+    expect(document.querySelector('.mdn-section')?.getAttribute('data-expanded')).toBe('true');
+  });
 });

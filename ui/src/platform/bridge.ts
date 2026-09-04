@@ -138,13 +138,27 @@ export function scanInsightsWorkspace(
   let settled = false;
   let unsubscribe = () => {};
 
+  let timeoutTimer: any;
   const finish = (result: InsightsScanComplete): void => {
     if (settled) return;
     settled = true;
+    clearTimeout(timeoutTimer);
     unsubscribe();
     pendingMap(pendingScanCancels, bridge).delete(request.requestId);
     resolveDone(result);
   };
+
+  timeoutTimer = setTimeout(() => {
+    finish({
+      requestId: request.requestId,
+      totalEntries: 0,
+      excludedEntries: 0,
+      skippedEntries: 0,
+      truncated: true,
+      truncatedReason: 'scan-timeout',
+      cancelled: false,
+    });
+  }, 45000);
 
   unsubscribe = bridge.onMessage((message) => {
     if (message.command === 'insightsScanBatch') {
@@ -199,8 +213,13 @@ export function readInsightsDocumentSource(
   request: ReadInsightsDocumentSourceRequest,
 ): Promise<InsightsSourceResult> {
   return insightsSourceReadLimiter(bridge)(() => new Promise((resolve) => {
+    let settled = false;
+    let timer: any;
     const unsubscribe = bridge.onMessage((message) => {
       if (message.command !== 'insightsDocumentSourceResult' || message.requestId !== request.requestId) return;
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       unsubscribe();
       resolve({
         requestId: message.requestId,
@@ -212,6 +231,16 @@ export function readInsightsDocumentSource(
         contentHash: message.contentHash,
       });
     });
+    timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      unsubscribe();
+      resolve({
+        requestId: request.requestId,
+        relativePath: request.relativePath,
+        status: 'unreadable',
+      });
+    }, 15000);
     bridge.postMessage({ command: 'readInsightsDocumentSource', ...request });
   }));
 }

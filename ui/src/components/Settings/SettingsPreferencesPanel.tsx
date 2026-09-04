@@ -185,6 +185,17 @@ export function SettingsPreferencesPanel({
           </label>
         </PreferenceRow>
 
+        <PreferenceRow id="insights-enabled" title={t.insightsEnabled} description={t.insightsEnabledDesc}>
+          <label className="switch-toggle" aria-label={t.insightsEnabled}>
+            <input
+              type="checkbox"
+              checked={state.settings.insightsEnabled}
+              onChange={(event) => updateSettings({ insightsEnabled: event.target.checked })}
+            />
+            <span className="switch-slider" />
+          </label>
+        </PreferenceRow>
+
         {isDesktop && (
           <PreferenceRow
             id="document-conversion"

@@ -57,6 +57,7 @@ export type KeyboardAction =
   | { type: 'settings-toggle' }
   | { type: 'toggle-theme' }
   | { type: 'toggle-toc' }
+  | { type: 'toggle-workspace-insights' }
   | { type: 'locate-file' }
   | { type: 'open-current-document-location' }
   | { type: 'toggle-focus-mode' }
@@ -94,6 +95,7 @@ export interface KeyboardState {
   hasOnWelcome: boolean;
   hasOnEditCurrentDocument?: boolean;
   hasOnToggleToc: boolean;
+  hasOnToggleWorkspaceInsights?: boolean;
   hasOnLocateFile: boolean;
   hasOnOpenBookmarks: boolean;
   hasOnOpenCurrentDocumentLocation?: boolean;
@@ -217,6 +219,11 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
   if (state.hasOnToggleToc && matchesShortcut(e, state.keybindings.toggleToc)) {
     if (state.isRepeat) return null;
     return { type: 'toggle-toc' };
+  }
+
+  if (state.hasOnToggleWorkspaceInsights && matchesShortcut(e, state.keybindings.toggleWorkspaceInsights)) {
+    if (state.isRepeat) return null;
+    return { type: 'toggle-workspace-insights' };
   }
 
   if (state.hasOnLocateFile && !state.isEditableTarget && matchesShortcut(e, state.keybindings.locateFile)) {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
 import { LintView } from '../../../../ui/src/components/Insights/LintView';
 import { DuplicatesView } from '../../../../ui/src/components/Insights/DuplicatesView';
@@ -34,5 +34,16 @@ describe('Insights Lint and Duplicates views', () => {
     expect(screen.getByRole('button', { name: INSIGHTS_TRANSLATIONS.en.showSuppressed })).toBeVisible();
     await user.click(screen.getByRole('button', { name: INSIGHTS_TRANSLATIONS.en.showSuppressed }));
     expect(screen.getByText(INSIGHTS_TRANSLATIONS.en.suppressed)).toBeVisible();
+  });
+
+  it('calls onSelectFinding with location when a lint finding target is clicked', async () => {
+    const document = doc('guide.md', '# A  \n### C\n# A\n');
+    const onSelectFinding = vi.fn();
+    const user = userEvent.setup();
+    render(<LintView documents={[document]} onSelectFinding={onSelectFinding} />);
+    const targets = screen.getAllByRole('button', { name: /guide\.md/i });
+    expect(targets.length).toBeGreaterThan(0);
+    await user.click(targets[0]);
+    expect(onSelectFinding).toHaveBeenCalledWith(expect.objectContaining({ path: 'guide.md' }));
   });
 });

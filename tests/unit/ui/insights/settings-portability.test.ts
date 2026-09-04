@@ -13,6 +13,7 @@ const settings: AppSettings = {
   defaultCsvPreview: true,
   fileTabs: false,
   bookmarksEnabled: false,
+  insightsEnabled: false,
   documentConversion: false,
 };
 

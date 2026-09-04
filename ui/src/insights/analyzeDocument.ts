@@ -35,6 +35,7 @@ export interface AnalyzedDiagram {
   readonly sourceStart: number;
   readonly sourceEnd: number;
   readonly fingerprint: string;
+  readonly code?: string;
 }
 
 export interface PersistedAnalyzedDocument {
@@ -188,6 +189,7 @@ function diagramsFrom(tokens: readonly BlockToken[], lint: readonly InsightsLint
       sourceStart,
       sourceEnd,
       fingerprint: fnv1a64(token.content.replace(/\s+/g, ' ').trim()),
+      code: token.content,
     }];
   });
 }

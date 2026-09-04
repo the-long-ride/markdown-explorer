@@ -116,7 +116,10 @@ function splitPipeCells(row: string): string[] {
 function looksLikeDelimiter(line: string): boolean {
   if (!line.includes('|')) return false;
   const cells = splitPipeCells(line);
-  return cells.length > 1 && cells.some(cell => /[-:]/.test(cell));
+  if (cells.length < 2) return false;
+  const hasDelimiterCell = cells.some(cell => /^:?-{2,}:?$/.test(cell.trim()));
+  const looksLikeProse = cells.some(cell => /\s{2,}|\b[a-zA-Z]{4,}\s+[a-zA-Z]{3,}\b/.test(cell.trim()));
+  return hasDelimiterCell && !looksLikeProse;
 }
 
 function validAbsoluteUri(value: string): boolean {
@@ -258,9 +261,11 @@ export function lintDocument(input: LintDocumentInput): InsightsLintFinding[] {
       }));
     }
     if (!validDelimiter && !looksLikeDelimiter(delimiter)) continue;
+    let lastTableRowIndex = index + 1;
     for (let rowIndex = index + 2; rowIndex < lines.length; rowIndex += 1) {
       const row = lines[rowIndex].replace(/\r$/, '');
       if (!row.trim() || !row.includes('|')) break;
+      lastTableRowIndex = rowIndex;
       if (splitPipeCells(row).length !== headerColumns) {
         push(rawFinding(input, 'table/column-count', `Table row has ${splitPipeCells(row).length} columns; expected ${headerColumns}.`, {
           line: rowIndex + 1,
@@ -269,6 +274,7 @@ export function lintDocument(input: LintDocumentInput): InsightsLintFinding[] {
         }));
       }
     }
+    index = lastTableRowIndex;
   }
 
   let listBlockMarkers: string[] = [];

@@ -207,6 +207,7 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
     defaultCsvPreview: raw.defaultCsvPreview !== false,
     fileTabs: raw.fileTabs === true,
     bookmarksEnabled: raw.bookmarksEnabled === true,
+    insightsEnabled: raw.insightsEnabled === true,
     documentConversion: raw.documentConversion === true,
     scopeFocus: normalizeScopeFocus(raw.scopeFocus),
     searchScopeFocus: normalizeScopeFocus(raw.searchScopeFocus),

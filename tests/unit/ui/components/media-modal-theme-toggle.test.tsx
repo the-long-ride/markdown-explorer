@@ -170,4 +170,19 @@ describe('MediaModal theme toggle integration', () => {
     });
     expect(svgDiv.innerHTML).not.toContain('SNAPB');
   });
+
+  it('renders SVG on open when item.html snapshot is missing', async () => {
+    const galleryWithoutHtml: MediaGallery = {
+      items: [{ type: 'svg', source: 'flowchart TD\nA-->B' }],
+      currentIndex: 0,
+    };
+    const { container } = render(
+      <MediaModal gallery={galleryWithoutHtml} onClose={() => {}} />,
+    );
+    const svgDiv = container.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
+    expect(svgDiv).toBeTruthy();
+    await waitFor(() => {
+      expect(svgDiv.innerHTML).toContain('mock-dark');
+    });
+  });
 });

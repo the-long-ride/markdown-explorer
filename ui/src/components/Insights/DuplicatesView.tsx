@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { INSIGHTS_TRANSLATIONS, type InsightsTranslations } from '../../contexts/insightsTranslations';
 import type { AnalyzedDocument } from '../../insights/analyzeDocument';
 import { findDuplicateGroups, normalizeDuplicateTokens, type DuplicateGroup } from '../../insights/duplicates';
+import { TooltipButton } from '../shared/TooltipButton';
+import { EyeIcon, EyeOffIcon, RestoreFindingIcon, SuppressFindingIcon } from './InsightsIcons';
 
 export interface DuplicatesViewProps {
   readonly documents: readonly AnalyzedDocument[];
@@ -74,20 +76,60 @@ export function DuplicatesView({ documents, labels = INSIGHTS_TRANSLATIONS.en, t
 
   return (
     <div className="insights-duplicates">
-      <div className="insights-view-summary">{format(labels.nearDuplicateThreshold, 'percent', Math.round(threshold * 100))}</div>
-      {suppressed.size > 0 && <button type="button" className="btn btn--sm" onClick={() => setShowSuppressed(value => !value)}>{showSuppressed ? labels.hideSuppressed : labels.showSuppressed}</button>}
+      <div className="insights-view-summary">
+        <span>{format(labels.nearDuplicateThreshold, 'percent', Math.round(threshold * 100))}</span>
+        {suppressed.size > 0 && (
+          <TooltipButton
+            type="button"
+            className={`btn btn--icon insights-filter-toggle${showSuppressed ? ' is-active' : ''}`}
+            tooltip={showSuppressed ? labels.hideSuppressed : labels.showSuppressed}
+            aria-label={showSuppressed ? labels.hideSuppressed : labels.showSuppressed}
+            aria-pressed={showSuppressed}
+            tooltipPos="below"
+            portalTooltip
+            onClick={() => setShowSuppressed(value => !value)}
+            icon={showSuppressed ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}
+          />
+        )}
+      </div>
       {!visible.length && <div className="workspace-insights__empty">{labels.noDuplicateGroups}</div>}
       <ul className="insights-list">
         {visible.map(group => {
           const hidden = suppressed.has(group.key);
           return (
             <li key={group.key} className={`insights-list__row${hidden ? ' is-suppressed' : ''}`}>
-              <div><strong>{labelFor(group, labels)}</strong><span>{group.paths.join(' · ')}{group.score !== undefined ? ` · ${Math.round(group.score * 100)}%` : ''}</span>{hidden && <em>{labels.suppressed}</em>}</div>
-              {hidden ? (
-                <button type="button" className="btn btn--sm" onClick={() => { const next = new Set(suppressed); next.delete(group.key); updateSuppressed(next); }}>{labels.restoreGroup}</button>
-              ) : (
-                <button type="button" className="btn btn--sm" aria-label={`${labels.suppress} ${labels.duplicates}`} onClick={() => { const next = new Set(suppressed); next.add(group.key); updateSuppressed(next); }}>{labels.suppress}</button>
-              )}
+              <div className="insights-lint__target">
+                <strong>{labelFor(group, labels)}</strong>
+                <span>{group.paths.join(' · ')}{group.score !== undefined ? ` · ${Math.round(group.score * 100)}%` : ''}</span>
+                {hidden && <em>{labels.suppressed}</em>}
+              </div>
+              <div className="insights-row-actions">
+                {hidden ? (
+                  <TooltipButton
+                    type="button"
+                    className="insights-icon-btn"
+                    tooltip={labels.restoreGroup}
+                    aria-label={labels.restoreGroup}
+                    tooltipPos="above"
+                    tooltipAlign="right"
+                    portalTooltip
+                    onClick={() => { const next = new Set(suppressed); next.delete(group.key); updateSuppressed(next); }}
+                    icon={<RestoreFindingIcon size={13} />}
+                  />
+                ) : (
+                  <TooltipButton
+                    type="button"
+                    className="insights-icon-btn"
+                    tooltip={labels.suppress}
+                    aria-label={`${labels.suppress} ${labels.duplicates}`}
+                    tooltipPos="above"
+                    tooltipAlign="right"
+                    portalTooltip
+                    onClick={() => { const next = new Set(suppressed); next.add(group.key); updateSuppressed(next); }}
+                    icon={<SuppressFindingIcon size={13} />}
+                  />
+                )}
+              </div>
             </li>
           );
         })}

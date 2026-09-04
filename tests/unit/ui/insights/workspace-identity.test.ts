@@ -37,4 +37,21 @@ describe('workspace identity', () => {
     expect(first.analysisSignature).toBe(same.analysisSignature);
     expect(changed.analysisSignature).not.toBe(first.analysisSignature);
   });
+
+  it('handles omitted history and propagates fingerprint into new or exact identity', () => {
+    const withoutHistory = resolveWorkspaceIdentity({ workspacePath: '/isolated' });
+    expect(withoutHistory.confidence).toBe('new');
+    expect(withoutHistory.key).toMatch(/^workspace-[0-9a-f]{16}$/);
+
+    const withFingerprint = resolveWorkspaceIdentity({ workspacePath: '/isolated', fingerprint: 'fp-1' });
+    expect(withFingerprint.fingerprint).toBe('fp-1');
+
+    const exactWithFp = resolveWorkspaceIdentity({
+      workspacePath: '/exact',
+      fingerprint: 'fp-2',
+      history: [{ key: 'k-exact', path: '/exact' }],
+    });
+    expect(exactWithFp.key).toBe('k-exact');
+    expect(exactWithFp.fingerprint).toBe('fp-2');
+  });
 });

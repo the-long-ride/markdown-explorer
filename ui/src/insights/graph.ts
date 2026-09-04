@@ -89,6 +89,17 @@ function selectDocumentPaths(snapshot: WorkspaceInsightsSnapshot, centerPath: st
   return selected;
 }
 
+function getRingAndIndex(index: number): { ring: number; indexInRing: number; ringCapacity: number } {
+  let ring = 0;
+  let remaining = index;
+  while (true) {
+    const capacity = 6 * (ring + 1);
+    if (remaining < capacity) return { ring, indexInRing: remaining, ringCapacity: capacity };
+    remaining -= capacity;
+    ring += 1;
+  }
+}
+
 function coordinates(ids: readonly string[], center?: string): Map<string, { x: number; y: number }> {
   const result = new Map<string, { x: number; y: number }>();
   if (!ids.length) return result;
@@ -96,11 +107,9 @@ function coordinates(ids: readonly string[], center?: string): Map<string, { x: 
   result.set(centerId, { x: 0, y: 0 });
   const others = ids.filter(id => id !== centerId).sort();
   for (let index = 0; index < others.length; index += 1) {
-    const ring = Math.floor(index / 24);
-    const indexInRing = index % 24;
-    const ringCount = Math.min(24, others.length - ring * 24);
-    const angle = (Math.PI * 2 * indexInRing) / Math.max(1, ringCount) - Math.PI / 2;
-    const radius = 150 + ring * 110;
+    const { ring, indexInRing, ringCapacity } = getRingAndIndex(index);
+    const angle = (Math.PI * 2 * indexInRing) / Math.max(1, ringCapacity) - Math.PI / 2;
+    const radius = 130 + ring * 120;
     result.set(others[index], {
       x: Math.round(Math.cos(angle) * radius * 1000) / 1000,
       y: Math.round(Math.sin(angle) * radius * 1000) / 1000,

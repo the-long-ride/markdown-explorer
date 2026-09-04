@@ -97,6 +97,7 @@ function sanitizePersistedDocument(raw: PersistedAnalyzedDocument): PersistedAna
       sourceStart: Number(diagram?.sourceStart) || 0,
       sourceEnd: Number(diagram?.sourceEnd) || 0,
       fingerprint: String(diagram?.fingerprint ?? ''),
+      code: diagram?.code ? String(diagram.code) : undefined,
     })) : [],
     exactFingerprint: String(value.exactFingerprint ?? ''),
     terminologySignatures: Array.isArray(value.terminologySignatures) ? value.terminologySignatures.map(String) : [],

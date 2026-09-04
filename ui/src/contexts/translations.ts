@@ -45,6 +45,8 @@ let _TRANSLATIONS: Record<string, Translations> = {
     fileTabsDesc: "When enabled, opening a file creates or activates a document tab. When disabled, it replaces the current panel.",
     bookmarksEnabled: "Enable Bookmark feature",
     bookmarksEnabledDesc: "Bookmark mixed-format text, multiple lines, LaTeX, Mermaid diagrams, images, and links, then jump back to the exact saved target.",
+    insightsEnabled: "Enable Workspace Insights feature",
+    insightsEnabledDesc: "Explore workspace documents, relationship graphs, lint findings, duplicate content, and media references.",
     bookmarks: {
       tab: "Bookmarks",
       searchPlaceholder: "Search bookmarks…",
@@ -181,7 +183,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       workspaceSelection: "Go to workspace selection",
       toggleSidebar: "Toggle sidebar visibility",
       openBookmarks: "Open Bookmarks tab",
-      toggleToc: "Toggle TOC",
+      toggleToc: "Toggle TOC", toggleWorkspaceInsights: "Toggle Workspace Insights",
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
       locateFile: "Locate current file",

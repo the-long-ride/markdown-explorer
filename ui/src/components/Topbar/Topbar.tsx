@@ -8,6 +8,7 @@ import { TooltipButton } from '../shared/TooltipButton';
 import { EditIcon } from '../shared/icons';
 import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
+import { INSIGHTS_UI_TRANSLATIONS } from '../../contexts/insightsUiTranslations';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 
 interface TopbarProps {
@@ -19,6 +20,8 @@ interface TopbarProps {
   hasUpdate?: boolean;
   isFullscreen?: boolean;
   onFullscreenToggle?: () => void;
+  isInsightsOpen?: boolean;
+  onInsightsToggle?: () => void;
 }
 
 interface BreadcrumbItem { text: string; isBold?: boolean; isEllipsis?: boolean; }
@@ -71,6 +74,7 @@ export function getBreadcrumbItems(relativePath: string, welcomePageLabel: strin
 export function Topbar({
   onSettingsOpen, onExportOpen, onExpandAll, onCollapseAll, onCopyFile,
   hasUpdate = false, isFullscreen = false, onFullscreenToggle,
+  isInsightsOpen = false, onInsightsToggle,
 }: TopbarProps) {
   const {
     state, navigate, openInEditor, refresh, toggleTheme, toggleSidebar, toggleToc,
@@ -83,6 +87,8 @@ export function Topbar({
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
   const exportT = getExportScopeTranslations(currentLang).exportCenter;
+  const insightsLang = currentLang as keyof typeof INSIGHTS_UI_TRANSLATIONS;
+  const insightsT = INSIGHTS_UI_TRANSLATIONS[insightsLang] ?? INSIGHTS_UI_TRANSLATIONS.en;
   const isDark = state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const breadcrumbItems = getBreadcrumbItems(state.relativePath || '', t.topbar.welcomePage);
@@ -174,6 +180,13 @@ export function Topbar({
           tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
           tocToggleDisabled={!state.currentFile || state.toc.length === 0}
           onTocToggle={toggleToc}
+          showInsights={state.settings.insightsEnabled}
+          insightsLabel={insightsT.title}
+          insightsTooltip={insightsT.title}
+          insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')}
+          insightsActive={isInsightsOpen}
+          canInsights={!!(state.workspacePath || state.workspaceName)}
+          onInsightsToggle={onInsightsToggle}
           focusModeLabel={t.actions.toggleFocusMode}
           focusModeTooltip={t.actions.toggleFocusMode}
           focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}

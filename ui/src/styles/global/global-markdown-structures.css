@@ -167,3 +167,81 @@
   height: auto;
   object-fit: contain;
 }
+
+/* ============================================================
+   Wiki Links & Transclusion Embeds (Themed)
+   ============================================================ */
+.mdn-wiki-link {
+  color: var(--accent-text);
+  text-decoration: none;
+  border-bottom: var(--stroke-w) dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  transition: border-color 0.12s, background-color 0.12s;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.mdn-wiki-link:hover,
+.mdn-wiki-link:focus-visible {
+  border-bottom-style: solid;
+  border-bottom-color: var(--accent);
+  background-color: var(--accent-dim);
+}
+
+.mdn-wiki-link::before {
+  content: "";
+  display: inline-block;
+  width: 0.88em;
+  height: 0.88em;
+  vertical-align: -0.1em;
+  margin-right: 3px;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 11-6 6v3h3l6-6'/%3E%3Cpath d='m22 2-6.5 6.5'/%3E%3Cpath d='m15.5 8.5 3 3'/%3E%3Cpath d='m12.5 5.5 3 3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 11-6 6v3h3l6-6'/%3E%3Cpath d='m22 2-6.5 6.5'/%3E%3Cpath d='m15.5 8.5 3 3'/%3E%3Cpath d='m12.5 5.5 3 3'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  opacity: 0.85;
+}
+
+.mdn-wiki-embed {
+  display: block;
+  margin: var(--section-gap, 10px) 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  border-top: var(--stroke-w) solid var(--bd-s);
+  border-right: var(--stroke-w) solid var(--bd-s);
+  border-bottom: var(--stroke-w) solid var(--bd-s);
+  border-radius: 0 var(--r) var(--r) 0;
+  background: var(--bg-s);
+  color: var(--tx);
+  box-shadow: var(--section-shadow, none);
+}
+
+.mdn-wiki-embed-placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: var(--r);
+  font-size: 0.88em;
+  font-family: var(--font-mono);
+  border: var(--stroke-w) dashed var(--bd-s);
+  background: var(--bg-code);
+  color: var(--tx2);
+}
+
+.mdn-wiki-embed-placeholder[data-mdn-transclusion-status="missing"],
+.mdn-wiki-embed-placeholder[data-mdn-transclusion-status="invalid-anchor"],
+.mdn-wiki-embed-placeholder[data-mdn-transclusion-status="outside-workspace"] {
+  border-color: color-mix(in srgb, var(--danger) 50%, var(--bd-s));
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--bg-code));
+}
+
+.mdn-wiki-embed-placeholder[data-mdn-transclusion-status="ambiguous"] {
+  border-color: color-mix(in srgb, var(--chart-5) 50%, var(--bd-s));
+  color: var(--chart-5);
+  background: color-mix(in srgb, var(--chart-5) 8%, var(--bg-code));
+}
+

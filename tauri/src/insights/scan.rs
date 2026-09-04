@@ -143,7 +143,8 @@ where
     let mut seen_dirs = HashSet::<PathBuf>::new();
     seen_dirs.insert(root_real.clone());
 
-    for item in WalkDir::new(&root_real).follow_links(true).into_iter() {
+    let mut it = WalkDir::new(&root_real).follow_links(true).into_iter();
+    while let Some(item) = it.next() {
         if cancelled() {
             return ScanResult { entries, excluded_entries, skipped_entries, cancelled: true };
         }
@@ -157,6 +158,9 @@ where
         let display_relative = normalized_relative(&root_real, entry.path()).unwrap_or_default();
         if should_exclude(&display_relative, &gitignore, user_patterns) {
             excluded_entries += 1;
+            if entry.file_type().is_dir() {
+                it.skip_current_dir();
+            }
             continue;
         }
         let Ok(real) = fs::canonicalize(entry.path()) else {
@@ -165,6 +169,9 @@ where
         };
         if !same_or_inside(&root_real, &real) {
             excluded_entries += 1;
+            if entry.file_type().is_dir() {
+                it.skip_current_dir();
+            }
             continue;
         }
         let Ok(metadata) = fs::metadata(&real) else {
@@ -173,6 +180,7 @@ where
         };
         if metadata.is_dir() {
             if !seen_dirs.insert(real) {
+                it.skip_current_dir();
                 continue;
             }
             continue;

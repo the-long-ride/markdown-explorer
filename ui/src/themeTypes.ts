@@ -83,6 +83,7 @@ export interface AppSettings {
   defaultCsvPreview: boolean;
   fileTabs: boolean;
   bookmarksEnabled: boolean;
+  insightsEnabled: boolean;
   documentConversion: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
@@ -105,6 +106,7 @@ export interface PersistedState {
   defaultCsvPreview?: boolean;
   fileTabs?: boolean;
   bookmarksEnabled?: boolean;
+  insightsEnabled?: boolean;
   documentConversion?: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;

@@ -144,4 +144,34 @@ describe('VS Code and Chromium shortcut bindings contract', () => {
     const action = resolveKeyboardAction(e, state);
     expect(action).toBeNull();
   });
+
+  it('defines default keybinding and scopes toggleWorkspaceInsights with Ctrl+Alt+I', () => {
+    expect(DEFAULT_KEYBINDINGS.toggleWorkspaceInsights).toBe('Ctrl+Alt+I');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleWorkspaceInsights).toBe('Ctrl+Alt+I');
+    const insightsAction = ACTIONS_LIST.find((a) => a.id === 'toggleWorkspaceInsights');
+    expect(insightsAction).toBeDefined();
+    expect(insightsAction?.scope).toBe('both');
+  });
+
+  it('resolves Ctrl+Alt+I to toggle-workspace-insights when enabled', () => {
+    const e = { key: 'i', ctrlKey: true, altKey: true, shiftKey: false, metaKey: false } as KeyboardEvent;
+    const state = {
+      isDesktop: true,
+      isDesktopLike: true,
+      isTermsOpen: false,
+      isModalOpen: false,
+      isSearchOpen: false,
+      isFindOpen: false,
+      isSettingsOpen: false,
+      isSidebarCursorMode: false,
+      hasOnToggleWorkspaceInsights: true,
+      keybindings: {
+        toggleWorkspaceInsights: 'Ctrl+Alt+I',
+      },
+      isRepeat: false,
+    } as any;
+
+    expect(resolveKeyboardAction(e, state)).toEqual({ type: 'toggle-workspace-insights' });
+    expect(resolveKeyboardAction(e, { ...state, hasOnToggleWorkspaceInsights: false })).toBeNull();
+  });
 });

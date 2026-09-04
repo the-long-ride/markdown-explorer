@@ -116,14 +116,20 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
     const cache = ensureCache();
     if (!cache) return;
     try {
-      const cached = await restoreWorkspaceInsightsCache(cache, cacheContext);
+      const cached = await Promise.race([
+        restoreWorkspaceInsightsCache(cache, cacheContext),
+        new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 1500)),
+      ]);
       if (!cached?.documents.length || disposedRef.current) return;
       provisionalPathsRef.current = new Set(cached.documents.map(document => document.path));
       setProgress({ completed: 0, total: cached.documents.length, provisional: true });
-      await worker.restoreCachedDocuments(
-        cached.documents.map(document => document.persisted),
-        requestId('insights-cache-restore'),
-      );
+      await Promise.race([
+        worker.restoreCachedDocuments(
+          cached.documents.map(document => document.persisted),
+          requestId('insights-cache-restore'),
+        ),
+        new Promise<void>(resolve => setTimeout(resolve, 3000)),
+      ]);
     } catch {
       // Ignore cache restore errors and continue with authoritative disk validation.
     }
@@ -134,45 +140,49 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
     worker: InsightsWorkerClient,
     forceHash: boolean,
   ): Promise<void> => {
-    const result = await readInsightsDocumentSource(options.bridge, {
-      requestId: requestId('insights-source'),
-      relativePath: entry.relativePath,
-      softLimitBytes: settings.sourceSoftLimitBytes,
-      hardLimitBytes: settings.sourceHardLimitBytes,
-    });
-    if (disposedRef.current) return;
-    if (result.status !== 'ok' || result.source === undefined) {
-      setWarnings(current => [...current, { path: entry.relativePath, reason: result.status }]);
-      hashesRef.current.delete(entry.relativePath);
-      validatedCacheDocumentsRef.current.delete(entry.relativePath);
-      if (provisionalPathsRef.current.delete(entry.relativePath)) {
-        await worker.applyFsDeltaBatch(
-          [{ kind: 'delete', relativePath: entry.relativePath }],
-          requestId('insights-cache-invalid'),
+    try {
+      const result = await readInsightsDocumentSource(options.bridge, {
+        requestId: requestId('insights-source'),
+        relativePath: entry.relativePath,
+        softLimitBytes: settings.sourceSoftLimitBytes,
+        hardLimitBytes: settings.sourceHardLimitBytes,
+      });
+      if (disposedRef.current) return;
+      if (result.status !== 'ok' || result.source === undefined) {
+        setWarnings(current => [...current, { path: entry.relativePath, reason: result.status }]);
+        hashesRef.current.delete(entry.relativePath);
+        validatedCacheDocumentsRef.current.delete(entry.relativePath);
+        if (provisionalPathsRef.current.delete(entry.relativePath)) {
+          await worker.applyFsDeltaBatch(
+            [{ kind: 'delete', relativePath: entry.relativePath }],
+            requestId('insights-cache-invalid'),
+          ).catch(() => {});
+        }
+        return;
+      }
+      const nextHash = result.contentHash ?? `${result.mtimeMs ?? entry.mtimeMs}:${result.sizeBytes ?? entry.sizeBytes}`;
+      if (!forceHash && hashesRef.current.get(entry.relativePath) === nextHash) return;
+      const jobId = requestId('insights-document');
+      documentResultsByJobRef.current.delete(jobId);
+      workerJobRef.current = jobId;
+      await worker.applySourceBatch([{
+        path: result.relativePath,
+        source: result.source,
+        revision: nextHash,
+      }], jobId);
+      if (workerJobRef.current === jobId) workerJobRef.current = null;
+      hashesRef.current.set(entry.relativePath, nextHash);
+      provisionalPathsRef.current.delete(entry.relativePath);
+      const analyzed = documentResultsByJobRef.current.get(jobId)?.find(document => document.path === result.relativePath);
+      documentResultsByJobRef.current.delete(jobId);
+      if (analyzed) {
+        validatedCacheDocumentsRef.current.set(
+          entry.relativePath,
+          createValidatedCacheDocument(entry, result, nextHash, analyzed),
         );
       }
-      return;
-    }
-    const nextHash = result.contentHash ?? `${result.mtimeMs ?? entry.mtimeMs}:${result.sizeBytes ?? entry.sizeBytes}`;
-    if (!forceHash && hashesRef.current.get(entry.relativePath) === nextHash) return;
-    const jobId = requestId('insights-document');
-    documentResultsByJobRef.current.delete(jobId);
-    workerJobRef.current = jobId;
-    await worker.applySourceBatch([{
-      path: result.relativePath,
-      source: result.source,
-      revision: nextHash,
-    }], jobId);
-    if (workerJobRef.current === jobId) workerJobRef.current = null;
-    hashesRef.current.set(entry.relativePath, nextHash);
-    provisionalPathsRef.current.delete(entry.relativePath);
-    const analyzed = documentResultsByJobRef.current.get(jobId)?.find(document => document.path === result.relativePath);
-    documentResultsByJobRef.current.delete(jobId);
-    if (analyzed) {
-      validatedCacheDocumentsRef.current.set(
-        entry.relativePath,
-        createValidatedCacheDocument(entry, result, nextHash, analyzed),
-      );
+    } catch (err) {
+      setWarnings(current => [...current, { path: entry.relativePath, reason: String(err) }]);
     }
   }, [options.bridge, settings.sourceHardLimitBytes, settings.sourceSoftLimitBytes]);
 
@@ -231,55 +241,46 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
     setStatus('indexing');
     setWarnings([]);
     setProgress({ completed: 0, total: 0, provisional: true });
-    await restoreCache(worker);
-    if (generation !== generationRef.current || disposedRef.current) return;
-    updateWorkspaceInsightsWatchState(options.bridge, options.workspaceOperationId, true, true);
-    const reads: Promise<void>[] = [];
-    let discovered = 0;
-    const scan = scanInsightsWorkspace(options.bridge, {
-      requestId: requestId('insights-scan'), workspaceOperationId: options.workspaceOperationId,
-      userPatterns: settings.userPatterns, oversizedPatterns: settings.oversizedPatterns,
-    }, batch => {
-      discovered = Math.max(discovered, batch.scannedEntries);
-      setProgress(current => ({
-        ...current,
-        total: Math.max(current.total, batch.scannedEntries),
-        provisional: true,
-      }));
-      for (const entry of batch.entries) {
-        if (entry.kind !== 'file' || !isMarkdownEntry(entry)) continue;
-        reads.push(readEntry(entry, worker, forceHash));
+    try {
+      await restoreCache(worker);
+      if (generation !== generationRef.current || disposedRef.current) return;
+      updateWorkspaceInsightsWatchState(options.bridge, options.workspaceOperationId, true, true);
+      const reads: Promise<void>[] = [];
+      let discovered = 0;
+      const scan = scanInsightsWorkspace(options.bridge, {
+        requestId: requestId('insights-scan'), workspaceOperationId: options.workspaceOperationId,
+        userPatterns: settings.userPatterns, oversizedPatterns: settings.oversizedPatterns,
+      }, batch => {
+        discovered = Math.max(discovered, batch.scannedEntries);
+        setProgress(current => ({ ...current, total: Math.max(current.total, batch.scannedEntries), provisional: true }));
+        for (const entry of batch.entries) {
+          if (entry.kind !== 'file' || !isMarkdownEntry(entry)) continue;
+          reads.push(readEntry(entry, worker, forceHash));
+        }
+      });
+      scanRef.current = scan;
+      const complete = await scan.done;
+      await Promise.all(reads);
+      if (generation !== generationRef.current || disposedRef.current) return;
+      scanRef.current = null;
+      if (complete.truncated) setWarnings(current => [...current, { reason: complete.truncatedReason ?? 'scan-truncated' }]);
+      if (complete.cancelled) { setStatus('paused'); return; }
+      if (!complete.truncated) {
+        const stalePaths = [...provisionalPathsRef.current];
+        provisionalPathsRef.current.clear();
+        if (stalePaths.length) {
+          await worker.applyFsDeltaBatch(stalePaths.map(relativePath => ({ kind: 'delete' as const, relativePath })), requestId('insights-cache-stale')).catch(() => {});
+        }
+        await persistValidatedCache().catch(() => {});
       }
-    });
-    scanRef.current = scan;
-    const complete = await scan.done;
-    await Promise.all(reads);
-    if (generation !== generationRef.current || disposedRef.current) return;
-    scanRef.current = null;
-    if (complete.truncated) {
-      setWarnings(current => [...current, { reason: complete.truncatedReason ?? 'scan-truncated' }]);
+      setProgress({ completed: complete.totalEntries || discovered, total: complete.totalEntries || discovered, provisional: false });
+      setStatus('ready');
+    } catch (error) {
+      if (generation !== generationRef.current || disposedRef.current) return;
+      scanRef.current = null;
+      setWarnings(current => [...current, { reason: String(error) }]);
+      setStatus('error');
     }
-    if (complete.cancelled) {
-      setStatus('paused');
-      return;
-    }
-    if (!complete.truncated) {
-      const stalePaths = [...provisionalPathsRef.current];
-      provisionalPathsRef.current.clear();
-      if (stalePaths.length) {
-        await worker.applyFsDeltaBatch(
-          stalePaths.map(relativePath => ({ kind: 'delete' as const, relativePath })),
-          requestId('insights-cache-stale'),
-        );
-      }
-      await persistValidatedCache();
-    }
-    setProgress({
-      completed: complete.totalEntries || discovered,
-      total: complete.totalEntries || discovered,
-      provisional: false,
-    });
-    setStatus('ready');
   }, [ensureWorker, options.bridge, options.workspaceKey, options.workspaceOperationId, persistValidatedCache, readEntry, restoreCache, settings.oversizedPatterns, settings.userPatterns]);
 
   const open = useCallback(async () => {

@@ -13,6 +13,7 @@ export interface Translations extends AuditedUiTranslationDomains {
   fontResetRole: string; fontResetAll: string; fontNormal: string; fontItalic: string;
   focus: string; tabs: string; sidebarLabels: string; sidebarLabelsDesc: string;
   fileTabs: string; fileTabsDesc: string; bookmarksEnabled: string; bookmarksEnabledDesc: string;
+  insightsEnabled: string; insightsEnabledDesc: string;
   bookmarks: {
     tab: string; searchPlaceholder: string; sortLabel: string;
     sortNameAsc: string; sortNameDesc: string; sortNewest: string; sortOldest: string;
@@ -57,7 +58,7 @@ export interface Translations extends AuditedUiTranslationDomains {
     editCurrentDocument: string; searchCurrent: string; searchAllTabs: string; loadMore: string; findCurrentFile: string;
     back: string; forward: string; welcome: string; settings: string; toggleTheme: string;
     toggleHtmlPreview: string; refresh: string; collapseAll: string; expandAll: string;
-    workspaceSelection: string; toggleSidebar: string; openBookmarks: string; toggleToc: string;
+    workspaceSelection: string; toggleSidebar: string; openBookmarks: string; toggleToc: string; toggleWorkspaceInsights?: string;
     zoomIn: string; zoomOut: string; locateFile: string; toggleDesktopViewMode: string;
     openCurrentDocumentLocation: string; toggleFocusMode: string; toggleFullscreen: string; toggleFullscreenTooltip: string;
   };

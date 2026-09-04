@@ -993,7 +993,11 @@ describe('SettingsModal deep', () => {
 
   describe('ACTIONS_LIST', () => {
     it('contains expected number of actions', () => {
-      expect(ACTIONS_LIST.length).toBe(29);
+      expect(ACTIONS_LIST.length).toBe(30);
+    });
+
+    it('contains toggleWorkspaceInsights action', () => {
+      expect(ACTIONS_LIST.find(a => a.id === 'toggleWorkspaceInsights')).toBeDefined();
     });
 
     it('contains findCurrentFile action', () => {

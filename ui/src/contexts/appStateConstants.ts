@@ -20,6 +20,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   locateFile: 'Alt+Q',
   toggleFocusMode: 'Ctrl+Alt+F',
   toggleHtmlPreview: 'Ctrl+Alt+H',
+  toggleWorkspaceInsights: 'Ctrl+Alt+I',
 };
 
 export const VSCODE_DEFAULT_KEYBINDINGS: Record<string, string> = {

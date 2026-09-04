@@ -17,63 +17,22 @@ import { TooltipButton } from "./TooltipButton";
 import { SwitchButton } from "./SwitchButton";
 
 export const EXPORT_CENTER_OPEN_EVENT = 'mdn-export-center-open';
+export const WORKSPACE_INSIGHTS_TOGGLE_EVENT = 'mdn-workspace-insights-toggle';
 
 interface ToolbarActionMenuProps {
-  triggerTooltip: string;
-  triggerAlign?: "left" | "right";
-  homeLabel: string;
-  themeLabel: string;
-  editLabel: string;
-  settingsLabel: string;
-  exportLabel?: string;
-  homeTooltip: string;
-  themeTooltip: string;
-  editTooltip: string;
-  settingsTooltip: string;
-  exportTooltip?: string;
-  homeShortcut?: string;
-  themeShortcut?: string;
-  editShortcut?: string;
-  settingsShortcut?: string;
-  canEdit: boolean;
-  isDark: boolean;
-  hasUpdate?: boolean;
-  showEdit?: boolean;
-  onHome: () => void;
-  onTheme: () => void;
-  onEdit: () => void;
-  onSettings: () => void;
-  onExport?: () => void;
+  triggerTooltip: string; triggerAlign?: "left" | "right";
+  homeLabel: string; themeLabel: string; editLabel: string; settingsLabel: string; exportLabel?: string;
+  homeTooltip: string; themeTooltip: string; editTooltip: string; settingsTooltip: string; exportTooltip?: string;
+  homeShortcut?: string; themeShortcut?: string; editShortcut?: string; settingsShortcut?: string;
+  canEdit: boolean; isDark: boolean; hasUpdate?: boolean; showEdit?: boolean;
+  onHome: () => void; onTheme: () => void; onEdit: () => void; onSettings: () => void; onExport?: () => void;
 
-  sidebarLabel?: string;
-  sidebarTooltip?: string;
-  sidebarShortcut?: string;
-  sidebarActive?: boolean;
-  onSidebarToggle?: () => void;
-
-  tocLabel?: string;
-  tocTooltip?: string;
-  tocShortcut?: string;
-  tocActive?: boolean;
-  tocToggleDisabled?: boolean;
-  onTocToggle?: () => void;
-
-  focusModeLabel?: string;
-  focusModeTooltip?: string;
-  focusModeShortcut?: string;
-  isFocusMode?: boolean;
-  onFocusModeToggle?: () => void;
-  showFullscreen?: boolean;
-  fullscreenLabel?: string;
-  fullscreenTooltip?: string;
-  fullscreenShortcut?: string;
-  isFullscreen?: boolean;
-  onFullscreenToggle?: () => void;
-  showResetZoom?: boolean;
-  resetZoomLabel?: string;
-  resetZoomTooltip?: string;
-  resetZoomShortcut?: string;
-  onResetZoom?: () => void;
+  sidebarLabel?: string; sidebarTooltip?: string; sidebarShortcut?: string; sidebarActive?: boolean; onSidebarToggle?: () => void;
+  tocLabel?: string; tocTooltip?: string; tocShortcut?: string; tocActive?: boolean; tocToggleDisabled?: boolean; onTocToggle?: () => void;
+  showInsights?: boolean; insightsLabel?: string; insightsTooltip?: string; insightsShortcut?: string; insightsActive?: boolean; canInsights?: boolean; onInsightsToggle?: () => void;
+  focusModeLabel?: string; focusModeTooltip?: string; focusModeShortcut?: string; isFocusMode?: boolean; onFocusModeToggle?: () => void;
+  showFullscreen?: boolean; fullscreenLabel?: string; fullscreenTooltip?: string; fullscreenShortcut?: string; isFullscreen?: boolean; onFullscreenToggle?: () => void;
+  showResetZoom?: boolean; resetZoomLabel?: string; resetZoomTooltip?: string; resetZoomShortcut?: string; onResetZoom?: () => void;
 }
 
 function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
@@ -88,6 +47,12 @@ function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
       return <SidebarIcon size={14} />;
     case "toc":
       return <TocIcon size={14} />;
+    case "insights":
+      return (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 19V9" /><path d="M10 19V5" /><path d="M16 19v-7" /><path d="M22 19V3" />
+        </svg>
+      );
     case "focusMode":
       return isFocusMode ? <ExitFocusIcon size={12} /> : <MaximizeIcon size={12} />;
     case "fullscreen":
@@ -147,6 +112,13 @@ export function ToolbarActionMenu({
   tocActive = false,
   tocToggleDisabled = false,
   onTocToggle,
+  showInsights = false,
+  insightsLabel,
+  insightsTooltip,
+  insightsShortcut,
+  insightsActive = false,
+  canInsights = true,
+  onInsightsToggle,
   focusModeLabel,
   focusModeTooltip,
   focusModeShortcut,
@@ -241,6 +213,16 @@ export function ToolbarActionMenu({
     });
   }
 
+  if (showInsights && insightsLabel) {
+    items.push({
+      id: "insights",
+      label: insightsLabel,
+      tooltip: buildShortcutTooltip(insightsTooltip || insightsLabel, insightsShortcut),
+      disabled: !canInsights,
+      toggleState: insightsActive,
+    });
+  }
+
   if (onFocusModeToggle && focusModeLabel && focusModeTooltip) {
     items.push({
       id: "focusMode",
@@ -300,6 +282,10 @@ export function ToolbarActionMenu({
         return;
       case "toc":
         onTocToggle?.();
+        return;
+      case "insights":
+        if (onInsightsToggle) onInsightsToggle();
+        else window.dispatchEvent(new Event(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
         return;
       case "focusMode":
         onFocusModeToggle?.();

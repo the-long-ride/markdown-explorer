@@ -40,3 +40,63 @@ describe('ToolbarActionMenu Export Center item', () => {
     expect(onExport).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('ToolbarActionMenu Workspace Insights item', () => {
+  it('renders Workspace Insights with switch toggle when showInsights is true', () => {
+    const onToggle = vi.fn();
+    render(
+      <ToolbarActionMenu
+        triggerTooltip="More Actions"
+        homeLabel="Home"
+        themeLabel="Theme"
+        editLabel="Edit"
+        settingsLabel="Settings"
+        homeTooltip="Home"
+        themeTooltip="Theme"
+        editTooltip="Edit"
+        settingsTooltip="Settings"
+        canEdit
+        isDark={false}
+        onHome={() => {}}
+        onTheme={() => {}}
+        onEdit={() => {}}
+        onSettings={() => {}}
+        showInsights
+        insightsLabel="Workspace Insights"
+        insightsActive={false}
+        onInsightsToggle={onToggle}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('More Actions'));
+    const insightsItem = screen.getByRole('menuitem', { name: 'Workspace Insights' });
+    expect(insightsItem).toBeInTheDocument();
+    fireEvent.click(insightsItem);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides Workspace Insights item when showInsights is false', () => {
+    render(
+      <ToolbarActionMenu
+        triggerTooltip="More Actions"
+        homeLabel="Home"
+        themeLabel="Theme"
+        editLabel="Edit"
+        settingsLabel="Settings"
+        homeTooltip="Home"
+        themeTooltip="Theme"
+        editTooltip="Edit"
+        settingsTooltip="Settings"
+        canEdit
+        isDark={false}
+        onHome={() => {}}
+        onTheme={() => {}}
+        onEdit={() => {}}
+        onSettings={() => {}}
+        showInsights={false}
+        insightsLabel="Workspace Insights"
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('More Actions'));
+    expect(screen.queryByRole('menuitem', { name: 'Workspace Insights' })).not.toBeInTheDocument();
+  });
+});

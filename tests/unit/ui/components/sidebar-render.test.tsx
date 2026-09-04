@@ -626,4 +626,10 @@ describe('Sidebar render', () => {
     fireEvent.click(scopeBtn!);
     expect(scopeBtn).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it('does not render Insights button in sidebar since moved to More actions menu', () => {
+    mockState.settings.insightsEnabled = true;
+    render(<Sidebar />);
+    expect(screen.queryByRole('button', { name: 'Workspace Insights' })).not.toBeInTheDocument();
+  });
 });

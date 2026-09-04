@@ -44,6 +44,7 @@ export function parseSettingsImport(rawText: string, isDesktop: boolean): Import
     settings: {
       ...imported.settings,
       bookmarksEnabled: raw.bookmarksEnabled === true,
+      insightsEnabled: raw.insightsEnabled === true,
       defaultCsvPreview: raw.defaultCsvPreview !== false,
       defaultHtmlCodeBlockPreview: typeof raw.defaultHtmlCodeBlockPreview === 'boolean'
         ? raw.defaultHtmlCodeBlockPreview

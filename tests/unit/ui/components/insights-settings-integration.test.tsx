@@ -34,7 +34,7 @@ describe('Workspace Insights persisted settings UI', () => {
     const onSettingsChange = vi.fn();
     render(<WorkspaceInsightsPanel session={session()} settings={settings} onSettingsChange={onSettingsChange} onResetWorkspaceOverrides={vi.fn()} />);
     await user.click(screen.getByRole('button', { name: `${INSIGHTS_TRANSLATIONS.en.entry} ${INSIGHTS_TRANSLATIONS.en.settings}` }));
-    expect(screen.getByRole('checkbox', { name: INSIGHTS_TRANSLATIONS.en.externalLinksLabel })).toBeChecked();
+    expect(screen.getByRole('switch', { name: INSIGHTS_TRANSLATIONS.en.externalLinksLabel })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('spinbutton', { name: INSIGHTS_TRANSLATIONS.en.externalTimeout })).toHaveValue(12000);
     expect(screen.getByRole('spinbutton', { name: /near-duplicate threshold/i })).toHaveValue(94);
     await user.click(screen.getByRole('tab', { name: INSIGHTS_TRANSLATIONS.en.duplicates }));
@@ -51,11 +51,12 @@ describe('Workspace Insights persisted settings UI', () => {
     await user.click(screen.getByRole('button', { name: `${INSIGHTS_TRANSLATIONS.en.entry} ${INSIGHTS_TRANSLATIONS.en.settings}` }));
     const scope = screen.getByRole('combobox', { name: INSIGHTS_TRANSLATIONS.en.settingsScope });
     expect(scope).toHaveValue('workspace');
-    expect(screen.getByRole('checkbox', { name: INSIGHTS_TRANSLATIONS.en.externalLinksLabel })).toBeChecked();
+    const externalLinksToggle = screen.getByRole('switch', { name: INSIGHTS_TRANSLATIONS.en.externalLinksLabel });
+    expect(externalLinksToggle).toHaveAttribute('aria-checked', 'true');
     await user.selectOptions(scope, 'global');
-    expect(screen.getByRole('checkbox', { name: INSIGHTS_TRANSLATIONS.en.externalLinksLabel })).not.toBeChecked();
+    expect(externalLinksToggle).toHaveAttribute('aria-checked', 'false');
     expect(screen.getByRole('spinbutton', { name: INSIGHTS_TRANSLATIONS.en.graphNodeCap })).toHaveValue(80);
-    await user.click(screen.getByRole('checkbox', { name: INSIGHTS_TRANSLATIONS.en.externalLinksLabel }));
+    await user.click(externalLinksToggle);
     expect(onGlobalSettingsChange).toHaveBeenCalledWith(expect.objectContaining({ externalLinks: { enabled: true } }));
     expect(onSettingsChange).not.toHaveBeenCalled();
   });
@@ -71,7 +72,7 @@ describe('Workspace Insights persisted settings UI', () => {
     fireEvent.change(screen.getByRole('spinbutton', { name: uiLabels.directLinks }), { target: { value: '55' } });
     expect(onSettingsChange).toHaveBeenCalledWith(expect.objectContaining({ relationshipWeights: expect.objectContaining({ links: 55 }) }));
     const duplicateRule = uiLabels.presentation.lintRules['heading/duplicate'];
-    expect(screen.getByRole('checkbox', { name: `${uiLabels.rule}: ${duplicateRule}` })).toBeChecked();
+    expect(screen.getByRole('switch', { name: `${uiLabels.rule}: ${duplicateRule}` })).toBeChecked();
     expect(screen.getByRole('combobox', { name: `${uiLabels.severity}: ${duplicateRule}` })).toHaveValue('error');
     await user.selectOptions(screen.getByRole('combobox', { name: uiLabels.settingsScope }), 'global');
     expect(screen.getByRole('spinbutton', { name: uiLabels.cacheCap })).toHaveValue(500);

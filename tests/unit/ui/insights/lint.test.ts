@@ -84,4 +84,16 @@ describe('workspace insights linting', () => {
     expect(applyLintSuppressions(findings, [{ scope: 'rule', ruleId: 'heading/duplicate' }]).map(item => item.id)).toEqual(['c']);
     expect(applyLintSuppressions(findings, []).map(item => item.id)).toEqual(['a', 'b', 'c']);
   });
+
+  it('does not flag valid tables containing hyphenated words as malformed delimiters', () => {
+    const ids = ruleIds([
+      '| Term | Definition |',
+      '|---|---|',
+      '| Workspace | Folder tree or single-file virtual root |',
+      '| Workspace tab | Desktop-level container for a workspace |',
+      '| Conversion preview | Non-Markdown preview |',
+    ].join('\n'));
+
+    expect(ids).not.toContain('table/malformed-delimiter');
+  });
 });
