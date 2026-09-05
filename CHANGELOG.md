@@ -4,7 +4,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
-## [Unreleased]
+## [v1.6.7] — 2026-09-06
 
 ### Added
 - **Workspace Insights Panel & Six Specialized Views**: Added an offline-first workspace auditing and exploration panel accessible via the More actions menu or `Ctrl+Alt+I`:
@@ -18,6 +18,13 @@ All notable changes to the **Markdown Explorer** extension will be documented in
   - Full support for Wiki Link syntax (`[[Note]]`, `[[Note#Heading]]`, `[[Note|Label]]`, `[[#Heading]]`, and relative forms `[[./Local]]`).
   - Transclusion embeds (`![[Note]]`, `![[Note#Heading]]`, `![[image.png]]`) with cycle detection and depth limit guards.
   - Smart fragment navigation auto-expanding collapsed parent headings and scrolling accurately after target document render.
+- **Community Support & Appreciation Prompt Modal**:
+  - Periodic support modal prompting users to star on GitHub or donate after 2 hours of accumulated usage, recurring every 24 hours.
+  - Custom theme-aware SVG checkbox icons (`CheckboxCheckedIcon` / `CheckboxUncheckedIcon`) replacing native browser checkboxes.
+  - "Don't show this again" preference persisted across sessions in local storage.
+  - Dedicated support card banner integrated into the Welcome/Home page overview.
+  - Environment-aware debug mode trigger (`--debug` or development runtime) across Electron, Tauri, VS Code, and browser variants.
+  - Complete translations for support prompt strings across all 9 supported languages (English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, Russian).
 - **Workspace Insights Shortcut (`Ctrl+Alt+I`)**:
   - Default keyboard shortcut `Ctrl+Alt+I` assigned to `toggleWorkspaceInsights` across all runtimes (Electron, Tauri, VS Code, Chromium extension, and Web).
   - Fully integrated with Settings keyboard shortcut configuration and the homepage Shortcuts overview tab.
@@ -35,6 +42,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
   - Prevented tooltip clipping by rendering action tooltips via portals above scrollable panel content.
 
 ### Fixed
+- **Scope View Modal Event Race Conditions**: Bound DOM and input listeners in `useLayoutEffect` to eliminate event listener registration race conditions.
 - **Tooltip Viewport Clipping**: Fixed action tooltips getting clipped by overflow containers in the Workspace Insights panel.
 - **Event Target Evaluation in Synthetic Event Streams**: Fixed bookmark sort anchors evaluating to null during synthetic event pooling in `BookmarksPanel`.
 - **Mermaid Thumbnail Sizing & Lifecycle**: Fixed off-screen scratch container measurement for thumbnail generation across layout-sensitive diagram types.

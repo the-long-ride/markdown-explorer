@@ -4,7 +4,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 > **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
 
-## [Unreleased]
+## [v1.6.7] — 2026-09-06
 
 ### Added
 - **Workspace Insights Panel & Six Specialized Views**: Added an offline-first workspace auditing and exploration panel accessible via the More actions menu or `Ctrl+Alt+I`:
@@ -18,6 +18,11 @@ All notable changes to the **Markdown Explorer** extension will be documented in
   - Full support for Wiki Link syntax (`[[Note]]`, `[[Note#Heading]]`, `[[Note|Label]]`, `[[#Heading]]`, and relative forms `[[./Local]]`).
   - Transclusion embeds (`![[Note]]`, `![[Note#Heading]]`, `![[image.png]]`) with cycle detection and depth limit guards.
   - Smart fragment navigation auto-expanding collapsed parent headings and scrolling accurately after target document render.
+- **Community Support & Appreciation Prompt Modal**:
+  - Periodic support modal prompting users to star on GitHub or donate after 2 hours of accumulated usage, recurring every 24 hours.
+  - Custom accessible SVG icons replacing native checkboxes with a "Don't show this again" option.
+  - Development debug mode flag propagation in `panelShell.ts`.
+  - Complete translations for support prompt strings across all 9 supported languages.
 - **Workspace Insights Shortcut (`Ctrl+Alt+I`)**:
   - Default keyboard shortcut `Ctrl+Alt+I` assigned to `toggleWorkspaceInsights` in the VS Code webview panel.
   - Fully integrated with Settings keyboard shortcut configuration and the homepage Shortcuts overview tab.
@@ -33,6 +38,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
   - Prevented tooltip clipping by rendering action tooltips via portals above scrollable panel content.
 
 ### Fixed
+- **Scope View Modal Event Race Conditions**: Bound DOM and input listeners in `useLayoutEffect` to eliminate event listener registration race conditions.
 - **Tooltip Viewport Clipping**: Fixed action tooltips getting clipped by overflow containers in the Workspace Insights panel.
 
 ---
