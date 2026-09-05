@@ -50,6 +50,7 @@ keywords:
 | `toggleSidebar` | Alt+A | Alt+A | Ctrl+B |
 | `openBookmarks` | Alt+Shift+B | Alt+Shift+B | Ctrl+Shift+B |
 | `toggleToc` | Alt+C | Alt+C | Ctrl+T |
+| `toggleWorkspaceInsights` | Ctrl+Alt+I | Ctrl+Alt+I | Ctrl+Alt+I |
 | `sidebarCursorMode` | Alt+Z | Alt+Z | Alt+Z |
 | `zoomIn` | — | — | Ctrl+= |
 | `zoomOut` | — | — | Ctrl+- |
@@ -77,6 +78,7 @@ keywords:
 - Editable inputs/textareas/selects/contenteditable retain normal typing unless a specific guarded action applies.
 - User bindings override defaults; `disabledKeybindings[actionId]` removes the action binding.
 - `openBookmarks` selects the Bookmarks tab when enabled; otherwise it opens Settings focused on **Enable Bookmark feature**.
+- `toggleWorkspaceInsights` toggles the Workspace Insights panel open/closed across runtimes (default `Ctrl+Alt+I`). If disabled, the entry is hidden from More actions, but the shortcut will open Settings focused on **Enable Workspace Insights feature**.
 - **Media modal gate exception**: `toggleTheme` fires through the media modal's keyboard gate (the matcher is lifted above `isModalOpen` in `resolveKeyboardAction`) so users can flip light/dark while the image/SVG modal is open. All other global shortcuts remain muted inside the modal. The terms dialog still captures the same shortcut (the matcher sits below `isTermsOpen`).
 - **Scope View modal shortcuts**: The Scope View modal traps focus and supports `Escape` to close, `Alt+Left`/`Alt+Right` and `BrowserBack`/`BrowserForward` to navigate its isolated history stack, and mouse buttons 3/4 for back/forward.
 

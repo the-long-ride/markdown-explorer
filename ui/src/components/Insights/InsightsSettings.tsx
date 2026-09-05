@@ -116,7 +116,7 @@ export function InsightsSettings({
 
       <div className="workspace-insights__settings-controls">
         <div className="workspace-insights__settings-section">
-          <div className="workspace-insights__settings-section-title">Scope & Network</div>
+          <div className="workspace-insights__settings-section-title">{labels.scopeAndNetwork}</div>
           {canEditGlobal && (
             <label className="workspace-insights__setting-row">
               <span>{labels.settingsScope}</span>
@@ -137,32 +137,32 @@ export function InsightsSettings({
           <label className="workspace-insights__setting-row">
             <span>
               {labels.externalTimeout}
-              <span className="workspace-insights__unit-note">(ms)</span>
+              <span className="workspace-insights__unit-note">({labels.unitMs})</span>
             </span>
             <input type="number" min={3000} max={30000} step={1000} aria-label={labels.externalTimeout} value={effectiveSettings.externalLinks.timeoutMs} onChange={event => changeSettings({ externalLinks: { timeoutMs: numericValue(event.target.value, effectiveSettings.externalLinks.timeoutMs) } })} />
           </label>
         </div>
 
         <div className="workspace-insights__settings-section">
-          <div className="workspace-insights__settings-section-title">Limits & Tuning</div>
+          <div className="workspace-insights__settings-section-title">{labels.limitsAndTuning}</div>
           <label className="workspace-insights__setting-row">
             <span>
               {nearDuplicateLabel}
-              <span className="workspace-insights__unit-note">(%)</span>
+              <span className="workspace-insights__unit-note">({labels.unitPercent})</span>
             </span>
             <input type="number" min={50} max={100} step={1} aria-label={nearDuplicateLabel} value={Math.round(effectiveSettings.nearDuplicateThreshold * 100)} onChange={event => changeSettings({ nearDuplicateThreshold: numericValue(event.target.value, effectiveSettings.nearDuplicateThreshold * 100) / 100 })} />
           </label>
           <label className="workspace-insights__setting-row">
             <span>
               {labels.graphNodeCap}
-              <span className="workspace-insights__unit-note">(nodes)</span>
+              <span className="workspace-insights__unit-note">({labels.unitNodes})</span>
             </span>
             <input type="number" min={25} max={500} step={25} aria-label={labels.graphNodeCap} value={effectiveSettings.graphNodeCap} onChange={event => changeSettings({ graphNodeCap: numericValue(event.target.value, effectiveSettings.graphNodeCap) })} />
           </label>
           <label className="workspace-insights__setting-row">
             <span>
               {labels.sourceSoftLimit}
-              <span className="workspace-insights__unit-note">(MB)</span>
+              <span className="workspace-insights__unit-note">({labels.unitMb})</span>
             </span>
             <input type="number" min={1} max={64} step={1} aria-label={labels.sourceSoftLimit} value={Math.max(1, Math.round(effectiveSettings.sourceSoftLimitBytes / (1024 * 1024)))} onChange={event => changeSettings({ sourceSoftLimitBytes: numericValue(event.target.value, effectiveSettings.sourceSoftLimitBytes / (1024 * 1024)) * 1024 * 1024 })} />
           </label>
@@ -170,7 +170,7 @@ export function InsightsSettings({
             <label className="workspace-insights__setting-row">
               <span>
                 {labels.cacheCap}
-                <span className="workspace-insights__unit-note">(MB)</span>
+                <span className="workspace-insights__unit-note">({labels.unitMb})</span>
               </span>
               <input type="number" min={64} max={2048} step={64} aria-label={labels.cacheCap} value={Math.round(effectiveSettings.cacheCapBytes / (1024 * 1024))} onChange={event => onGlobalSettingsChange?.({ cacheCapBytes: numericValue(event.target.value, effectiveSettings.cacheCapBytes / (1024 * 1024)) * 1024 * 1024 })} />
             </label>
@@ -206,7 +206,7 @@ export function InsightsSettings({
         </div>
 
         <div className="workspace-insights__settings-section">
-          <div className="workspace-insights__settings-section-title">Pattern Filters</div>
+          <div className="workspace-insights__settings-section-title">{labels.patternFilters}</div>
           <label className="workspace-insights__setting-col">
             <span>{labels.includeExcludePatterns}</span>
             <textarea placeholder="e.g. docs/**&#10;!archive/**" aria-label={labels.includeExcludePatterns} value={userPatternsDraft} onChange={event => updatePatterns('userPatterns', event.target.value)} />

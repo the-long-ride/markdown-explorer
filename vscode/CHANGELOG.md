@@ -6,6 +6,35 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ## [Unreleased]
 
+### Added
+- **Workspace Insights Panel & Six Specialized Views**: Added an offline-first workspace auditing and exploration panel accessible via the More actions menu or `Ctrl+Alt+I`:
+  - **Gallery**: Visual grid indexing all referenced media (images, diagrams, video, audio, documents) with Mermaid diagram thumbnail rendering, category filtering, search, and safe remote preview gates.
+  - **Links**: Workspace reference auditing surfacing broken links, missing targets, invalid anchors, outside-workspace files, dynamic references, ambiguous Wiki Links, and optional host-backed external HTTP checks.
+  - **Lint**: Fast Markdown diagnostics checking heading level jumps, duplicate headings, malformed frontmatter, unaligned table delimiters/columns, and inconsistent list indentation, with finding/rule/path-level suppressions.
+  - **Duplicates**: Exact duplicate, repeated section/passage, and near-duplicate document analysis with configurable similarity threshold (50%–100%) and group-level suppression.
+  - **Graph**: Interactive document relationship network graph with backlink traversal, 1st and 2nd degree neighborhood highlighting, node search, continuous zoom controls, and fullscreen mode.
+  - **Related Documents**: Deterministic related document ranking powered by direct links, shared tags, shared headings, title terms, and terminology overlap with explicit evidence breakdowns.
+- **Wiki Links & Transclusion Engine**:
+  - Full support for Wiki Link syntax (`[[Note]]`, `[[Note#Heading]]`, `[[Note|Label]]`, `[[#Heading]]`, and relative forms `[[./Local]]`).
+  - Transclusion embeds (`![[Note]]`, `![[Note#Heading]]`, `![[image.png]]`) with cycle detection and depth limit guards.
+  - Smart fragment navigation auto-expanding collapsed parent headings and scrolling accurately after target document render.
+- **Workspace Insights Shortcut (`Ctrl+Alt+I`)**:
+  - Default keyboard shortcut `Ctrl+Alt+I` assigned to `toggleWorkspaceInsights` in the VS Code webview panel.
+  - Fully integrated with Settings keyboard shortcut configuration and the homepage Shortcuts overview tab.
+- **Nine-Locale Localization**:
+  - Complete translations across all 9 supported languages (English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, Russian) for all Workspace Insights UI copy, settings sections, tuning limits, unit notes, search placeholders, graph controls, empty states, and presentation categories.
+
+### Changed
+- **Workspace Insights UX Polish**:
+  - Unified header layout into a single row containing title, polite indexing status, refresh, settings toggle, and close buttons.
+  - Enforced a minimum panel width of 390px (resizable up to 760px) with keyboard arrow-key resize support.
+  - Styled all filter chips, status badges, and tab counters with theme-aware border radiuses matching Tokyo Night, Glass Bento, Neon Voltage, Raw Grid, Vercel, and custom themes.
+  - Added clear unit notes `(ms)`, `(%)`, `(nodes)`, `(MB)` to numeric tuning inputs in Insights Settings.
+  - Prevented tooltip clipping by rendering action tooltips via portals above scrollable panel content.
+
+### Fixed
+- **Tooltip Viewport Clipping**: Fixed action tooltips getting clipped by overflow containers in the Workspace Insights panel.
+
 ---
 
 ## [v1.6.6] — 2026-08-24

@@ -173,15 +173,15 @@ export function GalleryView({ documents, labels: suppliedLabels, probeResource, 
         <input
           type="search"
           className="insights-gallery__search"
-          placeholder="Filter media or diagrams..."
+          placeholder={labels.filterMediaPlaceholder}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          aria-label="Filter media or diagrams"
+          aria-label={labels.filterMediaPlaceholder}
         />
       </div>
 
       {!filteredItems.length ? (
-        <div className="workspace-insights__empty">No items match your filter.</div>
+        <div className="workspace-insights__empty">{labels.noFilteredMedia}</div>
       ) : (
         <div className="insights-gallery" aria-label={labels.gallery}>
           {filteredItems.map(item => {

@@ -233,15 +233,15 @@ export function GraphView({
       <div className="insights-graph__header-row">
         <div className="insights-view-summary">
           <span className="insights-pill" title={`${format(labels.documentsShown, 'count', documentNodes.length)}${graph.hiddenCount > 0 ? ` · ${format(labels.hiddenByNodeCap, 'count', graph.hiddenCount)}` : ''}`}>
-            {documentNodes.length} docs{graph.hiddenCount > 0 ? ` (+${graph.hiddenCount})` : ''}
+            {format(labels.docsCount, 'count', documentNodes.length)}{graph.hiddenCount > 0 ? ` (+${graph.hiddenCount})` : ''}
           </span>
           {relationshipSummary && (
             <span className="insights-graph__rel-stats">
               <span className="insights-pill insights-pill--accent">
-                Rel: <strong>1st</strong> ({relationshipSummary.l1})
-                {relationshipSummary.l2 > 0 && <> · <strong>2nd</strong> ({relationshipSummary.l2})</>}
+                Rel: <strong>{labels.firstDegree}</strong> ({relationshipSummary.l1})
+                {relationshipSummary.l2 > 0 && <> · <strong>{labels.secondDegree}</strong> ({relationshipSummary.l2})</>}
               </span>
-              <button type="button" className="insights-graph__clear-sel" onClick={() => setSelectedId(null)} title="Clear selection" aria-label="Clear selection">
+              <button type="button" className="insights-graph__clear-sel" onClick={() => setSelectedId(null)} title={labels.clearSelection} aria-label={labels.clearSelection}>
                 ✕
               </button>
             </span>
@@ -251,16 +251,16 @@ export function GraphView({
           <input
             type="search"
             className="insights-graph__search"
-            placeholder="Search nodes..."
+            placeholder={labels.searchNodesPlaceholder}
             value={searchQuery}
             onChange={e => { setSearchQuery(e.target.value); setDropdownOpen(true); }}
             onFocus={() => setDropdownOpen(true)}
             onKeyDown={handleSearchKeyDown}
-            aria-label="Search nodes"
+            aria-label={labels.searchNodesPlaceholder}
           />
           {normalizedQuery && (
-            <span className="insights-graph__search-count" title={`${matchingNodes.length} found`}>
-              {matchingNodes.length} found
+            <span className="insights-graph__search-count" title={format(labels.nodesFound, 'count', matchingNodes.length)}>
+              {format(labels.nodesFound, 'count', matchingNodes.length)}
             </span>
           )}
           {dropdownOpen && normalizedQuery && matchingNodes.length > 0 && (
@@ -362,11 +362,11 @@ export function GraphView({
           </g>
         </svg>
 
-        <div className="insights-graph__controls" aria-label="Graph controls">
-          <button type="button" className="btn btn--icon btn--sm" onClick={zoomIn} title="Zoom in" aria-label="Zoom in"><ZoomInIcon size={14} /></button>
-          <button type="button" className="btn btn--icon btn--sm" onClick={zoomOut} title="Zoom out" aria-label="Zoom out"><ZoomOutIcon size={14} /></button>
-          <button type="button" className="btn btn--icon btn--sm" onClick={resetZoom} title="Reset zoom" aria-label="Reset zoom"><ResetZoomIcon size={14} /></button>
-          <button type="button" className="btn btn--icon btn--sm" onClick={toggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Toggle fullscreen"} aria-label={isFullscreen ? "Exit fullscreen" : "Toggle fullscreen"}>
+        <div className="insights-graph__controls" aria-label={labels.graphControlsAria}>
+          <button type="button" className="btn btn--icon btn--sm" onClick={zoomIn} title={labels.zoomIn} aria-label={labels.zoomIn}><ZoomInIcon size={14} /></button>
+          <button type="button" className="btn btn--icon btn--sm" onClick={zoomOut} title={labels.zoomOut} aria-label={labels.zoomOut}><ZoomOutIcon size={14} /></button>
+          <button type="button" className="btn btn--icon btn--sm" onClick={resetZoom} title={labels.resetZoom} aria-label={labels.resetZoom}><ResetZoomIcon size={14} /></button>
+          <button type="button" className="btn btn--icon btn--sm" onClick={toggleFullscreen} title={isFullscreen ? labels.exitFullscreen : labels.toggleFullscreen} aria-label={isFullscreen ? labels.exitFullscreen : labels.toggleFullscreen}>
             {isFullscreen ? <ExitFocusIcon size={13} /> : <FullscreenMenuIcon size={11} />}
           </button>
         </div>

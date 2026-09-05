@@ -122,7 +122,7 @@ Workspace Insights presentation is translated for all supported locales:
 - `ko`
 - `ru`
 
-The translated presentation domain includes **Gallery categories**, **link statuses**, **relationship presets**, **lint rule names**, and **severity labels**, in addition to panel/settings copy. Typed translation contracts and localization-focused component tests prevent presentation code from falling back to embedded English domain labels.
+The translated presentation domain includes **Gallery categories**, **link statuses**, **relationship presets**, **lint rule names**, and **severity labels**, in addition to panel/settings copy (sections, unit notes, search placeholders, graph navigation controls, and empty states). Typed translation contracts and localization-focused component tests prevent presentation code from falling back to embedded English domain labels.
 
 ## Performance characteristics
 

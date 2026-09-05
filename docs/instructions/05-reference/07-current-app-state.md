@@ -149,6 +149,24 @@ Interactive tables in rendered Markdown and delimited files support sorting, sea
 - **Open File Action**: Dedicated **Open file** header button (`OpenFileIcon`) navigates the main workspace to the previewed document and closes the modal.
 - **Navigation Parity**: Full support for keyboard shortcuts (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`, `Escape`) and hardware mouse back/forward buttons (mouse buttons 3 and 4).
 
+## Workspace Insights and Wiki Links
+
+### Workspace Insights
+- Workspace-wide analysis and reporting panel accessible via More actions or `Ctrl+Alt+I` (`toggleWorkspaceInsights`).
+- **6 Core Views**:
+  - **Gallery**: Visual grid of all referenced media (images, diagrams, video, audio, documents) with Mermaid diagram thumbnail rendering, category filtering, search, and external preview safety.
+  - **Links**: Workspace reference auditing surfacing broken links, missing files, invalid anchors, outside-workspace targets, dynamic references, ambiguous Wiki Links, and optional host-backed external HTTP checks.
+  - **Lint**: Structural Markdown diagnostics (heading hierarchy, frontmatter integrity, table column matching, list formatting) with granular suppression (finding, rule, or path-rule).
+  - **Duplicates**: Exact duplicates, repeated sections, and near-duplicate passage detection with configurable percentage threshold and suppression.
+  - **Graph**: Interactive document relationship graph with backlink traversal, 1st/2nd degree neighborhood filtering, search, continuous zoom, and fullscreen inspection.
+  - **Related**: Deterministic related document ranking powered by direct links, shared tags, shared headings, title terms, and terminology overlap.
+- **Tuning & Customization**: Granular settings (Scope & Network, Limits & Tuning, Pattern Filters) supporting global defaults and per-workspace overrides with local derived caching.
+
+### Wiki Links and Transclusion
+- First-class support for Wiki Link syntax (`[[Target]]`, `[[Target#Heading]]`, `[[Target|Alias]]`, `[[#Heading]]`, and relative paths `[[./Note]]`).
+- Embed syntax (`![[Note]]`, `![[Note#Heading]]`, `![[image.png]]`) for rich transclusion with recursion cycle detection and depth guards.
+- Automatic anchor scrolling with collapsible parent heading auto-expansion upon arrival.
+
 ## Platform and shell integrations
 
 - **Universal Hardware Mouse Navigation**: Mouse buttons 3 and 4 (Logitech and standard mice) navigate back and forward in document history and Scope View modal via `attachMouseHistoryNavigation` with 40 ms burst deduplication.
