@@ -17,6 +17,7 @@ export interface EditableDocumentSession {
   readonly lineEnding: LineEnding;
   readonly revision: DocumentRevisionToken | null;
   readonly saveState: 'idle' | 'saving' | 'conflict';
+  readonly pendingSaveSource: string | null;
   readonly conflict: DocumentConflict | null;
 }
 
@@ -52,6 +53,7 @@ export function createEditableDocumentSession(
     lineEnding,
     revision,
     saveState: 'idle',
+    pendingSaveSource: null,
     conflict: null,
   };
 }
@@ -77,6 +79,7 @@ export function markSaveStarted(session: EditableDocumentSession): EditableDocum
   return {
     ...session,
     saveState: 'saving',
+    pendingSaveSource: session.source,
     conflict: null,
   };
 }
@@ -87,9 +90,10 @@ export function markSaveSucceeded(
 ): EditableDocumentSession {
   return {
     ...session,
-    persistedSource: session.source,
+    persistedSource: session.pendingSaveSource ?? session.source,
     revision,
     saveState: 'idle',
+    pendingSaveSource: null,
     conflict: null,
   };
 }
@@ -103,6 +107,7 @@ export function markSaveConflict(
   return {
     ...session,
     saveState: 'conflict',
+    pendingSaveSource: null,
     conflict: {
       diskSource: disk.source,
       diskRevision,
@@ -111,11 +116,21 @@ export function markSaveConflict(
   };
 }
 
+export function markSaveFailed(session: EditableDocumentSession): EditableDocumentSession {
+  return {
+    ...session,
+    saveState: 'idle',
+    pendingSaveSource: null,
+    conflict: null,
+  };
+}
+
 export function discardWorkingChanges(session: EditableDocumentSession): EditableDocumentSession {
   return {
     ...session,
     source: session.persistedSource,
     saveState: 'idle',
+    pendingSaveSource: null,
     conflict: null,
   };
 }

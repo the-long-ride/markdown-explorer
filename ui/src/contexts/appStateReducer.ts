@@ -4,29 +4,39 @@ import {
   applyContentTab,
   applyContentTabsFallback,
   clearContentTabs,
-  createContentTabFromMessage,
   createPlaceholderContentTab,
   findFileInfo,
   getWorkspaceScopeKey,
   reconcileScopeFocusSetting,
   reorderContentTabs,
   refreshContentTabMetadata,
-  upsertContentTab,
 } from './contentTabState';
-import { resolveRenderedDocument } from './renderedDocument';
+import {
+  applyRenderContentWithSession,
+  reduceDocumentEditingAction,
+  type DocumentEditingAction,
+} from '../editor/documentWorkingCopy';
 import { reduceSettingsUiAction } from './reducers/settingsUiReducer';
 
 export * from './appStateModel';
 export * from './contentTabState';
 
 export type TocStorageWriter = (key: string, value: string) => void;
+export type AppAction = Action | DocumentEditingAction;
 
 export function reducer(
   state: AppState,
-  action: Action,
+  action: AppAction,
   writeTocStorage?: TocStorageWriter,
 ): AppState {
-  const settingsUiState = reduceSettingsUiAction(state, action, writeTocStorage);
+  if (action.type === 'RENDER_CONTENT') {
+    return applyRenderContentWithSession(state, action.msg, action.htmlPreviewOverride);
+  }
+
+  const editingState = reduceDocumentEditingAction(state, action as DocumentEditingAction);
+  if (editingState) return editingState;
+
+  const settingsUiState = reduceSettingsUiAction(state, action as Action, writeTocStorage);
   if (settingsUiState) return settingsUiState;
 
   switch (action.type) {
@@ -93,6 +103,7 @@ export function reducer(
             : workspaceChanged
               ? null
               : state.activeContentTabPath,
+        documentSessions: workspaceChanged ? {} : state.documentSessions,
         focusMode: false,
         sidebarActiveTab: 'files',
       };
@@ -111,70 +122,6 @@ export function reducer(
         ...state,
         recentWorkspaces: action.recentWorkspaces as RecentWorkspace[],
       };
-
-    case 'RENDER_CONTENT': {
-      const filePath = action.msg.filePath || null;
-      const nextFileList = action.msg.fileList ?? state.fileList;
-      const rendered = resolveRenderedDocument(action.msg, state.settings);
-      const existingTab = filePath
-        ? state.contentTabs.find(
-            (item) => normalizePathKey(item.filePath) === normalizePathKey(filePath),
-          )
-        : undefined;
-      const retainedCurrentOverride =
-        filePath && normalizePathKey(state.currentFile ?? '') === normalizePathKey(filePath)
-          ? state.currentHtmlPreviewOverride
-          : undefined;
-      const resolvedHtmlPreviewOverride =
-        action.htmlPreviewOverride ?? existingTab?.htmlPreviewOverride ?? retainedCurrentOverride;
-      const baseState: AppState = {
-        ...state,
-        fileList: nextFileList,
-        currentFile: filePath,
-        contentHtml: rendered.html,
-        markdownSource: action.msg.markdownSource ?? null,
-        sourceDocumentText: action.msg.sourceDocumentText ?? null,
-        currentHtmlPreviewOverride: resolvedHtmlPreviewOverride,
-        frontmatter: rendered.frontmatter,
-        toc: rendered.toc,
-        previewInfo: action.msg.previewInfo ?? null,
-        relativePath: action.msg.relativePath,
-        isLoading: false,
-        loadingLabel: '',
-        loadingDetail: '',
-        staleContentFilePath: null,
-        notFoundHref: null,
-        workspaceUnavailablePath: null,
-        workspaceUnavailableReason: null,
-        renderVersion: state.renderVersion + 1,
-      };
-      if (!state.settings.fileTabs) {
-        return {
-          ...baseState,
-          contentTabs: [],
-          activeContentTabPath: null,
-        };
-      }
-      if (!filePath) {
-        return {
-          ...baseState,
-          contentTabs: refreshContentTabMetadata(state.contentTabs, nextFileList),
-          activeContentTabPath: null,
-        };
-      }
-      const tab = {
-        ...createContentTabFromMessage(action.msg, nextFileList, rendered),
-        htmlPreviewOverride: resolvedHtmlPreviewOverride,
-      };
-      return {
-        ...baseState,
-        contentTabs: upsertContentTab(
-          refreshContentTabMetadata(state.contentTabs, nextFileList),
-          tab,
-        ),
-        activeContentTabPath: filePath,
-      };
-    }
 
     case 'WORKSPACE_FILES_CHANGED': {
       const nextWorkspaceKey = getWorkspaceScopeKey(action.workspacePath, action.workspaceName);
@@ -213,6 +160,7 @@ export function reducer(
           : refreshContentTabMetadata(state.contentTabs, action.fileList),
         activeContentTabPath: workspaceChanged ? null : state.activeContentTabPath,
         currentHtmlPreviewOverride: workspaceChanged ? undefined : state.currentHtmlPreviewOverride,
+        documentSessions: workspaceChanged ? {} : state.documentSessions,
         isLoading: false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -364,6 +312,7 @@ export function reducer(
         isMaximized: action.isMaximized ?? state.isMaximized,
         contentTabs: [],
         activeContentTabPath: null,
+        documentSessions: {},
         renderVersion: state.renderVersion + 1,
         focusMode: false,
       };
