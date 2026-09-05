@@ -77,6 +77,10 @@ function createMainWindow({
     if (debugTools.shouldAutoOpenDevTools()) {
       debugTools.openDevToolsIfDebug(mainWindow);
     }
+    const isDebug = Boolean(debugTools && typeof debugTools.isDebugMode === "function" && debugTools.isDebugMode());
+    if (isDebug) {
+      mainWindow.webContents.executeJavaScript("window.__DEBUG__ = true;").catch(() => {});
+    }
     mainWindow.webContents.executeJavaScript("window.__mdnPerfEntries ? window.__mdnPerfEntries() : null").then((rendererEntries) => {
       if (rendererEntries) {
         perfImpl.setRendererMarks(rendererEntries);
@@ -85,7 +89,12 @@ function createMainWindow({
     }).catch(() => {});
   });
 
-  mainWindow.loadFile(pathImpl.join(appDir, "ui", "dist", "index.html"));
+  const isDebug = Boolean(debugTools && typeof debugTools.isDebugMode === "function" && debugTools.isDebugMode());
+  if (isDebug) {
+    mainWindow.loadFile(pathImpl.join(appDir, "ui", "dist", "index.html"), { query: { debug: "1" } });
+  } else {
+    mainWindow.loadFile(pathImpl.join(appDir, "ui", "dist", "index.html"));
+  }
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();

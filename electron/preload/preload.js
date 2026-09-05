@@ -1,5 +1,22 @@
-function createPreloadApi({ ipcRenderer, webUtils }) {
+function isElectronDebug() {
+  try {
+    const isPackaged = Boolean(process.resourcesPath && !process.defaultApp);
+    const isTruthy = (v) => /^(1|true|yes|on)$/i.test(String(v || ''));
+    return (
+      !isPackaged ||
+      Boolean(process.defaultApp) ||
+      isTruthy(process.env?.MARKDOWN_EXPLORER_DEBUG) ||
+      Boolean(process.argv?.includes('--debug') || process.argv?.includes('--devtools')) ||
+      process.env?.NODE_ENV === 'development'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function createPreloadApi({ ipcRenderer, webUtils, isDebug = isElectronDebug() } = {}) {
   return {
+    isDebug: Boolean(isDebug),
     postMessage: (msg) => ipcRenderer.send('webview-message', msg),
     onMessage: (callback) => {
       const subscription = (event, ...args) => callback(...args);

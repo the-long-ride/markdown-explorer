@@ -1,0 +1,265 @@
+/* =============================================================================
+   components/Modal/SupportPromptModal.css — Community Support & Appreciation Modal Styles
+   ============================================================================= */
+
+.support-prompt-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  animation: supportPromptFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes supportPromptFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.support-prompt-card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-s, #1e1e2e);
+  color: var(--tx, #1f1a14);
+  border: 1px solid var(--bd-s, rgba(255, 255, 255, 0.12));
+  border-radius: var(--r-lg, 14px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--bd, rgba(255, 255, 255, 0.05));
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.support-prompt-card__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--tx3, #8a7c6e);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r, 6px);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.support-prompt-card__close:hover {
+  color: var(--tx, #1f1a14);
+  background: var(--bg-h, rgba(255, 255, 255, 0.08));
+}
+
+.support-prompt-card__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 28px;
+}
+
+.support-prompt-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.22) 0%, rgba(245, 158, 11, 0.12) 100%);
+  color: #eab308;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(234, 179, 8, 0.25);
+}
+
+.support-prompt-card__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--tx) !important;
+}
+
+.support-prompt-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.support-prompt-card__message {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--tx2, #5c5246);
+}
+
+.support-prompt-card__checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.88rem;
+  color: var(--tx2, #5c5246);
+  transition: color 0.15s ease;
+  margin-top: 4px;
+}
+
+.support-prompt-card__checkbox-label:hover {
+  color: var(--tx, #1f1a14);
+}
+
+.support-prompt-card__checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.support-prompt-card__checkbox-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  line-height: 1;
+  color: var(--tx3, #8a7c6e);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.support-prompt-card__checkbox-custom svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.support-prompt-card__checkbox-label:hover .support-prompt-card__checkbox-custom {
+  color: var(--tx, #1f1a14);
+}
+
+.support-prompt-card__checkbox:focus-visible + .support-prompt-card__checkbox-custom {
+  outline: 2px solid #eab308;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.support-prompt-card__checkbox:checked + .support-prompt-card__checkbox-custom,
+.support-prompt-card__checkbox-custom:has(rect) {
+  color: #eab308;
+}
+
+.support-prompt-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bd, rgba(255, 255, 255, 0.08));
+}
+
+.support-prompt-card__star-btn,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__star-btn,
+:is([data-theme], [data-theme-style], body) button.support-prompt-card__star-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 8px 18px;
+  height: auto;
+  border-radius: var(--r-md, 8px);
+  background: #eab308 !important;
+  color: #000000 !important;
+  border: 1px solid #eab308 !important;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.35);
+}
+
+.support-prompt-card__star-btn:hover,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__star-btn:hover,
+:is([data-theme], [data-theme-style], body) button.support-prompt-card__star-btn:hover {
+  background: #facc15 !important;
+  border-color: #facc15 !important;
+  color: #000000 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.45);
+}
+
+.support-prompt-card__star-btn:active,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__star-btn:active {
+  transform: translateY(0);
+  background: #eab308 !important;
+}
+
+.support-prompt-card__star-btn svg,
+.support-prompt-card__star-btn .support-prompt-card__btn-icon,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__star-btn svg {
+  color: #000000 !important;
+  fill: currentColor !important;
+  flex-shrink: 0;
+}
+
+.support-prompt-card__later-btn,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__later-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  height: auto;
+  border-radius: var(--r-md, 8px);
+  background: transparent !important;
+  color: var(--tx2, #5c5246) !important;
+  border: 1px solid var(--bd-s, rgba(255, 255, 255, 0.12)) !important;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.88rem;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.support-prompt-card__later-btn:hover,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__later-btn:hover {
+  background: var(--bg-h, rgba(255, 255, 255, 0.08)) !important;
+  color: var(--tx, #1f1a14) !important;
+  border-color: var(--bd-x, var(--bd-s)) !important;
+}
+
+.support-prompt-card__donate-btn,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__donate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  height: auto;
+  border-radius: var(--r-md, 8px);
+  background: transparent !important;
+  color: var(--tx, #1f1a14) !important;
+  border: 1px solid var(--bd-s, rgba(255, 255, 255, 0.12)) !important;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.88rem;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.support-prompt-card__donate-btn:hover,
+:is([data-theme], [data-theme-style], body) .support-prompt-card__donate-btn:hover {
+  background: var(--bg-h) !important;
+  color: var(--tx) !important;
+}

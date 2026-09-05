@@ -50,7 +50,7 @@ export function WelcomePage() {
     <div className="welcome-container">
       <InteractiveBackground />
       <div className="welcome-animate-wrapper">
-        <WelcomeHero copy={wt.hero} isDesktop={isDesktop} hostPlatform={state.hostPlatform} markdownThemLabel={t.ui.markdownThemLinkLabel} />
+        <WelcomeHero copy={wt.hero} isDesktop={isDesktop} hostPlatform={state.hostPlatform} markdownThemLabel={t.ui.markdownThemLinkLabel} language={currentLang} />
 
       {/* Tabs Bar */}
       <div className="tabs-bar">

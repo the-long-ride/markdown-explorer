@@ -15,6 +15,7 @@ export const READING_PROGRESS_STORAGE_KEY = 'markdown-explorer-reading-progress-
 export const INSIGHTS_SETTINGS_STORAGE_KEY = 'markdown-explorer-workspace-insights-settings-v1';
 export const INSIGHTS_CACHE_DB_NAME = 'markdown-explorer-workspace-insights-cache-v1';
 export const INSIGHTS_PANEL_WIDTH_STORAGE_KEY = 'markdown-explorer-workspace-insights-panel-width';
+export const SUPPORT_PROMPT_STATE_STORAGE_KEY = 'markdown-explorer-support-prompt-state-v1';
 
 export const SETTINGS_EXPORT_KIND = 'markdown-explorer-settings';
 export const SETTINGS_EXPORT_SCHEMA_VERSION = 1;

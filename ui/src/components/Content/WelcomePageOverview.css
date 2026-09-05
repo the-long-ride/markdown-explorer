@@ -114,6 +114,91 @@
   transform: rotate(15deg);
 }
 
+/* Hero Community Support & Appreciation Banner */
+.hero-support-banner,
+.hero-star-banner {
+  margin: 16px auto 0;
+  max-width: 680px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, var(--bg-s, rgba(255, 255, 255, 0.03)) 100%);
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  border-radius: var(--radius-md, 10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-support-banner:hover,
+.hero-star-banner:hover {
+  border-color: rgba(234, 179, 8, 0.45);
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.1);
+}
+
+.hero-support-banner__content,
+.hero-star-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.hero-support-banner__icon,
+.hero-star-banner__icon {
+  color: #eab308;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(234, 179, 8, 0.3));
+}
+
+.hero-support-banner__text,
+.hero-star-banner__text {
+  font-size: 0.88rem;
+  color: var(--tx2);
+  line-height: 1.4;
+}
+
+.hero-support-banner__btn,
+.hero-star-banner__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #000000 !important;
+  background: #eab308 !important;
+  border-radius: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 4px rgba(234, 179, 8, 0.3);
+}
+
+.hero-support-banner__btn:hover,
+.hero-star-banner__btn:hover {
+  background: #facc15 !important;
+  color: #000000 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(234, 179, 8, 0.4);
+}
+
+@media (max-width: 640px) {
+  .hero-support-banner,
+  .hero-star-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  .hero-support-banner__content,
+  .hero-star-banner__content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
 /* Tabs Bar */
 .tabs-bar {
   display: flex;

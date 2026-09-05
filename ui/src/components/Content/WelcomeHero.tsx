@@ -1,5 +1,8 @@
 import { GlobeIcon } from './WelcomePageIcons';
+import { StarIcon } from '../shared/icons';
+import { GITHUB_REPO_URL } from '../../constants/urls';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
+import { getSupportPromptTranslations } from '../../contexts/supportPromptTranslations';
 import type { HostPlatform } from '../../types';
 
 type WelcomeHeroCopy = ReturnType<typeof getWelcomeTranslations>['hero'];
@@ -9,9 +12,11 @@ interface WelcomeHeroProps {
   isDesktop: boolean;
   hostPlatform: HostPlatform;
   markdownThemLabel: string;
+  language?: string;
 }
 
-export function WelcomeHero({ copy, isDesktop, hostPlatform, markdownThemLabel }: WelcomeHeroProps) {
+export function WelcomeHero({ copy, isDesktop, hostPlatform, markdownThemLabel, language }: WelcomeHeroProps) {
+  const supportT = getSupportPromptTranslations(language);
   return (
     <div className="hero-section">
       <h1 className="hero-title">{copy.title}</h1>
@@ -55,6 +60,22 @@ export function WelcomeHero({ copy, isDesktop, hostPlatform, markdownThemLabel }
             </div>
           );
         })()}
+      </div>
+      <div className="hero-support-banner hero-star-banner" role="region" aria-label={supportT.homeSupportTitle}>
+        <div className="hero-support-banner__content hero-star-banner__content">
+          <StarIcon size={18} className="hero-support-banner__icon hero-star-banner__icon" />
+          <span className="hero-support-banner__text hero-star-banner__text">{supportT.homeSupportMessage}</span>
+        </div>
+        <a
+          href={GITHUB_REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hero-support-banner__btn hero-star-banner__btn"
+          aria-label={`${supportT.homeSupportButton} on GitHub`}
+        >
+          <StarIcon size={13} />
+          <span>{supportT.homeSupportButton}</span>
+        </a>
       </div>
     </div>
   );

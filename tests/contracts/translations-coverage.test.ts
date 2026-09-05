@@ -8,6 +8,7 @@ import { DESKTOP_TYPOGRAPHY_EN } from '../../ui/src/contexts/desktopTypographyTr
 import { EXPORT_SCOPE_TRANSLATIONS } from '../../ui/src/contexts/exportScopeTranslations';
 import { INSIGHTS_TRANSLATIONS } from '../../ui/src/contexts/insightsTranslations';
 import { INSIGHTS_UI_TRANSLATIONS } from '../../ui/src/contexts/insightsUiTranslations';
+import { SUPPORT_PROMPT_TRANSLATIONS } from '../../ui/src/contexts/supportPromptTranslations';
 
 function verifyObjectKeysRecursive(
   reference: Record<string, unknown>,
@@ -147,6 +148,26 @@ describe('translation coverage across all supported languages', () => {
       expect(t.topbar.expandAll).toBeDefined();
       expect(t.topbar.collapseAll).not.toContain('headings');
       expect(t.topbar.expandAll).not.toContain('headings');
+    }
+  });
+
+  test('SUPPORT_PROMPT_TRANSLATIONS contains all keys across all supported languages', () => {
+    const englishTemplate = SUPPORT_PROMPT_TRANSLATIONS.en as unknown as Record<string, unknown>;
+    for (const lang of expectedLanguages) {
+      const localeTranslations = SUPPORT_PROMPT_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `Support prompt block for "${lang}" must exist`).toBeDefined();
+      verifyObjectKeysRecursive(englishTemplate, localeTranslations, `supportPrompt.${lang}`);
+    }
+  });
+
+  test('Support prompt strings are actually translated outside English', () => {
+    for (const lang of expectedLanguages.filter((value) => value !== 'en')) {
+      expect(SUPPORT_PROMPT_TRANSLATIONS[lang].title).not.toBe(SUPPORT_PROMPT_TRANSLATIONS.en.title);
+      expect(SUPPORT_PROMPT_TRANSLATIONS[lang].starButton).not.toBe(SUPPORT_PROMPT_TRANSLATIONS.en.starButton);
+      expect(SUPPORT_PROMPT_TRANSLATIONS[lang].donateButton).not.toBe(SUPPORT_PROMPT_TRANSLATIONS.en.donateButton);
+      expect(SUPPORT_PROMPT_TRANSLATIONS[lang].dontShowAgain).not.toBe(SUPPORT_PROMPT_TRANSLATIONS.en.dontShowAgain);
+      expect(SUPPORT_PROMPT_TRANSLATIONS[lang].close).not.toBe(SUPPORT_PROMPT_TRANSLATIONS.en.close);
+      expect(SUPPORT_PROMPT_TRANSLATIONS[lang].homeSupportMessage).not.toBe(SUPPORT_PROMPT_TRANSLATIONS.en.homeSupportMessage);
     }
   });
 });

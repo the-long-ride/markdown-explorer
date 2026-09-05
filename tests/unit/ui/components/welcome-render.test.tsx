@@ -350,4 +350,13 @@ describe("WelcomePage rendering", () => {
     fireEvent.click(shuffleBtn);
     expect(card).toBeInTheDocument();
   });
+
+  it("renders GitHub star persuasion banner with link in WelcomeHero", () => {
+    setup();
+    const starBanner = screen.getByRole("region", { name: /Support Markdown Explorer/i });
+    expect(starBanner).toBeInTheDocument();
+    const starLink = screen.getByRole("link", { name: /Star on GitHub/i });
+    expect(starLink).toBeInTheDocument();
+    expect(starLink).toHaveAttribute("href", "https://github.com/the-long-ride/markdown-explorer");
+  });
 });

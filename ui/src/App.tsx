@@ -382,47 +382,24 @@ export function App() {
       updateWorkspaceAlias={updateWorkspaceAlias}
       scrollRef={scrollRef}
       t={t}
-      expandAll={expandAll}
-      collapseAll={collapseAll}
-      copyCurrentFileContent={copyCurrentFileContent}
-      refresh={refresh}
-      back={back}
-      forward={forward}
-      canGoBack={canGoBack}
-      canGoForward={canGoForward}
-       currentFile={state.currentFile}
-      searchOpen={searchOpen}
-      closeSearch={closeSearch}
-      searchScope={searchScope}
-      isAllTabsSearch={isAllTabsSearch}
-      allTabsSearchShortcutLabel={allTabsSearchShortcutLabel}
-      currentSearchShortcutLabel={currentSearchShortcutLabel}
-      crossTabSearchItems={crossTabSearchItems}
-      handleWorkspaceSearchSelect={handleWorkspaceSearchSelect}
-      handleCrossTabSelect={handleCrossTabSelect}
-      isIndexingAcrossTabs={isIndexingAcrossTabs}
-      findOpen={findOpen}
-      closeFind={closeFind}
-      findShortcutLabel={findShortcutLabel}
-      mediaGallery={mediaGallery}
-      setMediaGallery={setMediaGallery}
-      settingsOpen={settingsOpen}
-      downloadUpdate={downloadUpdate}
-      scheduleUpdateOnExit={scheduleUpdateOnExit}
-      restartAndApplyUpdate={restartAndApplyUpdate}
-      openUpdateChangelog={openUpdateChangelog}
-      themeOnboardingOpen={themeOnboardingOpen}
-      handleThemeOnboardingComplete={handleThemeOnboardingComplete}
-      pendingDroppedPath={pendingDroppedPath}
-      setPendingDroppedPath={setPendingDroppedPath}
-      confirmSwitchWorkspace={confirmSwitchWorkspace}
-      workspaceSelectionConfirmOpen={workspaceSelectionConfirmOpen}
-      setWorkspaceSelectionConfirmOpen={setWorkspaceSelectionConfirmOpen}
+      expandAll={expandAll} collapseAll={collapseAll}
+      copyCurrentFileContent={copyCurrentFileContent} refresh={refresh}
+      back={back} forward={forward} canGoBack={canGoBack} canGoForward={canGoForward}
+      currentFile={state.currentFile}
+      searchOpen={searchOpen} closeSearch={closeSearch} searchScope={searchScope}
+      isAllTabsSearch={isAllTabsSearch} allTabsSearchShortcutLabel={allTabsSearchShortcutLabel}
+      currentSearchShortcutLabel={currentSearchShortcutLabel} crossTabSearchItems={crossTabSearchItems}
+      handleWorkspaceSearchSelect={handleWorkspaceSearchSelect} handleCrossTabSelect={handleCrossTabSelect}
+      isIndexingAcrossTabs={isIndexingAcrossTabs} findOpen={findOpen} closeFind={closeFind} findShortcutLabel={findShortcutLabel}
+      mediaGallery={mediaGallery} setMediaGallery={setMediaGallery} settingsOpen={settingsOpen}
+      downloadUpdate={downloadUpdate} scheduleUpdateOnExit={scheduleUpdateOnExit}
+      restartAndApplyUpdate={restartAndApplyUpdate} openUpdateChangelog={openUpdateChangelog}
+      themeOnboardingOpen={themeOnboardingOpen} handleThemeOnboardingComplete={handleThemeOnboardingComplete}
+      pendingDroppedPath={pendingDroppedPath} setPendingDroppedPath={setPendingDroppedPath} confirmSwitchWorkspace={confirmSwitchWorkspace}
+      workspaceSelectionConfirmOpen={workspaceSelectionConfirmOpen} setWorkspaceSelectionConfirmOpen={setWorkspaceSelectionConfirmOpen}
       closeWorkspaceToSelection={closeWorkspaceToSelection}
-      focusMode={state.focusMode}
-      toggleFocusMode={toggleFocusMode}
-      isDragging={isDragging}
-      onImageClick={onImageClick}
+      focusMode={state.focusMode} toggleFocusMode={toggleFocusMode}
+      isDragging={isDragging} onImageClick={onImageClick} onOpenExternal={openExternalUrl}
     />
   );
 }

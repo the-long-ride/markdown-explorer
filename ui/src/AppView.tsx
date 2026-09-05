@@ -9,6 +9,7 @@ import { WorkspaceInsightsEntry } from "./components/Insights/WorkspaceInsightsE
 import { getEnabledShortcut } from "./utils/shortcuts";
 import { useModalRegionAnchor } from "./utils/useModalRegionAnchor";
 import { AvailableUpdateDialog } from "./components/Settings/AvailableUpdateDialog";
+import { useSupportPrompt } from "./hooks/useSupportPrompt";
 import type { MediaGallery } from "./components/Modal/mediaGallery";
 
 const Sidebar = lazy(() => import("./components/Sidebar/Sidebar").then((m) => ({ default: m.Sidebar })));
@@ -25,6 +26,7 @@ const ExportCenterModal = lazy(() => import("./components/Export/ExportCenterMod
 const ThemeOnboardingModal = lazy(() => import("./components/Modal/ThemeOnboardingModal").then((m) => ({ default: m.ThemeOnboardingModal })));
 const SwitchWorkspaceModal = lazy(() => import("./components/Modal/SwitchWorkspaceModal").then((m) => ({ default: m.SwitchWorkspaceModal })));
 const WorkspaceSelectionConfirmModal = lazy(() => import("./components/Modal/WorkspaceSelectionConfirmModal").then((m) => ({ default: m.WorkspaceSelectionConfirmModal })));
+const SupportPromptModal = lazy(() => import("./components/Modal/SupportPromptModal").then((m) => ({ default: m.SupportPromptModal })));
 
 
 export function AppView(props: any) {
@@ -102,8 +104,32 @@ export function AppView(props: any) {
   closeWorkspaceToSelection,
   toggleFocusMode,
   isDragging,
-  onImageClick
+  onImageClick,
+  onOpenExternal,
   } = props;
+
+  const isModalBlocked = Boolean(
+    themeOnboardingOpen ||
+    settingsOpen ||
+    exportCenterOpen ||
+    searchOpen ||
+    findOpen ||
+    mediaGallery ||
+    pendingDroppedPath !== null ||
+    workspaceSelectionConfirmOpen ||
+    updateNotification?.promptOpen ||
+    isInsightsOpen
+  );
+
+  const {
+    isOpen: supportPromptOpen,
+    handleClose: handleCloseSupportPrompt,
+    handleStar: handleSupportStar,
+  } = useSupportPrompt({
+    enabled: true,
+    isBlocked: isModalBlocked,
+    onOpenExternal,
+  });
 
   useEffect(() => {
     const openExportCenter = () => setExportCenterOpen(true);
@@ -330,6 +356,11 @@ export function AppView(props: any) {
           setWorkspaceSelectionConfirmOpen(false);
           closeWorkspaceToSelection();
         }}
+      />
+      <SupportPromptModal
+        isOpen={supportPromptOpen}
+        onClose={handleCloseSupportPrompt}
+        onStar={handleSupportStar}
       />
       </Suspense>
 

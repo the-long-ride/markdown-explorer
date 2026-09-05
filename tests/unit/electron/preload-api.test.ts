@@ -91,6 +91,7 @@ describe('createPreloadApi', () => {
     expect(exposeInMainWorld).toHaveBeenCalledWith(
       'electronAPI',
       expect.objectContaining({
+        isDebug: expect.any(Boolean),
         postMessage: expect.any(Function),
         onMessage: expect.any(Function),
         getPathForFile: expect.any(Function),
@@ -98,4 +99,13 @@ describe('createPreloadApi', () => {
     );
   });
 
+  test('createPreloadApi accepts explicit isDebug option', () => {
+    const ipcRenderer = { send: vi.fn(), on: vi.fn(), removeListener: vi.fn() };
+    const webUtils = { getPathForFile: vi.fn() };
+    const apiTrue = createPreloadApi({ ipcRenderer, webUtils, isDebug: true });
+    expect(apiTrue.isDebug).toBe(true);
+
+    const apiFalse = createPreloadApi({ ipcRenderer, webUtils, isDebug: false });
+    expect(apiFalse.isDebug).toBe(false);
+  });
 });

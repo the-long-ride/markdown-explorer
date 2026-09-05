@@ -130,6 +130,14 @@ describe('createMainWindow', () => {
     expect(windowMock.loadFile).toHaveBeenCalledWith('/test/app/ui/dist/index.html');
   });
 
+  test('loads index.html file with debug query param when isDebugMode is true', () => {
+    debugTools.isDebugMode = vi.fn(() => true);
+    create();
+    expect(windowMock.loadFile).toHaveBeenCalledWith('/test/app/ui/dist/index.html', {
+      query: { debug: '1' },
+    });
+  });
+
   test('registers before-input-event handler', () => {
     create();
     expect(windowMock.webContents.on).toHaveBeenCalledWith('before-input-event', expect.any(Function));
