@@ -29,6 +29,7 @@ import type {
   DocumentPreviewInfo,
   RenderContentMessage,
 } from '../types';
+import type { EditableDocumentSession } from '../editor/documentSession';
 
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 import { migrateDesktopFontBindings, type DesktopFontFamily } from '../desktop/fonts/fontModel';
@@ -78,6 +79,7 @@ export interface AppState {
   renderVersion: number;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
+  documentSessions: Record<string, EditableDocumentSession>;
   recentWorkspaces: RecentWorkspace[];
   isMaximized: boolean;
   appVersion: string;
@@ -230,6 +232,7 @@ export const initialState: AppState = {
   renderVersion: 0,
   contentTabs: [],
   activeContentTabPath: null,
+  documentSessions: {},
   recentWorkspaces: [],
   isMaximized: false,
   appVersion: '',
