@@ -45,6 +45,7 @@ keywords:
 | `defaultCsvPreview` | `boolean` | `true` | Default delimited data to table preview |
 | `fileTabs` | `boolean` | `false` | Enable document content tabs |
 | `bookmarksEnabled` | `boolean` | `false` | **Enable Bookmark feature**: show mixed-text/object capture actions and the Bookmarks tab; disabling preserves stored records |
+| `insightsEnabled` | `boolean` | `false` | **Enable Workspace Insights feature**: show Workspace Insights in the More actions menu; disabling hides the entry while preserving workspace settings and cache |
 | `documentConversion` | `boolean` | `false` | Include/convert supported binary documents |
 | `scopeFocus` | `Record<string,string[]>` | `{}` | Browsing focus paths by workspace |
 | `searchScopeFocus` | `Record<string,string[]>` | `{}` | Search focus paths by workspace |
@@ -81,7 +82,7 @@ Electron, Tauri, VS Code, and Chromium/Web expose Typography. VS Code uses exten
 
 ## Import coverage
 
-The active importer restores core booleans including `bookmarksEnabled`, `scopeFocus`, `desktopViewMode`, `keybindings`, `language`, custom themes, and active custom-theme ID. It does not currently return imported `searchScopeFocus` or `disabledKeybindings`; the reducer merge therefore preserves their existing values.
+The active importer restores core booleans including `bookmarksEnabled`, `insightsEnabled`, `scopeFocus`, `desktopViewMode`, `keybindings`, `language`, custom themes, and active custom-theme ID. It does not currently return imported `searchScopeFocus` or `disabledKeybindings`; the reducer merge therefore preserves their existing values.
 
 ## Persistence
 

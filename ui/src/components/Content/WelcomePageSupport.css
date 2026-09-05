@@ -1,6 +1,6 @@
 
 .privacy-list li::marker {
-  color: var(--success);
+  color: var(--accent-text);
 }
 
 .issues-card {

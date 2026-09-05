@@ -17,6 +17,7 @@ import { getEnabledShortcut } from '../../utils/shortcuts';
 import { requestShellLocation, supportsShellLocation } from '../../desktop/shellLocation';
 import { DesktopTabItem } from './DesktopTabItem';
 import { DesktopTabContextMenu } from './DesktopTabContextMenu';
+import { INSIGHTS_UI_TRANSLATIONS } from '../../contexts/insightsUiTranslations';
 
 const TAB_CLOSE_FADE_MS = 90;
 const TAB_CLOSE_COLLAPSE_MS = 140;
@@ -24,65 +25,32 @@ const TAB_CLOSE_COLLAPSE_MS = 140;
 type TabClosePhase = 'idle' | 'fade' | 'collapse';
 
 interface DesktopTabBarProps {
-  tabs: DesktopTab[];
-  activeTabId: string;
-  onSelectTab: (tabId: string) => void;
-  onNewTab: () => void;
-  onCloseTab: (tabId: string) => void;
+  tabs: DesktopTab[]; activeTabId: string;
+  onSelectTab: (tabId: string) => void; onNewTab: () => void; onCloseTab: (tabId: string) => void;
   onReorderTabs: (sourceTabId: string, targetTabId: string) => void;
-  onCloseTabsToRight: (tabId: string) => void;
-  onCloseOtherTabs: (tabId: string) => void;
-  onCloseAllTabs: () => void;
+  onCloseTabsToRight: (tabId: string) => void; onCloseOtherTabs: (tabId: string) => void; onCloseAllTabs: () => void;
   onAliasChange: (tabId: string, alias: string) => void;
-  onThemeToggle: () => void;
-  onSettingsOpen: () => void;
-  onSidebarToggle: () => void;
-  onBack: () => void;
-  onForward: () => void;
-  onRefresh: () => void;
-  canGoBack: boolean;
-  canGoForward: boolean;
-  onCollapseAll: () => void;
-  onExpandAll: () => void;
-  onCopyFile: (button?: HTMLElement | null) => void;
-  isDark: boolean;
-  isMaximized: boolean;
-  hasUpdate?: boolean;
-  isFullscreen?: boolean;
-  onFullscreenToggle?: () => void;
+  onThemeToggle: () => void; onSettingsOpen: () => void; onSidebarToggle: () => void;
+  onBack: () => void; onForward: () => void; onRefresh: () => void;
+  canGoBack: boolean; canGoForward: boolean;
+  onCollapseAll: () => void; onExpandAll: () => void; onCopyFile: (button?: HTMLElement | null) => void;
+  isDark: boolean; isMaximized: boolean; hasUpdate?: boolean; isFullscreen?: boolean;
+  onFullscreenToggle?: () => void; isInsightsOpen?: boolean; onInsightsToggle?: () => void;
 }
 
 export function DesktopTabBar({
-  tabs,
-  activeTabId,
-  onSelectTab,
-  onNewTab,
-  onCloseTab,
-  onReorderTabs,
-  onCloseTabsToRight,
-  onCloseOtherTabs,
-  onCloseAllTabs,
-  onAliasChange,
-  onThemeToggle,
-  onSettingsOpen,
-  onSidebarToggle,
-  onBack,
-  onForward,
-  onRefresh,
-  canGoBack,
-  canGoForward,
-  onCollapseAll,
-  onExpandAll,
-  onCopyFile,
-  isDark,
-  isMaximized,
-  hasUpdate = false,
-  isFullscreen = false,
-  onFullscreenToggle,
+  tabs, activeTabId, onSelectTab, onNewTab, onCloseTab, onReorderTabs,
+  onCloseTabsToRight, onCloseOtherTabs, onCloseAllTabs, onAliasChange,
+  onThemeToggle, onSettingsOpen, onSidebarToggle, onBack, onForward, onRefresh,
+  canGoBack, canGoForward, onCollapseAll, onExpandAll, onCopyFile,
+  isDark, isMaximized, hasUpdate = false, isFullscreen = false, onFullscreenToggle,
+  isInsightsOpen = false, onInsightsToggle,
 }: DesktopTabBarProps) {
   const { state, openInEditor, toggleToc, toggleFocusMode } = useAppState();
   const bridge = usePlatform();
   const currentLang = state.settings.language || 'en';
+  const insightsLang = currentLang as keyof typeof INSIGHTS_UI_TRANSLATIONS;
+  const insightsT = INSIGHTS_UI_TRANSLATIONS[insightsLang] ?? INSIGHTS_UI_TRANSLATIONS.en;
   const t = getTranslations(currentLang);
   const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const workspaceTabs = tabs.filter((tab) => tab.kind !== 'home');
@@ -374,6 +342,13 @@ export function DesktopTabBar({
         tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
         tocToggleDisabled={!state.currentFile || state.toc.length === 0}
         onTocToggle={toggleToc}
+        showInsights={state.settings.insightsEnabled}
+        insightsLabel={insightsT.title}
+        insightsTooltip={insightsT.title}
+        insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')}
+        insightsActive={isInsightsOpen}
+        canInsights={!!(state.workspacePath || state.workspaceName)}
+        onInsightsToggle={onInsightsToggle}
         focusModeLabel={t.actions.toggleFocusMode}
         focusModeTooltip={t.actions.toggleFocusMode}
         focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}

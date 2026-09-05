@@ -10,7 +10,7 @@
 
 import { useEffect } from 'react';
 import { AppStateProvider } from './contexts/AppStateContext';
-import { NavigationProvider } from './contexts/NavigationContext';
+import { WorkspaceNavigationProvider } from './contexts/NavigationContext';
 import { App } from './App';
 
 // Defer interactive component registration until after initial mount
@@ -50,9 +50,9 @@ export default function AppShell() {
 
   return (
     <AppStateProvider>
-      <NavigationProvider>
+      <WorkspaceNavigationProvider>
         <App />
-      </NavigationProvider>
+      </WorkspaceNavigationProvider>
     </AppStateProvider>
   );
 }

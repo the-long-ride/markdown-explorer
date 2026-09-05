@@ -85,7 +85,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     // gallery trigger a fresh recolor.
     const isNewGallery = gallery !== prevGalleryRef.current;
     prevGalleryRef.current = gallery;
-    if (isNewGallery) return;
+    if (isNewGallery && current.html) return;
     let cancelled = false;
     // Defer the helper call to the next microtask so the higher-up
     // useAppStateEffects theme-sync effect (in AppStateProvider, which fires

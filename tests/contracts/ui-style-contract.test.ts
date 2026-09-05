@@ -188,6 +188,41 @@ describe('UI style contract', () => {
         : undefined,
     ).toEqual([]);
   });
+
+  test('uses standard design tokens and theme styles for workspace insights and wiki elements', () => {
+    const insightsCss = fs.readFileSync(
+      path.join(uiRoot, 'styles/global/global-workspace-insights.css'),
+      'utf8',
+    );
+    const structuresCss = fs.readFileSync(
+      path.join(uiRoot, 'styles/global/global-markdown-structures.css'),
+      'utf8',
+    );
+    const globalCss = fs.readFileSync(path.join(uiRoot, 'styles/global.css'), 'utf8');
+
+    expect(globalCss).toContain('global-workspace-insights.css');
+    expect(insightsCss).not.toMatch(/var\(--(?:border|text|text-muted|hover|elevated|bg-surface)\b/);
+    expect(insightsCss).toContain('var(--tx)');
+    expect(insightsCss).toContain('var(--tx2)');
+    expect(insightsCss).toContain('var(--bg)');
+    expect(insightsCss).toContain('var(--bd-s)');
+
+    expect(structuresCss).toContain('.mdn-wiki-link');
+    expect(structuresCss).toContain('.mdn-wiki-embed');
+    expect(structuresCss).toContain('.mdn-wiki-embed-placeholder');
+    expect(structuresCss).toContain('var(--accent-text)');
+
+    for (const file of [
+      'global-theme-glass-bento.css',
+      'global-theme-tokyo-night.css',
+      'global-theme-neon-voltage.css',
+      'global-theme-raw-grid.css',
+      'global-theme-vercel.css',
+    ]) {
+      const content = fs.readFileSync(path.join(uiRoot, 'styles/global', file), 'utf8');
+      expect(content).toContain('.workspace-insights');
+    }
+  });
 });
 
 export { findStyleViolations };

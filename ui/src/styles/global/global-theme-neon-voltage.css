@@ -2,6 +2,7 @@
 [data-theme-style="neon-voltage"] .topbar,
 [data-theme-style="neon-voltage"] .desktop-tabbar,
 [data-theme-style="neon-voltage"] .sidebar,
+[data-theme-style="neon-voltage"] .workspace-insights,
 [data-theme-style="neon-voltage"] .toc-panel {
   border: var(--stroke-w) solid var(--bd-s);
   background:
@@ -24,7 +25,8 @@
 
 [data-theme-style="neon-voltage"] .mdn-section,
 [data-theme-style="neon-voltage"] .mdn-codeblock,
-[data-theme-style="neon-voltage"] .mdn-table-scroll {
+[data-theme-style="neon-voltage"] .mdn-table-scroll,
+[data-theme-style="neon-voltage"] .mdn-wiki-embed {
   border-color: color-mix(in srgb, var(--chart-2) 28%, var(--bd-s));
   box-shadow: var(--section-shadow);
 }

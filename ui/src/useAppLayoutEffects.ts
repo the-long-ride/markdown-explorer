@@ -4,6 +4,7 @@ import { useKeyboard } from "./hooks/useKeyboard";
 import { useResize } from "./hooks/useResize";
 import { requestShellLocation, supportsShellLocation } from "./desktop/shellLocation";
 import { collapseAll as collapseAllHeadingSections, expandAll as expandAllHeadingSections } from './dom/globalHandlers';
+import { WORKSPACE_INSIGHTS_TOGGLE_EVENT } from './components/shared/ToolbarActionMenu';
 
 interface AppLayoutEffectsArgs {
   state: any;
@@ -220,6 +221,11 @@ export function useAppLayoutEffects({
     }
   }, [bridge, state.currentFile, state.markdownSource]);
 
+  const toggleWorkspaceInsights = useCallback(() => {
+    if (!state.settings.insightsEnabled) return;
+    window.dispatchEvent(new CustomEvent(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
+  }, [state.settings.insightsEnabled]);
+
   // Keyboard shortcuts
   useKeyboard({
     onSearchOpen: openSidebarSearch,
@@ -242,6 +248,7 @@ export function useAppLayoutEffects({
     isModalOpen: modalOpen,
     isTermsOpen: !termsAccepted || themeOnboardingOpen,
     onToggleToc: toggleToc,
+    onToggleWorkspaceInsights: state.settings.insightsEnabled ? toggleWorkspaceInsights : undefined,
     onLocateFile: () => {
       window.dispatchEvent(new CustomEvent('locate-active-file'));
     },

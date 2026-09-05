@@ -359,8 +359,8 @@ kbd {
 }
 
 .privacy-card {
-  background: rgba(52, 211, 153, 0.04);
-  border: 1px solid rgba(52, 211, 153, 0.25);
+  background: var(--bg-s);
+  border: 1px solid var(--bd-s);
   border-radius: var(--r-lg);
   padding: 20px;
   box-shadow: var(--sh-sm);
@@ -368,7 +368,7 @@ kbd {
 }
 
 .privacy-card:hover {
-  border-color: rgba(52, 211, 153, 0.45);
+  border-color: var(--accent);
 }
 
 .privacy-title {
@@ -377,14 +377,14 @@ kbd {
   gap: 8px;
   font-weight: 700;
   font-size: 1.15rem;
-  color: var(--success);
+  color: var(--tx);
   margin-bottom: 10px;
 }
 
 .privacy-title svg.section-icon {
   width: 20px;
   height: 20px;
-  color: var(--success);
+  color: var(--accent);
   flex-shrink: 0;
 }
 

@@ -102,8 +102,8 @@ test('MediaModal supports a light/dark theme toggle that re-renders mermaid with
   );
   assert.match(
     deferredThemeEffect,
-    /if \(isNewGallery\)\s*return/,
-    'modal effect must early-return when isNewGallery is true (preserve the snapshot from createMediaGallery)',
+    /if \(isNewGallery && current\.html\)\s*return/,
+    'modal effect must early-return when isNewGallery is true and snapshot exists (preserve the snapshot from createMediaGallery)',
   );
 
   // ── Helper exports ──────────────────────────────────────────────────────

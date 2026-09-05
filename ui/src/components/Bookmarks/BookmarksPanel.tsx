@@ -157,7 +157,10 @@ export function BookmarksPanel({ visible, viewMode, workspaces, activeWorkspaceK
               icon={<SortIcon size={14} />}
               aria-haspopup="menu"
               aria-expanded={Boolean(sortAnchor)}
-              onClick={(event) => setSortAnchor((current) => (current ? null : event.currentTarget))}
+              onClick={(event) => {
+                const target = event.currentTarget;
+                setSortAnchor((current) => (current ? null : target));
+              }}
             />
             {viewMode === 'tabs' && <>
               <TooltipButton type="button" className="btn btn--icon" label={translations.collapseAll} tooltip={translations.collapseAll} icon={<CollapseIcon size={13} />} onClick={() => setExpanded(new Set())} />

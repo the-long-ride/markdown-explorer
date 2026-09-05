@@ -6,6 +6,8 @@ import { WELCOME_TRANSLATIONS } from '../../ui/src/contexts/welcomeTranslations'
 import { USER_MANUAL_TRANSLATIONS } from '../../ui/src/contexts/userManualTranslations';
 import { DESKTOP_TYPOGRAPHY_EN } from '../../ui/src/contexts/desktopTypographyTranslations';
 import { EXPORT_SCOPE_TRANSLATIONS } from '../../ui/src/contexts/exportScopeTranslations';
+import { INSIGHTS_TRANSLATIONS } from '../../ui/src/contexts/insightsTranslations';
+import { INSIGHTS_UI_TRANSLATIONS } from '../../ui/src/contexts/insightsUiTranslations';
 
 function verifyObjectKeysRecursive(
   reference: Record<string, unknown>,
@@ -85,6 +87,33 @@ describe('translation coverage across all supported languages', () => {
       expect(EXPORT_SCOPE_TRANSLATIONS[lang].exportCenter.title).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.exportCenter.title);
       expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.dialogLabel).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.dialogLabel);
       expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.openAsScope).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.openAsScope);
+    }
+  });
+
+  test('INSIGHTS_TRANSLATIONS contains all keys across all supported languages', () => {
+    const englishTemplate = INSIGHTS_TRANSLATIONS.en as unknown as Record<string, unknown>;
+    for (const lang of expectedLanguages) {
+      const localeTranslations = INSIGHTS_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `Insights translations block for "${lang}" must exist`).toBeDefined();
+      verifyObjectKeysRecursive(englishTemplate, localeTranslations, `insights.${lang}`);
+    }
+  });
+
+  test('INSIGHTS_UI_TRANSLATIONS contains all presentation keys across all supported languages', () => {
+    const englishTemplate = INSIGHTS_UI_TRANSLATIONS.en as unknown as Record<string, unknown>;
+    for (const lang of expectedLanguages) {
+      const localeTranslations = INSIGHTS_UI_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
+      expect(localeTranslations, `Insights UI block for "${lang}" must exist`).toBeDefined();
+      verifyObjectKeysRecursive(englishTemplate, localeTranslations, `insightsUi.${lang}`);
+    }
+  });
+
+  test('Workspace Insights is actually translated outside English', () => {
+    for (const lang of expectedLanguages.filter((value) => value !== 'en')) {
+      expect(INSIGHTS_TRANSLATIONS[lang].title).not.toBe(INSIGHTS_TRANSLATIONS.en.title);
+      expect(INSIGHTS_TRANSLATIONS[lang].scopeAndNetwork).not.toBe(INSIGHTS_TRANSLATIONS.en.scopeAndNetwork);
+      expect(INSIGHTS_TRANSLATIONS[lang].limitsAndTuning).not.toBe(INSIGHTS_TRANSLATIONS.en.limitsAndTuning);
+      expect(INSIGHTS_TRANSLATIONS[lang].patternFilters).not.toBe(INSIGHTS_TRANSLATIONS.en.patternFilters);
     }
   });
 

@@ -11,10 +11,12 @@
 [data-theme-style="raw-grid"] .topbar,
 [data-theme-style="raw-grid"] .desktop-tabbar,
 [data-theme-style="raw-grid"] .sidebar,
+[data-theme-style="raw-grid"] .workspace-insights,
 [data-theme-style="raw-grid"] .toc-panel,
 [data-theme-style="raw-grid"] .mdn-section,
 [data-theme-style="raw-grid"] .mdn-codeblock,
 [data-theme-style="raw-grid"] .mdn-table-scroll,
+[data-theme-style="raw-grid"] .mdn-wiki-embed,
 [data-theme-style="raw-grid"] .settings-card,
 [data-theme-style="raw-grid"] .modal {
   border: var(--stroke-w) solid var(--bd-s);
@@ -47,6 +49,7 @@
 }
 
 [data-theme-style="raw-grid"] .sidebar,
+[data-theme-style="raw-grid"] .workspace-insights,
 [data-theme-style="raw-grid"] .toc-panel {
   border-top: 0;
   border-bottom: 0;

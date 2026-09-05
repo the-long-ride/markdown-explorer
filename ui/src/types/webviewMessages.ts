@@ -2,6 +2,7 @@ import type { RecentWorkspace } from './files';
 import type { WorkspaceOperationMetadata } from './content';
 import type { CrossTabSearchResult, WorkspaceSearchResult } from './hostMessages';
 import type { ShellLocationMode, ThemeMode, ThemeStyle } from './settings';
+import type { ExternalLinkCheckRequest, InsightsScanRequest } from '../insights/contracts';
 
 export interface ReadWorkspaceTextResourceMessage { readonly command: 'readWorkspaceTextResource'; readonly requestId: string; readonly documentPath: string; readonly resourcePath: string; }
 export interface ReadWorkspaceExportResourceMessage { readonly command: 'readWorkspaceExportResource'; readonly requestId: string; readonly resourcePath: string; readonly documentPath?: string; }
@@ -11,6 +12,31 @@ export interface OpenInEditorMessage { readonly command: 'openInEditor'; readonl
 export interface WebviewReadyMessage { readonly command: 'ready'; readonly documentConversionEnabled?: boolean; }
 export interface CopyCodeMessage { readonly command: 'copyCode'; readonly text: string; }
 export interface RefreshMessage { readonly command: 'refresh'; }
+
+export interface ScanInsightsWorkspaceMessage extends InsightsScanRequest { readonly command: 'scanInsightsWorkspace'; }
+export interface CancelInsightsScanMessage { readonly command: 'cancelInsightsScan'; readonly requestId: string; }
+export interface ReadInsightsDocumentSourceMessage {
+  readonly command: 'readInsightsDocumentSource';
+  readonly requestId: string;
+  readonly relativePath: string;
+  readonly softLimitBytes: number;
+  readonly hardLimitBytes?: number;
+}
+export interface ProbeWorkspaceResourceMessage {
+  readonly command: 'probeWorkspaceResource';
+  readonly requestId: string;
+  readonly documentPath: string;
+  readonly resourcePath: string;
+}
+export interface SetInsightsWatchStateMessage {
+  readonly command: 'setInsightsWatchState';
+  readonly requestId: string;
+  readonly workspaceOperationId?: string;
+  readonly active: boolean;
+  readonly visible: boolean;
+}
+export interface CheckExternalLinksMessage extends ExternalLinkCheckRequest { readonly command: 'checkExternalLinks'; }
+export interface CancelExternalLinkChecksMessage { readonly command: 'cancelExternalLinkChecks'; readonly requestId: string; }
 
 export interface OpenFolderMessage extends WorkspaceOperationMetadata { readonly command: 'openFolder'; readonly openFirstFile?: boolean; readonly handle?: any; readonly replaceRecentWorkspacePath?: string; }
 export interface OpenFileMessage extends WorkspaceOperationMetadata { readonly command: 'openFile'; }
@@ -51,6 +77,8 @@ export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonl
 
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage
+  | ScanInsightsWorkspaceMessage | CancelInsightsScanMessage | ReadInsightsDocumentSourceMessage
+  | ProbeWorkspaceResourceMessage | SetInsightsWatchStateMessage | CheckExternalLinksMessage | CancelExternalLinkChecksMessage
   | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage
   | CopyCodeMessage | RefreshMessage | OpenFolderMessage | OpenFileMessage
   | OpenFileHandleMessage | OpenPathMessage | ActivateWorkspaceMessage | CrossTabSearchMessage

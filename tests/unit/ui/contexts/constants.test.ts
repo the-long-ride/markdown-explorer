@@ -19,19 +19,19 @@ import {
 } from '../../../../ui/src/contexts/appStateConstants';
 
 describe('appStateConstants', () => {
-  test('DEFAULT_KEYBINDINGS has 19 entries without app-owned zoom', () => {
-    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(19);
+  test('DEFAULT_KEYBINDINGS has 20 entries without app-owned zoom', () => {
+    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(20);
   });
 
   test('VSCODE_DEFAULT_KEYBINDINGS adds the editor action only for VS Code', () => {
-    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(20);
+    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(21);
     expect(VSCODE_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomIn).toBeUndefined();
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomOut).toBeUndefined();
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 29 entries including Edit and desktop reset zoom', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(29);
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 30 entries including Edit and desktop reset zoom', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(30);
     expect(DESKTOP_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+E');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.resetZoom).toBe('Ctrl+Alt+Z');
   });

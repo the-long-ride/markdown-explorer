@@ -31,6 +31,7 @@ interface UseKeyboardOptions {
   isModalOpen: boolean;
   isTermsOpen: boolean;
   onToggleToc?: () => void;
+  onToggleWorkspaceInsights?: () => void;
   onLocateFile?: () => void;
   onBookmarksOpen?: () => void;
   onOpenCurrentDocumentLocation?: () => void;
@@ -71,6 +72,7 @@ export function useKeyboard({
   isModalOpen,
   isTermsOpen,
   onToggleToc,
+  onToggleWorkspaceInsights,
   onLocateFile,
   onBookmarksOpen,
   onOpenCurrentDocumentLocation,
@@ -200,6 +202,7 @@ export function useKeyboard({
         hasOnWelcome: !!onWelcome,
         hasOnEditCurrentDocument: (isDesktop || state.appRuntime === 'vscode') && !!state.currentFile,
         hasOnToggleToc: !!onToggleToc,
+        hasOnToggleWorkspaceInsights: !!onToggleWorkspaceInsights,
         hasOnLocateFile: !!onLocateFile,
         hasOnOpenBookmarks: !!onBookmarksOpen,
         hasOnOpenCurrentDocumentLocation: !!onOpenCurrentDocumentLocation,
@@ -275,6 +278,9 @@ export function useKeyboard({
           break;
         case 'toggle-toc':
           onToggleToc?.();
+          break;
+        case 'toggle-workspace-insights':
+          onToggleWorkspaceInsights?.();
           break;
         case 'locate-file':
           onLocateFile?.();

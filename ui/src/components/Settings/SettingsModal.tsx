@@ -13,6 +13,7 @@ import { SettingsPreferencesPanel, type SettingsPreferencesSection } from "./Set
 import { ThemeRemixModal } from "./ThemeRemixModal";
 import { LANGUAGE_OPTIONS, getTranslations } from "../../contexts/translations";
 import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings, SettingsImportError } from "../../settings/settingsImportExport";
+import { announceInsightsSettingsChanged, saveInsightsSettingsConfig } from "../../insights/settingsStore";
 import { usePlatform } from "../../contexts/PlatformContext";
 import {
   LanguageIcon,
@@ -227,6 +228,10 @@ export function SettingsModal({
           });
         }
         restoreLocalUiSettings(imported.localUi);
+        if (imported.insights) {
+          saveInsightsSettingsConfig(imported.insights);
+          announceInsightsSettingsChanged();
+        }
         setSettingsDataStatus(t.settingsData.imported);
       } catch (err) {
         setSettingsDataStatus(

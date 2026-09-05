@@ -34,6 +34,27 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "loadWorkspaceSearchIndexes":
         handlers.loadWorkspaceSearchIndexes(msg);
         break;
+      case "scanInsightsWorkspace":
+        await handlers.scanInsightsWorkspace(msg);
+        break;
+      case "cancelInsightsScan":
+        handlers.cancelInsightsScan(msg);
+        break;
+      case "readInsightsDocumentSource":
+        await handlers.readInsightsDocumentSource(msg);
+        break;
+      case "probeWorkspaceResource":
+        await handlers.probeWorkspaceResource(msg);
+        break;
+      case "setInsightsWatchState":
+        handlers.setInsightsWatchState(msg);
+        break;
+      case "checkExternalLinks":
+        await handlers.checkExternalLinks(msg);
+        break;
+      case "cancelExternalLinkChecks":
+        handlers.cancelExternalLinkChecks(msg);
+        break;
       case "confirmOpenPath":
         handlers.confirmOpenPath(msg.path);
         break;

@@ -304,9 +304,9 @@
    Scroll to Top Button
    ============================================================ */
 .scroll-to-top-btn {
-  position: fixed !important;
-  bottom: 32px;
-  right: 30px;
+  position: absolute !important;
+  bottom: 24px;
+  right: 24px;
   background: var(--accent);
   color: #fff;
   border: none;
@@ -322,23 +322,17 @@
   transition:
     opacity 0.2s,
     transform 0.2s,
-    background 0.12s,
-    right 0.18s ease;
+    background 0.12s;
   box-shadow: var(--sh-md);
-  z-index: 999;
+  z-index: 99;
   pointer-events: none;
   outline: none;
 }
 .scroll-to-top-btn--with-toc {
-  right: 30px;
-}
-@media (min-width: 1180px) {
-  .scroll-to-top-btn--with-toc {
-    right: calc(var(--toc-width, var(--toc-w, 224px)) + 32px);
-  }
+  right: 24px;
 }
 .app--tab-view .scroll-to-top-btn {
-  bottom: 26px;
+  bottom: 24px;
 }
 .scroll-to-top-btn.is-visible {
   opacity: 1;

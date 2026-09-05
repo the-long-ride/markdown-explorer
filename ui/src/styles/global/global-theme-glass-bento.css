@@ -4,6 +4,7 @@
 [data-theme-style="glass"] .topbar,
 [data-theme-style="glass"] .app--tab-view .desktop-tabbar,
 [data-theme-style="glass"] .sidebar,
+[data-theme-style="glass"] .workspace-insights,
 [data-theme-style="glass"] .toc-panel,
 [data-theme-style="glass"] .toc-panel__header,
 [data-theme-style="glass"] .toc-compact__toggle,
@@ -20,6 +21,7 @@
 [data-theme-style="glass"] .mdn-frontmatter,
 [data-theme-style="glass"] .mdn-callout,
 [data-theme-style="glass"] .mdn-blockquote,
+[data-theme-style="glass"] .mdn-wiki-embed,
 [data-theme-style="glass"] .tooltip-text {
   backdrop-filter: var(--surface-blur);
   -webkit-backdrop-filter: var(--surface-blur);
@@ -50,7 +52,8 @@
   box-shadow: var(--sh-sm);
 }
 
-[data-theme-style="glass"] .toc-panel {
+[data-theme-style="glass"] .toc-panel,
+[data-theme-style="glass"] .workspace-insights {
   margin-left: 0;
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r-lg);
@@ -180,6 +183,7 @@
 [data-theme-style="bento"] .topbar,
 [data-theme-style="bento"] .app--tab-view .desktop-tabbar,
 [data-theme-style="bento"] .sidebar,
+[data-theme-style="bento"] .workspace-insights,
 [data-theme-style="bento"] .toc-panel {
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r-lg);
@@ -198,12 +202,13 @@
 }
 
 [data-theme-style="bento"] .sidebar,
+[data-theme-style="bento"] .workspace-insights,
 [data-theme-style="bento"] .toc-panel {
   background: var(--bg-s);
 }
 
 [data-theme-style="bento"] .toc-panel {
-  padding: 12px;
+  padding: 12px 12px 0;
 }
 
 [data-theme-style="bento"] .toc-compact-bar {

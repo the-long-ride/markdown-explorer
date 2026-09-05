@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { formatFeatureText, getExportScopeTranslations } from '../../contexts/exportScopeTranslations';
 import { usePlatform } from '../../contexts/PlatformContext';
@@ -129,7 +129,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
     return () => { active = false; };
   }, [initialFile?.fsPath]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!initialFile) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
@@ -167,7 +167,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
     window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_STATE_EVENT, { detail }));
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!initialFile) return;
     const handleNav = (e: Event) => {
       const dir = (e as CustomEvent<{ direction?: ScopeNavigationDirection }>).detail?.direction;
@@ -178,7 +178,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
     return () => window.removeEventListener(SCOPE_NAVIGATION_REQUEST_EVENT, handleNav);
   }, [goNext, goPrevious, initialFile]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!initialFile) return;
     const handleHistoryKey = (event: KeyboardEvent) => {
       const isBrowserBack = event.key === 'BrowserBack' || (event.altKey && event.key === 'ArrowLeft' && !event.ctrlKey && !event.metaKey && !event.shiftKey);
@@ -234,7 +234,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const body = bodyRef.current;
     if (!body || !current) return;
     const handleClick = (event: MouseEvent) => {

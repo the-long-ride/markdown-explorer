@@ -1,13 +1,15 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { TooltipButton } from "./components/shared/TooltipButton";
-import { EXPORT_CENTER_OPEN_EVENT } from "./components/shared/ToolbarActionMenu";
+import { EXPORT_CENTER_OPEN_EVENT, WORKSPACE_INSIGHTS_TOGGLE_EVENT } from "./components/shared/ToolbarActionMenu";
 import { DesktopTabBar } from "./components/Desktop/DesktopTabBar";
 import { ExitFocusIcon } from "./components/shared/icons";
 import { ScrollToTopButton } from "./components/shared/ScrollToTopButton";
 import { Topbar } from "./components/Topbar/Topbar";
+import { WorkspaceInsightsEntry } from "./components/Insights/WorkspaceInsightsEntry";
 import { getEnabledShortcut } from "./utils/shortcuts";
 import { useModalRegionAnchor } from "./utils/useModalRegionAnchor";
 import { AvailableUpdateDialog } from "./components/Settings/AvailableUpdateDialog";
+import type { MediaGallery } from "./components/Modal/mediaGallery";
 
 const Sidebar = lazy(() => import("./components/Sidebar/Sidebar").then((m) => ({ default: m.Sidebar })));
 const Content = lazy(() => import("./components/Content/Content").then((m) => ({ default: m.Content })));
@@ -27,6 +29,8 @@ const WorkspaceSelectionConfirmModal = lazy(() => import("./components/Modal/Wor
 
 export function AppView(props: any) {
   const [exportCenterOpen, setExportCenterOpen] = useState(false);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const toggleInsights = () => window.dispatchEvent(new Event(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
   const {
     isTabView,
     sidebarCursorMode,
@@ -107,6 +111,15 @@ export function AppView(props: any) {
     return () => window.removeEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
   }, []);
 
+  useEffect(() => {
+    const handleOpenMedia = (e: Event) => {
+      const detail = (e as CustomEvent<MediaGallery>).detail;
+      if (detail?.items?.length) setMediaGallery(detail);
+    };
+    window.addEventListener('markdown-explorer-open-media-modal', handleOpenMedia);
+    return () => window.removeEventListener('markdown-explorer-open-media-modal', handleOpenMedia);
+  }, [setMediaGallery]);
+
   useModalRegionAnchor();
 
   return (
@@ -140,6 +153,8 @@ export function AppView(props: any) {
           hasUpdate={updateNotification.attention}
           isFullscreen={isFullscreen}
           onFullscreenToggle={toggleFullscreen}
+          isInsightsOpen={isInsightsOpen}
+          onInsightsToggle={toggleInsights}
         />
       )}
       {state.isWorkspaceScanning && (
@@ -201,6 +216,8 @@ export function AppView(props: any) {
               hasUpdate={updateNotification.attention}
               isFullscreen={isFullscreen}
               onFullscreenToggle={toggleFullscreen}
+              isInsightsOpen={isInsightsOpen}
+              onInsightsToggle={toggleInsights}
             />
           )}
           <div className="body">
@@ -268,6 +285,7 @@ export function AppView(props: any) {
       />
       <MediaModal gallery={mediaGallery} onClose={() => setMediaGallery(null)} />
       <ExportCenterModal isOpen={exportCenterOpen} onClose={() => setExportCenterOpen(false)} />
+      {state.settings.insightsEnabled && <WorkspaceInsightsEntry onPanelOpenChange={setIsInsightsOpen} onOpenMedia={setMediaGallery} />}
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}

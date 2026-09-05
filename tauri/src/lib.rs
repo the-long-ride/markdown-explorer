@@ -9,6 +9,12 @@ pub mod error;
 pub mod fonts;
 #[cfg(not(test))]
 pub mod host_message;
+pub mod insights;
+#[path = "insights/external.rs"]
+pub mod insights_external;
+#[cfg(not(test))]
+#[path = "insights/external_host.rs"]
+pub mod insights_external_host;
 pub mod local_file;
 pub mod perf;
 #[cfg(not(test))]

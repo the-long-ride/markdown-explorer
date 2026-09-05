@@ -44,6 +44,8 @@ function createAppBootstrap({
   createHtmlPreviewServerFn = require("./html-preview-server").createHtmlPreviewServer,
   createExportResourceHandlersFn = require("./runtime-export-resources").createExportResourceHandlers,
   createExportSaveHandlerFn = require("./runtime-export-save").createExportSaveHandler,
+  createInsightsWorkspaceHostFn = require("./runtime-insights").createInsightsWorkspaceHost,
+  createExternalLinkHostFn = require("./runtime-insights-external").createExternalLinkHost,
   externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
@@ -71,6 +73,11 @@ function createAppBootstrap({
     }
   }
 
+  function isSameOrInsidePath(basePath, targetPath) {
+    const relative = pathImpl.relative(pathImpl.resolve(basePath), pathImpl.resolve(targetPath));
+    return relative === "" || (!relative.startsWith("..") && !pathImpl.isAbsolute(relative));
+  }
+
   const sendHostMessage = (message) => {
     mainWindowRef?.webContents.send("host-message", message);
   };
@@ -81,6 +88,14 @@ function createAppBootstrap({
     sendHostMessage,
     getWorkspaceBaseDir,
   });
+  const insightsHost = createInsightsWorkspaceHostFn({
+    fs: fsImpl,
+    pathApi: pathImpl,
+    sendHostMessage,
+    getWorkspaceBaseDir,
+    isSameOrInsidePath,
+  });
+  const externalLinkHost = createExternalLinkHostFn({ sendHostMessage });
   const saveExportFile = createExportSaveHandlerFn({
     dialog: dialogImpl,
     fs: fsImpl,
@@ -174,6 +189,13 @@ function createAppBootstrap({
           loadSearchPreview: runtimeImpl.handleLoadSearchPreview,
           indexWorkspaceSearchItems: runtimeImpl.handleIndexWorkspaceSearchItems,
           loadWorkspaceSearchIndexes: runtimeImpl.handleLoadWorkspaceSearchIndexes,
+          scanInsightsWorkspace: insightsHost.scanInsightsWorkspace,
+          cancelInsightsScan: insightsHost.cancelInsightsScan,
+          readInsightsDocumentSource: insightsHost.readInsightsDocumentSource,
+          probeWorkspaceResource: insightsHost.probeWorkspaceResource,
+          setInsightsWatchState: insightsHost.setInsightsWatchState,
+          checkExternalLinks: externalLinkHost.checkExternalLinks,
+          cancelExternalLinkChecks: externalLinkHost.cancelExternalLinkChecks,
           confirmOpenPath: runtimeImpl.handleConfirmOpenPath,
           openRecent: runtimeImpl.handleOpenRecent,
           deleteRecentWorkspace: runtimeImpl.handleDeleteRecentWorkspace,
@@ -213,6 +235,8 @@ function createAppBootstrap({
   });
 
   appImpl.on("before-quit", () => {
+    externalLinkHost.dispose();
+    insightsHost.dispose();
     runtimeImpl.dispose();
     void htmlPreviewServer.dispose();
     if (updateManagerRef) {
