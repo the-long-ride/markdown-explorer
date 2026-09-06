@@ -19,7 +19,7 @@ import type {
   SaveDocumentResultMessage,
 } from '../types';
 import { requestSaveDocument, type SaveDocumentRequestOptions } from '../editor/saveDocument';
-import { documentSessionKey } from '../editor/documentSession';
+import { documentSessionKey, type MarkdownEditMode } from '../editor/documentSession';
 import { useAppStateEffects } from './useAppStateEffects';
 import {
   type AppState,
@@ -67,6 +67,7 @@ interface AppStateContextValue {
   closeOtherContentTabs: (fsPath: string) => void;
   closeAllContentTabs: () => void;
   setWorkingDocumentSource: (filePath: string, source: string) => void;
+  setDocumentEditMode: (filePath: string, mode: MarkdownEditMode) => void;
   discardDocumentChanges: (filePath: string) => void;
   saveDocument: (
     filePath: string,
@@ -238,6 +239,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_WORKING_DOCUMENT_SOURCE', filePath, source });
   }, []);
 
+  const setDocumentEditMode = useCallback((filePath: string, mode: MarkdownEditMode) => {
+    dispatch({ type: 'SET_DOCUMENT_EDIT_MODE', filePath, mode });
+  }, []);
+
   const discardDocumentChanges = useCallback((filePath: string) => {
     dispatch({ type: 'DISCARD_DOCUMENT_CHANGES', filePath });
   }, []);
@@ -369,6 +374,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       closeOtherContentTabs,
       closeAllContentTabs,
       setWorkingDocumentSource,
+      setDocumentEditMode,
       discardDocumentChanges,
       saveDocument,
       openInEditor,
@@ -397,6 +403,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       closeOtherContentTabs,
       closeAllContentTabs,
       setWorkingDocumentSource,
+      setDocumentEditMode,
       discardDocumentChanges,
       saveDocument,
       openInEditor,
