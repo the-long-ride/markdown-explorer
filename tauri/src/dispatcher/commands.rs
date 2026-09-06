@@ -20,6 +20,10 @@ impl Dispatcher {
                 .and_then(Value::as_str)
                 .map(ToOwned::to_owned);
         }
+        if cmd == "saveDocument" {
+            self.handle_save_document(&msg);
+            return Ok(());
+        }
         if self.handle_workspace_command(cmd, &msg).await? {
             return Ok(());
         }
