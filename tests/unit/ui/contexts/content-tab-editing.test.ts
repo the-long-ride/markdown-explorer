@@ -39,6 +39,17 @@ describe('content tab editable working copies', () => {
     expect(next.contentTabs[0]?.documentWrite?.supported).toBe(true);
   });
 
+  it('creates an editable session before browser write permission has been granted', () => {
+    const msg = {
+      ...renderMessage('# A', null as any),
+      documentWrite: { supported: false, revision: null, reason: 'permission-required' as const },
+    };
+    const next = reducer(makeState(), { type: 'RENDER_CONTENT', msg });
+    expect(next.documentSessions['/docs/a.md']?.source).toBe('# A');
+    expect(next.documentSessions['/docs/a.md']?.revision).toBeNull();
+    expect(next.contentTabs[0]?.documentWrite?.reason).toBe('permission-required');
+  });
+
   it('re-renders the active document from unsaved working source', () => {
     const loaded = reducer(makeState(), { type: 'RENDER_CONTENT', msg: renderMessage() });
     const next = reducer(loaded, {
