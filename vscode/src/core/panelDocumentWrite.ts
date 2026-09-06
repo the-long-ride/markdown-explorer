@@ -1,12 +1,34 @@
 import * as path from 'path';
-import type {
-  DocumentWriteCapability,
-  SaveDocumentMessage,
-  SaveDocumentResultMessage,
-} from '../types';
 
 type FileStatLike = { mtime: number; size: number };
 type UriLike = { fsPath: string };
+
+export interface PanelDocumentWriteCapability {
+  readonly supported: boolean;
+  readonly revision: string | null;
+  readonly reason?: 'read-only-runtime' | 'permission-required' | 'unsupported-document';
+}
+
+export interface PanelSaveDocumentMessage {
+  readonly command: 'saveDocument';
+  readonly requestId: string;
+  readonly filePath: string;
+  readonly source: string;
+  readonly expectedRevision: string | null;
+  readonly force?: boolean;
+}
+
+export interface PanelSaveDocumentResultMessage {
+  readonly command: 'saveDocumentResult';
+  readonly requestId: string;
+  readonly filePath: string;
+  readonly ok: boolean;
+  readonly revision?: string;
+  readonly diskSource?: string;
+  readonly diskRevision?: string;
+  readonly reason?: 'conflict' | 'permission-denied' | 'missing' | 'outside-workspace' | 'read-only' | 'write-failed';
+  readonly error?: string;
+}
 
 export interface PanelDocumentWriteDeps {
   readonly workspace: {
@@ -46,7 +68,7 @@ function isMissingError(error: unknown): boolean {
     || /not\s*found|missing/i.test(value?.message ?? '');
 }
 
-function baseResult(message: SaveDocumentMessage) {
+function baseResult(message: PanelSaveDocumentMessage) {
   return {
     command: 'saveDocumentResult' as const,
     requestId: message.requestId,
@@ -65,7 +87,7 @@ export async function panelDocumentRevision(
 export async function panelDocumentWriteCapability(
   filePath: string,
   deps: PanelDocumentWriteDeps,
-): Promise<DocumentWriteCapability> {
+): Promise<PanelDocumentWriteCapability> {
   if (!/\.mdx?$/i.test(filePath)) {
     return { supported: false, revision: null, reason: 'unsupported-document' };
   }
@@ -80,9 +102,9 @@ export async function panelDocumentWriteCapability(
 }
 
 export async function handlePanelDocumentWrite(
-  message: SaveDocumentMessage,
+  message: PanelSaveDocumentMessage,
   deps: PanelDocumentWriteDeps,
-): Promise<SaveDocumentResultMessage> {
+): Promise<PanelSaveDocumentResultMessage> {
   const base = baseResult(message);
   if (!workspaceRootFor(message.filePath, deps)) {
     return { ...base, ok: false, reason: 'outside-workspace' };
@@ -99,11 +121,12 @@ export async function handlePanelDocumentWrite(
     currentRevision = revisionFromStat(stat);
     diskBytes = bytes;
   } catch (error) {
+    const missing = isMissingError(error);
     return {
       ...base,
       ok: false,
-      reason: isMissingError(error) ? 'missing' : 'write-failed',
-      ...(!isMissingError(error) ? { error: String((error as Error)?.message || error) } : {}),
+      reason: missing ? 'missing' : 'write-failed',
+      ...(!missing ? { error: String((error as Error)?.message || error) } : {}),
     };
   }
 
@@ -125,11 +148,12 @@ export async function handlePanelDocumentWrite(
       revision: await panelDocumentRevision(message.filePath, deps),
     };
   } catch (error) {
+    const missing = isMissingError(error);
     return {
       ...base,
       ok: false,
-      reason: isMissingError(error) ? 'missing' : 'write-failed',
-      ...(!isMissingError(error) ? { error: String((error as Error)?.message || error) } : {}),
+      reason: missing ? 'missing' : 'write-failed',
+      ...(!missing ? { error: String((error as Error)?.message || error) } : {}),
     };
   }
 }
