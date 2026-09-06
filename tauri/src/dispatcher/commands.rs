@@ -1,5 +1,8 @@
 use super::*;
 
+#[path = "document_write.rs"]
+pub(super) mod document_write;
+
 impl Dispatcher {
     pub async fn handle(self, msg: Value) -> Result<(), String> {
         let cmd = msg.get("command").and_then(|v| v.as_str()).unwrap_or("");
