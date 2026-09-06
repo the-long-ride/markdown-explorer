@@ -9,6 +9,7 @@ import {
   markSaveSucceeded,
   replaceWorkingSource,
   serializeDocumentSource,
+  setDocumentEditMode,
 } from '../../../../ui/src/editor/documentSession';
 
 describe('editable document session', () => {
@@ -16,6 +17,32 @@ describe('editable document session', () => {
     const clean = createEditableDocumentSession('/docs/a.md', '# A', '10:3');
     expect(isDocumentDirty(clean)).toBe(false);
     expect(isDocumentDirty(replaceWorkingSource(clean, '# B'))).toBe(true);
+  });
+
+  it('starts in rendered mode and can switch to plain without changing source', () => {
+    const edited = replaceWorkingSource(
+      createEditableDocumentSession('/docs/a.md', '# A', '10:3'),
+      '# B',
+    );
+
+    expect(edited.mode).toBe('rendered');
+    const plain = setDocumentEditMode(edited, 'plain');
+    expect(plain.mode).toBe('plain');
+    expect(plain.source).toBe('# B');
+    expect(plain.persistedSource).toBe('# A');
+    expect(isDocumentDirty(plain)).toBe(true);
+  });
+
+  it('switches back to rendered mode without losing unsaved source', () => {
+    const plain = setDocumentEditMode(
+      replaceWorkingSource(createEditableDocumentSession('/docs/a.md', '# A', '10:3'), '# B'),
+      'plain',
+    );
+
+    const rendered = setDocumentEditMode(plain, 'rendered');
+    expect(rendered.mode).toBe('rendered');
+    expect(rendered.source).toBe('# B');
+    expect(isDocumentDirty(rendered)).toBe(true);
   });
 
   it('keeps the working source when a save conflicts', () => {
