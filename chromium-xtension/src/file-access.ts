@@ -204,14 +204,19 @@ export async function writeTextFile(
 }
 
 export async function documentWriteCapability(
-  handle: FileSystemFileHandle,
+  handle: FileSystemFileHandle | FileSystemDirectoryHandle,
+  relativePath?: string,
 ): Promise<BrowserDocumentWriteCapability> {
   try {
-    const permission = await (handle as any).queryPermission({ mode: 'readwrite' });
+    const fileHandle = relativePath
+      ? await resolveFileHandle(handle as FileSystemDirectoryHandle, relativePath)
+      : handle as FileSystemFileHandle;
+    if (!fileHandle) return { supported: false, revision: null, reason: 'read-only-runtime' };
+    const permission = await (fileHandle as any).queryPermission({ mode: 'readwrite' });
     if (permission !== 'granted') {
       return { supported: false, revision: null, reason: 'permission-required' };
     }
-    return { supported: true, revision: await documentRevision(handle) };
+    return { supported: true, revision: await documentRevision(fileHandle) };
   } catch {
     return { supported: false, revision: null, reason: 'read-only-runtime' };
   }
