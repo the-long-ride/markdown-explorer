@@ -218,9 +218,6 @@ async function sendContent(
   if (!isWorkspaceRequestCurrent(request)) return;
 
   const fileInfo = findFileInfo(flatList, requestedFile);
-  const documentWrite = /\.mdx?$/i.test(requestedFile)
-    ? await documentWriteCapability(handle, requestedFile)
-    : undefined;
 
   sendToWebview({
     command: "renderContent",
@@ -234,7 +231,7 @@ async function sendContent(
     title: fileInfo.title,
     fileList: flatList,
     previewInfo: null,
-    documentWrite,
+    documentWrite: /\.mdx?$/i.test(requestedFile) ? await documentWriteCapability(handle, requestedFile) : undefined,
     ...request.operation,
   });
 }
