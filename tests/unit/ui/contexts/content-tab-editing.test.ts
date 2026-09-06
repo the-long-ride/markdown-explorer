@@ -63,6 +63,24 @@ describe('content tab editable working copies', () => {
     expect(next.contentTabs[0]?.markdownSource).toBe('# B');
   });
 
+  it('changes only the requested document mode without losing unsaved source', () => {
+    const loaded = reducer(makeState(), { type: 'RENDER_CONTENT', msg: renderMessage() });
+    const edited = reducer(loaded, {
+      type: 'SET_WORKING_DOCUMENT_SOURCE',
+      filePath: '/docs/a.md',
+      source: '# Mine',
+    } as any);
+    const next = reducer(edited, {
+      type: 'SET_DOCUMENT_EDIT_MODE',
+      filePath: '/docs/a.md',
+      mode: 'plain',
+    } as any);
+
+    expect(next.documentSessions['/docs/a.md']?.mode).toBe('plain');
+    expect(next.documentSessions['/docs/a.md']?.source).toBe('# Mine');
+    expect(next.documentSessions['/docs/a.md']?.persistedSource).toBe('# A');
+  });
+
   it('does not replace dirty working source when the host renders a newer disk version', () => {
     const loaded = reducer(makeState(), { type: 'RENDER_CONTENT', msg: renderMessage() });
     const edited = reducer(loaded, {
