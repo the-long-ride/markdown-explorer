@@ -34,9 +34,9 @@ export interface PanelDocumentWriteDeps {
   readonly workspace: {
     readonly workspaceFolders?: readonly { uri: UriLike }[];
     readonly fs: {
-      stat(uri: UriLike): Promise<FileStatLike>;
-      readFile(uri: UriLike): Promise<Uint8Array>;
-      writeFile(uri: UriLike, content: Uint8Array): Promise<void>;
+      stat(uri: UriLike): PromiseLike<FileStatLike>;
+      readFile(uri: UriLike): PromiseLike<Uint8Array>;
+      writeFile(uri: UriLike, content: Uint8Array): PromiseLike<void>;
     };
   };
   readonly Uri: {
