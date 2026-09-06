@@ -55,7 +55,15 @@ export function prepareRenderContentSession(
 ): { state: AppState; msg: RenderContentMessage } {
   const filePath = msg.filePath;
   const rawSource = msg.markdownSource;
-  if (!filePath || rawSource === null || rawSource === undefined || !isEditableMarkdownPath(filePath) || !msg.documentWrite?.supported) {
+  const writeCapability = msg.documentWrite;
+  const canRequestBrowserPermission = writeCapability?.reason === 'permission-required';
+  if (
+    !filePath
+    || rawSource === null
+    || rawSource === undefined
+    || !isEditableMarkdownPath(filePath)
+    || (!writeCapability?.supported && !canRequestBrowserPermission)
+  ) {
     return { state, msg };
   }
 
@@ -68,7 +76,7 @@ export function prepareRenderContentSession(
     };
   }
 
-  const session = createEditableDocumentSession(filePath, rawSource, msg.documentWrite.revision);
+  const session = createEditableDocumentSession(filePath, rawSource, writeCapability?.revision ?? null);
   return {
     state: {
       ...state,
