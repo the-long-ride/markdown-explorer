@@ -6,6 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAppState } from '../contexts/AppStateContext';
 import { usePlatform } from '../contexts/PlatformContext';
+import { documentSessionKey, isDocumentDirty } from '../editor/documentSession';
 import { requestAnimatedContentTabClose } from '../components/Content/contentTabCloseEvents';
 import { getScopeNavigationStateSnapshot, requestScopeNavigation, useScopeNavigationState } from './useScopeNavigationState';
 import { attachMouseHistoryNavigation } from '../utils/mouseHistoryNavigation';
@@ -92,6 +93,7 @@ export function useKeyboard({
     navigate,
     openInEditor,
     refresh,
+    saveDocument,
     closeContentTab,
     closeAllContentTabs,
     closeContentTabsToRight,
@@ -111,6 +113,18 @@ export function useKeyboard({
       ]),
     ),
     [state.settings.disabledKeybindings, state.settings.keybindings],
+  );
+  const activeDocumentSession = state.currentFile
+    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
+    : undefined;
+  const activeContentTab = state.currentFile
+    ? state.contentTabs?.find((tab) => tab.filePath === state.currentFile)
+    : undefined;
+  const hasSavableDocument = Boolean(
+    activeDocumentSession
+      && activeContentTab?.documentWrite?.supported
+      && activeDocumentSession.saveState !== 'saving'
+      && isDocumentDirty(activeDocumentSession),
   );
 
   useEffect(() => {
@@ -201,6 +215,7 @@ export function useKeyboard({
         hasOnSidebarCursorModeClose: !!onSidebarCursorModeClose,
         hasOnWelcome: !!onWelcome,
         hasOnEditCurrentDocument: (isDesktop || state.appRuntime === 'vscode') && !!state.currentFile,
+        hasOnSaveCurrentDocument: hasSavableDocument,
         hasOnToggleToc: !!onToggleToc,
         hasOnToggleWorkspaceInsights: !!onToggleWorkspaceInsights,
         hasOnLocateFile: !!onLocateFile,
@@ -265,6 +280,9 @@ export function useKeyboard({
         case 'welcome':
           if (onWelcome) onWelcome();
           else navigate(null);
+          break;
+        case 'save-current-document':
+          if (state.currentFile) void saveDocument(state.currentFile);
           break;
         case 'edit-current-document':
           openInEditor();
@@ -373,6 +391,7 @@ export function useKeyboard({
     navigate,
     openInEditor,
     refresh,
+    saveDocument,
     toggleTheme,
     toggleSidebar,
     closeContentTab,
@@ -382,6 +401,7 @@ export function useKeyboard({
     bridge,
     keybindings,
     isDesktop,
+    hasSavableDocument,
     onSearchOpen,
     onCrossTabSearchOpen,
     onSearchClose,
@@ -402,6 +422,7 @@ export function useKeyboard({
     isModalOpen,
     isTermsOpen,
     onToggleToc,
+    onToggleWorkspaceInsights,
     onLocateFile,
     onBookmarksOpen,
     onOpenCurrentDocumentLocation,
