@@ -48,7 +48,6 @@ export async function handleChromeHostUtilityCommand(message: any, context: Chro
         requestId: message.requestId,
         filePath: requestedPath,
         ...result,
-        ...(result.reason === 'io-error' ? { reason: 'write-failed' } : {}),
       });
       return true;
     }
