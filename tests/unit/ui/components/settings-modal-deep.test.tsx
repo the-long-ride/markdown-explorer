@@ -993,7 +993,7 @@ describe('SettingsModal deep', () => {
 
   describe('ACTIONS_LIST', () => {
     it('contains expected number of actions', () => {
-      expect(ACTIONS_LIST.length).toBe(30);
+      expect(ACTIONS_LIST.length).toBe(31);
     });
 
     it('contains toggleWorkspaceInsights action', () => {
