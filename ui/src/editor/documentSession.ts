@@ -16,6 +16,7 @@ export interface EditableDocumentSession {
   readonly persistedSource: string;
   readonly lineEnding: LineEnding;
   readonly revision: DocumentRevisionToken | null;
+  readonly mode: MarkdownEditMode;
   readonly saveState: 'idle' | 'saving' | 'conflict';
   readonly pendingSaveSource: string | null;
   readonly conflict: DocumentConflict | null;
@@ -52,6 +53,7 @@ export function createEditableDocumentSession(
     persistedSource: source,
     lineEnding,
     revision,
+    mode: 'rendered',
     saveState: 'idle',
     pendingSaveSource: null,
     conflict: null,
@@ -60,6 +62,16 @@ export function createEditableDocumentSession(
 
 export function isDocumentDirty(session: EditableDocumentSession): boolean {
   return session.source !== session.persistedSource;
+}
+
+export function setDocumentEditMode(
+  session: EditableDocumentSession,
+  mode: MarkdownEditMode,
+): EditableDocumentSession {
+  return {
+    ...session,
+    mode,
+  };
 }
 
 export function replaceWorkingSource(
