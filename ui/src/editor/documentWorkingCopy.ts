@@ -12,10 +12,13 @@ import {
   markSaveStarted,
   markSaveSucceeded,
   replaceWorkingSource,
+  setDocumentEditMode,
+  type MarkdownEditMode,
 } from './documentSession';
 
 export type DocumentEditingAction =
   | { readonly type: 'SET_WORKING_DOCUMENT_SOURCE'; readonly filePath: string; readonly source: string }
+  | { readonly type: 'SET_DOCUMENT_EDIT_MODE'; readonly filePath: string; readonly mode: MarkdownEditMode }
   | { readonly type: 'DISCARD_DOCUMENT_CHANGES'; readonly filePath: string }
   | { readonly type: 'MARK_DOCUMENT_SAVE_STARTED'; readonly filePath: string }
   | { readonly type: 'APPLY_SAVE_DOCUMENT_RESULT'; readonly result: SaveDocumentResultMessage };
@@ -97,6 +100,19 @@ export function updateWorkingDocumentSource(state: AppState, filePath: string, s
   }, filePath, nextSession.source);
 }
 
+export function updateDocumentEditMode(state: AppState, filePath: string, mode: MarkdownEditMode): AppState {
+  const key = documentSessionKey(filePath);
+  const session = state.documentSessions[key];
+  if (!session) return state;
+  return {
+    ...state,
+    documentSessions: {
+      ...state.documentSessions,
+      [key]: setDocumentEditMode(session, mode),
+    },
+  };
+}
+
 export function discardWorkingDocumentChanges(state: AppState, filePath: string): AppState {
   const key = documentSessionKey(filePath);
   const session = state.documentSessions[key];
@@ -145,6 +161,7 @@ export function applySavedDocumentResult(state: AppState, result: SaveDocumentRe
 export function reduceDocumentEditingAction(state: AppState, action: DocumentEditingAction): AppState | null {
   switch (action.type) {
     case 'SET_WORKING_DOCUMENT_SOURCE': return updateWorkingDocumentSource(state, action.filePath, action.source);
+    case 'SET_DOCUMENT_EDIT_MODE': return updateDocumentEditMode(state, action.filePath, action.mode);
     case 'DISCARD_DOCUMENT_CHANGES': return discardWorkingDocumentChanges(state, action.filePath);
     case 'MARK_DOCUMENT_SAVE_STARTED': return markDocumentSaveStarted(state, action.filePath);
     case 'APPLY_SAVE_DOCUMENT_RESULT': return applySavedDocumentResult(state, action.result);
