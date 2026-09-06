@@ -1,5 +1,6 @@
 import { lazy, memo, Suspense } from 'react';
 import type { AppState } from '../../contexts/appStateModel';
+import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import type { Translations } from '../../contexts/translations';
 import { documentSessionKey } from '../../editor/documentSession';
 import type { HtmlLocalFirstPolicyReport } from '../../markdown/htmlLocalFirstPreview';
@@ -79,6 +80,7 @@ export function ContentMainView({
 }: ContentMainViewProps) {
   const previewInfo = state.previewInfo;
   const previewCopy = t.documentPreview;
+  const editorT = getEditorUiTranslations(state.settings.language);
   const documentSession = state.currentFile
     ? state.documentSessions?.[documentSessionKey(state.currentFile)]
     : undefined;
@@ -181,6 +183,7 @@ export function ContentMainView({
               <PlainMarkdownEditor
                 value={documentSession.source}
                 disabled={documentSession.saveState === 'saving'}
+                ariaLabel={editorT.plainSourceLabel}
                 onChange={(source) => onWorkingDocumentSourceChange?.(state.currentFile!, source)}
                 onSave={() => { void onSaveDocument?.(state.currentFile!); }}
               />
