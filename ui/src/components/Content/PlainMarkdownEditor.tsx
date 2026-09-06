@@ -1,6 +1,7 @@
 interface PlainMarkdownEditorProps {
   value: string;
   disabled: boolean;
+  ariaLabel?: string;
   onChange: (value: string) => void;
   onSave: () => void;
 }
@@ -8,13 +9,14 @@ interface PlainMarkdownEditorProps {
 export function PlainMarkdownEditor({
   value,
   disabled,
+  ariaLabel = 'Markdown source',
   onChange,
   onSave,
 }: PlainMarkdownEditorProps) {
   return (
     <textarea
       className="markdown-plain-editor"
-      aria-label="Markdown source"
+      aria-label={ariaLabel}
       value={value}
       disabled={disabled}
       spellCheck={false}
