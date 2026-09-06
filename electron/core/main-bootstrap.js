@@ -209,6 +209,7 @@ function createAppBootstrap({
           navigate: runtimeImpl.handleNavigate,
           refresh: runtimeImpl.handleRefresh,
           setDocumentConversion: runtimeImpl.handleSetDocumentConversion,
+          saveDocument: runtimeImpl.handleSaveDocument,
           listDesktopFonts: runtimeImpl.handleListDesktopFonts,
           importDesktopFonts: runtimeImpl.handleImportDesktopFonts,
           removeImportedDesktopFont: runtimeImpl.handleRemoveImportedDesktopFont,
