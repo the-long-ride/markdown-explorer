@@ -86,6 +86,39 @@ describe('AppStateProvider editing API', () => {
     expect(result.current.state.documentSessions['/docs/a.md']?.source).toBe('# B');
   });
 
+  it('sets one document edit mode through the public context API', () => {
+    const { bridge } = createEditingBridge();
+    const { result } = renderHook(() => useAppState(), { wrapper: wrapperFor(bridge) });
+
+    act(() => {
+      result.current.dispatch({
+        type: 'RENDER_CONTENT',
+        msg: {
+          command: 'renderContent',
+          html: '<h1>A</h1>',
+          markdownSource: '# A',
+          frontmatter: {},
+          toc: [],
+          filePath: '/docs/a.md',
+          relativePath: 'a.md',
+          title: 'A',
+          fileList: [],
+          previewInfo: null,
+          documentWrite: { supported: true, revision: '10:3' },
+        },
+      });
+    });
+
+    const context = result.current as typeof result.current & {
+      setDocumentEditMode?: (filePath: string, mode: 'rendered' | 'inline-edit' | 'plain') => void;
+    };
+    expect(context.setDocumentEditMode).toBeTypeOf('function');
+    if (!context.setDocumentEditMode) return;
+
+    act(() => context.setDocumentEditMode?.('/docs/a.md', 'plain'));
+    expect(result.current.state.documentSessions['/docs/a.md']?.mode).toBe('plain');
+  });
+
   it('returns null instead of posting when the file has no editable session', async () => {
     const { bridge } = createEditingBridge();
     const { result } = renderHook(() => useAppState(), { wrapper: wrapperFor(bridge) });
