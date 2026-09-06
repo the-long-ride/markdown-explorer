@@ -64,6 +64,13 @@ export function isDocumentDirty(session: EditableDocumentSession): boolean {
   return session.source !== session.persistedSource;
 }
 
+export function isDocumentSavable(
+  session: EditableDocumentSession | undefined,
+  writeSupported: boolean | undefined,
+): boolean {
+  return Boolean(session && writeSupported && session.saveState !== 'saving' && isDocumentDirty(session));
+}
+
 export function setDocumentEditMode(
   session: EditableDocumentSession,
   mode: MarkdownEditMode,
