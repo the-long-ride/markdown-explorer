@@ -6,7 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAppState } from '../contexts/AppStateContext';
 import { usePlatform } from '../contexts/PlatformContext';
-import { documentSessionKey, isDocumentDirty } from '../editor/documentSession';
+import { documentSessionKey, isDocumentSavable } from '../editor/documentSession';
 import { requestAnimatedContentTabClose } from '../components/Content/contentTabCloseEvents';
 import { getScopeNavigationStateSnapshot, requestScopeNavigation, useScopeNavigationState } from './useScopeNavigationState';
 import { attachMouseHistoryNavigation } from '../utils/mouseHistoryNavigation';
@@ -44,11 +44,7 @@ interface UseKeyboardOptions {
   onWorkspaceSelection?: () => void;
 }
 
-import {
-  isEditableTarget,
-  matchesShortcut,
-  resolveKeyboardAction,
-} from './keyboardUtils';
+import { isEditableTarget, matchesShortcut, resolveKeyboardAction } from './keyboardUtils';
 
 export { isEditableTarget, matchesShortcut, resolveKeyboardAction } from './keyboardUtils';
 
@@ -114,18 +110,9 @@ export function useKeyboard({
     ),
     [state.settings.disabledKeybindings, state.settings.keybindings],
   );
-  const activeDocumentSession = state.currentFile
-    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
-    : undefined;
-  const activeContentTab = state.currentFile
-    ? state.contentTabs?.find((tab) => tab.filePath === state.currentFile)
-    : undefined;
-  const hasSavableDocument = Boolean(
-    activeDocumentSession
-      && activeContentTab?.documentWrite?.supported
-      && activeDocumentSession.saveState !== 'saving'
-      && isDocumentDirty(activeDocumentSession),
-  );
+  const activeDocumentSession = state.currentFile ? state.documentSessions?.[documentSessionKey(state.currentFile)] : undefined;
+  const activeContentTab = state.currentFile ? state.contentTabs?.find((tab) => tab.filePath === state.currentFile) : undefined;
+  const hasSavableDocument = isDocumentSavable(activeDocumentSession, activeContentTab?.documentWrite?.supported);
 
   useEffect(() => {
     const routeBack = () => {
