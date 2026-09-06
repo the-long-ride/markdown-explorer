@@ -80,7 +80,7 @@ export function ContentMainView({
   const previewInfo = state.previewInfo;
   const previewCopy = t.documentPreview;
   const documentSession = state.currentFile
-    ? state.documentSessions[documentSessionKey(state.currentFile)]
+    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
     : undefined;
   const isPlainMarkdownMode = documentSession?.mode === 'plain';
 
