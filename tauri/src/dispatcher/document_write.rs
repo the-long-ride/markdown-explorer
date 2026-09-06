@@ -10,7 +10,7 @@ pub(super) enum SaveDocumentOutcome {
     Missing,
 }
 
-pub(super) fn document_revision(path: &Path) -> Result<String, String> {
+pub(crate) fn document_revision(path: &Path) -> Result<String, String> {
     let metadata = fs::metadata(path).map_err(|error| error.to_string())?;
     let modified = metadata
         .modified()
