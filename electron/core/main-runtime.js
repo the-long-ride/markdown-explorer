@@ -3,6 +3,7 @@ const ZOOM_LEVEL_MAX = 2;
 const ZOOM_LEVEL_STEP = 0.2;
 const { registerRuntimeCommandHandlers } = require("./runtime-command-handlers");
 const { registerRuntimeWorkspaceHandlers } = require("./runtime-workspace-handlers");
+const { documentWriteCapabilityFor, saveWorkspaceDocument } = require("../workspace/document-write");
 
 const {
   isSupportedFilePathLite,
@@ -65,10 +66,15 @@ function createDesktopRuntime(deps) {
     ...(runtimeState.workspaceOperationId ? { workspaceOperationId: runtimeState.workspaceOperationId } : {}),
     ...(runtimeState.workspaceTabId ? { workspaceTabId: runtimeState.workspaceTabId } : {}),
   });
-  const sendScopedHostMessage = (message) => sendHostMessage({
-    ...getWorkspaceOperationMetadata(),
-    ...message,
-  });
+  const sendScopedHostMessage = (message) => {
+    const scopedMessage = message?.command === "renderContent"
+      ? { ...message, documentWrite: documentWriteCapabilityFor(message.filePath, fs) }
+      : message;
+    sendHostMessage({
+      ...getWorkspaceOperationMetadata(),
+      ...scopedMessage,
+    });
+  };
   const sendScopedLoading = (label, detail) => sendLoading(label, detail, getWorkspaceOperationMetadata());
 
   const workspaceHandlers = registerRuntimeWorkspaceHandlers({
@@ -238,6 +244,25 @@ function createDesktopRuntime(deps) {
     handleCancelAllWorkspaceScans
   } = commandHandlers;
 
+  async function handleSaveDocument(message = {}) {
+    const filePath = typeof message.filePath === 'string' ? message.filePath : '';
+    const result = await saveWorkspaceDocument({
+      workspacePath: runtimeState.workspacePath,
+      filePath,
+      source: message.source,
+      expectedRevision: message.expectedRevision ?? null,
+      force: message.force === true,
+      fsApi: fs,
+      pathApi,
+    });
+    sendScopedHostMessage({
+      command: 'saveDocumentResult',
+      requestId: typeof message.requestId === 'string' ? message.requestId : '',
+      filePath,
+      ...result,
+    });
+  }
+
   async function refreshActiveWorkspace({
     showLoading = false,
     loadingLabel = "Refreshing workspace...",
@@ -318,6 +343,7 @@ function createDesktopRuntime(deps) {
     handleListDesktopFonts,
     handleImportDesktopFonts,
     handleRemoveImportedDesktopFont,
+    handleSaveDocument,
     handleDownloadUpdate,
     handleScheduleDownloadedUpdate,
     handleRestartAndApplyUpdate,
