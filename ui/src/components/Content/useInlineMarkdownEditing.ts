@@ -77,7 +77,7 @@ export function useInlineMarkdownEditing({
         target.classList.remove('is-inline-editable');
       }
     };
-  }, [bodyRef.current, editLabel, enabled, renderVersion, source.length]);
+  }, [editLabel, enabled, renderVersion, source.length]);
 
   const apply = useCallback((replacement: string, range: MarkdownSourceRange) => {
     onSourceChange(replaceSourceRange(source, range, replacement));
