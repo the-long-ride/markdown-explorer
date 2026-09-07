@@ -7,7 +7,9 @@ import type { HtmlLocalFirstPolicyReport } from '../../markdown/htmlLocalFirstPr
 import type { AppSettings } from '../../types';
 import { AlertTriangleIcon, FileNotFoundIcon, FolderIcon, TrashIcon } from '../shared/icons';
 import { HtmlDocumentView } from './HtmlDocumentView';
+import { InlineMarkdownEditor } from './InlineMarkdownEditor';
 import { PlainMarkdownEditor } from './PlainMarkdownEditor';
+import { useInlineMarkdownEditing } from './useInlineMarkdownEditing';
 import { WelcomePage } from './WelcomePage';
 import { RandomTipCard } from './RandomTipCard';
 
@@ -85,6 +87,16 @@ export function ContentMainView({
     ? state.documentSessions?.[documentSessionKey(state.currentFile)]
     : undefined;
   const isPlainMarkdownMode = documentSession?.mode === 'plain';
+  const inlineEditing = useInlineMarkdownEditing({
+    enabled: documentSession?.mode === 'inline-edit',
+    bodyRef,
+    source: documentSession?.source ?? '',
+    renderVersion: state.renderVersion,
+    editLabel: editorT.inlineEdit,
+    onSourceChange: (source) => {
+      if (state.currentFile) onWorkingDocumentSourceChange?.(state.currentFile, source);
+    },
+  });
 
   return (
     <main className="content" id="mainContent">
@@ -223,6 +235,19 @@ export function ContentMainView({
           </div>
         )}
       </div>
+      {inlineEditing.activeTarget && documentSession && (
+        <InlineMarkdownEditor
+          target={inlineEditing.activeTarget}
+          source={documentSession.source}
+          labels={{
+            sourceLabel: editorT.inlineSourceLabel,
+            apply: editorT.apply,
+            cancel: editorT.cancel,
+          }}
+          onApply={inlineEditing.apply}
+          onCancel={inlineEditing.cancel}
+        />
+      )}
     </main>
   );
 }
