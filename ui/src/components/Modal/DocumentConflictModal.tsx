@@ -1,4 +1,4 @@
-import type { DocumentConflict } from '../../types';
+import type { DocumentConflict } from '../../editor/documentSession';
 
 interface DocumentConflictModalProps {
   readonly fileName: string;
