@@ -41,17 +41,17 @@ export function useInlineMarkdownEditing({
   onSourceChange,
 }: UseInlineMarkdownEditingOptions): InlineMarkdownEditingController {
   const [activeTarget, setActiveTarget] = useState<HTMLElement | null>(null);
+  const body = bodyRef.current;
 
   useEffect(() => {
     setActiveTarget(null);
-    const root = bodyRef.current;
-    if (!enabled || !root) return;
+    if (!enabled || !body) return;
 
     const installed: Array<{ target: HTMLElement; trigger: HTMLButtonElement }> = [];
-    const candidates = [...root.querySelectorAll<HTMLElement>(INLINE_EDITABLE_SELECTOR)];
+    const candidates = [...body.querySelectorAll<HTMLElement>(INLINE_EDITABLE_SELECTOR)];
 
     for (const target of candidates) {
-      if (!isTopLevelEditableTarget(target, root)) continue;
+      if (!isTopLevelEditableTarget(target, body)) continue;
       if (!readEditableRange(target, source.length)) continue;
 
       const trigger = document.createElement('button');
@@ -77,7 +77,7 @@ export function useInlineMarkdownEditing({
         target.classList.remove('is-inline-editable');
       }
     };
-  }, [bodyRef, editLabel, enabled, renderVersion, source.length]);
+  }, [body, editLabel, enabled, renderVersion, source.length]);
 
   const apply = useCallback((replacement: string, range: MarkdownSourceRange) => {
     onSourceChange(replaceSourceRange(source, range, replacement));
