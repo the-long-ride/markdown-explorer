@@ -1,5 +1,4 @@
-import type { EditableDocumentSession } from '../types';
-import { isDocumentDirty } from './documentSession';
+import { isDocumentDirty, type EditableDocumentSession } from './documentSession';
 
 export type UnsavedChangesChoice = 'save' | 'discard' | 'cancel';
 
