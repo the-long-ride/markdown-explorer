@@ -1,4 +1,5 @@
 import { useAppState } from '../../contexts/AppStateContext';
+import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import { getExportScopeTranslations } from '../../contexts/exportScopeTranslations';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { getTranslations } from '../../contexts/translations';
@@ -87,6 +88,7 @@ export function Topbar({
   const isDesktop = isElectron || state.appRuntime === 'tauri';
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const editorT = getEditorUiTranslations(currentLang);
   const exportT = getExportScopeTranslations(currentLang).exportCenter;
   const insightsLang = currentLang as keyof typeof INSIGHTS_UI_TRANSLATIONS;
   const insightsT = INSIGHTS_UI_TRANSLATIONS[insightsLang] ?? INSIGHTS_UI_TRANSLATIONS.en;
@@ -155,14 +157,22 @@ export function Topbar({
       <div className="topbar__actions">
         <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!!state.currentFile} />
         {activeDocumentSession && state.currentFile && (
-          <div className="topbar__markdown-editing" role="group" aria-label="Markdown editing mode">
+          <div className="topbar__markdown-editing" role="group" aria-label={editorT.modeGroup}>
             <button
               type="button"
               className="topbar__markdown-mode-btn"
               aria-pressed={activeDocumentSession.mode === 'rendered'}
               onClick={() => setDocumentEditMode(state.currentFile!, 'rendered')}
             >
-              Rendered
+              {editorT.rendered}
+            </button>
+            <button
+              type="button"
+              className="topbar__markdown-mode-btn"
+              aria-pressed={activeDocumentSession.mode === 'inline-edit'}
+              onClick={() => setDocumentEditMode(state.currentFile!, 'inline-edit')}
+            >
+              {editorT.inlineEdit}
             </button>
             <button
               type="button"
@@ -170,7 +180,7 @@ export function Topbar({
               aria-pressed={activeDocumentSession.mode === 'plain'}
               onClick={() => setDocumentEditMode(state.currentFile!, 'plain')}
             >
-              Plain
+              {editorT.plain}
             </button>
             <button
               type="button"
@@ -178,7 +188,7 @@ export function Topbar({
               disabled={!canSaveMarkdown}
               onClick={() => void saveDocument(state.currentFile!)}
             >
-              Save
+              {editorT.save}
             </button>
           </div>
         )}
