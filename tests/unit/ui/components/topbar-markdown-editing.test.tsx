@@ -99,11 +99,14 @@ function setup(state = editableState()) {
 describe('Topbar Markdown editing controls', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('switches an editable Markdown document between rendered and plain modes', () => {
+  it('switches an editable Markdown document between rendered, inline edit, and plain modes', () => {
     setup();
 
     fireEvent.click(screen.getByRole('button', { name: 'Plain' }));
     expect(mockSetDocumentEditMode).toHaveBeenCalledWith(filePath, 'plain');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inline Edit' }));
+    expect(mockSetDocumentEditMode).toHaveBeenCalledWith(filePath, 'inline-edit');
 
     fireEvent.click(screen.getByRole('button', { name: 'Rendered' }));
     expect(mockSetDocumentEditMode).toHaveBeenCalledWith(filePath, 'rendered');
@@ -134,6 +137,7 @@ describe('Topbar Markdown editing controls', () => {
   it('does not expose in-app editing controls without an editable Markdown session', () => {
     setup({ ...editableState(), currentFile: '/docs/image.png', documentSessions: {} });
     expect(screen.queryByRole('button', { name: 'Plain' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Inline Edit' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Rendered' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
   });
