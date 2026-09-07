@@ -16,11 +16,15 @@ import type {
   ThemeMode,
   ThemeStyle,
   AppSettings,
+  SaveDocumentResultMessage,
 } from '../types';
+import { requestSaveDocument, type SaveDocumentRequestOptions } from '../editor/saveDocument';
+import { documentSessionKey, type MarkdownEditMode } from '../editor/documentSession';
 import { useAppStateEffects } from './useAppStateEffects';
 import {
   type AppState,
   type Action,
+  type AppAction,
   type NavigateOptions,
   type PendingHtmlPreviewNavigation,
   reducer as appReducer,
@@ -28,7 +32,7 @@ import {
   normalizePathKey,
 } from './appStateReducer';
 
-export type { AppState, Action };
+export type { AppState, Action, AppAction };
 
 export {
   ALL_THEME_STYLE_OPTIONS,
@@ -44,7 +48,7 @@ export {
   isPetThemeStyle,
 } from './appStateConstants';
 
-function reducer(state: AppState, action: Action): AppState {
+function reducer(state: AppState, action: AppAction): AppState {
   return appReducer(state, action, (key, value) => {
     try { localStorage.setItem(key, value); } catch {}
   });
@@ -54,7 +58,7 @@ function reducer(state: AppState, action: Action): AppState {
 
 interface AppStateContextValue {
   state: AppState;
-  dispatch: React.Dispatch<Action>;
+  dispatch: React.Dispatch<AppAction>;
   navigate: (fsPath: string | null, options?: NavigateOptions) => void;
   activateContentTab: (fsPath: string) => void;
   reorderContentTabs: (sourcePath: string, targetPath: string) => void;
@@ -62,6 +66,13 @@ interface AppStateContextValue {
   closeContentTabsToRight: (fsPath: string) => void;
   closeOtherContentTabs: (fsPath: string) => void;
   closeAllContentTabs: () => void;
+  setWorkingDocumentSource: (filePath: string, source: string) => void;
+  setDocumentEditMode: (filePath: string, mode: MarkdownEditMode) => void;
+  discardDocumentChanges: (filePath: string) => void;
+  saveDocument: (
+    filePath: string,
+    options?: SaveDocumentRequestOptions,
+  ) => Promise<SaveDocumentResultMessage | null>;
   openInEditor: () => void;
   refresh: () => void;
   toggleTheme: () => void;
@@ -224,6 +235,30 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     bridge.postMessage({ command: 'navigate', path: '' });
   }, [bridge, state.contentTabs.length]);
 
+  const setWorkingDocumentSource = useCallback((filePath: string, source: string) => {
+    dispatch({ type: 'SET_WORKING_DOCUMENT_SOURCE', filePath, source });
+  }, []);
+
+  const setDocumentEditMode = useCallback((filePath: string, mode: MarkdownEditMode) => {
+    dispatch({ type: 'SET_DOCUMENT_EDIT_MODE', filePath, mode });
+  }, []);
+
+  const discardDocumentChanges = useCallback((filePath: string) => {
+    dispatch({ type: 'DISCARD_DOCUMENT_CHANGES', filePath });
+  }, []);
+
+  const saveDocument = useCallback(async (
+    filePath: string,
+    options: SaveDocumentRequestOptions = {},
+  ): Promise<SaveDocumentResultMessage | null> => {
+    const session = state.documentSessions[documentSessionKey(filePath)];
+    if (!session) return null;
+    dispatch({ type: 'MARK_DOCUMENT_SAVE_STARTED', filePath });
+    const result = await requestSaveDocument(bridge, session, options);
+    dispatch({ type: 'APPLY_SAVE_DOCUMENT_RESULT', result });
+    return result;
+  }, [bridge, state.documentSessions]);
+
   const openInEditor = useCallback(() => {
     if (state.currentFile) {
       bridge.postMessage({ command: 'openInEditor', path: state.currentFile });
@@ -319,7 +354,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
   }, [state.settings.desktopViewMode, updateSettings]);
 
-
   const toggleDefaultHtmlPreview = useCallback(() => {
     updateSettings({ defaultHtmlPreview: !state.settings.defaultHtmlPreview });
   }, [state.settings.defaultHtmlPreview, updateSettings]);
@@ -339,6 +373,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       closeContentTabsToRight,
       closeOtherContentTabs,
       closeAllContentTabs,
+      setWorkingDocumentSource,
+      setDocumentEditMode,
+      discardDocumentChanges,
+      saveDocument,
       openInEditor,
       refresh,
       toggleTheme,
@@ -364,6 +402,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       closeContentTabsToRight,
       closeOtherContentTabs,
       closeAllContentTabs,
+      setWorkingDocumentSource,
+      setDocumentEditMode,
+      discardDocumentChanges,
+      saveDocument,
       openInEditor,
       refresh,
       toggleTheme,
@@ -394,4 +436,3 @@ export function useAppState(): AppStateContextValue {
   if (!ctx) throw new Error('useAppState must be used within AppStateProvider');
   return ctx;
 }
-

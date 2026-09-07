@@ -1,10 +1,15 @@
 import { lazy, memo, Suspense } from 'react';
 import type { AppState } from '../../contexts/appStateModel';
+import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import type { Translations } from '../../contexts/translations';
+import { documentSessionKey } from '../../editor/documentSession';
 import type { HtmlLocalFirstPolicyReport } from '../../markdown/htmlLocalFirstPreview';
 import type { AppSettings } from '../../types';
 import { AlertTriangleIcon, FileNotFoundIcon, FolderIcon, TrashIcon } from '../shared/icons';
 import { HtmlDocumentView } from './HtmlDocumentView';
+import { InlineMarkdownEditor } from './InlineMarkdownEditor';
+import { PlainMarkdownEditor } from './PlainMarkdownEditor';
+import { useInlineMarkdownEditing } from './useInlineMarkdownEditing';
 import { WelcomePage } from './WelcomePage';
 import { RandomTipCard } from './RandomTipCard';
 
@@ -42,6 +47,8 @@ interface ContentMainViewProps {
   onUpdateSettings: (patch: Partial<AppSettings>) => void;
   onRefresh: () => void;
   onHtmlPolicyReport: (report: HtmlLocalFirstPolicyReport) => void;
+  onWorkingDocumentSourceChange?: (filePath: string, source: string) => void;
+  onSaveDocument?: (filePath: string) => void | Promise<unknown>;
 }
 
 export function ContentMainView({
@@ -70,9 +77,26 @@ export function ContentMainView({
   onUpdateSettings,
   onRefresh,
   onHtmlPolicyReport,
+  onWorkingDocumentSourceChange,
+  onSaveDocument,
 }: ContentMainViewProps) {
   const previewInfo = state.previewInfo;
   const previewCopy = t.documentPreview;
+  const editorT = getEditorUiTranslations(state.settings.language);
+  const documentSession = state.currentFile
+    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
+    : undefined;
+  const isPlainMarkdownMode = documentSession?.mode === 'plain';
+  const inlineEditing = useInlineMarkdownEditing({
+    enabled: documentSession?.mode === 'inline-edit',
+    bodyRef,
+    source: documentSession?.source ?? '',
+    renderVersion: state.renderVersion,
+    editLabel: editorT.inlineEdit,
+    onSourceChange: (source) => {
+      if (state.currentFile) onWorkingDocumentSourceChange?.(state.currentFile, source);
+    },
+  });
 
   return (
     <main className="content" id="mainContent">
@@ -167,6 +191,14 @@ export function ContentMainView({
                 conversionError={htmlMarkdownRender.error}
                 onPolicyReport={onHtmlPolicyReport}
               />
+            ) : isPlainMarkdownMode && documentSession ? (
+              <PlainMarkdownEditor
+                value={documentSession.source}
+                disabled={documentSession.saveState === 'saving'}
+                ariaLabel={editorT.plainSourceLabel}
+                onChange={(source) => onWorkingDocumentSourceChange?.(state.currentFile!, source)}
+                onSave={() => { void onSaveDocument?.(state.currentFile!); }}
+              />
             ) : (
               <>
                 {previewInfo && (
@@ -203,6 +235,19 @@ export function ContentMainView({
           </div>
         )}
       </div>
+      {inlineEditing.activeTarget && documentSession && (
+        <InlineMarkdownEditor
+          target={inlineEditing.activeTarget}
+          source={documentSession.source}
+          labels={{
+            sourceLabel: editorT.inlineSourceLabel,
+            apply: editorT.apply,
+            cancel: editorT.cancel,
+          }}
+          onApply={inlineEditing.apply}
+          onCancel={inlineEditing.cancel}
+        />
+      )}
     </main>
   );
 }

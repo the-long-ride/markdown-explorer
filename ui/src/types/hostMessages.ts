@@ -1,5 +1,5 @@
 import type { FolderNode, MdFile, RecentWorkspace } from './files';
-import type { RenderContentMessage, WorkspaceOperationMetadata } from './content';
+import type { DocumentRevisionToken, RenderContentMessage, WorkspaceOperationMetadata } from './content';
 import type { AppRuntime, HostPlatform, UpdateState, WorkspaceUnavailableReason } from './settings';
 import type { DesktopFontFamily } from '../desktop/fonts/fontModel';
 import type {
@@ -179,6 +179,18 @@ export interface WorkspaceExportResourceResultMessage {
   readonly reason?: ExportWorkspaceResourceHostFailureReason;
 }
 
+export interface SaveDocumentResultMessage {
+  readonly command: 'saveDocumentResult';
+  readonly requestId: string;
+  readonly filePath: string;
+  readonly ok: boolean;
+  readonly revision?: DocumentRevisionToken;
+  readonly diskSource?: string;
+  readonly diskRevision?: DocumentRevisionToken;
+  readonly reason?: 'conflict' | 'permission-denied' | 'missing' | 'outside-workspace' | 'read-only' | 'write-failed';
+  readonly error?: string;
+}
+
 export interface InsightsScanBatchMessage extends InsightsScanBatch { readonly command: 'insightsScanBatch'; }
 export interface InsightsScanCompleteMessage extends InsightsScanComplete { readonly command: 'insightsScanComplete'; }
 export interface InsightsDocumentSourceResultMessage extends InsightsSourceResult { readonly command: 'insightsDocumentSourceResult'; }
@@ -219,7 +231,7 @@ export type HostMessage =
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
   | FullscreenStateChangedMessage | ExternalOpenRequestMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
-  | WorkspaceTextResourceResultMessage | WorkspaceExportResourceResultMessage
+  | WorkspaceTextResourceResultMessage | WorkspaceExportResourceResultMessage | SaveDocumentResultMessage
   | InsightsScanBatchMessage | InsightsScanCompleteMessage | InsightsDocumentSourceResultMessage
   | WorkspaceResourceProbeResultMessage | InsightsFsDeltaMessage | InsightsRuntimeCapabilitiesMessage
   | ExternalLinkCheckResultMessage | ExternalLinkCheckCompleteMessage

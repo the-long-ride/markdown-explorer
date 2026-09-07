@@ -1,8 +1,10 @@
 import { useAppState } from '../../contexts/AppStateContext';
+import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import { getExportScopeTranslations } from '../../contexts/exportScopeTranslations';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { documentSessionKey, isDocumentDirty } from '../../editor/documentSession';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 import { TooltipButton } from '../shared/TooltipButton';
 import { EditIcon } from '../shared/icons';
@@ -78,7 +80,7 @@ export function Topbar({
 }: TopbarProps) {
   const {
     state, navigate, openInEditor, refresh, toggleTheme, toggleSidebar, toggleToc,
-    toggleFocusMode, dispatch,
+    toggleFocusMode, dispatch, setDocumentEditMode, saveDocument,
   } = useAppState();
   const { back, forward, canGoBack, canGoForward } = useNavigation();
   const bridge = usePlatform();
@@ -86,6 +88,7 @@ export function Topbar({
   const isDesktop = isElectron || state.appRuntime === 'tauri';
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const editorT = getEditorUiTranslations(currentLang);
   const exportT = getExportScopeTranslations(currentLang).exportCenter;
   const insightsLang = currentLang as keyof typeof INSIGHTS_UI_TRANSLATIONS;
   const insightsT = INSIGHTS_UI_TRANSLATIONS[insightsLang] ?? INSIGHTS_UI_TRANSLATIONS.en;
@@ -95,6 +98,18 @@ export function Topbar({
   const breakablePath = (state.currentFile || state.relativePath || '').replace(/[\/\\]/g, '$&' + '\u200B');
   const shouldExitTauriFullscreenOnRestore = state.appRuntime === 'tauri' && isFullscreen && onFullscreenToggle;
   const showsRestoreControl = state.isMaximized || isFullscreen;
+  const activeDocumentSession = state.currentFile
+    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
+    : undefined;
+  const activeContentTab = state.currentFile
+    ? state.contentTabs?.find((tab) => tab.filePath === state.currentFile)
+    : undefined;
+  const canSaveMarkdown = Boolean(
+    activeDocumentSession
+      && activeContentTab?.documentWrite?.supported
+      && activeDocumentSession.saveState !== 'saving'
+      && isDocumentDirty(activeDocumentSession),
+  );
 
   return (
     <header className="topbar">
@@ -141,6 +156,42 @@ export function Topbar({
 
       <div className="topbar__actions">
         <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!!state.currentFile} />
+        {activeDocumentSession && state.currentFile && (
+          <div className="topbar__markdown-editing" role="group" aria-label={editorT.modeGroup}>
+            <button
+              type="button"
+              className="topbar__markdown-mode-btn"
+              aria-pressed={activeDocumentSession.mode === 'rendered'}
+              onClick={() => setDocumentEditMode(state.currentFile!, 'rendered')}
+            >
+              {editorT.rendered}
+            </button>
+            <button
+              type="button"
+              className="topbar__markdown-mode-btn"
+              aria-pressed={activeDocumentSession.mode === 'inline-edit'}
+              onClick={() => setDocumentEditMode(state.currentFile!, 'inline-edit')}
+            >
+              {editorT.inlineEdit}
+            </button>
+            <button
+              type="button"
+              className="topbar__markdown-mode-btn"
+              aria-pressed={activeDocumentSession.mode === 'plain'}
+              onClick={() => setDocumentEditMode(state.currentFile!, 'plain')}
+            >
+              {editorT.plain}
+            </button>
+            <button
+              type="button"
+              className="topbar__markdown-save-btn"
+              disabled={!canSaveMarkdown}
+              onClick={() => void saveDocument(state.currentFile!)}
+            >
+              {editorT.save}
+            </button>
+          </div>
+        )}
         {state.appRuntime === 'vscode' && (
           <TooltipButton className="topbar__edit-action topbar__action-btn btn btn--icon" onClick={openInEditor} disabled={!state.currentFile} tooltip={t.topbar.edit} shortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')} portalTooltip icon={<EditIcon size={13} />} />
         )}

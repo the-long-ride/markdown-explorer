@@ -16,6 +16,7 @@ import { splitLeadingHtmlComments, buildRenderedDocumentSnapshot } from "./conte
 import { isHtmlDocumentPath } from "./HtmlDocumentView";
 import { convertHtmlSourceToMarkdown } from "../../markdown/htmlToMarkdown";
 import { renderMarkdownClientSide } from "../../contexts/contentTabState";
+import { documentSessionKey } from "../../editor/documentSession";
 import { hasHtmlLocalFirstPolicyNotice, type HtmlLocalFirstPolicyReport } from "../../markdown/htmlLocalFirstPreview";
 import { ContentMainView } from "./ContentMainView";
 import { BookmarkSelectionMenu } from "../Bookmarks/BookmarkSelectionMenu";
@@ -48,7 +49,14 @@ interface ContentProps {
 export const Content = memo(function Content({
   onImageClick, scrollRef, suppressWelcome = false, onCancelWorkspaceScan, onOpenWorkspaceAgain,
 }: ContentProps) {
-  const { state, navigate, refresh, updateSettings } = useAppState();
+  const {
+    state,
+    navigate,
+    refresh,
+    updateSettings,
+    setWorkingDocumentSource,
+    saveDocument,
+  } = useAppState();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
   const scopeT = getExportScopeTranslations(currentLang).scopeView;
@@ -67,6 +75,9 @@ export const Content = memo(function Content({
   const hostHtmlMarkdownHtml = activeContentTab?.contentHtml ?? state.contentHtml;
   const htmlPreviewOverride = activeContentTab?.htmlPreviewOverride ?? state.currentHtmlPreviewOverride;
   const isHtmlDocument = isHtmlDocumentPath(state.currentFile) && sourceDocumentText !== null;
+  const currentDocumentSession = state.currentFile
+    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
+    : undefined;
   const htmlDocumentPreviewEnabled = htmlPreviewOverride ?? state.settings.defaultHtmlPreview;
   const isFullHtmlPreview = isHtmlDocument && htmlDocumentPreviewEnabled;
   const htmlMarkdownRender = useMemo(() => {
@@ -101,7 +112,7 @@ export const Content = memo(function Content({
     return () => window.clearTimeout(timer);
   }, [isFullHtmlPreview, state.currentFile]);
 
-  const hasRenderableDocumentContent = Boolean(state.contentHtml) || isHtmlDocument;
+  const hasRenderableDocumentContent = Boolean(state.contentHtml) || isHtmlDocument || Boolean(currentDocumentSession);
   const previewInfo = state.previewInfo;
   const previewDuration = formatPreviewDuration(previewInfo?.durationMs);
   const previewCopy = t.documentPreview;
@@ -249,6 +260,7 @@ export const Content = memo(function Content({
         onCancelWorkspaceScan={onCancelWorkspaceScan} onOpenWorkspaceAgain={handleOpenWorkspaceAgain}
         onDeleteUnavailableWorkspace={handleDeleteUnavailableWorkspace} onUpdateSettings={updateSettings}
         onRefresh={refresh} onHtmlPolicyReport={handleHtmlPolicyReport}
+        onWorkingDocumentSourceChange={setWorkingDocumentSource} onSaveDocument={saveDocument}
       />
       {htmlModal && <HtmlPreviewModal documentHtml={htmlModal.documentHtml} title={t.previewActions.modalTitle} closeLabel={t.previewActions.closeModal} trigger={htmlModal.trigger} onClose={() => setHtmlModal(null)} />}
       <ScopeViewModal initialFile={scopeFile} files={state.fileList} onMediaClick={onImageClick} onClose={() => setScopeFile(null)} />

@@ -1,5 +1,6 @@
 import type { FolderNode, MdFile } from '../../ui/src/types';
 import type { BrowserSearchIndex } from './search-index';
+import { writeTextFile } from './file-access';
 import { handleChromeExportHostCommand } from './chrome-host-export';
 import { filterSearchIndexTabs, isValidExternalUrl, normalizeSearchQuery, resolveWorkspaceTextResourcePath } from './chrome-host-utils';
 import { handleBrowserInsightsHostCommand } from './insights-host-router';
@@ -27,6 +28,29 @@ export async function handleChromeHostUtilityCommand(message: any, context: Chro
   })) return true;
 
   switch (message.command) {
+    case 'saveDocument': {
+      const requestedPath = String(message.filePath || '');
+      const item = context.flatList.find((candidate) => candidate.fsPath === requestedPath || candidate.relativePath === requestedPath);
+      let result;
+      if (context.activeHandle && item) {
+        result = await writeTextFile(
+          context.activeHandle,
+          item.relativePath,
+          String(message.source ?? ''),
+          typeof message.expectedRevision === 'string' ? message.expectedRevision : null,
+          Boolean(message.force),
+        );
+      } else {
+        result = { ok: false as const, reason: context.activeHandle ? 'outside-workspace' as const : 'read-only' as const };
+      }
+      context.send({
+        command: 'saveDocumentResult',
+        requestId: message.requestId,
+        filePath: requestedPath,
+        ...result,
+      });
+      return true;
+    }
     case 'searchWorkspace': {
       const results = context.searchIndex
         ? await context.searchIndex.search(

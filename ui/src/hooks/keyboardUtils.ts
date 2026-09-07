@@ -54,6 +54,7 @@ export type KeyboardAction =
   | { type: 'forward' }
   | { type: 'welcome' }
   | { type: 'edit-current-document' }
+  | { type: 'save-current-document' }
   | { type: 'settings-toggle' }
   | { type: 'toggle-theme' }
   | { type: 'toggle-toc' }
@@ -94,6 +95,7 @@ export interface KeyboardState {
   hasOnSidebarCursorModeClose: boolean;
   hasOnWelcome: boolean;
   hasOnEditCurrentDocument?: boolean;
+  hasOnSaveCurrentDocument?: boolean;
   hasOnToggleToc: boolean;
   hasOnToggleWorkspaceInsights?: boolean;
   hasOnLocateFile: boolean;
@@ -202,6 +204,15 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
 
   if (matchesShortcut(e, state.keybindings.welcome)) {
     return { type: 'welcome' };
+  }
+
+  if (
+    state.hasOnSaveCurrentDocument &&
+    !state.isEditableTarget &&
+    matchesShortcut(e, state.keybindings.saveCurrentDocument)
+  ) {
+    if (state.isRepeat) return null;
+    return { type: 'save-current-document' };
   }
 
   if (

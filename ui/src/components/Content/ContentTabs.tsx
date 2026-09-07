@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import { getTranslations } from "../../contexts/translations";
+import { documentSessionKey, isDocumentDirty } from "../../editor/documentSession";
 import {
   TabContextMenu,
   type TabContextMenuAction,
@@ -252,12 +253,15 @@ export function ContentTabs() {
         {state.contentTabs.map((tab) => {
           const active = state.activeContentTabPath === tab.filePath;
           const label = state.settings.showTitle ? tab.title || tab.fileName : tab.fileName;
+          const session = state.documentSessions?.[documentSessionKey(tab.filePath)];
+          const dirty = session ? isDocumentDirty(session) : false;
           const closePhaseClass = closingTabPaths.has(tab.filePath)
             ? closingPhase === 'collapse' ? ' is-closing--collapse' : ' is-closing--fade'
             : '';
           return <ContentTabItem key={tab.filePath} tab={tab} active={active} label={label}
             closePhaseClass={closePhaseClass} dragged={draggedTabPath === tab.filePath}
-            closeLabel={t.tooltips.closeTab} draggedTabPathRef={draggedTabPathRef}
+            closeLabel={t.tooltips.closeTab} dirty={dirty} dirtyLabel="Unsaved changes"
+            draggedTabPathRef={draggedTabPathRef}
             didDragRef={didDragRef} ghostRef={ghostRef} tabElementsRef={tabElementsRef}
             onSetDraggedPath={setDraggedTabPath} onSetGhostLabel={setGhostLabel}
             onReorder={reorderContentTabs} onActivate={activateContentTab}
