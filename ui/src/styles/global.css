@@ -23,6 +23,8 @@
 @import './global/global-layout-sidebar.css';
 @import './global/global-markdown-foundation.css';
 @import './global/global-markdown-structures.css';
+@import './global/global-markdown-editing.css';
+@import './global/global-split-document-view.css';
 @import './global/global-code-blocks.css';
 @import './global/global-code-syntax.css';
 @import './global/global-sections-table-core.css';

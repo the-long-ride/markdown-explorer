@@ -1,0 +1,83 @@
+.history-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
+}
+
+.document-history-panel {
+  width: min(520px, 92vw);
+  height: 100%;
+  overflow: auto;
+  padding: 18px;
+  background: var(--bg);
+  border-left: var(--stroke-w) solid var(--border);
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.18);
+}
+
+.document-history-panel__header,
+.document-history-panel__revision-main,
+.document-history-panel__actions,
+.document-history-panel__meta,
+.document-history-panel__selection-actions,
+.document-diff-view__toolbar,
+.document-diff-view__labels,
+.git-revision-view__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.document-history-panel__header,
+.document-diff-view__toolbar,
+.git-revision-view__header { justify-content: space-between; }
+.document-history-panel__header h2 { margin: 0; }
+.document-history-panel__path,
+.document-history-panel__revision-path,
+.git-revision-view__path { color: var(--tx-2); font-size: 12px; overflow-wrap: anywhere; }
+.document-history-panel__load { margin-top: 16px; }
+.document-history-panel__error { margin-top: 16px; }
+.document-history-panel__list { margin: 16px 0 0; padding: 0; list-style: none; }
+.document-history-panel__revision { padding: 12px 0; border-top: var(--stroke-w) solid var(--border); }
+.document-history-panel__revision-main { align-items: flex-start; }
+.document-history-panel__subject { font-weight: 650; }
+.document-history-panel__meta { flex-wrap: wrap; margin-top: 5px; color: var(--tx-2); font-size: 11px; }
+.document-history-panel__actions { margin-top: 8px; flex-wrap: wrap; }
+.document-history-panel__selection-actions { justify-content: flex-end; margin-top: 14px; }
+
+.git-revision-view,
+.document-diff-view { width: 100%; }
+.git-revision-view__header,
+.document-diff-view__toolbar { position: sticky; top: 0; z-index: 2; padding: 10px 12px; background: var(--bg); border-bottom: var(--stroke-w) solid var(--border); }
+.git-revision-view__header > div { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.git-revision-view__body { max-width: none; padding-top: 18px; }
+.document-diff-view__toolbar > div { display: flex; gap: 6px; }
+.document-diff-view__toolbar .is-active { border-color: var(--accent); }
+.document-diff-view__labels { justify-content: space-between; padding: 8px 10px; color: var(--tx-2); font-size: 12px; }
+
+.source-diff-view__scroll { overflow: auto; border: var(--stroke-w) solid var(--border); border-radius: var(--r); }
+.source-diff-view__table { width: 100%; border-collapse: collapse; font-family: var(--font-mono, monospace); font-size: 12px; }
+.source-diff-view__table th,
+.source-diff-view__table td { padding: 4px 8px; border-bottom: var(--stroke-w) solid var(--border); text-align: left; vertical-align: top; }
+.source-diff-view__line-number { width: 1%; white-space: nowrap; color: var(--tx-2); text-align: right !important; user-select: none; }
+.source-diff-view__status { width: 1%; white-space: nowrap; }
+.source-diff-view__source code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.source-diff-view tr[data-diff-type="remove"] { background: color-mix(in srgb, var(--danger, #d33) 10%, transparent); }
+.source-diff-view tr[data-diff-type="add"] { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+.rendered-diff-view { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.rendered-diff-view__pane { min-width: 0; border: var(--stroke-w) solid var(--border); border-radius: var(--r); overflow: auto; }
+.rendered-diff-view__pane > header { position: sticky; top: 0; z-index: 1; padding: 8px 10px; background: var(--bg); border-bottom: var(--stroke-w) solid var(--border); font-size: 12px; font-weight: 650; }
+.rendered-diff-view__body { max-width: none; padding: 14px; }
+.rendered-diff-view__pane--removed .is-diff-changed { outline: 2px solid color-mix(in srgb, var(--danger, #d33) 55%, transparent); background: color-mix(in srgb, var(--danger, #d33) 8%, transparent); }
+.rendered-diff-view__pane--added .is-diff-changed { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+body:has(.git-revision-view) .topbar__markdown-editing,
+body:has(.document-diff-view) .topbar__markdown-editing { display: none; }
+
+@media (max-width: 760px) {
+  .rendered-diff-view { grid-template-columns: minmax(0, 1fr); }
+  .document-history-panel { width: 100%; }
+}

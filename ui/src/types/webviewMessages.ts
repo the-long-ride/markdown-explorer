@@ -1,12 +1,18 @@
 import type { RecentWorkspace } from './files';
-import type { WorkspaceOperationMetadata } from './content';
+import type { DocumentRevisionToken, WorkspaceOperationMetadata } from './content';
 import type { CrossTabSearchResult, WorkspaceSearchResult } from './hostMessages';
 import type { ShellLocationMode, ThemeMode, ThemeStyle } from './settings';
 import type { ExternalLinkCheckRequest, InsightsScanRequest } from '../insights/contracts';
+import type { GitCompareSide } from '../history/contracts';
 
 export interface ReadWorkspaceTextResourceMessage { readonly command: 'readWorkspaceTextResource'; readonly requestId: string; readonly documentPath: string; readonly resourcePath: string; }
 export interface ReadWorkspaceExportResourceMessage { readonly command: 'readWorkspaceExportResource'; readonly requestId: string; readonly resourcePath: string; readonly documentPath?: string; }
 export interface SaveExportFileMessage { readonly command: 'saveExportFile'; readonly requestId: string; readonly fileName: string; readonly mimeType: string; readonly dataBase64: string; }
+export interface SaveDocumentMessage { readonly command: 'saveDocument'; readonly requestId: string; readonly filePath: string; readonly source: string; readonly expectedRevision: DocumentRevisionToken | null; readonly force?: boolean; }
+export interface GetGitCapabilityMessage { readonly command: 'getGitCapability'; readonly requestId: string; }
+export interface ListDocumentHistoryMessage { readonly command: 'listDocumentHistory'; readonly requestId: string; readonly filePath: string; readonly limit?: number; }
+export interface ReadGitRevisionMessage { readonly command: 'readGitRevision'; readonly requestId: string; readonly oid: string; readonly path: string; }
+export interface CompareGitRevisionsMessage { readonly command: 'compareGitRevisions'; readonly requestId: string; readonly left: GitCompareSide; readonly right: GitCompareSide; }
 export interface NavigateMessage { readonly command: 'navigate'; readonly path: string; }
 export interface OpenInEditorMessage { readonly command: 'openInEditor'; readonly path: string; }
 export interface WebviewReadyMessage { readonly command: 'ready'; readonly documentConversionEnabled?: boolean; }
@@ -76,7 +82,8 @@ export interface RemoveImportedDesktopFontMessage { readonly command: 'removeImp
 export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonly fileName: string; readonly dataUrl: string; readonly requestId?: string; }
 
 export type WebviewMessage =
-  | ReadWorkspaceTextResourceMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage
+  | ReadWorkspaceTextResourceMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage | SaveDocumentMessage
+  | GetGitCapabilityMessage | ListDocumentHistoryMessage | ReadGitRevisionMessage | CompareGitRevisionsMessage
   | ScanInsightsWorkspaceMessage | CancelInsightsScanMessage | ReadInsightsDocumentSourceMessage
   | ProbeWorkspaceResourceMessage | SetInsightsWatchStateMessage | CheckExternalLinksMessage | CancelExternalLinkChecksMessage
   | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage

@@ -39,6 +39,7 @@ export const ACTIONS_LIST = [
   { id: 'closeAllContentTabs', label: 'Close all document tabs', scope: 'electron' },
 
   // General & Settings
+  { id: 'saveCurrentDocument', label: 'Save current document', scope: 'both' },
   { id: 'editCurrentDocument', label: 'Edit current document', scope: 'editor' },
   { id: 'settings', label: 'Toggle settings modal', scope: 'both' },
   { id: 'toggleTheme', label: 'Toggle light/dark mode', scope: 'both' },

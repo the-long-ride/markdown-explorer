@@ -8,6 +8,14 @@ export interface TocEntry {
 
 export type Frontmatter = Record<string, string>;
 
+export type DocumentRevisionToken = string;
+
+export interface DocumentWriteCapability {
+  readonly supported: boolean;
+  readonly revision: DocumentRevisionToken | null;
+  readonly reason?: 'read-only-runtime' | 'permission-required' | 'unsupported-document';
+}
+
 export interface DocumentPreviewInfo {
   readonly kind: 'converted' | 'text';
   readonly sourceExtension: string;
@@ -35,6 +43,7 @@ export interface RenderContentMessage extends WorkspaceOperationMetadata {
   readonly title: string;
   readonly fileList: MdFile[];
   readonly previewInfo?: DocumentPreviewInfo | null;
+  readonly documentWrite?: DocumentWriteCapability;
 }
 
 export interface ContentTab {
@@ -49,4 +58,5 @@ export interface ContentTab {
   readonly frontmatter: Frontmatter;
   readonly toc: TocEntry[];
   readonly previewInfo: DocumentPreviewInfo | null;
+  readonly documentWrite?: DocumentWriteCapability;
 }
