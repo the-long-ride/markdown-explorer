@@ -15,6 +15,10 @@ on:
       - 'chromium-xtension/src/**'
       - 'chromium-xtension/popup.js'
       - 'chromium-xtension/vite.config.ts'
+      - 'website-app/src/**'
+      - 'website-app/package.json'
+      - 'website-app/tsconfig.json'
+      - 'website-app/vite.config.ts'
       - 'tauri/src/**'
       - 'tauri/tests/**'
       - 'tauri/Cargo.toml'
@@ -34,6 +38,10 @@ on:
       - 'chromium-xtension/src/**'
       - 'chromium-xtension/popup.js'
       - 'chromium-xtension/vite.config.ts'
+      - 'website-app/src/**'
+      - 'website-app/package.json'
+      - 'website-app/tsconfig.json'
+      - 'website-app/vite.config.ts'
       - 'tauri/src/**'
       - 'tauri/tests/**'
       - 'tauri/Cargo.toml'
@@ -115,6 +123,10 @@ jobs:
         run: pnpm run build:vscode
       - name: Build Chromium host
         run: pnpm run build:chromium
+      - name: Typecheck Web app
+        run: pnpm --dir website-app typecheck
+      - name: Build Web app
+        run: pnpm --dir website-app build
 
   tauri:
     runs-on: ${{ matrix.os }}

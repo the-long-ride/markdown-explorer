@@ -2,11 +2,13 @@ import { existsSync } from 'node:fs';
 import fg from 'fast-glob';
 import { describe, expect, test } from 'vitest';
 import { coverageManifest, productionGlobs, productionIgnore } from './coverage-manifest';
+import { editorGitSplitCoverageManifest } from './editor-git-split-coverage-manifest';
 import { exportScopeCoverageManifest } from './export-scope-coverage-manifest';
 import { workspaceInsightsCoverageManifest } from './workspace-insights-coverage-manifest';
 
 const effectiveCoverageManifest = {
   ...coverageManifest,
+  ...editorGitSplitCoverageManifest,
   ...exportScopeCoverageManifest,
   ...workspaceInsightsCoverageManifest,
 };

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { createElement } from 'react';
+import { createSplitViewState } from '../../../../ui/src/split-view/paneState';
 
 const mockActivateContentTab = vi.fn();
 const mockCloseContentTab = vi.fn();
@@ -71,6 +72,7 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
       renderVersion: 1,
       contentTabs: [] as any[],
       activeContentTabPath: null,
+      splitView: createSplitViewState('/docs/readme.md'),
       recentWorkspaces: [],
       isMaximized: false,
       appVersion: '1.0.0',
@@ -265,7 +267,7 @@ describe('ContentTabs render', () => {
       ],
       activeContentTabPath: '/a.md',
     });
-    const { container } = render(createElement(ContentTabs));
+    render(createElement(ContentTabs));
     const bTab = screen.getByRole('tab', { name: /b\.md/ });
     const auxEvent = new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 });
     bTab.dispatchEvent(auxEvent);
