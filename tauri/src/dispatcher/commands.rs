@@ -1,5 +1,10 @@
 use super::*;
 
+#[path = "document_write.rs"]
+pub(super) mod document_write;
+#[path = "git_history.rs"]
+mod git_history;
+
 impl Dispatcher {
     pub async fn handle(self, msg: Value) -> Result<(), String> {
         let cmd = msg.get("command").and_then(|v| v.as_str()).unwrap_or("");
@@ -16,6 +21,13 @@ impl Dispatcher {
                 .get("workspaceTabId")
                 .and_then(Value::as_str)
                 .map(ToOwned::to_owned);
+        }
+        if cmd == "saveDocument" {
+            self.handle_save_document(&msg);
+            return Ok(());
+        }
+        if git_history::handle_command(&self.app, &self.state, cmd, &msg)? {
+            return Ok(());
         }
         if self.handle_workspace_command(cmd, &msg).await? {
             return Ok(());
