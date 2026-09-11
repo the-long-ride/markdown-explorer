@@ -2,7 +2,7 @@
 // chrome/src/chrome-host.ts — Host-side message router running in tab context
 // =============================================================================
 
-import { pickDirectory, readTextFile, verifyPermission } from "./file-access";
+import { documentWriteCapability, pickDirectory, readTextFile, verifyPermission } from "./file-access";
 import {
   startCurrentFileWatcher,
   stopCurrentFileWatcher,
@@ -231,6 +231,7 @@ async function sendContent(
     title: fileInfo.title,
     fileList: flatList,
     previewInfo: null,
+    documentWrite: /\.mdx?$/i.test(requestedFile) ? await documentWriteCapability(handle, requestedFile) : undefined,
     ...request.operation,
   });
 }
@@ -447,7 +448,5 @@ bus.addEventListener("webview-message", async (e: Event) => {
       }
       break;
     }
-
-
   }
 });

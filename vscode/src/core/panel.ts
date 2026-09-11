@@ -33,6 +33,7 @@ import { HtmlPreviewServer } from './htmlPreviewServer';
 import { rewritePanelMediaUrls } from './panelMedia';
 import { navigatePanel } from './panelNavigationHandler';
 import { readPanelWorkspaceTextResource } from './panelWorkspaceResources';
+import { handlePanelDocumentWrite, panelDocumentWriteCapability, type PanelSaveDocumentMessage } from './panelDocumentWrite';
 import { createPanelFontBridge, getGlobalStorageUri } from '../fonts/panelFontBridge';
 
 export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
@@ -112,6 +113,10 @@ export class MarkdownDocsPanel {
     this._panel.webview.onDidReceiveMessage(
       async (msg: WebviewMessage) => {
         if (await this._fontBridge.handle(msg)) return;
+        if ((msg as { command?: string }).command === 'saveDocument') {
+          const result = await handlePanelDocumentWrite(msg as unknown as PanelSaveDocumentMessage, { workspace: getVscode().workspace, Uri: getVscode().Uri });
+          await this._panel.webview.postMessage(result); return;
+        }
         switch (msg.command) {
           case 'navigate':
             await this._navigateTo(msg.path);
@@ -339,6 +344,7 @@ export class MarkdownDocsPanel {
     // Rewrite local image/video paths to Webview URIs.
     const rewrittenHtml = rewritePanelMediaUrls(html, this._currentFile!, (absolutePath) =>
       this._panel.webview.asWebviewUri(getVscode().Uri.file(absolutePath)).toString());
+    const documentWrite = await panelDocumentWriteCapability(this._currentFile, { workspace: getVscode().workspace, Uri: getVscode().Uri });
 
     const msg: RenderContentMessage = {
       command: 'renderContent',
@@ -352,6 +358,7 @@ export class MarkdownDocsPanel {
       title: fileInfo.title,
       fileList: this._flat,
       previewInfo,
+      ...({ documentWrite } as any),
     };
     await this._panel.webview.postMessage(msg);
   }
@@ -360,14 +367,7 @@ export class MarkdownDocsPanel {
     await this._panel.webview.postMessage({ command: 'setLoading', label, detail });
   }
 
-  private _hostInfo() {
-    return {
-      appVersion: this._extensionVersion,
-      appRuntime: 'vscode' as const,
-      hostPlatform: this._hostPlatform(),
-      hostArch: process.arch,
-    };
-  }
+  private _hostInfo() { return { appVersion: this._extensionVersion, appRuntime: 'vscode' as const, hostPlatform: this._hostPlatform(), hostArch: process.arch }; }
 
   private _hostPlatform() {
     if (process.platform === 'win32') return 'windows' as const;
@@ -375,8 +375,6 @@ export class MarkdownDocsPanel {
     if (process.platform === 'linux') return 'linux' as const;
     return 'unknown' as const;
   }
-
-
 
   // ---------------------------------------------------------------------------
   // Private: navigation

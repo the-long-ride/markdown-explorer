@@ -5,6 +5,12 @@ pub mod core;
 pub mod debug_tools;
 #[cfg(not(test))]
 pub mod dispatcher;
+#[cfg(test)]
+#[path = "dispatcher/document_write.rs"]
+mod document_write_test_target;
+#[cfg(test)]
+#[path = "dispatcher/git_history.rs"]
+mod git_history_test_target;
 pub mod error;
 pub mod fonts;
 #[cfg(not(test))]

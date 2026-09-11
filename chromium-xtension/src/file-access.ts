@@ -5,6 +5,22 @@
 const DB_NAME = 'markdown-explorer-db';
 const STORE_NAME = 'workspaces';
 
+export type FileWriteResult =
+  | { ok: true; revision: string; reason?: never }
+  | {
+      ok: false;
+      reason: 'permission-denied' | 'missing' | 'outside-workspace' | 'conflict' | 'write-failed' | 'io-error';
+      diskSource?: string;
+      diskRevision?: string;
+      error?: string;
+    };
+
+export type BrowserDocumentWriteResult = FileWriteResult;
+
+export type BrowserDocumentWriteCapability =
+  | { supported: true; revision: string }
+  | { supported: false; revision: string | null; reason: 'permission-required' | 'unsupported-document' | 'read-only-runtime' };
+
 function getDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
@@ -127,4 +143,84 @@ export async function readBinaryFile(
     type: file.type || '',
     size: file.size,
   };
+}
+
+export async function documentRevision(handle: FileSystemFileHandle): Promise<string> {
+  const file = await handle.getFile();
+  return `${file.lastModified}:${file.size}`;
+}
+
+async function writeResolvedFileHandle(
+  handle: FileSystemFileHandle,
+  source: string,
+  expectedRevision: string | null,
+  force: boolean,
+): Promise<FileWriteResult> {
+  try {
+    const file = await handle.getFile();
+    const currentRevision = `${file.lastModified}:${file.size}`;
+    if (!force && (expectedRevision === null || currentRevision !== expectedRevision)) {
+      return {
+        ok: false,
+        reason: 'conflict',
+        diskSource: await file.text(),
+        diskRevision: currentRevision,
+      };
+    }
+    const writable = await (handle as any).createWritable();
+    await writable.write(source);
+    await writable.close();
+    return { ok: true, revision: await documentRevision(handle) };
+  } catch (error) {
+    if ((error as DOMException | undefined)?.name === 'NotFoundError') {
+      return { ok: false, reason: 'missing' };
+    }
+    return { ok: false, reason: 'write-failed', error: String((error as Error)?.message || error) };
+  }
+}
+
+export async function writeFileHandle(
+  handle: FileSystemFileHandle,
+  source: string,
+  expectedRevision: string | null,
+  force = false,
+): Promise<FileWriteResult> {
+  if (!(await verifyPermission(handle, true))) {
+    return { ok: false, reason: 'permission-denied' };
+  }
+  return writeResolvedFileHandle(handle, source, expectedRevision, force);
+}
+
+export async function writeTextFile(
+  root: FileSystemDirectoryHandle,
+  relativePath: string,
+  source: string,
+  expectedRevision: string | null,
+  force = false,
+): Promise<FileWriteResult> {
+  if (!safePathParts(relativePath)) return { ok: false, reason: 'outside-workspace' };
+  if (!(await verifyPermission(root, true))) return { ok: false, reason: 'permission-denied' };
+  const handle = await resolveFileHandle(root, relativePath);
+  if (!handle) return { ok: false, reason: 'missing' };
+  return writeResolvedFileHandle(handle, source, expectedRevision, force);
+}
+
+export async function documentWriteCapability(
+  handle: FileSystemFileHandle | FileSystemDirectoryHandle,
+  relativePath?: string,
+): Promise<BrowserDocumentWriteCapability> {
+  try {
+    const fileHandle = relativePath
+      ? await resolveFileHandle(handle as FileSystemDirectoryHandle, relativePath)
+      : handle as FileSystemFileHandle;
+    if (!fileHandle) return { supported: false, revision: null, reason: 'read-only-runtime' };
+    const revision = await documentRevision(fileHandle);
+    const permission = await (fileHandle as any).queryPermission({ mode: 'readwrite' });
+    if (permission !== 'granted') {
+      return { supported: false, revision, reason: 'permission-required' };
+    }
+    return { supported: true, revision };
+  } catch {
+    return { supported: false, revision: null, reason: 'read-only-runtime' };
+  }
 }

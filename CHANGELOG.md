@@ -2,6 +2,21 @@
 
 All notable changes to the **Markdown Explorer** extension will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Local Markdown editing**: Added shared working-copy editing with inline rendered-section editing and full plain-source mode, keyboard save handling, unsaved-change guards, and conflict resolution across writable runtimes.
+- **Split document view**: Added a resizable two-pane document workspace with independent active pane, file, mode, and scroll state, including rendered, inline edit, plain source, Git revision, and diff modes.
+- **Local Git history and diff viewer**: Added read-only per-document Git history, revision viewing, revision-to-revision/current/working-copy comparisons, rename-following history, and source/rendered diff views in Electron, Tauri, and VS Code.
+- **Localized editor and history UI**: Added local editing, split-view, Git history, and diff labels across all 9 supported locales.
+
+### Changed
+- **Cross-runtime host contracts**: Added correlated Git capability/history/revision/comparison messages and safe local document-write contracts, with Chromium reporting Git history as unsupported while preserving protocol parity.
+- **Runtime and protocol documentation**: Synchronized README, runtime capability matrix, protocol catalogs, current application state, and release acceptance documentation for local editing, split view, and Git history.
+
+### Fixed
+- **Editor/history integration stability**: Aligned split-view state and History context integration across content tabs and standalone render surfaces, preserving strict History action-provider requirements without breaking isolated UI rendering.
+
 ---
 
 ## [v1.6.7] — 2026-09-06
@@ -627,7 +642,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ### Added Features & Enhancements
 - **In-App Update Checks**: Desktop and VS Code variants now check the latest GitHub Release on startup and compare it against the running app or extension version.
-- **Update Notification UI**: Settings buttons now show an update indicator when a newer release is available, and Settings includes a `Download new version` action.
+- **Update Notification UI**: Settings buttons now show an update indicator when a newer release version is available, and Settings includes a `Download new version` action.
 - **Platform-Aware Update Links**: Desktop downloads now resolve to the matching release asset for Windows, macOS, or Linux, while the VS Code variant opens the Marketplace listing.
 - **Release Changelog Links**: Update prompts and website release notes now link directly to the GitHub changelog.
 - **Release Download Counts**: The website reads GitHub Release asset download counts from the GitHub API and displays them beside desktop download buttons.
