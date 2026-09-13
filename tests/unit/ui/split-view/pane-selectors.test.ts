@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { initialState } from '../../../../ui/src/contexts/appStateModel';
 import { createEditableDocumentSession, documentSessionKey } from '../../../../ui/src/editor/documentSession';
+import { bumpDocumentRenderRevision, selectDocumentRenderRevision } from '../../../../ui/src/split-view/documentRenderRevision';
 import { createSplitViewState } from '../../../../ui/src/split-view/paneState';
 import { selectPaneDocument } from '../../../../ui/src/split-view/paneSelectors';
 
@@ -79,5 +80,14 @@ describe('pane document selectors', () => {
     expect(secondary?.source).toBe('# edited');
     expect(primary?.session).toBe(dirtySession);
     expect(secondary?.session).toBe(dirtySession);
+  });
+
+  it('tracks render revisions by normalized document path without touching unrelated documents', () => {
+    const revisions = bumpDocumentRenderRevision({}, '/Docs/A.md');
+    const next = bumpDocumentRenderRevision(revisions, '\\docs\\a.md');
+    const state = { ...initialState, documentRenderRevisions: next };
+
+    expect(selectDocumentRenderRevision(state, '/docs/a.md')).toBe(2);
+    expect(selectDocumentRenderRevision(state, '/docs/b.md')).toBe(0);
   });
 });

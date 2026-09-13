@@ -82,6 +82,7 @@ export interface AppState {
   desktopFontError: string | null;
   desktopFontsResult: { requestId: string; importedId?: string } | null;
   renderVersion: number;
+  documentRenderRevisions: Record<string, number>;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
   documentSessions: Record<string, EditableDocumentSession>;
@@ -239,6 +240,7 @@ export const initialState: AppState = {
   desktopFontError: null,
   desktopFontsResult: null,
   renderVersion: 0,
+  documentRenderRevisions: {},
   contentTabs: [],
   activeContentTabPath: null,
   documentSessions: {},

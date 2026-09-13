@@ -1,6 +1,7 @@
 import type { AppState } from '../contexts/appStateModel';
 import { normalizePathKey } from '../contexts/appStateModel';
 import { renderMarkdownClientSide } from '../contexts/contentTabState';
+import { bumpDocumentRenderRevision } from '../split-view/documentRenderRevision';
 import type { RenderContentMessage, SaveDocumentResultMessage } from '../types';
 import { isDocumentViewModeAllowed, isMarkdownEditingAvailable } from './editingFeature';
 import {
@@ -33,6 +34,13 @@ function isEditableMarkdownPath(filePath: string): boolean {
 function updateTabProjection(state: AppState, filePath: string, source: string): AppState {
   const rendered = renderMarkdownClientSide(source, filePath, /\.mdx$/i.test(filePath), state.settings);
   const target = normalizePathKey(filePath);
+  const previousTab = state.contentTabs.find((tab) => normalizePathKey(tab.filePath) === target);
+  const isCurrent = normalizePathKey(state.currentFile ?? '') === target;
+  const previousHtml = previousTab?.contentHtml ?? (isCurrent ? state.contentHtml : undefined);
+  const previousSource = previousTab?.markdownSource ?? (isCurrent ? state.markdownSource : undefined);
+  const documentRenderRevisions = previousHtml !== rendered.html || previousSource !== source
+    ? bumpDocumentRenderRevision(state.documentRenderRevisions, filePath)
+    : state.documentRenderRevisions;
   const contentTabs = state.contentTabs.map((tab) => normalizePathKey(tab.filePath) === target
     ? {
         ...tab,
@@ -42,8 +50,7 @@ function updateTabProjection(state: AppState, filePath: string, source: string):
         toc: rendered.toc,
       }
     : tab);
-  const isCurrent = normalizePathKey(state.currentFile ?? '') === target;
-  if (!isCurrent) return { ...state, contentTabs };
+  if (!isCurrent) return { ...state, contentTabs, documentRenderRevisions };
   return {
     ...state,
     contentTabs,
@@ -52,6 +59,7 @@ function updateTabProjection(state: AppState, filePath: string, source: string):
     frontmatter: rendered.frontmatter,
     toc: rendered.toc,
     renderVersion: state.renderVersion + 1,
+    documentRenderRevisions,
   };
 }
 

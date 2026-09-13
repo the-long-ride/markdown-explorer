@@ -20,6 +20,7 @@ import {
   type DocumentEditingAction,
 } from '../editor/documentWorkingCopy';
 import { reduceSettingsUiAction } from './reducers/settingsUiReducer';
+import { bumpDocumentRenderRevision } from '../split-view/documentRenderRevision';
 import { reduceSplitViewAction, type SplitViewAction } from '../split-view/splitViewReducer';
 
 export * from './appStateModel';
@@ -27,6 +28,22 @@ export * from './contentTabState';
 
 export type TocStorageWriter = (key: string, value: string) => void;
 export type AppAction = Action | DocumentEditingAction | SplitViewAction;
+
+function renderedDocumentChanged(
+  state: AppState,
+  filePath: string,
+  contentHtml: string,
+  markdownSource: string | null,
+  sourceDocumentText: string | null,
+): boolean {
+  const target = normalizePathKey(filePath);
+  const tab = state.contentTabs.find((item) => normalizePathKey(item.filePath) === target);
+  const isCurrent = normalizePathKey(state.currentFile ?? '') === target;
+  if (!tab && !isCurrent) return true;
+  return (tab?.contentHtml ?? state.contentHtml) !== contentHtml
+    || (tab?.markdownSource ?? state.markdownSource) !== markdownSource
+    || (tab?.sourceDocumentText ?? state.sourceDocumentText) !== sourceDocumentText;
+}
 
 export function reducer(
   state: AppState,
@@ -106,6 +123,7 @@ export function reducer(
           ? action.activeContentTabPath
           : workspaceChanged ? null : state.activeContentTabPath,
         documentSessions: workspaceChanged ? {} : state.documentSessions,
+        documentRenderRevisions: workspaceChanged ? {} : state.documentRenderRevisions,
         focusMode: false,
         sidebarActiveTab: 'files',
       };
@@ -126,6 +144,17 @@ export function reducer(
       const filePath = action.msg.filePath || null;
       const nextFileList = action.msg.fileList ?? state.fileList;
       const rendered = resolveRenderedDocument(action.msg, state.settings);
+      const nextMarkdownSource = action.msg.markdownSource ?? null;
+      const nextSourceDocumentText = action.msg.sourceDocumentText ?? null;
+      const documentRenderRevisions = filePath && renderedDocumentChanged(
+        state,
+        filePath,
+        rendered.html,
+        nextMarkdownSource,
+        nextSourceDocumentText,
+      )
+        ? bumpDocumentRenderRevision(state.documentRenderRevisions, filePath)
+        : state.documentRenderRevisions;
       const existingTab = filePath
         ? state.contentTabs.find((item) => normalizePathKey(item.filePath) === normalizePathKey(filePath))
         : undefined;
@@ -138,8 +167,8 @@ export function reducer(
         fileList: nextFileList,
         currentFile: filePath,
         contentHtml: rendered.html,
-        markdownSource: action.msg.markdownSource ?? null,
-        sourceDocumentText: action.msg.sourceDocumentText ?? null,
+        markdownSource: nextMarkdownSource,
+        sourceDocumentText: nextSourceDocumentText,
         currentHtmlPreviewOverride: resolvedHtmlPreviewOverride,
         frontmatter: rendered.frontmatter,
         toc: rendered.toc,
@@ -153,6 +182,7 @@ export function reducer(
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
         renderVersion: state.renderVersion + 1,
+        documentRenderRevisions,
       };
       if (!state.settings.fileTabs) return { ...baseState, contentTabs: [], activeContentTabPath: null };
       if (!filePath) {
@@ -210,6 +240,7 @@ export function reducer(
         activeContentTabPath: workspaceChanged ? null : state.activeContentTabPath,
         currentHtmlPreviewOverride: workspaceChanged ? undefined : state.currentHtmlPreviewOverride,
         documentSessions: workspaceChanged ? {} : state.documentSessions,
+        documentRenderRevisions: workspaceChanged ? {} : state.documentRenderRevisions,
         isLoading: false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -339,6 +370,7 @@ export function reducer(
         contentTabs: [],
         activeContentTabPath: null,
         documentSessions: {},
+        documentRenderRevisions: {},
         renderVersion: state.renderVersion + 1,
         focusMode: false,
       };

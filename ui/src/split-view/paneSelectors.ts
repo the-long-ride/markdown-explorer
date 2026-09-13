@@ -2,6 +2,7 @@ import type { AppState } from '../contexts/appStateModel';
 import { normalizePathKey } from '../contexts/appStateModel';
 import { documentSessionKey, type EditableDocumentSession } from '../editor/documentSession';
 import type { ContentTab } from '../types';
+import { selectDocumentRenderRevision } from './documentRenderRevision';
 import type { DocumentViewMode, PaneId } from './paneState';
 
 export interface PaneDocumentProjection {
@@ -15,6 +16,7 @@ export interface PaneDocumentProjection {
   readonly sourceDocumentText: string | null;
   readonly mode: DocumentViewMode;
   readonly scrollTop: number;
+  readonly renderRevision: number;
   readonly tab: ContentTab;
   readonly session?: EditableDocumentSession;
 }
@@ -46,6 +48,7 @@ export function selectPaneDocument(state: AppState, paneId: PaneId): PaneDocumen
     sourceDocumentText: tab.sourceDocumentText ?? null,
     mode: pane.mode,
     scrollTop: pane.scrollTop,
+    renderRevision: selectDocumentRenderRevision(state, tab.filePath),
     tab,
     session,
   };
