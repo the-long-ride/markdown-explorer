@@ -10,9 +10,13 @@ const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
 const {
   compareGitSources,
+  createGitHistoryMessageHandlers,
   detectGitCapability,
   listDocumentHistory,
+  listRepositoryHistory,
+  listRevisionFiles,
   readGitRevision,
+  readRevisionFile,
 } = require('../../../electron/git/document-history.js');
 
 const roots: string[] = [];
@@ -48,6 +52,23 @@ async function renameAndCommit(repo: string, oldPath: string, newPath: string, s
   await git(repo, 'mv', '--', oldPath, newPath);
   await git(repo, 'commit', '-m', subject);
   return (await git(repo, 'rev-parse', 'HEAD')).trim();
+}
+
+async function createRepositorySnapshotFixture() {
+  const repo = await createTempGitRepo();
+  const workspacePath = path.join(repo, 'workspace');
+  const firstOid = await commitFile(repo, 'workspace/a.md', '# root\n', 'root document');
+  await commitFile(repo, 'outside.md', '# outside\n', 'outside workspace');
+  const baseBranch = (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD')).trim();
+
+  await git(repo, 'checkout', '-b', 'snapshot-side');
+  const sideOid = await commitFile(repo, 'workspace/side.md', '# side\n', 'side document');
+  await git(repo, 'checkout', baseBranch);
+  const mainOid = await commitFile(repo, 'workspace/main.md', '# main\n', 'main document');
+  await git(repo, 'merge', '--no-ff', 'snapshot-side', '-m', 'merge side branch');
+  const mergeOid = (await git(repo, 'rev-parse', 'HEAD')).trim();
+
+  return { repo, workspacePath, firstOid, sideOid, mainOid, mergeOid };
 }
 
 afterEach(async () => {
@@ -190,5 +211,77 @@ describe('Electron local Git document history', () => {
       oid: docsOid,
       path: 'docs/inside.md',
     })).resolves.toMatchObject({ source: '# inside\n' });
+  });
+
+  it('lists repository commits with merge parents, refs, and exact HEAD state', async () => {
+    const fixture = await createRepositorySnapshotFixture();
+    const commits = await listRepositoryHistory({ workspacePath: fixture.workspacePath, limit: 50 });
+    const head = commits.find((item: { isHead: boolean }) => item.isHead);
+
+    expect(head?.oid).toBe(fixture.mergeOid);
+    expect(head?.parentOids).toHaveLength(2);
+    expect(head?.shortOid).toBe(fixture.mergeOid.slice(0, 7));
+    expect(head?.subject).toBe('merge side branch');
+    expect(commits.some((item: { refs: string[] }) => item.refs.some((ref) => ref.includes('snapshot-side')))).toBe(true);
+  });
+
+  it('lists only files inside the workspace for a selected revision', async () => {
+    const fixture = await createRepositorySnapshotFixture();
+    const files = await listRevisionFiles({ workspacePath: fixture.workspacePath, oid: fixture.mergeOid });
+
+    expect(files).toEqual([
+      { path: 'a.md' },
+      { path: 'main.md' },
+      { path: 'side.md' },
+    ]);
+    expect(files.some((item: { path: string }) => item.path.includes('outside.md'))).toBe(false);
+  });
+
+  it('reads workspace-relative historical files without changing the working tree', async () => {
+    const fixture = await createRepositorySnapshotFixture();
+    const statusBefore = await git(fixture.repo, 'status', '--porcelain');
+    const sourceBefore = await readFile(path.join(fixture.workspacePath, 'a.md'), 'utf8');
+
+    await expect(readRevisionFile({
+      workspacePath: fixture.workspacePath,
+      oid: fixture.mergeOid,
+      path: 'a.md',
+    })).resolves.toEqual({
+      oid: fixture.mergeOid,
+      path: 'a.md',
+      source: '# root\n',
+    });
+
+    await expect(readRevisionFile({
+      workspacePath: fixture.workspacePath,
+      oid: fixture.mergeOid,
+      path: '../outside.md',
+    })).rejects.toThrow(/outside workspace/i);
+    await expect(readRevisionFile({
+      workspacePath: fixture.workspacePath,
+      oid: 'HEAD;rm -rf .',
+      path: 'a.md',
+    })).rejects.toThrow(/invalid revision/i);
+
+    expect(await git(fixture.repo, 'status', '--porcelain')).toBe(statusBefore);
+    expect(await readFile(path.join(fixture.workspacePath, 'a.md'), 'utf8')).toBe(sourceBefore);
+  });
+
+  it('emits repository snapshot protocol result messages from handlers', async () => {
+    const fixture = await createRepositorySnapshotFixture();
+    const sent: any[] = [];
+    const handlers = createGitHistoryMessageHandlers({
+      getWorkspacePath: () => fixture.workspacePath,
+      sendHostMessage: (message: any) => sent.push(message),
+    });
+
+    await handlers.handleListRepositoryHistory({ requestId: 'history-1', limit: 20 });
+    expect(sent[0]).toMatchObject({ command: 'repositoryHistoryResult', requestId: 'history-1', ok: true });
+
+    await handlers.handleListRevisionFiles({ requestId: 'files-1', oid: fixture.mergeOid });
+    expect(sent[1]).toMatchObject({ command: 'revisionFilesResult', requestId: 'files-1', ok: true });
+
+    await handlers.handleReadRevisionFile({ requestId: 'file-1', oid: fixture.mergeOid, path: 'a.md' });
+    expect(sent[2]).toMatchObject({ command: 'revisionFileResult', requestId: 'file-1', ok: true, snapshot: { path: 'a.md' } });
   });
 });

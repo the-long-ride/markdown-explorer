@@ -11,7 +11,9 @@
 import { useEffect } from 'react';
 import { AppStateProvider } from './contexts/AppStateContext';
 import { HistoryProvider } from './contexts/HistoryContext';
+import { RepositorySnapshotFromHistoryProvider } from './contexts/RepositorySnapshotContext';
 import { WorkspaceNavigationProvider } from './contexts/NavigationContext';
+import { RepositorySnapshotPortal } from './components/History/RepositorySnapshotPortal';
 import { NativeCloseGuardBridge } from './editor/NativeCloseGuardBridge';
 import { App } from './App';
 
@@ -54,9 +56,12 @@ export default function AppShell() {
     <AppStateProvider>
       <NativeCloseGuardBridge />
       <HistoryProvider>
-        <WorkspaceNavigationProvider>
-          <App />
-        </WorkspaceNavigationProvider>
+        <RepositorySnapshotFromHistoryProvider>
+          <WorkspaceNavigationProvider>
+            <App />
+          </WorkspaceNavigationProvider>
+          <RepositorySnapshotPortal />
+        </RepositorySnapshotFromHistoryProvider>
       </HistoryProvider>
     </AppStateProvider>
   );

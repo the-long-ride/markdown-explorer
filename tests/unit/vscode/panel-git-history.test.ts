@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { createPanelGitHistoryAdapter } from '../../../vscode/src/core/panelGitHistory';
+import { createPanelGitHistoryAdapter, parsePanelRepositoryHistory } from '../../../vscode/src/core/panelGitHistory';
 
 type ExecCallback = (error: NodeJS.ErrnoException | null, stdout?: string, stderr?: string) => void;
 
@@ -98,5 +98,69 @@ describe('VS Code panel Git history adapter', () => {
       oid,
       path: 'secret.md',
     })).rejects.toThrow(/outside workspace/i);
+  });
+
+  it('parses repository merge parents, decorated refs, and exact HEAD', () => {
+    const mergeOid = 'd'.repeat(40);
+    const leftParent = 'e'.repeat(40);
+    const rightParent = 'f'.repeat(40);
+    const commits = parsePanelRepositoryHistory(
+      `\x1e${mergeOid}\x1f${leftParent} ${rightParent}\x1fDev\x1f2026-09-13T00:00:00Z\x1fmerge branch\x1fHEAD -> main, tag: v2\n`,
+      mergeOid,
+    );
+
+    expect(commits).toEqual([{
+      oid: mergeOid,
+      shortOid: mergeOid.slice(0, 7),
+      parentOids: [leftParent, rightParent],
+      author: 'Dev',
+      authoredAt: '2026-09-13T00:00:00Z',
+      subject: 'merge branch',
+      refs: ['HEAD -> main', 'tag: v2'],
+      isHead: true,
+    }]);
+  });
+
+  it('uses exact Git argument arrays for repository history', async () => {
+    const headOid = '1'.repeat(40);
+    const execFileImpl = makeExec([
+      '/workspace\n',
+      `${headOid}\n`,
+      `\x1e${headOid}\x1f\x1fDev\x1f2026-09-13T00:00:00Z\x1finitial\x1fHEAD -> main\n`,
+    ]);
+    const adapter = createPanelGitHistoryAdapter({ execFileImpl });
+
+    await expect(adapter.listRepositoryHistory({ workspacePath: '/workspace', limit: 200 })).resolves.toHaveLength(1);
+    expect(execFileImpl.mock.calls[1]?.[1]).toEqual(['rev-parse', 'HEAD']);
+    expect(execFileImpl.mock.calls[2]?.[1]).toEqual([
+      'log', '--all', '--format=%x1e%H%x1f%P%x1f%an%x1f%aI%x1f%s%x1f%D', '-n', '200',
+    ]);
+  });
+
+  it('scopes revision tree listing and reads to the workspace prefix', async () => {
+    const oid = '2'.repeat(40);
+    const listExec = makeExec([
+      '/workspace\n',
+      'docs/a.md\ndocs/sub/b.md\n',
+    ]);
+    const listAdapter = createPanelGitHistoryAdapter({ execFileImpl: listExec });
+
+    await expect(listAdapter.listRevisionFiles({ workspacePath: '/workspace/docs', oid })).resolves.toEqual([
+      { path: 'a.md' },
+      { path: 'sub/b.md' },
+    ]);
+    expect(listExec.mock.calls[1]?.[1]).toEqual(['ls-tree', '-r', '--name-only', oid, '--', 'docs']);
+
+    const readExec = makeExec(['/workspace\n', '# historical\n']);
+    const readAdapter = createPanelGitHistoryAdapter({ execFileImpl: readExec });
+    await expect(readAdapter.readRevisionFile({ workspacePath: '/workspace/docs', oid, path: 'a.md' })).resolves.toEqual({
+      oid,
+      path: 'a.md',
+      source: '# historical\n',
+    });
+    expect(readExec.mock.calls[1]?.[1]).toEqual(['show', `${oid}:docs/a.md`]);
+
+    await expect(readAdapter.readRevisionFile({ workspacePath: '/workspace/docs', oid, path: '../secret.md' })).rejects.toThrow(/outside workspace/i);
+    await expect(readAdapter.readRevisionFile({ workspacePath: '/workspace/docs', oid: 'HEAD', path: 'a.md' })).rejects.toThrow(/invalid revision/i);
   });
 });

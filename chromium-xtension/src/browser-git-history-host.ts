@@ -5,6 +5,9 @@ const GIT_HISTORY_COMMANDS = new Set([
   'listDocumentHistory',
   'readGitRevision',
   'compareGitRevisions',
+  'listRepositoryHistory',
+  'listRevisionFiles',
+  'readRevisionFile',
 ]);
 
 export async function handleBrowserGitHistoryCommand(
@@ -24,6 +27,15 @@ export async function handleBrowserGitHistoryCommand(
       break;
     case 'listDocumentHistory':
       send({ command: 'documentHistoryResult', requestId, ok: false, revisions: [], reason: 'unsupported-runtime' });
+      break;
+    case 'listRepositoryHistory':
+      send({ command: 'repositoryHistoryResult', requestId, ok: false, commits: [], reason: 'unsupported-runtime' });
+      break;
+    case 'listRevisionFiles':
+      send({ command: 'revisionFilesResult', requestId, ok: false, files: [], reason: 'unsupported-runtime' });
+      break;
+    case 'readRevisionFile':
+      send({ command: 'revisionFileResult', requestId, ok: false, reason: 'unsupported-runtime' });
       break;
     case 'readGitRevision':
       send({ command: 'gitRevisionResult', requestId, ok: false, reason: 'unsupported-runtime' });

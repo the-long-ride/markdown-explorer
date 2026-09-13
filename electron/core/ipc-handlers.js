@@ -135,6 +135,15 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "listDocumentHistory":
         await handlers.listDocumentHistory(msg);
         break;
+      case "listRepositoryHistory":
+        await handlers.listRepositoryHistory(msg);
+        break;
+      case "listRevisionFiles":
+        await handlers.listRevisionFiles(msg);
+        break;
+      case "readRevisionFile":
+        await handlers.readRevisionFile(msg);
+        break;
       case "readGitRevision":
         await handlers.readGitRevision(msg);
         break;

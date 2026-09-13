@@ -2,7 +2,14 @@ import type { FolderNode, MdFile, RecentWorkspace } from './files';
 import type { DocumentRevisionToken, RenderContentMessage, WorkspaceOperationMetadata } from './content';
 import type { AppRuntime, HostPlatform, UpdateState, WorkspaceUnavailableReason } from './settings';
 import type { DesktopFontFamily } from '../desktop/fonts/fontModel';
-import type { GitCapability, GitRevisionSnapshot, GitRevisionSummary } from '../history/contracts';
+import type {
+  GitCapability,
+  GitRepositoryCommit,
+  GitRevisionFile,
+  GitRevisionFileSnapshot,
+  GitRevisionSnapshot,
+  GitRevisionSummary,
+} from '../history/contracts';
 import type {
   ExternalLinkCheckResult,
   InsightsFsDelta,
@@ -225,6 +232,18 @@ export interface GitComparisonResultMessage {
   readonly reason?: string;
 }
 
+export type RepositoryHistoryResultMessage =
+  | { readonly command: 'repositoryHistoryResult'; readonly requestId: string; readonly ok: true; readonly commits: readonly GitRepositoryCommit[] }
+  | { readonly command: 'repositoryHistoryResult'; readonly requestId: string; readonly ok: false; readonly commits: readonly GitRepositoryCommit[]; readonly reason: string };
+
+export type RevisionFilesResultMessage =
+  | { readonly command: 'revisionFilesResult'; readonly requestId: string; readonly ok: true; readonly files: readonly GitRevisionFile[] }
+  | { readonly command: 'revisionFilesResult'; readonly requestId: string; readonly ok: false; readonly files: readonly GitRevisionFile[]; readonly reason: string };
+
+export type RevisionFileResultMessage =
+  | { readonly command: 'revisionFileResult'; readonly requestId: string; readonly ok: true; readonly snapshot: GitRevisionFileSnapshot }
+  | { readonly command: 'revisionFileResult'; readonly requestId: string; readonly ok: false; readonly reason: string };
+
 export interface InsightsScanBatchMessage extends InsightsScanBatch { readonly command: 'insightsScanBatch'; }
 export interface InsightsScanCompleteMessage extends InsightsScanComplete { readonly command: 'insightsScanComplete'; }
 export interface InsightsDocumentSourceResultMessage extends InsightsSourceResult { readonly command: 'insightsDocumentSourceResult'; }
@@ -267,6 +286,7 @@ export type HostMessage =
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
   | WorkspaceTextResourceResultMessage | WorkspaceExportResourceResultMessage | SaveDocumentResultMessage
   | GitCapabilityResultMessage | DocumentHistoryResultMessage | GitRevisionResultMessage | GitComparisonResultMessage
+  | RepositoryHistoryResultMessage | RevisionFilesResultMessage | RevisionFileResultMessage
   | InsightsScanBatchMessage | InsightsScanCompleteMessage | InsightsDocumentSourceResultMessage
   | WorkspaceResourceProbeResultMessage | InsightsFsDeltaMessage | InsightsRuntimeCapabilitiesMessage
   | ExternalLinkCheckResultMessage | ExternalLinkCheckCompleteMessage

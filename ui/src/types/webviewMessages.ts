@@ -13,6 +13,9 @@ export interface GetGitCapabilityMessage { readonly command: 'getGitCapability';
 export interface ListDocumentHistoryMessage { readonly command: 'listDocumentHistory'; readonly requestId: string; readonly filePath: string; readonly limit?: number; }
 export interface ReadGitRevisionMessage { readonly command: 'readGitRevision'; readonly requestId: string; readonly oid: string; readonly path: string; }
 export interface CompareGitRevisionsMessage { readonly command: 'compareGitRevisions'; readonly requestId: string; readonly left: GitCompareSide; readonly right: GitCompareSide; }
+export interface ListRepositoryHistoryMessage { readonly command: 'listRepositoryHistory'; readonly requestId: string; readonly limit?: number; }
+export interface ListRevisionFilesMessage { readonly command: 'listRevisionFiles'; readonly requestId: string; readonly oid: string; }
+export interface ReadRevisionFileMessage { readonly command: 'readRevisionFile'; readonly requestId: string; readonly oid: string; readonly path: string; }
 export interface NavigateMessage { readonly command: 'navigate'; readonly path: string; }
 export interface OpenInEditorMessage { readonly command: 'openInEditor'; readonly path: string; }
 export interface WebviewReadyMessage { readonly command: 'ready'; readonly documentConversionEnabled?: boolean; }
@@ -84,6 +87,7 @@ export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonl
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage | SaveDocumentMessage
   | GetGitCapabilityMessage | ListDocumentHistoryMessage | ReadGitRevisionMessage | CompareGitRevisionsMessage
+  | ListRepositoryHistoryMessage | ListRevisionFilesMessage | ReadRevisionFileMessage
   | ScanInsightsWorkspaceMessage | CancelInsightsScanMessage | ReadInsightsDocumentSourceMessage
   | ProbeWorkspaceResourceMessage | SetInsightsWatchStateMessage | CheckExternalLinksMessage | CancelExternalLinkChecksMessage
   | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage

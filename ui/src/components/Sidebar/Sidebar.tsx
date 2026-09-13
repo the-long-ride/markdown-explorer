@@ -7,8 +7,13 @@ import {
   useEffect,
 } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
-import { SearchIcon } from "../shared/icons";
+import type { SidebarTabId } from "../../contexts/appStateModel";
+import { getHistoryTranslations } from "../../contexts/historyTranslations";
+import { useRepositorySnapshot } from "../../contexts/RepositorySnapshotContext";
+import { SearchIcon, FolderIcon } from "../shared/icons";
 import { BookmarksPanel } from "../Bookmarks/BookmarksPanel";
+import { BookmarkIcon } from "../Bookmarks/BookmarkIcons";
+import { RepositoryHistoryPanel } from "../History/RepositoryHistoryPanel";
 import type { BookmarkRecord, OpenBookmarkWorkspace } from "../../bookmarks/types.ts";
 import { useBookmarks } from "../../bookmarks/useBookmarks.ts";
 import { FileNode, FolderNodeView } from "./TreeNode";
@@ -34,6 +39,7 @@ import { useSidebarPinnedSorting } from "./useSidebarPinnedSorting";
 import { useSidebarScopeFocus } from "./useSidebarScopeFocus";
 import { SidebarScopeControls } from "./SidebarScopeControls";
 import { SidebarTabsHeader } from "./SidebarTabsHeader";
+import { buildVisibleSidebarTabs, sidebarTabIndex } from "./sidebarTabs";
 
 interface SidebarProps {
   cursorMode?: boolean;
@@ -42,6 +48,16 @@ interface SidebarProps {
   bookmarkWorkspaces?: readonly OpenBookmarkWorkspace[];
   activeBookmarkWorkspaceKey?: string;
   onBookmarkNavigate?: (bookmark: BookmarkRecord) => void;
+}
+
+function HistorySidebarIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 3v6h6" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
 }
 
 export function Sidebar({
@@ -53,6 +69,7 @@ export function Sidebar({
   onBookmarkNavigate = () => {},
 }: SidebarProps) {
   const { state, updateSettings, dispatch, navigate } = useAppState();
+  const { capability: repositoryHistoryCapability } = useRepositorySnapshot();
   const bridge = usePlatform();
   const bookmarkDocument = useBookmarks();
   const [filter, setFilter] = useState("");
@@ -61,6 +78,7 @@ export function Sidebar({
     useFolderExpansionCommand();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
+  const historyT = getHistoryTranslations(currentLang);
 
   const navRef = useRef<HTMLElement>(null);
   const treeRef = useRef<HTMLDivElement>(null);
@@ -70,7 +88,6 @@ export function Sidebar({
   const canOpenItemLocations = supportsShellLocation(state.appRuntime);
   const canOpenHtmlInBrowser = supportsLocalFileBrowserOpen(state.appRuntime);
 
-  // Search status reported by SidebarSearch
   const [searchStatus, setSearchStatus] = useState<SidebarSearchStatus>({
     isSearching: false,
     resultCount: 0,
@@ -90,33 +107,48 @@ export function Sidebar({
   const isFiles = state.sidebarActiveTab === "files";
   const isSearch = state.sidebarActiveTab === "search";
   const isBookmarks = state.sidebarActiveTab === "bookmarks";
+  const isHistory = state.sidebarActiveTab === "history";
   const bookmarkCount = bookmarkViewMode === 'tabs'
     ? bookmarkDocument.items.filter((item) => bookmarkWorkspaces.some((workspace) => workspace.workspaceKey === item.workspaceKey)).length
     : bookmarkDocument.items.filter((item) => item.workspaceKey === activeBookmarkWorkspaceKey).length;
-  type SidebarTab = 'files' | 'search' | 'bookmarks';
-  const prevTabRef = useRef<SidebarTab>(state.sidebarActiveTab);
+  const historyEnabled = state.settings.historySidebarEnabled && repositoryHistoryCapability?.supported === true;
+  const visibleTabs = useMemo(() => buildVisibleSidebarTabs({
+    bookmarksEnabled: state.settings.bookmarksEnabled,
+    historyEnabled,
+    filesLabel: t.sidebar.files,
+    searchLabel: t.sidebar.search,
+    bookmarksLabel: t.bookmarks.tab,
+    historyLabel: historyT.history,
+    fileCount: state.fileList.length,
+    bookmarkCount,
+    icons: {
+      files: <FolderIcon size={14} />,
+      search: <SearchIcon size={14} />,
+      bookmarks: <BookmarkIcon size={14} />,
+      history: <HistorySidebarIcon size={14} />,
+    },
+  }), [bookmarkCount, historyEnabled, historyT.history, state.fileList.length, state.settings.bookmarksEnabled, t.bookmarks.tab, t.sidebar.files, t.sidebar.search]);
+  const prevTabRef = useRef<SidebarTabId>(state.sidebarActiveTab);
   const [slideDirection, setSlideDirection] = useState<'from-right' | 'from-left'>('from-right');
 
   useEffect(() => {
     const prevTab = prevTabRef.current;
     const currentTab = state.sidebarActiveTab;
     if (currentTab !== prevTab) {
-      const tabIndices: Record<SidebarTab, number> = { files: 0, search: 1, bookmarks: 2 };
-      const prevIdx = tabIndices[prevTab] ?? 0;
-      const currIdx = tabIndices[currentTab] ?? 0;
+      const prevIdx = sidebarTabIndex(visibleTabs, prevTab);
+      const currIdx = sidebarTabIndex(visibleTabs, currentTab);
       setSlideDirection(currIdx < prevIdx ? 'from-right' : 'from-left');
       prevTabRef.current = currentTab;
     }
-  }, [state.sidebarActiveTab]);
+  }, [state.sidebarActiveTab, visibleTabs]);
 
   useEffect(() => {
     if (!isFiles) setItemMenu(null);
   }, [isFiles]);
   useEffect(() => {
-    if (!state.settings.bookmarksEnabled && isBookmarks) {
-      dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "files" });
-    }
-  }, [dispatch, isBookmarks, state.settings.bookmarksEnabled]);
+    const activeUnavailable = (isBookmarks && !state.settings.bookmarksEnabled) || (isHistory && !historyEnabled);
+    if (activeUnavailable) dispatch({ type: "SET_SIDEBAR_ACTIVE_TAB", tab: "files" });
+  }, [dispatch, historyEnabled, isBookmarks, isHistory, state.settings.bookmarksEnabled]);
 
   const scrollToActiveFile = useCallback(() => {
     if (!state.currentFile) return;
@@ -264,156 +296,57 @@ export function Sidebar({
       ref={navRef}
       className={`sidebar${state.sidebarCollapsed ? " is-collapsed" : ""}${cursorMode ? " is-cursor-mode" : ""}${state.settings.bookmarksEnabled ? " has-bookmarks-feature" : ""}`}
       id="sidebar"
-      aria-label={
-        cursorMode ? t.ui.fileNavigationCursorMode : t.ui.fileNavigation
-      }
+      aria-label={cursorMode ? t.ui.fileNavigationCursorMode : t.ui.fileNavigation}
     >
       <SidebarTabsHeader
         activeTab={state.sidebarActiveTab}
-        bookmarksEnabled={state.settings.bookmarksEnabled}
-        fileCount={state.fileList.length}
-        bookmarkCount={bookmarkCount}
+        tabs={visibleTabs}
         searchStatus={searchStatus}
-        filesLabel={t.sidebar.files}
-        searchLabel={t.sidebar.search}
-        bookmarksLabel={t.bookmarks.tab}
         onSelect={(tab) => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab })}
       />
 
-      {/* Tab content — directional slide animation */}
-      <div
-        className={`sidebar__tab-panel${isFiles ? ` is-active is-${slideDirection}` : " is-hidden"}`}
-      >
+      <div className={`sidebar__tab-panel${isFiles ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
         <div className="sidebar__header-fields">
           <div className="sidebar__search">
             <SearchIcon size={15} />
-            <input
-              type="text"
-              placeholder={t.sidebar.filterPlaceholder}
-              autoComplete="off"
-              value={filter}
-              onChange={onFilterChange}
-              aria-label={t.sidebar.filterAriaLabel}
-            />
+            <input type="text" placeholder={t.sidebar.filterPlaceholder} autoComplete="off" value={filter} onChange={onFilterChange} aria-label={t.sidebar.filterAriaLabel} />
           </div>
           <div className="sidebar__files-second-row">
-            <SidebarScopeControls
-              editing={scopeFocusEditing}
-              hasEntry={hasScopeEntry}
-              count={scopeFocusCount}
-              total={allFilePaths.length}
-              allSelected={allFilesSelected}
-              labels={{
-                focus: t.sidebar.scopeFocus,
-                clear: t.sidebar.clearScopeFocus,
-                checkAll: t.sidebar.checkAll,
-                uncheckAll: t.sidebar.uncheckAll,
-              }}
-              onToggleEditing={() => setScopeFocusEditing((editing) => !editing)}
-              onToggleAll={toggleAllScopeFiles}
-              onClear={clearScopeFocus}
-            />
+            <SidebarScopeControls editing={scopeFocusEditing} hasEntry={hasScopeEntry} count={scopeFocusCount} total={allFilePaths.length} allSelected={allFilesSelected} labels={{ focus: t.sidebar.scopeFocus, clear: t.sidebar.clearScopeFocus, checkAll: t.sidebar.checkAll, uncheckAll: t.sidebar.uncheckAll }} onToggleEditing={() => setScopeFocusEditing((editing) => !editing)} onToggleAll={toggleAllScopeFiles} onClear={clearScopeFocus} />
           </div>
-          <SidebarFilesActions
-            canLocate={Boolean(state.currentFile)}
-            hasPins={hasPins}
-            locateLabel={t.tooltips.locateFile}
-            clearPinsLabel={t.sidebar.clearPinnedItems}
-            sortLabel={t.sidebar.sortFiles}
-            sortNameAscLabel={t.sidebar.sortNameAsc}
-            sortNameDescLabel={t.sidebar.sortNameDesc}
-            sortModifiedDescLabel={t.sidebar.sortModifiedDesc}
-            sortModifiedAscLabel={t.sidebar.sortModifiedAsc}
-            collapseLabel={t.sidebar.collapseAllFolders}
-            expandLabel={t.sidebar.expandAllFolders}
-            locateShortcut={getEnabledShortcut(state.settings, 'locateFile')}
-            sortMode={sortMode}
-            onLocate={scrollToActiveFile}
-            onClearPins={clearPins}
-            onSortChange={setSortMode}
-            onCollapseAll={collapseAllFolders}
-            onExpandAll={expandAllFolders}
-          />
+          <SidebarFilesActions canLocate={Boolean(state.currentFile)} hasPins={hasPins} locateLabel={t.tooltips.locateFile} clearPinsLabel={t.sidebar.clearPinnedItems} sortLabel={t.sidebar.sortFiles} sortNameAscLabel={t.sidebar.sortNameAsc} sortNameDescLabel={t.sidebar.sortNameDesc} sortModifiedDescLabel={t.sidebar.sortModifiedDesc} sortModifiedAscLabel={t.sidebar.sortModifiedAsc} collapseLabel={t.sidebar.collapseAllFolders} expandLabel={t.sidebar.expandAllFolders} locateShortcut={getEnabledShortcut(state.settings, 'locateFile')} sortMode={sortMode} onLocate={scrollToActiveFile} onClearPins={clearPins} onSortChange={setSortMode} onCollapseAll={collapseAllFolders} onExpandAll={expandAllFolders} />
         </div>
-        <div
-          className="sidebar__tree sidebar__tree--from-left"
-          id="sidebarTree"
-          role="tree"
-          ref={treeRef}
-          onScroll={handleScroll}
-        >
+        <div className="sidebar__tree sidebar__tree--from-left" id="sidebarTree" role="tree" ref={treeRef} onScroll={handleScroll}>
           {orderedRootItems.map((item) => item.kind === "file" ? (
-            <FileNode
-              key={item.key}
-              file={item.file}
-              scopeFocus={scopeFocusTree}
-              ordering={treeOrdering}
-              cursorMode={cursorMode}
-              cursorItemId={cursorItemId}
-              onRequestItemMenu={handleRequestItemMenu}
-              canRequestItemMenu={canRequestItemMenu}
-              openMenuPath={itemMenu?.path ?? null}
-              itemActionsLabel={t.sidebarItemActions}
-              pinnedLabel={t.sidebar.pinned}
-            />
+            <FileNode key={item.key} file={item.file} scopeFocus={scopeFocusTree} ordering={treeOrdering} cursorMode={cursorMode} cursorItemId={cursorItemId} onRequestItemMenu={handleRequestItemMenu} canRequestItemMenu={canRequestItemMenu} openMenuPath={itemMenu?.path ?? null} itemActionsLabel={t.sidebarItemActions} pinnedLabel={t.sidebar.pinned} />
           ) : (
-            <FolderNodeView
-              key={item.key}
-              node={item.folder}
-              filter={filter}
-              scopeFocus={scopeFocusTree}
-              ordering={treeOrdering}
-              cursorMode={cursorMode}
-              cursorItemId={cursorItemId}
-              onRequestItemMenu={handleRequestItemMenu}
-              canRequestItemMenu={canRequestItemMenu}
-              openMenuPath={itemMenu?.path ?? null}
-              itemActionsLabel={t.sidebarItemActions}
-              pinnedLabel={t.sidebar.pinned}
-              activeFolderPaths={activeFolderPaths}
-              locateRequest={locateRequest}
-              expansionCommand={folderExpansionCommand}
-            />
+            <FolderNodeView key={item.key} node={item.folder} filter={filter} scopeFocus={scopeFocusTree} ordering={treeOrdering} cursorMode={cursorMode} cursorItemId={cursorItemId} onRequestItemMenu={handleRequestItemMenu} canRequestItemMenu={canRequestItemMenu} openMenuPath={itemMenu?.path ?? null} itemActionsLabel={t.sidebarItemActions} pinnedLabel={t.sidebar.pinned} activeFolderPaths={activeFolderPaths} locateRequest={locateRequest} expansionCommand={folderExpansionCommand} />
           ))}
-          {!hasVisibleTreeItems && (
-            <div className="sidebar__empty-scope">
-              {hasScopeEntry ? t.sidebar.noScopeFiles : t.sidebar.noFiles}
-            </div>
-          )}
+          {!hasVisibleTreeItems && <div className="sidebar__empty-scope">{hasScopeEntry ? t.sidebar.noScopeFiles : t.sidebar.noFiles}</div>}
         </div>
       </div>
 
-      <div
-        className={`sidebar__tab-panel${isSearch ? ` is-active is-${slideDirection}` : " is-hidden"}`}
-      >
-        <SidebarSearch
-          isVisible={isSearch}
-          selectedFilePaths={selectedFilePaths}
-          hasScopeEntry={hasScopeEntry}
-          onStatusChange={handleSearchStatus}
-        />
+      <div className={`sidebar__tab-panel${isSearch ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
+        <SidebarSearch isVisible={isSearch} selectedFilePaths={selectedFilePaths} hasScopeEntry={hasScopeEntry} onStatusChange={handleSearchStatus} />
       </div>
 
       {state.settings.bookmarksEnabled && (
         <div className={`sidebar__tab-panel${isBookmarks ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
-          <BookmarksPanel
-            visible={isBookmarks}
-            viewMode={bookmarkViewMode}
-            workspaces={bookmarkWorkspaces}
-            activeWorkspaceKey={activeBookmarkWorkspaceKey}
-            translations={t.bookmarks}
-            onNavigate={onBookmarkNavigate}
-          />
+          <BookmarksPanel visible={isBookmarks} viewMode={bookmarkViewMode} workspaces={bookmarkWorkspaces} activeWorkspaceKey={activeBookmarkWorkspaceKey} translations={t.bookmarks} onNavigate={onBookmarkNavigate} />
         </div>
       )}
+
+      {historyEnabled && (
+        <div className={`sidebar__tab-panel${isHistory ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
+          <RepositoryHistoryPanel visible={isHistory} language={currentLang} />
+        </div>
+      )}
+
       {itemMenu && navRef.current && itemMenuItems.length > 0 && (
         <SidebarItemMenu
           anchor={itemMenu.anchor}
           sidebar={navRef.current}
-          menuLabel={t.sidebarItemActions.replace(
-            "{name}",
-            itemMenu.path.split(/[\\/]/).filter(Boolean).pop() ?? itemMenu.path,
-          )}
+          menuLabel={t.sidebarItemActions.replace("{name}", itemMenu.path.split(/[\\/]/).filter(Boolean).pop() ?? itemMenu.path)}
           items={itemMenuItems}
           onClose={() => setItemMenu(null)}
         />

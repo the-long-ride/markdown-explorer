@@ -22,7 +22,8 @@ export interface UnsavedChangesGuardController {
 }
 
 function fileName(filePath: string): string {
-  return filePath.split(/[\\/]/).filter(Boolean).at(-1) ?? filePath;
+  const parts = filePath.split(/[\\/]/).filter(Boolean);
+  return parts[parts.length - 1] ?? filePath;
 }
 
 export function useUnsavedChangesGuard({

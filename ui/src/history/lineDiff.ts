@@ -139,7 +139,7 @@ function buildHunks(lines: readonly DiffLine[], contextLines: number): DiffHunk[
   const context = Math.max(0, Math.trunc(Number.isFinite(contextLines) ? contextLines : 3));
   const groups: Array<{ first: number; last: number }> = [];
   for (const index of changed) {
-    const previous = groups.at(-1);
+    const previous = groups[groups.length - 1];
     if (!previous || index - previous.last - 1 > context * 2) groups.push({ first: index, last: index });
     else previous.last = index;
   }

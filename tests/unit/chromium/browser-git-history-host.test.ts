@@ -17,6 +17,9 @@ describe('browser Git history host', () => {
     ['listDocumentHistory', 'documentHistoryResult', { ok: false, revisions: [], reason: 'unsupported-runtime' }],
     ['readGitRevision', 'gitRevisionResult', { ok: false, reason: 'unsupported-runtime' }],
     ['compareGitRevisions', 'gitComparisonResult', { ok: false, reason: 'unsupported-runtime' }],
+    ['listRepositoryHistory', 'repositoryHistoryResult', { ok: false, commits: [], reason: 'unsupported-runtime' }],
+    ['listRevisionFiles', 'revisionFilesResult', { ok: false, files: [], reason: 'unsupported-runtime' }],
+    ['readRevisionFile', 'revisionFileResult', { ok: false, reason: 'unsupported-runtime' }],
   ] as const)('rejects %s safely', async (command, responseCommand, response) => {
     const send = vi.fn();
 

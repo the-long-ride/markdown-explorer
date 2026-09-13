@@ -1,4 +1,5 @@
 import type { AppState } from '../contexts/appStateModel';
+import { isDocumentViewModeAllowed } from '../editor/editingFeature';
 import {
   closeSplit,
   openSplit,
@@ -37,11 +38,14 @@ export function reduceSplitViewAction(state: AppState, action: { type: string } 
       return { ...state, splitView: setActivePane(state.splitView, action.paneId as PaneId) };
     case 'SET_SPLIT_RATIO':
       return { ...state, splitView: setSplitRatio(state.splitView, action.ratio as number) };
-    case 'SET_SPLIT_PANE_MODE':
+    case 'SET_SPLIT_PANE_MODE': {
+      const mode = action.mode as DocumentViewMode;
+      if (!isDocumentViewModeAllowed(state.settings, mode)) return state;
       return {
         ...state,
-        splitView: setPaneMode(state.splitView, action.paneId as PaneId, action.mode as DocumentViewMode),
+        splitView: setPaneMode(state.splitView, action.paneId as PaneId, mode),
       };
+    }
     case 'SWAP_SPLIT_PANES':
       return { ...state, splitView: swapPanes(state.splitView) };
     case 'SET_SPLIT_PANE_FILE':

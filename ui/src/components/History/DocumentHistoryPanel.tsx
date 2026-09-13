@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import { getHistoryTranslations } from '../../contexts/historyTranslations';
+import { getHistoryMetaTranslations } from '../../contexts/historyMetaTranslations';
 import type { GitRevisionSummary } from '../../history/contracts';
 import type { HistoryClient } from '../../history/historyClient';
+import { TooltipButton } from '../shared/TooltipButton';
+import { CopyableHistoryMeta } from './CopyableHistoryMeta';
+import { HistoryCompareIcon, HistoryCloseIcon, HistoryViewIcon, HistoryWorkingCopyIcon } from './HistoryActionIcons';
+import { HistorySelectionCheckbox } from './HistorySelectionCheckbox';
 
 interface DocumentHistoryPanelProps {
   filePath: string;
@@ -25,6 +30,7 @@ export function DocumentHistoryPanel({
   onCompareSelected,
 }: DocumentHistoryPanelProps) {
   const t = getHistoryTranslations(language);
+  const metaT = getHistoryMetaTranslations(language);
   const [revisions, setRevisions] = useState<readonly GitRevisionSummary[]>([]);
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -65,11 +71,11 @@ export function DocumentHistoryPanel({
     : current.length >= 2 ? [current[1], oid] : [...current, oid]);
 
   return (
-    <div className="history-panel-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="history-panel-backdrop mdn-app-modal-region" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <aside className="document-history-panel" role="dialog" aria-modal="true" aria-label={t.documentHistory}>
         <header className="document-history-panel__header">
           <div><h2>{t.history}</h2><div className="document-history-panel__path" title={filePath}>{filePath}</div></div>
-          <button type="button" className="btn" onClick={onClose} aria-label={t.closeHistory}>{t.closeHistory}</button>
+          <TooltipButton type="button" className="btn btn--icon document-history-panel__icon-action" onClick={onClose} tooltip={t.closeHistory} portalTooltip icon={<HistoryCloseIcon />} />
         </header>
         {status === 'idle' && <button type="button" className="btn document-history-panel__load" onClick={() => { void load(); }}>{t.loadHistory}</button>}
         {status === 'loading' && <div role="status">{t.loadingHistory}</div>}
@@ -78,22 +84,44 @@ export function DocumentHistoryPanel({
         {status === 'ready' && revisions.length === 0 && <div role="status">{t.noHistory}</div>}
         {status === 'ready' && revisions.length > 0 && (
           <>
-            {onCompareSelected && <div className="document-history-panel__selection-actions"><button type="button" className="btn" disabled={selectedRevisions.length !== 2} onClick={() => { if (selectedRevisions.length === 2) void runAction(() => onCompareSelected(selectedRevisions[0], selectedRevisions[1])); }}>{t.compareSelected}</button></div>}
+            {onCompareSelected && (
+              <div className="document-history-panel__selection-actions">
+                <TooltipButton
+                  type="button"
+                  className="btn btn--icon document-history-panel__icon-action"
+                  disabled={selectedRevisions.length !== 2}
+                  onClick={() => { if (selectedRevisions.length === 2) void runAction(() => onCompareSelected(selectedRevisions[0], selectedRevisions[1])); }}
+                  tooltip={t.compareSelected}
+                  portalTooltip
+                  icon={<HistoryCompareIcon />}
+                />
+              </div>
+            )}
             <ol className="document-history-panel__list">
               {revisions.map((revision) => (
                 <li key={revision.oid} className="document-history-panel__revision">
                   <div className="document-history-panel__revision-main">
-                    {onCompareSelected && <input type="checkbox" aria-label={`${t.revision} ${revision.shortOid}`} checked={selected.includes(revision.oid)} onChange={() => toggleSelected(revision.oid)} />}
-                    <div>
+                    {onCompareSelected && (
+                      <HistorySelectionCheckbox
+                        checked={selected.includes(revision.oid)}
+                        label={`${t.revision} ${revision.shortOid}`}
+                        onToggle={() => toggleSelected(revision.oid)}
+                      />
+                    )}
+                    <div className="document-history-panel__revision-copy">
                       <div className="document-history-panel__subject">{revision.subject || t.noCommitMessage}</div>
-                      <div className="document-history-panel__meta"><code>{revision.shortOid}</code><span>{revision.author}</span><time dateTime={revision.authoredAt}>{new Date(revision.authoredAt).toLocaleString(language)}</time></div>
+                      <div className="document-history-panel__meta">
+                        <CopyableHistoryMeta display={revision.shortOid} copyValue={revision.oid} tooltip={metaT.copyCommitSha} copiedLabel={metaT.copied} monospace />
+                        <CopyableHistoryMeta display={revision.author} copyValue={revision.author} tooltip={metaT.copyAuthor} copiedLabel={metaT.copied} />
+                        <time dateTime={revision.authoredAt}>{new Date(revision.authoredAt).toLocaleString(language)}</time>
+                      </div>
                       <div className="document-history-panel__revision-path">{revision.path}</div>
                     </div>
                   </div>
                   <div className="document-history-panel__actions">
-                    <button type="button" className="btn" onClick={() => { void runAction(() => onViewRevision(revision)); }}>{t.viewRevision}</button>
-                    {onCompareCurrent && <button type="button" className="btn" onClick={() => { void runAction(() => onCompareCurrent(revision)); }}>{t.compareCurrent}</button>}
-                    {onCompareWorkingCopy && <button type="button" className="btn" onClick={() => { void runAction(() => onCompareWorkingCopy(revision)); }}>{t.workingCopy}</button>}
+                    <TooltipButton type="button" className="btn btn--icon document-history-panel__icon-action" onClick={() => { void runAction(() => onViewRevision(revision)); }} tooltip={t.viewRevision} portalTooltip icon={<HistoryViewIcon />} />
+                    {onCompareCurrent && <TooltipButton type="button" className="btn btn--icon document-history-panel__icon-action" onClick={() => { void runAction(() => onCompareCurrent(revision)); }} tooltip={t.compareCurrent} portalTooltip icon={<HistoryCompareIcon />} />}
+                    {onCompareWorkingCopy && <TooltipButton type="button" className="btn btn--icon document-history-panel__icon-action" onClick={() => { void runAction(() => onCompareWorkingCopy(revision)); }} tooltip={t.workingCopy} portalTooltip icon={<HistoryWorkingCopyIcon />} />}
                   </div>
                 </li>
               ))}

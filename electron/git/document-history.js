@@ -176,6 +176,52 @@ function parseHistory(output, initialPath) {
   return revisions;
 }
 
+function parseRepositoryHistory(output, headOid) {
+  const records = output.split('\x1e').slice(1);
+  const commits = [];
+  for (const rawRecord of records) {
+    const header = rawRecord.replace(/^\r?\n/, '').split(/\r?\n/, 1)[0] || '';
+    const [oid, parents = '', author = '', authoredAt = '', subject = '', decorations = ''] = header.split('\x1f');
+    if (!FULL_OID.test(oid || '')) continue;
+    commits.push({
+      oid,
+      shortOid: oid.slice(0, 7),
+      parentOids: parents.split(/\s+/).filter((parentOid) => FULL_OID.test(parentOid)),
+      author,
+      authoredAt,
+      subject,
+      refs: decorations.split(',').map((value) => value.trim()).filter(Boolean),
+      isHead: oid.toLowerCase() === headOid.toLowerCase(),
+    });
+  }
+  return commits;
+}
+
+function workspaceRepositoryPrefix(repositoryRoot, workspaceRoot) {
+  const relative = path.relative(repositoryRoot, workspaceRoot);
+  return relative && relative !== '.' ? toGitPath(relative) : '';
+}
+
+function validateWorkspaceRelativePath(repositoryRoot, workspaceRoot, workspacePath) {
+  if (typeof workspacePath !== 'string' || !workspacePath.trim() || path.isAbsolute(workspacePath)) {
+    throw new GitHistoryError('Revision path is outside workspace', 'outside-workspace');
+  }
+  const normalized = workspacePath.replace(/\\/g, '/');
+  const absolute = path.resolve(workspaceRoot, ...normalized.split('/'));
+  assertWorkspacePath(workspaceRoot, absolute);
+  if (!isSameOrInside(repositoryRoot, absolute)) {
+    throw new GitHistoryError('Revision path is outside repository', 'outside-repository');
+  }
+  const relativeToWorkspace = toGitPath(path.relative(workspaceRoot, absolute));
+  if (!relativeToWorkspace || relativeToWorkspace === '.') {
+    throw new GitHistoryError('Revision path must identify a file inside the workspace', 'outside-workspace');
+  }
+  return {
+    workspacePath: relativeToWorkspace,
+    repositoryPath: toGitPath(path.relative(repositoryRoot, absolute)),
+  };
+}
+
 async function listDocumentHistory({ workspacePath, filePath, limit } = {}) {
   const { repositoryRoot, workspaceRoot } = await resolveGitContext(workspacePath);
   const gitPath = repositoryRelativePath(repositoryRoot, filePath, workspaceRoot);
@@ -193,12 +239,53 @@ async function listDocumentHistory({ workspacePath, filePath, limit } = {}) {
   return parseHistory(output, gitPath);
 }
 
+async function listRepositoryHistory({ workspacePath, limit } = {}) {
+  const { repositoryRoot } = await resolveGitContext(workspacePath);
+  const headOid = (await runGit(repositoryRoot, ['rev-parse', 'HEAD'])).trim();
+  const output = await runGit(repositoryRoot, [
+    'log',
+    '--all',
+    '--format=%x1e%H%x1f%P%x1f%an%x1f%aI%x1f%s%x1f%D',
+    '-n',
+    String(normalizeHistoryLimit(limit)),
+  ]);
+  return parseRepositoryHistory(output, headOid);
+}
+
+async function listRevisionFiles({ workspacePath, oid } = {}) {
+  const validatedOid = validateOid(oid);
+  const { repositoryRoot, workspaceRoot } = await resolveGitContext(workspacePath);
+  const prefix = workspaceRepositoryPrefix(repositoryRoot, workspaceRoot);
+  const args = ['ls-tree', '-r', '--name-only', validatedOid];
+  if (prefix) args.push('--', prefix);
+  const output = await runGit(repositoryRoot, args);
+  const prefixWithSlash = prefix ? `${prefix}/` : '';
+  return output
+    .split(/\r?\n/)
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .flatMap((repositoryPath) => {
+      if (prefixWithSlash && !repositoryPath.startsWith(prefixWithSlash)) return [];
+      const workspaceRelative = prefixWithSlash ? repositoryPath.slice(prefixWithSlash.length) : repositoryPath;
+      if (!workspaceRelative) return [];
+      return [{ path: workspaceRelative }];
+    });
+}
+
 async function readGitRevision({ workspacePath, oid, path: revisionPath } = {}) {
   const validatedOid = validateOid(oid);
   const { repositoryRoot, workspaceRoot } = await resolveGitContext(workspacePath);
   const gitPath = validateGitPath(repositoryRoot, revisionPath, workspaceRoot);
   const source = await runGit(repositoryRoot, ['show', `${validatedOid}:${gitPath}`]);
   return { oid: validatedOid, path: gitPath, source };
+}
+
+async function readRevisionFile({ workspacePath, oid, path: revisionPath } = {}) {
+  const validatedOid = validateOid(oid);
+  const { repositoryRoot, workspaceRoot } = await resolveGitContext(workspacePath);
+  const validatedPath = validateWorkspaceRelativePath(repositoryRoot, workspaceRoot, revisionPath);
+  const source = await runGit(repositoryRoot, ['show', `${validatedOid}:${validatedPath.repositoryPath}`]);
+  return { oid: validatedOid, path: validatedPath.workspacePath, source };
 }
 
 async function readCompareSide(repositoryRoot, workspaceRoot, side) {
@@ -269,6 +356,33 @@ function createGitHistoryMessageHandlers({ getWorkspacePath, sendHostMessage }) 
     }
   }
 
+  async function handleListRepositoryHistory(message = {}) {
+    try {
+      const commits = await listRepositoryHistory({ workspacePath: workspacePath(), limit: message.limit });
+      sendHostMessage({ command: 'repositoryHistoryResult', requestId: requestIdOf(message), ok: true, commits });
+    } catch (error) {
+      sendHostMessage({ command: 'repositoryHistoryResult', requestId: requestIdOf(message), ok: false, commits: [], reason: failureReason(error) });
+    }
+  }
+
+  async function handleListRevisionFiles(message = {}) {
+    try {
+      const files = await listRevisionFiles({ workspacePath: workspacePath(), oid: message.oid });
+      sendHostMessage({ command: 'revisionFilesResult', requestId: requestIdOf(message), ok: true, files });
+    } catch (error) {
+      sendHostMessage({ command: 'revisionFilesResult', requestId: requestIdOf(message), ok: false, files: [], reason: failureReason(error) });
+    }
+  }
+
+  async function handleReadRevisionFile(message = {}) {
+    try {
+      const snapshot = await readRevisionFile({ workspacePath: workspacePath(), oid: message.oid, path: message.path });
+      sendHostMessage({ command: 'revisionFileResult', requestId: requestIdOf(message), ok: true, snapshot });
+    } catch (error) {
+      sendHostMessage({ command: 'revisionFileResult', requestId: requestIdOf(message), ok: false, reason: failureReason(error) });
+    }
+  }
+
   async function handleReadGitRevision(message = {}) {
     try {
       const snapshot = await readGitRevision({ workspacePath: workspacePath(), oid: message.oid, path: message.path });
@@ -290,6 +404,9 @@ function createGitHistoryMessageHandlers({ getWorkspacePath, sendHostMessage }) 
   return {
     handleGetGitCapability,
     handleListDocumentHistory,
+    handleListRepositoryHistory,
+    handleListRevisionFiles,
+    handleReadRevisionFile,
     handleReadGitRevision,
     handleCompareGitRevisions,
   };
@@ -303,7 +420,11 @@ module.exports = {
   createGitHistoryMessageHandlers,
   detectGitCapability,
   listDocumentHistory,
+  listRepositoryHistory,
+  listRevisionFiles,
   parseHistory,
+  parseRepositoryHistory,
   readGitRevision,
+  readRevisionFile,
   resolveRepository,
 };

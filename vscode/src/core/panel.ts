@@ -34,6 +34,7 @@ import { rewritePanelMediaUrls } from './panelMedia';
 import { navigatePanel } from './panelNavigationHandler';
 import { readPanelWorkspaceTextResource } from './panelWorkspaceResources';
 import { handlePanelDocumentWrite, panelDocumentWriteCapability, type PanelSaveDocumentMessage } from './panelDocumentWrite';
+import { handlePanelGitHistoryMessage } from './panelGitHistory';
 import { createPanelFontBridge, getGlobalStorageUri } from '../fonts/panelFontBridge';
 
 export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
@@ -117,6 +118,8 @@ export class MarkdownDocsPanel {
           const result = await handlePanelDocumentWrite(msg as unknown as PanelSaveDocumentMessage, { workspace: getVscode().workspace, Uri: getVscode().Uri });
           await this._panel.webview.postMessage(result); return;
         }
+        const workspacePath = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (await handlePanelGitHistoryMessage(msg, workspacePath, (message) => this._panel.webview.postMessage(message))) return;
         switch (msg.command) {
           case 'navigate':
             await this._navigateTo(msg.path);
@@ -257,7 +260,6 @@ export class MarkdownDocsPanel {
     this._flat = flat;
     this._panel.title = `Markdown Explorer — ${workspaceName}`;
     await this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false });
-
     if (this._currentFile) {
       await this._sendContent();
     } else {

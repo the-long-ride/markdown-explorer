@@ -5,6 +5,7 @@ import { useNavigation } from '../../contexts/NavigationContext';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
 import { documentSessionKey, isDocumentDirty } from '../../editor/documentSession';
+import { isMarkdownEditingAvailable } from '../../editor/editingFeature';
 import { collectDirtyDocumentPaths } from '../../editor/unsavedGuards';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 import { TooltipButton } from '../shared/TooltipButton';
@@ -103,6 +104,7 @@ export function Topbar({
   const activeDocumentSession = state.currentFile
     ? state.documentSessions?.[documentSessionKey(state.currentFile)]
     : undefined;
+  const editingEnabled = isMarkdownEditingAvailable(state.settings);
   const canSaveMarkdown = Boolean(
     activeDocumentSession
       && activeDocumentSession.saveState !== 'saving'
@@ -156,7 +158,7 @@ export function Topbar({
 
       <div className="topbar__actions">
         <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!!state.currentFile} />
-        {activeDocumentSession && state.currentFile && (
+        {editingEnabled && activeDocumentSession && state.currentFile && (
           <div className="topbar__markdown-editing" role="group" aria-label={editorT.modeGroup}>
             <button
               type="button"
@@ -204,20 +206,19 @@ export function Topbar({
           exportLabel={exportT.title}
           homeTooltip={t.topbar.welcomePage}
           themeTooltip={themeToggleLabel}
-          editTooltip={t.topbar.edit}
+          editTooltip={editorT.inlineEdit}
           settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
           exportTooltip={exportT.exportDocumentsTooltip}
           homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
           themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
-          editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
           settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
-          canEdit={(state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode') && !!state.currentFile}
-          showEdit={state.appRuntime === 'desktop' || state.appRuntime === 'tauri'}
+          canEdit={editingEnabled && !!activeDocumentSession && !!state.currentFile}
+          showEdit={editingEnabled && (state.appRuntime === 'desktop' || state.appRuntime === 'tauri')}
           isDark={isDark}
           hasUpdate={hasUpdate}
           onHome={() => navigate(null)}
           onTheme={toggleTheme}
-          onEdit={openInEditor}
+          onEdit={() => { if (state.currentFile) setDocumentEditMode(state.currentFile, 'inline-edit'); }}
           onSettings={onSettingsOpen}
           onExport={onExportOpen}
           sidebarLabel={t.actions.toggleSidebar}

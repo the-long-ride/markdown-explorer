@@ -85,6 +85,8 @@ export interface AppSettings {
   bookmarksEnabled: boolean;
   insightsEnabled: boolean;
   documentConversion: boolean;
+  historySidebarEnabled: boolean;
+  markdownEditingEnabled: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
   sidebarPinnedItems?: Record<string, SidebarPinnedItem[]>;
@@ -108,6 +110,8 @@ export interface PersistedState {
   bookmarksEnabled?: boolean;
   insightsEnabled?: boolean;
   documentConversion?: boolean;
+  historySidebarEnabled?: boolean;
+  markdownEditingEnabled?: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
   sidebarPinnedItems?: Record<string, SidebarPinnedItem[]>;

@@ -4,11 +4,21 @@ import type {
   GitCapability,
   GitComparisonSources,
   GitCompareSide,
+  GitRepositoryCommit,
+  GitRevisionFile,
+  GitRevisionFileSnapshot,
   GitRevisionSnapshot,
   GitRevisionSummary,
 } from './contracts';
 
-type RequestKind = 'capability' | 'history' | 'revision' | 'comparison';
+type RequestKind =
+  | 'capability'
+  | 'history'
+  | 'revision'
+  | 'comparison'
+  | 'repository-history'
+  | 'revision-files'
+  | 'revision-file';
 
 type PendingRequest = {
   readonly kind: RequestKind;
@@ -21,6 +31,9 @@ export interface HistoryClient {
   listDocumentHistory(filePath: string, limit?: number): Promise<readonly GitRevisionSummary[]>;
   readGitRevision(oid: string, path: string): Promise<GitRevisionSnapshot>;
   compareGitRevisions(left: GitCompareSide, right: GitCompareSide): Promise<GitComparisonSources>;
+  listRepositoryHistory(limit?: number): Promise<readonly GitRepositoryCommit[]>;
+  listRevisionFiles(oid: string): Promise<readonly GitRevisionFile[]>;
+  readRevisionFile(oid: string, path: string): Promise<GitRevisionFileSnapshot>;
   dispose(): void;
 }
 
@@ -84,6 +97,33 @@ export function createHistoryClient(
           leftLabel: message.leftLabel,
           rightLabel: message.rightLabel,
         } satisfies GitComparisonSources);
+        return;
+      case 'repository-history':
+        if (message.command !== 'repositoryHistoryResult') return;
+        pending.delete(requestId);
+        if (!message.ok) {
+          request.reject(failure(message.reason, 'Unable to read repository history'));
+          return;
+        }
+        request.resolve(message.commits);
+        return;
+      case 'revision-files':
+        if (message.command !== 'revisionFilesResult') return;
+        pending.delete(requestId);
+        if (!message.ok) {
+          request.reject(failure(message.reason, 'Unable to list revision files'));
+          return;
+        }
+        request.resolve(message.files);
+        return;
+      case 'revision-file':
+        if (message.command !== 'revisionFileResult') return;
+        pending.delete(requestId);
+        if (!message.ok) {
+          request.reject(failure(message.reason, 'Unable to read revision file'));
+          return;
+        }
+        request.resolve(message.snapshot);
     }
   });
 
@@ -129,6 +169,28 @@ export function createHistoryClient(
         requestId,
         left,
         right,
+      }));
+    },
+    listRepositoryHistory(limit) {
+      return request<readonly GitRepositoryCommit[]>('repository-history', (requestId) => ({
+        command: 'listRepositoryHistory',
+        requestId,
+        ...(limit === undefined ? {} : { limit }),
+      }));
+    },
+    listRevisionFiles(oid) {
+      return request<readonly GitRevisionFile[]>('revision-files', (requestId) => ({
+        command: 'listRevisionFiles',
+        requestId,
+        oid,
+      }));
+    },
+    readRevisionFile(oid, path) {
+      return request<GitRevisionFileSnapshot>('revision-file', (requestId) => ({
+        command: 'readRevisionFile',
+        requestId,
+        oid,
+        path,
       }));
     },
     dispose() {

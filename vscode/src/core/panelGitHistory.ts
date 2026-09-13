@@ -73,6 +73,25 @@ function repositoryRelativePath(repositoryRoot: string, workspaceRoot: string, f
   return toGitPath(relative);
 }
 
+function workspaceRepositoryPrefix(repositoryRoot: string, workspaceRoot: string): string {
+  const relative = path.relative(repositoryRoot, workspaceRoot);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new PanelGitHistoryError('Workspace is outside repository', 'outside-workspace');
+  }
+  return relative && relative !== '.' ? toGitPath(relative) : '';
+}
+
+function validateWorkspaceRelativePath(repositoryRoot: string, workspaceRoot: string, filePath: string): { workspacePath: string; repositoryPath: string } {
+  if (!filePath || path.isAbsolute(filePath)) throw new PanelGitHistoryError('Revision path is outside workspace', 'outside-workspace');
+  const normalized = filePath.replace(/\\/g, '/');
+  const absolute = path.resolve(workspaceRoot, ...normalized.split('/'));
+  assertWorkspacePath(workspaceRoot, absolute);
+  if (!isSameOrInside(repositoryRoot, absolute)) throw new PanelGitHistoryError('Revision path is outside repository', 'outside-repository');
+  const workspacePath = toGitPath(path.relative(workspaceRoot, absolute));
+  if (!workspacePath || workspacePath === '.') throw new PanelGitHistoryError('Revision path must identify a file', 'outside-workspace');
+  return { workspacePath, repositoryPath: toGitPath(path.relative(repositoryRoot, absolute)) };
+}
+
 export function parsePanelGitHistory(output: string, initialPath: string) {
   const revisions: Array<{ oid: string; shortOid: string; author: string; authoredAt: string; subject: string; path: string }> = [];
   let trackedPath = initialPath;
@@ -90,6 +109,24 @@ export function parsePanelGitHistory(output: string, initialPath: string) {
     }
   }
   return revisions;
+}
+
+export function parsePanelRepositoryHistory(output: string, headOid: string) {
+  return output.split('\x1e').slice(1).flatMap((rawRecord) => {
+    const header = rawRecord.replace(/^\r?\n/, '').split(/\r?\n/, 1)[0] || '';
+    const [oid, parents = '', author = '', authoredAt = '', subject = '', decorations = ''] = header.split('\x1f');
+    if (!FULL_OID.test(oid || '')) return [];
+    return [{
+      oid,
+      shortOid: oid.slice(0, 7),
+      parentOids: parents.split(/\s+/).filter((parentOid) => FULL_OID.test(parentOid)),
+      author,
+      authoredAt,
+      subject,
+      refs: decorations.split(',').map((value) => value.trim()).filter(Boolean),
+      isHead: oid.toLowerCase() === headOid.toLowerCase(),
+    }];
+  });
 }
 
 export function createPanelGitHistoryAdapter({
@@ -137,11 +174,44 @@ export function createPanelGitHistoryAdapter({
     return parsePanelGitHistory(output, gitPath);
   }
 
+  async function listRepositoryHistory({ workspacePath, limit }: { workspacePath: string; limit?: number }) {
+    const { repositoryRoot } = await resolveContext(workspacePath);
+    const headOid = (await runGit(repositoryRoot, ['rev-parse', 'HEAD'])).trim();
+    const output = await runGit(repositoryRoot, ['log', '--all', '--format=%x1e%H%x1f%P%x1f%an%x1f%aI%x1f%s%x1f%D', '-n', String(normalizeLimit(limit))]);
+    return parsePanelRepositoryHistory(output, headOid);
+  }
+
+  async function listRevisionFiles({ workspacePath, oid }: { workspacePath: string; oid: string }) {
+    const validatedOid = validateOid(oid);
+    const { repositoryRoot, workspaceRoot } = await resolveContext(workspacePath);
+    const prefix = workspaceRepositoryPrefix(repositoryRoot, workspaceRoot);
+    const args = ['ls-tree', '-r', '--name-only', validatedOid];
+    if (prefix) args.push('--', prefix);
+    const output = await runGit(repositoryRoot, args);
+    const prefixWithSlash = prefix ? `${prefix}/` : '';
+    return output.split(/\r?\n/).map((value) => value.trim()).filter(Boolean).flatMap((repositoryPath) => {
+      if (prefixWithSlash && !repositoryPath.startsWith(prefixWithSlash)) return [];
+      const workspacePath = prefixWithSlash ? repositoryPath.slice(prefixWithSlash.length) : repositoryPath;
+      return workspacePath ? [{ path: workspacePath }] : [];
+    });
+  }
+
   async function readGitRevision({ workspacePath, oid, path: revisionPath }: { workspacePath: string; oid: string; path: string }) {
     const validatedOid = validateOid(oid);
     const { repositoryRoot, workspaceRoot } = await resolveContext(workspacePath);
     const gitPath = validateGitPath(repositoryRoot, workspaceRoot, revisionPath);
     return { oid: validatedOid, path: gitPath, source: await runGit(repositoryRoot, ['show', `${validatedOid}:${gitPath}`]) };
+  }
+
+  async function readRevisionFile({ workspacePath, oid, path: revisionPath }: { workspacePath: string; oid: string; path: string }) {
+    const validatedOid = validateOid(oid);
+    const { repositoryRoot, workspaceRoot } = await resolveContext(workspacePath);
+    const validatedPath = validateWorkspaceRelativePath(repositoryRoot, workspaceRoot, revisionPath);
+    return {
+      oid: validatedOid,
+      path: validatedPath.workspacePath,
+      source: await runGit(repositoryRoot, ['show', `${validatedOid}:${validatedPath.repositoryPath}`]),
+    };
   }
 
   async function readSide(repositoryRoot: string, workspaceRoot: string, side: GitCompareSide) {
@@ -160,7 +230,15 @@ export function createPanelGitHistoryAdapter({
     return { leftSource: leftResult.source, rightSource: rightResult.source, leftLabel: leftResult.label, rightLabel: rightResult.label };
   }
 
-  return { detectGitCapability, listDocumentHistory, readGitRevision, compareGitSources };
+  return {
+    detectGitCapability,
+    listDocumentHistory,
+    listRepositoryHistory,
+    listRevisionFiles,
+    readGitRevision,
+    readRevisionFile,
+    compareGitSources,
+  };
 }
 
 const defaultAdapter = createPanelGitHistoryAdapter();
@@ -170,7 +248,15 @@ export async function handlePanelGitHistoryMessage(
   workspacePath: string | undefined,
   postMessage: (message: Record<string, unknown>) => PromiseLike<unknown> | unknown,
 ): Promise<boolean> {
-  if (!['getGitCapability', 'listDocumentHistory', 'readGitRevision', 'compareGitRevisions'].includes(msg?.command)) return false;
+  if (![
+    'getGitCapability',
+    'listDocumentHistory',
+    'readGitRevision',
+    'compareGitRevisions',
+    'listRepositoryHistory',
+    'listRevisionFiles',
+    'readRevisionFile',
+  ].includes(msg?.command)) return false;
   const requestId = typeof msg.requestId === 'string' ? msg.requestId : '';
   const root = workspacePath || '';
   try {
@@ -179,6 +265,15 @@ export async function handlePanelGitHistoryMessage(
     } else if (msg.command === 'listDocumentHistory') {
       const revisions = await defaultAdapter.listDocumentHistory({ workspacePath: root, filePath: msg.filePath, limit: msg.limit });
       await postMessage({ command: 'documentHistoryResult', requestId, ok: true, revisions });
+    } else if (msg.command === 'listRepositoryHistory') {
+      const commits = await defaultAdapter.listRepositoryHistory({ workspacePath: root, limit: msg.limit });
+      await postMessage({ command: 'repositoryHistoryResult', requestId, ok: true, commits });
+    } else if (msg.command === 'listRevisionFiles') {
+      const files = await defaultAdapter.listRevisionFiles({ workspacePath: root, oid: msg.oid });
+      await postMessage({ command: 'revisionFilesResult', requestId, ok: true, files });
+    } else if (msg.command === 'readRevisionFile') {
+      const snapshot = await defaultAdapter.readRevisionFile({ workspacePath: root, oid: msg.oid, path: msg.path });
+      await postMessage({ command: 'revisionFileResult', requestId, ok: true, snapshot });
     } else if (msg.command === 'readGitRevision') {
       const snapshot = await defaultAdapter.readGitRevision({ workspacePath: root, oid: msg.oid, path: msg.path });
       await postMessage({ command: 'gitRevisionResult', requestId, ok: true, snapshot });
@@ -189,6 +284,9 @@ export async function handlePanelGitHistoryMessage(
   } catch (error) {
     const reason = error instanceof PanelGitHistoryError ? error.reason : String(error instanceof Error ? error.message : error);
     if (msg.command === 'listDocumentHistory') await postMessage({ command: 'documentHistoryResult', requestId, ok: false, revisions: [], reason });
+    else if (msg.command === 'listRepositoryHistory') await postMessage({ command: 'repositoryHistoryResult', requestId, ok: false, commits: [], reason });
+    else if (msg.command === 'listRevisionFiles') await postMessage({ command: 'revisionFilesResult', requestId, ok: false, files: [], reason });
+    else if (msg.command === 'readRevisionFile') await postMessage({ command: 'revisionFileResult', requestId, ok: false, reason });
     else if (msg.command === 'readGitRevision') await postMessage({ command: 'gitRevisionResult', requestId, ok: false, reason });
     else if (msg.command === 'compareGitRevisions') await postMessage({ command: 'gitComparisonResult', requestId, ok: false, reason });
     else await postMessage({ command: 'gitCapabilityResult', requestId, capability: { supported: false, reason: reason === 'git-unavailable' ? 'git-unavailable' : 'not-repository' } });

@@ -29,6 +29,17 @@ const revision = {
   path: 'docs/a.md',
 };
 
+const commit = {
+  oid: 'c'.repeat(40),
+  shortOid: 'ccccccc',
+  parentOids: ['b'.repeat(40)],
+  author: 'Test User',
+  authoredAt: '2026-09-13T00:00:00Z',
+  subject: 'feat: repository history',
+  refs: ['HEAD -> main'],
+  isHead: true,
+};
+
 describe('history client', () => {
   it('resolves only the matching history request id', async () => {
     const transport = createBridge();
@@ -78,6 +89,61 @@ describe('history client', () => {
 
     await expect(read).rejects.toThrow(/revision-unavailable/);
     await expect(capability).resolves.toEqual({ supported: true, repositoryRoot: '/repo' });
+    client.dispose();
+  });
+
+  it('lists repository history through the correlated repository result', async () => {
+    const transport = createBridge();
+    const client = createHistoryClient(transport.bridge, () => 'repo-1');
+    let settled = false;
+    const pending = client.listRepositoryHistory(200).then((value) => {
+      settled = true;
+      return value;
+    });
+
+    expect(transport.sent[0]).toEqual({ command: 'listRepositoryHistory', requestId: 'repo-1', limit: 200 });
+    transport.emit({ command: 'revisionFilesResult', requestId: 'repo-1', ok: true, files: [] });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    transport.emit({ command: 'repositoryHistoryResult', requestId: 'repo-1', ok: true, commits: [commit] });
+    await expect(pending).resolves.toEqual([commit]);
+    client.dispose();
+  });
+
+  it('lists and reads files from a selected revision', async () => {
+    const transport = createBridge();
+    const ids = ['files-1', 'file-2'];
+    const client = createHistoryClient(transport.bridge, () => ids.shift()!);
+    const oid = 'd'.repeat(40);
+
+    const filesPending = client.listRevisionFiles(oid);
+    expect(transport.sent[0]).toEqual({ command: 'listRevisionFiles', requestId: 'files-1', oid });
+    transport.emit({ command: 'revisionFilesResult', requestId: 'files-1', ok: true, files: [{ path: 'docs/a.md' }] });
+    await expect(filesPending).resolves.toEqual([{ path: 'docs/a.md' }]);
+
+    const filePending = client.readRevisionFile(oid, 'docs/a.md');
+    expect(transport.sent[1]).toEqual({ command: 'readRevisionFile', requestId: 'file-2', oid, path: 'docs/a.md' });
+    transport.emit({ command: 'revisionFileResult', requestId: 'file-2', ok: true, snapshot: { oid, path: 'docs/a.md', source: '# historical' } });
+    await expect(filePending).resolves.toEqual({ oid, path: 'docs/a.md', source: '# historical' });
+    client.dispose();
+  });
+
+  it('rejects repository snapshot host failures with their exact reason', async () => {
+    const transport = createBridge();
+    const ids = ['repo-fail', 'files-fail', 'file-fail'];
+    const client = createHistoryClient(transport.bridge, () => ids.shift()!);
+
+    const repository = client.listRepositoryHistory();
+    transport.emit({ command: 'repositoryHistoryResult', requestId: 'repo-fail', ok: false, commits: [], reason: 'unsupported-runtime' });
+    await expect(repository).rejects.toThrow(/unsupported-runtime/);
+
+    const files = client.listRevisionFiles('e'.repeat(40));
+    transport.emit({ command: 'revisionFilesResult', requestId: 'files-fail', ok: false, files: [], reason: 'invalid-revision' });
+    await expect(files).rejects.toThrow(/invalid-revision/);
+
+    const file = client.readRevisionFile('f'.repeat(40), 'docs/a.md');
+    transport.emit({ command: 'revisionFileResult', requestId: 'file-fail', ok: false, reason: 'git-command-failed' });
+    await expect(file).rejects.toThrow(/git-command-failed/);
     client.dispose();
   });
 });

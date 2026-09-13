@@ -55,6 +55,33 @@
   transform: none !important;
 }
 
+.sidebar__tab-strip.is-icon-only {
+  flex: 1 1 auto;
+  width: 100%;
+  gap: 2px;
+}
+
+.sidebar__tab-strip.is-icon-only .sidebar__tab-btn {
+  flex: 1 1 0;
+  min-width: 30px;
+  height: 28px;
+  padding: 2px 4px 6px;
+}
+
+.sidebar__history-placeholder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px;
+  color: var(--txm);
+  text-align: center;
+  font-size: 11px;
+}
+
 .sidebar__files-action-group,
 .bookmarks-panel__actions,
 .header-action-group,

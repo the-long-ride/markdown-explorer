@@ -2,6 +2,7 @@ import type { AppState } from '../contexts/appStateModel';
 import { normalizePathKey } from '../contexts/appStateModel';
 import { renderMarkdownClientSide } from '../contexts/contentTabState';
 import type { RenderContentMessage, SaveDocumentResultMessage } from '../types';
+import { isDocumentViewModeAllowed, isMarkdownEditingAvailable } from './editingFeature';
 import {
   createEditableDocumentSession,
   discardWorkingChanges,
@@ -92,6 +93,7 @@ export function prepareRenderContentSession(
 }
 
 export function updateWorkingDocumentSource(state: AppState, filePath: string, source: string): AppState {
+  if (!isMarkdownEditingAvailable(state.settings)) return state;
   const key = documentSessionKey(filePath);
   const session = state.documentSessions[key];
   if (!session) return state;
@@ -103,6 +105,7 @@ export function updateWorkingDocumentSource(state: AppState, filePath: string, s
 }
 
 export function updateDocumentEditMode(state: AppState, filePath: string, mode: MarkdownEditMode): AppState {
+  if (!isDocumentViewModeAllowed(state.settings, mode)) return state;
   const key = documentSessionKey(filePath);
   const session = state.documentSessions[key];
   if (!session) return state;
