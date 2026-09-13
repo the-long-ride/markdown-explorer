@@ -10,7 +10,7 @@ function makeState(overrides: Partial<AppState> = {}): AppState {
   return {
     ...initialState,
     isLoading: false,
-    settings: { ...initialState.settings, fileTabs: true },
+    settings: { ...initialState.settings, fileTabs: true, markdownEditingEnabled: true },
     ...overrides,
   };
 }

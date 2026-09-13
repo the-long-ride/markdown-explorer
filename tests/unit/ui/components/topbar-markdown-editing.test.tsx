@@ -47,6 +47,7 @@ function editableState({ dirty = true, writable = true }: { dirty?: boolean; wri
     workspaceName: 'docs',
     settings: {
       language: 'en',
+      markdownEditingEnabled: true,
       keybindings: { editCurrentDocument: 'Ctrl+E' },
       insightsEnabled: false,
     },

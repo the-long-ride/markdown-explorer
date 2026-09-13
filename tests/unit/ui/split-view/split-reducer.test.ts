@@ -19,7 +19,11 @@ describe('split view reducer integration', () => {
   });
 
   it('keeps pane modes independent', () => {
-    let state = { ...initialState, currentFile: '/docs/a.md' };
+    let state = {
+      ...initialState,
+      currentFile: '/docs/a.md',
+      settings: { ...initialState.settings, markdownEditingEnabled: true },
+    };
     state = reduceSplitViewAction(state, { type: 'OPEN_SPLIT_VIEW', filePath: '/docs/b.md' })!;
     state = reduceSplitViewAction(state, { type: 'SET_SPLIT_PANE_MODE', paneId: 'primary', mode: 'plain' })!;
     state = reduceSplitViewAction(state, { type: 'SET_SPLIT_PANE_MODE', paneId: 'secondary', mode: 'inline-edit' })!;

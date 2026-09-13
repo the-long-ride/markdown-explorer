@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-07T18:00:00+07:00'
+timestamp: '2026-09-14T00:00:00+07:00'
 name: Runtime Parity and Capability Matrix
 topic: Common contracts, supported capabilities, and intentional runtime differences
 document_type: runtime
@@ -39,6 +39,7 @@ keywords:
 - git
 - history
 - diff
+- repository snapshots
 ---
 
 # Runtime Parity and Capability Matrix
@@ -64,17 +65,28 @@ keywords:
 | Local Markdown save with revision conflict protection | Yes | Yes | Yes | Yes, writable file handle | Browser/virtual capability dependent |
 | Two-pane Markdown split view | Yes | Yes | Yes | Yes | Yes |
 | Local Git document history | Yes, installed Git | Yes, installed Git | Yes, installed Git | No, explicit unsupported | No, explicit unsupported |
+| Repository commit graph + read-only snapshot browser | Yes | Yes | Yes | No, explicit unsupported | No, explicit unsupported |
 | Read-only Git revision snapshots | Yes | Yes | Yes | No | No |
 | Local Source/Rendered Diff | Yes | Yes | Yes | Yes for non-Git/local source comparisons | Yes for non-Git/local source comparisons |
 | Installer updater | Installed packaged support | Signed plugin artifacts; download/defer/restart parity | Check/report only; VS Code installs | Store | Deployment |
 
 ## Git history parity contract
 
-Electron, Tauri, and VS Code use the user's installed local `git` executable for document history. Git execution is read-only, restricted to the active workspace/repository, and always uses structured argument arrays rather than shell command strings. Full object IDs and repository-contained paths are validated before snapshots are read.
+Electron, Tauri, and VS Code use the user's installed local `git` executable for document and repository history. Git execution is read-only, restricted to the active workspace/repository, and always uses structured argument arrays rather than shell command strings. Full object IDs and repository-contained paths are validated before snapshots are read.
 
-Chromium and Website hosts never attempt process execution. `getGitCapability` returns `{ supported: false, reason: 'unsupported-runtime' }`; history/snapshot/comparison requests fail safely without affecting ordinary reading, editing, split view, or local conflict comparison.
+Repository History adds three correlated requests on capable hosts:
+
+- `listRepositoryHistory` returns bounded commit metadata including all parent OIDs, refs/decorations, and exact current `HEAD` state.
+- `listRevisionFiles` runs a read-only revision tree lookup and returns only files contained by the active workspace, even when the workspace is a repository subfolder.
+- `readRevisionFile` reads one validated workspace-relative historical file without checkout, branch switching, index mutation, or working-tree mutation.
+
+The corresponding result messages are `repositoryHistoryResult`, `revisionFilesResult`, and `revisionFileResult`; they preserve the initiating `requestId` and typed success/failure shape across Electron, Tauri, VS Code, and browser-host unsupported responses.
+
+Chromium and Website hosts never attempt process execution. `getGitCapability` returns `{ supported: false, reason: 'unsupported-runtime' }`; document-history, repository-history, snapshot, file-list, and comparison requests fail safely without affecting ordinary reading, editing, split view, or local conflict comparison.
 
 The shared UI computes source and rendered diffs locally with the dependency-free Myers line-diff implementation. Conflict comparison does not require Git and remains available wherever the editor has both disk/current sources.
+
+Repository snapshot UI state is isolated from live content tabs, split panes, and editable document sessions. **Back to current HEAD** clears snapshot state only; it does not execute a Git checkout and restores the already-mounted live view.
 
 ## Common protocol requirement
 
@@ -94,18 +106,19 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 - Export Center and Scope View operate across all runtimes, using native save dialogs on desktop/VS Code and standard browser file downloads on Chromium/Web.
 - Hardware mouse back/forward buttons (buttons 3/4) and `BrowserBack`/`BrowserForward` keys provide universal history navigation in all runtimes.
 - Electron and Tauri restored windows have an 800 px minimum width; browser/extension hosts own their outer window constraints.
-- Document history is lazy: normal navigation must not start Git or enumerate commits.
+- Document and repository history are lazy: normal navigation must not start Git or enumerate commits.
 - Electron/Tauri/VS Code Git routes use no shell, mutate no repository state, and preserve correlated `requestId` values.
+- Repository revision file listing remains scoped to the active workspace and cannot expose sibling repository paths.
 - Chromium/Website explicitly report Git unsupported and never invoke a local process.
-- Historical revision and Diff pane modes are read-only and never replace or dirty the editable document session.
+- Historical revision, repository snapshot, and Diff modes are read-only and never replace or dirty the editable document session.
 
 ## Source traceability
 
 | Kind | Path | Purpose |
 |---|---|---|
-| Implementation | `ui/src/types/webviewMessages.ts` | Active behavior or contract |
-| Implementation | `ui/src/types/hostMessages.ts` | Active behavior or contract |
-| Implementation | `ui/src/history/contracts.ts` | Shared Git history models |
+| Implementation | `ui/src/types/webviewMessages.ts` | Active request contract |
+| Implementation | `ui/src/types/hostMessages.ts` | Active response contract |
+| Implementation | `ui/src/history/contracts.ts` | Shared Git history and repository snapshot models |
 | Implementation | `electron/core/runtime-command-handlers.js` | Electron command routing |
 | Implementation | `electron/git/document-history.js` | Electron local Git adapter |
 | Implementation | `tauri/src/dispatcher/commands.rs` | Tauri command routing |
@@ -116,7 +129,7 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 | Verification | `tests/contracts/host-message-parity.test.ts` | Automated expectation |
 | Verification | `tests/contracts/tauri-dispatcher-parity.test.ts` | Automated expectation |
 | Verification | `tests/contracts/tauri-host-message-parity.test.ts` | Automated expectation |
-| Verification | `tests/unit/electron/document-history.test.ts` | Electron Git boundary and history behavior |
+| Verification | `tests/unit/electron/document-history.test.ts` | Electron Git boundary, repository graph, and snapshot behavior |
 | Verification | `tests/unit/vscode/panel-git-history.test.ts` | VS Code Git parity |
 | Verification | `tests/unit/chromium/browser-git-history-host.test.ts` | Browser unsupported behavior |
 

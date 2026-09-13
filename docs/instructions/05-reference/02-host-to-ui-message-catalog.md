@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-07T18:00:00+07:00'
+timestamp: '2026-09-14T00:00:00+07:00'
 name: Host-to-UI Message Catalog
 topic: Exact active `HostMessage` command catalog
 document_type: reference
@@ -25,13 +25,14 @@ keywords:
 - messages
 - git
 - history
+- repository snapshots
 ---
 
 # Host-to-UI Message Catalog
 
 ## Contract count
 
-**36 active messages** are extracted from `ui/src/types/hostMessages.ts` and `ui/src/types/content.ts`.
+**39 active messages** are extracted from `ui/src/types/hostMessages.ts` and `ui/src/types/content.ts`.
 
 | Command | Interface and payload |
 |---|---|
@@ -57,6 +58,9 @@ keywords:
 | `readyAck` | `ReadyAckMessage` — workspaceOperationId?: string, workspaceTabId?: string, fileList: MdFile[], tree: FolderNode \| null, theme: string, themeStyle?: string, defaultExpanded: boolean, workspaceName: string, workspacePath?: string, recentWorkspaces?: readonly RecentWorkspace[], appVersion?: string, appRuntime?: AppRuntime, hostPlatform?: HostPlatform, hostArch?: string, canInstallUpdates?: boolean, documentConversionEnabled?: boolean, isMaximized?: boolean, isFullscreen?: boolean |
 | `recentWorkspacesChanged` | `RecentWorkspacesChangedMessage` — recentWorkspaces: readonly RecentWorkspace[] |
 | `renderContent` | `RenderContentMessage` — workspaceOperationId?: string, workspaceTabId?: string, html: string, markdownSource?: string \| null, sourceDocumentText?: string \| null, frontmatter: Frontmatter, toc: TocEntry[], filePath: string, relativePath: string, title: string, fileList: MdFile[], previewInfo?: DocumentPreviewInfo \| null, documentWrite?: DocumentWriteCapability |
+| `repositoryHistoryResult` | `RepositoryHistoryResultMessage` — success: requestId: string, ok: true, commits: readonly GitRepositoryCommit[]; failure: requestId: string, ok: false, commits: [], reason: string |
+| `revisionFileResult` | `RevisionFileResultMessage` — success: requestId: string, ok: true, snapshot: GitRevisionFileSnapshot; failure: requestId: string, ok: false, reason: string |
+| `revisionFilesResult` | `RevisionFilesResultMessage` — success: requestId: string, ok: true, files: readonly GitRevisionFile[]; failure: requestId: string, ok: false, files: [], reason: string |
 | `saveDocumentResult` | `SaveDocumentResultMessage` — requestId: string, filePath: string, ok: boolean, revision?: DocumentRevisionToken, diskSource?: string, diskRevision?: DocumentRevisionToken, reason?: 'conflict' \| 'permission-denied' \| 'missing' \| 'outside-workspace' \| 'read-only' \| 'write-failed', error?: string |
 | `searchPreviewResult` | `SearchPreviewResultMessage` — requestId: string, ok: boolean, filePath: string, markdownSource?: string, reason?: 'outside-workspace' \| 'missing' \| 'unreadable' \| 'unsupported' \| 'too-large' |
 | `setLoading` | `SetLoadingMessage` — workspaceOperationId?: string, workspaceTabId?: string, label?: string, detail?: string |
@@ -74,9 +78,12 @@ keywords:
 
 ## Git history response rules
 
-- `gitCapabilityResult`, `documentHistoryResult`, `gitRevisionResult`, and `gitComparisonResult` preserve the initiating `requestId`.
-- Unsupported browser hosts return a normal capability/result message instead of throwing across the bridge.
-- Historical source is delivered only through History response state; it never replaces the editable `renderContent` source or document session.
+- `gitCapabilityResult`, `documentHistoryResult`, `gitRevisionResult`, `gitComparisonResult`, `repositoryHistoryResult`, `revisionFilesResult`, and `revisionFileResult` preserve the initiating `requestId`.
+- `repositoryHistoryResult` returns bounded commit metadata including parent OIDs, refs/decorations, and `isHead`; it never means the host has checked out that commit.
+- `revisionFilesResult` contains workspace-relative file paths only. A repository subfolder workspace cannot receive paths from sibling repository directories.
+- `revisionFileResult` carries historical source for one validated full-OID/path request and is consumed by isolated read-only snapshot state.
+- Unsupported browser hosts return normal capability/result messages with `unsupported-runtime` instead of throwing across the bridge.
+- Historical source is delivered only through History/snapshot response state; it never replaces editable `renderContent` source or a document session.
 
 ## Document-save response rules
 
@@ -104,18 +111,20 @@ keywords:
 - Correlated messages must carry and preserve their operation/request metadata.
 - UI handlers ignore unknown messages and stale correlated messages safely.
 - `readyAck` capability fields govern native/updater/window UI.
-- Workspace resource results remain bounded and workspace-contained.
-- History/diff responses do not mutate document sessions by themselves.
+- Workspace resource and revision-file results remain bounded and workspace-contained.
+- History/diff/repository-snapshot responses do not mutate document sessions by themselves.
 
 ## Example
 
 ```typescript
 const message = {
-  command: 'gitCapabilityResult',
+  command: 'revisionFileResult',
   requestId: 'history-42',
-  capability: {
-    supported: false,
-    reason: 'unsupported-runtime',
+  ok: true,
+  snapshot: {
+    oid: '0123456789abcdef0123456789abcdef01234567',
+    path: 'docs/guide.md',
+    source: '# Historical guide',
   },
 };
 ```
@@ -124,9 +133,9 @@ const message = {
 
 | Kind | Path | Purpose |
 |---|---|---|
-| Implementation | `ui/src/types/hostMessages.ts` | Active behavior or contract |
+| Implementation | `ui/src/types/hostMessages.ts` | Active bridge response contract |
 | Implementation | `ui/src/types/content.ts` | Render/write capability contract |
-| Implementation | `ui/src/history/contracts.ts` | Git history response models |
+| Implementation | `ui/src/history/contracts.ts` | Git history and repository snapshot response models |
 | Implementation | `ui/src/insights/contracts.ts` | Workspace Insights response models |
 | Verification | `tests/contracts/host-message-parity.test.ts` | Automated expectation |
 | Verification | `tests/contracts/tauri-host-message-parity.test.ts` | Automated expectation |

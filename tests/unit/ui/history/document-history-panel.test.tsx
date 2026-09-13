@@ -4,6 +4,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { DocumentHistoryPanel } from '../../../../ui/src/components/History/DocumentHistoryPanel';
 import type { HistoryClient } from '../../../../ui/src/history/historyClient';
 
+vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
+  usePlatform: () => ({
+    postMessage: vi.fn(),
+    onMessage: vi.fn(() => vi.fn()),
+    getState: vi.fn(),
+    setState: vi.fn(),
+    copyToClipboard: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 const revision = {
   oid: 'a'.repeat(40),
   shortOid: 'aaaaaaa',

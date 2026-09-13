@@ -85,6 +85,7 @@ describe('AppStateProvider split API', () => {
 
     act(() => api.activatePane?.('primary'));
     act(() => api.setSplitRatio?.(0.7));
+    act(() => result.current.updateSettings({ markdownEditingEnabled: true }));
     act(() => api.setSplitPaneMode?.('secondary', 'plain'));
     act(() => api.setSplitPaneScrollTop?.('secondary', 240));
     expect(result.current.state.splitView.activePane).toBe('primary');

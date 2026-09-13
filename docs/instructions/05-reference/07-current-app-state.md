@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-07T18:00:00+07:00'
+timestamp: '2026-09-14T00:00:00+07:00'
 name: Current Application State
 topic: Unreleased synchronized product and runtime snapshot
 document_type: reference
@@ -26,6 +26,8 @@ source_scope:
 test_scope:
 - ../../../tests/node/localization-settings-doc-sync-contract.test.mjs
 - ../../../tests/manifest/editor-git-split-coverage-manifest.ts
+- ../../../tests/unit/ui/history/repository-history-panel.test.tsx
+- ../../../tests/unit/ui/split-view/split-render-isolation.test.tsx
 runtime_scope:
 - electron
 - tauri
@@ -42,12 +44,13 @@ keywords:
 - runtime parity
 - editing
 - git history
+- repository snapshots
 - split view
 ---
 
 # Current Application State
 
-This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-09-07. Feature, runtime, protocol, and catalog documents remain the normative detailed specifications; this page is the compact cross-product map used to detect documentation drift.
+This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-09-14. Feature, runtime, protocol, and catalog documents remain the normative detailed specifications; this page is the compact cross-product map used to detect documentation drift.
 
 ## Supported runtimes
 
@@ -61,6 +64,7 @@ Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code*
 | Open current document in external editor | `Ctrl+E`, action in More Actions | `Ctrl+E`, action in More Actions | `Ctrl+Alt+E`, icon beside More Actions | Not exposed |
 | Two-pane split document view | Yes | Yes | Yes | Yes |
 | Local Git document history | Installed local Git | Installed local Git | Installed local Git | Unsupported; no local process execution |
+| Repository commit graph / revision snapshot browser | Installed local Git | Installed local Git | Installed local Git | Unsupported; no local process execution |
 | Source / Rendered Diff | Yes | Yes | Yes | Yes for local source/conflict comparisons; Git history unavailable |
 | Typography font sources | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | Imported `.ttf`/`.otf`/`.woff`/`.woff2` via IndexedDB & FontFace API |
 | App-owned zoom | Yes | Yes | No; host/native zoom | No; host/native zoom |
@@ -73,6 +77,7 @@ VS Code imported fonts are copied to extension global storage and served to the 
 ### Local Markdown editing
 
 - Rendered Markdown remains the default document mode.
+- Markdown editing is a feature-gated preference and is **disabled by default**. Enabling it exposes writable Rendered/Inline Edit/Plain workflows without changing historical Revision/Diff or repository snapshot views from read-only behavior.
 - **Inline Edit** edits source-backed Markdown sections with native React/browser editing controls; **Plain** edits the complete raw Markdown source.
 - No third-party editor framework was added. Editing uses the existing parser/renderer and shared document-session state.
 - Each editable document session keeps a current working `source`, last confirmed `persistedSource`, save state, host revision token, and any active external-change conflict.
@@ -88,17 +93,23 @@ VS Code imported fonts are copied to extension global storage and served to the 
 - Each pane owns its own document identity, mode, scroll state, and active-pane focus.
 - Supported pane modes are **Rendered**, **Inline Edit**, **Plain**, **Revision**, and **Diff** when the associated capability/data exists.
 - Editable source remains shared per document session, so viewing or editing the same document from another pane does not create competing working copies.
+- Pane projections use document-scoped render revisions rather than the global application render counter. Editing, scrolling, or activating one pane therefore does not rerender an unrelated document body in the opposite pane.
+- When both panes show the same document and one pane is actively editing while the other is Rendered, the rendered mirror updates after a **150 ms debounce**; file changes and save-state transitions flush the relevant revision immediately.
 - Revision and Diff modes are read-only. Diff panes synchronize their comparison scrolling; ordinary document panes keep independent scroll positions.
 - Split mode does not expand tab count semantics: the pane state references existing/openable document identities and can be swapped, moved, or closed independently.
 
 ### Local Git history and diff
 
-- **More Actions → History** opens the document History workflow. Git capability/history loading is lazy; normal navigation never starts Git or enumerates commits.
+- **More Actions → History** opens the per-document History workflow. Git capability/history loading is lazy; normal navigation never starts Git or enumerates commits.
+- The capability-aware sidebar **History** tab is enabled by default as a preference, but it is visible only when the active workspace reports supported local Git capability.
 - Electron, Tauri, and VS Code use the user's installed `git` executable. Chromium and Web explicitly report `unsupported-runtime` and never attempt process execution.
 - All Git operations are read-only and repository-contained. Hosts use `execFile`/argument arrays or Rust `std::process::Command`; they do not construct shell command strings from paths or revisions.
-- Full object IDs and requested repository paths are validated before historical content is read.
+- Full object IDs and requested repository/workspace paths are validated before historical content is read.
 - Document history follows rename records backwards so older snapshots keep the historical path that Git reported for that revision.
-- **View revision** renders a historical snapshot read-only. **Compare with current**, **Working copy**, and two-revision comparison feed complete sources to the shared diff model.
+- Repository History loads a bounded commit graph including merge parents, refs/decorations, and exact `HEAD`. Selecting a commit lists only revision files contained by the active workspace, including when the workspace is a repository subfolder.
+- Selecting a repository revision file opens an isolated read-only snapshot above the live content shell. The working tree, current branch, content tabs, split panes, dirty sessions, and scroll state remain unchanged underneath it.
+- **Back to current HEAD** clears repository snapshot state only; it does not call `git checkout` and reveals the exact already-mounted live view.
+- **View revision** renders a document-history snapshot read-only. **Compare with current**, **Working copy**, and two-revision comparison feed complete sources to the shared diff model.
 - **Source Diff** uses the dependency-free Myers line-diff implementation with explicit Added/Removed/Unchanged states. **Rendered Diff** renders both complete Markdown documents and highlights source-backed changed blocks; it does not render malformed partial Markdown hunks.
 - Git failures do not affect normal Markdown reading, editing, saving, split view, or non-Git conflict comparison.
 
@@ -116,13 +127,20 @@ See [Local Git History and Diff](../../git-history-diff.md) and [Compare a Markd
 
 ## Settings and preferences
 
-Settings is organized into **Appearance**, **Typography**, **Theme Style**, **Keyboard Shortcuts**, and **Update & Backup**, with icons in the navigation rail and a description under every section title.
+Settings is organized into **Appearance**, **Features**, **Typography** (where supported), **Theme Style**, **Keyboard Shortcuts**, and **Update & Backup**, with icons in the navigation rail and a description under every section title.
 
 ### Appearance
 
 - Appearance renders Color Mode and preference controls directly under the section header.
 - There is **no secondary `View Preferences` heading**.
-- Existing view controls, including maximum pinned items, keep their persisted settings and localized descriptions.
+- Desktop view mode remains an Appearance control.
+
+### Features
+
+- Feature controls are separated from Appearance and include sidebar labels, file tabs, bookmarks, Workspace Insights, History Sidebar, Markdown Editing, runtime-supported document conversion, HTML preview, CSV preview, and related view capabilities.
+- `historySidebarEnabled` defaults to **true**, but the actual History tab is still capability-gated by `getGitCapability`; a browser runtime cannot force local Git process access by toggling the setting.
+- `markdownEditingEnabled` defaults to **false**. Enabling it changes only eligible writable Markdown editing surfaces; historical Git and repository snapshot content stays read-only.
+- Existing feature preferences keep their persisted settings and localized descriptions.
 
 ### Typography
 
@@ -164,7 +182,7 @@ Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for **Ap
 
 - Markdown/MDX is the core document surface, with local rendering, code blocks, math, Mermaid, media handling, links, heading navigation, table of contents, collapsible sections, local editing where writable, and read-only historical/diff modes where supported.
 - Supported file/conversion behavior is defined by the Supported Files and Conversion catalog and is capability-gated by runtime.
-- Sidebar navigation includes Files, Search, and opt-in Bookmarks with filtering, sorting, pinning, cursor-mode keyboard navigation, current-file location, and workspace scoping. Sidebar navigation ARIA text and pin/sort/search status labels come from the active locale without component-owned English fallbacks.
+- Sidebar navigation includes Files, Search, opt-in Bookmarks, and capability-aware History with filtering, sorting, pinning, cursor-mode keyboard navigation, current-file location, and workspace scoping. When more than three tabs are visible, sidebar tab labels collapse to icon-only presentation while accessible names/tooltips remain available.
 - The per-row pinned-item indicator uses the stroke-only `PinIcon` (Lucide thumbtack, size 12). Both unpin affordances — the per-item context-menu entry and the toolbar Clear Pins button — render the same `UnpinIcon` (Lucide thumbtack + diagonal slash overlay); `ClearPinsIcon` delegates to `UnpinIcon` so the slash stays in sync without SVG-path duplication.
 - Search covers the current document/current workspace and desktop cross-tab modes where supported; status labels and accessibility text are localized.
 - Desktop document tabs preserve active document and scroll state; context actions and their shortcut labels use translated copy. Recent-workspace `last opened` values use `Intl.RelativeTimeFormat`/`Intl.DateTimeFormat` with the selected application locale.
@@ -225,14 +243,14 @@ Interactive tables in rendered Markdown and delimited files support sorting, sea
 
 Markdown Explorer currently ships **nine supported locales**: English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
 
-The localization boundary covers normal visible text plus accessibility labels, placeholders, dialog copy, tooltip copy, status feedback, shortcut action names, onboarding/terms, workspace selection, Theme Remix, Welcome/Tips, initial loading/scanning states, sidebar navigation, recent-workspace time formatting, search On/Off state, Settings shell text, in-app editor controls, split-view actions, Git History states/actions, and Source/Rendered Diff labels. The audited translation domains are `ui`, `terms`, `onboarding`, `workspaceSelection`, `themeRemix`, and `rendererUi` in `auditedUiTranslations.ts`, while established feature-specific groups remain in the main translation catalog. `rendererUi` also travels through Markdown rendering so table filtering, row counts, wrapping, column visibility, chart switching, chart modal viewer actions, copy feedback, code/preview controls, and video/YouTube fallback labels stay in the selected locale after DOM updates.
+The localization boundary covers normal visible text plus accessibility labels, placeholders, dialog copy, tooltip copy, status feedback, shortcut action names, onboarding/terms, workspace selection, Theme Remix, Welcome/Tips, initial loading/scanning states, sidebar navigation, recent-workspace time formatting, search On/Off state, Settings shell text, in-app editor controls, split-view actions, Git History states/actions, repository history/snapshot actions, and Source/Rendered Diff labels. The audited translation domains are `ui`, `terms`, `onboarding`, `workspaceSelection`, `themeRemix`, and `rendererUi` in `auditedUiTranslations.ts`, while established feature-specific groups remain in the main translation catalog. `rendererUi` also travels through Markdown rendering so table filtering, row counts, wrapping, column visibility, chart switching, chart modal viewer actions, copy feedback, code/preview controls, and video/YouTube fallback labels stay in the selected locale after DOM updates.
 
 The dependency-free localization contract guards audited user-facing literals across React and generated Markdown/DOM code so new component-owned English fallbacks are caught before release. Technical identifiers remain intentionally literal when translation would change their meaning: commands, key IDs, CSS variables, URLs, `chrome://flags`, `brave://flags`, `File System Access API`, file extensions, and product/project brand names.
 
 ## Persistence and safety
 
 - Settings, recent workspaces, themes, bookmarks, tabs, and runtime-owned handles use the persistence layer documented in the Storage Catalog.
-- Editable document sessions and split/history view state are runtime UI state; historical source is not persisted into writable document state.
+- Editable document sessions, split/history view state, and repository snapshot selection are runtime UI state; historical source is not persisted into writable document state.
 - Browser file handles stay browser-owned; desktop filesystem access stays behind native bridges.
 - External navigation and local HTML/media access follow the runtime security boundaries instead of granting arbitrary renderer filesystem access.
 - Imported font files are managed within the owning desktop/VS Code runtime or browser IndexedDB rather than exposing unrestricted renderer paths.
@@ -256,4 +274,3 @@ When an implementation change alters a capability, default shortcut, Settings be
 - [Localization Catalog](10-localization-catalog.md)
 - [Localization, Welcome, and Onboarding](../03-features/15-localization-welcome-onboarding.md)
 - [Source Traceability Index](12-source-traceability-index.md)
-

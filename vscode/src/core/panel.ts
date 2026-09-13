@@ -59,10 +59,6 @@ export class MarkdownDocsPanel {
   private readonly _htmlPreviewServer: HtmlPreviewServer;
   private readonly _fontBridge: ReturnType<typeof createPanelFontBridge>;
 
-  // ---------------------------------------------------------------------------
-  // Factory
-  // ---------------------------------------------------------------------------
-
   static createOrShow(context: import('vscode').ExtensionContext, initialFilePath: string | null): void {
     const column = getVscode().ViewColumn.Active;
 
@@ -89,10 +85,6 @@ export class MarkdownDocsPanel {
 
     MarkdownDocsPanel.currentPanel = new MarkdownDocsPanel(panel, context, initialFilePath);
   }
-
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
 
   private constructor(
     panel: import('vscode').WebviewPanel,
@@ -185,16 +177,11 @@ export class MarkdownDocsPanel {
     void this._render();
   }
 
-  // ---------------------------------------------------------------------------
-  // Public API
-  // ---------------------------------------------------------------------------
-
   async refresh(): Promise<void> {
     await this._sendLoading('Refreshing workspace...');
     await this._render();
   }
 
-  /** Watcher-triggered refresh: re-scan sidebar, emit `currentFileChanged` banner when the saved file is the open one. See panelWatch.ts. */
   async refreshFromWatch(changedPath?: string | null): Promise<void> {
     if (!this._panel.webview.html) { await this._render(); return; }
     await refreshPanelFromWatch(
@@ -212,10 +199,6 @@ export class MarkdownDocsPanel {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Private: scan + build shell
-  // ---------------------------------------------------------------------------
-
   private async _render(): Promise<void> {
     if (!this._panel.webview.html) {
       this._panel.webview.html = buildWebviewShell(this._extensionPath, this._panel, getVscode());
@@ -223,10 +206,6 @@ export class MarkdownDocsPanel {
     }
     await this._onWebviewReady();
   }
-
-  // ---------------------------------------------------------------------------
-  // Private: send rendered content to webview
-  // ---------------------------------------------------------------------------
 
   private async _onWebviewReady(): Promise<void> {
     const config = getVscode().workspace.getConfiguration('markdownExplorer');
@@ -343,7 +322,6 @@ export class MarkdownDocsPanel {
     const renderer = new HtmlRenderer({ theme, isMdx });
     const { html, toc } = renderer.render(tokens);
 
-    // Rewrite local image/video paths to Webview URIs.
     const rewrittenHtml = rewritePanelMediaUrls(html, this._currentFile!, (absolutePath) =>
       this._panel.webview.asWebviewUri(getVscode().Uri.file(absolutePath)).toString());
     const documentWrite = await panelDocumentWriteCapability(this._currentFile, { workspace: getVscode().workspace, Uri: getVscode().Uri });
@@ -371,16 +349,9 @@ export class MarkdownDocsPanel {
 
   private _hostInfo() { return { appVersion: this._extensionVersion, appRuntime: 'vscode' as const, hostPlatform: this._hostPlatform(), hostArch: process.arch }; }
 
-  private _hostPlatform() {
-    if (process.platform === 'win32') return 'windows' as const;
-    if (process.platform === 'darwin') return 'macos' as const;
-    if (process.platform === 'linux') return 'linux' as const;
-    return 'unknown' as const;
+  _hostPlatform() {
+    return ({ win32: 'windows', darwin: 'macos', linux: 'linux' } as const)[process.platform as 'win32' | 'darwin' | 'linux'] ?? 'unknown';
   }
-
-  // ---------------------------------------------------------------------------
-  // Private: navigation
-  // ---------------------------------------------------------------------------
 
   _makeSearchExcerpt(text: string, index: number, matchLength: number) {
     return makeSearchExcerpt(text, index, matchLength);
@@ -399,6 +370,19 @@ export class MarkdownDocsPanel {
   _decodeNavigationHref(value: string) { return decodeNavigationHref(value); }
   _isRootRelativeWorkspaceHref(value: string) { return isRootRelativeWorkspaceHref(value); }
   _buildShell() { return buildWebviewShell(this._extensionPath, this._panel, getVscode()); }
+  _shouldKeepResourceUrl(url: string): boolean { return /^(https?:|data:|blob:|vscode-webview:|#)/i.test(url); }
+  _toWebviewResourceUri(resourcePath: string): string {
+    if (this._shouldKeepResourceUrl(resourcePath) || !this._currentFile) return resourcePath;
+    return this._panel.webview.asWebviewUri(getVscode().Uri.file(path.resolve(path.dirname(this._currentFile), resourcePath))).toString();
+  }
+  _rewriteRelativeMediaUrls(html: string): string {
+    return this._currentFile
+      ? rewritePanelMediaUrls(html, this._currentFile, (abs) => this._panel.webview.asWebviewUri(getVscode().Uri.file(abs)).toString())
+      : html;
+  }
+  _resolveNavigationPath(rawHref: string): string {
+    return resolvePanelNavigationPath(rawHref, this._currentFile, getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath ?? '');
+  }
 
   private async _navigateTo(href: string | null): Promise<void> {
     const workspaceRoot = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
@@ -443,34 +427,18 @@ export class MarkdownDocsPanel {
   private async _setDocumentConversion(enabled: boolean): Promise<void> {
     if (this._documentConversionEnabled === enabled) return;
     this._documentConversionEnabled = enabled;
-
     const config = getVscode().workspace.getConfiguration('markdownExplorer');
     await config.update('documentConversion', enabled, getVscode().ConfigurationTarget.Global);
-
-    await this._sendLoading(enabled ? 'Finding supported documents...' : 'Refreshing Markdown files...');
-    if (this._currentFile && !isSupportedFilePath(this._currentFile, enabled)) {
-      this._currentFile = null;
-    }
-    await this._render();
-  }
-
-  _shouldKeepResourceUrl(url: string): boolean { return /^(https?:|data:|blob:|vscode-webview:|#)/i.test(url); }
-  _toWebviewResourceUri(resourcePath: string): string {
-    if (this._shouldKeepResourceUrl(resourcePath) || !this._currentFile) return resourcePath;
-    return this._panel.webview.asWebviewUri(getVscode().Uri.file(path.resolve(path.dirname(this._currentFile), resourcePath))).toString();
-  }
-  _rewriteRelativeMediaUrls(html: string): string {
-    return this._currentFile ? rewritePanelMediaUrls(html, this._currentFile, (abs) => this._panel.webview.asWebviewUri(getVscode().Uri.file(abs)).toString()) : html;
-  }
-  _resolveNavigationPath(rawHref: string): string {
-    return resolvePanelNavigationPath(rawHref, this._currentFile, getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath ?? '');
+    await this.refresh();
   }
 
   dispose(): void {
     MarkdownDocsPanel.currentPanel = undefined;
+    this._htmlPreviewServer.dispose();
+    this._fontBridge.dispose();
     this._panel.dispose();
-    void this._htmlPreviewServer.dispose();
-    this._disposables.forEach(d => d.dispose());
-    this._disposables.length = 0;
+    while (this._disposables.length) {
+      this._disposables.pop()?.dispose();
+    }
   }
 }

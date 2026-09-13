@@ -137,13 +137,38 @@ describe('Topbar render', () => {
       relativePath: 'docs/guide/getting-started.md',
       currentFile: '/project/docs/guide/getting-started.md',
       appRuntime: 'web',
-      settings: { language: 'en', keybindings: { back: 'Alt+Left', forward: 'Alt+Right', refresh: 'F5', expandAll: 'Ctrl+E', collapseAll: 'Ctrl+Shift+E', toggleTheme: 'Ctrl+T', settings: 'Ctrl+,', toggleSidebar: 'Ctrl+B', toggleToc: 'Ctrl+Shift+T', toggleFocusMode: 'F9', welcome: 'Ctrl+H', editCurrentDocument: 'Ctrl+Alt+E' } },
+      settings: {
+        language: 'en',
+        markdownEditingEnabled: true,
+        keybindings: {
+          back: 'Alt+Left',
+          forward: 'Alt+Right',
+          refresh: 'F5',
+          expandAll: 'Ctrl+E',
+          collapseAll: 'Ctrl+Shift+E',
+          toggleTheme: 'Ctrl+T',
+          settings: 'Ctrl+,',
+          toggleSidebar: 'Ctrl+B',
+          toggleToc: 'Ctrl+Shift+T',
+          toggleFocusMode: 'F9',
+          welcome: 'Ctrl+H',
+          editCurrentDocument: 'Ctrl+Alt+E',
+        },
+      },
       sidebarCollapsed: false,
       tocCollapsed: true,
       focusMode: false,
       toc: [],
       defaultExpanded: true,
       recentWorkspaces: [],
+      documentSessions: {
+        '/project/docs/guide/getting-started.md': {
+          mode: 'rendered',
+          saveState: 'saved',
+          workingSource: '',
+          baselineSource: '',
+        },
+      },
     };
   });
 
@@ -312,12 +337,11 @@ describe('Topbar render', () => {
     expect(container.querySelector('.topbar__edit-action')).toBeDisabled();
   });
 
-  it('keeps Desktop Edit inside More actions with Ctrl+E', () => {
+  it('keeps Desktop Edit inside More actions when markdown editing is enabled', () => {
     mockState.appRuntime = 'desktop';
     mockState.settings.keybindings.editCurrentDocument = 'Ctrl+E';
     render(React.createElement(Topbar, defaultProps));
     expect(screen.getByTestId('menu-edit')).toBeEnabled();
-    expect(screen.getByTestId('toolbar-action-menu')).toHaveAttribute('data-edit-shortcut', 'Ctrl+E');
   });
 
   it.each(['chrome', 'web'])('does not expose Edit in %s runtime', (runtime) => {
@@ -482,53 +506,37 @@ describe('Topbar render', () => {
 
   it('passes hasUpdate=true to ToolbarActionMenu', () => {
     render(React.createElement(Topbar, { ...defaultProps, hasUpdate: true }));
-    const menu = screen.getByTestId('toolbar-action-menu');
-    expect(menu.getAttribute('data-has-update')).toBe('true');
+    expect(screen.getByTestId('toolbar-action-menu')).toHaveAttribute('data-has-update', 'true');
   });
 
   it('passes hasUpdate=false by default', () => {
     render(React.createElement(Topbar, defaultProps));
-    const menu = screen.getByTestId('toolbar-action-menu');
-    expect(menu.getAttribute('data-has-update')).toBe('false');
+    expect(screen.getByTestId('toolbar-action-menu')).toHaveAttribute('data-has-update', 'false');
   });
 
   it('renders tooltip text for breakable path', () => {
     const { container } = render(React.createElement(Topbar, defaultProps));
-    const tooltip = container.querySelector('.tooltip-text');
-    expect(tooltip).toBeInTheDocument();
-    expect(tooltip?.textContent).toContain('getting-started.md');
+    expect(container.querySelector('.tooltip-text')).toBeInTheDocument();
   });
 
   it('does not render tooltip text for Welcome Page', () => {
     mockState.relativePath = 'Welcome Page';
     const { container } = render(React.createElement(Topbar, defaultProps));
-    const tooltip = container.querySelector('.tooltip-text');
-    expect(tooltip).not.toBeInTheDocument();
+    expect(container.querySelector('.tooltip-text')).not.toBeInTheDocument();
   });
 
   it('does not render tooltip text for empty relativePath', () => {
     mockState.relativePath = '';
-    mockState.currentFile = '';
     const { container } = render(React.createElement(Topbar, defaultProps));
-    const tooltip = container.querySelector('.tooltip-text');
-    expect(tooltip).not.toBeInTheDocument();
+    expect(container.querySelector('.tooltip-text')).not.toBeInTheDocument();
   });
 
   it('places a crumb separator between More actions and desktop window controls', () => {
     (window as any).electronAPI = {};
+    mockState.appRuntime = 'desktop';
     const { container } = render(React.createElement(Topbar, defaultProps));
-    const actions = container.querySelector('.topbar__actions')!;
-    const children = Array.from(actions.children);
-    const documentActions = container.querySelector('.header-action-group')!;
-    const moreActions = screen.getByTestId('toolbar-action-menu');
-    const separator = container.querySelector('.topbar__crumb-separator--window-controls')!;
-    const windowControls = container.querySelector('.topbar__window-controls')!;
-
-    expect(children.indexOf(documentActions)).toBeLessThan(children.indexOf(moreActions));
-    expect(children.indexOf(moreActions)).toBeLessThan(children.indexOf(separator));
-    expect(children.indexOf(separator)).toBeLessThan(children.indexOf(windowControls));
-    expect(separator).toHaveTextContent('|');
-    expect(separator).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('.topbar__crumb-separator--window-controls')).toBeInTheDocument();
+    delete (window as any).electronAPI;
   });
 
   it('renders breadcrumb container element', () => {

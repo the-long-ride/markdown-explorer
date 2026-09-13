@@ -64,6 +64,7 @@ describe('AppStateProvider editing API', () => {
       });
     });
 
+    act(() => result.current.updateSettings({ markdownEditingEnabled: true }));
     act(() => result.current.setWorkingDocumentSource('/docs/a.md', '# B'));
     expect(result.current.state.documentSessions['/docs/a.md']?.source).toBe('# B');
 
@@ -115,6 +116,7 @@ describe('AppStateProvider editing API', () => {
     expect(context.setDocumentEditMode).toBeTypeOf('function');
     if (!context.setDocumentEditMode) return;
 
+    act(() => result.current.updateSettings({ markdownEditingEnabled: true }));
     act(() => context.setDocumentEditMode?.('/docs/a.md', 'plain'));
     expect(result.current.state.documentSessions['/docs/a.md']?.mode).toBe('plain');
   });

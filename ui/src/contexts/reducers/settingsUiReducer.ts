@@ -89,7 +89,7 @@ export function reduceSettingsUiAction(
       const activeCustomTheme = activeCustomThemeId
         ? customThemes?.find((theme) => theme.id === activeCustomThemeId)
         : undefined;
-      let nextState = {
+      let nextState: AppState = {
         ...state,
         themeStyle: activeCustomTheme?.baseStyle ?? state.themeStyle,
         hasThemeStylePreference: activeCustomTheme ? true : state.hasThemeStylePreference,

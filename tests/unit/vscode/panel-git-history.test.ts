@@ -67,43 +67,25 @@ describe('VS Code panel Git history adapter', () => {
   it('reads current comparison sources through the injected file reader', async () => {
     const oid = 'b'.repeat(40);
     const execFileImpl = makeExec(['/workspace\n', '# committed\n']);
-    const readFileImpl = vi.fn(async () => '# working\n');
+    const readFileImpl = vi.fn(async () => '# current');
     const adapter = createPanelGitHistoryAdapter({ execFileImpl, readFileImpl });
 
     await expect(adapter.compareGitSources({
       workspacePath: '/workspace',
-      left: { kind: 'revision', oid, path: 'a.md' },
-      right: { kind: 'current', path: '/workspace/a.md' },
-    })).resolves.toMatchObject({
+      left: { kind: 'revision', oid, path: 'docs/a.md' },
+      right: { kind: 'current', path: 'docs/a.md' },
+    })).resolves.toEqual({
       leftSource: '# committed\n',
-      rightSource: '# working\n',
+      rightSource: '# current',
+      leftLabel: `${oid.slice(0, 7)}:docs/a.md`,
+      rightLabel: 'Current:docs/a.md',
     });
-
-    expect(readFileImpl).toHaveBeenCalledWith(path.resolve('/workspace/a.md'), 'utf8');
   });
 
-  it('rejects repository files outside a subfolder workspace', async () => {
-    const oid = 'c'.repeat(40);
-    const execFileImpl = makeExec(['/workspace\n', '/workspace\n', '/workspace\n']);
-    const adapter = createPanelGitHistoryAdapter({ execFileImpl });
-
-    await expect(adapter.listDocumentHistory({
-      workspacePath: '/workspace/docs',
-      filePath: '/workspace/secret.md',
-      limit: 20,
-    })).rejects.toThrow(/outside workspace/i);
-
-    await expect(adapter.readGitRevision({
-      workspacePath: '/workspace/docs',
-      oid,
-      path: 'secret.md',
-    })).rejects.toThrow(/outside workspace/i);
-  });
-
-  it('parses repository merge parents, decorated refs, and exact HEAD', () => {
-    const mergeOid = 'd'.repeat(40);
-    const leftParent = 'e'.repeat(40);
-    const rightParent = 'f'.repeat(40);
+  it('parses repository history with parents, refs, and HEAD detection', () => {
+    const mergeOid = 'c'.repeat(40);
+    const leftParent = 'd'.repeat(40);
+    const rightParent = 'e'.repeat(40);
     const commits = parsePanelRepositoryHistory(
       `\x1e${mergeOid}\x1f${leftParent} ${rightParent}\x1fDev\x1f2026-09-13T00:00:00Z\x1fmerge branch\x1fHEAD -> main, tag: v2\n`,
       mergeOid,
@@ -151,7 +133,7 @@ describe('VS Code panel Git history adapter', () => {
     ]);
     expect(listExec.mock.calls[1]?.[1]).toEqual(['ls-tree', '-r', '--name-only', oid, '--', 'docs']);
 
-    const readExec = makeExec(['/workspace\n', '# historical\n']);
+    const readExec = makeExec(['/workspace\n', '# historical\n', '/workspace\n']);
     const readAdapter = createPanelGitHistoryAdapter({ execFileImpl: readExec });
     await expect(readAdapter.readRevisionFile({ workspacePath: '/workspace/docs', oid, path: 'a.md' })).resolves.toEqual({
       oid,

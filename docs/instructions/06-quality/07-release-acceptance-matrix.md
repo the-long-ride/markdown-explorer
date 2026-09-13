@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-07T18:00:00+07:00'
+timestamp: '2026-09-14T00:00:00+07:00'
 name: Release Acceptance Matrix
 topic: Product-level release readiness across use cases, hosts, security, and delivery
 document_type: quality
@@ -44,6 +44,7 @@ keywords:
 - release
 - editing
 - git
+- repository snapshots
 - split view
 ---
 
@@ -58,34 +59,40 @@ keywords:
 | Navigation | Sidebar, TOC, links, history, workspace tabs, content tabs, scroll memory, persistent bookmark jumps |
 | Search | Find, workspace, cross-tab where supported; stale request suppression |
 | Rendering | Markdown/MDX corpus, code, tables, math, Mermaid, media, HTML sandbox |
+| Feature controls | Features Settings section persists expected defaults; Markdown Editing starts off; History Sidebar starts on but remains capability-gated |
 | Markdown editing | Rendered/Inline Edit/Plain mode transitions, one shared working copy per document, dirty-state derivation, local re-render, and writable-runtime capability gating |
 | Save/conflicts | Revision-token save, conflict rejection, Reload/Compare/keep-mine flow, unsaved guards, permission/read-only failures, no silent overwrite |
 | Split view | Two independent panes, active-pane navigation, move/swap/close, pane mode/scroll independence, shared editable source, read-only Revision/Diff modes |
-| Git history | Lazy capability/history load, installed-Git support on Electron/Tauri/VS Code, rename traversal, full-OID/path validation, explicit Chromium/Web unsupported behavior |
+| Split render isolation | Document-scoped render revisions prevent unrelated opposite-pane body renders; same-document edit/render mirrors debounce by 150 ms and flush around save/file transitions |
+| Git document history | Lazy capability/history load, installed-Git support on Electron/Tauri/VS Code, rename traversal, full-OID/path validation, explicit Chromium/Web unsupported behavior |
+| Repository History | Lazy bounded commit graph, merge parents, refs, exact HEAD marker, workspace-scoped revision file listing, read-only snapshot browsing, Back to current HEAD without checkout |
 | Diff | Dependency-free Myers source diff, deterministic hunks/ranges, complete-document Rendered Diff, revision/current/working-copy/two-revision comparison, non-Git conflict comparison |
 | Conversion | Enable/disable, cache, formats, warnings/failures on capable hosts |
-| Settings | Every key, shortcuts, themes, import/export, localization, onboarding |
-| Localization | Editor, split, History, Git failure states, Source/Rendered Diff, Added/Removed/Unchanged available across all nine locales |
+| Settings | Every key, shortcuts, themes, feature controls, import/export, localization, onboarding |
+| Localization | Editor, split, History, repository snapshot, Git failure states, Source/Rendered Diff, Added/Removed/Unchanged available across all nine locales |
 | Desktop | Window/tray/fullscreen/zoom/quit, updater capability gating, signed artifact pairs, deferred/immediate apply |
-| Security | Path containment, dangerous URL blocking, HTML network restrictions, Git no-shell structured arguments, repository-contained reads, no Git mutation commands |
-| Performance | Incremental reveal, bounded work/results, cleanup/cancellation, 10k-line mostly-identical diff without quadratic matrix allocation |
+| Security | Path containment, dangerous URL blocking, HTML network restrictions, Git no-shell structured arguments, repository/workspace-contained reads, no Git mutation commands |
+| Performance | Incremental reveal, bounded work/results, cleanup/cancellation, 10k-line mostly-identical diff without quadratic matrix allocation, split-pane render isolation |
 
 ## Host acceptance
 
-- Electron installed, portable, and intended macOS/Linux artifacts behave according to capability; document writes and local Git history use bounded, workspace-contained host operations.
-- Tauri local protocols, conversion, window state, signed updater progress/state restoration, close-time apply, restart-now apply, document writes, and `std::process::Command` Git history pass.
-- VS Code commands, webview panel, editor actions, watching, packaging, revision-protected writes, and `execFile` Git history pass.
-- Chromium handles, permission recovery, writable-file save capability, scanning, polling, search, IndexedDB, and explicit Git `unsupported-runtime` behavior pass.
+- Electron installed, portable, and intended macOS/Linux artifacts behave according to capability; document writes and local Git history use bounded, workspace-contained host operations. Repository History preserves merge parents/refs/HEAD, lists only workspace-contained revision files, and reads snapshots without mutating the working tree.
+- Tauri local protocols, conversion, window state, signed updater progress/state restoration, close-time apply, restart-now apply, document writes, and `std::process::Command` Git history/repository snapshot reads pass.
+- VS Code commands, webview panel, editor actions, watching, packaging, revision-protected writes, and `execFile` Git history/repository snapshot reads pass.
+- Chromium handles, permission recovery, writable-file save capability, scanning, polling, search, IndexedDB, and explicit Git `unsupported-runtime` behavior for both document and repository history pass.
 - Website demo and file mode remain browser-safe and deploy successfully; no browser host attempts local process execution.
 
 ## Editor / History safety acceptance
 
 - Historical Git snapshots are never copied into editable document-session state and cannot be saved in place.
-- Revision and Diff pane modes expose no editable control or save path.
+- Repository snapshot browsing overlays the live content shell; returning to HEAD clears snapshot state only and exposes the already-mounted live tabs/split/editor state.
+- Revision, repository snapshot, and Diff modes expose no editable control or save path.
 - Git adapters perform only read operations. Stage, commit, checkout, restore, reset, stash, branch, merge, rebase, or equivalent repository mutation is outside the protocol.
 - Git commands use argument arrays/structured process APIs and never interpolate user paths or revisions into shell command strings.
 - Invalid object IDs, workspace escapes, repository escapes, missing Git, non-repositories, and bounded-output failures recover without breaking normal Markdown reading/editing.
+- Repository file listing and snapshot reads remain inside the active workspace, even when that workspace is a subfolder of a larger Git repository.
 - Dirty working-copy comparisons use the UI working source; conflict comparison can operate without Git.
+- Opposite split panes do not rerender their document body for unrelated source, scroll, or activation changes.
 
 ## Final verification commands
 
@@ -104,11 +111,11 @@ pnpm run build
 cargo test --manifest-path tauri/Cargo.toml -- --test-threads=1
 ```
 
-Manual acceptance on at least one real local Git repository additionally covers: edit/save, external-change conflict protection, two-pane independent modes, rename-following document history, read-only revision view, revision-to-current diff, and dirty working-copy diff.
+Manual acceptance on at least one real local Git repository additionally covers: edit/save, external-change conflict protection, two-pane independent modes, opposite-pane render isolation, same-document debounced rendered mirror, rename-following document history, read-only revision view, revision-to-current diff, dirty working-copy diff, repository graph with a merge commit, revision-file browsing, read-only snapshot display, and Back to current HEAD without working-tree changes.
 
 ## Release decision
 
-Release is blocked by failed required tests, contract drift, incomplete artifact set for the announced channel, security regression, writable-runtime conflict-protection regression, Git mutation/no-shell regression, or undocumented active behavior. Known non-blocking limitations are written explicitly in release notes.
+Release is blocked by failed required tests, contract drift, incomplete artifact set for the announced channel, security regression, writable-runtime conflict-protection regression, Git mutation/no-shell regression, repository/workspace containment regression, split render-isolation regression, or undocumented active behavior. Known non-blocking limitations are written explicitly in release notes.
 
 ## Source traceability
 
@@ -119,8 +126,8 @@ Release is blocked by failed required tests, contract drift, incomplete artifact
 | Implementation | `.github/workflows/release.yml` | Active behavior or contract |
 | Implementation | `.github/STORE_PUBLISHING.md` | Active behavior or contract |
 | Implementation | `ui/src/editor` | Editable document-session and conflict behavior |
-| Implementation | `ui/src/history` | History client, Myers diff, and changed ranges |
-| Implementation | `ui/src/split-view` | Two-pane state and selectors |
+| Implementation | `ui/src/history` | History client, repository graph, Myers diff, and changed ranges |
+| Implementation | `ui/src/split-view` | Two-pane state, selectors, and document render revisions |
 | Implementation | `electron/git/document-history.js` | Electron read-only Git adapter |
 | Implementation | `tauri/src/dispatcher/git_history.rs` | Tauri read-only Git adapter |
 | Implementation | `vscode/src/core/panelGitHistory.ts` | VS Code read-only Git adapter |

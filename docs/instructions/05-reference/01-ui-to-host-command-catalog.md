@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-07T18:00:00+07:00'
+timestamp: '2026-09-14T00:00:00+07:00'
 name: UI-to-Host Command Catalog
 topic: Exact active `WebviewMessage` command catalog
 document_type: reference
@@ -25,13 +25,14 @@ keywords:
 - commands
 - git
 - history
+- repository snapshots
 ---
 
 # UI-to-Host Command Catalog
 
 ## Contract count
 
-**56 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
+**59 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
 
 | Command | Interface and payload |
 |---|---|
@@ -52,6 +53,8 @@ keywords:
 | `indexWorkspaceSearchItems` | `IndexWorkspaceSearchItemsMessage` — items?: readonly CrossTabSearchResult[] |
 | `listDesktopFonts` | `ListDesktopFontsMessage` — requestId: string |
 | `listDocumentHistory` | `ListDocumentHistoryMessage` — requestId: string, filePath: string, limit?: number |
+| `listRepositoryHistory` | `ListRepositoryHistoryMessage` — requestId: string, limit?: number |
+| `listRevisionFiles` | `ListRevisionFilesMessage` — requestId: string, oid: string |
 | `loadSearchPreview` | `SearchPreviewRequestMessage` — requestId: string, filePath: string, tabId?: string |
 | `loadWorkspaceSearchIndexes` | `LoadWorkspaceSearchIndexesMessage` — tabs: readonly { tabId: string; workspacePath: string }[] |
 | `navigate` | `NavigateMessage` — path: string |
@@ -67,6 +70,7 @@ keywords:
 | `probeWorkspaceResource` | `ProbeWorkspaceResourceMessage` — requestId: string, documentPath: string, resourcePath: string |
 | `readGitRevision` | `ReadGitRevisionMessage` — requestId: string, oid: string, path: string |
 | `readInsightsDocumentSource` | `ReadInsightsDocumentSourceMessage` — requestId: string, relativePath: string, softLimitBytes: number, hardLimitBytes?: number |
+| `readRevisionFile` | `ReadRevisionFileMessage` — requestId: string, oid: string, path: string |
 | `readWorkspaceExportResource` | `ReadWorkspaceExportResourceMessage` — requestId: string, resourcePath: string, documentPath?: string |
 | `readWorkspaceTextResource` | `ReadWorkspaceTextResourceMessage` — requestId: string, documentPath: string, resourcePath: string |
 | `ready` | `WebviewReadyMessage` — documentConversionEnabled?: boolean |
@@ -94,9 +98,12 @@ keywords:
 
 ## Git history request rules
 
-- `getGitCapability`, `listDocumentHistory`, `readGitRevision`, and `compareGitRevisions` are correlated by `requestId`.
+- `getGitCapability`, `listDocumentHistory`, `readGitRevision`, `compareGitRevisions`, `listRepositoryHistory`, `listRevisionFiles`, and `readRevisionFile` are correlated by `requestId`.
 - Electron, Tauri, and VS Code route them to read-only local Git adapters. Chromium/Website return explicit unsupported responses and never start a local process.
-- Revision reads use validated full object IDs and repository-contained paths. No Git request accepts a shell command string.
+- `listRepositoryHistory` is bounded and reports commit identity, all parents, author/time/subject, refs, and exact `HEAD` state; it does not checkout a revision.
+- `listRevisionFiles` enumerates the selected tree under the active workspace boundary. A repository subfolder workspace cannot list sibling repository files.
+- `readRevisionFile` accepts a validated full OID plus workspace-relative path and returns historical source without mutating the index, working tree, branch, content tabs, split panes, or editable document sessions.
+- Revision reads use validated full object IDs and repository/workspace-contained paths. No Git request accepts a shell command string.
 - Historical reads never update editable document-session state.
 
 ## Document-save request rules
@@ -130,7 +137,7 @@ keywords:
 
 ```typescript
 window.PlatformBridge.postMessage({
-  command: 'readGitRevision',
+  command: 'readRevisionFile',
   requestId: 'history-42',
   oid: '0123456789abcdef0123456789abcdef01234567',
   path: 'docs/guide.md',
@@ -141,9 +148,9 @@ window.PlatformBridge.postMessage({
 
 | Kind | Path | Purpose |
 |---|---|---|
-| Implementation | `ui/src/types/webviewMessages.ts` | Active behavior or contract |
+| Implementation | `ui/src/types/webviewMessages.ts` | Active bridge request contract |
 | Implementation | `ui/src/platform/bridge.ts` | Active bridge behavior |
-| Implementation | `ui/src/history/contracts.ts` | Git comparison payload types |
+| Implementation | `ui/src/history/contracts.ts` | Git history and repository snapshot payload types |
 | Implementation | `ui/src/insights/contracts.ts` | Workspace Insights payload types |
 | Verification | `tests/contracts/host-message-parity.test.ts` | Automated expectation |
 | Verification | `tests/contracts/tauri-dispatcher-parity.test.ts` | Automated expectation |

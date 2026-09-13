@@ -23,7 +23,7 @@ function fixtureState() {
   const session = { ...createEditableDocumentSession('/docs/a.md', '# A', '1:3'), source: '# edited' };
   return {
     ...initialState,
-    settings: { ...initialState.settings, language: 'en' },
+    settings: { ...initialState.settings, language: 'en', markdownEditingEnabled: true },
     contentTabs: [tab],
     documentSessions: { [documentSessionKey('/docs/a.md')]: session },
     splitView: {

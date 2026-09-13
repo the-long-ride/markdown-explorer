@@ -19,7 +19,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 
 - **Read workspaces, not loose files**: file tree, table of contents, section cards, copy buttons, recent workspaces, and desktop tabs.
 - **Edit without leaving the reader**: switch writable Markdown documents between Rendered, Inline Edit, and Plain modes with revision-protected local saves and external-change conflict handling.
-- **Compare what changed locally**: use a two-pane split view, read-only local Git history on Electron/Tauri/VS Code, and dependency-free Source or Rendered Diff views without uploading document content.
+- **Compare what changed locally**: use a two-pane split view, read-only document and repository Git history on Electron/Tauri/VS Code, and dependency-free Source or Rendered Diff views without uploading document content.
 - **Preview more document types**: open `.html` and `.htm` files as interactive previews or converted Markdown (`Ctrl+Alt+H`), plus opt in to local conversion for DOCX, PDF, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
 - **Search where you need**: current file, current workspace, or every open desktop tab, with content excerpts and exact jump-to-result behavior.
 - **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+Z`, arrow keys, Enter, and Esc.
@@ -71,15 +71,18 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 <details>
 <summary><b>Local Markdown Editing, Split View & Git History</b></summary>
 
+- **Feature Controls**: Markdown editing is opt-in and starts disabled. The History Sidebar setting starts enabled, but the History tab appears only when the active runtime/workspace reports supported local Git capability.
 - **Rendered, Inline Edit, and Plain modes**: Writable Markdown documents can be edited directly inside Markdown Explorer without adding CodeMirror, Monaco, TipTap, ProseMirror, or another editor framework.
 - **Conflict-Protected Save**: Each save carries the revision observed when the document was loaded/saved. If the file changed externally, Markdown Explorer refuses a silent overwrite and offers Reload, Compare, or an explicit keep-mine action.
 - **Unsaved-Change Guards**: Closing tabs, changing workspaces, or closing the app protects dirty working copies until they are saved or deliberately discarded.
 - **Two-Pane Split View**: Open two documents side by side with independent active document, mode, and scroll position. A pane can show Rendered, Inline Edit, Plain, Revision, or Diff when the required data is available.
+- **Isolated Split Rendering**: Each document carries its own render revision so editing, scrolling, or activating one pane does not rerender an unrelated document in the other pane. When both panes show the same document and one is editing while the other is Rendered, the rendered mirror updates after a short 150 ms debounce and flushes immediately around save transitions.
 - **Local Git History**: Electron, Tauri, and VS Code use your installed local `git` executable to load document history lazily, follow renames, and open historical snapshots read-only. Chromium and Web explicitly report Git as unsupported and never start a local process.
+- **Repository History Sidebar**: On capable hosts, the History tab can load a bounded repository commit graph with merge parents, refs, and exact `HEAD`, browse files from a selected revision inside the active workspace, and open a read-only historical file without changing branches or the working tree. **Back to current HEAD** exits snapshot browsing without running `git checkout` and restores the live tabs/editor/split state already mounted underneath.
 - **Read-Only Git Boundary**: Markdown Explorer exposes no stage, commit, checkout, restore, reset, stash, branch, merge, or rebase operation. Git processes receive structured argument arrays rather than shell command strings, and revision/path inputs are validated before reads.
 - **Source & Rendered Diff**: Compare a revision with the persisted file, the dirty working copy, or another revision. Source Diff uses a dependency-free Myers line diff; Rendered Diff renders both complete Markdown documents and highlights changed source-backed blocks.
 - **Conflict Compare Without Git**: The same Diff UI can compare disk content against an unsaved working copy even outside a Git repository.
-- **Nine-Locale UI**: Editing, split-view, History, Git unavailable/not-repository states, diff modes, and Added/Removed/Unchanged labels are localized in all nine supported languages.
+- **Nine-Locale UI**: Editing, split-view, History, Git unavailable/not-repository states, repository snapshot browsing, diff modes, and Added/Removed/Unchanged labels are localized in all nine supported languages.
 
 See [Local Git History and Diff](docs/git-history-diff.md) and the [document-history comparison use case](docs/use-cases/compare-document-history.md).
 
@@ -163,7 +166,7 @@ See [Local Git History and Diff](docs/git-history-diff.md) and the [document-his
 - **Built-in Theme Families & Theme Remix**: Choose grouped built-in themes—including Aurora Glass, Neon Voltage, and Raw Grid—pet themes, or create, edit, import, and export custom themes with color, density, spacing, and background image controls.
 - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
 - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
-- **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
+- **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Features, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
 - **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, Code, and Mermaid** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Chromium and Web runtimes persist imported `.ttf`/`.otf`/`.woff`/`.woff2` fonts in IndexedDB and activate them via the `FontFace` API.
 - **Update Notifications**: Desktop releases can show a new-version dialog at startup with Download, Later, changelog, and **Skip notify for this version** actions. Skipping suppresses only that release; a newer release is shown again.
 - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
@@ -293,7 +296,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 - No telemetry.
 - No file upload.
 - Local parsing, indexing, rendering, editing, diff computation, and search.
-- Local Git history on Electron/Tauri/VS Code uses the installed `git` executable and exposes read-only operations only.
+- Local Git history and repository snapshot browsing on Electron/Tauri/VS Code use the installed `git` executable and expose read-only operations only.
 - MIT licensed public source.
 
 ## Links

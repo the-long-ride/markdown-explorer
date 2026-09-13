@@ -55,6 +55,7 @@ function renderProvider() {
         documentWrite: { supported: true, revision: '10:3' },
       },
     });
+    context!.updateSettings({ markdownEditingEnabled: true });
     context!.setWorkingDocumentSource(filePath, '# B');
   });
   return { bridge, filePath };

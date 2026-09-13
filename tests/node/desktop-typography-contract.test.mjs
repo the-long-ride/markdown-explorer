@@ -16,8 +16,12 @@ async function exists(path) {
 
 test('VS Code Edit capability is enabled for an active current file', async () => {
   const source = await read('ui/src/components/Topbar/Topbar.tsx');
-  assert.match(source, /canEdit=\{[^}]*appRuntime\s*===\s*['"]vscode['"]/s);
-  assert.match(source, /canEdit=\{[^}]*!!state\.currentFile/s);
+  // Edit in ToolbarActionMenu is gated by the shared markdownEditingEnabled feature flag.
+  assert.match(source, /canEdit=\{editingEnabled && !!activeDocumentSession && !!state\.currentFile\}/);
+  assert.match(source, /isMarkdownEditingAvailable/);
+  // VS Code still exposes the host openInEditor action for the native editor.
+  assert.match(source, /state\.appRuntime === 'vscode'/);
+  assert.match(source, /openInEditor/);
 
   const panel = await read('vscode/src/core/panel.ts');
   assert.match(panel, /case ['"]openInEditor['"]/);

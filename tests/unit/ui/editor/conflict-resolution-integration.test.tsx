@@ -45,6 +45,7 @@ function renderConflictProvider() {
       filePath, relativePath: 'a.md', title: 'A', fileList: [], previewInfo: null,
       documentWrite: { supported: true, revision: '10:3' },
     }});
+    context!.updateSettings({ markdownEditingEnabled: true });
     context!.setWorkingDocumentSource(filePath, '# Mine');
   });
   return { bridge, filePath };

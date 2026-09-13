@@ -17,7 +17,8 @@ test('sidebar tab registry supports optional bookmarks and capability-aware hist
   assert.match(helper, /id: 'search'/);
   assert.match(helper, /if \(input\.bookmarksEnabled\)/);
   assert.match(helper, /if \(input\.historyEnabled\)/);
-  assert.match(sidebar, /historyEnabled = state\.settings\.historySidebarEnabled && state\.gitCapability\?\.supported === true/);
+  assert.match(sidebar, /historyEnabled = state\.settings\.historySidebarEnabled && repositoryHistoryCapability\?\.supported === true/);
+  assert.match(sidebar, /useRepositorySnapshot\(\)/);
   assert.match(sidebar, /isHistory && !historyEnabled/);
   assert.match(sidebar, /SET_SIDEBAR_ACTIVE_TAB", tab: "files"/);
   assert.match(sidebar, /sidebarTabIndex\(visibleTabs, prevTab\)/);
