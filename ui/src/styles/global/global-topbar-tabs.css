@@ -12,6 +12,32 @@
 .desktop-tabbar__scrollbar {
   -webkit-app-region: no-drag;
 }
+
+/* Focus-view header: keep only the visible path non-draggable so the
+   remaining titlebar surface can move the desktop window. */
+.topbar .topbar__breadcrumb-container {
+  flex: 0 1 auto;
+  width: fit-content;
+  max-width: 100%;
+}
+.topbar .topbar__breadcrumb {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+}
+.app--tauri:not(.app--fullscreen) .topbar {
+  -webkit-app-region: drag;
+}
+.app--tauri:not(.app--fullscreen) .topbar__logo,
+.app--tauri:not(.app--fullscreen) .topbar__nav-actions,
+.app--tauri:not(.app--fullscreen) .topbar__breadcrumb-container,
+.app--tauri:not(.app--fullscreen) .topbar__actions,
+.app--tauri:not(.app--fullscreen) .topbar .btn,
+.app--tauri:not(.app--fullscreen) .topbar .toolbar-action-menu,
+.app--tauri:not(.app--fullscreen) .topbar .window-controls {
+  -webkit-app-region: no-drag;
+}
+
 .toolbar-action-menu__panel {
   width: max-content;
   min-width: 220px;
