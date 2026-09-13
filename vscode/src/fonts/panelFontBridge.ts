@@ -6,6 +6,7 @@ import { createPanelInsightsHost } from '../core/panelInsights';
 import { createInsightsExternalHost } from '../core/panelInsightsExternal';
 import { handlePanelExportResourceMessage } from '../core/panelExportResources';
 import { handlePanelExportSaveMessage } from '../core/panelExportSave';
+import { handlePanelGitHistoryMessage } from '../core/panelGitHistory';
 import { createVsCodeFontService, type VsCodeFontFamily } from './fontService';
 
 export function getGlobalStorageUri(
@@ -113,6 +114,11 @@ export function createPanelFontBridge(
         }
         return true;
       default:
+        if (await handlePanelGitHistoryMessage(
+          message,
+          vscodeApi.workspace.workspaceFolders?.[0]?.uri.fsPath,
+          postMessage,
+        )) return true;
         if (await handlePanelExportSaveMessage(
           message,
           vscodeApi,

@@ -29,6 +29,9 @@ import type {
   DocumentPreviewInfo,
   RenderContentMessage,
 } from '../types';
+import type { EditableDocumentSession } from '../editor/documentSession';
+import type { GitCapability } from '../history/contracts';
+import { createSplitViewState, type SplitViewState } from '../split-view/paneState';
 
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 import { migrateDesktopFontBindings, type DesktopFontFamily } from '../desktop/fonts/fontModel';
@@ -78,6 +81,9 @@ export interface AppState {
   renderVersion: number;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
+  documentSessions: Record<string, EditableDocumentSession>;
+  splitView: SplitViewState;
+  gitCapability: GitCapability | null;
   recentWorkspaces: RecentWorkspace[];
   isMaximized: boolean;
   appVersion: string;
@@ -230,6 +236,9 @@ export const initialState: AppState = {
   renderVersion: 0,
   contentTabs: [],
   activeContentTabPath: null,
+  documentSessions: {},
+  splitView: createSplitViewState(),
+  gitCapability: null,
   recentWorkspaces: [],
   isMaximized: false,
   appVersion: '',

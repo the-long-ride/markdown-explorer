@@ -1,7 +1,7 @@
 import type { MdFile, FolderNode } from '../../ui/src/types';
 import { normalizeForSearch, prepareHaystack } from '../../ui/src/utils/unicodeSearch';
 import type { BrowserSearchIndex } from '../../chromium-xtension/src/search-index';
-import { readTextFile } from '../../chromium-xtension/src/file-access';
+import { readTextFile, writeFileHandle, writeTextFile } from '../../chromium-xtension/src/file-access';
 import { resolveWorkspaceTextResourcePath } from '../../chromium-xtension/src/chrome-host-utils';
 import { makeExcerpt } from './web-test-search';
 import { resolveWorkspaceSearchItems } from '../../chromium-xtension/src/workspace-search-items';
@@ -74,6 +74,12 @@ async function searchSingleFile(
   return results;
 }
 
+function protocolWriteResult(result: Awaited<ReturnType<typeof writeTextFile>>) {
+  return result.reason === 'io-error'
+    ? { ...result, reason: 'write-failed' as const }
+    : result;
+}
+
 export async function handleWebFileUtilityMessage(
   msg: any,
   deps: FileUtilityRouterDeps,
@@ -86,6 +92,30 @@ export async function handleWebFileUtilityMessage(
   const flatList = deps.getFlatList();
 
   switch (msg.command) {
+    case 'saveDocument': {
+      const requestedPath = String(msg.filePath || '');
+      const source = String(msg.source ?? '');
+      const expectedRevision = typeof msg.expectedRevision === 'string' ? msg.expectedRevision : null;
+      const force = Boolean(msg.force);
+      const singleFileHandle = deps.getSingleFileHandle();
+      const activeHandle = deps.getActiveHandle();
+      const item = flatList.find((candidate) => candidate.fsPath === requestedPath || candidate.relativePath === requestedPath);
+      let result;
+      if (singleFileHandle && item && (singleFileHandle.name === item.fileName || flatList.length === 1)) {
+        result = await writeFileHandle(singleFileHandle, source, expectedRevision, force);
+      } else if (activeHandle && item) {
+        result = await writeTextFile(activeHandle, item.relativePath, source, expectedRevision, force);
+      } else {
+        result = { ok: false as const, reason: activeHandle || singleFileHandle ? 'outside-workspace' as const : 'read-only' as const };
+      }
+      deps.send({
+        command: 'saveDocumentResult',
+        requestId: msg.requestId,
+        filePath: requestedPath,
+        ...protocolWriteResult(result as Awaited<ReturnType<typeof writeTextFile>>),
+      });
+      return true;
+    }
     case 'searchWorkspace': {
       const rawQuery = String(msg.query || '').trim();
       const matchCase = Boolean(msg.matchCase);
