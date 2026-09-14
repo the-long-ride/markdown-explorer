@@ -14,6 +14,11 @@ describe('Workspace Insights documentation sync', () => {
     expect(design).toContain('PR #44');
   });
 
+  it('records PR #44 as merged instead of still under review', () => {
+    expect(design).toContain('merged into `main` in PR #44');
+    expect(design).not.toContain('under review in PR #44');
+  });
+
   it('documents authoritative cache validation and bounded source reads', () => {
     expect(design).toContain('provisional only');
     expect(design).toContain('rereads every eligible Markdown/MDX file');
