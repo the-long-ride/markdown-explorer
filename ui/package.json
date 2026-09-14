@@ -15,6 +15,11 @@
     "validate:mermaid-fixtures": "node scripts/validate-mermaid-manual.mjs"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.2",
+    "@codemirror/view": "^6.43.11",
     "@mermaid-js/mermaid-zenuml": "^0.2.3",
     "chart.js": "^4.5.1",
     "highlight.js": "^11.11.1",

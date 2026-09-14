@@ -72,15 +72,18 @@ body {
   margin: 0 2px;
 }
 .topbar__breadcrumb-container {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  width: fit-content;
   min-width: 0;
-  max-width: none;
+  max-width: 100%;
   position: relative;
   display: flex;
   align-items: center;
 }
 .topbar__breadcrumb {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  width: fit-content;
+  max-width: 100%;
   display: flex;
   align-items: center;
   gap: 4px;

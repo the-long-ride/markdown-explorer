@@ -5,15 +5,21 @@ import test from 'node:test';
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 test('bookmark sidebar exposes count, wider layout, and two-row controls', async () => {
-  const [header, panel, styles, tabsStyles, sidebar] = await Promise.all([
+  const [header, panel, styles, tabsStyles, sidebar, sidebarTabs] = await Promise.all([
     read('ui/src/components/Sidebar/SidebarTabsHeader.tsx'),
     read('ui/src/components/Bookmarks/BookmarksPanel.tsx'),
     read('ui/src/styles/global/global-bookmarks.css'),
     read('ui/src/styles/global/global-content-tabs-focus-search.css'),
     read('ui/src/components/Sidebar/Sidebar.tsx'),
+    read('ui/src/components/Sidebar/sidebarTabs.ts'),
   ]);
-  assert.match(header, /bookmarkCount/);
-  assert.match(header, /isBookmarks[\s\S]*sidebar__count/);
+  // Adaptive tabs: counts come from SidebarTabDescriptor; header renders activeDescriptor.count.
+  assert.match(sidebarTabs, /bookmarkCount/);
+  assert.match(sidebarTabs, /id: 'bookmarks'/);
+  assert.match(header, /activeDescriptor\?\.count/);
+  assert.match(header, /sidebar__count/);
+  assert.match(header, /onSelect\(tab\.id\)/);
+  assert.match(header, /sidebar__tab-btn--\$\{tab\.id\}/);
   assert.match(panel, /bookmarks-panel__search-row/);
   assert.match(panel, /bookmarks-panel__action-row/);
   assert.match(sidebar, /has-bookmarks-feature/);
@@ -23,11 +29,6 @@ test('bookmark sidebar exposes count, wider layout, and two-row controls', async
   assert.match(tabsStyles, /\.sidebar__tab-btn\s*\{[\s\S]*?flex:\s*0 0 auto/);
   assert.match(header, /offsetLeft/);
   assert.match(header, /offsetWidth/);
-  assert.match(header, /sidebar__tab-btn--files/);
-  assert.match(header, /sidebar__tab-btn--search/);
-  assert.match(header, /sidebar__tab-btn--bookmarks/);
-  assert.match(header, /is-search/);
-  assert.match(header, /is-bookmarks/);
 });
 
 test('bookmark panel supports selection mode, select all, and atomic batch delete', async () => {
@@ -143,4 +144,3 @@ test('topbar document header actions use section collapse/expand tooltips', asyn
   assert.match(translations, /collapseAll:\s*"Collapse all sections"/);
   assert.match(translations, /expandAll:\s*"Expand all sections"/);
 });
-

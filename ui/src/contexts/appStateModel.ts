@@ -29,9 +29,15 @@ import type {
   DocumentPreviewInfo,
   RenderContentMessage,
 } from '../types';
+import type { EditableDocumentSession } from '../editor/documentSession';
+import type { GitCapability } from '../history/contracts';
+import { createSplitViewState, type SplitViewState } from '../split-view/paneState';
 
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 import { migrateDesktopFontBindings, type DesktopFontFamily } from '../desktop/fonts/fontModel';
+
+export type SidebarTabId = 'files' | 'search' | 'bookmarks' | 'history';
+
 export interface NavigateOptions {
   htmlPreviewOverride?: boolean;
 }
@@ -76,8 +82,12 @@ export interface AppState {
   desktopFontError: string | null;
   desktopFontsResult: { requestId: string; importedId?: string } | null;
   renderVersion: number;
+  documentRenderRevisions: Record<string, number>;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
+  documentSessions: Record<string, EditableDocumentSession>;
+  splitView: SplitViewState;
+  gitCapability: GitCapability | null;
   recentWorkspaces: RecentWorkspace[];
   isMaximized: boolean;
   appVersion: string;
@@ -87,7 +97,7 @@ export interface AppState {
   canInstallUpdates: boolean;
   focusMode: boolean;
   updateState: UpdateState;
-  sidebarActiveTab: 'files' | 'search' | 'bookmarks';
+  sidebarActiveTab: SidebarTabId;
 }
 
 export type Action =
@@ -159,7 +169,7 @@ export type Action =
   | { type: 'SET_DESKTOP_FONTS'; fonts: readonly DesktopFontFamily[]; requestId: string; importedId?: string; error?: string }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean }
   | { type: 'TOGGLE_FOCUS_MODE' }
-  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: 'files' | 'search' | 'bookmarks' }
+  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: SidebarTabId }
   | { type: 'SET_SIDEBAR_COLLAPSED'; collapsed: boolean };
 
 export function createEmptyUpdateState(): UpdateState {
@@ -212,6 +222,8 @@ export const initialState: AppState = {
     bookmarksEnabled: false,
     insightsEnabled: false,
     documentConversion: false,
+    historySidebarEnabled: true,
+    markdownEditingEnabled: false,
     scopeFocus: {},
     searchScopeFocus: {},
     sidebarPinnedItems: {},
@@ -228,8 +240,12 @@ export const initialState: AppState = {
   desktopFontError: null,
   desktopFontsResult: null,
   renderVersion: 0,
+  documentRenderRevisions: {},
   contentTabs: [],
   activeContentTabPath: null,
+  documentSessions: {},
+  splitView: createSplitViewState(),
+  gitCapability: null,
   recentWorkspaces: [],
   isMaximized: false,
   appVersion: '',
@@ -287,6 +303,8 @@ export function createInitialState(
       bookmarksEnabled: saved.bookmarksEnabled === true,
       insightsEnabled: saved.insightsEnabled === true,
       documentConversion: saved.documentConversion === true,
+      historySidebarEnabled: saved.historySidebarEnabled !== false,
+      markdownEditingEnabled: saved.markdownEditingEnabled === true,
       scopeFocus: saved.scopeFocus ?? {},
       searchScopeFocus: saved.searchScopeFocus ?? {},
       sidebarPinnedItems: saved.sidebarPinnedItems ?? {},

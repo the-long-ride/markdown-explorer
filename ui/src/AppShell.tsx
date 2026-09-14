@@ -9,8 +9,12 @@
 // =============================================================================
 
 import { useEffect } from 'react';
-import { AppStateProvider } from './contexts/AppStateContext';
+import { AppStateProvider, useAppState } from './contexts/AppStateContext';
+import { HistoryProvider } from './contexts/HistoryContext';
+import { RepositorySnapshotFromHistoryProvider } from './contexts/RepositorySnapshotContext';
 import { WorkspaceNavigationProvider } from './contexts/NavigationContext';
+import { RepositorySnapshotPortal } from './components/History/RepositorySnapshotPortal';
+import { NativeCloseGuardBridge } from './editor/NativeCloseGuardBridge';
 import { App } from './App';
 
 // Defer interactive component registration until after initial mount
@@ -26,6 +30,21 @@ scheduleInteractive();
 
 const shouldLogPerf =
   import.meta.env.DEV || new URLSearchParams(window.location.search).has('perf');
+
+function FocusModeDragRegion() {
+  const { state } = useAppState();
+  if (!state.focusMode || (state.appRuntime !== 'desktop' && state.appRuntime !== 'tauri')) {
+    return null;
+  }
+
+  return (
+    <div
+      className="focus-mode-drag-region"
+      aria-hidden="true"
+      data-tauri-drag-region={state.appRuntime === 'tauri' ? '' : undefined}
+    />
+  );
+}
 
 export default function AppShell() {
   // ── Perf timing: collect renderer-side marks for main process ──────────
@@ -50,9 +69,16 @@ export default function AppShell() {
 
   return (
     <AppStateProvider>
-      <WorkspaceNavigationProvider>
-        <App />
-      </WorkspaceNavigationProvider>
+      <FocusModeDragRegion />
+      <NativeCloseGuardBridge />
+      <HistoryProvider>
+        <RepositorySnapshotFromHistoryProvider>
+          <WorkspaceNavigationProvider>
+            <App />
+          </WorkspaceNavigationProvider>
+          <RepositorySnapshotPortal />
+        </RepositorySnapshotFromHistoryProvider>
+      </HistoryProvider>
     </AppStateProvider>
   );
 }

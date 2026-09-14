@@ -1,7 +1,15 @@
 import type { FolderNode, MdFile, RecentWorkspace } from './files';
-import type { RenderContentMessage, WorkspaceOperationMetadata } from './content';
+import type { DocumentRevisionToken, RenderContentMessage, WorkspaceOperationMetadata } from './content';
 import type { AppRuntime, HostPlatform, UpdateState, WorkspaceUnavailableReason } from './settings';
 import type { DesktopFontFamily } from '../desktop/fonts/fontModel';
+import type {
+  GitCapability,
+  GitRepositoryCommit,
+  GitRevisionFile,
+  GitRevisionFileSnapshot,
+  GitRevisionSnapshot,
+  GitRevisionSummary,
+} from '../history/contracts';
 import type {
   ExternalLinkCheckResult,
   InsightsFsDelta,
@@ -179,6 +187,63 @@ export interface WorkspaceExportResourceResultMessage {
   readonly reason?: ExportWorkspaceResourceHostFailureReason;
 }
 
+export interface SaveDocumentResultMessage {
+  readonly command: 'saveDocumentResult';
+  readonly requestId: string;
+  readonly filePath: string;
+  readonly ok: boolean;
+  readonly revision?: DocumentRevisionToken;
+  readonly diskSource?: string;
+  readonly diskRevision?: DocumentRevisionToken;
+  readonly reason?: 'conflict' | 'permission-denied' | 'missing' | 'outside-workspace' | 'read-only' | 'write-failed';
+  readonly error?: string;
+}
+
+export interface GitCapabilityResultMessage {
+  readonly command: 'gitCapabilityResult';
+  readonly requestId: string;
+  readonly capability: GitCapability;
+}
+
+export interface DocumentHistoryResultMessage {
+  readonly command: 'documentHistoryResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly revisions: readonly GitRevisionSummary[];
+  readonly reason?: string;
+}
+
+export interface GitRevisionResultMessage {
+  readonly command: 'gitRevisionResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly snapshot?: GitRevisionSnapshot;
+  readonly reason?: string;
+}
+
+export interface GitComparisonResultMessage {
+  readonly command: 'gitComparisonResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly leftSource?: string;
+  readonly rightSource?: string;
+  readonly leftLabel?: string;
+  readonly rightLabel?: string;
+  readonly reason?: string;
+}
+
+export type RepositoryHistoryResultMessage =
+  | { readonly command: 'repositoryHistoryResult'; readonly requestId: string; readonly ok: true; readonly commits: readonly GitRepositoryCommit[] }
+  | { readonly command: 'repositoryHistoryResult'; readonly requestId: string; readonly ok: false; readonly commits: readonly GitRepositoryCommit[]; readonly reason: string };
+
+export type RevisionFilesResultMessage =
+  | { readonly command: 'revisionFilesResult'; readonly requestId: string; readonly ok: true; readonly files: readonly GitRevisionFile[] }
+  | { readonly command: 'revisionFilesResult'; readonly requestId: string; readonly ok: false; readonly files: readonly GitRevisionFile[]; readonly reason: string };
+
+export type RevisionFileResultMessage =
+  | { readonly command: 'revisionFileResult'; readonly requestId: string; readonly ok: true; readonly snapshot: GitRevisionFileSnapshot }
+  | { readonly command: 'revisionFileResult'; readonly requestId: string; readonly ok: false; readonly reason: string };
+
 export interface InsightsScanBatchMessage extends InsightsScanBatch { readonly command: 'insightsScanBatch'; }
 export interface InsightsScanCompleteMessage extends InsightsScanComplete { readonly command: 'insightsScanComplete'; }
 export interface InsightsDocumentSourceResultMessage extends InsightsSourceResult { readonly command: 'insightsDocumentSourceResult'; }
@@ -219,7 +284,9 @@ export type HostMessage =
   | WorkspaceOpenCancelledMessage | UpdateStateChangedMessage | WindowStateChangedMessage
   | FullscreenStateChangedMessage | ExternalOpenRequestMessage | ExternalOpenPathMessage | CrossTabSearchResultsMessage
   | WorkspaceSearchResultsMessage | SearchPreviewResultMessage | WorkspaceSearchIndexLoadedMessage
-  | WorkspaceTextResourceResultMessage | WorkspaceExportResourceResultMessage
+  | WorkspaceTextResourceResultMessage | WorkspaceExportResourceResultMessage | SaveDocumentResultMessage
+  | GitCapabilityResultMessage | DocumentHistoryResultMessage | GitRevisionResultMessage | GitComparisonResultMessage
+  | RepositoryHistoryResultMessage | RevisionFilesResultMessage | RevisionFileResultMessage
   | InsightsScanBatchMessage | InsightsScanCompleteMessage | InsightsDocumentSourceResultMessage
   | WorkspaceResourceProbeResultMessage | InsightsFsDeltaMessage | InsightsRuntimeCapabilitiesMessage
   | ExternalLinkCheckResultMessage | ExternalLinkCheckCompleteMessage

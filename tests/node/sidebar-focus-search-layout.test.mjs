@@ -23,13 +23,13 @@ test('sidebar search reruns for focus changes and the files scope controls occup
     read('ui/src/styles/global/global-sidebar-tree-layout.css'),
     read('ui/src/styles/global/global-sidebar-search-controls.css'),
   ]);
-  assert.match(sidebar, /selectedFilePaths=\{selectedFilePaths\}/);
-  assert.match(sidebar, /hasScopeEntry=\{hasScopeEntry\}/);
+  assert.match(sidebar, /selectedFilePaths=\{isRevisionMode \? undefined : selectedFilePaths\}/);
+  assert.match(sidebar, /hasScopeEntry=\{isRevisionMode \? false : hasScopeEntry\}/);
   assert.match(sidebar, /sidebar__files-second-row/);
   assert.match(search, /getScopeSearchRevision/);
   assert.match(search, /filterWorkspaceSearchResultsByScope/);
   assert.match(search, /scopeRevision/);
-  assert.match(search, /\[bridge, query, matchCase, scopeRevision\]/);
+  assert.match(search, /\[bridge, query, matchCase, revisionSearch, scopeRevision\]/);
   assert.match(treeCss, /--sidebar-search-height/);
   assert.match(scopeCss, /sidebar__files-second-row/);
 });
@@ -53,4 +53,21 @@ test('sidebar tabs fit their labels, animate one shared indicator, and bookmark 
   assert.match(panel, /TrashIcon/);
   assert.match(icons, /viewBox="0 0 122\.47 122\.88"/);
   assert.match(tabsCss, /sidebar-panel-enter/);
+});
+
+test('focus mode keeps a desktop drag strip while the breadcrumb only occupies content width', async () => {
+  const [appShell, topbarCss, electronCss] = await Promise.all([
+    read('ui/src/AppShell.tsx'),
+    read('ui/src/styles/global/global-topbar-actions.css'),
+    read('ui/src/styles/global/global-electron-window-controls.css'),
+  ]);
+
+  assert.match(appShell, /!state\.focusMode/);
+  assert.match(appShell, /state\.appRuntime !== 'desktop' && state\.appRuntime !== 'tauri'/);
+  assert.match(appShell, /focus-mode-drag-region/);
+  assert.match(appShell, /data-tauri-drag-region/);
+  assert.match(electronCss, /\.focus-mode-drag-region\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?top:\s*0;[\s\S]*?height:\s*10px;/);
+  assert.match(electronCss, /body\.is-electron \.focus-mode-drag-region\s*\{[\s\S]*?-webkit-app-region:\s*drag;/);
+  assert.match(topbarCss, /\.topbar__breadcrumb-container\s*\{[\s\S]*?flex:\s*0 1 auto;[\s\S]*?width:\s*fit-content;/);
+  assert.match(topbarCss, /\.topbar__breadcrumb\s*\{[\s\S]*?flex:\s*0 1 auto;[\s\S]*?width:\s*fit-content;/);
 });

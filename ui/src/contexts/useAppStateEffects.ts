@@ -64,6 +64,8 @@ export function useAppStateEffects({
           bookmarksEnabled: saved.bookmarksEnabled === true,
           insightsEnabled: saved.insightsEnabled === true,
           documentConversion: saved.documentConversion === true,
+          historySidebarEnabled: saved.historySidebarEnabled !== false,
+          markdownEditingEnabled: saved.markdownEditingEnabled === true,
           scopeFocus: saved.scopeFocus ?? {},
           searchScopeFocus: saved.searchScopeFocus ?? {},
           sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
@@ -257,9 +259,11 @@ export function useAppStateEffects({
     return () => media.removeEventListener('change', handleChange);
   }, [state.settings, state.theme, state.themeStyle]);
 
-  // Persist settings on change
+  // Persist settings on change without dropping repository-scoped view state.
   useEffect(() => {
+    const currentPersisted = bridge.getState<PersistedState>();
     bridge.setState<PersistedState>({
+      ...currentPersisted,
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
       defaultCsvPreview: state.settings.defaultCsvPreview,
@@ -267,6 +271,8 @@ export function useAppStateEffects({
       bookmarksEnabled: state.settings.bookmarksEnabled,
       insightsEnabled: state.settings.insightsEnabled,
       documentConversion: state.settings.documentConversion,
+      historySidebarEnabled: state.settings.historySidebarEnabled,
+      markdownEditingEnabled: state.settings.markdownEditingEnabled,
       scopeFocus: state.settings.scopeFocus,
       searchScopeFocus: state.settings.searchScopeFocus,
       sidebarPinnedItems: state.settings.sidebarPinnedItems,
@@ -281,6 +287,7 @@ export function useAppStateEffects({
       language: state.settings.language,
       customThemes: state.settings.customThemes,
       activeCustomThemeId: state.settings.activeCustomThemeId,
+      repositoryRevisionSelections: currentPersisted?.repositoryRevisionSelections,
     });
   }, [bridge, state.settings, state.theme, state.themeStyle]);
 
