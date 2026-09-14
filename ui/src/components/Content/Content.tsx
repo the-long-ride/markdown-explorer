@@ -56,6 +56,7 @@ export const Content = memo(function Content({
     refresh,
     updateSettings,
     setWorkingDocumentSource,
+    setDocumentEditMode,
     saveDocument,
   } = useAppState();
   const currentLang = state.settings.language || "en";
@@ -265,6 +266,7 @@ export const Content = memo(function Content({
           onDeleteUnavailableWorkspace={handleDeleteUnavailableWorkspace} onUpdateSettings={updateSettings}
           onRefresh={refresh} onHtmlPolicyReport={handleHtmlPolicyReport}
           onWorkingDocumentSourceChange={setWorkingDocumentSource} onSaveDocument={saveDocument}
+          onDocumentModeChange={setDocumentEditMode}
         />
       )}
       {htmlModal && <HtmlPreviewModal documentHtml={htmlModal.documentHtml} title={t.previewActions.modalTitle} closeLabel={t.previewActions.closeModal} trigger={htmlModal.trigger} onClose={() => setHtmlModal(null)} />}

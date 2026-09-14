@@ -6,11 +6,13 @@ export interface SidebarTabDescriptor {
   readonly label: string;
   readonly icon: ReactNode;
   readonly count?: number;
+  readonly indicator?: 'accent-dot';
 }
 
 interface BuildVisibleSidebarTabsInput {
   readonly bookmarksEnabled: boolean;
   readonly historyEnabled: boolean;
+  readonly historyIndicator?: 'accent-dot';
   readonly filesLabel: string;
   readonly searchLabel: string;
   readonly bookmarksLabel: string;
@@ -29,7 +31,7 @@ export function buildVisibleSidebarTabs(input: BuildVisibleSidebarTabsInput): re
     tabs.push({ id: 'bookmarks', label: input.bookmarksLabel, icon: input.icons.bookmarks, count: input.bookmarkCount });
   }
   if (input.historyEnabled) {
-    tabs.push({ id: 'history', label: input.historyLabel, icon: input.icons.history });
+    tabs.push({ id: 'history', label: input.historyLabel, icon: input.icons.history, indicator: input.historyIndicator });
   }
   return tabs;
 }

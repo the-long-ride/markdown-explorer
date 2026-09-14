@@ -5,17 +5,30 @@ import { RepositoryHistoryPanel } from '../../../../ui/src/components/History/Re
 import { RepositorySnapshotProvider } from '../../../../ui/src/contexts/RepositorySnapshotContext';
 import type { HistoryClient } from '../../../../ui/src/history/historyClient';
 
-const oid = 'a'.repeat(40);
-const commit = {
-  oid,
-  shortOid: oid.slice(0, 7),
-  parentOids: [],
-  author: 'Dev',
-  authoredAt: '2026-09-13T00:00:00Z',
-  subject: 'feat: snapshot history',
-  refs: ['HEAD -> main'],
-  isHead: true,
-};
+const headOid = 'h'.repeat(40);
+const oldOid = 'a'.repeat(40);
+const commits = [
+  {
+    oid: headOid,
+    shortOid: headOid.slice(0, 7),
+    parentOids: [oldOid],
+    author: 'Dev',
+    authoredAt: '2026-09-14T00:00:00Z',
+    subject: 'feat: current head',
+    refs: ['HEAD -> main'],
+    isHead: true,
+  },
+  {
+    oid: oldOid,
+    shortOid: oldOid.slice(0, 7),
+    parentOids: [],
+    author: 'Dev',
+    authoredAt: '2026-09-13T00:00:00Z',
+    subject: 'feat: snapshot history',
+    refs: [],
+    isHead: false,
+  },
+];
 
 function createClient(): HistoryClient {
   return {
@@ -23,48 +36,61 @@ function createClient(): HistoryClient {
     listDocumentHistory: vi.fn().mockResolvedValue([]),
     readGitRevision: vi.fn(),
     compareGitRevisions: vi.fn(),
-    listRepositoryHistory: vi.fn().mockResolvedValue([commit]),
+    listRepositoryHistory: vi.fn().mockResolvedValue(commits),
     listRevisionFiles: vi.fn().mockResolvedValue([{ path: 'docs/a.md' }]),
-    readRevisionFile: vi.fn().mockResolvedValue({ oid, path: 'docs/a.md', source: '# snapshot' }),
+    readRevisionFile: vi.fn().mockResolvedValue({ oid: oldOid, path: 'docs/a.md', source: '# snapshot' }),
     dispose: vi.fn(),
   };
 }
 
-describe('RepositoryHistoryPanel', () => {
-  it('loads repository commits only when visible and browses snapshot files', async () => {
-    const client = createClient();
-    const { rerender } = render(
+function HistoryFixture({ client, visible }: { client: HistoryClient; visible: boolean }) {
+  return (
+    <div className="sidebar">
       <RepositorySnapshotProvider client={client} workspaceKey="/repo">
-        <RepositoryHistoryPanel visible={false} language="en" />
-      </RepositorySnapshotProvider>,
-    );
+        <RepositoryHistoryPanel visible={visible} language="en" />
+      </RepositorySnapshotProvider>
+    </div>
+  );
+}
+
+async function activateOldCommitFromMenu(): Promise<void> {
+  await userEvent.click(await screen.findByRole('button', { name: /feat: snapshot history/i }));
+  expect(screen.getByRole('menu')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('menuitem', { name: /view workspace at this commit/i }));
+}
+
+describe('RepositoryHistoryPanel', () => {
+  it('loads repository commits only when visible and browses snapshot files after explicit activation', async () => {
+    const client = createClient();
+    const { rerender } = render(<HistoryFixture client={client} visible={false} />);
     await waitFor(() => expect(client.getCapability).toHaveBeenCalledTimes(1));
     expect(client.listRepositoryHistory).not.toHaveBeenCalled();
 
-    rerender(
-      <RepositorySnapshotProvider client={client} workspaceKey="/repo">
-        <RepositoryHistoryPanel visible language="en" />
-      </RepositorySnapshotProvider>,
-    );
+    rerender(<HistoryFixture client={client} visible />);
     expect(await screen.findByText('feat: snapshot history')).toBeInTheDocument();
     expect(client.listRepositoryHistory).toHaveBeenCalledWith(200);
+    expect(screen.getAllByTestId('repository-history-graph')).toHaveLength(1);
 
-    await userEvent.click(screen.getByRole('button', { name: /feat: snapshot history/i }));
+    await activateOldCommitFromMenu();
     expect(await screen.findByRole('button', { name: /docs\/a\.md/i })).toBeInTheDocument();
-    expect(client.listRevisionFiles).toHaveBeenCalledWith(oid);
+    expect(client.listRevisionFiles).toHaveBeenCalledWith(oldOid);
 
     await userEvent.click(screen.getByRole('button', { name: /docs\/a\.md/i }));
-    await waitFor(() => expect(client.readRevisionFile).toHaveBeenCalledWith(oid, 'docs/a.md'));
+    await waitFor(() => expect(client.readRevisionFile).toHaveBeenCalledWith(oldOid, 'docs/a.md'));
   });
 
-  it('offers Back to current HEAD after selecting a historical commit', async () => {
+  it('opens commit metadata without activating revision mode', async () => {
     const client = createClient();
-    render(
-      <RepositorySnapshotProvider client={client} workspaceKey="/repo">
-        <RepositoryHistoryPanel visible language="en" />
-      </RepositorySnapshotProvider>,
-    );
+    render(<HistoryFixture client={client} visible />);
     await userEvent.click(await screen.findByRole('button', { name: /feat: snapshot history/i }));
+    expect(screen.getByRole('menuitem', { name: /sha aaaaaaa/i })).toBeInTheDocument();
+    expect(client.listRevisionFiles).not.toHaveBeenCalled();
+  });
+
+  it('offers Back to current HEAD after activating a historical commit', async () => {
+    const client = createClient();
+    render(<HistoryFixture client={client} visible />);
+    await activateOldCommitFromMenu();
     expect(await screen.findByRole('button', { name: /back to current head/i })).toBeInTheDocument();
   });
 });

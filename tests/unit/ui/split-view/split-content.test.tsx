@@ -51,7 +51,7 @@ describe('SplitContentView', () => {
       />,
     );
 
-    expect(screen.getByRole('textbox', { name: /markdown source/i })).toHaveValue('# edited');
+    expect(screen.getByRole('textbox', { name: /markdown source/i })).toHaveTextContent('# edited');
     expect(screen.getByRole('region', { name: /secondary document/i })).toHaveTextContent('edited');
   });
 

@@ -1,5 +1,6 @@
 import type { SidebarPinnedItem, SidebarSortMode } from './types/files';
 import type { DesktopFontBindings, DesktopFontSelection } from './desktop/fonts/fontModel';
+import type { PersistedRepositoryRevisionSelections } from './history/repositoryView';
 
 // ── UI state ────────────────────────────────────────────────────────────────
 
@@ -128,4 +129,5 @@ export interface PersistedState {
   language?: string;
   customThemes?: CustomTheme[];
   activeCustomThemeId?: string;
+  repositoryRevisionSelections?: PersistedRepositoryRevisionSelections;
 }

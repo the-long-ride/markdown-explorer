@@ -106,7 +106,7 @@ function SplitPaneViewImpl({ paneId, projection, historyView, language, document
           ? <GitRevisionView snapshot={historyView.revision} language={language} onReturnToCurrent={() => clearHistoryView(paneId)} />
           : projection.mode === 'diff' && historyView?.comparison
             ? <DocumentDiffView {...historyView.comparison} language={language} onReturnToCurrent={() => clearHistoryView(paneId)} />
-            : <DocumentSurface filePath={projection.filePath} relativePath={projection.relativePath} mode={surfaceMode} contentHtml={projection.contentHtml} source={projection.source} stale={false} language={language} renderVersion={documentRenderRevision} disabled={!editingEnabled || projection.session?.saveState === 'saving'} onSourceChange={(source) => onSourceChange(projection.filePath, source)} onSave={() => onSave(projection.filePath)} />}
+            : <DocumentSurface filePath={projection.filePath} relativePath={projection.relativePath} mode={surfaceMode} contentHtml={projection.contentHtml} source={projection.source} stale={false} language={language} renderVersion={documentRenderRevision} disabled={!editingEnabled || projection.session?.saveState === 'saving'} onSourceChange={(source) => onSourceChange(projection.filePath, source)} onSave={() => onSave(projection.filePath)} onModeChange={(mode) => onModeChange(paneId, mode)} />}
       </div>
     </div>
   );

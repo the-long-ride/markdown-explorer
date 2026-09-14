@@ -49,6 +49,27 @@
   box-sizing: border-box;
 }
 
+.sidebar__tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar__tab-state-dot {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--bg);
+  border-radius: 999px;
+  background: var(--accent);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
 .sidebar__tab-btn svg {
   width: var(--shell-action-icon-size) !important;
   height: var(--shell-action-icon-size) !important;

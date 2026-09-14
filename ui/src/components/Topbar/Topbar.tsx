@@ -4,6 +4,7 @@ import { getExportScopeTranslations } from '../../contexts/exportScopeTranslatio
 import { useNavigation } from '../../contexts/NavigationContext';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { useRepositorySnapshot } from '../../contexts/RepositorySnapshotContext';
 import { documentSessionKey, isDocumentDirty } from '../../editor/documentSession';
 import { isMarkdownEditingAvailable } from '../../editor/editingFeature';
 import { collectDirtyDocumentPaths } from '../../editor/unsavedGuards';
@@ -85,10 +86,13 @@ export function Topbar({
     toggleFocusMode, dispatch, setDocumentEditMode, saveDocument,
     guardUnsavedChanges = (_filePaths: string[], commit: () => void) => commit(),
   } = useAppState();
+  const { repositoryView } = useRepositorySnapshot();
   const { back, forward, canGoBack, canGoForward } = useNavigation();
   const bridge = usePlatform();
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isDesktop = isElectron || state.appRuntime === 'tauri';
+  const isNativeEditRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
+  const isRevisionMode = repositoryView.mode === 'revision';
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
   const editorT = getEditorUiTranslations(currentLang);
@@ -105,13 +109,28 @@ export function Topbar({
     ? state.documentSessions?.[documentSessionKey(state.currentFile)]
     : undefined;
   const editingEnabled = isMarkdownEditingAvailable(state.settings);
+  const showEditInMoreActions = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || (state.appRuntime === 'vscode' && !editingEnabled);
   const canSaveMarkdown = Boolean(
-    activeDocumentSession
+    !isRevisionMode
+      && activeDocumentSession
       && activeDocumentSession.saveState !== 'saving'
       && isDocumentDirty(activeDocumentSession),
   );
+  const canUseEditAction = Boolean(
+    !isRevisionMode
+      && state.currentFile
+      && (editingEnabled ? activeDocumentSession : isNativeEditRuntime),
+  );
   const dirtyDocumentPaths = collectDirtyDocumentPaths(state.documentSessions ?? {});
   const guardDestructiveAction = (commit: () => void) => guardUnsavedChanges(dirtyDocumentPaths, commit);
+  const handleEdit = () => {
+    if (isRevisionMode || !state.currentFile) return;
+    if (editingEnabled && activeDocumentSession) {
+      setDocumentEditMode(state.currentFile, 'inline-edit');
+      return;
+    }
+    if (isNativeEditRuntime) openInEditor();
+  };
 
   return (
     <header className="topbar">
@@ -157,45 +176,17 @@ export function Topbar({
       </div>
 
       <div className="topbar__actions">
-        <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!!state.currentFile} />
-        {editingEnabled && activeDocumentSession && state.currentFile && (
+        <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!isRevisionMode && !!state.currentFile} />
+        {!isRevisionMode && editingEnabled && activeDocumentSession && state.currentFile && (
           <div className="topbar__markdown-editing" role="group" aria-label={editorT.modeGroup}>
-            <button
-              type="button"
-              className="topbar__markdown-mode-btn"
-              aria-pressed={activeDocumentSession.mode === 'rendered'}
-              onClick={() => setDocumentEditMode(state.currentFile!, 'rendered')}
-            >
-              {editorT.rendered}
-            </button>
-            <button
-              type="button"
-              className="topbar__markdown-mode-btn"
-              aria-pressed={activeDocumentSession.mode === 'inline-edit'}
-              onClick={() => setDocumentEditMode(state.currentFile!, 'inline-edit')}
-            >
-              {editorT.inlineEdit}
-            </button>
-            <button
-              type="button"
-              className="topbar__markdown-mode-btn"
-              aria-pressed={activeDocumentSession.mode === 'plain'}
-              onClick={() => setDocumentEditMode(state.currentFile!, 'plain')}
-            >
-              {editorT.plain}
-            </button>
-            <button
-              type="button"
-              className="topbar__markdown-save-btn"
-              disabled={!canSaveMarkdown}
-              onClick={() => void saveDocument(state.currentFile!)}
-            >
-              {editorT.save}
-            </button>
+            <button type="button" className="topbar__markdown-mode-btn" aria-pressed={activeDocumentSession.mode === 'rendered'} onClick={() => setDocumentEditMode(state.currentFile!, 'rendered')}>{editorT.rendered}</button>
+            <button type="button" className="topbar__markdown-mode-btn" aria-pressed={activeDocumentSession.mode === 'inline-edit'} onClick={() => setDocumentEditMode(state.currentFile!, 'inline-edit')}>{editorT.inlineEdit}</button>
+            <button type="button" className="topbar__markdown-mode-btn" aria-pressed={activeDocumentSession.mode === 'plain'} onClick={() => setDocumentEditMode(state.currentFile!, 'plain')}>{editorT.plain}</button>
+            <button type="button" className="topbar__markdown-save-btn" disabled={!canSaveMarkdown} onClick={() => void saveDocument(state.currentFile!)}>{editorT.save}</button>
           </div>
         )}
         {state.appRuntime === 'vscode' && (
-          <TooltipButton className="topbar__edit-action topbar__action-btn btn btn--icon" onClick={openInEditor} disabled={!state.currentFile} tooltip={t.topbar.edit} shortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')} portalTooltip icon={<EditIcon size={13} />} />
+          <TooltipButton className="topbar__edit-action topbar__action-btn btn btn--icon" onClick={openInEditor} disabled={isRevisionMode || !state.currentFile} tooltip={t.topbar.edit} shortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')} portalTooltip icon={<EditIcon size={13} />} />
         )}
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
@@ -206,19 +197,20 @@ export function Topbar({
           exportLabel={exportT.title}
           homeTooltip={t.topbar.welcomePage}
           themeTooltip={themeToggleLabel}
-          editTooltip={editorT.inlineEdit}
+          editTooltip={editingEnabled ? editorT.inlineEdit : t.topbar.edit}
           settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
           exportTooltip={exportT.exportDocumentsTooltip}
           homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
           themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
+          editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
           settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
-          canEdit={editingEnabled && !!activeDocumentSession && !!state.currentFile}
-          showEdit={editingEnabled && (state.appRuntime === 'desktop' || state.appRuntime === 'tauri')}
+          canEdit={canUseEditAction}
+          showEdit={showEditInMoreActions}
           isDark={isDark}
           hasUpdate={hasUpdate}
           onHome={() => navigate(null)}
           onTheme={toggleTheme}
-          onEdit={() => { if (state.currentFile) setDocumentEditMode(state.currentFile, 'inline-edit'); }}
+          onEdit={handleEdit}
           onSettings={onSettingsOpen}
           onExport={onExportOpen}
           sidebarLabel={t.actions.toggleSidebar}
@@ -230,7 +222,7 @@ export function Topbar({
           tocTooltip={t.actions.toggleToc}
           tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')}
           tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
-          tocToggleDisabled={!state.currentFile || state.toc.length === 0}
+          tocToggleDisabled={isRevisionMode || !state.currentFile || state.toc.length === 0}
           onTocToggle={toggleToc}
           showInsights={state.settings.insightsEnabled}
           insightsLabel={insightsT.title}

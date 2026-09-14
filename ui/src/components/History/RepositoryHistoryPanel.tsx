@@ -5,7 +5,15 @@ import { GitCommitGraph } from './GitCommitGraph';
 
 export function RepositoryHistoryPanel({ visible, language }: { visible: boolean; language?: string }) {
   const t = getHistoryTranslations(language);
-  const { state, commits, capability, loadHistory, selectCommit, openSnapshotFile, returnToHead } = useRepositorySnapshot();
+  const {
+    state,
+    commits,
+    capability,
+    loadHistory,
+    activateWorkspaceRevision,
+    openSnapshotFile,
+    returnToHead,
+  } = useRepositorySnapshot();
 
   useEffect(() => {
     if (!visible || capability?.supported !== true || state.status !== 'idle') return;
@@ -46,7 +54,8 @@ export function RepositoryHistoryPanel({ visible, language }: { visible: boolean
             selectedOid={state.selectedOid}
             headLabel={t.head}
             browseLabel={t.browseCommit}
-            onSelect={(oid) => { void selectCommit(oid); }}
+            onActivateRevision={(oid) => { void activateWorkspaceRevision(oid); }}
+            onReturnToHead={returnToHead}
           />
 
           {state.selectedOid && (

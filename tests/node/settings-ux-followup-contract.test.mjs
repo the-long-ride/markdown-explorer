@@ -74,7 +74,9 @@ test('Edit shortcut dispatch uses existing openInEditor and toolbar placement di
   assert.match(topbar, /topbar__edit-action/);
   assert.match(topbar, /state\.appRuntime === 'vscode'/);
   assert.match(topbar, /editCurrentDocument/);
-  assert.match(topbar, /showEdit=\{editingEnabled && \(state\.appRuntime === 'desktop' \|\| state\.appRuntime === 'tauri'\)\}/);
+  assert.match(topbar, /const showEditInMoreActions = state\.appRuntime === 'desktop' \|\| state\.appRuntime === 'tauri' \|\| \(state\.appRuntime === 'vscode' && !editingEnabled\)/);
+  assert.match(topbar, /showEdit=\{showEditInMoreActions\}/);
+  assert.match(topbar, /onEdit=\{handleEdit\}/);
   assert.match(desktopTabBar, /editShortcut=\{getEnabledShortcut\(state\.settings, 'editCurrentDocument'\)\}/);
 });
 

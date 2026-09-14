@@ -23,13 +23,13 @@ test('sidebar search reruns for focus changes and the files scope controls occup
     read('ui/src/styles/global/global-sidebar-tree-layout.css'),
     read('ui/src/styles/global/global-sidebar-search-controls.css'),
   ]);
-  assert.match(sidebar, /selectedFilePaths=\{selectedFilePaths\}/);
-  assert.match(sidebar, /hasScopeEntry=\{hasScopeEntry\}/);
+  assert.match(sidebar, /selectedFilePaths=\{isRevisionMode \? undefined : selectedFilePaths\}/);
+  assert.match(sidebar, /hasScopeEntry=\{isRevisionMode \? false : hasScopeEntry\}/);
   assert.match(sidebar, /sidebar__files-second-row/);
   assert.match(search, /getScopeSearchRevision/);
   assert.match(search, /filterWorkspaceSearchResultsByScope/);
   assert.match(search, /scopeRevision/);
-  assert.match(search, /\[bridge, query, matchCase, scopeRevision\]/);
+  assert.match(search, /\[bridge, query, matchCase, revisionSearch, scopeRevision\]/);
   assert.match(treeCss, /--sidebar-search-height/);
   assert.match(scopeCss, /sidebar__files-second-row/);
 });

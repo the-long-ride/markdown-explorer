@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import type { DocumentViewMode } from '../../split-view/paneState';
 import { InlineMarkdownEditor } from './InlineMarkdownEditor';
-import { PlainMarkdownEditor } from './PlainMarkdownEditor';
+import { MarkdownSourceEditor } from './MarkdownSourceEditor';
 import { useInlineMarkdownEditing } from './useInlineMarkdownEditing';
 
 interface DocumentSurfaceProps {
@@ -17,6 +17,7 @@ interface DocumentSurfaceProps {
   disabled?: boolean;
   onSourceChange: (source: string) => void;
   onSave: () => void | Promise<unknown>;
+  onModeChange?: (mode: DocumentViewMode) => void;
 }
 
 export function DocumentSurface({
@@ -31,6 +32,7 @@ export function DocumentSurface({
   disabled = false,
   onSourceChange,
   onSave,
+  onModeChange,
 }: DocumentSurfaceProps) {
   const editorT = getEditorUiTranslations(language);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -55,12 +57,14 @@ export function DocumentSurface({
         aria-live="polite"
       >
         {mode === 'plain' ? (
-          <PlainMarkdownEditor
+          <MarkdownSourceEditor
             value={source}
             disabled={disabled}
             ariaLabel={editorT.plainSourceLabel}
+            language={language}
             onChange={onSourceChange}
             onSave={() => { void onSave(); }}
+            onPreview={() => onModeChange?.('rendered')}
           />
         ) : (
           <div dangerouslySetInnerHTML={{ __html: contentHtml }} />

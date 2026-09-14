@@ -71,7 +71,7 @@ describe('ContentMainView plain Markdown mode', () => {
   it('shows the shared working source instead of rendered Markdown', () => {
     renderPlainMode();
 
-    expect(screen.getByRole('textbox', { name: 'Markdown source' })).toHaveValue('# Working');
+    expect(screen.getByRole('textbox', { name: 'Markdown source' })).toHaveTextContent('# Working');
     expect(screen.queryByText('Rendered')).not.toBeInTheDocument();
   });
 });

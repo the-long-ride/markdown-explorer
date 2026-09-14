@@ -3,7 +3,7 @@ import type { AppState } from '../../contexts/appStateModel';
 import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import { useHistoryView } from '../../contexts/HistoryContext';
 import type { Translations } from '../../contexts/translations';
-import { documentSessionKey } from '../../editor/documentSession';
+import { documentSessionKey, type MarkdownEditMode } from '../../editor/documentSession';
 import type { HtmlLocalFirstPolicyReport } from '../../markdown/htmlLocalFirstPreview';
 import type { AppSettings } from '../../types';
 import { DocumentDiffView } from '../History/DocumentDiffView';
@@ -11,7 +11,7 @@ import { GitRevisionView } from '../History/GitRevisionView';
 import { AlertTriangleIcon, FileNotFoundIcon, FolderIcon, TrashIcon } from '../shared/icons';
 import { HtmlDocumentView } from './HtmlDocumentView';
 import { InlineMarkdownEditor } from './InlineMarkdownEditor';
-import { PlainMarkdownEditor } from './PlainMarkdownEditor';
+import { MarkdownSourceEditor } from './MarkdownSourceEditor';
 import { useInlineMarkdownEditing } from './useInlineMarkdownEditing';
 import { WelcomePage } from './WelcomePage';
 import { RandomTipCard } from './RandomTipCard';
@@ -28,6 +28,7 @@ interface ContentMainViewProps {
   onCancelWorkspaceScan?: () => void; onOpenWorkspaceAgain: () => void; onDeleteUnavailableWorkspace: () => void;
   onUpdateSettings: (patch: Partial<AppSettings>) => void; onRefresh: () => void; onHtmlPolicyReport: (report: HtmlLocalFirstPolicyReport) => void;
   onWorkingDocumentSourceChange?: (filePath: string, source: string) => void; onSaveDocument?: (filePath: string) => void | Promise<unknown>;
+  onDocumentModeChange?: (filePath: string, mode: MarkdownEditMode) => void;
 }
 
 export function ContentMainView(props: ContentMainViewProps) {
@@ -36,7 +37,7 @@ export function ContentMainView(props: ContentMainViewProps) {
     isUnavailableWorkspaceInHistory, suppressWelcome, hasRenderableDocumentContent, isHtmlDocument, sourceDocumentText,
     htmlMarkdownRender, htmlDocumentPreviewEnabled, previewTitle, previewWarning, previewMeta, frontmatterEntries, renderedContentParts,
     onCancelWorkspaceScan, onOpenWorkspaceAgain, onDeleteUnavailableWorkspace, onUpdateSettings, onRefresh, onHtmlPolicyReport,
-    onWorkingDocumentSourceChange, onSaveDocument,
+    onWorkingDocumentSourceChange, onSaveDocument, onDocumentModeChange,
   } = props;
   const { historyViews, clearHistoryView } = useHistoryView();
   const activeHistory = historyViews.single?.filePath === state.currentFile ? historyViews.single : undefined;
@@ -66,7 +67,7 @@ export function ContentMainView(props: ContentMainViewProps) {
             {activeHistory?.mode === 'git-revision' && activeHistory.revision ? <GitRevisionView snapshot={activeHistory.revision} language={language} onReturnToCurrent={() => clearHistoryView('single')} />
               : activeHistory?.mode === 'diff' && activeHistory.comparison ? <DocumentDiffView {...activeHistory.comparison} language={language} onReturnToCurrent={() => clearHistoryView('single')} />
               : isHtmlDocument && sourceDocumentText !== null ? <HtmlDocumentView filePath={state.currentFile} htmlSource={sourceDocumentText} markdownHtml={htmlMarkdownRender.html} previewEnabled={htmlDocumentPreviewEnabled} title={state.relativePath || state.currentFile} conversionError={htmlMarkdownRender.error} onPolicyReport={onHtmlPolicyReport} />
-              : isPlainMarkdownMode && documentSession ? <PlainMarkdownEditor value={documentSession.source} disabled={documentSession.saveState === 'saving'} ariaLabel={editorT.plainSourceLabel} onChange={(source) => onWorkingDocumentSourceChange?.(state.currentFile!, source)} onSave={() => { void onSaveDocument?.(state.currentFile!); }} />
+              : isPlainMarkdownMode && documentSession ? <MarkdownSourceEditor value={documentSession.source} disabled={documentSession.saveState === 'saving'} ariaLabel={editorT.plainSourceLabel} language={language || 'en'} onChange={(source) => onWorkingDocumentSourceChange?.(state.currentFile!, source)} onSave={() => { void onSaveDocument?.(state.currentFile!); }} onPreview={() => onDocumentModeChange?.(state.currentFile!, 'rendered')} />
               : <>{previewInfo && <div className={`document-preview-notice document-preview-notice--${previewInfo.kind}`} role="note"><AlertTriangleIcon size={16} /><div className="document-preview-notice__body"><div className="document-preview-notice__title">{previewTitle}</div><div className="document-preview-notice__text">{previewWarning}</div>{previewMeta && <div className="document-preview-notice__meta">{previewMeta}</div>}</div></div>}{state.toc.length > 0 && !state.tocCollapsed && <Suspense fallback={null}><TableOfContents variant="compact" /></Suspense>}{renderedContentParts.leadingCommentsHtml && <HtmlContent html={renderedContentParts.leadingCommentsHtml} />}{frontmatterEntries.length > 0 && <details className="mdn-frontmatter" open aria-label={t.ui.documentProperties}><summary className="mdn-frontmatter-summary"><span>{t.ui.properties}</span><span className="mdn-frontmatter-count">{frontmatterEntries.length} {frontmatterEntries.length === 1 ? t.ui.propertySingular : t.ui.propertyPlural}</span></summary><div className="mdn-frontmatter-grid">{frontmatterEntries.map(([key, value]) => <div className="mdn-frontmatter-field" key={key}><span className="mdn-frontmatter-key">{key}</span><span className={`mdn-frontmatter-value${value ? '' : ' is-empty'}`}>{value || '\u00a0'}</span></div>)}</div></details>}<HtmlContent html={renderedContentParts.bodyHtml} /></>}
           </div>
         )}

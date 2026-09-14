@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Content } from '../../../../ui/src/components/Content/Content';
 import { useAppState } from '../../../../ui/src/contexts/AppStateContext';
@@ -33,6 +34,7 @@ vi.mock('../../../../ui/src/components/Modal/ScopeViewModal', () => ({ ScopeView
 vi.mock('../../../../ui/src/components/Bookmarks/BookmarkSelectionMenu', () => ({ BookmarkSelectionMenu: () => null }));
 
 const mockSetWorkingDocumentSource = vi.fn();
+const mockSetDocumentEditMode = vi.fn();
 const mockSaveDocument = vi.fn();
 
 function makeState() {
@@ -104,6 +106,7 @@ beforeEach(() => {
     refresh: vi.fn(),
     updateSettings: vi.fn(),
     setWorkingDocumentSource: mockSetWorkingDocumentSource,
+    setDocumentEditMode: mockSetDocumentEditMode,
     saveDocument: mockSaveDocument,
   } as any);
   vi.mocked(useNavigation).mockReturnValue({ push: vi.fn() } as any);
@@ -114,16 +117,20 @@ beforeEach(() => {
 });
 
 describe('Content plain Markdown mode integration', () => {
-  it('keeps an empty Markdown file editable and routes edits and save through the shared session API', () => {
+  it('keeps an empty Markdown file editable and routes formatting, save, and preview through the shared session API', async () => {
+    const user = userEvent.setup();
     render(<Content onImageClick={vi.fn()} scrollRef={{ current: null }} />);
 
     const editor = screen.getByRole('textbox', { name: 'Markdown source' });
-    expect(editor).toHaveValue('');
+    expect(editor).toHaveTextContent('');
 
-    fireEvent.change(editor, { target: { value: '# New' } });
-    expect(mockSetWorkingDocumentSource).toHaveBeenCalledWith('/docs/empty.md', '# New');
+    await user.click(screen.getByRole('button', { name: 'Bold' }));
+    expect(mockSetWorkingDocumentSource).toHaveBeenCalledWith('/docs/empty.md', '****');
 
     fireEvent.keyDown(editor, { key: 's', ctrlKey: true });
     expect(mockSaveDocument).toHaveBeenCalledWith('/docs/empty.md');
+
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(mockSetDocumentEditMode).toHaveBeenCalledWith('/docs/empty.md', 'rendered');
   });
 });

@@ -16,13 +16,17 @@ function commit(oid: string, parentOids: readonly string[]): GitRepositoryCommit
 }
 
 describe('git graph layout', () => {
-  it('assigns a stable lane to linear history', () => {
+  it('assigns a stable lane and continuous segments to linear history', () => {
     const a = 'a'.repeat(40);
     const b = 'b'.repeat(40);
     const c = 'c'.repeat(40);
     const layout = layoutGitGraph([commit(a, [b]), commit(b, [c]), commit(c, [])]);
     expect(layout.nodes.map((node) => node.lane)).toEqual([0, 0, 0]);
     expect(layout.laneCount).toBe(1);
+    expect(layout.segments).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fromRow: 0, toRow: 1, fromLane: 0, toLane: 0, parentOid: b, continuesBeyondWindow: false }),
+      expect.objectContaining({ fromRow: 1, toRow: 2, fromLane: 0, toLane: 0, parentOid: c, continuesBeyondWindow: false }),
+    ]));
   });
 
   it('creates deterministic adjacent lanes for merge parents and rejoins them', () => {
@@ -38,5 +42,23 @@ describe('git graph layout', () => {
     expect(first.nodes[0].parents).toEqual([{ oid: a, lane: 0 }, { oid: b, lane: 1 }]);
     expect(first.laneCount).toBeGreaterThanOrEqual(2);
     expect(first.nodes.find((node) => node.commit.oid === root)?.lane).toBe(0);
+    expect(first.segments).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fromRow: 0, parentOid: a, toRow: 1, toLane: 0 }),
+      expect.objectContaining({ fromRow: 0, parentOid: b, toRow: 2, toLane: 1 }),
+    ]));
+  });
+
+  it('extends an omitted parent to the bottom edge of the loaded window', () => {
+    const layout = layoutGitGraph([commit('c2', ['missing'])]);
+    expect(layout.segments).toEqual([
+      {
+        fromRow: 0,
+        fromLane: 0,
+        toRow: 1,
+        toLane: 0,
+        parentOid: 'missing',
+        continuesBeyondWindow: true,
+      },
+    ]);
   });
 });

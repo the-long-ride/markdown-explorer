@@ -17,9 +17,11 @@ test('Markdown Explorer editing is controlled by one persisted feature gate', as
   assert.match(helper, /isMarkdownEditingAvailable/);
   assert.match(helper, /markdownEditingEnabled === true/);
   assert.match(topbar, /editingEnabled = isMarkdownEditingAvailable\(state\.settings\)/);
-  assert.match(topbar, /showEdit=\{editingEnabled &&/);
-  assert.match(topbar, /onEdit=\{\(\) => \{ if \(state\.currentFile\) setDocumentEditMode\(state\.currentFile, 'inline-edit'\); \}\}/);
-  assert.doesNotMatch(topbar, /onEdit=\{openInEditor\}/);
+  assert.match(topbar, /!isRevisionMode && editingEnabled && activeDocumentSession && state\.currentFile/);
+  assert.match(topbar, /if \(editingEnabled && activeDocumentSession\)/);
+  assert.match(topbar, /setDocumentEditMode\(state\.currentFile, 'inline-edit'\)/);
+  assert.match(topbar, /if \(isNativeEditRuntime\) openInEditor\(\)/);
+  assert.match(topbar, /onEdit=\{handleEdit\}/);
   assert.match(split, /editingEnabled \? EDITABLE_MODES : READ_ONLY_MODES/);
   assert.match(workingCopy, /if \(!isMarkdownEditingAvailable\(state\.settings\)\) return state/);
   assert.match(workingCopy, /if \(!isDocumentViewModeAllowed\(state\.settings, mode\)\) return state/);

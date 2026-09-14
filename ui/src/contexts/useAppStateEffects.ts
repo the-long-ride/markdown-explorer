@@ -259,9 +259,11 @@ export function useAppStateEffects({
     return () => media.removeEventListener('change', handleChange);
   }, [state.settings, state.theme, state.themeStyle]);
 
-  // Persist settings on change
+  // Persist settings on change without dropping repository-scoped view state.
   useEffect(() => {
+    const currentPersisted = bridge.getState<PersistedState>();
     bridge.setState<PersistedState>({
+      ...currentPersisted,
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
       defaultCsvPreview: state.settings.defaultCsvPreview,
@@ -285,6 +287,7 @@ export function useAppStateEffects({
       language: state.settings.language,
       customThemes: state.settings.customThemes,
       activeCustomThemeId: state.settings.activeCustomThemeId,
+      repositoryRevisionSelections: currentPersisted?.repositoryRevisionSelections,
     });
   }, [bridge, state.settings, state.theme, state.themeStyle]);
 

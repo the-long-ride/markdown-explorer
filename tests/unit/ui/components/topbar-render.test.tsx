@@ -321,6 +321,17 @@ describe('Topbar render', () => {
     expect(screen.queryByTestId('menu-edit')).not.toBeInTheDocument();
   });
 
+  it('shows More actions Edit in VS Code when Markdown Explorer editing is off and routes externally', () => {
+    mockState.appRuntime = 'vscode';
+    mockState.settings.markdownEditingEnabled = false;
+    mockState.currentFile = '/project/docs/guide.mdx';
+    render(React.createElement(Topbar, defaultProps));
+    const edit = screen.getByTestId('menu-edit');
+    expect(edit).toBeEnabled();
+    fireEvent.click(edit);
+    expect(mockOpenInEditor).toHaveBeenCalledTimes(1);
+  });
+
   it('dispatches openInEditor from the dedicated VS Code Edit action', () => {
     mockState.appRuntime = 'vscode';
     mockState.currentFile = '/project/docs/guide.mdx';

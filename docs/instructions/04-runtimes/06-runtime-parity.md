@@ -13,6 +13,8 @@ source_scope:
 - ui/src/types/webviewMessages.ts
 - ui/src/types/hostMessages.ts
 - ui/src/history/contracts.ts
+- ui/src/history/repositoryView.ts
+- ui/src/history/revisionWorkspace.ts
 - electron/core/runtime-command-handlers.js
 - electron/git/document-history.js
 - tauri/src/dispatcher/commands.rs
@@ -30,6 +32,9 @@ test_scope:
 - tests/unit/vscode/panel-git-history.test.ts
 - tests/unit/chromium/browser-git-history-host.test.ts
 - tests/unit/chromium/chrome-host-commands.test.ts
+- tests/unit/ui/history/repository-view.test.ts
+- tests/unit/ui/history/revision-workspace.test.ts
+- tests/unit/ui/history/revision-search.test.ts
 runtime_scope:
 - runtime
 keywords:
@@ -63,9 +68,10 @@ keywords:
 | Scope View document modal | Yes | Yes | Yes | Yes | Yes |
 | Hardware mouse history navigation (3/4) | Yes | Yes | Yes | Yes | Yes |
 | Local Markdown save with revision conflict protection | Yes | Yes | Yes | Yes, writable file handle | Browser/virtual capability dependent |
+| Markdown source editor + formatting toolbar | Yes | Yes | Yes | Writable-handle capability | Browser/virtual capability dependent |
 | Two-pane Markdown split view | Yes | Yes | Yes | Yes | Yes |
 | Local Git document history | Yes, installed Git | Yes, installed Git | Yes, installed Git | No, explicit unsupported | No, explicit unsupported |
-| Repository commit graph + read-only snapshot browser | Yes | Yes | Yes | No, explicit unsupported | No, explicit unsupported |
+| Repository commit graph + persistent read-only revision workspace | Yes | Yes | Yes | No, explicit unsupported | No, explicit unsupported |
 | Read-only Git revision snapshots | Yes | Yes | Yes | No | No |
 | Local Source/Rendered Diff | Yes | Yes | Yes | Yes for non-Git/local source comparisons | Yes for non-Git/local source comparisons |
 | Installer updater | Installed packaged support | Signed plugin artifacts; download/defer/restart parity | Check/report only; VS Code installs | Store | Deployment |
@@ -82,11 +88,19 @@ Repository History adds three correlated requests on capable hosts:
 
 The corresponding result messages are `repositoryHistoryResult`, `revisionFilesResult`, and `revisionFileResult`; they preserve the initiating `requestId` and typed success/failure shape across Electron, Tauri, VS Code, and browser-host unsupported responses.
 
+The shared renderer turns a selected non-HEAD commit into an explicit read-only `RepositoryView`. The historical Files tree is projected from revision paths, file opens are routed through `readRevisionFile`, and workspace search reads revision sources rather than issuing a live workspace-search command. Selection is persisted per workspace and restored only when the saved object remains valid. Returning to HEAD clears UI/persistence state only and never invokes a Git checkout.
+
+The History tab shows an accent state dot only while a whole-workspace non-HEAD revision is active. Opening a commit menu by itself does not change repository view state.
+
 Chromium and Website hosts never attempt process execution. `getGitCapability` returns `{ supported: false, reason: 'unsupported-runtime' }`; document-history, repository-history, snapshot, file-list, and comparison requests fail safely without affecting ordinary reading, editing, split view, or local conflict comparison.
 
 The shared UI computes source and rendered diffs locally with the dependency-free Myers line-diff implementation. Conflict comparison does not require Git and remains available wherever the editor has both disk/current sources.
 
-Repository snapshot UI state is isolated from live content tabs, split panes, and editable document sessions. **Back to current HEAD** clears snapshot state only; it does not execute a Git checkout and restores the already-mounted live view.
+## Editing parity contract
+
+Markdown Explorer's internal Markdown source editor is CodeMirror 6, loaded locally from packaged dependencies. It provides source highlighting, line numbers, keyboard editing/history, and a formatting toolbar for bold, italic, H1-H6, quote, inline/fenced code, links, bulleted/numbered/task lists, tables, undo/redo, and Preview. The application document session remains the sole owner of working source, dirty state, save revision tokens, conflicts, and split-view synchronization.
+
+On a live workspace, **More Actions → Edit** stays available on capable native/editor runtimes even when `markdownEditingEnabled` is false. When the feature is enabled it enters Markdown Explorer's internal editing mode; when disabled it uses the existing external/native editor route. Whole-workspace historical mode disables both routes and Save.
 
 ## Common protocol requirement
 
@@ -110,7 +124,9 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 - Electron/Tauri/VS Code Git routes use no shell, mutate no repository state, and preserve correlated `requestId` values.
 - Repository revision file listing remains scoped to the active workspace and cannot expose sibling repository paths.
 - Chromium/Website explicitly report Git unsupported and never invoke a local process.
-- Historical revision, repository snapshot, and Diff modes are read-only and never replace or dirty the editable document session.
+- Historical revision, whole-workspace repository snapshot, and Diff modes are read-only and never replace or dirty the editable document session.
+- Persisted repository revisions are workspace-keyed and a stale/pruned selection falls back to live HEAD.
+- Internal Markdown editing and external/native Edit routes are both disabled while a historical workspace revision is active.
 
 ## Source traceability
 
@@ -119,6 +135,8 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 | Implementation | `ui/src/types/webviewMessages.ts` | Active request contract |
 | Implementation | `ui/src/types/hostMessages.ts` | Active response contract |
 | Implementation | `ui/src/history/contracts.ts` | Shared Git history and repository snapshot models |
+| Implementation | `ui/src/history/repositoryView.ts` | Per-workspace live/revision view persistence |
+| Implementation | `ui/src/history/revisionWorkspace.ts` | Historical tree projection and search |
 | Implementation | `electron/core/runtime-command-handlers.js` | Electron command routing |
 | Implementation | `electron/git/document-history.js` | Electron local Git adapter |
 | Implementation | `tauri/src/dispatcher/commands.rs` | Tauri command routing |
@@ -132,6 +150,9 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 | Verification | `tests/unit/electron/document-history.test.ts` | Electron Git boundary, repository graph, and snapshot behavior |
 | Verification | `tests/unit/vscode/panel-git-history.test.ts` | VS Code Git parity |
 | Verification | `tests/unit/chromium/browser-git-history-host.test.ts` | Browser unsupported behavior |
+| Verification | `tests/unit/ui/history/repository-view.test.ts` | Persistence isolation and clearing |
+| Verification | `tests/unit/ui/history/revision-workspace.test.ts` | Revision tree projection |
+| Verification | `tests/unit/ui/history/revision-search.test.ts` | Historical workspace search |
 
 ---
 

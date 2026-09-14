@@ -12,8 +12,18 @@ export interface GitGraphNode {
   readonly parents: readonly GitGraphParentLink[];
 }
 
+export interface GitGraphSegment {
+  readonly fromRow: number;
+  readonly fromLane: number;
+  readonly toRow: number;
+  readonly toLane: number;
+  readonly parentOid: string;
+  readonly continuesBeyondWindow: boolean;
+}
+
 export interface GitGraphLayout {
   readonly nodes: readonly GitGraphNode[];
+  readonly segments: readonly GitGraphSegment[];
   readonly laneCount: number;
 }
 
@@ -49,5 +59,23 @@ export function layoutGitGraph(commits: readonly GitRepositoryCommit[]): GitGrap
     nodes.push({ commit, row, lane, parents });
   });
 
-  return { nodes, laneCount };
+  const byOid = new Map(nodes.map((node) => [node.commit.oid, node]));
+  const segments: GitGraphSegment[] = [];
+  for (const node of nodes) {
+    for (const parent of node.parents) {
+      const target = byOid.get(parent.oid);
+      const toLane = target?.lane ?? parent.lane;
+      laneCount = Math.max(laneCount, node.lane + 1, toLane + 1);
+      segments.push({
+        fromRow: node.row,
+        fromLane: node.lane,
+        toRow: target?.row ?? commits.length,
+        toLane,
+        parentOid: parent.oid,
+        continuesBeyondWindow: !target,
+      });
+    }
+  }
+
+  return { nodes, segments, laneCount };
 }
