@@ -61,7 +61,7 @@ export function SidebarTabsHeader({
             {!iconOnly && <span className="sidebar__tab-label">{tab.label}</span>}
           </button>
         ))}
-        <span className="sidebar__tab-indicator" ref={indicatorRef} />
+        <span className={`sidebar__tab-indicator is-${activeTab}`} ref={indicatorRef} />
       </div>
       {activeTab === 'search' ? (
         <div className="sidebar__title-actions" key="search-actions">
