@@ -24,8 +24,10 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   saveCurrentDocument: 'Ctrl+S',
 };
 
+const { toggleWorkspaceInsights: _toggleWorkspaceInsights, ...VSCODE_SHARED_KEYBINDINGS } = DEFAULT_KEYBINDINGS;
+
 export const VSCODE_DEFAULT_KEYBINDINGS: Record<string, string> = {
-  ...DEFAULT_KEYBINDINGS,
+  ...VSCODE_SHARED_KEYBINDINGS,
   editCurrentDocument: 'Ctrl+Alt+E',
 };
 
