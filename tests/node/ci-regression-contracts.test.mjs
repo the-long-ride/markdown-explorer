@@ -58,8 +58,8 @@ test('workspace insights is gated by appearance settings toggle and accessible v
   assert.match(effects, /insightsEnabled:\s*state\.settings\.insightsEnabled/);
   assert.match(importExport, /insightsEnabled:\s*raw\.insightsEnabled === true/);
   assert.match(panel, /updateSettings\(\{\s*insightsEnabled:\s*event\.target\.checked\s*\}\)/);
-  assert.match(topbar, /showInsights=\{state\.settings\.insightsEnabled\}/);
-  assert.match(desktopTabBar, /showInsights=\{state\.settings\.insightsEnabled\}/);
+  assert.match(topbar, /showInsights=\{supportsWorkspaceInsights\(state\.appRuntime\) && state\.settings\.insightsEnabled\}/);
+  assert.match(desktopTabBar, /showInsights=\{supportsWorkspaceInsights\(state\.appRuntime\) && state\.settings\.insightsEnabled\}/);
   assert.match(toolbarMenu, /showInsights && insightsLabel/);
   assert.doesNotMatch(tabsHeader, /WorkspaceInsightsEntry/);
   assert.match(entry, /if \(!state\.settings\.insightsEnabled\) return null/);

@@ -24,6 +24,31 @@ function copyDirRecursive(src, dest, fsApi) {
   }
 }
 
+function pruneVsCodeOnlyInsightsArtifacts(rootDir, fsApi) {
+  const fss = fsApi || fs;
+  const generatedFiles = [
+    'vscode/out/vscode/src/core/panelInsights.js',
+    'vscode/out/vscode/src/core/panelInsights.js.map',
+    'vscode/out/vscode/src/core/panelInsights.d.ts',
+    'vscode/out/vscode/src/core/panelInsightsExternal.js',
+    'vscode/out/vscode/src/core/panelInsightsExternal.js.map',
+    'vscode/out/vscode/src/core/panelInsightsExternal.d.ts',
+    'vscode/ui/dist/assets/WorkspaceInsightsEntry.js',
+  ];
+  for (const relativePath of generatedFiles) {
+    const filePath = path.join(rootDir, relativePath);
+    if (fss.existsSync(filePath)) fss.rmSync(filePath, { force: true });
+  }
+
+  const assetsDir = path.join(rootDir, 'vscode', 'ui', 'dist', 'assets');
+  if (!fss.existsSync(assetsDir)) return;
+  for (const entry of fss.readdirSync(assetsDir, { withFileTypes: true })) {
+    if (entry.name.startsWith('insights.worker-')) {
+      fss.rmSync(path.join(assetsDir, entry.name), { force: true });
+    }
+  }
+}
+
 function main(fsApi) {
   const fss = fsApi || fs;
   const rootDir = path.resolve(__dirname, '..', '..');
@@ -44,6 +69,7 @@ function main(fsApi) {
 
     copyDirRecursive(uiDistSrc, vscodeUiDistDest, fss);
     copyDirRecursive(uiAssetsSrc, vscodeUiAssetsDest, fss);
+    pruneVsCodeOnlyInsightsArtifacts(rootDir, fss);
     console.log('UI artifacts copied successfully.');
   } catch (err) {
     console.error('Failed to copy UI artifacts:', err);
@@ -51,7 +77,7 @@ function main(fsApi) {
   }
 }
 
-module.exports = { copyDirRecursive, main };
+module.exports = { copyDirRecursive, pruneVsCodeOnlyInsightsArtifacts, main };
 
 if (require.main === module) {
   main();

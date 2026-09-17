@@ -1,6 +1,6 @@
 import type { FolderNode, MdFile, RecentWorkspace } from './files';
 import type { RenderContentMessage, WorkspaceOperationMetadata } from './content';
-import type { AppRuntime, HostPlatform, UpdateState, WorkspaceUnavailableReason } from './settings';
+import type { AppRuntime, HostPlatform, PersistedState, UpdateState, WorkspaceUnavailableReason } from './settings';
 import type { DesktopFontFamily } from '../desktop/fonts/fontModel';
 import type {
   ExternalLinkCheckResult,
@@ -30,6 +30,7 @@ export interface ReadyAckMessage extends WorkspaceOperationMetadata {
   readonly documentConversionEnabled?: boolean;
   readonly isMaximized?: boolean;
   readonly isFullscreen?: boolean;
+  readonly persistedState?: PersistedState;
 }
 
 export interface WorkspaceFilesChangedMessage extends WorkspaceOperationMetadata {

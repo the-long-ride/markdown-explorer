@@ -39,6 +39,7 @@ export function createVsCodeBridge(): PlatformBridge {
 
     setState<T>(state: T): void {
       api.setState(state);
+      api.postMessage({ command: 'persistState', state: state as any });
     },
 
     copyToClipboard(text: string) {

@@ -5,6 +5,7 @@ import { useResize } from "./hooks/useResize";
 import { requestShellLocation, supportsShellLocation } from "./desktop/shellLocation";
 import { collapseAll as collapseAllHeadingSections, expandAll as expandAllHeadingSections } from './dom/globalHandlers';
 import { WORKSPACE_INSIGHTS_TOGGLE_EVENT } from './components/shared/ToolbarActionMenu';
+import { supportsWorkspaceInsights } from './insights/runtimeCapabilities';
 
 interface AppLayoutEffectsArgs {
   state: any;
@@ -222,9 +223,9 @@ export function useAppLayoutEffects({
   }, [bridge, state.currentFile, state.markdownSource]);
 
   const toggleWorkspaceInsights = useCallback(() => {
-    if (!state.settings.insightsEnabled) return;
+    if (!supportsWorkspaceInsights(state.appRuntime) || !state.settings.insightsEnabled) return;
     window.dispatchEvent(new CustomEvent(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
-  }, [state.settings.insightsEnabled]);
+  }, [state.appRuntime, state.settings.insightsEnabled]);
 
   // Keyboard shortcuts
   useKeyboard({
@@ -248,7 +249,7 @@ export function useAppLayoutEffects({
     isModalOpen: modalOpen,
     isTermsOpen: !termsAccepted || themeOnboardingOpen,
     onToggleToc: toggleToc,
-    onToggleWorkspaceInsights: state.settings.insightsEnabled ? toggleWorkspaceInsights : undefined,
+    onToggleWorkspaceInsights: supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled ? toggleWorkspaceInsights : undefined,
     onLocateFile: () => {
       window.dispatchEvent(new CustomEvent('locate-active-file'));
     },

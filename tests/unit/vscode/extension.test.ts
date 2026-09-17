@@ -95,119 +95,119 @@ describe('_doActivate', () => {
     );
   });
 
-  test('markdownExplorer.open uses active editor markdown file', () => {
+  test('markdownExplorer.open uses active editor markdown file', async () => {
     vscode.window.activeTextEditor = {
       document: { languageId: 'markdown', fileName: '/test/readme.md' },
     };
     _doActivate(context as any, vscode as any);
     const openFn = vscode._registeredCommands['markdownExplorer.open'];
-    openFn();
+    await openFn();
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, '/test/readme.md');
   });
 
-  test('markdownExplorer.open ignores unsupported editor', () => {
+  test('markdownExplorer.open ignores unsupported editor', async () => {
     vscode.window.activeTextEditor = {
       document: { languageId: 'python', fileName: '/test/main.py' },
     };
     _doActivate(context as any, vscode as any);
     const openFn = vscode._registeredCommands['markdownExplorer.open'];
-    openFn();
+    await openFn();
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, null);
   });
 
-  test('markdownExplorer.openFile uses URI fsPath', () => {
+  test('markdownExplorer.openFile uses URI fsPath', async () => {
     _doActivate(context as any, vscode as any);
     const openFileFn = vscode._registeredCommands['markdownExplorer.openFile'];
-    openFileFn({ fsPath: '/test/page.md' });
+    await openFileFn({ fsPath: '/test/page.md' });
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, '/test/page.md');
   });
 
-  test('markdownExplorer.openFolder uses folder URI fsPath', () => {
+  test('markdownExplorer.openFolder uses folder URI fsPath', async () => {
     _doActivate(context as any, vscode as any);
     const openFolderFn = vscode._registeredCommands['markdownExplorer.openFolder'];
-    openFolderFn({ fsPath: '/test/docs-folder' });
+    await openFolderFn({ fsPath: '/test/docs-folder' });
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, '/test/docs-folder');
   });
 
-  test('markdownExplorer.openFile falls back to editor when no URI', () => {
+  test('markdownExplorer.openFile falls back to editor when no URI', async () => {
     vscode.window.activeTextEditor = {
       document: { languageId: 'markdown', fileName: '/test/doc.md' },
     };
     _doActivate(context as any, vscode as any);
     const openFileFn = vscode._registeredCommands['markdownExplorer.openFile'];
-    openFileFn(undefined);
+    await openFileFn(undefined);
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, '/test/doc.md');
   });
 
-  test('markdownExplorer.toggle disposes existing panel', () => {
+  test('markdownExplorer.toggle disposes existing panel', async () => {
     const mockDispose = vi.fn();
     Panel.currentPanel = { dispose: mockDispose };
     _doActivate(context as any, vscode as any);
     const toggleFn = vscode._registeredCommands['markdownExplorer.toggle'];
-    toggleFn();
+    await toggleFn();
     expect(mockDispose).toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
 
-  test('markdownExplorer.toggle creates panel when none exists', () => {
+  test('markdownExplorer.toggle creates panel when none exists', async () => {
     Panel.currentPanel = undefined;
     vscode.window.activeTextEditor = {
       document: { languageId: 'markdown', fileName: '/test/file.md' },
     };
     _doActivate(context as any, vscode as any);
     const toggleFn = vscode._registeredCommands['markdownExplorer.toggle'];
-    toggleFn();
+    await toggleFn();
     expect(Panel.createOrShow).toHaveBeenCalled();
   });
 
-  test('markdownExplorer.refresh calls panel refresh', () => {
+  test('markdownExplorer.refresh calls panel refresh', async () => {
     const mockRefresh = vi.fn();
     Panel.currentPanel = { refresh: mockRefresh };
     _doActivate(context as any, vscode as any);
     const refreshFn = vscode._registeredCommands['markdownExplorer.refresh'];
-    refreshFn();
+    await refreshFn();
     expect(mockRefresh).toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
 
-  test('markdownExplorer.refresh handles null panel gracefully', () => {
+  test('markdownExplorer.refresh handles null panel gracefully', async () => {
     _doActivate(context as any, vscode as any);
     const refreshFn = vscode._registeredCommands['markdownExplorer.refresh'];
-    expect(() => refreshFn()).not.toThrow();
+    await expect(refreshFn()).resolves.not.toThrow();
   });
 
-  test('auto-refresh on supported file save', () => {
+  test('auto-refresh on supported file save', async () => {
     const mockRefreshFromWatch = vi.fn();
     Panel.currentPanel = { refreshFromWatch: mockRefreshFromWatch };
     vscode.workspace.getConfiguration.mockReturnValue({
       get: vi.fn(() => true),
     });
     _doActivate(context as any, vscode as any);
-    vscode._onDidSaveHandlers[0]({ fileName: '/test/readme.md' });
+    await vscode._onDidSaveHandlers[0]({ fileName: '/test/readme.md' });
     expect(mockRefreshFromWatch).toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
 
-  test('auto-refresh skips non-supported files', () => {
+  test('auto-refresh skips non-supported files', async () => {
     const mockRefresh = vi.fn();
     Panel.currentPanel = { refresh: mockRefresh };
     vscode.workspace.getConfiguration.mockReturnValue({
       get: vi.fn(() => true),
     });
     _doActivate(context as any, vscode as any);
-    vscode._onDidSaveHandlers[0]({ fileName: '/test/file.py' });
+    await vscode._onDidSaveHandlers[0]({ fileName: '/test/file.py' });
     expect(mockRefresh).not.toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
 
-  test('auto-refresh skips when autoRefresh disabled', () => {
+  test('auto-refresh skips when autoRefresh disabled', async () => {
     const mockRefresh = vi.fn();
     Panel.currentPanel = { refresh: mockRefresh };
     vscode.workspace.getConfiguration.mockReturnValue({
       get: vi.fn(() => false),
     });
     _doActivate(context as any, vscode as any);
-    vscode._onDidSaveHandlers[0]({ fileName: '/test/readme.md' });
+    await vscode._onDidSaveHandlers[0]({ fileName: '/test/readme.md' });
     expect(mockRefresh).not.toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
@@ -217,29 +217,29 @@ describe('_doActivate', () => {
     expect(vscode.workspace.createFileSystemWatcher).toHaveBeenCalled();
   });
 
-  test('file watcher onDidCreate refreshes panel', () => {
+  test('file watcher onDidCreate refreshes panel', async () => {
     const mockRefreshFromWatch = vi.fn();
     Panel.currentPanel = { refreshFromWatch: mockRefreshFromWatch };
     _doActivate(context as any, vscode as any);
-    vscode._watcherEvents.onDidCreate[0]({ fsPath: '/test/new.md' });
+    await vscode._watcherEvents.onDidCreate[0]({ fsPath: '/test/new.md' });
     expect(mockRefreshFromWatch).toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
 
-  test('file watcher onDidChange refreshes panel with file path', () => {
+  test('file watcher onDidChange refreshes panel with file path', async () => {
     const mockRefreshFromWatch = vi.fn();
     Panel.currentPanel = { refreshFromWatch: mockRefreshFromWatch };
     _doActivate(context as any, vscode as any);
-    vscode._watcherEvents.onDidChange[0]({ fsPath: '/test/changed.md' });
+    await vscode._watcherEvents.onDidChange[0]({ fsPath: '/test/changed.md' });
     expect(mockRefreshFromWatch).toHaveBeenCalledWith('/test/changed.md');
     Panel.currentPanel = undefined;
   });
 
-  test('file watcher onDidDelete refreshes panel', () => {
+  test('file watcher onDidDelete refreshes panel', async () => {
     const mockRefresh = vi.fn();
     Panel.currentPanel = { refresh: mockRefresh };
     _doActivate(context as any, vscode as any);
-    vscode._watcherEvents.onDidDelete[0]();
+    await vscode._watcherEvents.onDidDelete[0]();
     expect(mockRefresh).toHaveBeenCalled();
     Panel.currentPanel = undefined;
   });
@@ -259,21 +259,21 @@ describe('_doActivate', () => {
     expect(vscode.workspace.onDidSaveTextDocument).toHaveBeenCalled();
   });
 
-  test('uses known supported file extensions in editor check', () => {
+  test('uses known supported file extensions in editor check', async () => {
     vscode.window.activeTextEditor = {
       document: { languageId: 'plaintext', fileName: '/test/notes.txt' },
     };
     _doActivate(context as any, vscode as any);
     const openFn = vscode._registeredCommands['markdownExplorer.open'];
-    openFn();
+    await openFn();
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, '/test/notes.txt');
   });
 
-  test('openFile without URI and without editor sends null', () => {
+  test('openFile without URI and without editor sends null', async () => {
     vscode.window.activeTextEditor = undefined;
     _doActivate(context as any, vscode as any);
     const openFileFn = vscode._registeredCommands['markdownExplorer.openFile'];
-    openFileFn();
+    await openFileFn();
     expect(Panel.createOrShow).toHaveBeenCalledWith(context, null);
   });
 

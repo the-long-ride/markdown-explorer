@@ -11,8 +11,15 @@ import { handleWebFileUtilityMessage } from './web-file-utility-router';
 import { createWorkspaceOperationState } from '../../chromium-xtension/src/workspace-operation-state';
 import { handleBrowserFontHostCommand } from '../../chromium-xtension/src/browser-font-host';
 
+declare global {
+  interface Window {
+    __webDemoBus?: EventTarget;
+  }
+}
+
 // The bus must be set up before ui/src/main.tsx runs so detectBridge() can
 // find window.__webDemoBus. This module is imported before main.tsx.
+// This existing bus also marks the shared browser UI as running in the website demo.
 if (!window.__webDemoBus) {
   (window as any).__webDemoBus = new EventTarget();
 }

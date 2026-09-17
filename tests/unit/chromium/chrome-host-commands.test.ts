@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { resetWorkspaceState, sendToWebview } from '../../../chromium-xtension/src/chrome-host';
+import { handleChromeHostUtilityCommand } from '../../../chromium-xtension/src/chrome-host-search';
 
 function sendWebviewMessage(msg: any) {
   (window as any).__chromeExtBus.dispatchEvent(
@@ -256,6 +257,62 @@ describe('chrome-host bus command handlers', () => {
 
       const result = sentMessages.find((m) => m.command === 'workspaceSearchResults');
       expect(result).toBeDefined();
+    });
+  });
+
+  describe('Scope View snapshot command', () => {
+    it('returns an in-workspace Markdown snapshot with request correlation', async () => {
+      const read = vi.fn(async (relativePath: string) => `# ${relativePath}`);
+      const context = {
+        searchIndex: { read } as any,
+        flatList: [{ fsPath: '/workspace/guide.md', relativePath: 'guide.md' }],
+        workspaceTree: null,
+        activeWorkspacePath: '/workspace',
+        activeHandle: null,
+        send: (message: any) => sentMessages.push(message),
+        readText: vi.fn(),
+      };
+
+      await handleChromeHostUtilityCommand(
+        { command: 'loadSearchPreview', requestId: 'scope-chrome-1', filePath: '/workspace/guide.md' },
+        context,
+      );
+
+      expect(read).toHaveBeenCalledWith('guide.md');
+      expect(sentMessages.at(-1)).toEqual({
+        command: 'searchPreviewResult',
+        requestId: 'scope-chrome-1',
+        ok: true,
+        filePath: '/workspace/guide.md',
+        markdownSource: '# guide.md',
+      });
+    });
+
+    it('rejects a snapshot outside the active workspace safely', async () => {
+      const send = vi.fn();
+      await handleChromeHostUtilityCommand(
+        {
+          command: 'loadSearchPreview',
+          requestId: 'scope-chrome-outside',
+          filePath: '/other/guide.md',
+        },
+        {
+          searchIndex: { read: vi.fn() } as any,
+          flatList: [{ fsPath: '/workspace/guide.md', relativePath: 'guide.md' }],
+          workspaceTree: null,
+          activeWorkspacePath: '/workspace',
+          activeHandle: null,
+          send,
+          readText: vi.fn(),
+        },
+      );
+
+      expect(send).toHaveBeenCalledWith(expect.objectContaining({
+        command: 'searchPreviewResult',
+        requestId: 'scope-chrome-outside',
+        ok: false,
+        reason: 'outside-workspace',
+      }));
     });
   });
 

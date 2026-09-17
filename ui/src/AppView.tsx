@@ -5,12 +5,12 @@ import { DesktopTabBar } from "./components/Desktop/DesktopTabBar";
 import { ExitFocusIcon } from "./components/shared/icons";
 import { ScrollToTopButton } from "./components/shared/ScrollToTopButton";
 import { Topbar } from "./components/Topbar/Topbar";
-import { WorkspaceInsightsEntry } from "./components/Insights/WorkspaceInsightsEntry";
 import { getEnabledShortcut } from "./utils/shortcuts";
 import { useModalRegionAnchor } from "./utils/useModalRegionAnchor";
 import { AvailableUpdateDialog } from "./components/Settings/AvailableUpdateDialog";
 import { useSupportPrompt } from "./hooks/useSupportPrompt";
 import type { MediaGallery } from "./components/Modal/mediaGallery";
+import { supportsWorkspaceInsights } from "./insights/runtimeCapabilities";
 
 const Sidebar = lazy(() => import("./components/Sidebar/Sidebar").then((m) => ({ default: m.Sidebar })));
 const Content = lazy(() => import("./components/Content/Content").then((m) => ({ default: m.Content })));
@@ -27,6 +27,7 @@ const ThemeOnboardingModal = lazy(() => import("./components/Modal/ThemeOnboardi
 const SwitchWorkspaceModal = lazy(() => import("./components/Modal/SwitchWorkspaceModal").then((m) => ({ default: m.SwitchWorkspaceModal })));
 const WorkspaceSelectionConfirmModal = lazy(() => import("./components/Modal/WorkspaceSelectionConfirmModal").then((m) => ({ default: m.WorkspaceSelectionConfirmModal })));
 const SupportPromptModal = lazy(() => import("./components/Modal/SupportPromptModal").then((m) => ({ default: m.SupportPromptModal })));
+const WorkspaceInsightsEntry = lazy(() => import("./components/Insights/WorkspaceInsightsEntry").then((m) => ({ default: m.WorkspaceInsightsEntry })));
 
 
 export function AppView(props: any) {
@@ -311,7 +312,7 @@ export function AppView(props: any) {
       />
       <MediaModal gallery={mediaGallery} onClose={() => setMediaGallery(null)} />
       <ExportCenterModal isOpen={exportCenterOpen} onClose={() => setExportCenterOpen(false)} />
-      {state.settings.insightsEnabled && <WorkspaceInsightsEntry onPanelOpenChange={setIsInsightsOpen} onOpenMedia={setMediaGallery} />}
+      {supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled && <WorkspaceInsightsEntry onPanelOpenChange={setIsInsightsOpen} onOpenMedia={setMediaGallery} />}
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}

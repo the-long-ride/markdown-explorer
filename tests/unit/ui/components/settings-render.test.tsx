@@ -20,6 +20,8 @@ function getMockState() {
       language: 'en',
       showTitle: false,
       fileTabs: true,
+      bookmarksEnabled: false,
+      insightsEnabled: true,
       defaultHtmlPreview: false,
       defaultCsvPreview: false,
       documentConversion: false,
@@ -102,6 +104,8 @@ vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
       sidebarLabelsDesc: 'Show titles.',
       fileTabs: 'File Tabs',
       fileTabsDesc: 'Open files in tabs.',
+      insightsEnabled: 'Enable Workspace Insights feature',
+      insightsEnabledDesc: 'Explore workspace insights.',
       documentConversion: 'Document Conversion',
       documentConversionDesc: 'Convert docs.',
       htmlPreview: 'HTML Preview',
@@ -257,6 +261,7 @@ vi.mock('../../../../ui/src/utils/shortcuts', () => ({
 
 describe('SettingsModal', () => {
   beforeEach(() => {
+    delete (window as any).__webDemoBus;
     mockState = getMockState();
     mockDispatch.mockClear();
     mockSetTheme.mockClear();
@@ -482,6 +487,44 @@ describe('SettingsModal', () => {
       />,
     );
     expect(screen.getByText('CSV Preview')).toBeInTheDocument();
+  });
+
+  it('hides the Workspace Insights preference from the website demo', () => {
+    mockState = { ...getMockState(), appRuntime: 'chrome' };
+    (window as any).__webDemoBus = new EventTarget();
+
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+
+    expect(screen.queryByText('Enable Workspace Insights feature')).not.toBeInTheDocument();
+  });
+
+  it('keeps the Workspace Insights preference in Chromium', () => {
+    mockState = { ...getMockState(), appRuntime: 'chrome' };
+
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('Enable Workspace Insights feature')).toBeInTheDocument();
   });
 
   it('renders Keyboard Shortcuts section', () => {

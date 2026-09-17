@@ -17,7 +17,7 @@ import { getEnabledShortcut } from '../../utils/shortcuts';
 import { requestShellLocation, supportsShellLocation } from '../../desktop/shellLocation';
 import { DesktopTabItem } from './DesktopTabItem';
 import { DesktopTabContextMenu } from './DesktopTabContextMenu';
-import { INSIGHTS_UI_TRANSLATIONS } from '../../contexts/insightsUiTranslations';
+import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
 
 const TAB_CLOSE_FADE_MS = 90;
 const TAB_CLOSE_COLLAPSE_MS = 140;
@@ -49,9 +49,8 @@ export function DesktopTabBar({
   const { state, openInEditor, toggleToc, toggleFocusMode } = useAppState();
   const bridge = usePlatform();
   const currentLang = state.settings.language || 'en';
-  const insightsLang = currentLang as keyof typeof INSIGHTS_UI_TRANSLATIONS;
-  const insightsT = INSIGHTS_UI_TRANSLATIONS[insightsLang] ?? INSIGHTS_UI_TRANSLATIONS.en;
   const t = getTranslations(currentLang);
+  const insightsLabel = t.actions.toggleWorkspaceInsights || 'Workspace Insights';
   const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const workspaceTabs = tabs.filter((tab) => tab.kind !== 'home');
 
@@ -342,9 +341,9 @@ export function DesktopTabBar({
         tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
         tocToggleDisabled={!state.currentFile || state.toc.length === 0}
         onTocToggle={toggleToc}
-        showInsights={state.settings.insightsEnabled}
-        insightsLabel={insightsT.title}
-        insightsTooltip={insightsT.title}
+        showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled}
+        insightsLabel={insightsLabel}
+        insightsTooltip={insightsLabel}
         insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')}
         insightsActive={isInsightsOpen}
         canInsights={!!(state.workspacePath || state.workspaceName)}

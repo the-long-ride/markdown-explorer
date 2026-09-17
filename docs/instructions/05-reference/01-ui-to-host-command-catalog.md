@@ -75,6 +75,8 @@ keywords:
 | `zoom-out` | `ZoomOutMessage` — No payload |
 | `zoom-reset` | `ZoomResetMessage` — No payload |
 
+`loadSearchPreview` is the browser-safe snapshot contract used by the shared Scope View modal. Chromium and Website handlers validate the requested file against the active workspace list and return `searchPreviewResult`; the Website runtime does not dispatch Workspace Insights host commands.
+
 ## Export request rules
 
 - `readWorkspaceExportResource` reads a bounded binary resource by workspace-relative path; hosts canonicalize the request and reject workspace escapes.

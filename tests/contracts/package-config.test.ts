@@ -12,6 +12,11 @@ async function readJson(relPath: string) {
 }
 
 describe('package configuration contracts', () => {
+  test('root package delegates VSIX packaging to the VS Code package once', async () => {
+    const pkg = await readJson('package.json');
+    expect(pkg.scripts.package).toBe('pnpm --filter ./vscode run package');
+  });
+
   describe('version synchronization', () => {
     let versions: Record<string, string>;
 
@@ -161,6 +166,17 @@ describe('package configuration contracts', () => {
     test('activation on startup finished', async () => {
       const pkg = await readJson('vscode/package.json');
       expect(pkg.activationEvents).toContain('onStartupFinished');
+    });
+
+    test('activates when any contributed command is invoked', async () => {
+      const pkg = await readJson('vscode/package.json');
+      expect(pkg.activationEvents).toEqual(expect.arrayContaining([
+        'onCommand:markdownExplorer.open',
+        'onCommand:markdownExplorer.openFile',
+        'onCommand:markdownExplorer.openFolder',
+        'onCommand:markdownExplorer.toggle',
+        'onCommand:markdownExplorer.refresh',
+      ]));
     });
 
     test('engine requires VS Code ^1.85.0+', async () => {

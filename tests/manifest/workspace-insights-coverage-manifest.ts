@@ -32,6 +32,7 @@ export const workspaceInsightsCoverageManifest: Record<string, string[]> = {
   'ui/src/insights/patterns.ts': ['tests/unit/ui/insights/patterns.test.ts'],
   'ui/src/insights/relationships.ts': ['tests/unit/ui/insights/relationships.test.ts'],
   'ui/src/insights/reports.ts': ['tests/unit/ui/components/insights-graph-related-reports.test.tsx'],
+  'ui/src/insights/runtimeCapabilities.ts': ['tests/unit/ui/insights/runtime-capabilities.test.ts'],
   'ui/src/insights/settingsStore.ts': ['tests/unit/ui/insights/settings-store.test.ts'],
   'ui/src/insights/useWorkspaceInsights.ts': ['tests/unit/ui/insights/use-workspace-insights.test.tsx'],
   'ui/src/insights/workerClient.ts': ['tests/unit/ui/insights/worker-client.test.ts'],

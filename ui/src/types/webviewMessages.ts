@@ -1,7 +1,7 @@
 import type { RecentWorkspace } from './files';
 import type { WorkspaceOperationMetadata } from './content';
 import type { CrossTabSearchResult, WorkspaceSearchResult } from './hostMessages';
-import type { ShellLocationMode, ThemeMode, ThemeStyle } from './settings';
+import type { PersistedState, ShellLocationMode, ThemeMode, ThemeStyle } from './settings';
 import type { ExternalLinkCheckRequest, InsightsScanRequest } from '../insights/contracts';
 
 export interface ReadWorkspaceTextResourceMessage { readonly command: 'readWorkspaceTextResource'; readonly requestId: string; readonly documentPath: string; readonly resourcePath: string; }
@@ -10,6 +10,7 @@ export interface SaveExportFileMessage { readonly command: 'saveExportFile'; rea
 export interface NavigateMessage { readonly command: 'navigate'; readonly path: string; }
 export interface OpenInEditorMessage { readonly command: 'openInEditor'; readonly path: string; }
 export interface WebviewReadyMessage { readonly command: 'ready'; readonly documentConversionEnabled?: boolean; }
+export interface PersistStateMessage { readonly command: 'persistState'; readonly state: PersistedState; }
 export interface CopyCodeMessage { readonly command: 'copyCode'; readonly text: string; }
 export interface RefreshMessage { readonly command: 'refresh'; }
 
@@ -79,7 +80,7 @@ export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage
   | ScanInsightsWorkspaceMessage | CancelInsightsScanMessage | ReadInsightsDocumentSourceMessage
   | ProbeWorkspaceResourceMessage | SetInsightsWatchStateMessage | CheckExternalLinksMessage | CancelExternalLinkChecksMessage
-  | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage
+  | NavigateMessage | OpenInEditorMessage | WebviewReadyMessage | PersistStateMessage
   | CopyCodeMessage | RefreshMessage | OpenFolderMessage | OpenFileMessage
   | OpenFileHandleMessage | OpenPathMessage | ActivateWorkspaceMessage | CrossTabSearchMessage
   | SearchPreviewRequestMessage | WorkspaceSearchMessage | IndexWorkspaceSearchItemsMessage | LoadWorkspaceSearchIndexesMessage

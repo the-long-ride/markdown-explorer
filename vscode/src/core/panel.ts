@@ -24,7 +24,7 @@ import { refreshPanelFromWatch } from './panelWatch';
 import { parse } from '../markdown/parser';
 import { HtmlRenderer } from '../markdown/renderer';
 import { createFailureMarkdown, DocumentConverter, getFileTypeLabel, isExtraDocumentFilePath, isMarkdownFilePath, isSupportedFilePath, stripKnownExtension } from './documentConversion';
-import type { DocumentPreviewInfo, MdFile, RenderContentMessage, WebviewMessage, WorkspaceSearchResult } from '../types';
+import type { DocumentPreviewInfo, MdFile, PersistedState, RenderContentMessage, WebviewMessage, WorkspaceSearchResult } from '../types';
 import { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
 import { buildWebviewShell } from './panelShell';
 import { makeSearchExcerpt, searchMarkdownItems } from './panelSearch';
@@ -94,7 +94,7 @@ export class MarkdownDocsPanel {
 
   private constructor(
     panel: import('vscode').WebviewPanel,
-    _context: import('vscode').ExtensionContext,
+    private readonly _context: import('vscode').ExtensionContext,
     initialFilePath: string | null,
   ) {
     this._panel = panel;
@@ -128,6 +128,7 @@ export class MarkdownDocsPanel {
             }
             await this._onWebviewReady();
             break;
+          case 'persistState': await this._context.globalState.update('markdownExplorer.uiState', msg.state); break;
           case 'copyCode':
             await getVscode().env.clipboard.writeText(msg.text);
             break;
@@ -365,7 +366,7 @@ export class MarkdownDocsPanel {
       appVersion: this._extensionVersion,
       appRuntime: 'vscode' as const,
       hostPlatform: this._hostPlatform(),
-      hostArch: process.arch,
+      hostArch: process.arch, persistedState: this._context.globalState?.get<PersistedState>('markdownExplorer.uiState'),
     };
   }
 
