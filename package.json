@@ -21,7 +21,7 @@
     "build:vscode": "pnpm --filter ./vscode run compile",
     "compile": "pnpm run build:ui && pnpm run build:vscode",
     "watch": "pnpm --filter ./vscode run watch",
-    "package": "pnpm run compile && pnpm --filter ./vscode run package",
+    "package": "pnpm --filter ./vscode run package",
     "start:electron": "pnpm --filter ./electron run start",
     "build:electron": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist",
     "build:electron:nsis": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist:nsis",
