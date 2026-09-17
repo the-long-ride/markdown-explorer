@@ -53,7 +53,6 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 
 ## Capability differences
 
-- Workspace Insights is supported in the Chromium extension; the website demo disables it because it has no persistent workspace host.
 - Document conversion is disabled.
 - Native shell reveal, tray, installer updater, and OS window controls are unavailable.
 - Custom fonts are managed in-browser using IndexedDB storage and the standard `FontFace` API.
@@ -61,7 +60,6 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 - Scanner is limited to browser-readable supported types, principally Markdown/MDX.
 - Handle permission can expire and must be requested again rather than treated as permanent missing data.
 - Bridge state key is `markdown-explorer-chrome-state`.
-- Scope View is available for internal Markdown/MDX links and loads snapshots through `loadSearchPreview` without navigating away from the current document.
 
 ## Source traceability
 
@@ -79,8 +77,6 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 | Implementation | `chromium-xtension/src/search-index.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/media-resolver.ts` | Active behavior or contract |
 | Implementation | `chromium-xtension/src/recent-workspaces.ts` | Active behavior or contract |
-| Implementation | `chromium-xtension/src/insights-host-router.ts` | Chromium Workspace Insights host commands |
-| Verification | `tests/unit/ui/components/scope-view-browser-runtimes.test.tsx` | Shared Scope View rendering through the Chromium host |
 | Verification | `tests/unit/chromium/chrome-bridge.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/chrome-host.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/chrome-host-export.test.ts` | Export resource and save bridge tests |

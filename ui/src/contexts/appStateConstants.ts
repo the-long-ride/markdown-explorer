@@ -21,12 +21,11 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleFocusMode: 'Ctrl+Alt+F',
   toggleHtmlPreview: 'Ctrl+Alt+H',
   toggleWorkspaceInsights: 'Ctrl+Alt+I',
+  saveCurrentDocument: 'Ctrl+S',
 };
 
-const { toggleWorkspaceInsights: _toggleWorkspaceInsights, ...VSCODE_SHARED_KEYBINDINGS } = DEFAULT_KEYBINDINGS;
-
 export const VSCODE_DEFAULT_KEYBINDINGS: Record<string, string> = {
-  ...VSCODE_SHARED_KEYBINDINGS,
+  ...DEFAULT_KEYBINDINGS,
   editCurrentDocument: 'Ctrl+Alt+E',
 };
 
@@ -169,7 +168,6 @@ export function normalizeKeybindingsForRuntime(
     ...(saved ?? {}),
   };
   if (runtime === 'chrome') delete normalized.editCurrentDocument;
-  if (runtime !== 'desktop') delete normalized.toggleWorkspaceInsights;
   if (runtime !== 'desktop' && runtime !== 'tauri') {
     delete normalized.zoomIn;
     delete normalized.zoomOut;

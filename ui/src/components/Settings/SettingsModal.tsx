@@ -10,8 +10,10 @@ import { TooltipButton } from "../shared/TooltipButton";
 import { SettingsShortcutsPanel } from "./SettingsShortcutsPanel";
 import { SettingsUpdateBackupPanel } from "./SettingsUpdateBackupPanel";
 import { SettingsPreferencesPanel, type SettingsPreferencesSection } from "./SettingsPreferencesPanel";
+import { SettingsFeaturesIcon } from "./SettingsFeaturesIcon";
 import { ThemeRemixModal } from "./ThemeRemixModal";
 import { LANGUAGE_OPTIONS, getTranslations } from "../../contexts/translations";
+import { getFeatureSettingsTranslations } from "../../contexts/featureSettingsTranslations";
 import { createSettingsExport, parseSettingsImport, restoreLocalUiSettings, SettingsImportError } from "../../settings/settingsImportExport";
 import { announceInsightsSettingsChanged, saveInsightsSettingsConfig } from "../../insights/settingsStore";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -29,7 +31,6 @@ import {
 import { BannedShortcutDialog, DownloadedUpdateDialog, ResetShortcutsConfirmDialog } from "./SettingsModalDialogs";
 import { ACTIONS_LIST, getLocalizedShortcutActionLabels } from "./settingsActions";
 import { getDefaultKeybindingsForRuntime } from "../../contexts/appStateConstants";
-import { supportsWorkspaceInsights } from "../../insights/runtimeCapabilities";
 
 export { ACTIONS_LIST };
 
@@ -46,7 +47,6 @@ interface SettingsModalProps {
   onOpenChangelog: () => void;
   hasUpdateAttention?: boolean;
 }
-
 
 export function SettingsModal({
   isOpen,
@@ -96,6 +96,7 @@ export function SettingsModal({
 
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
+  const featureT = getFeatureSettingsTranslations(currentLang);
   const currentVersionLabel = formatCurrentVersion(
     updateCheck.currentVersion || state.appVersion,
   );
@@ -115,12 +116,11 @@ export function SettingsModal({
   const updateVersionLabel = hostUpdateState.downloadedVersion || updateCheck.latestVersion;
   const visibleActions = ACTIONS_LIST.filter(
     (act) =>
-      (act.id !== 'toggleWorkspaceInsights' || supportsWorkspaceInsights(state.appRuntime)) &&
-      (act.scope === "both" ||
-        (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
-        (act.scope === "desktop" && isDesktopLike) ||
-        (act.scope === "electron" && isDesktop) ||
-        (act.scope === "editor" && supportsEditor)),
+      act.scope === "both" ||
+      (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
+      (act.scope === "desktop" && isDesktopLike) ||
+      (act.scope === "electron" && isDesktop) ||
+      (act.scope === "editor" && supportsEditor),
   );
   const shortcutActionLabels = getLocalizedShortcutActionLabels(t);
   const filteredActions = filterKeyboardShortcutActions(
@@ -230,7 +230,7 @@ export function SettingsModal({
           });
         }
         restoreLocalUiSettings(imported.localUi);
-        if (supportsWorkspaceInsights(state.appRuntime) && imported.insights) {
+        if (imported.insights) {
           saveInsightsSettingsConfig(imported.insights);
           announceInsightsSettingsChanged();
         }
@@ -250,6 +250,7 @@ export function SettingsModal({
 
   const settingsSections = [
     { id: 'appearance' as const, label: t.appearance, icon: <SettingsAppearanceIcon size={14} /> },
+    { id: 'features' as const, label: featureT.features, icon: <SettingsFeaturesIcon size={14} /> },
     ...(supportsTypography ? [{ id: 'typography' as const, label: t.typography, icon: <SettingsTypographyIcon size={14} /> }] : []),
     { id: 'theme' as const, label: t.themeStyle, icon: <SettingsThemeStyleIcon size={14} /> },
     { id: 'shortcuts' as const, label: t.shortcuts, icon: <SettingsShortcutsIcon size={14} /> },
@@ -345,7 +346,7 @@ export function SettingsModal({
           </aside>
 
           <main className={`settings-navigation__content${activeSection === 'typography' ? ' settings-navigation__content--typography' : ''}`}>
-            {(activeSection === 'appearance' || activeSection === 'typography' || activeSection === 'theme') && (
+            {(activeSection === 'appearance' || activeSection === 'features' || activeSection === 'typography' || activeSection === 'theme') && (
               <SettingsPreferencesPanel
                 section={activeSection}
                 state={state}

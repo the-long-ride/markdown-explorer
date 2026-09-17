@@ -1,8 +1,12 @@
 import * as path from 'path';
+import * as fs from 'fs';
 
 import type { WebviewMessage } from '../types';
+import { createPanelInsightsHost } from '../core/panelInsights';
+import { createInsightsExternalHost } from '../core/panelInsightsExternal';
 import { handlePanelExportResourceMessage } from '../core/panelExportResources';
 import { handlePanelExportSaveMessage } from '../core/panelExportSave';
+import { handlePanelGitHistoryMessage } from '../core/panelGitHistory';
 import { createVsCodeFontService, type VsCodeFontFamily } from './fontService';
 
 export function getGlobalStorageUri(
@@ -23,8 +27,18 @@ export function createPanelFontBridge(
     managedRoot: path.join(globalStorageUri.fsPath, 'fonts'),
     resolveCssUrl: (filePath) => webview.asWebviewUri(vscodeApi.Uri.file(filePath)).toString(),
   });
+  const postMessage = async (message: any) => { await webview.postMessage(message); };
+  const insightsHost = createPanelInsightsHost({
+    fs,
+    pathApi: path,
+    workspaceRoot: () => vscodeApi.workspace.workspaceFolders?.[0]?.uri.fsPath ?? null,
+    postMessage,
+  });
+  const externalHost = createInsightsExternalHost({ postMessage });
   context.subscriptions?.push({
     dispose: () => {
+      insightsHost.dispose();
+      externalHost.dispose();
     },
   });
 
@@ -47,6 +61,27 @@ export function createPanelFontBridge(
 
   async function handle(message: WebviewMessage | any): Promise<boolean> {
     switch (message.command) {
+      case 'scanInsightsWorkspace':
+        await insightsHost.scanInsightsWorkspace(message);
+        return true;
+      case 'cancelInsightsScan':
+        insightsHost.cancelInsightsScan(message);
+        return true;
+      case 'readInsightsDocumentSource':
+        await insightsHost.readInsightsDocumentSource(message);
+        return true;
+      case 'probeWorkspaceResource':
+        await insightsHost.probeWorkspaceResource(message);
+        return true;
+      case 'setInsightsWatchState':
+        await insightsHost.setInsightsWatchState(message);
+        return true;
+      case 'checkExternalLinks':
+        await externalHost.checkExternalLinks(message);
+        return true;
+      case 'cancelExternalLinkChecks':
+        externalHost.cancelExternalLinkChecks(message);
+        return true;
       case 'listDesktopFonts':
         await sendResult(message.requestId);
         return true;
@@ -79,6 +114,11 @@ export function createPanelFontBridge(
         }
         return true;
       default:
+        if (await handlePanelGitHistoryMessage(
+          message,
+          vscodeApi.workspace.workspaceFolders?.[0]?.uri.fsPath,
+          postMessage,
+        )) return true;
         if (await handlePanelExportSaveMessage(
           message,
           vscodeApi,
@@ -96,6 +136,8 @@ export function createPanelFontBridge(
   return {
     handle,
     dispose: () => {
+      insightsHost.dispose();
+      externalHost.dispose();
     },
   };
 }

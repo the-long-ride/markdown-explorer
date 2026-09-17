@@ -1,4 +1,5 @@
 import { importBrowserFont, listBrowserFonts, removeBrowserFont } from './browser-font-service';
+import { handleBrowserGitHistoryCommand } from './browser-git-history-host';
 
 type BrowserFontHostSend = (message: Record<string, unknown>) => void;
 
@@ -6,6 +7,7 @@ export async function handleBrowserFontHostCommand(
   msg: any,
   send: BrowserFontHostSend,
 ): Promise<boolean> {
+  if (await handleBrowserGitHistoryCommand(msg, send)) return true;
   if (!['listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont'].includes(msg?.command)) return false;
 
   try {

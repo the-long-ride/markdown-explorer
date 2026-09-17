@@ -1,6 +1,6 @@
 {
   "name": "markdown-explorer-workspace",
-  "version": "1.6.8",
+  "version": "1.6.9",
   "private": true,
   "packageManager": "pnpm@11.18.0",
   "scripts": {
@@ -21,7 +21,7 @@
     "build:vscode": "pnpm --filter ./vscode run compile",
     "compile": "pnpm run build:ui && pnpm run build:vscode",
     "watch": "pnpm --filter ./vscode run watch",
-    "package": "pnpm --filter ./vscode run package",
+    "package": "pnpm run compile && pnpm --filter ./vscode run package",
     "start:electron": "pnpm --filter ./electron run start",
     "build:electron": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist",
     "build:electron:nsis": "pnpm run build:ui:electron && pnpm run build:vscode && pnpm --filter ./electron run dist:nsis",
@@ -59,6 +59,6 @@
     "fake-indexeddb": "^6.2.5",
     "fast-glob": "^3.3.3",
     "jsdom": "^29.1.1",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.9"
   }
 }

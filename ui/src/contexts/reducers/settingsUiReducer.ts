@@ -2,8 +2,22 @@ import { TOC_COLLAPSED_STORAGE_KEY } from '../../constants/storage';
 import { createEmptyUpdateState, type Action, type AppState } from '../appStateModel';
 import { normalizeActiveCustomThemeId, normalizeCustomThemes } from '../../theme/customThemes';
 import { createContentTabFromState, renderMarkdownClientSide, upsertContentTab } from '../contentTabState';
+import { setDocumentEditMode as setSessionEditMode } from '../../editor/documentSession';
+import { isMarkdownEditingMode } from '../../editor/editingFeature';
+import { setPaneMode, type PaneId } from '../../split-view/paneState';
 
 export type TocStorageWriter = (key: string, value: string) => void;
+
+function disableMarkdownEditing(state: AppState): AppState {
+  const documentSessions = Object.fromEntries(
+    Object.entries(state.documentSessions).map(([key, session]) => [key, setSessionEditMode(session, 'rendered')]),
+  );
+  let splitView = state.splitView;
+  for (const paneId of ['primary', 'secondary'] as const satisfies readonly PaneId[]) {
+    if (isMarkdownEditingMode(splitView[paneId].mode)) splitView = setPaneMode(splitView, paneId, 'rendered');
+  }
+  return { ...state, documentSessions, splitView };
+}
 
 export function reduceSettingsUiAction(
   state: AppState,
@@ -75,7 +89,7 @@ export function reduceSettingsUiAction(
       const activeCustomTheme = activeCustomThemeId
         ? customThemes?.find((theme) => theme.id === activeCustomThemeId)
         : undefined;
-      const nextState = {
+      let nextState: AppState = {
         ...state,
         themeStyle: activeCustomTheme?.baseStyle ?? state.themeStyle,
         hasThemeStylePreference: activeCustomTheme ? true : state.hasThemeStylePreference,
@@ -86,6 +100,9 @@ export function reduceSettingsUiAction(
           activeCustomThemeId,
         },
       };
+      if (action.settings.markdownEditingEnabled === false) {
+        nextState = disableMarkdownEditing(nextState);
+      }
       const previewDefaultsChanged = 'defaultHtmlCodeBlockPreview' in action.settings || 'defaultCsvPreview' in action.settings || 'language' in action.settings;
       if (previewDefaultsChanged) {
         const rerenderTab = (tab: AppState['contentTabs'][number]) => {
