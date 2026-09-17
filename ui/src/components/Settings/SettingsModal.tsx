@@ -29,6 +29,7 @@ import {
 import { BannedShortcutDialog, DownloadedUpdateDialog, ResetShortcutsConfirmDialog } from "./SettingsModalDialogs";
 import { ACTIONS_LIST, getLocalizedShortcutActionLabels } from "./settingsActions";
 import { getDefaultKeybindingsForRuntime } from "../../contexts/appStateConstants";
+import { supportsWorkspaceInsights } from "../../insights/runtimeCapabilities";
 
 export { ACTIONS_LIST };
 
@@ -114,11 +115,12 @@ export function SettingsModal({
   const updateVersionLabel = hostUpdateState.downloadedVersion || updateCheck.latestVersion;
   const visibleActions = ACTIONS_LIST.filter(
     (act) =>
-      act.scope === "both" ||
-      (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
-      (act.scope === "desktop" && isDesktopLike) ||
-      (act.scope === "electron" && isDesktop) ||
-      (act.scope === "editor" && supportsEditor),
+      (act.id !== 'toggleWorkspaceInsights' || supportsWorkspaceInsights(state.appRuntime)) &&
+      (act.scope === "both" ||
+        (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
+        (act.scope === "desktop" && isDesktopLike) ||
+        (act.scope === "electron" && isDesktop) ||
+        (act.scope === "editor" && supportsEditor)),
   );
   const shortcutActionLabels = getLocalizedShortcutActionLabels(t);
   const filteredActions = filterKeyboardShortcutActions(
@@ -228,7 +230,7 @@ export function SettingsModal({
           });
         }
         restoreLocalUiSettings(imported.localUi);
-        if (imported.insights) {
+        if (supportsWorkspaceInsights(state.appRuntime) && imported.insights) {
           saveInsightsSettingsConfig(imported.insights);
           announceInsightsSettingsChanged();
         }

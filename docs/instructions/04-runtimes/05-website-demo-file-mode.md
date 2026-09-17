@@ -44,9 +44,12 @@ keywords:
 
 The website exposes `__webDemoBus`, selected by `ui/src/main.tsx`. `web-host.ts` routes common messages over virtual or file-mode services; search and message routing use focused modules.
 
+Website capability boundary: Workspace Insights is unavailable in the website demo, including its persisted setting, toolbar entry, settings row, keyboard action, and host command adapter. Scope View remains supported for internal Markdown/MDX links and loads linked-document snapshots through the shared `loadSearchPreview` contract in both demo/test and browser file modes.
+
 ## Persistence and limitations
 
 - Shared state key: `markdown-explorer-web-state`.
+- Scope View remains available for internal Markdown/MDX links in browser file mode.
 - No native tray, window controls, file manager reveal, installer updater, or privileged editor integration.
 - Browser permissions and APIs determine file mode availability.
 - Demo files are virtual and cannot imply native filesystem changes.
@@ -65,6 +68,8 @@ The website exposes `__webDemoBus`, selected by `ui/src/main.tsx`. `web-host.ts`
 | Implementation | `website-app/src/web-test-host.ts` | Active behavior or contract |
 | Implementation | `website-app/src/web-test-message-router.ts` | Active behavior or contract |
 | Implementation | `website-app/src/web-test-search.ts` | Active behavior or contract |
+| Implementation | `ui/src/insights/runtimeCapabilities.ts` | Website-demo Workspace Insights presentation gate |
+| Verification | `tests/contracts/website-demo-insights-removal.test.ts` | Browser capability boundary and Scope View documentation contract |
 | Verification | `tests/unit/ui/website/demoDropdown.test.ts` | Automated expectation |
 | Verification | `tests/contracts/website-homepage.test.ts` | Automated expectation |
 | Verification | `tests/unit/chromium/web-file-mode.test.ts` | Automated expectation |

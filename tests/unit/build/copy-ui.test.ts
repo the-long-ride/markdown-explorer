@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
-const { copyDirRecursive, main } = require('../../../vscode/scripts/copy-ui.js');
+const { copyDirRecursive, pruneVsCodeOnlyInsightsArtifacts, main } = require('../../../vscode/scripts/copy-ui.js');
 
 const rootDir = path.resolve(__dirname, '..', '..', '..');
 const uiDistSrc = path.join(rootDir, 'ui', 'dist');
@@ -165,5 +165,31 @@ describe('main', () => {
     main(fss);
     expect(log.copyFile.length).toBeGreaterThanOrEqual(1);
     expect(log.rm).toHaveLength(0);
+  });
+});
+
+describe('pruneVsCodeOnlyInsightsArtifacts', () => {
+  test('removes generated Insight host and webview artifacts from the VS Code package tree', () => {
+    const { fss, log } = makeMockFs({
+      existsSync: () => true,
+      readdirSync: (dir: string) => dir.endsWith(path.join('ui', 'dist', 'assets'))
+        ? [makeFileEntry('insights.worker-abc.js'), makeFileEntry('keep.js')]
+        : [],
+    });
+
+    pruneVsCodeOnlyInsightsArtifacts(rootDir, fss);
+
+    expect(log.rm).toContainEqual([
+      path.join(rootDir, 'vscode/out/vscode/src/core/panelInsights.js'),
+      JSON.stringify({ force: true }),
+    ]);
+    expect(log.rm).toContainEqual([
+      path.join(rootDir, 'vscode/ui/dist/assets/insights.worker-abc.js'),
+      JSON.stringify({ force: true }),
+    ]);
+    expect(log.rm).not.toContainEqual([
+      path.join(rootDir, 'vscode/ui/dist/assets/workspaceInsightsSession.js'),
+      JSON.stringify({ force: true }),
+    ]);
   });
 });

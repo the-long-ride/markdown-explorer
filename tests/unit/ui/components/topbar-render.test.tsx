@@ -92,13 +92,14 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
-  ToolbarActionMenu: ({ onHome, onTheme, onEdit, onSettings, hasUpdate, isDark, canEdit, showEdit = true, editShortcut, ...props }: any) =>
+  ToolbarActionMenu: ({ onHome, onTheme, onEdit, onSettings, onInsightsToggle, hasUpdate, isDark, canEdit, showEdit = true, showInsights, editShortcut, ...props }: any) =>
     React.createElement(
       'div',
       { 'data-testid': 'toolbar-action-menu', 'data-has-update': String(hasUpdate), 'data-is-dark': String(isDark), 'data-edit-shortcut': editShortcut || '' },
       React.createElement('button', { onClick: onHome, 'data-testid': 'menu-home' }, 'Home'),
       React.createElement('button', { onClick: onTheme, 'data-testid': 'menu-theme' }, 'Theme'),
       showEdit ? React.createElement('button', { onClick: onEdit, disabled: !canEdit, 'data-testid': 'menu-edit' }, 'Edit') : null,
+      showInsights ? React.createElement('button', { onClick: onInsightsToggle, 'data-testid': 'menu-insights' }, 'Insights') : null,
       React.createElement('button', { onClick: onSettings, 'data-testid': 'menu-settings' }, 'Settings'),
     ),
 }));
@@ -129,6 +130,7 @@ describe('Topbar render', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete (window as any).electronAPI;
+    delete (window as any).__webDemoBus;
     mockCanGoBack = true;
     mockCanGoForward = false;
     mockState = {
@@ -150,6 +152,23 @@ describe('Topbar render', () => {
   it('renders the topbar header container', () => {
     const { container } = render(React.createElement(Topbar, defaultProps));
     expect(container.querySelector('header.topbar')).toBeInTheDocument();
+  });
+
+  it('hides Workspace Insights from the website demo even when the persisted setting is enabled', () => {
+    mockState = { ...mockState, appRuntime: 'chrome', settings: { ...mockState.settings, insightsEnabled: true } };
+    (window as any).__webDemoBus = new EventTarget();
+
+    render(React.createElement(Topbar, defaultProps));
+
+    expect(screen.queryByTestId('menu-insights')).not.toBeInTheDocument();
+  });
+
+  it('keeps Workspace Insights visible for the Chromium extension', () => {
+    mockState = { ...mockState, appRuntime: 'chrome', settings: { ...mockState.settings, insightsEnabled: true } };
+
+    render(React.createElement(Topbar, defaultProps));
+
+    expect(screen.getByTestId('menu-insights')).toBeInTheDocument();
   });
 
   it('renders the logo image', () => {

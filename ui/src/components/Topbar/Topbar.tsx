@@ -8,7 +8,7 @@ import { TooltipButton } from '../shared/TooltipButton';
 import { EditIcon } from '../shared/icons';
 import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
-import { INSIGHTS_UI_TRANSLATIONS } from '../../contexts/insightsUiTranslations';
+import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 
 interface TopbarProps {
@@ -87,8 +87,7 @@ export function Topbar({
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
   const exportT = getExportScopeTranslations(currentLang).exportCenter;
-  const insightsLang = currentLang as keyof typeof INSIGHTS_UI_TRANSLATIONS;
-  const insightsT = INSIGHTS_UI_TRANSLATIONS[insightsLang] ?? INSIGHTS_UI_TRANSLATIONS.en;
+  const insightsLabel = t.actions.toggleWorkspaceInsights || 'Workspace Insights';
   const isDark = state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const breadcrumbItems = getBreadcrumbItems(state.relativePath || '', t.topbar.welcomePage);
@@ -180,9 +179,9 @@ export function Topbar({
           tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
           tocToggleDisabled={!state.currentFile || state.toc.length === 0}
           onTocToggle={toggleToc}
-          showInsights={state.settings.insightsEnabled}
-          insightsLabel={insightsT.title}
-          insightsTooltip={insightsT.title}
+          showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled}
+          insightsLabel={insightsLabel}
+          insightsTooltip={insightsLabel}
           insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')}
           insightsActive={isInsightsOpen}
           canInsights={!!(state.workspacePath || state.workspaceName)}

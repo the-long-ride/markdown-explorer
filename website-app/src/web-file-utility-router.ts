@@ -5,7 +5,6 @@ import { readTextFile } from '../../chromium-xtension/src/file-access';
 import { resolveWorkspaceTextResourcePath } from '../../chromium-xtension/src/chrome-host-utils';
 import { makeExcerpt } from './web-test-search';
 import { resolveWorkspaceSearchItems } from '../../chromium-xtension/src/workspace-search-items';
-import { handleWebInsightsHostCommand } from './web-insights-host';
 
 interface FileUtilityRouterDeps {
   getSearchIndex: () => BrowserSearchIndex | null;
@@ -78,11 +77,6 @@ export async function handleWebFileUtilityMessage(
   msg: any,
   deps: FileUtilityRouterDeps,
 ): Promise<boolean> {
-  if (await handleWebInsightsHostCommand(msg, {
-    activeHandle: deps.getActiveHandle(),
-    send: deps.send,
-  })) return true;
-
   const flatList = deps.getFlatList();
 
   switch (msg.command) {

@@ -190,6 +190,29 @@ describe('createInitialState', () => {
     expect(state.settings.language).toBe('vi');
   });
 
+  // Regression gate for the 1.6.7 user report: all supported appearance and
+  // menu/sidebar visibility combinations must survive panel recreation.
+  test.each([
+    ['dark', true, true],
+    ['light', false, false],
+    ['auto', true, false],
+    ['dark', false, true],
+  ] as const)('restores theme=%s showTitle=%s sidebarCollapsed=%s', (theme, showTitle, sidebarCollapsed) => {
+    const state = createInitialState({ theme, showTitle, sidebarCollapsed } as any, false);
+
+    expect(state.theme).toBe(theme);
+    expect(state.settings.showTitle).toBe(showTitle);
+    expect(state.sidebarCollapsed).toBe(sidebarCollapsed);
+  });
+
+  test('defaults missing sidebar visibility to visible', () => {
+    const state = createInitialState({ theme: 'light', showTitle: false } as any, false);
+
+    expect(state.theme).toBe('light');
+    expect(state.settings.showTitle).toBe(false);
+    expect(state.sidebarCollapsed).toBe(false);
+  });
+
   test('with storage mock for toc-collapsed', () => {
     const storage = { getItem: (k: string) => k === 'markdown-explorer-toc-collapsed' ? 'true' : null };
     const state = createInitialState(undefined, false, storage as any);

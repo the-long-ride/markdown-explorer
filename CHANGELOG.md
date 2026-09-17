@@ -4,6 +4,14 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ---
 
+## [v1.6.8] — 2026-09-17
+
+### Changes
+- Completed Workspace Insights documentation and completion-status contract coverage.
+- Added runtime capability boundaries so Workspace Insights remains available only in supported runtimes while shared Scope View and browser flows remain intact.
+- Hardened VS Code activation, persisted panel preferences, packaged the `yaml` runtime, and corrected the webview dependency packaging boundary that caused an empty panel.
+- Updated tests and runtime documentation across the workspace for the v1.6.8 release.
+
 ## [v1.6.7] — 2026-09-06
 
 ### Added

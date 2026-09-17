@@ -83,6 +83,15 @@ export interface RecentWorkspace {
 export type AppRuntime = 'desktop' | 'vscode';
 export type HostPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
 
+/** Renderer preferences mirrored into VS Code extension global state. */
+export interface PersistedState {
+  readonly theme?: string;
+  readonly themeStyle?: string;
+  readonly sidebarCollapsed?: boolean;
+  readonly showTitle?: boolean;
+  readonly [key: string]: unknown;
+}
+
 export interface ReadyAckMessage {
   readonly command: 'readyAck';
   readonly fileList: MdFile[];
@@ -97,6 +106,7 @@ export interface ReadyAckMessage {
   readonly hostPlatform?: HostPlatform;
   readonly hostArch?: string;
   readonly documentConversionEnabled?: boolean;
+  readonly persistedState?: PersistedState;
 }
 
 export interface NavNotFoundMessage {
@@ -197,6 +207,11 @@ export interface OpenInEditorMessage {
 export interface WebviewReadyMessage {
   readonly command: 'ready';
   readonly documentConversionEnabled?: boolean;
+}
+
+export interface PersistStateMessage {
+  readonly command: 'persistState';
+  readonly state: PersistedState;
 }
 
 export interface CopyCodeMessage {
@@ -319,6 +334,7 @@ export type WebviewMessage =
   | NavigateMessage
   | OpenInEditorMessage
   | WebviewReadyMessage
+  | PersistStateMessage
   | CopyCodeMessage
   | RefreshMessage
   | SearchPreviewRequestMessage

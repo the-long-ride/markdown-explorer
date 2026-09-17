@@ -100,6 +100,7 @@ export interface AppSettings {
 }
 
 export interface PersistedState {
+  sidebarCollapsed?: boolean;
   showTitle?: boolean;
   defaultHtmlPreview?: boolean;
   defaultHtmlCodeBlockPreview?: boolean;

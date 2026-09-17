@@ -40,6 +40,50 @@ type AppStateEffectsArgs = {
   pendingHtmlPreviewNavigationRef: MutableRefObject<PendingHtmlPreviewNavigation | null>;
 };
 
+function restorePersistedState(
+  dispatch: React.Dispatch<Action>,
+  saved: PersistedState | null | undefined,
+  isDesktop: boolean,
+): void {
+  if (!saved) return;
+
+  const customThemes = normalizeCustomThemes(saved.customThemes);
+  const activeCustomThemeId = normalizeActiveCustomThemeId(saved.activeCustomThemeId, customThemes);
+  dispatch({
+    type: 'UPDATE_SETTINGS',
+    settings: {
+      showTitle: saved.showTitle === true,
+      defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+      defaultCsvPreview: saved.defaultCsvPreview !== false,
+      fileTabs: saved.fileTabs === true,
+      bookmarksEnabled: saved.bookmarksEnabled === true,
+      insightsEnabled: saved.insightsEnabled === true,
+      documentConversion: saved.documentConversion === true,
+      scopeFocus: saved.scopeFocus ?? {},
+      searchScopeFocus: saved.searchScopeFocus ?? {},
+      sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
+      sidebarSortModes: saved.sidebarSortModes ?? {},
+      maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
+      desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+      fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
+      keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
+      disabledKeybindings: saved.disabledKeybindings ?? {},
+      language: saved.language || 'en',
+      customThemes,
+      activeCustomThemeId,
+    },
+  });
+  if (saved.theme) dispatch({ type: 'SET_THEME', theme: normalizeThemeMode(saved.theme) });
+  if (activeCustomThemeId) {
+    dispatch({ type: 'SELECT_CUSTOM_THEME', themeId: activeCustomThemeId });
+  } else if (saved.themeStyle) {
+    dispatch({ type: 'SET_THEME_STYLE', themeStyle: normalizeThemeStyle(saved.themeStyle) });
+  }
+  if (typeof saved.sidebarCollapsed === 'boolean') {
+    dispatch({ type: 'SET_SIDEBAR_COLLAPSED', collapsed: saved.sidebarCollapsed });
+  }
+}
+
 export function useAppStateEffects({
   bridge,
   dispatch,
@@ -50,46 +94,7 @@ export function useAppStateEffects({
 }: AppStateEffectsArgs) {
   // Load persisted settings on mount
   useEffect(() => {
-    const saved = bridge.getState<PersistedState>();
-    if (saved) {
-      const customThemes = normalizeCustomThemes(saved.customThemes);
-      const activeCustomThemeId = normalizeActiveCustomThemeId(saved.activeCustomThemeId, customThemes);
-      dispatch({
-        type: 'UPDATE_SETTINGS',
-        settings: {
-          showTitle: saved.showTitle === true,
-          defaultHtmlPreview: saved.defaultHtmlPreview !== false,
-          defaultCsvPreview: saved.defaultCsvPreview !== false,
-          fileTabs: saved.fileTabs === true,
-          bookmarksEnabled: saved.bookmarksEnabled === true,
-          insightsEnabled: saved.insightsEnabled === true,
-          documentConversion: saved.documentConversion === true,
-          scopeFocus: saved.scopeFocus ?? {},
-          searchScopeFocus: saved.searchScopeFocus ?? {},
-          sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
-          sidebarSortModes: saved.sidebarSortModes ?? {},
-          maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
-          desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
-          fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
-          keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
-          disabledKeybindings: saved.disabledKeybindings ?? {},
-          language: saved.language || 'en',
-          customThemes,
-          activeCustomThemeId,
-        },
-      });
-      if (saved.theme) {
-        dispatch({ type: 'SET_THEME', theme: normalizeThemeMode(saved.theme) });
-      }
-      if (activeCustomThemeId) {
-        dispatch({ type: 'SELECT_CUSTOM_THEME', themeId: activeCustomThemeId });
-      } else if (saved.themeStyle) {
-        dispatch({
-          type: 'SET_THEME_STYLE',
-          themeStyle: normalizeThemeStyle(saved.themeStyle),
-        });
-      }
-    }
+    restorePersistedState(dispatch, bridge.getState<PersistedState>(), isDesktop);
   }, [bridge, isDesktop]);
 
   // Listen for host messages
@@ -110,7 +115,7 @@ export function useAppStateEffects({
       switch (msg.command) {
         case 'readyAck':
           // Check saved appearance state because mount effects can race host ready.
-          const savedAppearance = bridge.getState<PersistedState>();
+          const savedAppearance = msg.persistedState ?? bridge.getState<PersistedState>();
           dispatch({
             type: 'READY_ACK',
             fileList: msg.fileList,
@@ -129,6 +134,7 @@ export function useAppStateEffects({
             documentConversionEnabled: msg.documentConversionEnabled,
             isMaximized: msg.isMaximized,
           });
+          restorePersistedState(dispatch, savedAppearance, isDesktop);
           break;
         case 'workspaceFilesChanged':
           dispatch({
@@ -260,6 +266,7 @@ export function useAppStateEffects({
   // Persist settings on change
   useEffect(() => {
     bridge.setState<PersistedState>({
+      sidebarCollapsed: state.sidebarCollapsed,
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
       defaultCsvPreview: state.settings.defaultCsvPreview,
@@ -282,7 +289,7 @@ export function useAppStateEffects({
       customThemes: state.settings.customThemes,
       activeCustomThemeId: state.settings.activeCustomThemeId,
     });
-  }, [bridge, state.settings, state.theme, state.themeStyle]);
+  }, [bridge, isDesktop, state.settings, state.theme, state.themeStyle]);
 
   useEffect(() => {
     const normalized = normalizeKeybindingsForRuntime(state.settings.keybindings, state.appRuntime);

@@ -52,3 +52,21 @@ src/**
 ui/dist/assets/*.ttf
 ui/assets/fonts/**
 **/*.ttf
+
+# Workspace Insights is not a VS Code capability; its host adapters are for other runtimes.
+out/vscode/src/core/panelInsights.js
+out/vscode/src/core/panelInsights.js.map
+out/vscode/src/core/panelInsights.d.ts
+out/vscode/src/core/panelInsightsExternal.js
+out/vscode/src/core/panelInsightsExternal.js.map
+out/vscode/src/core/panelInsightsExternal.d.ts
+**/panelInsights.*
+**/panelInsightsExternal.*
+
+# The renderer lazy chunks are unreachable in the VS Code capability boundary.
+ui/dist/assets/WorkspaceInsightsEntry.js
+ui/dist/assets/insights.worker-*.js
+
+# The compiled Markdown parser resolves yaml from this package-local runtime path.
+!out/node_modules/yaml/
+!out/node_modules/yaml/**

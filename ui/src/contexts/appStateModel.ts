@@ -276,6 +276,7 @@ export function createInitialState(
     hasThemePreference: !!saved.theme,
     themeStyle: saved.themeStyle ? normalizeThemeStyle(saved.themeStyle) : initialState.themeStyle,
     hasThemeStylePreference: !!saved.themeStyle,
+    sidebarCollapsed: saved.sidebarCollapsed === true,
     tocCollapsed,
     settings: {
       ...initialState.settings,
