@@ -22,6 +22,7 @@ import {
   writeDraggedDocumentPath,
 } from './components/Content/documentFileDrop';
 import { RepositorySnapshotPortal } from './components/History/RepositorySnapshotPortal';
+import { DOCUMENT_HISTORY_OPEN_EVENT } from './components/shared/ToolbarActionMenu';
 import { NativeCloseGuardBridge } from './editor/NativeCloseGuardBridge';
 import type { PaneId } from './split-view/paneState';
 import { App } from './App';
@@ -55,6 +56,18 @@ function FocusModeDragRegion() {
       <div className="focus-mode-drag-region__controls" />
     </div>
   );
+}
+
+function RepositoryHistorySidebarBridge() {
+  const { openRepositoryHistorySidebar } = useAppState();
+
+  useEffect(() => {
+    const onOpenHistory = () => openRepositoryHistorySidebar();
+    window.addEventListener(DOCUMENT_HISTORY_OPEN_EVENT, onOpenHistory);
+    return () => window.removeEventListener(DOCUMENT_HISTORY_OPEN_EVENT, onOpenHistory);
+  }, [openRepositoryHistorySidebar]);
+
+  return null;
 }
 
 function fileRow(target: EventTarget | null): HTMLElement | null {
@@ -182,6 +195,7 @@ export default function AppShell() {
     <AppStateProvider>
       <FocusModeDragRegion />
       <DocumentFileDragBridge />
+      <RepositoryHistorySidebarBridge />
       <NativeCloseGuardBridge />
       <HistoryProvider>
         <RepositorySnapshotFromHistoryProvider>

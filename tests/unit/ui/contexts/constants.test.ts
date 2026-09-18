@@ -25,7 +25,7 @@ describe('appStateConstants', () => {
   });
 
   test('VSCODE_DEFAULT_KEYBINDINGS adds the external editor action for VS Code', () => {
-    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(22);
+    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(21);
     expect(VSCODE_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomIn).toBeUndefined();
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomOut).toBeUndefined();
