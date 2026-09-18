@@ -132,7 +132,7 @@ test('bookmark sidebar exposes conditional tab, grouped panel, dialogs, menus, a
   const [sidebar, tabsHeader, panel, dialog, icons, model] = await Promise.all(paths.map(read));
   const sidebarSurface = `${sidebar}\n${tabsHeader}`;
   assert.match(sidebarSurface, /bookmarksEnabled/);
-  assert.match(tabsHeader, /onSelect\('bookmarks'\)/);
+  assert.match(tabsHeader, /onSelect\(tab\.id\)/);
   assert.match(sidebar, /<BookmarksPanel/);
   assert.match(panel, /groupBookmarksByOpenWorkspace/);
   assert.match(panel, /onDoubleClick/);

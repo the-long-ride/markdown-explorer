@@ -46,6 +46,7 @@ function createAppBootstrap({
   createExportSaveHandlerFn = require("./runtime-export-save").createExportSaveHandler,
   createInsightsWorkspaceHostFn = require("./runtime-insights").createInsightsWorkspaceHost,
   createExternalLinkHostFn = require("./runtime-insights-external").createExternalLinkHost,
+  createNativeCloseGuardFn = require("./native-close-guard").createNativeCloseGuard,
   externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
@@ -55,6 +56,7 @@ function createAppBootstrap({
 
   function createWindow() {
     mainWindowRef = createMainWindowFn({ appDir: appDirImpl, debugTools: debugToolsImpl, clampAppZoom: runtimeImpl.clampAppZoom });
+    nativeCloseGuard.attachWindow(mainWindowRef);
     if (setMainWindow) setMainWindow(mainWindowRef);
     perfImpl.mark("window:created");
   }
@@ -81,6 +83,13 @@ function createAppBootstrap({
   const sendHostMessage = (message) => {
     mainWindowRef?.webContents.send("host-message", message);
   };
+
+  const nativeCloseGuard = createNativeCloseGuardFn({
+    app: appImpl,
+    getMainWindow,
+    sendHostMessage,
+    platform: processImpl.platform,
+  });
 
   const exportResourceHandlers = createExportResourceHandlersFn({
     fs: fsImpl,
@@ -161,7 +170,7 @@ function createAppBootstrap({
         pathImpl,
         TrayConstructor,
         ElectronMenu: MenuImpl,
-        appQuit: () => appImpl.quit(),
+        appQuit: nativeCloseGuard.requestAppQuit,
       });
       updateManagerRef = createUpdateManagerFn({
         app: appImpl,
@@ -209,6 +218,13 @@ function createAppBootstrap({
           navigate: runtimeImpl.handleNavigate,
           refresh: runtimeImpl.handleRefresh,
           setDocumentConversion: runtimeImpl.handleSetDocumentConversion,
+          saveDocument: runtimeImpl.handleSaveDocument,
+          getGitCapability: runtimeImpl.handleGetGitCapability,
+          listDocumentHistory: runtimeImpl.handleListDocumentHistory,
+          readGitRevision: runtimeImpl.handleReadGitRevision,
+          compareGitRevisions: runtimeImpl.handleCompareGitRevisions,
+          confirmNativeClose: nativeCloseGuard.confirm,
+          windowClose: nativeCloseGuard.closeApprovedWindow,
           listDesktopFonts: runtimeImpl.handleListDesktopFonts,
           importDesktopFonts: runtimeImpl.handleImportDesktopFonts,
           removeImportedDesktopFont: runtimeImpl.handleRemoveImportedDesktopFont,
@@ -234,7 +250,8 @@ function createAppBootstrap({
     if (processImpl.platform !== "darwin") appImpl.quit();
   });
 
-  appImpl.on("before-quit", () => {
+  appImpl.on("before-quit", (event) => {
+    if (!nativeCloseGuard.handleBeforeQuit(event)) return;
     externalLinkHost.dispose();
     insightsHost.dispose();
     runtimeImpl.dispose();

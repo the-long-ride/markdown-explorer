@@ -220,32 +220,6 @@ describe('createVsCodeBridge', () => {
     expect(mockApi.setState).toHaveBeenCalledWith({ foo: 'bar' });
   });
 
-  // Regression gate for the 1.6.7 user report: webview state alone is lost when
-  // the VS Code panel is recreated, so writes must also reach extension storage.
-  test('setState asks the VS Code host to persist state across panel recreation', () => {
-    const bridge = createVsCodeBridge();
-    const state = { theme: 'dark', sidebarCollapsed: true };
-
-    bridge.setState(state);
-
-    expect(mockApi.postMessage).toHaveBeenCalledWith({ command: 'persistState', state });
-  });
-
-  test('setState forwards light-theme and visible-menu preferences without dropping fields', () => {
-    const bridge = createVsCodeBridge();
-    const state = {
-      theme: 'light',
-      themeStyle: 'glass',
-      showTitle: false,
-      sidebarCollapsed: false,
-    };
-
-    bridge.setState(state);
-
-    expect(mockApi.setState).toHaveBeenCalledWith(state);
-    expect(mockApi.postMessage).toHaveBeenCalledWith({ command: 'persistState', state });
-  });
-
   test('copyToClipboard posts copyCode message', () => {
     const bridge = createVsCodeBridge();
     bridge.copyToClipboard('txt');

@@ -38,7 +38,6 @@ for (const [name, relativeEntry] of entries) {
         formats: ['iife'],
         fileName: () => `${name}.js`,
       },
-      rollupOptions: { output: { inlineDynamicImports: true } },
     },
   });
 

@@ -7,7 +7,7 @@
 
 Markdown files are built for AI agents. **Markdown Explorer** makes them pleasant for humans.
 
-It turns `.md` and `.mdx` folders into a private, searchable documentation app with workspace navigation, rendered diagrams, math, videos, highlighted code, interactive tables, charts, tabs, and support for VS Code, Chromium browsers, desktop apps (Windows, Linux, [macOS](docs/macos-install.md)), and an interactive [demo web app](https://the-long-ride.github.io/markdown-explorer/).
+It turns `.md` and `.mdx` folders into a private, searchable documentation app with workspace navigation, local Markdown editing, split-document views, rendered diagrams, math, videos, highlighted code, interactive tables, charts, tabs, and support for VS Code, Chromium browsers, desktop apps (Windows, Linux, [macOS](docs/macos-install.md)), and an interactive [demo web app](https://the-long-ride.github.io/markdown-explorer/).
 
 Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-ride.github.io/markdown-explorer/)
 
@@ -18,6 +18,8 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 ## Why It Feels Different
 
 - **Read workspaces, not loose files**: file tree, table of contents, section cards, copy buttons, recent workspaces, and desktop tabs.
+- **Edit without leaving the reader**: switch writable Markdown documents between Rendered, Inline Edit, and Plain modes with revision-protected local saves and external-change conflict handling.
+- **Compare what changed locally**: use a two-pane split view, read-only document and repository Git history on Electron/Tauri/VS Code, and dependency-free Source or Rendered Diff views without uploading document content.
 - **Preview more document types**: open `.html` and `.htm` files as interactive previews or converted Markdown (`Ctrl+Alt+H`), plus opt in to local conversion for DOCX, PDF, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files.
 - **Search where you need**: current file, current workspace, or every open desktop tab, with content excerpts and exact jump-to-result behavior.
 - **Stay keyboard-first**: use Sidebar Cursor mode to move through folders and files with `Alt+Z`, arrow keys, Enter, and Esc.
@@ -55,7 +57,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus. On Windows, right-clicking a file to open with Markdown Explorer automatically sets the parent directory as the active workspace.
 - **Universal Hardware Mouse Navigation**: Logitech and all hardware mouse back/forward buttons (Mouse Buttons 3 and 4) along with `BrowserBack`/`BrowserForward` keys provide seamless history navigation across all runtimes.
 - **macOS Native Integration**: Standard AppKit Edit application menu (Undo, Redo, Cut, Copy, Paste, Select All) and normalized 16×16 template tray icon for macOS menu bar.
-- **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Chromium/Web does not expose Edit.
+- **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Chromium/Web does not expose this external-editor action.
 - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
 - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
 - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
@@ -63,6 +65,26 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 - **Richer Context & Row Menus**: Sidebar, document-tab, and workspace-tab menus expose context-aware actions and shortcuts.
 - **Relative Workspace Links**: Navigate across workspace files (`/`, `./`, `../`) with back/forward history.
 - **Live Auto-Refresh**: Instant workspace tree updates from native filesystem change events.
+
+</details>
+
+<details>
+<summary><b>Local Markdown Editing, Split View & Git History</b></summary>
+
+- **Feature Controls**: Markdown editing is opt-in and starts disabled. The History Sidebar setting starts enabled, but the History tab appears only when the active runtime/workspace reports supported local Git capability.
+- **Rendered, Inline Edit, and Plain modes**: Writable Markdown documents can be edited directly inside Markdown Explorer without adding CodeMirror, Monaco, TipTap, ProseMirror, or another editor framework.
+- **Conflict-Protected Save**: Each save carries the revision observed when the document was loaded/saved. If the file changed externally, Markdown Explorer refuses a silent overwrite and offers Reload, Compare, or an explicit keep-mine action.
+- **Unsaved-Change Guards**: Closing tabs, changing workspaces, or closing the app protects dirty working copies until they are saved or deliberately discarded.
+- **Two-Pane Split View**: Open two documents side by side with independent active document, mode, and scroll position. A pane can show Rendered, Inline Edit, Plain, Revision, or Diff when the required data is available.
+- **Isolated Split Rendering**: Each document carries its own render revision so editing, scrolling, or activating one pane does not rerender an unrelated document in the other pane. When both panes show the same document and one is editing while the other is Rendered, the rendered mirror updates after a short 150 ms debounce and flushes immediately around save transitions.
+- **Local Git History**: Electron, Tauri, and VS Code use your installed local `git` executable to load document history lazily, follow renames, and open historical snapshots read-only. Chromium and Web explicitly report Git as unsupported and never start a local process.
+- **Repository History Sidebar**: On capable hosts, the History tab can load a bounded repository commit graph with merge parents, refs, and exact `HEAD`, browse files from a selected revision inside the active workspace, and open a read-only historical file without changing branches or the working tree. **Back to current HEAD** exits snapshot browsing without running `git checkout` and restores the live tabs/editor/split state already mounted underneath.
+- **Read-Only Git Boundary**: Markdown Explorer exposes no stage, commit, checkout, restore, reset, stash, branch, merge, or rebase operation. Git processes receive structured argument arrays rather than shell command strings, and revision/path inputs are validated before reads.
+- **Source & Rendered Diff**: Compare a revision with the persisted file, the dirty working copy, or another revision. Source Diff uses a dependency-free Myers line diff; Rendered Diff renders both complete Markdown documents and highlights changed source-backed blocks.
+- **Conflict Compare Without Git**: The same Diff UI can compare disk content against an unsaved working copy even outside a Git repository.
+- **Nine-Locale UI**: Editing, split-view, History, Git unavailable/not-repository states, repository snapshot browsing, diff modes, and Added/Removed/Unchanged labels are localized in all nine supported languages.
+
+See [Local Git History and Diff](docs/git-history-diff.md) and the [document-history comparison use case](docs/use-cases/compare-document-history.md).
 
 </details>
 
@@ -114,7 +136,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 
 - **CSV and TSV Code Fences**: Switch highlighted delimited text into interactive tables with delimiter detection, header inference, Excel-style column labels, sorting, filtering, wrapping, and chart controls.
 - **Interactive Filtering & Sorting**: Multi-select column filters, row sorting, and text wrap/unwrap controls.
-- **Interactive Column Visibility**: Per-table Columns dropdown menu with accessible switch toggles, **Show all**, and last-visible-column guard.
+- **Interactive Column Visibility**: Per-table Columns dropdown menu with accessible switch toggles for each column, **Show all**, and last-visible-column guard.
 - **Collapsible Datasets**: Compact view for large datasets (1000+ rows).
 - **Expanded Chart Visualizations**: Automatically convert numeric table data into 9 interactive chart types: **Bar**, **Horizontal Bar**, **Line**, **Area**, **Scatter** (with multi-numeric X/Y point mapping), **Radar**, **Polar Area**, **Pie**, and **Doughnut**.
 - **Fullscreen Chart Modal Viewer**: Dedicated chart inspection viewer with 50%–1000% continuous zoom, mouse/touch pan, fit/reset, on-the-fly chart type switching, and image copy/save PNG.
@@ -144,7 +166,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 - **Built-in Theme Families & Theme Remix**: Choose grouped built-in themes—including Aurora Glass, Neon Voltage, and Raw Grid—pet themes, or create, edit, import, and export custom themes with color, density, spacing, and background image controls.
 - **Keyboard Shortcuts**: Fully customizable keyboard shortcuts covering virtually all actions, navigation controls, and features in the app.
 - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
-- **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
+- **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Features, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
 - **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, Code, and Mermaid** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Chromium and Web runtimes persist imported `.ttf`/`.otf`/`.woff`/`.woff2` fonts in IndexedDB and activate them via the `FontFace` API.
 - **Update Notifications**: Desktop releases can show a new-version dialog at startup with Download, Later, changelog, and **Skip notify for this version** actions. Skipping suppresses only that release; a newer release is shown again.
 - **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
@@ -243,7 +265,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 | Back to previous file | `Ctrl+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back | `Ctrl+ArrowLeft` / `Cmd+ArrowLeft` or mouse back |
 | Go to next file | `Ctrl+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward | `Ctrl+ArrowRight` / `Cmd+ArrowRight` or mouse forward |
 | Go to welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` | `Ctrl+H` / `Cmd+H` |
-| Edit current document | `Ctrl+E` | `Ctrl+Alt+E` / `Cmd+Alt+E` | N/A |
+| Open current document in external editor | `Ctrl+E` | `Ctrl+Alt+E` / `Cmd+Alt+E` | N/A |
 | Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` | `Ctrl+I` / `Cmd+I` |
 | Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
 | Refresh workspace | `F5` | `R` | `R` |
@@ -273,7 +295,8 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 
 - No telemetry.
 - No file upload.
-- Local parsing, indexing, rendering, and search.
+- Local parsing, indexing, rendering, editing, diff computation, and search.
+- Local Git history and repository snapshot browsing on Electron/Tauri/VS Code use the installed `git` executable and expose read-only operations only.
 - MIT licensed public source.
 
 ## Links
@@ -284,6 +307,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 - [Open VSX](https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer)
 - [Latest GitHub Release](https://github.com/the-long-ride/markdown-explorer/releases/latest)
 - [Changelog](https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md)
+- [Git History and Diff guide](docs/git-history-diff.md)
 - [Issues](https://github.com/the-long-ride/markdown-explorer/issues)
 
 ## Report Issues

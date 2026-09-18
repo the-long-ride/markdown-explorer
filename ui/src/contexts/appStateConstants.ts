@@ -21,6 +21,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleFocusMode: 'Ctrl+Alt+F',
   toggleHtmlPreview: 'Ctrl+Alt+H',
   toggleWorkspaceInsights: 'Ctrl+Alt+I',
+  saveCurrentDocument: 'Ctrl+S',
 };
 
 const { toggleWorkspaceInsights: _toggleWorkspaceInsights, ...VSCODE_SHARED_KEYBINDINGS } = DEFAULT_KEYBINDINGS;

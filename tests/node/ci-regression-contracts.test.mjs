@@ -41,7 +41,7 @@ test('CI contracts include installer, release bundles, theme spacing, and new so
   assert.match(read('ui/src/styles/global/global-switch-tooltip-diff.css'), /\.sr-only\s*\{[^}]*position:\s*absolute/);
 });
 
-test('workspace insights is gated by appearance settings toggle and accessible via More actions menu', () => {
+test('workspace insights is gated by runtime and appearance settings and accessible via More actions menu', () => {
   const topbar = read('ui/src/components/Topbar/Topbar.tsx');
   const desktopTabBar = read('ui/src/components/Desktop/DesktopTabBar.tsx');
   const toolbarMenu = read('ui/src/components/shared/ToolbarActionMenu.tsx');

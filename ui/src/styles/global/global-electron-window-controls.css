@@ -1,11 +1,45 @@
 /* ============================================================
    Electron Frameless Drag Region & Window Controls
    ============================================================ */
+.focus-mode-drag-region {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 34px;
+  z-index: 99999990;
+  pointer-events: none;
+  background: transparent;
+}
+
+.focus-mode-drag-region__surface {
+  position: absolute;
+  top: 6px;
+  right: 72px;
+  left: 0;
+  height: 24px;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.focus-mode-drag-region__controls {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  width: 72px;
+  height: 24px;
+  pointer-events: none;
+}
+
 body.is-electron .topbar {
   -webkit-app-region: drag;
   z-index: 200000;
 }
 
+body.is-electron .focus-mode-drag-region__surface {
+  -webkit-app-region: drag;
+}
+
+body.is-electron .focus-mode-drag-region__controls,
+body.is-electron .exit-focus-btn,
 body.is-electron .topbar__logo,
 body.is-electron .btn,
 body.is-electron .toolbar-action-menu,
