@@ -71,6 +71,7 @@ keywords:
 | Typography: system + imported fonts | Yes | Yes | Yes, extension global storage | Yes, IndexedDB fonts | Yes, IndexedDB fonts |
 | Markdown Explorer zoom controls | Yes | Yes | No, host-native | No, browser-native | No, browser-native |
 | Export Center (HTML/PDF/Site) | Yes, native save | Yes, native save | Yes, VS Code save | Yes, browser download | Yes, browser download |
+| Workspace Insights | Yes | Yes | No, Desktop-only | Yes | No, website demo |
 | Scope View document modal | Yes | Yes | Yes | Yes | Yes |
 | Hardware mouse history navigation (3/4) | Yes | Yes | Yes | Yes | Yes |
 | Local Markdown save with revision conflict protection | Yes | Yes | Yes | Yes, writable file handle | Browser/virtual capability dependent |

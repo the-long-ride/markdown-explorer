@@ -170,6 +170,7 @@ export function normalizeKeybindingsForRuntime(
     ...(saved ?? {}),
   };
   if (runtime === 'chrome') delete normalized.editCurrentDocument;
+  if (runtime !== 'desktop') delete normalized.toggleWorkspaceInsights;
   if (runtime !== 'desktop' && runtime !== 'tauri') {
     delete normalized.zoomIn;
     delete normalized.zoomOut;

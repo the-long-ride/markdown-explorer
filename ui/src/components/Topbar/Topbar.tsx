@@ -13,6 +13,7 @@ import { TooltipButton } from '../shared/TooltipButton';
 import { EditIcon } from '../shared/icons';
 import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
+import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
 import { INSIGHTS_UI_TRANSLATIONS } from '../../contexts/insightsUiTranslations';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 
@@ -224,7 +225,7 @@ export function Topbar({
           tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
           tocToggleDisabled={isRevisionMode || !state.currentFile || state.toc.length === 0}
           onTocToggle={toggleToc}
-          showInsights={state.settings.insightsEnabled}
+          showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled}
           insightsLabel={insightsT.title}
           insightsTooltip={insightsT.title}
           insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')}

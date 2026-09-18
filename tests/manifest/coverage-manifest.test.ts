@@ -32,7 +32,7 @@ describe('coverage manifest', () => {
   test('references existing test suites', () => {
     for (const suites of Object.values(effectiveCoverageManifest)) {
       expect(suites.length).toBeGreaterThan(0);
-      for (const suite of suites) expect(existsSync(suite)).toBe(true);
+      for (const suite of suites) expect(existsSync(suite), suite).toBe(true);
     }
   });
 

@@ -19,7 +19,12 @@
     "Visualization"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:markdownExplorer.open",
+    "onCommand:markdownExplorer.openFile",
+    "onCommand:markdownExplorer.openFolder",
+    "onCommand:markdownExplorer.toggle",
+    "onCommand:markdownExplorer.refresh"
   ],
   "main": "./out/vscode/src/extension.js",
   "contributes": {

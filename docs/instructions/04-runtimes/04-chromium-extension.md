@@ -56,6 +56,7 @@ Chromium uses the File System Access API. Directory/file handles are user-grante
 - Document conversion is disabled.
 - Native shell reveal, tray, installer updater, and OS window controls are unavailable.
 - Custom fonts are managed in-browser using IndexedDB storage and the standard `FontFace` API.
+- Workspace Insights is supported in the Chromium extension runtime; only the website demo removes the Insights host adapter and presentation entry points.
 - Interactive table controls (column toggles and chart switchers) utilize delegated event listeners in `useContentEffects` and `SearchDocumentPreview` to comply with Manifest V3 Content Security Policy rules.
 - Scanner is limited to browser-readable supported types, principally Markdown/MDX.
 - Handle permission can expire and must be requested again rather than treated as permanent missing data.

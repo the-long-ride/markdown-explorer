@@ -8,6 +8,7 @@ import { PreferenceDescriptionTooltip } from './PreferenceDescriptionTooltip';
 import { getEnabledShortcut, formatShortcutLabel } from '../../utils/shortcuts';
 import { normalizeMaxPinnedItems } from '../Sidebar/sidebarWorkspacePreferences';
 import { DesktopTypographySettings } from './DesktopTypographySettings';
+import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
 
 export type SettingsPreferencesSection = 'appearance' | 'typography' | 'theme' | 'features';
 
@@ -196,6 +197,7 @@ export function SettingsPreferencesPanel({
               </label>
             </PreferenceRow>
 
+            {supportsWorkspaceInsights(state.appRuntime) && (
             <PreferenceRow id="insights-enabled" title={t.insightsEnabled} description={t.insightsEnabledDesc}>
               <label className="switch-toggle" aria-label={t.insightsEnabled}>
                 <input
@@ -206,6 +208,7 @@ export function SettingsPreferencesPanel({
                 <span className="switch-slider" />
               </label>
             </PreferenceRow>
+            )}
 
             <PreferenceRow
               id="history-sidebar-enabled"
