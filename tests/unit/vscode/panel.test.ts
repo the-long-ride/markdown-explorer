@@ -171,56 +171,6 @@ describe('MarkdownDocsPanel', () => {
       expect(ackMsg).toBeDefined();
     });
 
-    // Regression gate for the 1.6.7 user report: a reopened VS Code panel must
-    // receive saved Dark Mode and menu/sidebar preferences from host storage.
-    test('persists webview state in extension global state and restores it in readyAck', async () => {
-      const persistedState = { theme: 'dark', showTitle: true, sidebarCollapsed: true };
-      const globalState = {
-        get: vi.fn(() => persistedState),
-        update: vi.fn(() => Promise.resolve()),
-      };
-      setupVscodeMock();
-      const context = {
-        extensionPath: '/fake/ext',
-        extension: { packageJSON: { version: '1.0' } },
-        globalState,
-      } as any;
-      MarkdownDocsPanel.createOrShow(context, null);
-
-      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
-      await msgHandler({ command: 'persistState', state: persistedState });
-      expect(globalState.update).toHaveBeenCalledWith('markdownExplorer.uiState', persistedState);
-
-      await msgHandler({ command: 'ready' });
-      const ackMsg = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'readyAck');
-      expect(ackMsg?.[0].persistedState).toEqual(persistedState);
-    });
-
-    test.each([
-      ['light', false, false],
-      ['auto', true, false],
-      ['dark', false, true],
-    ] as const)('restores %s theme with showTitle=%s sidebarCollapsed=%s', async (theme, showTitle, sidebarCollapsed) => {
-      const persistedState = { theme, showTitle, sidebarCollapsed };
-      const globalState = {
-        get: vi.fn(() => persistedState),
-        update: vi.fn(() => Promise.resolve()),
-      };
-      setupVscodeMock();
-      const context = {
-        extensionPath: '/fake/ext',
-        extension: { packageJSON: { version: '1.0' } },
-        globalState,
-      } as any;
-      MarkdownDocsPanel.createOrShow(context, null);
-
-      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
-      await msgHandler({ command: 'ready' });
-
-      const ackMsg = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'readyAck');
-      expect(ackMsg?.[0].persistedState).toEqual(persistedState);
-    });
-
     test('handles navigate message', async () => {
       setupVscodeMock();
       const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;

@@ -19,7 +19,7 @@ export const ACTIONS_LIST = [
   { id: 'toggleSidebar', label: 'Toggle sidebar visibility', scope: 'both' },
   { id: 'openBookmarks', label: 'Open Bookmarks tab', scope: 'both' },
   { id: 'toggleToc', label: 'Toggle table of contents panel', scope: 'both' },
-  { id: 'toggleWorkspaceInsights', label: 'Toggle workspace insights panel', scope: 'desktop' },
+  { id: 'toggleWorkspaceInsights', label: 'Toggle workspace insights panel', scope: 'both' },
   { id: 'toggleFocusMode', label: 'Toggle focus mode', scope: 'both' },
   { id: 'sidebarCursorMode', label: 'Sidebar cursor mode', scope: 'both' },
   { id: 'toggleDesktopViewMode', label: 'Toggle Tabs/Focus view', scope: 'electron' },
@@ -39,6 +39,7 @@ export const ACTIONS_LIST = [
   { id: 'closeAllContentTabs', label: 'Close all document tabs', scope: 'electron' },
 
   // General & Settings
+  { id: 'saveCurrentDocument', label: 'Save current document', scope: 'both' },
   { id: 'editCurrentDocument', label: 'Edit current document', scope: 'editor' },
   { id: 'settings', label: 'Toggle settings modal', scope: 'both' },
   { id: 'toggleTheme', label: 'Toggle light/dark mode', scope: 'both' },

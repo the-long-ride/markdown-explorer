@@ -2,10 +2,12 @@ import type { AppState } from '../../contexts/appStateModel';
 import type { SidebarPinnedItem } from '../../types';
 import { normalizePathKey } from '../../contexts/appStateReducer';
 import type { Translations } from '../../contexts/translations';
+import { getSplitViewTranslations } from '../../contexts/splitViewTranslations';
 import { getShellLocationLabel, requestShellLocation, resolveWorkspaceFolderPath } from '../../desktop/shellLocation';
 import { openLocalFileInBrowser } from '../../dom/htmlPreviewActions';
 import type { PlatformBridge } from '../../platform/bridge';
 import { getEnabledShortcut } from '../../utils/shortcuts';
+import { requestOpenInSplit } from '../Content/documentFileDrop';
 import { HtmlPreviewIcon, InternetIcon, MarkdownViewIcon, OpenFolderLocationIcon, RevealFileLocationIcon } from '../shared/icons';
 import { isHtmlDocumentPath } from '../Content/HtmlDocumentView';
 import type { SidebarItemMenuItem } from './SidebarItemMenu';
@@ -48,6 +50,14 @@ export function buildSidebarItemMenuItems({
       icon: <PinIcon />,
       disabled: pinLimitReached,
       onSelect: () => onTogglePin(pinItem),
+    });
+  }
+  if (target.kind === 'file') {
+    items.push({
+      id: 'open-in-split',
+      label: getSplitViewTranslations(state.settings.language).openInSplit,
+      dividerBefore: items.length > 0,
+      onSelect: () => requestOpenInSplit(target.path),
     });
   }
   if (target.kind === 'file' && isHtmlDocumentPath(target.path)) {

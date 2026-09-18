@@ -145,12 +145,12 @@ describe('VS Code and Chromium shortcut bindings contract', () => {
     expect(action).toBeNull();
   });
 
-  it('defines the Desktop-only Workspace Insights keybinding with Ctrl+Alt+I', () => {
+  it('defines default keybinding and scopes toggleWorkspaceInsights with Ctrl+Alt+I', () => {
     expect(DEFAULT_KEYBINDINGS.toggleWorkspaceInsights).toBe('Ctrl+Alt+I');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.toggleWorkspaceInsights).toBe('Ctrl+Alt+I');
     const insightsAction = ACTIONS_LIST.find((a) => a.id === 'toggleWorkspaceInsights');
     expect(insightsAction).toBeDefined();
-    expect(insightsAction?.scope).toBe('desktop');
+    expect(insightsAction?.scope).toBe('both');
   });
 
   it('resolves Ctrl+Alt+I to toggle-workspace-insights when enabled', () => {

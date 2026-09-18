@@ -1,6 +1,6 @@
 {
   "name": "markdown-explorer-workspace",
-  "version": "1.6.8",
+  "version": "1.6.9",
   "private": true,
   "packageManager": "pnpm@11.18.0",
   "scripts": {
@@ -59,6 +59,6 @@
     "fake-indexeddb": "^6.2.5",
     "fast-glob": "^3.3.3",
     "jsdom": "^29.1.1",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.9"
   }
 }

@@ -1,13 +1,15 @@
 ---
-timestamp: '2026-08-01T22:54:00+07:00'
+timestamp: '2026-09-17T00:00:00+07:00'
 name: Sidebar Tree, Filtering, and Scope
-topic: Sidebar Tree, Filtering, and Scope
+topic: Sidebar Tree, Filtering, Scope, and repository History
 document_type: specification
 status: active
 ui_spec: true
 parent_docs:
 - ../00-foundation/06-coverage-matrix.md
-related_docs: []
+related_docs:
+- ../../git-history-diff.md
+- ../../superpowers/specs/2026-09-17-pr48-as-built-sync.md
 source_scope:
 - ui/src/components/Sidebar/Sidebar.tsx
 - ui/src/components/Sidebar/SidebarSearch.tsx
@@ -26,28 +28,41 @@ source_scope:
 - ui/src/components/Sidebar/useSidebarCursorNavigation.ts
 - ui/src/components/Sidebar/useSidebarPinnedSorting.ts
 - ui/src/components/Sidebar/useSidebarScopeFocus.ts
+- ui/src/components/History/RepositoryHistoryPanel.tsx
+- ui/src/components/History/GitCommitGraph.tsx
+- ui/src/history/revisionWorkspace.ts
+- ui/src/history/repositoryView.ts
 - ui/src/hooks/useResize.ts
 - ui/src/styles/global/global-sidebar-search-controls.css
 test_scope:
 - tests/node/sidebar-pinning-sorting.test.mjs
+- tests/node/sidebar-focus-search-layout.test.mjs
+- tests/node/repository-history-pagination-contract.test.mjs
 - tests/unit/ui/components/sidebar-tree-ordering.test.ts
 - tests/unit/ui/components/sidebar-render.test.tsx
 - tests/unit/ui/components/sidebar-search-pure.test.ts
+- tests/unit/ui/components/sidebar-tabs-header.test.tsx
+- tests/unit/ui/history/repository-history-panel.test.tsx
+- tests/unit/ui/history/git-graph-layout.test.ts
+- tests/unit/ui/history/revision-workspace.test.ts
 - tests/unit/ui/hooks/useResize.test.ts
-- tests/node/sidebar-focus-search-layout.test.mjs
 runtime_scope:
 - all
 - native/editor-hosts
 - browser-hosts
 keywords:
-- sidebar tree, filtering, and scope
+- sidebar tree
+- filtering
+- scope
+- repository history
+- pagination
 ---
 
 # Sidebar Tree, Filtering, and Scope
 
 ## Feature intent
 
-Specify hierarchical file navigation, search/filter rendering, cursor navigation, context menus, resizing, and per-workspace scope focus.
+Specify hierarchical file navigation, search/filter rendering, cursor navigation, context menus, resizing, per-workspace scope focus, and the capability-aware repository History sidebar.
 
 ## Capability contract
 
@@ -57,37 +72,30 @@ Specify hierarchical file navigation, search/filter rendering, cursor navigation
 | Filter | Retain matching descendants and required ancestors. | Large trees are narrowed without losing context. |
 | Cursor mode | Move, expand, collapse, and open by keyboard. | Tree is usable without pointer. |
 | Scope focus | Limit navigation and workspace search to selected files/folders per workspace. | Users concentrate on relevant documentation. |
+| History | Show paged/searchable repository commits and read-only revision files only when local Git is supported. | Repository history is browsable without checkout or working-tree mutation. |
 | Resize | Persist bounded sidebar width. | Layout matches reader preference. |
 
-## Interaction and processing flow
-
-```mermaid
-flowchart LR
-    A[User input or host event] --> B[Validate and normalize]
-    B --> C[Update application state]
-    C --> D[Render or dispatch host command]
-    D --> E[Announce result or recover error]
-```
-
-### Tree-node behavior
+## Tree-node behavior
 
 - Folder expansion is independent from text filtering.
 - The active document remains visually identifiable when its node is visible.
 - File and folder context menus are built from target type and host capability.
+- File targets expose **Open in Split View** when split opening is available.
+- File rows can carry the Markdown Explorer document drag payload consumed by the document shell; folder rows do not masquerade as document drags.
 - Filter matching is case/Unicode aware through shared utilities where applicable.
 - Scope maps are reconciled when files/folders disappear.
 
-### Tree ordering, sorting, and pin controls
+## Tree ordering, sorting, and pin controls
 
-- **Folders-first Ordering**: By default (`name-asc`), unpinned folders are always listed before files at each directory level, with items within each group sorted alphabetically ascending (A-Z).
-- **Sort Modes**: `SidebarSortMenu` offers three sort modes: `name-asc` (A-Z, default), `name-desc` (Z-A), and `modified-desc` (recently modified first).
-- **Root Level Pin Hoisting**: When a file or folder located inside a parent folder is pinned, it is hoisted and displayed at the root level of the sidebar tree instead of remaining inside its parent folder.
-- **Revocable Sorting**: Clicking the currently active sort mode in `SidebarSortMenu` revokes active sorting and resets the workspace sort mode back to `DEFAULT_SIDEBAR_SORT_MODE` (`name-asc`).
-- **Toolbar Actions Sequence**: Sidebar toolbar buttons are arranged in exact sequence: `Sort` (left), `Clear Pins`, `Locate`, `Collapse All`, `Expand All` (right).
-- **Pin & Unpin Icons**: The per-row pinned-item indicator uses the stroke-only `PinIcon` (Lucide thumbtack, size 12 for tap-target parity). Both unpin affordances — the per-item context-menu entry and the toolbar Clear Pins button — render the same `UnpinIcon` SVG (Lucide thumbtack + diagonal slash overlay, path `M3 3L18 18`) so users see one consistent "remove pin" affordance regardless of scope. `ClearPinsIcon` is kept as a named export (so the toolbar call-site reads as "clear all pins") but delegates to `UnpinIcon`; both inherit `currentColor` from the parent button.
-- **Scope Focus Badge**: The scope focus count badge (`.sidebar__scope-count`) and TOC count badge (`.toc-panel__count`) utilize theme-aware border radius `border-radius: var(--r-s, var(--r));`.
+- Default `name-asc` ordering keeps unpinned folders before files at each directory level; each group is sorted alphabetically.
+- `SidebarSortMenu` offers `name-asc`, `name-desc`, and `modified-desc`.
+- Pinned nested items are hoisted to the root-level pinned area.
+- Selecting the active sort mode again resets to `DEFAULT_SIDEBAR_SORT_MODE` (`name-asc`).
+- Toolbar action order is Sort, Clear Pins, Locate, Collapse All, Expand All.
+- Pinned rows use the stroke-only `PinIcon`. Per-row unpin and Clear Pins use the shared `UnpinIcon` design.
+- Scope-focus and TOC count badges use theme-aware radius tokens.
 
-### Scope separation
+## Scope separation
 
 | Setting | Effect |
 |---|---|
@@ -96,6 +104,42 @@ flowchart LR
 
 The two maps may differ and must not overwrite each other.
 
+## Sidebar tab header contract
+
+- Files, Search, Bookmarks, and capability-aware History are produced from one visible-tab descriptor list.
+- With three or fewer visible tabs, controls show icon + translated label. With more than three, controls switch to icon-only presentation.
+- Every tab button uses Markdown Explorer tooltip behavior (`TooltipButton`) and retains an accessible name in both layouts; native browser `title` alone is not the tooltip contract.
+- The animated indicator is measured from the rendered visible-tab order, so optional Bookmarks/History tabs cannot shift it onto the wrong control.
+- Files and Search keep consistent search-field height. Files may render scope controls on a second row.
+- Workspace search filters results against the current search-focus set. Changing focus while a query is active reruns focus-aware search.
+
+## Repository History sidebar
+
+### Visibility and routing
+
+- `historySidebarEnabled` defaults to true, but History is rendered only after `getGitCapability` reports local Git support for the active workspace.
+- **More Actions → History** calls the centralized repository-history action, expands the sidebar if necessary, selects History, and lets the visible panel start lazy loading.
+- Opening History never checkout/restores/resets/switches branches or otherwise mutates Git state.
+
+### Graph, search, and paging
+
+- Repository history initially requests 50 commits.
+- The panel loads older pages as the user approaches the bottom through an `IntersectionObserver` sentinel, with a deterministic scroll-near-bottom fallback.
+- Additional pages use `offset = loaded commit count`; appended pages are de-duplicated by full OID and preserve order.
+- A short page marks history exhausted.
+- Search matches full SHA, short SHA, author, or subject/message case-insensitively.
+- While a query is active and no loaded commit matches, the panel may continue loading older pages until a match is found or history is exhausted.
+- Commit rows show continuous graph lanes, subject, short SHA, author, refs, merge parents, and the exact `HEAD` marker.
+
+### Historical workspace projection
+
+- Selecting a commit can activate the whole-workspace historical view without checkout.
+- Revision Files shows only document-eligible paths: Markdown/MDX and TXT always; convertible document formats only when document conversion is enabled. Arbitrary source files such as `.ts` are excluded.
+- Historical workspace search reads revision text sources, not the live filesystem search route.
+- Selecting a revision file opens an isolated read-only snapshot while live content tabs, editor sessions, split panes, scroll state, and unsaved working copies stay mounted.
+- Persisted revision selections are keyed per workspace. A saved revision is not treated as stale merely because it is absent from the initial 50-commit page; validation may page older history.
+- **Back to current HEAD** clears repository-view state/persistence only and reveals the exact already-mounted live view.
+- Chromium and Website runtimes keep History unavailable because they explicitly report `unsupported-runtime` and never execute a local process.
 
 ## States and failure behavior
 
@@ -106,13 +150,19 @@ The two maps may differ and must not overwrite each other.
 | Filtered | Matching subtree only | Clear query |
 | Cursor mode | One visible node focused | Exit/move/open |
 | Scoped | Selected roots applied | Edit/clear scope |
+| History loading | Initial repository page is loading | Result/error |
+| History loading-more | Older page is loading | Page/error |
+| History filtered | Loaded/paged commits filtered by query | Clear/change query |
+| Snapshot | Historical file is rendered read-only above live content | Back to current HEAD |
 
 ## Runtime behavior
 
 | Runtime | Specification |
 |---|---|
-| All | Shared tree and filtering behavior. |
-| Native/editor hosts | Reveal/open-in-editor actions enabled. |
+| All | Shared tree, filtering, scope, tab header, context-menu, and document-drag behavior. |
+| Electron / Tauri / VS Code | History can page/search repository commits and browse read-only snapshots through installed Git. |
+| Chromium / Website | Git History remains hidden/unsupported; no local process execution. |
+| Native/editor hosts | Reveal/open-in-editor actions enabled where the runtime supports them. |
 | Browser hosts | Filesystem shell actions unavailable. |
 
 ## Non-functional requirements
@@ -120,7 +170,8 @@ The two maps may differ and must not overwrite each other.
 - All actions remain keyboard reachable.
 - A failed enhancement must not prevent the base document from rendering.
 - Host-facing inputs are validated before filesystem, shell, or network access.
-
+- Repository snapshot browsing must not mutate live document/editor/split state or the Git working tree.
+- History paging must remain bounded per request and must not refetch the same prefix repeatedly.
 
 ## Acceptance criteria
 
@@ -128,67 +179,31 @@ The two maps may differ and must not overwrite each other.
 - [ ] Cursor navigation never focuses hidden nodes.
 - [ ] Scope state is reconciled after workspace change.
 - [ ] Sidebar width remains within layout bounds.
-## UI reference implementation
-
-The sample shows the interaction boundary, not a replacement for the React implementation.
-
-```html
-<section class="spec-sidebar-tree-filtering-and-scope" aria-labelledby="sidebar-tree-filtering-and-scope-title">
-  <h2 id="sidebar-tree-filtering-and-scope-title">Sidebar Tree, Filtering, and Scope</h2>
-  <p data-status role="status" aria-live="polite">Ready</p>
-  <button type="button" data-action>Open document</button>
-</section>
-```
-
-```css
-.spec-sidebar-tree-filtering-and-scope {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius, 8px);
-  background: var(--surface);
-  color: var(--text);
-}
-.spec-sidebar-tree-filtering-and-scope button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-```
-
-```javascript
-const root = document.querySelector('.spec-sidebar-tree-filtering-and-scope');
-const status = root.querySelector('[data-status]');
-root.querySelector('[data-action]').addEventListener('click', () => {
-  window.PlatformBridge.postMessage({ command: 'navigate', path: '/project/docs/guide.md' });
-  status.textContent = 'Request sent';
-});
-```
-## Sidebar header and focus-aware search contract
-
-- Files, Search, and Bookmarks tabs size to their icon and translated label; no fixed minimum tab width is imposed.
-- One measured indicator animates to the active tab, and all three bodies use the same reduced-motion-aware transition.
-- Each tab uses the same search-field height. Files keeps the search field on row one and scope-focus controls on row two.
-- Workspace search filters host results against the current focus set. Unfocused files never appear.
-- Changing focus while a non-empty search query exists changes the scope revision and reruns focus-aware search, so newly focused files appear and newly unfocused files disappear without editing the query.
+- [ ] Sidebar tab tooltips/accessibility remain available in icon-only mode.
+- [ ] History is visible only when the setting is enabled and local Git capability is supported.
+- [ ] More Actions → History selects the repository History sidebar.
+- [ ] Commit search matches SHA, author, and subject.
+- [ ] Older commits load with true offset pagination and append without duplicate OIDs.
+- [ ] Revision Files excludes non-document source files.
+- [ ] Selecting repository revisions does not checkout or dirty the working tree.
+- [ ] Back to current HEAD restores the previous live view without reconstructing its editor session.
 
 ## Source traceability
 
 | Kind | Path | Purpose |
 |---|---|---|
-| Implementation | `ui/src/components/Sidebar/Sidebar.tsx` | Active behavior or contract |
-| Implementation | `ui/src/components/Sidebar/TreeNode.tsx` | Active behavior or contract |
-| Implementation | `ui/src/components/Sidebar/SidebarScopeControls.tsx` | Scope focus controls |
-| Implementation | `ui/src/components/Sidebar/sidebarItemMenuItems.tsx` | Right-click context menu items |
-| Implementation | `ui/src/components/Sidebar/sidebarTreeFiltering.ts` | Active behavior or contract |
-| Implementation | `ui/src/components/Sidebar/sidebarActiveFolders.ts` | Active folder tracking |
-| Implementation | `ui/src/components/Sidebar/useSidebarCursorNavigation.ts` | Active behavior or contract |
-| Implementation | `ui/src/components/Sidebar/useSidebarPinnedSorting.ts` | Pinned item sort ordering |
-| Implementation | `ui/src/components/Sidebar/useSidebarScopeFocus.ts` | Per-workspace scope focus |
-| Implementation | `ui/src/hooks/useResize.ts` | Active behavior or contract |
-| Verification | `tests/unit/ui/components/sidebar-render.test.tsx` | Automated expectation |
-| Verification | `tests/unit/ui/components/sidebar-search-pure.test.ts` | Automated expectation |
-| Verification | `tests/unit/ui/hooks/useResize.test.ts` | Automated expectation |
+| Implementation | `ui/src/components/Sidebar/Sidebar.tsx` | Sidebar tabs and active panel behavior |
+| Implementation | `ui/src/components/Sidebar/TreeNode.tsx` | File/folder rows and document drag entrypoint |
+| Implementation | `ui/src/components/Sidebar/sidebarItemMenuItems.tsx` | File context actions including split opening |
+| Implementation | `ui/src/components/Sidebar/SidebarTabsHeader.tsx` | Visible-tab order, indicator, tooltip buttons |
+| Implementation | `ui/src/components/History/RepositoryHistoryPanel.tsx` | History search and progressive page loading |
+| Implementation | `ui/src/components/History/GitCommitGraph.tsx` | Commit graph rendering |
+| Implementation | `ui/src/history/revisionWorkspace.ts` | Historical file filtering/search |
+| Implementation | `ui/src/history/repositoryView.ts` | Commit filtering and per-workspace persisted revision selection |
+| Verification | `tests/unit/ui/components/sidebar-tabs-header.test.tsx` | Tooltip/header expectation |
+| Verification | `tests/unit/ui/history/repository-history-panel.test.tsx` | Repository history UI expectation |
+| Verification | `tests/unit/ui/history/revision-workspace.test.ts` | Historical file filtering |
+| Verification | `tests/node/repository-history-pagination-contract.test.mjs` | Cross-runtime history contract |
 
 ---
 

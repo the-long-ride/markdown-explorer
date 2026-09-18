@@ -19,12 +19,18 @@ export interface SidebarSearchStatus {
   showCount: boolean;
 }
 
+export interface RevisionSidebarSearch {
+  readonly oid: string;
+  run(query: string, matchCase: boolean, signal: AbortSignal): Promise<WorkspaceSearchResult[]>;
+  openPath(path: string): void;
+}
 
 interface SidebarSearchProps {
   isVisible: boolean;
   selectedFilePaths?: ReadonlySet<string>;
   hasScopeEntry?: boolean;
   onStatusChange?: (status: SidebarSearchStatus) => void;
+  revisionSearch?: RevisionSidebarSearch;
 }
 
 export function SidebarSearch({
@@ -32,6 +38,7 @@ export function SidebarSearch({
   selectedFilePaths = EMPTY_SELECTED_FILE_PATHS,
   hasScopeEntry = false,
   onStatusChange,
+  revisionSearch,
 }: SidebarSearchProps) {
   const { state } = useAppState();
   const bridge = usePlatform();
@@ -68,6 +75,11 @@ export function SidebarSearch({
     if (resultsTreeRef.current) resultsTreeRef.current.scrollTop = 0;
   }, [query]);
 
+  useEffect(() => {
+    setRawResults([]);
+    setIsSearching(false);
+  }, [revisionSearch?.oid]);
+
   const togglePath = useCallback((path: string) => {
     setCollapsedPaths((current) => {
       const next = new Set(current);
@@ -78,6 +90,7 @@ export function SidebarSearch({
   }, []);
 
   useEffect(() => {
+    if (revisionSearch) return undefined;
     return bridge.onMessage((message) => {
       if (
         message.command === 'workspaceSearchResults' &&
@@ -87,20 +100,33 @@ export function SidebarSearch({
         setIsSearching(false);
       }
     });
-  }, [bridge]);
+  }, [bridge, revisionSearch]);
 
   useEffect(() => {
     if (query.trim().length < 2) {
       setRawResults([]);
       setIsSearching(false);
-      return;
+      return undefined;
     }
 
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     requestIdRef.current = requestId;
+    const controller = new AbortController();
     setIsSearching(true);
 
     const handle = window.setTimeout(() => {
+      if (revisionSearch) {
+        void revisionSearch.run(query, matchCase, controller.signal).then((nextResults) => {
+          if (controller.signal.aborted) return;
+          setRawResults(nextResults);
+          setIsSearching(false);
+        }).catch((error: unknown) => {
+          if (controller.signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
+          setRawResults([]);
+          setIsSearching(false);
+        });
+        return;
+      }
       bridge.postMessage({
         command: 'searchWorkspace',
         requestId,
@@ -109,8 +135,11 @@ export function SidebarSearch({
       });
     }, 250);
 
-    return () => window.clearTimeout(handle);
-  }, [bridge, query, matchCase, scopeRevision]);
+    return () => {
+      window.clearTimeout(handle);
+      controller.abort();
+    };
+  }, [bridge, query, matchCase, revisionSearch, scopeRevision]);
 
   useEffect(() => {
     const focusInput = () => {
@@ -147,6 +176,9 @@ export function SidebarSearch({
     (searchResultTree.files.length > 0 || searchResultTree.children.length > 0)
     ? searchResultTree
     : null;
+  const openRevisionResult = revisionSearch
+    ? (match: WorkspaceSearchResult) => revisionSearch.openPath(match.relativePath)
+    : undefined;
 
   return (
     <>
@@ -208,6 +240,7 @@ export function SidebarSearch({
                 matchCase={matchCase}
                 collapsedPaths={collapsedPaths}
                 togglePath={togglePath}
+                onOpenResult={openRevisionResult}
               />
             ))}
             {visibleSearchResultTree.children.map((child) => (
@@ -218,6 +251,7 @@ export function SidebarSearch({
                 matchCase={matchCase}
                 collapsedPaths={collapsedPaths}
                 togglePath={togglePath}
+                onOpenResult={openRevisionResult}
               />
             ))}
           </>

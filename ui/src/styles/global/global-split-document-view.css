@@ -1,0 +1,250 @@
+.content--split {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Split panes own their document tabs, so hide the legacy shared strip while split content is mounted. */
+.content-shell:has(.content--split) > .content-tabs-wrap {
+  display: none;
+}
+
+.split-document-view {
+  display: grid;
+  grid-template-columns: minmax(0, var(--split-primary-size, 1fr)) 6px minmax(0, var(--split-secondary-size, 1fr));
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.split-document-pane {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid transparent;
+  background: var(--bg);
+}
+
+.split-document-pane.is-active {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.split-document-pane.is-file-drag-target,
+#mainContent.is-file-drag-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -3px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+}
+
+.split-document-pane__content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.split-document-pane__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--bd-x);
+  background: var(--bg-e);
+}
+
+.split-document-pane__tabs {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.split-document-pane__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.split-document-pane__tab-wrap {
+  display: inline-flex;
+  flex: 0 1 180px;
+  min-width: 80px;
+  max-width: 220px;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--r, 5px);
+  color: var(--tx-2);
+}
+
+.split-document-pane__tab-wrap.is-active {
+  border-color: var(--bd-x);
+  background: var(--bg);
+  color: var(--tx);
+}
+
+.split-document-pane__tab {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 4px 4px 7px;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.split-document-pane__tab-close {
+  display: grid;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.split-document-pane__tab-close:hover,
+.split-document-pane__tab-close:focus-visible {
+  background: var(--bg-h);
+}
+
+.split-document-pane__title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--tx);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.split-document-pane__modes {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.split-document-pane__mode {
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--r, 5px);
+  background: transparent;
+  color: var(--tx-2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.split-document-pane__mode:hover,
+.split-document-pane__mode:focus-visible {
+  border-color: var(--bd-x);
+  color: var(--tx);
+}
+
+.split-document-pane__mode.is-active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--bd-x));
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-e));
+  color: var(--tx);
+}
+
+.split-document-pane__scroll {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  contain: layout paint;
+}
+
+.split-document-pane__scroll .document-surface {
+  width: min(100%, var(--content-max-width, 960px));
+  min-height: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.split-document-pane__close {
+  position: absolute;
+  z-index: 4;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: var(--bg-e);
+  color: var(--tx-2);
+  cursor: pointer;
+}
+
+.split-document-pane--secondary .split-document-pane__header {
+  padding-right: 36px;
+}
+
+.split-document-pane__close:hover,
+.split-document-pane__close:focus-visible {
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
+.split-document-pane__empty {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--tx-3);
+  font-size: 12px;
+}
+
+.split-document-divider {
+  position: relative;
+  z-index: 3;
+  width: 6px;
+  min-width: 6px;
+  cursor: col-resize;
+  background: var(--bd-x);
+  touch-action: none;
+}
+
+.split-document-divider::after {
+  content: '';
+  position: absolute;
+  inset: 0 2px;
+  background: transparent;
+}
+
+.split-document-divider:hover::after,
+.split-document-divider:focus-visible::after {
+  background: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .split-document-pane__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .split-document-pane__tabs,
+  .split-document-pane__modes {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}

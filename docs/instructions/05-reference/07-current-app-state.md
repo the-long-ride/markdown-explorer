@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-18T17:30:00+07:00'
+timestamp: '2026-09-17T00:00:00+07:00'
 name: Current Application State
 topic: Unreleased synchronized product and runtime snapshot
 document_type: reference
@@ -12,8 +12,10 @@ related_docs:
 - 04-shortcut-catalog.md
 - 10-localization-catalog.md
 - ../04-runtimes/06-runtime-parity.md
-- ../03-features/12-settings-preferences-import-export.md
-- ../03-features/15-localization-welcome-onboarding.md
+- ../03-features/03-sidebar-tree-and-scope.md
+- ../03-features/04-content-tabs-and-document-shell.md
+- ../../git-history-diff.md
+- ../../superpowers/specs/2026-09-17-pr48-as-built-sync.md
 source_scope:
 - ../../../ui/src
 - ../../../electron
@@ -23,6 +25,12 @@ source_scope:
 - ../../../website-app
 test_scope:
 - ../../../tests/node/localization-settings-doc-sync-contract.test.mjs
+- ../../../tests/node/repository-history-pagination-contract.test.mjs
+- ../../../tests/node/split-file-drag-drop-contract.test.mjs
+- ../../../tests/node/focus-drag-region-contract.test.mjs
+- ../../../tests/manifest/editor-git-split-coverage-manifest.ts
+- ../../../tests/unit/ui/history
+- ../../../tests/unit/ui/split-view
 runtime_scope:
 - electron
 - tauri
@@ -32,174 +40,164 @@ runtime_scope:
 keywords:
 - current state
 - unreleased
+- version 1.6.9
 - settings
 - typography
 - localization
 - shortcuts
-- runtime parity
+- editing
+- repository history
+- split view
 ---
 
 # Current Application State
 
-This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-08-18. Feature, runtime, protocol, and catalog documents remain the normative detailed specifications; this page is the compact cross-product map used to detect documentation drift.
+This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-09-17. The PR #48 feature branch targets application version **1.6.9** so it remains distinct from the separate 1.6.8 hot-fix line. Detailed feature/runtime documents remain normative; this page is the compact cross-product map used to detect documentation drift.
 
 ## Supported runtimes
 
-Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code**, **Chromium**, and the website/browser-file runtime. The renderer capability-gates native actions rather than pretending every host owns the same filesystem, updater, window, editor, font, or zoom APIs.
+Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code**, **Chromium**, and the Website/browser-file runtime. The renderer capability-gates native actions rather than pretending every host owns the same filesystem, updater, window, editor, font, zoom, or Git APIs.
 
 | Capability | Electron | Tauri | VS Code | Chromium / Web |
 |---|---|---|---|---|
 | Workspace/folder browsing | Native desktop bridge | Native Tauri bridge | VS Code workspace APIs | Browser File System Access API where available |
-| Edit current document | `Ctrl+E`, action in More Actions | `Ctrl+E`, action in More Actions | `Ctrl+Alt+E`, icon beside More Actions | Not exposed |
-| Typography font sources | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | system fonts and imported `.ttf`/`.otf` | Imported `.ttf`/`.otf`/`.woff`/`.woff2` via IndexedDB & FontFace API |
+| Local Markdown Inline Edit / Plain editing | Yes | Yes | Yes | Yes when writable file permission exists; otherwise read-only |
+| Conflict-protected local save | Yes | Yes | Yes | Yes when writable file permission exists; otherwise read-only |
+| Open current document in external editor | `Ctrl+E`, More Actions | `Ctrl+E`, More Actions | `Ctrl+Alt+E`, icon/More Actions | Not exposed |
+| Two-pane split view with pane-owned tabs | Yes | Yes | Yes | Yes |
+| Local Git document history | Installed local Git | Installed local Git | Installed local Git | Unsupported; no local process execution |
+| Paged/searchable repository History | Installed local Git | Installed local Git | Installed local Git | Unsupported; no local process execution |
+| Read-only repository revision workspace | Installed local Git | Installed local Git | Installed local Git | Unsupported |
+| Source / Rendered Diff | Yes | Yes | Yes | Yes for non-Git/local comparisons |
+| Typography font sources | system fonts and imported files | system fonts and imported files | system fonts and imported files | imported browser fonts |
 | App-owned zoom | Yes | Yes | No; host/native zoom | No; host/native zoom |
-| Update installation | Markdown Explorer desktop updater | Signed Tauri updater | VS Code owns installation; Markdown Explorer checks/reports only | Store/deployment owned |
+| Update installation | Markdown Explorer desktop updater | Signed Tauri updater | VS Code owns installation; app checks/reports only | Store/deployment owned |
 
-VS Code imported fonts are copied to extension global storage and served to the webview with a webview-safe URI. Chromium extension and Web demo store imported font files in IndexedDB (`markdown-explorer-browser-fonts`) and activate them via blob URLs and the FontFace API. They customize Markdown Explorer only and do not mutate host editor or browser settings.
+VS Code imported fonts are copied to extension global storage and served to the webview with a safe URI. Chromium/Web store imported font files in IndexedDB and activate them with the FontFace API. Typography exposes system fonts and imported fonts where the runtime supports them.
 
-## Window, shell, and focus behavior
+## Markdown editing
 
-- Restored Electron and Tauri windows enforce a **800 px** minimum width; host-managed browser/extension windows keep host constraints.
-- Desktop Settings uses `width: min(800px, 100vw - 32px)` so it stays bounded on narrow windows.
-- Focus mode is an application-layout state, not an OS minimize operation. Entering focus mode hides the normal application chrome while retaining a dedicated exit control; toggling it restores the previous shell state.
-- Desktop Tabs and Focus views preserve workspace/document navigation, content-tab state, aliases, and scroll memory according to the desktop workspace specifications.
-- More Actions uses the compact menu-item density and splits toggle rows into discrete `menuitem` and `switch` elements. Desktop fullscreen uses the dedicated fullscreen icon.
-- Update attention dots across navigation and action triggers are standardized to `--update-attention-dot-size: 11px`.
-- **Reset zoom** is Markdown Explorer-owned only in Electron/Tauri desktop and defaults to **`Ctrl+Alt+Z`**. VS Code, Chromium, and Web use native host zooming and expose no Markdown Explorer reset-zoom action.
+- Rendered Markdown remains the default mode.
+- `markdownEditingEnabled` defaults to **false**.
+- The internal full-source Markdown editor uses locally packaged **CodeMirror 6**. CodeMirror owns cursor/selection/editor keymaps and local editor history; the Markdown Explorer document session remains authoritative for working source, dirty state, revision-token save, conflicts, persistence, and split synchronization.
+- The formatting toolbar covers bold, italic, headings, quote, inline/fenced code, links, bulleted/numbered/task lists, tables, undo/redo, and Preview.
+- On a live capable native/editor runtime, **Edit** remains available when internal Markdown editing is disabled and routes to the existing external/native editor. When internal editing is enabled it opens the in-app editing mode.
+- Save sends the last observed revision token. External disk changes produce a conflict rather than a silent overwrite. Reload, Compare, and explicit keep-mine/force-save remain user-controlled.
+- Unsaved-change guards protect destructive tab/workspace/window operations.
+- Historical Git Revision, repository snapshot, and Diff views are read-only and expose neither internal Edit, external Edit, nor Save.
+
+## Split document view
+
+- Split view is horizontal, side-by-side, and limited to two panes.
+- Each pane owns its own `tabs`, `activeTabPath`, document identity, mode, scroll state, and focus state.
+- Navigation opens/activates a tab only in the focused pane when tabs are enabled; when tabs are disabled it replaces only the focused pane's file.
+- Closing split view preserves/promotes the **currently focused pane** and that pane's tab strip instead of always retaining the former left pane.
+- File context menus expose **Open in Split View** where valid.
+- File rows use `application/x-markdown-explorer-file` with a text fallback for drag/drop. Dropping onto a split pane activates and opens into exactly that pane; dropping into the unsplit content area uses normal navigation.
+- Editable source remains shared per document session, so two panes showing the same live file never create competing working copies.
+- Document-scoped render revisions isolate expensive pane rendering. Editing, activating, or scrolling one pane must not remount an unrelated opposite-pane document body.
+- Ordinary wheel/trackpad scrolling remains local to the pane during the interaction and is persisted at lifecycle boundaries rather than dispatching global application state on every scroll event.
+- Revision and Diff modes are read-only.
+
+## Local Git history and repository snapshots
+
+- **More Actions → History** expands/selects the repository **History** sidebar. Document-specific revision/diff workflows remain available separately.
+- Git capability/history loading is lazy; ordinary navigation never starts Git or enumerates commits.
+- Electron, Tauri, and VS Code use the installed local Git executable with structured argument arrays / `std::process::Command`. Chromium/Web report `unsupported-runtime` and never start a local process.
+- Repository History initially requests **50 commits** and loads older pages with `offset = loaded count`. Native/editor hosts map offset to Git `--skip=<offset>` and page size to `-n <limit>`.
+- Pages append in order, de-duplicate by full OID, and a short page marks exhaustion.
+- Commit search is case-insensitive across full SHA, short SHA, author, and subject. If a query has no match in loaded commits, additional pages can load until a match appears or history is exhausted.
+- Commit rows preserve merge parents, refs/decorations, exact `HEAD`, and continuous graph lanes.
+- Selecting **View workspace at this commit** creates an isolated read-only repository view without checkout, reset, branch switch, index mutation, or working-tree mutation.
+- Revision Files shows normal document-eligible paths: Markdown/MDX and TXT plus convertible document types only when document conversion is enabled. Arbitrary source files such as `.ts` are filtered out.
+- Revision workspace search reads historical text sources and never sends synthetic `revision://` paths through live filesystem navigation/write routes.
+- Persisted revision selection is per-workspace. A saved OID is not discarded merely because it is absent from the first 50-commit page; validation may load older pages.
+- **Back to current HEAD** clears repository-view/persistence state only and reveals the already-mounted live tabs, split panes, dirty sessions, and scroll positions.
+- Git adapters remain read-only: stage, commit, checkout, restore, reset, stash, branch, switch, merge, and rebase are outside the protocol.
+
+See [Local Git History and Diff](../../git-history-diff.md).
+
+## Window, shell, and Focus behavior
+
+- Restored Electron and Tauri windows enforce an **800 px** minimum width; host-managed browser/extension windows keep host constraints.
+- Desktop Settings uses a bounded responsive width so it remains usable on narrow windows.
+- Focus mode hides normal application chrome while preserving mounted workspace/document state and a dedicated exit control.
+- Electron/Tauri Focus mode retains a thin native draggable body surface. Interactive Focus controls are `no-drag`.
+- Tauri's fullscreen guard remains authoritative: fullscreen Focus must not become draggable through the application surface.
+- Breadcrumb/header layout is content-sized rather than stretching across unused header width.
+- Reset zoom is Markdown Explorer-owned only in Electron/Tauri and defaults to **`Ctrl+Alt+Z`**. VS Code, Chromium, and Web leave zoom to the host.
 
 ## Settings and preferences
 
-Settings is organized into **Appearance**, **Typography**, **Theme Style**, **Keyboard Shortcuts**, and **Update & Backup**, with icons in the navigation rail and a description under every section title.
+Settings is organized into **Appearance**, **Features**, **Typography** (where supported), **Theme Style**, **Keyboard Shortcuts**, and **Update & Backup**, with icons in the navigation rail and descriptions under section titles.
 
 ### Appearance
 
-- Appearance renders Color Mode and preference controls directly under the section header.
-- There is **no secondary `View Preferences` heading**.
-- Existing view controls, including maximum pinned items, keep their persisted settings and localized descriptions.
+- Appearance renders Color Mode and view preferences directly under the section header, **without a secondary View Preferences heading**.
+- Desktop view mode remains an Appearance control.
+
+### Features
+
+- Feature controls include sidebar labels, file tabs, bookmarks, Workspace Insights, History Sidebar, Markdown Editing, runtime-supported document conversion, HTML preview, CSV preview, and related capabilities.
+- `historySidebarEnabled` defaults to true but the actual History tab is capability-gated by `getGitCapability`.
+- `markdownEditingEnabled` defaults to false.
 
 ### Typography
 
-Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for **App UI, Body, Heading, Quote, Code, and Mermaid**. Each role stores source/family/import ID, style, and explicit numeric weight.
+Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for App UI, Body, Heading, Quote, Code, and Mermaid.
 
-- System and imported fonts are searchable; `.ttf`, `.otf`, `.woff`, and `.woff2` imports bind to the initiating role's draft. Applying the Mermaid role re-renders visible Mermaid diagrams in the current document.
-- `FontSearchDropdown` calculates boundary-aware positioning against scroll containers and viewport edges to flip upward or downward flush against trigger buttons without gaps or clipping.
-- Typography's header and Apply action remain fixed while the role list owns its scrolling region.
-- The Apply action is disabled until the draft differs from persisted bindings.
-- Applying opens a confirmation dialog listing only changed roles as old → new values; Cancel leaves the draft untouched.
-- The action-level circle-check Apply icon is a component-owned **14 px × 14 px** box in every theme. The dialog's decorative confirmation icon is intentionally larger.
-- Reset/remove/import actions share the Settings outline-button behavior and tooltip conventions.
+- System/imported font sources are searchable where available.
+- Applying typography updates only changed role bindings and confirms before persistence.
+- Action-level Apply icons keep a fixed 14 px component-owned box independent of theme.
+- Imported font formats include runtime-supported `.ttf`, `.otf`, `.woff`, and `.woff2` paths.
 
-### Theme Style and Theme Remix
+### Keyboard shortcuts
 
-- Theme lists stay attached to their trigger with collision-aware vertical placement (opening flush downward or upward without mid-air gaps), display at most seven visible rows, and scroll beyond that limit.
-- Theme Style content is centered within its section.
-- Custom Theme Remix supports layout/density/background/color controls, custom-theme limits, and localized status feedback.
-- Theme-specific CSS may change colors/radii but must not override component-owned action-icon geometry.
-
-### Keyboard Shortcuts
-
-- Shortcut controls show active bindings with shared keycap rendering in tooltips and Settings.
-- Shortcut enabling/disabling utilizes the shared accessible `SwitchButton` component (`app-switch`).
-- The Settings close tooltip renders **Esc as the shared keycap component**, not literal `(Esc)` text.
-- Edit is runtime-specific: Electron/Tauri default to `Ctrl+E`; VS Code defaults to `Ctrl+Alt+E`; Chromium/Web expose no Edit action.
-- Reset zoom defaults to `Ctrl+Alt+Z` only on Electron/Tauri desktop.
-- Runtime normalization removes unsupported imported bindings instead of exposing dead actions.
+- Active bindings use shared keycap rendering in tooltips and Settings.
+- The legacy external Edit action remains runtime-specific: Electron/Tauri default to `Ctrl+E`; VS Code defaults to `Ctrl+Alt+E`; Chromium/Web expose no external-editor action.
+- Save is enabled only for a writable live document session.
+- Reset zoom defaults to `Ctrl+Alt+Z` only on Electron/Tauri.
 
 ### Update & Backup
 
-- Desktop/Tauri can check, download, defer, restart/apply, and skip notification for one normalized release version according to updater capabilities.
-- VS Code can check/report a newer Markdown Explorer extension version, but Markdown Explorer does not download or install it; VS Code owns extension updates.
-- The update-available dialog uses the glow icon, shows the changelog link below the version in the header, and uses shared outline actions for Later/Skip.
+- Desktop/Tauri can check, download, defer, restart/apply, and skip a normalized release version according to updater capability.
+- VS Code checks/reports but delegates installation to VS Code.
 - Import/Export JSON remains the settings portability mechanism for supported persisted preferences.
 
-## Documents, tables, and navigation
+## Documents, navigation, data, and export
 
-- Markdown/MDX is the core document surface, with local rendering, code blocks, math, Mermaid, media handling, links, heading navigation, table of contents, and collapsible sections.
-- Supported file/conversion behavior is defined by the Supported Files and Conversion catalog and is capability-gated by runtime.
-- Sidebar navigation includes Files, Search, and opt-in Bookmarks with filtering, sorting, pinning, cursor-mode keyboard navigation, current-file location, and workspace scoping. Sidebar navigation ARIA text and pin/sort/search status labels come from the active locale without component-owned English fallbacks.
-- The per-row pinned-item indicator uses the stroke-only `PinIcon` (Lucide thumbtack, size 12). Both unpin affordances — the per-item context-menu entry and the toolbar Clear Pins button — render the same `UnpinIcon` (Lucide thumbtack + diagonal slash overlay); `ClearPinsIcon` delegates to `UnpinIcon` so the slash stays in sync without SVG-path duplication.
-- Search covers the current document/current workspace and desktop cross-tab modes where supported; status labels and accessibility text are localized.
-- Desktop document tabs preserve active document and scroll state; context actions and their shortcut labels use translated copy. Recent-workspace `last opened` values use `Intl.RelativeTimeFormat`/`Intl.DateTimeFormat` with the selected application locale.
-- The Media Modal viewer exposes a light/dark theme toggle in its footer toolbar that re-renders the displayed Mermaid diagram with the new theme palette while preserving the current zoom/pan transform. The toggle's keyboard shortcut (`toggleTheme`) fires through the modal's keyboard gate; all other global shortcuts remain muted while the modal is open.
+- Markdown/MDX is the core surface with local rendering, syntax-highlighted code, math, Mermaid, media, links, TOC, collapsible sections, tables/charts, local editing where writable, and read-only historical/diff modes where required.
+- Sidebar navigation includes Files, Search, opt-in Bookmarks, and capability-aware History. With more than three visible sidebar tabs, labels collapse to icon-only while accessible names and Markdown Explorer tooltips remain available.
+- Search supports current document/current workspace and desktop cross-tab modes where supported.
+- Interactive tables support sorting, search/filtering, wrapping, column visibility, chart views, fullscreen chart inspection, copy/save image, and CSP-safe event delegation on Chromium.
+- Export Center supports HTML, client-side PDF, and static Website ZIP across runtimes, with document/explorer layouts and native/browser-appropriate save paths.
+- Scope View provides bounded modal document navigation without replacing the active workspace shell.
 
-### Interactive tables, filters, and charts
+## Bookmarks, user manual, localization, and accessibility
 
-Interactive tables in rendered Markdown and delimited files support sorting, searching, column value filtering, text wrapping, column visibility management, and rich chart visualizations:
+- Source-anchored bookmarks support robust persisted references for text and rendered objects with high-confidence relocation after edits.
+- The in-app searchable User Manual is available from Home and provides task-oriented guidance.
+- User-facing editor/history/split/settings strings are localized across **nine supported locales**: English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
+- Core navigation/actions remain keyboard reachable, with translated accessible names and focus-visible behavior.
 
-- **9 Chart view types**: **Table**, **Bar Chart**, **Horizontal Bar Chart**, **Line Chart**, **Area Chart**, **Scatter Chart**, **Radar Chart**, **Polar Area Chart**, **Pie Chart**, and **Doughnut Chart**.
-- **Scatter Charts**: Require at least two visible numeric columns; the first numeric column is mapped to the X-axis while subsequent numeric columns become independent Y series.
-- **Column Visibility**: Per-table **Columns** dropdown menu with switch toggles for each column, a **Show all** action, and a guard preventing the last visible column from being hidden.
-- **Dynamic Sizing**: The table view selector intrinsically sizes to the widest localized option via an offscreen sizer element.
-- **Fullscreen Chart Modal Viewer**: Click-to-enlarge chart modal with **50% to 1000% continuous zoom**, mouse drag & touch pan, **Fit to Screen**, **Reset Zoom**, modal type switcher, **Copy as Image** (raster PNG clipboard copy with font rendering), and **Save as Image (.PNG)** via native host dialog (`saveChartPng` on Tauri) or browser download.
-- **CSP Event Delegation**: Chromium extension delegates table column toggle and view selection clicks in `useContentEffects` and `SearchDocumentPreview` to comply with Manifest V3 Content Security Policy restrictions.
+## Version synchronization
 
-## Export Center and Scope View
+The feature branch target is **1.6.9**. Root `package.json` is authoritative and `scripts/sync-versions.mjs` synchronizes runtime package/config and public site version metadata before build/release. The 1.6.9 marker does not mean PR #48 has been merged; manual validation remains required.
 
-### Export Center
-- Modal Export Center supports **HTML**, **Static Website (ZIP)**, and client-side hybrid **PDF** output across all runtimes.
-- **Source Selection**: Current document, Selected documents (searchable multi-select with fill-height scrolling), Folder, or Whole workspace.
-- **Layout Modes**: Clean Document-only layout or Full Explorer interactive viewport shell (with tree, TOC, search, and theme switcher).
-- **Batch Modes**: Separate standalone files or single merged document with collision-safe anchor IDs.
-- **Offline Runtime Bundles**: Bundles isolated feature runtimes for core interactions, sandboxed HTML iframe previews with automatic height sync, media viewer, and table/chart interactions.
-- **Zero-Dialog PDF**: PDF generation uses `pdfmake` for semantic text and high-res vector/image capture for complex visual blocks, saving directly via `saveExportFile` without opening the system print center.
+## Source traceability
 
-### Scope View Modal
-- Deep inspection modal (`ScopeViewModal`) for exploring linked documents without disrupting main editor or content tab state.
-- **History Stack**: 10-step isolated history with animated depth segment indicators, Prev/Next navigation, and max-depth guards.
-- **Open File Action**: Dedicated **Open file** header button (`OpenFileIcon`) navigates the main workspace to the previewed document and closes the modal.
-- **Navigation Parity**: Full support for keyboard shortcuts (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`, `Escape`) and hardware mouse back/forward buttons (mouse buttons 3 and 4).
+| Area | Primary source |
+|---|---|
+| Editing/session/save | `ui/src/editor`, `ui/src/components/Content/MarkdownSourceEditor.tsx` |
+| Split panes/tabs/isolation | `ui/src/split-view`, `ui/src/components/Content/SplitDocumentView.tsx` |
+| File drag/drop | `ui/src/components/Content/documentFileDrop.ts` |
+| Repository History | `ui/src/components/History/RepositoryHistoryPanel.tsx`, `ui/src/contexts/RepositorySnapshotContext.tsx` |
+| Revision projection/search | `ui/src/history/revisionWorkspace.ts` |
+| History search/persistence | `ui/src/history/repositoryView.ts` |
+| Runtime Git adapters | `electron/git/document-history.js`, `tauri/src/dispatcher/git_repository.rs`, `vscode/src/core/panelGitHistory.ts` |
+| Version synchronization | `package.json`, `scripts/sync-versions.mjs` |
+| As-built PR #48 contract | `docs/superpowers/specs/2026-09-17-pr48-as-built-sync.md` |
 
-## Workspace Insights and Wiki Links
+---
 
-### Workspace Insights
-- Workspace-wide analysis and reporting panel accessible via More actions or `Ctrl+Alt+I` (`toggleWorkspaceInsights`).
-- **6 Core Views**:
-  - **Gallery**: Visual grid of all referenced media (images, diagrams, video, audio, documents) with Mermaid diagram thumbnail rendering, category filtering, search, and external preview safety.
-  - **Links**: Workspace reference auditing surfacing broken links, missing files, invalid anchors, outside-workspace targets, dynamic references, ambiguous Wiki Links, and optional host-backed external HTTP checks.
-  - **Lint**: Structural Markdown diagnostics (heading hierarchy, frontmatter integrity, table column matching, list formatting) with granular suppression (finding, rule, or path-rule).
-  - **Duplicates**: Exact duplicates, repeated sections, and near-duplicate passage detection with configurable percentage threshold and suppression.
-  - **Graph**: Interactive document relationship graph with backlink traversal, 1st/2nd degree neighborhood filtering, search, continuous zoom, and fullscreen inspection.
-  - **Related**: Deterministic related document ranking powered by direct links, shared tags, shared headings, title terms, and terminology overlap.
-- **Tuning & Customization**: Granular settings (Scope & Network, Limits & Tuning, Pattern Filters) supporting global defaults and per-workspace overrides with local derived caching.
-
-### Wiki Links and Transclusion
-- First-class support for Wiki Link syntax (`[[Target]]`, `[[Target#Heading]]`, `[[Target|Alias]]`, `[[#Heading]]`, and relative paths `[[./Note]]`).
-- Embed syntax (`![[Note]]`, `![[Note#Heading]]`, `![[image.png]]`) for rich transclusion with recursion cycle detection and depth guards.
-- Automatic anchor scrolling with collapsible parent heading auto-expansion upon arrival.
-
-## Platform and shell integrations
-
-- **Universal Hardware Mouse Navigation**: Mouse buttons 3 and 4 (Logitech and standard mice) navigate back and forward in document history and Scope View modal via `attachMouseHistoryNavigation` with 40 ms burst deduplication.
-- **macOS Native Edit Menu & Tray**: Restored standard AppKit Edit application menu (Undo, Redo, Cut, Copy, Paste, Select All) on macOS Electron desktop; normalized tray icon to a 16×16 template `NativeImage`.
-- **Windows File Explorer Context**: Structured `externalOpenRequest` host message (`file`, `folder`, `file-with-parent-workspace`) enables "Open with Markdown Explorer" to activate parent folder workspaces directly.
-
-## Onboarding, welcome, and localization
-
-Markdown Explorer currently ships **nine supported locales**: English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
-
-The localization boundary covers normal visible text plus accessibility labels, placeholders, dialog copy, tooltip copy, status feedback, shortcut action names, onboarding/terms, workspace selection, Theme Remix, Welcome/Tips, initial loading/scanning states, sidebar navigation, recent-workspace time formatting, search On/Off state, and Settings shell text. The audited translation domains are `ui`, `terms`, `onboarding`, `workspaceSelection`, `themeRemix`, and `rendererUi` in `auditedUiTranslations.ts`, while established feature-specific groups remain in the main translation catalog. `rendererUi` also travels through Markdown rendering so table filtering, row counts, wrapping, column visibility, chart switching, chart modal viewer actions, copy feedback, code/preview controls, and video/YouTube fallback labels stay in the selected locale after DOM updates.
-
-The dependency-free localization contract guards audited user-facing literals across React and generated Markdown/DOM code so new component-owned English fallbacks are caught before release. Technical identifiers remain intentionally literal when translation would change their meaning: commands, key IDs, CSS variables, URLs, `chrome://flags`, `brave://flags`, `File System Access API`, file extensions, and product/project brand names.
-
-## Persistence and safety
-
-- Settings, recent workspaces, themes, bookmarks, tabs, and runtime-owned handles use the persistence layer documented in the Storage Catalog.
-- Browser file handles stay browser-owned; desktop filesystem access stays behind native bridges.
-- External navigation and local HTML/media access follow the runtime security boundaries instead of granting arbitrary renderer filesystem access.
-- Imported font files are managed within the owning desktop/VS Code runtime or browser IndexedDB rather than exposing unrestricted renderer paths.
-
-## Documentation synchronization rule
-
-When an implementation change alters a capability, default shortcut, Settings behavior, runtime difference, persisted field, translation boundary, or operational limit, update the matching feature/runtime/reference specification **and this current-state snapshot in the same change**. `CHANGELOG.md` records the user-visible result under **Unreleased** until a version is cut.
-
-## Primary source-of-truth documents
-
-- [Tables, Filters, Sorting, and Charts](../03-features/08-tables-filters-charts.md)
-- [Settings and Preferences](../03-features/12-settings-preferences-import-export.md)
-- [Settings Catalog](03-settings-catalog.md)
-- [Keyboard Shortcut Catalog](04-shortcut-catalog.md)
-- [Localization Catalog](10-localization-catalog.md)
-- [Runtime Parity](../04-runtimes/06-runtime-parity.md)
-- [Localization, Welcome, and Onboarding](../03-features/15-localization-welcome-onboarding.md)
-- [Source Traceability Index](12-source-traceability-index.md)
-
+[← Supported Files and Conversion Catalog](06-supported-files-and-conversion.md) · [Documentation index](../README.md) · [Storage Catalog →](07-storage-catalog.md)

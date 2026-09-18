@@ -165,6 +165,13 @@ impl Dispatcher {
                 .map(|name| name.to_string_lossy().to_string())
                 .unwrap_or_default()
         });
+        let document_write = if crate::workspace::file_types::is_markdown_file_path(&file_path_str) {
+            super::commands::document_write::document_revision(current_file)
+                .ok()
+                .map(|revision| json!({ "supported": true, "revision": revision }))
+        } else {
+            None
+        };
 
         let mut extra = serde_json::Map::new();
         extra.insert("html".into(), "".into());
@@ -180,6 +187,9 @@ impl Dispatcher {
             "previewInfo".into(),
             serde_json::to_value(preview_info).unwrap_or(Value::Null),
         );
+        if let Some(document_write) = document_write {
+            extra.insert("documentWrite".into(), document_write);
+        }
         host_message::emit_scoped(
             &self.app,
             "renderContent",

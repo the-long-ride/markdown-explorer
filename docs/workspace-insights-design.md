@@ -2,7 +2,7 @@
 
 ## Implementation status
 
-Workspace Insights and Wiki Links are implemented and were merged into `main` in PR #44 on September 5, 2026. This document describes the behavior shipped on `main` and is the current architecture reference.
+Workspace Insights and Wiki Links are implemented on `feature/workspace-insights` and are under review in PR #44. This document describes the behavior that exists in the branch rather than a future-only design.
 
 The implementation keeps Markdown semantics in shared TypeScript modules, keeps filesystem/network capabilities in runtime hosts, and keeps presentation/session orchestration in the shared React UI. The feature remains offline-first: local indexing, local refresh, transclusion, duplicate analysis, graph generation, and relationship scoring do not contact external URLs.
 

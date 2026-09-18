@@ -555,7 +555,7 @@ describe('App render', () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.setItem('markdown-explorer-terms-accepted', 'true');
     localStorage.removeItem('markdown-explorer-theme-onboarding-complete');
-    mockState = createMockState({ appRuntime: 'desktop' });
+    mockState = createMockState();
     render(createElement(App));
     await waitFor(() => {
       expect(screen.getByTestId('theme-onboarding')).toBeInTheDocument();
@@ -566,7 +566,7 @@ describe('App render', () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.setItem('markdown-explorer-terms-accepted', 'true');
     localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
-    mockState = createMockState({ appRuntime: 'desktop' });
+    mockState = createMockState();
     render(createElement(App));
     expect(screen.queryByTestId('theme-onboarding')).not.toBeInTheDocument();
   });

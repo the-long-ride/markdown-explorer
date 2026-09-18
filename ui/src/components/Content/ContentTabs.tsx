@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
+import { getEditorUiTranslations } from "../../contexts/editorUiTranslations";
 import { getTranslations } from "../../contexts/translations";
+import { documentSessionKey, isDocumentDirty } from "../../editor/documentSession";
 import {
   TabContextMenu,
   type TabContextMenuAction,
@@ -30,10 +32,16 @@ export function ContentTabs() {
     closeContentTabsToRight,
     closeOtherContentTabs,
     closeAllContentTabs,
+    openInSplit,
+    moveToOtherPane,
+    swapSplitPanes,
+    closeSplitView,
+    guardUnsavedChanges = (_filePaths: string[], commit: () => void) => commit(),
     setContentTabHtmlPreview,
   } = useAppState();
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
+  const editorT = getEditorUiTranslations(currentLang);
   const bridge = usePlatform();
   const {
     tabsScrollRef, scrollbarTrackRef, scrollbarThumbRef, scrollbarMetrics,
@@ -81,7 +89,7 @@ export function ContentTabs() {
     closeInProgressRef.current = false;
   }, []);
 
-  const requestTabClose = useCallback((filePaths: string[], commitClose: () => void) => {
+  const commitTabClose = useCallback((filePaths: string[], commitClose: () => void) => {
     if (closeInProgressRef.current || filePaths.length === 0) return;
 
     const prefersReducedMotion = typeof window === 'undefined'
@@ -128,6 +136,11 @@ export function ContentTabs() {
     closeTimersRef.current = [fadeTimer];
   }, []);
 
+  const requestTabClose = useCallback((filePaths: string[], commitClose: () => void) => {
+    if (closeInProgressRef.current || filePaths.length === 0) return;
+    guardUnsavedChanges(filePaths, () => commitTabClose(filePaths, commitClose));
+  }, [commitTabClose, guardUnsavedChanges]);
+
   const handleContextMenuAction = useCallback(
     (action: TabContextMenuAction) => {
       if (!contextMenu) return;
@@ -151,6 +164,28 @@ export function ContentTabs() {
           if (supportsShellLocation(state.appRuntime)) {
             requestShellLocation(bridge, contextMenu.filePath, 'open-parent-directory');
           }
+          break;
+        case "openInSplit": {
+          const replacedPath = state.splitView?.enabled ? state.splitView.secondary.filePath : null;
+          const open = () => openInSplit(contextMenu.filePath);
+          if (replacedPath && replacedPath !== contextMenu.filePath) {
+            const session = state.documentSessions?.[documentSessionKey(replacedPath)];
+            if (session && isDocumentDirty(session)) {
+              guardUnsavedChanges([replacedPath], open);
+              break;
+            }
+          }
+          open();
+          break;
+        }
+        case "moveToOtherPane":
+          moveToOtherPane(contextMenu.filePath);
+          break;
+        case "swapPanes":
+          swapSplitPanes();
+          break;
+        case "closeSplit":
+          closeSplitView();
           break;
         case "closeThisTab":
           requestTabClose([contextMenu.filePath], () => closeContentTab(contextMenu.filePath));
@@ -183,12 +218,20 @@ export function ContentTabs() {
       closeContentTab,
       closeContentTabsToRight,
       closeOtherContentTabs,
+      closeSplitView,
       contextMenu,
+      guardUnsavedChanges,
+      moveToOtherPane,
+      openInSplit,
       requestTabClose,
       setContentTabHtmlPreview,
       state.appRuntime,
       state.contentTabs,
+      state.documentSessions,
       state.settings.defaultHtmlPreview,
+      state.splitView?.enabled,
+      state.splitView?.secondary.filePath,
+      swapSplitPanes,
       t?.previewActions?.openError,
     ],
   );
@@ -252,12 +295,15 @@ export function ContentTabs() {
         {state.contentTabs.map((tab) => {
           const active = state.activeContentTabPath === tab.filePath;
           const label = state.settings.showTitle ? tab.title || tab.fileName : tab.fileName;
+          const session = state.documentSessions?.[documentSessionKey(tab.filePath)];
+          const dirty = session ? isDocumentDirty(session) : false;
           const closePhaseClass = closingTabPaths.has(tab.filePath)
             ? closingPhase === 'collapse' ? ' is-closing--collapse' : ' is-closing--fade'
             : '';
           return <ContentTabItem key={tab.filePath} tab={tab} active={active} label={label}
             closePhaseClass={closePhaseClass} dragged={draggedTabPath === tab.filePath}
-            closeLabel={t.tooltips.closeTab} draggedTabPathRef={draggedTabPathRef}
+            closeLabel={t.tooltips.closeTab} dirty={dirty} dirtyLabel={editorT.unsavedChanges}
+            draggedTabPathRef={draggedTabPathRef}
             didDragRef={didDragRef} ghostRef={ghostRef} tabElementsRef={tabElementsRef}
             onSetDraggedPath={setDraggedTabPath} onSetGhostLabel={setGhostLabel}
             onReorder={reorderContentTabs} onActivate={activateContentTab}

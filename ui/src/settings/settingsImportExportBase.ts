@@ -158,7 +158,6 @@ function normalizeScopeFocus(value: unknown): Record<string, string[]> {
   return Object.fromEntries(entries);
 }
 
-
 export function normalizeSidebarPinnedItems(
   value: unknown,
   maxPinnedItems = 10,
@@ -209,6 +208,8 @@ function normalizeSettings(value: unknown, isDesktop: boolean): AppSettings {
     bookmarksEnabled: raw.bookmarksEnabled === true,
     insightsEnabled: raw.insightsEnabled === true,
     documentConversion: raw.documentConversion === true,
+    historySidebarEnabled: raw.historySidebarEnabled !== false,
+    markdownEditingEnabled: raw.markdownEditingEnabled === true,
     scopeFocus: normalizeScopeFocus(raw.scopeFocus),
     searchScopeFocus: normalizeScopeFocus(raw.searchScopeFocus),
     sidebarPinnedItems: normalizeSidebarPinnedItems(raw.sidebarPinnedItems, maxPinnedItems),

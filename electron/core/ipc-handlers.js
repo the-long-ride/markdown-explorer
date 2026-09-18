@@ -129,6 +129,30 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "setDocumentConversion":
         await handlers.setDocumentConversion(Boolean(msg.enabled));
         break;
+      case "getGitCapability":
+        await handlers.getGitCapability(msg);
+        break;
+      case "listDocumentHistory":
+        await handlers.listDocumentHistory(msg);
+        break;
+      case "listRepositoryHistory":
+        await handlers.listRepositoryHistory(msg);
+        break;
+      case "listRevisionFiles":
+        await handlers.listRevisionFiles(msg);
+        break;
+      case "readRevisionFile":
+        await handlers.readRevisionFile(msg);
+        break;
+      case "readGitRevision":
+        await handlers.readGitRevision(msg);
+        break;
+      case "compareGitRevisions":
+        await handlers.compareGitRevisions(msg);
+        break;
+      case "confirmNativeClose":
+        handlers.confirmNativeClose?.(msg);
+        break;
       case "listDesktopFonts":
         await handlers.listDesktopFonts(msg);
         break;
@@ -158,7 +182,8 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
         break;
       }
       case "window-close":
-        getMainWindow()?.close();
+        if (handlers.windowClose) handlers.windowClose();
+        else getMainWindow()?.close();
         break;
       case "toggle-fullscreen": {
         const mainWindow = getMainWindow();

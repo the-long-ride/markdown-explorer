@@ -49,10 +49,58 @@
   box-sizing: border-box;
 }
 
+.sidebar__tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar__tab-state-dot {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--bg);
+  border-radius: 999px;
+  background: var(--accent);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
 .sidebar__tab-btn svg {
   width: var(--shell-action-icon-size) !important;
   height: var(--shell-action-icon-size) !important;
   transform: none !important;
+}
+
+.sidebar__tab-strip.is-icon-only {
+  flex: 1 1 auto;
+  width: 100%;
+  gap: 2px;
+}
+
+.sidebar__tab-strip.is-icon-only .sidebar__tab-btn {
+  flex: 1 1 0;
+  min-width: 30px;
+  height: 28px;
+  padding: 2px 4px 6px;
+}
+
+.sidebar__history-placeholder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px;
+  color: var(--txm);
+  text-align: center;
+  font-size: 11px;
 }
 
 .sidebar__files-action-group,
