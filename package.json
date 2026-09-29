@@ -54,13 +54,13 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^6.0.3",
-    "@vitest/coverage-istanbul": "^4.1.9",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-istanbul": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
     "electron": "43.2.0",
     "electron-builder": "26.15.7",
     "fake-indexeddb": "^6.2.5",
     "fast-glob": "^3.3.3",
     "jsdom": "^29.1.1",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   }
 }
