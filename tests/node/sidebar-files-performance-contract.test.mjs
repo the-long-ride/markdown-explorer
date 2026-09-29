@@ -48,14 +48,14 @@ test('Files tab owns locate, collapse, expand, and scope controls', async () => 
   assert.match(styles, /border-radius:\s*var\(--r\)/);
 });
 
-test('sidebar Search always targets the full workspace and renders no scope editor', async () => {
+test('sidebar Search scopes focused candidates before host search and renders no scope editor', async () => {
   const search = await read('ui/src/components/Sidebar/SidebarSearch.tsx');
 
   assert.doesNotMatch(search, /searchScopeFocus/);
   assert.doesNotMatch(search, /scopeFocusEditing/);
   assert.doesNotMatch(search, /searchScopeTree/);
-  assert.doesNotMatch(search, /scopedSearchItems/);
-  assert.doesNotMatch(search, /items:/);
+  assert.match(search, /scopedSearchItems/);
+  assert.match(search, /items: scopedSearchItems/);
   assert.doesNotMatch(search, /className="sidebar__scope"/);
   assert.match(search, /command: 'searchWorkspace',[\s\S]*requestId,[\s\S]*query,[\s\S]*matchCase/);
 });

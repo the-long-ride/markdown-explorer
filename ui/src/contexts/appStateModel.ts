@@ -29,9 +29,14 @@ import type {
   DocumentPreviewInfo,
   RenderContentMessage,
 } from '../types';
+import type { EditableDocumentSession } from '../editor/documentSession';
+import { createSplitViewState, type SplitViewState } from '../split-view/paneState';
 
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 import { migrateDesktopFontBindings, type DesktopFontFamily } from '../desktop/fonts/fontModel';
+
+export type SidebarTabId = 'files' | 'search' | 'bookmarks' | 'history';
+
 export interface NavigateOptions {
   htmlPreviewOverride?: boolean;
 }
@@ -49,6 +54,8 @@ export interface AppState {
   hasThemePreference: boolean;
   themeStyle: ThemeStyle;
   hasThemeStylePreference: boolean;
+  hasSettingsPreference?: boolean;
+  hasSidebarPreference?: boolean;
   defaultExpanded: boolean;
   workspaceName: string;
   workspacePath?: string;
@@ -76,8 +83,11 @@ export interface AppState {
   desktopFontError: string | null;
   desktopFontsResult: { requestId: string; importedId?: string } | null;
   renderVersion: number;
+  documentRenderRevisions: Record<string, number>;
   contentTabs: ContentTab[];
   activeContentTabPath: string | null;
+  documentSessions: Record<string, EditableDocumentSession>;
+  splitView: SplitViewState;
   recentWorkspaces: RecentWorkspace[];
   isMaximized: boolean;
   appVersion: string;
@@ -87,10 +97,11 @@ export interface AppState {
   canInstallUpdates: boolean;
   focusMode: boolean;
   updateState: UpdateState;
-  sidebarActiveTab: 'files' | 'search' | 'bookmarks';
+  sidebarActiveTab: SidebarTabId;
 }
 
 export type Action =
+  | { type: 'RESTORE_PERSISTED_STATE'; persistedState: PersistedState | undefined }
   | {
       type: 'READY_ACK';
       fileList: MdFile[];
@@ -159,7 +170,7 @@ export type Action =
   | { type: 'SET_DESKTOP_FONTS'; fonts: readonly DesktopFontFamily[]; requestId: string; importedId?: string; error?: string }
   | { type: 'SET_MAXIMIZED'; isMaximized: boolean }
   | { type: 'TOGGLE_FOCUS_MODE' }
-  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: 'files' | 'search' | 'bookmarks' }
+  | { type: 'SET_SIDEBAR_ACTIVE_TAB'; tab: SidebarTabId }
   | { type: 'SET_SIDEBAR_COLLAPSED'; collapsed: boolean };
 
 export function createEmptyUpdateState(): UpdateState {
@@ -179,8 +190,10 @@ export const initialState: AppState = {
   currentFile: null,
   theme: 'auto',
   hasThemePreference: false,
-  themeStyle: 'default',
+  themeStyle: 'raw-grid',
   hasThemeStylePreference: false,
+  hasSettingsPreference: false,
+  hasSidebarPreference: false,
   defaultExpanded: true,
   workspaceName: '',
   workspacePath: undefined,
@@ -206,12 +219,15 @@ export const initialState: AppState = {
   settings: {
     showTitle: false,
     defaultHtmlPreview: true,
+    allowUpstreamHtmlPreview: false,
     defaultHtmlCodeBlockPreview: true,
     defaultCsvPreview: true,
     fileTabs: false,
     bookmarksEnabled: false,
     insightsEnabled: false,
     documentConversion: false,
+    historySidebarEnabled: true,
+    markdownEditingEnabled: false,
     scopeFocus: {},
     searchScopeFocus: {},
     sidebarPinnedItems: {},
@@ -228,8 +244,11 @@ export const initialState: AppState = {
   desktopFontError: null,
   desktopFontsResult: null,
   renderVersion: 0,
+  documentRenderRevisions: {},
   contentTabs: [],
   activeContentTabPath: null,
+  documentSessions: {},
+  splitView: createSplitViewState(),
   recentWorkspaces: [],
   isMaximized: false,
   appVersion: '',
@@ -276,18 +295,23 @@ export function createInitialState(
     hasThemePreference: !!saved.theme,
     themeStyle: saved.themeStyle ? normalizeThemeStyle(saved.themeStyle) : initialState.themeStyle,
     hasThemeStylePreference: !!saved.themeStyle,
+    hasSettingsPreference: true,
+    hasSidebarPreference: typeof saved.sidebarCollapsed === 'boolean',
     sidebarCollapsed: saved.sidebarCollapsed === true,
     tocCollapsed,
     settings: {
       ...initialState.settings,
       showTitle: saved.showTitle === true,
       defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+      allowUpstreamHtmlPreview: saved.allowUpstreamHtmlPreview === true,
       defaultHtmlCodeBlockPreview: saved.defaultHtmlCodeBlockPreview ?? saved.defaultHtmlPreview !== false,
       defaultCsvPreview: saved.defaultCsvPreview !== false,
       fileTabs: saved.fileTabs === true,
       bookmarksEnabled: saved.bookmarksEnabled === true,
       insightsEnabled: saved.insightsEnabled === true,
       documentConversion: saved.documentConversion === true,
+      historySidebarEnabled: saved.historySidebarEnabled !== false,
+      markdownEditingEnabled: saved.markdownEditingEnabled === true,
       scopeFocus: saved.scopeFocus ?? {},
       searchScopeFocus: saved.searchScopeFocus ?? {},
       sidebarPinnedItems: saved.sidebarPinnedItems ?? {},

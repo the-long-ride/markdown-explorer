@@ -7,7 +7,7 @@ const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relat
 
 describe('Mermaid content lifecycle parity', () => {
   it('uses one shared Mermaid appearance lifecycle in document content and Scope View', () => {
-    const contentEffects = read('ui/src/components/Content/useContentEffects.ts');
+    const contentEffects = read('ui/src/components/Content/useDocumentInteractions.ts');
     const scopeView = read('ui/src/components/Modal/ScopeViewModal.tsx');
     const sharedLifecycle = read('ui/src/components/Content/mermaidContentLifecycle.ts');
 

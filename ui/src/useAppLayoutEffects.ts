@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { SIDEBAR_WIDTH_STORAGE_KEY, TOC_WIDTH_STORAGE_KEY } from './constants/storage';
+import { useDirtyDocumentsGuard } from "./hooks/useDirtyDocumentsGuard";
 import { useKeyboard } from "./hooks/useKeyboard";
 import { useResize } from "./hooks/useResize";
 import { requestShellLocation, supportsShellLocation } from "./desktop/shellLocation";
@@ -174,19 +175,24 @@ export function useAppLayoutEffects({
     collapseAllHeadingSections();
   }, []);
 
+  const guardWorkspaceLeave = useDirtyDocumentsGuard();
+  // Every "back to workspace selection" entry point (shortcut, confirm modal,
+  // user manual) lands here, so the unsaved-changes prompt lives in one place.
   const closeWorkspaceToSelection = useCallback(() => {
-    dispatch({
-      type: 'READY_ACK',
-      fileList: [],
-      tree: null,
-      theme: state.theme,
-      themeStyle: state.themeStyle,
-      defaultExpanded: state.defaultExpanded,
-      workspaceName: '',
-      recentWorkspaces: state.recentWorkspaces,
+    guardWorkspaceLeave(() => {
+      dispatch({
+        type: 'READY_ACK',
+        fileList: [],
+        tree: null,
+        theme: state.theme,
+        themeStyle: state.themeStyle,
+        defaultExpanded: state.defaultExpanded,
+        workspaceName: '',
+        recentWorkspaces: state.recentWorkspaces,
+      });
+      bridge.postMessage({ command: 'closeWorkspace' });
     });
-    bridge.postMessage({ command: 'closeWorkspace' });
-  }, [bridge, dispatch, state.defaultExpanded, state.recentWorkspaces, state.theme, state.themeStyle]);
+  }, [bridge, dispatch, guardWorkspaceLeave, state.defaultExpanded, state.recentWorkspaces, state.theme, state.themeStyle]);
 
   const requestWorkspaceSelection = useCallback(() => {
     if (isTabView) {

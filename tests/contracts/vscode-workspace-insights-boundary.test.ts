@@ -22,7 +22,7 @@ describe('VS Code Workspace Insights boundary', () => {
       read('ui/src/AppView.tsx'),
       read('ui/src/components/Topbar/Topbar.tsx'),
       read('ui/src/components/Desktop/DesktopTabBar.tsx'),
-      read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
+      read('ui/src/components/Settings/SettingsFeaturesSection.tsx'),
       read('ui/src/components/Settings/settingsActions.ts'),
       read('ui/src/useAppLayoutEffects.ts'),
       read('ui/src/contexts/appStateConstants.ts'),
@@ -35,7 +35,7 @@ describe('VS Code Workspace Insights boundary', () => {
     expect(topbar).toContain('supportsWorkspaceInsights(state.appRuntime)');
     expect(tabBar).toContain('showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled}');
     expect(settings).toContain('supportsWorkspaceInsights(state.appRuntime) && (');
-    expect(actions).toContain("{ id: 'toggleWorkspaceInsights', label: 'Toggle workspace insights panel', scope: 'desktop' }");
+    expect(actions).toMatch(/\{\s*id:\s*'toggleWorkspaceInsights',\s*label:\s*'Toggle workspace insights panel',\s*scope:\s*'desktop'/);
     expect(layout).toContain('supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled');
     expect(keybindings).toContain("delete normalized.toggleWorkspaceInsights");
     expect(ignoreRules).toContain('out/vscode/src/core/panelInsights.js');

@@ -1,4 +1,5 @@
 import { DEFAULT_TABLE_UI_LABELS } from './tableUiLabels';
+import { findDocumentRootFor, getActiveDocumentBody } from '../document/activeDocumentRoot';
 export function slugifyHeading(text: string) {
   return text
     .toLowerCase()
@@ -127,9 +128,11 @@ export function registerCopyHandlers(win: any) {
       .find((child) => child.classList.contains('mdn-section-body')) as HTMLElement | undefined;
     if (!section || !body) return;
     try {
-      const sameIdSections = Array.from(document.querySelectorAll<HTMLElement>(`.mdn-section[id="${CSS.escape(section.id)}"]`));
+      const root = findDocumentRootFor(section);
+      const scope: ParentNode = root?.body ?? document;
+      const sameIdSections = Array.from(scope.querySelectorAll<HTMLElement>(`.mdn-section[id="${CSS.escape(section.id)}"]`));
       const occurrence = computeSectionOccurrence(sameIdSections, section);
-      const markdownSource = markdownSectionFromSource(win.UI.currentMarkdownSource, section.id, occurrence);
+      const markdownSource = markdownSectionFromSource(root?.markdownSource ?? win.UI.currentMarkdownSource, section.id, occurrence);
       copyText(markdownSource || textFromElement(body));
       markCopied(btn);
     } catch (err) {
@@ -138,7 +141,7 @@ export function registerCopyHandlers(win: any) {
   };
 
   win.UI.copyDocument = (btn?: HTMLElement | null) => {
-    const body = document.getElementById('mdBody') as HTMLElement | null;
+    const body = getActiveDocumentBody();
     if (!body) return;
     try {
       copyText(textFromElement(body));

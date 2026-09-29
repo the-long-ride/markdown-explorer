@@ -5,6 +5,7 @@ import { unicodeIndexOf } from '../../utils/unicodeSearch';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { TooltipButton } from '../shared/TooltipButton';
+import { getActiveDocumentBody } from '../../document/activeDocumentRoot';
 
 const FIND_MARK_CLASS = 'mdn-find-mark';
 const FIND_ACTIVE_CLASS = 'is-active';
@@ -17,7 +18,7 @@ interface FindInFilePanelProps {
 }
 
 function getFindRoot(): HTMLElement | null {
-  return document.getElementById('mdBody');
+  return getActiveDocumentBody();
 }
 
 function clearFindMarks(root = getFindRoot()) {

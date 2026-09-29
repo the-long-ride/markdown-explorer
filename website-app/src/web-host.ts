@@ -45,6 +45,7 @@ let activeWorkspacePath = '';
 let activeWorkspaceName = '';
 let searchIndex: BrowserSearchIndex | null = null;
 let singleFileHandle: FileSystemFileHandle | null = null;
+const workspaceSearchGeneration = { value: 0 };
 
 function send(msg: unknown) {
   bus.dispatchEvent(new CustomEvent('host-message', {
@@ -149,6 +150,7 @@ bus.addEventListener('webview-message', async (e: Event) => {
       send,
       sendTestReady,
       sendTestContent,
+      searchGeneration: workspaceSearchGeneration,
     });
     return;
   }
@@ -162,6 +164,7 @@ bus.addEventListener('webview-message', async (e: Event) => {
     getWorkspaceTree: () => workspaceTree,
     getActiveHandle: () => activeHandle,
     send,
+    searchGeneration: workspaceSearchGeneration,
   })) return;
 
   switch (msg.command) {

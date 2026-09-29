@@ -14,7 +14,6 @@ source_scope:
 - electron/core/main-runtime.js
 - electron/core/ipc-handlers.js
 - electron/window/window.js
-- electron/window/tray.js
 - electron/workspace/scanner.js
 - electron/workspace/workspace-watch.js
 - electron/search/search-worker-controller.js
@@ -25,7 +24,6 @@ source_scope:
 test_scope:
 - tests/unit/electron/main.test.ts
 - tests/unit/electron/window.test.ts
-- tests/unit/electron/tray.test.ts
 - tests/unit/electron/scanner.test.ts
 - tests/unit/electron/search-worker-controller.test.ts
 - tests/contracts/windows-explorer-installer.test.ts
@@ -44,7 +42,7 @@ keywords:
 | Service | Active modules | Contract |
 |---|---|---|
 | Bootstrap/lifecycle | main bootstrap/runtime/startup workspace | Single instance, window creation, ready/external path queue |
-| Window/tray | window and tray services | Frameless controls, maximize/fullscreen events, Open/Quit |
+| Window | window service | Frameless controls, maximize/fullscreen events |
 | Workspace | scanner, refresh, watch, recents | Native paths, exclusions, partial batches, change detection |
 | Navigation/resources | command handlers and resource reader | Render/navigation, safe local text reads |
 | Search | index, worker controller, worker | Current-workspace and bounded cross-tab results |
@@ -66,9 +64,7 @@ stateDiagram-v2
     CreateWindow --> WaitForReady
     WaitForReady --> OpenQueuedPath
     OpenQueuedPath --> Running
-    Running --> TrayOnly: hide/minimize workflow
-    TrayOnly --> Running: tray Open/click
-    Running --> Quit: tray Quit/non-mac all windows closed
+    Running --> Quit: non-mac all windows closed
 ```
 
 ## Workspace scanning rules
@@ -84,10 +80,9 @@ Electron owns system-font discovery, SFNT metadata inspection, managed font impo
 The desktop mono default is JetBrains Mono. Packaging includes only `JetBrainsMono-VariableFont_wght.ttf` and `JetBrainsMono-Italic-VariableFont_wght.ttf`; Cascadia Code and the static JetBrains family are excluded.
 Typography settings enumerate installed fonts on Windows, macOS, and Linux, discover available variants, and copy individually imported `.ttf`/`.otf` files into app-managed storage. Renderer settings store normalized references only; the original selected filesystem path is never persisted.
 
-## Native macOS menu and tray service
+## Native macOS menu service
 
 - **macOS Application Menu**: On macOS (`process.platform === 'darwin'`), `configureApplicationMenu` builds and installs an AppKit-compatible native application menu with `appMenu`, `editMenu` (`undo`, `redo`, `cut`, `copy`, `paste`, `selectAll`), and `windowMenu` roles. On Windows and Linux, the application menu is suppressed (`Menu.setApplicationMenu(null)`).
-- **macOS Menu Bar Tray Icon**: `createTrayIcon` normalizes the 128px icon to a crisp 16×16 template `NativeImage` (`setTemplateImage(true)`) on macOS so it automatically adapts to light and dark macOS menu bars without distortion. Windows and Linux retain standard path-based icon loading.
 
 ## External open and shell integration
 
@@ -113,20 +108,18 @@ Electron processes startup and second-instance CLI arguments into structured `ex
 | Implementation | `electron/core/runtime-export-save.js` | Export file saving bridge |
 | Implementation | `electron/core/external-open.js` | Structured external open request parser |
 | Implementation | `electron/window/window.js` | Active behavior or contract |
-| Implementation | `electron/window/tray.js` | Tray icon normalization and lifecycle |
 | Implementation | `electron/workspace/scanner.js` | Active behavior or contract |
 | Implementation | `electron/workspace/workspace-watch.js` | Active behavior or contract |
 | Implementation | `electron/search/search-worker-controller.js` | Active behavior or contract |
 | Implementation | `electron/render/document-converter.js` | Active behavior or contract |
 | Implementation | `electron/update/update-manager.js` | Active behavior or contract |
 | Implementation | `electron/package.json` | Active behavior or contract |
-| Verification | `tests/unit/electron/macos-native-behavior.test.ts` | macOS menu and tray regression tests |
+| Verification | `tests/unit/electron/macos-native-behavior.test.ts` | macOS menu regression tests |
 | Verification | `tests/unit/electron/external-open.test.ts` | External open request parser tests |
 | Verification | `tests/unit/electron/export-resources.test.ts` | Export resource bridge tests |
 | Verification | `tests/unit/electron/export-save.test.ts` | Export save bridge tests |
 | Verification | `tests/unit/electron/main.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/window.test.ts` | Automated expectation |
-| Verification | `tests/unit/electron/tray.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/scanner.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/search-worker-controller.test.ts` | Automated expectation |
 | Verification | `tests/contracts/windows-explorer-installer.test.ts` | Automated expectation |

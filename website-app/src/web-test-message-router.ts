@@ -1,6 +1,10 @@
 import type { MdFile } from '../../ui/src/types';
-import { searchVirtualFiles } from './web-test-search';
+import { searchVirtualFilesIncremental } from './web-test-search';
 import { getVirtualContent } from './virtual-workspace';
+import {
+  MAX_WORKSPACE_SEARCH_RESULTS,
+  WORKSPACE_SEARCH_BATCH_SIZE,
+} from '../../ui/src/constants/limits';
 
 interface TestMessageRouterDeps {
   getReadyHandled: () => boolean;
@@ -10,6 +14,7 @@ interface TestMessageRouterDeps {
   send: (message: unknown) => void;
   sendTestReady: () => Promise<void>;
   sendTestContent: (path: string) => Promise<void>;
+  searchGeneration?: { value: number };
 }
 
 export async function handleWebTestMessage(msg: any, deps: TestMessageRouterDeps): Promise<void> {
@@ -46,11 +51,18 @@ export async function handleWebTestMessage(msg: any, deps: TestMessageRouterDeps
       break;
     case 'searchWorkspace': {
       const query = String(msg.query || '').trim();
-      deps.send({
-        command: 'workspaceSearchResults',
-        requestId: msg.requestId,
-        results: searchVirtualFiles(query, 80, { matchCase: msg.matchCase === true }),
+      const generation = deps.searchGeneration ? ++deps.searchGeneration.value : 0;
+      const isCurrent = () => !deps.searchGeneration || generation === deps.searchGeneration.value;
+      const summary = await searchVirtualFilesIncremental(query, {
+        matchCase: msg.matchCase === true,
+        limit: MAX_WORKSPACE_SEARCH_RESULTS,
+        batchSize: WORKSPACE_SEARCH_BATCH_SIZE,
+        shouldCancel: () => !isCurrent(),
+        onBatch: results => {
+          if (isCurrent()) deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results, done: false });
+        },
       });
+      if (isCurrent()) deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results: [], done: true, ...summary });
       break;
     }
     case 'loadSearchPreview': {

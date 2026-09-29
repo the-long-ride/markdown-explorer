@@ -231,6 +231,7 @@ window.LANGS.en = {
       "Windows users can choose the NSIS installer (`Setup *.exe`) for Start Menu integration or the portable `.exe` to run directly. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.",
     footerBy: "Markdown Explorer by",
     footerIssues: "Issues",
+    footerDonate: "Donate",
     footerPrivacy: "Privacy",
     footerTerms: "Terms",
     footerLicense: "License",
@@ -270,6 +271,8 @@ window.LANGS.en = {
     pillar4Desc: "Native filesystem watcher detects file changes instantly and re-renders without manual reload — no polling, no cloud sync.",
     footerMit: "MIT licensed.",
     langSwitchTitle: "Switch language",
+    navDonate: "Donate",
+    donateAria: "Support Markdown Explorer with a donation",
     themeToggleTitle: "Toggle color theme",
     modalCloseLabel: "Close modal",
 };

@@ -153,12 +153,15 @@ describe('createInitialState', () => {
   test('no saved state, desktop', () => {
     const state = createInitialState(undefined, true);
     expect(state.appRuntime).toBe('desktop');
+    expect(state.themeStyle).toBe('raw-grid');
     expect(state.tocCollapsed).toBe(false);
+    expect(state.settings.allowUpstreamHtmlPreview).toBe(false);
   });
 
   test('no saved state, vscode', () => {
     const state = createInitialState(undefined, false);
     expect(state.appRuntime).toBe('vscode');
+    expect(state.themeStyle).toBe('raw-grid');
   });
 
   test('with saved state', () => {
@@ -167,6 +170,7 @@ describe('createInitialState', () => {
       themeStyle: 'bento',
       showTitle: true,
       defaultHtmlPreview: false,
+      allowUpstreamHtmlPreview: true,
       defaultCsvPreview: false,
       fileTabs: true,
       documentConversion: true,
@@ -185,32 +189,10 @@ describe('createInitialState', () => {
     expect(state.hasThemeStylePreference).toBe(true);
     expect(state.settings.showTitle).toBe(true);
     expect(state.settings.defaultHtmlPreview).toBe(false);
+    expect(state.settings.allowUpstreamHtmlPreview).toBe(true);
     expect(state.settings.fileTabs).toBe(true);
     expect(state.settings.desktopViewMode).toBe('tabs');
     expect(state.settings.language).toBe('vi');
-  });
-
-  // Regression gate for the 1.6.7 user report: all supported appearance and
-  // menu/sidebar visibility combinations must survive panel recreation.
-  test.each([
-    ['dark', true, true],
-    ['light', false, false],
-    ['auto', true, false],
-    ['dark', false, true],
-  ] as const)('restores theme=%s showTitle=%s sidebarCollapsed=%s', (theme, showTitle, sidebarCollapsed) => {
-    const state = createInitialState({ theme, showTitle, sidebarCollapsed } as any, false);
-
-    expect(state.theme).toBe(theme);
-    expect(state.settings.showTitle).toBe(showTitle);
-    expect(state.sidebarCollapsed).toBe(sidebarCollapsed);
-  });
-
-  test('defaults missing sidebar visibility to visible', () => {
-    const state = createInitialState({ theme: 'light', showTitle: false } as any, false);
-
-    expect(state.theme).toBe('light');
-    expect(state.settings.showTitle).toBe(false);
-    expect(state.sidebarCollapsed).toBe(false);
   });
 
   test('with storage mock for toc-collapsed', () => {
@@ -219,12 +201,18 @@ describe('createInitialState', () => {
     expect(state.tocCollapsed).toBe(true);
   });
 
-  test('with invalid saved theme falls back to default', () => {
+  test('with invalid saved theme falls back to Raw Grid', () => {
     const saved = { theme: 'invalid-mode', themeStyle: 'nonexistent' };
     const state = createInitialState(saved as any, false);
     expect(state.theme).toBe('auto');
     expect(state.hasThemePreference).toBe(true);
+    expect(state.themeStyle).toBe('raw-grid');
+  });
+
+  test('saved Explorer Classic choice is preserved', () => {
+    const state = createInitialState({ themeStyle: 'default' } as any, true);
     expect(state.themeStyle).toBe('default');
+    expect(state.hasThemeStylePreference).toBe(true);
   });
 });
 

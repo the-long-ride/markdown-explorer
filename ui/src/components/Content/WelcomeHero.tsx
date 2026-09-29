@@ -1,6 +1,7 @@
 import { GlobeIcon } from './WelcomePageIcons';
 import { StarIcon } from '../shared/icons';
-import { GITHUB_REPO_URL } from '../../constants/urls';
+import { HeartIcon } from '../shared/HeartIcon';
+import { DONATE_URL, GITHUB_REPO_URL } from '../../constants/urls';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
 import { getSupportPromptTranslations } from '../../contexts/supportPromptTranslations';
 import type { HostPlatform } from '../../types';
@@ -63,19 +64,29 @@ export function WelcomeHero({ copy, isDesktop, hostPlatform, markdownThemLabel, 
       </div>
       <div className="hero-support-banner hero-star-banner" role="region" aria-label={supportT.homeSupportTitle}>
         <div className="hero-support-banner__content hero-star-banner__content">
-          <StarIcon size={18} className="hero-support-banner__icon hero-star-banner__icon" />
+          <HeartIcon size={18} className="hero-support-banner__icon hero-star-banner__icon" />
           <span className="hero-support-banner__text hero-star-banner__text">{supportT.homeSupportMessage}</span>
         </div>
-        <a
-          href={GITHUB_REPO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hero-support-banner__btn hero-star-banner__btn"
-          aria-label={`${supportT.homeSupportButton} on GitHub`}
-        >
-          <StarIcon size={13} />
-          <span>{supportT.homeSupportButton}</span>
-        </a>
+        <div className="hero-support-banner__actions">
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hero-support-banner__btn hero-star-banner__btn"
+          >
+            <StarIcon size={13} />
+            <span>{supportT.homeSupportButton}</span>
+          </a>
+          <a
+            href={DONATE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hero-support-banner__btn hero-support-banner__btn--donate"
+          >
+            <HeartIcon size={13} />
+            <span>{supportT.donateButton}</span>
+          </a>
+        </div>
       </div>
     </div>
   );

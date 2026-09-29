@@ -148,4 +148,4 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 ---
 
-[← Document Conversion and Preview Quality](16-document-conversion.md) · [Documentation index](../README.md) · [Desktop Window, Tray, Startup, and Update Lifecycle →](18-window-tray-update-lifecycle.md)
+[← Document Conversion and Preview Quality](16-document-conversion.md) · [Documentation index](../README.md) · [Desktop Window, Startup, and Update Lifecycle →](18-window-tray-update-lifecycle.md)

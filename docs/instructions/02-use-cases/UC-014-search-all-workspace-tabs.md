@@ -131,7 +131,7 @@ flowchart LR
 
 | Runtime | Rule |
 |---|---|
-| Electron | Search worker; default max 2000 results, prime batch 5, UI page 100. |
+| Electron | Search worker; maximum 10,000 results, delivery batches up to 100, prime batch 5, UI page 100. |
 | Tauri | Parity search implementation where available. |
 | Other hosts | Feature hidden or adapted when desktop workspace tabs are absent. |
 

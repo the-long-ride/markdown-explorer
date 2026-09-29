@@ -6,6 +6,7 @@ import { useLayoutEffect, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getSupportPromptTranslations } from '../../contexts/supportPromptTranslations';
 import { StarIcon } from '../shared/icons';
+import { HeartIcon } from '../shared/HeartIcon';
 import './SupportPromptModal.css';
 
 export interface SupportPromptModalProps {
@@ -93,16 +94,54 @@ export function SupportPromptModal({ isOpen, onClose, onStar, onDonate }: Suppor
 
         <div className="support-prompt-card__header">
           <div className="support-prompt-card__icon" aria-hidden="true">
-            <StarIcon size={30} />
+            <HeartIcon size={20} />
           </div>
           <h2 id="support-prompt-title" className="support-prompt-card__title">
             {t.title}
           </h2>
+          <p className="support-prompt-card__message">{t.message}</p>
         </div>
 
-        <div className="support-prompt-card__body">
-          <p className="support-prompt-card__message">{t.message}</p>
+        <div className="support-prompt-card__options">
+          {onStar && (
+            <section className="support-prompt-option support-prompt-option--star" aria-labelledby="support-prompt-star-title">
+              <div className="support-prompt-option__icon" aria-hidden="true">
+                <StarIcon size={14} />
+              </div>
+              <h3 id="support-prompt-star-title" className="support-prompt-option__title">{t.starTitle}</h3>
+              <p className="support-prompt-option__desc">{t.starDesc}</p>
+              <button
+                type="button"
+                className="support-prompt-card__star-btn"
+                onClick={() => onStar(neverShowAgain)}
+              >
+                <StarIcon size={13} className="support-prompt-card__btn-icon" />
+                <span>{t.starButton}</span>
+              </button>
+            </section>
+          )}
+          {onDonate && (
+            <section className="support-prompt-option support-prompt-option--donate" aria-labelledby="support-prompt-donate-title">
+              <div className="support-prompt-option__icon" aria-hidden="true">
+                <HeartIcon size={14} />
+              </div>
+              <h3 id="support-prompt-donate-title" className="support-prompt-option__title">{t.donateTitle}</h3>
+              <p className="support-prompt-option__desc">{t.donateDesc}</p>
+              <button
+                type="button"
+                className="support-prompt-card__donate-btn"
+                onClick={() => onDonate(neverShowAgain)}
+              >
+                <HeartIcon size={13} className="support-prompt-card__btn-icon" />
+                <span>{t.donateButton}</span>
+              </button>
+            </section>
+          )}
+        </div>
 
+        <p className="support-prompt-card__thanks">{t.thanks}</p>
+
+        <div className="support-prompt-card__actions">
           <label className="support-prompt-card__checkbox-label">
             <input
               type="checkbox"
@@ -119,28 +158,6 @@ export function SupportPromptModal({ isOpen, onClose, onStar, onDonate }: Suppor
             </span>
             <span className="support-prompt-card__checkbox-text">{t.dontShowAgain}</span>
           </label>
-        </div>
-
-        <div className="support-prompt-card__actions">
-          {onStar && (
-            <button
-              type="button"
-              className="support-prompt-card__star-btn"
-              onClick={() => onStar(neverShowAgain)}
-            >
-              <StarIcon size={14} className="support-prompt-card__btn-icon" />
-              <span>{t.starButton}</span>
-            </button>
-          )}
-          {onDonate && (
-            <button
-              type="button"
-              className="support-prompt-card__donate-btn"
-              onClick={() => onDonate(neverShowAgain)}
-            >
-              <span>{t.donateButton}</span>
-            </button>
-          )}
           <button
             type="button"
             className="support-prompt-card__later-btn"

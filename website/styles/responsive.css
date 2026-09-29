@@ -25,6 +25,15 @@
     margin-left: auto;
   }
 
+  /* Donate pill collapses to an icon-only heart on narrow screens */
+  .donate-btn {
+    padding: 0.42rem 0.55rem;
+  }
+
+  .donate-btn .donate-label {
+    display: none;
+  }
+
   /* Navigation Bar 100% Full-Width Coverage Across Mobile Row */
   .nav-links {
     order: 3;

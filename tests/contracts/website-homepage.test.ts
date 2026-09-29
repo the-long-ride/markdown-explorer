@@ -37,6 +37,38 @@ describe('website homepage positioning', () => {
     expect(html).toContain('data-i18n="heroProofEverywhere"');
   });
 
+  test('links to the donate page from the header and footer', () => {
+    const html = read('website/index.html');
+    const donateUrl = 'https://github.com/the-long-ride#donate';
+    const headerControls = html.match(
+      /<div class="header-controls">[\s\S]*?id="lang-btn"/,
+    )?.[0];
+    const footerNav = html.match(
+      /<nav aria-label="Footer links">[\s\S]*?<\/nav>/,
+    )?.[0];
+
+    expect(headerControls).toBeDefined();
+    expect(headerControls).toMatch(
+      new RegExp(
+        `<a[^>]*class="ctrl-btn donate-btn"[^>]*href="${donateUrl}"[^>]*target="_blank"[^>]*rel="noopener"`,
+      ),
+    );
+    expect(headerControls).toContain('data-i18n="navDonate"');
+    expect(headerControls).toContain('data-i18n-aria-label="donateAria"');
+    expect(footerNav).toBeDefined();
+    expect(footerNav).toContain(`href="${donateUrl}"`);
+    expect(footerNav).toContain('data-i18n="footerDonate"');
+
+    for (const lang of ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru']) {
+      const dictionary = read(`website/i18n/${lang}.js`);
+      for (const key of ['navDonate', 'donateAria', 'footerDonate']) {
+        expect(dictionary, `${lang}.js is missing ${key}`).toMatch(
+          new RegExp(`\\b${key}:\\s*"[^"]+"`),
+        );
+      }
+    }
+  });
+
   test('falls back to English for newly introduced localization keys', () => {
     const i18n = read('website/i18n.js');
 

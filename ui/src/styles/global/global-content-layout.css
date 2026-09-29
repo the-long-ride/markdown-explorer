@@ -66,6 +66,13 @@
   line-height: 1.55;
 }
 
+.html-local-first-warning__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .html-local-first-warning ul {
   margin: 12px 0 18px;
   padding-left: 20px;

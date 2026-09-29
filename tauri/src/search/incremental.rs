@@ -145,7 +145,7 @@ impl Default for IncrementalOptions {
     fn default() -> Self {
         Self {
             batch_size: 100,
-            max_results: 2000,
+            max_results: 10000,
             max_matches_per_file: 200,
             yield_every: 25,
             match_case: false,

@@ -1,3 +1,4 @@
+import { formatCommandForChord, isInlineMarkdownEditorTarget, isMarkdownEditorTarget } from '../editor/editorUx.ts';
 export function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
   if (!shortcut) return false;
   const parts = shortcut.split('+').map((p) => p.trim().toLowerCase());
@@ -54,6 +55,7 @@ export type KeyboardAction =
   | { type: 'forward' }
   | { type: 'welcome' }
   | { type: 'edit-current-document' }
+  | { type: 'save-current-document' }
   | { type: 'settings-toggle' }
   | { type: 'toggle-theme' }
   | { type: 'toggle-toc' }
@@ -94,6 +96,7 @@ export interface KeyboardState {
   hasOnSidebarCursorModeClose: boolean;
   hasOnWelcome: boolean;
   hasOnEditCurrentDocument?: boolean;
+  hasOnSaveCurrentDocument?: boolean;
   hasOnToggleToc: boolean;
   hasOnToggleWorkspaceInsights?: boolean;
   hasOnLocateFile: boolean;
@@ -110,6 +113,10 @@ export interface KeyboardState {
 }
 
 export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): KeyboardAction {
+  // Markdown editors own their formatting chords (Mod+B/I/K/E) and inline Escape.
+  if (isMarkdownEditorTarget(e.target) && (formatCommandForChord(e) || (e.key === 'Escape' && isInlineMarkdownEditorTarget(e.target)))) {
+    return null;
+  }
   if (state.isDesktop) {
     const isZoomIn =
       matchesShortcut(e, state.keybindings.zoomIn) ||
@@ -202,6 +209,15 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
 
   if (matchesShortcut(e, state.keybindings.welcome)) {
     return { type: 'welcome' };
+  }
+
+  if (
+    state.hasOnSaveCurrentDocument &&
+    !state.isEditableTarget &&
+    matchesShortcut(e, state.keybindings.saveCurrentDocument)
+  ) {
+    if (state.isRepeat) return null;
+    return { type: 'save-current-document' };
   }
 
   if (

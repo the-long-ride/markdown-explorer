@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const modelUrl = new URL('../../ui/src/bookmarks/bookmarkModel.ts', import.meta.url);
 const storeUrl = new URL('../../ui/src/bookmarks/bookmarkStore.ts', import.meta.url);
@@ -103,7 +104,7 @@ test('bookmark setting persists, imports, renders, and has all language records'
     read('ui/src/contexts/appStateModel.ts'),
     read('ui/src/contexts/useAppStateEffects.ts'),
     read('ui/src/settings/settingsImportExport.ts'),
-    read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
+    read('ui/src/components/Settings/SettingsFeaturesSection.tsx'),
     read('ui/src/contexts/translationTypes.ts'),
     read('ui/src/contexts/translations.ts'),
     read('ui/src/contexts/translationsData.ts'),
@@ -132,7 +133,7 @@ test('bookmark sidebar exposes conditional tab, grouped panel, dialogs, menus, a
   const [sidebar, tabsHeader, panel, dialog, icons, model] = await Promise.all(paths.map(read));
   const sidebarSurface = `${sidebar}\n${tabsHeader}`;
   assert.match(sidebarSurface, /bookmarksEnabled/);
-  assert.match(tabsHeader, /onSelect\('bookmarks'\)/);
+  assert.match(tabsHeader, /onSelect\(tab\.id\)/);
   assert.match(sidebar, /<BookmarksPanel/);
   assert.match(panel, /groupBookmarksByOpenWorkspace/);
   assert.match(panel, /onDoubleClick/);
@@ -143,7 +144,7 @@ test('bookmark sidebar exposes conditional tab, grouped panel, dialogs, menus, a
   assert.match(panel, /collapseAll/);
   assert.match(dialog, /role="dialog"/);
   assert.match(dialog, /autoFocus/);
-  assert.match(icons, /viewBox="0 0 367 511\.499"/);
+  assert.match(icons, /viewBox="0 0 24 24"/);
   assert.match(icons, /viewBox="0 0 91\.5 122\.88"/);
   assert.match(model, /'files' \| 'search' \| 'bookmarks'/);
 });
@@ -172,7 +173,7 @@ test('content selection and app navigation wire bookmark creation to search-jump
   const { readFile } = await import('node:fs/promises');
   const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
   const [content, selectionHook, selectionMenu, app, bookmarkNavigation, appView, searchEffects] = await Promise.all([
-    read('ui/src/components/Content/Content.tsx'),
+    readProjectSource('ui/src/components/Content/Content.tsx'),
     read('ui/src/components/Content/useBookmarkSelection.ts'),
     read('ui/src/components/Bookmarks/BookmarkSelectionMenu.tsx'),
     read('ui/src/App.tsx'),

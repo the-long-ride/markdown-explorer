@@ -11,7 +11,7 @@ function createStartupReadyAck({
     fileList: [],
     tree: null,
     theme: "dark",
-    themeStyle: "default",
+    themeStyle: "raw-grid",
     defaultExpanded: true,
     workspaceName: path.basename(workspacePath || ""),
     workspacePath: workspacePath || undefined,

@@ -99,8 +99,22 @@ export function applyHtmlPreviewResize(data: unknown): boolean {
   if (typeof message.height !== 'number' || !Number.isFinite(message.height) || message.height <= 0) return false;
   const iframe = document.getElementById(message.id) as HTMLIFrameElement | null;
   if (!iframe) return false;
-  iframe.style.height = `${Math.ceil(message.height)}px`;
+  const height = `${Math.ceil(message.height)}px`;
+  // While the split divider is dragged every width step re-measures the
+  // preview; apply only the final height once the drag ends.
+  if (iframe.closest('.split-document-view.is-split-resizing')) {
+    iframe.dataset.mdnPendingHeight = height;
+    return true;
+  }
+  iframe.style.height = height;
   return true;
+}
+
+export function flushDeferredHtmlPreviewHeights(root: ParentNode): void {
+  root.querySelectorAll<HTMLIFrameElement>('iframe[data-mdn-pending-height]').forEach((iframe) => {
+    iframe.style.height = iframe.dataset.mdnPendingHeight ?? iframe.style.height;
+    delete iframe.dataset.mdnPendingHeight;
+  });
 }
 
 export function handleWikiLinkClick(

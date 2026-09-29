@@ -77,16 +77,15 @@ test('incremental scan publishing grows from 32 files up to 1024-file batches', 
   assert.doesNotMatch(tauri, /scanned_files % WORKSPACE_SCAN_BATCH_SIZE == 0/);
 });
 
-test('sidebar search always omits file payloads while overlay scopes stay optional', async () => {
+test('sidebar search sends focused candidates while overlay scopes stay optional', async () => {
   const [component, overlay, messageTypes] = await Promise.all([
     read('ui/src/components/Sidebar/SidebarSearch.tsx'),
     read('ui/src/components/Search/SearchOverlay.tsx'),
     read('ui/src/types/webviewMessages.ts'),
   ]);
 
-  assert.doesNotMatch(component, /searchScopeFocus/);
-  assert.doesNotMatch(component, /scopedSearchItems/);
-  assert.doesNotMatch(component, /items:/);
+  assert.match(component, /scopedSearchItems/);
+  assert.match(component, /\.\.\.\(scopedSearchItems \? \{ items: scopedSearchItems \} : \{\}\)/);
   assert.doesNotMatch(overlay, /items: state\.fileList\.map\(toWorkspaceSearchResult\)/);
   assert.match(messageTypes, /WorkspaceSearchMessage[^\r\n]*items\?: readonly WorkspaceSearchResult\[\]/);
 });
@@ -156,5 +155,5 @@ test('closed or unfiltered folders reuse resident arrays instead of filtering ev
   assert.match(treeNode, /: node\.children;/);
   assert.match(sidebarScope, /if \(!hasScopeEntry\) return allFilePathSet;/);
   assert.doesNotMatch(sidebarSearch, /selectedSearchFilePaths/);
-  assert.doesNotMatch(sidebarSearch, /state\.fileList/);
+  assert.match(sidebarSearch, /state\.fileList/);
 });

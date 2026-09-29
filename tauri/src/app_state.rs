@@ -12,6 +12,7 @@ pub struct AppState {
     pub inner: Arc<RwLock<AppStateInner>>,
     pub pending_update: Arc<Mutex<Option<crate::update::manager::PendingUpdate>>>,
     pub update_apply_in_progress: Arc<AtomicBool>,
+    pub close_guard: Arc<parking_lot::Mutex<crate::runtime::close_guard::CloseGuard>>,
 }
 
 impl Default for AppState {
@@ -20,6 +21,9 @@ impl Default for AppState {
             inner: Arc::new(RwLock::new(AppStateInner::default())),
             pending_update: Arc::new(Mutex::new(None)),
             update_apply_in_progress: Arc::new(AtomicBool::new(false)),
+            close_guard: Arc::new(parking_lot::Mutex::new(
+                crate::runtime::close_guard::CloseGuard::default(),
+            )),
         }
     }
 }

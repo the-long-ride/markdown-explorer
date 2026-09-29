@@ -44,7 +44,7 @@ keywords:
 | HTML/resources | HTML preview modules | preview server/resource handler | local file/HTML preview | preview server/resources | in-page sandbox |
 | Settings/themes | Settings, contexts, theme, `DesktopTypographySettings`, `AvailableUpdateDialog`, `TooltipButton` | bridge persistence/update | preload/dispatcher settings/update | webview state/config; VS Code-owned install | chrome/web state |
 | Localization | `translations*`, `auditedUiTranslations`, renderer/table copy | generated Markdown/DOM labels | shared renderer events | webview locale/font UI | chrome/web locale state |
-| Desktop lifecycle | Desktop components | window/tray/update/startup | window/update/bootstrap | host-owned | not applicable |
+| Desktop lifecycle | Desktop components | window/update/startup | window/update/bootstrap | host-owned | not applicable |
 | Delivery | root scripts/docs | package/installer | Cargo/Tauri configs | extension package | extension/website builds |
 
 ## Agent lookup procedure

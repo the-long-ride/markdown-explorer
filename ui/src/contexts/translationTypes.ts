@@ -28,8 +28,9 @@ export interface Translations extends AuditedUiTranslationDomains {
   maxPinnedItems: string; maxPinnedItemsDesc: string;
   documentConversion: string; documentConversionDesc: string;
   htmlPreview: string; htmlPreviewDesc: string;
+  allowUpstreamHtmlPreview: string; allowUpstreamHtmlPreviewDesc: string;
   htmlCodeBlockPreview: string; htmlCodeBlockPreviewDesc: string;
-  htmlLocalFirstWarningTitle: string; htmlLocalFirstWarningBody: string; htmlLocalFirstWarningOk: string;
+  htmlLocalFirstWarningTitle: string; htmlLocalFirstWarningBody: string; htmlLocalFirstWarningOk: string; htmlLocalFirstLoadUpstreamOnce: string;
   htmlLocalFirstBlockedRemoteStyles: string; htmlLocalFirstBlockedRemoteScripts: string;
   htmlLocalFirstAllowedRemoteImages: string; htmlLocalFirstAllowedRemoteFonts: string; htmlLocalFirstAllowedRemoteMedia: string;
   htmlLocalFirstBlockedNetworkApis: string; htmlLocalFirstBlockedLocalReferences: string; htmlLocalFirstMissingLocalReferences: string;
@@ -114,7 +115,7 @@ export interface Translations extends AuditedUiTranslationDomains {
   sidebar: {
     files: string; search: string; filterPlaceholder: string; filterAriaLabel: string;
     scopeFocus: string; clearScopeFocus: string; checkAll: string; uncheckAll: string;
-    collapseAllFolders: string; expandAllFolders: string; clearPinnedItems: string; sortFiles: string;
+    collapseAllFolders: string; expandAllFolders: string; clearPinnedItems: string; clearPinnedItemsConfirmBody: string; sortFiles: string;
     sortNameAsc: string; sortNameDesc: string; sortModifiedDesc: string; sortModifiedAsc: string;
     pinThisFile: string; pinThisFolder: string; unpinItem: string; pinned: string; noScopeFiles: string; noFiles: string;
   };

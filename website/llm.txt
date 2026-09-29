@@ -1,180 +1,379 @@
-# Markdown Explorer
+# Markdown Explorer — Complete Knowledge Base & LLM Guide
 
-> Rich Markdown viewer for VS Code and desktop. Turn Markdown and
-> document folders into a private, searchable documentation app.
+> **Markdown files are built for AI agents. Markdown Explorer makes them pleasant for humans.**
+> A local-first, privacy-focused documentation viewer, editor, split reader, and knowledge workspace.
+> Turns Markdown, MDX, and mixed-document folders into an interactive, searchable documentation desktop application, VS Code extension, Chromium browser extension, and web app.
 
-## Overview
+---
 
-Markdown Explorer is an open-source (MIT) tool that renders Markdown
-workspaces with Mermaid diagrams, LaTeX math, syntax-highlighted code,
-interactive data tables and charts, converted document previews, and
-document tabs. It runs as a VS Code extension, a standalone desktop app
-(Electron / Tauri), and a Chromium browser extension. All content stays
-local — nothing is uploaded.
+## 1. Overview & Metadata
 
-- Homepage: https://the-long-ride.github.io/markdown-explorer/
-- Repository: https://github.com/the-long-ride/markdown-explorer
-- License: MIT
-- Current version: 1.6.8
-- Languages: English, Tiếng Việt, Français, Español, 中文, Norsk, 日本語, 한국어, Русский
+Markdown Explorer is an open-source (MIT licensed), local-first tool designed to inspect, navigate, edit, and explore Markdown repositories. It renders GitHub-Flavored Markdown (GFM), Mermaid diagrams, LaTeX math, interactive data tables, automatic data charts, local office/document conversions, code blocks, and rich media. It includes workspace search, two-pane split views, inline editing, read-only Git history, knowledge graph visualization, and source-anchored bookmarks.
 
-## Platforms
+All scanning, indexing, parsing, rendering, and diffing happen locally on the user's machine. Zero telemetry, zero analytics, and zero cloud uploads.
 
-| Platform | Format |
-|---|---|
-| VS Code / VSCodium | Extension (Marketplace + Open VSX) |
-| Windows desktop | NSIS installer, portable `.exe`, `.zip` |
-| macOS desktop | `.dmg` (arm64 Apple Silicon / x64 Intel) |
-| Linux desktop | `.AppImage`, `.deb` |
-| Chromium browser | Unpacked extension (Chrome, Brave, Edge) |
+- **Current version**: 1.7.0
+- **License**: MIT
+- **Homepage**: https://the-long-ride.github.io/markdown-explorer/
+- **GitHub Repository**: https://github.com/the-long-ride/markdown-explorer
+- **Documentation**: https://the-long-ride.github.io/markdown-explorer/
+- **Issues**: https://github.com/the-long-ride/markdown-explorer/issues
+- **Releases**: https://github.com/the-long-ride/markdown-explorer/releases
+- **Web App / Demo (Example Workspace)**: https://the-long-ride.github.io/markdown-explorer/app/?mode=test
+- **Web App / Demo (Local Folder/File)**: https://the-long-ride.github.io/markdown-explorer/app/?mode=file
+- **Supported UI Languages**: English (`en`), Tiếng Việt (`vi`), Français (`fr`), Español (`es`), 中文 (`zh`), Norsk (`no`), 日本語 (`ja`), 한국어 (`ko`), Русский (`ru`).
 
-## Core features
+---
 
-### Document rendering
-- Full GFM (GitHub-Flavored Markdown) with tables, task lists, strikethrough, footnotes
-- GitHub-style alert callouts: `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`
-- 25+ programming languages syntax-highlighted (highlight.js) with copy controls, language labels, and line numbers
-- Mermaid diagrams (flowchart, sequence, class, state, ER, Gantt, pie, git graph, C4, architecture, timeline, mindmap, sankey, block, XY chart, requirement, packet, and more)
-- LaTeX math rendering (KaTeX) inline `$...$` and display `$$...$$`
-- Local and streaming video embedding
-- Image zoom via fullscreen backdrop-blur media modal
-- Interactive HTML sandboxes in isolated iframe previews
-- MDX support with interactive JSX components
+## 2. Platforms & Variants
 
-### Data tables & charts
-- Large tables (1000+ rows) with multi-select column filters
-- Sortable columns, row count badges
-- View-as-chart toggle: Bar, Line, Pie views auto-detected from numeric columns
-- Collapsed long-table mode for scrolling through filtered results
+Markdown Explorer is built as a single unified codebase running across five distinct runtime environments:
 
-### Converted document previews
-- Local conversion of non-Markdown files: DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, TXT
-- Best-effort rendering with quality notice
-- Cached repeat previews
-
-### Workspace navigation
-- Open any local folder as a documentation workspace
-- File tree sidebar with expand/collapse, file icons by type
-- **Sidebar Cursor mode** (Alt+Z): keyboard-first file tree navigation with Up/Down, Enter to open, Esc to exit
-- **Content File Tabs**: open multiple files as tabs (desktop only)
-- **Scope Focus**: filter the sidebar and focus-aware workspace search; changing focus reruns an existing query so unfocused files are excluded
-- **Workspace aliases**: rename workspace tabs to custom labels
-- Recent workspaces remembered across sessions
-- Workspace file-watcher: live refresh when files change on disk
-
-### Search
-- **3 search scopes**: current file, current workspace, all open desktop tabs
-- Results show focused excerpts with match highlighting
-- Click a result to jump to the exact line in the document
-- Cross-tab search across all open workspace tabs (desktop)
-
-### Bookmarks
-- Opt-in **Enable Bookmark feature** setting; saved bookmarks persist independently from settings
-- Bookmark one mixed-format, multi-line selection across plain text, bold/italic/strikethrough, inline or fenced code, punctuation, and symbols such as `$`, `@`, and `&`
-- Right-click complete LaTeX formulas, Mermaid diagrams, images, or links to save the exact rendered object; image/link actions open one naming dialog directly, normal link left-click behavior is unchanged, and Mermaid entrypoint nodes provide default names
-- Version-2 source anchors retain exact source range, occurrence, context, fingerprint, and object identity so repeated text such as the third of ten `Hello` values resolves correctly
-- Edited documents are relocated only with high confidence; uncertain targets show **Target changed** instead of jumping to the wrong match
-- Bookmarks use verified persistence for save and rename, with a translated green success toast or red error toast; the sidebar supports workspace grouping, search, sorting, expand/collapse, individual actions, selection mode, and batch deletion
-
-### In-app User manual
-- The second Home tab is a searchable, task-oriented guide available in all nine supported languages
-- Progressive sections cover Start here, Reading, Finding, Bookmarks, Customization, and Troubleshooting
-- Direct action cards open a workspace, Search, Bookmarks, or Settings where the runtime supports the action
-- Platform-aware keycaps show the correct Desktop, VS Code, Chromium, or Web shortcut
-
-### Custom theming
-- **Theme Remix**: build, duplicate, edit, import, and export custom themes
-- Controls: colors, density/spacing, content width, sidebar width, layout style, optional background images
-- Pre-built theme pets included (`pet-wave`, `pet-circuit`, etc.)
-- Settings import/export for sharing across machines
-
-### Multi-workspace (desktop only)
-- Open multiple folders simultaneously as separate desktop tabs
-- Tab context menu: close, close-to-right, close-others, close-all
-- Middle-click to close a tab, double-click to rename alias
-- Home tab with recent workspaces and quick actions
-
-### Editor integration (VS Code)
-- Sidebar icon opens Markdown Explorer in a dedicated panel
-- Right-click any `.md` file → "Open in Markdown Explorer"
-- Open-in-editor button sends the current file back to VS Code text editor
-- Font face stripping for VS Code webview compatibility
-
-## Keyboard shortcuts
-
-| Action | Desktop app | VS Code extension / Webview |
+| Variant / Platform | Packaging / Format | Key Capabilities & Architecture |
 |---|---|---|
-| Open settings | `Ctrl+,` | `Ctrl+I` / `Cmd+I` |
-| Toggle theme | `Ctrl+L` | `Ctrl+Shift+L` / `Cmd+Shift+L` |
-| Toggle sidebar | `Ctrl+B` | `Alt+A` |
-| Toggle TOC | `Alt+C` | `Alt+C` |
-| Toggle focus mode | `Ctrl+Alt+F` | `Ctrl+Alt+F` / `Cmd+Alt+F` |
-| Welcome page | `Ctrl+H` | `Ctrl+H` / `Cmd+H` |
-| Locate current file | `Alt+Q` | `Alt+Q` |
-| Sidebar cursor mode | `Alt+Z` | `Alt+Z` |
-| Toggle active HTML document view | `Ctrl+Alt+H` | `Ctrl+Alt+H` / `Cmd+Alt+H` |
-| Open Bookmarks | `Ctrl+Shift+B` | `Alt+Shift+B` |
+| **VS Code Extension** | `.vsix` on VS Code Marketplace & Open VSX | Runs inside a dedicated VS Code Webview panel; integrates with VS Code editor tabs, workspace commands, and the editor's extension host. |
+| **Windows Desktop** | Electron & Tauri: NSIS installer, portable `.exe`, `.zip` | Native desktop window with custom window frame, OS shell integration, File Explorer context menus, multi-workspace desktop tabs, and native file dialogs. |
+| **macOS Desktop** | Electron & Tauri: `.dmg` (Universal / Apple Silicon arm64 & Intel x64) | Native macOS AppKit Edit menu integration (Undo/Redo/Cut/Copy/Paste/Select All), crisp 16x16 menu bar template tray icon, smooth trackpad pan/zoom. |
+| **Linux Desktop** | Electron & Tauri: `.AppImage`, `.deb` | Native Linux window with system tray and hardware acceleration. |
+| **Chromium Extension** | Manifest V3 unpacked extension (Chrome, Edge, Brave, Opera) | Browser action popup & tab viewer using Chrome Storage API and File System Access API; fully sandboxed. |
+| **Web App (Live Demo)** | Static web app deployed on GitHub Pages | Browser-only client using HTML5 File System Access API or in-memory virtual example workspace; no server back-end required. |
 
-## Demo
+---
 
-A live browser demo is available at `/app` with two modes:
-- `/app/?mode=test` — browse the built-in example Markdown documents (renders locally, nothing uploaded)
-- `/app/?mode=file` — open a local folder or file from your device; renders locally, nothing uploaded
+## 3. Architecture & Tech Stack
 
-## Installation
+The project is structured as a high-performance **pnpm monorepo** with shared UI, modular runtime adapters, and an asynchronous message bus:
 
-### VS Code
-```
+### Monorepo Workspaces
+- `ui/`: Shared React 19 frontend compiled with Vite 8 and TypeScript 5.8. Contains the core Markdown parser, AST renderer, CodeMirror 6 editor, split view, search engine, Workspace Insights engine, theme system, and all UI components.
+- `vscode/`: VS Code extension wrapper. Hosts the UI within an isolated VS Code Webview, bridges VS Code commands and file systems, provides `@the-long-ride/markdown-them` document conversions, and executes read-only Git commands.
+- `electron/`: Electron 43 desktop application. Manages BrowserWindow lifecycle, native menus, tray icons, Windows registry / File Explorer context menus, local file watchers (`fs.watch`), and local `git` runner.
+- `tauri/`: Tauri 2.x native desktop shell written in Rust 2021 (`edition = "2021"`, Rust 1.96+). Uses native Webview2 (Windows) / WebKit (macOS/Linux) with in-process Rust document conversion adapters (`office_oxide`, `calamine`, `pdf-extract`, `html2markdown`, `rtf-parser`, `quick-xml`, `zip`).
+- `chromium-xtension/`: Chrome Manifest V3 extension packaging the UI with Chrome Extension Storage and Web Workers.
+- `website-app/`: Vite application serving the GitHub Pages demo with virtual files and File System Access API bridges.
+
+### Core Libraries & Subsystems
+- **Custom Markdown AST Parser & Renderer**: High-performance streaming parser (`ui/src/markdown/parser.ts`) generating an Abstract Syntax Tree with deterministic heading anchors, source line mappings, inline formatting, frontmatter parsing (via `yaml`), Wiki-links, transclusion, and raw HTML sanitization.
+- **CodeMirror 6 Editor**: `@codemirror/view`, `@codemirror/state`, `@codemirror/lang-markdown`, `@codemirror/language`, and `@lezer/highlight` for syntax-highlighted, low-latency in-app Markdown source editing without heavy frameworks like Monaco or TipTap.
+- **Mermaid 11 & ZenUML**: `@mermaid-js/mermaid-zenuml` and `mermaid` 11.16+ providing vector SVG diagram rendering with custom theme-aware palettes, responsive sizing, and fullscreen zoom modal inspection.
+- **KaTeX 0.16**: High-speed, offline LaTeX math rendering for inline `$...$` and display block `$$...$$` equations.
+- **highlight.js 11**: Syntax highlighting covering 25+ programming languages and shell command blocks (`bash`, `pwsh`, `zsh`, `sh`, `cmd`) with line numbering and copy buttons.
+- **Chart.js 4**: Interactive chart visualization engine supporting 9 distinct chart types generated automatically from Markdown, CSV, and TSV tables.
+- **pdfmake 0.3**: Client-side hybrid PDF generation packaging selectable, searchable text alongside crisp vector SVGs and raster images without opening the OS print dialog.
+- **Web Workers**: Dedicated offline background workers for Workspace Insights indexing, link checking, duplicate text shingles, and relationship scoring.
+
+### Asynchronous IPC Message Contract
+All platforms communicate with the shared UI using a strictly typed, bi-directional message protocol:
+- **`WebviewMessage` (UI -> Host)**: Commands including `openFile`, `scanWorkspace`, `searchWorkspace`, `saveDocument`, `listRepositoryHistory`, `readRevisionFile`, `exportPdf`, etc.
+- **`HostMessage` (Host -> UI)**: Events and responses including `workspaceScanned`, `fileContent`, `documentSaved`, `repositoryHistoryResult`, etc.
+
+---
+
+## 4. Runtime Parity Matrix
+
+Markdown Explorer maximizes feature parity while respecting platform-native security sandboxes:
+
+| Feature / Capability | Electron | Tauri | VS Code | Chromium | Web App |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Folder & File Workspace Browsing | Yes | Yes | Yes | Yes (Directory Handle) | Yes (Directory Handle / Test Mode) |
+| Live Filesystem Change Watcher | Yes (native) | Yes (notify crate) | Yes (VS Code API) | Polling fallback | Virtual / Polling fallback |
+| Workspace Search (Content & Filename) | Yes | Yes | Yes | Yes | Yes |
+| Cross-Tab Workspace Search | Yes | Yes | Limited | N/A (no desktop tabs) | N/A (no desktop tabs) |
+| Multi-Workspace Desktop Tabs | Yes | Yes | N/A (VS Code owns tabs) | N/A | N/A |
+| Focus View vs Tab View Mode | Yes (`Ctrl+Alt+T`) | Yes (`Ctrl+Alt+T`) | N/A | N/A | N/A |
+| Local Markdown Editing & Saving | Yes | Yes | Yes | Yes (Writable Handle) | Browser-dependent |
+| Revision Conflict Protection | Yes | Yes | Yes | Yes | Yes |
+| Two-Pane Split View | Yes | Yes | Yes | Yes | Yes |
+| Read-Only Git History & Revisions | Yes (local `git`) | Yes (local `git`) | Yes (local `git`) | No (unsupported) | No (unsupported) |
+| Myers Source Diff & Rendered Diff | Yes | Yes | Yes | Yes (local sources) | Yes (local sources) |
+| Whole-Workspace Historical Mode | Yes | Yes | Yes | No | No |
+| Workspace Insights (6 Views) | Yes | Yes | Desktop-only | Yes | Demo mode |
+| Wiki Links & Transclusion Embeds | Yes | Yes | Yes | Yes | Yes |
+| Data Tables & 9 Chart Types | Yes | Yes | Yes | Yes | Yes |
+| Non-Markdown Document Previews | Yes (Node library) | Yes (In-process Rust) | Yes (Extension host) | No | No |
+| Isolated HTML Preview / Sandbox | Yes (`Ctrl+Alt+H`) | Yes (`Ctrl+Alt+H`) | Yes (`Ctrl+Alt+H`) | In-page | In-page |
+| Scope View Modal (10-Step History) | Yes | Yes | Yes | Yes | Yes |
+| Source-Anchored Bookmarks | Yes | Yes | Yes | Yes | Yes |
+| Export Center (HTML, ZIP, PDF) | Yes (Native save) | Yes (Native save) | Yes (VS Code save) | Browser download | Browser download |
+| Typography (System & Imported Fonts) | Yes | Yes | Yes (Global Storage) | Yes (IndexedDB) | Yes (IndexedDB) |
+| Hardware Mouse Buttons (3 & 4) | Yes | Yes | Yes | Yes | Yes |
+| Auto-Update Notifications | Yes (In-app dialog) | Yes (Tauri updater) | Managed by VS Code | Chrome Web Store | Web deployment |
+
+---
+
+## 5. Comprehensive Feature Breakdown
+
+### 5.1 Document Reading & Rich Media
+- **GitHub Flavored Markdown (GFM)**: Full GFM specification support with tables, task lists (`- [x]`), strikethrough (`~~text~~`), footnotes (`[^1]`), auto-linked URLs, and blockquotes.
+- **GitHub Alert Callouts**: Modern alert boxes with custom styling: `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, and `[!CAUTION]`.
+- **Mermaid Diagrams (Offline)**: Flowcharts, sequence diagrams, class diagrams, state diagrams, ER diagrams, Gantt charts, pie charts, git graphs, C4 diagrams, mindmaps, architecture diagrams, timelines, Sankey diagrams, block diagrams, XY charts, requirement diagrams, packet diagrams, and ZenUML.
+  - Automatically themed to match the active Markdown Explorer theme and dark/light mode.
+  - Gantt charts scroll horizontally to prevent unreadable label compression.
+  - Diagrams can be opened in the Media Modal for smooth 50%–1000% pan/zoom, theme toggling, and copying/saving as PNG.
+- **LaTeX Math (KaTeX)**: Renders inline math expressions `$...$` and multiline centered display blocks `$$...$$` with high typography fidelity.
+- **Code Blocks & Terminal Commands**: Syntax highlighting for 25+ programming languages using highlight.js with line numbers, language labels, and one-click copy controls. Special support for terminal fences (`bash`, `pwsh`, `sh`, `zsh`, `cmd`).
+- **Interactive HTML Sandboxes**: Embed executable HTML snippets inside sandboxed iframes.
+- **Media Support**: Embedded local video, YouTube video embeds, responsive image rows that stay grouped across viewports, and fullscreen backdrop-blur media lightbox.
+
+### 5.2 Local Markdown Editing & Conflict-Protected Save
+- **Opt-in Feature**: Markdown editing starts disabled by default; toggle on in **Settings → Features → Markdown Editing**.
+- **Three Editing Modes**:
+  1. *Rendered*: High-fidelity view of the parsed Markdown with clickable links, diagrams, and math.
+  2. *Inline Edit*: Edit specific document sections directly in place.
+  3. *Plain Source*: Full-document source editing powered by CodeMirror 6 with syntax highlighting, line numbers, and a formatting toolbar (bold, italic, headings H1–H6, quotes, code, lists, tables, undo/redo).
+- **Conflict-Protected Save (`Ctrl+S`)**:
+  - Every open document tracks the exact revision token observed when loaded.
+  - If a file is modified externally on disk, Markdown Explorer prevents silent overwrites and displays a conflict resolution dialog offering:
+    - **Reload from Disk**: Discard local changes and load new disk contents.
+    - **Compare in Diff**: Open a side-by-side diff comparing the disk version with your unsaved working copy.
+    - **Keep Mine**: Explicitly overwrite disk contents with your local changes.
+- **Unsaved Changes Guard**: Prevents accidental data loss when closing tabs, switching workspaces, or quitting the app with unsaved dirty buffers.
+
+### 5.3 Two-Pane Split View
+- **Side-by-Side Document Comparison**: Open two documents simultaneously with independent pane focus, active document, view mode (Rendered, Inline Edit, Plain Source, Revision, Diff), and scroll positions.
+- **Pane-Owned Tabs**: Each pane maintains its own tab strip. Dragging a file from the sidebar or dropping it onto a pane activates and opens the document specifically in that pane.
+- **Isolated Rerendering**: Scrolling or editing in one pane does not cause performance-degrading rerenders in the other pane. When both panes view the same document (one editing, one rendered), updates sync after a 150 ms debounce.
+- **Clean Close Behavior**: Closing split view promotes the currently focused pane to the primary full-width view and preserves its tab strip.
+
+### 5.4 Read-Only Local Git History & Diff Viewer
+- **Zero-Mutation Guarantee**: Built exclusively for inspection. Markdown Explorer never executes `git checkout`, `commit`, `stage`, `merge`, `reset`, `rebase`, or `stash`. Commands are passed as structured argument arrays to the local `git` binary.
+- **Repository Commit Graph**:
+  - Continuous SVG lane graph visualizing branches, merge parents, commit SHAs, authors, dates, and current `HEAD`.
+  - Paged at 50 commits per page with infinite scrolling and instant search by SHA, author, or commit message.
+- **Whole-Workspace Historical Mode**:
+  - Selecting **"View workspace at this commit"** projects the entire sidebar file tree to that exact past Git commit without altering your disk or Git branch.
+  - Read historical documents, run workspace search across historical files, or return to current HEAD at any time (`Return to current HEAD` restores your live uncommitted working files and tabs).
+- **Document-Scoped History**:
+  - Follows file renames backwards through time.
+  - Allows instant read-only viewing of historical snapshots.
+- **Myers Source Diff & Rendered Diff**:
+  - *Source Diff*: Dependency-free Myers line diff displaying exact Added, Removed, and Unchanged lines with syntax highlighting.
+  - *Rendered Diff*: Fully renders both document versions as rich Markdown and highlights changed source-backed visual blocks (tables, math, callouts, diagrams).
+
+### 5.5 Workspace Insights & Wiki Links
+- **Six Analytical Auditing Views** (accessible via `Ctrl+Alt+I` or More Actions):
+  1. **Gallery**: Visual grid indexing all referenced media (images, Mermaid diagrams, videos, audio, documents) with diagram thumbnail previews, category filters, and search.
+  2. **Links**: Comprehensive workspace link audit surfacing broken links, missing targets, invalid anchors, outside-workspace files, dynamic references, ambiguous Wiki Links, and optional external HTTP status checks.
+  3. **Lint**: Structural Markdown diagnostics detecting heading level skips (e.g. H1 to H3), duplicate headings, malformed YAML frontmatter, misaligned tables, and inconsistent list indents, with path-level and rule-level suppression.
+  4. **Duplicates**: Analyzes document similarity using text shingles; detects exact duplicates, repeated passages, and near-duplicate files with a configurable similarity threshold (50%–100%).
+  5. **Graph**: Interactive 2D knowledge network graph with backlink traversal, 1st and 2nd degree neighborhood highlighting, node search, and zoom.
+  6. **Related**: Deterministic related document ranking powered by direct links, shared tags, shared headings, and keyword overlap with explainable signal breakdowns.
+- **Wiki Links & Transclusion Engine**:
+  - Full Wiki Link syntax support: `[[Note]]`, `[[Note#Heading]]`, `[[Note|Custom Label]]`, `[[#Anchor]]`, and relative paths `[[./Subfolder/Doc]]`.
+  - Transclusion embeds: `![[Note]]` or `![[Note#Heading]]` renders target content inline with cycle detection and depth limit guards.
+
+### 5.6 Data Tables & Interactive Charts
+- **Interactive Tables**: Automatically transforms Markdown tables, CSV code blocks, and TSV code blocks into rich data grids.
+- **Controls**: Multi-select column filtering, sortable columns, text wrap/unwrap, row count badges, and per-column visibility toggles.
+- **9 Chart Types**: Automatically detect numeric columns and render interactive charts:
+  1. *Bar Chart* (Vertical)
+  2. *Horizontal Bar Chart*
+  3. *Line Chart*
+  4. *Area Chart*
+  5. *Scatter Chart* (Multi-numeric X/Y point mapping)
+  6. *Radar Chart*
+  7. *Polar Area Chart*
+  8. *Pie Chart*
+  9. *Doughnut Chart*
+- **Fullscreen Chart Modal Viewer**: Dedicated inspection modal offering 50%–1000% continuous pan/zoom, on-the-fly chart type switching, and direct PNG image copying/saving.
+
+### 5.7 Converted Document Previews (Offline Office & PDF)
+- **Local Conversion**: Opt-in feature (**Settings → Features → Read DOCX, PDF, Office, and text files**) allowing local viewing of non-Markdown files:
+  - Formats: `DOC`, `DOCX`, `PDF`, `HTML`, `XLS`, `XLSX`, `XLM`, `PPTX`, `ODT`, `ODP`, `ODS`, `RTF`, `TXT`.
+  - Tauri uses native in-process Rust crates (`office_oxide`, `calamine`, `pdf-extract`, `html2markdown`, etc.). Electron and VS Code use `@the-long-ride/markdown-them`.
+  - Caches converted Markdown by file modification time and file size for instant repeat opens.
+  - Displays a subtle quality notice indicator (`converted-preview`, `legacy-best-effort`).
+
+### 5.8 Scope View Modal
+- **Deep-Dive Without Losing Context**: Right-click any document link and select **"Open as scope"** to open the linked document in an isolated modal overlay.
+- **10-Step History Stack**: Bounded history (`MAX_SCOPE_DEPTH=10`) with animated depth segment indicators and Back/Forward buttons.
+- **Open File Button**: Dedicated header button (`OpenFileIcon`) navigates the main workspace to the previewed file and closes the modal.
+- **Hardware Navigation**: Full support for keyboard (`Alt+Left`/`Alt+Right`, `BrowserBack`/`BrowserForward`, `Escape`) and mouse buttons 3/4.
+
+### 5.9 All-in-One Export Center
+- **Export Formats**:
+  1. *Standalone HTML*: Fully self-contained HTML file with embedded styles, scripts, and media.
+  2. *Static Website (ZIP)*: Multi-page static documentation website complete with interactive sidebar tree, search bar, table of contents, and theme toggle.
+  3. *Client-Side Hybrid PDF*: Generates clean, searchable, selectable PDF documents via `pdfmake` without opening the OS print dialog. Captures complex diagrams and charts as vector SVGs or crisp images.
+- **Scopes**: Export the Current document, Selected files (with multi-select search filter), a Folder, or the Entire workspace.
+- **Layouts**: Minimal *Document-only* or full *Explorer Viewport Shell*. Zero external CDN dependencies.
+
+### 5.10 Source-Anchored Bookmarks
+- **Opt-in Setting**: **Settings → Features → Enable Bookmark feature** (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Chromium / Web).
+- **Rich Target Capture**: Select any text (multi-line, mixed formatting, code, punctuation, symbols like `$`, `@`, `&`) or right-click rendered LaTeX formulas, Mermaid diagrams, images, or links to bookmark the exact object.
+- **Version-2 Source Anchors**: Preserves exact source range, occurrence index, context fingerprint, and object identity. Repeated occurrences (e.g. the 3rd instance of "Error") resolve accurately.
+- **Graceful Drift Handling**: If a document is edited and high-confidence relocation fails, the bookmark displays **Target changed** instead of jumping to the wrong passage.
+- **Verified Persistence**: Bookmark saves and renames use verified persistence with translated green success toasts or red error toasts. The Bookmarks sidebar supports search, sorting, workspace grouping, and batch deletion with checkboxes.
+
+### 5.11 Workspace Navigation & Organization
+- **Sidebar Cursor Mode (`Alt+Z`)**: Keyboard-first tree navigation. Use `Up`/`Down` arrows to navigate, `Enter` to open or expand/collapse folders, and `Esc` to exit.
+- **Locate Current File (`Alt+Q`)**: Instantly reveals and highlights the currently active file inside the sidebar tree.
+- **Hoisted Pinning**: Pin frequently used files and folders to the top of the sidebar. Items in deep subfolders are hoisted to the root of the file tree for fast access (up to 15 items).
+- **Scope Focus**: Focus on a specific subfolder; filters both the sidebar and workspace search. Changing scope automatically reruns active search queries.
+- **Content Tabs**: Multi-document tab strip with close options (`Close`, `Close Others`, `Close to Right`, `Close All`).
+- **Reading Progress & Scroll Memory**: Persists exact scroll positions and collapsed heading states across sessions for up to 100 recent files per workspace.
+- **Hardware Mouse Navigation**: Universal Logitech and mouse buttons 3/4 back/forward support across all views and modals with 40 ms event deduplication.
+
+### 5.12 Search System
+- **Three Search Scopes**:
+  1. *Current File* (`F` on Desktop, `K` on VS Code/Web)
+  2. *Current Workspace* (`Ctrl+F` on Desktop, `Ctrl+K` on VS Code/Web)
+  3. *All Open Workspace Tabs* (`Ctrl+Shift+F` on Desktop, `Ctrl+Shift+K` on VS Code/Web)
+- **Match Highlighting & Excerpts**: Results display contextual excerpts; clicking a result jumps directly to the exact line in the document.
+
+### 5.13 Custom Theming & Typography
+- **Theme Families**: Built-in themes include *Explorer Classic*, *Bento Grids*, *Default*, *Vercel*, *Tokyo Night*, and *Neon Voltage*.
+- **Pet Theme Companions**: *K-Ink (App author's dog)*, *White Shiba*, *Cat*, *Hamster*, *Corgi*.
+- **Theme Remix**: Build, duplicate, customize, import, and export themes. Tweak primary/accent colors, background images, densities, and panel spacing.
+- **Typography Controls**: Independent font family, style, and weight bindings for 6 distinct roles:
+  1. *App UI Font*
+  2. *Body Text Font*
+  3. *Heading Font*
+  4. *Quote Font*
+  5. *Code Font* (defaults to JetBrains Mono)
+  6. *Mermaid Diagram Font* (changing re-renders visible Mermaid diagrams)
+  Supports system-installed fonts or imported `.ttf`, `.otf`, `.woff`, `.woff2` files.
+
+### 5.14 In-App User Manual
+- The second tab on the Welcome page (`Ctrl+H`) houses a complete, searchable, task-oriented **User manual** translated into all 9 languages.
+- Covers Start here, Reading, Finding, Bookmarks, Customization, and Troubleshooting with interactive action cards and platform-aware keycaps.
+
+---
+
+## 6. Keyboard Shortcuts Cheat Sheet
+
+| Action | Desktop App (Win/Linux/Mac) | VS Code Extension | Chromium Extension & Web |
+|---|---|---|---|
+| **Search current workspace** | `Ctrl+F` (`Cmd+F`) | `Ctrl+K` (`Cmd+K`) | `Ctrl+K` |
+| **Search all open workspace tabs** | `Ctrl+Shift+F` | `Ctrl+Shift+K` | `Ctrl+Shift+K` |
+| **Find in current file** | `F` | `K` | `K` |
+| **Save current document** | `Ctrl+S` (`Cmd+S`) | `Ctrl+S` (`Cmd+S`) | `Ctrl+S` |
+| **Open external editor** | `Ctrl+E` (`Cmd+E`) | `Ctrl+Alt+E` (`Cmd+Alt+E`) | N/A |
+| **Open Settings** | `Ctrl+,` (`Cmd+,`) | `Ctrl+I` (`Cmd+I`) | `Ctrl+I` |
+| **Toggle Light/Dark Theme** | `Ctrl+L` (`Cmd+L`) | `Ctrl+Shift+L` | `Ctrl+Shift+L` |
+| **Toggle Sidebar** | `Ctrl+B` (`Cmd+B`) | `Alt+A` | `Alt+A` |
+| **Toggle Table of Contents (TOC)** | `Ctrl+T` (`Cmd+T`) | `Alt+C` | `Alt+C` |
+| **Toggle Workspace Insights** | `Ctrl+Alt+I` | `Ctrl+Alt+I` | `Ctrl+Alt+I` |
+| **Open Bookmarks Sidebar** | `Ctrl+Shift+B` | `Alt+Shift+B` | `Alt+Shift+B` |
+| **Sidebar Cursor Mode** | `Alt+Z` | `Alt+Z` | `Alt+Z` |
+| **Locate Current File in Tree** | `Alt+Q` | `Alt+Q` | `Alt+Q` |
+| **Toggle Focus Mode** | `Ctrl+Alt+F` | `Ctrl+Alt+F` | `Ctrl+Alt+F` |
+| **Toggle HTML Sandbox / Markdown**| `Ctrl+Alt+H` | `Ctrl+Alt+H` | `Ctrl+Alt+H` |
+| **Toggle Desktop Tabs/Focus View**| `Ctrl+Alt+T` | N/A | N/A |
+| **Navigate Back / Forward** | `Ctrl+Left` / `Ctrl+Right` or Mouse 3/4 | `Ctrl+Left` / `Ctrl+Right` or Mouse 3/4 | `Ctrl+Left` / `Ctrl+Right` or Mouse 3/4 |
+| **Welcome Page & User Manual** | `Ctrl+H` (`Cmd+H`) | `Ctrl+H` (`Cmd+H`) | `Ctrl+H` |
+| **Refresh Workspace** | `F5` | `R` | `R` |
+| **Collapse All Sections** | `Ctrl+Shift+X` | `Ctrl+Shift+X` | `Ctrl+Shift+X` |
+| **Expand All Sections** | `Ctrl+Shift+E` | `Ctrl+Shift+E` | `Ctrl+Shift+E` |
+| **Close Current Content Tab** | `Ctrl+W` | N/A | N/A |
+| **Close All Content Tabs** | `Ctrl+Shift+W` | N/A | N/A |
+| **Zoom In / Out / Reset** | `Ctrl+=` / `Ctrl+-` / `Ctrl+Alt+Z` | Host Zoom | Browser Zoom |
+
+---
+
+## 7. Power-User Tips & Tricks
+
+### Navigation & Discovery
+1. **Hands-Off-the-Mouse Reading**: Press `Alt+Z` to enter **Sidebar Cursor mode**. Use the Up/Down arrow keys to highlight files, hit `Enter` to open, or expand/collapse folders. Hit `Esc` or click anywhere to exit.
+2. **Never Lose Your Place in Big Projects**: When reading a deeply nested document, press `Alt+Q` (Locate File). The sidebar instantly scrolls to and highlights the active file.
+3. **Drill Down with Scope Focus**: Right-click any folder in the sidebar and choose **"Focus on this folder"**. The sidebar hides everything outside that folder, and all workspace searches automatically restrict their scope to that folder.
+4. **Instant Link Inspection with Scope View**: Don't want to lose your reading position or open another tab just to check a reference? Right-click any Markdown link and select **"Open as scope"**. A modal overlay displays the target document with a 10-step history stack. If you decide to stay, click the **Open file** icon in the modal header.
+
+### Editing & Split View
+5. **Side-by-Side Editing & Preview**: Press the Split View button in the topbar or right-click a file in the sidebar and choose **"Open in Split View"**. Keep one pane in **Plain Source** editor mode and the other pane in **Rendered** mode. As you type, the rendered pane mirrors your changes after a debounced 150 ms interval.
+6. **Drag & Drop Between Split Panes**: You can drag any file from the sidebar and drop it onto either the left or right split pane to open the file directly in that pane.
+7. **Resolving External File Edits**: If an AI agent or external editor updates a file while you have it open in Markdown Explorer, the editor detects the revision mismatch on save and gives you an instant side-by-side Myers Diff to compare before deciding whether to reload or keep your edits.
+
+### Visualizations, Tables & Media
+8. **Transform Data Tables into Charts with Zero Code**: Paste a standard Markdown table or a CSV/TSV code fence with numeric columns. Markdown Explorer auto-detects the numbers and displays a chart toggle. Click to switch between Bar, Line, Pie, Area, or Scatter views without modifying your Markdown file.
+9. **Zoom & Pan Complex Mermaid Diagrams**: Click any rendered Mermaid diagram or image to open it in the Media Modal. Use the mouse wheel to zoom (up to 1000%), click and drag to pan across large architecture diagrams, and click the **Theme Toggle** icon in the modal footer to test how your diagram looks in dark vs. light mode.
+10. **Export High-Resolution Diagram PNGs**: In the Media Modal, click **"Save as image (.PNG)"** or **"Copy PNG"** to export crisp, transparent, high-DPI raster images for presentations or bug reports.
+11. **Filter 1000+ Row Tables**: For large tables, click the column filter button to multi-select specific values, sort by ascending/descending order, or toggle column visibility.
+
+### Bookmarking & Auditing
+12. **Bookmark Exact Formulas and Diagrams**: You don't have to select raw text to bookmark an equation or diagram. Right-click any rendered KaTeX formula or Mermaid entrypoint node and select **"Add Bookmark"**. Markdown Explorer captures its exact source anchor, occurrence, and visual identity.
+13. **Audit Your Repository with Workspace Insights**: Press `Ctrl+Alt+I` to launch Workspace Insights:
+    - Switch to **Links** to immediately catch all broken internal links, missing image assets, and dead anchors before publishing docs.
+    - Switch to **Duplicates** to identify repeated documentation sections or copy-pasted guides across your project.
+    - Switch to **Graph** to visually inspect how your documentation notes connect to one another through links and Wiki Links.
+
+### Theming & Aesthetics
+14. **Personalize Your Reader with Theme Remix**: Open **Settings → Theme Style → Theme Remix**. Choose a base style (e.g. Bento Grids, Tokyo Night, or Default), select a pet companion, adjust content width and line height, and even add a custom backdrop image. Export your theme JSON to share with teammates.
+15. **Per-Role Font Pairing**: You can assign a clean geometric sans font to your **Heading Font**, a readable serif to **Body Font**, and a monospace font (like JetBrains Mono or Fira Code) to **Code Font** in **Settings → Typography**.
+
+---
+
+## 8. Settings Catalog Reference
+
+All settings can be configured via **Settings (`Ctrl+,` or `Ctrl+I`)**, persisted per platform, or exported/imported as JSON:
+
+| Setting Key | Type | Default | Description |
+|---|---|---|---|
+| `showTitle` | `boolean` | `false` | Displays the document title prominently in the content shell. |
+| `defaultHtmlPreview` | `boolean` | `true` | Opens `.html` / `.htm` files as isolated interactive previews by default. |
+| `defaultHtmlCodeBlockPreview` | `boolean` | `true` | Renders HTML code fences as live sandboxed previews. |
+| `defaultCsvPreview` | `boolean` | `true` | Renders CSV and TSV fences as interactive data tables. |
+| `fileTabs` | `boolean` | `false` | Enables multi-document content tabs at the top of the reading pane. |
+| `bookmarksEnabled` | `boolean` | `false` | Enables source-anchored bookmarks and the Bookmarks sidebar tab. |
+| `insightsEnabled` | `boolean` | `false` | Enables Workspace Insights (`Ctrl+Alt+I`) in More actions. |
+| `markdownEditingEnabled` | `boolean` | `false` | Enables local Markdown editing and formatting toolbar. |
+| `historySidebarEnabled` | `boolean` | `true` | Shows the local Git History tab in the sidebar (when Git repository is detected). |
+| `documentConversion` | `boolean` | `false` | Enables local conversion for DOCX, PDF, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files. |
+| `desktopViewMode` | `'focus' \| 'tabs'` | `'focus'` | Switches Desktop between distraction-free Focus View and Multi-Workspace Tab View. |
+| `language` | `string` | `'en'` | UI locale (`en`, `vi`, `fr`, `es`, `zh`, `no`, `ja`, `ko`, `ru`). |
+| `maxPinnedItems` | `number` | `10` | Maximum number of pinned files and folders hoisted to the top of the sidebar (1–15). |
+| `fontBindings` | `object` | defaults | Independent font family, style, and weight bindings for App UI, Body, Heading, Quote, Code, and Mermaid. |
+| `customThemes` | `array` | `[]` | List of user-created custom theme configurations. |
+
+---
+
+## 9. AI Agent & LLM Integration Guidelines
+
+Markdown Explorer is built to serve as the visual reading and editing companion for AI coding and documentation agents:
+
+1. **Agent Memory & Knowledge Bases**:
+   - Point Markdown Explorer at an agent's memory folder (e.g. `.agents/`, `docs/`, or Obsidian vaults).
+   - Agents can write standard Markdown with Wiki Links (`[[Concept]]`), and Markdown Explorer will instantly resolve references, transclusions, and interactive graph connections.
+2. **Rich Visual Output for Agents**:
+   - When generating complex architectures, agents should emit Mermaid code fences (`flowchart`, `sequenceDiagram`, `erDiagram`, `c4Context`, `architecture-beta`).
+   - For mathematical derivations, agents should emit KaTeX `$math$` and `$$math$$`.
+   - For datasets, metrics, or benchmarks, agents should emit Markdown tables or CSV fences; Markdown Explorer automatically provides interactive sorting, filtering, and chart visualization.
+3. **Structured Alert Blocks**:
+   - Agents should format critical notices using GitHub alerts (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]`). Markdown Explorer renders these with distinctive, accessible callout boxes.
+4. **Source Diffing and Review**:
+   - When an agent generates new versions of documents, users can compare past Git commits or unsaved drafts using Markdown Explorer's Myers Source Diff or visual Rendered Diff.
+5. **Source-Anchored Bookmarking for Prompts**:
+   - Users can bookmark specific sections, diagrams, or tables inside agent-generated files. Because bookmarks store exact line ranges and context fingerprints, they survive document editing and provide precise references for follow-up prompts.
+
+---
+
+## 10. Installation & Setup
+
+### VS Code & VSCodium
+Install directly from the command line:
+```bash
 code --install-extension the-long-ride.vscode-extension-markdown-explorer
 ```
-Marketplace: https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer
-Open VSX: https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer
+Or search for `Markdown Explorer in VS Code` on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer) or [Open VSX Registry](https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer).
 
-### Desktop
-Download from GitHub Releases: https://github.com/the-long-ride/markdown-explorer/releases/latest
-Choose the asset matching your OS and architecture.
+### Windows Desktop (NSIS & Portable)
+- Download the latest installer `Markdown-Explorer-Setup-*.exe` or standalone portable executable from [GitHub Releases](https://github.com/the-long-ride/markdown-explorer/releases/latest).
+- The installer automatically registers **"Open with Markdown Explorer"** and **"Open Folder in Markdown Explorer"** in the Windows File Explorer context menu.
 
-### Chromium extension
-Download the zip from the latest release, extract to a permanent folder, load unpacked via `chrome://extensions` (Developer mode → Load unpacked).
+### macOS Desktop (Apple Silicon arm64 & Intel x64)
+- Download the `.dmg` asset matching your Mac architecture from [GitHub Releases](https://github.com/the-long-ride/markdown-explorer/releases/latest).
+- Drag `Markdown Explorer.app` into your Applications folder.
 
-## FAQ
+### Linux Desktop (AppImage & DEB)
+- Download the `.AppImage` (make executable with `chmod +x` and run) or `.deb` package from [GitHub Releases](https://github.com/the-long-ride/markdown-explorer/releases/latest).
 
-**Is it free?** Yes, MIT licensed. Public repository.
+### Chromium Browser Extension (Chrome, Edge, Brave)
+1. Download the `chromium-extension-*.zip` release artifact and extract it into a permanent folder.
+2. Navigate to `chrome://extensions` (or `edge://extensions` / `brave://extensions`).
+3. Enable **Developer mode** in the top-right corner.
+4. Click **Load unpacked** and select the extracted folder.
 
-**Does it work offline?** Yes. Rendering and search are fully local. Only the website download page fetches release metadata from GitHub.
-
-**Can it preview Office/PDF files?** Yes. Enable "Read DOCX, PDF, Office, and text files" in Settings. Conversion is local, best-effort.
-
-**What desktop file should I download?**
-- Windows: NSIS `Setup *.exe` for Start Menu, or portable `.exe`
-- Linux: `.AppImage` or `.deb`
-- macOS: `.dmg` (arm64 for Apple Silicon, x64 for Intel)
-
-## Privacy
-
-Markdown Explorer does not upload or transmit Markdown content. All scanning, rendering, search, and document conversion happens locally on your device. No telemetry, no analytics, no cloud processing.
-
-## Agent / LLM use
-
-Markdown Explorer is designed for the agent era:
-- Use local Markdown folders as agent memory / knowledge bases
-- Navigate thousands of `.md` files with workspace search and Sidebar Cursor mode
-- Rich rendering of Mermaid diagrams and LaTeX math produced by code-generation agents
-- Syntax-highlighted code blocks make agent output readable
-- Interactive tables help inspect structured agent output
-- Source-anchored bookmarks preserve exact passages, formulas, diagrams, images, and links inside long agent-generated documents
-- The searchable User manual provides quick in-app guidance without leaving the local workspace
-- Privacy-first: agent memory stays local, not uploaded
-
-## Links
-
-- Homepage: https://the-long-ride.github.io/markdown-explorer/
-- GitHub: https://github.com/the-long-ride/markdown-explorer
-- Issues: https://github.com/the-long-ride/markdown-explorer/issues
-- Releases: https://github.com/the-long-ride/markdown-explorer/releases
-- Changelog: https://github.com/the-long-ride/markdown-explorer/blob/main/CHANGELOG.md
-- Privacy: https://the-long-ride.github.io/markdown-explorer/privacy.html
-- Terms: https://the-long-ride.github.io/markdown-explorer/terms.html
-- Demo (test workspace): https://the-long-ride.github.io/markdown-explorer/app/?mode=test
-- Demo (open folder/file): https://the-long-ride.github.io/markdown-explorer/app/?mode=file
-- Sitemap: https://the-long-ride.github.io/markdown-explorer/sitemap.xml
+### Web Demo
+Access the live web demo directly in any modern browser:
+- [Live Demo with Built-in Example Workspace](https://the-long-ride.github.io/markdown-explorer/app/?mode=test)
+- [Live Demo with Local Folder/File Access](https://the-long-ride.github.io/markdown-explorer/app/?mode=file)

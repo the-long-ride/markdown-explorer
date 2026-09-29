@@ -49,8 +49,10 @@ keywords:
 | Electron title enrichment deadline | 1500 ms |
 | Scan title prefix | 8 KiB |
 | Workspace search items | 10,000 maximum |
+| Workspace search host batch | 100 results |
+| Sidebar search render window | 100 rows, growing on scroll |
 | Workspace content indexing | skip bodies above 2 MiB |
-| Electron cross-tab default max results | 2,000 |
+| Electron cross-tab default max results | 10,000 |
 | Cross-tab index prime batch | 5 |
 | UI search page | 100 |
 | Chromium active-file poll | about 3000 ms |
@@ -106,6 +108,10 @@ Limits are product contracts only where active source enforces them. Changes req
 | Implementation | `vscode/src/core/incrementalScan.ts` | Applies reveal delay and scan batch limits |
 | Implementation | `electron/workspace/scanner.js` | Active behavior or contract |
 | Implementation | `electron/search/search-worker-controller.js` | Active behavior or contract |
+| Implementation | `electron/search/search-index.js` | Incremental workspace search ceiling and batching |
+| Implementation | `tauri/src/search/incremental.rs` | Incremental workspace search ceiling and batching |
+| Implementation | `tauri/src/search/worker.rs` | Worker delivery and cancellation |
+| Implementation | `ui/src/components/Sidebar/SidebarSearch.tsx` | Bounded result retention and lazy render window |
 | Implementation | `ui/src/components/Content/scheduleContentEnhancements.ts` | Active behavior or contract |
 | Implementation | `ui/src/components/Content/enhancements/tableEnhancement.ts` | Applies table collapse limit |
 | Implementation | `ui/src/components/Modal/MediaModal.tsx` | Active behavior or contract |

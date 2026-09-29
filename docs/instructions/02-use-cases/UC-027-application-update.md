@@ -203,4 +203,4 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 ---
 
-[← Control Window, Tray, Fullscreen, Zoom, and Quit](UC-026-window-tray-fullscreen-zoom-quit.md) · [Documentation index](../README.md) · [Recover from Errors and Unavailable Workspaces →](UC-028-errors-recovery-unavailable.md)
+[← Control Window, Fullscreen, Zoom, and Quit](UC-026-window-tray-fullscreen-zoom-quit.md) · [Documentation index](../README.md) · [Recover from Errors and Unavailable Workspaces →](UC-028-errors-recovery-unavailable.md)

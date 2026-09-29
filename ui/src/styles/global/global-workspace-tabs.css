@@ -297,7 +297,8 @@
 }
 
 .desktop-tabbar__navigation-actions,
-.desktop-tabbar__document-actions {
+.desktop-tabbar__document-actions,
+.desktop-tabbar .topbar__markdown-editing {
   -webkit-app-region: no-drag;
 }
 

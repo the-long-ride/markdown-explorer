@@ -1,4 +1,4 @@
-import { useEffect, type MutableRefObject } from 'react';
+import { useEffect, useRef, type MutableRefObject } from 'react';
 import {
   normalizeDesktopViewMode,
   normalizeKeybindings,
@@ -19,7 +19,7 @@ import {
   type AppState,
   type PendingHtmlPreviewNavigation,
 } from './appStateReducer';
-import { acceptsWorkspaceHostMessage } from '../desktop/workspaceOperations';
+import { acceptsWorkspaceHostMessage, clearWorkspaceOperation } from '../desktop/workspaceOperations';
 import { normalizeMaxPinnedItems } from '../components/Sidebar/sidebarWorkspacePreferences';
 import { applyDesktopTypography } from '../desktop/fonts/applyDesktopTypography';
 import { migrateDesktopFontBindings } from '../desktop/fonts/fontModel';
@@ -40,50 +40,6 @@ type AppStateEffectsArgs = {
   pendingHtmlPreviewNavigationRef: MutableRefObject<PendingHtmlPreviewNavigation | null>;
 };
 
-function restorePersistedState(
-  dispatch: React.Dispatch<Action>,
-  saved: PersistedState | null | undefined,
-  isDesktop: boolean,
-): void {
-  if (!saved) return;
-
-  const customThemes = normalizeCustomThemes(saved.customThemes);
-  const activeCustomThemeId = normalizeActiveCustomThemeId(saved.activeCustomThemeId, customThemes);
-  dispatch({
-    type: 'UPDATE_SETTINGS',
-    settings: {
-      showTitle: saved.showTitle === true,
-      defaultHtmlPreview: saved.defaultHtmlPreview !== false,
-      defaultCsvPreview: saved.defaultCsvPreview !== false,
-      fileTabs: saved.fileTabs === true,
-      bookmarksEnabled: saved.bookmarksEnabled === true,
-      insightsEnabled: saved.insightsEnabled === true,
-      documentConversion: saved.documentConversion === true,
-      scopeFocus: saved.scopeFocus ?? {},
-      searchScopeFocus: saved.searchScopeFocus ?? {},
-      sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
-      sidebarSortModes: saved.sidebarSortModes ?? {},
-      maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
-      desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
-      fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
-      keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
-      disabledKeybindings: saved.disabledKeybindings ?? {},
-      language: saved.language || 'en',
-      customThemes,
-      activeCustomThemeId,
-    },
-  });
-  if (saved.theme) dispatch({ type: 'SET_THEME', theme: normalizeThemeMode(saved.theme) });
-  if (activeCustomThemeId) {
-    dispatch({ type: 'SELECT_CUSTOM_THEME', themeId: activeCustomThemeId });
-  } else if (saved.themeStyle) {
-    dispatch({ type: 'SET_THEME_STYLE', themeStyle: normalizeThemeStyle(saved.themeStyle) });
-  }
-  if (typeof saved.sidebarCollapsed === 'boolean') {
-    dispatch({ type: 'SET_SIDEBAR_COLLAPSED', collapsed: saved.sidebarCollapsed });
-  }
-}
-
 export function useAppStateEffects({
   bridge,
   dispatch,
@@ -92,9 +48,52 @@ export function useAppStateEffects({
   shouldLogPerf,
   pendingHtmlPreviewNavigationRef,
 }: AppStateEffectsArgs) {
+  const readyId = useRef(globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`);
   // Load persisted settings on mount
   useEffect(() => {
-    restorePersistedState(dispatch, bridge.getState<PersistedState>(), isDesktop);
+    const saved = bridge.getState<PersistedState>();
+    if (saved) {
+      const customThemes = normalizeCustomThemes(saved.customThemes);
+      const activeCustomThemeId = normalizeActiveCustomThemeId(saved.activeCustomThemeId, customThemes);
+      dispatch({
+        type: 'UPDATE_SETTINGS',
+        settings: {
+          showTitle: saved.showTitle === true,
+          defaultHtmlPreview: saved.defaultHtmlPreview !== false,
+          allowUpstreamHtmlPreview: saved.allowUpstreamHtmlPreview === true,
+          defaultCsvPreview: saved.defaultCsvPreview !== false,
+          fileTabs: saved.fileTabs === true,
+          bookmarksEnabled: saved.bookmarksEnabled === true,
+          insightsEnabled: saved.insightsEnabled === true,
+          documentConversion: saved.documentConversion === true,
+          historySidebarEnabled: saved.historySidebarEnabled !== false,
+          markdownEditingEnabled: saved.markdownEditingEnabled === true,
+          scopeFocus: saved.scopeFocus ?? {},
+          searchScopeFocus: saved.searchScopeFocus ?? {},
+          sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
+          sidebarSortModes: saved.sidebarSortModes ?? {},
+          maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
+          desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+          fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
+          keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
+          disabledKeybindings: saved.disabledKeybindings ?? {},
+          language: saved.language || 'en',
+          customThemes,
+          activeCustomThemeId,
+        },
+      });
+      if (saved.theme) {
+        dispatch({ type: 'SET_THEME', theme: normalizeThemeMode(saved.theme) });
+      }
+      if (activeCustomThemeId) {
+        dispatch({ type: 'SELECT_CUSTOM_THEME', themeId: activeCustomThemeId });
+      } else if (saved.themeStyle) {
+        dispatch({
+          type: 'SET_THEME_STYLE',
+          themeStyle: normalizeThemeStyle(saved.themeStyle),
+        });
+      }
+    }
   }, [bridge, isDesktop]);
 
   // Listen for host messages
@@ -113,9 +112,23 @@ export function useAppStateEffects({
         return;
       }
       switch (msg.command) {
+        case 'restorePersistedState': {
+          const localPersisted = bridge.getState<PersistedState>();
+          bridge.setState<PersistedState>({
+            ...localPersisted,
+            ...msg.state,
+            repositoryRevisionSelections:
+              msg.state?.repositoryRevisionSelections ?? localPersisted?.repositoryRevisionSelections,
+            fileHistoryView: msg.state?.fileHistoryView ?? localPersisted?.fileHistoryView,
+            fileHistoryLayout: msg.state?.fileHistoryLayout ?? localPersisted?.fileHistoryLayout,
+          });
+          dispatch({ type: 'RESTORE_PERSISTED_STATE', persistedState: msg.state });
+          bridge.postMessage({ command: 'stateHydrated' });
+          break;
+        }
         case 'readyAck':
           // Check saved appearance state because mount effects can race host ready.
-          const savedAppearance = msg.persistedState ?? bridge.getState<PersistedState>();
+          const savedAppearance = bridge.getState<PersistedState>();
           dispatch({
             type: 'READY_ACK',
             fileList: msg.fileList,
@@ -134,7 +147,6 @@ export function useAppStateEffects({
             documentConversionEnabled: msg.documentConversionEnabled,
             isMaximized: msg.isMaximized,
           });
-          restorePersistedState(dispatch, savedAppearance, isDesktop);
           break;
         case 'workspaceFilesChanged':
           dispatch({
@@ -227,12 +239,14 @@ export function useAppStateEffects({
     });
 
     const saved = bridge.getState<PersistedState>();
+    clearWorkspaceOperation();
     if (shouldLogPerf) {
       performance.mark('renderer:ready-post');
       console.info('[perf] mark renderer:ready-post');
     }
     bridge.postMessage({
       command: 'ready',
+      readyId: readyId.current,
       documentConversionEnabled:
         typeof saved?.documentConversion === 'boolean'
           ? saved.documentConversion
@@ -263,17 +277,22 @@ export function useAppStateEffects({
     return () => media.removeEventListener('change', handleChange);
   }, [state.settings, state.theme, state.themeStyle]);
 
-  // Persist settings on change
+  // Persist settings on change without dropping repository-scoped view state.
   useEffect(() => {
+    const currentPersisted = bridge.getState<PersistedState>();
     bridge.setState<PersistedState>({
-      sidebarCollapsed: state.sidebarCollapsed,
+      ...currentPersisted,
       showTitle: state.settings.showTitle,
       defaultHtmlPreview: state.settings.defaultHtmlPreview,
+      allowUpstreamHtmlPreview: state.settings.allowUpstreamHtmlPreview,
+      defaultHtmlCodeBlockPreview: state.settings.defaultHtmlCodeBlockPreview,
       defaultCsvPreview: state.settings.defaultCsvPreview,
       fileTabs: state.settings.fileTabs,
       bookmarksEnabled: state.settings.bookmarksEnabled,
       insightsEnabled: state.settings.insightsEnabled,
       documentConversion: state.settings.documentConversion,
+      historySidebarEnabled: state.settings.historySidebarEnabled,
+      markdownEditingEnabled: state.settings.markdownEditingEnabled,
       scopeFocus: state.settings.scopeFocus,
       searchScopeFocus: state.settings.searchScopeFocus,
       sidebarPinnedItems: state.settings.sidebarPinnedItems,
@@ -283,13 +302,17 @@ export function useAppStateEffects({
       fontBindings: migrateDesktopFontBindings(state.settings.fontBindings),
       keybindings: state.settings.keybindings,
       disabledKeybindings: state.settings.disabledKeybindings,
+      sidebarCollapsed: state.sidebarCollapsed,
       theme: state.theme,
       themeStyle: state.themeStyle,
       language: state.settings.language,
       customThemes: state.settings.customThemes,
       activeCustomThemeId: state.settings.activeCustomThemeId,
+      repositoryRevisionSelections: currentPersisted?.repositoryRevisionSelections,
+      fileHistoryView: currentPersisted?.fileHistoryView,
+      fileHistoryLayout: currentPersisted?.fileHistoryLayout,
     });
-  }, [bridge, isDesktop, state.settings, state.theme, state.themeStyle]);
+  }, [bridge, state.settings, state.sidebarCollapsed, state.theme, state.themeStyle]);
 
   useEffect(() => {
     const normalized = normalizeKeybindingsForRuntime(state.settings.keybindings, state.appRuntime);

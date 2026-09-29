@@ -1,6 +1,6 @@
 {
   "name": "markdown-explorer-electron",
-  "version": "1.6.8",
+  "version": "1.7.0",
   "description": "Markdown Explorer - Transforms your markdown documents into a premium, interactive web-app experience.",
   "homepage": "https://github.com/the-long-ride/markdown-explorer",
   "author": {
@@ -61,6 +61,7 @@
       "fonts/**/*.js",
       "window/**/*.js",
       "workspace/**/*.js",
+      "git/**/*.js",
       "search/**/*.js",
       "render/document-converter.js",
       "update/**/*.js",

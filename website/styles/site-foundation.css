@@ -270,6 +270,72 @@ img {
   transform: translateY(-1px);
 }
 
+/* Donate pill */
+.donate-btn {
+  --donate: #ff7aa2;
+  --donate-bg: rgba(255, 122, 162, 0.12);
+  --donate-bg-hover: rgba(255, 122, 162, 0.22);
+  --donate-border: rgba(255, 122, 162, 0.38);
+  border-color: var(--donate-border);
+  border-radius: 999px;
+  background: var(--donate-bg);
+  color: var(--donate);
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, transform 120ms ease;
+}
+
+[data-theme="light"] .donate-btn {
+  --donate: #c2185b;
+  --donate-bg: rgba(214, 51, 108, 0.08);
+  --donate-bg-hover: rgba(214, 51, 108, 0.15);
+  --donate-border: rgba(214, 51, 108, 0.32);
+}
+
+.donate-btn:hover,
+.donate-btn:focus-visible {
+  background: var(--donate-bg-hover);
+  border-color: var(--donate);
+  color: var(--donate);
+  box-shadow: 0 6px 18px -8px var(--donate);
+  transform: translateY(-1px);
+}
+
+.donate-btn:focus-visible {
+  outline: 2px solid var(--donate);
+  outline-offset: 2px;
+}
+
+.donate-heart {
+  flex-shrink: 0;
+  transform-origin: center;
+}
+
+.donate-btn:hover .donate-heart,
+.donate-btn:focus-visible .donate-heart {
+  animation: donate-heartbeat 1.1s ease-in-out infinite;
+}
+
+@keyframes donate-heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.22); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.14); }
+  60% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donate-btn:hover,
+  .donate-btn:focus-visible {
+    transform: none;
+  }
+
+  .donate-btn:hover .donate-heart,
+  .donate-btn:focus-visible .donate-heart {
+    animation: none;
+  }
+}
+
 /* Sun/Moon icon visibility by theme */
 [data-theme="dark"] .icon-sun  { display: none; }
 [data-theme="light"] .icon-moon { display: none; }

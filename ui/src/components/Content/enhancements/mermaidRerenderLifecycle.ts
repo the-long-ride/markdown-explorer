@@ -1,6 +1,7 @@
 import { getMermaid } from '../../../lib/renderLibs';
 import { resolveThemeMode, type AppThemeMode } from '../../../utils/themeMode.ts';
 import { createDeferredMermaidRerender } from './deferredMermaidRerender.ts';
+import { resolveMermaidViewport, runInMermaidRenderLane } from './mermaidLazyRendering.ts';
 import { createMermaidRerenderQueue } from './mermaidRerenderQueue.ts';
 import {
   enhanceMermaid,
@@ -16,6 +17,8 @@ export interface MermaidRerenderLifecycle {
 interface MermaidRerenderLifecycleOptions {
   theme: string;
   runIdRef: { current: number };
+  /** Scroll container of this document root; visible diagrams rerender first. */
+  scroll?: Element | null;
 }
 
 export function createMermaidRerenderLifecycle(
@@ -33,7 +36,8 @@ export function createMermaidRerenderLifecycle(
     stopEnhancements = startEnhancements();
   };
 
-  const queue = createMermaidRerenderQueue<HTMLElement>(async (node, isCancelled) => {
+  const queue = createMermaidRerenderQueue<HTMLElement>((node, isCancelled) => runInMermaidRenderLane(async () => {
+    if (disposed || isCancelled()) return;
     node.setAttribute('data-mdn-rerender-queued', 'true');
     invalidateMermaidRendering(node);
     try {
@@ -45,9 +49,14 @@ export function createMermaidRerenderLifecycle(
         nodes: [node],
       });
     } finally {
-      if (!isCancelled() && !disposed) node.removeAttribute('data-mdn-rerender-queued');
+      // A disposed lifecycle must release the node so the next root lifecycle's
+      // enhancement pass can render it again instead of leaving raw source.
+      if (disposed || !isCancelled()) node.removeAttribute('data-mdn-rerender-queued');
     }
-  }, undefined, { onComplete: resumeEnhancements });
+  }), undefined, {
+    viewport: () => resolveMermaidViewport(options.scroll),
+    onComplete: resumeEnhancements,
+  });
 
   const deferred = createDeferredMermaidRerender(() => {
     if (disposed) return;

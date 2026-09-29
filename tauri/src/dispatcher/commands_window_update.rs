@@ -24,8 +24,26 @@ impl Dispatcher {
                 }
             }
             "window-close" => {
+                // `WebviewWindow::close` emits CloseRequested first, so this goes through the same
+                // native close guard as the title bar and Alt+F4.
                 if let Some(window) = self.app.get_webview_window("main") {
                     let _ = window.close();
+                }
+            }
+            "confirmNativeClose" => {
+                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or_default();
+                let intent = msg.get("intent").and_then(Value::as_str).unwrap_or_default();
+                let cancelled = msg.get("cancelled").and_then(Value::as_bool) == Some(true);
+                let outcome = self
+                    .state
+                    .close_guard
+                    .lock()
+                    .confirm(request_id, intent, cancelled);
+                if outcome == crate::runtime::close_guard::ConfirmOutcome::Approved {
+                    // The guard now lets exactly one close through (update-on-close still applies).
+                    if let Some(window) = self.app.get_webview_window("main") {
+                        let _ = window.close();
+                    }
                 }
             }
             "toggle-fullscreen" => {

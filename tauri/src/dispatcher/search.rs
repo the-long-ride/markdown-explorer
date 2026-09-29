@@ -8,11 +8,14 @@ impl Dispatcher {
         items: Option<Value>,
         match_case: bool,
     ) {
-        let idx = self.ensure_search_index();
         let flat_list = self.state.inner.read().flat_list.clone();
         let items = resolve_search_items(items, &flat_list);
-        let results = idx.search_with_case(query.trim(), &items, 10000, match_case);
-        host_message::emit_workspace_search_results(&self.app, request_id, json!(results));
+        self.ensure_search_worker();
+        let state = self.state.inner.read();
+        if let Some(ref worker) = state.search_worker {
+            worker.set_workspace_items(items);
+            worker.search_workspace(request_id.to_string(), query.trim().to_string(), match_case);
+        }
     }
 
     pub(super) fn handle_search_across_workspaces(

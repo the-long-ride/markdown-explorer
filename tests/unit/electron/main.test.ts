@@ -53,7 +53,6 @@ describe('createAppBootstrap', () => {
   let clearTimeoutImpl: ReturnType<typeof vi.fn>;
   let setImmediateImpl: ReturnType<typeof vi.fn>;
   let configureYouTubeEmbedHeadersFn: ReturnType<typeof vi.fn>;
-  let createAppTrayFn: ReturnType<typeof vi.fn>;
   let createUpdateManagerFn: ReturnType<typeof vi.fn>;
   let registerIpcHandlersFn: ReturnType<typeof vi.fn>;
   let runtimeImpl: any;
@@ -92,7 +91,6 @@ describe('createAppBootstrap', () => {
     clearTimeoutImpl = vi.fn();
     setImmediateImpl = vi.fn((fn: Function) => fn());
     configureYouTubeEmbedHeadersFn = vi.fn();
-    createAppTrayFn = vi.fn(() => ({}));
     createUpdateManagerFn = vi.fn(() => ({
       applyPendingUpdateOnQuit: vi.fn(),
     }));
@@ -150,7 +148,6 @@ describe('createAppBootstrap', () => {
       clearTimeoutImpl,
       setImmediateImpl,
       configureYouTubeEmbedHeadersFn,
-      createAppTrayFn,
       createUpdateManagerFn,
       registerIpcHandlersFn,
       runtimeImpl,
@@ -158,7 +155,6 @@ describe('createAppBootstrap', () => {
       appDirImpl: '/test/app',
       createMainWindowFn,
       recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
-      TrayConstructor: vi.fn(),
       ipcMainImpl: {},
       clipboardImpl: {},
       shellImpl: { openExternal: vi.fn() },
@@ -212,12 +208,11 @@ describe('createAppBootstrap', () => {
       result = createAppBootstrap({
         appImpl, BrowserWindowImpl, sessionImpl, MenuImpl, perfImpl,
         processImpl, setTimeoutImpl, clearTimeoutImpl, setImmediateImpl,
-        configureYouTubeEmbedHeadersFn, createAppTrayFn, createUpdateManagerFn,
+        configureYouTubeEmbedHeadersFn, createUpdateManagerFn,
         registerIpcHandlersFn, runtimeImpl, debugToolsImpl, createMainWindowFn,
         appDirImpl: '/test/app', pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
         fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
         recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
-        TrayConstructor: vi.fn(),
         ipcMainImpl: {},
         clipboardImpl: {},
         shellImpl: { openExternal: vi.fn() },
@@ -232,9 +227,8 @@ describe('createAppBootstrap', () => {
       expect(clearTimeoutImpl).toHaveBeenCalled();
     });
 
-    test('setImmediate creates tray, updateManager, and registers handlers', async () => {
+    test('setImmediate creates updateManager and registers handlers', async () => {
       await Promise.resolve();
-      expect(createAppTrayFn).toHaveBeenCalled();
       expect(createUpdateManagerFn).toHaveBeenCalledWith({
         app: appImpl,
         execPath: '/node',
@@ -271,6 +265,17 @@ describe('createAppBootstrap', () => {
       expect(call.handlers.scheduleDownloadedUpdate).toBe(runtimeImpl.handleScheduleDownloadedUpdate);
       expect(call.handlers.restartAndApplyUpdate).toBe(runtimeImpl.handleRestartAndApplyUpdate);
       expect(call.handlers.openHtmlPreview).toEqual(expect.any(Function));
+    });
+
+    test('windowClose routes through the native close guard instead of closing the window', async () => {
+      await Promise.resolve();
+      const call = registerIpcHandlersFn.mock.calls[0][0];
+      const win = createMainWindowFn.mock.results[0].value;
+      win.close = vi.fn();
+      call.handlers.windowClose();
+      expect(win.webContents.send).toHaveBeenCalledWith('host-message', expect.objectContaining({ command: 'nativeCloseRequested', intent: 'app' }));
+      expect(win.close).not.toHaveBeenCalled();
+      expect(appImpl.quit).not.toHaveBeenCalled();
     });
 
     test('registers activate event listener', async () => {
@@ -334,12 +339,11 @@ describe('createAppBootstrap', () => {
       result = createAppBootstrap({
         appImpl, BrowserWindowImpl, sessionImpl, MenuImpl, perfImpl,
         processImpl, setTimeoutImpl, clearTimeoutImpl, setImmediateImpl,
-        configureYouTubeEmbedHeadersFn, createAppTrayFn, createUpdateManagerFn,
+        configureYouTubeEmbedHeadersFn, createUpdateManagerFn,
         registerIpcHandlersFn, runtimeImpl, debugToolsImpl, createMainWindowFn,
         appDirImpl: '/test/app', pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
         fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
         recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
-        TrayConstructor: vi.fn(),
         ipcMainImpl: {},
         clipboardImpl: {},
         shellImpl: { openExternal: vi.fn() },
@@ -356,12 +360,11 @@ describe('createAppBootstrap', () => {
       result = createAppBootstrap({
         appImpl, BrowserWindowImpl, sessionImpl, MenuImpl, perfImpl,
         processImpl, setTimeoutImpl, clearTimeoutImpl, setImmediateImpl,
-        configureYouTubeEmbedHeadersFn, createAppTrayFn, createUpdateManagerFn,
+        configureYouTubeEmbedHeadersFn, createUpdateManagerFn,
         registerIpcHandlersFn, runtimeImpl, debugToolsImpl, createMainWindowFn,
         appDirImpl: '/test/app', pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
         fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
         recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
-        TrayConstructor: vi.fn(),
         ipcMainImpl: {},
         clipboardImpl: {},
         shellImpl: { openExternal: vi.fn() },
@@ -400,12 +403,12 @@ describe('createAppBootstrap', () => {
     result = createAppBootstrap({
       appImpl, BrowserWindowImpl, sessionImpl, MenuImpl, perfImpl, processImpl,
       setTimeoutImpl, clearTimeoutImpl, setImmediateImpl, configureYouTubeEmbedHeadersFn,
-      createAppTrayFn, createUpdateManagerFn, registerIpcHandlersFn, runtimeImpl,
+      createUpdateManagerFn, registerIpcHandlersFn, runtimeImpl,
       debugToolsImpl, createMainWindowFn, appDirImpl: '/test/app',
       pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
       fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
       recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
-      TrayConstructor: vi.fn(), ipcMainImpl: {}, clipboardImpl: {}, shellImpl: { openExternal: vi.fn() },
+      ipcMainImpl: {}, clipboardImpl: {}, shellImpl: { openExternal: vi.fn() },
       createHtmlPreviewServerFn,
       externalOpenQueue,
     });

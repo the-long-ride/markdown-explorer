@@ -26,7 +26,7 @@ describe('startup workspace', () => {
       fileList: [],
       tree: null,
       theme: 'dark',
-      themeStyle: 'default',
+      themeStyle: 'raw-grid',
       defaultExpanded: true,
       workspaceName: 'project',
       workspacePath: 'C:/docs/project',

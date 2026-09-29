@@ -1,6 +1,10 @@
 import { runContentEnhancements } from './runContentEnhancements';
 import { createContentEnhancementScheduler } from './contentEnhancementScheduler';
 
+// Fired (bubbling) on the document body whenever an enhancement pass settles,
+// so hosts can re-apply layout-sensitive state such as a restored scroll.
+export const ENHANCEMENTS_SETTLED_EVENT = 'mdn:enhancements-settled';
+
 interface ScheduleArgs {
   body: HTMLElement;
   state: { theme: string };
@@ -29,7 +33,7 @@ export function hasPendingContentEnhancements(body: ParentNode): boolean {
 export function scheduleContentEnhancements({
   body,
   state,
-  scrollRef: _scrollRef,
+  scrollRef,
   handleScroll,
   mermaidRunIdRef,
 }: ScheduleArgs) {
@@ -42,8 +46,12 @@ export function scheduleContentEnhancements({
       isDark: resolveDarkTheme(state.theme),
       isCancelled: () => cancelled,
       mermaidRunIdRef,
+      scroll: scrollRef.current,
     }),
-    onSettled: handleScroll,
+    onSettled: () => {
+      handleScroll();
+      body.dispatchEvent(new CustomEvent(ENHANCEMENTS_SETTLED_EVENT, { bubbles: true }));
+    },
     requestFrame: (callback) => requestAnimationFrame(callback),
     cancelFrame: (handle) => cancelAnimationFrame(handle),
     createObserver: (callback) => new MutationObserver(callback),

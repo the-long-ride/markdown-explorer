@@ -107,7 +107,8 @@ test('HTML previews do not inherit Markdown Explorer typography or theme styles'
   assert.match(documentBuilder, /data-mdn-network-guard/);
   assert.match(view, /sandbox="allow-scripts allow-forms"/);
   assert.match(globalHandlers, /message\.height !== 'number'/);
-  assert.match(globalHandlers, /iframe\.style\.height = `\$\{Math\.ceil\(message\.height\)\}px`/);
+  assert.match(globalHandlers, /const height = `\$\{Math\.ceil\(message\.height\)\}px`/);
+  assert.match(globalHandlers, /iframe\.style\.height = height;/);
   assert.doesNotMatch(globalHandlers, /Math\.max\(640/);
   assert.doesNotMatch(globalHandlers, /Math\.min\(1200/);
 });
@@ -217,11 +218,12 @@ test('workspace-local resource readers resolve root-relative paths and keep file
   assert.match(chrome, /reference\.startsWith\('\/'\)/);
 });
 
-test('local-first HTML dialog is shown 1 time per file and experience banner is shown 1 time total per app opening session', async () => {
+test('local-first HTML dialog resets with the rendered document and experience banner is shown 1 time total per app opening session', async () => {
   const content = await read('ui/src/components/Content/Content.tsx');
   assert.match(content, /htmlPreviewWarningSeenRef\.current\.has\((?:state\.currentFile|warningSessionKey)\)/);
   assert.match(content, /htmlPreviewWarningSeenRef\.current\.add\((?:state\.currentFile|warningSessionKey)\)/);
-  assert.doesNotMatch(content, /htmlPreviewWarningSeenRef\.current\.delete/);
+  assert.match(content, /htmlPreviewWarningSeenRef\.current\.delete\(state\.currentFile\)/);
+  assert.match(content, /\[state\.currentFile, state\.renderVersion\]/);
   assert.match(content, /htmlPreviewExperienceNoticeSeenRef\.current/);
   assert.match(content, /if\s*\(htmlPreviewExperienceNoticeSeenRef\.current\)\s*return;/);
 });

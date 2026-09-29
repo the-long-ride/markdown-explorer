@@ -49,6 +49,45 @@ describe('createPreloadApi', () => {
     expect(ipcRenderer.removeListener).toHaveBeenCalledWith('host-message', expect.any(Function));
   });
 
+  test('onMessage shares one ipc listener across many subscribers', () => {
+    const handlers: Function[] = [];
+    const ipcRenderer = {
+      send: vi.fn(),
+      on: vi.fn((_channel: string, handler: Function) => { handlers.push(handler); }),
+      removeListener: vi.fn((_channel: string, handler: Function) => {
+        const index = handlers.indexOf(handler);
+        if (index >= 0) handlers.splice(index, 1);
+      }),
+    };
+    const api = createPreloadApi({ ipcRenderer, webUtils: { getPathForFile: vi.fn() } });
+    const callbacks = Array.from({ length: 15 }, () => vi.fn());
+    const unsubscribes = callbacks.map((callback) => api.onMessage(callback));
+
+    expect(ipcRenderer.on).toHaveBeenCalledTimes(1);
+    handlers[0]({}, { command: 'ping' });
+    for (const callback of callbacks) expect(callback).toHaveBeenCalledWith({ command: 'ping' });
+
+    for (const unsubscribe of unsubscribes) unsubscribe();
+    expect(ipcRenderer.removeListener).toHaveBeenCalledTimes(1);
+    expect(handlers).toHaveLength(0);
+  });
+
+  test('a throwing subscriber does not stop delivery to the others', () => {
+    const handlers: Function[] = [];
+    const ipcRenderer = { send: vi.fn(), on: vi.fn((_c: string, h: Function) => { handlers.push(h); }), removeListener: vi.fn() };
+    const api = createPreloadApi({ ipcRenderer, webUtils: { getPathForFile: vi.fn() } });
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const after = vi.fn();
+    api.onMessage(() => { throw new Error('boom'); });
+    api.onMessage(after);
+
+    handlers[0]({}, { command: 'ping' });
+
+    expect(after).toHaveBeenCalledWith({ command: 'ping' });
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
+  });
+
   test('getPathForFile uses webUtils.getPathForFile when available', () => {
     const ipcRenderer = { send: vi.fn(), on: vi.fn(), removeListener: vi.fn() };
     const webUtils = { getPathForFile: vi.fn((file: any) => '/resolved/path') };

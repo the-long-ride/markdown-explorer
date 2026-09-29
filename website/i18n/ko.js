@@ -174,6 +174,7 @@ window.LANGS.ko = {
     faq3A: "Windows는 NSIS 또는 포터블 exe, Linux는 AppImage 또는 deb, macOS는 칩셋에 맞는 dmg를 선택하세요.",
     footerBy: "개발진:",
     footerIssues: "이슈 제보",
+    footerDonate: "후원하기",
     footerPrivacy: "개인정보 처리방침",
     footerTerms: "이용약관",
     footerLicense: "라이선스",
@@ -235,6 +236,8 @@ window.LANGS.ko = {
     footerMit: "MIT 라이선스.",
     galleryCaption3Title: "대화형 HTML 샌드박스",
     langSwitchTitle: "언어 변경",
+    navDonate: "후원하기",
+    donateAria: "후원으로 Markdown Explorer를 응원해 주세요",
     themeToggleTitle: "색상 테마 전환",
     modalCloseLabel: "모달 닫기",
 };

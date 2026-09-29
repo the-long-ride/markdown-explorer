@@ -8,6 +8,7 @@ function createRuntimeCommandSearchHandlers({
   sendHostMessage,
 }) {
   const indexedSearchPaths = new Set();
+  let workspaceSearchGeneration = 0;
 
   function handleSearchAcrossWorkspaces(msg) {
     ensureHeavyModules();
@@ -25,10 +26,48 @@ function createRuntimeCommandSearchHandlers({
     const idx = ensureSearchIndex();
     const query = String(msg.query || "").trim();
     const items = Array.isArray(msg.items) ? msg.items : state.flatList;
-    sendHostMessage({
-      command: "workspaceSearchResults",
-      requestId: msg.requestId,
-      results: idx.search(query, items, 10000, { matchCase: Boolean(msg.matchCase) }),
+    const generation = ++workspaceSearchGeneration;
+    const requestId = msg.requestId;
+    if (typeof idx.searchIncremental !== "function") {
+      let results = [];
+      try {
+        results = idx.search(query, items, 10000, { matchCase: Boolean(msg.matchCase) });
+      } catch {
+        // Always answer so the UI clears its loading state.
+      }
+      sendHostMessage({ command: "workspaceSearchResults", requestId, results, done: true, total: results.length, truncated: false, cancelled: false });
+      return;
+    }
+
+    void idx.searchIncremental(query, items, {
+      matchCase: Boolean(msg.matchCase),
+      batchSize: 100,
+      maxResults: 10000,
+      maxMatchesPerFile: 200,
+      yieldEvery: 25,
+      shouldCancel: () => generation !== workspaceSearchGeneration,
+      onBatch(results) {
+        if (generation === workspaceSearchGeneration) {
+          sendHostMessage({ command: "workspaceSearchResults", requestId, results, done: false });
+        }
+      },
+    }).then((summary) => {
+      if (generation === workspaceSearchGeneration) {
+        sendHostMessage({ command: "workspaceSearchResults", requestId, results: [], done: true, ...summary });
+      }
+    }).catch((error) => {
+      if (generation === workspaceSearchGeneration) {
+        sendHostMessage({
+          command: "workspaceSearchResults",
+          requestId,
+          results: [],
+          done: true,
+          total: 0,
+          truncated: false,
+          cancelled: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     });
   }
 

@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GITHUB_REPO_URL } from '../../../../ui/src/constants/urls';
+import { DONATE_URL, GITHUB_REPO_URL } from '../../../../ui/src/constants/urls';
 import { useSupportPrompt } from '../../../../ui/src/hooks/useSupportPrompt';
 import {
   loadSupportPromptState,
@@ -101,6 +101,25 @@ describe('useSupportPrompt', () => {
     expect(onOpenExternal).toHaveBeenCalledWith(GITHUB_REPO_URL);
     expect(result.current.isOpen).toBe(false);
     expect(loadSupportPromptState().neverShowAgain).toBe(false);
+  });
+
+  it('handleDonate opens the donation page and closes modal', () => {
+    const onOpenExternal = vi.fn();
+    saveSupportPromptState({
+      totalUsageMs: SUPPORT_PROMPT_FIRST_THRESHOLD_MS + 100,
+      lastPromptUsageMs: 0,
+      neverShowAgain: false,
+    });
+
+    const { result } = renderHook(() => useSupportPrompt({ onOpenExternal }));
+    act(() => {
+      result.current.handleDonate(true);
+    });
+
+    expect(DONATE_URL).toBe('https://github.com/the-long-ride#donate');
+    expect(onOpenExternal).toHaveBeenCalledWith(DONATE_URL);
+    expect(result.current.isOpen).toBe(false);
+    expect(loadSupportPromptState().neverShowAgain).toBe(true);
   });
 
   it('handleStar falls back to window.open if onOpenExternal not provided', () => {

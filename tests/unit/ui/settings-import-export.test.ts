@@ -381,6 +381,14 @@ describe('parseSettingsImport - normalizeSettings branches', () => {
     expect(result.settings.defaultHtmlPreview).toBe(false);
   });
 
+  test('upstream HTML preview access defaults to false and preserves explicit consent', () => {
+    const safeDefault = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
+    const allowed = parseSettingsImport(JSON.stringify(makeEnvelope({ allowUpstreamHtmlPreview: true })), false);
+
+    expect(safeDefault.settings.allowUpstreamHtmlPreview).toBe(false);
+    expect(allowed.settings.allowUpstreamHtmlPreview).toBe(true);
+  });
+
   test('defaultCsvPreview defaults to true for legacy exports', () => {
     const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
     expect(result.settings.defaultCsvPreview).toBe(true);

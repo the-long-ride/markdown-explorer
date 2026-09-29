@@ -358,5 +358,8 @@ describe("WelcomePage rendering", () => {
     const starLink = screen.getByRole("link", { name: /Star on GitHub/i });
     expect(starLink).toBeInTheDocument();
     expect(starLink).toHaveAttribute("href", "https://github.com/the-long-ride/markdown-explorer");
+    const donateLink = screen.getByRole("link", { name: /^Donate$/i });
+    expect(donateLink).toHaveAttribute("href", "https://github.com/the-long-ride#donate");
+    expect(donateLink).toHaveAttribute("target", "_blank");
   });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { useDirtyDocumentsGuard } from '../../hooks/useDirtyDocumentsGuard';
 import { FolderIcon } from '../shared/icons';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 import type { RecentWorkspace } from '../../types';
@@ -28,6 +29,7 @@ export function WorkspaceSelection({
 }: WorkspaceSelectionProps = {}) {
   const { state, toggleTheme } = useAppState();
   const bridge = usePlatform();
+  const guardWorkspaceLeave = useDirtyDocumentsGuard();
   const t = getTranslations(state.settings.language || 'en');
   const [modalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,20 +41,22 @@ export function WorkspaceSelection({
   const isWebDemo = typeof (window as any).__webDemoBus !== 'undefined';
   const isWebFileMode = isWebDemo && new URLSearchParams(window.location.search).get('mode') === 'file';
 
-  const handleOpenFolder = () => {
+  // Opening another workspace replaces the loaded one; a dirty document left
+  // behind by an earlier host-initiated switch is resolved before it is dropped.
+  const handleOpenFolder = () => guardWorkspaceLeave(() => {
     const operation = onBeforeOpenWorkspace?.();
     bridge.postMessage({ command: 'openFolder', openFirstFile: embeddedInTabs, ...operation });
-  };
+  });
 
-  const handleOpenFile = () => {
+  const handleOpenFile = () => guardWorkspaceLeave(() => {
     const operation = onBeforeOpenWorkspace?.();
     bridge.postMessage({ command: 'openFile', ...operation });
-  };
+  });
 
-  const handleOpenRecent = (path: string) => {
+  const handleOpenRecent = (path: string) => guardWorkspaceLeave(() => {
     const operation = onBeforeOpenWorkspace?.();
     bridge.postMessage({ command: 'openRecentWorkspace', path, openFirstFile: embeddedInTabs, ...operation });
-  };
+  });
 
   const handleDeleteRecent = (path: string) => {
     bridge.postMessage({ command: 'deleteRecentWorkspace', path });

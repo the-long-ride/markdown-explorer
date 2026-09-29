@@ -1,6 +1,10 @@
 import { virtualFiles, getVirtualContent } from "./virtual-workspace";
 import type { MdFile } from "../../ui/src/types";
 import { normalizeForSearch, prepareHaystack } from "../../ui/src/utils/unicodeSearch";
+import {
+  MAX_WORKSPACE_SEARCH_RESULTS,
+  WORKSPACE_SEARCH_BATCH_SIZE,
+} from "../../ui/src/constants/limits";
 
 
 // Simple content search over virtual files
@@ -22,7 +26,7 @@ export function makeExcerpt(text: string, index: number, matchLength: number): s
 
 export function searchVirtualFiles(
   query: string,
-  limit = 80,
+  limit = MAX_WORKSPACE_SEARCH_RESULTS,
   options: { matchCase?: boolean } = {},
 ): unknown[] {
   const matchCase = options.matchCase === true;
@@ -88,4 +92,41 @@ export function searchVirtualFiles(
     matchLength: r.matchLength,
     matchOrdinal: r.matchOrdinal,
   }));
+}
+
+export interface VirtualSearchIncrementalOptions {
+  limit?: number;
+  batchSize?: number;
+  yieldEvery?: number;
+  matchCase?: boolean;
+  shouldCancel?: () => boolean;
+  onBatch?: (results: readonly unknown[]) => void;
+}
+
+export async function searchVirtualFilesIncremental(
+  query: string,
+  options: VirtualSearchIncrementalOptions = {},
+): Promise<{ total: number; truncated: boolean; cancelled: boolean }> {
+  const limit = Math.max(1, Math.min(MAX_WORKSPACE_SEARCH_RESULTS, Math.floor(options.limit ?? MAX_WORKSPACE_SEARCH_RESULTS)));
+  const batchSize = Math.max(1, Math.min(WORKSPACE_SEARCH_BATCH_SIZE, Math.floor(options.batchSize ?? WORKSPACE_SEARCH_BATCH_SIZE)));
+  const yieldEvery = Math.max(1, Math.floor(options.yieldEvery ?? 25));
+  const candidates = searchVirtualFiles(query, limit + 1, { matchCase: options.matchCase });
+  const truncated = candidates.length > limit;
+  const results = candidates.slice(0, limit);
+  let total = 0;
+  let cancelled = false;
+
+  for (let index = 0; index < results.length; index += batchSize) {
+    if (options.shouldCancel?.()) {
+      cancelled = true;
+      break;
+    }
+    options.onBatch?.(results.slice(index, index + batchSize));
+    total = Math.min(index + batchSize, results.length);
+    if (Math.floor(index / batchSize) % yieldEvery === 0) {
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  return { total, truncated, cancelled };
 }

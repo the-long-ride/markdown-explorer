@@ -23,13 +23,13 @@ test('sidebar search reruns for focus changes and the files scope controls occup
     read('ui/src/styles/global/global-sidebar-tree-layout.css'),
     read('ui/src/styles/global/global-sidebar-search-controls.css'),
   ]);
-  assert.match(sidebar, /selectedFilePaths=\{selectedFilePaths\}/);
-  assert.match(sidebar, /hasScopeEntry=\{hasScopeEntry\}/);
+  assert.match(sidebar, /selectedFilePaths=\{isRevisionMode \? undefined : selectedFilePaths\}/);
+  assert.match(sidebar, /hasScopeEntry=\{isRevisionMode \? false : hasScopeEntry\}/);
   assert.match(sidebar, /sidebar__files-second-row/);
   assert.match(search, /getScopeSearchRevision/);
   assert.match(search, /filterWorkspaceSearchResultsByScope/);
   assert.match(search, /scopeRevision/);
-  assert.match(search, /\[bridge, query, matchCase, scopeRevision\]/);
+  assert.match(search, /scopeRevision, scopedSearchItems\]/);
   assert.match(treeCss, /--sidebar-search-height/);
   assert.match(scopeCss, /sidebar__files-second-row/);
 });
@@ -53,4 +53,45 @@ test('sidebar tabs fit their labels, animate one shared indicator, and bookmark 
   assert.match(panel, /TrashIcon/);
   assert.match(icons, /viewBox="0 0 122\.47 122\.88"/);
   assert.match(tabsCss, /sidebar-panel-enter/);
+});
+
+test('focus mode keeps a reliable desktop drag surface while the breadcrumb only occupies content width', async () => {
+  const [appShell, topbarCss, electronCss, topbarTsx] = await Promise.all([
+    read('ui/src/AppShell.tsx'),
+    read('ui/src/styles/global/global-topbar-actions.css'),
+    read('ui/src/styles/global/global-electron-window-controls.css'),
+    read('ui/src/components/Topbar/Topbar.tsx'),
+  ]);
+
+  assert.match(appShell, /!state\.focusMode/);
+  assert.match(appShell, /state\.appRuntime !== 'desktop' && state\.appRuntime !== 'tauri'/);
+  assert.match(appShell, /focus-mode-drag-region__surface/);
+  assert.match(appShell, /focus-mode-drag-region__controls/);
+  assert.match(appShell, /data-tauri-drag-region/);
+  assert.match(electronCss, /\.focus-mode-drag-region\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?height:\s*34px;/);
+  assert.match(electronCss, /\.focus-mode-drag-region__surface\s*\{[\s\S]*?top:\s*6px;[\s\S]*?height:\s*24px;/);
+  assert.match(electronCss, /body\.is-electron \.focus-mode-drag-region__surface\s*\{[\s\S]*?-webkit-app-region:\s*drag;/);
+  assert.match(electronCss, /body\.is-desktop \.focus-mode-drag-region__surface[\s\S]*?-webkit-app-region:\s*drag;/);
+  assert.match(electronCss, /body\.is-desktop \.topbar[\s\S]*?-webkit-app-region:\s*drag;/);
+  assert.match(electronCss, /body\.is-electron \.topbar\s*\{[\s\S]*?-webkit-app-region:\s*drag;/);
+  assert.doesNotMatch(electronCss, /body\.is-electron \.topbar__breadcrumb-container/);
+  assert.match(electronCss, /body\.is-electron \.focus-mode-drag-region__controls,[\s\S]*?-webkit-app-region:\s*no-drag;/);
+  assert.match(topbarCss, /\.topbar__breadcrumb-container\s*\{[\s\S]*?flex:\s*0 1 auto;[\s\S]*?width:\s*fit-content;/);
+  assert.match(topbarCss, /\.topbar__breadcrumb\s*\{[\s\S]*?flex:\s*0 1 auto;[\s\S]*?width:\s*fit-content;/);
+  assert.match(topbarTsx, /<header className="topbar" data-tauri-drag-region=\{isDesktop \? '' : undefined\}>/);
+  assert.match(topbarTsx, /<div className="topbar__breadcrumb-container" data-tauri-drag-region=\{isDesktop \? '' : undefined\}>/);
+});
+
+test('narrow window topbar keeps app title unwrapped, hides subtitle, and truncates breadcrumb filename from left', async () => {
+  const [topbarCss, buttonsCss, topbarTsx] = await Promise.all([
+    read('ui/src/styles/global/global-topbar-actions.css'),
+    read('ui/src/styles/global/global-search-buttons.css'),
+    read('ui/src/components/Topbar/Topbar.tsx'),
+  ]);
+
+  assert.match(topbarCss, /\.topbar__logo-title\s*\{[\s\S]*?white-space:\s*nowrap;/);
+  assert.match(topbarCss, /@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*?\.topbar__logo-subtitle\s*\{[\s\S]*?display:\s*none/);
+  assert.match(buttonsCss, /\.topbar__breadcrumb\s*\{[\s\S]*?display:\s*flex\s*!important;[\s\S]*?white-space:\s*nowrap\s*!important;/);
+  assert.match(buttonsCss, /\.topbar__breadcrumb-part--bold\s*\{[\s\S]*?direction:\s*rtl;[\s\S]*?text-overflow:\s*ellipsis\s*!important;/);
+  assert.match(topbarTsx, /topbar__breadcrumb-item\$\{item\.isBold \? ' topbar__breadcrumb-item--file' : ' topbar__breadcrumb-item--dir'\}/);
 });

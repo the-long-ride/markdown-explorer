@@ -55,7 +55,8 @@ if (fs.existsSync(cargoPath)) {
 const indexHtmlPath = path.join(rootDir, 'website/index.html');
 if (fs.existsSync(indexHtmlPath)) {
   let content = fs.readFileSync(indexHtmlPath, 'utf8');
-  const updated = content.replace(/"softwareVersion":\s*"[^"]*"/, `"softwareVersion": "${version}"`);
+  let updated = content.replace(/"softwareVersion":\s*"[^"]*"/, `"softwareVersion": "${version}"`);
+  updated = updated.replace(/<span data-version-text>v[^<]*<\/span>/, `<span data-version-text>v${version}</span>`);
   if (content !== updated) {
     fs.writeFileSync(indexHtmlPath, updated, 'utf8');
     console.log(`Synced: website/index.html -> ${version}`);
@@ -66,7 +67,7 @@ if (fs.existsSync(indexHtmlPath)) {
 const llmTxtPath = path.join(rootDir, 'website/llm.txt');
 if (fs.existsSync(llmTxtPath)) {
   let content = fs.readFileSync(llmTxtPath, 'utf8');
-  const updated = content.replace(/- Current version:\s*\d+\.\d+\.\d+/, `- Current version: ${version}`);
+  const updated = content.replace(/- (\*\*Current version\*\*|Current version):\s*\d+\.\d+\.\d+/, `- $1: ${version}`);
   if (content !== updated) {
     fs.writeFileSync(llmTxtPath, updated, 'utf8');
     console.log(`Synced: website/llm.txt -> ${version}`);

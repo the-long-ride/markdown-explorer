@@ -1,17 +1,19 @@
-# Runtime build output must be packaged even though the repository ignores build artifacts
-!out/
-!out/**
-!ui/
+# Package only the VS Code host bundle and its two externalized runtime helpers.
+out/**
+!out/vscode/src/core/extension.bundle.js
+!out/vscode/src/vendor/markdown-them.cjs
+!out/node_modules/yaml/index.js
 !ui/dist/
 !ui/dist/**
-!ui/assets/
-!ui/assets/**
+ui/assets/**
+!ui/assets/icons/markdown-explorer-dark-stroke.svg
+!ui/assets/icons/markdown-explorer-light-stroke.svg
+!ui/assets/logos/logo-500.png
 
 # TypeScript configurations and Source Code
 **/tsconfig.json
+tsconfig.tsbuildinfo
 src/**
-**/out/**/*.map
-**/out/**/*.d.ts
 
 # Test files and test sample documents
 **/test/**
@@ -66,7 +68,3 @@ out/vscode/src/core/panelInsightsExternal.d.ts
 # The renderer lazy chunks are unreachable in the VS Code capability boundary.
 ui/dist/assets/WorkspaceInsightsEntry.js
 ui/dist/assets/insights.worker-*.js
-
-# The compiled Markdown parser resolves yaml from this package-local runtime path.
-!out/node_modules/yaml/
-!out/node_modules/yaml/**

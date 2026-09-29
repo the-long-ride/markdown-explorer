@@ -24,7 +24,7 @@ describe('website demo Workspace Insights boundary', () => {
     for (const file of [
       'ui/src/AppView.tsx',
       'ui/src/components/Topbar/Topbar.tsx',
-      'ui/src/components/Settings/SettingsPreferencesPanel.tsx',
+      'ui/src/components/Settings/SettingsFeaturesSection.tsx',
       'ui/src/components/Settings/SettingsModal.tsx',
       'ui/src/useAppLayoutEffects.ts',
     ]) {

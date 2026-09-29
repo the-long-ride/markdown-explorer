@@ -2,7 +2,8 @@ import { enhanceRawHtmlImageRows } from '../../markdown/rawHtmlImageRows';
 import { getChart, getHighlightJs, getKatex, getMermaid } from '../../lib/renderLibs';
 import { syncHtmlPreviewTheme } from './enhancements/htmlPreviewTheme';
 import { enhanceMath } from './enhancements/mathRendering';
-import { enhanceMermaid } from './enhancements/mermaidRendering';
+import { enhanceMermaidLazily } from './enhancements/mermaidLazyRendering';
+import { resolveMermaidCacheSignature } from './enhancements/mermaidSvgCache';
 import { enhanceSyntax } from './enhancements/syntaxHighlighting';
 import { enhanceTables } from './enhancements/tableEnhancement';
 import { runEnhancementTasks } from './enhancementTasks';
@@ -12,10 +13,12 @@ export interface ContentEnhancementOptions {
   isDark: boolean;
   isCancelled: () => boolean;
   mermaidRunIdRef: { current: number };
+  /** Scroll container of the document root; orders lazy Mermaid rendering. */
+  scroll?: Element | null;
 }
 
 export async function runContentEnhancements(options: ContentEnhancementOptions): Promise<void> {
-  const { body, isDark, isCancelled, mermaidRunIdRef } = options;
+  const { body, isDark, isCancelled, mermaidRunIdRef, scroll } = options;
   enhanceRawHtmlImageRows(body);
 
   await runEnhancementTasks([
@@ -29,12 +32,15 @@ export async function runContentEnhancements(options: ContentEnhancementOptions)
     },
     {
       label: 'Mermaid',
-      run: () => enhanceMermaid(body, {
+      run: () => enhanceMermaidLazily(body, {
         getLibrary: getMermaid,
         isDark,
         isCancelled,
         runIdRef: mermaidRunIdRef,
-      }),
+        // Resolved theme variables, read when the pass starts, so another theme
+        // (mode, style or custom palette) never reuses stale diagram colors.
+        cacheSignature: resolveMermaidCacheSignature(document, isDark),
+      }, { scroll }),
     },
     {
       label: 'Table enhancement',

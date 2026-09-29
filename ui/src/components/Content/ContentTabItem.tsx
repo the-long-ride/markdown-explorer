@@ -9,6 +9,8 @@ interface ContentTabItemProps {
   closePhaseClass: string;
   dragged: boolean;
   closeLabel: string;
+  dirty?: boolean;
+  dirtyLabel?: string;
   draggedTabPathRef: MutableRefObject<string | null>;
   didDragRef: MutableRefObject<boolean>;
   ghostRef: React.RefObject<HTMLDivElement | null>;
@@ -22,9 +24,10 @@ interface ContentTabItemProps {
 }
 
 export function ContentTabItem({
-  tab, active, label, closePhaseClass, dragged, closeLabel, draggedTabPathRef,
-  didDragRef, ghostRef, tabElementsRef, onSetDraggedPath, onSetGhostLabel,
-  onReorder, onActivate, onOpenContextMenu, onClose,
+  tab, active, label, closePhaseClass, dragged, closeLabel, dirty = false,
+  dirtyLabel = 'Unsaved changes', draggedTabPathRef, didDragRef, ghostRef,
+  tabElementsRef, onSetDraggedPath, onSetGhostLabel, onReorder, onActivate,
+  onOpenContextMenu, onClose,
 }: ContentTabItemProps) {
   const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || (event.target as HTMLElement).closest('.content-tab__close')) return;
@@ -82,6 +85,7 @@ export function ContentTabItem({
       onAuxClick={(event) => { if (event.button === 1) { event.preventDefault(); onClose(tab.filePath); } }}
     >
       <span className="content-tab__label">{label}</span>
+      {dirty && <span className="content-tab__dirty" aria-label={dirtyLabel} title={dirtyLabel}>●</span>}
       <button type="button" className="content-tab__close" aria-label={closeLabel} title={closeLabel}
         onClick={(event) => { event.stopPropagation(); onClose(tab.filePath); }}>
         <CloseIcon size={11} />

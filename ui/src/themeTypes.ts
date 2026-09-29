@@ -1,5 +1,6 @@
 import type { SidebarPinnedItem, SidebarSortMode } from './types/files';
 import type { DesktopFontBindings, DesktopFontSelection } from './desktop/fonts/fontModel';
+import type { PersistedRepositoryRevisionSelections } from './history/repositoryView';
 
 // ── UI state ────────────────────────────────────────────────────────────────
 
@@ -79,12 +80,15 @@ export interface CustomTheme {
 export interface AppSettings {
   showTitle: boolean;
   defaultHtmlPreview: boolean;
+  allowUpstreamHtmlPreview: boolean;
   defaultHtmlCodeBlockPreview: boolean;
   defaultCsvPreview: boolean;
   fileTabs: boolean;
   bookmarksEnabled: boolean;
   insightsEnabled: boolean;
   documentConversion: boolean;
+  historySidebarEnabled: boolean;
+  markdownEditingEnabled: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
   sidebarPinnedItems?: Record<string, SidebarPinnedItem[]>;
@@ -103,12 +107,15 @@ export interface PersistedState {
   sidebarCollapsed?: boolean;
   showTitle?: boolean;
   defaultHtmlPreview?: boolean;
+  allowUpstreamHtmlPreview?: boolean;
   defaultHtmlCodeBlockPreview?: boolean;
   defaultCsvPreview?: boolean;
   fileTabs?: boolean;
   bookmarksEnabled?: boolean;
   insightsEnabled?: boolean;
   documentConversion?: boolean;
+  historySidebarEnabled?: boolean;
+  markdownEditingEnabled?: boolean;
   scopeFocus?: Record<string, string[]>;
   searchScopeFocus?: Record<string, string[]>;
   sidebarPinnedItems?: Record<string, SidebarPinnedItem[]>;
@@ -125,4 +132,8 @@ export interface PersistedState {
   language?: string;
   customThemes?: CustomTheme[];
   activeCustomThemeId?: string;
+  repositoryRevisionSelections?: PersistedRepositoryRevisionSelections;
+  fileHistoryView?: 'raw-inline' | 'raw-split' | 'rendered';
+  fileHistoryLayout?: { listWidth?: number; splitRatio?: number };
+  inlineEditToolbarVisible?: boolean;
 }

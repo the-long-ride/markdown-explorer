@@ -23,3 +23,9 @@
     0 0 18px color-mix(in srgb, #450a0a 40%, transparent);
 }
 
+
+.document-conflict-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

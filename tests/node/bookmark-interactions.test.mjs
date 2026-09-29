@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -29,8 +30,8 @@ test('bookmark menu sends one source payload through the verified save command',
 test('link menu keeps open and copy actions and adds bookmark action only when enabled', async () => {
   const [menu, content, effects] = await Promise.all([
     read('ui/src/components/shared/LinkContextMenu.tsx'),
-    read('ui/src/components/Content/Content.tsx'),
-    read('ui/src/components/Content/useContentEffects.ts'),
+    readProjectSource('ui/src/components/Content/Content.tsx'),
+    readProjectSource('ui/src/components/Content/useContentEffects.ts'),
   ]);
   assert.match(menu, /onOpen/);
   assert.match(menu, /onCopy/);
@@ -44,12 +45,12 @@ test('link menu keeps open and copy actions and adds bookmark action only when e
 
 test('native content context-menu dispatch handles bookmark objects before the normal link menu', async () => {
   const [content, effects, mainView] = await Promise.all([
-    read('ui/src/components/Content/Content.tsx'),
-    read('ui/src/components/Content/useContentEffects.ts'),
+    readProjectSource('ui/src/components/Content/Content.tsx'),
+    readProjectSource('ui/src/components/Content/useContentEffects.ts'),
     read('ui/src/components/Content/ContentMainView.tsx'),
   ]);
   assert.match(effects, /onBookmarkContextMenu/);
-  assert.match(effects, /if \(onBookmarkContextMenu\?\.\(event\)\) return/);
+  assert.match(effects, /if \((?:callbacks\.)?onBookmarkContextMenu\?\.\(event\)\) return/);
   assert.match(content, /onBookmarkContextMenu: handleBookmarkContextMenu/);
   assert.doesNotMatch(mainView, /onContextMenu\?:/);
   assert.doesNotMatch(content, /onContextMenu=\{handleBookmarkContextMenu\}/);
@@ -57,7 +58,7 @@ test('native content context-menu dispatch handles bookmark objects before the n
 
 test('link bookmark action opens the name dialog directly and captures the chosen bookmark target once', async () => {
   const [content, hook, menu, selectionMenu] = await Promise.all([
-    read('ui/src/components/Content/Content.tsx'),
+    readProjectSource('ui/src/components/Content/Content.tsx'),
     read('ui/src/components/Content/useBookmarkSelection.ts'),
     read('ui/src/components/shared/LinkContextMenu.tsx'),
     read('ui/src/components/Bookmarks/BookmarkSelectionMenu.tsx'),

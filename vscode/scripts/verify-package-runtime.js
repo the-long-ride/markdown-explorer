@@ -3,7 +3,7 @@ const path = require('path');
 
 const extensionRoot = path.resolve(__dirname, '..');
 const requiredRuntimeFiles = [
-  path.join('out', 'vscode', 'src', 'extension.js'),
+  path.join('out', 'vscode', 'src', 'core', 'extension.bundle.js'),
   path.join('out', 'vscode', 'src', 'vendor', 'markdown-them.cjs'),
   path.join('out', 'node_modules', 'yaml', 'index.js'),
   path.join('ui', 'dist', 'index.html'),

@@ -217,6 +217,7 @@ window.LANGS.ru = {
       "Пользователям Windows следует выбрать NSIS установочный файл или портативный .exe. Пользователям Linux предпочтительно использовать .AppImage или .deb. Пользователям macOS следует выбрать .dmg (arm64 для Apple Silicon и x64 для Intel).",
     footerBy: "Markdown Explorer от",
     footerIssues: "Проблемы",
+    footerDonate: "Пожертвовать",
     footerPrivacy: "Конфиденциальность",
     footerTerms: "Условия",
     footerLicense: "Лицензия",
@@ -278,6 +279,8 @@ window.LANGS.ru = {
     galleryCaption3Title: "Интерактивные песочницы HTML",
     heroDemoLabel: "Живое демо",
     langSwitchTitle: "Сменить язык",
+    navDonate: "Поддержать",
+    donateAria: "Поддержать Markdown Explorer пожертвованием",
     themeToggleTitle: "Переключить цветовую тему",
     modalCloseLabel: "Закрыть окно",
 };

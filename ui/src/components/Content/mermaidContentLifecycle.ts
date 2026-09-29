@@ -3,6 +3,8 @@ import { createMermaidRerenderLifecycle } from './enhancements/mermaidRerenderLi
 
 interface MermaidContentLifecycleArgs {
   body: ParentNode;
+  /** Scroll container of the document root (main view, split pane, scope view). */
+  scroll?: Element | null;
   state: any;
   previousAppearanceKeyRef: { current: string | null };
   runIdRef: { current: number };
@@ -11,6 +13,7 @@ interface MermaidContentLifecycleArgs {
 
 export function installMermaidContentLifecycle({
   body,
+  scroll,
   state,
   previousAppearanceKeyRef,
   runIdRef,
@@ -22,6 +25,7 @@ export function installMermaidContentLifecycle({
   const rerender = createMermaidRerenderLifecycle(body, startEnhancements, {
     theme: state.theme,
     runIdRef,
+    scroll,
   });
   if (appearance.changed) rerender.schedule();
   const unsubscribeAutoTheme = subscribeToAutoMermaidTheme(state.theme, () => rerender.schedule());

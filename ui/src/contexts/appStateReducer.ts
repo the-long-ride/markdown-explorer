@@ -1,4 +1,4 @@
-import { normalizePathKey, type AppState, type Action } from './appStateModel';
+import { createInitialState, normalizePathKey, type AppState, type Action } from './appStateModel';
 import type { MdFile, RecentWorkspace } from '../types';
 import {
   applyContentTab,
@@ -14,31 +14,87 @@ import {
   upsertContentTab,
 } from './contentTabState';
 import { resolveRenderedDocument } from './renderedDocument';
+import { isRedundantRender, retainEquivalentDocumentSessions } from './redundantRender';
+import {
+  prepareRenderContentSession,
+  reduceDocumentEditingAction,
+  type DocumentEditingAction,
+} from '../editor/documentWorkingCopy';
+import { retainDirtyDocumentSessions } from '../editor/unsavedGuards';
 import { reduceSettingsUiAction } from './reducers/settingsUiReducer';
+import { bumpDocumentRenderRevision } from '../split-view/documentRenderRevision';
+import { reduceSplitViewAction, retainSplitPaneContentTabs, type SplitViewAction } from '../split-view/splitViewReducer';
 
 export * from './appStateModel';
 export * from './contentTabState';
 
 export type TocStorageWriter = (key: string, value: string) => void;
+export type AppAction = Action | DocumentEditingAction | SplitViewAction;
+
+function renderedDocumentChanged(
+  state: AppState,
+  filePath: string,
+  contentHtml: string,
+  markdownSource: string | null,
+  sourceDocumentText: string | null,
+): boolean {
+  const target = normalizePathKey(filePath);
+  const tab = state.contentTabs.find((item) => normalizePathKey(item.filePath) === target);
+  const isCurrent = normalizePathKey(state.currentFile ?? '') === target;
+  if (!tab && !isCurrent) return true;
+  return (tab?.contentHtml ?? state.contentHtml) !== contentHtml
+    || (tab?.markdownSource ?? state.markdownSource) !== markdownSource
+    || (tab?.sourceDocumentText ?? state.sourceDocumentText) !== sourceDocumentText;
+}
 
 export function reducer(
   state: AppState,
-  action: Action,
+  action: AppAction,
   writeTocStorage?: TocStorageWriter,
 ): AppState {
-  const settingsUiState = reduceSettingsUiAction(state, action, writeTocStorage);
+  let renderBaseline: AppState | null = null;
+  if (action.type === 'RENDER_CONTENT') {
+    const prepared = prepareRenderContentSession(state, action.msg);
+    const retained = retainEquivalentDocumentSessions(state, prepared.state);
+    // Only a render that left the document session untouched may be dropped.
+    if (retained === state) renderBaseline = state;
+    state = retained;
+    action = { ...action, msg: prepared.msg };
+  }
+
+  const editingState = reduceDocumentEditingAction(state, action as DocumentEditingAction);
+  if (editingState) return editingState;
+
+  const splitViewState = reduceSplitViewAction(state, action as SplitViewAction);
+  if (splitViewState) return splitViewState;
+
+  const settingsUiState = reduceSettingsUiAction(state, action as Action, writeTocStorage);
   if (settingsUiState) return settingsUiState;
 
   switch (action.type) {
+    case 'RESTORE_PERSISTED_STATE': {
+      const isDesktopRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri';
+      const restored = createInitialState(action.persistedState, isDesktopRuntime);
+      return {
+        ...state,
+        theme: state.hasThemePreference ? state.theme : restored.theme,
+        hasThemePreference: state.hasThemePreference || restored.hasThemePreference,
+        themeStyle: state.hasThemeStylePreference ? state.themeStyle : restored.themeStyle,
+        hasThemeStylePreference: state.hasThemeStylePreference || restored.hasThemeStylePreference,
+        sidebarCollapsed: state.hasSidebarPreference ? state.sidebarCollapsed : restored.sidebarCollapsed,
+        hasSidebarPreference: state.hasSidebarPreference || restored.hasSidebarPreference,
+        settings: state.hasSettingsPreference ? { ...state.settings } : restored.settings,
+        hasSettingsPreference: state.hasSettingsPreference || restored.hasSettingsPreference,
+      };
+    }
+
     case 'READY_ACK': {
       const nextWorkspaceKey = getWorkspaceScopeKey(action.workspacePath, action.workspaceName);
       const currentWorkspaceKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
       const workspaceChanged = nextWorkspaceKey !== currentWorkspaceKey;
       const restoredContentTabs = action.contentTabs
         ? refreshContentTabMetadata(action.contentTabs, action.fileList)
-        : workspaceChanged
-          ? []
-          : refreshContentTabMetadata(state.contentTabs, action.fileList);
+        : workspaceChanged ? [] : refreshContentTabMetadata(state.contentTabs, action.fileList);
       const reconciledScopeFocus = reconcileScopeFocusSetting({
         scopeFocus: state.settings.scopeFocus,
         scopeKey: nextWorkspaceKey,
@@ -80,19 +136,16 @@ export function reducer(
         hostArch: action.hostArch ?? state.hostArch,
         canInstallUpdates: action.canInstallUpdates ?? state.canInstallUpdates,
         isMaximized: action.isMaximized ?? state.isMaximized,
-        isLoading: workspaceChanged
-          ? (action.workspaceName ? state.isLoading : false)
-          : false,
+        isLoading: workspaceChanged ? (action.workspaceName ? state.isLoading : false) : false,
         staleContentFilePath: null,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
         contentTabs: restoredContentTabs,
-        activeContentTabPath:
-          action.activeContentTabPath !== undefined
-            ? action.activeContentTabPath
-            : workspaceChanged
-              ? null
-              : state.activeContentTabPath,
+        activeContentTabPath: action.activeContentTabPath !== undefined
+          ? action.activeContentTabPath
+          : workspaceChanged ? null : state.activeContentTabPath,
+        documentSessions: workspaceChanged ? retainDirtyDocumentSessions(state.documentSessions) : state.documentSessions,
+        documentRenderRevisions: workspaceChanged ? {} : state.documentRenderRevisions,
         focusMode: false,
         sidebarActiveTab: 'files',
       };
@@ -107,33 +160,37 @@ export function reducer(
       };
 
     case 'RECENT_WORKSPACES_CHANGED':
-      return {
-        ...state,
-        recentWorkspaces: action.recentWorkspaces as RecentWorkspace[],
-      };
+      return { ...state, recentWorkspaces: action.recentWorkspaces as RecentWorkspace[] };
 
     case 'RENDER_CONTENT': {
       const filePath = action.msg.filePath || null;
       const nextFileList = action.msg.fileList ?? state.fileList;
       const rendered = resolveRenderedDocument(action.msg, state.settings);
+      const nextMarkdownSource = action.msg.markdownSource ?? null;
+      const nextSourceDocumentText = action.msg.sourceDocumentText ?? null;
+      const documentRenderRevisions = filePath && renderedDocumentChanged(
+        state,
+        filePath,
+        rendered.html,
+        nextMarkdownSource,
+        nextSourceDocumentText,
+      )
+        ? bumpDocumentRenderRevision(state.documentRenderRevisions, filePath)
+        : state.documentRenderRevisions;
       const existingTab = filePath
-        ? state.contentTabs.find(
-            (item) => normalizePathKey(item.filePath) === normalizePathKey(filePath),
-          )
+        ? state.contentTabs.find((item) => normalizePathKey(item.filePath) === normalizePathKey(filePath))
         : undefined;
-      const retainedCurrentOverride =
-        filePath && normalizePathKey(state.currentFile ?? '') === normalizePathKey(filePath)
-          ? state.currentHtmlPreviewOverride
-          : undefined;
-      const resolvedHtmlPreviewOverride =
-        action.htmlPreviewOverride ?? existingTab?.htmlPreviewOverride ?? retainedCurrentOverride;
+      const retainedCurrentOverride = filePath && normalizePathKey(state.currentFile ?? '') === normalizePathKey(filePath)
+        ? state.currentHtmlPreviewOverride
+        : undefined;
+      const resolvedHtmlPreviewOverride = action.htmlPreviewOverride ?? existingTab?.htmlPreviewOverride ?? retainedCurrentOverride;
       const baseState: AppState = {
         ...state,
         fileList: nextFileList,
         currentFile: filePath,
         contentHtml: rendered.html,
-        markdownSource: action.msg.markdownSource ?? null,
-        sourceDocumentText: action.msg.sourceDocumentText ?? null,
+        markdownSource: nextMarkdownSource,
+        sourceDocumentText: nextSourceDocumentText,
         currentHtmlPreviewOverride: resolvedHtmlPreviewOverride,
         frontmatter: rendered.frontmatter,
         toc: rendered.toc,
@@ -147,33 +204,31 @@ export function reducer(
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
         renderVersion: state.renderVersion + 1,
+        documentRenderRevisions,
       };
+      const tab = filePath ? {
+        ...createContentTabFromMessage(action.msg, nextFileList, rendered),
+        documentWrite: action.msg.documentWrite,
+        htmlPreviewOverride: resolvedHtmlPreviewOverride,
+      } : null;
+      let next: AppState;
       if (!state.settings.fileTabs) {
-        return {
-          ...baseState,
-          contentTabs: [],
-          activeContentTabPath: null,
-        };
-      }
-      if (!filePath) {
-        return {
+        next = { ...baseState, contentTabs: retainSplitPaneContentTabs(state, tab), activeContentTabPath: null };
+      } else if (!tab) {
+        next = {
           ...baseState,
           contentTabs: refreshContentTabMetadata(state.contentTabs, nextFileList),
           activeContentTabPath: null,
         };
+      } else {
+        next = {
+          ...baseState,
+          contentTabs: upsertContentTab(refreshContentTabMetadata(state.contentTabs, nextFileList), tab),
+          activeContentTabPath: tab.filePath,
+        };
       }
-      const tab = {
-        ...createContentTabFromMessage(action.msg, nextFileList, rendered),
-        htmlPreviewOverride: resolvedHtmlPreviewOverride,
-      };
-      return {
-        ...baseState,
-        contentTabs: upsertContentTab(
-          refreshContentTabMetadata(state.contentTabs, nextFileList),
-          tab,
-        ),
-        activeContentTabPath: filePath,
-      };
+      // A redundant host reply (e.g. to a cached tab switch) keeps the same state.
+      return renderBaseline === state && isRedundantRender(state, next) ? state : next;
     }
 
     case 'WORKSPACE_FILES_CHANGED': {
@@ -208,11 +263,11 @@ export function reducer(
           scopeFocus: reconciledScopeFocus,
           searchScopeFocus: reconciledSearchScopeFocus,
         },
-        contentTabs: workspaceChanged
-          ? []
-          : refreshContentTabMetadata(state.contentTabs, action.fileList),
+        contentTabs: workspaceChanged ? [] : refreshContentTabMetadata(state.contentTabs, action.fileList),
         activeContentTabPath: workspaceChanged ? null : state.activeContentTabPath,
         currentHtmlPreviewOverride: workspaceChanged ? undefined : state.currentHtmlPreviewOverride,
+        documentSessions: workspaceChanged ? retainDirtyDocumentSessions(state.documentSessions) : state.documentSessions,
+        documentRenderRevisions: workspaceChanged ? {} : state.documentRenderRevisions,
         isLoading: false,
         workspaceUnavailablePath: null,
         workspaceUnavailableReason: null,
@@ -221,10 +276,7 @@ export function reducer(
 
     case 'CURRENT_FILE_CHANGED':
       if (normalizePathKey(state.currentFile ?? '') !== normalizePathKey(action.filePath)) return state;
-      return {
-        ...state,
-        staleContentFilePath: action.filePath,
-      };
+      return { ...state, staleContentFilePath: action.filePath };
 
     case 'NAV_NOT_FOUND':
       return {
@@ -236,9 +288,7 @@ export function reducer(
       };
 
     case 'ACTIVATE_CONTENT_TAB': {
-      const tab = state.contentTabs.find(
-        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
-      );
+      const tab = state.contentTabs.find((item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath));
       if (!tab) return state;
       return applyContentTab(state, tab);
     }
@@ -259,19 +309,13 @@ export function reducer(
       let contentTabs = placeholders;
       if (currentFile) {
         const activeKey = normalizePathKey(currentFile);
-        const activeExists = placeholders.some(
-          (tab) => normalizePathKey(tab.filePath) === activeKey,
-        );
+        const activeExists = placeholders.some((tab) => normalizePathKey(tab.filePath) === activeKey);
         if (!activeExists) {
           const activeInfo = findFileInfo(state.fileList, currentFile);
           if (activeInfo) contentTabs = [...placeholders, createPlaceholderContentTab(activeInfo)];
         }
       }
-      return {
-        ...state,
-        contentTabs,
-        activeContentTabPath: currentFile ?? placeholders[0].filePath,
-      };
+      return { ...state, contentTabs, activeContentTabPath: currentFile ?? placeholders[0].filePath };
     }
 
     case 'SET_CONTENT_TAB_HTML_PREVIEW': {
@@ -297,16 +341,11 @@ export function reducer(
     }
 
     case 'CLOSE_CONTENT_TAB': {
-      const tabIndex = state.contentTabs.findIndex(
-        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
-      );
+      const tabIndex = state.contentTabs.findIndex((item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath));
       if (tabIndex === -1) return state;
       const nextTabs = state.contentTabs.filter((_, index) => index !== tabIndex);
       if (normalizePathKey(state.activeContentTabPath ?? '') !== normalizePathKey(action.filePath)) {
-        return {
-          ...state,
-          contentTabs: nextTabs,
-        };
+        return { ...state, contentTabs: nextTabs };
       }
       const fallback = nextTabs[tabIndex - 1] ?? nextTabs[tabIndex] ?? null;
       if (fallback) return applyContentTab(state, fallback, nextTabs);
@@ -314,26 +353,19 @@ export function reducer(
     }
 
     case 'CLOSE_CONTENT_TABS_TO_RIGHT': {
-      const tabIndex = state.contentTabs.findIndex(
-        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
-      );
+      const tabIndex = state.contentTabs.findIndex((item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath));
       if (tabIndex === -1 || tabIndex >= state.contentTabs.length - 1) return state;
-      const nextTabs = state.contentTabs.slice(0, tabIndex + 1);
-      return applyContentTabsFallback(state, nextTabs, action.filePath);
+      return applyContentTabsFallback(state, state.contentTabs.slice(0, tabIndex + 1), action.filePath);
     }
 
     case 'CLOSE_OTHER_CONTENT_TABS': {
-      const targetTab = state.contentTabs.find(
-        (item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath),
-      );
+      const targetTab = state.contentTabs.find((item) => normalizePathKey(item.filePath) === normalizePathKey(action.filePath));
       if (!targetTab || state.contentTabs.length <= 1) return state;
       return applyContentTab(state, targetTab, [targetTab]);
     }
 
-    case 'CLOSE_ALL_CONTENT_TABS': {
-      if (state.contentTabs.length === 0) return state;
-      return clearContentTabs(state);
-    }
+    case 'CLOSE_ALL_CONTENT_TABS':
+      return state.contentTabs.length === 0 ? state : clearContentTabs(state);
 
     case 'WORKSPACE_UNAVAILABLE':
       return {
@@ -364,6 +396,8 @@ export function reducer(
         isMaximized: action.isMaximized ?? state.isMaximized,
         contentTabs: [],
         activeContentTabPath: null,
+        documentSessions: retainDirtyDocumentSessions(state.documentSessions),
+        documentRenderRevisions: {},
         renderVersion: state.renderVersion + 1,
         focusMode: false,
       };

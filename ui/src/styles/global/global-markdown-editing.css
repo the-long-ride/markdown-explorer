@@ -1,0 +1,571 @@
+.topbar__markdown-editing {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r);
+  background: var(--bg-s);
+}
+
+.topbar__markdown-mode-btn,
+.topbar__markdown-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--r-sm, 4px);
+  background: transparent;
+  color: var(--tx-2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.topbar__markdown-mode-btn:hover {
+  color: var(--tx);
+  background: var(--bg-h);
+}
+
+.topbar__markdown-mode-btn[aria-pressed='true'] {
+  background: var(--bg-e);
+  color: var(--tx);
+  box-shadow: inset 0 0 0 var(--stroke-w) var(--bd-x);
+}
+
+.topbar__markdown-save-btn {
+  gap: 6px;
+}
+
+.topbar__markdown-save-btn:not(:disabled) {
+  color: var(--accent);
+}
+
+.topbar__markdown-save-btn.is-dirty::before,
+.topbar__markdown-save-btn.is-saving::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.topbar__markdown-save-btn.is-saving::before {
+  animation: markdown-editing-pulse 900ms ease-in-out infinite;
+}
+
+.topbar__markdown-save-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.topbar__markdown-save-btn.is-saving:disabled {
+  opacity: 0.8;
+}
+
+@keyframes markdown-editing-pulse {
+  50% { opacity: 0.25; }
+}
+
+/* Plain source editor */
+
+.markdown-source-editor {
+  --markdown-source-editor-height: max(calc(100dvh - 190px), 420px);
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 1100px);
+  min-height: var(--markdown-source-editor-height);
+  margin: 0 auto;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--tx);
+  box-shadow: var(--sh-sm);
+}
+
+.markdown-source-editor:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--bd-x));
+}
+
+.markdown-formatting-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 5px 8px;
+  border-bottom: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r) var(--r) 0 0;
+  background: var(--bg-e);
+}
+
+.markdown-formatting-toolbar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.markdown-formatting-toolbar__group + .markdown-formatting-toolbar__group::before {
+  content: '';
+  align-self: stretch;
+  width: var(--stroke-w);
+  margin: 5px 6px 5px 3px;
+  background: var(--bd-x);
+}
+
+.markdown-formatting-toolbar__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: var(--stroke-w) solid transparent;
+  border-radius: var(--r-sm, 4px);
+  background: transparent;
+  color: var(--tx-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.markdown-formatting-toolbar__button svg {
+  flex: none;
+}
+
+.markdown-formatting-toolbar__button--heading {
+  min-width: 26px;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+.markdown-formatting-toolbar__button--heading small {
+  font-size: 9px;
+  font-weight: 600;
+  transform: translateY(2px);
+}
+
+.markdown-formatting-toolbar__button--labelled {
+  padding: 0 10px;
+  border-color: var(--bd-x);
+  background: var(--bg);
+  color: var(--tx);
+  font-weight: 500;
+}
+
+.markdown-formatting-toolbar__button:hover:not(:disabled),
+.markdown-formatting-toolbar__button:focus-visible {
+  border-color: var(--bd-x);
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}
+
+.markdown-formatting-toolbar__button:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.markdown-formatting-toolbar__button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.markdown-formatting-toolbar__spacer {
+  flex: 1 1 12px;
+}
+
+.markdown-source-editor__host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.markdown-source-editor__host .cm-editor {
+  flex: 1 1 auto;
+  min-height: calc(var(--markdown-source-editor-height) - 72px);
+  background: var(--bg);
+  color: var(--tx);
+}
+
+.markdown-source-editor__host .cm-scroller {
+  overflow: auto;
+  font-family: var(--font-code, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.markdown-source-editor__host .cm-content {
+  min-height: calc(var(--markdown-source-editor-height) - 72px);
+  padding: 20px 0 28px;
+  caret-color: var(--accent);
+}
+
+.markdown-source-editor__host .cm-line {
+  padding: 0 24px 0 12px;
+}
+
+.markdown-source-editor__host .cm-gutters {
+  border-right: var(--stroke-w) solid var(--bd-s);
+  background: var(--bg-s);
+  color: var(--txm);
+}
+
+.markdown-source-editor__host .cm-lineNumbers .cm-gutterElement {
+  min-width: 3ch;
+  padding: 0 10px 0 12px;
+  font-size: 12px;
+}
+
+.markdown-source-editor__host .cm-activeLine {
+  background: color-mix(in srgb, var(--bg-h) 70%, transparent);
+}
+
+.markdown-source-editor__host .cm-activeLineGutter {
+  background: var(--bg-h);
+  color: var(--tx);
+}
+
+.markdown-source-editor__host .cm-cursor {
+  border-left-color: var(--accent);
+  border-left-width: 2px;
+}
+
+.markdown-source-editor__host .cm-selectionBackground,
+.markdown-source-editor__host .cm-content ::selection {
+  background: color-mix(in srgb, var(--accent) 24%, transparent) !important;
+}
+
+.markdown-source-editor__host .cm-md-code {
+  padding: 1px 0;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  color: var(--tx);
+}
+
+.markdown-source-editor__host .cm-focused {
+  outline: none;
+}
+
+.markdown-source-editor.is-disabled .markdown-source-editor__host {
+  opacity: 0.7;
+}
+
+.markdown-source-editor__status {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 28px;
+  padding: 0 12px;
+  border-top: var(--stroke-w) solid var(--bd-s);
+  border-radius: 0 0 var(--r) var(--r);
+  background: var(--bg-s);
+  color: var(--txm);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.markdown-source-editor__status-spacer {
+  flex: 1 1 auto;
+}
+
+.markdown-source-editor__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tx-2);
+}
+
+.markdown-source-editor__state::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--txm);
+}
+
+.markdown-source-editor__state.is-dirty {
+  color: var(--accent);
+}
+
+.markdown-source-editor__state.is-dirty::before,
+.markdown-source-editor__state.is-saving::before {
+  background: var(--accent);
+}
+
+.markdown-source-editor__state.is-saving::before {
+  animation: markdown-editing-pulse 900ms ease-in-out infinite;
+}
+
+.markdown-source-editor__state.is-saved::before {
+  background: var(--diff-add-bar, #2da44e);
+}
+
+/* Inline block editing */
+
+.mdn-body .is-inline-editable {
+  position: relative;
+  border-radius: var(--r-sm, 4px);
+  transition: outline-color 120ms ease, background-color 120ms ease;
+  outline: 1px dashed transparent;
+  outline-offset: 4px;
+}
+
+.mdn-body .is-inline-editable:hover {
+  outline-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  cursor: text;
+}
+
+.mdn-body .is-inline-editable:focus-within:not(:hover) {
+  outline-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.mdn-body .is-inline-editable > .mdn-inline-edit-trigger {
+  position: absolute;
+  top: -26px;
+  right: 0;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r-sm, 4px);
+  background: var(--bg-e);
+  color: var(--tx-2);
+  box-shadow: var(--sh-sm);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.is-inline-editable:hover > .mdn-inline-edit-trigger,
+.mdn-inline-edit-trigger:focus-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.mdn-inline-edit-trigger:hover,
+.mdn-inline-edit-trigger:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.mdn-heading-text.is-inline-editable {
+  outline-offset: 3px;
+}
+
+.mdn-body:has(.is-inline-editing) .mdn-inline-edit-trigger {
+  display: none;
+}
+
+.mdn-body:has(.is-inline-editing) .is-inline-editable:hover {
+  outline-color: transparent;
+  cursor: auto;
+}
+
+.is-inline-editing,
+.is-inline-editing-anchor {
+  display: none !important;
+}
+
+.markdown-inline-editor-host {
+  margin: 10px 0 14px;
+}
+
+.markdown-inline-editor {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: var(--stroke-w) solid color-mix(in srgb, var(--accent) 55%, var(--bd-x));
+  border-radius: var(--r);
+  background: var(--bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent), var(--sh-sm);
+  animation: markdown-inline-editor-in 140ms ease-out;
+}
+
+@keyframes markdown-inline-editor-in {
+  from { opacity: 0; transform: translateY(-3px); }
+}
+
+.markdown-inline-editor__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 8px 4px 10px;
+  border-bottom: var(--stroke-w) solid var(--bd-s);
+  background: var(--bg-e);
+}
+
+.markdown-inline-editor__chip {
+  color: var(--tx-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.markdown-inline-editor__toolbar-switch {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.markdown-inline-editor__source {
+  display: block;
+  width: 100%;
+  min-height: 4.5em;
+  max-height: 60vh;
+  padding: 12px 14px;
+  border: 0;
+  resize: vertical;
+  background: var(--bg);
+  color: var(--tx);
+  caret-color: var(--accent);
+  font-family: var(--font-code, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: 13.5px;
+  line-height: 1.6;
+  tab-size: 2;
+  field-sizing: content;
+}
+
+.markdown-inline-editor__source:focus {
+  outline: none;
+}
+
+.markdown-inline-editor__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.markdown-inline-editor__actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0 6px;
+  border-radius: var(--r-sm, 4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-inline-editor,
+  .mdn-inline-edit-trigger,
+  .topbar__markdown-save-btn.is-saving::before,
+  .markdown-source-editor__state.is-saving::before {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (hover: none) {
+  .mdn-inline-edit-trigger {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .markdown-source-editor {
+    --markdown-source-editor-height: 55vh;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .markdown-formatting-toolbar {
+    position: static;
+    border-radius: 0;
+  }
+
+  .markdown-source-editor__status {
+    border-radius: 0;
+  }
+
+  .markdown-source-editor__status > span:nth-child(3) {
+    display: none;
+  }
+
+}
+
+
+/* Document editing modal card (unsaved changes & conflict dialogs) */
+.document-editing-modal-card {
+  width: min(520px, calc(100vw - 32px));
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.document-editing-modal-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tx);
+  line-height: 1.35;
+}
+
+.document-editing-modal-card__message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.document-editing-modal-card__lead {
+  margin: 0;
+  color: var(--tx2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.document-editing-modal-card__filename {
+  font-weight: 600;
+  color: var(--tx);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.document-editing-modal-card__error {
+  margin: 8px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.document-editing-modal-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.document-editing-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

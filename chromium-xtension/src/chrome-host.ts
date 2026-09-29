@@ -2,7 +2,7 @@
 // chrome/src/chrome-host.ts — Host-side message router running in tab context
 // =============================================================================
 
-import { pickDirectory, readTextFile, verifyPermission } from "./file-access";
+import { documentWriteCapability, pickDirectory, readTextFile, verifyPermission } from "./file-access";
 import {
   startCurrentFileWatcher,
   stopCurrentFileWatcher,
@@ -36,14 +36,14 @@ if (!window.__chromeExtBus) {
 const bus = window.__chromeExtBus;
 
 let activeHandle: FileSystemDirectoryHandle | null = null;
-let activeWorkspacePath = "";
-let activeWorkspaceName = "";
+let activeWorkspacePath = "", activeWorkspaceName = "";
 let currentFile: string | null = null; // Relative path, e.g. "docs/intro.md"
 let flatList: MdFile[] = [];
 let workspaceTree: FolderNode | null = null;
 let searchIndex: BrowserSearchIndex | null = null;
 let readyHandled = false;
 let workspaceScanGeneration = 0;
+const workspaceSearchGeneration = { value: 0 };
 const workspaceOperation = createWorkspaceOperationState();
 
 function currentWorkspaceOperationMetadata(): WorkspaceOperationMetadata { return workspaceOperation.current(); }
@@ -231,6 +231,7 @@ async function sendContent(
     title: fileInfo.title,
     fileList: flatList,
     previewInfo: null,
+    documentWrite: /\.mdx?$/i.test(requestedFile) ? await documentWriteCapability(handle, requestedFile) : undefined,
     ...request.operation,
   });
 }
@@ -245,7 +246,7 @@ bus.addEventListener("webview-message", async (e: Event) => {
   if (!msg) return;
 
   if (await handleBrowserFontHostCommand(msg, sendToWebview)) return;
-  if (await handleChromeHostUtilityCommand(msg, { searchIndex, flatList, workspaceTree, activeWorkspacePath, activeHandle, send: sendToWebview, readText: readTextFile })) return;
+  if (await handleChromeHostUtilityCommand(msg, { searchIndex, flatList, workspaceTree, activeWorkspacePath, activeHandle, send: sendToWebview, readText: readTextFile, searchGeneration: workspaceSearchGeneration })) return;
 
   switch (msg.command) {
     case "ready": {
@@ -447,7 +448,5 @@ bus.addEventListener("webview-message", async (e: Event) => {
       }
       break;
     }
-
-
   }
 });

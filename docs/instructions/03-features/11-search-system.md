@@ -81,11 +81,16 @@ flowchart LR
 |---|---:|
 | Workspace items | maximum 10,000 |
 | Content indexing | skip file bodies above 2 MiB |
-| Electron cross-tab result default max | 2,000 |
+| Workspace result ceiling | 10,000 |
+| Host result batch | 100 |
+| Sidebar render window | 100 rows |
+| Electron cross-tab result default max | 10,000 |
 | Electron index-prime batch | 5 |
 | UI result page | 100 |
 
 Find-in-document excludes interactive chrome, scripts/styles, iframe, SVG/canvas, line numbers, and table toolbar text. Search is case-insensitive by default. The single **Match case** toggle switches current-file, workspace, and cross-tab matching to exact casing. Cross-tab requests also carry the currently checked workspace tab IDs. Search responses and full-file preview responses must match their latest request IDs.
+
+Workspace search is streamed as zero or more `workspaceSearchResults` messages with `done: false`, followed by one terminal message with `done: true`, `total`, `truncated`, and `cancelled` metadata. Each host batch is capped at 100 results and superseded requests stop at their next yield point. The shared sidebar keeps received results bounded at 10,000 but initially renders only 100 rows, adding another 100 when the result scroller nears the bottom. Older one-shot responses without `done` remain valid and are treated as terminal.
 
 
 ## States and failure behavior
@@ -103,8 +108,9 @@ Find-in-document excludes interactive chrome, scripts/styles, iframe, SVG/canvas
 | Runtime | Specification |
 |---|---|
 | All | Shared overlay/result UI and DOM find. |
-| Electron | Worker-backed cross-tab search. |
-| Tauri/VS Code/Chromium/Website | Runtime-specific workspace index/search implementation. |
+| Electron | Yielding workspace search plus worker-backed cross-tab search. |
+| Tauri | Worker-backed workspace and cross-tab search. |
+| VS Code/Chromium/Website | Runtime-specific incremental workspace index/search implementation. |
 
 ## Non-functional requirements
 
@@ -125,6 +131,8 @@ Find-in-document excludes interactive chrome, scripts/styles, iframe, SVG/canvas
 - [ ] All nine supported languages provide every new search label.
 - [ ] Case sensitivity is consistent across shared UI and all runtime search implementations.
 - [ ] Oversized files are metadata searchable without body indexing.
+- [x] Workspace search accepts up to 10,000 results through 100-result batches without mounting all rows at once.
+- [x] Superseded workspace queries cancel stale host work and never append stale batches.
 ## UI reference implementation
 
 The sample shows the interaction boundary, not a replacement for the React implementation.

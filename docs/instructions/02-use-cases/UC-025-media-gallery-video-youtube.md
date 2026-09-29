@@ -196,4 +196,4 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 ---
 
-[← Interact with Tables and Charts](UC-024-tables-charts.md) · [Documentation index](../README.md) · [Control Window, Tray, Fullscreen, Zoom, and Quit →](UC-026-window-tray-fullscreen-zoom-quit.md)
+[← Interact with Tables and Charts](UC-024-tables-charts.md) · [Documentation index](../README.md) · [Control Window, Fullscreen, Zoom, and Quit →](UC-026-window-tray-fullscreen-zoom-quit.md)

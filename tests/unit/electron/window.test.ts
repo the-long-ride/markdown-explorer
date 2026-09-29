@@ -31,6 +31,7 @@ function makeBrowserWindowMock() {
   return {
     show: vi.fn(),
     loadFile: vi.fn(),
+    loadURL: vi.fn(),
     on: vi.fn((event: string, handler: Function) => {
       if (!events[event]) events[event] = [];
       events[event].push(handler);
@@ -85,6 +86,7 @@ describe('createMainWindow', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   function create(deps?: Record<string, any>) {
@@ -128,6 +130,12 @@ describe('createMainWindow', () => {
   test('loads index.html file', () => {
     create();
     expect(windowMock.loadFile).toHaveBeenCalledWith('/test/app/ui/dist/index.html');
+  });
+
+  test('loads the Vite server during Electron development', () => {
+    create({ devServerUrl: 'http://127.0.0.1:5173/' });
+    expect(windowMock.loadURL).toHaveBeenCalledWith('http://127.0.0.1:5173/');
+    expect(windowMock.loadFile).not.toHaveBeenCalled();
   });
 
   test('loads index.html file with debug query param when isDebugMode is true', () => {

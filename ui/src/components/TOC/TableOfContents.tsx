@@ -7,12 +7,25 @@ import { useAppState } from '../../contexts/AppStateContext';
 import type { TocEntry } from '../../types';
 import { ChevronUpIcon } from '../shared/icons';
 import { getTranslations } from '../../contexts/translations';
+import { getActiveDocumentBody, getActiveDocumentScroll, getDocumentRoot, type DocumentRootId } from '../../document/activeDocumentRoot';
 
 interface TableOfContentsProps {
   variant?: 'panel' | 'compact';
+  entries?: readonly TocEntry[];
+  rootId?: DocumentRootId;
 }
 
-function useActiveTocId(toc: readonly TocEntry[], renderVersion: number) {
+function tocScrollContainer(rootId: DocumentRootId | undefined): HTMLElement | null {
+  return rootId ? getDocumentRoot(rootId)?.scroll ?? null : getActiveDocumentScroll();
+}
+
+function findHeading(rootId: DocumentRootId | undefined, id: string): HTMLElement | null {
+  const body = rootId ? getDocumentRoot(rootId)?.body : getActiveDocumentBody();
+  const scoped = body?.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`) ?? null;
+  return scoped ?? (rootId ? null : document.getElementById(id));
+}
+
+function useActiveTocId(toc: readonly TocEntry[], renderVersion: number, rootId?: DocumentRootId) {
   const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
 
   useEffect(() => {
@@ -21,7 +34,7 @@ function useActiveTocId(toc: readonly TocEntry[], renderVersion: number) {
       return;
     }
 
-    const scrollContainer = document.getElementById('contentScroll');
+    const scrollContainer = tocScrollContainer(rootId);
     if (!scrollContainer) {
       setActiveId(toc[0].id);
       return;
@@ -35,7 +48,7 @@ function useActiveTocId(toc: readonly TocEntry[], renderVersion: number) {
       let nextActiveId = toc[0].id;
 
       for (const entry of toc) {
-        const target = document.getElementById(entry.id);
+        const target = findHeading(rootId, entry.id);
         if (!target) continue;
         if (target.getBoundingClientRect().top <= threshold) {
           nextActiveId = entry.id;
@@ -63,25 +76,26 @@ function useActiveTocId(toc: readonly TocEntry[], renderVersion: number) {
       scrollContainer.removeEventListener('scroll', scheduleUpdate);
       window.removeEventListener('resize', scheduleUpdate);
     };
-  }, [toc, renderVersion]);
+  }, [toc, renderVersion, rootId]);
 
   return activeId;
 }
 
-export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
+export function TableOfContents({ variant = 'panel', entries, rootId }: TableOfContentsProps) {
   const { state } = useAppState();
+  const toc = entries ?? state.toc;
   const [compactOpen, setCompactOpen] = useState(false);
-  const activeId = useActiveTocId(state.toc, state.renderVersion);
+  const activeId = useActiveTocId(toc, state.renderVersion, rootId);
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
   const activeEntry = useMemo(
-    () => state.toc.find((entry) => entry.id === activeId) ?? state.toc[0],
-    [activeId, state.toc],
+    () => toc.find((entry) => entry.id === activeId) ?? toc[0],
+    [activeId, toc],
   );
 
   const scrollTo = useCallback((id: string) => {
-    const el = document.getElementById(id);
+    const el = findHeading(rootId, id);
     if (!el) return;
     // Expand parent sections
     let parent = el.closest('.mdn-section') as HTMLElement | null;
@@ -94,24 +108,24 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
       behavior: prefersReducedMotion ? 'auto' : 'smooth',
       block: 'start',
     });
-  }, []);
+  }, [rootId]);
 
   const scrollToTop = useCallback(() => {
-    const scrollContainer = document.getElementById('contentScroll');
+    const scrollContainer = tocScrollContainer(rootId);
     if (scrollContainer) {
       scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setCompactOpen(false);
-  }, []);
+  }, [rootId]);
 
   useEffect(() => {
     setCompactOpen(false);
   }, [state.currentFile, state.renderVersion]);
 
-  if (state.toc.length === 0) return null;
+  if (toc.length === 0) return null;
 
   const renderItems = (closeOnSelect = false) =>
-    state.toc.map((entry, index) => {
+    toc.map((entry, index) => {
       const isActive = entry.id === activeId;
       return (
         <button
@@ -164,7 +178,7 @@ export function TableOfContents({ variant = 'panel' }: TableOfContentsProps) {
         <div className="toc-panel__title-row">
           <div className="toc-panel__title-group">
             <div className="toc-panel__title">{t.toc.onThisPage}</div>
-            <span className="toc-panel__count">{state.toc.length}</span>
+            <span className="toc-panel__count">{toc.length}</span>
           </div>
         </div>
         <div className="toc-panel__current" title={activeEntry?.text}>

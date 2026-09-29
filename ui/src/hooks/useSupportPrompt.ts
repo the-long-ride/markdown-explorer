@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GITHUB_REPO_URL } from '../constants/urls';
+import { DONATE_URL, GITHUB_REPO_URL } from '../constants/urls';
 import {
   addSupportPromptUsage,
   isDebugMode,
@@ -95,12 +95,12 @@ export function useSupportPrompt({
     setIsOpen(false);
   }, []);
 
-  const handleStar = useCallback((neverShowAgain?: boolean) => {
+  const openSupportLink = useCallback((url: string, neverShowAgain?: boolean) => {
     dismissedInSessionRef.current = true;
     if (onOpenExternalRef.current) {
-      onOpenExternalRef.current(GITHUB_REPO_URL);
+      onOpenExternalRef.current(url);
     } else if (typeof window !== 'undefined') {
-      window.open(GITHUB_REPO_URL, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
     if (neverShowAgain) {
       setSupportPromptNeverShowAgain();
@@ -108,9 +108,13 @@ export function useSupportPrompt({
     setIsOpen(false);
   }, []);
 
+  const handleStar = useCallback((neverShowAgain?: boolean) => openSupportLink(GITHUB_REPO_URL, neverShowAgain), [openSupportLink]);
+  const handleDonate = useCallback((neverShowAgain?: boolean) => openSupportLink(DONATE_URL, neverShowAgain), [openSupportLink]);
+
   return {
     isOpen,
     handleClose,
     handleStar,
+    handleDonate,
   };
 }

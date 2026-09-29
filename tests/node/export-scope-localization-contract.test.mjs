@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { readProjectSourceSync } from './read-refactored-source.mjs';
 
 function source(path) {
   return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -8,7 +9,7 @@ function source(path) {
 
 test('new export and scope entry points consume the feature translation catalog', () => {
   const topbar = source('ui/src/components/Topbar/Topbar.tsx');
-  const content = source('ui/src/components/Content/Content.tsx');
+  const content = readProjectSourceSync('ui/src/components/Content/Content.tsx');
   const exportCenter = source('ui/src/components/Export/ExportCenterModal.tsx');
   const scopeView = source('ui/src/components/Modal/ScopeViewModal.tsx');
 

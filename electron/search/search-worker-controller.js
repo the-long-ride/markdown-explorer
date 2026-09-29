@@ -31,7 +31,7 @@ function createSearchWorkerController({
       matchCase = false,
       tabIds,
       batchSize = 100,
-      maxResults = 2000,
+      maxResults = 10000,
       maxMatchesPerFile = 200,
       yieldEvery = 25,
     }) {

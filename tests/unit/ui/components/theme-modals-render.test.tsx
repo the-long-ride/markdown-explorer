@@ -53,12 +53,12 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
     { id: 'dark', label: 'Dark' },
   ],
   THEME_STYLE_OPTIONS: [
-    { id: 'default', label: 'Default', description: 'Default style' },
+    { id: 'default', label: 'Explorer Classic', description: 'Explorer Classic style' },
     { id: 'bento', label: 'Bento', description: 'Bento style' },
     { id: 'vercel', label: 'Vercel', description: 'Vercel style' },
     { id: 'tokyo-night', label: 'Tokyo Night', description: 'Tokyo style' },
     { id: 'neon-voltage', label: 'Neon Voltage', description: 'Neon style' },
-    { id: 'raw-grid', label: 'Raw Grid', description: 'Raw style' },
+    { id: 'raw-grid', label: 'Default', description: 'Raw style' },
   ],
   PET_THEME_STYLE_OPTIONS: [
     { id: 'pet-white-shiba', label: 'White Shiba', description: 'White Shiba style' },
@@ -79,8 +79,8 @@ vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
         themesDesc: 'Built-in styles',
         themesMenuLabel: 'Built-in themes',
         chooseTheme: 'Choose theme',
-        defaultLabel: 'Default',
-        defaultDesc: 'Default style',
+        defaultLabel: 'Explorer Classic',
+        defaultDesc: 'Explorer Classic style',
         bentoLabel: 'Bento',
         bentoDesc: 'Bento style',
         vercelLabel: 'Vercel',
@@ -89,7 +89,7 @@ vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
         tokyoNightDesc: 'Tokyo style',
         neonVoltageLabel: 'Neon Voltage',
         neonVoltageDesc: 'Neon style',
-        rawGridLabel: 'Raw Grid',
+        rawGridLabel: 'Default',
         rawGridDesc: 'Raw style',
         petsLabel: 'Pet themes',
         petsDesc: 'Pets style',
@@ -409,13 +409,14 @@ describe('ThemeStylePicker', () => {
 
   it('opens the translated built-in themes listbox with every built-in option', () => {
     render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Explorer Classic/i }));
     const listbox = screen.getByRole('listbox', { name: 'Built-in themes' });
     expect(listbox).toBeInTheDocument();
     expect(screen.getAllByRole('option')).toHaveLength(6);
     expect(screen.queryByRole('option', { name: /Aurora Glass/i })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: /Neon Voltage/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /Raw Grid/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Default/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Explorer Classic/i })).toBeInTheDocument();
   });
 
   it('marks Themes group active for a built-in theme', () => {
@@ -426,7 +427,7 @@ describe('ThemeStylePicker', () => {
   it('selects a built-in theme from the listbox', () => {
     const onChange = vi.fn();
     render(<ThemeStylePicker value="default" onChange={onChange} />);
-    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Explorer Classic/i }));
     fireEvent.click(screen.getByRole('option', { name: /Bento/i }));
     expect(onChange).toHaveBeenCalledWith('bento');
   });
@@ -496,7 +497,7 @@ describe('ThemeStylePicker', () => {
 
   it('closes the open group on Escape', () => {
     render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Explorer Classic/i }));
     expect(screen.getByRole('listbox', { name: 'Built-in themes' })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('listbox', { name: 'Built-in themes' })).not.toBeInTheDocument();
@@ -504,7 +505,7 @@ describe('ThemeStylePicker', () => {
 
   it('closes the open group on outside pointer input', () => {
     render(<ThemeStylePicker value="default" onChange={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Explorer Classic/i }));
     expect(screen.getByRole('listbox', { name: 'Built-in themes' })).toBeInTheDocument();
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('listbox', { name: 'Built-in themes' })).not.toBeInTheDocument();

@@ -47,6 +47,20 @@ test('all search surfaces expose one Match case toggle and forward matchCase', a
   assert.match(sidebar, /command: 'searchWorkspace'[\s\S]*matchCase/);
 });
 
+test('workspace search supports streamed batches and bounded sidebar rendering', async () => {
+  const [types, sidebar, limits] = await Promise.all([
+    read('ui/src/types/hostMessages.ts'),
+    read('ui/src/components/Sidebar/SidebarSearch.tsx'),
+    read('ui/src/constants/limits.ts'),
+  ]);
+  assert.match(types, /interface WorkspaceSearchResultsMessage[\s\S]*done\?: boolean/);
+  assert.match(types, /interface WorkspaceSearchResultsMessage[\s\S]*truncated\?: boolean/);
+  assert.match(sidebar, /setRawResults\(\(current\) => \[[\s\S]*\.\.\.current,[\s\S]*message\.results/);
+  assert.match(sidebar, /WORKSPACE_SEARCH_RENDER_PAGE_SIZE/);
+  assert.match(limits, /MAX_WORKSPACE_SEARCH_RESULTS\s*=\s*10_000/);
+  assert.match(limits, /WORKSPACE_SEARCH_BATCH_SIZE\s*=\s*100/);
+});
+
 test('all nine locales define the complete search translation domain', async () => {
   const data = await read('ui/src/contexts/translationsData.ts');
   assert.equal(data.match(/\n    search: \{/g)?.length, 9);

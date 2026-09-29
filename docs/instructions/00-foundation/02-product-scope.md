@@ -31,7 +31,7 @@ Markdown Explorer opens local documentation workspaces and individual documents,
 
 | Surface | Primary use |
 |---|---|
-| Electron desktop | Full local workspace, native shell, tray, installer, updater |
+| Electron desktop | Full local workspace, native shell, installer, updater |
 | Tauri desktop | Native Rust host with local protocols and document conversion |
 | VS Code extension | Documentation viewer integrated with editor workspaces |
 | Chromium extension | Browser file-system handles and IndexedDB recents |
@@ -45,7 +45,7 @@ Markdown Explorer opens local documentation workspaces and individual documents,
 - Markdown/MDX rendering, code, tables/charts, math, Mermaid, media, and HTML preview.
 - Current-document, workspace, and cross-workspace search.
 - Preferences, keyboard shortcuts, themes, localization, onboarding, and persistence.
-- Native window, tray, shell-location, updater, conversion, packaging, and release behavior.
+- Native window, shell-location, updater, conversion, packaging, and release behavior.
 
 ## Explicit exclusions
 

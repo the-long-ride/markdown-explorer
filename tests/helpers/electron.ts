@@ -109,12 +109,6 @@ export function createElectronMock(overrides: Record<string, any> = {}) {
     buildFromTemplate: vi.fn(() => ({})),
   };
 
-  const Tray = vi.fn(() => ({
-    setToolTip: vi.fn(),
-    setContextMenu: vi.fn(),
-    on: vi.fn(),
-  }));
-
   const BrowserWindow = vi.fn(() => window);
 
   const contextBridge = { exposeInMainWorld: vi.fn() };
@@ -132,7 +126,6 @@ export function createElectronMock(overrides: Record<string, any> = {}) {
     app,
     session,
     Menu,
-    Tray,
     BrowserWindow,
     contextBridge,
     webUtils,

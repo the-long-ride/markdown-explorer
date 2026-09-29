@@ -14,17 +14,16 @@ function registerRuntimeCommandHandlers(context) {
   }
 
   async function handleReady(msg = {}) {
-    if (typeof msg.documentConversionEnabled === "boolean") {
-      state.documentConversionEnabled = msg.documentConversionEnabled;
-    }
+    if (typeof msg.documentConversionEnabled === "boolean") state.documentConversionEnabled = msg.documentConversionEnabled;
 
-    if (state.readyHandled) return;
+    if (state.readyHandled && (!msg.readyId || state.lastReadyId === msg.readyId)) return;
+    if (state.readyHandled) state.workspaceOperationId = state.workspaceTabId = null;
     state.readyHandled = true;
+    state.lastReadyId = msg.readyId || null;
     perf.mark("host:ready");
-    const recents = recentWorkspacesStore.load();
     const ackMsg = createStartupReadyAck({
       workspacePath: state.workspacePath,
-      recentWorkspaces: recents,
+      recentWorkspaces: recentWorkspacesStore.load(),
       documentConversionEnabled: state.documentConversionEnabled,
       hostInfo: getHostInfo(),
     });

@@ -214,6 +214,7 @@ window.LANGS.vi = {
     faq3A: "Người dùng Windows có thể chọn bản cài đặt NSIS hoặc bản portable. Người dùng Linux có thể chọn .AppImage hoặc .deb. Người dùng macOS nên chọn .dmg (arm64 cho Apple Silicon, x64 cho Intel).",
     footerBy: "Markdown Explorer phát triển bởi",
     footerIssues: "Phản hồi lỗi",
+    footerDonate: "Ủng hộ",
     footerPrivacy: "Quyền riêng tư",
     footerTerms: "Điều khoản",
     footerLicense: "Giấy phép",
@@ -267,6 +268,8 @@ window.LANGS.vi = {
     footerMit: "Bản quyền MIT.",
     galleryCaption3Title: "Hộp cát HTML tương tác",
     langSwitchTitle: "Đổi ngôn ngữ",
+    navDonate: "Ủng hộ",
+    donateAria: "Ủng hộ Markdown Explorer bằng một khoản quyên góp",
     themeToggleTitle: "Đổi giao diện màu",
     modalCloseLabel: "Đóng cửa sổ",
 };

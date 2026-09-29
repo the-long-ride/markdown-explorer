@@ -174,6 +174,7 @@ window.LANGS.zh = {
     faq3A: "Windows 用户可选择 NSIS 安装包或便携版；Linux 用户可选择 AppImage 或 .deb；macOS 用户请选择对应芯片的 .dmg。",
     footerBy: "Markdown Explorer 开发团队：",
     footerIssues: "问题反馈",
+    footerDonate: "捐助",
     footerPrivacy: "隐私政策",
     footerTerms: "服务条款",
     footerLicense: "开源协议",
@@ -235,6 +236,8 @@ window.LANGS.zh = {
     footerMit: "基于 MIT 协议。",
     galleryCaption3Title: "可交互 HTML 沙盒",
     langSwitchTitle: "切换语言",
+    navDonate: "捐助",
+    donateAria: "捐助支持 Markdown Explorer",
     themeToggleTitle: "切换颜色主题",
     modalCloseLabel: "关闭弹窗",
 };

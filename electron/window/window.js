@@ -7,6 +7,7 @@ function createMainWindow({
   perfImpl,
   pathImpl,
   dirname,
+  devServerUrl,
 } = {}) {
   const mainWindow = new BrowserWindowConstructor({
     show: false,
@@ -89,8 +90,21 @@ function createMainWindow({
     }).catch(() => {});
   });
 
+  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    console.error("[renderer:did-fail-load]", errorCode, errorDescription, validatedURL);
+  });
+
+  // A crashed renderer leaves only the dark window background; log why.
+  // exitCode -2147483645 (0x80000003) usually means the Chromium sandbox
+  // could not start child processes from the install location (dev: --no-sandbox).
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    console.error("[renderer:gone]", details && details.reason, details && details.exitCode);
+  });
+
   const isDebug = Boolean(debugTools && typeof debugTools.isDebugMode === "function" && debugTools.isDebugMode());
-  if (isDebug) {
+  if (devServerUrl) {
+    mainWindow.loadURL(new URL(isDebug ? '?debug=1' : '', devServerUrl).toString());
+  } else if (isDebug) {
     mainWindow.loadFile(pathImpl.join(appDir, "ui", "dist", "index.html"), { query: { debug: "1" } });
   } else {
     mainWindow.loadFile(pathImpl.join(appDir, "ui", "dist", "index.html"));
@@ -104,7 +118,7 @@ function createMainWindow({
 }
 
 const path = require("path");
-const { BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell } = require("electron");
 const perf = require("../perf/perf-timer");
 
 function createMainWindowLegacy(deps) {
@@ -118,6 +132,7 @@ function createMainWindowLegacy(deps) {
     perfImpl: perf,
     pathImpl: path,
     dirname: __dirname,
+    devServerUrl: app.isPackaged ? undefined : process.env.MDN_DEV_SERVER_URL,
   });
 }
 

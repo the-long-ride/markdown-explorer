@@ -1,4 +1,5 @@
 import { setHeadingSectionExpanded } from '../components/Content/enhancements/headingSectionState';
+import { getActiveDocumentBody } from '../document/activeDocumentRoot';
 
 export const HEADING_SECTION_STATE_CHANGE_EVENT = 'markdown-explorer-heading-state-change';
 
@@ -21,14 +22,14 @@ export function toggleSection(headerEl: HTMLElement): void {
 }
 
 export function expandAll(): void {
-  document.querySelectorAll<HTMLElement>('.mdn-section').forEach((section) => {
+  (getActiveDocumentBody() ?? document).querySelectorAll<HTMLElement>('.mdn-section').forEach((section) => {
     setHeadingSectionExpanded(section, true);
     notifyHeadingSectionStateChange(section);
   });
 }
 
 export function collapseAll(): void {
-  document.querySelectorAll<HTMLElement>('.mdn-section').forEach((section) => {
+  (getActiveDocumentBody() ?? document).querySelectorAll<HTMLElement>('.mdn-section').forEach((section) => {
     setHeadingSectionExpanded(section, false);
     notifyHeadingSectionStateChange(section);
   });

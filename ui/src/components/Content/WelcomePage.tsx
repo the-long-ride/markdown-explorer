@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { useMemo, useState } from 'react';
+import { version as bundledVersion } from '../../../package.json';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
 import { getTranslations } from '../../contexts/translations';
@@ -230,7 +231,7 @@ export function WelcomePage() {
         )}
 
         {activeTab === 'manual' && (
-          <UserManualTab language={currentLang} settings={state.settings} />
+          <UserManualTab language={currentLang} settings={state.settings} version={state.appVersion || bundledVersion} />
         )}
 
         {activeTab === 'shortcuts' && (

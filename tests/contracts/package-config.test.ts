@@ -94,16 +94,17 @@ describe('package configuration contracts', () => {
   });
 
   describe('VS Code extension manifest', () => {
-    test('declares exactly 5 commands', async () => {
+    test('declares exactly 6 commands', async () => {
       const pkg = await readJson('vscode/package.json');
       const commands = pkg.contributes.commands;
-      expect(commands).toHaveLength(5);
+      expect(commands).toHaveLength(6);
       const ids = commands.map((c: any) => c.command).sort();
       expect(ids).toEqual([
         'markdownExplorer.open',
         'markdownExplorer.openFile',
         'markdownExplorer.openFolder',
         'markdownExplorer.refresh',
+        'markdownExplorer.saveCurrentDocument',
         'markdownExplorer.toggle',
       ].sort());
     });
@@ -125,13 +126,22 @@ describe('package configuration contracts', () => {
       expect(explorerContext.find((c: any) => c.command === 'markdownExplorer.openFolder')?.when).toBe('explorerResourceIsFolder');
     });
 
-    test('declares 2 keybindings', async () => {
+    test('declares 3 keybindings', async () => {
       const pkg = await readJson('vscode/package.json');
       const kb = pkg.contributes.keybindings;
-      expect(kb).toHaveLength(2);
+      expect(kb).toHaveLength(3);
       const cmds = kb.map((k: any) => k.command);
       expect(cmds).toContain('markdownExplorer.open');
       expect(cmds).toContain('markdownExplorer.toggle');
+      expect(cmds).toContain('markdownExplorer.saveCurrentDocument');
+    });
+
+    test('saveCurrentDocument keybinding is scoped to webviewFocus to avoid conflicting with the editor save command', async () => {
+      const pkg = await readJson('vscode/package.json');
+      const kb = pkg.contributes.keybindings.find((k: any) => k.command === 'markdownExplorer.saveCurrentDocument');
+      expect(kb.key).toBe('ctrl+s');
+      expect(kb.mac).toBe('cmd+s');
+      expect(kb.when).toBe('webviewFocus');
     });
 
     test('declares 6 configuration properties', async () => {
@@ -156,8 +166,9 @@ describe('package configuration contracts', () => {
     test('themeStyle enum matches UI ThemeStyle', async () => {
       const pkg = await readJson('vscode/package.json');
       const styleConfig = pkg.contributes.configuration.properties['markdownExplorer.themeStyle'];
+      expect(styleConfig.default).toBe('raw-grid');
       expect(styleConfig.enum).toEqual([
-        'default', 'bento', 'vercel', 'tokyo-night', 'neon-voltage', 'raw-grid',
+        'raw-grid', 'default', 'bento', 'vercel', 'tokyo-night', 'neon-voltage',
         'pet-white-shiba',
         'pet-k-ink', 'pet-cat', 'pet-hamster', 'pet-corgi',
       ]);
@@ -186,7 +197,7 @@ describe('package configuration contracts', () => {
 
     test('main entry points to compiled output', async () => {
       const pkg = await readJson('vscode/package.json');
-      expect(pkg.main).toBe('./out/vscode/src/extension.js');
+      expect(pkg.main).toBe('./out/vscode/src/core/extension.bundle.js');
     });
 
     test('publisher is the-long-ride', async () => {

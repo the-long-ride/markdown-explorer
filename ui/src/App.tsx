@@ -15,6 +15,7 @@ import type { PendingSearchJump, SearchScope } from './desktop/types';
 // Defer global DOM handlers until after mount
 import { initGlobalHandlers } from './dom/globalHandlers';
 import { useDesktopTabs } from './hooks/useDesktopTabs';
+import { useDirtyDocumentsGuard, useRequestWindowClose } from './hooks/useDirtyDocumentsGuard';
 import { useFileDropOpen } from './hooks/useFileDropOpen';
 import { useUpdateCheck } from './hooks/useUpdateCheck';
 import { formatShortcutLabel, getEnabledShortcut } from './utils/shortcuts';
@@ -44,6 +45,8 @@ export function App() {
   }, [activeHtmlDocument, activeHtmlTab?.htmlPreviewOverride, setContentTabHtmlPreview, state.currentFile, state.settings.defaultHtmlPreview, t.htmlPreviewDisabled, t.htmlPreviewEnabled]);
 
   const bridge = usePlatform();
+  const requestWindowClose = useRequestWindowClose();
+  const guardWorkspaceLeave = useDirtyDocumentsGuard();
   const {
     back,
     forward,
@@ -111,6 +114,7 @@ export function App() {
     isDesktop,
     isTabView,
     setNavigationScope,
+    guardWorkspaceLeave,
   });
   const { isDragging } = useFileDropOpen({
     isDesktop,
@@ -119,13 +123,17 @@ export function App() {
     modalOpen,
     openDroppedPath,
     openDroppedFolder: useCallback((handle: any) => {
-      const operation = prepareWorkspaceOpen();
-      bridge.postMessage({ command: 'openFolder', handle, openFirstFile: true, ...operation });
-    }, [bridge, prepareWorkspaceOpen]),
+      guardWorkspaceLeave(() => {
+        const operation = prepareWorkspaceOpen();
+        bridge.postMessage({ command: 'openFolder', handle, openFirstFile: true, ...operation });
+      });
+    }, [bridge, guardWorkspaceLeave, prepareWorkspaceOpen]),
     openDroppedFileHandle: useCallback((handle: any) => {
-      const operation = prepareWorkspaceOpen();
-      bridge.postMessage({ command: 'openFileHandle', handle, ...operation });
-    }, [bridge, prepareWorkspaceOpen]),
+      guardWorkspaceLeave(() => {
+        const operation = prepareWorkspaceOpen();
+        bridge.postMessage({ command: 'openFileHandle', handle, ...operation });
+      });
+    }, [bridge, guardWorkspaceLeave, prepareWorkspaceOpen]),
   });
   const openSearch = useCallback((scope: SearchScope = 'current') => {
     setSearchScope(scope);
@@ -266,7 +274,8 @@ export function App() {
 
   // Image click → open media modal
   const onImageClick = useCallback((el: HTMLElement) => {
-    const gallery = createMediaGallery(el);
+    const root = el.closest<HTMLElement>('[data-document-root]') ?? document;
+    const gallery = createMediaGallery(el, root);
     if (gallery) setMediaGallery(gallery);
   }, []);
 
@@ -312,7 +321,7 @@ export function App() {
               />
               <TooltipButton
                 className="btn btn--icon window-control-btn window-control-btn--close"
-                onClick={() => bridge.postMessage({ command: 'window-close' })}
+                onClick={requestWindowClose}
                 tooltip={t.tooltips.closeApp}
                 tooltipAlign="right"
                 icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}

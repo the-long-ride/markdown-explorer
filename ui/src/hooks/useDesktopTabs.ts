@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Action, AppState } from '../contexts/AppStateContext';
+import { getWorkspaceScopeKey } from '../contexts/contentTabState';
+import type { DirtyDocumentsGuard } from './useDirtyDocumentsGuard';
 import {
   createEmptyTab,
   createTabId,
@@ -33,7 +35,15 @@ interface UseDesktopTabsParams {
   isDesktop: boolean;
   isTabView: boolean;
   setNavigationScope: (scopeId: string) => void;
+  /**
+   * Runs an action that leaves the current workspace (switch/close tab, new
+   * workspace tab, dropped path, ...) behind the unsaved-changes prompt.
+   * Defaults to committing immediately.
+   */
+  guardWorkspaceLeave?: DirtyDocumentsGuard;
 }
+
+const commitImmediately: DirtyDocumentsGuard = (commit) => commit();
 
 export function useDesktopTabs({
   state,
@@ -42,6 +52,7 @@ export function useDesktopTabs({
   isDesktop,
   isTabView,
   setNavigationScope,
+  guardWorkspaceLeave = commitImmediately,
 }: UseDesktopTabsParams) {
   const workspaceNameRef = useRef(state.workspaceName);
   const initialDesktopStateRef = useRef<InitialDesktopState | null>(null);
@@ -176,7 +187,9 @@ export function useDesktopTabs({
     return operation;
   }, [bridge, markCancelledOperationIdle]);
 
-  const activateTab = useCallback(
+  // Unguarded workspace/tab switch. Callers either already ran the unsaved-changes
+  // guard (close* flows) or are restoring on startup, when nothing can be dirty.
+  const switchToTab = useCallback(
     (tabId: string, targetFilePath?: string) => {
       const tab = tabs.find((item) => item.id === tabId);
       if (!tab) return;
@@ -259,18 +272,34 @@ export function useDesktopTabs({
     ],
   );
 
+  const currentWorkspaceKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
+  const activateTab = useCallback((tabId: string, targetFilePath?: string) => {
+    const target = tabs.find((item) => item.id === tabId);
+    if (!target) return;
+    // Re-activating the workspace that is already loaded (e.g. jumping to a file
+    // in it) keeps every open document, so it needs no prompt.
+    const staysInWorkspace = target.kind === 'workspace'
+      && Boolean(target.workspacePath)
+      && getWorkspaceScopeKey(target.workspacePath, target.workspaceName ?? '') === currentWorkspaceKey;
+    if (staysInWorkspace) {
+      switchToTab(tabId, targetFilePath);
+      return;
+    }
+    guardWorkspaceLeave(() => switchToTab(tabId, targetFilePath));
+  }, [currentWorkspaceKey, guardWorkspaceLeave, switchToTab, tabs]);
+
   useEffect(() => {
     if (!isTabView || restoredDesktopTabsRef.current || state.isLoading) return;
     restoredDesktopTabsRef.current = true;
     const activeTab = tabs.find((tab) => tab.id === activeTabId);
     if (activeTab?.kind === 'workspace' && activeTab.workspacePath) {
-      activateTab(activeTab.id);
+      switchToTab(activeTab.id);
     } else if (!activeTab) {
       setActiveTabId('home');
     }
-  }, [activateTab, activeTabId, isTabView, state.isLoading, tabs]);
+  }, [activeTabId, isTabView, state.isLoading, switchToTab, tabs]);
 
-  const createNewWorkspaceTab = useCallback(() => {
+  const createNewWorkspaceTabUnguarded = useCallback(() => {
     const activeOperation = getActiveWorkspaceOperation();
     if (activeOperation) {
       bridge.postMessage({ command: 'cancelWorkspaceScan', workspaceOperationId: activeOperation.workspaceOperationId });
@@ -287,14 +316,24 @@ export function useDesktopTabs({
     return id;
   }, [bridge, dispatchEmptyWorkspace, isTabView, markCancelledOperationIdle, setNavigationScope]);
 
+  // Opening a new workspace tab replaces the loaded workspace; the returned id
+  // is only available when the unsaved-changes prompt did not have to be shown.
+  const createNewWorkspaceTab = useCallback((): string | undefined => {
+    let createdTabId: string | undefined;
+    guardWorkspaceLeave(() => { createdTabId = createNewWorkspaceTabUnguarded(); });
+    return createdTabId;
+  }, [createNewWorkspaceTabUnguarded, guardWorkspaceLeave]);
+
+  // Synchronous: callers (workspace selection, drop targets) run the
+  // unsaved-changes guard themselves before calling this.
   const prepareWorkspaceOpen = useCallback((): WorkspaceOperationContext | undefined => {
     if (!isTabView) return undefined;
     const active = tabs.find((tab) => tab.id === activeTabIdRef.current);
     const targetTabId = !active || active.kind === 'home'
-      ? createNewWorkspaceTab()
+      ? createNewWorkspaceTabUnguarded()
       : active.id;
     return beginOperationForTab(targetTabId);
-  }, [beginOperationForTab, createNewWorkspaceTab, isTabView, tabs]);
+  }, [beginOperationForTab, createNewWorkspaceTabUnguarded, isTabView, tabs]);
 
   const reopenUnavailableWorkspace = useCallback((oldPath: string) => {
     if (!oldPath) return;
@@ -318,10 +357,12 @@ export function useDesktopTabs({
   const openDroppedPath = useCallback((droppedPath: string) => {
     if (!droppedPath) return;
     if (isTabView) {
-      const active = tabs.find((tab) => tab.id === activeTabIdRef.current);
-      const targetTabId = active?.kind === 'new' ? active.id : createNewWorkspaceTab();
-      const operation = beginOperationForTab(targetTabId);
-      bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true, ...operation });
+      guardWorkspaceLeave(() => {
+        const active = tabs.find((tab) => tab.id === activeTabIdRef.current);
+        const targetTabId = active?.kind === 'new' ? active.id : createNewWorkspaceTabUnguarded();
+        const operation = beginOperationForTab(targetTabId);
+        bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true, ...operation });
+      });
       return;
     }
 
@@ -331,25 +372,26 @@ export function useDesktopTabs({
     }
 
     bridge.postMessage({ command: 'openPath', path: droppedPath, openFirstFile: true });
-  }, [beginOperationForTab, bridge, createNewWorkspaceTab, isTabView, tabs]);
+  }, [beginOperationForTab, bridge, createNewWorkspaceTabUnguarded, guardWorkspaceLeave, isTabView, tabs]);
 
   const confirmSwitchWorkspace = useCallback(() => {
-    if (pendingDroppedPath) {
-      bridge.postMessage({ command: 'openPath', path: pendingDroppedPath, openFirstFile: true });
-      setPendingDroppedPath(null);
-    }
-  }, [bridge, pendingDroppedPath]);
+    if (!pendingDroppedPath) return;
+    const path = pendingDroppedPath;
+    setPendingDroppedPath(null);
+    guardWorkspaceLeave(() => bridge.postMessage({ command: 'openPath', path, openFirstFile: true }));
+  }, [bridge, guardWorkspaceLeave, pendingDroppedPath]);
 
   const { closeTab, reorderTabs, closeTabsToRight, closeOtherTabs, closeAllTabs,
     updateTabAlias, updateWorkspaceAlias } = useDesktopTabManagement({
     tabs, tabsRef, activeTabIdRef, pendingWorkspaceTabIdRef, setTabs, setActiveTabId,
-    setWorkspaceAliases, activateTab, bridge, dispatchEmptyWorkspace, isTabView, setNavigationScope,
+    setWorkspaceAliases, activateTab: switchToTab, bridge, dispatchEmptyWorkspace, isTabView, setNavigationScope,
+    guardWorkspaceLeave,
   });
 
   const { crossTabSearchItems, isIndexingAcrossTabs } = useDesktopTabSearchSync({
     tabs, tabsRef, setTabs, pendingWorkspaceTabIdRef, pendingWorkspaceReplacementRef,
     requestedWorkspaceIndexesRef, bridge, isTabView, isLoading: state.isLoading,
-    createNewWorkspaceTab, beginOperationForTab,
+    createNewWorkspaceTab: createNewWorkspaceTabUnguarded, beginOperationForTab, guardWorkspaceLeave,
   });
 
   const cancelCurrentWorkspaceScan = useCallback(() => {

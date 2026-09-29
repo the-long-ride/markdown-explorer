@@ -1,3 +1,4 @@
+import { getActiveDocumentBody } from '../document/activeDocumentRoot';
 export interface JumpLocation {
   readonly line?: number;
   readonly sourceStart?: number;
@@ -78,7 +79,7 @@ export function jumpToLintLocation(
   let timer = 0;
 
   const tryJump = (): boolean => {
-    const body = document.getElementById('mdBody');
+    const body = getActiveDocumentBody();
     if (!(body instanceof HTMLElement)) return false;
 
     const currentDoc = body.dataset.mdnSourceDocumentPath ?? '';

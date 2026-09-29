@@ -17,6 +17,46 @@
   flex: 1.2;
 }
 
+.settings-shortcuts__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-shortcuts__header > div {
+  min-width: 0;
+}
+
+.settings-shortcuts__header > button {
+  flex: 0 0 auto;
+}
+
+.settings-shortcuts__reset.settings-outline-button {
+  width: 30px;
+  height: 30px;
+  padding: 0 !important;
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--bd-s));
+  background: color-mix(in srgb, var(--warning) 8%, var(--bg-e));
+}
+
+.settings-shortcuts__reset.settings-outline-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-shortcuts__reset.settings-outline-button:hover:not(:disabled),
+.settings-shortcuts__reset.settings-outline-button:focus-visible:not(:disabled) {
+  color: var(--warning);
+  border-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 16%, var(--bg-e));
+}
+
+.settings-shortcuts__reset.settings-outline-button:focus-visible:not(:disabled) {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning) 35%, transparent);
+}
+
 .settings-panel-heading {
   margin-bottom: 4px;
   color: var(--tx);
@@ -50,21 +90,65 @@
   padding-right: 6px;
 }
 
+.settings-shortcut-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-shortcut-group + .settings-shortcut-group {
+  margin-top: 12px;
+}
+
+.settings-shortcut-group__label {
+  margin: 0;
+  padding-inline: 2px;
+  color: var(--tx2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.settings-shortcut-group__card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--stroke-w) solid var(--bd-s);
+  border-radius: var(--r);
+  background: var(--bg-e);
+}
+
 .settings-shortcut-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
   font-size: 12px;
+}
+
+.settings-shortcut-row + .settings-shortcut-row {
+  border-top: var(--stroke-w) solid var(--bd);
 }
 
 .settings-shortcut-label {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
   color: var(--tx);
   font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.2px;
+}
+
+.settings-shortcut-scope {
+  color: var(--tx3);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .settings-shortcut-toggle {
@@ -272,6 +356,12 @@
 .settings-appearance-controls .settings-preference-row {
   min-height: 50px;
   align-items: center;
+}
+
+.settings-appearance-section .settings-item__desc .shortcut-keycaps-container {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 3px;
 }
 
 .settings-appearance-controls > .settings-preference-row:first-child,

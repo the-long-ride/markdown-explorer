@@ -34,12 +34,12 @@ keywords:
 
 | Value | Category |
 |---|---|
-| `default` | Built-in style |
+| `raw-grid` | Built-in style, default for new users (labeled as Default) |
+| `default` | Built-in style, shown as Explorer Classic |
 | `bento` | Built-in style |
 | `vercel` | Built-in style |
 | `tokyo-night` | Built-in style |
 | `neon-voltage` | Built-in style |
-| `raw-grid` | Built-in style |
 | `pet-white-shiba` | Built-in style |
 | `pet-k-ink` | Built-in style |
 | `pet-cat` | Built-in style |
@@ -52,7 +52,7 @@ keywords:
 |---|---|
 | `pet-shiba-memes` | `tokyo-night` |
 | `pet-shiba` | `pet-white-shiba` |
-| Unknown value, including `glass` | `default` |
+| Unknown value, including `glass` | `raw-grid` |
 
 ## Custom theme fields
 

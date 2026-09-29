@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const read = (path) => readFile(path, 'utf8');
 
@@ -39,7 +40,7 @@ test('column controls have dedicated labels and styling', async () => {
 
 test('Chromium delegated click handling opens the Columns menu when MV3 blocks inline handlers', async () => {
   const [contentEffects, searchPreview] = await Promise.all([
-    read('ui/src/components/Content/useContentEffects.ts'),
+    readProjectSource('ui/src/components/Content/useContentEffects.ts'),
     read('ui/src/components/Search/SearchDocumentPreview.tsx'),
   ]);
   assert.match(contentEffects, /mdn-table-columns-toggle[\s\S]*?toggleColumnMenu/);

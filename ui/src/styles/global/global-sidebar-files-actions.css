@@ -83,3 +83,59 @@
   color: var(--danger);
 }
 
+.sidebar-clear-pins-dialog__backdrop {
+  position: fixed;
+  z-index: 100001;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--modal-bg);
+}
+
+.sidebar-clear-pins-dialog {
+  display: grid;
+  gap: 12px;
+  width: min(420px, 100%);
+  padding: 20px;
+  border: var(--stroke-w) solid var(--bd-x);
+  border-radius: var(--r-lg);
+  background: var(--bg-e);
+  color: var(--tx);
+  box-shadow: var(--sh-lg);
+}
+
+.sidebar-clear-pins-dialog h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.sidebar-clear-pins-dialog p {
+  color: var(--tx2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sidebar-clear-pins-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sidebar-clear-pins-dialog__actions .btn {
+  min-height: 34px;
+  padding-inline: 12px;
+}
+
+.sidebar-clear-pins-dialog__confirm {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--bd-s));
+  color: var(--warning);
+}
+
+.sidebar-clear-pins-dialog__confirm:hover,
+.sidebar-clear-pins-dialog__confirm:focus-visible {
+  border-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, var(--bg-e));
+  color: var(--warning);
+}
+

@@ -27,7 +27,6 @@ function createAppBootstrap({
   clearTimeoutImpl,
   setImmediateImpl,
   configureYouTubeEmbedHeadersFn,
-  createAppTrayFn,
   createUpdateManagerFn,
   registerIpcHandlersFn,
   runtimeImpl,
@@ -37,7 +36,6 @@ function createAppBootstrap({
   recentWorkspacesStoreImpl,
   setMainWindow,
   setUpdateManager,
-  TrayConstructor = require("electron").Tray,
   ipcMainImpl = require("electron").ipcMain,
   clipboardImpl = require("electron").clipboard,
   shellImpl = require("electron").shell,
@@ -46,15 +44,16 @@ function createAppBootstrap({
   createExportSaveHandlerFn = require("./runtime-export-save").createExportSaveHandler,
   createInsightsWorkspaceHostFn = require("./runtime-insights").createInsightsWorkspaceHost,
   createExternalLinkHostFn = require("./runtime-insights-external").createExternalLinkHost,
+  createNativeCloseGuardFn = require("./native-close-guard").createNativeCloseGuard,
   externalOpenQueue = null,
 } = {}) {
   let mainWindowRef = null;
-  let trayRef = null;
   let updateManagerRef = null;
   const htmlPreviewServer = createHtmlPreviewServerFn();
 
   function createWindow() {
     mainWindowRef = createMainWindowFn({ appDir: appDirImpl, debugTools: debugToolsImpl, clampAppZoom: runtimeImpl.clampAppZoom });
+    nativeCloseGuard.attachWindow(mainWindowRef);
     if (setMainWindow) setMainWindow(mainWindowRef);
     perfImpl.mark("window:created");
   }
@@ -81,6 +80,14 @@ function createAppBootstrap({
   const sendHostMessage = (message) => {
     mainWindowRef?.webContents.send("host-message", message);
   };
+
+  const nativeCloseGuard = createNativeCloseGuardFn({
+    app: appImpl,
+    dialog: dialogImpl,
+    getMainWindow,
+    sendHostMessage,
+    platform: processImpl.platform,
+  });
 
   const exportResourceHandlers = createExportResourceHandlersFn({
     fs: fsImpl,
@@ -154,15 +161,6 @@ function createAppBootstrap({
     }, 1000);
     hidden.once("closed", () => clearTimeoutImpl(gpuTimeout));
     setImmediateImpl(() => {
-      trayRef = createAppTrayFn({
-        appDir: appDirImpl,
-        getMainWindow,
-        fs: fsImpl,
-        pathImpl,
-        TrayConstructor,
-        ElectronMenu: MenuImpl,
-        appQuit: () => appImpl.quit(),
-      });
       updateManagerRef = createUpdateManagerFn({
         app: appImpl,
         execPath: processImpl.execPath,
@@ -209,6 +207,15 @@ function createAppBootstrap({
           navigate: runtimeImpl.handleNavigate,
           refresh: runtimeImpl.handleRefresh,
           setDocumentConversion: runtimeImpl.handleSetDocumentConversion,
+          saveDocument: runtimeImpl.handleSaveDocument,
+          listDocumentHistory: runtimeImpl.handleListDocumentHistory,
+          listRepositoryHistory: runtimeImpl.handleListRepositoryHistory,
+          listRevisionFiles: runtimeImpl.handleListRevisionFiles,
+          readRevisionFile: runtimeImpl.handleReadRevisionFile,
+          readGitRevision: runtimeImpl.handleReadGitRevision,
+          compareGitRevisions: runtimeImpl.handleCompareGitRevisions,
+          confirmNativeClose: nativeCloseGuard.confirm,
+          windowClose: nativeCloseGuard.requestWindowClose,
           listDesktopFonts: runtimeImpl.handleListDesktopFonts,
           importDesktopFonts: runtimeImpl.handleImportDesktopFonts,
           removeImportedDesktopFont: runtimeImpl.handleRemoveImportedDesktopFont,
@@ -234,7 +241,8 @@ function createAppBootstrap({
     if (processImpl.platform !== "darwin") appImpl.quit();
   });
 
-  appImpl.on("before-quit", () => {
+  appImpl.on("before-quit", (event) => {
+    if (!nativeCloseGuard.handleBeforeQuit(event)) return;
     externalLinkHost.dispose();
     insightsHost.dispose();
     runtimeImpl.dispose();

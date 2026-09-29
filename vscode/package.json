@@ -2,7 +2,7 @@
   "name": "vscode-extension-markdown-explorer",
   "displayName": "Markdown Explorer in VS Code",
   "description": "Markdown for AI agents, Markdown Explorer for human. View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
-  "version": "1.6.8",
+  "version": "1.7.0",
   "license": "MIT",
   "publisher": "the-long-ride",
   "icon": "ui/assets/logos/logo-500.png",
@@ -26,7 +26,7 @@
     "onCommand:markdownExplorer.toggle",
     "onCommand:markdownExplorer.refresh"
   ],
-  "main": "./out/vscode/src/extension.js",
+  "main": "./out/vscode/src/core/extension.bundle.js",
   "contributes": {
     "commands": [
       {
@@ -65,6 +65,10 @@
         "command": "markdownExplorer.refresh",
         "title": "Markdown Explorer: Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "markdownExplorer.saveCurrentDocument",
+        "title": "Markdown Explorer: Save Current Document"
       }
     ],
     "menus": {
@@ -106,6 +110,12 @@
         "key": "ctrl+alt+v",
         "mac": "cmd+alt+v",
         "when": "editorLangId == markdown"
+      },
+      {
+        "command": "markdownExplorer.saveCurrentDocument",
+        "key": "ctrl+s",
+        "mac": "cmd+s",
+        "when": "webviewFocus"
       }
     ],
     "configuration": {
@@ -123,14 +133,14 @@
         },
         "markdownExplorer.themeStyle": {
           "type": "string",
-          "default": "default",
+          "default": "raw-grid",
           "enum": [
+            "raw-grid",
             "default",
             "bento",
             "vercel",
             "tokyo-night",
             "neon-voltage",
-            "raw-grid",
             "pet-white-shiba",
             "pet-k-ink",
             "pet-cat",
@@ -138,12 +148,12 @@
             "pet-corgi"
           ],
           "enumDescriptions": [
-            "Original compact Markdown Explorer styling.",
+            "Visible grids, asymmetric panels, and stripped-back mechanical borders.",
+            "Explorer Classic: the original compact Markdown Explorer styling.",
             "Bento grids with modular panels and stronger structure.",
             "High-contrast monochrome, sharp borders, and geometric focus.",
             "Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast.",
             "Deep black surfaces with electric coral, teal, and purple glow.",
-            "Visible grids, asymmetric panels, and stripped-back mechanical borders.",
             "Pets theme: white Shiba mascot with cute anime PNG background pets.",
             "Pets theme: K-Ink (app author's dog) with expressive anime PNG background pets.",
             "Pets theme: cat mascot with whiskers and cute anime PNG background pets.",
@@ -180,7 +190,7 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./ && node scripts/bundle-markdown-them.js && cd ../ui && pnpm run build && cd ../vscode && node scripts/copy-ui.js",
+    "compile": "tsc -p ./ && node scripts/bundle-markdown-them.js && node scripts/bundle-extension.js && cd ../ui && pnpm run build && cd ../vscode && node scripts/copy-ui.js",
     "watch": "tsc -watch -p ./",
     "package": "pnpm run compile && node scripts/verify-package-runtime.js && pnpm exec vsce package --no-dependencies",
     "typecheck": "tsc -p ./ --noEmit"
