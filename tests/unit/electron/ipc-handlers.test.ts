@@ -52,6 +52,9 @@ describe('registerIpcHandlers', () => {
       scheduleDownloadedUpdate: vi.fn(() => Promise.resolve()),
       restartAndApplyUpdate: vi.fn(() => Promise.resolve()),
       openHtmlPreview: vi.fn(() => Promise.resolve()),
+      listRepositoryHistory: vi.fn(() => Promise.resolve()),
+      listRevisionFiles: vi.fn(() => Promise.resolve()),
+      readRevisionFile: vi.fn(() => Promise.resolve()),
     };
     getMainWindow = vi.fn();
     shell = { openExternal: vi.fn(), openPath: vi.fn(), showItemInFolder: vi.fn() };
@@ -204,6 +207,15 @@ describe('registerIpcHandlers', () => {
       getMainWindow.mockReturnValue(win);
       registeredHandler(null, { command: 'window-close' });
       expect(win.close).toHaveBeenCalled();
+    });
+
+    test('window-close goes through the close guard handler instead of closing the window directly', () => {
+      const win = { close: vi.fn() };
+      getMainWindow.mockReturnValue(win);
+      (handlers as any).windowClose = vi.fn();
+      registeredHandler(null, { command: 'window-close' });
+      expect((handlers as any).windowClose).toHaveBeenCalledTimes(1);
+      expect(win.close).not.toHaveBeenCalled();
     });
 
     test('window-close safe when getMainWindow returns null', () => {
@@ -430,6 +442,30 @@ describe('registerIpcHandlers', () => {
     test('restartAndApplyUpdate', () => {
       registeredHandler(null, { command: 'restartAndApplyUpdate' });
       expect(handlers.restartAndApplyUpdate).toHaveBeenCalled();
+    });
+
+    test('listRepositoryHistory', () => {
+      registeredHandler(null, { command: 'listRepositoryHistory', limit: 10 });
+      expect(handlers.listRepositoryHistory).toHaveBeenCalledWith({ command: 'listRepositoryHistory', limit: 10 });
+    });
+
+    test('listRevisionFiles', () => {
+      registeredHandler(null, { command: 'listRevisionFiles', oid: 'abc123' });
+      expect(handlers.listRevisionFiles).toHaveBeenCalledWith({ command: 'listRevisionFiles', oid: 'abc123' });
+    });
+
+    test('readRevisionFile', () => {
+      registeredHandler(null, { command: 'readRevisionFile', oid: 'abc123', path: 'README.md' });
+      expect(handlers.readRevisionFile).toHaveBeenCalledWith({ command: 'readRevisionFile', oid: 'abc123', path: 'README.md' });
+    });
+
+    test('safely handles missing git history handlers without rejection', async () => {
+      delete (handlers as any).listRepositoryHistory;
+      delete (handlers as any).listRevisionFiles;
+      delete (handlers as any).readRevisionFile;
+      await expect(registeredHandler(null, { command: 'listRepositoryHistory' })).resolves.not.toThrow();
+      await expect(registeredHandler(null, { command: 'listRevisionFiles' })).resolves.not.toThrow();
+      await expect(registeredHandler(null, { command: 'readRevisionFile' })).resolves.not.toThrow();
     });
   });
 });

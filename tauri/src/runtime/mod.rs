@@ -6,3 +6,4 @@ pub mod html_preview;
 pub mod export_resources;
 
 pub mod png_export;
+pub mod close_guard;

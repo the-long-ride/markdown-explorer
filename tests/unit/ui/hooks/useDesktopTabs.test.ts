@@ -1277,4 +1277,189 @@ describe('useDesktopTabs', () => {
       expect(result.current.pendingDroppedPath).toBeNull();
     });
   });
+
+  describe('unsaved-changes guard on workspace leave', () => {
+    let pendingCommits: Array<() => void>;
+    let guardWorkspaceLeave: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      pendingCommits = [];
+      guardWorkspaceLeave = vi.fn((commit: () => void) => { pendingCommits.push(commit); });
+    });
+
+    function setupGuarded(stateOverrides: Record<string, any> = { workspaceName: 'ws', workspacePath: '/ws' }, isTabView = true) {
+      const dispatch = vi.fn();
+      const bridge = makeBridge();
+      const input = {
+        state: makeState(stateOverrides),
+        dispatch,
+        bridge,
+        isDesktop: true,
+        isTabView,
+        setNavigationScope: vi.fn(),
+        guardWorkspaceLeave,
+      };
+      const hook = renderHook((props) => useDesktopTabs(props), { initialProps: input });
+      return { ...hook, dispatch, bridge, input };
+    }
+
+    const approve = () => act(() => { pendingCommits.splice(0).forEach((commit) => commit()); });
+    const posted = (bridge: ReturnType<typeof makeBridge>, command: string) =>
+      bridge.postMessage.mock.calls.filter((call: any[]) => call[0].command === command);
+
+    function withTwoTabs() {
+      const ctx = setupGuarded();
+      const lastTabId = () => ctx.result.current.tabs[ctx.result.current.tabs.length - 1].id;
+      act(() => { ctx.result.current.createNewWorkspaceTab(); });
+      approve();
+      const first = lastTabId();
+      act(() => { ctx.result.current.createNewWorkspaceTab(); });
+      approve();
+      const second = lastTabId();
+      ctx.input.state = makeState({ workspaceName: 'ws', workspacePath: '/ws', renderVersion: 3 });
+      ctx.rerender(ctx.input);
+      guardWorkspaceLeave.mockClear();
+      return { ...ctx, first, second };
+    }
+
+    it('holds a tab switch that leaves the loaded workspace until the guard commits', () => {
+      const { result, dispatch, bridge } = setupGuarded();
+      act(() => { result.current.activateTab('home'); });
+
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+      expect(dispatch).not.toHaveBeenCalled();
+      expect(posted(bridge, 'closeWorkspace')).toHaveLength(0);
+
+      approve();
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'READY_ACK', workspaceName: '' }));
+      expect(posted(bridge, 'closeWorkspace')).toHaveLength(1);
+    });
+
+    it('does not switch when the guard is never committed (user cancelled)', () => {
+      const { result, dispatch, bridge } = setupGuarded();
+      act(() => { result.current.activateTab('home'); });
+      expect(dispatch).not.toHaveBeenCalled();
+      expect(posted(bridge, 'closeWorkspace')).toHaveLength(0);
+    });
+
+    it('does not prompt when re-activating the workspace that is already loaded', () => {
+      const { result, input, rerender, bridge } = setupGuarded();
+      act(() => { result.current.createNewWorkspaceTab(); });
+      approve();
+      const tabId = result.current.tabs[result.current.tabs.length - 1].id;
+      input.state = makeState({ workspaceName: 'ws', workspacePath: '/ws', currentFile: '/ws/a.md', contentHtml: '<p>a</p>', renderVersion: 2 });
+      rerender(input);
+      guardWorkspaceLeave.mockClear();
+      bridge.postMessage.mockClear();
+
+      act(() => { result.current.activateTab(tabId, '/ws/b.md'); });
+
+      expect(guardWorkspaceLeave).not.toHaveBeenCalled();
+      expect(posted(bridge, 'activateWorkspace')).toHaveLength(1);
+    });
+
+    it('holds creating a new workspace tab and returns its id only after approval', () => {
+      const { result, bridge } = setupGuarded();
+      let created: string | undefined = 'unset';
+      act(() => { created = result.current.createNewWorkspaceTab(); });
+      const before = result.current.tabs.length;
+      expect(created).toBeUndefined();
+      expect(posted(bridge, 'closeWorkspace')).toHaveLength(0);
+
+      approve();
+      expect(result.current.tabs).toHaveLength(before + 1);
+      expect(posted(bridge, 'closeWorkspace')).toHaveLength(1);
+    });
+
+    it('holds closing the active tab but not an inactive one', () => {
+      const { result, first, second } = withTwoTabs();
+
+      act(() => { result.current.closeTab(first); });
+      expect(guardWorkspaceLeave).not.toHaveBeenCalled();
+      expect(result.current.tabs.some((tab) => tab.id === first)).toBe(false);
+
+      act(() => { result.current.closeTab(second); });
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+      expect(result.current.tabs.some((tab) => tab.id === second)).toBe(true);
+
+      approve();
+      expect(result.current.tabs.some((tab) => tab.id === second)).toBe(false);
+    });
+
+    it('activates the fallback tab after a guarded close without prompting a second time', () => {
+      const { result, dispatch, second } = withTwoTabs();
+
+      act(() => { result.current.closeTab(second); });
+      approve();
+      act(() => { vi.runAllTimers(); });
+
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+      expect(dispatch).toHaveBeenCalled();
+    });
+
+    it('holds close-all-tabs', () => {
+      const { result, bridge } = setupGuarded();
+      act(() => { result.current.closeAllTabs(); });
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+      expect(posted(bridge, 'cancelAllWorkspaceScans')).toHaveLength(0);
+      approve();
+      expect(posted(bridge, 'cancelAllWorkspaceScans')).toHaveLength(1);
+    });
+
+    it('holds close-other-tabs only when the active tab would be closed', () => {
+      const { result, first, second } = withTwoTabs();
+
+      act(() => { result.current.closeOtherTabs(second); });
+      expect(guardWorkspaceLeave).not.toHaveBeenCalled();
+
+      act(() => { result.current.closeOtherTabs(first); });
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+    });
+
+    it('holds a dropped path in tab view until the guard commits', () => {
+      const { result, bridge } = setupGuarded();
+      act(() => { result.current.openDroppedPath('/dropped'); });
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+      expect(posted(bridge, 'openPath')).toHaveLength(0);
+      approve();
+      expect(posted(bridge, 'openPath')).toHaveLength(1);
+    });
+
+    it('holds confirming a workspace switch for a dropped path in sidebar view', () => {
+      const { result, bridge } = setupGuarded({ workspaceName: 'ws', workspacePath: '/ws' }, false);
+      act(() => { result.current.openDroppedPath('/dropped'); });
+      expect(result.current.pendingDroppedPath).toBe('/dropped');
+      expect(guardWorkspaceLeave).not.toHaveBeenCalled();
+
+      act(() => { result.current.confirmSwitchWorkspace(); });
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+      expect(posted(bridge, 'openPath')).toHaveLength(0);
+      approve();
+      expect(posted(bridge, 'openPath')).toEqual([[{ command: 'openPath', path: '/dropped', openFirstFile: true }]]);
+    });
+
+    it('holds a host-initiated external open request', () => {
+      const { bridge } = setupGuarded();
+      act(() => { bridge._fireMessage({ command: 'externalOpenPath', path: '/external' }); });
+      expect(guardWorkspaceLeave).toHaveBeenCalledTimes(1);
+      expect(posted(bridge, 'openPath')).toHaveLength(0);
+      approve();
+      expect(posted(bridge, 'openPath')).toHaveLength(1);
+    });
+
+    it('never prompts when the caller supplies no guard', () => {
+      const bridge = makeBridge();
+      const props = {
+        state: makeState({ workspaceName: 'ws', workspacePath: '/ws' }),
+        dispatch: vi.fn(),
+        bridge,
+        isDesktop: true,
+        isTabView: true,
+        setNavigationScope: vi.fn(),
+      };
+      const { result } = renderHook(() => useDesktopTabs(props));
+      act(() => { result.current.activateTab('home'); });
+      expect(bridge.postMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
+    });
+  });
 });

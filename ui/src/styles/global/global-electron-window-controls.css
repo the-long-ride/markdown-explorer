@@ -1,22 +1,91 @@
 /* ============================================================
    Electron Frameless Drag Region & Window Controls
    ============================================================ */
+.focus-mode-drag-region {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 34px;
+  z-index: 99999990;
+  pointer-events: none;
+  background: transparent;
+}
+
+.focus-mode-drag-region__surface {
+  position: absolute;
+  top: 6px;
+  right: 72px;
+  left: 0;
+  height: 24px;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.focus-mode-drag-region__controls {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  width: 72px;
+  height: 24px;
+  pointer-events: none;
+}
+
+body.is-desktop .topbar,
+body.is-tauri .topbar {
+  -webkit-app-region: drag;
+  z-index: 200000;
+}
+
 body.is-electron .topbar {
   -webkit-app-region: drag;
   z-index: 200000;
 }
 
-body.is-electron .topbar__logo,
+body.is-desktop .focus-mode-drag-region__surface,
+body.is-tauri .focus-mode-drag-region__surface,
+.focus-mode-drag-region__surface {
+  -webkit-app-region: drag;
+}
+
+body.is-electron .focus-mode-drag-region__surface {
+  -webkit-app-region: drag;
+}
+
+body.is-electron .focus-mode-drag-region__controls,
+body.is-desktop .focus-mode-drag-region__controls,
+body.is-tauri .focus-mode-drag-region__controls,
+body.is-electron .exit-focus-btn,
+body.is-desktop .exit-focus-btn,
+body.is-tauri .exit-focus-btn,
+body.is-electron .topbar a,
+body.is-desktop .topbar a,
+body.is-tauri .topbar a,
+body.is-electron .topbar button,
+body.is-desktop .topbar button,
+body.is-tauri .topbar button,
+body.is-electron .topbar input,
+body.is-desktop .topbar input,
+body.is-tauri .topbar input,
 body.is-electron .btn,
+body.is-desktop .btn,
+body.is-tauri .btn,
 body.is-electron .toolbar-action-menu,
+body.is-desktop .toolbar-action-menu,
+body.is-tauri .toolbar-action-menu,
 body.is-electron .toolbar-action-menu__panel,
+body.is-desktop .toolbar-action-menu__panel,
+body.is-tauri .toolbar-action-menu__panel,
 body.is-electron .search-bar,
-body.is-electron .topbar__divider,
-body.is-electron .topbar__breadcrumb-container,
+body.is-desktop .search-bar,
+body.is-tauri .search-bar,
 body.is-electron .window-controls,
-body.is-electron .sidebar-resize {
+body.is-desktop .window-controls,
+body.is-tauri .window-controls,
+body.is-electron .sidebar-resize,
+body.is-desktop .sidebar-resize,
+body.is-tauri .sidebar-resize {
   -webkit-app-region: no-drag;
 }
+
 
 .window-control-btn {
   border: none !important;

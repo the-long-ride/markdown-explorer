@@ -16,7 +16,7 @@ test('test-code fixture covers XML declaration, XML fragment, and headerless CSV
 });
 
 test('frontmatter extraction accepts only leading HTML-comment preambles', async () => {
-  const parser = await read('ui/src/markdown/parser.ts');
+  const parser = await read('ui/src/markdown/frontmatter.ts');
   assert.match(parser, /scanFrontmatterPreamble|findFrontmatterStartAfterComments/);
   assert.match(parser, /<!--/);
   assert.match(parser, /-->/);
@@ -52,18 +52,18 @@ test('Markdown image-only paragraphs render as equal-width rows and heading badg
   assert.match(headingBlock, /aspect-ratio:\s*1/);
 });
 
-test('Settings Appearance uses one scroll owner and preference tooltips render through a portal', async () => {
-  const [panel, tooltip, modal, navigationCss, layoutCss] = await Promise.all([
+test('Settings Appearance uses one scroll owner and inline descriptions', async () => {
+  const [panel, modal, navigationCss, layoutCss] = await Promise.all([
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
-    read('ui/src/components/Settings/PreferenceDescriptionTooltip.tsx'),
     read('ui/src/components/Settings/SettingsModal.tsx'),
     read('ui/src/styles/global/global-settings-navigation.css'),
     read('ui/src/styles/global/global-settings-layout.css'),
   ]);
   const css = `${navigationCss}
 ${layoutCss}`;
-  assert.match(panel, /PreferenceDescriptionTooltip/);
-  assert.match(tooltip, /createPortal/);
+  assert.match(panel, /settings-item__desc/);
+  assert.match(panel, /t\.desktopViewDesc/);
+  assert.doesNotMatch(panel, /PreferenceDescriptionTooltip/);
   assert.match(modal, /settings-navigation__content/);
   assert.match(css, /\.settings-navigation__content/);
   assert.match(css, /overflow:\s*auto/);

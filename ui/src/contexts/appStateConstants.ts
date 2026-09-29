@@ -21,6 +21,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleFocusMode: 'Ctrl+Alt+F',
   toggleHtmlPreview: 'Ctrl+Alt+H',
   toggleWorkspaceInsights: 'Ctrl+Alt+I',
+  saveCurrentDocument: 'Ctrl+S',
 };
 
 const { toggleWorkspaceInsights: _toggleWorkspaceInsights, ...VSCODE_SHARED_KEYBINDINGS } = DEFAULT_KEYBINDINGS;
@@ -76,8 +77,13 @@ export const THEME_STYLE_OPTIONS: readonly {
   description: string;
 }[] = [
   {
-    id: 'default',
+    id: 'raw-grid',
     label: 'Default',
+    description: 'Visible structure, asymmetric panels, and mechanical borders.',
+  },
+  {
+    id: 'default',
+    label: 'Explorer Classic',
     description: 'Compact reader surfaces with the original Markdown Explorer balance.',
   },
   {
@@ -99,11 +105,6 @@ export const THEME_STYLE_OPTIONS: readonly {
     id: 'neon-voltage',
     label: 'Neon Voltage',
     description: 'Deep black surfaces with electric coral, teal, and purple glow.',
-  },
-  {
-    id: 'raw-grid',
-    label: 'Raw Grid',
-    description: 'Visible structure, asymmetric panels, and mechanical borders.',
   },
 ];
 
@@ -189,7 +190,7 @@ export function normalizeThemeStyle(value: unknown): ThemeStyle {
   if (value === 'pet-shiba') return 'pet-white-shiba';
   return ALL_THEME_STYLE_OPTIONS.some((option) => option.id === value)
     ? (value as ThemeStyle)
-    : 'default';
+    : 'raw-grid';
 }
 
 export function normalizeDesktopViewMode(value: unknown): DesktopViewMode {

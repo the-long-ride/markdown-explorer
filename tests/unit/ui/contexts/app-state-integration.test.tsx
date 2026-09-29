@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { AppStateProvider, useAppState } from '../../../../ui/src/contexts/AppStateContext';
 import { PlatformProvider } from '../../../../ui/src/contexts/PlatformContext';
 import type { PlatformBridge } from '../../../../ui/src/platform/bridge';
@@ -119,14 +119,14 @@ describe('AppStateProvider integration', () => {
     });
 
     it('applies HTML preview intent after an unopened file finishes loading', () => {
-      let hostMessageHandler: ((message: any) => void) | undefined;
+      const hostMessageHandlers = new Set<(message: any) => void>();
       const bridge = {
         ...mockBridge,
         getState: vi.fn(() => ({ fileTabs: true, defaultHtmlPreview: true })),
         postMessage: vi.fn(),
         onMessage: vi.fn((handler: (message: any) => void) => {
-          hostMessageHandler = handler;
-          return vi.fn();
+          hostMessageHandlers.add(handler);
+          return () => hostMessageHandlers.delete(handler);
         }),
         setState: vi.fn(),
         copyToClipboard: vi.fn(),
@@ -137,7 +137,7 @@ describe('AppStateProvider integration', () => {
         result.current.navigate('/docs/page.html', { htmlPreviewOverride: false });
       });
       act(() => {
-        hostMessageHandler?.({
+        hostMessageHandlers.forEach((handler) => handler({
           command: 'renderContent',
           filePath: '/docs/page.html',
           html: '<p>Page</p>',
@@ -145,7 +145,7 @@ describe('AppStateProvider integration', () => {
           frontmatter: {},
           toc: [],
           relativePath: 'page.html',
-        });
+        }));
       });
 
       expect(result.current.state.currentFile).toBe('/docs/page.html');
@@ -154,14 +154,14 @@ describe('AppStateProvider integration', () => {
     });
 
     it('clears pending HTML preview intent when navigation fails', () => {
-      let hostMessageHandler: ((message: any) => void) | undefined;
+      const hostMessageHandlers = new Set<(message: any) => void>();
       const bridge = {
         ...mockBridge,
         getState: vi.fn(() => ({ fileTabs: true, defaultHtmlPreview: true })),
         postMessage: vi.fn(),
         onMessage: vi.fn((handler: (message: any) => void) => {
-          hostMessageHandler = handler;
-          return vi.fn();
+          hostMessageHandlers.add(handler);
+          return () => hostMessageHandlers.delete(handler);
         }),
         setState: vi.fn(),
         copyToClipboard: vi.fn(),
@@ -170,8 +170,8 @@ describe('AppStateProvider integration', () => {
 
       act(() => {
         result.current.navigate('/docs/missing.html', { htmlPreviewOverride: false });
-        hostMessageHandler?.({ command: 'navNotFound', href: '/docs/missing.html' });
-        hostMessageHandler?.({
+        hostMessageHandlers.forEach((handler) => handler({ command: 'navNotFound', href: '/docs/missing.html' }));
+        hostMessageHandlers.forEach((handler) => handler({
           command: 'renderContent',
           filePath: '/docs/missing.html',
           html: '<p>Later</p>',
@@ -179,7 +179,7 @@ describe('AppStateProvider integration', () => {
           frontmatter: {},
           toc: [],
           relativePath: 'missing.html',
-        });
+        }));
       });
 
       expect(result.current.state.currentHtmlPreviewOverride).toBeUndefined();
@@ -368,12 +368,31 @@ describe('AppStateProvider integration', () => {
       expect(result.current.state.theme).toBe('light');
     });
 
-    it('cycles from auto to light', () => {
-      const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
+    it('cycles from auto to light when the system theme is dark', () => {
+      vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+      try {
+        const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
 
-      if (result.current.state.theme === 'auto') {
-        act(() => { result.current.toggleTheme(); });
-        expect(result.current.state.theme).toBe('light');
+        if (result.current.state.theme === 'auto') {
+          act(() => { result.current.toggleTheme(); });
+          expect(result.current.state.theme).toBe('light');
+        }
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('cycles from auto to dark when the system theme is light', () => {
+      vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+      try {
+        const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
+
+        if (result.current.state.theme === 'auto') {
+          act(() => { result.current.toggleTheme(); });
+          expect(result.current.state.theme).toBe('dark');
+        }
+      } finally {
+        vi.unstubAllGlobals();
       }
     });
 
@@ -391,6 +410,25 @@ describe('AppStateProvider integration', () => {
   });
 
   describe('updateSettings', () => {
+    it('restores and persists explicit upstream HTML preview consent', async () => {
+      const bridge = {
+        ...mockBridge,
+        getState: vi.fn(() => ({ allowUpstreamHtmlPreview: true })),
+        postMessage: vi.fn(),
+        onMessage: vi.fn(() => vi.fn()),
+        setState: vi.fn(),
+        copyToClipboard: vi.fn(),
+      } as unknown as PlatformBridge;
+
+      const { result } = renderHook(() => useAppState(), { wrapper: createWrapper(bridge) });
+
+      await waitFor(() => expect(result.current.state.settings.allowUpstreamHtmlPreview).toBe(true));
+      act(() => result.current.updateSettings({ allowUpstreamHtmlPreview: false }));
+      await waitFor(() => expect(bridge.setState).toHaveBeenLastCalledWith(
+        expect.objectContaining({ allowUpstreamHtmlPreview: false }),
+      ));
+    });
+
     it('persists settings via bridge.setState', () => {
       const { result } = renderHook(() => useAppState(), { wrapper: createWrapper() });
 

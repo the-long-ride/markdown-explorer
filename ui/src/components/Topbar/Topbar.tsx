@@ -1,14 +1,22 @@
 import { useAppState } from '../../contexts/AppStateContext';
+import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import { getExportScopeTranslations } from '../../contexts/exportScopeTranslations';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { useRepositorySnapshot } from '../../contexts/RepositorySnapshotContext';
+import { documentSessionKey } from '../../editor/documentSession';
+import { isMarkdownEditingAvailable } from '../../editor/editingFeature';
+import { requestWindowClose } from '../../editor/nativeCloseApproval';
+import { collectDirtyDocumentPaths } from '../../editor/unsavedGuards';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 import { TooltipButton } from '../shared/TooltipButton';
 import { EditIcon } from '../shared/icons';
 import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
+import { MarkdownEditingHeaderActions } from '../shared/MarkdownEditingHeaderActions';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
 import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
+import { INSIGHTS_UI_TRANSLATIONS } from '../../contexts/insightsUiTranslations';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 
 interface TopbarProps {
@@ -78,25 +86,52 @@ export function Topbar({
 }: TopbarProps) {
   const {
     state, navigate, openInEditor, refresh, toggleTheme, toggleSidebar, toggleToc,
-    toggleFocusMode, dispatch,
+    toggleFocusMode, dispatch, setDocumentEditMode, saveDocument,
+    guardUnsavedChanges = (_filePaths: string[], commit: () => void) => commit(),
   } = useAppState();
+  const { repositoryView } = useRepositorySnapshot();
   const { back, forward, canGoBack, canGoForward } = useNavigation();
   const bridge = usePlatform();
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isDesktop = isElectron || state.appRuntime === 'tauri';
+  const isNativeEditRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
+  const isRevisionMode = repositoryView.mode === 'revision';
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const editorT = getEditorUiTranslations(currentLang);
   const exportT = getExportScopeTranslations(currentLang).exportCenter;
-  const insightsLabel = t.actions.toggleWorkspaceInsights || 'Workspace Insights';
+  const insightsLang = currentLang as keyof typeof INSIGHTS_UI_TRANSLATIONS;
+  const insightsT = INSIGHTS_UI_TRANSLATIONS[insightsLang] ?? INSIGHTS_UI_TRANSLATIONS.en;
   const isDark = state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const breadcrumbItems = getBreadcrumbItems(state.relativePath || '', t.topbar.welcomePage);
   const breakablePath = (state.currentFile || state.relativePath || '').replace(/[\/\\]/g, '$&' + '\u200B');
   const shouldExitTauriFullscreenOnRestore = state.appRuntime === 'tauri' && isFullscreen && onFullscreenToggle;
   const showsRestoreControl = state.isMaximized || isFullscreen;
+  const activeDocumentSession = state.currentFile
+    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
+    : undefined;
+  const isMarkdown = Boolean(state.currentFile && /\.mdx?$/i.test(state.currentFile));
+  const editingEnabled = isMarkdownEditingAvailable(state.settings);
+  const showEditInMoreActions = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || (state.appRuntime === 'vscode' && !editingEnabled);
+  const canUseEditAction = Boolean(
+    !isRevisionMode
+      && state.currentFile
+      && (!isMarkdown && isNativeEditRuntime || (editingEnabled ? activeDocumentSession : isNativeEditRuntime)),
+  );
+  const dirtyDocumentPaths = collectDirtyDocumentPaths(state.documentSessions ?? {});
+  const guardDestructiveAction = (commit: () => void) => guardUnsavedChanges(dirtyDocumentPaths, commit);
+  const handleEdit = () => {
+    if (isRevisionMode || !state.currentFile) return;
+    if (editingEnabled && activeDocumentSession) {
+      setDocumentEditMode(state.currentFile, 'inline-edit');
+      return;
+    }
+    if (isNativeEditRuntime) openInEditor();
+  };
 
   return (
-    <header className="topbar">
+    <header className="topbar" data-tauri-drag-region={isDesktop ? '' : undefined}>
       <div className="topbar__logo">
         <span className="topbar__logo-icon"><img src={logoUrl} width={20} height={20} alt="Markdown Explorer" className="topbar__logo-img" /></span>
         <div className="topbar__logo-text-group">
@@ -110,13 +145,13 @@ export function Topbar({
           <span className="topbar__crumb-separator" aria-hidden="true">|</span>
           <TooltipButton
             className="btn btn--icon"
-            onClick={() => {
+            onClick={() => guardDestructiveAction(() => {
               dispatch({
                 type: 'READY_ACK', fileList: [], tree: null, theme: state.theme, themeStyle: state.themeStyle,
                 defaultExpanded: state.defaultExpanded, workspaceName: '', recentWorkspaces: state.recentWorkspaces,
               });
               bridge.postMessage({ command: 'closeWorkspace' });
-            }}
+            })}
             tooltip={t.topbar.closeFolder}
             icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>}
           />
@@ -126,10 +161,13 @@ export function Topbar({
       <span className="topbar__crumb-separator" aria-hidden="true">|</span>
       <NavigationHeaderActions onBack={back} onForward={forward} onRefresh={refresh} canGoBack={canGoBack} canGoForward={canGoForward} className="topbar__nav-actions" />
 
-      <div className="topbar__breadcrumb-container">
+      <div className="topbar__breadcrumb-container" data-tauri-drag-region={isDesktop ? '' : undefined}>
         <div className="topbar__breadcrumb" id="breadcrumb">
           {breadcrumbItems.map((item, index) => (
-            <span key={index}>
+            <span
+              key={index}
+              className={`topbar__breadcrumb-item${item.isBold ? ' topbar__breadcrumb-item--file' : ' topbar__breadcrumb-item--dir'}`}
+            >
               {index > 0 && <span className="sep">/</span>}
               <span className={`topbar__breadcrumb-part${item.isBold ? ' topbar__breadcrumb-part--bold' : ''}${item.isEllipsis ? ' topbar__breadcrumb-part--ellipsis' : ''}`}>{item.text}</span>
             </span>
@@ -139,9 +177,12 @@ export function Topbar({
       </div>
 
       <div className="topbar__actions">
-        <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!!state.currentFile} />
+        {!isRevisionMode && editingEnabled && activeDocumentSession && state.currentFile && (
+          <MarkdownEditingHeaderActions filePath={state.currentFile} session={activeDocumentSession} labels={editorT} saveShortcut={getEnabledShortcut(state.settings, 'saveCurrentDocument')} onModeChange={setDocumentEditMode} onSave={saveDocument} />
+        )}
+        <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!isRevisionMode && !!state.currentFile} />
         {state.appRuntime === 'vscode' && (
-          <TooltipButton className="topbar__edit-action topbar__action-btn btn btn--icon" onClick={openInEditor} disabled={!state.currentFile} tooltip={t.topbar.edit} shortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')} portalTooltip icon={<EditIcon size={13} />} />
+          <TooltipButton className="topbar__edit-action topbar__action-btn btn btn--icon" onClick={openInEditor} disabled={isRevisionMode || !state.currentFile} tooltip={t.topbar.edit} shortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')} portalTooltip icon={<EditIcon size={13} />} />
         )}
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
@@ -152,20 +193,20 @@ export function Topbar({
           exportLabel={exportT.title}
           homeTooltip={t.topbar.welcomePage}
           themeTooltip={themeToggleLabel}
-          editTooltip={t.topbar.edit}
+          editTooltip={(!isMarkdown || !editingEnabled) ? t.topbar.edit : editorT.inlineEdit}
           settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
           exportTooltip={exportT.exportDocumentsTooltip}
           homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
           themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
           editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
           settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
-          canEdit={(state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode') && !!state.currentFile}
-          showEdit={state.appRuntime === 'desktop' || state.appRuntime === 'tauri'}
+          canEdit={canUseEditAction}
+          showEdit={showEditInMoreActions}
           isDark={isDark}
           hasUpdate={hasUpdate}
           onHome={() => navigate(null)}
           onTheme={toggleTheme}
-          onEdit={openInEditor}
+          onEdit={handleEdit}
           onSettings={onSettingsOpen}
           onExport={onExportOpen}
           sidebarLabel={t.actions.toggleSidebar}
@@ -177,11 +218,11 @@ export function Topbar({
           tocTooltip={t.actions.toggleToc}
           tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')}
           tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
-          tocToggleDisabled={!state.currentFile || state.toc.length === 0}
+          tocToggleDisabled={isRevisionMode || !state.currentFile || state.toc.length === 0}
           onTocToggle={toggleToc}
           showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled}
-          insightsLabel={insightsLabel}
-          insightsTooltip={insightsLabel}
+          insightsLabel={insightsT.title}
+          insightsTooltip={insightsT.title}
           insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')}
           insightsActive={isInsightsOpen}
           canInsights={!!(state.workspacePath || state.workspaceName)}
@@ -219,7 +260,7 @@ export function Topbar({
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
                 )}
               />
-              <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={() => bridge.postMessage({ command: 'window-close' })} tooltip={t.tooltips.closeApp} tooltipAlign="right" icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>} />
+              <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={() => requestWindowClose(bridge, guardDestructiveAction)} tooltip={t.tooltips.closeApp} tooltipAlign="right" icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>} />
             </div>
           </>
         )}

@@ -48,6 +48,10 @@ export interface MermaidOptions {
   runIdRef: { current: number };
   document?: Pick<Document, 'documentElement' | 'defaultView'>;
   nodes?: readonly HTMLElement[];
+  /** Receives the raw SVG markup mermaid produced, before it is prepared. */
+  onRawSvg?: (node: HTMLElement, source: string, svgMarkup: string) => void;
+  /** Theme signature keying the SVG cache (see mermaidSvgCache.ts). */
+  cacheSignature?: string;
 }
 
 const MERMAID_SELECTOR = '.mermaid:not([data-mdn-rendered]):not([data-mdn-render-error])';
@@ -372,6 +376,7 @@ export async function enhanceMermaid(
       }
       if (node.dataset.mdnRenderRun !== renderToken) return;
       if (!node.querySelector('svg')) throw new Error('Mermaid completed without producing an SVG');
+      options.onRawSvg?.(node, originalCode, node.innerHTML);
       node.dataset.mdnRendered = 'true';
       delete node.dataset.mdnRenderAttempts;
       delete node.dataset.mdnRenderError;

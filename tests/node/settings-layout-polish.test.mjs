@@ -79,7 +79,10 @@ test('settings tabs expose descriptions, theme content is centered, and version 
   assert.match(shortcuts, /settings-section-panel__header[\s\S]*?<h3>\{t\.shortcuts\}<\/h3>[\s\S]*?<p>\{t\.shortcutsHint\}<\/p>/);
   assert.match(typographyCss, /desktop-typography-settings\s*\{[\s\S]*?border-top:\s*0;/);
   assert.match(layoutCss, /settings-theme-style-section\s*\{[\s\S]*?margin-inline:\s*auto;/);
-  assert.match(modal, /<TooltipButton[\s\S]*className="settings-navigation__version"[\s\S]*tooltip=\{t\.tooltips\.openChangelog\}/);
+  const footer = await read('ui/src/components/Settings/SettingsVersionFooter.tsx');
+  assert.match(modal, /<SettingsVersionFooter[\s\S]*changelogTooltip=\{t\.tooltips\.openChangelog\}/);
+  assert.match(footer, /<TooltipButton[\s\S]*className="settings-navigation__version"[\s\S]*tooltip=\{changelogTooltip\}/);
+  assert.match(footer, /className="settings-navigation__donate"[\s\S]*onClick=\{openDonate\}/);
   assert.match(navigationCss, /settings-navigation__version[\s\S]*?text-decoration/);
 });
 

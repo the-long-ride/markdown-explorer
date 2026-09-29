@@ -176,6 +176,22 @@ describe('_doActivate', () => {
     await expect(refreshFn()).resolves.not.toThrow();
   });
 
+  test('markdownExplorer.saveCurrentDocument forwards the save request into the webview', async () => {
+    const mockRequestSaveCurrentDocument = vi.fn();
+    Panel.currentPanel = { requestSaveCurrentDocument: mockRequestSaveCurrentDocument };
+    _doActivate(context as any, vscode as any);
+    const saveFn = vscode._registeredCommands['markdownExplorer.saveCurrentDocument'];
+    await saveFn();
+    expect(mockRequestSaveCurrentDocument).toHaveBeenCalled();
+    Panel.currentPanel = undefined;
+  });
+
+  test('markdownExplorer.saveCurrentDocument handles null panel gracefully', async () => {
+    _doActivate(context as any, vscode as any);
+    const saveFn = vscode._registeredCommands['markdownExplorer.saveCurrentDocument'];
+    await expect(saveFn()).resolves.not.toThrow();
+  });
+
   test('auto-refresh on supported file save', async () => {
     const mockRefreshFromWatch = vi.fn();
     Panel.currentPanel = { refreshFromWatch: mockRefreshFromWatch };
@@ -251,7 +267,7 @@ describe('_doActivate', () => {
 
   test('registerCommand calls return disposables pushed to context', () => {
     _doActivate(context as any, vscode as any);
-    expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(5);
+    expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(6);
   });
 
   test('onDidSaveTextDocument called with handler', () => {

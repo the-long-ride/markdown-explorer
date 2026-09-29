@@ -71,6 +71,7 @@
   --inline-code-border: color-mix(in srgb, var(--accent) 28%, var(--bd-s));
   --inline-code-fg: color-mix(in srgb, var(--accent-text) 88%, var(--tx));
   --success: #34d399;
+  --warning: #fbbf24;
   --danger: #f87171;
   --chart-1: #ff9130;
   --chart-2: #34d399;
@@ -133,15 +134,16 @@ body.is-chrome-ext {
   --hl-terminal-muted: var(--tx2);
 }
 [data-theme="light"] {
+  --warning: #b45309;
   --bg: #fdfbf7;
   --bg-s: #ffffff;
   --bg-e: #f5f2eb;
   --bg-h: #eae5da;
   --bg-a: #ded7c9;
   --bg-code: #f6f3eb;
-  --bd: rgba(90, 70, 50, 0.08);
-  --bd-s: rgba(90, 70, 50, 0.15);
-  --bd-x: rgba(90, 70, 50, 0.24);
+  --bd: rgba(90, 70, 50, 0.14);
+  --bd-s: rgba(90, 70, 50, 0.27);
+  --bd-x: rgba(90, 70, 50, 0.42);
   --tx: #1f1a14;
   --tx2: #5c5246;
   --txm: #5a4f44;
@@ -180,15 +182,16 @@ body.is-chrome-ext {
 /* Auto theme system prefers light overrides */
 @media (prefers-color-scheme: light) {
   [data-theme="auto"] {
+    --warning: #b45309;
     --bg: #fdfbf7;
     --bg-s: #ffffff;
     --bg-e: #f5f2eb;
     --bg-h: #eae5da;
     --bg-a: #ded7c9;
     --bg-code: #f6f3eb;
-    --bd: rgba(90, 70, 50, 0.08);
-    --bd-s: rgba(90, 70, 50, 0.15);
-    --bd-x: rgba(90, 70, 50, 0.24);
+    --bd: rgba(90, 70, 50, 0.14);
+    --bd-s: rgba(90, 70, 50, 0.27);
+    --bd-x: rgba(90, 70, 50, 0.42);
     --tx: #1f1a14;
     --tx2: #5c5246;
     --txm: #5a4f44;

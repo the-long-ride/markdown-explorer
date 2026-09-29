@@ -1,0 +1,174 @@
+/* File history modal: commit list on the left, diff of the selection on the right. */
+.file-history__card {
+  --file-history-bar-height: 45px;
+  width: min(1320px, calc(100vw - 24px));
+  height: min(90dvh, calc(100dvh - var(--modal-region-top, 44px) - 24px));
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: var(--stroke-w, 1px) solid var(--bd-x);
+  border-radius: var(--r-lg);
+  background: var(--dialog-surface, var(--bg-e));
+  color: var(--tx);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--tx) 18%, transparent);
+  user-select: text;
+}
+
+.file-history__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: var(--stroke-w, 1px) solid var(--bd-x);
+}
+.file-history__heading { min-width: 0; flex: 1 1 auto; }
+.file-history__view-controls { min-width: 0; flex: 0 1 auto; display: flex; align-items: center; gap: 8px; }
+.file-history__view-controls .file-history__badge { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-history__heading h2 { margin: 0; font-size: 15px; }
+.file-history__heading p { margin: 2px 0 0; overflow: hidden; color: var(--txm); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.file-history__compare.is-active { border-color: var(--accent); color: var(--accent); }
+.file-history__close {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: none;
+  background: none;
+  color: var(--tx2);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .62;
+}
+.file-history__close:hover,
+.file-history__close:focus-visible { opacity: 1; color: var(--tx); }
+
+.file-history__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: min(var(--file-history-list-width, 280px), 60%) minmax(0, 1fr);
+}
+.file-history__sidebar {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: var(--stroke-w, 1px) solid var(--bd-x);
+}
+.file-history__hint { margin: 0; padding: 6px 12px; border-bottom: var(--stroke-w, 1px) dashed var(--bd-x); color: var(--txm); font-size: 11px; }
+.file-history__list { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+.file-history__filter { box-sizing: border-box; height: var(--file-history-bar-height); display: flex; align-items: center; padding: 0 10px; border-bottom: var(--stroke-w, 1px) solid var(--bd-x); }
+.file-history__filter input {
+  width: 100%;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: var(--stroke-w, 1px) solid var(--bd-x);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--tx);
+}
+.file-history__commits { flex: 1 1 auto; min-height: 0; margin: 0; padding: 4px; overflow-x: hidden; overflow-y: auto; list-style: none; }
+.file-history__commit { display: flex; align-items: flex-start; gap: 6px; border-radius: var(--r-md); }
+.file-history__commit.is-picked { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.file-history__commit--current { margin-bottom: 4px; border-bottom: var(--stroke-w, 1px) dashed var(--bd-x); }
+.file-history__pick { margin: 6px 0 0 4px; }
+.file-history__sha { flex: 0 0 auto; margin: 6px 4px 0 0; font-size: 11px; }
+/* SHAs sit on the list's right edge: open the copy tooltip leftwards so it stays inside the list. */
+.file-history__commits .file-history__sha .tooltip-container .tooltip-text,
+.file-history__commits .file-history__sha .tooltip-container:hover .tooltip-text { left: auto; right: 0; transform: none; }
+.file-history__commit-button {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 8px;
+  border: var(--stroke-w, 1px) solid transparent;
+  border-radius: var(--r-md);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.file-history__commit-button:hover { background: color-mix(in srgb, var(--tx) 5%, transparent); }
+.file-history__commit-button[aria-pressed="true"] { border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.file-history__commit-button:disabled { cursor: default; opacity: .55; }
+.file-history__commit-subject { overflow: hidden; font-size: 12.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.file-history__commit-meta { display: flex; flex-wrap: wrap; gap: 6px; color: var(--txm); font-size: 11px; }
+.file-history__rename { color: var(--accent); font-size: 11px; }
+
+.file-history__diff { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* Same height as the commit filter so both bottom borders form one line. Columns track the split ratio. */
+.file-history__toolbar {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  height: var(--file-history-bar-height);
+  display: grid;
+  grid-template-columns: calc(var(--file-history-split-ratio, 0.5) * 100%) minmax(0, 1fr);
+  align-items: center;
+  padding: 0 12px;
+  overflow: hidden;
+  scrollbar-gutter: stable;
+  border-bottom: var(--stroke-w, 1px) solid var(--bd-x);
+}
+.file-history__side { min-width: 0; display: flex; align-items: center; gap: 7px; color: var(--tx2); font-size: 12px; }
+.file-history__side--old { padding-right: 12px; }
+.file-history__side--new { padding-left: 12px; }
+.file-history__side-mark {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.file-history__side--old .file-history__side-mark { background: var(--diff-del-bg); color: var(--diff-del-fg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--diff-del-bar) 45%, transparent); }
+.file-history__side--new .file-history__side-mark { background: var(--diff-add-bg); color: var(--diff-add-fg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--diff-add-bar) 45%, transparent); }
+.file-history__side-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-history__segmented { display: inline-flex; gap: 2px; }
+.file-history__segmented .btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; }
+.file-history__segmented .btn.is-active { border-color: var(--accent); color: var(--accent); }
+.file-history__badge { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-size: 11px; }
+.file-history__diff-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px 12px; scrollbar-gutter: stable; }
+
+/* Resizers: the list edge and the split boundary. The guide mirrors the diff body's padding and scrollbar gutter. */
+.file-history__resizer { position: absolute; top: 0; bottom: 0; z-index: 3; width: 9px; cursor: col-resize; touch-action: none; pointer-events: auto; outline: none; }
+.file-history__resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: transparent; transition: background-color 120ms ease, box-shadow 120ms ease; }
+.file-history__resizer:hover::after,
+.file-history__resizer:focus-visible::after,
+.file-history__resizer.is-dragging::after { background: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.file-history__resizer--list { right: -5px; }
+.file-history__split-guide { position: absolute; inset: 0; padding: 0 12px; overflow: hidden; scrollbar-gutter: stable; pointer-events: none; }
+.file-history__resizer--split { left: calc(12px + var(--file-history-split-ratio, 0.5) * (100% - 24px) - 4px); }
+body.is-file-history-resizing { cursor: col-resize; user-select: none; }
+.file-history__diff-body .source-diff-view__scroll,
+.file-history__diff-body .split-source-diff-view__scroll { max-height: none; }
+.file-history__diff-body .rendered-diff-view { height: 100%; }
+.file-history__status { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 32px 16px; color: var(--txm); font-size: 13px; }
+.file-history__status--error { color: var(--danger, #d33); }
+
+.file-history__body--loading { opacity: .7; }
+.file-history__skeleton-list { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-right: var(--stroke-w, 1px) solid var(--bd-x); }
+.file-history__skeleton-row,
+.file-history__skeleton-diff { display: block; border-radius: var(--r-md); background: color-mix(in srgb, var(--tx) 7%, transparent); animation: file-history-pulse 1.2s ease-in-out infinite; }
+.file-history__skeleton-row { height: 38px; }
+.file-history__skeleton-diff { margin: 12px; }
+@keyframes file-history-pulse { 50% { opacity: .45; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .file-history__skeleton-row,
+  .file-history__skeleton-diff { animation: none; }
+}
+
+@media (max-width: 720px) {
+  .file-history__body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 40%) minmax(0, 1fr); }
+  .file-history__sidebar { border-right: none; border-bottom: var(--stroke-w, 1px) solid var(--bd-x); }
+  .file-history__resizer--list { display: none; }
+}

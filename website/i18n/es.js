@@ -174,6 +174,7 @@ window.LANGS.es = {
     faq3A: "En Windows elija el instalador NSIS o el ejecutable portable. En Linux use AppImage o .deb. En macOS elija .dmg.",
     footerBy: "Markdown Explorer por",
     footerIssues: "Problemas",
+    footerDonate: "Donar",
     footerPrivacy: "Privacidad",
     footerTerms: "Términos",
     footerLicense: "Licencia",
@@ -235,6 +236,8 @@ window.LANGS.es = {
     footerMit: "Licencia MIT.",
     galleryCaption3Title: "Entornos de pruebas HTML interactivos",
     langSwitchTitle: "Cambiar idioma",
+    navDonate: "Donar",
+    donateAria: "Apoya a Markdown Explorer con una donación",
     themeToggleTitle: "Cambiar tema de color",
     modalCloseLabel: "Cerrar ventana",
 };

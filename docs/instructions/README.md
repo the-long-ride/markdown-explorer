@@ -86,7 +86,7 @@ This folder is a source-derived specification of the active application. It is o
 - [Convert Supported Documents to Markdown Preview](02-use-cases/UC-023-document-conversion.md) — Use case UC-023
 - [Interact with Tables and Charts](02-use-cases/UC-024-tables-charts.md) — Use case UC-024
 - [View Images, Diagrams, Video, and YouTube Media](02-use-cases/UC-025-media-gallery-video-youtube.md) — Use case UC-025
-- [Control Window, Tray, Fullscreen, Zoom, and Quit](02-use-cases/UC-026-window-tray-fullscreen-zoom-quit.md) — Use case UC-026
+- [Control Window, Fullscreen, Zoom, and Quit](02-use-cases/UC-026-window-tray-fullscreen-zoom-quit.md) — Use case UC-026
 - [Download, Schedule, and Apply Application Updates](02-use-cases/UC-027-application-update.md) — Use case UC-027
 - [Recover from Errors and Unavailable Workspaces](02-use-cases/UC-028-errors-recovery-unavailable.md) — Use case UC-028
 - [Use Welcome, Help, and Localization](02-use-cases/UC-029-welcome-help-localization.md) — Use case UC-029
@@ -111,7 +111,7 @@ This folder is a source-derived specification of the active application. It is o
 - [Localization, Welcome, Terms, and Onboarding](03-features/15-localization-welcome-onboarding.md) — Localization, Welcome, Terms, and Onboarding
 - [Document Conversion and Preview Quality](03-features/16-document-conversion.md) — Document Conversion and Preview Quality
 - [Context Menus, Shell Locations, Links, and Editor Actions](03-features/17-context-menus-shell-links.md) — Context Menus, Shell Locations, Links, and Editor Actions
-- [Desktop Window, Tray, Startup, and Update Lifecycle](03-features/18-window-tray-update-lifecycle.md) — Desktop Window, Tray, Startup, and Update Lifecycle
+- [Desktop Window, Startup, and Update Lifecycle](03-features/18-window-tray-update-lifecycle.md) — Desktop Window, Startup, and Update Lifecycle
 - [Errors, Recovery, Status, and Observability](03-features/19-errors-recovery-observability.md) — Errors, Recovery, Status, and Observability
 - [Performance, Incremental Work, and Enhancement Scheduling](03-features/20-performance-enhancement-scheduling.md) — Performance, Incremental Work, and Enhancement Scheduling
 - [Source-Anchored Document Bookmarks](03-features/21-bookmarks.md) — Mixed Markdown/object capture, exact occurrences, batch management, and safe relocation

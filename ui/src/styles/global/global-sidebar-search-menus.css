@@ -84,10 +84,11 @@
   outline: none;
 }
 
+.tab-context-menu.sidebar-item-menu,
 .sidebar-item-menu {
   position: fixed;
-  left: var(--sidebar-item-menu-left, 0);
-  top: var(--sidebar-item-menu-top, 0);
+  left: var(--sidebar-item-menu-left, var(--menu-left, 0));
+  top: var(--sidebar-item-menu-top, var(--menu-top, 0));
   width: min(248px, calc(var(--sidebar-width, 290px) - 16px));
   z-index: 10050;
 }

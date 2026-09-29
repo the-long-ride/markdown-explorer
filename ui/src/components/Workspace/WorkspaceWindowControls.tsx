@@ -4,6 +4,7 @@ import { isDesktopRuntime } from './workspaceSelectionUtils';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { useRequestWindowClose } from '../../hooks/useDirtyDocumentsGuard';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 
 interface WorkspaceWindowControlsProps {
@@ -21,6 +22,7 @@ export function WorkspaceWindowControls({
 }: WorkspaceWindowControlsProps) {
   const { state } = useAppState();
   const bridge = usePlatform();
+  const requestWindowClose = useRequestWindowClose();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -55,7 +57,7 @@ export function WorkspaceWindowControls({
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>
               )}
             />
-            <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={() => bridge.postMessage({ command: 'window-close' })} tooltip={t.tooltips.closeApp} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
+            <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={requestWindowClose} tooltip={t.tooltips.closeApp} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
           </>
         )}
       </div>

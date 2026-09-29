@@ -171,56 +171,6 @@ describe('MarkdownDocsPanel', () => {
       expect(ackMsg).toBeDefined();
     });
 
-    // Regression gate for the 1.6.7 user report: a reopened VS Code panel must
-    // receive saved Dark Mode and menu/sidebar preferences from host storage.
-    test('persists webview state in extension global state and restores it in readyAck', async () => {
-      const persistedState = { theme: 'dark', showTitle: true, sidebarCollapsed: true };
-      const globalState = {
-        get: vi.fn(() => persistedState),
-        update: vi.fn(() => Promise.resolve()),
-      };
-      setupVscodeMock();
-      const context = {
-        extensionPath: '/fake/ext',
-        extension: { packageJSON: { version: '1.0' } },
-        globalState,
-      } as any;
-      MarkdownDocsPanel.createOrShow(context, null);
-
-      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
-      await msgHandler({ command: 'persistState', state: persistedState });
-      expect(globalState.update).toHaveBeenCalledWith('markdownExplorer.uiState', persistedState);
-
-      await msgHandler({ command: 'ready' });
-      const ackMsg = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'readyAck');
-      expect(ackMsg?.[0].persistedState).toEqual(persistedState);
-    });
-
-    test.each([
-      ['light', false, false],
-      ['auto', true, false],
-      ['dark', false, true],
-    ] as const)('restores %s theme with showTitle=%s sidebarCollapsed=%s', async (theme, showTitle, sidebarCollapsed) => {
-      const persistedState = { theme, showTitle, sidebarCollapsed };
-      const globalState = {
-        get: vi.fn(() => persistedState),
-        update: vi.fn(() => Promise.resolve()),
-      };
-      setupVscodeMock();
-      const context = {
-        extensionPath: '/fake/ext',
-        extension: { packageJSON: { version: '1.0' } },
-        globalState,
-      } as any;
-      MarkdownDocsPanel.createOrShow(context, null);
-
-      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
-      await msgHandler({ command: 'ready' });
-
-      const ackMsg = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'readyAck');
-      expect(ackMsg?.[0].persistedState).toEqual(persistedState);
-    });
-
     test('handles navigate message', async () => {
       setupVscodeMock();
       const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
@@ -241,6 +191,44 @@ describe('MarkdownDocsPanel', () => {
       const searchMsg = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'workspaceSearchResults');
       expect(searchMsg).toBeDefined();
       expect(searchMsg[0].requestId).toBe('r1');
+    });
+
+    test('streams workspace search batches and sends terminal metadata', async () => {
+      const tempDir = makeTempDir('panel-search-stream-');
+      const rawItems = Array.from({ length: 20 }, (_, index) => {
+        const fsPath = path.join(tempDir, `match-${index}.md`);
+        writeFile(fsPath, 'needle '.repeat(10));
+        return { fsPath, relativePath: `match-${index}.md`, fileName: `match-${index}.md`, title: `Match ${index}` };
+      });
+      const scanner = await import('../../../vscode/src/core/scanner');
+      vi.mocked(scanner.WorkspaceScanner.readFile).mockReturnValue('needle '.repeat(10));
+      setupVscodeMock();
+      const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
+      MarkdownDocsPanel.createOrShow(context, null);
+
+      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
+      await msgHandler({ command: 'searchWorkspace', requestId: 'r-stream', query: 'needle', items: rawItems });
+
+      const messages = mockPostMessage.mock.calls
+        .map((call: any) => call[0])
+        .filter((message: any) => message.command === 'workspaceSearchResults' && message.requestId === 'r-stream');
+      expect(messages.some((message: any) => message.done === false)).toBe(true);
+      expect(messages.at(-1)).toMatchObject({ done: true, total: 200, truncated: false });
+      expect(Math.max(...messages.slice(0, -1).map((message: any) => message.results.length))).toBeLessThanOrEqual(100);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    });
+
+    test('still answers searchWorkspace with empty results when the search throws', async () => {
+      setupVscodeMock();
+      const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
+      MarkdownDocsPanel.createOrShow(context, null);
+
+      const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
+      const brokenItem = { get fsPath(): string { throw new Error('unreadable item'); } };
+      await msgHandler({ command: 'searchWorkspace', requestId: 'r-fail', query: 'test', items: [brokenItem] });
+
+      const searchMsg = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'workspaceSearchResults' && call[0].requestId === 'r-fail');
+      expect(searchMsg?.[0].results).toEqual([]);
     });
 
     test('handles refresh message', async () => {

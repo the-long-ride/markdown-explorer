@@ -65,7 +65,7 @@ graph TD
     *   [vscode/scripts/copy-ui.js](file:///f:/Extensions/markdown-explorer/vscode/scripts/copy-ui.js): Compiles and copies React UI distribution assets into the extension folder before VSIX packaging.
 *   **`electron/` (Electron standalone shell)**:
     *   Coordinates operating system integrations.
-    *   [electron/main.js](file:///f:/Extensions/markdown-explorer/electron/main.js): Main process managing the frameless window, system tray menu, IPC event handlers, and active paths.
+    *   [electron/main.js](file:///f:/Extensions/markdown-explorer/electron/main.js): Main process managing the frameless window, IPC event handlers, and active paths.
     *   [electron/preload/preload.js](file:///f:/Extensions/markdown-explorer/electron/preload/preload.js): Context-isolated bridge exposing a secure platform communication interface (`electronAPI`).
     *   [electron/workspace/scanner.js](file:///f:/Extensions/markdown-explorer/electron/workspace/scanner.js): Scans local folders recursively to map out markdown files and automatically extract frontmatter/heading titles.
 
@@ -120,39 +120,34 @@ To deliver a sleek, premium experience, the desktop app uses a frameless window 
 *   Titlebar control buttons (Minimize, Maximize/Restore, Close) are bound to IPC commands (`window-minimize`, `window-maximize`, and `window-close`), which safely invoke native Electron BrowserWindow state operations.
 *   Developer Tools access (`F12` or `Ctrl+Shift+I`) is automatically blocked in production/packaged builds to secure client data.
 
-### 2. System Tray Integration
-*   The application launches a custom taskbar icon using the premium [ui/assets/logos/logo-128.png](file:///f:/Extensions/markdown-explorer/ui/assets/logos/logo-128.png) graphic.
-*   Right-clicking the tray menu presents controls to **Open Markdown Explorer** or **Quit** the application completely.
-*   Left-clicking the tray icon toggles window visibility, bringing the application back into immediate focus.
-
-### 3. Recent Workspaces Persistence
+### 2. Recent Workspaces Persistence
 *   Recent folders opened by the user are stored in flat JSON format inside `recent-workspaces.json` under the standard operating system's `userData` application directory.
 *   This persistence ledger is loaded on startup and displayed on the centermost Workspace Selection Page, allowing users to collapse recent lists or launch workspaces with a single click.
 
-### 4. High-Performance Workspace Scanner
+### 3. High-Performance Workspace Scanner
 The scanner inside [electron/workspace/scanner.js](file:///f:/Extensions/markdown-explorer/electron/workspace/scanner.js) builds a tree view of local workspace files using native node file-system APIs:
 *   **Exclusions**: Folders like `.git`, `node_modules`, `.vscode`, `out`, and `dist` are strictly ignored to prevent scanning overhead.
 *   **Search Limit**: The workspace scan is hard-capped at **1000 files** to maintain high UI rendering performance.
 *   **Title Resolution**: The scanner parses titles intelligently. If the file is an `.mdx` document, it matches title fields from frontmatter blocks, exported variables (`export const title = '...'`), exported metadata blocks, and JSX components. For standard `.md` files, it extracts the first high-level heading (`# Heading`). If none exists, it defaults to the file name.
 
-### 5. Path Breadcrumb & Tooltip Refinements
+### 4. Path Breadcrumb & Tooltip Refinements
 *   **5-Tier Folding**: Breadcrumbs inside the header automatically collapse using a progressive 5-tier algorithm (Tier 1: full path, Tier 2: root/sub/.../parent/file, Tier 3: root/.../parent/file, Tier 4: .../parent/file, Tier 5: .../file...me.md) designed to fit within a 45-character budget.
 *   **Ellipsis Overflow Prevention**: Path folding uses strict `!important` overriding in [ui/src/styles/global.css](file:///f:/Extensions/markdown-explorer/ui/src/styles/global.css) to prevent element overflow bugs.
 *   **Viewport-Adaptive Tooltip**: Hovering over the breadcrumb container reveals the full path in a left-aligned tooltip scaled dynamically to `max-width: max(280px, calc(100vw - 340px))` to stay within the viewport. Zero-width spaces (`\u200B`) are appended after slashes to wrap lines nicely. The tooltip is excluded on the Welcome Page.
 
-### 6. Offline Typography and Font Routing
+### 5. Offline Typography and Font Routing
 To ensure the application looks premium offline without making external CDN calls, we package two embedded fonts:
 *   **Be Vietnam Pro** (for clean, legible UI text) and **Cascadia Code** (for codeblocks and markdown markup).
 *   **Dynamic Font Routing**: Custom fonts are packaged under the `ui/assets/fonts/` folder and applied conditionally using the `body.is-electron` CSS selector.
 *   The VS Code extension inherits the user's active theme and system families without overriding them, whereas the Electron Desktop target automatically activates custom typography.
 *   **Optimization rule**: The TTF source font files are excluded from VSIX packaging using `.vscodeignore` configurations, **halving the packaged extension binary size down to 173.34 KB**.
 
-### 7. First-Run Terms & License Agreement Modal
+### 6. First-Run Terms & License Agreement Modal
 *   On the very first launch of the desktop application, a frameless modal overlay asks the user to accept the MIT License and offline-first privacy statement.
 *   This state is persisted in the client's LocalStorage under `markdown-explorer-terms-accepted`.
 *   Until checked, the modal locks out workspace selectors and document renderers.
 
-### 8. Relative Image Path URL Resolver
+### 7. Relative Image Path URL Resolver
 *   Because Electron webviews run under strict sandbox guidelines, standard relative image paths (e.g. `src="images/screenshot.png"`) will fail to render when running on local filesystems.
 *   Inside `electron/main.js`, a regex scanner intercepts compiled HTML output at render-time and replaces relative paths with absolute `file:///` URLs mapped to the workspace folder. This allows local visual media to render seamlessly in both extension and desktop modes.
 

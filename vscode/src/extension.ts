@@ -107,6 +107,14 @@ export function _doActivate(
     }),
   );
 
+  // Webview-scoped Ctrl+S: forwards the save request into the webview instead
+  // of competing with VS Code's own text-editor save command.
+  context.subscriptions.push(
+    vscode.commands.registerCommand('markdownExplorer.saveCurrentDocument', async () => {
+      await (await getPanel()).currentPanel?.requestSaveCurrentDocument();
+    }),
+  );
+
   // Auto-refresh on file save (banner-style: only re-scan sidebar; if the
   // saved file is the one currently displayed, the panel emits a
   // `currentFileChanged` message so the UI shows the banner without

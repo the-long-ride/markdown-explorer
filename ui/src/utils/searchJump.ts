@@ -1,9 +1,10 @@
 import { unicodeIndexOf } from './unicodeSearch';
+import { getActiveDocumentBody } from '../document/activeDocumentRoot';
 
 const SEARCH_JUMP_MARK_CLASS = 'mdn-search-jump-mark';
 
 function getSearchJumpRoot(): HTMLElement | null {
-  return document.getElementById('mdBody');
+  return getActiveDocumentBody();
 }
 
 export function clearSearchJumpMarks(root = getSearchJumpRoot()) {

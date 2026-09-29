@@ -8,6 +8,11 @@ export type TabContextMenuAction =
   | "openInBrowser"
   | "toggleHtmlDocumentView"
   | "openLocation"
+  | "openInSplit"
+  | "history"
+  | "moveToOtherPane"
+  | "swapPanes"
+  | "closeSplit"
   | "closeThisTab"
   | "closeTabsToRight"
   | "closeOtherTabs"
@@ -74,8 +79,14 @@ export function TabContextMenu({
   ariaLabel,
   onClose,
 }: TabContextMenuProps) {
-  const { state } = useAppState();
-  const t = getTranslations(state.settings.language);
+  let language = 'en';
+  try {
+    const appState = useAppState();
+    language = appState?.state?.settings?.language || 'en';
+  } catch {
+    language = 'en';
+  }
+  const t = getTranslations(language);
   const menuRef = useRef<HTMLDivElement>(null);
   const resolvedItems = useMemo<readonly TabContextMenuItem[]>(() => {
     if (items) return items.filter((item) => !item.hidden);

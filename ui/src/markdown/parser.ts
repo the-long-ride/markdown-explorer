@@ -11,7 +11,7 @@ import {
   parseTable,
   parseTabTable,
 } from './tableParser.ts';
-import { extractFrontmatter, mapBodyOffsetToSource, scanFrontmatterPreamble } from './sourceMapping.ts';
+import { extractFrontmatter, mapBodyOffsetToSource } from './sourceMapping.ts';
 
 export type BlockToken =
   | HeadingToken
@@ -101,13 +101,16 @@ export function parse(markdown: string, isMdx = false): ParseResult {
 
   let body = afterFm;
   if (isMdx) {
-    // Strip imports and exports from MDX body so they don't render as paragraph text
+    // Hide imports/exports without changing character offsets. Inline editing
+    // depends on token source ranges pointing into the original Markdown source.
     const lines = body.split("\n");
-    const filteredLines = lines.filter((line) => {
+    body = lines.map((line) => {
       const trimmed = line.trim();
-      return !trimmed.startsWith("import ") && !trimmed.startsWith("export ");
-    });
-    body = filteredLines.join("\n");
+      if (trimmed.startsWith("import ") || trimmed.startsWith("export ")) {
+        return " ".repeat(line.length);
+      }
+      return line;
+    }).join("\n");
   }
 
   const lines = body.split("\n");
@@ -119,9 +122,6 @@ export function parse(markdown: string, isMdx = false): ParseResult {
   }
   return { tokens, frontmatter };
 }
-
-// Frontmatter source mapping lives in sourceMapping.ts.
-void scanFrontmatterPreamble;
 
 // ── Block tokenizer ────────────────────────────────────────
 

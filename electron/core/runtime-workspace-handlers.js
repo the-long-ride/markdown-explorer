@@ -194,7 +194,7 @@ function registerRuntimeWorkspaceHandlers(context) {
       lastPublishedCount = next.fileList.length;
       state.flatList = next.fileList;
       sendHostMessage({
-        command: "readyAck", ...next, theme: "dark", themeStyle: "default",
+        command: "readyAck", ...next, theme: "dark", themeStyle: "raw-grid",
         defaultExpanded: true, workspaceName, workspacePath, recentWorkspaces: recents,
         documentConversionEnabled: state.documentConversionEnabled, ...getHostInfo(),
       });
@@ -240,7 +240,7 @@ function registerRuntimeWorkspaceHandlers(context) {
       fileList: flat,
       tree,
       theme: "dark",
-      themeStyle: "default",
+      themeStyle: "raw-grid",
       defaultExpanded: true,
       workspaceName,
       workspacePath,

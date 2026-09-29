@@ -261,13 +261,50 @@ describe('BrowserSearchIndex.search', () => {
     expect(result).toHaveLength(3);
   });
 
-  it('defaults limit to 80', async () => {
+  it('defaults limit to the shared 10000-result ceiling', async () => {
     getEntrySpy.mockResolvedValue(null);
-    const items = Array.from({ length: 90 }, (_, i) =>
+    const items = Array.from({ length: 10050 }, (_, i) =>
       makeItem({ relativePath: `def${i}.md`, fileName: `def${i}.md`, title: `Default${i}` })
     );
     const result = await index.search('default', items);
-    expect(result).toHaveLength(80);
+    expect(result).toHaveLength(10000);
+  });
+
+  it('streams up to 10000 results in bounded batches', async () => {
+    getEntrySpy.mockResolvedValue(null);
+    const items = Array.from({ length: 10050 }, (_, i) =>
+      makeItem({ relativePath: `needle${i}.md`, fileName: `needle${i}.md`, title: `Needle${i}` })
+    );
+    const batches: any[][] = [];
+
+    const summary = await index.searchIncremental('needle', items, {
+      batchSize: 100,
+      yieldEvery: 25,
+      onBatch: batch => batches.push([...batch]),
+    });
+
+    expect(summary).toEqual({ total: 10000, truncated: true, cancelled: false });
+    expect(batches).toHaveLength(100);
+    expect(batches.every(batch => batch.length <= 100)).toBe(true);
+    expect(batches.flat()).toHaveLength(10000);
+  });
+
+  it('stops streaming when the current search is cancelled', async () => {
+    getEntrySpy.mockResolvedValue(null);
+    const items = Array.from({ length: 1000 }, (_, i) =>
+      makeItem({ relativePath: `cancel${i}.md`, fileName: `cancel${i}.md`, title: `Cancel${i}` })
+    );
+    let processedBatches = 0;
+
+    const summary = await index.searchIncremental('cancel', items, {
+      batchSize: 100,
+      yieldEvery: 1,
+      shouldCancel: () => processedBatches >= 1,
+      onBatch: () => { processedBatches += 1; },
+    });
+
+    expect(summary.cancelled).toBe(true);
+    expect(summary.total).toBeLessThan(1000);
   });
 
   it('uses stripped filename as title fallback when title is empty', async () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
+import { createEditableDocumentSession, documentSessionKey, replaceWorkingSource } from '../../../../ui/src/editor/documentSession';
 
 let useFileDropOpenReturn = { isDragging: false };
 let useDesktopTabsReturn = {
@@ -401,6 +402,31 @@ describe('App render', () => {
     expect(mockBridge.postMessage).toHaveBeenCalledWith({ command: 'window-close' });
   });
 
+  it('guards the close button behind the unsaved-changes prompt', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.removeItem('markdown-explorer-terms-accepted');
+    const filePath = '/docs/readme.md';
+    const dirty = replaceWorkingSource(createEditableDocumentSession(filePath, '# A', '1:3'), '# B');
+    mockState = createMockState({ documentSessions: { [documentSessionKey(filePath)]: dirty } });
+    let commit: (() => void) | null = null;
+    const guardUnsavedChanges = vi.fn((_paths: string[], next: () => void) => { commit = next; });
+    (mockAppState as any).guardUnsavedChanges = guardUnsavedChanges;
+    try {
+      render(createElement(App));
+      await waitFor(() => {
+        expect(screen.getByTitle('Close App')).toBeInTheDocument();
+      });
+      mockBridge.postMessage.mockClear();
+      fireEvent.click(screen.getByTitle('Close App'));
+      expect(guardUnsavedChanges).toHaveBeenCalledWith([filePath], expect.any(Function), undefined);
+      expect(mockBridge.postMessage).not.toHaveBeenCalledWith({ command: 'window-close' });
+      commit?.();
+      expect(mockBridge.postMessage).toHaveBeenCalledWith({ command: 'window-close' });
+    } finally {
+      delete (mockAppState as any).guardUnsavedChanges;
+    }
+  });
+
   it('shows restore tooltip when maximized', async () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.removeItem('markdown-explorer-terms-accepted');
@@ -555,18 +581,17 @@ describe('App render', () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.setItem('markdown-explorer-terms-accepted', 'true');
     localStorage.removeItem('markdown-explorer-theme-onboarding-complete');
-    mockState = createMockState({ appRuntime: 'desktop' });
+    mockState = createMockState();
     render(createElement(App));
-    await waitFor(() => {
-      expect(screen.getByTestId('theme-onboarding')).toBeInTheDocument();
-    });
+    // The modal is lazy-loaded; first import can exceed the default 1s on busy CI runners.
+    expect(await screen.findByTestId('theme-onboarding', {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('does not render theme onboarding when complete', async () => {
     vi.stubGlobal('electronAPI', {});
     localStorage.setItem('markdown-explorer-terms-accepted', 'true');
     localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
-    mockState = createMockState({ appRuntime: 'desktop' });
+    mockState = createMockState();
     render(createElement(App));
     expect(screen.queryByTestId('theme-onboarding')).not.toBeInTheDocument();
   });
@@ -613,6 +638,37 @@ describe('App render', () => {
 
     expect(useDesktopTabsReturn.createNewWorkspaceTab).toHaveBeenCalledTimes(1);
     expect(mockBridge.postMessage).not.toHaveBeenCalledWith({ command: 'closeWorkspace' });
+  });
+
+  it('holds returning to workspace selection behind the unsaved-changes prompt', () => {
+    vi.stubGlobal('electronAPI', {});
+    const filePath = '/docs/readme.md';
+    const dirty = replaceWorkingSource(createEditableDocumentSession(filePath, '# A', '1:3'), '# B');
+    mockState = createMockState({
+      appRuntime: 'desktop',
+      workspaceName: '',
+      documentSessions: { [documentSessionKey(filePath)]: dirty },
+    });
+    let commit: (() => void) | null = null;
+    const guardUnsavedChanges = vi.fn((_paths: string[], next: () => void) => { commit = next; });
+    (mockAppState as any).guardUnsavedChanges = guardUnsavedChanges;
+    try {
+      render(createElement(App));
+      mockBridge.postMessage.mockClear();
+      mockDispatch.mockClear();
+
+      mockKeyboardOptions.onWorkspaceSelection();
+
+      expect(guardUnsavedChanges).toHaveBeenCalledWith([filePath], expect.any(Function), undefined);
+      expect(mockBridge.postMessage).not.toHaveBeenCalledWith({ command: 'closeWorkspace' });
+      expect(mockDispatch).not.toHaveBeenCalled();
+
+      commit?.();
+      expect(mockBridge.postMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'READY_ACK', workspaceName: '' }));
+    } finally {
+      delete (mockAppState as any).guardUnsavedChanges;
+    }
   });
 
   it('does not render close folder button in focus mode for chrome runtime', async () => {

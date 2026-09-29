@@ -22,6 +22,7 @@ import {
   type WikiDocumentDescriptor,
   type WikiResolution,
 } from '../markdown/wikiLinks';
+import { getActiveDocumentBody } from '../document/activeDocumentRoot';
 
 export interface WikiNavigationResolver {
   resolve: (rawTarget: string, sourceDocumentPath: string) => WikiResolution | Promise<WikiResolution>;
@@ -70,11 +71,11 @@ function expandFragmentParents(target: HTMLElement): void {
 }
 
 function renderedWikiFragment(canonicalPath: string, fragment: string): HTMLElement | null {
-  const body = document.getElementById('mdBody');
+  const body = getActiveDocumentBody();
   if (!(body instanceof HTMLElement)) return null;
   if (normalizeDocumentPath(body.dataset.mdnSourceDocumentPath ?? '') !== normalizeDocumentPath(canonicalPath)) return null;
-  const target = document.getElementById(fragment);
-  return target instanceof HTMLElement && body.contains(target) ? target : null;
+  const target = body.querySelector(`[id="${CSS.escape(fragment)}"]`);
+  return target instanceof HTMLElement ? target : null;
 }
 
 function scrollWikiFragment(canonicalPath: string, fragment: string): boolean {

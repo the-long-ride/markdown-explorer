@@ -91,6 +91,7 @@ function FontRoleRow({
             className="desktop-font-binding-row__import"
             label={t.fontImport}
             tooltip={t.fontImport}
+            iconOnly
             icon={<ImportSettingsIcon size={13} />}
             onClick={onImport}
           />

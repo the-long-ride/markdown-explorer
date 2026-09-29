@@ -3,7 +3,13 @@ import { BrowserScanner } from '../../chromium-xtension/src/scanner';
 import { BrowserSearchIndex } from '../../chromium-xtension/src/search-index';
 import { BrowserRecentWorkspaces } from '../../chromium-xtension/src/recent-workspaces';
 import { rewriteMediaUrls } from '../../chromium-xtension/src/media-resolver';
-import { readTextFile } from '../../chromium-xtension/src/file-access';
+import {
+  documentRevision,
+  documentWriteCapability,
+  readTextFile,
+  writeFileHandle,
+  type BrowserDocumentWriteResult,
+} from '../../chromium-xtension/src/file-access';
 import { nextIncrementalPublishCount } from '../../chromium-xtension/src/incremental-publish';
 import type { MdFile, FolderNode } from '../../ui/src/types';
 
@@ -35,6 +41,27 @@ interface FileModeDeps {
 
 export const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
 export const WORKSPACE_SCAN_BATCH_SIZE = 32;
+
+function isEditableMarkdownPath(filePath: string): boolean {
+  return /\.mdx?$/i.test(filePath);
+}
+
+async function singleFileDocumentWriteCapability(handle: FileSystemFileHandle) {
+  const permission = await (handle as any).queryPermission?.({ mode: 'readwrite' });
+  if (permission !== 'granted') {
+    return { supported: false, revision: null, reason: 'permission-required' as const };
+  }
+  return { supported: true, revision: await documentRevision(handle) };
+}
+
+export async function writeSingleFileDocument(
+  handle: FileSystemFileHandle,
+  source: string,
+  expectedRevision: string | null,
+  force = false,
+): Promise<BrowserDocumentWriteResult> {
+  return writeFileHandle(handle, source, expectedRevision, force);
+}
 
 export function createFileModeHandlers({
   state,
@@ -225,6 +252,9 @@ async function sendFileContent(relativePath: string, request?: WorkspaceScanRequ
   const rewrittenHtml = await rewriteMediaUrls(handle, html, relativePath);
   if (request && !isWorkspaceScanCurrent(request)) return;
   const fileInfo = findFileInfo(state.flatList, relativePath);
+  const documentWrite = isEditableMarkdownPath(relativePath)
+    ? await documentWriteCapability(handle, relativePath)
+    : undefined;
 
   send({
     command: 'renderContent',
@@ -238,6 +268,7 @@ async function sendFileContent(relativePath: string, request?: WorkspaceScanRequ
     title: fileInfo.title,
     fileList: state.flatList,
     previewInfo: null,
+    documentWrite,
     ...(request?.operation ?? getWorkspaceOperationMetadata()),
   });
 }
@@ -332,6 +363,9 @@ async function sendSingleFileContent(
   if (state.singleFileHandle !== expectedHandle || workspaceScanGeneration !== generation) return;
   const { html, frontmatter, toc } = renderMarkdown(relativePath, raw);
   const fileInfo = findFileInfo(state.flatList, relativePath);
+  const documentWrite = isEditableMarkdownPath(relativePath)
+    ? await singleFileDocumentWriteCapability(expectedHandle)
+    : undefined;
 
   send({
     command: 'renderContent',
@@ -345,6 +379,7 @@ async function sendSingleFileContent(
     title: fileInfo.title,
     fileList: state.flatList,
     previewInfo: null,
+    documentWrite,
     ...operation,
   });
 }
@@ -391,4 +426,3 @@ function cancelAllWorkspaceScans() {
     cancelAllWorkspaceScans,
   };
 }
-

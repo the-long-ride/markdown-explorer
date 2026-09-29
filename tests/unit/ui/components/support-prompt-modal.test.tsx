@@ -28,7 +28,9 @@ describe('SupportPromptModal', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Enjoying Markdown Explorer?')).toBeInTheDocument();
-    expect(screen.getByText(/You've been using Markdown Explorer for a while/)).toBeInTheDocument();
+    expect(screen.getByText(/Thanks for spending time with Markdown Explorer/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Leave a star' })).toBeInTheDocument();
+    expect(screen.getByText('Either way, thank you for being here!')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Star on GitHub/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Maybe later' })).toBeInTheDocument();
     expect(screen.getByText("Don't show this again")).toBeInTheDocument();
@@ -74,10 +76,16 @@ describe('SupportPromptModal', () => {
     const onDonate = vi.fn();
     render(<SupportPromptModal isOpen={true} onClose={vi.fn()} onStar={vi.fn()} onDonate={onDonate} />);
 
+    expect(screen.getByRole('heading', { name: 'Make a donation' })).toBeInTheDocument();
     const donateBtn = screen.getByRole('button', { name: /Donate/i });
     expect(donateBtn).toBeInTheDocument();
     fireEvent.click(donateBtn);
     expect(onDonate).toHaveBeenCalledWith(false);
+  });
+
+  it('hides the donation option when no donate handler is provided', () => {
+    render(<SupportPromptModal isOpen={true} onClose={vi.fn()} onStar={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /Donate/i })).toBeNull();
   });
 
   it('triggers onClose when maybe later or close button clicked', () => {

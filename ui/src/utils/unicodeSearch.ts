@@ -38,6 +38,9 @@ export interface UnicodeSearchMatch {
   matchLength: number;
 }
 
+/** Marks and Hangul medial/final jamo compose with the preceding character under NFC. */
+const COMBINING_SEQUENCE_CONTINUATION = /[\p{M}ᅠ-ᇿힰ-퟿]/u;
+
 /**
  * Build a mapping from positions in the normalized-lower string back
  * to positions in the original string.
@@ -67,24 +70,29 @@ function buildNormMap(original: string): {
   }
 
   const toOriginal = new Uint32Array(normalizedText.length);
-  let accumulatedOrig = '';
+  // Normalize per combining sequence (a starter plus its marks) instead of the
+  // whole growing prefix: the prefix approach was O(n^2) and froze workspace
+  // search on large decomposed (macOS NFD) documents.
+  let segment = '';
+  let segmentStartNormLen = 0;
   let lastNormLen = 0;
 
   for (let origPos = 0; origPos < original.length; origPos++) {
-    const codePoint = original.codePointAt(origPos)!;
-    const origChar = String.fromCodePoint(codePoint);
-    const origCharLen = origChar.length;
-    
-    accumulatedOrig += origChar;
-    const currentNormLen = normalizeForSearch(accumulatedOrig).length;
+    const origChar = String.fromCodePoint(original.codePointAt(origPos)!);
+    if (segment && !COMBINING_SEQUENCE_CONTINUATION.test(origChar)) {
+      segmentStartNormLen += normalizeForSearch(segment).length;
+      segment = '';
+    }
+    segment += origChar;
+    const currentNormLen = segmentStartNormLen + normalizeForSearch(segment).length;
 
     for (let k = lastNormLen; k < currentNormLen && k < normalizedText.length; k++) {
       toOriginal[k] = origPos;
     }
-    
+
     lastNormLen = currentNormLen;
 
-    if (origCharLen > 1) {
+    if (origChar.length > 1) {
       origPos++;
     }
   }

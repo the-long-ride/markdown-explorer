@@ -1,5 +1,5 @@
 export interface SidebarItemMenuPositionInput {
-  anchorRect: Pick<DOMRect, 'top' | 'bottom' | 'right'>;
+  anchorRect: Pick<DOMRect, 'top' | 'bottom' | 'right'> & Partial<Pick<DOMRect, 'left'>>;
   sidebarRect: Pick<DOMRect, 'left' | 'right'>;
   menuWidth: number;
   menuHeight: number;
@@ -7,6 +7,7 @@ export interface SidebarItemMenuPositionInput {
   viewportHeight: number;
   gap?: number;
   margin?: number;
+  align?: 'right' | 'left';
 }
 
 export interface SidebarItemMenuPosition {
@@ -24,10 +25,19 @@ export function computeSidebarItemMenuPosition({
   viewportHeight,
   gap = 4,
   margin = 8,
+  align = 'right',
 }: SidebarItemMenuPositionInput): SidebarItemMenuPosition {
+  const maxSidebarLeft = Math.max(
+    sidebarRect.left + margin,
+    sidebarRect.right - (menuWidth + margin),
+  );
+  let targetLeft = anchorRect.right - menuWidth;
+  if (align === 'left') {
+    targetLeft = anchorRect.left !== undefined ? anchorRect.left : sidebarRect.left + margin;
+  }
   const left = Math.max(
     sidebarRect.left + margin,
-    Math.min(anchorRect.right - menuWidth, viewportWidth - menuWidth - margin),
+    Math.min(targetLeft, maxSidebarLeft, viewportWidth - menuWidth - margin),
   );
   const belowTop = anchorRect.bottom + gap;
   const canFitBelow = belowTop + menuHeight <= viewportHeight - margin;

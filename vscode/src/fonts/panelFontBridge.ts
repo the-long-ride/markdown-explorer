@@ -3,6 +3,7 @@ import * as path from 'path';
 import type { WebviewMessage } from '../types';
 import { handlePanelExportResourceMessage } from '../core/panelExportResources';
 import { handlePanelExportSaveMessage } from '../core/panelExportSave';
+import { handlePanelGitHistoryMessage } from '../core/panelGitHistory';
 import { createVsCodeFontService, type VsCodeFontFamily } from './fontService';
 
 export function getGlobalStorageUri(
@@ -23,10 +24,7 @@ export function createPanelFontBridge(
     managedRoot: path.join(globalStorageUri.fsPath, 'fonts'),
     resolveCssUrl: (filePath) => webview.asWebviewUri(vscodeApi.Uri.file(filePath)).toString(),
   });
-  context.subscriptions?.push({
-    dispose: () => {
-    },
-  });
+  const postMessage = async (message: any) => { await webview.postMessage(message); };
 
   async function sendResult(requestId: string, importedId?: string, error?: string): Promise<void> {
     let fonts: VsCodeFontFamily[] = [];
@@ -79,6 +77,11 @@ export function createPanelFontBridge(
         }
         return true;
       default:
+        if (await handlePanelGitHistoryMessage(
+          message,
+          vscodeApi.workspace.workspaceFolders?.[0]?.uri.fsPath,
+          postMessage,
+        )) return true;
         if (await handlePanelExportSaveMessage(
           message,
           vscodeApi,
@@ -95,7 +98,6 @@ export function createPanelFontBridge(
 
   return {
     handle,
-    dispose: () => {
-    },
+    dispose: () => {},
   };
 }

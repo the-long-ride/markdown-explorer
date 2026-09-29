@@ -162,7 +162,7 @@ function pushSearchResult(result, state) {
 async function searchItemsIncremental(query, items, getEntry, options = {}) {
   const {
     batchSize = 100,
-    maxResults = 2000,
+    maxResults = 10000,
     maxMatchesPerFile = 200,
     yieldEvery = 25,
     shouldCancel = () => false,

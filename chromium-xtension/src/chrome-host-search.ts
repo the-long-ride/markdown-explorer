@@ -1,9 +1,14 @@
 import type { FolderNode, MdFile } from '../../ui/src/types';
 import type { BrowserSearchIndex } from './search-index';
+import { writeTextFile } from './file-access';
 import { handleChromeExportHostCommand } from './chrome-host-export';
 import { filterSearchIndexTabs, isValidExternalUrl, normalizeSearchQuery, resolveWorkspaceTextResourcePath } from './chrome-host-utils';
 import { handleBrowserInsightsHostCommand } from './insights-host-router';
 import { resolveWorkspaceSearchItems } from './workspace-search-items';
+import {
+  MAX_WORKSPACE_SEARCH_RESULTS,
+  WORKSPACE_SEARCH_BATCH_SIZE,
+} from '../../ui/src/constants/limits';
 
 interface ChromeHostSearchContext {
   searchIndex: BrowserSearchIndex | null;
@@ -13,6 +18,7 @@ interface ChromeHostSearchContext {
   activeHandle: FileSystemDirectoryHandle | null;
   send: (message: any) => void;
   readText: (handle: FileSystemDirectoryHandle, path: string) => Promise<string>;
+  searchGeneration?: { value: number };
 }
 
 export async function handleChromeHostUtilityCommand(message: any, context: ChromeHostSearchContext): Promise<boolean> {
@@ -27,15 +33,70 @@ export async function handleChromeHostUtilityCommand(message: any, context: Chro
   })) return true;
 
   switch (message.command) {
+    case 'saveDocument': {
+      const requestedPath = String(message.filePath || '');
+      const item = context.flatList.find((candidate) => candidate.fsPath === requestedPath || candidate.relativePath === requestedPath);
+      let result;
+      if (context.activeHandle && item) {
+        result = await writeTextFile(
+          context.activeHandle,
+          item.relativePath,
+          String(message.source ?? ''),
+          typeof message.expectedRevision === 'string' ? message.expectedRevision : null,
+          Boolean(message.force),
+        );
+      } else {
+        result = { ok: false as const, reason: context.activeHandle ? 'outside-workspace' as const : 'read-only' as const };
+      }
+      context.send({
+        command: 'saveDocumentResult',
+        requestId: message.requestId,
+        filePath: requestedPath,
+        ...result,
+      });
+      return true;
+    }
     case 'searchWorkspace': {
-      const results = context.searchIndex
-        ? await context.searchIndex.search(
-            normalizeSearchQuery(message.query, Boolean(message.matchCase)),
-            resolveWorkspaceSearchItems(message.items, context.flatList),
-            80,
-            { matchCase: Boolean(message.matchCase) },
-          ) : [];
-      context.send({ command: 'workspaceSearchResults', requestId: message.requestId, results });
+      const generation = context.searchGeneration ? ++context.searchGeneration.value : 0;
+      const isCurrent = () => !context.searchGeneration || generation === context.searchGeneration.value;
+      const requestId = message.requestId;
+      const searchIndex = context.searchIndex;
+      const searchItems = resolveWorkspaceSearchItems(message.items, context.flatList);
+
+      if (!searchIndex) {
+        context.send({ command: 'workspaceSearchResults', requestId, results: [], done: true, total: 0, truncated: false, cancelled: false });
+        return true;
+      }
+
+      try {
+        const summary = await searchIndex.searchIncremental(
+          normalizeSearchQuery(message.query, Boolean(message.matchCase)),
+          searchItems,
+          {
+            matchCase: Boolean(message.matchCase),
+            limit: MAX_WORKSPACE_SEARCH_RESULTS,
+            batchSize: WORKSPACE_SEARCH_BATCH_SIZE,
+            shouldCancel: () => !isCurrent(),
+            onBatch: results => {
+              if (isCurrent()) context.send({ command: 'workspaceSearchResults', requestId, results, done: false });
+            },
+          },
+        );
+        if (isCurrent()) context.send({ command: 'workspaceSearchResults', requestId, results: [], done: true, ...summary });
+      } catch (error) {
+        if (isCurrent()) {
+          context.send({
+            command: 'workspaceSearchResults',
+            requestId,
+            results: [],
+            done: true,
+            total: 0,
+            truncated: false,
+            cancelled: false,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
       return true;
     }
     case 'loadSearchPreview': {

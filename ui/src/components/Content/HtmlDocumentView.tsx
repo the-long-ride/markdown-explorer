@@ -15,6 +15,7 @@ export interface HtmlDocumentViewProps {
   previewEnabled: boolean;
   title: string;
   conversionError?: string | null;
+  allowUpstreamResources?: boolean;
   onPolicyReport?: (report: HtmlLocalFirstPolicyReport) => void;
 }
 
@@ -30,6 +31,7 @@ export const HtmlDocumentView = memo(function HtmlDocumentView({
   previewEnabled,
   title,
   conversionError,
+  allowUpstreamResources = false,
   onPolicyReport,
 }: HtmlDocumentViewProps) {
   const bridge = usePlatform();
@@ -53,17 +55,18 @@ export const HtmlDocumentView = memo(function HtmlDocumentView({
       documentPath: filePath,
       readLocalText: (resourcePath, baseDocumentPath) =>
         readWorkspaceTextResource(bridge, baseDocumentPath, resourcePath),
+      allowUpstreamResources,
     }).then((prepared) => {
       if (cancelled) return;
       setSrcDoc(prepared.documentHtml);
-      onPolicyReport?.(prepared.policyReport);
+      if (!allowUpstreamResources) onPolicyReport?.(prepared.policyReport);
     }).catch((error) => {
       if (cancelled) return;
       setPreviewError(error instanceof Error ? error.message : String(error));
     });
 
     return () => { cancelled = true; };
-  }, [bridge, filePath, htmlSource, onPolicyReport, previewEnabled]);
+  }, [allowUpstreamResources, bridge, filePath, htmlSource, onPolicyReport, previewEnabled]);
 
   if (!previewEnabled) {
     return (

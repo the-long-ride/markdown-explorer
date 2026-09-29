@@ -226,8 +226,8 @@ export function SearchOverlay({
       setRemoteQuery(query);
       setRemoteMatchCase(matchCase);
       setRemoteWorkspaceKey(enabledWorkspaceKey);
-      if (msg.done) setIsCrossTabSearching(false);
-      else setRemoteResults((current) => [...current, ...(msg.results as CrossTabSearchItem[])]);
+      setRemoteResults((current) => [...current, ...(msg.results as CrossTabSearchItem[])]);
+      if (msg.done !== false) setIsCrossTabSearching(false);
     });
   }, [bridge, enabledWorkspaceKey, hasCrossTabSearch, isOpen, matchCase, query]);
 
@@ -237,8 +237,8 @@ export function SearchOverlay({
       if (msg.command !== 'workspaceSearchResults' || msg.requestId !== workspaceRequestIdRef.current) return;
       setWorkspaceRemoteQuery(query);
       setWorkspaceRemoteMatchCase(matchCase);
-      setWorkspaceRemoteResults(msg.results as WorkspaceSearchResult[]);
-      setIsWorkspaceSearching(false);
+      setWorkspaceRemoteResults((current) => [...current, ...(msg.results as WorkspaceSearchResult[])]);
+      if (msg.done !== false) setIsWorkspaceSearching(false);
     });
   }, [bridge, hasCrossTabSearch, isOpen, matchCase, query]);
 

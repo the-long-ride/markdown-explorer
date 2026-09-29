@@ -4,6 +4,32 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 > **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
 
+## [v1.7.0] — 2026-09-29
+
+### Added
+- **Lazy workspace search results**: VS Code workspace search now streams up to 10,000 results in bounded batches, cancels stale requests, and renders the shared sidebar result tree in lazy 100-row windows.
+- **Local Markdown editing in webview**: Added local document write operations (`saveDocumentWriteRequest`, `documentWriteResult`) with backup preservation, unsaved-change guards, and direct file save via `Ctrl+S` (`markdownExplorer.saveCurrentDocument` command).
+- **Split document view**: Supported two-pane document workspace in the VS Code webview panel with independent active pane, file, view mode, and scroll synchronization.
+- **Local Git history and diff viewer**: Added per-file Git history inspection, commit graphs, revision retrieval, and side-by-side / unified diffs backed by `panelGitHistory.ts`.
+- **External editor routing for non-Markdown files**: Enabled More Actions **Edit** to launch the host editor for non-Markdown document and source file types.
+- **Save and reset icons**: Added floppy disk save icons in webview topbar and split pane headers; enlarged refresh icon for resetting keyboard shortcuts in settings.
+- **Enhanced unsaved changes guard**: Refreshed dialog layout with a clear header (*Your changes have not been saved*), two-line file path info, right-aligned buttons, and a *Don't Save & Leave* discard action with a cancellation icon.
+- **Inline editor header layout**: Positioned action buttons at the top right of the inline editor header with keyboard shortcut tooltips (`Ctrl+Enter` / `Esc`) and removed redundant footer.
+- **Theme name and translation polish**: Renamed `Raw Grid` theme to `Default` and refined non-English localization across all 8 supported locales (`vi`, `fr`, `es`, `zh`, `no`, `ja`, `ko`, `ru`) for natural UI terminology.
+- **User manual copy prompt animation**: Updated the copy prompt button to an icon-only button with smooth pop and ring animation.
+
+### Changed
+- **Panel modularization & LOC budget**: Extracted `panelGitHistory.ts`, `panelDocumentWrite.ts`, and `panelMessages.ts` from `panel.ts` to maintain strict maintainability and bundle budgets.
+
+### Fixed
+- **Sidebar Search on macOS**: Fixed workspace search hanging on decomposed (NFD) Unicode text by normalizing per combining sequence instead of re-processing the whole prefix per character, and made the VS Code host always answer `searchWorkspace`, even when the search throws.
+- **Copy code opening the Mermaid viewer**: Clicking or right-clicking a code block's Copy button no longer opens the media viewer or image context menu on the first Mermaid diagram; buttons and controls are excluded from media targeting.
+- **Safer document saves in the webview panel**: `panelDocumentWrite.ts` only writes Markdown files outside `.git`, writes atomically, reports a conflict for unknown revisions or files dirty in a VS Code editor, and preserves a leading BOM.
+- **Git history with non-ASCII paths**: `panelGitHistory.ts` uses `core.quotePath=false` and NUL-separated output, no longer restarts paging at page 1, maps oversized output to `output-too-large`, and rejects current-side symlinks that escape the workspace.
+- **Persistent settings stability**: Hardened webview settings persistence and configuration synchronization across VS Code sessions.
+
+---
+
 ## [v1.6.7] — 2026-09-06
 
 ### Added

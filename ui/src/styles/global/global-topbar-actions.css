@@ -44,17 +44,20 @@ body {
   flex-direction: column;
   justify-content: center;
   line-height: 1.1;
+  white-space: nowrap;
 }
 .topbar__logo-title {
   font-weight: 700;
   font-size: 12.5px;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 .topbar__logo-subtitle {
   font-size: 9.5px;
   color: var(--tx2);
   font-weight: 500;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .topbar__logo-subtitle a {
   color: var(--accent-text);
@@ -64,6 +67,13 @@ body {
 .topbar__logo-subtitle a:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 900px) {
+  .topbar .topbar__logo-subtitle,
+  .topbar__logo-subtitle {
+    display: none !important;
+  }
+}
 .topbar__divider {
   width: 1px;
   height: 20px;
@@ -72,15 +82,18 @@ body {
   margin: 0 2px;
 }
 .topbar__breadcrumb-container {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  width: fit-content;
   min-width: 0;
-  max-width: none;
+  max-width: 100%;
   position: relative;
   display: flex;
   align-items: center;
 }
 .topbar__breadcrumb {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  width: fit-content;
+  max-width: 100%;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -221,6 +234,13 @@ body {
   min-width: 0;
   white-space: nowrap;
   text-align: left;
+}
+
+.toolbar-action-menu__separator {
+  flex: 0 0 auto;
+  height: 0;
+  margin: 3px 6px;
+  border-top: 1px solid var(--bd-s);
 }
 
 .toolbar-action-menu__item.is-toggle {

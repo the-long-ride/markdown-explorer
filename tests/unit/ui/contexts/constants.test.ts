@@ -19,19 +19,21 @@ import {
 } from '../../../../ui/src/contexts/appStateConstants';
 
 describe('appStateConstants', () => {
-  test('DEFAULT_KEYBINDINGS has 20 entries without app-owned zoom', () => {
-    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(20);
+  test('DEFAULT_KEYBINDINGS has 21 entries including Save without app-owned zoom', () => {
+    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(21);
+    expect(DEFAULT_KEYBINDINGS.saveCurrentDocument).toBe('Ctrl+S');
   });
 
-  test('VSCODE_DEFAULT_KEYBINDINGS adds the editor action only for VS Code', () => {
-    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(20);
+  test('VSCODE_DEFAULT_KEYBINDINGS adds the external editor action for VS Code', () => {
+    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(21);
     expect(VSCODE_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomIn).toBeUndefined();
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomOut).toBeUndefined();
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 30 entries including Edit and desktop reset zoom', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(30);
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 31 entries including Save, Edit, and desktop reset zoom', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(31);
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.saveCurrentDocument).toBe('Ctrl+S');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+E');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.resetZoom).toBe('Ctrl+Alt+Z');
   });
@@ -102,7 +104,7 @@ describe('appStateConstants', () => {
   });
 
   test('normalizeThemeStyle valid', () => {
-    expect(normalizeThemeStyle('glass')).toBe('default');
+    expect(normalizeThemeStyle('glass')).toBe('raw-grid');
     expect(normalizeThemeStyle('default')).toBe('default');
     expect(normalizeThemeStyle('bento')).toBe('bento');
     expect(normalizeThemeStyle('vercel')).toBe('vercel');
@@ -111,8 +113,8 @@ describe('appStateConstants', () => {
     expect(normalizeThemeStyle('raw-grid')).toBe('raw-grid');
   });
 
-  test('normalizeThemeStyle invalid falls back to default', () => {
-    expect(normalizeThemeStyle('invalid')).toBe('default');
+  test('normalizeThemeStyle invalid falls back to Raw Grid', () => {
+    expect(normalizeThemeStyle('invalid')).toBe('raw-grid');
   });
 
   test('normalizeDesktopViewMode valid', () => {
@@ -144,5 +146,10 @@ describe('appStateConstants', () => {
 
   test('ALL_THEME_STYLE_OPTIONS combines style + pet options', () => {
     expect(ALL_THEME_STYLE_OPTIONS.length).toBe(THEME_STYLE_OPTIONS.length + PET_THEME_STYLE_OPTIONS.length);
+  });
+
+  test('Raw Grid is first and the former default has its own name', () => {
+    expect(THEME_STYLE_OPTIONS[0].id).toBe('raw-grid');
+    expect(THEME_STYLE_OPTIONS.find((option) => option.id === 'default')?.label).toBe('Explorer Classic');
   });
 });

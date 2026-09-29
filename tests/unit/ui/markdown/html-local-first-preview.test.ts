@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { JSDOM, VirtualConsole } from 'jsdom';
 import {
   hasHtmlLocalFirstPolicyNotice,
   prepareLocalFirstHtmlPreview,
@@ -28,6 +29,75 @@ describe('htmlLocalFirstPreview', () => {
   });
 
   describe('prepareLocalFirstHtmlPreview', () => {
+    it('keeps storage-dependent theme controls interactive in an opaque-origin preview', async () => {
+      const result = await prepareLocalFirstHtmlPreview({
+        htmlSource: `
+          <!doctype html>
+          <html data-theme="dark">
+            <body>
+              <button id="theme-btn">Toggle theme</button>
+              <script src="site.js"></script>
+            </body>
+          </html>
+        `,
+        documentPath: '/workspace/index.html',
+        readLocalText: async (resourcePath) => resourcePath === 'site.js'
+          ? {
+              ok: true,
+              resolvedPath: '/workspace/site.js',
+              content: `
+                const html = document.documentElement;
+                const savedTheme = localStorage.getItem('site-theme') || 'dark';
+                html.setAttribute('data-theme', savedTheme);
+                document.getElementById('theme-btn').addEventListener('click', () => {
+                  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                  html.setAttribute('data-theme', next);
+                  localStorage.setItem('site-theme', next);
+                });
+              `,
+            }
+          : { ok: false, reason: 'not-found' },
+        allowUpstreamResources: true,
+      });
+      const dom = new JSDOM(result.documentHtml, {
+        runScripts: 'dangerously',
+        virtualConsole: new VirtualConsole(),
+      });
+
+      dom.window.document.getElementById('theme-btn')?.click();
+
+      expect(dom.window.document.documentElement.getAttribute('data-theme')).toBe('light');
+      dom.window.close();
+    });
+
+    it('keeps upstream styles, scripts, and network access when the user allows them', async () => {
+      const result = await prepareLocalFirstHtmlPreview({
+        htmlSource: `
+          <html>
+            <head>
+              <link rel="stylesheet" href="https://cdn.example.com/app.css">
+              <script src="https://cdn.example.com/app.js"></script>
+              <script src="../secrets.js"></script>
+              <script>fetch('https://api.example.com/data')</script>
+            </head>
+          </html>
+        `,
+        documentPath: '/workspace/doc.html',
+        readLocalText: async () => ({ ok: false, reason: 'outside-workspace' }),
+        allowUpstreamResources: true,
+      });
+
+      expect(result.documentHtml).toContain('href="https://cdn.example.com/app.css"');
+      expect(result.documentHtml).toContain('src="https://cdn.example.com/app.js"');
+      expect(result.documentHtml).toContain("connect-src http: https: ws: wss:");
+      expect(result.documentHtml).not.toContain('data-mdn-network-guard="true"');
+      expect(result.documentHtml).not.toContain('../secrets.js');
+      expect(result.policyReport.blockedRemoteStyles).toEqual([]);
+      expect(result.policyReport.blockedRemoteScripts).toEqual([]);
+      expect(result.policyReport.blockedNetworkApis).toEqual([]);
+      expect(result.policyReport.blockedLocalReferences).toEqual(['../secrets.js']);
+    });
+
     it('inlines local stylesheets and scripts, blocking remote assets and APIs', async () => {
       const html = `
         <!DOCTYPE html>

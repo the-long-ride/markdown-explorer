@@ -464,10 +464,8 @@
 
 .settings-reset-shortcuts-btn::before,
 [data-theme-style^="pet-"] .settings-reset-shortcuts-btn::before {
-  content: "!";
-  background: color-mix(in srgb, #000 18%, transparent);
-  color: currentColor;
-  filter: none;
+  content: none;
+  display: none;
 }
 
 .settings-reset-shortcuts-btn:hover {

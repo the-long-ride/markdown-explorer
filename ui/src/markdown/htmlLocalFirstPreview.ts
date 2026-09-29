@@ -47,6 +47,22 @@ const LOCAL_FIRST_CSP = [
   "base-uri 'none'",
 ].join('; ');
 
+const UPSTREAM_ENABLED_CSP = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline' http: https:",
+  "style-src 'unsafe-inline' http: https:",
+  "connect-src http: https: ws: wss:",
+  "img-src http: https: data: blob:",
+  "font-src http: https: data: blob:",
+  "media-src http: https: data: blob:",
+  "frame-src 'none'",
+  "child-src 'none'",
+  "worker-src 'none'",
+  "object-src 'none'",
+  "form-action 'none'",
+  "base-uri 'none'",
+].join('; ');
+
 function emptyPolicyReport(): HtmlLocalFirstPolicyReport {
   return {
     blockedRemoteStyles: [],
@@ -81,6 +97,40 @@ function networkGuardScript(): string {
   replace(window, 'EventSource', blocked('EventSource'));
   if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
     replace(navigator, 'sendBeacon', blocked('sendBeacon'));
+  }
+})();`;
+}
+
+function storageCompatibilityScript(): string {
+  return `
+(function () {
+  const createMemoryStorage = function () {
+    const entries = new Map();
+    return {
+      get length() { return entries.size; },
+      key: function (index) { return Array.from(entries.keys())[index] ?? null; },
+      getItem: function (key) {
+        key = String(key);
+        return entries.has(key) ? entries.get(key) : null;
+      },
+      setItem: function (key, value) { entries.set(String(key), String(value)); },
+      removeItem: function (key) { entries.delete(String(key)); },
+      clear: function () { entries.clear(); }
+    };
+  };
+  for (const name of ['localStorage', 'sessionStorage']) {
+    try {
+      void window[name];
+    } catch (_) {
+      try {
+        Object.defineProperty(window, name, {
+          configurable: false,
+          enumerable: true,
+          writable: false,
+          value: createMemoryStorage()
+        });
+      } catch (_) {}
+    }
   }
 })();`;
 }
@@ -146,7 +196,12 @@ function classifyAllowedRemoteMedia(documentNode: Document, report: HtmlLocalFir
   });
 }
 
-function processCssRemoteReferences(css: string, report: HtmlLocalFirstPolicyReport): string {
+function processCssRemoteReferences(
+  css: string,
+  report: HtmlLocalFirstPolicyReport,
+  allowUpstreamResources: boolean,
+): string {
+  if (allowUpstreamResources) return css;
   let next = css.replace(
     /@import\s+(?:url\(\s*)?["']?((?:https?:)?\/\/[^\s"')]+)["']?\s*\)?[^;]*;/gi,
     (_match, url: string) => {
@@ -178,6 +233,7 @@ async function inlineLocalImports(
   readLocalText: HtmlLocalTextReader,
   report: HtmlLocalFirstPolicyReport,
   seen: Set<string>,
+  allowUpstreamResources: boolean,
 ): Promise<string> {
   const importPattern = /@import\s+(?:url\(\s*)?["']?([^\s"')]+)["']?\s*\)?[^;]*;/gi;
   const matches = [...css.matchAll(importPattern)];
@@ -197,38 +253,42 @@ async function inlineLocalImports(
     }
     seen.add(response.resolvedPath);
     const imported = await inlineLocalImports(
-      processCssRemoteReferences(response.content, report),
+      processCssRemoteReferences(response.content, report, allowUpstreamResources),
       response.resolvedPath,
       readLocalText,
       report,
       seen,
+      allowUpstreamResources,
     );
     next = next.replace(match[0], `\n/* inlined ${reference} */\n${imported}\n`);
   }
   return next;
 }
 
-function installLocalFirstCsp(documentNode: Document): void {
+function installPreviewCsp(documentNode: Document, allowUpstreamResources: boolean): void {
   documentNode.querySelectorAll('meta[http-equiv="Content-Security-Policy" i]').forEach((meta) => meta.remove());
   const csp = documentNode.createElement('meta');
   csp.httpEquiv = 'Content-Security-Policy';
-  csp.content = LOCAL_FIRST_CSP;
+  csp.content = allowUpstreamResources ? UPSTREAM_ENABLED_CSP : LOCAL_FIRST_CSP;
   documentNode.head.prepend(csp);
 }
 
 /**
- * Prepare an isolated, local-first HTML document. Workspace-local CSS/JS is
- * embedded; network CSS/JS is removed; remote media remains available; and
- * network APIs are replaced before any user script runs.
+ * Prepare an isolated HTML document. Local-first mode embeds workspace CSS/JS,
+ * removes upstream CSS/JS, and blocks script network APIs. Explicit upstream
+ * mode keeps remote resources and network access while preserving the iframe
+ * boundary and host-validated workspace resource reads.
  */
 export async function prepareLocalFirstHtmlPreview({
   htmlSource,
   documentPath,
   readLocalText,
+  allowUpstreamResources = false,
 }: {
   htmlSource: string;
   documentPath: string;
   readLocalText: HtmlLocalTextReader;
+  allowUpstreamResources?: boolean;
 }): Promise<PreparedLocalFirstHtmlPreview> {
   const report = emptyPolicyReport();
   const documentNode = new DOMParser().parseFromString(htmlSource, 'text/html');
@@ -243,6 +303,7 @@ export async function prepareLocalFirstHtmlPreview({
     const href = link.getAttribute('href') || '';
     if (!href || DATA_OR_BLOB_URL.test(href)) continue;
     if (REMOTE_URL.test(href)) {
+      if (allowUpstreamResources) continue;
       pushUnique(report.blockedRemoteStyles, href);
       link.remove();
       continue;
@@ -256,27 +317,29 @@ export async function prepareLocalFirstHtmlPreview({
     const style = documentNode.createElement('style');
     style.dataset.mdnLocalResource = response.resolvedPath;
     style.textContent = await inlineLocalImports(
-      processCssRemoteReferences(response.content, report),
+      processCssRemoteReferences(response.content, report, allowUpstreamResources),
       response.resolvedPath,
       readLocalText,
       report,
       new Set([response.resolvedPath]),
+      allowUpstreamResources,
     );
     link.replaceWith(style);
   }
 
   for (const style of Array.from(documentNode.querySelectorAll<HTMLStyleElement>('style'))) {
-    style.textContent = processCssRemoteReferences(style.textContent || '', report);
+    style.textContent = processCssRemoteReferences(style.textContent || '', report, allowUpstreamResources);
   }
 
   for (const script of Array.from(documentNode.querySelectorAll<HTMLScriptElement>('script'))) {
     const src = script.getAttribute('src') || '';
     if (!src) {
-      collectNetworkApis(script.textContent || '', report);
+      if (!allowUpstreamResources) collectNetworkApis(script.textContent || '', report);
       continue;
     }
     if (DATA_OR_BLOB_URL.test(src)) continue;
     if (REMOTE_URL.test(src)) {
+      if (allowUpstreamResources) continue;
       pushUnique(report.blockedRemoteScripts, src);
       script.remove();
       continue;
@@ -287,7 +350,7 @@ export async function prepareLocalFirstHtmlPreview({
       script.remove();
       continue;
     }
-    collectNetworkApis(response.content, report);
+    if (!allowUpstreamResources) collectNetworkApis(response.content, report);
     const inlineScript = documentNode.createElement('script');
     for (const attribute of Array.from(script.attributes)) {
       if (attribute.name.toLowerCase() !== 'src' && attribute.name.toLowerCase() !== 'integrity') {
@@ -299,12 +362,18 @@ export async function prepareLocalFirstHtmlPreview({
     script.replaceWith(inlineScript);
   }
 
-  installLocalFirstCsp(documentNode);
-  const guard = documentNode.createElement('script');
-  guard.dataset.mdnNetworkGuard = 'true';
-  guard.textContent = networkGuardScript();
+  installPreviewCsp(documentNode, allowUpstreamResources);
+  const storageCompatibility = documentNode.createElement('script');
+  storageCompatibility.dataset.mdnStorageCompatibility = 'true';
+  storageCompatibility.textContent = storageCompatibilityScript();
   const csp = documentNode.head.querySelector('meta[http-equiv="Content-Security-Policy" i]');
-  csp?.after(guard);
+  csp?.after(storageCompatibility);
+  if (!allowUpstreamResources) {
+    const guard = documentNode.createElement('script');
+    guard.dataset.mdnNetworkGuard = 'true';
+    guard.textContent = networkGuardScript();
+    storageCompatibility.after(guard);
+  }
 
   const doctype = documentNode.doctype ? `<!DOCTYPE ${documentNode.doctype.name}>\n` : '<!DOCTYPE html>\n';
   return {

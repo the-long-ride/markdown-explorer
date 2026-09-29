@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const contentPaths = [
   path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'Content.tsx'),
   path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'ContentMainView.tsx'),
+  path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'DocumentBody.tsx'),
   path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'components', 'Content', 'enhancements', 'syntaxHighlighting.ts'),
 ].filter(existsSync);
 const translationsTypePath = path.join(__dirname, '..', '..', '..', '..', 'ui', 'src', 'contexts', 'translationTypes.ts');
@@ -86,13 +87,14 @@ describe('content-notice', () => {
     expect(toolbarCss).toMatch(/\.toolbar-action-menu__item \.btn-label\s*{[^}]*white-space:\s*nowrap;/s);
   });
 
-  test('HTML local-first warning dialog shows 1 time per file and experience banner shows 1 time in app opening time', async () => {
+  test('HTML local-first warning dialog resets with the rendered document and experience banner shows 1 time in app opening time', async () => {
     const content = await readContentSources();
 
     expect(content).toMatch(/const warningSessionKey = state\.currentFile \?\? '';/);
     expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.has\(warningSessionKey\)/);
     expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.add\(warningSessionKey\)/);
-    expect(content).not.toMatch(/htmlPreviewWarningSeenRef\.current\.delete/);
+    expect(content).toMatch(/htmlPreviewWarningSeenRef\.current\.delete\(state\.currentFile\)/);
+    expect(content).toMatch(/\[state\.currentFile, state\.renderVersion\]/);
     expect(content).toMatch(/htmlPreviewExperienceNoticeSeenRef\.current/);
     expect(content).toMatch(/if\s*\(htmlPreviewExperienceNoticeSeenRef\.current\)\s*return;/);
   });

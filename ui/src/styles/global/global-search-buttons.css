@@ -177,24 +177,40 @@
 
 /* Breadcrumb tooltip override */
 .topbar__breadcrumb {
-  flex: 1 1 auto;
-  width: 100%;
+  flex: 0 1 auto;
+  width: fit-content;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  white-space: nowrap !important;
   cursor: default;
-  display: block !important;
+  display: flex !important;
+  align-items: center;
+  gap: 2px;
 }
 .topbar__breadcrumb span {
-  display: inline !important;
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
+  white-space: nowrap !important;
 }
 .topbar__breadcrumb .sep {
   display: inline !important;
   margin: 0 4px;
+  flex-shrink: 0;
+}
+.topbar__breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap !important;
+  min-width: 0;
+}
+.topbar__breadcrumb-item--dir {
+  flex-shrink: 2;
+  min-width: 0;
+  overflow: hidden;
+}
+.topbar__breadcrumb-item--file {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 .topbar__breadcrumb-container .tooltip-text {
   white-space: normal;
@@ -222,6 +238,15 @@
   color: var(--tx) !important;
   font-weight: 500 !important;
   max-width: clamp(220px, 42vw, 640px) !important;
+  direction: rtl;
+  text-align: left;
+  unicode-bidi: plaintext;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.topbar__breadcrumb-part--bold::before {
+  content: "\200E";
 }
 .topbar__breadcrumb-container:hover .tooltip-text {
   visibility: visible;
@@ -235,6 +260,15 @@ span.topbar__breadcrumb-part {
   white-space: nowrap !important;
   display: inline-block !important;
   vertical-align: middle;
+}
+
+@media (max-width: 820px) {
+  .topbar__breadcrumb-item--dir {
+    display: none !important;
+  }
+  .topbar__breadcrumb-item--file .sep {
+    display: none !important;
+  }
 }
 /* ============================================================
    Buttons & Search Bar
@@ -268,15 +302,18 @@ span.topbar__breadcrumb-part {
 .btn:active {
   transform: scale(0.96);
 }
-.btn--accent {
+.btn--accent,
+.btn--primary {
   background: var(--accent);
   border-color: transparent;
   color: #fff;
   font-weight: 600;
   box-shadow: 0 1px 6px var(--accent-dim);
 }
-.btn--accent:hover {
+.btn--accent:hover,
+.btn--primary:hover {
   filter: brightness(1.1);
+  color: #fff;
 }
 .btn--icon {
   padding: 0 6px;

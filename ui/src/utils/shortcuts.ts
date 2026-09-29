@@ -2,6 +2,7 @@ const SHORTCUT_KEY_LABELS: Record<string, string> = {
   arrowleft: '←',
   arrowright: '→',
   esc: 'Esc',
+  enter: 'Enter',
 };
 
 const MODIFIER_LABELS: Record<string, string> = {

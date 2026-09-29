@@ -126,6 +126,7 @@ export function AppView(props: any) {
     isOpen: supportPromptOpen,
     handleClose: handleCloseSupportPrompt,
     handleStar: handleSupportStar,
+    handleDonate: handleSupportDonate,
   } = useSupportPrompt({
     enabled: true,
     isBlocked: isModalBlocked,
@@ -322,6 +323,7 @@ export function AppView(props: any) {
         onScheduleUpdateOnExit={scheduleUpdateOnExit}
         onRestartAndApplyUpdate={restartAndApplyUpdate}
         onOpenChangelog={openUpdateChangelog}
+        onOpenExternal={onOpenExternal}
         hasUpdateAttention={updateNotification.attention}
       />
       {updateNotification.promptOpen && (
@@ -362,6 +364,7 @@ export function AppView(props: any) {
         isOpen={supportPromptOpen}
         onClose={handleCloseSupportPrompt}
         onStar={handleSupportStar}
+        onDonate={handleSupportDonate}
       />
       </Suspense>
 

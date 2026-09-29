@@ -9,7 +9,12 @@ import logoUrl from '../../assets/logos/logo-500.png?inline';
 import type { DesktopTab } from '../../desktop/types';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
+import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
+import { documentSessionKey } from '../../editor/documentSession';
+import { isMarkdownEditingAvailable } from '../../editor/editingFeature';
+import { MarkdownEditingHeaderActions } from '../shared/MarkdownEditingHeaderActions';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { useRequestWindowClose } from '../../hooks/useDirtyDocumentsGuard';
 import type { TabContextMenuAction } from '../shared/TabContextMenu';
 import { useTabBarScrollbar } from './useTabBarScrollbar';
 import { useCssVars } from '../../utils/useCssVars';
@@ -46,13 +51,32 @@ export function DesktopTabBar({
   isDark, isMaximized, hasUpdate = false, isFullscreen = false, onFullscreenToggle,
   isInsightsOpen = false, onInsightsToggle,
 }: DesktopTabBarProps) {
-  const { state, openInEditor, toggleToc, toggleFocusMode } = useAppState();
+  const { state, openInEditor, setDocumentEditMode, saveDocument, toggleToc, toggleFocusMode } = useAppState();
   const bridge = usePlatform();
+  const requestWindowClose = useRequestWindowClose();
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
+  const editorT = getEditorUiTranslations(currentLang);
   const insightsLabel = t.actions.toggleWorkspaceInsights || 'Workspace Insights';
   const themeToggleLabel = isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode;
   const workspaceTabs = tabs.filter((tab) => tab.kind !== 'home');
+  const isNativeEditRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
+  const isMarkdown = Boolean(state.currentFile && /\.mdx?$/i.test(state.currentFile));
+  const editingEnabled = isMarkdownEditingAvailable(state.settings);
+  const activeDocumentSession = state.currentFile
+    ? state.documentSessions?.[documentSessionKey(state.currentFile)]
+    : undefined;
+  const canUseEditAction = Boolean(
+    state.currentFile && (isMarkdown && editingEnabled ? activeDocumentSession : isNativeEditRuntime),
+  );
+  const handleEdit = () => {
+    if (!state.currentFile) return;
+    if (isMarkdown && editingEnabled && activeDocumentSession) {
+      setDocumentEditMode(state.currentFile, 'inline-edit');
+      return;
+    }
+    if (isNativeEditRuntime) openInEditor();
+  };
 
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [draftAlias, setDraftAlias] = useState('');
@@ -301,6 +325,9 @@ export function DesktopTabBar({
         shortcut={getEnabledShortcut(state.settings, 'workspaceSelection')}
         icon={<PlusIcon />}
       />
+      {editingEnabled && activeDocumentSession && state.currentFile && (
+        <MarkdownEditingHeaderActions filePath={state.currentFile} session={activeDocumentSession} labels={editorT} saveShortcut={getEnabledShortcut(state.settings, 'saveCurrentDocument')} onModeChange={setDocumentEditMode} onSave={saveDocument} />
+      )}
       <DocumentHeaderActions
         onCollapseAll={onCollapseAll}
         onExpandAll={onExpandAll}
@@ -316,18 +343,18 @@ export function DesktopTabBar({
         settingsLabel={t.topbar.settings}
         homeTooltip={t.topbar.welcomePage}
         themeTooltip={themeToggleLabel}
-        editTooltip={t.topbar.edit}
+        editTooltip={(!isMarkdown || !editingEnabled) ? t.topbar.edit : editorT.inlineEdit}
         settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
         homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
         themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
         editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
         settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
-        canEdit={!!state.currentFile}
+        canEdit={canUseEditAction}
         isDark={isDark}
         hasUpdate={hasUpdate}
         onHome={() => onSelectTab('home')}
         onTheme={onThemeToggle}
-        onEdit={openInEditor}
+        onEdit={handleEdit}
         showEdit={true}
         onSettings={onSettingsOpen}
         sidebarLabel={t.actions.toggleSidebar}
@@ -374,7 +401,7 @@ export function DesktopTabBar({
       <div className="desktop-tabbar__window-controls">
         <TooltipButton className="btn btn--icon window-control-btn" onClick={() => bridge.postMessage({ command: 'window-minimize' })} tooltip={t.tooltips.minimize} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>} />
         <TooltipButton className="btn btn--icon window-control-btn" onClick={() => shouldExitTauriFullscreenOnRestore ? onFullscreenToggle?.() : bridge.postMessage({ command: 'window-maximize' })} tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize} icon={showsRestoreControl ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M8 8V3h13v13h-5" /><path d="M3 8h13v13H3z" /></svg>) : (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>)} />
-        <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={() => bridge.postMessage({ command: 'window-close' })} tooltip={t.tooltips.closeApp} tooltipAlign="right" icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
+        <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={requestWindowClose} tooltip={t.tooltips.closeApp} tooltipAlign="right" icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
       </div>
       {draggedTabId && (
         <div

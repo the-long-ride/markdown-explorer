@@ -1,10 +1,13 @@
 require('v8-compile-cache');
 
+if (process.env.NODE_OPTIONS) {
+  delete process.env.NODE_OPTIONS;
+}
+
 /* v8 ignore next 15 */
 const {
   app,
   BrowserWindow,
-  Tray,
   dialog,
   ipcMain,
   clipboard,
@@ -12,8 +15,16 @@ const {
   shell,
   session,
 } = require("electron");
+
+if (process.platform === 'win32') {
+  app.disableHardwareAcceleration();
+}
 const path = require("path");
 const fs = require("fs");
+
+if (!app.isPackaged && process.env.MDN_DEV_SERVER_URL) {
+  app.setPath('userData', path.join(app.getPath('appData'), 'markdown-explorer-dev'));
+}
 
 const perf = require("./perf/perf-timer");
 const { createMainWindowLegacy } = require("./window/window");
@@ -185,6 +196,9 @@ Menu.setApplicationMenu(null);
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-networking');
+if (process.platform === 'win32') {
+  app.commandLine.appendSwitch('in-process-gpu');
+}
 
 const { createAppBootstrap } = require('./core/main-bootstrap');
 
@@ -203,7 +217,6 @@ const bootstrap = createAppBootstrap({
   clearTimeoutImpl: clearTimeout,
   setImmediateImpl: setImmediate,
   configureYouTubeEmbedHeadersFn: configureYouTubeEmbedHeaders,
-  createAppTrayFn: require("./window/tray").createAppTray,
   createUpdateManagerFn: require("./update/update-manager").createUpdateManager,
   registerIpcHandlersFn: require("./core/ipc-handlers").registerIpcHandlers,
   runtimeImpl: runtime,
@@ -223,7 +236,6 @@ const bootstrap = createAppBootstrap({
     win.on("leave-full-screen", emitFullscreenState);
   },
   setUpdateManager: (um) => { updateManager = um; },
-  TrayConstructor: Tray,
   ipcMainImpl: ipcMain,
   clipboardImpl: clipboard,
   shellImpl: shell,

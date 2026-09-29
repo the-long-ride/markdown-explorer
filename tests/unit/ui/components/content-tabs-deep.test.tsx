@@ -110,6 +110,10 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
 
 let mockAppState = createMockAppState();
 
+vi.mock('../../../../ui/src/contexts/RepositorySnapshotContext', () => ({
+  useRepositorySnapshot: () => ({}),
+}));
+
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => mockAppState,
 }));
@@ -173,6 +177,9 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
         {hasItem('openLocation') && (
           <button data-testid="ctx-open-location" disabled={getItemDisabled('openLocation')} onClick={() => handleAction('openLocation')}>Open location</button>
         )}
+        {hasItem('history') && (
+          <button data-testid="ctx-history" disabled={getItemDisabled('history')} onClick={() => handleAction('history')}>History</button>
+        )}
         <button data-testid="ctx-close-this" disabled={getItemDisabled('closeThisTab')} onClick={() => handleAction('closeThisTab')}>Close</button>
         <button data-testid="ctx-close-right" disabled={getItemDisabled('closeTabsToRight')} onClick={() => handleAction('closeTabsToRight')}>Close to right</button>
         <button data-testid="ctx-close-others" disabled={getItemDisabled('closeOtherTabs')} onClick={() => handleAction('closeOtherTabs')}>Close others</button>
@@ -232,6 +239,25 @@ describe('ContentTabs deep', () => {
         path: '/a.md',
         mode: 'open-parent-directory',
       });
+    });
+
+    it('opens document history from the tab context menu', () => {
+      const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+      mockAppState = createMockAppState({
+        contentTabs: [makeTab('/a.md', 'a.md', 'A')],
+        activeContentTabPath: '/a.md',
+      });
+      render(createElement(ContentTabs));
+      fireEvent.contextMenu(screen.getByRole('tab'), { clientX: 10, clientY: 10 });
+      expect(screen.getByTestId('ctx-history')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('ctx-history'));
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'mdn-document-history-open',
+          detail: { filePath: '/a.md' },
+        }),
+      );
+      dispatchSpy.mockRestore();
     });
 
     it('context menu closeThisTab action calls closeContentTab', () => {

@@ -16,8 +16,14 @@ async function exists(path) {
 
 test('VS Code Edit capability is enabled for an active current file', async () => {
   const source = await read('ui/src/components/Topbar/Topbar.tsx');
-  assert.match(source, /canEdit=\{[^}]*appRuntime\s*===\s*['"]vscode['"]/s);
-  assert.match(source, /canEdit=\{[^}]*!!state\.currentFile/s);
+  // Markdown Explorer inline editing uses the feature gate, while native runtimes retain an editor fallback.
+  assert.match(source, /const canUseEditAction = Boolean\([\s\S]*editingEnabled \? activeDocumentSession : isNativeEditRuntime/);
+  assert.match(source, /canEdit=\{canUseEditAction\}/);
+  assert.match(source, /isMarkdownEditingAvailable/);
+  assert.match(source, /state\.appRuntime === 'vscode'/);
+  assert.match(source, /if \(editingEnabled && activeDocumentSession\)/);
+  assert.match(source, /setDocumentEditMode\(state\.currentFile, 'inline-edit'\)/);
+  assert.match(source, /if \(isNativeEditRuntime\) openInEditor\(\)/);
 
   const panel = await read('vscode/src/core/panel.ts');
   assert.match(panel, /case ['"]openInEditor['"]/);

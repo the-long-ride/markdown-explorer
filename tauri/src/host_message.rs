@@ -235,6 +235,31 @@ pub fn emit_workspace_search_results(app: &AppHandle, request_id: &str, results:
     emit(app, "workspaceSearchResults", extra);
 }
 
+pub fn emit_workspace_search_results_batch(app: &AppHandle, request_id: &str, results: Value) {
+    let mut extra = serde_json::Map::new();
+    extra.insert("requestId".into(), request_id.into());
+    extra.insert("results".into(), results);
+    extra.insert("done".into(), false.into());
+    emit(app, "workspaceSearchResults", extra);
+}
+
+pub fn emit_workspace_search_results_done(
+    app: &AppHandle,
+    request_id: &str,
+    total: usize,
+    truncated: bool,
+    cancelled: bool,
+) {
+    let mut extra = serde_json::Map::new();
+    extra.insert("requestId".into(), request_id.into());
+    extra.insert("results".into(), json!([]));
+    extra.insert("done".into(), true.into());
+    extra.insert("total".into(), total.into());
+    extra.insert("truncated".into(), truncated.into());
+    extra.insert("cancelled".into(), cancelled.into());
+    emit(app, "workspaceSearchResults", extra);
+}
+
 pub fn emit_cross_tab_search_results_batch(app: &AppHandle, request_id: &str, results: Value) {
     let mut extra = serde_json::Map::new();
     extra.insert("requestId".into(), request_id.into());
@@ -290,6 +315,15 @@ pub fn emit_fullscreen_changed(app: &AppHandle, is_fullscreen: bool) {
     let mut extra = serde_json::Map::new();
     extra.insert("isFullscreen".into(), is_fullscreen.into());
     emit(app, "fullscreenChanged", extra);
+}
+
+/// Asks the UI to run its unsaved-changes guard. Deliberately not workspace-scoped: a close request
+/// belongs to the window, not to a workspace operation.
+pub fn emit_native_close_requested(app: &AppHandle, request_id: &str, intent: &str) {
+    let mut extra = serde_json::Map::new();
+    extra.insert("requestId".into(), request_id.into());
+    extra.insert("intent".into(), intent.into());
+    emit_scoped(app, "nativeCloseRequested", extra, None);
 }
 
 pub fn emit_external_open_path(app: &AppHandle, path: &str) {

@@ -23,7 +23,7 @@ pub fn create_startup_ready_ack(
         "fileList": [],
         "tree": null,
         "theme": "dark",
-        "themeStyle": "default",
+        "themeStyle": "raw-grid",
         "defaultExpanded": true,
         "workspaceName": workspace_name,
         "recentWorkspaces": recent_workspaces,
@@ -93,7 +93,7 @@ mod tests {
         let result =
             create_startup_ready_ack(None, vec![], true, "win32", "x64", false, "1.2.3-test");
         assert_eq!(result["theme"], "dark");
-        assert_eq!(result["themeStyle"], "default");
+        assert_eq!(result["themeStyle"], "raw-grid");
         assert_eq!(result["defaultExpanded"], true);
         assert!(result["fileList"].is_array());
     }

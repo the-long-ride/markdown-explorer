@@ -7,7 +7,8 @@ use tokio::sync::mpsc;
 
 pub enum SearchWorkerCommand {
     SetItems(Vec<MdFile>),
-    Search { request_id: String, query: String, match_case: bool, tab_ids: Option<Vec<String>> },
+    Search { request_id: String, query: String, match_case: bool, tab_ids: Option<Vec<String>>, workspace: bool },
+    SetWorkspaceItems(Vec<MdFile>),
     Cancel,
     Dispose,
 }
@@ -18,6 +19,16 @@ pub enum SearchWorkerMessage {
         results: Vec<WorkspaceSearchResult>,
     },
     Done {
+        request_id: String,
+        total: usize,
+        truncated: bool,
+        cancelled: bool,
+    },
+    WorkspaceBatch {
+        request_id: String,
+        results: Vec<WorkspaceSearchResult>,
+    },
+    WorkspaceDone {
         request_id: String,
         total: usize,
         truncated: bool,
@@ -40,6 +51,8 @@ where
     tokio::spawn(async move {
         let index = SearchIndex::default();
         let mut items: Vec<MdFile> = Vec::new();
+        // Workspace search keeps its own list so it never clobbers cross-tab items.
+        let mut workspace_items: Vec<MdFile> = Vec::new();
 
         while let Some(cmd) = rx.recv().await {
             match cmd {
@@ -48,7 +61,10 @@ where
                     items = new_items;
                     index.prime(&items);
                 }
-                SearchWorkerCommand::Search { request_id, query, match_case, tab_ids } => {
+                SearchWorkerCommand::SetWorkspaceItems(new_items) => {
+                    workspace_items = new_items;
+                }
+                SearchWorkerCommand::Search { request_id, query, match_case, tab_ids, workspace } => {
                     *active_request_id.write() = request_id.clone();
 
                     let index = index.clone();
@@ -60,6 +76,7 @@ where
                                 .cloned()
                                 .collect()
                         }
+                        None if workspace => workspace_items.clone(),
                         None => items.clone(),
                     };
                     let active_id = active_request_id.clone();
@@ -78,10 +95,11 @@ where
                             let req_id = req_id.clone();
                             move |results: Vec<WorkspaceSearchResult>| {
                                 if *active_id.read() == req_id {
-                                    on_msg(SearchWorkerMessage::Batch {
-                                        request_id: req_id.clone(),
-                                        results,
-                                    });
+                                    if workspace {
+                                        on_msg(SearchWorkerMessage::WorkspaceBatch { request_id: req_id.clone(), results });
+                                    } else {
+                                        on_msg(SearchWorkerMessage::Batch { request_id: req_id.clone(), results });
+                                    }
                                 }
                             }
                         };
@@ -97,12 +115,21 @@ where
                             },
                         );
 
-                        on_msg(SearchWorkerMessage::Done {
-                            request_id: req_id,
-                            total: result.total,
-                            truncated: result.truncated,
-                            cancelled: result.cancelled,
-                        });
+                        if workspace {
+                            on_msg(SearchWorkerMessage::WorkspaceDone {
+                                request_id: req_id,
+                                total: result.total,
+                                truncated: result.truncated,
+                                cancelled: result.cancelled,
+                            });
+                        } else {
+                            on_msg(SearchWorkerMessage::Done {
+                                request_id: req_id,
+                                total: result.total,
+                                truncated: result.truncated,
+                                cancelled: result.cancelled,
+                            });
+                        }
                     });
                 }
                 SearchWorkerCommand::Cancel => {
@@ -122,6 +149,10 @@ where
 impl SearchWorkerHandle {
     pub fn set_items(&self, items: Vec<MdFile>) {
         let _ = self.tx.send(SearchWorkerCommand::SetItems(items));
+    }
+
+    pub fn set_workspace_items(&self, items: Vec<MdFile>) {
+        let _ = self.tx.send(SearchWorkerCommand::SetWorkspaceItems(items));
     }
 
     pub fn search(&self, request_id: String, query: String) {
@@ -144,6 +175,17 @@ impl SearchWorkerHandle {
             query,
             match_case,
             tab_ids,
+            workspace: false,
+        });
+    }
+
+    pub fn search_workspace(&self, request_id: String, query: String, match_case: bool) {
+        let _ = self.tx.send(SearchWorkerCommand::Search {
+            request_id,
+            query,
+            match_case,
+            tab_ids: None,
+            workspace: true,
         });
     }
 
@@ -189,6 +231,34 @@ mod tests {
             tab_label: Some(tab_label.to_string()),
             ..make_file(name)
         }
+    }
+
+    #[tokio::test]
+    async fn workspace_search_does_not_replace_cross_tab_items() {
+        let (msg_tx, mut msg_rx) = mpsc::unbounded_channel::<SearchWorkerMessage>();
+        let handle = create_search_worker(move |msg| {
+            let _ = msg_tx.send(msg);
+        });
+
+        handle.set_items(vec![make_tab_file("a", "tab-1", "Workspace A")]);
+        handle.set_workspace_items(vec![make_file("a")]);
+        handle.search_workspace("ws".into(), "test".into(), false);
+        handle.search_with_case_and_tabs("tabs".into(), "test".into(), false, Some(vec!["tab-1".into()]));
+
+        let mut workspace_done = false;
+        let mut tabs_total = 0;
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+        while tokio::time::Instant::now() < deadline && tabs_total == 0 {
+            match tokio::time::timeout(Duration::from_millis(500), msg_rx.recv()).await {
+                Ok(Some(SearchWorkerMessage::WorkspaceDone { .. })) => workspace_done = true,
+                Ok(Some(SearchWorkerMessage::Done { request_id, total, .. })) if request_id == "tabs" => tabs_total = total,
+                Ok(Some(_)) => {}
+                _ => break,
+            }
+        }
+        // The workspace request may be superseded by the newer cross-tab request.
+        let _ = workspace_done;
+        assert!(tabs_total > 0, "cross-tab search must still see its own items");
     }
 
     #[tokio::test]

@@ -1,5 +1,6 @@
 import { projectMarkdownSource } from '../bookmarks/bookmarkDomAnchors.ts';
 import type { BookmarkRecord, BookmarkResolution } from '../bookmarks/types.ts';
+import { getActiveDocumentBody } from '../document/activeDocumentRoot.ts';
 
 const ACTIVE_CLASS = 'mdn-bookmark-jump-target';
 const MARK_CLASS = 'mdn-bookmark-jump-mark';
@@ -22,7 +23,7 @@ export function sourceRangeToRenderedOffsets(source: string, sourceStart: number
 }
 
 function jumpRoot(): HTMLElement | null {
-  return document.getElementById('mdBody');
+  return getActiveDocumentBody();
 }
 
 export function clearBookmarkJumpMarks(root = jumpRoot()): void {

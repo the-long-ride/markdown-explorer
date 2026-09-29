@@ -36,15 +36,15 @@
   margin-bottom: 2px;
 }
 
+[data-theme-style="vercel"] .settings-card--settings {
+  box-shadow: var(--sh-lg), 0 10px 30px rgba(0, 0, 0, 0.1), 0 28px 72px rgba(0, 0, 0, 0.14);
+}
+
 /* Sizing and alignment constraints */
 [data-theme-style="vercel"] .toc-compact,
 [data-theme-style="vercel"] .mdn-body {
   max-width: 1040px;
   margin: 0 auto;
-}
-
-[data-theme-style="vercel"] .content__scroll {
-  padding-bottom: 36px;
 }
 
 /* Buttons, Search/Inputs, Copy and Preview Buttons */

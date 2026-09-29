@@ -4,6 +4,7 @@ import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { DesktopTab } from '../../../../ui/src/desktop/types';
+import { createEditableDocumentSession, documentSessionKey, replaceWorkingSource } from '../../../../ui/src/editor/documentSession';
 
 const mockPostMessage = vi.fn();
 const mockOpenInEditor = vi.fn();
@@ -541,5 +542,67 @@ describe('DesktopTabBar interactions', () => {
     fireEvent.keyDown(input, { key: 'Escape' });
     expect(props.onAliasChange).not.toHaveBeenCalled();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('switches to inline editing instead of the external editor when Markdown editing is on', () => {
+    const setDocumentEditMode = vi.fn();
+    const base = createMockAppState({ documentSessions: { [documentSessionKey('/docs/readme.md')]: { mode: 'rendered' } } });
+    mockAppState = { ...base, setDocumentEditMode, state: { ...base.state, settings: { ...base.state.settings, markdownEditingEnabled: true } } };
+    renderTabBar();
+    fireEvent.click(screen.getByTestId('menu-edit'));
+    expect(setDocumentEditMode).toHaveBeenCalledWith('/docs/readme.md', 'inline-edit');
+    expect(mockOpenInEditor).not.toHaveBeenCalled();
+  });
+
+  it('shows Markdown editing controls in Tabs view before document actions', () => {
+    const filePath = '/docs/readme.md';
+    const session = replaceWorkingSource(createEditableDocumentSession(filePath, '# A', 'rev-1'), '# B');
+    const setDocumentEditMode = vi.fn();
+    const saveDocument = vi.fn();
+    const base = createMockAppState({ documentSessions: { [documentSessionKey(filePath)]: session } });
+    mockAppState = {
+      ...base, setDocumentEditMode, saveDocument,
+      state: { ...base.state, settings: { ...base.state.settings, markdownEditingEnabled: true } },
+    };
+    renderTabBar();
+
+    const controls = screen.getByRole('group', { name: 'Markdown editing mode' });
+    const documentActions = document.querySelector('.desktop-tabbar__document-actions');
+    expect(controls.compareDocumentPosition(documentActions!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    fireEvent.click(screen.getByRole('button', { name: 'Plain' }));
+    expect(setDocumentEditMode).toHaveBeenCalledWith(filePath, 'plain');
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(saveDocument).toHaveBeenCalledWith(filePath);
+  });
+
+  it('opens the external editor from More actions when Markdown editing is off', () => {
+    renderTabBar();
+    fireEvent.click(screen.getByTestId('menu-edit'));
+    expect(mockOpenInEditor).toHaveBeenCalledTimes(1);
+  });
+
+  it('guards the window close button behind the unsaved-changes prompt', () => {
+    const filePath = '/docs/readme.md';
+    const session = replaceWorkingSource(createEditableDocumentSession(filePath, '# A', 'rev-1'), '# B');
+    let commit: (() => void) | null = null;
+    const guardUnsavedChanges = vi.fn((_paths: string[], next: () => void) => { commit = next; });
+    const base = createMockAppState({ documentSessions: { [documentSessionKey(filePath)]: session } });
+    mockAppState = { ...base, guardUnsavedChanges };
+    const { container } = renderTabBar();
+
+    fireEvent.click(container.querySelector('.window-control-btn--close')!);
+    expect(guardUnsavedChanges).toHaveBeenCalledWith([filePath], expect.any(Function), undefined);
+    expect(mockPostMessage).not.toHaveBeenCalledWith({ command: 'window-close' });
+    act(() => commit?.());
+    expect(mockPostMessage).toHaveBeenCalledWith({ command: 'window-close' });
+  });
+
+  it('closes the window immediately when nothing is unsaved', () => {
+    const guardUnsavedChanges = vi.fn();
+    mockAppState = { ...createMockAppState(), guardUnsavedChanges };
+    const { container } = renderTabBar();
+    fireEvent.click(container.querySelector('.window-control-btn--close')!);
+    expect(guardUnsavedChanges).not.toHaveBeenCalled();
+    expect(mockPostMessage).toHaveBeenCalledWith({ command: 'window-close' });
   });
 });

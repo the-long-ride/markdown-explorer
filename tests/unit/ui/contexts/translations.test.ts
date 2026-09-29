@@ -13,7 +13,7 @@ describe('translations', () => {
     expect(t.settings).toBe('Settings');
     expect(t.appearance).toBe('Appearance');
     expect(t.shortcuts).toBe('Keyboard Shortcuts');
-    expect(t.themeStyles.defaultLabel).toBe('Default');
+    expect(t.themeStyles.defaultLabel).toBe('Explorer Classic');
     expect(t.actions.searchCurrent).toBe('Search current workspace');
     expect(t.topbar.home).toBe('Home');
     expect(t.tooltips.switchLanguage).toBe('Switch Language');

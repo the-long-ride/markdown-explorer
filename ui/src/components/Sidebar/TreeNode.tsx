@@ -125,6 +125,7 @@ export function FileNode({
   openMenuPath = null,
   itemActionsLabel,
   pinnedLabel = 'Pinned',
+  onNavigate,
 }: {
   file: MdFile;
   scopeFocus?: ScopeFocusTreeProps;
@@ -136,6 +137,7 @@ export function FileNode({
   openMenuPath?: string | null;
   itemActionsLabel?: string;
   pinnedLabel?: string;
+  onNavigate?: (file: MdFile) => void;
 }) {
   const { state, navigate } = useAppState();
   const isActive = state.currentFile === file.fsPath;
@@ -143,6 +145,10 @@ export function FileNode({
   const displayName = state.settings.showTitle ? file.title : file.fileName;
   const isChecked = scopeFocus?.selectedFilePaths.has(file.fsPath) ?? true;
   const isPinned = ordering.pinnedKeys.has(`file:${file.fsPath}`);
+  const openFile = useCallback(() => {
+    if (onNavigate) onNavigate(file);
+    else navigate(file.fsPath);
+  }, [file, navigate, onNavigate]);
 
   return (
     <div
@@ -153,8 +159,8 @@ export function FileNode({
       data-sidebar-cursor-item="true"
       data-sidebar-kind="file"
       data-sidebar-id={file.fsPath}
-      onClick={() => navigate(file.fsPath)}
-      onKeyDown={(event) => { if (event.key === 'Enter') navigate(file.fsPath); }}
+      onClick={openFile}
+      onKeyDown={(event) => { if (event.key === 'Enter') openFile(); }}
       onContextMenu={(event) => {
         if (onRequestItemMenu && (canRequestItemMenu?.({ kind: 'file', path: file.fsPath }) ?? true)) {
           event.preventDefault();
@@ -217,6 +223,7 @@ export function FolderNodeView({
   activeFolderPaths,
   locateRequest = 0,
   expansionCommand,
+  onNavigate,
 }: {
   node: FolderNode;
   filter: string;
@@ -232,6 +239,7 @@ export function FolderNodeView({
   activeFolderPaths?: ReadonlySet<string>;
   locateRequest?: number;
   expansionCommand?: FolderExpansionCommand;
+  onNavigate?: (file: MdFile) => void;
 }) {
   const [isOpen, setIsOpen] = useState(() => expansionCommand?.expanded ?? true);
   const toggle = useCallback(() => setIsOpen((value) => !value), []);
@@ -375,6 +383,7 @@ export function FolderNodeView({
               openMenuPath={openMenuPath}
               itemActionsLabel={itemActionsLabel}
               pinnedLabel={pinnedLabel}
+              onNavigate={onNavigate}
             />
           ) : (
             <FolderNodeView
@@ -393,6 +402,7 @@ export function FolderNodeView({
               activeFolderPaths={activeFolderPaths}
               locateRequest={locateRequest}
               expansionCommand={expansionCommand}
+              onNavigate={onNavigate}
             />
           ))}
         </div>

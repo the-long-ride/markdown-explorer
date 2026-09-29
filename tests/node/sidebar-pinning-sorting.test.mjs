@@ -91,7 +91,7 @@ test('settings persist workspace pins sort modes and maximum pin count', async (
     read('ui/src/themeTypes.ts'),
     read('ui/src/contexts/useAppStateEffects.ts'),
     read('ui/src/settings/settingsImportExport.ts'),
-    read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
+    read('ui/src/components/Settings/SettingsFeaturesSection.tsx'),
   ]);
   assert.match(themeTypes, /sidebarPinnedItems/);
   assert.match(themeTypes, /sidebarSortModes/);

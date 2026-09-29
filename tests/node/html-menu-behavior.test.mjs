@@ -42,6 +42,41 @@ test('sidebar item menu aligns to the three-dot button right edge and flips abov
     viewportHeight: 800,
   });
   assert.deepEqual(above, { left: 32, top: 676, placement: 'above' });
+
+  // Left-aligned commit row positioning
+  const leftBelow = computeSidebarItemMenuPosition({
+    anchorRect: { top: 120, bottom: 172, left: 48, right: 900 },
+    sidebarRect: { left: 48, right: 348 },
+    menuWidth: 248,
+    menuHeight: 110,
+    viewportWidth: 1280,
+    viewportHeight: 800,
+    align: 'left',
+  });
+  assert.deepEqual(leftBelow, { left: 56, top: 176, placement: 'below' });
+
+  // Left-aligned commit row flipping above near viewport bottom
+  const leftAbove = computeSidebarItemMenuPosition({
+    anchorRect: { top: 720, bottom: 772, left: 48, right: 900 },
+    sidebarRect: { left: 48, right: 348 },
+    menuWidth: 248,
+    menuHeight: 110,
+    viewportWidth: 1280,
+    viewportHeight: 800,
+    align: 'left',
+  });
+  assert.deepEqual(leftAbove, { left: 56, top: 606, placement: 'above' });
+
+  // Clamps wide rows within sidebar bounds when right-aligned
+  const wideClamped = computeSidebarItemMenuPosition({
+    anchorRect: { top: 120, bottom: 172, right: 950 },
+    sidebarRect: { left: 48, right: 348 },
+    menuWidth: 248,
+    menuHeight: 110,
+    viewportWidth: 1280,
+    viewportHeight: 800,
+  });
+  assert.deepEqual(wideClamped, { left: 92, top: 176, placement: 'below' });
 });
 
 test('local HTML files can open in the system browser outside web and PWA runtimes', () => {

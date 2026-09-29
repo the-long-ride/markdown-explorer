@@ -174,6 +174,7 @@ window.LANGS.ja = {
     faq3A: "WindowsはNSISまたはポータブル版、LinuxはAppImageまたは.deb、macOSはチップに合った.dmgをお選びください。",
     footerBy: "開発元：",
     footerIssues: "不具合報告",
+    footerDonate: "寄付",
     footerPrivacy: "プライバシー",
     footerTerms: "利用規約",
     footerLicense: "ライセンス",
@@ -235,6 +236,8 @@ window.LANGS.ja = {
     footerMit: "MITライセンス。",
     galleryCaption3Title: "対話型HTMLサンドボックス",
     langSwitchTitle: "言語を切り替える",
+    navDonate: "寄付",
+    donateAria: "寄付で Markdown Explorer を応援する",
     themeToggleTitle: "カラーテーマを切り替える",
     modalCloseLabel: "モーダルを閉じる",
 };

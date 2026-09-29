@@ -174,6 +174,7 @@ window.LANGS.no = {
     faq3A: "På Windows velger du NSIS-installasjon eller bærbar exe. På Linux velger du AppImage eller deb. På macOS velger du dmg.",
     footerBy: "Markdown Explorer av",
     footerIssues: "Problemer",
+    footerDonate: "Doner",
     footerPrivacy: "Personvern",
     footerTerms: "Vilkår",
     footerLicense: "Lisens",
@@ -235,6 +236,8 @@ window.LANGS.no = {
     footerMit: "MIT-lisensiert.",
     galleryCaption3Title: "Interaktive HTML-sandkasser",
     langSwitchTitle: "Bytt språk",
+    navDonate: "Doner",
+    donateAria: "Støtt Markdown Explorer med en donasjon",
     themeToggleTitle: "Endre fargetema",
     modalCloseLabel: "Lukk vindu",
 };

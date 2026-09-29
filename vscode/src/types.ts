@@ -109,6 +109,11 @@ export interface ReadyAckMessage {
   readonly persistedState?: PersistedState;
 }
 
+export interface RestorePersistedStateMessage {
+  readonly command: 'restorePersistedState';
+  readonly state: PersistedState | undefined;
+}
+
 export interface NavNotFoundMessage {
   readonly command: 'navNotFound';
   readonly href: string;
@@ -135,6 +140,11 @@ export interface WorkspaceSearchResultsMessage {
   readonly command: 'workspaceSearchResults';
   readonly requestId: string;
   readonly results: readonly WorkspaceSearchResult[];
+  readonly done?: boolean;
+  readonly total?: number;
+  readonly truncated?: boolean;
+  readonly cancelled?: boolean;
+  readonly error?: string;
 }
 
 export interface SearchPreviewResultMessage {
@@ -184,6 +194,7 @@ export interface DesktopFontsResultMessage {
 export type HostMessage =
   | RenderContentMessage
   | ReadyAckMessage
+  | RestorePersistedStateMessage
   | NavNotFoundMessage
   | SetLoadingMessage
   | WorkspaceSearchResultsMessage
@@ -212,6 +223,10 @@ export interface WebviewReadyMessage {
 export interface PersistStateMessage {
   readonly command: 'persistState';
   readonly state: PersistedState;
+}
+
+export interface StateHydratedMessage {
+  readonly command: 'stateHydrated';
 }
 
 export interface CopyCodeMessage {
@@ -335,6 +350,7 @@ export type WebviewMessage =
   | OpenInEditorMessage
   | WebviewReadyMessage
   | PersistStateMessage
+  | StateHydratedMessage
   | CopyCodeMessage
   | RefreshMessage
   | SearchPreviewRequestMessage

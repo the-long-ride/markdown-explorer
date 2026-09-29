@@ -62,6 +62,14 @@ export const EditIcon = ({ size = 12, ...rest }: IconProps) => (
   </svg>
 );
 
+export const HistoryIcon = ({ size = 14, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
+    <path d="M3 12a9 9 0 1 0 3-6.7" />
+    <path d="M3 3v6h6" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+);
+
 export const SearchIcon = ({ size = 13, ...rest }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...rest}>
     <circle cx="11" cy="11" r="8"/>
@@ -206,6 +214,12 @@ export const CopyIcon = ({ size = 13, ...rest }: IconProps) => (
   </svg>
 );
 
+export const ScopeIcon = ({ size = 16, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 122.881 122.88" fill="currentColor" aria-hidden="true" {...rest}>
+    <path d="M61.44,35.174c7.253,0,13.82,2.94,18.572,7.694c4.754,4.753,7.693,11.319,7.693,18.572c0,7.253-2.939,13.819-7.693,18.572 c-4.752,4.754-11.318,7.694-18.572,7.694c-7.252,0-13.819-2.94-18.572-7.694c-4.753-4.753-7.693-11.319-7.693-18.572 c0-7.252,2.94-13.819,7.693-18.572C47.621,38.114,54.188,35.174,61.44,35.174L61.44,35.174z M61.44,0 c16.966,0,32.326,6.877,43.445,17.996s17.996,26.479,17.996,43.444c0,16.967-6.877,32.326-17.996,43.444 C93.766,116.003,78.406,122.88,61.44,122.88c-16.966,0-32.325-6.877-43.444-17.996C6.877,93.766,0,78.406,0,61.439 c0-16.965,6.877-32.325,17.996-43.444C29.115,6.877,44.474,0,61.44,0L61.44,0z M100.012,22.869 C90.141,12.998,76.504,6.893,61.44,6.893c-15.063,0-28.7,6.105-38.571,15.976C12.999,32.74,6.893,46.376,6.893,61.439 c0,15.063,6.105,28.701,15.976,38.571c9.871,9.871,23.508,15.976,38.571,15.976c15.064,0,28.701-6.104,38.572-15.976 c9.869-9.87,15.975-23.508,15.975-38.571C115.986,46.376,109.881,32.74,100.012,22.869L100.012,22.869z M75.139,47.741 c-3.506-3.505-8.348-5.674-13.699-5.674c-5.35,0-10.193,2.168-13.698,5.674c-3.506,3.505-5.674,8.349-5.674,13.698 c0,5.351,2.168,10.193,5.674,13.699c3.505,3.505,8.349,5.674,13.698,5.674c5.351,0,10.193-2.169,13.699-5.674 c3.506-3.506,5.674-8.349,5.674-13.699C80.813,56.09,78.645,51.247,75.139,47.741L75.139,47.741z" />
+  </svg>
+);
+
 export const CheckIcon = ({ size = 13, ...rest }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" {...rest}>
     <polyline points="20 6 9 17 4 12"/>
@@ -316,13 +330,13 @@ export const CloseTabIcon = ({ size = 15, ...rest }: IconProps) => (
 
 export const CloseRightIcon = ({ size = 15, ...rest }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
-    <path d="M4 6h7v12H4z" /><path d="m15 8 5 5m0-5-5 5" />
+    <rect x="3" y="4" width="7.5" height="16" rx="2" /><path d="m13.5 8.25 7.5 7.5m0-7.5-7.5 7.5" />
   </svg>
 );
 
 export const CloseOthersIcon = ({ size = 15, ...rest }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
-    <rect x="8" y="5" width="8" height="14" rx="1" /><path d="m3 8 3 3m0-3-3 3m15-3 3 3m0-3-3 3" />
+    <rect x="9" y="4" width="6" height="16" rx="1.5" /><path d="m1.5 9 6 6m0-6-6 6m9-6 6 6m0-6-6 6" />
   </svg>
 );
 
@@ -343,7 +357,6 @@ export const MarkdownViewIcon = ({ size = 15, ...rest }: IconProps) => (
     <path d="M4 5h16v14H4z" /><path d="M7 15V9l3 3 3-3v6m2-3 2 2 2-2" />
   </svg>
 );
-
 
 export const SettingsAppearanceIcon = ({ size = 16, ...rest }: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 511.97" width={size} height={size} fill="currentColor" aria-hidden="true" {...rest}>
@@ -440,19 +453,15 @@ export const SaveImageIcon = ({ size = 14, ...rest }: IconProps) => (
 );
 
 export const StarIcon = ({ size = 14, ...rest }: IconProps) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    {...rest}
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+export const SplitViewIcon = ({ size = 14, ...rest }: IconProps) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width={size} height={size} aria-hidden="true" {...rest}>
+    <rect x="6" y="6" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="4" />
+    <line x1="24" y1="6" x2="24" y2="42" stroke="currentColor" strokeWidth="4" />
   </svg>
 );
 

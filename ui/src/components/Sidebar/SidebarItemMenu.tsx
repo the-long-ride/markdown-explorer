@@ -31,6 +31,7 @@ export interface SidebarItemMenuProps {
   menuLabel: string;
   items: readonly SidebarItemMenuItem[];
   onClose: () => void;
+  align?: 'right' | 'left';
 }
 
 export function SidebarItemMenu({
@@ -39,6 +40,7 @@ export function SidebarItemMenu({
   menuLabel,
   items,
   onClose,
+  align = 'right',
 }: SidebarItemMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const firstActionRef = useRef<HTMLButtonElement>(null);
@@ -63,8 +65,9 @@ export function SidebarItemMenu({
       menuHeight: menuRect?.height || Math.max(44, items.length * 36 + 8),
       viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
+      align,
     }));
-  }, [anchor, items.length, onClose, sidebar]);
+  }, [align, anchor, items.length, onClose, sidebar]);
 
   useLayoutEffect(() => {
     updatePosition();
@@ -74,6 +77,8 @@ export function SidebarItemMenu({
   const menuCssVariables = useMemo(() => ({
     '--sidebar-item-menu-left': `${position.left}px`,
     '--sidebar-item-menu-top': `${position.top}px`,
+    '--menu-left': `${position.left}px`,
+    '--menu-top': `${position.top}px`,
   }), [position.left, position.top]);
   useCssVars(menuRef, menuCssVariables);
 

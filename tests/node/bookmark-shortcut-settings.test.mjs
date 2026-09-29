@@ -30,7 +30,7 @@ test('keyboard resolver exposes open-bookmarks action without firing in editable
 test('bookmark shortcut opens the tab or focuses the disabled feature setting', async () => {
   const [layout, settings, actions] = await Promise.all([
     read('ui/src/useAppLayoutEffects.ts'),
-    read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
+    read('ui/src/components/Settings/FeatureSettingRow.tsx'),
     read('ui/src/components/Settings/settingsActions.ts'),
   ]);
   assert.match(layout, /openSidebarBookmarks/);

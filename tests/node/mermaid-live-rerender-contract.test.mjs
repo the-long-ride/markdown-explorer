@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const root = new URL('../../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
@@ -53,7 +54,7 @@ test('Mermaid appearance scheduler defers, coalesces, and cancels rerenders', as
 });
 
 test('content effects defer rendered Mermaid invalidation through the shared lifecycle', async () => {
-  const effects = await read('ui/src/components/Content/useContentEffects.ts');
+  const effects = await readProjectSource('ui/src/components/Content/useContentEffects.ts');
   const contentLifecycle = await read('ui/src/components/Content/mermaidContentLifecycle.ts');
   const appearance = await read('ui/src/components/Content/enhancements/mermaidAppearance.ts');
   const lifecycle = await read('ui/src/components/Content/enhancements/mermaidRerenderLifecycle.ts');
@@ -76,7 +77,7 @@ test('content effects defer rendered Mermaid invalidation through the shared lif
 });
 
 test('auto theme media changes use the same shared deferred Mermaid rerender scheduler', async () => {
-  const effects = await read('ui/src/components/Content/useContentEffects.ts');
+  const effects = await readProjectSource('ui/src/components/Content/useContentEffects.ts');
   const contentLifecycle = await read('ui/src/components/Content/mermaidContentLifecycle.ts');
   const appearance = await read('ui/src/components/Content/enhancements/mermaidAppearance.ts');
   const lifecycle = await read('ui/src/components/Content/enhancements/mermaidRerenderLifecycle.ts');

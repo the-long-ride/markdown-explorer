@@ -282,6 +282,27 @@ describe('createDesktopRuntime', () => {
       expect(ctx.sentMessages.length).toBe(0);
     });
 
+    test('sends readyAck and reloads the current workspace after renderer refresh', async () => {
+      runtime.state.workspacePath = '/some/path';
+      await runtime.handleReady({ readyId: 'renderer-before-refresh' });
+      runtime.state.workspaceOperationId = 'old-operation';
+      runtime.state.workspaceTabId = 'old-tab';
+      ctx.sentMessages.length = 0;
+      ctx.deps.deferWorkspaceLoad.mockClear();
+      await runtime.handleReady({ readyId: 'renderer-after-refresh' });
+      expect(ctx.sentMessages.some((message: any) => message.command === 'readyAck')).toBe(true);
+      expect(ctx.deps.deferWorkspaceLoad).toHaveBeenCalledOnce();
+      expect(runtime.state.workspaceOperationId).toBeNull();
+      expect(runtime.state.workspaceTabId).toBeNull();
+    });
+
+    test('ignores duplicate ready messages from the same renderer mount', async () => {
+      await runtime.handleReady({ readyId: 'same-renderer' });
+      ctx.sentMessages.length = 0;
+      await runtime.handleReady({ readyId: 'same-renderer' });
+      expect(ctx.sentMessages).toHaveLength(0);
+    });
+
     test('sets documentConversionEnabled from message', async () => {
       await runtime.handleReady({ documentConversionEnabled: true });
       expect(runtime.state.documentConversionEnabled).toBe(true);
@@ -542,6 +563,13 @@ describe('createDesktopRuntime', () => {
       const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceSearchResults');
       expect(msg).toBeDefined();
       expect(msg.requestId).toBe('r1');
+    });
+
+    test('answers with empty results when the search index throws', () => {
+      ctx.mockSearchIndex.search.mockImplementation(() => { throw new Error('unreadable'); });
+      runtime.handleSearchWorkspace({ requestId: 'r-fail', query: 'test', items: [] });
+      const msg = ctx.sentMessages.find((m: any) => m.command === 'workspaceSearchResults' && m.requestId === 'r-fail');
+      expect(msg?.results).toEqual([]);
     });
 
     test('keeps an explicit empty items scope empty', () => {

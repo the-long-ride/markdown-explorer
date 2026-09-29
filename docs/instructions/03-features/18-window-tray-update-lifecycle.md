@@ -1,7 +1,7 @@
 ---
 timestamp: '2026-08-05T06:40:23+07:00'
-name: Desktop Window, Tray, Startup, and Update Lifecycle
-topic: Desktop Window, Tray, Startup, and Update Lifecycle
+name: Desktop Window, Startup, and Update Lifecycle
+topic: Desktop Window, Startup, and Update Lifecycle
 document_type: specification
 status: active
 ui_spec: true
@@ -12,7 +12,6 @@ source_scope:
 - electron/core/main-bootstrap.js
 - electron/core/startup-workspace.js
 - electron/window/window.js
-- electron/window/tray.js
 - electron/update/update-manager.js
 - tauri/tauri.conf.json
 - tauri/src/core/bootstrap.rs
@@ -22,7 +21,6 @@ source_scope:
 - .github/workflows/release.yml
 test_scope:
 - tests/unit/electron/main.test.ts
-- tests/unit/electron/tray.test.ts
 - tests/unit/electron/window.test.ts
 - tests/node/packaged-runtime-contract.test.mjs
 - tests/node/tauri-updater-contract.test.mjs
@@ -31,14 +29,14 @@ runtime_scope:
 - tauri
 - other-hosts
 keywords:
-- desktop window, tray, startup, and update lifecycle
+- desktop window, startup, and update lifecycle
 ---
 
-# Desktop Window, Tray, Startup, and Update Lifecycle
+# Desktop Window, Startup, and Update Lifecycle
 
 ## Feature intent
 
-Define single-instance startup, external-path queue, frameless controls, native window state, tray behavior, platform close lifecycle, and updater capability/state.
+Define single-instance startup, external-path queue, frameless controls, native window state, platform close lifecycle, and updater capability/state.
 
 ## Capability contract
 
@@ -46,7 +44,6 @@ Define single-instance startup, external-path queue, frameless controls, native 
 |---|---|---|
 | Single instance | Focus existing app and queue new external targets. | One coherent process owns state. |
 | Window controls | Minimize, maximize, close, fullscreen, zoom. | Frameless desktop remains controllable. |
-| Tray | Open/focus and explicit Quit. | Desktop app can remain accessible. |
 | Platform lifecycle | Apply macOS vs non-mac window-close behavior. | OS conventions are respected. |
 | Updater | Gate download/schedule/apply by package capability; preserve matching Electron/Tauri choices and states. | Supported installations update safely. |
 
@@ -65,7 +62,6 @@ flowchart LR
 - Acquire single-instance lock.
 - Remove standard menu for frameless shell.
 - Queue startup/external paths until UI readiness.
-- Tray click/Open restores and focuses; Quit terminates.
 - Non-macOS quits when all windows close; macOS remains and recreates on activate.
 - In-app installation is limited to installed packaged Windows builds, excluding portable.
 
@@ -91,7 +87,6 @@ flowchart LR
 |---|---|---|
 | Starting | Single-instance/startup target | Ready/error |
 | Visible | Window active | Minimize/hide/close |
-| Tray-only | Process active/window hidden | Open/Quit |
 | Fullscreen/maximized | Host state emitted | Restore |
 | Update states | Idle through error | Download/schedule/apply |
 
@@ -113,7 +108,6 @@ flowchart LR
 ## Acceptance criteria
 
 - [ ] Second-instance path reaches the existing ready UI exactly once.
-- [ ] Tray Quit exits.
 - [ ] Host events are authoritative for maximized/fullscreen UI.
 - [ ] Unsupported builds hide installer controls.
 ## UI reference implementation
@@ -121,15 +115,15 @@ flowchart LR
 The sample shows the interaction boundary, not a replacement for the React implementation.
 
 ```html
-<section class="spec-desktop-window-tray-startup-and-update-lifecycle" aria-labelledby="desktop-window-tray-startup-and-update-lifecycle-title">
-  <h2 id="desktop-window-tray-startup-and-update-lifecycle-title">Desktop Window, Tray, Startup, and Update Lifecycle</h2>
+<section class="spec-desktop-window-startup-and-update-lifecycle" aria-labelledby="desktop-window-startup-and-update-lifecycle-title">
+  <h2 id="desktop-window-startup-and-update-lifecycle-title">Desktop Window, Startup, and Update Lifecycle</h2>
   <p data-status role="status" aria-live="polite">Ready</p>
   <button type="button" data-action>Minimize window</button>
 </section>
 ```
 
 ```css
-.spec-desktop-window-tray-startup-and-update-lifecycle {
+.spec-desktop-window-startup-and-update-lifecycle {
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
@@ -138,14 +132,14 @@ The sample shows the interaction boundary, not a replacement for the React imple
   background: var(--surface);
   color: var(--text);
 }
-.spec-desktop-window-tray-startup-and-update-lifecycle button:focus-visible {
+.spec-desktop-window-startup-and-update-lifecycle button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 ```
 
 ```javascript
-const root = document.querySelector('.spec-desktop-window-tray-startup-and-update-lifecycle');
+const root = document.querySelector('.spec-desktop-window-startup-and-update-lifecycle');
 const status = root.querySelector('[data-status]');
 root.querySelector('[data-action]').addEventListener('click', () => {
   window.PlatformBridge.postMessage({ command: 'window-minimize' });
@@ -159,7 +153,6 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `electron/core/main-bootstrap.js` | Active behavior or contract |
 | Implementation | `electron/core/startup-workspace.js` | Active behavior or contract |
 | Implementation | `electron/window/window.js` | Active behavior or contract |
-| Implementation | `electron/window/tray.js` | Active behavior or contract |
 | Implementation | `electron/update/update-manager.js` | Active behavior or contract |
 | Implementation | `tauri/tauri.conf.json` | Active behavior or contract |
 | Implementation | `tauri/src/core/bootstrap.rs` | Plugin setup and close interception |
@@ -168,7 +161,6 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 | Implementation | `scripts/configure-tauri-updater.mjs` | Public-key release configuration |
 | Implementation | `.github/workflows/release.yml` | Signed updater artifacts and signatures |
 | Verification | `tests/unit/electron/main.test.ts` | Automated expectation |
-| Verification | `tests/unit/electron/tray.test.ts` | Automated expectation |
 | Verification | `tests/unit/electron/window.test.ts` | Automated expectation |
 | Verification | `tests/node/packaged-runtime-contract.test.mjs` | Automated expectation |
 | Verification | `tests/node/tauri-updater-contract.test.mjs` | Official plugin, state parity, and artifact-signing contract |

@@ -124,6 +124,7 @@ pub fn boot() {
                 app.set_menu(menu)?;
             }
 
+            let state_for_page_load = state_for_dispatch.clone();
             let window =
                 WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                     .title("Markdown Explorer")
@@ -134,6 +135,15 @@ pub fn boot() {
                     .decorations(false)
                     .auto_resize()
                     .initialization_script(&shim_js)
+                    .on_page_load(move |_window, payload| {
+                        if matches!(payload.event(), tauri::webview::PageLoadEvent::Started) {
+                            // A reloading webview can no longer answer a pending close request.
+                            state_for_page_load.close_guard.lock().clear_pending();
+                            // The reloaded UI sends a fresh `ready`; without this reset the
+                            // host ignores it as a duplicate and the UI loads forever.
+                            state_for_page_load.inner.write().ready_handled = false;
+                        }
+                    })
                     .build()?;
             let icon = match Image::from_bytes(APP_ICON_PNG) {
                 Ok(img) => img,
@@ -203,6 +213,21 @@ pub fn boot() {
                     }
                 }
                 tauri::WindowEvent::CloseRequested { api, .. } => {
+                    // Every close path (title bar, Alt+F4, in-app `window-close`) lands here.
+                    // The UI must approve first so unsaved documents are never lost.
+                    let decision = state_for_event
+                        .close_guard
+                        .lock()
+                        .on_close_requested(std::time::Instant::now());
+                    if let crate::runtime::close_guard::CloseDecision::Prevent(request) = decision {
+                        api.prevent_close();
+                        crate::host_message::emit_native_close_requested(
+                            &app_for_event,
+                            &request.request_id,
+                            request.intent,
+                        );
+                        return;
+                    }
                     tauri::async_runtime::spawn(crate::runtime::html_preview::shutdown());
                     if crate::update::manager::UpdateManager::should_apply_on_close(&state_for_event)
                     {

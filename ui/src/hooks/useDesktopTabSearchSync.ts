@@ -4,6 +4,7 @@ import { getTabLabel } from '../desktop/desktopTabs';
 import { clearWorkspaceOperation, getActiveWorkspaceOperation, type WorkspaceOperationContext } from '../desktop/workspaceOperations';
 import type { CrossTabSearchItem, DesktopTab } from '../desktop/types';
 import type { ExternalOpenRequest } from '../types/hostMessages';
+import type { DirtyDocumentsGuard } from './useDirtyDocumentsGuard';
 
 interface DesktopTabSearchSyncOptions {
   tabs: DesktopTab[];
@@ -17,7 +18,11 @@ interface DesktopTabSearchSyncOptions {
   isLoading: boolean;
   createNewWorkspaceTab: () => string;
   beginOperationForTab: (tabId: string) => WorkspaceOperationContext;
+  /** Host-initiated opens replace the loaded workspace, so they run behind the unsaved-changes prompt. */
+  guardWorkspaceLeave?: DirtyDocumentsGuard;
 }
+
+const commitImmediately: DirtyDocumentsGuard = (commit) => commit();
 
 export function createExternalOpenCommand(request: ExternalOpenRequest, operation?: WorkspaceOperationContext) {
   const metadata = operation ?? {};
@@ -41,6 +46,7 @@ export function createExternalOpenCommand(request: ExternalOpenRequest, operatio
 export function useDesktopTabSearchSync({
   tabs, tabsRef, setTabs, pendingWorkspaceTabIdRef, pendingWorkspaceReplacementRef,
   requestedWorkspaceIndexesRef, bridge, isTabView, isLoading, createNewWorkspaceTab, beginOperationForTab,
+  guardWorkspaceLeave = commitImmediately,
 }: DesktopTabSearchSyncOptions) {
   const crossTabSearchItems = useMemo<CrossTabSearchItem[]>(() => tabs.flatMap((tab) =>
     tab.kind === 'workspace' ? tab.fileList.map((file) => ({ tabId: tab.id, tabLabel: getTabLabel(tab),
@@ -77,20 +83,24 @@ export function useDesktopTabSearchSync({
       }
     }
     if (msg.command === 'externalOpenRequest') {
-      let operation: WorkspaceOperationContext | undefined;
-      if (isTabView) {
-        const targetTabId = createNewWorkspaceTab();
-        operation = beginOperationForTab(targetTabId);
-      }
-      bridge.postMessage(createExternalOpenCommand(msg.request, operation));
+      guardWorkspaceLeave(() => {
+        let operation: WorkspaceOperationContext | undefined;
+        if (isTabView) {
+          const targetTabId = createNewWorkspaceTab();
+          operation = beginOperationForTab(targetTabId);
+        }
+        bridge.postMessage(createExternalOpenCommand(msg.request, operation));
+      });
       return;
     }
     if (msg.command === 'externalOpenPath') {
-      if (isTabView) {
-        const targetTabId = createNewWorkspaceTab();
-        const operation = beginOperationForTab(targetTabId);
-        bridge.postMessage({ command: 'openPath', path: msg.path, openFirstFile: false, ...operation });
-      } else bridge.postMessage({ command: 'openPath', path: msg.path, openFirstFile: false });
+      guardWorkspaceLeave(() => {
+        if (isTabView) {
+          const targetTabId = createNewWorkspaceTab();
+          const operation = beginOperationForTab(targetTabId);
+          bridge.postMessage({ command: 'openPath', path: msg.path, openFirstFile: false, ...operation });
+        } else bridge.postMessage({ command: 'openPath', path: msg.path, openFirstFile: false });
+      });
       return;
     }
     if (!isTabView || msg.command !== 'workspaceSearchIndexLoaded') return;
@@ -101,7 +111,7 @@ export function useDesktopTabSearchSync({
         fileList: tab.fileList.length > 0 ? tab.fileList : loaded.fileList,
         tree: tab.tree ?? loaded.tree, isIndexed: true };
     }));
-  }), [beginOperationForTab, bridge, createNewWorkspaceTab, isTabView, pendingWorkspaceReplacementRef, pendingWorkspaceTabIdRef, setTabs]);
+  }), [beginOperationForTab, bridge, createNewWorkspaceTab, guardWorkspaceLeave, isTabView, pendingWorkspaceReplacementRef, pendingWorkspaceTabIdRef, setTabs]);
 
   useEffect(() => {
     if (!isTabView || isLoading) return;

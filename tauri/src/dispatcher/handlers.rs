@@ -149,6 +149,30 @@ impl Dispatcher {
                     cancelled,
                 );
             }
+            SearchWorkerMessage::WorkspaceBatch {
+                request_id,
+                results,
+            } => {
+                host_message::emit_workspace_search_results_batch(
+                    &app,
+                    &request_id,
+                    json!(results),
+                );
+            }
+            SearchWorkerMessage::WorkspaceDone {
+                request_id,
+                total,
+                truncated,
+                cancelled,
+            } => {
+                host_message::emit_workspace_search_results_done(
+                    &app,
+                    &request_id,
+                    total,
+                    truncated,
+                    cancelled,
+                );
+            }
         });
         state.search_worker = Some(handle);
     }

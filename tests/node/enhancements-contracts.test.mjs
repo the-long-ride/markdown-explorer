@@ -115,20 +115,18 @@ test('XML fragments are highlighted structurally without requiring a declaration
   assert.match(source, /svg/);
 });
 
-test('View Preferences descriptions are hover or focus panels while Theme Style remains inline', async () => {
-  const [component, tooltip, css] = await Promise.all([
+test('Appearance descriptions render below labels while Theme Style remains inline', async () => {
+  const [component, css] = await Promise.all([
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
-    read('ui/src/components/Settings/PreferenceDescriptionTooltip.tsx'),
     read('ui/src/styles/global/global-settings-layout.css'),
   ]);
   assert.match(component, /settings-preference-row/);
-  assert.match(component, /PreferenceDescriptionTooltip/);
-  assert.match(tooltip, /settings-preference-description-panel/);
-  assert.match(tooltip, /createPortal/);
-  assert.match(component, /t\.csvPreview/);
-  assert.match(css, /\.settings-preference-description-panel/);
-  assert.match(component, /onMouseEnter/);
-  assert.match(component, /onFocus/);
+  assert.match(component, /settings-item__desc/);
+  assert.match(component, /t\.colorModeDesc/);
+  assert.match(component, /t\.desktopViewDesc/);
+  assert.match(component, /aria-describedby="settings-desktop-view-description"/);
+  assert.doesNotMatch(component, /PreferenceDescriptionTooltip/);
+  assert.match(css, /\.settings-appearance-section \.settings-item__desc \.shortcut-keycaps-container/);
   assert.match(component, /t\.themeStyleDesc/);
 });
 

@@ -174,6 +174,7 @@ window.LANGS.fr = {
     faq3A: "Sur Windows, choisissez l'installateur NSIS ou le binaire portable. Sur Linux, choississez AppImage ou .deb. Sur macOS, choisissez .dmg.",
     footerBy: "Markdown Explorer par",
     footerIssues: "Problèmes",
+    footerDonate: "Faire un don",
     footerPrivacy: "Confidentialité",
     footerTerms: "Conditions",
     footerLicense: "Licence",
@@ -235,6 +236,8 @@ window.LANGS.fr = {
     footerMit: "Sous licence MIT.",
     galleryCaption3Title: "Bacs à sable HTML interactifs",
     langSwitchTitle: "Changer de langue",
+    navDonate: "Faire un don",
+    donateAria: "Soutenir Markdown Explorer par un don",
     themeToggleTitle: "Changer le thème de couleur",
     modalCloseLabel: "Fermer la fenêtre",
 };

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Content } from "../../../../ui/src/components/Content/Content";
 import { useAppState } from "../../../../ui/src/contexts/AppStateContext";
 import { useNavigation } from "../../../../ui/src/contexts/NavigationContext";
@@ -166,6 +166,91 @@ beforeEach(() => {
 });
 
 describe("Content rendering", () => {
+  const upstreamHtml = `<!doctype html><html><head>
+    <link rel="stylesheet" href="https://cdn.example.com/app.css">
+    <script src="https://cdn.example.com/app.js"></script>
+  </head><body>Preview</body></html>`;
+
+  it("reloads only the current HTML preview with upstream resources when the warning action is chosen", async () => {
+    setup({
+      currentFile: "/docs/demo.html",
+      relativePath: "demo.html",
+      sourceDocumentText: upstreamHtml,
+      settings: {
+        language: "en",
+        keybindings: {},
+        desktopViewMode: "default",
+        documentConversion: false,
+        defaultHtmlPreview: true,
+        allowUpstreamHtmlPreview: false,
+      },
+    });
+
+    expect(await screen.findByRole("dialog", { name: "Local-first HTML preview" })).toBeInTheDocument();
+    const iframe = screen.getByTitle("demo.html");
+    expect(iframe.getAttribute("srcdoc")).not.toContain("https://cdn.example.com/app.js");
+
+    fireEvent.click(screen.getByRole("button", { name: "Load upstream content this time" }));
+
+    await waitFor(() => expect(screen.getByTitle("demo.html").getAttribute("srcdoc")).toContain("https://cdn.example.com/app.js"));
+    expect(screen.queryByRole("dialog", { name: "Local-first HTML preview" })).not.toBeInTheDocument();
+    expect(mockUpdateSettings).not.toHaveBeenCalledWith({ allowUpstreamHtmlPreview: true });
+  });
+
+  it("loads upstream resources without showing the warning when the saved setting is enabled", async () => {
+    setup({
+      currentFile: "/docs/trusted.html",
+      relativePath: "trusted.html",
+      sourceDocumentText: upstreamHtml,
+      settings: {
+        language: "en",
+        keybindings: {},
+        desktopViewMode: "default",
+        documentConversion: false,
+        defaultHtmlPreview: true,
+        allowUpstreamHtmlPreview: true,
+      },
+    });
+
+    await waitFor(() => expect(screen.getByTitle("trusted.html").getAttribute("srcdoc")).toContain("https://cdn.example.com/app.js"));
+    expect(screen.queryByRole("dialog", { name: "Local-first HTML preview" })).not.toBeInTheDocument();
+  });
+
+  it("expires one-preview upstream permission when the document is rendered again", async () => {
+    let currentState = makeState({
+      currentFile: "/docs/demo.html",
+      relativePath: "demo.html",
+      sourceDocumentText: upstreamHtml,
+      settings: {
+        language: "en",
+        keybindings: {},
+        desktopViewMode: "default",
+        documentConversion: false,
+        defaultHtmlPreview: true,
+        allowUpstreamHtmlPreview: false,
+      },
+    });
+    vi.mocked(useAppState).mockImplementation(() => ({
+      state: currentState,
+      navigate: mockNavigate,
+      refresh: mockRefresh,
+      updateSettings: mockUpdateSettings,
+    }));
+    vi.mocked(useNavigation).mockReturnValue({ push: mockPush });
+    vi.mocked(usePlatform).mockReturnValue({ postMessage: mockPostMessage });
+    const scrollRef = { current: null } as React.RefObject<HTMLDivElement | null>;
+    const view = render(<Content onImageClick={vi.fn()} scrollRef={scrollRef} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Load upstream content this time" }));
+    await waitFor(() => expect(screen.getByTitle("demo.html").getAttribute("srcdoc")).toContain("https://cdn.example.com/app.js"));
+
+    currentState = { ...currentState, renderVersion: 2 };
+    view.rerender(<Content onImageClick={vi.fn()} scrollRef={scrollRef} />);
+
+    expect(await screen.findByRole("dialog", { name: "Local-first HTML preview" })).toBeInTheDocument();
+    expect(screen.getByTitle("demo.html").getAttribute("srcdoc")).not.toContain("https://cdn.example.com/app.js");
+  });
+
   it("renders loading spinner when isLoading", () => {
     const { container } = setup({ isLoading: true });
     expect(container.querySelector(".spinner")).toBeInTheDocument();

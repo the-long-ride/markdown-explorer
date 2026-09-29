@@ -18,16 +18,11 @@
       "name": "Electron Desktop App",
       "type": "node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/electron",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
-      "windows": {
-        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
-      },
-      "args": ["."],
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/ui/scripts/dev-electron.mjs",
+      "args": ["--no-sandbox", "--in-process-gpu", "--disable-gpu"],
       "console": "integratedTerminal",
-      "autoAttachChildProcesses": false,
-      "outFiles": ["${workspaceFolder}/vscode/out/**/*.js"],
-      "preLaunchTask": "compile",
+      "autoAttachChildProcesses": true,
       "presentation": {
         "group": "debug",
         "order": 2

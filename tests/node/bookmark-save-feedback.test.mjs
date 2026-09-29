@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { readProjectSource } from './read-refactored-source.mjs';
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 const modelUrl = new URL('../../ui/src/bookmarks/bookmarkModel.ts', import.meta.url);
@@ -102,7 +103,7 @@ test('bookmark rename command verifies the persisted name', async () => {
 test('direct object actions open one naming dialog and emit verified success or error notices', async () => {
   const [selectionMenu, content, panel, notice, css] = await Promise.all([
     read('ui/src/components/Bookmarks/BookmarkSelectionMenu.tsx'),
-    read('ui/src/components/Content/Content.tsx'),
+    readProjectSource('ui/src/components/Content/Content.tsx'),
     read('ui/src/components/Bookmarks/BookmarksPanel.tsx'),
     read('ui/src/utils/actionNotice.ts'),
     read('ui/src/styles/global/global-action-notice.css'),

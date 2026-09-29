@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SidebarSortMode } from '../../types';
 import { CollapseIcon, ExpandIcon, LocateIcon } from '../shared/icons';
 import { TooltipButton } from '../shared/TooltipButton';
 import { ClearPinsIcon, SortIcon, SortStatusIcon } from './sidebarPinIcons';
 import { SidebarSortMenu } from './SidebarSortMenu';
+import { SidebarClearPinsDialog } from './SidebarClearPinsDialog';
 
 interface SidebarFilesActionsProps {
   canLocate: boolean;
   hasPins: boolean;
+  workspaceKey: string;
   locateLabel: string;
   clearPinsLabel: string;
+  clearPinsConfirmBody: string;
+  cancelLabel: string;
   sortLabel: string;
   sortNameAscLabel: string;
   sortNameDescLabel: string;
@@ -29,8 +33,11 @@ interface SidebarFilesActionsProps {
 export function SidebarFilesActions({
   canLocate,
   hasPins,
+  workspaceKey,
   locateLabel,
   clearPinsLabel,
+  clearPinsConfirmBody,
+  cancelLabel,
   sortLabel,
   sortNameAscLabel,
   sortNameDescLabel,
@@ -47,7 +54,24 @@ export function SidebarFilesActions({
   onExpandAll,
 }: SidebarFilesActionsProps) {
   const [sortAnchor, setSortAnchor] = useState<HTMLElement | null>(null);
+  const [confirmWorkspaceKey, setConfirmWorkspaceKey] = useState<string | null>(null);
+  const clearPinsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const sidebar = sortAnchor?.closest('.sidebar') as HTMLElement | null;
+
+  useEffect(() => { setConfirmWorkspaceKey(null); }, [workspaceKey]);
+  useEffect(() => { if (!hasPins) setConfirmWorkspaceKey(null); }, [hasPins]);
+
+  const closeClearPinsDialog = () => {
+    setConfirmWorkspaceKey(null);
+    if (clearPinsTriggerRef.current?.isConnected && !clearPinsTriggerRef.current.disabled) {
+      clearPinsTriggerRef.current.focus();
+    }
+  };
+
+  const confirmClearPins = () => {
+    if (confirmWorkspaceKey === workspaceKey && hasPins) onClearPins();
+    closeClearPinsDialog();
+  };
 
   const sortStatusLabel =
     sortMode === 'name-asc'
@@ -59,6 +83,7 @@ export function SidebarFilesActions({
       : sortModifiedAscLabel;
 
   return (
+    <>
     <div className="sidebar__files-actions">
       <div className="sidebar__sort-status" title={sortStatusLabel} aria-label={sortStatusLabel}>
         <SortStatusIcon mode={sortMode} size={14} />
@@ -79,7 +104,11 @@ export function SidebarFilesActions({
         <TooltipButton
           type="button"
           className="btn btn--icon sidebar__files-action sidebar__files-action--clear-pins"
-          onClick={onClearPins}
+          onClick={(event) => {
+            setSortAnchor(null);
+            clearPinsTriggerRef.current = event.currentTarget;
+            setConfirmWorkspaceKey(workspaceKey);
+          }}
           tooltip={clearPinsLabel}
           label={clearPinsLabel}
           tooltipPos="below"
@@ -134,5 +163,15 @@ export function SidebarFilesActions({
         />
       )}
     </div>
+    {confirmWorkspaceKey === workspaceKey && hasPins && (
+      <SidebarClearPinsDialog
+        title={clearPinsLabel}
+        message={clearPinsConfirmBody}
+        cancelLabel={cancelLabel}
+        onCancel={closeClearPinsDialog}
+        onConfirm={confirmClearPins}
+      />
+    )}
+    </>
   );
 }

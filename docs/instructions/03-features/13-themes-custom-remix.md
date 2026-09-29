@@ -67,7 +67,7 @@ Pet theme indicator markers use species-tailored SVG assets in `ui/src/assets/th
 - `k-ink-paw.svg` (`aria-label="K-Ink wolf paw"` with shorter claw tip path)
 - `white-shiba-paw.svg` (`aria-label="White shiba paw"`)
 
-### Raw Grid Theme specific layout
+### Default (Raw Grid) Theme specific layout
 
 - **Background Grid**: Grid background size set to `48px 48px`.
 - **Content Padding**: Outer `.content__scroll` padding set to `12px 16px 20px`; inner `.mdn-body` padding set to `20px 24px`.

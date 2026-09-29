@@ -9,6 +9,7 @@ import { EXPORT_SCOPE_TRANSLATIONS } from '../../ui/src/contexts/exportScopeTran
 import { INSIGHTS_TRANSLATIONS } from '../../ui/src/contexts/insightsTranslations';
 import { INSIGHTS_UI_TRANSLATIONS } from '../../ui/src/contexts/insightsUiTranslations';
 import { SUPPORT_PROMPT_TRANSLATIONS } from '../../ui/src/contexts/supportPromptTranslations';
+import { buildAiHelpPrompt } from '../../ui/src/components/Content/UserManualTab';
 
 function verifyObjectKeysRecursive(
   reference: Record<string, unknown>,
@@ -71,6 +72,18 @@ describe('translation coverage across all supported languages', () => {
       const localeTranslations = USER_MANUAL_TRANSLATIONS[lang] as unknown as Record<string, unknown>;
       expect(localeTranslations, `User manual block for "${lang}" must exist`).toBeDefined();
       verifyObjectKeysRecursive(englishTemplate, localeTranslations, `userManual.${lang}`);
+    }
+  });
+
+  test('User manual AI guidance prompt is localized in all 9 supported languages', () => {
+    for (const lang of expectedLanguages) {
+      const prompt = buildAiHelpPrompt('1.7.0', lang);
+      expect(prompt).toContain('1.7.0');
+      expect(prompt).toContain('https://github.com/the-long-ride/markdown-explorer');
+      expect(prompt.trim().length).toBeGreaterThan(100);
+      if (lang !== 'en') {
+        expect(prompt).not.toBe(buildAiHelpPrompt('1.7.0', 'en'));
+      }
     }
   });
 

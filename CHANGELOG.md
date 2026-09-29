@@ -2,6 +2,38 @@
 
 All notable changes to the **Markdown Explorer** extension will be documented in this file.
 
+## [v1.7.0] — 2026-09-29
+
+### Added
+- **Lazy 10,000-result workspace search**: Raised workspace/sidebar search across Electron, Tauri, VS Code, Chromium, and Website runtimes to a 10,000-result ceiling with 100-result streaming batches, stale-query cancellation, focused-scope-before-cap behavior, and a 100-row sidebar render window that grows as the user scrolls.
+- **Local Markdown editing**: Added shared working-copy editing with inline rendered-section editing and full plain-source mode, keyboard save handling (`Ctrl+S`, `Ctrl+Enter`), unsaved-change guards, and conflict resolution across writable runtimes.
+- **Split document view**: Added a resizable two-pane document workspace with independent active pane, file, mode, and scroll state, including rendered, inline edit, plain source, Git revision, and diff modes.
+- **Local Git history and diff viewer**: Added read-only per-document Git history, revision viewing, revision-to-revision/current/working-copy comparisons, rename-following history, and source/rendered diff views in Electron, Tauri, and VS Code.
+- **External editor routing for non-Markdown files**: Enabled the **Edit** action in the **More actions** menu for non-Markdown document and code types to launch the user's default system editor directly, even when Markdown editing is active.
+- **Save and discard UX enhancements**:
+  - Save buttons across the topbar, split-view pane header, and inline editor header now feature an accessible, crisp floppy disk icon.
+  - Reset keyboard shortcuts button in Settings now uses an enlarged reset/refresh icon matching the Typography settings style.
+  - Enhanced Unsaved Changes modal with a prominent header (*Your changes have not been saved*), two-line message indicating the unsaved file path, right-aligned buttons with consistent gap, and a refreshed *Don't Save & Leave* discard button with a cancellation icon.
+- **Inline editor header controls**: Positioned action buttons at the top right of the inline editor header with interactive tooltips showing keyboard shortcuts (`Ctrl+Enter` to save, `Esc` to cancel, and toolbar switch tooltip), eliminating the redundant bottom footer.
+- **Theme nomenclature normalization**: Renamed the raw grid visual theme to **Default** across all UI surfaces, settings, and localized translations.
+- **Native localization quality refinement**: Comprehensively audited and refined all non-English translations across all 8 supported non-English locales (`vi`, `fr`, `es`, `zh`, `no`, `ja`, `ko`, `ru`), replacing literal and machine-translated phrasing with idiomatic desktop and web UI terminology.
+- **User manual copy prompt animation**: Updated the copy prompt button in the User Manual tab to an icon-only button with smooth pop and ring animation mirroring the heading section copy buttons, with full localized prompt templates in the User Manual.
+
+### Changed
+- **Cross-runtime host contracts**: Added correlated Git capability/history/revision/comparison messages and safe local document-write contracts, with Chromium reporting Git history as unsupported while preserving protocol parity.
+- **Runtime and protocol documentation**: Synchronized README, runtime capability matrix, protocol catalogs, current application state, and release acceptance documentation for local editing, split view, and Git history.
+
+### Fixed
+- **Sidebar Search on macOS**: Fixed workspace search hanging on decomposed (NFD) Unicode text by normalizing per combining sequence instead of re-processing the whole prefix per character, and made the VS Code host always answer `searchWorkspace`, even when the search throws.
+- **Copy code opening the Mermaid viewer**: Clicking or right-clicking a code block's Copy button no longer opens the media viewer or image context menu on the first Mermaid diagram; buttons and controls are excluded from media targeting.
+- **Unsaved edits lost on workspace change or window close**: Workspace switches, tab closes, open-recent, drag-and-drop, and every in-app close button now go through the unsaved-changes guard; dirty documents survive workspace-unavailable events, and Tauri gained the native close guard Electron already had. Electron's close guard can no longer deadlock after a renderer crash or reload.
+- **Safer document saves**: Saves are restricted to Markdown files outside `.git`, written atomically (temp file + rename), report a conflict instead of overwriting when the on-disk revision is unknown, apply late save results after a timeout, and ignore double-submits.
+- **Git history with non-ASCII paths**: History and revision listings use `core.quotePath=false` and NUL-separated output in Electron, Tauri, and VS Code, so names like `blåbær.md` work; paging no longer restarts at page 1 when a cursor is missing, Tauri runs Git off the async dispatcher with a timeout and output cap, and current-side reads reject symlinks that escape the workspace.
+- **History diff performance and correctness**: The line diff uses linear-space Myers with a too-different fallback, source diffs render only visible rows, and highlights no longer drift on CRLF sources.
+- **Editing polish**: Refreshing a document no longer drops the user out of edit mode, the conflict dialog's *Compare changes* action now reveals the diff (with a localized banner to return), the failed-save reason is shown in the unsaved-changes dialog, and an open inline editor keeps its draft when another pane re-renders.
+- **Editor/history integration stability**: Aligned split-view state and History context integration across content tabs and standalone render surfaces, preserving strict History action-provider requirements without breaking isolated UI rendering.
+- **VS Code panel modularization & persistent settings**: Modularized panel code to maintain panel LOC budget and hardened webview settings persistence across restarts.
+
 ---
 
 ## [v1.6.8] — 2026-09-17
@@ -11,6 +43,8 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 - Added runtime capability boundaries so Workspace Insights remains available only in supported runtimes while shared Scope View and browser flows remain intact.
 - Hardened VS Code activation, persisted panel preferences, packaged the `yaml` runtime, and corrected the webview dependency packaging boundary that caused an empty panel.
 - Updated tests and runtime documentation across the workspace for the v1.6.8 release.
+
+---
 
 ## [v1.6.7] — 2026-09-06
 
@@ -635,7 +669,7 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 ### Added Features & Enhancements
 - **In-App Update Checks**: Desktop and VS Code variants now check the latest GitHub Release on startup and compare it against the running app or extension version.
-- **Update Notification UI**: Settings buttons now show an update indicator when a newer release is available, and Settings includes a `Download new version` action.
+- **Update Notification UI**: Settings buttons now show an update indicator when a newer release version is available, and Settings includes a `Download new version` action.
 - **Platform-Aware Update Links**: Desktop downloads now resolve to the matching release asset for Windows, macOS, or Linux, while the VS Code variant opens the Marketplace listing.
 - **Release Changelog Links**: Update prompts and website release notes now link directly to the GitHub changelog.
 - **Release Download Counts**: The website reads GitHub Release asset download counts from the GitHub API and displays them beside desktop download buttons.

@@ -6,6 +6,9 @@ import { useEffect, useMemo } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAppState } from '../contexts/AppStateContext';
 import { usePlatform } from '../contexts/PlatformContext';
+import { useDirtyDocumentsGuard } from './useDirtyDocumentsGuard';
+import { documentSessionKey, isDocumentSavable } from '../editor/documentSession';
+import { isMarkdownEditingAvailable } from '../editor/editingFeature';
 import { requestAnimatedContentTabClose } from '../components/Content/contentTabCloseEvents';
 import { getScopeNavigationStateSnapshot, requestScopeNavigation, useScopeNavigationState } from './useScopeNavigationState';
 import { attachMouseHistoryNavigation } from '../utils/mouseHistoryNavigation';
@@ -43,45 +46,20 @@ interface UseKeyboardOptions {
   onWorkspaceSelection?: () => void;
 }
 
-import {
-  isEditableTarget,
-  matchesShortcut,
-  resolveKeyboardAction,
-} from './keyboardUtils';
+import { isEditableTarget, matchesShortcut, resolveKeyboardAction } from './keyboardUtils';
 
 export { isEditableTarget, matchesShortcut, resolveKeyboardAction } from './keyboardUtils';
 
 export function useKeyboard({
-  onSearchOpen,
-  onCrossTabSearchOpen,
-  onSearchClose,
-  onFindOpen,
-  onFindClose,
-  onSettingsOpen,
-  onSettingsClose,
-  onWelcome,
-  onExpandAll,
-  onCollapseAll,
-  onSidebarCursorModeToggle,
-  onSidebarCursorModeClose,
-  isSearchOpen,
-  isFindOpen = false,
-  activeSearchScope = 'current',
-  isSidebarCursorMode = false,
-  isSettingsOpen,
-  isModalOpen,
-  isTermsOpen,
-  onToggleToc,
-  onToggleWorkspaceInsights,
-  onLocateFile,
-  onBookmarksOpen,
-  onOpenCurrentDocumentLocation,
-  onToggleFocusMode,
-  onToggleDesktopViewMode,
-  activeHtmlDocument = false,
-  onToggleActiveHtmlDocumentPreview,
-  onToggleFullscreen,
-  onWorkspaceSelection,
+  onSearchOpen, onCrossTabSearchOpen, onSearchClose, onFindOpen, onFindClose,
+  onSettingsOpen, onSettingsClose, onWelcome, onExpandAll, onCollapseAll,
+  onSidebarCursorModeToggle, onSidebarCursorModeClose,
+  isSearchOpen, isFindOpen = false, activeSearchScope = 'current',
+  isSidebarCursorMode = false, isSettingsOpen, isModalOpen, isTermsOpen,
+  onToggleToc, onToggleWorkspaceInsights, onLocateFile, onBookmarksOpen,
+  onOpenCurrentDocumentLocation, onToggleFocusMode, onToggleDesktopViewMode,
+  activeHtmlDocument = false, onToggleActiveHtmlDocumentPreview,
+  onToggleFullscreen, onWorkspaceSelection,
 }: UseKeyboardOptions) {
   const { back, forward } = useNavigation();
   useScopeNavigationState();
@@ -91,13 +69,16 @@ export function useKeyboard({
     toggleSidebar,
     navigate,
     openInEditor,
+    setDocumentEditMode,
     refresh,
+    saveDocument,
     closeContentTab,
     closeAllContentTabs,
     closeContentTabsToRight,
     closeOtherContentTabs,
   } = useAppState();
   const bridge = usePlatform();
+  const guardWorkspaceLeave = useDirtyDocumentsGuard();
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isDesktop = isElectron || state.appRuntime === 'tauri';
@@ -112,6 +93,11 @@ export function useKeyboard({
     ),
     [state.settings.disabledKeybindings, state.settings.keybindings],
   );
+  const activeDocumentSession = state.currentFile ? state.documentSessions?.[documentSessionKey(state.currentFile)] : undefined;
+  const hasSavableDocument = isDocumentSavable(activeDocumentSession);
+  const isMarkdown = Boolean(state.currentFile && /\.mdx?$/i.test(state.currentFile));
+  const editingEnabled = isMarkdownEditingAvailable(state.settings);
+  const hasEditableSession = !!activeDocumentSession;
 
   useEffect(() => {
     const routeBack = () => {
@@ -130,15 +116,11 @@ export function useKeyboard({
         return;
       }
 
-      // Logitech and many drivers emit BrowserBack/BrowserForward or Alt+Left/Right
-      // as universal browser navigation keys. Handle them independently of the
-      // configured shortcut so Logi mice always work.
       const isBrowserBackFallback = e.key === 'BrowserBack'
         || (e.altKey && e.key === 'ArrowLeft' && !e.ctrlKey && !e.metaKey && !e.shiftKey);
       const isBrowserForwardFallback = e.key === 'BrowserForward'
         || (e.altKey && e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey && !e.shiftKey);
 
-      // When terms screen is open history navigation is muted (mirrors mouse handler).
       if (!isTermsOpen) {
         if (getScopeNavigationStateSnapshot().active) {
           if (isBrowserBackFallback) {
@@ -154,8 +136,6 @@ export function useKeyboard({
         }
       }
 
-      // Scope View is itself a modal, so its configured history shortcuts must
-      // be routed before the normal modal shortcut gate suppresses globals.
       if (getScopeNavigationStateSnapshot().active) {
         if (matchesShortcut(e, keybindings.back)) {
           e.preventDefault();
@@ -169,7 +149,6 @@ export function useKeyboard({
         }
       }
 
-      // Universal fallback for non-scope navigation (scope-aware via routeBack/routeForward).
       if (!isTermsOpen) {
         if (isBrowserBackFallback) {
           e.preventDefault();
@@ -201,6 +180,7 @@ export function useKeyboard({
         hasOnSidebarCursorModeClose: !!onSidebarCursorModeClose,
         hasOnWelcome: !!onWelcome,
         hasOnEditCurrentDocument: (isDesktop || state.appRuntime === 'vscode') && !!state.currentFile,
+        hasOnSaveCurrentDocument: hasSavableDocument,
         hasOnToggleToc: !!onToggleToc,
         hasOnToggleWorkspaceInsights: !!onToggleWorkspaceInsights,
         hasOnLocateFile: !!onLocateFile,
@@ -266,8 +246,15 @@ export function useKeyboard({
           if (onWelcome) onWelcome();
           else navigate(null);
           break;
+        case 'save-current-document':
+          if (state.currentFile) void saveDocument(state.currentFile);
+          break;
         case 'edit-current-document':
-          openInEditor();
+          if (isMarkdown && editingEnabled && hasEditableSession && state.currentFile) {
+            setDocumentEditMode?.(state.currentFile, 'inline-edit');
+          } else {
+            openInEditor();
+          }
           break;
         case 'settings-toggle':
           if (isSettingsOpen) onSettingsClose();
@@ -335,7 +322,7 @@ export function useKeyboard({
           break;
         case 'workspace-selection':
           onWorkspaceSelection?.();
-          if (!onWorkspaceSelection) bridge.postMessage({ command: 'closeWorkspace' });
+          if (!onWorkspaceSelection) guardWorkspaceLeave(() => bridge.postMessage({ command: 'closeWorkspace' }));
           break;
         case 'toggle-sidebar':
           toggleSidebar();
@@ -343,8 +330,6 @@ export function useKeyboard({
       }
     };
 
-    // Mouse Back/Forward arrive under different event names depending on the
-    // device, driver and webview; one helper covers every variant.
     const detachMouseHistory = attachMouseHistoryNavigation((direction) => {
       if (isTermsOpen) return;
       if (direction === 'back') routeBack();
@@ -372,7 +357,9 @@ export function useKeyboard({
     forward,
     navigate,
     openInEditor,
+    setDocumentEditMode, editingEnabled, hasEditableSession,
     refresh,
+    saveDocument,
     toggleTheme,
     toggleSidebar,
     closeContentTab,
@@ -382,6 +369,7 @@ export function useKeyboard({
     bridge,
     keybindings,
     isDesktop,
+    hasSavableDocument,
     onSearchOpen,
     onCrossTabSearchOpen,
     onSearchClose,
@@ -402,6 +390,7 @@ export function useKeyboard({
     isModalOpen,
     isTermsOpen,
     onToggleToc,
+    onToggleWorkspaceInsights,
     onLocateFile,
     onBookmarksOpen,
     onOpenCurrentDocumentLocation,
@@ -411,6 +400,7 @@ export function useKeyboard({
     onToggleActiveHtmlDocumentPreview,
     onToggleFullscreen,
     onWorkspaceSelection,
+    guardWorkspaceLeave,
     state.activeContentTabPath,
     state.appRuntime,
     state.currentFile,

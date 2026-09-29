@@ -38,6 +38,22 @@ const SOURCE_GROUPS = new Map(Object.entries({
     'ui/src/components/Content/useContentEffects.ts',
     'ui/src/components/Content/useContentNavigationEffects.ts',
     'ui/src/components/Content/useContentScrollMemory.ts',
+    'ui/src/components/Content/useDocumentOverlays.tsx',
+    'ui/src/components/Content/DocumentBody.tsx',
+    'ui/src/components/Content/documentPreviewNotice.ts',
+    'ui/src/components/Content/useDocumentInteractions.ts',
+    'ui/src/components/Content/documentClickHandler.ts',
+    'ui/src/components/Content/documentContextMenuHandler.ts',
+  ],
+  'ui/src/components/Content/ContentMainView.tsx': [
+    'ui/src/components/Content/ContentMainView.tsx',
+    'ui/src/components/Content/DocumentBody.tsx',
+  ],
+  'ui/src/components/Content/useContentEffects.ts': [
+    'ui/src/components/Content/useContentEffects.ts',
+    'ui/src/components/Content/useDocumentInteractions.ts',
+    'ui/src/components/Content/documentClickHandler.ts',
+    'ui/src/components/Content/documentContextMenuHandler.ts',
   ],
   'ui/src/components/Content/ContentTabs.tsx': [
     'ui/src/components/Content/ContentTabs.tsx',
@@ -63,6 +79,11 @@ const SOURCE_GROUPS = new Map(Object.entries({
   'ui/src/components/Settings/SettingsModal.tsx': [
     'ui/src/components/Settings/SettingsModal.tsx',
     'ui/src/components/Settings/settingsModalData.ts',
+  ],
+  'ui/src/components/Settings/SettingsPreferencesPanel.tsx': [
+    'ui/src/components/Settings/SettingsPreferencesPanel.tsx',
+    'ui/src/components/Settings/SettingsFeaturesSection.tsx',
+    'ui/src/components/Settings/FeatureSettingRow.tsx',
   ],
   'ui/src/components/Sidebar/Sidebar.tsx': [
     'ui/src/components/Sidebar/Sidebar.tsx',

@@ -38,6 +38,7 @@ function createDebugTools({ isPackaged, env = process.env, argv = process.argv }
   }
 
   return {
+    isDebugMode,
     shouldAutoOpenDevTools,
     openDevToolsIfDebug,
     toggleDevToolsIfDebug,

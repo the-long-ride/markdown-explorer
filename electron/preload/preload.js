@@ -15,14 +15,28 @@ function isElectronDebug() {
 }
 
 function createPreloadApi({ ipcRenderer, webUtils, isDebug = isElectronDebug() } = {}) {
+  // One ipc listener fans out to every UI subscriber; one listener per
+  // subscriber tripped Node's MaxListenersExceededWarning.
+  const subscribers = new Set();
+  const dispatch = (_event, ...args) => {
+    for (const subscriber of [...subscribers]) {
+      try {
+        subscriber.callback(...args);
+      } catch (error) {
+        console.error('[preload] host-message subscriber failed:', error);
+      }
+    }
+  };
   return {
     isDebug: Boolean(isDebug),
     postMessage: (msg) => ipcRenderer.send('webview-message', msg),
     onMessage: (callback) => {
-      const subscription = (event, ...args) => callback(...args);
-      ipcRenderer.on('host-message', subscription);
+      if (subscribers.size === 0) ipcRenderer.on('host-message', dispatch);
+      const subscriber = { callback };
+      subscribers.add(subscriber);
       return () => {
-        ipcRenderer.removeListener('host-message', subscription);
+        if (!subscribers.delete(subscriber)) return;
+        if (subscribers.size === 0) ipcRenderer.removeListener('host-message', dispatch);
       };
     },
     getPathForFile: (file) => {

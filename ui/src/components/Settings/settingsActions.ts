@@ -1,47 +1,58 @@
 import type { Translations } from '../../contexts/translationTypes';
 
-export const ACTIONS_LIST = [
+export type ShortcutMission = 'application' | 'document' | 'documentTabs' | 'navigation' | 'search' | 'view';
+export type ShortcutScope = 'both' | 'non-vscode' | 'desktop' | 'electron' | 'editor';
+
+export interface ShortcutAction {
+  id: string;
+  label: string;
+  scope: ShortcutScope;
+  mission: ShortcutMission;
+}
+
+export const ACTIONS_LIST: ShortcutAction[] = [
   // Navigation & Workspace
-  { id: 'welcome', label: 'Go to welcome page', scope: 'both' },
-  { id: 'workspaceSelection', label: 'Go to workspace selection', scope: 'non-vscode' },
-  { id: 'back', label: 'Back to previous file', scope: 'both' },
-  { id: 'forward', label: 'Go to next file', scope: 'both' },
-  { id: 'locateFile', label: 'Locate current open file in sidebar', scope: 'both' },
-  { id: 'openCurrentDocumentLocation', label: 'Open current document folder', scope: 'electron' },
-  { id: 'refresh', label: 'Refresh current file', scope: 'both' },
+  { id: 'welcome', label: 'Go to welcome page', scope: 'both', mission: 'navigation' },
+  { id: 'workspaceSelection', label: 'Go to workspace selection', scope: 'non-vscode', mission: 'navigation' },
+  { id: 'back', label: 'Back to previous file', scope: 'both', mission: 'navigation' },
+  { id: 'forward', label: 'Go to next file', scope: 'both', mission: 'navigation' },
+  { id: 'locateFile', label: 'Locate current open file in sidebar', scope: 'both', mission: 'navigation' },
+  { id: 'openCurrentDocumentLocation', label: 'Open current document folder', scope: 'electron', mission: 'document' },
+  { id: 'refresh', label: 'Refresh current file', scope: 'both', mission: 'document' },
 
   // Search & Find
-  { id: 'findCurrentFile', label: 'Find in current file', scope: 'both' },
-  { id: 'searchCurrent', label: 'Search current workspace', scope: 'both' },
-  { id: 'searchAllTabs', label: 'Search all tabs', scope: 'desktop' },
+  { id: 'findCurrentFile', label: 'Find in current file', scope: 'both', mission: 'search' },
+  { id: 'searchCurrent', label: 'Search current workspace', scope: 'both', mission: 'search' },
+  { id: 'searchAllTabs', label: 'Search all tabs', scope: 'desktop', mission: 'search' },
 
   // View & Panels
-  { id: 'toggleSidebar', label: 'Toggle sidebar visibility', scope: 'both' },
-  { id: 'openBookmarks', label: 'Open Bookmarks tab', scope: 'both' },
-  { id: 'toggleToc', label: 'Toggle table of contents panel', scope: 'both' },
-  { id: 'toggleWorkspaceInsights', label: 'Toggle workspace insights panel', scope: 'desktop' },
-  { id: 'toggleFocusMode', label: 'Toggle focus mode', scope: 'both' },
-  { id: 'sidebarCursorMode', label: 'Sidebar cursor mode', scope: 'both' },
-  { id: 'toggleDesktopViewMode', label: 'Toggle Tabs/Focus view', scope: 'electron' },
-  { id: 'toggleHtmlPreview', label: 'Toggle default HTML preview', scope: 'both' },
-  { id: 'zoomIn', label: 'Zoom in', scope: 'electron' },
-  { id: 'zoomOut', label: 'Zoom out', scope: 'electron' },
-  { id: 'resetZoom', label: 'Reset zoom', scope: 'electron' },
+  { id: 'toggleSidebar', label: 'Toggle sidebar visibility', scope: 'both', mission: 'view' },
+  { id: 'openBookmarks', label: 'Open Bookmarks tab', scope: 'both', mission: 'view' },
+  { id: 'toggleToc', label: 'Toggle table of contents panel', scope: 'both', mission: 'view' },
+  { id: 'toggleWorkspaceInsights', label: 'Toggle workspace insights panel', scope: 'desktop', mission: 'view' },
+  { id: 'toggleFocusMode', label: 'Toggle focus mode', scope: 'both', mission: 'view' },
+  { id: 'sidebarCursorMode', label: 'Sidebar cursor mode', scope: 'both', mission: 'view' },
+  { id: 'toggleDesktopViewMode', label: 'Toggle Tabs/Focus view', scope: 'electron', mission: 'view' },
+  { id: 'toggleHtmlPreview', label: 'Toggle default HTML preview', scope: 'both', mission: 'view' },
+  { id: 'zoomIn', label: 'Zoom in', scope: 'electron', mission: 'view' },
+  { id: 'zoomOut', label: 'Zoom out', scope: 'electron', mission: 'view' },
+  { id: 'resetZoom', label: 'Reset zoom', scope: 'electron', mission: 'view' },
 
   // Headings & Structure
-  { id: 'collapseAll', label: 'Collapse all headings', scope: 'desktop' },
-  { id: 'expandAll', label: 'Expand all headings', scope: 'desktop' },
+  { id: 'collapseAll', label: 'Collapse all headings', scope: 'desktop', mission: 'document' },
+  { id: 'expandAll', label: 'Expand all headings', scope: 'desktop', mission: 'document' },
 
   // Tab Management
-  { id: 'closeContentTab', label: 'Close current document tab', scope: 'electron' },
-  { id: 'closeOtherContentTabs', label: 'Close other document tabs', scope: 'electron' },
-  { id: 'closeContentTabsToRight', label: 'Close document tabs to the right', scope: 'electron' },
-  { id: 'closeAllContentTabs', label: 'Close all document tabs', scope: 'electron' },
+  { id: 'closeContentTab', label: 'Close current document tab', scope: 'electron', mission: 'documentTabs' },
+  { id: 'closeOtherContentTabs', label: 'Close other document tabs', scope: 'electron', mission: 'documentTabs' },
+  { id: 'closeContentTabsToRight', label: 'Close document tabs to the right', scope: 'electron', mission: 'documentTabs' },
+  { id: 'closeAllContentTabs', label: 'Close all document tabs', scope: 'electron', mission: 'documentTabs' },
 
   // General & Settings
-  { id: 'editCurrentDocument', label: 'Edit current document', scope: 'editor' },
-  { id: 'settings', label: 'Toggle settings modal', scope: 'both' },
-  { id: 'toggleTheme', label: 'Toggle light/dark mode', scope: 'both' },
+  { id: 'saveCurrentDocument', label: 'Save current document', scope: 'both', mission: 'document' },
+  { id: 'editCurrentDocument', label: 'Edit current document', scope: 'editor', mission: 'document' },
+  { id: 'settings', label: 'Toggle settings modal', scope: 'both', mission: 'application' },
+  { id: 'toggleTheme', label: 'Toggle light/dark mode', scope: 'both', mission: 'application' },
 ];
 
 

@@ -1,0 +1,338 @@
+.content--split {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Split panes own their document tabs, so hide the legacy shared strip while split content is mounted. */
+.content-shell:has(.content--split) > .content-tabs-wrap {
+  display: none;
+}
+
+/* The pane sizes are read only by .split-document-view itself. Registering
+   them as non-inherited stops every divider step from invalidating the style of
+   every element in both documents (custom properties inherit by default). */
+@property --split-primary-size {
+  syntax: '*';
+  inherits: false;
+}
+
+@property --split-secondary-size {
+  syntax: '*';
+  inherits: false;
+}
+
+.split-document-view {
+  display: grid;
+  grid-template-columns: minmax(0, var(--split-primary-size, 1fr)) 1px minmax(0, var(--split-secondary-size, 1fr));
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.split-document-pane {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: none;
+  outline: none;
+  background: var(--bg);
+}
+
+.split-document-pane.is-active {
+  border: none;
+  outline: none;
+}
+
+.split-document-pane.is-active .split-document-pane__header {
+  border-bottom-color: var(--accent);
+  box-shadow: inset 0 -12px 16px -6px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.split-document-pane.is-file-drag-target,
+#mainContent.is-file-drag-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -3px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+}
+
+.split-document-pane.is-pane-swap-target,
+.split-document-pane__content.is-pane-swap-target,
+.split-document-pane__empty.is-pane-swap-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -3px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+}
+
+body.is-split-dragging,
+body.is-split-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+body.is-split-dragging iframe {
+  pointer-events: none;
+}
+
+.split-document-pane.is-dragging {
+  opacity: 0.7;
+}
+
+.split-document-pane__header {
+  touch-action: none;
+}
+
+.split-document-pane__content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.split-document-pane__header {
+  display: flex;
+  flex: 0 0 40px;
+  height: 40px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 8px;
+  border-bottom: var(--stroke-w) solid var(--bd-s);
+  background: var(--bg-e);
+  box-sizing: border-box;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.split-document-pane__header:active {
+  cursor: grabbing;
+}
+
+.tree-file[draggable="true"] {
+  cursor: grab;
+}
+
+.tree-file[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.split-document-pane__tabs,
+.split-document-pane__modes,
+.split-document-pane__mode,
+.split-document-pane__tabs .content-tab {
+  cursor: default;
+}
+
+.split-document-pane__tabs {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: flex-end;
+  height: 100%;
+  min-width: 0;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.split-document-pane__tabs::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.split-document-pane__tabs .content-tab {
+  flex: 0 1 clamp(110px, 20vw, 240px);
+  min-width: 80px;
+  max-width: 260px;
+  cursor: pointer;
+}
+
+.split-document-pane__tabs .content-tab.is-active {
+  flex-basis: clamp(140px, 26vw, 300px);
+}
+
+.split-document-pane__tabs .content-tab.is-dragging {
+  opacity: 0.45;
+}
+
+.split-document-pane__tabs.is-tab-drop-target {
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-e));
+  border-radius: var(--r, 4px);
+}
+
+.split-document-pane__tab-wrap {
+  display: inline-flex;
+}
+
+.split-document-pane__title {
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  color: var(--tx);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.split-document-pane__modes {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-self: center;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r, 5px);
+  background: var(--bg-a);
+}
+
+.split-document-pane__mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r, 5px);
+  background: transparent;
+  color: var(--tx-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.split-document-pane__mode:hover,
+.split-document-pane__mode:focus-visible {
+  border-color: var(--bd-x);
+  color: var(--tx);
+}
+
+.split-document-pane__mode.is-active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--bd-x));
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-e));
+  color: var(--tx);
+}
+
+.split-document-pane__scroll {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  contain: layout paint;
+}
+
+.split-document-pane__scroll .document-surface {
+  width: min(100%, var(--content-max-width, 960px));
+  min-height: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Full-document HTML preview fills the complete pane in both directions. */
+.split-document-pane__scroll.split-document-pane__scroll--html-preview {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.split-document-pane__scroll--html-preview .document-surface.mdn-body--html-preview {
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.split-document-pane__scroll--html-preview .html-document-view__iframe {
+  border: 0;
+}
+
+.split-document-pane__empty {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--tx-3);
+  font-size: 12px;
+}
+
+.split-document-divider {
+  position: relative;
+  z-index: 3;
+  width: 1px;
+  min-width: 1px;
+  cursor: col-resize;
+  background: var(--bd-s);
+  touch-action: none;
+}
+
+.split-document-divider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  right: -3px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.split-document-divider:hover::after,
+.split-document-divider:focus-visible::after {
+  background: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .split-document-pane__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .split-document-pane__tabs,
+  .split-document-pane__modes {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+.split-document-pane__tab-wrap.is-drop-before {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.split-document-pane__tab-wrap.is-drop-after {
+  box-shadow: inset -3px 0 0 var(--accent);
+}
+
+/* Divider drag: keep every frame cheap. */
+body.is-split-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.split-document-view.is-split-resizing iframe {
+  pointer-events: none;
+}
+
+/* While dragging, skip layout of offscreen top-level sections. Scoped to the
+   drag so every section has rendered once and keeps its last measured size
+   (`auto`), which avoids scroll jumps. */
+.split-document-view.is-split-resizing .document-surface > .mdn-section,
+.split-document-view.is-split-resizing .document-surface > div > .mdn-section,
+.split-document-view.is-split-resizing .document-surface > div > :is(p, pre, table, ul, ol, blockquote, .mdn-table-wrap, .mdn-mermaid-wrap) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}

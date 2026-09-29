@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SidebarItemMenu } from '../../../../ui/src/components/Sidebar/SidebarItemMenu';
+import { buildSidebarItemMenuItems } from '../../../../ui/src/components/Sidebar/sidebarItemMenuItems';
+import { getTranslations } from '../../../../ui/src/contexts/translations';
+import { DOCUMENT_HISTORY_OPEN_EVENT } from '../../../../ui/src/components/shared/ToolbarActionMenu';
 
 function createConnectedElement(rect: Partial<DOMRect> = {}): HTMLElement {
   const element = document.createElement('button');
@@ -79,5 +82,53 @@ describe('SidebarItemMenu', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Show HTML Preview' }));
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('builds history menu item for document files and dispatches document history event', () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    const items = buildSidebarItemMenuItems({
+      state: { settings: { language: 'en' } } as any,
+      target: { kind: 'file', path: '/repo/notes.md', anchor: null as any },
+      canOpenHtmlInBrowser: false,
+      canOpenItemLocations: false,
+      translations: getTranslations('en'),
+      bridge: {} as any,
+      navigate: vi.fn(),
+      isPinned: false,
+      pinLimitReached: false,
+      onTogglePin: vi.fn(),
+    });
+
+    const historyItem = items.find((item) => item.id === 'history');
+    expect(historyItem).toBeDefined();
+    expect(historyItem?.label).toBe('Revision (Git)');
+    expect(historyItem?.disabled).toBeFalsy();
+
+    historyItem?.onSelect();
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: DOCUMENT_HISTORY_OPEN_EVENT,
+        detail: { filePath: '/repo/notes.md' },
+      }),
+    );
+    dispatchSpy.mockRestore();
+  });
+
+  it('does not include history menu item for folder targets', () => {
+    const items = buildSidebarItemMenuItems({
+      state: { settings: { language: 'en' } } as any,
+      target: { kind: 'folder', path: '/repo/docs', anchor: null as any },
+      canOpenHtmlInBrowser: false,
+      canOpenItemLocations: false,
+      translations: getTranslations('en'),
+      bridge: {} as any,
+      navigate: vi.fn(),
+      isPinned: false,
+      pinLimitReached: false,
+      onTogglePin: vi.fn(),
+    });
+
+    const historyItem = items.find((item) => item.id === 'history');
+    expect(historyItem).toBeUndefined();
   });
 });

@@ -149,4 +149,4 @@ root.querySelector('[data-action]').addEventListener('click', () => {
 
 ---
 
-[← Desktop Window, Tray, Startup, and Update Lifecycle](18-window-tray-update-lifecycle.md) · [Documentation index](../README.md) · [Performance, Incremental Work, and Enhancement Scheduling →](20-performance-enhancement-scheduling.md)
+[← Desktop Window, Startup, and Update Lifecycle](18-window-tray-update-lifecycle.md) · [Documentation index](../README.md) · [Performance, Incremental Work, and Enhancement Scheduling →](20-performance-enhancement-scheduling.md)
