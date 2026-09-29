@@ -9,6 +9,11 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const read = readProjectSource;
 const locales = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'];
 
+function isPatchedJsYamlVersion(version) {
+  const [major, minor, patch] = version.split('.').map(Number);
+  return major > 4 || (major === 4 && (minor > 3 || (minor === 3 && patch >= 0)));
+}
+
 test('left and right arrow shortcuts use glyph labels', async () => {
   const source = await read('ui/src/utils/shortcuts.ts');
   assert.match(source, /arrowleft:\s*['"]←['"]/i);
@@ -105,22 +110,22 @@ test('reported vulnerable transitive dependencies are overridden from the pnpm w
 
   assert.doesNotMatch(manifest, /"pnpm"\s*:\s*\{[\s\S]*?"overrides"/);
   assert.match(workspace, /overrides:[\s\S]*dompurify:\s*3\.4\.13/);
-  assert.match(workspace, /overrides:[\s\S]*js-yaml:\s*4\.3\.1/);
+  assert.match(workspace, /overrides:[\s\S]*js-yaml:\s*\^4\.3\.2/);
   assert.match(workspace, /overrides:[\s\S]*fast-uri:\s*\^?3\.1\.[56]/);
   assert.match(workspace, /overrides:[\s\S]*fast-xml-parser:\s*5\.10\.1/);
 
   assert.match(lock, /^overrides:\s*$/m);
   assert.match(lock, /dompurify:\s*3\.4\.13/);
-  assert.match(lock, /js-yaml:\s*4\.3\.1/);
   assert.match(lock, /fast-uri:\s*\^?3\.1\.[56]/);
   assert.match(lock, /fast-xml-parser:\s*5\.10\.1/);
   assert.match(lock, /dompurify@3\.4\.13/);
-  assert.match(lock, /js-yaml@4\.3\.1/);
+  const jsYamlVersions = [...lock.matchAll(/^\s*js-yaml@(\d+\.\d+\.\d+):/gm)].map((match) => match[1]);
+  assert.ok(jsYamlVersions.length > 0, 'lockfile must contain a resolved js-yaml package');
+  assert.ok(jsYamlVersions.every(isPatchedJsYamlVersion), `all resolved js-yaml versions must be patched: ${jsYamlVersions.join(', ')}`);
   assert.match(lock, /pdfjs-dist@6\.2\.108/);
   assert.match(lock, /fast-uri@3\.1\.[5-7]/);
   assert.match(lock, /fast-xml-parser@5\.10\.1/);
   assert.doesNotMatch(lock, /dompurify@3\.4\.12/);
-  assert.doesNotMatch(lock, /js-yaml@4\.3\.0/);
   assert.doesNotMatch(lock, /fast-uri@3\.1\.3/);
   assert.doesNotMatch(lock, /fast-xml-parser@5\.9\.3/);
   assert.doesNotMatch(lock, /pdfjs-dist@6\.1\.200/);
