@@ -1,8 +1,8 @@
 {
   "name": "markdown-explorer-workspace",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "private": true,
-  "packageManager": "pnpm@11.18.0",
+  "packageManager": "pnpm@12.11.2",
   "scripts": {
     "test": "vitest run",
     "test:node": "node --experimental-strip-types --test tests/node/*.test.mjs",

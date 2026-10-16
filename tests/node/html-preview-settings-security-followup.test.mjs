@@ -109,24 +109,43 @@ test('reported vulnerable transitive dependencies are overridden from the pnpm w
   ]);
 
   assert.doesNotMatch(manifest, /"pnpm"\s*:\s*\{[\s\S]*?"overrides"/);
-  assert.match(workspace, /overrides:[\s\S]*dompurify:\s*3\.4\.13/);
+  assert.match(workspace, /overrides:[\s\S]*dompurify:\s*3\.4\.17/);
   assert.match(workspace, /overrides:[\s\S]*js-yaml:\s*\^4\.3\.2/);
-  assert.match(workspace, /overrides:[\s\S]*fast-uri:\s*\^?3\.1\.[56]/);
+  assert.match(workspace, /overrides:[\s\S]*fast-uri:\s*\^?3\.1\.8/);
   assert.match(workspace, /overrides:[\s\S]*fast-xml-parser:\s*5\.10\.1/);
 
   assert.match(lock, /^overrides:\s*$/m);
-  assert.match(lock, /dompurify:\s*3\.4\.13/);
-  assert.match(lock, /fast-uri:\s*\^?3\.1\.[56]/);
+  assert.match(lock, /dompurify:\s*3\.4\.17/);
+  assert.match(lock, /fast-uri:\s*\^?3\.1\.8/);
   assert.match(lock, /fast-xml-parser:\s*5\.10\.1/);
-  assert.match(lock, /dompurify@3\.4\.13/);
+  assert.match(lock, /dompurify@3\.4\.17/);
   const jsYamlVersions = [...lock.matchAll(/^\s*js-yaml@(\d+\.\d+\.\d+):/gm)].map((match) => match[1]);
   assert.ok(jsYamlVersions.length > 0, 'lockfile must contain a resolved js-yaml package');
   assert.ok(jsYamlVersions.every(isPatchedJsYamlVersion), `all resolved js-yaml versions must be patched: ${jsYamlVersions.join(', ')}`);
   assert.match(lock, /pdfjs-dist@6\.2\.108/);
-  assert.match(lock, /fast-uri@3\.1\.[5-7]/);
+  assert.match(lock, /fast-uri@3\.1\.8/);
   assert.match(lock, /fast-xml-parser@5\.10\.1/);
   assert.doesNotMatch(lock, /dompurify@3\.4\.12/);
   assert.doesNotMatch(lock, /fast-uri@3\.1\.3/);
   assert.doesNotMatch(lock, /fast-xml-parser@5\.9\.3/);
   assert.doesNotMatch(lock, /pdfjs-dist@6\.1\.200/);
+  const securityFloors = {
+    'http-cache-semantics': [4, 3, 0],
+    'markdown-it': [14, 3, 1],
+    'brace-expansion': [5, 0, 12],
+    dompurify: [3, 4, 17],
+    'fast-uri': [3, 1, 8],
+    katex: [0, 18, 2],
+    'source-map-js': [1, 2, 2],
+  };
+  for (const [name, floor] of Object.entries(securityFloors)) {
+    const versions = [...lock.matchAll(new RegExp(`^  ${name}@(\\d+)\\.(\\d+)\\.(\\d+):`, 'gm'))];
+    assert.ok(versions.length > 0, `${name} must be resolved in the lockfile`);
+    for (const [, ...parts] of versions) {
+      const version = parts.map(Number);
+      const firstDifference = version.findIndex((part, index) => part !== floor[index]);
+      assert.ok(firstDifference === -1 || version[firstDifference] > floor[firstDifference],
+        `${name}@${version.join('.')} is below security floor ${floor.join('.')}`);
+    }
+  }
 });
