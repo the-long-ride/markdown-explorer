@@ -80,6 +80,14 @@ A release must not publish with mixed application versions. Version metadata ide
 - Windows uploads NSIS `.exe` plus `.exe.sig`; Linux uploads AppImage plus `.AppImage.sig`; macOS builds `app,dmg` and uploads `.app.tar.gz` plus `.sig`.
 - Artifact renaming moves a companion signature with its installer so release pairs stay addressable. Missing updater outputs fail the upload step.
 
+## Tauri Linux compatibility
+
+Both `release.yml` and `build-all.yml` build Tauri Linux packages on `ubuntu-22.04`. This fixes the native build baseline instead of allowing `ubuntu-latest` upgrades to raise the minimum glibc requirement. Rust cache keys include the matrix OS label so native artifacts from a newer Ubuntu baseline are not reused.
+
+The 22.04 build is intended to run on Ubuntu 22.04 and newer releases, including 24.04; this is an expected compatibility range, not evidence of a successful runtime test. Before publishing, extract the rebuilt AppImage, inspect the executable and bundled libraries for unsupported glibc requirements, and verify offline GUI startup on both Ubuntu 22.04 and 24.04. Passing workflow contracts alone does not verify the generated Linux binary.
+
+See [Tauri AppImage limitations](https://v2.tauri.app/distribute/appimage/#limitations) and the [catalog failure report](https://github.com/AppImage/appimage.github.io/pull/9103#issuecomment-5903483585).
+
 ## Release verification
 
 1. Run `pnpm run sync-versions` and verify no intended target remains on an older application version.
