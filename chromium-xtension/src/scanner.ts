@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { MdFile, FolderNode } from '../../ui/src/types';
+import { treeHasEmptyFolder } from './incremental-publish';
 
 export class BrowserScanner {
   private static readonly TITLE_CHUNK_BYTES = 8 * 1024;
@@ -15,8 +16,9 @@ export class BrowserScanner {
       onFile?: (file: MdFile, count: number) => void;
       isCurrent?: () => boolean;
     } = {},
-  ): Promise<{ tree: FolderNode; flat: MdFile[] }> {
+  ): Promise<{ tree: FolderNode; flat: MdFile[]; emptyDirs: string[] }> {
     const flat: MdFile[] = [];
+    const emptyDirs: string[] = [];
     const discovered: Array<{
       handle: FileSystemFileHandle;
       relativePath: string;
@@ -29,7 +31,9 @@ export class BrowserScanner {
       if (!isCurrent()) return;
       // Typecast values iterator since TS types for FileSystemDirectoryHandle might vary
       const entries = (currentHandle as any).values();
+      let entryCount = 0;
       for await (const entry of entries) {
+        entryCount += 1;
         if (!isCurrent()) return;
         if (excludes.includes(entry.name)) continue;
 
@@ -44,12 +48,13 @@ export class BrowserScanner {
           }
         }
       }
+      if (entryCount === 0 && currentRelativePath) emptyDirs.push(currentRelativePath);
     }
 
     await traverse(rootHandle, '');
-    if (!isCurrent()) return { tree: BrowserScanner.buildTree([]), flat: [] };
+    if (!isCurrent()) return { tree: BrowserScanner.buildTree([]), flat: [], emptyDirs: [] };
     for (let index = 0; index < discovered.length; index += BrowserScanner.TITLE_CONCURRENCY) {
-      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat), flat };
+      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat, emptyDirs), flat, emptyDirs };
       const batch = discovered.slice(index, index + BrowserScanner.TITLE_CONCURRENCY);
       await Promise.all(
         batch.map(async file => {
@@ -61,13 +66,13 @@ export class BrowserScanner {
           return entry;
         }),
       );
-      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat), flat };
+      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat, emptyDirs), flat, emptyDirs };
       options.onProgress?.(flat.length);
     }
     flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
     if (discovered.length === 0) options.onProgress?.(0);
-    const tree = BrowserScanner.buildTree(flat);
-    return { tree, flat };
+    const tree = BrowserScanner.buildTree(flat, emptyDirs);
+    return { tree, flat, emptyDirs };
   }
 
   static async buildFileEntry(fileHandle: FileSystemFileHandle, relativePath: string): Promise<MdFile> {
@@ -150,36 +155,46 @@ export class BrowserScanner {
     return null;
   }
 
-  static buildTree(flat: MdFile[]): FolderNode {
+  static buildTree(flat: MdFile[], emptyDirs: readonly string[] = []): FolderNode {
     const root: FolderNode = { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
     const childIndexes = new WeakMap<FolderNode, Map<string, FolderNode>>();
+    const ensureChild = (node: FolderNode, name: string, childPath: string): FolderNode => {
+      let childIndex = childIndexes.get(node);
+      if (!childIndex) {
+        childIndex = new Map<string, FolderNode>();
+        childIndexes.set(node, childIndex);
+      }
+      let child = childIndex.get(name);
+      if (!child) {
+        child = { name, path: childPath, children: [], files: [], modifiedAt: 0 };
+        node.children.push(child);
+        childIndex.set(name, child);
+      }
+      return child;
+    };
 
     for (const file of flat) {
       let node = root;
       const modifiedAt = file.modifiedAt ?? 0;
       node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
       const dirs = file.parts.slice(0, -1);
-
       for (let i = 0; i < dirs.length; i++) {
-        const name = dirs[i];
-        let childIndex = childIndexes.get(node);
-        if (!childIndex) {
-          childIndex = new Map<string, FolderNode>();
-          childIndexes.set(node, childIndex);
-        }
-        let child = childIndex.get(name);
-        if (!child) {
-          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [], modifiedAt: 0 };
-          node.children.push(child);
-          childIndex.set(name, child);
-        }
-        node = child;
+        node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
         node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
       }
-
       node.files.push(file);
     }
 
+    for (const dirPath of emptyDirs) {
+      const dirs = dirPath.split('/').filter(Boolean);
+      let node = root;
+      for (let i = 0; i < dirs.length; i++) node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
+    }
+
     return root;
+  }
+
+  static hasEmptyFolder(node: FolderNode): boolean {
+    return treeHasEmptyFolder(node);
   }
 }

@@ -1,10 +1,11 @@
 // =============================================================================
 // website-app/src/virtual-workspace.ts
-// Builds a virtual MdFile[] + FolderNode tree from bundled test markdown files.
-// Vite's import.meta.glob with ?raw imports all manual-tests/*.md files as strings.
+// Seeds a simulated workspace from bundled Markdown, then restores browser-local changes.
 // =============================================================================
 
 import type { MdFile, FolderNode } from '../../ui/src/types';
+import { BrowserScanner } from '../../chromium-xtension/src/scanner';
+import { DemoEntryStore } from './demo-entry-store';
 
 // Vite glob import — all .md and .mdx files in the manual-tests directory, as raw strings.
 // The keys are relative paths like '../../manual-tests/test-basic.md'
@@ -39,12 +40,12 @@ function stripExtension(fileName: string): string {
 }
 
 function buildFileEntry(globKey: string, raw: string): MdFile {
-  // globKey: '../../test/test-basic.md' → fileName: 'test-basic.md'
+  // Paths may include simulated folders after create/rename operations.
   const fileName = globKey.split('/').pop()!;
   const ext = fileName.includes('.') ? ('.' + fileName.split('.').pop()!.toLowerCase()) : '';
   const isMdx = ext === '.mdx';
-  const relativePath = fileName; // flat — all test files are at root level
-  const parts = [fileName];
+  const relativePath = globKey;
+  const parts = relativePath.split('/');
   const title = extractTitle(raw, isMdx) || stripExtension(fileName);
 
   return {
@@ -59,33 +60,40 @@ function buildFileEntry(globKey: string, raw: string): MdFile {
   };
 }
 
-function buildTree(flat: MdFile[]): FolderNode {
-  return {
-    name: 'Test Workspace',
-    path: '',
-    children: [],
-    files: [...flat],
-    modifiedAt: Math.max(0, ...flat.map((file) => file.modifiedAt ?? 0)),
-  };
-}
-
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /** All virtual files as a flat list (sorted by fileName). */
-export const virtualFiles: MdFile[] = Object.entries(rawTestFiles)
-  .map(([key, raw]) => buildFileEntry(key, raw as string))
-  .sort((a, b) => a.fileName.localeCompare(b.fileName));
+export let virtualFiles: MdFile[] = [];
 
-/** Folder tree — single root node containing all test files. */
-export const virtualTree: FolderNode = buildTree(virtualFiles);
+/** Current folder tree, including simulated empty folders. */
+export let virtualTree: FolderNode;
 
 /** Map of relativePath → raw markdown string for fast lookup. */
-export const virtualContent = new Map<string, string>(
+const bundledContent = new Map<string, string>(
   Object.entries(rawTestFiles).map(([key, raw]) => {
     const fileName = key.split('/').pop()!;
     return [fileName, raw as string];
   }),
 );
+export const virtualContent = new Map<string, string>();
+export const demoEntryStore = new DemoEntryStore(
+  [...bundledContent.keys()].map(path => ({ path, kind: 'file', source: path })),
+  {
+    getItem: key => window.localStorage.getItem(key),
+    setItem: (key, value) => window.localStorage.setItem(key, value),
+  },
+);
+
+export function refreshVirtualWorkspace(): void {
+  virtualContent.clear();
+  for (const entry of demoEntryStore.entries) {
+    if (entry.kind === 'file') virtualContent.set(entry.path, entry.source ? bundledContent.get(entry.source) ?? '' : '');
+  }
+  virtualFiles = [...virtualContent].map(([path, raw]) => buildFileEntry(path, raw))
+    .sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+  virtualTree = { ...BrowserScanner.buildTree(virtualFiles, demoEntryStore.entries.filter(e => e.kind === 'folder').map(e => e.path)), name: 'Test Workspace' };
+}
+refreshVirtualWorkspace();
 
 /** Returns the raw markdown for a given relative path, or null if not found. */
 export function getVirtualContent(relativePath: string): string | null {

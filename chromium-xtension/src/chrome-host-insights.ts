@@ -74,7 +74,7 @@ async function getFileHandle(root: FileSystemDirectoryHandle, relativePath: stri
     for (let index = 0; index < parts.length - 1; index += 1) {
       directory = await directory.getDirectoryHandle(parts[index]);
     }
-    return await directory.getFileHandle(parts.at(-1)!);
+    return await directory.getFileHandle(parts[parts.length - 1]);
   } catch {
     return null;
   }
@@ -87,7 +87,7 @@ async function getAnyHandle(root: FileSystemDirectoryHandle, relativePath: strin
   let directory = root;
   try {
     for (let index = 0; index < parts.length - 1; index += 1) directory = await directory.getDirectoryHandle(parts[index]);
-    const name = parts.at(-1)!;
+    const name = parts[parts.length - 1];
     try { return await directory.getFileHandle(name); }
     catch { return await directory.getDirectoryHandle(name); }
   } catch {

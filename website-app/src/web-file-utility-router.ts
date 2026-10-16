@@ -4,6 +4,7 @@ import type { BrowserSearchIndex } from '../../chromium-xtension/src/search-inde
 import { readTextFile, writeFileHandle, writeTextFile } from '../../chromium-xtension/src/file-access';
 import { resolveWorkspaceTextResourcePath } from '../../chromium-xtension/src/chrome-host-utils';
 import { makeExcerpt } from './web-test-search';
+import { handleBrowserWorkspaceEntryCommand } from '../../chromium-xtension/src/workspace-entries';
 import { resolveWorkspaceSearchItems } from '../../chromium-xtension/src/workspace-search-items';
 import {
   MAX_WORKSPACE_SEARCH_RESULTS,
@@ -18,6 +19,8 @@ interface FileUtilityRouterDeps {
   getWorkspaceTree: () => FolderNode | null;
   getActiveHandle: () => FileSystemDirectoryHandle | null;
   send: (message: unknown) => void;
+  onRename?: (oldPath: string, newPath: string, origin: FileSystemDirectoryHandle | null) => void;
+  refreshWorkspace: () => Promise<void>;
   searchGeneration?: { value: number };
 }
 
@@ -88,6 +91,13 @@ export async function handleWebFileUtilityMessage(
   msg: any,
   deps: FileUtilityRouterDeps,
 ): Promise<boolean> {
+  if (await handleBrowserWorkspaceEntryCommand(msg, {
+    activeHandle: deps.getActiveHandle(),
+    send: deps.send,
+    onRename: deps.onRename,
+    refreshWorkspace: deps.refreshWorkspace,
+  })) return true;
+
   const flatList = deps.getFlatList();
 
   switch (msg.command) {
