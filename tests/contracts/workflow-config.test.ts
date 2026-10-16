@@ -70,7 +70,7 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).toContain('name: Build Electron Desktop Application');
     expect(workflow).toContain('pnpm run build:electron');
     expect(workflow).toContain('name: Build Tauri Desktop Application');
-    expect(workflow).toContain('os: [windows-latest, ubuntu-latest, macos-latest]');
+    expect(workflow).toContain('os: [windows-latest, ubuntu-22.04, macos-latest]');
     expect(workflow).toContain('cargo tauri build --bundles nsis');
     expect(workflow).toContain('cargo tauri build --bundles appimage,deb');
     expect(workflow).toContain('cargo tauri build --bundles app,dmg');
