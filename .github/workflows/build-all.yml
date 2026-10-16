@@ -134,7 +134,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # Build against the oldest supported glibc baseline for AppImage portability.
+        os: [windows-latest, ubuntu-22.04, macos-latest]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -167,6 +168,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: tauri
+          key: ${{ matrix.os }}
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --locked --version '^2'
