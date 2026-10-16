@@ -2,6 +2,9 @@ use super::*;
 
 impl Dispatcher {
     pub(super) async fn handle_workspace_command(&self, cmd: &str, msg: &Value) -> Result<bool, String> {
+        if self.handle_workspace_entry_command(cmd, msg).await {
+            return Ok(true);
+        }
         match cmd {
             // ── B1 handlers ──
             "openFolder" => {

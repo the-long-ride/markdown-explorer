@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-17T00:00:00+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: Build and Release Specification
 topic: Build commands, version synchronization, release artifacts, and verification
 document_type: quality
@@ -35,6 +35,8 @@ keywords:
 
 PR #48 / `feature/editor-git-history-split-view` targets **1.7.0**. The 1.7.0 target is intentionally above the separate 1.6.8 hot-fix line. It is still an unreleased/manual-validation target until the PR is explicitly approved and merged.
 
+The current application version is **1.7.1** (sidebar file operations). The Tauri build now pulls the `trash` crate from crates.io (`trash = "5"` in `tauri/Cargo.toml`) to move deleted entries to the OS Trash; it adds transitive dependencies, including a second `windows` crate generation in `tauri/Cargo.lock`. The real OS-Trash call is not exercised by the Rust unit tests (they inject the removal), so it needs a manual smoke test on a real desktop build.
+
 ## Main build commands
 
 | Command | Output |
@@ -55,7 +57,7 @@ PR #48 / `feature/editor-git-history-split-view` targets **1.7.0**. The 1.7.0 ta
 
 Root `package.json` is the authoritative application version. `prebuild`, `precompile`, and runtime prebuild scripts invoke `scripts/sync-versions.mjs`.
 
-For 1.7.0 the synchronized targets are:
+For 1.7.1 the synchronized targets are:
 
 - `ui/package.json`
 - `vscode/package.json`

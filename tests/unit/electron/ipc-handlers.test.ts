@@ -1,5 +1,7 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 const { registerIpcHandlers } = require('../../../electron/core/ipc-handlers.js');
@@ -459,6 +461,44 @@ describe('registerIpcHandlers', () => {
       expect(handlers.readRevisionFile).toHaveBeenCalledWith({ command: 'readRevisionFile', oid: 'abc123', path: 'README.md' });
     });
 
+    test('saveDocument', async () => {
+      const message = { command: 'saveDocument', requestId: 's1', filePath: '/ws/a.md', source: '# a', expectedRevision: null };
+      (handlers as any).saveDocument = vi.fn(() => Promise.resolve());
+      await registeredHandler(null, message);
+      expect((handlers as any).saveDocument).toHaveBeenCalledTimes(1);
+      expect((handlers as any).saveDocument).toHaveBeenCalledWith(message);
+    });
+
+    test('awaits saveDocument before the listener resolves', async () => {
+      const order: string[] = [];
+      (handlers as any).saveDocument = vi.fn(async () => { await Promise.resolve(); order.push('saved'); });
+      await registeredHandler(null, { command: 'saveDocument', requestId: 's2', filePath: '/ws/a.md', source: '', expectedRevision: null });
+      expect(order).toEqual(['saved']);
+    });
+
+    test('safely handles a missing saveDocument handler without rejection', async () => {
+      await expect(registeredHandler(null, { command: 'saveDocument' })).resolves.not.toThrow();
+    });
+
+    test('createWorkspaceEntry', async () => {
+      const message = { command: 'createWorkspaceEntry', requestId: 'r1', parentPath: '', name: 'a.md', kind: 'file' };
+      (handlers as any).createWorkspaceEntry = vi.fn(() => Promise.resolve());
+      await registeredHandler(null, message);
+      expect((handlers as any).createWorkspaceEntry).toHaveBeenCalledWith(message);
+    });
+
+    test('deleteWorkspaceEntries', async () => {
+      const message = { command: 'deleteWorkspaceEntries', requestId: 'r2', paths: ['a.md'] };
+      (handlers as any).deleteWorkspaceEntries = vi.fn(() => Promise.resolve());
+      await registeredHandler(null, message);
+      expect((handlers as any).deleteWorkspaceEntries).toHaveBeenCalledWith(message);
+    });
+
+    test('safely handles missing workspace entry handlers without rejection', async () => {
+      await expect(registeredHandler(null, { command: 'createWorkspaceEntry' })).resolves.not.toThrow();
+      await expect(registeredHandler(null, { command: 'deleteWorkspaceEntries' })).resolves.not.toThrow();
+    });
+
     test('safely handles missing git history handlers without rejection', async () => {
       delete (handlers as any).listRepositoryHistory;
       delete (handlers as any).listRevisionFiles;
@@ -466,6 +506,33 @@ describe('registerIpcHandlers', () => {
       await expect(registeredHandler(null, { command: 'listRepositoryHistory' })).resolves.not.toThrow();
       await expect(registeredHandler(null, { command: 'listRevisionFiles' })).resolves.not.toThrow();
       await expect(registeredHandler(null, { command: 'readRevisionFile' })).resolves.not.toThrow();
+    });
+  });
+
+  describe('bootstrap handler wiring', () => {
+    const read = (relPath: string) => readFileSync(path.resolve(__dirname, '../../..', relPath), 'utf8').replace(/\r\n/g, '\n');
+
+    // Keys of the `handlers: { ... }` object that main-bootstrap hands to registerIpcHandlers.
+    function bootstrapHandlerKeys(): string[] {
+      const lines = read('electron/core/main-bootstrap.js').split('\n');
+      const start = lines.findIndex((line) => /^ {8}handlers: \{$/.test(line));
+      expect(start).toBeGreaterThan(-1);
+      const keys: string[] = [];
+      for (const line of lines.slice(start + 1)) {
+        if (/^ {8}\},?$/.test(line)) break;
+        const match = /^ {10}(\w+)\s*[:,]/.exec(line);
+        if (match) keys.push(match[1]);
+      }
+      return keys;
+    }
+
+    test('every handler wired in main-bootstrap is dispatched by ipc-handlers', () => {
+      const keys = bootstrapHandlerKeys();
+      expect(keys).toContain('saveDocument');
+      expect(keys.length).toBeGreaterThan(40);
+      const ipcSource = read('electron/core/ipc-handlers.js');
+      const unused = keys.filter((key) => !new RegExp('handlers\\.' + key + '\\b').test(ipcSource));
+      expect(unused).toEqual([]);
     });
   });
 });

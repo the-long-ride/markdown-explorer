@@ -1,10 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { hostMessages, webviewMessages } from '../fixtures/messages';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 const uiTypes = await import('../../ui/src/types.ts');
 const vscodeTypes = await import('../../vscode/src/types.ts');
 const require = createRequire(import.meta.url);
+const repoRoot = path.resolve(__dirname, '../..');
 const ipcHandlers = require('../../electron/core/ipc-handlers.js');
 
 type UiHostMessage = typeof uiTypes.HostMessage;
@@ -17,18 +20,20 @@ const UI_HOST_COMMANDS: (UiHostMessage extends { command: infer C }[] ? C : neve
   'recentWorkspacesChanged', 'navNotFound', 'workspaceUnavailable', 'setLoading', 'workspaceScanProgress',
   'updateStateChanged', 'window-state-changed', 'crossTabSearchResults',
   'workspaceSearchResults', 'workspaceSearchIndexLoaded', 'desktopFontsResult',
-  'chartPngSaveResult',
+  'chartPngSaveResult', 'createWorkspaceEntryResult', 'renameWorkspaceEntryResult', 'deleteWorkspaceEntriesResult',
 ] as string[] as never[];
 
 const VSCODE_HOST_COMMANDS: string[] = [
   'renderContent', 'readyAck', 'navNotFound', 'setLoading', 'workspaceSearchResults',
   'workspaceFilesChanged', 'currentFileChanged', 'desktopFontsResult',
+  'createWorkspaceEntryResult', 'renameWorkspaceEntryResult', 'deleteWorkspaceEntriesResult',
 ];
 
 const CHROMIUM_HOST_COMMANDS: string[] = [
   'readyAck', 'renderContent', 'setLoading', 'workspaceFilesChanged',
   'recentWorkspacesChanged', 'workspaceUnavailable', 'workspaceSearchResults',
   'workspaceSearchIndexLoaded', 'currentFileChanged', 'workspaceScanProgress',
+  'createWorkspaceEntryResult', 'renameWorkspaceEntryResult', 'deleteWorkspaceEntriesResult',
 ];
 
 const DESKTOP_WEBVIEW_COMMANDS: string[] = [
@@ -40,6 +45,7 @@ const DESKTOP_WEBVIEW_COMMANDS: string[] = [
   'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont', 'downloadUpdate',
   'scheduleDownloadedUpdate', 'restartAndApplyUpdate', 'window-minimize',
   'window-maximize', 'window-close', 'toggle-fullscreen',
+  'createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries',
 ];
 
 const VSCODE_WEBVIEW_COMMANDS: string[] = [
@@ -48,12 +54,14 @@ const VSCODE_WEBVIEW_COMMANDS: string[] = [
   'openFolder', 'openFile', 'openPath', 'confirmOpenPath',
   'openRecentWorkspace', 'closeWorkspace', 'deleteRecentWorkspace',
   'listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont',
+  'createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries',
 ];
 
 const CHROMIUM_WEBVIEW_COMMANDS: string[] = [
   'ready', 'openFolder', 'openRecentWorkspace', 'activateWorkspace', 'deleteRecentWorkspace',
   'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'navigate', 'refresh', 'searchWorkspace',
   'loadWorkspaceSearchIndexes', 'indexWorkspaceSearchItems', 'openExternal',
+  'createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries',
 ];
 
 describe('host-message parity', () => {
@@ -76,6 +84,7 @@ describe('host-message parity', () => {
       'openExternal', 'openHtmlPreview', 'refresh', 'setDocumentConversion', 'listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont', 'updateAppearance',
       'downloadUpdate', 'scheduleDownloadedUpdate', 'restartAndApplyUpdate',
       'window-minimize', 'window-maximize', 'window-close', 'toggle-fullscreen',
+      'createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries',
     ];
 
     for (const cmd of UI_WEBVIEW_COMMANDS) {
@@ -254,6 +263,9 @@ describe('host-message parity', () => {
         openHtmlPreview: () => webviewMessages.openHtmlPreview(),
         replaceRecentWorkspaces: () => webviewMessages.replaceRecentWorkspaces([]),
         downloadUpdate: () => webviewMessages.downloadUpdate(),
+        createWorkspaceEntry: () => webviewMessages.createWorkspaceEntry(),
+        renameWorkspaceEntry: () => webviewMessages.renameWorkspaceEntry(),
+        deleteWorkspaceEntries: () => webviewMessages.deleteWorkspaceEntries(),
       };
       for (const [key, factory] of Object.entries(simpleFactories)) {
         const msg = factory();
@@ -302,6 +314,48 @@ describe('host-message parity', () => {
       const msg = webviewMessages.searchWorkspace('test');
       expect(msg).toHaveProperty('query');
       expect(msg).toHaveProperty('requestId');
+    });
+  });
+
+  describe('workspace entry commands are handled by every runtime', () => {
+    const WORKSPACE_ENTRY_COMMANDS = ['createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries'];
+    const RESULT_COMMANDS = ['createWorkspaceEntryResult', 'renameWorkspaceEntryResult', 'deleteWorkspaceEntriesResult'];
+    const read = (relPath: string) => readFileSync(path.join(repoRoot, relPath), 'utf8');
+    const RUNTIME_SOURCES: Record<string, string[]> = {
+      desktop: ['electron/core/ipc-handlers.js', 'electron/workspace/workspace-entries.js'],
+      vscode: ['vscode/src/core/panelWorkspaceEntries.ts'],
+      tauri: ['tauri/src/dispatcher/workspace_entries.rs'],
+      chromium: ['chromium-xtension/src/workspace-entries.ts'],
+    };
+
+    for (const [runtime, files] of Object.entries(RUNTIME_SOURCES)) {
+      test(`${runtime} handles both commands and replies with both results`, () => {
+        const source = files.map(read).join('\n');
+        for (const command of [...WORKSPACE_ENTRY_COMMANDS, ...RESULT_COMMANDS]) expect(source).toContain(command);
+      });
+    }
+
+    test('every runtime lists both commands as handled webview messages', () => {
+      for (const list of [DESKTOP_WEBVIEW_COMMANDS, VSCODE_WEBVIEW_COMMANDS, CHROMIUM_WEBVIEW_COMMANDS]) {
+        for (const command of WORKSPACE_ENTRY_COMMANDS) expect(list).toContain(command);
+      }
+    });
+
+    test('the Chromium extension and the website both route the commands through the shared browser handler', () => {
+      expect(read('chromium-xtension/src/chrome-host-search.ts')).toContain('handleBrowserWorkspaceEntryCommand');
+      expect(read('website-app/src/web-file-utility-router.ts')).toContain('handleBrowserWorkspaceEntryCommand');
+    });
+
+    test('deletes go to the trash on desktop, VS Code and Tauri but are permanent in browsers', () => {
+      for (const file of ['electron/workspace/workspace-entries.js', 'vscode/src/core/panelWorkspaceEntries.ts', 'tauri/src/dispatcher/workspace_entries.rs']) {
+        expect(read(file)).toMatch(/["']trash["']/);
+      }
+      expect(read('chromium-xtension/src/workspace-entries.ts')).toContain("mode: 'permanent'");
+    });
+
+    test('result fixtures match the protocol shapes', () => {
+      expect(hostMessages.createWorkspaceEntryResult()).toMatchObject({ command: 'createWorkspaceEntryResult', ok: true });
+      expect(hostMessages.deleteWorkspaceEntriesResult()).toMatchObject({ command: 'deleteWorkspaceEntriesResult', deleted: ['old.md'], failed: [] });
     });
   });
 

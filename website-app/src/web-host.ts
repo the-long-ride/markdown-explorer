@@ -88,7 +88,7 @@ const testState = {
   set currentFile(value: string | null) { currentFile = value; },
 };
 
-const { sendTestReady, sendTestContent } = createTestModeHandlers({
+const { sendTestReady, sendTestContent, refreshTestWorkspace } = createTestModeHandlers({
   send,
   state: testState,
   hostInfo,
@@ -135,6 +135,33 @@ const {
   cancelAllWorkspaceScans,
 } = fileModeHandlers;
 
+let rescanGeneration = 0;
+
+/** Returns null (and writes no state) when the workspace changed or a newer rescan started meanwhile. */
+async function rescanWorkspace(handle: FileSystemDirectoryHandle) {
+  const generation = ++rescanGeneration;
+  const { tree, flat } = await BrowserScanner.scan(handle);
+  if (activeHandle !== handle || generation !== rescanGeneration) return null;
+  flatList = flat;
+  workspaceTree = tree;
+  if (!searchIndex) searchIndex = new BrowserSearchIndex(handle);
+  searchIndex.prime(flat);
+  return { tree, flat };
+}
+
+/** Rescans after a host-side entry change and pushes the fresh tree (empty folders included) to the UI. */
+async function refreshWorkspaceTree(): Promise<void> {
+  const handle = activeHandle;
+  if (!handle) return;
+  const scanned = await rescanWorkspace(handle);
+  if (!scanned) return;
+  const { tree, flat } = scanned;
+  send({
+    command: 'workspaceFilesChanged', fileList: flat, tree,
+    workspaceName: activeWorkspaceName, workspacePath: activeWorkspacePath, documentConversionEnabled: false,
+  });
+}
+
 bus.addEventListener('webview-message', async (e: Event) => {
   const msg = (e as CustomEvent).detail;
   if (!msg) return;
@@ -146,10 +173,12 @@ bus.addEventListener('webview-message', async (e: Event) => {
       getReadyHandled: () => readyHandled,
       setReadyHandled: value => { readyHandled = value; },
       setCurrentFile: path => { currentFile = path; },
+      getCurrentFile: () => currentFile,
       getFlatList: () => flatList,
       send,
       sendTestReady,
       sendTestContent,
+      refreshTestWorkspace,
       searchGeneration: workspaceSearchGeneration,
     });
     return;
@@ -164,6 +193,11 @@ bus.addEventListener('webview-message', async (e: Event) => {
     getWorkspaceTree: () => workspaceTree,
     getActiveHandle: () => activeHandle,
     send,
+    onRename: (oldPath, newPath, origin) => {
+      if (activeHandle !== origin) return;
+      if (currentFile === oldPath || currentFile?.startsWith(oldPath + '/')) currentFile = newPath + currentFile.slice(oldPath.length);
+    },
+    refreshWorkspace: refreshWorkspaceTree,
     searchGeneration: workspaceSearchGeneration,
   })) return;
 
@@ -361,11 +395,9 @@ bus.addEventListener('webview-message', async (e: Event) => {
     case 'refresh': {
       if (activeHandle) {
         sendLoading('Refreshing workspace…');
-        const { tree, flat } = await BrowserScanner.scan(activeHandle);
-        flatList = flat;
-        workspaceTree = tree;
-        if (!searchIndex) searchIndex = new BrowserSearchIndex(activeHandle);
-        searchIndex.prime(flat);
+        const scanned = await rescanWorkspace(activeHandle);
+        if (!scanned) break;
+        const { tree, flat } = scanned;
         const recents = await BrowserRecentWorkspaces.load();
         send({
           command: 'readyAck',

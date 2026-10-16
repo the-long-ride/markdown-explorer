@@ -286,12 +286,8 @@
   transform: rotate(90deg);
 }
 
-.bookmark-item > input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 auto;
-  accent-color: var(--accent);
-  cursor: pointer;
+.bookmarks-panel__actions {
+  align-items: center;
 }
 
 .bookmark-item.is-selected {

@@ -10,7 +10,7 @@ import {
   writeFileHandle,
   type BrowserDocumentWriteResult,
 } from '../../chromium-xtension/src/file-access';
-import { nextIncrementalPublishCount } from '../../chromium-xtension/src/incremental-publish';
+import { nextIncrementalPublishCount, treeHasEmptyFolder } from '../../chromium-xtension/src/incremental-publish';
 import type { MdFile, FolderNode } from '../../ui/src/types';
 
 type WorkspaceOperationMetadata = {
@@ -191,7 +191,7 @@ async function loadHandleWorkspace(
   const recents = await recentsPromise;
   if (!isWorkspaceScanCurrent(request)) return false;
   if (revealed) {
-    if (lastPublishedCount !== flat.length) {
+    if (lastPublishedCount !== flat.length || treeHasEmptyFolder(tree)) {
       send({
         command: 'workspaceFilesChanged', fileList: flat, tree,
         workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,

@@ -75,4 +75,36 @@ describe('scanWorkspaceIncrementally', () => {
     expect(reveals).toHaveLength(1);
     expect(reveals[0].fileList).toEqual([]);
   });
+
+  it('forces a final publish when the completed tree has an empty folder', async () => {
+    vi.useFakeTimers();
+    let resolveScan!: (result: any) => void;
+    let callbacks!: { onFile(file: any, count: number): void; onProgress(count: number): void };
+    scan.mockImplementationOnce((_handle: any, options: typeof callbacks) => {
+      callbacks = options;
+      return new Promise(resolve => { resolveScan = resolve; });
+    });
+    const changes: any[] = [];
+    const pending = scanWorkspaceIncrementally({
+      handle: {} as FileSystemDirectoryHandle,
+      isCurrent: () => true,
+      onProgress: vi.fn(),
+      onReveal: vi.fn(),
+      onChanged: snapshot => { changes.push(snapshot); },
+    });
+    await vi.advanceTimersByTimeAsync(WORKSPACE_SCAN_REVEAL_DELAY_MS);
+    const first = makeFile(0);
+    callbacks.onFile(first, 1);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const tree = {
+      name: 'root', path: '', files: [first],
+      children: [{ name: 'blank', path: 'blank', files: [], children: [] }],
+    };
+    resolveScan({ tree, flat: [first], emptyDirs: ['blank'] });
+    await pending;
+    expect(changes).toHaveLength(1);
+    expect(changes[0].tree).toBe(tree);
+  });
 });

@@ -83,7 +83,7 @@
   color: var(--danger);
 }
 
-.sidebar-clear-pins-dialog__backdrop {
+.sidebar-confirm-dialog__backdrop {
   position: fixed;
   z-index: 100001;
   inset: 0;
@@ -93,7 +93,7 @@
   background: var(--modal-bg);
 }
 
-.sidebar-clear-pins-dialog {
+.sidebar-confirm-dialog {
   display: grid;
   gap: 12px;
   width: min(420px, 100%);
@@ -105,37 +105,186 @@
   box-shadow: var(--sh-lg);
 }
 
-.sidebar-clear-pins-dialog h2 {
+.sidebar-confirm-dialog h2 {
   margin: 0;
   font-size: 17px;
 }
 
-.sidebar-clear-pins-dialog p {
+.sidebar-confirm-dialog p {
   color: var(--tx2);
   font-size: 13px;
   line-height: 1.5;
 }
 
-.sidebar-clear-pins-dialog__actions {
+.sidebar-confirm-dialog__actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
 
-.sidebar-clear-pins-dialog__actions .btn {
+.sidebar-confirm-dialog__actions .btn {
   min-height: 34px;
   padding-inline: 12px;
 }
 
-.sidebar-clear-pins-dialog__confirm {
+.sidebar-confirm-dialog__confirm {
   border-color: color-mix(in srgb, var(--warning) 55%, var(--bd-s));
   color: var(--warning);
 }
 
-.sidebar-clear-pins-dialog__confirm:hover,
-.sidebar-clear-pins-dialog__confirm:focus-visible {
+.sidebar-confirm-dialog__confirm:hover,
+.sidebar-confirm-dialog__confirm:focus-visible {
   border-color: var(--warning);
   background: color-mix(in srgb, var(--warning) 12%, var(--bg-e));
   color: var(--warning);
 }
 
+.sidebar-confirm-dialog__list {
+  margin: 0;
+  padding-left: 18px;
+  max-height: 140px;
+  overflow: auto;
+  color: var(--tx2);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.sidebar-confirm-dialog__more {
+  list-style: none;
+  margin-left: -18px;
+  color: var(--tx3, var(--tx2));
+}
+
+.sidebar-confirm-dialog p.sidebar-confirm-dialog__warning {
+  margin: 0;
+  color: var(--warning);
+  font-size: 12px;
+}
+
+.sidebar-confirm-dialog--destructive .sidebar-confirm-dialog__confirm.is-destructive {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.sidebar-confirm-dialog--destructive .sidebar-confirm-dialog__confirm.is-destructive:hover,
+.sidebar-confirm-dialog--destructive .sidebar-confirm-dialog__confirm.is-destructive:focus-visible {
+  background: color-mix(in srgb, var(--danger) 85%, #000);
+  border-color: color-mix(in srgb, var(--danger) 85%, #000);
+  color: #fff;
+}
+.sidebar__files-action-group--left {
+  margin-right: auto;
+}
+
+.sidebar__files-action-group--right {
+  margin-left: auto;
+}
+
+.sidebar__files-actions--selection {
+  justify-content: flex-start;
+}
+
+.sidebar__files-actions--selection .sidebar__selection-count {
+  margin-left: auto;
+}
+
+.sidebar__files-action--delete-selected:hover:not(:disabled),
+.sidebar__files-action--delete-selected:focus-visible {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--bd-s));
+}
+
+.sidebar__selection-count {
+  font-size: 11px;
+  color: var(--tx3, var(--tx2));
+  margin: 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-entry-checkbox {
+  margin: 0 6px 0 0;
+  flex: 0 0 auto;
+}
+
+.tree-file.is-selected,
+.tree-folder__header.is-selected {
+  background: var(--sidebar-item-selected-bg, var(--accent-dim));
+  color: var(--tx);
+}
+
+.sidebar-entry-input {
+  padding: 2px 8px 4px;
+}
+
+.sidebar-entry-input__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tx2);
+}
+
+.sidebar-entry-input__row input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 2px 6px;
+  border: var(--stroke-w, 1px) solid var(--accent);
+  border-radius: var(--r-s, var(--r));
+  background: var(--bg-e, var(--bg));
+  color: var(--tx);
+}
+
+.sidebar-entry-input__row input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, none);
+}
+
+.sidebar-entry-input__row input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.sidebar-entry-input__message {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--tx3, var(--tx2));
+}
+
+.sidebar-entry-input__message.is-error {
+  color: var(--danger);
+}
+
+.tree-file.is-entry-focused,
+.tree-folder__header.is-entry-focused {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, var(--bd-s));
+}
+
+.sidebar-entry-rename {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-entry-rename input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1px 4px;
+  border: var(--stroke-w, 1px) solid var(--accent);
+  border-radius: var(--r-s);
+  font: inherit;
+  color: var(--tx);
+  background: var(--bg-e);
+}
+
+.sidebar-entry-rename input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.sidebar-delete-dialog__permanent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  font-size: 12px;
+  cursor: pointer;
+}

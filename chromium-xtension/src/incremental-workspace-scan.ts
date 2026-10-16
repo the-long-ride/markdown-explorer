@@ -1,6 +1,6 @@
 import type { FolderNode, MdFile } from '../../ui/src/types';
 import { BrowserScanner } from './scanner';
-import { nextIncrementalPublishCount } from './incremental-publish';
+import { nextIncrementalPublishCount, treeHasEmptyFolder } from './incremental-publish';
 
 export const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
 export const WORKSPACE_SCAN_BATCH_SIZE = 32;
@@ -78,7 +78,7 @@ export async function scanWorkspaceIncrementally({
   if (revealPromise) await revealPromise;
   if (!isCurrent()) return null;
   if (revealed) {
-    if (lastPublishedCount !== result.flat.length) onChanged({ fileList: result.flat, tree: result.tree });
+    if (lastPublishedCount !== result.flat.length || treeHasEmptyFolder(result.tree)) onChanged({ fileList: result.flat, tree: result.tree });
   } else {
     await onReveal({ fileList: result.flat, tree: result.tree });
   }

@@ -1,6 +1,6 @@
 {
   "name": "markdown-explorer-electron",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Markdown Explorer - Transforms your markdown documents into a premium, interactive web-app experience.",
   "homepage": "https://github.com/the-long-ride/markdown-explorer",
   "author": {
@@ -29,7 +29,7 @@
     "appId": "com.thelongride.markdownexplorer",
     "productName": "Markdown Explorer",
     "copyright": "Copyright © 2026 the-long-ride",
-    "electronVersion": "43.2.0",
+    "electronVersion": "43.5.0",
     "directories": {
       "output": "dist"
     },

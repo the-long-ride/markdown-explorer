@@ -128,6 +128,25 @@ export const hostMessages = {
     path: '/tmp/chart.png',
     ...overrides,
   }),
+  renameWorkspaceEntryResult: (overrides = {}) => ({
+    command: 'renameWorkspaceEntryResult' as const, requestId: 'rename-1', ok: true, oldPath: 'old.md', path: 'new.md', kind: 'file', ...overrides,
+  }),
+  createWorkspaceEntryResult: (overrides = {}) => ({
+    command: 'createWorkspaceEntryResult' as const,
+    requestId: 'entry-1',
+    ok: true,
+    kind: 'file',
+    path: 'notes/new.md',
+    ...overrides,
+  }),
+  deleteWorkspaceEntriesResult: (overrides = {}) => ({
+    command: 'deleteWorkspaceEntriesResult' as const,
+    requestId: 'entry-2',
+    mode: 'trash',
+    deleted: ['old.md'],
+    failed: [],
+    ...overrides,
+  }),
 };
 
 export const webviewMessages = {
@@ -326,6 +345,23 @@ export const webviewMessages = {
   }),
   toggleFullscreen: (overrides = {}) => ({
     command: 'toggle-fullscreen' as const,
+    ...overrides,
+  }),
+  renameWorkspaceEntry: (overrides = {}) => ({
+    command: 'renameWorkspaceEntry' as const, requestId: 'rename-1', path: 'old.md', name: 'new.md', kind: 'file', ...overrides,
+  }),
+  createWorkspaceEntry: (overrides = {}) => ({
+    command: 'createWorkspaceEntry' as const,
+    requestId: 'entry-1',
+    parentPath: 'notes',
+    name: 'new.md',
+    kind: 'file',
+    ...overrides,
+  }),
+  deleteWorkspaceEntries: (overrides = {}) => ({
+    command: 'deleteWorkspaceEntries' as const,
+    requestId: 'entry-2',
+    paths: ['old.md'],
     ...overrides,
   }),
 };

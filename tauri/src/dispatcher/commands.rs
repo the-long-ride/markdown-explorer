@@ -2,6 +2,8 @@ use super::*;
 
 #[path = "document_write.rs"]
 pub(super) mod document_write;
+#[path = "workspace_entries.rs"]
+pub(super) mod workspace_entries;
 #[path = "git_history.rs"]
 mod git_history;
 

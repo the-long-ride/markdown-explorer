@@ -348,7 +348,10 @@ mod tests {
         let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let root = std::env::temp_dir().join(format!("md-explorer-tauri-history-{}-{nonce}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
-        git(&root, &["init"]); git(&root, &["config", "user.name", "Markdown Explorer Tests"]); git(&root, &["config", "user.email", "tests@example.invalid"]);
+        git(&root, &["init"]);
+        // Only use this disposable repository's sample hooks, not personal global hooks.
+        git(&root, &["config", "core.hooksPath", root.join(".git/hooks").to_str().unwrap()]);
+        git(&root, &["config", "user.name", "Markdown Explorer Tests"]); git(&root, &["config", "user.email", "tests@example.invalid"]);
         TempRepo(root)
     }
 

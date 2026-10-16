@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-17T00:00:00+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: Host-to-UI Message Catalog
 topic: Exact active `HostMessage` command catalog
 document_type: reference
@@ -16,10 +16,12 @@ source_scope:
 - ui/src/types/content.ts
 - ui/src/history/contracts.ts
 - ui/src/insights/contracts.ts
+- ui/src/workspace/workspaceEntriesClient.ts
 test_scope:
 - tests/contracts/host-message-parity.test.ts
 - tests/contracts/tauri-host-message-parity.test.ts
 - tests/node/repository-history-pagination-contract.test.mjs
+- tests/unit/ui/workspace/workspace-entries-client.test.ts
 runtime_scope:
 - shared
 keywords:
@@ -35,13 +37,16 @@ keywords:
 
 ## Contract count
 
-**39 active messages** are extracted from `ui/src/types/hostMessages.ts` and `ui/src/types/content.ts`.
+**41 active messages** are extracted from `ui/src/types/hostMessages.ts` and `ui/src/types/content.ts`.
 
 | Command | Interface and payload |
 |---|---|
 | `chartPngSaveResult` | `ChartPngSaveResultMessage` — ok: boolean, path?: string, error?: string, requestId?: string |
+| `renameWorkspaceEntryResult` | `RenameWorkspaceEntryResultMessage` — requestId, ok, oldPath?, path?, kind?, reason?, error? |
+| `createWorkspaceEntryResult` | `CreateWorkspaceEntryResultMessage` — requestId: string, ok: boolean, path?: string, kind?: 'file' \| 'folder', reason?: WorkspaceEntryFailureReason, error?: string |
 | `crossTabSearchResults` | `CrossTabSearchResultsMessage` — requestId: string, results: readonly CrossTabSearchResult[], done?: boolean, total?: number, truncated?: boolean, cancelled?: boolean, error?: string |
 | `currentFileChanged` | `CurrentFileChangedMessage` — workspaceOperationId?: string, workspaceTabId?: string, filePath: string |
+| `deleteWorkspaceEntriesResult` | `DeleteWorkspaceEntriesResultMessage` — requestId: string, mode: 'trash' \| 'permanent', deleted: string[], failed: { path, reason }[] |
 | `desktopFontsResult` | `DesktopFontsResultMessage` — requestId: string, fonts: readonly DesktopFontFamily[], importedId?: string, error?: string |
 | `documentHistoryResult` | `DocumentHistoryResultMessage` — requestId: string, ok: boolean, revisions: readonly GitRevisionSummary[], reason?: string |
 | `externalLinkCheckComplete` | `ExternalLinkCheckCompleteMessage` — requestId: string, cancelled: boolean |
@@ -96,6 +101,13 @@ keywords:
 - A successful save returns the new revision token.
 - A conflict returns the current disk source/revision so the UI can Reload, Compare, or explicitly force-save after user choice.
 
+## Workspace entry response rules
+
+- `createWorkspaceEntryResult` and `deleteWorkspaceEntriesResult` are correlated by `requestId`. Hosts send the refreshed tree (`workspaceFilesChanged`/`readyAck`) before a successful result.
+- A create success carries the new workspace-relative `path` and its `kind`; a failure carries a `reason` (and optionally a host `error` string). `WorkspaceEntryFailureReason` is `exists | invalid-name | outside-workspace | protected | missing | permission-denied | unsupported | failed`.
+- A delete result always reports the `mode` the host used (`trash` on Electron, VS Code, Tauri; `permanent` on Chromium and website file mode), the paths it removed in `deleted`, and every other requested path in `failed` with a per-path reason. A partial failure is not an error result.
+- Results are sent unscoped (no `workspaceOperationId`); the UI matches them by `requestId` only.
+
 ## Workspace Insights response rules
 
 - Insights scan/source/probe/link messages preserve `requestId`; filesystem deltas may additionally preserve `workspaceOperationId`.
@@ -130,6 +142,12 @@ const message = {
 };
 ```
 
+## Entry rename and workspace identity
+
+- `renameWorkspaceEntryResult`: `{ requestId, ok, oldPath?, path?, kind?, reason?, error? }`. Native/browser paths are relative; the client captures origin workspace identity for migration and reconciles late successful results after timeout.
+- `deleteWorkspaceEntriesResult` reports explicit `mode`, confirmed `deleted` paths and independent `failed` paths. Only confirmed removals close/discard tabs and clear pins.
+- VS Code `readyAck` and `workspaceFilesChanged` include `workspacePath`, including progressive scans and watcher refreshes. Without that identity the shared UI cannot enable folder operations correctly.
+
 ## Source traceability
 
 | Kind | Path | Purpose |
@@ -139,9 +157,11 @@ const message = {
 | Implementation | `ui/src/history/contracts.ts` | Git history and repository snapshot response models |
 | Implementation | `ui/src/contexts/RepositorySnapshotContext.tsx` | Page append/de-duplication, exhaustion, and persisted-revision restore |
 | Implementation | `ui/src/insights/contracts.ts` | Workspace Insights response models |
+| Implementation | `ui/src/workspace/workspaceEntriesClient.ts` | Create/delete result matching and timeout results |
 | Verification | `tests/contracts/host-message-parity.test.ts` | Automated expectation |
 | Verification | `tests/contracts/tauri-host-message-parity.test.ts` | Automated expectation |
 | Verification | `tests/node/repository-history-pagination-contract.test.mjs` | Cross-runtime pagination behavior |
+| Verification | `tests/unit/ui/workspace/workspace-entries-client.test.ts` | Create/delete result correlation |
 
 ---
 

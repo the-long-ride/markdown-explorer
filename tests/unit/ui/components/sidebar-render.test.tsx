@@ -110,6 +110,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   FolderIcon: () => <span>folder-icon</span>,
   CollapseIcon: () => <span>collapse-icon</span>,
   ExpandIcon: () => <span>expand-icon</span>,
+  PlusIcon: () => <span>plus-icon</span>,
 }));
 
 describe('Sidebar render', () => {
@@ -568,11 +569,14 @@ describe('Sidebar render', () => {
     expect(document.querySelector('.sidebar__scope')).toBeInTheDocument();
   });
 
-  it('renders locate, collapse, expand, sort, and clear-pins actions in one Files toolbar', () => {
+  it('renders create, select, locate, collapse, expand, sort, and clear-pins actions in one Files toolbar', () => {
     render(<Sidebar />);
     const toolbar = document.querySelector('.sidebar__files-actions');
     expect(toolbar).toBeInTheDocument();
-    expect(toolbar?.querySelectorAll('.sidebar__files-action')).toHaveLength(5);
+    expect(toolbar?.querySelectorAll('.sidebar__files-action')).toHaveLength(8);
+    for (const name of ['new-file', 'new-folder', 'select']) {
+      expect(toolbar?.querySelector(`.sidebar__files-action--${name}`)).toBeInTheDocument();
+    }
     expect(screen.getByRole('button', { name: 'Collapse all folders' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Expand all folders' })).toBeInTheDocument();
   });

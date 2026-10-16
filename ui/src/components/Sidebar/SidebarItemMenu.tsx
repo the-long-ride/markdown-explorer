@@ -93,7 +93,10 @@ export function SidebarItemMenu({
       onClose();
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Escape') return;
+      // Mark the key handled so window-level Escape handlers (selection mode) do not act on it too.
+      event.preventDefault();
+      onClose();
     };
     const handleScrollOrResize = () => onClose();
     document.addEventListener('pointerdown', handlePointerDown, true);

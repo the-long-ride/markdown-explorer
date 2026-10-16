@@ -10,7 +10,7 @@ import {
 import { scanWorkspaceIncrementally } from "./incremental-workspace-scan";
 import { renderMarkdown } from "./markdown-renderer";
 import { BrowserSearchIndex } from "./search-index";
-import { BrowserRecentWorkspaces } from "./recent-workspaces";
+import { BrowserRecentWorkspaces, recentWorkspacesChangedMessage } from "./recent-workspaces";
 import { rewriteMediaUrls, revokeAll } from "./media-resolver";
 import type { MdFile, FolderNode } from "../../ui/src/types";
 import { createEmptyWorkspaceReadyAck, createWelcomeMessage, extractWorkspaceName, findFileInfo, getHostInfo, shouldOpenFirstFile } from "./chrome-host-utils";
@@ -63,11 +63,7 @@ export function sendLoading(label: string, detail?: string) {
 }
 
 async function sendRecentWorkspacesChanged() {
-  const recents = await BrowserRecentWorkspaces.load();
-  sendToWebview({
-    command: "recentWorkspacesChanged",
-    recentWorkspaces: recents,
-  });
+  sendToWebview(await recentWorkspacesChangedMessage());
 }
 
 export function resetWorkspaceState(): void {
@@ -246,7 +242,10 @@ bus.addEventListener("webview-message", async (e: Event) => {
   if (!msg) return;
 
   if (await handleBrowserFontHostCommand(msg, sendToWebview)) return;
-  if (await handleChromeHostUtilityCommand(msg, { searchIndex, flatList, workspaceTree, activeWorkspacePath, activeHandle, send: sendToWebview, readText: readTextFile, searchGeneration: workspaceSearchGeneration })) return;
+  if (await handleChromeHostUtilityCommand(msg, { searchIndex, flatList, workspaceTree, activeWorkspacePath, activeHandle, send: sendToWebview, readText: readTextFile, searchGeneration: workspaceSearchGeneration, onRename: (oldPath, newPath, origin) => {
+    if (activeHandle !== origin) return;
+    if (currentFile === oldPath || currentFile?.startsWith(oldPath + '/')) currentFile = newPath + currentFile.slice(oldPath.length);
+  }, refreshWorkspace: async () => { if (await sendWorkspaceData()) await (currentFile ? sendContent() : sendWelcome()); } })) return;
 
   switch (msg.command) {
     case "ready": {

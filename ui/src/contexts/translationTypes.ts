@@ -116,6 +116,14 @@ export interface Translations extends AuditedUiTranslationDomains {
     files: string; search: string; filterPlaceholder: string; filterAriaLabel: string;
     scopeFocus: string; clearScopeFocus: string; checkAll: string; uncheckAll: string;
     collapseAllFolders: string; expandAllFolders: string; clearPinnedItems: string; clearPinnedItemsConfirmBody: string; sortFiles: string;
+    renameFile: string; renameFolder: string; deleteFile: string; deleteFolder: string; permanentlyDelete: string;
+    newFile: string; newFolder: string; newFileMenu: string; newFolderMenu: string; newFileInputLabel: string; newFolderInputLabel: string;
+    selectMode: string; exitSelectMode: string; selectItem: string; unpinSelected: string; unpinSelectedConfirmBody: string;
+    deleteSelected: string; deleteTrashTitle: string; deletePermanentTitle: string; deleteTrashBody: string; deletePermanentBody: string;
+    deleteTrashConfirm: string; deletePermanentConfirm: string; deleteMore: string; deleteUnsavedWarning: string; deleteFailed: string;
+    entryUnlistedType: string; entryErrorEmpty: string; entryErrorExists: string; entryErrorInvalid: string; entryErrorReserved: string;
+    entryErrorProtected: string; entryErrorPermission: string; entryErrorMissing: string; entryErrorOutside: string;
+    entryErrorUnsupported: string; entryErrorFailed: string;
     sortNameAsc: string; sortNameDesc: string; sortModifiedDesc: string; sortModifiedAsc: string;
     pinThisFile: string; pinThisFolder: string; unpinItem: string; pinned: string; noScopeFiles: string; noFiles: string;
   };

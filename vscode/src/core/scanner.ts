@@ -4,6 +4,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
+import { ignoredFolderNamesFromGlobs, listEmptyDirectories, treeHasEmptyFolder } from './emptyDirectories';
 import type { MdFile, FolderNode, ScanResult } from '../types';
 import {
   getExtension,
@@ -96,7 +97,8 @@ export class WorkspaceScanner {
       }
     }
     reportProgress(flat.length);
-    const tree = WorkspaceScanner.buildTree(flat);
+    const emptyDirs = await listEmptyDirectories(rootPath, ['.git', ...ignoredFolderNamesFromGlobs(excludePatterns)]);
+    const tree = WorkspaceScanner.buildTree(flat, emptyDirs);
 
     return { tree, flat };
   }
@@ -221,38 +223,49 @@ export class WorkspaceScanner {
     }
   }
 
-  static buildTree(flat: MdFile[]): FolderNode {
+  static buildTree(flat: MdFile[], emptyDirs: readonly string[] = []): FolderNode {
     const root = WorkspaceScanner.emptyRoot();
     const childIndexes = new WeakMap<FolderNode, Map<string, FolderNode>>();
+    const ensureChild = (node: FolderNode, name: string, childPath: string): FolderNode => {
+      let childIndex = childIndexes.get(node);
+      if (!childIndex) {
+        childIndex = new Map<string, FolderNode>();
+        childIndexes.set(node, childIndex);
+      }
+      let child = childIndex.get(name);
+      if (!child) {
+        child = { name, path: childPath, children: [], files: [], modifiedAt: 0 };
+        node.children.push(child);
+        childIndex.set(name, child);
+      }
+      return child;
+    };
 
     for (const file of flat) {
       let node = root;
       const modifiedAt = file.modifiedAt ?? 0;
       node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
       const dirs = file.parts.slice(0, -1);
-
       for (let i = 0; i < dirs.length; i++) {
-        const name = dirs[i];
-        let childIndex = childIndexes.get(node);
-        if (!childIndex) {
-          childIndex = new Map<string, FolderNode>();
-          childIndexes.set(node, childIndex);
-        }
-        let child = childIndex.get(name);
-        if (!child) {
-          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [], modifiedAt: 0 };
-          node.children.push(child);
-          childIndex.set(name, child);
-        }
-        node = child;
+        node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
         node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
       }
-
       node.files.push(file);
+    }
+
+    for (const dirPath of emptyDirs) {
+      const dirs = dirPath.split('/').filter(Boolean);
+      let node = root;
+      for (let i = 0; i < dirs.length; i++) node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
     }
 
     return root;
   }
+
+  static hasEmptyFolder(node: FolderNode): boolean {
+    return treeHasEmptyFolder(node);
+  }
+
   private static emptyRoot(): FolderNode {
     return { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
   }

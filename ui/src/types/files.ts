@@ -25,6 +25,7 @@ export interface RecentWorkspace {
 
 
 export type SidebarItemKind = 'file' | 'folder';
+export type WorkspaceEntryKind = 'file' | 'folder';
 export type SidebarSortMode =
   | 'name-asc'
   | 'name-desc'

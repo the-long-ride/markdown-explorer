@@ -129,6 +129,18 @@ function registerIpcHandlers({ ipcMain, clipboard, fs, handlers, getMainWindow, 
       case "setDocumentConversion":
         await handlers.setDocumentConversion(Boolean(msg.enabled));
         break;
+      case "saveDocument":
+        await handlers.saveDocument?.(msg);
+        break;
+      case "createWorkspaceEntry":
+        await handlers.createWorkspaceEntry?.(msg);
+        break;
+      case "renameWorkspaceEntry":
+        await handlers.renameWorkspaceEntry?.(msg);
+        break;
+      case "deleteWorkspaceEntries":
+        await handlers.deleteWorkspaceEntries?.(msg);
+        break;
       case "listDocumentHistory":
         await handlers.listDocumentHistory?.(msg);
         break;

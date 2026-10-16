@@ -56,10 +56,18 @@ export function createTestModeHandlers({
     });
   }
 
+  async function refreshTestWorkspace() {
+    state.flatList = virtualFiles;
+    state.workspaceTree = virtualTree;
+    send({ command: 'workspaceFilesChanged', fileList: state.flatList, tree: state.workspaceTree,
+      workspaceName: 'Test Workspace', workspacePath: 'test-workspace', documentConversionEnabled: false });
+  }
+
   async function sendTestReady() {
     state.flatList = virtualFiles;
     state.workspaceTree = virtualTree;
-    state.currentFile = virtualFiles[0]?.relativePath ?? null;
+    state.currentFile = virtualFiles.some(file => file.relativePath === state.currentFile)
+      ? state.currentFile : virtualFiles[0]?.relativePath ?? null;
 
     send({
       command: 'readyAck',
@@ -80,6 +88,6 @@ export function createTestModeHandlers({
     }
   }
 
-  return { sendTestReady, sendTestContent };
+  return { sendTestReady, sendTestContent, refreshTestWorkspace };
 }
 

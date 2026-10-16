@@ -121,7 +121,7 @@ describe('MarkdownDocsPanel', () => {
         reportFile = onFile;
         resolveScan = resolve as typeof resolveScan;
       }));
-      setupVscodeMock();
+      setupVscodeMock({ workspace: { workspaceFolders: [{ name: 'docs', uri: { fsPath: '/workspace/docs' } }], getConfiguration: () => ({ get: mockConfigGet }) } });
       const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
       MarkdownDocsPanel.createOrShow(context, null);
       const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
@@ -142,11 +142,13 @@ describe('MarkdownDocsPanel', () => {
       await Promise.resolve();
       const reveal = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'readyAck');
       expect(reveal?.[0].fileList).toHaveLength(1);
+      expect(reveal?.[0].workspacePath).toBe('/workspace/docs');
 
       for (let index = 1; index < files.length; index++) reportFile(files[index], index + 1);
       await Promise.resolve();
       const refreshes = mockPostMessage.mock.calls.filter((call: any) => call[0].command === 'workspaceFilesChanged');
       expect(refreshes.at(-1)?.[0].fileList).toHaveLength(32);
+      expect(refreshes.at(-1)?.[0].workspacePath).toBe('/workspace/docs');
 
       resolveScan({ tree: null, flat: files });
       await pending;

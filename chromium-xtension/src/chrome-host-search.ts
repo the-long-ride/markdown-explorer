@@ -4,6 +4,7 @@ import { writeTextFile } from './file-access';
 import { handleChromeExportHostCommand } from './chrome-host-export';
 import { filterSearchIndexTabs, isValidExternalUrl, normalizeSearchQuery, resolveWorkspaceTextResourcePath } from './chrome-host-utils';
 import { handleBrowserInsightsHostCommand } from './insights-host-router';
+import { handleBrowserWorkspaceEntryCommand } from './workspace-entries';
 import { resolveWorkspaceSearchItems } from './workspace-search-items';
 import {
   MAX_WORKSPACE_SEARCH_RESULTS,
@@ -17,11 +18,15 @@ interface ChromeHostSearchContext {
   activeWorkspacePath: string;
   activeHandle: FileSystemDirectoryHandle | null;
   send: (message: any) => void;
+  onRename?: (oldPath: string, newPath: string, origin: FileSystemDirectoryHandle | null) => void;
+  refreshWorkspace: () => Promise<void>;
   readText: (handle: FileSystemDirectoryHandle, path: string) => Promise<string>;
   searchGeneration?: { value: number };
 }
 
 export async function handleChromeHostUtilityCommand(message: any, context: ChromeHostSearchContext): Promise<boolean> {
+  if (await handleBrowserWorkspaceEntryCommand(message, context)) return true;
+
   if (await handleBrowserInsightsHostCommand(message, {
     activeHandle: context.activeHandle,
     send: context.send,

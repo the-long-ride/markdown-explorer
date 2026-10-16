@@ -1,6 +1,6 @@
 const { createRuntimeWorkspaceSearchHelpers } = require("./runtime-workspace-search");
 const { createWorkspaceTextResourceReader } = require("./runtime-workspace-resources");
-const { nextIncrementalPublishCount } = require("../workspace/incremental-publish");
+const { nextIncrementalPublishCount, treeHasEmptyFolder } = require("../workspace/incremental-publish");
 const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
 const WORKSPACE_SCAN_BATCH_SIZE = 32;
 
@@ -231,7 +231,7 @@ function registerRuntimeWorkspaceHandlers(context) {
     idx.prime(flat);
 
     if (displayedWorkspace) {
-      if (lastPublishedCount !== flat.length) sendHostMessage({
+      if (lastPublishedCount !== flat.length || treeHasEmptyFolder(tree)) sendHostMessage({
         command: "workspaceFilesChanged", fileList: flat, tree, workspaceName, workspacePath,
         documentConversionEnabled: state.documentConversionEnabled,
       });

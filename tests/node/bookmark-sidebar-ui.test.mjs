@@ -39,7 +39,10 @@ test('bookmark panel supports selection mode, select all, and atomic batch delet
   ]);
   assert.match(panel, /selectionMode/);
   assert.match(panel, /selectedIds/);
-  assert.match(panel, /type="checkbox"/);
+  assert.match(panel, /<SelectionCheckbox/);
+  const checkbox = await read('ui/src/components/shared/SelectionCheckbox.tsx');
+  assert.match(checkbox, /type="checkbox"/);
+  assert.match(checkbox, /aria-label=\{label\}/);
   assert.match(panel, /bookmarkStore\.removeMany/);
   assert.match(panel, /translations\.selectAll/);
   assert.match(panel, /translations\.toggleSelection/);
@@ -49,7 +52,7 @@ test('bookmark panel supports selection mode, select all, and atomic batch delet
   assert.match(panel, /disabled=\{selectedIds\.size === 0\}/);
 
   // Assert Select all and delete selected are enclosed within selectionMode check
-  assert.match(panel, /\{selectionMode && \(\s*<>\s*<TooltipButton[^>]*selectAll[\s\S]*<TooltipButton[^>]*deleteSelected/);
+  assert.match(panel, /\{selectionMode && \(\s*<>\s*<span[^>]*aria-live="polite">\{selectedIds\.size\}<\/span>\s*<TooltipButton[^>]*selectAll[\s\S]*<TooltipButton[^>]*deleteSelected/);
 
   // Assert button order: selectAll -> deleteSelected -> toggleSelection -> sort -> collapseAll -> expandAll
   const selectAllPos = panel.indexOf('translations.selectAll');
@@ -85,7 +88,7 @@ test('bookmark and edit icons use supplied currentColor SVG paths and groups reu
   assert.match(menu, /EditBookmarkIcon/);
   assert.match(panel, /SelectAllIcon/);
   assert.match(panel, /BookmarkGroupChevron/);
-  assert.doesNotMatch(panel, /'▾'|'▸'/);
+  assert.doesNotMatch(panel, /'â–¾'|'â–¸'/);
 });
 test('sidebar supports directional tab body movement animations based on target tab index', async () => {
   const [sidebar, css] = await Promise.all([

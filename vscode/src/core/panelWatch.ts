@@ -7,6 +7,7 @@ export interface RefreshFromWatchHost {
   readonly scanGeneration: number;
   readonly currentFile: string | null;
   readonly workspaceName: string;
+  readonly workspacePath?: string;
   postMessage: (msg: unknown) => PromiseLike<unknown> | void;
   bumpScanGeneration: () => number;
   isCurrentScan: (gen: number) => boolean;
@@ -27,6 +28,7 @@ export async function refreshPanelFromWatch(
       command: "workspaceFilesChanged",
       ...next,
       workspaceName: host.workspaceName,
+      workspacePath: host.workspacePath,
       documentConversionEnabled: host.documentConversionEnabled,
     });
   };

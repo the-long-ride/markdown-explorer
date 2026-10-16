@@ -14,4 +14,11 @@ function nextIncrementalPublishCount(
   return last + batchSize;
 }
 
-module.exports = { nextIncrementalPublishCount };
+// True when any folder in the tree has no files and no subfolders on disk.
+function treeHasEmptyFolder(node) {
+  const children = node?.children ?? [];
+  return children.some((child) => (child.children.length === 0 && child.files.length === 0)
+    || treeHasEmptyFolder(child));
+}
+
+module.exports = { nextIncrementalPublishCount, treeHasEmptyFolder };

@@ -12,6 +12,7 @@ const TAURI_HOST_SRC = [
   'tauri/src/host_message.rs',
   'tauri/src/update/manager.rs',
   'tauri/src/core/bootstrap.rs',
+  'tauri/src/dispatcher/workspace_entries.rs',
 ].map(readSrc).join('\n\n');
 
 const REQUIRED_HOST_COMMANDS = [
@@ -30,6 +31,9 @@ const REQUIRED_HOST_COMMANDS = [
   'workspaceSearchResults',
   'workspaceSearchIndexLoaded',
   'fullscreenChanged',
+  'createWorkspaceEntryResult',
+  'renameWorkspaceEntryResult',
+  'deleteWorkspaceEntriesResult',
 ];
 
 describe('tauri host-message parity', () => {
@@ -72,6 +76,13 @@ describe('tauri host-message parity', () => {
       expect(src).toContain('workspaceTabId');
       expect(src).toContain('workspace_operation_id');
       expect(src).toContain('workspace_tab_id');
+    });
+
+    test('workspace entry commands are dispatched and report the trash delete mode', () => {
+      const src = readSrc('tauri/src/dispatcher/workspace_entries.rs');
+      expect(src).toContain('"createWorkspaceEntry"');
+      expect(src).toContain('"deleteWorkspaceEntries"');
+      expect(src).toContain('"trash"');
     });
 
     test('workspaceSearchResults has requestId, results', () => {

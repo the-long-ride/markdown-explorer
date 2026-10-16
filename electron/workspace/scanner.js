@@ -7,6 +7,7 @@ const {
   isSupportedFilePath,
   stripKnownExtension,
 } = require('../render/document-converter');
+const { treeHasEmptyFolder } = require('./incremental-publish');
 const DEFAULT_IGNORED_FOLDERS = [
   '.git', 'node_modules', '.vscode', 'dist', 'out', 'build',
   'coverage', '.next', '.nuxt', '.turbo', '.cache', 'vendor',
@@ -47,6 +48,7 @@ class DesktopScanner {
     let filesSinceYield = 0;
     let titleBatch = []; // collect markdown files needing title extraction
     const metadataBatch = [];
+    const emptyDirs = [];
 
     while (dirQueueIndex < dirQueue.length && isCurrent()) {
       const currentDir = dirQueue[dirQueueIndex++];
@@ -56,6 +58,9 @@ class DesktopScanner {
       } catch (err) {
         console.error('Failed to read directory:', currentDir, err);
         continue;
+      }
+      if (entries.length === 0 && currentDir !== rootPath) {
+        emptyDirs.push(path.relative(rootPath, currentDir).split(path.sep).join('/'));
       }
 
       for (const entry of entries) {
@@ -138,8 +143,8 @@ class DesktopScanner {
 
     flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
     if (onProgress && isCurrent()) onProgress(flat.length);
-    const tree = DesktopScanner.buildTree(flat);
-    return { tree, flat };
+    const tree = DesktopScanner.buildTree(flat, emptyDirs);
+    return { tree, flat, emptyDirs };
   }
 
   // Lightweight file entry builder (used during scan, title filled later)
@@ -256,37 +261,48 @@ class DesktopScanner {
     return null;
   }
 
-  static buildTree(flat) {
+  static buildTree(flat, emptyDirs = []) {
     const root = { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
     const childIndexes = new WeakMap();
+    const ensureChild = (node, name, childPath) => {
+      let childIndex = childIndexes.get(node);
+      if (!childIndex) {
+        childIndex = new Map();
+        childIndexes.set(node, childIndex);
+      }
+      let child = childIndex.get(name);
+      if (!child) {
+        child = { name, path: childPath, children: [], files: [], modifiedAt: 0 };
+        node.children.push(child);
+        childIndex.set(name, child);
+      }
+      return child;
+    };
 
     for (const file of flat) {
       let node = root;
       const modifiedAt = file.modifiedAt || 0;
       node.modifiedAt = Math.max(node.modifiedAt || 0, modifiedAt);
       const dirs = file.parts.slice(0, -1);
-
       for (let i = 0; i < dirs.length; i++) {
-        const name = dirs[i];
-        let childIndex = childIndexes.get(node);
-        if (!childIndex) {
-          childIndex = new Map();
-          childIndexes.set(node, childIndex);
-        }
-        let child = childIndex.get(name);
-        if (!child) {
-          child = { name, path: dirs.slice(0, i + 1).join('/'), children: [], files: [], modifiedAt: 0 };
-          node.children.push(child);
-          childIndex.set(name, child);
-        }
-        node = child;
+        node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
         node.modifiedAt = Math.max(node.modifiedAt || 0, modifiedAt);
       }
-
       node.files.push(file);
     }
 
+    // Folders with zero entries on disk; files never create them.
+    for (const dirPath of emptyDirs) {
+      const dirs = dirPath.split('/').filter(Boolean);
+      let node = root;
+      for (let i = 0; i < dirs.length; i++) node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
+    }
+
     return root;
+  }
+
+  static hasEmptyFolder(node) {
+    return treeHasEmptyFolder(node);
   }
 }
 

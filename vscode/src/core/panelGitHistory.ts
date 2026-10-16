@@ -204,7 +204,16 @@ export function createPanelGitHistoryAdapter({
   async function resolveContext(workspacePath: string): Promise<{ repositoryRoot: string; workspaceRoot: string }> {
     if (!workspacePath) throw new PanelGitHistoryError('A workspace path is required', 'not-repository');
     const workspaceRoot = await workspaceDirectory(workspacePath);
-    const root = (await runGit(workspaceRoot, ['rev-parse', '--show-toplevel'])).trim();
+    let root: string;
+    try {
+      root = (await runGit(workspaceRoot, ['rev-parse', '--show-toplevel'])).trim();
+    } catch (error) {
+      // Git exits 128 for several unrelated conditions; only this diagnostic means a plain folder.
+      if (error instanceof PanelGitHistoryError && error.reason === 'git-command-failed' && /not a git repository/i.test(error.message)) {
+        throw new PanelGitHistoryError('The workspace is not a Git repository', 'not-repository', error);
+      }
+      throw error;
+    }
     if (!root) throw new PanelGitHistoryError('The workspace is not a Git repository', 'not-repository');
     // Compare real paths on both sides so junctions, symlinks, subst drives and casing agree with Git.
     const repositoryRoot = await realpathOrSelf(root);

@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-05T06:40:23+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: Application Coverage Matrix
 topic: Complete use-case, feature, protocol, runtime, and quality coverage
 document_type: specification
@@ -31,7 +31,7 @@ keywords:
 
 ## Coverage declaration
 
-This matrix covers **31 end-to-end use cases**, **21 feature specifications**, **5 product runtimes plus parity**, **38 UI→host commands**, and **18 host→UI messages** from the active source tree.
+This matrix covers **32 end-to-end use cases**, **21 feature specifications**, **5 product runtimes plus parity**, **61 UI→host commands**, and **41 host→UI messages** from the active source tree.
 
 Coverage means the behavior has:
 
@@ -77,6 +77,7 @@ Coverage means the behavior has:
 | [UC-029: Use Welcome, Help, and Localization](../02-use-cases/UC-029-welcome-help-localization.md) | [Feature](../03-features/15-localization-welcome-onboarding.md) | `openExternal` | Source + test traced |
 | [UC-030: Copy, Edit, Open in Browser, and Export Content](../02-use-cases/UC-030-copy-edit-browser-snapshot.md) | [Feature](../03-features/07-code-blocks-and-copy.md) | `copyCode`, `openInEditor`, `openHtmlPreview`, `openExternal` | Source + test traced |
 | [UC-031: Save and Navigate Source-Anchored Bookmarks](../02-use-cases/UC-031-manage-bookmarks.md) | [Feature](../03-features/21-bookmarks.md) | Mixed Markdown/object capture, v2 local store, exact open-workspace navigation | Source + test traced |
+| [UC-032: Create and Delete Workspace Entries](../02-use-cases/UC-032-create-and-delete-workspace-entries.md) | [Feature](../03-features/03-sidebar-tree-and-scope.md) | `createWorkspaceEntry`, `deleteWorkspaceEntries` (create/delete entries, selection mode, empty folders) | Source + test traced |
 
 ## Cross-cutting coverage
 

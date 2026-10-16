@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { SidebarSortMode } from '../../types';
 import { CollapseIcon, ExpandIcon, LocateIcon } from '../shared/icons';
 import { TooltipButton } from '../shared/TooltipButton';
 import { ClearPinsIcon, SortIcon, SortStatusIcon } from './sidebarPinIcons';
 import { SidebarSortMenu } from './SidebarSortMenu';
-import { SidebarClearPinsDialog } from './SidebarClearPinsDialog';
+import { SidebarConfirmDialog } from './SidebarConfirmDialog';
 
 interface SidebarFilesActionsProps {
   canLocate: boolean;
@@ -28,6 +28,7 @@ interface SidebarFilesActionsProps {
   onSortChange: (mode: SidebarSortMode) => void;
   onCollapseAll: () => void;
   onExpandAll: () => void;
+  leftActions?: ReactNode;
 }
 
 export function SidebarFilesActions({
@@ -52,6 +53,7 @@ export function SidebarFilesActions({
   onSortChange,
   onCollapseAll,
   onExpandAll,
+  leftActions,
 }: SidebarFilesActionsProps) {
   const [sortAnchor, setSortAnchor] = useState<HTMLElement | null>(null);
   const [confirmWorkspaceKey, setConfirmWorkspaceKey] = useState<string | null>(null);
@@ -85,10 +87,11 @@ export function SidebarFilesActions({
   return (
     <>
     <div className="sidebar__files-actions">
-      <div className="sidebar__sort-status" title={sortStatusLabel} aria-label={sortStatusLabel}>
-        <SortStatusIcon mode={sortMode} size={14} />
-      </div>
-      <div className="sidebar__files-action-group">
+      {leftActions && <div className="sidebar__files-action-group sidebar__files-action-group--left">{leftActions}</div>}
+      <div className="sidebar__files-action-group sidebar__files-action-group--right">
+        <div className="sidebar__sort-status" title={sortStatusLabel} aria-label={sortStatusLabel}>
+          <SortStatusIcon mode={sortMode} size={14} />
+        </div>
         <TooltipButton
           type="button"
           className={`btn btn--icon sidebar__files-action sidebar__files-action--sort${sortAnchor ? ' is-open is-active' : ''}`}
@@ -164,7 +167,7 @@ export function SidebarFilesActions({
       )}
     </div>
     {confirmWorkspaceKey === workspaceKey && hasPins && (
-      <SidebarClearPinsDialog
+      <SidebarConfirmDialog
         title={clearPinsLabel}
         message={clearPinsConfirmBody}
         cancelLabel={cancelLabel}

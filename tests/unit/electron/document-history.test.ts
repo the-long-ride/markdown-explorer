@@ -37,6 +37,8 @@ async function createTempGitRepo(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), 'md-explorer-history-'));
   roots.push(root);
   await git(root, 'init');
+  // Disposable fixtures must not run the developer's global commit hooks.
+  await git(root, 'config', 'core.hooksPath', path.join(root, '.git', 'hooks'));
   await git(root, 'config', 'user.name', 'Markdown Explorer Tests');
   await git(root, 'config', 'user.email', 'tests@example.invalid');
   return root;

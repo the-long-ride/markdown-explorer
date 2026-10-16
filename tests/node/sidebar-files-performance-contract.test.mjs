@@ -41,7 +41,9 @@ test('Files tab owns locate, collapse, expand, and scope controls', async () => 
   assert.match(expansionHook, /FolderExpansionCommand/);
   assert.match(expansionHook, /version: current\.version \+ 1/);
   assert.match(sidebar, /expansionCommand=\{folderExpansionCommand\}/);
-  assert.match(tree, /export interface FolderExpansionCommand/);
+  assert.match(tree, /export.*FolderExpansionCommand/);
+  const model = await read('ui/src/components/Sidebar/sidebarTreeModel.ts');
+  assert.match(model, /export interface FolderExpansionCommand/);
   assert.match(tree, /expansionCommand\?: FolderExpansionCommand/);
   assert.match(tree, /useState\(\(\) => expansionCommand\?\.expanded \?\? true\)/);
   assert.match(styles, /\.sidebar__files-actions/);

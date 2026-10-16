@@ -2,18 +2,8 @@
 // core/panel.ts — WebviewPanel: UI shell + message bridge
 // =============================================================================
 
-let _vscode: any = null;
-
-function getVscode(): typeof import('vscode') {
-  if (!_vscode) {
-    _vscode = require('vscode');
-  }
-  return _vscode;
-}
-
-export function overrideVscodeForTest(mock: any): void {
-  _vscode = mock;
-}
+import { getVscode } from './panelVscodeApi';
+export { overrideVscodeForTest } from './panelVscodeApi';
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -36,6 +26,7 @@ import { navigatePanel } from './panelNavigationHandler';
 import { readPanelWorkspaceTextResource } from './panelWorkspaceResources';
 import { handlePanelDocumentWrite, panelDocumentWriteCapability, type PanelSaveDocumentMessage } from './panelDocumentWrite';
 import { handlePanelGitHistoryMessage } from './panelGitHistory';
+import { handlePanelWorkspaceEntryMessage } from './panelWorkspaceEntries';
 import { createPanelFontBridge, getGlobalStorageUri } from '../fonts/panelFontBridge';
 import { createRenderContentMessage, createWelcomeRenderContentMessage } from './panelMessages';
 
@@ -114,6 +105,13 @@ export class MarkdownDocsPanel {
     this._panel.webview.onDidReceiveMessage(
       async (msg: WebviewMessage) => {
         if (await this._fontBridge.handle(msg)) return;
+        if (await handlePanelWorkspaceEntryMessage(msg, { vscodeApi: getVscode(), onRename: (oldPath, newPath) => {
+          const base = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath;
+          if (!base || !this._currentFile) return;
+          const old = path.join(base, ...oldPath.split('/'));
+          const next = path.join(base, ...newPath.split('/'));
+          if (this._currentFile === old || this._currentFile.startsWith(old + path.sep)) this._currentFile = next + this._currentFile.slice(old.length);
+        }, refresh: () => this.refreshFromWatch(null), post: (m) => this._panel.webview.postMessage(m) })) return;
         if ((msg as { command?: string }).command === 'saveDocument') {
           const result = await handlePanelDocumentWrite(msg as unknown as PanelSaveDocumentMessage, { workspace: getVscode().workspace, Uri: getVscode().Uri });
           await this._panel.webview.postMessage(result); return;
@@ -210,6 +208,7 @@ export class MarkdownDocsPanel {
         scanGeneration: this._scanGeneration,
         currentFile: this._currentFile,
         workspaceName: getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace',
+        workspacePath: getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath,
         postMessage: (m) => this._panel.webview.postMessage(m),
         bumpScanGeneration: () => ++this._scanGeneration,
         isCurrentScan: (g) => g === this._scanGeneration,
@@ -234,6 +233,7 @@ export class MarkdownDocsPanel {
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
     const scanGeneration = ++this._scanGeneration;
     const workspaceName = getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace';
+    const workspacePath = getVscode().workspace.workspaceFolders?.[0]?.uri.fsPath;
     await this._panel.webview.postMessage({ command: 'workspaceScanProgress', scannedFiles: 0, active: true });
     const result = await scanWorkspaceIncrementally({
       documentConversionEnabled: this._documentConversionEnabled,
@@ -245,12 +245,12 @@ export class MarkdownDocsPanel {
         this._flat = next.fileList;
         void this._panel.webview.postMessage({
           command: 'readyAck', ...next, theme, themeStyle, defaultExpanded,
-          workspaceName, documentConversionEnabled: this._documentConversionEnabled, ...this._hostInfo(),
+          workspaceName, workspacePath, documentConversionEnabled: this._documentConversionEnabled, ...this._hostInfo(),
         });
       },
       onChanged: next => {
         this._flat = next.fileList;
-        void this._panel.webview.postMessage({ command: 'workspaceFilesChanged', ...next, workspaceName,
+        void this._panel.webview.postMessage({ command: 'workspaceFilesChanged', ...next, workspaceName, workspacePath,
           documentConversionEnabled: this._documentConversionEnabled });
       },
     });

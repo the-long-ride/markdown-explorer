@@ -1,6 +1,26 @@
 # Changelog
 
-All notable changes to the **Markdown Explorer** extension will be documented in this file.
+All notable changes to **Markdown Explorer** will be documented in this file.
+
+## [v1.7.1] — 2026-10-16
+
+### Added
+- **Workspace file and folder management**: Create entries from the Files toolbar or folder menu, rename files/folders from their menu or with F2, and delete focused or selected entries with Delete and a confirmation dialog. Names, collisions, protected paths, and workspace boundaries are checked by each host.
+- **Files entry selection and focus**: Added Entry selection mode, selected counts, shared checkbox artwork, batch unpin/delete actions, and a thin focused-row outline. Empty folders appear in workspace trees.
+- **Persistent simulated web demo**: Demo mode supports create, rename, and delete for virtual files/folders stored only in localStorage, including nested and empty folders. Reload retains changes and renamed sample content; real filesystem permissions are unnecessary.
+
+### Changed
+- **Consistent sidebar controls**: New File/New Folder toolbar buttons, menu actions, and inline creation rows reuse matching SVG icons. Files and Bookmarks share selection styling and accessible confirmation dialogs; sort status sits beside the sort control.
+- **Rename state continuity**: Successful renames migrate tabs, dirty buffers, bookmarks, pins, scope references, and split-pane paths, including folder descendants and late host replies.
+- **Explicit deletion modes**: Electron, Tauri, and VS Code default to OS Trash with a permanent-delete option. Chromium and website local-folder mode delete permanently; demo deletion affects browser-local simulated entries only.
+- **Release metadata and specifications**: Synchronized version 1.7.1, runtime/protocol/state documentation, release acceptance, and LLM guidance. Updated the declared pnpm version to 12.11.2 and aligned Electron packaging with the workspace runtime.
+
+### Fixed
+- **Dependency security**: Updated DOMPurify, markdown-it, http-cache-semantics, brace-expansion, fast-uri, KaTeX, and source-map-js to patched releases. The pnpm audit now retains only the unpatched upstream braces and sprintf-js advisories; see [the dependency audit](docs/dependency-security-audit.md).
+- **VS Code/VSCodium file controls**: Ready, incremental, and watcher updates now include the workspace path so management controls remain available for an opened folder.
+- **VS Code non-repository guidance**: Ordinary folders now show the existing Git repository guidance instead of the generic git-command-failed error; other Git failures retain their error category.
+- **Empty-directory refreshes**: Workspace scans publish newly discovered empty folders even when the file count is unchanged.
+- **Release verification**: Completed source/test ownership, isolated disposable Git fixtures from personal commit hooks, and separated host helper modules to meet source size limits without relaxing checks.
 
 ## [v1.7.0] — 2026-09-29
 

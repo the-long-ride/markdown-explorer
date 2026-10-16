@@ -84,6 +84,27 @@ describe('SidebarItemMenu', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('consumes Escape: closes the menu and marks the key event as handled', () => {
+    const onClose = vi.fn();
+    render(
+      <SidebarItemMenu
+        anchor={createConnectedElement()}
+        sidebar={createConnectedElement({ left: 0, right: 280, width: 280 })}
+        menuLabel="HTML file actions"
+        items={[{ id: 'preview', label: 'Show HTML Preview', onSelect: vi.fn() }]}
+        onClose={onClose}
+      />,
+    );
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    document.body.dispatchEvent(event);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(event.defaultPrevented).toBe(true);
+    const other = new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true });
+    document.body.dispatchEvent(other);
+    expect(other.defaultPrevented).toBe(false);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('builds history menu item for document files and dispatches document history event', () => {
     const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
     const items = buildSidebarItemMenuItems({

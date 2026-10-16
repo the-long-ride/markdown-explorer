@@ -4,6 +4,7 @@
 
 import type { Translations } from './translationTypes';
 import { DESKTOP_TYPOGRAPHY_EN } from './desktopTypographyTranslations';
+import { SIDEBAR_FILE_OPS_EN } from './sidebarFileOpsTranslations';
 import { AUDITED_UI_TRANSLATIONS } from './auditedUiTranslations';
 import type { AppLanguage } from './languageOptions';
 export { LANGUAGE_OPTIONS } from './languageOptions';
@@ -359,6 +360,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       expandAllFolders: "Expand all folders",
       clearPinnedItems: "Clear all pinned items",
       clearPinnedItemsConfirmBody: "This will unpin every item in the current workspace.",
+      ...SIDEBAR_FILE_OPS_EN,
       sortFiles: "Sort files and folders",
       sortNameAsc: "Name A → Z",
       sortNameDesc: "Name Z → A",

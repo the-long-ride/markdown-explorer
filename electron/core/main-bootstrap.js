@@ -1,3 +1,5 @@
+const { createWorkspaceEntryHandlers } = require("../workspace/workspace-entries");
+
 function configureApplicationMenu({ MenuImpl, platform } = {}) {
   if (platform !== "darwin") {
     MenuImpl.setApplicationMenu(null);
@@ -80,6 +82,20 @@ function createAppBootstrap({
   const sendHostMessage = (message) => {
     mainWindowRef?.webContents.send("host-message", message);
   };
+
+  const workspaceEntryHandlers = createWorkspaceEntryHandlers({
+    getWorkspacePath: () => runtimeImpl.state?.workspacePath,
+    sendHostMessage,
+    refresh: () => runtimeImpl.refreshActiveWorkspace({ preserveCurrentContent: true }),
+    onRename: (oldPath, newPath) => {
+      const state = runtimeImpl.state;
+      if (!state?.currentFile || !state.workspacePath) return;
+      const old = pathImpl.join(state.workspacePath, ...oldPath.split('/'));
+      const next = pathImpl.join(state.workspacePath, ...newPath.split('/'));
+      if (state.currentFile === old || state.currentFile.startsWith(old + pathImpl.sep)) state.currentFile = next + state.currentFile.slice(old.length);
+    },
+    trashItem: (target) => shellImpl.trashItem(target),
+  });
 
   const nativeCloseGuard = createNativeCloseGuardFn({
     app: appImpl,
@@ -208,6 +224,9 @@ function createAppBootstrap({
           refresh: runtimeImpl.handleRefresh,
           setDocumentConversion: runtimeImpl.handleSetDocumentConversion,
           saveDocument: runtimeImpl.handleSaveDocument,
+          createWorkspaceEntry: workspaceEntryHandlers.handleCreateWorkspaceEntry,
+          renameWorkspaceEntry: workspaceEntryHandlers.handleRenameWorkspaceEntry,
+          deleteWorkspaceEntries: workspaceEntryHandlers.handleDeleteWorkspaceEntries,
           listDocumentHistory: runtimeImpl.handleListDocumentHistory,
           listRepositoryHistory: runtimeImpl.handleListRepositoryHistory,
           listRevisionFiles: runtimeImpl.handleListRevisionFiles,

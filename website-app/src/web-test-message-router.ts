@@ -1,6 +1,7 @@
 import type { MdFile } from '../../ui/src/types';
 import { searchVirtualFilesIncremental } from './web-test-search';
 import { getVirtualContent } from './virtual-workspace';
+import { handleWebDemoEntryMessage } from './web-demo-entry-router';
 import {
   MAX_WORKSPACE_SEARCH_RESULTS,
   WORKSPACE_SEARCH_BATCH_SIZE,
@@ -10,14 +11,17 @@ interface TestMessageRouterDeps {
   getReadyHandled: () => boolean;
   setReadyHandled: (value: boolean) => void;
   setCurrentFile: (path: string | null) => void;
+  getCurrentFile: () => string | null;
   getFlatList: () => MdFile[];
   send: (message: unknown) => void;
   sendTestReady: () => Promise<void>;
   sendTestContent: (path: string) => Promise<void>;
+  refreshTestWorkspace: () => Promise<void>;
   searchGeneration?: { value: number };
 }
 
 export async function handleWebTestMessage(msg: any, deps: TestMessageRouterDeps): Promise<void> {
+  if (await handleWebDemoEntryMessage(msg, deps)) return;
   switch (msg.command) {
     case 'ready': {
       if (deps.getReadyHandled()) return;

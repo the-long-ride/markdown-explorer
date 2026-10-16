@@ -11,6 +11,9 @@ mod document_write_test_target;
 #[cfg(test)]
 #[path = "dispatcher/git_history.rs"]
 mod git_history_test_target;
+#[cfg(test)]
+#[path = "dispatcher/workspace_entries.rs"]
+mod workspace_entries_test_target;
 pub mod error;
 pub mod fonts;
 #[cfg(not(test))]

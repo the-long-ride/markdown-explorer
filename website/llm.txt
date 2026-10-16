@@ -12,7 +12,7 @@ Markdown Explorer is an open-source (MIT licensed), local-first tool designed to
 
 All scanning, indexing, parsing, rendering, and diffing happen locally on the user's machine. Zero telemetry, zero analytics, and zero cloud uploads.
 
-- **Current version**: 1.7.0
+- **Current version**: 1.7.1
 - **License**: MIT
 - **Homepage**: https://the-long-ride.github.io/markdown-explorer/
 - **GitHub Repository**: https://github.com/the-long-ride/markdown-explorer
@@ -209,6 +209,8 @@ Markdown Explorer maximizes feature parity while respecting platform-native secu
 - **Sidebar Cursor Mode (`Alt+Z`)**: Keyboard-first tree navigation. Use `Up`/`Down` arrows to navigate, `Enter` to open or expand/collapse folders, and `Esc` to exit.
 - **Locate Current File (`Alt+Q`)**: Instantly reveals and highlights the currently active file inside the sidebar tree.
 - **Hoisted Pinning**: Pin frequently used files and folders to the top of the sidebar. Items in deep subfolders are hoisted to the root of the file tree for fast access (up to 15 items).
+- **Files and folder management**: Create entries from toolbar or folder menus; rename with F2 or the item menu; delete focused or selected entries with confirmation. Native hosts default to Trash with a permanent-delete option; Chromium/local-folder web mode deletes permanently. Renames preserve tabs, unsaved buffers, bookmarks, pins, scope, and split panes. Entry selection mode and truly empty folders are supported.
+- **Simulated demo workspace**: The default web demo creates, renames, and deletes fake entries in `localStorage` only. Nested and empty folders and renamed sample content survive reload. Explicit `?mode=file` continues to manage user-selected real folders with browser write permission.
 - **Scope Focus**: Focus on a specific subfolder; filters both the sidebar and workspace search. Changing scope automatically reruns active search queries.
 - **Content Tabs**: Multi-document tab strip with close options (`Close`, `Close Others`, `Close to Right`, `Close All`).
 - **Reading Progress & Scroll Memory**: Persists exact scroll positions and collapsed heading states across sessions for up to 100 recent files per workspace.

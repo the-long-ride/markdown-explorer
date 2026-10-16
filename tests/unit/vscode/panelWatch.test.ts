@@ -20,6 +20,7 @@ function makeHost(overrides: Partial<Parameters<typeof refreshPanelFromWatch>[0]
     documentConversionEnabled: false,
     currentFile: '/ws/a.md',
     workspaceName: 'ws',
+    workspacePath: '/ws',
     postMessage,
     bumpScanGeneration: () => 5,
     isCurrentScan: () => true,
@@ -38,6 +39,9 @@ describe('refreshPanelFromWatch', () => {
     const commands = host.postMessage.mock.calls.map((c: any) => c[0]?.command);
     expect(commands).toContain('workspaceScanProgress');
     expect(commands).toContain('workspaceFilesChanged');
+    const snapshots = host.postMessage.mock.calls.filter((c: any) => c[0]?.command === 'workspaceFilesChanged');
+    expect(snapshots.length).toBeGreaterThan(0);
+    for (const snapshot of snapshots) expect(snapshot[0]).toMatchObject({ workspaceName: 'ws', workspacePath: '/ws' });
     expect(commands).toContain('currentFileChanged');
     const changed = host.postMessage.mock.calls.find((c: any) => c[0]?.command === 'currentFileChanged');
     expect(changed?.[0]?.filePath).toBe('/ws/a.md');

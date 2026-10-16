@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-17T00:00:00+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: Release Acceptance Matrix
 topic: Product-level release readiness across use cases, hosts, security, and delivery
 document_type: quality
@@ -27,6 +27,12 @@ source_scope:
 - tauri/src/dispatcher/git_history.rs
 - tauri/src/dispatcher/git_repository.rs
 - vscode/src/core/panelGitHistory.ts
+- ui/src/workspace
+- ui/src/components/Sidebar/useSidebarFileOps.tsx
+- electron/workspace/workspace-entries.js
+- vscode/src/core/panelWorkspaceEntries.ts
+- tauri/src/dispatcher/workspace_entries.rs
+- chromium-xtension/src/workspace-entries.ts
 test_scope:
 - tests/manifest/coverage-manifest.test.ts
 - tests/manifest/editor-git-split-coverage-manifest.ts
@@ -43,6 +49,11 @@ test_scope:
 - tests/unit/electron/document-history.test.ts
 - tests/unit/vscode/panel-git-history.test.ts
 - tests/unit/chromium/browser-git-history-host.test.ts
+- tests/unit/ui/workspace
+- tests/unit/ui/components/sidebar-file-ops.test.tsx
+- tests/unit/electron/workspace-entries.test.ts
+- tests/unit/vscode/panel-workspace-entries.test.ts
+- tests/unit/chromium/workspace-entries.test.ts
 runtime_scope:
 - all
 keywords:
@@ -54,6 +65,8 @@ keywords:
 - repository snapshots
 - split view
 - pagination
+- file operations
+- empty folders
 ---
 
 # Release Acceptance Matrix
@@ -80,6 +93,7 @@ keywords:
 | History routing | More Actions → History expands/selects the repository History sidebar; document revision/diff workflows remain available without owning that top-level route |
 | Revision projection | Historical Files view matches normal document eligibility and excludes arbitrary source-code files; conversion formats appear only when document conversion is enabled |
 | Persisted revision validation | A saved historical OID is not cleared solely because it lies outside the initial history page; additional pages may be loaded before declaring it stale |
+| Sidebar file operations | Create file/folder from the Files tab and folder menu, selection mode, Unpin selected, Delete selected (Trash vs permanent wording), and empty folders in the tree behave as in the Sidebar file operations acceptance table on every runtime |
 | Focus mode | Desktop Focus view retains a native drag surface, controls are no-drag, breadcrumb sizing is compact, and Tauri fullscreen cannot be made draggable |
 | Diff | Dependency-free Myers source diff, deterministic hunks/ranges, complete-document Rendered Diff, revision/current/working-copy/two-revision comparison, non-Git conflict comparison |
 | Conversion | Enable/disable, cache, formats, warnings/failures on capable hosts |
@@ -88,7 +102,7 @@ keywords:
 | Desktop | Window/fullscreen/zoom/quit, updater capability gating, signed artifact pairs, deferred/immediate apply |
 | Security | Path containment, dangerous URL blocking, HTML network restrictions, Git no-shell structured arguments, repository/workspace-contained reads, no Git mutation commands |
 | Performance | Incremental reveal, bounded work/results, cancellation, bounded historical search, paged history, 10k-line mostly-identical diff without quadratic matrix allocation, split-pane render isolation |
-| Version | Root and synchronized runtime/package/site metadata agree on the intended release version; PR #48 target is 1.7.0 |
+| Version | Root and synchronized runtime/package/site metadata agree on the intended release version; current version is 1.7.1 (PR #48 targeted 1.7.0) |
 
 ## Host acceptance
 
@@ -97,6 +111,25 @@ keywords:
 - VS Code commands, webview panel, editor actions, watching, packaging, revision-protected writes, and `execFile` Git history/repository snapshot reads pass, including offset paging.
 - Chromium handles, permission recovery, writable-file save capability, scanning, polling, search, IndexedDB, and explicit Git `unsupported-runtime` behavior for both document and repository history pass.
 - Website demo and file mode remain browser-safe and deploy successfully; no browser host attempts local process execution.
+
+## Sidebar file operations acceptance
+
+| Check | Required result | Runtimes |
+|---|---|---|
+| Create file at the root | With nothing focused, **New File** → `todo` → Enter creates `todo.md` at the workspace root, the tree refreshes, and the file opens in inline edit | Electron, Tauri, VS Code, Chromium, website file mode |
+| Create file in the focused folder | Click folder `docs` → **New File** → `todo` → Enter creates `docs/todo.md` and expands `docs` | All five |
+| Create via the folder menu | Right-click a folder → **New File…** / **New Folder…** targets that folder | All five |
+| Create folder | **New Folder** → name → Enter shows the folder expanded | All five |
+| Duplicate rejected | An existing name (case-insensitive except on Linux) shows the inline error and sends nothing; the existing entry is untouched | All five |
+| Name-required and invalid names | Enter on the untouched `.md` prefill, reserved Windows names, and `.git` are rejected inline | All five |
+| Single-file workspace | Controls show; the host answer `unsupported` appears inline | All five |
+| Delete to Trash | Select a file and a folder → **Delete selected** → **Move to Trash**: entries leave the tree, their tabs close, their pins are removed, and they can be restored from the OS Trash | Electron, Tauri, VS Code |
+| Permanent-delete warning | The dialog says the delete is permanent and cannot be undone, and the entries are gone with no Trash | Chromium, website file mode |
+| Unpin selected | Select pinned entries → **Unpin selected** → confirm removes only those pins | All five |
+| Empty folder visibility | A truly empty folder is visible after creation and after a reload/refresh; ignored folders stay hidden | All five |
+| Demo test mode | Create, select, and delete controls are hidden in the website demo test mode; `?mode=file` shows them | Website |
+
+The Tauri OS-Trash call (the `trash` crate) has no automated coverage beyond injected removal; a manual smoke test on a real desktop build is required for the release.
 
 ## Editor / History / Split safety acceptance
 
@@ -139,6 +172,14 @@ Manual acceptance on at least one real local Git repository additionally covers:
 
 Release is blocked by failed required tests, contract drift, incomplete artifact set for the announced channel, version drift, security regression, writable-runtime conflict-protection regression, Git mutation/no-shell regression, repository/workspace containment regression, historical/live-state leakage, split render/scroll isolation regression, CodeMirror synchronization regression, or undocumented active behavior. Known non-blocking limitations are written explicitly in release notes.
 
+## v1.7.1 entry-action acceptance
+
+- Verify file/folder create, rename, focused-row F2/Delete, selection counts and batch deletion across supported hosts. Revision workspaces remain read-only.
+- Verify rename preserves tabs, dirty buffers, pins, bookmarks, scope and split panes, including descendants and late replies; reject collisions, traversal and protected paths.
+- Verify native Trash versus explicit permanent mode, browser write permission, partial failures and unsaved-change warnings.
+- Verify simulated demo nested/empty entries, sample rename content, persistent deletion and reload, corrupt-storage recovery and failed writes; never touch real files in this mode.
+- Verify VSCodium workspace identity after ready/incremental/watcher updates, ordinary-folder Git guidance and real-repository history. Rebuild and restart the F5 host when testing source changes.
+
 ## Source traceability
 
 | Kind | Path | Purpose |
@@ -153,11 +194,14 @@ Release is blocked by failed required tests, contract drift, incomplete artifact
 | Implementation | `electron/git/document-history.js` | Electron read-only Git adapter |
 | Implementation | `tauri/src/dispatcher/git_repository.rs` | Tauri repository paging |
 | Implementation | `vscode/src/core/panelGitHistory.ts` | VS Code Git adapter |
+| Implementation | `ui/src/workspace`, `ui/src/components/Sidebar/useSidebarFileOps.tsx` | Sidebar file-operation client, rules, capability, and UI wiring |
+| Implementation | `electron/workspace/workspace-entries.js`, `vscode/src/core/panelWorkspaceEntries.ts`, `tauri/src/dispatcher/workspace_entries.rs`, `chromium-xtension/src/workspace-entries.ts` | Per-runtime create/delete host modules |
 | Verification | `tests/manifest/editor-git-split-coverage-manifest.ts` | New production-source ownership map |
 | Verification | `tests/node/repository-history-pagination-contract.test.mjs` | Pagination/search/routing parity |
 | Verification | `tests/node/split-file-drag-drop-contract.test.mjs` | Drag/drop contract |
 | Verification | `tests/node/focus-drag-region-contract.test.mjs` | Focus drag contract |
 | Verification | `tests/unit/ui/editor`, `tests/unit/ui/history`, `tests/unit/ui/split-view` | Shared UI acceptance |
+| Verification | `tests/unit/ui/workspace`, `tests/unit/ui/components/sidebar-file-ops.test.tsx` | Sidebar file-operation UI acceptance |
 
 ---
 

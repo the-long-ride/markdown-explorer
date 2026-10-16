@@ -1,6 +1,6 @@
 [package]
 name = "markdown-explorer-tauri"
-version = "1.7.0"
+version = "1.7.1"
 edition = "2021"
 rust-version = "1.96"
 
@@ -44,6 +44,7 @@ rtf-parser = { version = "0.4.3", default-features = false }
 quick-xml = "0.41"
 zip = { version = "8.6", default-features = false, features = ["deflate"] }
 calamine = "0.36"
+trash = "5"
 
 [dev-dependencies]
 tempfile = "3"
