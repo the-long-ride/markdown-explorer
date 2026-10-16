@@ -36,7 +36,7 @@ keywords:
 
 | Mode | Data source | Purpose |
 |---|---|---|
-| Demo | Bundled virtual workspace | Explore the UI without file permissions |
+| Demo | Bundled virtual workspace with localStorage changes | Explore the UI without file permissions |
 | Browser file mode | User-selected browser files/handles | Read local documentation in a normal web page |
 | Test host | Deterministic virtual messages/data | Automated website/UI verification |
 
@@ -49,9 +49,13 @@ Website capability boundary: Workspace Insights is unavailable in the website de
 ## Persistence and limitations
 
 - Shared state key: `markdown-explorer-web-state`.
+- Demo entry key: `markdown-explorer.demo-workspace.v1`. Create, rename, and delete operate on simulated files/folders only, including nested and empty folders. Changes survive refresh; clearing this key restores the bundled samples on the next load.
+- Renamed samples retain their bundled Markdown content; localStorage holds entry metadata rather than copies of bundled documents. Invalid snapshots fall back to the bundled samples, and a failed storage write leaves the current workspace unchanged.
+- These simulated operations apply to demo mode (`?mode=test`, also the default). Explicit browser file mode (`?mode=file`) continues to operate on user-selected real folders with browser write permission.
 - Scope View remains available for internal Markdown/MDX links in browser file mode.
 - No native tray, window controls, file manager reveal, installer updater, or privileged editor integration.
 - Browser permissions and APIs determine file mode availability.
+- Browser filesystem create checks for collisions, but the File System Access API has no exclusive-create primitive. Browser rename falls back to copy-then-remove when move is unavailable; it is not atomic. If removing the original fails, the complete destination is retained and the failure reports its location.
 - Demo files are virtual and cannot imply native filesystem changes.
 - HTML preview remains sandboxed in-page.
 - Document conversion is not a native website capability.

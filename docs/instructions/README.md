@@ -92,6 +92,7 @@ This folder is a source-derived specification of the active application. It is o
 - [Use Welcome, Help, and Localization](02-use-cases/UC-029-welcome-help-localization.md) — Use case UC-029
 - [Copy, Edit, Open in Browser, and Export Content](02-use-cases/UC-030-copy-edit-browser-snapshot.md) — Use case UC-030
 - [Save and Navigate Source-Anchored Bookmarks](02-use-cases/UC-031-manage-bookmarks.md) — Use case UC-031
+- [Create and Delete Workspace Entries](02-use-cases/UC-032-create-and-delete-workspace-entries.md) — Use case UC-032
 
 ### Features
 - [Workspace Selection and Application Shell](03-features/01-workspace-selection-shell.md) — Workspace Selection and Application Shell

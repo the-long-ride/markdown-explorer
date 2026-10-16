@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-17T00:00:00+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: UI-to-Host Command Catalog
 topic: Exact active `WebviewMessage` command catalog
 document_type: reference
@@ -17,10 +17,12 @@ source_scope:
 - ui/src/history/contracts.ts
 - ui/src/history/historyClient.ts
 - ui/src/insights/contracts.ts
+- ui/src/workspace/workspaceEntriesClient.ts
 test_scope:
 - tests/contracts/host-message-parity.test.ts
 - tests/contracts/tauri-dispatcher-parity.test.ts
 - tests/node/repository-history-pagination-contract.test.mjs
+- tests/unit/ui/workspace/workspace-entries-client.test.ts
 runtime_scope:
 - shared
 keywords:
@@ -36,7 +38,7 @@ keywords:
 
 ## Contract count
 
-**59 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
+**61 active commands** are extracted from `ui/src/types/webviewMessages.ts`.
 
 | Command | Interface and payload |
 |---|---|
@@ -50,7 +52,10 @@ keywords:
 | `compareGitRevisions` | `CompareGitRevisionsMessage` — requestId: string, left: GitCompareSide, right: GitCompareSide |
 | `confirmOpenPath` | `ConfirmOpenPathMessage` — path: string |
 | `copyCode` | `CopyCodeMessage` — text: string |
+| `createWorkspaceEntry` | `CreateWorkspaceEntryMessage` — requestId: string, parentPath: string ('/'-separated, '' = root), name: string, kind: 'file' \| 'folder' |
 | `deleteRecentWorkspace` | `DeleteRecentWorkspaceMessage` — path: string |
+| `renameWorkspaceEntry` | `RenameWorkspaceEntryMessage` — requestId, path, name, kind: 'file' \| 'folder' |
+| `deleteWorkspaceEntries` | `DeleteWorkspaceEntriesMessage` — requestId: string, paths: string[] ('/'-separated, workspace-relative), mode?: 'trash' \| 'permanent' |
 | `downloadUpdate` | `DownloadUpdateMessage` — version: string, url: string |
 | `importDesktopFonts` | `ImportDesktopFontsMessage` — requestId: string |
 | `indexWorkspaceSearchItems` | `IndexWorkspaceSearchItemsMessage` — items?: readonly CrossTabSearchResult[] |
@@ -117,6 +122,14 @@ keywords:
 - Hosts reject stale revisions with a conflict result rather than overwriting disk content silently.
 - `force: true` is reserved for the explicit conflict-resolution flow; normal saves keep optimistic revision protection enabled.
 
+## Workspace entry request rules
+
+- `createWorkspaceEntry` and `deleteWorkspaceEntries` are correlated by `requestId` and answered by `createWorkspaceEntryResult` / `deleteWorkspaceEntriesResult`. The UI client (`workspaceEntriesClient.ts`) waits 15 seconds, then synthesizes a `failed` result: one `failed` reason for a create, one `failed` entry per requested path for a delete.
+- Paths are workspace-relative and '/'-separated; `parentPath: ''` is the workspace root. Hosts never trim `name`; the UI trims it first and appends `.md` to a file name that contains no `.`.
+- Runtimes: Electron, VS Code, Tauri, Chromium, and website file mode implement both commands. Electron, VS Code, and Tauri default to OS Trash (`mode: 'trash'`) with an explicit permanent override; the Chromium extension and website file mode remove them permanently with File System Access `removeEntry` (`mode: 'permanent'`).
+- Create is exclusive and never overwrites an existing entry. Delete never follows a symlink entry, refuses any `.git` segment and the workspace root, and processes each path independently. Failure reasons are listed in the [Error and Reason Catalog](09-error-and-reason-catalog.md).
+- The website demo implements create/rename/delete against localStorage-backed simulated entries; no real filesystem access occurs. Website `?mode=file` uses real directory handles and requires write permission.
+
 ## Workspace Insights request rules
 
 - Insights scan/source/resource/external-link commands are correlated by `requestId`; workspace scans may additionally carry `workspaceOperationId`.
@@ -149,6 +162,12 @@ window.PlatformBridge.postMessage({
 });
 ```
 
+## Entry rename and explicit deletion mode
+
+- `renameWorkspaceEntry`: `{ requestId, path, name, kind: 'file' | 'folder' }`; path is workspace-relative with `/` separators. Validate protected roots, containment and destination collisions; never overwrite.
+- `deleteWorkspaceEntries` also accepts optional `mode: 'trash' | 'permanent'`. Native hosts honor the selected mode; browser and simulated hosts report permanent mode explicitly.
+- All entry mutations refresh the workspace before replying on success. Demo mode updates only its localStorage-backed simulated workspace. Real browser rename uses move when supported; its copy fallback retains the complete destination if removing the original fails and reports that recovery location.
+
 ## Source traceability
 
 | Kind | Path | Purpose |
@@ -158,9 +177,11 @@ window.PlatformBridge.postMessage({
 | Implementation | `ui/src/history/historyClient.ts` | Correlated Git request client and pagination payload |
 | Implementation | `ui/src/history/contracts.ts` | Git history and repository snapshot payload types |
 | Implementation | `ui/src/insights/contracts.ts` | Workspace Insights payload types |
+| Implementation | `ui/src/workspace/workspaceEntriesClient.ts` | Correlated create/delete entry requests and timeout results |
 | Verification | `tests/contracts/host-message-parity.test.ts` | Automated expectation |
 | Verification | `tests/contracts/tauri-dispatcher-parity.test.ts` | Automated expectation |
 | Verification | `tests/node/repository-history-pagination-contract.test.mjs` | Cross-runtime offset/search/routing contract |
+| Verification | `tests/unit/ui/workspace/workspace-entries-client.test.ts` | Request/response correlation and timeout results |
 
 ---
 

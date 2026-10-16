@@ -4,6 +4,22 @@ All notable changes to the **Markdown Explorer** extension will be documented in
 
 > **Note:** This changelog is maintained independently from the root [`CHANGELOG.md`](../CHANGELOG.md). It covers only VS Code extension-specific changes. For desktop (Electron/Tauri), Chromium extension, and web releases, see the root changelog.
 
+## [v1.7.1] — 2026-10-16
+
+### Added
+- **Files management in the webview**: Create files/folders from the toolbar or folder menu; rename entries from their menu or with F2; delete the focused entry or selection using Delete and a confirmation dialog.
+- **Entry selection and empty folders**: Added shared row checkboxes, selected counts, batch unpin/delete actions, a focused-row outline, and empty folders in the Files tree.
+- **Deletion choice**: Deletion defaults to the system Trash through workspace.fs.delete. Permanently Delete explicitly opts into removal without Trash; the dialog warns about affected unsaved files.
+
+### Changed
+- **Rename continuity**: Renames preserve open tabs, unsaved buffers, bookmarks, pins, scope references, and split-pane paths, including descendants of renamed folders.
+- **Consistent creation icons**: Toolbar buttons, context menus, and inline drafts use the same New File/New Folder SVG icons. Shared checkbox and confirmation controls keep Files and Bookmarks consistent.
+
+### Fixed
+- **Dependency security**: Updated the shared webview's DOMPurify and KaTeX, plus affected extension packaging dependencies, to patched releases. The workspace audit still reports unpatched upstream braces and sprintf-js advisories; see [the dependency audit](../docs/dependency-security-audit.md).
+- **Missing controls in VS Code/VSCodium**: Workspace identity is included in ready, incremental, and watcher messages, enabling the management controls for an opened folder.
+- **Git history in ordinary folders**: A folder outside a Git repository now shows repository guidance instead of git-command-failed. Git remains read-only; no repository is initialized automatically.
+
 ## [v1.7.0] — 2026-09-29
 
 ### Added

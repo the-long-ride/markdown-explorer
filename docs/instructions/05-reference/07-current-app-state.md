@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-17T00:00:00+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: Current Application State
 topic: Unreleased synchronized product and runtime snapshot
 document_type: reference
@@ -40,7 +40,7 @@ runtime_scope:
 keywords:
 - current state
 - unreleased
-- version 1.7.0
+- version 1.7.1
 - settings
 - typography
 - localization
@@ -48,11 +48,13 @@ keywords:
 - editing
 - repository history
 - split view
+- file operations
+- empty folders
 ---
 
 # Current Application State
 
-This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-09-17. The PR #48 feature branch targets application version **1.7.0** so it remains distinct from the separate 1.6.8 hot-fix line. Detailed feature/runtime documents remain normative; this page is the compact cross-product map used to detect documentation drift.
+This reference is the synchronized **Unreleased** snapshot of Markdown Explorer as of 2026-09-17. The PR #48 feature branch targets application version **1.7.0** so it remains distinct from the separate 1.6.8 hot-fix line. The current application version is **1.7.1**, which adds Files tab file operations (see Sidebar file operations). Detailed feature/runtime documents remain normative; this page is the compact cross-product map used to detect documentation drift.
 
 ## Supported runtimes
 
@@ -72,6 +74,8 @@ Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code*
 | Typography font sources | system fonts and imported files | system fonts and imported files | system fonts and imported files | imported browser fonts |
 | App-owned zoom | Yes | Yes | No; host/native zoom | No; host/native zoom |
 | Update installation | Markdown Explorer desktop updater | Signed Tauri updater | VS Code owns installation; app checks/reports only | Store/deployment owned |
+| Create file/folder (Files tab) | Yes | Yes | Yes | Yes (website: file mode only) |
+| Delete selected entries | OS Trash | OS Trash | OS Trash | Permanent |
 
 VS Code imported fonts are copied to extension global storage and served to the webview with a safe URI. Chromium/Web store imported font files in IndexedDB and activate them with the FontFace API. Typography exposes system fonts and imported fonts where the runtime supports them.
 
@@ -118,6 +122,15 @@ VS Code imported fonts are copied to extension global storage and served to the 
 - Git adapters remain read-only: stage, commit, checkout, restore, reset, stash, branch, switch, merge, and rebase are outside the protocol.
 
 See [Local Git History and Diff](../../git-history-diff.md).
+
+## Sidebar file operations (1.7.1)
+
+- **Files tab create buttons**: **New File** (file-plus icon) and **New Folder** buttons on the left of the action bar. The new entry is created in the last focused folder, the parent of the last focused file, or the workspace root, VS Code style. File names default to `.md` when no extension is typed; any extension is accepted.
+- **Folder context menu creation**: **New File…** and **New Folder…** in the folder context menu create inside that folder.
+- **Files tab selection mode**: checkboxes on every row with Expand all, Collapse all, Unpin selected, and Delete selected, each destructive action behind a confirmation dialog. Electron, Tauri, and VS Code move deleted items to the system Trash; the Chromium extension and website file mode delete permanently and say so.
+- **Empty folders in the tree**: truly empty folders appear in the Files tree on every runtime.
+- **Shared confirm dialog**: the clear-pins confirmation now uses the shared sidebar confirm dialog.
+- The capability is derived from `appRuntime` and hidden without a workspace or in historical revision mode. Details: [Sidebar Tree, Filtering, and Scope](../03-features/03-sidebar-tree-and-scope.md) and [UC-032](../02-use-cases/UC-032-create-and-delete-workspace-entries.md).
 
 ## Window, shell, and Focus behavior
 
@@ -190,7 +203,7 @@ Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for App 
 
 ## Version synchronization
 
-The feature branch target is **1.7.0**. Root `package.json` is authoritative and `scripts/sync-versions.mjs` synchronizes runtime package/config and public site version metadata before build/release. The 1.7.0 marker does not mean PR #48 has been merged; manual validation remains required.
+The current version is **1.7.1** (sidebar file operations on top of the PR #48 feature set, which targeted **1.7.0**). Root `package.json` is authoritative and `scripts/sync-versions.mjs` synchronizes runtime package/config and public site version metadata before build/release. The 1.7.0 marker does not mean PR #48 has been merged; manual validation remains required.
 
 ## Source traceability
 
@@ -203,9 +216,14 @@ The feature branch target is **1.7.0**. Root `package.json` is authoritative and
 | Revision projection/search | `ui/src/history/revisionWorkspace.ts` |
 | History search/persistence | `ui/src/history/repositoryView.ts` |
 | Runtime Git adapters | `electron/git/document-history.js`, `tauri/src/dispatcher/git_repository.rs`, `vscode/src/core/panelGitHistory.ts` |
+| Sidebar file operations | `ui/src/workspace/*`, `ui/src/components/Sidebar/useSidebarFileOps.tsx`, `electron/workspace/workspace-entries.js`, `vscode/src/core/panelWorkspaceEntries.ts`, `tauri/src/dispatcher/workspace_entries.rs`, `chromium-xtension/src/workspace-entries.ts` |
 | Version synchronization | `package.json`, `scripts/sync-versions.mjs` |
 | As-built PR #48 contract | `docs/superpowers/specs/2026-09-17-pr48-as-built-sync.md` |
 
 ---
 
 [← Supported Files and Conversion Catalog](06-supported-files-and-conversion.md) · [Documentation index](../README.md) · [Storage Catalog →](07-storage-catalog.md)
+
+## v1.7.1 synchronization
+
+Files support per-entry rename/delete, F2/Delete shortcuts, focused-row outlines, explicit permanent deletion and rename state migration. The web demo persists simulated entry metadata in localStorage; explicit browser file mode still uses real handles. VSCodium workspace messages retain workspacePath and ordinary folders receive not-repository Git guidance. See [entry actions design](../../sidebar-entry-actions-design.md).

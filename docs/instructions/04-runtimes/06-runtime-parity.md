@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-09-17T00:00:00+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: Runtime Parity and Capability Matrix
 topic: Common contracts, supported capabilities, and intentional runtime differences
 document_type: runtime
@@ -27,6 +27,11 @@ source_scope:
 - chromium-xtension/src/chrome-host.ts
 - chromium-xtension/src/browser-git-history-host.ts
 - website-app/src/web-test-message-router.ts
+- electron/workspace/workspace-entries.js
+- vscode/src/core/panelWorkspaceEntries.ts
+- tauri/src/dispatcher/workspace_entries.rs
+- chromium-xtension/src/workspace-entries.ts
+- website-app/src/web-file-utility-router.ts
 test_scope:
 - tests/contracts/host-message-parity.test.ts
 - tests/contracts/tauri-dispatcher-parity.test.ts
@@ -39,6 +44,10 @@ test_scope:
 - tests/unit/ui/history/revision-workspace.test.ts
 - tests/unit/ui/history/revision-search.test.ts
 - tests/unit/ui/split-view
+- tests/unit/electron/workspace-entries.test.ts
+- tests/unit/vscode/panel-workspace-entries.test.ts
+- tests/unit/chromium/workspace-entries.test.ts
+- tests/unit/chromium/web-file-workspace-entries.test.ts
 runtime_scope:
 - runtime
 keywords:
@@ -51,6 +60,8 @@ keywords:
 - repository snapshots
 - split view
 - pagination
+- file operations
+- empty folders
 ---
 
 # Runtime Parity and Capability Matrix
@@ -60,6 +71,10 @@ keywords:
 | Capability | Electron | Tauri | VS Code | Chromium | Website |
 |---|:---:|:---:|:---:|:---:|:---:|
 | Folder/file workspace | Yes | Yes | Yes | Yes, handles | Yes, browser/virtual |
+| Create file/folder | Yes | Yes | Yes | Yes | Yes, real file mode / simulated demo |
+| Rename file/folder | Yes | Yes | Yes | Yes | Yes, real file mode / simulated demo |
+| Delete entries | Trash / permanent | Trash / permanent | Trash / permanent | Permanent (`removeEntry`) | Real file mode: permanent; demo: simulated localStorage removal |
+| Empty folders in tree | Yes | Yes | Yes | Yes | Yes |
 | Native watcher | Yes | Yes | Yes | Poll | Browser-dependent |
 | Workspace search | Yes | Yes | Yes | Yes | Yes |
 | Cross-workspace desktop search | Yes | Parity path | Limited by shell | No desktop tabs | No desktop tabs |
@@ -128,6 +143,19 @@ On a live workspace, **More Actions → Edit** stays available on capable native
 
 Electron and Tauri retain a thin application-owned draggable surface when Focus mode hides normal chrome. Interactive Focus controls remain `no-drag`. Tauri's fullscreen guard remains authoritative and must prevent the Focus surface from making a fullscreen window draggable.
 
+## Workspace entry operations parity contract
+
+`createWorkspaceEntry` and `deleteWorkspaceEntries` are handled by one focused host module per runtime. Every module carries its own copy of the name rules, tested against the shared fixture `tests/fixtures/workspace-entry-names.json`, resolves the parent against the workspace base with lexical and (where the runtime can) real-path containment, refreshes the tree **before** it sends a successful result, never overwrites on create, and refuses `.git` segments and the workspace root on delete.
+
+| Runtime | Module | Create | Delete |
+|---|---|---|---|
+| Electron | `electron/workspace/workspace-entries.js` (wired in `main-bootstrap.js` and `ipc-handlers.js`) | exclusive open, `mkdir` | `shell.trashItem` (`trash`) |
+| VS Code | `vscode/src/core/panelWorkspaceEntries.ts` (wired in `panel.ts`) | `fs` exclusive open, `mkdir` | `workspace.fs.delete` with `useTrash: true` (`trash`) |
+| Tauri | `tauri/src/dispatcher/workspace_entries.rs` | `create_new`, `create_dir` | `trash` crate (`trash`) |
+| Chromium / Website file mode | `chromium-xtension/src/workspace-entries.ts` (used by `chrome-host-search.ts` and `website-app/src/web-file-utility-router.ts`) | `getFileHandle`/`getDirectoryHandle` with `create` after an existence probe | `removeEntry(name, { recursive: true })` (`permanent`); requests `readwrite` permission lazily, denial gives `permission-denied` |
+
+The UI derives the capability from `appRuntime` (no host field). The website demo handles create/rename/delete against simulated entries persisted only in localStorage; its controls are enabled. Empty-folder scanning is a separate per-runtime change in each scanner (Electron `DesktopScanner`, VS Code `WorkspaceScanner` plus `emptyDirectories.ts`, Tauri `scanner.rs` and `tree_builder.rs`, Chromium/website `BrowserScanner`).
+
 ## Common protocol requirement
 
 All adapters must honor the active `WebviewMessage` and `HostMessage` discriminants they support. Unsupported capabilities are hidden or produce safe recovery; adapters must not silently reinterpret commands.
@@ -149,6 +177,16 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 - Pane-owned split tabs preserve focused-pane state on close and do not dispatch application state on every scroll event.
 - Focus-mode native dragging remains disabled in Tauri fullscreen.
 
+## Workspace entry actions in v1.7.1
+
+| Runtime | Create / rename | Delete and persistence |
+|---|---|---|
+| Electron / Tauri / VS Code | Real workspace entries; guarded paths and collisions | OS Trash by default, explicit permanent override |
+| Chromium / website file mode | Real entries under an opened directory handle with write permission | Permanent removal; single-file handles do not support workspace mutations |
+| Website demo | Simulated entries, no real folder access | localStorage-only mutations persist across reload |
+
+VS Code/VSCodium sends workspacePath in ready, incremental and watcher payloads. Git history requires an existing Git repository; an ordinary folder receives `not-repository` guidance, while missing Git and other execution errors remain distinct.
+
 ## Source traceability
 
 | Kind | Path | Purpose |
@@ -164,10 +202,15 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 | Implementation | `tauri/src/dispatcher/git_repository.rs` | Tauri repository-history paging |
 | Implementation | `vscode/src/core/panelGitHistory.ts` | VS Code local Git adapter |
 | Implementation | `chromium-xtension/src/browser-git-history-host.ts` | Explicit browser unsupported responses |
+| Implementation | `electron/workspace/workspace-entries.js` | Electron create/delete (Trash) |
+| Implementation | `vscode/src/core/panelWorkspaceEntries.ts` | VS Code create/delete (Trash) |
+| Implementation | `tauri/src/dispatcher/workspace_entries.rs` | Tauri create/delete (Trash crate) |
+| Implementation | `chromium-xtension/src/workspace-entries.ts` | Chromium/website create/delete (permanent) |
 | Verification | `tests/node/repository-history-pagination-contract.test.mjs` | Pagination/search/routing parity |
 | Verification | `tests/unit/ui/history/repository-view.test.ts` | Search/persistence behavior |
 | Verification | `tests/unit/ui/history/revision-workspace.test.ts` | Revision file projection |
 | Verification | `tests/unit/ui/split-view` | Pane tabs and isolation |
+| Verification | `tests/unit/electron/workspace-entries.test.ts`, `tests/unit/vscode/panel-workspace-entries.test.ts`, `tests/unit/chromium/workspace-entries.test.ts` | Per-runtime entry operations against the shared name fixture |
 
 ---
 

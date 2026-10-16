@@ -134,4 +134,4 @@ The active Bookmarks header shows the visible saved count. Search occupies the f
 
 ---
 
-[← Copy, Edit, Open in Browser, and Export Content](UC-030-copy-edit-browser-snapshot.md) · [Documentation index](../README.md) · [Workspace Selection and Application Shell →](../03-features/01-workspace-selection-shell.md)
+[← Copy, Edit, Open in Browser, and Export Content](UC-030-copy-edit-browser-snapshot.md) · [Documentation index](../README.md) · [Create and Delete Workspace Entries →](UC-032-create-and-delete-workspace-entries.md)

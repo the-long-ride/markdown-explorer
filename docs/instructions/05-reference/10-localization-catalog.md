@@ -1,5 +1,5 @@
 ---
-timestamp: '2026-08-05T06:40:23+07:00'
+timestamp: '2026-10-07T00:00:00+07:00'
 name: Localization Catalog
 topic: Supported locales and translation boundaries
 document_type: reference
@@ -17,6 +17,8 @@ source_scope:
 - ui/src/contexts/userManualTranslations.ts
 - ui/src/contexts/translationTypes.ts
 - ui/src/contexts/exportScopeTranslations.ts
+- ui/src/contexts/sidebarFileOpsTranslations.ts
+- ui/src/workspace/workspaceEntryMessages.ts
 - ui/src/components/Modal/ScopeViewModal.tsx
 - ui/src/components/Export/ExportCenterModal.tsx
 test_scope:
@@ -29,6 +31,7 @@ test_scope:
 - tests/node/localization-settings-doc-sync-contract.test.mjs
 - tests/unit/ui/components/scope-view-modal.test.tsx
 - tests/contracts/translations-coverage.test.ts
+- tests/unit/ui/workspace/workspace-entry-messages.test.ts
 runtime_scope:
 - shared
 keywords:
@@ -62,6 +65,11 @@ keywords:
 - The `bookmarks` domain covers **Enable Bookmark feature**, tab/count, search/sort/group controls, icon tooltips, selection/batch-delete actions, add/edit dialogs, object/link capture, empty states, target-changed notices, and verified-operation feedback across all nine locales. Required feedback keys are `savedSuccess`, `saveFailed`, `renamedSuccess`, `renameFailed`, and `storageUnavailable`.
 - `userManualTranslations.ts` supplies the searchable User Manual sections, task cards, direct actions, no-results state, and bookmark guidance for all nine locales.
 - Sidebar pinning, sorting, and maximum pinned items preference keys (`maxPinnedItems`, `maxPinnedItemsDesc`, `clearPinnedItems`, `sortFiles`, `sortNameAsc`, `sortNameDesc`, `sortModifiedDesc`, `sortModifiedAsc`, `pinThisFile`, `pinThisFolder`, `unpinItem`, `pinned`) are strictly typed as non-optional in `translationTypes.ts` and fully translated across all 9 supported locales.
+- Sidebar file operations add **32** non-optional `sidebar.*` keys, translated in all nine locales and typed in `translationTypes.ts`. Placeholders: `{name}`, `{count}`, `{names}`. The English strings live in `sidebarFileOpsTranslations.ts` (`SIDEBAR_FILE_OPS_EN`, spread into both the inline English record in `translations.ts` and the English record in `translationsData.ts`); the other eight locales are literal entries in `translationsData.ts`. The selection toolbar and dialogs reuse `bookmarks.cancel` for the Cancel label.
+  - Create: `newFile`, `newFolder`, `newFileMenu`, `newFolderMenu`, `newFileInputLabel`, `newFolderInputLabel`, `entryUnlistedType`.
+  - Selection: `selectMode`, `exitSelectMode`, `selectItem` (`{name}`), `unpinSelected` (`{count}`), `unpinSelectedConfirmBody` (`{count}`), `deleteSelected` (`{count}`).
+  - Delete dialog: `deleteTrashTitle` and `deletePermanentTitle` (`{count}`), `deleteTrashBody`, `deletePermanentBody`, `deleteTrashConfirm`, `deletePermanentConfirm`, `deleteMore` (`{count}`), `deleteUnsavedWarning` (`{count}`), `deleteFailed` (`{names}`).
+  - Errors: `entryErrorEmpty`, `entryErrorExists` (`{name}`), `entryErrorInvalid` (`{name}`), `entryErrorReserved` (`{name}`), `entryErrorProtected` (`{name}`), `entryErrorPermission`, `entryErrorMissing`, `entryErrorOutside`, `entryErrorUnsupported`, `entryErrorFailed`.
 - `exportScopeTranslations.ts` provides the `exportCenter` (`title`, `description`, `close`, `export`, `exporting`, `source` with `region/title/mode/current/selected/folder/workspace/noCurrent/documentsToExport/searchDocuments/folderToExport/searchFolders/documentCount/renderableCount/selectAll/unselectAll/noMatches/includeFile`, `options` with `format/htmlDescription/pdfDescription/staticWebsite/.../batchOutput/separateOutputs/mergedOutput/documentsSelected/activity/...`, `status` with `unableCreate/selectAtLeastOne/cancelled/partial/failedCount/complete/failed`) and `scopeView` (`dialogLabel`, `previous`, `next`, `level`, `close`, `loading`, `maximumDepth`, `unableOpen`, `outsideWorkspace`, `linkMenu`, `openInBrowser`, `copyLink`, `openAsScope`, `openFile`) domains for all nine locales. `openFile` ("Open file") is the Scope View header action that navigates the main workspace to the currently viewed scope file and closes the modal. The Export Center no longer exposes an "Additional workspace files" selector; the `extras` domain and its `listWorkspaceExportResources` enumeration were removed.
 - `insightsTranslations.ts` and `insightsUiTranslations.ts` provide the `insights` and `insightsUi` domains across all nine locales. This includes panel navigation (`gallery`, `links`, `lint`, `duplicates`, `graph`, `related`), indexing progress/provisional states, link checker actions/results, lint rule suppression, duplicate grouping, graph search/zoom/fullscreen/degree controls, related document evidence ranking, settings tuning sections (`scopeAndNetwork`, `limitsAndTuning`, `patternFilters`), unit notes, and presentation categories (media types, HTTP/local link statuses, relationship presets, and lint rules).
 - Welcome tips use a dedicated translation model/fallback.
@@ -89,6 +97,8 @@ Unknown locale or missing key uses the canonical fallback, normally English. A l
 | Implementation | `ui/src/contexts/welcomeTranslations.ts` | Welcome tips and existing welcome tabs |
 | Implementation | `ui/src/contexts/userManualTranslations.ts` | Searchable User Manual copy for nine locales |
 | Implementation | `ui/src/contexts/translationTypes.ts` | Active behavior or contract |
+| Implementation | `ui/src/contexts/sidebarFileOpsTranslations.ts` | English strings for the 32 sidebar file-operation keys |
+| Implementation | `ui/src/workspace/workspaceEntryMessages.ts` | Placeholder filling and reason/problem to key mapping |
 | Verification | `tests/unit/ui/contexts/translations.test.ts` | Automated expectation |
 | Verification | `tests/unit/ui/contexts/search-translations.test.ts` | All search keys exist in all nine locales |
 | Verification | `tests/unit/ui/contexts/welcome-translations.test.ts` | Automated expectation |
@@ -98,6 +108,7 @@ Unknown locale or missing key uses the canonical fallback, normally English. A l
 | Verification | `tests/node/user-manual-home.test.mjs` | All nine User Manual records and action wiring |
 | Verification | `tests/node/table-renderer-translations-contract.test.mjs` | Table and chart nine-locale translation verification |
 | Verification | `tests/node/localization-settings-doc-sync-contract.test.mjs` | Renderer hard-coded-copy guard and nine-locale audited-domain coverage |
+| Verification | `tests/unit/ui/workspace/workspace-entry-messages.test.ts` | File-operation messages resolve with no leftover placeholders in all nine locales |
 
 ---
 
