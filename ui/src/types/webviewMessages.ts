@@ -1,4 +1,4 @@
-import type { RecentWorkspace } from './files';
+import type { RecentWorkspace, WorkspaceEntryKind } from './files';
 import type { DocumentRevisionToken, WorkspaceOperationMetadata } from './content';
 import type { CrossTabSearchResult, WorkspaceSearchResult } from './hostMessages';
 import type { PersistedState, ShellLocationMode, ThemeMode, ThemeStyle } from './settings';
@@ -85,6 +85,26 @@ export interface ImportDesktopFontsMessage { readonly command: 'importDesktopFon
 export interface RemoveImportedDesktopFontMessage { readonly command: 'removeImportedDesktopFont'; readonly requestId: string; readonly id: string; }
 export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonly fileName: string; readonly dataUrl: string; readonly requestId?: string; }
 
+export interface CreateWorkspaceEntryMessage {
+  readonly command: 'createWorkspaceEntry';
+  readonly requestId: string;
+  /** Workspace-relative, '/'-separated, '' for the root. */
+  readonly parentPath: string;
+  readonly name: string;
+  readonly kind: WorkspaceEntryKind;
+}
+export interface RenameWorkspaceEntryMessage {
+  readonly command: 'renameWorkspaceEntry'; readonly requestId: string;
+  readonly path: string; readonly name: string; readonly kind: WorkspaceEntryKind;
+}
+export interface DeleteWorkspaceEntriesMessage {
+  readonly command: 'deleteWorkspaceEntries';
+  readonly mode?: 'trash' | 'permanent';
+  readonly requestId: string;
+  /** Workspace-relative, '/'-separated. */
+  readonly paths: readonly string[];
+}
+
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage | SaveDocumentMessage
   | ListDocumentHistoryMessage | ReadGitRevisionMessage | CompareGitRevisionsMessage
@@ -103,4 +123,5 @@ export type WebviewMessage =
   | OpenShellLocationMessage | OpenExternalMessage | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage | DownloadUpdateMessage | ScheduleDownloadedUpdateMessage
   | RestartAndApplyUpdateMessage | ListDesktopFontsMessage | ImportDesktopFontsMessage
-  | RemoveImportedDesktopFontMessage | SaveChartPngMessage;
+  | RemoveImportedDesktopFontMessage | SaveChartPngMessage
+  | RenameWorkspaceEntryMessage | CreateWorkspaceEntryMessage | DeleteWorkspaceEntriesMessage;

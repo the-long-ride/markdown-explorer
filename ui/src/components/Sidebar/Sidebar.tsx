@@ -33,6 +33,8 @@ import { folderHasVisibleContent, getWorkspaceScopeKey, matchesFileSearch } from
 import { getActiveFolderPaths } from "./sidebarActiveFolders";
 import { useLocateActiveFile } from "./useLocateActiveFile";
 import { SidebarFilesActions } from "./SidebarFilesActions";
+import { SidebarTreeEntryContext } from "./sidebarTreeContext";
+import { useSidebarFileOps } from "./useSidebarFileOps";
 import { useFolderExpansionCommand } from "./useFolderExpansionCommand";
 import { collectHoistedPinnedItems, orderSidebarLevel } from "./sidebarTreeOrdering";
 import { useSidebarPinnedSorting } from "./useSidebarPinnedSorting";
@@ -185,6 +187,7 @@ export function Sidebar({
     hasPins,
     pinLimitReached,
     clearPins,
+    removePins,
     togglePin,
     setSortMode,
   } = useSidebarPinnedSorting({
@@ -193,6 +196,8 @@ export function Sidebar({
     settings: state.settings,
     updateSettings,
   });
+  const leaveScopeEditing = useCallback(() => setScopeFocusEditing(false), []);
+  const fileOps = useSidebarFileOps({ enabled: !isRevisionMode, bridge, t, workspaceKey: scopeKey, pinnedKeys, removePins, expandAllFolders, collapseAllFolders, onEnterSelection: leaveScopeEditing });
   const liveTreeOrdering = useMemo<TreeOrderingProps>(() => ({ pinnedKeys, sortMode }), [pinnedKeys, sortMode]);
   const displayedTreeOrdering = useMemo<TreeOrderingProps>(() => isRevisionMode
     ? { pinnedKeys: EMPTY_PINNED_KEYS, sortMode: 'name-asc' }
@@ -305,10 +310,18 @@ export function Sidebar({
     isPinned: itemMenu ? pinnedKeys.has(`${itemMenu.kind}:${itemMenu.path}`) : false,
     pinLimitReached,
     onTogglePin: togglePin,
+    onCreateEntry: fileOps.capability.create ? fileOps.startCreate : undefined,
+    onRenameEntry: fileOps.capability.create ? fileOps.entryActions.startRename : undefined,
+    onDeleteEntry: fileOps.capability.deleteMode ? fileOps.entryActions.requestDelete : undefined,
+    canChangeEntry: fileOps.entryActions.canChange,
   }), [
     bridge,
     canOpenHtmlInBrowser,
     canOpenItemLocations,
+    fileOps.capability.create,
+    fileOps.capability.deleteMode,
+    fileOps.entryActions,
+    fileOps.startCreate,
     isRevisionMode,
     itemMenu,
     navigate,
@@ -355,19 +368,23 @@ export function Sidebar({
           {!isRevisionMode && (
             <>
               <div className="sidebar__files-second-row">
-                <SidebarScopeControls editing={scopeFocusEditing} hasEntry={hasScopeEntry} count={scopeFocusCount} total={allFilePaths.length} allSelected={allFilesSelected} labels={{ focus: t.sidebar.scopeFocus, clear: t.sidebar.clearScopeFocus, checkAll: t.sidebar.checkAll, uncheckAll: t.sidebar.uncheckAll }} onToggleEditing={() => setScopeFocusEditing((editing) => !editing)} onToggleAll={toggleAllScopeFiles} onClear={clearScopeFocus} />
+                <SidebarScopeControls editing={scopeFocusEditing} hasEntry={hasScopeEntry} count={scopeFocusCount} total={allFilePaths.length} allSelected={allFilesSelected} labels={{ focus: t.sidebar.scopeFocus, clear: t.sidebar.clearScopeFocus, checkAll: t.sidebar.checkAll, uncheckAll: t.sidebar.uncheckAll }} onToggleEditing={() => { fileOps.exitSelection(); setScopeFocusEditing((editing) => !editing); }} onToggleAll={toggleAllScopeFiles} onClear={clearScopeFocus} />
               </div>
-              <SidebarFilesActions canLocate={Boolean(displayedCurrentFile)} hasPins={hasPins} workspaceKey={scopeKey} locateLabel={t.tooltips.locateFile} clearPinsLabel={t.sidebar.clearPinnedItems} clearPinsConfirmBody={t.sidebar.clearPinnedItemsConfirmBody} cancelLabel={t.bookmarks.cancel} sortLabel={t.sidebar.sortFiles} sortNameAscLabel={t.sidebar.sortNameAsc} sortNameDescLabel={t.sidebar.sortNameDesc} sortModifiedDescLabel={t.sidebar.sortModifiedDesc} sortModifiedAscLabel={t.sidebar.sortModifiedAsc} collapseLabel={t.sidebar.collapseAllFolders} expandLabel={t.sidebar.expandAllFolders} locateShortcut={getEnabledShortcut(state.settings, 'locateFile')} sortMode={sortMode} onLocate={scrollToActiveFile} onClearPins={clearPins} onSortChange={setSortMode} onCollapseAll={collapseAllFolders} onExpandAll={expandAllFolders} />
+              {fileOps.selectionToolbar ?? <SidebarFilesActions leftActions={fileOps.createActions} canLocate={Boolean(displayedCurrentFile)} hasPins={hasPins} workspaceKey={scopeKey} locateLabel={t.tooltips.locateFile} clearPinsLabel={t.sidebar.clearPinnedItems} clearPinsConfirmBody={t.sidebar.clearPinnedItemsConfirmBody} cancelLabel={t.bookmarks.cancel} sortLabel={t.sidebar.sortFiles} sortNameAscLabel={t.sidebar.sortNameAsc} sortNameDescLabel={t.sidebar.sortNameDesc} sortModifiedDescLabel={t.sidebar.sortModifiedDesc} sortModifiedAscLabel={t.sidebar.sortModifiedAsc} collapseLabel={t.sidebar.collapseAllFolders} expandLabel={t.sidebar.expandAllFolders} locateShortcut={getEnabledShortcut(state.settings, 'locateFile')} sortMode={sortMode} onLocate={scrollToActiveFile} onClearPins={clearPins} onSortChange={setSortMode} onCollapseAll={fileOps.collapseAll} onExpandAll={expandAllFolders} />}
             </>
           )}
         </div>
-        <div className="sidebar__tree sidebar__tree--from-left" id="sidebarTree" role="tree" ref={treeRef} onScroll={handleScroll}>
+        <div className="sidebar__tree sidebar__tree--from-left" id="sidebarTree" role="tree" ref={treeRef} onScroll={handleScroll} onClick={fileOps.onTreeClick} onKeyDown={fileOps.entryActions.onTreeKeyDown}>
+          <SidebarTreeEntryContext.Provider value={fileOps.treeContext}>
+          {fileOps.entryActions.deleteDialog}
+          {fileOps.rootInput}
           {orderedRootItems.map((item) => item.kind === "file" ? (
             <FileNode key={item.key} file={item.file} scopeFocus={displayedScopeFocus} ordering={displayedTreeOrdering} cursorMode={cursorMode} cursorItemId={cursorItemId} onRequestItemMenu={isRevisionMode ? undefined : handleRequestItemMenu} canRequestItemMenu={canRequestItemMenu} openMenuPath={itemMenu?.path ?? null} itemActionsLabel={isRevisionMode ? undefined : t.sidebarItemActions} pinnedLabel={t.sidebar.pinned} onNavigate={isRevisionMode ? openRevisionFile : undefined} />
           ) : (
             <FolderNodeView key={item.key} node={item.folder} filter={filter} scopeFocus={displayedScopeFocus} ordering={displayedTreeOrdering} cursorMode={cursorMode} cursorItemId={cursorItemId} onRequestItemMenu={isRevisionMode ? undefined : handleRequestItemMenu} canRequestItemMenu={canRequestItemMenu} openMenuPath={itemMenu?.path ?? null} itemActionsLabel={isRevisionMode ? undefined : t.sidebarItemActions} pinnedLabel={t.sidebar.pinned} activeFolderPaths={activeFolderPaths} locateRequest={locateRequest} expansionCommand={folderExpansionCommand} onNavigate={isRevisionMode ? openRevisionFile : undefined} />
           ))}
           {!hasVisibleTreeItems && <div className="sidebar__empty-scope">{displayedHasScopeEntry ? t.sidebar.noScopeFiles : t.sidebar.noFiles}</div>}
+          </SidebarTreeEntryContext.Provider>
         </div>
       </div>
 

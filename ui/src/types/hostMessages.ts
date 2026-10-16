@@ -1,4 +1,4 @@
-import type { FolderNode, MdFile, RecentWorkspace } from './files';
+import type { FolderNode, MdFile, RecentWorkspace, WorkspaceEntryKind } from './files';
 import type { DocumentRevisionToken, RenderContentMessage, WorkspaceOperationMetadata } from './content';
 import type { AppRuntime, HostPlatform, PersistedState, UpdateState, WorkspaceUnavailableReason } from './settings';
 import type { DesktopFontFamily } from '../desktop/fonts/fontModel';
@@ -284,6 +284,35 @@ export interface RequestSaveCurrentDocumentMessage {
   readonly command: 'requestSaveCurrentDocument';
 }
 
+export type WorkspaceEntryFailureReason =
+  | 'exists' | 'invalid-name' | 'outside-workspace' | 'protected'
+  | 'missing' | 'permission-denied' | 'unsupported' | 'failed';
+export type WorkspaceEntryDeleteMode = 'trash' | 'permanent';
+
+export interface CreateWorkspaceEntryResultMessage {
+  readonly command: 'createWorkspaceEntryResult';
+  readonly requestId: string;
+  readonly ok: boolean;
+  readonly path?: string;
+  readonly kind?: WorkspaceEntryKind;
+  readonly reason?: WorkspaceEntryFailureReason;
+  readonly error?: string;
+}
+export interface RenameWorkspaceEntryResultMessage {
+  readonly command: 'renameWorkspaceEntryResult'; readonly requestId: string; readonly ok: boolean;
+  /** Synthetic client timeout: the operation is still running and its eventual reply must reconcile. */
+  readonly pending?: boolean;
+  readonly oldPath?: string; readonly path?: string; readonly kind?: WorkspaceEntryKind;
+  readonly reason?: WorkspaceEntryFailureReason; readonly error?: string;
+}
+export interface DeleteWorkspaceEntriesResultMessage {
+  readonly command: 'deleteWorkspaceEntriesResult';
+  readonly requestId: string;
+  readonly mode: WorkspaceEntryDeleteMode;
+  readonly deleted: readonly string[];
+  readonly failed: readonly { readonly path: string; readonly reason: WorkspaceEntryFailureReason }[];
+}
+
 export type HostMessage =
   | RenderContentMessage | ReadyAckMessage | RestorePersistedStateMessage | WorkspaceFilesChangedMessage
   | CurrentFileChangedMessage | RecentWorkspacesChangedMessage | NavNotFoundMessage
@@ -297,4 +326,5 @@ export type HostMessage =
   | InsightsScanBatchMessage | InsightsScanCompleteMessage | InsightsDocumentSourceResultMessage
   | WorkspaceResourceProbeResultMessage | InsightsFsDeltaMessage | InsightsRuntimeCapabilitiesMessage
   | ExternalLinkCheckResultMessage | ExternalLinkCheckCompleteMessage
-  | DesktopFontsResultMessage | ChartPngSaveResultMessage | RequestSaveCurrentDocumentMessage;
+  | DesktopFontsResultMessage | ChartPngSaveResultMessage | RequestSaveCurrentDocumentMessage
+  | RenameWorkspaceEntryResultMessage | CreateWorkspaceEntryResultMessage | DeleteWorkspaceEntriesResultMessage;

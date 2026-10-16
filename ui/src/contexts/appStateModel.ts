@@ -101,6 +101,7 @@ export interface AppState {
 }
 
 export type Action =
+  | { type: 'RENAME_WORKSPACE_ENTRY'; workspaceKey: string; oldPath: string; newPath: string; oldAbsolutePath?: string; newAbsolutePath?: string }
   | { type: 'RESTORE_PERSISTED_STATE'; persistedState: PersistedState | undefined }
   | {
       type: 'READY_ACK';

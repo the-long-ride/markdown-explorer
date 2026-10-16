@@ -1,5 +1,8 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 const { createAppBootstrap } = require('../../../electron/core/main-bootstrap.js');
@@ -265,6 +268,8 @@ describe('createAppBootstrap', () => {
       expect(call.handlers.scheduleDownloadedUpdate).toBe(runtimeImpl.handleScheduleDownloadedUpdate);
       expect(call.handlers.restartAndApplyUpdate).toBe(runtimeImpl.handleRestartAndApplyUpdate);
       expect(call.handlers.openHtmlPreview).toEqual(expect.any(Function));
+      expect(call.handlers.createWorkspaceEntry).toEqual(expect.any(Function));
+      expect(call.handlers.deleteWorkspaceEntries).toEqual(expect.any(Function));
     });
 
     test('windowClose routes through the native close guard instead of closing the window', async () => {
@@ -396,6 +401,44 @@ describe('createAppBootstrap', () => {
       const um = result.getUpdateManager();
       expect(um).toBeDefined();
     });
+  });
+
+  test('wires workspace entry handlers to workspace state, refresh, trash and host messages', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-bootstrap-'));
+    try {
+      fs.writeFileSync(path.join(root, 'old.md'), 'old');
+      runtimeImpl.state = { workspacePath: root };
+      runtimeImpl.refreshActiveWorkspace = vi.fn(async () => {});
+      const trashItem = vi.fn(async () => {});
+      createAppBootstrap({
+        appImpl, BrowserWindowImpl, sessionImpl, MenuImpl, perfImpl, processImpl,
+        setTimeoutImpl, clearTimeoutImpl, setImmediateImpl, configureYouTubeEmbedHeadersFn,
+        createUpdateManagerFn, registerIpcHandlersFn, runtimeImpl,
+        debugToolsImpl, createMainWindowFn, appDirImpl: '/test/app',
+        pathImpl: { join: vi.fn((...args: string[]) => args.join('/')), dirname: vi.fn((p: string) => p) },
+        fsImpl: { existsSync: vi.fn(() => true), statSync: vi.fn(() => ({ isFile: vi.fn(() => false) })) },
+        recentWorkspacesStoreImpl: { load: vi.fn(() => []), save: vi.fn() },
+        ipcMainImpl: {}, clipboardImpl: {}, shellImpl: { openExternal: vi.fn(), trashItem },
+        createHtmlPreviewServerFn,
+      });
+      await Promise.resolve();
+      hiddenMock._triggerOnce('ready-to-show');
+      const handlers = registerIpcHandlersFn.mock.calls.at(-1)[0].handlers;
+      const win = createMainWindowFn.mock.results.at(-1).value;
+      await handlers.createWorkspaceEntry({ requestId: 'c1', parentPath: '', name: 'new.md', kind: 'file' });
+      expect(fs.existsSync(path.join(root, 'new.md'))).toBe(true);
+      expect(runtimeImpl.refreshActiveWorkspace).toHaveBeenCalledWith({ preserveCurrentContent: true });
+      expect(win.webContents.send).toHaveBeenCalledWith('host-message', {
+        command: 'createWorkspaceEntryResult', requestId: 'c1', ok: true, kind: 'file', path: 'new.md',
+      });
+      await handlers.deleteWorkspaceEntries({ requestId: 'd1', paths: ['old.md'] });
+      expect(trashItem).toHaveBeenCalledWith(path.join(fs.realpathSync(root), 'old.md'));
+      expect(win.webContents.send).toHaveBeenCalledWith('host-message', {
+        command: 'deleteWorkspaceEntriesResult', requestId: 'd1', mode: 'trash', deleted: ['old.md'], failed: [],
+      });
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 
   test('delivers queued Explorer path after renderer ready', async () => {

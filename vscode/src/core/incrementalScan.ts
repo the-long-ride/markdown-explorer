@@ -4,6 +4,7 @@ import {
   WORKSPACE_SCAN_REVEAL_DELAY_MS,
 } from '../constants/workspace';
 import { WorkspaceScanner } from './scanner';
+import { treeHasEmptyFolder } from './emptyDirectories';
 import { nextIncrementalPublishCount } from './incrementalPublish';
 
 export {
@@ -73,7 +74,7 @@ export async function scanWorkspaceIncrementally({
   clearTimeout(revealTimer);
   if (!isCurrent()) return null;
   if (revealed) {
-    if (lastPublishedCount !== result.flat.length) {
+    if (lastPublishedCount !== result.flat.length || treeHasEmptyFolder(result.tree)) {
       onChanged({ fileList: result.flat, tree: result.tree });
     }
   } else {

@@ -288,6 +288,7 @@ pub fn scan_with_callbacks_and_cancel(
     excludes.extend(custom_ignores);
 
     let mut flat: Vec<MdFile> = Vec::new();
+    let mut empty_dirs: Vec<String> = Vec::new();
     let mut queue = VecDeque::from([root_path.to_path_buf()]);
 
     while let Some(current_dir) = queue.pop_front() {
@@ -301,7 +302,9 @@ pub fn scan_with_callbacks_and_cancel(
                 continue;
             }
         };
+        let mut entry_count = 0usize;
         for entry in entries.flatten() {
+            entry_count += 1;
             if should_cancel() {
                 break;
             }
@@ -331,11 +334,21 @@ pub fn scan_with_callbacks_and_cancel(
                 }
             }
         }
+        if entry_count == 0 && current_dir != root_path {
+            if let Ok(relative) = current_dir.strip_prefix(root_path) {
+                let joined = relative
+                    .components()
+                    .map(|c| c.as_os_str().to_string_lossy().into_owned())
+                    .collect::<Vec<_>>()
+                    .join("/");
+                empty_dirs.push(joined);
+            }
+        }
     }
 
     flat.sort_by(|a, b| a.fs_path.cmp(&b.fs_path));
     report_progress(flat.len());
-    let tree = build_tree(&flat);
+    let tree = tree_builder::build_tree_with_empty_dirs(&flat, &empty_dirs);
     Ok(ScanResult { tree, flat })
 }
 
@@ -517,5 +530,23 @@ mod tests {
         let tree = build_tree(&flat);
         assert_eq!(tree.children.len(), 1);
         assert_eq!(tree.children[0].files.len(), 2);
+    }
+
+    #[test]
+    fn scan_reports_truly_empty_folders_only() {
+        let root = temp_dir("tauri-empty");
+        fs::create_dir_all(root.join("blank")).unwrap();
+        fs::create_dir_all(root.join("outer/inner")).unwrap();
+        write(&root.join("assets/logo.png"), "picture");
+        fs::create_dir_all(root.join("node_modules/empty")).unwrap();
+        write(&root.join("readme.md"), "# Readme");
+
+        let result = scan(&root, ScanOptions::default()).unwrap();
+        let mut top: Vec<_> = result.tree.children.iter().map(|c| c.path.clone()).collect();
+        top.sort();
+        assert_eq!(top, vec!["blank".to_string(), "outer".to_string()]);
+        let outer = result.tree.children.iter().find(|c| c.path == "outer").unwrap();
+        assert_eq!(outer.children[0].path, "outer/inner");
+        assert!(outer.children[0].files.is_empty());
     }
 }

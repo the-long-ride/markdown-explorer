@@ -1,5 +1,5 @@
 import type { AppState } from '../../contexts/appStateModel';
-import type { SidebarPinnedItem } from '../../types';
+import type { SidebarPinnedItem, WorkspaceEntryKind } from '../../types';
 import { normalizePathKey } from '../../contexts/appStateReducer';
 import type { Translations } from '../../contexts/translations';
 import { getHistoryAvailabilityCopy } from '../../history/historyAvailability';
@@ -10,10 +10,12 @@ import type { PlatformBridge } from '../../platform/bridge';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 import { requestOpenInSplit } from '../Content/documentFileDrop';
 import { requestOpenDocumentHistory } from '../shared/ToolbarActionMenu';
-import { HistoryIcon, HtmlPreviewIcon, InternetIcon, MarkdownViewIcon, OpenFolderLocationIcon, RevealFileLocationIcon, SplitViewIcon } from '../shared/icons';
+import { HistoryIcon, HtmlPreviewIcon, InternetIcon, MarkdownViewIcon, OpenFolderLocationIcon, TrashIcon, RevealFileLocationIcon, SplitViewIcon } from '../shared/icons';
 import { isHtmlDocumentPath } from '../Content/HtmlDocumentView';
 import type { SidebarItemMenuItem } from './SidebarItemMenu';
 import type { SidebarItemMenuTarget } from './TreeNode';
+import { FilePlusIcon, FolderPlusIcon } from './sidebarEntryIcons';
+import { RenameEntryIcon } from './sidebarRenameIcon';
 import { PinIcon, UnpinIcon } from './sidebarPinIcons';
 
 interface SidebarItemMenuOptions {
@@ -27,20 +29,33 @@ interface SidebarItemMenuOptions {
   isPinned: boolean;
   pinLimitReached: boolean;
   onTogglePin: (item: SidebarPinnedItem) => void;
+  onRenameEntry?: (kind: WorkspaceEntryKind, path: string) => void;
+  onDeleteEntry?: (kind: WorkspaceEntryKind, path: string) => void;
+  canChangeEntry?: (entry: { kind: WorkspaceEntryKind; path: string }) => boolean;
+  onCreateEntry?: (kind: WorkspaceEntryKind, parentPath: string) => void;
 }
 
 export function buildSidebarItemMenuItems({
   state, target, canOpenHtmlInBrowser, canOpenItemLocations, translations: t, bridge, navigate,
-  isPinned, pinLimitReached, onTogglePin,
+  isPinned, pinLimitReached, onTogglePin, onCreateEntry, onRenameEntry, onDeleteEntry, canChangeEntry,
 }: SidebarItemMenuOptions): readonly SidebarItemMenuItem[] {
   if (!target) return [];
   const items: SidebarItemMenuItem[] = [];
   const pinItem: SidebarPinnedItem = { kind: target.kind, path: target.path };
+  if (target.kind === 'folder' && onCreateEntry) {
+    items.push({ id: 'new-file', label: t.sidebar.newFileMenu, icon: <FilePlusIcon size={14} />, onSelect: () => onCreateEntry('file', target.path) });
+    items.push({ id: 'new-folder', label: t.sidebar.newFolderMenu, icon: <FolderPlusIcon size={14} />, onSelect: () => onCreateEntry('folder', target.path) });
+  }
+  if (onRenameEntry) items.push({ id: 'rename-entry', label: target.kind === 'file' ? t.sidebar.renameFile : t.sidebar.renameFolder,
+    icon: <RenameEntryIcon />, shortcut: 'F2', disabled: canChangeEntry ? !canChangeEntry(target) : false, dividerBefore: items.length > 0, onSelect: () => onRenameEntry(target.kind, target.path) });
+  if (onDeleteEntry) items.push({ id: 'delete-entry', label: target.kind === 'file' ? t.sidebar.deleteFile : t.sidebar.deleteFolder,
+    icon: <TrashIcon size={14} />, shortcut: 'Del', disabled: canChangeEntry ? !canChangeEntry(target) : false, onSelect: () => onDeleteEntry(target.kind, target.path) });
   if (isPinned) {
     items.push({
       id: 'unpin',
       label: t.sidebar.unpinItem,
       icon: <UnpinIcon />,
+      dividerBefore: items.length > 0,
       onSelect: () => onTogglePin(pinItem),
     });
   } else {
@@ -50,6 +65,7 @@ export function buildSidebarItemMenuItems({
         ? t.sidebar.pinThisFile
         : t.sidebar.pinThisFolder,
       icon: <PinIcon />,
+      dividerBefore: items.length > 0,
       disabled: pinLimitReached,
       onSelect: () => onTogglePin(pinItem),
     });

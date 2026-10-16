@@ -23,6 +23,21 @@ function makeExec(outputs: string[]) {
 }
 
 describe('VS Code panel Git history adapter', () => {
+  it('reports an ordinary non-Git folder as not-repository instead of a command failure', async () => {
+    const execFileImpl = vi.fn((_file: string, _args: readonly string[], _options: Record<string, unknown>, callback: (error: NodeJS.ErrnoException | null, stdout: string, stderr: string) => void) => {
+      callback(Object.assign(new Error('exit 128'), { code: 128 }), '', 'fatal: not a git repository (or any of the parent directories): .git');
+    });
+    const adapter = createPanelGitHistoryAdapter({ ...hermetic, execFileImpl });
+    await expect(adapter.listRepositoryHistory({ workspacePath: tmpdir() })).rejects.toMatchObject({ reason: 'not-repository' });
+  });
+
+  it('keeps other Git errors distinct from an ordinary non-repository folder', async () => {
+    const execFileImpl = vi.fn((_file: string, _args: readonly string[], _options: Record<string, unknown>, callback: (error: NodeJS.ErrnoException | null, stdout: string, stderr: string) => void) => {
+      callback(Object.assign(new Error('exit 128'), { code: 128 }), '', 'fatal: detected dubious ownership in repository');
+    });
+    const adapter = createPanelGitHistoryAdapter({ ...hermetic, execFileImpl });
+    await expect(adapter.listRepositoryHistory({ workspacePath: tmpdir() })).rejects.toMatchObject({ reason: 'git-command-failed', message: 'fatal: detected dubious ownership in repository' });
+  });
   it('runs Git with argument arrays from the workspace folder', async () => {
     const execFileImpl = makeExec(['/workspace\n', '']);
     const adapter = createPanelGitHistoryAdapter({ ...hermetic, execFileImpl });

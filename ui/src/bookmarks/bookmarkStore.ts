@@ -1,3 +1,4 @@
+import { replaceEntryPrefix } from '../workspace/workspaceEntryPaths.ts';
 import { normalizeBookmarkDocument, normalizeBookmarkRecord } from './bookmarkModel.ts';
 import { BOOKMARK_DOCUMENT_VERSION, type BookmarkDocument, type BookmarkRecord } from './types.ts';
 
@@ -13,6 +14,7 @@ export interface BookmarkStore {
   subscribe(listener: () => void): () => void;
   add(record: BookmarkRecord): BookmarkRecord;
   rename(id: string, name: string, updatedAt?: number): boolean;
+  relocatePaths(workspaceKey: string, oldPath: string, newPath: string): boolean;
   remove(id: string): boolean;
   removeMany(ids: readonly string[]): boolean;
 }
@@ -59,6 +61,18 @@ export function createBookmarkStore(storage: BookmarkStorage): BookmarkStore {
         if (item.id !== id) return item;
         changed = true;
         return { ...item, name: normalizedName, updatedAt };
+      });
+      if (changed) persist(items);
+      return changed;
+    },
+    relocatePaths(workspaceKey, oldPath, newPath) {
+      let changed = false;
+      const items = snapshot.items.map(item => {
+        if (item.workspaceKey !== workspaceKey) return item;
+        const filePath = replaceEntryPrefix(item.filePath, oldPath, newPath);
+        if (filePath === item.filePath) return item;
+        changed = true;
+        return { ...item, filePath, updatedAt: Date.now() };
       });
       if (changed) persist(items);
       return changed;

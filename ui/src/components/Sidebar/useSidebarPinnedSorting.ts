@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { AppSettings, FolderNode, SidebarPinnedItem, SidebarSortMode } from '../../types';
 import {
   clearWorkspacePins,
@@ -45,6 +45,12 @@ export function useSidebarPinnedSorting({
   );
   const sortMode = getWorkspaceSortMode(settings.sidebarSortModes, workspaceKey);
 
+  // removePins runs after a delete round trip; it must see the pins and settings of that moment, not of the click.
+  const latestRef = useRef({ pins, storedPins: settings.sidebarPinnedItems, updateSettings, workspaceKey });
+  useLayoutEffect(() => {
+    latestRef.current = { pins, storedPins: settings.sidebarPinnedItems, updateSettings, workspaceKey };
+  });
+
   useEffect(() => {
     if (pinsEqual(rawPins, pins)) return;
     updateSettings({
@@ -75,6 +81,15 @@ export function useSidebarPinnedSorting({
     });
   }, [settings.sidebarSortModes, updateSettings, workspaceKey]);
 
+  const removePins = useCallback((shouldRemove: (pin: SidebarPinnedItem) => boolean) => {
+    const latest = latestRef.current;
+    const kept = latest.pins.filter((pin) => !shouldRemove(pin));
+    if (kept.length === latest.pins.length) return;
+    latest.updateSettings({
+      sidebarPinnedItems: setWorkspacePins(latest.storedPins, latest.workspaceKey, kept),
+    });
+  }, []);
+
   return {
     pins,
     pinnedKeys,
@@ -83,6 +98,7 @@ export function useSidebarPinnedSorting({
     hasPins: pins.length > 0,
     pinLimitReached: pins.length >= maxPinnedItems,
     clearPins,
+    removePins,
     togglePin,
     setSortMode,
   };

@@ -12,6 +12,7 @@ import { BookmarkBatchDeleteDialog } from './BookmarkBatchDeleteDialog';
 import { BookmarkDialog } from './BookmarkDialog';
 import { BookmarkGroupChevron, BookmarkIcon, SelectionModeIcon, SelectAllIcon } from './BookmarkIcons';
 import { BookmarkItemMenu } from './BookmarkItemMenu';
+import { SelectionCheckbox } from '../shared/SelectionCheckbox';
 import { TooltipButton } from '../shared/TooltipButton';
 import { dispatchActionNotice } from '../../utils/actionNotice.ts';
 
@@ -105,7 +106,7 @@ export function BookmarksPanel({ visible, viewMode, workspaces, activeWorkspaceK
       onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activateItem(bookmark); } }}
     >
       {selectionMode ? (
-        <input type="checkbox" checked={selectedIds.has(bookmark.id)} aria-label={translations.selectBookmark.replace('{name}', bookmark.name)} onChange={() => toggleSelected(bookmark.id)} onClick={(event) => event.stopPropagation()} />
+        <SelectionCheckbox checked={selectedIds.has(bookmark.id)} label={translations.selectBookmark.replace('{name}', bookmark.name)} onChange={() => toggleSelected(bookmark.id)} />
       ) : <BookmarkIcon size={13} />}
       <div className="bookmark-item__copy">
         <span className="bookmark-item__name">{bookmark.name}</span>
@@ -144,6 +145,7 @@ export function BookmarksPanel({ visible, viewMode, workspaces, activeWorkspaceK
           <div className="bookmarks-panel__actions">
             {selectionMode && (
               <>
+                <span className="sidebar__selection-count bookmarks-panel__selection-count" aria-live="polite">{selectedIds.size}</span>
                 <TooltipButton type="button" className="btn btn--icon bookmarks-panel__select-all" label={translations.selectAll} tooltip={translations.selectAll} icon={<SelectAllIcon size={14} />} disabled={visibleBookmarks.length === 0} onClick={selectAllBookmarks} />
                 <TooltipButton type="button" className="btn btn--icon bookmarks-panel__delete-selected" label={translations.deleteSelected} tooltip={translations.deleteSelected} icon={<TrashIcon size={13} />} disabled={selectedIds.size === 0} onClick={() => setConfirmDelete(true)} />
               </>

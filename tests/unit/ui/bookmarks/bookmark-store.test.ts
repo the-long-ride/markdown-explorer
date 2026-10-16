@@ -135,3 +135,10 @@ describe('bookmarkStore', () => {
     expect(() => store.add(sampleRecord)).toThrow('bookmark-persist-failed');
   });
 });
+it('moves descendant bookmark paths while retaining ids and text anchors',()=>{
+  const storage=new MockStorage();const store=createBookmarkStore(storage);
+  store.add({...sampleRecord,filePath:'/w1/docs/a.md'});store.add({...sampleRecord,id:'other',workspaceKey:'/w2',filePath:'/w1/docs/b.md'});
+  expect(store.relocatePaths('/w1','/w1/docs','/w1/notes')).toBe(true);
+  expect(store.getSnapshot().items.find(item=>item.id==='bm-1')).toMatchObject({filePath:'/w1/notes/a.md',sourceAnchor:sampleRecord.sourceAnchor,selectedText:'Hello'});
+  expect(store.getSnapshot().items.find(item=>item.id==='other')?.filePath).toBe('/w1/docs/b.md');
+});

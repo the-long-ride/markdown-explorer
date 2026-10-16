@@ -1,0 +1,25 @@
+{
+  "valid": ["notes.md", "Notes 2.md", "v1.2", ".env", "read me.txt", "日本語.md", "git-notes.md", ".gitignore"],
+  "invalid": [
+    ["", "empty"],
+    ["   ", "empty"],
+    [".", "invalid"],
+    ["..", "invalid"],
+    ["a/b", "invalid"],
+    ["a\\b", "invalid"],
+    ["bad:name", "invalid"],
+    ["q?.md", "invalid"],
+    ["pipe|name", "invalid"],
+    ["trail.", "invalid"],
+    ["trail ", "invalid"],
+    ["tab\tname", "invalid"],
+    ["CON", "reserved"],
+    ["nul.md", "reserved"],
+    ["com1.txt", "reserved"],
+    ["Lpt9", "reserved"],
+    [".git", "protected"],
+    [".GIT", "protected"],
+    [".git.", "protected"],
+    [".git ", "protected"]
+  ]
+}

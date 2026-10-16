@@ -1,3 +1,4 @@
+import { renameWorkspaceEntryState } from '../workspace/workspaceEntryRenameState';
 import { createInitialState, normalizePathKey, type AppState, type Action } from './appStateModel';
 import type { MdFile, RecentWorkspace } from '../types';
 import {
@@ -72,6 +73,8 @@ export function reducer(
   if (settingsUiState) return settingsUiState;
 
   switch (action.type) {
+    case 'RENAME_WORKSPACE_ENTRY':
+      return renameWorkspaceEntryState(state, action.workspaceKey, action.oldPath, action.newPath, action.oldAbsolutePath, action.newAbsolutePath);
     case 'RESTORE_PERSISTED_STATE': {
       const isDesktopRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri';
       const restored = createInitialState(action.persistedState, isDesktopRuntime);
