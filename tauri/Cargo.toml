@@ -42,7 +42,7 @@ pdf-extract = "0.12"
 html2markdown = { version = "0.2.0", default-features = false }
 rtf-parser = { version = "0.4.3", default-features = false }
 quick-xml = "0.41"
-zip = { version = "8.6", default-features = false, features = ["deflate"] }
+zip = { version = "9.0", default-features = false, features = ["deflate"] }
 calamine = "0.36"
 trash = "5"
 
