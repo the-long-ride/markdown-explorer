@@ -1,0 +1,222 @@
+// =============================================================================
+// chrome/src/scanner.ts — Async directory scanner for local File System Access API
+// =============================================================================
+
+import type { MdFile, FolderNode } from '../../ui/src/types';
+import { treeHasEmptyFolder } from './incremental-publish';
+
+const EXTRA_DOCUMENT_EXTENSIONS = new Set([
+  '.txt', '.html', '.htm', '.csv', '.tsv',
+  '.doc', '.docx', '.pdf', '.xls', '.xlsx',
+  '.xlm', '.pptx', '.odt', '.odp', '.ods', '.rtf',
+]);
+
+export class BrowserScanner {
+  private static readonly TITLE_CHUNK_BYTES = 8 * 1024;
+  private static readonly TITLE_CONCURRENCY = 32;
+
+  static async scan(
+    rootHandle: FileSystemDirectoryHandle,
+    optionsOrProgress?:
+      | {
+          onProgress?: (count: number) => void;
+          onFile?: (file: MdFile, count: number) => void;
+          isCurrent?: () => boolean;
+          documentConversion?: boolean;
+        }
+      | ((count: number) => void),
+    legacyOptions?: { documentConversion?: boolean },
+  ): Promise<{ tree: FolderNode; flat: MdFile[]; emptyDirs: string[] }> {
+    const options = typeof optionsOrProgress === 'function'
+      ? { onProgress: optionsOrProgress, ...legacyOptions }
+      : (optionsOrProgress ?? {});
+    const flat: MdFile[] = [];
+    const emptyDirs: string[] = [];
+    const discovered: Array<{
+      handle: FileSystemFileHandle;
+      relativePath: string;
+    }> = [];
+    const excludes = ['.git', 'node_modules', '.vscode', 'out', 'dist'];
+    const isCurrent = options.isCurrent ?? (() => true);
+
+    // Define traverse as a local recursive helper
+    async function traverse(currentHandle: FileSystemDirectoryHandle, currentRelativePath: string) {
+      if (!isCurrent()) return;
+      // Typecast values iterator since TS types for FileSystemDirectoryHandle might vary
+      const entries = (currentHandle as any).values();
+      let entryCount = 0;
+      for await (const entry of entries) {
+        entryCount += 1;
+        if (!isCurrent()) return;
+        if (excludes.includes(entry.name)) continue;
+
+        const relativePath = currentRelativePath ? `${currentRelativePath}/${entry.name}` : entry.name;
+
+        if (entry.kind === 'directory') {
+          await traverse(entry, relativePath);
+        } else if (entry.kind === 'file') {
+          const lowerName = entry.name.toLowerCase();
+          const dot = lowerName.lastIndexOf('.');
+          const ext = dot !== -1 ? lowerName.slice(dot) : '';
+          const isMd = ext === '.md' || ext === '.mdx' || ext === '.markdown';
+          const isDoc = Boolean(options.documentConversion) && EXTRA_DOCUMENT_EXTENSIONS.has(ext);
+          if (isMd || isDoc) {
+            discovered.push({ handle: entry, relativePath });
+          }
+        }
+      }
+      if (entryCount === 0 && currentRelativePath) emptyDirs.push(currentRelativePath);
+    }
+
+    await traverse(rootHandle, '');
+    if (!isCurrent()) return { tree: BrowserScanner.buildTree([]), flat: [], emptyDirs: [] };
+    for (let index = 0; index < discovered.length; index += BrowserScanner.TITLE_CONCURRENCY) {
+      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat, emptyDirs), flat, emptyDirs };
+      const batch = discovered.slice(index, index + BrowserScanner.TITLE_CONCURRENCY);
+      await Promise.all(
+        batch.map(async file => {
+          if (!isCurrent()) return null;
+          const entry = await BrowserScanner.buildFileEntry(file.handle, file.relativePath);
+          if (!isCurrent()) return null;
+          options.onFile?.(entry, flat.length + 1);
+          flat.push(entry);
+          return entry;
+        }),
+      );
+      if (!isCurrent()) return { tree: BrowserScanner.buildTree(flat, emptyDirs), flat, emptyDirs };
+      options.onProgress?.(flat.length);
+    }
+    flat.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+    if (discovered.length === 0) options.onProgress?.(0);
+    const tree = BrowserScanner.buildTree(flat, emptyDirs);
+    return { tree, flat, emptyDirs };
+  }
+
+  static async buildFileEntry(fileHandle: FileSystemFileHandle, relativePath: string): Promise<MdFile> {
+    const parts = relativePath.split('/');
+    const fileName = parts[parts.length - 1];
+    const extIdx = fileName.lastIndexOf('.');
+    const ext = extIdx !== -1 ? fileName.slice(extIdx).toLowerCase() : '';
+    const isMarkdown = ext === '.md' || ext === '.mdx' || ext === '.markdown';
+    const documentKind = isMarkdown ? 'markdown' : 'document';
+
+    let title = '';
+    let modifiedAt = 0;
+    try {
+      const file = await fileHandle.getFile();
+      modifiedAt = Number.isFinite(file.lastModified) ? file.lastModified : 0;
+      if (isMarkdown) {
+        const titleSource = typeof file.slice === 'function'
+          ? file.slice(0, BrowserScanner.TITLE_CHUNK_BYTES)
+          : file;
+        const content = await titleSource.text();
+        title = BrowserScanner.extractTitle(content, ext === '.mdx') || BrowserScanner.stripKnownExtension(fileName);
+      } else {
+        title = BrowserScanner.stripKnownExtension(fileName);
+      }
+    } catch (err) {
+      title = BrowserScanner.stripKnownExtension(fileName);
+    }
+
+    return {
+      fsPath: relativePath,
+      relativePath,
+      parts,
+      fileName,
+      title,
+      extension: ext,
+      documentKind,
+      modifiedAt
+    };
+  }
+
+  static stripKnownExtension(fileName: string): string {
+    const extIdx = fileName.lastIndexOf('.');
+    return extIdx !== -1 ? fileName.slice(0, extIdx) : fileName;
+  }
+
+  static extractTitle(content: string, isMdx = false): string | null {
+    if (isMdx) {
+      const mdxTitle = BrowserScanner.extractMdxTitle(content);
+      if (mdxTitle) return mdxTitle;
+    }
+    const match = /^#+\s+(.+)$/m.exec(content);
+    return match?.[1]?.trim() ?? null;
+  }
+
+  static extractMdxTitle(content: string): string | null {
+    // 1. Frontmatter title
+    const fmMatch = /^---\n([\s\S]*?)\n---/.exec(content);
+    if (fmMatch) {
+      for (const line of fmMatch[1].split('\n')) {
+        const sep = line.indexOf(':');
+        if (sep > 0 && line.slice(0, sep).trim() === 'title') {
+          return line.slice(sep + 1).trim().replace(/^['"]|['"]$/g, '');
+        }
+      }
+    }
+
+    // 2. export const title = ...
+    const exportMatch = /export\s+(?:const|let|var)\s+title\s*=\s*(['"`])(.*?)\1/.exec(content);
+    if (exportMatch) {
+      return exportMatch[2].trim();
+    }
+
+    // 3. export const meta = { title: ... }
+    const metaMatch = /export\s+(?:const|let|var)\s+meta\s*=\s*\{[\s\S]*?title\s*:\s*(['"`])(.*?)\1/.exec(content);
+    if (metaMatch) {
+      return metaMatch[2].trim();
+    }
+
+    // 4. JSX title prop
+    const jsxMatch = /<[A-Z]\w*\s+[^>]*?title=(?:(['"`])(.*?)\1|\{(['"`])(.*?)\3\})/.exec(content);
+    if (jsxMatch) {
+      return jsxMatch[2]?.trim() ?? jsxMatch[4]?.trim() ?? null;
+    }
+
+    return null;
+  }
+
+  static buildTree(flat: MdFile[], emptyDirs: readonly string[] = []): FolderNode {
+    const root: FolderNode = { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
+    const childIndexes = new WeakMap<FolderNode, Map<string, FolderNode>>();
+    const ensureChild = (node: FolderNode, name: string, childPath: string): FolderNode => {
+      let childIndex = childIndexes.get(node);
+      if (!childIndex) {
+        childIndex = new Map<string, FolderNode>();
+        childIndexes.set(node, childIndex);
+      }
+      let child = childIndex.get(name);
+      if (!child) {
+        child = { name, path: childPath, children: [], files: [], modifiedAt: 0 };
+        node.children.push(child);
+        childIndex.set(name, child);
+      }
+      return child;
+    };
+
+    for (const file of flat) {
+      let node = root;
+      const modifiedAt = file.modifiedAt ?? 0;
+      node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
+      const dirs = file.parts.slice(0, -1);
+      for (let i = 0; i < dirs.length; i++) {
+        node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
+        node.modifiedAt = Math.max(node.modifiedAt ?? 0, modifiedAt);
+      }
+      node.files.push(file);
+    }
+
+    for (const dirPath of emptyDirs) {
+      const dirs = dirPath.split('/').filter(Boolean);
+      let node = root;
+      for (let i = 0; i < dirs.length; i++) node = ensureChild(node, dirs[i], dirs.slice(0, i + 1).join('/'));
+    }
+
+    return root;
+  }
+
+  static hasEmptyFolder(node: FolderNode): boolean {
+    return treeHasEmptyFolder(node);
+  }
+}

@@ -1,0 +1,394 @@
+/* ── Header GitHub Star Link ───────────────────────────────── */
+.nav-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.nav-github-icon {
+  flex: 0 0 auto;
+}
+
+.nav-github-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.24rem;
+  padding: 0.14rem 0.42rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--accent-2);
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.nav-github-stars[hidden] {
+  display: none;
+}
+
+@media (max-width: 580px) {
+  .nav-github-stars {
+    padding: 0.12rem 0.3rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* ── Concise Landing Spotlight & Explorer Classic Panels ─────── */
+.spotlight-section {
+  padding: clamp(3.2rem, 6vw, 5.2rem) 0;
+}
+
+.spotlight-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem 2rem;
+  margin-bottom: 1.8rem;
+}
+
+.spotlight-header .section-heading {
+  margin-bottom: 0;
+  max-width: 40rem;
+}
+
+.spotlight-header .section-heading p {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+}
+
+/* Segmented Switcher — mirrors Explorer Classic Settings / Export Center */
+.spotlight-tablist {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.spotlight-tab {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0.58rem 0.95rem;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.spotlight-tab:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.spotlight-tab[aria-selected="true"],
+.spotlight-tab.is-active {
+  background: var(--accent);
+  color: #211208;
+  border-color: transparent;
+  box-shadow: 0 2px 10px var(--accent-dim);
+}
+
+[data-theme="light"] .spotlight-tab[aria-selected="true"],
+[data-theme="light"] .spotlight-tab.is-active {
+  color: #ffffff;
+}
+
+.spotlight-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Stage Container (#gallery anchor inside #features) */
+.spotlight-stage {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: clamp(1.2rem, 2.6vw, 2rem);
+}
+
+.spotlight-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+  align-items: center;
+}
+
+.spotlight-panel[hidden] {
+  display: none;
+}
+
+.spotlight-copy h3 {
+  font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+  line-height: 1.18;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.spotlight-copy > p {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.spotlight-points {
+  list-style: none;
+  margin: 1.35rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.spotlight-points li {
+  display: grid;
+  grid-template-columns: 1.35rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.spotlight-points li strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.spotlight-point-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.1rem;
+  border-radius: 6px;
+  background: var(--accent-dim);
+  color: var(--accent-2);
+}
+
+.spotlight-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.spotlight-cta-row .button {
+  min-height: 2.55rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.88rem;
+}
+
+.spotlight-media-frame {
+  margin: 0;
+  padding: 0.55rem;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.spotlight-media-frame img,
+.spotlight-media-frame video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.spotlight-media-frame figcaption {
+  padding: 0.65rem 0.45rem 0.2rem;
+  color: var(--soft);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* ── Where It Runs Strip ───────────────────────────────────── */
+.runtimes-section {
+  padding: clamp(2.8rem, 5vw, 4.4rem) 0;
+}
+
+.runtimes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.runtime-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.runtime-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+[data-theme="light"] .runtime-card:hover {
+  box-shadow: 0 10px 26px rgba(70, 46, 24, 0.10);
+}
+
+.runtime-card-featured {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.runtime-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.runtime-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--accent-2);
+}
+
+.runtime-card h3 {
+  font-size: 1.12rem;
+  color: var(--text-heading);
+}
+
+.runtime-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.runtime-card-link {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  color: var(--accent-2);
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.runtime-card-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+
+/* ── Compact Privacy & Languages Trust Strip ───────────────── */
+.trust-section {
+  padding: 0 0 clamp(2.8rem, 5vw, 4.2rem);
+}
+
+.trust-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.trust-item {
+  background: var(--surface);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.trust-item strong {
+  color: var(--text-heading);
+  font-size: 0.94rem;
+}
+
+.trust-item span {
+  color: var(--muted);
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 960px) {
+  .spotlight-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .runtimes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trust-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .spotlight-tablist {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spotlight-tab {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .trust-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Live Spotlight Embeds & YouTube Demo Placeholder ── */
+.spotlight-embed-wrap {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.spotlight-demo-iframe {
+  display: block;
+  width: 100%;
+  height: clamp(320px, 34vw, 430px);
+  border: 0;
+  background: var(--surface-2);
+}
+
+.spotlight-media-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0.25rem 0;
+}

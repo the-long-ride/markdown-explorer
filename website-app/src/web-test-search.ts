@@ -27,7 +27,11 @@ export function makeExcerpt(text: string, index: number, matchLength: number): s
 export function searchVirtualFiles(
   query: string,
   limit = MAX_WORKSPACE_SEARCH_RESULTS,
-  options: { matchCase?: boolean } = {},
+  options: {
+    matchCase?: boolean;
+    files?: readonly MdFile[];
+    getContent?: (path: string) => string | null;
+  } = {},
 ): unknown[] {
   const matchCase = options.matchCase === true;
   const q = matchCase ? query.trim() : query.trim().toLowerCase();
@@ -42,8 +46,11 @@ export function searchVirtualFiles(
     matchOrdinal: number;
   }> = [];
 
-  for (const file of virtualFiles) {
-    const raw = getVirtualContent(file.relativePath) ?? '';
+  const targetFiles = options.files ?? virtualFiles;
+  const readContent = options.getContent ?? getVirtualContent;
+
+  for (const file of targetFiles) {
+    const raw = readContent(file.relativePath) ?? '';
     const haystack = matchCase ? null : prepareHaystack(raw);
     const titleValue = matchCase ? file.title : normalizeForSearch(file.title);
     const fileValue = matchCase ? file.fileName : normalizeForSearch(file.fileName);
@@ -99,6 +106,8 @@ export interface VirtualSearchIncrementalOptions {
   batchSize?: number;
   yieldEvery?: number;
   matchCase?: boolean;
+  files?: readonly MdFile[];
+  getContent?: (path: string) => string | null;
   shouldCancel?: () => boolean;
   onBatch?: (results: readonly unknown[]) => void;
 }
@@ -110,7 +119,11 @@ export async function searchVirtualFilesIncremental(
   const limit = Math.max(1, Math.min(MAX_WORKSPACE_SEARCH_RESULTS, Math.floor(options.limit ?? MAX_WORKSPACE_SEARCH_RESULTS)));
   const batchSize = Math.max(1, Math.min(WORKSPACE_SEARCH_BATCH_SIZE, Math.floor(options.batchSize ?? WORKSPACE_SEARCH_BATCH_SIZE)));
   const yieldEvery = Math.max(1, Math.floor(options.yieldEvery ?? 25));
-  const candidates = searchVirtualFiles(query, limit + 1, { matchCase: options.matchCase });
+  const candidates = searchVirtualFiles(query, limit + 1, {
+    matchCase: options.matchCase,
+    files: options.files,
+    getContent: options.getContent,
+  });
   const truncated = candidates.length > limit;
   const results = candidates.slice(0, limit);
   let total = 0;

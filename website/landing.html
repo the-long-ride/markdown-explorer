@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-theme-style="raw-grid">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Markdown Explorer — Best Free, Open-Source Markdown Viewer & Editor
+    </title>
+    <meta
+      name="description"
+      content="The best free, open-source Markdown viewer and editor. Turn local folders and notes into a fast, private workspace with live split editing, Git diffs, Mermaid diagrams, math, tables, charts, and clean export."
+    />
+    <meta
+      name="keywords"
+      content="Markdown Explorer, markdown viewer, documentation browser, VS Code extension, markdown desktop app, local markdown reader, Mermaid diagram preview, LaTeX math renderer, interactive tables, data charts, MDX reader, offline documentation, workspace search, private notes, code syntax highlighting, trình xem markdown, đọc file markdown, offline markdown, the-long-ride, md reader, md view, markdown navigation"
+    />
+    <meta name="author" content="the-long-ride" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link
+      rel="canonical"
+      href="https://the-long-ride.github.io/markdown-explorer/"
+    />
+
+    <!-- Dynamic Theme Color for Browser Chrome (Raw Grid) -->
+    <meta
+      name="theme-color"
+      content="#101010"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="theme-color"
+      content="#f2efe9"
+      media="(prefers-color-scheme: light)"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Markdown Explorer" />
+    <meta
+      property="og:title"
+      content="Markdown Explorer — Make AI-era Markdown useful for humans"
+    />
+    <meta
+      property="og:description"
+      content="Turn Markdown folders and AI-generated project knowledge into a private, searchable workspace with exact search jumps, diagrams, math, code, interactive tables, and local previews."
+    />
+    <meta
+      property="og:url"
+      content="https://the-long-ride.github.io/markdown-explorer/"
+    />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+    />
+    <meta
+      property="og:image:secure_url"
+      content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Markdown Explorer workspace layout featuring Explorer Classic dark mode, document tabs, files sidebar, search, and a formatted Markdown preview."
+    />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="vi_VN" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+    <meta property="og:locale:alternate" content="nb_NO" />
+    <meta property="og:locale:alternate" content="ja_JP" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta property="og:locale:alternate" content="ru_RU" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Markdown Explorer — Make AI-era Markdown useful for humans"
+    />
+    <meta
+      name="twitter:description"
+      content="Turn Markdown folders and AI-generated project knowledge into a private, searchable workspace with exact search jumps, diagrams, math, code, interactive tables, and local previews."
+    />
+    <meta
+      name="twitter:image"
+      content="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png"
+    />
+
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/responsive.css" />
+    <link rel="stylesheet" href="styles/image-viewer.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Markdown Explorer",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Windows, macOS, Linux, Web, VS Code",
+        "description": "Markdown Explorer turns Markdown folders and AI-generated project knowledge into a private, searchable documentation workspace for humans.",
+        "url": "https://the-long-ride.github.io/markdown-explorer/",
+        "downloadUrl": "https://github.com/the-long-ride/markdown-explorer/releases/latest",
+        "softwareVersion": "1.7.2",
+        "license": "https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE",
+        "codeRepository": "https://github.com/the-long-ride/markdown-explorer",
+        "screenshot": "https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png",
+        "featureList": [
+          "Workspace Markdown navigation",
+          "Current file, current workspace, and all-tabs search",
+          "Mermaid and LaTeX rendering",
+          "Syntax-highlighted code blocks",
+          "Interactive tables and charts",
+          "Converted DOCX, PDF, HTML, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT previews",
+          "Sidebar Cursor mode and Scope Focus",
+          "Split view editing and per-document Git revision diffing",
+          "Export Center to themed PDF, HTML, and static sites",
+          "Offline desktop app and client-side web app"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "The Long Ride"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="page-bg-canvas" class="page-bg-canvas" aria-hidden="true"></canvas>
+    <a class="skip-link" href="#main" data-i18n="skipToContent"
+      >Skip to content</a
+    >
+
+    <header class="site-header" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="Markdown Explorer home">
+        <img
+          src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+          alt=""
+          width="34"
+          height="34"
+        />
+        <span>Markdown Explorer</span>
+      </a>
+      <nav class="nav-links" aria-label="Page sections">
+        <a href="app/?mode=web" class="button primary web-demo-nav-link" data-i18n="navWebApp">Open App</a>
+        <a href="features/" data-i18n="nav_features_demo">Live Component Demos</a>
+        <a href="#features" data-i18n="navFeatures">Features</a>
+        <a href="#download" data-i18n="navDownload">Download</a>
+        <a href="#faq" data-i18n="navFaq">FAQ</a>
+        <a
+          class="nav-github-link"
+          href="https://github.com/the-long-ride/markdown-explorer"
+          target="_blank"
+          rel="noopener"
+          aria-label="Markdown Explorer on GitHub"
+          title="GitHub"
+        >
+          <svg class="nav-github-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11.02 11.02 0 0 1 5.76 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.39-5.26 5.67.41.36.79 1.07.79 2.15v3.19c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
+          </svg>
+          <span class="nav-github-stars" data-github-stars hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2.5l2.93 5.94 6.56.95-4.74 4.62 1.12 6.53L12 17.46l-5.87 3.08 1.12-6.53L2.51 9.39l6.56-.95L12 2.5z" />
+            </svg>
+            <span data-github-stars-count></span>
+          </span>
+        </a>
+      </nav>
+      <div class="header-controls">
+        <a
+          class="ctrl-btn donate-btn"
+          href="https://github.com/the-long-ride#donate"
+          target="_blank"
+          rel="noopener"
+          aria-label="Support Markdown Explorer with a donation"
+          title="Support Markdown Explorer with a donation"
+          data-i18n-aria-label="donateAria"
+          data-i18n-title="donateAria"
+        >
+          <svg
+            class="donate-heart"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+            />
+          </svg>
+          <span class="donate-label" data-i18n="navDonate">Donate</span>
+        </a>
+        <button
+          id="lang-btn"
+          class="ctrl-btn"
+          aria-label="Switch language"
+          title="Switch language"
+          data-i18n-aria-label="langSwitchTitle"
+          data-i18n-title="langSwitchTitle"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path
+              d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+            />
+          </svg>
+          <span id="lang-label">EN</span>
+        </button>
+        <div
+          class="lang-menu"
+          id="lang-menu"
+          role="menu"
+          aria-label="Language selector"
+          hidden
+        >
+          <button role="menuitem" data-lang="en">🇬🇧 English</button>
+          <button role="menuitem" data-lang="vi">🇻🇳 Tiếng Việt</button>
+          <button role="menuitem" data-lang="fr">🇫🇷 Français</button>
+          <button role="menuitem" data-lang="es">🇪🇸 Español</button>
+          <button role="menuitem" data-lang="zh">🇨🇳 中文</button>
+          <button role="menuitem" data-lang="no">🇳🇴 Norsk</button>
+          <button role="menuitem" data-lang="ja">🇯🇵 日本語</button>
+          <button role="menuitem" data-lang="ko">🇰🇷 한국어</button>
+          <button role="menuitem" data-lang="ru">🇷🇺 Русский</button>
+        </div>
+        <button
+          id="theme-btn"
+          class="ctrl-btn"
+          aria-label="Toggle colour theme"
+          title="Toggle colour theme"
+          data-i18n-aria-label="themeToggleTitle"
+          data-i18n-title="themeToggleTitle"
+        >
+          <svg
+            class="icon-sun"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg
+            class="icon-moon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Band 1: Design C — Interactive Mini-Workstation Hero -->
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero-workstation">
+          <div class="hero-text-side hero-deck">
+            <div class="hero-deck-top">
+              <div class="hero-badge">
+                <span class="badge-dot"></span>
+                <span data-i18n="heroProductLabel">Best free open-source Markdown viewer &amp; editor</span>
+              </div>
+            </div>
+
+            <div class="hero-deck-main">
+              <div class="hero-deck-intro">
+                <h1 id="hero-title">
+                  Markdown <span class="hero-title-accent">Explorer</span>
+                </h1>
+                <p class="hero-copy" data-i18n="heroCopy">
+                  The best free, open-source Markdown viewer and editor. Turn folders, notes, and docs into a fast, private workspace you can search, edit side-by-side, and enjoy reading.
+                </p>
+              </div>
+
+              <div class="hero-deck-cta">
+                <div class="hero-actions" aria-label="Try Markdown Explorer">
+                  <a
+                    class="button primary hero-primary-cta"
+                    href="app/?mode=web"
+                  >
+                    <svg class="btn-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    <span data-i18n="heroTryFile">Launch Web App</span>
+                  </a>
+                  <a
+                    class="button secondary"
+                    href="app/?mode=test"
+                  >
+                    <span data-i18n="heroExploreDemo">Live demo</span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                  <a
+                    class="button secondary"
+                    href="features/"
+                    data-i18n="heroFeaturesDemoCta"
+                  >Live Component Demos</a>
+                </div>
+                <div class="hero-install-links" aria-label="Install Markdown Explorer">
+                  <a href="#download" class="accent-link" data-i18n="heroDownloadDesktop">Download the desktop app</a>
+                  <span aria-hidden="true">•</span>
+                  <a
+                    href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+                    rel="noopener"
+                    data-i18n="heroInstallVscode"
+                  >Install for VS Code</a>
+                </div>
+              </div>
+            </div>
+
+            <ul class="hero-proof-list" aria-label="Product promises">
+              <li>
+                <strong data-i18n="heroProofPrivate">Private by default</strong>
+                <span data-i18n="heroProofPrivateCopy">Local parsing, indexing, search, and rendering.</span>
+              </li>
+              <li>
+                <strong data-i18n="heroProofOpen">Open source</strong>
+                <span data-i18n="heroProofOpenCopy">Free to use under the MIT license.</span>
+              </li>
+              <li>
+                <strong data-i18n="heroProofEverywhere">Use it everywhere</strong>
+                <span data-i18n="heroProofEverywhereCopy">Browser, VS Code, Windows, macOS, and Linux.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="hero-visual-side hero-stage-frame">
+            <div class="hero-mode-bar window-bar" role="group" aria-label="Preview workspace mode">
+              <div class="hero-mode-keys">
+                <button
+                  type="button"
+                  class="hero-mode-key is-active"
+                  aria-pressed="true"
+                  data-hero-mode="workspace"
+                  data-hero-feature="workspace"
+                  data-hero-caption="Open a folder. Search everything. Jump to the exact answer."
+                >
+                  <span>01</span> Workspace
+                </button>
+                <button
+                  type="button"
+                  class="hero-mode-key"
+                  aria-pressed="false"
+                  data-hero-mode="split"
+                  data-hero-feature="split-editor"
+                  data-hero-caption="Edit raw Markdown side by side with synchronized live preview."
+                >
+                  <span>02</span> Split View
+                </button>
+                <button
+                  type="button"
+                  class="hero-mode-key"
+                  aria-pressed="false"
+                  data-hero-mode="charts"
+                  data-hero-feature="tables-charts"
+                  data-hero-caption="Filter Markdown and CSV tables and turn numeric columns into charts."
+                >
+                  <span>03</span> Data &amp; Charts
+                </button>
+              </div>
+              <span class="hero-mode-version" data-version-text>v1.7.2</span>
+            </div>
+
+            <div id="hero-demo-frame" class="hero-product-preview hero-demo-frame">
+              <div class="window-stage">
+                <iframe
+                  id="hero-demo-iframe"
+                  class="hero-demo-iframe"
+                  data-active-feature="workspace"
+                  src="app/features/?embed=1&feature=workspace"
+                  title="Markdown Explorer Live Workspace Component Demo"
+                  loading="eager"
+                ></iframe>
+                <a
+                  class="demo-studio-link-pill hero-studio-pill"
+                  href="features/"
+                  data-i18n="heroStudioPill"
+                >Open Full Component Demo Studio with Sidebar Nav ↗</a>
+              </div>
+              <div class="hero-preview-caption">
+                <span id="hero-preview-caption-text" data-i18n="heroPreviewCaption">Open a folder. Search everything. Jump to the exact answer.</span>
+                <a class="hero-preview-arrow" href="features/" aria-label="Open Component Demo Studio">↗</a>
+              </div>
+            </div>
+
+            <div class="hero-use-cases" aria-label="Built for">
+              <span data-i18n="heroBuiltFor">Built for</span>
+              <ul>
+                <li data-i18n="heroUseCaseAi">AI-generated project knowledge</li>
+                <li data-i18n="heroUseCaseEngineering">Engineering documentation</li>
+                <li data-i18n="heroUseCaseResearch">Research and technical writing</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider" aria-hidden="true"></div>
+
+      <!-- Band 2: Interactive 4-Tab Product Spotlight (#features + #gallery stage) -->
+      <section
+        class="section spotlight-section"
+        id="features"
+        aria-labelledby="spotlight-title"
+      >
+        <div class="spotlight-header">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="spotlightEyebrow">Inside the workspace</p>
+            <h2 id="spotlight-title" data-i18n="spotlightTitle">
+              Built for dense docs, nothing extra
+            </h2>
+            <p data-i18n="spotlightSubtitle">
+              Switch tabs to inspect core workflows, or launch the live Web App straight from your browser.
+            </p>
+          </div>
+
+          <div
+            class="spotlight-tablist"
+            role="tablist"
+            aria-label="Workflow spotlight tabs"
+          >
+            <button
+              type="button"
+              id="tab-read"
+              class="spotlight-tab is-active"
+              role="tab"
+              aria-selected="true"
+              aria-controls="panel-read"
+              tabindex="0"
+              data-spotlight-tab="read"
+              data-i18n="spotlightTabRead"
+            >
+              Read &amp; Navigate
+            </button>
+            <button
+              type="button"
+              id="tab-write"
+              class="spotlight-tab"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-write"
+              tabindex="-1"
+              data-spotlight-tab="write"
+              data-i18n="spotlightTabWrite"
+            >
+              Write, Split &amp; Git
+            </button>
+            <button
+              type="button"
+              id="tab-data"
+              class="spotlight-tab"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-data"
+              tabindex="-1"
+              data-spotlight-tab="data"
+              data-i18n="spotlightTabData"
+            >
+              Diagrams &amp; Data
+            </button>
+            <button
+              type="button"
+              id="tab-search"
+              class="spotlight-tab"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-search"
+              tabindex="-1"
+              data-spotlight-tab="search"
+              data-i18n="spotlightTabSearch"
+            >
+              Search &amp; Export
+            </button>
+          </div>
+        </div>
+
+        <div class="spotlight-stage" id="gallery">
+          <!-- Tab 1: Read & Navigate (media slot can be swapped from img to video later) -->
+          <article
+            id="panel-read"
+            class="spotlight-panel"
+            role="tabpanel"
+            aria-labelledby="tab-read"
+            data-spotlight-panel="read"
+          >
+            <div class="spotlight-copy">
+              <p class="eyebrow" data-i18n="spotlightReadKicker">Distraction-free reading</p>
+              <h3 data-i18n="spotlightReadTitle">
+                Focus on one topic with Scope Focus &amp; Sidebar Cursor
+              </h3>
+              <p data-i18n="spotlightReadBody">
+                Keep full workspace context while narrowing your view to a single folder, section, or preview.
+              </p>
+              <ul class="spotlight-points">
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightReadPoint1"><strong>Scope Focus &amp; TOC:</strong> Lock onto any folder or heading outline without losing sidebar context.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightReadPoint2"><strong>Keyboard-first tree:</strong> Jump files via <code>Alt+S</code>, arrows, <code>Enter</code>, and locate current file with <code>Ctrl+Q</code>.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightReadPoint3"><strong>HTML &amp; Video embeds:</strong> Render isolated interactive HTML sandboxes, local video, and streaming embeds.</span>
+                </li>
+              </ul>
+              <div class="spotlight-cta-row">
+                <a class="button primary" href="app/?mode=web" data-i18n="spotlightTryBtn">Open live in Web App</a>
+                <a class="button secondary" href="app/?mode=test" data-i18n="spotlightDemoBtn">Explore sample docs</a>
+              </div>
+            </div>
+            <figure class="spotlight-media-frame">
+              <div class="spotlight-embed-wrap">
+                <iframe
+                  class="spotlight-demo-iframe"
+                  data-spotlight-iframe="read"
+                  data-feature-slug="sidebar-toc"
+                  src="app/features/?embed=1&feature=sidebar-toc"
+                  title="Markdown Explorer Live Sidebar and Table of Contents Demo"
+                  loading="lazy"
+                ></iframe>
+              </div>
+              <div class="spotlight-media-actions">
+                <a
+                  class="demo-studio-link-pill"
+                  href="features/?feature=sidebar-toc"
+                  data-i18n="spotlightOpenStudio"
+                >Open in Interactive Demo Studio ↗</a>
+              </div>
+              <figcaption data-i18n="spotlightReadCaption">
+                Scope Focus isolating a single section inside the workspace while preserving quick navigation.
+              </figcaption>
+            </figure>
+          </article>
+
+          <!-- Tab 2: Write, Split & Git -->
+          <article
+            id="panel-write"
+            class="spotlight-panel"
+            role="tabpanel"
+            aria-labelledby="tab-write"
+            data-spotlight-panel="write"
+            hidden
+          >
+            <div class="spotlight-copy">
+              <p class="eyebrow" data-i18n="spotlightWriteKicker">Live editing &amp; history</p>
+              <h3 data-i18n="spotlightWriteTitle">
+                Side-by-side Split View with per-document Git diffs
+              </h3>
+              <p data-i18n="spotlightWriteBody">
+                Edit Markdown cleanly beside its live rendered output and inspect file revisions without leaving the reader.
+              </p>
+              <ul class="spotlight-points">
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightWritePoint1"><strong>Synchronized Split View:</strong> Author Markdown on the left while Mermaid, math, and tables update on the right.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightWritePoint2"><strong>Per-document Git history:</strong> Diff uncommitted edits or past commits directly inside any open document.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightWritePoint3"><strong>Live auto-refresh:</strong> Native filesystem watcher picks up AI agent edits instantly with zero reload.</span>
+                </li>
+              </ul>
+              <div class="spotlight-cta-row">
+                <a class="button primary" href="app/?mode=web" data-i18n="spotlightTryBtn">Open live in Web App</a>
+                <a class="button secondary" href="app/?mode=test" data-i18n="spotlightDemoBtn">Explore sample docs</a>
+              </div>
+            </div>
+            <figure class="spotlight-media-frame">
+              <div class="spotlight-embed-wrap">
+                <iframe
+                  class="spotlight-demo-iframe"
+                  data-spotlight-iframe="write"
+                  data-feature-slug="git-diff"
+                  src="app/features/?embed=1&feature=git-diff"
+                  title="Markdown Explorer Live Git Diff and Split Revision Demo"
+                  loading="lazy"
+                ></iframe>
+              </div>
+              <div class="spotlight-media-actions">
+                <a
+                  class="demo-studio-link-pill"
+                  href="features/?feature=git-diff"
+                  data-i18n="spotlightOpenStudio"
+                >Open in Interactive Demo Studio ↗</a>
+              </div>
+              <figcaption data-i18n="spotlightWriteCaption">
+                Synchronized Markdown editor and rendered preview running side by side in Split View.
+              </figcaption>
+            </figure>
+          </article>
+
+          <!-- Tab 3: Diagrams & Data -->
+          <article
+            id="panel-data"
+            class="spotlight-panel"
+            role="tabpanel"
+            aria-labelledby="tab-data"
+            data-spotlight-panel="data"
+            hidden
+          >
+            <div class="spotlight-copy">
+              <p class="eyebrow" data-i18n="spotlightDataKicker">Rich technical rendering</p>
+              <h3 data-i18n="spotlightDataTitle">
+                Mermaid diagrams, LaTeX math, tables &amp; instant charts
+              </h3>
+              <p data-i18n="spotlightDataBody">
+                Turn dense specs and delimited code blocks into filterable tables and charts automatically.
+              </p>
+              <ul class="spotlight-points">
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightDataPoint1"><strong>Interactive tables &amp; CSV/TSV:</strong> Sort, multi-select filter, and chart numeric columns as Bar, Line, or Pie.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightDataPoint2"><strong>Offline Mermaid &amp; KaTeX:</strong> Render flowcharts, sequence, ER graphs, and math offline with pan-zoom lightbox.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightDataPoint3"><strong>10+ local document formats:</strong> Preview DOCX, PDF, XLSX, PPTX, HTML, ODT, RTF, and TXT in one workspace.</span>
+                </li>
+              </ul>
+              <div class="spotlight-cta-row">
+                <a class="button primary" href="app/?mode=web" data-i18n="spotlightTryBtn">Open live in Web App</a>
+                <a class="button secondary" href="app/?mode=test" data-i18n="spotlightDemoBtn">Explore sample docs</a>
+              </div>
+            </div>
+            <figure class="spotlight-media-frame">
+              <div class="spotlight-embed-wrap">
+                <iframe
+                  class="spotlight-demo-iframe"
+                  data-spotlight-iframe="data"
+                  data-feature-slug="tables-charts"
+                  src="app/features/?embed=1&feature=tables-charts"
+                  title="Markdown Explorer Live Interactive Tables and Charts Demo"
+                  loading="lazy"
+                ></iframe>
+              </div>
+              <div class="spotlight-media-actions">
+                <a
+                  class="demo-studio-link-pill"
+                  href="features/?feature=tables-charts"
+                  data-i18n="spotlightOpenStudio"
+                >Open in Interactive Demo Studio ↗</a>
+              </div>
+              <figcaption data-i18n="spotlightDataCaption">
+                Automatic interactive table filters and chart visualization generated from CSV/TSV and Markdown tables.
+              </figcaption>
+            </figure>
+          </article>
+
+          <!-- Tab 4: Search & Export -->
+          <article
+            id="panel-search"
+            class="spotlight-panel"
+            role="tabpanel"
+            aria-labelledby="tab-search"
+            data-spotlight-panel="search"
+            hidden
+          >
+            <div class="spotlight-copy">
+              <p class="eyebrow" data-i18n="spotlightSearchKicker">Exact answers &amp; sharing</p>
+              <h3 data-i18n="spotlightSearchTitle">
+                3-scope workspace search and clean Export Center
+              </h3>
+              <p data-i18n="spotlightSearchBody">
+                Jump straight to matching paragraphs across tabs, then ship docs as PDF, HTML, or static sites.
+              </p>
+              <ul class="spotlight-points">
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightSearchPoint1"><strong>3 search scopes:</strong> Search inside current file, current workspace, or across all open desktop tabs.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightSearchPoint2"><strong>Flexible Export Center:</strong> Package selected docs into themed PDF, standalone HTML, or a static site ZIP.</span>
+                </li>
+                <li>
+                  <span class="spotlight-point-icon" aria-hidden="true">✓</span>
+                  <span data-i18n-html="spotlightSearchPoint3"><strong>Theme Remix &amp; 9 languages:</strong> Customize Explorer Classic themes, spacing, hotkeys, and UI language locally.</span>
+                </li>
+              </ul>
+              <div class="spotlight-cta-row">
+                <a class="button primary" href="app/?mode=web" data-i18n="spotlightTryBtn">Open live in Web App</a>
+                <a class="button secondary" href="app/?mode=test" data-i18n="spotlightDemoBtn">Explore sample docs</a>
+              </div>
+            </div>
+            <figure class="spotlight-media-frame">
+              <div class="spotlight-embed-wrap">
+                <iframe
+                  class="spotlight-demo-iframe"
+                  data-spotlight-iframe="search"
+                  data-feature-slug="insights"
+                  src="app/features/?embed=1&feature=insights"
+                  title="Markdown Explorer Live Workspace Insights Demo"
+                  loading="lazy"
+                ></iframe>
+              </div>
+              <div class="spotlight-media-actions">
+                <a
+                  class="demo-studio-link-pill"
+                  href="features/?feature=insights"
+                  data-i18n="spotlightOpenStudio"
+                >Open in Interactive Demo Studio ↗</a>
+              </div>
+              <figcaption data-i18n="spotlightSearchCaption">
+                Export Center batching selected Markdown files into themed PDF and standalone HTML packages.
+              </figcaption>
+            </figure>
+          </article>
+        </div>
+      </section>
+
+      <div class="section-divider" aria-hidden="true"></div>
+
+      <!-- Band 2.5: YouTube App Demo Embed Placeholder -->
+      <section
+        id="video-demo"
+        class="section video-demo-band"
+        data-video-demo-section
+        aria-labelledby="video-demo-title"
+      >
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="video_demo_eyebrow">01.5 / VIDEO WALKTHROUGH</p>
+          <h2 id="video-demo-title" data-i18n="video_demo_title">
+            Watch the Full App Walkthrough
+          </h2>
+          <p data-i18n="video_demo_subtitle">
+            See how Markdown Explorer turns local folders into a fast, private workspace with synchronized split editing, Git diffs, charts, and workspace insights.
+          </p>
+        </div>
+
+        <div
+          class="youtube-placeholder-frame"
+          data-youtube-placeholder
+          data-youtube-video-id="coming-soon"
+          data-youtube-embed=""
+        >
+          <div class="youtube-placeholder-topbar">
+            <span class="youtube-status-pill" data-i18n="video_demo_badge">
+              YouTube App Demo — Embed Placeholder
+            </span>
+            <span class="youtube-aspect-pill">16:9 · YOUTUBE SLOT</span>
+          </div>
+
+          <div class="youtube-placeholder-stage">
+            <button
+              type="button"
+              class="youtube-play-trigger"
+              data-youtube-placeholder-trigger
+              aria-label="Preview YouTube App Demo Placeholder"
+            >
+              <span class="youtube-play-badge" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="8 5 19 12 8 19 8 5"></polygon>
+                </svg>
+              </span>
+              <span class="youtube-play-meta">
+                <strong data-i18n="video_demo_placeholder_title">Full Walkthrough Video Coming Soon</strong>
+                <span data-i18n="video_demo_placeholder_copy">
+                  This 16:9 cinema slot is pre-wired for the official YouTube walkthrough. While the recording is being finalized, explore the live interactive components above or launch the full demo studio.
+                </span>
+              </span>
+              <span class="button primary youtube-preview-btn" data-i18n="video_demo_play_btn">
+                Preview Video Slot
+              </span>
+            </button>
+
+            <div class="youtube-placeholder-preview-note" data-youtube-preview-note hidden>
+              <p data-i18n="video_demo_preview_note">
+                Official YouTube video ID is queued (coming-soon). Jump straight into any live component in the studio:
+              </p>
+              <a class="button primary" href="features/" data-i18n="video_demo_studio_cta">
+                Open Interactive Component Studio ↗
+              </a>
+            </div>
+          </div>
+
+          <div class="youtube-chapter-bar" aria-label="Walkthrough chapters">
+            <a class="youtube-chapter-pill" href="features/?feature=workspace">00:00 Workspace &amp; Themes</a>
+            <a class="youtube-chapter-pill" href="features/?feature=split-editor">01:15 Split View &amp; Git Diff</a>
+            <a class="youtube-chapter-pill" href="features/?feature=tables-charts">02:30 Tables &amp; Charts</a>
+            <a class="youtube-chapter-pill" href="features/?feature=insights">03:45 Workspace Insights</a>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider" aria-hidden="true"></div>
+
+      <!-- Band 3: Where It Runs -->
+      <section class="section runtimes-section" id="runtimes" aria-labelledby="runtimes-title">
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="runtimesEyebrow">Run anywhere</p>
+          <h2 id="runtimes-title" data-i18n="runtimesTitle">
+            Start in your browser, upgrade to desktop anytime
+          </h2>
+        </div>
+
+        <div class="runtimes-grid">
+          <article class="runtime-card runtime-card-featured">
+            <div class="runtime-card-top">
+              <h3 data-i18n="runtimeWebTitle">Web App</h3>
+              <span class="runtime-pill" data-i18n="runtimeWebPill">Browser · Zero install</span>
+            </div>
+            <p data-i18n="runtimeWebBody">
+              Open local folders, individual Markdown files, or curated sample docs straight in your browser with 100% client-side privacy.
+            </p>
+            <a class="runtime-card-link" href="app/?mode=web" data-i18n="runtimeWebCta">
+              Launch Web App →
+            </a>
+          </article>
+
+          <article class="runtime-card">
+            <div class="runtime-card-top">
+              <h3 data-i18n="runtimeDesktopTitle">Desktop App</h3>
+              <span class="runtime-pill" data-i18n="runtimeDesktopPill">Tauri &amp; Electron</span>
+            </div>
+            <p data-i18n="runtimeDesktopBody">
+              Unlock multi-workspace Tabs view, native filesystem auto-refresh, system hotkeys, and full batch Export Center on Windows, macOS, and Linux.
+            </p>
+            <a class="runtime-card-link" href="#download" data-i18n="runtimeDesktopCta">
+              Choose installer ↓
+            </a>
+          </article>
+
+          <article class="runtime-card">
+            <div class="runtime-card-top">
+              <h3 data-i18n="runtimeVscodeTitle">VS Code &amp; Open VSX</h3>
+              <span class="runtime-pill" data-i18n="runtimeVscodePill">In-editor</span>
+            </div>
+            <p data-i18n="runtimeVscodeBody">
+              Browse specs, PRDs, and AI agent memory trees directly inside your IDE sidebar without context-switching.
+            </p>
+            <a
+              class="runtime-card-link"
+              href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+              target="_blank"
+              rel="noopener"
+              data-i18n="runtimeVscodeCta"
+            >
+              Install extension ↗
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <!-- Compact Privacy & Localization Trust Strip -->
+      <section class="section trust-section" aria-label="Privacy and localization highlights">
+        <div class="trust-panel">
+          <div class="trust-item">
+            <strong data-i18n="trustZeroUploadTitle">Zero Cloud Uploads</strong>
+            <span data-i18n="trustZeroUploadBody">Parsing, search indexing, and rendering happen 100% locally.</span>
+          </div>
+          <div class="trust-item">
+            <strong data-i18n="trustZeroTelemetryTitle">Zero Telemetry</strong>
+            <span data-i18n="trustZeroTelemetryBody">No analytics scripts, no tracking pixels, no accounts.</span>
+          </div>
+          <div class="trust-item">
+            <strong data-i18n="trustOfflineTitle">Offline &amp; Air-Gapped</strong>
+            <span data-i18n="trustOfflineBody">Full Markdown, Mermaid, math, and office previews without internet.</span>
+          </div>
+          <div class="trust-item">
+            <strong data-i18n="trustLanguagesTitle">9 UI Languages</strong>
+            <span data-i18n="trustLanguagesBody">EN · VI · FR · ES · ZH · NO · JA · KO · RU</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider" aria-hidden="true"></div>
+
+      <!-- Band 4: Download & Install -->
+      <section class="section" id="download" aria-labelledby="download-title">
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="downloadEyebrow">
+            Get Markdown Explorer - Current version - <span data-version-text>v1.7.2</span>
+          </p>
+          <h2 id="download-title" data-i18n="downloadTitle">
+            Install the extension or download the desktop app
+          </h2>
+          <p data-i18n="downloadSubtitle">
+            Desktop unlocks multi-workspace tabs and system shortcuts. Choose
+            Rust Tauri for smaller downloads, faster startup, and lower memory
+            — or Electron for maximum OS compatibility with bundled Chromium.
+          </p>
+        </div>
+
+        <div class="download-grid">
+          <article class="download-card">
+            <h3 data-i18n="dlWinTitle">Windows desktop</h3>
+            <p data-i18n="dlWinBody">
+              Both Rust Tauri and Electron offer an installer and a portable bundle that runs without setup.
+            </p>
+            <div class="card-actions">
+              <a
+                id="dl-win-light-btn"
+                class="button primary btn btn-primary release-download"
+                data-platform="tauri-windows"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinLightweightBtn"
+                >Rust Tauri (Installer)</a
+              >
+              <a
+                id="dl-win-light-portable-btn"
+                class="button primary btn btn-primary release-download"
+                data-platform="tauri-windows-portable"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinLightweightPortableBtn"
+                >Rust Tauri (Portable)</a
+              >
+              <a
+                id="dl-win-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="windows-nsis"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinNsisBtn"
+                >Electron (Installer)</a
+              >
+              <a
+                id="dl-win-portable-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="windows-portable"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinPortableBtn"
+                >Electron (Portable)</a
+              >
+            </div>
+          </article>
+          <article class="download-card">
+            <h3 data-i18n="dlLinuxTitle">Linux desktop</h3>
+            <p data-i18n="dlLinuxBody">
+              Available in Rust Tauri or Electron as portable `.AppImage` and
+              `.deb` packages for Debian and Ubuntu.
+            </p>
+            <div class="card-actions">
+              <a
+                id="dl-linux-light-btn"
+                class="button primary btn btn-primary release-download"
+                data-platform="tauri-linux-appimage"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxLightweightAppImageBtn"
+                >Rust Tauri (AppImage)</a
+              >
+              <a
+                id="dl-linux-light-deb-btn"
+                class="button primary btn btn-primary release-download"
+                data-platform="tauri-linux-deb"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxLightweightDebBtn"
+                >Rust Tauri (.deb)</a
+              >
+              <a
+                id="dl-linux-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="linux-appimage"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxAppImageBtn"
+                >Electron (AppImage)</a
+              >
+              <a
+                id="dl-linux-deb-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="linux-deb"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxDebBtn"
+                >Electron (.deb)</a
+              >
+            </div>
+          </article>
+          <article class="download-card">
+            <h3 data-i18n="dlMacTitle">macOS desktop</h3>
+            <p data-i18n="dlMacBody">
+              Pick the Rust Tauri `.dmg`, or choose Electron `.dmg` for Apple
+              Silicon (`arm64`) or Intel (`x64`).
+            </p>
+            <div class="card-actions">
+              <a
+                id="dl-mac-light-btn"
+                class="button primary btn btn-primary release-download"
+                data-platform="tauri-macos"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlMacLightweightBtn"
+                >Rust Tauri</a
+              >
+              <a
+                class="button secondary btn btn-secondary"
+                href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
+                target="_blank"
+                rel="noopener"
+                data-i18n="macosInstallBtn"
+                >Install Guide</a
+              >
+              <a
+                id="dl-mac-arm-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="macos-arm64"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlMacArmBtn"
+                >Electron (Apple Silicon)</a
+              >
+              <a
+                id="dl-mac-intel-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="macos-x64"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlMacIntelBtn"
+                >Electron (Intel)</a
+              >
+            </div>
+          </article>
+          <article class="download-card">
+            <h3 data-i18n="dlVscodeTitle">VS Code Marketplace</h3>
+            <p data-i18n="dlVscodeBody">
+              Best choice for VS Code users. Launch the docs viewer directly
+              inside your editor.
+            </p>
+            <div class="card-actions">
+              <a
+                class="button primary marketplace-download"
+                data-platform="vscode-marketplace"
+                href="https://marketplace.visualstudio.com/items?itemName=the-long-ride.vscode-extension-markdown-explorer"
+                rel="noopener"
+                data-i18n="dlVscodeBtn"
+                >Install extension</a
+              >
+            </div>
+          </article>
+          <article class="download-card">
+            <h3 data-i18n="dlOvxTitle">Open VSX Registry</h3>
+            <p data-i18n="dlOvxBody">
+              Use this for VSCodium and VS Code-compatible editors that rely on
+              Open VSX.
+            </p>
+            <div class="card-actions">
+              <a
+                class="button primary marketplace-download"
+                data-platform="open-vsx"
+                href="https://open-vsx.org/extension/the-long-ride/vscode-extension-markdown-explorer"
+                rel="noopener"
+                data-i18n="dlOvxBtn"
+                >Install from Open VSX</a
+              >
+            </div>
+          </article>
+          <article class="download-card quiet">
+            <h3 data-i18n="dlGhTitle">Latest release page</h3>
+            <p data-i18n="dlGhBody">
+              Every GitHub Release includes file descriptions so you can pick
+              the right package for your OS.
+            </p>
+            <a
+              class="button secondary"
+              href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+              rel="noopener"
+              data-i18n="dlGhBtn"
+              >View latest release</a
+            >
+          </article>
+        </div>
+        <p class="release-note" id="release-note" data-i18n="releaseChecking">
+          Checking latest release assets...
+        </p>
+      </section>
+
+      <!-- Band 5: Concise FAQ -->
+      <section class="section faq" id="faq" aria-labelledby="faq-title">
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="faqEyebrow">FAQ</p>
+          <h2 id="faq-title" data-i18n="faqTitle">Common questions</h2>
+        </div>
+
+        <details>
+          <summary data-i18n="faq1Q">Is Markdown Explorer free?</summary>
+          <p data-i18n="faq1A">
+            Yes. The project is MIT licensed and the GitHub repository is public.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq2Q">Does it work without internet?</summary>
+          <p data-i18n="faq2A">
+            Yes. Rendering and searching happen locally. The website download buttons use GitHub only to find the latest release files and public download totals.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq4Q">What document formats can I preview locally?</summary>
+          <p data-i18n="faq4A">
+            In addition to Markdown (.md), Markdown Explorer supports local previews of DOCX, PDF, XLSX, PPTX, HTML, ODT, ODP, ODS, RTF, and TXT files directly inside your workspace with local caching.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq5Q">What is the difference between Rust Tauri and Electron builds?</summary>
+          <p data-i18n="faq5A">
+            Rust Tauri uses the OS webview for compact downloads, fast startup, and low memory. Electron bundles Chromium for identical rendering and maximum compatibility across older OS versions and Linux distros.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq6Q">Does Markdown Explorer collect any telemetry or user data?</summary>
+          <p data-i18n="faq6A">
+            No. Markdown Explorer is 100% private and offline-first with zero telemetry, no tracking scripts, and no remote file uploads.
+          </p>
+        </details>
+        <details>
+          <summary data-i18n="faq3Q">Which desktop file should I download?</summary>
+          <p data-i18n="faq3A">
+            Windows users can choose the NSIS installer (`Setup *.exe`) for Start Menu integration or the portable `.exe` to run directly. Linux users can choose `.AppImage` or `.deb`. macOS users should choose `.dmg`, with `arm64` for Apple Silicon and `x64` for Intel.
+          </p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        <span data-i18n="footerBy">Markdown Explorer by</span>
+        <a href="https://github.com/the-long-ride" rel="noopener"
+          >@the-long-ride</a
+        >
+      </p>
+      <nav aria-label="Footer links">
+        <a
+          href="https://github.com/the-long-ride#donate"
+          target="_blank"
+          rel="noopener"
+          data-i18n="footerDonate"
+          >Donate</a
+        >
+        <a
+          href="https://github.com/the-long-ride/markdown-explorer/issues"
+          rel="noopener"
+          data-i18n="footerIssues"
+          >Issues</a
+        >
+        <a href="privacy.html" data-i18n="footerPrivacy">Privacy</a>
+        <a href="terms.html" data-i18n="footerTerms">Terms</a>
+        <a
+          href="https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE"
+          target="_blank"
+          rel="noopener"
+          data-i18n="footerLicense"
+          >MIT License</a
+        >
+      </nav>
+    </footer>
+
+    <script src="i18n/en.js" defer></script>
+    <script src="i18n/vi.js" defer></script>
+    <script src="i18n/fr.js" defer></script>
+    <script src="i18n/es.js" defer></script>
+    <script src="i18n/zh.js" defer></script>
+    <script src="i18n/no.js" defer></script>
+    <script src="i18n/ja.js" defer></script>
+    <script src="i18n/ko.js" defer></script>
+    <script src="i18n/ru.js" defer></script>
+    <script src="site-download-helpers.js" defer></script>
+    <script src="site-download-rendering.js" defer></script>
+    <script src="site-release-api.js" defer></script>
+    <script src="i18n.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="site-image-viewer.js" defer></script>
+    <script src="site-effects.js" defer></script>
+  </body>
+</html>

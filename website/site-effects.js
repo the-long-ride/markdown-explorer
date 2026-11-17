@@ -49,16 +49,183 @@
 
   window.MarkdownExplorerImageViewer?.init();
 
-  const guideBtn = document.getElementById("guide-btn");
-  const guideModal = document.getElementById("guide-modal");
-  const modalCloseBtn = document.getElementById("modal-close-btn");
-  if (guideBtn && guideModal && modalCloseBtn) {
-    const openModal = () => { guideModal.style.display = "flex"; document.body.style.overflow = "hidden"; };
-    const closeModal = () => { guideModal.style.display = "none"; document.body.style.overflow = ""; };
-    guideBtn.addEventListener("click", openModal);
-    modalCloseBtn.addEventListener("click", closeModal);
-    guideModal.addEventListener("click", (e) => { if (e.target === guideModal) closeModal(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && guideModal.style.display === "flex") closeModal(); });
+  /* ── Interactive Hero Mode Switcher & Live Embed ── */
+  const HERO_FEATURES = { workspace: "workspace", split: "split-editor", charts: "tables-charts" };
+  const heroModeKeys = [...document.querySelectorAll("[data-hero-mode]")];
+  const heroDemoIframe = document.getElementById("hero-demo-iframe");
+  const heroPreviewImg = document.getElementById("hero-preview-img");
+  const heroPreviewCaption = document.getElementById("hero-preview-caption-text");
+  const heroPreviewCard = (heroDemoIframe || heroPreviewImg)?.closest(".hero-product-preview");
+  const heroStudioPill = document.querySelector(".hero-studio-pill");
+  const postDemoSelect = (iframe, feature) => {
+    if (!iframe || !feature) return;
+    iframe.dataset.activeFeature = feature;
+    if (iframe.contentWindow) iframe.contentWindow.postMessage({ type: "mde-demo-select", feature }, "*");
+    else iframe.src = `app/features/?embed=1&feature=${encodeURIComponent(feature)}`;
+  };
+  heroDemoIframe?.addEventListener("load", () => {
+    if (heroDemoIframe.dataset.activeFeature) postDemoSelect(heroDemoIframe, heroDemoIframe.dataset.activeFeature);
+  });
+  if (heroModeKeys.length > 0 && (heroDemoIframe || heroPreviewImg)) {
+    heroModeKeys.forEach((btn) => btn.addEventListener("click", () => {
+      const mode = btn.getAttribute("data-hero-mode") || "workspace";
+      const feature = btn.getAttribute("data-hero-feature") || HERO_FEATURES[mode] || "workspace";
+      const nextSrc = btn.getAttribute("data-hero-src"), nextAlt = btn.getAttribute("data-hero-alt"), nextCaption = btn.getAttribute("data-hero-caption");
+      heroModeKeys.forEach((key) => {
+        const isActive = key === btn;
+        key.classList.toggle("is-active", isActive);
+        key.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+      if (heroDemoIframe) postDemoSelect(heroDemoIframe, feature);
+      if (heroStudioPill) heroStudioPill.setAttribute("href", `features/?feature=${encodeURIComponent(feature)}`);
+      if (heroPreviewImg && nextSrc && heroPreviewImg.src !== nextSrc) heroPreviewImg.src = nextSrc;
+      if (heroPreviewImg && nextAlt) heroPreviewImg.alt = nextAlt;
+      if (heroPreviewCaption && nextCaption) heroPreviewCaption.textContent = nextCaption;
+      if (heroPreviewCard) { heroPreviewCard.classList.remove("is-switching"); void heroPreviewCard.offsetWidth; heroPreviewCard.classList.add("is-switching"); }
+    }));
+  }
+  /* ── Interactive Product Spotlight Tabs (landing.html) ── */
+  const spotlightTabs = [...document.querySelectorAll("[data-spotlight-tab]")];
+  const spotlightPanels = [...document.querySelectorAll("[data-spotlight-panel]")];
+  if (spotlightTabs.length > 0 && spotlightPanels.length > 0) {
+    const activateSpotlightTab = (targetTab, focusTab = false) => {
+      const targetId = targetTab.getAttribute("data-spotlight-tab");
+      spotlightTabs.forEach((tab) => {
+        const isActive = tab === targetTab;
+        tab.classList.toggle("is-active", isActive);
+        tab.setAttribute("aria-selected", isActive ? "true" : "false");
+        tab.tabIndex = isActive ? 0 : -1;
+      });
+      spotlightPanels.forEach((panel) => {
+        const matches = panel.getAttribute("data-spotlight-panel") === targetId;
+        panel.hidden = !matches;
+        if (matches) { const frame = panel.querySelector("[data-spotlight-iframe]"); if (frame) postDemoSelect(frame, frame.getAttribute("data-feature-slug")); }
+      });
+      if (focusTab) targetTab.focus();
+    };
+    spotlightTabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => activateSpotlightTab(tab, false));
+      tab.addEventListener("keydown", (e) => {
+        const len = spotlightTabs.length;
+        const map = { ArrowRight: (index + 1) % len, ArrowLeft: (index - 1 + len) % len, Home: 0, End: len - 1 };
+        if (map[e.key] === undefined) return;
+        e.preventDefault();
+        activateSpotlightTab(spotlightTabs[map[e.key]], true);
+      });
+    });
+  }
+  /* ── YouTube Walkthrough Placeholder Trigger ── */
+  document.querySelectorAll("[data-youtube-placeholder-trigger]").forEach((trigger) => {
+    trigger.addEventListener("click", () => {
+      const box = trigger.closest("[data-youtube-placeholder]");
+      if (!box) return;
+      const embedUrl = box.getAttribute("data-youtube-embed") || "", videoId = box.getAttribute("data-youtube-video-id") || "";
+      if (embedUrl || (videoId && videoId !== "coming-soon")) {
+        const stage = box.querySelector(".youtube-placeholder-stage");
+        if (!stage) return;
+        const iframe = Object.assign(document.createElement("iframe"), {
+          className: "youtube-embed-iframe", title: "Markdown Explorer YouTube App Walkthrough", allowFullscreen: true,
+          allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+          src: embedUrl || `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1`,
+        });
+        return stage.replaceChildren(iframe);
+      }
+      const nextOpen = !box.classList.contains("is-preview-open");
+      box.classList.toggle("is-preview-open", nextOpen);
+      const note = box.querySelector("[data-youtube-preview-note]");
+      if (note) note.hidden = !nextOpen;
+    });
+  });
+
+  /* ── Raw Grid Retro Scroll Reveal ── */
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const isRawGridPage = document.documentElement.getAttribute("data-theme-style") === "raw-grid";
+  if (isRawGridPage && !prefersReducedMotion && typeof IntersectionObserver === "function") {
+    const revealGroups = [
+      document.querySelectorAll(".spotlight-stage"),
+      document.querySelectorAll(".runtime-card"),
+      document.querySelectorAll(".trust-item"),
+      document.querySelectorAll(".download-card"),
+      document.querySelectorAll(".faq details"),
+      document.querySelectorAll(".legal-section"),
+    ];
+    const allTargets = [];
+    revealGroups.forEach((group) => {
+      group.forEach((el, idx) => {
+        el.setAttribute("data-retro-reveal", "");
+        el.style.setProperty("--retro-delay", `${Math.min(idx, 5) * 55}ms`);
+        allTargets.push(el);
+      });
+    });
+    if (allTargets.length > 0) {
+      document.documentElement.classList.add("has-retro-reveal");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("is-revealed");
+            observer.unobserve(entry.target);
+          });
+        },
+        { rootMargin: "0px 0px -24px 0px", threshold: 0.05 },
+      );
+      allTargets.forEach((el) => observer.observe(el));
+    }
+  }
+
+  /* ── Header GitHub Live Star Counter ── */
+  const starContainers = [...document.querySelectorAll("[data-github-stars]")];
+  if (starContainers.length > 0) {
+    const STARS_CACHE_KEY = "mdn_github_stars_cache";
+    const STARS_CACHE_TTL = 60 * 60 * 1000;
+    const GITHUB_REPO_API = "https://api.github.com/repos/the-long-ride/markdown-explorer";
+    const formatStars = (count) => new Intl.NumberFormat().format(count);
+    const renderStars = (count) => {
+      if (typeof count !== "number" || !Number.isFinite(count)) return;
+      starContainers.forEach((container) => {
+        const countEl = container.querySelector("[data-github-stars-count]");
+        if (countEl) countEl.textContent = formatStars(count);
+        container.hidden = false;
+      });
+    };
+
+    let shouldFetch = true;
+    try {
+      const cachedRaw = localStorage.getItem(STARS_CACHE_KEY);
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw);
+        if (typeof cached?.count === "number" && Number.isFinite(cached.count)) {
+          renderStars(cached.count);
+          if (typeof cached.timestamp === "number" && Date.now() - cached.timestamp < STARS_CACHE_TTL) {
+            shouldFetch = false;
+          }
+        }
+      }
+    } catch (_) {
+      // Ignore storage failures
+    }
+
+    if (shouldFetch && typeof fetch === "function") {
+      fetch(GITHUB_REPO_API, {
+        headers: { Accept: "application/vnd.github.v3+json" },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (typeof data?.stargazers_count !== "number") return;
+          renderStars(data.stargazers_count);
+          try {
+            localStorage.setItem(
+              STARS_CACHE_KEY,
+              JSON.stringify({ count: data.stargazers_count, timestamp: Date.now() }),
+            );
+          } catch (_) {
+            // Ignore storage failures
+          }
+        })
+        .catch(() => {
+          // Leave fallback cached or hidden gracefully
+        });
+    }
   }
 
   /* ── Capabilities Grab & Release Horizontal Carousel Loop ── */

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-theme-style="raw-grid">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -112,7 +112,7 @@
         "description": "Markdown Explorer turns Markdown folders and AI-generated project knowledge into a private, searchable documentation workspace for humans.",
         "url": "https://the-long-ride.github.io/markdown-explorer/",
         "downloadUrl": "https://github.com/the-long-ride/markdown-explorer/releases/latest",
-        "softwareVersion": "1.7.1",
+        "softwareVersion": "1.7.2",
         "license": "https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE",
         "codeRepository": "https://github.com/the-long-ride/markdown-explorer",
         "screenshot": "https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/media/demo/Homepage.png",
@@ -140,6 +140,21 @@
         }
       }
     </script>
+    <script>
+      (function() {
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+        if (!/[?&]landing=1\b/.test(search) && !/^#(features|gallery|video-demo|download|faq)\b/.test(hash)) {
+          var target = 'app/?mode=web';
+          if (/[?&]mode=/.test(search)) {
+            var params = new URLSearchParams(search);
+            var mode = params.get('mode') || 'web';
+            target = 'app/?mode=' + encodeURIComponent(mode === 'file' ? 'web' : mode);
+          }
+          window.location.replace(target);
+        }
+      })();
+    </script>
   </head>
   <body>
     <canvas id="page-bg-canvas" class="page-bg-canvas" aria-hidden="true"></canvas>
@@ -158,46 +173,29 @@
         <span>Markdown Explorer</span>
       </a>
       <nav class="nav-links" aria-label="Page sections">
-        <span class="nav-dropdown-wrap">
-          <button
-            id="demo-btn"
-            class="nav-dropdown-btn"
-            aria-haspopup="true"
-            aria-expanded="false"
-            data-i18n="navDemo"
-          >
-            Demo ▾
-          </button>
-          <div
-            class="nav-dropdown-menu"
-            id="demo-menu"
-            role="menu"
-            aria-label="Demo options"
-            hidden
-          >
-            <a
-              href="app/?mode=test"
-              target="_blank"
-              rel="noopener"
-              role="menuitem"
-              data-i18n="navDemoExamples"
-              >Example files</a
-            >
-            <a
-              href="app/?mode=file"
-              target="_blank"
-              rel="noopener"
-              role="menuitem"
-              data-i18n="navDemoTry"
-              >Open a file</a
-            >
-          </div>
-        </span>
+        <a href="app/?mode=web" class="button primary web-demo-nav-link" data-i18n="navWebApp">Open App</a>
+        <a href="features/" data-i18n="nav_features_demo">Live Component Demos</a>
         <a href="#features" data-i18n="navFeatures">Features</a>
-        <a href="#gallery" data-i18n="navGallery">Gallery</a>
         <a href="#download" data-i18n="navDownload">Download</a>
         <a href="#faq" data-i18n="navFaq">FAQ</a>
-
+        <a
+          class="nav-github-link"
+          href="https://github.com/the-long-ride/markdown-explorer"
+          target="_blank"
+          rel="noopener"
+          aria-label="Markdown Explorer on GitHub"
+          title="GitHub"
+        >
+          <svg class="nav-github-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11.02 11.02 0 0 1 5.76 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.39-5.26 5.67.41.36.79 1.07.79 2.15v3.19c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
+          </svg>
+          <span class="nav-github-stars" data-github-stars hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2.5l2.93 5.94 6.56.95-4.74 4.62 1.12 6.53L12 17.46l-5.87 3.08 1.12-6.53L2.51 9.39l6.56-.95L12 2.5z" />
+            </svg>
+            <span data-github-stars-count></span>
+          </span>
+        </a>
       </nav>
       <div class="header-controls">
         <a
@@ -337,18 +335,14 @@
             <div class="hero-actions" aria-label="Try Markdown Explorer">
               <a
                 class="button primary hero-primary-cta"
-                href="app/?mode=file"
-                target="_blank"
-                rel="noopener"
+                href="app/?mode=web"
               >
                 <svg class="btn-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                <span data-i18n="heroTryFile">Open your Markdown file</span>
+                <span data-i18n="heroTryFile">Launch Web App</span>
               </a>
               <a
                 class="button secondary"
                 href="app/?mode=test"
-                target="_blank"
-                rel="noopener"
               >
                 <span data-i18n="heroExploreDemo">Live demo</span>
                 <span aria-hidden="true">↗</span>
@@ -385,8 +379,6 @@
             <a
               class="hero-product-preview"
               href="app/?mode=test"
-              target="_blank"
-              rel="noopener"
               aria-label="Open the Markdown Explorer live demo"
             >
               <span class="hero-preview-kicker" data-i18n="heroPreviewKicker">Your documentation becomes an app</span>
@@ -645,6 +637,18 @@
           <p data-i18n="featuresSectionSubtitle">
             Explore the powerful tools built into Markdown Explorer to make local documentation interactive and comfortable.
           </p>
+        </div>
+
+        <div class="features-studio-callout" data-features-studio-callout>
+          <div class="features-studio-callout-copy">
+            <strong data-i18n="featuresCalloutTitle">Prefer clicking real UI components?</strong>
+            <p data-i18n="featuresCalloutBody">
+              Test the live Markdown renderer, Split Editor, Git Diff, Tables &amp; Charts, and Workspace Insights in our interactive Component Demo Studio.
+            </p>
+          </div>
+          <a class="button primary" href="features/" data-i18n="featuresCalloutBtn">
+            Open Live Component Demos ↗
+          </a>
         </div>
 
         <div class="feature-grid">
@@ -1037,6 +1041,77 @@
         </div>
       </section>
 
+      <section
+        id="video-demo"
+        class="section video-demo-band"
+        data-video-demo-section
+        aria-labelledby="video-demo-title"
+      >
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="video_demo_eyebrow">01.5 / VIDEO WALKTHROUGH</p>
+          <h2 id="video-demo-title" data-i18n="video_demo_title">
+            Watch the Full App Walkthrough
+          </h2>
+          <p data-i18n="video_demo_subtitle">
+            See how Markdown Explorer turns local folders into a fast, private workspace with synchronized split editing, Git diffs, charts, and workspace insights.
+          </p>
+        </div>
+
+        <div
+          class="youtube-placeholder-frame"
+          data-youtube-placeholder
+          data-youtube-video-id="coming-soon"
+          data-youtube-embed=""
+        >
+          <div class="youtube-placeholder-topbar">
+            <span class="youtube-status-pill" data-i18n="video_demo_badge">
+              YouTube App Demo — Embed Placeholder
+            </span>
+            <span class="youtube-aspect-pill">16:9 · YOUTUBE SLOT</span>
+          </div>
+
+          <div class="youtube-placeholder-stage">
+            <button
+              type="button"
+              class="youtube-play-trigger"
+              data-youtube-placeholder-trigger
+              aria-label="Preview YouTube App Demo Placeholder"
+            >
+              <span class="youtube-play-badge" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="8 5 19 12 8 19 8 5"></polygon>
+                </svg>
+              </span>
+              <span class="youtube-play-meta">
+                <strong data-i18n="video_demo_placeholder_title">Full Walkthrough Video Coming Soon</strong>
+                <span data-i18n="video_demo_placeholder_copy">
+                  This 16:9 cinema slot is pre-wired for the official YouTube walkthrough. While the recording is being finalized, explore the live interactive components above or launch the full demo studio.
+                </span>
+              </span>
+              <span class="button primary youtube-preview-btn" data-i18n="video_demo_play_btn">
+                Preview Video Slot
+              </span>
+            </button>
+
+            <div class="youtube-placeholder-preview-note" data-youtube-preview-note hidden>
+              <p data-i18n="video_demo_preview_note">
+                Official YouTube video ID is queued (coming-soon). Jump straight into any live component in the studio:
+              </p>
+              <a class="button primary" href="features/" data-i18n="video_demo_studio_cta">
+                Open Interactive Component Studio ↗
+              </a>
+            </div>
+          </div>
+
+          <div class="youtube-chapter-bar" aria-label="Walkthrough chapters">
+            <a class="youtube-chapter-pill" href="features/?feature=workspace">00:00 Workspace &amp; Themes</a>
+            <a class="youtube-chapter-pill" href="features/?feature=split-editor">01:15 Split View &amp; Git Diff</a>
+            <a class="youtube-chapter-pill" href="features/?feature=tables-charts">02:30 Tables &amp; Charts</a>
+            <a class="youtube-chapter-pill" href="features/?feature=insights">03:45 Workspace Insights</a>
+          </div>
+        </div>
+      </section>
+
       <section class="section privacy-section" aria-labelledby="privacy-title">
         <div class="section-heading">
           <h2 id="privacy-title" class="eyebrow" data-i18n="privacyEyebrow">Private by default</h2>
@@ -1091,17 +1166,15 @@
       <section class="section" id="download" aria-labelledby="download-title">
         <div class="section-heading">
           <p class="eyebrow" data-i18n="downloadEyebrow">
-            Get Markdown Explorer - Current version - <span data-version-text>v1.7.1</span>
+            Get Markdown Explorer - Current version - <span data-version-text>v1.7.2</span>
           </p>
           <h2 id="download-title" data-i18n="downloadTitle">
             Install the extension or download the desktop app
           </h2>
           <p data-i18n="downloadSubtitle">
-            The desktop app goes beyond the VS Code extension with Tabs view,
-            multiple workspaces open at the same time, more keyboard shortcuts,
-            and extra features. Lightweight variants are powered by Tauri for a
-            minimal resource footprint and faster performance, while standard
-            builds use Electron for battle-tested stability across all platforms.
+            Desktop unlocks multi-workspace tabs and system shortcuts. Choose
+            Rust Tauri for smaller downloads, faster startup, and lower memory
+            — or Electron for maximum OS compatibility with bundled Chromium.
           </p>
         </div>
 
@@ -1109,93 +1182,110 @@
           <article class="download-card">
             <h3 data-i18n="dlWinTitle">Windows desktop</h3>
             <p data-i18n="dlWinBody">
-              Use the NSIS installer for Start Menu and desktop shortcuts, or the portable `.exe` to run directly without installation.
+              Both Rust Tauri and Electron offer an installer and a portable bundle that runs without setup.
             </p>
             <div class="card-actions">
               <a
-                class="button primary release-download"
+                id="dl-win-light-btn"
+                class="button primary btn btn-primary release-download"
                 data-platform="tauri-windows"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlWinLightweightBtn"
-                >Lightweight</a
+                >Rust Tauri (Installer)</a
               >
               <a
-                class="button secondary release-download"
+                id="dl-win-light-portable-btn"
+                class="button primary btn btn-primary release-download"
+                data-platform="tauri-windows-portable"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlWinLightweightPortableBtn"
+                >Rust Tauri (Portable)</a
+              >
+              <a
+                id="dl-win-btn"
+                class="button secondary btn btn-secondary release-download"
                 data-platform="windows-nsis"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlWinNsisBtn"
-                >Installer</a
+                >Electron (Installer)</a
               >
               <a
-                class="button secondary release-download"
+                id="dl-win-portable-btn"
+                class="button secondary btn btn-secondary release-download"
                 data-platform="windows-portable"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlWinPortableBtn"
-                >Portable</a
+                >Electron (Portable)</a
               >
             </div>
           </article>
           <article class="download-card">
             <h3 data-i18n="dlLinuxTitle">Linux desktop</h3>
             <p data-i18n="dlLinuxBody">
-              Use `.AppImage` for portable launch, or `.deb` on Debian and
-              Ubuntu-based systems.
+              Available in Rust Tauri or Electron as portable `.AppImage` and
+              `.deb` packages for Debian and Ubuntu.
             </p>
             <div class="card-actions">
               <a
-                class="button primary release-download"
+                id="dl-linux-light-btn"
+                class="button primary btn btn-primary release-download"
                 data-platform="tauri-linux-appimage"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlLinuxLightweightAppImageBtn"
-                >Lightweight AppImage</a
+                >Rust Tauri (AppImage)</a
               >
               <a
-                class="button secondary release-download"
-                data-platform="linux-appimage"
-                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-                rel="noopener"
-                data-i18n="dlLinuxAppImageBtn"
-                >AppImage</a
-              >
-              <a
-                class="button secondary release-download"
-                data-platform="linux-deb"
-                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-                rel="noopener"
-                data-i18n="dlLinuxDebBtn"
-                >.deb</a
-              >
-              <a
-                class="button secondary release-download"
+                id="dl-linux-light-deb-btn"
+                class="button primary btn btn-primary release-download"
                 data-platform="tauri-linux-deb"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlLinuxLightweightDebBtn"
-                >Lightweight .deb</a
+                >Rust Tauri (.deb)</a
+              >
+              <a
+                id="dl-linux-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="linux-appimage"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxAppImageBtn"
+                >Electron (AppImage)</a
+              >
+              <a
+                id="dl-linux-deb-btn"
+                class="button secondary btn btn-secondary release-download"
+                data-platform="linux-deb"
+                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
+                rel="noopener"
+                data-i18n="dlLinuxDebBtn"
+                >Electron (.deb)</a
               >
             </div>
           </article>
           <article class="download-card">
             <h3 data-i18n="dlMacTitle">macOS desktop</h3>
             <p data-i18n="dlMacBody">
-              Download a `.dmg` for your chip. Use `arm64` for Apple Silicon and
-              `x64` for Intel Macs.
+              Pick the Rust Tauri `.dmg`, or choose Electron `.dmg` for Apple
+              Silicon (`arm64`) or Intel (`x64`).
             </p>
             <div class="card-actions">
               <a
-                class="button primary release-download"
+                id="dl-mac-light-btn"
+                class="button primary btn btn-primary release-download"
                 data-platform="tauri-macos"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlMacLightweightBtn"
-                >Lightweight</a
+                >Rust Tauri</a
               >
               <a
-                class="button secondary"
+                class="button secondary btn btn-secondary"
                 href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md"
                 target="_blank"
                 rel="noopener"
@@ -1203,20 +1293,22 @@
                 >Install Guide</a
               >
               <a
-                class="button secondary release-download"
+                id="dl-mac-arm-btn"
+                class="button secondary btn btn-secondary release-download"
                 data-platform="macos-arm64"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlMacArmBtn"
-                >Apple Silicon</a
+                >Electron (Apple Silicon)</a
               >
               <a
-                class="button secondary release-download"
+                id="dl-mac-intel-btn"
+                class="button secondary btn btn-secondary release-download"
                 data-platform="macos-x64"
                 href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
                 rel="noopener"
                 data-i18n="dlMacIntelBtn"
-                >Intel</a
+                >Electron (Intel)</a
               >
             </div>
           </article>
@@ -1251,29 +1343,6 @@
                 rel="noopener"
                 data-i18n="dlOvxBtn"
                 >Install from Open VSX</a
-              >
-            </div>
-          </article>
-          <article class="download-card">
-            <h3 data-i18n="dlChromiumTitle">Chromium extension</h3>
-            <p data-i18n="dlChromiumBody">
-              Run Markdown Explorer directly in your browser. Install unpacked extension from the latest release.
-            </p>
-            <div class="card-actions">
-              <button
-                type="button"
-                class="button secondary"
-                id="guide-btn"
-                data-i18n="guideBtn"
-                >Install Guide</button
-              >
-              <a
-                class="button primary release-download"
-                data-platform="chromium"
-                href="https://github.com/the-long-ride/markdown-explorer/releases/latest"
-                rel="noopener"
-                data-i18n="dlChromiumBtn"
-                >Extension zip</a
               >
             </div>
           </article>
@@ -1380,14 +1449,9 @@
         <span data-i18n="footerBy">Markdown Explorer by</span>
         <a href="https://github.com/the-long-ride" rel="noopener"
           >@the-long-ride</a
-        >. <span data-i18n="footerMit">MIT licensed.</span>
+        >
       </p>
       <nav aria-label="Footer links">
-        <a
-          href="https://github.com/the-long-ride/markdown-explorer"
-          rel="noopener"
-          >GitHub</a
-        >
         <a
           href="https://github.com/the-long-ride#donate"
           target="_blank"
@@ -1405,48 +1469,13 @@
         <a href="terms.html" data-i18n="footerTerms">Terms</a>
         <a
           href="https://github.com/the-long-ride/markdown-explorer/blob/main/LICENSE"
+          target="_blank"
           rel="noopener"
           data-i18n="footerLicense"
-          >License</a
+          >MIT License</a
         >
       </nav>
     </footer>
-
-    <!-- Chromium Extension Installation Guide Modal -->
-    <div id="guide-modal" class="modal-overlay" style="display: none;">
-      <div class="modal-card">
-        <header class="modal-header">
-          <h3 data-i18n="modalTitle">Extension Install Guide</h3>
-          <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close modal" data-i18n-aria-label="modalCloseLabel">&times;</button>
-        </header>
-        <div class="modal-body">
-          <p data-i18n="modalIntro">Follow these steps to load the unpacked extension in any Chromium-based browser (Chrome, Brave, Edge, etc.):</p>
-          <ol>
-            <li>
-              <span data-i18n="modalStep1">Download the extension zip file and extract its contents to a folder.</span>
-            </li>
-            <li>
-              <strong data-i18n="modalStep2Important">Important:</strong>
-              <span data-i18n="modalStep2">Move the extracted folder to a stable, permanent directory (such as your Documents folder). Do not leave it in your Downloads folder or delete it, as moving it later will break the installed extension.</span>
-            </li>
-            <li>
-              <span data-i18n="modalStep3">Open your browser and navigate to the extensions management page:</span>
-              <ul>
-                <li>Chrome: <code>chrome://extensions</code></li>
-                <li>Brave: <code>brave://extensions</code></li>
-                <li>Edge: <code>edge://extensions</code></li>
-              </ul>
-            </li>
-            <li>
-              <span data-i18n="modalStep4">Turn on the <strong>Developer mode</strong> switch (usually found in the top-right corner).</span>
-            </li>
-            <li>
-              <span data-i18n="modalStep5">Click the <strong>Load unpacked</strong> button (usually in the top-left) and select the extracted extension folder.</span>
-            </li>
-          </ol>
-        </div>
-      </div>
-    </div>
 
     <script src="i18n/en.js" defer></script>
     <script src="i18n/vi.js" defer></script>

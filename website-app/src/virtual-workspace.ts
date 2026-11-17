@@ -4,7 +4,7 @@
 // =============================================================================
 
 import type { MdFile, FolderNode } from '../../ui/src/types';
-import { BrowserScanner } from '../../chromium-xtension/src/scanner';
+import { BrowserScanner } from './scanner';
 import { DemoEntryStore } from './demo-entry-store';
 
 // Vite glob import — all .md and .mdx files in the manual-tests directory, as raw strings.
@@ -85,15 +85,26 @@ export const demoEntryStore = new DemoEntryStore(
 );
 
 export function refreshVirtualWorkspace(): void {
+  const prev = new Map(virtualContent);
   virtualContent.clear();
   for (const entry of demoEntryStore.entries) {
-    if (entry.kind === 'file') virtualContent.set(entry.path, entry.source ? bundledContent.get(entry.source) ?? '' : '');
+    if (entry.kind === 'file') {
+      const existing = prev.get(entry.path);
+      virtualContent.set(entry.path, existing ?? (entry.source ? bundledContent.get(entry.source) ?? '' : ''));
+    }
   }
   virtualFiles = [...virtualContent].map(([path, raw]) => buildFileEntry(path, raw))
     .sort((a, b) => a.relativePath.localeCompare(b.relativePath));
   virtualTree = { ...BrowserScanner.buildTree(virtualFiles, demoEntryStore.entries.filter(e => e.kind === 'folder').map(e => e.path)), name: 'Test Workspace' };
 }
 refreshVirtualWorkspace();
+
+export function setVirtualContent(relativePath: string, content: string): void {
+  virtualContent.set(relativePath, content);
+  virtualFiles = [...virtualContent].map(([path, raw]) => buildFileEntry(path, raw))
+    .sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+  virtualTree = { ...BrowserScanner.buildTree(virtualFiles, demoEntryStore.entries.filter(e => e.kind === 'folder').map(e => e.path)), name: 'Test Workspace' };
+}
 
 /** Returns the raw markdown for a given relative path, or null if not found. */
 export function getVirtualContent(relativePath: string): string | null {

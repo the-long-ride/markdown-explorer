@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-theme-style="raw-grid">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Markdown Explorer — Live Interactive Component Demo Studio
+    </title>
+    <meta
+      name="description"
+      content="Explore live interactive Markdown Explorer UI components: workspace navigation, synchronized split editor, Myers Git diffs, interactive tables and Chart.js charts, and Workspace Insights."
+    />
+    <meta name="author" content="the-long-ride" />
+    <meta name="robots" content="index,follow" />
+    <link
+      rel="canonical"
+      href="https://the-long-ride.github.io/markdown-explorer/features/"
+    />
+    <meta
+      name="theme-color"
+      content="#101010"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="theme-color"
+      content="#f2efe9"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Markdown Explorer" />
+    <meta
+      property="og:title"
+      content="Markdown Explorer — Live Component Demo Studio"
+    />
+    <meta
+      property="og:description"
+      content="Interactive showcase of Markdown Explorer's real UI components running live in your browser."
+    />
+    <meta
+      property="og:url"
+      content="https://the-long-ride.github.io/markdown-explorer/features/"
+    />
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles/base.css" />
+    <link rel="stylesheet" href="../styles/responsive.css" />
+    <script>
+      (function () {
+        var saved = localStorage.getItem("mde-site-theme");
+        if (saved === "light" || saved === "dark") {
+          document.documentElement.setAttribute("data-theme", saved);
+        }
+      })();
+    </script>
+  </head>
+  <body class="features-studio-page">
+    <header class="features-fallback-bar" aria-label="Component demo navigation">
+      <a class="features-fallback-brand" href="../?landing=1">
+        <img
+          src="https://raw.githubusercontent.com/the-long-ride/markdown-explorer/main/ui/assets/logos/logo-128.png"
+          alt="Markdown Explorer logo"
+          width="24"
+          height="24"
+        />
+        <span>Markdown Explorer</span>
+        <span class="features-fallback-tag">Component Demo Studio</span>
+      </a>
+      <div class="features-fallback-actions">
+        <a class="button secondary" href="../?landing=1">← Back to Landing</a>
+        <a class="button secondary" href="../landing.html#video-demo">Video Walkthrough</a>
+        <a class="button primary" href="../app/?mode=web">Launch Full App ↗</a>
+      </div>
+    </header>
+
+    <main id="main" class="features-studio-viewport">
+      <iframe
+        id="features-studio-iframe"
+        class="features-studio-iframe"
+        src="../app/features/"
+        title="Markdown Explorer Live Component Demo Studio"
+        loading="eager"
+      ></iframe>
+      <noscript>
+        <div class="features-noscript-card">
+          <p>
+            JavaScript is disabled. Open the interactive component studio or main web app directly:
+          </p>
+          <p>
+            <a class="button primary" href="../app/features/">Open Component Studio</a>
+            <a class="button secondary" href="../app/?mode=web">Open Full Web App</a>
+            <a class="button secondary" href="../?landing=1">Back to Landing</a>
+          </p>
+        </div>
+      </noscript>
+    </main>
+
+    <script>
+      (function () {
+        var iframe = document.getElementById("features-studio-iframe");
+        if (!iframe) return;
+
+        var buildTarget = function () {
+          var search = window.location.search || "";
+          var hash = window.location.hash || "";
+          return "../app/features/" + search + hash;
+        };
+
+        var target = buildTarget();
+        if (target !== "../app/features/") {
+          iframe.src = target;
+        }
+
+        window.addEventListener("hashchange", function () {
+          var slug = (window.location.hash || "").replace(/^#/, "").trim();
+          if (slug && iframe.contentWindow) {
+            iframe.contentWindow.postMessage(
+              { type: "mde-demo-select", feature: slug },
+              "*",
+            );
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

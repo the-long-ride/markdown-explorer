@@ -1,7 +1,9 @@
 import type { MdFile } from '../../ui/src/types';
 import { searchVirtualFilesIncremental } from './web-test-search';
-import { getVirtualContent } from './virtual-workspace';
+import { getVirtualContent, setVirtualContent } from './virtual-workspace';
 import { handleWebDemoEntryMessage } from './web-demo-entry-router';
+import { handleWebInsightsHostCommand } from './web-insights-host';
+import { executeWebNavigation } from './web-navigation';
 import {
   MAX_WORKSPACE_SEARCH_RESULTS,
   WORKSPACE_SEARCH_BATCH_SIZE,
@@ -18,36 +20,40 @@ interface TestMessageRouterDeps {
   sendTestContent: (path: string) => Promise<void>;
   refreshTestWorkspace: () => Promise<void>;
   searchGeneration?: { value: number };
+  getDocumentConversionEnabled?: () => boolean;
+  setDocumentConversionEnabled?: (enabled: boolean) => void;
 }
 
 export async function handleWebTestMessage(msg: any, deps: TestMessageRouterDeps): Promise<void> {
   if (await handleWebDemoEntryMessage(msg, deps)) return;
+  if (await handleWebInsightsHostCommand(msg, {
+    getFlatList: deps.getFlatList,
+    getFileContent: (path) => getVirtualContent(path),
+    send: deps.send,
+  })) return;
   switch (msg.command) {
     case 'ready': {
+      if (typeof msg.documentConversion === 'boolean' && deps.setDocumentConversionEnabled) {
+        deps.setDocumentConversionEnabled(msg.documentConversion);
+      }
       if (deps.getReadyHandled()) return;
       deps.setReadyHandled(true);
       await deps.sendTestReady();
       break;
     }
-    case 'navigate': {
-      const path = msg.path;
-      if (!path) {
-        deps.send({
-          command: 'renderContent',
-          html: '',
-          markdownSource: '',
-          frontmatter: {},
-          toc: [],
-          filePath: '',
-          relativePath: 'Welcome Page',
-          title: 'Welcome',
-          fileList: deps.getFlatList(),
-          previewInfo: null,
-        });
-        return;
+    case 'setDocumentConversion': {
+      if (deps.setDocumentConversionEnabled) {
+        deps.setDocumentConversionEnabled(Boolean(msg.enabled));
       }
-      deps.setCurrentFile(path);
-      await deps.sendTestContent(path);
+      await deps.refreshTestWorkspace();
+      break;
+    }
+    case 'navigate': {
+      await executeWebNavigation(msg.path, deps.getCurrentFile(), deps.getFlatList(), {
+        setCurrentFile: deps.setCurrentFile,
+        send: deps.send,
+        openFile: deps.sendTestContent,
+      });
       break;
     }
     case 'refresh':
@@ -77,9 +83,42 @@ export async function handleWebTestMessage(msg: any, deps: TestMessageRouterDeps
         : { command: 'searchPreviewResult', requestId: msg.requestId, ok: true, filePath: item!.fsPath, markdownSource });
       break;
     }
+    case 'saveDocument': {
+      const requestedPath = String(msg.filePath || '');
+      const source = String(msg.source ?? '');
+      setVirtualContent(requestedPath, source);
+      await deps.refreshTestWorkspace();
+      deps.send({
+        command: 'saveDocumentResult',
+        requestId: msg.requestId,
+        filePath: requestedPath,
+        ok: true,
+        revision: String(source.length),
+      });
+      break;
+    }
+    case 'activateWorkspace': {
+      if (msg.filePath) {
+        deps.setCurrentFile(String(msg.filePath));
+      }
+      await deps.sendTestReady();
+      break;
+    }
     case 'closeWorkspace':
       deps.setReadyHandled(false);
-      await deps.sendTestReady();
+      deps.setCurrentFile(null);
+      deps.send({
+        command: 'readyAck',
+        fileList: [],
+        tree: null,
+        theme: 'dark',
+        themeStyle: 'default',
+        defaultExpanded: true,
+        workspaceName: '',
+        workspacePath: undefined,
+        recentWorkspaces: [],
+        documentConversionEnabled: Boolean(deps.getDocumentConversionEnabled?.()),
+      });
       break;
     case 'readWorkspaceTextResource':
       deps.send({

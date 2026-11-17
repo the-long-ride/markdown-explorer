@@ -1,6 +1,7 @@
-import { renderMarkdown } from '../../chromium-xtension/src/markdown-renderer';
+import { renderMarkdown } from './markdown-renderer';
 import { virtualFiles, virtualTree, getVirtualContent } from './virtual-workspace';
 import type { MdFile, FolderNode } from '../../ui/src/types';
+import { isExtraDocumentFile, convertWebDocumentToMarkdown } from './web-document-converter';
 
 interface TestState {
   flatList: MdFile[];
@@ -13,6 +14,7 @@ interface TestHandlerDeps {
   state: TestState;
   hostInfo: () => Record<string, unknown>;
   findFileInfo: (list: MdFile[], relativePath: string) => { relativePath: string; title: string };
+  getDocumentConversionEnabled?: () => boolean;
 }
 
 export function createTestModeHandlers({
@@ -20,7 +22,10 @@ export function createTestModeHandlers({
   state,
   hostInfo,
   findFileInfo,
+  getDocumentConversionEnabled,
 }: TestHandlerDeps) {
+  const isDocConv = () => Boolean(getDocumentConversionEnabled?.());
+
   async function sendTestContent(relativePath: string) {
     const raw = getVirtualContent(relativePath);
     if (raw === null) {
@@ -35,24 +40,44 @@ export function createTestModeHandlers({
         title: relativePath,
         fileList: state.flatList,
         previewInfo: null,
+        documentConversionEnabled: isDocConv(),
       });
       return;
     }
 
-    const { html, frontmatter, toc } = renderMarkdown(relativePath, raw);
+    let markdownSource = raw;
+    let previewInfo: any = null;
+    let documentWrite: any = {
+      supported: true,
+      revision: String(raw.length),
+    };
+
+    if (isExtraDocumentFile(relativePath)) {
+      const converted = await convertWebDocumentToMarkdown({ name: relativePath, text: raw });
+      markdownSource = converted.markdown;
+      previewInfo = converted.previewInfo;
+      if (converted.previewInfo?.readOnly) {
+        documentWrite = { supported: false, revision: null, reason: 'read-only-runtime' };
+      }
+    }
+
+    const { html, frontmatter, toc } = renderMarkdown(relativePath, markdownSource);
     const fileInfo = findFileInfo(state.flatList, relativePath);
 
     send({
       command: 'renderContent',
       html,
-      markdownSource: raw,
+      markdownSource,
+      sourceDocumentText: /\.html?$/i.test(relativePath) ? raw : null,
       frontmatter,
       toc,
       filePath: relativePath,
       relativePath: fileInfo.relativePath,
       title: fileInfo.title,
       fileList: state.flatList,
-      previewInfo: null,
+      previewInfo,
+      documentWrite,
+      documentConversionEnabled: isDocConv(),
     });
   }
 
@@ -60,7 +85,7 @@ export function createTestModeHandlers({
     state.flatList = virtualFiles;
     state.workspaceTree = virtualTree;
     send({ command: 'workspaceFilesChanged', fileList: state.flatList, tree: state.workspaceTree,
-      workspaceName: 'Test Workspace', workspacePath: 'test-workspace', documentConversionEnabled: false });
+      workspaceName: 'Test Workspace', workspacePath: 'test-workspace', documentConversionEnabled: isDocConv() });
   }
 
   async function sendTestReady() {
@@ -79,7 +104,7 @@ export function createTestModeHandlers({
       workspaceName: 'Test Workspace',
       workspacePath: 'test-workspace',
       recentWorkspaces: [],
-      documentConversionEnabled: false,
+      documentConversionEnabled: isDocConv(),
       ...hostInfo(),
     });
 
