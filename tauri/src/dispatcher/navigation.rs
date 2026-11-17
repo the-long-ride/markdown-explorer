@@ -28,7 +28,7 @@ impl Dispatcher {
             );
         if supported {
             self.state.inner.write().current_file = Some(resolved);
-            self.send_content();
+            self.send_content().await;
         } else {
             host_message::emit_nav_not_found(&self.app, &resolved.to_string_lossy());
         }

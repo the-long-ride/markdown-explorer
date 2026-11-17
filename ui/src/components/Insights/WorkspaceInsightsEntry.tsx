@@ -28,7 +28,31 @@ export function WorkspaceInsightsEntry({ onPanelOpenChange, onOpenMedia }: Works
   const globalSettings = useMemo(() => resolveInsightsSettings(insightsConfig.globalDefaults, {}), [insightsConfig.globalDefaults]);
   const settings = useMemo(() => resolveInsightsSettings(insightsConfig.globalDefaults, workspaceOverrides), [insightsConfig.globalDefaults, workspaceOverrides]);
   const session = useWorkspaceInsights({ bridge, workspaceKey, workspaceOperationId: (state as any).workspaceOperationId, settings: insightsConfig.globalDefaults, workspaceOverrides });
-  useEffect(() => { setPortalTarget(document.querySelector('.body')); }, [workspaceKey, state.sidebarCollapsed]);
+  useEffect(() => {
+    if (!state.settings.insightsEnabled || typeof document === 'undefined' || !document.body) return;
+
+    const findConnectedBody = () => {
+      const el = document.querySelector<HTMLElement>('.body');
+      return el && el.isConnected ? el : null;
+    };
+
+    const existing = findConnectedBody();
+    if (existing) {
+      setPortalTarget(current => (current === existing ? current : existing));
+      return;
+    }
+
+    setPortalTarget(current => (current === null ? current : null));
+
+    const observer = new MutationObserver(() => {
+      const el = findConnectedBody();
+      if (!el) return;
+      setPortalTarget(current => (current === el ? current : el));
+      observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [workspaceKey, state.sidebarCollapsed, session.panelOpen, state.settings.insightsEnabled]);
   useEffect(() => { const reload = () => setInsightsConfig(loadInsightsSettingsConfig()); window.addEventListener(INSIGHTS_SETTINGS_CHANGED_EVENT, reload); return () => window.removeEventListener(INSIGHTS_SETTINGS_CHANGED_EVENT, reload); }, []);
   useEffect(() => { onPanelOpenChange?.(session.panelOpen); }, [onPanelOpenChange, session.panelOpen]);
   useEffect(() => {
@@ -61,10 +85,27 @@ export function WorkspaceInsightsEntry({ onPanelOpenChange, onOpenMedia }: Works
 
   return (
     <>
-      {portalTarget && session.panelOpen && createPortal(
+      {portalTarget && createPortal(
         <>
-          <div className="insights-resize" id="insightsResize" role="separator" tabIndex={0} aria-orientation="vertical" aria-label={labels.title}/>
-          <WorkspaceInsightsPanel session={session} labels={labels} settings={settings} globalSettings={globalSettings} onGlobalSettingsChange={updateGlobalSettings} onSettingsChange={updateWorkspaceSettings} onResetWorkspaceOverrides={resetWorkspaceOverrides} onSelectPath={handleSelectPath} onOpenMedia={onOpenMedia}/>
+          <div
+            className={`insights-resize${!session.panelOpen ? ' is-collapsed' : ''}`}
+            id="insightsResize"
+            role="separator"
+            tabIndex={session.panelOpen ? 0 : -1}
+            aria-orientation="vertical"
+            aria-label={labels.title}
+          />
+          <WorkspaceInsightsPanel
+            session={session}
+            labels={labels}
+            settings={settings}
+            globalSettings={globalSettings}
+            onGlobalSettingsChange={updateGlobalSettings}
+            onSettingsChange={updateWorkspaceSettings}
+            onResetWorkspaceOverrides={resetWorkspaceOverrides}
+            onSelectPath={handleSelectPath}
+            onOpenMedia={onOpenMedia}
+          />
         </>,
         portalTarget
       )}

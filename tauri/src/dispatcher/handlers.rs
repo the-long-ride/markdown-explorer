@@ -237,7 +237,7 @@ impl Dispatcher {
             .any(|f| f.fs_path == current_file.to_string_lossy())
     }
 
-    pub(super) fn send_workspace_files_changed(&self) -> bool {
+    pub(super) async fn send_workspace_files_changed(&self) -> bool {
         let (workspace_path, document_conversion_enabled, scan_generation, operation) = {
             let state = self.state.inner.read();
             (
@@ -254,7 +254,30 @@ impl Dispatcher {
             return false;
         };
 
-        let status = get_workspace_path_status(&workspace_path);
+        let ws_for_scan = workspace_path.clone();
+        let (status, scan_result) = match tauri::async_runtime::spawn_blocking(move || {
+            let status = get_workspace_path_status(&ws_for_scan);
+            let scan_result = if status.ok {
+                Some(scan(
+                    &ws_for_scan,
+                    ScanOptions {
+                        document_conversion_enabled,
+                    },
+                ))
+            } else {
+                None
+            };
+            (status, scan_result)
+        })
+        .await
+        {
+            Ok(outcome) => outcome,
+            Err(err) => {
+                eprintln!("Failed to scan workspace on watch: {err}");
+                return false;
+            }
+        };
+
         if !status.ok {
             if self.is_workspace_scan_current(
                 &workspace_path,
@@ -269,17 +292,13 @@ impl Dispatcher {
             return false;
         }
 
-        let result = match scan(
-            &workspace_path,
-            ScanOptions {
-                document_conversion_enabled,
-            },
-        ) {
-            Ok(r) => r,
-            Err(err) => {
+        let result = match scan_result {
+            Some(Ok(r)) => r,
+            Some(Err(err)) => {
                 eprintln!("Failed to scan workspace on watch: {err}");
                 return false;
             }
+            None => return false,
         };
 
         {
@@ -298,7 +317,8 @@ impl Dispatcher {
         }
 
         let idx = self.ensure_search_index();
-        idx.prime(&result.flat);
+        let flat_for_prime = result.flat.clone();
+        let _ = tauri::async_runtime::spawn_blocking(move || idx.prime(&flat_for_prime)).await;
 
         let workspace_name = workspace_path
             .file_name()

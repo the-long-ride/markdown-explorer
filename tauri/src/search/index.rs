@@ -5,7 +5,7 @@ use crate::workspace::file_types::{
 use crate::workspace::scanner::{DocumentKind, MdFile};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
@@ -15,6 +15,7 @@ mod incremental;
 pub use incremental::{IncrementalOptions, IncrementalSummary};
 
 const MAX_INDEXABLE_BYTES: u64 = 2 * 1024 * 1024;
+const MAX_SEARCH_CACHE_ENTRIES: usize = 512;
 const PRIME_BATCH_SIZE: usize = 5;
 const MAX_SYNC_MATCHES_PER_FILE: usize = 10000;
 
@@ -52,9 +53,32 @@ pub(crate) struct SearchEntry {
     haystack: PreparedHaystack,
 }
 
+#[derive(Default)]
+struct SearchCache {
+    entries: HashMap<String, Arc<SearchEntry>>,
+    order: VecDeque<String>,
+}
+
+impl SearchCache {
+    fn insert(&mut self, key: String, entry: Arc<SearchEntry>, max_entries: usize) {
+        if let Some(pos) = self.order.iter().position(|existing| existing == &key) {
+            self.order.remove(pos);
+        }
+        self.order.push_back(key.clone());
+        self.entries.insert(key, entry);
+        while self.entries.len() > max_entries {
+            if let Some(oldest) = self.order.pop_front() {
+                self.entries.remove(&oldest);
+            } else {
+                break;
+            }
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct SearchIndex {
-    cache: Arc<RwLock<HashMap<String, SearchEntry>>>,
+    cache: Arc<RwLock<SearchCache>>,
 }
 
 pub fn can_search_file_contents(file_path: &str) -> bool {
@@ -181,7 +205,7 @@ fn make_result(
 }
 
 impl SearchIndex {
-    pub(crate) fn get_entry(&self, file_path: &str) -> Option<SearchEntry> {
+    pub(crate) fn get_entry(&self, file_path: &str) -> Option<Arc<SearchEntry>> {
         if file_path.is_empty()
             || !Path::new(file_path).exists()
             || !can_search_file_contents(file_path)
@@ -199,26 +223,28 @@ impl SearchIndex {
             .map(|duration| duration.as_millis())
             .unwrap_or(0);
         let size = metadata.len();
-        if let Some(entry) = self.cache.read().get(file_path) {
+        if let Some(entry) = self.cache.read().entries.get(file_path) {
             if entry.mtime_ms == mtime_ms && entry.size == size {
-                return Some(entry.clone());
+                return Some(Arc::clone(entry));
             }
         }
         let raw = fs::read_to_string(file_path).ok()?;
-        let entry = SearchEntry {
+        let entry = Arc::new(SearchEntry {
             mtime_ms,
             size,
             haystack: prepare_haystack(&raw),
             raw,
-        };
-        self.cache
-            .write()
-            .insert(file_path.to_string(), entry.clone());
+        });
+        self.cache.write().insert(
+            file_path.to_string(),
+            Arc::clone(&entry),
+            MAX_SEARCH_CACHE_ENTRIES,
+        );
         Some(entry)
     }
 
     pub fn read(&self, file_path: &str) -> Option<String> {
-        self.get_entry(file_path).map(|entry| entry.raw)
+        self.get_entry(file_path).map(|entry| entry.raw.clone())
     }
 
     pub fn prime(&self, items: &[MdFile]) {
@@ -328,5 +354,30 @@ impl SearchIndex {
             .take(limit)
             .map(|item| item.result)
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn search_cache_evicts_oldest_when_exceeding_max_entries() {
+        let mut cache = SearchCache::default();
+        for idx in 0..=MAX_SEARCH_CACHE_ENTRIES {
+            let key = format!("/ws/file-{idx}.md");
+            let entry = Arc::new(SearchEntry {
+                mtime_ms: idx as u128,
+                size: 5,
+                raw: "hello".to_string(),
+                haystack: prepare_haystack("hello"),
+            });
+            cache.insert(key, entry, MAX_SEARCH_CACHE_ENTRIES);
+        }
+        assert_eq!(cache.entries.len(), MAX_SEARCH_CACHE_ENTRIES);
+        assert!(!cache.entries.contains_key("/ws/file-0.md"));
+        assert!(cache
+            .entries
+            .contains_key(&format!("/ws/file-{MAX_SEARCH_CACHE_ENTRIES}.md")));
     }
 }

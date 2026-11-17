@@ -3,14 +3,13 @@ const crypto = require('node:crypto');
 const DEFAULT_SOFT_LIMIT_BYTES = 10 * 1024 * 1024;
 const DEFAULT_HARD_LIMIT_BYTES = 64 * 1024 * 1024;
 const SCAN_BATCH_SIZE = 200;
+const WATCH_DEBOUNCE_MS = 50;
 const HARD_EXCLUDED_SEGMENTS = new Set(['.git', '.hg', '.svn']);
-const DEFAULT_EXCLUDED_SEGMENTS = new Set(['node_modules', '.next', 'dist', 'build', 'coverage', '.cache']);
+const DEFAULT_EXCLUDED_SEGMENTS = new Set(['node_modules', '.next', 'dist', 'build', 'out', 'target', 'coverage', '.cache']);
 
 const MIME_TYPES = {
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
-  '.webp': 'image/webp', '.svg': 'image/svg+xml', '.avif': 'image/avif',
-  '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime', '.m4v': 'video/x-m4v',
-  '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.m4a': 'audio/mp4',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.avif': 'image/avif',
+  '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime', '.m4v': 'video/x-m4v', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.m4a': 'audio/mp4',
   '.md': 'text/markdown', '.mdx': 'text/mdx', '.txt': 'text/plain', '.pdf': 'application/pdf',
 };
 
@@ -88,6 +87,8 @@ function createInsightsWorkspaceHost({
 }) {
   const cancelledScans = new Set();
   const watchDisposers = new Set();
+  const pendingDeltas = new Map();
+  let deltaFlushTimer = null;
   let watchRequestId = '';
   let watchWorkspaceOperationId;
   let watchGeneration = 0;
@@ -223,29 +224,37 @@ function createInsightsWorkspaceHost({
       catch { skippedEntries += 1; return; }
       for (const dirent of entries) {
         if (cancelledScans.has(requestId)) break;
+        const isSymlink = typeof dirent.isSymbolicLink === 'function' && dirent.isSymbolicLink();
         const absolute = pathApi.join(absoluteDir, dirent.name);
         const displayRelative = normalizeRelativePath(pathApi, root, absolute);
         if (shouldExclude(displayRelative, gitignorePatterns, userPatterns)) { excludedEntries += 1; continue; }
-        let real;
-        let stat;
-        try {
-          real = fs.realpathSync(absolute);
-          if (!isSameOrInsidePath(root, real, pathApi)) { excludedEntries += 1; continue; }
-          stat = fs.statSync(real);
-        } catch { skippedEntries += 1; continue; }
-        if (stat.isDirectory()) { walk(absolute); continue; }
-        if (!stat.isFile() || visitedFiles.has(real)) continue;
-        visitedFiles.add(real);
+        if (isSymlink) {
+          let real, stat;
+          try {
+            real = fs.realpathSync(absolute);
+            if (!isSameOrInsidePath(root, real, pathApi)) { excludedEntries += 1; continue; }
+            stat = fs.statSync(real);
+          } catch { skippedEntries += 1; continue; }
+          if (stat.isDirectory()) { walk(absolute); continue; }
+          if (!stat.isFile() || visitedFiles.has(real)) continue;
+          visitedFiles.add(real);
+          totalEntries += 1;
+          batch.push({ relativePath: displayRelative, canonicalRelativePath: normalizeRelativePath(pathApi, root, real), kind: 'file', sizeBytes: stat.size, mtimeMs: stat.mtimeMs, extension: pathApi.extname(displayRelative).toLowerCase() || undefined, isSymlink: true });
+          if (batch.length >= SCAN_BATCH_SIZE) flush();
+          continue;
+        }
+        if (typeof dirent.isDirectory === 'function' && dirent.isDirectory()) { walk(absolute); continue; }
+        const isFile = typeof dirent.isFile === 'function' ? dirent.isFile() : true;
+        if (!isFile || visitedFiles.has(absolute)) continue;
+        visitedFiles.add(absolute);
         totalEntries += 1;
-        batch.push({
-          relativePath: displayRelative,
-          canonicalRelativePath: normalizeRelativePath(pathApi, root, real),
-          kind: 'file',
-          sizeBytes: stat.size,
-          mtimeMs: stat.mtimeMs,
-          extension: pathApi.extname(displayRelative).toLowerCase() || undefined,
-          isSymlink: dirent.isSymbolicLink ? dirent.isSymbolicLink() : false,
-        });
+        const ext = pathApi.extname(displayRelative).toLowerCase() || undefined;
+        let sizeBytes = 0, mtimeMs = 0;
+        if (ext === '.md' || ext === '.mdx') {
+          try { const stat = fs.statSync(absolute); sizeBytes = stat.size; mtimeMs = stat.mtimeMs; }
+          catch { skippedEntries += 1; totalEntries -= 1; continue; }
+        }
+        batch.push({ relativePath: displayRelative, canonicalRelativePath: displayRelative, kind: 'file', sizeBytes, mtimeMs, extension: ext, isSymlink: false });
         if (batch.length >= SCAN_BATCH_SIZE) flush();
       }
     };
@@ -253,11 +262,7 @@ function createInsightsWorkspaceHost({
     walk(root);
     flush();
     const cancelled = cancelledScans.delete(requestId);
-    sendHostMessage({
-      command: 'insightsScanComplete', requestId, totalEntries, excludedEntries, skippedEntries,
-      truncated: false,
-      ...(cancelled ? { cancelled: true } : {}),
-    });
+    sendHostMessage({ command: 'insightsScanComplete', requestId, totalEntries, excludedEntries, skippedEntries, truncated: false, ...(cancelled ? { cancelled: true } : {}) });
   }
 
   function cancelInsightsScan(message = {}) {
@@ -267,17 +272,37 @@ function createInsightsWorkspaceHost({
 
   function stopWatch() {
     watchGeneration += 1;
-    for (const dispose of watchDisposers) {
-      try { dispose(); } catch { /* noop */ }
-    }
+    if (deltaFlushTimer) { clearTimeout(deltaFlushTimer); deltaFlushTimer = null; }
+    pendingDeltas.clear();
+    for (const dispose of watchDisposers) { try { dispose(); } catch { /* noop */ } }
     watchDisposers.clear();
   }
 
-  function startWatch(root) {
+  function flushDeltas() {
+    deltaFlushTimer = null;
+    if (!pendingDeltas.size) return;
+    const deltas = Array.from(pendingDeltas.values());
+    pendingDeltas.clear();
+    sendHostMessage({
+      command: 'insightsFsDelta', requestId: watchRequestId,
+      ...(watchWorkspaceOperationId ? { workspaceOperationId: watchWorkspaceOperationId } : {}),
+      deltas,
+    });
+  }
+
+  function queueDelta(delta) {
+    pendingDeltas.set(delta.relativePath, delta);
+    if (deltaFlushTimer) clearTimeout(deltaFlushTimer);
+    deltaFlushTimer = setTimeout(flushDeltas, WATCH_DEBOUNCE_MS);
+  }
+
+  function startWatch(root, gitignorePatterns = [], userPatterns = []) {
     stopWatch();
     const generation = watchGeneration;
     const seen = new Set();
     const attach = dir => {
+      const relativeDir = normalizeRelativePath(pathApi, root, dir);
+      if (relativeDir && shouldExclude(relativeDir, gitignorePatterns, userPatterns)) return;
       let real;
       try { real = fs.realpathSync(dir); } catch { return; }
       if (seen.has(real) || !isSameOrInsidePath(root, real, pathApi)) return;
@@ -288,6 +313,7 @@ function createInsightsWorkspaceHost({
           if (generation !== watchGeneration || !name) return;
           const absolute = pathApi.join(dir, String(name));
           const relativePath = normalizeRelativePath(pathApi, root, absolute);
+          if (!relativePath || shouldExclude(relativePath, gitignorePatterns, userPatterns)) return;
           let delta;
           try {
             if (!fs.existsSync(absolute)) delta = { kind: 'delete', relativePath };
@@ -299,19 +325,14 @@ function createInsightsWorkspaceHost({
               delta = {
                 kind: 'update',
                 entry: {
-                  relativePath,
-                  canonicalRelativePath: normalizeRelativePath(pathApi, root, realTarget),
+                  relativePath, canonicalRelativePath: normalizeRelativePath(pathApi, root, realTarget),
                   kind: 'file', sizeBytes: stat.size, mtimeMs: stat.mtimeMs,
                   extension: pathApi.extname(relativePath).toLowerCase() || undefined,
                 },
               };
             }
           } catch { delta = { kind: 'delete', relativePath }; }
-          sendHostMessage({
-            command: 'insightsFsDelta', requestId: watchRequestId,
-            ...(watchWorkspaceOperationId ? { workspaceOperationId: watchWorkspaceOperationId } : {}),
-            deltas: [delta],
-          });
+          queueDelta(delta);
         });
         watchDisposers.add(() => watcher.close());
       } catch { return; }
@@ -330,37 +351,19 @@ function createInsightsWorkspaceHost({
     const root = workspaceRoot();
     const active = message.active === true && Boolean(root);
     if (!active) stopWatch();
-    else startWatch(root);
+    else startWatch(root, readGitignore(fs, pathApi, root), Array.isArray(message.userPatterns) ? message.userPatterns : []);
     sendHostMessage({
-      command: 'insightsRuntimeCapabilities',
-      requestId: watchRequestId,
-      capabilities: {
-        fileChanges: active && watchDisposers.size > 0 ? 'native' : 'unsupported',
-        externalLinkChecking: true,
-        documentPreviewReuse: true,
-      },
+      command: 'insightsRuntimeCapabilities', requestId: watchRequestId,
+      capabilities: { fileChanges: active && watchDisposers.size > 0 ? 'native' : 'unsupported', externalLinkChecking: true, documentPreviewReuse: true },
     });
   }
 
-  function dispose() {
-    stopWatch();
-    cancelledScans.clear();
-  }
+  function dispose() { stopWatch(); cancelledScans.clear(); }
 
   return {
     capabilities: { fileChanges: 'native', externalLinkChecking: true, documentPreviewReuse: true },
-    scanInsightsWorkspace,
-    cancelInsightsScan,
-    readInsightsDocumentSource,
-    probeWorkspaceResource,
-    setInsightsWatchState,
-    dispose,
+    scanInsightsWorkspace, cancelInsightsScan, readInsightsDocumentSource, probeWorkspaceResource, setInsightsWatchState, dispose,
   };
 }
 
-module.exports = {
-  DEFAULT_SOFT_LIMIT_BYTES,
-  DEFAULT_HARD_LIMIT_BYTES,
-  SCAN_BATCH_SIZE,
-  createInsightsWorkspaceHost,
-};
+module.exports = { DEFAULT_SOFT_LIMIT_BYTES, DEFAULT_HARD_LIMIT_BYTES, SCAN_BATCH_SIZE, createInsightsWorkspaceHost };

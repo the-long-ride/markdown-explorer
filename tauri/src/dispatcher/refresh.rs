@@ -39,7 +39,7 @@ impl Dispatcher {
         }
 
         if preserve_current_content {
-            if !self.send_workspace_files_changed() {
+            if !self.send_workspace_files_changed().await {
                 return;
             }
             let current_file_still_available = self.is_current_file_still_available();

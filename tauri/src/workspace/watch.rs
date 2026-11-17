@@ -62,22 +62,8 @@ const EXTRA_DOCUMENT_EXTENSIONS: &[&str] = &[
 ];
 
 const IGNORED_DIRS: &[&str] = &[
-    ".git",
-    "node_modules",
-    ".vscode",
-    "dist",
-    "out",
-    "build",
-    "coverage",
-    ".next",
-    ".nuxt",
-    ".turbo",
-    ".cache",
-    "vendor",
-    "target",
-    "bin",
-    "obj",
-    ".tauri",
+    ".git", "node_modules", ".vscode", "dist", "out", "build", "coverage", ".next",
+    ".nuxt", ".turbo", ".cache", "vendor", "target", "bin", "obj", ".tauri",
 ];
 
 fn is_ignored_watch_path(path: &str) -> bool {
@@ -133,6 +119,7 @@ pub fn should_notify_current_file_changed(
     }
 }
 
+#[derive(Default)]
 struct WatchState {
     current_workspace_path: Option<PathBuf>,
     current_workspace: Option<PathBuf>,
@@ -145,25 +132,25 @@ struct WatchState {
     pending_change: Option<WatchChange>,
 }
 
-impl Default for WatchState {
-    fn default() -> Self {
-        Self {
-            current_workspace_path: None,
-            current_workspace: None,
-            watched_path: None,
-            debounce_timer: None,
-            watch_generation: 0,
-            current_generation: 0,
-            refresh_in_flight: false,
-            refresh_queued: false,
-            pending_change: None,
-        }
-    }
-}
-
 pub struct WorkspaceWatchController {
     state: Arc<Mutex<WatchState>>,
     watcher: Arc<Mutex<Option<RecommendedWatcher>>>,
+}
+
+fn collect_watch_event_paths(event: &notify::Event) -> Option<Vec<String>> {
+    if matches!(event.kind, notify::EventKind::Access(_)) {
+        return None;
+    }
+    if event.paths.is_empty() {
+        return Some(vec![String::new()]);
+    }
+    let paths = event
+        .paths
+        .iter()
+        .map(|p| p.to_string_lossy().to_string())
+        .filter(|p| !is_ignored_watch_path(p))
+        .collect::<Vec<_>>();
+    (!paths.is_empty()).then_some(paths)
 }
 
 impl WorkspaceWatchController {
@@ -180,16 +167,13 @@ impl WorkspaceWatchController {
         let notify_watcher: Option<RecommendedWatcher> =
             notify::recommended_watcher(move |res: Result<notify::Event, _>| {
                 if let Ok(event) = res {
-                    let full_path = event
-                        .paths
-                        .first()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_default();
-                    if is_ignored_watch_path(&full_path) {
+                    let Some(paths) = collect_watch_event_paths(&event) else {
                         return;
-                    }
+                    };
                     let event_type = format!("{:?}", event.kind).to_lowercase();
-                    let _ = notify_tx.send((event_type, full_path));
+                    for full_path in paths {
+                        let _ = notify_tx.send((event_type.clone(), full_path));
+                    }
                 }
             })
             .ok();
@@ -206,14 +190,21 @@ impl WorkspaceWatchController {
                 };
                 if let Some(ws) = ws {
                     let filename = workspace_relative_path(&ws, Path::new(&full_path));
-                    let change = create_watch_change(&ws, &event_type, &filename);
+                    let mut merged = Some(create_watch_change(&ws, &event_type, &filename));
+                    while let Ok((next_type, next_path)) = notify_rx.try_recv() {
+                        let next_name = workspace_relative_path(&ws, Path::new(&next_path));
+                        merged = merge_watch_change(
+                            merged,
+                            Some(create_watch_change(&ws, &next_type, &next_name)),
+                        );
+                    }
                     schedule_refresh(
                         &watcher_state,
                         &on_refresh,
                         watcher_debounce,
                         ws,
                         gen,
-                        Some(change),
+                        merged,
                     );
                 }
             }
@@ -639,5 +630,24 @@ mod tests {
         assert!(!is_ignored_watch_path("/workspace/my_target/build.md"));
         assert!(!is_ignored_watch_path("/workspace/coverage-report.md"));
         assert!(!is_ignored_watch_path("/workspace/binary_file.md"));
+    }
+
+    #[test]
+    fn collect_watch_event_paths_ignores_access_and_filters_ignored_paths() {
+        let access_event = notify::Event::new(notify::EventKind::Access(
+            notify::event::AccessKind::Read,
+        ))
+        .add_path(PathBuf::from("/workspace/readme.md"));
+        assert!(collect_watch_event_paths(&access_event).is_none());
+
+        let mixed_event = notify::Event::new(notify::EventKind::Modify(
+            notify::event::ModifyKind::Name(notify::event::RenameMode::Both),
+        ))
+        .add_path(PathBuf::from("/workspace/.git/index.lock"))
+        .add_path(PathBuf::from("/workspace/docs/notes.md"));
+        assert_eq!(
+            collect_watch_event_paths(&mixed_event),
+            Some(vec!["/workspace/docs/notes.md".to_string()])
+        );
     }
 }

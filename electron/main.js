@@ -1,3 +1,6 @@
+if (!process.env.V8_COMPILE_CACHE_CACHE_DIR) {
+  process.env.V8_COMPILE_CACHE_CACHE_DIR = require('path').join(require('os').tmpdir(), 'markdown-explorer-v8-cache');
+}
 require('v8-compile-cache');
 
 if (process.env.NODE_OPTIONS) {
@@ -121,9 +124,10 @@ const runtime = createDesktopRuntime({
   async scanWorkspaceData(wsPath, options = {}) {
     ensureHeavyModules();
     const isCurrent = typeof options.isCurrent === 'function' ? options.isCurrent : () => true;
+    const emitProgress = options.emitProgress !== false;
     let tree = null;
     let flat = [];
-    if (isCurrent()) mainWindow?.webContents.send("host-message", {
+    if (emitProgress && isCurrent()) mainWindow?.webContents.send("host-message", {
       command: "workspaceScanProgress", scannedFiles: 0, active: true, ...(options.operation || {}),
     });
 
@@ -142,7 +146,7 @@ const runtime = createDesktopRuntime({
           isCurrent,
           documentConversionEnabled: runtime.state.documentConversionEnabled,
           onProgress(scannedFiles) {
-            if (!isCurrent()) return;
+            if (!emitProgress || !isCurrent()) return;
             mainWindow?.webContents.send("host-message", {
               command: "workspaceScanProgress",
               scannedFiles,
@@ -161,7 +165,7 @@ const runtime = createDesktopRuntime({
       console.error("Failed to scan workspace data:", err);
     }
 
-    if (isCurrent()) mainWindow?.webContents.send("host-message", {
+    if (emitProgress && isCurrent()) mainWindow?.webContents.send("host-message", {
       command: "workspaceScanProgress", scannedFiles: flat.length, active: false, ...(options.operation || {}),
     });
     return { tree, flat };
@@ -194,7 +198,6 @@ const runtime = createDesktopRuntime({
 Menu.setApplicationMenu(null);
 
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
-app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-networking');
 if (process.platform === 'win32') {
   app.commandLine.appendSwitch('in-process-gpu');

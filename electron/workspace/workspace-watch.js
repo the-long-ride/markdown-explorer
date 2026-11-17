@@ -1,9 +1,33 @@
 const path = require("path");
 
+const IGNORED_WATCH_SEGMENTS = new Set([
+  ".git",
+  "node_modules",
+  ".vscode",
+  "dist",
+  "out",
+  "build",
+  "coverage",
+  ".next",
+  ".nuxt",
+  ".turbo",
+  ".cache",
+  "vendor",
+  "target",
+  "bin",
+  "obj",
+]);
+
 function normalizeWatchFilename(filename) {
   return Buffer.isBuffer(filename) ? filename.toString()
     : typeof filename === "string" ? filename
     : "";
+}
+
+function isIgnoredWatchFilename(filename) {
+  const normalized = normalizeWatchFilename(filename);
+  if (!normalized) return false;
+  return normalized.split(/[\\/]+/).some((segment) => IGNORED_WATCH_SEGMENTS.has(segment));
 }
 
 function createWatchChange(workspacePath, eventType, filename) {
@@ -73,6 +97,7 @@ function scheduleRefreshFn(state, onRefresh, change) {
 function bindWatcherFn(state, onRefresh) {
   try {
     state.currentWatcher.value = state.fs.watch(state.workspacePath.value, { recursive: true }, (eventType, filename) => {
+      if (isIgnoredWatchFilename(filename)) return;
       scheduleRefreshFn(
         state,
         onRefresh,
@@ -166,6 +191,8 @@ module.exports = {
   scheduleRefreshFn,
   bindWatcherFn,
   normalizeWatchFilename,
+  isIgnoredWatchFilename,
+  IGNORED_WATCH_SEGMENTS,
   createWatchChange,
   mergeWatchChange,
 };

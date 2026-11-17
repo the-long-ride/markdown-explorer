@@ -24,6 +24,8 @@ function createMainWindow({
       preload: pathImpl.join(dirname, "..", "preload", "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      spellcheck: false,
+      backgroundThrottling: true,
     },
   });
 
