@@ -109,6 +109,9 @@ flowchart LR
 - Scatter chart requires at least two visible numeric columns (first is X, others are Y series).
 - Table view dropdown dynamically sizes to its widest localized option.
 - Chart modal viewer supports continuous 50%–1000% zoom and mouse/touch pan.
+- **Multi-cell table selection & cell clearing** (`tableSelection.ts`): The table editor supports 2D rectangular cell selection across rows and columns. Pressing `Backspace` or `Delete` clears the contents of all highlighted cells at once while preserving the table structure.
+- **Inline color swatches** (`enhanceColorSwatches.ts`): Color codes (Hex, RGB, HSL) inside table cells and markdown content automatically render interactive inline color preview swatches.
+- **Default-ON Markdown and table editing**: Document editing is enabled by default (`markdownEditingEnabled: true`), providing immediate access to the visual inline table editor and formatting tools.
 
 ## Protocol effects
 

@@ -95,6 +95,10 @@ flowchart LR
 - Keycaps dynamically inherit active theme tokens (`--bg-e`, `--bg-s`, `--accent`, `--bd-x`, `--bd-s`) and border radius (`border-radius: clamp(0px, var(--r, 6px), 10px)`).
 - Shortcut labels in Settings Modal render with high-contrast font weight (`font-weight: 600`) for clear legibility.
 - Tips & Practices tab automatically syncs shortcut descriptions with the user's active keybindings configuration.
+- **Edit current document** (`editCurrentDocument`): Default `Ctrl+E` on Desktop, `Ctrl+Alt+E` on VS Code and Chrome extension runtimes. Toggles inline rendered-section editing or opens in host editor.
+- **Toggle Plain Markdown Editor** (`plainEditCurrentDocument`): Default `Ctrl+Shift+E` on Desktop, `Ctrl+Alt+Shift+E` on VS Code and Chrome extension runtimes. Toggles full source editing mode with the Markdown formatting toolbar.
+- **Inline code formatting** (`editorInlineCode`): Default `Ctrl+\`` applies inline code backticks to the active selection or cursor position in the Markdown editor.
+- **Expand all headings** (`expandAll`): Default `Ctrl+Alt+x` expands all collapsed document sections across desktop and non-desktop runtimes.
 
 
 ## Protocol effects

@@ -43,7 +43,7 @@ keywords:
 | `defaultHtmlPreview` | `boolean` | `true` | Default `.html` to sandbox preview |
 | `defaultHtmlCodeBlockPreview` | `boolean` | `true` | Default HTML fences to preview |
 | `defaultCsvPreview` | `boolean` | `true` | Default delimited data to table preview |
-| `fileTabs` | `boolean` | `false` | Enable document content tabs |
+| `fileTabs` | `boolean` | `true` | Enable document content tabs |
 | `bookmarksEnabled` | `boolean` | `false` | **Enable Bookmark feature**: show mixed-text/object capture actions and the Bookmarks tab; disabling preserves stored records |
 | `insightsEnabled` | `boolean` | `false` | **Enable Workspace Insights feature**: show Workspace Insights in the More actions menu; disabling hides the entry while preserving workspace settings and cache |
 | `documentConversion` | `boolean` | `false` | Include/convert supported binary documents |

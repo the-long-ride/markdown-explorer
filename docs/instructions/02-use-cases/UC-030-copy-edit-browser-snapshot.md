@@ -74,6 +74,14 @@ flowchart LR
 | 5 | Open HTML preview/browser | Build safe preview and send `openHtmlPreview` or browser action. | Preview destination opens. |
 | 6 | Restore control state | Reset temporary copied label/timer. | Action can repeat. |
 
+## Local Markdown Editing & Preview Modes
+
+- **Default-ON Markdown editing**: Markdown editing is enabled by default (`markdownEditingEnabled: true`), allowing seamless transitions between rendered preview and editing surfaces.
+- **Bidirectional mode toggles & toast notifications**: Users can toggle between rendered preview, inline section editing, and full plain-source mode via keyboard shortcuts (`Ctrl+E` / `Ctrl+Alt+E`, `Ctrl+Shift+E` / `Ctrl+Alt+Shift+E`) or topbar buttons, accompanied by status toast notifications.
+- **Inline editor undo/redo stack**: The inline editor integrates history management (`useInlineEditorHistory.ts`) with dedicated undo (`Ctrl+Z`) and redo (`Ctrl+Y` / `Ctrl+Shift+Z`) stacks.
+- **Table cell selection and batch clearing**: Table editing supports multi-cell rectangular drag selection (`tableSelection.ts`), with `Backspace` / `Delete` key shortcuts to instantly clear selected cell values.
+- **Inline color swatches**: Rendered Markdown surfaces parse color tokens (hex, rgb, hsl) and inject interactive preview swatches (`enhanceColorSwatches.ts`).
+
 ## VS Code Edit capability
 
 When a `.md` or `.mdx` document is active in the VS Code runtime, More → **Edit** is enabled and sends the existing `openInEditor` command with the current canonical file path. The VS Code host opens/reveals that source in a text editor. The action is disabled when there is no current file, including the Welcome page. Desktop runtimes retain their existing editor/shell behavior.

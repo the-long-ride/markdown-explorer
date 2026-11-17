@@ -9,7 +9,7 @@ This document contains a 1000-row dataset of synthetic telemetry to test sorting
 > **1 000 rows** of synthetic telemetry. Use the table search and column sort headers to explore.
 
 | Index | Date       | Metric Value | Event Signature                           | Category |
-| ----: | ---------- | -----------: | ----------------------------------------- | -------- |
+| ----- | ---------- | -----------: | ----------------------------------------- | -------- |
 |     1 | 2024-01-01 |      6714.25 | `EVT-0C4F64D8808D` — nominal latency      | Alpha    |
 |     2 | 2024-01-02 |      5275.37 | `EVT-BB6C899604F5` — nominal jitter       | Beta     |
 |     3 | 2024-01-03 |      7271.64 | `EVT-C036FEEBA0CD` — baseline latency     | Gamma    |

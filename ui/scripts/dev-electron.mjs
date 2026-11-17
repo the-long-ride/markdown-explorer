@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,6 +37,11 @@ let restarting = false;
 
 function launchElectron() {
   if (stopping) return;
+  if (process.platform === 'win32') {
+    try {
+      execSync(`icacls "${dirname(electronBinary)}" /grant "*S-1-15-2-1:(OI)(CI)(RX)"`, { stdio: 'ignore' });
+    } catch {}
+  }
   electronProcess = spawn(electronBinary, [...electronArgs, electronRoot], {
     cwd: workspaceRoot,
     env: { ...process.env, MDN_DEV_SERVER_URL: devServerUrl },

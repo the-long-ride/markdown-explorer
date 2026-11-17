@@ -13,17 +13,16 @@
   <a href="https://github.com/the-long-ride/markdown-explorer/releases/latest"><img src="https://img.shields.io/badge/Windows-%E2%9C%93-ff9130?style=flat-square&logo=windows&logoColor=white" alt="Windows" /></a>
   <a href="https://github.com/the-long-ride/markdown-explorer/releases/latest"><img src="https://img.shields.io/badge/macOS-%E2%9C%93-ff9130?style=flat-square&logo=apple&logoColor=white" alt="macOS" /></a>
   <a href="https://github.com/the-long-ride/markdown-explorer/releases/latest"><img src="https://img.shields.io/badge/Linux-%E2%9C%93-ff9130?style=flat-square&logo=linux&logoColor=white" alt="Linux" /></a>
-  <a href="https://github.com/the-long-ride/markdown-explorer/blob/main/docs/chromium-install.md"><img src="https://img.shields.io/badge/Chromium%20Extension-%E2%9C%93-ff9130?style=flat-square&logo=chromium&logoColor=white" alt="Chromium Extension" /></a>
-  <a href="https://the-long-ride.github.io/markdown-explorer/"><img src="https://img.shields.io/badge/Web%20Browser%20(Demo)-%E2%9C%93-ff9130?style=flat-square&logo=googlechrome&logoColor=white" alt="Web Browser (Demo App)" /></a>
+  <a href="https://the-long-ride.github.io/markdown-explorer/"><img src="https://img.shields.io/badge/Web%20App-%E2%9C%93-ff9130?style=flat-square&logo=googlechrome&logoColor=white" alt="Web App" /></a>
 </p>
 <p align="left">
   <a href="https://github.com/the-long-ride/markdown-explorer/releases/latest"><img src="https://img.shields.io/badge/Electron-%E2%9C%93-ff9130?style=flat-square&logo=electron&logoColor=white" alt="Electron" /></a>
   <a href="https://github.com/the-long-ride/markdown-explorer/releases/latest"><img src="https://img.shields.io/badge/Tauri-%E2%9C%93-ff9130?style=flat-square&logo=tauri&logoColor=white" alt="Tauri" /></a>
 </p>
 
-Markdown files are built for AI agents. **Markdown Explorer** makes them pleasant for humans.
+**The best free, open-source Markdown viewer and editor — built for fast reading, writing, and local knowledge.**
 
-It turns `.md` and `.mdx` folders into a private, searchable documentation app with workspace navigation, local Markdown editing, split-document views, rendered diagrams, math, videos, highlighted code, interactive tables, charts, tabs, and support for VS Code, Chromium browsers, desktop apps (Windows, Linux, [macOS](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md)), and an interactive [demo web app](https://the-long-ride.github.io/markdown-explorer/).
+**Markdown Explorer** turns `.md` and `.mdx` folders into a fast, private, searchable workspace with split-view editing, Git revision diffs, offline Mermaid diagrams, LaTeX math, highlighted code, interactive tables, charts, office previews, and export — running on the [Web app](https://the-long-ride.github.io/markdown-explorer/), VS Code, and native desktop (Windows, Linux, [macOS](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md)).
 
 Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-ride.github.io/markdown-explorer/)
 
@@ -49,7 +48,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 | **All-in-One Export Center** | Basic print-to-PDF with messy browser chrome and clipped SVG graphics. | Clean standalone offline HTML bundles, static website ZIP archives, and client-side vector-quality hybrid PDFs with zero cloud dependencies. |
 | **Keyboard-First & Hardware Parity** | Mouse-heavy navigation; rigid keybindings. | Full Sidebar Cursor mode (`Alt+Z`), target locator (`Alt+Q`), customizable keybindings, and Logitech/hardware mouse back/forward button parity across all runtimes. |
 | **Privacy & Zero Telemetry** | Cloud-based indexing, remote telemetry, or tracking scripts. | 100% local parsing, indexing, and rendering. Zero telemetry, zero analytics, zero file uploads, and MIT open-source license. |
-| **Multi-Runtime Flexibility** | Locked to a single packaging format. | Run natively in VS Code, VSCodium (Open VSX), Chromium browsers, lightweight Tauri desktop, or battle-tested Electron desktop. |
+| **Multi-Runtime Flexibility** | Locked to a single packaging format. | Run natively in VS Code, VSCodium (Open VSX), Web browsers, lightweight Tauri desktop, or battle-tested Electron desktop. |
 
 ## Installation
 
@@ -60,7 +59,7 @@ Homepage: [https://the-long-ride.github.io/markdown-explorer/](https://the-long-
 | Windows desktop | [Download the latest `.exe`](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size) |
 | Linux desktop | [Download `.AppImage` or `.deb`](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size) |
 | macOS desktop | [Download `.dmg` for arm64 or x64](https://github.com/the-long-ride/markdown-explorer/releases/latest) (or Tauri version for better performance and smaller bundle size). First launch notes: [macOS guide](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/macos-install.md) |
-| Chromium extension | [Download `.zip` release](https://github.com/the-long-ride/markdown-explorer/releases/latest). Setup guide: [Chromium guide](https://github.com/the-long-ride/markdown-explorer/blob/main/docs/chromium-install.md) |
+| Web app | [Launch in Browser](https://the-long-ride.github.io/markdown-explorer/) (test workspace and local File System Access mode) |
 | Microsoft Store and Ubuntu App Center | Automated Tauri publishing is prepared; use [GitHub Releases](https://github.com/the-long-ride/markdown-explorer/releases/latest) until the store listings are enabled. |
 
 ## VS Code Extension Tutorial
@@ -91,7 +90,7 @@ In VS Code, imported fonts live in extension global storage and do not change VS
 - **Open Folder / File from File Explorer**: Launch folders or `.md`/`.mdx` files directly from OS File Explorer context menus. On Windows, right-clicking a file to open with Markdown Explorer automatically sets the parent directory as the active workspace.
 - **Universal Hardware Mouse Navigation**: Logitech and all hardware mouse back/forward buttons (Mouse Buttons 3 and 4) along with `BrowserBack`/`BrowserForward` keys provide seamless history navigation across all runtimes.
 - **macOS Native Integration**: Standard AppKit Edit application menu (Undo, Redo, Cut, Copy, Paste, Select All).
-- **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Chromium/Web does not expose this external-editor action.
+- **Edit from preview**: Desktop keeps **Edit** in More actions (`Ctrl+E`), while VS Code exposes a dedicated Edit icon beside More actions (`Ctrl+Alt+E` / `Cmd+Alt+E`) to open the current `.md`/`.mdx` source in a normal editor tab. Web does not expose this external-editor action.
 - **Locate Current File**: Highlight and reveal the currently open file in the sidebar tree using the target icon button or `Alt+Q` shortcut.
 - **Sidebar Cursor Mode**: Keyboard-first file tree navigation (`Alt+Z`) with arrow keys, `Enter`, and `Esc`.
 - **Content File Tabs & Scope Focus**: Open files in tabs and narrow sidebar view to selected files or folders.
@@ -122,7 +121,7 @@ In VS Code, imported fonts live in extension global storage and do not change VS
 - **Unsaved-Change Guards**: Closing tabs, changing workspaces, or closing the app protects dirty working copies until they are saved or deliberately discarded.
 - **Two-Pane Split View**: Open two documents side by side with independent active document, mode, and scroll position. A pane can show Rendered, Inline Edit, Plain, Revision, or Diff when the required data is available.
 - **Isolated Split Rendering**: Each document carries its own render revision so editing, scrolling, or activating one pane does not rerender an unrelated document in the other pane. When both panes show the same document and one is editing while the other is Rendered, the rendered mirror updates after a short 150 ms debounce and flushes immediately around save transitions.
-- **Local Git History**: Electron, Tauri, and VS Code use your installed local `git` executable to load document history lazily, follow renames, and open historical snapshots read-only. Chromium and Web explicitly report Git as unsupported and never start a local process.
+- **Local Git History**: Electron, Tauri, and VS Code use your installed local `git` executable to load document history lazily, follow renames, and open historical snapshots read-only. Web explicitly reports Git as unsupported and never starts a local process.
 - **Repository History Sidebar**: On capable hosts, the History tab can load a bounded repository commit graph with merge parents, refs, and exact `HEAD`, browse files from a selected revision inside the active workspace, and open a read-only historical file without changing branches or the working tree. **Back to current HEAD** exits snapshot browsing without running `git checkout` and restores the live tabs/editor/split state already mounted underneath.
 - **Read-Only Git Boundary**: Markdown Explorer exposes no stage, commit, checkout, restore, reset, stash, branch, merge, or rebase operation. Git processes receive structured argument arrays rather than shell command strings, and revision/path inputs are validated before reads.
 - **Source & Rendered Diff**: Compare a revision with the persisted file, the dirty working copy, or another revision. Source Diff uses a dependency-free Myers line diff; Rendered Diff renders both complete Markdown documents and highlights changed source-backed blocks.
@@ -146,12 +145,12 @@ See [Local Git History and Diff](https://github.com/the-long-ride/markdown-explo
 <summary><b>Pin & Bookmarks</b></summary>
 
 - **Sidebar Pinning**: Pin any file or folder to the top of the sidebar for fast one-click access. Pinned items inside subfolders are hoisted and displayed at the root level of the file tree.
-- **Files and folder management**: Create entries from toolbar or folder menus; rename with F2 or the item menu; delete focused or selected entries with confirmation. Native hosts default to Trash with a permanent-delete option; Chromium/local-folder web mode deletes permanently. Renames preserve tabs, unsaved buffers, bookmarks, pins, scope, and split panes. Entry selection mode and truly empty folders are supported.
-- **Simulated demo workspace**: The default web demo creates, renames, and deletes fake entries in `localStorage` only. Nested and empty folders and renamed sample content survive reload. Explicit `?mode=file` continues to manage user-selected real folders with browser write permission.
+- **Files and folder management**: Create entries from toolbar or folder menus; rename with F2 or the item menu; delete focused or selected entries with confirmation. Native hosts default to Trash with a permanent-delete option; Web local-folder mode deletes permanently. Renames preserve tabs, unsaved buffers, bookmarks, pins, scope, and split panes. Entry selection mode and truly empty folders are supported.
+- **Web workspaces & test mode**: The default Web app (`?mode=web`) manages user-selected local folders/files and browser virtual workspaces in `localStorage`/IndexedDB. `?mode=test` opens a simulated example workspace whose virtual tree and edits persist in `localStorage` only.
 - **Persistent Bookmarks**: Save named bookmarks from selected document text. Jump back to the exact location with search-style highlighting, and manage items through rename, delete, and three-dot or right-click menus.
 - **Source-Anchored Targets**: Bookmarks store the exact Markdown source range and a fingerprint so they survive edits and relocate contextually. Multi-line, mixed-format, LaTeX, Mermaid, image, and link selections are all supported. Repeated content resolves to the saved occurrence; edited targets report **Target changed** instead of jumping incorrectly.
 - **Bookmark Sidebar Tab**: Dedicated sidebar tab with live saved-count badge, sort controls, and instant search. Tab View groups bookmarks by workspace; Focus View shows only the current workspace.
-- **Batch Management**: Checkbox selection mode with confirmed batch deletion (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Chromium / Web).
+- **Batch Management**: Checkbox selection mode with confirmed batch deletion (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Web).
 - **Fully Localized**: All pin and bookmark labels, dialogs, empty/error states, and actions are available in English, Vietnamese, French, Spanish, Chinese, Norwegian, Japanese, Korean, and Russian.
 
 </details>
@@ -275,9 +274,9 @@ See [Local Git History and Diff](https://github.com/the-long-ride/markdown-explo
 - **Desktop Store Publishing**: Automated release pipeline for signing and submitting Tauri builds to Microsoft Store and Ubuntu App Center.
 - **Settings Navigation**: Settings uses a sidebar with Appearance, Typography, Theme Style, Features, Keyboard Shortcuts, and Update & Backup sections so related controls stay focused instead of sharing one long form.
 - **Searchable User Manual**: The Welcome page includes a localized, task-oriented manual with searchable sections, platform-aware shortcut keycaps, direct action cards, and an AI help prompt across all nine supported languages.
-- **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, Code, and Mermaid** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. Chromium and Web runtimes persist imported `.ttf`/`.otf`/`.woff`/`.woff2` fonts in IndexedDB and activate them via the `FontFace` API. Code defaults to JetBrains Mono, and changing the Mermaid font re-renders diagrams in the current document.
+- **Typography**: Electron, Tauri, and VS Code support independent **App UI, Body, Heading, Quote, Code, and Mermaid** font bindings. Each role can choose a detected system family or an imported `.ttf`/`.otf` file plus an explicit supported style/weight. The Web runtime persists imported `.ttf`/`.otf`/`.woff`/`.woff2` fonts in IndexedDB and activates them via the `FontFace` API. Code defaults to JetBrains Mono, and changing the Mermaid font re-renders diagrams in the current document.
 - **Update Notifications**: Desktop releases can show a new-version dialog at startup with Download, Later, changelog, and **Skip notify for this version** actions. Skipping suppresses only that release; a newer release is shown again.
-- **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Chromium extensions.
+- **Cross-Platform**: Available for VS Code, Open VSX, Desktop (Electron & Tauri), and Web.
 - **Native OS Integration**: Windows File Explorer context menus and customizable desktop shortcuts.
 - **Privacy First**: 100% local rendering and search with zero telemetry and no file uploads.
 
@@ -306,7 +305,7 @@ Desktop shortcuts can be customized in Settings. VS Code keeps editor-friendly d
 <details>
 <summary><b>View Keyboard Shortcuts</b></summary>
 
-| Action | Desktop app | VS Code extension | Chromium extension |
+| Action | Desktop app | VS Code extension | Web app |
 | --- | --- | --- | --- |
 | Open Markdown Explorer | N/A | `Ctrl+Shift+M` / `Cmd+Shift+M` | N/A |
 | Toggle preview for current Markdown file | N/A | `Ctrl+Alt+V` / `Cmd+Alt+V` | N/A |

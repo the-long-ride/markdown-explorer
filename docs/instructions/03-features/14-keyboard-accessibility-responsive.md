@@ -77,6 +77,12 @@ The Scope View modal traps focus and isolates navigation within its bounded 10-s
 - Hardware mouse back/forward buttons (mouse buttons 3 and 4) navigate the scope stack when the modal is active, and document history when closed.
 - `Escape` dismisses the modal and restores focus.
 
+### Unified Custom Tooltip Rule (No Native `title` Tooltips on UI Elements)
+
+- All UI hover hints must use either `data-hover-tooltip="..."` (rendered via `HoverTooltipPortal`) or `<Tooltip>` / `.tooltip-container` + `.tooltip-text`.
+- Native HTML `title=` attributes must NEVER be placed on buttons, links, badges, tabs, or text labels (neither standalone nor alongside `data-hover-tooltip` / `<Tooltip>`), preventing native OS browser tooltips from clashing with or double-rendering over theme-styled custom tooltips.
+- Exception: `<iframe>` elements retain `title="..."` strictly as a WCAG accessible frame name.
+
 
 ## States and failure behavior
 

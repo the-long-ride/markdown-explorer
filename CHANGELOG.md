@@ -2,6 +2,24 @@
 
 All notable changes to **Markdown Explorer** will be documented in this file.
 
+## [v1.7.2] — 2026-11-16
+
+### Added
+- **Workspace Insights**: Added 6-view workspace analysis (Overview, Graph, Diagnostics, Media/Diagrams, Links, and AI Prompts) across Electron, Tauri, and Web App runtimes with streamed worker indexing.
+- **Cyberpunk & Snake themes + Tour Guide**: Added the Cyberpunk and Snake themes (with chamfered Search Overlay, Scope View modal, right-click menus, and inner-shape geometric checkboxes), Matrix/Raw Grid backdrop effects, custom hover tooltips with 3D shortcut keycaps, and an interactive onboarding Tour Guide.
+- **Scope View TOC & wider modal**: Added a header TOC toggle (`ScopeViewToc`) inside Scope View, increased the modal (`1600×1120`) and document (`1120px`) width ceilings, and localized all new UI controls (including `sort`, `alignIntelligent`, and sidebar ZIP/file download labels) across all 9 supported languages.
+- **Intelligent table alignment, sticky controls & column resizing**: Added automatic column alignment inference (`left`, `center`, `right`, `intelligent`), sticky table headers/expanded Show Less bars, sticky code-block headers and expanded Show Less buttons, flexible single/two-row wrapped table headers, unwrap-mode pointer and keyboard (`ArrowLeft`/`ArrowRight`, `Enter`/`Space` header action delegation) column resizing with `pointercancel`/`blur` cleanup, a Reset Column Widths SVG action beside Wrap/Unwrap, and an interactive visual table editor/context menu.
+- **Markdown editor shortcuts & empty-line formatting**: Added dedicated Markdown editor shortcuts (`editorBold`, `editorIncreaseFontSize`, etc.) with editor-zone priority, desktop `Ctrl+Shift+E` (`openFiles`) / `Ctrl+Alt+E` (`plainEditCurrentDocument`) bindings, and direct prefix insertion (`- `, `1. `, `- [ ] `, `> `, `# `) when clicking list/quote/heading toolbar buttons on an empty cursor line.
+- **Standalone Web App & Raw Grid homepage**: Replaced the Chromium extension with the standalone GitHub Pages Web App (`app/?mode=web` default, `?mode=test` demo), added a Windows Portable Tauri download option, redesigned the landing page in the Raw Grid theme with an interactive Mini-Workstation hero, and added keyboard shortcut keycaps to the Files, Search, and Bookmarks sidebar tab tooltips (with edge-aligned tooltips so first/last tabs never clip).
+
+### Changed
+- **Performance & z-index layering**: Bounded Mermaid concurrent rendering, memoized Insights views, deduplicated CSS selectors, centralized root z-index layer tokens, gated `Search All Workspaces` to multi-workspace sessions (routing single-workspace searches to Sidebar Search), and added smooth dark/light theme toggle transitions on the website.
+- **Desktop & preference polish**: Defaulted `bookmarksEnabled` ON and `historySidebarEnabled` OFF, applied theme-adaptive scrollbar radii (`var(--r-s, var(--r))`) and 40px grab targets, added localized `applyScopeFocus` tooltip, improved desktop tabs, typography settings, inline recent workspaces panel, SVG home control, and synchronized `docs/specs/` for v1.7.2.
+
+### Fixed
+- **Overlay stacking, document overflow & Cyberpunk alignment**: Portaled `ScopeViewModal`, `MediaModal`, and `TabContextMenu` directly to `document.body` with proper modal/menu/dropdown z-index layering and nested `Escape` precedence, eliminated horizontal scrollbars across normal, converted Markdown, Split View, and Scope document bodies, unclipped table column resizers in custom-width tables, and aligned File History header buttons (plus disabled Compare state and `[data-theme="auto"]` light context menus) in Cyberpunk theme.
+- **Build, packaging & CI**: Patched `rustls` (Dependabot alert 92), built Tauri AppImages on Ubuntu 22.04, added `ui/scripts/dev-tauri.mjs` HMR runner and `ScopeViewToc.tsx` coverage mapping, moved DOM-only table alignment helpers out of shared non-DOM TypeScript modules for clean VS Code packaging, and updated unit, contract, and website test suites.
+
 ## [v1.7.1] — 2026-10-16
 
 ### Added

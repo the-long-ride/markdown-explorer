@@ -88,6 +88,8 @@ flowchart LR
 - Background accepts png/jpeg/webp/gif data URLs within configured size.
 - Layout numeric values are clamped to documented ranges.
 - Pet theme rail markers are organized in `ui/src/assets/themes/pets/rail-markers/` with species-tailored SVG designs (`cat-paw.svg`, `hamster-paw.svg`, `corgi-paw.svg`, `white-shiba-paw.svg`, `k-ink-paw.svg`).
+- **Directional multi-zone gradient transitions**: View Transitions animate mode flips directionally (`light->dark` top-to-bottom, `dark->light` bottom-to-top) originating from click or action coordinates via `executeThemeTransition` (`themeTransition.ts`), with temporary animation freeze attributes (`data-theme-transitioning`, `data-transition-direction`) and clean overlay removal upon completion.
+- **Cyberpunk block-glitch transitions**: When switching into or out of the `cyberpunk` style, `themeTransition.ts` deploys a block-glitch transition effect synchronized with cyberdeck styling. When `prefers-reduced-motion: reduce` is enabled, transitions execute synchronously without animation.
 
 
 ## Protocol effects

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { syncReadme } from './sync-readme.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,8 +19,6 @@ const jsonFiles = [
   'ui/package.json',
   'vscode/package.json',
   'electron/package.json',
-  'chromium-xtension/package.json',
-  'chromium-xtension/manifest.json',
   'website-app/package.json',
   'tauri/package.json',
   'tauri/tauri.conf.json',
@@ -74,5 +73,7 @@ if (fs.existsSync(llmTxtPath)) {
   }
 }
 
-console.log('Version synchronization complete.');
+// 6. Sync vscode/README.md from root README.md
+syncReadme();
 
+console.log('Version synchronization complete.');

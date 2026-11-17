@@ -20,7 +20,7 @@ source_scope:
 test_scope:
 - tests/unit/ui/website/demoDropdown.test.ts
 - tests/contracts/website-homepage.test.ts
-- tests/unit/chromium/web-file-mode.test.ts
+- tests/unit/website/web-file-mode.test.ts
 - tests/node/website-image-viewer.test.mjs
 runtime_scope:
 - website
@@ -42,7 +42,7 @@ keywords:
 
 ## Host behavior
 
-The website exposes `__webDemoBus`, selected by `ui/src/main.tsx`. `web-host.ts` routes common messages over virtual or file-mode services; search and message routing use focused modules.
+The website exposes `__webBus`, selected by `ui/src/main.tsx`. `web-host.ts` routes common messages over virtual or file-mode services; search and message routing use focused modules.
 
 Website capability boundary: Workspace Insights is unavailable in the website demo, including its persisted setting, toolbar entry, settings row, keyboard action, and host command adapter. Scope View remains supported for internal Markdown/MDX links and loads linked-document snapshots through the shared `loadSearchPreview` contract in both demo/test and browser file modes.
 
@@ -76,9 +76,9 @@ Website capability boundary: Workspace Insights is unavailable in the website de
 | Verification | `tests/contracts/website-demo-insights-removal.test.ts` | Browser capability boundary and Scope View documentation contract |
 | Verification | `tests/unit/ui/website/demoDropdown.test.ts` | Automated expectation |
 | Verification | `tests/contracts/website-homepage.test.ts` | Automated expectation |
-| Verification | `tests/unit/chromium/web-file-mode.test.ts` | Automated expectation |
+| Verification | `tests/unit/website/web-file-mode.test.ts` | Automated expectation |
 | Verification | `tests/node/website-image-viewer.test.mjs` | Automated expectation |
 
 ---
 
-[← Chromium Extension Runtime](04-chromium-extension.md) · [Documentation index](../README.md) · [Runtime Parity and Capability Matrix →](06-runtime-parity.md)
+[← VS Code Extension Runtime](03-vscode-extension.md) · [Documentation index](../README.md) · [Runtime Parity and Capability Matrix →](06-runtime-parity.md)

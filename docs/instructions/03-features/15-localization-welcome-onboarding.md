@@ -111,6 +111,7 @@ First-run completion uses separate local-storage flags for terms acceptance and 
 - All actions remain keyboard reachable.
 - A failed enhancement must not prevent the base document from rendering.
 - Host-facing inputs are validated before filesystem, shell, or network access.
+- Homepage & tour badges (`.welcome-tour-trigger-btn__badge`, `.tour-guide-badge`, `.tour-guide-dot`, `.hero-star-banner__count`, `.welcome-ecosystem__count`, `.welcome-ecosystem__item-tag`, `.tip-card-badge`) strictly follow the Theme-Adaptive Badge, Pill, and Control Geometry Rule (`var(--r-sm, var(--r))` and Cyberpunk cut-corner `clip-path`).
 
 
 ## Acceptance criteria

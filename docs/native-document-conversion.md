@@ -9,7 +9,7 @@ Markdown Explorer converts documents locally. No document content is uploaded an
 | Tauri | In-process Rust adapters; no Node runtime, sidecar, shell command, or external converter |
 | Electron | `@the-long-ride/markdown-them` in the Electron main process |
 | VS Code | `@the-long-ride/markdown-them` in the extension host |
-| Chromium/web | Document conversion remains disabled because browser extensions cannot safely use the local Node/Rust filesystem adapters |
+| Web | Opt-in in-browser conversion via `website-app/src/web-document-converter.ts` (disabled by default; never invokes native Node/Rust binaries) |
 
 ## Tauri format adapters
 

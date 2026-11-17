@@ -295,46 +295,9 @@ jobs:
             tauri/target/release/bundle/macos/*.app.tar.gz
             tauri/target/release/bundle/macos/*.app.tar.gz.sig
 
-  build-chromium-extension:
-    name: Build Chromium Extension
-    needs: test-gate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && github.event.inputs.tag || github.ref }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "pnpm"
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Chromium Extension
-        run: pnpm run build:chromium
-
-      - name: Create Zip File
-        run: |
-          cd chromium-xtension/dist
-          zip -r ../markdown-explorer-chromium.zip .
-
-      - name: Upload Chromium Extension Artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: chromium-extension
-          path: chromium-xtension/markdown-explorer-chromium.zip
-
   publish-release:
     name: Publish GitHub Release and Extensions
-    needs: [build-vscode, build-electron-desktop, build-tauri-desktop, build-chromium-extension]
+    needs: [build-vscode, build-electron-desktop, build-tauri-desktop]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -382,19 +345,12 @@ jobs:
           name: tauri-desktop-macos
           path: ./release-artifacts/tauri-macos
 
-      - name: Download Chromium Extension Artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: chromium-extension
-          path: ./release-artifacts/chromium
-
       - name: Stage release assets with variant prefixes
         shell: bash
         run: |
           mkdir -p release-assets
 
           find ./release-artifacts/vscode -type f -name "*.vsix" -exec cp {} ./release-assets/ \;
-          find ./release-artifacts/chromium -type f -name "*.zip" -exec cp {} ./release-assets/ \;
 
           while IFS= read -r file; do
             base=$(basename "$file")
