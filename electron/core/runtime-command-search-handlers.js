@@ -123,7 +123,7 @@ function createRuntimeCommandSearchHandlers({
         let payload = { tabId, workspacePath, fileList: [], tree: null };
         if (fs.existsSync(workspacePath)) {
           try {
-            const { tree, flat } = await scanWorkspaceData(workspacePath);
+            const { tree, flat } = await scanWorkspaceData(workspacePath, { emitProgress: false });
             ensureSearchIndex().prime(flat);
             payload = { tabId, workspacePath, fileList: flat, tree };
           } catch {

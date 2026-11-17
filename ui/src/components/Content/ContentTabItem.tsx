@@ -1,6 +1,7 @@
 import type { MutableRefObject } from 'react';
 import type { ContentTab } from '../../types';
 import { CloseIcon } from '../shared/icons';
+import { TooltipButton } from '../shared/TooltipButton';
 
 interface ContentTabItemProps {
   tab: ContentTab;
@@ -61,7 +62,8 @@ export function ContentTabItem({
         }
       }}
       className={`content-tab${active ? ' is-active' : ''}${dragged ? ' is-dragging' : ''}${closePhaseClass}`}
-      role="tab" aria-selected={active} tabIndex={0} title={tab.relativePath}
+      role="tab" aria-selected={active} tabIndex={0} data-hover-tooltip={tab.relativePath}
+      data-hover-tooltip-pos="bottom"
       onPointerDown={startDrag}
       onPointerEnter={() => {
         if (draggedTabPathRef.current && draggedTabPathRef.current !== tab.filePath) {
@@ -85,11 +87,20 @@ export function ContentTabItem({
       onAuxClick={(event) => { if (event.button === 1) { event.preventDefault(); onClose(tab.filePath); } }}
     >
       <span className="content-tab__label">{label}</span>
-      {dirty && <span className="content-tab__dirty" aria-label={dirtyLabel} title={dirtyLabel}>●</span>}
-      <button type="button" className="content-tab__close" aria-label={closeLabel} title={closeLabel}
-        onClick={(event) => { event.stopPropagation(); onClose(tab.filePath); }}>
-        <CloseIcon size={11} />
-      </button>
+      {dirty && <span className="content-tab__dirty" aria-label={dirtyLabel} data-hover-tooltip={dirtyLabel}>●</span>}
+      <TooltipButton
+        type="button"
+        className="content-tab__close"
+        tooltip={closeLabel}
+        tooltipPos="below"
+        portalTooltip
+        tabIndex={-1}
+        icon={<CloseIcon size={11} />}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose(tab.filePath);
+        }}
+      />
     </div>
   );
 }

@@ -82,9 +82,6 @@ body.is-split-dragging iframe {
   opacity: 0.7;
 }
 
-.split-document-pane__header {
-  touch-action: none;
-}
 
 .split-document-pane__content {
   display: flex;
@@ -96,6 +93,7 @@ body.is-split-dragging iframe {
 }
 
 .split-document-pane__header {
+  touch-action: none;
   display: flex;
   flex: 0 0 40px;
   height: 40px;
@@ -194,7 +192,11 @@ body.is-split-dragging iframe {
   align-self: center;
   align-items: center;
   gap: 2px;
-  padding: 2px;
+  padding: 1px 3px;
+  height: var(--shell-action-size, 28px);
+  min-height: var(--shell-action-size, 28px);
+  max-height: var(--shell-action-size, 28px);
+  box-sizing: border-box;
   border-radius: var(--r, 5px);
   background: var(--bg-a);
 }
@@ -203,11 +205,14 @@ body.is-split-dragging iframe {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 26px;
-  padding: 0;
+  min-width: calc(var(--shell-action-size, 28px) - 4px);
+  height: calc(var(--shell-action-size, 28px) - 4px);
+  min-height: calc(var(--shell-action-size, 28px) - 4px);
+  max-height: 100%;
+  padding: 0 6px;
+  box-sizing: border-box;
   border: 1px solid transparent;
-  border-radius: var(--r, 5px);
+  border-radius: var(--r-sm, 4px);
   background: transparent;
   color: var(--tx-2);
   font: inherit;
@@ -230,12 +235,15 @@ body.is-split-dragging iframe {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   contain: layout paint;
 }
 
 .split-document-pane__scroll .document-surface {
   width: min(100%, var(--content-max-width, 960px));
+  max-width: 100%;
+  min-width: 0;
   min-height: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -256,6 +264,31 @@ body.is-split-dragging iframe {
   min-height: 0;
   margin: 0;
   padding: 0;
+}
+
+/* Plain source editor fills the complete split pane in both directions. */
+.split-document-pane__scroll.split-document-pane__scroll--plain-edit,
+[data-theme-style] .split-document-pane__scroll.split-document-pane__scroll--plain-edit {
+  display: flex;
+  flex-direction: column;
+  overflow: clip;
+  padding: 0 10px 10px 10px;
+  scrollbar-gutter: auto;
+  box-sizing: border-box;
+}
+
+.split-document-pane__scroll--plain-edit .document-surface,
+[data-theme-style] .split-document-pane__scroll--plain-edit .document-surface {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .split-document-pane__scroll--html-preview .html-document-view__iframe {

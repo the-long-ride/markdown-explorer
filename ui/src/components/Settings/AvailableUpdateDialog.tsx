@@ -1,6 +1,7 @@
 import type { Translations } from '../../contexts/translationTypes';
 import { SkipUpdateVersionIcon, UpdateGlowIcon } from '../shared/icons';
 import { SettingsOutlineButton } from './SettingsOutlineButton';
+import { useDialogKeyboard } from '../../hooks/useDialogKeyboard';
 
 export function AvailableUpdateDialog({
   version,
@@ -21,6 +22,13 @@ export function AvailableUpdateDialog({
   onSkipVersion: () => void;
   onChangelog: () => void;
 }) {
+  useDialogKeyboard({
+    open: true,
+    onCancel: onLater,
+    onPrimary: canDownloadUpdate ? onDownload : undefined,
+    cancelSelector: '.settings-card__close, .settings-update-dialog__defer, .update-available-card__skip, .settings-update-card__link',
+  });
+
   const status = t.newerVersionStatus.replace('{current}', currentVersion || '0.0.0').replace('{latest}', version);
   return (
     <div className="mdn-modal settings-modal-dialog update-available-modal" role="dialog" aria-modal="true" aria-labelledby="update-available-title">

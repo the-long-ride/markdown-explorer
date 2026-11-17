@@ -1,0 +1,529 @@
+/* =============================================================================
+   global-theme-cyberpunk.css — Night City // 2077 Theme
+   6-sided closed-border cut-corner cyberdeck geometry (top-right & bottom-left
+   45° chamfers with continuous 1px perimeter stroke, zero clipping of tooltips,
+   and outset box-shadow / drop-shadow borderlines across all UI surfaces)
+   ============================================================================= */
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(*:not(.is-inline-editable), *::before, *::after) { outline: none !important; }
+
+/* 0. Shared 6-Sided Closed-Border Cut-Corner Geometry Engine */
+:root[data-theme][data-theme-style="cyberpunk"] :where(
+  .mdn-section, .mdn-section-header, .mdn-codeblock, .mdn-codeblock-header, .mdn-table-scroll, .mdn-wiki-embed, .mdn-mermaid-wrap, .mdn-frontmatter, .mdn-callout, .markdown-source-editor, .markdown-formatting-toolbar, .markdown-source-editor__status,
+  .desktop-tab, .content-tab, .tab-btn, .insights-tab, .segmented-control, .tabs-bar, .btn, .topbar__action-btn, .desktop-tabbar__new, .desktop-tabbar__home, .card-action-btn,
+  .settings-language-btn, .settings-reload-window-btn, .settings-outline-btn, .settings-outline-button, .settings-data-btn, .settings-download-update-btn,
+  .sidebar__scope-btn, .sidebar__scope-clear, .sidebar__scope-toggle-all, .banned-shortcut-close-btn, .state-screen__cancel, .state-screen__button--primary,
+  .scroll-to-top-btn, .mdn-table-toggle-btn, .mdn-codeblock-toggle-btn, .table-insert-dialog__button, .mdn-table-view-switcher button,
+  .workspace-selection__open-button, .workspace-selection-confirm-button, .theme-remix-tabs button, .theme-remix-btn,
+  .find-in-file-panel__case, .search-overlay-case-toggle, .search-overlay-preview-toggle, .insights-icon-btn, .workspace-insights__action-btn, .workspace-insights__close,
+  .settings-card__close, .export-center__close, .file-history__close, .html-local-first-warning__close, .mdn-modal-close, .mdn-modal-btn, .topbar__markdown-editing,
+  .topbar__markdown-mode-btn, .topbar__markdown-save-btn, .split-document-pane__modes, .split-document-pane__mode,
+  .support-prompt-card__star-btn, .support-prompt-card__donate-btn, .support-prompt-card__later-btn, .hero-support-banner__btn, .hero-star-banner__btn,
+  .homepage-link, .welcome-random-tip-shuffle-btn, .theme-remix-launch-btn, .theme-remix-list__icon-btn, .theme-onboarding-card__open-settings,
+  .theme-onboarding-card__skip, .theme-onboarding-card__continue, .terms-continue, .switch-workspace-actions button, .user-manual__quick-actions button, .settings-reset-shortcuts-btn,
+  .modal, .settings-card, .settings-card--settings, .settings-card--navigation, .support-prompt-card, .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
+  .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card, .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
+  .mdn-modal-content-svg, .mdn-modal-footer, .mdn-chart-viewer__viewport, .feature-card, .shortcuts-card, .privacy-card, .issues-card, .tip-card, .welcome-card,
+  .manual-ai-prompt, .user-manual__header, .manual-card, .hero-support-banner, .hero-star-banner, .toolbar-action-menu__panel, .settings-language-menu, .context-menu, .tab-context-menu, .sidebar-item-menu, .cm-table-context-menu,
+  .custom-select__menu, .theme-group-menu, .pet-theme-menu, .custom-theme-menu, .theme-remix-menu, .theme-onboarding-card__select-menu, .bookmarks-sort-menu, .font-search-menu, .font-variant-menu,
+  .export-source-menu--portal, .searchable-select__menu, .settings-feature-row, .settings-preference-row, .settings-shortcut-row, .desktop-font-binding-row, .desktop-font-card, .settings-section-card, .settings-update-card, .support-prompt-option,
+  .theme-onboarding-card__section, .theme-onboarding-card__hint, .theme-remix-list__item, .theme-remix-section--panel, .switch-workspace-paths, .workspace-insights__settings, .workspace-insights__settings-desc,
+  .workspace-insights__settings-section, .workspace-insights__settings-subgroup, .workspace-insights__settings-lint, .workspace-insights__settings-lint-rule, .theme-style-option, .export-center__current-file,
+  .export-center__folder-picker, .export-multi-select, .export-center__selection-summary, .export-center__activity, .export-center__activity li,
+  .settings-item__icon, .workspace-insights__setting-icon, .support-prompt-card__icon, .support-prompt-option__icon, .switch-workspace-header__icon, .theme-style-option__swatch span, .theme-style-option__swatch--pet,
+  .theme-group-menu__swatch, .settings-navigation__donate, .tip-card-badge, .file-history__badge, .repository-history__head-badge, .mdn-frontmatter-key, .workspace-insights__tab-badge, .insights-pill--accent, .insights-filter-chip, .desktop-font-card__badge,
+  .tree-file-search-count-badge, .toc-panel__count, .sidebar__count, .sidebar__scope-count, .hero-star-banner__count, .support-prompt-card__star-count,
+  .search-bar, .sidebar__search, .mdn-table-search-wrap, .settings-shortcuts-search, .manual-search, .settings-shortcut-input, .settings-number-input, .settings-font-select, .search-overlay-input,
+  .bookmark-dialog input, .file-history__filter input, .theme-remix-field input[type="text"], .custom-select__trigger, .font-search-dropdown__trigger, .font-variant-dropdown__trigger,
+  .theme-group-select, .pet-theme-select, .custom-theme-select, .theme-remix-select, .theme-onboarding-card__select-btn, .export-source-select__trigger, .searchable-select__trigger, .searchable-select__search, .export-multi-select__search,
+  .workspace-insights__settings select, .workspace-insights__settings input[type="text"], .workspace-insights__settings input[type="number"], .workspace-insights__settings textarea,
+  select, textarea, kbd, .keycap-3d, [role="switch"], .app-switch, .switch-slider, .tooltip-text, .hover-tooltip-portal, .settings-preference-description-panel
+) {
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--bd-x);
+  --cp-cut-top: 8px;
+  --cp-cut-bottom: 6px;
+  --cp-bottom-h: 1px;
+  --cp-left-w: 1px;
+  border: 0 !important;
+  outline: none !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0, var(--cp-bd) var(--cp-bottom-h), transparent var(--cp-bottom-h)) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / var(--cp-left-w) calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+/* 1. Shell, Bars & Dividers: Outset Box-Shadow Faked Borderlines */
+:root[data-theme][data-theme-style="cyberpunk"] :is(.topbar, .desktop-tabbar, .app--tab-view .desktop-tabbar) {
+  border: 0 !important; border-radius: 0 !important;
+  background: color-mix(in srgb, var(--bg-s) 82%, transparent) !important;
+  backdrop-filter: blur(6px);
+  position: relative; z-index: var(--z-topbar);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .content-tabs-wrap {
+  border: 0 !important; border-radius: 0 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  position: relative; z-index: var(--z-topbar);
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.sidebar, .workspace-insights, .toc-panel) {
+  border: 0 !important; border-radius: 0 !important;
+  background: color-mix(in srgb, var(--bg-s) 68%, transparent) !important;
+  backdrop-filter: blur(12px) !important; position: relative; z-index: 1;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .sidebar {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .toc-panel {
+  clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .topbar, .desktop-tabbar, .app--tab-view .desktop-tabbar, .content-tabs-wrap, .settings-navigation-header,
+  .settings-card__header, .scope-view__header, .export-center__header, .file-history__header, .file-history__filter,
+  .file-history__toolbar, .theme-remix-header, .theme-onboarding-card__header, .bookmarks-panel__toolbar,
+  .shortcuts-title, .workspace-insights__settings-heading, .export-multi-select__toolbar
+) { border: 0 !important; box-shadow: 0 1px 0 var(--bd-s) !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .topbar { position: relative; }
+:root[data-theme][data-theme-style="cyberpunk"] .topbar::after { content: ""; position: absolute; bottom: 0; right: 18px; width: 24px; height: 2px; background: var(--deco-cyan); pointer-events: none; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.sidebar, .export-center__source-column, .file-history__sidebar) { border: 0 !important; box-shadow: 1px 0 0 var(--bd-s) !important; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.workspace-insights, .toc-panel, .scope-view__open-file) { border: 0 !important; box-shadow: -1px 0 0 var(--bd-s) !important; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .scope-view__notice, .export-center__footer, .workspace-insights__settings-summary, .settings-shortcuts-footer,
+  .support-prompt-card__actions, .switch-workspace-actions, .theme-onboarding-card__actions,
+  .theme-remix-section, .theme-remix-layout-background
+) { border: 0 !important; box-shadow: 0 -1px 0 var(--bd-s) !important; }
+
+/* 2. Document Reading Pane & Section Surfaces */
+:root[data-theme][data-theme-style="cyberpunk"] :is(.body, .content-shell, .content-shell__main, .content) {
+  background: transparent !important;
+  position: relative;
+  z-index: 1;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .content__scroll {
+  position: relative;
+  z-index: 1;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-body { color: var(--tx); }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.mdn-section, .mdn-codeblock, .mdn-table-scroll, .mdn-wiki-embed, .mdn-mermaid-wrap, .mdn-frontmatter, .mdn-callout, .markdown-source-editor) {
+  --cp-bg: var(--bg-s); --cp-bd: var(--bd-s); --cp-cut-top: 12px; --cp-cut-bottom: 8px;
+  box-shadow: none !important; transition: filter 160ms ease, box-shadow 160ms ease;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.mdn-section-header, .mdn-codeblock-header, .markdown-formatting-toolbar) {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-s); --cp-cut-top: 12px; --cp-cut-bottom: 0px; box-shadow: none !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-section:not([data-expanded="true"]) > .mdn-section-header { --cp-cut-bottom: 8px; }
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-section--h1 > .mdn-section-header { --cp-bg: var(--bg-a); }
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-section .mdn-section-header { --cp-bg: color-mix(in srgb, var(--bg-e) 55%, var(--bg-s)); }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.mdn-section-header, .mdn-section .mdn-section-header, .mdn-section--h1 > .mdn-section-header):hover { --cp-bg: var(--bg-h); }
+:root[data-theme][data-theme-style="cyberpunk"] .markdown-source-editor__status {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-s); --cp-cut-top: 0px; --cp-cut-bottom: 8px; box-shadow: none !important;
+}
+
+/* Inline markdown editing in Cyberpunk theme: visible dashed accent outline, inset perimeter & subtle highlight tint */
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-body .is-inline-editable:hover {
+  outline: 1px dashed var(--accent) !important;
+  outline-offset: 4px !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent) !important;
+  background-color: color-mix(in srgb, var(--accent) 6%, transparent) !important;
+  cursor: text !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-body .is-inline-editable:focus-within:not(:hover) {
+  outline: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent) !important;
+  outline-offset: 4px !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent) !important;
+  background-color: color-mix(in srgb, var(--accent) 4%, transparent) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-heading-text.is-inline-editable:is(:hover, :focus-within) {
+  outline-offset: 3px !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-body:has(.is-inline-editing) .is-inline-editable:hover {
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  cursor: auto !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .markdown-inline-editor {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent), 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  border-radius: 0 !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-inline-edit-trigger:hover {
+  background: var(--bg-h) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+/* Hover on homepage cards ONLY: Cyberpunk shape with transparent inner part & cyan (dark) / red-pink (light) outline */
+:root[data-theme="dark"][data-theme-style="cyberpunk"] :is(.welcome-card, .feature-card, .privacy-card, .issues-card, .tip-card):hover,
+:root[data-theme="auto"][data-theme-style="cyberpunk"] :is(.welcome-card, .feature-card, .privacy-card, .issues-card, .tip-card):hover {
+  --cp-bg: transparent !important;
+  --cp-bd: var(--deco-cyan) !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--deco-cyan) 65%, transparent)) !important;
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] :is(.welcome-card, .feature-card, .privacy-card, .issues-card, .tip-card):hover {
+  --cp-bg: transparent !important;
+  --cp-bd: var(--deco-rose) !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--deco-rose) 55%, transparent)) !important;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"][data-theme-style="cyberpunk"] :is(.welcome-card, .feature-card, .privacy-card, .issues-card, .tip-card):hover {
+    --cp-bg: transparent !important;
+    --cp-bd: var(--deco-rose) !important;
+    box-shadow: none !important;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--deco-rose) 55%, transparent)) !important;
+  }
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-heading-1 { border: 0 !important; box-shadow: 0 2px 0 var(--accent); padding-bottom: 6px; }
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-blockquote { border: 0 !important; border-radius: 0 !important; background: var(--bg-s); box-shadow: -3px 0 0 var(--accent), 0 1px 0 var(--bd); padding: 8px 16px; }
+/* Normal Document Tables: clean standard appearance */
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-table :is(th, td) {
+  border-bottom: 1px solid color-mix(in srgb, var(--bd-s) 65%, transparent) !important;
+  border-right: 1px solid color-mix(in srgb, var(--bd-s) 50%, transparent) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-table :is(th:last-child, td:last-child) { border-right: none !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-table tbody tr:last-child td { border-bottom: none !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-table thead th { border-bottom: 1px solid var(--bd-x) !important; }
+
+:root[data-theme][data-theme-style="cyberpunk"] .cm-table-widget {
+  border: 1px solid var(--bd-s) !important; border-radius: 0 !important; background: var(--bg-s) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .cm-table-cell { border: 1px solid var(--bd-s) !important; }
+
+/* Enhanced Cyberpunk Shortcuts Table */
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-card {
+  --cp-bg: var(--bg-s);
+  --cp-bd: var(--bd-s);
+  --cp-cut-top: 14px;
+  --cp-cut-bottom: 10px;
+  padding: 24px;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-title {
+  color: var(--accent) !important;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-title .section-icon {
+  color: var(--deco-cyan) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 14px;
+  font-family: var(--font-ui);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-table thead tr th {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-e)) !important;
+  color: var(--accent) !important;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 16px !important;
+  border: 0 !important;
+  box-shadow: inset 0 -2px 0 var(--accent), inset -1px 0 0 var(--bd-s) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-table thead tr th:last-child {
+  box-shadow: inset 0 -2px 0 var(--accent) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-table tbody tr td {
+  padding: 10px 16px !important;
+  border: 0 !important;
+  box-shadow: inset -1px 0 0 var(--bd-s), inset 0 -1px 0 var(--bd) !important;
+  color: var(--tx2) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-table tbody tr td:last-child {
+  box-shadow: inset 0 -1px 0 var(--bd) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-table tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--bg-e) 35%, transparent);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .shortcuts-table :is(kbd, .keycap-3d) {
+  --cp-bg: color-mix(in srgb, var(--accent) 14%, var(--bg-code)); --cp-bd: var(--accent); --cp-cut-top: 4px; --cp-cut-bottom: 4px;
+  color: var(--accent) !important; font-weight: 700; padding: 0 6px !important; margin: 0 2px;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; line-height: 1 !important;
+}
+
+/* 3. Tabs & Segmented Controls: Cut-Corner Shape, Red-Pink / Cyan Active Decoration & Glitch */
+:root[data-theme][data-theme-style="cyberpunk"] :is(.desktop-tab, .content-tab, .tab-btn, .insights-tab) {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-x); --cp-cut-top: 9px; --cp-cut-bottom: 6px;
+  position: relative; box-shadow: none !important; color: var(--tx2); transition: color 140ms;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.desktop-tab, .content-tab, .tab-btn, .insights-tab):hover {
+  --cp-bg: var(--bg-h); --cp-bd: var(--accent); color: var(--tx);
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.desktop-tab, .content-tab, .tab-btn, .insights-tab):hover :is(.desktop-tab__title, .desktop-tab__icon, .content-tab__title, .tab-btn__label, span:not(.tooltip-text):not(.tooltip-text *):not(.tooltip-portal *), svg:not(.tooltip-text *):not(.tooltip-portal *)) {
+  display: inline-flex;
+  animation: cp-glitch-text .24s steps(1, end);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .insights-tab:is(.is-active, .active) {
+  --cp-bg: var(--bg-a); --cp-bd: var(--accent); --cp-bottom-h: 2px; color: var(--tx) !important; font-weight: 700;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.desktop-tab, .content-tab):is(.is-active, .active) {
+  --cp-tab-a: var(--deco-rose); --cp-tab-b: var(--deco-cyan);
+  --cp-bg: color-mix(in srgb, var(--deco-rose) 15%, var(--bg-a));
+  color: var(--tx) !important; font-weight: 700;
+  background:
+    linear-gradient(90deg, var(--cp-tab-b), var(--cp-tab-a)) top left / calc(100% - 9px) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-tab-a) 0 1px, transparent 1px) bottom right / 100% calc(100% - 9px) no-repeat,
+    linear-gradient(0deg, var(--cp-tab-a) 0 2px, transparent 2px) bottom right / calc(100% - 6px) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-tab-a), var(--cp-tab-b)) top left / 2px calc(100% - 6px) no-repeat,
+    linear-gradient(225deg, transparent 6.21px, var(--cp-tab-a) 6.36px, var(--cp-tab-a) 7.07px, var(--cp-bg) 7.22px, var(--cp-bg) calc(100% - 5.10px), var(--cp-tab-b) calc(100% - 4.95px), var(--cp-tab-b) calc(100% - 4.24px), transparent calc(100% - 4.09px)) 0 0 / 100% 100% no-repeat !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .content-tab:is(.is-active, .active) {
+  --cp-tab-a: var(--deco-cyan); --cp-tab-b: var(--deco-rose);
+  --cp-bg: color-mix(in srgb, var(--deco-cyan) 15%, var(--bg-a));
+}
+:root[data-theme="light"][data-theme-style="cyberpunk"] :is(.desktop-tab, .content-tab):is(.is-active, .active),
+:root[data-theme="light"][data-theme-style="cyberpunk"] .tree-file.is-active { --cp-bg: color-mix(in srgb, var(--deco-rose) 14%, var(--bg-s)); }
+:root[data-theme="light"][data-theme-style="cyberpunk"] .content-tab:is(.is-active, .active) { --cp-bg: color-mix(in srgb, var(--deco-cyan) 14%, var(--bg-s)); }
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"][data-theme-style="cyberpunk"] :is(.desktop-tab, .content-tab):is(.is-active, .active),
+  :root[data-theme="auto"][data-theme-style="cyberpunk"] .tree-file.is-active { --cp-bg: color-mix(in srgb, var(--deco-rose) 14%, var(--bg-s)); }
+  :root[data-theme="auto"][data-theme-style="cyberpunk"] .content-tab:is(.is-active, .active) { --cp-bg: color-mix(in srgb, var(--deco-cyan) 14%, var(--bg-s)); }
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.desktop-tab, .content-tab):is(.is-active, .active)::before {
+  content: ""; display: inline-block; width: 2px; height: 12px; margin-right: 4px; flex-shrink: 0;
+  background: linear-gradient(180deg, var(--deco-rose), var(--deco-cyan));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--deco-rose) 65%, transparent);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .desktop-tab:is(.is-active, .active) .desktop-tab__icon { color: var(--deco-rose) !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .content-tab:is(.is-active, .active) .content-tab__title { color: var(--tx) !important; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.segmented-control, .tabs-bar) { --cp-bg: var(--bg-e); --cp-bd: var(--bd-s); --cp-cut-top: 8px; --cp-cut-bottom: 6px; --seg-pad: 4px; padding: 4px; box-shadow: none !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .segmented-option { --cp-cut-top: 5px; --cp-cut-bottom: 4px; border-radius: 0 !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .segmented-option.is-active { color: var(--accent-ink) !important; font-weight: 700; background: transparent !important; box-shadow: none !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .segmented-control::before {
+  --cp-bg: var(--accent); --cp-bd: var(--primary-edge); border-radius: 0 !important; box-shadow: none !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - 5px) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - 5px) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - 4px) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - 4px) no-repeat,
+    linear-gradient(225deg, transparent 3.39px, var(--cp-bd) 3.54px, var(--cp-bd) 4.25px, var(--cp-bg) 4.40px, var(--cp-bg) calc(100% - 3.69px), var(--cp-bd) calc(100% - 3.54px), var(--cp-bd) calc(100% - 2.83px), transparent calc(100% - 2.68px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+/* 4. All Buttons: Cut-Corner Shape, Inner Registration Bar & Glitch */
+:root[data-theme][data-theme-style="cyberpunk"] :where(
+  .btn, .topbar__action-btn, .desktop-tabbar__new, .desktop-tabbar__home, .card-action-btn,
+  .settings-language-btn, .settings-reload-window-btn, .settings-outline-btn, .settings-data-btn, .settings-download-update-btn,
+  .sidebar__scope-btn, .sidebar__scope-clear, .sidebar__scope-toggle-all,
+  .banned-shortcut-close-btn, .state-screen__cancel, .state-screen__button--primary,
+  .table-insert-dialog__button, .mdn-table-view-switcher button, .workspace-selection__open-button,
+  .workspace-selection-confirm-button, .theme-remix-tabs button, .theme-remix-btn,
+  .find-in-file-panel__case, .search-overlay-case-toggle, .search-overlay-preview-toggle,
+  .insights-icon-btn, .workspace-insights__action-btn, .workspace-insights__close,
+  .settings-card__close, .export-center__close, .file-history__close, .html-local-first-warning__close, .mdn-modal-close, .mdn-modal-btn,
+  .support-prompt-card__star-btn, .support-prompt-card__donate-btn, .support-prompt-card__later-btn,
+  .hero-support-banner__btn, .hero-star-banner__btn, .homepage-link, .welcome-random-tip-shuffle-btn,
+  .theme-remix-launch-btn, .theme-remix-list__icon-btn, .theme-onboarding-card__open-settings,
+  .theme-onboarding-card__skip, .theme-onboarding-card__continue, .terms-continue, .switch-workspace-actions button,
+  .user-manual__quick-actions button, .settings-reset-shortcuts-btn
+) {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-x); --cp-cut-top: 8px; --cp-cut-bottom: 6px;
+  position: relative; box-shadow: none !important; color: var(--tx) !important; opacity: 1; transform: translate3d(0, 0, 0); transition: color 140ms;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn--icon, .window-control-btn, .sidebar__files-action, .insights-icon-btn, .workspace-insights__action-btn,
+  .workspace-insights__close, .settings-card__close, .export-center__close, .file-history__close, .html-local-first-warning__close,
+  .mdn-modal-close, .mdn-modal-btn, .mdn-modal-tool, .theme-remix-list__icon-btn, .settings-language-btn, .settings-reload-window-btn,
+  .sidebar__scope-btn, .sidebar__scope-clear, .sidebar__scope-toggle-all,
+  .find-in-file-panel__case, .search-overlay-case-toggle, .search-overlay-preview-toggle
+) { --cp-cut-top: 6px; --cp-cut-bottom: 5px; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.settings-card__close, .export-center__close, .file-history__close, .html-local-first-warning__close) {
+  width: 30px; height: 30px; display: inline-flex !important; align-items: center; justify-content: center; font-size: 18px;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn, .topbar__action-btn, .desktop-tabbar__new, .desktop-tabbar__home, .scroll-to-top-btn,
+  .settings-language-btn, .settings-reload-window-btn, .settings-outline-btn, .settings-data-btn, .insights-icon-btn, .workspace-insights__action-btn,
+  .sidebar__scope-btn, .sidebar__scope-clear, .sidebar__scope-toggle-all,
+  .workspace-insights__close, .settings-card__close, .export-center__close, .file-history__close, .html-local-first-warning__close,
+  .mdn-modal-close, .mdn-modal-btn, .mdn-modal-tool, .support-prompt-card__later-btn, .homepage-link,
+  .welcome-random-tip-shuffle-btn, .theme-remix-launch-btn, .theme-remix-list__icon-btn,
+  .theme-onboarding-card__open-settings, .theme-onboarding-card__skip, .switch-workspace-actions button,
+  .user-manual__quick-actions button, .settings-reset-shortcuts-btn,
+  .table-insert-dialog__button, .mdn-table-view-switcher button, .theme-remix-tabs button, .theme-remix-btn
+):hover {
+  --cp-bg: var(--bg-h); --cp-bd: var(--accent); color: var(--tx) !important; transform: translate3d(0, 0, 0);
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn, .topbar__action-btn, .desktop-tabbar__new, .desktop-tabbar__home, .scroll-to-top-btn,
+  .settings-language-btn, .settings-reload-window-btn, .settings-outline-btn, .settings-data-btn, .insights-icon-btn, .workspace-insights__action-btn,
+  .sidebar__scope-btn, .sidebar__scope-clear, .sidebar__scope-toggle-all,
+  .workspace-insights__close, .settings-card__close, .export-center__close, .file-history__close, .html-local-first-warning__close,
+  .mdn-modal-close, .mdn-modal-btn, .mdn-modal-tool, .support-prompt-card__later-btn, .homepage-link,
+  .welcome-random-tip-shuffle-btn, .theme-remix-launch-btn, .theme-remix-list__icon-btn,
+  .theme-onboarding-card__open-settings, .theme-onboarding-card__skip, .switch-workspace-actions button,
+  .user-manual__quick-actions button, .settings-reset-shortcuts-btn,
+  .table-insert-dialog__button, .mdn-table-view-switcher button, .theme-remix-tabs button, .theme-remix-btn
+):hover :is(.btn-label, .btn-icon, svg:not(.tooltip-text *):not(.tooltip-portal *), span:not(.tooltip-text):not(.tooltip-text *):not(.tooltip-portal *), [class*="label"], [class*="icon"]) {
+  display: inline-flex;
+  animation: cp-glitch-text .24s steps(1, end);
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn, .topbar__action-btn, .desktop-tabbar__new, .desktop-tabbar__home, .card-action-btn,
+  .header-action-group .btn, .desktop-tabbar__document-actions .btn, .desktop-tabbar__navigation-actions .btn,
+  .settings-language-btn, .settings-reload-window-btn, .settings-outline-btn, .settings-outline-button, .settings-data-btn
+):hover :is(svg:not(.tooltip-text *):not(.tooltip-portal *), .btn-icon svg) {
+  display: inline-flex !important;
+  animation: cp-glitch-icon .24s steps(1, end) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.btn, .topbar__action-btn, .desktop-tabbar__home, .workspace-insights__action-btn, .sidebar__scope-btn).is-active {
+  --cp-bg: var(--accent); --cp-bd: var(--primary-edge); color: var(--accent-ink) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.topbar__markdown-editing, .split-document-pane__modes) {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-s); --cp-cut-top: 6px; --cp-cut-bottom: 5px;
+  height: var(--shell-action-size, 28px) !important; min-height: var(--shell-action-size, 28px) !important; max-height: var(--shell-action-size, 28px) !important;
+  box-sizing: border-box !important; box-shadow: none !important; gap: 2px !important; padding: 1px 3px !important; align-items: center !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .window-control-btn, .content-tab__close, .desktop-tab__close,
+  .topbar__markdown-mode-btn, .topbar__markdown-save-btn, .split-document-pane__mode, .mdn-modal-tool
+) {
+  border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--tx2);
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.topbar__markdown-mode-btn, .topbar__markdown-save-btn, .split-document-pane__mode) {
+  height: calc(var(--shell-action-size, 28px) - 4px) !important; min-height: calc(var(--shell-action-size, 28px) - 4px) !important; max-height: calc(var(--shell-action-size, 28px) - 4px) !important;
+  padding: 0 6px !important; box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .window-control-btn, .content-tab__close, .desktop-tab__close,
+  .topbar__markdown-mode-btn, .topbar__markdown-save-btn, .split-document-pane__mode
+):hover {
+  --cp-bg: var(--bg-h); --cp-bd: var(--bd-x); color: var(--tx) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .topbar__markdown-mode-btn[aria-pressed="true"], .topbar__markdown-mode-btn.is-active,
+  .split-document-pane__mode[aria-pressed="true"], .split-document-pane__mode.is-active
+) {
+  --cp-bg: var(--accent); --cp-bd: var(--primary-edge); color: var(--accent-ink) !important;
+  font-weight: 700; box-shadow: none !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - 5px) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - 5px) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - 4px) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - 4px) no-repeat,
+    linear-gradient(225deg, transparent 3.39px, var(--cp-bd) 3.54px, var(--cp-bd) 4.25px, var(--cp-bg) 4.40px, var(--cp-bg) calc(100% - 3.69px), var(--cp-bd) calc(100% - 3.54px), var(--cp-bd) calc(100% - 2.83px), transparent calc(100% - 2.68px)) 0 0 / 100% 100% no-repeat !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .topbar__markdown-save-btn:not(:disabled) { color: var(--accent); }
+:root[data-theme][data-theme-style="cyberpunk"] .topbar__markdown-save-btn:not(:disabled):hover {
+  --cp-bg: var(--accent); --cp-bd: var(--primary-edge); color: var(--accent-ink) !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - 5px) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - 5px) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - 4px) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - 4px) no-repeat,
+    linear-gradient(225deg, transparent 3.39px, var(--cp-bd) 3.54px, var(--cp-bd) 4.25px, var(--cp-bg) 4.40px, var(--cp-bg) calc(100% - 3.69px), var(--cp-bd) calc(100% - 3.54px), var(--cp-bd) calc(100% - 2.83px), transparent calc(100% - 2.68px)) 0 0 / 100% 100% no-repeat !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-modal-tool:is(:hover, :focus-visible, .is-active) {
+  --cp-bg: var(--bg-h); --cp-bd: var(--accent); color: var(--tx) !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - 5px) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - 5px) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - 4px) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - 4px) no-repeat,
+    linear-gradient(225deg, transparent 3.39px, var(--cp-bd) 3.54px, var(--cp-bd) 4.25px, var(--cp-bg) 4.40px, var(--cp-bg) calc(100% - 3.69px), var(--cp-bd) calc(100% - 3.54px), var(--cp-bd) calc(100% - 2.83px), transparent calc(100% - 2.68px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+/* Inner Vertical Registration Bar | on Text & Action Buttons */
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn:not(.btn--icon), .card-action-btn, .settings-outline-btn, .settings-data-btn,
+  .settings-download-update-btn, .banned-shortcut-close-btn, .support-prompt-card__star-btn,
+  .support-prompt-card__donate-btn, .support-prompt-card__later-btn, .hero-support-banner__btn,
+  .hero-star-banner__btn, .theme-remix-launch-btn, .theme-onboarding-card__open-settings,
+  .theme-onboarding-card__skip, .theme-onboarding-card__continue, .terms-continue.is-enabled,
+  .switch-workspace-actions button
+)::before {
+  content: ""; display: inline-block; width: 1.5px; height: 13px; background: currentColor; opacity: 0.72; margin-right: 7px; flex-shrink: 0;
+}
+
+/* Yellow Background Buttons = Crisp Black/Dark Ink Text (--accent-ink) */
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn--primary, .btn--accent, .primary-btn, .card-action-btn, .settings-modal-btn--primary,
+  .settings-download-update-btn, .banned-shortcut-close-btn, .support-prompt-card__star-btn,
+  .hero-support-banner__btn:not(.hero-support-banner__btn--donate), .hero-star-banner__btn,
+  .theme-onboarding-card__continue, .terms-continue.is-enabled, .switch-workspace-confirm,
+  .welcome-actions .btn:first-child, .state-screen__button--primary, .table-insert-dialog__button--submit,
+  .mdn-table-view-switcher button.is-active, .workspace-selection__open-button,
+  .workspace-selection-confirm-button:not(.workspace-selection-confirm-button--outline),
+  .theme-remix-tabs button.is-active, .theme-remix-btn--accent, .scroll-to-top-btn, .tab-btn.active,
+  .find-in-file-panel__case.is-active, .find-in-file-panel__case[aria-pressed="true"], .search-overlay-case-toggle.is-active,
+  .search-overlay-case-toggle[aria-pressed="true"], .search-overlay-preview-toggle.is-active, .search-overlay-preview-toggle[aria-pressed="true"]
+) {
+  --cp-bg: var(--primary-fill); --cp-bd: var(--primary-edge); --cp-cut-top: 10px; --cp-cut-bottom: 7px;
+  color: var(--accent-ink) !important; font-weight: 700;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn--primary, .btn--accent, .primary-btn, .card-action-btn, .settings-modal-btn--primary,
+  .settings-download-update-btn, .banned-shortcut-close-btn, .support-prompt-card__star-btn,
+  .hero-support-banner__btn:not(.hero-support-banner__btn--donate), .hero-star-banner__btn,
+  .theme-onboarding-card__continue, .terms-continue.is-enabled, .switch-workspace-confirm,
+  .welcome-actions .btn:first-child, .state-screen__button--primary, .table-insert-dialog__button--submit,
+  .mdn-table-view-switcher button.is-active, .workspace-selection__open-button,
+  .workspace-selection-confirm-button:not(.workspace-selection-confirm-button--outline),
+  .theme-remix-tabs button.is-active, .theme-remix-btn--accent, .scroll-to-top-btn, .tab-btn.active,
+  .homepage-link
+):hover {
+  --cp-bg: var(--primary-fill-hover); --cp-bd: var(--primary-edge); color: var(--accent-ink) !important; transform: translate3d(0, 0, 0);
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .btn--primary, .btn--accent, .primary-btn, .card-action-btn, .settings-modal-btn--primary,
+  .settings-download-update-btn, .banned-shortcut-close-btn, .support-prompt-card__star-btn,
+  .hero-support-banner__btn:not(.hero-support-banner__btn--donate), .hero-star-banner__btn,
+  .theme-onboarding-card__continue, .terms-continue.is-enabled, .switch-workspace-confirm,
+  .welcome-actions .btn:first-child, .state-screen__button--primary, .table-insert-dialog__button--submit,
+  .mdn-table-view-switcher button.is-active, .workspace-selection__open-button,
+  .workspace-selection-confirm-button:not(.workspace-selection-confirm-button--outline),
+  .theme-remix-tabs button.is-active, .theme-remix-btn--accent, .tab-btn.active, .homepage-link
+):hover :is(.btn-label, .btn-icon, svg, span, [class*="label"], [class*="icon"]) {
+  display: inline-flex; animation: cp-glitch-text .24s steps(1, end);
+}
+
+/* Rose/Crimson Cyberpunk Donate Action Button */
+:root[data-theme][data-theme-style="cyberpunk"] :is(.support-prompt-card__donate-btn, .hero-support-banner__btn.hero-support-banner__btn--donate) {
+  --cp-bg: #f43f5e; --cp-bd: #fda4af; --cp-cut-top: 11px; --cp-cut-bottom: 8px;
+  color: #ffffff !important; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.support-prompt-card__donate-btn, .hero-support-banner__btn.hero-support-banner__btn--donate):hover {
+  --cp-bg: #fb7185; --cp-bd: #ffffff; color: #ffffff !important; transform: translate3d(0, 0, 0);
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.support-prompt-card__donate-btn, .hero-support-banner__btn.hero-support-banner__btn--donate):hover :is(span, svg, [class*="label"], [class*="icon"]) {
+  display: inline-flex; animation: cp-glitch-text .24s steps(1, end);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.mdn-table-toggle-btn, .mdn-codeblock-toggle-btn) {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-x); --cp-cut-top: 8px; --cp-cut-bottom: 6px;
+  color: var(--tx2) !important; font-family: var(--font-ui) !important; font-weight: 700 !important; cursor: pointer !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.mdn-table-toggle-btn, .mdn-codeblock-toggle-btn):hover {
+  --cp-bg: var(--bg-h); --cp-bd: var(--accent); color: var(--tx) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.mdn-table-toggle-btn.is-expanded, .mdn-codeblock[data-collapsed="false"] .mdn-codeblock-toggle-btn) {
+  position: sticky !important; bottom: var(--mdn-sticky-bottom-offset, 0px) !important; margin-bottom: 0 !important; --cp-cut-bottom: 0px !important;
+  z-index: 30 !important; backdrop-filter: blur(8px) !important; filter: drop-shadow(0 -4px 12px rgba(0, 0, 0, 0.6)) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.welcome-container, .mdn-modal-toolbar, .mdn-modal-footer .mdn-modal-toolbar) {
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(button, [role="button"], .btn, .settings-outline-button, .desktop-typography-settings__apply, .desktop-typography-settings__reset-all), :root[data-theme][data-theme-style="cyberpunk"] :is(button, [role="button"], .btn, .settings-outline-button, .desktop-typography-settings__apply, .desktop-typography-settings__reset-all) * { cursor: pointer !important; }
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.hero-star-banner__count, .support-prompt-card__star-count) {
+  --cp-cut-top: 5px; --cp-cut-bottom: 4px; --cp-bg: rgba(0, 0, 0, 0.22); --cp-bd: rgba(0, 0, 0, 0.45);
+  color: #000000 !important; font-weight: 800; padding: 1px 7px; margin-left: 4px;
+}

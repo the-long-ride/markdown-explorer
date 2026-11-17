@@ -1,0 +1,31 @@
+/* Global delayed hover tooltip for file nodes, search results, and TOC entries */
+.hover-tooltip-portal {
+  position: fixed;
+  left: var(--hover-tooltip-left, 0);
+  top: var(--hover-tooltip-top, 0);
+  visibility: var(--hover-tooltip-visibility, hidden);
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  background: var(--bg-e);
+  color: var(--tx);
+  border: var(--stroke-w, 1px) solid var(--bd-x);
+  border-radius: var(--r, 6px);
+  padding: 5px 9px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  max-width: min(440px, calc(100vw - 24px));
+  word-break: break-all;
+  white-space: normal;
+  opacity: 0;
+  transform: none;
+  transition: opacity 0.12s ease;
+  user-select: none;
+}
+
+.hover-tooltip-portal.is-visible {
+  opacity: 1;
+  transform: none;
+}

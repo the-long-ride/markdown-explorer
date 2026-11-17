@@ -1,5 +1,7 @@
 import { TooltipButton } from '../shared/TooltipButton';
+import { WebDemoNavActions } from '../Topbar/WebDemoNavActions';
 import type { ThemeMode } from '../../types';
+import { executeThemeTransition } from '../../utils/themeTransition';
 import { isDesktopRuntime } from './workspaceSelectionUtils';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
@@ -12,6 +14,7 @@ interface WorkspaceWindowControlsProps {
   theme: ThemeMode;
   isMaximized: boolean;
   onToggleTheme: () => void;
+  onOpenHomepage?: () => void;
 }
 
 export function WorkspaceWindowControls({
@@ -19,6 +22,7 @@ export function WorkspaceWindowControls({
   theme,
   isMaximized,
   onToggleTheme,
+  onOpenHomepage,
 }: WorkspaceWindowControlsProps) {
   const { state } = useAppState();
   const bridge = usePlatform();
@@ -32,9 +36,28 @@ export function WorkspaceWindowControls({
   return (
     <div className={`workspace-window-controls${embeddedInTabs ? ' is-hidden' : ''}${isDesktop ? ' is-desktop' : ''}`}>
       <div className="window-controls">
+        {onOpenHomepage && (
+          <TooltipButton
+            className="btn btn--icon workspace-selection__home-button"
+            onClick={onOpenHomepage}
+            tooltip={t.topbar.home}
+            shortcut={getEnabledShortcut(state.settings, 'welcome')}
+            aria-label={t.topbar.home}
+            data-testid="workspace-open-homepage-btn"
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z" /></svg>
+            }
+          />
+        )}
         <TooltipButton
           className="btn btn--icon"
-          onClick={onToggleTheme}
+          onClick={(e) => {
+            executeThemeTransition(onToggleTheme, {
+              originElement: e.currentTarget,
+              event: e,
+              nextTheme: isDark ? 'light' : 'dark',
+            });
+          }}
           tooltip={themeToggleLabel}
           shortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
           icon={isDark ? (
@@ -60,6 +83,7 @@ export function WorkspaceWindowControls({
             <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={requestWindowClose} tooltip={t.tooltips.closeApp} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
           </>
         )}
+        <WebDemoNavActions />
       </div>
     </div>
   );

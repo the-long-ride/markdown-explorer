@@ -85,17 +85,6 @@ export function useDocumentInteractions({
     body.addEventListener("click", handleClick);
     body.addEventListener("contextmenu", handleContextMenu);
 
-    const startEnhancements = () => scheduleContentEnhancements({
-      body, state, scrollRef, handleScroll, mermaidRunIdRef,
-    });
-    const disposeMermaidLifecycle = installMermaidContentLifecycle({
-      body,
-      scroll: scrollContainer,
-      state,
-      previousAppearanceKeyRef: lastMermaidAppearanceKeyRef,
-      runIdRef: mermaidRunIdRef,
-      startEnhancements,
-    });
     if (scrollMemory) {
       restoreScrollPosition({
         scrollRef, positions: scrollMemory.positions.current, workspaceKey,
@@ -105,15 +94,33 @@ export function useDocumentInteractions({
     }
 
     return () => {
-      disposeMermaidLifecycle();
       body.removeEventListener("click", handleClick);
       body.removeEventListener("contextmenu", handleContextMenu);
       headingSections.dispose();
       detachScrollHandler?.(); detachScrollFlushOnHide?.();
       persistScroll.flush();
     };
-  }, [doc.renderVersion, doc.filePath, doc.disabled, doc.rootId, state.theme, state.themeStyle,
-    state.settings.activeCustomThemeId, state.settings.customThemes, state.settings.fontBindings,
+  }, [doc.renderVersion, doc.filePath, doc.disabled, doc.rootId,
     onImageClick, navigate, scrollRef, bridge, previewLabels, onOpenHtmlModal, onOpenLinkMenu,
     onBookmarkContextMenu, onActionError, state.appRuntime, state.defaultExpanded]);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body || doc.disabled) return;
+
+    const scrollContainer = scrollRef.current;
+    const handleScroll = () => syncStickyTableHeaders(scrollContainer);
+    const startEnhancements = () => scheduleContentEnhancements({
+      body, state, scrollRef, handleScroll, mermaidRunIdRef,
+    });
+    return installMermaidContentLifecycle({
+      body,
+      scroll: scrollContainer,
+      state,
+      previousAppearanceKeyRef: lastMermaidAppearanceKeyRef,
+      runIdRef: mermaidRunIdRef,
+      startEnhancements,
+    });
+  }, [doc.renderVersion, doc.filePath, doc.disabled, doc.rootId, state.theme, state.themeStyle,
+    state.settings.activeCustomThemeId, state.settings.customThemes, state.settings.fontBindings]);
 }

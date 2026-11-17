@@ -129,8 +129,9 @@ export function SidebarItemMenu({
           type="button"
           className={`tab-context-menu__item${item.dividerBefore ? ' has-divider-before' : ''}`}
           role="menuitem"
-          disabled={item.disabled}
+          disabled={Boolean(item.disabled)}
           onClick={() => {
+            if (item.disabled) return;
             item.onSelect();
             onClose();
           }}

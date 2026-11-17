@@ -1,5 +1,6 @@
 .topbar__action-btn,
-.topbar__new-workspace-btn {
+.topbar__new-workspace-btn,
+.topbar__close-workspace-btn {
   min-width: var(--control-h, 28px);
   width: var(--control-h, 28px);
   height: var(--control-h, 28px);
@@ -12,7 +13,9 @@
 .topbar__action-btn:hover,
 .topbar__action-btn:focus-visible,
 .topbar__new-workspace-btn:hover,
-.topbar__new-workspace-btn:focus-visible {
+.topbar__new-workspace-btn:focus-visible,
+.topbar__close-workspace-btn:hover,
+.topbar__close-workspace-btn:focus-visible {
   border-color: var(--bd-x);
   background: var(--bg-h);
   color: var(--tx);
@@ -31,8 +34,8 @@
     linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--bg-s)), var(--bg-s) 45%),
     var(--bg-s);
   color: var(--tx);
-  box-shadow: var(--sh-lg);
-  z-index: 400000;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  z-index: var(--z-menu);
   -webkit-app-region: no-drag;
 }
 
@@ -89,8 +92,12 @@
 
 .tab-context-menu__item-shortcut {
   margin-left: 0;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-bottom-width: 1px;
   color: var(--tx3);
-  font: 600 10px/1 var(--font-ui);
+  font: 600 9.5px/1 var(--font-ui);
   letter-spacing: 0.02em;
   white-space: nowrap;
 }

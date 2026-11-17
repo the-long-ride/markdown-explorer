@@ -5,7 +5,7 @@
   position: fixed;
   inset: 0 0 auto 0;
   height: 34px;
-  z-index: 99999990;
+  z-index: var(--z-window-controls);
   pointer-events: none;
   background: transparent;
 }
@@ -32,12 +32,12 @@
 body.is-desktop .topbar,
 body.is-tauri .topbar {
   -webkit-app-region: drag;
-  z-index: 200000;
+  z-index: var(--z-window-controls);
 }
 
 body.is-electron .topbar {
   -webkit-app-region: drag;
-  z-index: 200000;
+  z-index: var(--z-window-controls);
 }
 
 body.is-desktop .focus-mode-drag-region__surface,

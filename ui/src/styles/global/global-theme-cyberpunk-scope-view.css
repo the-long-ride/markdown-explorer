@@ -1,0 +1,157 @@
+/* =============================================================================
+   global-theme-cyberpunk-scope-view.css
+   Cyberpunk HUD surface, perimeter frame, controls & depth meter for Scope View
+   ============================================================================= */
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__card {
+  padding: 2px !important;
+  box-sizing: border-box;
+  --cp-bg: var(--bg-s);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  --cp-beam-w: 2px;
+  -webkit-mask:
+    linear-gradient(90deg, #000, #000) top left / calc(100% - var(--cp-cut-top)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) bottom right / var(--cp-beam-w) calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, #000, #000) bottom right / calc(100% - var(--cp-cut-bottom)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) top left / var(--cp-beam-w) calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px), #000 calc(var(--cp-cut-top) * 0.7071), #000 calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071), transparent calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071 + 0.2px), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071 - 0.2px), #000 calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071), #000 calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)) 0 0 / 100% 100% no-repeat;
+  mask:
+    linear-gradient(90deg, #000, #000) top left / calc(100% - var(--cp-cut-top)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) bottom right / var(--cp-beam-w) calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, #000, #000) bottom right / calc(100% - var(--cp-cut-bottom)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) top left / var(--cp-beam-w) calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px), #000 calc(var(--cp-cut-top) * 0.7071), #000 calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071), transparent calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071 + 0.2px), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071 - 0.2px), #000 calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071), #000 calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)) 0 0 / 100% 100% no-repeat;
+  background: conic-gradient(
+    from var(--cp-beam-angle, 0deg) at 50% 50%,
+    transparent 0deg,
+    transparent 240deg,
+    color-mix(in srgb, var(--cp-rail-cyan) 35%, transparent) 275deg,
+    var(--cp-rail-cyan) 305deg,
+    #FFFFFF 336deg,
+    var(--cp-rail-rose) 350deg,
+    color-mix(in srgb, var(--cp-rail-rose) 35%, transparent) 356deg,
+    transparent 360deg
+  );
+  animation: cp-beam-orbit 5s linear infinite;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--cp-rail-cyan) 70%, transparent)) drop-shadow(0 0 8px color-mix(in srgb, var(--cp-rail-rose) 70%, transparent));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__header {
+  position: relative;
+  padding-right: 18px;
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 var(--bd-s) !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--deco-cyan) 8%, var(--bg-e)), var(--bg-e));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 20px;
+  width: 32px;
+  height: 2px;
+  background: var(--deco-cyan);
+  pointer-events: none;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__nav-button {
+  width: 26px;
+  height: 26px;
+  --cp-cut-top: 6px;
+  --cp-cut-bottom: 5px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__nav-button:disabled {
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--bd-s);
+  opacity: 0.42;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__open-file {
+  margin-left: 6px;
+  padding-left: 0;
+  box-shadow: none !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__identity {
+  color: var(--tx);
+  letter-spacing: 0.015em;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__identity strong {
+  color: var(--tx);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__depth {
+  gap: 3px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__depth-segment {
+  height: 8px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  clip-path: polygon(2px 0, 100% 0, calc(100% - 2px) 100%, 0 100%);
+  background: color-mix(in srgb, var(--tx-m) 24%, var(--bg));
+  transition: background 140ms ease, filter 140ms ease;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__depth-segment.is-filled {
+  background: var(--deco-cyan);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__depth-segment.is-current {
+  background: var(--accent);
+  box-shadow: none;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 55%, transparent));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__close.settings-card__close {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 16px;
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--bd-x);
+  --cp-cut-top: 6px;
+  --cp-cut-bottom: 5px;
+  color: var(--tx2) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__close.settings-card__close:hover {
+  --cp-bg: var(--deco-rose-dim);
+  --cp-bd: var(--deco-rose);
+  color: var(--tx) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__content {
+  background: var(--bg) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__toc.toc-panel {
+  clip-path: none !important;
+  backdrop-filter: none !important;
+  background: var(--bg-s) !important;
+  box-shadow: -1px 0 0 var(--bd-s) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__loading-overlay {
+  border: 0 !important;
+  border-radius: 0 !important;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  background: color-mix(in srgb, var(--bg-e) 92%, var(--deco-cyan));
+  box-shadow: none !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-view__notice {
+  background: color-mix(in srgb, var(--deco-cyan) 7%, var(--bg-e));
+  color: var(--tx2);
+  box-shadow: inset 2px 0 0 var(--deco-cyan), 0 -1px 0 var(--bd-s) !important;
+}

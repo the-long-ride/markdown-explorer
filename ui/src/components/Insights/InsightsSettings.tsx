@@ -15,6 +15,7 @@ import { INSIGHTS_LINT_RULE_DEFAULTS } from '../../insights/lint';
 import { createInsightsPathMatcher } from '../../insights/patterns';
 import type { WorkspaceInsightsSessionViewModel } from '../../insights/useWorkspaceInsights';
 import { SwitchButton } from '../shared/SwitchButton';
+import { InsightsSettingIcon } from './InsightsIcons';
 
 export interface InsightsSettingsProps {
   readonly session: WorkspaceInsightsSessionViewModel;
@@ -119,7 +120,12 @@ export function InsightsSettings({
           <div className="workspace-insights__settings-section-title">{labels.scopeAndNetwork}</div>
           {canEditGlobal && (
             <label className="workspace-insights__setting-row">
-              <span>{labels.settingsScope}</span>
+              <span className="workspace-insights__setting-label">
+                <span className="workspace-insights__setting-icon" aria-hidden="true">
+                  <InsightsSettingIcon id="settings-scope" />
+                </span>
+                <span>{labels.settingsScope}</span>
+              </span>
               <select aria-label={labels.settingsScope} value={effectiveScope} onChange={event => setScope(event.target.value as 'workspace' | 'global')}>
                 <option value="workspace">{labels.workspaceOverrides}</option>
                 <option value="global">{labels.globalDefaults}</option>
@@ -127,7 +133,12 @@ export function InsightsSettings({
             </label>
           )}
           <div className="workspace-insights__toggle-row">
-            <span>{labels.externalLinksLabel}</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="check-external-links" />
+              </span>
+              <span>{labels.externalLinksLabel}</span>
+            </span>
             <SwitchButton
               checked={effectiveSettings.externalLinks.enabled}
               label={labels.externalLinksLabel}
@@ -135,9 +146,14 @@ export function InsightsSettings({
             />
           </div>
           <label className="workspace-insights__setting-row">
-            <span>
-              {labels.externalTimeout}
-              <span className="workspace-insights__unit-note">({labels.unitMs})</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="external-timeout" />
+              </span>
+              <span>
+                {labels.externalTimeout}
+                <span className="workspace-insights__unit-note">({labels.unitMs})</span>
+              </span>
             </span>
             <input type="number" min={3000} max={30000} step={1000} aria-label={labels.externalTimeout} value={effectiveSettings.externalLinks.timeoutMs} onChange={event => changeSettings({ externalLinks: { timeoutMs: numericValue(event.target.value, effectiveSettings.externalLinks.timeoutMs) } })} />
           </label>
@@ -146,31 +162,51 @@ export function InsightsSettings({
         <div className="workspace-insights__settings-section">
           <div className="workspace-insights__settings-section-title">{labels.limitsAndTuning}</div>
           <label className="workspace-insights__setting-row">
-            <span>
-              {nearDuplicateLabel}
-              <span className="workspace-insights__unit-note">({labels.unitPercent})</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="near-duplicate" />
+              </span>
+              <span>
+                {nearDuplicateLabel}
+                <span className="workspace-insights__unit-note">({labels.unitPercent})</span>
+              </span>
             </span>
             <input type="number" min={50} max={100} step={1} aria-label={nearDuplicateLabel} value={Math.round(effectiveSettings.nearDuplicateThreshold * 100)} onChange={event => changeSettings({ nearDuplicateThreshold: numericValue(event.target.value, effectiveSettings.nearDuplicateThreshold * 100) / 100 })} />
           </label>
           <label className="workspace-insights__setting-row">
-            <span>
-              {labels.graphNodeCap}
-              <span className="workspace-insights__unit-note">({labels.unitNodes})</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="graph-node-cap" />
+              </span>
+              <span>
+                {labels.graphNodeCap}
+                <span className="workspace-insights__unit-note">({labels.unitNodes})</span>
+              </span>
             </span>
             <input type="number" min={25} max={500} step={25} aria-label={labels.graphNodeCap} value={effectiveSettings.graphNodeCap} onChange={event => changeSettings({ graphNodeCap: numericValue(event.target.value, effectiveSettings.graphNodeCap) })} />
           </label>
           <label className="workspace-insights__setting-row">
-            <span>
-              {labels.sourceSoftLimit}
-              <span className="workspace-insights__unit-note">({labels.unitMb})</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="source-soft-limit" />
+              </span>
+              <span>
+                {labels.sourceSoftLimit}
+                <span className="workspace-insights__unit-note">({labels.unitMb})</span>
+              </span>
             </span>
             <input type="number" min={1} max={64} step={1} aria-label={labels.sourceSoftLimit} value={Math.max(1, Math.round(effectiveSettings.sourceSoftLimitBytes / (1024 * 1024)))} onChange={event => changeSettings({ sourceSoftLimitBytes: numericValue(event.target.value, effectiveSettings.sourceSoftLimitBytes / (1024 * 1024)) * 1024 * 1024 })} />
           </label>
           {effectiveScope === 'global' && (
             <label className="workspace-insights__setting-row">
-              <span>
-                {labels.cacheCap}
-                <span className="workspace-insights__unit-note">({labels.unitMb})</span>
+              <span className="workspace-insights__setting-label">
+                <span className="workspace-insights__setting-icon" aria-hidden="true">
+                  <InsightsSettingIcon id="cache-cap" />
+                </span>
+                <span>
+                  {labels.cacheCap}
+                  <span className="workspace-insights__unit-note">({labels.unitMb})</span>
+                </span>
               </span>
               <input type="number" min={64} max={2048} step={64} aria-label={labels.cacheCap} value={Math.round(effectiveSettings.cacheCapBytes / (1024 * 1024))} onChange={event => onGlobalSettingsChange?.({ cacheCapBytes: numericValue(event.target.value, effectiveSettings.cacheCapBytes / (1024 * 1024)) * 1024 * 1024 })} />
             </label>
@@ -180,7 +216,12 @@ export function InsightsSettings({
         <div className="workspace-insights__settings-section">
           <div className="workspace-insights__settings-section-title">{labels.relationshipPreset}</div>
           <label className="workspace-insights__setting-row">
-            <span>{labels.relationshipPreset}</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="relationship-preset" />
+              </span>
+              <span>{labels.relationshipPreset}</span>
+            </span>
             <select aria-label={labels.relationshipPreset} value={effectiveSettings.relationshipPreset} onChange={event => changeSettings({ relationshipPreset: event.target.value as InsightsSettings['relationshipPreset'] })}>
               {(['default', 'link-focused', 'tag-focused', 'terminology-focused', 'custom'] as const).map(preset => (
                 <option key={preset} value={preset}>{labels.presentation.relationshipPresets[preset]}</option>
@@ -197,7 +238,12 @@ export function InsightsSettings({
                 ['terminology', labels.sharedTerminology],
               ] as const).map(([key, label]) => (
                 <label key={key}>
-                  <span>{label}</span>
+                  <span className="workspace-insights__setting-label">
+                    <span className="workspace-insights__setting-icon workspace-insights__setting-icon--sub" aria-hidden="true">
+                      <InsightsSettingIcon id={`weight-${key}`} size={11} />
+                    </span>
+                    <span>{label}</span>
+                  </span>
                   <input type="number" min={0} max={100} step={1} aria-label={label} value={effectiveSettings.relationshipWeights[key]} onChange={event => updateRelationshipWeight(key, event.target.value)} />
                 </label>
               ))}
@@ -208,11 +254,21 @@ export function InsightsSettings({
         <div className="workspace-insights__settings-section">
           <div className="workspace-insights__settings-section-title">{labels.patternFilters}</div>
           <label className="workspace-insights__setting-col">
-            <span>{labels.includeExcludePatterns}</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="user-patterns" />
+              </span>
+              <span>{labels.includeExcludePatterns}</span>
+            </span>
             <textarea placeholder="e.g. docs/**&#10;!archive/**" aria-label={labels.includeExcludePatterns} value={userPatternsDraft} onChange={event => updatePatterns('userPatterns', event.target.value)} />
           </label>
           <label className="workspace-insights__setting-col">
-            <span>{labels.oversizedPatterns}</span>
+            <span className="workspace-insights__setting-label">
+              <span className="workspace-insights__setting-icon" aria-hidden="true">
+                <InsightsSettingIcon id="oversized-patterns" />
+              </span>
+              <span>{labels.oversizedPatterns}</span>
+            </span>
             <textarea placeholder="e.g. large-reference.md" aria-label={labels.oversizedPatterns} value={oversizedPatternsDraft} onChange={event => updatePatterns('oversizedPatterns', event.target.value)} />
           </label>
           {patternError && <div role="alert" className="workspace-insights__settings-error">{patternError}</div>}
@@ -231,8 +287,11 @@ export function InsightsSettings({
                     label={`${labels.rule}: ${ruleLabel}`}
                     onClick={() => updateLintRule(ruleId, { enabled: !config.enabled })}
                   />
-                  <span onClick={() => updateLintRule(ruleId, { enabled: !config.enabled })}>
-                    {ruleLabel}
+                  <span className="workspace-insights__setting-label" onClick={() => updateLintRule(ruleId, { enabled: !config.enabled })}>
+                    <span className="workspace-insights__setting-icon workspace-insights__setting-icon--sub" aria-hidden="true">
+                      <InsightsSettingIcon id={`lint-${ruleId}`} size={11} />
+                    </span>
+                    <span>{ruleLabel}</span>
                   </span>
                 </div>
                 <select aria-label={`${labels.severity}: ${ruleLabel}`} value={config.severity} onChange={event => updateLintRule(ruleId, { severity: event.target.value as 'info' | 'warning' | 'error' })}>

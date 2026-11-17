@@ -1,6 +1,6 @@
 import type { Translations } from '../../contexts/translationTypes';
 
-export type ShortcutMission = 'application' | 'document' | 'documentTabs' | 'navigation' | 'search' | 'view';
+export type ShortcutMission = 'application' | 'document' | 'documentTabs' | 'markdownEditor' | 'navigation' | 'search' | 'view';
 export type ShortcutScope = 'both' | 'non-vscode' | 'desktop' | 'electron' | 'editor';
 
 export interface ShortcutAction {
@@ -27,6 +27,7 @@ export const ACTIONS_LIST: ShortcutAction[] = [
 
   // View & Panels
   { id: 'toggleSidebar', label: 'Toggle sidebar visibility', scope: 'both', mission: 'view' },
+  { id: 'openFiles', label: 'Open Files tab', scope: 'both', mission: 'view' },
   { id: 'openBookmarks', label: 'Open Bookmarks tab', scope: 'both', mission: 'view' },
   { id: 'toggleToc', label: 'Toggle table of contents panel', scope: 'both', mission: 'view' },
   { id: 'toggleWorkspaceInsights', label: 'Toggle workspace insights panel', scope: 'desktop', mission: 'view' },
@@ -51,10 +52,33 @@ export const ACTIONS_LIST: ShortcutAction[] = [
   // General & Settings
   { id: 'saveCurrentDocument', label: 'Save current document', scope: 'both', mission: 'document' },
   { id: 'editCurrentDocument', label: 'Edit current document', scope: 'editor', mission: 'document' },
+  { id: 'plainEditCurrentDocument', label: 'Toggle Plain Markdown Editor', scope: 'editor', mission: 'document' },
+  { id: 'reloadWindow', label: 'Reload window', scope: 'editor', mission: 'application' },
   { id: 'settings', label: 'Toggle settings modal', scope: 'both', mission: 'application' },
   { id: 'toggleTheme', label: 'Toggle light/dark mode', scope: 'both', mission: 'application' },
+
+  // Markdown Editor
+  { id: 'editorBold', label: 'Bold', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorItalic', label: 'Italic', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorUnderline', label: 'Underline', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorInlineCode', label: 'Inline code', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorLink', label: 'Insert link', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorCodeBlock', label: 'Code block', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorQuote', label: 'Blockquote', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorBulletList', label: 'Bullet list', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorNumberedList', label: 'Numbered list', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorTaskList', label: 'Task list', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorDecreaseFontSize', label: 'Decrease font size', scope: 'editor', mission: 'markdownEditor' },
+  { id: 'editorIncreaseFontSize', label: 'Increase font size', scope: 'editor', mission: 'markdownEditor' },
 ];
 
+const EDITOR_SHORTCUT_ACTION_IDS = new Set(
+  ACTIONS_LIST.filter((action) => action.mission === 'markdownEditor').map((action) => action.id),
+);
+
+export function isEditorShortcutAction(actionId: string): boolean {
+  return EDITOR_SHORTCUT_ACTION_IDS.has(actionId);
+}
 
 export function getLocalizedShortcutActionLabel(
   t: Translations,
@@ -68,6 +92,18 @@ export function getLocalizedShortcutActionLabel(
     case 'closeContentTabsToRight': return t.tabContextMenu.closeTabsToRight;
     case 'closeOtherContentTabs': return t.tabContextMenu.closeOtherTabs;
     case 'closeAllContentTabs': return t.tabContextMenu.closeAllTabs;
+    case 'editorBold': return t.markdownEditor?.bold ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorItalic': return t.markdownEditor?.italic ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorUnderline': return t.markdownEditor?.underline ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorInlineCode': return t.markdownEditor?.inlineCode ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorLink': return t.markdownEditor?.link ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorCodeBlock': return t.markdownEditor?.codeBlock ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorQuote': return t.markdownEditor?.quote ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorBulletList': return t.markdownEditor?.bulletList ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorNumberedList': return t.markdownEditor?.numberedList ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorTaskList': return t.markdownEditor?.taskList ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorDecreaseFontSize': return t.markdownEditor?.decreaseFontSize ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
+    case 'editorIncreaseFontSize': return t.markdownEditor?.increaseFontSize ?? (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
     default:
       return (t.actions as Record<string, string | undefined>)[actionId] ?? fallback;
   }

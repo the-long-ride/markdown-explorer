@@ -1,7 +1,7 @@
 #termsModal {
   position: fixed;
   inset: 0;
-  z-index: 3000;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,22 +70,60 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--tx);
+  color: var(--tx2);
   font-size: 12px;
   cursor: pointer;
   user-select: none;
+  transition: color 0.15s ease;
+}
+
+.terms-checkbox-label:hover {
+  color: var(--tx);
 }
 
 .terms-checkbox {
-  flex: 0 0 15px;
-  width: 15px;
-  height: 15px;
-  margin-top: 0;
-  accent-color: var(--accent);
-  cursor: pointer;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
-.terms-checkbox-label span {
+.terms-checkbox-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  line-height: 1;
+  color: var(--tx3);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.terms-checkbox-custom svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.terms-checkbox-label:hover .terms-checkbox-custom {
+  color: var(--tx);
+}
+
+.terms-checkbox:focus-visible + .terms-checkbox-custom {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.terms-checkbox:checked + .terms-checkbox-custom,
+.terms-checkbox-custom:has(rect) {
+  color: var(--accent);
+}
+
+.terms-checkbox-text {
+  color: var(--tx);
   line-height: 1.4;
 }
 

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { buildShortcutTooltip } from "../../utils/toolbar-menu.js";
+import { executeThemeTransition } from "../../utils/themeTransition";
 import {
   EditIcon,
   HomeIcon,
@@ -74,7 +75,11 @@ interface ToolbarActionMenuProps {
 function getItemIcon(id: string, isDark: boolean, isFocusMode: boolean) {
   switch (id) {
     case "home": return <HomeIcon size={13} />;
-    case "theme": return isDark ? <SunIcon size={14} /> : <MoonIcon size={14} />;
+    case "theme": return (
+      <span className="theme-toggle-morph">
+        {isDark ? <SunIcon size={14} /> : <MoonIcon size={14} />}
+      </span>
+    );
     case "edit": return <EditIcon size={12} />;
     case "history": return <HistoryIcon size={13} />;
     case "sidebar": return <SidebarIcon size={14} />;
@@ -136,11 +141,17 @@ export function ToolbarActionMenu({
   items.push({ id: "export", label: exportLabel, tooltip: exportTooltip || exportLabel, disabled: false });
   items.push({ id: "settings", label: settingsLabel, tooltip: buildShortcutTooltip(settingsTooltip, settingsShortcut), disabled: false });
 
-  const handleAction = (item: MenuItem) => {
+  const handleAction = (item: MenuItem, event?: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => {
     setOpen(false);
     switch (item.id) {
       case "home": onHome(); return;
-      case "theme": onTheme(); return;
+      case "theme":
+        executeThemeTransition(onTheme, {
+          originElement: event?.currentTarget ?? menuRef.current,
+          event: event && 'clientX' in event && event.clientX > 0 ? event : undefined,
+          nextTheme: isDark ? 'light' : 'dark',
+        });
+        return;
       case "edit": onEdit(); return;
       case "history": if (onHistory) onHistory(); else window.dispatchEvent(new Event(DOCUMENT_HISTORY_OPEN_EVENT)); return;
       case "sidebar": onSidebarToggle?.(); return;
@@ -164,11 +175,11 @@ export function ToolbarActionMenu({
               {dividerBefore && <div className="toolbar-action-menu__separator" role="separator" aria-orientation="horizontal" />}
               {typeof item.toggleState === "boolean" ? (
                 <div className={`toolbar-action-menu__item is-toggle${item.disabled ? " is-disabled" : ""}`} role="none">
-                  <TooltipButton type="button" role="menuitem" className="toolbar-action-menu__toggle-action" onClick={() => handleAction(item)} tooltip={item.tooltip} icon={getItemIcon(item.id, isDark, isFocusMode)} label={item.label} onlyIcon={false} disabled={item.disabled} tooltipPos="above" tooltipAlign="center" />
-                  <SwitchButton checked={item.toggleState} label={item.label} className="toolbar-action-menu__switch" disabled={item.disabled} onClick={() => handleAction(item)} />
+                  <TooltipButton type="button" role="menuitem" className="toolbar-action-menu__toggle-action" onClick={(e) => handleAction(item, e)} tooltip={item.tooltip} icon={getItemIcon(item.id, isDark, isFocusMode)} label={item.label} onlyIcon={false} disabled={item.disabled} tooltipPos="above" tooltipAlign="right" />
+                  <SwitchButton checked={item.toggleState} label={item.label} className="toolbar-action-menu__switch" disabled={item.disabled} onClick={(e) => handleAction(item, e)} />
                 </div>
               ) : (
-                <TooltipButton type="button" role="menuitem" className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}${item.id === "settings" && hasUpdate ? " has-update" : ""}`} onClick={() => handleAction(item)} tooltip={item.tooltip} icon={getItemIcon(item.id, isDark, isFocusMode)} label={item.label} onlyIcon={false} disabled={item.disabled} tooltipPos="above" tooltipAlign="center" />
+                <TooltipButton type="button" role="menuitem" className={`toolbar-action-menu__item${item.id === "settings" ? " is-primary" : ""}${item.id === "settings" && hasUpdate ? " has-update" : ""}`} onClick={(e) => handleAction(item, e)} tooltip={item.tooltip} icon={getItemIcon(item.id, isDark, isFocusMode)} label={item.label} onlyIcon={false} disabled={item.disabled} tooltipPos="above" tooltipAlign="right" />
               )}
             </Fragment>
           ))}

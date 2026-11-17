@@ -1,7 +1,7 @@
 .theme-onboarding-modal {
   position: fixed;
   inset: 0;
-  z-index: 2147483640;
+  z-index: var(--z-modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,7 +155,7 @@
   left: 0;
   right: 0;
   top: calc(100% + 4px);
-  z-index: 10000020;
+  z-index: var(--z-modal-popover);
   max-height: 220px;
   overflow-y: auto;
   overscroll-behavior: contain;

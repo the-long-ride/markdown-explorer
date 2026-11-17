@@ -47,6 +47,7 @@ pub struct AppStateInner {
     pub workspace_operation_id: Option<String>,
     pub workspace_tab_id: Option<String>,
     pub ready_handled: bool,
+    pub last_ready_id: Option<String>,
     pub document_conversion_enabled: bool,
     pub fullscreen_transition: FullscreenTransition,
     pub update_state: crate::update::UpdateState,

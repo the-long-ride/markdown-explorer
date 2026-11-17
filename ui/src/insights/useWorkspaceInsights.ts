@@ -1,50 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AnalyzedDocument } from './analyzeDocument';
 import type { InsightsCachedDocument, InsightsCacheStore } from './cache';
-import {
-  checkExternalLinks as startExternalLinkChecks,
-  readInsightsDocumentSource,
-  scanInsightsWorkspace,
-  type ExternalLinkCheckHandle,
-  type InsightsScanHandle,
-} from '../platform/bridge';
+import { readInsightsDocumentSource, scanInsightsWorkspace, type ExternalLinkCheckHandle, type InsightsScanHandle } from '../platform/bridge';
 import { resolveInsightsSettings } from './config';
-import type {
-  ExternalLinkCheckResult,
-  InsightsFsDelta,
-  InsightsWorkspaceEntry,
-} from './contracts';
+import { createAsyncLimiter } from './concurrency';
+import type { ExternalLinkCheckResult, InsightsFsDelta, InsightsWorkspaceEntry } from './contracts';
 import type { WorkspaceInsightsSnapshot } from './index';
-import {
-  createInsightsWorkerClient,
-  type InsightsWorkerClient,
-} from './workerClient';
+import { createInsightsWorkerClient, type InsightsWorkerClient } from './workerClient';
 import type { InsightsSourceInput, InsightsWorkerOutput } from './workerProtocol';
 import {
-  buildWorkspaceWikiResolverContext,
-  createValidatedCacheDocument,
-  createWorkspaceInsightsCacheContext,
-  createWorkspaceInsightsCacheStore,
-  emptyWorkspaceInsightsSnapshot as emptySnapshot,
-  insightsRequestId as requestId,
-  isMarkdownInsightsEntry as isMarkdownEntry,
-  persistWorkspaceInsightsCache,
-  restoreWorkspaceInsightsCache,
-  updateWorkspaceInsightsWatchState,
-  useWorkspaceInsightsSettingsLifecycle,
-  type UseWorkspaceInsightsOptions,
-  type WorkspaceInsightsProgress,
-  type WorkspaceInsightsSessionViewModel,
-  type WorkspaceInsightsStatus,
-  type WorkspaceInsightsWarning,
+  applyBatchedSources, buildWorkspaceWikiResolverContext, createWorkspaceInsightsCacheContext,
+  createWorkspaceInsightsCacheStore, emptyWorkspaceInsightsSnapshot as emptySnapshot, executeExternalLinkChecks,
+  insightsRequestId as requestId, isMarkdownInsightsEntry as isMarkdownEntry, persistWorkspaceInsightsCache,
+  restoreWorkspaceCacheToWorker, updateWorkspaceInsightsWatchState, useWorkspaceInsightsSettingsLifecycle,
+  type InsightsPendingDocument, type UseWorkspaceInsightsOptions, type WorkspaceInsightsProgress,
+  type WorkspaceInsightsSessionViewModel, type WorkspaceInsightsStatus, type WorkspaceInsightsWarning,
 } from './workspaceInsightsSession';
 
 export type {
-  UseWorkspaceInsightsOptions,
-  WorkspaceInsightsProgress,
-  WorkspaceInsightsSessionViewModel,
-  WorkspaceInsightsStatus,
-  WorkspaceInsightsWarning,
+  UseWorkspaceInsightsOptions, WorkspaceInsightsProgress, WorkspaceInsightsSessionViewModel,
+  WorkspaceInsightsStatus, WorkspaceInsightsWarning,
 } from './workspaceInsightsSession';
 
 export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): WorkspaceInsightsSessionViewModel {
@@ -71,6 +46,9 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
   const externalRef = useRef<ExternalLinkCheckHandle | null>(null);
   const workerJobRef = useRef<string | null>(null);
   const snapshotRef = useRef(snapshot);
+  const statusRef = useRef(status);
+  const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const readLimiterRef = useRef(createAsyncLimiter());
   const hashesRef = useRef(new Map<string, string>());
   const cacheRef = useRef<InsightsCacheStore | null>(null);
   const cacheLoadedRef = useRef(false);
@@ -82,7 +60,7 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
   const generationRef = useRef(0);
 
   useEffect(() => { snapshotRef.current = snapshot; }, [snapshot]);
-
+  useEffect(() => { statusRef.current = status; }, [status]);
   const handleWorkerEvent = useCallback((event: InsightsWorkerOutput) => {
     if (event.type === 'progress') {
       setProgress({ completed: event.completed, total: event.total, provisional: true });
@@ -91,8 +69,23 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
       documentResultsByJobRef.current.set(event.jobId, [...previous, ...event.documents]);
       setProgress(current => ({ ...current, provisional: true }));
     } else if (event.type === 'complete') {
-      snapshotRef.current = event.snapshot;
-      setSnapshot(event.snapshot);
+      if (event.snapshot) {
+        snapshotRef.current = event.snapshot;
+        if (statusRef.current === 'indexing') {
+          if (!snapshotTimerRef.current) {
+            snapshotTimerRef.current = setTimeout(() => {
+              snapshotTimerRef.current = null;
+              setSnapshot(snapshotRef.current);
+            }, 120);
+          }
+        } else {
+          if (snapshotTimerRef.current) {
+            clearTimeout(snapshotTimerRef.current);
+            snapshotTimerRef.current = null;
+          }
+          setSnapshot(event.snapshot);
+        }
+      }
     } else if (event.type === 'error') {
       setStatus('error');
       setWarnings(current => [...current, { reason: event.message }]);
@@ -113,76 +106,46 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
   const restoreCache = useCallback(async (worker: InsightsWorkerClient): Promise<void> => {
     if (!cacheContext || cacheLoadedRef.current) return;
     cacheLoadedRef.current = true;
-    const cache = ensureCache();
-    if (!cache) return;
-    try {
-      const cached = await Promise.race([
-        restoreWorkspaceInsightsCache(cache, cacheContext),
-        new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 1500)),
-      ]);
-      if (!cached?.documents.length || disposedRef.current) return;
-      provisionalPathsRef.current = new Set(cached.documents.map(document => document.path));
-      setProgress({ completed: 0, total: cached.documents.length, provisional: true });
-      await Promise.race([
-        worker.restoreCachedDocuments(
-          cached.documents.map(document => document.persisted),
-          requestId('insights-cache-restore'),
-        ),
-        new Promise<void>(resolve => setTimeout(resolve, 3000)),
-      ]);
-    } catch {
-      // Ignore cache restore errors and continue with authoritative disk validation.
-    }
+    await restoreWorkspaceCacheToWorker(
+      ensureCache(),
+      cacheContext,
+      worker,
+      provisionalPathsRef,
+      setProgress,
+      disposedRef,
+    );
   }, [cacheContext, ensureCache]);
 
-  const readEntry = useCallback(async (
+  const readSourceEntry = useCallback(async (
     entry: InsightsWorkspaceEntry,
-    worker: InsightsWorkerClient,
     forceHash: boolean,
-  ): Promise<void> => {
+  ): Promise<InsightsPendingDocument | null> => {
     try {
-      const result = await readInsightsDocumentSource(options.bridge, {
+      const result = await readLimiterRef.current(() => readInsightsDocumentSource(options.bridge, {
         requestId: requestId('insights-source'),
         relativePath: entry.relativePath,
         softLimitBytes: settings.sourceSoftLimitBytes,
         hardLimitBytes: settings.sourceHardLimitBytes,
-      });
-      if (disposedRef.current) return;
+      }));
+      if (disposedRef.current) return null;
       if (result.status !== 'ok' || result.source === undefined) {
         setWarnings(current => [...current, { path: entry.relativePath, reason: result.status }]);
         hashesRef.current.delete(entry.relativePath);
         validatedCacheDocumentsRef.current.delete(entry.relativePath);
-        if (provisionalPathsRef.current.delete(entry.relativePath)) {
-          await worker.applyFsDeltaBatch(
+        if (provisionalPathsRef.current.delete(entry.relativePath) && workerRef.current) {
+          void workerRef.current.applyFsDeltaBatch(
             [{ kind: 'delete', relativePath: entry.relativePath }],
             requestId('insights-cache-invalid'),
           ).catch(() => {});
         }
-        return;
+        return null;
       }
       const nextHash = result.contentHash ?? `${result.mtimeMs ?? entry.mtimeMs}:${result.sizeBytes ?? entry.sizeBytes}`;
-      if (!forceHash && hashesRef.current.get(entry.relativePath) === nextHash) return;
-      const jobId = requestId('insights-document');
-      documentResultsByJobRef.current.delete(jobId);
-      workerJobRef.current = jobId;
-      await worker.applySourceBatch([{
-        path: result.relativePath,
-        source: result.source,
-        revision: nextHash,
-      }], jobId);
-      if (workerJobRef.current === jobId) workerJobRef.current = null;
-      hashesRef.current.set(entry.relativePath, nextHash);
-      provisionalPathsRef.current.delete(entry.relativePath);
-      const analyzed = documentResultsByJobRef.current.get(jobId)?.find(document => document.path === result.relativePath);
-      documentResultsByJobRef.current.delete(jobId);
-      if (analyzed) {
-        validatedCacheDocumentsRef.current.set(
-          entry.relativePath,
-          createValidatedCacheDocument(entry, result, nextHash, analyzed),
-        );
-      }
+      if (!forceHash && hashesRef.current.get(entry.relativePath) === nextHash) return null;
+      return { entry, result, nextHash };
     } catch (err) {
       setWarnings(current => [...current, { path: entry.relativePath, reason: String(err) }]);
+      return null;
     }
   }, [options.bridge, settings.sourceHardLimitBytes, settings.sourceSoftLimitBytes]);
 
@@ -190,7 +153,7 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
     const worker = workerRef.current;
     if (!worker || disposedRef.current) return;
     const structural: InsightsFsDelta[] = [];
-    const reads: Promise<void>[] = [];
+    const readTasks: Promise<InsightsPendingDocument | null>[] = [];
     for (const delta of deltas) {
       if (delta.kind === 'delete') {
         hashesRef.current.delete(delta.relativePath);
@@ -205,16 +168,19 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
         }
         structural.push(delta);
         if (delta.entry.kind === 'file' && isMarkdownEntry(delta.entry)) {
-          reads.push(readEntry(delta.entry, worker, true));
+          readTasks.push(readSourceEntry(delta.entry, true));
         }
       } else if (delta.entry.kind === 'file' && isMarkdownEntry(delta.entry)) {
-        reads.push(readEntry(delta.entry, worker, false));
+        readTasks.push(readSourceEntry(delta.entry, false));
       }
     }
     if (structural.length) await worker.applyFsDeltaBatch(structural, requestId('insights-fs'));
-    await Promise.all(reads);
+    const items = (await Promise.all(readTasks)).filter((item): item is InsightsPendingDocument => Boolean(item));
+    if (items.length) {
+      await applyBatchedSources(items, worker, documentResultsByJobRef, hashesRef, provisionalPathsRef, validatedCacheDocumentsRef, workerJobRef);
+    }
     await persistValidatedCache();
-  }, [persistValidatedCache, readEntry]);
+  }, [persistValidatedCache, readSourceEntry]);
 
   const ensureWorker = useCallback((): InsightsWorkerClient => {
     if (workerRef.current) return workerRef.current;
@@ -245,7 +211,7 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
       await restoreCache(worker);
       if (generation !== generationRef.current || disposedRef.current) return;
       updateWorkspaceInsightsWatchState(options.bridge, options.workspaceOperationId, true, true);
-      const reads: Promise<void>[] = [];
+      const toAnalyze: InsightsWorkspaceEntry[] = [];
       let discovered = 0;
       const scan = scanInsightsWorkspace(options.bridge, {
         requestId: requestId('insights-scan'), workspaceOperationId: options.workspaceOperationId,
@@ -254,13 +220,38 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
         discovered = Math.max(discovered, batch.scannedEntries);
         setProgress(current => ({ ...current, total: Math.max(current.total, batch.scannedEntries), provisional: true }));
         for (const entry of batch.entries) {
-          if (entry.kind !== 'file' || !isMarkdownEntry(entry)) continue;
-          reads.push(readEntry(entry, worker, forceHash));
+          if (entry.kind === 'file' && isMarkdownEntry(entry)) toAnalyze.push(entry);
         }
       });
       scanRef.current = scan;
       const complete = await scan.done;
-      await Promise.all(reads);
+      if (generation !== generationRef.current || disposedRef.current) return;
+      const BATCH_SIZE = 16;
+      let receivedFinalSnapshot = false;
+      for (let i = 0; i < toAnalyze.length; i += BATCH_SIZE) {
+        if (generation !== generationRef.current || disposedRef.current) return;
+        const chunk = toAnalyze.slice(i, i + BATCH_SIZE);
+        const rawResults = await Promise.all(chunk.map(entry => readSourceEntry(entry, forceHash)));
+        if (generation !== generationRef.current || disposedRef.current) return;
+        const validItems = rawResults.filter((item): item is InsightsPendingDocument => Boolean(item));
+        if (validItems.length > 0) {
+          const isLastBatch = i + BATCH_SIZE >= toAnalyze.length;
+          if (isLastBatch) receivedFinalSnapshot = true;
+          await applyBatchedSources(
+            validItems,
+            worker,
+            documentResultsByJobRef,
+            hashesRef,
+            provisionalPathsRef,
+            validatedCacheDocumentsRef,
+            workerJobRef,
+            { includeSnapshot: isLastBatch },
+          );
+        }
+      }
+      if (toAnalyze.length > 0 && !receivedFinalSnapshot) {
+        await worker.requestSnapshot(requestId('insights-final-snapshot'));
+      }
       if (generation !== generationRef.current || disposedRef.current) return;
       scanRef.current = null;
       if (complete.truncated) setWarnings(current => [...current, { reason: complete.truncatedReason ?? 'scan-truncated' }]);
@@ -273,6 +264,11 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
         }
         await persistValidatedCache().catch(() => {});
       }
+      if (snapshotTimerRef.current) {
+        clearTimeout(snapshotTimerRef.current);
+        snapshotTimerRef.current = null;
+      }
+      setSnapshot(snapshotRef.current);
       setProgress({ completed: complete.totalEntries || discovered, total: complete.totalEntries || discovered, provisional: false });
       setStatus('ready');
     } catch (error) {
@@ -281,22 +277,28 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
       setWarnings(current => [...current, { reason: String(error) }]);
       setStatus('error');
     }
-  }, [ensureWorker, options.bridge, options.workspaceKey, options.workspaceOperationId, persistValidatedCache, readEntry, restoreCache, settings.oversizedPatterns, settings.userPatterns]);
+  }, [ensureWorker, options.bridge, options.workspaceKey, options.workspaceOperationId, persistValidatedCache, readSourceEntry, restoreCache, settings.oversizedPatterns, settings.userPatterns]);
 
   const open = useCallback(async () => {
-    if (!options.workspaceKey || disposedRef.current) return;
+    if (disposedRef.current) return;
     setPanelOpen(true);
+    if (!options.workspaceKey) return;
     if (openedRef.current && workerRef.current && status !== 'idle') {
       updateWorkspaceInsightsWatchState(options.bridge, options.workspaceOperationId, true, true);
       if (status === 'paused') setStatus(snapshotRef.current.revision > 0 ? 'ready' : 'idle');
       return;
     }
+    await new Promise(resolve => setTimeout(resolve, 0));
     await runScan(false);
   }, [options.bridge, options.workspaceKey, options.workspaceOperationId, runScan, status]);
 
   const closePanel = useCallback(() => {
     setPanelOpen(false);
     updateWorkspaceInsightsWatchState(options.bridge, options.workspaceOperationId, openedRef.current, false);
+    if (snapshotTimerRef.current) {
+      clearTimeout(snapshotTimerRef.current);
+      snapshotTimerRef.current = null;
+    }
     if (status === 'indexing') {
       scanRef.current?.cancel();
       if (workerJobRef.current) workerRef.current?.cancel(workerJobRef.current);
@@ -336,47 +338,27 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
     urls: readonly string[],
     checkOptions: { readonly recheck?: boolean } = {},
   ): Promise<readonly ExternalLinkCheckResult[]> => {
-    if (!settings.externalLinks.enabled || disposedRef.current) return [];
-    const unique = [...new Set(urls.filter(url => /^https?:\/\//i.test(url)))];
-    if (!unique.length) return [];
-    const results: ExternalLinkCheckResult[] = [];
-    const handle = startExternalLinkChecks(options.bridge, {
-      requestId: requestId('insights-external'), urls: unique,
-      timeoutMs: settings.externalLinks.timeoutMs,
-      recheck: checkOptions.recheck,
-      approvedPrivateOrigins: [...approvedPrivateOrigins],
-    }, result => {
-      results.push(result);
-      setExternalResults(current => {
-        const next = new Map(current);
-        next.set(result.url, result);
-        return next;
-      });
-    });
-    externalRef.current = handle;
-    await handle.done;
-    if (externalRef.current === handle) externalRef.current = null;
-    return results;
-  }, [approvedPrivateOrigins, options.bridge, settings.externalLinks.enabled, settings.externalLinks.timeoutMs]);
+    if (disposedRef.current) return [];
+    return executeExternalLinkChecks(
+      options.bridge,
+      urls,
+      settings.externalLinks,
+      approvedPrivateOrigins,
+      externalRef,
+      result => setExternalResults(current => new Map(current).set(result.url, result)),
+      checkOptions,
+    );
+  }, [approvedPrivateOrigins, options.bridge, settings.externalLinks]);
 
   const approvePrivateOrigin = useCallback((origin: string) => {
     setApprovedPrivateOrigins(current => new Set(current).add(origin));
   }, []);
 
-  const getWikiResolverContext = useCallback((sourceDocumentPath: string) => (
-    buildWorkspaceWikiResolverContext(
-      sourceDocumentPath,
-      snapshotRef.current,
-      options.bridge,
-      options.workspaceOperationId,
-      settings,
-    )
-  ), [options.bridge, options.workspaceOperationId, settings]);
-
   const dispose = useCallback(() => {
     if (disposedRef.current) return;
     disposedRef.current = true;
     generationRef.current += 1;
+    if (snapshotTimerRef.current) { clearTimeout(snapshotTimerRef.current); snapshotTimerRef.current = null; }
     scanRef.current?.cancel();
     externalRef.current?.cancel();
     if (workerJobRef.current) workerRef.current?.cancel(workerJobRef.current);
@@ -403,19 +385,32 @@ export function useWorkspaceInsights(options: UseWorkspaceInsightsOptions): Work
     return () => dispose();
   }, [options.workspaceKey, dispose]);
 
+  const getWikiResolverContext = useCallback((sourceDocumentPath: string) => buildWorkspaceWikiResolverContext(
+    sourceDocumentPath,
+    snapshotRef.current,
+    options.bridge,
+    options.workspaceOperationId,
+    settings,
+  ), [options.bridge, options.workspaceOperationId, settings]);
+
   useWorkspaceInsightsSettingsLifecycle({
-    workerRef, settings, analysisSignature: cacheContext?.analysisSignature ?? null,
-    openedRef, validatedCacheDocuments: validatedCacheDocumentsRef.current,
-    hashes: hashesRef.current, panelOpen, runScan, setStatus,
-    bridge: options.bridge, workspaceOperationId: options.workspaceOperationId,
+    workerRef,
+    settings,
+    analysisSignature: cacheContext?.analysisSignature ?? null,
+    openedRef,
+    validatedCacheDocuments: validatedCacheDocumentsRef.current,
+    hashes: hashesRef.current,
+    panelOpen,
+    runScan,
+    setStatus,
+    bridge: options.bridge,
+    workspaceOperationId: options.workspaceOperationId,
   });
 
   return {
     panelOpen, status, snapshot, progress, warnings, workerMode,
-    externalResults, approvedPrivateOrigins,
-    open, closePanel, refreshLocal, pause, dispose,
-    applyActiveOverlay, clearActiveOverlay,
-    checkExternalLinks, cancelExternalChecks, approvePrivateOrigin,
-    getWikiResolverContext,
+    externalResults, approvedPrivateOrigins, open, closePanel, refreshLocal,
+    pause, dispose, applyActiveOverlay, clearActiveOverlay, checkExternalLinks,
+    cancelExternalChecks, approvePrivateOrigin, getWikiResolverContext,
   };
 }

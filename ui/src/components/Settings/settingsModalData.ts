@@ -1,23 +1,30 @@
 import type { Translations } from '../../contexts/translations';
-import whiteShibaBlep from '../../assets/themes/pets/backgrounds/white-shiba-blep.png';
+import { version as bundledVersion } from '../../../package.json';
+import nikaAngry from '../../assets/themes/pets/backgrounds/nika-angry.png';
 import kInkSurprise from '../../assets/themes/pets/backgrounds/k-ink-surprise.png';
-import catBlep from '../../assets/themes/pets/backgrounds/cat-blep.png';
-import hamsterBlep from '../../assets/themes/pets/backgrounds/hamster-blep.png';
-import corgiBlep from '../../assets/themes/pets/backgrounds/corgi-blep.png';
 
 export const PET_BLEP_URLS = {
-  'pet-white-shiba': whiteShibaBlep,
+  'pet-white-shiba': nikaAngry,
   'pet-k-ink': kInkSurprise,
-  'pet-cat': catBlep,
-  'pet-hamster': hamsterBlep,
-  'pet-corgi': corgiBlep,
 };
 
 export const BANNED_SHORTCUTS: Record<string, keyof Translations> = {
   'Ctrl+Space': 'bannedShortcutImeMessage',
 };
 
-export function formatCurrentVersion(version: string): string {
-  const match = version.trim().match(/^v?(\d+)\.(\d+)\.(\d+)/i);
-  return match ? `v${match[1]}.${match[2]}.${match[3]}` : '';
+export function resolveVersionNumber(version?: string): string {
+  const trimmed = (version ?? '').trim();
+  if (!trimmed || trimmed === '0.0.0' || /^\(?demo\)?$/i.test(trimmed)) {
+    return bundledVersion;
+  }
+  return trimmed.replace(/\s*\(demo\)\s*/gi, '').trim() || bundledVersion;
+}
+
+export function formatCurrentVersion(version?: string): string {
+  const resolved = resolveVersionNumber(version);
+  const match = resolved.match(/^v?(\d+)\.(\d+)\.(\d+)/i);
+  if (match) {
+    return `v${match[1]}.${match[2]}.${match[3]}`;
+  }
+  return resolved;
 }

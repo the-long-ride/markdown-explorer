@@ -95,13 +95,25 @@ export function WorkspaceInsightsPanel({
     return () => handle.removeEventListener('keydown', onKeyDown);
   }, [session.panelOpen]);
 
-  const viewLabels = useMemo<ReadonlyArray<{ key: InsightsViewKey; label: string }>>(() => [
-    { key: 'gallery', label: labels.gallery },
-    { key: 'links', label: labels.links },
-    { key: 'lint', label: labels.lint },
-    { key: 'duplicates', label: labels.duplicates },
-    { key: 'graph', label: labels.graph },
-    { key: 'related', label: labels.related },
+  useEffect(() => {
+    if (!session.panelOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        e.preventDefault();
+        session.closePanel();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [session.panelOpen, session.closePanel]);
+
+  const viewLabels = useMemo<ReadonlyArray<{ key: InsightsViewKey; label: string; tooltip: string }>>(() => [
+    { key: 'gallery', label: labels.gallery, tooltip: labels.galleryTooltip },
+    { key: 'links', label: labels.links, tooltip: labels.linksTooltip },
+    { key: 'lint', label: labels.lint, tooltip: labels.lintTooltip },
+    { key: 'duplicates', label: labels.duplicates, tooltip: labels.duplicatesTooltip },
+    { key: 'graph', label: labels.graph, tooltip: labels.graphTooltip },
+    { key: 'related', label: labels.related, tooltip: labels.relatedTooltip },
   ], [labels]);
   const activeLabel = useMemo(
     () => viewLabels.find(view => view.key === activeView)?.label ?? labels.gallery,
@@ -165,11 +177,18 @@ export function WorkspaceInsightsPanel({
   const statusLabel = `${statusText(session, labels)}${session.workerMode === 'degraded' ? ` · ${labels.degraded}` : ''}`;
 
   return (
-    <aside id="workspaceInsightsPanel" className="workspace-insights" role="region" aria-label={labels.title}>
+    <aside
+      id="workspaceInsightsPanel"
+      className={`workspace-insights${!session.panelOpen ? ' is-collapsed' : ''}`}
+      role="region"
+      aria-label={labels.title}
+      aria-hidden={!session.panelOpen}
+      inert={!session.panelOpen}
+    >
       <header className="workspace-insights__header">
         <div className="workspace-insights__title-wrap">
           <h2 className="workspace-insights__title">{labels.title}</h2>
-          <span className="workspace-insights__status" role="status" aria-live="polite" title={statusLabel}>
+          <span className="workspace-insights__status" role="status" aria-live="polite" data-hover-tooltip={statusLabel}>
             {statusLabel}
           </span>
         </div>
@@ -213,8 +232,12 @@ export function WorkspaceInsightsPanel({
             shortcut="Esc"
             tooltipPos="below"
             tooltipAlign="right"
+            aria-label={labels.close}
           >
-            &times;
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" clipRule="evenodd" d="M7.22 14.47L9.69 12 7.22 9.53a.75.75 0 111.06-1.06l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 01-1.06-1.06z" />
+              <path fillRule="evenodd" clipRule="evenodd" d="M3.75 2A1.75 1.75 0 002 3.75v16.5c0 .966.784 1.75 1.75 1.75h16.5A1.75 1.75 0 0022 20.25V3.75A1.75 1.75 0 0020.25 2H3.75zM3.5 3.75a.25.25 0 01.25-.25H15v17H3.75a.25.25 0 01-.25-.25V3.75zm13 16.75v-17h3.75a.25.25 0 01.25.25v16.5a.25.25 0 01-.25.25H16.5z" />
+            </svg>
           </TooltipButton>
         </div>
       </header>
@@ -224,12 +247,15 @@ export function WorkspaceInsightsPanel({
       <div className="workspace-insights__tabs" role="tablist" aria-label={labels.title}>
         {viewLabels.map(view => {
           const count = tabCounts[view.key];
+          const tooltip = typeof count === 'number' && count > 0 ? `${view.tooltip} (${count})` : view.tooltip;
           return (
             <button
               key={view.key}
               type="button"
               role="tab"
               aria-label={view.label}
+              data-hover-tooltip={tooltip}
+              data-hover-tooltip-pos="bottom"
               aria-selected={!settingsOpen && activeView === view.key}
               className={`workspace-insights__tab${!settingsOpen && activeView === view.key ? ' is-active' : ''}`}
               onClick={() => { setActiveView(view.key); setSettingsOpen(false); }}

@@ -5,26 +5,40 @@ body {
   background: var(--bg);
   color: var(--tx);
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--font-ui-size, 13px);
   /* Prevent layout from collapsing below a usable size:
      min-width: sidebar-min(180) + readable-content(280) = 460px
      min-height: topbar(~48) + compact-toc-bar(~50) + content(262) = 360px */
   min-width: 460px;
   min-height: 360px;
 }
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--bd-s) transparent;
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bd-s) transparent;
+  }
 }
 *::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--bd-s);
+  background: color-mix(in srgb, var(--txm) 55%, var(--bd-s));
   border-radius: var(--r-s, var(--r));
+  min-height: 40px;
+  min-width: 40px;
+}
+:root[data-theme] *::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent) 75%, var(--tx2));
+}
+:root[data-theme] *::-webkit-scrollbar-thumb:active {
+  background: var(--accent);
 }
 *::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: var(--r-s, var(--r));
+}
+*::-webkit-scrollbar-corner {
   background: transparent;
 }
 .app {
@@ -37,7 +51,7 @@ body {
 .sidebar-cursor-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 150000;
+  z-index: var(--z-topbar);
   pointer-events: none;
   background: rgba(0, 0, 0, 0.48);
   opacity: 0;
@@ -50,7 +64,7 @@ body {
 
 .app.app--sidebar-cursor-mode .topbar,
 .app.app--sidebar-cursor-mode .desktop-tabbar {
-  z-index: 100000;
+  z-index: var(--z-sidebar);
 }
 
 html[data-custom-theme-id] body::before {

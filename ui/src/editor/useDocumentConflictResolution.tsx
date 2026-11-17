@@ -4,6 +4,7 @@ import { DocumentConflictBanner, DocumentConflictModal } from '../components/Mod
 import type { AppAction } from '../contexts/appStateReducer';
 import type { SaveDocumentRequestOptions } from './saveDocument';
 import type { EditableDocumentSession } from './documentSession';
+import { clearEditorSession } from './editorSessionStore';
 
 export const DOCUMENT_COMPARE_REQUEST_EVENT = 'markdown-explorer-document-compare-request';
 
@@ -52,6 +53,7 @@ export function useDocumentConflictResolution({
 
   const reloadDisk = useCallback(() => {
     if (!session?.conflict) return;
+    clearEditorSession(session.filePath);
     dispatch({ type: 'RESOLVE_DOCUMENT_CONFLICT_RELOAD', filePath: session.filePath });
   }, [dispatch, session]);
 

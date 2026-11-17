@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useAppState } from "../../contexts/AppStateContext";
 import { getTranslations } from "../../contexts/translations";
 import { useCssVars } from "../../utils/useCssVars";
@@ -142,7 +143,7 @@ export function TabContextMenu({
     };
   }, [onClose]);
 
-  return (
+  const menu = (
     <div
       ref={menuRef}
       className="tab-context-menu"
@@ -173,4 +174,5 @@ export function TabContextMenu({
       ))}
     </div>
   );
+  return typeof document !== "undefined" ? createPortal(menu, document.body) : menu;
 }

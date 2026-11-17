@@ -15,7 +15,7 @@ export function registerTableColumnHandlers(
       [...row.cells].forEach((cell, index) => cell.classList.toggle('is-hidden-column', hidden.has(index)));
     });
     document.getElementById(`${tableId}-columns-toggle`)?.classList.toggle('is-active', hidden.size > 0);
-    if (state.wrapped) syncWrappedColumnWidths(tableId, true);
+    syncWrappedColumnWidths(tableId, state.wrapped);
     if (typeof win.Table.refreshChartAvailability === 'function') win.Table.refreshChartAvailability(tableId);
   };
 

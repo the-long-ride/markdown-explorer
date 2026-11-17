@@ -153,16 +153,20 @@ export function buildNearDuplicateCandidates(corpus: readonly DuplicateCorpusDoc
     for (const shingle of evidence) bucketKeys.add(`${Number.parseInt(hash(shingle).slice(0, 4), 16) % 16}:${hash(shingle).slice(0, 8)}`);
     for (const token of [...new Set(tokens)].slice(0, 12)) bucketKeys.add(`t:${token}`);
     for (const key of bucketKeys) {
-      const list = buckets.get(key) ?? [];
-      if (list.length < 100) list.push(document.path);
-      buckets.set(key, list);
+      let list = buckets.get(key);
+      if (!list) {
+        buckets.set(key, [document.path]);
+      } else if (list.length < 80) {
+        list.push(document.path);
+      }
     }
   }
   const pairs = new Set<string>();
   for (const list of buckets.values()) {
     const unique = [...new Set(list)].sort();
-    for (let i = 0; i < unique.length; i += 1) {
-      for (let j = i + 1; j < unique.length; j += 1) pairs.add(`${unique[i]}\u0000${unique[j]}`);
+    const limit = Math.min(unique.length, 80);
+    for (let i = 0; i < limit; i += 1) {
+      for (let j = i + 1; j < limit; j += 1) pairs.add(`${unique[i]}\u0000${unique[j]}`);
     }
   }
   return pairs;

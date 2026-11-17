@@ -91,7 +91,7 @@
     var(--bg-s);
   color: var(--tx);
   box-shadow: var(--sh-lg);
-  z-index: 2000;
+  z-index: var(--z-dropdown);
 }
 
 .custom-theme-menu[hidden] {

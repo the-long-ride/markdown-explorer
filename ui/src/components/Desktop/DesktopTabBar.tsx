@@ -22,7 +22,8 @@ import { getEnabledShortcut } from '../../utils/shortcuts';
 import { requestShellLocation, supportsShellLocation } from '../../desktop/shellLocation';
 import { DesktopTabItem } from './DesktopTabItem';
 import { DesktopTabContextMenu } from './DesktopTabContextMenu';
-import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
+import { isWebRuntime, supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
+import { WebDemoNavActions } from '../Topbar/WebDemoNavActions';
 
 const TAB_CLOSE_FADE_MS = 90;
 const TAB_CLOSE_COLLAPSE_MS = 140;
@@ -326,7 +327,7 @@ export function DesktopTabBar({
         icon={<PlusIcon />}
       />
       {editingEnabled && activeDocumentSession && state.currentFile && (
-        <MarkdownEditingHeaderActions filePath={state.currentFile} session={activeDocumentSession} labels={editorT} saveShortcut={getEnabledShortcut(state.settings, 'saveCurrentDocument')} onModeChange={setDocumentEditMode} onSave={saveDocument} />
+        <MarkdownEditingHeaderActions filePath={state.currentFile} session={activeDocumentSession} labels={editorT} saveShortcut={getEnabledShortcut(state.settings, 'saveCurrentDocument')} editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')} plainShortcut={getEnabledShortcut(state.settings, 'plainEditCurrentDocument')} onModeChange={setDocumentEditMode} onSave={saveDocument} />
       )}
       <DocumentHeaderActions
         onCollapseAll={onCollapseAll}
@@ -337,72 +338,36 @@ export function DesktopTabBar({
       />
       <ToolbarActionMenu
         triggerTooltip={t.topbar.moreActions}
-        homeLabel={t.topbar.home}
-        themeLabel={themeToggleLabel}
-        editLabel={t.topbar.editLabel}
-        settingsLabel={t.topbar.settings}
-        homeTooltip={t.topbar.welcomePage}
-        themeTooltip={themeToggleLabel}
-        editTooltip={(!isMarkdown || !editingEnabled) ? t.topbar.edit : editorT.inlineEdit}
-        settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings}
-        homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
-        themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
-        editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
-        settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
-        canEdit={canUseEditAction}
-        isDark={isDark}
-        hasUpdate={hasUpdate}
-        onHome={() => onSelectTab('home')}
-        onTheme={onThemeToggle}
-        onEdit={handleEdit}
-        showEdit={true}
-        onSettings={onSettingsOpen}
-        sidebarLabel={t.actions.toggleSidebar}
-        sidebarTooltip={t.actions.toggleSidebar}
-        sidebarShortcut={getEnabledShortcut(state.settings, 'toggleSidebar')}
-        sidebarActive={!state.sidebarCollapsed}
-        onSidebarToggle={onSidebarToggle}
-        tocLabel={t.actions.toggleToc}
-        tocTooltip={t.actions.toggleToc}
-        tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')}
-        tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
-        tocToggleDisabled={!state.currentFile || state.toc.length === 0}
-        onTocToggle={toggleToc}
-        showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled}
-        insightsLabel={insightsLabel}
-        insightsTooltip={insightsLabel}
-        insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')}
-        insightsActive={isInsightsOpen}
-        canInsights={!!(state.workspacePath || state.workspaceName)}
-        onInsightsToggle={onInsightsToggle}
-        focusModeLabel={t.actions.toggleFocusMode}
-        focusModeTooltip={t.actions.toggleFocusMode}
-        focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')}
-        isFocusMode={state.focusMode}
-        onFocusModeToggle={toggleFocusMode}
-        showFullscreen
-        fullscreenLabel={t.actions.toggleFullscreen}
-        fullscreenTooltip={t.actions.toggleFullscreenTooltip}
-        fullscreenShortcut="F11"
-        isFullscreen={isFullscreen}
-        onFullscreenToggle={onFullscreenToggle}
-        showResetZoom
-        resetZoomLabel={t.tooltips.resetZoom}
-        resetZoomTooltip={t.tooltips.resetZoom}
-        resetZoomShortcut={getEnabledShortcut(state.settings, 'resetZoom')}
-        onResetZoom={() => bridge.postMessage({ command: 'zoom-reset' })}
+        homeLabel={t.topbar.homeGetHelp || t.topbar.home} homeTooltip={t.topbar.welcomePage} homeShortcut={getEnabledShortcut(state.settings, 'welcome')}
+        themeLabel={themeToggleLabel} themeTooltip={themeToggleLabel} themeShortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
+        editLabel={t.topbar.editLabel} editTooltip={(!isMarkdown || !editingEnabled) ? t.topbar.edit : editorT.inlineEdit} editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')}
+        settingsLabel={t.topbar.settings} settingsTooltip={hasUpdate ? t.topbar.settingsUpdate : t.topbar.settings} settingsShortcut={getEnabledShortcut(state.settings, 'settings')}
+        canEdit={canUseEditAction} isDark={isDark} hasUpdate={hasUpdate} showEdit={true}
+        onHome={() => onSelectTab('home')} onTheme={onThemeToggle} onEdit={handleEdit} onSettings={onSettingsOpen}
+        sidebarLabel={t.actions.toggleSidebar} sidebarTooltip={t.actions.toggleSidebar} sidebarShortcut={getEnabledShortcut(state.settings, 'toggleSidebar')} sidebarActive={!state.sidebarCollapsed} onSidebarToggle={onSidebarToggle}
+        tocLabel={t.actions.toggleToc} tocTooltip={t.actions.toggleToc} tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')} tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0} tocToggleDisabled={!state.currentFile || state.toc.length === 0} onTocToggle={toggleToc}
+        showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled} insightsLabel={insightsLabel} insightsTooltip={insightsLabel} insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')} insightsActive={isInsightsOpen} canInsights={!!(state.workspacePath || state.workspaceName)} onInsightsToggle={onInsightsToggle}
+        focusModeLabel={t.actions.toggleFocusMode} focusModeTooltip={t.actions.toggleFocusMode} focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')} isFocusMode={state.focusMode} onFocusModeToggle={toggleFocusMode}
+        showFullscreen fullscreenLabel={t.actions.toggleFullscreen} fullscreenTooltip={t.actions.toggleFullscreenTooltip} fullscreenShortcut="F11" isFullscreen={isFullscreen} onFullscreenToggle={onFullscreenToggle}
+        showResetZoom resetZoomLabel={t.tooltips.resetZoom} resetZoomTooltip={t.tooltips.resetZoom} resetZoomShortcut={getEnabledShortcut(state.settings, 'resetZoom')} onResetZoom={() => bridge.postMessage({ command: 'zoom-reset' })}
       />
-      <span
-        className="topbar__crumb-separator desktop-tabbar__window-separator"
-        aria-hidden="true"
-      >
-        |
-      </span>
-      <div className="desktop-tabbar__window-controls">
-        <TooltipButton className="btn btn--icon window-control-btn" onClick={() => bridge.postMessage({ command: 'window-minimize' })} tooltip={t.tooltips.minimize} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>} />
-        <TooltipButton className="btn btn--icon window-control-btn" onClick={() => shouldExitTauriFullscreenOnRestore ? onFullscreenToggle?.() : bridge.postMessage({ command: 'window-maximize' })} tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize} icon={showsRestoreControl ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M8 8V3h13v13h-5" /><path d="M3 8h13v13H3z" /></svg>) : (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>)} />
-        <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={requestWindowClose} tooltip={t.tooltips.closeApp} tooltipAlign="right" icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
-      </div>
+      {isWebRuntime() ? (
+        <WebDemoNavActions />
+      ) : (
+        <>
+          <span
+            className="topbar__crumb-separator desktop-tabbar__window-separator"
+            aria-hidden="true"
+          >
+            |
+          </span>
+          <div className="desktop-tabbar__window-controls">
+            <TooltipButton className="btn btn--icon window-control-btn" onClick={() => bridge.postMessage({ command: 'window-minimize' })} tooltip={t.tooltips.minimize} icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>} />
+            <TooltipButton className="btn btn--icon window-control-btn" onClick={() => shouldExitTauriFullscreenOnRestore ? onFullscreenToggle?.() : bridge.postMessage({ command: 'window-maximize' })} tooltip={showsRestoreControl ? t.tooltips.restore : t.tooltips.maximize} icon={showsRestoreControl ? (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M8 8V3h13v13h-5" /><path d="M3 8h13v13H3z" /></svg>) : (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>)} />
+            <TooltipButton className="btn btn--icon window-control-btn window-control-btn--close" onClick={requestWindowClose} tooltip={t.tooltips.closeApp} tooltipAlign="right" icon={<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>} />
+          </div>
+        </>
+      )}
       {draggedTabId && (
         <div
           ref={ghostRef}

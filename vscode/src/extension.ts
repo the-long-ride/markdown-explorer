@@ -107,6 +107,13 @@ export function _doActivate(
     }),
   );
 
+  // Full webview reload (Ctrl+Shift+R when webview is focused)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('markdownExplorer.reloadWebview', async () => {
+      await (await getPanel()).currentPanel?.reloadWebview();
+    }),
+  );
+
   // Webview-scoped Ctrl+S: forwards the save request into the webview instead
   // of competing with VS Code's own text-editor save command.
   context.subscriptions.push(

@@ -2,33 +2,40 @@
    Table of Contents Panel
    ============================================================ */
 .toc-resize {
-  width: 8px;
-  margin: 0 -4px;
+  width: 6px;
+  margin: 0 -6px 0 0;
+  align-self: stretch;
   background: transparent;
   cursor: col-resize;
   display: none;
   flex-shrink: 0;
   position: relative;
-  z-index: 11;
+  z-index: var(--z-resize-handle);
+  touch-action: none;
+  pointer-events: auto;
   user-select: none;
   -webkit-user-select: none;
 }
 .toc-resize::after {
   content: "";
   position: absolute;
-  top: 12px;
-  bottom: 12px;
-  left: 3px;
+  top: 0;
+  bottom: 0;
+  left: 0;
   width: 2px;
-  border-radius: 2px;
   background: transparent;
   transition:
-    background 0.15s,
-    box-shadow 0.15s;
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 }
-.toc-resize:hover::after {
+.toc-resize:hover::after,
+.toc-resize.is-resize-guide::after {
   background: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-dim);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.toc-resize.is-resize-guide {
+  transition: none;
+  will-change: transform;
 }
 .toc-panel {
   position: relative;
@@ -152,16 +159,6 @@
 .toc-item__marker {
   display: none;
 }
-.toc-item.is-active .toc-item__marker {
-  display: block;
-  width: 6px;
-  height: 6px;
-  margin-top: 0.45em;
-  margin-right: 4px;
-  flex: 0 0 6px;
-  border-radius: 50%;
-  background: var(--accent);
-}
 .toc-item__text {
   flex: 1;
   min-width: 0;
@@ -231,13 +228,13 @@
     var(--bg-s);
   border-bottom: var(--stroke-w) solid var(--bd-s);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--bd-x) 32%, transparent);
-  z-index: 5000;
+  z-index: var(--z-toc-overlay);
   transition: padding 0.18s ease;
 }
 .toc-compact {
   display: none;
   position: relative;
-  z-index: 5010;
+  z-index: var(--z-toc-overlay);
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
@@ -305,7 +302,7 @@
     ),
     var(--bg-s);
   box-shadow: var(--sh-lg);
-  z-index: 5020;
+  z-index: var(--z-toc-overlay);
 }
 .toc-compact__menu[hidden] {
   display: none;
@@ -358,7 +355,7 @@
     position: absolute;
     top: 12px;
     right: 16px;
-    z-index: 100;
+    z-index: var(--z-topbar);
   }
 }
 body.is-resizing .toc-panel {
@@ -369,7 +366,7 @@ body.is-resizing .toc-panel {
   position: absolute !important;
   top: 12px;
   left: 12px;
-  z-index: 100;
+  z-index: var(--z-topbar);
   width: 28px;
   height: 28px;
   display: inline-flex;
@@ -391,7 +388,7 @@ body.is-resizing .toc-panel {
   position: fixed !important;
   top: calc(var(--topbar-h) + 48px);
   right: 6px;
-  z-index: 100;
+  z-index: var(--z-topbar);
   width: 28px;
   height: 28px;
   display: inline-flex;

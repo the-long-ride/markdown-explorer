@@ -6,6 +6,8 @@ import type { InsightsLintSeverity, InsightsLintSuppressionConfig } from '../../
 import type { InsightsLintFinding } from '../../insights/lint';
 import { CustomSelect } from '../shared/CustomSelect';
 import { TooltipButton } from '../shared/TooltipButton';
+import { CheckIcon, CopyIcon } from '../shared/icons';
+import { buildLintAiPrompt, copyTextToClipboard } from '../../insights/aiPrompts';
 import {
   EyeIcon,
   EyeOffIcon,
@@ -46,22 +48,43 @@ export function LintView({
   const controlled = suppressions !== undefined;
   const effectiveSuppressions = controlled ? suppressions : localSuppressions;
 
-  const isSuppressed = (finding: (typeof findings)[number]) =>
-    effectiveSuppressions.some(item =>
-      item.scope === 'finding'
-        ? item.findingId === finding.id
-        : item.scope === 'rule'
-          ? item.ruleId === finding.ruleId
-          : item.path === finding.path && item.ruleId === finding.ruleId,
-    );
+  const suppressionLookups = useMemo(() => {
+    const findingIds = new Set<string>();
+    const ruleIds = new Set<string>();
+    const pathRules = new Set<string>();
+    for (const item of effectiveSuppressions) {
+      if (item.scope === 'finding') findingIds.add(item.findingId);
+      else if (item.scope === 'rule') ruleIds.add(item.ruleId);
+      else pathRules.add(`${item.path}\0${item.ruleId}`);
+    }
+    return { findingIds, ruleIds, pathRules };
+  }, [effectiveSuppressions]);
 
-  const visible = findings.filter(
-    finding =>
-      (severity === 'all' || finding.severity === severity) &&
-      (rule === 'all' || finding.ruleId === rule) &&
-      (showSuppressed || !isSuppressed(finding)),
+  const isSuppressed = (finding: (typeof findings)[number]) =>
+    suppressionLookups.findingIds.has(finding.id) ||
+    suppressionLookups.ruleIds.has(finding.ruleId) ||
+    suppressionLookups.pathRules.has(`${finding.path}\0${finding.ruleId}`);
+
+  const visible = useMemo(
+    () =>
+      findings.filter(
+        finding =>
+          (severity === 'all' || finding.severity === severity) &&
+          (rule === 'all' || finding.ruleId === rule) &&
+          (showSuppressed || !isSuppressed(finding)),
+      ),
+    [findings, severity, rule, showSuppressed, suppressionLookups],
   );
-  const hasSuppressed = findings.some(isSuppressed);
+  const hasSuppressed = useMemo(() => findings.some(isSuppressed), [findings, suppressionLookups]);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const handleCopyAiPrompt = async () => {
+    const prompt = buildLintAiPrompt(visible, labels);
+    const ok = await copyTextToClipboard(prompt);
+    if (ok) {
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    }
+  };
 
   const updateSuppressions = (next: readonly InsightsLintSuppressionConfig[]) => {
     const deduped = [...new Map(next.map(item => [suppressionKey(item), item] as const)).values()];
@@ -132,10 +155,20 @@ export function LintView({
             icon={showSuppressed ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}
           />
         )}
+        <TooltipButton
+          type="button"
+          className="btn btn--icon insights-filter-toggle"
+          tooltip={copiedPrompt ? 'Copied AI prompt!' : 'Copy prompt for AI agent to fix markdown lint'}
+          aria-label={copiedPrompt ? 'Copied AI prompt!' : 'Copy prompt for AI agent to fix markdown lint'}
+          tooltipPos="below"
+          portalTooltip
+          onClick={handleCopyAiPrompt}
+          icon={copiedPrompt ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+        />
         <span
           className="insights-lint__count"
           data-testid="lint-findings-count"
-          title={`${visible.length}`}
+          data-hover-tooltip={`${visible.length}`}
           aria-label={`${visible.length}`}
         >
           {visible.length}
@@ -155,7 +188,7 @@ export function LintView({
                 type="button"
                 className="insights-lint__target"
                 onClick={() => onSelectFinding?.(finding)}
-                title={`${finding.path}${finding.line ? `:${finding.line}` : ''}`}
+                data-hover-tooltip={`${finding.path}${finding.line ? `:${finding.line}` : ''}`}
                 aria-label={`${ruleLabel} - ${finding.path}${finding.line ? `:${finding.line}` : ''}`}
               >
                 <strong>{ruleLabel}</strong>
@@ -174,7 +207,7 @@ export function LintView({
                     className="insights-icon-btn"
                     tooltip={labels.restoreFinding}
                     aria-label={labels.restoreFinding}
-                    tooltipPos="above"
+                    tooltipPos="below"
                     tooltipAlign="right"
                     portalTooltip
                     onClick={() => restoreFinding(finding)}
@@ -187,7 +220,7 @@ export function LintView({
                       className="insights-icon-btn"
                       tooltip={labels.suppress}
                       aria-label={labels.suppress}
-                      tooltipPos="above"
+                      tooltipPos="below"
                       tooltipAlign="right"
                       portalTooltip
                       onClick={() =>
@@ -200,7 +233,7 @@ export function LintView({
                       className="insights-icon-btn"
                       tooltip={labels.suppressRule}
                       aria-label={labels.suppressRule}
-                      tooltipPos="above"
+                      tooltipPos="below"
                       tooltipAlign="right"
                       portalTooltip
                       onClick={() =>
@@ -213,7 +246,7 @@ export function LintView({
                       className="insights-icon-btn"
                       tooltip={labels.suppressPath}
                       aria-label={labels.suppressPath}
-                      tooltipPos="above"
+                      tooltipPos="below"
                       tooltipAlign="right"
                       portalTooltip
                       onClick={() =>

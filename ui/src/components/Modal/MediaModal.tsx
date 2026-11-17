@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { TooltipButton } from '../shared/TooltipButton';
 import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, CopyIcon, SaveImageIcon, SunIcon, MoonIcon } from '../shared/icons';
 import { useAppState } from '../../contexts/AppStateContext';
@@ -19,6 +20,7 @@ import {
 import type { MediaGallery } from './mediaGallery';
 import { renderMermaidToSvg } from '../Content/enhancements/mermaidRenderToSvg';
 import { resolveThemeMode } from '../../utils/themeMode';
+import { executeThemeTransition } from '../../utils/themeTransition';
 
 interface MediaModalProps {
   gallery: MediaGallery | null;
@@ -198,7 +200,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     if (wrapRef.current) wrapRef.current.style.cursor = 'grab';
   };
 
-  return (
+  const modal = (
     <div id="mediaModal" className="mdn-modal media-modal" ref={modalRef} role="dialog" aria-modal="true"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -210,7 +212,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
         data-tooltip-align="right"
       >
         <CloseIcon size={16} />
-        <span className="tooltip-text">{t.tooltips.closeModal}</span>
+        <span className="tooltip-text"><span className="tooltip-content-wrap">{t.tooltips.closeModal}</span></span>
       </button>
 
       {items.length > 1 && (
@@ -255,11 +257,24 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
           <span className="mdn-modal-zoom-text">{Math.round(zoom * 100)}%</span>
           <TooltipButton className="mdn-modal-tool" onClick={zoomOut} tooltip={t.tooltips.zoomOut} tooltipPos="above" icon={<ZoomOutIcon />} />
           <TooltipButton className="mdn-modal-tool" onClick={reset} tooltip={t.tooltips.resetZoom} tooltipPos="above" icon={<ResetZoomIcon />} />
-          <TooltipButton className="mdn-modal-tool" onClick={toggleTheme} tooltip={t.topbar.theme} tooltipPos="above" icon={isDarkNow ? <SunIcon /> : <MoonIcon />} />
+          <TooltipButton
+            className="mdn-modal-tool"
+            onClick={(e) => {
+              executeThemeTransition(toggleTheme, {
+                originElement: e.currentTarget,
+                event: e,
+                nextTheme: isDarkNow ? 'light' : 'dark',
+              });
+            }}
+            tooltip={t.topbar.theme}
+            tooltipPos="above"
+            icon={isDarkNow ? <SunIcon /> : <MoonIcon />}
+          />
           <TooltipButton className="mdn-modal-tool" onClick={handleCopy} tooltip={t.previewActions.copyImage} tooltipPos="above" icon={<CopyIcon size={14} />} />
           <TooltipButton className="mdn-modal-tool" onClick={handleSave} tooltip={t.previewActions.saveImagePng} tooltipPos="above" icon={<SaveImageIcon size={14} />} />
         </div>
       </div>
     </div>
   );
+  return typeof document !== 'undefined' ? createPortal(modal, document.body) : modal;
 }

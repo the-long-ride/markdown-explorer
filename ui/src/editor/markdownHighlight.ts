@@ -1,5 +1,15 @@
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { tags } from '@lezer/highlight';
+import { Tag, styleTags, tags } from '@lezer/highlight';
+
+export const markdownListMarkTag = Tag.define();
+
+export const markdownCustomLanguageExtension = {
+  props: [
+    styleTags({
+      ListMark: markdownListMarkTag,
+    }),
+  ],
+};
 
 // Markdown token styling for the plain source editor. Colours come from theme
 // tokens so every theme (light, dark, auto) keeps its own palette.
@@ -15,7 +25,9 @@ export const markdownHighlightStyle = HighlightStyle.define([
   { tag: tags.url, color: 'var(--accent)', textDecoration: 'underline' },
   { tag: tags.monospace, class: 'cm-md-code' },
   { tag: tags.quote, color: 'var(--tx-2)', fontStyle: 'italic' },
-  { tag: [tags.processingInstruction, tags.contentSeparator, tags.meta], color: 'var(--txm)' },
+  { tag: markdownListMarkTag, class: 'cm-md-list-mark', color: 'var(--tx)', fontWeight: '600' },
+  { tag: tags.processingInstruction, color: 'var(--tx2)' },
+  { tag: [tags.contentSeparator, tags.meta], color: 'var(--txm)' },
   { tag: tags.comment, color: 'var(--txm)', fontStyle: 'italic' },
 ]);
 

@@ -1,6 +1,6 @@
 import type { PdfNode, PdfTextRun } from './pdfModel';
 
-const SKIP_SELECTOR = '.mdn-copy-btn,.mdn-section-copy-btn,.mdn-section-chevron,.mdn-table-toolbar,.mdn-table-controls,.mdn-table-filter-btn,.mdn-table-columns-toggle,.mdn-table-view-dropdown,.tooltip-text';
+const SKIP_SELECTOR = '.mdn-copy-btn,.mdn-section-copy-btn,.mdn-section-chevron,.mdn-table-toolbar,.mdn-table-controls,.mdn-table-align-btn,.mdn-table-filter-btn,.mdn-table-columns-toggle,.mdn-table-view-dropdown,.tooltip-text';
 const PRINT_TEXT = '#1f2328';
 const PRINT_PANEL = '#f6f8fa';
 const PRINT_HEADER = '#f3f4f6';

@@ -3,11 +3,13 @@ import { renderMarkdownClientSide } from '../contexts/contentTabState';
 import type { ResolvedLink } from '../dom/linkContextMenu';
 import type { PlatformBridge } from '../platform/bridge';
 import type { MdFile } from '../types/files';
+import type { TocEntry } from '../types';
 
 export interface DocumentSnapshot {
   file: MdFile;
   markdownSource: string;
   html: string;
+  toc?: TocEntry[];
 }
 
 const DEFAULT_SNAPSHOT_TIMEOUT_MS = 8_000;
@@ -50,14 +52,14 @@ export async function loadDocumentSnapshot(
     });
   });
 
-  const html = renderMarkdownClientSide(
+  const rendered = renderMarkdownClientSide(
     markdownSource,
     file.fsPath,
     file.fileName.toLowerCase().endsWith('.mdx'),
     settings,
-  ).html;
+  );
 
-  return { file, markdownSource, html };
+  return { file, markdownSource, html: rendered.html, toc: rendered.toc };
 }
 
 function stripQueryAndFragment(value: string): string {
@@ -82,10 +84,79 @@ function normalizeComparablePath(value: string): string {
   return /^[A-Za-z]:\//.test(collapsed) ? collapsed.toLowerCase() : collapsed;
 }
 
-export function findScopeFile(link: ResolvedLink, files: readonly MdFile[]): MdFile | null {
+function decodeLinkTarget(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function normalizeRelativeScopePath(value: string): string {
+  return value.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+|\/+$/g, '');
+}
+
+function resolveWorkspaceScopePath(rawHref: string, files: readonly MdFile[], currentFile?: string | null): string | null {
+  const cleanRaw = decodeLinkTarget(stripQueryAndFragment(rawHref)).replace(/\\/g, '/').trim();
+  if (!cleanRaw || /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(cleanRaw)) return null;
+
+  let parts: string[] = [];
+  if (!cleanRaw.startsWith('/')) {
+    const normalizedCurrent = currentFile ? normalizeComparablePath(currentFile) : '';
+    const currentEntry = normalizedCurrent
+      ? files.find((file) => normalizeComparablePath(file.fsPath) === normalizedCurrent)
+      : undefined;
+    const baseRelative = currentEntry
+      ? normalizeRelativeScopePath(currentEntry.relativePath)
+      : (currentFile && !/^(?:[A-Za-z]:\/|\/|file:)/i.test(currentFile.replace(/\\/g, '/'))
+          ? normalizeRelativeScopePath(currentFile)
+          : '');
+    parts = baseRelative.split('/').slice(0, -1).filter(Boolean);
+  }
+
+  for (const segment of cleanRaw.replace(/^\/+/, '').split('/')) {
+    if (!segment || segment === '.') continue;
+    if (segment === '..') {
+      if (parts.length === 0) return null;
+      parts.pop();
+      continue;
+    }
+    parts.push(segment);
+  }
+
+  const candidate = parts.join('/');
+  return candidate || null;
+}
+
+export function findScopeFile(
+  link: ResolvedLink,
+  files: readonly MdFile[],
+  currentFile?: string | null,
+): MdFile | null {
   if (!link.openable || !link.resolved) return null;
   if (!['file', 'relative'].includes(link.kind)) return null;
   const target = normalizeComparablePath(link.resolved);
-  if (!target) return null;
-  return files.find((file) => normalizeComparablePath(file.fsPath) === target) ?? null;
+  if (target) {
+    const exact = files.find((file) => normalizeComparablePath(file.fsPath) === target);
+    if (exact) return exact;
+  }
+
+  const workspaceTarget = resolveWorkspaceScopePath(link.raw, files, currentFile);
+  if (!workspaceTarget) return null;
+
+  const exactRelative = files.find(
+    (file) =>
+      normalizeRelativeScopePath(file.relativePath) === workspaceTarget ||
+      normalizeRelativeScopePath(file.fsPath) === workspaceTarget,
+  );
+  if (exactRelative) return exactRelative;
+
+  const targetLower = workspaceTarget.toLowerCase();
+  return (
+    files.find(
+      (file) =>
+        normalizeRelativeScopePath(file.relativePath).toLowerCase() === targetLower ||
+        normalizeRelativeScopePath(file.fsPath).toLowerCase() === targetLower,
+    ) ?? null
+  );
 }

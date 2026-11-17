@@ -107,6 +107,19 @@ function findFrontmatterRange(text: string): FrontmatterRange | null {
   return null;
 }
 
+/**
+ * Returns the exact character range of the leading YAML frontmatter block (`--- ... ---`)
+ * excluding the trailing newline after the closing delimiter.
+ */
+export function findFrontmatterSourceRange(text: string): { start: number; end: number } | null {
+  const range = findFrontmatterRange(text);
+  if (!range) return null;
+  let end = range.end;
+  if (end > range.start && text[end - 1] === '\n') end -= 1;
+  if (end > range.start && text[end - 1] === '\r') end -= 1;
+  return end > range.start ? { start: range.start, end } : null;
+}
+
 function lineAt(text: string, offset: number): number {
   let line = 1;
   for (let index = 0; index < Math.min(offset, text.length); index += 1) {

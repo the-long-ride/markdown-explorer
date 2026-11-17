@@ -4,6 +4,8 @@ import type { UpdateState } from '../../types';
 import type { Translations } from '../../contexts/translationTypes';
 import { ExportSettingsIcon, ImportSettingsIcon, OpenInBrowserIcon, SettingsUpdateBackupIcon } from '../shared/icons';
 import { SettingsOutlineButton } from './SettingsOutlineButton';
+import { resolveVersionNumber } from './settingsModalData';
+import { isWebRuntime } from '../../insights/runtimeCapabilities';
 
 export function SettingsUpdateBackupPanel({
   state,
@@ -26,16 +28,19 @@ export function SettingsUpdateBackupPanel({
   onOpenChangelog: () => void;
   onDownloadUpdate: () => void;
 }) {
-  const updateAvailable = updateCheck.status === 'available' && updateCheck.hasUpdate;
-  const canDownloadUpdate = state.appRuntime !== 'vscode';
+  const isWeb = state.appRuntime === 'web' || isWebRuntime();
+  const updateAvailable = !isWeb && updateCheck.status === 'available' && updateCheck.hasUpdate;
+  const canDownloadUpdate = state.appRuntime !== 'vscode' && !isWeb;
   const status = hostUpdateState.status;
   const busy = status === 'downloading' || status === 'applying' || status === 'scheduled-on-exit';
   const error = status === 'error' ? hostUpdateState.error || '' : '';
-  const currentVersion = updateCheck.currentVersion || state.appVersion || '0.0.0';
+  const currentVersion = resolveVersionNumber(updateCheck.currentVersion || state.appVersion);
   const latestVersion = updateCheck.latestVersion || currentVersion;
-  const versionStatus = updateAvailable
-    ? t.newerVersionStatus.replace('{current}', currentVersion).replace('{latest}', latestVersion)
-    : t.latestVersionStatus.replace('{current}', currentVersion);
+  const versionStatus = isWeb
+    ? t.webVersionStatus.replace('{current}', currentVersion)
+    : updateAvailable
+      ? t.newerVersionStatus.replace('{current}', currentVersion).replace('{latest}', latestVersion)
+      : t.latestVersionStatus.replace('{current}', currentVersion);
 
   return (
     <div className="settings-section-panel settings-update-backup-panel">
@@ -48,7 +53,7 @@ export function SettingsUpdateBackupPanel({
         <div className="settings-section-card__header">
           <div>
             <div className="settings-item__title">{t.applicationUpdate}</div>
-            <div className="settings-item__desc">{updateCheck.status === 'checking' ? t.updateChecking : versionStatus}</div>
+            <div className="settings-item__desc">{!isWeb && updateCheck.status === 'checking' ? t.updateChecking : versionStatus}</div>
           </div>
           {updateAvailable && <span className="settings-nav-badge-dot" aria-label={t.ui.updateAvailable} />}
         </div>
@@ -57,15 +62,19 @@ export function SettingsUpdateBackupPanel({
         {status === 'applying' && <div className="settings-item__desc">{t.update.applying}</div>}
         {error && <div className="settings-item__desc desktop-typography-settings__error">{error}</div>}
         <div className="settings-section-card__actions">
+          {!isWeb && (
+            <SettingsOutlineButton
+              type="button"
+              className="settings-data-btn"
+              label={t.checkForUpdate}
+              tooltip={t.checkForUpdate}
+              icon={<SettingsUpdateBackupIcon size={14} />}
+              onClick={updateCheck.checkNow}
+            />
+          )}
           <SettingsOutlineButton
             type="button"
-            label={t.checkForUpdate}
-            tooltip={t.checkForUpdate}
-            icon={<SettingsUpdateBackupIcon size={14} />}
-            onClick={updateCheck.checkNow}
-          />
-          <SettingsOutlineButton
-            type="button"
+            className="settings-data-btn"
             label={t.update.viewChangelog}
             tooltip={t.update.viewChangelog}
             icon={<OpenInBrowserIcon size={14} />}

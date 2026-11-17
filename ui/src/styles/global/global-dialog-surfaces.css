@@ -45,7 +45,7 @@
 }
 
 .mdn-app-modal-region .scope-view__card {
-  height: min(680px, calc(100dvh - var(--modal-region-top) - 24px));
+  height: min(1120px, calc(100dvh - var(--modal-region-top) - 24px));
   max-height: calc(100dvh - var(--modal-region-top) - 24px);
 }
 

@@ -46,9 +46,9 @@ export function SplitSourceDiffView({ leftSource, rightSource, leftLabel, rightL
               : (
                 <tr key={start + offset} className="split-source-diff-view__row">
                   <td className="split-source-diff-view__line-number">{entry.row.left?.line ?? ''}</td>
-                  <td className="split-source-diff-view__source" data-diff-type={entry.row.left?.type ?? 'empty'} title={entry.row.left?.text || undefined}><code>{entry.row.left ? entry.row.left.text || ' ' : ''}</code></td>
+                  <td className="split-source-diff-view__source" data-diff-type={entry.row.left?.type ?? 'empty'} data-hover-tooltip={entry.row.left?.text || undefined}><code>{entry.row.left ? entry.row.left.text || ' ' : ''}</code></td>
                   <td className="split-source-diff-view__line-number">{entry.row.right?.line ?? ''}</td>
-                  <td className="split-source-diff-view__source" data-diff-type={entry.row.right?.type ?? 'empty'} title={entry.row.right?.text || undefined}><code>{entry.row.right ? entry.row.right.text || ' ' : ''}</code></td>
+                  <td className="split-source-diff-view__source" data-diff-type={entry.row.right?.type ?? 'empty'} data-hover-tooltip={entry.row.right?.text || undefined}><code>{entry.row.right ? entry.row.right.text || ' ' : ''}</code></td>
                 </tr>
               ))}
             {end < entries.length && <tr className="split-source-diff-view__spacer split-source-diff-view__spacer--after" aria-hidden="true"><td colSpan={4} /></tr>}

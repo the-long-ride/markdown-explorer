@@ -20,6 +20,8 @@
   --table-cell-pad-x: 13px;
   --stroke-w: 1px;
   --r: 8px;
+  --r-sm: 6px;
+  --r-s: 6px;
   --r-md: 8px;
   --r-lg: 12px;
   --surface-blur: none;
@@ -121,6 +123,8 @@
   --table-cell-pad-x: 13px;
   --stroke-w: 1px;
   --r: 8px;
+  --r-sm: 6px;
+  --r-s: 6px;
   --r-md: 10px;
   --r-lg: 14px;
   --surface-blur: blur(18px) saturate(150%);
@@ -215,8 +219,11 @@
   --table-cell-pad-x: 10px;
   --stroke-w: 1px;
   --r: 0px;
+  --r-sm: 0px;
+  --r-s: 0px;
   --r-md: 0px;
   --r-lg: 0px;
+  --r-xl: 0px;
   --surface-blur: none;
 }
 
@@ -287,4 +294,122 @@
   --chart-6: #b12d61;
   --chart-7: #654bb5;
   --chart-8: #007c68;
+}
+
+/* Cyberpunk: machined controls, cut-corner cyberdeck geometry, signal yellow/vermilion */
+[data-theme-style="cyberpunk"] {
+  --topbar-h: 46px;
+  --topbar-gap: 8px;
+  --topbar-pad-x: 12px;
+  --control-h: 28px;
+  --control-pad-x: 10px;
+  --control-gap: 6px;
+  --content-pad-y: 24px;
+  --content-pad-x: 20px;
+  --section-gap: 14px;
+  --section-header-gap: 8px;
+  --section-header-pad-y: 10px;
+  --section-header-pad-x: 14px;
+  --section-body-pad-y: 14px;
+  --section-body-pad-x: 16px;
+  --table-cell-pad-y: 8px;
+  --table-cell-pad-x: 12px;
+  --stroke-w: 0px;
+  --r: 0px;
+  --r-sm: 0px;
+  --r-s: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --r-xl: 0px;
+  --surface-blur: none;
+}
+
+[data-theme-style="cyberpunk"][data-theme="dark"],
+[data-theme-style="cyberpunk"][data-theme="auto"] {
+  --bg: #111315;
+  --bg-s: #1A1C1F;
+  --bg-e: #23262A;
+  --bg-h: #2C3034;
+  --bg-a: #353A3D;
+  --bg-code: #151719;
+  --bd: #34383A;
+  --bd-s: #414548;
+  --bd-x: #6E716B;
+  --tx: #F3F0E6;
+  --tx2: #B5B4AA;
+  --txm: #898B85;
+  --tx3: #757A76;
+  --txc: #E6D24F;
+  --accent: #E6D24F;
+  --accent-text: #E6D24F;
+  --accent-dim: rgba(230, 210, 79, 0.16);
+  --accent-ink: #1B1C15;
+  --accent-contrast: #1B1C15;
+  --primary-fill: #E6D24F;
+  --primary-fill-hover: #D9C640;
+  --primary-edge: #CAB83B;
+  --deco-cyan: #5FB9BE;
+  --deco-rose: #D75B79;
+  --deco-cyan-dim: rgba(95, 185, 190, 0.12);
+  --deco-rose-dim: rgba(215, 91, 121, 0.12);
+  --success: #7FA98A;
+  --danger: #CA7774;
+  --sh-sm: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --sh-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --sh-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --section-shadow: none;
+  --modal-bg: rgba(17, 19, 21, 0.96);
+  --modal-fg: #F3F0E6;
+  --chart-1: #E6D24F;
+  --chart-2: #5FB9BE;
+  --chart-3: #D75B79;
+  --chart-4: #898B85;
+  --chart-5: #7FA98A;
+  --chart-6: #CA7774;
+  --chart-7: #414548;
+  --chart-8: #B5B4AA;
+}
+
+[data-theme-style="cyberpunk"][data-theme="light"] {
+  --bg: #F2EBDB;
+  --bg-s: #FFF9EF;
+  --bg-e: #E8DFCF;
+  --bg-h: #DED2BF;
+  --bg-a: #D5C5AF;
+  --bg-code: #EAE2D4;
+  --bd: #C6BAA6;
+  --bd-s: #B2A48D;
+  --bd-x: #726A5E;
+  --tx: #252621;
+  --tx2: #4C4C43;
+  --txm: #615D52;
+  --tx3: #696357;
+  --txc: #A53B2A;
+  --accent: #A53B2A;
+  --accent-text: #A53B2A;
+  --accent-dim: rgba(165, 59, 42, 0.13);
+  --accent-ink: #FFF9EF;
+  --primary-fill: #A53B2A;
+  --primary-fill-hover: #8F2E22;
+  --primary-edge: #782B23;
+  --deco-cyan: #18A5B0;
+  --deco-rose: #E64878;
+  --deco-cyan-dim: rgba(24, 165, 176, 0.1);
+  --deco-rose-dim: rgba(230, 72, 120, 0.1);
+  --success: #496C50;
+  --danger: #A73535;
+  --sh-sm: 0 4px 12px rgba(37, 38, 33, 0.08);
+  --sh-md: 0 8px 24px rgba(37, 38, 33, 0.12);
+  --sh-lg: 0 16px 40px rgba(37, 38, 33, 0.16);
+  --section-shadow: none;
+  --modal-bg: rgba(242, 235, 219, 0.97);
+  --modal-fg: #252621;
+  --chart-1: #A53B2A;
+  --chart-2: #18A5B0;
+  --chart-3: #E64878;
+  --chart-4: #615D52;
+  --chart-5: #496C50;
+  --chart-6: #A73535;
+  --chart-7: #B2A48D;
+  --chart-8: #4C4C43;
 }

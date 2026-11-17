@@ -1,0 +1,141 @@
+/* =============================================================================
+ * global-theme-cyberpunk-modals.css — Cyberpunk Modals & Animated Neon Beam
+ * Cut-corner cyberdeck geometry with continuous moving neon perimeter beam
+ * ============================================================================= */
+
+@property --cp-beam-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes cp-beam-orbit {
+  0% { --cp-beam-angle: 0deg; }
+  100% { --cp-beam-angle: 360deg; }
+}
+
+/* 5. Floating Modal Dialogs: Cut-Corner Shape & Dual-Rail Moving Neon Beam */
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .modal, .settings-card, .settings-card--settings, .settings-card--navigation, .support-prompt-card,
+  .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
+  .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
+  .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
+  .mdn-modal-content-svg, .mdn-chart-viewer__viewport, .desktop-typography-confirm-dialog
+) {
+  --cp-bg: var(--bg-e); --cp-cut-top: 18px; --cp-cut-bottom: 14px;
+  --cp-rail-cyan: #00F0FF; --cp-rail-rose: #FF0055;
+  --cp-rail-cyan-dim: rgba(0, 240, 255, 0.22);
+  --cp-rail-rose-dim: rgba(255, 0, 85, 0.22);
+  box-shadow: none !important; position: relative;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 14px 100%, 0 calc(100% - 14px)) !important;
+  filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) !important;
+  background:
+    linear-gradient(90deg, var(--cp-rail-cyan-dim), var(--cp-rail-cyan-dim)) top left / calc(100% - var(--cp-cut-top)) 1.5px no-repeat,
+    linear-gradient(180deg, var(--cp-rail-cyan-dim) 0%, var(--cp-rail-rose-dim) 100%) bottom right / 1.5px calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, var(--cp-rail-rose-dim), var(--cp-rail-rose-dim)) bottom right / calc(100% - var(--cp-cut-bottom)) 1.5px no-repeat,
+    linear-gradient(180deg, var(--cp-rail-cyan-dim) 0%, var(--cp-rail-rose-dim) 100%) top left / 1.5px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px), var(--cp-rail-cyan-dim) calc(var(--cp-cut-top) * 0.7071), var(--cp-rail-cyan-dim) calc(var(--cp-cut-top) * 0.7071 + 1.06px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 1.25px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 1.25px), var(--cp-rail-rose-dim) calc(100% - var(--cp-cut-bottom) * 0.7071 - 1.06px), var(--cp-rail-rose-dim) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] :is(
+  .modal, .settings-card, .settings-card--settings, .settings-card--navigation, .support-prompt-card,
+  .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
+  .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
+  .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card
+) {
+  --cp-rail-cyan: #00B8D4; --cp-rail-rose: #E6004C;
+  --cp-rail-cyan-dim: rgba(0, 184, 212, 0.28);
+  --cp-rail-rose-dim: rgba(230, 0, 76, 0.28);
+  filter: drop-shadow(0 16px 40px rgba(0, 0, 0, 0.28)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.15)) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .settings-card, .theme-remix-card, .switch-workspace-card, .export-center__card,
+  .scope-view__card, .file-history__card, .bookmark-dialog, .theme-onboarding-card,
+  .terms-card, .support-prompt-card, .mdn-html-modal, .update-available-card, .banned-shortcut-card, .desktop-typography-confirm-dialog
+)::before {
+  display: none !important;
+}
+
+/* Moving Neon Beam Perimeter Tracer across all Modals */
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .modal, .settings-card, .settings-card--settings, .settings-card--navigation, .support-prompt-card,
+  .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
+  .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
+  .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
+  .mdn-modal-content-svg, .mdn-chart-viewer__viewport, .desktop-typography-confirm-dialog
+)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  --cp-beam-w: 2px;
+  -webkit-mask:
+    linear-gradient(90deg, #000, #000) top left / calc(100% - var(--cp-cut-top)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) bottom right / var(--cp-beam-w) calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, #000, #000) bottom right / calc(100% - var(--cp-cut-bottom)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) top left / var(--cp-beam-w) calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px), #000 calc(var(--cp-cut-top) * 0.7071), #000 calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071), transparent calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071 + 0.2px), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071 - 0.2px), #000 calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071), #000 calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)) 0 0 / 100% 100% no-repeat;
+  mask:
+    linear-gradient(90deg, #000, #000) top left / calc(100% - var(--cp-cut-top)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) bottom right / var(--cp-beam-w) calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, #000, #000) bottom right / calc(100% - var(--cp-cut-bottom)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) top left / var(--cp-beam-w) calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px), #000 calc(var(--cp-cut-top) * 0.7071), #000 calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071), transparent calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071 + 0.2px), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071 - 0.2px), #000 calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071), #000 calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)) 0 0 / 100% 100% no-repeat;
+  background: conic-gradient(
+    from var(--cp-beam-angle, 0deg) at 50% 50%,
+    transparent 0deg,
+    transparent 240deg,
+    color-mix(in srgb, var(--cp-rail-cyan) 35%, transparent) 275deg,
+    var(--cp-rail-cyan) 305deg,
+    #FFFFFF 336deg,
+    var(--cp-rail-rose) 350deg,
+    color-mix(in srgb, var(--cp-rail-rose) 35%, transparent) 356deg,
+    transparent 360deg
+  );
+  animation: cp-beam-orbit 5s linear infinite;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--cp-rail-cyan) 70%, transparent)) drop-shadow(0 0 8px color-mix(in srgb, var(--cp-rail-rose) 70%, transparent));
+}
+
+/* Export Center Modal Cyberpunk HUD Enhancements */
+:root[data-theme][data-theme-style="cyberpunk"] .export-center__card {
+  padding: 2px !important;
+  box-sizing: border-box;
+  --cp-bg: var(--bg-s);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .export-center__header {
+  position: relative;
+  padding-right: 18px;
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 var(--bd-s) !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--deco-cyan) 8%, var(--bg-e)), var(--bg-e)) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .export-center__header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 20px;
+  width: 32px;
+  height: 2px;
+  background: var(--deco-cyan);
+  pointer-events: none;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .export-center__footer {
+  border-top: 0 !important;
+  box-shadow: 0 -1px 0 var(--bd-s) !important;
+  background: var(--bg-e) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme][data-theme-style="cyberpunk"] :is(
+    .modal, .settings-card, .settings-card--settings, .settings-card--navigation, .support-prompt-card,
+    .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
+    .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
+    .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
+    .mdn-modal-content-svg, .mdn-chart-viewer__viewport, .desktop-typography-confirm-dialog
+  )::after {
+    display: none !important;
+    animation: none !important;
+  }
+}

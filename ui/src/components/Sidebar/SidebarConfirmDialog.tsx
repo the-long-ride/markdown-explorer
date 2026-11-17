@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, type ReactNode, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, type ReactNode, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useDialogKeyboard } from '../../hooks/useDialogKeyboard';
 
 interface SidebarConfirmDialogProps {
   title: string;
@@ -35,11 +36,27 @@ export function SidebarConfirmDialog({
 
   useEffect(() => { cancelRef.current?.focus(); }, []);
 
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+  useDialogKeyboard({
+    open: true,
+    onCancel,
+    onConfirm,
+    cancelRef,
+    primaryRef: confirmRef,
+  });
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
       onCancel();
+    } else if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.nativeEvent.isComposing) {
+      const active = document.activeElement;
+      if (active === cancelRef.current || (active instanceof HTMLButtonElement && active !== confirmRef.current)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      onConfirm();
     } else if (event.key === 'Tab') {
       const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), [tabindex="0"]'));
       const first = controls[0], last = controls[controls.length - 1];

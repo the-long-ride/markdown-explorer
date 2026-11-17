@@ -3,6 +3,7 @@ import { normalizePathKey } from '../../contexts/appStateModel';
 import type { PaneId } from '../../split-view/paneState';
 import { beginSplitPointerDrag } from '../../split-view/splitPointerDrag';
 import { CloseIcon } from '../shared/icons';
+import { TooltipButton } from '../shared/TooltipButton';
 
 export interface SplitPaneTabsProps {
   paneId: PaneId;
@@ -69,7 +70,8 @@ export function SplitPaneTabs({
             aria-selected={active}
             aria-label={label}
             tabIndex={0}
-            title={path}
+            data-hover-tooltip={path}
+            data-hover-tooltip-pos="bottom"
             onPointerDown={(event) => handleTabPointerDown(event, path, label)}
             onClick={() => onActivate?.(paneId, path)}
             onContextMenu={(event) => {
@@ -83,22 +85,24 @@ export function SplitPaneTabs({
           >
             <span className="content-tab__label split-document-pane__tab">{label}</span>
             {dirty && (
-              <span className="content-tab__dirty" aria-label={dirtyLabel} title={dirtyLabel}>
+              <span className="content-tab__dirty" aria-label={dirtyLabel} data-hover-tooltip={dirtyLabel}>
                 ●
               </span>
             )}
-            <button
+            <TooltipButton
               type="button"
               className="content-tab__close split-document-pane__tab-close"
               aria-label={`${closeLabel} ${label}`}
-              title={`${closeLabel} ${label}`}
+              tooltip={`${closeLabel} ${label}`}
+              tooltipPos="below"
+              portalTooltip
+              tabIndex={-1}
+              icon={<CloseIcon size={11} />}
               onClick={(event) => {
                 event.stopPropagation();
                 onClose?.(paneId, path);
               }}
-            >
-              <CloseIcon size={11} />
-            </button>
+            />
           </div>
         );
       })}

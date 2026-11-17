@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { INSIGHTS_TRANSLATIONS, type InsightsTranslations } from '../../contexts/insightsTranslations';
 import { buildFocusedGraph, type FocusedGraphNode } from '../../insights/graph';
 import type { WorkspaceInsightsSnapshot } from '../../insights/index';
-import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, FullscreenMenuIcon, ExitFocusIcon } from '../shared/icons';
+import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, FullscreenMenuIcon, ExitFocusIcon, CopyIcon, CheckIcon } from '../shared/icons';
+import { buildGraphAiPrompt, copyTextToClipboard } from '../../insights/aiPrompts';
 
 export interface GraphViewProps {
   readonly snapshot: WorkspaceInsightsSnapshot;
@@ -17,10 +18,7 @@ export interface GraphViewProps {
 
 function nodeRadius(node: FocusedGraphNode, isHighlighted = false, relLevel?: number): number {
   const base = node.kind === 'document' ? 18 : node.kind === 'tag' ? 13 : 11;
-  if (isHighlighted) return base + 4;
-  if (relLevel === 0) return base + 3;
-  if (relLevel === 1) return base + 1;
-  return base;
+  return isHighlighted ? base + 4 : relLevel === 0 ? base + 3 : relLevel === 1 ? base + 1 : base;
 }
 
 function format(value: string, key: string, replacement: string | number): string {
@@ -59,6 +57,7 @@ export function GraphView({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, panX: 0, panY: 0 });
   const searchWrapRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     if (!dropdownOpen) return;
@@ -78,6 +77,8 @@ export function GraphView({
     if (node.kind === 'document') onSelectPath?.(node.id);
   };
 
+  const nodeById = useMemo(() => new Map(graph.nodes.map(node => [node.id, node])), [graph.nodes]);
+
   const adjacency = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const edge of graph.edges) {
@@ -93,20 +94,13 @@ export function GraphView({
 
   const nodeDistanceMap = useMemo(() => {
     if (!selected) return null;
-    const dist = new Map<string, number>();
-    dist.set(selected, 0);
-    const queue: string[] = [selected];
+    const dist = new Map<string, number>([[selected, 0]]);
+    const queue = [selected];
     while (queue.length > 0) {
       const current = queue.shift()!;
       const d = dist.get(current)!;
-      const neighbors = adjacency.get(current);
-      if (neighbors) {
-        for (const next of neighbors) {
-          if (!dist.has(next)) {
-            dist.set(next, d + 1);
-            queue.push(next);
-          }
-        }
+      for (const next of adjacency.get(current) ?? []) {
+        if (!dist.has(next)) { dist.set(next, d + 1); queue.push(next); }
       }
     }
     return dist;
@@ -114,14 +108,10 @@ export function GraphView({
 
   const relationshipSummary = useMemo(() => {
     if (!nodeDistanceMap || !selected) return null;
-    let l1 = 0;
-    let l2 = 0;
-    let l3 = 0;
+    let l1 = 0, l2 = 0, l3 = 0;
     for (const [id, d] of nodeDistanceMap.entries()) {
       if (id === selected) continue;
-      if (d === 1) l1++;
-      else if (d === 2) l2++;
-      else if (d === 3) l3++;
+      if (d === 1) l1++; else if (d === 2) l2++; else if (d === 3) l3++;
     }
     return { l1, l2, l3, total: nodeDistanceMap.size - 1 };
   }, [nodeDistanceMap, selected]);
@@ -131,28 +121,13 @@ export function GraphView({
     if (!normalizedQuery) return new Map<string, string>();
     const matches = new Map<string, string>();
     for (const node of graph.nodes) {
-      if (node.label.toLowerCase().includes(normalizedQuery)) {
-        matches.set(node.id, 'title');
-        continue;
-      }
-      if (node.id.toLowerCase().includes(normalizedQuery)) {
-        matches.set(node.id, 'path');
-        continue;
-      }
+      if (node.label.toLowerCase().includes(normalizedQuery)) { matches.set(node.id, 'title'); continue; }
+      if (node.id.toLowerCase().includes(normalizedQuery)) { matches.set(node.id, 'path'); continue; }
       const doc = snapshot.documents.get(node.id);
       if (doc) {
-        if (doc.tags.some(t => t.toLowerCase().includes(normalizedQuery))) {
-          matches.set(node.id, 'tag');
-          continue;
-        }
-        if (doc.headings.some(h => h.text.toLowerCase().includes(normalizedQuery))) {
-          matches.set(node.id, 'heading');
-          continue;
-        }
-        if (doc.aliases.some(a => a.toLowerCase().includes(normalizedQuery))) {
-          matches.set(node.id, 'alias');
-          continue;
-        }
+        if (doc.tags.some(t => t.toLowerCase().includes(normalizedQuery))) matches.set(node.id, 'tag');
+        else if (doc.headings.some(h => h.text.toLowerCase().includes(normalizedQuery))) matches.set(node.id, 'heading');
+        else if (doc.aliases.some(a => a.toLowerCase().includes(normalizedQuery))) matches.set(node.id, 'alias');
       }
     }
     return matches;
@@ -194,16 +169,31 @@ export function GraphView({
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
   };
 
-  const onWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.15 : 0.87;
-    setZoom(prev => Math.min(4, Math.max(0.25, prev * factor)));
-  };
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.cancelable) e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 0.87;
+      setZoom(prev => Math.min(4, Math.max(0.25, prev * factor)));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [graph.nodes.length]);
 
   const zoomIn = () => setZoom(prev => Math.min(4, prev * 1.25));
   const zoomOut = () => setZoom(prev => Math.max(0.25, prev * 0.8));
   const resetZoom = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
   const toggleFullscreen = () => setIsFullscreen(prev => !prev);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const handleCopyAiPrompt = async () => {
+    const prompt = buildGraphAiPrompt(snapshot, labels);
+    const ok = await copyTextToClipboard(prompt);
+    if (ok) {
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (!isFullscreen) return;
@@ -232,16 +222,25 @@ export function GraphView({
     <div className={`insights-graph${isFullscreen ? ' is-fullscreen' : ''}`}>
       <div className="insights-graph__header-row">
         <div className="insights-view-summary">
-          <span className="insights-pill" title={`${format(labels.documentsShown, 'count', documentNodes.length)}${graph.hiddenCount > 0 ? ` · ${format(labels.hiddenByNodeCap, 'count', graph.hiddenCount)}` : ''}`}>
+          <span className="insights-pill" data-hover-tooltip={`${format(labels.documentsShown, 'count', documentNodes.length)}${graph.hiddenCount > 0 ? ` · ${format(labels.hiddenByNodeCap, 'count', graph.hiddenCount)}` : ''}`}>
             {format(labels.docsCount, 'count', documentNodes.length)}{graph.hiddenCount > 0 ? ` (+${graph.hiddenCount})` : ''}
           </span>
+          <button
+            type="button"
+            className="btn btn--icon btn--sm"
+            onClick={handleCopyAiPrompt}
+            data-hover-tooltip={copiedPrompt ? 'Copied AI prompt!' : 'Copy prompt for AI agent to fix graph & link issues'}
+            aria-label={copiedPrompt ? 'Copied AI prompt!' : 'Copy prompt for AI agent to fix graph & link issues'}
+          >
+            {copiedPrompt ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+          </button>
           {relationshipSummary && (
             <span className="insights-graph__rel-stats">
               <span className="insights-pill insights-pill--accent">
                 Rel: <strong>{labels.firstDegree}</strong> ({relationshipSummary.l1})
                 {relationshipSummary.l2 > 0 && <> · <strong>{labels.secondDegree}</strong> ({relationshipSummary.l2})</>}
               </span>
-              <button type="button" className="insights-graph__clear-sel" onClick={() => setSelectedId(null)} title={labels.clearSelection} aria-label={labels.clearSelection}>
+              <button type="button" className="insights-graph__clear-sel" onClick={() => setSelectedId(null)} data-hover-tooltip={labels.clearSelection} aria-label={labels.clearSelection}>
                 ✕
               </button>
             </span>
@@ -259,7 +258,7 @@ export function GraphView({
             aria-label={labels.searchNodesPlaceholder}
           />
           {normalizedQuery && (
-            <span className="insights-graph__search-count" title={format(labels.nodesFound, 'count', matchingNodes.length)}>
+            <span className="insights-graph__search-count" data-hover-tooltip={format(labels.nodesFound, 'count', matchingNodes.length)}>
               {format(labels.nodesFound, 'count', matchingNodes.length)}
             </span>
           )}
@@ -273,7 +272,7 @@ export function GraphView({
                   className="insights-graph__search-option"
                   onClick={() => selectAndCenter(node)}
                 >
-                  <span className="insights-graph__search-option-label" title={node.label}>{node.label}</span>
+                  <span className="insights-graph__search-option-label" data-hover-tooltip={node.label}>{node.label}</span>
                   <span className="insights-graph__search-option-badge">{searchMatchInfo.get(node.id)}</span>
                 </li>
               ))}
@@ -292,14 +291,14 @@ export function GraphView({
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
-          onWheel={onWheel}
+          ref={svgRef}
           onClick={e => { if (e.target === e.currentTarget) setSelectedId(null); }}
         >
           <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
             <g aria-hidden="true" className="insights-graph__edges">
               {graph.edges.map(edge => {
-                const source = graph.nodes.find(node => node.id === edge.source);
-                const target = graph.nodes.find(node => node.id === edge.target);
+                const source = nodeById.get(edge.source);
+                const target = nodeById.get(edge.target);
                 if (!source || !target) return null;
                 const edgeDimmed = normalizedQuery && (!searchMatchInfo.has(source.id) && !searchMatchInfo.has(target.id));
                 let edgeRelClass = '';
@@ -363,10 +362,10 @@ export function GraphView({
         </svg>
 
         <div className="insights-graph__controls" aria-label={labels.graphControlsAria}>
-          <button type="button" className="btn btn--icon btn--sm" onClick={zoomIn} title={labels.zoomIn} aria-label={labels.zoomIn}><ZoomInIcon size={14} /></button>
-          <button type="button" className="btn btn--icon btn--sm" onClick={zoomOut} title={labels.zoomOut} aria-label={labels.zoomOut}><ZoomOutIcon size={14} /></button>
-          <button type="button" className="btn btn--icon btn--sm" onClick={resetZoom} title={labels.resetZoom} aria-label={labels.resetZoom}><ResetZoomIcon size={14} /></button>
-          <button type="button" className="btn btn--icon btn--sm" onClick={toggleFullscreen} title={isFullscreen ? labels.exitFullscreen : labels.toggleFullscreen} aria-label={isFullscreen ? labels.exitFullscreen : labels.toggleFullscreen}>
+          <button type="button" className="btn btn--icon btn--sm" onClick={zoomIn} data-hover-tooltip={labels.zoomIn} aria-label={labels.zoomIn}><ZoomInIcon size={14} /></button>
+          <button type="button" className="btn btn--icon btn--sm" onClick={zoomOut} data-hover-tooltip={labels.zoomOut} aria-label={labels.zoomOut}><ZoomOutIcon size={14} /></button>
+          <button type="button" className="btn btn--icon btn--sm" onClick={resetZoom} data-hover-tooltip={labels.resetZoom} aria-label={labels.resetZoom}><ResetZoomIcon size={14} /></button>
+          <button type="button" className="btn btn--icon btn--sm" onClick={toggleFullscreen} data-hover-tooltip={isFullscreen ? labels.exitFullscreen : labels.toggleFullscreen} aria-label={isFullscreen ? labels.exitFullscreen : labels.toggleFullscreen}>
             {isFullscreen ? <ExitFocusIcon size={13} /> : <FullscreenMenuIcon size={11} />}
           </button>
         </div>

@@ -94,7 +94,7 @@
     var(--bg-s);
   color: var(--tx);
   box-shadow: var(--sh-lg);
-  z-index: 2000;
+  z-index: var(--z-dropdown);
 }
 
 .pet-theme-menu[hidden] {
@@ -107,7 +107,7 @@
 
 .pet-theme-menu::-webkit-scrollbar-thumb {
   background: var(--bd-s);
-  border-radius: 4px;
+  border-radius: var(--r-s, var(--r));
 }
 
 .pet-theme-menu__option {

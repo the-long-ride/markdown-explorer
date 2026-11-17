@@ -40,6 +40,7 @@ interface UseUpdateCheckParams {
   readonly runtime: AppRuntime;
   readonly hostPlatform: HostPlatform;
   readonly hostArch: string;
+  readonly delayMs?: number;
 }
 
 export function normalizeVersion(version: string) {
@@ -194,9 +195,14 @@ export function useUpdateCheck({
   runtime,
   hostPlatform,
   hostArch,
+  delayMs,
 }: UseUpdateCheckParams): UpdateCheckState {
+  const isWeb = typeof window !== 'undefined' && typeof (window as any).__webBus !== 'undefined';
+  const isParsable = Boolean(parseVersion(currentVersion));
+  const isEligible = Boolean(currentVersion) && runtime !== 'web' && !isWeb && isParsable && !currentVersion.includes('(demo)');
+
   const initialState = useMemo<Omit<UpdateCheckState, 'checkNow'>>(() => ({
-    status: currentVersion ? 'checking' : 'idle',
+    status: isEligible ? 'checking' : 'idle',
     currentVersion,
     latestVersion: '',
     downloadUrl: runtime === 'vscode' ? VSCODE_MARKETPLACE_URL : RELEASE_FALLBACK_URL,
@@ -204,14 +210,14 @@ export function useUpdateCheck({
     releaseUrl: RELEASE_FALLBACK_URL,
     changelogUrl: CHANGELOG_URL,
     hasUpdate: false,
-  }), [currentVersion, runtime]);
+  }), [currentVersion, isEligible, runtime]);
 
   const [state, setState] = useState<Omit<UpdateCheckState, 'checkNow'>>(initialState);
   const [checkNonce, setCheckNonce] = useState(0);
   const checkNow = useCallback(() => setCheckNonce((value: number) => value + 1), []);
 
   useEffect(() => {
-    if (!currentVersion) {
+    if (!isEligible) {
       setState(initialState);
       return;
     }
@@ -220,7 +226,7 @@ export function useUpdateCheck({
     setState(initialState);
 
     // Delay update check to avoid competing with first paint
-    const delayMs = checkNonce > 0 ? 0 : 8000;
+    const resolvedDelayMs = typeof delayMs === 'number' ? delayMs : (checkNonce > 0 ? 0 : 8000);
     const timer = setTimeout(() => {
       if (controller.signal.aborted) return;
       fetch(RELEASE_API_URL, {
@@ -263,10 +269,10 @@ export function useUpdateCheck({
           error: err instanceof Error ? err.message : 'Unable to check for updates',
         });
       });
-    }, delayMs);
+    }, resolvedDelayMs);
 
     return () => { controller.abort(); clearTimeout(timer); };
-  }, [checkNonce, currentVersion, hostArch, hostPlatform, initialState, runtime]);
+  }, [checkNonce, currentVersion, delayMs, hostArch, hostPlatform, initialState, isEligible, runtime]);
 
   return { ...state, checkNow };
 }

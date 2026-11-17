@@ -10,11 +10,12 @@ import type { PlatformBridge } from '../../platform/bridge';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 import { requestOpenInSplit } from '../Content/documentFileDrop';
 import { requestOpenDocumentHistory } from '../shared/ToolbarActionMenu';
-import { HistoryIcon, HtmlPreviewIcon, InternetIcon, MarkdownViewIcon, OpenFolderLocationIcon, TrashIcon, RevealFileLocationIcon, SplitViewIcon } from '../shared/icons';
+import { CopyIcon, HistoryIcon, HtmlPreviewIcon, InternetIcon, MarkdownViewIcon, OpenFolderLocationIcon, TrashIcon, RevealFileLocationIcon, SplitViewIcon } from '../shared/icons';
 import { isHtmlDocumentPath } from '../Content/HtmlDocumentView';
 import type { SidebarItemMenuItem } from './SidebarItemMenu';
 import type { SidebarItemMenuTarget } from './TreeNode';
-import { FilePlusIcon, FolderPlusIcon } from './sidebarEntryIcons';
+import { FilePlusIcon, FolderPlusIcon, DownloadIcon } from './sidebarEntryIcons';
+import { downloadWebDemoFile, downloadWebDemoFolderZip } from '../../utils/webDemoDownload';
 import { RenameEntryIcon } from './sidebarRenameIcon';
 import { PinIcon, UnpinIcon } from './sidebarPinIcons';
 
@@ -70,6 +71,7 @@ export function buildSidebarItemMenuItems({
       onSelect: () => onTogglePin(pinItem),
     });
   }
+  const isWeb = typeof (window as any).__webBus !== 'undefined';
   if (target.kind === 'file') {
     items.push({
       id: 'open-in-split',
@@ -78,11 +80,12 @@ export function buildSidebarItemMenuItems({
       dividerBefore: items.length > 0,
       onSelect: () => requestOpenInSplit(target.path),
     });
-    const revisionLabel = getHistoryAvailabilityCopy(state.settings.language).revision;
+    const baseRevisionLabel = getHistoryAvailabilityCopy(state.settings.language).revision;
     items.push({
       id: 'history',
-      label: revisionLabel,
+      label: isWeb ? `${baseRevisionLabel} (Web unavailable)` : baseRevisionLabel,
       icon: <HistoryIcon size={14} />,
+      disabled: isWeb,
       onSelect: () => requestOpenDocumentHistory(target.path),
     });
   }
@@ -104,11 +107,94 @@ export function buildSidebarItemMenuItems({
       shortcut: getEnabledShortcut(state.settings, 'toggleHtmlPreview'),
       onSelect: () => navigate(target.path, { htmlPreviewOverride: !htmlPreviewEnabled }) });
   }
+  if (isWeb) {
+    if (target.kind === 'file') {
+      items.push({
+        id: 'download-file',
+        label: t.sidebar.downloadFile,
+        icon: <DownloadIcon size={14} />,
+        dividerBefore: items.length > 0,
+        onSelect: () => {
+          const file = state.fileList?.find((f) => f.fsPath === target.path || f.relativePath === target.path) ?? {
+            fileName: target.path.split(/[\\/]/).pop() || 'document.md',
+            fsPath: target.path,
+            relativePath: target.path,
+            extension: '.md',
+            documentKind: 'markdown',
+          };
+          void downloadWebDemoFile(file as any, state);
+        },
+      });
+    } else if (target.kind === 'folder') {
+      items.push({
+        id: 'download-folder-zip',
+        label: t.sidebar.downloadFolderZip,
+        icon: <DownloadIcon size={14} />,
+        dividerBefore: items.length > 0,
+        onSelect: () => {
+          const folderName = target.path.split(/[\\/]/).filter(Boolean).pop() || 'folder';
+          void downloadWebDemoFolderZip(target.path, folderName, state);
+        },
+      });
+    }
+  }
+
+  const copyPathToClipboard = (textToCopy: string) => {
+    try {
+      void bridge.copyToClipboard(textToCopy);
+    } catch {
+      void navigator.clipboard?.writeText(textToCopy);
+    }
+  };
+
+  const getTargetPaths = () => {
+    if (target.kind === 'file') {
+      const fullPath = target.path;
+      const matching = state.fileList?.find((f) => f.fsPath === target.path);
+      let relativePath = matching?.relativePath;
+      if (!relativePath) {
+        if (state.workspacePath && target.path.startsWith(state.workspacePath)) {
+          relativePath = target.path.slice(state.workspacePath.length).replace(/^[\/\\]+/, '');
+        } else {
+          relativePath = target.path;
+        }
+      }
+      return { fullPath, relativePath };
+    }
+    const fullPath = resolveWorkspaceFolderPath(state.workspacePath || '', target.path, state.hostPlatform);
+    const separator = state.hostPlatform === 'windows' ? '\\' : '/';
+    const relativePath = target.path.replace(/[\\/]+/g, separator);
+    return { fullPath, relativePath };
+  };
+
+  const { fullPath, relativePath } = getTargetPaths();
+
+  items.push({
+    id: 'copy-relative-path',
+    label: t.sidebar.copyRelativePath,
+    icon: <CopyIcon size={14} />,
+    dividerBefore: items.length > 0,
+    onSelect: () => {
+      copyPathToClipboard(relativePath);
+      window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', { detail: t.rendererUi.copied }));
+    },
+  });
+
+  items.push({
+    id: 'copy-full-path',
+    label: t.sidebar.copyFullPath,
+    icon: <CopyIcon size={14} />,
+    onSelect: () => {
+      copyPathToClipboard(fullPath);
+      window.dispatchEvent(new CustomEvent('markdown-explorer-action-notice', { detail: t.rendererUi.copied }));
+    },
+  });
+
   if (canOpenItemLocations) {
     items.push({ id: 'open-location', label: getShellLocationLabel(t, state.hostPlatform, target.kind),
       icon: target.kind === 'file' ? <RevealFileLocationIcon /> : <OpenFolderLocationIcon />,
       shortcut: target.kind === 'file' ? getEnabledShortcut(state.settings, 'openCurrentDocumentLocation') : undefined,
-      dividerBefore: items.length > 0,
+      dividerBefore: false,
       onSelect: () => target.kind === 'file'
         ? requestShellLocation(bridge, target.path, 'reveal-file')
         : requestShellLocation(bridge, resolveWorkspaceFolderPath(state.workspacePath || '', target.path, state.hostPlatform), 'open-directory') });

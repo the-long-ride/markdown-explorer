@@ -36,7 +36,7 @@ export function SourceDiffView({ leftSource, rightSource, leftLabel, rightLabel,
                 <td className="source-diff-view__line-number">{'left' in line ? line.left : ''}</td>
                 <td className="source-diff-view__line-number">{'right' in line ? line.right : ''}</td>
                 <td className="source-diff-view__status"><span aria-hidden="true">{markerFor(line.type)}</span><span className="source-diff-view__sr">{statusFor(line.type)}</span></td>
-                <td className="source-diff-view__source" title={line.text || undefined}><code>{line.text || ' '}</code></td>
+                <td className="source-diff-view__source" data-hover-tooltip={line.text || undefined}><code>{line.text || ' '}</code></td>
               </tr>
             ))}
             {end < lines.length && <tr className="source-diff-view__spacer source-diff-view__spacer--after" aria-hidden="true"><td colSpan={4} /></tr>}

@@ -37,7 +37,7 @@ export function useSidebarEntryDeletion({ bridge, t, deleteMode }: Options) {
     const result = await requestDeleteWorkspaceEntries(bridge, paths, mode);
     const isGone = (entryPath: string) => result.deleted.some((deleted) => isSameOrDescendant(entryPath, deleted));
     const removed = filesBefore.filter((file) => isGone(toEntryPath(file.relativePath)));
-    for (const file of currentWorkspace.current === startedIn || state.appRuntime !== 'chrome' ? removed : []) {
+    for (const file of currentWorkspace.current === startedIn || state.appRuntime !== 'web' ? removed : []) {
       discardDocumentChanges(file.fsPath);
       closeContentTab(file.fsPath);
     }

@@ -41,9 +41,24 @@ export function RandomTipCard() {
   const wt = getWelcomeTranslations(currentLang);
   const t = getTranslations(currentLang);
 
+  const effectiveSettings = useMemo(() => {
+    const directKeybindings = (state as any)?.keybindings;
+    const settingsKeybindings = state.settings?.keybindings;
+    if (directKeybindings || settingsKeybindings) {
+      return {
+        ...state.settings,
+        keybindings: {
+          ...settingsKeybindings,
+          ...directKeybindings,
+        },
+      };
+    }
+    return state.settings;
+  }, [state.settings, (state as any)?.keybindings]);
+
   const tipGroups = useMemo(
-    () => buildWelcomeTipGroups(currentLang, state.settings, wt.tips),
-    [currentLang, state.settings, wt.tips],
+    () => buildWelcomeTipGroups(currentLang, effectiveSettings, wt.tips),
+    [currentLang, effectiveSettings, wt.tips],
   );
 
   const allTips = useMemo(() => {
@@ -92,7 +107,7 @@ export function RandomTipCard() {
               type="button"
               className="welcome-random-tip-shuffle-btn"
               onClick={handleShuffleTip}
-              title={t.ui.anotherTip}
+              data-hover-tooltip={t.ui.anotherTip}
               aria-label={t.ui.anotherTip}
             >
               <DiceIcon size={14} />

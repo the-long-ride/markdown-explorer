@@ -65,7 +65,10 @@
 
 [data-theme-style="raw-grid"] {
   --r: 0px;
+  --r-sm: 0px;
   --r-s: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
   --r-m: 0px;
   --r-l: 0px;
   --radius-lg: 0px;
@@ -74,10 +77,13 @@
 
 [data-theme-style="raw-grid"] [role="switch"],
 [data-theme-style="raw-grid"] [role="switch"] span,
+[data-theme-style="raw-grid"] .app-switch,
+[data-theme-style="raw-grid"] .app-switch__thumb,
 [data-theme-style="raw-grid"] .settings-shortcut-toggle,
 [data-theme-style="raw-grid"] .settings-shortcut-toggle span,
 [data-theme-style="raw-grid"] .settings-shortcut-input,
 [data-theme-style="raw-grid"] .segmented-control,
+[data-theme-style="raw-grid"] .segmented-control::before,
 [data-theme-style="raw-grid"] .segmented-option,
 [data-theme-style="raw-grid"] .toolbar-action-menu__item,
 [data-theme-style="raw-grid"] .toolbar-action-menu__switch,
@@ -85,13 +91,18 @@
 [data-theme-style="raw-grid"] .switch-slider::before,
 [data-theme-style="raw-grid"] .scroll-to-top-btn,
 [data-theme-style="raw-grid"] .settings-language-btn,
+[data-theme-style="raw-grid"] .settings-reload-window-btn,
 [data-theme-style="raw-grid"] .settings-language-menu,
 [data-theme-style="raw-grid"] .settings-language-menu__option,
 [data-theme-style="raw-grid"] .search-overlay-card,
 [data-theme-style="raw-grid"] .search-overlay-input,
 [data-theme-style="raw-grid"] .search-overlay-result,
 [data-theme-style="raw-grid"] *::-webkit-scrollbar-thumb,
+[data-theme-style="raw-grid"] *::-webkit-scrollbar-track,
+[data-theme-style="raw-grid"] *::-webkit-scrollbar-corner,
+[data-theme-style="raw-grid"] .content-tabs__scrollbar::before,
 [data-theme-style="raw-grid"] .content-tabs__scrollbar-thumb,
+[data-theme-style="raw-grid"] .desktop-tabbar__scrollbar::before,
 [data-theme-style="raw-grid"] .desktop-tabbar__scrollbar-thumb {
   border-radius: 0 !important;
 }
@@ -102,16 +113,16 @@
 }
 
 [data-theme-style="raw-grid"] .welcome-container {
-  background: var(--bg);
-  border: var(--stroke-w) solid var(--bd-s);
-  padding: 24px;
-  max-width: 900px;
+  background: transparent;
+  border: none;
+  max-width: 1380px;
 }
 
 [data-theme-style="raw-grid"] .state-screen:not(.state-screen--loading) {
   background: var(--bg);
   border: var(--stroke-w) solid var(--bd-s);
   padding: 24px 28px;
+  flex: 0 0 auto;
   max-width: 600px;
   width: 100%;
   height: fit-content;
@@ -122,12 +133,36 @@
 /* Flatten pill/rounded shapes to match the angular theme */
 [data-theme-style="raw-grid"] .tabs-bar,
 [data-theme-style="raw-grid"] .tab-btn,
+[data-theme-style="raw-grid"] .welcome-tabs,
+[data-theme-style="raw-grid"] .welcome-tab,
+[data-theme-style="raw-grid"] .welcome-launchpad,
+[data-theme-style="raw-grid"] .welcome-launchpad__action-btn,
+[data-theme-style="raw-grid"] .welcome-launchpad__quick-btn,
+[data-theme-style="raw-grid"] .welcome-launchpad__tour-btn,
+[data-theme-style="raw-grid"] .welcome-launchpad__recent-item,
+[data-theme-style="raw-grid"] .welcome-launchpad__workspace-status,
 [data-theme-style="raw-grid"] .feature-card,
 [data-theme-style="raw-grid"] .shortcuts-card,
 [data-theme-style="raw-grid"] .privacy-card,
 [data-theme-style="raw-grid"] .homepage-link,
 [data-theme-style="raw-grid"] .card-action-btn,
-[data-theme-style="raw-grid"] .desktop-recommendation {
+[data-theme-style="raw-grid"] .desktop-recommendation,
+[data-theme-style="raw-grid"] .welcome-tour-trigger-btn,
+[data-theme-style="raw-grid"] .welcome-tour-trigger-btn__badge,
+[data-theme-style="raw-grid"] .tour-guide-badge,
+[data-theme-style="raw-grid"] .tour-guide-dot,
+[data-theme-style="raw-grid"] .hero-support-banner,
+[data-theme-style="raw-grid"] .hero-star-banner,
+[data-theme-style="raw-grid"] .hero-support-banner__btn,
+[data-theme-style="raw-grid"] .hero-star-banner__btn,
+[data-theme-style="raw-grid"] .hero-star-banner__count,
+[data-theme-style="raw-grid"] .support-prompt-card__star-count,
+[data-theme-style="raw-grid"] .welcome-ecosystem__toggle,
+[data-theme-style="raw-grid"] .welcome-ecosystem__count,
+[data-theme-style="raw-grid"] .welcome-ecosystem__item,
+[data-theme-style="raw-grid"] .welcome-ecosystem__item-tag,
+[data-theme-style="raw-grid"] .tip-card,
+[data-theme-style="raw-grid"] .tip-card-badge,
+[data-theme-style="raw-grid"] .mdn-modal-tool {
   border-radius: 0 !important;
 }
-

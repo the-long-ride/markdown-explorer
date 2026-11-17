@@ -222,11 +222,11 @@
   left: 0;
   bottom: auto;
   top: 100%;
-  transform: translateY(4px);
+  transform: none;
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
-  z-index: 99999999;
+  z-index: var(--z-tooltip);
   padding: 8px 12px;
   line-height: 1.4;
   border-radius: 6px;
@@ -251,7 +251,7 @@
 .topbar__breadcrumb-container:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 span.topbar__breadcrumb-part {
   max-width: clamp(120px, 22vw, 360px);
@@ -406,36 +406,69 @@ span.topbar__breadcrumb-part {
   color: var(--txm);
 }
 
-/* Search overlay input */
-.search-overlay-input {
-  flex: 1;
-  height: 32px;
-  background: var(--bg-e);
-  border: var(--stroke-w) solid var(--bd-s);
-  border-radius: var(--r);
-  padding: 0 10px;
-  outline: none;
-  font-size: 11.5px;
-  color: var(--tx);
-  font-family: var(--font-ui);
-  cursor: text;
-  opacity: 1;
-  box-sizing: border-box;
-  transition: border-color 0.12s, box-shadow 0.12s;
-}
-
-.search-overlay-input:disabled {
-  cursor: not-allowed;
-}
-
-.search-overlay-input:focus {
-  border-color: var(--accent);
-  box-shadow: var(--focus-ring);
-}
 
 .find-in-file-panel__case.is-active,
 .find-in-file-panel__case[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--bg);
+}
+
+@media (max-width: 900px) {
+  .search-overlay {
+    padding: 24px;
+  }
+
+  .search-overlay-card {
+    width: calc(100vw - 48px);
+    height: min(680px, calc(100vh - 64px));
+  }
+
+  .search-overlay-layout {
+    grid-template-columns: 180px 5px minmax(280px, 1fr) 5px minmax(240px, var(--search-preview-width));
+  }
+}
+
+@media (max-width: 720px) {
+  .search-overlay-layout,
+  .search-overlay-layout.is-preview-hidden {
+    grid-template-columns: minmax(280px, 1fr) 5px minmax(240px, var(--search-preview-width));
+  }
+
+  .search-overlay-layout.is-preview-hidden {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .search-overlay-workspaces,
+  .search-overlay-resize-handle:first-of-type {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .search-overlay {
+    align-items: flex-start;
+    padding: 14px 10px;
+  }
+
+  .search-overlay-card {
+    width: calc(100vw - 20px);
+    height: min(650px, calc(100vh - 28px));
+    min-height: 360px;
+    border-radius: 12px;
+  }
+
+  .search-overlay-input-row {
+    gap: 6px;
+    padding: 9px 10px;
+  }
+
+  .search-overlay-preview-toggle {
+    min-width: 54px;
+    padding-inline: 6px;
+  }
+
+  .search-overlay-subtitle {
+    display: none;
+  }
 }

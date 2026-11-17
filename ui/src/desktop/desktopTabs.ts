@@ -2,6 +2,7 @@ import {
   DESKTOP_TABS_STORAGE_KEY,
   WORKSPACE_ALIASES_STORAGE_KEY,
 } from '../constants/storage';
+import { TOUR_DEMO_WORKSPACE_PATH } from '../components/Tour/tourDemoWorkspace';
 import type {
   DesktopTab,
   DesktopTabKind,
@@ -87,7 +88,9 @@ export function readPersistedDesktopTabs(workspaceAliases: WorkspaceAliasMap): {
     const stored = localStorage.getItem(DESKTOP_TABS_STORAGE_KEY);
     if (!stored) throw new Error('No persisted tab state');
     const parsed = JSON.parse(stored) as PersistedDesktopTabsState;
-    const persistedTabs = Array.isArray(parsed.tabs) ? parsed.tabs : [];
+    const persistedTabs = (Array.isArray(parsed.tabs) ? parsed.tabs : []).filter(
+      (tab) => tab.workspacePath !== TOUR_DEMO_WORKSPACE_PATH,
+    );
     const tabs = persistedTabs.map((tab) => {
       const restored = createEmptyTab(tab.id, tab.kind);
       restored.alias = tab.alias;
@@ -100,6 +103,7 @@ export function readPersistedDesktopTabs(workspaceAliases: WorkspaceAliasMap): {
           (path): path is string => typeof path === 'string' && path.length > 0,
         );
       }
+      restored.activeContentTabPath = tab.activeContentTabPath ?? restored.currentFile;
       if (restored.workspacePath) {
         restored.alias = workspaceAliases[restored.workspacePath] ?? restored.alias;
       }
@@ -133,7 +137,9 @@ export function writePersistedDesktopTabs(tabs: DesktopTab[], activeTabId: strin
         workspaceName: tab.workspaceName,
         workspacePath: tab.workspacePath,
         currentFile: tab.currentFile,
-        contentTabs: tab.contentTabs.map((contentTab) => contentTab.filePath),
+        contentTabs: tab.contentTabs.length > 0
+          ? tab.contentTabs.map((contentTab) => contentTab.filePath)
+          : (tab.restoredContentTabPaths ?? []),
         activeContentTabPath: tab.activeContentTabPath ?? tab.currentFile,
       })),
     };
@@ -144,6 +150,17 @@ export function writePersistedDesktopTabs(tabs: DesktopTab[], activeTabId: strin
 }
 
 export function readInitialDesktopState(): InitialDesktopState {
+  if (
+    typeof window !== 'undefined' &&
+    typeof (window as any).__webBus !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('mode')?.toLowerCase() === 'test'
+  ) {
+    return {
+      workspaceAliases: {},
+      tabs: [createEmptyTab('home', 'home')],
+      activeTabId: 'home',
+    };
+  }
   const workspaceAliases = readWorkspaceAliases();
   const tabState = readPersistedDesktopTabs(workspaceAliases);
   for (const tab of tabState.tabs) {

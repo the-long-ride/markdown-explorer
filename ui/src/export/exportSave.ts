@@ -48,7 +48,7 @@ export function saveExportArtifact(
   artifact: ExportArtifact,
   timeoutMs = DEFAULT_SAVE_TIMEOUT_MS,
 ): Promise<ExportSaveResult> {
-  if (runtime === 'chrome') {
+  if (runtime === 'web') {
     try {
       return Promise.resolve(saveWithBrowserDownload(artifact));
     } catch (error) {

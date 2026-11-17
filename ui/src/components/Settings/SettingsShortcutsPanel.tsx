@@ -6,6 +6,7 @@ import { RefreshIcon } from '../shared/icons';
 import type { ShortcutAction } from './settingsActions';
 import { SettingsOutlineButton } from './SettingsOutlineButton';
 import { getShortcutGroupTranslations, groupShortcutActions } from './shortcutGroups';
+import { ShortcutActionIcon } from './settingsRowIcons';
 
 type SettingsShortcutsPanelProps = {
   state: AppState;
@@ -39,9 +40,12 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
     const hasKeycaps = isEnabled && !isRecording && Boolean(val);
     return (
       <div className="settings-shortcut-row" key={act.id}>
-        <div className="settings-shortcut-label">
-          <span>{actionLabels[act.id]}</span>
-          <span className="settings-shortcut-scope">{scopeLabels[act.scope]}</span>
+        <div className="settings-shortcut-row__info">
+          <span className="settings-item__icon settings-shortcut-row__icon" aria-hidden="true"><ShortcutActionIcon actionId={act.id} /></span>
+          <div className="settings-shortcut-label">
+            <span className="settings-shortcut-title">{actionLabels[act.id]}</span>
+            <span className="settings-shortcut-scope">{scopeLabels[act.scope]}</span>
+          </div>
         </div>
         <SwitchButton
           checked={isEnabled}
@@ -120,6 +124,11 @@ export function SettingsShortcutsPanel(props: SettingsShortcutsPanelProps) {
           {groups.map((group) => (
             <section key={group.mission} className="settings-shortcut-group" role="group" aria-labelledby={`settings-shortcut-group-${group.mission}`}>
               <h4 id={`settings-shortcut-group-${group.mission}`} className="settings-shortcut-group__label">{group.label}</h4>
+              {group.description && (
+                <p className="settings-shortcut-group__description settings-group-description keybinding-group__description">
+                  {group.description}
+                </p>
+              )}
               <div className="settings-shortcut-group__card">
                 {group.actions.map(renderAction)}
               </div>

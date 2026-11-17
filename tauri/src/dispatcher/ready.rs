@@ -3,21 +3,33 @@ use crate::host_message::WorkspaceOperationMetadata;
 
 impl Dispatcher {
     pub(super) async fn handle_ready(&self, msg: &Value) {
+        let ready_id = msg
+            .get("readyId")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let requested_operation = WorkspaceOperationMetadata::from_parts(
             msg.get("workspaceOperationId").and_then(Value::as_str),
             msg.get("workspaceTabId").and_then(Value::as_str),
         );
-        let operation = requested_operation.or_else(|| host_message::current_workspace_operation(&self.app));
         if let Some(enabled) = msg
             .get("documentConversionEnabled")
             .and_then(Value::as_bool)
         {
             self.state.inner.write().document_conversion_enabled = enabled;
         }
-        if self.state.inner.read().ready_handled {
-            return;
+        {
+            let mut state = self.state.inner.write();
+            if state.ready_handled && (ready_id.is_none() || state.last_ready_id == ready_id) {
+                return;
+            }
+            if requested_operation.is_none() {
+                state.workspace_operation_id = None;
+                state.workspace_tab_id = None;
+            }
+            state.ready_handled = true;
+            state.last_ready_id = ready_id;
         }
-        self.state.inner.write().ready_handled = true;
+        let operation = requested_operation.or_else(|| host_message::current_workspace_operation(&self.app));
 
         let config_dir = self.app.path().app_config_dir().unwrap_or_default();
         let update_state =

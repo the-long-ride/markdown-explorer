@@ -38,7 +38,7 @@ export function SwitchButton({
     >
       <span className="app-switch__thumb" aria-hidden="true" />
       {children}
-      {tooltipText && <span className="tooltip-text">{tooltipText}</span>}
+      {tooltipText && <span className="tooltip-text"><span className="tooltip-content-wrap">{tooltipText}</span></span>}
     </button>
   );
 }

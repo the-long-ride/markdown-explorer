@@ -14,11 +14,7 @@ export function isWorkspaceNavigationHref(href: string): boolean {
   const trimmed = href.trim();
   if (!trimmed || trimmed === "#" || trimmed.startsWith("#")) return false;
   if (/^[a-z][a-z\d+.-]*:/i.test(trimmed) || trimmed.startsWith("//")) return false;
-  return (
-    trimmed.startsWith("/") ||
-    trimmed.startsWith("./") ||
-    trimmed.startsWith("../")
-  );
+  return true;
 }
 
 
@@ -42,8 +38,11 @@ export function splitLeadingHtmlComments(html: string): { leadingCommentsHtml: s
 
 export function syncStickyTableHeaders(scrollContainer: HTMLElement | null): void {
   if (!scrollContainer) return;
+  scrollContainer.dataset.mdnJsStickyHeaders = 'true';
+  const padBottom = parseFloat(window.getComputedStyle(scrollContainer).paddingBottom || '0') || 0;
+  scrollContainer.style.setProperty('--mdn-sticky-bottom-offset', `${-padBottom}px`);
   const rectScroll = scrollContainer.getBoundingClientRect();
-  const stickyTop = rectScroll.top;
+  const stickyTop = rectScroll.top + scrollContainer.clientTop;
 
   scrollContainer
     .querySelectorAll<HTMLTableElement>(".mdn-table")
@@ -51,9 +50,11 @@ export function syncStickyTableHeaders(scrollContainer: HTMLElement | null): voi
       const thead = table.querySelector<HTMLElement>("thead");
       if (!thead) return;
       const rectTable = table.getBoundingClientRect();
+      const tableHeight = rectTable.height || table.offsetHeight;
+      const theadHeight = thead.getBoundingClientRect().height || thead.offsetHeight;
+      const maxTranslate = Math.max(0, tableHeight - theadHeight);
       const offsetPast = stickyTop - rectTable.top;
-      if (offsetPast > 0) {
-        const maxTranslate = table.offsetHeight - thead.offsetHeight;
+      if (offsetPast > 0 && maxTranslate > 0) {
         const translateY = Math.min(offsetPast, maxTranslate);
         thead.style.transform = `translateY(${translateY}px)`;
         thead.style.position = "relative";

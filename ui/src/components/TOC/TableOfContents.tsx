@@ -136,7 +136,8 @@ export function TableOfContents({ variant = 'panel', entries, rootId }: TableOfC
             scrollTo(entry.id);
             if (closeOnSelect) setCompactOpen(false);
           }}
-          title={entry.text}
+          data-hover-tooltip={entry.text}
+          data-hover-tooltip-pos="left"
           aria-current={isActive ? 'location' : undefined}
         >
           <span className="toc-item__marker" aria-hidden="true" />
@@ -153,7 +154,8 @@ export function TableOfContents({ variant = 'panel', entries, rootId }: TableOfC
           className="toc-compact__toggle"
           aria-expanded={compactOpen}
           onClick={() => setCompactOpen((open) => !open)}
-          title={activeEntry?.text}
+          data-hover-tooltip={activeEntry?.text || t.toc.onThisPage}
+          data-hover-tooltip-pos="left"
         >
           <span className="toc-compact__label">{t.toc.onThisPage}</span>
           <ChevronUpIcon size={14} className="toc-compact__chevron" />
@@ -181,7 +183,7 @@ export function TableOfContents({ variant = 'panel', entries, rootId }: TableOfC
             <span className="toc-panel__count">{toc.length}</span>
           </div>
         </div>
-        <div className="toc-panel__current" title={activeEntry?.text}>
+        <div className="toc-panel__current" data-hover-tooltip={activeEntry?.text || t.toc.sections} data-hover-tooltip-pos="left">
           {activeEntry?.text ?? t.toc.sections}
         </div>
       </div>

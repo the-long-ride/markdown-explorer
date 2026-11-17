@@ -1,7 +1,7 @@
 .search-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2147483647;
+  z-index: var(--z-search-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,6 +107,11 @@
   font-family: var(--font-ui);
   font-size: 11.5px;
   box-sizing: border-box;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.search-overlay-input:disabled {
+  cursor: not-allowed;
 }
 
 .search-overlay-input:focus {
@@ -234,8 +239,59 @@ body.is-resizing .search-overlay-resize-handle::after {
   color: var(--tx);
 }
 
+.scope-focus-checkbox,
 .search-overlay-workspace__checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
   margin: 0;
+  border: 2px solid color-mix(in srgb, var(--txm) 76%, transparent);
+  border-radius: min(var(--r-s, 3px), 4px);
+  background: var(--bg-e);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+
+.scope-focus-checkbox::after,
+.search-overlay-workspace__checkbox::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: min(var(--r-s, 2px), 2px);
+  background: var(--accent);
+  transform: scale(0);
+  transition: transform 0.1s ease;
+}
+
+.scope-focus-checkbox:hover,
+.search-overlay-workspace__checkbox:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-e));
+}
+
+.scope-focus-checkbox:checked,
+.search-overlay-workspace__checkbox:checked {
+  border-color: var(--accent);
+  background: var(--bg-e);
+}
+
+.scope-focus-checkbox:checked::after,
+.search-overlay-workspace__checkbox:checked::after {
+  transform: scale(1);
+}
+
+.scope-focus-checkbox:focus-visible,
+.search-overlay-workspace__checkbox:focus-visible {
+  outline: 2px solid var(--accent-dim);
+  outline-offset: 2px;
 }
 
 .search-overlay-workspace__select {
@@ -352,6 +408,13 @@ body.is-resizing .search-overlay-resize-handle::after {
 .search-overlay-results::-webkit-scrollbar-thumb {
   border-radius: var(--r-s, var(--r));
   background: var(--bd-s);
+}
+
+@supports selector(::-webkit-scrollbar) {
+  .search-overlay-results {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
 }
 
 .search-overlay-message {
@@ -490,63 +553,4 @@ body.is-resizing .search-overlay-resize-handle::after {
 .search-overlay-preview__document mark.mdn-search-jump-mark {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-
-@media (max-width: 900px) {
-  .search-overlay {
-    padding: 24px;
-  }
-
-  .search-overlay-card {
-    width: calc(100vw - 48px);
-    height: min(680px, calc(100vh - 64px));
-  }
-
-  .search-overlay-layout {
-    grid-template-columns: 180px 5px minmax(280px, 1fr) 5px minmax(240px, var(--search-preview-width));
-  }
-}
-
-@media (max-width: 720px) {
-  .search-overlay-layout,
-  .search-overlay-layout.is-preview-hidden {
-    grid-template-columns: minmax(280px, 1fr) 5px minmax(240px, var(--search-preview-width));
-  }
-
-  .search-overlay-layout.is-preview-hidden {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .search-overlay-workspaces,
-  .search-overlay-resize-handle:first-of-type {
-    display: none;
-  }
-}
-
-@media (max-width: 620px) {
-  .search-overlay {
-    align-items: flex-start;
-    padding: 14px 10px;
-  }
-
-  .search-overlay-card {
-    width: calc(100vw - 20px);
-    height: min(650px, calc(100vh - 28px));
-    min-height: 360px;
-    border-radius: 12px;
-  }
-
-  .search-overlay-input-row {
-    gap: 6px;
-    padding: 9px 10px;
-  }
-
-  .search-overlay-preview-toggle {
-    min-width: 54px;
-    padding-inline: 6px;
-  }
-
-  .search-overlay-subtitle {
-    display: none;
-  }
 }

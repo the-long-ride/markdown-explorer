@@ -1,4 +1,493 @@
 /* Keep the public selector contract visible at the entrypoint. */
-.mdn-table-view-menu__option.is-selected {
+
+/* CodeMirror Markdown Visual Table Widget */
+.cm-table-widget {
+  margin: 6px 0;
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  border-radius: var(--r-md, 6px);
+  background: var(--bg-s);
+  overflow: auto;
+  box-shadow: var(--sh-sm);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+}
+
+.cm-table-widget:last-child {
+  margin-bottom: 0;
+}
+
+.cm-table-widget__bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--bg-e);
+  color: var(--tx2);
+  border-bottom: var(--stroke-w, 1px) solid var(--bd-s);
+  user-select: none;
+}
+
+.cm-table-widget__info {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--txm);
+}
+
+.cm-table-widget__toggle-btn {
+  background: var(--bg-e);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tx);
+  cursor: pointer;
+  padding: 3px 9px;
+  border-radius: var(--r, 4px);
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cm-table-widget__toggle-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.cm-table-widget__toggle-btn:hover {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+  color: var(--tx);
+}
+
+.cm-table-widget__toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.cm-table-widget__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--tx);
+}
+
+.cm-table-cell {
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  padding: 6px 12px;
+  min-width: 60px;
+  outline: none;
+  line-height: 1.45;
+  color: var(--tx);
+  transition: box-shadow 0.1s ease, background 0.1s ease;
+}
+
+.cm-table-cell:focus {
+  box-shadow: inset 0 0 0 2px var(--accent);
   background: var(--accent-dim);
 }
+
+.cm-table-cell.is-multi-selected,
+.cm-table-cell[data-cell-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-a)) !important;
+  box-shadow: inset 0 0 0 1.5px var(--accent) !important;
+  outline: none;
+}
+
+.cm-table-cell--header {
+  background: var(--bg-e);
+  font-weight: 600;
+  color: var(--tx);
+}
+
+/* Raw table banner */
+.cm-raw-table-banner {
+  padding: 4px 0;
+  display: flex;
+}
+
+.cm-raw-table-banner__btn {
+  background: var(--bg-e);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  border-radius: var(--r, 4px);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tx);
+  cursor: pointer;
+  padding: 3px 9px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cm-raw-table-banner__btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.cm-raw-table-banner__btn:hover {
+  background: var(--bg-h);
+  border-color: var(--bd-x);
+  color: var(--tx);
+}
+
+.cm-raw-table-banner__btn:active {
+  transform: scale(0.97);
+}
+
+/* Context Menu */
+.cm-table-context-menu {
+  position: fixed;
+  z-index: var(--z-menu);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--bg-s)), var(--bg-s) 45%),
+    var(--bg-s);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  border-radius: var(--r-md, 6px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  user-select: none;
+  font-family: var(--font-ui);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  -webkit-app-region: no-drag;
+}
+
+.cm-table-context-menu__item {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--r, 6px) - 2px);
+  color: var(--tx2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 8px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.12s ease, color 0.12s ease;
+  -webkit-app-region: no-drag;
+}
+
+.cm-table-context-menu__item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--tx2);
+  flex-shrink: 0;
+}
+
+.cm-table-context-menu__item:hover:not(:disabled) .cm-table-context-menu__item-icon,
+.cm-table-context-menu__item:focus-visible:not(:disabled) .cm-table-context-menu__item-icon {
+  color: var(--tx);
+}
+
+.cm-table-context-menu__item-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.cm-table-context-menu__item:hover:not(:disabled),
+.cm-table-context-menu__item:focus-visible:not(:disabled) {
+  background: var(--bg-h);
+  color: var(--tx);
+  outline: none;
+}
+
+.cm-table-context-menu__item:disabled {
+  color: var(--txm);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cm-table-context-menu__divider {
+  height: 1px;
+  background: var(--bd-s);
+  margin: 3px 0;
+}
+
+/* Table Insert Dialog */
+.table-insert-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: var(--z-panel-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-insert-dialog {
+  background: var(--bg-s);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  border-radius: var(--r-lg, 8px);
+  box-shadow: var(--sh-lg);
+  padding: 20px 24px;
+  min-width: 320px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--tx);
+  font-family: var(--font-ui);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+}
+
+.table-insert-dialog__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tx);
+}
+
+.table-insert-dialog__fields {
+  display: flex;
+  gap: 16px;
+}
+
+.table-insert-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.table-insert-dialog__label {
+  font-size: 12px;
+  color: var(--tx2);
+}
+
+.table-insert-dialog__input {
+  background: var(--bg-e);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  border-radius: var(--r, 4px);
+  padding: 6px 10px;
+  font-size: 14px;
+  color: var(--tx);
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.table-insert-dialog__input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Table Insert Dialog Grid */
+.table-insert-dialog__grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.table-insert-dialog__grid-status {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--tx2);
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.table-insert-dialog__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 28px);
+  grid-template-rows: repeat(7, 28px);
+  gap: 4px;
+  padding: 8px;
+  background: var(--bg-e);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  border-radius: var(--r-md, 6px);
+  box-shadow: var(--sh-sm);
+  touch-action: none;
+}
+
+.table-insert-dialog__grid-cell {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r, 3px);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  background: var(--bg-s);
+  cursor: pointer;
+  box-sizing: border-box;
+  padding: 0;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+}
+
+.table-insert-dialog__grid-cell:hover,
+.table-insert-dialog__grid-cell.is-highlighted {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.table-insert-dialog__grid-cell.is-corner {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.table-insert-dialog__grid-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.table-insert-dialog__grid-cell:active {
+  transform: scale(0.95);
+}
+
+.table-insert-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.table-insert-dialog__button {
+  padding: 6px 14px;
+  border-radius: var(--r, 4px);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  border: var(--stroke-w, 1px) solid transparent;
+  transition: all 0.15s ease;
+}
+
+.table-insert-dialog__button--cancel {
+  background: var(--bg-e);
+  border-color: var(--bd-s);
+  color: var(--tx);
+}
+
+.table-insert-dialog__button--cancel:hover {
+  background: var(--bg-h);
+}
+
+.table-insert-dialog__button--submit {
+  background: var(--accent);
+  color: #fff;
+}
+
+.table-insert-dialog__button--submit:hover {
+  opacity: 0.9;
+}
+
+.link-insert-dialog {
+  width: min(560px, calc(100vw - 32px));
+  min-width: min(460px, calc(100vw - 32px));
+  max-width: 560px;
+}
+
+.link-insert-dialog__url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.link-insert-dialog__url-row .table-insert-dialog__input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.link-insert-dialog__paste-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--bg-e);
+  border: var(--stroke-w, 1px) solid var(--bd-s);
+  border-radius: var(--r, 4px);
+  color: var(--tx2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.link-insert-dialog__paste-btn:hover {
+  background: var(--bg-h);
+  color: var(--tx);
+  border-color: var(--bd);
+}
+
+/* Inline Table Editor Host */
+.markdown-inline-editor__table-host {
+  display: flex;
+  flex-direction: column;
+  min-height: 4.5em;
+  max-height: 65vh;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.markdown-inline-editor__table-host .cm-editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--tx);
+  outline: none;
+}
+
+.markdown-inline-editor__table-host .cm-scroller {
+  overflow: auto;
+  font-family: var(--font-code, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--editor-font-size, var(--markdown-editor-font-size, 13.5px));
+  line-height: 1.6;
+}
+
+.markdown-inline-editor__table-host .cm-content {
+  padding: 8px 12px;
+  caret-color: var(--accent);
+}
+
+.markdown-inline-editor__table-host .cm-table-widget {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="8"] { --editor-font-size: 8px; --markdown-editor-font-size: 8px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="9"] { --editor-font-size: 9px; --markdown-editor-font-size: 9px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="10"] { --editor-font-size: 10px; --markdown-editor-font-size: 10px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="11"] { --editor-font-size: 11px; --markdown-editor-font-size: 11px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="12"] { --editor-font-size: 12px; --markdown-editor-font-size: 12px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="13"] { --editor-font-size: 13px; --markdown-editor-font-size: 13px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="14"] { --editor-font-size: 14px; --markdown-editor-font-size: 14px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="15"] { --editor-font-size: 15px; --markdown-editor-font-size: 15px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="16"] { --editor-font-size: 16px; --markdown-editor-font-size: 16px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="17"] { --editor-font-size: 17px; --markdown-editor-font-size: 17px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="18"] { --editor-font-size: 18px; --markdown-editor-font-size: 18px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="19"] { --editor-font-size: 19px; --markdown-editor-font-size: 19px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="20"] { --editor-font-size: 20px; --markdown-editor-font-size: 20px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="21"] { --editor-font-size: 21px; --markdown-editor-font-size: 21px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="22"] { --editor-font-size: 22px; --markdown-editor-font-size: 22px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="23"] { --editor-font-size: 23px; --markdown-editor-font-size: 23px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="24"] { --editor-font-size: 24px; --markdown-editor-font-size: 24px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="25"] { --editor-font-size: 25px; --markdown-editor-font-size: 25px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="26"] { --editor-font-size: 26px; --markdown-editor-font-size: 26px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="27"] { --editor-font-size: 27px; --markdown-editor-font-size: 27px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="28"] { --editor-font-size: 28px; --markdown-editor-font-size: 28px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="29"] { --editor-font-size: 29px; --markdown-editor-font-size: 29px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="30"] { --editor-font-size: 30px; --markdown-editor-font-size: 30px; } :is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="31"] { --editor-font-size: 31px; --markdown-editor-font-size: 31px; }
+:is(.markdown-source-editor, .markdown-inline-editor)[data-editor-font-size="32"] { --editor-font-size: 32px; --markdown-editor-font-size: 32px; }

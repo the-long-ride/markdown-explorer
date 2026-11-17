@@ -19,7 +19,7 @@ body {
   gap: var(--topbar-gap);
   padding: 0 var(--topbar-pad-x);
   flex-shrink: 0;
-  z-index: 200000;
+  z-index: var(--z-window-controls);
   box-shadow: var(--sh-sm);
   user-select: none;
   -webkit-user-select: none;
@@ -142,7 +142,7 @@ body {
     linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--bg-s)), var(--bg-s) 45%),
     var(--bg-s);
   box-shadow: var(--sh-lg);
-  z-index: 300000;
+  z-index: var(--z-menu);
 }
 
 [data-theme-style="glass"] .toolbar-action-menu__panel {
@@ -197,7 +197,7 @@ body {
 }
 
 .toolbar-action-menu__item .tooltip-text {
-  z-index: 400000;
+  z-index: var(--z-menu);
   white-space: nowrap;
   overflow: visible;
 }

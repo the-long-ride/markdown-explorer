@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   min-height: 68px;
-  padding: 14px 104px 12px 20px;
+  padding: 14px 144px 12px 20px;
   border-bottom: 0;
 }
 .settings-navigation-header__copy h2 {
@@ -155,11 +155,13 @@
   overflow: auto;
   padding: 18px;
 }
-.settings-navigation__content--typography {
+.settings-navigation__content--typography,
+.settings-navigation__content--features {
   display: flex;
   overflow: hidden;
 }
-.settings-navigation__content--typography > * {
+.settings-navigation__content--typography > *,
+.settings-navigation__content--features > * {
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -214,7 +216,7 @@
   }
   .settings-navigation-header {
     min-height: 62px;
-    padding: 12px 96px 10px 14px;
+    padding: 12px 132px 10px 14px;
   }
   .settings-navigation-layout {
     grid-template-columns: minmax(0, 1fr);

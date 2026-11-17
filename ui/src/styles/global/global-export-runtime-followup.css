@@ -83,7 +83,7 @@
   position: absolute;
   top: 50%;
   left: 20px;
-  z-index: 2010;
+  z-index: var(--z-modal-popover);
   transform: translateY(-50%);
 }
 
@@ -91,7 +91,7 @@
   position: absolute;
   top: 50%;
   right: 20px;
-  z-index: 2010;
+  z-index: var(--z-modal-popover);
   transform: translateY(-50%);
 }
 
@@ -159,6 +159,15 @@ html[data-mdn-export="true"] .mdn-export-sidebar::-webkit-scrollbar-track,
 html[data-mdn-export="true"] .mdn-export-main::-webkit-scrollbar-track,
 html[data-mdn-export="true"] .mdn-export-file-list::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  html[data-mdn-export="true"] .mdn-export-sidebar,
+  html[data-mdn-export="true"] .mdn-export-main,
+  html[data-mdn-export="true"] .mdn-export-file-list {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
 }
 
 /* Exported pages do not have the native application topbar. Reclaim that

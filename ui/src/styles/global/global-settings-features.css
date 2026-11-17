@@ -1,4 +1,27 @@
-/* Settings > Features: grouped sections with inline descriptions. */
+/* Settings > Features: grouped sections with fixed header and scrollable items. */
+.settings-section-panel.settings-features-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  gap: 14px;
+}
+
+.settings-features-section__header {
+  flex-shrink: 0;
+}
+
+.settings-features-section__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
+}
+
 .settings-feature-groups {
   display: grid;
   gap: 20px;
@@ -106,6 +129,12 @@
   outline-offset: 2px;
 }
 
+.switch-toggle.is-disabled,
+.switch-toggle input:disabled + .switch-slider {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
 @media (max-width: 520px) {
   .settings-feature-row {
     gap: 12px;
@@ -120,4 +149,46 @@
   .settings-feature-row {
     transition: none;
   }
+}
+
+/* Inline icons centered vertically with title and description across settings items */
+.settings-item__header,
+.settings-feature-row__content,
+.desktop-font-binding-row__info,
+.settings-shortcut-row__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.settings-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: var(--r, 6px);
+  background: color-mix(in srgb, var(--accent) 9%, var(--bg-s));
+  border: var(--stroke-w, 1px) solid color-mix(in srgb, var(--accent) 18%, var(--bd-s));
+  color: var(--accent);
+  align-self: center;
+  box-sizing: border-box;
+}
+
+.settings-item__icon svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.settings-shortcut-row__info {
+  gap: 10px;
+}
+
+.settings-shortcut-row__icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
 }

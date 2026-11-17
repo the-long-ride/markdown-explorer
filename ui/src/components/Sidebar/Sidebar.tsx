@@ -1,13 +1,4 @@
-import {
-  lazy,
-  Suspense,
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-  useLayoutEffect,
-  useEffect,
-} from "react";
+import { lazy, Suspense, useState, useCallback, useMemo, useRef, useLayoutEffect, useEffect } from "react";
 import { useAppState } from "../../contexts/AppStateContext";
 import type { SidebarTabId } from "../../contexts/appStateModel";
 import { getHistoryTranslations } from "../../contexts/historyTranslations";
@@ -27,13 +18,14 @@ import { SidebarSearch, type RevisionSidebarSearch } from "./SidebarSearch";
 import type { SidebarSearchStatus } from "./SidebarSearch";
 import { useSidebarCursorNavigation } from "./useSidebarCursorNavigation";
 import { getEnabledShortcut } from "../../utils/shortcuts";
+import { isWebRuntime } from "../../insights/runtimeCapabilities";
 import { supportsLocalFileBrowserOpen } from "../../dom/localFileBrowserSupport";
 import { buildSidebarItemMenuItems } from "./sidebarItemMenuItems";
 import { folderHasVisibleContent, getWorkspaceScopeKey, matchesFileSearch } from "./sidebarTreeFiltering";
 import { getActiveFolderPaths } from "./sidebarActiveFolders";
 import { useLocateActiveFile } from "./useLocateActiveFile";
 import { SidebarFilesActions } from "./SidebarFilesActions";
-import { SidebarTreeEntryContext } from "./sidebarTreeContext";
+import { SidebarTreeEntryContext, type SidebarTreeEntryContextValue } from "./sidebarTreeContext";
 import { useSidebarFileOps } from "./useSidebarFileOps";
 import { useFolderExpansionCommand } from "./useFolderExpansionCommand";
 import { collectHoistedPinnedItems, orderSidebarLevel } from "./sidebarTreeOrdering";
@@ -42,6 +34,7 @@ import { useSidebarScopeFocus } from "./useSidebarScopeFocus";
 import { SidebarScopeControls } from "./SidebarScopeControls";
 import { SidebarTabsHeader } from "./SidebarTabsHeader";
 import { buildVisibleSidebarTabs, sidebarTabIndex } from "./sidebarTabs";
+import { downloadWebDemoWorkspaceZip, shouldShowWorkspaceZipButton } from "../../utils/webDemoDownload";
 
 interface SidebarProps {
   cursorMode?: boolean;
@@ -61,13 +54,7 @@ const RepositoryHistoryPanel = lazy(() => import("../History/RepositoryHistoryPa
   .then((module) => ({ default: module.RepositoryHistoryPanel })));
 
 function HistorySidebarIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 12a9 9 0 1 0 3-6.7" />
-      <path d="M3 3v6h6" />
-      <path d="M12 7v5l3 2" />
-    </svg>
-  );
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg>;
 }
 
 export function Sidebar({
@@ -132,7 +119,7 @@ export function Sidebar({
   const bookmarkCount = bookmarkViewMode === 'tabs'
     ? bookmarkDocument.items.filter((item) => bookmarkWorkspaces.some((workspace) => workspace.workspaceKey === item.workspaceKey)).length
     : bookmarkDocument.items.filter((item) => item.workspaceKey === activeBookmarkWorkspaceKey).length;
-  const historyEnabled = state.settings.historySidebarEnabled;
+  const historyEnabled = state.settings.historySidebarEnabled && !isWebRuntime();
   const visibleTabs = useMemo(() => buildVisibleSidebarTabs({
     bookmarksEnabled: state.settings.bookmarksEnabled,
     historyEnabled,
@@ -140,6 +127,9 @@ export function Sidebar({
     searchLabel: t.sidebar.search,
     bookmarksLabel: t.bookmarks.tab,
     historyLabel: historyT.history,
+    filesShortcut: getEnabledShortcut(state.settings, 'openFiles'),
+    searchShortcut: getEnabledShortcut(state.settings, 'searchCurrent'),
+    bookmarksShortcut: getEnabledShortcut(state.settings, 'openBookmarks'),
     fileCount: displayedFileList.length,
     bookmarkCount,
     icons: {
@@ -148,7 +138,7 @@ export function Sidebar({
       bookmarks: <BookmarkIcon size={14} />,
       history: <HistorySidebarIcon size={14} />,
     },
-  }), [bookmarkCount, displayedFileList.length, historyEnabled, historyT.history, state.settings.bookmarksEnabled, t.bookmarks.tab, t.sidebar.files, t.sidebar.search]);
+  }), [bookmarkCount, displayedFileList.length, historyEnabled, historyT.history, state.settings, t.bookmarks.tab, t.sidebar.files, t.sidebar.search]);
   const prevTabRef = useRef<SidebarTabId>(state.sidebarActiveTab);
   const [slideDirection, setSlideDirection] = useState<'from-right' | 'from-left'>('from-right');
   const [hasOpenedHistory, setHasOpenedHistory] = useState(isHistory);
@@ -315,21 +305,9 @@ export function Sidebar({
     onDeleteEntry: fileOps.capability.deleteMode ? fileOps.entryActions.requestDelete : undefined,
     canChangeEntry: fileOps.entryActions.canChange,
   }), [
-    bridge,
-    canOpenHtmlInBrowser,
-    canOpenItemLocations,
-    fileOps.capability.create,
-    fileOps.capability.deleteMode,
-    fileOps.entryActions,
-    fileOps.startCreate,
-    isRevisionMode,
-    itemMenu,
-    navigate,
-    pinLimitReached,
-    pinnedKeys,
-    state,
-    t,
-    togglePin,
+    bridge, canOpenHtmlInBrowser, canOpenItemLocations, fileOps.capability.create,
+    fileOps.capability.deleteMode, fileOps.entryActions, fileOps.startCreate, isRevisionMode,
+    itemMenu, navigate, pinLimitReached, pinnedKeys, state, t, togglePin,
   ]);
 
   const openRevisionFile = useCallback((file: { relativePath: string }) => {
@@ -342,6 +320,30 @@ export function Sidebar({
       openPath: (path) => { void openSnapshotFile(path); },
     }
     : undefined, [openSnapshotFile, repositoryView, searchRevision]);
+
+  const treeEntryContextValue = useMemo<SidebarTreeEntryContextValue>(() => ({
+    inlineParentPath: fileOps.treeContext?.inlineParentPath ?? null,
+    inlineInput: fileOps.treeContext?.inlineInput ?? null,
+    revealPath: fileOps.treeContext?.revealPath ?? null,
+    selectionActive: fileOps.treeContext?.selectionActive ?? false,
+    focusedKey: fileOps.treeContext?.focusedKey,
+    renameKey: fileOps.treeContext?.renameKey,
+    renameInput: fileOps.treeContext?.renameInput,
+    isSelected: fileOps.treeContext?.isSelected ?? (() => false),
+    toggleSelected: fileOps.treeContext?.toggleSelected ?? (() => {}),
+    selectItemLabel: fileOps.treeContext?.selectItemLabel ?? t.sidebar.selectItem,
+    rememberFocus: fileOps.treeContext?.rememberFocus ?? (() => {}),
+    onFolderCollapsed: fileOps.treeContext?.onFolderCollapsed,
+    currentFile: displayedCurrentFile,
+    showTitle: state.settings.showTitle,
+    navigate,
+  }), [fileOps.treeContext, displayedCurrentFile, state.settings.showTitle, navigate, t.sidebar.selectItem]);
+
+  const isWeb = typeof (window as any).__webBus !== 'undefined';
+  const canDownloadWorkspaceZip = shouldShowWorkspaceZipButton(isWeb, state.fileList, state.workspacePath);
+  const handleDownloadWorkspaceZip = useCallback(() => {
+    void downloadWebDemoWorkspaceZip(state);
+  }, [state]);
 
   if (!displayedTree) return null;
 
@@ -357,6 +359,8 @@ export function Sidebar({
         tabs={visibleTabs}
         searchStatus={searchStatus}
         onSelect={(tab) => dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab })}
+        onDownloadWorkspaceZip={canDownloadWorkspaceZip ? handleDownloadWorkspaceZip : undefined}
+        downloadWorkspaceLabel={t.sidebar.downloadWorkspaceZip}
       />
 
       <div className={`sidebar__tab-panel${isFiles ? ` is-active is-${slideDirection}` : " is-hidden"}`}>
@@ -368,14 +372,14 @@ export function Sidebar({
           {!isRevisionMode && (
             <>
               <div className="sidebar__files-second-row">
-                <SidebarScopeControls editing={scopeFocusEditing} hasEntry={hasScopeEntry} count={scopeFocusCount} total={allFilePaths.length} allSelected={allFilesSelected} labels={{ focus: t.sidebar.scopeFocus, clear: t.sidebar.clearScopeFocus, checkAll: t.sidebar.checkAll, uncheckAll: t.sidebar.uncheckAll }} onToggleEditing={() => { fileOps.exitSelection(); setScopeFocusEditing((editing) => !editing); }} onToggleAll={toggleAllScopeFiles} onClear={clearScopeFocus} />
+                <SidebarScopeControls editing={scopeFocusEditing} hasEntry={hasScopeEntry} count={scopeFocusCount} total={allFilePaths.length} allSelected={allFilesSelected} labels={{ focus: t.sidebar.scopeFocus, applyFocus: t.sidebar.applyScopeFocus, clear: t.sidebar.clearScopeFocus, checkAll: t.sidebar.checkAll, uncheckAll: t.sidebar.uncheckAll }} onToggleEditing={() => { fileOps.exitSelection(); setScopeFocusEditing((editing) => !editing); }} onToggleAll={toggleAllScopeFiles} onClear={clearScopeFocus} />
               </div>
               {fileOps.selectionToolbar ?? <SidebarFilesActions leftActions={fileOps.createActions} canLocate={Boolean(displayedCurrentFile)} hasPins={hasPins} workspaceKey={scopeKey} locateLabel={t.tooltips.locateFile} clearPinsLabel={t.sidebar.clearPinnedItems} clearPinsConfirmBody={t.sidebar.clearPinnedItemsConfirmBody} cancelLabel={t.bookmarks.cancel} sortLabel={t.sidebar.sortFiles} sortNameAscLabel={t.sidebar.sortNameAsc} sortNameDescLabel={t.sidebar.sortNameDesc} sortModifiedDescLabel={t.sidebar.sortModifiedDesc} sortModifiedAscLabel={t.sidebar.sortModifiedAsc} collapseLabel={t.sidebar.collapseAllFolders} expandLabel={t.sidebar.expandAllFolders} locateShortcut={getEnabledShortcut(state.settings, 'locateFile')} sortMode={sortMode} onLocate={scrollToActiveFile} onClearPins={clearPins} onSortChange={setSortMode} onCollapseAll={fileOps.collapseAll} onExpandAll={expandAllFolders} />}
             </>
           )}
         </div>
         <div className="sidebar__tree sidebar__tree--from-left" id="sidebarTree" role="tree" ref={treeRef} onScroll={handleScroll} onClick={fileOps.onTreeClick} onKeyDown={fileOps.entryActions.onTreeKeyDown}>
-          <SidebarTreeEntryContext.Provider value={fileOps.treeContext}>
+          <SidebarTreeEntryContext.Provider value={treeEntryContextValue}>
           {fileOps.entryActions.deleteDialog}
           {fileOps.rootInput}
           {orderedRootItems.map((item) => item.kind === "file" ? (

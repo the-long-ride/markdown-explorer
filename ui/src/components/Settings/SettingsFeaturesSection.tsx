@@ -4,7 +4,7 @@ import type { AppState } from '../../contexts/appStateReducer';
 import { getFeatureSettingsTranslations } from '../../contexts/featureSettingsTranslations';
 import { getEnabledShortcut, formatShortcutLabel } from '../../utils/shortcuts';
 import { normalizeMaxPinnedItems } from '../Sidebar/sidebarWorkspacePreferences';
-import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
+import { supportsWorkspaceInsights, isWebRuntime } from '../../insights/runtimeCapabilities';
 import { FeatureSettingRow, FeatureSwitch } from './FeatureSettingRow';
 
 type SettingsFeaturesSectionProps = {
@@ -35,6 +35,7 @@ export function getVisibleFeatureGroups(groups: ReadonlyArray<FeatureSettingGrou
 }
 
 export function SettingsFeaturesSection({ state, t, isDesktop, updateSettings }: SettingsFeaturesSectionProps) {
+  const isWeb = isWebRuntime();
   const featureT = getFeatureSettingsTranslations(state.settings.language);
   const toggleHtmlPreview = formatShortcutLabel(getEnabledShortcut(state.settings, 'toggleHtmlPreview') || '');
   const htmlPreviewDescription = toggleHtmlPreview
@@ -67,14 +68,18 @@ export function SettingsFeaturesSection({ state, t, isDesktop, updateSettings }:
         <FeatureSettingRow
           key="history-sidebar-enabled"
           id="history-sidebar-enabled"
-          title={featureT.historySidebarEnabled}
-          description={featureT.historySidebarEnabledDesc}
+          title={isWeb ? `${featureT.historySidebarEnabled} (Web unavailable)` : featureT.historySidebarEnabled}
+          description={isWeb ? `${featureT.historySidebarEnabledDesc} Not supported in Web version.` : featureT.historySidebarEnabledDesc}
         >
           {(ids) => (
             <FeatureSwitch
               ids={ids}
-              checked={state.settings.historySidebarEnabled}
-              onChange={(event) => updateSettings({ historySidebarEnabled: event.target.checked })}
+              checked={isWeb ? false : state.settings.historySidebarEnabled}
+              disabled={isWeb}
+              onChange={(event) => {
+                if (isWeb) return;
+                updateSettings({ historySidebarEnabled: event.target.checked });
+              }}
             />
           )}
         </FeatureSettingRow>,
@@ -210,24 +215,26 @@ export function SettingsFeaturesSection({ state, t, isDesktop, updateSettings }:
 
   return (
     <section className="settings-section-panel settings-features-section" aria-labelledby="settings-features-heading">
-      <div className="settings-section-panel__header">
+      <div className="settings-section-panel__header settings-features-section__header">
         <h3 id="settings-features-heading">{featureT.features}</h3>
         <p>{featureT.featuresDesc}</p>
       </div>
-      <div className="settings-feature-groups">
-        {getVisibleFeatureGroups(groups).map((group) => (
-          <section
-            key={group.id}
-            className="settings-feature-group"
-            data-group-id={group.id}
-            aria-labelledby={`settings-feature-group-${group.id}`}
-          >
-            <h4 id={`settings-feature-group-${group.id}`} className="settings-feature-group__title">
-              {group.title}
-            </h4>
-            <div className="settings-feature-group__card">{group.rows}</div>
-          </section>
-        ))}
+      <div className="settings-features-section__scroll">
+        <div className="settings-feature-groups">
+          {getVisibleFeatureGroups(groups).map((group) => (
+            <section
+              key={group.id}
+              className="settings-feature-group"
+              data-group-id={group.id}
+              aria-labelledby={`settings-feature-group-${group.id}`}
+            >
+              <h4 id={`settings-feature-group-${group.id}`} className="settings-feature-group__title">
+                {group.title}
+              </h4>
+              <div className="settings-feature-group__card">{group.rows}</div>
+            </section>
+          ))}
+        </div>
       </div>
     </section>
   );

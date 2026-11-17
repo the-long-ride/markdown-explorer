@@ -37,7 +37,7 @@
 }
 .switch-toggle input:checked + .switch-slider:before {
   transform: translateX(18px);
-  background-color: #fff;
+  background-color: var(--accent-ink, #fff);
 }
 .sr-only {
   position: absolute;
@@ -58,7 +58,7 @@
   position: relative;
 }
 .tooltip-container:hover {
-  z-index: 99999999;
+  z-index: var(--z-tooltip);
 }
 .tooltip-text {
   visibility: hidden;
@@ -75,15 +75,13 @@
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition:
-    opacity 0.12s,
-    transform 0.12s;
-  z-index: 99999999;
+  transition: opacity 0.12s ease;
+  z-index: var(--z-tooltip);
   box-shadow: var(--sh-md);
 }
 .tooltip-container:not([data-tooltip-pos="below"]) .tooltip-text {
   bottom: 125%;
-  transform: translateX(-50%) translateY(4px);
+  transform: translateX(-50%);
 }
 .tooltip-container:not([data-tooltip-pos="below"]):hover .tooltip-text {
   visibility: visible;
@@ -93,7 +91,7 @@
 .tooltip-container[data-tooltip-pos="below"] .tooltip-text {
   top: 125%;
   bottom: auto;
-  transform: translateX(-50%) translateY(-4px);
+  transform: translateX(-50%);
 }
 .tooltip-container[data-tooltip-pos="below"]:hover .tooltip-text {
   visibility: visible;
@@ -101,19 +99,18 @@
   transform: translateX(-50%) translateY(0);
 }
 
-/* Viewport-clamped center tooltip for More Actions dropdown items */
+/* Viewport-clamped right-aligned tooltip for More Actions dropdown items */
 .toolbar-action-menu__panel .tooltip-container .tooltip-text {
-  /* Center on the button, clamped so tooltip never bleeds outside the panel */
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%) translateY(4px);
-  /* Allow tooltip to escape panel horizontally but stay inside viewport */
-  max-width: min(260px, calc(100vw - 24px));
+  left: auto;
+  right: 0;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  transform: none;
 }
 .toolbar-action-menu__panel .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: none;
 }
 
 [data-theme-style="glass"] .tooltip-text {
@@ -133,51 +130,19 @@
   left: auto;
   right: 0;
 }
-.tooltip-container[data-tooltip-align="right"]:not([data-tooltip-pos="below"])
-  .tooltip-text {
-  transform: translateX(0) translateY(4px);
-}
-.tooltip-container[data-tooltip-align="right"]:not(
-    [data-tooltip-pos="below"]
-  ):hover
-  .tooltip-text {
-  transform: translateX(0) translateY(0);
-}
-.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"]
-  .tooltip-text {
-  transform: translateX(0) translateY(-4px);
-}
-.tooltip-container[data-tooltip-align="right"][data-tooltip-pos="below"]:hover
-  .tooltip-text {
-  transform: translateX(0) translateY(0);
-}
+.tooltip-container[data-tooltip-align="right"] .tooltip-text { transform: none; }
+.tooltip-container[data-tooltip-align="right"]:hover .tooltip-text { transform: none; }
 
 /* Tooltip Left Alignment (avoids window overflow/clipping on far left edges) */
 .tooltip-container[data-tooltip-align="left"] .tooltip-text {
   left: 0;
   right: auto;
 }
-.tooltip-container[data-tooltip-align="left"]:not([data-tooltip-pos="below"])
-  .tooltip-text {
-  transform: translateX(0) translateY(4px);
-}
-.tooltip-container[data-tooltip-align="left"]:not(
-    [data-tooltip-pos="below"]
-  ):hover
-  .tooltip-text {
-  transform: translateX(0) translateY(0);
-}
-.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"]
-  .tooltip-text {
-  transform: translateX(0) translateY(-4px);
-}
-.tooltip-container[data-tooltip-align="left"][data-tooltip-pos="below"]:hover
-  .tooltip-text {
-  transform: translateX(0) translateY(0);
-}
+.tooltip-container[data-tooltip-align="left"] .tooltip-text { transform: none; }
+.tooltip-container[data-tooltip-align="left"]:hover .tooltip-text { transform: none; }
 /* Settings tooltips sit above portal dropdowns and stay inside edge controls. */
 .settings-card--settings .tooltip-text {
-  z-index: 10000050;
+  z-index: var(--z-tooltip);
   max-width: min(280px, calc(100vw - 24px));
 }
 .settings-navigation__version .tooltip-text {
@@ -267,11 +232,11 @@
   max-width: 100%;
   overflow: visible !important;
 }
-.content .mdn-body .mdn-mermaid-wrap {
+.mdn-body .mdn-mermaid-wrap {
   max-height: calc(var(--mermaid-max-h) + 32px);
   overflow: hidden;
 }
-.content .mdn-body .mermaid {
+.mdn-body .mermaid {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -280,7 +245,7 @@
   max-height: var(--mermaid-max-h);
   overflow: hidden !important;
 }
-.content .mdn-body .mermaid svg {
+.mdn-body .mermaid svg {
   display: block !important;
   width: auto !important;
   max-width: 100% !important;
@@ -290,7 +255,7 @@
   overflow: hidden !important;
   object-fit: contain;
 }
-.content .mdn-body .mdn-mermaid-wrap > svg {
+.mdn-body .mdn-mermaid-wrap > svg {
   display: block !important;
   width: auto !important;
   max-width: 100% !important;
@@ -324,7 +289,7 @@
     transform 0.2s,
     background 0.12s;
   box-shadow: var(--sh-md);
-  z-index: 99;
+  z-index: var(--z-floating);
   pointer-events: none;
   outline: none;
 }
@@ -505,7 +470,7 @@ kbd:active,
 .confetti-particle {
   position: fixed;
   pointer-events: none;
-  z-index: 9999;
+  z-index: var(--z-tooltip);
 }
 
 /* Viewport-level tooltip used by controls that can be clipped by shell overflow. */
@@ -516,9 +481,25 @@ kbd:active,
   visibility: var(--portal-visibility, hidden);
   right: auto;
   bottom: auto;
-  z-index: 2147483000;
+  z-index: var(--z-tooltip);
   opacity: 1;
   transform: none !important;
+  width: max-content;
   max-width: min(320px, calc(100vw - 16px));
+  white-space: normal;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.tooltip-trigger-wrap,
+.tooltip-disabled-wrap {
+  display: inline-flex;
+}
+
+.tooltip-disabled-wrap {
+  cursor: default;
+}
+
+.tooltip-disabled-wrap > button:disabled {
   pointer-events: none;
 }

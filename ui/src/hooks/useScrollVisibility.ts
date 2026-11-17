@@ -26,9 +26,10 @@ export function useScrollVisibility(
     const updateVisibility = () => {
       animationFrame = null;
       const hideThreshold = Math.max(0, threshold - 24);
-      const nextVisible = visibleRef.current
+      const hasOverflow = el.scrollHeight > el.clientHeight + 20;
+      const nextVisible = hasOverflow && (visibleRef.current
         ? el.scrollTop > hideThreshold
-        : el.scrollTop > threshold;
+        : el.scrollTop > threshold);
       if (visibleRef.current === nextVisible) return;
       visibleRef.current = nextVisible;
       setIsVisible(nextVisible);

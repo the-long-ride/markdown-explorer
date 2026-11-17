@@ -5,6 +5,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCssVars } from "../../utils/useCssVars";
+import { executeThemeTransition } from "../../utils/themeTransition";
 import {
   DEFAULT_PET_THEME_STYLE,
   PET_THEME_STYLE_OPTIONS,
@@ -14,11 +15,12 @@ import {
 import type { PetThemeStyle, ThemeStyle } from "../../types";
 import { useAppState } from "../../contexts/AppStateContext";
 import { getTranslations } from "../../contexts/translations";
-import whiteShibaPet from "../../assets/themes/pets/backgrounds/white-shiba-happy.png";
-import kInkPet from "../../assets/themes/pets/backgrounds/k-ink-wolf.png";
-import catPet from "../../assets/themes/pets/backgrounds/cat-happy.png";
-import hamsterPet from "../../assets/themes/pets/backgrounds/hamster-happy.png";
-import corgiPet from "../../assets/themes/pets/backgrounds/corgi-happy.png";
+import {
+  type BuiltInThemeStyle,
+  Chevron,
+  PetImageSwatch,
+  ThemeIcon,
+} from "./ThemePickerIcons";
 
 interface ThemeStylePickerProps {
   value: ThemeStyle;
@@ -29,7 +31,6 @@ interface ThemeStylePickerProps {
 }
 
 type OpenGroup = "themes" | "pets" | "custom" | null;
-type BuiltInThemeStyle = Exclude<ThemeStyle, PetThemeStyle>;
 
 const MAX_VISIBLE_THEME_MENU_ITEMS = 7;
 
@@ -44,87 +45,6 @@ function getThemeMenuDesiredHeight(group: Exclude<OpenGroup, null>, itemCount?: 
         : 1;
   const items = Math.min(MAX_VISIBLE_THEME_MENU_ITEMS, Math.max(1, count));
   return rowHeight * items + 10;
-}
-
-const PET_IMAGE_URLS: Record<PetThemeStyle, string> = {
-  "pet-white-shiba": whiteShibaPet,
-  "pet-k-ink": kInkPet,
-  "pet-cat": catPet,
-  "pet-hamster": hamsterPet,
-  "pet-corgi": corgiPet,
-};
-
-function PetImageSwatch({ themeStyle }: { themeStyle: PetThemeStyle }) {
-  return (
-    <img
-      className="pet-theme-swatch-image"
-      src={PET_IMAGE_URLS[themeStyle]}
-      alt=""
-      draggable={false}
-    />
-  );
-}
-
-function ThemeIcon({ themeStyle, size = 18 }: { themeStyle: BuiltInThemeStyle; size?: number }) {
-  switch (themeStyle) {
-    case "bento":
-      return (
-        <svg className="theme-option-icon theme-option-icon--bento" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="8" height="10" rx="2" fill="currentColor" fillOpacity="0.12" />
-          <rect x="13" y="3" width="8" height="6" rx="1.5" fill="currentColor" fillOpacity="0.12" />
-          <rect x="13" y="11" width="8" height="10" rx="1.5" fill="currentColor" fillOpacity="0.12" />
-          <rect x="3" y="15" width="8" height="6" rx="1.5" fill="currentColor" fillOpacity="0.12" />
-        </svg>
-      );
-    case "vercel":
-      return (
-        <svg className="theme-option-icon theme-option-icon--vercel" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
-          <path d="M12 4L21 19.5H3L12 4Z" fill="currentColor" fillOpacity="0.15" />
-        </svg>
-      );
-    case "tokyo-night":
-      return (
-        <svg className="theme-option-icon theme-option-icon--tokyo-night" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" fillOpacity="0.12" />
-          <circle cx="17.5" cy="6" r="1" fill="currentColor" stroke="none" />
-        </svg>
-      );
-    case "neon-voltage":
-      return (
-        <svg className="theme-option-icon theme-option-icon--neon-voltage" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="currentColor" fillOpacity="0.15" />
-        </svg>
-      );
-    case "raw-grid":
-      return (
-        <svg className="theme-option-icon theme-option-icon--raw-grid" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor" fillOpacity="0.08" />
-          <line x1="3" y1="9" x2="21" y2="9" opacity="0.6" />
-          <line x1="3" y1="15" x2="21" y2="15" opacity="0.6" />
-          <line x1="9" y1="3" x2="9" y2="21" opacity="0.6" />
-          <line x1="15" y1="3" x2="15" y2="21" opacity="0.6" />
-        </svg>
-      );
-    default:
-      return (
-        <svg className="theme-option-icon theme-option-icon--default" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="3" fill="currentColor" fillOpacity="0.12" />
-          <line x1="7" y1="8" x2="17" y2="8" strokeWidth="2" />
-          <line x1="7" y1="12" x2="15" y2="12" opacity="0.75" />
-          <line x1="7" y1="16" x2="12" y2="16" opacity="0.5" />
-        </svg>
-      );
-  }
-}
-
-function Chevron() {
-  return (
-    <span className="pet-theme-select__chevron" aria-hidden="true">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m6 9 6 6 6-6" />
-      </svg>
-    </span>
-  );
 }
 
 export function ThemeStylePicker({
@@ -173,6 +93,8 @@ export function ThemeStylePicker({
         return { label: t.themeStyles.tokyoNightLabel, desc: t.themeStyles.tokyoNightDesc };
       case "neon-voltage":
         return { label: t.themeStyles.neonVoltageLabel, desc: t.themeStyles.neonVoltageDesc };
+      case "cyberpunk":
+        return { label: t.themeStyles.cyberpunkLabel || 'Cyberpunk', desc: t.themeStyles.cyberpunkDesc || 'Machined controls, cut-corner cyberdeck geometry, and signal yellow/vermilion accents.' };
       case "raw-grid":
         return { label: t.themeStyles.rawGridLabel, desc: t.themeStyles.rawGridDesc };
       default:
@@ -184,12 +106,6 @@ export function ThemeStylePicker({
     switch (themeStyle) {
       case "pet-k-ink":
         return t.themeStyles.kInkLabel;
-      case "pet-cat":
-        return t.themeStyles.catLabel;
-      case "pet-hamster":
-        return t.themeStyles.hamsterLabel;
-      case "pet-corgi":
-        return t.themeStyles.corgiLabel;
       default:
         return t.themeStyles.whiteShibaLabel;
     }
@@ -272,20 +188,36 @@ export function ThemeStylePicker({
     };
   }, [openGroup]);
 
-  const selectBuiltIn = (themeStyle: BuiltInThemeStyle) => {
-    onChange(themeStyle);
+  const selectBuiltIn = (themeStyle: BuiltInThemeStyle, event?: React.MouseEvent<HTMLElement>) => {
+    executeThemeTransition(() => onChange(themeStyle), {
+      originElement: event?.currentTarget ?? pickerRef.current,
+      event: event && 'clientX' in event && event.clientX > 0 ? event : undefined,
+      themeStyle,
+      nextTheme: state.theme,
+    });
     setOpenGroup(null);
   };
 
   useCssVars(menuRef, menuPosition ? { '--menu-top': menuPosition.top !== undefined ? `${menuPosition.top}px` : undefined, '--menu-bottom': menuPosition.bottom !== undefined ? `${menuPosition.bottom}px` : undefined, '--menu-left': `${menuPosition.left}px`, '--menu-width': `${menuPosition.width}px`, '--menu-max-height': `${menuPosition.maxHeight}px` } : {});
 
-  const selectPet = (themeStyle: PetThemeStyle) => {
-    onChange(themeStyle);
+  const selectPet = (themeStyle: PetThemeStyle, event?: React.MouseEvent<HTMLElement>) => {
+    executeThemeTransition(() => onChange(themeStyle), {
+      originElement: event?.currentTarget ?? pickerRef.current,
+      event: event && 'clientX' in event && event.clientX > 0 ? event : undefined,
+      themeStyle,
+      nextTheme: state.theme,
+    });
     setOpenGroup(null);
   };
 
-  const selectCustom = (themeId: string) => {
-    selectCustomTheme(themeId);
+  const selectCustom = (themeId: string, event?: React.MouseEvent<HTMLElement>) => {
+    const customTheme = customThemes.find((theme) => theme.id === themeId);
+    executeThemeTransition(() => selectCustomTheme(themeId), {
+      originElement: event?.currentTarget ?? pickerRef.current,
+      event: event && 'clientX' in event && event.clientX > 0 ? event : undefined,
+      themeStyle: customTheme?.baseStyle,
+      nextTheme: customTheme?.colorMode ?? state.theme,
+    });
     setOpenGroup(null);
   };
 
@@ -301,7 +233,7 @@ export function ThemeStylePicker({
           type="button"
           className="theme-style-option__main"
           aria-pressed={!isPetSelected && !activeCustomTheme}
-          onClick={() => selectBuiltIn(selectedBuiltIn.id)}
+          onClick={(e) => selectBuiltIn(selectedBuiltIn.id, e)}
         >
           <span className="theme-style-option__swatch" aria-hidden="true">
             <span className="theme-swatch-main"><ThemeIcon themeStyle={selectedBuiltIn.id} size={18} /></span>
@@ -332,7 +264,7 @@ export function ThemeStylePicker({
         className={`theme-style-option theme-style-option--pets theme-style-option--${selectedPetTheme}${isPetSelected ? " is-active" : ""}`}
         data-theme-group="pets"
       >
-        <button type="button" className="theme-style-option__main" aria-pressed={isPetSelected} onClick={() => selectPet(selectedPetTheme)}>
+        <button type="button" className="theme-style-option__main" aria-pressed={isPetSelected} onClick={(e) => selectPet(selectedPetTheme, e)}>
           <span className="theme-style-option__swatch theme-style-option__swatch--pet" aria-hidden="true"><PetImageSwatch themeStyle={selectedPetTheme} /></span>
           <span className="theme-style-option__text">
             <span className="theme-style-option__label">{t.themeStyles.petsLabel}</span>
@@ -390,7 +322,7 @@ export function ThemeStylePicker({
             const copy = getThemeCopy(option.id);
             const selected = option.id === value && !activeCustomTheme;
             return (
-              <button key={option.id} type="button" role="option" aria-selected={selected} className={`theme-group-menu__option theme-group-menu__option--${option.id}${selected ? " is-selected" : ""}`} onClick={() => selectBuiltIn(option.id)}>
+              <button key={option.id} type="button" role="option" aria-selected={selected} className={`theme-group-menu__option theme-group-menu__option--${option.id}${selected ? " is-selected" : ""}`} onClick={(e) => selectBuiltIn(option.id, e)}>
                 <span className="theme-group-menu__swatch" aria-hidden="true"><ThemeIcon themeStyle={option.id} size={16} /></span>
                 <span className="theme-group-menu__copy"><span className="theme-group-menu__label">{copy.label}</span><span className="theme-group-menu__desc">{copy.desc}</span></span>
               </button>
@@ -399,7 +331,7 @@ export function ThemeStylePicker({
           {openGroup === "pets" && PET_THEME_STYLE_OPTIONS.map((option) => {
             const selected = option.id === selectedPetTheme;
             return (
-              <button key={option.id} type="button" role="option" aria-selected={selected} className={`pet-theme-menu__option pet-theme-menu__option--${option.id}${selected ? " is-selected" : ""}`} onClick={() => selectPet(option.id)}>
+              <button key={option.id} type="button" role="option" aria-selected={selected} className={`pet-theme-menu__option pet-theme-menu__option--${option.id}${selected ? " is-selected" : ""}`} onClick={(e) => selectPet(option.id, e)}>
                 <span className="pet-theme-menu__paw" aria-hidden="true" /><span className="pet-theme-menu__label">{getPetLabel(option.id)}</span>
               </button>
             );
@@ -407,7 +339,7 @@ export function ThemeStylePicker({
           {openGroup === "custom" && customThemes.map((theme) => {
             const selected = theme.id === activeCustomTheme?.id;
             return (
-              <button key={theme.id} type="button" role="option" aria-selected={selected} className={`custom-theme-menu__option${selected ? " is-selected" : ""}`} onClick={() => selectCustom(theme.id)}>
+              <button key={theme.id} type="button" role="option" aria-selected={selected} className={`custom-theme-menu__option${selected ? " is-selected" : ""}`} onClick={(e) => selectCustom(theme.id, e)}>
                 <span className="custom-theme-menu__swatch" aria-hidden="true" /><span className="custom-theme-menu__label">{theme.name}</span>
               </button>
             );

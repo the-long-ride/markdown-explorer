@@ -1,5 +1,5 @@
 // =============================================================================
-// platform/web.ts — Web demo PlatformBridge implementation
+// platform/web.ts — Web PlatformBridge implementation
 // =============================================================================
 
 import type { PlatformBridge } from './bridge';
@@ -8,14 +8,14 @@ import type { HostMessage, WebviewMessage } from '../types';
 
 declare global {
   interface Window {
-    __webDemoBus?: EventTarget;
+    __webBus?: EventTarget;
   }
 }
 
 export function createWebBridge(): PlatformBridge {
-  const bus = window.__webDemoBus;
+  const bus = window.__webBus;
   if (!bus) {
-    throw new Error('__webDemoBus is not available. Web demo host not initialized.');
+    throw new Error('__webBus is not available. Web host not initialized.');
   }
 
   return {

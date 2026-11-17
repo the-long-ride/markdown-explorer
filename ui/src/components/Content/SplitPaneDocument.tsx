@@ -108,14 +108,19 @@ export function SplitPaneDocument({
   });
 
   const isFullHtmlPreview = isHtmlDocument && htmlPreviewEnabled && mode !== 'plain';
+  const isPlainMode = mode === 'plain';
   // A full HTML preview fills the whole pane, like the main reader viewport.
   // The body's parent is the pane scroll area; its ref is not attached yet when
   // this child layout effect first runs, so resolve it from the DOM instead.
   useLayoutEffect(() => {
     const scroll = bodyRef.current?.parentElement;
     scroll?.classList.toggle('split-document-pane__scroll--html-preview', isFullHtmlPreview);
-    return () => scroll?.classList.remove('split-document-pane__scroll--html-preview');
-  }, [isFullHtmlPreview]);
+    scroll?.classList.toggle('split-document-pane__scroll--plain-edit', isPlainMode);
+    return () => {
+      scroll?.classList.remove('split-document-pane__scroll--html-preview');
+      scroll?.classList.remove('split-document-pane__scroll--plain-edit');
+    };
+  }, [isFullHtmlPreview, isPlainMode]);
 
   useDocumentRootRegistration({
     id: paneId,

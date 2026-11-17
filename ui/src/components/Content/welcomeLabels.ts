@@ -1,6 +1,6 @@
 export const cleanTitle = (text: string): string => {
   if (!text) return '';
-  return text.replace(/^[✨⌨️🔒💡🔍🛠️📁📊📋🎨🖼️🐞🌐]\s*/u, '').replace(/\s*→\s*$/, '').trim();
+  return text.replace(/^(?:[✨⌨🔒💡🔍🛠📁📊📋📑🎨🖼🐞🌐]|\p{Extended_Pictographic})[\uFE0E\uFE0F]?\s*/u, '').replace(/\s*→\s*$/, '').trim();
 };
 
 export const TAB_LABELS: Record<

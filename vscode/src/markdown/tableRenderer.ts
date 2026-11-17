@@ -1,5 +1,6 @@
 import { renderInline } from './inline';
 import { shortId } from '../utils';
+import { inferIntelligentColumnAlignment } from '../../../ui/src/dom/intelligentTableAlign';
 
 export interface InteractiveTableData {
   headers: string[];
@@ -20,18 +21,28 @@ function isCategoryColumn(rows: string[][], colIndex: number): boolean {
 export function renderInteractiveTable(data: InteractiveTableData, isMdx = false): string {
   const id = shortId('tbl');
   const align = data.align ?? [];
+  const intelligentAligns = data.headers.map((_, columnIndex) =>
+    inferIntelligentColumnAlignment(data.rows.map((row) => row[columnIndex] ?? '')),
+  );
   const thead = data.headers.map((header, columnIndex) => {
-    const alignAttr = align[columnIndex] ? ` style="text-align:${align[columnIndex]}"` : '';
+    const colAlign = align[columnIndex];
+    const intelligentAlign = intelligentAligns[columnIndex];
+    const alignAttr = `${colAlign ? ` data-col-align="${colAlign}" style="text-align:${colAlign}"` : ''}${intelligentAlign ? ` data-intelligent-align="${intelligentAlign}"` : ''}`;
+    const alignButton = `<span class="mdn-table-align-btn" onclick="event.stopPropagation(); Table.showAlignMenu('${id}', ${columnIndex}, this)" data-hover-tooltip="Align column" aria-label="Align column" role="button" tabindex="0">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+    </span>`;
     const category = isCategoryColumn(data.rows, columnIndex);
     const filterButton = category
       ? `<span class="mdn-table-filter-btn" onclick="event.stopPropagation(); Table.showFilterMenu('${id}', ${columnIndex}, this)" title="Filter by values" role="button" tabindex="0">
              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
            </span>`
       : '';
-    return `<th class="mdn-th${category ? ' has-filter' : ''}" data-col="${columnIndex}" onclick="Table.sort('${id}',${columnIndex})" tabindex="0"${alignAttr}>
+    const sortButton = `<span class="mdn-sort-icon" onclick="event.stopPropagation(); Table.sort('${id}',${columnIndex})" title="Sort" role="button" tabindex="0">⇅</span>`;
+    return `<th class="mdn-th${category ? ' has-filter' : ''}" data-col="${columnIndex}"${alignAttr}>
   <div class="mdn-th-content">
     <span class="mdn-th-text">${renderInline(header, isMdx)}</span>
-    <span class="mdn-sort-icon" aria-hidden="true">⇅</span>
+    ${sortButton}
+    ${alignButton}
     ${filterButton}
   </div>
 </th>`;
@@ -40,7 +51,9 @@ export function renderInteractiveTable(data: InteractiveTableData, isMdx = false
   const tbody = data.rows.map((row, rowIndex) => {
     const rowClass = rowIndex >= 15 ? ' class="is-collapsed-row"' : '';
     const cells = data.headers.map((_, columnIndex) => {
-      const alignAttr = align[columnIndex] ? ` style="text-align:${align[columnIndex]}"` : '';
+      const colAlign = align[columnIndex];
+      const intelligentAlign = intelligentAligns[columnIndex];
+      const alignAttr = `${colAlign ? ` data-col-align="${colAlign}" style="text-align:${colAlign}"` : ''}${intelligentAlign ? ` data-intelligent-align="${intelligentAlign}"` : ''}`;
       return `<td${alignAttr}>${renderInline(row[columnIndex] ?? '', isMdx)}</td>`;
     }).join('');
     return `<tr${rowClass}>${cells}</tr>`;

@@ -1,10 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useAppState } from '../../contexts/AppStateContext';
+import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import type { FolderNode, MdFile } from '../../types';
 import { FolderIcon, FolderChevronIcon, MoreVerticalIcon } from '../shared/icons';
 import { PinIcon } from './sidebarPinIcons';
 import { ScopeCheckbox, SidebarEntryCheckbox } from './SidebarTreeCheckboxes';
-import { sidebarTreeForcesOpen, useSidebarTreeEntry } from './sidebarTreeContext';
+import { sidebarTreeForcesOpen, useResolvedSidebarTreeEntry, useSidebarTreeEntry, type SidebarTreeEntryContextValue } from './sidebarTreeContext';
 import { orderSidebarLevel } from './sidebarTreeOrdering';
 import { FileNode } from './FileNode';
 import { DEFAULT_TREE_ORDERING, folderHasVisibleContent, isFileVisible, getFolderFilePaths, getFolderSelectionState, type ScopeFocusTreeProps, type TreeOrderingProps, type SidebarItemMenuTarget, type FolderExpansionCommand } from './sidebarTreeModel';
@@ -12,7 +11,26 @@ export { FileNode } from './FileNode';
 export { DEFAULT_TREE_ORDERING } from './sidebarTreeModel';
 export type { ScopeFocusTreeProps, TreeOrderingProps, SidebarItemMenuTarget, FolderExpansionCommand } from './sidebarTreeModel';
 
-export function FolderNodeView({
+export interface FolderNodeViewProps {
+  node: FolderNode;
+  filter: string;
+  scopeFocus: ScopeFocusTreeProps;
+  ordering?: TreeOrderingProps;
+  cursorMode?: boolean;
+  cursorItemId?: string | null;
+  onRequestItemMenu?: (target: SidebarItemMenuTarget) => void;
+  canRequestItemMenu?: (target: Pick<SidebarItemMenuTarget, 'kind' | 'path'>) => boolean;
+  openMenuPath?: string | null;
+  itemActionsLabel?: string;
+  pinnedLabel?: string;
+  activeFolderPaths?: ReadonlySet<string>;
+  locateRequest?: number;
+  expansionCommand?: FolderExpansionCommand;
+  onNavigate?: (file: MdFile) => void;
+}
+
+function FolderNodeViewImpl({
+  entry,
   node,
   filter,
   scopeFocus,
@@ -28,34 +46,16 @@ export function FolderNodeView({
   locateRequest = 0,
   expansionCommand,
   onNavigate,
-}: {
-  node: FolderNode;
-  filter: string;
-  scopeFocus: ScopeFocusTreeProps;
-  ordering: TreeOrderingProps;
-  cursorMode?: boolean;
-  cursorItemId?: string | null;
-  onRequestItemMenu?: (target: SidebarItemMenuTarget) => void;
-  canRequestItemMenu?: (target: Pick<SidebarItemMenuTarget, 'kind' | 'path'>) => boolean;
-  openMenuPath?: string | null;
-  itemActionsLabel?: string;
-  pinnedLabel?: string;
-  activeFolderPaths?: ReadonlySet<string>;
-  locateRequest?: number;
-  expansionCommand?: FolderExpansionCommand;
-  onNavigate?: (file: MdFile) => void;
-}) {
+}: FolderNodeViewProps & { entry: SidebarTreeEntryContextValue }) {
   const [isOpen, setIsOpen] = useState(() => expansionCommand?.expanded ?? true);
   const toggle = useCallback(() => setIsOpen((value) => !value), []);
-  const entry = useSidebarTreeEntry();
-  const forcedOpen = entry ? sidebarTreeForcesOpen(entry, node.path) : false;
+  const forcedOpen = sidebarTreeForcesOpen(entry, node.path);
   const activate = () => {
-    entry?.rememberFocus('folder', node.path);
-    if (entry?.selectionActive) return entry.toggleSelected('folder', node.path);
-    if (isOpen) entry?.onFolderCollapsed?.(node.path);
+    entry.rememberFocus('folder', node.path);
+    if (entry.selectionActive) return entry.toggleSelected('folder', node.path);
+    if (isOpen) entry.onFolderCollapsed?.(node.path);
     toggle();
   };
-  const { state } = useAppState();
   const q = filter.toLowerCase().trim();
   const containsActiveFile = activeFolderPaths?.has(node.path) ?? false;
   const lastExpandedFileRef = useRef<string | null>(null);
@@ -67,21 +67,20 @@ export function FolderNodeView({
   }, [expansionCommand]);
 
   useEffect(() => {
-    if (state.currentFile && containsActiveFile) {
-      if (lastExpandedFileRef.current !== state.currentFile) {
-        lastExpandedFileRef.current = state.currentFile;
+    if (entry.currentFile && containsActiveFile) {
+      if (lastExpandedFileRef.current !== entry.currentFile) {
+        lastExpandedFileRef.current = entry.currentFile;
         setIsOpen(true);
       }
     } else {
       lastExpandedFileRef.current = null;
     }
-  }, [containsActiveFile, state.currentFile]);
+  }, [containsActiveFile, entry.currentFile]);
 
   useEffect(() => {
     if (locateRequest > 0 && containsActiveFile) setIsOpen(true);
   }, [containsActiveFile, locateRequest]);
 
-  // Declared after the expansion effects so a forced-open path wins over a collapse command on mount.
   useEffect(() => { if (forcedOpen) setIsOpen(true); }, [forcedOpen]);
 
   const folderSelectionState = scopeFocus.editing
@@ -113,7 +112,7 @@ export function FolderNodeView({
   const orderedItems = isOpen
     ? orderSidebarLevel(unpinnedFiles, unpinnedChildren, {
       ...ordering,
-      showTitle: state.settings.showTitle,
+      showTitle: entry.showTitle ?? true,
     })
     : [];
   const folderCursorId = `folder:${node.path}`;
@@ -126,8 +125,8 @@ export function FolderNodeView({
       role="treeitem"
     >
       <div
-        className={`tree-folder__header${entry?.focusedKey === `folder:${node.path}` ? ' is-entry-focused' : ''}${isCursor ? ' is-cursor' : ''}${entry?.isSelected(`folder:${node.path}`) ? ' is-selected' : ''}`}
-        onFocus={(event) => { if (event.target === event.currentTarget) entry?.rememberFocus('folder', node.path); }}
+        className={`tree-folder__header${entry.focusedKey === `folder:${node.path}` ? ' is-entry-focused' : ''}${isCursor ? ' is-cursor' : ''}${entry.isSelected(`folder:${node.path}`) ? ' is-selected' : ''}`}
+        onFocus={(event) => { if (event.target === event.currentTarget) entry.rememberFocus('folder', node.path); }}
         onClick={(event) => { if (!document.activeElement?.closest('.sidebar-entry-input')) event.currentTarget.focus(); activate(); }}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
@@ -154,12 +153,12 @@ export function FolderNodeView({
         <span
           className="tree-folder__chevron"
           aria-hidden="true"
-          onClick={entry?.selectionActive ? (event) => { event.stopPropagation(); toggle(); } : undefined}
+          onClick={entry.selectionActive ? (event) => { event.stopPropagation(); toggle(); } : undefined}
         ><FolderChevronIcon /></span>
         <FolderIcon />
-        {entry?.renameKey === `folder:${node.path}` ? entry.renameInput : <span className="tree-folder__name">{node.name}</span>}
+        {entry.renameKey === `folder:${node.path}` ? entry.renameInput : <span className="tree-folder__name">{node.name}</span>}
         {isPinned && (
-          <span className="sidebar-tree-item__pin" title={pinnedLabel} aria-label={pinnedLabel}>
+          <span className="sidebar-tree-item__pin" data-hover-tooltip={pinnedLabel} aria-label={pinnedLabel}>
             <PinIcon size={12} />
           </span>
         )}
@@ -169,7 +168,7 @@ export function FolderNodeView({
             type="button"
             className={`sidebar-tree-item__menu-button${openMenuPath === node.path ? ' is-open' : ''}`}
             aria-label={itemActionsLabel.replace('{name}', node.name)}
-            title={itemActionsLabel.replace('{name}', node.name)}
+            data-hover-tooltip={itemActionsLabel.replace('{name}', node.name)}
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -191,7 +190,7 @@ export function FolderNodeView({
       </div>
       {isOpen && (
         <div className="tree-folder__children" role="group">
-          {entry?.inlineParentPath === node.path && entry.inlineInput}
+          {entry.inlineParentPath === node.path && entry.inlineInput}
           {orderedItems.map((item) => item.kind === 'file' ? (
             <FileNode
               key={item.key}
@@ -231,4 +230,19 @@ export function FolderNodeView({
       )}
     </div>
   );
+}
+
+const MemoizedFolderNodeView = memo(FolderNodeViewImpl);
+
+function FolderNodeViewWithAppState(props: FolderNodeViewProps) {
+  const entry = useResolvedSidebarTreeEntry();
+  return <MemoizedFolderNodeView {...props} entry={entry} />;
+}
+
+export function FolderNodeView(props: FolderNodeViewProps) {
+  const entry = useSidebarTreeEntry();
+  if (!entry || entry.currentFile === undefined) {
+    return <FolderNodeViewWithAppState {...props} />;
+  }
+  return <MemoizedFolderNodeView {...props} entry={entry} />;
 }

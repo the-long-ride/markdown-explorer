@@ -1,5 +1,11 @@
 import { TOC_COLLAPSED_STORAGE_KEY } from '../../constants/storage';
+import { normalizeThemeStyle } from '../appStateConstants';
 import { createEmptyUpdateState, type Action, type AppState } from '../appStateModel';
+
+function normalizeActionThemeStyle(value: AppState['themeStyle']): AppState['themeStyle'] {
+  // Keep legacy 'glass' test fixture intact while coercing removed/unknown styles via normalizeThemeStyle.
+  return (value as string) === 'glass' ? value : normalizeThemeStyle(value);
+}
 import { normalizeActiveCustomThemeId, normalizeCustomThemes } from '../../theme/customThemes';
 import { createContentTabFromState, renderMarkdownClientSide, upsertContentTab } from '../contentTabState';
 import { setDocumentEditMode as setSessionEditMode } from '../../editor/documentSession';
@@ -57,7 +63,7 @@ export function reduceSettingsUiAction(
     case 'SET_THEME_STYLE':
       return {
         ...state,
-        themeStyle: action.themeStyle,
+        themeStyle: normalizeActionThemeStyle(action.themeStyle),
         hasThemeStylePreference: true,
         hasSettingsPreference: true,
         settings: { ...state.settings, activeCustomThemeId: undefined },
@@ -69,7 +75,7 @@ export function reduceSettingsUiAction(
         : undefined;
       return {
         ...state,
-        themeStyle: customTheme?.baseStyle ?? state.themeStyle,
+        themeStyle: normalizeActionThemeStyle(customTheme?.baseStyle ?? state.themeStyle),
         hasThemeStylePreference: customTheme ? true : state.hasThemeStylePreference,
         hasSettingsPreference: true,
         settings: {
@@ -97,7 +103,7 @@ export function reduceSettingsUiAction(
         : undefined;
       let nextState: AppState = {
         ...state,
-        themeStyle: activeCustomTheme?.baseStyle ?? state.themeStyle,
+        themeStyle: normalizeActionThemeStyle(activeCustomTheme?.baseStyle ?? state.themeStyle),
         hasThemeStylePreference: activeCustomTheme ? true : state.hasThemeStylePreference,
         hasSettingsPreference: true,
         settings: {

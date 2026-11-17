@@ -9,9 +9,11 @@ import {
   type InsightsWorkspaceCache,
 } from './cache';
 import {
+  checkExternalLinks as startExternalLinkChecks,
   readInsightsDocumentSource,
   scanInsightsWorkspace,
   setInsightsWatchState,
+  type ExternalLinkCheckHandle,
   type PlatformBridge,
 } from '../platform/bridge';
 import type {
@@ -115,6 +117,61 @@ export function restoreWorkspaceInsightsCache(
   context: WorkspaceInsightsCacheContext,
 ): Promise<InsightsWorkspaceCache | undefined> {
   return cache.getWorkspace(context.workspaceId, context.analyzerVersion, context.analysisSignature);
+}
+
+export async function restoreWorkspaceCacheToWorker(
+  cache: InsightsCacheStore | null,
+  context: WorkspaceInsightsCacheContext | null,
+  worker: InsightsWorkerClient,
+  provisionalPathsRef: { current: Set<string> },
+  setProgress: (fn: (current: WorkspaceInsightsProgress) => WorkspaceInsightsProgress) => void,
+  disposedRef: { current: boolean },
+): Promise<void> {
+  if (!cache || !context) return;
+  try {
+    const cached = await Promise.race([
+      restoreWorkspaceInsightsCache(cache, context),
+      new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 1500)),
+    ]);
+    if (!cached?.documents.length || disposedRef.current) return;
+    provisionalPathsRef.current = new Set(cached.documents.map(document => document.path));
+    setProgress(current => ({ ...current, total: cached.documents.length, provisional: true }));
+    await Promise.race([
+      worker.restoreCachedDocuments(
+        cached.documents.map(document => document.persisted),
+        insightsRequestId("insights-cache-restore"),
+      ),
+      new Promise<void>(resolve => setTimeout(resolve, 3000)),
+    ]);
+  } catch {}
+}
+
+export async function executeExternalLinkChecks(
+  bridge: PlatformBridge,
+  urls: readonly string[],
+  settings: InsightsSettings["externalLinks"],
+  approvedPrivateOrigins: ReadonlySet<string>,
+  externalRef: { current: ExternalLinkCheckHandle | null },
+  onResult: (result: ExternalLinkCheckResult) => void,
+  checkOptions: { readonly recheck?: boolean } = {},
+): Promise<readonly ExternalLinkCheckResult[]> {
+  if (!settings.enabled) return [];
+  const unique = [...new Set(urls.filter(url => /^https?:\/\//i.test(url)))];
+  if (!unique.length) return [];
+  const results: ExternalLinkCheckResult[] = [];
+  const handle = startExternalLinkChecks(bridge, {
+    requestId: insightsRequestId("insights-external"), urls: unique,
+    timeoutMs: settings.timeoutMs,
+    recheck: checkOptions.recheck,
+    approvedPrivateOrigins: [...approvedPrivateOrigins],
+  }, result => {
+    results.push(result);
+    onResult(result);
+  });
+  externalRef.current = handle;
+  await handle.done;
+  if (externalRef.current === handle) externalRef.current = null;
+  return results;
 }
 
 export function invalidateWorkspaceInsightsAnalysisCache(
@@ -222,6 +279,51 @@ export function createValidatedCacheDocument(
     lastAccessedAt: Date.now(),
   };
 }
+
+export interface InsightsPendingDocument {
+  readonly entry: InsightsWorkspaceEntry;
+  readonly result: InsightsSourceResult;
+  readonly nextHash: string;
+}
+
+export async function applyBatchedSources(
+  items: readonly InsightsPendingDocument[],
+  worker: InsightsWorkerClient,
+  documentResultsByJobRef: { current: Map<string, AnalyzedDocument[]> },
+  hashesRef: { current: Map<string, string> },
+  provisionalPathsRef: { current: Set<string> },
+  validatedCacheDocumentsRef: { current: Map<string, InsightsCachedDocument> },
+  workerJobRef: { current: string | null },
+  options?: { readonly includeSnapshot?: boolean },
+): Promise<void> {
+  if (!items.length) return;
+  const jobId = insightsRequestId("insights-batch");
+  documentResultsByJobRef.current.delete(jobId);
+  workerJobRef.current = jobId;
+  const sources: InsightsSourceInput[] = items.map(item => ({
+    path: item.result.relativePath,
+    source: item.result.source ?? "",
+    revision: item.nextHash,
+  }));
+  await worker.applySourceBatch(sources, jobId, options);
+  if (workerJobRef.current === jobId) workerJobRef.current = null;
+  const analyzedDocs = documentResultsByJobRef.current.get(jobId) ?? [];
+  documentResultsByJobRef.current.delete(jobId);
+  const analyzedByPath = new Map(analyzedDocs.map(doc => [doc.path, doc]));
+  for (const item of items) {
+    hashesRef.current.set(item.entry.relativePath, item.nextHash);
+    provisionalPathsRef.current.delete(item.entry.relativePath);
+    const analyzed = analyzedByPath.get(item.result.relativePath);
+    if (analyzed) {
+      validatedCacheDocumentsRef.current.set(
+        item.entry.relativePath,
+        createValidatedCacheDocument(item.entry, item.result, item.nextHash, analyzed),
+      );
+    }
+  }
+}
+
+export const analyzeBatch = applyBatchedSources;
 
 export function workspaceWikiDescriptors(snapshot: WorkspaceInsightsSnapshot): WikiDocumentDescriptor[] {
   return [...snapshot.documents.values()].map(document => ({

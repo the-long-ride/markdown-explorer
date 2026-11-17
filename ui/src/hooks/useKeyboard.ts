@@ -12,43 +12,15 @@ import { isMarkdownEditingAvailable } from '../editor/editingFeature';
 import { requestAnimatedContentTabClose } from '../components/Content/contentTabCloseEvents';
 import { getScopeNavigationStateSnapshot, requestScopeNavigation, useScopeNavigationState } from './useScopeNavigationState';
 import { attachMouseHistoryNavigation } from '../utils/mouseHistoryNavigation';
+import { executeThemeTransition } from '../utils/themeTransition';
+import { dispatchActionNotice } from '../utils/actionNotice';
+import { getEditorUiTranslations } from '../contexts/editorUiTranslations';
 
-interface UseKeyboardOptions {
-  onSearchOpen: () => void;
-  onCrossTabSearchOpen?: () => void;
-  onSearchClose: () => void;
-  onFindOpen?: () => void;
-  onFindClose?: () => void;
-  onSettingsOpen: () => void;
-  onSettingsClose: () => void;
-  onWelcome?: () => void;
-  onExpandAll: () => void;
-  onCollapseAll: () => void;
-  onSidebarCursorModeToggle?: () => void;
-  onSidebarCursorModeClose?: () => void;
-  isSearchOpen: boolean;
-  isFindOpen?: boolean;
-  activeSearchScope?: 'current' | 'all-tabs';
-  isSidebarCursorMode?: boolean;
-  isSettingsOpen: boolean;
-  isModalOpen: boolean;
-  isTermsOpen: boolean;
-  onToggleToc?: () => void;
-  onToggleWorkspaceInsights?: () => void;
-  onLocateFile?: () => void;
-  onBookmarksOpen?: () => void;
-  onOpenCurrentDocumentLocation?: () => void;
-  onToggleFocusMode?: () => void;
-  onToggleDesktopViewMode?: () => void;
-  activeHtmlDocument?: boolean;
-  onToggleActiveHtmlDocumentPreview?: () => void;
-  onToggleFullscreen?: () => void;
-  onWorkspaceSelection?: () => void;
-}
 
-import { isEditableTarget, matchesShortcut, resolveKeyboardAction } from './keyboardUtils';
 
-export { isEditableTarget, matchesShortcut, resolveKeyboardAction } from './keyboardUtils';
+import { isEditableTarget, matchesShortcut, resolveKeyboardAction, type UseKeyboardOptions } from './keyboardUtils';
+
+export { isEditableTarget, matchesShortcut, resolveKeyboardAction, type UseKeyboardOptions } from './keyboardUtils';
 
 export function useKeyboard({
   onSearchOpen, onCrossTabSearchOpen, onSearchClose, onFindOpen, onFindClose,
@@ -56,7 +28,7 @@ export function useKeyboard({
   onSidebarCursorModeToggle, onSidebarCursorModeClose,
   isSearchOpen, isFindOpen = false, activeSearchScope = 'current',
   isSidebarCursorMode = false, isSettingsOpen, isModalOpen, isTermsOpen,
-  onToggleToc, onToggleWorkspaceInsights, onLocateFile, onBookmarksOpen,
+  onToggleToc, onToggleWorkspaceInsights, onLocateFile, onFilesOpen, onBookmarksOpen,
   onOpenCurrentDocumentLocation, onToggleFocusMode, onToggleDesktopViewMode,
   activeHtmlDocument = false, onToggleActiveHtmlDocumentPreview,
   onToggleFullscreen, onWorkspaceSelection,
@@ -82,8 +54,8 @@ export function useKeyboard({
 
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isDesktop = isElectron || state.appRuntime === 'tauri';
-  const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  const isDesktopLike = isDesktop || isChrome;
+  const isWeb = typeof (window as any).__webBus !== 'undefined' || state.appRuntime === 'web';
+  const isDesktopLike = isDesktop || isWeb;
   const keybindings = useMemo(
     () => Object.fromEntries(
       Object.entries(state.settings.keybindings || {}).map(([id, shortcut]) => [
@@ -110,7 +82,7 @@ export function useKeyboard({
     };
 
     const handler = (e: KeyboardEvent) => {
-      if (!state.currentFile && e.key === 'F5') {
+      if (!state.currentFile && e.key === 'F5' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
         return;
@@ -136,7 +108,7 @@ export function useKeyboard({
         }
       }
 
-      if (getScopeNavigationStateSnapshot().active) {
+      if (!isEditableTarget(e.target) && getScopeNavigationStateSnapshot().active) {
         if (matchesShortcut(e, keybindings.back)) {
           e.preventDefault();
           requestScopeNavigation('previous');
@@ -179,11 +151,19 @@ export function useKeyboard({
         hasOnSidebarCursorModeToggle: !!onSidebarCursorModeToggle,
         hasOnSidebarCursorModeClose: !!onSidebarCursorModeClose,
         hasOnWelcome: !!onWelcome,
-        hasOnEditCurrentDocument: (isDesktop || state.appRuntime === 'vscode') && !!state.currentFile,
+        hasOnEditCurrentDocument: (isDesktop || state.appRuntime === 'vscode' || editingEnabled) && !!state.currentFile,
+        hasOnPlainEditCurrentDocument: editingEnabled && !!state.currentFile,
+        markdownEditingEnabled: editingEnabled,
+        activeTab: Boolean(state.currentFile && isMarkdown),
+        activeMarkdownTab: Boolean(state.currentFile && isMarkdown),
+        anyModalOpen: Boolean(isTermsOpen || isModalOpen || isSettingsOpen),
+        searchOpen: isSearchOpen,
+        findInFileOpen: !!isFindOpen,
         hasOnSaveCurrentDocument: hasSavableDocument,
         hasOnToggleToc: !!onToggleToc,
         hasOnToggleWorkspaceInsights: !!onToggleWorkspaceInsights,
         hasOnLocateFile: !!onLocateFile,
+        hasOnOpenFiles: !!onFilesOpen,
         hasOnOpenBookmarks: !!onBookmarksOpen,
         hasOnOpenCurrentDocumentLocation: !!onOpenCurrentDocumentLocation,
         hasOnToggleFocusMode: !!onToggleFocusMode,
@@ -208,6 +188,10 @@ export function useKeyboard({
           break;
         case 'zoom-reset':
           bridge.postMessage({ command: 'zoom-reset' });
+          break;
+        case 'reload-window':
+          if (state.appRuntime === 'vscode') bridge.postMessage({ command: 'reloadWebview' });
+          else window.location.reload();
           break;
         case 'sidebar-cursor-mode-toggle':
           onSidebarCursorModeToggle?.();
@@ -250,10 +234,23 @@ export function useKeyboard({
           if (state.currentFile) void saveDocument(state.currentFile);
           break;
         case 'edit-current-document':
-          if (isMarkdown && editingEnabled && hasEditableSession && state.currentFile) {
-            setDocumentEditMode?.(state.currentFile, 'inline-edit');
+          if (isMarkdown && editingEnabled && activeDocumentSession && state.currentFile) {
+            const nextMode = activeDocumentSession.mode === 'inline-edit' ? 'rendered' : 'inline-edit';
+            setDocumentEditMode(state.currentFile, nextMode);
+            const editorT = getEditorUiTranslations(state.settings.language);
+            const message = nextMode === 'inline-edit' ? editorT.inlineEdit : editorT.rendered;
+            dispatchActionNotice(message, 'neutral');
           } else {
             openInEditor();
+          }
+          break;
+        case 'plain-edit-current-document':
+          if (isMarkdown && editingEnabled && activeDocumentSession && state.currentFile) {
+            const nextMode = activeDocumentSession.mode === 'plain' ? 'rendered' : 'plain';
+            setDocumentEditMode(state.currentFile, nextMode);
+            const editorT = getEditorUiTranslations(state.settings.language);
+            const message = nextMode === 'plain' ? editorT.plain : editorT.rendered;
+            dispatchActionNotice(message, 'neutral');
           }
           break;
         case 'settings-toggle':
@@ -261,7 +258,9 @@ export function useKeyboard({
           else onSettingsOpen();
           break;
         case 'toggle-theme':
-          toggleTheme();
+          executeThemeTransition(toggleTheme, {
+            nextTheme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark',
+          });
           break;
         case 'toggle-toc':
           onToggleToc?.();
@@ -271,6 +270,9 @@ export function useKeyboard({
           break;
         case 'locate-file':
           onLocateFile?.();
+          break;
+        case 'open-files':
+          onFilesOpen?.();
           break;
         case 'open-bookmarks':
           onBookmarksOpen?.();
@@ -392,6 +394,7 @@ export function useKeyboard({
     onToggleToc,
     onToggleWorkspaceInsights,
     onLocateFile,
+    onFilesOpen,
     onBookmarksOpen,
     onOpenCurrentDocumentLocation,
     onToggleFocusMode,

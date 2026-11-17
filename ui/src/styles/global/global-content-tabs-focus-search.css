@@ -1,5 +1,6 @@
 .content-tabs__scrollbar-thumb {
   position: absolute;
+  z-index: 1;
   left: 0;
   top: 1px;
   height: 2px;
@@ -14,6 +15,14 @@
     background 0.12s ease,
     height 0.12s ease,
     top 0.12s ease;
+}
+.content-tabs__scrollbar-thumb::after {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: -6px;
+  bottom: -6px;
 }
 .content-tabs__scrollbar:hover .content-tabs__scrollbar-thumb,
 .content-tabs__scrollbar.is-dragging .content-tabs__scrollbar-thumb {
@@ -152,34 +161,25 @@
   overflow: hidden;
 }
 .content__scroll {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable;
   padding: calc(var(--content-pad-x) * 0.35) var(--content-pad-x) 20px;
-  max-width: 100%;
-  width: 100%;
-  margin: 0 auto;
+  max-width: 100%; width: 100%; margin: 0 auto;
 }
-.content__scroll--plain-edit { padding: 0; }
-.content__scroll::-webkit-scrollbar {
-  width: 5px;
-}
-.content__scroll::-webkit-scrollbar-thumb {
-  background: var(--bd-s);
-  border-radius: var(--r-s, var(--r));
+.content__scroll::-webkit-scrollbar { width: 5px; }
+.content__scroll::-webkit-scrollbar-thumb { background: var(--bd-s); border-radius: var(--r-s, var(--r)); }
+.content__inner:has(> .state-screen),
+.content__scroll:has(> .state-screen) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - var(--topbar-h) - 80px);
 }
 
 /* States */
 .state-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 12px;
-  color: var(--txm);
-  text-align: center;
-  padding: 32px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 12px; color: var(--txm); text-align: center; padding: 32px;
 }
 .state-screen__icon {
   font-size: 36px;
@@ -314,7 +314,7 @@
   position: fixed !important;
   top: calc(var(--topbar-h) + 12px);
   right: 6px;
-  z-index: 10000;
+  z-index: var(--z-panel-overlay);
   width: 28px;
   height: 28px;
   display: inline-flex;
@@ -361,7 +361,7 @@
   position: fixed !important;
   top: 12px !important;
   right: 28px !important;
-  z-index: 99999999 !important;
+  z-index: var(--z-tooltip) !important;
   border: 1px solid var(--bd) !important;
   backdrop-filter: var(--surface-blur) !important;
   -webkit-backdrop-filter: var(--surface-blur) !important;
@@ -524,7 +524,7 @@
   justify-content: center;
   background: var(--bg-e);
   border: var(--stroke-w) solid var(--bd);
-  border-radius: 999px;
+  border-radius: var(--r-sm, var(--r, 4px));
   padding: 1px 6px;
   font-size: 9.5px;
   color: var(--txm);

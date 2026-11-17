@@ -16,6 +16,11 @@
    VS Code extension excludes .ttf files via .vscodeignore,
    and never adds the app runtime body classes, so fonts are never loaded there.
    ============================================================ */
+::selection {
+  background: var(--selection-bg, color-mix(in srgb, var(--accent) 28%, var(--bg)));
+  color: var(--selection-fg, var(--tx));
+}
+
 :root {
   /* VS Code and app runtimes both get system UI fonts by default.
      App runtimes override these via body runtime classes below. */
@@ -37,7 +42,13 @@
   --font-mono-weight: 400;
   --font-mermaid-style: normal;
   --font-mermaid-weight: 400;
-  --sidebar-w: 245px;
+  --font-ui-size: 13px;
+  --font-body-size: 13px;
+  --font-heading-size: 16px;
+  --font-quote-size: 13px;
+  --font-mono-size: 12px;
+  --font-mermaid-size: 13px;
+  --sidebar-w: 290px;
   --toc-w: 224px;
   --topbar-h: 44px;
   --topbar-gap: 8px;
@@ -58,10 +69,14 @@
   --table-cell-pad-x: 12px;
   --stroke-w: 1px;
   --focus-ring: 0 0 0 2px var(--accent-dim);
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, var(--bg));
+  --selection-fg: var(--tx);
   --hl-terminal-muted: var(--tx2);
   --surface-blur: none;
   --section-shadow: none;
   --r: 5px;
+  --r-sm: 4px;
+  --r-s: 4px;
   --r-md: 6px;
   --r-lg: 8px;
   --accent: #ff9130;
@@ -81,6 +96,28 @@
   --chart-6: #ec4899;
   --chart-7: #a855f7;
   --chart-8: #14b8a6;
+
+  /* Centralized z-index layer scale */
+  --z-below: -1;
+  --z-base: 0;
+  --z-raised: 1;
+  --z-elevated: 10;
+  --z-sticky: 20;
+  --z-floating: 30;
+  --z-resize-handle: 40;
+  --z-dropdown: 50;
+  --z-popover: 60;
+  --z-toc-overlay: 70;
+  --z-panel-overlay: 80;
+  --z-sidebar: 90;
+  --z-topbar: 100;
+  --z-window-controls: 110;
+  --z-menu: 120;
+  --z-modal: 130;
+  --z-modal-popover: 140;
+  --z-modal-overlay: 150;
+  --z-search-overlay: 160;
+  --z-tooltip: 200;
 }
 
 /* App runtimes: use bundled custom fonts */
@@ -91,7 +128,7 @@ body.is-tauri {
   --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
 }
 
-body.is-chrome-ext {
+body.is-web {
   --font-ui: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono: "Fira Code", Consolas, monospace;
 }
@@ -131,6 +168,8 @@ body.is-chrome-ext {
   --hl-sel: #b392f0;
   --hl-func: #ffcc66;
   --hl-pkg: #4ec9b0;
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, var(--bg));
+  --selection-fg: var(--tx);
   --hl-terminal-muted: var(--tx2);
 }
 [data-theme="light"] {
@@ -176,6 +215,8 @@ body.is-chrome-ext {
   --hl-sel: #6f42c1;
   --hl-func: #b58900;
   --hl-pkg: #22863a;
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, var(--bg));
+  --selection-fg: var(--tx);
   --hl-terminal-muted: var(--tx2);
 }
 
@@ -223,7 +264,9 @@ body.is-chrome-ext {
     --hl-sel: #6f42c1;
     --hl-func: #b58900;
     --hl-pkg: #22863a;
-    --hl-terminal-muted: var(--tx2);
+    --selection-bg: color-mix(in srgb, var(--accent) 28%, var(--bg));
+  --selection-fg: var(--tx);
+  --hl-terminal-muted: var(--tx2);
   }
 }
 

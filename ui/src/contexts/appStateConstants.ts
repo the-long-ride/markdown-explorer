@@ -1,4 +1,5 @@
 import type { AppRuntime, DesktopViewMode, PetThemeStyle, ThemeMode, ThemeStyle } from '../types';
+import { supportsWorkspaceInsights } from '../insights/runtimeCapabilities';
 
 export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   searchCurrent: 'Ctrl+K',
@@ -11,9 +12,10 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleTheme: 'Ctrl+Shift+l',
   refresh: 'R',
   collapseAll: 'Ctrl+Shift+x',
-  expandAll: 'Ctrl+Shift+e',
+  expandAll: 'Ctrl+Alt+x',
   workspaceSelection: 'Ctrl+Alt+W',
   toggleSidebar: 'Alt+A',
+  openFiles: 'Alt+Shift+E',
   openBookmarks: 'Alt+Shift+B',
   toggleToc: 'Alt+C',
   sidebarCursorMode: 'Alt+Z',
@@ -22,6 +24,20 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   toggleHtmlPreview: 'Ctrl+Alt+H',
   toggleWorkspaceInsights: 'Ctrl+Alt+I',
   saveCurrentDocument: 'Ctrl+S',
+  editCurrentDocument: 'Ctrl+Alt+E',
+  plainEditCurrentDocument: 'Ctrl+Alt+Shift+E',
+  editorBold: 'Ctrl+B',
+  editorItalic: 'Ctrl+I',
+  editorUnderline: 'Ctrl+U',
+  editorInlineCode: 'Ctrl+`',
+  editorLink: 'Ctrl+K',
+  editorCodeBlock: 'Ctrl+Shift+C',
+  editorQuote: 'Ctrl+Shift+Q',
+  editorBulletList: 'Ctrl+Shift+8',
+  editorNumberedList: 'Ctrl+Shift+7',
+  editorTaskList: 'Ctrl+Shift+9',
+  editorDecreaseFontSize: 'Ctrl+Alt+-',
+  editorIncreaseFontSize: 'Ctrl+Alt+=',
 };
 
 const { toggleWorkspaceInsights: _toggleWorkspaceInsights, ...VSCODE_SHARED_KEYBINDINGS } = DEFAULT_KEYBINDINGS;
@@ -29,14 +45,20 @@ const { toggleWorkspaceInsights: _toggleWorkspaceInsights, ...VSCODE_SHARED_KEYB
 export const VSCODE_DEFAULT_KEYBINDINGS: Record<string, string> = {
   ...VSCODE_SHARED_KEYBINDINGS,
   editCurrentDocument: 'Ctrl+Alt+E',
+  plainEditCurrentDocument: 'Ctrl+Alt+Shift+E',
+  reloadWindow: 'Ctrl+Shift+R',
 };
 
 export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   ...DEFAULT_KEYBINDINGS,
   editCurrentDocument: 'Ctrl+E',
+  plainEditCurrentDocument: 'Ctrl+Alt+E',
+  reloadWindow: 'Ctrl+F5',
   zoomIn: 'Ctrl+=',
   zoomOut: 'Ctrl+-',
-  resetZoom: 'Ctrl+Alt+Z',
+  resetZoom: 'Ctrl+0',
+  editorDecreaseFontSize: 'Ctrl+-',
+  editorIncreaseFontSize: 'Ctrl+=',
   refresh: 'F5',
   settings: 'Ctrl+,',
   searchCurrent: 'Ctrl+F',
@@ -44,6 +66,7 @@ export const DESKTOP_DEFAULT_KEYBINDINGS: Record<string, string> = {
   findCurrentFile: 'F',
   toggleTheme: 'Ctrl+L',
   toggleSidebar: 'Ctrl+B',
+  openFiles: 'Ctrl+Shift+E',
   openBookmarks: 'Ctrl+Shift+B',
   toggleToc: 'Ctrl+T',
   workspaceSelection: 'Ctrl+N',
@@ -106,6 +129,11 @@ export const THEME_STYLE_OPTIONS: readonly {
     label: 'Neon Voltage',
     description: 'Deep black surfaces with electric coral, teal, and purple glow.',
   },
+  {
+    id: 'cyberpunk',
+    label: 'Cyberpunk',
+    description: 'Machined controls, cut-corner cyberdeck geometry, and signal yellow/vermilion accents.',
+  },
 ];
 
 export const DEFAULT_PET_THEME_STYLE: PetThemeStyle = 'pet-white-shiba';
@@ -117,28 +145,13 @@ export const PET_THEME_STYLE_OPTIONS: readonly {
 }[] = [
   {
     id: 'pet-k-ink',
-    label: "K-Ink (app author's dog)",
+    label: 'K-Ink',
     description: 'A personal K-Ink theme with expressive ears, warm amber eyes, and anime sticker energy.',
   },
   {
     id: 'pet-white-shiba',
-    label: 'White Shiba',
-    description: 'Snowy fur, warm ears, and a calm little desk buddy.',
-  },
-  {
-    id: 'pet-cat',
-    label: 'Cat',
-    description: 'Soft midnight whiskers, fish-bone marks, and nimble motion.',
-  },
-  {
-    id: 'pet-hamster',
-    label: 'Hamster',
-    description: 'Seed colors, round cheeks, and a pocket-sized reading rhythm.',
-  },
-  {
-    id: 'pet-corgi',
-    label: 'Corgi',
-    description: 'Golden loaf shapes, sky notes, and a wagging workspace mood.',
+    label: 'Nika',
+    description: 'Warm and playful companion theme with joyful energy.',
   },
 ];
 
@@ -169,8 +182,18 @@ export function normalizeKeybindingsForRuntime(
     ...getDefaultKeybindingsForRuntime(runtime),
     ...(saved ?? {}),
   };
-  if (runtime === 'chrome') delete normalized.editCurrentDocument;
-  if (runtime !== 'desktop') delete normalized.toggleWorkspaceInsights;
+  if (runtime === 'vscode' || runtime === 'web') {
+    if (normalized.editCurrentDocument === 'Ctrl+E') {
+      normalized.editCurrentDocument = 'Ctrl+Alt+E';
+    }
+    if (normalized.plainEditCurrentDocument === 'Ctrl+Shift+E') {
+      normalized.plainEditCurrentDocument = 'Ctrl+Alt+Shift+E';
+    }
+  }
+  if (runtime === 'web') {
+    delete normalized.reloadWindow;
+  }
+  if (!supportsWorkspaceInsights(runtime)) delete normalized.toggleWorkspaceInsights;
   if (runtime !== 'desktop' && runtime !== 'tauri') {
     delete normalized.zoomIn;
     delete normalized.zoomOut;
@@ -187,6 +210,7 @@ export function normalizeThemeMode(value: unknown): ThemeMode {
 
 export function normalizeThemeStyle(value: unknown): ThemeStyle {
   if (value === 'pet-shiba-memes') return 'tokyo-night';
+  if (value === 'night-city-2077') return 'cyberpunk';
   if (value === 'pet-shiba') return 'pet-white-shiba';
   return ALL_THEME_STYLE_OPTIONS.some((option) => option.id === value)
     ? (value as ThemeStyle)

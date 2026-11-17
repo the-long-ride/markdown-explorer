@@ -14,6 +14,7 @@ import { hasHtmlLocalFirstPolicyNotice, type HtmlLocalFirstPolicyReport } from "
 import { ContentMainView } from "./ContentMainView";
 import { SplitContent } from "./SplitContent";
 import { ACTION_NOTICE_EVENT, normalizeActionNoticeDetail, type ActionNoticeDetail, type ActionNoticeTone } from "../../utils/actionNotice.ts";
+import { useDialogKeyboard } from "../../hooks/useDialogKeyboard";
 
 export { isWorkspaceNavigationHref } from "./contentUtils";
 
@@ -83,6 +84,15 @@ export const Content = memo(function Content({
   }, [warningSessionKey]);
 
   const allowUpstreamHtmlPreview = state.settings.allowUpstreamHtmlPreview || allowUpstreamHtmlPreviewOnce;
+  useDialogKeyboard({
+    open: Boolean(htmlLocalFirstWarning && !allowUpstreamHtmlPreview),
+    onCancel: () => setHtmlLocalFirstWarning(null),
+    onConfirm: () => {
+      setHtmlLocalFirstWarning(null);
+      setAllowUpstreamHtmlPreviewOnce(true);
+    },
+    cancelSelector: '.html-local-first-warning__close, .html-local-first-warning__actions button:first-child',
+  });
   useEffect(() => {
     setHtmlLocalFirstWarning(null);
     setAllowUpstreamHtmlPreviewOnce(false);
@@ -99,7 +109,7 @@ export const Content = memo(function Content({
 
   const hasRenderableDocumentContent = Boolean(state.contentHtml) || isHtmlDocument || Boolean(currentDocumentSession);
   const previewNotice = buildPreviewNotice(state.previewInfo, t);
-  const isDesktopTabView = typeof (window as any).electronAPI !== "undefined" && state.settings.desktopViewMode === "tabs";
+  const isDesktopTabView = (typeof (window as any).electronAPI !== "undefined" || typeof (window as any).__webBus !== "undefined" || state.appRuntime === "web") && state.settings.desktopViewMode === "tabs";
   const isUnavailableWorkspaceInHistory = workspaceUnavailablePath
     ? state.recentWorkspaces.some((item) => item.path === workspaceUnavailablePath) : false;
 

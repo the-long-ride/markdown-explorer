@@ -16,9 +16,11 @@ import {
 } from '../../desktop/fonts/fontModel';
 import { ImportSettingsIcon, RefreshIcon, TypographyApplyIcon } from '../shared/icons';
 import { SettingsOutlineButton } from './SettingsOutlineButton';
+import { TypographyRoleIcon } from './settingsRowIcons';
 import { FontSearchDropdown } from './FontSearchDropdown';
 import { FontVariantDropdown } from './FontVariantDropdown';
 import { desktopTypographyBindingsEqual, getDesktopTypographyChanges, type DesktopTypographyChangeValue } from './desktopTypographyChanges';
+import { useDialogKeyboard } from '../../hooks/useDialogKeyboard';
 
 function createRequestId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -30,7 +32,7 @@ const ROLE_LABELS: Record<DesktopFontUsageRole, keyof Pick<Translations, 'appUiF
 
 function formatTypographyChangeValue(value: DesktopTypographyChangeValue, t: Translations): string {
   const style = value.style === 'italic' ? t.fontItalic : t.fontNormal;
-  return `${value.family} · ${style} ${value.weight}`;
+  return `${value.family} · ${style} ${value.weight} · ${value.size}px`;
 }
 
 function chooseFamily(
@@ -39,7 +41,8 @@ function chooseFamily(
   selection: DesktopFontSelection,
   fonts: AppState['desktopFonts'],
 ): DesktopFontBinding {
-  if (selection.source === 'default') return { ...DEFAULT_DESKTOP_FONT_BINDINGS[role] };
+  const size = current.size ?? DEFAULT_DESKTOP_FONT_BINDINGS[role].size ?? 13;
+  if (selection.source === 'default') return { ...DEFAULT_DESKTOP_FONT_BINDINGS[role], size };
   const family = findDesktopFontFamily(selection, fonts);
   const variants = getDesktopFontVariantOptions(family);
   const sameVariant = variants.find((option) => option.style === current.style && option.weight === current.weight);
@@ -48,6 +51,7 @@ function chooseFamily(
     ...selection,
     style: preferred?.style ?? DEFAULT_DESKTOP_FONT_BINDINGS[role].style,
     weight: preferred?.weight ?? DEFAULT_DESKTOP_FONT_BINDINGS[role].weight,
+    size,
   };
 }
 
@@ -78,12 +82,32 @@ function FontRoleRow({
   onRemove: (id: string) => void;
 }) {
   const family = findDesktopFontFamily(binding, fonts);
+  const fallbackSize = DEFAULT_DESKTOP_FONT_BINDINGS[role].size ?? 13;
+  const currentSize = binding.size ?? fallbackSize;
+  const [localSize, setLocalSize] = useState<string>(String(currentSize));
+
+  useEffect(() => {
+    setLocalSize(String(binding.size ?? fallbackSize));
+  }, [binding.size, fallbackSize]);
+
+  const stepSize = (delta: number) => {
+    const parsed = parseInt(localSize, 10);
+    const base = Number.isFinite(parsed) ? parsed : fallbackSize;
+    const clamped = Math.max(7, Math.min(49, base + delta));
+    setLocalSize(String(clamped));
+    if (clamped !== binding.size) {
+      onChange({ ...binding, size: clamped });
+    }
+  };
   return (
     <section className="desktop-font-binding-row">
       <div className="desktop-font-binding-row__heading">
-        <div>
-          <div className="settings-item__title">{t[ROLE_LABELS[role]]}</div>
-          <div className="settings-item__desc">{family?.family ?? t.fontDefaultDescription}</div>
+        <div className="desktop-font-binding-row__info">
+          <span className="settings-item__icon desktop-font-binding-row__icon" aria-hidden="true"><TypographyRoleIcon role={role} /></span>
+          <div>
+            <div className="settings-item__title">{t[ROLE_LABELS[role]]}</div>
+            <div className="settings-item__desc">{family?.family ?? t.fontDefaultDescription}</div>
+          </div>
         </div>
         <div className="desktop-font-binding-row__header-actions">
           <SettingsOutlineButton
@@ -119,6 +143,73 @@ function FontRoleRow({
           t={t}
           onChange={(variant) => onChange({ ...binding, ...variant })}
         />
+        <div className="desktop-font-size-input-col tooltip-container" data-tooltip-pos="below" data-tooltip-align="center">
+          <div className="desktop-font-size-stepper">
+            <input
+              type="number"
+              className="settings-number-input desktop-font-size-input"
+              min={7}
+              max={49}
+              step={1}
+              value={localSize}
+              aria-label={`${t[ROLE_LABELS[role]]} ${t.fontSize}`}
+              onChange={(e) => {
+                setLocalSize(e.target.value);
+                const parsed = parseInt(e.target.value, 10);
+                if (Number.isFinite(parsed) && parsed >= 7 && parsed <= 49) {
+                  onChange({ ...binding, size: parsed });
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  stepSize(1);
+                } else if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  stepSize(-1);
+                }
+              }}
+              onBlur={() => {
+                const parsed = parseInt(localSize, 10);
+                const clamped = Number.isFinite(parsed) ? Math.max(7, Math.min(49, parsed)) : fallbackSize;
+                setLocalSize(String(clamped));
+                if (clamped !== binding.size) {
+                  onChange({ ...binding, size: clamped });
+                }
+              }}
+            />
+            <span className="desktop-font-size-unit" aria-hidden="true">px</span>
+            <div className="desktop-font-size-stepper__actions">
+              <button
+                type="button"
+                className="desktop-font-size-stepper__btn desktop-font-size-stepper__btn--up"
+                tabIndex={-1}
+                aria-label={`${t[ROLE_LABELS[role]]} ${t.fontSize} +`}
+                disabled={Number.isFinite(parseInt(localSize, 10)) && parseInt(localSize, 10) >= 49}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => stepSize(1)}
+              >
+                <svg width="7" height="4" viewBox="0 0 7 4" fill="currentColor" aria-hidden="true">
+                  <path d="M3.5 0.5L7 3.5H0L3.5 0.5Z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="desktop-font-size-stepper__btn desktop-font-size-stepper__btn--down"
+                tabIndex={-1}
+                aria-label={`${t[ROLE_LABELS[role]]} ${t.fontSize} -`}
+                disabled={Number.isFinite(parseInt(localSize, 10)) && parseInt(localSize, 10) <= 7}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => stepSize(-1)}
+              >
+                <svg width="7" height="4" viewBox="0 0 7 4" fill="currentColor" aria-hidden="true">
+                  <path d="M3.5 3.5L0 0.5H7L3.5 3.5Z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <span className="tooltip-text"><span className="tooltip-content-wrap">{`${t.fontSize} (7-49px)`}</span></span>
+        </div>
       </div>
       {family?.source === 'imported' && (
         <div className="desktop-font-binding-row__actions">
@@ -200,10 +291,20 @@ export function DesktopTypographySettings({
 
   const resetAllFonts = () => setDraft(migrateDesktopFontBindings(DEFAULT_DESKTOP_FONT_BINDINGS));
   const cancelApply = () => setFontApplyConfirmOpen(false);
+
+
   const confirmApply = () => {
+
+
     updateSettings({ fontBindings: draft });
     setFontApplyConfirmOpen(false);
   };
+  useDialogKeyboard({
+    open: Boolean(fontApplyConfirmOpen && changed),
+    onCancel: cancelApply,
+    onConfirm: confirmApply,
+    cancelSelector: '.settings-card__close, .desktop-typography-confirm-dialog .btn--outline, .desktop-typography-confirm-dialog__actions button:first-child',
+  });
 
   return (
     <>

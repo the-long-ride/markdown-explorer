@@ -7,6 +7,8 @@ import logoUrl from "../../assets/logos/logo-500.png?inline";
 import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from "../../constants/urls";
 import { useAppState } from "../../contexts/AppStateContext";
 import { getTranslations } from "../../contexts/translations";
+import { useDialogKeyboard } from "../../hooks/useDialogKeyboard";
+import { CheckboxCheckedIcon, CheckboxUncheckedIcon } from "../shared/CheckboxIcons";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -23,6 +25,12 @@ export function TermsModal({
   const [checked, setChecked] = useState(false);
   const { state } = useAppState();
   const t = getTranslations(state.settings.language || "en");
+
+  useDialogKeyboard({
+    open: isOpen,
+    onPrimary: onAgree,
+    disabled: !checked,
+  });
 
   if (!isOpen) return null;
 
@@ -90,7 +98,14 @@ export function TermsModal({
               onChange={(e) => setChecked(e.target.checked)}
               className="terms-checkbox"
             />
-            <span>{t.terms.agreement}</span>
+            <span className="terms-checkbox-custom" aria-hidden="true">
+              {checked ? (
+                <CheckboxCheckedIcon size={18} />
+              ) : (
+                <CheckboxUncheckedIcon size={18} />
+              )}
+            </span>
+            <span className="terms-checkbox-text">{t.terms.agreement}</span>
           </label>
 
           {/* Action Button */}

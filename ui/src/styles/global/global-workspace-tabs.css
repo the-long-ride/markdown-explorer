@@ -22,6 +22,12 @@
   background: var(--bg);
 }
 
+.tab-home .content__scroll,
+#homeContentScroll {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 .desktop-tabbar {
   height: 42px;
   flex: 0 0 42px;
@@ -32,7 +38,7 @@
   border-bottom: var(--stroke-w) solid var(--bd-s);
   background: var(--bg-s);
   box-shadow: var(--sh-sm);
-  z-index: 200000;
+  z-index: var(--z-window-controls);
   -webkit-app-region: drag;
 }
 
@@ -149,8 +155,18 @@
   background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
+.desktop-tabbar__scrollbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -5px;
+  bottom: -6px;
+}
+
 .desktop-tabbar__scrollbar-thumb {
   position: absolute;
+  z-index: 1;
   left: 0;
   top: 1px;
   height: 4px;
@@ -163,6 +179,15 @@
   cursor: grab;
   -webkit-app-region: no-drag;
   transition: background 0.12s ease, height 0.12s ease, top 0.12s ease;
+}
+
+.desktop-tabbar__scrollbar-thumb::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: -5px;
+  bottom: -6px;
 }
 
 .desktop-tabbar__scrollbar:hover .desktop-tabbar__scrollbar-thumb,

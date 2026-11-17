@@ -4,42 +4,111 @@ export interface TipItem {
   badge?: string;
 }
 
-export type TipGroupId = "navigateAndOrganize" | "previewStructuredContent" | "workWithRichDocuments" | "personalizeMarkdownExplorer";
+export type TipGroupId =
+  | "navigateAndOrganize"
+  | "authoringAndHistory"
+  | "previewStructuredContent"
+  | "workWithRichDocuments"
+  | "insightsAndExport"
+  | "personalizeMarkdownExplorer";
 
 export const TIP_GROUP_LABELS: Record<string, Record<TipGroupId, string>> = {
-  en: { navigateAndOrganize: "Navigate and organize", previewStructuredContent: "Preview structured content", workWithRichDocuments: "Work with rich documents", personalizeMarkdownExplorer: "Personalize Markdown Explorer" },
-  vi: { navigateAndOrganize: "Điều hướng và sắp xếp", previewStructuredContent: "Xem trước nội dung có cấu trúc", workWithRichDocuments: "Làm việc với tài liệu phong phú", personalizeMarkdownExplorer: "Cá nhân hóa Markdown Explorer" },
-  fr: { navigateAndOrganize: "Naviguer et organiser", previewStructuredContent: "Prévisualiser le contenu structuré", workWithRichDocuments: "Travailler avec des documents riches", personalizeMarkdownExplorer: "Personnaliser Markdown Explorer" },
-  es: { navigateAndOrganize: "Navegar y organizar", previewStructuredContent: "Previsualizar contenido estructurado", workWithRichDocuments: "Trabajar con documentos enriquecidos", personalizeMarkdownExplorer: "Personalizar Markdown Explorer" },
-  zh: { navigateAndOrganize: "导航与整理", previewStructuredContent: "预览结构化内容", workWithRichDocuments: "处理丰富文档", personalizeMarkdownExplorer: "个性化 Markdown Explorer" },
-  no: { navigateAndOrganize: "Naviger og organiser", previewStructuredContent: "Forhåndsvis strukturert innhold", workWithRichDocuments: "Arbeid med rike dokumenter", personalizeMarkdownExplorer: "Tilpass Markdown Explorer" },
-  ja: { navigateAndOrganize: "移動と整理", previewStructuredContent: "構造化コンテンツのプレビュー", workWithRichDocuments: "リッチドキュメントの活用", personalizeMarkdownExplorer: "Markdown Explorer のカスタマイズ" },
-  ko: { navigateAndOrganize: "탐색 및 정리", previewStructuredContent: "구조화된 콘텐츠 미리보기", workWithRichDocuments: "리치 문서 작업", personalizeMarkdownExplorer: "Markdown Explorer 개인화" },
-  ru: { navigateAndOrganize: "Навигация и организация", previewStructuredContent: "Предпросмотр структурированных данных", workWithRichDocuments: "Работа с насыщенными документами", personalizeMarkdownExplorer: "Персонализация Markdown Explorer" },
+  en: {
+    navigateAndOrganize: "Navigate, search & organize",
+    authoringAndHistory: "Edit, split view & version history",
+    previewStructuredContent: "Tables, charts, code & sandboxes",
+    workWithRichDocuments: "Diagrams, math, media & document conversion",
+    insightsAndExport: "Workspace insights, knowledge graph & export",
+    personalizeMarkdownExplorer: "Personalize themes, shortcuts & tour",
+  },
+  vi: {
+    navigateAndOrganize: "Điều hướng, tìm kiếm & sắp xếp",
+    authoringAndHistory: "Chỉnh sửa, chế độ chia đôi & lịch sử phiên bản",
+    previewStructuredContent: "Bảng, biểu đồ, mã nguồn & hộp cát",
+    workWithRichDocuments: "Sơ đồ, toán học, đa phương tiện & chuyển đổi tài liệu",
+    insightsAndExport: "Thông tin chi tiết, đồ thị tri thức & xuất tệp",
+    personalizeMarkdownExplorer: "Cá nhân hóa giao diện, phím tắt & chuyến tham quan",
+  },
+  fr: {
+    navigateAndOrganize: "Naviguer, rechercher et organiser",
+    authoringAndHistory: "Édition, vue fractionnée et historique",
+    previewStructuredContent: "Tableaux, graphiques, code et sandboxes",
+    workWithRichDocuments: "Diagrammes, maths, médias et conversion de documents",
+    insightsAndExport: "Aperçus d'espace, graphe de connaissances et export",
+    personalizeMarkdownExplorer: "Personnaliser thèmes, raccourcis et visite guidée",
+  },
+  es: {
+    navigateAndOrganize: "Navegar, buscar y organizar",
+    authoringAndHistory: "Edición, vista dividida e historial",
+    previewStructuredContent: "Tablas, gráficos, código y sandboxes",
+    workWithRichDocuments: "Diagramas, matemáticas, medios y conversión de documentos",
+    insightsAndExport: "Estadísticas del espacio, grafo de conocimiento y exportación",
+    personalizeMarkdownExplorer: "Personalizar temas, atajos y recorrido interactivo",
+  },
+  zh: {
+    navigateAndOrganize: "导航、搜索与整理",
+    authoringAndHistory: "编辑、分屏视图与版本历史",
+    previewStructuredContent: "表格、图表、代码与沙箱",
+    workWithRichDocuments: "图表、数学公式、媒体与文档转换",
+    insightsAndExport: "工作区洞察、知识图谱与导出",
+    personalizeMarkdownExplorer: "个性化主题、快捷键与导览",
+  },
+  no: {
+    navigateAndOrganize: "Naviger, søk og organiser",
+    authoringAndHistory: "Redigering, delt visning og versjonshistorikk",
+    previewStructuredContent: "Tabeller, diagrammer, kode og sandkasser",
+    workWithRichDocuments: "Diagrammer, matematikk, medier og dokumentkonvertering",
+    insightsAndExport: "Arbeidsområde-innsikt, kunnskapsgraf og eksport",
+    personalizeMarkdownExplorer: "Tilpass temaer, snarveier og omvisning",
+  },
+  ja: {
+    navigateAndOrganize: "移動・検索・整理",
+    authoringAndHistory: "編集・分割表示・バージョン履歴",
+    previewStructuredContent: "表・チャート・コード・サンドボックス",
+    workWithRichDocuments: "ダイアグラム・数式・メディア・ドキュメント変換",
+    insightsAndExport: "ワークスペース分析・ナレッジグラフ・エクスポート",
+    personalizeMarkdownExplorer: "テーマ・ショートカット・ツアーのカスタマイズ",
+  },
+  ko: {
+    navigateAndOrganize: "탐색, 검색 및 정리",
+    authoringAndHistory: "편집, 분할 뷰 및 버전 기록",
+    previewStructuredContent: "표, 차트, 코드 및 샌드박스",
+    workWithRichDocuments: "다이어그램, 수식, 미디어 및 문서 변환",
+    insightsAndExport: "작업 공간 인사이트, 지식 그래프 및 내보내기",
+    personalizeMarkdownExplorer: "테마, 단축키 및 둘러보기 맞춤 설정",
+  },
+  ru: {
+    navigateAndOrganize: "Навигация, поиск и организация",
+    authoringAndHistory: "Редактирование, сплит-вид и история версий",
+    previewStructuredContent: "Таблицы, диаграммы, код и песочницы",
+    workWithRichDocuments: "Диаграммы, формулы, медиа и конвертация документов",
+    insightsAndExport: "Аналитика рабочего пространства, граф знаний и экспорт",
+    personalizeMarkdownExplorer: "Персонализация тем, горячих клавиш и тура",
+  },
 };
 
 export const TIPS_CONTENT: Record<string, Array<TipItem>> = {
   en: [
-    { title: "Quick Search vs. Find in Current File Shortcuts", desc: "To boost your documentation lookup speeds, Markdown Explorer separates global search from in-file finding:\n• Desktop App: Press (Ctrl+F) to open global Quick Search, and (Ctrl+Shift+F) to search all tabs. Press the bare key (F) to search for keywords in the current file.\n• VS Code: Press (Ctrl+K) to open global Quick Search, (Ctrl+Shift+K) to search all tabs, and the bare key (K) to find keywords inside the current file.", badge: "Smart Shortcuts" },
-    { title: "HTML Live Preview Sandbox & Direct Interaction", desc: "When you write HTML code blocks in your Markdown documents (e.g. ```html ... ```), Markdown Explorer automatically spawns a secure and isolated iframe Sandbox using the (sandbox=\"allow-scripts\") attribute. Click the (Show Preview) button on the block header to toggle interactive rendering and directly run buttons, inputs, or scripts safely inside the markdown document.", badge: "HTML Sandbox" },
-    { title: "Drag & Drop for Instant Workspace Loading", desc: "On the Desktop application, you don't need to manually click open/browse dialogs. Simply grab any workspace folder or Markdown file from your OS Explorer or Finder, and drop it anywhere inside the app window. The app will immediately mount the dropped path as your active workspace or open the document.", badge: "Desktop Exclusive" },
-    { title: "Excel-Style Table Interactions & Charts", desc: "Does your table contain numeric values? Toggle the (Bar), (Line), or (Pie) buttons above the table to instantly render dynamic Chart.js visualizations. You can also click column headers to Sort, click the filter (funnel) icon to filter rows by specific values, or search text globally inside the search bar above.", badge: "Table Actions" },
-    { title: "Premium Media Modal & Diagram Zooming", desc: "Click any image or generated Mermaid diagram to launch a beautiful backdrop-blur modal. You can scroll your mouse wheel ((Mouse Wheel)) to zoom in/out, click and drag to (pan) across high-res graphics, and press (Left/Right) arrow keys to cycle through all images available in the current document.", badge: "Media Viewer" },
-    { title: "Distraction-Free Focus Mode", desc: "Toggle Focus Mode with (Ctrl+Alt+F) (or click the expand button in the top-left of the document card) to instantly hide the sidebar, topbar, and Table of Contents (TOC) panel. This gives you a clean, full-width distraction-free view ideal for reading long guides.", badge: "Focus Mode" },
-    { title: "Narrow Down Files with Scope Focus", desc: "Working in a massive repository? Click the Edit Scope icon at the top of the sidebar to choose only specific files or subfolders you want to see. Markdown Explorer will temporarily filter the file tree to keep you focused on your active workspace sub-components.", badge: "Scope Focus" },
-    { title: "Customize Styles with Theme Remix", desc: "Go to Settings → (Theme Remix) to create, duplicate, and customize your own styling interfaces. You can fine-tune font sizes, primary accents, background images, and layout density, or import/export (.json) theme sheets to share with your team.", badge: "Theme Remix" },
-    { title: "Quick Workspace Switcher", desc: "On the Desktop app, press (Ctrl+P) at any time to open the (Switch Workspace) modal. You can instantly jump between recent folders or drag in a new folder to load a different project without leaving your keyboard.", badge: "Fast Switching" }
+    { title: "Quick Search vs. Find in Current File Shortcuts", desc: "Separate global search from quick in-file keyword lookup:\n• Desktop App: (Ctrl+F) for global Quick Search, (Ctrl+Shift+F) for all tabs, and bare key (F) for keyword search in the current document.\n• VS Code: (Ctrl+K) for Quick Search, (Ctrl+Shift+K) for all tabs, and bare key (K) for in-file keyword finding.", badge: "Search Shortcuts" },
+    { title: "HTML Live Preview Sandbox & Direct Interaction", desc: "Fenced ```html code blocks automatically spawn an isolated iframe sandbox with scripts enabled. Click (Show Preview) on the block header to safely run buttons, inputs, interactive widgets, and scripts directly inside your markdown.", badge: "HTML Sandbox" },
+    { title: "Drag & Drop for Instant Workspace Loading", desc: "Drop any workspace folder or Markdown file from your OS file manager directly into the application window to mount the workspace or open the file immediately with zero dialogs.", badge: "Drag & Drop" },
+    { title: "Excel-Style Table Interactions & Charts", desc: "Click column headers to sort, use the funnel icon to filter values, and use the search bar to filter rows. Toggle (Bar), (Line), or (Pie) to instantly visualize numeric tables as dynamic Chart.js charts.", badge: "Tables & Charts" },
+    { title: "Premium Media Modal & Diagram Zooming", desc: "Click any image or Mermaid diagram to open the backdrop-blur viewer. Scroll (Mouse Wheel) to zoom, click and drag to (pan) high-resolution assets, and use (Left/Right) arrow keys to cycle through document media.", badge: "Media Viewer" },
+    { title: "Distraction-Free Focus Mode", desc: "Press (Ctrl+Alt+F) (or click the expand button on the document header) to hide the sidebar, topbar, and Table of Contents for an immersive, distraction-free reading canvas.", badge: "Focus Mode" },
+    { title: "Narrow Down Files with Scope Focus", desc: "Working in large mono-repos? Click the Scope Focus icon in the sidebar to isolate only active subfolders and hide noisy files across the entire file tree.", badge: "Scope Focus" },
+    { title: "Customize Styles with Theme Remix", desc: "Go to Settings → (Theme Remix) to tweak fonts, line heights, surface styling, and accents across 8+ aesthetics, or import and export custom theme sheets (.json).", badge: "Theme Remix" },
+    { title: "Quick Workspace Switcher", desc: "On Desktop, press (Ctrl+P) anytime to open the workspace switcher modal. Jump between recent folders or drag in a new path without touching your mouse.", badge: "Quick Switch" }
   ],
   vi: [
-    { title: "Tìm kiếm nhanh tức thì (Quick Search) vs. Tìm trong tệp (Find in File)", desc: "Để tăng tốc độ tìm kiếm tài liệu, Markdown Explorer phân biệt hai chế độ tìm kiếm siêu nhanh:\n• Phiên bản Desktop: Nhấn (Ctrl+F) để mở thanh Tìm kiếm nhanh (Quick Search) toàn bộ dự án, (Ctrl+Shift+F) để tìm trên tất cả các tab. Nhấn phím đơn (F) (khi không trong chế độ nhập liệu) để mở khung tìm kiếm từ khóa trong chính tệp hiện tại.\n• Phiên bản VS Code: Nhấn (Ctrl+K) để tìm kiếm nhanh, (Ctrl+Shift+K) để tìm trên tất cả các tab và nhấn phím đơn (K) để tìm từ khóa trong tệp hiện tại.", badge: "Phím tắt thông minh" },
-    { title: "HTML Live Preview Sandbox & Tương tác trực tiếp", desc: "Khi bạn viết các khối mã HTML trong tài liệu Markdown (ví dụ ```html ... ```), Markdown Explorer tự động tạo một khung iframe Sandbox biệt lập và an toàn (sử dụng thuộc tính (sandbox=\"allow-scripts\")). Nhấn nút (Show Preview) trên góc block để xem và tương tác trực tiếp với các phần tử giao diện, nút bấm, input, script chạy cục bộ mà không sợ ảnh hưởng đến ứng dụng chủ.", badge: "HTML Sandbox" },
-    { title: "Kéo & Thả để mở Không gian làm việc nhanh", desc: "Bạn có biết rằng trên phiên bản Desktop, bạn không cần nhấn qua nhiều menu phức tạp để mở dự án? Chỉ cần kéo bất kỳ thư mục dự án hoặc tập tin Markdown nào từ máy tính của bạn (File Explorer hoặc Finder) và thả trực tiếp vào bất cứ đâu trên cửa sổ ứng dụng. Ứng dụng sẽ tự động tải thư mục đó làm Workspace mới hoặc mở file tức thì.", badge: "Độc quyền Desktop" },
-    { title: "Phân tích & Trực quan hóa dữ liệu bảng kiểu Excel", desc: "Bảng dữ liệu của bạn có nhiều cột số? Hãy nhấp vào các nút (Bar), (Line) hoặc (Pie) ở phía trên bảng để chuyển đổi dữ liệu thô thành các biểu đồ Chart.js sinh động. Ngoài ra, bạn có thể nhấp vào đầu cột để sắp xếp tăng/giảm, sử dụng biểu tượng bộ lọc (funnel) để lọc các hàng theo giá trị cụ thể, hoặc gõ vào ô tìm kiếm để lọc nhanh nội dung.", badge: "Tương tác bảng" },
-    { title: "Trình xem đa phương tiện cao cấp & Thu phóng sơ đồ", desc: "Click vào bất kỳ hình ảnh nào hoặc các sơ đồ Mermaid để khởi chạy khung modal phóng to với hiệu ứng làm mờ nền (backdrop-blur) cao cấp. Bạn có thể sử dụng bánh xe chuột ((Mouse Wheel)) để phóng to/thu nhỏ, click giữ chuột để kéo ((pan)) hình ảnh, và sử dụng các phím mũi tên (Trái/Phải) để chuyển đổi nhanh qua lại giữa các hình ảnh trong tài liệu.", badge: "Trình xem đa phương tiện" },
-    { title: "Chế độ đọc tập trung (Focus Mode)", desc: "Nhấn (Ctrl+Alt+F) (hoặc nhấp nút thu phóng ở góc trái thẻ tài liệu) để kích hoạt Chế độ Đọc tập trung. Toàn bộ thanh bên, thanh trên và mục lục sẽ ẩn đi, mang lại không gian đọc thoáng đãng và không phân tâm.", badge: "Đọc tập trung" },
-    { title: "Tập trung phạm vi (Scope Focus)", desc: "Làm việc trong dự án lớn? Nhấp vào nút Chỉnh sửa phạm vi ở đầu thanh bên để chọn riêng các tệp hoặc thư mục muốn hiển thị. Cây thư mục sẽ lọc bớt các tệp không liên quan để bạn tập trung làm việc.", badge: "Tập trung phạm vi" },
-    { title: "Tự phối màu giao diện (Theme Remix)", desc: "Vào Cài đặt → (Theme Remix) để tự thiết kế và tùy biến giao diện đọc. Bạn có thể thay đổi kích thước phông chữ, màu sắc chủ đạo, khoảng cách dòng, ảnh nền, hoặc nhập/xuất cấu hình theme (.json) để chia sẻ.", badge: "Theme Remix" },
-    { title: "Chuyển nhanh không gian làm việc", desc: "Trên ứng dụng Desktop, nhấn (Ctrl+P) bất kỳ lúc nào để hiển thị nhanh khung chuyển nhanh không gian làm việc. Bạn có thể chọn nhanh các thư mục mở gần đây hoặc kéo thả thư mục mới để chuyển đổi tức thì.", badge: "Chuyển nhanh" }
+    { title: "Tìm kiếm nhanh tức thì (Quick Search) vs. Tìm trong tệp (Find in File)", desc: "Tách biệt tìm kiếm toàn cục và tìm từ khóa trong tệp:\n• Desktop: (Ctrl+F) tìm nhanh toàn dự án, (Ctrl+Shift+F) tìm trên mọi tab, phím đơn (F) để tìm từ khóa trong tệp hiện tại.\n• VS Code: (Ctrl+K) tìm nhanh, (Ctrl+Shift+K) tìm trên mọi tab, phím đơn (K) để tìm từ khóa trong tệp hiện tại.", badge: "Phím tắt thông minh" },
+    { title: "HTML Live Preview Sandbox & Tương tác trực tiếp", desc: "Các khối mã ```html tự động tạo khung iframe sandbox an toàn với script được kích hoạt. Nhấn (Show Preview) trên góc block để chạy thử giao diện, nút bấm, biểu mẫu và script trực tiếp.", badge: "HTML Sandbox" },
+    { title: "Kéo & Thả để mở Không gian làm việc nhanh", desc: "Kéo thả bất kỳ thư mục dự án hoặc tập tin Markdown nào từ trình quản lý tệp hệ thống vào cửa sổ ứng dụng để mở và gắn kết không gian làm việc tức thì.", badge: "Kéo & Thả" },
+    { title: "Phân tích & Trực quan hóa dữ liệu bảng kiểu Excel", desc: "Nhấp đầu cột để sắp xếp, dùng phễu lọc để lọc giá trị và gõ ô tìm kiếm để lọc hàng. Nhấp (Bar), (Line) hoặc (Pie) để chuyển bảng số liệu thành biểu đồ Chart.js sinh động.", badge: "Bảng & Biểu đồ" },
+    { title: "Trình xem đa phương tiện cao cấp & Thu phóng sơ đồ", desc: "Nhấp vào hình ảnh hoặc sơ đồ Mermaid để mở trình xem nền mờ. Lăn chuột ((Mouse Wheel)) để phóng to/thu nhỏ, kéo rê để di chuyển ảnh và phím mũi tên (Trái/Phải) để chuyển ảnh.", badge: "Trình xem đa phương tiện" },
+    { title: "Chế độ đọc tập trung (Focus Mode)", desc: "Nhấn (Ctrl+Alt+F) (hoặc nút phóng to ở góc thẻ tài liệu) để ẩn thanh bên, thanh trên và mục lục, mang lại không gian đọc toàn màn hình không phân tâm.", badge: "Đọc tập trung" },
+    { title: "Tập trung phạm vi (Scope Focus)", desc: "Làm việc trong dự án lớn? Nhấp biểu tượng Chỉnh sửa phạm vi trên thanh bên để chỉ hiển thị các thư mục cần thiết và ẩn các tệp không liên quan.", badge: "Tập trung phạm vi" },
+    { title: "Tự phối màu giao diện (Theme Remix)", desc: "Vào Cài đặt → (Theme Remix) để tùy biến phông chữ, màu sắc, ảnh nền trên hơn 8 phong cách chủ đề, hoặc nhập/xuất cấu hình (.json) chia sẻ cùng nhóm.", badge: "Theme Remix" },
+    { title: "Chuyển nhanh không gian làm việc", desc: "Trên Desktop, nhấn (Ctrl+P) bất cứ lúc nào để mở khung chuyển đổi không gian làm việc. Chuyển đổi nhanh giữa các thư mục gần đây mà không cần rời tay khỏi bàn phím.", badge: "Chuyển nhanh" }
   ],
   fr: [
     { title: "Recherche rapide vs Recherche dans le fichier", desc: "Pour accélérer vos recherches, Markdown Explorer distingue la recherche globale de la recherche locale :\n• Desktop : (Ctrl+F) pour la recherche globale, (Ctrl+Shift+F) pour tous les onglets, touche unique (F) pour le fichier actuel.\n• VS Code : (Ctrl+K) pour la recherche globale, (Ctrl+Shift+K) pour tous les onglets, touche unique (K) pour le fichier actuel.", badge: "Raccourcis intelligents" },

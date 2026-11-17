@@ -1,9 +1,14 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { TooltipButton } from "./components/shared/TooltipButton";
 import { EXPORT_CENTER_OPEN_EVENT, WORKSPACE_INSIGHTS_TOGGLE_EVENT } from "./components/shared/ToolbarActionMenu";
 import { DesktopTabBar } from "./components/Desktop/DesktopTabBar";
 import { ExitFocusIcon } from "./components/shared/icons";
 import { ScrollToTopButton } from "./components/shared/ScrollToTopButton";
+import { CyberpunkMatrixBackdrop } from "./components/shared/CyberpunkMatrixBackdrop";
+import { HoverTooltipPortal } from "./components/shared/HoverTooltipPortal";
+import { TourGuideOverlay } from "./components/Tour/TourGuideOverlay";
+import { TOUR_DEMO_WORKSPACE_PATH } from "./components/Tour/tourDemoWorkspace";
+import { TOUR_STAGE_CHANGE_EVENT, type TourStage, type TourStageChangeDetail } from "./components/Tour/tourEvents";
 import { Topbar } from "./components/Topbar/Topbar";
 import { getEnabledShortcut } from "./utils/shortcuts";
 import { useModalRegionAnchor } from "./utils/useModalRegionAnchor";
@@ -33,93 +38,55 @@ const WorkspaceInsightsEntry = lazy(() => import("./components/Insights/Workspac
 export function AppView(props: any) {
   const [exportCenterOpen, setExportCenterOpen] = useState(false);
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [tourStage, setTourStage] = useState<TourStage | null>(null);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [showStandaloneHomepage, setShowStandaloneHomepage] = useState(false);
   const toggleInsights = () => window.dispatchEvent(new Event(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
   const {
-    isTabView,
-    sidebarCursorMode,
-    closeSidebarCursorMode,
-  state,
-  activeTabId,
-  tabs,
-  bookmarkWorkspaces,
-  activeBookmarkWorkspaceKey,
-  handleBookmarkNavigate,
-  activateTab,
-  createNewWorkspaceTab,
-  closeTab,
-  reorderTabs,
-  closeTabsToRight,
-  closeOtherTabs,
-  closeAllTabs,
-  cancelCurrentWorkspaceScan,
-  updateTabAlias,
-  toggleTheme,
-  setSettingsOpen,
-  toggleSidebar,
-  isDark,
-  updateCheck,
-  updateNotification,
-  isFullscreen,
-  toggleFullscreen,
-  prepareWorkspaceOpen,
-  reopenUnavailableWorkspace,
-  workspaceAliases,
-  updateWorkspaceAlias,
-  scrollRef,
-  t,
-  expandAll,
-  collapseAll,
-  copyCurrentFileContent,
-  refresh,
-  back,
-  forward,
-  canGoBack,
-  canGoForward,
-  searchOpen,
-  closeSearch,
-  searchScope,
-  isAllTabsSearch,
-  allTabsSearchShortcutLabel,
-  currentSearchShortcutLabel,
-  crossTabSearchItems,
-  handleWorkspaceSearchSelect,
-  handleCrossTabSelect,
-  isIndexingAcrossTabs,
-  findOpen,
-  closeFind,
-  findShortcutLabel,
-  mediaGallery,
-  setMediaGallery,
-  settingsOpen,
-  downloadUpdate,
-  scheduleUpdateOnExit,
-  restartAndApplyUpdate,
-  openUpdateChangelog,
-  themeOnboardingOpen,
-  handleThemeOnboardingComplete,
-  pendingDroppedPath,
-  setPendingDroppedPath,
-  confirmSwitchWorkspace,
-  workspaceSelectionConfirmOpen,
-  setWorkspaceSelectionConfirmOpen,
-  closeWorkspaceToSelection,
-  toggleFocusMode,
-  isDragging,
-  onImageClick,
-  onOpenExternal,
+    isTabView, sidebarCursorMode, closeSidebarCursorMode, state, activeTabId, tabs,
+    bookmarkWorkspaces, activeBookmarkWorkspaceKey, handleBookmarkNavigate, activateTab,
+    createNewWorkspaceTab, closeTab, reorderTabs, closeTabsToRight, closeOtherTabs, closeAllTabs,
+    cancelCurrentWorkspaceScan, updateTabAlias, toggleTheme, setSettingsOpen, toggleSidebar, isDark,
+    updateCheck, updateNotification, isFullscreen, toggleFullscreen, prepareWorkspaceOpen,
+    reopenUnavailableWorkspace, workspaceAliases, updateWorkspaceAlias, scrollRef, t,
+    expandAll, collapseAll, copyCurrentFileContent, refresh, back, forward, canGoBack, canGoForward,
+    searchOpen, closeSearch, searchScope, isAllTabsSearch, allTabsSearchShortcutLabel,
+    currentSearchShortcutLabel, crossTabSearchItems, handleWorkspaceSearchSelect, handleCrossTabSelect,
+    isIndexingAcrossTabs, findOpen, closeFind, findShortcutLabel, mediaGallery, setMediaGallery,
+    settingsOpen, downloadUpdate, scheduleUpdateOnExit, restartAndApplyUpdate, openUpdateChangelog,
+    themeOnboardingOpen, handleThemeOnboardingComplete, pendingDroppedPath, setPendingDroppedPath,
+    confirmSwitchWorkspace, workspaceSelectionConfirmOpen, setWorkspaceSelectionConfirmOpen,
+    closeWorkspaceToSelection, toggleFocusMode, isDragging, onImageClick, onOpenExternal,
+    termsAccepted, initialUpdateSettled,
   } = props;
 
+  const hasMountedWorkspaceRef = useRef(false);
+  useEffect(() => {
+    if (!hasMountedWorkspaceRef.current) {
+      hasMountedWorkspaceRef.current = true;
+      return;
+    }
+    if (state.workspacePath === TOUR_DEMO_WORKSPACE_PATH || !state.workspaceName) return;
+    setShowStandaloneHomepage(false);
+  }, [state.workspaceName, state.currentFile, state.workspacePath]);
+
+  const activeTab = isTabView
+    ? tabs?.find((tab: { id: string; kind: string; workspacePath?: string; workspaceName?: string }) => tab.id === activeTabId)
+    : undefined;
+  const isEmptyWorkspaceTab = Boolean(
+    isTabView
+    && activeTab
+    && activeTab.kind !== 'home'
+    && !activeTab.workspacePath
+    && !activeTab.workspaceName,
+  );
+  const isTourActive = Boolean(isTourOpen || tourStage !== null);
+
   const isModalBlocked = Boolean(
-    themeOnboardingOpen ||
-    settingsOpen ||
-    exportCenterOpen ||
-    searchOpen ||
-    findOpen ||
-    mediaGallery ||
-    pendingDroppedPath !== null ||
-    workspaceSelectionConfirmOpen ||
-    updateNotification?.promptOpen ||
-    isInsightsOpen
+    termsAccepted === false || initialUpdateSettled === false || themeOnboardingOpen ||
+    settingsOpen || exportCenterOpen || searchOpen || findOpen || mediaGallery ||
+    pendingDroppedPath !== null || workspaceSelectionConfirmOpen ||
+    updateNotification?.promptOpen || isInsightsOpen || isTourActive
   );
 
   const {
@@ -131,13 +98,36 @@ export function AppView(props: any) {
     enabled: true,
     isBlocked: isModalBlocked,
     onOpenExternal,
+    currentFile: state.currentFile,
   });
+
+  const isTourBlocked = Boolean(
+    termsAccepted === false || updateNotification?.promptOpen || initialUpdateSettled === false ||
+    themeOnboardingOpen || (settingsOpen && !isTourOpen) || exportCenterOpen || searchOpen || findOpen ||
+    mediaGallery || pendingDroppedPath !== null || workspaceSelectionConfirmOpen ||
+    supportPromptOpen || isInsightsOpen
+  );
 
   useEffect(() => {
     const openExportCenter = () => setExportCenterOpen(true);
+    const openHomepage = () => { if (isTabView) activateTab('home'); else setShowStandaloneHomepage(true); };
+    const openWorkspaceSel = () => setShowStandaloneHomepage(false);
+    const handleTourStage = (e: Event) => {
+      const detail = (e as CustomEvent<TourStageChangeDetail>).detail;
+      setTourStage(detail?.active ? detail.stage : null);
+      if (detail && typeof detail.openSettings === 'boolean') setSettingsOpen(detail.openSettings);
+    };
     window.addEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
-    return () => window.removeEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
-  }, []);
+    window.addEventListener('open-homepage', openHomepage);
+    window.addEventListener('open-workspace-selection', openWorkspaceSel);
+    window.addEventListener(TOUR_STAGE_CHANGE_EVENT, handleTourStage);
+    return () => {
+      window.removeEventListener(EXPORT_CENTER_OPEN_EVENT, openExportCenter);
+      window.removeEventListener('open-homepage', openHomepage);
+      window.removeEventListener('open-workspace-selection', openWorkspaceSel);
+      window.removeEventListener(TOUR_STAGE_CHANGE_EVENT, handleTourStage);
+    };
+  }, [activateTab, isTabView, setSettingsOpen]);
 
   useEffect(() => {
     const handleOpenMedia = (e: Event) => {
@@ -152,6 +142,9 @@ export function AppView(props: any) {
 
   return (
     <div className={`app${isTabView ? ' app--tab-view' : ''}${sidebarCursorMode ? ' app--sidebar-cursor-mode' : ''}${state.focusMode ? ' app--focus-mode' : ''}${state.appRuntime === 'tauri' ? ' app--tauri' : ''}${isFullscreen ? ' app--fullscreen' : ''}${state.isMaximized && state.hostPlatform === 'windows' ? ' is-maximized-windows' : ''}${state.hostPlatform === 'windows' ? ' is-windows' : ''}`}>
+      <CyberpunkMatrixBackdrop />
+      <HoverTooltipPortal />
+      <TourGuideOverlay isBlocked={isTourBlocked} updatePromptOpen={updateNotification?.promptOpen} onOpenChange={setIsTourOpen} />
       <div className="sidebar-cursor-backdrop" aria-hidden="true" />
       {isTabView && (
         <DesktopTabBar
@@ -195,98 +188,117 @@ export function AppView(props: any) {
           )}
         </div>
       )}
-      {isTabView && activeTabId === 'home' ? (
-        <main className="tab-home">
-          <div className="content__scroll" id="homeContentScroll">
-            <WelcomePage />
-          </div>
-        </main>
-      ) : !state.workspaceName ? (
-        state.appRuntime === 'vscode' ? (
-          <main className="tab-home">
-            <div className="content__scroll" id="homeContentScroll">
-              <WelcomePage />
-            </div>
-          </main>
-        ) : isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
-          <main className="tab-loading">
-            <div className="state-screen state-screen--tab-loading">
-              <div className="spinner" />
-              <div className="state-screen__title">{state.loadingLabel || t.ui.loadingDocs}</div>
-              {state.isWorkspaceScanning && (
-                <div className="state-screen__sub">
-                  {t.ui.scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(state.settings.language || 'en'))}
-                </div>
-              )}
-              {state.loadingDetail && <div className="state-screen__sub">{state.loadingDetail}</div>}
-              <button type="button" className="btn state-screen__cancel" onClick={cancelCurrentWorkspaceScan}>
-                {t.tooltips.cancelScan}
-              </button>
-            </div>
-          </main>
-        ) : (
-          <WorkspaceSelection
-            onBeforeOpenWorkspace={prepareWorkspaceOpen}
-            embeddedInTabs={isTabView}
-            workspaceAliases={workspaceAliases}
-            onWorkspaceAliasChange={updateWorkspaceAlias}
-          />
-        )
-      ) : (
-        <>
-          {!isTabView && (
-            <Topbar
-              onSettingsOpen={() => setSettingsOpen(true)}
-              onExportOpen={() => setExportCenterOpen(true)}
-              onExpandAll={expandAll}
-              onCollapseAll={collapseAll}
-              onCopyFile={copyCurrentFileContent}
-              hasUpdate={updateNotification.attention}
-              isFullscreen={isFullscreen}
-              onFullscreenToggle={toggleFullscreen}
-              isInsightsOpen={isInsightsOpen}
-              onInsightsToggle={toggleInsights}
-            />
-          )}
-          <div className="body">
-            <Sidebar
-              cursorMode={sidebarCursorMode}
-              onCursorModeClose={closeSidebarCursorMode}
-              bookmarkViewMode={isTabView ? 'tabs' : 'focus'}
-              bookmarkWorkspaces={bookmarkWorkspaces}
-              activeBookmarkWorkspaceKey={activeBookmarkWorkspaceKey}
-              onBookmarkNavigate={handleBookmarkNavigate}
-            />
-            <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label={t.ui.resizeSidebar} />
-            <div className="content-shell">
-              <ContentTabs />
-
-              <div className="content-shell__main">
-                <Content
-                  onImageClick={onImageClick}
-                  scrollRef={scrollRef}
-                  suppressWelcome={isTabView}
-                  onCancelWorkspaceScan={isTabView ? cancelCurrentWorkspaceScan : undefined}
-                  onOpenWorkspaceAgain={reopenUnavailableWorkspace}
-                />
-                <ScrollToTopButton
-                  scrollRef={scrollRef}
-                  observeKey={state.workspaceName}
-                  tooltip={t.tooltips.scrollToTop}
-                  withToc={state.toc.length > 0 && !state.tocCollapsed && !state.focusMode}
-                />
-              </div>
-
-            </div>
-            {state.toc.length > 0 && (
-              <>
-                <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label={t.ui.resizeToc} />
-                <Suspense fallback={null}><TableOfContents variant="panel" /></Suspense>
-              </>
+      <Suspense fallback={null}>
+        {tourStage !== 'workspace' && ((isTabView && activeTabId === 'home') || tourStage === 'home' || (!isTabView && showStandaloneHomepage)) ? (
+          <>
+            {!isTabView && showStandaloneHomepage && tourStage !== 'home' && (
+              <Topbar
+                onSettingsOpen={() => setSettingsOpen(true)}
+                onExportOpen={() => setExportCenterOpen(true)}
+                onExpandAll={expandAll}
+                onCollapseAll={collapseAll}
+                onCopyFile={copyCurrentFileContent}
+                hasUpdate={updateNotification.attention}
+                isFullscreen={isFullscreen}
+                onFullscreenToggle={toggleFullscreen}
+                isInsightsOpen={isInsightsOpen}
+                onInsightsToggle={toggleInsights}
+              />
             )}
-          </div>
-        </>
-      )}
+            <main className="tab-home">
+              <div className="content__scroll" id="homeContentScroll">
+                <WelcomePage />
+              </div>
+            </main>
+          </>
+        ) : isEmptyWorkspaceTab || (tourStage !== 'workspace' && (!state.workspaceName || (!state.workspacePath && state.fileList.length === 0))) ? (
+          state.appRuntime === 'vscode' ? (
+            <main className="tab-home">
+              <div className="content__scroll" id="homeContentScroll">
+                <WelcomePage />
+              </div>
+            </main>
+          ) : isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
+            <main className="tab-loading">
+              <div className="state-screen state-screen--tab-loading">
+                <div className="spinner" />
+                <div className="state-screen__title">{state.loadingLabel || t.ui.loadingDocs}</div>
+                {state.isWorkspaceScanning && (
+                  <div className="state-screen__sub">
+                    {t.ui.scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(state.settings.language || 'en'))}
+                  </div>
+                )}
+                {state.loadingDetail && <div className="state-screen__sub">{state.loadingDetail}</div>}
+                <button type="button" className="btn state-screen__cancel" onClick={cancelCurrentWorkspaceScan}>
+                  {t.tooltips.cancelScan}
+                </button>
+              </div>
+            </main>
+          ) : (
+            <WorkspaceSelection
+              onBeforeOpenWorkspace={prepareWorkspaceOpen}
+              onOpenHomepage={() => (isTabView ? activateTab('home') : setShowStandaloneHomepage(true))}
+              embeddedInTabs={isTabView}
+              workspaceAliases={workspaceAliases}
+              onWorkspaceAliasChange={updateWorkspaceAlias}
+            />
+          )
+        ) : (
+          <>
+            {!isTabView && (
+              <Topbar
+                onSettingsOpen={() => setSettingsOpen(true)}
+                onExportOpen={() => setExportCenterOpen(true)}
+                onExpandAll={expandAll}
+                onCollapseAll={collapseAll}
+                onCopyFile={copyCurrentFileContent}
+                hasUpdate={updateNotification.attention}
+                isFullscreen={isFullscreen}
+                onFullscreenToggle={toggleFullscreen}
+                isInsightsOpen={isInsightsOpen}
+                onInsightsToggle={toggleInsights}
+              />
+            )}
+            <div className="body">
+              <Sidebar
+                cursorMode={sidebarCursorMode}
+                onCursorModeClose={closeSidebarCursorMode}
+                bookmarkViewMode={isTabView ? 'tabs' : 'focus'}
+                bookmarkWorkspaces={bookmarkWorkspaces}
+                activeBookmarkWorkspaceKey={activeBookmarkWorkspaceKey}
+                onBookmarkNavigate={handleBookmarkNavigate}
+              />
+              <div className="sidebar-resize" id="sidebarResize" role="separator" aria-label={t.ui.resizeSidebar} />
+              <div className="content-shell">
+                <ContentTabs />
+
+                <div className="content-shell__main">
+                  <Content
+                    onImageClick={onImageClick}
+                    scrollRef={scrollRef}
+                    suppressWelcome={isTabView}
+                    onCancelWorkspaceScan={isTabView ? cancelCurrentWorkspaceScan : undefined}
+                    onOpenWorkspaceAgain={reopenUnavailableWorkspace}
+                  />
+                  <ScrollToTopButton
+                    scrollRef={scrollRef}
+                    observeKey={`${state.workspaceName}:${state.currentFile}:${state.renderVersion}`}
+                    tooltip={t.tooltips.scrollToTop}
+                    withToc={state.toc.length > 0 && !state.tocCollapsed && !state.focusMode}
+                  />
+                </div>
+
+              </div>
+              {state.toc.length > 0 && (
+                <>
+                  <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label={t.ui.resizeToc} />
+                  <Suspense fallback={null}><TableOfContents variant="panel" /></Suspense>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </Suspense>
 
       <Suspense fallback={null}>
       <SearchOverlay
@@ -313,7 +325,7 @@ export function AppView(props: any) {
       />
       <MediaModal gallery={mediaGallery} onClose={() => setMediaGallery(null)} />
       <ExportCenterModal isOpen={exportCenterOpen} onClose={() => setExportCenterOpen(false)} />
-      {supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled && <WorkspaceInsightsEntry onPanelOpenChange={setIsInsightsOpen} onOpenMedia={setMediaGallery} />}
+      {supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled && <Suspense fallback={null}><WorkspaceInsightsEntry onPanelOpenChange={setIsInsightsOpen} onOpenMedia={setMediaGallery} /></Suspense>}
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -390,5 +402,5 @@ export function AppView(props: any) {
         </div>
       )}
     </div>
-  );;
+  );
 }

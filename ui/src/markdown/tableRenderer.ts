@@ -2,6 +2,7 @@ import { renderInline } from './inline';
 import { escHtml, shortId } from './utils';
 import { AUDITED_UI_TRANSLATIONS } from '../contexts/auditedUiTranslations';
 import type { AuditedUiTranslationDomains } from '../contexts/auditedUiTranslationTypes';
+import { inferIntelligentColumnAlignment } from '../dom/intelligentTableAlign';
 
 export interface InteractiveTableData {
   headers: string[];
@@ -27,19 +28,29 @@ export function renderInteractiveTable(
   const id = shortId('tbl');
   const encodedLabels = escHtml(JSON.stringify(labels));
   const align = data.align ?? [];
+  const intelligentAligns = data.headers.map((_, columnIndex) =>
+    inferIntelligentColumnAlignment(data.rows.map((row) => row[columnIndex] ?? '')),
+  );
   const thead = data.headers.map((header, columnIndex) => {
-    const alignAttr = align[columnIndex] ? ` style="text-align:${align[columnIndex]}"` : '';
+    const colAlign = align[columnIndex];
+    const intelligentAlign = intelligentAligns[columnIndex];
+    const alignAttr = `${colAlign ? ` data-col-align="${colAlign}" style="text-align:${colAlign}"` : ''}${intelligentAlign ? ` data-intelligent-align="${intelligentAlign}"` : ''}`;
+    const alignLabel = escHtml(labels.alignColumn);
+    const alignButton = `<span class="mdn-table-align-btn" onclick="event.stopPropagation(); Table.showAlignMenu('${id}', ${columnIndex}, this)" data-hover-tooltip="${alignLabel}" aria-label="${alignLabel}" role="button" tabindex="0">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+    </span>`;
     const category = isCategoryColumn(data.rows, columnIndex);
     const filterButton = category
-      ? `<span class="mdn-table-filter-btn" onclick="event.stopPropagation(); Table.showFilterMenu('${id}', ${columnIndex}, this)" title="${escHtml(labels.filterByValues)}" role="button" tabindex="0">
+      ? `<span class="mdn-table-filter-btn" onclick="event.stopPropagation(); Table.showFilterMenu('${id}', ${columnIndex}, this)" data-hover-tooltip="${escHtml(labels.filterByValues)}" aria-label="${escHtml(labels.filterByValues)}" role="button" tabindex="0">
              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
            </span>`
       : '';
-    return `<th class="mdn-th${category ? ' has-filter' : ''}" data-col="${columnIndex}" onclick="Table.sort('${id}',${columnIndex})" tabindex="0"${alignAttr}>
+    const sortLabel = escHtml(labels.sort);
+    const sortButton = `<span class="mdn-sort-icon" onclick="event.stopPropagation(); Table.sort('${id}',${columnIndex})" data-hover-tooltip="${sortLabel}" aria-label="${sortLabel}" role="button" tabindex="0">⇅</span>`;
+    return `<th class="mdn-th${category ? ' has-filter' : ''}" data-col="${columnIndex}"${alignAttr}>
   <div class="mdn-th-content">
     <span class="mdn-th-text">${renderInline(header, isMdx, labels)}</span>
-    <span class="mdn-sort-icon" aria-hidden="true">⇅</span>
-    ${filterButton}
+    <span class="mdn-th-actions">${sortButton}${alignButton}${filterButton}</span>
   </div>
 </th>`;
   }).join('');
@@ -47,7 +58,9 @@ export function renderInteractiveTable(
   const tbody = data.rows.map((row, rowIndex) => {
     const rowClass = rowIndex >= 15 ? ' class="is-collapsed-row"' : '';
     const cells = data.headers.map((_, columnIndex) => {
-      const alignAttr = align[columnIndex] ? ` style="text-align:${align[columnIndex]}"` : '';
+      const colAlign = align[columnIndex];
+      const intelligentAlign = intelligentAligns[columnIndex];
+      const alignAttr = `${colAlign ? ` data-col-align="${colAlign}" style="text-align:${colAlign}"` : ''}${intelligentAlign ? ` data-intelligent-align="${intelligentAlign}"` : ''}`;
       return `<td${alignAttr}>${renderInline(row[columnIndex] ?? '', isMdx, labels)}</td>`;
     }).join('');
     return `<tr${rowClass}>${cells}</tr>`;
@@ -65,6 +78,10 @@ export function renderInteractiveTable(
     </label>
     <span class="mdn-row-count" id="${id}-count"></span>
     <div class="mdn-table-toolbar-actions">
+      <button type="button" class="mdn-table-reset-widths tooltip-container" data-tooltip-pos="above" id="${id}-reset-widths" onclick="Table.resetColumnWidths('${id}')" aria-label="${escHtml(labels.resetColumnWidths)}" hidden>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <span class="tooltip-text">${escHtml(labels.resetColumnWidths)}</span>
+      </button>
       <button class="mdn-table-wrap-toggle tooltip-container" data-tooltip-pos="above" id="${id}-wrap-toggle" onclick="Table.toggleWrap('${id}', this)" aria-pressed="false" aria-label="${escHtml(labels.wrapTableText)}">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7h16"/><path d="M4 12h10a4 4 0 0 1 0 8H9"/><path d="m12 17-3 3 3 3"/></svg><span class="mdn-table-wrap-toggle__label">${escHtml(labels.wrap)}</span>
         <span class="tooltip-text">${escHtml(labels.wrapTableText)}</span>

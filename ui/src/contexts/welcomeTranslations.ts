@@ -29,6 +29,13 @@ export interface WelcomeTranslations {
     html: { title: string; desc: string };
     modal: { title: string; desc: string };
     shortcuts: { title: string; vscodeDesc: string; desc: string };
+    editor: { title: string; desc: string };
+    insights: { title: string; desc: string };
+    git: { title: string; desc: string };
+    export: { title: string; desc: string };
+    outline: { title: string; desc: string };
+    bookmarks: { title: string; desc: string };
+    themes: { title: string; desc: string };
   };
   shortcutsTable: {
     headers: { action: string; shortcut: string };
@@ -77,8 +84,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   en: {
     hero: {
       title: "Welcome to Markdown Explorer",
-      descDesktop: "A premium, local-first documentation viewer and navigator for Desktop.",
-      descVSCode: "A premium, local-first documentation viewer and navigator for Visual Studio Code.",
+      descDesktop: "All-in-one local-first Markdown workspace — read, edit, diagram, analyze & export on Desktop.",
+      descVSCode: "All-in-one local-first Markdown workspace — read, edit, diagram, analyze & export in Visual Studio Code.",
       createdBy: "Created by",
       repository: "Repository",
       license: "License",
@@ -99,36 +106,64 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
       title: "How to Use All Features",
       tree: {
         title: "📁 Workspace Navigation Tree",
-        desc: "The left sidebar displays an interactive folder structure scanning all markdown files in your workspace. Simply click any file to open it in preview mode. You can filter files by name using the search bar at the top of the sidebar.",
+        desc: "Interactive folder tree with live file filtering, scope focus to isolate active folders, and direct drag-and-drop workspace mounting.",
       },
       search: {
-        title: "🔍 Instant Quick Search",
-        desc: "Press the search shortcut from anywhere in the preview window to open the quick search overlay. Type a query to search markdown filenames, paths, titles, and file contents. Use the mouse or keyboard to select and open a file.",
+        title: "🔍 Instant Multi-Tier Search",
+        desc: "High-speed document retrieval across three tiers: in-file keyword jump (F), workspace fuzzy search (Ctrl+F), and cross-tab search (Ctrl+Shift+F).",
       },
       tables: {
-        title: "📋 Excel-Style Interactive Data Tables",
-        desc: "Standard Markdown tables as well as CSV and TSV code blocks are automatically converted to interactive tables. You can sort columns by clicking their headers, use the funnel icon on headers to filter rows by values, and type inside the search bar above the table to search row contents.",
+        title: "📋 Interactive Data Tables",
+        desc: "Automatically enhances Markdown, CSV, and TSV tables with column sorting, value-based header filtering, and global table row search.",
       },
       charts: {
-        title: "📊 One-Click Table-to-Chart Switcher",
-        desc: "For Markdown tables and CSV or TSV code blocks containing numeric columns, a view switcher will appear. Click the Bar, Line, or Pie buttons to instantly visualize the table data as an interactive Chart.js chart.",
+        title: "📊 One-Click Table-to-Chart Visualizer",
+        desc: "Instantly transform numeric table data into dynamic Chart.js visualizations with one-click toggles for Bar, Line, and Pie charts.",
       },
       highlight: {
         title: "🎨 Syntax Highlighting & Mermaid Diagrams",
-        desc: "Enjoy high-contrast, premium syntax highlighting for code blocks (TypeScript, JavaScript, etc.) with custom overrides for comments and optional properties. Mermaid sequence, flowchart, and class diagrams render natively on the client with 100% strict offline containment.",
+        desc: "High-contrast syntax highlighting for 50+ languages, offline Mermaid diagrams (flowcharts, sequence, class), and KaTeX math formula rendering.",
       },
       html: {
-        title: "🌐 Interactive HTML & Document Preview Modes",
-        desc: "Open .html and .htm files as isolated interactive web previews or converted Markdown on the fly (toggle with Ctrl+Alt+H). Embedded local CSS and JS run securely under local policies, fenced HTML code blocks render as interactive iframe sandboxes, and document tab menus include 'Open in Browser' for native execution.",
+        title: "🌐 Interactive HTML Sandboxes & Doc Conversion",
+        desc: "Run fenced HTML code blocks in secure sandboxes, and toggle .html files between live preview and Markdown reading mode (Ctrl+Alt+H).",
       },
       modal: {
-        title: "🖼️ Zoomable Backdrop Media Modal",
-        desc: "Click any image or diagram within your documents to launch a premium backdrop-blur modal. You can scroll to zoom in/out, click and drag to pan across high-res graphics, or use the arrow keys to cycle through all images in the document.",
+        title: "🖼️ Zoom & Pan Backdrop Media Viewer",
+        desc: "Inspect images and diagrams in a backdrop-blur modal with mouse wheel zoom, pan dragging, and arrow key cycling across the document.",
       },
       shortcuts: {
-        title: "⌨️ Keyboard Shortcuts & Navigation",
+        title: "⌨️ Keyboard Shortcuts & Focus Mode",
         vscodeDesc: "Use Ctrl+Shift+M (Cmd+Shift+M on Mac) to open Markdown Explorer, and Ctrl+Alt+V (Cmd+Alt+V on Mac) or click the editor title button to quickly toggle the Markdown Explorer view on a markdown file.",
-        desc: "Control and navigate your documentation easily using standard and customizable keyboard shortcuts:",
+        desc: "Navigate hands-free with customizable keybindings, rapid tab switching, and distraction-free Focus Mode (Ctrl+Alt+F).",
+      },
+      editor: {
+        title: "✏️ Rich Markdown & Inline Block Editor",
+        desc: "Edit full source with CodeMirror or double-click any block or table to edit inline—complete with formatting toolbar, link & table dialogs, YAML frontmatter properties (---), adjustable font size (8px–32px), and conflict guards.",
+      },
+      insights: {
+        title: "🕸️ Workspace Insights & Knowledge Graph",
+        desc: "Visualize document connections in an interactive force-directed graph, audit broken links and orphan files, and inspect workspace-wide tag, heading, and reading-time telemetry.",
+      },
+      git: {
+        title: "🌿 Git History, Blame & Diff Viewer",
+        desc: "Browse repository commit history, inspect file revision timelines and line-level Git blame annotations, and compare changes in side-by-side or inline diff views.",
+      },
+      export: {
+        title: "📤 Multi-Format Export Center",
+        desc: "Export single documents, folders, or entire workspaces to print-ready PDF, standalone offline HTML, DOCX, or high-resolution PNG/SVG diagrams with live preview.",
+      },
+      outline: {
+        title: "📑 Table of Contents, Section Folding & Progress",
+        desc: "Jump across headings with the interactive Table of Contents, collapse or expand nested document sections, and automatically restore your reading scroll position.",
+      },
+      bookmarks: {
+        title: "🔖 Smart Bookmarks & Section Pinning",
+        desc: "Pin important documents and heading anchors across workspaces with custom labels, instant filter search, and one-click batch management.",
+      },
+      themes: {
+        title: "🎭 Multi-Tab Workspaces, Themes & Typography",
+        desc: "Work across multiple workspace tabs and document sub-tabs with live file-watcher reload, 10+ handcrafted visual & interactive pet themes, and customizable reading and code fonts.",
       },
     },
     shortcutsTable: {
@@ -180,8 +215,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   vi: {
     hero: {
       title: "Chào mừng đến với Markdown Explorer",
-      descDesktop: "Trình hiển thị và điều hướng tài liệu cao cấp, bảo mật cục bộ dành cho Máy tính.",
-      descVSCode: "Trình hiển thị và điều hướng tài liệu cao cấp, bảo mật cục bộ dành cho Visual Studio Code.",
+      descDesktop: "Không gian làm việc Markdown toàn diện, bảo mật cục bộ — đọc, chỉnh sửa, vẽ sơ đồ, phân tích & xuất bản trên Máy tính.",
+      descVSCode: "Không gian làm việc Markdown toàn diện, bảo mật cục bộ — đọc, chỉnh sửa, vẽ sơ đồ, phân tích & xuất bản trong Visual Studio Code.",
       createdBy: "Tạo bởi",
       repository: "Kho lưu trữ",
       license: "Giấy phép",
@@ -201,37 +236,65 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
     features: {
       title: "Cách sử dụng tất cả tính năng",
       tree: {
-        title: "📁 Cây thư mục không gian làm việc",
-        desc: "Thanh bên trái hiển thị cấu trúc thư mục tương tác quét tất cả các tệp markdown trong không gian làm việc của bạn. Chỉ cần nhấp vào bất kỳ tệp nào để mở ở chế độ xem trước. Bạn có thể lọc tệp theo tên bằng thanh tìm kiếm ở đầu thanh bên.",
+        title: "📁 Cây thư mục dự án (Workspace Tree)",
+        desc: "Cấu trúc thư mục tương tác với bộ lọc tệp tức thì, tính năng Scope Focus cho dự án lớn và hỗ trợ kéo thả mở thư mục ngay lập tức.",
       },
       search: {
-        title: "🔍 Tìm kiếm nhanh tức thì",
-        desc: "Nhấn phím tắt tìm kiếm từ bất kỳ đâu trong cửa sổ xem trước để mở khung tìm kiếm nhanh. Nhập từ khóa để tìm kiếm tên tệp markdown, đường dẫn, tiêu đề và nội dung tệp. Sử dụng chuột hoặc bàn phím để chọn và mở tệp.",
+        title: "🔍 Tìm kiếm đa tầng siêu nhanh",
+        desc: "Tìm kiếm tốc độ cao 3 cấp độ: nhảy từ khóa trong tệp (F), tìm kiếm toàn dự án (Ctrl+F), và tìm trên mọi tab (Ctrl+Shift+F).",
       },
       tables: {
-        title: "📋 Bảng dữ liệu tương tác kiểu Excel",
-        desc: "Các bảng Markdown tiêu chuẩn cũng như khối mã CSV và TSV được tự động chuyển đổi thành bảng tương tác. Bạn có thể sắp xếp các cột bằng cách nhấp vào tiêu đề, sử dụng biểu tượng phễu để lọc các hàng theo giá trị và nhập vào thanh tìm kiếm phía trên bảng để tìm nội dung hàng.",
+        title: "📋 Bảng dữ liệu tương tác thông minh",
+        desc: "Tự động nâng cấp bảng Markdown, CSV, TSV thành bảng tương tác với tính năng sắp xếp cột, lọc giá trị và tìm kiếm hàng.",
       },
       charts: {
-        title: "📊 Chuyển đổi bảng thành biểu đồ bằng một cú nhấp",
-        desc: "Đối với bảng Markdown và các khối mã CSV hoặc TSV chứa cột số, một trình chuyển đổi chế độ xem sẽ xuất hiện. Nhấp vào các nút Cột, Đường hoặc Tròn để trực quan hóa dữ liệu bảng ngay lập tức dưới dạng biểu đồ Chart.js tương tác.",
+        title: "📊 Chuyển đổi bảng thành biểu đồ 1 chạm",
+        desc: "Trực quan hóa bảng số liệu tức thì sang biểu đồ Chart.js sinh động với các chế độ Cột (Bar), Đường (Line), và Tròn (Pie).",
       },
       highlight: {
         title: "🎨 Tô sáng cú pháp & Sơ đồ Mermaid",
-        desc: "Trải nghiệm tô sáng cú pháp cao cấp, độ tương phản cao cho các khối mã (TypeScript, JavaScript, v.v.) với ghi đè tùy chỉnh cho chú thích và thuộc tính tùy chọn. Các sơ đồ trình tự, lưu đồ và sơ đồ lớp Mermaid được kết xuất cục bộ hoàn toàn an toàn ngoại tuyến.",
+        desc: "Tô sáng hơn 50 ngôn ngữ lập trình, vẽ sơ đồ Mermaid ngoại tuyến (flowchart, sequence, class) và kết xuất công thức toán học KaTeX.",
       },
       html: {
-        title: "🌐 Chế độ xem trước HTML tương tác & tài liệu",
-        desc: "Mở các tệp .html và .htm dưới dạng bản xem trước web tương tác cô lập hoặc chuyển đổi sang Markdown linh hoạt (bật/tắt bằng Ctrl+Alt+H). CSS và JS cục bộ được nhúng chạy an toàn theo chính sách cục bộ, các khối mã HTML render thành hộp cát iframe tương tác, và menu thẻ tài liệu có thêm tùy chọn 'Mở trong trình duyệt'.",
+        title: "🌐 HTML Sandbox & Chuyển đổi tài liệu",
+        desc: "Chạy thử mã HTML trong sandbox an toàn và chuyển đổi linh hoạt tệp .html giữa chế độ xem trước và đọc Markdown (Ctrl+Alt+H).",
       },
       modal: {
-        title: "🖼️ Cửa sổ đa phương tiện làm mờ nền",
-        desc: "Nhấp vào bất kỳ hình ảnh hoặc sơ đồ nào trong tài liệu của bạn để mở cửa sổ phóng to làm mờ nền cao cấp. Bạn có thể cuộn để phóng to/thu nhỏ, nhấp kéo để di chuyển hình ảnh độ phân giải cao hoặc sử dụng các phím mũi tên để chuyển qua lại giữa các hình ảnh.",
+        title: "🖼️ Trình xem ảnh & sơ đồ phóng to/thu nhỏ",
+        desc: "Xem ảnh và sơ đồ toàn màn hình với nền mờ, lăn chuột để phóng to/thu nhỏ, kéo rê để di chuyển và phím mũi tên để chuyển ảnh.",
       },
       shortcuts: {
-        title: "⌨️ Phím tắt & Điều hướng",
-        vscodeDesc: "Sử dụng Ctrl+Shift+M (Cmd+Shift+M trên Mac) để mở Markdown Explorer, và Ctrl+Alt+V (Cmd+Alt+V trên Mac) hoặc nhấp vào nút tiêu đề trình chỉnh sửa để bật/tắt nhanh chế độ xem Markdown Explorer của tệp markdown.",
-        desc: "Kiểm soát và điều hướng tài liệu của bạn dễ dàng bằng các phím tắt tiêu chuẩn và có thể tùy chỉnh:",
+        title: "⌨️ Phím tắt & Chế độ đọc tập trung",
+        vscodeDesc: "Nhấn Ctrl+Shift+M (Cmd+Shift+M trên Mac) để mở Markdown Explorer, và Ctrl+Alt+V (Cmd+Alt+V trên Mac) để xem nhanh tệp.",
+        desc: "Điều khiển nhanh với hệ thống phím tắt tùy biến, chuyển tab mượt mà và Chế độ đọc tập trung không phân tâm (Ctrl+Alt+F).",
+      },
+      editor: {
+        title: "✏️ Trình chỉnh sửa Markdown & Khối trực tiếp",
+        desc: "Chỉnh sửa toàn bộ mã nguồn với CodeMirror hoặc nhấp đúp vào khối hay bảng bất kỳ để chỉnh sửa trực tiếp—tích hợp thanh công cụ định dạng, hộp thoại liên kết & bảng, thuộc tính YAML frontmatter (---), cỡ chữ tùy chỉnh (8px–32px) và chống xung đột tệp.",
+      },
+      insights: {
+        title: "🕸️ Phân tích không gian làm việc & Đồ thị tri thức",
+        desc: "Trực quan hóa liên kết giữa các tài liệu qua đồ thị tương tác dạng lực (force-directed graph), kiểm tra liên kết hỏng và tệp mồ côi, đồng thời theo dõi thẻ (tags), tiêu đề và thời gian đọc trên toàn không gian làm việc.",
+      },
+      git: {
+        title: "🌿 Lịch sử Git, Blame & Trình so sánh khác biệt (Diff)",
+        desc: "Duyệt lịch sử commit của kho lưu trữ, kiểm tra dòng thời gian các phiên bản tệp và chú thích Git blame từng dòng, so sánh các thay đổi ở chế độ song song hoặc trực tiếp trên dòng.",
+      },
+      export: {
+        title: "📤 Trung tâm xuất tài liệu đa định dạng",
+        desc: "Xuất từng tài liệu, thư mục hoặc toàn bộ không gian làm việc sang định dạng PDF sẵn sàng in ấn, HTML độc lập ngoại tuyến, DOCX hoặc sơ đồ PNG/SVG độ phân giải cao kèm xem trước trực tiếp.",
+      },
+      outline: {
+        title: "📑 Mục lục tự động, Thu gọn phần & Lưu tiến độ",
+        desc: "Chuyển nhanh giữa các tiêu đề với Mục lục tương tác, thu gọn hoặc mở rộng các phần tài liệu lồng nhau và tự động khôi phục vị trí cuộn khi đọc.",
+      },
+      bookmarks: {
+        title: "🔖 Dấu trang thông minh & Ghim đề mục",
+        desc: "Ghim các tài liệu quan trọng và mỏ neo tiêu đề trên các không gian làm việc với nhãn tùy chỉnh, tìm kiếm bộ lọc tức thì và quản lý hàng loạt chỉ với 1 cú nhấp.",
+      },
+      themes: {
+        title: "🎭 Không gian đa tab, Giao diện & Kiểu chữ",
+        desc: "Làm việc trên nhiều tab không gian và tab tài liệu phụ với tự động tải lại qua bộ theo dõi tệp, hơn 10 chủ đề giao diện thú cưng tương tác thủ công và tùy biến phông chữ đọc & mã nguồn.",
       },
     },
     shortcutsTable: {
@@ -283,8 +346,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   fr: {
     hero: {
       title: "Bienvenue sur Markdown Explorer",
-      descDesktop: "Un visualiseur et navigateur de documentation premium et local pour Bureau.",
-      descVSCode: "Un visualiseur et navigateur de documentation premium et local pour Visual Studio Code.",
+      descDesktop: "Espace de travail Markdown tout-en-un et local — lire, éditer, schématiser, analyser et exporter sur Bureau.",
+      descVSCode: "Espace de travail Markdown tout-en-un et local — lire, éditer, schématiser, analyser et exporter dans Visual Studio Code.",
       createdBy: "Créé par",
       repository: "Dépôt",
       license: "Licence",
@@ -336,6 +399,34 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         vscodeDesc: "Utilisez Ctrl+Shift+M (Cmd+Shift+M sur Mac) pour ouvrir Markdown Explorer, et Ctrl+Alt+V (Cmd+Alt+V sur Mac) ou cliquez sur le titre de l'éditeur pour basculer rapidement la vue.",
         desc: "Contrôlez et naviguez facilement dans votre documentation à l'aide des raccourcis clavier standards et personnalisables :",
       },
+      editor: {
+        title: "✏️ Éditeur Markdown complet & blocs en ligne",
+        desc: "Modifiez le code source complet avec CodeMirror ou double-cliquez sur n'importe quel bloc ou tableau pour l'éditer en ligne—avec barre de formatage, boîtes de dialogue de liens et tableaux, propriétés YAML frontmatter (---), taille de police ajustable (8px–32px) et protection anti-conflits.",
+      },
+      insights: {
+        title: "🕸️ Aperçus de l'espace & Graphe de connaissances",
+        desc: "Visualisez les liens entre documents dans un graphe interactif à dispersion de forces, auditez les liens brisés et fichiers orphelins, et inspectez la télémétrie des balises, en-têtes et temps de lecture à l'échelle de l'espace.",
+      },
+      git: {
+        title: "🌿 Historique Git, Blame & Visualiseur de différences",
+        desc: "Parcourez l'historique des commits du dépôt, inspectez la chronologie des révisions de fichiers et les annotations Git blame ligne par ligne, et comparez les modifications côte à côte ou en ligne.",
+      },
+      export: {
+        title: "📤 Centre d'exportation multi-format",
+        desc: "Exportez des documents uniques, des dossiers ou des espaces complets en PDF prêts à imprimer, HTML autonome hors ligne, DOCX ou diagrammes PNG/SVG haute résolution avec aperçu en direct.",
+      },
+      outline: {
+        title: "📑 Table des matières, repliement de sections & progression",
+        desc: "Naviguez entre les en-têtes grâce à la table des matières interactive, réduisez ou développez les sections imbriquées et restaurez automatiquement votre position de défilement de lecture.",
+      },
+      bookmarks: {
+        title: "🔖 Favoris intelligents & épinglage de sections",
+        desc: "Épinglez des documents importants et des ancres de titre dans tous vos espaces avec des étiquettes personnalisées, une recherche filtrée instantanée et une gestion par lot en un clic.",
+      },
+      themes: {
+        title: "🎭 Espaces multi-onglets, thèmes & typographie",
+        desc: "Travaillez sur plusieurs onglets d'espace et sous-onglets de documents avec rechargement automatique en direct, plus de 10 thèmes visuels et animaux interactifs conçus avec soin, et polices de lecture et de code personnalisables.",
+      },
     },
     shortcutsTable: {
       headers: { action: "Action", shortcut: "Raccourci par défaut" },
@@ -386,8 +477,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   es: {
     hero: {
       title: "Bienvenido a Markdown Explorer",
-      descDesktop: "Un visor y navegador de documentación premium y local para Escritorio.",
-      descVSCode: "Un visor y navegador de documentación premium y local para Visual Studio Code.",
+      descDesktop: "Espacio de trabajo Markdown todo en uno y local — leer, editar, diagramar, analizar y exportar en Escritorio.",
+      descVSCode: "Espacio de trabajo Markdown todo en uno y local — leer, editar, diagramar, analizar y exportar en Visual Studio Code.",
       createdBy: "Creado por",
       repository: "Repositorio",
       license: "Licencia",
@@ -439,6 +530,34 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         vscodeDesc: "Use Ctrl+Shift+M (Cmd+Shift+M en Mac) para abrir Markdown Explorer, y Ctrl+Alt+V (Cmd+Alt+V en Mac) o el botón de título del editor para alternar la vista rápidamente.",
         desc: "Controle y navegue fácilmente por sus documentos con atajos de teclado estándar y personalizables:",
       },
+      editor: {
+        title: "✏️ Editor de Markdown enriquecido y bloques en línea",
+        desc: "Edite el código fuente completo con CodeMirror o haga doble clic en cualquier bloque o tabla para editar en línea—con barra de herramientas de formato, diálogos de enlaces y tablas, propiedades YAML frontmatter (---), tamaño de fuente ajustable (8px–32px) y protección contra conflictos.",
+      },
+      insights: {
+        title: "🕸️ Estadísticas del espacio y grafo de conocimiento",
+        desc: "Visualice las conexiones entre documentos en un grafo interactivo dirigido por fuerzas, audite enlaces rotos y archivos huérfanos, e inspeccione la telemetría de etiquetas, encabezados y tiempos de lectura en todo el espacio.",
+      },
+      git: {
+        title: "🌿 Historial de Git, Blame y visor de diferencias (Diff)",
+        desc: "Explore el historial de confirmaciones del repositorio, inspeccione las líneas de tiempo de revisión de archivos y anotaciones Git blame a nivel de línea, y compare cambios en vistas en paralelo o en línea.",
+      },
+      export: {
+        title: "📤 Centro de exportación multiformato",
+        desc: "Exporte documentos individuales, carpetas o espacios completos a PDF listo para imprimir, HTML independiente sin conexión, DOCX o diagramas PNG/SVG de alta resolución con vista previa en vivo.",
+      },
+      outline: {
+        title: "📑 Tabla de contenidos, plegado de secciones y progreso",
+        desc: "Salte entre encabezados con la tabla de contenidos interactiva, pliegue o despliegue secciones de documentos anidadas y restaure automáticamente la posición de desplazamiento de lectura.",
+      },
+      bookmarks: {
+        title: "🔖 Marcadores inteligentes y fijación de secciones",
+        desc: "Fije documentos importantes y anclajes de encabezados en todos los espacios de trabajo con etiquetas personalizadas, búsqueda por filtros instantánea y administración por lotes con un solo clic.",
+      },
+      themes: {
+        title: "🎭 Espacios con múltiples pestañas, temas y tipografía",
+        desc: "Trabaje en múltiples pestañas de espacio y subpestañas de documentos con recarga en vivo mediante observador de archivos, más de 10 temas visuales e interactivos de mascotas hechos a mano, y fuentes de lectura y código personalizables.",
+      },
     },
     shortcutsTable: {
       headers: { action: "Acción", shortcut: "Atajo predeterminado" },
@@ -489,8 +608,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   zh: {
     hero: {
       title: "欢迎使用 Markdown Explorer",
-      descDesktop: "一款为桌面端打造的优质、本地优先的文档查看与导航工具。",
-      descVSCode: "一款为 VS Code 打造的优质、本地优先的文档查看与导航插件。",
+      descDesktop: "全功能本地优先 Markdown 工作区 — 在桌面端进行阅读、编辑、绘图、分析与导出。",
+      descVSCode: "全功能本地优先 Markdown 工作区 — 在 VS Code 中进行阅读、编辑、绘图、分析与导出。",
       createdBy: "开发者",
       repository: "开源仓库",
       license: "开源协议",
@@ -542,6 +661,34 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         vscodeDesc: "使用 Ctrl+Shift+M（Mac 上为 Cmd+Shift+M）打开 Markdown Explorer，使用 Ctrl+Alt+V（Mac 上为 Cmd+Alt+V）或单击编辑器标题按钮在 Markdown 文件上快速切换预览。",
         desc: "使用标准和可自定义的键盘快捷键轻松控制和导航您的文档：",
       },
+      editor: {
+        title: "✏️ 富文本 Markdown 与内联块编辑器",
+        desc: "使用 CodeMirror 编辑完整源码，或双击任意内容块/表格进行即时内联编辑—配备格式工具栏、链接与表格对话框、YAML Frontmatter 属性配置 (---)、可调节字号 (8px–32px) 以及多端文件冲突防护。",
+      },
+      insights: {
+        title: "🕸️ 工作区洞察与知识图谱",
+        desc: "在交互式力导向图中直观呈现文档间的关联网络，审计失效链接与孤立文件，并全景分析工作区标签分布、各级标题与阅读时长指标。",
+      },
+      git: {
+        title: "🌿 Git 历史记录、Blame 与差异对比器",
+        desc: "浏览版本库提交历史，检查文件修订时间线与逐行 Git blame 溯源标注，并在并排或内联差异视图中直观比对变更。",
+      },
+      export: {
+        title: "📤 多格式导出中心",
+        desc: "将单个文档、文件夹或整个工作区一键导出为打印级 PDF、单文件离线 HTML、DOCX 文档或高分辨率 PNG/SVG 图表，并支持实时渲染预览。",
+      },
+      outline: {
+        title: "📑 目录大纲、章节折叠与阅读进度",
+        desc: "通过交互式大纲目录快速穿梭于各级标题，自由折叠或展开层级嵌套章节，并在重新打开时自动记忆并恢复上次阅读滚动位置。",
+      },
+      bookmarks: {
+        title: "🔖 智能书签与章节快速置顶",
+        desc: "跨工作区随心置顶关键文档与标题锚点，支持自定义彩色标签、即时输入过滤与便捷的一键批量管理。",
+      },
+      themes: {
+        title: "🎭 多标签工作区、主题外观与排版字形",
+        desc: "支持跨多工作区标签页与文档子标签高效协作，集成文件监听实时重载、10+ 精美视觉与交互式桌面宠物主题，以及完全可定制的阅读与代码字体。",
+      },
     },
     shortcutsTable: {
       headers: { action: "操作", shortcut: "默认快捷键" },
@@ -592,8 +739,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   no: {
     hero: {
       title: "Velkommen til Markdown Explorer",
-      descDesktop: "En førsteklasses, lokal-først dokumentviser og navigator for Skrivebord.",
-      descVSCode: "En førsteklasses, lokal-først dokumentviser og navigator for Visual Studio Code.",
+      descDesktop: "Alt-i-ett lokal-først Markdown-arbeidsområde — les, rediger, lag diagrammer, analyser og eksporter på Skrivebord.",
+      descVSCode: "Alt-i-ett lokal-først Markdown-arbeidsområde — les, rediger, lag diagrammer, analyser og eksporter i Visual Studio Code.",
       createdBy: "Laget av",
       repository: "Kildekode",
       license: "Lisens",
@@ -645,6 +792,34 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         vscodeDesc: "Bruk Ctrl+Shift+M (Cmd+Shift+M på Mac) for å åpne Markdown Explorer, og Ctrl+Alt+V (Cmd+Alt+V på Mac) eller klikk på editortittelknappen for å veksle visning.",
         desc: "Styr og naviger dokumentasjonen din enkelt ved hjelp av standard og tilpassbare snarveier:",
       },
+      editor: {
+        title: "✏️ Rik Markdown- og innebygd blokkredigering",
+        desc: "Rediger full kildekode med CodeMirror eller dobbeltklikk på en blokk eller tabell for å redigere direkte på stedet—komplett med formateringsverktøylinje, lenke- og tabelldialoger, YAML frontmatter-egenskaper (---), justerbar skriftstørrelse (8px–32px) og konfliktbeskyttelse.",
+      },
+      insights: {
+        title: "🕸️ Innsikt i arbeidsområde og kunnskapsgraf",
+        desc: "Visualiser dokumentkoblinger i en interaktiv kraftstyrt graf (force-directed graph), finn ødelagte lenker og foreldreløse filer, og inspiser emneknagger, overskrifter og lesetidstelemetri på tvers av hele arbeidsområdet.",
+      },
+      git: {
+        title: "🌿 Git-historikk, Blame & Diff-visning",
+        desc: "Bla gjennom historikk over commits i depotet, inspiser revisjonstidslinjer for filer og Git blame-merknader på linjenivå, og sammenlign endringer side ved side eller i innebygd diff-visning.",
+      },
+      export: {
+        title: "📤 Eksportsenter for flere formater",
+        desc: "Eksporter enkeltstående dokumenter, mapper eller hele arbeidsområder til utskriftsklar PDF, frittstående frakoblet HTML, DOCX eller høyoppløselige PNG/SVG-diagrammer med sanntids forhåndsvisning.",
+      },
+      outline: {
+        title: "📑 Innholdsfortegnelse, seksjonsfolding og fremdrift",
+        desc: "Hopp raskt mellom overskrifter med den interaktive innholdsfortegnelsen, skjul eller utvid nestede seksjoner i dokumentet, og gjenopprett automatisk rulleposisjonen din ved lesing.",
+      },
+      bookmarks: {
+        title: "🔖 Smarte bokmerker og seksjonsfeste",
+        desc: "Fest viktige dokumenter og overskriftsankre på tvers av arbeidsområder med egendefinerte etiketter, øyeblikkelig filtersøk og samlet administrasjon med ett klikk.",
+      },
+      themes: {
+        title: "🎭 Arbeidsområder med flere faner, temaer og typografi",
+        desc: "Arbeid på tvers av flere arbeidsområdefaner og dokumentunderfaner med live filovervåker-oppdatering, 10+ håndlagde visuelle og interaktive kjæledyrtemaer, samt tilpassbare lese- og kodeskrifter.",
+      },
     },
     shortcutsTable: {
       headers: { action: "Handling", shortcut: "Standardsnarvei" },
@@ -695,8 +870,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   ja: {
     hero: {
       title: "Markdown Explorer へようこそ",
-      descDesktop: "デスクトップ向けのプレミアムでローカル優先のドキュメントビューアおよびナビゲーターです。",
-      descVSCode: "VS Code 向けのプレミアムでローカル優先のドキュメントビューアおよびナビゲーターです。",
+      descDesktop: "オールインワンのローカル優先 Markdown ワークスペース — デスクトップでの閲覧、編集、図解、分析、エクスポートに対応。",
+      descVSCode: "オールインワンのローカル優先 Markdown ワークスペース — VS Code での閲覧、編集、図解、分析、エクスポートに対応。",
       createdBy: "作成者",
       repository: "リポジトリ",
       license: "ライセンス",
@@ -748,6 +923,34 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         vscodeDesc: "Ctrl+Shift+M（Mac では Cmd+Shift+M）で Markdown Explorer を開き、Ctrl+Alt+V（Mac では Cmd+Alt+V）またはエディタタイトルボタンでプレビュー表示を切り替えます。",
         desc: "標準およびカスタマイズ可能なキーボードショートカットを使用して、ドキュメントの操作やナビゲーションを簡単に行えます：",
       },
+      editor: {
+        title: "✏️ リッチ Markdown ＆ インラインブロックエディタ",
+        desc: "CodeMirror でソースコード全体を編集するか、任意のブロックや表をダブルクリックしてその場でインライン編集できます—書式設定ツールバー、リンクや表のダイアログ、YAML フロントマター属性 (---)、調整可能なフォントサイズ (8px–32px)、ファイル競合防止機能を完備。",
+      },
+      insights: {
+        title: "🕸️ ワークスペース洞察 ＆ ナレッジグラフ",
+        desc: "インタラクティブな力指向グラフでドキュメント間のつながりを可視化し、リンク切れや孤立ファイルを検出・監査し、ワークスペース全体のタグ、見出し、推定読了時間を一目で把握できます。",
+      },
+      git: {
+        title: "🌿 Git 履歴、Blame ＆ 差分 (Diff) ビューア",
+        desc: "リポジトリのコミット履歴を閲覧し、ファイルの変更タイムラインと行ごとの Git blame アノテーションを確認し、左右並列またはインライン差分ビューで変更点を比較できます。",
+      },
+      export: {
+        title: "📤 マルチフォーマット書き出しセンター",
+        desc: "単一のドキュメント、フォルダ、またはワークスペース全体を、印刷品質の PDF、完全オフライン対応の単一 HTML、DOCX、または高解像度 PNG/SVG 図としてライブプレビュー付きでエクスポートできます。",
+      },
+      outline: {
+        title: "📑 目次 (TOC)、セクション折りたたみ ＆ 読書進捗",
+        desc: "インタラクティブな目次で見出し間を素早く移動し、入れ子になったセクションを自由に折りたたみ・展開でき、前回の読書スクロール位置を自動的に復元します。",
+      },
+      bookmarks: {
+        title: "🔖 スマートブックマーク ＆ セクションピン留め",
+        desc: "重要なドキュメントや見出しアンカーをワークスペースをまたいでピン留めし、カスタムラベル、即時フィルター検索、ワンクリックの一括管理が可能です。",
+      },
+      themes: {
+        title: "🎭 マルチタブワークスペース、テーマ ＆ タイポグラフィ",
+        desc: "ファイル監視によるリアルタイムリロードを備えた複数のワークスペースタブやドキュメントサブタブで作業でき、10種類以上の美しいビジュアル＆対話型ペットテーマ、自由にカスタマイズできる読書・コード用フォントを利用できます。",
+      },
     },
     shortcutsTable: {
       headers: { action: "操作", shortcut: "デフォルトのショートカット" },
@@ -798,8 +1001,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   ko: {
     hero: {
       title: "Markdown Explorer에 오신 것을 환영합니다",
-      descDesktop: "데스크톱 환경을 위한 프리미엄, 로컬 우선의 문서 뷰어 및 네비게이터입니다.",
-      descVSCode: "VS Code 환경을 위한 프리미엄, 로컬 우선의 문서 뷰어 및 네비게이터입니다.",
+      descDesktop: "올인원 로컬 우선 Markdown 작업 공간 — 데스크톱에서 읽기, 편집, 다이어그램, 분석 및 내보내기 지원.",
+      descVSCode: "올인원 로컬 우선 Markdown 작업 공간 — VS Code에서 읽기, 편집, 다이어그램, 분석 및 내보내기 지원.",
       createdBy: "만든 이",
       repository: "저장소",
       license: "라이선스",
@@ -851,6 +1054,34 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         vscodeDesc: "Ctrl+Shift+M(Mac의 경우 Cmd+Shift+M)으로 Markdown Explorer를 열고, Ctrl+Alt+V(Mac의 경우 Cmd+Alt+V) 또는 편집기 제목 버튼을 눌러 보기 모드를 전환합니다.",
         desc: "표준 및 사용자 정의 키보드 단축키를 사용하여 문서를 편리하게 조작하고 탐색하십시오:",
       },
+      editor: {
+        title: "✏️ 리치 마크다운 및 인라인 블록 편집기",
+        desc: "CodeMirror로 전체 소스를 편집하거나 블록 또는 표를 더블 클릭하여 인라인으로 직접 편집하세요—서식 도구 모음, 링크 및 표 대화상자, YAML 프론트매터 속성 (---), 조절 가능한 글꼴 크기(8px–32px) 및 충돌 방지 기능 제공.",
+      },
+      insights: {
+        title: "🕸️ 워크스페이스 분석 및 지식 그래프",
+        desc: "상호작용형 포스 다이렉트(힘 기반) 그래프로 문서 간 연결을 시각화하고, 깨진 링크와 고립된 파일을 감사하며, 워크스페이스 전체 태그, 헤딩, 예상 읽기 시간 데이터를 확인하세요.",
+      },
+      git: {
+        title: "🌿 Git 히스토리, Blame 및 차이점(Diff) 뷰어",
+        desc: "저장소 커밋 히스토리를 탐색하고, 파일 수정 타임라인과 라인 단위 Git blame 주석을 검사하며, 나란히 보기(Side-by-side) 또는 인라인 차이점 뷰로 변경 사항을 비교하세요.",
+      },
+      export: {
+        title: "📤 다양한 형식의 내보내기 센터",
+        desc: "단일 문서, 폴더 또는 전체 워크스페이스를 인쇄용 PDF, 단독 오프라인 HTML, DOCX 문서, 또는 고해상도 PNG/SVG 다이어그램으로 실시간 미리보기와 함께 내보내세요.",
+      },
+      outline: {
+        title: "📑 목차(TOC), 섹션 접기 및 읽기 진행 상태",
+        desc: "대화형 목차로 제목 사이를 빠르게 이동하고, 중첩된 문서 섹션을 접거나 펼치며, 이전 읽기 스크롤 위치를 자동으로 복원하세요.",
+      },
+      bookmarks: {
+        title: "🔖 스마트 북마크 및 섹션 고정",
+        desc: "여러 워크스페이스에 걸쳐 중요한 문서와 제목 앵커를 맞춤 라벨과 함께 고정하고, 즉각적인 필터 검색 및 원클릭 일괄 관리를 활용하세요.",
+      },
+      themes: {
+        title: "🎭 다중 탭 워크스페이스, 테마 및 타이포그래피",
+        desc: "실시간 파일 감시 자동 새로고침을 지원하는 다중 워크스페이스 탭 및 문서 하위 탭에서 작업하고, 10개 이상의 엄선된 비주얼 및 대화형 펫 테마와 맞춤형 읽기/코드 글꼴을 즐겨보세요.",
+      },
     },
     shortcutsTable: {
       headers: { action: "동작", shortcut: "기본 단축키" },
@@ -901,8 +1132,8 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
   ru: {
     hero: {
       title: "Добро пожаловать в Markdown Explorer",
-      descDesktop: "Удобный локальный просмотрщик и навигатор документации премиум-класса для ПК.",
-      descVSCode: "Удобный локальный просмотрщик и навигатор документации премиум-класса для VS Code.",
+      descDesktop: "Универсальное локальное рабочее пространство Markdown — чтение, редактирование, диаграммы, анализ и экспорт на ПК.",
+      descVSCode: "Универсальное локальное рабочее пространство Markdown — чтение, редактирование, диаграммы, анализ и экспорт в Visual Studio Code.",
       createdBy: "Создатель",
       repository: "Репозиторий",
       license: "Лицензия",
@@ -953,6 +1184,34 @@ export const WELCOME_TRANSLATIONS: Record<string, WelcomeTranslations> = {
         title: "⌨️ Сочетания клавиш и Навигация",
         vscodeDesc: "Используйте Ctrl+Shift+M (Cmd+Shift+M на Mac) для запуска Markdown Explorer, и Ctrl+Alt+V (Cmd+Alt+V на Mac) или нажмите на заголовок редактора для быстрого переключения.",
         desc: "Легко управляйте документацией с помощью стандартных и настраиваемых сочетаний клавиш:",
+      },
+      editor: {
+        title: "✏️ Полнофункциональный редактор Markdown и встроенных блоков",
+        desc: "Редактируйте исходный код с помощью CodeMirror или дважды щелкните по любому блоку или таблице для инлайн-редактирования — панель форматирования, диалоги ссылок и таблиц, метаданные YAML frontmatter (---), регулируемый размер шрифта (8–32px) и защита от конфликтов.",
+      },
+      insights: {
+        title: "🕸️ Аналитика рабочей области и граф знаний",
+        desc: "Визуализируйте связи между документами в интерактивном графе связей, находите неработающие ссылки и изолированные файлы, а также отслеживайте теги, заголовки и расчетное время чтения по всей рабочей области.",
+      },
+      git: {
+        title: "🌿 История Git, Blame и просмотр различий (Diff)",
+        desc: "Просматривайте историю коммитов репозитория, шкалу ревизий файлов и построчные аннотации Git blame, а также сравнивайте изменения в параллельном или встроенном виде diff.",
+      },
+      export: {
+        title: "📤 Центр экспорта в различные форматы",
+        desc: "Экспортируйте отдельные документы, папки или всю рабочую область в готовый к печати PDF, автономный HTML, DOCX или диаграммы PNG/SVG высокого разрешения с интерактивным предпросмотром.",
+      },
+      outline: {
+        title: "📑 Оглавление, сворачивание разделов и прогресс чтения",
+        desc: "Быстро перемещайтесь по заголовкам с помощью интерактивного оглавления, сворачивайте или разворачивайте вложенные разделы и автоматически восстанавливайте позицию прокрутки при чтении.",
+      },
+      bookmarks: {
+        title: "🔖 Умные закладки и закрепление разделов",
+        desc: "Закрепляйте важные документы и якоря заголовков между рабочими областями с пользовательскими метками, мгновенным поиском по фильтрам и пакетным управлением в один клик.",
+      },
+      themes: {
+        title: "🎭 Многовкладочные рабочие области, темы и типографика",
+        desc: "Работайте с несколькими вкладками рабочих областей и документов с автоматической перезагрузкой при изменении файлов, 10+ авторскими визуальными темами и интерактивными питомцами, а также настраиваемыми шрифтами для чтения и кода.",
       },
     },
     shortcutsTable: {

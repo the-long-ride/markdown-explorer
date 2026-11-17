@@ -17,6 +17,7 @@ export const KEYBOARD_SHORTCUT_ENGLISH_LABELS: Record<string, string> = {
   expandAll: 'Expand all headings',
   workspaceSelection: 'Go to workspace selection',
   toggleSidebar: 'Toggle sidebar visibility',
+  openFiles: 'Open Files tab',
   openBookmarks: 'Open Bookmarks tab',
   toggleToc: 'Toggle table of contents panel',
   toggleWorkspaceInsights: 'Toggle workspace insights panel',
@@ -26,6 +27,18 @@ export const KEYBOARD_SHORTCUT_ENGLISH_LABELS: Record<string, string> = {
   openCurrentDocumentLocation: 'Open current document folder',
   zoomIn: 'Zoom in',
   zoomOut: 'Zoom out',
+  editorBold: 'Bold',
+  editorItalic: 'Italic',
+  editorUnderline: 'Underline',
+  editorInlineCode: 'Inline code',
+  editorLink: 'Insert link',
+  editorCodeBlock: 'Code block',
+  editorQuote: 'Blockquote',
+  editorBulletList: 'Bullet list',
+  editorNumberedList: 'Numbered list',
+  editorTaskList: 'Task list',
+  editorDecreaseFontSize: 'Decrease font size',
+  editorIncreaseFontSize: 'Increase font size',
 };
 
 export function filterKeyboardShortcutActions<T extends KeyboardShortcutSearchAction>(
