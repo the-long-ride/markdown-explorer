@@ -64,4 +64,35 @@ describe('Windows Explorer installer integration', () => {
     expect(hooks).toContain('"Icon"');
     expect(hooks).toContain('DeleteRegKey HKCU');
   });
+
+  test('provides opt-in full app and temp data cleanup on uninstall for both desktop installers', () => {
+    const electronHooks = readFileSync(electronHooksPath, 'utf8');
+
+    expect(electronHooks).toContain('!macro customUnWelcomePage');
+    expect(electronHooks).toContain('UninstPage custom un.MarkdownExplorerUninstallOptions un.MarkdownExplorerUninstallOptionsLeave');
+    expect(electronHooks).toContain('Delete all application data, settings, cache, and temporary files on this device');
+    expect(electronHooks).toContain('!macro customUnInit');
+    expect(electronHooks).toContain('--delete-app-data');
+    expect(electronHooks).toContain('${ifNot} ${isUpdated}');
+    expect(electronHooks).toContain('$ME_UnCleanAppData == ${BST_CHECKED}');
+    expect(electronHooks).toContain('$APPDATA\\${APP_PRODUCT_FILENAME}');
+    expect(electronHooks).toContain('$LOCALAPPDATA\\${APP_PRODUCT_FILENAME}');
+    expect(electronHooks).toContain('$LOCALAPPDATA\\markdown-explorer-updater');
+    expect(electronHooks).toContain('$TEMP\\markdown-explorer-updater');
+    expect(electronHooks).toContain('Function un.RemoveTempEntries');
+    expect(electronHooks).toContain('Call un.RemoveTempEntries');
+
+    expect(hooks).toContain('!macro NSIS_HOOK_POSTUNINSTALL');
+    expect(hooks).toContain('${If} $DeleteAppDataCheckboxState = 1');
+    expect(hooks).toContain('${AndIf} $UpdateMode <> 1');
+    expect(hooks).toContain('$APPDATA\\com.the-long-ride.markdown-explorer');
+    expect(hooks).toContain('$LOCALAPPDATA\\com.the-long-ride.markdown-explorer');
+    expect(hooks).toContain('$LOCALAPPDATA\\com.the-long-ride.markdown-explorer-updater');
+    expect(hooks).toContain('$TEMP\\markdown-explorer-updater');
+    expect(hooks).toContain('$TEMP\\markdown-explorer-external-open');
+    expect(hooks).toContain('Function un.RemoveTempEntries');
+
+    const electronMain = readFileSync(resolve(root, 'electron/main.js'), 'utf8');
+    expect(electronMain).toContain('markdown-explorer-v8-cache');
+  });
 });

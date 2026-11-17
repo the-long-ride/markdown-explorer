@@ -267,7 +267,7 @@ describe('_doActivate', () => {
 
   test('registerCommand calls return disposables pushed to context', () => {
     _doActivate(context as any, vscode as any);
-    expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(6);
+    expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(7);
   });
 
   test('onDidSaveTextDocument called with handler', () => {

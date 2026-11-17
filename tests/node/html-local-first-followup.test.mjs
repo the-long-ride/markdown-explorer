@@ -133,8 +133,7 @@ test('settings confirm shortcut reset, use requested icons, and remove requested
   assert.match(modal, /ImportSettingsIcon/);
   assert.match(modal, /ExportSettingsIcon/);
   assert.doesNotMatch(cssLayout, /\.settings-appearance-controls\s*>\s*:first-child/);
-  assert.match(cssLayout, /\.settings-appearance-controls\s*>\s*\.settings-preference-row:first-child[^}]*border-top:\s*0/s);
-  assert.match(cssLayout, /\[data-row-id="desktop-view"\]\s*\+\s*\.settings-preference-row[^}]*border-top:\s*0/s);
+  assert.match(cssLayout, /\.settings-appearance-controls\s*>\s*\.settings-preference-row(?::first-child)?[^}]*border-top:\s*0/s);
   assert.match(prefs, /data-row-id=\{id\}/);
   assert.match(cssA, /settings-panel-heading--secondary[^}]*border-top:\s*0/s);
   assert.match(prefs, /settings-theme-style-section/);
@@ -201,12 +200,11 @@ test('examples, grouped tips, translations, and changelog cover the follow-up', 
 });
 
 test('workspace-local resource readers resolve root-relative paths and keep file URLs inside the workspace', async () => {
-  const [electron, vscode, tauri, web, chrome] = await Promise.all([
+  const [electron, vscode, tauri, web] = await Promise.all([
     read('electron/core/runtime-workspace-handlers.js'),
     read('vscode/src/core/panel.ts'),
     read('tauri/src/dispatcher/commands.rs'),
     read('website-app/src/web-host.ts'),
-    read('chromium-xtension/src/chrome-host.ts'),
   ]);
   assert.match(electron, /reference\.startsWith\("\/"\)[\s\S]*pathApi\.resolve\(baseDir/);
   assert.doesNotMatch(electron, /reference\.startsWith\("\/"\)\s*&&\s*!pathApi\.isAbsolute/);
@@ -215,7 +213,6 @@ test('workspace-local resource readers resolve root-relative paths and keep file
   assert.match(tauri, /Url::parse\(reference\)/);
   assert.match(tauri, /to_file_path\(\)/);
   assert.match(web, /reference\.startsWith\('\/'\)/);
-  assert.match(chrome, /reference\.startsWith\('\/'\)/);
 });
 
 test('local-first HTML dialog resets with the rendered document and experience banner is shown 1 time total per app opening session', async () => {

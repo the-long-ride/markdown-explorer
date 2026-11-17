@@ -706,13 +706,13 @@ describe('ContentTabs deep', () => {
       expect(screen.getByRole('tab')).toHaveAttribute('tabIndex', '0');
     });
 
-    it('tab has title attribute with relativePath', () => {
+    it('tab has hover tooltip attribute with relativePath', () => {
       mockAppState = createMockAppState({
         contentTabs: [makeTab('/docs/readme.md', 'readme.md', 'ReadMe', 'docs/readme.md')],
         activeContentTabPath: '/docs/readme.md',
       });
       render(createElement(ContentTabs));
-      expect(screen.getByRole('tab')).toHaveAttribute('title', 'docs/readme.md');
+      expect(screen.getByRole('tab')).toHaveAttribute('data-hover-tooltip', 'docs/readme.md');
     });
 
     it('contextMenu closeTabsToRight enabled for non-last tab', () => {

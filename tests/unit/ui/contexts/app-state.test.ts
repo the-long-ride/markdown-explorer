@@ -214,6 +214,13 @@ describe('createInitialState', () => {
     expect(state.themeStyle).toBe('default');
     expect(state.hasThemeStylePreference).toBe(true);
   });
+
+  test('fileTabs defaults to true and preserves saved false', () => {
+    expect(initialState.settings.fileTabs).toBe(true);
+    expect(createInitialState(undefined, false).settings.fileTabs).toBe(true);
+    expect(createInitialState({} as any, true).settings.fileTabs).toBe(true);
+    expect(createInitialState({ fileTabs: false } as any, true).settings.fileTabs).toBe(false);
+  });
 });
 
 describe('renderMarkdownClientSide', () => {
@@ -463,6 +470,34 @@ describe('reducer', () => {
         workspaceName: '',
       });
       expect(next.isLoading).toBe(false);
+    });
+
+    test('cleared workspace resets current document state and relativePath', () => {
+      const state = makeState({
+        workspaceName: '',
+        currentFile: 'note.md',
+        contentHtml: '<p>note</p>',
+        sourceDocumentText: 'note',
+        toc: [{ text: 'Title', level: 1, id: 'title' }],
+        frontmatter: { title: 'Note' },
+        relativePath: 'note.md',
+      });
+      const next = reducer(state, {
+        type: 'READY_ACK',
+        fileList: [],
+        tree: null,
+        theme: 'dark',
+        themeStyle: 'glass',
+        defaultExpanded: true,
+        workspaceName: '',
+        workspacePath: undefined,
+      });
+      expect(next.currentFile).toBeNull();
+      expect(next.contentHtml).toBe('');
+      expect(next.sourceDocumentText).toBeNull();
+      expect(next.toc).toEqual([]);
+      expect(next.frontmatter).toEqual({});
+      expect(next.relativePath).toBe('');
     });
   });
 
@@ -994,5 +1029,22 @@ describe('reducer', () => {
   test('unknown action returns unchanged state', () => {
     const state = makeState();
     expect(reducer(state, { type: 'UNKNOWN_ACTION' } as any)).toEqual(state);
+  });
+
+  test('defaults bookmarksEnabled ON and historySidebarEnabled OFF while honoring explicit overrides', () => {
+    expect(initialState.settings.bookmarksEnabled).toBe(true);
+    expect(initialState.settings.historySidebarEnabled).toBe(false);
+
+    const fresh = createInitialState(undefined, true);
+    expect(fresh.settings.bookmarksEnabled).toBe(true);
+    expect(fresh.settings.historySidebarEnabled).toBe(false);
+
+    const savedWithoutFlags = createInitialState({}, false);
+    expect(savedWithoutFlags.settings.bookmarksEnabled).toBe(true);
+    expect(savedWithoutFlags.settings.historySidebarEnabled).toBe(false);
+
+    const savedWithOverrides = createInitialState({ bookmarksEnabled: false, historySidebarEnabled: true }, true);
+    expect(savedWithOverrides.settings.bookmarksEnabled).toBe(false);
+    expect(savedWithOverrides.settings.historySidebarEnabled).toBe(true);
   });
 });

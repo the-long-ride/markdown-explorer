@@ -172,14 +172,12 @@ test('Snake sandbox and Unreleased changelog cover the patch series', async () =
 });
 
 test('raw HTML source survives every host and desktop workspace-tab cache path', async () => {
-  const [chromeHost, webFileMode, desktopTypes, snapshot, desktopTabs] = await Promise.all([
-    read('chromium-xtension/src/chrome-host.ts'),
+  const [webFileMode, desktopTypes, snapshot, desktopTabs] = await Promise.all([
     read('website-app/src/web-file-mode.ts'),
     read('ui/src/desktop/types.ts'),
     read('ui/src/desktop/desktopTabSnapshot.ts'),
     read('ui/src/hooks/useDesktopTabs.ts'),
   ]);
-  assert.match(chromeHost, /sourceDocumentText/);
   assert.match(webFileMode, /sourceDocumentText/g);
   assert.match(desktopTypes, /sourceDocumentText\?:\s*string\s*\|\s*null/);
   assert.match(snapshot, /sourceDocumentText:\s*state\.sourceDocumentText/);

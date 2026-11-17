@@ -23,6 +23,8 @@ describe('useScrollVisibility', () => {
 
   it('returns isVisible=true when scrollTop exceeds threshold', () => {
     const el = document.createElement('div');
+    Object.defineProperty(el, 'scrollHeight', { value: 1000, writable: true });
+    Object.defineProperty(el, 'clientHeight', { value: 500, writable: true });
     Object.defineProperty(el, 'scrollTop', { value: 300, writable: true });
     document.body.appendChild(el);
 

@@ -91,7 +91,8 @@ describe('UI style contract', () => {
 
     expect(globalCss).toContain('global-theme-neon-voltage.css');
     expect(globalCss).toContain('global-theme-raw-grid.css');
-    for (const id of ['neon-voltage', 'raw-grid']) {
+    expect(globalCss).toContain('global-theme-cyberpunk.css');
+    for (const id of ['neon-voltage', 'raw-grid', 'cyberpunk']) {
       expect(themeTokens).toContain(`[data-theme-style="${id}"][data-theme="dark"]`);
       expect(themeTokens).toContain(`[data-theme-style="${id}"][data-theme="light"]`);
       expect(autoLightTokens).toContain(`[data-theme-style="${id}"][data-theme="auto"]`);
@@ -217,12 +218,347 @@ describe('UI style contract', () => {
       'global-theme-tokyo-night.css',
       'global-theme-neon-voltage.css',
       'global-theme-raw-grid.css',
+      'global-theme-cyberpunk.css',
       'global-theme-vercel.css',
     ]) {
       const content = fs.readFileSync(path.join(uiRoot, 'styles/global', file), 'utf8');
       expect(content).toContain('.workspace-insights');
     }
   });
+
+  test('enforces theme-adaptive border-radius and shape on badges, tags, and tour indicators', () => {
+    const baseTokens = fs.readFileSync(path.join(uiRoot, 'styles/tokens/tokens-base-themes.css'), 'utf8');
+    const vividTokens = fs.readFileSync(path.join(uiRoot, 'styles/tokens/tokens-style-vivid.css'), 'utf8');
+
+    expect(baseTokens).toMatch(/--r-sm:\s*4px;/);
+    expect(vividTokens).toMatch(/\[data-theme-style="raw-grid"\]\s*\{[^}]*--r-sm:\s*0px;/s);
+    expect(vividTokens).toMatch(/\[data-theme-style="cyberpunk"\]\s*\{[^}]*--r-sm:\s*0px;/s);
+
+    const badgeCss = [
+      fs.readFileSync(path.join(uiRoot, 'components/Content/WelcomeCommandDeck.css'), 'utf8'),
+      fs.readFileSync(path.join(uiRoot, 'components/Content/WelcomePageOverview.css'), 'utf8'),
+      fs.readFileSync(path.join(uiRoot, 'components/Content/WelcomePageSupport.css'), 'utf8'),
+      fs.readFileSync(path.join(uiRoot, 'components/Tour/TourGuideOverlay.css'), 'utf8'),
+      fs.readFileSync(path.join(uiRoot, 'styles/global/global-file-history-modal.css'), 'utf8'),
+      fs.readFileSync(path.join(uiRoot, 'styles/global/global-history-diff.css'), 'utf8'),
+      fs.readFileSync(path.join(uiRoot, 'styles/global/global-settings-typography.css'), 'utf8'),
+      fs.readFileSync(path.join(uiRoot, 'styles/global/global-content-tabs-focus-search.css'), 'utf8'),
+    ].join('\n');
+
+    const selectors = [
+      '.welcome-tour-trigger-btn__badge',
+      '.tour-guide-badge',
+      '.tour-guide-dot',
+      '.tip-card-badge',
+      '.hero-star-banner__count',
+      '.welcome-ecosystem__count',
+      '.welcome-ecosystem__item-tag',
+      '.file-history__badge',
+      '.repository-history__head-badge',
+      '.desktop-font-card__badge',
+      '.tree-file-search-count-badge',
+    ];
+
+    for (const sel of selectors) {
+      const escaped = sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?:^|\\n)\\s*${escaped}\\s*\\{([^}]*)\\}`, 'm');
+      const match = badgeCss.match(regex);
+      expect(match, `Expected rule for ${sel}`).toBeTruthy();
+      const block = match?.[1] ?? '';
+      expect(block).toContain('var(--r-sm');
+      expect(block).not.toContain('border-radius: 999px');
+      expect(block).not.toContain('border-radius: 12px');
+    }
+
+    const commandDeckCss = fs.readFileSync(path.join(uiRoot, 'components/Content/WelcomeCommandDeck.css'), 'utf8');
+    const tourOverlayCss = fs.readFileSync(path.join(uiRoot, 'components/Tour/TourGuideOverlay.css'), 'utf8');
+
+    const cyberpunkDeckSelectors = [
+      '.welcome-tour-trigger-btn__badge',
+      '.welcome-ecosystem__count',
+      '.welcome-ecosystem__item-tag',
+      '.hero-star-banner__count',
+    ];
+    for (const sel of cyberpunkDeckSelectors) {
+      const escaped = sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      expect(commandDeckCss).toMatch(
+        new RegExp(`:root\\[data-theme\\]\\[data-theme-style="cyberpunk"\\][\\s\\S]*?${escaped}[\\s\\S]*?clip-path`),
+      );
+    }
+
+    const cyberpunkTourSelectors = [
+      '.tour-guide-badge',
+      '.tour-guide-dot',
+    ];
+    for (const sel of cyberpunkTourSelectors) {
+      const escaped = sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      expect(tourOverlayCss).toMatch(
+        new RegExp(`:root\\[data-theme\\]\\[data-theme-style="cyberpunk"\\][\\s\\S]*?${escaped}[\\s\\S]*?clip-path`),
+      );
+    }
+
+    const overviewCss = fs.readFileSync(path.join(uiRoot, 'components/Content/WelcomePageOverview.css'), 'utf8');
+    expect(overviewCss).toMatch(/:is\(\.tabs-bar,\s*\.welcome-tabs\)[\s\S]*?border-radius:\s*var\(--r-lg/);
+    expect(overviewCss).not.toMatch(/:is\(\.tabs-bar,\s*\.welcome-tabs\)[\s\S]*?border-radius:\s*(?:30px|999px|9999px)/);
+    expect(overviewCss).toMatch(/:is\(\.tab-btn,\s*\.welcome-tab\)[\s\S]*?border-radius:\s*var\(--r-md/);
+    expect(overviewCss).not.toMatch(/:is\(\.tab-btn,\s*\.welcome-tab\)[\s\S]*?border-radius:\s*(?:25px|999px|9999px)/);
+    expect(commandDeckCss).toMatch(/:is\(\.tabs-bar,\s*\.welcome-tabs\)[\s\S]*?border-radius:\s*var\(--r-lg/);
+    expect(commandDeckCss).toMatch(/:is\(\.tab-btn,\s*\.welcome-tab\)[\s\S]*?border-radius:\s*var\(--r-md/);
+  });
+
+  test('enforces view transition feathered gradient masks and multi-zone curtains without circle clip-paths', () => {
+    const vtCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-view-transitions.css'), 'utf8');
+
+    // 1. Top-to-bottom to-dark feathered gradient mask
+    expect(vtCss).toMatch(
+      /:root\[data-transition-direction="to-dark"\]::view-transition-new\(root\)[\s\S]*?-webkit-mask-image:\s*linear-gradient\(180deg,[\s\S]*?mask-size:\s*100%\s+260%/
+    );
+    expect(vtCss).toMatch(
+      /:root\[data-transition-direction="to-dark"\][\s\S]*?::view-transition-new\(root\)[\s\S]*?animation:\s*vt-mask-sweep-down/
+    );
+
+    // 2. Bottom-to-top to-light reverse feathered gradient mask
+    expect(vtCss).toMatch(
+      /:root\[data-transition-direction="to-light"\]::view-transition-new\(root\)[\s\S]*?-webkit-mask-image:\s*linear-gradient\(0deg,[\s\S]*?mask-size:\s*100%\s+260%/
+    );
+    expect(vtCss).toMatch(
+      /:root\[data-transition-direction="to-light"\][\s\S]*?::view-transition-new\(root\)[\s\S]*?animation:\s*vt-mask-sweep-up/
+    );
+
+    // 3. Multi-zone gradient curtain across theme presets (default, raw-grid, bento, pet-*, neon-voltage, tokyo-night, vercel)
+    expect(vtCss).toMatch(
+      /\.theme-magic-overlay\[data-direction="to-dark"\] \.theme-magic-overlay__beam[\s\S]*?linear-gradient\(180deg,\s*transparent\s*0%,\s*rgba\(30,\s*27,\s*75/
+    );
+    expect(vtCss).toMatch(
+      /\.theme-magic-overlay\[data-direction="to-light"\] \.theme-magic-overlay__beam[\s\S]*?linear-gradient\(0deg,\s*transparent\s*0%,\s*rgba\(254,\s*243,\s*199/
+    );
+    expect(vtCss).toMatch(
+      /\.theme-magic-overlay\[data-theme-style="neon-voltage"\]\[data-direction="to-dark"\] \.theme-magic-overlay__beam[\s\S]*?rgba\(255,\s*0,\s*127/
+    );
+    expect(vtCss).toMatch(
+      /\.theme-magic-overlay\[data-theme-style="tokyo-night"\]\[data-direction="to-dark"\] \.theme-magic-overlay__beam[\s\S]*?rgba\(122,\s*162,\s*247/
+    );
+    expect(vtCss).toMatch(
+      /\.theme-magic-overlay\[data-theme-style="vercel"\]\[data-direction="to-dark"\] \.theme-magic-overlay__beam[\s\S]*?rgba\(161,\s*161,\s*170/
+    );
+
+    // 4. Smooth reduced-size cyberpunk glitch slabs
+    expect(vtCss).toMatch(
+      /\.theme-magic-overlay\[data-theme-style="cyberpunk"\] \.theme-magic-overlay__beam[\s\S]*?background-size:\s*100%\s+4\.5%,\s*100%\s+5\.5%,\s*100%\s+4%;/
+    );
+    expect(vtCss).toMatch(
+      /\.theme-magic-overlay\[data-theme-style="cyberpunk"\] \.theme-magic-overlay__beam[\s\S]*?background-position:\s*0\s+26%,\s*0\s+52%,\s*0\s+74%;/
+    );
+
+    // 5. Zero circle(...) clip-paths in view transition styles
+    expect(vtCss).not.toContain('circle(');
+  });
+
+  test('enforces cyberpunk chamfered polygon shapes on TOC items and hides marker dots', () => {
+    const cpSurfacesCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-theme-cyberpunk-surfaces.css'), 'utf8');
+
+    // Chamfered polygon on .toc-item and .toc-link
+    expect(cpSurfacesCss).toMatch(
+      /:root\[data-theme\]\[data-theme-style="cyberpunk"\]\s*:is\(\.toc-item,\s*\.toc-link\)[\s\S]*?clip-path:\s*polygon\(0\s+0,\s*calc\(100%\s*-\s*var\(--cp-cut-top,\s*7px\)\)\s+0,\s*100%\s+var\(--cp-cut-top,\s*7px\),\s*100%\s+100%,\s*var\(--cp-cut-bottom,\s*6px\)\s+100%,\s*0\s+calc\(100%\s*-\s*var\(--cp-cut-bottom,\s*6px\)\)\)\s*!important;/
+    );
+    expect(cpSurfacesCss).toMatch(
+      /:root\[data-theme\]\[data-theme-style="cyberpunk"\]\s*:is\(\.toc-item,\s*\.toc-link\)[\s\S]*?border-radius:\s*0\s*!important;/
+    );
+
+    // .toc-item__marker and ::before dot hidden in Cyberpunk theme
+    expect(cpSurfacesCss).toMatch(
+      /:root\[data-theme\]\[data-theme-style="cyberpunk"\]\s*:is\(\.toc-item,\s*\.toc-link\)\s+\.toc-item__marker,\s*:root\[data-theme\]\[data-theme-style="cyberpunk"\]\s*:is\(\.toc-item,\s*\.toc-link\)::before\s*\{[\s\S]*?display:\s*none\s*!important;[\s\S]*?content:\s*none\s*!important;/
+    );
+  });
+
+  test('enforces theme toggle morph styling with currentColor and zero color filters', () => {
+    const themePickerCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-theme-picker-settings.css'), 'utf8');
+
+    expect(themePickerCss).toMatch(
+      /\.theme-toggle-morph\s*\{[\s\S]*?color:\s*currentColor;[\s\S]*?filter:\s*none;/
+    );
+    expect(themePickerCss).toMatch(
+      /\[data-theme="dark"\]\s+\.theme-toggle-morph\s*\{[\s\S]*?filter:\s*none;/
+    );
+    expect(themePickerCss).toMatch(
+      /\[data-theme="light"\]\s+\.theme-toggle-morph\s*\{[\s\S]*?filter:\s*none;/
+    );
+    expect(themePickerCss).toMatch(
+      /\.theme-toggle-morph\s+svg\s*\{[\s\S]*?color:\s*currentColor;[\s\S]*?filter:\s*none;/
+    );
+    expect(themePickerCss).not.toMatch(/\.theme-toggle-morph[^{]*\{[^}]*filter:\s*drop-shadow/);
+  });
+
+  test('enforces shell control sizing parity for close-workspace button and mode switchers', () => {
+    const shellSizingCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-shell-control-sizing.css'), 'utf8');
+
+    // 28x28 square sizing for close-workspace-btn
+    expect(shellSizingCss).toMatch(/--shell-action-size:\s*28px;/);
+    expect(shellSizingCss).toMatch(
+      /:is\([^)]*\.topbar__close-workspace-btn[^)]*\)\s*\{[\s\S]*?width:\s*var\(--shell-action-size\)\s*!important;[\s\S]*?height:\s*var\(--shell-action-size\)\s*!important;/
+    );
+
+    // 28px height alignment for topbar__markdown-editing and split-document-pane__modes
+    expect(shellSizingCss).toMatch(
+      /:is\(\.topbar__markdown-editing,\s*\.split-document-pane__modes\)\s*\{[\s\S]*?height:\s*var\(--shell-action-size,\s*28px\)\s*!important;[\s\S]*?min-height:\s*var\(--shell-action-size,\s*28px\)\s*!important;[\s\S]*?max-height:\s*var\(--shell-action-size,\s*28px\)\s*!important;/
+    );
+  });
+
+  test('keeps markdown editor gutters and scrollers synchronized with dynamic font size', () => {
+    const editingCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-markdown-editing.css'), 'utf8');
+    const tablesCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-document-sections-tables.css'), 'utf8');
+
+    // Scroller font size must read from --editor-font-size
+    expect(editingCss).toMatch(/\.markdown-source-editor__host \.cm-scroller\s*\{[^}]*font-size:\s*var\(--editor-font-size/);
+    expect(editingCss).toMatch(/\.markdown-source-editor__host \.cm-line\s*\{[^}]*line-height:\s*inherit;/);
+
+    // Gutter elements must never hardcode 12px; must inherit font-size and line-height
+    expect(editingCss).not.toMatch(/\.markdown-source-editor__host \.cm-lineNumbers \.cm-gutterElement\s*\{[^}]*font-size:\s*12px/);
+    expect(editingCss).toMatch(/\.markdown-source-editor__host \.cm-lineNumbers \.cm-gutterElement\s*\{[^}]*font-size:\s*inherit;/);
+    expect(editingCss).toMatch(/\.markdown-source-editor__host \.cm-lineNumbers \.cm-gutterElement\s*\{[^}]*line-height:\s*inherit;/);
+
+    // Inline editor source and table editor scroller must both bind to --editor-font-size
+    expect(editingCss).toMatch(/\.markdown-inline-editor__source\s*\{[^}]*font-size:\s*var\(--editor-font-size/);
+    expect(tablesCss).toMatch(/\.markdown-inline-editor__table-host \.cm-scroller\s*\{[^}]*font-size:\s*var\(--editor-font-size/);
+  });
+
+  test('does not attach native HTML title attributes to non-iframe elements in UI components and markdown renderers', () => {
+    const targetFiles = [
+      ...collectSourceFiles(path.join(uiRoot, 'components')).filter((file) => /\.tsx$/.test(file)),
+      path.join(uiRoot, 'markdown/utils.ts'),
+      path.join(uiRoot, 'markdown/tableRenderer.ts'),
+    ];
+    const violations = targetFiles.flatMap(findNativeTitleViolations);
+
+    expect(
+      violations,
+      violations.length
+        ? `Native HTML title attribute violations:\n${violations
+            .map(({ file, line, excerpt }) => `${file}:${line}: ${excerpt}`)
+            .join('\n')}`
+        : undefined,
+    ).toEqual([]);
+  });
+
+  test('enforces visible inline edit zone outline, inset perimeter, and hover styling in Cyberpunk theme', () => {
+    const cpCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-theme-cyberpunk.css'), 'utf8');
+    const editingCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-markdown-editing.css'), 'utf8');
+
+    expect(cpCss).toMatch(
+      /:root\[data-theme\]\[data-theme-style="cyberpunk"\][\s\S]*?\.is-inline-editable:hover\s*\{[^}]*outline:\s*1px\s+dashed\s+var\(--accent\)\s*!important;/
+    );
+    expect(cpCss).toMatch(
+      /:root\[data-theme\]\[data-theme-style="cyberpunk"\][\s\S]*?\.is-inline-editable:hover\s*\{[^}]*box-shadow:\s*inset\s+0\s+0\s+0\s+1px/
+    );
+    expect(cpCss).toMatch(
+      /:root\[data-theme\]\[data-theme-style="cyberpunk"\][\s\S]*?\.mdn-heading-text\.is-inline-editable/
+    );
+    expect(cpCss).toMatch(
+      /:root\[data-theme\]\[data-theme-style="cyberpunk"\] :is\(\*:not\(\.is-inline-editable\)/
+    );
+    expect(editingCss).toMatch(/\.mdn-body \.is-inline-editable:hover\s*\{[^}]*background-color:/);
+  });
+
+  test('applies Cyberpunk chamfer geometry and hover edges to content right-click menus', () => {
+    const globalCss = fs.readFileSync(path.join(uiRoot, 'styles/global.css'), 'utf8');
+    const menusCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-theme-cyberpunk-menus.css'), 'utf8');
+
+    expect(globalCss).toContain("global-theme-cyberpunk-menus.css");
+    expect(menusCss).toMatch(/:root\[data-theme\]\[data-theme-style="cyberpunk"\] \.mdn-link-context-menu\s*\{[\s\S]*?clip-path:\s*polygon\(/);
+    expect(menusCss).toMatch(/:root\[data-theme\]\[data-theme-style="cyberpunk"\] \.mdn-link-context-menu button\s*\{[\s\S]*?clip-path:\s*polygon\(/);
+    expect(menusCss).toMatch(/:root\[data-theme\]\[data-theme-style="cyberpunk"\] \.mdn-link-context-menu button:is\(:hover, :focus-visible\):not\(:disabled\)/);
+  });
+
+  test('disables horizontal scrollbars on document body scrollers including split view and constrains body blocks', () => {
+    const contentTabsCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-content-tabs-focus-search.css'), 'utf8');
+    const splitCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-split-document-view.css'), 'utf8');
+    const scopeCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-scope-view.css'), 'utf8');
+    const markdownFoundationCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-markdown-foundation.css'), 'utf8');
+    const switchCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-switch-tooltip-diff.css'), 'utf8');
+
+    expect(contentTabsCss).toMatch(/\.content__scroll\s*\{[^}]*overflow-x:\s*hidden;/s);
+    expect(splitCss).toMatch(/\.split-document-pane__scroll\s*\{[^}]*overflow-x:\s*hidden;/s);
+    expect(scopeCss).toMatch(/\.scope-view__scroll\s*\{[^}]*overflow-x:\s*hidden;/s);
+    expect(markdownFoundationCss).toMatch(/\.mdn-body\s*\{[^}]*max-width:\s*100%;/s);
+    expect(markdownFoundationCss).toMatch(/\.mdn-body\s*\{[^}]*overflow-wrap:\s*break-word;/s);
+    expect(switchCss).toMatch(/^\.mdn-body \.mermaid svg\s*\{/m);
+  });
+
+  test('keeps Scope View below active body overlays, MediaModal, and dropdowns', () => {
+    const scopeCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-scope-view.css'), 'utf8');
+    const syntaxCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-code-syntax.css'), 'utf8');
+    const tableCoreCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-sections-table-core.css'), 'utf8');
+    const mediaCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-media-viewer-settings-shell.css'), 'utf8');
+    const tableControlsCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-table-view-controls.css'), 'utf8');
+
+    expect(scopeCss).toMatch(/\.scope-view\s*\{[^}]*z-index:\s*var\(--z-modal\);/s);
+    expect(mediaCss).toMatch(/\.media-modal\.mdn-modal\s*\{[^}]*z-index:\s*var\(--z-modal-popover\);/s);
+    expect(syntaxCss).toMatch(/body\s*>\s*\.mdn-link-context-menu\s*\{[^}]*z-index:/s);
+    expect(tableCoreCss).not.toMatch(/\.mdn-filter-dropdown\s*\{[^}]*z-index:\s*var\(--z-dropdown\);/s);
+    expect(tableControlsCss).not.toMatch(/not\(\.is-wrapped\)\s+\.mdn-table\s+th\s*\{[^}]*overflow:\s*hidden/s);
+  });
+
+  test('keeps context menu item shortcut keycaps compact so row height stays uniform', () => {
+    const menusCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-tab-actions-menus.css'), 'utf8');
+    const cpMenusCss = fs.readFileSync(path.join(uiRoot, 'styles/global/global-theme-cyberpunk-menus.css'), 'utf8');
+
+    expect(menusCss).toMatch(/\.tab-context-menu__item-shortcut\s*\{[^}]*height:\s*16px;/s);
+    expect(cpMenusCss).toMatch(/\.tab-context-menu__item-shortcut\s*\{[^}]*height:\s*16px;/s);
+  });
 });
 
-export { findStyleViolations };
+type TitleViolation = {
+  file: string;
+  line: number;
+  excerpt: string;
+};
+
+function findNativeTitleViolations(filePath: string): TitleViolation[] {
+  const source = fs.readFileSync(filePath, 'utf8');
+  const file = path.relative(repoRoot, filePath).replaceAll('\\', '/');
+  const violations: TitleViolation[] = [];
+  const tagStartRegex = /<([a-z][a-z0-9-]*)\b/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = tagStartRegex.exec(source)) !== null) {
+    const tagName = match[1];
+    if (tagName === 'iframe') continue;
+    const startIndex = match.index;
+    let i = startIndex + match[0].length;
+    let braceDepth = 0;
+    let quote: string | null = null;
+
+    while (i < source.length) {
+      const ch = source[i];
+      if (quote) {
+        if (ch === '\\') { i += 2; continue; }
+        if (ch === quote) quote = null;
+      } else if (ch === '"' || ch === "'") {
+        quote = ch;
+      } else if (ch === '{') {
+        braceDepth++;
+      } else if (ch === '}') {
+        if (braceDepth > 0) braceDepth--;
+      } else if (braceDepth === 0) {
+        if (ch === '>' || (ch === '/' && source[i + 1] === '>')) break;
+        if (ch === '<') break;
+      }
+      i++;
+    }
+
+    const tagAttrs = source.slice(startIndex, i);
+    const titleMatch = /(?<!-)\btitle\s*=/i.exec(tagAttrs);
+    if (titleMatch) {
+      const titleIndex = startIndex + titleMatch.index;
+      violations.push({
+        file,
+        line: source.slice(0, titleIndex).split('\n').length,
+        excerpt: source.slice(titleIndex, titleIndex + 80).split('\n')[0].trim(),
+      });
+    }
+  }
+
+  return violations;
+}
+
+export { findStyleViolations, findNativeTitleViolations };

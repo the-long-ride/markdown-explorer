@@ -37,8 +37,8 @@ test('VS Code Explorer header opens Markdown Explorer with supplied stroke icons
     readIcon('markdown-explorer-dark-stroke.svg'),
     readText('../../vscode/README.md'),
   ]);
-  assert.match(lightIcon, /viewBox="80 90 864 844"/);
-  assert.match(darkIcon, /viewBox="80 90 864 844"/);
+  assert.match(lightIcon, /viewBox="104 114 816 760"/);
+  assert.match(darkIcon, /viewBox="104 114 816 760"/);
   assert.match(readme, /## VS Code Extension Tutorial/);
   assert.match(readme, /Markdown Explorer button in the workspace header/);
   assert.match(readme, /Open Folder in Markdown Explorer/);

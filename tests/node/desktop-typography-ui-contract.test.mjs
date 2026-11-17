@@ -32,7 +32,7 @@ test('desktop typography renders five independent role bindings with searchable 
     read('ui/src/components/Settings/FontSearchDropdown.tsx'),
     read('ui/src/components/Settings/FontVariantDropdown.tsx'),
   ]);
-  assert.match(panel, /isDesktop\s*&&[\s\S]*<DesktopTypographySettings/);
+  assert.match(panel, /(?:isDesktop|supportsTypography)\s*&&[\s\S]*<DesktopTypographySettings/);
   for (const role of ['appUi', 'body', 'heading', 'quote', 'code']) assert.match(component, new RegExp(`role=["']${role}["']`));
   assert.match(component, /importDesktopFonts/);
   assert.match(component, /removeImportedDesktopFont/);

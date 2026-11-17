@@ -3,12 +3,6 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const SOURCE_GROUPS = new Map(Object.entries({
-  'chromium-xtension/src/chrome-host.ts': [
-    'chromium-xtension/src/chrome-host.ts',
-    'chromium-xtension/src/chrome-host-search.ts',
-    'chromium-xtension/src/chrome-host-utils.ts',
-    'chromium-xtension/src/workspace-operation-state.ts',
-  ],
   'electron/core/runtime-command-handlers.js': [
     'electron/core/runtime-command-handlers.js',
     'electron/core/runtime-command-search-handlers.js',
@@ -146,8 +140,8 @@ const SOURCE_GROUPS = new Map(Object.entries({
     'website-app/src/web-host.ts',
     'website-app/src/web-test-message-router.ts',
     'website-app/src/web-file-utility-router.ts',
-    'chromium-xtension/src/chrome-host-utils.ts',
-    'chromium-xtension/src/workspace-operation-state.ts',
+    'website-app/src/browser-host-utils.ts',
+    'website-app/src/workspace-operation-state.ts',
   ],
 }));
 

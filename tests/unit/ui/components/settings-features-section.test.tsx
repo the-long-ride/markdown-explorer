@@ -5,6 +5,12 @@ import {
   getVisibleFeatureGroups,
 } from '../../../../ui/src/components/Settings/SettingsFeaturesSection';
 import { FEATURE_SETTINGS_TRANSLATIONS } from '../../../../ui/src/contexts/featureSettingsTranslations';
+import {
+  AppearanceRowIcon,
+  FeatureRowIcon,
+  ShortcutActionIcon,
+  TypographyRoleIcon,
+} from '../../../../ui/src/components/Settings/settingsRowIcons';
 
 const t = {
   sidebarLabels: 'Sidebar File Labels',
@@ -62,7 +68,7 @@ const groupTitles = FEATURE_SETTINGS_TRANSLATIONS.en;
 
 describe('SettingsFeaturesSection', () => {
   afterEach(() => {
-    delete (window as any).__webDemoBus;
+    delete (window as any).__webBus;
   });
 
   it('renders grouped sections with real headings in order', () => {
@@ -119,10 +125,17 @@ describe('SettingsFeaturesSection', () => {
     }
   });
 
-  it('hides Workspace Insights in the website demo runtime', () => {
-    (window as any).__webDemoBus = new EventTarget();
-    renderSection({ isDesktop: false, state: makeState({ appRuntime: 'chrome' }) });
-    expect(screen.queryByRole('checkbox', { name: t.insightsEnabled })).not.toBeInTheDocument();
+  it('shows Workspace Insights and disables History sidebar in the web runtime', () => {
+    (window as any).__webBus = new EventTarget();
+    renderSection({ isDesktop: false, state: makeState({ appRuntime: 'web' }) });
+    expect(screen.getByRole('checkbox', { name: t.insightsEnabled })).toBeInTheDocument();
+    const historyRow = document.querySelector('#history-sidebar-enabled');
+    expect(historyRow).toBeInTheDocument();
+    expect(historyRow).toHaveTextContent('(Web unavailable)');
+    const checkbox = historyRow?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).toBeDisabled();
+    expect(checkbox?.checked).toBe(false);
   });
 
   it('toggles and number input still update settings', () => {
@@ -173,6 +186,39 @@ describe('feature settings translations', () => {
       const entry = FEATURE_SETTINGS_TRANSLATIONS[language] as unknown as Record<string, string>;
       expect(entry, language).toBeDefined();
       for (const key of keys) expect(entry[key]?.trim(), `${language}.${key}`).toBeTruthy();
+    }
+  });
+});
+
+describe('settingsRowIcons', () => {
+  it('renders SVG for all typography roles and fallback', () => {
+    const roles = ['appUi', 'ui', 'body', 'document', 'heading', 'quote', 'code', 'mermaid', 'math', 'other'];
+    for (const role of roles) {
+      const { container } = render(<TypographyRoleIcon role={role} />);
+      expect(container.querySelector('svg')).toBeInTheDocument();
+    }
+  });
+
+  it('renders SVG for appearance rows and fallback', () => {
+    for (const id of ['colorMode', 'desktopView', 'unknown']) {
+      const { container } = render(<AppearanceRowIcon id={id} />);
+      expect(container.querySelector('svg')).toBeInTheDocument();
+    }
+  });
+
+  it('renders SVG for feature rows and fallback', () => {
+    for (const id of ['sidebar-labels', 'file-tabs', 'history-sidebar-enabled', 'unknown']) {
+      const { container } = render(<FeatureRowIcon id={id} />);
+      expect(container.querySelector('svg')).toBeInTheDocument();
+    }
+    const { container } = render(<FeatureRowIcon id="history-sidebar-enabled" />);
+    expect(container.querySelector('svg path[d="M12 7v5l4 2"]')).toBeInTheDocument();
+  });
+
+  it('renders SVG for shortcut actions and fallback', () => {
+    for (const actionId of ['welcome', 'zoomIn', 'unknown']) {
+      const { container } = render(<ShortcutActionIcon actionId={actionId} />);
+      expect(container.querySelector('svg')).toBeInTheDocument();
     }
   });
 });

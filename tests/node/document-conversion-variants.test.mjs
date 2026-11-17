@@ -32,7 +32,8 @@ test('Tauri uses an in-process native Rust converter without sidecar packaging',
   assert.doesNotMatch(read('pnpm-workspace.yaml'), /mdthem-sidecar/);
 });
 
-test('Chromium keeps document conversion disabled', () => {
-  const chromium = read('chromium-xtension/src/chrome-host.ts');
-  assert.match(chromium, /documentConversionEnabled:\s*false/);
+test('Web defaults document conversion to disabled and uses in-browser conversion when enabled', () => {
+  const webHost = read('website-app/src/web-host.ts');
+  assert.match(webHost, /let\s+documentConversionEnabled\s*=\s*false/);
+  assert.match(read('website-app/src/web-document-converter.ts'), /convertWebDocumentToMarkdown/);
 });

@@ -9,7 +9,6 @@ test('every supported host routes full-file search preview requests', async () =
     read('electron/core/runtime-command-search-handlers.js'),
     read('tauri/src/dispatcher/search.rs'),
     Promise.all([read('vscode/src/core/panel.ts'), read('vscode/src/core/panelSearchPreview.ts')]).then((parts) => parts.join('\n')),
-    read('chromium-xtension/src/chrome-host-search.ts'),
     Promise.all([read('website-app/src/web-file-utility-router.ts'), read('website-app/src/web-test-message-router.ts')]).then((parts) => parts.join('\n')),
   ]);
   for (const source of hosts) {

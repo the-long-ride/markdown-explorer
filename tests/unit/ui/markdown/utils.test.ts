@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { escHtml, escAttr, slugify, shortId, renderButton } from '../../../../ui/src/markdown/utils';
 
 const AMP = '\x26';
@@ -100,6 +100,9 @@ describe('markdown/utils', () => {
       const html = renderButton({ onClick: 'doThing()', label: 'Click' });
       expect(html).toContain('onclick="doThing()"');
       expect(html).toContain('tooltip-container');
+      expect(html).toContain('aria-label="Click"');
+      expect(html).toContain('<span class="tooltip-text">Click</span>');
+      expect(html).not.toContain('title="');
       expect(html).toContain('Click');
     });
 
@@ -120,12 +123,23 @@ describe('markdown/utils', () => {
 
     it('uses tooltip over label when provided', () => {
       const html = renderButton({ onClick: 'x()', label: 'L', tooltip: 'Tip text' });
-      expect(html).toContain('Tip text');
+      expect(html).toContain('<span class="tooltip-text">Tip text</span>');
+      expect(html).toContain('aria-label="L"');
+      expect(html).not.toContain('title="');
     });
 
     it('falls back to label for tooltip when no tooltip given', () => {
       const html = renderButton({ onClick: 'x()', label: 'My Label' });
-      expect(html).toContain('My Label');
+      expect(html).toContain('<span class="tooltip-text">My Label</span>');
+      expect(html).toContain('aria-label="My Label"');
+      expect(html).not.toContain('title="');
+    });
+
+    it('falls back to title for tooltipText when tooltip is not provided, but never sets title attribute', () => {
+      const html = renderButton({ onClick: 'x()', label: 'L', title: 'Fallback Title' });
+      expect(html).toContain('<span class="tooltip-text">Fallback Title</span>');
+      expect(html).toContain('aria-label="Fallback Title"');
+      expect(html).not.toContain('title="');
     });
 
     it('adds data-tooltip-pos when tooltipPos provided', () => {

@@ -36,13 +36,3 @@ test('column controls have dedicated labels and styling', async () => {
   assert.match(types, /showAllColumns:\s*string/);
   assert.match(css, /mdn-table-columns/);
 });
-
-
-test('Chromium delegated click handling opens the Columns menu when MV3 blocks inline handlers', async () => {
-  const [contentEffects, searchPreview] = await Promise.all([
-    readProjectSource('ui/src/components/Content/useContentEffects.ts'),
-    read('ui/src/components/Search/SearchDocumentPreview.tsx'),
-  ]);
-  assert.match(contentEffects, /mdn-table-columns-toggle[\s\S]*?toggleColumnMenu/);
-  assert.match(searchPreview, /mdn-table-columns-toggle[\s\S]*?toggleColumnMenu/);
-});

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
@@ -45,5 +45,36 @@ describe('Insights Lint and Duplicates views', () => {
     expect(targets.length).toBeGreaterThan(0);
     await user.click(targets[0]);
     expect(onSelectFinding).toHaveBeenCalledWith(expect.objectContaining({ path: 'guide.md' }));
+  });
+
+  it('copies AI prompt to fix markdown lint issues', async () => {
+    const document = doc('guide.md', '# A  \n### C\n# A\n');
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
+    render(<LintView documents={[document]} />);
+    const copyBtn = screen.getByRole('button', { name: /copy prompt for ai agent to fix markdown lint/i });
+    expect(copyBtn).toBeVisible();
+    fireEvent.click(copyBtn);
+    expect(writeText).toHaveBeenCalledOnce();
+    const copiedText = writeText.mock.calls[0][0];
+    expect(copiedText).toContain('guide.md');
+    expect(copiedText).toContain('Instructions:');
+  });
+
+  it('copies AI prompt to review and fix duplicates', async () => {
+    const exactA = doc('a.md', '# Same\nUseful duplicate body with enough repeated terminology here.\n');
+    const exactB = doc('b.md', '# Same  \r\nUseful duplicate body with enough repeated terminology here.');
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
+    render(<DuplicatesView documents={[exactA, exactB]} threshold={0.8} />);
+    const copyBtn = screen.getByRole('button', { name: /copy prompt for ai agent to review and fix duplicates/i });
+    expect(copyBtn).toBeVisible();
+    fireEvent.click(copyBtn);
+    expect(writeText).toHaveBeenCalledOnce();
+    const copiedText = writeText.mock.calls[0][0];
+    expect(copiedText).toContain('Exact Duplicates');
+    expect(copiedText).toContain('a.md');
+    expect(copiedText).toContain('b.md');
+    expect(copiedText).toContain('Double-check and brainstorm');
   });
 });

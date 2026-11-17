@@ -79,6 +79,20 @@ describe('renderInline', () => {
       expect(result).toContain('onclick="Nav.go');
     });
 
+    test('renders internal .mdx and .markdown links with Nav.go while keeping https .mdx external', () => {
+      const internalMdx = renderInline('[mdx](./test-interactive.mdx)');
+      expect(internalMdx).toContain('onclick="Nav.go');
+      expect(internalMdx).toContain('mdn-link--internal');
+
+      const internalMarkdown = renderInline('[doc](notes/spec.markdown#top)');
+      expect(internalMarkdown).toContain('onclick="Nav.go');
+      expect(internalMarkdown).toContain('mdn-link--internal');
+
+      const externalMdx = renderInline('[remote](https://example.com/guide.mdx)');
+      expect(externalMdx).toContain('target="_blank"');
+      expect(externalMdx).not.toContain('Nav.go');
+    });
+
     test('renders bare URL as link', () => {
       const result = renderInline('visit https://example.com now');
       expect(result).toContain('href="https://example.com"');

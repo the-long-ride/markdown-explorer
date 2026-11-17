@@ -50,6 +50,20 @@ describe('welcomeTranslations', () => {
       expect(t.features.highlight.title).toBeTruthy();
       expect(t.features.modal.title).toBeTruthy();
       expect(t.features.shortcuts.title).toBeTruthy();
+      expect(t.features.editor.title).toBeTruthy();
+      expect(t.features.editor.desc).toBeTruthy();
+      expect(t.features.insights.title).toBeTruthy();
+      expect(t.features.insights.desc).toBeTruthy();
+      expect(t.features.git.title).toBeTruthy();
+      expect(t.features.git.desc).toBeTruthy();
+      expect(t.features.export.title).toBeTruthy();
+      expect(t.features.export.desc).toBeTruthy();
+      expect(t.features.outline.title).toBeTruthy();
+      expect(t.features.outline.desc).toBeTruthy();
+      expect(t.features.bookmarks.title).toBeTruthy();
+      expect(t.features.bookmarks.desc).toBeTruthy();
+      expect(t.features.themes.title).toBeTruthy();
+      expect(t.features.themes.desc).toBeTruthy();
     }
   });
 

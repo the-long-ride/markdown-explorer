@@ -42,4 +42,10 @@ describe('coverage manifest', () => {
       expect(editorGitSplitCoverageManifest[source]?.length, source).toBeGreaterThan(0);
     }
   });
+
+  test('has zero overlapping keys between base coverage manifest and editorGitSplitCoverageManifest', () => {
+    const baseKeys = new Set(Object.keys(coverageManifest));
+    const overlappingKeys = Object.keys(editorGitSplitCoverageManifest).filter((key) => baseKeys.has(key));
+    expect(overlappingKeys).toEqual([]);
+  });
 });

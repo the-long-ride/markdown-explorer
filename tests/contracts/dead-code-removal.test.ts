@@ -95,7 +95,7 @@ describe('confirmed dead-code removal', () => {
       'ui/src/dom/globalHandlers.ts',
       'ui/src/desktop/desktopTabs.ts',
       'ui/src/desktop/workspaceOperations.ts',
-      'chromium-xtension/src/file-access.ts',
+      'website-app/src/file-access.ts',
       'electron/render/document-converter.js',
       'ui/src/contexts/contentTabState.ts',
       'vscode/src/core/documentConversion.ts',
@@ -127,7 +127,6 @@ describe('confirmed dead-code removal', () => {
     const roots = [
       'ui/src',
       'electron',
-      'chromium-xtension/src',
       'vscode/src',
       'vscode/scripts',
       'website-app/src',

@@ -94,4 +94,45 @@ describe('findScopeFile', () => {
       raw: '../secret.md', resolved: 'file:///C:/secret.md', kind: 'file', openable: true, copyable: true,
     }, files)).toBeNull();
   });
+
+  it('matches relative, root-relative, and parent links in web workspaces', () => {
+    const webFiles = [
+      file('README.md', 'README.md'),
+      file('manual-tests/test-navigation.md', 'manual-tests/test-navigation.md'),
+      file('manual-tests/test-basic.md', 'manual-tests/test-basic.md'),
+      file('manual-tests/test-interactive.mdx', 'manual-tests/test-interactive.mdx'),
+      file('docs/my guide.md', 'docs/my guide.md'),
+    ];
+    expect(findScopeFile({
+      raw: './test-basic.md#headings',
+      resolved: 'https://example.test/manual-tests/test-basic.md#headings',
+      kind: 'relative',
+      openable: true,
+      copyable: true,
+    }, webFiles, 'manual-tests/test-navigation.md')).toBe(webFiles[2]);
+
+    expect(findScopeFile({
+      raw: '/manual-tests/test-interactive.mdx',
+      resolved: 'https://example.test/manual-tests/test-interactive.mdx',
+      kind: 'relative',
+      openable: true,
+      copyable: true,
+    }, webFiles, 'docs/my guide.md')).toBe(webFiles[3]);
+
+    expect(findScopeFile({
+      raw: '../README.md',
+      resolved: 'https://example.test/README.md',
+      kind: 'relative',
+      openable: true,
+      copyable: true,
+    }, webFiles, 'manual-tests/test-navigation.md')).toBe(webFiles[0]);
+
+    expect(findScopeFile({
+      raw: '../secret.md',
+      resolved: 'https://example.test/secret.md',
+      kind: 'relative',
+      openable: true,
+      copyable: true,
+    }, webFiles, 'README.md')).toBeNull();
+  });
 });

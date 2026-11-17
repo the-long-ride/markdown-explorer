@@ -95,4 +95,27 @@ describe('Electron Insights workspace host', () => {
     expect(batches.flatMap(m => m.entries)).toHaveLength(1005);
     expect(complete).toMatchObject({ requestId: 'scan-1', totalEntries: 1005, truncated: false });
   });
+
+  it('optimizes file tree walk by avoiding realpathSync and non-markdown statSync on non-symlink entries', async () => {
+    const ws = makeWorkspace();
+    ws.write('doc.md', '# doc');
+    ws.write('img.png', 'PNG DATA');
+    const realpathSync = vi.fn(nodeFs.realpathSync);
+    const statSync = vi.fn(nodeFs.statSync);
+    const fsImpl = { ...nodeFs, realpathSync, statSync } as typeof nodeFs;
+    const { host, sent } = harness(ws.root, fsImpl);
+
+    await host.scanInsightsWorkspace({ requestId: 'scan-opt', userPatterns: [] });
+
+    const complete = sent.find(m => m.command === 'insightsScanComplete');
+    expect(complete).toMatchObject({ requestId: 'scan-opt', totalEntries: 2, truncated: false });
+
+    const realpathArgs = realpathSync.mock.calls.map(call => String(call[0]));
+    expect(realpathArgs.some(arg => arg.endsWith('doc.md'))).toBe(false);
+    expect(realpathArgs.some(arg => arg.endsWith('img.png'))).toBe(false);
+
+    const statArgs = statSync.mock.calls.map(call => String(call[0]));
+    expect(statArgs.some(arg => arg.endsWith('doc.md'))).toBe(true);
+    expect(statArgs.some(arg => arg.endsWith('img.png'))).toBe(false);
+  });
 });

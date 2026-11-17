@@ -45,9 +45,9 @@ describe('Scope View rendered-content parity', () => {
   });
 
   it('synchronizes sticky table headers when the Scope scroll container moves', async () => {
-    const { container } = render(<ScopeViewModal initialFile={target} files={[target]} onClose={() => {}} />);
+    const { baseElement } = render(<ScopeViewModal initialFile={target} files={[target]} onClose={() => {}} />);
     await screen.findByText('Head');
-    const scroll = container.querySelector<HTMLElement>('.scope-view__scroll');
+    const scroll = baseElement.querySelector<HTMLElement>('.scope-view__scroll');
     expect(scroll).not.toBeNull();
     mocks.syncStickyTableHeaders.mockClear();
     fireEvent.scroll(scroll!);

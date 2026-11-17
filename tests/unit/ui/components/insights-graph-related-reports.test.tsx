@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
@@ -94,7 +94,7 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(screen.getByText('2nd')).toBeVisible();
 
     // Clicking clear resets selection
-    const clearBtn = screen.getByTitle(/clear selection/i);
+    const clearBtn = screen.getByRole('button', { name: /clear selection/i });
     await user.click(clearBtn);
     expect(nodeA).not.toHaveClass('is-rel-0');
   });
@@ -159,5 +159,19 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(markdown).toContain('Provisional');
     expect(markdown).toContain('a.md');
     expect(markdown).not.toContain('Authentication refresh tokens.');
+  });
+
+  it('copies AI prompt to fix graph and link issues', () => {
+    const { snapshot } = fixture();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
+    render(<GraphView snapshot={snapshot} nodeCap={100} />);
+    const copyBtn = screen.getByRole('button', { name: /copy prompt for ai agent to fix graph & link issues/i });
+    expect(copyBtn).toBeVisible();
+    fireEvent.click(copyBtn);
+    expect(writeText).toHaveBeenCalledOnce();
+    const copiedText = writeText.mock.calls[0][0];
+    expect(copiedText).toBeDefined();
+    expect(copiedText.length).toBeGreaterThan(0);
   });
 });

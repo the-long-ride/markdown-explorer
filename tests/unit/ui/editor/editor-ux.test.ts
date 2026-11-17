@@ -1,13 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clampEditorFontSize,
   countWords,
+  DEFAULT_EDITOR_FONT_SIZE,
   editorModKeyLabel,
   fillTemplate,
+  fontSizeActionForChord,
   formatCommandForChord,
   formatShortcutLabel,
+  getEditorCommandShortcutLabel,
+  getEditorFontSizeShortcutLabel,
+  getInitialEditorFontSize,
   isApplePlatform,
   isInlineMarkdownEditorTarget,
   isMarkdownEditorTarget,
+  MAX_EDITOR_FONT_SIZE,
+  MIN_EDITOR_FONT_SIZE,
+  persistEditorFontSize,
 } from '../../../../ui/src/editor/editorUx';
 
 function chord(key: string, extra: Partial<{ ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean }> = {}) {
@@ -26,15 +35,49 @@ describe('editorUx', () => {
     expect(formatShortcutLabel('Z', { platform: 'iPad', shift: true })).toBe('⇧⌘Z');
   });
 
-  it('maps only plain Mod+B/I/K/E chords to formatting commands', () => {
+  it('maps only plain Mod+B/I/K/` chords to formatting commands', () => {
     expect(formatCommandForChord(chord('b', { ctrlKey: true }))).toBe('bold');
     expect(formatCommandForChord(chord('I', { metaKey: true }))).toBe('italic');
     expect(formatCommandForChord(chord('k', { ctrlKey: true }))).toBe('link');
-    expect(formatCommandForChord(chord('e', { ctrlKey: true }))).toBe('inline-code');
+    expect(formatCommandForChord(chord('`', { ctrlKey: true }))).toBe('inline-code');
     expect(formatCommandForChord(chord('b'))).toBeNull();
     expect(formatCommandForChord(chord('b', { ctrlKey: true, shiftKey: true }))).toBeNull();
     expect(formatCommandForChord(chord('b', { ctrlKey: true, altKey: true }))).toBeNull();
     expect(formatCommandForChord(chord('s', { ctrlKey: true }))).toBeNull();
+  });
+
+  it('respects custom keybindings and skips disabled bindings in formatCommandForChord', () => {
+    // Custom keybinding
+    expect(formatCommandForChord(chord('l', { ctrlKey: true }), { editorBold: 'Ctrl+L' })).toBe('bold');
+    expect(formatCommandForChord(chord('q', { ctrlKey: true, shiftKey: true }), { editorQuote: 'Ctrl+Shift+Q' })).toBe('quote');
+
+    // Default bindings still work if not overridden
+    expect(formatCommandForChord(chord('i', { ctrlKey: true }), { editorBold: 'Ctrl+L' })).toBe('italic');
+
+    // Skipped when disabled
+    expect(formatCommandForChord(chord('b', { ctrlKey: true }), undefined, { editorBold: true })).toBeNull();
+    expect(formatCommandForChord(chord('l', { ctrlKey: true }), { editorBold: 'Ctrl+L' }, { editorBold: true })).toBeNull();
+    expect(formatCommandForChord(chord('q', { ctrlKey: true, shiftKey: true }), { editorQuote: 'Ctrl+Shift+Q' }, { editorQuote: true })).toBeNull();
+  });
+
+  it('formats editor shortcut labels and returns undefined when disabled', () => {
+    // Default shortcut label
+    expect(getEditorCommandShortcutLabel('bold', undefined, undefined, 'Win32')).toBe('Ctrl+B');
+    expect(getEditorCommandShortcutLabel('bold', undefined, undefined, 'MacIntel')).toBe('⌘B');
+
+    // Custom shortcut label
+    expect(getEditorCommandShortcutLabel('bold', { editorBold: 'Ctrl+L' }, undefined, 'Win32')).toBe('Ctrl+L');
+    expect(getEditorCommandShortcutLabel('bold', { editorBold: 'Ctrl+L' }, undefined, 'MacIntel')).toBe('⌘L');
+    expect(getEditorCommandShortcutLabel('quote', { editorQuote: 'Ctrl+Shift+Q' }, undefined, 'Win32')).toBe('Ctrl+Shift+Q');
+    expect(getEditorCommandShortcutLabel('quote', { editorQuote: 'Ctrl+Shift+Q' }, undefined, 'MacIntel')).toBe('⇧⌘Q');
+
+    // Disabled shortcut returns undefined
+    expect(getEditorCommandShortcutLabel('bold', undefined, { editorBold: true })).toBeUndefined();
+    expect(getEditorCommandShortcutLabel('bold', { editorBold: 'Ctrl+L' }, { editorBold: true })).toBeUndefined();
+    expect(getEditorCommandShortcutLabel('quote', { editorQuote: 'Ctrl+Shift+Q' }, { editorQuote: true })).toBeUndefined();
+
+    // Unknown command returns undefined
+    expect(getEditorCommandShortcutLabel('nonexistent-cmd' as any)).toBeUndefined();
   });
 
   it('detects targets inside the Markdown editors', () => {
@@ -61,5 +104,36 @@ describe('editorUx', () => {
     expect(countWords('Xin chào các bạn')).toBe(4);
     expect(fillTemplate('Ln {line}, Col {column}', { line: 3, column: 7 })).toBe('Ln 3, Col 7');
     expect(fillTemplate('{count} words {missing}', { count: 2 })).toBe('2 words {missing}');
+  });
+
+  it('clamps and persists editor font size between 8px and 32px', () => {
+    expect(MIN_EDITOR_FONT_SIZE).toBe(8);
+    expect(MAX_EDITOR_FONT_SIZE).toBe(32);
+    expect(clampEditorFontSize(14)).toBe(14);
+    expect(clampEditorFontSize(5)).toBe(8);
+    expect(clampEditorFontSize(50)).toBe(32);
+    expect(clampEditorFontSize(NaN)).toBe(DEFAULT_EDITOR_FONT_SIZE);
+
+    persistEditorFontSize(20);
+    expect(getInitialEditorFontSize()).toBe(20);
+    persistEditorFontSize(DEFAULT_EDITOR_FONT_SIZE);
+  });
+
+  it('detects font-size shortcut chords and formats labels', () => {
+    expect(fontSizeActionForChord(chord('-', { ctrlKey: true }))).toBe('decrease');
+    expect(fontSizeActionForChord(chord('=', { ctrlKey: true }))).toBe('increase');
+    // On keyboards where + or _ are reported
+    expect(fontSizeActionForChord(chord('+', { ctrlKey: true }))).toBe('increase');
+    expect(fontSizeActionForChord(chord('_', { ctrlKey: true }))).toBe('decrease');
+    expect(fontSizeActionForChord(chord('a', { ctrlKey: true }))).toBeNull();
+
+    expect(getEditorFontSizeShortcutLabel('decrease', undefined, undefined, 'Win32')).toBe('Ctrl+-');
+    expect(getEditorFontSizeShortcutLabel('increase', undefined, undefined, 'Win32')).toBe('Ctrl+=');
+    expect(getEditorFontSizeShortcutLabel('decrease', undefined, undefined, 'MacIntel')).toBe('⌘-');
+    expect(getEditorFontSizeShortcutLabel('increase', undefined, undefined, 'MacIntel')).toBe('⌘=');
+
+    // Disabled
+    expect(getEditorFontSizeShortcutLabel('decrease', undefined, { editorDecreaseFontSize: true })).toBeUndefined();
+    expect(fontSizeActionForChord(chord('-', { ctrlKey: true }), undefined, { editorDecreaseFontSize: true })).toBeNull();
   });
 });

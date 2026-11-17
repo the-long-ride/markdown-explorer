@@ -20,9 +20,12 @@ const defaultKeybindings: Record<string, string> = {
   sidebarCursorMode: 'ctrl+shift+s',
   refresh: 'ctrl+r',
   collapseAll: 'ctrl+shift+c',
-  expandAll: 'ctrl+shift+e',
+  expandAll: 'ctrl+alt+x',
   workspaceSelection: 'ctrl+shift+w',
   toggleSidebar: 'alt+a',
+  editCurrentDocument: 'ctrl+e',
+  plainEditCurrentDocument: 'ctrl+alt+e',
+  openFiles: 'ctrl+shift+e',
 };
 
 const defaultProps = {
@@ -78,6 +81,20 @@ const mockRefresh = vi.fn();
 const mockToggleTheme = vi.fn();
 const mockToggleSidebar = vi.fn();
 const mockPostMessage = vi.fn();
+const mockSetDocumentEditMode = vi.fn();
+const mockDispatchActionNotice = vi.fn();
+
+let mockAppState: any = {
+  settings: { keybindings: defaultKeybindings, language: 'en', markdownEditingEnabled: true },
+  currentFile: 'test.md',
+  documentSessions: {
+    'test.md': { mode: 'rendered' },
+  },
+};
+
+vi.mock('../../../../ui/src/utils/actionNotice', () => ({
+  dispatchActionNotice: (...args: any[]) => mockDispatchActionNotice(...args),
+}));
 
 vi.mock('../../../../ui/src/contexts/NavigationContext', () => ({
   useNavigation: () => ({
@@ -92,11 +109,12 @@ vi.mock('../../../../ui/src/contexts/NavigationContext', () => ({
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
-    state: { settings: { keybindings: defaultKeybindings } },
+    state: mockAppState,
     navigate: mockNavigate,
     refresh: mockRefresh,
     toggleTheme: mockToggleTheme,
     toggleSidebar: mockToggleSidebar,
+    setDocumentEditMode: mockSetDocumentEditMode,
   }),
 }));
 
@@ -123,13 +141,22 @@ describe('useKeyboard hook integration', () => {
     mockToggleTheme.mockClear();
     mockToggleSidebar.mockClear();
     mockPostMessage.mockClear();
+    mockSetDocumentEditMode.mockClear();
+    mockDispatchActionNotice.mockClear();
+    mockAppState = {
+      settings: { keybindings: defaultKeybindings, language: 'en', markdownEditingEnabled: true },
+      currentFile: 'test.md',
+      documentSessions: {
+        'test.md': { mode: 'rendered' },
+      },
+    };
     delete (window as any).electronAPI;
-    delete (window as any).__chromeExtBus;
+    delete (window as any).__webBus;
   });
 
   afterEach(() => {
     delete (window as any).electronAPI;
-    delete (window as any).__chromeExtBus;
+    delete (window as any).__webBus;
   });
 
   it('calls onSearchClose on Escape when search is open', () => {
@@ -234,14 +261,14 @@ describe('useKeyboard hook integration', () => {
   });
 
   it('calls onCrossTabSearchOpen on Ctrl+Shift+K when desktop-like', () => {
-    (window as any).__chromeExtBus = {};
+    (window as any).__webBus = {};
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: 'K', ctrlKey: true, shiftKey: true });
     expect(defaultProps.onCrossTabSearchOpen).toHaveBeenCalledTimes(1);
   });
 
   it('closes cross-tab search when Ctrl+Shift+K pressed and search open with all-tabs scope', () => {
-    (window as any).__chromeExtBus = {};
+    (window as any).__webBus = {};
     renderHook(() =>
       useKeyboard({ ...defaultProps, isSearchOpen: true, activeSearchScope: 'all-tabs' }),
     );
@@ -321,6 +348,18 @@ describe('useKeyboard hook integration', () => {
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: 'ArrowRight', altKey: true });
     expect(mockForward).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call back or forward when editable target is focused', () => {
+    renderHook(() => useKeyboard(defaultProps));
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.focus();
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', ctrlKey: true, bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true }));
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockForward).not.toHaveBeenCalled();
+    input.remove();
   });
 
   it('dispatches zoom-in on pinching (ctrl+wheel up)', () => {
@@ -428,7 +467,7 @@ describe('useKeyboard hook integration', () => {
   });
 
   it('calls toggleSidebar on Alt+A when desktop-like', () => {
-    (window as any).__chromeExtBus = {};
+    (window as any).__webBus = {};
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: 'a', altKey: true });
     expect(mockToggleSidebar).toHaveBeenCalledTimes(1);
@@ -441,21 +480,21 @@ describe('useKeyboard hook integration', () => {
   });
 
   it('calls onCollapseAll on Ctrl+Shift+C when desktop-like', () => {
-    (window as any).__chromeExtBus = {};
+    (window as any).__webBus = {};
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: 'c', ctrlKey: true, shiftKey: true });
     expect(defaultProps.onCollapseAll).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onExpandAll on Ctrl+Shift+E when desktop-like', () => {
-    (window as any).__chromeExtBus = {};
+  it('calls onExpandAll on Ctrl+Alt+X when desktop-like', () => {
+    (window as any).__webBus = {};
     renderHook(() => useKeyboard(defaultProps));
-    fireKeyDown({ key: 'e', ctrlKey: true, shiftKey: true });
+    fireKeyDown({ key: 'x', ctrlKey: true, altKey: true });
     expect(defaultProps.onExpandAll).toHaveBeenCalledTimes(1);
   });
 
   it('dispatches closeWorkspace on workspace-selection action', () => {
-    (window as any).__chromeExtBus = {};
+    (window as any).__webBus = {};
     const { onWorkspaceSelection, ...legacyProps } = defaultProps;
     renderHook(() => useKeyboard(legacyProps));
     fireKeyDown({ key: 'w', ctrlKey: true, shiftKey: true });
@@ -463,7 +502,7 @@ describe('useKeyboard hook integration', () => {
   });
 
   it('calls workspace-selection callback instead of closing directly when provided', () => {
-    (window as any).__chromeExtBus = {};
+    (window as any).__webBus = {};
     renderHook(() => useKeyboard(defaultProps));
     fireKeyDown({ key: 'w', ctrlKey: true, shiftKey: true });
     expect(defaultProps.onWorkspaceSelection).toHaveBeenCalledTimes(1);
@@ -500,7 +539,7 @@ describe('useKeyboard hook integration', () => {
   });
 
   it('calls onSearchOpen on Ctrl+K toggle when search is closed (desktop-like)', () => {
-    (window as any).__chromeExtBus = {};
+    (window as any).__webBus = {};
     renderHook(() => useKeyboard({ ...defaultProps, isSearchOpen: false }));
     fireKeyDown({ key: 'k', ctrlKey: true });
     expect(defaultProps.onSearchOpen).toHaveBeenCalledTimes(1);
@@ -589,5 +628,43 @@ describe('useKeyboard hook integration', () => {
     fireKeyDown({ key: ',', ctrlKey: true });
     expect(defaultProps.onSettingsOpen).toHaveBeenCalledTimes(1);
     expect(defaultProps.onSettingsClose).not.toHaveBeenCalled();
+  });
+  it('toggles from rendered to inline-edit on Ctrl+E and shows toast notification', () => {
+    mockAppState.documentSessions['test.md'].mode = 'rendered';
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'e', ctrlKey: true });
+    expect(mockSetDocumentEditMode).toHaveBeenCalledWith('test.md', 'inline-edit');
+    expect(mockDispatchActionNotice).toHaveBeenCalledWith('Inline Edit', 'neutral');
+  });
+
+  it('toggles from inline-edit back to rendered on Ctrl+E and shows toast notification', () => {
+    mockAppState.documentSessions['test.md'].mode = 'inline-edit';
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'e', ctrlKey: true });
+    expect(mockSetDocumentEditMode).toHaveBeenCalledWith('test.md', 'rendered');
+    expect(mockDispatchActionNotice).toHaveBeenCalledWith('Rendered', 'neutral');
+  });
+
+  it('toggles from rendered to plain on Ctrl+Alt+E and shows toast notification', () => {
+    mockAppState.documentSessions['test.md'].mode = 'rendered';
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'e', ctrlKey: true, altKey: true });
+    expect(mockSetDocumentEditMode).toHaveBeenCalledWith('test.md', 'plain');
+    expect(mockDispatchActionNotice).toHaveBeenCalledWith('Plain', 'neutral');
+  });
+
+  it('toggles from plain back to rendered on Ctrl+Alt+E and shows toast notification', () => {
+    mockAppState.documentSessions['test.md'].mode = 'plain';
+    renderHook(() => useKeyboard(defaultProps));
+    fireKeyDown({ key: 'e', ctrlKey: true, altKey: true });
+    expect(mockSetDocumentEditMode).toHaveBeenCalledWith('test.md', 'rendered');
+    expect(mockDispatchActionNotice).toHaveBeenCalledWith('Rendered', 'neutral');
+  });
+
+  it('calls onFilesOpen on Ctrl+Shift+E outside editable targets', () => {
+    const onFilesOpen = vi.fn();
+    renderHook(() => useKeyboard({ ...defaultProps, onFilesOpen }));
+    fireKeyDown({ key: 'E', ctrlKey: true, shiftKey: true });
+    expect(onFilesOpen).toHaveBeenCalledTimes(1);
   });
 });

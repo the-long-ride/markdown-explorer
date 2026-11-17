@@ -66,4 +66,50 @@ describe('MermaidThumbnail', () => {
     expect(screen.getByTestId('mermaid-thumbnail-placeholder')).toBeVisible();
     expect(screen.queryByTestId('mermaid-thumbnail-rendered')).toBeNull();
   });
-})
+
+  it('limits concurrency to 2 simultaneous renders and queues remaining', async () => {
+    const { renderMermaidToSvg } = await import('../../../../ui/src/components/Content/enhancements/mermaidRenderToSvg.ts');
+    const mockFn = vi.mocked(renderMermaidToSvg);
+    mockFn.mockClear();
+
+    let resolveP1!: (value: any) => void;
+    let resolveP2!: (value: any) => void;
+    let resolveP3!: (value: any) => void;
+
+    let callCount = 0;
+    mockFn.mockImplementation(async () => {
+      callCount++;
+      const currentCall = callCount;
+      if (currentCall === 1) {
+        return new Promise(res => { resolveP1 = res; });
+      }
+      if (currentCall === 2) {
+        return new Promise(res => { resolveP2 = res; });
+      }
+      return new Promise(res => { resolveP3 = res; });
+    });
+
+    render(
+      <div>
+        <MermaidThumbnail code="graph TD; A1-->B1;" label="D1" status="valid" />
+        <MermaidThumbnail code="graph TD; A2-->B2;" label="D2" status="valid" />
+        <MermaidThumbnail code="graph TD; A3-->B3;" label="D3" status="valid" />
+      </div>
+    );
+
+    // Initial intersection should trigger only 2 concurrent renders
+    await waitFor(() => {
+      expect(mockFn).toHaveBeenCalledTimes(2);
+    });
+
+    // Resolve first render -> third task should pump and execute
+    resolveP1({ svgHtml: '<svg><text>D1</text></svg>' });
+    await waitFor(() => {
+      expect(mockFn).toHaveBeenCalledTimes(3);
+    });
+
+    // Clean up pending promises
+    resolveP2({ svgHtml: '<svg><text>D2</text></svg>' });
+    resolveP3({ svgHtml: '<svg><text>D3</text></svg>' });
+  });
+});

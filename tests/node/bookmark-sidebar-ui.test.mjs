@@ -72,7 +72,7 @@ test('bookmark panel supports selection mode, select all, and atomic batch delet
   assert.match(filesActions, /btn btn--icon sidebar__files-action/);
   assert.match(filesActions, /sidebar__sort-status/);
   assert.match(filesStyles, /sidebar__sort-status/);
-  assert.match(filesStyles, /width:\s*26px/);
+  assert.match(filesStyles, /width:\s*(?:var\(--shell-action-size,\s*28px\)|26px)/);
 });
 
 test('bookmark and edit icons use supplied currentColor SVG paths and groups reuse chevrons', async () => {

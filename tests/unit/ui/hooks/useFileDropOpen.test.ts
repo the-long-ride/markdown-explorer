@@ -34,23 +34,23 @@ function createDragEvent(type: string, opts: { types?: string[]; files?: any[]; 
 
 interface HookProps {
   isDesktop: boolean;
-  isChrome: boolean;
-  isWebDemo?: boolean;
+  isWeb?: boolean;
   modalOpen: boolean;
   openDroppedPath: ReturnType<typeof vi.fn>;
   openDroppedFolder?: (handle: any) => void;
   openDroppedFileHandle?: (handle: any) => void;
+  openDroppedWebFiles?: (files: File[]) => void;
 }
 
 function makeProps(overrides: Partial<HookProps> = {}): HookProps {
   return {
     isDesktop: true,
-    isChrome: false,
-    isWebDemo: false,
+    isWeb: false,
     modalOpen: false,
     openDroppedPath: vi.fn(),
     openDroppedFolder: undefined,
     openDroppedFileHandle: undefined,
+    openDroppedWebFiles: undefined,
     ...overrides,
   };
 }
@@ -71,9 +71,9 @@ describe('useFileDropOpen', () => {
     expect(result.current.isDragging).toBe(false);
   });
 
-  it('does not attach listeners when not desktop and not chrome', () => {
+  it('does not attach listeners when not desktop and not web', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
-    const props = makeProps({ isDesktop: false, isChrome: false });
+    const props = makeProps({ isDesktop: false, isWeb: false });
     const { unmount } = renderHook((p) => useFileDropOpen(p!), { initialProps: props });
     const calls = addSpy.mock.calls.map((c) => c[0]);
     expect(calls).not.toContain('dragenter');
@@ -83,7 +83,7 @@ describe('useFileDropOpen', () => {
 
   it('attaches listeners when isDesktop is true', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
-    const props = makeProps({ isDesktop: true, isChrome: false });
+    const props = makeProps({ isDesktop: true, isWeb: false });
     const { unmount } = renderHook((p) => useFileDropOpen(p!), { initialProps: props });
     const calls = addSpy.mock.calls.map((c) => c[0]);
     expect(calls).toContain('dragenter');
@@ -95,19 +95,9 @@ describe('useFileDropOpen', () => {
     addSpy.mockRestore();
   });
 
-  it('attaches listeners when isChrome is true', () => {
+  it('attaches listeners when isWeb is true', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
-    const props = makeProps({ isDesktop: false, isChrome: true });
-    const { unmount } = renderHook((p) => useFileDropOpen(p!), { initialProps: props });
-    const calls = addSpy.mock.calls.map((c) => c[0]);
-    expect(calls).toContain('dragenter');
-    unmount();
-    addSpy.mockRestore();
-  });
-
-  it('attaches listeners when isWebDemo is true', () => {
-    const addSpy = vi.spyOn(window, 'addEventListener');
-    const props = makeProps({ isDesktop: false, isChrome: false, isWebDemo: true });
+    const props = makeProps({ isDesktop: false, isWeb: true });
     const { unmount } = renderHook((p) => useFileDropOpen(p!), { initialProps: props });
     const calls = addSpy.mock.calls.map((c) => c[0]);
     expect(calls).toContain('dragenter');
@@ -279,27 +269,13 @@ describe('useFileDropOpen', () => {
       expect(props.openDroppedPath).not.toHaveBeenCalled();
     });
 
-    it('chrome path: calls openDroppedFolder for directory handle', async () => {
-      const handle = { kind: 'directory' };
-      const getAsFileSystemHandle = vi.fn().mockResolvedValue(handle);
-      const item = { getAsFileSystemHandle };
-      const openDroppedFolder = vi.fn();
-      const props = makeProps({ isDesktop: false, isChrome: true, openDroppedFolder });
-      renderHook((p) => useFileDropOpen(p!), { initialProps: props });
-      const { event } = createDragEvent('drop', { files: [], items: [item] });
-      act(() => { window.dispatchEvent(event); });
-      await vi.waitFor(() => {
-        expect(openDroppedFolder).toHaveBeenCalledWith(handle);
-      });
-    });
-
-    it('chrome path: falls through if handle is not a directory', async () => {
+    it('web path: falls through if handle is not a directory', async () => {
       mockGetDroppedFilePath.mockReturnValue('/path/file.md');
       const handle = { kind: 'file' };
       const getAsFileSystemHandle = vi.fn().mockResolvedValue(handle);
       const item = { getAsFileSystemHandle };
       const openDroppedFolder = vi.fn();
-      const props = makeProps({ isDesktop: false, isChrome: true, openDroppedFolder });
+      const props = makeProps({ isDesktop: false, isWeb: true, openDroppedFolder });
       const file = new File([''], 'file.md', { type: '' });
       renderHook((p) => useFileDropOpen(p!), { initialProps: props });
       const { event } = createDragEvent('drop', { files: [file], items: [item] });
@@ -310,9 +286,9 @@ describe('useFileDropOpen', () => {
       });
     });
 
-    it('chrome path: falls through if getAsFileSystemHandle is missing', () => {
+    it('web path: falls through if getAsFileSystemHandle is missing', () => {
       mockGetDroppedFilePath.mockReturnValue('/path/file.md');
-      const props = makeProps({ isDesktop: false, isChrome: true, openDroppedFolder: vi.fn() });
+      const props = makeProps({ isDesktop: false, isWeb: true, openDroppedFolder: vi.fn() });
       const file = new File([''], 'file.md', { type: '' });
       renderHook((p) => useFileDropOpen(p!), { initialProps: props });
       const { event } = createDragEvent('drop', { files: [file], items: [{}] });
@@ -320,12 +296,12 @@ describe('useFileDropOpen', () => {
       expect(props.openDroppedPath).toHaveBeenCalledWith('/path/file.md');
     });
 
-    it('chrome path: falls through if getAsFileSystemHandle throws', async () => {
+    it('web path: falls through if getAsFileSystemHandle throws', async () => {
       mockGetDroppedFilePath.mockReturnValue('/path/file.md');
       const getAsFileSystemHandle = vi.fn().mockRejectedValue(new Error('fail'));
       const item = { getAsFileSystemHandle };
       const openDroppedFolder = vi.fn();
-      const props = makeProps({ isDesktop: false, isChrome: true, openDroppedFolder });
+      const props = makeProps({ isDesktop: false, isWeb: true, openDroppedFolder });
       const file = new File([''], 'file.md', { type: '' });
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       renderHook((p) => useFileDropOpen(p!), { initialProps: props });
@@ -342,7 +318,7 @@ describe('useFileDropOpen', () => {
       const getAsFileSystemHandle = vi.fn().mockResolvedValue(handle);
       const item = { getAsFileSystemHandle };
       const openDroppedFolder = vi.fn();
-      const props = makeProps({ isDesktop: false, isChrome: false, isWebDemo: true, openDroppedFolder, openDroppedFileHandle: vi.fn() });
+      const props = makeProps({ isDesktop: false, isWeb: true, openDroppedFolder, openDroppedFileHandle: vi.fn() });
       renderHook((p) => useFileDropOpen(p!), { initialProps: props });
       const { event } = createDragEvent('drop', { files: [], items: [item] });
       act(() => { window.dispatchEvent(event); });
@@ -357,7 +333,7 @@ describe('useFileDropOpen', () => {
       const getAsFileSystemHandle = vi.fn().mockResolvedValue(handle);
       const item = { getAsFileSystemHandle };
       const openDroppedFileHandle = vi.fn();
-      const props = makeProps({ isDesktop: false, isChrome: false, isWebDemo: true, openDroppedFolder: vi.fn(), openDroppedFileHandle });
+      const props = makeProps({ isDesktop: false, isWeb: true, openDroppedFolder: vi.fn(), openDroppedFileHandle });
       renderHook((p) => useFileDropOpen(p!), { initialProps: props });
       const { event } = createDragEvent('drop', { files: [], items: [item] });
       act(() => { window.dispatchEvent(event); });
@@ -365,6 +341,20 @@ describe('useFileDropOpen', () => {
         expect(openDroppedFileHandle).toHaveBeenCalledWith(handle);
         expect(props.openDroppedFolder).not.toHaveBeenCalled();
       });
+    });
+
+    it('web path: calls openDroppedWebFiles when files are dropped in web', async () => {
+      const openDroppedWebFiles = vi.fn();
+      const file = new File(['# Dropped'], 'dropped.md', { type: 'text/markdown' });
+      const props = makeProps({
+        isDesktop: false,
+        isWeb: true,
+        openDroppedWebFiles,
+      });
+      renderHook((p) => useFileDropOpen(p!), { initialProps: props });
+      const { event } = createDragEvent('drop', { files: [file] });
+      act(() => { window.dispatchEvent(event); });
+      expect(openDroppedWebFiles).toHaveBeenCalledWith([file]);
     });
   });
 

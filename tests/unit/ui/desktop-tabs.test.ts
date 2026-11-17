@@ -136,6 +136,18 @@ describe('desktopTabs', () => {
       expect(stored.tabs[0].id).toBe('tab-1');
       expect(stored.tabs[0].workspacePath).toBe('/docs');
     });
+
+    test('preserves restoredContentTabPaths when contentTabs have not hydrated yet', () => {
+      const tab = createEmptyTab('tab-1', 'workspace');
+      tab.workspacePath = '/docs';
+      tab.workspaceName = 'docs';
+      tab.currentFile = '/docs/readme.md';
+      tab.restoredContentTabPaths = ['/docs/readme.md', '/docs/guide.md'];
+      writePersistedDesktopTabs([tab], 'tab-1');
+      const stored = JSON.parse(localStorage.getItem('markdown-explorer-desktop-tabs-v1')!);
+      expect(stored.tabs[0].contentTabs).toEqual(['/docs/readme.md', '/docs/guide.md']);
+      expect(stored.tabs[0].currentFile).toBe('/docs/readme.md');
+    });
   });
 
   describe('readInitialDesktopState', () => {

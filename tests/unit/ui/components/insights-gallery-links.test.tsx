@@ -82,4 +82,17 @@ describe('Insights Gallery and Links views', () => {
     await user.type(searchInput, 'nonexistent');
     expect(screen.getByText(/no items match your filter/i)).toBeVisible();
   });
+
+  it('batches resource probing in chunks of 16 without flooding', async () => {
+    const probeResource = vi.fn(async () => ({ status: 'exists' as const, kind: 'file' as const, sizeBytes: 100 }));
+    // Generate document with 20 image references
+    const links = Array.from({ length: 20 }, (_, i) => `![Img ${i}](../assets/img_${i}.png)`).join('\n');
+    const document = doc('docs/many.md', `# Batch Test\n${links}`);
+
+    render(<GalleryView documents={[document]} labels={labels} probeResource={probeResource} />);
+
+    await waitFor(() => {
+      expect(probeResource).toHaveBeenCalledTimes(20);
+    });
+  });
 });

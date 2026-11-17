@@ -111,7 +111,7 @@ test('workspace scanners expose modifiedAt and folder tree builders derive it', 
     read('electron/workspace/scanner.js'),
     read('vscode/src/core/scanner.ts'),
     read('vscode/src/types.ts'),
-    read('chromium-xtension/src/scanner.ts'),
+    read('website-app/src/scanner.ts'),
     read('tauri/src/workspace/scanner.rs'),
     read('tauri/src/workspace/tree_builder.rs'),
   ]);

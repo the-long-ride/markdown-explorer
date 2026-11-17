@@ -40,10 +40,10 @@ describe('MediaModal theme toggle integration', () => {
   });
 
   it('replaces SVG innerHTML on theme flip while preserving zoom/pan CSS vars', async () => {
-    const { container, rerender } = render(
+    const { baseElement, rerender } = render(
       <MediaModal gallery={mockGallery} onClose={() => {}} />,
     );
-    const svgDiv = container.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
+    const svgDiv = baseElement.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
     expect(svgDiv).toBeTruthy();
 
     // Initial mount: the snapshot baked by createMediaGallery is PRESERVED —
@@ -131,8 +131,8 @@ describe('MediaModal theme toggle integration', () => {
 
     // First open: snapshot of A is preserved (helper is skipped on the first
     // dep-change for the new gallery).
-    const { container, rerender } = render(<MediaModal gallery={galleryA} onClose={() => {}} />);
-    let svgDiv = container.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
+    const { baseElement, rerender } = render(<MediaModal gallery={galleryA} onClose={() => {}} />);
+    let svgDiv = baseElement.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
     expect(svgDiv).toBeTruthy();
     await waitFor(() => {
       expect(svgDiv.innerHTML).toContain('SNAPA');
@@ -143,7 +143,7 @@ describe('MediaModal theme toggle integration', () => {
     // so prevGalleryRef persists. The themed re-render effect early-returns on
     // `if (!gallery) return;` and does not touch prevGalleryRef for this tick.
     rerender(<MediaModal gallery={null} onClose={() => {}} />);
-    expect(container.querySelector('.mdn-modal-content-svg')).toBeNull();
+    expect(baseElement.querySelector('.mdn-modal-content-svg')).toBeNull();
 
     // Re-open with a NEW gallery B (different identity than galleryA): the
     // effect computes isNewGallery = (galleryB !== galleryA) = true → skip the
@@ -151,7 +151,7 @@ describe('MediaModal theme toggle integration', () => {
     // would have been flipped to false during galleryA's first tick and would
     // NOT reset, so this test directly exercises the prevGalleryRef pattern.
     rerender(<MediaModal gallery={galleryB} onClose={() => {}} />);
-    svgDiv = container.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
+    svgDiv = baseElement.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
     await waitFor(() => {
       expect(svgDiv).toBeTruthy();
       expect(svgDiv.innerHTML).toContain('SNAPB');
@@ -176,10 +176,10 @@ describe('MediaModal theme toggle integration', () => {
       items: [{ type: 'svg', source: 'flowchart TD\nA-->B' }],
       currentIndex: 0,
     };
-    const { container } = render(
+    const { baseElement } = render(
       <MediaModal gallery={galleryWithoutHtml} onClose={() => {}} />,
     );
-    const svgDiv = container.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
+    const svgDiv = baseElement.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
     expect(svgDiv).toBeTruthy();
     await waitFor(() => {
       expect(svgDiv.innerHTML).toContain('mock-dark');

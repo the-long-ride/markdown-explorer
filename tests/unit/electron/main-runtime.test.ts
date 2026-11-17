@@ -939,7 +939,7 @@ describe('createDesktopRuntime', () => {
       expect(unavailable).toBeDefined();
     });
 
-    test('preserves content when preserveCurrentContent is true', async () => {
+    test('preserves content when preserveCurrentContent is true and suppresses scan progress', async () => {
       runtime.state.workspacePath = '/my/project';
       runtime.state.flatList = [];
       runtime.state.currentFile = '/my/project/readme.md';
@@ -948,6 +948,10 @@ describe('createDesktopRuntime', () => {
       ctx.deps.scanWorkspaceData.mockResolvedValue({ tree: null, flat: [] });
       ctx.deps.shouldNotifyCurrentFileChanged.mockReturnValue(true);
       await runtime.refreshActiveWorkspace({ preserveCurrentContent: true, changedPath: '/my/project/readme.md' });
+      expect(ctx.deps.scanWorkspaceData).toHaveBeenCalledWith(
+        '/my/project',
+        expect.objectContaining({ emitProgress: false }),
+      );
       const msg = ctx.sentMessages.find((m: any) => m.command === 'currentFileChanged');
       expect(msg).toBeDefined();
     });

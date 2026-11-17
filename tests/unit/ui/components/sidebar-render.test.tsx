@@ -621,6 +621,56 @@ describe('Sidebar render', () => {
     expect(scopeBtn!.className).toContain('is-active');
   });
 
+  it('applies comfort loop is-scope-narrowed class when scoped files are fewer than total files', () => {
+    mockState.fileList = [
+      { fsPath: '/docs/readme.md', relativePath: 'readme.md', fileName: 'readme.md', title: 'Readme' },
+      { fsPath: '/docs/guide.md', relativePath: 'guide.md', fileName: 'guide.md', title: 'Guide' },
+    ];
+    mockState.tree = {
+      name: 'Docs',
+      path: '/docs',
+      files: mockState.fileList,
+      children: [],
+    };
+    mockState.settings.scopeFocus = { '/docs': ['/docs/readme.md'] };
+    render(<Sidebar />);
+    const scopeBtn = screen.getAllByRole('button').find((btn) =>
+      btn.className.includes('sidebar__scope-btn'),
+    );
+    expect(scopeBtn!.className).toContain('is-scope-narrowed');
+    expect(scopeBtn).toHaveAttribute('data-scope-narrowed', 'true');
+  });
+
+  it('does not apply is-scope-narrowed class when scoped files equal total workspace files', () => {
+    mockState.fileList = [
+      { fsPath: '/docs/readme.md', relativePath: 'readme.md', fileName: 'readme.md', title: 'Readme' },
+      { fsPath: '/docs/guide.md', relativePath: 'guide.md', fileName: 'guide.md', title: 'Guide' },
+    ];
+    mockState.tree = {
+      name: 'Docs',
+      path: '/docs',
+      files: mockState.fileList,
+      children: [],
+    };
+    mockState.settings.scopeFocus = { '/docs': ['/docs/readme.md', '/docs/guide.md'] };
+    render(<Sidebar />);
+    const scopeBtn = screen.getAllByRole('button').find((btn) =>
+      btn.className.includes('sidebar__scope-btn'),
+    );
+    expect(scopeBtn!.className).not.toContain('is-scope-narrowed');
+    expect(scopeBtn).not.toHaveAttribute('data-scope-narrowed');
+  });
+
+  it('does not apply is-scope-narrowed class when scope focus is not active', () => {
+    mockState.settings.scopeFocus = {};
+    render(<Sidebar />);
+    const scopeBtn = screen.getAllByRole('button').find((btn) =>
+      btn.className.includes('sidebar__scope-btn'),
+    );
+    expect(scopeBtn!.className).not.toContain('is-scope-narrowed');
+    expect(scopeBtn).not.toHaveAttribute('data-scope-narrowed');
+  });
+
   it('sets aria-pressed on scope button', () => {
     render(<Sidebar />);
     const scopeBtn = screen.getAllByRole('button').find((btn) =>

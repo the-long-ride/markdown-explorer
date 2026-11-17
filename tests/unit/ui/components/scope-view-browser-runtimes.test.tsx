@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HostMessage } from '../../../../ui/src/types/hostMessages';
 import type { WebviewMessage } from '../../../../ui/src/types/webviewMessages';
 import type { MdFile } from '../../../../ui/src/types/files';
-import { handleChromeHostUtilityCommand } from '../../../../chromium-xtension/src/chrome-host-search';
 import { handleWebFileUtilityMessage } from '../../../../website-app/src/web-file-utility-router';
 
 let listeners: ((message: HostMessage) => void)[] = [];
@@ -87,7 +86,7 @@ const nestedFile: MdFile = {
   documentKind: 'markdown',
 };
 
-describe('Scope View across Chromium Extension and Web Demo runtimes', () => {
+describe('Scope View in Web runtime', () => {
   beforeEach(() => {
     listeners = [];
     postedMessages = [];
@@ -96,54 +95,7 @@ describe('Scope View across Chromium Extension and Web Demo runtimes', () => {
     mocks.onMessage.mockClear();
   });
 
-  it('loads document snapshot and renders scope view via Chromium extension host router', async () => {
-    const mockSearchIndex = {
-      read: vi.fn(async (relativePath: string) => {
-        if (relativePath === 'subfolder/guide.md') {
-          return '# Guide Header\n\nWelcome to the guide. See [API](api.md).';
-        }
-        return null;
-      }),
-      search: vi.fn(async () => []),
-      prime: vi.fn(),
-    };
-
-    const chromeContext = {
-      searchIndex: mockSearchIndex as any,
-      flatList: [targetFile, nestedFile],
-      workspaceTree: null,
-      activeWorkspacePath: '/workspace',
-      activeHandle: null,
-      send: (message: HostMessage) => {
-        listeners.forEach((listener) => listener(message));
-      },
-      readText: vi.fn(async () => ''),
-    };
-
-    onPostMessageHook = async (msg: WebviewMessage) => {
-      if (msg.command === 'loadSearchPreview') {
-        await handleChromeHostUtilityCommand(msg, chromeContext);
-      }
-    };
-
-    const onClose = vi.fn();
-    render(
-      <ScopeViewModal
-        initialFile={targetFile}
-        files={[targetFile, nestedFile]}
-        onClose={onClose}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Guide Header')).toBeDefined();
-    });
-
-    expect(mockSearchIndex.read).toHaveBeenCalledWith('subfolder/guide.md');
-    expect(postedMessages.some((msg) => msg.command === 'loadSearchPreview' && msg.filePath === targetFile.fsPath)).toBe(true);
-  });
-
-  it('loads document snapshot and renders scope view via Web Demo utility router', async () => {
+  it('loads document snapshot and renders scope view via Web utility router', async () => {
     const mockSearchIndex = {
       read: vi.fn(async (relativePath: string) => {
         if (relativePath === 'subfolder/guide.md') {
@@ -234,21 +186,21 @@ describe('Scope View across Chromium Extension and Web Demo runtimes', () => {
       prime: vi.fn(),
     };
 
-    const chromeContext = {
-      searchIndex: mockSearchIndex as any,
-      flatList: [targetFile],
-      workspaceTree: null,
-      activeWorkspacePath: '/workspace',
-      activeHandle: null,
-      send: (message: HostMessage) => {
-        listeners.forEach((listener) => listener(message));
+    const webDeps = {
+      getSearchIndex: () => mockSearchIndex as any,
+      getSingleFileHandle: () => null,
+      getFlatList: () => [targetFile],
+      getActiveWorkspacePath: () => '/workspace',
+      getWorkspaceTree: () => null,
+      getActiveHandle: () => null,
+      send: (message: unknown) => {
+        listeners.forEach((listener) => listener(message as HostMessage));
       },
-      readText: vi.fn(async () => ''),
     };
 
     onPostMessageHook = async (msg: WebviewMessage) => {
       if (msg.command === 'loadSearchPreview') {
-        await handleChromeHostUtilityCommand(msg, chromeContext);
+        await handleWebFileUtilityMessage(msg, webDeps, [targetFile]);
       }
     };
 

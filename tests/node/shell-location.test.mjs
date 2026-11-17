@@ -20,7 +20,7 @@ const translations = {
 test('shell-location actions are available only in desktop runtimes', () => {
   assert.equal(supportsShellLocation('desktop'), true);
   assert.equal(supportsShellLocation('tauri'), true);
-  assert.equal(supportsShellLocation('chrome'), false);
+  assert.equal(supportsShellLocation('web'), false);
   assert.equal(supportsShellLocation('vscode'), false);
 });
 

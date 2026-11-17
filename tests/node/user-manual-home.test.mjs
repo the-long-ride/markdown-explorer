@@ -4,23 +4,21 @@ import test from 'node:test';
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 
-test('user manual is the second welcome tab with searchable task sections', async () => {
+test('user manual is the first welcome tab and renders only the AI prompt section', async () => {
   const [welcome, manual, labels] = await Promise.all([
     read('ui/src/components/Content/WelcomePage.tsx'),
     read('ui/src/components/Content/UserManualTab.tsx'),
     read('ui/src/components/Content/welcomeLabels.ts'),
   ]);
   assert.match(welcome, /activeTab === 'manual'/);
-  const featureIndex = welcome.indexOf("setActiveTab('features')");
   const manualIndex = welcome.indexOf("setActiveTab('manual')");
+  const featureIndex = welcome.indexOf("setActiveTab('features')");
   const shortcutsIndex = welcome.indexOf("setActiveTab('shortcuts')");
-  assert.ok(featureIndex >= 0 && manualIndex > featureIndex && shortcutsIndex > manualIndex);
-  assert.match(manual, /manual-search/);
-  assert.match(manual, /manual\.sections/);
-  assert.match(manual, /open-workspace-selection/);
-  assert.match(manual, /open-sidebar-search/);
-  assert.match(manual, /open-bookmarks/);
-  assert.match(manual, /open-settings/);
+  assert.ok(manualIndex >= 0 && featureIndex > manualIndex && shortcutsIndex > featureIndex);
+  assert.match(manual, /manual-ai-prompt/);
+  assert.doesNotMatch(manual, /user-manual__header/);
+  assert.doesNotMatch(manual, /user-manual__quick-actions/);
+  assert.doesNotMatch(manual, /user-manual__sections/);
   assert.match(labels, /manual:/);
 });
 

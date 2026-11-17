@@ -56,4 +56,24 @@ describe('Insights worker client', () => {
     client.cancel('cancelled');
     client.dispose();
   });
+
+  it('supports includeSnapshot: false to skip full snapshot cloning and populates analyzed docs', async () => {
+    const client = createInsightsWorkerClient({ createWorker: () => { throw new Error('blocked'); }, yieldControl: async () => {} });
+    const events: any[] = [];
+    client.onEvent(event => events.push(event));
+    await client.applySourceBatch([{ path: 'a.md', source: '# A', revision: '1' }], 'no-snap', { includeSnapshot: false });
+    const completeEvent = events.find(event => event.type === 'complete');
+    expect(completeEvent).toBeDefined();
+    expect(completeEvent.snapshot).toBeNull();
+    expect(completeEvent.analyzed).toHaveLength(1);
+    expect(completeEvent.analyzed[0].path).toBe('a.md');
+
+    // requesting snapshot returns the cumulative index snapshot
+    await client.requestSnapshot('req-snap');
+    const snapshotEvent = events.at(-1);
+    expect(snapshotEvent.type).toBe('complete');
+    expect(snapshotEvent.snapshot).toBeDefined();
+    expect(snapshotEvent.snapshot.documents.get('a.md')?.title).toBe('A');
+    client.dispose();
+  });
 });

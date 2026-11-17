@@ -1,21 +1,21 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createChromeBridge } from '../../../ui/src/platform/chrome';
+import { createWebBridge } from '../../../ui/src/platform/web';
 import { createElectronBridge } from '../../../ui/src/platform/electron';
 import { createVsCodeBridge } from '../../../ui/src/platform/vscode';
 
-describe('createChromeBridge', () => {
+describe('createWebBridge', () => {
   beforeEach(() => {
-    delete (window as any).__chromeExtBus;
+    delete (window as any).__webBus;
   });
 
-  test('throws without __chromeExtBus', () => {
-    expect(() => createChromeBridge()).toThrow('__chromeExtBus');
+  test('throws without __webBus', () => {
+    expect(() => createWebBridge()).toThrow('__webBus');
   });
 
   test('returns bridge with all methods when bus exists', () => {
-    (window as any).__chromeExtBus = new EventTarget();
-    const bridge = createChromeBridge();
+    (window as any).__webBus = new EventTarget();
+    const bridge = createWebBridge();
     expect(typeof bridge.postMessage).toBe('function');
     expect(typeof bridge.onMessage).toBe('function');
     expect(typeof bridge.getState).toBe('function');
@@ -25,8 +25,8 @@ describe('createChromeBridge', () => {
 
   test('postMessage dispatches CustomEvent on bus', () => {
     const bus = new EventTarget();
-    (window as any).__chromeExtBus = bus;
-    const bridge = createChromeBridge();
+    (window as any).__webBus = bus;
+    const bridge = createWebBridge();
     let received: any;
     bus.addEventListener('webview-message', (e: any) => { received = e.detail; });
     bridge.postMessage({ command: 'test' });
@@ -35,8 +35,8 @@ describe('createChromeBridge', () => {
 
   test('onMessage listens for host-message on bus', () => {
     const bus = new EventTarget();
-    (window as any).__chromeExtBus = bus;
-    const bridge = createChromeBridge();
+    (window as any).__webBus = bus;
+    const bridge = createWebBridge();
     let received: any;
     const unsub = bridge.onMessage((msg) => { received = msg; });
     bus.dispatchEvent(new CustomEvent('host-message', { detail: { command: 'update' } }));
@@ -46,8 +46,8 @@ describe('createChromeBridge', () => {
 
   test('onMessage unsubscribe stops receiving', () => {
     const bus = new EventTarget();
-    (window as any).__chromeExtBus = bus;
-    const bridge = createChromeBridge();
+    (window as any).__webBus = bus;
+    const bridge = createWebBridge();
     let count = 0;
     const unsub = bridge.onMessage(() => { count++; });
     unsub();
@@ -56,39 +56,39 @@ describe('createChromeBridge', () => {
   });
 
   test('getState reads from localStorage', () => {
-    (window as any).__chromeExtBus = new EventTarget();
-    localStorage.setItem('markdown-explorer-chrome-state', JSON.stringify({ a: 1 }));
-    const bridge = createChromeBridge();
+    (window as any).__webBus = new EventTarget();
+    localStorage.setItem('markdown-explorer-web-state', JSON.stringify({ a: 1 }));
+    const bridge = createWebBridge();
     expect(bridge.getState()).toEqual({ a: 1 });
   });
 
   test('setState writes to localStorage', () => {
-    (window as any).__chromeExtBus = new EventTarget();
-    const bridge = createChromeBridge();
+    (window as any).__webBus = new EventTarget();
+    const bridge = createWebBridge();
     bridge.setState({ b: 2 });
-    expect(JSON.parse(localStorage.getItem('markdown-explorer-chrome-state')!)).toEqual({ b: 2 });
+    expect(JSON.parse(localStorage.getItem('markdown-explorer-web-state')!)).toEqual({ b: 2 });
   });
 
   test('getState with invalid JSON returns undefined', () => {
-    (window as any).__chromeExtBus = new EventTarget();
-    localStorage.setItem('markdown-explorer-chrome-state', 'not-json{{');
-    const bridge = createChromeBridge();
+    (window as any).__webBus = new EventTarget();
+    localStorage.setItem('markdown-explorer-web-state', 'not-json{{');
+    const bridge = createWebBridge();
     expect(bridge.getState()).toBeUndefined();
   });
 
   test('setState with error silently catches', () => {
-    (window as any).__chromeExtBus = new EventTarget();
-    const bridge = createChromeBridge();
+    (window as any).__webBus = new EventTarget();
+    const bridge = createWebBridge();
     const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
     expect(() => bridge.setState({ x: 1 })).not.toThrow();
     spy.mockRestore();
   });
 
   test('copyToClipboard calls navigator.clipboard.writeText', () => {
-    (window as any).__chromeExtBus = new EventTarget();
+    (window as any).__webBus = new EventTarget();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });
-    const bridge = createChromeBridge();
+    const bridge = createWebBridge();
     bridge.copyToClipboard('hello');
     expect(writeText).toHaveBeenCalledWith('hello');
   });

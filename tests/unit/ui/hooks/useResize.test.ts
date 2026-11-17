@@ -433,4 +433,124 @@ describe('useResize', () => {
     const val = document.documentElement.style.getPropertyValue('--sidebar-width');
     expect(val).toBe('480px');
   });
+
+  it('re-binds to newly mounted DOM elements after remount without changing trigger', async () => {
+    vi.useFakeTimers();
+    createElement('sidebarResize');
+    createElement('sidebar', 300);
+
+    renderHook(() =>
+      useResize('sidebarResize', 'sidebar', 'workspace-static', {
+        min: 290,
+        max: 800,
+        mode: 'synchronized',
+        freezeContentId: 'sidebarTree',
+      }),
+    );
+
+    // Old elements are removed from DOM (e.g. switching views)
+    removeElement('sidebarResize');
+    removeElement('sidebar');
+
+    // New DOM elements are mounted with the same IDs while trigger stays identical
+    const newSidebar = createElement('sidebar', 300);
+    const newResize = createElement('sidebarResize');
+    const newTree = createElement('sidebarTree', 300);
+
+    // Allow MutationObserver microtask and scheduleBind rAF to execute
+    await Promise.resolve();
+    act(() => {
+      vi.advanceTimersByTime(32);
+    });
+
+    const raf = installAnimationFrameController();
+
+    // Drag newResize handle
+    dispatchPointer(newResize, 'pointerdown', { button: 0, clientX: 300, pointerId: 1 });
+    expect(newSidebar.classList.contains('is-resizing-shell')).toBe(true);
+    expect(newTree.classList.contains('is-resize-width-locked')).toBe(true);
+
+    // Resize wider than 480px (to 600px)
+    dispatchPointer(document, 'pointermove', { clientX: 600, pointerId: 1 });
+    act(() => {
+      raf.flush();
+    });
+
+    expect(newSidebar.style.width).toBe('600px');
+
+    dispatchPointer(document, 'pointerup', { pointerId: 1 });
+    expect(document.documentElement.style.getPropertyValue('--sidebar-width')).toBe('600px');
+    expect(localStorage.getItem('markdown-explorer-sidebar-width')).toBe('600');
+    expect(newSidebar.style.width).toBe('');
+    expect(newTree.style.width).toBe('');
+    expect(newTree.classList.contains('is-resize-width-locked')).toBe(false);
+
+    removeElement('sidebarResize');
+    removeElement('sidebar');
+    removeElement('sidebarTree');
+    vi.useRealTimers();
+  });
+
+  it('allows sidebar to be resized wider than 480px up to custom max (e.g. 650px)', () => {
+    const handle = createElement('sidebarResize');
+    const target = createElement('sidebar', 290);
+    const raf = installAnimationFrameController();
+
+    renderHook(() =>
+      useResize('sidebarResize', 'sidebar', undefined, {
+        min: 290,
+        max: 800,
+        mode: 'synchronized',
+      }),
+    );
+
+    dispatchPointer(handle, 'pointerdown', { button: 0, clientX: 290, pointerId: 1 });
+    dispatchPointer(document, 'pointermove', { clientX: 650, pointerId: 1 });
+    act(() => {
+      raf.flush();
+    });
+
+    expect(target.style.width).toBe('650px');
+
+    dispatchPointer(document, 'pointerup', { pointerId: 1 });
+    expect(document.documentElement.style.getPropertyValue('--sidebar-width')).toBe('650px');
+    expect(localStorage.getItem('markdown-explorer-sidebar-width')).toBe('650');
+
+    removeElement('sidebarResize');
+    removeElement('sidebar');
+  });
+
+  it('resolves freezeContent dynamically on pointerdown so tab switching uses current tree', () => {
+    const initialTree = createElement('sidebarTree', 290);
+
+    renderHook(() =>
+      useResize('handle', 'target', undefined, {
+        min: 290,
+        max: 800,
+        mode: 'synchronized',
+        freezeContentId: 'sidebarTree',
+      }),
+    );
+
+    // Initial drag with first tree
+    dispatchPointer(handleEl, 'pointerdown', { button: 0, clientX: 290, pointerId: 1 });
+    expect(initialTree.classList.contains('is-resize-width-locked')).toBe(true);
+    dispatchPointer(document, 'pointerup', { pointerId: 1 });
+    expect(initialTree.classList.contains('is-resize-width-locked')).toBe(false);
+
+    // User switches sidebar tab (e.g. Files -> Search -> Bookmarks), replacing sidebarTree DOM node
+    removeElement('sidebarTree');
+    const newTree = createElement('sidebarTree', 290);
+
+    // Dragging again dynamically freezes newTree instead of stale initialTree
+    dispatchPointer(handleEl, 'pointerdown', { button: 0, clientX: 290, pointerId: 1 });
+    expect(newTree.classList.contains('is-resize-width-locked')).toBe(true);
+    expect(newTree.style.width).toBe('250px');
+
+    dispatchPointer(document, 'pointerup', { pointerId: 1 });
+    expect(newTree.classList.contains('is-resize-width-locked')).toBe(false);
+    expect(newTree.style.width).toBe('');
+
+    removeElement('sidebarTree');
+  });
 });

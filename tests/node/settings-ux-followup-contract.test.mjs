@@ -11,6 +11,8 @@ const icons = read('ui/src/components/shared/icons.tsx');
 const navCss = read('ui/src/styles/global/global-settings-navigation.css');
 const layoutCss = read('ui/src/styles/global/global-settings-layout.css');
 const typographyCss = read('ui/src/styles/global/global-settings-typography.css');
+const featuresSection = read('ui/src/components/Settings/SettingsFeaturesSection.tsx');
+const featuresCss = read('ui/src/styles/global/global-settings-features.css');
 const constants = read('ui/src/contexts/appStateConstants.ts');
 const actions = read('ui/src/components/Settings/settingsActions.ts');
 const keyboardUtils = read('ui/src/hooks/keyboardUtils.ts');
@@ -42,6 +44,15 @@ test('Typography keeps its header fixed and scrolls only the font role region', 
   const typographyBlock = typographyCss.match(/\.desktop-typography-settings\s*\{([^}]*)\}/)?.[1] ?? '';
   assert.match(typographyBlock, /display:\s*flex/);
   assert.doesNotMatch(typographyBlock, /display:\s*grid/);
+});
+
+test('Features keeps its header fixed and scrolls only the feature groups region', () => {
+  assert.match(featuresSection, /settings-features-section__scroll/);
+  assert.match(settingsModal, /settings-navigation__content--features/);
+  assert.match(navCss, /settings-navigation__content--features[\s\S]*overflow:\s*hidden/);
+  assert.match(featuresCss, /settings-features-section__scroll[\s\S]*overflow-y:\s*auto/);
+  const featuresBlock = featuresCss.match(/\.settings-section-panel\.settings-features-section\s*\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(featuresBlock, /display:\s*flex/);
 });
 
 test('Settings close tooltip uses keycap shortcut and navigation uses supplied icons', () => {

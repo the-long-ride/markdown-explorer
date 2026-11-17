@@ -50,5 +50,7 @@ test('shell action sizing is fixed across themes while native window glyphs stay
   assert.match(shellCss, /\.sidebar__tab-btn\s*\{[\s\S]*?gap:\s*6px[\s\S]*?padding:\s*2px\s+7px\s+6px/);
   assert.match(shellCss, /\.sidebar__tab-btn\s+svg[\s\S]*?width:\s*var\(--shell-action-icon-size\)/);
   assert.match(shellCss, /\.window-control-btn\s+svg[\s\S]*?width:\s*var\(--shell-window-glyph-size\)/);
+  assert.match(shellCss, /\.topbar__markdown-editing[\s\S]*?height:\s*var\(--shell-action-size,\s*28px\)\s*!important/);
+  assert.match(shellCss, /\.topbar__markdown-mode-btn[\s\S]*?height:\s*calc\(var\(--shell-action-size,\s*28px\)\s*-\s*4px\)\s*!important/);
   assert.match(shellCss, /transform:\s*none\s*!important/);
 });

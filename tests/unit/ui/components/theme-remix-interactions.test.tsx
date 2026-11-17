@@ -53,7 +53,7 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
     { id: 'bento', label: 'Bento', description: 'Bento style' },
   ],
   PET_THEME_STYLE_OPTIONS: [
-    { id: 'pet-white-shiba', label: 'White Shiba', description: 'White Shiba style' },
+    { id: 'pet-white-shiba', label: 'Nika', description: 'Nika style' },
   ],
   DEFAULT_PET_THEME_STYLE: 'pet-white-shiba',
   isPetThemeStyle: (value: string) => value.startsWith('pet-'),
@@ -94,7 +94,7 @@ vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/*.png', () => ({
   default: 'pet-image.png',
 }), { virtual: true });
 
-vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/white-shiba-happy.png', () => ({ default: 'ws.png' }));
+vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/nika-happy.png', () => ({ default: 'ws.png' }));
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/shiba-happy.png', () => ({ default: 's.png' }));
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/shiba-memes-happy.png', () => ({ default: 'bs.png' }));
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/k-ink-wolf.png', () => ({ default: 'ki.png' }));
@@ -161,7 +161,7 @@ describe('ThemeRemixModal interactions', () => {
       makeTheme({ id: 't2', name: 'Theme Two' }),
     ];
     const { container } = render(<ThemeRemixModal isOpen={true} onClose={() => {}} />);
-    fireEvent.click(screen.getByTitle('Theme Two').closest('button')!);
+    fireEvent.click(screen.getByText('Theme Two').closest('button')!);
     const item = container.querySelector('.theme-remix-list__item.is-selected');
     expect(item).toHaveTextContent('Theme Two');
   });

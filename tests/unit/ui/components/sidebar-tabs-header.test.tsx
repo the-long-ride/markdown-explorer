@@ -27,5 +27,36 @@ describe('SidebarTabsHeader tooltips', () => {
       expect(button).toHaveClass('tooltip-container');
       expect(button.querySelector('.tooltip-text')).toHaveTextContent(label);
     }
+    expect(screen.getByRole('button', { name: 'Files' })).toHaveAttribute('data-tooltip-align', 'left');
+    expect(screen.getByRole('button', { name: 'Search' })).toHaveAttribute('data-tooltip-align', 'center');
+    expect(screen.getByRole('button', { name: 'History' })).toHaveAttribute('data-tooltip-align', 'right');
+  });
+
+  it('renders keyboard shortcut keycaps in Search and Bookmarks tab tooltips when bound', () => {
+    const tabsWithShortcuts = [
+      { id: 'files', label: 'Files', icon: <span aria-hidden="true">F</span>, count: 12 },
+      { id: 'search', label: 'Search', icon: <span aria-hidden="true">S</span>, shortcut: 'Ctrl+K' },
+      { id: 'bookmarks', label: 'Bookmarks', icon: <span aria-hidden="true">B</span>, shortcut: 'Alt+Shift+B' },
+    ] as any;
+
+    render(
+      <SidebarTabsHeader
+        activeTab="files"
+        tabs={tabsWithShortcuts}
+        searchStatus={idleStatus}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    const searchTip = screen.getByRole('button', { name: 'Search' }).querySelector('.tooltip-text');
+    expect(searchTip).toHaveTextContent('Search');
+    expect(searchTip).toHaveTextContent('Ctrl');
+    expect(searchTip).toHaveTextContent('K');
+
+    const bookmarksTip = screen.getByRole('button', { name: 'Bookmarks' }).querySelector('.tooltip-text');
+    expect(bookmarksTip).toHaveTextContent('Bookmarks');
+    expect(bookmarksTip).toHaveTextContent('Alt');
+    expect(bookmarksTip).toHaveTextContent('Shift');
+    expect(bookmarksTip).toHaveTextContent('B');
   });
 });

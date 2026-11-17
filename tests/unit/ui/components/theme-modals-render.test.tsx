@@ -58,10 +58,11 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
     { id: 'vercel', label: 'Vercel', description: 'Vercel style' },
     { id: 'tokyo-night', label: 'Tokyo Night', description: 'Tokyo style' },
     { id: 'neon-voltage', label: 'Neon Voltage', description: 'Neon style' },
+    { id: 'cyberpunk', label: 'Cyberpunk', description: 'Cyberpunk style' },
     { id: 'raw-grid', label: 'Default', description: 'Raw style' },
   ],
   PET_THEME_STYLE_OPTIONS: [
-    { id: 'pet-white-shiba', label: 'White Shiba', description: 'White Shiba style' },
+    { id: 'pet-white-shiba', label: 'Nika', description: 'Nika style' },
   ],
   DEFAULT_PET_THEME_STYLE: 'pet-white-shiba',
   isPetThemeStyle: (value: string) => value.startsWith('pet-'),
@@ -95,8 +96,8 @@ vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
         petsDesc: 'Pets style',
         petsMenuLabel: 'Pet themes',
         choosePetTheme: 'Choose pet theme',
-        whiteShibaLabel: 'White Shiba',
-        kInkLabel: "K-Ink (app author's dog)",
+        whiteShibaLabel: 'Nika',
+        kInkLabel: 'K-Ink',
         catLabel: 'Cat',
         hamsterLabel: 'Hamster',
         corgiLabel: 'Corgi',
@@ -124,7 +125,7 @@ vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/*.png', () => ({
   default: 'pet-image.png',
 }), { virtual: true });
 
-vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/white-shiba-happy.png', () => ({ default: 'ws.png' }));
+vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/nika-happy.png', () => ({ default: 'ws.png' }));
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/shiba-happy.png', () => ({ default: 's.png' }));
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/shiba-memes-happy.png', () => ({ default: 'bs.png' }));
 vi.mock('../../../../ui/src/assets/themes/pets/backgrounds/k-ink-wolf.png', () => ({ default: 'ki.png' }));
@@ -412,9 +413,10 @@ describe('ThemeStylePicker', () => {
     fireEvent.click(screen.getByRole('button', { name: /Explorer Classic/i }));
     const listbox = screen.getByRole('listbox', { name: 'Built-in themes' });
     expect(listbox).toBeInTheDocument();
-    expect(screen.getAllByRole('option')).toHaveLength(6);
+    expect(screen.getAllByRole('option')).toHaveLength(7);
     expect(screen.queryByRole('option', { name: /Aurora Glass/i })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: /Neon Voltage/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Cyberpunk/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /Default/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /Explorer Classic/i })).toBeInTheDocument();
   });
@@ -438,7 +440,7 @@ describe('ThemeStylePicker', () => {
     const petSelect = screen.getAllByRole('button').find((button) => button.className.includes('pet-theme-select'));
     fireEvent.click(petSelect!);
     expect(screen.getByRole('listbox', { name: 'Pet themes' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('option', { name: 'White Shiba' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Nika' }));
     expect(onChange).toHaveBeenCalledWith('pet-white-shiba');
   });
 

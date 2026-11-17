@@ -152,4 +152,77 @@ describe('SidebarItemMenu', () => {
     const historyItem = items.find((item) => item.id === 'history');
     expect(historyItem).toBeUndefined();
   });
+  it('builds copy-relative-path and copy-full-path menu items for file targets', () => {
+    const copyToClipboard = vi.fn();
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    const items = buildSidebarItemMenuItems({
+      state: {
+        workspacePath: '/repo',
+        hostPlatform: 'linux',
+        fileList: [{ fsPath: '/repo/docs/guide.md', relativePath: 'docs/guide.md' }],
+        settings: { language: 'en' },
+      } as any,
+      target: { kind: 'file', path: '/repo/docs/guide.md', anchor: null as any },
+      canOpenHtmlInBrowser: false,
+      canOpenItemLocations: false,
+      translations: getTranslations('en'),
+      bridge: { copyToClipboard } as any,
+      navigate: vi.fn(),
+      isPinned: false,
+      pinLimitReached: false,
+      onTogglePin: vi.fn(),
+    });
+
+    const copyRel = items.find((item) => item.id === 'copy-relative-path');
+    const copyFull = items.find((item) => item.id === 'copy-full-path');
+
+    expect(copyRel).toBeDefined();
+    expect(copyRel?.label).toBe('Copy relative path');
+    expect(copyFull).toBeDefined();
+    expect(copyFull?.label).toBe('Copy full path');
+
+    copyRel?.onSelect();
+    expect(copyToClipboard).toHaveBeenCalledWith('docs/guide.md');
+
+    copyFull?.onSelect();
+    expect(copyToClipboard).toHaveBeenCalledWith('/repo/docs/guide.md');
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'markdown-explorer-action-notice', detail: 'Copied!' }),
+    );
+    dispatchSpy.mockRestore();
+  });
+
+  it('builds copy-relative-path and copy-full-path menu items for folder targets', () => {
+    const copyToClipboard = vi.fn();
+    const items = buildSidebarItemMenuItems({
+      state: {
+        workspacePath: '/repo',
+        hostPlatform: 'linux',
+        fileList: [],
+        settings: { language: 'en' },
+      } as any,
+      target: { kind: 'folder', path: 'docs/sub', anchor: null as any },
+      canOpenHtmlInBrowser: false,
+      canOpenItemLocations: false,
+      translations: getTranslations('en'),
+      bridge: { copyToClipboard } as any,
+      navigate: vi.fn(),
+      isPinned: false,
+      pinLimitReached: false,
+      onTogglePin: vi.fn(),
+    });
+
+    const copyRel = items.find((item) => item.id === 'copy-relative-path');
+    const copyFull = items.find((item) => item.id === 'copy-full-path');
+
+    expect(copyRel).toBeDefined();
+    expect(copyFull).toBeDefined();
+
+    copyRel?.onSelect();
+    expect(copyToClipboard).toHaveBeenCalledWith('docs/sub');
+
+    copyFull?.onSelect();
+    expect(copyToClipboard).toHaveBeenCalledWith('/repo/docs/sub');
+  });
 });

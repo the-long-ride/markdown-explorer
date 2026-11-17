@@ -65,17 +65,16 @@ test('workspace unavailable screen uses translations and the tab-scoped reopen c
 });
 
 test('workspace recovery removes the old recent entry only after a replacement opens', async () => {
-  const [hook, electron, website, chromium, tauri] = await Promise.all([
+  const [hook, electron, website, tauri] = await Promise.all([
     read('ui/src/hooks/useDesktopTabs.ts'),
     read('electron/core/runtime-command-handlers.js'),
     read('website-app/src/web-host.ts'),
-    read('chromium-xtension/src/chrome-host.ts'),
     read('tauri/src/dispatcher/commands.rs'),
   ]);
   assert.match(hook, /pendingWorkspaceReplacementRef/);
   assert.match(hook, /workspaceOpenCancelled/);
   assert.match(hook, /pendingWorkspaceReplacementRef\.current = null/);
-  for (const [name, source] of Object.entries({ electron, website, chromium, tauri })) {
+  for (const [name, source] of Object.entries({ electron, website, tauri })) {
     assert.ok(source.includes('replaceRecentWorkspacePath'), `${name} replacement path support missing`);
     assert.ok(source.includes('workspaceOpenCancelled'), `${name} picker-cancel message missing`);
     assert.ok(
@@ -187,18 +186,13 @@ test('resetting to an empty workspace clears scan progress immediately', async (
 });
 
 test('browser workspace replacement rechecks operation ownership after removing the old recent entry', async () => {
-  const [website, chromium] = await Promise.all([
-    read('website-app/src/web-host.ts'),
-    read('chromium-xtension/src/chrome-host.ts'),
-  ]);
-  for (const [name, source] of Object.entries({ website, chromium })) {
-    const replacement = source.match(/if \(msg\.replaceRecentWorkspacePath[\s\S]*?BrowserRecentWorkspaces\.remove\(msg\.replaceRecentWorkspacePath\);([\s\S]*?)(?:activeHandle = handle|await loadHandleWorkspace\(handle)/)?.[1] ?? '';
-    assert.match(
-      replacement,
-      /(?:isWorkspaceOperationCurrent\(operation\)|workspaceOperation\.isCurrent\(operation\))/,
-      `${name} must reject a stale replacement operation after the async recent-workspace removal`,
-    );
-  }
+  const website = await read('website-app/src/web-host.ts');
+  const replacement = website.match(/if \(msg\.replaceRecentWorkspacePath[\s\S]*?BrowserRecentWorkspaces\.remove\(msg\.replaceRecentWorkspacePath\);([\s\S]*?)(?:activeHandle = handle|await loadHandleWorkspace\(handle)/)?.[1] ?? '';
+  assert.match(
+    replacement,
+    /(?:isWorkspaceOperationCurrent\(operation\)|workspaceOperation\.isCurrent\(operation\))/,
+    'website must reject a stale replacement operation after the async recent-workspace removal',
+  );
 });
 
 test('CSV preview does not clip interactive table menus', async () => {

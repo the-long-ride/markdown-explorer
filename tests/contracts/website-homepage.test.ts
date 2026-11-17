@@ -21,7 +21,7 @@ describe('website homepage positioning', () => {
     const html = read('website/index.html');
 
     expect(html).toMatch(
-      /class="button primary hero-primary-cta"[\s\S]*?href="app\/\?mode=file"/,
+      /class="button primary hero-primary-cta"[\s\S]*?href="app\/\?mode=web"/,
     );
     expect(html).toContain('data-i18n="heroTryFile"');
     expect(html).toContain('data-i18n="heroExploreDemo"');
@@ -120,5 +120,18 @@ describe('website homepage positioning', () => {
     expect(rendering).toContain('activeVersion');
     expect(read('website/i18n/en.js')).toContain('Get Markdown Explorer - Current version - <span data-version-text>');
     expect(rendering).not.toContain('download-button-version');
+  });
+
+  test('exposes the features/ demo studio link and #video-demo YouTube placeholder', () => {
+    for (const filePath of ['website/index.html', 'website/landing.html']) {
+      const html = read(filePath);
+      expect(html).toContain('href="features/"');
+      expect(html).toContain('id="video-demo"');
+      expect(html).toContain('data-youtube-placeholder');
+    }
+
+    const english = read('website/i18n/en.js');
+    expect(english).toContain('nav_features_demo:');
+    expect(english).toContain('video_demo_title:');
   });
 });

@@ -106,4 +106,16 @@ describe('Workspace Insights persisted settings UI', () => {
     await user.click(screen.getAllByRole('button', { name: INSIGHTS_TRANSLATIONS.en.suppress })[0]);
     expect(lintChange).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ scope: 'finding' })]));
   });
+
+  it("renders SVG icons for all setting items and lint rules", async () => {
+    const user = userEvent.setup();
+    const settings = normalizeInsightsSettings({});
+    const { container } = render(<WorkspaceInsightsPanel session={session()} settings={settings} onSettingsChange={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: `${INSIGHTS_TRANSLATIONS.en.entry} ${INSIGHTS_TRANSLATIONS.en.settings}` }));
+    const settingIcons = container.querySelectorAll(".workspace-insights__setting-icon");
+    expect(settingIcons.length).toBeGreaterThan(10);
+    for (const icon of settingIcons) {
+      expect(icon.querySelector("svg")).toBeTruthy();
+    }
+  });
 });

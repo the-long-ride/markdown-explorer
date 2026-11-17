@@ -37,7 +37,6 @@ import {
   TABLE_MIN_WRAPPED_COLUMN_CHARS,
 } from '../../ui/src/constants/limits.ts';
 import {
-  CHROMIUM_APP_STATE_STORAGE_KEY,
   DESKTOP_TABS_STORAGE_KEY,
   ELECTRON_APP_STATE_STORAGE_KEY,
   SETTINGS_EXPORT_KIND,
@@ -99,7 +98,6 @@ test('product limits match the active limits catalog', () => {
 
 test('persistent storage identifiers remain stable', () => {
   assert.equal(ELECTRON_APP_STATE_STORAGE_KEY, 'markdown-explorer-ui-state');
-  assert.equal(CHROMIUM_APP_STATE_STORAGE_KEY, 'markdown-explorer-chrome-state');
   assert.equal(WEB_APP_STATE_STORAGE_KEY, 'markdown-explorer-web-state');
   assert.equal(TERMS_ACCEPTED_STORAGE_KEY, 'markdown-explorer-terms-accepted');
   assert.equal(THEME_ONBOARDING_COMPLETE_STORAGE_KEY, 'markdown-explorer-theme-onboarding-complete');

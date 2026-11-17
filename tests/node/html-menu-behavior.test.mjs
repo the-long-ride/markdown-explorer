@@ -83,5 +83,5 @@ test('local HTML files can open in the system browser outside web and PWA runtim
   assert.equal(supportsLocalFileBrowserOpen('desktop'), true);
   assert.equal(supportsLocalFileBrowserOpen('tauri'), true);
   assert.equal(supportsLocalFileBrowserOpen('vscode'), true);
-  assert.equal(supportsLocalFileBrowserOpen('chrome'), false);
+  assert.equal(supportsLocalFileBrowserOpen('web'), false);
 });
