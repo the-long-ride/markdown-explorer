@@ -149,3 +149,8 @@
   color: var(--tx);
   font-weight: 600;
 }
+
+/* Apply top breathing room on the document surface instead of .content__scroll so sticky top:0 bars sit flush with the scrollport top. */
+:where(.content__scroll:not(.content__scroll--plain-edit):not(.content__scroll--html-preview)) > .mdn-body:not(.mdn-body--html-preview) {
+  padding-top: calc(var(--content-pad-x) * 0.35);
+}

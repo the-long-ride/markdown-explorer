@@ -270,6 +270,7 @@ export const coverageManifest: Record<string, string[]> = {
   'website-app/src/features/demoBusHost.ts': ['tests/contracts/website-features-demo.test.ts'],
   'website-app/src/features/demoCatalog.ts': ['tests/unit/website/features-demo-catalog.test.ts'],
   'website-app/src/features/demoGitFixtures.ts': ['tests/unit/website/features-demo-catalog.test.ts'],
+  'website-app/src/features/demoHtmlSandboxFixture.ts': ['tests/unit/website/features-demo-catalog.test.ts'],
   'website-app/src/features/demoInsightsFixture.ts': ['tests/unit/website/features-demo-catalog.test.ts'],
   'website-app/src/features/demoMarkdownFixtures.ts': ['tests/unit/website/features-demo-catalog.test.ts'],
   'website-app/src/file-access.ts': ['tests/unit/website/file-access.test.ts', 'tests/unit/website/file-access-write.test.ts'],

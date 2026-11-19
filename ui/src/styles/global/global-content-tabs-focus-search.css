@@ -165,10 +165,6 @@
   padding: 0 var(--content-pad-x) 20px;
   max-width: 100%; width: 100%; margin: 0 auto;
 }
-/* Apply top breathing room on the document surface instead of the scroll container so sticky top:0 bars sit flush with the scrollport top. */
-:where(.content__scroll:not(.content__scroll--plain-edit):not(.content__scroll--html-preview)) > .mdn-body:not(.mdn-body--html-preview) {
-  padding-top: calc(var(--content-pad-x) * 0.35);
-}
 .content__scroll::-webkit-scrollbar { width: 5px; }
 .content__scroll::-webkit-scrollbar-thumb { background: var(--bd-s); border-radius: var(--r-s, var(--r)); }
 .content__inner:has(> .state-screen),
