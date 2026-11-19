@@ -38,6 +38,11 @@ describe('website interactive feature demo studio contracts', () => {
     expect(studioApp).toContain('installDemoBusHost');
     expect(studioApp).toContain('PlatformProvider');
     expect(studioApp).toContain('AppStateProvider');
+    expect(studioApp).toContain("from '../../../ui/src/components/shared/CustomSelect'");
+    expect(studioApp).toContain('<CustomSelect');
+    expect(studioApp).not.toMatch(/<select\b/);
+    expect(authoring).not.toMatch(/<select\b/);
+    expect(insightsAndDiff).not.toMatch(/<select\b/);
     expect(studioApp).toContain("'pet-k-ink'");
     expect(studioApp).toContain("'pet-white-shiba'");
 
@@ -140,7 +145,7 @@ describe('website interactive feature demo studio contracts', () => {
 
     const spotlightIframes = landingHtml.match(/data-spotlight-iframe="/g) ?? [];
     expect(spotlightIframes).toHaveLength(4);
-    for (const slug of ['sidebar-toc', 'git-diff', 'tables-charts', 'insights']) {
+    for (const slug of ['sidebar-toc', 'git-diff', 'tables-charts', 'search-bookmarks']) {
       expect(landingHtml).toContain(`src="app/features/?embed=1&feature=${slug}"`);
       expect(landingHtml).toContain(`href="features/?feature=${slug}"`);
     }
@@ -150,13 +155,27 @@ describe('website interactive feature demo studio contracts', () => {
     expect(landingHtml).toContain('data-youtube-placeholder');
   });
 
-  test('exposes features/ link and YouTube placeholder on index.html and sitemap.xml', () => {
+  test('removes ?landing=1 page links and exposes landing.html + features/ in sitemap.xml', () => {
     const indexHtml = read('website/index.html');
+    const landingHtml = read('website/landing.html');
+    const siteFeaturesHtml = read('website/features/index.html');
+    const studioApp = read('website-app/src/features/FeaturesStudioApp.tsx');
+    const llmTxt = read('website/llm.txt');
     const sitemap = read('website/sitemap.xml');
 
-    expect(indexHtml).toContain('href="features/"');
-    expect(indexHtml).toContain('id="video-demo"');
-    expect(indexHtml).toContain('data-youtube-placeholder');
+    expect(indexHtml).not.toContain('landing=1');
+    expect(siteFeaturesHtml).not.toContain('landing=1');
+    expect(studioApp).not.toContain('landing=1');
+    expect(llmTxt).not.toContain('landing=1');
+
+    expect(siteFeaturesHtml).not.toContain('features-fallback-bar');
+    expect(studioApp).not.toContain('feature-highlights-bar');
+    expect(siteFeaturesHtml).toContain('href="../landing.html"');
+    expect(studioApp).toContain('href="/markdown-explorer/landing.html"');
+    expect(landingHtml).toContain('href="features/" data-i18n="navFeatures"');
+    expect(landingHtml).toContain('id="video-demo"');
+    expect(landingHtml).toContain('data-youtube-placeholder');
+    expect(sitemap).toContain('/markdown-explorer/landing.html');
     expect(sitemap).toContain('/markdown-explorer/features/');
   });
 });

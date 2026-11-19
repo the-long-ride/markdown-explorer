@@ -100,7 +100,6 @@ export function WorkspaceAndNavStage({
 
   const [homeSubView, setHomeSubView] = useState<'selection' | 'welcome'>('selection');
   const [workspaceAliases, setWorkspaceAliases] = useState<Record<string, string>>({});
-  const [statusNotice, setStatusNotice] = useState<string>('');
   const [scopeModalOpen, setScopeModalOpen] = useState(false);
   const [mediaGallery, setMediaGallery] = useState<MediaGallery | null>(null);
 
@@ -153,7 +152,6 @@ export function WorkspaceAndNavStage({
     (bookmark: BookmarkRecord) => {
       navigate(bookmark.filePath);
       onSelectDoc(bookmark.filePath);
-      setStatusNotice(`Jumped to bookmark "${bookmark.name}" (${bookmark.filePath})`);
     },
     [navigate, onSelectDoc],
   );
@@ -164,22 +162,17 @@ export function WorkspaceAndNavStage({
       type: 'createVirtualWorkspace',
       name: 'virtual-scratchpad',
     });
-    setStatusNotice('Switched to virtual scratchpad workspace (in-memory demo)');
   }, [bridge]);
 
   const handleResetDemoWorkspace = useCallback(() => {
     bridge.postMessage({ command: 'openFolder', openFirstFile: true });
     onSelectDoc('docs/architecture-overview.md');
-    setStatusNotice(`Opened ${DEMO_WORKSPACE_NAME}`);
   }, [bridge, onSelectDoc]);
 
   const recentsList =
     state.recentWorkspaces.length > 0 ? state.recentWorkspaces : DEMO_RECENT_WORKSPACES;
 
   if (mode === 'workspace-home') {
-    const activeWorkspaceLabel = state.workspaceName || DEMO_WORKSPACE_NAME;
-    const activeDocLabel = state.currentFile || activeDocPath;
-
     return (
       <div className="demo-workspace-home-stage" data-testid="demo-workspace-home-stage">
         <div className="demo-stage-bar demo-stage-bar--wrap">
@@ -191,7 +184,7 @@ export function WorkspaceAndNavStage({
               data-testid="home-subview-selection"
               onClick={() => setHomeSubView('selection')}
             >
-              Workspace Selection ({recentsList.length} recents)
+              Workspaces ({recentsList.length})
             </button>
             <button
               type="button"
@@ -200,37 +193,28 @@ export function WorkspaceAndNavStage({
               data-testid="home-subview-welcome"
               onClick={() => setHomeSubView('welcome')}
             >
-              Welcome Launchpad &amp; Guide
+              Welcome
             </button>
           </div>
 
           <div className="demo-stage-bar__actions">
-            <span className="demo-stage-bar__label">
-              Active: <strong>{activeWorkspaceLabel}</strong> ({activeDocLabel})
-            </span>
             <button
               type="button"
               className="demo-pill-btn"
               data-testid="demo-trigger-virtual-workspace"
               onClick={handleCreateVirtual}
             >
-              + New Virtual Workspace
+              + Virtual
             </button>
             <button
               type="button"
               className="demo-pill-btn"
               onClick={handleResetDemoWorkspace}
             >
-              Open Demo Doc
+              Reset
             </button>
           </div>
         </div>
-
-        {statusNotice && (
-          <div className="demo-stage-bar demo-stage-bar--notice" role="status">
-            <span className="demo-stage-bar__label">{statusNotice}</span>
-          </div>
-        )}
 
         <div className="demo-stage-content-host demo-workspace-home-host">
           {homeSubView === 'selection' ? (
@@ -261,7 +245,6 @@ export function WorkspaceAndNavStage({
     <div className="demo-sidebar-toc-stage" data-testid="demo-sidebar-toc-stage">
       <div className="demo-stage-bar demo-stage-bar--wrap">
         <div className="demo-doc-pills" role="group" aria-label="Sidebar tabs">
-          <span className="demo-stage-bar__label">Sidebar Tab:</span>
           {(['files', 'search', 'bookmarks'] as const).map((tab) => (
             <button
               key={tab}
@@ -270,7 +253,7 @@ export function WorkspaceAndNavStage({
               aria-pressed={state.sidebarActiveTab === tab}
               onClick={() => setSidebarActiveTab(tab)}
             >
-              {tab === 'files' ? 'Files & Scope' : tab === 'search' ? 'Search' : 'Bookmarks'}
+              {tab === 'files' ? 'Files' : tab === 'search' ? 'Search' : 'Bookmarks'}
             </button>
           ))}
         </div>
@@ -282,16 +265,10 @@ export function WorkspaceAndNavStage({
             data-testid="open-scope-view-btn"
             onClick={() => setScopeModalOpen(true)}
           >
-            Open Scope View Modal ({scopeFiles.length} docs)
+            Scope View ({scopeFiles.length})
           </button>
         </div>
       </div>
-
-      {statusNotice && (
-        <div className="demo-stage-bar demo-stage-bar--notice" role="status">
-          <span className="demo-stage-bar__label">{statusNotice}</span>
-        </div>
-      )}
 
       <div className="body demo-sidebar-toc-body">
         <Sidebar

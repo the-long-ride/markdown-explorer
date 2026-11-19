@@ -21,8 +21,8 @@ describe("website landing and tauri download contracts", () => {
     assert.ok(html.includes('id="faq"'), "landing.html must contain #faq");
   });
 
-  it("prioritizes and highlights Tauri builds in download section of landing.html and index.html", async () => {
-    for (const filePath of ["website/landing.html", "website/index.html"]) {
+  it("prioritizes and highlights Tauri builds in download section of landing.html", async () => {
+    for (const filePath of ["website/landing.html"]) {
       const html = await readProjectFile(filePath);
 
       // Windows
@@ -89,7 +89,7 @@ describe("website landing and tauri download contracts", () => {
     }
   });
 
-  it("ensures website/index.html redirects default root visits to app/?mode=web", async () => {
+  it("ensures website/index.html redirects default root visits to app/?mode=web without ?landing=1", async () => {
     const html = await readProjectFile("website/index.html");
 
     assert.ok(
@@ -101,8 +101,12 @@ describe("website landing and tauri download contracts", () => {
       "index.html must include redirection script for root visits",
     );
     assert.ok(
-      html.includes("landing=1") || html.includes("landing"),
-      "index.html must bypass redirect when landing parameter is present",
+      !html.includes("landing=1"),
+      "index.html must not serve or check deprecated ?landing=1 page parameter",
+    );
+    assert.ok(
+      html.includes("landing.html"),
+      "index.html must route section anchors cleanly to landing.html",
     );
   });
 

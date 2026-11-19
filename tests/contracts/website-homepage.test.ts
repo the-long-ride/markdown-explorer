@@ -8,7 +8,7 @@ const read = (relativePath: string) =>
 
 describe('website homepage positioning', () => {
   test('leads with the human benefit instead of a feature inventory', () => {
-    const html = read('website/index.html');
+    const html = read('website/landing.html');
     const english = read('website/i18n/en.js');
 
     expect(html).toContain('id="hero-title"');
@@ -18,7 +18,7 @@ describe('website homepage positioning', () => {
   });
 
   test('puts the zero-install browser experience first', () => {
-    const html = read('website/index.html');
+    const html = read('website/landing.html');
 
     expect(html).toMatch(
       /class="button primary hero-primary-cta"[\s\S]*?href="app\/\?mode=web"/,
@@ -27,18 +27,19 @@ describe('website homepage positioning', () => {
     expect(html).toContain('data-i18n="heroExploreDemo"');
   });
 
-  test('shows the real product and concise trust proof above the fold', () => {
-    const html = read('website/index.html');
+  test('shows the live interactive demo and concise trust proof above the fold', () => {
+    const html = read('website/landing.html');
 
-    expect(html).toContain('class="hero-product-preview"');
-    expect(html).toContain('media/demo/Homepage.png');
+    expect(html).toContain('class="hero-product-preview hero-demo-frame"');
+    expect(html).toContain('id="hero-demo-iframe"');
+    expect(html).toContain('src="app/features/?embed=1&feature=workspace"');
     expect(html).toContain('data-i18n="heroProofPrivate"');
     expect(html).toContain('data-i18n="heroProofOpen"');
     expect(html).toContain('data-i18n="heroProofEverywhere"');
   });
 
   test('links to the donate page from the header and footer', () => {
-    const html = read('website/index.html');
+    const html = read('website/landing.html');
     const donateUrl = 'https://github.com/the-long-ride#donate';
     const headerControls = html.match(
       /<div class="header-controls">[\s\S]*?id="lang-btn"/,
@@ -85,18 +86,15 @@ describe('website homepage positioning', () => {
     expect(responsive).toContain('.hero-product-preview');
   });
 
-  test('documents the latest HTML, data, workspace, and store work with screenshots', () => {
-    const html = read('website/index.html');
+  test('documents HTML, data, workspace, and store support on landing page and README', () => {
+    const html = read('website/landing.html');
     const english = read('website/i18n/en.js');
     const readme = read('README.md');
 
-    expect(html).toContain('data-i18n="latestHtmlTitle"');
-    expect(html).toContain('data-i18n="latestDataTitle"');
-    expect(html).toContain('data-i18n="latestWorkspaceTitle"');
-    expect(html).toContain('data-i18n="latestStoresTitle"');
-    expect(html).toContain('Supported-HTML-File-Preview.png');
-    expect(html).toContain('chart-for datatable-and-CSV-TSV_2.png');
-    expect(html).toContain('VS-Code-style-mutli-workspace-multi-document-tabs.png');
+    expect(html).toContain('data-spotlight-iframe="read"');
+    expect(html).toContain('data-spotlight-iframe="write"');
+    expect(html).toContain('data-spotlight-iframe="data"');
+    expect(html).toContain('data-spotlight-iframe="search"');
     expect(english).toContain('Run Markdown Explorer on Windows, macOS, and Linux.');
 
     expect(readme).toContain('## Features');
@@ -107,7 +105,7 @@ describe('website homepage positioning', () => {
   });
 
   test('queries GitHub for real version first and updates all version texts', () => {
-    const html = read('website/index.html');
+    const html = read('website/landing.html');
     const script = read('website/script.js');
     const rendering = read('website/site-download-rendering.js');
     const pkg = JSON.parse(read('package.json'));
@@ -122,16 +120,23 @@ describe('website homepage positioning', () => {
     expect(rendering).not.toContain('download-button-version');
   });
 
-  test('exposes the features/ demo studio link and #video-demo YouTube placeholder', () => {
-    for (const filePath of ['website/index.html', 'website/landing.html']) {
-      const html = read(filePath);
-      expect(html).toContain('href="features/"');
-      expect(html).toContain('id="video-demo"');
-      expect(html).toContain('data-youtube-placeholder');
-    }
+  test('routes Features nav directly to features/ without Live Component Demos duplicate link and includes #video-demo', () => {
+    const landingHtml = read('website/landing.html');
+    const headerNav = landingHtml.match(/<nav class="nav-links"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    expect(headerNav).toContain('href="features/" data-i18n="navFeatures"');
+    expect(headerNav).not.toContain('nav_features_demo');
+    expect(landingHtml).not.toContain('Live Component Demos');
+
+    expect(landingHtml).toContain('href="features/"');
+    expect(landingHtml).toContain('id="video-demo"');
+    expect(landingHtml).toContain('data-youtube-placeholder');
+
+    const indexHtml = read('website/index.html');
+    expect(indexHtml).toContain('app/?mode=web');
+    expect(indexHtml).not.toContain('landing=1');
 
     const english = read('website/i18n/en.js');
-    expect(english).toContain('nav_features_demo:');
+    expect(english).toContain('heroFeaturesDemoCta:');
     expect(english).toContain('video_demo_title:');
   });
 });

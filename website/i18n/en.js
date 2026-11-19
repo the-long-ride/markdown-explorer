@@ -343,7 +343,7 @@ window.LANGS.en = {
     trustOfflineTitle: "Offline & Air-Gapped",
     trustOfflineBody: "Full Markdown, Mermaid, math, and office previews without internet.",
     trustLanguagesTitle: "9 UI Languages", trustLanguagesBody: "EN · VI · FR · ES · ZH · NO · JA · KO · RU",
-    nav_features_demo: "Live Component Demos", heroFeaturesDemoCta: "Live Component Demos", heroStudioPill: "Open Full Component Demo Studio with Sidebar Nav ↗", spotlightOpenStudio: "Open in Interactive Demo Studio ↗",
+    heroFeaturesDemoCta: "Explore Features", heroStudioPill: "Open Features Studio ↗", spotlightOpenStudio: "Open Features Studio ↗",
     video_demo_eyebrow: "01.5 / VIDEO WALKTHROUGH", video_demo_title: "Watch the Full App Walkthrough", video_demo_badge: "YouTube App Demo — Embed Placeholder", video_demo_play_btn: "Preview Video Slot", video_demo_studio_cta: "Open Interactive Component Studio ↗",
     video_demo_subtitle: "See how Markdown Explorer turns local folders into a fast, private workspace with synchronized split editing, Git diffs, charts, and workspace insights.",
     video_demo_placeholder_title: "Full Walkthrough Video Coming Soon", video_demo_placeholder_copy: "This 16:9 cinema slot is pre-wired for the official YouTube walkthrough. While the recording is being finalized, explore the live interactive components above or launch the full demo studio.", video_demo_preview_note: "Official YouTube video ID is queued (coming-soon). Jump straight into any live component in the studio:",

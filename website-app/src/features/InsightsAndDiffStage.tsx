@@ -12,6 +12,7 @@ import { RepositoryHistoryPanel } from '../../../ui/src/components/History/Repos
 import { WorkspaceInsightsPanel } from '../../../ui/src/components/Insights/WorkspaceInsightsPanel';
 import { MediaModal } from '../../../ui/src/components/Modal/MediaModal';
 import type { MediaGallery } from '../../../ui/src/components/Modal/mediaGallery';
+import { CustomSelect } from '../../../ui/src/components/shared/CustomSelect';
 import { AppStateContext } from '../../../ui/src/contexts/AppStateContext';
 import { useHistory } from '../../../ui/src/contexts/HistoryContext';
 import { usePlatform } from '../../../ui/src/contexts/PlatformContext';
@@ -30,15 +31,6 @@ export interface InsightsAndDiffStageProps {
 }
 
 type GitSubMode = 'diff' | 'file-history' | 'repo-history';
-
-const INSIGHTS_QUICK_TABS: readonly { key: WorkspaceInsightsTabKey; label: string }[] = [
-  { key: 'gallery', label: 'Media Library' },
-  { key: 'links', label: 'Links & Backlinks' },
-  { key: 'lint', label: 'Link Lint' },
-  { key: 'duplicates', label: 'Duplicates' },
-  { key: 'graph', label: 'Link Graph' },
-  { key: 'related', label: 'Related Docs' },
-] as const;
 
 const HISTORY_TARGET_FILES = [
   { path: 'docs/release-playbook.md', label: 'Release Playbook' },
@@ -74,7 +66,7 @@ function GitDiffAndHistoryStage({
             data-testid="git-submode-diff"
             onClick={() => setGitSubMode('diff')}
           >
-            Myers Document Diff
+            Diff
           </button>
           <button
             type="button"
@@ -83,7 +75,7 @@ function GitDiffAndHistoryStage({
             data-testid="git-submode-file-history"
             onClick={() => setGitSubMode('file-history')}
           >
-            Commit Timeline Modal
+            History
           </button>
           <button
             type="button"
@@ -92,30 +84,25 @@ function GitDiffAndHistoryStage({
             data-testid="git-submode-repo-history"
             onClick={() => setGitSubMode('repo-history')}
           >
-            Repository Commit Graph
+            Repo Graph
           </button>
         </div>
 
         <div className="demo-stage-bar__actions">
           {gitSubMode === 'diff' ? (
             <span className="demo-stage-bar__label">
-              Comparing <strong>docs/release-playbook.md</strong> — <code>3b18e04</code> vs <code>7f4a92c</code>
+              <code>3b18e04</code> → <code>7f4a92c</code>
             </span>
           ) : (
             <label className="feature-theme-picker">
-              <span className="feature-theme-picker__label">File:</span>
-              <select
+              <span className="feature-theme-picker__label">File</span>
+              <CustomSelect
                 className="feature-theme-select"
                 aria-label="Commit history file"
                 value={historyFilePath}
-                onChange={(event) => setHistoryFilePath(event.target.value)}
-              >
-                {HISTORY_TARGET_FILES.map((item) => (
-                  <option key={item.path} value={item.path}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
+                options={HISTORY_TARGET_FILES.map((item) => ({ value: item.path, label: item.label }))}
+                onChange={(nextPath) => setHistoryFilePath(nextPath)}
+              />
             </label>
           )}
         </div>
@@ -141,15 +128,7 @@ function GitDiffAndHistoryStage({
               ) : (
                 <div className="demo-capability-card">
                   <div className="demo-capability-card__head">
-                    <div>
-                      <span className="demo-capability-card__eyebrow">Revision Snapshot</span>
-                      <h3 className="demo-capability-card__title">Browse Any Historical Commit</h3>
-                    </div>
-                  </div>
-                  <div className="demo-capability-card__body">
-                    <p className="demo-capability-card__copy">
-                      Click any commit row in the Git Commit Graph on the left to inspect its file tree, then select a document to render that exact historical revision here.
-                    </p>
+                    <h3 className="demo-capability-card__title">Select a commit</h3>
                   </div>
                 </div>
               )}
@@ -193,11 +172,9 @@ export function InsightsAndDiffStage({
   const appStateCtx = useContext(AppStateContext);
   const activeLanguage = language ?? appStateCtx?.state.settings.language ?? 'en';
   const [activeTab, setActiveTab] = useState<WorkspaceInsightsTabKey>('gallery');
-  const [statusNote, setStatusNote] = useState<string>('');
   const [localMediaGallery, setLocalMediaGallery] = useState<MediaGallery | null>(null);
 
   const handleDocJump = (path: string) => {
-    setStatusNote(`Opened ${path} in workspace`);
     onSelectDoc?.(path);
     onOpenDoc?.(path);
   };
@@ -220,35 +197,12 @@ export function InsightsAndDiffStage({
 
   return (
     <div className="demo-insights-stage" data-testid="demo-insights-stage">
-      <div className="demo-stage-bar demo-stage-bar--wrap">
-        <div className="demo-doc-pills" role="group" aria-label="Workspace insights views">
-          {INSIGHTS_QUICK_TABS.map((tab) => {
-            const active = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                className={`demo-pill-btn${active ? ' is-active' : ''}`}
-                aria-pressed={active}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-        <span className="demo-stage-bar__hint">
-          {statusNote || 'Switch across all 6 offline workspace insight views'}
-        </span>
-      </div>
-
       <div className="demo-insights-stage__panel-host">
         <WorkspaceInsightsPanel
           session={session}
           labels={labels}
           settings={DEFAULT_INSIGHTS_SETTINGS}
           onSelectPath={(path) => {
-            setStatusNote(`Jumped to ${path}`);
             onSelectDoc?.(path);
             onOpenDoc?.(path);
           }}

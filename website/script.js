@@ -30,7 +30,7 @@
       clearTimeout(switchTimer);
       html.classList.add("is-theme-switching");
       apply();
-      switchTimer = setTimeout(() => html.classList.remove("is-theme-switching"), 280);
+      switchTimer = setTimeout(() => html.classList.remove("is-theme-switching"), 680);
     });
   }
 

@@ -26,7 +26,7 @@ export interface FeatureStageRouterProps {
 const DOC_SWITCHER_ITEMS = [
   { path: 'docs/architecture-overview.md', label: 'Architecture' },
   { path: 'docs/metrics-benchmarks.md', label: 'Metrics & Charts' },
-  { path: 'docs/release-playbook.md', label: 'Release Playbook' },
+  { path: 'docs/math-latex.md', label: 'Math & LaTeX' },
   { path: 'docs/design-system-themes.md', label: 'Design System' },
 ] as const;
 
@@ -137,10 +137,6 @@ export function FeatureStageRouter({ slug, onSelectDoc }: FeatureStageRouterProp
     return (
       <div className="demo-content-stage" data-testid="demo-stage-tables-charts">
         <div className="demo-stage-bar demo-stage-bar--wrap">
-          <span className="demo-stage-bar__label">
-            Tables, CSV/TSV &amp; Chart.js: sort headers, filter columns, toggle CSV/TSV, or plot
-            charts.
-          </span>
           <div className="demo-doc-pills" role="group" aria-label="Demo documents">
             {DOC_SWITCHER_ITEMS.map((doc) => {
               const isActive = activeDocPath === doc.path;
@@ -200,7 +196,7 @@ export function FeatureStageRouter({ slug, onSelectDoc }: FeatureStageRouterProp
             className="demo-pill-btn"
             onClick={() => setHtmlModalOpen(true)}
           >
-            Open HTML Preview Modal
+            HTML Modal
           </button>
         </div>
       </div>

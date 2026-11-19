@@ -9,13 +9,13 @@ import { Content } from '../../../ui/src/components/Content/Content';
 import { SplitContent } from '../../../ui/src/components/Content/SplitContent';
 import { MediaModal } from '../../../ui/src/components/Modal/MediaModal';
 import { createMediaGallery, type MediaGallery } from '../../../ui/src/components/Modal/mediaGallery';
+import { CustomSelect } from '../../../ui/src/components/shared/CustomSelect';
 import { MarkdownEditingHeaderActions } from '../../../ui/src/components/shared/MarkdownEditingHeaderActions';
 import { useAppState } from '../../../ui/src/contexts/AppStateContext';
 import { getEditorUiTranslations } from '../../../ui/src/contexts/editorUiTranslations';
 import { usePlatform } from '../../../ui/src/contexts/PlatformContext';
 import {
   documentSessionKey,
-  isDocumentDirty,
   type MarkdownEditMode,
 } from '../../../ui/src/editor/documentSession';
 import { getEnabledShortcut } from '../../../ui/src/utils/shortcuts';
@@ -33,9 +33,9 @@ const EDITOR_DOCS = [
 ] as const;
 
 const EDITOR_MODE_OPTIONS: readonly { mode: MarkdownEditMode; label: string; testId: string }[] = [
-  { mode: 'plain', label: 'CodeMirror 6 Source', testId: 'editor-mode-plain-btn' },
-  { mode: 'inline-edit', label: 'Inline Block & Table', testId: 'editor-mode-inline-btn' },
-  { mode: 'rendered', label: 'Rendered Reader', testId: 'editor-mode-rendered-btn' },
+  { mode: 'plain', label: 'CodeMirror', testId: 'editor-mode-plain-btn' },
+  { mode: 'inline-edit', label: 'Inline Edit', testId: 'editor-mode-inline-btn' },
+  { mode: 'rendered', label: 'Reader', testId: 'editor-mode-rendered-btn' },
 ] as const;
 
 const SPLIT_SECONDARY_DOCS = [
@@ -173,25 +173,19 @@ export function AuthoringStage({ mode, activeDocPath, onSelectDoc }: AuthoringSt
       <div className="demo-content-stage" data-testid="demo-split-view-stage">
         <div className="demo-stage-bar demo-stage-bar--wrap">
           <div className="demo-stage-bar__actions">
-            <span className="demo-stage-bar__label">Secondary Pane:</span>
-            <select
+            <CustomSelect
               className="feature-theme-select"
               aria-label="Secondary pane document"
               value={secondaryDoc}
-              onChange={(event) => handleSecondaryDocChange(event.target.value)}
-            >
-              {SPLIT_SECONDARY_DOCS.map((doc) => (
-                <option key={doc.path} value={doc.path}>
-                  {doc.label}
-                </option>
-              ))}
-            </select>
+              options={SPLIT_SECONDARY_DOCS.map((doc) => ({ value: doc.path, label: doc.label }))}
+              onChange={(nextPath) => handleSecondaryDocChange(nextPath)}
+            />
             <button
               type="button"
               className="demo-pill-btn"
               onClick={() => dispatch({ type: 'SWAP_SPLIT_PANES' })}
             >
-              Swap Panes
+              Swap
             </button>
             <button
               type="button"
@@ -205,7 +199,7 @@ export function AuthoringStage({ mode, activeDocPath, onSelectDoc }: AuthoringSt
                 })
               }
             >
-              {secondaryMode === 'plain' ? 'Render Right Pane' : 'Edit Right in CodeMirror'}
+              {secondaryMode === 'plain' ? 'Render' : 'CodeMirror'}
             </button>
             <button
               type="button"
@@ -213,12 +207,9 @@ export function AuthoringStage({ mode, activeDocPath, onSelectDoc }: AuthoringSt
               aria-pressed={syncScroll}
               onClick={() => setSyncScroll((prev) => !prev)}
             >
-              {syncScroll ? 'Sync Scroll: On' : 'Sync Scroll: Off'}
+              Sync Scroll
             </button>
           </div>
-          <span className="demo-stage-bar__hint">
-            Drag center divider or switch pane modes independently
-          </span>
         </div>
 
         <div ref={splitHostRef} className="demo-stage-content-host">
@@ -235,7 +226,6 @@ export function AuthoringStage({ mode, activeDocPath, onSelectDoc }: AuthoringSt
 
   const editorT = getEditorUiTranslations(state.settings.language);
   const currentMode: MarkdownEditMode = activeSession?.mode ?? 'rendered';
-  const isDirty = activeSession ? isDocumentDirty(activeSession) : false;
 
   return (
     <div className="demo-content-stage" data-testid="demo-live-editor-stage">
@@ -290,9 +280,6 @@ export function AuthoringStage({ mode, activeDocPath, onSelectDoc }: AuthoringSt
               onSave={saveDocument}
             />
           )}
-          <span className="demo-stage-bar__hint">
-            {isDirty ? 'Unsaved edits (click Save)' : 'Synced'}
-          </span>
         </div>
       </div>
 

@@ -19,7 +19,7 @@ All scanning, indexing, parsing, rendering, and diffing happen locally on the us
 - **Documentation**: https://the-long-ride.github.io/markdown-explorer/
 - **Issues**: https://github.com/the-long-ride/markdown-explorer/issues
 - **Releases**: https://github.com/the-long-ride/markdown-explorer/releases
-- **GitHub Homepage & Web App**: https://the-long-ride.github.io/markdown-explorer/ (redirects to `app/?mode=web`; add `?landing=1` for landing page)
+- **GitHub Homepage & Web App**: https://the-long-ride.github.io/markdown-explorer/ (redirects to `app/?mode=web`; landing page at https://the-long-ride.github.io/markdown-explorer/landing.html)
 - **Web App (Local Folder, File & Virtual Workspaces)**: https://the-long-ride.github.io/markdown-explorer/app/?mode=web
 - **Web App / Demo (Example Workspace)**: https://the-long-ride.github.io/markdown-explorer/app/?mode=test
 - **Supported UI Languages**: English (`en`), Tiếng Việt (`vi`), Français (`fr`), Español (`es`), 中文 (`zh`), Norsk (`no`), 日本語 (`ja`), 한국어 (`ko`), Русский (`ru`).

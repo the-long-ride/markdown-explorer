@@ -86,9 +86,7 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [remixOpen, setRemixOpen] = useState(false);
   const [mediaGallery, setMediaGallery] = useState<MediaGallery | null>(null);
-  const [statusNote, setStatusNote] = useState(
-    'Click tabs, drag to reorder, double-click to rename alias, or test all 9 themes below.',
-  );
+  const setStatusNote = useCallback((_note: string) => undefined, []);
 
   const isDark = resolveThemeMode(state.theme) === 'dark';
 
@@ -299,24 +297,23 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
       />
 
       <div className="demo-stage-bar demo-stage-bar--wrap">
-        <span className="demo-stage-bar__label">{statusNote}</span>
         <div className="demo-stage-bar__actions">
           <button
             type="button"
             className="btn btn--primary demo-action-btn"
             onClick={() => setSettingsOpen(true)}
           >
-            Open Settings Modal
+            Settings
           </button>
           <button type="button" className="btn demo-action-btn" onClick={() => setRemixOpen(true)}>
-            Theme Remix Studio
+            Remix
           </button>
           <button
             type="button"
             className="btn demo-action-btn"
             onClick={() => requestStartUserTour()}
           >
-            Start Guided Tour
+            Tour
           </button>
           <button
             type="button"
@@ -329,7 +326,7 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
               })
             }
           >
-            {isDark ? 'Switch to Light' : 'Switch to Dark'}
+            {isDark ? 'Light' : 'Dark'}
           </button>
         </div>
       </div>
@@ -344,16 +341,10 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
               data-theme-card={opt.id}
               className={`demo-theme-card demo-theme-card--${opt.id}${active ? ' is-active' : ''}`}
               aria-pressed={active}
-              onClick={() => {
-                setThemeStyle(opt.id);
-                setStatusNote(`Applied "${opt.label}" (${opt.id}) theme style.`);
-              }}
+              onClick={() => setThemeStyle(opt.id)}
             >
               <span className="demo-theme-card__swatch" aria-hidden="true" />
-              <span className="demo-theme-card__meta">
-                <strong className="demo-theme-card__name">{opt.label}</strong>
-                <span className="demo-theme-card__id">{opt.id}</span>
-              </span>
+              <strong className="demo-theme-card__name">{opt.label}</strong>
             </button>
           );
         })}

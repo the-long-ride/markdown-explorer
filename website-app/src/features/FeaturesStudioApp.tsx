@@ -4,7 +4,9 @@
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import appLogo from '../../../ui/assets/logos/logo-128.png';
 import { CyberpunkMatrixBackdrop } from '../../../ui/src/components/shared/CyberpunkMatrixBackdrop';
+import { CustomSelect } from '../../../ui/src/components/shared/CustomSelect';
 import { HoverTooltipPortal } from '../../../ui/src/components/shared/HoverTooltipPortal';
 import {
   ALL_THEME_STYLE_OPTIONS,
@@ -137,19 +139,19 @@ function StudioShell({
 
   const studioHref = `/markdown-explorer/features/?feature=${encodeURIComponent(activeSlug)}`;
 
+  const themeSelectOptions = useMemo(
+    () => styleOptions.map((opt) => ({ value: opt.id, label: opt.label })),
+    [styleOptions],
+  );
+
   const renderThemeSelect = () => (
-    <select
+    <CustomSelect
       className="feature-theme-select"
       aria-label="Theme style"
       value={state.themeStyle}
-      onChange={(e) => setThemeStyle(e.target.value as ThemeStyle)}
-    >
-      {styleOptions.map((opt) => (
-        <option key={opt.id} value={opt.id}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+      options={themeSelectOptions}
+      onChange={(nextStyle) => setThemeStyle(nextStyle)}
+    />
   );
 
   const handleToggleTheme = (e: React.MouseEvent<HTMLButtonElement>) =>
@@ -166,9 +168,7 @@ function StudioShell({
         <HoverTooltipPortal />
         <header className="feature-embed-header">
           <div className="feature-embed-header__meta">
-            <span className="feature-studio-badge">{activeItem.badge}</span>
             <span className="feature-embed-header__title">{activeItem.title}</span>
-            <span className="feature-embed-header__sub">{activeItem.subtitle}</span>
           </div>
           <div className="feature-embed-header__controls">
             {renderThemeSelect()}
@@ -176,7 +176,7 @@ function StudioShell({
               {isDark ? 'Light' : 'Dark'}
             </button>
             <a className="btn btn--primary feature-header-btn" href={studioHref} target="_top">
-              Open Full Demo Studio &#8599;
+              Expand &#8599;
             </a>
           </div>
         </header>
@@ -194,15 +194,8 @@ function StudioShell({
 
       <header className="feature-studio-header">
         <div className="feature-studio-brand">
-          <span className="feature-studio-brand__mark">ME</span>
-          <div>
-            <h1 className="feature-studio-brand__title">
-              Markdown Explorer — Live Component Showcase
-            </h1>
-            <p className="feature-studio-brand__sub">
-              Interactive browser showcase running the real React UI modules offline
-            </p>
-          </div>
+          <img className="feature-studio-brand__logo" src={appLogo} alt="Markdown Explorer" width={30} height={30} />
+          <h1 className="feature-studio-brand__title">Component Studio</h1>
         </div>
 
         <div className="feature-studio-controls">
@@ -211,24 +204,24 @@ function StudioShell({
             {renderThemeSelect()}
           </label>
           <button type="button" className="btn feature-header-btn" onClick={handleToggleTheme}>
-            {isDark ? 'Light Mode' : 'Dark Mode'}
+            {isDark ? 'Light' : 'Dark'}
           </button>
           <a
             className="btn feature-header-btn"
-            href="/markdown-explorer/?landing=1#video-demo"
+            href="/markdown-explorer/landing.html#video-demo"
             target="_top"
           >
-            Watch Video Placeholder
+            Video
           </a>
-          <a className="btn feature-header-btn" href="/markdown-explorer/?landing=1" target="_top">
-            Back to Website
+          <a className="btn feature-header-btn" href="/markdown-explorer/landing.html" target="_top">
+            Home
           </a>
           <a
             className="btn btn--primary feature-header-btn"
             href="/markdown-explorer/app/?mode=test"
             target="_top"
           >
-            Open Full Workspace App
+            Open App
           </a>
         </div>
       </header>
@@ -240,10 +233,8 @@ function StudioShell({
           aria-label="Feature Demos"
         >
           <div className="feature-demo-sidebar__heading">
-            <span>Interactive Stages</span>
-            <span className="feature-demo-sidebar__count">
-              {FEATURE_DEMO_CATALOG.length} Live Components
-            </span>
+            <span>Features</span>
+            <span className="feature-demo-sidebar__count">{FEATURE_DEMO_CATALOG.length}</span>
           </div>
           <div className="feature-demo-sidebar__list">
             {groupedCategories.map(({ category, items }) => (
@@ -260,11 +251,7 @@ function StudioShell({
                       aria-current={isActive ? 'page' : undefined}
                       onClick={() => selectFeature(item.slug)}
                     >
-                      <div className="feature-demo-nav-item__top">
-                        <span className="feature-studio-badge">{item.badge}</span>
-                      </div>
-                      <div className="feature-demo-nav-item__title">{item.title}</div>
-                      <div className="feature-demo-nav-item__sub">{item.subtitle}</div>
+                      <span className="feature-demo-nav-item__title">{item.title}</span>
                     </button>
                   );
                 })}
@@ -274,23 +261,6 @@ function StudioShell({
         </nav>
 
         <section className="feature-studio-stage-col">
-          <div className="feature-highlights-bar">
-            <div className="feature-highlights-bar__copy">
-              <div className="feature-highlights-bar__heading">
-                <span className="feature-studio-badge">{activeItem.badge}</span>
-                <h2>{activeItem.title}</h2>
-              </div>
-              <p className="feature-highlights-bar__desc">{activeItem.description}</p>
-            </div>
-            <ul className="feature-highlights-chips">
-              {activeItem.highlights.map((highlight) => (
-                <li key={highlight} className="feature-highlights-chip">
-                  {highlight}
-                </li>
-              ))}
-            </ul>
-          </div>
-
           <main className="feature-stage-frame">
             <FeatureStageRouter
               slug={activeSlug}

@@ -75,21 +75,11 @@ export function SearchExportStage({
   const [exportOpen, setExportOpen] = useState(mode === 'export-center');
   const [scopeFile, setScopeFile] = useState<MdFile | null>(null);
   const [mediaGallery, setMediaGallery] = useState<MediaGallery | null>(null);
-  const [lastAction, setLastAction] = useState<string>(
-    mode === 'export-center'
-      ? 'Configure batch HTML/PDF/ZIP export or inspect docs in ScopeViewModal.'
-      : 'Click any bookmark or open SearchOverlay to jump inside the live preview.',
-  );
 
   useEffect(() => {
     setExportOpen(mode === 'export-center');
     setSearchOpen(false);
     setScopeFile(null);
-    setLastAction(
-      mode === 'export-center'
-        ? 'Configure batch HTML/PDF/ZIP export or inspect docs in ScopeViewModal.'
-        : 'Click any bookmark or open SearchOverlay to jump inside the live preview.',
-    );
   }, [mode]);
 
   const workspaceKey = getBookmarkWorkspaceKey(
@@ -152,15 +142,11 @@ export function SearchExportStage({
 
   const handleBookmarkNavigate = (bookmark: BookmarkRecord) => {
     openDocument(bookmark.filePath);
-    setLastAction(`Navigated to bookmark "${bookmark.name}" (${bookmark.filePath})`);
   };
 
-  const handleWorkspaceSearchSelect = (item: WorkspaceSearchResult, query: string) => {
+  const handleWorkspaceSearchSelect = (item: WorkspaceSearchResult, _query: string) => {
     openDocument(item.fsPath);
     setSearchOpen(false);
-    setLastAction(
-      `Opened search match "${query}" in ${item.relativePath}:${item.lineNumber ?? 1}`,
-    );
   };
 
   const handleImageClick = useCallback((el: HTMLElement) => {
@@ -175,95 +161,39 @@ export function SearchExportStage({
 
     return (
       <div className="demo-search-export-stage" data-testid="demo-export-center-stage">
-        <div className="demo-stage-bar">
-          <span className="demo-stage-bar__label">{lastAction}</span>
+        <div className="demo-stage-bar demo-stage-bar--wrap">
           <div className="demo-stage-bar__actions">
             <button
               type="button"
               className="btn btn--primary demo-action-btn"
               onClick={() => setExportOpen(true)}
             >
-              Open Export Center
+              Export Center
             </button>
             <button
               type="button"
               className="btn demo-action-btn"
               onClick={() => defaultScopeFile && setScopeFile(defaultScopeFile)}
             >
-              Open Scope View
+              Scope View
             </button>
+          </div>
+          <div className="demo-doc-pills">
+            {DEMO_FILES.map((file) => (
+              <button
+                key={file.fsPath}
+                type="button"
+                className="demo-pill-btn"
+                onClick={() => setScopeFile(file)}
+              >
+                {file.fileName}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="demo-search-export-grid">
-          <section className="demo-capability-card">
-            <header className="demo-capability-card__head">
-              <div>
-                <span className="demo-capability-card__eyebrow">Batch Export &amp; Scope</span>
-                <h3 className="demo-capability-card__title">Export Center &amp; Multi-Doc Reader</h3>
-              </div>
-              <span className="demo-capability-card__pill">{DEMO_FILES.length} Demo Docs</span>
-            </header>
-            <div className="demo-capability-card__body">
-              <p className="demo-capability-card__copy">
-                Bundle current files, selected subsets, folders, or the entire workspace into
-                standalone HTML or static ZIP archives via <strong>ExportCenterModal</strong>, or
-                traverse linked documents inside <strong>ScopeViewModal</strong>.
-              </p>
-              <div className="demo-launcher-stack">
-                <div className="demo-launcher-box">
-                  <div className="demo-launcher-box__title">Export Center Studio</div>
-                  <div className="demo-launcher-box__desc">
-                    Supports Current File, Selected Files, Folder, and Whole Workspace modes with
-                    live progress rows.
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn--primary"
-                    onClick={() => setExportOpen(true)}
-                  >
-                    Launch Export Center Modal
-                  </button>
-                </div>
-                <div className="demo-launcher-box">
-                  <div className="demo-launcher-box__title">Scope View Modal</div>
-                  <div className="demo-launcher-box__desc">
-                    Open any workspace document in an isolated reader overlay with scoped TOC and
-                    cross-document link history.
-                  </div>
-                  <div className="demo-doc-pills">
-                    {DEMO_FILES.map((file) => (
-                      <button
-                        key={file.fsPath}
-                        type="button"
-                        className="demo-pill-btn"
-                        onClick={() => {
-                          setScopeFile(file);
-                          setLastAction(`Opened ${file.relativePath} in ScopeViewModal.`);
-                        }}
-                      >
-                        {file.fileName}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="demo-capability-card">
-            <header className="demo-capability-card__head">
-              <div>
-                <span className="demo-capability-card__eyebrow">Document Preview</span>
-                <h3 className="demo-capability-card__title">
-                  {state.relativePath || 'docs/architecture-overview.md'}
-                </h3>
-              </div>
-            </header>
-            <div className="demo-preview-host">
-              <Content onImageClick={handleImageClick} scrollRef={scrollRef} suppressWelcome={true} />
-            </div>
-          </section>
+        <div className="demo-stage-content-host">
+          <Content onImageClick={handleImageClick} scrollRef={scrollRef} suppressWelcome={true} />
         </div>
 
         <ExportCenterModal isOpen={exportOpen} onClose={() => setExportOpen(false)} />
@@ -281,27 +211,20 @@ export function SearchExportStage({
   return (
     <div className="demo-search-export-stage" data-testid="demo-search-bookmarks-stage">
       <div className="demo-stage-bar">
-        <span className="demo-stage-bar__label">{lastAction}</span>
+        <span className="demo-stage-bar__label">{state.relativePath || 'docs/architecture-overview.md'}</span>
         <div className="demo-stage-bar__actions">
           <button
             type="button"
             className="btn btn--primary demo-action-btn"
             onClick={() => setSearchOpen(true)}
           >
-            Open Search Overlay
+            Search
           </button>
         </div>
       </div>
 
       <div className="demo-search-export-grid">
         <section className="demo-capability-card">
-          <header className="demo-capability-card__head">
-            <div>
-              <span className="demo-capability-card__eyebrow">Live BookmarksPanel</span>
-              <h3 className="demo-capability-card__title">Saved Anchors &amp; Sort/Filter</h3>
-            </div>
-            <span className="demo-capability-card__pill">Interactive</span>
-          </header>
           <div className="demo-bookmarks-host">
             <BookmarksPanel
               visible={true}
@@ -315,21 +238,6 @@ export function SearchExportStage({
         </section>
 
         <section className="demo-capability-card">
-          <header className="demo-capability-card__head">
-            <div>
-              <span className="demo-capability-card__eyebrow">Live Content Preview</span>
-              <h3 className="demo-capability-card__title">
-                {state.relativePath || 'docs/architecture-overview.md'}
-              </h3>
-            </div>
-            <button
-              type="button"
-              className="demo-pill-btn"
-              onClick={() => setSearchOpen(true)}
-            >
-              Search Workspace
-            </button>
-          </header>
           <div className="demo-preview-host">
             <Content onImageClick={handleImageClick} scrollRef={scrollRef} suppressWelcome={true} />
           </div>

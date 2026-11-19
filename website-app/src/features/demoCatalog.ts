@@ -50,8 +50,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'workspace-home',
     category: 'Workspace',
-    title: 'Workspace Launchpad & Welcome',
-    badge: 'Home & Recents',
+    title: 'Home & Welcome',
+    badge: 'Home',
     subtitle: 'Recent workspaces, aliases, virtual scratchpad & onboarding',
     description:
       'Switch between pinned and recent documentation folders, launch an instant virtual workspace, or explore the Welcome Launchpad and interactive feature manual.',
@@ -65,7 +65,7 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'sidebar-toc',
     category: 'Workspace',
-    title: 'File Tree, Scope & TOC',
+    title: 'Files & TOC',
     badge: 'Navigation',
     subtitle: 'Folder tree, Scope Focus filtering, History tab & active TOC',
     description:
@@ -80,8 +80,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'workspace',
     category: 'Reader & Data',
-    title: 'Rich Markdown & Diagrams',
-    badge: 'Core Reader',
+    title: 'Reader & Diagrams',
+    badge: 'Reader',
     subtitle: 'Mermaid lightbox, KaTeX math, frontmatter & HTML sandbox',
     description:
       'Render technical documentation offline with interactive Mermaid diagrams, KaTeX equations, YAML frontmatter properties, copyable code fences, and sandboxed HTML previews.',
@@ -95,8 +95,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'tables-charts',
     category: 'Reader & Data',
-    title: 'Tables, CSV/TSV & Charts',
-    badge: 'Data & Charts',
+    title: 'Tables & Charts',
+    badge: 'Data',
     subtitle: 'Sort, multi-filter, CSV/TSV toggle & Chart.js visuals',
     description:
       'Turn Markdown tables and CSV/TSV code blocks into sortable, filterable grids with intelligent numeric alignment and one-click Bar, Line, or Pie charts.',
@@ -110,8 +110,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'live-editor',
     category: 'Authoring',
-    title: 'Live Markdown Editor Modes',
-    badge: 'Editor Modes',
+    title: 'Live Editor',
+    badge: 'Editor',
     subtitle: 'CodeMirror 6 source, formatting toolbar & inline block edit',
     description:
       'Edit Markdown directly inside the reader via full CodeMirror 6 source mode with formatting toolbar, block-level InlineMarkdownEditor, or rendered preview with dirty tracking.',
@@ -125,8 +125,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'split-view',
     category: 'Authoring',
-    title: 'Split View & Pane Sync',
-    badge: 'Dual Pane',
+    title: 'Split View',
+    badge: 'Split',
     subtitle: 'Draggable dual-pane workspace with independent pane modes',
     description:
       'Compare two documents or edit Markdown side-by-side with live rendered output, draggable SplitDivider ratios, independent pane tabs, and one-click pane swap.',
@@ -140,8 +140,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'insights',
     category: 'Audit & Git',
-    title: 'Workspace Insights',
-    badge: 'Audit & Graph',
+    title: 'Insights',
+    badge: 'Insights',
     subtitle: 'Gallery, Links, Lint, Duplicates, Graph & Related docs',
     description:
       'Audit entire documentation folders locally: inspect broken links, heading/table lint findings, duplicate passages, media galleries, and interactive relationship graphs.',
@@ -155,8 +155,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'git-diff',
     category: 'Audit & Git',
-    title: 'Git History & Myers Diff',
-    badge: 'Revisions',
+    title: 'Git & Diff',
+    badge: 'Git',
     subtitle: 'DocumentDiffView, FileHistoryModal & GitCommitGraph',
     description:
       'Inspect line-by-line Myers source diffs and visual Rendered Diffs, browse per-file commit timelines in FileHistoryModal, and explore the repository commit graph.',
@@ -170,8 +170,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'search-bookmarks',
     category: 'Productivity',
-    title: 'Full-Text Search & Bookmarks',
-    badge: 'Discovery',
+    title: 'Search & Bookmarks',
+    badge: 'Search',
     subtitle: 'SearchOverlay with live preview & BookmarksPanel anchors',
     description:
       'Search across workspace documents with highlighted excerpts and live document preview, and organize reusable text bookmarks with search, sort, and rename.',
@@ -185,8 +185,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'export-center',
     category: 'Productivity',
-    title: 'Batch Export & Scope View',
-    badge: 'Publishing',
+    title: 'Export & Scope',
+    badge: 'Export',
     subtitle: 'ExportCenterModal (HTML/PDF/ZIP) & ScopeViewModal',
     description:
       'Bundle single documents, folders, or entire workspaces into self-contained HTML files or static-site ZIP archives offline, or read focused selections in ScopeViewModal.',
@@ -200,8 +200,8 @@ export const FEATURE_DEMO_CATALOG: readonly FeatureDemoItem[] = [
   {
     slug: 'themes-tabs',
     category: 'Personalization',
-    title: 'Tabs, Themes & Settings',
-    badge: 'Customization',
+    title: 'Tabs & Themes',
+    badge: 'Themes',
     subtitle: 'DesktopTabBar, 9 themes, SettingsModal, ThemeRemix & Tour',
     description:
       'Manage multi-workspace tabs in DesktopTabBar, switch across all 9 built-in & Pet themes, customize typography and shortcuts in SettingsModal, or launch the guided Tour.',

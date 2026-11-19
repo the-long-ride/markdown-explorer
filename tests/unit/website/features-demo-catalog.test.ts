@@ -121,10 +121,11 @@ describe('DEMO_DOCS, recent workspaces, HTML preview, and Git fixtures', () => {
     expect(Object.keys(DEMO_DOCS)).toEqual([
       'docs/architecture-overview.md',
       'docs/metrics-benchmarks.md',
+      'docs/math-latex.md',
       'docs/release-playbook.md',
       'docs/design-system-themes.md',
     ]);
-    expect(DEMO_FILES).toHaveLength(4);
+    expect(DEMO_FILES).toHaveLength(5);
     expect(DEMO_TREE.name).toBe(DEMO_WORKSPACE_NAME);
 
     expect(DEMO_RECENT_WORKSPACES).toHaveLength(3);
@@ -196,7 +197,7 @@ describe('createDemoInsightsSession', () => {
     expect(session.status).toBe('ready');
 
     const docs = [...session.snapshot.documents.values()];
-    expect(docs).toHaveLength(4);
+    expect(docs).toHaveLength(5);
 
     // 1. Gallery view: diagrams present
     const totalDiagrams = docs.reduce((sum, doc) => sum + doc.diagrams.length, 0);
@@ -233,7 +234,7 @@ describe('createDemoInsightsSession', () => {
       (sum, edges) => sum + edges.length,
       0,
     );
-    expect(session.snapshot.documents.size).toBe(4);
+    expect(session.snapshot.documents.size).toBe(5);
     expect(totalEdges).toBeGreaterThan(0);
 
     // 6. Related view: relationship scoring finds related documents for architecture-overview
@@ -258,7 +259,7 @@ describe('createDemoInsightsSession', () => {
 
     // Wiki resolver and external check helpers
     const wikiCtx = await session.getWikiResolverContext('docs/architecture-overview.md');
-    expect(wikiCtx.documents.length).toBe(4);
+    expect(wikiCtx.documents.length).toBe(5);
     const checkResults = await session.checkExternalLinks(['https://example.com']);
     expect(checkResults[0]?.status).toBe('reachable');
   });

@@ -409,7 +409,7 @@ img {
 }
 
 ::view-transition-new(root) {
-  animation: themeReveal 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: themeReveal 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes themeReveal {
@@ -424,10 +424,10 @@ img {
 html.is-theme-switching,
 html.is-theme-switching * {
   transition:
-    background-color 240ms ease,
-    color 240ms ease,
-    border-color 240ms ease,
-    box-shadow 240ms ease !important;
+    background-color 640ms ease,
+    color 640ms ease,
+    border-color 640ms ease,
+    box-shadow 640ms ease !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
