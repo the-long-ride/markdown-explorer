@@ -109,7 +109,7 @@ describe('WebDemoNavActions', () => {
     expect(window.location.href).toBe('../landing.html#download');
 
     fireEvent.click(screen.getByTestId('web-demo-nav-features'));
-    expect(window.location.href).toBe('../landing.html#features');
+    expect(window.location.href).toBe('../features/');
   });
 
   it('navigates to privacy and terms page', () => {

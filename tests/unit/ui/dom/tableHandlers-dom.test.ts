@@ -392,6 +392,39 @@ describe('dom/tableHandlers registerTableHandlers', () => {
       expect(thead.style.zIndex).toBe('');
     });
 
+    it('offsets sticky table headers below a visible compact TOC bar', () => {
+      document.body.innerHTML = `
+        <div class="content__scroll" id="scroll">
+          <div class="mdn-body">
+            <nav class="toc-compact">
+              <button type="button" class="toc-compact__toggle" id="tocBtn">On This Page</button>
+            </nav>
+            <div class="mdn-table-wrap">
+              <div class="mdn-table-scroll">
+                <table class="mdn-table" id="t1">
+                  <thead><tr><th class="mdn-th">Index</th></tr></thead>
+                  <tbody><tr><td>1</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      const scroll = document.getElementById('scroll') as HTMLElement;
+      const tocBtn = document.getElementById('tocBtn') as HTMLElement;
+      const table = document.getElementById('t1') as HTMLTableElement;
+      const thead = table.querySelector('thead') as HTMLElement;
+
+      Object.defineProperty(scroll, 'clientTop', { value: 0, configurable: true });
+      scroll.getBoundingClientRect = () => ({ top: 80, height: 400 } as DOMRect);
+      tocBtn.getBoundingClientRect = () => ({ top: 80, bottom: 120, height: 40 } as DOMRect);
+      thead.getBoundingClientRect = () => ({ top: 0, height: 32 } as DOMRect);
+      table.getBoundingClientRect = () => ({ top: 50, height: 300 } as DOMRect);
+
+      syncStickyTableHeaders(scroll);
+      expect(scroll.style.getPropertyValue('--mdn-sticky-top-offset')).toBe('40px');
+      expect(thead.style.transform).toBe('translateY(70px)');
+    });
+
     it('toggles is-expanded on Show Less button and resyncs sticky headers when collapsing', () => {
       registerTableHandlers(win);
       const rows = Array.from({ length: 18 }, (_, i) => `<tr><td>${i + 1}</td></tr>`).join('');

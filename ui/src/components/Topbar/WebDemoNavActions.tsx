@@ -143,7 +143,7 @@ export function WebDemoNavActions() {
         label="Features"
         onlyIcon={true}
         icon={<FeaturesIcon />}
-        onClick={() => handleNavigate('landing.html#features')}
+        onClick={() => handleNavigate('features/')}
       />
       <TooltipButton
         className="btn btn--secondary btn--icon web-demo-nav__btn web-demo-nav__btn--github"

@@ -42,7 +42,24 @@ export function syncStickyTableHeaders(scrollContainer: HTMLElement | null): voi
   const padBottom = parseFloat(window.getComputedStyle(scrollContainer).paddingBottom || '0') || 0;
   scrollContainer.style.setProperty('--mdn-sticky-bottom-offset', `${-padBottom}px`);
   const rectScroll = scrollContainer.getBoundingClientRect();
-  const stickyTop = rectScroll.top + scrollContainer.clientTop;
+  const baseStickyTop = rectScroll.top + scrollContainer.clientTop;
+  let stickyTop = baseStickyTop;
+
+  const noticeEl = scrollContainer.querySelector<HTMLElement>('.current-file-change-notice');
+  const noticeRect = noticeEl?.getBoundingClientRect();
+  if (noticeRect && noticeRect.height > 0) {
+    stickyTop = Math.max(stickyTop, noticeRect.bottom);
+  }
+
+  const tocCompact = scrollContainer.querySelector<HTMLElement>('.mdn-body .toc-compact');
+  const tocBar = tocCompact?.querySelector<HTMLElement>('.toc-compact__toggle') ?? tocCompact;
+  const tocRect = tocBar?.getBoundingClientRect();
+  if (tocRect && tocRect.height > 0) {
+    stickyTop = Math.max(stickyTop, tocRect.bottom);
+  }
+
+  const topOffset = Math.max(0, stickyTop - baseStickyTop);
+  scrollContainer.style.setProperty('--mdn-sticky-top-offset', topOffset > 0 ? `${topOffset}px` : '-1px');
 
   scrollContainer
     .querySelectorAll<HTMLTableElement>(".mdn-table")

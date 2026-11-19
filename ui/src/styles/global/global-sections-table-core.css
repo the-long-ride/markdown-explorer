@@ -267,7 +267,7 @@
 }
 .mdn-th {
   position: sticky;
-  top: -1px;
+  top: var(--mdn-sticky-top-offset, -1px);
   z-index: 10;
   background: var(--bg-e);
   padding: calc(var(--table-cell-pad-y) + 1px) var(--table-cell-pad-x);

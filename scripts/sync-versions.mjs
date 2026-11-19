@@ -50,15 +50,15 @@ if (fs.existsSync(cargoPath)) {
   }
 }
 
-// 4. Sync website/index.html
-const indexHtmlPath = path.join(rootDir, 'website/index.html');
-if (fs.existsSync(indexHtmlPath)) {
-  let content = fs.readFileSync(indexHtmlPath, 'utf8');
+// 4. Sync website/landing.html
+const landingHtmlPath = path.join(rootDir, 'website/landing.html');
+if (fs.existsSync(landingHtmlPath)) {
+  let content = fs.readFileSync(landingHtmlPath, 'utf8');
   let updated = content.replace(/"softwareVersion":\s*"[^"]*"/, `"softwareVersion": "${version}"`);
-  updated = updated.replace(/<span data-version-text>v[^<]*<\/span>/, `<span data-version-text>v${version}</span>`);
+  updated = updated.replace(/<span data-version-text>v[^<]*<\/span>/g, `<span data-version-text>v${version}</span>`);
   if (content !== updated) {
-    fs.writeFileSync(indexHtmlPath, updated, 'utf8');
-    console.log(`Synced: website/index.html -> ${version}`);
+    fs.writeFileSync(landingHtmlPath, updated, 'utf8');
+    console.log(`Synced: website/landing.html -> ${version}`);
   }
 }
 

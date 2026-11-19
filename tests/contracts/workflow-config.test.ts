@@ -140,3 +140,21 @@ describe('GitHub Actions workflow contracts', () => {
   });
 
 });
+
+describe('VS Code launch configuration contracts', () => {
+  test('Website debug configuration uses msedge browser debugger without hardcoded user paths', () => {
+    const launchJson = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, '.vscode', 'launch.json'), 'utf8'),
+    ) as { configurations: Array<Record<string, unknown>> };
+    const websiteConfig = launchJson.configurations.find(
+      (entry) => entry.name === 'Website',
+    );
+
+    expect(websiteConfig).toBeDefined();
+    expect(websiteConfig?.type).toBe('msedge');
+    expect(websiteConfig?.request).toBe('launch');
+    expect(websiteConfig?.preLaunchTask).toBe('dev: website-app');
+    expect(websiteConfig?.url).toBe('http://localhost:5173/markdown-explorer/');
+    expect(websiteConfig?.runtimeExecutable).toBeUndefined();
+  });
+});

@@ -50,3 +50,25 @@ test('chart footer keeps legends visible and stacks controls when horizontal spa
     /@media\s*\(max-width:\s*900px\)[\s\S]*?\.mdn-chart-viewer__footer\s+\.mdn-modal-toolbar\s*\{[\s\S]*?justify-self:\s*end/,
   );
 });
+
+test('cyberpunk modal outline attaches to non-scrolling chart frame rather than overflow-auto viewport', async () => {
+  const [viewer, viewerCss, modalsCss, cyberCss] = await Promise.all([
+    read('ui/src/dom/tableChartViewer.ts'),
+    read('ui/src/styles/global/global-table-chart-viewer.css'),
+    read('ui/src/styles/global/global-theme-cyberpunk-modals.css'),
+    read('ui/src/styles/global/global-theme-cyberpunk.css'),
+  ]);
+
+  assert.match(
+    viewer,
+    /class=["']mdn-chart-viewer__frame["'][\s\S]*?class=["']mdn-chart-viewer__viewport["']/,
+  );
+  assert.match(viewerCss, /\.mdn-chart-viewer__frame\s*\{[\s\S]*?position:\s*relative/);
+  assert.match(modalsCss, /\.mdn-chart-viewer__frame[\s\S]*?--cp-bg:\s*var\(--bg\)/);
+  assert.match(cyberCss, /\.mdn-chart-viewer__frame/);
+  assert.doesNotMatch(
+    cyberCss,
+    /\.mdn-chart-viewer__viewport/,
+    'Cyberpunk cut-corner background geometry must target non-scrolling __frame',
+  );
+});

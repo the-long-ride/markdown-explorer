@@ -58,9 +58,6 @@
   transition: height 0.15s ease-out;
 }
 .mdn-codeblock-header {
-  position: sticky;
-  top: 0;
-  z-index: 12;
   display: flex;
   align-items: center;
   justify-content: space-between;

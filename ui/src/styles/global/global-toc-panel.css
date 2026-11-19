@@ -440,8 +440,8 @@ body.is-resizing .toc-panel {
 .mdn-body .toc-compact {
   position: sticky;
   top: 0;
-  z-index: 11;
-  padding: 8px 0;
+  z-index: var(--z-toc-overlay, 70);
+  padding: 0;
   margin-bottom: 16px;
   width: 100%;
 }

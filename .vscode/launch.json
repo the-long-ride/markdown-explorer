@@ -45,7 +45,7 @@
     },
     {
       "name": "Website",
-      "type": "chrome",
+      "type": "msedge",
       "request": "launch",
       "preLaunchTask": "dev: website-app",
       "url": "http://localhost:5173/markdown-explorer/",

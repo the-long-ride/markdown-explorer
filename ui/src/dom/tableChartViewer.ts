@@ -122,9 +122,11 @@ export function registerTableChartViewer(win: any, createPayload: ChartPayloadFa
         ${CLOSE_ICON}<span class="tooltip-text">${escapeHtml(labels.closeChartView)}</span>
       </button>
       <div class="mdn-chart-viewer__stage">
-        <div class="mdn-chart-viewer__viewport">
-          <div class="mdn-chart-viewer__pan-surface">
-            <div class="mdn-chart-viewer__plot"><canvas></canvas></div>
+        <div class="mdn-chart-viewer__frame">
+          <div class="mdn-chart-viewer__viewport">
+            <div class="mdn-chart-viewer__pan-surface">
+              <div class="mdn-chart-viewer__plot"><canvas></canvas></div>
+            </div>
           </div>
         </div>
         <div class="mdn-modal-footer mdn-chart-viewer__footer">

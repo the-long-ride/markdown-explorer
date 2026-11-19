@@ -20,7 +20,7 @@
   .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
   .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
   .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
-  .mdn-modal-content-svg, .mdn-chart-viewer__viewport, .desktop-typography-confirm-dialog
+  .mdn-modal-content-svg, .mdn-chart-viewer__frame, .desktop-typography-confirm-dialog
 ) {
   --cp-bg: var(--bg-e); --cp-cut-top: 18px; --cp-cut-bottom: 14px;
   --cp-rail-cyan: #00F0FF; --cp-rail-rose: #FF0055;
@@ -41,7 +41,8 @@
   .modal, .settings-card, .settings-card--settings, .settings-card--navigation, .support-prompt-card,
   .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
   .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
-  .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card
+  .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
+  .mdn-chart-viewer__frame
 ) {
   --cp-rail-cyan: #00B8D4; --cp-rail-rose: #E6004C;
   --cp-rail-cyan-dim: rgba(0, 184, 212, 0.28);
@@ -63,7 +64,7 @@
   .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
   .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
   .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
-  .mdn-modal-content-svg, .mdn-chart-viewer__viewport, .desktop-typography-confirm-dialog
+  .mdn-modal-content-svg, .mdn-chart-viewer__frame, .desktop-typography-confirm-dialog
 )::after {
   content: "";
   position: absolute;
@@ -96,6 +97,18 @@
   );
   animation: cp-beam-orbit 5s linear infinite;
   filter: drop-shadow(0 0 4px color-mix(in srgb, var(--cp-rail-cyan) 70%, transparent)) drop-shadow(0 0 8px color-mix(in srgb, var(--cp-rail-rose) 70%, transparent));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-chart-viewer__frame {
+  --cp-bg: var(--bg);
+  overflow: hidden;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-chart-viewer__viewport {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 /* Export Center Modal Cyberpunk HUD Enhancements */
@@ -133,7 +146,7 @@
     .export-center__card, .scope-view__card, .search-overlay-card, .find-in-file-panel, .file-history__card,
     .mdn-html-modal, .html-local-first-warning, .banned-shortcut-card, .update-available-card,
     .bookmark-dialog, .terms-card, .switch-workspace-card, .theme-remix-card, .theme-onboarding-card,
-    .mdn-modal-content-svg, .mdn-chart-viewer__viewport, .desktop-typography-confirm-dialog
+    .mdn-modal-content-svg, .mdn-chart-viewer__frame, .desktop-typography-confirm-dialog
   )::after {
     display: none !important;
     animation: none !important;
