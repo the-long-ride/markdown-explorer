@@ -9,26 +9,30 @@
   .header-action-group .btn,
   .topbar__action-btn,
   .topbar__new-workspace-btn,
+  .topbar__close-workspace-btn,
   .desktop-tabbar__new,
   .sidebar__files-action,
   .bookmarks-panel__actions .btn--icon,
-  .window-control-btn
+  .window-control-btn,
+  .web-demo-nav__btn
 ) {
   width: var(--shell-action-size) !important;
   min-width: var(--shell-action-size) !important;
   height: var(--shell-action-size) !important;
   min-height: var(--shell-action-size) !important;
   padding: 0 !important;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
 }
 
 :is(
   .header-action-group .btn,
   .topbar__action-btn,
   .topbar__new-workspace-btn,
+  .topbar__close-workspace-btn,
   .desktop-tabbar__new,
   .sidebar__files-action,
-  .bookmarks-panel__actions .btn--icon
+  .bookmarks-panel__actions .btn--icon,
+  .web-demo-nav__btn
 ) :is(svg, .btn-icon svg) {
   width: var(--shell-action-icon-size) !important;
   height: var(--shell-action-icon-size) !important;
@@ -38,6 +42,47 @@
 .window-control-btn svg {
   width: var(--shell-window-glyph-size) !important;
   height: var(--shell-window-glyph-size) !important;
+  transform: none !important;
+}
+
+/* Grouped mode switcher containers: strictly equal to shell action size (28px) across all themes */
+:is(.topbar__markdown-editing, .split-document-pane__modes) {
+  height: var(--shell-action-size, 28px) !important;
+  min-height: var(--shell-action-size, 28px) !important;
+  max-height: var(--shell-action-size, 28px) !important;
+  box-sizing: border-box !important;
+  padding: 1px 3px !important;
+  align-items: center !important;
+}
+
+/* Inner buttons inside grouped mode switchers: fit cleanly within the 28px outer container */
+:is(
+  .topbar__markdown-mode-btn,
+  .topbar__markdown-save-btn,
+  .split-document-pane__mode,
+  .topbar__markdown-editing .btn,
+  .split-document-pane__modes .btn
+) {
+  height: calc(var(--shell-action-size, 28px) - 4px) !important;
+  min-height: calc(var(--shell-action-size, 28px) - 4px) !important;
+  max-height: 100% !important;
+  min-width: calc(var(--shell-action-size, 28px) - 4px) !important;
+  padding: 0 6px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+:is(
+  .topbar__markdown-mode-btn,
+  .topbar__markdown-save-btn,
+  .split-document-pane__mode,
+  .topbar__markdown-editing .btn,
+  .split-document-pane__modes .btn
+) :is(svg, .btn-icon svg) {
+  width: var(--shell-action-icon-size, 14px) !important;
+  height: var(--shell-action-icon-size, 14px) !important;
   transform: none !important;
 }
 
@@ -109,4 +154,56 @@
 .topbar__window-controls,
 .desktop-tabbar__window-controls {
   column-gap: 3px;
+}
+
+/* Right-most web demo navigation actions */
+.web-demo-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.web-demo-nav__btn {
+  width: var(--shell-action-size, 28px) !important;
+  min-width: var(--shell-action-size, 28px) !important;
+  height: var(--shell-action-size, 28px) !important;
+  min-height: var(--shell-action-size, 28px) !important;
+  padding: 0 !important;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--r-sm, 4px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.web-demo-nav__btn svg {
+  width: var(--shell-action-icon-size, 14px) !important;
+  height: var(--shell-action-icon-size, 14px) !important;
+  transform: none !important;
+  flex-shrink: 0;
+}
+
+.web-demo-nav .web-demo-nav__btn--github:has(.web-demo-nav__stars-badge) {
+  width: auto !important;
+  padding: 0 7px !important;
+  gap: 4px;
+}
+
+.web-demo-nav__stars-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--r-sm, 4px);
+  background: var(--accent-dim);
+  color: var(--accent);
 }

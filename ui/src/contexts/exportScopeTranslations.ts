@@ -27,6 +27,7 @@ export interface ExportCenterFeatureTranslations {
 export interface ScopeViewFeatureTranslations {
   dialogLabel: string; previous: string; next: string; level: string; close: string; loading: string; maximumDepth: string;
   unableOpen: string; outsideWorkspace: string; linkMenu: string; openInBrowser: string; copyLink: string; openAsScope: string; openFile: string;
+  toggleToc: string; noHeadings: string;
 }
 
 export interface ExportScopeTranslations {
@@ -111,6 +112,8 @@ const TEXT = {
     copyLink: l('Copy link', 'Sao chép liên kết', 'Copier le lien', 'Copiar enlace', '复制链接', 'Kopier lenke', 'リンクをコピー', '링크 복사', 'Копировать ссылку'),
     openAsScope: l('Open as scope', 'Mở dưới dạng phạm vi', 'Ouvrir comme portée', 'Abrir como ámbito', '作为范围打开', 'Åpne som omfang', 'スコープとして開く', '범위로 열기', 'Открыть как область'),
     openFile: l('Open file', 'Mở tệp', 'Ouvrir le fichier', 'Abrir archivo', '打开文件', 'Åpne fil', 'ファイルを開く', '파일 열기', 'Открыть файл'),
+    toggleToc: l('Toggle table of contents', 'Bật/tắt mục lục', 'Afficher/masquer la table des matières', 'Mostrar u ocultar la tabla de contenido', '切换目录', 'Slå innholdsfortegnelse på/av', '目次を切り替え', '목차 전환', 'Переключить оглавление'),
+    noHeadings: l('No headings in this document.', 'Không có tiêu đề trong tài liệu này.', 'Aucun titre dans ce document.', 'No hay encabezados en este documento.', '此文档中没有标题。', 'Ingen overskrifter i dette dokumentet.', 'このドキュメントに見出しはありません。', '이 문서에는 제목이 없습니다.', 'В этом документе нет заголовков.'),
   },
 };
 

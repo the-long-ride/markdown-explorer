@@ -10,16 +10,39 @@
 .git-revision-view__header { justify-content: space-between; }
 .git-revision-view__path { color: var(--tx-2); font-size: 12px; overflow-wrap: anywhere; }
 .document-history-panel__select {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  min-height: 28px;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
   padding: 0;
+  border: none;
+  border-radius: var(--r-sm, var(--r, 4px));
+  background: transparent;
+  color: var(--tx3, var(--tx2));
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  appearance: none;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
-.document-history-panel__select { flex: 0 0 28px; }
+.document-history-panel__select svg {
+  display: block;
+  flex-shrink: 0;
+}
+.document-history-panel__select:hover {
+  color: var(--tx);
+  background: color-mix(in srgb, var(--tx) 8%, transparent);
+}
+.document-history-panel__select[aria-checked="true"],
+.document-history-panel__select[aria-checked="true"]:hover {
+  color: var(--accent);
+}
+.document-history-panel__select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .document-history-panel__copy-meta { display: inline-flex; min-width: 0; }
 .document-history-panel__meta-copy {
   appearance: none;
@@ -239,7 +262,7 @@
   position: fixed;
   left: var(--repository-history-card-left, 0);
   top: var(--repository-history-card-top, 0);
-  z-index: 10050;
+  z-index: var(--z-popover);
   width: min(280px, calc(100vw - 24px));
   padding: 10px 12px;
   border: var(--stroke-w) solid var(--bd-s);
@@ -298,7 +321,7 @@
 .repository-history__commit-subject { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 650; }
 .repository-history__commit-meta { display: flex; min-width: 0; flex-wrap: nowrap; align-items: center; gap: 5px; margin-top: 2px; color: var(--txm); font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .repository-history__commit-meta code { font-family: var(--font-mono); }
-.repository-history__head-badge { padding: 1px 4px; border-radius: 999px; background: var(--accent); color: var(--accent-contrast, #fff); font-size: 8px; font-weight: 800; flex-shrink: 0; }
+.repository-history__head-badge { padding: 1px 4px; border-radius: var(--r-sm, var(--r, 4px)); background: var(--accent); color: var(--accent-contrast, #fff); font-size: 8px; font-weight: 800; flex-shrink: 0; }
 .repository-history__refs { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--txm); font-size: 9px; }
 .repository-history__files { border-top: var(--stroke-w) solid var(--bd-s); }
 .repository-history__files h4 { margin: 0; padding: 9px 10px 6px; font-size: 10px; text-transform: uppercase; color: var(--txm); }
@@ -325,7 +348,7 @@
 .repository-snapshot-content__identity { display: flex; min-width: 0; align-items: center; gap: 8px; }
 .repository-snapshot-content__identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .repository-snapshot-content__identity code { flex: 0 0 auto; font-family: var(--font-mono); font-size: 10px; color: var(--txm); }
-.repository-snapshot-content__readonly { flex: 0 0 auto; padding: 2px 6px; border: var(--stroke-w) solid var(--accent); border-radius: 999px; color: var(--accent); font-size: 9px; font-weight: 800; }
+.repository-snapshot-content__readonly { flex: 0 0 auto; padding: 2px 6px; border: var(--stroke-w) solid var(--accent); border-radius: var(--r-sm, var(--r, 4px)); color: var(--accent); font-size: 9px; font-weight: 800; }
 .repository-snapshot-content__scroll { min-height: 0; }
 .repository-snapshot-content__body { max-width: none; }
 .repository-snapshot-content__source { margin: 0; padding: 18px; overflow: auto; white-space: pre; font-family: var(--font-mono); font-size: 12px; line-height: 1.55; }

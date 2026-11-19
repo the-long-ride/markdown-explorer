@@ -17,6 +17,7 @@ test('sidebar resize moves the shell and handle together while locking tree layo
   assert.match(hook, /target\.classList\.add\('is-resizing-shell'\)/);
   assert.match(hook, /document\.documentElement\.style\.setProperty\(cssVar, `\$\{lastAppliedWidth\}px`\)/);
   assert.match(layout, /useResize\('sidebarResize',[\s\S]*mode: 'synchronized'[\s\S]*freezeContentId: 'sidebarTree'/);
+  assert.match(layout, /useResize\('sidebarResize',[\s\S]*max:\s*800/);
   assert.doesNotMatch(layout, /useResize\('tocResize',[\s\S]{0,220}mode: 'synchronized'/);
   assert.match(styles, /\.sidebar\.is-resizing-shell\s*\{[\s\S]*?will-change:\s*width/);
   assert.match(styles, /\.sidebar__tree\.is-resize-width-locked/);

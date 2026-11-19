@@ -54,9 +54,9 @@ flowchart LR
 
 ### Active styles
 
-`default`, `bento`, `vercel`, `tokyo-night`, `neon-voltage`, `raw-grid`, `pet-white-shiba`, `pet-k-ink`, `pet-cat`, `pet-hamster`, `pet-corgi`.
+`default`, `bento`, `vercel`, `tokyo-night`, `neon-voltage`, `cyberpunk`, `raw-grid`, `pet-white-shiba`, `pet-k-ink`, `pet-cat`, `pet-hamster`, `pet-corgi`.
 
-`glass` stylesheets/tests do not make `glass` a valid current `ThemeStyle`. Unknown values normalize to `default`. Legacy `pet-shiba-memes` maps to `tokyo-night`; `pet-shiba` maps to `pet-white-shiba`.
+`glass` stylesheets/tests do not make `glass` a valid current `ThemeStyle`. Unknown values normalize to `default`. Legacy `pet-shiba-memes` maps to `tokyo-night`; `night-city-2077` maps to `cyberpunk`; `pet-shiba` maps to `pet-white-shiba`.
 
 ### Pet Theme Rail Markers
 
@@ -72,6 +72,19 @@ Pet theme indicator markers use species-tailored SVG assets in `ui/src/assets/th
 - **Background Grid**: Grid background size set to `48px 48px`.
 - **Content Padding**: Outer `.content__scroll` padding set to `12px 16px 20px`; inner `.mdn-body` padding set to `20px 24px`.
 - **State Screen Panels**: Empty/state screens (`.state-screen:not(.state-screen--loading)`, such as `No supported documents found`) render inside a solid panel with background `var(--bg)`, border `var(--stroke-w) solid var(--bd-s)`, `max-width: 600px`, `height: fit-content`, `padding: 24px 28px`, and centered vertically and horizontally in `.content__scroll` via flex column layout and `margin: auto` (matching `.welcome-container` presentation).
+
+### Theme-Adaptive Badge, Pill, and Control Geometry Rule
+
+All badges, tags, count pills, step indicators, keycaps, and action buttons (including `.welcome-tour-trigger-btn__badge`, `.tour-guide-badge`, `.tour-guide-dot`, `.hero-star-banner__count`, `.welcome-ecosystem__count`, `.welcome-ecosystem__item-tag`, `.tip-card-badge`, `.file-history__badge`, `.repository-history__head-badge`, `.desktop-font-card__badge`, and `.tree-file-search-count-badge`) MUST use theme border-radius tokens (`var(--r-sm, var(--r))` for badges/tags/indicators/keycaps; `var(--r-md, var(--r))` for buttons) and theme geometry rather than hardcoded pill radii (`999px`, `12px`, `20px`). Specifically:
+- `raw-grid` (Default): `--r-sm: 0px; --r: 0px; --r-md: 0px; --r-lg: 0px;` (sharp `0px` rectangular corners).
+- `cyberpunk`: `--r-sm: 0px;` with 6-sided closed-border 45° cut-corner `clip-path` polygon geometry.
+- Rounded built-in & pet styles (`default`, `bento`, `vercel`, `tokyo-night`, `neon-voltage`, `pet-*`): follow `--r-sm` (`4px`–`6px`) and `--r-md` (`6px`–`10px`).
+
+### Unified Custom Tooltip Rule (No Native `title` Tooltips on UI Elements)
+
+- All UI hover hints must use either `data-hover-tooltip="..."` (rendered via `HoverTooltipPortal`) or `<Tooltip>` / `.tooltip-container` + `.tooltip-text`.
+- Native HTML `title=` attributes must NEVER be placed on buttons, links, badges, tabs, or text labels (neither standalone nor alongside `data-hover-tooltip` / `<Tooltip>`), preventing native OS browser tooltips from clashing with or double-rendering over theme-styled custom tooltips.
+- Exception: `<iframe>` elements retain `title="..."` strictly as a WCAG accessible frame name.
 
 ### Custom limits
 
@@ -108,6 +121,7 @@ Pet theme indicator markers use species-tailored SVG assets in `ui/src/assets/th
 
 ## Acceptance criteria
 
+- [ ] All badges, tags, count pills, and tour indicators inherit active theme border-radius tokens and shape geometry.
 - [ ] Only active style union values persist.
 - [ ] All custom numeric fields stay in range.
 - [ ] Oversized/unsupported background images are rejected.

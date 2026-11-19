@@ -136,9 +136,6 @@
   background: var(--accent-dim);
   color: var(--accent-text);
   font-weight: 600;
-}
-
-[data-theme-style="vercel"] .tree-file.is-active {
   border-color: transparent;
 }
 

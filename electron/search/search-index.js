@@ -303,6 +303,7 @@ function primeIndex(paths, getEntry, primeBatchSize, setTimeoutImpl) {
 function createSearchIndex() {
   const cache = new Map();
   const MAX_INDEXABLE_BYTES = 2 * 1024 * 1024;
+  const MAX_CACHE_ENTRIES = 256;
   const PRIME_BATCH_SIZE = 5;
 
   function getEntry(filePath) {
@@ -316,6 +317,8 @@ function createSearchIndex() {
     }
     const cached = cache.get(filePath);
     if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
+      cache.delete(filePath);
+      cache.set(filePath, cached);
       return cached;
     }
 
@@ -326,6 +329,11 @@ function createSearchIndex() {
       raw,
       haystack: prepareHaystack(raw),
     };
+    if (cache.has(filePath)) cache.delete(filePath);
+    else if (cache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = cache.keys().next().value;
+      if (oldestKey !== undefined) cache.delete(oldestKey);
+    }
     cache.set(filePath, entry);
     return entry;
   }

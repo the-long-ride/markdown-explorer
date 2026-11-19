@@ -19,11 +19,11 @@
     var(--pet-bg-blep);
   background-repeat: no-repeat, no-repeat;
   background-position:
-    clamp(18px, 5vw, 76px) clamp(64px, 12vh, 150px),
-    calc(100% - clamp(26px, 6vw, 96px)) clamp(58px, 10vh, 128px);
+    clamp(16px, 4.5vw, 68px) clamp(54px, 10vh, 136px),
+    calc(100% - clamp(20px, 5vw, 76px)) clamp(50px, 9vh, 118px);
   background-size:
-    clamp(112px, 14.3vw, 224px) clamp(112px, 14.3vw, 224px),
-    clamp(96px, 11.7vw, 190px) clamp(96px, 11.7vw, 190px);
+    clamp(168px, 20.8vw, 312px) clamp(168px, 20.8vw, 312px),
+    clamp(144px, 17.5vw, 268px) clamp(144px, 17.5vw, 268px);
   opacity: var(--pet-bg-side-opacity);
   filter: saturate(1.08);
   animation: petBackgroundWander 21s ease-in-out infinite alternate;
@@ -90,11 +90,6 @@
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--bg-s)), var(--bg-s) 34%),
     var(--bg-s);
-}
-
-[data-theme-style^="pet-"] .sidebar-resize {
-  background: var(--bg);
-  border-right: var(--stroke-w) solid var(--bd-s);
 }
 
 [data-theme-style^="pet-"] .toc-compact-bar {

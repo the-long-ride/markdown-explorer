@@ -49,7 +49,7 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, icon, tooltip, shortcut, label, onlyIcon = true, ...props }: any) => (
+  TooltipButton: ({ onClick, children, icon, tooltip, shortcut, label, onlyIcon = true, tooltipPos: _tp, tooltipAlign: _ta, portalTooltip: _pt, ...props }: any) => (
     <button onClick={onClick} aria-label={label || tooltip} data-shortcut={shortcut || undefined} {...props}>
       {icon}{!onlyIcon && label}{children}
     </button>
@@ -107,7 +107,9 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   SettingsFeaturesIcon: () => <span>features-icon</span>,
   RefreshIcon: () => <span>refresh-icon</span>,
   OpenInBrowserIcon: () => <span>browser-icon</span>,
+  ReloadWindowIcon: () => <span>reload-window</span>,
   LanguageIcon: () => <span>lang-icon</span>,
+  HistoryIcon: () => <span>history-icon</span>,
 }));
 
 vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
@@ -118,7 +120,7 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
   ],
   getDefaultKeybindings: () => ({ searchCurrent: 'Ctrl+K', editCurrentDocument: 'Ctrl+Alt+E' }),
   getDefaultKeybindingsForRuntime: (runtime: string) =>
-    runtime === 'chrome' ? { searchCurrent: 'Ctrl+K' } : { searchCurrent: 'Ctrl+K', editCurrentDocument: runtime === 'vscode' ? 'Ctrl+Alt+E' : 'Ctrl+E' },
+    runtime === 'web' ? { searchCurrent: 'Ctrl+K' } : { searchCurrent: 'Ctrl+K', editCurrentDocument: runtime === 'vscode' ? 'Ctrl+Alt+E' : 'Ctrl+E' },
 }));
 
 vi.mock('../../../../ui/src/settings/settingsImportExport', () => ({

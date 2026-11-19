@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { registerTableHandlers } from '../../../../ui/src/dom/tableHandlers';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { getWrappedColumnPercentages, registerTableHandlers } from '../../../../ui/src/dom/tableHandlers';
+import { syncStickyTableHeaders } from '../../../../ui/src/components/Content/contentUtils';
 
 describe('dom/tableHandlers registerTableHandlers', () => {
   let win: any;
@@ -31,6 +32,16 @@ describe('dom/tableHandlers registerTableHandlers', () => {
   it('installs Table.showFilterMenu', () => {
     registerTableHandlers(win);
     expect(typeof win.Table.showFilterMenu).toBe('function');
+  });
+
+  it('installs Table.showAlignMenu', () => {
+    registerTableHandlers(win);
+    expect(typeof win.Table.showAlignMenu).toBe('function');
+  });
+
+  it('installs Table.setColumnAlignment', () => {
+    registerTableHandlers(win);
+    expect(typeof win.Table.setColumnAlignment).toBe('function');
   });
 
   it('installs Table.toggleCollapse', () => {
@@ -204,15 +215,53 @@ describe('dom/tableHandlers registerTableHandlers', () => {
       expect(widths[0]).toBeLessThan(25);
     });
 
-    it('removes calculated column widths when wrap mode is disabled', () => {
+    it('reads header text from .mdn-th-text and gives hidden columns 0% width in wrapped mode', () => {
       registerTableHandlers(win);
       document.body.innerHTML = `
         <div id="t1-wrap"></div>
-        <table id="t1"><thead><tr><th class="mdn-th">Name</th></tr></thead><tbody><tr><td>Value</td></tr></tbody></table>`;
+        <table id="t1">
+          <thead>
+            <tr>
+              <th class="mdn-th"><div class="mdn-th-content"><span class="mdn-th-text">#</span><span class="mdn-th-actions"><span class="mdn-sort-icon">↕</span><span class="mdn-table-filter-btn">FilterIconText</span></span></div></th>
+              <th class="mdn-th is-hidden-column"><div class="mdn-th-content"><span class="mdn-th-text">Hidden Long Column Header</span></div></th>
+              <th class="mdn-th"><div class="mdn-th-content"><span class="mdn-th-text">Description</span></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td class="is-hidden-column">Very long hidden cell content that should not steal width</td><td>Detailed workflow description for task execution</td></tr>
+          </tbody>
+        </table>`;
+
+      const table = document.getElementById('t1') as HTMLTableElement;
+      const percentages = getWrappedColumnPercentages(table);
+      expect(percentages).toHaveLength(3);
+      expect(percentages[1]).toBe(0);
+      expect(percentages[0]).toBeLessThan(20);
+      expect(percentages[0] + percentages[2]).toBeCloseTo(100, 3);
+    });
+
+    it('sets and updates --mdn-wrapped-table-min-width when wrapped and removes it when unwrapped', () => {
+      registerTableHandlers(win);
+      document.body.innerHTML = `
+        <div id="t1-wrap"></div>
+        <table id="t1">
+          <thead><tr><th class="mdn-th">#</th><th class="mdn-th">Flag</th><th class="mdn-th">Task Description</th><th class="mdn-th">Expected Output</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Có</td><td>Implement wrapped table column sizing</td><td>Readable multi-column layout without single-letter vertical strips</td></tr>
+          </tbody>
+        </table>`;
+
+      const table = document.getElementById('t1') as HTMLTableElement;
+      win.Table.toggleWrap('t1');
+      const initialMinWidth = Number.parseInt(table.style.getPropertyValue('--mdn-wrapped-table-min-width'), 10);
+      expect(initialMinWidth).toBeGreaterThan(200);
+
+      win.Table.setColumnVisibility('t1', 3, false);
+      const reducedMinWidth = Number.parseInt(table.style.getPropertyValue('--mdn-wrapped-table-min-width'), 10);
+      expect(reducedMinWidth).toBeLessThan(initialMinWidth);
 
       win.Table.toggleWrap('t1');
-      win.Table.toggleWrap('t1');
-
+      expect(table.style.getPropertyValue('--mdn-wrapped-table-min-width')).toBe('');
       expect(document.querySelector('#t1 colgroup[data-mdn-wrapped-columns]')).not.toBeInTheDocument();
     });
   });
@@ -299,6 +348,120 @@ describe('dom/tableHandlers registerTableHandlers', () => {
 
       expect(() => win.UI.toggleCodeCollapse(btn)).not.toThrow();
       expect(btn.textContent).toBe('');
+    });
+  });
+
+  describe('sticky table headers and Show Less toggle', () => {
+    it('marks scroll container for JS sticky headers and positions thead flush with scroll container top', () => {
+      document.body.innerHTML = `
+        <div class="content__scroll" id="scroll">
+          <div class="mdn-table-wrap" id="t1-wrap">
+            <div class="mdn-table-scroll">
+              <table class="mdn-table" id="t1">
+                <thead><tr><th class="mdn-th">Index</th></tr></thead>
+                <tbody><tr><td>1</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>`;
+      const scroll = document.getElementById('scroll') as HTMLElement;
+      const table = document.getElementById('t1') as HTMLTableElement;
+      const thead = table.querySelector('thead') as HTMLElement;
+
+      Object.defineProperty(scroll, 'clientTop', { value: 2, configurable: true });
+      scroll.getBoundingClientRect = () => ({ top: 80, height: 400 } as DOMRect);
+      thead.getBoundingClientRect = () => ({ top: 0, height: 32 } as DOMRect);
+
+      let tableTop = -40;
+      table.getBoundingClientRect = () => ({ top: tableTop, height: 300 } as DOMRect);
+
+      syncStickyTableHeaders(scroll);
+      expect(scroll.dataset.mdnJsStickyHeaders).toBe('true');
+      expect(thead.style.transform).toBe('translateY(122px)');
+      expect(thead.style.position).toBe('relative');
+      expect(thead.style.zIndex).toBe('10');
+
+      tableTop = -350;
+      syncStickyTableHeaders(scroll);
+      expect(thead.style.transform).toBe('translateY(268px)');
+
+      tableTop = 100;
+      syncStickyTableHeaders(scroll);
+      expect(thead.style.transform).toBe('');
+      expect(thead.style.position).toBe('');
+      expect(thead.style.zIndex).toBe('');
+    });
+
+    it('offsets sticky table headers below a visible compact TOC bar', () => {
+      document.body.innerHTML = `
+        <div class="content__scroll" id="scroll">
+          <div class="mdn-body">
+            <nav class="toc-compact">
+              <button type="button" class="toc-compact__toggle" id="tocBtn">On This Page</button>
+            </nav>
+            <div class="mdn-table-wrap">
+              <div class="mdn-table-scroll">
+                <table class="mdn-table" id="t1">
+                  <thead><tr><th class="mdn-th">Index</th></tr></thead>
+                  <tbody><tr><td>1</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      const scroll = document.getElementById('scroll') as HTMLElement;
+      const tocBtn = document.getElementById('tocBtn') as HTMLElement;
+      const table = document.getElementById('t1') as HTMLTableElement;
+      const thead = table.querySelector('thead') as HTMLElement;
+
+      Object.defineProperty(scroll, 'clientTop', { value: 0, configurable: true });
+      scroll.getBoundingClientRect = () => ({ top: 80, height: 400 } as DOMRect);
+      tocBtn.getBoundingClientRect = () => ({ top: 80, bottom: 120, height: 40 } as DOMRect);
+      thead.getBoundingClientRect = () => ({ top: 0, height: 32 } as DOMRect);
+      table.getBoundingClientRect = () => ({ top: 50, height: 300 } as DOMRect);
+
+      syncStickyTableHeaders(scroll);
+      expect(scroll.style.getPropertyValue('--mdn-sticky-top-offset')).toBe('40px');
+      expect(thead.style.transform).toBe('translateY(70px)');
+    });
+
+    it('toggles is-expanded on Show Less button and resyncs sticky headers when collapsing', () => {
+      registerTableHandlers(win);
+      const rows = Array.from({ length: 18 }, (_, i) => `<tr><td>${i + 1}</td></tr>`).join('');
+      document.body.innerHTML = `
+        <div class="content__scroll" id="scroll">
+          <div class="mdn-table-wrap" id="t1-wrap">
+            <div class="mdn-table-scroll">
+              <table class="mdn-table" id="t1">
+                <thead><tr><th class="mdn-th">Index</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            <button class="mdn-table-toggle-btn" id="t1-toggle-btn">Show More</button>
+          </div>
+        </div>`;
+      const scroll = document.getElementById('scroll') as HTMLElement;
+      const table = document.getElementById('t1') as HTMLTableElement;
+      const thead = table.querySelector('thead') as HTMLElement;
+      const toggleBtn = document.getElementById('t1-toggle-btn') as HTMLButtonElement;
+      const wrap = document.getElementById('t1-wrap') as HTMLElement;
+      wrap.scrollIntoView = () => {};
+
+      scroll.getBoundingClientRect = () => ({ top: 60, height: 400 } as DOMRect);
+      thead.getBoundingClientRect = () => ({ top: 0, height: 30 } as DOMRect);
+      table.getBoundingClientRect = () => ({ top: -100, height: 600 } as DOMRect);
+
+      win.Table.toggleCollapse('t1');
+      expect(toggleBtn.classList.contains('is-expanded')).toBe(true);
+      expect(toggleBtn.textContent).toBe('Show Less');
+      expect(scroll.dataset.mdnJsStickyHeaders).toBe('true');
+      expect(thead.style.transform).toBe('translateY(160px)');
+
+      table.getBoundingClientRect = () => ({ top: 80, height: 300 } as DOMRect);
+      win.Table.toggleCollapse('t1');
+      expect(toggleBtn.classList.contains('is-expanded')).toBe(false);
+      expect(toggleBtn.textContent).toBe('Show More');
+      expect(thead.style.transform).toBe('');
     });
   });
 });

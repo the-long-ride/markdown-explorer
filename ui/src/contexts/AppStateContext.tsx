@@ -22,11 +22,13 @@ import type {
 } from '../types';
 import { requestSaveDocument, type SaveDocumentRequestOptions } from '../editor/saveDocument';
 import { documentSessionKey, isDocumentSavable, type MarkdownEditMode } from '../editor/documentSession';
+import { clearEditorSession, clearAllEditorSessions } from '../editor/editorSessionStore';
 import { useUnsavedChangesGuard } from '../editor/useUnsavedChangesGuard';
 import { getEditorUiTranslations } from './editorUiTranslations';
 import { useDocumentConflictResolution } from '../editor/useDocumentConflictResolution';
 import type { DocumentViewMode, PaneId } from '../split-view/paneState';
 import type { SidebarTabId } from './appStateModel';
+import { createTourDemoRenderAction, isTourDemoPath } from '../components/Tour/tourDemoWorkspace';
 import { useAppStateEffects } from './useAppStateEffects';
 import {
   type AppState,
@@ -138,6 +140,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       pendingHtmlPreviewNavigationRef.current = null;
     }
     if (targetPath) {
+      if (isTourDemoPath(targetPath)) {
+        const cleanPath = targetPath.split('#')[0];
+        if (navigateDepsRef.current.splitView.enabled) {
+          dispatch({ type: 'SET_SPLIT_PANE_FILE', paneId: navigateDepsRef.current.splitView.activePane, filePath: cleanPath });
+        }
+        const action = createTourDemoRenderAction(cleanPath);
+        if (action) dispatch(action);
+        if (options?.htmlPreviewOverride !== undefined) {
+          dispatch({ type: 'SET_CONTENT_TAB_HTML_PREVIEW', filePath: cleanPath, enabled: options.htmlPreviewOverride });
+          pendingHtmlPreviewNavigationRef.current = null;
+        }
+        return;
+      }
       const cachedPath = navigateDepsRef.current.getCachedContentTabPath(targetPath);
       if (cachedPath) {
         if (navigateDepsRef.current.splitView.enabled) {
@@ -152,11 +167,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (navigateDepsRef.current.splitView.enabled) {
-        dispatch({
-          type: 'SET_SPLIT_PANE_FILE',
-          paneId: navigateDepsRef.current.splitView.activePane,
-          filePath: targetPath.split('#')[0],
-        });
+        dispatch({ type: 'SET_SPLIT_PANE_FILE', paneId: navigateDepsRef.current.splitView.activePane, filePath: targetPath.split('#')[0] });
       }
     }
     dispatch({ type: 'SET_LOADING' });
@@ -166,6 +177,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const activateContentTab = useCallback((fsPath: string) => {
     if (!fsPath) return;
     pendingHtmlPreviewNavigationRef.current = null;
+    if (isTourDemoPath(fsPath)) {
+      dispatch({ type: 'ACTIVATE_CONTENT_TAB', filePath: fsPath });
+      const action = createTourDemoRenderAction(fsPath);
+      if (action) dispatch(action);
+      return;
+    }
     dispatch({ type: 'ACTIVATE_CONTENT_TAB', filePath: fsPath });
     bridge.postMessage({ command: 'navigate', path: fsPath });
   }, [bridge]);
@@ -181,6 +198,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const closingActive = normalizePathKey(state.activeContentTabPath ?? '') === normalizePathKey(fsPath);
     const nextTabs = state.contentTabs.filter((_, index) => index !== tabIndex);
     const fallback = closingActive ? nextTabs[tabIndex - 1] ?? nextTabs[tabIndex] ?? null : null;
+    clearEditorSession(fsPath);
     dispatch({ type: 'CLOSE_CONTENT_TAB', filePath: fsPath });
     if (closingActive) bridge.postMessage({ command: 'navigate', path: fallback?.filePath ?? '' });
   }, [bridge, state.activeContentTabPath, state.contentTabs]);
@@ -189,6 +207,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const targetIndex = state.contentTabs.findIndex((item) => normalizePathKey(item.filePath) === normalizePathKey(fsPath));
     if (targetIndex === -1 || targetIndex >= state.contentTabs.length - 1) return;
     const activeIndex = state.contentTabs.findIndex((item) => normalizePathKey(item.filePath) === normalizePathKey(state.activeContentTabPath ?? ''));
+    state.contentTabs.slice(targetIndex + 1).forEach((item) => clearEditorSession(item.filePath));
     dispatch({ type: 'CLOSE_CONTENT_TABS_TO_RIGHT', filePath: fsPath });
     if (activeIndex === -1 || activeIndex > targetIndex) bridge.postMessage({ command: 'navigate', path: fsPath });
   }, [bridge, state.activeContentTabPath, state.contentTabs]);
@@ -197,12 +216,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const targetTab = state.contentTabs.find((item) => normalizePathKey(item.filePath) === normalizePathKey(fsPath));
     if (!targetTab || state.contentTabs.length <= 1) return;
     const targetIsActive = normalizePathKey(state.activeContentTabPath ?? '') === normalizePathKey(fsPath);
+    state.contentTabs.filter((item) => normalizePathKey(item.filePath) !== normalizePathKey(fsPath)).forEach((item) => clearEditorSession(item.filePath));
     dispatch({ type: 'CLOSE_OTHER_CONTENT_TABS', filePath: fsPath });
     if (!targetIsActive) bridge.postMessage({ command: 'navigate', path: fsPath });
   }, [bridge, state.activeContentTabPath, state.contentTabs]);
 
   const closeAllContentTabs = useCallback(() => {
     if (state.contentTabs.length === 0) return;
+    clearAllEditorSessions();
     dispatch({ type: 'CLOSE_ALL_CONTENT_TABS' });
     bridge.postMessage({ command: 'navigate', path: '' });
   }, [bridge, state.contentTabs.length]);
@@ -260,6 +281,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const discardDocumentChanges = useCallback((filePath: string) => {
+    clearEditorSession(filePath);
     dispatch({ type: 'DISCARD_DOCUMENT_CHANGES', filePath });
   }, []);
 
@@ -329,6 +351,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   currentFileRef.current = state.currentFile;
   const refresh = useCallback(() => {
     if (!currentFileRef.current) return;
+    if (isTourDemoPath(currentFileRef.current)) {
+      const action = createTourDemoRenderAction(currentFileRef.current);
+      if (action) dispatch(action);
+      return;
+    }
     dispatch({ type: 'SET_LOADING' });
     bridge.postMessage({ command: 'refresh' });
   }, [bridge]);

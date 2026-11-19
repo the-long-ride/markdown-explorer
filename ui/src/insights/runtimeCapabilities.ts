@@ -2,15 +2,14 @@ import type { AppRuntime } from '../types/settings';
 
 declare global {
   interface Window {
-    __webDemoBus?: EventTarget;
+    __webBus?: EventTarget;
   }
 }
 
-export function isWebsiteDemoRuntime(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.__webDemoBus);
+export function isWebRuntime(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.__webBus);
 }
 
 export function supportsWorkspaceInsights(runtime: AppRuntime): boolean {
-  if (runtime === 'vscode') return false;
-  return runtime !== 'chrome' || !isWebsiteDemoRuntime();
+  return runtime !== 'vscode';
 }

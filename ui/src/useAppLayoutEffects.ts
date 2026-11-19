@@ -6,6 +6,7 @@ import { useResize } from "./hooks/useResize";
 import { requestShellLocation, supportsShellLocation } from "./desktop/shellLocation";
 import { collapseAll as collapseAllHeadingSections, expandAll as expandAllHeadingSections } from './dom/globalHandlers';
 import { WORKSPACE_INSIGHTS_TOGGLE_EVENT } from './components/shared/ToolbarActionMenu';
+import { requestDismissWorkspaceTour } from './components/Tour/tourEvents';
 import { supportsWorkspaceInsights } from './insights/runtimeCapabilities';
 
 interface AppLayoutEffectsArgs {
@@ -14,6 +15,7 @@ interface AppLayoutEffectsArgs {
   dispatch: (action: any) => void;
   termsAccepted: boolean;
   themeOnboardingComplete: boolean;
+  updatePromptOpen?: boolean;
   setSidebarCursorMode: (value: boolean) => void;
   sidebarCursorMode: boolean;
   searchOpen: boolean;
@@ -27,6 +29,7 @@ interface AppLayoutEffectsArgs {
   openSidebarSearch: () => void;
   openSearch: (scope?: any) => void;
   closeSearch: () => void;
+  canUseCrossTabSearch?: boolean;
   openFind: () => void;
   closeFind: () => void;
   setSettingsOpen: (value: boolean) => void;
@@ -46,6 +49,7 @@ export function useAppLayoutEffects({
   dispatch,
   termsAccepted,
   themeOnboardingComplete,
+  updatePromptOpen = false,
   setSidebarCursorMode,
   sidebarCursorMode,
   searchOpen,
@@ -59,6 +63,7 @@ export function useAppLayoutEffects({
   openSidebarSearch,
   openSearch,
   closeSearch,
+  canUseCrossTabSearch = false,
   openFind,
   closeFind,
   setSettingsOpen,
@@ -71,7 +76,7 @@ export function useAppLayoutEffects({
   onToggleActiveHtmlDocumentPreview,
   toggleFullscreen,
 }: AppLayoutEffectsArgs) {
-  const themeOnboardingOpen = termsAccepted && !themeOnboardingComplete;
+  const themeOnboardingOpen = termsAccepted && !themeOnboardingComplete && !updatePromptOpen;
 
   const closeSidebarCursorMode = useCallback(() => {
     setSidebarCursorMode(false);
@@ -152,7 +157,8 @@ export function useAppLayoutEffects({
 
   // Sidebar resize handle
   useResize('sidebarResize', 'sidebar', state.workspaceName, {
-    min: 235,
+    min: 290,
+    max: 800,
     mode: 'synchronized',
     freezeContentId: 'sidebarTree',
   });
@@ -180,6 +186,7 @@ export function useAppLayoutEffects({
   // user manual) lands here, so the unsaved-changes prompt lives in one place.
   const closeWorkspaceToSelection = useCallback(() => {
     guardWorkspaceLeave(() => {
+      requestDismissWorkspaceTour();
       dispatch({
         type: 'READY_ACK',
         fileList: [],
@@ -188,6 +195,7 @@ export function useAppLayoutEffects({
         themeStyle: state.themeStyle,
         defaultExpanded: state.defaultExpanded,
         workspaceName: '',
+        workspacePath: undefined,
         recentWorkspaces: state.recentWorkspaces,
       });
       bridge.postMessage({ command: 'closeWorkspace' });
@@ -205,6 +213,11 @@ export function useAppLayoutEffects({
     }
     closeWorkspaceToSelection();
   }, [closeWorkspaceToSelection, createNewWorkspaceTab, isTabView, state.workspaceName]);
+
+  const openSidebarFiles = useCallback(() => {
+    if (state.sidebarCollapsed) toggleSidebar();
+    dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'files' });
+  }, [dispatch, state.sidebarCollapsed, toggleSidebar]);
 
   const openSidebarBookmarks = useCallback(() => {
     if (!state.settings.bookmarksEnabled) {
@@ -236,7 +249,7 @@ export function useAppLayoutEffects({
   // Keyboard shortcuts
   useKeyboard({
     onSearchOpen: openSidebarSearch,
-    onCrossTabSearchOpen: isTabView ? () => openSearch('all-tabs') : undefined,
+    onCrossTabSearchOpen: canUseCrossTabSearch ? () => openSearch('all-tabs') : undefined,
     onSearchClose: closeSearch,
     onFindOpen: openFind,
     onFindClose: closeFind,
@@ -259,6 +272,7 @@ export function useAppLayoutEffects({
     onLocateFile: () => {
       window.dispatchEvent(new CustomEvent('locate-active-file'));
     },
+    onFilesOpen: openSidebarFiles,
     onBookmarksOpen: openSidebarBookmarks,
     onOpenCurrentDocumentLocation: supportsShellLocation(state.appRuntime) && state.currentFile
       ? () => requestShellLocation(bridge, state.currentFile, 'open-parent-directory')

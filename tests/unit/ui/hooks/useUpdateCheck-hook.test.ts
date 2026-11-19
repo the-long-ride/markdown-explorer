@@ -48,6 +48,36 @@ describe('useUpdateCheck hook', () => {
     expect(result.current.downloadUrl).toBe(RELEASE_FALLBACK_URL);
   });
 
+  it('returns idle and hasUpdate false when runtime is web without fetching on startup', async () => {
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy;
+    const { result } = renderHook(() =>
+      useUpdateCheck({ currentVersion: '1.7.1', runtime: 'web', hostPlatform: 'unknown', hostArch: 'unknown' }),
+    );
+    expect(result.current.status).toBe('idle');
+    expect(result.current.hasUpdate).toBe(false);
+    await advanceDelay();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result.current.status).toBe('idle');
+    expect(result.current.hasUpdate).toBe(false);
+  });
+
+  it('returns idle and hasUpdate false when __webBus is present', async () => {
+    (window as any).__webBus = new EventTarget();
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy;
+    const { result } = renderHook(() =>
+      useUpdateCheck({ currentVersion: '1.7.1', runtime: 'desktop', hostPlatform: 'unknown', hostArch: 'unknown' }),
+    );
+    expect(result.current.status).toBe('idle');
+    expect(result.current.hasUpdate).toBe(false);
+    await advanceDelay();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result.current.status).toBe('idle');
+    expect(result.current.hasUpdate).toBe(false);
+    delete (window as any).__webBus;
+  });
+
   it('starts checking when currentVersion is provided', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) } as Response);
     const { result } = renderHook(() =>

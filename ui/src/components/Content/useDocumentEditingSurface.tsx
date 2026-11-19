@@ -1,6 +1,8 @@
-import { useLayoutEffect, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useLayoutEffect, useEffect, useRef, useState, useContext, type ReactNode, type RefObject } from 'react';
+import { AppStateContext } from '../../contexts/AppStateContext';
 import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import { editorModKeyLabel } from '../../editor/editorUx';
+import { findFrontmatterSourceRange } from '../../markdown/frontmatter';
 import type { DocumentViewMode } from '../../split-view/paneState';
 import type { DocumentBodyPlainSession, DocumentBodyProps } from './DocumentBody';
 import { InlineMarkdownEditor } from './InlineMarkdownEditor';
@@ -20,6 +22,8 @@ export interface DocumentEditingSurfaceOptions {
   readonly language: string | undefined;
   readonly saving: boolean;
   readonly dirty?: boolean;
+  readonly keybindings?: Readonly<Record<string, string>>;
+  readonly disabledKeybindings?: Readonly<Record<string, boolean>>;
   readonly onSourceChange: (source: string) => void;
   readonly onSave: () => void | Promise<unknown>;
   readonly onPreview: () => void;
@@ -30,7 +34,7 @@ export interface DocumentEditingSurface {
   /** The floating inline editor for the active block, or null when none is open. */
   readonly inlineEditor: ReactNode;
   /** Editing related props that both the main view and split panes pass to `DocumentBody`. */
-  readonly bodyProps: Pick<DocumentBodyProps, 'plainSession' | 'onSourceChange' | 'onSave' | 'onPreview'>;
+  readonly bodyProps: Pick<DocumentBodyProps, 'plainSession' | 'frontmatterSourceRange' | 'onSourceChange' | 'onSave' | 'onPreview' | 'keybindings' | 'disabledKeybindings'>;
 }
 
 // One place for the editing wiring shared by the main document view and every
@@ -38,8 +42,11 @@ export interface DocumentEditingSurface {
 // apply-and-save shortcut, the plain-source session and the editor labels.
 export function useDocumentEditingSurface({
   filePath, mode, source, hasSession, suspended = false, bodyRef, renderVersion, language, saving, dirty,
-  onSourceChange, onSave, onPreview,
+  keybindings, disabledKeybindings, onSourceChange, onSave, onPreview,
 }: DocumentEditingSurfaceOptions): DocumentEditingSurface {
+  const appState = useContext(AppStateContext);
+  const activeKeybindings = keybindings ?? appState?.state.settings.keybindings;
+  const activeDisabledKeybindings = disabledKeybindings ?? appState?.state.settings.disabledKeybindings;
   const editorT = getEditorUiTranslations(language);
   const active = hasSession && !suspended;
   const isPlainMode = active && mode === 'plain';
@@ -63,6 +70,9 @@ export function useDocumentEditingSurface({
     <InlineMarkdownEditor
       target={inlineEditing.activeTarget}
       source={source}
+      language={language ?? 'en'}
+      keybindings={activeKeybindings}
+      disabledKeybindings={activeDisabledKeybindings}
       labels={{
         sourceLabel: editorT.inlineSourceLabel,
         apply: editorT.apply,
@@ -80,10 +90,11 @@ export function useDocumentEditingSurface({
   const plainSession: DocumentBodyPlainSession | null = isPlainMode
     ? { source, saving, plainSourceLabel: editorT.plainSourceLabel, ...(dirty === undefined ? {} : { dirty }) }
     : null;
+  const frontmatterSourceRange = inlineEnabled && source ? findFrontmatterSourceRange(source) : null;
 
   return {
     isPlainMode,
     inlineEditor,
-    bodyProps: { plainSession, onSourceChange, onSave: () => { void onSave(); }, onPreview },
+    bodyProps: { plainSession, frontmatterSourceRange, onSourceChange, onSave: () => { void onSave(); }, onPreview, keybindings: activeKeybindings, disabledKeybindings: activeDisabledKeybindings },
   };
 }

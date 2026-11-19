@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DocumentDiffView } from '../../../../ui/src/components/History/DocumentDiffView';
 
@@ -9,5 +9,13 @@ describe('source diff view', () => {
     expect(screen.getByText('new').closest('[data-diff-type]')).toHaveAttribute('data-diff-type', 'add');
     expect(screen.getByText('Removed')).toBeInTheDocument();
     expect(screen.getByText('Added')).toBeInTheDocument();
+  });
+
+  it('switches to side-by-side Split Diff mode', () => {
+    const { container } = render(<DocumentDiffView leftSource={'# A\nold'} rightSource={'# A\nnew'} leftLabel="old" rightLabel="current" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Split Diff' }));
+    expect(container.querySelector('.split-source-diff-view')).toBeInTheDocument();
+    expect(screen.getByText('old').closest('[data-diff-type]')).toHaveAttribute('data-diff-type', 'remove');
+    expect(screen.getByText('new').closest('[data-diff-type]')).toHaveAttribute('data-diff-type', 'add');
   });
 });

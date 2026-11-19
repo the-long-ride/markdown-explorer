@@ -8,6 +8,8 @@ import { getSupportPromptTranslations } from '../../contexts/supportPromptTransl
 import { StarIcon } from '../shared/icons';
 import { CheckboxCheckedIcon, CheckboxUncheckedIcon } from '../shared/CheckboxIcons';
 import { HeartIcon } from '../shared/HeartIcon';
+import { useGitHubStars } from '../../hooks/useGitHubStars';
+import { GITHUB_REPO_URL, DONATE_URL } from '../../constants/urls';
 import './SupportPromptModal.css';
 
 export interface SupportPromptModalProps {
@@ -20,6 +22,7 @@ export interface SupportPromptModalProps {
 export function SupportPromptModal({ isOpen, onClose, onStar, onDonate }: SupportPromptModalProps) {
   const { state } = useAppState();
   const [neverShowAgain, setNeverShowAgain] = useState(false);
+  const starCount = useGitHubStars(undefined, isOpen);
 
   const t = getSupportPromptTranslations(state?.settings?.language);
 
@@ -28,12 +31,31 @@ export function SupportPromptModal({ isOpen, onClose, onStar, onDonate }: Suppor
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
+        event.stopPropagation();
         onClose(neverShowAgain);
+        return;
+      }
+      if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing) {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && (
+          active.classList.contains('support-prompt-card__close') ||
+          active.classList.contains('support-prompt-card__later-btn') ||
+          (onStar && active.classList.contains('support-prompt-card__donate-btn'))
+        )) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        if (onStar) {
+          onStar(neverShowAgain);
+        } else if (onDonate) {
+          onDonate(neverShowAgain);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, neverShowAgain, onClose]);
+  }, [isOpen, neverShowAgain, onClose, onStar, onDonate]);
 
   if (!isOpen) return null;
 
@@ -81,9 +103,16 @@ export function SupportPromptModal({ isOpen, onClose, onStar, onDonate }: Suppor
                 type="button"
                 className="support-prompt-card__star-btn"
                 onClick={() => onStar(neverShowAgain)}
+                data-hover-tooltip={GITHUB_REPO_URL}
+                data-hover-tooltip-pos="top"
               >
                 <StarIcon size={13} className="support-prompt-card__btn-icon" />
                 <span>{t.starButton}</span>
+                {typeof starCount === 'number' && starCount > 0 && (
+                  <span className="hero-star-banner__count support-prompt-card__star-count" data-testid="support-modal-github-star-count">
+                    {starCount.toLocaleString()}
+                  </span>
+                )}
               </button>
             </section>
           )}
@@ -98,6 +127,8 @@ export function SupportPromptModal({ isOpen, onClose, onStar, onDonate }: Suppor
                 type="button"
                 className="support-prompt-card__donate-btn"
                 onClick={() => onDonate(neverShowAgain)}
+                data-hover-tooltip={DONATE_URL}
+                data-hover-tooltip-pos="top"
               >
                 <HeartIcon size={13} className="support-prompt-card__btn-icon" />
                 <span>{t.donateButton}</span>

@@ -1,0 +1,2611 @@
+{
+  "schema_version": 1,
+  "last_sync_commit": "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0",
+  "last_full_scan_commit": "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0",
+  "inventory_complete": true,
+  "source_to_specs": {
+    ".github/scripts/release-notes.mjs": [
+      "workflow.build-and-verification"
+    ],
+    ".github/workflows/build-all.yml": [
+      "workflow.build-and-verification"
+    ],
+    ".github/workflows/deploy-website.yml": [
+      "workflow.build-and-verification"
+    ],
+    ".github/workflows/release.yml": [
+      "workflow.build-and-verification"
+    ],
+    ".github/workflows/test.yml": [
+      "workflow.build-and-verification"
+    ],
+    ".vscode/launch.json": [
+      "workflow.build-and-verification"
+    ],
+    ".vscode/tasks.json": [
+      "workflow.build-and-verification"
+    ],
+    "electron/build/installer.nsh": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/external-open.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/html-preview-server.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/ipc-handlers.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/main-bootstrap.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/main-runtime.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/native-close-guard.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-command-handlers.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-command-search-handlers.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-export-resources.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-export-save.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-insights-external.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-insights.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-update-handlers.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-utils.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-workspace-handlers.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-workspace-resources.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/runtime-workspace-search.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/core/startup-workspace.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/fonts/font-service.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/git/document-history.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/git/git-history-handlers.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/git/git-runner.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/main.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/perf/perf-timer.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/preload/preload.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/render/document-converter.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/search/search-index.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/search/search-worker-controller.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/search/search-worker.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/search/unicode-search.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/update/update-helper.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/update/update-manager.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/update/update-state.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/window/debug-tools.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/window/window.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/document-write.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/incremental-publish.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/recents.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/scanner.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/workspace-entries.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/workspace-entry-name.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/workspace-refresh.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/workspace/workspace-watch.js": [
+      "architecture.runtime-electron"
+    ],
+    "electron/youtube/youtube-headers.js": [
+      "architecture.runtime-electron"
+    ],
+    "package.json": [
+      "workflow.build-and-verification"
+    ],
+    "pnpm-workspace.yaml": [
+      "workflow.build-and-verification"
+    ],
+    "scripts/configure-tauri-updater.mjs": [
+      "workflow.build-and-verification"
+    ],
+    "scripts/fetch-marketplace-stats.mjs": [
+      "workflow.build-and-verification"
+    ],
+    "scripts/sync-readme.mjs": [
+      "workflow.build-and-verification"
+    ],
+    "scripts/sync-versions.mjs": [
+      "workflow.build-and-verification"
+    ],
+    "tauri/build.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/scripts/run-with-global-cache.mjs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/app_state.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/core/bootstrap.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/core/error.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/core/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/debug_tools.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/commands.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/commands_external.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/commands_window_update.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/commands_workspace.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/content_handlers.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/document_write.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/git_history.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/git_repository.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/git_runner.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/handlers.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/incremental_scan.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/navigation.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/ready.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/refresh.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/search.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/settings.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/workspace_entries.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/dispatcher/workspace_entry_paths.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/error.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/fonts.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/host_message.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/insights/external.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/insights/external_host.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/insights/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/insights/scan.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/lib.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/local_file.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/main.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/perf.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/preload/api.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/preload/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/document_converter.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/html.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/markdown.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/odf.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/office.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/pdf.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/pptx.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/rtf.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/render/native_document_converter/spreadsheet.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/close_guard.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/export_resources.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/external_open.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/html_preview.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/navigation.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/png_export.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/refresh.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/runtime/startup.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/search/incremental.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/search/index.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/search/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/search/unicode.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/search/worker.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/update/manager.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/update/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/workspace/file_types.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/workspace/mod.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/workspace/open.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/workspace/recents.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/workspace/scanner.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/workspace/tree_builder.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/workspace/watch.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/src/youtube.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/tests/parity_smoke.rs": [
+      "architecture.runtime-tauri"
+    ],
+    "tauri/windows/explorer-hooks.nsh": [
+      "architecture.runtime-tauri"
+    ],
+    "ui/scripts/build-export-runtime.mjs": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/scripts/dev-electron.mjs": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/scripts/dev-tauri.mjs": [
+      "workflow.build-and-verification"
+    ],
+    "ui/scripts/validate-mermaid-manual.mjs": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/App.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/AppShell.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/AppView.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/bookmarks/bookmarkCommands.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/bookmarks/bookmarkDefaultName.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/bookmarks/bookmarkDomAnchors.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/bookmarks/bookmarkModel.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/bookmarks/bookmarkStore.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/bookmarks/types.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/bookmarks/useBookmarks.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Bookmarks/BookmarkBatchDeleteDialog.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Bookmarks/BookmarkDialog.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Bookmarks/BookmarkIcons.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Bookmarks/BookmarkItemMenu.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Bookmarks/BookmarkSelectionMenu.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Bookmarks/BookmarksPanel.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Content/Content.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/ContentMainView.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/ContentTabItem.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/ContentTabs.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/DocumentBody.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/DocumentEnvironmentContext.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/HtmlDocumentView.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/InlineMarkdownEditor.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/InlineTableEditor.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/InteractiveComponents.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/LinkInsertDialog.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/MarkdownEditingIcons.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/MarkdownFormattingToolbar.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/MarkdownSourceEditor.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/RandomTipCard.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/SplitContent.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/SplitDivider.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/SplitDocumentView.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/SplitPaneDocument.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/SplitPaneTabs.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/SplitPaneView.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/TableInsertDialog.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/UserManualTab.css": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/UserManualTab.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomeCommandDeck.css": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomeFeaturesGrid.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomeHero.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomeLaunchpad.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomePage.css": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomePage.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomePageIcons.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomePageOverview.css": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/WelcomePageSupport.css": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/contentEnhancementScheduler.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/contentTabCloseEvents.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/contentTabContextMenuItems.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/contentUtils.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/documentClickHandler.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/documentContextMenuHandler.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/documentFileDrop.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/documentInteractionTypes.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/documentMediaTarget.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/documentPreviewNotice.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancementTasks.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/deferredMermaidRerender.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/enhanceColorSwatches.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/headingSectionState.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/htmlPreviewTheme.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mathRendering.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidAppearance.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidArchitecture.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidContrast.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidLayout.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidLazyRendering.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidRenderToSvg.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidRendering.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidRerenderLifecycle.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidRerenderQueue.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidSankey.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidSvgCache.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidSvgSnapshot.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidTheme.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/mermaidZenUml.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/syntaxHighlighting.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/enhancements/tableEnhancement.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/headingSectionInteractions.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/mermaidContentLifecycle.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/renderWelcomeDescription.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/runContentEnhancements.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/scheduleContentEnhancements.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useBookmarkSelection.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useContentEffects.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useContentNavigationEffects.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useContentScrollMemory.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useContentTabsScrollbar.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useDocumentEditingSurface.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useDocumentInteractions.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useDocumentOverlays.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useInlineEditorHistory.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useInlineMarkdownEditing.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useReadingProgressPersistence.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/useStableDocumentState.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomeLabels.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomePageHelpers.tsx": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomeTipGroups.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomeTipsContent.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomeTipsExtended.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomeTipsExtendedA.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomeTipsExtendedB.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Content/welcomeTipsExtendedC.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/components/Desktop/DesktopTabBar.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Desktop/DesktopTabContextMenu.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Desktop/DesktopTabItem.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Desktop/useTabBarScrollbar.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Export/ExportCenterModal.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Export/ExportCenterOptionsPanel.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Export/ExportCenterSourcePanel.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Export/ExportMultiSelect.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Export/ExportSourceSelect.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Export/exportSelectionModel.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/History/CopyableHistoryMeta.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/DocumentDiffView.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/FileHistoryCommitList.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/FileHistoryDiffPane.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/FileHistoryModal.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/FileHistoryResizeHandle.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/GitCommitGraph.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/GitRevisionView.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/HistoryActionIcons.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/HistorySelectionCheckbox.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/RenderedDiffView.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/RepositoryCommitMenu.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/RepositoryHistoryPanel.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/RepositorySnapshotContent.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/RepositorySnapshotPortal.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/SourceDiffView.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/SplitSourceDiffView.tsx": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/diffVirtualRows.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/repositoryHistoryLabels.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/useFileHistoryLayout.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/useSyncedScroll.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/History/useVisibleRowRange.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/components/Insights/DuplicatesView.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/GalleryView.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/GraphView.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/InsightsIcons.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/InsightsSettings.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/LinksView.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/LintView.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/MermaidThumbnail.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/RelatedView.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/WorkspaceInsightsEntry.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Insights/WorkspaceInsightsPanel.tsx": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/components/Modal/DocumentConflictModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/HtmlPreviewModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/MediaModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/ScopeViewModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/ScopeViewToc.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/SupportPromptModal.css": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/SupportPromptModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/SwitchWorkspaceModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/TermsModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/ThemeOnboardingModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/UnsavedChangesModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/WorkspaceSelectionConfirmModal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/mediaGallery.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Modal/scopeHistory.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Search/FindInFilePanel.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Search/SearchDocumentPreview.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Search/SearchOverlay.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Search/SearchOverlayResults.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Search/SearchOverlayWorkspaceList.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Search/searchOverlayModel.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Search/useSearchOverlayResize.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Settings/AvailableUpdateDialog.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/DesktopTypographySettings.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/FeatureSettingRow.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/FontSearchDropdown.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/FontVariantDropdown.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/PreferenceDescriptionTooltip.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsFeaturesIcon.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsFeaturesSection.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsModal.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsModalDialogs.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsOutlineButton.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsPreferencesPanel.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsShortcutsPanel.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsUpdateBackupPanel.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/SettingsVersionFooter.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/TableAlignmentInfoDialog.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/ThemePickerIcons.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/ThemeRemixDropdown.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/ThemeRemixModal.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/ThemeStylePicker.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/desktopTypographyChanges.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/keyboardShortcutSearch.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/settingsActions.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/settingsModalData.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/settingsRowIcons.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/shortcutGroups.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/themeRemixModel.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/themeRemixTranslations.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/useThemeRemixActions.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Settings/useThemeRemixStatus.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Sidebar/FileNode.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/Sidebar.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarConfirmDialog.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarDeleteDialog.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarEntryRenameInput.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarFilesActions.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarInlineEntryInput.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarItemMenu.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarScopeControls.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarSearch.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarSelectionActions.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarSortMenu.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarTabsHeader.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/SidebarTreeCheckboxes.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/TreeNode.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarActiveFolders.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarEntryIcons.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarItemMenuItems.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarItemMenuPosition.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarPinIcons.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarRenameIcon.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarSearchResultTree.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarSearchScope.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarSearchTree.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarTabs.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarTreeContext.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarTreeFiltering.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarTreeModel.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarTreeOrdering.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/sidebarWorkspacePreferences.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useFolderExpansionCommand.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useLocateActiveFile.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarCursorNavigation.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarEntryActions.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarEntryCreation.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarEntryDeletion.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarFileOps.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarPinnedSorting.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarScopeFocus.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Sidebar/useSidebarSelectionMode.ts": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/TOC/TableOfContents.tsx": [
+      "feature.sidebar-search-bookmarks"
+    ],
+    "ui/src/components/Topbar/Topbar.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Topbar/WebDemoNavActions.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Tour/TourGuideOverlay.css": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Tour/TourGuideOverlay.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Tour/tourDemoWorkspace.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Tour/tourEvents.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Tour/tourSteps.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Tour/tourTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/Workspace/BrowserFlagGuideModal.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Workspace/RecentWorkspaceItem.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Workspace/RecentWorkspacesModal.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Workspace/WorkspaceSelection.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Workspace/WorkspaceWindowControls.tsx": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/Workspace/workspaceSelectionUtils.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/components/shared/CheckboxIcons.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/CustomSelect.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/CyberpunkMatrixBackdrop.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/HeaderActionGroups.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/HeartIcon.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/HoverTooltipPortal.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/InteractiveBackground.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/LinkContextMenu.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/MarkdownEditingHeaderActions.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/ScrollToTopButton.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/SearchableSelect.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/SelectionCheckbox.css": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/SelectionCheckbox.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/ShortcutKeycaps.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/SwitchButton.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/TabContextMenu.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/ToolbarActionMenu.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/TooltipButton.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/icons.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/components/shared/parseShortcutText.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/constants/limits.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/constants/storage.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/constants/urls.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/AppStateContext.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/HistoryContext.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/NavigationContext.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/PlatformContext.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/RepositorySnapshotContext.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/appStateConstants.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/appStateModel.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/appStateReducer.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/auditedUiTranslationTypes.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/auditedUiTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/auditedUiTranslationsBase.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/contentTabState.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/desktopTypographyTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/editorUiTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/exportScopeTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/featureSettingsTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/fileHistoryTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/historyMetaTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/historyTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/insightsTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/insightsUiTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/languageOptions.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/reducers/settingsUiReducer.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/redundantRender.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/renderedDocument.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/scope-focus-reconcile.d.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/scope-focus-reconcile.js": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/sidebarEntryActionsTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/sidebarFileOpsTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/splitViewTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/supportPromptTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/translationTypes.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/translations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/translationsData.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/useAppStateEffects.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/usePersistedRevisionSelections.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/userManualTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/contexts/welcomeTranslations.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/desktop/desktopTabSnapshot.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/desktop/desktopTabs.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/desktop/fonts/applyDesktopTypography.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/desktop/fonts/fontModel.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/desktop/shellLocation.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/desktop/types.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/desktop/workspaceOperations.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/document/activeDocumentRoot.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/document/scopeDocumentIds.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/document/useDocumentRootRegistration.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/codeLineHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/copyHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/copyImage.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/globalHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/headingSectionHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/htmlPreviewActions.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/intelligentTableAlign.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/linkContextMenu.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/localFileBrowserSupport.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/localFileUrl.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/nativeChartPngSave.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/portableContentHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/portableInteractionController.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/portableMediaViewer.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/saveTauriImage.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/switchButtonElement.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableAlignHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableChartConfig.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableChartHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableChartImageActions.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableChartViewer.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableChartViewerChart.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableChartViewerLegend.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableChartViews.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableColumnHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableFilterHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableHandlers.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableResizeStore.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/dom/tableUiLabels.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/editor/NativeCloseGuardBridge.tsx": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/documentSession.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/documentWorkingCopy.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/editingFeature.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/editorSessionStore.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/editorUx.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/inlineEdit.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/markdownFormatting.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/markdownHighlight.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/nativeCloseApproval.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/saveDocument.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/tableContextMenu.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/tableEditor.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/tableIcons.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/tableSelection.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/tableVisualPlugin.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/unsavedGuards.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/useDocumentConflictResolution.tsx": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/useNativeCloseGuard.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/editor/useUnsavedChangesGuard.tsx": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/export/documentSnapshot.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportAssets.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportExplorerNavigation.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportHtml.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportJobRunner.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportModel.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportResources.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportRuntimeAssets.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportSave.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportSite.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportSnapshot.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/exportTheme.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/pdf/pdfComposer.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/pdf/pdfFonts.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/pdf/pdfMakeLoader.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/pdf/pdfModel.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/pdf/pdfPrintLayout.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/pdf/pdfSemantic.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/pdf/pdfVisualCapture.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/runtime/entry-charts.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/runtime/entry-core.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/runtime/entry-html-preview.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/runtime/entry-media.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/runtime/entry-table.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/export/zipStore.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/history/contracts.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/diffRanges.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/gitGraphLayout.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/historyAvailability.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/historyClient.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/lineDiff.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/repositoryView.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/revisionWorkspace.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/splitDiffRows.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/useFileHistory.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/hooks/keyboardUtils.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useBookmarkNavigation.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useDesktopTabManagement.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/hooks/useDesktopTabSearchSync.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/hooks/useDesktopTabs.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/hooks/useDialogKeyboard.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useDirtyDocumentsGuard.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useFileDropOpen.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useGitHubStars.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useKeyboard.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useResize.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useScopeNavigationState.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useScrollVisibility.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useSupportPrompt.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useUpdateCheck.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useUpdateNotificationState.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useUserManualActions.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/insights/aiPrompts.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/analyzeDocument.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/cache.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/concurrency.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/config.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/contracts.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/duplicates.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/graph.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/index.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/insights.worker.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/jumpToLocation.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/lint.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/patterns.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/relationships.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/reports.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/runtimeCapabilities.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/settingsStore.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/useWorkspaceInsights.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/workerClient.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/workerProtocol.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/workspaceIdentity.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/insights/workspaceInsightsSession.ts": [
+      "feature.workspace-insights-and-export"
+    ],
+    "ui/src/lib/renderLibs.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/main.tsx": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/markdown/anchors.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/codeRenderer.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/delimitedText.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/frontmatter.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/highlightRules.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/highlighter.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/highlighting/interpolations.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/highlighting/terminal.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/highlighting/xml.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/htmlLocalFirstPreview.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/htmlPreviewDocument.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/htmlToMarkdown.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/inline.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/mediaUrls.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/parser.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/rawHtmlImageRows.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/references.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/renderer.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/sourceMapping.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/tableParser.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/tableRenderer.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/transclusion.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/types.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/utils.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/markdown/wikiLinks.ts": [
+      "feature.markdown-rendering-and-tables"
+    ],
+    "ui/src/platform/bridge.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/platform/electron.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/platform/vscode.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/platform/web.ts": [
+      "architecture.runtime-chromium-and-web-demo",
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/readingProgress/readingProgressStore.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/settings/settingsImportExport.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/settings/settingsImportExportBase.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/split-view/documentRenderRevision.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/split-view/paneSelectors.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/split-view/paneState.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/split-view/splitPointerDrag.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/split-view/splitViewReducer.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/split-view/usePaneRenderRevision.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/split-view/useSplitDropHandler.ts": [
+      "feature.local-editing-and-split-view"
+    ],
+    "ui/src/styles/fonts.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-action-notice.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-app-shell.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-bookmarks.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-code-blocks.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-code-syntax.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-content-layout.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-content-tabs-focus-search.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-custom-select.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-dialog-surfaces.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-document-sections-tables.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-dynamic-layout.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-electron-window-controls.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-electron-workspace.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-export-center.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-export-runtime-followup.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-file-history-modal.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-history-diff.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-hover-tooltip.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-insights-settings.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-layout-sidebar.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-markdown-editing.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-markdown-foundation.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-markdown-structures.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-media-settings-dialogs.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-media-viewer-settings-shell.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-mermaid-rendering.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-onboarding.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-pet-theme-backgrounds.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-recent-workspaces.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-scope-view.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-search-buttons.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-search-overlay.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-sections-table-core.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-actions-dialogs.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-features.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-layout.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-navigation.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-responsive.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-shortcut-search.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-typography.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-settings-warning-animation.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-shell-control-sizing.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-sidebar-files-actions.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-sidebar-search-controls.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-sidebar-search-menus.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-sidebar-tree-layout.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-split-document-view.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-switch-button.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-switch-tooltip-diff.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-switch-workspace-modal.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-tab-actions-menus.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-table-alignment.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-table-chart-viewer.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-table-view-controls.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-terms-modal.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-cyberpunk-menus.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-cyberpunk-scope-view.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-cyberpunk-search.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-cyberpunk-surfaces.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-cyberpunk.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-glass-bento.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-neon-voltage.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-picker-custom.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-picker-pets.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-picker-remix.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-picker-settings.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-picker-styles.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-raw-grid.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-remix-controls.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-remix-dialog.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-tokyo-night.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-theme-vercel.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-toc-panel.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-topbar-actions.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-topbar-tabs.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-view-transitions.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-workspace-insights.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-workspace-selection-screen.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-workspace-selection.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/global/global-workspace-tabs.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/tokens.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/tokens/tokens-app-shell.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/tokens/tokens-base-themes.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/tokens/tokens-pet-auto-light.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/tokens/tokens-pet-themes.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/tokens/tokens-style-foundation.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/styles/tokens/tokens-style-vivid.css": [
+      "architecture.ui-theming-and-styles"
+    ],
+    "ui/src/theme/customThemes.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/themeTypes.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/types.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/types/content.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/types/files.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/types/hostMessages.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/types/index.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/types/settings.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/types/webviewMessages.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/updateNotification.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/useAppLayoutEffects.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/useAppSearchEffects.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/useAppUpdateActions.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/actionNotice.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/bookmarkJump.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/mouseHistoryNavigation.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/searchJump.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/shortcuts.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/supportPromptStore.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/themeMode.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/utils/themeTransition.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/utils/toolbar-menu.d.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/toolbar-menu.js": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/unicodeSearch.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/useCssVars.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/useModalRegionAnchor.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/webDemoDownload.ts": [
+      "architecture.runtime-chromium-and-web-demo",
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/welcomeEvents.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/zipBuilder.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/vite-env.d.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/workspace/workspaceEntriesClient.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/workspace/workspaceEntryCapability.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/workspace/workspaceEntryMessages.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/workspace/workspaceEntryName.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/workspace/workspaceEntryPaths.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/src/workspace/workspaceEntryRenameState.ts": [
+      "feature.workspace-tabs-and-settings"
+    ],
+    "ui/vite.config.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "vitest.config.ts": [
+      "workflow.build-and-verification"
+    ],
+    "vscode/package.json": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/scripts/bundle-extension.js": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/scripts/bundle-markdown-them.js": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/scripts/copy-ui.js": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/scripts/verify-package-runtime.js": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/constants/workspace.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/documentConversion.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/emptyDirectories.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/htmlPreviewServer.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/incrementalPublish.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/incrementalScan.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panel.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelDocumentWrite.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelExportResources.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelExportSave.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelGitHistory.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelInsights.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelInsightsExternal.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelMedia.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelMessages.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelNavigation.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelNavigationHandler.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelSearch.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelSearchPreview.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelShell.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelVscodeApi.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelWatch.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelWorkspaceEntries.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelWorkspaceResources.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/panelWorkspaceSearch.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/scanner.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/unicodeSearch.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/core/workspaceEntryName.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/extension.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/fonts/fontService.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/fonts/panelFontBridge.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/codeRenderer.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/delimitedText.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/highlighter.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/htmlPreviewDocument.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/inline.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/parser.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/renderer.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/markdown/tableRenderer.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/types.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "vscode/src/utils.ts": [
+      "architecture.runtime-vscode"
+    ],
+    "website-app/src/browser-font-host.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/browser-font-service.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/browser-git-history-host.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/browser-host-utils.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/browser-insights-host.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/demo-entry-store.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/file-access.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/incremental-publish.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/insights-host-router.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/main-web.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/markdown-renderer.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/media-resolver.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/recent-workspaces.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/scanner.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/search-index.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/user-virtual-workspaces.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/virtual-workspace.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-demo-entry-router.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-document-converter.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-file-content.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-file-mode.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-file-utility-router.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-host.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-insights-host.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-navigation.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-test-host.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-test-message-router.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/web-test-search.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/workspace-entries.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/workspace-operation-state.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/workspace-search-items.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/vite.config.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/en.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/es.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/fr.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/ja.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/ko.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/no.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/ru.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/vi.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/i18n/zh.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/index.html": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/landing.html": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/privacy.html": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/script.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/site-download-helpers.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/site-download-rendering.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/site-effects.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/site-image-viewer.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/site-release-api.js": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/base.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/homepage-hero.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/homepage-sections.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/image-viewer.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/landing-hero-window.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/landing-raw-grid.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/landing-spotlight.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/legal-pages.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/responsive-tablet.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/responsive.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/site-components.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/site-foundation.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/styles/site-typography.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website/terms.html": [
+      "architecture.runtime-chromium-and-web-demo"
+    ]
+  }
+}

@@ -1,15 +1,25 @@
 import type { MdFile, FolderNode } from '../../ui/src/types';
 import { normalizeForSearch, prepareHaystack } from '../../ui/src/utils/unicodeSearch';
-import type { BrowserSearchIndex } from '../../chromium-xtension/src/search-index';
-import { readTextFile, writeFileHandle, writeTextFile } from '../../chromium-xtension/src/file-access';
-import { resolveWorkspaceTextResourcePath } from '../../chromium-xtension/src/chrome-host-utils';
-import { makeExcerpt } from './web-test-search';
-import { handleBrowserWorkspaceEntryCommand } from '../../chromium-xtension/src/workspace-entries';
-import { resolveWorkspaceSearchItems } from '../../chromium-xtension/src/workspace-search-items';
+import type { BrowserSearchIndex } from './search-index';
+import { readTextFile, writeFileHandle, writeTextFile } from './file-access';
+import { resolveWorkspaceTextResourcePath } from './browser-host-utils';
+import { makeExcerpt, searchVirtualFilesIncremental } from './web-test-search';
+import { handleBrowserWorkspaceEntryCommand } from './workspace-entries';
+import { resolveWorkspaceSearchItems } from './workspace-search-items';
 import {
   MAX_WORKSPACE_SEARCH_RESULTS,
   WORKSPACE_SEARCH_BATCH_SIZE,
 } from '../../ui/src/constants/limits';
+import {
+  isVirtualWorkspacePath,
+  getVirtualWorkspaceEntryStore,
+  getVirtualWorkspaceFileContent,
+  setVirtualWorkspaceFileContent,
+  renameVirtualWorkspaceContent,
+  deleteVirtualWorkspaceContent,
+} from './user-virtual-workspaces';
+import { DemoEntryError } from './demo-entry-store';
+import { handleWebInsightsHostCommand } from './web-insights-host';
 
 interface FileUtilityRouterDeps {
   getSearchIndex: () => BrowserSearchIndex | null;
@@ -91,11 +101,133 @@ export async function handleWebFileUtilityMessage(
   msg: any,
   deps: FileUtilityRouterDeps,
 ): Promise<boolean> {
+  const activeWorkspacePath = deps.getActiveWorkspacePath();
+
+  if (isVirtualWorkspacePath(activeWorkspacePath)) {
+    if (await handleWebInsightsHostCommand(msg, {
+      activeWorkspacePath,
+      getFlatList: deps.getFlatList,
+      getFileContent: (path) => getVirtualWorkspaceFileContent(activeWorkspacePath, path),
+      send: deps.send,
+    })) return true;
+
+    switch (msg.command) {
+      case 'createWorkspaceEntry': {
+        const store = getVirtualWorkspaceEntryStore(activeWorkspacePath);
+        try {
+          const createdPath = store.create(msg.parentPath, msg.name, msg.kind);
+          if (msg.kind === 'file') {
+            setVirtualWorkspaceFileContent(activeWorkspacePath, createdPath, '');
+          }
+          await deps.refreshWorkspace();
+          deps.send({ command: 'createWorkspaceEntryResult', requestId: msg.requestId, ok: true, path: createdPath, kind: msg.kind });
+        } catch (error) {
+          deps.send({ command: 'createWorkspaceEntryResult', requestId: msg.requestId, ok: false, reason: error instanceof DemoEntryError ? error.reason : 'failed' });
+        }
+        return true;
+      }
+      case 'renameWorkspaceEntry': {
+        const store = getVirtualWorkspaceEntryStore(activeWorkspacePath);
+        try {
+          const newPath = store.rename(msg.path, msg.name, msg.kind);
+          renameVirtualWorkspaceContent(activeWorkspacePath, msg.path, newPath);
+          deps.onRename?.(msg.path, newPath, null);
+          await deps.refreshWorkspace();
+          deps.send({ command: 'renameWorkspaceEntryResult', requestId: msg.requestId, ok: true, path: newPath, oldPath: msg.path, kind: msg.kind });
+        } catch (error) {
+          deps.send({ command: 'renameWorkspaceEntryResult', requestId: msg.requestId, ok: false, reason: error instanceof DemoEntryError ? error.reason : 'failed' });
+        }
+        return true;
+      }
+      case 'deleteWorkspaceEntries': {
+        const store = getVirtualWorkspaceEntryStore(activeWorkspacePath);
+        const deleted: string[] = [];
+        const failed: { path: string; reason: any }[] = [];
+        for (const path of Array.isArray(msg.paths) ? msg.paths : []) {
+          try {
+            deleted.push(store.delete(path));
+          } catch (error) {
+            failed.push({ path: String(path), reason: error instanceof DemoEntryError ? error.reason : 'failed' });
+          }
+        }
+        deleteVirtualWorkspaceContent(activeWorkspacePath, deleted);
+        if (deleted.length > 0) {
+          await deps.refreshWorkspace();
+        }
+        deps.send({ command: 'deleteWorkspaceEntriesResult', requestId: msg.requestId, mode: 'permanent', deleted, failed });
+        return true;
+      }
+      case 'saveDocument': {
+        const requestedPath = String(msg.filePath || '');
+        const source = String(msg.source ?? '');
+        setVirtualWorkspaceFileContent(activeWorkspacePath, requestedPath, source);
+        await deps.refreshWorkspace();
+        deps.send({
+          command: 'saveDocumentResult',
+          requestId: msg.requestId,
+          filePath: requestedPath,
+          ok: true,
+          revision: String(source.length),
+        });
+        return true;
+      }
+      case 'searchWorkspace': {
+        const rawQuery = String(msg.query || '').trim();
+        const generation = deps.searchGeneration ? ++deps.searchGeneration.value : 0;
+        const isCurrent = () => !deps.searchGeneration || generation === deps.searchGeneration.value;
+        const summary = await searchVirtualFilesIncremental(rawQuery, {
+          matchCase: Boolean(msg.matchCase),
+          limit: MAX_WORKSPACE_SEARCH_RESULTS,
+          batchSize: WORKSPACE_SEARCH_BATCH_SIZE,
+          files: deps.getFlatList(),
+          getContent: (path) => getVirtualWorkspaceFileContent(activeWorkspacePath, path),
+          shouldCancel: () => !isCurrent(),
+          onBatch: (results) => {
+            if (isCurrent()) deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results, done: false });
+          },
+        });
+        if (isCurrent()) deps.send({ command: 'workspaceSearchResults', requestId: msg.requestId, results: [], done: true, ...summary });
+        return true;
+      }
+      case 'loadSearchPreview': {
+        const item = deps.getFlatList().find((candidate) => candidate.fsPath === String(msg.filePath || ''));
+        const markdownSource = item ? getVirtualWorkspaceFileContent(activeWorkspacePath, item.relativePath) : null;
+        deps.send(markdownSource === null
+          ? { command: 'searchPreviewResult', requestId: msg.requestId, ok: false, filePath: msg.filePath, reason: 'outside-workspace' }
+          : { command: 'searchPreviewResult', requestId: msg.requestId, ok: true, filePath: item!.fsPath, markdownSource });
+        return true;
+      }
+      case 'readWorkspaceTextResource': {
+        const resolvedPath = resolveWorkspaceTextResourcePath(
+          String(msg.documentPath || ''),
+          String(msg.resourcePath || ''),
+        );
+        const content = resolvedPath ? getVirtualWorkspaceFileContent(activeWorkspacePath, resolvedPath) : null;
+        if (content !== null) {
+          deps.send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: true, content, resolvedPath });
+        } else {
+          deps.send({ command: 'workspaceTextResourceResult', requestId: msg.requestId, ok: false, reason: 'missing' });
+        }
+        return true;
+      }
+      default:
+        break;
+    }
+  }
+
   if (await handleBrowserWorkspaceEntryCommand(msg, {
     activeHandle: deps.getActiveHandle(),
     send: deps.send,
     onRename: deps.onRename,
     refreshWorkspace: deps.refreshWorkspace,
+  })) return true;
+
+  if (await handleWebInsightsHostCommand(msg, {
+    activeHandle: deps.getActiveHandle(),
+    singleFileHandle: deps.getSingleFileHandle(),
+    activeWorkspacePath,
+    getFlatList: deps.getFlatList,
+    send: deps.send,
   })) return true;
 
   const flatList = deps.getFlatList();

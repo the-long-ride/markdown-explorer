@@ -1,4 +1,4 @@
-import { analyzeDocument, restorePersistedAnalyzedDocument, type PersistedAnalyzedDocument } from './analyzeDocument.ts';
+import { analyzeDocument, restorePersistedAnalyzedDocument, type AnalyzedDocument, type PersistedAnalyzedDocument } from './analyzeDocument.ts';
 import { normalizeInsightsSettings, type InsightsSettings } from './config.ts';
 import { WorkspaceInsightsIndex } from './index.ts';
 import type { InsightsFsDelta } from './contracts.ts';
@@ -18,7 +18,8 @@ export interface InsightsWorkerClient {
   onEvent(listener: (event: InsightsWorkerOutput) => void): () => void;
   initialize(settings?: Partial<InsightsSettings>): void;
   restoreCachedDocuments(documents: readonly PersistedAnalyzedDocument[], jobId?: string): Promise<void>;
-  applySourceBatch(documents: readonly InsightsSourceInput[], jobId?: string): Promise<void>;
+  applySourceBatch(documents: readonly InsightsSourceInput[], jobId?: string, options?: { readonly includeSnapshot?: boolean }): Promise<void>;
+  analyzeBatch?(documents: readonly InsightsSourceInput[], jobId?: string, options?: { readonly includeSnapshot?: boolean }): Promise<void>;
   applyFsDeltaBatch(deltas: readonly InsightsFsDelta[], jobId?: string): Promise<void>;
   setActiveOverlay(document: InsightsSourceInput, jobId?: string): Promise<void>;
   clearActiveOverlay(path: string, jobId?: string): Promise<void>;
@@ -47,18 +48,20 @@ function createDegradedClient(yieldControl: () => Promise<void>): InsightsWorker
   let disposed = false;
   const emit = (event: InsightsWorkerOutput) => { if (!disposed) for (const listener of listeners) listener(event); };
 
-  const apply = async (documents: readonly InsightsSourceInput[], jobId = id('batch')) => {
+  const apply = async (documents: readonly InsightsSourceInput[], jobId = id('batch'), options?: { readonly includeSnapshot?: boolean }) => {
     cancelled.delete(jobId);
     const batch = [];
+    const results: AnalyzedDocument[] = [];
     for (let i = 0; i < documents.length; i += 1) {
       if (cancelled.has(jobId) || disposed) { emit({ type: 'cancelled', jobId }); return; }
       const analyzed = analyzeDocument({ ...documents[i], lintRules: settings.lintRules });
-      index.applyDocument(analyzed); batch.push(analyzed);
+      index.applyDocument(analyzed); batch.push(analyzed); results.push(analyzed);
       if (batch.length >= 10 || i === documents.length - 1) emit({ type: 'documentResults', jobId, documents: batch.splice(0) });
       emit({ type: 'progress', jobId, completed: i + 1, total: documents.length });
       if ((i + 1) % 10 === 0) await yieldControl();
     }
-    emit({ type: 'complete', jobId, snapshot: index.snapshot() });
+    const includeSnapshot = options?.includeSnapshot !== false;
+    emit({ type: 'complete', jobId, snapshot: includeSnapshot ? index.snapshot() : null, ...(includeSnapshot ? {} : { analyzed: results }) });
   };
   return {
     mode: 'degraded',
@@ -69,6 +72,7 @@ function createDegradedClient(yieldControl: () => Promise<void>): InsightsWorker
       emit({ type: 'complete', jobId, snapshot: index.snapshot() });
     },
     applySourceBatch: apply,
+    analyzeBatch: apply,
     async applyFsDeltaBatch(deltas, jobId = id('fs-delta')) { for (const delta of deltas) if (delta.kind === 'delete') index.removeDocument(delta.relativePath); emit({ type: 'complete', jobId, snapshot: index.snapshot() }); },
     async setActiveOverlay(document, jobId = id('overlay')) { index.applyActiveOverlay(analyzeDocument({ ...document, lintRules: settings.lintRules })); emit({ type: 'complete', jobId, snapshot: index.snapshot() }); },
     async clearActiveOverlay(path, jobId = id('overlay-clear')) { index.clearActiveOverlay(path); emit({ type: 'complete', jobId, snapshot: index.snapshot() }); },
@@ -135,7 +139,22 @@ export function createInsightsWorkerClient(options: CreateInsightsWorkerClientOp
     onEvent(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     initialize(settings) { try { worker.postMessage({ type: 'initialize', settings }); } catch {} },
     restoreCachedDocuments(documents, jobId = id('restore-cache')) { return postJob({ type: 'restoreCachedDocuments', jobId, documents }); },
-    applySourceBatch(documents, jobId = id('batch')) { return postJob({ type: 'applySourceBatch', jobId, documents }); },
+    applySourceBatch(documents, jobId = id('batch'), options) {
+      return postJob({
+        type: 'applySourceBatch',
+        jobId,
+        documents,
+        ...(options?.includeSnapshot !== undefined ? { includeSnapshot: options.includeSnapshot } : {}),
+      });
+    },
+    analyzeBatch(documents, jobId = id('batch'), options) {
+      return postJob({
+        type: 'applySourceBatch',
+        jobId,
+        documents,
+        ...(options?.includeSnapshot !== undefined ? { includeSnapshot: options.includeSnapshot } : {}),
+      });
+    },
     applyFsDeltaBatch(deltas, jobId = id('fs-delta')) { return postJob({ type: 'applyFsDeltaBatch', jobId, deltas }); },
     setActiveOverlay(document, jobId = id('overlay')) { return postJob({ type: 'setActiveOverlay', jobId, document }); },
     clearActiveOverlay(path, jobId = id('overlay-clear')) { return postJob({ type: 'clearActiveOverlay', jobId, path }); },

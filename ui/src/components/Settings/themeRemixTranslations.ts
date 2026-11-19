@@ -7,12 +7,10 @@ export function getThemeRemixBaseStyleLabels(t: Translations): Record<string, st
     vercel: t.themeStyles.vercelLabel,
     "tokyo-night": t.themeStyles.tokyoNightLabel,
     "neon-voltage": t.themeStyles.neonVoltageLabel,
+    cyberpunk: t.themeStyles.cyberpunkLabel || 'Cyberpunk',
     "raw-grid": t.themeStyles.rawGridLabel,
     "pet-white-shiba": t.themeStyles.whiteShibaLabel,
     "pet-k-ink": t.themeStyles.kInkLabel,
-    "pet-cat": t.themeStyles.catLabel,
-    "pet-hamster": t.themeStyles.hamsterLabel,
-    "pet-corgi": t.themeStyles.corgiLabel,
   };
 }
 

@@ -148,3 +148,26 @@ test('search overlay stabilizes preview against scan batches', async () => {
   assert.match(preview, /memo\(SearchDocumentPreviewInner\)/);
 });
 
+test('workspace checkboxes use square default styling and chamfered cyberpunk styling', async () => {
+  const [workspaces, overlayCss, cpSearchCss, globalCss] = await Promise.all([
+    read('ui/src/components/Search/SearchOverlayWorkspaceList.tsx'),
+    read('ui/src/styles/global/global-search-overlay.css'),
+    read('ui/src/styles/global/global-theme-cyberpunk-search.css'),
+    read('ui/src/styles/global.css'),
+  ]);
+
+  assert.doesNotMatch(workspaces, /scope-focus-checkbox/);
+  assert.match(overlayCss, /\.search-overlay-workspace__checkbox\s*\{[\s\S]*appearance:\s*none[\s\S]*border-radius:\s*min\(var\(--r-s,\s*3px\),\s*4px\)/);
+  assert.match(overlayCss, /\.search-overlay-workspace__checkbox:checked::after/);
+  assert.match(globalCss, /global-theme-cyberpunk-search\.css/);
+  assert.match(cpSearchCss, /\[data-theme-style="cyberpunk"\]\s*\.search-overlay-card::after[\s\S]*--cp-rail-cyan[\s\S]*--cp-rail-rose/);
+  assert.match(cpSearchCss, /\[data-theme-style="cyberpunk"\]\s*:is\(\.search-overlay-workspace__checkbox,\s*\.scope-focus-checkbox\)[\s\S]*clip-path:\s*polygon/);
+  assert.match(cpSearchCss, /\[data-theme-style="cyberpunk"\]\s*\.search-overlay\s+\.search-result-row\.is-active/);
+});
+
+test('search all workspaces modal requires desktop Multi-workspace view with at least 2 workspace tabs', async () => {
+  const app = await read('ui/src/App.tsx');
+  assert.match(app, /openWorkspaceTabs\.length\s*>=\s*2/);
+  assert.match(app, /openSidebarSearch\(\)/);
+});
+

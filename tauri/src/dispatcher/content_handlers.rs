@@ -53,7 +53,7 @@ impl Dispatcher {
                 == operation
     }
 
-    pub(super) fn send_initial_content_for_scan(
+    pub(super) async fn send_initial_content_for_scan(
         &self,
         open_first_file: bool,
         workspace_path: &Path,
@@ -90,18 +90,18 @@ impl Dispatcher {
             return;
         }
         if request.current_file.is_some() {
-            self.send_content_for_request(request);
+            self.send_content_for_request(request).await;
         } else {
             self.send_welcome_for_request(request);
         }
     }
 
-    pub(super) fn send_content(&self) {
+    pub(super) async fn send_content(&self) {
         let request = self.capture_workspace_request();
-        self.send_content_for_request(request);
+        self.send_content_for_request(request).await;
     }
 
-    fn send_content_for_request(&self, request: WorkspaceContentRequest) {
+    async fn send_content_for_request(&self, request: WorkspaceContentRequest) {
         let Some(current_file) = request.current_file.as_ref() else {
             return;
         };
@@ -112,7 +112,7 @@ impl Dispatcher {
             return;
         }
 
-        let file_path_str = current_file.to_string_lossy().to_string();
+        let file_path = current_file.to_string_lossy().to_string();
         let (doc_conv, converter, flat_list) = {
             let state = self.state.inner.read();
             if state.workspace_path.as_ref() != request.workspace_path.as_ref()
@@ -131,21 +131,36 @@ impl Dispatcher {
             .extension()
             .and_then(|ext| ext.to_str())
             .is_some_and(|ext| ext.eq_ignore_ascii_case("html") || ext.eq_ignore_ascii_case("htm"));
-        let source_document_text = if is_html_document {
-            std::fs::read_to_string(&current_file).ok()
-        } else {
-            None
-        };
         let native_html_conversion = current_file
             .extension()
             .and_then(|ext| ext.to_str())
             .is_some_and(|ext| ext.eq_ignore_ascii_case("html"));
         let conversion_enabled = if is_html_document { true } else { doc_conv };
-        let result = if is_html_document && !native_html_conversion {
-            None
-        } else {
-            Some(converter.read_markdown(&file_path_str, conversion_enabled))
-        };
+        let is_markdown_doc = crate::workspace::file_types::is_markdown_file_path(&file_path);
+        let current_file_for_io = current_file.clone();
+        let file_path_str = file_path.clone();
+        let (source_document_text, result, document_write) = tauri::async_runtime::spawn_blocking(move || {
+            let source_document_text = if is_html_document {
+                std::fs::read_to_string(&current_file_for_io).ok()
+            } else {
+                None
+            };
+            let result = if is_html_document && !native_html_conversion {
+                None
+            } else {
+                Some(converter.read_markdown(&file_path_str, conversion_enabled))
+            };
+            let document_write = if is_markdown_doc {
+                super::commands::document_write::document_revision(&current_file_for_io)
+                    .ok()
+                    .map(|revision| json!({ "supported": true, "revision": revision }))
+            } else {
+                None
+            };
+            (source_document_text, result, document_write)
+        })
+        .await
+        .unwrap_or((None, None, None));
         if !self.is_workspace_request_current(&request) {
             return;
         }
@@ -155,23 +170,16 @@ impl Dispatcher {
             .unwrap_or_default();
         let preview_info = result.and_then(|value| value.preview_info);
 
-        let file_info = flat_list.iter().find(|file| file.fs_path == file_path_str);
+        let file_info = flat_list.iter().find(|file| file.fs_path == file_path);
         let relative_path = file_info
             .map(|file| file.relative_path.clone())
-            .unwrap_or_else(|| file_path_str.clone());
+            .unwrap_or_else(|| file_path.clone());
         let title = file_info.map(|file| file.title.clone()).unwrap_or_else(|| {
             current_file
                 .file_stem()
                 .map(|name| name.to_string_lossy().to_string())
                 .unwrap_or_default()
         });
-        let document_write = if crate::workspace::file_types::is_markdown_file_path(&file_path_str) {
-            super::commands::document_write::document_revision(current_file)
-                .ok()
-                .map(|revision| json!({ "supported": true, "revision": revision }))
-        } else {
-            None
-        };
 
         let mut extra = serde_json::Map::new();
         extra.insert("html".into(), "".into());
@@ -179,7 +187,7 @@ impl Dispatcher {
         extra.insert("sourceDocumentText".into(), source_document_text.into());
         extra.insert("frontmatter".into(), json!({}));
         extra.insert("toc".into(), json!([]));
-        extra.insert("filePath".into(), file_path_str.into());
+        extra.insert("filePath".into(), file_path.into());
         extra.insert("relativePath".into(), relative_path.into());
         extra.insert("title".into(), title.into());
         extra.insert("fileList".into(), json!(flat_list));

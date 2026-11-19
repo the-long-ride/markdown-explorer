@@ -113,7 +113,7 @@ export function BookmarksPanel({ visible, viewMode, workspaces, activeWorkspaceK
         <span className="bookmark-item__text">{bookmark.renderedText || bookmark.selectedText}</span>
       </div>
       {!selectionMode && (
-        <button type="button" className="bookmark-item__menu" aria-label={translations.menuLabel} title={translations.menuLabel} onClick={(event) => { event.stopPropagation(); openMenu(bookmark, event.currentTarget); }}>
+        <button type="button" className="bookmark-item__menu" aria-label={translations.menuLabel} data-hover-tooltip={translations.menuLabel} onClick={(event) => { event.stopPropagation(); openMenu(bookmark, event.currentTarget); }}>
           <MoreVerticalIcon size={14} />
         </button>
       )}
@@ -139,7 +139,7 @@ export function BookmarksPanel({ visible, viewMode, workspaces, activeWorkspaceK
           </div>
         </div>
         <div className="bookmarks-panel__action-row">
-          <div className="sidebar__sort-status" title={sortStatusLabel} aria-label={sortStatusLabel}>
+          <div className="sidebar__sort-status" data-hover-tooltip={sortStatusLabel} aria-label={sortStatusLabel}>
             <SortStatusIcon mode={sortMode} size={14} />
           </div>
           <div className="bookmarks-panel__actions">
@@ -210,7 +210,7 @@ export function BookmarksPanel({ visible, viewMode, workspaces, activeWorkspaceK
         {viewMode === 'focus' ? focusItems.map(renderItem) : groups.map((group) => {
           const isExpanded = expanded.has(group.workspaceKey);
           return <section key={group.id} className={`bookmark-group${group.active ? ' is-active' : ''}`}>
-            <button type="button" className="bookmark-group__header" aria-expanded={isExpanded} title={isExpanded ? translations.collapseAll : translations.expandAll} onClick={() => setExpanded((current) => {
+            <button type="button" className="bookmark-group__header" aria-expanded={isExpanded} data-hover-tooltip={isExpanded ? translations.collapseAll : translations.expandAll} onClick={() => setExpanded((current) => {
               const next = new Set(current);
               if (next.has(group.workspaceKey)) next.delete(group.workspaceKey); else next.add(group.workspaceKey);
               return next;

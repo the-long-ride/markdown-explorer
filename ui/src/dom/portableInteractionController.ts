@@ -14,9 +14,12 @@ const managedInlineSelectors = [
   '.mdn-codeblock-toggle-btn',
   '.mdn-table-input',
   '.mdn-table-toggle-btn',
+  '.mdn-table-reset-widths',
   '.mdn-table-wrap-toggle',
   '.mdn-table-columns-toggle',
+  '.mdn-table-align-btn',
   '.mdn-table-filter-btn',
+  '.mdn-sort-icon',
   '.mdn-th',
 ].join(',');
 
@@ -109,6 +112,19 @@ export function installPortableInteractionController(
       return;
     }
 
+    const alignButton = target.closest<HTMLElement>('.mdn-table-align-btn');
+    if (alignButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const header = alignButton.closest<HTMLElement>('.mdn-th');
+      const tableId = tableIdFromWrap(alignButton);
+      const columnIndex = Number.parseInt(header?.dataset.col ?? '', 10);
+      if (tableId && Number.isFinite(columnIndex)) {
+        win.Table?.showAlignMenu?.(tableId, columnIndex, alignButton);
+      }
+      return;
+    }
+
     const filterButton = target.closest<HTMLElement>('.mdn-table-filter-btn');
     if (filterButton) {
       event.preventDefault();
@@ -128,6 +144,15 @@ export function installPortableInteractionController(
       event.stopPropagation();
       const tableId = tableIdFromControl(tableToggle, '-toggle-btn');
       if (tableId) win.Table?.toggleCollapse?.(tableId);
+      return;
+    }
+
+    const resetWidths = target.closest<HTMLElement>('.mdn-table-reset-widths');
+    if (resetWidths) {
+      event.preventDefault();
+      event.stopPropagation();
+      const tableId = tableIdFromControl(resetWidths, '-reset-widths');
+      if (tableId) win.Table?.resetColumnWidths?.(tableId);
       return;
     }
 
@@ -174,13 +199,19 @@ export function installPortableInteractionController(
       return;
     }
 
-    const header = target.closest<HTMLElement>('.mdn-th');
-    if (header) {
+    const sortIcon = target.closest<HTMLElement>('.mdn-sort-icon');
+    if (sortIcon) {
       event.preventDefault();
       event.stopPropagation();
-      const tableId = tableIdFromWrap(header);
-      const columnIndex = Number.parseInt(header.dataset.col ?? '', 10);
+      const header = sortIcon.closest<HTMLElement>('.mdn-th');
+      const tableId = header ? tableIdFromWrap(header) : '';
+      const columnIndex = header ? Number.parseInt(header.dataset.col ?? '', 10) : NaN;
       if (tableId && Number.isFinite(columnIndex)) win.Table?.sort?.(tableId, columnIndex);
+      return;
+    }
+
+    const header = target.closest<HTMLElement>('.mdn-th');
+    if (header) {
       return;
     }
 
@@ -189,5 +220,16 @@ export function installPortableInteractionController(
       event.preventDefault();
       win.UI?.toggleSection?.(sectionHeader);
     }
+  });
+
+  doc.addEventListener('keydown', (event) => {
+    if (event.defaultPrevented || (event.key !== 'Enter' && event.key !== ' ')) return;
+    const actionButton = targetElement(event.target)?.closest<HTMLElement>(
+      '.mdn-th-actions [role="button"]',
+    );
+    if (!actionButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+    actionButton.click();
   });
 }

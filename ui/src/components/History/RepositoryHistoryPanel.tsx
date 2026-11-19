@@ -141,7 +141,7 @@ export function RepositoryHistoryPanel({ visible, language, hasWorkspace = true 
                       <button
                         type="button"
                         className={`repository-history__file${state.activePath === file.path ? ' is-active' : ''}`}
-                        title={t.openSnapshotFile}
+                        data-hover-tooltip={t.openSnapshotFile}
                         onClick={() => { void openSnapshotFile(file.path); }}
                       >
                         <span>{file.path}</span>

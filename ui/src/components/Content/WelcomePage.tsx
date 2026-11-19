@@ -2,7 +2,7 @@
 // components/Content/WelcomePage.tsx — Common Welcome & Guidelines Screen
 // =============================================================================
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { version as bundledVersion } from '../../../package.json';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getWelcomeTranslations } from '../../contexts/welcomeTranslations';
@@ -10,365 +10,229 @@ import { getTranslations } from '../../contexts/translations';
 import { ACTIONS_LIST } from '../Settings/SettingsModal';
 import { getLocalizedShortcutActionLabel } from '../Settings/settingsActions';
 import { InteractiveBackground } from '../shared/InteractiveBackground';
+import { WELCOME_SELECT_TAB_EVENT, getLastRequestedWelcomeTab, type WelcomeTabId } from '../../utils/welcomeEvents';
+import { WelcomeLaunchpad } from './WelcomeLaunchpad';
+import { WelcomeHero } from './WelcomeHero';
+import { UserManualTab } from './UserManualTab';
+import { WelcomeFeaturesGrid } from './WelcomeFeaturesGrid';
 import './WelcomePage.css';
 
 import {
-  ArrowRightIcon, BugIcon, ChartIcon, FolderIcon, GlobeIcon, HighlightIcon,
-  KeyboardIcon, LightbulbIcon, LockIcon, ModalIcon, SearchIcon, SparklesIcon,
-  TableIcon,
+  BugIcon, KeyboardIcon, LightbulbIcon, LockIcon, SparklesIcon,
 } from './WelcomePageIcons';
 import { buildWelcomeTipGroups } from './welcomeTipGroups';
-import { WelcomeHero } from './WelcomeHero';
-import { UserManualTab } from './UserManualTab';
-
-// =============================================================================
-// Helper Utilities & Localized Labels (Emoji-free)
-// =============================================================================
-
 import { cleanTitle, TAB_LABELS } from './welcomeLabels';
 import { renderWelcomeDescription } from './renderWelcomeDescription';
 import { getTipIcon, renderShortcutKeys } from './welcomePageHelpers';
 import { getEnabledShortcut } from '../../utils/shortcuts';
 
 export function WelcomePage() {
-  const isDesktop = typeof (window as any).electronAPI !== 'undefined';
-  const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  const isDesktopLike = isDesktop || isChrome;
   const { state } = useAppState();
-  const supportsEditor = isDesktop || state.appRuntime === 'vscode';
+  const isDesktop = typeof (window as any).electronAPI !== 'undefined' || state.appRuntime === 'tauri' || state.appRuntime === 'desktop';
+  const isWeb = typeof (window as any).__webBus !== 'undefined' || state.appRuntime === 'web';
+  const isDesktopLike = isDesktop || isWeb;
+  const supportsEditor = isDesktop || state.appRuntime === 'vscode' || isWeb;
   const currentLang = state.settings.language || 'en';
   const wt = getWelcomeTranslations(currentLang);
   const t = getTranslations(currentLang);
 
-  const [activeTab, setActiveTab] = useState<'features' | 'manual' | 'shortcuts' | 'privacy' | 'tips'>('features');
+  const [activeTab, setActiveTab] = useState<WelcomeTabId>(() => getLastRequestedWelcomeTab() ?? 'manual');
   const labels = TAB_LABELS[currentLang] || TAB_LABELS.en;
+  const effectiveSettings = useMemo(() => {
+    const directKeybindings = (state as any)?.keybindings;
+    const settingsKeybindings = state.settings?.keybindings;
+    if (directKeybindings || settingsKeybindings) {
+      return {
+        ...state.settings,
+        keybindings: {
+          ...settingsKeybindings,
+          ...directKeybindings,
+        },
+      };
+    }
+    return state.settings;
+  }, [state.settings, (state as any)?.keybindings]);
+
   const tipGroups = useMemo(
-    () => buildWelcomeTipGroups(currentLang, state.settings, wt.tips),
-    [currentLang, state.settings, wt.tips],
+    () => buildWelcomeTipGroups(currentLang, effectiveSettings, wt.tips),
+    [currentLang, effectiveSettings, wt.tips],
   );
+
+  useEffect(() => {
+    const handleSelectTab = (event: Event) => {
+      const tab = (event as CustomEvent<WelcomeTabId>).detail;
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener(WELCOME_SELECT_TAB_EVENT, handleSelectTab);
+    return () => window.removeEventListener(WELCOME_SELECT_TAB_EVENT, handleSelectTab);
+  }, []);
 
   return (
     <div className="welcome-container">
       <InteractiveBackground />
       <div className="welcome-animate-wrapper">
-        <WelcomeHero copy={wt.hero} isDesktop={isDesktop} hostPlatform={state.hostPlatform} markdownThemLabel={t.ui.markdownThemLinkLabel} language={currentLang} />
+        <WelcomeHero copy={wt.hero} isDesktop={isDesktopLike} hostPlatform={state.hostPlatform} markdownThemLabel={t.ui.markdownThemLinkLabel} language={currentLang} />
 
-      {/* Tabs Bar */}
-      <div className="tabs-bar">
-        <button
-          className={`tab-btn ${activeTab === 'features' ? 'active' : ''}`}
-          onClick={() => setActiveTab('features')}
-        >
-          <SparklesIcon className="tab-icon" />
-          {labels.features}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'manual' ? 'active' : ''}`}
-          onClick={() => setActiveTab('manual')}
-        >
-          <LightbulbIcon className="tab-icon" />
-          {labels.manual}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'shortcuts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('shortcuts')}
-        >
-          <KeyboardIcon className="tab-icon" />
-          {labels.shortcuts}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'tips' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tips')}
-        >
-          <LightbulbIcon className="tab-icon" />
-          {labels.tips}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'privacy' ? 'active' : ''}`}
-          onClick={() => setActiveTab('privacy')}
-        >
-          <LockIcon className="tab-icon" />
-          {labels.privacy}
-        </button>
-      </div>
+        <div className="welcome-command-deck">
+          <WelcomeLaunchpad
+            language={currentLang} isDesktop={isDesktop}
+            workspaceName={state.workspaceName} fileCount={state.fileList?.length ?? 0}
+            recentWorkspaces={state.recentWorkspaces}
+          />
 
-      {/* Tab Content */}
-      <div className="tab-content">
-        {activeTab === 'features' && (
-          <div className="features-grid">
+          <div className="welcome-discovery-workbench">
+            {/* Tabs Bar */}
+            <div className="tabs-bar welcome-tabs" data-tour-id="welcome-tabs-bar">
+              <button
+                className={`tab-btn welcome-tab ${activeTab === 'manual' ? 'active' : ''}`}
+                data-tour-id="welcome-tab-manual"
+                onClick={() => setActiveTab('manual')}
+              >
+                <LightbulbIcon className="tab-icon" />{labels.manual}
+              </button>
+              <button
+                className={`tab-btn welcome-tab ${activeTab === 'features' ? 'active' : ''}`}
+                data-tour-id="welcome-tab-features"
+                onClick={() => setActiveTab('features')}
+              >
+                <SparklesIcon className="tab-icon" />{labels.features}
+              </button>
+              <button
+                className={`tab-btn welcome-tab ${activeTab === 'shortcuts' ? 'active' : ''}`}
+                data-tour-id="welcome-tab-shortcuts"
+                onClick={() => setActiveTab('shortcuts')}
+              >
+                <KeyboardIcon className="tab-icon" />{labels.shortcuts}
+              </button>
+              <button
+                className={`tab-btn welcome-tab ${activeTab === 'tips' ? 'active' : ''}`}
+                data-tour-id="welcome-tab-tips"
+                onClick={() => setActiveTab('tips')}
+              >
+                <LightbulbIcon className="tab-icon" />{labels.tips}
+              </button>
+              <button
+                className={`tab-btn welcome-tab ${activeTab === 'privacy' ? 'active' : ''}`}
+                data-tour-id="welcome-tab-privacy"
+                onClick={() => setActiveTab('privacy')}
+              >
+                <LockIcon className="tab-icon" />{labels.privacy}
+              </button>
+            </div>
 
-            {/* Feature 1: Navigation Tree */}
-            {wt?.features?.tree && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <FolderIcon className="card-icon" />
-                  {cleanTitle(wt.features.tree.title)}
-                </div>
-                <div className="feature-card-desc">
-                  {wt.features.tree.desc}
-                </div>
-              </div>
-            )}
+            {/* Tab Content */}
+            <div className="tab-content">
+              {activeTab === 'features' && (
+                <WelcomeFeaturesGrid
+                  features={wt?.features}
+                  settings={state.settings}
+                  isDesktop={isDesktop}
+                  supportsEditor={supportsEditor}
+                  viewShortcutsLabel={labels.viewShortcuts}
+                  onViewShortcuts={() => setActiveTab('shortcuts')}
+                />
+              )}
 
-            {/* Feature 2: Quick Search */}
-            {wt?.features?.search && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <SearchIcon className="card-icon" />
-                  {cleanTitle(wt.features.search.title)}
-                </div>
-                <div className="feature-card-desc">
-                  {wt.features.search.desc}
-                  <div className="welcome-spacer--small">
-                    <strong>
-                      {renderShortcutKeys(getEnabledShortcut(state.settings, 'findCurrentFile') || (isDesktop ? 'F' : 'K'))}
-                      {' · '}
-                      {renderShortcutKeys(getEnabledShortcut(state.settings, 'searchCurrent') || (isDesktop ? 'Ctrl+F' : 'Ctrl+K'))}
+              {activeTab === 'manual' && (
+                <UserManualTab language={currentLang} settings={state.settings} version={state.appVersion || bundledVersion} />
+              )}
+
+              {activeTab === 'shortcuts' && (
+                <div className="shortcuts-card">
+                  <h2 className="shortcuts-title"><KeyboardIcon className="section-icon" />{cleanTitle(wt.features.shortcuts.title)}</h2>
+                  {!isDesktop && (<div className="welcome-feature-card__detail">{wt.features.shortcuts.vscodeDesc}</div>)}
+                  <table className="shortcuts-table">
+                    <thead>
+                      <tr>
+                        <th>{wt.shortcutsTable.headers.action}</th>
+                        <th>{wt.shortcutsTable.headers.shortcut}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ACTIONS_LIST.filter((act) =>
+                        act.scope === 'both' ||
+                        (act.scope === 'non-vscode' && state.appRuntime !== 'vscode') ||
+                        (act.scope === 'desktop' && isDesktopLike) ||
+                        (act.scope === 'electron' && isDesktop) ||
+                        (act.scope === 'editor' && supportsEditor),
+                      ).map((act) => {
+                        const val = getEnabledShortcut(state.settings, act.id) ?? state.settings.keybindings?.[act.id] ?? "";
+                        return (
+                          <tr key={act.id}>
+                            <td>{getLocalizedShortcutActionLabel(t, act.id, act.label)}</td>
+                            <td>{renderShortcutKeys(val)}</td>
+                          </tr>
+                        );
+                      })}
                       {isDesktop && (
-                        <>
-                          {' · '}
-                          {renderShortcutKeys(getEnabledShortcut(state.settings, 'searchAllTabs') || 'Ctrl+Shift+F')}
-                        </>
+                        <tr><td>{t.actions.toggleFullscreen}</td><td><kbd>F11</kbd></td></tr>
                       )}
-                    </strong>
+                      <tr><td>{wt.shortcutsTable.rows.zoomModal}</td><td><kbd>{wt.shortcutsTable.rows.zoomModalShortcut}</kbd></td></tr>
+                      <tr>
+                        <td>{t.ui.sidebarCursorDetails}</td>
+                        <td>
+                          {t.ui.sidebarCursorUse} <kbd>UP</kbd> / <kbd>DOWN</kbd> {t.ui.sidebarCursorToMove}{' '}
+                          <kbd>ENTER</kbd> {t.ui.sidebarCursorToExpandOpen} <kbd>ESC</kbd> {t.ui.sidebarCursorToLeave}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div className="shortcuts-note">{wt.shortcutsTable.note}</div>
+                </div>
+              )}
+
+              {activeTab === 'tips' && (
+                <div className="tips-use-cases">
+                  {tipGroups.map((group) => (
+                    <section className="tips-use-case" key={group.id} data-tip-group={group.id}>
+                      <h2 className="tips-use-case__title">{group.title}</h2>
+                      <div className="tips-container">
+                        {group.items.map((item, idx) => (
+                          <div className="tip-card" key={`${group.id}-${idx}`}>
+                            <div className="tip-card-header">
+                              <h3 className="tip-card-title">{getTipIcon(idx)}{item.title}</h3>
+                              {item.badge && <span className="tip-card-badge">{item.badge}</span>}
+                            </div>
+                            <div className="tip-card-desc tip-card-desc--multiline">
+                              {renderWelcomeDescription(item.desc)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'privacy' && (
+                <div className="privacy-support-container">
+                  <div className="privacy-card">
+                    <h2 className="privacy-title"><LockIcon className="section-icon" />{cleanTitle(wt.privacy.title)}</h2>
+                    <div className="privacy-desc">
+                      {wt.privacy.desc}
+                      <ul className="privacy-list">
+                        {wt.privacy.bullets.map((bullet, idx) => (<li key={idx}>{bullet}</li>))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="issues-card">
+                    <h2 className="issues-title"><BugIcon className="section-icon" />{cleanTitle(wt.issues.title)}</h2>
+                    <div className="issues-desc">
+                      {wt.issues.hint}{' '}
+                      <a href="https://github.com/the-long-ride/markdown-explorer/issues" target="_blank" rel="noopener noreferrer">
+                        {wt.issues.linkText}
+                      </a>
+                    </div>
+                    <ul className="issues-list">
+                      {wt.issues.bullets.map((bullet, idx) => (<li key={idx}>{bullet}</li>))}
+                    </ul>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Feature 3: Interactive Tables */}
-            {wt?.features?.tables && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <TableIcon className="card-icon" />
-                  {cleanTitle(wt.features.tables.title)}
-                </div>
-                <div className="feature-card-desc">
-                  {wt.features.tables.desc}
-                </div>
-              </div>
-            )}
-
-            {/* Feature 4: Table-to-Chart */}
-            {wt?.features?.charts && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <ChartIcon className="card-icon" />
-                  {cleanTitle(wt.features.charts.title)}
-                </div>
-                <div className="feature-card-desc">
-                  {wt.features.charts.desc}
-                </div>
-              </div>
-            )}
-
-            {/* Feature 5: Syntax Highlighting & Mermaid */}
-            {wt?.features?.highlight && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <HighlightIcon className="card-icon" />
-                  {cleanTitle(wt.features.highlight.title)}
-                </div>
-                <div className="feature-card-desc">
-                  {wt.features.highlight.desc}
-                </div>
-              </div>
-            )}
-
-            {/* Feature 6: Interactive HTML & Document Previews */}
-            {wt?.features?.html && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <GlobeIcon className="card-icon" />
-                  {cleanTitle(wt.features.html.title)}
-                </div>
-                <div className="feature-card-desc">
-                  {wt.features.html.desc}
-                </div>
-              </div>
-            )}
-
-            {/* Feature 7: Media Modal */}
-            {wt?.features?.modal && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <ModalIcon className="card-icon" />
-                  {cleanTitle(wt.features.modal.title).replace(/Media Modal/g, 'Media Viewer')}
-                </div>
-                <div className="feature-card-desc">
-                  {wt.features.modal.desc}
-                </div>
-              </div>
-            )}
-
-            {/* Feature 8: Keyboard Shortcuts Guide Card */}
-            {wt?.features?.shortcuts && (
-              <div className="feature-card">
-                <div className="feature-card-title">
-                  <KeyboardIcon className="card-icon" />
-                  {cleanTitle(wt.features.shortcuts.title)}
-                </div>
-                <div className="feature-card-desc">
-                  {!isDesktop && (
-                    <div className="welcome-feature-card__detail">
-                      {wt.features.shortcuts.vscodeDesc}
-                    </div>
-                  )}
-                  {wt.features.shortcuts.desc}
-                </div>
-                <div className="feature-card-action">
-                  <button
-                    className="card-action-btn"
-                    onClick={() => setActiveTab('shortcuts')}
-                  >
-                    {cleanTitle(labels.viewShortcuts)}
-                    <ArrowRightIcon className="action-btn-icon" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'manual' && (
-          <UserManualTab language={currentLang} settings={state.settings} version={state.appVersion || bundledVersion} />
-        )}
-
-        {activeTab === 'shortcuts' && (
-          <div className="shortcuts-card">
-            <h2 className="shortcuts-title">
-              <KeyboardIcon className="section-icon" />
-              {cleanTitle(wt.features.shortcuts.title)}
-            </h2>
-            {!isDesktop && (
-          <div className="welcome-feature-card__detail">
-                {wt.features.shortcuts.vscodeDesc}
-              </div>
-            )}
-            <table className="shortcuts-table">
-              <thead>
-                <tr>
-                  <th>{wt.shortcutsTable.headers.action}</th>
-                  <th>{wt.shortcutsTable.headers.shortcut}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ACTIONS_LIST.filter((act) =>
-                  act.scope === 'both' ||
-                  (act.scope === 'non-vscode' && state.appRuntime !== 'vscode') ||
-                  (act.scope === 'desktop' && isDesktopLike) ||
-                  (act.scope === 'electron' && isDesktop) ||
-                  (act.scope === 'editor' && supportsEditor),
-                ).map((act) => {
-                  const val = getEnabledShortcut(state.settings, act.id) ?? state.settings.keybindings?.[act.id] ?? "";
-                  return (
-                    <tr key={act.id}>
-                      <td>{getLocalizedShortcutActionLabel(t, act.id, act.label)}</td>
-                      <td>
-                        {renderShortcutKeys(val)}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {isDesktop && (
-                  <tr>
-                    <td>{t.actions.toggleFullscreen}</td>
-                    <td><kbd>F11</kbd></td>
-                  </tr>
-                )}
-                {/* Special non-customizable shortcuts */}
-                <tr>
-                  <td>{wt.shortcutsTable.rows.zoomModal}</td>
-                  <td><kbd>{wt.shortcutsTable.rows.zoomModalShortcut}</kbd></td>
-                </tr>
-                <tr>
-                  <td>{t.ui.sidebarCursorDetails}</td>
-                  <td>
-                    {t.ui.sidebarCursorUse} <kbd>UP</kbd> / <kbd>DOWN</kbd> {t.ui.sidebarCursorToMove}{' '}
-                    <kbd>ENTER</kbd> {t.ui.sidebarCursorToExpandOpen} <kbd>ESC</kbd> {t.ui.sidebarCursorToLeave}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div className="shortcuts-note">
-              {wt.shortcutsTable.note}
+              )}
             </div>
           </div>
-        )}
-
-        {activeTab === 'tips' && (
-          <div className="tips-use-cases">
-            {tipGroups.map((group) => (
-              <section className="tips-use-case" key={group.id} data-tip-group={group.id}>
-                <h2 className="tips-use-case__title">{group.title}</h2>
-                <div className="tips-container">
-                  {group.items.map((item, idx) => (
-                    <div className="tip-card" key={`${group.id}-${idx}`}>
-                      <div className="tip-card-header">
-                        <h3 className="tip-card-title">
-                          {getTipIcon(idx)}
-                          {item.title}
-                        </h3>
-                        {item.badge && <span className="tip-card-badge">{item.badge}</span>}
-                      </div>
-                      <div className="tip-card-desc tip-card-desc--multiline">
-                        {renderWelcomeDescription(item.desc)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'privacy' && (
-          <div className="privacy-support-container">
-            {/* Privacy Pledge */}
-            <div className="privacy-card">
-              <h2 className="privacy-title">
-                <LockIcon className="section-icon" />
-                {cleanTitle(wt.privacy.title)}
-              </h2>
-              <div className="privacy-desc">
-                {wt.privacy.desc}
-                <ul className="privacy-list">
-                  {wt.privacy.bullets.map((bullet, idx) => (
-                    <li key={idx}>
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Report Issues */}
-            <div className="issues-card">
-              <h2 className="issues-title">
-                <BugIcon className="section-icon" />
-                {cleanTitle(wt.issues.title)}
-              </h2>
-              <div className="issues-desc">
-                {wt.issues.hint}{' '}
-                <a
-                  href="https://github.com/the-long-ride/markdown-explorer/issues"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {wt.issues.linkText}
-                </a>
-              </div>
-              <ul className="issues-list">
-                {wt.issues.bullets.map((bullet, idx) => (
-                  <li key={idx}>
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
       </div>
     </div>
   );

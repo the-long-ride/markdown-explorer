@@ -21,13 +21,11 @@ describe('package configuration contracts', () => {
     let versions: Record<string, string>;
 
     test('all package manifests share the same version', async () => {
-      const [root, desktop, vscode, ui, chromium, chromiumManifest, websiteApp] = await Promise.all([
+      const [root, desktop, vscode, ui, websiteApp] = await Promise.all([
         readJson('package.json'),
         readJson('electron/package.json'),
         readJson('vscode/package.json'),
         readJson('ui/package.json'),
-        readJson('chromium-xtension/package.json'),
-        readJson('chromium-xtension/manifest.json'),
         readJson('website-app/package.json'),
       ]);
 
@@ -36,8 +34,6 @@ describe('package configuration contracts', () => {
         desktop: desktop.version,
         vscode: vscode.version,
         ui: ui.version,
-        chromium: chromium.version,
-        chromiumManifest: chromiumManifest.version,
         websiteApp: websiteApp.version,
       };
 
@@ -45,8 +41,6 @@ describe('package configuration contracts', () => {
       expect(versions.desktop).toBe(v);
       expect(versions.vscode).toBe(v);
       expect(versions.ui).toBe(v);
-      expect(versions.chromium).toBe(v);
-      expect(versions.chromiumManifest).toBe(v);
       expect(versions.websiteApp).toBe(v);
     });
 
@@ -57,7 +51,7 @@ describe('package configuration contracts', () => {
   });
 
   describe('workspace membership', () => {
-    const expectedPackages = ['ui', 'vscode', 'electron', 'chromium-xtension', 'tauri', 'website-app'];
+    const expectedPackages = ['ui', 'vscode', 'electron', 'tauri', 'website-app'];
 
     async function readWorkspacePackages() {
       const yaml = await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8');
@@ -94,16 +88,17 @@ describe('package configuration contracts', () => {
   });
 
   describe('VS Code extension manifest', () => {
-    test('declares exactly 6 commands', async () => {
+    test('declares expected commands', async () => {
       const pkg = await readJson('vscode/package.json');
       const commands = pkg.contributes.commands;
-      expect(commands).toHaveLength(6);
+      expect(commands).toHaveLength(7);
       const ids = commands.map((c: any) => c.command).sort();
       expect(ids).toEqual([
         'markdownExplorer.open',
         'markdownExplorer.openFile',
         'markdownExplorer.openFolder',
         'markdownExplorer.refresh',
+        'markdownExplorer.reloadWebview',
         'markdownExplorer.saveCurrentDocument',
         'markdownExplorer.toggle',
       ].sort());
@@ -126,14 +121,15 @@ describe('package configuration contracts', () => {
       expect(explorerContext.find((c: any) => c.command === 'markdownExplorer.openFolder')?.when).toBe('explorerResourceIsFolder');
     });
 
-    test('declares 3 keybindings', async () => {
+    test('declares 4 keybindings', async () => {
       const pkg = await readJson('vscode/package.json');
       const kb = pkg.contributes.keybindings;
-      expect(kb).toHaveLength(3);
+      expect(kb).toHaveLength(4);
       const cmds = kb.map((k: any) => k.command);
       expect(cmds).toContain('markdownExplorer.open');
       expect(cmds).toContain('markdownExplorer.toggle');
       expect(cmds).toContain('markdownExplorer.saveCurrentDocument');
+      expect(cmds).toContain('markdownExplorer.reloadWebview');
     });
 
     test('saveCurrentDocument keybinding is scoped to webviewFocus to avoid conflicting with the editor save command', async () => {
@@ -168,9 +164,9 @@ describe('package configuration contracts', () => {
       const styleConfig = pkg.contributes.configuration.properties['markdownExplorer.themeStyle'];
       expect(styleConfig.default).toBe('raw-grid');
       expect(styleConfig.enum).toEqual([
-        'raw-grid', 'default', 'bento', 'vercel', 'tokyo-night', 'neon-voltage',
+        'raw-grid', 'default', 'bento', 'vercel', 'tokyo-night', 'neon-voltage', 'cyberpunk',
         'pet-white-shiba',
-        'pet-k-ink', 'pet-cat', 'pet-hamster', 'pet-corgi',
+        'pet-k-ink',
       ]);
     });
 
@@ -209,45 +205,6 @@ describe('package configuration contracts', () => {
       const pkg = await readJson('vscode/package.json');
       expect(pkg.contributes.views).toBeUndefined();
       expect(pkg.contributes.viewsContainers).toBeUndefined();
-    });
-  });
-
-  describe('Chromium extension manifest', () => {
-    test('uses manifest version 3', async () => {
-      const manifest = await readJson('chromium-xtension/manifest.json');
-      expect(manifest.manifest_version).toBe(3);
-    });
-
-    test('permissions are minimal (storage only)', async () => {
-      const manifest = await readJson('chromium-xtension/manifest.json');
-      expect(manifest.permissions).toEqual(['storage']);
-    });
-
-    test('declares popup action with default_popup', async () => {
-      const manifest = await readJson('chromium-xtension/manifest.json');
-      expect(manifest.action.default_popup).toBe('popup.html');
-    });
-
-    test('content security policy is defined for extension_pages', async () => {
-      const manifest = await readJson('chromium-xtension/manifest.json');
-      const csp = manifest.content_security_policy.extension_pages;
-      expect(csp).toContain("script-src 'self'");
-      expect(csp).toContain("style-src 'self' 'unsafe-inline'");
-      expect(csp).toMatch(/img-src[^;]+blob:/);
-      expect(csp).toMatch(/media-src[^;]+blob:/);
-    });
-
-    test('icon paths reference existing files', async () => {
-      const manifest = await readJson('chromium-xtension/manifest.json');
-      const iconSizes = ['16', '48', '128'] as const;
-      for (const size of iconSizes) {
-        expect(existsSync(resolve(root, 'chromium-xtension', manifest.icons[size]))).toBe(true);
-        expect(existsSync(resolve(root, 'chromium-xtension', manifest.action.default_icon[size]))).toBe(true);
-      }
-    });
-
-    test('popup.html source exists', async () => {
-      expect(existsSync(resolve(root, 'chromium-xtension/popup.html'))).toBe(true);
     });
   });
 

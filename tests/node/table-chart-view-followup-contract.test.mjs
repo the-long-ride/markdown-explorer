@@ -8,16 +8,22 @@ const readOptional = async (path) => {
 };
 
 test('table toolbar Wrap, chart type and Columns controls use app tooltips', async () => {
-  const [renderer, charts] = await Promise.all([
+  const [renderer, charts, tableCoreCss, tableViewCss] = await Promise.all([
     read('ui/src/markdown/tableRenderer.ts'),
     read('ui/src/dom/tableChartHandlers.ts'),
+    read('ui/src/styles/global/global-sections-table-core.css'),
+    read('ui/src/styles/global/global-table-view-controls.css'),
   ]);
+  assert.match(renderer, /mdn-table-reset-widths[^>]*tooltip-container[\s\S]*?mdn-table-wrap-toggle/);
+  assert.match(renderer, /tooltip-text[\s\S]*?resetColumnWidths/);
   assert.match(renderer, /mdn-table-wrap-toggle[^>]*tooltip-container|tooltip-container[^>]*mdn-table-wrap-toggle/);
   assert.match(renderer, /mdn-table-columns-toggle[^>]*tooltip-container|tooltip-container[^>]*mdn-table-columns-toggle/);
   assert.match(renderer, /tooltip-text[\s\S]*?wrapTableText/);
   assert.match(renderer, /tooltip-text[\s\S]*?labels\.columns/);
   assert.match(charts, /mdn-table-view-select[^>]*tooltip-container|tooltip-container[^>]*mdn-table-view-select/);
   assert.match(charts, /tooltip-text[\s\S]*?tableViewType/);
+  assert.match(tableCoreCss, /\.mdn-table-wrap\.is-wrapped \.mdn-th-content\s*\{[\s\S]*?flex-direction:\s*row;[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.doesNotMatch(tableViewCss, /\.mdn-table-wrap:not\(\.is-wrapped\) \.mdn-table-col-resizer\s*\{\s*display:\s*none/);
 });
 
 test('column visibility menu reuses the shared accessible switch instead of checkboxes', async () => {

@@ -131,8 +131,8 @@ export function ThemeRemixModal({ isOpen, onClose }: ThemeRemixModalProps) {
                       className="theme-remix-list__select"
                       onClick={() => setSelectedThemeId(theme.id)}
                     >
-                      <span className="theme-remix-list__name" title={theme.name}>{theme.name}</span>
-                      <span className="theme-remix-list__meta" title={theme.baseStyle}>{theme.baseStyle}</span>
+                      <span className="theme-remix-list__name" data-hover-tooltip={theme.name}>{theme.name}</span>
+                      <span className="theme-remix-list__meta" data-hover-tooltip={theme.baseStyle}>{theme.baseStyle}</span>
                     </button>
                     <div className="theme-remix-list__actions" role="group" aria-label={`${theme.name}: ${t.themeRemix.duplicate} / ${t.themeRemix.delete}`}>
                       <TooltipButton

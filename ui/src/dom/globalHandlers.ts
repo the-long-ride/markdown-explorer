@@ -3,6 +3,7 @@ import { registerCopyHandlers } from './copyHandlers';
 import { registerTableHandlers } from './tableHandlers';
 import { registerNativeChartPngSave } from './nativeChartPngSave';
 import { collapseAll, expandAll, toggleSection } from './headingSectionHandlers';
+import { syncStickyTableHeaders } from '../components/Content/contentUtils';
 export {
   HEADING_SECTION_STATE_CHANGE_EVENT,
   collapseAll,
@@ -23,10 +24,10 @@ export function setHtmlMode(wrap: HTMLElement, mode: string) {
     if (langLabel) langLabel.textContent = previewLabel;
     if (previewBody) previewBody.style.display = '';
     if (codeSource) codeSource.style.display = 'none';
-    const showCodeLabel = toggleBtn?.dataset.labelShowCode || toggleBtn?.getAttribute('title') || '';
+    const showCodeLabel = toggleBtn?.dataset.labelShowCode || toggleBtn?.getAttribute('aria-label') || toggleBtn?.getAttribute('title') || '';
     if (tooltipText) tooltipText.textContent = showCodeLabel;
     if (toggleBtn) {
-      toggleBtn.title = showCodeLabel;
+      toggleBtn.removeAttribute('title');
       toggleBtn.setAttribute('aria-label', showCodeLabel);
       toggleBtn.dataset.i18nKey = 'showCode';
       const svg = toggleBtn.querySelector('svg');
@@ -38,10 +39,10 @@ export function setHtmlMode(wrap: HTMLElement, mode: string) {
     if (langLabel) langLabel.textContent = 'HTML';
     if (previewBody) previewBody.style.display = 'none';
     if (codeSource) codeSource.style.display = '';
-    const showPreviewLabel = toggleBtn?.dataset.labelShowPreview || toggleBtn?.getAttribute('title') || '';
+    const showPreviewLabel = toggleBtn?.dataset.labelShowPreview || toggleBtn?.getAttribute('aria-label') || toggleBtn?.getAttribute('title') || '';
     if (tooltipText) tooltipText.textContent = showPreviewLabel;
     if (toggleBtn) {
-      toggleBtn.title = showPreviewLabel;
+      toggleBtn.removeAttribute('title');
       toggleBtn.setAttribute('aria-label', showPreviewLabel);
       toggleBtn.dataset.i18nKey = 'showPreview';
       const svg = toggleBtn.querySelector('svg');
@@ -74,9 +75,9 @@ export function setCsvMode(wrap: HTMLElement, mode: string) {
   if (codeSource) codeSource.style.display = preview ? 'none' : '';
   if (!toggleBtn) return;
   const nextLabel = preview
-    ? toggleBtn.dataset.labelShowCode || toggleBtn.getAttribute('title') || ''
-    : toggleBtn.dataset.labelShowPreview || toggleBtn.getAttribute('title') || '';
-  toggleBtn.title = nextLabel;
+    ? toggleBtn.dataset.labelShowCode || toggleBtn.getAttribute('aria-label') || toggleBtn.getAttribute('title') || ''
+    : toggleBtn.dataset.labelShowPreview || toggleBtn.getAttribute('aria-label') || toggleBtn.getAttribute('title') || '';
+  toggleBtn.removeAttribute('title');
   toggleBtn.setAttribute('aria-label', nextLabel);
   toggleBtn.dataset.i18nKey = preview ? 'showCode' : 'showPreview';
   if (tooltipText) tooltipText.textContent = nextLabel;
@@ -146,9 +147,23 @@ export function initGlobalHandlers() {
   });
 
   if (!win.UI) win.UI = {};
-  win.UI.toggleSection = toggleSection;
-  win.UI.expandAll = expandAll;
-  win.UI.collapseAll = collapseAll;
+  const resyncStickyTableHeaders = () => {
+    document
+      .querySelectorAll<HTMLElement>('.content__scroll, .split-document-pane__scroll, [data-mdn-js-sticky-headers="true"]')
+      .forEach((container) => syncStickyTableHeaders(container));
+  };
+  win.UI.toggleSection = (headerEl: HTMLElement) => {
+    toggleSection(headerEl);
+    resyncStickyTableHeaders();
+  };
+  win.UI.expandAll = () => {
+    expandAll();
+    resyncStickyTableHeaders();
+  };
+  win.UI.collapseAll = () => {
+    collapseAll();
+    resyncStickyTableHeaders();
+  };
   win.UI.setHtmlMode = setHtmlMode;
   win.UI.toggleHtmlMode = toggleHtmlMode;
   win.UI.setCsvMode = setCsvMode;

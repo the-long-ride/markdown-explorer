@@ -90,4 +90,15 @@ describe('Workspace Insights settings portability', () => {
     const imported = parseSettingsImport(JSON.stringify(envelope), false);
     expect(imported.insights?.globalDefaults.sourceHardLimitBytes).toBeUndefined();
   });
+
+  it('defaults imported bookmarksEnabled to true and historySidebarEnabled to false when omitted', () => {
+    const envelope = createSettingsExport({ theme: 'auto', themeStyle: 'default', settings, recentWorkspaces: [] });
+    const rawSettings = envelope.payload.settings as unknown as Record<string, unknown>;
+    delete rawSettings.bookmarksEnabled;
+    delete rawSettings.historySidebarEnabled;
+
+    const imported = parseSettingsImport(JSON.stringify(envelope), true);
+    expect(imported.settings.bookmarksEnabled).toBe(true);
+    expect(imported.settings.historySidebarEnabled).toBe(false);
+  });
 });

@@ -294,12 +294,14 @@ impl Dispatcher {
                 false,
                 operation.as_ref(),
             );
-            dispatcher.send_initial_content_for_scan(
-                open_first_file,
-                &workspace_path,
-                scan_generation,
-                operation.as_ref(),
-            );
+            tauri::async_runtime::spawn(async move {
+                dispatcher.send_initial_content_for_scan(
+                    open_first_file,
+                    &workspace_path,
+                    scan_generation,
+                    operation.as_ref(),
+                ).await;
+            });
         });
     }
 }

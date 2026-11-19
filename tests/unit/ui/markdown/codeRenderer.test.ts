@@ -168,10 +168,12 @@ describe('HTML preview action toolbar', () => {
     const html = renderCodeBlock({ type: 'code', lang: 'html', content: '<p>hello</p>' }, 'auto');
     expect(html).toContain('data-i18n-key="openInBrowser"');
     expect(html).toContain('data-i18n-key="openAsModal"');
-    expect(html).toContain('title="Open in browser"');
+    expect(html).not.toContain('title="Open in browser"');
     expect(html).toContain('aria-label="Open in browser"');
-    expect(html).toContain('title="Open as modal"');
+    expect(html).toContain('<span class="tooltip-text">Open in browser</span>');
+    expect(html).not.toContain('title="Open as modal"');
     expect(html).toContain('aria-label="Open as modal"');
+    expect(html).toContain('<span class="tooltip-text">Open as modal</span>');
   });
 });
 
@@ -188,7 +190,7 @@ describe('CSV and TSV preview code blocks', () => {
     expect(html).toContain('data-mode="preview"');
     expect(html).toContain('mdn-table-wrap');
     expect(html).toContain('<span class="mdn-th-text">Month</span>');
-    expect(html).toContain('<td>2026-01</td>');
+    expect(html).toMatch(/<td[^>]*>2026-01<\/td>/);
     expect(html).toContain('style="display:none"');
   });
 
@@ -221,7 +223,7 @@ describe('CSV and TSV preview code blocks', () => {
     expect(html).toContain('data-i18n-preview-key="tsvPreviewTitle"');
     expect(html).toContain('<span class="mdn-th-text">A</span>');
     expect(html).toContain('<span class="mdn-th-text">B</span>');
-    expect(html).toContain('<td>January</td>');
+    expect(html).toMatch(/<td[^>]*>January<\/td>/);
   });
 
   it('honors explicit delimiter and header metadata', () => {
@@ -233,7 +235,7 @@ describe('CSV and TSV preview code blocks', () => {
     }, 'auto');
 
     expect(html).toContain('<span class="mdn-th-text">Name</span>');
-    expect(html).toContain('<td>Desktop</td>');
+    expect(html).toMatch(/<td[^>]*>Desktop<\/td>/);
   });
 
   it('keeps source available and renders a localized warning hook for malformed quotes', () => {

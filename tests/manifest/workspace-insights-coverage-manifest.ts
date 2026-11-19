@@ -1,6 +1,7 @@
 export const workspaceInsightsCoverageManifest: Record<string, string[]> = {
-  'chromium-xtension/src/chrome-host-insights.ts': ['tests/unit/chromium/chrome-host-insights.test.ts', 'tests/unit/chromium/chrome-host-insights-polling.test.ts'],
-  'chromium-xtension/src/insights-host-router.ts': ['tests/unit/chromium/chrome-host-insights.test.ts'],
+  'website-app/src/browser-insights-host.ts': ['tests/unit/website/browser-insights-host.test.ts', 'tests/unit/website/browser-insights-host-polling.test.ts'],
+  'website-app/src/insights-host-router.ts': ['tests/unit/website/browser-insights-host.test.ts'],
+  'website-app/src/web-insights-host.ts': ['tests/unit/website/web-document-conversion-and-insights.test.ts'],
   'electron/core/runtime-insights-external.js': ['tests/unit/electron/insights-external.test.ts'],
   'electron/core/runtime-insights.js': ['tests/unit/electron/runtime-insights.test.ts'],
   'ui/src/components/Insights/DuplicatesView.tsx': ['tests/unit/ui/components/insights-lint-duplicates.test.tsx', 'tests/unit/ui/components/insights-settings-integration.test.tsx'],
@@ -18,6 +19,7 @@ export const workspaceInsightsCoverageManifest: Record<string, string[]> = {
   'ui/src/contexts/auditedUiTranslationsBase.ts': ['tests/contracts/translations-coverage.test.ts'],
   'ui/src/contexts/insightsTranslations.ts': ['tests/unit/ui/contexts/insights-translations.test.ts'],
   'ui/src/contexts/insightsUiTranslations.ts': ['tests/unit/ui/contexts/insights-translations.test.ts', 'tests/unit/ui/components/insights-localization.test.tsx'],
+  'ui/src/insights/aiPrompts.ts': ['tests/unit/ui/insights/ai-prompts.test.ts'],
   'ui/src/insights/analyzeDocument.ts': ['tests/unit/ui/insights/analyze-document.test.ts'],
   'ui/src/insights/cache.ts': ['tests/unit/ui/insights/cache.test.ts'],
   'ui/src/insights/concurrency.ts': ['tests/unit/ui/insights/concurrency.test.ts'],

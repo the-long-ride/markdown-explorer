@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppState } from '../../contexts/AppStateContext';
 import { formatFeatureText, getExportScopeTranslations } from '../../contexts/exportScopeTranslations';
 import { usePlatform } from '../../contexts/PlatformContext';
@@ -16,7 +17,9 @@ import { installMermaidContentLifecycle } from '../Content/mermaidContentLifecyc
 import { scheduleContentEnhancements } from '../Content/scheduleContentEnhancements';
 import { LinkContextMenu } from '../shared/LinkContextMenu';
 import { TooltipButton } from '../shared/TooltipButton';
-import { ChevronLeftIcon, ChevronRightIcon, OpenFileIcon } from '../shared/icons';
+import { ChevronLeftIcon, ChevronRightIcon, OpenFileIcon, TocIcon } from '../shared/icons';
+import type { TocEntry } from '../../types';
+import { ScopeViewToc, extractScopeTocEntries } from './ScopeViewToc';
 import {
   MAX_SCOPE_DEPTH,
   SCOPE_NAVIGATION_REQUEST_EVENT,
@@ -91,6 +94,8 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<ScopeContextMenuState | null>(null);
+  const [tocOpen, setTocOpen] = useState(false);
+  const [domTocEntries, setDomTocEntries] = useState<TocEntry[]>([]);
 
   bridgeRef.current = bridge;
   settingsRef.current = state.settings;
@@ -105,6 +110,8 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
       setError(null);
       setNotice(null);
       setContextMenu(null);
+      setTocOpen(false);
+      setDomTocEntries([]);
       headingStateByFileRef.current.clear();
       return;
     }
@@ -134,6 +141,9 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       if (contextMenu) { setContextMenu(null); return; }
+      if (document.querySelector('#mediaModal, #mdn-chart-modal, .mdn-align-dropdown')) return;
+      const filterDropdown = document.querySelector<HTMLElement>('.mdn-filter-dropdown');
+      if (filterDropdown) { filterDropdown.remove(); event.preventDefault(); return; }
       event.preventDefault();
       onClose();
     };
@@ -147,6 +157,16 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
   const canNext = Boolean(history && history.index < history.entries.length - 1);
   const backShortcut = getEnabledShortcut(state.settings, 'back');
   const forwardShortcut = getEnabledShortcut(state.settings, 'forward');
+
+  useLayoutEffect(() => {
+    if (!current || Array.isArray(current.snapshot.toc)) {
+      setDomTocEntries([]);
+      return;
+    }
+    setDomTocEntries(extractScopeTocEntries(current.snapshot, bodyRef.current));
+  }, [current]);
+
+  const tocEntries = current && Array.isArray(current.snapshot.toc) ? current.snapshot.toc : domTocEntries;
 
   const goPrevious = useCallback(() => setHistory((val) => { const n = val ? previousScope(val) : val; historyRef.current = n; return n; }), []);
   const goNext = useCallback(() => setHistory((val) => { const n = val ? nextScope(val) : val; historyRef.current = n; return n; }), []);
@@ -200,6 +220,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
   useEffect(() => {
     const body = bodyRef.current;
     if (!body || !current) return;
+    body.querySelectorAll('a[data-mdn-target][onclick]').forEach((anchor) => anchor.removeAttribute('onclick'));
     const headingSections = createHeadingSectionInteractions({
       body, currentFile: current.file.fsPath,
       defaultExpanded: state.defaultExpanded !== false, stateByFile: headingStateByFileRef.current,
@@ -277,7 +298,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
         body.querySelector<HTMLElement>(`#${CSS.escape(id)}`)?.scrollIntoView({ block: 'start' });
         return;
       }
-      const scopeFile = findScopeFile(link, files);
+      const scopeFile = findScopeFile(link, files, current.file.fsPath);
       if (scopeFile) { event.preventDefault(); event.stopPropagation(); void openNestedScope(scopeFile); return; }
       if (link.kind === 'web' && link.openable) { event.preventDefault(); bridgeRef.current.postMessage({ command: 'openExternal', url: link.resolved }); return; }
       if (link.kind === 'file' || link.kind === 'relative') { event.preventDefault(); setNotice(scopeTRef.current.outsideWorkspace); }
@@ -287,7 +308,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
       const anchor = target?.closest<HTMLAnchorElement>('a[href], a[data-mdn-target]');
       if (!anchor || !body.contains(anchor)) return;
       const link = resolveRenderedLink(anchor, current.file.fsPath);
-      const scopeFile = findScopeFile(link, files);
+      const scopeFile = findScopeFile(link, files, current.file.fsPath);
       if (!scopeFile) return;
       event.preventDefault(); event.stopPropagation();
       setContextMenu({ x: event.clientX, y: event.clientY, anchor, link, target: scopeFile });
@@ -299,7 +320,7 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
 
   if (!initialFile) return null;
   const levelLabel = formatFeatureText(scopeT.level, { depth, max: MAX_SCOPE_DEPTH });
-  return (
+  const modal = (
     <div className="mdn-modal mdn-app-modal-region scope-view" role="dialog" aria-modal="true" aria-label={scopeT.dialogLabel} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <section className="scope-view__card">
         <header className="scope-view__header">
@@ -309,18 +330,39 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
             <TooltipButton className="btn btn--icon scope-view__nav-button scope-view__open-file" tooltip={scopeT.openFile} disabled={!current} onClick={handleOpenFile} icon={<OpenFileIcon size={13} />} />
           </div>
           <div className="scope-view__identity"><strong>{current ? `${current.file.title} — ${current.file.relativePath}` : initialFile.relativePath}</strong></div>
-          <div className="scope-view__depth" aria-label={levelLabel} title={levelLabel}>
+          <div className="scope-view__depth" aria-label={levelLabel} data-hover-tooltip={levelLabel}>
             {Array.from({ length: MAX_SCOPE_DEPTH }, (_, index) => (
               <div key={index} className={`scope-view__depth-segment${index < depth ? ' is-filled' : ''}${index === depth - 1 ? ' is-current' : ''}`} aria-hidden="true" />
             ))}
           </div>
+          <TooltipButton
+            className={`btn btn--icon scope-view__nav-button scope-view__toc-toggle${tocOpen ? ' is-active' : ''}`}
+            tooltip={scopeT.toggleToc}
+            label={scopeT.toggleToc}
+            aria-pressed={tocOpen}
+            disabled={!current}
+            onClick={() => setTocOpen((open) => !open)}
+            icon={<TocIcon size={14} />}
+          />
           <TooltipButton className="settings-card__close scope-view__close" tooltip={scopeT.close} label={getScopeCloseLabel(state.settings.language)} shortcut="Esc" tooltipPos="below" tooltipAlign="right" onClick={onClose}>×</TooltipButton>
         </header>
-        <div className="scope-view__content">
-          {loading && !current && <div className="scope-view__state"><div className="spinner" />{scopeT.loading}</div>}
-          {error && <div className="scope-view__state scope-view__state--error" role="alert">{error}</div>}
-          {current && <div ref={scrollRef} className="scope-view__scroll" onScroll={handleScopeScroll}><div ref={bodyRef} className="mdn-body scope-view__document" dangerouslySetInnerHTML={{ __html: current.snapshot.html }} /></div>}
-          {loading && current && <div className="scope-view__loading-overlay"><div className="spinner" /></div>}
+        <div className={`scope-view__content${tocOpen ? ' scope-view__content--with-toc' : ''}`}>
+          <div className="scope-view__main">
+            {loading && !current && <div className="scope-view__state"><div className="spinner" />{scopeT.loading}</div>}
+            {error && <div className="scope-view__state scope-view__state--error" role="alert">{error}</div>}
+            {current && <div ref={scrollRef} className="scope-view__scroll" onScroll={handleScopeScroll}><div ref={bodyRef} className="mdn-body scope-view__document" dangerouslySetInnerHTML={{ __html: current.snapshot.html }} /></div>}
+            {loading && current && <div className="scope-view__loading-overlay"><div className="spinner" /></div>}
+          </div>
+          {tocOpen && current && (
+            <ScopeViewToc
+              entries={tocEntries}
+              documentKey={`${history?.index ?? 0}:${current.file.fsPath}`}
+              language={state.settings.language}
+              emptyLabel={scopeT.noHeadings}
+              scrollRef={scrollRef}
+              bodyRef={bodyRef}
+            />
+          )}
         </div>
         {notice && <div className="scope-view__notice" role="status">{notice}</div>}
       </section>
@@ -334,4 +376,5 @@ export function ScopeViewModal({ initialFile, files, onClose, onMediaClick }: Sc
       )}
     </div>
   );
+  return typeof document !== 'undefined' ? createPortal(modal, document.body) : modal;
 }

@@ -29,18 +29,12 @@ function registerRuntimeWorkspaceHandlers(context) {
     createRuntimeWorkspaceSearchHelpers({ state, createSearchIndex, createSearchWorkerController, getMainWindow, sendHostMessage });
 
   function getWorkspacePathStatus(wsPath) {
-    if (!wsPath || typeof wsPath !== "string") {
-      return { ok: false, reason: "missing" };
-    }
+    if (!wsPath || typeof wsPath !== "string") return { ok: false, reason: "missing" };
     try {
       fs.accessSync(wsPath, fs.constants.R_OK);
-      const stat = fs.statSync(wsPath);
-      return { ok: true, stat };
+      return { ok: true, stat: fs.statSync(wsPath) };
     } catch (err) {
-      return {
-        ok: false,
-        reason: isAccessDeniedError(err) ? "locked" : "missing",
-      };
+      return { ok: false, reason: isAccessDeniedError(err) ? "locked" : "missing" };
     }
   }
 
@@ -144,6 +138,7 @@ function registerRuntimeWorkspaceHandlers(context) {
 
     const { tree, flat } = await scanWorkspaceData(request.workspacePath, {
       operation: request.operation,
+      emitProgress: false,
       isCurrent: () => isWorkspaceRefreshCurrent(request),
     });
     if (scanGeneration !== workspaceScanGeneration || !isWorkspaceRefreshCurrent(request)) return false;
@@ -179,6 +174,10 @@ function registerRuntimeWorkspaceHandlers(context) {
     const scanGeneration = ++workspaceScanGeneration;
     const workspaceName = pathApi.basename(workspacePath);
     const recents = recentWorkspacesStore.load();
+    const isScanCurrent = () => state.workspacePath === workspacePath
+      && scanGeneration === workspaceScanGeneration
+      && state.workspaceOperationId === (operation.workspaceOperationId || null)
+      && state.workspaceTabId === (operation.workspaceTabId || null);
     let displayedWorkspace = false;
     let thresholdElapsed = false;
     let lastPublishedCount = 0;
@@ -188,7 +187,7 @@ function registerRuntimeWorkspaceHandlers(context) {
       return { fileList, tree: buildWorkspaceTree(fileList) };
     };
     const publishReveal = () => {
-      if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration || displayedWorkspace || discovered.length === 0) return;
+      if (!isScanCurrent() || displayedWorkspace || discovered.length === 0) return;
       displayedWorkspace = true;
       const next = snapshot();
       lastPublishedCount = next.fileList.length;
@@ -197,35 +196,37 @@ function registerRuntimeWorkspaceHandlers(context) {
         command: "readyAck", ...next, theme: "dark", themeStyle: "raw-grid",
         defaultExpanded: true, workspaceName, workspacePath, recentWorkspaces: recents,
         documentConversionEnabled: state.documentConversionEnabled, ...getHostInfo(),
+        ...operation,
       });
     };
     const publishChanged = () => {
-      if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
+      if (!isScanCurrent()) return;
       const next = snapshot();
       lastPublishedCount = next.fileList.length;
       state.flatList = next.fileList;
       sendHostMessage({
         command: "workspaceFilesChanged", ...next, workspaceName, workspacePath,
         documentConversionEnabled: state.documentConversionEnabled,
+        ...operation,
       });
     };
     const revealTimer = setTimeout(() => {
-      if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
+      if (!isScanCurrent()) return;
       thresholdElapsed = true;
       publishReveal();
     }, WORKSPACE_SCAN_REVEAL_DELAY_MS);
     const { tree, flat } = await scanWorkspaceData(workspacePath, {
       operation,
-      isCurrent: () => state.workspacePath === workspacePath && scanGeneration === workspaceScanGeneration,
+      isCurrent: isScanCurrent,
       onFile(file, scannedFiles) {
-        if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return;
+        if (!isScanCurrent()) return;
         discovered.push(file);
         if (thresholdElapsed && !displayedWorkspace) publishReveal();
         else if (displayedWorkspace && scannedFiles >= nextIncrementalPublishCount(lastPublishedCount, WORKSPACE_SCAN_BATCH_SIZE)) publishChanged();
       },
     });
     clearTimeout(revealTimer);
-    if (state.workspacePath !== workspacePath || scanGeneration !== workspaceScanGeneration) return false;
+    if (!isScanCurrent()) return false;
     state.flatList = flat;
     const idx = ensureSearchIndex();
     idx.prime(flat);
@@ -234,6 +235,7 @@ function registerRuntimeWorkspaceHandlers(context) {
       if (lastPublishedCount !== flat.length || treeHasEmptyFolder(tree)) sendHostMessage({
         command: "workspaceFilesChanged", fileList: flat, tree, workspaceName, workspacePath,
         documentConversionEnabled: state.documentConversionEnabled,
+        ...operation,
       });
     } else sendHostMessage({
       command: "readyAck",
@@ -247,6 +249,7 @@ function registerRuntimeWorkspaceHandlers(context) {
       recentWorkspaces: recents,
       documentConversionEnabled: state.documentConversionEnabled,
       ...getHostInfo(),
+      ...operation,
     });
     return true;
   }
@@ -266,7 +269,9 @@ function registerRuntimeWorkspaceHandlers(context) {
   function isWorkspaceRequestCurrent(request) {
     return state.workspacePath === request.workspacePath
       && state.currentFile === request.filePath
-      && workspaceScanGeneration === request.scanGeneration;
+      && workspaceScanGeneration === request.scanGeneration
+      && state.workspaceOperationId === (request.operation.workspaceOperationId || null)
+      && state.workspaceTabId === (request.operation.workspaceTabId || null);
   }
 
   async function sendInitialContent(openFirstFile = false) {

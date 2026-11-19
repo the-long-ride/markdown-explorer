@@ -29,7 +29,7 @@ This folder is a source-derived specification of the active application. It is o
 - Full use-case specifications with alternate/failure flows and acceptance criteria.
 - Feature specifications include UI reference HTML, CSS, and JavaScript where applicable.
 - Exact protocol, settings, shortcut, theme, file, storage, limit, and error catalogs.
-- Runtime-specific behavior for Electron, Tauri, VS Code, Chromium, and website modes.
+- Runtime-specific behavior for Electron, Tauri, VS Code, and Web runtimes.
 - Source/test traceability and release-quality requirements.
 
 ## Recommended start
@@ -121,8 +121,7 @@ This folder is a source-derived specification of the active application. It is o
 - [Electron Desktop Runtime](04-runtimes/01-electron-desktop.md) — Electron host behavior, services, packaging, and Windows/macOS/Linux lifecycle
 - [Tauri Desktop Runtime](04-runtimes/02-tauri-desktop.md) — Rust host, local protocols, native conversion, window lifecycle, and updater configuration
 - [VS Code Extension Runtime](04-runtimes/03-vscode-extension.md) — Extension activation, commands, panel, workspace services, editor integration, and packaging
-- [Chromium Extension Runtime](04-runtimes/04-chromium-extension.md) — Browser file handles, IndexedDB, scanning, polling, search, and capability limits
-- [Website Demo and Browser File Mode](04-runtimes/05-website-demo-file-mode.md) — Virtual demo host, browser file utility mode, search, persistence, and native-feature exclusions
+- [Web Runtime (Test & File Mode)](04-runtimes/05-website-demo-file-mode.md) — Virtual test host, browser file utility mode, search, persistence, and native-feature exclusions
 - [Runtime Parity and Capability Matrix](04-runtimes/06-runtime-parity.md) — Common contracts, supported capabilities, and intentional runtime differences
 
 ### Reference

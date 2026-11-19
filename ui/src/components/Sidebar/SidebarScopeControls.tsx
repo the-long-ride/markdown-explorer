@@ -7,8 +7,10 @@ interface SidebarScopeControlsProps {
   count: number;
   total: number;
   allSelected: boolean;
+  narrowed?: boolean;
   labels: {
     focus: string;
+    applyFocus?: string;
     clear: string;
     checkAll: string;
     uncheckAll: string;
@@ -24,19 +26,25 @@ export function SidebarScopeControls({
   count,
   total,
   allSelected,
+  narrowed,
   labels,
   onToggleEditing,
   onToggleAll,
   onClear,
 }: SidebarScopeControlsProps) {
   const bulkLabel = allSelected ? labels.uncheckAll : labels.checkAll;
+  const isNarrowed = typeof narrowed === 'boolean' ? narrowed : (hasEntry && total > 0 && count < total);
+  const focusTooltip = editing && hasEntry ? labels.applyFocus : undefined;
   return (
     <div className="sidebar__scope">
       <button
         type="button"
-        className={`sidebar__scope-btn${editing || hasEntry ? ' is-active' : ''}`}
+        className={`sidebar__scope-btn${editing || hasEntry ? ' is-active' : ''}${isNarrowed ? ' is-scope-narrowed' : ''}`}
         onClick={onToggleEditing}
         aria-pressed={editing}
+        data-scope-narrowed={isNarrowed ? 'true' : undefined}
+        data-hover-tooltip={focusTooltip}
+        data-hover-tooltip-pos={focusTooltip ? 'bottom' : undefined}
       >
         <span>{labels.focus}</span>
         <span className="sidebar__scope-count">{count}/{total}</span>

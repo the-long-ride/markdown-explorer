@@ -89,7 +89,7 @@ export function SidebarFilesActions({
     <div className="sidebar__files-actions">
       {leftActions && <div className="sidebar__files-action-group sidebar__files-action-group--left">{leftActions}</div>}
       <div className="sidebar__files-action-group sidebar__files-action-group--right">
-        <div className="sidebar__sort-status" title={sortStatusLabel} aria-label={sortStatusLabel}>
+        <div className="sidebar__sort-status" data-hover-tooltip={sortStatusLabel} aria-label={sortStatusLabel}>
           <SortStatusIcon mode={sortMode} size={14} />
         </div>
         <TooltipButton

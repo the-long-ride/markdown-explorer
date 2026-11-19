@@ -12,6 +12,7 @@ import type { PreviewNotice } from './documentPreviewNotice';
 import { useDocumentEditingSurface } from './useDocumentEditingSurface';
 import { WelcomePage } from './WelcomePage';
 import { RandomTipCard } from './RandomTipCard';
+
 import { useDocumentRootRegistration } from '../../document/useDocumentRootRegistration';
 
 
@@ -54,6 +55,7 @@ export function ContentMainView(props: ContentMainViewProps) {
 
   return (
     <main className="content" id="mainContent">
+
       <div className={`content__scroll${isFullHtmlPreview ? ' content__scroll--html-preview' : ''}${isPlainMarkdownMode ? ' content__scroll--plain-edit' : ''}`} id="contentScroll" ref={scrollRef}>
         {state.isLoading && <div className="state-screen state-screen--loading" id="loadingScreen"><div className="spinner" /><div className="state-screen__title">{state.loadingLabel || t.ui.loadingDocs}</div>{state.loadingDetail && <div className="state-screen__sub">{state.loadingDetail}</div>}{onCancelWorkspaceScan && <button type="button" className="btn state-screen__cancel" onClick={onCancelWorkspaceScan}>{t.tooltips.cancelScan}</button>}</div>}
         {!state.isLoading && workspaceUnavailablePath && <div className="state-screen state-screen--workspace-unavailable"><div className="state-screen__icon state-screen__icon--warning"><AlertTriangleIcon size={34} /></div><div className="state-screen__title">{t.workspaceUnavailable.title}</div><div className="state-screen__sub">{t.workspaceUnavailable.description}</div><div className="state-screen__path">{workspaceUnavailablePath}</div>{isDesktopTabView && <div className="state-screen__hint">{t.workspaceUnavailable.tabHint}</div>}<div className="state-screen__actions"><button type="button" className="state-screen__button state-screen__button--primary" onClick={onOpenWorkspaceAgain}><FolderIcon size={14} /><span>{t.workspaceUnavailable.openAgain}</span></button><button type="button" className="state-screen__button state-screen__button--danger" onClick={onDeleteUnavailableWorkspace} disabled={!isUnavailableWorkspaceInHistory}><TrashIcon size={14} /><span>{isUnavailableWorkspaceInHistory ? t.workspaceUnavailable.deleteHistory : t.workspaceUnavailable.removedHistory}</span></button></div></div>}
@@ -62,7 +64,7 @@ export function ContentMainView(props: ContentMainViewProps) {
         {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && !suppressWelcome && !state.currentFile && state.fileList.length > 0 && <WelcomePage />}
         {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && suppressWelcome && !state.currentFile && state.fileList.length > 0 && <RandomTipCard />}
         {!state.isLoading && !state.notFoundHref && !workspaceUnavailablePath && state.currentFile && hasRenderableDocumentContent && (
-          <div className={`mdn-body${isFullHtmlPreview ? ' mdn-body--html-preview' : ''}`} id="mdBody" data-document-root="main" ref={bodyRef} aria-live="polite" data-mdn-source-document-path={state.relativePath || undefined}>
+          <div className={`mdn-body${isFullHtmlPreview ? ' mdn-body--html-preview' : ''}`} id="mdBody" data-document-root="main" ref={bodyRef} aria-live="polite" data-file-path={state.currentFile || undefined} data-mdn-source-document-path={state.relativePath || undefined}>
             {activeHistory?.mode === 'git-revision' && activeHistory.revision ? <GitRevisionView snapshot={activeHistory.revision} language={language} onReturnToCurrent={() => clearHistoryView('single')} />
               : activeHistory?.mode === 'diff' && activeHistory.comparison ? <DocumentDiffView {...activeHistory.comparison} language={language} onReturnToCurrent={() => clearHistoryView('single')} />
               : <DocumentBody

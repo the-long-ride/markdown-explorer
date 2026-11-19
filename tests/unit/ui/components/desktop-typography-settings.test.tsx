@@ -192,4 +192,80 @@ describe('DesktopTypographySettings', () => {
       }),
     );
   });
+  it('renders font size inputs with limits 7 to 49 for all roles', () => {
+    const state = createMockState();
+    renderComponent(state);
+
+    const sizeInputs = screen.getAllByRole('spinbutton');
+    expect(sizeInputs).toHaveLength(6);
+
+    for (const input of sizeInputs) {
+      expect(input).toHaveAttribute('min', '7');
+      expect(input).toHaveAttribute('max', '49');
+    }
+  });
+
+  it('updates font size within 7 to 49 and enables Apply button', () => {
+    const state = createMockState();
+    const { updateSettings } = renderComponent(state);
+
+    const sizeInputs = screen.getAllByRole('spinbutton');
+    // Body font size input is at index 1
+    fireEvent.change(sizeInputs[1], { target: { value: '24' } });
+
+    const applyBtn = screen.getByRole('button', { name: new RegExp(t.fontApply) });
+    expect(applyBtn).not.toBeDisabled();
+    fireEvent.click(applyBtn);
+
+    expect(screen.getByRole('dialog', { name: t.fontApplyConfirmTitle })).toBeInTheDocument();
+    expect(screen.getByText(/24px/)).toBeInTheDocument();
+
+    const confirmBtn = screen.getByRole('button', { name: new RegExp(t.fontApplyChanges) });
+    fireEvent.click(confirmBtn);
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fontBindings: expect.objectContaining({
+          body: expect.objectContaining({ size: 24 }),
+        }),
+      }),
+    );
+  });
+
+  it('clamps font size on blur to minimum 7 and maximum 49', () => {
+    const state = createMockState();
+    renderComponent(state);
+
+    const sizeInputs = screen.getAllByRole('spinbutton');
+    // Enter value exceeding max 49
+    fireEvent.change(sizeInputs[0], { target: { value: '120' } });
+    fireEvent.blur(sizeInputs[0]);
+    expect(sizeInputs[0]).toHaveValue(49);
+
+    // Enter value below min 7
+    fireEvent.change(sizeInputs[0], { target: { value: '3' } });
+    fireEvent.blur(sizeInputs[0]);
+    expect(sizeInputs[0]).toHaveValue(7);
+  });
+
+  it('steps font size up and down with custom arrow buttons and displays tooltip', () => {
+    const state = createMockState();
+    renderComponent(state);
+
+    const sizeInputs = screen.getAllByRole('spinbutton');
+    const initialVal = Number((sizeInputs[0] as HTMLInputElement).value);
+
+    const upButtons = screen.getAllByRole('button', { name: /\+/ });
+    expect(upButtons).toHaveLength(6);
+    fireEvent.click(upButtons[0]);
+    expect(sizeInputs[0]).toHaveValue(initialVal + 1);
+
+    const downButtons = screen.getAllByRole('button', { name: /-/ });
+    expect(downButtons).toHaveLength(6);
+    fireEvent.click(downButtons[0]);
+    expect(sizeInputs[0]).toHaveValue(initialVal);
+
+    const tooltipTexts = screen.getAllByText(new RegExp(`${t.fontSize} \\(7-49px\\)`));
+    expect(tooltipTexts.length).toBeGreaterThanOrEqual(6);
+  });
 });

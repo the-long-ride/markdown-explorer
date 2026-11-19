@@ -6,6 +6,7 @@
 @import './global/global-app-shell.css';
 @import './global/global-switch-button.css';
 @import './global/global-settings-layout.css';
+@import './global/global-table-alignment.css';
 @import './global/global-settings-typography.css';
 @import './global/global-settings-navigation.css';
 @import './global/global-settings-features.css';
@@ -47,6 +48,7 @@
 @import './global/global-media-settings-dialogs.css';
 @import './global/global-settings-responsive.css';
 @import './global/global-theme-picker-settings.css';
+@import './global/global-view-transitions.css';
 @import './global/global-theme-picker-styles.css';
 @import './global/global-theme-picker-pets.css';
 @import './global/global-theme-picker-custom.css';
@@ -68,6 +70,14 @@
 @import './global/global-sidebar-search-controls.css';
 @import './global/global-shell-control-sizing.css';
 @import './global/global-export-runtime-followup.css';
+@import './global/global-hover-tooltip.css';
+@import './global/global-theme-cyberpunk.css';
+@import './global/global-theme-cyberpunk-surfaces.css';
+@import './global/global-theme-cyberpunk-modals.css';
+@import './global/global-theme-cyberpunk-search.css';
+@import './global/global-theme-cyberpunk-scope-view.css';
+@import './global/global-theme-cyberpunk-menus.css';
+@import '../components/Tour/TourGuideOverlay.css';
 
 /* Global focus outline reset for text inputs */
 input:not([type="checkbox"]):not([type="radio"]):focus,
@@ -99,7 +109,7 @@ textarea:focus-visible {
   opacity: 0.85;
   white-space: nowrap;
   backdrop-filter: blur(4px);
-  z-index: 99999;
+  z-index: var(--z-panel-overlay);
 }
 
 
@@ -135,7 +145,7 @@ textarea:focus-visible {
 
 .html-preview-experience-banner {
   position: fixed;
-  z-index: 11000;
+  z-index: var(--z-panel-overlay);
   top: calc(var(--topbar-h, 42px) + 12px);
   left: 50%;
   width: min(720px, calc(100vw - 32px));

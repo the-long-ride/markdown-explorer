@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SettingsModal, ACTIONS_LIST } from '../../../../ui/src/components/Settings/SettingsModal';
+import { formatCurrentVersion, resolveVersionNumber } from '../../../../ui/src/components/Settings/settingsModalData';
 
 const mockDispatch = vi.fn();
 const mockSetTheme = vi.fn();
@@ -120,7 +121,9 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   SettingsFeaturesIcon: () => <span>features-icon</span>,
   RefreshIcon: () => <span>refresh</span>,
   OpenInBrowserIcon: () => <span>browser</span>,
+  ReloadWindowIcon: () => <span>reload-window</span>,
   LanguageIcon: () => <span>lang</span>,
+  HistoryIcon: () => <span>history</span>,
 }));
 
 vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
@@ -256,8 +259,107 @@ describe('SettingsModal render', () => {
     expect(screen.getByText('CSV Preview')).toBeInTheDocument();
   });
 
+  it('renders Markdown Editor shortcut group description under Keyboard Shortcuts', () => {
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+    expect(
+      screen.getByText('Active when focused inside the Markdown editor. These shortcuts take priority and can override general app shortcuts while editing.')
+    ).toBeInTheDocument();
+  });
+
   it('exposes ACTIONS_LIST with expected scopes', () => {
     expect(ACTIONS_LIST.length).toBeGreaterThan(0);
     expect(ACTIONS_LIST.some(a => a.id === 'settings')).toBe(true);
+  });
+
+  it('renders the formatted version button in the sidebar footer', () => {
+    mockState = { ...getMockState(), appVersion: '1.7.1' };
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    expect(screen.getByText('v1.7.1')).toBeInTheDocument();
+  });
+
+  it('renders clean version without check-for-update button in Update & Backup when running in web runtime', () => {
+    mockState = { ...getMockState(), appRuntime: 'web', appVersion: '1.7.1' };
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={() => {}}
+        updateCheck={defaultUpdateCheck}
+        hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={() => {}}
+        onScheduleUpdateOnExit={() => {}}
+        onRestartAndApplyUpdate={() => {}}
+        onOpenChangelog={() => {}}
+      />,
+    );
+    expect(screen.getByText('v1.7.1')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Update & Backup'));
+    expect(screen.getByText('You are using version 1.7.1.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check for update' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'See changelog on GitHub' })).toBeInTheDocument();
+  });
+
+  it('resolves bundled version without demo suffix when running under __webBus with empty appVersion', () => {
+    (window as any).__webBus = new EventTarget();
+    mockState = { ...getMockState(), appRuntime: 'web', appVersion: '' };
+    try {
+      render(
+        <SettingsModal
+          isOpen={true}
+          onClose={() => {}}
+          updateCheck={defaultUpdateCheck}
+          hostUpdateState={defaultHostUpdateState}
+          onDownloadUpdate={() => {}}
+          onScheduleUpdateOnExit={() => {}}
+          onRestartAndApplyUpdate={() => {}}
+          onOpenChangelog={() => {}}
+        />,
+      );
+      expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
+      fireEvent.click(screen.getByText('Update & Backup'));
+      expect(screen.queryByRole('button', { name: 'Check for update' })).not.toBeInTheDocument();
+    } finally {
+      delete (window as any).__webBus;
+    }
+  });
+});
+
+describe('formatCurrentVersion and resolveVersionNumber', () => {
+  it('formats release versions with leading v', () => {
+    expect(formatCurrentVersion('1.7.1')).toBe('v1.7.1');
+    expect(formatCurrentVersion('v1.7.1')).toBe('v1.7.1');
+  });
+
+  it('resolves empty version to bundled version with or without __webBus', () => {
+    expect(formatCurrentVersion('')).toMatch(/^v\d+\.\d+\.\d+$/);
+    (window as any).__webBus = new EventTarget();
+    try {
+      expect(formatCurrentVersion('')).toMatch(/^v\d+\.\d+\.\d+$/);
+      expect(resolveVersionNumber('')).toMatch(/^\d+\.\d+\.\d+$/);
+    } finally {
+      delete (window as any).__webBus;
+    }
   });
 });

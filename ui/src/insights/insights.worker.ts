@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { analyzeDocument, restorePersistedAnalyzedDocument } from './analyzeDocument.ts';
+import { analyzeDocument, restorePersistedAnalyzedDocument, type AnalyzedDocument } from './analyzeDocument.ts';
 import { normalizeInsightsSettings, type InsightsSettings } from './config.ts';
 import { WorkspaceInsightsIndex } from './index.ts';
 import type { InsightsWorkerInput, InsightsWorkerOutput } from './workerProtocol.ts';
@@ -10,15 +10,17 @@ const cancelled = new Set<string>();
 const ctx: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope;
 const send = (message: InsightsWorkerOutput) => ctx.postMessage(message);
 
-async function applyBatch(message: Extract<InsightsWorkerInput, { type: 'applySourceBatch' }>): Promise<void> {
+async function applyBatch(message: Extract<InsightsWorkerInput, { type: 'applySourceBatch' | 'analyze-batch' }>): Promise<void> {
   cancelled.delete(message.jobId);
   const analyzed = [];
+  const results: AnalyzedDocument[] = [];
   for (let i = 0; i < message.documents.length; i += 1) {
     if (cancelled.has(message.jobId)) { send({ type: 'cancelled', jobId: message.jobId }); return; }
     const source = message.documents[i];
     const document = analyzeDocument({ ...source, lintRules: settings.lintRules });
     index.applyDocument(document);
     analyzed.push(document);
+    results.push(document);
     if (analyzed.length >= 25 || i === message.documents.length - 1) {
       send({ type: 'documentResults', jobId: message.jobId, documents: analyzed.splice(0) });
     }
@@ -27,7 +29,13 @@ async function applyBatch(message: Extract<InsightsWorkerInput, { type: 'applySo
       await Promise.resolve();
     }
   }
-  send({ type: 'complete', jobId: message.jobId, snapshot: index.snapshot() });
+  const includeSnapshot = message.includeSnapshot !== false;
+  send({
+    type: 'complete',
+    jobId: message.jobId,
+    snapshot: includeSnapshot ? index.snapshot() : null,
+    ...(includeSnapshot ? {} : { analyzed: results }),
+  });
 }
 
 ctx.onmessage = (event: MessageEvent<InsightsWorkerInput>) => {
@@ -41,7 +49,8 @@ ctx.onmessage = (event: MessageEvent<InsightsWorkerInput>) => {
         send({ type: 'complete', jobId: message.jobId, snapshot: index.snapshot() });
         break;
       }
-      case 'applySourceBatch': void applyBatch(message).catch(error => send({ type: 'error', jobId: message.jobId, message: String(error) })); break;
+      case 'applySourceBatch':
+      case 'analyze-batch': void applyBatch(message).catch(error => send({ type: 'error', jobId: message.jobId, message: String(error) })); break;
       case 'applyFsDeltaBatch': {
         for (const delta of message.deltas) {
           if (delta.kind === 'delete') index.removeDocument(delta.relativePath);

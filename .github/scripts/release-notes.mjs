@@ -7,7 +7,6 @@ const platforms = [
   'macOS',
   'Linux',
   'VS Code Extension',
-  'Chromium Extension',
   'Other',
 ];
 
@@ -47,9 +46,6 @@ function classifyAsset(name) {
   const lower = name.toLowerCase();
 
   if (lower.endsWith('.vsix')) return 'VS Code Extension';
-  if (lower.includes('chromium') && lower.endsWith('.zip')) {
-    return 'Chromium Extension';
-  }
   if (lower.endsWith('.exe')) return 'Windows';
   if (lower.endsWith('.dmg') || lower.endsWith('.zip')) return 'macOS';
   if (lower.endsWith('.deb') || lower.endsWith('.appimage')) return 'Linux';
@@ -65,7 +61,6 @@ function describeAsset(name, platform) {
       : '';
 
   if (platform === 'VS Code Extension') return 'VS Code extension package.';
-  if (platform === 'Chromium Extension') return 'Chromium extension package.';
   if (platform === 'Windows') {
     return lower.includes('setup')
       ? `${runtime || 'Desktop'} installer for Windows.`

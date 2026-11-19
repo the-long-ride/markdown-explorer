@@ -3,16 +3,14 @@ pub fn electron_api_shim_js() -> &'static str {
 (function () {
   if (window.electronAPI) return;
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-  // Block hard-reload shortcuts (Ctrl+R, Ctrl+Shift+R, Ctrl+F5) that would
-  // crash the Tauri app by reloading the webview without re-injecting the
-  // preload bridge or Tauri globals.
+  // Prevent WebView2's unmanaged native reload accelerator on Ctrl+R / Ctrl+F5
+  // while allowing the keydown event to reach the app's keyboard handler.
   document.addEventListener('keydown', function (e) {
     var ctrl = e.ctrlKey || e.metaKey;
     if (!ctrl) return;
     var k = e.key;
     if (k === 'r' || k === 'R' || k === 'F5') {
       e.preventDefault();
-      e.stopImmediatePropagation();
     }
   }, true);
   const listeners = new Set();
@@ -250,9 +248,8 @@ mod tests {
     #[test]
     fn test_electron_api_shim_js_contains_reload_prevention() {
         let js = electron_api_shim_js();
-        assert!(js.contains("Block hard-reload shortcuts"));
+        assert!(js.contains("Prevent WebView2's unmanaged native reload accelerator"));
         assert!(js.contains("e.preventDefault()"));
-        assert!(js.contains("e.stopImmediatePropagation()"));
         assert!(js.contains("'r' || k === 'R' || k === 'F5'"));
     }
 

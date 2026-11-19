@@ -5,7 +5,7 @@
 import { createContext, useContext } from 'react';
 import type { PlatformBridge } from '../platform/bridge';
 
-const PlatformContext = createContext<PlatformBridge | null>(null);
+export const PlatformContext = createContext<PlatformBridge | null>(null);
 
 export function PlatformProvider({
   bridge,

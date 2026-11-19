@@ -18,6 +18,8 @@
   --table-cell-pad-x: 12px;
   --stroke-w: 1px;
   --r: 8px;
+  --r-sm: 6px;
+  --r-s: 6px;
   --r-md: 8px;
   --r-lg: 8px;
   --surface-blur: none;
@@ -97,39 +99,17 @@
 }
 
 [data-theme-style="pet-white-shiba"] {
-  --pet-bg-happy: url("../../assets/themes/pets/backgrounds/white-shiba-happy.png");
-  --pet-bg-wink: url("../../assets/themes/pets/backgrounds/white-shiba-wink.png");
-  --pet-bg-blep: url("../../assets/themes/pets/backgrounds/white-shiba-blep.png");
+  --pet-bg-happy: url("../../assets/themes/pets/backgrounds/nika-happy.png");
+  --pet-bg-wink: url("../../assets/themes/pets/backgrounds/nika-like-mother.png");
+  --pet-bg-blep: url("../../assets/themes/pets/backgrounds/nika-angry.png");
   --pet-paw: url("../../assets/themes/pets/rail-markers/white-shiba-paw.svg");
 }
-
 
 [data-theme-style="pet-k-ink"] {
   --pet-bg-happy: url("../../assets/themes/pets/backgrounds/k-ink-wolf.png");
   --pet-bg-wink: url("../../assets/themes/pets/backgrounds/k-ink-wating.png");
   --pet-bg-blep: url("../../assets/themes/pets/backgrounds/k-ink-surprise.png");
   --pet-paw: url("../../assets/themes/pets/rail-markers/k-ink-paw.svg");
-}
-
-[data-theme-style="pet-cat"] {
-  --pet-bg-happy: url("../../assets/themes/pets/backgrounds/cat-happy.png");
-  --pet-bg-wink: url("../../assets/themes/pets/backgrounds/cat-wink.png");
-  --pet-bg-blep: url("../../assets/themes/pets/backgrounds/cat-blep.png");
-  --pet-paw: url("../../assets/themes/pets/rail-markers/cat-paw.svg");
-}
-
-[data-theme-style="pet-hamster"] {
-  --pet-bg-happy: url("../../assets/themes/pets/backgrounds/hamster-happy.png");
-  --pet-bg-wink: url("../../assets/themes/pets/backgrounds/hamster-wink.png");
-  --pet-bg-blep: url("../../assets/themes/pets/backgrounds/hamster-blep.png");
-  --pet-paw: url("../../assets/themes/pets/rail-markers/hamster-paw.svg");
-}
-
-[data-theme-style="pet-corgi"] {
-  --pet-bg-happy: url("../../assets/themes/pets/backgrounds/corgi-happy.png");
-  --pet-bg-wink: url("../../assets/themes/pets/backgrounds/corgi-wink.png");
-  --pet-bg-blep: url("../../assets/themes/pets/backgrounds/corgi-blep.png");
-  --pet-paw: url("../../assets/themes/pets/rail-markers/corgi-paw.svg");
 }
 
 [data-theme-style="pet-white-shiba"][data-theme="dark"],
@@ -142,7 +122,6 @@
   --chart-2: #93c5fd;
   --chart-3: #86efac;
 }
-
 
 [data-theme-style="pet-k-ink"][data-theme="dark"],
 [data-theme-style="pet-k-ink"][data-theme="auto"] {
@@ -172,46 +151,12 @@
   --pet-bg-side-opacity: 0.13;
 }
 
-[data-theme-style="pet-cat"][data-theme="dark"],
-[data-theme-style="pet-cat"][data-theme="auto"] {
-  --accent: #7dd3fc;
-  --accent-dim: rgba(125, 211, 252, 0.16);
-  --accent-text: #bae6fd;
-  --txc: #f9a8d4;
-  --chart-1: #7dd3fc;
-  --chart-2: #f9a8d4;
-  --chart-3: #a7f3d0;
-}
-
-[data-theme-style="pet-hamster"][data-theme="dark"],
-[data-theme-style="pet-hamster"][data-theme="auto"] {
-  --accent: #f59e0b;
-  --accent-dim: rgba(245, 158, 11, 0.16);
-  --accent-text: #fcd34d;
-  --txc: #86efac;
-  --chart-1: #f59e0b;
-  --chart-2: #86efac;
-  --chart-3: #fda4af;
-}
-
-[data-theme-style="pet-corgi"][data-theme="dark"],
-[data-theme-style="pet-corgi"][data-theme="auto"] {
-  --accent: #60a5fa;
-  --accent-dim: rgba(96, 165, 250, 0.16);
-  --accent-text: #bfdbfe;
-  --txc: #fcd34d;
-  --chart-1: #60a5fa;
-  --chart-2: #fcd34d;
-  --chart-3: #fb923c;
-}
-
 [data-theme-style="pet-white-shiba"][data-theme="light"] {
   --accent: #b96f35;
   --accent-dim: rgba(185, 111, 53, 0.13);
   --accent-text: #8a4a20;
   --txc: #2563eb;
 }
-
 
 [data-theme-style="pet-k-ink"][data-theme="light"] {
   --bg: #f7f5f2;
@@ -235,34 +180,4 @@
   --chart-3: #9b7f5f;
   --pet-bg-main-opacity: 0.18;
   --pet-bg-side-opacity: 0.1;
-}
-
-[data-theme-style="pet-cat"][data-theme="light"] {
-  --accent: #0369a1;
-  --accent-dim: rgba(3, 105, 161, 0.13);
-  --accent-text: #075985;
-  --txc: #be185d;
-  --chart-1: #0369a1;
-  --chart-2: #be185d;
-  --chart-3: #0d9488;
-}
-
-[data-theme-style="pet-hamster"][data-theme="light"] {
-  --accent: #b45309;
-  --accent-dim: rgba(180, 83, 9, 0.13);
-  --accent-text: #92400e;
-  --txc: #15803d;
-  --chart-1: #b45309;
-  --chart-2: #16a34a;
-  --chart-3: #db2777;
-}
-
-[data-theme-style="pet-corgi"][data-theme="light"] {
-  --accent: #2563eb;
-  --accent-dim: rgba(37, 99, 235, 0.13);
-  --accent-text: #1d4ed8;
-  --txc: #a16207;
-  --chart-1: #2563eb;
-  --chart-2: #ca8a04;
-  --chart-3: #c05621;
 }

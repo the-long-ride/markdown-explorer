@@ -69,13 +69,13 @@ describe('saveExportArtifact', () => {
     await expect(failPending).resolves.toEqual({ ok: false, error: 'disk full' });
   });
 
-  it('uses an object URL download for Chromium without posting to the host bridge', async () => {
+  it('uses an object URL download for web without posting to the host bridge', async () => {
     const harness = bridgeHarness();
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:export');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
-    await expect(saveExportArtifact(harness.bridge, 'chrome', artifact, 1000))
+    await expect(saveExportArtifact(harness.bridge, 'web', artifact, 1000))
       .resolves.toEqual({ ok: true, path: 'docs.zip' });
 
     expect(harness.posted).toHaveLength(0);

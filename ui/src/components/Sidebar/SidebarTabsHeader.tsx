@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { SidebarTabId } from '../../contexts/appStateModel';
 import { useRepositorySnapshot } from '../../contexts/RepositorySnapshotContext';
 import { TooltipButton } from '../shared/TooltipButton';
+import { DownloadIcon } from './sidebarEntryIcons';
 import type { SidebarSearchStatus } from './SidebarSearch';
 import type { SidebarTabDescriptor } from './sidebarTabs';
 
@@ -10,6 +11,8 @@ interface SidebarTabsHeaderProps {
   tabs: readonly SidebarTabDescriptor[];
   searchStatus: SidebarSearchStatus;
   onSelect: (tab: SidebarTabId) => void;
+  onDownloadWorkspaceZip?: () => void;
+  downloadWorkspaceLabel?: string;
 }
 
 export function SidebarTabsHeader({
@@ -17,6 +20,8 @@ export function SidebarTabsHeader({
   tabs,
   searchStatus,
   onSelect,
+  onDownloadWorkspaceZip,
+  downloadWorkspaceLabel,
 }: SidebarTabsHeaderProps) {
   const { repositoryView } = useRepositorySnapshot();
   const stripRef = useRef<HTMLDivElement>(null);
@@ -50,8 +55,9 @@ export function SidebarTabsHeader({
   return (
     <div className="sidebar__title-row">
       <div className={`sidebar__tab-strip${iconOnly ? ' is-icon-only' : ''}`} ref={stripRef}>
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const showStateDot = tab.indicator === 'accent-dot' || (tab.id === 'history' && viewingOldRevision);
+          const tooltipAlign = index === 0 ? 'left' : index === tabs.length - 1 ? 'right' : 'center';
           return (
             <TooltipButton
               key={tab.id}
@@ -59,6 +65,8 @@ export function SidebarTabsHeader({
               className={`sidebar__tab-btn sidebar__tab-btn--${tab.id}${activeTab === tab.id ? ' is-active' : ''}`}
               aria-label={tab.label}
               tooltip={tab.label}
+              shortcut={tab.shortcut}
+              tooltipAlign={tooltipAlign}
               onClick={() => onSelect(tab.id)}
             >
               <span className="sidebar__tab-icon-wrap">
@@ -78,6 +86,21 @@ export function SidebarTabsHeader({
         </div>
       ) : activeDescriptor?.count !== undefined ? (
         <div className="sidebar__title-actions" key={`${activeTab}-actions`}>
+          {activeTab === 'files' && onDownloadWorkspaceZip && (
+            <TooltipButton
+              type="button"
+              className="sidebar__download-zip-btn"
+              data-testid="sidebar-download-workspace-zip"
+              onlyIcon={true}
+              tooltip={downloadWorkspaceLabel}
+              label={downloadWorkspaceLabel}
+              tooltipPos="below"
+              tooltipAlign="right"
+              onClick={onDownloadWorkspaceZip}
+            >
+              <DownloadIcon size={14} />
+            </TooltipButton>
+          )}
           <span className="sidebar__count" id={activeTab === 'files' ? 'fileCount' : undefined}>{activeDescriptor.count}</span>
         </div>
       ) : null}

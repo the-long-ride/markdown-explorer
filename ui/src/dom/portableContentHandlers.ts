@@ -40,7 +40,7 @@ function cleanText(source: HTMLElement): string {
     '.tooltip-text', '.mdn-anchor', '.mdn-section-copy-btn', '.mdn-section-chevron',
     '.mdn-copy-btn', '.mdn-toggle-preview-btn', '.mdn-toggle-csv-btn',
     '.mdn-codeblock-toggle-btn', '.mdn-codeblock-lang', '.mdn-table-toolbar',
-    '.mdn-table-filter-btn', '.mdn-sort-icon',
+    '.mdn-table-align-btn', '.mdn-table-filter-btn', '.mdn-sort-icon',
   ].join(',')).forEach((element) => element.remove());
   return (clone.innerText || clone.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -62,7 +62,6 @@ export function setPortableHtmlMode(wrap: HTMLElement, mode: 'code' | 'preview')
     const nextLabel = preview
       ? toggle.dataset.labelShowCode || 'Show code'
       : toggle.dataset.labelShowPreview || 'Show preview';
-    toggle.title = nextLabel;
     toggle.setAttribute('aria-label', nextLabel);
     const tooltip = toggle.querySelector<HTMLElement>('.tooltip-text');
     if (tooltip) tooltip.textContent = nextLabel;
@@ -85,7 +84,6 @@ export function setPortableCsvMode(wrap: HTMLElement, mode: 'code' | 'preview'):
     const nextLabel = preview
       ? toggle.dataset.labelShowCode || 'Show code'
       : toggle.dataset.labelShowPreview || 'Show preview';
-    toggle.title = nextLabel;
     toggle.setAttribute('aria-label', nextLabel);
     const tooltip = toggle.querySelector<HTMLElement>('.tooltip-text');
     if (tooltip) tooltip.textContent = nextLabel;

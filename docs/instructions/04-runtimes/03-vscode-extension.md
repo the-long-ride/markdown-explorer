@@ -110,4 +110,4 @@ The extension compiles shared/copied UI assets and packages according to `vscode
 
 ---
 
-[← Tauri Desktop Runtime](02-tauri-desktop.md) · [Documentation index](../README.md) · [Chromium Extension Runtime →](04-chromium-extension.md)
+[← Tauri Desktop Runtime](02-tauri-desktop.md) · [Documentation index](../README.md) · [Web Runtime →](05-website-demo-file-mode.md)

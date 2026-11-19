@@ -2,7 +2,7 @@
 
 > **Markdown files are built for AI agents. Markdown Explorer makes them pleasant for humans.**
 > A local-first, privacy-focused documentation viewer, editor, split reader, and knowledge workspace.
-> Turns Markdown, MDX, and mixed-document folders into an interactive, searchable documentation desktop application, VS Code extension, Chromium browser extension, and web app.
+> Turns Markdown, MDX, and mixed-document folders into an interactive, searchable documentation desktop application, VS Code extension, and web app.
 
 ---
 
@@ -12,22 +12,23 @@ Markdown Explorer is an open-source (MIT licensed), local-first tool designed to
 
 All scanning, indexing, parsing, rendering, and diffing happen locally on the user's machine. Zero telemetry, zero analytics, and zero cloud uploads.
 
-- **Current version**: 1.7.1
+- **Current version**: 1.7.2
 - **License**: MIT
 - **Homepage**: https://the-long-ride.github.io/markdown-explorer/
 - **GitHub Repository**: https://github.com/the-long-ride/markdown-explorer
 - **Documentation**: https://the-long-ride.github.io/markdown-explorer/
 - **Issues**: https://github.com/the-long-ride/markdown-explorer/issues
 - **Releases**: https://github.com/the-long-ride/markdown-explorer/releases
+- **GitHub Homepage & Web App**: https://the-long-ride.github.io/markdown-explorer/ (redirects to `app/?mode=web`; landing page at https://the-long-ride.github.io/markdown-explorer/landing.html)
+- **Web App (Local Folder, File & Virtual Workspaces)**: https://the-long-ride.github.io/markdown-explorer/app/?mode=web
 - **Web App / Demo (Example Workspace)**: https://the-long-ride.github.io/markdown-explorer/app/?mode=test
-- **Web App / Demo (Local Folder/File)**: https://the-long-ride.github.io/markdown-explorer/app/?mode=file
 - **Supported UI Languages**: English (`en`), Tiếng Việt (`vi`), Français (`fr`), Español (`es`), 中文 (`zh`), Norsk (`no`), 日本語 (`ja`), 한국어 (`ko`), Русский (`ru`).
 
 ---
 
 ## 2. Platforms & Variants
 
-Markdown Explorer is built as a single unified codebase running across five distinct runtime environments:
+Markdown Explorer is built as a single unified codebase running across four distinct runtime environments:
 
 | Variant / Platform | Packaging / Format | Key Capabilities & Architecture |
 |---|---|---|
@@ -35,8 +36,7 @@ Markdown Explorer is built as a single unified codebase running across five dist
 | **Windows Desktop** | Electron & Tauri: NSIS installer, portable `.exe`, `.zip` | Native desktop window with custom window frame, OS shell integration, File Explorer context menus, multi-workspace desktop tabs, and native file dialogs. |
 | **macOS Desktop** | Electron & Tauri: `.dmg` (Universal / Apple Silicon arm64 & Intel x64) | Native macOS AppKit Edit menu integration (Undo/Redo/Cut/Copy/Paste/Select All), crisp 16x16 menu bar template tray icon, smooth trackpad pan/zoom. |
 | **Linux Desktop** | Electron & Tauri: `.AppImage`, `.deb` | Native Linux window with system tray and hardware acceleration. |
-| **Chromium Extension** | Manifest V3 unpacked extension (Chrome, Edge, Brave, Opera) | Browser action popup & tab viewer using Chrome Storage API and File System Access API; fully sandboxed. |
-| **Web App (Live Demo)** | Static web app deployed on GitHub Pages | Browser-only client using HTML5 File System Access API or in-memory virtual example workspace; no server back-end required. |
+| **Web App** | Static web app deployed on GitHub Pages | Browser-only client using HTML5 File System Access API, local virtual workspaces, or bundled example workspace (`?mode=test`); no server back-end required. |
 
 ---
 
@@ -49,8 +49,7 @@ The project is structured as a high-performance **pnpm monorepo** with shared UI
 - `vscode/`: VS Code extension wrapper. Hosts the UI within an isolated VS Code Webview, bridges VS Code commands and file systems, provides `@the-long-ride/markdown-them` document conversions, and executes read-only Git commands.
 - `electron/`: Electron 43 desktop application. Manages BrowserWindow lifecycle, native menus, tray icons, Windows registry / File Explorer context menus, local file watchers (`fs.watch`), and local `git` runner.
 - `tauri/`: Tauri 2.x native desktop shell written in Rust 2021 (`edition = "2021"`, Rust 1.96+). Uses native Webview2 (Windows) / WebKit (macOS/Linux) with in-process Rust document conversion adapters (`office_oxide`, `calamine`, `pdf-extract`, `html2markdown`, `rtf-parser`, `quick-xml`, `zip`).
-- `chromium-xtension/`: Chrome Manifest V3 extension packaging the UI with Chrome Extension Storage and Web Workers.
-- `website-app/`: Vite application serving the GitHub Pages demo with virtual files and File System Access API bridges.
+- `website-app/`: Vite application serving the GitHub Pages Web App (`?mode=web` default, `?mode=test` sample workspace) with virtual workspaces and File System Access API bridges.
 
 ### Core Libraries & Subsystems
 - **Custom Markdown AST Parser & Renderer**: High-performance streaming parser (`ui/src/markdown/parser.ts`) generating an Abstract Syntax Tree with deterministic heading anchors, source line mappings, inline formatting, frontmatter parsing (via `yaml`), Wiki-links, transclusion, and raw HTML sanitization.
@@ -73,31 +72,31 @@ All platforms communicate with the shared UI using a strictly typed, bi-directio
 
 Markdown Explorer maximizes feature parity while respecting platform-native security sandboxes:
 
-| Feature / Capability | Electron | Tauri | VS Code | Chromium | Web App |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Folder & File Workspace Browsing | Yes | Yes | Yes | Yes (Directory Handle) | Yes (Directory Handle / Test Mode) |
-| Live Filesystem Change Watcher | Yes (native) | Yes (notify crate) | Yes (VS Code API) | Polling fallback | Virtual / Polling fallback |
-| Workspace Search (Content & Filename) | Yes | Yes | Yes | Yes | Yes |
-| Cross-Tab Workspace Search | Yes | Yes | Limited | N/A (no desktop tabs) | N/A (no desktop tabs) |
-| Multi-Workspace Desktop Tabs | Yes | Yes | N/A (VS Code owns tabs) | N/A | N/A |
-| Focus View vs Tab View Mode | Yes (`Ctrl+Alt+T`) | Yes (`Ctrl+Alt+T`) | N/A | N/A | N/A |
-| Local Markdown Editing & Saving | Yes | Yes | Yes | Yes (Writable Handle) | Browser-dependent |
-| Revision Conflict Protection | Yes | Yes | Yes | Yes | Yes |
-| Two-Pane Split View | Yes | Yes | Yes | Yes | Yes |
-| Read-Only Git History & Revisions | Yes (local `git`) | Yes (local `git`) | Yes (local `git`) | No (unsupported) | No (unsupported) |
-| Myers Source Diff & Rendered Diff | Yes | Yes | Yes | Yes (local sources) | Yes (local sources) |
-| Whole-Workspace Historical Mode | Yes | Yes | Yes | No | No |
-| Workspace Insights (6 Views) | Yes | Yes | Desktop-only | Yes | Demo mode |
-| Wiki Links & Transclusion Embeds | Yes | Yes | Yes | Yes | Yes |
-| Data Tables & 9 Chart Types | Yes | Yes | Yes | Yes | Yes |
-| Non-Markdown Document Previews | Yes (Node library) | Yes (In-process Rust) | Yes (Extension host) | No | No |
-| Isolated HTML Preview / Sandbox | Yes (`Ctrl+Alt+H`) | Yes (`Ctrl+Alt+H`) | Yes (`Ctrl+Alt+H`) | In-page | In-page |
-| Scope View Modal (10-Step History) | Yes | Yes | Yes | Yes | Yes |
-| Source-Anchored Bookmarks | Yes | Yes | Yes | Yes | Yes |
-| Export Center (HTML, ZIP, PDF) | Yes (Native save) | Yes (Native save) | Yes (VS Code save) | Browser download | Browser download |
-| Typography (System & Imported Fonts) | Yes | Yes | Yes (Global Storage) | Yes (IndexedDB) | Yes (IndexedDB) |
-| Hardware Mouse Buttons (3 & 4) | Yes | Yes | Yes | Yes | Yes |
-| Auto-Update Notifications | Yes (In-app dialog) | Yes (Tauri updater) | Managed by VS Code | Chrome Web Store | Web deployment |
+| Feature / Capability | Electron | Tauri | VS Code | Web App |
+|---|:---:|:---:|:---:|:---:|
+| Folder & File Workspace Browsing | Yes | Yes | Yes | Yes (Directory Handle / Virtual / Test Mode) |
+| Live Filesystem Change Watcher | Yes (native) | Yes (notify crate) | Yes (VS Code API) | Virtual / Polling fallback |
+| Workspace Search (Content & Filename) | Yes | Yes | Yes | Yes |
+| Cross-Tab Workspace Search | Yes | Yes | Limited | N/A (no desktop tabs) |
+| Multi-Workspace Desktop Tabs | Yes | Yes | N/A (VS Code owns tabs) | N/A |
+| Focus View vs Tab View Mode | Yes (`Ctrl+Alt+T`) | Yes (`Ctrl+Alt+T`) | N/A | N/A |
+| Local Markdown Editing & Saving | Yes | Yes | Yes | Yes (Writable Handle / Virtual) |
+| Revision Conflict Protection | Yes | Yes | Yes | Yes |
+| Two-Pane Split View | Yes | Yes | Yes | Yes |
+| Read-Only Git History & Revisions | Yes (local `git`) | Yes (local `git`) | Yes (local `git`) | No (unsupported) |
+| Myers Source Diff & Rendered Diff | Yes | Yes | Yes | Yes (local sources) |
+| Whole-Workspace Historical Mode | Yes | Yes | Yes | No |
+| Workspace Insights (6 Views) | Yes | Yes | Desktop-only | Yes (local & virtual) |
+| Wiki Links & Transclusion Embeds | Yes | Yes | Yes | Yes |
+| Data Tables & 9 Chart Types | Yes | Yes | Yes | Yes |
+| Non-Markdown Document Previews | Yes (Node library) | Yes (In-process Rust) | Yes (Extension host) | No |
+| Isolated HTML Preview / Sandbox | Yes (`Ctrl+Alt+H`) | Yes (`Ctrl+Alt+H`) | Yes (`Ctrl+Alt+H`) | In-page |
+| Scope View Modal (10-Step History) | Yes | Yes | Yes | Yes |
+| Source-Anchored Bookmarks | Yes | Yes | Yes | Yes |
+| Export Center (HTML, ZIP, PDF) | Yes (Native save) | Yes (Native save) | Yes (VS Code save) | Browser download |
+| Typography (System & Imported Fonts) | Yes | Yes | Yes (Global Storage) | Yes (IndexedDB) |
+| Hardware Mouse Buttons (3 & 4) | Yes | Yes | Yes | Yes |
+| Auto-Update Notifications | Yes (In-app dialog) | Yes (Tauri updater) | Managed by VS Code | Web deployment |
 
 ---
 
@@ -199,7 +198,7 @@ Markdown Explorer maximizes feature parity while respecting platform-native secu
 - **Layouts**: Minimal *Document-only* or full *Explorer Viewport Shell*. Zero external CDN dependencies.
 
 ### 5.10 Source-Anchored Bookmarks
-- **Opt-in Setting**: **Settings → Features → Enable Bookmark feature** (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Chromium / Web).
+- **Opt-in Setting**: **Settings → Features → Enable Bookmark feature** (`Ctrl+Shift+B` on Desktop, `Alt+Shift+B` on VS Code / Web).
 - **Rich Target Capture**: Select any text (multi-line, mixed formatting, code, punctuation, symbols like `$`, `@`, `&`) or right-click rendered LaTeX formulas, Mermaid diagrams, images, or links to bookmark the exact object.
 - **Version-2 Source Anchors**: Preserves exact source range, occurrence index, context fingerprint, and object identity. Repeated occurrences (e.g. the 3rd instance of "Error") resolve accurately.
 - **Graceful Drift Handling**: If a document is edited and high-confidence relocation fails, the bookmark displays **Target changed** instead of jumping to the wrong passage.
@@ -209,8 +208,8 @@ Markdown Explorer maximizes feature parity while respecting platform-native secu
 - **Sidebar Cursor Mode (`Alt+Z`)**: Keyboard-first tree navigation. Use `Up`/`Down` arrows to navigate, `Enter` to open or expand/collapse folders, and `Esc` to exit.
 - **Locate Current File (`Alt+Q`)**: Instantly reveals and highlights the currently active file inside the sidebar tree.
 - **Hoisted Pinning**: Pin frequently used files and folders to the top of the sidebar. Items in deep subfolders are hoisted to the root of the file tree for fast access (up to 15 items).
-- **Files and folder management**: Create entries from toolbar or folder menus; rename with F2 or the item menu; delete focused or selected entries with confirmation. Native hosts default to Trash with a permanent-delete option; Chromium/local-folder web mode deletes permanently. Renames preserve tabs, unsaved buffers, bookmarks, pins, scope, and split panes. Entry selection mode and truly empty folders are supported.
-- **Simulated demo workspace**: The default web demo creates, renames, and deletes fake entries in `localStorage` only. Nested and empty folders and renamed sample content survive reload. Explicit `?mode=file` continues to manage user-selected real folders with browser write permission.
+- **Files and folder management**: Create entries from toolbar or folder menus; rename with F2 or the item menu; delete focused or selected entries with confirmation. Native hosts default to Trash with a permanent-delete option; local-folder web mode deletes permanently. Renames preserve tabs, unsaved buffers, bookmarks, pins, scope, and split panes. Entry selection mode and truly empty folders are supported.
+- **Web workspaces & test mode**: The default Web app (`?mode=web`) manages user-selected local folders/files and browser virtual workspaces in `localStorage`/IndexedDB. `?mode=test` opens a simulated example workspace whose virtual tree and edits persist in `localStorage` only.
 - **Scope Focus**: Focus on a specific subfolder; filters both the sidebar and workspace search. Changing scope automatically reruns active search queries.
 - **Content Tabs**: Multi-document tab strip with close options (`Close`, `Close Others`, `Close to Right`, `Close All`).
 - **Reading Progress & Scroll Memory**: Persists exact scroll positions and collapsed heading states across sessions for up to 100 recent files per workspace.
@@ -244,7 +243,7 @@ Markdown Explorer maximizes feature parity while respecting platform-native secu
 
 ## 6. Keyboard Shortcuts Cheat Sheet
 
-| Action | Desktop App (Win/Linux/Mac) | VS Code Extension | Chromium Extension & Web |
+| Action | Desktop App (Win/Linux/Mac) | VS Code Extension | Web App |
 |---|---|---|---|
 | **Search current workspace** | `Ctrl+F` (`Cmd+F`) | `Ctrl+K` (`Cmd+K`) | `Ctrl+K` |
 | **Search all open workspace tabs** | `Ctrl+Shift+F` | `Ctrl+Shift+K` | `Ctrl+Shift+K` |
@@ -315,10 +314,10 @@ All settings can be configured via **Settings (`Ctrl+,` or `Ctrl+I`)**, persiste
 | `defaultHtmlPreview` | `boolean` | `true` | Opens `.html` / `.htm` files as isolated interactive previews by default. |
 | `defaultHtmlCodeBlockPreview` | `boolean` | `true` | Renders HTML code fences as live sandboxed previews. |
 | `defaultCsvPreview` | `boolean` | `true` | Renders CSV and TSV fences as interactive data tables. |
-| `fileTabs` | `boolean` | `false` | Enables multi-document content tabs at the top of the reading pane. |
+| `fileTabs` | `boolean` | `true` | Enables multi-document content tabs at the top of the reading pane. |
 | `bookmarksEnabled` | `boolean` | `false` | Enables source-anchored bookmarks and the Bookmarks sidebar tab. |
 | `insightsEnabled` | `boolean` | `false` | Enables Workspace Insights (`Ctrl+Alt+I`) in More actions. |
-| `markdownEditingEnabled` | `boolean` | `false` | Enables local Markdown editing and formatting toolbar. |
+| `markdownEditingEnabled` | `boolean` | `true` | Enables local Markdown editing and formatting toolbar. |
 | `historySidebarEnabled` | `boolean` | `true` | Shows the local Git History tab in the sidebar (when Git repository is detected). |
 | `documentConversion` | `boolean` | `false` | Enables local conversion for DOCX, PDF, XLSX, PPTX, ODT, ODP, ODS, RTF, and TXT files. |
 | `desktopViewMode` | `'focus' \| 'tabs'` | `'focus'` | Switches Desktop between distraction-free Focus View and Multi-Workspace Tab View. |
@@ -369,13 +368,7 @@ Or search for `Markdown Explorer in VS Code` on the [VS Code Marketplace](https:
 ### Linux Desktop (AppImage & DEB)
 - Download the `.AppImage` (make executable with `chmod +x` and run) or `.deb` package from [GitHub Releases](https://github.com/the-long-ride/markdown-explorer/releases/latest).
 
-### Chromium Browser Extension (Chrome, Edge, Brave)
-1. Download the `chromium-extension-*.zip` release artifact and extract it into a permanent folder.
-2. Navigate to `chrome://extensions` (or `edge://extensions` / `brave://extensions`).
-3. Enable **Developer mode** in the top-right corner.
-4. Click **Load unpacked** and select the extracted folder.
-
-### Web Demo
-Access the live web demo directly in any modern browser:
-- [Live Demo with Built-in Example Workspace](https://the-long-ride.github.io/markdown-explorer/app/?mode=test)
-- [Live Demo with Local Folder/File Access](https://the-long-ride.github.io/markdown-explorer/app/?mode=file)
+### Web App
+Access Markdown Explorer directly in any modern browser:
+- [Markdown Explorer on Web (Local Folders, Files & Virtual Workspaces)](https://the-long-ride.github.io/markdown-explorer/app/?mode=web)
+- [Sample Workspace (Test Mode)](https://the-long-ride.github.io/markdown-explorer/app/?mode=test)

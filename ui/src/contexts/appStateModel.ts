@@ -37,6 +37,12 @@ import { migrateDesktopFontBindings, type DesktopFontFamily } from '../desktop/f
 
 export type SidebarTabId = 'files' | 'search' | 'bookmarks' | 'history';
 
+export interface Keybindings {
+  editCurrentDocument?: string;
+  plainEditCurrentDocument?: string;
+  [key: string]: string | undefined;
+}
+
 export interface NavigateOptions {
   htmlPreviewOverride?: boolean;
 }
@@ -223,18 +229,19 @@ export const initialState: AppState = {
     allowUpstreamHtmlPreview: false,
     defaultHtmlCodeBlockPreview: true,
     defaultCsvPreview: true,
-    fileTabs: false,
-    bookmarksEnabled: false,
+    fileTabs: true,
+    bookmarksEnabled: true,
     insightsEnabled: false,
     documentConversion: false,
-    historySidebarEnabled: true,
-    markdownEditingEnabled: false,
+    historySidebarEnabled: false,
+    markdownEditingEnabled: true,
     scopeFocus: {},
     searchScopeFocus: {},
     sidebarPinnedItems: {},
     sidebarSortModes: {},
     maxPinnedItems: 10,
     desktopViewMode: 'focus',
+    tableColumnAlignment: 'intelligent',
     fontBindings: migrateDesktopFontBindings(undefined),
     keybindings: DEFAULT_KEYBINDINGS,
     disabledKeybindings: {},
@@ -307,18 +314,19 @@ export function createInitialState(
       allowUpstreamHtmlPreview: saved.allowUpstreamHtmlPreview === true,
       defaultHtmlCodeBlockPreview: saved.defaultHtmlCodeBlockPreview ?? saved.defaultHtmlPreview !== false,
       defaultCsvPreview: saved.defaultCsvPreview !== false,
-      fileTabs: saved.fileTabs === true,
-      bookmarksEnabled: saved.bookmarksEnabled === true,
+      fileTabs: saved.fileTabs !== false,
+      bookmarksEnabled: saved.bookmarksEnabled !== false,
       insightsEnabled: saved.insightsEnabled === true,
       documentConversion: saved.documentConversion === true,
-      historySidebarEnabled: saved.historySidebarEnabled !== false,
-      markdownEditingEnabled: saved.markdownEditingEnabled === true,
+      historySidebarEnabled: saved.historySidebarEnabled === true,
+      markdownEditingEnabled: saved.markdownEditingEnabled !== false,
       scopeFocus: saved.scopeFocus ?? {},
       searchScopeFocus: saved.searchScopeFocus ?? {},
       sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
       sidebarSortModes: saved.sidebarSortModes ?? {},
       maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
       desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+      tableColumnAlignment: saved?.tableColumnAlignment === 'left' || saved?.tableColumnAlignment === 'center' || saved?.tableColumnAlignment === 'right' || saved?.tableColumnAlignment === 'intelligent' ? saved.tableColumnAlignment : 'intelligent',
       fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
       keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
       disabledKeybindings: saved.disabledKeybindings ?? {},

@@ -64,9 +64,9 @@ export const EditIcon = ({ size = 12, ...rest }: IconProps) => (
 
 export const HistoryIcon = ({ size = 14, ...rest }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
-    <path d="M3 12a9 9 0 1 0 3-6.7" />
-    <path d="M3 3v6h6" />
-    <path d="M12 7v5l3 2" />
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+    <path d="M12 7v5l4 2" />
   </svg>
 );
 
@@ -459,9 +459,12 @@ export const StarIcon = ({ size = 14, ...rest }: IconProps) => (
 );
 
 export const SplitViewIcon = ({ size = 14, ...rest }: IconProps) => (
-  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width={size} height={size} aria-hidden="true" {...rest}>
-    <rect x="6" y="6" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="4" />
-    <line x1="24" y1="6" x2="24" y2="42" stroke="currentColor" strokeWidth="4" />
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width={size} height={size} aria-hidden="true" {...rest}><rect x="6" y="6" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="4" /><line x1="24" y1="6" x2="24" y2="42" stroke="currentColor" strokeWidth="4" /></svg>
+);
+
+export const ReloadWindowIcon = ({ size = 16, ...rest }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
+    <rect x="2.5" y="3.5" width="19" height="17" rx="2.5" /><line x1="2.5" y1="8" x2="21.5" y2="8" /><circle cx="5.5" cy="5.75" r="0.6" fill="currentColor" stroke="none" /><circle cx="8" cy="5.75" r="0.6" fill="currentColor" stroke="none" /><path d="M15.4 12.2a3.6 3.6 0 1 0 .75 3.35" /><polyline points="15.8 10 15.8 12.5 13.3 12.5" />
   </svg>
 );
 

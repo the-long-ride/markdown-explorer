@@ -89,8 +89,8 @@ export function LinksView({
     return result.sort((a, b) => a.sourcePath.localeCompare(b.sourcePath) || a.key.localeCompare(b.key));
   }, [documents, externalResults, snapshot.brokenLinks]);
 
-  const brokenCount = rows.filter(row => row.broken).length;
-  const checkedCount = externalUrls.filter(url => externalResults.has(url)).length;
+  const brokenCount = useMemo(() => rows.filter(row => row.broken).length, [rows]);
+  const checkedCount = useMemo(() => externalUrls.filter(url => externalResults.has(url)).length, [externalUrls, externalResults]);
   const runCheck = async (recheck = false) => {
     if (!externalCheckingEnabled || !onCheckExternalLinks || !externalUrls.length || isChecking) return;
     setChecking(true);
@@ -110,7 +110,7 @@ export function LinksView({
               type="button"
               className="insights-lint__target"
               onClick={() => onSelectPath?.(row.sourcePath, { sourceStart: row.sourceStart, sourceEnd: row.sourceEnd })}
-              title={`${row.sourcePath} -> ${row.target}`}
+              data-hover-tooltip={`${row.sourcePath} -> ${row.target}`}
               aria-label={`${row.target} - ${row.sourcePath}`}
             >
               <strong>{row.target}</strong>

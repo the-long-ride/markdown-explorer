@@ -14,7 +14,7 @@ function FileDropHarness({
 }) {
   const { isDragging } = useFileDropOpen({
     isDesktop,
-    isChrome: false,
+    isWeb: false,
     modalOpen,
     openDroppedPath,
   });

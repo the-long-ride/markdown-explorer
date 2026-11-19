@@ -1,10 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Markdown Explorer",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "identifier": "com.the-long-ride.markdown-explorer",
   "build": {
-    "frontendDist": "../ui/dist"
+    "frontendDist": "../ui/dist",
+    "removeUnusedCommands": true
   },
   "app": {
     "withGlobalTauri": true,

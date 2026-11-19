@@ -28,7 +28,7 @@ import { handlePanelDocumentWrite, panelDocumentWriteCapability, type PanelSaveD
 import { handlePanelGitHistoryMessage } from './panelGitHistory';
 import { handlePanelWorkspaceEntryMessage } from './panelWorkspaceEntries';
 import { createPanelFontBridge, getGlobalStorageUri } from '../fonts/panelFontBridge';
-import { createRenderContentMessage, createWelcomeRenderContentMessage } from './panelMessages';
+import { createRenderContentMessage, createWelcomeRenderContentMessage, normalizeVscodeThemeStyle } from './panelMessages';
 
 export { normalizePanelPath, stripNavigationFragment, decodeNavigationHref, isRootRelativeWorkspaceHref, isSameOrInsidePath, resolvePanelNavigationPath } from './panelNavigation';
 export { buildWebviewShell } from './panelShell';
@@ -163,9 +163,8 @@ export class MarkdownDocsPanel {
               await this._htmlPreviewServer.open(msg.documentHtml);
             }
             break;
-          case 'refresh':
-            await this.refresh();
-            break;
+          case 'refresh': await this.refresh(); break;
+          case 'reloadWebview': await this.reloadWebview(); break;
           case 'setDocumentConversion':
             await this._setDocumentConversion(Boolean(msg.enabled));
             break;
@@ -194,6 +193,11 @@ export class MarkdownDocsPanel {
   async refresh(): Promise<void> {
     await this._sendLoading('Refreshing workspace...');
     await this._render();
+  }
+
+  async reloadWebview(): Promise<void> {
+    this._awaitingStateHydration = true; this._panel.webview.html = '';
+    this._panel.webview.html = buildWebviewShell(this._extensionPath, this._panel, getVscode());
   }
 
   async requestSaveCurrentDocument(): Promise<void> {
@@ -229,7 +233,7 @@ export class MarkdownDocsPanel {
   private async _onWebviewReady(): Promise<void> {
     const config = getVscode().workspace.getConfiguration('markdownExplorer');
     const theme = config.get<string>('theme') ?? 'auto';
-    const themeStyle = config.get<string>('themeStyle') ?? 'raw-grid';
+    const themeStyle = normalizeVscodeThemeStyle(config.get<string>('themeStyle'));
     const defaultExpanded = config.get<boolean>('defaultExpanded') ?? true;
     const scanGeneration = ++this._scanGeneration;
     const workspaceName = getVscode().workspace.workspaceFolders?.[0]?.name ?? 'Workspace';

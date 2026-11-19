@@ -1,0 +1,324 @@
+/* Cyberpunk theme refinements for Search All Workspaces modal and workspace checkboxes */
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-card {
+  padding: 2px !important;
+  box-sizing: border-box;
+  --cp-bg: var(--bg-s);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  --cp-beam-w: 2px;
+  -webkit-mask:
+    linear-gradient(90deg, #000, #000) top left / calc(100% - var(--cp-cut-top)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) bottom right / var(--cp-beam-w) calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, #000, #000) bottom right / calc(100% - var(--cp-cut-bottom)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) top left / var(--cp-beam-w) calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px), #000 calc(var(--cp-cut-top) * 0.7071), #000 calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071), transparent calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071 + 0.2px), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071 - 0.2px), #000 calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071), #000 calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)) 0 0 / 100% 100% no-repeat;
+  mask:
+    linear-gradient(90deg, #000, #000) top left / calc(100% - var(--cp-cut-top)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) bottom right / var(--cp-beam-w) calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, #000, #000) bottom right / calc(100% - var(--cp-cut-bottom)) var(--cp-beam-w) no-repeat,
+    linear-gradient(180deg, #000, #000) top left / var(--cp-beam-w) calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px), #000 calc(var(--cp-cut-top) * 0.7071), #000 calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071), transparent calc(var(--cp-cut-top) * 0.7071 + var(--cp-beam-w) * 0.7071 + 0.2px), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071 - 0.2px), #000 calc(100% - var(--cp-cut-bottom) * 0.7071 - var(--cp-beam-w) * 0.7071), #000 calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)) 0 0 / 100% 100% no-repeat;
+  background: conic-gradient(
+    from var(--cp-beam-angle, 0deg) at 50% 50%,
+    transparent 0deg,
+    transparent 240deg,
+    color-mix(in srgb, var(--cp-rail-cyan) 35%, transparent) 275deg,
+    var(--cp-rail-cyan) 305deg,
+    #FFFFFF 336deg,
+    var(--cp-rail-rose) 350deg,
+    color-mix(in srgb, var(--cp-rail-rose) 35%, transparent) 356deg,
+    transparent 360deg
+  );
+  animation: cp-beam-orbit 5s linear infinite;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--cp-rail-cyan) 70%, transparent)) drop-shadow(0 0 8px color-mix(in srgb, var(--cp-rail-rose) 70%, transparent));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-layout {
+  background: var(--bg-s);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-header {
+  position: relative;
+  padding-right: 18px;
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 var(--bd-s) !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--deco-cyan) 8%, var(--bg-e)), var(--bg-e));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 20px;
+  width: 32px;
+  height: 2px;
+  background: var(--deco-cyan);
+  pointer-events: none;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-title {
+  letter-spacing: 0.03em;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-subtitle {
+  color: var(--deco-cyan);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-close {
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--bd-x);
+  --cp-cut-top: 6px;
+  --cp-cut-bottom: 5px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--tx2) !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-close:hover {
+  --cp-bg: var(--deco-rose-dim);
+  --cp-bd: var(--deco-rose);
+  color: var(--tx) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-input-row {
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 var(--bd-s) !important;
+  background: var(--bg) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-input-row .search-icon {
+  color: var(--deco-cyan);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-input:focus {
+  --cp-bd: var(--deco-cyan);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--deco-cyan) 30%, transparent));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.search-overlay-case-toggle, .search-overlay-preview-toggle):not(.is-active):not([aria-pressed="true"]):hover {
+  --cp-bg: var(--bg-h);
+  --cp-bd: var(--deco-cyan);
+  color: var(--tx) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-workspaces,
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-preview {
+  background: var(--bg) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-results-panel {
+  background: var(--bg-s) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-section-header {
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 var(--bd-s) !important;
+  background: color-mix(in srgb, var(--bg-e) 45%, var(--bg-s));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-section-title {
+  color: var(--deco-cyan);
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-preview__file-name {
+  font-family: var(--font-mono);
+  color: var(--deco-cyan);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-resize-handle {
+  background: var(--bg) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-resize-handle:hover::after,
+:root[data-theme][data-theme-style="cyberpunk"] body.is-resizing .search-overlay-resize-handle::after {
+  background: var(--deco-cyan);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-workspace {
+  --cp-cut-top: 7px;
+  --cp-cut-bottom: 5px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  gap: 9px;
+  padding: 6px 8px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-workspace:hover {
+  --cp-bg: var(--bg-h);
+  --cp-bd: var(--deco-cyan);
+  color: var(--tx);
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-workspace.is-active {
+  --cp-bg: color-mix(in srgb, var(--accent) 11%, var(--bg-a));
+  --cp-bd: var(--accent);
+  color: var(--tx);
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 2px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-workspace__badge,
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay .search-result-row__icon {
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--bd-s);
+  --cp-cut-top: 5px;
+  --cp-cut-bottom: 4px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-workspace.is-active .search-overlay-workspace__badge,
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay .search-result-row.is-active .search-result-row__icon {
+  --cp-bg: var(--accent-dim);
+  --cp-bd: var(--accent);
+  color: var(--accent);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-workspace.is-active .search-overlay-workspace__count {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.search-overlay-workspace__checkbox, .scope-focus-checkbox) {
+  --cp-bg: var(--bg-code);
+  --cp-bd: color-mix(in srgb, var(--deco-cyan) 55%, var(--bd-x));
+  --cp-cut-top: 4px;
+  --cp-cut-bottom: 4px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.search-overlay-workspace__checkbox, .scope-focus-checkbox):hover {
+  --cp-bg: var(--deco-cyan-dim);
+  --cp-bd: var(--deco-cyan);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.search-overlay-workspace__checkbox, .scope-focus-checkbox):is(:checked, :indeterminate) {
+  --cp-bg: var(--bg-code);
+  --cp-bd: var(--accent);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 45%, transparent));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.search-overlay-workspace__checkbox, .scope-focus-checkbox)::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  background: var(--primary-fill);
+  clip-path: polygon(0 0, calc(100% - 2px) 0, 100% 2px, 100% 100%, 2px 100%, 0 calc(100% - 2px));
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .scope-focus-checkbox:indeterminate::after {
+  height: 2px;
+  clip-path: none;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay .search-result-row {
+  --cp-cut-top: 8px;
+  --cp-cut-bottom: 6px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  margin: 0 0 4px;
+  padding: 9px 10px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay .search-result-row:hover {
+  --cp-bg: var(--bg-h);
+  --cp-bd: var(--deco-cyan);
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay .search-result-row.is-active {
+  --cp-bg: color-mix(in srgb, var(--accent) 11%, var(--bg-a));
+  --cp-bd: var(--accent);
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 2px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.search-result-row__open, .search-overlay-preview__open) {
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--bd-x);
+  --cp-cut-top: 5px;
+  --cp-cut-bottom: 4px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.search-result-row__open, .search-overlay-preview__open):hover {
+  --cp-bg: var(--bg-h);
+  --cp-bd: var(--accent);
+  color: var(--accent);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-preview__document mark.mdn-search-jump-mark,
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-preview__document mark.mdn-search-jump-mark-secondary,
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay .search-result-row__excerpt strong {
+  border-radius: 0;
+  padding: 0 2px;
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: var(--accent);
+  border-bottom: 1px solid var(--accent);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .search-overlay-preview__document mark.mdn-search-jump-mark {
+  background: var(--primary-fill);
+  color: var(--accent-ink);
+  border-bottom: 0;
+  outline: 1px solid var(--deco-cyan);
+  outline-offset: 1px;
+}

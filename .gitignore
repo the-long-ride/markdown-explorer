@@ -57,3 +57,5 @@ tauri/tauri.microsoft-store.ci.conf.json
 
 # Git
 *.patch
+.archify/
+--no-sandbox/

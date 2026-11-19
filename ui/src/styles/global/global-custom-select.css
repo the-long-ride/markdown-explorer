@@ -81,7 +81,7 @@
   border: var(--stroke-w) solid var(--bd);
   border-radius: var(--r-md);
   box-shadow: var(--sh-lg);
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   list-style: none;
   margin: 0;
   padding: 4px;

@@ -49,11 +49,11 @@ export function SearchOverlayWorkspaceList({
             >
               <input
                 type="checkbox"
-                className="search-overlay-workspace__checkbox scope-focus-checkbox"
+                className="search-overlay-workspace__checkbox"
                 checked={checked}
                 onChange={(event) => onToggle(workspace.id, event.target.checked)}
                 aria-label={checkboxLabel}
-                title={checkboxLabel}
+                data-hover-tooltip={checkboxLabel}
               />
               <button
                 type="button"

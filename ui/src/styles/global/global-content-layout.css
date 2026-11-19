@@ -34,7 +34,7 @@
 
 .html-local-first-warning-backdrop {
   position: fixed;
-  z-index: 12000;
+  z-index: var(--z-modal-overlay);
   inset: 0;
   display: grid;
   place-items: center;
@@ -87,8 +87,8 @@
   height: 30px;
   padding: 0;
   place-items: center;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md, 7px);
+  border: var(--stroke-w, 1px) solid transparent;
+  border-radius: var(--r);
   background: transparent;
   color: var(--tx2);
   font-size: 20px;
@@ -101,4 +101,56 @@
   background: var(--bg-h);
   color: var(--tx);
   outline: none;
+}
+
+.content__scroll--plain-edit,
+[data-theme-style] .content__scroll.content__scroll--plain-edit {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 0 10px 10px 10px;
+  scrollbar-gutter: auto;
+  box-sizing: border-box;
+  overflow: clip;
+}
+
+.content__scroll--plain-edit .mdn-body,
+[data-theme-style] .content__scroll--plain-edit .mdn-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.markdown-formatting-toolbar__button--active,
+.markdown-formatting-toolbar__button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+
+.markdown-inline-editor__source[wrap="off"] {
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.markdown-source-editor__host .cm-content {
+  padding-right: 16px;
+}
+
+.markdown-source-editor__host .cm-md-list-mark {
+  color: var(--tx);
+  font-weight: 600;
+}
+
+/* Apply top breathing room on the document surface instead of .content__scroll so sticky top:0 bars sit flush with the scrollport top. */
+:where(.content__scroll:not(.content__scroll--plain-edit):not(.content__scroll--html-preview)) > .mdn-body:not(.mdn-body--html-preview) {
+  padding-top: calc(var(--content-pad-x) * 0.35);
 }

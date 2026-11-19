@@ -8,16 +8,87 @@ This document tests syntax highlighting across all supported programming languag
 
 ```html
 <style>
-  :root { color-scheme: light dark; }
+  :root {
+    color-scheme: light dark;
+    --bg: #151518;
+    --bg-s: #1d1d22;
+    --bg-e: #25252c;
+    --bg-h: #2d2d36;
+    --tx: #f4efe8;
+    --tx2: #a59e95;
+    --txm: #5a544e;
+    --bd: rgba(255, 230, 210, 0.08);
+    --bd-s: rgba(255, 230, 210, 0.16);
+    --accent: #ff9130;
+    --accent-dim: rgba(255, 145, 48, 0.15);
+    --r: 5px;
+    --r-lg: 8px;
+    --sh-md: 0 4px 20px rgba(0, 0, 0, 0.6);
+    --font-sans: "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    --snake-body: #34d399;
+    --snake-food: #f87171;
+    --snake-overlay: rgba(21, 21, 24, 0.84);
+  }
+  :root[data-theme="light"] {
+    --bg: #fdfbf7;
+    --bg-s: #ffffff;
+    --bg-e: #f5f2eb;
+    --bg-h: #eae5da;
+    --tx: #1f1a14;
+    --tx2: #5c5246;
+    --txm: #5a4f44;
+    --bd: rgba(90, 70, 50, 0.14);
+    --bd-s: rgba(90, 70, 50, 0.27);
+    --accent: #ff9130;
+    --accent-dim: rgba(255, 145, 48, 0.15);
+    --sh-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --snake-body: #10b981;
+    --snake-food: #ef4444;
+    --snake-overlay: rgba(253, 251, 247, 0.88);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #fdfbf7;
+      --bg-s: #ffffff;
+      --bg-e: #f5f2eb;
+      --bg-h: #eae5da;
+      --tx: #1f1a14;
+      --tx2: #5c5246;
+      --txm: #5a4f44;
+      --bd: rgba(90, 70, 50, 0.14);
+      --bd-s: rgba(90, 70, 50, 0.27);
+      --accent: #ff9130;
+      --accent-dim: rgba(255, 145, 48, 0.15);
+      --sh-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+      --snake-body: #10b981;
+      --snake-food: #ef4444;
+      --snake-overlay: rgba(253, 251, 247, 0.88);
+    }
+  }
   * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 12px;
+    background: transparent;
+    color: var(--tx);
+    font-family: var(--font-sans);
+  }
   .snake-game {
     width: min(100%, 520px);
     margin: 0 auto;
     padding: 16px;
-    border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
-    border-radius: 14px;
-    background: color-mix(in srgb, Canvas 94%, #6d5ef0 6%);
-    font: 14px/1.4 system-ui, sans-serif;
+    border: 1px solid var(--bd);
+    border-radius: var(--r-lg);
+    background: var(--bg-s);
+    color: var(--tx);
+    box-shadow: var(--sh-md);
+    font: 14px/1.4 var(--font-sans);
+  }
+  .snake-game:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-dim), var(--sh-md);
   }
   .snake-game__header,
   .snake-game__controls {
@@ -27,35 +98,73 @@ This document tests syntax highlighting across all supported programming languag
     gap: 10px;
     flex-wrap: wrap;
   }
-  .snake-game__score { font-weight: 700; }
+  .snake-game__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tx);
+  }
+  .snake-game__score {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tx2);
+    background: var(--bg-e);
+    border: 1px solid var(--bd);
+    border-radius: var(--r);
+    padding: 4px 10px;
+  }
+  .snake-game__score span { color: var(--tx); }
+  .snake-game__sep { color: var(--txm); margin: 0 2px; }
+  #snake-best { color: var(--accent); }
   #snake-game-canvas {
     display: block;
     width: min(100%, 420px);
     aspect-ratio: 1;
     margin: 14px auto;
-    border: 2px solid color-mix(in srgb, currentColor 34%, transparent);
-    border-radius: 10px;
-    background: #111827;
+    border: 1px solid var(--bd-s);
+    border-radius: var(--r);
+    background: var(--bg);
   }
   .snake-game button {
     min-width: 84px;
-    padding: 8px 12px;
-    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
-    border-radius: 8px;
-    background: color-mix(in srgb, Canvas 88%, #6d5ef0 12%);
-    color: CanvasText;
+    padding: 7px 14px;
+    border: 1px solid var(--bd-s);
+    border-radius: var(--r);
+    background: var(--bg-e);
+    color: var(--tx);
+    font: 600 13px/1.2 var(--font-sans);
     cursor: pointer;
-    font-weight: 700;
+    transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
   }
-  .snake-game button:hover,
-  .snake-game button:focus-visible { border-color: #6d5ef0; outline: none; }
-  .snake-game__hint { margin: 10px 0 0; text-align: center; opacity: .72; }
+  .snake-game button:hover {
+    background: var(--bg-h);
+    border-color: var(--bd-s);
+  }
+  .snake-game button:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-dim);
+    outline: none;
+  }
+  #snake-start {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--tx);
+  }
+  #snake-start:hover {
+    background: color-mix(in srgb, var(--accent) 24%, var(--bg-e));
+  }
+  .snake-game__hint {
+    margin: 10px 0 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--tx2);
+  }
 </style>
 
 <div class="snake-game" id="snake-game" tabindex="0" aria-label="Interactive Snake game">
   <div class="snake-game__header">
-    <strong>Markdown Explorer Snake</strong>
-    <span class="snake-game__score">Score: <span id="snake-score">0</span> · Best: <span id="snake-best">0</span></span>
+    <strong class="snake-game__title">Markdown Explorer Snake</strong>
+    <span class="snake-game__score">Score: <span id="snake-score">0</span><span class="snake-game__sep">·</span>Best: <span id="snake-best">0</span></span>
   </div>
   <canvas id="snake-game-canvas" width="420" height="420" aria-label="Snake game board"></canvas>
   <div class="snake-game__controls">
@@ -89,6 +198,10 @@ This document tests syntax highlighting across all supported programming languag
   let paused = false;
   let lastTick = 0;
   let frameId = 0;
+  let gameOverMessage = '';
+
+  const token = (name, fallback) =>
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
   const randomFood = () => {
     let next;
@@ -103,6 +216,7 @@ This document tests syntax highlighting across all supported programming languag
     direction = { x: 1, y: 0 };
     queuedDirection = direction;
     score = 0;
+    gameOverMessage = '';
     scoreEl.textContent = '0';
     paused = false;
     pauseButton.textContent = 'Pause';
@@ -115,28 +229,39 @@ This document tests syntax highlighting across all supported programming languag
     ctx.fillRect(position.x * cell + inset, position.y * cell + inset, cell - inset * 2, cell - inset * 2);
   };
 
+  const drawOverlay = (message) => {
+    const top = canvas.height / 2 - 34;
+    ctx.fillStyle = token('--snake-overlay', 'rgba(21, 21, 24, 0.84)');
+    ctx.fillRect(0, top, canvas.width, 68);
+    ctx.fillStyle = token('--bd-s', 'rgba(255, 230, 210, 0.16)');
+    ctx.fillRect(0, top, canvas.width, 1);
+    ctx.fillRect(0, top + 67, canvas.width, 1);
+    ctx.fillStyle = token('--tx', '#f4efe8');
+    ctx.textAlign = 'center';
+    ctx.font = `600 18px ${token('--font-sans', 'system-ui, sans-serif')}`;
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2 + 6);
+  };
+
   const draw = () => {
-    ctx.fillStyle = '#111827';
+    ctx.fillStyle = token('--bg', '#151518');
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = 'rgba(255,255,255,.045)';
+    ctx.strokeStyle = token('--bd', 'rgba(255, 230, 210, 0.08)');
     for (let i = 1; i < cells; i += 1) {
       ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, canvas.height); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(canvas.width, i * cell); ctx.stroke();
     }
-    drawCell(food, '#fb7185', 2);
-    snake.forEach((part, index) => drawCell(part, index === 0 ? '#a78bfa' : '#34d399', 1.5));
+    drawCell(food, token('--snake-food', '#f87171'), 2);
+    const headColor = token('--accent', '#ff9130');
+    const bodyColor = token('--snake-body', '#34d399');
+    snake.forEach((part, index) => drawCell(part, index === 0 ? headColor : bodyColor, 1.5));
+    if (gameOverMessage) drawOverlay(gameOverMessage);
   };
 
   const stop = (message) => {
     running = false;
     cancelAnimationFrame(frameId);
+    gameOverMessage = message;
     draw();
-    ctx.fillStyle = 'rgba(17,24,39,.72)';
-    ctx.fillRect(0, canvas.height / 2 - 34, canvas.width, 68);
-    ctx.fillStyle = '#f9fafb';
-    ctx.textAlign = 'center';
-    ctx.font = '700 22px system-ui';
-    ctx.fillText(message, canvas.width / 2, canvas.height / 2 + 8);
   };
 
   const step = () => {
@@ -211,6 +336,14 @@ This document tests syntax highlighting across all supported programming languag
     running = false;
     reset();
     begin();
+  });
+
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (data && data.type === 'set-theme' && (data.theme === 'dark' || data.theme === 'light')) {
+      document.documentElement.setAttribute('data-theme', data.theme);
+      draw();
+    }
   });
 
   reset();
@@ -443,18 +576,39 @@ echo "Backup completed: log_backup_$DATE.tar.gz"
 ## CSS / SCSS
 
 ```css
+/* Color tokens and theme showcase */
+:root {
+  --neon-cyan: #00f0ff;
+  --neon-pink: #ff2a85;
+  --dark-surface: #171716;
+  --paper-cream: #e9e5ddff;
+  --slate-900: rgb(15, 23, 42);
+  --cyan-glow: rgba(0, 240, 255, 0.18);
+  --brand-blue: hsl(217, 91%, 60%);
+  --forest-green: oklch(0.72 0.19 149.5);
+}
+
 /* Styling for cards */
 .card-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   padding: 10px;
+  background: rgb(15, 23, 42);
+  color: #e9e5ddff;
+}
+
+.card-item {
+  background: #171716;
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.18);
 }
 
 .card-item:hover {
-  background: var(--bg-h);
-  border-color: var(--accent);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: hsl(217, 91%, 60%);
+  border-color: #00f0ff;
+  box-shadow: 0 4px 12px #ff2a85;
+  color: oklch(0.72 0.19 149.5);
 }
 ```
 

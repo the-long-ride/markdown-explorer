@@ -29,7 +29,7 @@ const VSCODE_HOST_COMMANDS: string[] = [
   'createWorkspaceEntryResult', 'renameWorkspaceEntryResult', 'deleteWorkspaceEntriesResult',
 ];
 
-const CHROMIUM_HOST_COMMANDS: string[] = [
+const WEB_HOST_COMMANDS: string[] = [
   'readyAck', 'renderContent', 'setLoading', 'workspaceFilesChanged',
   'recentWorkspacesChanged', 'workspaceUnavailable', 'workspaceSearchResults',
   'workspaceSearchIndexLoaded', 'currentFileChanged', 'workspaceScanProgress',
@@ -57,7 +57,7 @@ const VSCODE_WEBVIEW_COMMANDS: string[] = [
   'createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries',
 ];
 
-const CHROMIUM_WEBVIEW_COMMANDS: string[] = [
+const WEB_WEBVIEW_COMMANDS: string[] = [
   'ready', 'openFolder', 'openRecentWorkspace', 'activateWorkspace', 'deleteRecentWorkspace',
   'closeWorkspace', 'cancelWorkspaceScan', 'cancelAllWorkspaceScans', 'navigate', 'refresh', 'searchWorkspace',
   'loadWorkspaceSearchIndexes', 'indexWorkspaceSearchItems', 'openExternal',
@@ -134,7 +134,7 @@ describe('host-message parity', () => {
 
   describe('VSCode-only HostMessage exclusions are documented', () => {
     const VSCODE_EXCLUDED_HOST = UI_HOST_COMMANDS.filter(c => !VSCODE_HOST_COMMANDS.includes(c));
-    test('VSCode omits desktop/chromium-only host messages', () => {
+    test('VSCode omits desktop/web-only host messages', () => {
       expect(VSCODE_EXCLUDED_HOST.sort()).toEqual([
         'chartPngSaveResult',
         'crossTabSearchResults',
@@ -150,7 +150,7 @@ describe('host-message parity', () => {
 
   describe('VSCode-only WebviewMessage exclusions are documented', () => {
     const VSCODE_EXCLUDED_WEBVIEW = DESKTOP_WEBVIEW_COMMANDS.filter(c => !VSCODE_WEBVIEW_COMMANDS.includes(c));
-    test('VSCode omits desktop/chromium-only webview messages', () => {
+    test('VSCode omits desktop/web-only webview messages', () => {
       expect(VSCODE_EXCLUDED_WEBVIEW.sort()).toEqual([
         'activateWorkspace',
         'cancelAllWorkspaceScans',
@@ -179,10 +179,10 @@ describe('host-message parity', () => {
     });
   });
 
-  describe('Chromium-only WebviewMessage exclusions are documented', () => {
-    const CHROMIUM_EXCLUDED = DESKTOP_WEBVIEW_COMMANDS.filter(c => !CHROMIUM_WEBVIEW_COMMANDS.includes(c));
-    test('Chromium omits desktop/vscode-only webview messages', () => {
-      expect(CHROMIUM_EXCLUDED.sort()).toEqual([
+  describe('Web-only WebviewMessage exclusions are documented', () => {
+    const WEB_EXCLUDED = DESKTOP_WEBVIEW_COMMANDS.filter(c => !WEB_WEBVIEW_COMMANDS.includes(c));
+    test('Web omits desktop/vscode-only webview messages', () => {
+      expect(WEB_EXCLUDED.sort()).toEqual([
         'confirmOpenPath',
         'copyCode',
         'downloadUpdate',
@@ -325,7 +325,7 @@ describe('host-message parity', () => {
       desktop: ['electron/core/ipc-handlers.js', 'electron/workspace/workspace-entries.js'],
       vscode: ['vscode/src/core/panelWorkspaceEntries.ts'],
       tauri: ['tauri/src/dispatcher/workspace_entries.rs'],
-      chromium: ['chromium-xtension/src/workspace-entries.ts'],
+      web: ['website-app/src/workspace-entries.ts'],
     };
 
     for (const [runtime, files] of Object.entries(RUNTIME_SOURCES)) {
@@ -336,13 +336,12 @@ describe('host-message parity', () => {
     }
 
     test('every runtime lists both commands as handled webview messages', () => {
-      for (const list of [DESKTOP_WEBVIEW_COMMANDS, VSCODE_WEBVIEW_COMMANDS, CHROMIUM_WEBVIEW_COMMANDS]) {
+      for (const list of [DESKTOP_WEBVIEW_COMMANDS, VSCODE_WEBVIEW_COMMANDS, WEB_WEBVIEW_COMMANDS]) {
         for (const command of WORKSPACE_ENTRY_COMMANDS) expect(list).toContain(command);
       }
     });
 
-    test('the Chromium extension and the website both route the commands through the shared browser handler', () => {
-      expect(read('chromium-xtension/src/chrome-host-search.ts')).toContain('handleBrowserWorkspaceEntryCommand');
+    test('the web host routes workspace entry commands through the shared browser handler', () => {
       expect(read('website-app/src/web-file-utility-router.ts')).toContain('handleBrowserWorkspaceEntryCommand');
     });
 
@@ -350,7 +349,7 @@ describe('host-message parity', () => {
       for (const file of ['electron/workspace/workspace-entries.js', 'vscode/src/core/panelWorkspaceEntries.ts', 'tauri/src/dispatcher/workspace_entries.rs']) {
         expect(read(file)).toMatch(/["']trash["']/);
       }
-      expect(read('chromium-xtension/src/workspace-entries.ts')).toContain("mode: 'permanent'");
+      expect(read('website-app/src/workspace-entries.ts')).toContain("mode: 'permanent'");
     });
 
     test('result fixtures match the protocol shapes', () => {
@@ -360,7 +359,7 @@ describe('host-message parity', () => {
   });
 
   describe('openExternal URL validation is consistent', () => {
-    test('desktop and chromium both validate safe browser URL schemas', () => {
+    test('desktop validates safe browser URL schemas', () => {
       const desktopSrc = ipcHandlers.registerIpcHandlers.toString();
       expect(desktopSrc).toContain('https?');
       expect(desktopSrc).toContain('file');

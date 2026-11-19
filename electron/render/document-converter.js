@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
+const MAX_CACHE_ENTRIES = 256;
 const MARKDOWN_EXTENSIONS = new Set([".md", ".mdx"]);
 const TEXT_DOCUMENT_EXTENSIONS = new Set([".txt"]);
 const CONVERTIBLE_DOCUMENT_EXTENSIONS = new Set([
@@ -135,7 +136,7 @@ async function readMarkdownFile(ext, filePath, resolveMarkdownThem, cache) {
     );
     const durationMs = Date.now() - startedAt;
 
-    cache.set(filePath, {
+    setCachedConversionResult(cache, filePath, {
       mtimeMs: stat.mtimeMs,
       size: stat.size,
       markdown,
@@ -155,20 +156,32 @@ async function readMarkdownFile(ext, filePath, resolveMarkdownThem, cache) {
   }
 }
 
+function setCachedConversionResult(cache, filePath, value) {
+  if (cache.has(filePath)) cache.delete(filePath);
+  else if (cache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) cache.delete(oldestKey);
+  }
+  cache.set(filePath, value);
+}
+
 async function getCachedConversionResult(cache, filePath, stat) {
   const cached = cache.get(filePath);
-  return (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size)
-    ? {
-        markdown: cached.markdown,
-        previewInfo: {
-          kind: "converted",
-          sourceExtension: getExtension(filePath),
-          sourceLabel: getFileTypeLabel(filePath),
-          durationMs: cached.durationMs,
-          fromCache: true,
-        },
-      }
-    : null;
+  if (!cached || cached.mtimeMs !== stat.mtimeMs || cached.size !== stat.size) {
+    return null;
+  }
+  cache.delete(filePath);
+  cache.set(filePath, cached);
+  return {
+    markdown: cached.markdown,
+    previewInfo: {
+      kind: "converted",
+      sourceExtension: getExtension(filePath),
+      sourceLabel: getFileTypeLabel(filePath),
+      durationMs: cached.durationMs,
+      fromCache: true,
+    },
+  };
 }
 
 function createDocumentConverter({ getMarkdownThem: injectedGetMarkdownThem } = {}) {
@@ -187,6 +200,7 @@ function createDocumentConverter({ getMarkdownThem: injectedGetMarkdownThem } = 
 }
 
 module.exports = {
+  MAX_CACHE_ENTRIES,
   ALL_SUPPORTED_EXTENSIONS,
   CONVERTIBLE_DOCUMENT_EXTENSIONS,
   EXTRA_DOCUMENT_EXTENSIONS,

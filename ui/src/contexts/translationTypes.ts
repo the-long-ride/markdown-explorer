@@ -1,16 +1,33 @@
 import type { AuditedUiTranslationDomains } from './auditedUiTranslationTypes';
 
+export interface MarkdownEditorShortcutTranslations {
+  bold: string;
+  italic: string;
+  underline: string;
+  inlineCode: string;
+  link: string;
+  codeBlock: string;
+  quote: string;
+  bulletList: string;
+  numberedList: string;
+  taskList: string;
+  decreaseFontSize?: string;
+  increaseFontSize?: string;
+}
+
 export interface Translations extends AuditedUiTranslationDomains {
+  markdownEditor?: MarkdownEditorShortcutTranslations;
   settings: string; subtitle: string; appearance: string;
   colorMode: string; colorModeDesc: string; auto: string; light: string; dark: string;
   themeStyle: string; themeStyleDesc: string; desktopView: string; desktopViewDesc: string;
+  tableAlignment: string; tableAlignmentDesc: string; alignLeft: string; alignMiddle: string; alignRight: string; alignIntelligent: string;
   typography: string; typographyDesc: string;
   appUiFont: string; bodyFont: string; headingFont: string; quoteFont: string; codeFont: string; mermaidFont: string;
   fontDefault: string; fontDefaultDescription: string; fontSystem: string; fontImported: string;
   fontImport: string; fontRemove: string;
   fontApply: string; fontApplyConfirmTitle: string; fontApplyConfirmBody: string; fontApplyChanges: string;
   fontSearchPlaceholder: string; fontNoResults: string; fontVariant: string;
-  fontResetRole: string; fontResetAll: string; fontNormal: string; fontItalic: string;
+  fontResetRole: string; fontResetAll: string; fontNormal: string; fontItalic: string; fontSize: string;
   focus: string; tabs: string; sidebarLabels: string; sidebarLabelsDesc: string;
   fileTabs: string; fileTabsDesc: string; bookmarksEnabled: string; bookmarksEnabledDesc: string;
   insightsEnabled: string; insightsEnabledDesc: string;
@@ -38,7 +55,7 @@ export interface Translations extends AuditedUiTranslationDomains {
   csvPreview: string; csvPreviewDesc: string;
   importJson: string; exportJson: string; importJsonTooltip: string; exportJsonTooltip: string;
   updateBackup: string; updateBackupDesc: string; applicationUpdate: string; checkForUpdate: string;
-  settingsBackup: string; settingsBackupDesc: string; latestVersionStatus: string; newerVersionStatus: string;
+  settingsBackup: string; settingsBackupDesc: string; latestVersionStatus: string; newerVersionStatus: string; webVersionStatus: string;
   updateLater: string; updateSkipVersion: string; updateChecking: string;
   shortcuts: string; shortcutsHint: string; resetShortcuts: string; closeSettings: string;
   openInBrowser: string; showHtmlPreview: string; showMarkdownView: string; openContainingFolder: string;
@@ -49,22 +66,22 @@ export interface Translations extends AuditedUiTranslationDomains {
     defaultLabel: string; defaultDesc: string; glassLabel: string; glassDesc: string;
     bentoLabel: string; bentoDesc: string; vercelLabel: string; vercelDesc: string;
     tokyoNightLabel: string; tokyoNightDesc: string; neonVoltageLabel: string; neonVoltageDesc: string;
-    rawGridLabel: string; rawGridDesc: string; petsLabel: string; petsDesc: string;
+    rawGridLabel: string; rawGridDesc: string; cyberpunkLabel: string; cyberpunkDesc: string; petsLabel: string; petsDesc: string;
     petsMenuLabel: string; choosePetTheme: string; whiteShibaLabel: string; kInkLabel: string;
     catLabel: string; hamsterLabel: string; corgiLabel: string;
     customThemesLabel: string; customThemesDesc: string; customThemesMenuLabel: string;
     chooseCustomTheme: string; themeRemixLabel: string;
   };
   actions: {
-    editCurrentDocument: string; searchCurrent: string; searchAllTabs: string; loadMore: string; findCurrentFile: string;
+    editCurrentDocument: string; plainEditCurrentDocument: string; searchCurrent: string; searchAllTabs: string; loadMore: string; findCurrentFile: string;
     back: string; forward: string; welcome: string; settings: string; toggleTheme: string;
     toggleHtmlPreview: string; refresh: string; collapseAll: string; expandAll: string;
-    workspaceSelection: string; toggleSidebar: string; openBookmarks: string; toggleToc: string; toggleWorkspaceInsights?: string;
+    workspaceSelection: string; toggleSidebar: string; openFiles: string; openBookmarks: string; toggleToc: string; toggleWorkspaceInsights?: string;
     zoomIn: string; zoomOut: string; locateFile: string; toggleDesktopViewMode: string;
-    openCurrentDocumentLocation: string; toggleFocusMode: string; toggleFullscreen: string; toggleFullscreenTooltip: string;
+    openCurrentDocumentLocation: string; toggleFocusMode: string; toggleFullscreen: string; toggleFullscreenTooltip: string; reloadWindow: string;
   };
   topbar: {
-    home: string; welcomePage: string; themeLabel: string; moreActions: string; closeFolder: string;
+    home: string; homeGetHelp: string; welcomePage: string; themeLabel: string; moreActions: string; closeFolder: string;
     goBack: string; goForward: string; refresh: string; searchPlaceholder: string;
     expandAll: string; collapseAll: string; edit: string; editLabel: string; copy: string;
     theme: string; switchToDarkMode: string; switchToLightMode: string; settings: string; settingsUpdate: string; sidebar: string;
@@ -72,7 +89,7 @@ export interface Translations extends AuditedUiTranslationDomains {
   tooltips: {
     switchLanguage: string; minimize: string; maximize: string; restore: string; closeApp: string; close: string;
     removeFromRecents: string; previous: string; next: string; zoomIn: string; zoomOut: string; resetZoom: string;
-    scrollToTop: string; newTab: string; closeModal: string; closeTab: string; openChangelog: string; locateFile: string; cancelScan: string;
+    scrollToTop: string; newTab: string; closeModal: string; closeTab: string; openChangelog: string; locateFile: string; cancelScan: string; reloadWindow: string;
   };
   previewActions: {
     openInBrowser: string; openAsModal: string; showCode: string; showPreview: string; copyCode: string; plainText: string;
@@ -114,7 +131,7 @@ export interface Translations extends AuditedUiTranslationDomains {
   };
   sidebar: {
     files: string; search: string; filterPlaceholder: string; filterAriaLabel: string;
-    scopeFocus: string; clearScopeFocus: string; checkAll: string; uncheckAll: string;
+    scopeFocus: string; applyScopeFocus: string; clearScopeFocus: string; checkAll: string; uncheckAll: string;
     collapseAllFolders: string; expandAllFolders: string; clearPinnedItems: string; clearPinnedItemsConfirmBody: string; sortFiles: string;
     renameFile: string; renameFolder: string; deleteFile: string; deleteFolder: string; permanentlyDelete: string;
     newFile: string; newFolder: string; newFileMenu: string; newFolderMenu: string; newFileInputLabel: string; newFolderInputLabel: string;
@@ -126,6 +143,7 @@ export interface Translations extends AuditedUiTranslationDomains {
     entryErrorUnsupported: string; entryErrorFailed: string;
     sortNameAsc: string; sortNameDesc: string; sortModifiedDesc: string; sortModifiedAsc: string;
     pinThisFile: string; pinThisFolder: string; unpinItem: string; pinned: string; noScopeFiles: string; noFiles: string;
+    copyRelativePath: string; copyFullPath: string; downloadWorkspaceZip: string; downloadFile: string; downloadFolderZip: string;
   };
   toc: {
     onThisPage: string; returnToTop: string; sections: string;

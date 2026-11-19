@@ -113,6 +113,7 @@ export function registerCopyHandlers(win: any) {
       '.mdn-codeblock-toggle-btn',
       '.mdn-codeblock-lang',
       '.mdn-table-toolbar',
+      '.mdn-table-align-btn',
       '.mdn-table-filter-btn',
       '.mdn-sort-icon',
     ].join(',')).forEach((el) => el.remove());

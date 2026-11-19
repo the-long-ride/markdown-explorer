@@ -34,6 +34,8 @@ export function useResize(
     let observer: MutationObserver | null = null;
     let bindFrame = 0;
     let cleanupListeners: (() => void) | null = null;
+    let boundHandle: HTMLElement | null = null;
+    let boundTarget: HTMLElement | null = null;
 
     const restoreDragState = () => {
       document.body.style.cursor = '';
@@ -42,14 +44,37 @@ export function useResize(
     };
 
     const bind = () => {
-      if (disposed || cleanupListeners) return !!cleanupListeners;
+      if (disposed) return false;
 
       const handle = document.getElementById(handleId);
       const target = document.getElementById(targetId);
-      const freezeContent = freezeContentId
-        ? document.getElementById(freezeContentId)
-        : null;
-      if (!handle || !target) return false;
+      if (!handle || !target) {
+        if (cleanupListeners) {
+          cleanupListeners();
+          cleanupListeners = null;
+          boundHandle = null;
+          boundTarget = null;
+        }
+        return false;
+      }
+
+      if (
+        cleanupListeners &&
+        boundHandle === handle &&
+        boundTarget === target &&
+        handle.isConnected &&
+        target.isConnected
+      ) {
+        return true;
+      }
+
+      if (cleanupListeners) {
+        cleanupListeners();
+        cleanupListeners = null;
+      }
+
+      boundHandle = handle;
+      boundTarget = target;
 
       let dragging = false;
       let startX = 0;
@@ -59,6 +84,7 @@ export function useResize(
       let commitFrame = 0;
       let pendingWidth: number | null = null;
       let lastAppliedWidth: number | null = null;
+      let activeFreezeContent: HTMLElement | null = null;
 
       const clearGuide = () => {
         handle.style.transform = '';
@@ -68,10 +94,14 @@ export function useResize(
       const clearSynchronizedState = () => {
         target.style.removeProperty('width');
         target.classList.remove('is-resizing-shell');
+        const freezeContent =
+          activeFreezeContent ??
+          (freezeContentId ? document.getElementById(freezeContentId) : null);
         if (freezeContent) {
           freezeContent.style.removeProperty('width');
           freezeContent.classList.remove('is-resize-width-locked');
         }
+        activeFreezeContent = null;
       };
 
       const clearCommitState = () => {
@@ -169,6 +199,11 @@ export function useResize(
         pendingWidth = null;
         lastAppliedWidth = null;
 
+        const freezeContent = freezeContentId
+          ? document.getElementById(freezeContentId)
+          : null;
+        activeFreezeContent = freezeContent;
+
         dragging = true;
         activePointerId = event.pointerId;
         startX = event.clientX;
@@ -223,27 +258,33 @@ export function useResize(
     };
 
     const scheduleBind = () => {
-      if (bindFrame) return;
+      if (disposed || bindFrame) return;
       bindFrame = window.requestAnimationFrame(() => {
         bindFrame = 0;
-        if (bind() && observer) {
-          observer.disconnect();
-          observer = null;
-        }
+        bind();
       });
     };
 
-    if (!bind()) {
+    if (typeof MutationObserver !== 'undefined') {
       observer = new MutationObserver(scheduleBind);
       observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    if (!bind()) {
       scheduleBind();
     }
 
     return () => {
       disposed = true;
-      if (bindFrame) window.cancelAnimationFrame(bindFrame);
+      if (bindFrame) {
+        window.cancelAnimationFrame(bindFrame);
+        bindFrame = 0;
+      }
       observer?.disconnect();
       cleanupListeners?.();
+      cleanupListeners = null;
+      boundHandle = null;
+      boundTarget = null;
       restoreDragState();
     };
   }, [

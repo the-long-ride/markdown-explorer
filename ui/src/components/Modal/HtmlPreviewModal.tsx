@@ -111,7 +111,7 @@ export function HtmlPreviewModal({
             type="button"
             className="mdn-html-modal__close"
             aria-label={closeLabel}
-            title={closeLabel}
+            data-hover-tooltip={closeLabel}
             onClick={onClose}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

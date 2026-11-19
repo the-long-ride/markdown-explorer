@@ -207,8 +207,8 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(vitest@4.1.11)
       electron:
-        specifier: 43.5.0
-        version: 43.5.0(supports-color@7.2.0)
+        specifier: 43.8.6
+        version: 43.8.6(supports-color@7.2.0)
       electron-builder:
         specifier: 26.15.7
         version: 26.15.7(electron-builder-squirrel-windows@26.15.7)(supports-color@7.2.0)
@@ -225,30 +225,18 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@24.19.0)(@vitest/coverage-istanbul@4.1.11)(@vitest/coverage-v8@4.1.11)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.3(@types/node@24.19.0)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
 
-  chromium-xtension:
-    devDependencies:
-      '@vitejs/plugin-react':
-        specifier: ^6.0.3
-        version: 6.0.3(vite@8.1.3(@types/node@24.19.0)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
-      typescript:
-        specifier: ~5.8.3
-        version: 5.8.3
-      vite:
-        specifier: ^8.1.3
-        version: 8.1.3(@types/node@24.19.0)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)
-
   electron:
     dependencies:
       '@the-long-ride/markdown-them':
-        specifier: ^1.3.2
-        version: 1.3.2(@napi-rs/canvas@0.1.100)(supports-color@7.2.0)
+        specifier: ^1.4.0
+        version: 1.4.0(@napi-rs/canvas@0.1.100)(supports-color@7.2.0)
       v8-compile-cache:
         specifier: ^2.4.0
         version: 2.4.0
     devDependencies:
       electron:
-        specifier: 43.5.0
-        version: 43.5.0(supports-color@7.2.0)
+        specifier: 43.8.6
+        version: 43.8.6(supports-color@7.2.0)
       electron-builder:
         specifier: 26.15.7
         version: 26.15.7(electron-builder-squirrel-windows@26.15.7)(supports-color@7.2.0)
@@ -322,8 +310,8 @@ importers:
   vscode:
     dependencies:
       '@the-long-ride/markdown-them':
-        specifier: ^1.3.2
-        version: 1.3.2(@napi-rs/canvas@0.1.100)(supports-color@7.2.0)
+        specifier: ^1.4.0
+        version: 1.4.0(@napi-rs/canvas@0.1.100)(supports-color@7.2.0)
     devDependencies:
       '@types/node':
         specifier: ^20.19.43
@@ -1110,8 +1098,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@opendocsg/pdf2md@0.2.7':
-    resolution: {integrity: sha512-bOhYUklfOBKk/DdYBDiH2EFghfcXIm30phTGt86Naj6zl4ORPXVpe8WTs72f7+PLwC+G2cEcT+oMcI69hDU79g==}
+  '@opendocsg/pdf2md@0.3.5':
+    resolution: {integrity: sha512-h9nmql4IbeItL+59lR9PWPDxRReKgyk2B7AejyvggVjJP17SoqWS7ZGETcVYyiZy0PXrjcHWAL3LmhV+3X349Q==}
     hasBin: true
 
   '@oxc-project/types@0.139.0':
@@ -1438,12 +1426,13 @@ packages:
   '@textlint/types@15.7.1':
     resolution: {integrity: sha512-Vye/GmFNBTgVzZFtIFJTmLB+s2A7oIADxNG6r9UhfPuY+Czv0z5G3xeyFZZudPlfxURsKUyPIU5XsjOFqVp33A==}
 
-  '@the-long-ride/markdown-them@1.3.2':
-    resolution: {integrity: sha512-TVYEXPljhv+OY0jAfJqz6AAiZbLzSgt5Yzk8+48JW1/y9HNTb4Fz1uPhpH78I7sdygZ+MC542LXlpeLg1jHzHg==}
+  '@the-long-ride/markdown-them@1.4.0':
+    resolution: {integrity: sha512-p0X1VXEh9KBM3vkIStK99hyL5ZsDJw+DJSFw40BIAQhZzhDxpe/UirpkkJmPN4sUlAjDK1hzYsEXwXIulrfM0g==}
     engines: {node: '>=18'}
+    hasBin: true
 
-  '@tokenizer/inflate@0.4.1':
-    resolution: {integrity: sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==}
+  '@tokenizer/inflate@0.6.0':
+    resolution: {integrity: sha512-+0RDxhBkyT9xMnGdJAwmats9yxRLR8ypJrQgrnLqOu4Gv/aHlnxYgdGVy2QTwvBl6IF/w2Hr+ZNirH+iMUbVZA==}
     engines: {node: '>=18'}
 
   '@tokenizer/token@0.3.0':
@@ -2405,8 +2394,8 @@ packages:
     resolution: {integrity: sha512-bO3y10YikuUwUuDUQRM4KfwNkKhnpVO7IPdbsrejwN9/AABJzzTQ4GeHwyzNSrVO+tEH3/Np255a3sVZpZDjvg==}
     engines: {node: '>=8.0.0'}
 
-  electron@43.5.0:
-    resolution: {integrity: sha512-nV2aWuKatmUrxrAWP2pNIynNX7dy83TCAz+6KnsbK7hDVLE+6fa2iouOtir41AboZTa+J5w2UgicWHAqUaaUJw==}
+  electron@43.8.6:
+    resolution: {integrity: sha512-2k3n5cjPHZqYTOn8iaJrm4fmb/QsvciomLD7PG9IECd0N/jr8Hxcu6Z/3mvMRrtXWCOp/i8qm5ZAcSnUzAa5Mw==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -2541,8 +2530,8 @@ packages:
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
-  file-type@22.0.1:
-    resolution: {integrity: sha512-ww5Mhre0EE+jmBvOXTmXAbEMuZE7uX4a3+oRCQFNj8w++g3ev913N6tXQz0XTXbueQ5TWQfm6BdaViEHHn8bhA==}
+  file-type@22.3.0:
+    resolution: {integrity: sha512-PrPedgnnWl5bWz3JHgar0QSzRvzeyFh7dZ9JpYOgcPZu4KALS9zw4MMa6qXRYyjeBsAlpaWB2boLuG991+0HIQ==}
     engines: {node: '>=22'}
 
   filelist@1.0.6:
@@ -3295,13 +3284,19 @@ packages:
     resolution: {integrity: sha512-9miFgM2OFba7hB+pRgvtV84pYTBaoTHohvmIgiRt6dRIzbwEOIaNaP+dIlGs2fNFoB0SeISs0Jz5WFVRid6Xyg==}
     engines: {node: '>=12.20.0'}
 
-  officeparser@7.5.1:
-    resolution: {integrity: sha512-Gv9146byEWL2e6OpdbrHY3tpgI9+irAG9TrqMvtUpB1bX/o9by7Lm+WjBLPB8pO8mIruIrXSIgCra+jtIGRLgg==}
-    engines: {node: '>=18.0.0'}
+  officeparser@8.5.0:
+    resolution: {integrity: sha512-dLJCOVyzn/WHDXAN0CXmh2Ny+PxiCZz5yG2HVUm4TCvq17e+WwrqTkb2qfPgNmQc/ZomsK13Mj0BO2tjBJM1cg==}
+    engines: {node: '>=22.23.4 <23 || >=24.22.1 <25 || >=26.12.1'}
     hasBin: true
     peerDependencies:
-      puppeteer: '*'
+      '@pdf-lib/fontkit': ^1.1.1 || ^2.0.0
+      pdf-lib: ^1.17.1 || ^2.0.0
+      puppeteer: '>=22'
     peerDependenciesMeta:
+      '@pdf-lib/fontkit':
+        optional: true
+      pdf-lib:
+        optional: true
       puppeteer:
         optional: true
 
@@ -3791,8 +3786,8 @@ packages:
   strnum@2.4.1:
     resolution: {integrity: sha512-M9eUSMT2dCB2cTNPG7UYj6KuK7RJR2SN2+yCV/fTW3xzTCS6EaGZ5pSMgDIjB7r8zSfTGk+dvvn9rTjpVS9Mwg==}
 
-  strtok3@10.3.5:
-    resolution: {integrity: sha512-ki4hZQfh5rX0QDLLkOCj+h+CVNkqmp/CMf8v8kZpkNVK6jGQooMytqzLZYUVYIZcFZ6yDB70EfD8POcFXiF5oA==}
+  strtok3@10.7.0:
+    resolution: {integrity: sha512-iAqrCpp7UXD2FZiHWhLXqdJ6CmNeVzRkkHAyyhhKMVtbVm2KtPX3D/bJNonvtcyLTHS4rwqP2pz9fsjK1K4z0Q==}
     engines: {node: '>=18'}
 
   structured-source@4.0.0:
@@ -3961,8 +3956,8 @@ packages:
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
-  uint8array-extras@1.5.0:
-    resolution: {integrity: sha512-rvKSBiC5zqCCiDZ9kAOszZcDvdAHwwIKJG33Ykj43OKcWsnmcBRL09YTU4nOeHZ8Y2a7l1MgTd08SBe9A8Qj6A==}
+  uint8array-extras@1.6.0:
+    resolution: {integrity: sha512-8iAasVS4wUx0gPLjH8Xtz2PeDzTSiy8QiLGu2DT3X5GU+egFEQhpnbtkehbAwjvDcxIERmCYcysiODFmE3Ud0Q==}
     engines: {node: '>=18'}
 
   underscore@1.13.8:
@@ -5087,7 +5082,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@opendocsg/pdf2md@0.2.7(@napi-rs/canvas@0.1.100)':
+  '@opendocsg/pdf2md@0.3.5(@napi-rs/canvas@0.1.100)':
     dependencies:
       enumify: 1.0.4
       minimist: 1.2.8
@@ -5395,23 +5390,26 @@ snapshots:
     dependencies:
       '@textlint/ast-node-types': 15.7.1
 
-  '@the-long-ride/markdown-them@1.3.2(@napi-rs/canvas@0.1.100)(supports-color@7.2.0)':
+  '@the-long-ride/markdown-them@1.4.0(@napi-rs/canvas@0.1.100)(supports-color@7.2.0)':
     dependencies:
-      '@opendocsg/pdf2md': 0.2.7(@napi-rs/canvas@0.1.100)
+      '@opendocsg/pdf2md': 0.3.5(@napi-rs/canvas@0.1.100)
       fast-xml-parser: 5.10.1
       jszip: 3.10.1
       mammoth: 1.12.0
-      officeparser: 7.5.1(supports-color@7.2.0)
+      officeparser: 8.5.0(supports-color@7.2.0)
       turndown: 7.2.4
     transitivePeerDependencies:
       - '@napi-rs/canvas'
+      - '@pdf-lib/fontkit'
       - encoding
+      - pdf-lib
       - puppeteer
       - supports-color
 
-  '@tokenizer/inflate@0.4.1(supports-color@7.2.0)':
+  '@tokenizer/inflate@0.6.0(supports-color@7.2.0)':
     dependencies:
       debug: 4.4.3(supports-color@7.2.0)
+      strtok3: 10.7.0
       token-types: 6.1.2
     transitivePeerDependencies:
       - supports-color
@@ -6566,7 +6564,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@43.5.0(supports-color@7.2.0):
+  electron@43.8.6(supports-color@7.2.0):
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
       '@electron/get': 5.1.0(supports-color@7.2.0)
@@ -6708,12 +6706,12 @@ snapshots:
 
   fflate@0.8.3: {}
 
-  file-type@22.0.1(supports-color@7.2.0):
+  file-type@22.3.0(supports-color@7.2.0):
     dependencies:
-      '@tokenizer/inflate': 0.4.1(supports-color@7.2.0)
-      strtok3: 10.3.5
+      '@tokenizer/inflate': 0.6.0(supports-color@7.2.0)
+      strtok3: 10.7.0
       token-types: 6.1.2
-      uint8array-extras: 1.5.0
+      uint8array-extras: 1.6.0
     transitivePeerDependencies:
       - supports-color
 
@@ -7479,11 +7477,11 @@ snapshots:
 
   obug@2.1.3: {}
 
-  officeparser@7.5.1(supports-color@7.2.0):
+  officeparser@8.5.0(supports-color@7.2.0):
     dependencies:
       '@xmldom/xmldom': 0.9.12
       fflate: 0.8.3
-      file-type: 22.0.1(supports-color@7.2.0)
+      file-type: 22.3.0(supports-color@7.2.0)
       pdfjs-dist: 6.2.108
       tesseract.js: 7.0.0
     transitivePeerDependencies:
@@ -8036,7 +8034,7 @@ snapshots:
     dependencies:
       anynum: 1.0.1
 
-  strtok3@10.3.5:
+  strtok3@10.7.0:
     dependencies:
       '@tokenizer/token': 0.3.0
 
@@ -8224,7 +8222,7 @@ snapshots:
 
   uc.micro@2.1.0: {}
 
-  uint8array-extras@1.5.0: {}
+  uint8array-extras@1.6.0: {}
 
   underscore@1.13.8: {}
 

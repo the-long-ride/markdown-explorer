@@ -20,19 +20,18 @@ import { announceInsightsSettingsChanged, saveInsightsSettingsConfig } from "../
 import { usePlatform } from "../../contexts/PlatformContext";
 import {
   LanguageIcon,
+  ReloadWindowIcon,
   SettingsAppearanceIcon,
   SettingsShortcutsIcon,
   SettingsThemeStyleIcon,
   SettingsTypographyIcon,
   SettingsUpdateBackupIcon,
 } from "../shared/icons";
-import {
-  filterKeyboardShortcutActions,
-} from "./keyboardShortcutSearch";
+import { filterKeyboardShortcutActions } from "./keyboardShortcutSearch";
 import { BannedShortcutDialog, DownloadedUpdateDialog, ResetShortcutsConfirmDialog } from "./SettingsModalDialogs";
-import { ACTIONS_LIST, getLocalizedShortcutActionLabels } from "./settingsActions";
+import { ACTIONS_LIST, getLocalizedShortcutActionLabels, isEditorShortcutAction } from "./settingsActions";
 import { getDefaultKeybindingsForRuntime } from "../../contexts/appStateConstants";
-import { supportsWorkspaceInsights } from "../../insights/runtimeCapabilities";
+import { isWebRuntime, supportsWorkspaceInsights } from "../../insights/runtimeCapabilities";
 
 export { ACTIONS_LIST };
 
@@ -111,16 +110,17 @@ export function SettingsModal({
   };
 
   const isDesktop = typeof (window as any).electronAPI !== "undefined" || state.appRuntime === "tauri";
-  const isChrome = typeof (window as any).__chromeExtBus !== "undefined";
-  const supportsTypography = isDesktop || state.appRuntime === "vscode" || state.appRuntime === "chrome";
-  const isDesktopLike = isDesktop || isChrome;
-  const supportsEditor = isDesktop || state.appRuntime === "vscode";
+  const isWeb = state.appRuntime === "web" || isWebRuntime();
+  const supportsTypography = isDesktop || state.appRuntime === "vscode" || isWeb;
+  const isDesktopLike = isDesktop || isWeb;
+  const supportsEditor = isDesktop || state.appRuntime === "vscode" || isWeb;
   const updateStatus = hostUpdateState.status;
   const isUpdateDownloaded = updateStatus === "downloaded";
   const updateVersionLabel = hostUpdateState.downloadedVersion || updateCheck.latestVersion;
   const visibleActions = ACTIONS_LIST.filter(
     (act) =>
       (act.id !== 'toggleWorkspaceInsights' || supportsWorkspaceInsights(state.appRuntime)) &&
+      (act.id !== 'reloadWindow' || !isWeb) &&
       (act.scope === "both" ||
         (act.scope === "non-vscode" && state.appRuntime !== "vscode") ||
         (act.scope === "desktop" && isDesktopLike) ||
@@ -166,9 +166,13 @@ export function SettingsModal({
       return;
     }
 
+    const targetIsEditor = isEditorShortcutAction(actionId);
     const duplicateAction = Object.entries(state.settings.keybindings ?? {}).find(
       ([existingActionId, existingShortcut]) =>
-        existingActionId !== actionId && existingShortcut.toLowerCase() === shortcutStr.toLowerCase(),
+        existingActionId !== actionId &&
+        isEditorShortcutAction(existingActionId) === targetIsEditor &&
+        !state.settings.disabledKeybindings?.[existingActionId] &&
+        existingShortcut.toLowerCase() === shortcutStr.toLowerCase(),
     );
     if (duplicateAction) {
       setBannedShortcutError(t.ui.shortcutAlreadyAssigned.replace('{shortcut}', shortcutStr));
@@ -280,14 +284,16 @@ export function SettingsModal({
           </div>
         </header>
         <div className="settings-card__top-actions">
+          <TooltipButton
+            className="settings-reload-window-btn"
+            onClick={() => state.appRuntime === "vscode" ? bridge.postMessage({ command: "reloadWebview" }) : window.location.reload()}
+            tooltip={t.tooltips.reloadWindow}
+            shortcut={supportsEditor && !state.settings.disabledKeybindings?.reloadWindow ? state.settings.keybindings?.reloadWindow : undefined}
+            tooltipPos="below"
+            icon={<ReloadWindowIcon size={16} />}
+          />
           <div className="settings-language-dropdown" ref={langDropdownRef}>
-            <TooltipButton
-              className="settings-language-btn"
-              onClick={() => setLangMenuOpen((open) => !open)}
-              tooltip={t.tooltips.switchLanguage}
-              tooltipPos="below"
-              icon={<LanguageIcon size={16} />}
-            />
+            <TooltipButton className="settings-language-btn" onClick={() => setLangMenuOpen((open) => !open)} tooltip={t.tooltips.switchLanguage} tooltipPos="below" icon={<LanguageIcon size={16} />} />
             {langMenuOpen && (
               <div className="settings-language-menu" role="listbox" aria-label={t.ui.languages}>
                 {LANGUAGE_OPTIONS.map((option) => (
@@ -305,16 +311,7 @@ export function SettingsModal({
               </div>
             )}
           </div>
-          <TooltipButton
-            className="settings-card__close"
-            onClick={onClose}
-            tooltip={t.closeSettings}
-            shortcut="Esc"
-            tooltipPos="below"
-            tooltipAlign="right"
-          >
-            &times;
-          </TooltipButton>
+          <TooltipButton className="settings-card__close" onClick={onClose} tooltip={t.closeSettings} shortcut="Esc" tooltipPos="below" tooltipAlign="right">&times;</TooltipButton>
         </div>
 
         <div className="settings-navigation-layout">
@@ -345,7 +342,7 @@ export function SettingsModal({
             />
           </aside>
 
-          <main className={`settings-navigation__content${activeSection === 'typography' ? ' settings-navigation__content--typography' : ''}`}>
+          <main className={`settings-navigation__content${activeSection === 'typography' ? ' settings-navigation__content--typography' : ''}${activeSection === 'features' ? ' settings-navigation__content--features' : ''}`}>
             {(activeSection === 'appearance' || activeSection === 'features' || activeSection === 'typography' || activeSection === 'theme') && (
               <SettingsPreferencesPanel
                 section={activeSection}

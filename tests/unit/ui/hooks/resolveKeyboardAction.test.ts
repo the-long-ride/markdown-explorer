@@ -414,6 +414,12 @@ describe('resolveKeyboardAction', () => {
       const result = resolveKeyboardAction(e, defaultState());
       expect(result).toBeNull();
     });
+
+    it('returns null when target is editable', () => {
+      const e = mkEvent({ key: 'ArrowLeft', altKey: true });
+      const result = resolveKeyboardAction(e, defaultState({ isEditableTarget: true }));
+      expect(result).toBeNull();
+    });
   });
 
   describe('forward shortcut', () => {
@@ -421,6 +427,12 @@ describe('resolveKeyboardAction', () => {
       const e = mkEvent({ key: 'ArrowRight', altKey: true });
       const result = resolveKeyboardAction(e, defaultState());
       expect(result).toEqual({ type: 'forward' });
+    });
+
+    it('returns null when target is editable', () => {
+      const e = mkEvent({ key: 'ArrowRight', altKey: true });
+      const result = resolveKeyboardAction(e, defaultState({ isEditableTarget: true }));
+      expect(result).toBeNull();
     });
   });
 
@@ -838,6 +850,101 @@ describe('resolveKeyboardAction', () => {
       const e = mkEvent({ key: 'z', metaKey: true, altKey: true });
       const result = resolveKeyboardAction(e, defaultState({ isDesktop: true, isDesktopLike: true }));
       expect(result).toEqual({ type: 'zoom-reset' });
+    });
+  });
+
+  describe('reload-window on desktop', () => {
+    it('matches configured reloadWindow shortcut', () => {
+      const e = mkEvent({ key: 'F5', ctrlKey: true });
+      const result = resolveKeyboardAction(e, defaultState({
+        isDesktop: true,
+        keybindings: { ...defaultBindings, reloadWindow: 'ctrl+f5' },
+      }));
+      expect(result).toEqual({ type: 'reload-window' });
+    });
+
+    it('matches ctrl+r or cmd+r on desktop when reloadWindow is configured and enabled', () => {
+      const ctrlR = mkEvent({ key: 'r', ctrlKey: true });
+      const cmdR = mkEvent({ key: 'r', metaKey: true });
+      const state = defaultState({
+        isDesktop: true,
+        keybindings: { ...defaultBindings, reloadWindow: 'ctrl+f5' },
+      });
+      expect(resolveKeyboardAction(ctrlR, state)).toEqual({ type: 'reload-window' });
+      expect(resolveKeyboardAction(cmdR, state)).toEqual({ type: 'reload-window' });
+    });
+
+    it('ignores ctrl+r if reloadWindow is disabled', () => {
+      const ctrlR = mkEvent({ key: 'r', ctrlKey: true });
+      const state = defaultState({
+        isDesktop: true,
+        keybindings: { ...defaultBindings, refresh: 'f5', reloadWindow: 'ctrl+f5' },
+        disabledKeybindings: { reloadWindow: true },
+      });
+      expect(resolveKeyboardAction(ctrlR, state)).toBeNull();
+    });
+
+    it('ignores repeated keydown for reload-window', () => {
+      const e = mkEvent({ key: 'r', ctrlKey: true });
+      const result = resolveKeyboardAction(e, defaultState({
+        isDesktop: true,
+        isRepeat: true,
+        keybindings: { ...defaultBindings, reloadWindow: 'ctrl+f5' },
+      }));
+      expect(result).toBeNull();
+    });
+  });
+  describe('markdown editing shortcuts', () => {
+    it('resolves edit-current-document when markdown editing is enabled and markdown tab is active even in editable target', () => {
+      const e = mkEvent({ key: 'e', ctrlKey: true });
+      const state = defaultState({
+        isEditableTarget: true,
+        markdownEditingEnabled: true,
+        activeTab: true,
+        keybindings: { ...defaultBindings, editCurrentDocument: 'ctrl+e' },
+      });
+      expect(resolveKeyboardAction(e, state)).toEqual({ type: 'edit-current-document' });
+    });
+
+    it('resolves plain-edit-current-document when markdown editing is enabled and markdown tab is active even in editable target', () => {
+      const e = mkEvent({ key: 'e', ctrlKey: true, altKey: true });
+      const state = defaultState({
+        isEditableTarget: true,
+        markdownEditingEnabled: true,
+        activeTab: true,
+        keybindings: { ...defaultBindings, plainEditCurrentDocument: 'ctrl+alt+e' },
+      });
+      expect(resolveKeyboardAction(e, state)).toEqual({ type: 'plain-edit-current-document' });
+    });
+
+    it('resolves open-files on desktop Ctrl+Shift+E outside editable targets', () => {
+      const e = mkEvent({ key: 'E', ctrlKey: true, shiftKey: true });
+      const state = defaultState({
+        hasOnOpenFiles: true,
+        keybindings: { ...defaultBindings, openFiles: 'ctrl+shift+e' },
+      });
+      expect(resolveKeyboardAction(e, state)).toEqual({ type: 'open-files' });
+    });
+
+    it('blocks editing toggle when a modal or search overlay is open', () => {
+      const e = mkEvent({ key: 'e', ctrlKey: true });
+      const state = defaultState({
+        isEditableTarget: true,
+        markdownEditingEnabled: true,
+        activeTab: true,
+        isModalOpen: true,
+        keybindings: { ...defaultBindings, editCurrentDocument: 'ctrl+e' },
+      });
+      expect(resolveKeyboardAction(e, state)).toBeNull();
+
+      const searchState = defaultState({
+        isEditableTarget: true,
+        markdownEditingEnabled: true,
+        activeTab: true,
+        isSearchOpen: true,
+        keybindings: { ...defaultBindings, editCurrentDocument: 'ctrl+e' },
+      });
+      expect(resolveKeyboardAction(e, searchState)).toBeNull();
     });
   });
 });

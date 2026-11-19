@@ -73,7 +73,7 @@
 .file-history__commit { display: flex; align-items: flex-start; gap: 6px; border-radius: var(--r-md); }
 .file-history__commit.is-picked { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .file-history__commit--current { margin-bottom: 4px; border-bottom: var(--stroke-w, 1px) dashed var(--bd-x); }
-.file-history__pick { margin: 6px 0 0 4px; }
+.file-history__pick { align-self: center; margin: 0 0 0 4px; display: inline-flex; align-items: center; }
 .file-history__sha { flex: 0 0 auto; margin: 6px 4px 0 0; font-size: 11px; }
 /* SHAs sit on the list's right edge: open the copy tooltip leftwards so it stays inside the list. */
 .file-history__commits .file-history__sha .tooltip-container .tooltip-text,
@@ -135,7 +135,7 @@
 .file-history__segmented { display: inline-flex; gap: 2px; }
 .file-history__segmented .btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; }
 .file-history__segmented .btn.is-active { border-color: var(--accent); color: var(--accent); }
-.file-history__badge { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-size: 11px; }
+.file-history__badge { padding: 2px 8px; border-radius: var(--r-sm, var(--r, 4px)); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-size: 11px; }
 .file-history__diff-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px 12px; scrollbar-gutter: stable; }
 
 /* Resizers: the list edge and the split boundary. The guide mirrors the diff body's padding and scrollbar gutter. */

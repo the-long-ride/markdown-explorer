@@ -41,21 +41,19 @@
       "presentation": {
         "group": "debug",
         "order": 3
-      },
-      "preLaunchTask": "compile:tauri"
+      }
     },
     {
-      "name": "Web Demo",
-      "type": "chrome",
-      "request": "attach",
-      "port": 9222,
+      "name": "Website",
+      "type": "msedge",
+      "request": "launch",
       "preLaunchTask": "dev: website-app",
-      "url": "http://localhost:5173/markdown-explorer/app/",
+      "url": "http://localhost:5173/markdown-explorer/",
       "webRoot": "${workspaceFolder}/website-app",
       "sourceMaps": true,
       "sourceMapPathOverrides": {
         "/markdown-explorer/app/src/*": "${workspaceFolder}/website-app/src/*",
-        "/markdown-explorer/app/@fs/F:/my-repos/markdown-explorer/*": "${workspaceFolder}/*",
+        "/markdown-explorer/app/@fs/*": "/*",
         "/markdown-explorer/app/node_modules/*": "${workspaceFolder}/node_modules/*"
       },
       "presentation": {

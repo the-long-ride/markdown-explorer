@@ -37,6 +37,57 @@ function anchorOid(selection: FileHistorySelection | null): string | null {
   return selection.kind === 'range' ? selection.newerOid : selection.oid;
 }
 
+export type CompareReplaceSide = 'older' | 'newer';
+
+/**
+ * Updates the two-commit compare selection using Option 3 boundary movement:
+ * clicks outside the checked span move the adjacent outer boundary, while clicks
+ * between the two checked commits alternate moving the older then newer endpoint.
+ */
+export function nextComparePicks(
+  entries: readonly { readonly oid: string }[],
+  picks: readonly string[],
+  oid: string,
+  insideReplaceSide: CompareReplaceSide,
+): { readonly picks: string[]; readonly nextInsideSide: CompareReplaceSide } {
+  if (picks.includes(oid)) {
+    const remaining = picks.filter((value) => value !== oid);
+    return {
+      picks: remaining,
+      nextInsideSide: remaining.length < 2 ? 'older' : insideReplaceSide,
+    };
+  }
+  if (picks.length < 2) {
+    return { picks: [...picks, oid], nextInsideSide: 'older' };
+  }
+
+  const indexOf = (value: string) => entries.findIndex((item) => item.oid === value);
+  const idxA = indexOf(picks[0]);
+  const idxB = indexOf(picks[1]);
+  const targetIdx = indexOf(oid);
+  if (idxA < 0 || idxB < 0 || targetIdx < 0) {
+    const older = idxA > idxB ? picks[0] : picks[1];
+    return { picks: [...picks.filter((value) => value !== older), oid], nextInsideSide: 'older' };
+  }
+
+  const newerPick = idxA <= idxB ? picks[0] : picks[1];
+  const olderPick = idxA <= idxB ? picks[1] : picks[0];
+  const newerIdx = Math.min(idxA, idxB);
+  const olderIdx = Math.max(idxA, idxB);
+
+  // Entries are ordered newest (0) -> oldest (length - 1).
+  if (targetIdx < newerIdx) {
+    return { picks: [oid, olderPick], nextInsideSide: insideReplaceSide };
+  }
+  if (targetIdx > olderIdx) {
+    return { picks: [newerPick, oid], nextInsideSide: insideReplaceSide };
+  }
+  if (insideReplaceSide === 'older') {
+    return { picks: [newerPick, oid], nextInsideSide: 'newer' };
+  }
+  return { picks: [oid, olderPick], nextInsideSide: 'older' };
+}
+
 export function FileHistoryModal({ filePath, client, language, workspacePath, bridge, currentSource, onClose }: FileHistoryModalProps) {
   const t = getFileHistoryTranslations(language);
   const historyT = getHistoryTranslations(language);
@@ -45,6 +96,7 @@ export function FileHistoryModal({ filePath, client, language, workspacePath, br
   const [view, setView] = useState<FileHistoryView>(() => readView(bridge));
   const [compareMode, setCompareMode] = useState(false);
   const [picks, setPicks] = useState<readonly string[]>([]);
+  const insideReplaceSideRef = useRef<CompareReplaceSide>('older');
   const fileName = filePath.split(/[\\/]/).pop() || filePath;
 
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -99,17 +151,11 @@ export function FileHistoryModal({ filePath, client, language, workspacePath, br
   }, [bridge]);
 
   const togglePick = useCallback((oid: string) => {
-    const indexOf = (value: string) => entries.findIndex((item) => item.oid === value);
-    let next: string[];
-    if (picks.includes(oid)) next = picks.filter((value) => value !== oid);
-    else if (picks.length < 2) next = [...picks, oid];
-    else {
-      // Replace the older pick (higher index = older commit).
-      const older = indexOf(picks[0]) > indexOf(picks[1]) ? picks[0] : picks[1];
-      next = [...picks.filter((value) => value !== older), oid];
-    }
+    const { picks: next, nextInsideSide } = nextComparePicks(entries, picks, oid, insideReplaceSideRef.current);
+    insideReplaceSideRef.current = nextInsideSide;
     setPicks(next);
     if (next.length === 2) {
+      const indexOf = (value: string) => entries.findIndex((item) => item.oid === value);
       const [a, b] = next;
       const aIsOlder = indexOf(a) > indexOf(b);
       select({ kind: 'range', olderOid: aIsOlder ? a : b, newerOid: aIsOlder ? b : a });
@@ -133,13 +179,13 @@ export function FileHistoryModal({ filePath, client, language, workspacePath, br
     <div ref={dialogRef} className="mdn-modal mdn-app-modal-region file-history-modal" role="dialog" aria-modal="true" aria-label={`${t.title} — ${fileName}`} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section ref={cardRef} className="file-history__card">
         <header className="file-history__header">
-          <div className="file-history__heading"><h2>{t.title}</h2><p title={filePath}>{filePath}</p></div>
+          <div className="file-history__heading"><h2>{t.title}</h2><p data-hover-tooltip={filePath}>{filePath}</p></div>
           {showViewControls && <FileHistoryViewControls view={view} t={t} fileAdded={history.diff.fileAdded} onViewChange={changeView} />}
           <button
             type="button"
             className={`btn file-history__compare${compareMode ? ' is-active' : ''}`}
             aria-pressed={compareMode}
-            onClick={() => { setCompareMode((value) => !value); setPicks([]); }}
+            onClick={() => { setCompareMode((value) => !value); setPicks([]); insideReplaceSideRef.current = 'older'; }}
             disabled={entries.length < 2}
           ><HistoryCompareIcon size={14} /> {t.compare}</button>
           <button ref={closeRef} type="button" className="file-history__close" aria-label={t.close} onClick={onClose}><HistoryCloseIcon size={16} /></button>

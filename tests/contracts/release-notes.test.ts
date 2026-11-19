@@ -11,7 +11,6 @@ test('groups every asset and emits direct encoded links', () => {
       'tauri-MarkdownExplorer.dmg',
       'electron-MarkdownExplorer.AppImage',
       'markdown-explorer-1.6.0.vsix',
-      'markdown-explorer-chromium.zip',
     ],
   });
 
@@ -19,7 +18,7 @@ test('groups every asset and emits direct encoded links', () => {
   expect(notes).toContain('### macOS');
   expect(notes).toContain('### Linux');
   expect(notes).toContain('### VS Code Extension');
-  expect(notes).toContain('### Chromium Extension');
+  expect(notes).not.toContain('### Chromium Extension');
   expect(notes).toContain('| Name | Download | Size | Description |');
   expect(notes).toContain('| --- | --- | --- | --- |');
   expect(notes).toContain('electron-Markdown.Explorer.Setup.exe');

@@ -380,13 +380,13 @@ describe('ContentTabs render', () => {
     expect(tabElements).toHaveLength(3);
   });
 
-  it('tab has title attribute with relativePath', () => {
+  it('tab has hover tooltip attribute with relativePath', () => {
     mockAppState = createMockAppState({
       contentTabs: [makeTab('/docs/readme.md', 'readme.md', 'ReadMe', 'docs/readme.md')],
       activeContentTabPath: '/docs/readme.md',
     });
     render(createElement(ContentTabs));
     const tab = screen.getByRole('tab');
-    expect(tab).toHaveAttribute('title', 'docs/readme.md');
+    expect(tab).toHaveAttribute('data-hover-tooltip', 'docs/readme.md');
   });
 });

@@ -2,20 +2,29 @@ import { useCallback, useEffect, useState } from 'react';
 import type { UpdateCheckState } from './useUpdateCheck';
 import { getSkippedUpdateVersion, shouldNotifyForUpdate, skipUpdateVersion } from '../updateNotification';
 
-export function useUpdateNotificationState(updateCheck: UpdateCheckState, downloadUpdate: () => void) {
+export interface UseUpdateNotificationOptions {
+  readonly enabled?: boolean;
+}
+
+export function useUpdateNotificationState(
+  updateCheck: UpdateCheckState,
+  downloadUpdate: () => void,
+  options?: UseUpdateNotificationOptions,
+) {
+  const enabled = options?.enabled ?? true;
   const [skippedVersion, setSkippedVersion] = useState(() => getSkippedUpdateVersion());
   const [dismissedVersion, setDismissedVersion] = useState('');
   const [promptOpen, setPromptOpen] = useState(false);
   const attention = shouldNotifyForUpdate(updateCheck.hasUpdate, updateCheck.latestVersion, skippedVersion);
 
   useEffect(() => {
-    if (!attention || !updateCheck.latestVersion) {
+    if (!enabled || !attention || !updateCheck.latestVersion) {
       setPromptOpen(false);
       return;
     }
     if (dismissedVersion === updateCheck.latestVersion) return;
     setPromptOpen(true);
-  }, [attention, dismissedVersion, updateCheck.latestVersion]);
+  }, [enabled, attention, dismissedVersion, updateCheck.latestVersion]);
 
   const later = useCallback(() => {
     setDismissedVersion(updateCheck.latestVersion);

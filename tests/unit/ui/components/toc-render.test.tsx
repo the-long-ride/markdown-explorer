@@ -81,7 +81,7 @@ describe('TableOfContents', () => {
     expect(tocItems[3]).toHaveTextContent('Configuration');
   });
 
-  it('renders marker hooks with a default active dot', () => {
+  it('keeps marker hooks in DOM while hiding the default active dot', () => {
     render(<TableOfContents />);
 
     expect(document.querySelectorAll('.toc-item__marker')).toHaveLength(4);
@@ -89,12 +89,8 @@ describe('TableOfContents', () => {
       resolve(process.cwd(), 'ui/src/styles/global/global-toc-panel.css'),
       'utf8',
     );
-    expect(styles).toMatch(
-      /\.toc-item\.is-active \.toc-item__marker\s*\{[^}]*display: block;[^}]*background: var\(--accent\);/s,
-    );
-    expect(styles).toMatch(
-      /\.toc-item\.is-active \.toc-item__marker\s*\{[^}]*margin-right: 4px;/s,
-    );
+    expect(styles).toMatch(/\.toc-item__marker\s*\{\s*display: none;/s);
+    expect(styles).not.toMatch(/\.toc-item\.is-active \.toc-item__marker/);
   });
 
   it('renders toc items with correct heading level class', () => {

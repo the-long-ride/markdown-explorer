@@ -8,7 +8,44 @@ export interface MermaidThumbnailProps {
   readonly onOpenMedia?: (svgHtml?: string) => void;
 }
 
+const MAX_CACHE_ENTRIES = 60;
 const mermaidThumbnailCache = new Map<string, string>();
+
+function getCachedMermaidSvg(key: string): string | undefined {
+  const value = mermaidThumbnailCache.get(key);
+  if (value !== undefined) {
+    mermaidThumbnailCache.delete(key);
+    mermaidThumbnailCache.set(key, value);
+  }
+  return value;
+}
+
+function setCachedMermaidSvg(key: string, svg: string): void {
+  if (mermaidThumbnailCache.has(key)) {
+    mermaidThumbnailCache.delete(key);
+  } else if (mermaidThumbnailCache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = mermaidThumbnailCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      mermaidThumbnailCache.delete(oldestKey);
+    }
+  }
+  mermaidThumbnailCache.set(key, svg);
+}
+
+const MAX_CONCURRENT_MERMAID_RENDERS = 2;
+let activeMermaidRenders = 0;
+type MermaidTask = () => void;
+const mermaidRenderQueue: MermaidTask[] = [];
+
+function pumpMermaidQueue(): void {
+  while (activeMermaidRenders < MAX_CONCURRENT_MERMAID_RENDERS && mermaidRenderQueue.length > 0) {
+    const task = mermaidRenderQueue.shift();
+    if (task) {
+      activeMermaidRenders++;
+      task();
+    }
+  }
+}
 
 function isDocumentDark(): boolean {
   if (typeof document === 'undefined') return false;
@@ -53,25 +90,45 @@ export function MermaidThumbnail({ code, label, status, onOpenMedia }: MermaidTh
     if (!isVisible || !code || status === 'invalid') return;
     const isDark = isDocumentDark();
     const cacheKey = `${code}:${isDark ? 'dark' : 'light'}`;
-    const cached = mermaidThumbnailCache.get(cacheKey);
+    const cached = getCachedMermaidSvg(cacheKey);
     if (cached) {
       setSvgHtml(cached);
       return;
     }
 
     let cancelled = false;
-    renderMermaidToSvg({ source: code, isDark })
-      .then(({ svgHtml: rendered }) => {
-        if (cancelled) return;
-        mermaidThumbnailCache.set(cacheKey, rendered);
-        setSvgHtml(rendered);
-      })
-      .catch(() => {
-        // Fall back gracefully to placeholder icon on syntax failure
-      });
+
+    const task: MermaidTask = () => {
+      if (cancelled) {
+        activeMermaidRenders--;
+        pumpMermaidQueue();
+        return;
+      }
+
+      renderMermaidToSvg({ source: code, isDark })
+        .then(({ svgHtml: rendered }) => {
+          if (cancelled) return;
+          setCachedMermaidSvg(cacheKey, rendered);
+          setSvgHtml(rendered);
+        })
+        .catch(() => {
+          // Fall back gracefully to placeholder icon on syntax failure
+        })
+        .finally(() => {
+          activeMermaidRenders--;
+          pumpMermaidQueue();
+        });
+    };
+
+    mermaidRenderQueue.push(task);
+    pumpMermaidQueue();
 
     return () => {
       cancelled = true;
+      const idx = mermaidRenderQueue.indexOf(task);
+      if (idx !== -1) {
+        mermaidRenderQueue.splice(idx, 1);
+      }
     };
   }, [code, isVisible, status]);
 
@@ -83,7 +140,7 @@ export function MermaidThumbnail({ code, label, status, onOpenMedia }: MermaidTh
         onClick={onOpenMedia ? e => { e.stopPropagation(); onOpenMedia(svgHtml); } : undefined}
         data-testid="mermaid-thumbnail-rendered"
         aria-label={label}
-        title={label}
+        data-hover-tooltip={label}
         dangerouslySetInnerHTML={{ __html: svgHtml }}
       />
     );

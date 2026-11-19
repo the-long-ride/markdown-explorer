@@ -172,7 +172,11 @@ vi.mock('../../../../ui/src/components/TOC/TableOfContents', () => ({
   TableOfContents: () => createElement('div', { 'data-testid': 'toc' }),
 }));
 vi.mock('../../../../ui/src/components/Search/SearchOverlay', () => ({
-  SearchOverlay: () => createElement('div', { 'data-testid': 'search-overlay' }),
+  SearchOverlay: ({ isOpen, scopeKey }: any) => createElement('div', {
+    'data-testid': 'search-overlay',
+    'data-open': String(Boolean(isOpen)),
+    'data-scope': scopeKey ?? '',
+  }),
 }));
 vi.mock('../../../../ui/src/components/Search/FindInFilePanel', () => ({
   FindInFilePanel: () => createElement('div', { 'data-testid': 'find-panel' }),
@@ -181,7 +185,7 @@ vi.mock('../../../../ui/src/components/Modal/MediaModal', () => ({
   MediaModal: () => createElement('div', { 'data-testid': 'media-modal' }),
 }));
 vi.mock('../../../../ui/src/components/Settings/SettingsModal', () => ({
-  SettingsModal: () => createElement('div', { 'data-testid': 'settings-modal' }),
+  SettingsModal: ({ isOpen }: any) => (isOpen ? createElement('div', { 'data-testid': 'settings-modal' }) : null),
 }));
 vi.mock('../../../../ui/src/components/Modal/TermsModal', () => ({
   TermsModal: ({ isOpen, onAgree }: { isOpen: boolean; onAgree: () => void }) =>
@@ -190,6 +194,10 @@ vi.mock('../../../../ui/src/components/Modal/TermsModal', () => ({
 vi.mock('../../../../ui/src/components/Modal/ThemeOnboardingModal', () => ({
   ThemeOnboardingModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? createElement('div', { 'data-testid': 'theme-onboarding' }) : null,
+}));
+vi.mock('../../../../ui/src/components/Modal/SupportPromptModal', () => ({
+  SupportPromptModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? createElement('div', { 'data-testid': 'support-prompt-modal' }) : null,
 }));
 vi.mock('../../../../ui/src/components/Modal/SwitchWorkspaceModal', () => ({
   SwitchWorkspaceModal: () => createElement('div', { 'data-testid': 'switch-workspace-modal' }),
@@ -212,6 +220,8 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   ChevronUpIcon: () => createElement('svg', { 'data-testid': 'chevron-up-icon' }),
   MinimizeIcon: () => createElement('svg', { 'data-testid': 'minimize-icon' }),
   ExitFocusIcon: () => createElement('svg', { 'data-testid': 'exit-focus-icon' }),
+  UpdateGlowIcon: () => createElement('svg', { 'data-testid': 'update-glow-icon' }),
+  SkipUpdateVersionIcon: () => createElement('svg', { 'data-testid': 'skip-update-version-icon' }),
 }));
 vi.mock('../../../../ui/src/dom/globalHandlers', () => ({
   initGlobalHandlers: vi.fn(),
@@ -231,13 +241,29 @@ vi.mock('../../../../ui/src/hooks/useResize', () => ({
 vi.mock('../../../../ui/src/hooks/useScrollVisibility', () => ({
   useScrollVisibility: () => ({ isVisible: false, scrollToTop: vi.fn() }),
 }));
+let mockUpdateCheck = {
+  status: 'idle',
+  hasUpdate: false,
+  latestVersion: '',
+  downloadUrl: '',
+  changelogUrl: '',
+};
 vi.mock('../../../../ui/src/hooks/useUpdateCheck', () => ({
-  useUpdateCheck: () => ({
-    hasUpdate: false,
-    latestVersion: '',
-    downloadUrl: '',
-    changelogUrl: '',
-  }),
+  useUpdateCheck: () => mockUpdateCheck,
+}));
+let mockSupportPrompt = {
+  isOpen: false,
+  handleDismiss: vi.fn(),
+  handleNeverAgain: vi.fn(),
+  handleDonate: vi.fn(),
+  handleStar: vi.fn(),
+};
+let lastSupportPromptOptions: any = null;
+vi.mock('../../../../ui/src/hooks/useSupportPrompt', () => ({
+  useSupportPrompt: (options: any) => {
+    lastSupportPromptOptions = options;
+    return mockSupportPrompt;
+  },
 }));
 vi.mock('../../../../ui/src/utils/shortcuts', () => ({
   formatShortcutLabel: (s: string) => s,
@@ -254,8 +280,23 @@ describe('App render', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    mockSupportPrompt = {
+      isOpen: false,
+      handleDismiss: vi.fn(),
+      handleNeverAgain: vi.fn(),
+      handleDonate: vi.fn(),
+      handleStar: vi.fn(),
+    };
+    lastSupportPromptOptions = null;
+    mockUpdateCheck = {
+      status: 'idle',
+      hasUpdate: false,
+      latestVersion: '',
+      downloadUrl: '',
+      changelogUrl: '',
+    };
     vi.stubGlobal('electronAPI', undefined);
-    delete (window as any).__chromeExtBus;
+    delete (window as any).__webBus;
     mockState = createMockState();
     mockKeyboardOptions = undefined;
     useFileDropOpenReturn = { isDragging: false };
@@ -283,7 +324,7 @@ describe('App render', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    delete (window as any).__chromeExtBus;
+    delete (window as any).__webBus;
   });
 
   it('shows TermsModal when terms not accepted on desktop-like platform', async () => {
@@ -312,6 +353,44 @@ describe('App render', () => {
     await waitFor(() => {
       expect(screen.getByTestId('workspace-selection')).toBeInTheDocument();
     });
+  });
+
+  it('renders WorkspaceSelection when workspacePath is empty and fileList is empty', async () => {
+    mockState = createMockState({ workspaceName: 'Stale Workspace', workspacePath: undefined, fileList: [], appRuntime: 'web' });
+    render(createElement(App));
+    await waitFor(() => {
+      expect(screen.getByTestId('workspace-selection')).toBeInTheDocument();
+    });
+  });
+
+  it('renders WorkspaceSelection in Web tabs mode when active tab is a new empty workspace tab', async () => {
+    (window as any).__webBus = new EventTarget();
+    const prevTabs = useDesktopTabsReturn.tabs;
+    const prevActiveTabId = useDesktopTabsReturn.activeTabId;
+    useDesktopTabsReturn.tabs = [
+      { id: 'home', kind: 'home' },
+      { id: 'tab-new-1', kind: 'new', workspaceName: undefined, workspacePath: undefined },
+    ];
+    useDesktopTabsReturn.activeTabId = 'tab-new-1';
+    try {
+      mockState = createMockState({
+        workspaceName: 'Virtual Workspace',
+        workspacePath: 'virtual://ws-1',
+        fileList: [],
+        contentHtml: '',
+        appRuntime: 'web',
+        settings: { ...createMockState().settings, desktopViewMode: 'tabs' },
+      });
+      render(createElement(App));
+      await waitFor(() => {
+        expect(screen.getByTestId('workspace-selection')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('content')).not.toBeInTheDocument();
+    } finally {
+      useDesktopTabsReturn.tabs = prevTabs;
+      useDesktopTabsReturn.activeTabId = prevActiveTabId;
+      delete (window as any).__webBus;
+    }
   });
 
   it('renders loading screen when isLoading and no workspace', () => {
@@ -357,13 +436,14 @@ describe('App render', () => {
     expect(screen.getByTitle('Close App')).toBeInTheDocument();
   });
 
-  it('does not show window controls when Chrome ext only (not isElectron) in terms screen', async () => {
-    (window as any).__chromeExtBus = {};
+  it('skips terms screen when Web bus is present', async () => {
+    (window as any).__webBus = {};
     localStorage.removeItem('markdown-explorer-terms-accepted');
     render(createElement(App));
     await waitFor(() => {
-      expect(screen.getByTestId('terms-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('sidebar')).toBeInTheDocument();
     });
+    expect(screen.queryByTestId('terms-modal')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Minimize')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Maximize')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Close')).not.toBeInTheDocument();
@@ -671,8 +751,8 @@ describe('App render', () => {
     }
   });
 
-  it('does not render close folder button in focus mode for chrome runtime', async () => {
-    mockState = createMockState({ focusMode: true, appRuntime: 'chrome' });
+  it('does not render close folder button in focus mode for web runtime', async () => {
+    mockState = createMockState({ focusMode: true, appRuntime: 'web' });
     render(createElement(App));
     await waitFor(() => {
       expect(screen.getByTitle('Toggle focus mode')).toBeInTheDocument();
@@ -685,5 +765,353 @@ describe('App render', () => {
     render(createElement(App));
     expect(screen.queryByTestId('workspace-selection')).not.toBeInTheDocument();
     expect(screen.getByTestId('welcome-page')).toBeInTheDocument();
+  });
+
+  it('switches between home and workspace shell and toggles settings modal on TOUR_STAGE_CHANGE_EVENT', async () => {
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    vi.stubGlobal('electronAPI', {});
+    mockState = createMockState({
+      appRuntime: 'desktop',
+      workspaceName: '',
+      settings: { ...createMockState().settings, desktopViewMode: 'tabs' },
+    });
+    useDesktopTabsReturn.activeTabId = 'home';
+    (useDesktopTabsReturn as any).isTabView = true;
+
+    render(createElement(App));
+
+    expect(screen.getByTestId('welcome-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('content-tabs')).not.toBeInTheDocument();
+
+    fireEvent(
+      window,
+      new CustomEvent('markdown-explorer-tour-stage-change', {
+        detail: { active: true, stage: 'workspace', openSettings: true },
+      })
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('welcome-page')).not.toBeInTheDocument();
+      expect(screen.getByTestId('content-tabs')).toBeInTheDocument();
+      expect(screen.getByTestId('settings-modal')).toBeInTheDocument();
+    });
+
+    fireEvent(
+      window,
+      new CustomEvent('markdown-explorer-tour-stage-change', {
+        detail: { active: false, stage: 'home', openSettings: false },
+      })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('welcome-page')).toBeInTheDocument();
+      expect(screen.queryByTestId('content-tabs')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('settings-modal')).not.toBeInTheDocument();
+    });
+  });
+
+  it('strictly orders startup flow: TermsModal -> New Update modal -> Theme Onboarding -> Tour Guide', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.removeItem('markdown-explorer-terms-accepted');
+    localStorage.removeItem('markdown-explorer-theme-onboarding-complete');
+    localStorage.removeItem('markdown-explorer-user-tour-complete-v1');
+    mockUpdateCheck = {
+      status: 'available',
+      hasUpdate: true,
+      latestVersion: 'v2.0.0',
+      currentVersion: '1.0.0',
+      downloadUrl: 'https://example.com/download',
+      changelogUrl: 'https://example.com/changelog',
+    };
+
+    render(createElement(App));
+
+    // Step 1: TermsModal must open FIRST.
+    // New update modal, Theme onboarding, and Tour guide must NOT be visible.
+    expect(screen.getByTestId('terms-modal')).toBeInTheDocument();
+    expect(document.querySelector('.update-available-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('theme-onboarding')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tour-guide-overlay')).not.toBeInTheDocument();
+
+    // Step 2: Accept terms.
+    fireEvent.click(screen.getByTestId('terms-agree'));
+
+    // Step 3: New Update modal must open right after TermsModal.
+    // Theme onboarding and Tour guide must NOT open yet while New Update modal is visible!
+    await waitFor(() => {
+      expect(document.querySelector('.update-available-modal')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('terms-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('theme-onboarding')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tour-guide-overlay')).not.toBeInTheDocument();
+
+    // Step 4: Dismiss update dialog ("Later").
+    const laterBtn = screen.getByText('Later');
+    fireEvent.click(laterBtn);
+
+    // Step 5: Now Theme Onboarding modal opens!
+    await waitFor(() => {
+      expect(screen.getByTestId('theme-onboarding')).toBeInTheDocument();
+    });
+    expect(document.querySelector('.update-available-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tour-guide-overlay')).not.toBeInTheDocument();
+  });
+
+  it('when theme onboarding is already complete, New Update modal blocks Tour Guide until dismissed', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    localStorage.removeItem('markdown-explorer-user-tour-complete-v1');
+    mockUpdateCheck = {
+      status: 'available',
+      hasUpdate: true,
+      latestVersion: 'v2.0.0',
+      currentVersion: '1.0.0',
+      downloadUrl: 'https://example.com/download',
+      changelogUrl: 'https://example.com/changelog',
+    };
+
+    render(createElement(App));
+
+    // New Update modal opens immediately (terms accepted, theme onboarding complete)
+    await waitFor(() => {
+      expect(document.querySelector('.update-available-modal')).toBeInTheDocument();
+    });
+    // Tour guide MUST NOT be open while update modal is visible
+    expect(screen.queryByTestId('tour-guide-overlay')).not.toBeInTheDocument();
+
+    // User dismisses update modal
+    const laterBtn = screen.getByText('Later');
+    fireEvent.click(laterBtn);
+
+    // Tour guide can now start
+    await waitFor(() => {
+      expect(screen.getByTestId('tour-guide-overlay')).toBeInTheDocument();
+    });
+    expect(document.querySelector('.update-available-modal')).not.toBeInTheDocument();
+  });
+
+  it('does not show New Update modal in web demo even if updateCheck reports update available', async () => {
+    vi.stubGlobal('__webBus', new EventTarget());
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    mockUpdateCheck = {
+      status: 'available',
+      hasUpdate: true,
+      latestVersion: 'v2.0.0',
+      currentVersion: '1.0.0',
+      downloadUrl: 'https://example.com/download',
+      changelogUrl: 'https://example.com/changelog',
+    };
+
+    render(createElement(App));
+
+    expect(document.querySelector('.update-available-modal')).not.toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it('when SupportPromptModal is open, TourGuideOverlay is blocked and does not render', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    mockSupportPrompt.isOpen = true;
+
+    render(createElement(App));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('support-prompt-modal')).toBeInTheDocument();
+    });
+
+    // Dispatch tour start event
+    window.dispatchEvent(new Event('markdown-explorer:start-user-tour'));
+
+    // Tour guide overlay must NOT render while support prompt modal is open
+    expect(screen.queryByTestId('tour-guide-overlay')).not.toBeInTheDocument();
+  });
+
+  it('when TourGuideOverlay is open, isModalBlocked is passed true to useSupportPrompt', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    localStorage.removeItem('markdown-explorer-user-tour-complete-v1');
+
+    render(createElement(App));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tour-guide-overlay')).toBeInTheDocument();
+    });
+
+    // isModalBlocked passed to useSupportPrompt must be true to prevent support prompt during tour
+    await waitFor(() => {
+      expect(lastSupportPromptOptions?.isBlocked).toBe(true);
+    });
+  });
+
+  it('isModalBlocked passed to useSupportPrompt is true when theme onboarding is open', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.removeItem('markdown-explorer-theme-onboarding-complete');
+
+    render(createElement(App));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('theme-onboarding')).toBeInTheDocument();
+    });
+
+    expect(lastSupportPromptOptions?.isBlocked).toBe(true);
+    expect(screen.queryByTestId('support-prompt-modal')).not.toBeInTheDocument();
+  });
+
+  it('renders WelcomePage when isTabView is false and tourStage is home even with workspaceName set', async () => {
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    mockState = createMockState({ workspaceName: 'my-active-workspace', appRuntime: 'vscode' });
+
+    render(createElement(App));
+
+    expect(screen.getByTestId('content')).toBeInTheDocument();
+    expect(screen.queryByTestId('welcome-page')).not.toBeInTheDocument();
+
+    window.dispatchEvent(new CustomEvent('markdown-explorer-tour-stage-change', {
+      detail: { active: true, stage: 'home' }
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('welcome-page')).toBeInTheDocument();
+    });
+  });
+
+  it('renders WelcomePage when isTabView is false and open-homepage is dispatched with workspaceName set', async () => {
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    mockState = createMockState({ workspaceName: 'my-active-workspace', appRuntime: 'vscode' });
+
+    const { rerender } = render(createElement(App));
+
+    expect(screen.getByTestId('content')).toBeInTheDocument();
+    expect(screen.queryByTestId('welcome-page')).not.toBeInTheDocument();
+
+    window.dispatchEvent(new CustomEvent('open-homepage'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('welcome-page')).toBeInTheDocument();
+    });
+
+    mockState = createMockState({ workspaceName: 'my-active-workspace', currentFile: '/docs/new-file.md', appRuntime: 'vscode' });
+    rerender(createElement(App));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('welcome-page')).not.toBeInTheDocument();
+      expect(screen.getByTestId('content')).toBeInTheDocument();
+    });
+  });
+
+  it('renders WorkspaceSelection when isTabView is true with an empty new workspace tab even if tourStage is workspace', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    mockState = createMockState({
+      appRuntime: 'desktop',
+      workspaceName: '',
+      settings: { ...createMockState().settings, desktopViewMode: 'tabs' },
+    });
+    useDesktopTabsReturn.tabs = [
+      { id: 'home', kind: 'home', fileList: [], tree: null, currentFile: null, contentHtml: '', markdownSource: null, sourceDocumentText: null, frontmatter: {}, toc: [], previewInfo: null, relativePath: '', isLoading: false, notFoundHref: null, workspaceUnavailablePath: null, workspaceUnavailableReason: null, contentTabs: [], activeContentTabPath: null },
+      { id: 'tab-new', kind: 'new', fileList: [], tree: null, currentFile: null, contentHtml: '', markdownSource: null, sourceDocumentText: null, frontmatter: {}, toc: [], previewInfo: null, relativePath: '', isLoading: false, notFoundHref: null, workspaceUnavailablePath: null, workspaceUnavailableReason: null, contentTabs: [], activeContentTabPath: null },
+    ];
+    useDesktopTabsReturn.activeTabId = 'tab-new';
+    (useDesktopTabsReturn as any).isTabView = true;
+
+    render(createElement(App));
+
+    fireEvent(
+      window,
+      new CustomEvent('markdown-explorer-tour-stage-change', {
+        detail: { active: true, stage: 'workspace' },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('workspace-selection')).toBeInTheDocument();
+      expect(screen.queryByTestId('content')).not.toBeInTheDocument();
+    });
+  });
+
+  it('opens sidebar Search tab when searching all workspaces with only 1 open workspace tab or in Focus view', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    const makeWorkspaceTab = (id: string, name: string) => ({
+      id, kind: 'workspace', workspaceName: name, workspacePath: `/${name}`,
+      fileList: [], tree: null, currentFile: null, contentHtml: '', markdownSource: null,
+      sourceDocumentText: null, frontmatter: {}, toc: [], previewInfo: null, relativePath: '',
+      isLoading: false, notFoundHref: null, workspaceUnavailablePath: null, workspaceUnavailableReason: null,
+      contentTabs: [], activeContentTabPath: null,
+    });
+
+    mockState = createMockState({
+      appRuntime: 'desktop',
+      workspaceName: 'alpha',
+      settings: { ...createMockState().settings, desktopViewMode: 'tabs' },
+    });
+    useDesktopTabsReturn.tabs = [
+      { id: 'home', kind: 'home', fileList: [], tree: null, currentFile: null, contentHtml: '', markdownSource: null, sourceDocumentText: null, frontmatter: {}, toc: [], previewInfo: null, relativePath: '', isLoading: false, notFoundHref: null, workspaceUnavailablePath: null, workspaceUnavailableReason: null, contentTabs: [], activeContentTabPath: null },
+      makeWorkspaceTab('ws-1', 'alpha'),
+    ];
+    useDesktopTabsReturn.activeTabId = 'ws-1';
+    (useDesktopTabsReturn as any).isTabView = true;
+
+    const { unmount } = render(createElement(App));
+    mockKeyboardOptions.onCrossTabSearchOpen();
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'search' });
+    expect(screen.getByTestId('search-overlay')).toHaveAttribute('data-open', 'false');
+    unmount();
+
+    mockDispatch.mockClear();
+    mockState = createMockState({
+      appRuntime: 'desktop',
+      workspaceName: 'alpha',
+      settings: { ...createMockState().settings, desktopViewMode: 'focus' },
+    });
+    useDesktopTabsReturn.tabs = [makeWorkspaceTab('ws-1', 'alpha'), makeWorkspaceTab('ws-2', 'beta')];
+    (useDesktopTabsReturn as any).isTabView = false;
+
+    render(createElement(App));
+    mockKeyboardOptions.onCrossTabSearchOpen();
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'search' });
+    expect(screen.getByTestId('search-overlay')).toHaveAttribute('data-open', 'false');
+  });
+
+  it('opens Search all workspaces modal in desktop Multi-workspace view when at least 2 workspace tabs are open', async () => {
+    vi.stubGlobal('electronAPI', {});
+    localStorage.setItem('markdown-explorer-terms-accepted', 'true');
+    localStorage.setItem('markdown-explorer-theme-onboarding-complete', 'true');
+    const makeWorkspaceTab = (id: string, name: string) => ({
+      id, kind: 'workspace', workspaceName: name, workspacePath: `/${name}`,
+      fileList: [], tree: null, currentFile: null, contentHtml: '', markdownSource: null,
+      sourceDocumentText: null, frontmatter: {}, toc: [], previewInfo: null, relativePath: '',
+      isLoading: false, notFoundHref: null, workspaceUnavailablePath: null, workspaceUnavailableReason: null,
+      contentTabs: [], activeContentTabPath: null,
+    });
+
+    mockState = createMockState({
+      appRuntime: 'desktop',
+      workspaceName: 'alpha',
+      settings: { ...createMockState().settings, desktopViewMode: 'tabs' },
+    });
+    useDesktopTabsReturn.tabs = [makeWorkspaceTab('ws-1', 'alpha'), makeWorkspaceTab('ws-2', 'beta')];
+    useDesktopTabsReturn.activeTabId = 'ws-1';
+    (useDesktopTabsReturn as any).isTabView = true;
+
+    render(createElement(App));
+    fireEvent(window, new Event('resize'));
+    mockKeyboardOptions.onCrossTabSearchOpen();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('search-overlay')).toHaveAttribute('data-open', 'true');
+      expect(screen.getByTestId('search-overlay')).toHaveAttribute('data-scope', 'all-tabs');
+    });
   });
 });

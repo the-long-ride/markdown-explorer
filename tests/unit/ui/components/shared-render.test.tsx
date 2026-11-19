@@ -64,6 +64,41 @@ describe('InteractiveBackground', () => {
     const canvas = container.querySelector('canvas') as HTMLCanvasElement;
     expect(canvas).toHaveClass('interactive-background-canvas');
   });
+
+  it('mounts, resizes, and cleans up with active 2D canvas context without throwing (no TDZ error)', () => {
+    const mockCtx = {
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      fillStyle: '',
+    };
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue(mockCtx as unknown as CanvasRenderingContext2D);
+
+    let unmountFn: (() => void) | null = null;
+    expect(() => {
+      const { unmount } = render(React.createElement(InteractiveBackground));
+      unmountFn = unmount;
+    }).not.toThrow();
+
+    expect(() => {
+      window.dispatchEvent(new Event('resize'));
+    }).not.toThrow();
+
+    expect(() => {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 200, clientY: 200 }));
+      window.dispatchEvent(new PointerEvent('pointerleave'));
+    }).not.toThrow();
+
+    expect(() => {
+      if (unmountFn) unmountFn();
+    }).not.toThrow();
+
+    getContextSpy.mockRestore();
+  });
 });
 
 describe('TabContextMenu', () => {
@@ -160,9 +195,10 @@ describe('TabContextMenu', () => {
     expect(closeItem?.className).toContain('is-primary');
   });
 
-  it('sets position style from x and y props', () => {
+  it('sets position style from x and y props and portals directly into document.body', () => {
     render(React.createElement(TabContextMenu, { x: 50, y: 200, labels: defaultLabels, onAction: vi.fn(), onClose: vi.fn() }));
     const menu = screen.getByRole('menu');
+    expect(menu.parentElement).toBe(document.body);
     expect(menu.style.left).toBeDefined();
     expect(menu.style.top).toBeDefined();
   });
@@ -232,6 +268,53 @@ describe('TooltipButton', () => {
   it('passes extra button HTML attributes', () => {
     render(React.createElement(TooltipButton, { tooltip: 't', disabled: true }, 'X'));
     expect(screen.getByRole('button')).toBeDisabled();
+  });
+
+  it("flips portal tooltip from below to above when overflowing bottom of viewport", () => {
+    render(React.createElement(TooltipButton, { tooltip: "Edge tooltip", portalTooltip: true, tooltipPos: "below" }, "Hover me"));
+    const button = screen.getByRole("button");
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue({
+      left: 100, right: 150, top: 750, bottom: 780, width: 50, height: 30,
+    } as any);
+
+    fireEvent.mouseEnter(button);
+
+    const portalTooltip = document.querySelector(".tooltip-portal") as HTMLElement;
+    expect(portalTooltip).toBeInTheDocument();
+  });
+
+  it('opens clamped portal tooltip on hover of disabled button and keeps button identity across disabled changes', () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    const getTooltipRect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('tooltip-portal')) {
+        return { left: 0, right: 160, top: 0, bottom: 28, width: 160, height: 28 } as DOMRect;
+      }
+      return { left: 980, right: 1010, top: 40, bottom: 68, width: 30, height: 28 } as DOMRect;
+    });
+    try {
+      const { rerender } = render(
+        React.createElement(TooltipButton, { tooltip: 'Redo', shortcut: 'Ctrl+Shift+Z', portalTooltip: true, tooltipPos: 'below', disabled: true }, 'RedoIcon'),
+      );
+      const button = screen.getByRole('button');
+      expect(button).toBeDisabled();
+      const wrap = button.closest('.tooltip-disabled-wrap') as HTMLElement;
+      expect(wrap).toBeInTheDocument();
+
+      fireEvent.mouseEnter(wrap);
+      const portalTooltip = document.querySelector('.tooltip-portal') as HTMLElement;
+      expect(portalTooltip).toBeInTheDocument();
+      expect(portalTooltip.style.getPropertyValue('--portal-left')).toBe('856px');
+
+      rerender(
+        React.createElement(TooltipButton, { tooltip: 'Redo', shortcut: 'Ctrl+Shift+Z', portalTooltip: true, tooltipPos: 'below', disabled: false }, 'RedoIcon'),
+      );
+      expect(screen.getByRole('button')).toBe(button);
+      expect(button).toBeEnabled();
+    } finally {
+      getTooltipRect.mockRestore();
+      Object.defineProperty(window, 'innerWidth', { value: originalInnerWidth, configurable: true });
+    }
   });
 });
 

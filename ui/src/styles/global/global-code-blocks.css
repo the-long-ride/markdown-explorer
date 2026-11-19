@@ -190,6 +190,14 @@
   background: var(--bg-h);
   color: var(--accent);
 }
+.mdn-codeblock[data-collapsed="false"] .mdn-codeblock-toggle-btn {
+  position: sticky;
+  bottom: var(--mdn-sticky-bottom-offset, 0px);
+  z-index: 12;
+  border-top: var(--stroke-w) solid var(--bd-s);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
 .mdn-codeblock[data-mode="preview"] .mdn-codeblock-toggle-btn {
   display: none;
 }
@@ -304,4 +312,31 @@
 .mdn-html-comment code,
 .mdn-html-comment code * {
   font-family: inherit;
+}
+
+.mdn-color-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  vertical-align: baseline;
+}
+
+.mdn-color-swatch {
+  display: inline-block;
+  width: 0.92em;
+  height: 0.92em;
+  min-width: 0.92em;
+  min-height: 0.92em;
+  border-radius: var(--r-sm, var(--r, 2px));
+  background-color: var(--mdn-swatch-color, transparent);
+  border: 0.5px solid rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
+  user-select: none;
+  pointer-events: none;
+  vertical-align: -0.1em;
+}
+
+[data-theme-style="raw-grid"] .mdn-color-swatch,
+[data-theme-style="cyberpunk"] .mdn-color-swatch {
+  border-radius: 0 !important;
 }

@@ -3,7 +3,7 @@ import { getWorkspaceEntryCapability, isWebDemoTestMode } from '../../../../ui/s
 
 describe('getWorkspaceEntryCapability', () => {
   it.each([
-    ['desktop', 'trash'], ['tauri', 'trash'], ['vscode', 'trash'], ['chrome', 'permanent'],
+    ['desktop', 'trash'], ['tauri', 'trash'], ['vscode', 'trash'], ['web', 'permanent'],
   ] as const)('%s deletes with %s', (runtime, mode) => {
     expect(getWorkspaceEntryCapability(runtime, true)).toEqual({ create: true, deleteMode: mode });
   });
@@ -14,16 +14,18 @@ describe('getWorkspaceEntryCapability', () => {
 
 describe('isWebDemoTestMode', () => {
   afterEach(() => {
-    delete (window as { __webDemoBus?: EventTarget }).__webDemoBus;
+    delete (window as { __webBus?: EventTarget }).__webBus;
     window.history.pushState({}, '', '/');
   });
-  it('is false outside the website demo', () => {
+  it('is false outside the web runtime', () => {
     expect(isWebDemoTestMode()).toBe(false);
   });
-  it('is true in the demo test mode and false in its file mode', () => {
-    (window as { __webDemoBus?: EventTarget }).__webDemoBus = new EventTarget();
-    expect(isWebDemoTestMode()).toBe(true);
-    window.history.pushState({}, '', '/?mode=file');
+  it('is true in web test mode and false in web mode', () => {
+    (window as { __webBus?: EventTarget }).__webBus = new EventTarget();
     expect(isWebDemoTestMode()).toBe(false);
+    window.history.pushState({}, '', '/?mode=web');
+    expect(isWebDemoTestMode()).toBe(false);
+    window.history.pushState({}, '', '/?mode=test');
+    expect(isWebDemoTestMode()).toBe(true);
   });
 });

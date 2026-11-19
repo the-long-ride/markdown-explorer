@@ -33,9 +33,14 @@ type SidebarFileOpsKey =
   | 'entryErrorMissing'
   | 'entryErrorOutside'
   | 'entryErrorUnsupported'
-  | 'entryErrorFailed';
+  | 'entryErrorFailed'
+  | 'copyRelativePath'
+  | 'copyFullPath'
+  | 'downloadWorkspaceZip'
+  | 'downloadFile'
+  | 'downloadFolderZip';
 
-/** English sidebar strings for create / select / delete file operations. */
+/** English sidebar strings for create / select / delete / download file operations. */
 export const SIDEBAR_FILE_OPS_EN: Pick<Translations['sidebar'], SidebarFileOpsKey> = {
   renameFile: "Rename file",
   renameFolder: "Rename folder",
@@ -74,4 +79,9 @@ export const SIDEBAR_FILE_OPS_EN: Pick<Translations['sidebar'], SidebarFileOpsKe
   entryErrorOutside: "The location is outside the workspace.",
   entryErrorUnsupported: "Not available in a single-file workspace.",
   entryErrorFailed: "The operation failed.",
+  copyRelativePath: "Copy relative path",
+  copyFullPath: "Copy full path",
+  downloadWorkspaceZip: "Download workspace as ZIP",
+  downloadFile: "Download .md",
+  downloadFolderZip: "Download ZIP",
 };

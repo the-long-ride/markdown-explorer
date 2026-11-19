@@ -60,7 +60,7 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-sm, var(--r, 4px));
   border: var(--stroke-w) solid var(--bd-s);
   background: color-mix(in srgb, var(--bg-s) 84%, transparent);
   color: var(--tx2);
@@ -172,11 +172,102 @@
 .desktop-font-binding-row__actions { display: flex; align-items: center; gap: 8px; }
 .desktop-font-binding-row__heading { justify-content: space-between; }
 .desktop-font-binding-row__header-actions { flex: 0 0 auto; justify-content: flex-end; }
+.desktop-font-binding-row__import svg { transform: rotate(-90deg); }
 .desktop-font-binding-row__controls > * { min-width: 0; flex: 1 1 0; }
+.desktop-font-size-input-col {
+  flex: 0 0 auto !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
+.desktop-font-size-stepper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.desktop-font-size-input {
+  width: 72px !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 4px 36px 4px 8px !important;
+  text-align: right;
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+.desktop-font-size-input::-webkit-inner-spin-button,
+.desktop-font-size-input::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  display: none !important;
+}
+.desktop-font-size-stepper__actions {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  bottom: 3px;
+  width: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+  z-index: 2;
+  pointer-events: auto;
+}
+.desktop-font-size-stepper__btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 14px !important;
+  height: 12px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: var(--txm) !important;
+  cursor: pointer !important;
+  clip-path: none !important;
+  user-select: none;
+  transition: color 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+}
+.desktop-font-size-stepper__btn::before,
+.desktop-font-size-stepper__btn::after {
+  content: none !important;
+  display: none !important;
+}
+.desktop-font-size-stepper__btn:hover:not(:disabled) {
+  color: var(--accent) !important;
+}
+.desktop-font-size-stepper__btn:active:not(:disabled) {
+  transform: scale(0.88);
+}
+.desktop-font-size-stepper__btn:disabled {
+  opacity: 0.22 !important;
+  cursor: default !important;
+}
+.desktop-font-size-unit {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--txm);
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
 .desktop-font-binding-row__actions { justify-content: flex-end; }
 .font-search-dropdown { min-width: 0; }
 .font-search-dropdown__trigger,
 .font-variant-dropdown__trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   min-height: 34px;
   padding: 6px 10px;
@@ -185,13 +276,6 @@
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r);
   font: inherit;
-}
-.font-search-dropdown__trigger,
-.font-variant-dropdown__trigger {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
   text-align: left;
   cursor: pointer;
 }
@@ -206,7 +290,7 @@
   width: var(--menu-width, auto);
   max-height: var(--menu-max-height, none);
   visibility: var(--menu-visibility, hidden);
-  z-index: 2147483646;
+  z-index: var(--z-modal-overlay);
   display: flex;
   flex-direction: column;
   padding: 8px;
@@ -247,7 +331,7 @@
   left: var(--menu-left, auto);
   width: var(--menu-width, auto);
   max-height: var(--menu-max-height, none);
-  z-index: 2147483646;
+  z-index: var(--z-modal-overlay);
   display: flex;
   flex-direction: column;
   padding: 6px;
@@ -284,6 +368,27 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.desktop-typography-settings__apply,
+.desktop-typography-settings__apply:hover,
+.desktop-typography-settings__apply:disabled,
+.desktop-typography-confirm-dialog__apply,
+.desktop-typography-confirm-dialog__apply:hover,
+.desktop-typography-confirm-dialog__apply:disabled,
+.desktop-typography-settings__reset-all,
+.desktop-typography-settings__reset-all:hover,
+.desktop-typography-settings__reset-all:disabled {
+  cursor: pointer !important;
+}
+
+.desktop-typography-settings__apply *,
+.desktop-typography-confirm-dialog__apply *,
+.desktop-typography-settings__reset-all * {
+  pointer-events: none !important;
+  cursor: pointer !important;
 }
 
 /* Action icon dimensions are component-owned so themes cannot resize Apply. */
@@ -296,13 +401,13 @@
 }
 
 .desktop-typography-settings__apply:disabled {
-  cursor: default;
+  cursor: pointer !important;
   opacity: 0.46;
   transform: none;
 }
 
 .desktop-typography-confirm-modal {
-  z-index: 10000120;
+  z-index: var(--z-modal-popover);
 }
 
 .desktop-typography-confirm-dialog {

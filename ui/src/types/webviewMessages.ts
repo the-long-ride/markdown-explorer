@@ -84,6 +84,7 @@ export interface ListDesktopFontsMessage { readonly command: 'listDesktopFonts';
 export interface ImportDesktopFontsMessage { readonly command: 'importDesktopFonts'; readonly requestId: string; }
 export interface RemoveImportedDesktopFontMessage { readonly command: 'removeImportedDesktopFont'; readonly requestId: string; readonly id: string; }
 export interface SaveChartPngMessage { readonly command: 'saveChartPng'; readonly fileName: string; readonly dataUrl: string; readonly requestId?: string; }
+export interface ReloadWebviewMessage { readonly command: 'reloadWebview'; }
 
 export interface CreateWorkspaceEntryMessage {
   readonly command: 'createWorkspaceEntry';
@@ -105,6 +106,15 @@ export interface DeleteWorkspaceEntriesMessage {
   readonly paths: readonly string[];
 }
 
+
+export interface CreateVirtualWorkspaceMessage {
+  readonly command: 'createVirtualWorkspace';
+  readonly type?: 'createVirtualWorkspace';
+  readonly name?: string;
+  readonly workspaceOperationId?: string;
+  readonly workspaceTabId?: string;
+}
+
 export type WebviewMessage =
   | ReadWorkspaceTextResourceMessage | ReadWorkspaceExportResourceMessage | SaveExportFileMessage | SaveDocumentMessage
   | ListDocumentHistoryMessage | ReadGitRevisionMessage | CompareGitRevisionsMessage
@@ -123,5 +133,5 @@ export type WebviewMessage =
   | OpenShellLocationMessage | OpenExternalMessage | OpenHtmlPreviewMessage
   | SetDocumentConversionMessage | DownloadUpdateMessage | ScheduleDownloadedUpdateMessage
   | RestartAndApplyUpdateMessage | ListDesktopFontsMessage | ImportDesktopFontsMessage
-  | RemoveImportedDesktopFontMessage | SaveChartPngMessage
-  | RenameWorkspaceEntryMessage | CreateWorkspaceEntryMessage | DeleteWorkspaceEntriesMessage;
+  | RemoveImportedDesktopFontMessage | SaveChartPngMessage | ReloadWebviewMessage
+  | RenameWorkspaceEntryMessage | CreateWorkspaceEntryMessage | DeleteWorkspaceEntriesMessage | CreateVirtualWorkspaceMessage;

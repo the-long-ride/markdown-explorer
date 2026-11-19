@@ -32,16 +32,30 @@
       "type": "shell",
       "command": "pnpm",
       "args": [
-        "--filter",
-        "./website-app",
         "run",
-        "dev"
+        "dev:web"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "isBackground": true,
-      "problemMatcher": "$tsc-watch",
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": [
+          {
+            "regexp": "^$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE|dev:web|website-app",
+          "endsPattern": "Local:\\s+http://"
+        }
+      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated"

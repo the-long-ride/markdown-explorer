@@ -15,7 +15,7 @@ vi.mock('../../../../ui/src/components/shared/HeaderActionGroups', () => ({
 }));
 vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({ ToolbarActionMenu: () => null }));
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ tooltip, icon, ...props }: any) => <button aria-label={tooltip} {...props}>{icon}</button>,
+  TooltipButton: ({ tooltip, icon, tooltipPos: _tp, tooltipAlign: _ta, portalTooltip: _pt, ...props }: any) => <button aria-label={tooltip} {...props}>{icon}</button>,
 }));
 vi.mock('../../../../ui/src/components/shared/icons', () => ({ EditIcon: () => <span /> }));
 vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({ default: 'logo.png' }));

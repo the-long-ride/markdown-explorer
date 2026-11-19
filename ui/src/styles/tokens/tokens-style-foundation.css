@@ -19,6 +19,8 @@
   --table-cell-pad-x: 14px;
   --stroke-w: 1px;
   --r: 8px;
+  --r-sm: 6px;
+  --r-s: 6px;
   --r-md: 8px;
   --r-lg: 8px;
   --surface-blur: blur(24px) saturate(160%);
@@ -44,6 +46,8 @@
   --table-cell-pad-x: 12px;
   --stroke-w: 1px;
   --r: 8px;
+  --r-sm: 6px;
+  --r-s: 6px;
   --r-md: 8px;
   --r-lg: 8px;
   --surface-blur: none;
@@ -211,6 +215,8 @@
   --table-cell-pad-x: 12px;
   --stroke-w: 1px;
   --r: 6px;
+  --r-sm: 4px;
+  --r-s: 4px;
   --r-md: 6px;
   --r-lg: 12px;
   --font-ui: "Geist Sans", "Be Vietnam Pro", -apple-system, "Segoe UI", system-ui, sans-serif;

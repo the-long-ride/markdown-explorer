@@ -65,36 +65,6 @@
     --pet-bg-main-opacity: 0.18;
     --pet-bg-side-opacity: 0.1;
   }
-
-  [data-theme-style="pet-cat"][data-theme="auto"] {
-    --accent: #0369a1;
-    --accent-dim: rgba(3, 105, 161, 0.13);
-    --accent-text: #075985;
-    --txc: #be185d;
-    --chart-1: #0369a1;
-    --chart-2: #be185d;
-    --chart-3: #0d9488;
-  }
-
-  [data-theme-style="pet-hamster"][data-theme="auto"] {
-    --accent: #b45309;
-    --accent-dim: rgba(180, 83, 9, 0.13);
-    --accent-text: #92400e;
-    --txc: #15803d;
-    --chart-1: #b45309;
-    --chart-2: #16a34a;
-    --chart-3: #db2777;
-  }
-
-  [data-theme-style="pet-corgi"][data-theme="auto"] {
-    --accent: #2563eb;
-    --accent-dim: rgba(37, 99, 235, 0.13);
-    --accent-text: #1d4ed8;
-    --txc: #a16207;
-    --chart-1: #2563eb;
-    --chart-2: #ca8a04;
-    --chart-3: #c05621;
-  }
 }
 
 @media (prefers-color-scheme: light) {
@@ -236,5 +206,49 @@
     --chart-6: #b12d61;
     --chart-7: #654bb5;
     --chart-8: #007c68;
+  }
+
+  [data-theme-style="cyberpunk"][data-theme="auto"] {
+    --bg: #F2EBDB;
+    --bg-s: #FFF9EF;
+    --bg-e: #E8DFCF;
+    --bg-h: #DED2BF;
+    --bg-a: #D5C5AF;
+    --bg-code: #EAE2D4;
+    --bd: #C6BAA6;
+    --bd-s: #B2A48D;
+    --bd-x: #726A5E;
+    --tx: #252621;
+    --tx2: #4C4C43;
+    --txm: #615D52;
+    --tx3: #696357;
+    --txc: #A53B2A;
+    --accent: #A53B2A;
+    --accent-text: #A53B2A;
+    --accent-dim: rgba(165, 59, 42, 0.13);
+    --accent-ink: #FFF9EF;
+    --primary-fill: #A53B2A;
+    --primary-fill-hover: #8F2E22;
+    --primary-edge: #782B23;
+    --deco-cyan: #18A5B0;
+    --deco-rose: #E64878;
+    --deco-cyan-dim: rgba(24, 165, 176, 0.1);
+    --deco-rose-dim: rgba(230, 72, 120, 0.1);
+    --success: #496C50;
+    --danger: #A73535;
+    --sh-sm: 0 4px 12px rgba(37, 38, 33, 0.08);
+    --sh-md: 0 8px 24px rgba(37, 38, 33, 0.12);
+    --sh-lg: 0 16px 40px rgba(37, 38, 33, 0.16);
+    --section-shadow: none;
+    --modal-bg: rgba(242, 235, 219, 0.97);
+    --modal-fg: #252621;
+    --chart-1: #A53B2A;
+    --chart-2: #18A5B0;
+    --chart-3: #E64878;
+    --chart-4: #615D52;
+    --chart-5: #496C50;
+    --chart-6: #A73535;
+    --chart-7: #B2A48D;
+    --chart-8: #4C4C43;
   }
 }

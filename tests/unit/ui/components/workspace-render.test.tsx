@@ -5,6 +5,7 @@ import { WorkspaceSelection } from '../../../../ui/src/components/Workspace/Work
 import { RecentWorkspaceItem } from '../../../../ui/src/components/Workspace/RecentWorkspaceItem';
 import { RecentWorkspacesModal } from '../../../../ui/src/components/Workspace/RecentWorkspacesModal';
 import { WorkspaceWindowControls } from '../../../../ui/src/components/Workspace/WorkspaceWindowControls';
+import { BrowserFlagGuideModal } from '../../../../ui/src/components/Workspace/BrowserFlagGuideModal';
 
 const mockPostMessage = vi.fn();
 const mockBridge = { postMessage: mockPostMessage, getState: vi.fn(() => ({})), onMessage: vi.fn(() => vi.fn()) };
@@ -85,13 +86,24 @@ vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({
   default: 'logo.png',
 }));
 
-function MockWorkspaceWindowControls({ onToggleTheme, theme, isMaximized, embeddedInTabs }: any) {
+function MockWorkspaceWindowControls({ onToggleTheme, onOpenHomepage, theme, isMaximized, embeddedInTabs }: any) {
   return React.createElement('div', {
     'data-testid': 'window-controls',
     'data-theme': theme,
     'data-maximized': String(isMaximized),
     'data-embedded': String(embeddedInTabs),
   },
+    onOpenHomepage
+      ? React.createElement(
+          'button',
+          {
+            'data-testid': 'workspace-open-homepage-btn',
+            'aria-label': 'Home',
+            onClick: onOpenHomepage,
+          },
+          React.createElement('svg', null),
+        )
+      : null,
     React.createElement('button', { onClick: onToggleTheme }, 'Toggle Theme'),
   );
 }
@@ -186,40 +198,74 @@ describe('WorkspaceSelection', () => {
     expect(screen.getByTestId('recent-workspace-item')).toBeInTheDocument();
   });
 
-  it('renders up to 3 recent workspaces by default', () => {
+  it('renders all recent workspaces directly in the right panel', () => {
     mockState.recentWorkspaces = [
       { name: 'A', path: '/a' },
       { name: 'B', path: '/b' },
       { name: 'C', path: '/c' },
       { name: 'D', path: '/d' },
+      { name: 'E', path: '/e' },
+      { name: 'F', path: '/f' },
     ];
     render(React.createElement(WorkspaceSelection));
-    expect(screen.getAllByTestId('recent-workspace-item')).toHaveLength(3);
+    expect(screen.getAllByTestId('recent-workspace-item')).toHaveLength(6);
   });
 
-  it('shows Show More link button when recent workspaces are present', () => {
-    mockState.recentWorkspaces = [
-      { name: 'A', path: '/a' },
-    ];
-    render(React.createElement(WorkspaceSelection));
-    expect(screen.getByRole('button', { name: 'Show More…' })).toHaveClass('workspace-selection__show-more');
-  });
-
-  it('opens modal when Show More clicked', () => {
+  it('does not apply scrollable modifier when recent workspaces count is 5 or fewer', () => {
     mockState.recentWorkspaces = [
       { name: 'A', path: '/a' },
       { name: 'B', path: '/b' },
       { name: 'C', path: '/c' },
       { name: 'D', path: '/d' },
+      { name: 'E', path: '/e' },
+    ];
+    const { container } = render(React.createElement(WorkspaceSelection));
+    const list = container.querySelector('.workspace-selection__recent-list');
+    expect(list).toBeInTheDocument();
+    expect(list).not.toHaveClass('workspace-selection__recent-list--scrollable');
+  });
+
+  it('applies scrollable modifier when recent workspaces count exceeds 5', () => {
+    mockState.recentWorkspaces = [
+      { name: 'A', path: '/a' },
+      { name: 'B', path: '/b' },
+      { name: 'C', path: '/c' },
+      { name: 'D', path: '/d' },
+      { name: 'E', path: '/e' },
+      { name: 'F', path: '/f' },
+    ];
+    const { container } = render(React.createElement(WorkspaceSelection));
+    const list = container.querySelector('.workspace-selection__recent-list');
+    expect(list).toBeInTheDocument();
+    expect(list).toHaveClass('workspace-selection__recent-list--scrollable');
+  });
+
+  it('filters recent workspaces directly in the right panel search input and clears search', () => {
+    mockState.recentWorkspaces = [
+      { name: 'Alpha', path: '/alpha' },
+      { name: 'Beta', path: '/beta' },
     ];
     render(React.createElement(WorkspaceSelection));
-    fireEvent.click(screen.getByText('Show More…'));
-    expect(screen.getByTestId('workspaces-modal')).toBeInTheDocument();
+    const searchInput = screen.getByPlaceholderText('Search...');
+    fireEvent.change(searchInput, { target: { value: 'beta' } });
+    expect(screen.getAllByTestId('recent-workspace-item')).toHaveLength(1);
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+  });
+
+  it('shows empty state when search query matches no recent workspaces', () => {
+    mockState.recentWorkspaces = [
+      { name: 'Alpha', path: '/alpha' },
+    ];
+    render(React.createElement(WorkspaceSelection));
+    const searchInput = screen.getByPlaceholderText('Search...');
+    fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+    expect(screen.queryByTestId('recent-workspace-item')).not.toBeInTheDocument();
+    expect(screen.getByText('None')).toBeInTheDocument();
   });
 
   it('renders description text', () => {
     render(React.createElement(WorkspaceSelection));
-    expect(screen.getByText('Documentation viewer & navigator')).toBeInTheDocument();
+    expect(screen.getByText('All-in-one Markdown workspace — read, edit, diagram, analyze & export')).toBeInTheDocument();
   });
 
   it('renders the InteractiveBackground', () => {
@@ -237,11 +283,24 @@ describe('WorkspaceSelection', () => {
     expect(screen.queryByText('Open File')).not.toBeInTheDocument();
   });
 
-  it('shows Open File button in desktop mode', () => {
+  it('shows Open File button with secondary style in desktop mode', () => {
     (window as any).electronAPI = {};
     render(React.createElement(WorkspaceSelection));
-    expect(screen.getByText('Open File')).toBeInTheDocument();
+    const btn = screen.getByText('Open File').closest('button');
+    expect(btn).toBeInTheDocument();
+    expect(btn).toHaveClass('workspace-selection__open-file');
     delete (window as any).electronAPI;
+  });
+
+  it('shows Open File button with secondary style in web demo file mode', () => {
+    (window as any).__webBus = new EventTarget();
+    window.history.pushState({}, '', '?mode=web');
+    render(React.createElement(WorkspaceSelection));
+    const btn = screen.getByText('Open File').closest('button');
+    expect(btn).toBeInTheDocument();
+    expect(btn).toHaveClass('workspace-selection__open-file');
+    delete (window as any).__webBus;
+    window.history.pushState({}, '', '/');
   });
 
   it('sends openFile command when Open File clicked in desktop mode', () => {
@@ -264,6 +323,73 @@ describe('WorkspaceSelection', () => {
     render(React.createElement(WorkspaceSelection));
     fireEvent.click(screen.getByText('Delete'));
     expect(mockPostMessage).toHaveBeenCalledWith({ command: 'deleteRecentWorkspace', path: '/p' });
+  });
+
+  it('renders top-right Open Homepage button as SVG icon-only next to theme toggle and triggers onOpenHomepage on click', () => {
+    const onOpenHomepage = vi.fn();
+    render(React.createElement(WorkspaceSelection, { onOpenHomepage }));
+    const homeBtn = screen.getByTestId('workspace-open-homepage-btn');
+    expect(homeBtn).toBeInTheDocument();
+    expect(homeBtn).toHaveAttribute('aria-label', 'Home');
+    expect(homeBtn.querySelector('svg')).toBeInTheDocument();
+    expect(homeBtn).toHaveTextContent('');
+    fireEvent.click(homeBtn);
+    expect(onOpenHomepage).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render browser flag hint by default or on desktop', () => {
+    (window as any).electronAPI = {};
+    const { unmount } = render(React.createElement(WorkspaceSelection));
+    expect(screen.queryByTestId('open-folder-flag-hint')).not.toBeInTheDocument();
+    unmount();
+
+    delete (window as any).electronAPI;
+    mockState.appRuntime = 'desktop';
+    render(React.createElement(WorkspaceSelection));
+    expect(screen.queryByTestId('open-folder-flag-hint')).not.toBeInTheDocument();
+  });
+
+  it('does not render browser flag hint on VS Code', () => {
+    mockState.appRuntime = 'vscode';
+    render(React.createElement(WorkspaceSelection));
+    expect(screen.queryByTestId('open-folder-flag-hint')).not.toBeInTheDocument();
+  });
+
+  it('renders browser flag hint and opens guideline modal in web demo', () => {
+    (window as any).__webBus = new EventTarget();
+    try {
+      render(React.createElement(WorkspaceSelection));
+      const hint = screen.getByTestId('open-folder-flag-hint');
+      expect(hint).toBeInTheDocument();
+      expect(hint).toHaveTextContent('Enable the File System Access flag to open folders.');
+
+      const guideLink = screen.getByTestId('open-folder-flag-guide-link');
+      expect(guideLink).toBeInTheDocument();
+      expect(screen.queryByTestId('browser-flag-guide-modal')).not.toBeInTheDocument();
+
+      fireEvent.click(guideLink);
+      expect(screen.getByTestId('browser-flag-guide-modal')).toBeInTheDocument();
+      expect(screen.getByText('Browser Configuration Guide')).toBeInTheDocument();
+
+      const closeBtn = screen.getByRole('button', { name: 'Close' });
+      fireEvent.click(closeBtn);
+      expect(screen.queryByTestId('browser-flag-guide-modal')).not.toBeInTheDocument();
+    } finally {
+      delete (window as any).__webBus;
+    }
+  });
+
+  it('renders browser flag hint in web runtime and closes modal on Escape', () => {
+    mockState.appRuntime = 'web';
+    render(React.createElement(WorkspaceSelection));
+    const hint = screen.getByTestId('open-folder-flag-hint');
+    expect(hint).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('open-folder-flag-guide-link'));
+    expect(screen.getByTestId('browser-flag-guide-modal')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('browser-flag-guide-modal')).not.toBeInTheDocument();
   });
 });
 
@@ -419,5 +545,50 @@ describe('WorkspaceWindowControls', () => {
     render(React.createElement(WorkspaceWindowControls, defaultControlsProps));
     fireEvent.click(screen.getByText('Toggle Theme'));
     expect(defaultControlsProps.onToggleTheme).toHaveBeenCalled();
+  });
+});
+
+
+describe('BrowserFlagGuideModal', () => {
+  it('renders guide contents when isOpen is true', () => {
+    const handleClose = vi.fn();
+    const t = {
+      workspaceSelection: {
+        browserConfigTitle: 'Browser configuration required',
+        browserConfigIntro: 'Follow these steps',
+        browserConfigOpen: 'Open',
+        browserConfigOr: 'or',
+        browserConfigSearch: 'Search for',
+        browserConfigEnable: 'Enable it',
+      },
+      tooltips: {
+        close: 'Close',
+      },
+    };
+
+    render(React.createElement(BrowserFlagGuideModal, { isOpen: true, onClose: handleClose, t }));
+    expect(screen.getByTestId('browser-flag-guide-modal')).toBeInTheDocument();
+    expect(screen.getByText('Browser configuration required')).toBeInTheDocument();
+    expect(screen.getByText('Follow these steps')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Close'));
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render when isOpen is false', () => {
+    const handleClose = vi.fn();
+    render(React.createElement(BrowserFlagGuideModal, { isOpen: false, onClose: handleClose, t: {} }));
+    expect(screen.queryByTestId('browser-flag-guide-modal')).toBeNull();
+  });
+
+  it('closes on Escape key and backdrop click', () => {
+    const handleClose = vi.fn();
+    render(React.createElement(BrowserFlagGuideModal, { isOpen: true, onClose: handleClose, t: {} }));
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(handleClose).toHaveBeenCalledTimes(1);
+
+    const overlay = screen.getByTestId('browser-flag-guide-modal');
+    fireEvent.click(overlay);
+    expect(handleClose).toHaveBeenCalledTimes(2);
   });
 });

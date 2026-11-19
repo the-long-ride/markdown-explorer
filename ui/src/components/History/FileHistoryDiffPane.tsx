@@ -28,7 +28,7 @@ export function FileHistoryViewControls({ view, t, fileAdded, onViewChange }: Fi
   const isRaw = view !== 'rendered';
   return (
     <div className="file-history__view-controls">
-      {fileAdded && <span className="file-history__badge" title={t.fileAdded}>{t.fileAdded}</span>}
+      {fileAdded && <span className="file-history__badge" data-hover-tooltip={t.fileAdded}>{t.fileAdded}</span>}
       <div role="group" aria-label={t.viewMode} className="file-history__segmented">
         <TooltipButton type="button" className={`btn${isRaw ? ' is-active' : ''}`} tooltip={t.raw} aria-pressed={isRaw} portalTooltip icon={<PlainSourceIcon size={15} />} onClick={() => onViewChange(view === 'raw-split' ? 'raw-split' : 'raw-inline')} />
         <TooltipButton type="button" className={`btn${!isRaw ? ' is-active' : ''}`} tooltip={t.rendered} aria-pressed={!isRaw} portalTooltip icon={<RenderedViewIcon size={15} />} onClick={() => onViewChange('rendered')} />
@@ -74,11 +74,11 @@ export function FileHistoryDiffPane({ diff, view, language, t, currentLabel, spl
       <header className="file-history__toolbar">
         {sources && (
           <>
-            <span className="file-history__side file-history__side--old" title={leftLabel}>
+            <span className="file-history__side file-history__side--old" data-hover-tooltip={leftLabel}>
               <span className="file-history__side-mark" aria-hidden="true">-</span>
               <span className="file-history__side-text">{leftLabel}</span>
             </span>
-            <span className="file-history__side file-history__side--new" title={rightLabel}>
+            <span className="file-history__side file-history__side--new" data-hover-tooltip={rightLabel}>
               <span className="file-history__side-mark" aria-hidden="true">+</span>
               <span className="file-history__side-text">{rightLabel}</span>
             </span>

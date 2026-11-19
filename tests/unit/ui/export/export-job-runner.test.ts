@@ -74,7 +74,7 @@ describe('runExportJob', () => {
 
   it('generates and saves PDFs through the same facade for every runtime', async () => {
     const target = file('Guide');
-    for (const runtime of ['desktop', 'tauri', 'vscode', 'chrome'] as AppRuntime[]) {
+    for (const runtime of ['desktop', 'tauri', 'vscode', 'web'] as AppRuntime[]) {
       const save = vi.fn(async (_bridge, receivedRuntime, artifact) => ({ ok: true, path: `${receivedRuntime}:${artifact.fileName}` }));
       const result = await runExportJob({ ...baseArgs, runtime, job: job('pdf', [target]) }, dependencies({
         loadSnapshot: vi.fn(async () => snapshot(target)), saveArtifact: save,

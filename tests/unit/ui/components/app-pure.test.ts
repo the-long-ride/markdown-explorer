@@ -6,11 +6,11 @@ function detectPlatform(
 ) {
   const w = windowRef ?? {};
   const isElectron = typeof (w as any).electronAPI !== 'undefined';
-  const isChrome = typeof (w as any).__chromeExtBus !== 'undefined';
+  const isWeb = typeof (w as any).__webBus !== 'undefined';
   const isDesktop = isElectron;
-  const isDesktopLike = isDesktop || isChrome;
+  const isDesktopLike = isDesktop || isWeb;
   const isTabView = isDesktop && desktopViewMode === 'tabs';
-  return { isElectron, isChrome, isDesktop, isDesktopLike, isTabView };
+  return { isElectron, isWeb, isDesktop, isDesktopLike, isTabView };
 }
 
 function readSidebarWidthFromStorage(
@@ -38,14 +38,14 @@ describe('App pure logic', () => {
       expect(result.isDesktop).toBe(false);
     });
 
-    it('detects Chrome extension when __chromeExtBus is defined', () => {
-      const result = detectPlatform({ __chromeExtBus: {} });
-      expect(result.isChrome).toBe(true);
+    it('detects Web bus when __webBus is defined', () => {
+      const result = detectPlatform({ __webBus: {} });
+      expect(result.isWeb).toBe(true);
     });
 
-    it('does not detect Chrome extension when __chromeExtBus is absent', () => {
+    it('does not detect Web bus when __webBus is absent', () => {
       const result = detectPlatform({});
-      expect(result.isChrome).toBe(false);
+      expect(result.isWeb).toBe(false);
     });
 
     it('isDesktopLike is true for Electron', () => {
@@ -53,17 +53,17 @@ describe('App pure logic', () => {
       expect(result.isDesktopLike).toBe(true);
     });
 
-    it('isDesktopLike is true for Chrome extension', () => {
-      const result = detectPlatform({ __chromeExtBus: {} });
+    it('isDesktopLike is true for Web', () => {
+      const result = detectPlatform({ __webBus: {} });
       expect(result.isDesktopLike).toBe(true);
     });
 
-    it('isDesktopLike is true for both Electron and Chrome', () => {
-      const result = detectPlatform({ electronAPI: {}, __chromeExtBus: {} });
+    it('isDesktopLike is true for both Electron and Web', () => {
+      const result = detectPlatform({ electronAPI: {}, __webBus: {} });
       expect(result.isDesktopLike).toBe(true);
     });
 
-    it('isDesktopLike is false for web', () => {
+    it('isDesktopLike is false when no host markers exist', () => {
       const result = detectPlatform({});
       expect(result.isDesktopLike).toBe(false);
     });
@@ -83,8 +83,8 @@ describe('App pure logic', () => {
       expect(result.isTabView).toBe(false);
     });
 
-    it('isTabView is false when Chrome extension (not desktop) even in tab mode', () => {
-      const result = detectPlatform({ __chromeExtBus: {} }, 'tabs');
+    it('isTabView is false when Web (not desktop) even in tab mode', () => {
+      const result = detectPlatform({ __webBus: {} }, 'tabs');
       expect(result.isTabView).toBe(false);
     });
 
@@ -98,9 +98,9 @@ describe('App pure logic', () => {
       expect(result.isElectron).toBe(false);
     });
 
-    it('__chromeExtBus set to undefined is not detected', () => {
-      const result = detectPlatform({ __chromeExtBus: undefined });
-      expect(result.isChrome).toBe(false);
+    it('__webBus set to undefined is not detected', () => {
+      const result = detectPlatform({ __webBus: undefined });
+      expect(result.isWeb).toBe(false);
     });
   });
 

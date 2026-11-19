@@ -17,9 +17,7 @@
   min-width: 220px;
   max-width: calc(100vw - 16px);
 }
-.toolbar-action-menu__item .btn-label {
-  white-space: nowrap;
-}
+.toolbar-action-menu__item .btn-label { white-space: nowrap; }
 .topbar__crumb-separator { flex: 0 0 auto; margin: 0 4px; color: var(--bd-s); font-size: 12px; line-height: 1; user-select: none; }
 .topbar__nav-actions { display: flex; align-items: center; gap: 4px; }
 .topbar__window-controls { display: flex; align-items: center; gap: 2px; }

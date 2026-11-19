@@ -1,17 +1,27 @@
-import { renderMarkdown } from '../../chromium-xtension/src/markdown-renderer';
-import { BrowserScanner } from '../../chromium-xtension/src/scanner';
-import { BrowserSearchIndex } from '../../chromium-xtension/src/search-index';
-import { BrowserRecentWorkspaces } from '../../chromium-xtension/src/recent-workspaces';
-import { rewriteMediaUrls } from '../../chromium-xtension/src/media-resolver';
+import { renderMarkdown } from './markdown-renderer';
+import { BrowserScanner } from './scanner';
+import { BrowserSearchIndex } from './search-index';
+import { BrowserRecentWorkspaces } from './recent-workspaces';
+import { rewriteMediaUrls } from './media-resolver';
 import {
-  documentRevision,
-  documentWriteCapability,
-  readTextFile,
-  writeFileHandle,
-  type BrowserDocumentWriteResult,
-} from '../../chromium-xtension/src/file-access';
-import { nextIncrementalPublishCount, treeHasEmptyFolder } from '../../chromium-xtension/src/incremental-publish';
+  writeSingleFileDocument,
+  buildMdFileFromName,
+  readContainerDocument,
+  readAndConvertFile,
+} from './web-file-content';
+import { isExtraDocumentFile, convertWebDocumentToMarkdown } from './web-document-converter';
+export { writeSingleFileDocument };
+import { nextIncrementalPublishCount, treeHasEmptyFolder } from './incremental-publish';
 import type { MdFile, FolderNode } from '../../ui/src/types';
+import {
+  loadAllRecentWorkspaces,
+  renderVirtualFile,
+  loadVirtualWorkspaceHandler,
+} from './user-virtual-workspaces';
+
+function sendEmptyWelcome(send: (m: unknown) => void, fileList: MdFile[], operation: Record<string, unknown>) {
+  send({ command: 'renderContent', html: '', markdownSource: '', frontmatter: {}, toc: [], filePath: '', relativePath: 'Welcome Page', title: 'Welcome', fileList, previewInfo: null, ...operation });
+}
 
 type WorkspaceOperationMetadata = {
   workspaceOperationId?: string;
@@ -27,6 +37,7 @@ interface FileModeState {
   workspaceTree: FolderNode | null;
   searchIndex: BrowserSearchIndex | null;
   singleFileHandle: FileSystemFileHandle | null;
+  documentConversionEnabled?: boolean;
 }
 
 interface FileModeDeps {
@@ -41,27 +52,6 @@ interface FileModeDeps {
 
 export const WORKSPACE_SCAN_REVEAL_DELAY_MS = 3000;
 export const WORKSPACE_SCAN_BATCH_SIZE = 32;
-
-function isEditableMarkdownPath(filePath: string): boolean {
-  return /\.mdx?$/i.test(filePath);
-}
-
-async function singleFileDocumentWriteCapability(handle: FileSystemFileHandle) {
-  const permission = await (handle as any).queryPermission?.({ mode: 'readwrite' });
-  if (permission !== 'granted') {
-    return { supported: false, revision: null, reason: 'permission-required' as const };
-  }
-  return { supported: true, revision: await documentRevision(handle) };
-}
-
-export async function writeSingleFileDocument(
-  handle: FileSystemFileHandle,
-  source: string,
-  expectedRevision: string | null,
-  force = false,
-): Promise<BrowserDocumentWriteResult> {
-  return writeFileHandle(handle, source, expectedRevision, force);
-}
 
 export function createFileModeHandlers({
   state,
@@ -123,11 +113,12 @@ async function loadHandleWorkspace(
   let thresholdElapsed = false;
   let lastPublishedCount = 0;
   const discovered: MdFile[] = [];
-  const recentsPromise = BrowserRecentWorkspaces.load();
+  const recentsPromise = loadAllRecentWorkspaces();
   const snapshot = () => {
     const fileList = [...discovered].sort((a, b) => a.fsPath.localeCompare(b.fsPath));
     return { fileList, tree: BrowserScanner.buildTree(fileList) };
   };
+  const docConv = () => Boolean(state.documentConversionEnabled);
   const publishChanged = () => {
     if (!isWorkspaceScanCurrent(request)) return;
     const next = snapshot();
@@ -137,7 +128,7 @@ async function loadHandleWorkspace(
     send({
       command: 'workspaceFilesChanged', ...next,
       workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,
-      documentConversionEnabled: false, ...request.operation,
+      documentConversionEnabled: docConv(), ...request.operation,
     });
   };
   let revealPromise: Promise<void> | null = null;
@@ -155,13 +146,14 @@ async function loadHandleWorkspace(
         command: 'readyAck', ...next, theme: 'dark', themeStyle: 'default',
         defaultExpanded: true, workspaceName: state.activeWorkspaceName,
         workspacePath: state.activeWorkspacePath, recentWorkspaces,
-        documentConversionEnabled: false, ...hostInfo(), ...request.operation,
+        documentConversionEnabled: docConv(), ...hostInfo(), ...request.operation,
       });
       revealed = true;
     })();
   };
   send({ command: 'workspaceScanProgress', scannedFiles: 0, active: true, ...request.operation });
   const scanPromise = BrowserScanner.scan(handle, {
+    documentConversion: docConv(),
     isCurrent: () => isWorkspaceScanCurrent(request),
     onProgress(scannedFiles) {
       if (!isWorkspaceScanCurrent(request)) return;
@@ -195,23 +187,14 @@ async function loadHandleWorkspace(
       send({
         command: 'workspaceFilesChanged', fileList: flat, tree,
         workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,
-        documentConversionEnabled: false, ...request.operation,
+        documentConversionEnabled: docConv(), ...request.operation,
       });
     }
   } else {
     send({
-      command: 'readyAck',
-      fileList: flat,
-      tree,
-      theme: 'dark',
-      themeStyle: 'default',
-      defaultExpanded: true,
-      workspaceName: state.activeWorkspaceName,
-      workspacePath: state.activeWorkspacePath,
-      recentWorkspaces: recents,
-      documentConversionEnabled: false,
-      ...hostInfo(),
-      ...request.operation,
+      command: 'readyAck', fileList: flat, tree, theme: 'dark', themeStyle: 'default', defaultExpanded: true,
+      workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath, recentWorkspaces: recents,
+      documentConversionEnabled: docConv(), ...hostInfo(), ...request.operation,
     });
   }
   send({ command: 'workspaceScanProgress', scannedFiles: flat.length, active: false, ...request.operation });
@@ -220,19 +203,7 @@ async function loadHandleWorkspace(
     state.currentFile = flat[0].relativePath;
     await sendFileContent(state.currentFile, request);
   } else if (isWorkspaceScanCurrent(request)) {
-    send({
-      command: 'renderContent',
-      html: '',
-      markdownSource: '',
-      frontmatter: {},
-      toc: [],
-      filePath: '',
-      relativePath: 'Welcome Page',
-      title: 'Welcome',
-      fileList: state.flatList,
-      previewInfo: null,
-      ...request.operation,
-    });
+    sendEmptyWelcome(send, state.flatList, request.operation);
   }
   return isWorkspaceScanCurrent(request);
 }
@@ -240,56 +211,46 @@ async function loadHandleWorkspace(
 async function sendFileContent(relativePath: string, request?: WorkspaceScanRequest) {
   const handle = request?.handle ?? state.activeHandle;
   if (!handle || (request && !isWorkspaceScanCurrent(request))) return;
-  let raw = '';
+  let markdownSource = '';
+  let rawText = '';
+  let previewInfo: any = null;
+  let documentWrite: any = undefined;
   try {
-    raw = await readTextFile(handle, relativePath);
+    const res = await readContainerDocument(handle, relativePath);
+    markdownSource = res.markdownSource;
+    rawText = res.rawText;
+    previewInfo = res.previewInfo;
+    documentWrite = res.documentWrite;
   } catch {
-    raw = `# File Not Found\n\nCould not read: **${relativePath}**`;
+    markdownSource = `# File Not Found\n\nCould not read: **${relativePath}**`;
+    rawText = markdownSource;
   }
   if (request && !isWorkspaceScanCurrent(request)) return;
 
-  const { html, frontmatter, toc } = renderMarkdown(relativePath, raw);
+  const { html, frontmatter, toc } = renderMarkdown(relativePath, markdownSource);
   const rewrittenHtml = await rewriteMediaUrls(handle, html, relativePath);
   if (request && !isWorkspaceScanCurrent(request)) return;
   const fileInfo = findFileInfo(state.flatList, relativePath);
-  const documentWrite = isEditableMarkdownPath(relativePath)
-    ? await documentWriteCapability(handle, relativePath)
-    : undefined;
 
   send({
     command: 'renderContent',
     html: rewrittenHtml,
-    markdownSource: raw,
-    sourceDocumentText: /\.html?$/i.test(relativePath) ? raw : null,
+    markdownSource,
+    sourceDocumentText: /\.html?$/i.test(relativePath) ? rawText : null,
     frontmatter,
     toc,
     filePath: relativePath,
     relativePath: fileInfo.relativePath,
     title: fileInfo.title,
     fileList: state.flatList,
-    previewInfo: null,
+    previewInfo,
     documentWrite,
+    documentConversionEnabled: Boolean(state.documentConversionEnabled),
     ...(request?.operation ?? getWorkspaceOperationMetadata()),
   });
 }
 
 // ── File-mode: single dropped file (FileSystemFileHandle) ──────────────────────
-
-function buildMdFileFromName(fileName: string, modifiedAt = 0): MdFile {
-  const dot = fileName.lastIndexOf('.');
-  const ext = dot !== -1 ? fileName.slice(dot).toLowerCase() : '';
-  const base = dot !== -1 ? fileName.slice(0, dot) : fileName;
-  return {
-    fsPath: fileName,
-    relativePath: fileName,
-    parts: [fileName],
-    fileName,
-    title: base || fileName,
-    extension: ext,
-    documentKind: 'markdown',
-    modifiedAt,
-  };
-}
 
 async function loadSingleFileWorkspace(handle: FileSystemFileHandle) {
   const operation = getWorkspaceOperationMetadata();
@@ -308,21 +269,12 @@ async function loadSingleFileWorkspace(handle: FileSystemFileHandle) {
   state.workspaceTree = { name: fileName, path: '', children: [], files: [entry], modifiedAt };
 
   send({ command: 'setLoading', label: 'Loading file…', ...operation });
-  const recents = await BrowserRecentWorkspaces.load();
+  const recents = await loadAllRecentWorkspaces();
   if (state.singleFileHandle !== handle || workspaceScanGeneration !== generation) return false;
   send({
-    command: 'readyAck',
-    fileList: state.flatList,
-    tree: state.workspaceTree,
-    theme: 'dark',
-    themeStyle: 'default',
-    defaultExpanded: true,
-    workspaceName: state.activeWorkspaceName,
-    workspacePath: state.activeWorkspacePath,
-    recentWorkspaces: recents,
-    documentConversionEnabled: false,
-    ...hostInfo(),
-    ...operation,
+    command: 'readyAck', fileList: state.flatList, tree: state.workspaceTree, theme: 'dark', themeStyle: 'default',
+    defaultExpanded: true, workspaceName: state.activeWorkspaceName, workspacePath: state.activeWorkspacePath,
+    recentWorkspaces: recents, documentConversionEnabled: Boolean(state.documentConversionEnabled), ...hostInfo(), ...operation,
   });
 
   await sendSingleFileContent(fileName, handle, operation, generation);
@@ -336,63 +288,102 @@ async function sendSingleFileContent(
   generation = workspaceScanGeneration,
 ) {
   if (!expectedHandle || state.singleFileHandle !== expectedHandle || workspaceScanGeneration !== generation) {
-    send({
-      command: 'renderContent',
-      html: '',
-      markdownSource: '',
-      frontmatter: {},
-      toc: [],
-      filePath: '',
-      relativePath: 'Welcome Page',
-      title: 'Welcome',
-      fileList: state.flatList,
-      previewInfo: null,
-      ...operation,
-    });
+    sendEmptyWelcome(send, state.flatList, operation);
     return;
   }
 
-  let raw = '';
+  let markdownSource = '';
+  let rawText = '';
+  let previewInfo: any = null;
+  let documentWrite: any = undefined;
   try {
-    const file = await expectedHandle.getFile();
-    raw = await file.text();
+    const res = await readAndConvertFile(expectedHandle, relativePath);
+    markdownSource = res.markdownSource;
+    rawText = res.rawText;
+    previewInfo = res.previewInfo;
+    documentWrite = res.documentWrite;
   } catch {
-    raw = `# File Not Found\n\nCould not read: **${relativePath}**`;
+    markdownSource = `# File Not Found\n\nCould not read: **${relativePath}**`;
+    rawText = markdownSource;
   }
 
   if (state.singleFileHandle !== expectedHandle || workspaceScanGeneration !== generation) return;
-  const { html, frontmatter, toc } = renderMarkdown(relativePath, raw);
+  const { html, frontmatter, toc } = renderMarkdown(relativePath, markdownSource);
   const fileInfo = findFileInfo(state.flatList, relativePath);
-  const documentWrite = isEditableMarkdownPath(relativePath)
-    ? await singleFileDocumentWriteCapability(expectedHandle)
-    : undefined;
 
   send({
     command: 'renderContent',
     html,
-    markdownSource: raw,
-    sourceDocumentText: /\.html?$/i.test(relativePath) ? raw : null,
+    markdownSource,
+    sourceDocumentText: /\.html?$/i.test(relativePath) ? rawText : null,
     frontmatter,
     toc,
     filePath: relativePath,
     relativePath: fileInfo.relativePath,
     title: fileInfo.title,
     fileList: state.flatList,
-    previewInfo: null,
+    previewInfo,
     documentWrite,
+    documentConversionEnabled: Boolean(state.documentConversionEnabled),
     ...operation,
   });
 }
 
+const loadVirtualWorkspace = (workspacePath: string, openFirstFile: boolean | string = true) => {
+  let generation = workspaceScanGeneration;
+  return loadVirtualWorkspaceHandler({
+    workspacePath,
+    openFirstFile: typeof openFirstFile === 'string' ? false : openFirstFile,
+    targetFile: typeof openFirstFile === 'string' ? openFirstFile : undefined,
+    state,
+    send,
+    hostInfo,
+    findFileInfo,
+    getWorkspaceOperationMetadata,
+    resetFileState: () => {
+      resetFileState();
+      generation = workspaceScanGeneration;
+    },
+    isCurrentGeneration: () => workspaceScanGeneration === generation,
+  });
+};
+
+async function sendVirtualFileContent(workspacePath: string, relativePath: string) {
+  const rendered = renderVirtualFile({
+    workspacePath,
+    relativePath,
+    fileList: state.flatList,
+    findFileInfo,
+    operationMetadata: getWorkspaceOperationMetadata(),
+  });
+  if (isExtraDocumentFile(relativePath)) {
+    const raw = String((rendered as any).markdownSource ?? '');
+    const converted = await convertWebDocumentToMarkdown({ name: relativePath, text: raw });
+    const { html, frontmatter, toc } = renderMarkdown(relativePath, converted.markdown);
+    send({
+      ...rendered,
+      html,
+      markdownSource: converted.markdown,
+      previewInfo: converted.previewInfo,
+      documentWrite: converted.previewInfo?.readOnly
+        ? { supported: false, revision: null, reason: 'read-only-runtime' }
+        : (rendered as any).documentWrite,
+      documentConversionEnabled: Boolean(state.documentConversionEnabled),
+    });
+    return;
+  }
+  send({ ...rendered, documentConversionEnabled: Boolean(state.documentConversionEnabled) });
+}
+
 async function sendFileRecentWorkspacesChanged() {
-  const recents = await BrowserRecentWorkspaces.load();
+  const recents = await loadAllRecentWorkspaces();
   send({ command: 'recentWorkspacesChanged', recentWorkspaces: recents });
 }
 
 function sendWorkspaceUnavailable(workspacePath: string, reason = 'missing') {
   const operation = getWorkspaceOperationMetadata();
   resetFileState();
-  BrowserRecentWorkspaces.load().then(recents => {
+  loadAllRecentWorkspaces().then(recents => {
     send({
       command: 'workspaceUnavailable',
       workspacePath,
@@ -405,13 +396,8 @@ function sendWorkspaceUnavailable(workspacePath: string, reason = 'missing') {
   });
 }
 
-function cancelWorkspaceScan() {
-  workspaceScanGeneration += 1;
-}
-
-function cancelAllWorkspaceScans() {
-  workspaceScanGeneration += 1;
-}
+function cancelWorkspaceScan() { workspaceScanGeneration += 1; }
+function cancelAllWorkspaceScans() { workspaceScanGeneration += 1; }
 
   return {
     resetFileState,
@@ -424,5 +410,8 @@ function cancelAllWorkspaceScans() {
     sendWorkspaceUnavailable,
     cancelWorkspaceScan,
     cancelAllWorkspaceScans,
+    loadVirtualWorkspace,
+    sendVirtualFileContent,
+    loadAllRecentWorkspaces,
   };
 }

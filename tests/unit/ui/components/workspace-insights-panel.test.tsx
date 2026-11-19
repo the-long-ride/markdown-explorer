@@ -1,7 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { WorkspaceInsightsPanel } from '../../../../ui/src/components/Insights/WorkspaceInsightsPanel';
+import { WorkspaceInsightsEntry } from '../../../../ui/src/components/Insights/WorkspaceInsightsEntry';
+import { WORKSPACE_INSIGHTS_TOGGLE_EVENT } from '../../../../ui/src/components/shared/ToolbarActionMenu';
+import { AppStateContext } from '../../../../ui/src/contexts/AppStateContext';
+import { PlatformContext } from '../../../../ui/src/contexts/PlatformContext';
 import { INSIGHTS_TRANSLATIONS } from '../../../../ui/src/contexts/insightsTranslations';
 import type { WorkspaceInsightsSessionViewModel } from '../../../../ui/src/insights/useWorkspaceInsights';
 
@@ -69,5 +73,237 @@ describe('WorkspaceInsightsPanel', () => {
     const separator = screen.getByRole('separator');
     fireEvent.keyDown(separator, { key: 'ArrowLeft' });
     expect(document.documentElement.style.getPropertyValue('--insights-width')).not.toBe('');
+  });
+
+  it('applies is-collapsed and inert when panel is not open', () => {
+    const value = session({ panelOpen: false });
+    const { container } = render(<WorkspaceInsightsPanel session={value} />);
+    const panel = container.querySelector('#workspaceInsightsPanel');
+    expect(panel).toHaveClass('workspace-insights');
+    expect(panel).toHaveClass('is-collapsed');
+    expect(panel).toHaveAttribute('aria-hidden', 'true');
+    expect(panel).toHaveAttribute('inert');
+  });
+
+  it('closes panel when Escape is pressed while panel is open', () => {
+    const value = session({ panelOpen: true });
+    render(<WorkspaceInsightsPanel session={value} />);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(value.closePanel).toHaveBeenCalled();
+  });
+
+  it('renders descriptive hover tooltips with count badges on tabs across locales', () => {
+    const customSession = session({
+      snapshot: {
+        documents: new Map([
+          ['doc1.md', {
+            path: 'doc1.md',
+            revision: '1',
+            title: 'Doc 1',
+            aliases: [],
+            tags: [],
+            anchors: new Set(),
+            headings: [],
+            references: [],
+            dynamicReferences: [],
+            sections: [],
+            diagrams: [],
+            exactFingerprint: '',
+            terminology: [],
+            terminologySignatures: [],
+            lint: [{ rule: 'MD001', line: 1, message: 'Header issue', severity: 'warning' } as any],
+          } as any],
+        ]),
+        outboundLinks: new Map(),
+        backlinks: new Map(),
+        brokenLinks: [{ sourcePath: 'doc1.md', targetUrl: 'https://broken.link', error: '404' } as any],
+        tags: new Map(),
+        headings: new Map(),
+        titles: new Map(),
+        revision: 1,
+      },
+    });
+    render(<WorkspaceInsightsPanel session={customSession} labels={INSIGHTS_TRANSLATIONS.vi} />);
+
+    const galleryTab = screen.getByRole('tab', { name: INSIGHTS_TRANSLATIONS.vi.gallery });
+    expect(galleryTab).toHaveAttribute('data-hover-tooltip', INSIGHTS_TRANSLATIONS.vi.galleryTooltip);
+    expect(galleryTab).toHaveAttribute('data-hover-tooltip-pos', 'bottom');
+
+    const linksTab = screen.getByRole('tab', { name: INSIGHTS_TRANSLATIONS.vi.links });
+    expect(linksTab).toHaveAttribute('data-hover-tooltip', `${INSIGHTS_TRANSLATIONS.vi.linksTooltip} (1)`);
+
+    const lintTab = screen.getByRole('tab', { name: INSIGHTS_TRANSLATIONS.vi.lint });
+    expect(lintTab).toHaveAttribute('data-hover-tooltip', `${INSIGHTS_TRANSLATIONS.vi.lintTooltip} (1)`);
+  });
+
+  it('toggles WorkspaceInsightsEntry open and closed via WORKSPACE_INSIGHTS_TOGGLE_EVENT', async () => {
+    const mockAppState = {
+      state: {
+        workspacePath: 'test-ws',
+        workspaceName: 'Test Workspace',
+        settings: { insightsEnabled: true, language: 'en' },
+        fileList: [],
+      },
+      navigate: vi.fn(),
+    };
+    const mockPlatform = {
+      onMessage: vi.fn(() => () => {}),
+      postMessage: vi.fn(),
+    };
+
+    render(
+      <AppStateContext.Provider value={mockAppState as any}>
+        <PlatformContext.Provider value={mockPlatform as any}>
+          <div className="body">
+            <WorkspaceInsightsEntry />
+          </div>
+        </PlatformContext.Provider>
+      </AppStateContext.Provider>
+    );
+
+    // Initially collapsed / closed
+    const panel = document.getElementById('workspaceInsightsPanel');
+    expect(panel).toBeInTheDocument();
+    expect(panel).toHaveClass('is-collapsed');
+
+    // Dispatch toggle event to open
+    window.dispatchEvent(new Event(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
+    await waitFor(() => {
+      expect(document.getElementById('workspaceInsightsPanel')).not.toHaveClass('is-collapsed');
+    });
+
+    // Dispatch toggle event to close
+    window.dispatchEvent(new Event(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
+    await waitFor(() => {
+      expect(document.getElementById('workspaceInsightsPanel')).toHaveClass('is-collapsed');
+    });
+  });
+
+  it('updates portalTarget when .body is added after initial mount and handles dynamic DOM replacement', async () => {
+    const mockAppState = {
+      state: {
+        workspacePath: 'test-ws',
+        workspaceName: 'Test Workspace',
+        settings: { insightsEnabled: true, language: 'en' },
+        fileList: [],
+      },
+      navigate: vi.fn(),
+    };
+    const mockPlatform = {
+      onMessage: vi.fn(() => () => {}),
+      postMessage: vi.fn(),
+    };
+
+    const { container, unmount } = render(
+      <AppStateContext.Provider value={mockAppState as any}>
+        <PlatformContext.Provider value={mockPlatform as any}>
+          <div data-testid="wrapper" />
+        </PlatformContext.Provider>
+      </AppStateContext.Provider>
+    );
+
+    // Mount WorkspaceInsightsEntry without .body in DOM initially
+    const { rerender } = render(
+      <AppStateContext.Provider value={mockAppState as any}>
+        <PlatformContext.Provider value={mockPlatform as any}>
+          <WorkspaceInsightsEntry />
+        </PlatformContext.Provider>
+      </AppStateContext.Provider>
+    );
+
+    expect(document.getElementById('workspaceInsightsPanel')).not.toBeInTheDocument();
+
+    // Now append .body element to container
+    const newBody = document.createElement('div');
+    newBody.className = 'body';
+    container.appendChild(newBody);
+
+    // Verify MutationObserver detects .body and ports into it, opening successfully
+    window.dispatchEvent(new Event(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
+    await waitFor(() => {
+      const panel = document.getElementById('workspaceInsightsPanel');
+      expect(panel).toBeInTheDocument();
+      expect(panel).not.toHaveClass('is-collapsed');
+      expect(newBody.contains(panel)).toBe(true);
+    });
+
+    unmount();
+  });
+
+  it('does not attach MutationObserver when .body already exists and disconnects immediately once .body appears', async () => {
+    const mockAppState = {
+      state: {
+        workspacePath: 'test-ws',
+        workspaceName: 'Test Workspace',
+        settings: { insightsEnabled: true, language: 'en' },
+        fileList: [],
+      },
+      navigate: vi.fn(),
+    };
+    const mockPlatform = {
+      onMessage: vi.fn(() => () => {}),
+      postMessage: vi.fn(),
+    };
+
+    const OriginalMutationObserver = globalThis.MutationObserver;
+    const observeSpy = vi.fn();
+    const disconnectSpy = vi.fn();
+    let capturedCallback: MutationCallback | null = null;
+
+    class SpyMutationObserver {
+      constructor(cb: MutationCallback) {
+        capturedCallback = cb;
+      }
+      observe = observeSpy;
+      disconnect = disconnectSpy;
+      takeRecords = () => [];
+    }
+
+    vi.stubGlobal('MutationObserver', SpyMutationObserver);
+
+    // Case 1: .body already connected on mount -> WorkspaceInsightsEntry does NOT attach an observer
+    // (only the mounted WorkspaceInsightsPanel's useResize hook attaches 1 observer, not 2)
+    const existingBody = document.createElement('div');
+    existingBody.className = 'body';
+    document.body.appendChild(existingBody);
+
+    const firstRender = render(
+      <AppStateContext.Provider value={mockAppState as any}>
+        <PlatformContext.Provider value={mockPlatform as any}>
+          <WorkspaceInsightsEntry />
+        </PlatformContext.Provider>
+      </AppStateContext.Provider>
+    );
+
+    expect(observeSpy).toHaveBeenCalledTimes(1);
+    firstRender.unmount();
+    existingBody.remove();
+
+    // Case 2: .body missing initially -> WorkspaceInsightsEntry observes once, then disconnects immediately once .body appears
+    observeSpy.mockClear();
+    disconnectSpy.mockClear();
+    capturedCallback = null;
+
+    const secondRender = render(
+      <AppStateContext.Provider value={mockAppState as any}>
+        <PlatformContext.Provider value={mockPlatform as any}>
+          <WorkspaceInsightsEntry />
+        </PlatformContext.Provider>
+      </AppStateContext.Provider>
+    );
+
+    expect(observeSpy).toHaveBeenCalledTimes(1);
+    expect(disconnectSpy).not.toHaveBeenCalled();
+
+    const lateBody = document.createElement('div');
+    lateBody.className = 'body';
+    document.body.appendChild(lateBody);
+    capturedCallback?.([], {} as MutationObserver);
+
+    expect(disconnectSpy).toHaveBeenCalledTimes(1);
+
+    secondRender.unmount();
+    lateBody.remove();
+    vi.stubGlobal('MutationObserver', OriginalMutationObserver);
   });
 });

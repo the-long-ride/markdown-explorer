@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { readEditableRange, replaceSourceRange, type MarkdownSourceRange } from '../../editor/inlineEdit';
 
 const INLINE_EDITABLE_SELECTOR = [
+  '.mdn-frontmatter[data-mdn-source-start][data-mdn-source-end]',
   '.mdn-heading-text[data-mdn-source-start][data-mdn-source-end]',
   'p[data-mdn-source-start][data-mdn-source-end]',
   '.mdn-blockquote[data-mdn-source-start][data-mdn-source-end]',

@@ -41,7 +41,7 @@ function createDemoDom() {
           <button id="demo-btn" data-i18n="navDemo" aria-expanded="false">Demo</button>
           <div id="demo-menu" role="menu" hidden>
             <a href="app/?mode=test" role="menuitem" data-i18n="navDemoExamples">Example files</a>
-            <a href="app/?mode=file" role="menuitem" data-i18n="navDemoTry">Open a file</a>
+            <a href="app/?mode=web" role="menuitem" data-i18n="navDemoTry">Open Web App</a>
           </div>
           <span id="lang-label"></span>
         </body>
@@ -58,7 +58,7 @@ function createDemoDom() {
       label: 'EN',
       navDemo: 'Demo',
       navDemoExamples: 'Example files',
-      navDemoTry: 'Open a file',
+      navDemoTry: 'Open Web App',
     },
   };
 

@@ -1,4 +1,5 @@
 import { renameWorkspaceEntryState } from '../workspace/workspaceEntryRenameState';
+import { normalizeThemeStyle } from './appStateConstants';
 import { createInitialState, normalizePathKey, type AppState, type Action } from './appStateModel';
 import type { MdFile, RecentWorkspace } from '../types';
 import {
@@ -95,36 +96,25 @@ export function reducer(
       const nextWorkspaceKey = getWorkspaceScopeKey(action.workspacePath, action.workspaceName);
       const currentWorkspaceKey = getWorkspaceScopeKey(state.workspacePath, state.workspaceName);
       const workspaceChanged = nextWorkspaceKey !== currentWorkspaceKey;
+      const isClearedWorkspace = !action.workspaceName && (!action.fileList || action.fileList.length === 0);
+      const shouldResetWorkspaceContent = workspaceChanged || isClearedWorkspace;
       const restoredContentTabs = action.contentTabs
         ? refreshContentTabMetadata(action.contentTabs, action.fileList)
-        : workspaceChanged ? [] : refreshContentTabMetadata(state.contentTabs, action.fileList);
-      const reconciledScopeFocus = reconcileScopeFocusSetting({
-        scopeFocus: state.settings.scopeFocus,
-        scopeKey: nextWorkspaceKey,
-        previousFileList: state.fileList,
-        nextFileList: action.fileList,
-        previousTree: state.tree,
-        includeNewFiles: !workspaceChanged && state.fileList.length > 0,
-      });
-      const reconciledSearchScopeFocus = reconcileScopeFocusSetting({
-        scopeFocus: state.settings.searchScopeFocus,
-        scopeKey: nextWorkspaceKey,
-        previousFileList: state.fileList,
-        nextFileList: action.fileList,
-        previousTree: state.tree,
-        includeNewFiles: !workspaceChanged && state.fileList.length > 0,
-      });
+        : shouldResetWorkspaceContent ? [] : refreshContentTabMetadata(state.contentTabs, action.fileList);
+      const reconcileBase = { scopeKey: nextWorkspaceKey, previousFileList: state.fileList, nextFileList: action.fileList, previousTree: state.tree, includeNewFiles: !workspaceChanged && state.fileList.length > 0 };
+      const reconciledScopeFocus = reconcileScopeFocusSetting({ ...reconcileBase, scopeFocus: state.settings.scopeFocus });
+      const reconciledSearchScopeFocus = reconcileScopeFocusSetting({ ...reconcileBase, scopeFocus: state.settings.searchScopeFocus });
       return {
         ...state,
         fileList: action.fileList,
         tree: action.tree,
         theme: state.hasThemePreference ? state.theme : action.theme,
-        themeStyle: state.hasThemeStylePreference ? state.themeStyle : action.themeStyle,
+        themeStyle: normalizeThemeStyle(state.hasThemeStylePreference ? state.themeStyle : action.themeStyle),
         defaultExpanded: action.defaultExpanded,
         workspaceName: action.workspaceName,
         workspacePath: action.workspacePath,
         markdownSource: null,
-        currentHtmlPreviewOverride: workspaceChanged ? undefined : state.currentHtmlPreviewOverride,
+        currentHtmlPreviewOverride: shouldResetWorkspaceContent ? undefined : state.currentHtmlPreviewOverride,
         previewInfo: null,
         settings: {
           ...state.settings,
@@ -146,9 +136,15 @@ export function reducer(
         contentTabs: restoredContentTabs,
         activeContentTabPath: action.activeContentTabPath !== undefined
           ? action.activeContentTabPath
-          : workspaceChanged ? null : state.activeContentTabPath,
-        documentSessions: workspaceChanged ? retainDirtyDocumentSessions(state.documentSessions) : state.documentSessions,
-        documentRenderRevisions: workspaceChanged ? {} : state.documentRenderRevisions,
+          : shouldResetWorkspaceContent ? null : state.activeContentTabPath,
+        currentFile: isClearedWorkspace || (workspaceChanged && !action.workspaceName) ? null : state.currentFile,
+        contentHtml: isClearedWorkspace || (workspaceChanged && !action.workspaceName) ? '' : state.contentHtml,
+        sourceDocumentText: isClearedWorkspace || (workspaceChanged && !action.workspaceName) ? null : state.sourceDocumentText,
+        toc: isClearedWorkspace || (workspaceChanged && !action.workspaceName) ? [] : state.toc,
+        frontmatter: isClearedWorkspace || (workspaceChanged && !action.workspaceName) ? {} : state.frontmatter,
+        relativePath: isClearedWorkspace || (workspaceChanged && !action.workspaceName) ? '' : state.relativePath,
+        documentSessions: shouldResetWorkspaceContent ? retainDirtyDocumentSessions(state.documentSessions) : state.documentSessions,
+        documentRenderRevisions: shouldResetWorkspaceContent ? {} : state.documentRenderRevisions,
         focusMode: false,
         sidebarActiveTab: 'files',
       };

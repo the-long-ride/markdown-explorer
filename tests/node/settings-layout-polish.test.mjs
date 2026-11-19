@@ -122,6 +122,6 @@ test('Theme Style menus attach portal positioning to every trigger and cap lists
 
 test('settings tooltip layers remain above settings dropdown portals and edge controls align inward', async () => {
   const css = await read('ui/src/styles/global/global-switch-tooltip-diff.css');
-  assert.match(css, /settings-card--settings[\s\S]*?tooltip-text[\s\S]*?z-index:\s*10000050/);
+  assert.match(css, /settings-card--settings[\s\S]*?tooltip-text[\s\S]*?z-index:\s*(?:10000050|var\(--z-tooltip\))/);
   assert.match(css, /settings-navigation__version[\s\S]*?tooltip-text/);
 });

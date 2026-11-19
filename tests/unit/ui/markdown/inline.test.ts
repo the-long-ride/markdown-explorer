@@ -120,6 +120,16 @@ describe('markdown/inline', () => {
       expect(result).toContain('Nav.go');
     });
 
+    it('renders internal .mdx and .markdown links with Nav.go', () => {
+      const result = renderInline('[MDX](./test-interactive.mdx#top)');
+      expect(result).toContain('Nav.go');
+      expect(result).toContain('mdn-link--internal');
+
+      const external = renderInline('[Remote](https://example.com/demo.mdx)');
+      expect(external).toContain('target="_blank"');
+      expect(external).not.toContain('Nav.go');
+    });
+
     it('renders YouTube video links as embed', () => {
       const result = renderInline('[Watch](https://www.youtube.com/watch?v=abc123)');
       expect(result).toContain('mdn-video-wrap--embed');

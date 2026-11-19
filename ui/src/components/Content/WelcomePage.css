@@ -1,5 +1,6 @@
 @import './WelcomePageOverview.css';
 @import './WelcomePageSupport.css';
+@import './WelcomeCommandDeck.css';
 
 .tips-use-cases {
   display: flex;

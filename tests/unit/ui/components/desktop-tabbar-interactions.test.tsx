@@ -190,10 +190,10 @@ vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
 });
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, tooltip, icon, children, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
-    <button onClick={onClick} aria-label={tooltip} data-tooltip={tooltip} {...props}>
+  TooltipButton: ({ as: Comp = 'button', onClick, tooltip, icon, children, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, portalTooltip: _portalTooltip, disabled, ...props }: any) => (
+    <Comp onClick={onClick} disabled={Comp === 'button' ? disabled : undefined} aria-label={tooltip} data-tooltip={tooltip} {...props}>
       {icon}{children}
-    </button>
+    </Comp>
   ),
 }));
 
@@ -604,5 +604,16 @@ describe('DesktopTabBar interactions', () => {
     fireEvent.click(container.querySelector('.window-control-btn--close')!);
     expect(guardUnsavedChanges).not.toHaveBeenCalled();
     expect(mockPostMessage).toHaveBeenCalledWith({ command: 'window-close' });
+  });
+
+  it('renders WebDemoNavActions instead of window controls in web runtime', () => {
+    (window as any).__webBus = new EventTarget();
+    try {
+      const { container } = renderTabBar();
+      expect(screen.getByTestId('web-demo-nav')).toBeInTheDocument();
+      expect(container.querySelector('.desktop-tabbar__window-controls')).toBeNull();
+    } finally {
+      delete (window as any).__webBus;
+    }
   });
 });

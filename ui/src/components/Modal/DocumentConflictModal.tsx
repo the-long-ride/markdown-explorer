@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { DocumentConflict } from '../../editor/documentSession';
 import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
+import { useDialogKeyboard } from '../../hooks/useDialogKeyboard';
 
 interface DocumentConflictModalProps {
   readonly fileName: string;
@@ -9,6 +10,8 @@ interface DocumentConflictModalProps {
   readonly onReload: () => void;
   readonly onKeepMine: () => void;
   readonly onCompare: () => void;
+  readonly onClose?: () => void;
+  readonly onCancel?: () => void;
 }
 
 interface DocumentConflictBannerProps {
@@ -28,10 +31,20 @@ export function DocumentConflictModal({
   onReload,
   onKeepMine,
   onCompare,
+  onClose,
+  onCancel,
 }: DocumentConflictModalProps) {
   const t = getEditorUiTranslations(language);
   const dialogRef = useRef<HTMLDivElement>(null);
   const compareRef = useRef<HTMLButtonElement>(null);
+
+  useDialogKeyboard({
+    open: true,
+    onPrimary: onCompare,
+    primaryRef: compareRef,
+    onClose,
+    onCancel,
+  });
 
   useEffect(() => {
     const trigger = document.activeElement as HTMLElement | null;

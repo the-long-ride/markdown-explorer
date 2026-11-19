@@ -9,7 +9,6 @@ import { createRoot } from 'react-dom/client';
 import { PlatformProvider } from './contexts/PlatformContext';
 import { createVsCodeBridge } from './platform/vscode';
 import { createElectronBridge } from './platform/electron';
-import { createChromeBridge } from './platform/chrome';
 import { createWebBridge } from './platform/web';
 
 // Lazy-load the full application shell (providers + App + all components).
@@ -47,17 +46,12 @@ export function detectBridge(win: any = window) {
     document.body.classList.add('is-desktop', 'is-electron');
     return createElectronBridge();
   }
-// Chromium Extension provides window.__chromeExtBus
-  if (typeof win.__chromeExtBus !== 'undefined') {
-    document.body.classList.add('is-chrome-ext');
-    return createChromeBridge();
-  }
-  // Web demo provides window.__webDemoBus
-  if (typeof win.__webDemoBus !== 'undefined') {
-    document.body.classList.add('is-web-demo');
+  // Web runtime provides window.__webBus
+  if (typeof win.__webBus !== 'undefined') {
+    document.body.classList.add('is-web');
     return createWebBridge();
   }
-  throw new Error('Unknown platform. Expected VS Code webview, Electron, Chromium Extension, or Web Demo.');
+  throw new Error('Unknown platform. Expected VS Code webview, Electron, Tauri, or Web.');
 }
 
 const bridge = detectBridge();

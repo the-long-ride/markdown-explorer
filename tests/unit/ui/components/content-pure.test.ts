@@ -63,6 +63,11 @@ describe('Content pure functions', () => {
       expect(isWorkspaceNavigationHref('tel:+1234')).toBe(false);
     });
 
+    it('returns true for bare relative workspace paths', () => {
+      expect(isWorkspaceNavigationHref('guide.md')).toBe(true);
+      expect(isWorkspaceNavigationHref('docs/sub/guide.mdx#top')).toBe(true);
+    });
+
     it('handles whitespace around href', () => {
       expect(isWorkspaceNavigationHref('  /path  ')).toBe(true);
     });

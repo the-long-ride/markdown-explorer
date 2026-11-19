@@ -8,7 +8,7 @@ export interface UpdateState {
   readonly error?: string;
 }
 
-export type AppRuntime = 'desktop' | 'vscode' | 'chrome' | 'tauri';
+export type AppRuntime = 'desktop' | 'vscode' | 'web' | 'tauri';
 export type HostPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
 export type WorkspaceUnavailableReason = 'missing' | 'locked';
 export type ShellLocationMode = 'open-directory' | 'reveal-file' | 'open-parent-directory';
@@ -24,6 +24,7 @@ export type {
   DesktopViewMode,
   PersistedState,
   PetThemeStyle,
+  TableColumnAlignment,
   ThemeMode,
   ThemeStyle,
 } from '../themeTypes';

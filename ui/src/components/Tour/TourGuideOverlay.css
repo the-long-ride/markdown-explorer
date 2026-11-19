@@ -1,0 +1,311 @@
+.tour-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-search-overlay);
+  pointer-events: auto;
+  overflow: hidden;
+  font-family: var(--font-ui);
+}
+
+.tour-guide-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 18, 0.25);
+  cursor: pointer;
+}
+
+.tour-guide-spotlight {
+  position: absolute;
+  top: var(--tour-spot-top, 50%);
+  left: var(--tour-spot-left, 50%);
+  width: var(--tour-spot-width, 0px);
+  height: var(--tour-spot-height, 0px);
+  box-shadow: 0 0 0 9999px rgba(8, 10, 18, 0.64), 0 0 0 2px var(--accent), 0 0 24px var(--accent-dim);
+  border-radius: var(--r-lg, 12px);
+  transition: opacity 0.22s ease, box-shadow 0.22s ease;
+  pointer-events: none;
+}
+
+.tour-guide-overlay[data-has-target="false"] .tour-guide-backdrop {
+  background: rgba(8, 10, 18, 0.64);
+}
+
+.tour-guide-overlay[data-has-target="false"] .tour-guide-spotlight {
+  opacity: 0;
+}
+
+.tour-guide-card {
+  position: fixed;
+  top: var(--tour-card-top, 50%);
+  left: var(--tour-card-left, 50%);
+  width: min(372px, calc(100vw - 32px));
+  background: var(--bg-e, var(--bg-s));
+  border: 1px solid var(--bd-s);
+  border-radius: var(--r-lg, 12px);
+  box-shadow: var(--sh-lg, 0 18px 42px rgba(0, 0, 0, 0.38)), 0 0 0 1px var(--accent-dim);
+  padding: 18px 20px;
+  z-index: calc(var(--z-tooltip) - 1);
+  pointer-events: auto;
+  color: var(--tx);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+}
+
+.tour-guide-overlay[data-has-target="false"] .tour-guide-card {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tour-guide-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tour-guide-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour-guide-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: var(--r-sm, var(--r, 4px));
+  background: var(--accent-dim);
+  color: var(--accent-text);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.tour-guide-progress-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}
+
+.tour-guide-skip-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--tx3);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r, 6px);
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.tour-guide-skip-btn:hover {
+  color: var(--tx);
+  background: var(--bg-h);
+  border-color: var(--bd-s);
+}
+
+.tour-guide-title {
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px 0;
+  color: var(--tx);
+}
+
+.tour-guide-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--tx2);
+  margin: 0 0 16px 0;
+}
+
+.tour-guide-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bd);
+}
+
+.tour-guide-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-guide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-sm, var(--r, 4px));
+  border: none;
+  background: var(--bd-s);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.tour-guide-dot:hover {
+  background: var(--tx3);
+}
+
+.tour-guide-dot--active {
+  width: 20px;
+  background: var(--accent);
+}
+
+.tour-guide-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour-guide-btn {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 650;
+  border-radius: var(--r, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tour-guide-btn--secondary {
+  background: var(--bg-s);
+  border: 1px solid var(--bd-s);
+  color: var(--tx2);
+}
+
+.tour-guide-btn--secondary:hover:not(:disabled) {
+  color: var(--tx);
+  background: var(--bg-h);
+  border-color: var(--accent);
+}
+
+.tour-guide-btn--secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tour-guide-btn--primary {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-ink, #ffffff);
+  box-shadow: 0 2px 8px var(--accent-dim);
+}
+
+.tour-guide-btn--primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+/* Cyberpunk 6-Sided Closed-Border Cut-Corner Geometry */
+:root[data-theme][data-theme-style="cyberpunk"] .tour-guide-spotlight {
+  border-radius: 0;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .tour-guide-card {
+  --cp-bg: var(--bg-e, var(--bg-s));
+  --cp-bd: var(--accent);
+  --cp-cut-top: 14px;
+  --cp-cut-bottom: 12px;
+  border: 0 !important;
+  outline: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cp-cut-top)) 0,
+    100% var(--cp-cut-top),
+    100% 100%,
+    var(--cp-cut-bottom) 100%,
+    0 calc(100% - var(--cp-cut-bottom))
+  );
+  filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 1px var(--accent));
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1.5px no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) bottom right / 1.5px calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) bottom right / calc(100% - var(--cp-cut-bottom)) 1.5px no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1.5px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(
+      225deg,
+      transparent calc(var(--cp-cut-top) * 0.7071 - 0.2px),
+      var(--cp-bd) calc(var(--cp-cut-top) * 0.7071),
+      var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 1.06px),
+      var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 1.25px),
+      var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 1.25px),
+      var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 1.06px),
+      var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071),
+      transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.2px)
+    ) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :where(.tour-guide-badge, .tour-guide-btn, .tour-guide-skip-btn:hover) {
+  --cp-bg: var(--bg-s);
+  --cp-bd: var(--bd-x);
+  --cp-cut-top: 7px;
+  --cp-cut-bottom: 5px;
+  border: 0 !important;
+  outline: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cp-cut-top)) 0,
+    100% var(--cp-cut-top),
+    100% 100%,
+    var(--cp-cut-bottom) 100%,
+    0 calc(100% - var(--cp-cut-bottom))
+  );
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) bottom right / 1px calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) bottom right / calc(100% - var(--cp-cut-bottom)) 1px no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(
+      225deg,
+      transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px),
+      var(--cp-bd) calc(var(--cp-cut-top) * 0.7071),
+      var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px),
+      var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px),
+      var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px),
+      var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px),
+      var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071),
+      transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)
+    ) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .tour-guide-badge {
+  --cp-bg: var(--accent-dim);
+  --cp-bd: var(--accent);
+  --cp-cut-top: 6px;
+  --cp-cut-bottom: 4px;
+  color: var(--accent-text) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .tour-guide-btn--secondary:hover:not(:disabled) {
+  --cp-bg: var(--bg-h);
+  --cp-bd: var(--accent);
+  color: var(--tx) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .tour-guide-btn--primary {
+  --cp-bg: var(--primary-fill);
+  --cp-bd: var(--primary-edge);
+  color: var(--accent-ink) !important;
+  font-weight: 700;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .tour-guide-btn--primary:hover {
+  --cp-bg: var(--primary-fill-hover);
+  --cp-bd: var(--primary-edge);
+  color: var(--accent-ink) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .tour-guide-dot {
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 2px) 0, 100% 2px, 100% 100%, 2px 100%, 0 calc(100% - 2px));
+}

@@ -1,0 +1,463 @@
+/* =============================================================================
+   components/Content/WelcomeCommandDeck.css — Responsive Split Command Deck
+   Left Column: Hero Identity + Minimized Links + Ecosystem Repos
+   Right Column: Launchpad Dock + Discovery Workbench
+   ============================================================================= */
+
+/* 1. Main Container & Responsive Split Grid */
+.welcome-container {
+  max-width: 1380px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 28px 48px;
+  box-sizing: border-box;
+}
+
+.welcome-animate-wrapper {
+  display: grid;
+  grid-template-columns: 408px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+/* 2. Left Column — Stationary Hero & Open-Source Ecosystem */
+.welcome-command-hero {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  padding: 0 6px 20px 0;
+  display: block;
+  text-align: left;
+  margin-bottom: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  min-width: 0;
+}
+
+.welcome-command-hero::-webkit-scrollbar {
+  width: 4px;
+}
+
+.welcome-command-hero::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.welcome-command-hero::-webkit-scrollbar-thumb {
+  background: var(--bd-s);
+  border-radius: var(--r-sm, var(--r, 4px));
+}
+
+.welcome-command-hero__main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  text-align: left;
+}
+
+.welcome-command-hero .hero-title {
+  text-align: left;
+  font-size: 1.85rem;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.welcome-command-hero .hero-subtitle {
+  text-align: left;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.welcome-command-hero .hero-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 0.81rem;
+  line-height: 1.5;
+  gap: 3px;
+  width: 100%;
+}
+.welcome-command-hero .hero-meta__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.welcome-command-hero .hero-meta__dot {
+  color: var(--tx3);
+  font-size: 0.75rem;
+  margin: 0 1px;
+}
+
+.welcome-command-hero .homepage-link-container {
+  justify-content: flex-start;
+  margin-top: 2px;
+  gap: 8px;
+  width: 100%;
+}
+
+.welcome-command-hero .homepage-link--compact {
+  padding: 5px 11px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--r-md, 8px);
+  gap: 6px;
+}
+
+.welcome-command-hero .desktop-recommendation {
+  text-align: left;
+  font-size: 0.8rem;
+  margin-top: 0;
+}
+
+/* Tour Trigger Button */
+.welcome-tour-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: var(--r-md, 8px);
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-s));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--bd-s));
+  color: var(--tx);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease, border-color 0.18s ease;
+  width: auto;
+}
+
+.welcome-tour-trigger-btn:hover {
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg-s));
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.welcome-tour-trigger-btn__icon { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
+.welcome-tour-trigger-btn__label { font-weight: 700; color: var(--tx); }
+.welcome-tour-trigger-btn__badge {
+  font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: var(--r-sm, var(--r, 4px));
+  background: var(--accent); color: var(--accent-ink, #ffffff); letter-spacing: 0.02em; white-space: nowrap;
+}
+
+/* Support Banner in Left Column */
+.welcome-command-hero .hero-support-banner {
+  margin: 6px 0 0; width: 100%; max-width: 100%; padding: 14px 16px;
+  flex-direction: column; align-items: stretch; gap: 12px; box-sizing: border-box;
+  background: color-mix(in srgb, var(--bg-s) 88%, transparent);
+  border: 1px solid var(--bd-s);
+  border-radius: var(--r-lg, 12px);
+}
+.welcome-command-hero .hero-support-banner__content {
+  display: flex; align-items: flex-start; text-align: left; gap: 10px;
+}
+.welcome-command-hero .hero-support-banner__icon {
+  margin-top: 2px; flex-shrink: 0; color: #f43f5e;
+}
+.welcome-command-hero .hero-support-banner__text {
+  font-size: 0.82rem; line-height: 1.5; color: var(--tx2);
+}
+.welcome-command-hero .hero-support-banner__actions {
+  width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; justify-content: stretch;
+}
+.welcome-command-hero .hero-support-banner__btn {
+  justify-content: center; width: 100%; box-sizing: border-box; padding: 7px 12px; font-size: 0.8rem; font-weight: 700;
+}
+
+/* Creator Open-Source Ecosystem Section */
+.welcome-ecosystem {
+  width: 100%; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--bd);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.welcome-ecosystem__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.welcome-ecosystem__toggle {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; margin-left: -8px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-sm, 6px);
+  color: var(--tx2); font-family: inherit; cursor: pointer; transition: all 0.15s ease;
+}
+.welcome-ecosystem__toggle:hover { color: var(--tx); background: var(--bg-h); border-color: var(--bd-s); }
+.welcome-ecosystem__chevron { color: var(--tx3); transition: transform 0.18s ease; flex-shrink: 0; }
+.welcome-ecosystem__chevron.is-open { transform: rotate(90deg); color: var(--accent); }
+.welcome-ecosystem__title {
+  font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: inherit;
+}
+.welcome-ecosystem__count {
+  font-size: 0.66rem; font-weight: 700; padding: 1px 6px; border-radius: var(--r-sm, var(--r, 4px));
+  background: var(--bg-e, var(--bg-s)); border: 1px solid var(--bd-s); color: var(--tx3);
+}
+.welcome-ecosystem__author {
+  font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; color: var(--accent-text);
+  text-decoration: none; transition: opacity 0.15s ease;
+}
+.welcome-ecosystem__author:hover { text-decoration: underline; opacity: 0.9; }
+.welcome-ecosystem__list { display: grid; grid-template-columns: 1fr; gap: 8px; }
+
+.welcome-ecosystem__item {
+  display: flex; flex-direction: column; gap: 6px; padding: 10px 12px;
+  background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-md, 8px);
+  text-decoration: none;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease, background 0.18s ease;
+}
+.welcome-ecosystem__item:hover { background: var(--bg-h); border-color: var(--accent); transform: translateY(-1px); }
+.welcome-ecosystem__item-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.welcome-ecosystem__item-name {
+  font-family: var(--font-mono); font-size: 0.83rem; font-weight: 700; color: var(--tx); white-space: nowrap;
+}
+.welcome-ecosystem__item-tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+}
+.welcome-ecosystem__item-tag {
+  font-size: 0.66rem; font-weight: 700; padding: 2px 7px; border-radius: var(--r-sm, var(--r, 4px));
+  background: var(--accent-dim); color: var(--accent-text); white-space: nowrap;
+}
+.welcome-ecosystem__item-arrow {
+  width: 13px; height: 13px; margin-left: auto; color: var(--tx3); flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+.welcome-ecosystem__item:hover .welcome-ecosystem__item-arrow { color: var(--accent); transform: translateX(2px); }
+.welcome-ecosystem__item-desc { margin: 0; font-size: 0.77rem; line-height: 1.42; color: var(--tx2); }
+
+/* 3. Right Column — Command Deck Stack (Launchpad + Workbench) */
+.welcome-command-deck { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+
+/* 4. Horizontal Launch Bar */
+.welcome-launchpad {
+  position: static; display: flex; flex-direction: column; gap: 12px; padding: 14px 18px;
+  background: var(--bg-s); border: 1px solid var(--bd-s); border-radius: var(--r-lg, 12px);
+  box-shadow: var(--sh-sm); width: 100%; box-sizing: border-box;
+}
+.welcome-launchpad__bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+.welcome-launchpad__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.welcome-launchpad__workspace-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-e, var(--bg-s)));
+  border: 1px solid var(--bd-s);
+  border-radius: var(--r-md, 8px);
+  user-select: none;
+  max-width: 100%;
+}
+.welcome-launchpad__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tx3);
+  opacity: 0.55;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.welcome-launchpad__status-dot.is-active {
+  background: var(--accent);
+  opacity: 1;
+  box-shadow: 0 0 6px var(--accent);
+}
+.welcome-launchpad__workspace-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--tx);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.welcome-launchpad__workspace-empty {
+  font-size: 0.81rem;
+  color: var(--tx2);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.welcome-launchpad__workspace-meta { font-size: 0.74rem; color: var(--tx3); font-weight: 500; }
+
+.welcome-launchpad__primary-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.welcome-launchpad__action-btn {
+  width: auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 15px; border-radius: var(--r-md, 8px); font-family: inherit;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.18s ease;
+}
+.welcome-launchpad__action-btn--primary {
+  background: var(--accent); color: var(--accent-ink, #ffffff);
+  border: 1px solid var(--accent); box-shadow: 0 2px 8px var(--accent-dim);
+}
+.welcome-launchpad__action-btn--primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.welcome-launchpad__action-btn--secondary { background: var(--bg-e, var(--bg-s)); color: var(--tx2); border: 1px solid var(--bd-s); }
+.welcome-launchpad__action-btn--secondary:hover { color: var(--tx); background: var(--bg-h); border-color: var(--accent); transform: translateY(-1px); }
+.welcome-launchpad__btn-icon { width: 15px; height: 15px; flex-shrink: 0; }
+.welcome-launchpad__quick-grid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.welcome-launchpad__quick-btn,
+.welcome-launchpad__tour-btn {
+  display: inline-flex; flex-direction: row; align-items: center; gap: 7px; padding: 7px 12px; width: auto;
+  background: var(--bg-e, var(--bg-s)); border: 1px solid var(--bd-s); border-radius: var(--r-md, 8px);
+  color: var(--tx2); font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  transition: all 0.18s ease; text-align: left;
+}
+.welcome-launchpad__quick-btn:hover,
+.welcome-launchpad__tour-btn:hover { color: var(--tx); background: var(--bg-h); border-color: var(--accent); transform: translateY(-1px); }
+.welcome-launchpad__tour-btn {
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-e, var(--bg-s)));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--bd-s)); color: var(--tx);
+}
+.welcome-launchpad__quick-icon,
+.welcome-launchpad__tour-icon { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
+
+.welcome-launchpad__section--recents {
+  border-top: 1px solid var(--bd); padding-top: 10px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.welcome-launchpad__section-title {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tx3); white-space: nowrap;
+}
+.welcome-launchpad__recents-list { display: flex; flex-direction: row; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; }
+.welcome-launchpad__recent-item {
+  display: inline-flex; align-items: center; gap: 6px; width: auto; max-width: 220px; padding: 5px 11px;
+  background: var(--bg-e, var(--bg-s)); border: 1px solid var(--bd-s); border-radius: var(--r-md, 8px);
+  color: var(--tx2); font-family: inherit; font-size: 0.78rem; cursor: pointer; transition: all 0.15s ease;
+}
+.welcome-launchpad__recent-item:hover { background: var(--bg-h); border-color: var(--accent); color: var(--tx); transform: translateY(-1px); }
+.welcome-launchpad__recent-icon { width: 13px; height: 13px; color: var(--accent-text); flex-shrink: 0; }
+.welcome-launchpad__recent-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 5. Right-Side Discovery Workbench */
+.welcome-discovery-workbench {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-height: 480px;
+}
+.welcome-discovery-workbench :is(.tabs-bar, .welcome-tabs) {
+  margin: 0 0 6px 0;
+  width: fit-content;
+  max-width: 100%;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-lg, 12px);
+  box-sizing: border-box;
+}
+
+.welcome-discovery-workbench :is(.tab-btn, .welcome-tab) {
+  padding: 6px 13px;
+  font-size: 0.84rem;
+  border-radius: var(--r-md, 8px);
+  white-space: nowrap;
+}
+.features-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.tips-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.privacy-support-container { display: flex; flex-direction: column; gap: 18px; width: 100%; }
+
+/* 6. Responsive Breakpoints */
+@media (max-width: 1040px) {
+  .welcome-animate-wrapper { grid-template-columns: 1fr; gap: 22px; }
+  .welcome-command-hero { position: static; max-height: none; overflow: visible; padding-bottom: 0; }
+  .welcome-command-hero .hero-support-banner { flex-direction: column; align-items: stretch; }
+  .welcome-command-hero .hero-support-banner__actions { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .welcome-ecosystem__list { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+}
+
+@media (max-width: 680px) {
+  .welcome-container { padding: 16px 14px 36px; }
+  .welcome-command-hero .hero-title { white-space: normal; }
+  .welcome-command-hero .hero-support-banner { flex-direction: column; align-items: flex-start; }
+  .welcome-launchpad__header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .welcome-launchpad__bar, .welcome-launchpad__primary-actions { flex-direction: column; align-items: stretch; }
+  .welcome-launchpad__action-btn { width: 100%; }
+  .welcome-launchpad__quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); margin-left: 0; width: 100%; }
+  .welcome-launchpad__quick-btn, .welcome-launchpad__tour-btn { justify-content: center; }
+}
+
+/* 7. Cyberpunk 6-Sided Closed-Border Cut-Corner Geometry */
+:root[data-theme][data-theme-style="cyberpunk"] :where(
+  .welcome-launchpad, .welcome-ecosystem__item, .welcome-launchpad__action-btn,
+  .welcome-launchpad__quick-btn, .welcome-launchpad__tour-btn, .welcome-launchpad__recent-item,
+  .welcome-launchpad__workspace-status, .welcome-tour-trigger-btn,
+  .welcome-tour-trigger-btn__badge, .welcome-ecosystem__item-tag, .welcome-ecosystem__count,
+  .hero-star-banner__count,
+  .tabs-bar, .welcome-tabs, .tab-btn, .welcome-tab
+) {
+  --cp-bg: var(--bg-e, var(--bg-s));
+  --cp-bd: var(--bd-x);
+  --cp-cut-top: 8px;
+  --cp-cut-bottom: 6px;
+  border: 0 !important; outline: none !important; border-radius: 0 !important; box-shadow: none !important;
+  clip-path: polygon(0 0, calc(100% - var(--cp-cut-top)) 0, 100% var(--cp-cut-top), 100% 100%, var(--cp-cut-bottom) 100%, 0 calc(100% - var(--cp-cut-bottom)));
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) bottom right / 1px calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) bottom right / calc(100% - var(--cp-cut-bottom)) 1px no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .welcome-launchpad {
+  --cp-bg: color-mix(in srgb, var(--bg-s) 78%, transparent);
+  --cp-bd: var(--bd-s); --cp-cut-top: 12px; --cp-cut-bottom: 10px; backdrop-filter: blur(4px);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .welcome-ecosystem__item {
+  --cp-bg: color-mix(in srgb, var(--bg-s) 82%, transparent); --cp-bd: var(--bd-s);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .welcome-ecosystem__item:hover {
+  --cp-bg: transparent !important; --cp-bd: var(--deco-cyan) !important;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--deco-cyan) 55%, transparent));
+}
+:root[data-theme="light"][data-theme-style="cyberpunk"] .welcome-ecosystem__item:hover {
+  --cp-bd: var(--deco-rose) !important;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--deco-rose) 45%, transparent));
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.welcome-launchpad__action-btn--primary, .welcome-tour-trigger-btn__badge) {
+  --cp-bg: var(--primary-fill); --cp-bd: var(--primary-edge); color: var(--accent-ink) !important; font-weight: 700;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .welcome-launchpad__action-btn--primary:hover {
+  --cp-bg: var(--primary-fill-hover); --cp-bd: var(--primary-edge); color: var(--accent-ink) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .welcome-launchpad__action-btn--secondary, .welcome-launchpad__quick-btn,
+  .welcome-launchpad__tour-btn, .welcome-launchpad__recent-item, .welcome-tour-trigger-btn
+):hover {
+  --cp-bg: var(--bg-h); --cp-bd: var(--accent); color: var(--tx) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.welcome-tour-trigger-btn__badge, .welcome-ecosystem__item-tag, .welcome-ecosystem__count, .hero-star-banner__count) {
+  --cp-cut-top: 5px; --cp-cut-bottom: 4px;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .hero-star-banner__count {
+  --cp-bg: rgba(0, 0, 0, 0.22);
+  --cp-bd: rgba(0, 0, 0, 0.45);
+  color: #000000 !important;
+  font-weight: 800;
+  padding: 1px 7px;
+  margin-left: 4px;
+}

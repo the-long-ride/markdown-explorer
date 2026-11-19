@@ -2,12 +2,14 @@
 // App.tsx — Root component
 // =============================================================================
 
-import { useState, useCallback, useRef, lazy, Suspense } from 'react';
+import { useState, useCallback, useRef, lazy, Suspense, useEffect, useMemo } from 'react';
 import { useAppState } from './contexts/AppStateContext';
 import { usePlatform } from './contexts/PlatformContext';
 import { useNavigation } from './contexts/NavigationContext';
 import { getTranslations } from './contexts/translations';
-import { TERMS_ACCEPTED_STORAGE_KEY, THEME_ONBOARDING_COMPLETE_STORAGE_KEY } from './constants/storage';
+import { TERMS_ACCEPTED_STORAGE_KEY, THEME_ONBOARDING_COMPLETE_STORAGE_KEY, USER_TOUR_COMPLETE_STORAGE_KEY } from './constants/storage';
+import { requestStartUserTour } from './components/Tour/tourEvents';
+import { executeThemeTransition } from './utils/themeTransition';
 
 const TermsModal = lazy(() => import('./components/Modal/TermsModal').then(m => ({ default: m.TermsModal })));
 import { TooltipButton } from './components/shared/TooltipButton';
@@ -62,66 +64,40 @@ export function App() {
   const [sidebarCursorMode, setSidebarCursorMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isDesktop = typeof (window as any).electronAPI !== 'undefined'; const isChrome = typeof (window as any).__chromeExtBus !== 'undefined';
-  const isWebFileMode = typeof (window as any).__webDemoBus !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'file';
-  const isDesktopLike = isDesktop || isChrome;
-  const isTabView = isDesktop && state.settings.desktopViewMode === 'tabs';
+  const isDesktop = typeof (window as any).electronAPI !== 'undefined';
+  const isWeb = typeof (window as any).__webBus !== 'undefined';
+  const isWebFileMode = isWeb && new URLSearchParams(window.location.search).get('mode')?.toLowerCase() !== 'test';
+  const isDesktopLike = isDesktop;
+  const isTabView = (isDesktop || isWeb) && state.settings.desktopViewMode === 'tabs';
   const updateCheck = useUpdateCheck({
     currentVersion: state.appVersion,
     runtime: state.appRuntime,
     hostPlatform: state.hostPlatform,
     hostArch: state.hostArch,
+    delayMs: 800,
   });
-  const currentSearchShortcutLabel = formatShortcutLabel(
-    isDesktopLike ? getEnabledShortcut(state.settings, 'searchCurrent') ?? '' : 'Ctrl+K',
-  );
-  const allTabsSearchShortcutLabel = formatShortcutLabel(
-    getEnabledShortcut(state.settings, 'searchAllTabs') ?? '',
-  );
-  const findShortcutLabel = formatShortcutLabel(
-    getEnabledShortcut(state.settings, 'findCurrentFile') ?? (isDesktopLike ? '' : 'K'),
-  );
-  const isDark =
-    state.theme === 'dark' ||
-    (state.theme === 'auto' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const currentSearchShortcutLabel = formatShortcutLabel(isDesktopLike ? getEnabledShortcut(state.settings, 'searchCurrent') ?? '' : 'Ctrl+K');
+  const allTabsSearchShortcutLabel = formatShortcutLabel(getEnabledShortcut(state.settings, 'searchAllTabs') ?? '');
+  const findShortcutLabel = formatShortcutLabel(getEnabledShortcut(state.settings, 'findCurrentFile') ?? (isDesktopLike ? '' : 'K'));
+  const isDark = state.theme === 'dark' || (state.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const {
-    activeTabId,
-    tabs,
-    workspaceAliases,
-    activateTab,
-    createNewWorkspaceTab,
-    prepareWorkspaceOpen,
-    reopenUnavailableWorkspace,
-    openDroppedPath,
-    pendingDroppedPath,
-    setPendingDroppedPath,
-    confirmSwitchWorkspace,
-    closeTab,
-    reorderTabs,
-    closeTabsToRight,
-    closeOtherTabs,
-    closeAllTabs,
-    cancelCurrentWorkspaceScan,
-    updateTabAlias,
-    updateWorkspaceAlias,
-    crossTabSearchItems,
-    isIndexingAcrossTabs,
-  } = useDesktopTabs({
-    state,
-    dispatch,
-    bridge,
-    isDesktop,
-    isTabView,
-    setNavigationScope,
-    guardWorkspaceLeave,
-  });
+    activeTabId, tabs, workspaceAliases, activateTab, createNewWorkspaceTab,
+    prepareWorkspaceOpen, reopenUnavailableWorkspace, openDroppedPath,
+    pendingDroppedPath, setPendingDroppedPath, confirmSwitchWorkspace,
+    closeTab, reorderTabs, closeTabsToRight, closeOtherTabs, closeAllTabs,
+    cancelCurrentWorkspaceScan, updateTabAlias, updateWorkspaceAlias,
+    crossTabSearchItems, isIndexingAcrossTabs,
+  } = useDesktopTabs({ state, dispatch, bridge, isDesktop: isDesktop || isWebFileMode, isTabView, setNavigationScope, guardWorkspaceLeave });
+  const openDroppedWebFiles = useCallback((files: File[]) => {
+    guardWorkspaceLeave(async () => {
+      const operation = prepareWorkspaceOpen();
+      const filePayloads = await Promise.all(files.map(async (f) => ({ name: f.name, content: await f.text() })));
+      (bridge as any).postMessage({ command: 'openDroppedFiles', files: filePayloads, ...operation });
+    });
+  }, [bridge, guardWorkspaceLeave, prepareWorkspaceOpen]);
+
   const { isDragging } = useFileDropOpen({
-    isDesktop,
-    isChrome,
-    isWebDemo: isWebFileMode,
-    modalOpen,
-    openDroppedPath,
+    isDesktop, isWeb: isWebFileMode, modalOpen, openDroppedPath,
     openDroppedFolder: useCallback((handle: any) => {
       guardWorkspaceLeave(() => {
         const operation = prepareWorkspaceOpen();
@@ -134,13 +110,8 @@ export function App() {
         bridge.postMessage({ command: 'openFileHandle', handle, ...operation });
       });
     }, [bridge, guardWorkspaceLeave, prepareWorkspaceOpen]),
+    openDroppedWebFiles,
   });
-  const openSearch = useCallback((scope: SearchScope = 'current') => {
-    setSearchScope(scope);
-    setFindOpen(false);
-    setSearchOpen(true);
-  }, []);
-
   const closeSearch = useCallback(() => {
     setSearchOpen(false);
   }, []);
@@ -174,6 +145,31 @@ export function App() {
     dispatch,
   });
 
+  const openWorkspaceTabs = useMemo(() => tabs.filter((tab) => tab.kind === 'workspace'), [tabs]);
+  const canOpenAllWorkspacesSearch = isDesktop && isTabView && openWorkspaceTabs.length >= 2;
+  const canUseCrossTabSearch = canOpenAllWorkspacesSearch || Boolean(state.workspaceName) || openWorkspaceTabs.length === 1;
+
+  const openSearch = useCallback((scope: SearchScope = 'current') => {
+    if (scope === 'all-tabs' && !canOpenAllWorkspacesSearch) {
+      if (isTabView && openWorkspaceTabs.length === 1 && activeTabId !== openWorkspaceTabs[0].id) {
+        activateTab(openWorkspaceTabs[0].id);
+      }
+      if (state.workspaceName || openWorkspaceTabs.length === 1) {
+        openSidebarSearch();
+      }
+      return;
+    }
+    setSearchScope(scope);
+    setFindOpen(false);
+    setSearchOpen(true);
+  }, [activateTab, activeTabId, canOpenAllWorkspacesSearch, isTabView, openSidebarSearch, openWorkspaceTabs, state.workspaceName]);
+
+  useEffect(() => {
+    if (searchOpen && searchScope === 'all-tabs' && !canOpenAllWorkspacesSearch) {
+      setSearchOpen(false);
+    }
+  }, [canOpenAllWorkspacesSearch, searchOpen, searchScope]);
+
   const { activeBookmarkWorkspaceKey, bookmarkWorkspaces, handleBookmarkNavigate } = useBookmarkNavigation({
     state,
     tabs,
@@ -202,12 +198,17 @@ export function App() {
   }, []);
 
   const handleThemeOnboardingComplete = useCallback(() => {
+    let shouldStartTour = false;
     try {
       localStorage.setItem(THEME_ONBOARDING_COMPLETE_STORAGE_KEY, 'true');
+      shouldStartTour = localStorage.getItem(USER_TOUR_COMPLETE_STORAGE_KEY) !== 'true';
     } catch {
       // Ignore storage failures; the user can still continue.
     }
     setThemeOnboardingComplete(true);
+    if (shouldStartTour) {
+      window.setTimeout(() => requestStartUserTour(), 120);
+    }
   }, []);
 
   const { openExternalUrl, downloadUpdate, scheduleUpdateOnExit, restartAndApplyUpdate, openUpdateChangelog } = useAppUpdateActions({
@@ -219,58 +220,64 @@ export function App() {
     changelogUrl: updateCheck.changelogUrl,
   });
 
-  const updateNotification = useUpdateNotificationState(updateCheck, downloadUpdate);
+  const updateNotification = useUpdateNotificationState(updateCheck, downloadUpdate, {
+    enabled: termsAccepted && !isWeb,
+  });
+
+  const [initialUpdateSettled, setInitialUpdateSettled] = useState(
+    () => updateCheck.status !== 'checking',
+  );
+
+  useEffect(() => {
+    if (updateCheck.status !== 'checking') {
+      setInitialUpdateSettled(true);
+    }
+  }, [updateCheck.status]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialUpdateSettled(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!termsAccepted || !themeOnboardingComplete) return;
+    let shouldStartTour = false;
+    try {
+      shouldStartTour = localStorage.getItem(USER_TOUR_COMPLETE_STORAGE_KEY) !== 'true';
+    } catch {
+      shouldStartTour = false;
+    }
+    if (shouldStartTour) {
+      const timer = setTimeout(() => {
+        requestStartUserTour();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [termsAccepted, themeOnboardingComplete]);
 
   const {
-    themeOnboardingOpen,
-    closeWorkspaceToSelection,
-    closeSidebarCursorMode,
-    expandAll,
-    collapseAll,
-    openSidebarBookmarks,
-    copyCurrentFileContent,
+    themeOnboardingOpen, closeWorkspaceToSelection, closeSidebarCursorMode,
+    expandAll, collapseAll, openSidebarBookmarks, copyCurrentFileContent,
   } = useAppLayoutEffects({
-    state,
-    bridge,
-    dispatch,
-    termsAccepted,
-    themeOnboardingComplete,
-    setSidebarCursorMode,
-    sidebarCursorMode,
-    searchOpen,
-    findOpen,
-    settingsOpen,
-    modalOpen,
-    toggleSidebar,
-    isTabView,
-    createNewWorkspaceTab,
-    setWorkspaceSelectionConfirmOpen,
-    openSidebarSearch,
-    openSearch,
-    closeSearch,
-    openFind,
-    closeFind,
-    setSettingsOpen,
-    activateTab,
-    searchScope,
-    toggleToc,
-    toggleFocusMode,
-    toggleDesktopViewMode,
-    activeHtmlDocument,
+    state, bridge, dispatch, termsAccepted, themeOnboardingComplete,
+    updatePromptOpen: updateNotification.promptOpen, setSidebarCursorMode,
+    sidebarCursorMode, searchOpen, findOpen, settingsOpen, modalOpen, toggleSidebar,
+    isTabView, createNewWorkspaceTab, setWorkspaceSelectionConfirmOpen,
+    openSidebarSearch, openSearch, closeSearch, canUseCrossTabSearch, openFind, closeFind,
+    setSettingsOpen, activateTab, searchScope, toggleToc, toggleFocusMode,
+    toggleDesktopViewMode, activeHtmlDocument,
     onToggleActiveHtmlDocumentPreview: handleToggleActiveHtmlDocumentPreview,
     toggleFullscreen,
   });
 
   useUserManualActions({
-    isTabView,
-    createNewWorkspaceTab,
-    closeWorkspaceToSelection,
-    openSidebarSearch,
-    openSidebarBookmarks,
-    openSettings: useCallback(() => setSettingsOpen(true), []),
+    isTabView, createNewWorkspaceTab, closeWorkspaceToSelection,
+    openSidebarSearch, openSidebarBookmarks, openSettings: useCallback(() => setSettingsOpen(true), []),
   });
 
-  const isAllTabsSearch = isTabView && searchScope === 'all-tabs';
+  const isAllTabsSearch = canOpenAllWorkspacesSearch && searchScope === 'all-tabs';
 
   // Image click → open media modal
   const onImageClick = useCallback((el: HTMLElement) => {
@@ -288,7 +295,7 @@ export function App() {
             <div className="window-controls">
               <TooltipButton
                 className="btn btn--icon window-control-btn"
-                onClick={toggleTheme}
+                onClick={(e) => executeThemeTransition(toggleTheme, { originElement: e.currentTarget, event: e, nextTheme: isDark ? 'light' : 'dark' })}
                 tooltip={isDark ? t.topbar.switchToLightMode : t.topbar.switchToDarkMode}
                 shortcut={getEnabledShortcut(state.settings, 'toggleTheme')}
                 icon={
@@ -311,10 +318,7 @@ export function App() {
                 onClick={() => bridge.postMessage({ command: 'window-maximize' })}
                 tooltip={state.isMaximized ? t.tooltips.restore : t.tooltips.maximize}
                 icon={state.isMaximized ? (
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-                    <path d="M8 8V3h13v13h-5" />
-                    <path d="M3 8h13v13H3z" />
-                  </svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M8 8V3h13v13h-5" /><path d="M3 8h13v13H3z" /></svg>
                 ) : (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
                 )}
@@ -340,20 +344,22 @@ export function App() {
 
   if (!isTabView && (state.isLoading || state.isWorkspaceScanning) && !state.workspaceName) {
     return (
-      <div className="state-screen state-screen--initial-loading">
-        <div className="spinner" />
-        <div className="state-screen__title">
-          {state.loadingLabel || t.ui.loadingDocs}
-        </div>
-        {state.isWorkspaceScanning && (
-          <div className="state-screen__sub">
-            {t.ui.scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(currentLang))}
+      <main className="tab-loading tab-loading--fullscreen">
+        <div className="state-screen state-screen--initial-loading">
+          <div className="spinner" />
+          <div className="state-screen__title">
+            {state.loadingLabel || t.ui.loadingDocs}
           </div>
-        )}
-        {state.loadingDetail && (
-          <div className="state-screen__sub">{state.loadingDetail}</div>
-        )}
-      </div>
+          {state.isWorkspaceScanning && (
+            <div className="state-screen__sub">
+              {t.ui.scanningFiles.replace('{count}', state.scannedFiles.toLocaleString(currentLang))}
+            </div>
+          )}
+          {state.loadingDetail && (
+            <div className="state-screen__sub">{state.loadingDetail}</div>
+          )}
+        </div>
+      </main>
     );
   }
 
@@ -404,6 +410,7 @@ export function App() {
       downloadUpdate={downloadUpdate} scheduleUpdateOnExit={scheduleUpdateOnExit}
       restartAndApplyUpdate={restartAndApplyUpdate} openUpdateChangelog={openUpdateChangelog}
       themeOnboardingOpen={themeOnboardingOpen} handleThemeOnboardingComplete={handleThemeOnboardingComplete}
+      termsAccepted={termsAccepted} initialUpdateSettled={initialUpdateSettled}
       pendingDroppedPath={pendingDroppedPath} setPendingDroppedPath={setPendingDroppedPath} confirmSwitchWorkspace={confirmSwitchWorkspace}
       workspaceSelectionConfirmOpen={workspaceSelectionConfirmOpen} setWorkspaceSelectionConfirmOpen={setWorkspaceSelectionConfirmOpen}
       closeWorkspaceToSelection={closeWorkspaceToSelection}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { InsightsTranslations } from '../../contexts/insightsTranslations';
 import { ensureInsightsUiTranslations, insightsStatusLabel, type InsightsUiTranslations } from '../../contexts/insightsUiTranslations';
 import type { AnalyzedDocument } from '../../insights/analyzeDocument';
@@ -107,17 +107,52 @@ export function GalleryView({ documents, labels: suppliedLabels, probeResource, 
     }
   };
 
+  const probesRef = useRef(probes);
+  probesRef.current = probes;
+
   useEffect(() => {
     if (!probeResource) return;
     let cancelled = false;
-    for (const item of items) {
-      if (item.remote || item.category === 'diagram') continue;
-      void probeResource(item.documentPath, item.target).then(result => {
-        if (cancelled) return;
-        setProbes(current => new Map(current).set(item.key, result));
-      });
+    const unprobed = items.filter(
+      item => !item.remote && item.category !== 'diagram' && !probesRef.current.has(item.key),
+    );
+    if (!unprobed.length) return;
+
+    const CHUNK_SIZE = 16;
+    async function runProbes() {
+      for (let i = 0; i < unprobed.length; i += CHUNK_SIZE) {
+        if (cancelled) break;
+        const chunk = unprobed.slice(i, i + CHUNK_SIZE);
+        const resolved = await Promise.all(
+          chunk.map(async item => {
+            try {
+              const result = await probeResource!(item.documentPath, item.target);
+              return { key: item.key, result };
+            } catch {
+              return null;
+            }
+          }),
+        );
+        if (cancelled) break;
+        const valid = resolved.filter(
+          (entry): entry is { key: string; result: WorkspaceResourceProbeResult } => entry !== null,
+        );
+        if (valid.length > 0) {
+          setProbes(current => {
+            const next = new Map(current);
+            for (const { key, result } of valid) {
+              next.set(key, result);
+            }
+            return next;
+          });
+        }
+      }
     }
-    return () => { cancelled = true; };
+
+    void runProbes();
+    return () => {
+      cancelled = true;
+    };
   }, [items, probeResource]);
 
   const counts = useMemo(() => {
@@ -240,9 +275,9 @@ export function GalleryView({ documents, labels: suppliedLabels, probeResource, 
                   {!item.remote && item.category !== 'diagram' && <span>{probe ? insightsStatusLabel(labels, probe.status) : '…'}</span>}
                   {item.remote && <span>{labels.remoteMedia}</span>}
                 </div>
-                <div className="insights-card__title" title={item.label}>{item.label}</div>
-                <div className="insights-card__target" title={item.target}>{item.target}</div>
-                <div className="insights-card__doc" title={item.documentPath}>
+                <div className="insights-card__title" data-hover-tooltip={item.label}>{item.label}</div>
+                <div className="insights-card__target" data-hover-tooltip={item.target}>{item.target}</div>
+                <div className="insights-card__doc" data-hover-tooltip={item.documentPath}>
                   <span>{docBasename}</span>
                 </div>
                 {item.category === 'image' && (!loaded || !item.remote) && (

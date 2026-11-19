@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { getTranslations } from '../../contexts/translations';
+import { useDialogKeyboard } from '../../hooks/useDialogKeyboard';
 
 interface WorkspaceSelectionConfirmModalProps {
   isOpen: boolean;
@@ -15,15 +16,16 @@ export function WorkspaceSelectionConfirmModal({
 }: WorkspaceSelectionConfirmModalProps) {
   const { state } = useAppState();
   const t = getTranslations(state.settings.language || 'en');
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-      if (event.key === 'Enter') onConfirm();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, onConfirm]);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  useDialogKeyboard({
+    open: isOpen,
+    onClose,
+    onConfirm,
+    cancelRef,
+    primaryRef: confirmRef,
+  });
 
   if (!isOpen) return null;
 
@@ -42,6 +44,7 @@ export function WorkspaceSelectionConfirmModal({
         <div className="workspace-selection-confirm-card__body">{t.workspaceSelection.confirmBody}</div>
         <div className="workspace-selection-confirm-card__actions">
           <button
+            ref={cancelRef}
             type="button"
             className="workspace-selection-confirm-button workspace-selection-confirm-button--outline"
             onClick={onClose}
@@ -49,6 +52,7 @@ export function WorkspaceSelectionConfirmModal({
             {t.workspaceSelection.cancel}
           </button>
           <button
+            ref={confirmRef}
             type="button"
             className="workspace-selection-confirm-button"
             onClick={onConfirm}

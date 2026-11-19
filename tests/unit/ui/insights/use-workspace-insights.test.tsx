@@ -270,4 +270,59 @@ describe('useWorkspaceInsights', () => {
     expect(requests[0].urls).toEqual(['https://example.test']);
     expect(result.current.externalResults.get('https://example.test')?.status).toBe('reachable');
   });
+
+  it('streams batches in chunks of 16 and requests snapshot only on the final batch', async () => {
+    const entries = Array.from({ length: 18 }, (_, i) => ({
+      relativePath: `doc-${i}.md`,
+      canonicalRelativePath: `doc-${i}.md`,
+      kind: 'file' as const,
+      sizeBytes: 10,
+      mtimeMs: 1,
+      extension: '.md',
+    }));
+    const listeners = new Set<(message: any) => void>();
+    const bridge: PlatformBridge = {
+      postMessage(message) {
+        if (message.command === 'scanInsightsWorkspace') queueMicrotask(() => {
+          for (const listener of listeners) listener({
+            command: 'insightsScanBatch', requestId: message.requestId,
+            entries, scannedEntries: entries.length, excludedEntries: 0,
+          });
+          for (const listener of listeners) listener({
+            command: 'insightsScanComplete', requestId: message.requestId,
+            totalEntries: entries.length, excludedEntries: 0, skippedEntries: 0, truncated: false,
+          });
+        });
+        if (message.command === 'readInsightsDocumentSource') queueMicrotask(() => {
+          for (const listener of listeners) listener({
+            command: 'insightsDocumentSourceResult', requestId: message.requestId,
+            relativePath: message.relativePath, status: 'ok', source: `# ${message.relativePath}`, sizeBytes: 10, mtimeMs: 1, contentHash: `hash-${message.relativePath}`,
+          });
+        });
+      },
+      onMessage(handler) { listeners.add(handler); return () => listeners.delete(handler); },
+      getState: () => undefined, setState: () => {}, copyToClipboard: () => {},
+    };
+    const workerApplyOptions: any[] = [];
+    const worker: InsightsWorkerClient = {
+      mode: 'worker',
+      onEvent: () => () => {},
+      initialize: vi.fn(),
+      restoreCachedDocuments: vi.fn(async () => {}),
+      applySourceBatch: vi.fn(async (_documents, _jobId, options) => {
+        workerApplyOptions.push(options);
+      }),
+      applyFsDeltaBatch: vi.fn(async () => {}),
+      setActiveOverlay: vi.fn(async () => {}),
+      clearActiveOverlay: vi.fn(async () => {}),
+      requestSnapshot: vi.fn(async () => {}),
+      cancel: vi.fn(),
+      dispose: vi.fn(),
+    };
+    const { result } = renderHook(() => useWorkspaceInsights({ bridge, workspaceKey: '/workspace', createWorkerClient: () => worker }));
+    await act(async () => { await result.current.open(); });
+    expect(workerApplyOptions).toHaveLength(2);
+    expect(workerApplyOptions[0]).toEqual({ includeSnapshot: false });
+    expect(workerApplyOptions[1]).toEqual({ includeSnapshot: true });
+  });
 });

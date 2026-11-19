@@ -54,10 +54,8 @@ export function renderButton(options: ButtonOptions): string {
   const idAttr = options.id ? ` id="${options.id}"` : '';
   const disabledAttr = options.disabled ? ' disabled' : '';
   const keyDownAttr = options.onKeyDown ? ` onkeydown="${options.onKeyDown}"` : '';
-  const tooltipText = options.tooltip || options.label;
-  const titleText = options.title || tooltipText;
-  const ariaLabel = options.ariaLabel || options.label;
-  const titleAttr = ` title="${escHtml(titleText)}"`;
+  const tooltipText = options.tooltip || options.title || options.label;
+  const ariaLabel = options.ariaLabel || options.title || options.label;
   const ariaAttr = ` aria-label="${escHtml(ariaLabel)}"`;
   const i18nAttr = options.dataI18nKey ? ` data-i18n-key="${escHtml(options.dataI18nKey)}"` : '';
   const copiedAttr = options.copiedLabel ? ` data-copied-label="${escHtml(options.copiedLabel)}"` : '';
@@ -78,7 +76,7 @@ export function renderButton(options: ButtonOptions): string {
     ? (options.iconHtml || '')
     : `${iconHtml}${iconHtml && labelHtml ? ' ' : ''}${labelHtml}`;
 
-  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${keyDownAttr}${disabledAttr}${tooltipPosAttr}${titleAttr}${ariaAttr}${i18nAttr}${copiedAttr}${showCodeAttr}${showPreviewAttr}>
+  return `<button${classAttr}${idAttr} onclick="${options.onClick}"${keyDownAttr}${disabledAttr}${tooltipPosAttr}${ariaAttr}${i18nAttr}${copiedAttr}${showCodeAttr}${showPreviewAttr}>
   ${content}
   <span class="tooltip-text">${escHtml(tooltipText)}</span>
 </button>`;

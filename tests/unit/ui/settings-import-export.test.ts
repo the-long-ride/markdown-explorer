@@ -399,9 +399,12 @@ describe('parseSettingsImport - normalizeSettings branches', () => {
     expect(result.settings.defaultCsvPreview).toBe(false);
   });
 
-  test('fileTabs defaults to false', () => {
+  test('fileTabs defaults to true and preserves explicit false', () => {
     const result = parseSettingsImport(JSON.stringify(makeEnvelope({})), false);
-    expect(result.settings.fileTabs).toBe(false);
+    expect(result.settings.fileTabs).toBe(true);
+
+    const disabled = parseSettingsImport(JSON.stringify(makeEnvelope({ fileTabs: false })), false);
+    expect(disabled.settings.fileTabs).toBe(false);
   });
 
   test('documentConversion defaults to false', () => {

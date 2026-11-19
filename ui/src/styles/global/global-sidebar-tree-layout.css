@@ -45,7 +45,7 @@ body:not(.is-resizing) .sidebar {
   width: 0;
 }
 .sidebar.is-cursor-mode {
-  z-index: 160000;
+  z-index: var(--z-topbar);
   border-right-color: color-mix(in srgb, var(--accent) 52%, var(--bd-s));
   box-shadow:
     14px 0 44px color-mix(in srgb, var(--accent) 34%, transparent),
@@ -320,76 +320,52 @@ body:not(.is-resizing) .sidebar {
   padding-right: 6px;
 }
 .scope-focus-checkbox {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
   margin: 0 0 0 auto;
-  appearance: none;
-  -webkit-appearance: none;
-  display: inline-grid;
-  place-content: center;
-  border: var(--stroke-w) solid color-mix(in srgb, var(--txm) 74%, transparent);
-  border-radius: 999px;
-  background: transparent;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-.scope-focus-checkbox:hover {
-  border-color: var(--tx2);
-}
-.scope-focus-checkbox:checked {
-  border-color: var(--accent);
-  background: radial-gradient(
-    circle at center,
-    var(--accent) 0 3px,
-    transparent 3.5px
-  );
 }
 .scope-focus-checkbox:indeterminate {
   border-color: var(--accent);
-  background: linear-gradient(var(--accent), var(--accent)) center / 6px 2px
-    no-repeat;
+  background: var(--bg-e);
 }
-.scope-focus-checkbox:focus-visible {
-  outline: 2px solid var(--accent-dim);
-  outline-offset: 2px;
+.scope-focus-checkbox:indeterminate::after {
+  height: 2px;
+  border-radius: 1px;
+  transform: scale(1);
 }
 
 /* Resize handle */
 .sidebar-resize {
-  width: 8px;
-  margin: 0;
+  width: 6px;
+  margin: 0 -6px 0 0;
+  align-self: stretch;
   background: transparent;
   cursor: col-resize;
   flex-shrink: 0;
-  z-index: 50;
+  z-index: var(--z-resize-handle);
   position: relative;
   touch-action: none;
   pointer-events: auto;
   user-select: none;
   -webkit-user-select: none;
 }
+.sidebar.is-collapsed + .sidebar-resize { display: none; }
 .sidebar-resize::after {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
+  left: 0;
   width: 2px;
-  transform: translateX(-50%);
   background: transparent;
-  transition: background 0.15s;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
-.sidebar-resize:hover::after {
+.sidebar-resize:hover::after,
+.sidebar-resize.is-resize-guide::after {
   background: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 .sidebar-resize.is-resize-guide {
   transition: none;
   will-change: transform;
-}
-.sidebar-resize.is-resize-guide::after {
-  background: var(--accent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 /* Drag resizing modifiers */
@@ -428,6 +404,7 @@ body.is-dragging-files .mdn-html-preview-iframe {
   flex: 0 0 40px;
   height: 40px;
   position: relative;
+  background: transparent !important;
   border-bottom: var(--stroke-w) solid var(--bd-s);
 }
 .content-tabs {
@@ -467,6 +444,14 @@ body.is-dragging-files .mdn-html-preview-iframe {
   height: 2px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.content-tabs__scrollbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  bottom: -6px;
 }
 
 .sidebar__search-case {

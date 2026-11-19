@@ -22,11 +22,6 @@ on:
         required: false
         type: boolean
         default: true
-      build_chromium:
-        description: "Build Chromium Extension (.zip)"
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -252,40 +247,3 @@ jobs:
             tauri/target/release/bundle/dmg/*.dmg
             tauri/target/release/bundle/macos/*.app.tar.gz
             tauri/target/release/bundle/macos/*.app.tar.gz.sig
-
-  build-chromium-extension:
-    name: Build Chromium Extension
-    if: ${{ inputs.build_chromium != false }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.inputs.ref != '' && github.event.inputs.ref || github.ref }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "pnpm"
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Chromium Extension
-        run: pnpm run build:chromium
-
-      - name: Create Zip File
-        run: |
-          cd chromium-xtension/dist
-          zip -r ../markdown-explorer-chromium.zip .
-
-      - name: Upload Chromium Extension Artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: chromium-extension
-          path: chromium-xtension/markdown-explorer-chromium.zip

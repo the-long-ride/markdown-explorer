@@ -1,0 +1,458 @@
+/* Zero-Lag 60fps View Transition: Freeze underlying live CSS transitions */
+:root[data-theme-transitioning] *,
+:root[data-theme-transitioning] *::before,
+:root[data-theme-transitioning] *::after {
+  transition: none !important;
+}
+
+/* GPU-accelerated base view-transition rules:
+   Old snapshot stays static underneath; new snapshot reveals on top */
+::view-transition-old(root) {
+  z-index: 1;
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* GPU-accelerated Signature Overlay */
+.theme-magic-overlay {
+  view-transition-name: theme-magic-overlay;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10000;
+}
+
+::view-transition-group(theme-magic-overlay) {
+  z-index: 10000;
+  pointer-events: none;
+}
+
+::view-transition-old(theme-magic-overlay) {
+  display: none;
+}
+
+::view-transition-new(theme-magic-overlay) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Ring element: disabled for standard gradient transitions,
+   re-purposed for Cyberpunk subtle chromatic aberration edge fringe and horizontal anaglyph bands */
+.theme-magic-overlay__ring {
+  display: none;
+}
+
+.theme-magic-overlay[data-theme-style="cyberpunk"] .theme-magic-overlay__ring,
+:root[data-transition-theme="cyberpunk"] .theme-magic-overlay .theme-magic-overlay__ring {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 240, 255, 0.22) 0%, rgba(0, 240, 255, 0.08) 4%, transparent 12%, transparent 88%, rgba(255, 0, 60, 0.08) 96%, rgba(255, 0, 60, 0.22) 100%),
+    linear-gradient(180deg,
+      transparent 0%,
+      transparent 26%,
+      rgba(0, 240, 255, 0.18) 26%,
+      rgba(0, 240, 255, 0.18) 31%,
+      transparent 31%,
+      transparent 64%,
+      rgba(255, 0, 60, 0.18) 64%,
+      rgba(255, 0, 60, 0.18) 70%,
+      transparent 70%,
+      transparent 100%
+    );
+  mix-blend-mode: hard-light;
+}
+
+/* Full-width vertical gradient curtain / beam */
+.theme-magic-overlay__beam {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Keyframes: Feathered Mask Sweeps (Non-Cyberpunk Themes)
+   ========================================================================== */
+
+@keyframes vt-mask-sweep-down {
+  0% { -webkit-mask-position: 0% 100%; mask-position: 0% 100%; }
+  100% { -webkit-mask-position: 0% 0%; mask-position: 0% 0%; }
+}
+
+@keyframes vt-mask-sweep-up {
+  0% { -webkit-mask-position: 0% 0%; mask-position: 0% 0%; }
+  100% { -webkit-mask-position: 0% 100%; mask-position: 0% 100%; }
+}
+
+/* ==========================================================================
+   Keyframes: Overlay Beam Sweeps (Non-Cyberpunk Themes)
+   ========================================================================== */
+
+@keyframes vt-beam-sweep-down {
+  0% { transform: translate3d(0, -100%, 0); opacity: 0.9; }
+  50% { opacity: 1; }
+  100% { transform: translate3d(0, 100%, 0); opacity: 0; }
+}
+
+@keyframes vt-beam-sweep-up {
+  0% { transform: translate3d(0, 100%, 0); opacity: 0.9; }
+  50% { opacity: 1; }
+  100% { transform: translate3d(0, -100%, 0); opacity: 0; }
+}
+
+/* ==========================================================================
+   Keyframes: Cyberpunk Digital Glitch Suite (Stepped Chromatic Aberration)
+   ========================================================================== */
+
+/* 1. Outgoing Snapshot: Clean subtle horizontal micro-jitter */
+@keyframes vt-cyberpunk-glitch-old {
+  0% { transform: translate3d(0, 0, 0); opacity: 1; }
+  25% { transform: translate3d(-4px, 0, 0); opacity: 0.95; }
+  50% { transform: translate3d(3px, 0, 0); opacity: 0.8; }
+  75% { transform: translate3d(-2px, 0, 0); opacity: 0.5; }
+  100% { transform: translate3d(0, 0, 0); opacity: 0; }
+}
+
+/* 2. Incoming Snapshot: Crisp sweep reveal with subtle horizontal snap */
+@keyframes vt-cyberpunk-smooth-down {
+  0% {
+    -webkit-mask-position: 0% 100%;
+    mask-position: 0% 100%;
+    transform: translate3d(6px, 0, 0);
+  }
+  30% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  65% {
+    transform: translate3d(2px, 0, 0);
+  }
+  100% {
+    -webkit-mask-position: 0% 0%;
+    mask-position: 0% 0%;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes vt-cyberpunk-smooth-up {
+  0% {
+    -webkit-mask-position: 0% 0%;
+    mask-position: 0% 0%;
+    transform: translate3d(6px, 0, 0);
+  }
+  30% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  65% {
+    transform: translate3d(2px, 0, 0);
+  }
+  100% {
+    -webkit-mask-position: 0% 100%;
+    mask-position: 0% 100%;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* 3. Overlay Glitch Bars: Stepped horizontal chromatic displace slices */
+@keyframes vt-cyberpunk-glitch-bars {
+  0% { transform: translate3d(-14px, 0, 0); opacity: 0; }
+  20% { transform: translate3d(12px, 0, 0); opacity: 0.95; }
+  45% { transform: translate3d(-8px, 0, 0); opacity: 0.75; }
+  70% { transform: translate3d(4px, 0, 0); opacity: 0.45; }
+  100% { transform: translate3d(0, 0, 0); opacity: 0; }
+}
+
+/* 4. Interactive & Transition Glitch Text Elements */
+@keyframes cp-glitch-text {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    text-shadow: none;
+  }
+  20% {
+    transform: translate3d(-2px, 0, 0) skewX(-6deg);
+    text-shadow: 2px 0 var(--accent, #E6D24F), -2px 0 var(--deco-cyan, #5FB9BE);
+  }
+  45% {
+    transform: translate3d(2px, -0.5px, 0) skewX(5deg);
+    text-shadow: -2px 0 var(--deco-rose, #D75B79), 2px 0 var(--deco-cyan, #5FB9BE);
+  }
+  70% {
+    transform: translate3d(-1px, 0.5px, 0);
+    text-shadow: 1.5px 0 var(--deco-cyan, #5FB9BE), -1.5px 0 var(--deco-rose, #D75B79);
+  }
+  85% {
+    transform: translate3d(1px, 0, 0);
+    text-shadow: -1px 0 var(--accent, #E6D24F);
+  }
+}
+
+/* 5. Interactive & Transition Glitch Icon Elements */
+@keyframes cp-glitch-icon {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) !important;
+    filter: none !important;
+  }
+  20% {
+    transform: translate3d(-2px, 0, 0) skewX(-6deg) !important;
+    filter: drop-shadow(2px 0 var(--accent, #E6D24F)) drop-shadow(-2px 0 var(--deco-cyan, #5FB9BE)) !important;
+  }
+  45% {
+    transform: translate3d(2px, -0.5px, 0) skewX(5deg) !important;
+    filter: drop-shadow(-2px 0 var(--deco-rose, #D75B79)) drop-shadow(2px 0 var(--deco-cyan, #5FB9BE)) !important;
+  }
+  70% {
+    transform: translate3d(-1px, 0.5px, 0) !important;
+    filter: drop-shadow(1.5px 0 var(--deco-cyan, #5FB9BE)) drop-shadow(-1.5px 0 var(--deco-rose, #D75B79)) !important;
+  }
+  85% {
+    transform: translate3d(1px, 0, 0) !important;
+    filter: drop-shadow(-1px 0 var(--accent, #E6D24F)) !important;
+  }
+}
+
+/* ==========================================================================
+   Cyberpunk Glitch Bindings
+   ========================================================================== */
+
+:root[data-transition-theme="cyberpunk"]::view-transition-old(root) {
+  animation: vt-cyberpunk-glitch-old 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+:root[data-transition-direction="to-dark"][data-transition-theme="cyberpunk"]::view-transition-new(root) {
+  animation: vt-cyberpunk-smooth-down 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+:root[data-transition-direction="to-light"][data-transition-theme="cyberpunk"]::view-transition-new(root),
+:root:not([data-transition-direction])[data-transition-theme="cyberpunk"]::view-transition-new(root) {
+  animation: vt-cyberpunk-smooth-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+:root[data-transition-theme="cyberpunk"]::view-transition-new(theme-magic-overlay) {
+  animation: vt-cyberpunk-glitch-bars 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Elements that trigger the stepped glitch during Cyberpunk theme switch */
+:root:is([data-theme-transitioning][data-transition-theme="cyberpunk"], [data-theme-style="cyberpunk"][data-theme-glitching]) :is(
+  .btn, .topbar__action-btn, .desktop-tab, .content-tab, .tab-btn, .insights-tab,
+  .workspace-selection__open-button, .workspace-selection__open-file, .workspace-selection__home-button,
+  .topbar__brand, .topbar__title, .workspace-insights__title, .settings-card__title,
+  .mdn-heading, .mdn-section-title, .tip-card-badge, .file-history__badge,
+  .workspace-insights__tab-badge
+) :is(.btn-label, .btn-icon, span:not(.tooltip-text):not(.tooltip-text *):not(.tooltip-portal *), [class*="label"], [class*="title"]) {
+  display: inline-flex;
+  animation: cp-glitch-text .42s steps(1, end);
+}
+
+:root:is([data-theme-transitioning][data-transition-theme="cyberpunk"], [data-theme-style="cyberpunk"][data-theme-glitching]) :is(
+  .btn, .topbar__action-btn, .desktop-tab, .content-tab, .tab-btn, .insights-tab,
+  .workspace-selection__open-button, .workspace-selection__open-file, .workspace-selection__home-button
+) svg:not(.tooltip-text *):not(.tooltip-portal *) {
+  display: inline-flex !important;
+  animation: cp-glitch-icon .42s steps(1, end) !important;
+}
+
+:root:is([data-theme-transitioning][data-transition-theme="cyberpunk"], [data-theme-style="cyberpunk"][data-theme-glitching]) :is(
+  .btn-label, [class*="desc"], .tab-btn__label, .content-tab__title, .desktop-tab__title
+) {
+  animation-delay: 0.04s;
+}
+
+/* Cyberpunk compact horizontal rectangular displacement glitch slabs */
+.theme-magic-overlay[data-theme-style="cyberpunk"] .theme-magic-overlay__beam,
+:root[data-transition-theme="cyberpunk"] .theme-magic-overlay .theme-magic-overlay__beam {
+  background-image:
+    linear-gradient(90deg, transparent 12%, rgba(224, 255, 255, 0.32) 12%, rgba(0, 240, 255, 0.28) 22%, rgba(255, 0, 60, 0.28) 22%, rgba(255, 0, 60, 0.24) 36%, transparent 36%),
+    linear-gradient(90deg, transparent 48%, rgba(255, 0, 60, 0.28) 48%, rgba(255, 0, 60, 0.24) 60%, rgba(0, 240, 255, 0.28) 60%, rgba(224, 255, 255, 0.30) 74%, transparent 74%),
+    linear-gradient(90deg, transparent 24%, rgba(0, 240, 255, 0.26) 24%, rgba(0, 240, 255, 0.26) 36%, rgba(255, 0, 60, 0.26) 36%, rgba(255, 0, 60, 0.24) 48%, transparent 48%);
+  background-repeat: no-repeat;
+  background-size: 100% 4.5%, 100% 5.5%, 100% 4%;
+  background-position: 0 26%, 0 52%, 0 74%;
+  mix-blend-mode: screen;
+}
+
+/* ==========================================================================
+   Per-Theme Wide Multi-Zone Gradient Palettes (Non-Cyberpunk Themes)
+   ========================================================================== */
+
+/* Default / Raw-Grid / Bento / Pet-* wide multi-zone aurora gradients */
+.theme-magic-overlay .theme-magic-overlay__beam,
+.theme-magic-overlay[data-direction="to-dark"] .theme-magic-overlay__beam,
+:root[data-transition-direction="to-dark"]:not([data-transition-theme="cyberpunk"]) .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(180deg, transparent 0%, rgba(30, 27, 75, 0.28) 20%, rgba(79, 70, 229, 0.36) 42%, rgba(56, 189, 248, 0.32) 62%, rgba(168, 85, 247, 0.2) 80%, transparent 100%);
+}
+
+.theme-magic-overlay[data-direction="to-light"] .theme-magic-overlay__beam,
+:root[data-transition-direction="to-light"]:not([data-transition-theme="cyberpunk"]) .theme-magic-overlay .theme-magic-overlay__beam,
+:root:not([data-transition-direction]):not([data-transition-theme="cyberpunk"]) .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(0deg, transparent 0%, rgba(254, 243, 199, 0.32) 20%, rgba(251, 191, 36, 0.36) 42%, rgba(244, 114, 182, 0.26) 62%, rgba(56, 189, 248, 0.28) 80%, transparent 100%);
+}
+
+/* Neon-Voltage electric plasma gradient zone */
+.theme-magic-overlay[data-theme-style="neon-voltage"][data-direction="to-dark"] .theme-magic-overlay__beam,
+:root[data-transition-theme="neon-voltage"][data-transition-direction="to-dark"] .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 0, 127, 0.38) 22%, rgba(147, 51, 234, 0.36) 48%, rgba(0, 229, 255, 0.42) 72%, transparent 100%);
+}
+
+.theme-magic-overlay[data-theme-style="neon-voltage"][data-direction="to-light"] .theme-magic-overlay__beam,
+.theme-magic-overlay[data-theme-style="neon-voltage"] .theme-magic-overlay__beam,
+:root[data-transition-theme="neon-voltage"][data-transition-direction="to-light"] .theme-magic-overlay .theme-magic-overlay__beam,
+:root[data-transition-theme="neon-voltage"]:not([data-transition-direction]) .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(0deg, transparent 0%, rgba(0, 229, 255, 0.42) 22%, rgba(147, 51, 234, 0.36) 48%, rgba(255, 0, 127, 0.38) 72%, transparent 100%);
+}
+
+/* Tokyo-Night synthwave dusk and dawn gradient zones */
+.theme-magic-overlay[data-theme-style="tokyo-night"][data-direction="to-dark"] .theme-magic-overlay__beam,
+:root[data-transition-theme="tokyo-night"][data-transition-direction="to-dark"] .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(180deg, transparent 0%, rgba(26, 27, 38, 0.4) 18%, rgba(122, 162, 247, 0.45) 40%, rgba(187, 154, 247, 0.45) 62%, rgba(247, 118, 142, 0.35) 82%, transparent 100%);
+}
+
+.theme-magic-overlay[data-theme-style="tokyo-night"][data-direction="to-light"] .theme-magic-overlay__beam,
+.theme-magic-overlay[data-theme-style="tokyo-night"] .theme-magic-overlay__beam,
+:root[data-transition-theme="tokyo-night"][data-transition-direction="to-light"] .theme-magic-overlay .theme-magic-overlay__beam,
+:root[data-transition-theme="tokyo-night"]:not([data-transition-direction]) .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(0deg, transparent 0%, rgba(255, 158, 100, 0.4) 18%, rgba(224, 175, 104, 0.45) 40%, rgba(125, 207, 255, 0.45) 62%, rgba(187, 154, 247, 0.35) 82%, transparent 100%);
+}
+
+/* Vercel monochrome platinum/graphite gradient zone */
+.theme-magic-overlay[data-theme-style="vercel"][data-direction="to-dark"] .theme-magic-overlay__beam,
+:root[data-transition-theme="vercel"][data-transition-direction="to-dark"] .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.16) 25%, rgba(161, 161, 170, 0.28) 50%, rgba(255, 255, 255, 0.18) 75%, transparent 100%);
+}
+
+.theme-magic-overlay[data-theme-style="vercel"][data-direction="to-light"] .theme-magic-overlay__beam,
+.theme-magic-overlay[data-theme-style="vercel"] .theme-magic-overlay__beam,
+:root[data-transition-theme="vercel"][data-transition-direction="to-light"] .theme-magic-overlay .theme-magic-overlay__beam,
+:root[data-transition-theme="vercel"]:not([data-transition-direction]) .theme-magic-overlay .theme-magic-overlay__beam {
+  background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.16) 25%, rgba(161, 161, 170, 0.28) 50%, rgba(255, 255, 255, 0.18) 75%, transparent 100%);
+}
+
+/* ==========================================================================
+   Root Reveal Animation Selectors: Feathered Gradient Mask
+   ========================================================================== */
+
+/* Feathered gradient vertical mask applied to incoming snapshot */
+:root[data-transition-direction="to-dark"]::view-transition-new(root) {
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 42%, rgba(0, 0, 0, 0.65) 54%, rgba(0, 0, 0, 0.25) 64%, transparent 75%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 42%, rgba(0, 0, 0, 0.65) 54%, rgba(0, 0, 0, 0.25) 64%, transparent 75%, transparent 100%);
+  -webkit-mask-size: 100% 260%;
+  mask-size: 100% 260%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+:root[data-transition-direction="to-light"]::view-transition-new(root),
+:root:not([data-transition-direction])::view-transition-new(root) {
+  -webkit-mask-image: linear-gradient(0deg, #000 0%, #000 42%, rgba(0, 0, 0, 0.65) 54%, rgba(0, 0, 0, 0.25) 64%, transparent 75%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 0%, #000 42%, rgba(0, 0, 0, 0.65) 54%, rgba(0, 0, 0, 0.25) 64%, transparent 75%, transparent 100%);
+  -webkit-mask-size: 100% 260%;
+  mask-size: 100% 260%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* to-dark: Top-to-Bottom Mask Sweep (::view-transition-new(root)) */
+:root[data-transition-direction="to-dark"][data-transition-theme="vercel"]::view-transition-new(root) {
+  animation: vt-mask-sweep-down 0.26s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+:root[data-transition-direction="to-dark"][data-transition-theme="neon-voltage"]::view-transition-new(root) {
+  animation: vt-mask-sweep-down 0.34s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+:root[data-transition-direction="to-dark"][data-transition-theme="tokyo-night"]::view-transition-new(root) {
+  animation: vt-mask-sweep-down 0.34s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+:root[data-transition-direction="to-dark"]:not([data-transition-theme="cyberpunk"]):not([data-transition-theme="tokyo-night"]):not([data-transition-theme="vercel"]):not([data-transition-theme="neon-voltage"])::view-transition-new(root) {
+  animation: vt-mask-sweep-down 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* to-light: Bottom-to-Top Reverse Mask Sweep (::view-transition-new(root)) */
+:root[data-transition-direction="to-light"][data-transition-theme="vercel"]::view-transition-new(root),
+:root:not([data-transition-direction])[data-transition-theme="vercel"]::view-transition-new(root) {
+  animation: vt-mask-sweep-up 0.26s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+:root[data-transition-direction="to-light"][data-transition-theme="neon-voltage"]::view-transition-new(root),
+:root:not([data-transition-direction])[data-transition-theme="neon-voltage"]::view-transition-new(root) {
+  animation: vt-mask-sweep-up 0.34s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+:root[data-transition-direction="to-light"][data-transition-theme="tokyo-night"]::view-transition-new(root),
+:root:not([data-transition-direction])[data-transition-theme="tokyo-night"]::view-transition-new(root) {
+  animation: vt-mask-sweep-up 0.34s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+:root[data-transition-direction="to-light"]:not([data-transition-theme="cyberpunk"]):not([data-transition-theme="tokyo-night"]):not([data-transition-theme="vercel"]):not([data-transition-theme="neon-voltage"])::view-transition-new(root),
+:root:not([data-transition-direction]):not([data-transition-theme="cyberpunk"]):not([data-transition-theme="tokyo-night"]):not([data-transition-theme="vercel"]):not([data-transition-theme="neon-voltage"])::view-transition-new(root) {
+  animation: vt-mask-sweep-up 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ==========================================================================
+   Overlay Beam Curtain Sweep Animation Selectors (Non-Cyberpunk)
+   ========================================================================== */
+
+/* to-dark: Top-to-Bottom Beam Sweep (::view-transition-new(theme-magic-overlay)) */
+:root[data-transition-direction="to-dark"][data-transition-theme="vercel"]::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-down 0.26s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+:root[data-transition-direction="to-dark"][data-transition-theme="neon-voltage"]::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-down 0.34s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+:root[data-transition-direction="to-dark"][data-transition-theme="tokyo-night"]::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-down 0.34s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+:root[data-transition-direction="to-dark"]:not([data-transition-theme="cyberpunk"]):not([data-transition-theme="tokyo-night"]):not([data-transition-theme="vercel"]):not([data-transition-theme="neon-voltage"])::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-down 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* to-light: Bottom-to-Top Reverse Beam Sweep (::view-transition-new(theme-magic-overlay)) */
+:root[data-transition-direction="to-light"][data-transition-theme="vercel"]::view-transition-new(theme-magic-overlay),
+:root:not([data-transition-direction])[data-transition-theme="vercel"]::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-up 0.26s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+:root[data-transition-direction="to-light"][data-transition-theme="neon-voltage"]::view-transition-new(theme-magic-overlay),
+:root:not([data-transition-direction])[data-transition-theme="neon-voltage"]::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-up 0.34s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+:root[data-transition-direction="to-light"][data-transition-theme="tokyo-night"]::view-transition-new(theme-magic-overlay),
+:root:not([data-transition-direction])[data-transition-theme="tokyo-night"]::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-up 0.34s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+:root[data-transition-direction="to-light"]:not([data-transition-theme="cyberpunk"]):not([data-transition-theme="tokyo-night"]):not([data-transition-theme="vercel"]):not([data-transition-theme="neon-voltage"])::view-transition-new(theme-magic-overlay),
+:root:not([data-transition-direction]):not([data-transition-theme="cyberpunk"]):not([data-transition-theme="tokyo-night"]):not([data-transition-theme="vercel"]):not([data-transition-theme="neon-voltage"])::view-transition-new(theme-magic-overlay) {
+  animation: vt-beam-sweep-up 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Accessibility: reduce motion override */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .theme-magic-overlay {
+    display: none !important;
+  }
+}

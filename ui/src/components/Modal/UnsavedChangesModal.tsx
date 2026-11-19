@@ -41,6 +41,17 @@ export function UnsavedChangesModal({ fileName, labels, saving = false, errorMes
         if (!savingRef.current) onChoose('cancel');
         return;
       }
+      if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing) {
+        if (savingRef.current) return;
+        const active = document.activeElement;
+        if (active instanceof HTMLButtonElement && active !== saveRef.current) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        onChoose('save');
+        return;
+      }
       const dialog = dialogRef.current;
       if (event.key !== 'Tab' || !dialog) return;
       const focusables = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)];

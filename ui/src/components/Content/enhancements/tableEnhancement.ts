@@ -4,6 +4,7 @@ import { formatUiLabel, getTableUiLabels } from '../../../dom/tableUiLabels.ts';
 interface TableGlobals {
   states?: Record<string, { chartInstance?: { destroy(): void } }>;
   detectChartable?(tableId: string): void;
+  restoreTableLayout?(tableId: string): void;
   ensureChartLibrary?: () => Promise<unknown>;
 }
 
@@ -58,6 +59,7 @@ export async function enhanceTables(
       }
       if (tableGlobals?.states) delete tableGlobals.states[table.id];
       detectChartable(table.id);
+      tableGlobals.restoreTableLayout?.(table.id);
       table.dataset.mdnEnhanced = 'true';
       delete table.dataset.mdnRenderAttempts;
       delete table.dataset.mdnRenderError;

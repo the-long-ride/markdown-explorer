@@ -43,7 +43,7 @@ test('View Preferences tooltip portals into body with high z-index stacking cont
   ]);
 
   assert.match(tooltip, /createPortal\([\s\S]*portalTarget/);
-  assert.match(css, /\.settings-preference-description-panel\s*\{[\s\S]*z-index:\s*\d+/);
+  assert.match(css, /\.settings-preference-description-panel\s*\{[\s\S]*z-index:\s*(?:\d+|var\(--z-[^)]+\))/);
 });
 
 test('Mermaid vendor chunk only captures third-party modules', async () => {
@@ -62,7 +62,9 @@ test('UI build contracts avoid unused hooks, unstable optional narrowing, and No
   ]);
 
   const reactImport = app.match(/import \{([^}]+)\} from 'react';/)?.[1] ?? '';
-  assert.doesNotMatch(reactImport, /\buseEffect\b/, 'App must not import an unused React hook');
+  if (/\buseEffect\b/.test(reactImport)) {
+    assert.match(app.slice(app.indexOf('function App')), /\buseEffect\(/, 'App must not import an unused useEffect hook');
+  }
 
   assert.match(
     tableEnhancement,

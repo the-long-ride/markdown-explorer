@@ -24,13 +24,13 @@ source_scope:
 - tauri/src/dispatcher/git_repository.rs
 - vscode/src/core/panel.ts
 - vscode/src/core/panelGitHistory.ts
-- chromium-xtension/src/chrome-host.ts
-- chromium-xtension/src/browser-git-history-host.ts
+- website-app/src/web-host.ts
+- website-app/src/browser-git-history-host.ts
 - website-app/src/web-test-message-router.ts
 - electron/workspace/workspace-entries.js
 - vscode/src/core/panelWorkspaceEntries.ts
 - tauri/src/dispatcher/workspace_entries.rs
-- chromium-xtension/src/workspace-entries.ts
+- website-app/src/workspace-entries.ts
 - website-app/src/web-file-utility-router.ts
 test_scope:
 - tests/contracts/host-message-parity.test.ts
@@ -39,15 +39,15 @@ test_scope:
 - tests/node/repository-history-pagination-contract.test.mjs
 - tests/unit/electron/document-history.test.ts
 - tests/unit/vscode/panel-git-history.test.ts
-- tests/unit/chromium/browser-git-history-host.test.ts
+- tests/unit/website/browser-git-history-host.test.ts
 - tests/unit/ui/history/repository-view.test.ts
 - tests/unit/ui/history/revision-workspace.test.ts
 - tests/unit/ui/history/revision-search.test.ts
 - tests/unit/ui/split-view
 - tests/unit/electron/workspace-entries.test.ts
 - tests/unit/vscode/panel-workspace-entries.test.ts
-- tests/unit/chromium/workspace-entries.test.ts
-- tests/unit/chromium/web-file-workspace-entries.test.ts
+- tests/unit/website/workspace-entries.test.ts
+- tests/unit/website/web-file-workspace-entries.test.ts
 runtime_scope:
 - runtime
 keywords:
@@ -68,16 +68,16 @@ keywords:
 
 ## Capability matrix
 
-| Capability | Electron | Tauri | VS Code | Chromium | Website |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Folder/file workspace | Yes | Yes | Yes | Yes, handles | Yes, browser/virtual |
-| Create file/folder | Yes | Yes | Yes | Yes | Yes, real file mode / simulated demo |
-| Rename file/folder | Yes | Yes | Yes | Yes | Yes, real file mode / simulated demo |
-| Delete entries | Trash / permanent | Trash / permanent | Trash / permanent | Permanent (`removeEntry`) | Real file mode: permanent; demo: simulated localStorage removal |
-| Empty folders in tree | Yes | Yes | Yes | Yes | Yes |
-| Native watcher | Yes | Yes | Yes | Poll | Browser-dependent |
-| Workspace search | Yes | Yes | Yes | Yes | Yes |
-| Cross-workspace desktop search | Yes | Parity path | Limited by shell | No desktop tabs | No desktop tabs |
+| Capability | Electron | Tauri | VS Code | Web |
+|---|:---:|:---:|:---:|:---:|
+| Folder/file workspace | Yes | Yes | Yes | Yes, browser/virtual |
+| Create file/folder | Yes | Yes | Yes | Yes, real file mode / simulated test mode |
+| Rename file/folder | Yes | Yes | Yes | Yes, real file mode / simulated test mode |
+| Delete entries | Trash / permanent | Trash / permanent | Trash / permanent | File mode: permanent (`removeEntry`); test mode: simulated localStorage removal |
+| Empty folders in tree | Yes | Yes | Yes | Yes |
+| Native watcher | Yes | Yes | Yes | Poll / browser-dependent |
+| Workspace search | Yes | Yes | Yes | Yes |
+| Cross-workspace desktop search | Yes | Parity path | Limited by shell | Yes, Tab View |
 | Persistent bookmarks | Focus + Tabs grouping | Focus + Tabs grouping | Focus view | Focus view | Focus view |
 | Document conversion | Yes | Yes, native | Yes | No | No native conversion |
 | Native shell/editor | Yes | Yes | Editor/OS | No | No |
@@ -120,7 +120,7 @@ The shared renderer turns a selected non-HEAD commit into an explicit read-only 
 
 Selection is persisted per workspace and restored only when the object remains valid. Returning to HEAD clears UI/persistence state only and never invokes a Git checkout. The History tab shows an accent state dot only while a whole-workspace non-HEAD revision is active.
 
-Chromium and Website hosts never attempt process execution. Document-history, repository-history, snapshot, file-list, and comparison requests fail safely with `unsupported-runtime` without affecting ordinary reading, editing, split view, or local conflict comparison.
+Web hosts never attempt process execution. Document-history, repository-history, snapshot, file-list, and comparison requests fail safely with `unsupported-runtime` without affecting ordinary reading, editing, split view, or local conflict comparison.
 
 ## Editing parity contract
 
@@ -152,9 +152,9 @@ Electron and Tauri retain a thin application-owned draggable surface when Focus 
 | Electron | `electron/workspace/workspace-entries.js` (wired in `main-bootstrap.js` and `ipc-handlers.js`) | exclusive open, `mkdir` | `shell.trashItem` (`trash`) |
 | VS Code | `vscode/src/core/panelWorkspaceEntries.ts` (wired in `panel.ts`) | `fs` exclusive open, `mkdir` | `workspace.fs.delete` with `useTrash: true` (`trash`) |
 | Tauri | `tauri/src/dispatcher/workspace_entries.rs` | `create_new`, `create_dir` | `trash` crate (`trash`) |
-| Chromium / Website file mode | `chromium-xtension/src/workspace-entries.ts` (used by `chrome-host-search.ts` and `website-app/src/web-file-utility-router.ts`) | `getFileHandle`/`getDirectoryHandle` with `create` after an existence probe | `removeEntry(name, { recursive: true })` (`permanent`); requests `readwrite` permission lazily, denial gives `permission-denied` |
+| Web file mode | `website-app/src/workspace-entries.ts` (used by `website-app/src/web-file-utility-router.ts`) | `getFileHandle`/`getDirectoryHandle` with `create` after an existence probe | `removeEntry(name, { recursive: true })` (`permanent`); requests `readwrite` permission lazily, denial gives `permission-denied` |
 
-The UI derives the capability from `appRuntime` (no host field). The website demo handles create/rename/delete against simulated entries persisted only in localStorage; its controls are enabled. Empty-folder scanning is a separate per-runtime change in each scanner (Electron `DesktopScanner`, VS Code `WorkspaceScanner` plus `emptyDirectories.ts`, Tauri `scanner.rs` and `tree_builder.rs`, Chromium/website `BrowserScanner`).
+The UI derives the capability from `appRuntime` (no host field). The Web test mode handles create/rename/delete against simulated entries persisted only in localStorage; its controls are enabled. Empty-folder scanning is a separate per-runtime change in each scanner (Electron `DesktopScanner`, VS Code `WorkspaceScanner` plus `emptyDirectories.ts`, Tauri `scanner.rs` and `tree_builder.rs`, Web `BrowserScanner`).
 
 ## Common protocol requirement
 
@@ -170,7 +170,7 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 - Electron/Tauri/VS Code Git routes use no shell, mutate no repository state, and preserve correlated `requestId` values.
 - Repository history pagination preserves `limit`/`offset` semantics across Electron, Tauri, and VS Code.
 - Repository revision file listing remains scoped to the active workspace and cannot expose sibling repository paths.
-- Chromium/Website explicitly report Git unsupported and never invoke a local process.
+- Web explicitly reports Git unsupported and never invokes a local process.
 - Historical revision, whole-workspace repository snapshot, and Diff modes are read-only and never replace or dirty the editable document session.
 - Persisted repository revisions are workspace-keyed and are not cleared solely because they are outside the first history page.
 - Internal Markdown editing and external/native Edit routes are both disabled while a historical workspace revision is active.
@@ -182,7 +182,7 @@ All adapters must honor the active `WebviewMessage` and `HostMessage` discrimina
 | Runtime | Create / rename | Delete and persistence |
 |---|---|---|
 | Electron / Tauri / VS Code | Real workspace entries; guarded paths and collisions | OS Trash by default, explicit permanent override |
-| Chromium / website file mode | Real entries under an opened directory handle with write permission | Permanent removal; single-file handles do not support workspace mutations |
+| Web file mode | Real entries under an opened directory handle with write permission | Permanent removal; single-file handles do not support workspace mutations |
 | Website demo | Simulated entries, no real folder access | localStorage-only mutations persist across reload |
 
 VS Code/VSCodium sends workspacePath in ready, incremental and watcher payloads. Git history requires an existing Git repository; an ordinary folder receives `not-repository` guidance, while missing Git and other execution errors remain distinct.
@@ -201,16 +201,16 @@ VS Code/VSCodium sends workspacePath in ready, incremental and watcher payloads.
 | Implementation | `tauri/src/dispatcher/git_history.rs` | Tauri routing |
 | Implementation | `tauri/src/dispatcher/git_repository.rs` | Tauri repository-history paging |
 | Implementation | `vscode/src/core/panelGitHistory.ts` | VS Code local Git adapter |
-| Implementation | `chromium-xtension/src/browser-git-history-host.ts` | Explicit browser unsupported responses |
+| Implementation | `website-app/src/browser-git-history-host.ts` | Explicit browser unsupported responses |
 | Implementation | `electron/workspace/workspace-entries.js` | Electron create/delete (Trash) |
 | Implementation | `vscode/src/core/panelWorkspaceEntries.ts` | VS Code create/delete (Trash) |
 | Implementation | `tauri/src/dispatcher/workspace_entries.rs` | Tauri create/delete (Trash crate) |
-| Implementation | `chromium-xtension/src/workspace-entries.ts` | Chromium/website create/delete (permanent) |
+| Implementation | `website-app/src/workspace-entries.ts` | Web file-mode create/delete (permanent) |
 | Verification | `tests/node/repository-history-pagination-contract.test.mjs` | Pagination/search/routing parity |
 | Verification | `tests/unit/ui/history/repository-view.test.ts` | Search/persistence behavior |
 | Verification | `tests/unit/ui/history/revision-workspace.test.ts` | Revision file projection |
 | Verification | `tests/unit/ui/split-view` | Pane tabs and isolation |
-| Verification | `tests/unit/electron/workspace-entries.test.ts`, `tests/unit/vscode/panel-workspace-entries.test.ts`, `tests/unit/chromium/workspace-entries.test.ts` | Per-runtime entry operations against the shared name fixture |
+| Verification | `tests/unit/electron/workspace-entries.test.ts`, `tests/unit/vscode/panel-workspace-entries.test.ts`, `tests/unit/website/workspace-entries.test.ts` | Per-runtime entry operations against the shared name fixture |
 
 ---
 

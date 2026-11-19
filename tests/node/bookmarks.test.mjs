@@ -110,9 +110,9 @@ test('bookmark setting persists, imports, renders, and has all language records'
     read('ui/src/contexts/translationsData.ts'),
   ]);
   assert.match(types, /bookmarksEnabled:\s*boolean/);
-  assert.match(model, /bookmarksEnabled:\s*false/);
+  assert.match(model, /bookmarksEnabled:\s*true/);
   assert.match(effects, /bookmarksEnabled:\s*state\.settings\.bookmarksEnabled/);
-  assert.match(importExport, /bookmarksEnabled:\s*raw\.bookmarksEnabled === true/);
+  assert.match(importExport, /bookmarksEnabled:\s*raw\.bookmarksEnabled !== false/);
   assert.match(panel, /updateSettings\(\{ bookmarksEnabled: event\.target\.checked \}\)/);
   assert.match(translationTypes, /bookmarks:\s*\{/);
   assert.match(inline, /bookmarksEnabledDesc/);

@@ -229,7 +229,7 @@ export function renderInline(text: string, isMdx = false): string {
       linkHtml = renderYouTubeEmbed(href, label);
     } else if (isVideoSource(href)) {
       linkHtml = renderVideo(href, label);
-    } else if (href.endsWith('.md') || href.includes('.md#')) {
+    } else if (!/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(href) && /\.(?:md|mdx|markdown)(?:$|[?#])/i.test(href)) {
       linkHtml = `<a href="#" class="mdn-link mdn-link--internal" data-mdn-target="${escHtml(href)}" onclick="Nav.go('${escAttr(href)}');return false;">${label}</a>`;
     } else {
       linkHtml = `<a href="${href}" class="mdn-link" target="_blank" rel="noopener noreferrer">${label}</a>`;

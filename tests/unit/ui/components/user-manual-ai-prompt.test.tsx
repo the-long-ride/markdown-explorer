@@ -24,7 +24,7 @@ describe('User Manual AI prompt', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     render(<UserManualTab language="en" settings={{ keybindings: {} } as any} version="1.7.0" />);
 
-    expect(screen.getByRole('heading', { name: /ask an ai about markdown explorer/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /get help to using markdown explorer by any ai/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /copy prompt/i }));
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
@@ -42,7 +42,7 @@ describe('User Manual AI prompt', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     render(<UserManualTab language="vi" settings={{ keybindings: {} } as any} version="1.7.0" />);
 
-    expect(screen.getByRole('heading', { name: /hỏi ai về markdown explorer/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /nhận trợ giúp sử dụng markdown explorer bằng bất kỳ ai nào/i })).toBeInTheDocument();
     const copyBtn = screen.getByRole('button', { name: /sao chép lời nhắc/i });
     expect(copyBtn).toBeInTheDocument();
     fireEvent.click(copyBtn);

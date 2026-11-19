@@ -33,14 +33,21 @@ describe('ExportCenterModal', () => {
     expect(screen.getByRole('radio', { name: /^Document only/ })).toBeChecked();
   });
 
-  it('offers exactly HTML, PDF, and Static Website formats', () => {
+  it('offers exactly HTML, PDF, and Static Website formats using segmented swap controls', () => {
     render(<ExportCenterModal isOpen onClose={() => {}} />);
     const group = screen.getByRole('group', { name: 'Format' });
-    expect(Array.from(group.querySelectorAll('input[type="radio"]')).map((input) => (input as HTMLInputElement).value)).toEqual(['html', 'pdf', 'site']);
+    const radiogroup = screen.getByRole('radiogroup', { name: 'Format' });
+    expect(radiogroup).toHaveClass('segmented-control', 'export-center__segmented');
+    expect(screen.getByRole('radiogroup', { name: 'Visual Layout' })).toHaveClass('segmented-control', 'segmented-control--two');
+    expect(screen.getByRole('radiogroup', { name: 'Batch mode' })).toHaveClass('segmented-control', 'segmented-control--two');
+    expect(Array.from(group.querySelectorAll('[role="radio"]')).map((option) => option.getAttribute('data-value'))).toEqual(['html', 'pdf', 'site']);
+    expect(radiogroup).toHaveAccessibleDescription('Standalone themed document');
+    fireEvent.click(screen.getByRole('radio', { name: 'Static Website' }));
+    expect(radiogroup).toHaveAccessibleDescription('Portable site ZIP with internal links');
   });
 
   it('keeps PDF selectable for every runtime variant', () => {
-    for (const runtime of ['desktop', 'tauri', 'vscode', 'chrome'] as AppRuntime[]) {
+    for (const runtime of ['desktop', 'tauri', 'vscode', 'web'] as AppRuntime[]) {
       fixtures.runtime = runtime;
       const view = render(<ExportCenterModal isOpen onClose={() => {}} />);
       fireEvent.click(screen.getByRole('radio', { name: /^PDF/ }));

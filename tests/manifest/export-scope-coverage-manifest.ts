@@ -1,5 +1,4 @@
 export const exportScopeCoverageManifest: Record<string, string[]> = {
-  'chromium-xtension/src/chrome-host-export.ts': ['tests/unit/chromium/chrome-host-export.test.ts'],
   'electron/core/runtime-export-resources.js': ['tests/unit/electron/export-resources.test.ts'],
   'electron/core/runtime-export-save.js': ['tests/unit/electron/export-save.test.ts'],
   'ui/src/components/Content/mermaidContentLifecycle.ts': ['tests/contracts/mermaid-lifecycle-parity.test.ts', 'tests/unit/ui/components/scope-view-modal.test.tsx'],
@@ -9,6 +8,7 @@ export const exportScopeCoverageManifest: Record<string, string[]> = {
   'ui/src/components/Export/ExportMultiSelect.tsx': ['tests/unit/ui/components/export-source-controls.test.tsx'],
   'ui/src/components/Export/exportSelectionModel.ts': ['tests/unit/ui/export/export-selection-model.test.ts'],
   'ui/src/components/Modal/ScopeViewModal.tsx': ['tests/unit/ui/components/scope-view-modal.test.tsx', 'tests/unit/ui/components/scope-view-render-parity.test.tsx', 'tests/unit/ui/components/scope-view-navigation-controls.test.tsx', 'tests/unit/ui/components/scope-view-browser-runtimes.test.tsx'],
+  'ui/src/components/Modal/ScopeViewToc.tsx': ['tests/unit/ui/components/scope-view-modal.test.tsx'],
   'ui/src/components/Modal/scopeHistory.ts': ['tests/unit/ui/components/scope-history.test.ts'],
   'ui/src/components/shared/SearchableSelect.tsx': ['tests/unit/ui/components/export-source-controls.test.tsx'],
   'ui/src/contexts/exportScopeTranslations.ts': ['tests/contracts/translations-coverage.test.ts', 'tests/unit/ui/components/export-center-modal.test.tsx', 'tests/unit/ui/components/scope-view-modal.test.tsx'],

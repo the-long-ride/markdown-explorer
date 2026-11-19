@@ -1,8 +1,8 @@
 {
   "name": "vscode-extension-markdown-explorer",
   "displayName": "Markdown Explorer in VS Code",
-  "description": "Markdown for AI agents, Markdown Explorer for human. View markdown files as interactive HTML docs with collapsible sections, sortable tables, and sidebar navigation — inside VS Code.",
-  "version": "1.7.1",
+  "description": "The best free, open-source Markdown viewer & editor inside VS Code — explore folders with collapsible sections, live split editing, Mermaid diagrams, sortable tables, interactive charts, and fast workspace search.",
+  "version": "1.7.2",
   "license": "MIT",
   "publisher": "the-long-ride",
   "icon": "ui/assets/logos/logo-500.png",
@@ -69,6 +69,10 @@
       {
         "command": "markdownExplorer.saveCurrentDocument",
         "title": "Markdown Explorer: Save Current Document"
+      },
+      {
+        "command": "markdownExplorer.reloadWebview",
+        "title": "Markdown Explorer: Reload Window"
       }
     ],
     "menus": {
@@ -116,6 +120,12 @@
         "key": "ctrl+s",
         "mac": "cmd+s",
         "when": "webviewFocus"
+      },
+      {
+        "command": "markdownExplorer.reloadWebview",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "webviewFocus"
       }
     ],
     "configuration": {
@@ -141,11 +151,9 @@
             "vercel",
             "tokyo-night",
             "neon-voltage",
+            "cyberpunk",
             "pet-white-shiba",
-            "pet-k-ink",
-            "pet-cat",
-            "pet-hamster",
-            "pet-corgi"
+            "pet-k-ink"
           ],
           "enumDescriptions": [
             "Visible grids, asymmetric panels, and stripped-back mechanical borders.",
@@ -154,11 +162,9 @@
             "High-contrast monochrome, sharp borders, and geometric focus.",
             "Synthwave cyber aesthetic with vibrant neon highlights and deep night contrast.",
             "Deep black surfaces with electric coral, teal, and purple glow.",
-            "Pets theme: white Shiba mascot with cute anime PNG background pets.",
-            "Pets theme: K-Ink (app author's dog) with expressive anime PNG background pets.",
-            "Pets theme: cat mascot with whiskers and cute anime PNG background pets.",
-            "Pets theme: hamster mascot with seed-colored anime PNG background pets.",
-            "Pets theme: corgi mascot with golden-loaf anime PNG background pets."
+            "Machined controls, cut-corner cyberdeck geometry, and signal yellow/vermilion accents.",
+            "Pets theme: Nika (app author's white Shiba) with cute anime PNG background pets.",
+            "Pets theme: K-Ink (app author's dog) with expressive anime PNG background pets."
           ],
           "description": "Visual style for surfaces, borders, backgrounds, shadows, spacing, and strokes."
         },
@@ -203,6 +209,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@the-long-ride/markdown-them": "^1.3.2"
+    "@the-long-ride/markdown-them": "^1.4.0"
   }
 }

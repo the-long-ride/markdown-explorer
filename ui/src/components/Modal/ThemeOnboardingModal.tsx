@@ -38,6 +38,34 @@ export function ThemeOnboardingModal({
     return () => window.removeEventListener("mousedown", handleClickOutside);
   }, [langMenuOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        if (langMenuOpen) {
+          setLangMenuOpen(false);
+        } else {
+          onComplete();
+        }
+        return;
+      }
+      if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing) {
+        if (langMenuOpen) return;
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && active.classList.contains('theme-onboarding-card__open-settings')) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        onComplete();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, langMenuOpen, onComplete]);
+
   if (!isOpen) return null;
 
   return (

@@ -17,7 +17,7 @@ function registerRuntimeCommandHandlers(context) {
     if (typeof msg.documentConversionEnabled === "boolean") state.documentConversionEnabled = msg.documentConversionEnabled;
 
     if (state.readyHandled && (!msg.readyId || state.lastReadyId === msg.readyId)) return;
-    if (state.readyHandled) state.workspaceOperationId = state.workspaceTabId = null;
+    if (!msg.workspaceOperationId && !msg.workspaceTabId) state.workspaceOperationId = state.workspaceTabId = null;
     state.readyHandled = true;
     state.lastReadyId = msg.readyId || null;
     perf.mark("host:ready");

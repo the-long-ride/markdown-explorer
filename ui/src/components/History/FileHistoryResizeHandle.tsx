@@ -54,7 +54,7 @@ export function FileHistoryResizeHandle({ className, label, valueNow, valueMin, 
       aria-valuemin={valueMin}
       aria-valuemax={valueMax}
       tabIndex={0}
-      title={label}
+      data-hover-tooltip={label}
       className={`file-history__resizer ${className}`}
       onPointerDown={handlePointerDown}
       onKeyDown={handleKeyDown}

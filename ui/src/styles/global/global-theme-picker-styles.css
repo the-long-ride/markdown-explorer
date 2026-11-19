@@ -143,21 +143,6 @@
   --pet-paw: url("../../assets/themes/pets/rail-markers/k-ink-paw.svg");
 }
 
-.theme-style-option--pet-cat,
-.pet-theme-menu__option--pet-cat {
-  --pet-paw: url("../../assets/themes/pets/rail-markers/cat-paw.svg");
-}
-
-.theme-style-option--pet-hamster,
-.pet-theme-menu__option--pet-hamster {
-  --pet-paw: url("../../assets/themes/pets/rail-markers/hamster-paw.svg");
-}
-
-.theme-style-option--pet-corgi,
-.pet-theme-menu__option--pet-corgi {
-  --pet-paw: url("../../assets/themes/pets/rail-markers/corgi-paw.svg");
-}
-
 /* Grouped built-in theme menu */
 .theme-style-option--themes {
   display: flex;
@@ -236,33 +221,6 @@
   z-index: 21;
 }
 
-.theme-group-menu[hidden] {
-  display: none;
-}
-
-.theme-group-menu__option {
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: calc(var(--r) - 2px);
-  background: transparent;
-  color: var(--tx2);
-  font-family: var(--font-ui);
-  text-align: left;
-  padding: 7px 8px;
-  cursor: pointer;
-}
-
-.theme-group-menu__option:hover,
-.theme-group-menu__option:focus-visible {
-  background: var(--bg-h);
-  color: var(--tx);
-  outline: none;
-}
 
 
 .theme-group-menu[hidden] {
@@ -366,8 +324,75 @@
   width: var(--menu-width, auto) !important;
   max-height: var(--menu-max-height, none) !important;
   right: auto !important;
-  z-index: 2147483646 !important;
+  z-index: var(--z-modal-overlay) !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
 }
 
+
+.theme-style-option--cyberpunk .theme-style-option__swatch {
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+
+.theme-style-option--cyberpunk .theme-style-option__swatch span:first-child {
+  background: linear-gradient(135deg, #111315 0%, #111315 48%, #F2EBDB 52%, #F2EBDB 100%);
+  border-color: #E6D24F;
+  position: relative;
+}
+
+.theme-style-option--cyberpunk .theme-style-option__swatch span:first-child::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  background: linear-gradient(135deg, #E6D24F 0%, #E6D24F 40%, #A53B2A 60%, #A53B2A 100%);
+  clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
+}
+
+/* Periodic 3-second glitch on Cyberpunk theme option name & description when not yet applied */
+:root:not([data-theme-style="cyberpunk"]) .theme-group-menu__option--cyberpunk:not(.is-selected) :is(.theme-group-menu__label, .theme-group-menu__desc),
+:root:not([data-theme-style="cyberpunk"]) .theme-style-option--cyberpunk:not(.is-active) :is(.theme-style-option__label, .theme-style-option__desc, .theme-group-select__label) {
+  display: inline-block;
+  animation: cyberpunk-option-glitch-3s 3s steps(1, end) infinite;
+}
+
+:root:not([data-theme-style="cyberpunk"]) .theme-group-menu__option--cyberpunk:not(.is-selected):is(:hover, :focus-visible) :is(.theme-group-menu__label, .theme-group-menu__desc),
+:root:not([data-theme-style="cyberpunk"]) .theme-style-option--cyberpunk:not(.is-active):is(:hover, :focus-visible) :is(.theme-style-option__label, .theme-style-option__desc, .theme-group-select__label) {
+  will-change: transform, text-shadow;
+}
+
+:root:not([data-theme-style="cyberpunk"]) .theme-group-menu__option--cyberpunk:not(.is-selected) .theme-group-menu__desc,
+:root:not([data-theme-style="cyberpunk"]) .theme-style-option--cyberpunk:not(.is-active) .theme-style-option__desc {
+  animation-delay: 0.04s;
+}
+
+@keyframes cyberpunk-option-glitch-3s {
+  0%, 86%, 100% {
+    transform: translate3d(0, 0, 0);
+    text-shadow: none;
+  }
+  88% {
+    transform: translate3d(-2px, 0, 0) skewX(-6deg);
+    text-shadow: 2px 0 #E6D24F, -2px 0 #5FB9BE;
+  }
+  91% {
+    transform: translate3d(2px, -0.5px, 0) skewX(5deg);
+    text-shadow: -2px 0 #D75B79, 2px 0 #5FB9BE;
+  }
+  94% {
+    transform: translate3d(-1px, 0.5px, 0);
+    text-shadow: 1.5px 0 #5FB9BE, -1.5px 0 #D75B79;
+  }
+  97% {
+    transform: translate3d(1px, 0, 0);
+    text-shadow: -1px 0 #E6D24F;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-theme-style="cyberpunk"]) .theme-group-menu__option--cyberpunk:not(.is-selected) :is(.theme-group-menu__label, .theme-group-menu__desc),
+  :root:not([data-theme-style="cyberpunk"]) .theme-style-option--cyberpunk:not(.is-active) :is(.theme-style-option__label, .theme-style-option__desc, .theme-group-select__label) {
+    animation: none;
+    will-change: auto;
+  }
+}

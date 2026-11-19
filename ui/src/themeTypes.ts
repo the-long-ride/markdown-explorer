@@ -4,14 +4,13 @@ import type { PersistedRepositoryRevisionSelections } from './history/repository
 
 // ── UI state ────────────────────────────────────────────────────────────────
 
+export type ResolvedTableColumnAlignment = 'left' | 'center' | 'right';
+export type TableColumnAlignment = ResolvedTableColumnAlignment | 'intelligent';
 export type ThemeMode = 'auto' | 'light' | 'dark';
 export type DesktopViewMode = 'focus' | 'tabs';
 export type PetThemeStyle =
   | 'pet-white-shiba'
-  | 'pet-k-ink'
-  | 'pet-cat'
-  | 'pet-hamster'
-  | 'pet-corgi';
+  | 'pet-k-ink';
 
 export type ThemeStyle =
   | 'default'
@@ -19,6 +18,7 @@ export type ThemeStyle =
   | 'vercel'
   | 'tokyo-night'
   | 'neon-voltage'
+  | 'cyberpunk'
   | 'raw-grid'
   | PetThemeStyle;
 
@@ -95,6 +95,7 @@ export interface AppSettings {
   sidebarSortModes?: Record<string, SidebarSortMode>;
   maxPinnedItems?: number;
   desktopViewMode?: DesktopViewMode;
+  tableColumnAlignment?: TableColumnAlignment;
   fontBindings?: DesktopFontBindings;
   keybindings?: Record<string, string>;
   disabledKeybindings?: Record<string, boolean>;
@@ -122,6 +123,7 @@ export interface PersistedState {
   sidebarSortModes?: Record<string, SidebarSortMode>;
   maxPinnedItems?: number;
   desktopViewMode?: DesktopViewMode;
+  tableColumnAlignment?: TableColumnAlignment;
   fontBindings?: DesktopFontBindings;
   appFont?: DesktopFontSelection;
   codeFont?: DesktopFontSelection;

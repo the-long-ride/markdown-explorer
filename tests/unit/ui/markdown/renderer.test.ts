@@ -342,6 +342,7 @@ describe('markdown/renderer', () => {
         const renderer = new HtmlRenderer();
         const { html } = renderer.render(tokens);
         expect(html).toContain('mdn-table-filter-btn');
+        expect(html).toContain('mdn-th-actions');
       });
 
       it('does not show filter button for non-category columns', () => {

@@ -19,23 +19,34 @@ import {
 } from '../../../../ui/src/contexts/appStateConstants';
 
 describe('appStateConstants', () => {
-  test('DEFAULT_KEYBINDINGS has 21 entries including Save without app-owned zoom', () => {
-    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(21);
+  test('DEFAULT_KEYBINDINGS has 36 entries including Save and editor shortcuts without app-owned zoom', () => {
+    expect(Object.keys(DEFAULT_KEYBINDINGS)).toHaveLength(36);
+    expect(DEFAULT_KEYBINDINGS.editorDecreaseFontSize).toBe('Ctrl+Alt+-');
+    expect(DEFAULT_KEYBINDINGS.editorIncreaseFontSize).toBe('Ctrl+Alt+=');
     expect(DEFAULT_KEYBINDINGS.saveCurrentDocument).toBe('Ctrl+S');
+    expect(DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(DEFAULT_KEYBINDINGS.plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
+    expect(DEFAULT_KEYBINDINGS.openFiles).toBe('Alt+Shift+E');
+    expect(DEFAULT_KEYBINDINGS.editorInlineCode).toBe('Ctrl+`');
+    expect(DEFAULT_KEYBINDINGS.expandAll).toBe('Ctrl+Alt+x');
   });
 
   test('VSCODE_DEFAULT_KEYBINDINGS adds the external editor action for VS Code', () => {
-    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(21);
+    expect(Object.keys(VSCODE_DEFAULT_KEYBINDINGS)).toHaveLength(36);
     expect(VSCODE_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(VSCODE_DEFAULT_KEYBINDINGS.plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
+    expect(VSCODE_DEFAULT_KEYBINDINGS.openFiles).toBe('Alt+Shift+E');
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomIn).toBeUndefined();
     expect(VSCODE_DEFAULT_KEYBINDINGS.zoomOut).toBeUndefined();
   });
 
-  test('DESKTOP_DEFAULT_KEYBINDINGS has 31 entries including Save, Edit, and desktop reset zoom', () => {
-    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(31);
+  test('DESKTOP_DEFAULT_KEYBINDINGS has 46 entries including Save, Edit, and desktop reset zoom', () => {
+    expect(Object.keys(DESKTOP_DEFAULT_KEYBINDINGS)).toHaveLength(46);
     expect(DESKTOP_DEFAULT_KEYBINDINGS.saveCurrentDocument).toBe('Ctrl+S');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+E');
-    expect(DESKTOP_DEFAULT_KEYBINDINGS.resetZoom).toBe('Ctrl+Alt+Z');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.plainEditCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.openFiles).toBe('Ctrl+Shift+E');
+    expect(DESKTOP_DEFAULT_KEYBINDINGS.resetZoom).toBe('Ctrl+0');
   });
 
   test('DESKTOP_DEFAULT_KEYBINDINGS overrides 5 from defaults', () => {
@@ -65,21 +76,38 @@ describe('appStateConstants', () => {
     expect(getDefaultKeybindingsForRuntime('desktop').editCurrentDocument).toBe('Ctrl+E');
     expect(getDefaultKeybindingsForRuntime('tauri').editCurrentDocument).toBe('Ctrl+E');
     expect(getDefaultKeybindingsForRuntime('vscode').editCurrentDocument).toBe('Ctrl+Alt+E');
-    expect(getDefaultKeybindingsForRuntime('chrome').editCurrentDocument).toBeUndefined();
+    expect(getDefaultKeybindingsForRuntime('web').editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(getDefaultKeybindingsForRuntime('web').plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
   });
 
-  test('normalizeKeybindingsForRuntime strips imported Edit binding in Chromium', () => {
-    const kb = normalizeKeybindingsForRuntime({ editCurrentDocument: 'Ctrl+Shift+E' }, 'chrome');
-    expect(kb.editCurrentDocument).toBeUndefined();
+  test('normalizeKeybindingsForRuntime preserves and normalizes Edit bindings in Web and VS Code', () => {
+    const kb = normalizeKeybindingsForRuntime({ editCurrentDocument: 'Ctrl+E', plainEditCurrentDocument: 'Ctrl+Shift+E' }, 'web');
+    expect(kb.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(kb.plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
+
+    const vskb = normalizeKeybindingsForRuntime({ editCurrentDocument: 'Ctrl+E', plainEditCurrentDocument: 'Ctrl+Shift+E' }, 'vscode');
+    expect(vskb.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(vskb.plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
   });
 
   test('normalizeKeybindingsForRuntime strips reset zoom outside desktop apps', () => {
     expect(normalizeKeybindingsForRuntime({ zoomIn: 'Ctrl+=', zoomOut: 'Ctrl+-', resetZoom: 'Ctrl+Alt+Z' }, 'vscode')).not.toHaveProperty('zoomIn');
     expect(normalizeKeybindingsForRuntime({ zoomIn: 'Ctrl+=', zoomOut: 'Ctrl+-', resetZoom: 'Ctrl+Alt+Z' }, 'vscode')).not.toHaveProperty('zoomOut');
     expect(normalizeKeybindingsForRuntime({ resetZoom: 'Ctrl+Alt+Z' }, 'vscode').resetZoom).toBeUndefined();
-    expect(normalizeKeybindingsForRuntime({ resetZoom: 'Ctrl+Alt+Z' }, 'chrome').resetZoom).toBeUndefined();
-    expect(normalizeKeybindingsForRuntime(undefined, 'desktop').resetZoom).toBe('Ctrl+Alt+Z');
-    expect(normalizeKeybindingsForRuntime(undefined, 'tauri').resetZoom).toBe('Ctrl+Alt+Z');
+    expect(normalizeKeybindingsForRuntime({ resetZoom: 'Ctrl+Alt+Z' }, 'web').resetZoom).toBeUndefined();
+    expect(normalizeKeybindingsForRuntime(undefined, 'desktop').resetZoom).toBe('Ctrl+0');
+    expect(normalizeKeybindingsForRuntime(undefined, 'tauri').resetZoom).toBe('Ctrl+0');
+  });
+
+  test('normalizeKeybindingsForRuntime keeps Markdown editor shortcuts in web while stripping reloadWindow', () => {
+    const webKb = normalizeKeybindingsForRuntime(undefined, 'web');
+    expect(webKb.editorBold).toBe('Ctrl+B');
+    expect(webKb.editorIncreaseFontSize).toBe('Ctrl+Alt+=');
+    expect(normalizeKeybindingsForRuntime(undefined, 'vscode').editorIncreaseFontSize).toBe('Ctrl+Alt+=');
+    expect(normalizeKeybindingsForRuntime(undefined, 'desktop').editorIncreaseFontSize).toBe('Ctrl+=');
+    expect(webKb.reloadWindow).toBeUndefined();
+    expect(webKb.toggleWorkspaceInsights).toBe('Ctrl+Alt+I');
+    expect(normalizeKeybindingsForRuntime(undefined, 'vscode').toggleWorkspaceInsights).toBeUndefined();
   });
 
   test('normalizeKeybindings merges saved over defaults', () => {
@@ -110,11 +138,16 @@ describe('appStateConstants', () => {
     expect(normalizeThemeStyle('vercel')).toBe('vercel');
     expect(normalizeThemeStyle('tokyo-night')).toBe('tokyo-night');
     expect(normalizeThemeStyle('neon-voltage')).toBe('neon-voltage');
+    expect(normalizeThemeStyle('cyberpunk')).toBe('cyberpunk');
+    expect(normalizeThemeStyle('night-city-2077')).toBe('cyberpunk');
     expect(normalizeThemeStyle('raw-grid')).toBe('raw-grid');
   });
 
-  test('normalizeThemeStyle invalid falls back to Raw Grid', () => {
+  test('normalizeThemeStyle invalid or removed pet themes fall back to Raw Grid', () => {
     expect(normalizeThemeStyle('invalid')).toBe('raw-grid');
+    expect(normalizeThemeStyle('pet-cat')).toBe('raw-grid');
+    expect(normalizeThemeStyle('pet-hamster')).toBe('raw-grid');
+    expect(normalizeThemeStyle('pet-corgi')).toBe('raw-grid');
   });
 
   test('normalizeDesktopViewMode valid', () => {
@@ -127,7 +160,7 @@ describe('appStateConstants', () => {
 
   test('isPetThemeStyle identifies pet themes', () => {
     expect(isPetThemeStyle('pet-white-shiba')).toBe(true);
-    expect(isPetThemeStyle('pet-cat')).toBe(true);
+    expect(isPetThemeStyle('pet-k-ink')).toBe(true);
   });
 
   test('isPetThemeStyle returns false for non-pet styles', () => {
@@ -137,6 +170,7 @@ describe('appStateConstants', () => {
     expect(isPetThemeStyle('vercel')).toBe(false);
     expect(isPetThemeStyle('tokyo-night')).toBe(false);
     expect(isPetThemeStyle('neon-voltage')).toBe(false);
+    expect(isPetThemeStyle('cyberpunk')).toBe(false);
     expect(isPetThemeStyle('raw-grid')).toBe(false);
   });
 
@@ -151,5 +185,13 @@ describe('appStateConstants', () => {
   test('Raw Grid is first and the former default has its own name', () => {
     expect(THEME_STYLE_OPTIONS[0].id).toBe('raw-grid');
     expect(THEME_STYLE_OPTIONS.find((option) => option.id === 'default')?.label).toBe('Explorer Classic');
+  });
+
+  test('normalizeThemeStyle falls back removed pet themes to raw-grid', () => {
+    expect(normalizeThemeStyle('pet-cat')).toBe('raw-grid');
+    expect(normalizeThemeStyle('pet-hamster')).toBe('raw-grid');
+    expect(normalizeThemeStyle('pet-corgi')).toBe('raw-grid');
+    expect(normalizeThemeStyle('pet-k-ink')).toBe('pet-k-ink');
+    expect(normalizeThemeStyle('pet-white-shiba')).toBe('pet-white-shiba');
   });
 });

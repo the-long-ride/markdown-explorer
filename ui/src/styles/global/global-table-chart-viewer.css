@@ -1,7 +1,7 @@
 .mdn-table-chart-container canvas { cursor: default; }
 
 .mdn-chart-viewer {
-  z-index: 10000100;
+  z-index: var(--z-modal-popover);
   padding: 0;
 }
 
@@ -98,6 +98,17 @@
   height: 100% !important;
 }
 
+.mdn-chart-viewer__frame {
+  position: relative;
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
 .mdn-chart-viewer__viewport {
   --mdn-chart-pan-gutter: 64px;
   display: block;
@@ -182,7 +193,7 @@
 .mdn-chart-viewer .mdn-modal-close svg { width: 16px; height: 16px; }
 
 .mdn-chart-viewer__type-dropdown {
-  z-index: 2020;
+  z-index: var(--z-popover);
 }
 
 .mdn-chart-viewer__type-dropdown .mdn-table-view-menu {
@@ -193,7 +204,7 @@
   max-height: none;
   overflow: visible;
   scrollbar-width: none;
-  z-index: 2030;
+  z-index: var(--z-popover);
 }
 
 .mdn-chart-viewer__type-dropdown .mdn-table-view-menu::-webkit-scrollbar {
@@ -210,7 +221,7 @@
   box-shadow: 4px 4px 0 var(--bd-s) !important;
 }
 
-.mdn-chart-context-menu { z-index: 10000150; }
+.mdn-chart-context-menu { z-index: var(--z-modal-popover); }
 .mdn-chart-context-menu__item { white-space: nowrap; }
 .mdn-chart-context-menu__icon { width: 16px; height: 16px; flex: 0 0 16px; display: inline-flex; align-items: center; justify-content: center; }
 .mdn-chart-context-menu__icon svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.8; }

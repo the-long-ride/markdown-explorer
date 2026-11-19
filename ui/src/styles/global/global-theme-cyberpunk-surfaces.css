@@ -1,0 +1,523 @@
+/* =============================================================================
+ * global-theme-cyberpunk-surfaces.css — Cyberpunk Theme Settings & Surfaces
+ * ============================================================================= */
+
+/* 6. Settings Rows, Modal Cards, Badges, Icon Boxes & Menu Options */
+:root[data-theme][data-theme-style="cyberpunk"] :is(.settings-feature-group__card, .settings-shortcut-group__card) {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; gap: 8px !important; overflow: visible !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :where(
+  .settings-feature-row, .settings-preference-row, .settings-shortcut-row, .desktop-font-binding-row,
+  .desktop-font-card, .settings-section-card, .settings-update-card, .support-prompt-option,
+  .theme-onboarding-card__section, .theme-onboarding-card__hint, .theme-remix-list__item, .theme-remix-section--panel,
+  .switch-workspace-paths, .workspace-insights__settings, .workspace-insights__settings-desc,
+  .workspace-insights__settings-section, .workspace-insights__settings-subgroup, .workspace-insights__settings-lint,
+  .workspace-insights__settings-lint-rule, .theme-style-option, .export-center__current-file,
+  .export-center__folder-picker, .export-multi-select,
+  .export-center__selection-summary, .export-center__activity, .export-center__activity li
+) {
+  --cp-bg: var(--bg-s); --cp-bd: var(--bd-s); --cp-cut-top: 9px; --cp-cut-bottom: 7px;
+  padding: 10px 14px; box-shadow: none !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .support-prompt-option--star {
+  --cp-bg: color-mix(in srgb, #eab308 8%, var(--bg-s)); --cp-bd: color-mix(in srgb, #eab308 55%, var(--bd-s));
+}
+:root[data-theme][data-theme-style="cyberpunk"] .support-prompt-option--donate {
+  --cp-bg: color-mix(in srgb, #f43f5e 8%, var(--bg-s)); --cp-bd: color-mix(in srgb, #f43f5e 55%, var(--bd-s));
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .settings-feature-row, .settings-preference-row, .settings-shortcut-row, .desktop-font-binding-row,
+  .theme-style-option, .support-prompt-option, .theme-remix-list__item
+):hover { --cp-bg: var(--bg-h); --cp-bd: var(--accent); }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.theme-style-option.is-active, .theme-remix-list__item.is-selected) {
+  --cp-bg: var(--bg-a); --cp-bd: var(--accent); --cp-left-w: 2px;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .settings-item__icon, .workspace-insights__setting-icon, .support-prompt-card__icon, .support-prompt-option__icon,
+  .switch-workspace-header__icon, .theme-style-option__swatch span, .theme-style-option__swatch--pet,
+  .theme-group-menu__swatch
+) {
+  --cp-bg: color-mix(in srgb, var(--accent) 12%, var(--bg-e)); --cp-bd: var(--accent); --cp-cut-top: 5px; --cp-cut-bottom: 4px; box-shadow: none !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.support-prompt-card__icon, .support-prompt-option--donate .support-prompt-option__icon) {
+  --cp-bg: rgba(244, 63, 94, 0.16); --cp-bd: #f43f5e;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .settings-navigation__donate {
+  --cp-bg: color-mix(in srgb, var(--accent) 12%, var(--bg-e)); --cp-bd: var(--accent); --cp-cut-top: 8px; --cp-cut-bottom: 6px; box-shadow: none !important;
+}
+
+/* Yellow Background Badges, Pills & Keys = Crisp Black/Dark Ink Text (--accent-ink) */
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .tip-card-badge, .file-history__badge, .repository-history__head-badge, .mdn-frontmatter-key,
+  .workspace-insights__tab.is-active .workspace-insights__tab-badge, .insights-pill--accent,
+  .insights-filter-chip.is-active, .desktop-font-card__badge, .tree-file-search-count-badge, .toc-panel__count,
+  .sidebar__count, .sidebar__scope-count,
+  .hero-star-banner__count, .support-prompt-card__star-count
+) {
+  --cp-bg: var(--primary-fill); --cp-bd: var(--primary-edge); --cp-cut-top: 5px; --cp-cut-bottom: 4px;
+  color: var(--accent-ink) !important; font-weight: 700; box-shadow: none !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .insights-pill--accent strong { color: var(--accent-ink) !important; }
+
+/* Menu Items, Sidebar Navigation & Left Sidebar "Files" Tree Rows */
+:root[data-theme][data-theme-style="cyberpunk"] .tree-folder__children {
+  border-left: 0 !important; box-shadow: -1px 0 0 var(--bd-s) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .tree-folder.is-open:hover > .tree-folder__children {
+  box-shadow: -1px 0 0 color-mix(in srgb, var(--deco-cyan) 65%, var(--bd-s)) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .tree-folder__header { font-weight: 700; color: var(--tx); }
+:root[data-theme][data-theme-style="cyberpunk"] .tree-folder.is-open > .tree-folder__header .tree-folder__icon { color: var(--deco-cyan); }
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .toolbar-action-menu__item, .settings-language-menu__option, .search-overlay-result, .tree-row, .file-row,
+  .tree-folder__header, .tree-file,
+  .tab-context-menu__item, .sidebar-item-menu__item, .settings-navigation__item, .custom-select__option,
+  .theme-group-menu__option, .pet-theme-menu__option, .custom-theme-menu__option, .theme-remix-menu__option,
+  .theme-onboarding-card__select-option, .bookmarks-sort-menu button, .bookmark-group__header, .bookmark-item,
+  .file-history__commit-button, .font-search-menu__option, .font-variant-menu__option,
+  .export-source-menu__option, .searchable-select__option, .toc-item, .toc-link
+) { --cp-cut-top: 8px; --cp-cut-bottom: 6px; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; transition: color 120ms; }
+:root[data-theme][data-theme-style="cyberpunk"] .toolbar-action-menu__item.is-toggle .toolbar-action-menu__toggle-action { background: transparent !important; box-shadow: none !important; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .toolbar-action-menu__item, .settings-language-menu__option, .search-overlay-result, .tree-row, .file-row,
+  .tree-folder__header, .tree-file,
+  .tab-context-menu__item, .sidebar-item-menu__item, .settings-navigation__item, .custom-select__option,
+  .theme-group-menu__option, .pet-theme-menu__option, .custom-theme-menu__option, .theme-remix-menu__option,
+  .theme-onboarding-card__select-option, .bookmarks-sort-menu button, .bookmark-group__header, .bookmark-item,
+  .file-history__commit-button, .font-search-menu__option, .font-variant-menu__option,
+  .export-source-menu__option, .searchable-select__option, .toc-item, .toc-link
+):hover {
+  --cp-bg: var(--bg-h); --cp-bd: var(--accent); color: var(--tx) !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .tree-item--active, .file-row--active, .tree-file.is-active, .tree-folder__header.is-cursor, .tree-file.is-cursor,
+  .toolbar-action-menu__item.is-active, .settings-navigation__item.is-active,
+  .custom-select__option.is-selected, .theme-group-menu__option.is-selected, .pet-theme-menu__option.is-selected,
+  .custom-theme-menu__option.is-selected, .theme-remix-menu__option.is-selected, .theme-onboarding-card__select-option.is-selected,
+  .bookmark-item.is-selected, .file-history__commit-button[aria-pressed="true"], .font-search-menu__option.is-selected,
+  .font-variant-menu__option.is-selected, .export-source-menu__option.is-selected, .searchable-select__option.is-selected,
+  .toc-item.is-active, .toc-link.is-active
+) {
+  --cp-bg: var(--bg-a); --cp-bd: var(--accent); --cp-cut-top: 8px; --cp-cut-bottom: 6px; color: var(--tx) !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 2px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .tree-file.is-active {
+  --cp-bg: color-mix(in srgb, var(--deco-rose) 12%, var(--bg-a)); --cp-bd: var(--deco-rose); font-weight: 700;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .tree-file.is-active .tree-file__icon { color: var(--deco-rose) !important; }
+
+/* Table of Contents (ON THIS PAGE) Chamfer Shape & Active Treatment */
+:root[data-theme][data-theme-style="cyberpunk"] :is(.toc-item, .toc-link) {
+  --cp-cut-top: 7px; --cp-cut-bottom: 6px;
+  border-radius: 0 !important;
+  padding-left: calc(10px + var(--toc-indent, 0px)) !important; padding-right: 10px !important;
+  clip-path: polygon(0 0, calc(100% - var(--cp-cut-top, 7px)) 0, 100% var(--cp-cut-top, 7px), 100% 100%, var(--cp-cut-bottom, 6px) 100%, 0 calc(100% - var(--cp-cut-bottom, 6px))) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.toc-item.is-active, .toc-link.is-active) {
+  --cp-bg: color-mix(in srgb, var(--accent) 12%, var(--bg-a)); --cp-bd: var(--accent); color: var(--accent-text) !important; font-weight: 700;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.toc-item.is-active, .toc-link.is-active):is(:hover, :focus-visible) {
+  --cp-bg: color-mix(in srgb, var(--accent) 20%, var(--bg-a)); --cp-bd: var(--accent); color: var(--accent-text) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.toc-item, .toc-link) .toc-item__marker,
+:root[data-theme][data-theme-style="cyberpunk"] :is(.toc-item, .toc-link)::before {
+  display: none !important; content: none !important;
+}
+
+/* 7. Inputs, Dropdown Triggers, Switches & Tooltips */
+:root[data-theme][data-theme-style="cyberpunk"] :where(
+  .search-bar, .sidebar__search, .mdn-table-search-wrap, .settings-shortcuts-search, .manual-search,
+  .settings-shortcut-input, .settings-number-input, .settings-font-select, .search-overlay-input,
+  .bookmark-dialog input, .file-history__filter input, .theme-remix-field input[type="text"],
+  .custom-select__trigger, .font-search-dropdown__trigger, .font-variant-dropdown__trigger,
+  .theme-group-select, .pet-theme-select, .custom-theme-select, .theme-remix-select,
+  .theme-onboarding-card__select-btn, .export-source-select__trigger, .searchable-select__trigger,
+  .searchable-select__search, .export-multi-select__search,
+  .workspace-insights__settings select, .workspace-insights__settings input[type="text"],
+  .workspace-insights__settings input[type="number"], .workspace-insights__settings textarea,
+  select, textarea, kbd, .keycap-3d
+) { --cp-bg: var(--bg-code); --cp-bd: var(--bd-x); --cp-cut-top: 7px; --cp-cut-bottom: 5px; box-shadow: none !important; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(kbd, .keycap-3d) { --cp-bg: var(--bg-e); --cp-cut-top: 4px; --cp-cut-bottom: 3px; display: inline-flex !important; align-items: center !important; justify-content: center !important; line-height: 1 !important; padding: 0 6px !important; box-sizing: border-box !important; text-align: center !important; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .search-bar:focus-within, .sidebar__search:focus-within, .mdn-table-search-wrap:focus-within,
+  .settings-shortcuts-search:focus-within, .manual-search:focus-within, .settings-shortcut-input:focus,
+  .settings-number-input:focus, .settings-font-select:focus, .bookmark-dialog input:focus,
+  .file-history__filter input:focus, .theme-remix-field input[type="text"]:focus, .custom-select__trigger:hover,
+  .custom-select.is-open .custom-select__trigger, .font-search-dropdown__trigger:hover,
+  .font-variant-dropdown__trigger:hover, .theme-group-select:hover, .pet-theme-select:hover,
+  .custom-theme-select:hover, .theme-remix-select:hover, .theme-onboarding-card__select-btn:hover,
+  .export-source-select__trigger:hover, .searchable-select__trigger:hover, select:focus, textarea:focus
+) { --cp-bd: var(--accent); }
+
+/* Unified Cyberpunk Switch Button Track & Solid Chamfered Thumb (.app-switch & .switch-slider) */
+:root[data-theme][data-theme-style="cyberpunk"] :is([role="switch"], .app-switch, .switch-slider) {
+  --cp-bg: var(--bg-code); --cp-bd: var(--bd-x); --cp-cut-top: 4px; --cp-cut-bottom: 4px; box-shadow: none !important;
+  width: 38px !important; height: 20px !important; border-radius: 0 !important; box-sizing: border-box !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .switch-toggle {
+  width: 38px !important; height: 20px !important; display: inline-flex !important; align-items: center !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .app-switch {
+  display: inline-flex !important; align-items: center !important; justify-content: flex-start !important;
+  padding: 0 3px !important; box-sizing: border-box !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is([role="switch"][aria-checked="true"], .app-switch.is-on, .switch-toggle input:checked + .switch-slider) {
+  --cp-bg: var(--primary-fill); --cp-bd: var(--primary-edge);
+}
+:root[data-theme][data-theme-style="cyberpunk"] .app-switch__thumb,
+:root[data-theme][data-theme-style="cyberpunk"] .switch-slider::before,
+:root[data-theme][data-theme-style="cyberpunk"] .switch-slider:before {
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  background: var(--tx2) !important;
+  clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px)) !important;
+  width: 14px !important; height: 14px !important; left: 3px !important; bottom: 3px !important;
+  transition: transform 0.16s ease, background 0.16s ease !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .switch-toggle input:checked + .switch-slider::before,
+:root[data-theme][data-theme-style="cyberpunk"] .switch-toggle input:checked + .switch-slider:before {
+  transform: translateX(18px) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .app-switch.is-on .app-switch__thumb,
+  .switch-toggle input:checked + .switch-slider::before,
+  .switch-toggle input:checked + .switch-slider:before
+) {
+  background: var(--accent-ink) !important;
+}
+
+/* Cyberpunk Tooltip Callout = High-Contrast Text, Neon Cyan Separators & Yellow Keycaps */
+:root[data-theme][data-theme-style="cyberpunk"] :is(.tooltip-text, .hover-tooltip-portal, .settings-preference-description-panel) {
+  --cp-bg: var(--bg-e); --cp-bd: var(--accent); --cp-cut-top: 6px; --cp-cut-bottom: 5px;
+  color: var(--tx) !important; font-weight: 600;
+  padding: 5px 10px;
+  box-shadow: none !important; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.tooltip-text, .hover-tooltip-portal) .tooltip-content-wrap {
+  display: inline-flex; align-items: center; gap: 2px; white-space: nowrap;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .settings-preference-description-panel::after { display: none !important; }
+:root[data-theme][data-theme-style="cyberpunk"] :is(.tooltip-text, .settings-preference-description-panel) :is(.keycap-plus, .tooltip-shortcut-sep) {
+  color: var(--deco-cyan) !important; opacity: 0.95 !important; font-weight: 700;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.tooltip-text, .settings-preference-description-panel) :is(kbd, .keycap-3d) {
+  --cp-bg: color-mix(in srgb, var(--accent) 14%, var(--bg-code)); --cp-bd: var(--accent);
+  color: var(--accent) !important; font-weight: 700;
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(.content-tabs__scrollbar-thumb, .desktop-tabbar__scrollbar-thumb),
+:root[data-theme][data-theme-style="cyberpunk"] :is(.content-tabs__scrollbar, .desktop-tabbar__scrollbar)::before,
+:root[data-theme][data-theme-style="cyberpunk"] *::-webkit-scrollbar-thumb,
+:root[data-theme][data-theme-style="cyberpunk"] *::-webkit-scrollbar-track,
+:root[data-theme][data-theme-style="cyberpunk"] *::-webkit-scrollbar-corner { border-radius: 0 !important; }
+
+/* 8. Cyberpunk Digital Jitter Glitch Keyframes */
+@keyframes cp-glitch-text {
+  0%, 100% { transform: translate3d(0, 0, 0); text-shadow: none; }
+  20% { transform: translate3d(-2px, 0, 0) skewX(-6deg); text-shadow: 2px 0 var(--accent, #E6D24F), -2px 0 var(--deco-cyan, #5FB9BE); }
+  45% { transform: translate3d(2px, -0.5px, 0) skewX(5deg); text-shadow: -2px 0 var(--deco-rose, #D75B79), 2px 0 var(--deco-cyan, #5FB9BE); }
+  70% { transform: translate3d(-1px, 0.5px, 0); text-shadow: 1.5px 0 var(--deco-cyan, #5FB9BE), -1.5px 0 var(--deco-rose, #D75B79); }
+  85% { transform: translate3d(1px, 0, 0); text-shadow: -1px 0 var(--accent, #E6D24F); }
+}
+@keyframes cp-glitch-icon {
+  0%, 100% { transform: translate3d(0, 0, 0) !important; filter: none !important; }
+  20% { transform: translate3d(-2px, 0, 0) skewX(-6deg) !important; filter: drop-shadow(2px 0 var(--accent, #E6D24F)) drop-shadow(-2px 0 var(--deco-cyan, #5FB9BE)) !important; }
+  45% { transform: translate3d(2px, -0.5px, 0) skewX(5deg) !important; filter: drop-shadow(-2px 0 var(--deco-rose, #D75B79)) drop-shadow(2px 0 var(--deco-cyan, #5FB9BE)) !important; }
+  70% { transform: translate3d(-1px, 0.5px, 0) !important; filter: drop-shadow(1.5px 0 var(--deco-cyan, #5FB9BE)) drop-shadow(-1.5px 0 var(--deco-rose, #D75B79)) !important; }
+  85% { transform: translate3d(1px, 0, 0) !important; filter: drop-shadow(-1px 0 var(--accent, #E6D24F)) !important; }
+}
+@keyframes cp-glitch-tooltip-chroma {
+  0%, 100% { text-shadow: none; }
+  20% { text-shadow: 2px 0 var(--accent, #E6D24F), -2px 0 var(--deco-cyan, #5FB9BE); }
+  45% { text-shadow: -2px 0 var(--deco-rose, #D75B79), 2px 0 var(--deco-cyan, #5FB9BE); }
+  70% { text-shadow: 1.5px 0 var(--deco-cyan, #5FB9BE), -1.5px 0 var(--deco-rose, #D75B79); }
+  85% { text-shadow: -1px 0 var(--accent, #E6D24F); }
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .tooltip-container:hover .tooltip-text,
+  .tooltip-container:focus-within .tooltip-text,
+  .topbar__breadcrumb-container:hover .tooltip-text,
+  .hover-tooltip-portal.is-visible,
+  .tooltip-portal,
+  .settings-preference-description-panel.is-visible
+) {
+  animation: cp-glitch-tooltip-chroma .24s steps(1, end) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .tooltip-container:hover .tooltip-text,
+  .tooltip-container:focus-within .tooltip-text,
+  .topbar__breadcrumb-container:hover .tooltip-text,
+  .hover-tooltip-portal.is-visible,
+  .tooltip-portal,
+  .settings-preference-description-panel.is-visible
+) .tooltip-content-wrap {
+  display: inline-flex;
+  animation: cp-glitch-text .24s steps(1, end);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .tooltip-container:hover .tooltip-text,
+  .tooltip-container:focus-within .tooltip-text,
+  .topbar__breadcrumb-container:hover .tooltip-text,
+  .hover-tooltip-portal.is-visible,
+  .tooltip-portal,
+  .settings-preference-description-panel.is-visible
+) svg {
+  display: inline-flex !important;
+  animation: cp-glitch-icon .24s steps(1, end) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme][data-theme-style="cyberpunk"] * { animation: none !important; transform: none !important; text-shadow: none !important; }
+}
+
+/* 9. Cyberpunk Ambient Matrix Terminal Backdrop */
+.cyberpunk-matrix-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.28;
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] .cyberpunk-matrix-canvas {
+  opacity: 0.22;
+}
+
+:root[data-theme="auto"][data-theme-style="cyberpunk"] .cyberpunk-matrix-canvas {
+  opacity: 0.28;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"][data-theme-style="cyberpunk"] .cyberpunk-matrix-canvas {
+    opacity: 0.22;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cyberpunk-matrix-canvas {
+    display: none !important;
+  }
+}
+
+
+/* Scroll-to-Top Button: Cyberpunk Cut-Corner Badge, strictly respecting scroll visibility */
+:root[data-theme][data-theme-style="cyberpunk"] .scroll-to-top-btn {
+  --cp-bg: var(--accent);
+  --cp-bd: var(--primary-edge);
+  --cp-cut-top: 6px;
+  --cp-cut-bottom: 5px;
+  position: absolute !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 0 !important;
+  color: var(--accent-ink) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(10px) !important;
+  transition: opacity 0.2s ease, transform 0.2s ease, filter 0.14s ease !important;
+  z-index: var(--z-floating) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .scroll-to-top-btn.is-visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateY(0) !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .scroll-to-top-btn:hover {
+  filter: brightness(1.2) drop-shadow(0 0 8px var(--accent)) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Enhanced Cyberpunk Table Context Menu & Floating Menus */
+:root[data-theme][data-theme-style="cyberpunk"] .cm-table-context-menu {
+  --cp-bg: var(--bg-s); --cp-bd: var(--bd-s); --cp-cut-top: 8px; --cp-cut-bottom: 6px;
+  border-radius: 0 !important; border: 0 !important; box-shadow: none !important;
+  backdrop-filter: blur(14px) !important; padding: 6px !important; z-index: var(--z-menu) !important;
+}
+:root[data-theme="dark"][data-theme-style="cyberpunk"] .cm-table-context-menu {
+  --cp-bd: var(--deco-cyan);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 6px rgba(0, 240, 255, 0.12));
+}
+:root[data-theme="light"][data-theme-style="cyberpunk"] .cm-table-context-menu {
+  --cp-bd: var(--deco-rose); box-shadow: none !important;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.18)) drop-shadow(0 0 6px rgba(230, 72, 120, 0.12));
+}
+:root[data-theme][data-theme-style="cyberpunk"] .cm-table-context-menu__item {
+  --cp-cut-top: 5px; --cp-cut-bottom: 4px; border-radius: 0 !important; margin: 1px 0 !important;
+  padding: 6px 10px !important; color: var(--tx) !important; font-family: var(--font-ui) !important;
+  font-size: 12px !important; border: 0 !important; background: transparent !important; box-shadow: none !important;
+  transition: all 120ms ease !important;
+}
+:root[data-theme="dark"][data-theme-style="cyberpunk"] .cm-table-context-menu__item:is(:hover, :focus-visible):not(:disabled) {
+  --cp-bg: color-mix(in srgb, var(--deco-cyan) 18%, var(--bg-h)) !important; --cp-bd: var(--deco-cyan) !important; color: #ffffff !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+:root[data-theme="light"][data-theme-style="cyberpunk"] .cm-table-context-menu__item:is(:hover, :focus-visible):not(:disabled) {
+  --cp-bg: color-mix(in srgb, var(--deco-rose) 18%, var(--bg-h)) !important; --cp-bd: var(--deco-rose) !important; color: var(--tx) !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .cm-table-context-menu__item:disabled { opacity: 0.4 !important; cursor: not-allowed !important; background: transparent !important; }
+:root[data-theme][data-theme-style="cyberpunk"] .cm-table-context-menu__divider { height: 1px !important; background: var(--bd-s) !important; margin: 4px 2px !important; }
+
+/* Ensure More Actions dropdown is always above all components */
+:root[data-theme][data-theme-style="cyberpunk"] .toolbar-action-menu.is-open {
+  z-index: var(--z-menu) !important;
+}
+:root[data-theme="light"][data-theme-style="cyberpunk"] :is(.toolbar-action-menu__panel, .tab-context-menu) {
+  --cp-bd: var(--deco-rose);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.18)) drop-shadow(0 0 6px rgba(230, 72, 120, 0.12));
+}
+:root[data-theme="dark"][data-theme-style="cyberpunk"] :is(.toolbar-action-menu__panel, .tab-context-menu) {
+  --cp-bd: var(--deco-cyan);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 6px rgba(0, 240, 255, 0.12));
+}
+
+
+
+/* Cyberpunk custom hover tooltip portal styling */
+:root[data-theme][data-theme-style="cyberpunk"] .hover-tooltip-portal {
+  --cp-bg: #141618;
+  --cp-bd: var(--accent);
+  --cp-cut-top: 7px;
+  --cp-cut-bottom: 5px;
+  color: var(--tx) !important;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  padding: 7px 11px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 6px 16px rgba(0, 0, 0, 0.75));
+  backdrop-filter: blur(8px);
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] .hover-tooltip-portal {
+  --cp-bg: #FFFFFF;
+  --cp-bd: #FF0055;
+  color: #0F172A !important;
+  filter: drop-shadow(0 0 1px #FF0055) drop-shadow(0 4px 14px rgba(255, 0, 85, 0.25));
+}
+
+
+/* 11. Straight Cyberdeck Empty State Screen (No Muddy Dropshadow, Crisp 1px Straight Perimeter) */
+:root[data-theme][data-theme-style="cyberpunk"] .content__scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading) {
+  background: color-mix(in srgb, var(--bg-s) 92%, transparent) !important;
+  border: 1px solid var(--bd-s) !important;
+  border-radius: 0 !important;
+  outline: none !important; box-shadow: none !important; filter: none !important;
+  flex: 0 0 auto; max-width: 580px; width: 90%; height: fit-content; min-height: auto; margin: auto;
+  padding: 36px 32px;
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+}
+
+:root[data-theme="dark"][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading),
+:root[data-theme="auto"][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading) {
+  border: 1px solid color-mix(in srgb, var(--deco-cyan) 45%, var(--bd-s)) !important;
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading) {
+  border: 1px solid color-mix(in srgb, var(--deco-rose) 45%, var(--bd-s)) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading)::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  width: 36px;
+  height: 2px;
+  background: var(--deco-cyan);
+  pointer-events: none;
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading)::before {
+  background: var(--deco-rose);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading) .state-screen__icon {
+  font-size: 38px;
+  color: var(--deco-cyan);
+  opacity: 0.95;
+  margin-bottom: 6px;
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading) .state-screen__icon {
+  color: var(--deco-rose);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading) .state-screen__title {
+  color: var(--tx) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.4px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .state-screen:not(.state-screen--loading) .state-screen__sub {
+  color: var(--tx2) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  max-width: 480px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .settings-navigation {
+  --cp-nav-bg: color-mix(in srgb, var(--bg) 56%, var(--bg-s)); --cp-cut-bottom: 12px;
+  border: 0 !important; box-shadow: 1px 0 0 var(--bd-s) !important;
+  background:
+    linear-gradient(0deg, var(--bd-x) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--bd-x), var(--bd-x)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(45deg, transparent calc(var(--cp-cut-bottom) * 0.7071 - 0.15px), var(--bd-x) calc(var(--cp-cut-bottom) * 0.7071), var(--bd-x) calc(var(--cp-cut-bottom) * 0.7071 + 0.7071px), var(--cp-nav-bg) calc(var(--cp-cut-bottom) * 0.7071 + 0.86px)) bottom / 100% 100% no-repeat !important;
+}
+:root[data-theme][data-theme-style="cyberpunk"] .toolbar-action-menu__panel {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-x); --cp-cut-top: 12px; --cp-cut-bottom: 9px;
+  position: absolute !important; top: calc(100% + 8px) !important; right: 0 !important; left: auto !important;
+  z-index: var(--z-menu) !important; padding: 10px 8px !important; box-shadow: none !important;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+}
+:root[data-theme][data-theme-style="cyberpunk"] :is(
+  .settings-language-menu, .context-menu, .tab-context-menu, .sidebar-item-menu, .custom-select__menu,
+  .theme-group-menu, .pet-theme-menu, .custom-theme-menu, .theme-remix-menu, .theme-onboarding-card__select-menu,
+  .bookmarks-sort-menu, .font-search-menu, .font-variant-menu, .export-source-menu--portal, .searchable-select__menu
+) {
+  --cp-bg: var(--bg-e); --cp-bd: var(--bd-x); --cp-cut-top: 10px; --cp-cut-bottom: 8px;
+  box-shadow: none !important; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+}
+:root[data-theme][data-theme-style="cyberpunk"] .toolbar-action-menu__separator { background: var(--bd-s); height: 1px; margin: 4px 2px; }
+
+:root[data-theme][data-theme-style="cyberpunk"] [data-row-id="desktop-view"] { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; margin-top: 16px; }
+:root[data-theme][data-theme-style="cyberpunk"] [data-row-id="desktop-view"]:hover { background: transparent !important; border: 0 !important; box-shadow: none !important; }

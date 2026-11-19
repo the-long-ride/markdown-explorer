@@ -18,11 +18,19 @@
 
   const themeBtn = document.getElementById("theme-btn");
   if (themeBtn) {
+    let switchTimer = 0;
     themeBtn.addEventListener("click", () => {
-      const next =
-        html.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      html.setAttribute("data-theme", next);
-      localStorage.setItem(LS_THEME, next);
+      const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      const apply = () => { html.setAttribute("data-theme", next); localStorage.setItem(LS_THEME, next); };
+      if (typeof document.startViewTransition === "function") {
+        const t = document.startViewTransition(apply);
+        t?.ready?.catch?.(() => {});
+        return t?.finished?.catch?.(() => {});
+      }
+      clearTimeout(switchTimer);
+      html.classList.add("is-theme-switching");
+      apply();
+      switchTimer = setTimeout(() => html.classList.remove("is-theme-switching"), 680);
     });
   }
 
@@ -50,12 +58,13 @@
       const key = el.getAttribute("data-i18n");
       if (t[key] !== undefined) {
         const val = t[key];
-        if (val.includes("`") || val.includes("<br") || val.includes("<span")) {
-          el.innerHTML = formatText(val);
-        } else {
-          el.textContent = val;
-        }
+        const isHtml = val.includes("`") || val.includes("<br") || val.includes("<span");
+        el[isHtml ? "innerHTML" : "textContent"] = isHtml ? formatText(val) : val;
       }
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-html");
+      if (t[key] !== undefined) el.innerHTML = formatText(t[key]);
     });
     document.querySelectorAll("[data-i18n-title]").forEach((el) => {
       const key = el.getAttribute("data-i18n-title");

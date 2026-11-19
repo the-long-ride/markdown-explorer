@@ -2,7 +2,10 @@
 // components/Modal/SwitchWorkspaceModal.tsx — Custom Switch Workspace Modal
 // =============================================================================
 
+import { useContext, useRef } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
+import { PlatformContext } from '../../contexts/PlatformContext';
+import { useDialogKeyboard } from '../../hooks/useDialogKeyboard';
 
 interface SwitchWorkspaceModalProps {
   isOpen: boolean;
@@ -106,6 +109,18 @@ export function SwitchWorkspaceModal({
   targetPath,
 }: SwitchWorkspaceModalProps) {
   const { state } = useAppState();
+  const bridge = useContext(PlatformContext);
+  const isWeb = typeof (window as any).__webBus !== 'undefined';
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  useDialogKeyboard({
+    open: isOpen,
+    onClose,
+    onConfirm,
+    cancelRef,
+    primaryRef: confirmRef,
+  });
 
   if (!isOpen) return null;
 
@@ -173,7 +188,25 @@ export function SwitchWorkspaceModal({
 
         {/* Action Buttons */}
         <div className="switch-workspace-actions">
+          {isWeb && (
+            <button
+              type="button"
+              data-testid="create-virtual-workspace-btn"
+              className="segmented-option"
+              onClick={() => {
+                if (bridge) {
+                  bridge.postMessage({ command: 'createVirtualWorkspace', type: 'createVirtualWorkspace' });
+                } else {
+                  (window as any).__webBus?.dispatchEvent(new CustomEvent('webview-message', { detail: { command: 'createVirtualWorkspace', type: 'createVirtualWorkspace' } }));
+                }
+                onClose();
+              }}
+            >
+              New Virtual Workspace
+            </button>
+          )}
           <button
+            ref={cancelRef}
             type="button"
             className="segmented-option"
             onClick={onClose}
@@ -181,6 +214,7 @@ export function SwitchWorkspaceModal({
             {t.cancelBtn}
           </button>
           <button
+            ref={confirmRef}
             type="button"
             onClick={onConfirm}
             className="settings-download-update-btn switch-workspace-confirm"

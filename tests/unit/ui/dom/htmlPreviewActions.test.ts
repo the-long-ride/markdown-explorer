@@ -37,12 +37,16 @@ describe('html preview actions', () => {
   });
 
   test('applies translated title, aria label, tooltip, and toggle label data', () => {
-    document.body.innerHTML = '<button data-i18n-key="openInBrowser"><span class="tooltip-text"></span></button><button class="mdn-toggle-preview-btn" data-i18n-key="showCode"><span class="tooltip-text"></span></button>';
+    document.body.innerHTML = '<button data-i18n-key="openInBrowser"><span class="tooltip-text"></span></button><button class="mdn-toggle-preview-btn" data-i18n-key="showCode"><span class="tooltip-text"></span></button><span data-i18n-key="openAsModal" data-hover-tooltip="Old modal"></span>';
     applyPreviewActionTranslations(document.body, labels);
     const button = document.querySelector('[data-i18n-key="openInBrowser"]')!;
-    expect(button.getAttribute('title')).toBe('Browser');
+    expect(button.getAttribute('title')).toBeNull();
     expect(button.getAttribute('aria-label')).toBe('Browser');
     expect(button.querySelector('.tooltip-text')?.textContent).toBe('Browser');
+    const hoverEl = document.querySelector('[data-i18n-key="openAsModal"]')!;
+    expect(hoverEl.getAttribute('title')).toBeNull();
+    expect(hoverEl.getAttribute('aria-label')).toBe('Modal');
+    expect(hoverEl.getAttribute('data-hover-tooltip')).toBe('Modal');
     const toggle = document.querySelector('.mdn-toggle-preview-btn')!;
     expect(toggle.getAttribute('data-label-show-code')).toBe('Code');
     expect(toggle.getAttribute('data-label-show-preview')).toBe('Preview');
@@ -97,7 +101,7 @@ describe('html preview actions', () => {
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     vi.spyOn(window, 'open').mockImplementation(() => { throw new Error('blocked'); });
     const onError = vi.fn();
-    openHtmlPreviewInBrowser({ bridge: {} as any, runtime: 'chrome', documentHtml: '<p>x</p>', currentFile: null, onError });
+    openHtmlPreviewInBrowser({ bridge: {} as any, runtime: 'web', documentHtml: '<p>x</p>', currentFile: null, onError });
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:user-html');
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:shell');
     expect(onError).toHaveBeenCalled();
@@ -111,7 +115,7 @@ describe('html preview actions', () => {
     const replace = vi.fn();
     const previewWindow = { closed: false, opener: window, location: { replace } } as unknown as Window;
     const open = vi.spyOn(window, 'open').mockReturnValue(previewWindow);
-    openHtmlPreviewInBrowser({ bridge: {} as any, runtime: 'chrome', documentHtml: '<p>x</p>', currentFile: null });
+    openHtmlPreviewInBrowser({ bridge: {} as any, runtime: 'web', documentHtml: '<p>x</p>', currentFile: null });
     expect(createObjectURL).toHaveBeenCalledTimes(2);
     expect(open).toHaveBeenCalledWith('', '_blank');
     expect(previewWindow.opener).toBeNull();

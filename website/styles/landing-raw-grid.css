@@ -1,0 +1,492 @@
+/* ── Raw Grid Architecture Overrides ([data-theme-style="raw-grid"]) ── */
+[data-theme-style="raw-grid"] body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: -1px -1px;
+  animation: retroGridDrift 32s steps(24, end) infinite;
+}
+
+[data-theme-style="raw-grid"] .page-bg-canvas,
+[data-theme-style="raw-grid"] .hero::before,
+[data-theme-style="raw-grid"] .hero-visual-side::before {
+  display: none;
+}
+
+[data-theme-style="raw-grid"] .site-header {
+  backdrop-filter: none;
+  border-bottom: 1px solid var(--line);
+}
+
+[data-theme-style="raw-grid"] .button,
+[data-theme-style="raw-grid"] .ctrl-btn,
+[data-theme-style="raw-grid"] .nav-links a,
+[data-theme-style="raw-grid"] .nav-github-stars,
+[data-theme-style="raw-grid"] .nav-dropdown-btn,
+[data-theme-style="raw-grid"] .nav-dropdown-menu,
+[data-theme-style="raw-grid"] .lang-menu,
+[data-theme-style="raw-grid"] .hero-badge,
+[data-theme-style="raw-grid"] .hero-product-preview,
+[data-theme-style="raw-grid"] .hero-product-preview-image,
+[data-theme-style="raw-grid"] .hero-preview-kicker,
+[data-theme-style="raw-grid"] .hero-use-cases li,
+[data-theme-style="raw-grid"] .spotlight-tablist,
+[data-theme-style="raw-grid"] .spotlight-tab,
+[data-theme-style="raw-grid"] .spotlight-stage,
+[data-theme-style="raw-grid"] .spotlight-point-icon,
+[data-theme-style="raw-grid"] .spotlight-media-frame,
+[data-theme-style="raw-grid"] .spotlight-media-frame img,
+[data-theme-style="raw-grid"] .spotlight-media-frame video,
+[data-theme-style="raw-grid"] .runtime-card,
+[data-theme-style="raw-grid"] .runtime-pill,
+[data-theme-style="raw-grid"] .trust-panel,
+[data-theme-style="raw-grid"] .download-card,
+[data-theme-style="raw-grid"] .lang-tag,
+[data-theme-style="raw-grid"] .legal-meta span,
+[data-theme-style="raw-grid"] .legal-hero,
+[data-theme-style="raw-grid"] .legal-toc,
+[data-theme-style="raw-grid"] .legal-section,
+[data-theme-style="raw-grid"] .faq details,
+[data-theme-style="raw-grid"] .release-download-number,
+[data-theme-style="raw-grid"] code,
+[data-theme-style="raw-grid"] ::-webkit-scrollbar-thumb,
+[data-theme-style="raw-grid"] .lightbox-panel,
+[data-theme-style="raw-grid"] .lightbox-close {
+  border-radius: 0 !important;
+}
+
+[data-theme-style="raw-grid"] .hero-badge {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+[data-theme-style="raw-grid"] .hero-badge .badge-dot,
+[data-theme-style="raw-grid"] .hero-badge .badge-dot::after {
+  border-radius: 0 !important;
+}
+
+[data-theme-style="raw-grid"] .hero-product-preview {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+  transform: none;
+}
+
+[data-theme-style="raw-grid"] .hero-product-preview:hover {
+  transform: translate(-2px, -2px);
+  border-color: var(--accent);
+  box-shadow: 12px 12px 0 rgba(0, 0, 0, 0.56);
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .hero-product-preview:hover {
+  box-shadow: 12px 12px 0 rgba(24, 22, 20, 0.22);
+}
+
+[data-theme-style="raw-grid"] .hero-preview-kicker {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  backdrop-filter: none;
+}
+
+[data-theme-style="raw-grid"] .hero-primary-cta,
+[data-theme-style="raw-grid"] .hero-primary-cta:hover {
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .hero-primary-cta,
+[data-theme-style="raw-grid"][data-theme="light"] .hero-primary-cta:hover {
+  box-shadow: 4px 4px 0 rgba(24, 22, 20, 0.18);
+}
+
+[data-theme-style="raw-grid"] .spotlight-stage {
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+}
+
+[data-theme-style="raw-grid"] .spotlight-tablist {
+  border: 1px solid var(--line-strong);
+  box-shadow: none;
+}
+
+[data-theme-style="raw-grid"] .spotlight-tab[aria-selected="true"],
+[data-theme-style="raw-grid"] .spotlight-tab.is-active {
+  box-shadow: none;
+}
+
+[data-theme-style="raw-grid"] .runtime-card:hover,
+[data-theme-style="raw-grid"] .download-card:hover {
+  border-color: var(--accent);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.42);
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .runtime-card:hover,
+[data-theme-style="raw-grid"][data-theme="light"] .download-card:hover {
+  box-shadow: 6px 6px 0 rgba(24, 22, 20, 0.16);
+}
+
+[data-theme-style="raw-grid"] :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Legal Pages & FAQ Retro Panels ────────────────────────── */
+[data-theme-style="raw-grid"] .legal-hero {
+  margin-top: clamp(2rem, 4vw, 3.2rem);
+  margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
+  padding: clamp(1.5rem, 3.5vw, 2.4rem);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-top: 3px solid var(--accent);
+  box-shadow: var(--shadow);
+  animation: retroBootIn 320ms steps(5, end) both;
+}
+
+[data-theme-style="raw-grid"] .legal-hero h1 {
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+}
+
+[data-theme-style="raw-grid"] .legal-meta span {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+[data-theme-style="raw-grid"] .legal-toc {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  padding: 1rem 1.25rem;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.42);
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .legal-toc {
+  box-shadow: 6px 6px 0 rgba(24, 22, 20, 0.16);
+}
+
+[data-theme-style="raw-grid"] .legal-toc a {
+  padding: 0.4rem 0.45rem;
+  border-left: 2px solid transparent;
+  transition: color 120ms steps(2, end), border-color 120ms steps(2, end), background 120ms steps(2, end);
+}
+
+[data-theme-style="raw-grid"] .legal-toc a:hover {
+  border-left-color: var(--accent);
+  background: var(--surface-2);
+}
+
+[data-theme-style="raw-grid"] .legal-document {
+  display: grid;
+  gap: 1.15rem;
+}
+
+[data-theme-style="raw-grid"] .legal-section {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  padding: clamp(1.25rem, 2.5vw, 1.8rem);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.42);
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .legal-section {
+  box-shadow: 6px 6px 0 rgba(24, 22, 20, 0.16);
+}
+
+[data-theme-style="raw-grid"] .legal-section:last-child {
+  border-bottom: 1px solid var(--line-strong);
+}
+
+[data-theme-style="raw-grid"] .faq details {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+[data-theme-style="raw-grid"] .faq details:last-child {
+  border-bottom: 1px solid var(--line-strong);
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .faq details {
+  box-shadow: 4px 4px 0 rgba(24, 22, 20, 0.14);
+}
+
+[data-theme-style="raw-grid"] .faq details[open] {
+  border-color: var(--accent);
+  border-left: 3px solid var(--accent);
+}
+
+[data-theme-style="raw-grid"] .faq details[open] p {
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+  animation: retroBootIn 180ms steps(4, end) both;
+}
+
+[data-theme-style="raw-grid"] .release-note {
+  display: inline-block;
+  margin-top: 1.35rem;
+  padding: 0.7rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .release-note {
+  box-shadow: 4px 4px 0 rgba(24, 22, 20, 0.14);
+}
+
+[data-theme-style="raw-grid"] .site-footer {
+  border-top: 1px solid var(--line-strong);
+}
+
+[data-theme-style="raw-grid"] .site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+[data-theme-style="raw-grid"] .site-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.36rem 0.72rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0 !important;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 90ms steps(2, end), box-shadow 90ms steps(2, end), border-color 120ms steps(2, end), background 120ms steps(2, end), color 120ms steps(2, end);
+}
+
+[data-theme-style="raw-grid"] .site-footer nav a:hover {
+  transform: translate(-2px, -2px);
+  border-color: var(--accent);
+  color: var(--accent-2);
+  background: var(--surface-2);
+  box-shadow: 3px 3px 0 var(--line-strong);
+}
+
+[data-theme-style="raw-grid"] .site-footer nav a:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+/* ── Raw Grid Retro Animations ─────────────────────────────── */
+@keyframes retroGridDrift {
+  from {
+    background-position: -1px -1px, -1px -1px;
+  }
+  to {
+    background-position: 47px 47px, 47px 47px;
+  }
+}
+
+@keyframes retroLedBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.24;
+  }
+}
+
+@keyframes retroCursorBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes retroBootIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes retroPanelSnap {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes retroScanSweep {
+  from {
+    transform: translateY(-10%);
+    opacity: 0.55;
+  }
+  to {
+    transform: translateY(115%);
+    opacity: 0;
+  }
+}
+
+[data-theme-style="raw-grid"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 90;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(255, 255, 255, 0.024) 2px,
+    rgba(255, 255, 255, 0.024) 3px
+  );
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] body::after {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(24, 22, 20, 0.022) 2px,
+    rgba(24, 22, 20, 0.022) 3px
+  );
+}
+
+[data-theme-style="raw-grid"] .hero-badge .badge-dot {
+  animation: retroLedBlink 1.3s steps(2, end) infinite;
+}
+
+[data-theme-style="raw-grid"] .hero-title-accent::after {
+  content: "_";
+  display: inline-block;
+  margin-left: 0.06em;
+  color: var(--accent);
+  animation: retroCursorBlink 1.05s steps(2, end) infinite;
+}
+
+[data-theme-style="raw-grid"] .hero-text-side {
+  animation: retroBootIn 320ms steps(5, end) both;
+}
+
+[data-theme-style="raw-grid"] .hero-visual-side {
+  animation: retroBootIn 360ms steps(5, end) 90ms both;
+}
+
+[data-theme-style="raw-grid"] .button,
+[data-theme-style="raw-grid"] .spotlight-tab {
+  transition: transform 90ms steps(2, end), box-shadow 90ms steps(2, end), background 120ms steps(2, end), border-color 120ms steps(2, end);
+}
+
+[data-theme-style="raw-grid"] .button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--line-strong);
+}
+
+[data-theme-style="raw-grid"] .button.primary:hover {
+  box-shadow: 4px 4px 0 var(--accent-2);
+}
+
+[data-theme-style="raw-grid"] .nav-links a.button.primary,
+[data-theme-style="raw-grid"] .nav-links a.button.primary:hover {
+  min-height: auto;
+  padding: 0.42rem 0.85rem;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #211208;
+}
+
+[data-theme-style="raw-grid"][data-theme="light"] .nav-links a.button.primary,
+[data-theme-style="raw-grid"][data-theme="light"] .nav-links a.button.primary:hover {
+  color: #fff;
+}
+
+[data-theme-style="raw-grid"] .button:active,
+[data-theme-style="raw-grid"] .spotlight-tab:active {
+  transform: translate(2px, 2px);
+  box-shadow: none !important;
+}
+
+[data-theme-style="raw-grid"] .spotlight-media-frame {
+  position: relative;
+}
+
+[data-theme-style="raw-grid"] .hero-product-preview::after,
+[data-theme-style="raw-grid"] .spotlight-media-frame::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 18%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 106, 34, 0.16),
+    transparent
+  );
+}
+
+[data-theme-style="raw-grid"] .hero-product-preview:hover::after,
+[data-theme-style="raw-grid"] .spotlight-media-frame:hover::after {
+  animation: retroScanSweep 620ms steps(12, end) forwards;
+}
+
+[data-theme-style="raw-grid"] .spotlight-panel:not([hidden]) {
+  animation: retroPanelSnap 240ms steps(5, end) both;
+}
+
+[data-theme-style="raw-grid"].has-retro-reveal [data-retro-reveal] {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+[data-theme-style="raw-grid"].has-retro-reveal [data-retro-reveal].is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 240ms steps(4, end) var(--retro-delay, 0ms),
+    transform 240ms steps(4, end) var(--retro-delay, 0ms),
+    border-color 140ms steps(2, end),
+    box-shadow 140ms steps(2, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme-style="raw-grid"] body,
+  [data-theme-style="raw-grid"] .hero-badge .badge-dot,
+  [data-theme-style="raw-grid"] .hero-title-accent::after,
+  [data-theme-style="raw-grid"] .hero-text-side,
+  [data-theme-style="raw-grid"] .hero-visual-side,
+  [data-theme-style="raw-grid"] .legal-hero,
+  [data-theme-style="raw-grid"] .faq details[open] p,
+  [data-theme-style="raw-grid"] .spotlight-panel:not([hidden]),
+  [data-theme-style="raw-grid"] .hero-product-preview:hover::after,
+  [data-theme-style="raw-grid"] .hero-product-preview.is-switching .hero-product-preview-image,
+  [data-theme-style="raw-grid"] .spotlight-media-frame:hover::after {
+    animation: none !important;
+  }
+
+  [data-theme-style="raw-grid"] .button,
+  [data-theme-style="raw-grid"] .spotlight-tab,
+  [data-theme-style="raw-grid"] .site-footer nav a,
+  [data-theme-style="raw-grid"].has-retro-reveal [data-retro-reveal],
+  [data-theme-style="raw-grid"].has-retro-reveal [data-retro-reveal].is-revealed {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

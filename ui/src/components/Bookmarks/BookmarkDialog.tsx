@@ -1,5 +1,6 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useDialogKeyboard } from '../../hooks/useDialogKeyboard';
 
 interface BookmarkDialogProps {
   open: boolean;
@@ -25,6 +26,8 @@ export function BookmarkDialog({
   onClose,
 }: BookmarkDialogProps) {
   const [value, setValue] = useState(initialValue);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const saveRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const inputId = useId();
 
@@ -32,17 +35,20 @@ export function BookmarkDialog({
     if (open) setValue(initialValue);
   }, [initialValue, open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, open]);
+  const normalized = value.trim();
+
+  useDialogKeyboard({
+    open,
+    onClose,
+    onSave: () => {
+      if (normalized) onSave(normalized);
+    },
+    disabled: !normalized,
+    cancelRef,
+    primaryRef: saveRef,
+  });
 
   if (!open) return null;
-  const normalized = value.trim();
   return createPortal(
     <div className="bookmark-dialog-backdrop" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
@@ -68,8 +74,8 @@ export function BookmarkDialog({
           onChange={(event) => setValue(event.target.value)}
         />
         <div className="bookmark-dialog__actions">
-          <button type="button" className="btn" onClick={onClose}>{cancelLabel}</button>
-          <button type="submit" className="btn btn--accent" disabled={!normalized}>{saveLabel}</button>
+          <button ref={cancelRef} type="button" className="btn" onClick={onClose}>{cancelLabel}</button>
+          <button ref={saveRef} type="submit" className="btn btn--accent" disabled={!normalized}>{saveLabel}</button>
         </div>
       </form>
     </div>,

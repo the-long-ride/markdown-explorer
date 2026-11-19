@@ -97,14 +97,10 @@ test('every supported language includes the scan-cancel translation', async () =
 });
 
 test('browser hosts gate async workspace continuations with the operation that started them', async () => {
-  const [chromium, website, electron] = await Promise.all([
-    read('chromium-xtension/src/chrome-host.ts'),
+  const [website, electron] = await Promise.all([
     read('website-app/src/web-host.ts'),
     read('electron/core/runtime-workspace-handlers.js'),
   ]);
-  assert.match(chromium, /function isWorkspaceOperationCurrent/);
-  assert.match(chromium, /const operation = currentWorkspaceOperationMetadata\(\);[\s\S]*await pickDirectory\(\)[\s\S]*if \(!isWorkspaceOperationCurrent\(operation\)\) break;/);
-  assert.match(chromium, /catch \(err\)[\s\S]*scanGeneration === workspaceScanGeneration[\s\S]*isWorkspaceOperationCurrent\(operation\)/);
   assert.match(website, /createWorkspaceOperationState/);
   assert.match(website, /workspaceOperation\.isCurrent\(operation\)/);
   assert.match(website, /await BrowserRecentWorkspaces\.getHandle\(folderPath\);[\s\S]*if \(!workspaceOperation\.isCurrent\(operation\)\) break;/);
@@ -113,17 +109,15 @@ test('browser hosts gate async workspace continuations with the operation that s
 });
 
 test('all runtime hosts expose current/all scan cancellation and operation scoping', async () => {
-  const [electron, chromium, website, tauri] = await Promise.all([
+  const [electron, website, tauri] = await Promise.all([
     read('electron/core/ipc-handlers.js'),
-    read('chromium-xtension/src/chrome-host.ts'),
     read('website-app/src/web-host.ts'),
     read('tauri/src/dispatcher/commands.rs'),
   ]);
-  for (const [name, source] of Object.entries({ electron, chromium, website, tauri })) {
+  for (const [name, source] of Object.entries({ electron, website, tauri })) {
     assert.ok(source.includes('cancelWorkspaceScan'), `${name} current cancellation missing`);
     assert.ok(source.includes('cancelAllWorkspaceScans'), `${name} all cancellation missing`);
   }
-  assert.match(chromium, /workspaceOperationId/);
   assert.match(website, /workspaceOperationId/);
   assert.match(tauri, /workspace_operation_id/);
 });
@@ -144,17 +138,15 @@ test('Tauri async workspace messages retain the operation captured when scanning
 });
 
 test('workspace close acknowledgements keep the operation that was closed', async () => {
-  const [electronCommands, electronUpdate, chromium, website, tauri, tauriReady] = await Promise.all([
+  const [electronCommands, electronUpdate, website, tauri, tauriReady] = await Promise.all([
     read('electron/core/runtime-command-handlers.js'),
     read('electron/core/runtime-update-handlers.js'),
-    read('chromium-xtension/src/chrome-host.ts'),
     read('website-app/src/web-host.ts'),
     read('tauri/src/dispatcher/commands.rs'),
     read('tauri/src/dispatcher/ready.rs'),
   ]);
   assert.match(electronUpdate, /const operation = \{[\s\S]*workspaceOperationId[\s\S]*handleReady\(\{ workspaceOperationMetadata: operation \}\)/);
   assert.match(electronCommands, /workspaceOperationMetadata[\s\S]*sendHostMessage\(\{ \.\.\.ackMsg, \.\.\.workspaceOperationMetadata \}\)/);
-  assert.match(chromium, /case "closeWorkspace":[\s\S]*const operation = currentWorkspaceOperationMetadata\(\)[\s\S]*\.\.\.operation/);
   assert.match(website, /case 'closeWorkspace':[\s\S]*const operation = workspaceOperation\.current\(\)[\s\S]*\.\.\.operation/);
   assert.match(tauri, /"closeWorkspace" => \{[\s\S]*WorkspaceOperationMetadata::from_parts[\s\S]*handle_ready\(&ready_message\)/);
   assert.match(tauriReady, /emit_ready_ack_scoped\(&self\.app, &ack, operation\.as_ref\(\)\)/);
@@ -173,6 +165,6 @@ test('watch refreshes verify workspace generation and operation before publishin
     read('tauri/src/dispatcher/refresh.rs'),
   ]);
   assert.match(electron, /async function sendWorkspaceFilesChanged\(\)[\s\S]*scanGeneration[\s\S]*isWorkspaceRefreshCurrent[\s\S]*return false/);
-  assert.match(tauri, /pub\(super\) fn send_workspace_files_changed\(&self\) -> bool[\s\S]*scan_generation[\s\S]*operation[\s\S]*return false/);
-  assert.match(tauriRefresh, /if !self\.send_workspace_files_changed\(\) \{[\s\S]*return;/);
+  assert.match(tauri, /pub\(super\) async fn send_workspace_files_changed\(&self\) -> bool[\s\S]*scan_generation[\s\S]*operation[\s\S]*return false/);
+  assert.match(tauriRefresh, /if !self\.send_workspace_files_changed\(\)\.await \{[\s\S]*return;/);
 });

@@ -39,8 +39,9 @@ function inferredPairs(snapshot: WorkspaceInsightsSnapshot): Map<string, number>
   const weights = new Map<string, number>();
   for (const paths of snapshot.tags.values()) {
     const list = [...paths].sort();
-    for (let i = 0; i < list.length; i += 1) {
-      for (let j = i + 1; j < list.length; j += 1) {
+    const limit = Math.min(list.length, 80);
+    for (let i = 0; i < limit; i += 1) {
+      for (let j = i + 1; j < limit; j += 1) {
         const key = pairKey(list[i], list[j]);
         weights.set(key, (weights.get(key) ?? 0) + 1);
       }
@@ -49,7 +50,7 @@ function inferredPairs(snapshot: WorkspaceInsightsSnapshot): Map<string, number>
   return weights;
 }
 
-function selectDocumentPaths(snapshot: WorkspaceInsightsSnapshot, centerPath: string | undefined, cap: number, includeInferred: boolean): string[] {
+function selectDocumentPaths(snapshot: WorkspaceInsightsSnapshot, centerPath: string | undefined, cap: number, inferredMap?: Map<string, number>): string[] {
   const all = [...snapshot.documents.keys()].sort();
   if (!all.length) return [];
   const center = centerPath && snapshot.documents.has(centerPath) ? centerPath : all[0];
@@ -72,8 +73,8 @@ function selectDocumentPaths(snapshot: WorkspaceInsightsSnapshot, centerPath: st
       if (selected.length >= cap) break;
     }
   }
-  if (includeInferred && selected.length < cap) {
-    const inferred = [...inferredPairs(snapshot).entries()]
+  if (inferredMap && selected.length < cap) {
+    const inferred = [...inferredMap.entries()]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     for (const [key] of inferred) {
       const [a, b] = key.split('\u0000');
@@ -120,7 +121,8 @@ function coordinates(ids: readonly string[], center?: string): Map<string, { x: 
 
 export function buildFocusedGraph(snapshot: WorkspaceInsightsSnapshot, options: FocusedGraphOptions = {}): FocusedGraph {
   const cap = Math.max(1, Math.round(options.nodeCap ?? 100));
-  const documentPaths = selectDocumentPaths(snapshot, options.centerPath, cap, options.includeInferred === true);
+  const inferred = options.includeInferred ? inferredPairs(snapshot) : undefined;
+  const documentPaths = selectDocumentPaths(snapshot, options.centerPath, cap, inferred);
   const selected = new Set(documentPaths);
   const center = options.centerPath && selected.has(options.centerPath) ? options.centerPath : documentPaths[0];
   const coords = coordinates(documentPaths, center);
@@ -147,8 +149,8 @@ export function buildFocusedGraph(snapshot: WorkspaceInsightsSnapshot, options: 
     }
   }
 
-  if (options.includeInferred) {
-    for (const [key] of [...inferredPairs(snapshot).entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+  if (inferred) {
+    for (const [key] of [...inferred.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
       const [a, b] = key.split('\u0000');
       if (!selected.has(a) || !selected.has(b)) continue;
       addEdge({ id: `inferred:${a}<->${b}`, source: a, target: b, kind: 'inferred' });

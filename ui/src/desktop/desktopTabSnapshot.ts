@@ -11,6 +11,7 @@ export function snapshotDesktopTab(
   const sameWorkspace =
     !tab.workspacePath || !nextWorkspacePath || tab.workspacePath === nextWorkspacePath;
   const savedAlias = nextWorkspacePath ? workspaceAliases[nextWorkspacePath] : undefined;
+  const preserveRestoredSelection = sameWorkspace && state.isLoading && !state.currentFile;
 
   return {
     ...tab,
@@ -20,7 +21,7 @@ export function snapshotDesktopTab(
     workspacePath: nextWorkspacePath,
     fileList: state.fileList,
     tree: state.tree,
-    currentFile: state.currentFile,
+    currentFile: preserveRestoredSelection ? tab.currentFile : state.currentFile,
     contentHtml: state.contentHtml,
     markdownSource: state.markdownSource,
     sourceDocumentText: state.sourceDocumentText,
@@ -32,8 +33,8 @@ export function snapshotDesktopTab(
     notFoundHref: state.notFoundHref,
     workspaceUnavailablePath: state.workspaceUnavailablePath,
     workspaceUnavailableReason: state.workspaceUnavailableReason,
-    contentTabs: state.contentTabs,
-    activeContentTabPath: state.activeContentTabPath,
+    contentTabs: preserveRestoredSelection && state.contentTabs.length === 0 ? tab.contentTabs : state.contentTabs,
+    activeContentTabPath: preserveRestoredSelection ? tab.activeContentTabPath : state.activeContentTabPath,
     isIndexed: tab.isIndexed || (tab.id === activeTabId && !state.isLoading),
     workspaceLoadState: state.workspaceName && !state.isLoading && !state.isWorkspaceScanning ? 'ready' : tab.workspaceLoadState,
   };

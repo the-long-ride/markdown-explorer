@@ -2,6 +2,7 @@ import type { MutableRefObject } from 'react';
 import { getTabLabel } from '../../desktop/desktopTabs';
 import type { DesktopTab } from '../../desktop/types';
 import { CloseIcon } from '../shared/icons';
+import { TooltipButton } from '../shared/TooltipButton';
 
 interface DesktopTabItemProps {
   tab: DesktopTab;
@@ -70,7 +71,8 @@ export function DesktopTabItem({
       onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); onContextMenu({ tabId: tab.id, x: event.clientX, y: event.clientY }); }}
       onMouseDown={(event) => { if (event.button === 1) event.preventDefault(); }}
       onAuxClick={(event) => { if (event.button === 1) { event.preventDefault(); event.stopPropagation(); onClose(tab.id); } }}
-      onDoubleClick={() => onStartEditing(tab)} title={tab.workspacePath ?? label}
+      onDoubleClick={() => onStartEditing(tab)} data-hover-tooltip={tab.workspacePath ?? label}
+      data-hover-tooltip-pos="bottom"
       onPointerDown={beginDrag}
       onPointerEnter={() => {
         if (draggedTabIdRef.current && draggedTabIdRef.current !== tab.id) {
@@ -89,10 +91,19 @@ export function DesktopTabItem({
           onClick={(event) => event.stopPropagation()} onBlur={onCommitAlias}
           onKeyDown={(event) => { if (event.key === 'Enter') onCommitAlias(); if (event.key === 'Escape') onCancelAlias(); }} />
       ) : <span className="desktop-tab__label">{label}</span>}
-      <span className="desktop-tab__close" role="button" tabIndex={-1} aria-label={closeLabel} title={closeLabel}
-        onClick={(event) => { event.stopPropagation(); onClose(tab.id); }}>
-        <CloseIcon size={11} />
-      </span>
+      <TooltipButton
+        as="span"
+        className="desktop-tab__close"
+        tooltip={closeLabel}
+        tooltipPos="below"
+        portalTooltip
+        tabIndex={-1}
+        icon={<CloseIcon size={11} />}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose(tab.id);
+        }}
+      />
     </button>
   );
 }

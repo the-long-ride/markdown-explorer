@@ -11,6 +11,7 @@ export interface DesktopFontSelection {
 export interface DesktopFontBinding extends DesktopFontSelection {
   readonly style: DesktopFontStyle;
   readonly weight: number;
+  readonly size?: number;
 }
 
 export interface DesktopFontBindings {
@@ -49,18 +50,24 @@ const SAFE_ID = /^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/;
 const COMMON_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
 
 export const DEFAULT_DESKTOP_FONT_BINDINGS: DesktopFontBindings = {
-  appUi: { source: 'default', style: 'normal', weight: 400 },
-  body: { source: 'default', style: 'normal', weight: 400 },
-  heading: { source: 'default', style: 'normal', weight: 700 },
-  quote: { source: 'default', style: 'italic', weight: 400 },
-  code: { source: 'default', style: 'normal', weight: 400 },
-  mermaid: { source: 'default', style: 'normal', weight: 400 },
+  appUi: { source: 'default', style: 'normal', weight: 400, size: 13 },
+  body: { source: 'default', style: 'normal', weight: 400, size: 13 },
+  heading: { source: 'default', style: 'normal', weight: 700, size: 16 },
+  quote: { source: 'default', style: 'italic', weight: 400, size: 13 },
+  code: { source: 'default', style: 'normal', weight: 400, size: 12 },
+  mermaid: { source: 'default', style: 'normal', weight: 400, size: 13 },
 };
 
 function clean(value: unknown, max = 128): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed ? trimmed.slice(0, max) : undefined;
+}
+
+function normalizeSize(value: unknown, fallback: number): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.max(7, Math.min(49, Math.round(numeric)));
 }
 
 function normalizeWeight(value: unknown, fallback: number): number {
@@ -93,13 +100,14 @@ export function normalizeDesktopFontBinding(
   if (selection.source === 'default' && raw.source !== 'default') return { ...fallback };
   const style: DesktopFontStyle = raw.style === 'italic' ? 'italic' : raw.style === 'normal' ? 'normal' : fallback.style;
   const weight = normalizeWeight(raw.weight, fallback.weight);
-  return { ...selection, style, weight };
+  const size = normalizeSize(raw.size, fallback.size ?? 13);
+  return { ...selection, style, weight, size };
 }
 
 function bindingFromLegacy(selection: unknown, role: DesktopFontUsageRole): DesktopFontBinding {
   const normalized = normalizeDesktopFontSelection(selection);
   const fallback = DEFAULT_DESKTOP_FONT_BINDINGS[role];
-  return { ...normalized, style: fallback.style, weight: fallback.weight };
+  return { ...normalized, style: fallback.style, weight: fallback.weight, size: fallback.size };
 }
 
 export function migrateDesktopFontBindings(

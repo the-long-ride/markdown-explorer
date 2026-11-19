@@ -8,6 +8,35 @@
   line-height: 1.65;
   color: var(--tx);
   font-size: 13px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+.mdn-body :is(.mdn-section, .mdn-section-header, .mdn-section-body, .mdn-codeblock, .mdn-table-wrap, .mdn-wiki-embed, .mdn-callout, .mdn-blockquote, .mdn-html-preview-wrap, .mdn-csv-preview-wrap, .html-document-view__markdown) {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.mdn-body :is(.mdn-section-title, p, li, h1, h2, h3, h4, h5, h6, .mdn-blockquote, .mdn-callout-body) {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.mdn-body :is(.mdn-link, .mdn-wiki-link) {
+  overflow-wrap: anywhere;
+}
+.mdn-body pre:not(.mdn-code):not(.mdn-math-block pre),
+.mdn-body table:not(.mdn-table) {
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+.mdn-body table:not(.mdn-table) {
+  display: block;
+}
+.mdn-body :is(iframe, canvas, object, embed) {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .mdn-frontmatter {
   width: 100%;

@@ -231,13 +231,8 @@
   box-shadow: var(--sh-sm);
 }
 
-[data-theme-style="bento"] .sidebar-resize {
-  width: 8px;
-  margin: 0;
-}
-
 [data-theme-style="bento"] .content__scroll {
-  padding-bottom: 28px;
+  padding-bottom: 12px;
 }
 
 [data-theme-style="bento"] .btn,

@@ -4,11 +4,12 @@ import {
   DESKTOP_DEFAULT_KEYBINDINGS,
   VSCODE_DEFAULT_KEYBINDINGS,
   getDefaultKeybindingsForRuntime,
+  normalizeKeybindingsForRuntime,
 } from '../../../ui/src/contexts/appStateConstants';
 import { ACTIONS_LIST } from '../../../ui/src/components/Settings/settingsActions';
 import { resolveKeyboardAction } from '../../../ui/src/hooks/keyboardUtils';
 
-describe('VS Code and Chromium shortcut bindings contract', () => {
+describe('VS Code and Web shortcut bindings contract', () => {
   it('defines correct default keybindings for Alt+A (toggle sidebar) and Alt+C (toggle TOC)', () => {
     expect(DEFAULT_KEYBINDINGS.toggleSidebar).toBe('Alt+A');
     expect(DEFAULT_KEYBINDINGS.toggleToc).toBe('Alt+C');
@@ -31,7 +32,24 @@ describe('VS Code and Chromium shortcut bindings contract', () => {
     expect(edit?.scope).toBe('editor');
     expect(DESKTOP_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+E');
     expect(VSCODE_DEFAULT_KEYBINDINGS.editCurrentDocument).toBe('Ctrl+Alt+E');
-    expect(getDefaultKeybindingsForRuntime('chrome').editCurrentDocument).toBeUndefined();
+    expect(getDefaultKeybindingsForRuntime('web').editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(getDefaultKeybindingsForRuntime('web').plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
+  });
+
+  it('preserves and normalizes Edit shortcuts for Web and VS Code runtime', () => {
+    const webNormalized = normalizeKeybindingsForRuntime(
+      { editCurrentDocument: 'Ctrl+E', plainEditCurrentDocument: 'Ctrl+Shift+E' },
+      'web',
+    );
+    expect(webNormalized.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(webNormalized.plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
+
+    const vscodeNormalized = normalizeKeybindingsForRuntime(
+      { editCurrentDocument: 'Ctrl+E', plainEditCurrentDocument: 'Ctrl+Shift+E' },
+      'vscode',
+    );
+    expect(vscodeNormalized.editCurrentDocument).toBe('Ctrl+Alt+E');
+    expect(vscodeNormalized.plainEditCurrentDocument).toBe('Ctrl+Alt+Shift+E');
   });
 
   it('resolves the VS Code Edit shortcut only when editor capability is exposed', () => {
@@ -57,7 +75,7 @@ describe('VS Code and Chromium shortcut bindings contract', () => {
     expect(resolveKeyboardAction(event, { ...state, hasOnEditCurrentDocument: false })).toBeNull();
   });
 
-  it('resolves workspaceSelection on Web demo and Chrome extension runtimes', () => {
+  it('resolves workspaceSelection on Web runtime', () => {
     const e = { key: 'w', ctrlKey: true, altKey: true, shiftKey: false, metaKey: false } as KeyboardEvent;
     const webState = {
       isDesktop: false,

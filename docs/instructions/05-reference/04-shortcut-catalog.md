@@ -40,12 +40,14 @@ keywords:
 | `back` | Ctrl+ArrowLeft | Ctrl+ArrowLeft | Ctrl+ArrowLeft |
 | `forward` | Ctrl+ArrowRight | Ctrl+ArrowRight | Ctrl+ArrowRight |
 | `welcome` | Ctrl+H | Ctrl+H | Ctrl+H |
-| `editCurrentDocument` | — | Ctrl+Alt+E | Ctrl+E |
+| `editCurrentDocument` | Ctrl+Alt+E | Ctrl+Alt+E | Ctrl+E |
+| `plainEditCurrentDocument` | Ctrl+Alt+Shift+E | Ctrl+Alt+Shift+E | Ctrl+Shift+E |
+| `editorInlineCode` | Ctrl+` | Ctrl+` | Ctrl+` |
 | `settings` | Ctrl+I | Ctrl+I | Ctrl+, |
 | `toggleTheme` | Ctrl+Shift+L | Ctrl+Shift+L | Ctrl+L |
 | `refresh` | R | R | F5 |
 | `collapseAll` | Ctrl+Shift+X | Ctrl+Shift+X | Ctrl+Shift+X |
-| `expandAll` | Ctrl+Shift+E | Ctrl+Shift+E | Ctrl+Shift+E |
+| `expandAll` | Ctrl+Alt+x | Ctrl+Alt+x | Ctrl+Alt+x |
 | `workspaceSelection` | Ctrl+Alt+W | Ctrl+Alt+W | Ctrl+N |
 | `toggleSidebar` | Alt+A | Alt+A | Ctrl+B |
 | `openBookmarks` | Alt+Shift+B | Alt+Shift+B | Ctrl+Shift+B |
@@ -67,7 +69,10 @@ keywords:
 
 ## Fixed behavior
 
-- **Edit current document** (`editCurrentDocument`) exists only where the host can open the current file in an editor: Desktop uses `Ctrl+E`, VS Code uses `Ctrl+Alt+E`, and Chromium/Web exposes no Edit action or binding.
+- **Edit current document** (`editCurrentDocument`): Desktop uses `Ctrl+E`, while VS Code and Chrome extension use `Ctrl+Alt+E`. Toggles inline editing in place or opens the active file in the host editor.
+- **Toggle Plain Markdown Editor** (`plainEditCurrentDocument`): Desktop uses `Ctrl+Shift+E`, while VS Code and Chrome extension use `Ctrl+Alt+Shift+E`. Switches to full plain source editing with formatting toolbar controls.
+- **Editor inline code** (`editorInlineCode`): Formats selected text as inline code backticks (`Ctrl+\``) in the Markdown editor.
+- **Expand all headings** (`expandAll`): Expands all collapsed headings and sections across document views (`Ctrl+Alt+x`).
 - **Universal hardware mouse navigation**: Mouse back/forward buttons (mouse buttons 3 and 4, Logitech and standard mice) trigger `back` and `forward` navigation across all runtimes via `attachMouseHistoryNavigation`. The handler captures `mousedown`/`pointerdown` early to prevent browser navigation and dedupes `mouseup`/`pointerup`/`auxclick` within 40 ms. When the Scope View modal is open, mouse buttons route to the modal's isolated 10-step history stack; otherwise they route to main document navigation.
 - **Fallback navigation keys**: `Alt+ArrowLeft` / `BrowserBack` and `Alt+ArrowRight` / `BrowserForward` serve as universal fallback history navigation shortcuts in both main views and Scope View modal.
 - VS Code renders Edit as an icon-only toolbar action immediately before More actions; Desktop keeps Edit inside More actions.

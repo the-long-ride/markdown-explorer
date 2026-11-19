@@ -72,6 +72,8 @@ export function SearchOverlayResults({
             <div
               key={key}
               className={`search-result-row${active ? ' is-active' : ''}${previewEnabled ? ' has-preview' : ''}`}
+              data-hover-tooltip={isCrossTabItem(item) ? `${item.tabLabel} • ${item.relativePath}` : item.relativePath}
+              data-hover-tooltip-pos="bottom"
               role="option"
               aria-selected={active}
               tabIndex={0}

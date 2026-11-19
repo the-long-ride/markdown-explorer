@@ -97,8 +97,8 @@ vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
 }));
 
 
-function MockTooltipButton({ onClick, children, tooltip, disabled, ...props }: any) {
-  return React.createElement('button', { onClick, disabled, 'aria-label': tooltip, 'data-tooltip': tooltip, ...props }, children);
+function MockTooltipButton({ as: Comp = 'button', onClick, children, tooltip, disabled, icon, tooltipPos: _tp, tooltipAlign: _ta, portalTooltip: _pt, ...props }: any) {
+  return React.createElement(Comp, { onClick, disabled: Comp === 'button' ? disabled : undefined, 'aria-label': tooltip, 'data-tooltip': tooltip, ...props }, icon, children);
 }
 
 function MockToolbarActionMenu() {

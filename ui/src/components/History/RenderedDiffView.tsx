@@ -40,14 +40,17 @@ export function RenderedDiffView({ leftSource: rawLeftSource, rightSource: rawRi
   const rightRanges = useMemo(() => changedCharacterRanges(rightSource, hunks, 'right'), [rightSource, hunks]);
   const leftRendered = useMemo(() => renderMarkdownClientSide(leftSource, 'left.md'), [leftSource]);
   const rightRendered = useMemo(() => renderMarkdownClientSide(rightSource, 'right.md'), [rightSource]);
+  // Stable prop objects: React re-assigns innerHTML when the object identity changes, wiping the imperative .is-diff-changed marks.
+  const leftHtml = useMemo(() => ({ __html: leftRendered.html }), [leftRendered.html]);
+  const rightHtml = useMemo(() => ({ __html: rightRendered.html }), [rightRendered.html]);
   useSyncedScroll(leftPaneRef, rightPaneRef);
   useEffect(() => markChangedBlocks(leftRef.current, leftRanges), [leftRanges, leftRendered.html]);
   useEffect(() => markChangedBlocks(rightRef.current, rightRanges), [rightRanges, rightRendered.html]);
   return (
     <section className="rendered-diff-view" aria-label={t.renderedDiff}>
       {tooDifferent && <p className="source-diff-view__notice rendered-diff-view__notice" role="status">{t.diffTooDifferent}</p>}
-      <div ref={leftPaneRef} className="rendered-diff-view__pane rendered-diff-view__pane--removed">{!hideLabels && <header>{t.left} — {leftLabel ?? t.left}</header>}<div ref={leftRef} className="mdn-body rendered-diff-view__body" dangerouslySetInnerHTML={{ __html: leftRendered.html }} /></div>
-      <div ref={rightPaneRef} className="rendered-diff-view__pane rendered-diff-view__pane--added">{!hideLabels && <header>{t.right} — {rightLabel ?? t.right}</header>}<div ref={rightRef} className="mdn-body rendered-diff-view__body" dangerouslySetInnerHTML={{ __html: rightRendered.html }} /></div>
+      <div ref={leftPaneRef} className="rendered-diff-view__pane rendered-diff-view__pane--removed">{!hideLabels && <header>{t.left} — {leftLabel ?? t.left}</header>}<div ref={leftRef} className="mdn-body rendered-diff-view__body" dangerouslySetInnerHTML={leftHtml} /></div>
+      <div ref={rightPaneRef} className="rendered-diff-view__pane rendered-diff-view__pane--added">{!hideLabels && <header>{t.right} — {rightLabel ?? t.right}</header>}<div ref={rightRef} className="mdn-body rendered-diff-view__body" dangerouslySetInnerHTML={rightHtml} /></div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 [package]
 name = "markdown-explorer-tauri"
-version = "1.7.1"
+version = "1.7.2"
 edition = "2021"
 rust-version = "1.96"
 
@@ -58,3 +58,10 @@ custom-protocol = ["tauri/custom-protocol"]
 
 [patch.crates-io]
 glib = { path = "vendor/glib" }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

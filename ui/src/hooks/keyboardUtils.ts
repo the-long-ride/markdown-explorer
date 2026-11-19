@@ -1,4 +1,9 @@
-import { formatCommandForChord, isInlineMarkdownEditorTarget, isMarkdownEditorTarget } from '../editor/editorUx.ts';
+import {
+  fontSizeActionForChord,
+  formatCommandForChord,
+  isInlineMarkdownEditorTarget,
+  isMarkdownEditorTarget,
+} from '../editor/editorUx.ts';
 export function matchesShortcut(e: KeyboardEvent, shortcut: string): boolean {
   if (!shortcut) return false;
   const parts = shortcut.split('+').map((p) => p.trim().toLowerCase());
@@ -43,6 +48,7 @@ export type KeyboardAction =
   | { type: 'zoom-in' }
   | { type: 'zoom-out' }
   | { type: 'zoom-reset' }
+  | { type: 'reload-window' }
   | { type: 'sidebar-cursor-mode-toggle' }
   | { type: 'close-sidebar-cursor-mode' }
   | { type: 'close-search' }
@@ -55,6 +61,7 @@ export type KeyboardAction =
   | { type: 'forward' }
   | { type: 'welcome' }
   | { type: 'edit-current-document' }
+  | { type: 'plain-edit-current-document' }
   | { type: 'save-current-document' }
   | { type: 'settings-toggle' }
   | { type: 'toggle-theme' }
@@ -75,6 +82,7 @@ export type KeyboardAction =
   | { type: 'expand-all' }
   | { type: 'workspace-selection' }
   | { type: 'toggle-sidebar' }
+  | { type: 'open-files' }
   | { type: 'open-bookmarks' }
   | null;
 
@@ -90,16 +98,25 @@ export interface KeyboardState {
   isSidebarCursorMode: boolean;
   activeSearchScope: 'current' | 'all-tabs';
   keybindings: Record<string, string>;
+  disabledKeybindings?: Record<string, boolean>;
   hasOnCrossTabSearchOpen: boolean;
   hasOnFindOpen: boolean;
   hasOnSidebarCursorModeToggle: boolean;
   hasOnSidebarCursorModeClose: boolean;
   hasOnWelcome: boolean;
   hasOnEditCurrentDocument?: boolean;
+  hasOnPlainEditCurrentDocument?: boolean;
+  markdownEditingEnabled?: boolean;
+  activeTab?: boolean | unknown;
+  activeMarkdownTab?: boolean;
+  anyModalOpen?: boolean;
+  searchOpen?: boolean;
+  findInFileOpen?: boolean;
   hasOnSaveCurrentDocument?: boolean;
   hasOnToggleToc: boolean;
   hasOnToggleWorkspaceInsights?: boolean;
   hasOnLocateFile: boolean;
+  hasOnOpenFiles?: boolean;
   hasOnOpenBookmarks: boolean;
   hasOnOpenCurrentDocumentLocation?: boolean;
   hasOnToggleFocusMode: boolean;
@@ -113,8 +130,13 @@ export interface KeyboardState {
 }
 
 export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): KeyboardAction {
-  // Markdown editors own their formatting chords (Mod+B/I/K/E) and inline Escape.
-  if (isMarkdownEditorTarget(e.target) && (formatCommandForChord(e) || (e.key === 'Escape' && isInlineMarkdownEditorTarget(e.target)))) {
+  // Markdown editors own their configured editor shortcuts and inline Escape when focused in the editor zone.
+  if (
+    isMarkdownEditorTarget(e.target) &&
+    (formatCommandForChord(e, state.keybindings, state.disabledKeybindings) ||
+      fontSizeActionForChord(e, state.keybindings, state.disabledKeybindings) ||
+      (e.key === 'Escape' && isInlineMarkdownEditorTarget(e.target)))
+  ) {
     return null;
   }
   if (state.isDesktop) {
@@ -129,6 +151,20 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     if (isZoomIn) return { type: 'zoom-in' };
     if (isZoomOut) return { type: 'zoom-out' };
     if (isZoomReset) return { type: 'zoom-reset' };
+  }
+
+  const isReloadWindow =
+    matchesShortcut(e, state.keybindings.reloadWindow) ||
+    (state.isDesktop &&
+      !state.disabledKeybindings?.reloadWindow &&
+      Boolean(state.keybindings.reloadWindow) &&
+      (e.ctrlKey || e.metaKey) &&
+      !e.shiftKey &&
+      !e.altKey &&
+      e.key.toLowerCase() === 'r');
+  if ((state.isDesktop || state.isVscode) && isReloadWindow) {
+    if (state.isRepeat) return null;
+    return { type: 'reload-window' };
   }
 
   if (state.isTermsOpen) return null;
@@ -199,11 +235,11 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     return { type: 'find-toggle' };
   }
 
-  if (matchesShortcut(e, state.keybindings.back)) {
+  if (!state.isEditableTarget && matchesShortcut(e, state.keybindings.back)) {
     return { type: 'back' };
   }
 
-  if (matchesShortcut(e, state.keybindings.forward)) {
+  if (!state.isEditableTarget && matchesShortcut(e, state.keybindings.forward)) {
     return { type: 'forward' };
   }
 
@@ -220,12 +256,25 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
     return { type: 'save-current-document' };
   }
 
-  if (
-    state.hasOnEditCurrentDocument &&
-    !state.isEditableTarget &&
-    matchesShortcut(e, state.keybindings.editCurrentDocument)
-  ) {
-    return { type: 'edit-current-document' };
+  const canToggleMarkdownEditing = Boolean(
+    state.markdownEditingEnabled &&
+    (state.activeMarkdownTab ?? state.activeTab ?? state.hasOnEditCurrentDocument) &&
+    !(state.anyModalOpen || state.isModalOpen || state.isSettingsOpen || state.isTermsOpen) &&
+    !(state.searchOpen || state.isSearchOpen || state.findInFileOpen || state.isFindOpen),
+  );
+
+  if (matchesShortcut(e, state.keybindings.plainEditCurrentDocument)) {
+    if (canToggleMarkdownEditing || (!state.isEditableTarget && (state.hasOnPlainEditCurrentDocument ?? state.hasOnEditCurrentDocument))) {
+      if (state.isRepeat) return null;
+      return { type: 'plain-edit-current-document' };
+    }
+  }
+
+  if (matchesShortcut(e, state.keybindings.editCurrentDocument)) {
+    if (canToggleMarkdownEditing || (!state.isEditableTarget && state.hasOnEditCurrentDocument)) {
+      if (state.isRepeat) return null;
+      return { type: 'edit-current-document' };
+    }
   }
 
   if (matchesShortcut(e, state.keybindings.settings)) {
@@ -244,6 +293,11 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
 
   if (state.hasOnLocateFile && !state.isEditableTarget && matchesShortcut(e, state.keybindings.locateFile)) {
     return { type: 'locate-file' };
+  }
+
+  if (state.hasOnOpenFiles && !state.isEditableTarget && matchesShortcut(e, state.keybindings.openFiles)) {
+    if (state.isRepeat) return null;
+    return { type: 'open-files' };
   }
 
   if (state.hasOnOpenBookmarks && !state.isEditableTarget && matchesShortcut(e, state.keybindings.openBookmarks)) {
@@ -298,4 +352,38 @@ export function resolveKeyboardAction(e: KeyboardEvent, state: KeyboardState): K
   }
 
   return null;
+}
+
+export interface UseKeyboardOptions {
+  onSearchOpen: () => void;
+  onCrossTabSearchOpen?: () => void;
+  onSearchClose: () => void;
+  onFindOpen?: () => void;
+  onFindClose?: () => void;
+  onSettingsOpen: () => void;
+  onSettingsClose: () => void;
+  onWelcome?: () => void;
+  onExpandAll: () => void;
+  onCollapseAll: () => void;
+  onSidebarCursorModeToggle?: () => void;
+  onSidebarCursorModeClose?: () => void;
+  isSearchOpen: boolean;
+  isFindOpen?: boolean;
+  activeSearchScope?: 'current' | 'all-tabs';
+  isSidebarCursorMode?: boolean;
+  isSettingsOpen: boolean;
+  isModalOpen: boolean;
+  isTermsOpen: boolean;
+  onToggleToc?: () => void;
+  onToggleWorkspaceInsights?: () => void;
+  onLocateFile?: () => void;
+  onFilesOpen?: () => void;
+  onBookmarksOpen?: () => void;
+  onOpenCurrentDocumentLocation?: () => void;
+  onToggleFocusMode?: () => void;
+  onToggleDesktopViewMode?: () => void;
+  activeHtmlDocument?: boolean;
+  onToggleActiveHtmlDocumentPreview?: () => void;
+  onToggleFullscreen?: () => void;
+  onWorkspaceSelection?: () => void;
 }

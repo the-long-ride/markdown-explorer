@@ -62,18 +62,19 @@ export function useAppStateEffects({
           defaultHtmlPreview: saved.defaultHtmlPreview !== false,
           allowUpstreamHtmlPreview: saved.allowUpstreamHtmlPreview === true,
           defaultCsvPreview: saved.defaultCsvPreview !== false,
-          fileTabs: saved.fileTabs === true,
-          bookmarksEnabled: saved.bookmarksEnabled === true,
+          fileTabs: saved.fileTabs !== false,
+          bookmarksEnabled: saved.bookmarksEnabled !== false,
           insightsEnabled: saved.insightsEnabled === true,
           documentConversion: saved.documentConversion === true,
-          historySidebarEnabled: saved.historySidebarEnabled !== false,
-          markdownEditingEnabled: saved.markdownEditingEnabled === true,
+          historySidebarEnabled: saved.historySidebarEnabled === true,
+          markdownEditingEnabled: saved.markdownEditingEnabled !== false,
           scopeFocus: saved.scopeFocus ?? {},
           searchScopeFocus: saved.searchScopeFocus ?? {},
           sidebarPinnedItems: saved.sidebarPinnedItems ?? {},
           sidebarSortModes: saved.sidebarSortModes ?? {},
           maxPinnedItems: normalizeMaxPinnedItems(saved.maxPinnedItems),
           desktopViewMode: normalizeDesktopViewMode(saved.desktopViewMode),
+          tableColumnAlignment: saved.tableColumnAlignment === 'left' || saved.tableColumnAlignment === 'center' || saved.tableColumnAlignment === 'right' || saved.tableColumnAlignment === 'intelligent' ? saved.tableColumnAlignment : 'intelligent',
           fontBindings: migrateDesktopFontBindings(saved.fontBindings, saved.appFont, saved.codeFont),
           keybindings: normalizeKeybindings(saved.keybindings, isDesktop),
           disabledKeybindings: saved.disabledKeybindings ?? {},
@@ -259,13 +260,19 @@ export function useAppStateEffects({
   // Sync theme to document
   useEffect(() => {
     const activeCustomTheme = getActiveCustomTheme(state.settings);
+    const resolvedStyle = activeCustomTheme?.baseStyle ?? state.themeStyle;
+
     document.documentElement.dataset.theme = state.theme;
-    document.documentElement.dataset.themeStyle = activeCustomTheme?.baseStyle ?? state.themeStyle;
+    document.documentElement.dataset.themeStyle = resolvedStyle;
     applyCustomThemeToRoot(document.documentElement, activeCustomTheme, state.theme);
 
-    if (state.theme !== 'auto') return;
+    if (state.theme !== 'auto') {
+      return;
+    }
     const media = window.matchMedia?.('(prefers-color-scheme: light)');
-    if (!media) return;
+    if (!media) {
+      return;
+    }
     const handleChange = () => {
       applyCustomThemeToRoot(
         document.documentElement,
@@ -274,8 +281,19 @@ export function useAppStateEffects({
       );
     };
     media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
+    return () => {
+      media.removeEventListener('change', handleChange);
+    };
   }, [state.settings, state.theme, state.themeStyle]);
+
+  useEffect(() => {
+    const tableAlign = state.settings.tableColumnAlignment ?? 'intelligent';
+    document.documentElement.dataset.tableAlign = tableAlign;
+    document.documentElement.style.setProperty(
+      '--mdn-table-default-align',
+      tableAlign === 'intelligent' ? 'left' : tableAlign,
+    );
+  }, [state.settings.tableColumnAlignment]);
 
   // Persist settings on change without dropping repository-scoped view state.
   useEffect(() => {
@@ -299,6 +317,7 @@ export function useAppStateEffects({
       sidebarSortModes: state.settings.sidebarSortModes,
       maxPinnedItems: normalizeMaxPinnedItems(state.settings.maxPinnedItems),
       desktopViewMode: state.settings.desktopViewMode,
+      tableColumnAlignment: state.settings.tableColumnAlignment,
       fontBindings: migrateDesktopFontBindings(state.settings.fontBindings),
       keybindings: state.settings.keybindings,
       disabledKeybindings: state.settings.disabledKeybindings,
@@ -321,13 +340,13 @@ export function useAppStateEffects({
   }, [dispatch, state.appRuntime, state.settings.keybindings]);
 
   useEffect(() => {
-    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'chrome';
+    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'web';
     if (!typographyRuntime) return;
     bridge.postMessage({ command: 'listDesktopFonts', requestId: `startup-${Date.now()}` });
   }, [bridge, state.appRuntime]);
 
   useEffect(() => {
-    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'chrome';
+    const typographyRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode' || state.appRuntime === 'web';
     applyDesktopTypography(
       document,
       { fontBindings: state.settings.fontBindings },

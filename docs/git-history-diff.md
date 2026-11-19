@@ -9,10 +9,9 @@ Markdown Explorer can inspect a document or workspace's local Git history withou
 | Electron | Yes | Yes | Yes |
 | Tauri | Yes | Yes | Yes |
 | VS Code | Yes | Yes | Yes |
-| Chromium extension | No | No | No |
 | Web app | No | No | No |
 
-Electron, Tauri, and VS Code use the installed local `git` executable. Chromium and Web return an explicit `unsupported-runtime` capability response; they never try to start a process.
+Electron, Tauri, and VS Code use the installed local `git` executable. Web returns an explicit `unsupported-runtime` capability response; it never tries to start a process.
 
 ## Read-only guarantee
 

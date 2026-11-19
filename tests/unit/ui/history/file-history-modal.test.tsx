@@ -92,6 +92,57 @@ describe('FileHistoryModal', () => {
     expect(screen.getByText('new 1')).toBeInTheDocument();
   });
 
+  it('follows Option 3 boundary replacement across V4..V1 compare toggles and portals checkbox tooltips', async () => {
+    // Entries ordered latest -> oldest: [V4, V3, V2, V1]
+    const entries = [
+      entry(0, { subject: 'V4' }),
+      entry(1, { subject: 'V3' }),
+      entry(2, { subject: 'V2' }),
+      entry(3, { subject: 'V1' }),
+    ];
+    renderModal(entries);
+    await screen.findByText('V1');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Compare' }));
+    const box = (name: 'V4' | 'V3' | 'V2' | 'V1') => screen.getByRole('checkbox', { name: new RegExp(`Compare: ${name}$`) });
+    const checkedState = () => (['V4', 'V3', 'V2', 'V1'] as const).filter((name) => box(name).getAttribute('aria-checked') === 'true');
+
+    // Start: check V3 and V2
+    await userEvent.click(box('V3'));
+    await userEvent.click(box('V2'));
+    expect(checkedState()).toEqual(['V3', 'V2']);
+
+    // Check V4 (above both) -> moves V3 to V4 => [V4, V2]
+    await userEvent.click(box('V4'));
+    expect(checkedState()).toEqual(['V4', 'V2']);
+
+    // Check V1 (below both) -> moves V2 to V1 => [V4, V1]
+    await userEvent.click(box('V1'));
+    expect(checkedState()).toEqual(['V4', 'V1']);
+
+    // Check V3 (inside) -> moves V1 to V3 => [V4, V3]
+    await userEvent.click(box('V3'));
+    expect(checkedState()).toEqual(['V4', 'V3']);
+
+    // Check V1 (below both) -> moves V3 to V1 => [V4, V1]
+    await userEvent.click(box('V1'));
+    expect(checkedState()).toEqual(['V4', 'V1']);
+
+    // Check V3 (inside again) -> alternates to move V4 to V3 => [V3, V1]
+    await userEvent.click(box('V3'));
+    expect(checkedState()).toEqual(['V3', 'V1']);
+
+    // Checkbox uses shared SVG icon & left-aligned portal tooltip
+    const firstBox = box('V4');
+    expect(firstBox).toHaveAttribute('data-tooltip-align', 'left');
+    fireEvent.mouseEnter(firstBox);
+    await waitFor(() => {
+      const portal = document.body.querySelector('.tooltip-portal');
+      expect(portal).not.toBeNull();
+      expect(portal?.textContent).toContain('Compare: V4');
+    });
+  });
+
   it('compares the selected commit with the current file from the pinned row', async () => {
     const { client } = renderModal();
     await screen.findByText('commit 0');

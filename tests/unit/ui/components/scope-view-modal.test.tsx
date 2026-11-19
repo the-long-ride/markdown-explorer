@@ -115,23 +115,23 @@ describe('ScopeViewModal', () => {
   });
 
   it('renders ten depth segments and enlarges the active segment marker', async () => {
-    const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Doc 1');
 
-    const segments = container.querySelectorAll('.scope-view__depth-segment');
+    const segments = baseElement.querySelectorAll('.scope-view__depth-segment');
     expect(segments).toHaveLength(10);
     expect(segments[0]).toHaveClass('is-filled', 'is-current');
-    expect(container.querySelectorAll('.scope-view__depth-segment.is-current')).toHaveLength(1);
+    expect(baseElement.querySelectorAll('.scope-view__depth-segment.is-current')).toHaveLength(1);
     expect(screen.getByLabelText('Scope level 1 of 10')).toBeTruthy();
   });
 
   it('opens nested workspace documents without touching main navigation and supports previous/next', async () => {
-    const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Doc 1');
 
     fireEvent.click(screen.getByText('Open 2'));
     await screen.findByText('Doc 2');
-    expect(container.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(2);
+    expect(baseElement.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(2);
 
     fireEvent.click(screen.getByLabelText('Previous scope'));
     await screen.findByText('Doc 1');
@@ -189,7 +189,7 @@ describe('ScopeViewModal', () => {
   });
 
   it('blocks the eleventh nested scope and keeps level ten active', async () => {
-    const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Doc 1');
 
     for (let i = 2; i <= 10; i += 1) {
@@ -199,7 +199,7 @@ describe('ScopeViewModal', () => {
     fireEvent.click(screen.getByText('Open 11'));
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Maximum scope depth reached'));
-    expect(container.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(10);
+    expect(baseElement.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(10);
     expect(screen.getByText('Doc 10')).toBeTruthy();
   });
 
@@ -210,7 +210,7 @@ describe('ScopeViewModal', () => {
       return new Promise<ReturnType<typeof snapshot>>((resolve) => { resolveDocTen = resolve; });
     });
 
-    const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Doc 1');
     for (let i = 2; i <= 9; i += 1) {
       fireEvent.click(screen.getByText(`Open ${i}`));
@@ -228,7 +228,7 @@ describe('ScopeViewModal', () => {
     });
     await screen.findByText('Doc 10');
 
-    expect(container.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(9);
+    expect(baseElement.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(9);
     expect(screen.getByLabelText('Scope level 9 of 10')).toBeTruthy();
   });
 
@@ -250,10 +250,10 @@ describe('ScopeViewModal', () => {
       markdownSource: '# Doc 1',
       html: '<section class="mdn-section" data-expanded="true"><div class="mdn-section-header" aria-expanded="true">Section heading</div><div class="mdn-section-body">Section body</div></section>',
     });
-    const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Section heading');
 
-    const section = container.querySelector<HTMLElement>('.mdn-section');
+    const section = baseElement.querySelector<HTMLElement>('.mdn-section');
     fireEvent.click(screen.getByText('Section heading'));
     expect(section?.dataset.expanded).toBe('false');
     expect(screen.getByText('Section heading')).toHaveAttribute('aria-expanded', 'false');
@@ -287,14 +287,14 @@ describe('ScopeViewModal', () => {
       markdownSource: '# Doc 1',
       html: '<div class="mdn-mermaid-wrap"><div class="mermaid"><svg aria-label="Scope diagram"></svg></div></div>',
     });
-    const { container } = render(
+    const { baseElement } = render(
       <ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} onMediaClick={onMediaClick} />,
     );
     await screen.findByLabelText('Scope diagram');
 
     fireEvent.click(screen.getByLabelText('Scope diagram'));
     expect(onMediaClick).toHaveBeenCalledTimes(1);
-    expect(onMediaClick).toHaveBeenCalledWith(container.querySelector('.mdn-mermaid-wrap'));
+    expect(onMediaClick).toHaveBeenCalledWith(baseElement.querySelector('.mdn-mermaid-wrap'));
   });
 
   it('rerenders Mermaid when Scope View appearance changes', async () => {
@@ -320,16 +320,58 @@ describe('ScopeViewModal', () => {
     };
     window.addEventListener(ACTION_NOTICE_EVENT, onNotice);
     try {
-      const { container } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+      const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
       const link = await screen.findByRole('link', { name: 'Open self' });
       await waitFor(() => expect(mocks.scheduleEnhancements).toHaveBeenCalled());
       fireEvent.click(link);
 
       await waitFor(() => expect(notices).toContain('You are currently viewing this document.'));
       expect(mocks.loadDocumentSnapshot).toHaveBeenCalledTimes(1);
-      expect(container.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(1);
+      expect(baseElement.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(1);
     } finally {
       window.removeEventListener(ACTION_NOTICE_EVENT, onNotice);
     }
+  });
+
+  it('portals Scope View directly into document.body and toggles the scope file TOC from the header', async () => {
+    mocks.loadDocumentSnapshot.mockImplementation(async (_bridge: unknown, target: MdFile) => ({
+      file: target,
+      markdownSource: `# ${target.title}\n## Sub Section`,
+      html: `<section class="mdn-section" id="sec-1" data-expanded="true"><div class="mdn-section-header" aria-expanded="true"><h1>${target.title}</h1></div></section><h2 id="sub-1">Sub Section</h2><a href="./2.md">Open 2</a>`,
+      toc: [
+        { level: 1, text: target.title, id: 'sec-1' },
+        { level: 2, text: 'Sub Section', id: 'sub-1' },
+      ],
+    }));
+
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    await screen.findByText('Doc 1');
+
+    const dialog = screen.getByRole('dialog', { name: 'Scope view' });
+    expect(dialog.parentElement).toBe(document.body);
+
+    const toggleButton = screen.getByRole('button', { name: 'Toggle table of contents' });
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+    expect(baseElement.querySelector('.scope-view__toc')).toBeNull();
+
+    fireEvent.click(toggleButton);
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'true');
+    const tocPanel = baseElement.querySelector('.scope-view__toc');
+    expect(tocPanel).not.toBeNull();
+    expect(tocPanel?.textContent).toContain('Sub Section');
+
+    const targetHeading = baseElement.querySelector<HTMLElement>('#sub-1')!;
+    const scrollIntoView = vi.fn();
+    targetHeading.scrollIntoView = scrollIntoView;
+    fireEvent.click(tocPanel!.querySelectorAll('.toc-item')[1]!);
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByText('Open 2'));
+    await screen.findByRole('heading', { name: 'Doc 2' });
+    expect(baseElement.querySelector('.scope-view__toc')?.textContent).toContain('Doc 2');
+
+    fireEvent.click(toggleButton);
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+    expect(baseElement.querySelector('.scope-view__toc')).toBeNull();
   });
 });

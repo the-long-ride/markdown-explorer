@@ -139,7 +139,7 @@ pre code.hljs {
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 1000000;
+  z-index: var(--z-modal-overlay);
   background: color-mix(in srgb, #000 52%, transparent);
 }
 .mdn-html-modal {
@@ -192,13 +192,16 @@ pre code.hljs {
   position: fixed;
   left: var(--link-context-menu-left, 0);
   top: var(--link-context-menu-top, 0);
-  z-index: 1000001;
+  z-index: var(--z-menu);
   min-width: 178px;
   padding: 5px;
   border: var(--stroke-w) solid var(--bd-x);
   border-radius: var(--r);
   background: var(--bg-e);
   box-shadow: var(--sh-lg);
+}
+body > .mdn-link-context-menu {
+  z-index: calc(var(--z-modal-overlay) + 20);
 }
 .mdn-link-context-menu button {
   width: 100%;
@@ -223,7 +226,7 @@ pre code.hljs {
   position: fixed;
   right: 18px;
   bottom: 18px;
-  z-index: 1000002;
+  z-index: var(--z-modal-popover);
   max-width: min(420px, calc(100vw - 36px));
   padding: 9px 12px;
   border: var(--stroke-w) solid var(--bd-x);

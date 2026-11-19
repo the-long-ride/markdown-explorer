@@ -5,7 +5,7 @@ type DesktopTypographyTranslationKey =
   | 'fontDefault' | 'fontDefaultDescription' | 'fontSystem' | 'fontImported'
   | 'fontImport' | 'fontRemove'
   | 'fontApply' | 'fontApplyConfirmTitle' | 'fontApplyConfirmBody' | 'fontApplyChanges' | 'fontSearchPlaceholder' | 'fontNoResults'
-  | 'fontVariant' | 'fontResetRole' | 'fontResetAll' | 'fontNormal' | 'fontItalic';
+  | 'fontVariant' | 'fontResetRole' | 'fontResetAll' | 'fontNormal' | 'fontItalic' | 'fontSize';
 
 export const DESKTOP_TYPOGRAPHY_EN: Pick<Translations, DesktopTypographyTranslationKey> = {
   typography: 'Typography',
@@ -20,5 +20,5 @@ export const DESKTOP_TYPOGRAPHY_EN: Pick<Translations, DesktopTypographyTranslat
   fontApplyChanges: 'Apply changes',
   fontSearchPlaceholder: 'Search fonts…', fontNoResults: 'No matching fonts',
   fontVariant: 'Variant', fontResetRole: 'Reset this font role to default', fontResetAll: 'Reset all fonts to defaults',
-  fontNormal: 'Normal', fontItalic: 'Italic',
+  fontNormal: 'Normal', fontItalic: 'Italic', fontSize: 'Font size',
 };

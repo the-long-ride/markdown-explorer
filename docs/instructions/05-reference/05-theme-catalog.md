@@ -40,6 +40,7 @@ keywords:
 | `vercel` | Built-in style |
 | `tokyo-night` | Built-in style |
 | `neon-voltage` | Built-in style |
+| `cyberpunk` | Built-in style |
 | `pet-white-shiba` | Built-in style |
 | `pet-k-ink` | Built-in style |
 | `pet-cat` | Built-in style |
@@ -51,6 +52,7 @@ keywords:
 | Input | Normalized output |
 |---|---|
 | `pet-shiba-memes` | `tokyo-night` |
+| `night-city-2077` | `cyberpunk` |
 | `pet-shiba` | `pet-white-shiba` |
 | Unknown value, including `glass` | `raw-grid` |
 

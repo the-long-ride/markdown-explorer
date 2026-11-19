@@ -18,6 +18,15 @@
   border-left: var(--stroke-w) solid var(--bd-s);
   color: var(--tx);
   font-family: var(--font-ui);
+  transition: width 0.18s ease, min-width 0.18s ease, flex-basis 0.18s ease, border-left-color 0.18s ease;
+}
+
+body.is-resizing .workspace-insights,
+.workspace-insights.is-resizing-shell { transition: none !important; }
+
+.workspace-insights.is-collapsed {
+  width: 0 !important; min-width: 0 !important; flex-basis: 0 !important;
+  border-left-color: transparent !important; pointer-events: none !important;
 }
 
 .insights-resize {
@@ -31,6 +40,8 @@
   user-select: none;
   -webkit-user-select: none;
 }
+
+.insights-resize.is-collapsed { display: none !important; }
 
 .insights-resize::after {
   content: '';
@@ -52,24 +63,14 @@
    Header, Tabs, Warnings & Empty
    ============================================================ */
 .workspace-insights__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border-bottom: var(--stroke-w) solid var(--bd);
-  background: var(--bg-s);
-  min-width: 0;
-  flex-wrap: nowrap;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border-bottom: var(--stroke-w) solid var(--bd); background: var(--bg-s);
+  min-width: 0; flex-wrap: nowrap;
 }
 
 .workspace-insights__title-wrap {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
+  display: flex; align-items: baseline; gap: 6px;
+  min-width: 0; flex: 1; overflow: hidden;
 }
 
 .workspace-insights__title {
@@ -114,6 +115,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
+  min-width: 0;
   border: 0;
   border-bottom: 2px solid transparent;
   padding: 8px 6px;
@@ -128,7 +130,14 @@
   transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
+.workspace-insights__tab > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .workspace-insights__tab-badge {
+  flex-shrink: 0;
   font-size: 9.5px;
   line-height: 1;
   padding: 1px 4px;
@@ -212,6 +221,8 @@
 }
 
 .insights-list__row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -312,7 +323,7 @@
    Graph View
    ============================================================ */
 .insights-graph { display: flex; flex-direction: column; gap: 8px; height: 100%; flex: 1; min-height: 0; }
-.insights-graph.is-fullscreen { position: fixed; inset: 0; z-index: 10000; background: var(--bg); padding: 16px; gap: 10px; }
+.insights-graph.is-fullscreen { position: fixed; inset: 0; z-index: var(--z-panel-overlay); background: var(--bg); padding: 16px; gap: 10px; }
 .insights-graph__header-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .insights-pill {
   display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px;
@@ -335,7 +346,7 @@
   position: absolute; top: calc(100% + 4px); right: 0; left: auto; width: max-content;
   min-width: 260px; max-width: min(340px, calc(100vw - 32px)); max-height: 200px; overflow-y: auto;
   background: var(--bg-e); border: var(--stroke-w) solid var(--bd); border-radius: var(--r-md);
-  box-shadow: var(--sh-lg); z-index: 1000; list-style: none; margin: 0; padding: 4px;
+  box-shadow: var(--sh-lg); z-index: var(--z-dropdown); list-style: none; margin: 0; padding: 4px;
 }
 .insights-graph__search-option {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -435,6 +446,8 @@
 .insights-gallery__search:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
 .insights-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
 .insights-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 180px;
   display: flex; flex-direction: column; border: var(--stroke-w) solid var(--bd); border-radius: var(--r-md);
   background: var(--bg-s); overflow: hidden; font-size: 11px; cursor: pointer; text-align: left;
   transition: border-color 0.15s, box-shadow 0.15s;

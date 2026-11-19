@@ -15,6 +15,7 @@ if (win.Table) {
     if (!table.id) return;
     win.Table?.initState?.(table.id);
     win.Table?.detectChartable?.(table.id);
+    win.Table?.restoreTableLayout?.(table.id);
     win.Table?.applyAllFilters?.(table.id);
   });
 }

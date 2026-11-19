@@ -120,9 +120,12 @@ export function scoreRelatedDocument(a: RelationshipDocument, b: RelationshipDoc
 
 function addBucket(map: Map<string, string[]>, key: string, path: string): void {
   if (!key) return;
-  const list = map.get(key) ?? [];
-  if (list.length < 250) list.push(path);
-  map.set(key, list);
+  const list = map.get(key);
+  if (!list) {
+    map.set(key, [path]);
+  } else if (list.length < 80) {
+    list.push(path);
+  }
 }
 
 export function buildRelationshipCandidates(documents: readonly RelationshipDocument[]): Set<string> {
@@ -138,8 +141,9 @@ export function buildRelationshipCandidates(documents: readonly RelationshipDocu
   const result = new Set<string>();
   for (const list of buckets.values()) {
     const uniquePaths = [...new Set(list)].sort();
-    for (let i = 0; i < uniquePaths.length; i += 1) {
-      for (let j = i + 1; j < uniquePaths.length; j += 1) result.add(`${uniquePaths[i]}\u0000${uniquePaths[j]}`);
+    const limit = Math.min(uniquePaths.length, 80);
+    for (let i = 0; i < limit; i += 1) {
+      for (let j = i + 1; j < limit; j += 1) result.add(`${uniquePaths[i]}\u0000${uniquePaths[j]}`);
     }
   }
   const byNorm = new Map(documents.map(document => [norm(document.path), document.path]));

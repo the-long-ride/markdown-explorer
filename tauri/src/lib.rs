@@ -26,7 +26,6 @@ pub mod insights_external;
 pub mod insights_external_host;
 pub mod local_file;
 pub mod perf;
-#[cfg(not(test))]
 pub mod preload;
 pub mod render;
 pub mod runtime;

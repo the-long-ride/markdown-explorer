@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { WelcomePage } from "../../../../ui/src/components/Content/WelcomePage";
+import { WelcomeLaunchpad } from "../../../../ui/src/components/Content/WelcomeLaunchpad";
 import { RandomTipCard } from "../../../../ui/src/components/Content/RandomTipCard";
 import { useAppState } from "../../../../ui/src/contexts/AppStateContext";
 
@@ -28,10 +29,18 @@ vi.mock("../../../../ui/src/contexts/welcomeTranslations", () => ({
       title: "✨ Feature Highlights",
       tree: { title: "📁 File Tree", desc: "Navigate files with a tree sidebar" },
       search: { title: "🔍 Quick Search", desc: "Find content instantly" },
+      editor: { title: "✏️ Rich Markdown Editor", desc: "Edit source and tables inline" },
       tables: { title: "📋 Interactive Tables", desc: "Sort, filter, and chart data" },
       charts: { title: "📊 Table Charts", desc: "Visualize table data" },
       highlight: { title: "🎨 Syntax Highlighting", desc: "Code blocks with color" },
+      insights: { title: "🕸️ Workspace Insights", desc: "Connected knowledge graph" },
+      git: { title: "🌿 Git History", desc: "Browse revisions and diffs" },
+      export: { title: "📤 Export Center", desc: "Export to PDF, HTML, and images" },
+      outline: { title: "📑 Table of Contents", desc: "Jump across document sections" },
+      bookmarks: { title: "🔖 Smart Bookmarks", desc: "Pin documents and anchors" },
+      html: { title: "🌐 HTML Sandboxes", desc: "Interactive sandboxes" },
       modal: { title: "🖼️ Media Modal", desc: "Zoom images and diagrams" },
+      themes: { title: "🎭 Themes & Typography", desc: "Custom themes and layouts" },
       shortcuts: {
         title: "⌨️ Keyboard Shortcuts →",
         desc: "Navigate and control the reader",
@@ -48,6 +57,11 @@ vi.mock("../../../../ui/src/contexts/welcomeTranslations", () => ({
       hint: "Found a bug?",
       linkText: "Open an issue",
       bullets: ["Describe the problem", "Include steps to reproduce"],
+    },
+    tips: {
+      tipToggleDesktopView: { title: "Switch Focus and Tabs views", desc: "Use {shortcut} to move between the distraction-free Focus layout and workspace Tabs without opening Settings." },
+      tipToggleHtmlPreview: { title: "Toggle interactive HTML instantly", desc: "Use {shortcut} to switch the active .html or .htm document between HTML Preview and Markdown View." },
+      tipOpenContainingFolder: { title: "Open the active document folder", desc: "Use {shortcut} in the desktop app to open the current document’s containing folder in Explorer, Finder, or your file manager." },
     },
   }),
 }));
@@ -125,7 +139,8 @@ function setup(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   delete (window as Record<string, unknown>).electronAPI;
-  delete (window as Record<string, unknown>).__chromeExtBus;
+  delete (window as Record<string, unknown>).__webBus;
+  delete (window as Record<string, unknown>).PlatformBridge;
 });
 
 describe("WelcomePage rendering", () => {
@@ -151,6 +166,14 @@ describe("WelcomePage rendering", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders desktop description when __webBus is present", () => {
+    (window as Record<string, unknown>).__webBus = {};
+    setup();
+    expect(
+      screen.getByText("A premium document reader for the desktop")
+    ).toBeInTheDocument();
+  });
+
   it("renders tab buttons", () => {
     setup();
     expect(screen.getByText("Features")).toBeInTheDocument();
@@ -159,15 +182,17 @@ describe("WelcomePage rendering", () => {
     expect(screen.getByText("Privacy")).toBeInTheDocument();
   });
 
-  it("defaults to features tab", () => {
+  it("defaults to user manual tab and shows features grid when switching to features tab", () => {
     setup();
+    expect(
+      screen.getByRole("button", { name: /User manual/ }).className
+    ).toContain("active");
+    expect(document.querySelector(".manual-ai-prompt")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Features"));
     expect(
       screen.getByRole("button", { name: /Features/ }).className
     ).toContain("active");
-  });
-
-  it("shows features grid by default", () => {
-    setup();
     expect(document.querySelector(".features-grid")).toBeInTheDocument();
   });
 
@@ -197,16 +222,27 @@ describe("WelcomePage rendering", () => {
 
   it("renders feature cards in features tab", () => {
     setup();
+    fireEvent.click(screen.getByText("Features"));
     expect(screen.getByText("File Tree")).toBeInTheDocument();
     expect(screen.getByText("Quick Search")).toBeInTheDocument();
+    expect(screen.getByText("Rich Markdown Editor")).toBeInTheDocument();
     expect(screen.getByText("Interactive Tables")).toBeInTheDocument();
     expect(screen.getByText("Table Charts")).toBeInTheDocument();
     expect(screen.getByText("Syntax Highlighting")).toBeInTheDocument();
+    expect(screen.getByText("Workspace Insights")).toBeInTheDocument();
+    expect(screen.getByText("Git History")).toBeInTheDocument();
+    expect(screen.getByText("Export Center")).toBeInTheDocument();
+    expect(screen.getByText("Table of Contents")).toBeInTheDocument();
+    expect(screen.getByText("Smart Bookmarks")).toBeInTheDocument();
+    expect(screen.getByText("HTML Sandboxes")).toBeInTheDocument();
     expect(screen.getByText(/Media Viewer/)).toBeInTheDocument();
+    expect(screen.getByText("Themes & Typography")).toBeInTheDocument();
+    expect(screen.getByText("Keyboard Shortcuts")).toBeInTheDocument();
   });
 
   it("switches to shortcuts tab when View shortcuts button is clicked", () => {
     setup();
+    fireEvent.click(screen.getByText("Features"));
     const viewShortcutsBtns = screen.getAllByText("View shortcuts");
     fireEvent.click(viewShortcutsBtns[0]);
     expect(document.querySelector(".shortcuts-card")).toBeInTheDocument();
@@ -333,10 +369,10 @@ describe("WelcomePage rendering", () => {
 
   it("removes active class from previously active tab", () => {
     setup();
-    const featuresBtn = screen.getByText("Features").closest(".tab-btn");
-    expect(featuresBtn?.className).toContain("active");
+    const manualBtn = screen.getByText("User manual").closest(".tab-btn");
+    expect(manualBtn?.className).toContain("active");
     fireEvent.click(screen.getByText("Tips & Practices"));
-    expect(featuresBtn?.className).not.toContain("active");
+    expect(manualBtn?.className).not.toContain("active");
   });
 
   it("renders featured random tip card with shuffle button", () => {
@@ -358,8 +394,290 @@ describe("WelcomePage rendering", () => {
     const starLink = screen.getByRole("link", { name: /Star on GitHub/i });
     expect(starLink).toBeInTheDocument();
     expect(starLink).toHaveAttribute("href", "https://github.com/the-long-ride/markdown-explorer");
+    expect(screen.getByTestId("github-star-count")).toHaveTextContent("15");
     const donateLink = screen.getByRole("link", { name: /^Donate$/i });
     expect(donateLink).toHaveAttribute("href", "https://github.com/the-long-ride#donate");
     expect(donateLink).toHaveAttribute("target", "_blank");
+  });
+
+  it("renders command deck and launchpad inside WelcomePage", () => {
+    setup();
+    expect(document.querySelector(".welcome-command-deck")).toBeInTheDocument();
+    expect(screen.getByTestId("welcome-launchpad")).toBeInTheDocument();
+    expect(document.querySelector('[data-tour-id="welcome-launchpad"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-tour-id="welcome-tabs-bar"]')).toBeInTheDocument();
+  });
+
+  it("dispatches markdown-explorer-start-tour when tour-trigger button is clicked", () => {
+    setup();
+    const tourHandler = vi.fn();
+    window.addEventListener("markdown-explorer-start-tour", tourHandler);
+
+    const tourBtn = document.querySelector('[data-tour-id="tour-trigger"]');
+    expect(tourBtn).toBeInTheDocument();
+    fireEvent.click(tourBtn!);
+
+    expect(tourHandler).toHaveBeenCalledTimes(1);
+    window.removeEventListener("markdown-explorer-start-tour", tourHandler);
+  });
+
+  it("switches active tab when markdown-explorer-welcome-select-tab event is dispatched", () => {
+    setup();
+    expect(screen.getByRole("button", { name: /User manual/i }).className).toContain("active");
+
+    fireEvent(
+      window,
+      new CustomEvent("markdown-explorer-welcome-select-tab", { detail: "features" })
+    );
+
+    expect(screen.getByRole("button", { name: /User manual/i }).className).not.toContain("active");
+    expect(screen.getByRole("button", { name: /Features/i }).className).toContain("active");
+  });
+
+  it("renders minimized website button with URL tooltip and collapsible open-source ecosystem (collapsed by default)", () => {
+    setup();
+    const websiteLink = screen.getByRole("link", { name: /Website/i });
+    expect(websiteLink).toHaveAttribute("href", "https://the-long-ride.github.io/markdown-explorer");
+    expect(websiteLink).toHaveAttribute(
+      "data-hover-tooltip",
+      "https://the-long-ride.github.io/markdown-explorer"
+    );
+
+    const toggleBtn = screen.getByTestId("welcome-ecosystem-toggle");
+    expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("markdown-them")).not.toBeInTheDocument();
+
+    fireEvent.click(toggleBtn);
+    expect(toggleBtn).toHaveAttribute("aria-expanded", "true");
+
+    expect(screen.getByText("markdown-them")).toBeInTheDocument();
+    expect(screen.getByText("aevra")).toBeInTheDocument();
+    expect(screen.getByText("aevra-desktop-use")).toBeInTheDocument();
+    expect(screen.getByText("aevra-browser-use")).toBeInTheDocument();
+    expect(screen.getByText("engram")).toBeInTheDocument();
+    expect(screen.getByText("quotashift")).toBeInTheDocument();
+
+    const items = document.querySelectorAll(".welcome-ecosystem__item");
+    expect(items.length).toBe(6);
+    items.forEach((item) => {
+      expect(item.querySelectorAll(".welcome-ecosystem__item-tag").length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe("WelcomeLaunchpad Option A 2-Tier Command Header & Recents", () => {
+    it("renders structured 2-tier command header with active workspace status, quick tools, and primary action buttons", () => {
+      const postMessage = vi.fn();
+      (window as any).PlatformBridge = { postMessage };
+
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={true}
+          workspaceName="markdown-workspace"
+          fileCount={18}
+          recentWorkspaces={[
+            { name: "markdown-workspace", path: "/repos/markdown-workspace" },
+            { name: "docs-repo", path: "/repos/docs-repo" },
+          ]}
+        />
+      );
+
+      // Tier 1: Context & Utility Header
+      const header = document.querySelector(".welcome-launchpad__header");
+      expect(header).toBeInTheDocument();
+
+      const statusPill = document.querySelector(".welcome-launchpad__workspace-status");
+      expect(statusPill).toBeInTheDocument();
+
+      const statusDot = document.querySelector(".welcome-launchpad__status-dot");
+      expect(statusDot).toHaveClass("is-active");
+
+      const wsName = screen.getByText("markdown-workspace");
+      expect(wsName).toHaveAttribute("data-hover-tooltip", "markdown-workspace");
+      expect(screen.getByText(/18\s+files/i)).toBeInTheDocument();
+
+      // Quick grid in Tier 1
+      const quickGrid = document.querySelector(".welcome-launchpad__quick-grid");
+      expect(quickGrid).toBeInTheDocument();
+      expect(document.querySelector(".welcome-launchpad__tour-btn")).toBeInTheDocument();
+      expect(document.querySelector(".welcome-launchpad__quick-btn")).toBeInTheDocument();
+
+      // Tier 2: Primary Actions
+      const primaryActions = document.querySelector(".welcome-launchpad__primary-actions");
+      expect(primaryActions).toBeInTheDocument();
+
+      const openFolderBtn = screen.getByRole("button", { name: /Open Folder/i });
+      expect(openFolderBtn).toHaveClass("welcome-launchpad__action-btn--primary");
+
+      const openFileBtn = screen.getByRole("button", { name: /Open File/i });
+      expect(openFileBtn).toHaveClass("welcome-launchpad__action-btn--secondary");
+
+      const switchWsBtn = screen.getByRole("button", { name: /workspace selection|Switch Workspace/i });
+      expect(switchWsBtn).toHaveClass("welcome-launchpad__action-btn--secondary");
+
+      // Recents deduplication: "markdown-workspace" should NOT be in recents chips
+      const recentChips = document.querySelectorAll(".welcome-launchpad__recent-item");
+      expect(recentChips.length).toBe(1);
+      expect(screen.getByText("docs-repo")).toBeInTheDocument();
+      expect(screen.queryAllByText("markdown-workspace").length).toBe(1); // Only in status pill!
+    });
+
+    it("renders muted status dot and placeholder when workspaceName is not set", () => {
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={true}
+        />
+      );
+
+      const statusDot = document.querySelector(".welcome-launchpad__status-dot");
+      expect(statusDot).not.toHaveClass("is-active");
+      expect(screen.getByText(/All-in-one Markdown workspace|Select a workspace/i)).toBeInTheDocument();
+    });
+
+    it("triggers bridge postMessage on Open Folder and Open File when bridge is available", () => {
+      const postMessage = vi.fn();
+      (window as any).PlatformBridge = { postMessage };
+
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={true}
+          workspaceName="test-project"
+        />
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /Open Folder/i }));
+      expect(postMessage).toHaveBeenCalledWith({ command: "openFolder", openFirstFile: false });
+
+      fireEvent.click(screen.getByRole("button", { name: /Open File/i }));
+      expect(postMessage).toHaveBeenCalledWith({ command: "openFile" });
+    });
+
+    it("dispatches open-workspace-selection on Open Folder when bridge is absent", () => {
+      const wsHandler = vi.fn();
+      window.addEventListener("open-workspace-selection", wsHandler);
+
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={false}
+        />
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /Open Folder/i }));
+      expect(wsHandler).toHaveBeenCalledTimes(1);
+
+      window.removeEventListener("open-workspace-selection", wsHandler);
+    });
+
+    it("dispatches open-workspace-selection on Switch Workspace button click", () => {
+      const wsHandler = vi.fn();
+      window.addEventListener("open-workspace-selection", wsHandler);
+
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={true}
+          workspaceName="active-workspace"
+        />
+      );
+
+      const switchWsBtn = screen.getByRole("button", { name: /workspace selection|Switch Workspace/i });
+      fireEvent.click(switchWsBtn);
+      expect(wsHandler).toHaveBeenCalledTimes(1);
+
+      window.removeEventListener("open-workspace-selection", wsHandler);
+    });
+
+    it("triggers openRecentWorkspace when a recent workspace chip is clicked", () => {
+      const postMessage = vi.fn();
+      (window as any).PlatformBridge = { postMessage };
+
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={true}
+          workspaceName="active-ws"
+          recentWorkspaces={[
+            { name: "other-project", path: "/repos/other-project" }
+          ]}
+        />
+      );
+
+      const recentChip = screen.getByRole("button", { name: /other-project/i });
+      fireEvent.click(recentChip);
+      expect(postMessage).toHaveBeenCalledWith({
+        command: "openRecentWorkspace",
+        path: "/repos/other-project",
+        openFirstFile: false,
+      });
+    });
+
+    it("hides recents section when all recent workspaces match the active workspace", () => {
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={true}
+          workspaceName="duplicate-ws"
+          recentWorkspaces={[
+            { name: "duplicate-ws", path: "/repos/duplicate-ws" }
+          ]}
+        />
+      );
+
+      expect(document.querySelector(".welcome-launchpad__section--recents")).not.toBeInTheDocument();
+    });
+
+    it("dispatches open-settings when Settings button is clicked", () => {
+      const settingsHandler = vi.fn();
+      window.addEventListener("open-settings", settingsHandler);
+
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={true}
+        />
+      );
+
+      const settingsBtn = document.querySelector(".welcome-launchpad__quick-btn");
+      expect(settingsBtn).toBeInTheDocument();
+      fireEvent.click(settingsBtn!);
+
+      expect(settingsHandler).toHaveBeenCalledTimes(1);
+      window.removeEventListener("open-settings", settingsHandler);
+    });
+
+    it("renders New Virtual Workspace, Open Folder, and Open File buttons in Web Mode and dispatches createVirtualWorkspace", () => {
+      const origLocation = window.location;
+      delete (window as any).location;
+      window.location = new URL("https://example.com/?mode=web") as any;
+      (window as any).__webBus = new EventTarget();
+
+      const postMessage = vi.fn();
+      (window as any).PlatformBridge = { postMessage };
+
+      render(
+        <WelcomeLaunchpad
+          language="en"
+          isDesktop={false}
+        />
+      );
+
+      const virtualBtn = screen.getByTestId("welcome-create-virtual-workspace-btn");
+      expect(virtualBtn).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Open Folder/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Open File/i })).toBeInTheDocument();
+
+      fireEvent.click(virtualBtn);
+      expect(postMessage).toHaveBeenCalledWith({
+        command: "createVirtualWorkspace",
+        type: "createVirtualWorkspace",
+      });
+
+      delete (window as any).__webBus;
+      delete (window as any).PlatformBridge;
+      window.location = origLocation;
+    });
   });
 });

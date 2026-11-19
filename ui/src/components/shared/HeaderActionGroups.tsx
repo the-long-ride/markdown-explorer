@@ -49,6 +49,7 @@ export function NavigationHeaderActions({
         disabled={scopeNavigation.active ? !scopeNavigation.canPrevious : !canGoBack}
         tooltip={t.topbar.goBack}
         shortcut={getEnabledShortcut(state.settings, 'back')}
+        portalTooltip
         icon={<ChevronLeftIcon />}
       />
       <TooltipButton
@@ -57,6 +58,7 @@ export function NavigationHeaderActions({
         disabled={scopeNavigation.active ? !scopeNavigation.canNext : !canGoForward}
         tooltip={t.topbar.goForward}
         shortcut={getEnabledShortcut(state.settings, 'forward')}
+        portalTooltip
         icon={<ChevronRightIcon />}
       />
       <TooltipButton
@@ -65,6 +67,7 @@ export function NavigationHeaderActions({
         disabled={!state.currentFile}
         tooltip={t.topbar.refresh}
         shortcut={getEnabledShortcut(state.settings, 'refresh')}
+        portalTooltip
         icon={<RefreshIcon />}
       />
     </div>
@@ -96,6 +99,7 @@ export function DocumentHeaderActions({
         onClick={onCollapseAll}
         tooltip={t.topbar.collapseAll}
         shortcut={getEnabledShortcut(state.settings, 'collapseAll')}
+        portalTooltip
         icon={<CollapseIcon />}
       />
       <TooltipButton
@@ -103,6 +107,7 @@ export function DocumentHeaderActions({
         onClick={onExpandAll}
         tooltip={t.topbar.expandAll}
         shortcut={getEnabledShortcut(state.settings, 'expandAll')}
+        portalTooltip
         icon={<ExpandIcon />}
       />
       <TooltipButton
@@ -110,6 +115,7 @@ export function DocumentHeaderActions({
         onClick={(event) => onCopyFile(event.currentTarget)}
         tooltip={t.topbar.copy}
         disabled={!canCopyFile}
+        portalTooltip
         icon={<CopyIcon />}
       />
     </div>

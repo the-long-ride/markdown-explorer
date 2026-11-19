@@ -7,7 +7,8 @@ const root = process.cwd();
 const source = fs.readFileSync(path.join(root, 'ui/src/contexts/auditedUiTranslations.ts'), 'utf8');
 const languages = ['en', 'vi', 'fr', 'es', 'zh', 'no', 'ja', 'ko', 'ru'];
 const requiredKeys = [
-  'columns', 'showAllColumns', 'horizontalBarChart', 'areaChart', 'scatterChart',
+  'columns', 'showAllColumns', 'alignColumn', 'alignLeft', 'alignMiddle', 'alignRight',
+  'horizontalBarChart', 'areaChart', 'scatterChart',
   'radarChart', 'polarAreaChart', 'doughnutChart', 'chartViewTitle', 'chartFit', 'chartZoom',
   'copyChartImage', 'saveChartPng', 'closeChartView',
 ];

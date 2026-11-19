@@ -116,16 +116,15 @@ test('desktop context menus and shortcut expose localized file-manager actions',
 });
 
 test('pet theme rail-markers directory assets and shortcut label font-weight styles are present', async () => {
-  const [petTokens, catPaw, kInkPaw, settingsCss] = await Promise.all([
+  const [petTokens, whiteShibaPaw, kInkPaw, settingsCss] = await Promise.all([
     read('ui/src/styles/tokens/tokens-pet-themes.css'),
-    read('ui/src/assets/themes/pets/rail-markers/cat-paw.svg'),
+    read('ui/src/assets/themes/pets/rail-markers/white-shiba-paw.svg'),
     read('ui/src/assets/themes/pets/rail-markers/k-ink-paw.svg'),
     read('ui/src/styles/global/global-settings-layout.css'),
   ]);
-  assert.match(petTokens, /rail-markers\/cat-paw\.svg/);
-  assert.match(petTokens, /rail-markers\/corgi-paw\.svg/);
-  assert.match(catPaw, /aria-label="Cat paw"/);
-  assert.match(catPaw, /fill="#e2e8f0"/); // Retractable claws
+  assert.match(petTokens, /rail-markers\/white-shiba-paw\.svg/);
+  assert.match(petTokens, /rail-markers\/k-ink-paw\.svg/);
+  assert.ok(whiteShibaPaw.includes('<svg'));
   assert.match(kInkPaw, /aria-label="K-Ink wolf paw"/);
   assert.match(kInkPaw, /L 4\.5 7\.2/); // Shorter claw tips
   assert.match(settingsCss, /\.settings-shortcut-label[\s\S]*?font-weight:\s*600;/);

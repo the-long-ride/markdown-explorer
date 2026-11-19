@@ -122,7 +122,7 @@ export function useDocumentOverlays({ state, bridge, document: doc, bodyRef, onI
     closeLinkMenu: () => setLinkMenu(null),
   });
 
-  const scopeTarget = linkMenu?.link ? findScopeFile(linkMenu.link, state.fileList) : null;
+  const scopeTarget = linkMenu?.link ? findScopeFile(linkMenu.link, state.fileList, doc.filePath) : null;
 
   const overlays: ReactNode = (
     <>

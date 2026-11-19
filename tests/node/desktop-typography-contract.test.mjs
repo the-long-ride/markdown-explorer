@@ -55,8 +55,8 @@ test('bundled JetBrains Mono is applied only to desktop runtimes', async () => {
   const desktopBlock = tokens.match(/body\.is-desktop,[\s\S]*?body\.is-tauri[\s\S]*?\n\}/)?.[0] ?? '';
   assert.match(desktopBlock, /JetBrains Mono/);
   assert.match(desktopBlock, /body\.is-tauri/);
-  const chromeBlock = tokens.match(/body\.is-chrome-ext[\s\S]*?\n\}/)?.[0] ?? '';
-  assert.doesNotMatch(chromeBlock, /JetBrains Mono/);
+  const webBlock = tokens.match(/body\.is-web[\s\S]*?\n\}/)?.[0] ?? '';
+  assert.doesNotMatch(webBlock, /JetBrains Mono/);
 });
 
 test('JetBrains font copying and inline faces are desktop-only without removing existing UI fonts', async () => {

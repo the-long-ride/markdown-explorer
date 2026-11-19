@@ -7,13 +7,16 @@
   background: var(--modal-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  z-index: 100000;
+  z-index: var(--z-modal);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--modal-fg);
   user-select: none;
+}
+.media-modal.mdn-modal {
+  z-index: var(--z-modal-popover);
 }
 .mdn-modal-close {
   position: absolute !important;
@@ -29,7 +32,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 2010;
+  z-index: var(--z-popover);
   transition: all 0.15s;
   outline: none;
 }
@@ -49,7 +52,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 2005;
+  z-index: var(--z-popover);
 }
 .mdn-modal-btn {
   background: var(--bg-e);
@@ -145,7 +148,7 @@
   min-width: 0;
   box-sizing: border-box;
   box-shadow: var(--sh-lg);
-  z-index: 2010;
+  z-index: var(--z-popover);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -180,7 +183,7 @@
   align-items: center;
   gap: 12px;
   box-shadow: var(--sh-lg);
-  z-index: 2010;
+  z-index: var(--z-popover);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -193,7 +196,7 @@
   align-items: center;
   justify-content: center;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: var(--r-sm, var(--r, 4px));
   transition:
     color 0.15s,
     background 0.12s;
@@ -230,8 +233,6 @@
 }
 .settings-modal {
   background: var(--bg);
-}
-.settings-modal {
   justify-content: flex-start;
   padding: calc(var(--topbar-h) + 16px) 16px 16px;
   overflow: hidden;
@@ -308,16 +309,6 @@
   font-size: 10.5px;
   line-height: 1.35;
   text-align: right;
-}
-.settings-shortcut-row {
-  min-width: 0;
-}
-.settings-shortcut-label {
-  min-width: 0;
-}
-.settings-shortcut-input {
-  box-sizing: border-box;
-  font-family: var(--font-ui);
 }
 .settings-reset-shortcuts-btn {
   --reset-warning: #f59e0b;
@@ -446,32 +437,10 @@
   padding-right: 0;
 }
 
-.settings-reset-shortcuts-btn,
-[data-theme="dark"] .settings-reset-shortcuts-btn,
-[data-theme="auto"] .settings-reset-shortcuts-btn,
-[data-theme-style="glass"] .settings-reset-shortcuts-btn,
-[data-theme-style="bento"] .settings-reset-shortcuts-btn,
-[data-theme-style^="pet-"] .settings-reset-shortcuts-btn {
-  --reset-warning: var(--warning, #d79b32);
-  --reset-warning-strong: color-mix(in srgb, var(--warning, #d79b32) 82%, #000);
-  border-color: color-mix(in srgb, var(--warning, #d79b32) 74%, var(--bd-x));
-  background: var(--warning, #d79b32);
-  color: #17120a;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--warning, #d79b32) 34%, transparent);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
 .settings-reset-shortcuts-btn::before,
 [data-theme-style^="pet-"] .settings-reset-shortcuts-btn::before {
   content: none;
   display: none;
-}
-
-.settings-reset-shortcuts-btn:hover {
-  background: color-mix(in srgb, var(--warning, #d79b32) 88%, #fff);
-  border-color: var(--warning, #d79b32);
-  color: #17120a;
 }
 
 /* Reset shortcuts is a secondary outline action. */

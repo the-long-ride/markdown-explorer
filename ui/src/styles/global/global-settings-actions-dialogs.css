@@ -122,7 +122,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  z-index: 100;
+  z-index: var(--z-floating);
 }
 
 .settings-card__top-actions .settings-card__close {
@@ -204,7 +204,8 @@
   position: relative;
 }
 
-.settings-language-btn {
+.settings-language-btn,
+.settings-reload-window-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -221,7 +222,8 @@
   padding: 0;
 }
 
-.settings-language-btn:hover {
+.settings-language-btn:hover,
+.settings-reload-window-btn:hover {
   opacity: 1;
   color: var(--tx);
   background: var(--bg-h);
@@ -241,7 +243,7 @@
   border: var(--stroke-w) solid var(--bd-s);
   border-radius: var(--r-md);
   box-shadow: var(--sh-lg);
-  z-index: 2000;
+  z-index: var(--z-popover);
   backdrop-filter: var(--surface-blur);
   -webkit-backdrop-filter: var(--surface-blur);
 }
@@ -279,7 +281,7 @@
    Banned Shortcut Warning Dialog
    ============================================================ */
 .banned-shortcut-modal {
-  z-index: 310000;
+  z-index: var(--z-menu);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -486,4 +488,3 @@
 .update-available-card__copy { min-width: 0; }
 .update-available-card__header .update-available-card__changelog { display: inline-flex; width: fit-content; margin-top: 10px; }
 .update-available-card__actions .settings-outline-button { min-height: 34px; }
-.update-available-card__skip { color: var(--tx2); }

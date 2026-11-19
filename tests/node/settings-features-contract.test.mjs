@@ -16,14 +16,14 @@ test('feature settings persist with safe defaults', async () => {
   assert.match(types, /markdownEditingEnabled:\s*boolean/);
   assert.match(types, /historySidebarEnabled\?:\s*boolean/);
   assert.match(types, /markdownEditingEnabled\?:\s*boolean/);
-  assert.match(model, /historySidebarEnabled:\s*true/);
-  assert.match(model, /markdownEditingEnabled:\s*false/);
-  assert.match(model, /historySidebarEnabled:\s*saved\.historySidebarEnabled !== false/);
-  assert.match(model, /markdownEditingEnabled:\s*saved\.markdownEditingEnabled === true/);
+  assert.match(model, /historySidebarEnabled:\s*false/);
+  assert.match(model, /markdownEditingEnabled:\s*true/);
+  assert.match(model, /historySidebarEnabled:\s*saved\.historySidebarEnabled === true/);
+  assert.match(model, /markdownEditingEnabled:\s*saved\.markdownEditingEnabled !== false/);
   assert.match(effects, /historySidebarEnabled:\s*state\.settings\.historySidebarEnabled/);
   assert.match(effects, /markdownEditingEnabled:\s*state\.settings\.markdownEditingEnabled/);
-  assert.match(importExport, /historySidebarEnabled:\s*raw\.historySidebarEnabled !== false/);
-  assert.match(importExport, /markdownEditingEnabled:\s*raw\.markdownEditingEnabled === true/);
+  assert.match(importExport, /historySidebarEnabled:\s*raw\.historySidebarEnabled === true/);
+  assert.match(importExport, /markdownEditingEnabled:\s*raw\.markdownEditingEnabled !== false/);
 });
 
 test('settings modal exposes a Features section and feature rows are separated from Appearance', async () => {

@@ -208,4 +208,60 @@ describe('appStateReducer - inline callback coverage with populated contentTabs'
     expect(next.notFoundHref).toBe('/missing');
     expect(next.contentTabs.length).toBe(1);
   });
+
+  test('normalizes removed pet themes to raw-grid across style and settings actions', () => {
+    for (const removed of ['pet-cat', 'pet-hamster', 'pet-corgi'] as const) {
+      const fromSet = appStateReducer(makeState(), {
+        type: 'SET_THEME_STYLE',
+        themeStyle: removed as unknown as AppState['themeStyle'],
+      });
+      expect(fromSet.themeStyle).toBe('raw-grid');
+
+      const fromAck = appStateReducer(makeState(), {
+        type: 'READY_ACK',
+        files: [],
+        tree: [],
+        theme: 'dark',
+        themeStyle: removed as unknown as AppState['themeStyle'],
+        defaultExpanded: true,
+        workspaceName: 'ws',
+        documentConversionEnabled: false,
+        platform: 'win32',
+        appVersion: '1.0.0',
+        capabilities: { externalEditor: false, fontImport: false, exportFiles: false, documentConversion: false, workspaceSelection: false },
+      });
+      expect(fromAck.themeStyle).toBe('raw-grid');
+    }
+
+    const withRemovedCustomTheme = makeState({
+      settings: {
+        ...initialState.settings,
+        customThemes: [{
+          id: 'legacy-cat',
+          name: 'Legacy Cat',
+          baseStyle: 'pet-cat' as unknown as AppState['themeStyle'],
+          tokens: {},
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        }],
+      },
+    });
+    const fromSelectCustom = appStateReducer(withRemovedCustomTheme, {
+      type: 'SELECT_CUSTOM_THEME',
+      themeId: 'legacy-cat',
+    });
+    expect(fromSelectCustom.themeStyle).toBe('raw-grid');
+
+    const fromUpdateSettings = appStateReducer(
+      makeState({ themeStyle: 'pet-corgi' as unknown as AppState['themeStyle'] }),
+      {
+        type: 'UPDATE_SETTINGS',
+        settings: {
+          ...withRemovedCustomTheme.settings,
+          activeCustomThemeId: 'legacy-cat',
+        },
+      },
+    );
+    expect(fromUpdateSettings.themeStyle).toBe('raw-grid');
+  });
 });

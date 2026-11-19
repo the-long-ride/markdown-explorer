@@ -28,7 +28,7 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, children, icon, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) => (
+  TooltipButton: ({ onClick, children, icon, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, onlyIcon: _onlyIcon, portalTooltip: _portalTooltip, ...props }: any) => (
     <button onClick={onClick} {...props}>{icon}{children}</button>
   ),
 }));
@@ -345,5 +345,36 @@ describe('WorkspaceWindowControls', () => {
       expect(mockPostMessage).toHaveBeenCalled();
     }
     delete (window as any).electronAPI;
+  });
+
+  it('renders SVG-only Home button on the left side of the theme toggle button when onOpenHomepage is provided', () => {
+    const onOpenHomepage = vi.fn();
+    const onToggleTheme = vi.fn();
+    render(
+      <WorkspaceWindowControls
+        embeddedInTabs={false}
+        theme="light"
+        isMaximized={false}
+        onToggleTheme={onToggleTheme}
+        onOpenHomepage={onOpenHomepage}
+      />,
+    );
+    const btns = screen.getAllByRole('button');
+    expect(btns.length).toBe(2);
+    expect(btns[0]).toHaveAttribute('data-testid', 'workspace-open-homepage-btn');
+    expect(btns[0]).toHaveAttribute('aria-label', 'Home');
+    expect(btns[0]).toHaveClass('btn', 'btn--icon', 'workspace-selection__home-button');
+    expect(btns[0].querySelector('svg')).toBeInTheDocument();
+    expect(btns[0]).toHaveTextContent('');
+    expect(btns[1]).toHaveAttribute('tooltip', 'Dark');
+    fireEvent.click(btns[0]);
+    expect(onOpenHomepage).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders web navigation actions when window.__webBus is present', () => {
+    window.__webBus = new EventTarget();
+    render(<WorkspaceWindowControls embeddedInTabs={false} theme="light" isMaximized={false} onToggleTheme={vi.fn()} />);
+    expect(screen.getByTestId('web-demo-nav')).toBeInTheDocument();
+    delete window.__webBus;
   });
 });

@@ -33,10 +33,14 @@ const within = (path: string, parent: string) => path === parent || path.startsW
 /** A simulated workspace. Every mutation persists before publishing its new in-memory state. */
 export class DemoEntryStore {
   entries: readonly DemoEntry[];
-  constructor(seeds: readonly DemoEntry[], private readonly storage: Pick<Storage, 'getItem' | 'setItem'>) {
+  constructor(
+    seeds: readonly DemoEntry[],
+    private readonly storage: Pick<Storage, 'getItem' | 'setItem'>,
+    private readonly storageKey: string = DEMO_WORKSPACE_STORAGE_KEY,
+  ) {
     this.entries = seeds.map(e => ({ ...e }));
     try {
-      const raw = storage.getItem(DEMO_WORKSPACE_STORAGE_KEY);
+      const raw = storage.getItem(this.storageKey);
       if (!raw) return;
       const saved: unknown = JSON.parse(raw);
       if (!Array.isArray(saved)) return;
@@ -58,7 +62,7 @@ export class DemoEntryStore {
     if (parent && !entries.some(e => e.path === parent && e.kind === 'folder')) fail('missing');
   }
   private commit(entries: DemoEntry[]): void {
-    try { this.storage.setItem(DEMO_WORKSPACE_STORAGE_KEY, JSON.stringify(entries)); }
+    try { this.storage.setItem(this.storageKey, JSON.stringify(entries)); }
     catch { return fail('failed'); }
     this.entries = entries;
   }

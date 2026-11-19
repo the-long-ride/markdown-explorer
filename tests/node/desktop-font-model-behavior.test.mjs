@@ -15,8 +15,8 @@ test('font selection normalization rejects malformed imported references', () =>
 
 test('role binding normalization keeps explicit style and weight', () => {
   assert.deepEqual(
-    normalizeDesktopFontBinding({ source: 'system', family: 'Inter', style: 'italic', weight: 600 }, 'heading'),
-    { source: 'system', family: 'Inter', style: 'italic', weight: 600 },
+    normalizeDesktopFontBinding({ source: 'system', family: 'Inter', style: 'italic', weight: 600, size: 16 }, 'heading'),
+    { source: 'system', family: 'Inter', style: 'italic', weight: 600, size: 16 },
   );
   assert.deepEqual(normalizeDesktopFontBinding({ source: 'bad' }, 'quote'), DEFAULT_DESKTOP_FONT_BINDINGS.quote);
 });

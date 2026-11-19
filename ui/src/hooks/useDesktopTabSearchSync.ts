@@ -69,7 +69,11 @@ export function useDesktopTabSearchSync({
         ? { ...tab, workspaceOperationId: undefined, workspaceLoadState: tab.workspacePath ? 'ready' : 'idle' } : tab));
       return;
     }
-    if (msg.command === 'readyAck' && pendingReplacement && msg.workspaceOperationId === pendingReplacement.workspaceOperationId) {
+    if (
+      pendingReplacement
+      && msg.workspaceOperationId === pendingReplacement.workspaceOperationId
+      && (msg.command === 'readyAck' || msg.command === 'workspaceFilesChanged' || msg.command === 'workspaceUnavailable')
+    ) {
       pendingWorkspaceReplacementRef.current = null;
     }
     if (msg.workspaceOperationId && msg.workspaceTabId) {

@@ -8,8 +8,8 @@ import { ShortcutKeycaps } from '../shared/ShortcutKeycaps';
 export function renderWelcomeDescription(text: string) {
   if (!text) return null;
 
-  // Tokenize text for shortcuts in [brackets] or (parentheses)
-  const parts = text.split(/(\[[^\]]+\]|\((?:Ctrl\+|Cmd\+|Alt\+|Shift\+|Meta\+|F\d+|[A-Za-z0-9,/\\;:'`\[\]=-]+\+?)[^)]*\))/gi);
+  // Tokenize text for shortcuts in [brackets], (parentheses), or bare modifier+key combinations
+  const parts = text.split(/(\[[^\]]+\]|\((?:Ctrl\+|Cmd\+|Alt\+|Shift\+|Meta\+|F\d+|[A-Za-z0-9,/\\;:'`\[\]=-]+\+?)[^)]*\)|(?:Ctrl|Cmd|Alt|Shift|Meta)\+(?:[A-Za-z0-9,/\\;:'`\[\]=-]+\+?)*[A-Za-z0-9,/\\;:'`\[\]=-]+)/gi);
 
   return parts.map((part, idx) => {
     let key = '';
@@ -26,6 +26,8 @@ export function renderWelcomeDescription(text: string) {
       ) {
         key = inner;
       }
+    } else if (/^(?:Ctrl|Cmd|Alt|Shift|Meta)\+(?:[A-Za-z0-9,/\\;:'`\[\]=-]+\+?)*[A-Za-z0-9,/\\;:'`\[\]=-]+$/i.test(part)) {
+      key = part;
     }
 
     if (key) {

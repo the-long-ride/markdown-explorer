@@ -67,6 +67,7 @@ async function computeGitContext(workspacePath) {
   return { repositoryRoot, workspaceRoot };
 }
 
+const MAX_CACHE_ENTRIES = 256;
 const gitContextCache = new Map();
 
 function gitContextKey(workspacePath) {
@@ -76,8 +77,16 @@ function gitContextKey(workspacePath) {
 function resolveGitContext(workspacePath) {
   const key = gitContextKey(workspacePath);
   const cached = gitContextCache.get(key);
-  if (cached) return cached;
+  if (cached) {
+    gitContextCache.delete(key);
+    gitContextCache.set(key, cached);
+    return cached;
+  }
   const pending = computeGitContext(workspacePath);
+  if (gitContextCache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = gitContextCache.keys().next().value;
+    if (oldestKey !== undefined) gitContextCache.delete(oldestKey);
+  }
   gitContextCache.set(key, pending);
   pending.catch(() => {
     if (gitContextCache.get(key) === pending) gitContextCache.delete(key);
@@ -372,21 +381,8 @@ function createGitHistoryMessageHandlers(options) {
 }
 
 module.exports = {
-  FULL_OID,
-  GIT_TIMEOUT_MS,
-  clearGitContextCache,
-  resolveGitContext,
-  toGitHistoryError,
-  GitHistoryError,
-  MAX_GIT_OUTPUT_BYTES,
-  compareGitSources,
-  createGitHistoryMessageHandlers,
-  listDocumentHistory,
-  listRepositoryHistory,
-  listRevisionFiles,
-  parseHistory,
-  parseRepositoryHistory,
-  readGitRevision,
-  readRevisionFile,
-  resolveRepository,
+  FULL_OID, GIT_TIMEOUT_MS, clearGitContextCache, resolveGitContext, toGitHistoryError,
+  GitHistoryError, MAX_GIT_OUTPUT_BYTES, compareGitSources, createGitHistoryMessageHandlers,
+  listDocumentHistory, listRepositoryHistory, listRevisionFiles, parseHistory,
+  parseRepositoryHistory, readGitRevision, readRevisionFile, resolveRepository,
 };

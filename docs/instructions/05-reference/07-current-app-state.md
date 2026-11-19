@@ -21,7 +21,7 @@ source_scope:
 - ../../../electron
 - ../../../tauri
 - ../../../vscode
-- ../../../chromium-xtension
+- ../../../website-app
 - ../../../website-app
 test_scope:
 - ../../../tests/node/localization-settings-doc-sync-contract.test.mjs
@@ -35,7 +35,7 @@ runtime_scope:
 - electron
 - tauri
 - vscode
-- chromium
+- web
 - web
 keywords:
 - current state
@@ -58,9 +58,9 @@ This reference is the synchronized **Unreleased** snapshot of Markdown Explorer 
 
 ## Supported runtimes
 
-Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code**, **Chromium**, and the Website/browser-file runtime. The renderer capability-gates native actions rather than pretending every host owns the same filesystem, updater, window, editor, font, zoom, or Git APIs.
+Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code**, and the **Web** runtime (`test` and `file` modes). The renderer capability-gates native actions rather than pretending every host owns the same filesystem, updater, window, editor, font, zoom, or Git APIs.
 
-| Capability | Electron | Tauri | VS Code | Chromium / Web |
+| Capability | Electron | Tauri | VS Code | Web |
 |---|---|---|---|---|
 | Workspace/folder browsing | Native desktop bridge | Native Tauri bridge | VS Code workspace APIs | Browser File System Access API where available |
 | Local Markdown Inline Edit / Plain editing | Yes | Yes | Yes | Yes when writable file permission exists; otherwise read-only |
@@ -77,12 +77,12 @@ Markdown Explorer shares the renderer across **Electron**, **Tauri**, **VS Code*
 | Create file/folder (Files tab) | Yes | Yes | Yes | Yes (website: file mode only) |
 | Delete selected entries | OS Trash | OS Trash | OS Trash | Permanent |
 
-VS Code imported fonts are copied to extension global storage and served to the webview with a safe URI. Chromium/Web store imported font files in IndexedDB and activate them with the FontFace API. Typography exposes system fonts and imported fonts where the runtime supports them.
+VS Code imported fonts are copied to extension global storage and served to the webview with a safe URI. Web stores imported font files in IndexedDB and activates them with the FontFace API. Typography exposes system fonts and imported fonts where the runtime supports them.
 
 ## Markdown editing
 
 - Rendered Markdown remains the default mode.
-- `markdownEditingEnabled` defaults to **false**.
+- `markdownEditingEnabled` defaults to **true**.
 - The internal full-source Markdown editor uses locally packaged **CodeMirror 6**. CodeMirror owns cursor/selection/editor keymaps and local editor history; the Markdown Explorer document session remains authoritative for working source, dirty state, revision-token save, conflicts, persistence, and split synchronization.
 - The formatting toolbar covers bold, italic, headings, quote, inline/fenced code, links, bulleted/numbered/task lists, tables, undo/redo, and Preview.
 - The inline Markdown editor action buttons are located at the top right of the editor header with interactive tooltips displaying keyboard shortcuts (`Ctrl+Enter` to save, `Esc` to cancel, and toolbar switch tooltip), eliminating the redundant bottom footer.
@@ -109,7 +109,7 @@ VS Code imported fonts are copied to extension global storage and served to the 
 
 - **More Actions → History** expands/selects the repository **History** sidebar. Document-specific revision/diff workflows remain available separately.
 - Git capability/history loading is lazy; ordinary navigation never starts Git or enumerates commits.
-- Electron, Tauri, and VS Code use the installed local Git executable with structured argument arrays / `std::process::Command`. Chromium/Web report `unsupported-runtime` and never start a local process.
+- Electron, Tauri, and VS Code use the installed local Git executable with structured argument arrays / `std::process::Command`. Web reports `unsupported-runtime` and never starts a local process.
 - Repository History initially requests **50 commits** and loads older pages with `offset = loaded count`. Native/editor hosts map offset to Git `--skip=<offset>` and page size to `-n <limit>`.
 - Pages append in order, de-duplicate by full OID, and a short page marks exhaustion.
 - Commit search is case-insensitive across full SHA, short SHA, author, and subject. If a query has no match in loaded commits, additional pages can load until a match appears or history is exhausted.
@@ -127,7 +127,7 @@ See [Local Git History and Diff](../../git-history-diff.md).
 
 - **Files tab create buttons**: **New File** (file-plus icon) and **New Folder** buttons on the left of the action bar. The new entry is created in the last focused folder, the parent of the last focused file, or the workspace root, VS Code style. File names default to `.md` when no extension is typed; any extension is accepted.
 - **Folder context menu creation**: **New File…** and **New Folder…** in the folder context menu create inside that folder.
-- **Files tab selection mode**: checkboxes on every row with Expand all, Collapse all, Unpin selected, and Delete selected, each destructive action behind a confirmation dialog. Electron, Tauri, and VS Code move deleted items to the system Trash; the Chromium extension and website file mode delete permanently and say so.
+- **Files tab selection mode**: checkboxes on every row with Expand all, Collapse all, Unpin selected, and Delete selected, each destructive action behind a confirmation dialog. Electron, Tauri, and VS Code move deleted items to the system Trash; Web local-folder mode deletes permanently and says so.
 - **Empty folders in the tree**: truly empty folders appear in the Files tree on every runtime.
 - **Shared confirm dialog**: the clear-pins confirmation now uses the shared sidebar confirm dialog.
 - The capability is derived from `appRuntime` and hidden without a workspace or in historical revision mode. Details: [Sidebar Tree, Filtering, and Scope](../03-features/03-sidebar-tree-and-scope.md) and [UC-032](../02-use-cases/UC-032-create-and-delete-workspace-entries.md).
@@ -140,7 +140,7 @@ See [Local Git History and Diff](../../git-history-diff.md).
 - Electron/Tauri Focus mode retains a thin native draggable body surface. Interactive Focus controls are `no-drag`.
 - Tauri's fullscreen guard remains authoritative: fullscreen Focus must not become draggable through the application surface.
 - Breadcrumb/header layout is content-sized rather than stretching across unused header width.
-- Reset zoom is Markdown Explorer-owned only in Electron/Tauri and defaults to **`Ctrl+Alt+Z`**. VS Code, Chromium, and Web leave zoom to the host.
+- Reset zoom is Markdown Explorer-owned only in Electron/Tauri and defaults to **`Ctrl+Alt+Z`**. VS Code and Web leave zoom to the host.
 
 ## Settings and preferences
 
@@ -155,11 +155,11 @@ Settings is organized into **Appearance**, **Features**, **Typography** (where s
 
 - Feature controls include sidebar labels, file tabs, bookmarks, Workspace Insights, History Sidebar, Markdown Editing, runtime-supported document conversion, HTML preview, CSV preview, and related capabilities.
 - `historySidebarEnabled` defaults to true. The History tab does not probe Git; it reminds users that History needs Git installed and a Git-tracked workspace, and explains failed loads.
-- `markdownEditingEnabled` defaults to false.
+- `markdownEditingEnabled` defaults to true.
 
 ### Typography
 
-Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for App UI, Body, Heading, Quote, Code, and Mermaid.
+Electron, Tauri, VS Code, and Web expose role-based Typography for App UI, Body, Heading, Quote, Code, and Mermaid.
 
 - System/imported font sources are searchable where available.
 - Applying typography updates only changed role bindings and confirms before persistence.
@@ -170,7 +170,7 @@ Electron, Tauri, VS Code, and Chromium/Web expose role-based Typography for App 
 
 - Active bindings use shared keycap rendering in tooltips and Settings.
 - Reset keyboard shortcut button in Settings uses an enlarged reset/refresh icon matching the Typography settings style.
-- The legacy external Edit action remains runtime-specific: Electron/Tauri default to `Ctrl+E`; VS Code defaults to `Ctrl+Alt+E`; Chromium/Web expose no external-editor action.
+- The legacy external Edit action remains runtime-specific: Electron/Tauri default to `Ctrl+E`; VS Code defaults to `Ctrl+Alt+E`; Web exposes no external-editor action.
 - Save is enabled only for a writable live document session.
 - Reset zoom defaults to `Ctrl+Alt+Z` only on Electron/Tauri.
 
@@ -216,7 +216,7 @@ The current version is **1.7.1** (sidebar file operations on top of the PR #48 f
 | Revision projection/search | `ui/src/history/revisionWorkspace.ts` |
 | History search/persistence | `ui/src/history/repositoryView.ts` |
 | Runtime Git adapters | `electron/git/document-history.js`, `tauri/src/dispatcher/git_repository.rs`, `vscode/src/core/panelGitHistory.ts` |
-| Sidebar file operations | `ui/src/workspace/*`, `ui/src/components/Sidebar/useSidebarFileOps.tsx`, `electron/workspace/workspace-entries.js`, `vscode/src/core/panelWorkspaceEntries.ts`, `tauri/src/dispatcher/workspace_entries.rs`, `chromium-xtension/src/workspace-entries.ts` |
+| Sidebar file operations | `ui/src/workspace/*`, `ui/src/components/Sidebar/useSidebarFileOps.tsx`, `electron/workspace/workspace-entries.js`, `vscode/src/core/panelWorkspaceEntries.ts`, `tauri/src/dispatcher/workspace_entries.rs`, `website-app/src/workspace-entries.ts` |
 | Version synchronization | `package.json`, `scripts/sync-versions.mjs` |
 | As-built PR #48 contract | `docs/superpowers/specs/2026-09-17-pr48-as-built-sync.md` |
 

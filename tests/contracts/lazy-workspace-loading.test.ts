@@ -13,7 +13,6 @@ describe('lazy workspace loading parity', () => {
     for (const source of [
       read('electron/core/runtime-workspace-handlers.js'),
       read('vscode/src/core/incrementalScan.ts'),
-      read('chromium-xtension/src/incremental-workspace-scan.ts'),
       read('website-app/src/web-file-mode.ts'),
     ]) {
       expect(source).toMatch(/3000|WORKSPACE_SCAN_REVEAL_DELAY_MS/);
@@ -25,7 +24,6 @@ describe('lazy workspace loading parity', () => {
     for (const host of [
       read('electron/core/runtime-workspace-handlers.js'),
       read('vscode/src/core/panel.ts'),
-      read('chromium-xtension/src/chrome-host.ts'),
       read('website-app/src/web-file-mode.ts'),
       tauri,
     ]) expect(host).toMatch(/workspaceFilesChanged|emit_workspace_files_changed_scoped/);
@@ -36,7 +34,7 @@ describe('lazy workspace loading parity', () => {
       read('electron/workspace/scanner.js'),
       read('tauri/src/workspace/scanner.rs'),
       read('vscode/src/core/scanner.ts'),
-      read('chromium-xtension/src/scanner.ts'),
+      read('website-app/src/scanner.ts'),
     ]) {
       expect(source).toMatch(/progress|report_progress|reportProgress|onProgress/);
       expect(source).toMatch(/onFile|report_file|reportFile/);

@@ -238,6 +238,10 @@ export interface RefreshMessage {
   readonly command: 'refresh';
 }
 
+export interface ReloadWebviewMessage {
+  readonly command: 'reloadWebview';
+}
+
 export interface SearchPreviewRequestMessage {
   readonly command: 'loadSearchPreview';
   readonly requestId: string;
@@ -297,12 +301,10 @@ export interface UpdateAppearanceMessage {
     | 'vercel'
     | 'tokyo-night'
     | 'neon-voltage'
+    | 'cyberpunk'
     | 'raw-grid'
     | 'pet-white-shiba'
-    | 'pet-k-ink'
-    | 'pet-cat'
-    | 'pet-hamster'
-    | 'pet-corgi';
+    | 'pet-k-ink';
 }
 
 
@@ -353,6 +355,7 @@ export type WebviewMessage =
   | StateHydratedMessage
   | CopyCodeMessage
   | RefreshMessage
+  | ReloadWebviewMessage
   | SearchPreviewRequestMessage
   | WorkspaceSearchMessage
   | OpenFolderMessage

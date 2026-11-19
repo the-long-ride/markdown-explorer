@@ -3,8 +3,9 @@ import { getHistoryTranslations } from '../../contexts/historyTranslations';
 import '../../styles/global/global-history-diff.css';
 import { RenderedDiffView } from './RenderedDiffView';
 import { SourceDiffView } from './SourceDiffView';
+import { SplitSourceDiffView } from './SplitSourceDiffView';
 
-export type DocumentDiffMode = 'source' | 'rendered';
+export type DocumentDiffMode = 'source' | 'split' | 'rendered';
 interface DocumentDiffViewProps {
   leftSource: string; rightSource: string; leftLabel?: string; rightLabel?: string; language?: string;
   defaultMode?: DocumentDiffMode; onReturnToCurrent?: () => void;
@@ -18,13 +19,16 @@ export function DocumentDiffView({ leftSource, rightSource, leftLabel, rightLabe
       <header className="document-diff-view__toolbar">
         <div role="group" aria-label={t.diffMode}>
           <button type="button" className={`btn${mode === 'source' ? ' is-active' : ''}`} aria-pressed={mode === 'source'} onClick={() => setMode('source')}>{t.sourceDiff}</button>
+          <button type="button" className={`btn${mode === 'split' ? ' is-active' : ''}`} aria-pressed={mode === 'split'} onClick={() => setMode('split')}>{t.splitDiff}</button>
           <button type="button" className={`btn${mode === 'rendered' ? ' is-active' : ''}`} aria-pressed={mode === 'rendered'} onClick={() => setMode('rendered')}>{t.renderedDiff}</button>
         </div>
         {onReturnToCurrent && <button type="button" className="btn" onClick={onReturnToCurrent}>{t.returnCurrent}</button>}
       </header>
       {mode === 'source'
         ? <SourceDiffView leftSource={leftSource} rightSource={rightSource} leftLabel={leftLabel} rightLabel={rightLabel} language={language} />
-        : <RenderedDiffView leftSource={leftSource} rightSource={rightSource} leftLabel={leftLabel} rightLabel={rightLabel} language={language} />}
+        : mode === 'split'
+          ? <SplitSourceDiffView leftSource={leftSource} rightSource={rightSource} leftLabel={leftLabel} rightLabel={rightLabel} language={language} />
+          : <RenderedDiffView leftSource={leftSource} rightSource={rightSource} leftLabel={leftLabel} rightLabel={rightLabel} language={language} />}
     </section>
   );
 }

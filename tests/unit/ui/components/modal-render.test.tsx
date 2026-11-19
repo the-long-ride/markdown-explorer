@@ -223,11 +223,17 @@ describe('TermsModal', () => {
     expect(screen.getByText('Terms of Service')).toBeInTheDocument();
   });
 
-  it('renders checkbox for agreement', () => {
-    render(<TermsModal isOpen={true} onAgree={() => {}} />);
+  it('renders checkbox with custom SVG icon state for agreement', () => {
+    const { container } = render(<TermsModal isOpen={true} onAgree={() => {}} />);
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox).toBeInTheDocument();
     expect(checkbox).not.toBeChecked();
+    expect(container.querySelector('.terms-checkbox-custom svg')).toBeInTheDocument();
+    expect(container.querySelector('.terms-checkbox-custom rect')).not.toBeInTheDocument();
+
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+    expect(container.querySelector('.terms-checkbox-custom rect')).toBeInTheDocument();
   });
 
   it('disables continue button when checkbox is unchecked', () => {

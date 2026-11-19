@@ -65,7 +65,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   window.removeEventListener('markdown-explorer-action-notice', onNotice);
-  delete (window as any).__webDemoBus;
+  delete (window as any).__webBus;
   window.history.pushState({}, '', '/');
 });
 
@@ -84,15 +84,15 @@ describe('Sidebar file operations', () => {
     expect(screen.queryByRole('button', { name: t.sidebar.selectMode })).toBeNull();
   });
 
-  it('enables simulated entry controls in demo mode and real entry controls in file mode', () => {
-    (window as any).__webDemoBus = new EventTarget();
-    mockState = makeState({ appRuntime: 'chrome' });
+  it('enables simulated entry controls in demo mode and real entry controls in web mode', () => {
+    (window as any).__webBus = new EventTarget();
+    mockState = makeState({ appRuntime: 'web' });
     render(<Sidebar />);
     expect(btn(t.sidebar.newFile)).toBeTruthy();
     expect(btn(t.sidebar.newFolder)).toBeTruthy();
     expect(btn(t.sidebar.selectMode)).toBeTruthy();
     cleanup();
-    window.history.pushState({}, '', '/?mode=file');
+    window.history.pushState({}, '', '/?mode=web');
     render(<Sidebar />);
     expect(btn(t.sidebar.newFile)).toBeTruthy();
   });

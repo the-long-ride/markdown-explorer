@@ -50,7 +50,7 @@ test('focus mode hides navigation chrome and exit action does not use minimize i
   assert.doesNotMatch(app, /state\.focusMode[\s\S]{0,500}<MinimizeIcon/);
 });
 
-test('Reset zoom is desktop-only and defaults to Ctrl+Alt+Z', async () => {
+test('Reset zoom is desktop-only and defaults to Ctrl+0', async () => {
   const [constants, actions, keyboard, webview, topbar, tabbar] = await Promise.all([
     read('ui/src/contexts/appStateConstants.ts'),
     read('ui/src/components/Settings/settingsActions.ts'),
@@ -59,7 +59,7 @@ test('Reset zoom is desktop-only and defaults to Ctrl+Alt+Z', async () => {
     read('ui/src/components/Topbar/Topbar.tsx'),
     read('ui/src/components/Desktop/DesktopTabBar.tsx'),
   ]);
-  assert.match(constants, /resetZoom:\s*['"]Ctrl\+Alt\+Z['"]/);
+  assert.match(constants, /resetZoom:\s*['"]Ctrl\+0['"]/);
   assert.match(actions, /id:\s*['"]resetZoom['"][^\n]*scope:\s*['"]electron['"]/);
   assert.match(keyboard, /state\.isDesktop[\s\S]*state\.keybindings\.resetZoom/);
   assert.doesNotMatch(keyboard, /e\.key\s*===\s*['"]0['"]/);
@@ -86,7 +86,7 @@ test('Electron and Tauri reset zoom and use 800px minimum width', async () => {
   assert.match(tauriSettings, /set_zoom\(1\.0\)/);
 });
 
-test('VS Code exposes system/imported Typography while Chromium/Web stay excluded', async () => {
+test('VS Code and Web expose Typography alongside Desktop', async () => {
   const [modal, prefs, effects, panel, fontBridge, types, apply, manifest] = await Promise.all([
     read('ui/src/components/Settings/SettingsModal.tsx'),
     read('ui/src/components/Settings/SettingsPreferencesPanel.tsx'),
@@ -97,7 +97,7 @@ test('VS Code exposes system/imported Typography while Chromium/Web stay exclude
     read('ui/src/desktop/fonts/applyDesktopTypography.ts'),
     read('tests/manifest/coverage-manifest.ts'),
   ]);
-  assert.match(modal, /supportsTypography\s*=\s*isDesktop\s*\|\|\s*state\.appRuntime\s*===\s*["']vscode["']/);
+  assert.match(modal, /supportsTypography\s*=\s*isDesktop\s*\|\|\s*state\.appRuntime\s*===\s*["']vscode["']\s*\|\|\s*isWeb/);
   assert.match(modal, /supportsTypography\s*\?\s*\[\{\s*id:\s*['"]typography['"]/);
   assert.match(prefs, /supportsTypography/);
   assert.match(effects, /state\.appRuntime\s*===\s*['"]vscode['"]/);

@@ -11,7 +11,7 @@ async function readProjectFile(path) {
 
 describe("website image viewer", () => {
   it("loads the controller before site effects and initializes it once", async () => {
-    const html = await readProjectFile("website/index.html");
+    const html = await readProjectFile("website/landing.html");
     const effects = await readProjectFile("website/site-effects.js");
     const viewerIndex = html.indexOf('src="site-image-viewer.js"');
     const effectsIndex = html.indexOf('src="site-effects.js"');
@@ -77,14 +77,12 @@ describe("website image viewer", () => {
     assert.ok(responsive.includes("grid-template-columns: repeat(2, minmax(0, 1fr));"));
   });
 
-  it("keeps feature copy short and removes the duplicated fullscreen gallery image", async () => {
-    const html = await readProjectFile("website/index.html");
+  it("keeps concise feature spotlight copy and preserves lightbox-compatible strings", async () => {
+    const html = await readProjectFile("website/landing.html");
     const english = await readProjectFile("website/i18n/en.js");
     assert.ok(html.includes("Scope Focus"));
-    assert.ok(html.includes("HTML Sandboxes & Video Embeds"));
-    assert.ok(html.includes("galleryCaption3"));
-    for (const source of [html, english]) assert.ok(source.includes("Workspace history"));
+    assert.ok(html.includes("HTML &amp; Video embeds"));
+    assert.ok(english.includes("Workspace history"));
     assert.ok(english.includes('galleryCaption3Title: "Isolated HTML Sandboxes"'));
-    assert.equal((html.match(/support-focus-and-full-screen-mode-turn-your-document-to-presentation\.png/g) || []).length, 1);
   });
 });

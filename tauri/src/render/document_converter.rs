@@ -1,9 +1,11 @@
 use parking_lot::Mutex;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
+
+const MAX_CONVERTER_CACHE_ENTRIES: usize = 256;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DocumentKind {
@@ -47,6 +49,7 @@ struct CacheEntry {
 #[derive(Clone)]
 pub struct DocumentConverter {
     cache: Arc<Mutex<HashMap<String, CacheEntry>>>,
+    cache_order: Arc<Mutex<VecDeque<String>>>,
 }
 
 fn get_extension(file_path: &str) -> String {
@@ -109,6 +112,30 @@ impl DocumentConverter {
     pub fn new() -> Self {
         Self {
             cache: Arc::new(Mutex::new(HashMap::new())),
+            cache_order: Arc::new(Mutex::new(VecDeque::new())),
+        }
+    }
+
+    fn touch_cache_entry(&self, key: &str) {
+        let evicted_keys = {
+            let mut order = self.cache_order.lock();
+            if let Some(pos) = order.iter().position(|existing| existing == key) {
+                order.remove(pos);
+            }
+            order.push_back(key.to_string());
+            let mut evicted = Vec::new();
+            while order.len() > MAX_CONVERTER_CACHE_ENTRIES {
+                if let Some(oldest) = order.pop_front() {
+                    evicted.push(oldest);
+                }
+            }
+            evicted
+        };
+        if !evicted_keys.is_empty() {
+            let mut cache = self.cache.lock();
+            for evicted in evicted_keys {
+                cache.remove(&evicted);
+            }
         }
     }
 
@@ -206,11 +233,11 @@ impl DocumentConverter {
                     .unwrap_or(0);
                 let size = metadata.len();
 
-                {
+                let cached_hit = {
                     let cache = self.cache.lock();
-                    if let Some(entry) = cache.get(file_path) {
+                    cache.get(file_path).and_then(|entry| {
                         if entry.mtime_ms == mtime_ms && entry.size == size {
-                            return ReadMarkdownResult {
+                            Some(ReadMarkdownResult {
                                 markdown: entry.markdown.clone(),
                                 preview_info: Some(DocumentPreviewInfo {
                                     kind: "converted".to_string(),
@@ -224,9 +251,15 @@ impl DocumentConverter {
                                             .to_string(),
                                     ),
                                 }),
-                            };
+                            })
+                        } else {
+                            None
                         }
-                    }
+                    })
+                };
+                if let Some(hit) = cached_hit {
+                    self.touch_cache_entry(file_path);
+                    return hit;
                 }
 
                 let started = std::time::Instant::now();
@@ -255,6 +288,7 @@ impl DocumentConverter {
                                 },
                             );
                         }
+                        self.touch_cache_entry(file_path);
                         ReadMarkdownResult {
                             markdown,
                             preview_info: Some(DocumentPreviewInfo {
@@ -548,5 +582,28 @@ mod tests {
         let result = conv.read_markdown("/nonexistent/file.txt", false);
         assert!(result.markdown.contains("could not convert"));
         assert!(result.preview_info.is_some());
+    }
+
+    #[test]
+    fn converter_cache_evicts_oldest_when_exceeding_max_entries() {
+        let conv = DocumentConverter::new();
+        for idx in 0..=MAX_CONVERTER_CACHE_ENTRIES {
+            let key = format!("/tmp/doc-{idx}.pdf");
+            conv.cache.lock().insert(
+                key.clone(),
+                CacheEntry {
+                    mtime_ms: idx as u128,
+                    size: 10,
+                    markdown: format!("# {idx}"),
+                    duration_ms: 1,
+                    quality: crate::render::native_document_converter::ConversionQuality::BestEffortLegacy,
+                },
+            );
+            conv.touch_cache_entry(&key);
+        }
+        let cache = conv.cache.lock();
+        assert_eq!(cache.len(), MAX_CONVERTER_CACHE_ENTRIES);
+        assert!(!cache.contains_key("/tmp/doc-0.pdf"));
+        assert!(cache.contains_key(&format!("/tmp/doc-{MAX_CONVERTER_CACHE_ENTRIES}.pdf")));
     }
 }

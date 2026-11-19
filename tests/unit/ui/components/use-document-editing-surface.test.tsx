@@ -78,7 +78,7 @@ describe('useDocumentEditingSurface', () => {
     expect(result.current.inlineEditor).not.toBeNull();
 
     render(<>{result.current.inlineEditor}</>);
-    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const textarea = (document.querySelector('textarea.markdown-inline-editor__source') ?? screen.getAllByRole('textbox').find((el) => el.tagName === 'TEXTAREA')) as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: 'Alpha edited' } });
     fireEvent.keyDown(textarea, { key: 's', ctrlKey: true });
 

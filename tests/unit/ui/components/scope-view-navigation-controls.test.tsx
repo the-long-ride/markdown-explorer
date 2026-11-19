@@ -53,18 +53,20 @@ describe('ScopeViewModal navigation controls', () => {
   });
 
   it('shows configured history shortcuts and Escape in Previous, Next, and Close tooltips', async () => {
-    const { container } = render(<ScopeViewModal initialFile={target} files={[target]} onClose={() => {}} />);
+    const { baseElement } = render(<ScopeViewModal initialFile={target} files={[target]} onClose={() => {}} />);
     await screen.findByText('Readme');
 
     const previous = screen.getByRole('button', { name: 'Previous scope' });
     const next = screen.getByRole('button', { name: 'Next scope' });
     const openFile = screen.getByRole('button', { name: 'Open file' });
+    const tocToggle = screen.getByRole('button', { name: 'Toggle table of contents' });
     const close = screen.getByRole('button', { name: 'Close scope view' });
 
     expect(previous.querySelector('.tooltip-text')?.textContent).toContain('Alt');
     expect(next.querySelector('.tooltip-text')?.textContent).toContain('Alt');
     expect(openFile.querySelector('.tooltip-text')?.textContent).toBe('Open file');
+    expect(tocToggle.querySelector('.tooltip-text')?.textContent).toBe('Toggle table of contents');
     expect(close.querySelector('.tooltip-text')?.textContent).toContain('Esc');
-    expect(container.querySelectorAll('.tooltip-text')).toHaveLength(4);
+    expect(baseElement.querySelectorAll('.tooltip-text')).toHaveLength(5);
   });
 });

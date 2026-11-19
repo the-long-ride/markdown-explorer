@@ -23,7 +23,7 @@ export function RepositorySnapshotContent() {
       <header className="repository-snapshot-content__header">
         <div className="repository-snapshot-content__identity">
           <span className="repository-snapshot-content__readonly">{t.snapshotReadOnly}</span>
-          {snapshot && <strong title={snapshot.path}>{snapshot.path}</strong>}
+          {snapshot && <strong data-hover-tooltip={snapshot.path}>{snapshot.path}</strong>}
           <code>{revisionOid.slice(0, 7)}</code>
         </div>
         <button type="button" className="btn" onClick={returnToHead}>{t.backToHead}</button>

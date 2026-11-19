@@ -37,7 +37,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: "Don't show this again",
     close: 'Close',
     homeSupportTitle: 'Support Markdown Explorer',
-    homeSupportMessage: 'Enjoying Markdown Explorer? A star or a small donation keeps it growing.',
+    homeSupportMessage: 'Love using Markdown Explorer? Support development with a GitHub star or donation.',
     homeSupportButton: 'Star on GitHub',
   },
   vi: {
@@ -54,7 +54,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: 'Không hiển thị lại',
     close: 'Đóng',
     homeSupportTitle: 'Ủng hộ Markdown Explorer',
-    homeSupportMessage: 'Thích Markdown Explorer? Một ngôi sao hoặc một khoản ủng hộ nhỏ sẽ giúp dự án tiếp tục phát triển.',
+    homeSupportMessage: 'Yêu thích Markdown Explorer? Hãy ủng hộ dự án bằng một ngôi sao GitHub hoặc quyên góp.',
     homeSupportButton: 'Tặng sao trên GitHub',
   },
   fr: {
@@ -71,7 +71,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: 'Ne plus afficher',
     close: 'Fermer',
     homeSupportTitle: 'Soutenez Markdown Explorer',
-    homeSupportMessage: 'Vous aimez Markdown Explorer ? Une étoile ou un petit don l’aide à grandir.',
+    homeSupportMessage: 'Vous aimez Markdown Explorer ? Soutenez son développement avec une étoile GitHub ou un don.',
     homeSupportButton: 'Étoiler sur GitHub',
   },
   es: {
@@ -88,7 +88,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: 'No volver a mostrar',
     close: 'Cerrar',
     homeSupportTitle: 'Apoya Markdown Explorer',
-    homeSupportMessage: '¿Disfrutas de Markdown Explorer? Una estrella o una pequeña donación lo ayudan a crecer.',
+    homeSupportMessage: '¿Te encanta Markdown Explorer? Apoya el proyecto con una estrella en GitHub o una donación.',
     homeSupportButton: 'Dar estrella en GitHub',
   },
   zh: {
@@ -105,7 +105,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: '不再显示',
     close: '关闭',
     homeSupportTitle: '支持 Markdown Explorer',
-    homeSupportMessage: '喜欢 Markdown Explorer 吗？一颗星或一笔小额赞助都能帮助它持续成长。',
+    homeSupportMessage: '喜欢 Markdown Explorer 吗？欢迎通过 GitHub Star 或赞助支持我们持续更新。',
     homeSupportButton: '在 GitHub 上点星',
   },
   no: {
@@ -122,7 +122,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: 'Ikke vis dette igjen',
     close: 'Lukk',
     homeSupportTitle: 'Støtt Markdown Explorer',
-    homeSupportMessage: 'Liker du Markdown Explorer? En stjerne eller en liten donasjon hjelper prosjektet å vokse.',
+    homeSupportMessage: 'Liker du Markdown Explorer? Støtt utviklingen med en GitHub-stjerne eller donasjon.',
     homeSupportButton: 'Gi stjerne på GitHub',
   },
   ja: {
@@ -139,7 +139,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: '今後このメッセージを表示しない',
     close: '閉じる',
     homeSupportTitle: 'Markdown Explorer を応援',
-    homeSupportMessage: 'Markdown Explorer をご愛用いただいていますか？スターや少額の寄付が成長の力になります。',
+    homeSupportMessage: 'Markdown Explorer を気に入っていただけましたか？GitHub でのスターや寄付で開発を応援してください。',
     homeSupportButton: 'GitHub でスターを付ける',
   },
   ko: {
@@ -156,7 +156,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: '다시 표시하지 않음',
     close: '닫기',
     homeSupportTitle: 'Markdown Explorer 응원하기',
-    homeSupportMessage: 'Markdown Explorer가 마음에 드시나요? 스타나 작은 후원이 프로젝트 성장에 힘이 됩니다.',
+    homeSupportMessage: 'Markdown Explorer가 마음에 드시나요? GitHub 스타나 후원으로 개발을 응원해 주세요.',
     homeSupportButton: 'GitHub에서 스타 주기',
   },
   ru: {
@@ -173,7 +173,7 @@ export const SUPPORT_PROMPT_TRANSLATIONS: Record<AppLanguage, SupportPromptTrans
     dontShowAgain: 'Больше не показывать',
     close: 'Закрыть',
     homeSupportTitle: 'Поддержите Markdown Explorer',
-    homeSupportMessage: 'Нравится Markdown Explorer? Звезда или небольшое пожертвование помогают проекту расти.',
+    homeSupportMessage: 'Нравится Markdown Explorer? Поддержите разработку звездой на GitHub или пожертвованием.',
     homeSupportButton: 'Поставить звезду на GitHub',
   },
 };

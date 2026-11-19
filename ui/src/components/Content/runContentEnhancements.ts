@@ -1,5 +1,6 @@
 import { enhanceRawHtmlImageRows } from '../../markdown/rawHtmlImageRows';
 import { getChart, getHighlightJs, getKatex, getMermaid } from '../../lib/renderLibs';
+import { enhanceColorSwatches } from './enhancements/enhanceColorSwatches';
 import { syncHtmlPreviewTheme } from './enhancements/htmlPreviewTheme';
 import { enhanceMath } from './enhancements/mathRendering';
 import { enhanceMermaidLazily } from './enhancements/mermaidLazyRendering';
@@ -52,5 +53,6 @@ export async function runContentEnhancements(options: ContentEnhancementOptions)
   ], isCancelled);
 
   if (isCancelled()) return;
+  enhanceColorSwatches(body);
   syncHtmlPreviewTheme(body, isDark);
 }

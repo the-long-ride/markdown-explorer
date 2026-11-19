@@ -128,10 +128,14 @@ export function applyPreviewActionTranslations(root: ParentNode, labels: Preview
     const key = element.dataset.i18nKey as keyof PreviewActionLabels | undefined;
     if (!key || typeof labels[key] !== 'string') return;
     const label = labels[key];
-    element.setAttribute('title', label);
+    element.removeAttribute('title');
     element.setAttribute('aria-label', label);
     const tooltip = element.querySelector<HTMLElement>('.tooltip-text');
-    if (tooltip) tooltip.textContent = label;
+    if (tooltip) {
+      tooltip.textContent = label;
+    } else if (element.hasAttribute('data-hover-tooltip')) {
+      element.setAttribute('data-hover-tooltip', label);
+    }
   });
   root.querySelectorAll<HTMLElement>('[data-i18n-content-key]').forEach((element) => {
     const key = element.dataset.i18nContentKey as keyof PreviewActionLabels | undefined;
@@ -173,7 +177,7 @@ export function openHtmlPreviewInBrowser({
   title = 'HTML preview',
 }: OpenHtmlPreviewOptions): void {
   const completeDocument = prepareStandaloneHtmlPreview(documentHtml, currentFile);
-  if (runtime !== 'chrome') {
+  if (runtime !== 'web') {
     try {
       bridge.postMessage({ command: 'openHtmlPreview', documentHtml: completeDocument });
     } catch {

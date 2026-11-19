@@ -7,9 +7,7 @@ const runtimeInclude = [
   'vscode/scripts/**/*.js',
   'ui/src/**/*.{ts,tsx,js}',
   'ui/vite.config.ts',
-  'chromium-xtension/src/**/*.{ts,tsx}',
-  'chromium-xtension/popup.js',
-  'chromium-xtension/vite.config.ts',
+  'website-app/src/**/*.{ts,tsx}',
 ];
 
 const runtimeExclude = [
@@ -34,8 +32,6 @@ const runtimeExclude = [
   'electron/main.js',
   'ui/src/main.tsx',
   'ui/src/AppShell.tsx',
-  'chromium-xtension/popup.js',
-  'chromium-xtension/src/main-chrome.tsx',
 
   // ── Build glue / one-shot scripts ────────────────────────────────────────
   'vscode/scripts/bundle-markdown-them.js',
@@ -67,10 +63,10 @@ export default defineConfig({
       { extends: true, test: { name: 'electron',    environment: 'node',  include: ['tests/unit/electron/**/*.test.ts'],       setupFiles: ['tests/setup/node.ts'] } },
       { extends: true, test: { name: 'vscode',     environment: 'node',  include: ['tests/unit/vscode/**/*.test.ts'],        setupFiles: ['tests/setup/node.ts'] } },
       { extends: true, test: { name: 'ui',         environment: 'jsdom', include: ['tests/unit/ui/**/*.test.{ts,tsx}'],      setupFiles: ['tests/setup/dom.ts'] } },
-      { extends: true, test: { name: 'chromium',   environment: 'jsdom', include: ['tests/unit/chromium/**/*.test.{ts,tsx}'], setupFiles: ['tests/setup/chromium.ts'] } },
       { extends: true, test: { name: 'contracts',  environment: 'node',  include: ['tests/contracts/**/*.test.ts'],          setupFiles: ['tests/setup/node.ts'] } },
       { extends: true, test: { name: 'manifest',    environment: 'node',  include: ['tests/manifest/**/*.test.ts'],           setupFiles: ['tests/setup/node.ts'] } },
       { extends: true, test: { name: 'build',       environment: 'node',  include: ['tests/unit/build/**/*.test.ts'],         setupFiles: ['tests/setup/node.ts'] } },
+      { extends: true, test: { name: 'website',     environment: 'jsdom', include: ['tests/unit/website/**/*.test.{ts,tsx}'], setupFiles: ['tests/setup/website.ts'] } },
     ],
     coverage: {
       provider: 'v8',

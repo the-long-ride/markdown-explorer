@@ -173,6 +173,26 @@ describe('MarkdownDocsPanel', () => {
       expect(ackMsg).toBeDefined();
     });
 
+    test('normalizes removed pet themeStyle settings to raw-grid on readyAck', async () => {
+      for (const removed of ['pet-cat', 'pet-hamster', 'pet-corgi']) {
+        setupVscodeMock();
+        const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;
+        MarkdownDocsPanel.createOrShow(context, null);
+
+        const msgHandler = mockOnDidReceiveMessage.mock.calls[0][0];
+        mockConfigGet = vi.fn((key: string) => {
+          if (key === 'theme') return 'dark';
+          if (key === 'themeStyle') return removed;
+          if (key === 'defaultExpanded') return true;
+          return undefined;
+        });
+        await msgHandler({ command: 'ready', documentConversionEnabled: true });
+
+        const ackMsg = mockPostMessage.mock.calls.find((call: any) => call[0].command === 'readyAck');
+        expect(ackMsg?.[0].themeStyle).toBe('raw-grid');
+      }
+    });
+
     test('handles navigate message', async () => {
       setupVscodeMock();
       const context = { extensionPath: '/fake/ext', extension: { packageJSON: { version: '1.0' } } } as any;

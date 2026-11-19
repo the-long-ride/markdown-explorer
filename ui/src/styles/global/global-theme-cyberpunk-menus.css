@@ -1,0 +1,147 @@
+/* =============================================================================
+   global-theme-cyberpunk-menus.css
+   Cyberpunk 6-sided cut-corner shape & hover framing for content right-click menus
+   ============================================================================= */
+
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-link-context-menu {
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--deco-cyan);
+  --cp-cut-top: 10px;
+  --cp-cut-bottom: 8px;
+  padding: 6px;
+  border: 0 !important;
+  outline: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip-path: polygon(0 0, calc(100% - var(--cp-cut-top)) 0, 100% var(--cp-cut-top), 100% 100%, var(--cp-cut-bottom) 100%, 0 calc(100% - var(--cp-cut-bottom)));
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.52)) drop-shadow(0 0 6px rgba(0, 240, 255, 0.14));
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] .mdn-link-context-menu {
+  --cp-bd: var(--deco-rose);
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.18)) drop-shadow(0 0 6px rgba(230, 0, 76, 0.12));
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"][data-theme-style="cyberpunk"] .mdn-link-context-menu {
+    --cp-bd: var(--deco-rose);
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.18)) drop-shadow(0 0 6px rgba(230, 0, 76, 0.12));
+  }
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-link-context-menu button {
+  --cp-cut-top: 7px;
+  --cp-cut-bottom: 5px;
+  margin: 1px 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  clip-path: polygon(0 0, calc(100% - var(--cp-cut-top)) 0, 100% var(--cp-cut-top), 100% 100%, var(--cp-cut-bottom) 100%, 0 calc(100% - var(--cp-cut-bottom)));
+  transition: color 120ms;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-link-context-menu button:is(:hover, :focus-visible):not(:disabled) {
+  --cp-bg: var(--bg-h);
+  --cp-bd: var(--accent);
+  color: var(--tx) !important;
+  background:
+    linear-gradient(90deg, var(--cp-bd), var(--cp-bd)) top left / calc(100% - var(--cp-cut-top)) 1px no-repeat,
+    linear-gradient(270deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / 100% calc(100% - var(--cp-cut-top)) no-repeat,
+    linear-gradient(0deg, var(--cp-bd) 0 1px, transparent 1px) bottom right / calc(100% - var(--cp-cut-bottom)) 100% no-repeat,
+    linear-gradient(180deg, var(--cp-bd), var(--cp-bd)) top left / 1px calc(100% - var(--cp-cut-bottom)) no-repeat,
+    linear-gradient(225deg, transparent calc(var(--cp-cut-top) * 0.7071 - 0.15px), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071), var(--cp-bd) calc(var(--cp-cut-top) * 0.7071 + 0.7071px), var(--cp-bg) calc(var(--cp-cut-top) * 0.7071 + 0.86px), var(--cp-bg) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.86px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071 - 0.7071px), var(--cp-bd) calc(100% - var(--cp-cut-bottom) * 0.7071), transparent calc(100% - var(--cp-cut-bottom) * 0.7071 + 0.15px)) 0 0 / 100% 100% no-repeat !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .mdn-link-context-menu button:is(:hover, :focus-visible):not(:disabled) svg {
+  color: var(--deco-cyan);
+}
+
+:root[data-theme="light"][data-theme-style="cyberpunk"] .mdn-link-context-menu button:is(:hover, :focus-visible):not(:disabled) svg {
+  color: var(--deco-rose);
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"][data-theme-style="cyberpunk"] .mdn-link-context-menu button:is(:hover, :focus-visible):not(:disabled) svg {
+    color: var(--deco-rose);
+  }
+}
+
+/* File History modal header buttons & segmented controls */
+:root[data-theme][data-theme-style="cyberpunk"] .file-history__header {
+  padding-right: 18px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .file-history__segmented {
+  gap: 4px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .file-history__segmented .btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  --cp-cut-top: 6px;
+  --cp-cut-bottom: 5px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] :is(.file-history__segmented .btn, .file-history__compare)::before {
+  display: none !important;
+  content: none !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .file-history__compare {
+  height: 28px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  --cp-cut-top: 7px;
+  --cp-cut-bottom: 5px;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .file-history__compare:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .file-history__close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  opacity: 1;
+  font-size: 16px;
+  --cp-bg: var(--bg-e);
+  --cp-bd: var(--bd-x);
+  --cp-cut-top: 6px;
+  --cp-cut-bottom: 5px;
+  color: var(--tx2) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .file-history__close:hover {
+  --cp-bg: var(--deco-rose-dim);
+  --cp-bd: var(--deco-rose);
+  color: var(--tx) !important;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .document-history-panel__select {
+  border-radius: 0;
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .document-history-panel__select:focus-visible {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+:root[data-theme][data-theme-style="cyberpunk"] .tab-context-menu__item-shortcut {
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px !important;
+  font-size: 9.5px;
+  --cp-cut-top: 3px;
+  --cp-cut-bottom: 2px;
+}

@@ -93,22 +93,27 @@ impl Dispatcher {
                 .and_then(Value::as_str)
                 .unwrap_or("");
             if !tab_id.is_empty() && !ws_path.is_empty() {
-                let (flat, tree) = if Path::new(ws_path).exists() {
-                    let doc_conv = self.state.inner.read().document_conversion_enabled;
+                let doc_conv = self.state.inner.read().document_conversion_enabled;
+                let ws_path_buf = PathBuf::from(ws_path);
+                let idx = self.ensure_search_index();
+                let (flat, tree) = tauri::async_runtime::spawn_blocking(move || {
+                    if !ws_path_buf.exists() {
+                        return (json!([]), Value::Null);
+                    }
                     scan(
-                        Path::new(ws_path),
+                        &ws_path_buf,
                         ScanOptions {
                             document_conversion_enabled: doc_conv,
                         },
                     )
                     .map(|result| {
-                        self.ensure_search_index().prime(&result.flat);
+                        idx.prime(&result.flat);
                         (json!(result.flat), json!(result.tree))
                     })
                     .unwrap_or((json!([]), Value::Null))
-                } else {
-                    (json!([]), Value::Null)
-                };
+                })
+                .await
+                .unwrap_or((json!([]), Value::Null));
                 host_message::emit_workspace_search_index_loaded(
                     &self.app, tab_id, ws_path, flat, tree,
                 );

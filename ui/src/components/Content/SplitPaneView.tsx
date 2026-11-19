@@ -30,6 +30,8 @@ export interface PaneViewProps {
   language: string;
   documentRenderRevision: number;
   editingEnabled: boolean;
+  editShortcut?: string;
+  plainShortcut?: string;
   clearHistoryView: (target?: HistoryViewTarget) => void;
   onModeChange: (paneId: PaneId, mode: DocumentViewMode) => void;
   onSourceChange: (filePath: string, source: string) => void;
@@ -116,6 +118,8 @@ function panePropsEqual(left: PaneViewProps, right: PaneViewProps): boolean {
   return left.paneId === right.paneId
     && left.language === right.language
     && left.editingEnabled === right.editingEnabled
+    && left.editShortcut === right.editShortcut
+    && left.plainShortcut === right.plainShortcut
     && left.documentRenderRevision === right.documentRenderRevision
     && left.activeTabPath === right.activeTabPath
     && left.showTabs === right.showTabs
@@ -138,6 +142,8 @@ function SplitPaneViewImpl({
   language,
   documentRenderRevision,
   editingEnabled,
+  editShortcut,
+  plainShortcut,
   clearHistoryView,
   onModeChange,
   onSourceChange,
@@ -266,7 +272,7 @@ function SplitPaneViewImpl({
             onOpenContextMenu={onTabContextMenu}
           />
         ) : (
-          <span className="split-document-pane__title" title={projection.filePath}>{projection.title || projection.fileName}</span>
+          <span className="split-document-pane__title" data-hover-tooltip={projection.filePath} data-hover-tooltip-pos="bottom">{projection.title || projection.fileName}</span>
         )}
         {isMarkdownDocument && modes.length > 0 && (
           <div className="split-document-pane__modes" role="group" aria-label={`${paneLabel}: ${editorT.modeGroup}`}>
@@ -278,6 +284,15 @@ function SplitPaneViewImpl({
                 aria-label={`${paneLabel} ${modeLabels[mode]}`}
                 aria-pressed={projection.mode === mode}
                 tooltip={modeLabels[mode]}
+                shortcut={
+                  mode === 'inline-edit'
+                    ? editShortcut
+                    : mode === 'plain'
+                      ? plainShortcut
+                      : mode === 'rendered'
+                        ? (projection.mode === 'plain' ? plainShortcut : editShortcut)
+                        : undefined
+                }
                 portalTooltip
                 icon={modeIcons[mode]}
                 onClick={() => {

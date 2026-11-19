@@ -182,4 +182,31 @@ describe('useInlineMarkdownEditing', () => {
       body.remove();
     });
   });
+
+  it('installs an inline edit trigger on frontmatter properties cards when source range is present', () => {
+    const body = document.createElement('div');
+    const source = '---\ntype: regex\n---\n\n# Body';
+    body.innerHTML = `<details class="mdn-frontmatter" open data-mdn-source-start="0" data-mdn-source-end="19"><summary class="mdn-frontmatter-summary"><span>Properties</span></summary><div class="mdn-frontmatter-grid"></div></details>`;
+    document.body.appendChild(body);
+    const bodyRef = { current: body };
+    const onSourceChange = vi.fn();
+
+    const { result } = renderHook(() => useInlineMarkdownEditing({
+      enabled: true,
+      bodyRef,
+      source,
+      renderVersion: 1,
+      editLabel: 'Edit Markdown block',
+      onSourceChange,
+    }));
+
+    const fm = body.querySelector('.mdn-frontmatter') as HTMLElement;
+    const trigger = fm.querySelector(':scope > .mdn-inline-edit-trigger') as HTMLButtonElement | null;
+    expect(trigger).not.toBeNull();
+    expect(fm).toHaveClass('is-inline-editable');
+
+    act(() => trigger!.click());
+    expect(result.current.activeTarget).toBe(fm);
+    body.remove();
+  });
 });

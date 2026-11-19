@@ -50,7 +50,7 @@ describe('portable export interactions', () => {
           </div>
         </div>
         <table id="tbl" class="mdn-table">
-          <thead><tr><th class="mdn-th" data-col="1" onclick="Table.sort('tbl',1)"><span id="sort-target">Value</span></th></tr></thead>
+          <thead><tr><th class="mdn-th" data-col="1"><span class="mdn-sort-icon" id="sort-target" onclick="Table.sort('tbl',1)">Value</span></th></tr></thead>
           <tbody><tr><td>1</td></tr></tbody>
         </table>
       </div>`;

@@ -12,9 +12,6 @@ on:
       - 'vscode/scripts/**'
       - 'ui/src/**'
       - 'ui/vite.config.ts'
-      - 'chromium-xtension/src/**'
-      - 'chromium-xtension/popup.js'
-      - 'chromium-xtension/vite.config.ts'
       - 'website-app/src/**'
       - 'website-app/package.json'
       - 'website-app/tsconfig.json'
@@ -35,9 +32,6 @@ on:
       - 'vscode/scripts/**'
       - 'ui/src/**'
       - 'ui/vite.config.ts'
-      - 'chromium-xtension/src/**'
-      - 'chromium-xtension/popup.js'
-      - 'chromium-xtension/vite.config.ts'
       - 'website-app/src/**'
       - 'website-app/package.json'
       - 'website-app/tsconfig.json'
@@ -113,16 +107,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Test VS Code host
         run: pnpm run test:vscode
-      - name: Test Chromium host
-        run: pnpm run test:chromium
+      - name: Test Web host
+        run: pnpm run test:website
       - name: Build shared UI
         run: pnpm run build:ui
       - name: Build Electron UI variant
         run: pnpm run build:ui:electron
       - name: Build VS Code host
         run: pnpm run build:vscode
-      - name: Build Chromium host
-        run: pnpm run build:chromium
       - name: Typecheck Web app
         run: pnpm --dir website-app typecheck
       - name: Build Web app

@@ -3,6 +3,8 @@ import { INSIGHTS_TRANSLATIONS, type InsightsTranslations } from '../../contexts
 import type { AnalyzedDocument } from '../../insights/analyzeDocument';
 import { findDuplicateGroups, normalizeDuplicateTokens, type DuplicateGroup } from '../../insights/duplicates';
 import { TooltipButton } from '../shared/TooltipButton';
+import { CheckIcon, CopyIcon } from '../shared/icons';
+import { buildDuplicatesAiPrompt, copyTextToClipboard } from '../../insights/aiPrompts';
 import { EyeIcon, EyeOffIcon, RestoreFindingIcon, SuppressFindingIcon } from './InsightsIcons';
 
 export interface DuplicatesViewProps {
@@ -26,16 +28,23 @@ function analyzedGroups(documents: readonly AnalyzedDocument[], threshold: numbe
     if (unique.length > 1) result.push({ key: `exact:${fingerprint}`, kind: 'exact', paths: unique, fingerprint });
   }
 
-  const sections = new Map<string, string[]>();
-  for (const document of documents) for (const section of document.sections) {
-    if (section.text.length < 100 || normalizeDuplicateTokens(section.text).length < 20) continue;
-    const paths = sections.get(section.fingerprint) ?? [];
-    paths.push(document.path);
-    sections.set(section.fingerprint, paths);
+  const sections = new Map<string, { paths: string[]; sampleText: string }>();
+  for (const document of documents) {
+    for (const section of document.sections) {
+      if (section.text.length < 100) continue;
+      const existing = sections.get(section.fingerprint);
+      if (existing) {
+        existing.paths.push(document.path);
+      } else {
+        sections.set(section.fingerprint, { paths: [document.path], sampleText: section.text });
+      }
+    }
   }
-  for (const [fingerprint, paths] of sections) {
-    const unique = [...new Set(paths)].sort();
-    if (unique.length > 1) result.push({ key: `section:${fingerprint}`, kind: 'section', paths: unique, fingerprint });
+  for (const [fingerprint, entry] of sections) {
+    const unique = [...new Set(entry.paths)].sort();
+    if (unique.length > 1 && normalizeDuplicateTokens(entry.sampleText).length >= 20) {
+      result.push({ key: `section:${fingerprint}`, kind: 'section', paths: unique, fingerprint });
+    }
   }
 
   const exactPairs = new Set<string>();
@@ -66,7 +75,19 @@ export function DuplicatesView({ documents, labels = INSIGHTS_TRANSLATIONS.en, t
   const [showSuppressed, setShowSuppressed] = useState(false);
   const controlled = suppressions !== undefined;
   const suppressed = useMemo(() => controlled ? new Set(suppressions) : localSuppressed, [controlled, localSuppressed, suppressions]);
-  const visible = groups.filter(group => showSuppressed || !suppressed.has(group.key));
+  const visible = useMemo(
+    () => groups.filter(group => showSuppressed || !suppressed.has(group.key)),
+    [groups, showSuppressed, suppressed],
+  );
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const handleCopyAiPrompt = async () => {
+    const prompt = buildDuplicatesAiPrompt(visible, labels);
+    const ok = await copyTextToClipboard(prompt);
+    if (ok) {
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    }
+  };
 
   const updateSuppressed = (next: Set<string>) => {
     const values = [...next].sort();
@@ -78,6 +99,16 @@ export function DuplicatesView({ documents, labels = INSIGHTS_TRANSLATIONS.en, t
     <div className="insights-duplicates">
       <div className="insights-view-summary">
         <span>{format(labels.nearDuplicateThreshold, 'percent', Math.round(threshold * 100))}</span>
+        <TooltipButton
+          type="button"
+          className="btn btn--icon btn--sm"
+          tooltip={copiedPrompt ? 'Copied AI prompt!' : 'Copy prompt for AI agent to review and fix duplicates'}
+          aria-label={copiedPrompt ? 'Copied AI prompt!' : 'Copy prompt for AI agent to review and fix duplicates'}
+          tooltipPos="below"
+          portalTooltip
+          onClick={handleCopyAiPrompt}
+          icon={copiedPrompt ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+        />
         {suppressed.size > 0 && (
           <TooltipButton
             type="button"
@@ -110,7 +141,7 @@ export function DuplicatesView({ documents, labels = INSIGHTS_TRANSLATIONS.en, t
                     className="insights-icon-btn"
                     tooltip={labels.restoreGroup}
                     aria-label={labels.restoreGroup}
-                    tooltipPos="above"
+                    tooltipPos="below"
                     tooltipAlign="right"
                     portalTooltip
                     onClick={() => { const next = new Set(suppressed); next.delete(group.key); updateSuppressed(next); }}
@@ -122,7 +153,7 @@ export function DuplicatesView({ documents, labels = INSIGHTS_TRANSLATIONS.en, t
                     className="insights-icon-btn"
                     tooltip={labels.suppress}
                     aria-label={`${labels.suppress} ${labels.duplicates}`}
-                    tooltipPos="above"
+                    tooltipPos="below"
                     tooltipAlign="right"
                     portalTooltip
                     onClick={() => { const next = new Set(suppressed); next.add(group.key); updateSuppressed(next); }}
@@ -133,7 +164,7 @@ export function DuplicatesView({ documents, labels = INSIGHTS_TRANSLATIONS.en, t
             </li>
           );
         })}
-      </ul>
-    </div>
+      </ul >
+    </div >
   );
 }

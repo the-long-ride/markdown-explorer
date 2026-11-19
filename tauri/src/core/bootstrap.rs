@@ -141,7 +141,10 @@ pub fn boot() {
                             state_for_page_load.close_guard.lock().clear_pending();
                             // The reloaded UI sends a fresh `ready`; without this reset the
                             // host ignores it as a duplicate and the UI loads forever.
-                            state_for_page_load.inner.write().ready_handled = false;
+                            let mut inner = state_for_page_load.inner.write();
+                            inner.ready_handled = false;
+                            inner.workspace_operation_id = None;
+                            inner.workspace_tab_id = None;
                         }
                     })
                     .build()?;

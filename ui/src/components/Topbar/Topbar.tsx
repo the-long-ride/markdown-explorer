@@ -15,6 +15,7 @@ import { EditIcon } from '../shared/icons';
 import { DocumentHeaderActions, NavigationHeaderActions } from '../shared/HeaderActionGroups';
 import { MarkdownEditingHeaderActions } from '../shared/MarkdownEditingHeaderActions';
 import { ToolbarActionMenu } from '../shared/ToolbarActionMenu';
+import { WebDemoNavActions } from './WebDemoNavActions';
 import { supportsWorkspaceInsights } from '../../insights/runtimeCapabilities';
 import { INSIGHTS_UI_TRANSLATIONS } from '../../contexts/insightsUiTranslations';
 import logoUrl from '../../assets/logos/logo-500.png?inline';
@@ -121,6 +122,7 @@ export function Topbar({
   );
   const dirtyDocumentPaths = collectDirtyDocumentPaths(state.documentSessions ?? {});
   const guardDestructiveAction = (commit: () => void) => guardUnsavedChanges(dirtyDocumentPaths, commit);
+  const hasActiveWorkspace = Boolean(state.workspacePath || (state.workspaceName && state.fileList.length > 0) || state.currentFile);
   const handleEdit = () => {
     if (isRevisionMode || !state.currentFile) return;
     if (editingEnabled && activeDocumentSession) {
@@ -140,15 +142,15 @@ export function Topbar({
         </div>
       </div>
 
-      {(state.appRuntime === 'desktop' || state.appRuntime === 'chrome' || state.appRuntime === 'tauri') && (
+      {(state.appRuntime === 'desktop' || state.appRuntime === 'web' || state.appRuntime === 'tauri') && hasActiveWorkspace && (
         <>
           <span className="topbar__crumb-separator" aria-hidden="true">|</span>
           <TooltipButton
-            className="btn btn--icon"
+            className="topbar__action-btn topbar__close-workspace-btn btn btn--icon"
             onClick={() => guardDestructiveAction(() => {
               dispatch({
                 type: 'READY_ACK', fileList: [], tree: null, theme: state.theme, themeStyle: state.themeStyle,
-                defaultExpanded: state.defaultExpanded, workspaceName: '', recentWorkspaces: state.recentWorkspaces,
+                defaultExpanded: state.defaultExpanded, workspaceName: '', workspacePath: undefined, recentWorkspaces: state.recentWorkspaces,
               });
               bridge.postMessage({ command: 'closeWorkspace' });
             })}
@@ -173,12 +175,12 @@ export function Topbar({
             </span>
           ))}
         </div>
-        {state.relativePath && state.relativePath !== 'Welcome Page' && <span className="tooltip-text">{breakablePath}</span>}
+        {state.relativePath && state.relativePath !== 'Welcome Page' && <span className="tooltip-text"><span className="tooltip-content-wrap">{breakablePath}</span></span>}
       </div>
 
       <div className="topbar__actions">
         {!isRevisionMode && editingEnabled && activeDocumentSession && state.currentFile && (
-          <MarkdownEditingHeaderActions filePath={state.currentFile} session={activeDocumentSession} labels={editorT} saveShortcut={getEnabledShortcut(state.settings, 'saveCurrentDocument')} onModeChange={setDocumentEditMode} onSave={saveDocument} />
+          <MarkdownEditingHeaderActions filePath={state.currentFile} session={activeDocumentSession} labels={editorT} saveShortcut={getEnabledShortcut(state.settings, 'saveCurrentDocument')} editShortcut={getEnabledShortcut(state.settings, 'editCurrentDocument')} plainShortcut={getEnabledShortcut(state.settings, 'plainEditCurrentDocument')} onModeChange={setDocumentEditMode} onSave={saveDocument} />
         )}
         <DocumentHeaderActions onCollapseAll={onCollapseAll} onExpandAll={onExpandAll} onCopyFile={onCopyFile} canCopyFile={!isRevisionMode && !!state.currentFile} />
         {state.appRuntime === 'vscode' && (
@@ -186,7 +188,7 @@ export function Topbar({
         )}
         <ToolbarActionMenu
           triggerTooltip={t.topbar.moreActions}
-          homeLabel={t.topbar.home}
+          homeLabel={t.topbar.homeGetHelp || t.topbar.home}
           themeLabel={themeToggleLabel}
           editLabel={t.topbar.editLabel}
           settingsLabel={t.topbar.settings}
@@ -264,6 +266,7 @@ export function Topbar({
             </div>
           </>
         )}
+        <WebDemoNavActions />
       </div>
     </header>
   );

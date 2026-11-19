@@ -101,6 +101,17 @@ describe('translation coverage across all supported languages', () => {
       expect(EXPORT_SCOPE_TRANSLATIONS[lang].exportCenter.title).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.exportCenter.title);
       expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.dialogLabel).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.dialogLabel);
       expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.openAsScope).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.openAsScope);
+      expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.toggleToc).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.toggleToc);
+      expect(EXPORT_SCOPE_TRANSLATIONS[lang].scopeView.noHeadings).not.toBe(EXPORT_SCOPE_TRANSLATIONS.en.scopeView.noHeadings);
+      expect(TRANSLATIONS[lang].sidebar.applyScopeFocus).not.toBe(TRANSLATIONS.en.sidebar.applyScopeFocus);
+      expect(TRANSLATIONS[lang].sidebar.downloadWorkspaceZip).not.toBe(TRANSLATIONS.en.sidebar.downloadWorkspaceZip);
+      expect(TRANSLATIONS[lang].sidebar.downloadFile).not.toBe(TRANSLATIONS.en.sidebar.downloadFile);
+      expect(TRANSLATIONS[lang].sidebar.downloadFolderZip).not.toBe(TRANSLATIONS.en.sidebar.downloadFolderZip);
+      expect(TRANSLATIONS[lang].actions.openFiles).not.toBe(TRANSLATIONS.en.actions.openFiles);
+      expect(TRANSLATIONS[lang].alignIntelligent).not.toBe(TRANSLATIONS.en.alignIntelligent);
+      expect(AUDITED_UI_TRANSLATIONS[lang].rendererUi.resetColumnWidths).not.toBe(AUDITED_UI_TRANSLATIONS.en.rendererUi.resetColumnWidths);
+      expect(AUDITED_UI_TRANSLATIONS[lang].rendererUi.sort).not.toBe(AUDITED_UI_TRANSLATIONS.en.rendererUi.sort);
+      expect(AUDITED_UI_TRANSLATIONS[lang].rendererUi.alignIntelligent).not.toBe(AUDITED_UI_TRANSLATIONS.en.rendererUi.alignIntelligent);
     }
   });
 

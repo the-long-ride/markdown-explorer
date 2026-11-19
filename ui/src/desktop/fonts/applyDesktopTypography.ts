@@ -47,18 +47,20 @@ function resolveBinding(
   fallbackCss: string,
   fallback: DesktopFontBinding,
 ) {
+  const size = binding.size ?? fallback.size ?? 13;
   if (binding.source === 'default') {
-    return { css: fallbackCss, family: undefined, style: binding.style, weight: binding.weight };
+    return { css: fallbackCss, family: undefined, style: binding.style, weight: binding.weight, size };
   }
   const family = findDesktopFontFamily(binding, families);
   if (!bindingIsAvailable(binding, family)) {
-    return { css: fallbackCss, family: undefined, style: fallback.style, weight: fallback.weight };
+    return { css: fallbackCss, family: undefined, style: fallback.style, weight: fallback.weight, size };
   }
   return {
     css: `${cssString(family!.cssFamily)}, ${fallbackCss}`,
     family,
     style: binding.style,
     weight: binding.weight,
+    size,
   };
 }
 
@@ -94,12 +96,12 @@ function registerImported(doc: Document, families: readonly DesktopFontFamily[])
 }
 
 const ROLE_VARIABLES = {
-  appUi: ['--font-ui', '--font-ui-style', '--font-ui-weight'],
-  body: ['--font-body', '--font-body-style', '--font-body-weight'],
-  heading: ['--font-heading', '--font-heading-style', '--font-heading-weight'],
-  quote: ['--font-quote', '--font-quote-style', '--font-quote-weight'],
-  code: ['--font-mono', '--font-mono-style', '--font-mono-weight'],
-  mermaid: ['--font-mermaid', '--font-mermaid-style', '--font-mermaid-weight'],
+  appUi: ['--font-ui', '--font-ui-style', '--font-ui-weight', '--font-ui-size'],
+  body: ['--font-body', '--font-body-style', '--font-body-weight', '--font-body-size'],
+  heading: ['--font-heading', '--font-heading-style', '--font-heading-weight', '--font-heading-size'],
+  quote: ['--font-quote', '--font-quote-style', '--font-quote-weight', '--font-quote-size'],
+  code: ['--font-mono', '--font-mono-style', '--font-mono-weight', '--font-mono-size'],
+  mermaid: ['--font-mermaid', '--font-mermaid-style', '--font-mermaid-weight', '--font-mermaid-size'],
 } as const;
 
 export function applyDesktopTypography(
@@ -135,10 +137,11 @@ export function applyDesktopTypography(
 
   targets.forEach((target) => {
     for (const [role, item] of Object.entries(resolved) as [keyof typeof resolved, (typeof resolved)[keyof typeof resolved]][]) {
-      const [familyVar, styleVar, weightVar] = ROLE_VARIABLES[role];
+      const [familyVar, styleVar, weightVar, sizeVar] = ROLE_VARIABLES[role];
       target.style.setProperty(familyVar, item.css);
       target.style.setProperty(styleVar, item.style);
       target.style.setProperty(weightVar, String(item.weight));
+      target.style.setProperty(sizeVar, `${item.size}px`);
     }
   });
 }

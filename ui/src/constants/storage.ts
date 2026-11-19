@@ -1,6 +1,5 @@
 /** Stable local persistence and import/export identifiers. */
 export const ELECTRON_APP_STATE_STORAGE_KEY = 'markdown-explorer-ui-state';
-export const CHROMIUM_APP_STATE_STORAGE_KEY = 'markdown-explorer-chrome-state';
 export const WEB_APP_STATE_STORAGE_KEY = 'markdown-explorer-web-state';
 
 export const TERMS_ACCEPTED_STORAGE_KEY = 'markdown-explorer-terms-accepted';
@@ -19,3 +18,5 @@ export const SUPPORT_PROMPT_STATE_STORAGE_KEY = 'markdown-explorer-support-promp
 
 export const SETTINGS_EXPORT_KIND = 'markdown-explorer-settings';
 export const SETTINGS_EXPORT_SCHEMA_VERSION = 1;
+
+export const USER_TOUR_COMPLETE_STORAGE_KEY = 'markdown-explorer-user-tour-complete-v1';

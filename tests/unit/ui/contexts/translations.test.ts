@@ -16,6 +16,7 @@ describe('translations', () => {
     expect(t.themeStyles.defaultLabel).toBe('Explorer Classic');
     expect(t.actions.searchCurrent).toBe('Search current workspace');
     expect(t.topbar.home).toBe('Home');
+    expect(t.topbar.homeGetHelp).toBe('Home - Get help');
     expect(t.tooltips.switchLanguage).toBe('Switch Language');
     expect(t.tabContextMenu.closeThisTab).toBe('Close this tab');
     expect(t.documentPreview.convertedTitle).toBe('Converted {sourceLabel} preview');

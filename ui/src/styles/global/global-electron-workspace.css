@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  z-index: 10;
+  z-index: var(--z-elevated);
 }
 .recent-workspace-actions--modal {
   top: 12px;

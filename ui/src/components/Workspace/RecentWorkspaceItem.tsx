@@ -91,7 +91,8 @@ export function RecentWorkspaceItem({
             className={`recent-workspace-delete-btn${modal ? ' recent-workspace-delete-btn--modal' : ''}`}
             tooltip={t.ui.renameWorkspace}
             tooltipPos="above"
-            tooltipAlign="right"
+            tooltipAlign="center"
+            portalTooltip
           >
             <EditIcon size={11} />
           </TooltipButton>
@@ -104,7 +105,8 @@ export function RecentWorkspaceItem({
           className={`recent-workspace-delete-btn${modal ? ' recent-workspace-delete-btn--modal' : ''}`}
           tooltip={t.tooltips.removeFromRecents}
           tooltipPos="above"
-          tooltipAlign="right"
+          tooltipAlign="center"
+          portalTooltip
         >
           &times;
         </TooltipButton>

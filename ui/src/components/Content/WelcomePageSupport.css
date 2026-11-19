@@ -6,7 +6,7 @@
 .issues-card {
   background: var(--bg-s);
   border: 1px solid var(--bd-s);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-lg, 12px);
   padding: 20px;
   box-shadow: var(--sh-sm);
 }
@@ -117,7 +117,7 @@
 .tip-card {
   background: var(--bg-s);
   border: 1px solid var(--bd-s);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-lg, 12px);
   padding: 20px;
   box-shadow: var(--sh-sm);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -164,7 +164,7 @@
   background: var(--accent-dim);
   border: 1px solid rgba(139, 124, 248, 0.2);
   padding: 3px 10px;
-  border-radius: 12px;
+  border-radius: var(--r-sm, var(--r, 4px));
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }

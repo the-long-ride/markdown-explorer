@@ -3,7 +3,7 @@ import test from 'node:test';
 import {
   inferBrowserFontDescriptor,
   isSupportedBrowserFontFileName,
-} from '../../chromium-xtension/src/browser-font-service.ts';
+} from '../../website-app/src/browser-font-service.ts';
 
 test('browser font imports accept TTF, OTF, WOFF, and WOFF2 only', () => {
   for (const name of ['Demo.ttf', 'Demo.OTF', 'Demo.woff', 'Demo.woff2']) {

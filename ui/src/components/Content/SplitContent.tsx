@@ -22,6 +22,7 @@ import { useStableDocumentState } from './useStableDocumentState';
 import { setActiveDocumentRootId } from '../../document/activeDocumentRoot';
 import { useSplitDropHandler } from '../../split-view/useSplitDropHandler';
 import { isEditingMode, sameDocument, usePaneRenderRevision } from '../../split-view/usePaneRenderRevision';
+import { getEnabledShortcut } from '../../utils/shortcuts';
 
 export interface SplitContentViewProps {
   state: AppState;
@@ -58,6 +59,8 @@ export function SplitContentView({
   const t = getTranslations(language);
   const splitT = getSplitViewTranslations(language);
   const editingEnabled = isMarkdownEditingAvailable(state.settings);
+  const editShortcut = getEnabledShortcut(state.settings, 'editCurrentDocument');
+  const plainShortcut = getEnabledShortcut(state.settings, 'plainEditCurrentDocument');
   const { historyViews, clearHistoryView } = useHistoryView();
   const primary = selectPaneDocument(state, 'primary');
   const secondary = selectPaneDocument(state, 'secondary');
@@ -142,8 +145,8 @@ export function SplitContentView({
         primaryLabel={splitT.primaryDocument}
         secondaryLabel={splitT.secondaryDocument}
         resizeLabel={splitT.resizeDocumentPanes}
-        primary={<SplitPaneView paneId="primary" projection={primary} paneTabs={state.splitView.primary.tabs} activeTabPath={state.splitView.primary.activeTabPath} tabLabels={tabLabels} dirtyMap={dirtyMap} showTabs={state.settings.fileTabs} historyView={primaryHistoryView} language={language} documentRenderRevision={primaryRenderRevision} editingEnabled={editingEnabled} clearHistoryView={clearHistoryView} onModeChange={onModeChange} onSourceChange={onSourceChange} onSave={onSave} onScrollChange={onScrollChange} onTabActivate={onTabActivate} onTabClose={onTabClose} onTabContextMenu={setContextMenu} onHeaderContextMenu={openHeaderContextMenu} />}
-        secondary={<SplitPaneView paneId="secondary" projection={secondary} paneTabs={state.splitView.secondary.tabs} activeTabPath={state.splitView.secondary.activeTabPath} tabLabels={tabLabels} dirtyMap={dirtyMap} showTabs={state.settings.fileTabs} historyView={secondaryHistoryView} language={language} documentRenderRevision={secondaryRenderRevision} editingEnabled={editingEnabled} clearHistoryView={clearHistoryView} onModeChange={onModeChange} onSourceChange={onSourceChange} onSave={onSave} onScrollChange={onScrollChange} onTabActivate={onTabActivate} onTabClose={onTabClose} onTabContextMenu={setContextMenu} onHeaderContextMenu={openHeaderContextMenu} />}
+        primary={<SplitPaneView paneId="primary" projection={primary} paneTabs={state.splitView.primary.tabs} activeTabPath={state.splitView.primary.activeTabPath} tabLabels={tabLabels} dirtyMap={dirtyMap} showTabs={state.settings.fileTabs} historyView={primaryHistoryView} language={language} documentRenderRevision={primaryRenderRevision} editingEnabled={editingEnabled} editShortcut={editShortcut} plainShortcut={plainShortcut} clearHistoryView={clearHistoryView} onModeChange={onModeChange} onSourceChange={onSourceChange} onSave={onSave} onScrollChange={onScrollChange} onTabActivate={onTabActivate} onTabClose={onTabClose} onTabContextMenu={setContextMenu} onHeaderContextMenu={openHeaderContextMenu} />}
+        secondary={<SplitPaneView paneId="secondary" projection={secondary} paneTabs={state.splitView.secondary.tabs} activeTabPath={state.splitView.secondary.activeTabPath} tabLabels={tabLabels} dirtyMap={dirtyMap} showTabs={state.settings.fileTabs} historyView={secondaryHistoryView} language={language} documentRenderRevision={secondaryRenderRevision} editingEnabled={editingEnabled} editShortcut={editShortcut} plainShortcut={plainShortcut} clearHistoryView={clearHistoryView} onModeChange={onModeChange} onSourceChange={onSourceChange} onSave={onSave} onScrollChange={onScrollChange} onTabActivate={onTabActivate} onTabClose={onTabClose} onTabContextMenu={setContextMenu} onHeaderContextMenu={openHeaderContextMenu} />}
         onActivatePane={onActivatePane}
         onRatioChange={onRatioChange}
       />

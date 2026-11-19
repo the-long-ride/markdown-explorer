@@ -82,7 +82,7 @@ vi.mock('../../../../ui/src/contexts/translations', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
-  TooltipButton: ({ onClick, disabled, tooltip, children, className, shortcut, icon, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, ...props }: any) =>
+  TooltipButton: ({ onClick, disabled, tooltip, children, className, shortcut, icon, tooltipPos: _tooltipPos, tooltipAlign: _tooltipAlign, onlyIcon: _onlyIcon, portalTooltip: _portalTooltip, ...props }: any) =>
     React.createElement(
       'button',
       { onClick, disabled, title: tooltip, className, 'data-shortcut': shortcut, ...props },
@@ -374,8 +374,8 @@ describe('Topbar render', () => {
     expect(screen.getByTestId('menu-edit')).toBeEnabled();
   });
 
-  it.each(['chrome', 'web'])('does not expose Edit in %s runtime', (runtime) => {
-    mockState.appRuntime = runtime;
+  it('does not expose Edit in web runtime', () => {
+    mockState.appRuntime = 'web';
     const { container } = render(React.createElement(Topbar, defaultProps));
     expect(container.querySelector('.topbar__edit-action')).not.toBeInTheDocument();
     expect(screen.queryByTestId('menu-edit')).not.toBeInTheDocument();
@@ -474,15 +474,15 @@ describe('Topbar render', () => {
     expect(closeFolders.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders Close Folder button in chrome runtime', () => {
-    mockState.appRuntime = 'chrome';
+  it('renders Close Folder button in web runtime', () => {
+    mockState.appRuntime = 'web';
     const { container } = render(React.createElement(Topbar, defaultProps));
     const closeFolders = container.querySelectorAll('button[title="Close Folder"]');
     expect(closeFolders.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('does not render Close Folder button in web runtime', () => {
-    mockState.appRuntime = 'web';
+  it('does not render Close Folder button in vscode runtime', () => {
+    mockState.appRuntime = 'vscode';
     const { container } = render(React.createElement(Topbar, defaultProps));
     const closeFolders = container.querySelectorAll('button[title="Close Folder"]');
     expect(closeFolders).toHaveLength(0);
@@ -495,12 +495,31 @@ describe('Topbar render', () => {
     expect(separators).toHaveLength(1);
   });
 
+  it('does not render Close Folder button when no active workspace exists', () => {
+    mockState.appRuntime = 'web';
+    mockState.currentFile = null;
+    mockState.relativePath = '';
+    mockState.workspacePath = undefined;
+    mockState.workspaceName = '';
+    mockState.fileList = [];
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    const closeFolders = container.querySelectorAll('button[title="Close Folder"]');
+    expect(closeFolders).toHaveLength(0);
+  });
+
   it('dispatches READY_ACK and sends closeWorkspace on Close Folder click', () => {
     mockState.appRuntime = 'desktop';
+    mockState.workspacePath = 'demo-workspace';
+    mockState.workspaceName = 'Demo Workspace';
     const { container } = render(React.createElement(Topbar, defaultProps));
     const btn = container.querySelector('button[title="Close Folder"]') as HTMLElement;
     fireEvent.click(btn);
-    expect(mockDispatch).toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'READY_ACK',
+      fileList: [],
+      workspaceName: '',
+      workspacePath: undefined,
+    }));
     expect(mockPostMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
   });
 
@@ -624,5 +643,20 @@ describe('Topbar render', () => {
     expect(editBtn).not.toBeDisabled();
     fireEvent.click(editBtn);
     expect(mockOpenInEditor).toHaveBeenCalled();
+  });
+
+  it('renders web navigation actions when window.__webBus is present', () => {
+    mockState.appRuntime = 'web';
+    window.__webBus = new EventTarget();
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    expect(container.querySelector('[data-testid="web-demo-nav"]')).not.toBeNull();
+    delete window.__webBus;
+  });
+
+  it('does not render web navigation actions when window.__webBus is absent', () => {
+    mockState.appRuntime = 'desktop';
+    delete window.__webBus;
+    const { container } = render(React.createElement(Topbar, defaultProps));
+    expect(container.querySelector('[data-testid="web-demo-nav"]')).toBeNull();
   });
 });

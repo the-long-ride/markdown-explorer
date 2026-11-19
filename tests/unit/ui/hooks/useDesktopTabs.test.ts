@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDesktopTabs } from '../../../../ui/src/hooks/useDesktopTabs';
-import { clearWorkspaceOperation } from '../../../../ui/src/desktop/workspaceOperations';
+import { acceptsWorkspaceHostMessage, clearWorkspaceOperation, getActiveWorkspaceOperation } from '../../../../ui/src/desktop/workspaceOperations';
 
 let nextTabId = 0;
 
@@ -40,7 +40,7 @@ vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
     nextTabs.splice(nextTabs.findIndex((tab) => tab.id === targetId), 0, source);
     return nextTabs;
   },
-  readInitialDesktopState: () => ({
+  readInitialDesktopState: vi.fn(() => ({
     workspaceAliases: {} as Record<string, string>,
     tabs: [
       {
@@ -65,13 +65,13 @@ vi.mock('../../../../ui/src/desktop/desktopTabs', () => ({
       },
     ],
     activeTabId: 'home',
-  }),
+  })),
   writePersistedDesktopTabs: vi.fn(),
   writeWorkspaceAliases: vi.fn(),
 }));
 
 
-import { writePersistedDesktopTabs, writeWorkspaceAliases } from '../../../../ui/src/desktop/desktopTabs';
+import { readInitialDesktopState, writePersistedDesktopTabs, writeWorkspaceAliases } from '../../../../ui/src/desktop/desktopTabs';
 
 function makeState(overrides: Record<string, any> = {}): any {
   return {
@@ -346,6 +346,28 @@ describe('useDesktopTabs', () => {
 
       expect(setNavigationScope).toHaveBeenCalledWith('focus');
     });
+
+    it('clears workspace state before posting closeWorkspace in tab view', () => {
+      const state = makeState({ workspaceName: 'Demo', workspacePath: 'virtual://ws-1' });
+      const { result, dispatch, bridge } = setupHook({ state, isTabView: true });
+      const callOrder: string[] = [];
+      dispatch.mockImplementation((action: any) => {
+        if (action.type === 'READY_ACK' && action.workspaceName === '') callOrder.push('dispatchEmpty');
+      });
+      bridge.postMessage.mockImplementation((msg: any) => {
+        if (msg.command === 'closeWorkspace') callOrder.push('closeWorkspace');
+      });
+
+      let newId = '';
+      act(() => { newId = result.current.createNewWorkspaceTab() ?? ''; });
+
+      expect(callOrder).toEqual(['dispatchEmpty', 'closeWorkspace']);
+      expect(result.current.activeTabId).toBe(newId);
+      const active = result.current.tabs.find((t: any) => t.id === newId);
+      expect(active?.kind).toBe('new');
+      expect(active?.workspacePath).toBeUndefined();
+      expect(active?.workspaceName).toBeUndefined();
+    });
   });
 
   describe('prepareWorkspaceOpen', () => {
@@ -502,6 +524,49 @@ describe('useDesktopTabs', () => {
         workspaceOperationId: undefined,
       }));
       expect(result.current.activeTabId).toBe(unavailableTab.id);
+    });
+
+    it('clears stale tab operations when switching to focus view so reopening accepts unscoped host messages', () => {
+      const bridge = makeBridge();
+      const unavailableState = makeState({
+        workspaceName: 'Missing workspace',
+        workspacePath: '/missing/workspace',
+        workspaceUnavailablePath: '/missing/workspace',
+        workspaceUnavailableReason: 'missing',
+        renderVersion: 2,
+      });
+      const { result, rerender } = renderHook(
+        ({ isTabView }: { isTabView: boolean }) => useDesktopTabs({
+          state: unavailableState,
+          dispatch: vi.fn(),
+          bridge,
+          isDesktop: true,
+          isTabView,
+          setNavigationScope: vi.fn(),
+        }),
+        { initialProps: { isTabView: true } },
+      );
+
+      act(() => { result.current.createNewWorkspaceTab(); });
+      act(() => { result.current.reopenUnavailableWorkspace('/missing/workspace'); });
+      expect(getActiveWorkspaceOperation()).not.toBeNull();
+
+      rerender({ isTabView: false });
+
+      expect(getActiveWorkspaceOperation()).toBeNull();
+      bridge.postMessage.mockClear();
+      act(() => { result.current.reopenUnavailableWorkspace('/missing/workspace'); });
+
+      expect(bridge.postMessage).toHaveBeenCalledWith({
+        command: 'openFolder',
+        openFirstFile: false,
+        replaceRecentWorkspacePath: '/missing/workspace',
+      });
+      expect(acceptsWorkspaceHostMessage({
+        command: 'workspaceFilesChanged',
+        workspacePath: '/selected/workspace',
+        workspaceName: 'workspace',
+      })).toBe(true);
     });
   });
 
@@ -1460,6 +1525,232 @@ describe('useDesktopTabs', () => {
       const { result } = renderHook(() => useDesktopTabs(props));
       act(() => { result.current.activateTab('home'); });
       expect(bridge.postMessage).toHaveBeenCalledWith({ command: 'closeWorkspace' });
+    });
+  });
+
+  describe('reload workspace tab restoration', () => {
+    it('re-activates the persisted active workspace tab after startup readyAck even while isLoading stays true', () => {
+      (readInitialDesktopState as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        workspaceAliases: {},
+        tabs: [
+          {
+            id: 'home',
+            kind: 'home',
+            fileList: [],
+            tree: null,
+            currentFile: null,
+            contentHtml: '',
+            markdownSource: null,
+            frontmatter: {},
+            toc: [],
+            previewInfo: null,
+            relativePath: '',
+            isLoading: false,
+            notFoundHref: null,
+            workspaceUnavailablePath: null,
+            workspaceUnavailableReason: null,
+            contentTabs: [],
+            activeContentTabPath: null,
+            isIndexed: false,
+          },
+          {
+            id: 'tab-ws-1',
+            kind: 'workspace',
+            workspaceName: 'markdown-explorer',
+            workspacePath: '/repos/markdown-explorer',
+            fileList: [],
+            tree: null,
+            currentFile: '/repos/markdown-explorer/README.md',
+            contentHtml: '',
+            markdownSource: null,
+            frontmatter: {},
+            toc: [],
+            previewInfo: null,
+            relativePath: '',
+            isLoading: false,
+            notFoundHref: null,
+            workspaceUnavailablePath: null,
+            workspaceUnavailableReason: null,
+            contentTabs: [],
+            activeContentTabPath: '/repos/markdown-explorer/README.md',
+            restoredContentTabPaths: ['/repos/markdown-explorer/README.md'],
+            isIndexed: false,
+          },
+        ],
+        activeTabId: 'tab-ws-1',
+      });
+
+      // Initial mount before readyAck arrives: appVersion is empty and isLoading is true
+      const initialReloadState = makeState({
+        isLoading: true,
+        appVersion: '',
+        workspaceName: '',
+        workspacePath: undefined,
+      });
+      const { result, bridge, rerender, input } = setupHook({
+        state: initialReloadState,
+        isTabView: true,
+      });
+
+      expect(bridge.postMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ command: 'activateWorkspace' }),
+      );
+
+      // Startup readyAck arrives on reload with workspaceName set and isLoading still true
+      input.state = makeState({
+        isLoading: true,
+        appVersion: '1.7.1',
+        workspaceName: 'markdown-explorer',
+        workspacePath: '/repos/markdown-explorer',
+      });
+      rerender(input);
+
+      expect(bridge.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'activateWorkspace',
+          workspacePath: '/repos/markdown-explorer',
+          filePath: '/repos/markdown-explorer/README.md',
+          openFirstFile: false,
+          workspaceTabId: 'tab-ws-1',
+          workspaceOperationId: expect.any(String),
+        }),
+      );
+
+      const restoredTab = result.current.tabs.find((tab: any) => tab.id === 'tab-ws-1');
+      expect(restoredTab?.currentFile).toBe('/repos/markdown-explorer/README.md');
+      expect(restoredTab?.restoredContentTabPaths).toEqual(['/repos/markdown-explorer/README.md']);
+    });
+
+    it('preserves already-loaded workspace tree and content when restoring the active workspace tab', () => {
+      (readInitialDesktopState as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        workspaceAliases: {},
+        tabs: [
+          {
+            id: 'home',
+            kind: 'home',
+            fileList: [],
+            tree: null,
+            currentFile: null,
+            contentHtml: '',
+            markdownSource: null,
+            frontmatter: {},
+            toc: [],
+            previewInfo: null,
+            relativePath: '',
+            isLoading: false,
+            notFoundHref: null,
+            workspaceUnavailablePath: null,
+            workspaceUnavailableReason: null,
+            contentTabs: [],
+            activeContentTabPath: null,
+            isIndexed: false,
+          },
+          {
+            id: 'tab-ws-1',
+            kind: 'workspace',
+            workspaceName: 'markdown-explorer',
+            workspacePath: '/repos/markdown-explorer',
+            fileList: [],
+            tree: null,
+            currentFile: '/repos/markdown-explorer/README.md',
+            contentHtml: '',
+            markdownSource: null,
+            frontmatter: {},
+            toc: [],
+            previewInfo: null,
+            relativePath: '',
+            isLoading: false,
+            notFoundHref: null,
+            workspaceUnavailablePath: null,
+            workspaceUnavailableReason: null,
+            contentTabs: [],
+            activeContentTabPath: '/repos/markdown-explorer/README.md',
+            isIndexed: false,
+          },
+        ],
+        activeTabId: 'tab-ws-1',
+      });
+
+      const existingTree = { name: 'root', path: '', children: [], files: [], modifiedAt: 0 };
+      const existingFiles = [
+        { fsPath: '/repos/markdown-explorer/README.md', title: 'README', fileName: 'README.md', relativePath: 'README.md' },
+      ];
+      const loadedReloadState = makeState({
+        isLoading: false,
+        appVersion: '1.7.1',
+        workspaceName: 'markdown-explorer',
+        workspacePath: '/repos/markdown-explorer',
+        fileList: existingFiles,
+        tree: existingTree,
+        currentFile: '/repos/markdown-explorer/README.md',
+        contentHtml: '<h1>README</h1>',
+      });
+
+      const { dispatch, bridge } = setupHook({
+        state: loadedReloadState,
+        isTabView: true,
+      });
+
+      expect(bridge.postMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ command: 'activateWorkspace' }),
+      );
+      expect(dispatch).not.toHaveBeenCalledWith({ type: 'SET_LOADING' });
+    });
+
+    it('does not post activateWorkspace when toggling desktopViewMode from focus to tabs with an already-loaded workspace', () => {
+      const existingFiles = [
+        { fsPath: '/repos/markdown-explorer/README.md', title: 'README', fileName: 'README.md', relativePath: 'README.md' },
+      ];
+      const loadedState = makeState({
+        isLoading: false,
+        appVersion: '1.7.1',
+        workspaceName: 'markdown-explorer',
+        workspacePath: '/repos/markdown-explorer',
+        fileList: existingFiles,
+        currentFile: '/repos/markdown-explorer/README.md',
+        contentHtml: '<h1>README</h1>',
+      });
+
+      const { bridge, rerender, input } = setupHook({
+        state: loadedState,
+        isTabView: false,
+      });
+
+      expect(bridge.postMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ command: 'activateWorkspace' }),
+      );
+
+      input.isTabView = true;
+      rerender(input);
+
+      expect(bridge.postMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ command: 'activateWorkspace' }),
+      );
+    });
+
+    it('opens ONLY the current workspace as 1 tab when toggling desktopViewMode from focus to tabs', () => {
+      const loadedState = makeState({
+        isLoading: false,
+        appVersion: '1.7.1',
+        workspaceName: 'markdown-explorer',
+        workspacePath: '/repos/markdown-explorer',
+        fileList: [],
+        currentFile: null,
+      });
+
+      const { result, rerender, input } = setupHook({
+        state: loadedState,
+        isTabView: false,
+      });
+
+      input.isTabView = true;
+      rerender(input);
+
+      expect(result.current.tabs).toHaveLength(2);
+      expect(result.current.tabs[0].kind).toBe('home');
+      expect(result.current.tabs[1].kind).toBe('workspace');
+      expect(result.current.tabs[1].workspacePath).toBe('/repos/markdown-explorer');
+      expect(result.current.activeTabId).toBe(result.current.tabs[1].id);
     });
   });
 });

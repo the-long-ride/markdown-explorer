@@ -171,7 +171,7 @@ test('Unreleased changelog and current-state specs describe this synchronized st
   assert.match(changelog, /## \[(?:Unreleased|v1\.6\.4)\][\s\S]*Appearance[^\n]*View Preferences/i);
   assert.match(changelog, /## \[(?:Unreleased|v1\.6\.4)\][\s\S]*localization/i);
   assert.match(changelog, /## \[(?:Unreleased|v1\.6\.4)\][\s\S]*Typography[^\n]*icon/i);
-  assert.match(currentState, /Electron[\s\S]*Tauri[\s\S]*VS Code[\s\S]*Chromium/i);
+  assert.match(currentState, /Electron[\s\S]*Tauri[\s\S]*VS Code[\s\S]*Web/i);
   assert.match(currentState, /800 px/);
   assert.match(currentState, /Ctrl\+Alt\+Z/);
   assert.match(currentState, /nine supported locales|9 supported locales/i);

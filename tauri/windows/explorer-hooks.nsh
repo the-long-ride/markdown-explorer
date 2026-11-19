@@ -47,6 +47,30 @@ Function MarkdownExplorerOptionsLeave
   ${NSD_GetState} $ME_FolderContextCheckbox $ME_AddFolderContext
 FunctionEnd
 
+Function un.RemoveTempEntries
+  Exch $R0
+  Push $R1
+  Push $R2
+  FindFirst $R1 $R2 "$TEMP\$R0"
+  un_temp_loop:
+    StrCmp $R2 "" un_temp_done
+    StrCmp $R2 "." un_temp_next
+    StrCmp $R2 ".." un_temp_next
+    IfFileExists "$TEMP\$R2\*.*" 0 un_temp_file
+      RMDir /r "$TEMP\$R2"
+      Goto un_temp_next
+    un_temp_file:
+      Delete "$TEMP\$R2"
+    un_temp_next:
+      FindNext $R1 $R2
+      Goto un_temp_loop
+  un_temp_done:
+    FindClose $R1
+  Pop $R2
+  Pop $R1
+  Pop $R0
+FunctionEnd
+
 !macro NSIS_HOOK_PREINSTALL
 !macroend
 
@@ -98,4 +122,26 @@ FunctionEnd
   DeleteRegKey HKCU "Software\Classes\SystemFileAssociations\.mdx\shell\MarkdownExplorerWithFolder"
   DeleteRegKey HKCU "Software\Classes\Directory\shell\MarkdownExplorer"
   DeleteRegKey HKCU "Software\Classes\Directory\Background\shell\MarkdownExplorer"
+!macroend
+
+!macro NSIS_HOOK_POSTUNINSTALL
+  ${If} $DeleteAppDataCheckboxState = 1
+  ${AndIf} $UpdateMode <> 1
+    SetShellVarContext current
+    RMDir /r "$APPDATA\com.the-long-ride.markdown-explorer"
+    RMDir /r "$LOCALAPPDATA\com.the-long-ride.markdown-explorer"
+    RMDir /r "$LOCALAPPDATA\com.the-long-ride.markdown-explorer-updater"
+    RMDir /r "$TEMP\markdown-explorer-updater"
+    RMDir /r "$TEMP\markdown-explorer-external-open"
+    Push "markdown-explorer-*"
+    Call un.RemoveTempEntries
+    Push "md-explorer-*"
+    Call un.RemoveTempEntries
+    Push "Markdown Explorer*"
+    Call un.RemoveTempEntries
+    Push "com.the-long-ride.markdown-explorer*"
+    Call un.RemoveTempEntries
+    Push "com.thelongride.markdownexplorer*"
+    Call un.RemoveTempEntries
+  ${EndIf}
 !macroend

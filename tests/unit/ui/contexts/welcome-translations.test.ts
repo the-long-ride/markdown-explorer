@@ -53,8 +53,28 @@ describe('welcomeTranslations', () => {
     expect(f.tables).toBeDefined();
     expect(f.charts).toBeDefined();
     expect(f.highlight).toBeDefined();
+    expect(f.html).toBeDefined();
     expect(f.modal).toBeDefined();
     expect(f.shortcuts).toBeDefined();
+    expect(f.editor).toBeDefined();
+    expect(f.insights).toBeDefined();
+    expect(f.git).toBeDefined();
+    expect(f.export).toBeDefined();
+    expect(f.outline).toBeDefined();
+    expect(f.bookmarks).toBeDefined();
+    expect(f.themes).toBeDefined();
+  });
+
+  test.each(LANGUAGE_KEYS)('language %s features contains all core cards including the 7 new feature cards', (lang) => {
+    const f = WELCOME_TRANSLATIONS[lang].features;
+    const requiredKeys = ['editor', 'insights', 'git', 'export', 'outline', 'bookmarks', 'themes'] as const;
+    for (const key of requiredKeys) {
+      expect(f[key]).toBeDefined();
+      expect(typeof f[key].title).toBe('string');
+      expect(f[key].title.length).toBeGreaterThan(0);
+      expect(typeof f[key].desc).toBe('string');
+      expect(f[key].desc.length).toBeGreaterThan(0);
+    }
   });
 
   test('English shortcutsTable has headers and rows', () => {
