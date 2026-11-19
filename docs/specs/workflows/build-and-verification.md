@@ -13,7 +13,7 @@ last_verified_at: "2026-11-17T03:16:00Z"
 last_verified_code_commit: "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0"
 last_source_change_commit: "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0"
 last_source_change_at: "2026-11-17T03:16:00Z"
-source_fingerprint: "sha256:8ff2365e84d25744e0f1aafbb7a91dd03cdc7c24045e85bb6ee5293e8103c3fe"
+source_fingerprint: "sha256:e8bdf6c25d9339e0c42a6a4f3ca55d55ffdd3dad51e43e99ae183af65d005685"
 ---
 
 # Build, Versioning, and Verification
@@ -32,7 +32,7 @@ Documents the root monorepo scripts, version synchronization across all package/
 
 ## Key workflows and behavior
 
-- **Build & dev**: `pnpm run build` compiles the shared `ui` bundle and `vscode`; runtime-specific scripts target `tauri` (`dev:tauri` via `ui/scripts/dev-tauri.mjs`, launching Vite HMR on `127.0.0.1:5174` with a temporary `dev-tauri.conf.json` override in the global Tauri cache), `electron`, `vscode`, and `website-app` (`dev:web`, `start:web`, `preview:web`, `start:web:built`, `build:website-app`). `.vscode/launch.json` provides a `"Website"` Chrome launch against `http://localhost:5173/markdown-explorer/` backed by the `dev: website-app` task (`pnpm run dev:web`) in `.vscode/tasks.json`. `chromium-xtension` has been removed from `pnpm-workspace.yaml`, `package.json`, `vitest.config.ts`, CI workflows, and `.github/scripts/release-notes.mjs`.
+- **Build & dev**: `pnpm run build` compiles the shared `ui` bundle and `vscode`; runtime-specific scripts target `tauri` (`dev:tauri` via `ui/scripts/dev-tauri.mjs`, launching Vite HMR on `127.0.0.1:5174` with a temporary `dev-tauri.conf.json` override in the global Tauri cache), `electron`, `vscode`, and `website-app` (`dev:web`, `start:web`, `preview:web`, `start:web:built`, `build:website-app`). `.vscode/launch.json` provides a `"Website"` Edge (`msedge`) launch against `http://localhost:5173/markdown-explorer/` backed by the `dev: website-app` task (`pnpm run dev:web`) in `.vscode/tasks.json`. `chromium-xtension` has been removed from `pnpm-workspace.yaml`, `package.json`, `vitest.config.ts`, CI workflows, and `.github/scripts/release-notes.mjs`.
 - **Version & README synchronization**: `scripts/sync-versions.mjs` propagates the root version across workspace `package.json` manifests, `tauri/Cargo.toml`, `tauri/tauri.conf.json`, and `website/llm.txt`, then invokes `syncReadme()` from `scripts/sync-readme.mjs` (also runnable via `pnpm run sync-readme`) to keep `vscode/README.md` synchronized with `README.md` while retaining `## VS Code Extension Tutorial` and rewriting relative links to GitHub blob URLs.
 - **CI & packaging**: `.github/workflows/{build-all,release}.yml` build VS Code (`.vsix`), Electron desktop, and Tauri desktop (with Linux AppImage builds pinned to `ubuntu-22.04` for glibc baseline compatibility and `rust-cache` keyed by `matrix.os`). `.github/workflows/test.yml` runs `test:vscode`, `test:website`, UI/Electron/VS Code/Web builds, and Web app typechecks.
 - **Verification**:
