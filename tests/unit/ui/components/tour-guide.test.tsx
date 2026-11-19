@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { useReducer } from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { TourGuideOverlay } from '../../../../ui/src/components/Tour/TourGuideOverlay';
+import { AppStateContext } from '../../../../ui/src/contexts/AppStateContext';
+import { initialState } from '../../../../ui/src/contexts/appStateModel';
+import { reducer as appReducer } from '../../../../ui/src/contexts/appStateReducer';
 import {
   START_USER_TOUR_EVENT,
   WELCOME_SELECT_TAB_EVENT,
@@ -64,6 +68,7 @@ describe('Tour Subsystem', () => {
       'welcome',
       'launchpad',
       'manual',
+      'workspaceSelection',
       'navigation',
       'sidebar',
       'reader',
@@ -102,8 +107,26 @@ describe('Tour Subsystem', () => {
   });
 
   describe('tourSteps', () => {
-    it('builds 9 ordered tour steps with home and workspace stages', () => {
-      const steps = buildTourSteps('en', 'desktop');
+    it.each(['desktop', 'tauri'] as const)('builds 5 ordered tour steps with home and selection stages for %s (no virtual workspace sample)', (runtime) => {
+      const steps = buildTourSteps('en', runtime);
+      expect(steps).toHaveLength(5);
+      expect(steps.map((s) => s.id)).toEqual([
+        'welcome',
+        'launchpad',
+        'manual',
+        'workspaceSelection',
+        'settings',
+      ]);
+      expect(steps.slice(0, 3).every((s) => s.stage === 'home')).toBe(true);
+      expect(steps[0].welcomeTab).toBe('features');
+      expect(steps[2].welcomeTab).toBe('manual');
+      expect(steps[3].stage).toBe('selection');
+      expect(steps[4].stage).toBe('selection');
+      expect(steps[4].openSettings).toBe(true);
+    });
+
+    it.each(['web', 'vscode'] as const)('builds 9 ordered tour steps with home and workspace stages for %s', (runtime) => {
+      const steps = buildTourSteps('en', runtime);
       expect(steps).toHaveLength(9);
       expect(steps.map((s) => s.id)).toEqual([
         'welcome',
@@ -228,6 +251,8 @@ describe('Tour Subsystem', () => {
         expect(action.msg.markdownSource).toContain('Welcome to your Virtual Workspace');
         expect(action.msg.toc).toEqual([
           { id: 'welcome-to-your-virtual-workspace', text: 'Welcome to your Virtual Workspace', level: 1 },
+          { id: 'open-local-files-folders', text: 'Open Local Files & Folders', level: 2 },
+          { id: 'enable-local-folder-support-chromium-browsers', text: 'Enable Local Folder Support (Chromium Browsers)', level: 2 },
         ]);
         expect(action.msg.documentWrite).toEqual({
           supported: true,
@@ -270,7 +295,7 @@ describe('Tour Subsystem', () => {
       const overlay = screen.getByTestId('tour-guide-overlay');
       expect(overlay).toBeTruthy();
       expect(overlay.getAttribute('data-tour-step')).toBe('welcome');
-      expect(screen.getByText('Step 1 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 1 of 5')).toBeTruthy();
       expect(screen.getByRole('button', { name: /skip/i })).toBeTruthy();
     });
 
@@ -289,7 +314,7 @@ describe('Tour Subsystem', () => {
       fireEvent.click(nextBtn);
       const overlay = screen.getByTestId('tour-guide-overlay');
       expect(overlay.getAttribute('data-tour-step')).toBe('launchpad');
-      expect(screen.getByText('Step 2 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 2 of 5')).toBeTruthy();
       expect(backBtn).not.toBeDisabled();
 
       // Click back -> Step 1
@@ -304,12 +329,12 @@ describe('Tour Subsystem', () => {
         requestStartUserTour();
       });
 
-      // Navigate to step 9 (index 8)
-      for (let i = 0; i < 8; i++) {
-        fireEvent.click(screen.getByRole('button', { name: /next/i }));
+      // Navigate to step 5 (index 4)
+      for (let i = 0; i < 4; i++) {
+        fireEvent.click(screen.getByRole('button', { name: /^next$/i }));
       }
 
-      expect(screen.getByText('Step 9 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 5 of 5')).toBeTruthy();
       const finishBtn = screen.getByRole('button', { name: /finish|complete/i });
       expect(finishBtn).toBeTruthy();
 
@@ -337,15 +362,15 @@ describe('Tour Subsystem', () => {
         requestStartUserTour();
       });
 
-      expect(screen.getByText('Step 1 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 1 of 5')).toBeTruthy();
 
       // ArrowRight -> Step 2
       fireEvent.keyDown(window, { key: 'ArrowRight' });
-      expect(screen.getByText('Step 2 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 2 of 5')).toBeTruthy();
 
       // ArrowLeft -> Step 1
       fireEvent.keyDown(window, { key: 'ArrowLeft' });
-      expect(screen.getByText('Step 1 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 1 of 5')).toBeTruthy();
 
       // Escape -> Closes tour
       fireEvent.keyDown(window, { key: 'Escape' });
@@ -403,12 +428,12 @@ describe('Tour Subsystem', () => {
         requestStartUserTour();
       });
 
-      expect(screen.getByText('Step 1 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 1 of 5')).toBeTruthy();
 
       const input = screen.getByTestId('test-input');
       fireEvent.keyDown(input, { key: 'ArrowRight' });
       // Remains on step 1 because arrow keys in input are not hijacked
-      expect(screen.getByText('Step 1 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 1 of 5')).toBeTruthy();
     });
 
     it('registers keydown listener in capture phase so bubbles cannot intercept', () => {
@@ -430,11 +455,11 @@ describe('Tour Subsystem', () => {
 
       const overlay = screen.getByTestId('tour-guide-overlay');
       const dots = overlay.querySelectorAll<HTMLButtonElement>('.tour-guide-dot');
-      expect(dots).toHaveLength(9);
+      expect(dots).toHaveLength(5);
 
       // Jump to step 3
       fireEvent.click(dots[2]);
-      expect(screen.getByText('Step 3 of 9')).toBeTruthy();
+      expect(screen.getByText('Step 3 of 5')).toBeTruthy();
     });
 
     it('dispatches requestWelcomeTabSelect when stepping to a step with welcomeTab', () => {
@@ -479,7 +504,7 @@ describe('Tour Subsystem', () => {
       vi.useRealTimers();
     });
 
-    it('dispatches requestTourStageChange when transitioning steps and closing', () => {
+    it('dispatches requestTourStageChange when transitioning steps and closing on desktop', () => {
       const stageListener = vi.fn();
       window.addEventListener(TOUR_STAGE_CHANGE_EVENT, (e: any) => stageListener(e.detail));
 
@@ -495,22 +520,22 @@ describe('Tour Subsystem', () => {
         openSettings: false,
       });
 
-      // Jump to Step 4 (navigation -> workspace)
+      // Jump to Step 4 (workspaceSelection -> selection)
       const overlay = screen.getByTestId('tour-guide-overlay');
       const dots = overlay.querySelectorAll<HTMLButtonElement>('.tour-guide-dot');
       fireEvent.click(dots[3]);
 
       expect(stageListener).toHaveBeenLastCalledWith({
         active: true,
-        stage: 'workspace',
+        stage: 'selection',
         openSettings: false,
       });
 
-      // Jump to Step 9 (settings -> workspace with openSettings: true)
-      fireEvent.click(dots[8]);
+      // Jump to Step 5 (settings -> selection with openSettings: true)
+      fireEvent.click(dots[4]);
       expect(stageListener).toHaveBeenLastCalledWith({
         active: true,
-        stage: 'workspace',
+        stage: 'selection',
         openSettings: true,
       });
 
@@ -545,24 +570,19 @@ describe('Tour Subsystem', () => {
       fireEvent.click(nextBtn);
       // Step 3
       fireEvent.click(nextBtn);
-      // Step 4 (navigation -> workspace)
+      // Step 4 (workspaceSelection -> selection)
       fireEvent.click(nextBtn);
       expect(stageListener).toHaveBeenLastCalledWith({
         active: true,
-        stage: 'workspace',
+        stage: 'selection',
         openSettings: false,
       });
 
-      // Steps 5 to 8
-      for (let i = 0; i < 4; i++) {
-        fireEvent.click(nextBtn);
-      }
-
-      // Step 9 (settings -> workspace with openSettings: true)
+      // Step 5 (settings -> selection with openSettings: true)
       fireEvent.click(nextBtn);
       expect(stageListener).toHaveBeenLastCalledWith({
         active: true,
-        stage: 'workspace',
+        stage: 'selection',
         openSettings: true,
       });
 
@@ -678,20 +698,30 @@ describe('Tour Subsystem', () => {
       // User interacts: clicks Next to go to Step 2
       const nextBtn = screen.getByRole('button', { name: /^next$/i });
       fireEvent.click(nextBtn);
-      expect(screen.getByText('Step 2 of 9')).toBeInTheDocument();
+      expect(screen.getByText('Step 2 of 5')).toBeInTheDocument();
 
       // A blocking flag arrives while tour is active and in-progress
       rerender(<TourGuideOverlay isBlocked={true} />);
       // Should remain open at Step 2
       expect(screen.getByTestId('tour-guide-overlay')).toBeInTheDocument();
-      expect(screen.getByText('Step 2 of 9')).toBeInTheDocument();
+      expect(screen.getByText('Step 2 of 5')).toBeInTheDocument();
     });
 
-    it('dismisses the workspace tour when requestDismissWorkspaceTour is fired during workspace stage', () => {
+    it('dismisses the workspace tour when requestDismissWorkspaceTour is fired during workspace stage on web', () => {
       const stageListener = vi.fn();
       window.addEventListener(TOUR_STAGE_CHANGE_EVENT, (e: any) => stageListener(e.detail));
+      const dispatch = vi.fn();
 
-      render(<TourGuideOverlay />);
+      render(
+        <AppStateContext.Provider
+          value={{
+            state: { ...initialState, appRuntime: 'web', workspaceName: 'Virtual Workspace 1', workspacePath: 'virtual://ws-1' },
+            dispatch,
+          } as any}
+        >
+          <TourGuideOverlay />
+        </AppStateContext.Provider>,
+      );
       act(() => {
         requestStartUserTour();
       });
@@ -701,6 +731,7 @@ describe('Tour Subsystem', () => {
         fireEvent.click(screen.getByRole('button', { name: /^next$/i }));
       }
       expect(stageListener).toHaveBeenLastCalledWith({ active: true, stage: 'workspace', openSettings: false });
+      expect(dispatch).not.toHaveBeenCalled();
 
       act(() => {
         requestDismissWorkspaceTour();
@@ -709,6 +740,117 @@ describe('Tour Subsystem', () => {
       expect(screen.queryByTestId('tour-guide-overlay')).toBeNull();
       expect(stageListener).toHaveBeenLastCalledWith({ active: false, stage: 'home', openSettings: false });
       expect(localStorage.getItem(USER_TOUR_COMPLETE_STORAGE_KEY)).toBe('true');
+    });
+
+    it('never injects tourDemoWorkspace for desktop, tauri, or vscode variants', () => {
+      for (const runtime of ['desktop', 'tauri', 'vscode'] as const) {
+        const dispatch = vi.fn();
+        const { unmount } = render(
+          <AppStateContext.Provider
+            value={{
+              state: { ...initialState, appRuntime: runtime, workspaceName: '', workspacePath: undefined },
+              dispatch,
+            } as any}
+          >
+            <TourGuideOverlay />
+          </AppStateContext.Provider>,
+        );
+        act(() => {
+          requestStartUserTour();
+        });
+        const dots = screen.getByTestId('tour-guide-overlay').querySelectorAll<HTMLButtonElement>('.tour-guide-dot');
+        for (let i = 0; i < dots.length; i++) {
+          fireEvent.click(dots[i]);
+        }
+        expect(dispatch).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: /finish|complete/i }));
+        expect(dispatch).not.toHaveBeenCalled();
+        unmount();
+      }
+    });
+
+    it('injects tourDemoWorkspace only on web when no workspace is loaded and clears it on close', () => {
+      const dispatch = vi.fn();
+      render(
+        <AppStateContext.Provider
+          value={{
+            state: { ...initialState, appRuntime: 'web', workspaceName: '', workspacePath: undefined },
+            dispatch,
+          } as any}
+        >
+          <TourGuideOverlay />
+        </AppStateContext.Provider>,
+      );
+      act(() => {
+        requestStartUserTour();
+      });
+
+      const dots = screen.getByTestId('tour-guide-overlay').querySelectorAll<HTMLButtonElement>('.tour-guide-dot');
+      expect(dots).toHaveLength(9);
+      fireEvent.click(dots[3]);
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'READY_ACK', workspacePath: TOUR_DEMO_WORKSPACE_PATH }));
+
+      fireEvent.click(dots[8]);
+      fireEvent.click(screen.getByRole('button', { name: /finish|complete/i }));
+      expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'READY_ACK', workspaceName: '', workspacePath: undefined }));
+    });
+
+    it('does not trigger Maximum update depth exceeded when stepping through workspace steps with stateful AppStateContext', () => {
+      const setSidebarCollapsedSpy = vi.fn();
+      const setSidebarActiveTabSpy = vi.fn();
+
+      function StatefulTourHarness() {
+        const [state, dispatch] = useReducer(
+          (s, a) => appReducer(s, a),
+          {
+            ...initialState,
+            appRuntime: 'web',
+            workspaceName: 'Virtual Workspace 1',
+            workspacePath: 'virtual://ws-1',
+            sidebarCollapsed: true,
+            sidebarActiveTab: 'search',
+            tocCollapsed: true,
+          },
+        );
+        return (
+          <AppStateContext.Provider
+            value={{
+              state,
+              dispatch,
+              setSidebarCollapsed: (collapsed: boolean) => {
+                setSidebarCollapsedSpy(collapsed);
+                dispatch({ type: 'SET_SIDEBAR_COLLAPSED', collapsed });
+              },
+              setSidebarActiveTab: (tab) => {
+                setSidebarActiveTabSpy(tab);
+                dispatch({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab });
+              },
+              toggleToc: () => dispatch({ type: 'TOGGLE_TOC' }),
+            } as any}
+          >
+            <TourGuideOverlay />
+          </AppStateContext.Provider>
+        );
+      }
+
+      render(<StatefulTourHarness />);
+      act(() => {
+        requestStartUserTour();
+      });
+
+      const dots = screen.getByTestId('tour-guide-overlay').querySelectorAll<HTMLButtonElement>('.tour-guide-dot');
+      // Step 4 (navigation -> workspace, expands sidebar)
+      fireEvent.click(dots[3]);
+      // Step 5 (sidebar -> switches tab to files)
+      fireEvent.click(dots[4]);
+      // Step 7 (toc -> expands toc)
+      fireEvent.click(dots[6]);
+      // Step 9 (settings)
+      fireEvent.click(dots[8]);
+
+      expect(setSidebarCollapsedSpy).toHaveBeenCalledTimes(1);
+      expect(setSidebarActiveTabSpy).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Step 9 of 9')).toBeInTheDocument();
     });
   });
 });

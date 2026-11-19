@@ -1,7 +1,9 @@
 import { createElement } from 'react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { detectMode } from '../../../website-app/src/main-web';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { detectMode, getWebAppTitle } from '../../../website-app/src/main-web';
 import { PlatformProvider } from '../../../ui/src/contexts/PlatformContext';
 import { AppStateContext } from '../../../ui/src/contexts/AppStateContext';
 import { WorkspaceSelection } from '../../../ui/src/components/Workspace/WorkspaceSelection';
@@ -48,6 +50,18 @@ describe('user-virtual-workspaces', () => {
     });
   });
 
+  describe('getWebAppTitle', () => {
+    it('returns View & Edit suffix for web mode and Demo suffix for test mode', () => {
+      expect(getWebAppTitle('web')).toBe('Markdown Explorer – View & Edit');
+      expect(getWebAppTitle('test')).toBe('Markdown Explorer – Demo');
+    });
+
+    it('uses View & Edit in website-app/index.html default title', () => {
+      const html = readFileSync(resolve(process.cwd(), 'website-app/index.html'), 'utf8');
+      expect(html).toContain('<title>Markdown Explorer – View &amp; Edit</title>');
+    });
+  });
+
   describe('isVirtualWorkspacePath', () => {
     it('identifies virtual workspace paths starting with virtual://', () => {
       expect(isVirtualWorkspacePath('virtual://ws-123')).toBe(true);
@@ -81,6 +95,9 @@ describe('user-virtual-workspaces', () => {
 
       const content = getVirtualWorkspaceFileContent(ws.path, 'Welcome.md');
       expect(content).toContain('Welcome');
+      expect(content).toContain('Close Workspace');
+      expect(content).toContain('chrome://flags');
+      expect(content).toContain('File System Access API');
     });
 
     it('falls back to numbered names when name is empty or whitespace', () => {
@@ -443,6 +460,45 @@ describe('user-virtual-workspaces', () => {
         const readyAck = hostMessages.find((m) => m.command === 'readyAck');
         expect(readyAck).toBeDefined();
         expect(readyAck.workspaceName).toBe('');
+      } finally {
+        bus.removeEventListener('host-message', listener);
+      }
+    });
+
+    it('preserves documentConversionEnabled in readyAck when loading a virtual workspace after drop', async () => {
+      initWebHost('file');
+      const bus = getWebBus();
+      (window as any).__webBus = bus;
+      const hostMessages: any[] = [];
+      const listener = (e: any) => hostMessages.push(e.detail);
+      bus.addEventListener('host-message', listener);
+
+      try {
+        bus.dispatchEvent(
+          new CustomEvent('webview-message', {
+            detail: { command: 'setDocumentConversion', enabled: true },
+          }),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        hostMessages.length = 0;
+
+        bus.dispatchEvent(
+          new CustomEvent('webview-message', {
+            detail: {
+              command: 'openDroppedFiles',
+              files: [{ name: 'Dropped.md', content: '# Dropped Title' }],
+            },
+          }),
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 80));
+
+        const readyAck = hostMessages.find((m) => m.command === 'readyAck');
+        expect(readyAck).toBeDefined();
+        expect(readyAck.documentConversionEnabled).toBe(true);
+        const renderContent = hostMessages.find((m) => m.command === 'renderContent');
+        expect(renderContent?.filePath).toBe('Dropped.md');
+        expect(renderContent?.markdownSource).toBe('# Dropped Title');
       } finally {
         bus.removeEventListener('host-message', listener);
       }

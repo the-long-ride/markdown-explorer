@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MediaModal } from '../../../../ui/src/components/Modal/MediaModal';
@@ -278,6 +280,15 @@ describe('TermsModal', () => {
     expect(onOpenExternal).toHaveBeenCalledWith(
       'https://the-long-ride.github.io/markdown-explorer/terms.html',
     );
+  });
+
+  it('keeps the terms card wide enough and prevents Privacy Policy / Terms of Service link wrapping', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'ui/src/styles/global/global-terms-modal.css'),
+      'utf8',
+    );
+    expect(css).toMatch(/\.settings-card\.terms-card\s*\{[^}]*width:\s*680px;/s);
+    expect(css).toMatch(/\.terms-link\s*\{[^}]*white-space:\s*nowrap;/s);
   });
 });
 

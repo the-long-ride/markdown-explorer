@@ -15,6 +15,11 @@ import {
   createTourClearDemoWorkspaceAction,
   TOUR_DEMO_WORKSPACE_PATH,
 } from './tourDemoWorkspace';
+import {
+  INITIAL_TOUR_COORDS,
+  areTourCoordsEqual,
+  computeTourTargetCoords,
+} from './tourTargetPosition';
 import { USER_TOUR_COMPLETE_STORAGE_KEY } from '../../constants/storage';
 
 function useSafeAppState() {
@@ -23,6 +28,15 @@ function useSafeAppState() {
   } catch {
     return null;
   }
+}
+
+function getDemoWorkspaceOptions(ctx: ReturnType<typeof useSafeAppState>) {
+  return {
+    theme: ctx?.state?.theme ?? 'dark',
+    themeStyle: ctx?.state?.themeStyle ?? 'default',
+    appRuntime: ctx?.state?.appRuntime ?? 'desktop',
+    hostPlatform: ctx?.state?.hostPlatform ?? 'windows',
+  };
 }
 
 export interface TourGuideOverlayProps {
@@ -43,19 +57,14 @@ export function TourGuideOverlay({
   const [isOpen, setIsOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [hasTarget, setHasTarget] = useState(false);
-  const [coords, setCoords] = useState({
-    spotTop: 0,
-    spotLeft: 0,
-    spotWidth: 0,
-    spotHeight: 0,
-    cardTop: 0,
-    cardLeft: 0,
-  });
+  const [coords, setCoords] = useState(INITIAL_TOUR_COORDS);
 
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const injectedDemoRef = useRef(false);
   const pendingTourRef = useRef(false);
   const userInteractedRef = useRef(false);
+  const appStateCtxRef = useRef(appStateCtx);
+  appStateCtxRef.current = appStateCtx;
 
   const steps = useMemo(() => buildTourSteps(language, runtime), [language, runtime]);
   const tt = useMemo(() => getTourTranslations(language), [language]);
@@ -114,51 +123,10 @@ export function TourGuideOverlay({
 
   const updateTarget = useCallback(() => {
     if (!isOpen || !activeStep) return;
-
-    let foundEl: HTMLElement | null = null;
-    const candidates = document.querySelectorAll<HTMLElement>(activeStep.targetSelector);
-    for (let i = 0; i < candidates.length; i++) {
-      const el = candidates[i];
-      const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        foundEl = el;
-        break;
-      }
-    }
-    if (!foundEl && candidates.length > 0) {
-      foundEl = candidates[0];
-    }
-
-    if (foundEl) {
-      foundEl.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
-      const rect = foundEl.getBoundingClientRect();
-      const pad = 8;
-      const spotTop = Math.max(0, rect.top - pad);
-      const spotLeft = Math.max(0, rect.left - pad);
-      const spotWidth = Math.max(0, rect.width + pad * 2);
-      const spotHeight = Math.max(0, rect.height + pad * 2);
-
-      const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
-      const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
-      const cardWidth = 360;
-      const cardHeight = 220;
-
-      let cardTop = spotTop + spotHeight + 12;
-      if (cardTop + cardHeight > vh - 20) {
-        cardTop = Math.max(20, spotTop - cardHeight - 12);
-      }
-      let cardLeft = spotLeft + spotWidth / 2 - cardWidth / 2;
-      cardLeft = Math.max(20, Math.min(vw - cardWidth - 20, cardLeft));
-
+    const nextCoords = computeTourTargetCoords(activeStep.targetSelector);
+    if (nextCoords) {
       setHasTarget(true);
-      setCoords({
-        spotTop,
-        spotLeft,
-        spotWidth,
-        spotHeight,
-        cardTop,
-        cardLeft,
-      });
+      setCoords((prev) => (areTourCoordsEqual(prev, nextCoords) ? prev : nextCoords));
     } else {
       setHasTarget(false);
     }
@@ -166,33 +134,30 @@ export function TourGuideOverlay({
 
   useEffect(() => {
     if (!isOpen || !activeStep) return;
+    const ctx = appStateCtxRef.current;
 
     if (activeStep.stage === 'workspace') {
       if (
-        appStateCtx?.dispatch &&
-        (!appStateCtx.state?.workspaceName || appStateCtx.state?.workspacePath === TOUR_DEMO_WORKSPACE_PATH)
+        runtime === 'web' &&
+        ctx?.dispatch &&
+        (!ctx.state?.workspaceName || ctx.state?.workspacePath === TOUR_DEMO_WORKSPACE_PATH)
       ) {
         if (!injectedDemoRef.current) {
-          const actions = createTourDemoWorkspaceActions({
-            theme: appStateCtx.state?.theme ?? 'dark',
-            themeStyle: appStateCtx.state?.themeStyle ?? 'default',
-            appRuntime: appStateCtx.state?.appRuntime ?? 'desktop',
-            hostPlatform: appStateCtx.state?.hostPlatform ?? 'windows',
-          });
+          const actions = createTourDemoWorkspaceActions(getDemoWorkspaceOptions(ctx));
           for (const action of actions) {
-            appStateCtx.dispatch(action);
+            ctx.dispatch(action);
           }
           injectedDemoRef.current = true;
         }
       }
-      if (appStateCtx?.setSidebarCollapsed) {
-        appStateCtx.setSidebarCollapsed(false);
+      if (ctx?.setSidebarCollapsed && ctx.state?.sidebarCollapsed !== false) {
+        ctx.setSidebarCollapsed(false);
       }
-      if (activeStep.sidebarTab && appStateCtx?.setSidebarActiveTab) {
-        appStateCtx.setSidebarActiveTab(activeStep.sidebarTab);
+      if (activeStep.sidebarTab && ctx?.setSidebarActiveTab && ctx.state?.sidebarActiveTab !== activeStep.sidebarTab) {
+        ctx.setSidebarActiveTab(activeStep.sidebarTab);
       }
-      if (activeStep.ensureTocOpen && appStateCtx?.state?.tocCollapsed) {
-        appStateCtx.toggleToc?.();
+      if (activeStep.ensureTocOpen && ctx?.state?.tocCollapsed) {
+        ctx.toggleToc?.();
       }
     }
 
@@ -213,7 +178,7 @@ export function TourGuideOverlay({
     return () => {
       if (tabTimer) clearTimeout(tabTimer);
     };
-  }, [isOpen, activeStep, appStateCtx, updateTarget]);
+  }, [isOpen, activeStep, runtime, updateTarget]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -249,24 +214,20 @@ export function TourGuideOverlay({
     pendingTourRef.current = false;
     userInteractedRef.current = false;
     requestTourStageChange({ active: false, stage: 'home', openSettings: false });
+    const ctx = appStateCtxRef.current;
     if (
-      (injectedDemoRef.current || appStateCtx?.state?.workspacePath === TOUR_DEMO_WORKSPACE_PATH) &&
-      appStateCtx?.dispatch
+      (injectedDemoRef.current || ctx?.state?.workspacePath === TOUR_DEMO_WORKSPACE_PATH) &&
+      ctx?.dispatch
     ) {
-      const clearAction = createTourClearDemoWorkspaceAction({
-        theme: appStateCtx.state?.theme ?? 'dark',
-        themeStyle: appStateCtx.state?.themeStyle ?? 'default',
-        appRuntime: appStateCtx.state?.appRuntime ?? 'desktop',
-        hostPlatform: appStateCtx.state?.hostPlatform ?? 'windows',
-      });
-      appStateCtx.dispatch(clearAction);
+      const clearAction = createTourClearDemoWorkspaceAction(getDemoWorkspaceOptions(ctx));
+      ctx.dispatch(clearAction);
       injectedDemoRef.current = false;
     }
     try {
       localStorage.setItem(USER_TOUR_COMPLETE_STORAGE_KEY, 'true');
     } catch {}
     setIsOpen(false);
-  }, [appStateCtx]);
+  }, []);
 
   const handleSkip = useCallback(() => {
     handleClose();

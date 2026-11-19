@@ -5,7 +5,7 @@ export {
   requestWelcomeTabSelect,
 } from '../../utils/welcomeEvents';
 
-export type TourStage = 'home' | 'workspace';
+export type TourStage = 'home' | 'selection' | 'workspace';
 
 export interface TourStageChangeDetail {
   active: boolean;

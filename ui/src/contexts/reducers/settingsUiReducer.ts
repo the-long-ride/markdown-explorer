@@ -178,10 +178,12 @@ export function reduceSettingsUiAction(
       };
 
     case 'SET_SIDEBAR_ACTIVE_TAB':
-      return { ...state, sidebarActiveTab: action.tab };
+      return state.sidebarActiveTab === action.tab ? state : { ...state, sidebarActiveTab: action.tab };
 
     case 'SET_SIDEBAR_COLLAPSED':
-      return { ...state, sidebarCollapsed: action.collapsed, hasSidebarPreference: true };
+      return state.sidebarCollapsed === action.collapsed && state.hasSidebarPreference
+        ? state
+        : { ...state, sidebarCollapsed: action.collapsed, hasSidebarPreference: true };
 
     default:
       return null;

@@ -189,7 +189,7 @@ export function AppView(props: any) {
         </div>
       )}
       <Suspense fallback={null}>
-        {tourStage !== 'workspace' && ((isTabView && activeTabId === 'home') || tourStage === 'home' || (!isTabView && showStandaloneHomepage)) ? (
+        {tourStage !== 'workspace' && tourStage !== 'selection' && ((isTabView && activeTabId === 'home') || tourStage === 'home' || (!isTabView && showStandaloneHomepage)) ? (
           <>
             {!isTabView && showStandaloneHomepage && tourStage !== 'home' && (
               <Topbar
@@ -211,14 +211,14 @@ export function AppView(props: any) {
               </div>
             </main>
           </>
-        ) : isEmptyWorkspaceTab || (tourStage !== 'workspace' && (!state.workspaceName || (!state.workspacePath && state.fileList.length === 0))) ? (
+        ) : isEmptyWorkspaceTab || (tourStage === 'selection' && state.appRuntime !== 'vscode') || (tourStage !== 'workspace' && (!state.workspaceName || (!state.workspacePath && state.fileList.length === 0))) ? (
           state.appRuntime === 'vscode' ? (
             <main className="tab-home">
               <div className="content__scroll" id="homeContentScroll">
                 <WelcomePage />
               </div>
             </main>
-          ) : isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
+          ) : tourStage !== 'selection' && isTabView && (state.isLoading || state.isWorkspaceScanning) ? (
             <main className="tab-loading">
               <div className="state-screen state-screen--tab-loading">
                 <div className="spinner" />

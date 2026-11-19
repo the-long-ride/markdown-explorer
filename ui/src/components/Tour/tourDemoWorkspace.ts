@@ -41,6 +41,8 @@ interface DemoDocEntry {
 
 const DEMO_TOC: TocEntry[] = [
   { id: 'welcome-to-your-virtual-workspace', text: 'Welcome to your Virtual Workspace', level: 1 },
+  { id: 'open-local-files-folders', text: 'Open Local Files & Folders', level: 2 },
+  { id: 'enable-local-folder-support-chromium-browsers', text: 'Enable Local Folder Support (Chromium Browsers)', level: 2 },
 ];
 
 const DEMO_HTML = [
@@ -52,10 +54,42 @@ const DEMO_HTML = [
   '<li><strong>Instant editing</strong>: Click on any document to view or edit it.</li>',
   '<li><strong>Saved locally</strong>: Your files and edits are stored right in your browser\u2019s local storage.</li>',
   '</ul>',
+  '<h2 class="mdn-heading-2" id="open-local-files-folders">Open Local Files &amp; Folders</h2>',
+  '<ul>',
+  '<li><strong>Workspace Selection</strong>: Click the <strong>Close Workspace</strong> button in the top-left bar (next to the navigation arrows) to open the Workspace Selection page and open a local folder or file.</li>',
+  '<li><strong>Drag &amp; Drop Anywhere</strong>: Drag and drop any <code>.md</code> file, supported document, or local folder right into anywhere in this app to open it immediately.</li>',
+  '</ul>',
+  '<h2 class="mdn-heading-2" id="enable-local-folder-support-chromium-browsers">Enable Local Folder Support (Chromium Browsers)</h2>',
+  '<p>To open or drop local folders directly in Chrome, Edge, or Brave, enable the File System Access API flag:</p>',
+  '<ol>',
+  '<li>Open a new browser tab and visit <code>chrome://flags</code> (or <code>brave://flags</code> / <code>edge://flags</code>).</li>',
+  '<li>Search for <strong>File System Access API</strong>.</li>',
+  '<li>Set it to <strong>Enabled</strong> and relaunch your browser.</li>',
+  '</ol>',
   '</div>',
 ].join('');
 
-const DEMO_MARKDOWN = `# Welcome to your Virtual Workspace\n\nYou can create, edit, and organize Markdown documents directly in your browser.\n\n- **Create files & folders**: Use the sidebar action buttons to add new files and folders.\n- **Instant editing**: Click on any document to view or edit it.\n- **Saved locally**: Your files and edits are stored right in your browser's local storage.\n`;
+const DEMO_MARKDOWN = `# Welcome to your Virtual Workspace
+
+You can create, edit, and organize Markdown documents directly in your browser.
+
+- **Create files & folders**: Use the sidebar action buttons to add new files and folders.
+- **Instant editing**: Click on any document to view or edit it.
+- **Saved locally**: Your files and edits are stored right in your browser's local storage.
+
+## Open Local Files & Folders
+
+- **Workspace Selection**: Click the **Close Workspace** button in the top-left bar (next to the navigation arrows) to open the Workspace Selection page and open a local folder or file.
+- **Drag & Drop Anywhere**: Drag and drop any \`.md\` file, supported document, or local folder right into anywhere in this app to open it immediately.
+
+## Enable Local Folder Support (Chromium Browsers)
+
+To open or drop local folders directly in Chrome, Edge, or Brave, enable the File System Access API flag:
+
+1. Open a new browser tab and visit \`chrome://flags\` (or \`brave://flags\` / \`edge://flags\`).
+2. Search for **File System Access API**.
+3. Set it to **Enabled** and relaunch your browser.
+`;
 
 const DEMO_DOCS: Record<string, DemoDocEntry> = {
   [`${TOUR_DEMO_WORKSPACE_PATH}/Welcome.md`]: {

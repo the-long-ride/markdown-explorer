@@ -281,19 +281,23 @@
   transform: rotate(180deg);
   transition: transform 0.15s;
 }
+.toc-compact.is-open .toc-compact__toggle {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
 .toc-compact.is-open .toc-compact__chevron {
   transform: rotate(0);
 }
 .toc-compact__menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% - var(--stroke-w));
   left: 0;
   right: 0;
   max-height: min(48vh, 360px);
   overflow-y: auto;
   padding: 12px;
   border: var(--stroke-w) solid var(--bd-s);
-  border-radius: var(--r-lg);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
   background:
     linear-gradient(
       180deg,

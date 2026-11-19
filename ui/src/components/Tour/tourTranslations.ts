@@ -18,6 +18,7 @@ export interface TourTranslations {
     features: TourStepCopy;
     manual: TourStepCopy;
     shortcuts: TourStepCopy;
+    workspaceSelection: TourStepCopy;
     navigation: TourStepCopy;
     sidebar: TourStepCopy;
     reader: TourStepCopy;
@@ -42,6 +43,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: 'Capabilities', title: 'Interactive Capabilities', desc: 'Experience sortable tables, table-to-chart conversion, Mermaid diagrams, and local HTML preview.' },
       manual: { badge: 'Manual & AI', title: 'Searchable User Manual', desc: 'Browse built-in documentation and copy tailored 1-click prompts for AI coding assistants.' },
       shortcuts: { badge: 'Customization', title: 'Shortcuts & Themes', desc: 'Review live keyboard shortcuts, customize typography, and switch themes including Cyberpunk.' },
+      workspaceSelection: { badge: 'Workspaces', title: 'Workspace Selection', desc: 'Open a local folder or file, drag & drop paths, or jump back into any recent workspace.' },
       navigation: { badge: 'Navigation', title: 'Multi-Tab Navigation', desc: 'Switch open markdown files, open new tabs, and split panes for side-by-side reading.' },
       sidebar: { badge: 'Explorer', title: 'Workspace File Tree', desc: 'Browse documentation hierarchies, search filenames, and pin your favorites.' },
       reader: { badge: 'Reader', title: 'Interactive Document Viewer', desc: 'Read styled markdown with live tables, chart rendering, code highlighting, and zoom.' },
@@ -64,6 +66,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: 'Tính năng', title: 'Khả năng tương tác cao', desc: 'Khám phá bảng dữ liệu tương tác, vẽ biểu đồ bảng, sơ đồ Mermaid và xem trước HTML.' },
       manual: { badge: 'Tài liệu & AI', title: 'Sổ tay hướng dẫn & AI', desc: 'Tra cứu tài liệu tích hợp và sao chép câu lệnh mẫu 1 chạm cho trợ lý AI.' },
       shortcuts: { badge: 'Tuỳ biến', title: 'Phím tắt & Giao diện', desc: 'Xem nhanh phím tắt, tuỳ biến font chữ và đổi giao diện phong phú gồm Cyberpunk.' },
+      workspaceSelection: { badge: 'Không gian', title: 'Chọn không gian làm việc', desc: 'Mở thư mục hoặc tệp cục bộ, kéo thả đường dẫn, hoặc quay lại các không gian gần đây.' },
       navigation: { badge: 'Điều hướng', title: 'Điều hướng đa tab', desc: 'Chuyển đổi giữa các tệp markdown đã mở, mở tab mới và chia đôi màn hình đọc.' },
       sidebar: { badge: 'Khám phá', title: 'Cây thư mục không gian', desc: 'Duyệt cấu trúc tài liệu, tìm kiếm tên tệp và ghim các tài liệu yêu thích.' },
       reader: { badge: 'Trình đọc', title: 'Trình xem tài liệu tương tác', desc: 'Đọc markdown định dạng đẹp với bảng tương tác, biểu đồ trực quan và tô màu mã nguồn.' },
@@ -86,6 +89,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: 'Fonctionnalités', title: 'Capacités interactives', desc: 'Tableaux triables, graphiques instantanés, Mermaid et prévisualisation HTML.' },
       manual: { badge: 'Manuel & IA', title: 'Manuel utilisateur & IA', desc: 'Consultez la documentation et copiez des prompts IA optimisés en un clic.' },
       shortcuts: { badge: 'Personnalisation', title: 'Raccourcis & Thèmes', desc: 'Consultez les raccourcis clavier, la typographie et activez le thème Cyberpunk.' },
+      workspaceSelection: { badge: 'Espaces', title: 'Sélection d’espace de travail', desc: 'Ouvrez un dossier ou fichier local, glissez-déposez des chemins, ou reprenez un espace récent.' },
       navigation: { badge: 'Navigation', title: 'Navigation multi-onglets', desc: "Basculez entre fichiers markdown ouverts, ouvrez de nouveaux onglets et scindez l'affichage." },
       sidebar: { badge: 'Explorateur', title: 'Arborescence des fichiers', desc: 'Parcourez la hiérarchie des documents, recherchez des fichiers et épinglez vos favoris.' },
       reader: { badge: 'Lecteur', title: 'Lecteur de documents interactif', desc: 'Lisez du markdown stylisé avec tableaux dynamiques, graphiques et coloration syntaxique.' },
@@ -108,6 +112,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: 'Funciones', title: 'Capacidades interactivas', desc: 'Tablas ordenables, gráficos desde tablas, diagramas Mermaid y visor HTML.' },
       manual: { badge: 'Manual e IA', title: 'Manual de usuario e IA', desc: 'Explore documentación integrada y copie prompts listos para asistentes de IA.' },
       shortcuts: { badge: 'Ajustes', title: 'Atajos y Temas', desc: 'Consulte atajos de teclado, ajustes tipográficos y temas como Cyberpunk.' },
+      workspaceSelection: { badge: 'Espacios', title: 'Selección de espacio', desc: 'Abra una carpeta o archivo local, arrastre rutas o vuelva a cualquier espacio reciente.' },
       navigation: { badge: 'Navegación', title: 'Navegación multipestaña', desc: 'Alterne entre archivos markdown abiertos, cree nuevas pestañas y divida paneles de lectura.' },
       sidebar: { badge: 'Explorador', title: 'Árbol de archivos', desc: 'Examine la jerarquía de documentos, busque nombres de archivo y fije sus favoritos.' },
       reader: { badge: 'Lector', title: 'Visor de documentos interactivo', desc: 'Lea markdown estilizado con tablas dinámicas, gráficos, resaltado de sintaxis y zoom.' },
@@ -130,6 +135,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: '核心特性', title: '丰富交互能力', desc: '支持可排序表格、表格生成图表、Mermaid 架构图与本地优先 HTML 预览。' },
       manual: { badge: '手册与 AI', title: '可检索用户手册', desc: '查阅内置文档，并一键复制专为 AI 编码助手定制的上下文提示词。' },
       shortcuts: { badge: '个性化', title: '快捷键与主题', desc: '实时查看键盘快捷键，灵活调节字体排版，自由切换包含赛博朋克的精美主题。' },
+      workspaceSelection: { badge: '工作区', title: '选择工作区', desc: '打开本地文件夹或文件、直接拖拽路径，或快速切换回最近打开的工作区。' },
       navigation: { badge: '导航', title: '多标签页导航', desc: '在已打开的 Markdown 文件间快速切换，新建标签页并支持分屏并排阅读。' },
       sidebar: { badge: '资源管理', title: '工作区文件树', desc: '浏览层级化文档目录，即时搜索文件名并收藏常用文档。' },
       reader: { badge: '阅读器', title: '交互式文档阅读器', desc: '高品质渲染 Markdown，支持交互式表格、即时图表渲染与代码高亮。' },
@@ -152,6 +158,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: 'Funksjoner', title: 'Interaktive muligheter', desc: 'Sorterbare tabeller, diagrammer fra tabeller, Mermaid og HTML-visning.' },
       manual: { badge: 'Håndbok & AI', title: 'Søkbar brukermanual', desc: 'Utforsk innebygd dokumentasjon og kopier AI-prompts med ett klikk.' },
       shortcuts: { badge: 'Tilpasning', title: 'Snarveier & Temaer', desc: 'Se tastatursnarveier, juster typografi og velg temaer som Cyberpunk.' },
+      workspaceSelection: { badge: 'Arbeidsområder', title: 'Velg arbeidsområde', desc: 'Åpne en lokal mappe eller fil, dra og slipp baner, eller hopp tilbake til et nylig område.' },
       navigation: { badge: 'Navigasjon', title: 'Flersidefane-navigasjon', desc: 'Veksle mellom åpnede markdown-filer, åpne nye faner og del visningsruten.' },
       sidebar: { badge: 'Utforsker', title: 'Arbeidsområdets filtré', desc: 'Bla gjennom dokumenthierarkiet, søk etter filnavn og fest dine favoritter.' },
       reader: { badge: 'Leser', title: 'Interaktiv dokumentviser', desc: 'Les stylet markdown med interaktive tabeller, diagrammer og syntaksutheving.' },
@@ -174,6 +181,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: '機能紹介', title: '多彩なインタラクティブ機能', desc: 'ソート対応表、表からのグラフ生成、Mermaid図、ローカルHTMLプレビュー。' },
       manual: { badge: 'マニュアル＆AI', title: '検索可能なユーザーマニュアル', desc: '内蔵ドキュメントの参照や、AIコーディング支援用プロンプトの1クリック取得。' },
       shortcuts: { badge: 'カスタマイズ', title: 'ショートカット＆テーマ', desc: 'リアルタイムショートカット一覧、タイポグラフィ、サイバーパンク等のテーマ。' },
+      workspaceSelection: { badge: 'ワークスペース', title: 'ワークスペース選択', desc: 'ローカルのフォルダやファイルを開くか、ドラッグ＆ドロップ、または履歴から素早く再開できます。' },
       navigation: { badge: 'ナビゲーション', title: 'マルチタブ ナビゲーション', desc: '開いたMarkdownファイルを素早く切替、新規タブ作成や画面分割での並行閲覧に対応。' },
       sidebar: { badge: 'エクスプローラー', title: 'ワークスペース ファイルツリー', desc: '階層化された文書構造をブラウズし、ファイル名検索やお気に入り登録が可能。' },
       reader: { badge: 'リーダー', title: 'インタラクティブ 文書ビューア', desc: '美しいスタイルでMarkdownを閲覧。動的テーブル、グラフ描画、コード強調表示に対応。' },
@@ -196,6 +204,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: '주요 기능', title: '인터랙티브 기능', desc: '정렬 가능한 테이블, 테이블 차트 생성, Mermaid 다이어그램, 로컬 HTML 미리보기.' },
       manual: { badge: '매뉴얼 & AI', title: '검색 가능한 사용자 매뉴얼', desc: '기본 설명서를 탐색하고 AI 코딩 도구를 위한 프롬프트를 원클릭으로 복사하세요.' },
       shortcuts: { badge: '사용자 설정', title: '단축키 및 테마', desc: '실시간 키보드 단축키, 타이포그래피 설정 및 사이버펑크를 포함한 테마 전환.' },
+      workspaceSelection: { badge: '워크스페이스', title: '워크스페이스 선택', desc: '로컬 폴더나 파일을 열거나, 경로를 드래그 앤 드롭하고, 최근 작업 공간으로 바로 돌아가세요.' },
       navigation: { badge: '탐색', title: '다중 탭 탐색', desc: '열려 있는 마크다운 파일을 빠르게 전환하고, 새 탭을 열거나 화면을 분할하여 읽으세요.' },
       sidebar: { badge: '탐색기', title: '워크스페이스 파일 트리', desc: '계층형 문서 구조를 탐색하고, 파일명을 검색하며 즐겨찾기를 고정하세요.' },
       reader: { badge: '리더', title: '인터랙티브 문서 뷰어', desc: '인터랙티브 표, 차트 렌더링, 코드 강조 및 확대 기능으로 마크다운을 쾌적하게 읽으세요.' },
@@ -218,6 +227,7 @@ const TRANSLATIONS: Record<string, TourTranslations> = {
       features: { badge: 'Возможности', title: 'Интерактивные возможности', desc: 'Сортировка таблиц, графики из таблиц, диаграммы Mermaid и HTML-просмотр.' },
       manual: { badge: 'Справка и ИИ', title: 'Руководство пользователя и ИИ', desc: 'Поиск по документации и копирование готовых промптов для ИИ-ассистентов.' },
       shortcuts: { badge: 'Настройки', title: 'Горячие клавиши и темы', desc: 'Клавиатурные сокращения, настройки шрифтов и темы оформления, включая Cyberpunk.' },
+      workspaceSelection: { badge: 'Пространства', title: 'Выбор рабочего пространства', desc: 'Откройте локальную папку или файл, перетащите путь или вернитесь к недавним пространствам.' },
       navigation: { badge: 'Навигация', title: 'Вкладки и навигация', desc: 'Переключайтесь между открытыми файлами, открывайте вкладки и разделяйте экран для чтения.' },
       sidebar: { badge: 'Проводник', title: 'Дерево файлов проекта', desc: 'Просматривайте структуру документов, ищите файлы по имени и закрепляйте избранное.' },
       reader: { badge: 'Чтение', title: 'Интерактивный просмотр документов', desc: 'Стилизованный markdown с интерактивными таблицами, диаграммами и подсветкой кода.' },

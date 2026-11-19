@@ -20,9 +20,15 @@ export function detectMode(
   return params.get('mode') === 'test' ? 'test' : 'web';
 }
 
+export function getWebAppTitle(mode: 'web' | 'test'): string {
+  return mode === 'test' ? 'Markdown Explorer – Demo' : 'Markdown Explorer – View & Edit';
+}
+
 // Set mode BEFORE the UI boots so the host listener handles 'ready' correctly.
 if (typeof document !== 'undefined' && document.getElementById('root')) {
-  initWebHost(detectMode());
+  const mode = detectMode();
+  document.title = getWebAppTitle(mode);
+  initWebHost(mode);
 
   // Boot the full React UI — detectBridge() in ui/src/main.tsx will find
   // window.__webBus and use createWebBridge().
