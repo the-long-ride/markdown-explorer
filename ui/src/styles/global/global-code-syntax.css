@@ -226,7 +226,7 @@ body > .mdn-link-context-menu {
   position: fixed;
   right: 18px;
   bottom: 18px;
-  z-index: var(--z-modal-popover);
+  z-index: calc(var(--z-tooltip) - 1);
   max-width: min(420px, calc(100vw - 36px));
   padding: 9px 12px;
   border: var(--stroke-w) solid var(--bd-x);

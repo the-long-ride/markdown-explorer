@@ -45,6 +45,10 @@ export function executeThemeTransition(
   };
 
   if (!isThemeTransitionSupported() || !root) {
+    if (root) {
+      if (options?.nextTheme) root.setAttribute('data-theme', options.nextTheme);
+      if (options?.themeStyle) root.setAttribute('data-theme-style', options.themeStyle);
+    }
     updateThemeState();
     if (root) {
       if (options?.nextTheme) root.setAttribute('data-theme', options.nextTheme);
@@ -145,6 +149,8 @@ export function executeThemeTransition(
     }
 
     const performDomUpdate = () => {
+      if (options?.nextTheme) root.setAttribute('data-theme', options.nextTheme);
+      if (options?.themeStyle) root.setAttribute('data-theme-style', options.themeStyle);
       updateThemeState();
       if (options?.nextTheme) root.setAttribute('data-theme', options.nextTheme);
       if (options?.themeStyle) root.setAttribute('data-theme-style', options.themeStyle);

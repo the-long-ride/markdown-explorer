@@ -8,6 +8,7 @@ import {
 } from './mermaidSvgCache.ts';
 import {
   createMermaidRerenderQueue,
+  isMermaidNodeHidden,
   type MermaidQueueScheduler,
   type MermaidViewport,
 } from './mermaidRerenderQueue.ts';
@@ -108,30 +109,44 @@ export async function enhanceMermaidLazily(
 ): Promise<void> {
   const doc = options.document ?? (typeof document === 'undefined' ? undefined : document);
   const signature = options.cacheSignature ?? resolveMermaidCacheSignature(doc, options.isDark);
-  const hits: HTMLElement[] = [];
+  const hits: Array<{ node: HTMLElement; svg: string }> = [];
   const misses: HTMLElement[] = [];
   for (const node of root.querySelectorAll<HTMLElement>(PENDING_MERMAID_SELECTOR)) {
+    if (isMermaidNodeHidden(node)) continue;
     if (!node.dataset.originalCode) node.dataset.originalCode = node.textContent || '';
     const source = node.dataset.originalCode;
     const cached = isCacheableMermaidSource(source) ? getCachedMermaidSvg(mermaidCacheKey(source, signature)) : undefined;
     if (cached && !node.querySelector('svg')) {
-      node.innerHTML = cached;
-      hits.push(node);
+      hits.push({ node, svg: cached });
     } else {
       misses.push(node);
     }
   }
   if (hits.length > 0 && !options.isCancelled()) {
-    await runInMermaidRenderLane(() => enhanceMermaid(root, { ...options, nodes: hits }));
+    await runInMermaidRenderLane(() => {
+      if (options.isCancelled()) return Promise.resolve();
+      const visibleHits: HTMLElement[] = [];
+      for (const { node, svg } of hits) {
+        if (isMermaidNodeHidden(node)) continue;
+        if (!node.querySelector('svg')) node.innerHTML = svg;
+        visibleHits.push(node);
+      }
+      return visibleHits.length > 0
+        ? enhanceMermaid(root, { ...options, nodes: visibleHits })
+        : Promise.resolve();
+    });
   }
   const onRawSvg = (node: HTMLElement, source: string, svg: string) => {
     if (isCacheableMermaidSource(source)) setCachedMermaidSvg(mermaidCacheKey(source, signature), svg);
     options.onRawSvg?.(node, source, svg);
   };
-  return renderMermaidNodesLazily(misses, (node, isCancelled) => enhanceMermaid(root, {
-    ...options,
-    onRawSvg,
-    isCancelled,
-    nodes: [node],
-  }), { ...lazy, isCancelled: options.isCancelled });
+  return renderMermaidNodesLazily(misses, (node, isCancelled) => {
+    if (isMermaidNodeHidden(node)) return Promise.resolve();
+    return enhanceMermaid(root, {
+      ...options,
+      onRawSvg,
+      isCancelled,
+      nodes: [node],
+    });
+  }, { ...lazy, isCancelled: options.isCancelled });
 }

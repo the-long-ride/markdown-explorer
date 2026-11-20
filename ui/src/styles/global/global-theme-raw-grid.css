@@ -1,6 +1,8 @@
 /* Raw Grid layout, inspired by visible documentation grids without copied branding */
 [data-theme-style="raw-grid"] .app,
-[data-theme-style="raw-grid"] .content {
+[data-theme-style="raw-grid"] .content,
+[data-theme-style="raw-grid"] .tab-loading,
+[data-theme-style="raw-grid"] .splash {
   background-image:
     linear-gradient(var(--bd) 1px, transparent 1px),
     linear-gradient(90deg, var(--bd) 1px, transparent 1px);

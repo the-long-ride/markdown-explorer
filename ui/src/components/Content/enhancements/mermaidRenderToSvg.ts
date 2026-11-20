@@ -15,6 +15,7 @@ import {
   resolveMermaidFontFamily,
   resolveMermaidThemeOptions,
 } from './mermaidRendering.ts';
+import { runInMermaidRenderLane } from './mermaidLazyRendering.ts';
 import { snapshotSvgHtml } from './mermaidSvgSnapshot.ts';
 
 export interface RenderMermaidToSvgArgs {
@@ -91,29 +92,34 @@ export async function renderMermaidToSvg(args: RenderMermaidToSvgArgs): Promise<
   host.style.overflow = 'visible';
   host.style.pointerEvents = 'none';
   host.appendChild(scratchNode);
-  doc.body.appendChild(host);
 
   const { getMermaid } = await import('../../../lib/renderLibs.ts');
   const mermaid = await getMermaid();
   if (typeof mermaid.run !== 'function') throw new Error('renderMermaidToSvg: mermaid.run unavailable');
 
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: 'loose',
-    theme: 'base',
-    themeVariables,
-    fontFamily,
-    ...layoutConfig,
+  let svgHtml = '';
+  await runInMermaidRenderLane(async () => {
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'loose',
+      theme: 'base',
+      themeVariables,
+      fontFamily,
+      ...layoutConfig,
+    });
+    try {
+      doc.body.appendChild(host);
+      await mermaid.run({ nodes: [scratchNode] });
+      const svg = scratchNode.querySelector('svg');
+      if (!svg) throw new Error('renderMermaidToSvg: mermaid produced no svg');
+      // Prepare and snapshot while still mounted in the off-screen host so
+      // getComputedStyle, getBBox, getCTM, and getBoundingClientRect have layout.
+      prepareMermaidSvg(svg, kind, args.source, null, themeTokens, fontFamily);
+      svgHtml = snapshotSvgHtml(svg);
+    } finally {
+      host.remove();
+    }
   });
-  try {
-    await mermaid.run({ nodes: [scratchNode] });
-  } finally {
-    host.remove();
-  }
 
-  const svg = scratchNode.querySelector('svg');
-  if (!svg) throw new Error('renderMermaidToSvg: mermaid produced no svg');
-
-  prepareMermaidSvg(svg, kind, args.source, null, themeTokens, fontFamily);
-  return { svgHtml: snapshotSvgHtml(svg) };
+  return { svgHtml };
 }

@@ -23,6 +23,7 @@ import type {
   CustomThemeColorOverrides,
   CustomThemeLayout,
   CustomThemeScheme,
+  PersistedState,
   ThemeMode,
 } from '../types';
 
@@ -304,4 +305,23 @@ export function applyCustomThemeToRoot(
   applyColorOverrides(root, theme, getCurrentScheme(theme.colorMode ?? themeMode));
   applyLayout(root, theme.layout);
   applyBackground(root, theme.background);
+}
+
+/** Synchronously apply persisted or default theme attributes before initial paint. */
+export function syncBootThemeToDocument(
+  saved?: PersistedState | null,
+  root: HTMLElement | null = typeof document !== 'undefined' ? document.documentElement : null,
+) {
+  if (!root) return;
+  const theme = normalizeThemeMode(saved?.theme);
+  const customThemes = normalizeCustomThemes(saved?.customThemes);
+  const activeCustomThemeId = normalizeActiveCustomThemeId(saved?.activeCustomThemeId, customThemes);
+  const activeCustomTheme = activeCustomThemeId
+    ? customThemes.find((item) => item.id === activeCustomThemeId)
+    : undefined;
+  const resolvedStyle = activeCustomTheme?.baseStyle ?? normalizeThemeStyle(saved?.themeStyle);
+
+  root.dataset.theme = theme;
+  root.dataset.themeStyle = resolvedStyle;
+  applyCustomThemeToRoot(root, activeCustomTheme, theme);
 }
