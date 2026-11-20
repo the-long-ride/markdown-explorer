@@ -6,6 +6,7 @@ export type TourStepId =
   | 'welcome'
   | 'launchpad'
   | 'manual'
+  | 'workspaceSelection'
   | 'navigation'
   | 'sidebar'
   | 'reader'
@@ -26,9 +27,9 @@ export interface TourStepDefinition {
   desc: string;
 }
 
-export function buildTourSteps(language = 'en', _runtime = 'desktop'): TourStepDefinition[] {
+export function buildTourSteps(language = 'en', runtime = 'desktop'): TourStepDefinition[] {
   const t = getTourTranslations(language).steps;
-  return [
+  const homeSteps: TourStepDefinition[] = [
     {
       id: 'welcome',
       stage: 'home',
@@ -55,6 +56,33 @@ export function buildTourSteps(language = 'en', _runtime = 'desktop'): TourStepD
       title: t.manual.title,
       desc: t.manual.desc,
     },
+  ];
+
+  if (runtime === 'desktop' || runtime === 'tauri') {
+    return [
+      ...homeSteps,
+      {
+        id: 'workspaceSelection',
+        stage: 'selection',
+        targetSelector: '.workspace-selection__panel, .workspace-selection__actions, .workspace-selection',
+        badge: t.workspaceSelection.badge,
+        title: t.workspaceSelection.title,
+        desc: t.workspaceSelection.desc,
+      },
+      {
+        id: 'settings',
+        stage: 'selection',
+        openSettings: true,
+        targetSelector: '.settings-card, .workspace-selection__actions',
+        badge: t.settings.badge,
+        title: t.settings.title,
+        desc: t.settings.desc,
+      },
+    ];
+  }
+
+  return [
+    ...homeSteps,
     {
       id: 'navigation',
       stage: 'workspace',

@@ -695,15 +695,15 @@ describe('App render', () => {
     await waitFor(() => {
       expect(screen.getByTitle('Toggle focus mode')).toBeInTheDocument();
     });
-    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Close workspace')).not.toBeInTheDocument();
 
     mockState = createMockState({ focusMode: true, appRuntime: 'vscode' });
     rerender(createElement(App));
-    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Close workspace')).not.toBeInTheDocument();
 
     mockState = createMockState({ focusMode: true, appRuntime: 'desktop' });
     rerender(createElement(App));
-    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Close workspace')).not.toBeInTheDocument();
   });
 
   it('opens a new workspace-selection tab from the shortcut in Tab view', () => {
@@ -757,7 +757,7 @@ describe('App render', () => {
     await waitFor(() => {
       expect(screen.getByTitle('Toggle focus mode')).toBeInTheDocument();
     });
-    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Close workspace')).not.toBeInTheDocument();
   });
 
   it('never renders WorkspaceSelection in VS Code extension when workspaceName is empty', () => {

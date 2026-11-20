@@ -203,7 +203,7 @@ let _TRANSLATIONS: Record<string, Translations> = {
       welcomePage: "Welcome Page",
       themeLabel: "Theme",
       moreActions: "More actions",
-      closeFolder: "Close Folder (Return to Workspace Selector)",
+      closeFolder: "Close workspace (Return to Workspace Selector)",
       goBack: "Go Back",
       goForward: "Go Forward",
       refresh: "Refresh",

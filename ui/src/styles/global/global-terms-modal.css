@@ -11,7 +11,7 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
-.terms-card {
+.settings-card.terms-card {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -57,6 +57,7 @@
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
+  white-space: nowrap;
 }
 
 .terms-agreement {

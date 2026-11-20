@@ -90,8 +90,15 @@ export function App() {
   } = useDesktopTabs({ state, dispatch, bridge, isDesktop: isDesktop || isWebFileMode, isTabView, setNavigationScope, guardWorkspaceLeave });
   const openDroppedWebFiles = useCallback((files: File[]) => {
     guardWorkspaceLeave(async () => {
+      const filePayloads = (await Promise.all(files.map(async (f) => {
+        try {
+          return { name: f.name, content: await f.text() };
+        } catch {
+          return null;
+        }
+      }))).filter((entry): entry is { name: string; content: string } => entry !== null);
+      if (filePayloads.length === 0) return;
       const operation = prepareWorkspaceOpen();
-      const filePayloads = await Promise.all(files.map(async (f) => ({ name: f.name, content: await f.text() })));
       (bridge as any).postMessage({ command: 'openDroppedFiles', files: filePayloads, ...operation });
     });
   }, [bridge, guardWorkspaceLeave, prepareWorkspaceOpen]);

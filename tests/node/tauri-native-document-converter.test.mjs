@@ -57,12 +57,12 @@ test('Tauri native converter declares every supported document extension', () =>
 
 test('Tauri native converter uses only approved local Rust adapters', () => {
   const cargo = read('tauri/Cargo.toml');
-  assert.match(cargo, /office_oxide = \{ version = "0\.1\.8", default-features = false \}/);
+  assert.match(cargo, /office_oxide = \{ version = "0\.1\.17", default-features = false \}/);
   assert.match(cargo, /pdf-extract = "0\.12"/);
   assert.match(cargo, /html2markdown = \{ version = "0\.2\.0", default-features = false \}/);
   assert.match(cargo, /rtf-parser = \{ version = "0\.4\.3", default-features = false \}/);
   assert.match(cargo, /quick-xml = "0\.41"/);
-  assert.match(cargo, /calamine = "0\.36"/);
+  assert.match(cargo, /calamine = "0\.38"/);
   assert.doesNotMatch(cargo, /^html2md\s*=/m);
 });
 

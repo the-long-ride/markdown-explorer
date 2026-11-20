@@ -356,6 +356,97 @@ describe('useFileDropOpen', () => {
       act(() => { window.dispatchEvent(event); });
       expect(openDroppedWebFiles).toHaveBeenCalledWith([file]);
     });
+
+    it('web path: opens dropped .md file via openDroppedWebFiles even when getAsFileSystemHandle is present and browser clears dataTransfer.files after await', async () => {
+      const openDroppedWebFiles = vi.fn();
+      const openDroppedFolder = vi.fn();
+      const openDroppedFileHandle = vi.fn();
+      const file = new File(['# Hello'], 'notes.md', { type: 'text/markdown' });
+      const handle = { kind: 'file', getFile: vi.fn().mockResolvedValue(file) };
+      const item = { getAsFileSystemHandle: vi.fn() };
+      const props = makeProps({
+        isDesktop: false,
+        isWeb: true,
+        openDroppedFolder,
+        openDroppedFileHandle,
+        openDroppedWebFiles,
+      });
+      renderHook((p) => useFileDropOpen(p!), { initialProps: props });
+
+      const { event, dataTransfer } = createDragEvent('drop', { files: [file], items: [item] });
+      // Simulate Chromium clearing DataTransfer.files as soon as the synchronous drop event yields
+      item.getAsFileSystemHandle.mockImplementation(async () => {
+        dataTransfer.files = [];
+        return handle;
+      });
+
+      act(() => { window.dispatchEvent(event); });
+      await vi.waitFor(() => {
+        expect(openDroppedWebFiles).toHaveBeenCalledWith([file]);
+        expect(openDroppedFolder).not.toHaveBeenCalled();
+        expect(openDroppedFileHandle).not.toHaveBeenCalled();
+      });
+    });
+
+    it('web path: resolves handle.getFile() for dropped .md file when dataTransfer.files is empty', async () => {
+      const openDroppedWebFiles = vi.fn();
+      const file = new File(['# From handle'], 'readme.md', { type: 'text/markdown' });
+      const handle = { kind: 'file', getFile: vi.fn().mockResolvedValue(file) };
+      const item = { getAsFileSystemHandle: vi.fn().mockResolvedValue(handle) };
+      const props = makeProps({
+        isDesktop: false,
+        isWeb: true,
+        openDroppedFolder: vi.fn(),
+        openDroppedFileHandle: vi.fn(),
+        openDroppedWebFiles,
+      });
+      renderHook((p) => useFileDropOpen(p!), { initialProps: props });
+
+      const { event } = createDragEvent('drop', { files: [], items: [item] });
+      act(() => { window.dispatchEvent(event); });
+      await vi.waitFor(() => {
+        expect(openDroppedWebFiles).toHaveBeenCalledWith([file]);
+      });
+    });
+
+    it('web path: routes dropped binary document handles through openDroppedFileHandle instead of text decoding', async () => {
+      const openDroppedWebFiles = vi.fn();
+      const openDroppedFileHandle = vi.fn();
+      const pdfFile = new File(['%PDF-1.4'], 'report.pdf', { type: 'application/pdf' });
+      const handle = { kind: 'file', getFile: vi.fn().mockResolvedValue(pdfFile) };
+      const item = { getAsFileSystemHandle: vi.fn().mockResolvedValue(handle) };
+      const props = makeProps({
+        isDesktop: false,
+        isWeb: true,
+        openDroppedFolder: vi.fn(),
+        openDroppedFileHandle,
+        openDroppedWebFiles,
+      });
+      renderHook((p) => useFileDropOpen(p!), { initialProps: props });
+
+      const { event } = createDragEvent('drop', { files: [pdfFile], items: [item] });
+      act(() => { window.dispatchEvent(event); });
+      await vi.waitFor(() => {
+        expect(openDroppedFileHandle).toHaveBeenCalledWith(handle);
+        expect(openDroppedWebFiles).not.toHaveBeenCalled();
+      });
+    });
+
+    it('web path: ignores 0-byte directory placeholder when webkitGetAsEntry reports a directory', () => {
+      const openDroppedWebFiles = vi.fn();
+      const dirPlaceholder = new File([''], 'docs-folder', { type: '' });
+      const item = { webkitGetAsEntry: () => ({ isDirectory: true, isFile: false }) };
+      const props = makeProps({
+        isDesktop: false,
+        isWeb: true,
+        openDroppedWebFiles,
+      });
+      renderHook((p) => useFileDropOpen(p!), { initialProps: props });
+
+      const { event } = createDragEvent('drop', { files: [dirPlaceholder], items: [item] });
+      act(() => { window.dispatchEvent(event); });
+      expect(openDroppedWebFiles).not.toHaveBeenCalled();
+    });
   });
 
   describe('dragend', () => {

@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { getDroppedFilePath } from '../desktop/desktopTabs';
 
+const TEXT_DROP_EXTENSIONS = new Set([
+  '.md', '.mdx', '.markdown', '.txt', '.html', '.htm', '.csv', '.tsv',
+]);
+
+function isTextDropFile(fileName: string): boolean {
+  const dot = fileName.lastIndexOf('.');
+  if (dot === -1) return false;
+  return TEXT_DROP_EXTENSIONS.has(fileName.slice(dot).toLowerCase());
+}
+
 interface UseFileDropOpenParams {
   isDesktop: boolean;
   isWeb?: boolean;
@@ -64,36 +74,65 @@ export function useFileDropOpen({
       resetDragState();
       if (modalOpen) return;
 
-      if (isWeb && event.dataTransfer?.items && openDroppedFolder) {
-        const items = Array.from(event.dataTransfer.items);
-        if (items.length > 0) {
-          const item = items[0];
-          if (typeof (item as any).getAsFileSystemHandle === 'function') {
-            try {
-              const handle = await (item as any).getAsFileSystemHandle();
-              if (handle && handle.kind === 'directory') {
-                openDroppedFolder(handle);
-                return;
-              }
-              if (isWeb && !openDroppedWebFiles && handle && (handle as any).kind === 'file' && openDroppedFileHandle) {
+      // Snapshot synchronous DataTransfer lists before any `await`, because
+      // Chromium clears DataTransfer once the drop handler yields.
+      const droppedFiles = Array.from(event.dataTransfer?.files ?? []);
+      const items = Array.from(event.dataTransfer?.items ?? []);
+
+      if (isWeb && items.length > 0 && (openDroppedFolder || openDroppedFileHandle || openDroppedWebFiles)) {
+        const item = items[0];
+        if (typeof (item as any).getAsFileSystemHandle === 'function') {
+          try {
+            const handle = await (item as any).getAsFileSystemHandle();
+            if (handle && handle.kind === 'directory' && openDroppedFolder) {
+              openDroppedFolder(handle);
+              return;
+            }
+            if (handle && (handle as any).kind === 'file') {
+              if (!openDroppedWebFiles && openDroppedFileHandle) {
                 openDroppedFileHandle(handle);
                 return;
               }
-            } catch (err) {
-              console.error('Failed to get FileSystemHandle on drop:', err);
+              if (openDroppedWebFiles) {
+                const resolvedFiles = droppedFiles.length > 0
+                  ? droppedFiles
+                  : (typeof (handle as any).getFile === 'function' ? [await (handle as any).getFile()] : []);
+                if (resolvedFiles.length > 0) {
+                  if (
+                    openDroppedFileHandle &&
+                    resolvedFiles.length === 1 &&
+                    !isTextDropFile(resolvedFiles[0].name)
+                  ) {
+                    openDroppedFileHandle(handle);
+                    return;
+                  }
+                  openDroppedWebFiles(resolvedFiles);
+                  return;
+                }
+                if (openDroppedFileHandle) {
+                  openDroppedFileHandle(handle);
+                  return;
+                }
+              }
             }
+          } catch (err) {
+            console.error('Failed to get FileSystemHandle on drop:', err);
           }
         }
       }
 
-      if (isWeb && openDroppedWebFiles && event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-        openDroppedWebFiles(Array.from(event.dataTransfer.files));
-        return;
+      if (isWeb && openDroppedWebFiles && droppedFiles.length > 0) {
+        const entry = items[0] && typeof (items[0] as any).webkitGetAsEntry === 'function'
+          ? (items[0] as any).webkitGetAsEntry()
+          : null;
+        if (!entry?.isDirectory) {
+          openDroppedWebFiles(droppedFiles);
+          return;
+        }
       }
 
-      const files = Array.from(event.dataTransfer?.files ?? []);
-      if (files.length === 0) return;
-      const droppedPath = getDroppedFilePath(files[0]);
+      if (droppedFiles.length === 0) return;
+      const droppedPath = getDroppedFilePath(droppedFiles[0]);
       if (droppedPath) openDroppedPath(droppedPath);
     };
 

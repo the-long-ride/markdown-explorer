@@ -14,6 +14,19 @@ You can create, edit, and organize Markdown documents directly in your browser.
 - **Create files & folders**: Use the sidebar action buttons to add new files and folders.
 - **Instant editing**: Click on any document to view or edit it.
 - **Saved locally**: Your files and edits are stored right in your browser's local storage.
+
+## Open Local Files & Folders
+
+- **Workspace Selection**: Click the **Close Workspace** button in the top-left bar (next to the navigation arrows) to open the Workspace Selection page and open a local folder or file.
+- **Drag & Drop Anywhere**: Drag and drop any \`.md\` file, supported document, or local folder right into anywhere in this app to open it immediately.
+
+## Enable Local Folder Support (Chromium Browsers)
+
+To open or drop local folders directly in Chrome, Edge, or Brave, enable the File System Access API flag:
+
+1. Open a new browser tab and visit \`chrome://flags\` (or \`brave://flags\` / \`edge://flags\`).
+2. Search for **File System Access API**.
+3. Set it to **Enabled** and relaunch your browser.
 `;
 
 async function requestContentFromWebDemoBus(filePath: string): Promise<string | null> {

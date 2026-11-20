@@ -189,6 +189,21 @@ describe('TableOfContents', () => {
       expect(styles).toMatch(/\.toc-compact__toggle::before\s*\{\s*display: none;/);
     });
 
+    it('attaches the compact menu flush below the toggle without a vertical gap', () => {
+      const styles = readFileSync(
+        resolve(process.cwd(), 'ui/src/styles/global/global-toc-panel.css'),
+        'utf8',
+      );
+
+      expect(styles).toMatch(
+        /\.toc-compact\.is-open \.toc-compact__toggle\s*\{\s*border-bottom-left-radius:\s*0;\s*border-bottom-right-radius:\s*0;/s,
+      );
+      expect(styles).toMatch(
+        /\.toc-compact__menu\s*\{[^}]*top:\s*calc\(100% - var\(--stroke-w\)\);[^}]*border-radius:\s*0 0 var\(--r-lg\) var\(--r-lg\);/s,
+      );
+      expect(styles).not.toMatch(/\.toc-compact__menu\s*\{[^}]*top:\s*calc\(100% \+ 8px\)/s);
+    });
+
     it('removes active TOC and refresh-banner rails while retaining pet paw hooks', () => {
       const themeStyles = [
         'ui/src/styles/global/global-theme-vercel.css',
