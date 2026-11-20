@@ -379,6 +379,7 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/components/Tour/tourDemoWorkspace.ts': ['tests/unit/ui/components/tour-guide.test.tsx'],
   'ui/src/components/Tour/tourEvents.ts': ['tests/unit/ui/components/tour-guide.test.tsx'],
   'ui/src/components/Tour/tourSteps.ts': ['tests/unit/ui/components/tour-guide.test.tsx'],
+  'ui/src/components/Tour/tourTargetPosition.ts': ['tests/unit/ui/components/tour-guide.test.tsx'],
   'ui/src/components/Tour/tourTranslations.ts': ['tests/unit/ui/components/tour-guide.test.tsx'],
   'ui/src/components/Content/contentTabContextMenuItems.tsx': ['tests/unit/ui/components/content-tabs-deep.test.tsx'],
   'ui/src/components/Content/enhancements/deferredMermaidRerender.ts': ['tests/node/mermaid-rendering-quality.test.mjs'],

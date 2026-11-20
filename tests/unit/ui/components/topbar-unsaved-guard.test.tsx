@@ -54,7 +54,7 @@ describe('Topbar unsaved changes guard', () => {
 
   it('defers closing the workspace until the guard commits', () => {
     setup('desktop');
-    fireEvent.click(screen.getByRole('button', { name: /close folder/i }));
+    fireEvent.click(screen.getByRole('button', { name: /close workspace/i }));
     expect(guardUnsavedChanges).toHaveBeenCalledWith([filePath], expect.any(Function));
     expect(postMessage).not.toHaveBeenCalledWith({ command: 'closeWorkspace' });
     guardedCommit?.();
