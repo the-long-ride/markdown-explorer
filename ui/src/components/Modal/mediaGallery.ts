@@ -35,7 +35,7 @@ function readMermaidSource(wrap: HTMLElement): string | undefined {
   if (encoded) {
     try { return decodeURIComponent(encoded); } catch { /* fall through */ }
   }
-  const raw = wrap.querySelector<HTMLElement>('.mermaid')?.dataset?.originalCode;
+  const raw = wrap.dataset?.originalCode || wrap.querySelector<HTMLElement>('.mermaid')?.dataset?.originalCode;
   return raw || undefined;
 }
 

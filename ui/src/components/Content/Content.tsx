@@ -1,4 +1,5 @@
 import { memo, useRef, useState, useCallback, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useAppState } from "../../contexts/AppStateContext";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -157,6 +158,12 @@ export const Content = memo(function Content({
     if (workspaceUnavailablePath) bridge.postMessage({ command: "deleteRecentWorkspace", path: workspaceUnavailablePath });
   };
 
+  const actionNoticeNode = actionNotice ? (
+    <div className={`mdn-action-notice mdn-action-notice--${actionNotice.tone}`} role={actionNotice.tone === 'error' ? 'alert' : 'status'}>
+      {actionNotice.message}
+    </div>
+  ) : null;
+
   return (
     <>
       {state.splitView?.enabled ? (
@@ -203,7 +210,7 @@ export const Content = memo(function Content({
         </div>
       )}
       {showHtmlPreviewExperienceBanner && <div className="html-preview-experience-banner" role="status">{t.htmlPreviewExperienceNotice}</div>}
-      {actionNotice && <div className={`mdn-action-notice mdn-action-notice--${actionNotice.tone}`} role={actionNotice.tone === 'error' ? 'alert' : 'status'}>{actionNotice.message}</div>}
+      {actionNoticeNode && (typeof document !== "undefined" ? createPortal(actionNoticeNode, document.body) : actionNoticeNode)}
     </>
   );
 });

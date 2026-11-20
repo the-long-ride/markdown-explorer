@@ -10,6 +10,8 @@ import { PlatformProvider } from './contexts/PlatformContext';
 import { createVsCodeBridge } from './platform/vscode';
 import { createElectronBridge } from './platform/electron';
 import { createWebBridge } from './platform/web';
+import { syncBootThemeToDocument } from './theme/customThemes';
+import type { PersistedState } from './types';
 
 // Lazy-load the full application shell (providers + App + all components).
 // This keeps index.js tiny so the window paints instantly.
@@ -55,6 +57,7 @@ export function detectBridge(win: any = window) {
 }
 
 const bridge = detectBridge();
+syncBootThemeToDocument(bridge.getState<PersistedState>());
 (window as any).PlatformBridge = bridge;
 
 // ── Mount React app ────────────────────────────────────────────────────────
@@ -67,16 +70,25 @@ function dismissSplash() {
   setTimeout(() => splash.remove(), 350);
 }
 
+const bootLoadingFallback = (
+  <main className="tab-loading tab-loading--fullscreen">
+    <div className="state-screen state-screen--initial-loading">
+      <div className="spinner" />
+      <div className="state-screen__title">Loading…</div>
+    </div>
+  </main>
+);
+
 const root = createRoot(document.getElementById('root')!);
 root.render(
   <StrictMode>
     <PlatformProvider bridge={bridge}>
-      <Suspense fallback={null}>
+      <Suspense fallback={bootLoadingFallback}>
         <AppShell />
       </Suspense>
     </PlatformProvider>
   </StrictMode>,
 );
 
-dismissSplash();
+void appShellPromise.finally(() => dismissSplash());
 

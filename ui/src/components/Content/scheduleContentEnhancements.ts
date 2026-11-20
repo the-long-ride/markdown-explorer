@@ -1,5 +1,6 @@
 import { runContentEnhancements } from './runContentEnhancements';
 import { createContentEnhancementScheduler } from './contentEnhancementScheduler';
+import { isMermaidNodeHidden } from './enhancements/mermaidRerenderQueue';
 
 // Fired (bubbling) on the document body whenever an enhancement pass settles,
 // so hosts can re-apply layout-sensitive state such as a restored scroll.
@@ -13,12 +14,12 @@ interface ScheduleArgs {
   mermaidRunIdRef: React.MutableRefObject<number>;
 }
 
-const PENDING_ENHANCEMENT_SELECTOR = [
+const PENDING_NON_MERMAID_SELECTOR = [
   'pre code:not(.is-custom-highlighted):not([data-mdn-highlighted]):not([data-mdn-render-error])',
   '.mdn-math[data-math]:not(.is-rendered):not([data-mdn-render-error])',
-  '.mermaid:not([data-mdn-rendered]):not([data-mdn-render-error]):not([data-mdn-rerender-queued])',
   '.mdn-table:not([data-mdn-enhanced]):not([data-mdn-render-error])',
 ].join(',');
+const PENDING_MERMAID_SELECTOR = '.mermaid:not([data-mdn-rendered]):not([data-mdn-render-error]):not([data-mdn-rerender-queued])';
 
 function resolveDarkTheme(theme: string): boolean {
   return theme === 'dark' || (
@@ -27,7 +28,11 @@ function resolveDarkTheme(theme: string): boolean {
 }
 
 export function hasPendingContentEnhancements(body: ParentNode): boolean {
-  return body.querySelector(PENDING_ENHANCEMENT_SELECTOR) !== null;
+  if (body.querySelector(PENDING_NON_MERMAID_SELECTOR) !== null) return true;
+  for (const node of body.querySelectorAll<HTMLElement>(PENDING_MERMAID_SELECTOR)) {
+    if (!isMermaidNodeHidden(node)) return true;
+  }
+  return false;
 }
 
 export function scheduleContentEnhancements({

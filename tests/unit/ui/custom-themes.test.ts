@@ -10,11 +10,14 @@ import {
   getActiveCustomTheme,
   normalizeActiveCustomThemeId,
   normalizeCustomThemes,
+  syncBootThemeToDocument,
 } from '../../../ui/src/theme/customThemes';
 
 afterEach(() => {
   document.documentElement.removeAttribute('style');
   document.documentElement.removeAttribute('data-custom-theme-id');
+  document.documentElement.removeAttribute('data-theme');
+  document.documentElement.removeAttribute('data-theme-style');
 });
 
 const VALID_DATA_URL = 'data:image/png;base64,iVBOR';
@@ -424,5 +427,38 @@ describe('applyCustomThemeToRoot', () => {
     expect(root.style.getPropertyValue('--r')).toBe('');
     expect(root.style.getPropertyValue('--custom-theme-bg-image')).toBe('');
     expect(root.getAttribute('data-custom-theme-id')).toBeNull();
+  });
+});
+
+describe('syncBootThemeToDocument', () => {
+  test('defaults to auto + raw-grid when no persisted state exists', () => {
+    const root = document.documentElement;
+    syncBootThemeToDocument(undefined, root);
+    expect(root.dataset.theme).toBe('auto');
+    expect(root.dataset.themeStyle).toBe('raw-grid');
+    expect(root.getAttribute('data-custom-theme-id')).toBeNull();
+  });
+
+  test('applies persisted theme, themeStyle, and custom theme overrides before mount', () => {
+    const root = document.documentElement;
+    syncBootThemeToDocument({
+      theme: 'light',
+      themeStyle: 'bento',
+      activeCustomThemeId: 'ct-1',
+      customThemes: [{
+        id: 'ct-1',
+        name: 'Boot Custom',
+        baseStyle: 'cyberpunk',
+        colorMode: 'dark',
+        createdAt: 1,
+        updatedAt: 1,
+        colors: { dark: { bg: '#101214', accent: '#00ffd5' } },
+      }],
+    }, root);
+    expect(root.dataset.theme).toBe('light');
+    expect(root.dataset.themeStyle).toBe('cyberpunk');
+    expect(root.dataset.customThemeId).toBe('ct-1');
+    expect(root.style.getPropertyValue('--bg')).toBe('#101214');
+    expect(root.style.getPropertyValue('--accent')).toBe('#00ffd5');
   });
 });

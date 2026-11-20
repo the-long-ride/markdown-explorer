@@ -7,6 +7,7 @@ import {
 import { enforceMermaidSvgContrast } from './mermaidContrast.ts';
 import { repairArchitectureLabelCollisions } from './mermaidArchitecture.ts';
 import { enforceZenUmlFont, repairZenUmlTitle } from './mermaidZenUml.ts';
+import { isMermaidNodeHidden } from './mermaidRerenderQueue.ts';
 import {
   applySankeyIntrinsicWidth,
   estimateSankeyIntrinsicWidth,
@@ -275,7 +276,9 @@ export function fitSequenceSvg(svg: SVGSVGElement): void {
 
 function getPendingNodes(root: ParentNode, explicitNodes?: readonly HTMLElement[]): HTMLElement[] {
   const nodes = explicitNodes ?? [...root.querySelectorAll<HTMLElement>(MERMAID_SELECTOR)];
-  return [...nodes].filter((element) => !element.dataset.mdnRendered && !element.dataset.mdnRenderError);
+  return [...nodes].filter(
+    (element) => !element.dataset.mdnRendered && !element.dataset.mdnRenderError && !isMermaidNodeHidden(element),
+  );
 }
 
 export function getMermaidRenderNodes(root: ParentNode): HTMLElement[] {
@@ -318,6 +321,7 @@ export async function enhanceMermaid(
 
   for (const node of nodes) {
     if (options.isCancelled() || runId !== options.runIdRef.current) return;
+    if (isMermaidNodeHidden(node)) continue;
 
     if (!node.dataset.originalCode) node.dataset.originalCode = node.textContent || '';
     const originalCode = node.dataset.originalCode || '';

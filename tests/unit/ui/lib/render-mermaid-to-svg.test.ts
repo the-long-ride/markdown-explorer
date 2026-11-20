@@ -127,5 +127,34 @@ describe('renderMermaidToSvg', () => {
       expect(document.body.children.length).toBe(before);
       expect(findHost()).toBeUndefined();
     });
+
+    it('keeps the off-screen host attached during SVG preparation and snapshot measurement', async () => {
+      let hostAttachedDuringPrepare = false;
+      runMock.mockImplementationOnce(async ({ nodes }: { nodes: HTMLElement[] }) => {
+        for (const node of nodes) {
+          node.innerHTML = '<svg width="100" height="100"><rect width="50" height="50"/></svg>';
+          const svg = node.querySelector('svg') as SVGSVGElement;
+          svg.getBoundingClientRect = () => {
+            hostAttachedDuringPrepare = Boolean(findHost()?.contains(svg));
+            return {
+              x: 0, y: 0, left: 0, top: 0, right: 120, bottom: 100, width: 120, height: 100,
+              toJSON: () => ({}),
+            };
+          };
+        }
+      });
+
+      const before = document.body.children.length;
+      const { svgHtml } = await renderMermaidToSvg({
+        source: 'flowchart TD\nA-->B',
+        isDark: false,
+        document,
+      });
+
+      expect(hostAttachedDuringPrepare).toBe(true);
+      expect(svgHtml).toContain('width="120"');
+      expect(document.body.children.length).toBe(before);
+      expect(findHost()).toBeUndefined();
+    });
   });
 });

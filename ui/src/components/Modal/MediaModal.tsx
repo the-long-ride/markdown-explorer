@@ -2,7 +2,7 @@
 // components/Modal/MediaModal.tsx — Image/SVG zoom & pan viewer
 // =============================================================================
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { TooltipButton } from '../shared/TooltipButton';
 import { ZoomInIcon, ZoomOutIcon, ResetZoomIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, CopyIcon, SaveImageIcon, SunIcon, MoonIcon } from '../shared/icons';
@@ -46,6 +46,13 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
   const transformVars = { '--pan-x': `${pan.x}px`, '--pan-y': `${pan.y}px`, '--zoom': zoom };
   useCssVars(mediaImageRef, transformVars);
   useCssVars(mediaSvgRef, transformVars);
+  const item = gallery && items.length > 0 ? items[Math.min(currentIndex, items.length - 1)] : null;
+  // Memoize dangerouslySetInnerHTML so React 19 reference checks do not reset
+  // imperatively swapped SVG markup during zoom, pan, or unrelated re-renders.
+  const svgInnerHtml = useMemo(
+    () => ({ __html: item?.type === 'svg' ? (item.html ?? '') : '' }),
+    [item, item?.html],
+  );
 
   useEffect(() => {
     setCurrentIndex(gallery?.currentIndex ?? 0);
@@ -74,6 +81,8 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
   const prevGalleryRef = useRef<MediaGallery | null>(null);
   useEffect(() => {
     if (!gallery) return;
+    const isNewGallery = gallery !== prevGalleryRef.current;
+    if (isNewGallery && currentIndex !== (gallery.currentIndex ?? 0)) return;
     const current = gallery.items[Math.min(currentIndex, gallery.items.length - 1)];
     if (!current || current.type !== 'svg' || !current.source) return;
     // Capture the narrowed `source` (`string`) before entering the microtask
@@ -85,7 +94,6 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     // by createMediaGallery is already correct (drawn from the content body's
     // fully-laid-out SVG). Subsequent theme flips / navigation on the SAME
     // gallery trigger a fresh recolor.
-    const isNewGallery = gallery !== prevGalleryRef.current;
     prevGalleryRef.current = gallery;
     if (isNewGallery && current.html) return;
     let cancelled = false;
@@ -98,16 +106,22 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     // SVG would silently keep the previous theme's palette.
     queueMicrotask(() => {
       if (cancelled) return;
+      if (typeof document !== 'undefined' && state.theme) {
+        document.documentElement.dataset.theme = state.theme;
+      }
       renderMermaidToSvg({ source, isDark: isDarkNow })
         .then(({ svgHtml }) => {
-          if (!cancelled && mediaSvgRef.current) {
-            mediaSvgRef.current.innerHTML = svgHtml;
+          if (!cancelled) {
+            current.html = svgHtml;
+            if (mediaSvgRef.current) {
+              mediaSvgRef.current.innerHTML = svgHtml;
+            }
           }
         })
         .catch(() => { /* ignore render errors during theme flip */ });
     });
     return () => { cancelled = true; };
-  }, [state.theme, currentIndex, gallery, isDarkNow]);
+  }, [state.theme, state.themeStyle, state.settings?.activeCustomThemeId, currentIndex, gallery, isDarkNow]);
 
 
   const zoomIn = useCallback(() => setZoom((z) => Math.min(MEDIA_ZOOM_MAX, z + MEDIA_ZOOM_BUTTON_STEP)), []);
@@ -183,8 +197,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
     return () => modal.removeEventListener('wheel', handler);
   }, [gallery, items.length]);
 
-  if (!gallery || items.length === 0) return null;
-  const item = items[Math.min(currentIndex, items.length - 1)];
+  if (!gallery || !item) return null;
 
   const onMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -245,7 +258,7 @@ export function MediaModal({ gallery, onClose }: MediaModalProps) {
               className="mdn-modal-content-svg media-modal__transform"
               data-mdn-mermaid-kind={item.kind}
               ref={mediaSvgRef}
-              dangerouslySetInnerHTML={{ __html: item.html ?? '' }}
+              dangerouslySetInnerHTML={svgInnerHtml}
             />
           )}
         </div>

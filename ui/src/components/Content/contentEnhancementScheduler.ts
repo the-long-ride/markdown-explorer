@@ -86,13 +86,22 @@ export function createContentEnhancementScheduler(
     }
   };
 
-  const observer = options.createObserver(() => {
+  const observer = options.createObserver((records) => {
     if (disposed || !bodyIsCurrent()) return;
+    const hasChildListMutation = !Array.isArray(records)
+      || records.length === 0
+      || records.some((record) => record.type === 'childList');
+    if (!hasChildListMutation && !options.hasPending()) return;
     retryIndex = 0;
     clearScheduledDelay();
     requestRun();
   });
-  observer.observe(options.body, { childList: true, subtree: true });
+  observer.observe(options.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-expanded', 'open', 'hidden'],
+  });
   requestRun();
 
   return {

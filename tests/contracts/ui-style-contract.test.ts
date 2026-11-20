@@ -494,6 +494,9 @@ describe('UI style contract', () => {
     expect(scopeCss).toMatch(/\.scope-view\s*\{[^}]*z-index:\s*var\(--z-modal\);/s);
     expect(mediaCss).toMatch(/\.media-modal\.mdn-modal\s*\{[^}]*z-index:\s*var\(--z-modal-popover\);/s);
     expect(syntaxCss).toMatch(/body\s*>\s*\.mdn-link-context-menu\s*\{[^}]*z-index:/s);
+    expect(syntaxCss).toMatch(/\.mdn-action-notice\s*\{[^}]*z-index:\s*calc\(var\(--z-tooltip\) - 1\);/s);
+    const contentTsx = fs.readFileSync(path.join(uiRoot, 'components/Content/Content.tsx'), 'utf8');
+    expect(contentTsx).toContain('createPortal(actionNoticeNode, document.body)');
     expect(tableCoreCss).not.toMatch(/\.mdn-filter-dropdown\s*\{[^}]*z-index:\s*var\(--z-dropdown\);/s);
     expect(tableControlsCss).not.toMatch(/not\(\.is-wrapped\)\s+\.mdn-table\s+th\s*\{[^}]*overflow:\s*hidden/s);
   });

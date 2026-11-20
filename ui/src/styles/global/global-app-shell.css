@@ -112,7 +112,7 @@
   align-items: center;
   justify-content: center;
   color: var(--tx);
-  background: var(--bg);
+  background: transparent;
 }
 
 .state-screen__cancel {
