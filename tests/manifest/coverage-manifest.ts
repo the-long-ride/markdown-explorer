@@ -205,6 +205,7 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/hooks/useSupportPrompt.ts': ['tests/unit/ui/hooks/useSupportPrompt.test.ts'],
   'ui/src/hooks/useUserManualActions.ts': ['tests/node/user-manual-home.test.mjs'],
   'ui/src/hooks/useResize.ts': ['tests/unit/ui/hooks/useResize.test.ts'],
+  'ui/src/hooks/useResetOnChange.ts': ['tests/unit/ui/hooks/useResetOnChange.test.ts'],
   'ui/src/hooks/useScrollVisibility.ts': ['tests/unit/ui/hooks/useKeyboard.test.ts'],
   'ui/src/hooks/useUpdateCheck.ts': ['tests/unit/ui/hooks/useUpdateCheck.test.ts', 'tests/unit/ui/hooks/useUpdateCheck-hook.test.ts'],
   'ui/src/hooks/useUpdateNotificationState.ts': ['tests/node/settings-navigation-update.test.mjs'],

@@ -32,7 +32,8 @@ export function areTourCoordsEqual(a: TourCoords, b: TourCoords): boolean {
 
 /**
  * Finds the first visible target element matching `targetSelector` and computes
- * spotlight + tooltip card coordinates within the current viewport.
+ * spotlight + tooltip card coordinates within the current viewport. Returns null
+ * while no candidate has a laid-out box, so callers never spotlight a 0x0 rect.
  */
 export function computeTourTargetCoords(targetSelector: string): TourCoords | null {
   let foundEl: HTMLElement | null = null;
@@ -44,9 +45,6 @@ export function computeTourTargetCoords(targetSelector: string): TourCoords | nu
       foundEl = el;
       break;
     }
-  }
-  if (!foundEl && candidates.length > 0) {
-    foundEl = candidates[0];
   }
   if (!foundEl) return null;
 

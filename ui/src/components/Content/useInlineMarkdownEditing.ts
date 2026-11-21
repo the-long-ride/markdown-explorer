@@ -65,6 +65,9 @@ export function useInlineMarkdownEditing({
   onSourceChange,
 }: UseInlineMarkdownEditingOptions): InlineMarkdownEditingController {
   const [activeTarget, setActiveTarget] = useState<HTMLElement | null>(null);
+  // Skips the no-op close on every render bump while no block editor is open.
+  const activeTargetRef = useRef(activeTarget);
+  activeTargetRef.current = activeTarget;
 
   const filePathRef = useRef(filePath);
 
@@ -75,7 +78,7 @@ export function useInlineMarkdownEditing({
     // A render bump caused by an edit elsewhere (for example the other split pane
     // of the same file) must not discard the open editor and its draft. Only close
     // it when the file changed or its block no longer exists with a valid range.
-    setActiveTarget((current) => {
+    if (activeTargetRef.current) setActiveTarget((current) => {
       if (!current || fileChanged || !enabled || !root) return null;
       return root.contains(current) && readEditableRange(current, source.length) ? current : null;
     });

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../contexts/AppStateContext';
 import type { TocEntry } from '../../types';
 import { ChevronUpIcon } from '../shared/icons';
+import { useResetOnChange } from '../../hooks/useResetOnChange';
 import { getTranslations } from '../../contexts/translations';
 import {
   getActiveDocumentBody,
@@ -131,9 +132,7 @@ export function TableOfContents({ variant = 'panel', entries, rootId, documentKe
     setCompactOpen(false);
   }, [rootId]);
 
-  useEffect(() => {
-    setCompactOpen(false);
-  }, [state.currentFile, renderKey]);
+  useResetOnChange([state.currentFile, renderKey], () => setCompactOpen(false));
 
   if (toc.length === 0) return null;
 

@@ -212,6 +212,23 @@ describe('parser', () => {
       expect((result.tokens[0] as CodeBlockToken).lang).toBe('tsx');
     });
 
+    it('closes fenced code at a closing fence indented up to three spaces', () => {
+      const result = parse('```mermaid\nflowchart LR\n  A --> B\n  ```\n\nMath: $E=mc^2$');
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'code', lang: 'mermaid', content: 'flowchart LR\n  A --> B' });
+      expect(result.tokens[1]).toMatchObject({ type: 'paragraph' });
+    });
+
+    it('does not close fenced code at a shorter, mismatched, or info-string fence', () => {
+      const result = parse('````md\n```js\n~~~~\n```\n````\nafter');
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'code', lang: 'md', content: '```js\n~~~~\n```' });
+      expect(result.tokens[1]).toMatchObject({ type: 'paragraph' });
+    });
+
+    it('does not treat a fence indented four spaces as closing', () => {
+      const result = parse('```\ncode\n    ```\n```');
+      expect(stripSourceRange(result.tokens[0])).toEqual({ type: 'code', lang: '', content: 'code\n    ```' });
+    });
+
     it('preserves CSV fence metadata for delimiter and header overrides', () => {
       const result = parse('```csv noheader delimiter=tab\nA\tB\n```');
       expect(stripSourceRange(result.tokens[0])).toEqual({

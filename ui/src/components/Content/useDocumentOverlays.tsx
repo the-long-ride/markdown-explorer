@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useState, type ReactNode, type RefObject } from "react";
 import type { AppState } from "../../contexts/appStateModel";
 import { getExportScopeTranslations } from "../../contexts/exportScopeTranslations";
 import { getTranslations } from "../../contexts/translations";
@@ -13,6 +13,7 @@ import { ScopeViewModal } from "../Modal/ScopeViewModal";
 import { LinkContextMenu, type LinkContextMenuState } from "../shared/LinkContextMenu";
 import { buildRenderedDocumentSnapshot } from "./contentUtils";
 import { useBookmarkSelection } from "./useBookmarkSelection";
+import { useResetOnChange } from "../../hooks/useResetOnChange";
 
 export interface DocumentOverlayDocument {
   filePath: string | null;
@@ -56,9 +57,9 @@ export function useDocumentOverlays({
   const [linkMenu, setLinkMenu] = useState<LinkContextMenuState | null>(null);
   const [scopeFile, setScopeFile] = useState<(typeof state.fileList)[number] | null>(null);
 
-  useEffect(() => {
+  useResetOnChange([doc.filePath, doc.renderVersion], () => {
     setLinkMenu(null); setHtmlModal(null); setScopeFile(null);
-  }, [doc.filePath, doc.renderVersion]);
+  });
 
   const onActionError = useCallback((message: string) => showActionNotice(message), []);
 

@@ -174,6 +174,22 @@ describe('tableEditor', () => {
     expect(ranges[1].data.headers).toEqual(['Another', 'Table']);
   });
 
+  it('keeps tables inside a code block until its real closing fence', () => {
+    const doc = [
+      '````markdown',
+      '```js',
+      '| Not | Table |',
+      '| --- | --- |',
+      '```',
+      '````',
+      '| Real | Table |',
+      '| --- | --- |',
+    ].join('\n');
+
+    const ranges = findTableRanges(doc);
+    expect(ranges.map((range) => range.data.headers)).toEqual([['Real', 'Table']]);
+  });
+
   it('bounds table ranges to exact table block so trailing content is editable', () => {
     const docWithTrailingNewlines = [
       '# Document',

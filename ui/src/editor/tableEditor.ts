@@ -1,3 +1,5 @@
+import { isClosingCodeFence } from '../markdown/parser.ts';
+
 export type TableAlignment = 'left' | 'center' | 'right' | null;
 
 export interface TableData {
@@ -279,19 +281,25 @@ export function findTableRanges(docText: string): TableRange[] {
   const ranges: TableRange[] = [];
   const lines = docText.split('\n');
   let offset = 0;
-  let inCodeBlock = false;
+  let openFence: string | null = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const trimmed = line.trim();
 
-    if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
-      inCodeBlock = !inCodeBlock;
+    if (openFence !== null) {
+      if (isClosingCodeFence(line, openFence)) openFence = null;
       offset += line.length + 1;
       continue;
     }
 
-    if (!inCodeBlock && i + 1 < lines.length) {
+    const openingFence = /^\s*(`{3,}|~{3,})/.exec(line);
+    if (openingFence) {
+      openFence = openingFence[1];
+      offset += line.length + 1;
+      continue;
+    }
+
+    if (i + 1 < lines.length) {
       const nextLine = lines[i + 1];
       if (line.includes('|') && isPipeTableSeparator(nextLine)) {
         const startOffset = offset;
