@@ -19,6 +19,8 @@ const mockBridge = { postMessage: mockPostMessage, getState: vi.fn(() => ({})), 
 let mockState: any;
 let mockCanGoBack = true;
 let mockCanGoForward = false;
+let mockSnapshotView: any = { mode: 'live' };
+let mockSnapshotToc: any[] = [];
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
@@ -45,6 +47,13 @@ vi.mock('../../../../ui/src/contexts/NavigationContext', () => ({
 
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
   usePlatform: () => mockBridge,
+}));
+
+vi.mock('../../../../ui/src/contexts/RepositorySnapshotContext', () => ({
+  useRepositorySnapshot: () => ({
+    repositoryView: mockSnapshotView,
+    activeToc: mockSnapshotToc,
+  }),
 }));
 
 vi.mock('../../../../ui/src/contexts/translations', () => ({
@@ -92,13 +101,14 @@ vi.mock('../../../../ui/src/components/shared/TooltipButton', () => ({
 }));
 
 vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
-  ToolbarActionMenu: ({ onHome, onTheme, onEdit, onSettings, hasUpdate, isDark, canEdit, showEdit = true, editShortcut, ...props }: any) =>
+  ToolbarActionMenu: ({ onHome, onTheme, onEdit, onSettings, onTocToggle, tocToggleDisabled, tocActive, hasUpdate, isDark, canEdit, showEdit = true, editShortcut, ...props }: any) =>
     React.createElement(
       'div',
       { 'data-testid': 'toolbar-action-menu', 'data-has-update': String(hasUpdate), 'data-is-dark': String(isDark), 'data-edit-shortcut': editShortcut || '' },
       React.createElement('button', { onClick: onHome, 'data-testid': 'menu-home' }, 'Home'),
       React.createElement('button', { onClick: onTheme, 'data-testid': 'menu-theme' }, 'Theme'),
       showEdit ? React.createElement('button', { onClick: onEdit, disabled: !canEdit, 'data-testid': 'menu-edit' }, 'Edit') : null,
+      React.createElement('button', { onClick: onTocToggle, disabled: Boolean(tocToggleDisabled), 'data-active': String(Boolean(tocActive)), 'data-testid': 'menu-toc' }, 'Toggle TOC'),
       React.createElement('button', { onClick: onSettings, 'data-testid': 'menu-settings' }, 'Settings'),
     ),
 }));
@@ -143,6 +153,8 @@ describe('Topbar render', () => {
     delete (window as any).electronAPI;
     mockCanGoBack = true;
     mockCanGoForward = false;
+    mockSnapshotView = { mode: 'live' };
+    mockSnapshotToc = [];
     mockState = {
       theme: 'light',
       isMaximized: false,
@@ -658,5 +670,24 @@ describe('Topbar render', () => {
     delete window.__webBus;
     const { container } = render(React.createElement(Topbar, defaultProps));
     expect(container.querySelector('[data-testid="web-demo-nav"]')).toBeNull();
+  });
+
+  it('enables Toggle TOC in revision mode when the snapshot has TOC entries and disables it when empty', () => {
+    mockState.toc = [];
+    mockState.currentFile = null;
+    mockState.tocCollapsed = false;
+    mockSnapshotView = { mode: 'revision', oid: 'a'.repeat(40), headOid: 'b'.repeat(40) };
+    mockSnapshotToc = [{ id: 'overview', text: 'Overview', level: 1 }];
+    const { rerender, getByTestId } = render(React.createElement(Topbar, defaultProps));
+    const tocBtn = getByTestId('menu-toc');
+    expect(tocBtn).not.toBeDisabled();
+    expect(tocBtn).toHaveAttribute('data-active', 'true');
+    fireEvent.click(tocBtn);
+    expect(mockToggleToc).toHaveBeenCalledTimes(1);
+
+    mockSnapshotToc = [];
+    rerender(React.createElement(Topbar, defaultProps));
+    expect(getByTestId('menu-toc')).toBeDisabled();
+    expect(getByTestId('menu-toc')).toHaveAttribute('data-active', 'false');
   });
 });

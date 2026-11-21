@@ -508,6 +508,11 @@ describe('UI style contract', () => {
     expect(menusCss).toMatch(/\.tab-context-menu__item-shortcut\s*\{[^}]*height:\s*16px;/s);
     expect(cpMenusCss).toMatch(/\.tab-context-menu__item-shortcut\s*\{[^}]*height:\s*16px;/s);
   });
+
+  test('resets host-inherited scrollbar-color/width when ::-webkit-scrollbar is supported', () => {
+    const tokensShellCss = fs.readFileSync(path.join(uiRoot, 'styles/tokens/tokens-app-shell.css'), 'utf8');
+    expect(tokensShellCss).toMatch(/@supports selector\(::-webkit-scrollbar\)\s*\{\s*html,\s*body,\s*\*\s*\{[^}]*scrollbar-width:\s*auto;\s*scrollbar-color:\s*auto;/s);
+  });
 });
 
 type TitleViolation = {

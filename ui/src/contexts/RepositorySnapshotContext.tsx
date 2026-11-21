@@ -13,13 +13,21 @@ import {
   searchRevisionWorkspace,
   type RevisionWorkspaceProjection,
 } from '../history/revisionWorkspace';
-import type { WorkspaceSearchResult } from '../types';
+import type { TocEntry, WorkspaceSearchResult } from '../types';
+import type { AppState } from './appStateModel';
 import { useAppState } from './AppStateContext';
+import { renderMarkdownClientSide, type RenderedMarkdown } from './contentTabState';
 import { useHistory } from './HistoryContext';
 import { usePlatform } from './PlatformContext';
 import { usePersistedRevisionSelections } from './usePersistedRevisionSelections';
 
 const HISTORY_PAGE_SIZE = 50;
+const EMPTY_TOC: readonly TocEntry[] = [];
+
+export type SnapshotPreviewSettings = Pick<
+  AppState['settings'],
+  'defaultHtmlPreview' | 'defaultHtmlCodeBlockPreview' | 'defaultCsvPreview' | 'language'
+>;
 
 export interface RepositorySnapshotState {
   readonly selectedOid: string | null;
@@ -36,6 +44,8 @@ export interface RepositorySnapshotContextValue {
   readonly commits: readonly GitRepositoryCommit[];
   readonly repositoryView: RepositoryView;
   readonly revisionWorkspace: RevisionWorkspaceProjection | null;
+  readonly activeRendered: RenderedMarkdown | null;
+  readonly activeToc: readonly TocEntry[];
   readonly hasMoreHistory: boolean;
   readonly isLoadingMoreHistory: boolean;
   readonly allRefs: boolean;
@@ -66,6 +76,8 @@ const EMPTY_CONTEXT: RepositorySnapshotContextValue = {
   commits: [],
   repositoryView: LIVE_VIEW,
   revisionWorkspace: null,
+  activeRendered: null,
+  activeToc: EMPTY_TOC,
   hasMoreHistory: false,
   isLoadingMoreHistory: false,
   allRefs: false,
@@ -99,6 +111,7 @@ export function RepositorySnapshotProvider({
   workspaceKey,
   enabled = true,
   documentConversionEnabled = false,
+  previewSettings,
   persistedSelections,
   onPersistedSelectionsChange,
 }: {
@@ -107,6 +120,7 @@ export function RepositorySnapshotProvider({
   workspaceKey: string;
   enabled?: boolean;
   documentConversionEnabled?: boolean;
+  previewSettings?: SnapshotPreviewSettings;
   persistedSelections?: PersistedRepositoryRevisionSelections;
   onPersistedSelectionsChange?: (next: PersistedRepositoryRevisionSelections) => void;
 }) {
@@ -310,11 +324,33 @@ export function RepositorySnapshotProvider({
     );
   }, [client, documentConversionEnabled, repositoryView, state.files]);
 
+  const activeRendered = useMemo<RenderedMarkdown | null>(() => {
+    const snapshot = state.activeFile;
+    if (repositoryView.mode !== 'revision' || !snapshot || !/\.mdx?$/i.test(snapshot.path)) return null;
+    return renderMarkdownClientSide(
+      snapshot.source,
+      snapshot.path,
+      /\.mdx$/i.test(snapshot.path),
+      previewSettings,
+    );
+  }, [
+    repositoryView.mode,
+    state.activeFile,
+    previewSettings?.defaultHtmlPreview,
+    previewSettings?.defaultHtmlCodeBlockPreview,
+    previewSettings?.defaultCsvPreview,
+    previewSettings?.language,
+  ]);
+
+  const activeToc = activeRendered ? activeRendered.toc : EMPTY_TOC;
+
   const value = useMemo<RepositorySnapshotContextValue>(() => ({
     state,
     commits,
     repositoryView,
     revisionWorkspace,
+    activeRendered,
+    activeToc,
     hasMoreHistory,
     isLoadingMoreHistory,
     allRefs,
@@ -326,7 +362,7 @@ export function RepositorySnapshotProvider({
     openSnapshotFile,
     searchRevision,
     returnToHead,
-  }), [activateWorkspaceRevision, allRefs, setAllRefs, commits, hasMoreHistory, isLoadingMoreHistory, loadHistory, loadMoreHistory, openSnapshotFile, repositoryView, returnToHead, revisionWorkspace, searchRevision, selectCommit, state]);
+  }), [activateWorkspaceRevision, activeRendered, activeToc, allRefs, setAllRefs, commits, hasMoreHistory, isLoadingMoreHistory, loadHistory, loadMoreHistory, openSnapshotFile, repositoryView, returnToHead, revisionWorkspace, searchRevision, selectCommit, state]);
 
   return <RepositorySnapshotContext.Provider value={value}>{children}</RepositorySnapshotContext.Provider>;
 }
@@ -337,6 +373,17 @@ export function RepositorySnapshotFromHistoryProvider({ children }: { children: 
   const bridge = usePlatform();
   const workspaceKey = repositoryWorkspaceKey(state.workspacePath, state.workspaceName);
   const persisted = usePersistedRevisionSelections(bridge, workspaceKey);
+  const previewSettings = useMemo<SnapshotPreviewSettings>(() => ({
+    defaultHtmlPreview: state.settings.defaultHtmlPreview,
+    defaultHtmlCodeBlockPreview: state.settings.defaultHtmlCodeBlockPreview,
+    defaultCsvPreview: state.settings.defaultCsvPreview,
+    language: state.settings.language,
+  }), [
+    state.settings.defaultCsvPreview,
+    state.settings.defaultHtmlCodeBlockPreview,
+    state.settings.defaultHtmlPreview,
+    state.settings.language,
+  ]);
 
   return (
     <RepositorySnapshotProvider
@@ -344,6 +391,7 @@ export function RepositorySnapshotFromHistoryProvider({ children }: { children: 
       workspaceKey={workspaceKey}
       enabled={state.settings.historySidebarEnabled}
       documentConversionEnabled={state.settings.documentConversion}
+      previewSettings={previewSettings}
       persistedSelections={persisted.selections}
       onPersistedSelectionsChange={persisted.update}
     >

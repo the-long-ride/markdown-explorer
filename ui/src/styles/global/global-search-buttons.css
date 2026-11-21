@@ -148,6 +148,14 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
+.mdn-search-jump-target {
+  border-radius: var(--r, 6px);
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 24%, transparent);
+  animation: mdn-search-jump-pulse 1500ms ease-out;
+}
+
 @keyframes mdn-search-jump-pulse {
   0% {
     box-shadow:

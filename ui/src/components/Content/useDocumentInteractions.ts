@@ -8,6 +8,7 @@ import { getWorkspaceScopeKey } from "../../contexts/contentTabState";
 import { createDocumentClickHandler } from "./documentClickHandler";
 import { createDocumentContextMenuHandler } from "./documentContextMenuHandler";
 import type { DocumentInteractionCallbacks, DocumentInteractionDocument } from "./documentInteractionTypes";
+import { createHeadingSectionInteractions } from "./headingSectionInteractions";
 import {
   createScrollPersistHandler,
   createTrackedHeadingSections,
@@ -24,7 +25,7 @@ export interface DocumentScrollMemory {
 export interface DocumentInteractionArgs extends DocumentInteractionCallbacks {
   state: any;
   document: DocumentInteractionDocument;
-  bodyRef: RefObject<HTMLDivElement | null>;
+  bodyRef: RefObject<HTMLElement | null>;
   scrollRef: RefObject<HTMLDivElement | null>;
   bridge: any;
   previewLabels: PreviewActionLabels;
@@ -59,14 +60,22 @@ export function useDocumentInteractions({
     const body = bodyRef.current;
     if (!body || doc.disabled) return;
 
-    const headingSections = createTrackedHeadingSections({
-      body,
-      currentFile: doc.filePath,
-      defaultExpanded: state.defaultExpanded !== false,
-      stateByFile: headingStateByFileRef.current,
-      workspaceKey,
-      onPersist: rememberHeadingsFor,
-    });
+    const persistReadingProgress = doc.persistReadingProgress !== false;
+    const headingSections = persistReadingProgress
+      ? createTrackedHeadingSections({
+          body,
+          currentFile: doc.filePath,
+          defaultExpanded: state.defaultExpanded !== false,
+          stateByFile: headingStateByFileRef.current,
+          workspaceKey,
+          onPersist: rememberHeadingsFor,
+        })
+      : createHeadingSectionInteractions({
+          body,
+          currentFile: doc.filePath,
+          defaultExpanded: state.defaultExpanded !== false,
+          stateByFile: headingStateByFileRef.current,
+        });
 
     applyPreviewActionTranslations(body, previewLabels);
 
@@ -74,10 +83,14 @@ export function useDocumentInteractions({
     const handleContextMenu = createDocumentContextMenuHandler({ body, filePath: doc.filePath, callbacks });
 
     const scrollContainer = scrollRef.current;
-    const persistScroll = createScrollPersistHandler(scrollRef, workspaceKey, doc.filePath);
-    const handleScroll = () => { syncStickyTableHeaders(scrollContainer); persistScroll.persist(); };
+    const persistScroll = persistReadingProgress
+      ? createScrollPersistHandler(scrollRef, workspaceKey, doc.filePath)
+      : null;
+    const syncSticky = () => syncStickyTableHeaders(scrollContainer);
+    const handleScroll = () => { syncSticky(); persistScroll?.persist(); };
     const detachScrollHandler = attachContentScrollHandler(scrollContainer, handleScroll);
-    const detachScrollFlushOnHide = attachScrollFlushOnHide(persistScroll.flush);
+    const detachScrollFlushOnHide = persistScroll ? attachScrollFlushOnHide(persistScroll.flush) : null;
+    window.addEventListener("resize", syncSticky);
 
     const handleClick = createDocumentClickHandler({
       body, filePath: doc.filePath, appRuntime: state.appRuntime, bridge, previewLabels, headingSections, callbacks,
@@ -92,15 +105,17 @@ export function useDocumentInteractions({
         lastFileRef: scrollMemory.lastFileRef, lastVersionRef: scrollMemory.lastVersionRef,
       });
     }
+    syncSticky();
 
     return () => {
       body.removeEventListener("click", handleClick);
       body.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("resize", syncSticky);
       headingSections.dispose();
       detachScrollHandler?.(); detachScrollFlushOnHide?.();
-      persistScroll.flush();
+      persistScroll?.flush();
     };
-  }, [doc.renderVersion, doc.filePath, doc.disabled, doc.rootId,
+  }, [doc.renderVersion, doc.filePath, doc.disabled, doc.rootId, doc.persistReadingProgress,
     onImageClick, navigate, scrollRef, bridge, previewLabels, onOpenHtmlModal, onOpenLinkMenu,
     onBookmarkContextMenu, onActionError, state.appRuntime, state.defaultExpanded]);
 
@@ -110,6 +125,7 @@ export function useDocumentInteractions({
 
     const scrollContainer = scrollRef.current;
     const handleScroll = () => syncStickyTableHeaders(scrollContainer);
+    handleScroll();
     const startEnhancements = () => scheduleContentEnhancements({
       body, state, scrollRef, handleScroll, mermaidRunIdRef,
     });

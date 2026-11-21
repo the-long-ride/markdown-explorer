@@ -9,7 +9,7 @@ interface BookmarkSelectionArgs {
   isFullHtmlPreview: boolean;
   markdownSource: string | null;
   sourceDocumentText: string | null;
-  bodyRef: React.RefObject<HTMLDivElement | null>;
+  bodyRef: React.RefObject<HTMLElement | null>;
   closeLinkMenu: () => void;
 }
 

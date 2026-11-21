@@ -26,7 +26,8 @@ export interface SidebarSearchStatus {
 export interface RevisionSidebarSearch {
   readonly oid: string;
   run(query: string, matchCase: boolean, signal: AbortSignal): Promise<WorkspaceSearchResult[]>;
-  openPath(path: string): void;
+  openPath?(path: string): void;
+  openResult?(match: WorkspaceSearchResult, query: string, matchCase: boolean): void;
 }
 
 interface SidebarSearchProps {
@@ -207,7 +208,13 @@ export function SidebarSearch({
     ? searchResultTree
     : null;
   const openRevisionResult = revisionSearch
-    ? (match: WorkspaceSearchResult) => revisionSearch.openPath(match.relativePath)
+    ? (match: WorkspaceSearchResult) => {
+      if (revisionSearch.openResult) {
+        revisionSearch.openResult(match, query, matchCase);
+        return;
+      }
+      revisionSearch.openPath?.(match.relativePath);
+    }
     : undefined;
 
   return (

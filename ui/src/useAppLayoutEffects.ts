@@ -7,6 +7,7 @@ import { requestShellLocation, supportsShellLocation } from "./desktop/shellLoca
 import { collapseAll as collapseAllHeadingSections, expandAll as expandAllHeadingSections } from './dom/globalHandlers';
 import { WORKSPACE_INSIGHTS_TOGGLE_EVENT } from './components/shared/ToolbarActionMenu';
 import { requestDismissWorkspaceTour } from './components/Tour/tourEvents';
+import { useRepositorySnapshot } from './contexts/RepositorySnapshotContext';
 import { supportsWorkspaceInsights } from './insights/runtimeCapabilities';
 
 interface AppLayoutEffectsArgs {
@@ -163,8 +164,13 @@ export function useAppLayoutEffects({
     freezeContentId: 'sidebarTree',
   });
 
+  const snapshotContext = useRepositorySnapshot();
+  const effectiveTocLength = snapshotContext?.repositoryView?.mode === 'revision'
+    ? (snapshotContext.activeToc?.length ?? 0)
+    : state.toc.length;
+
   // Table of contents resize handle
-  useResize('tocResize', 'tocPanel', `${state.workspaceName}:${state.toc.length}`, {
+  useResize('tocResize', 'tocPanel', `${state.workspaceName}:${effectiveTocLength}`, {
     min: 180,
     max: 360,
     cssVar: '--toc-width',

@@ -15,6 +15,7 @@ import { useModalRegionAnchor } from "./utils/useModalRegionAnchor";
 import { AvailableUpdateDialog } from "./components/Settings/AvailableUpdateDialog";
 import { useSupportPrompt } from "./hooks/useSupportPrompt";
 import type { MediaGallery } from "./components/Modal/mediaGallery";
+import { useRepositorySnapshot } from "./contexts/RepositorySnapshotContext";
 import { supportsWorkspaceInsights } from "./insights/runtimeCapabilities";
 
 const Sidebar = lazy(() => import("./components/Sidebar/Sidebar").then((m) => ({ default: m.Sidebar })));
@@ -80,6 +81,10 @@ export function AppView(props: any) {
     && !activeTab.workspacePath
     && !activeTab.workspaceName,
   );
+  const snapshotContext = useRepositorySnapshot();
+  const isRevisionMode = snapshotContext?.repositoryView?.mode === 'revision';
+  const displayedToc = isRevisionMode ? (snapshotContext.activeToc ?? []) : state.toc;
+  const tocDocumentKey = isRevisionMode ? `${snapshotContext.repositoryView.oid}:${snapshotContext.state?.activeFile?.path ?? ''}` : undefined;
   const isTourActive = Boolean(isTourOpen || tourStage !== null);
 
   const isModalBlocked = Boolean(
@@ -284,15 +289,15 @@ export function AppView(props: any) {
                     scrollRef={scrollRef}
                     observeKey={`${state.workspaceName}:${state.currentFile}:${state.renderVersion}`}
                     tooltip={t.tooltips.scrollToTop}
-                    withToc={state.toc.length > 0 && !state.tocCollapsed && !state.focusMode}
+                    withToc={displayedToc.length > 0 && !state.tocCollapsed && !state.focusMode}
                   />
                 </div>
 
               </div>
-              {state.toc.length > 0 && (
+              {displayedToc.length > 0 && (
                 <>
                   <div className={`toc-resize${state.tocCollapsed ? ' is-collapsed' : ''}`} id="tocResize" role="separator" aria-label={t.ui.resizeToc} />
-                  <Suspense fallback={null}><TableOfContents variant="panel" /></Suspense>
+                  <Suspense fallback={null}><TableOfContents variant="panel" entries={isRevisionMode ? displayedToc : undefined} rootId={isRevisionMode ? 'snapshot' : undefined} documentKey={tocDocumentKey} /></Suspense>
                 </>
               )}
             </div>

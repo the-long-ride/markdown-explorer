@@ -50,6 +50,7 @@ function Probe() {
       <span data-testid="selected">{snapshot.state.selectedOid ?? ''}</span>
       <span data-testid="view">{snapshot.repositoryView.mode === 'revision' ? `revision:${snapshot.repositoryView.oid}` : 'live'}</span>
       <span data-testid="active">{snapshot.state.activeFile?.source ?? ''}</span>
+      <span data-testid="active-toc">{snapshot.activeToc.map((entry) => entry.text).join(',')}</span>
       <span data-testid="count">{snapshot.commits.length}</span>
       <span data-testid="error">{snapshot.state.error ?? ''}</span>
       <span data-testid="all-refs">{String(snapshot.allRefs)}</span>
@@ -90,11 +91,13 @@ describe('RepositorySnapshotProvider', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'open' }));
     await waitFor(() => expect(screen.getByTestId('active')).toHaveTextContent('# historical'));
+    expect(screen.getByTestId('active-toc')).toHaveTextContent('historical');
     expect(client.readRevisionFile).toHaveBeenCalledWith(oldOid, 'docs/a.md');
 
     await userEvent.click(screen.getByRole('button', { name: 'head' }));
     expect(screen.getByTestId('selected')).toHaveTextContent('');
     expect(screen.getByTestId('active')).toHaveTextContent('');
+    expect(screen.getByTestId('active-toc')).toHaveTextContent('');
     expect(screen.getByTestId('view')).toHaveTextContent('live');
     expect(onPersistedSelectionsChange).toHaveBeenLastCalledWith({});
     expect(client.compareGitRevisions).not.toHaveBeenCalled();
