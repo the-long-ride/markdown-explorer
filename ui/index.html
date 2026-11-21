@@ -1,13 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="auto" data-theme-style="raw-grid">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown Explorer</title>
+  <script>
+    (function () {
+      try {
+        var r = document.documentElement;
+        var raw = localStorage.getItem('markdown-explorer-ui-state') || localStorage.getItem('markdown-explorer-web-state');
+        if (!raw) return;
+        var s = JSON.parse(raw);
+        if (!s || typeof s !== 'object') return;
+        var m = s.theme === 'light' || s.theme === 'dark' || s.theme === 'auto' ? s.theme : 'auto';
+        var map = { 'pet-shiba-memes': 'tokyo-night', 'night-city-2077': 'cyberpunk', 'pet-shiba': 'pet-white-shiba' };
+        var ok = { 'raw-grid': 1, 'default': 1, 'bento': 1, 'vercel': 1, 'tokyo-night': 1, 'neon-voltage': 1, 'cyberpunk': 1, 'pet-k-ink': 1, 'pet-white-shiba': 1 };
+        var norm = function (v) { var n = map[v] || v; return ok[n] ? n : 'raw-grid'; };
+        var ct = Array.isArray(s.customThemes) && s.activeCustomThemeId
+          ? s.customThemes.find(function (t) { return t && t.id === s.activeCustomThemeId; })
+          : null;
+        r.dataset.theme = m;
+        r.dataset.themeStyle = ct ? norm(ct.baseStyle) : norm(s.themeStyle);
+        if (ct) {
+          r.dataset.customThemeId = ct.id;
+          var cm = ct.colorMode === 'light' || ct.colorMode === 'dark' || ct.colorMode === 'auto' ? ct.colorMode : m;
+          var sc = cm === 'light' || (cm === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+          var cols = ct.colors && ct.colors[sc];
+          if (cols && typeof cols === 'object') {
+            var vars = { bg: '--bg', surface: '--bg-s', text: '--tx', textMuted: '--tx2', border: '--bd-s', accent: '--accent' };
+            for (var k in vars) {
+              if (typeof cols[k] === 'string' && /^#[0-9a-f]{6}$/i.test(cols[k].trim())) r.style.setProperty(vars[k], cols[k].trim().toLowerCase());
+            }
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
   <!-- Critical inline styles for fast first paint — avoids render-blocking CSS wait -->
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{background:#151518;color:#f4efe8}
+    :root,[data-theme-style="raw-grid"][data-theme="dark"],[data-theme-style="raw-grid"][data-theme="auto"]{--bg:#101010;--bd:#292929;--bd-s:#393939;--tx:#f4f1ec;--tx2:#aaa6a0;--accent:#ff6a22}
+    [data-theme-style="raw-grid"][data-theme="light"]{--bg:#f2efe9;--bd:#d4cec2;--bd-s:#aaa398;--tx:#181614;--tx2:#5c5751;--accent:#d84b00}
+    [data-theme-style="default"][data-theme="dark"],[data-theme-style="default"][data-theme="auto"]{--bg:#151518;--bd:rgba(255,230,210,.08);--bd-s:rgba(255,230,210,.16);--tx:#f4efe8;--tx2:#a59e95;--accent:#ff9130}
+    [data-theme-style="default"][data-theme="light"]{--bg:#fdfbf7;--bd:rgba(90,70,50,.14);--bd-s:rgba(90,70,50,.27);--tx:#1f1a14;--tx2:#5c5246;--accent:#ff9130}
+    [data-theme-style="bento"][data-theme="dark"],[data-theme-style="bento"][data-theme="auto"]{--bg:#141614;--bd:rgba(226,232,220,.1);--bd-s:rgba(226,232,220,.18);--tx:#eef5ec;--tx2:#aebbaa;--accent:#34d399}
+    [data-theme-style="bento"][data-theme="light"]{--bg:#f4f7f5;--bd:rgba(28,51,39,.16);--bd-s:rgba(28,51,39,.3);--tx:#15221a;--tx2:#46574c;--accent:#0f766e}
+    [data-theme-style="vercel"][data-theme="dark"],[data-theme-style="vercel"][data-theme="auto"]{--bg:#000;--bd:rgba(255,255,255,.08);--bd-s:#2e2e2e;--tx:#fff;--tx2:#888;--accent:#0070f3}
+    [data-theme-style="vercel"][data-theme="light"]{--bg:#fff;--bd:rgba(0,0,0,.1);--bd-s:#d4d4d4;--tx:#171717;--tx2:#4d4d4d;--accent:#006bff}
+    [data-theme-style="tokyo-night"][data-theme="dark"],[data-theme-style="tokyo-night"][data-theme="auto"]{--bg:#1a1b26;--bd:rgba(41,46,66,.6);--bd-s:#292e42;--tx:#c0caf5;--tx2:#a9b1d6;--accent:#7dcfff}
+    [data-theme-style="tokyo-night"][data-theme="light"]{--bg:#d5d6db;--bd:rgba(150,153,163,.42);--bd-s:rgba(150,153,163,.72);--tx:#343b58;--tx2:#272e4b;--accent:#0f4b6e}
+    [data-theme-style="neon-voltage"][data-theme="dark"],[data-theme-style="neon-voltage"][data-theme="auto"]{--bg:#050507;--bd:rgba(111,241,226,.1);--bd-s:rgba(111,241,226,.22);--tx:#f8f7ff;--tx2:#aaa7be;--accent:#ff6b6b}
+    [data-theme-style="neon-voltage"][data-theme="light"]{--bg:#f8f7ff;--bd:rgba(38,29,64,.15);--bd-s:rgba(38,29,64,.3);--tx:#1c1728;--tx2:#554e66;--accent:#e64655}
+    [data-theme-style="cyberpunk"][data-theme="dark"],[data-theme-style="cyberpunk"][data-theme="auto"]{--bg:#111315;--bd:#34383a;--bd-s:#414548;--tx:#f3f0e6;--tx2:#b5b4aa;--accent:#e6d24f}
+    [data-theme-style="cyberpunk"][data-theme="light"]{--bg:#f2ebdb;--bd:#c6baa6;--bd-s:#b2a48d;--tx:#252621;--tx2:#4c4c43;--accent:#a53b2a}
+    [data-theme-style^="pet-"][data-theme="dark"],[data-theme-style^="pet-"][data-theme="auto"]{--bg:#151817;--bd:rgba(229,236,226,.1);--bd-s:rgba(229,236,226,.18);--tx:#f0f6f1;--tx2:#b6c3b8;--accent:#f0b775}
+    [data-theme-style="pet-k-ink"][data-theme="dark"],[data-theme-style="pet-k-ink"][data-theme="auto"]{--bg:#0d0b0a;--bd:rgba(252,238,222,.12);--bd-s:rgba(252,238,222,.22);--tx:#fff8f2;--tx2:#f2e5dc;--accent:#a98fa0}
+    [data-theme-style^="pet-"][data-theme="light"]{--bg:#f7faf7;--bd:rgba(29,48,38,.16);--bd-s:rgba(29,48,38,.3);--tx:#16231a;--tx2:#47584c;--accent:#b96f35}
+    [data-theme-style="pet-k-ink"][data-theme="light"]{--bg:#f7f5f2;--bd:rgba(29,48,38,.16);--bd-s:rgba(29,48,38,.3);--tx:#1d1714;--tx2:#55463e;--accent:#7f6474}
+    @media(prefers-color-scheme:light){
+      [data-theme-style="raw-grid"]:not([data-theme="dark"]){--bg:#f2efe9;--bd:#d4cec2;--bd-s:#aaa398;--tx:#181614;--tx2:#5c5751;--accent:#d84b00}
+      [data-theme-style="default"][data-theme="auto"]{--bg:#fdfbf7;--bd:rgba(90,70,50,.14);--bd-s:rgba(90,70,50,.27);--tx:#1f1a14;--tx2:#5c5246;--accent:#ff9130}
+      [data-theme-style="bento"][data-theme="auto"]{--bg:#f4f7f5;--bd:rgba(28,51,39,.16);--bd-s:rgba(28,51,39,.3);--tx:#15221a;--tx2:#46574c;--accent:#0f766e}
+      [data-theme-style="vercel"][data-theme="auto"]{--bg:#fff;--bd:rgba(0,0,0,.1);--bd-s:#d4d4d4;--tx:#171717;--tx2:#4d4d4d;--accent:#006bff}
+      [data-theme-style="neon-voltage"][data-theme="auto"]{--bg:#f8f7ff;--bd:rgba(38,29,64,.15);--bd-s:rgba(38,29,64,.3);--tx:#1c1728;--tx2:#554e66;--accent:#e64655}
+      [data-theme-style="cyberpunk"][data-theme="auto"]{--bg:#f2ebdb;--bd:#c6baa6;--bd-s:#b2a48d;--tx:#252621;--tx2:#4c4c43;--accent:#a53b2a}
+      [data-theme-style^="pet-"][data-theme="auto"]{--bg:#f7faf7;--bd:rgba(29,48,38,.16);--bd-s:rgba(29,48,38,.3);--tx:#16231a;--tx2:#47584c;--accent:#b96f35}
+      [data-theme-style="pet-k-ink"][data-theme="auto"]{--bg:#f7f5f2;--bd:rgba(29,48,38,.16);--bd-s:rgba(29,48,38,.3);--tx:#1d1714;--tx2:#55463e;--accent:#7f6474}
+    }
+    html{background:var(--bg);color:var(--tx)}
     body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif}
     #root{min-height:100vh}
     /* @font-face with font-display:swap — starts font download immediately, shows fallback text */
@@ -18,11 +78,12 @@
     @font-face{font-family:"JetBrains Mono";src:url("./assets/fonts/JetBrainsMono/JetBrainsMono-VariableFont_wght.ttf") format("truetype");font-weight:100 800;font-style:normal;font-display:swap}
     @font-face{font-family:"JetBrains Mono";src:url("./assets/fonts/JetBrainsMono/JetBrainsMono-Italic-VariableFont_wght.ttf") format("truetype");font-weight:100 800;font-style:italic;font-display:swap}
     /* Splash screen — visible instantly, removed by React mount */
-    .splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#151518;z-index:var(--z-tooltip, 200);transition:opacity .3s}
+    .splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);z-index:var(--z-tooltip, 200);transition:opacity .3s}
+    [data-theme-style="raw-grid"] .splash{background-image:linear-gradient(var(--bd) 1px,transparent 1px),linear-gradient(90deg,var(--bd) 1px,transparent 1px);background-size:48px 48px;background-position:-1px -1px}
     .splash.fade-out{opacity:0;pointer-events:none}
-    .splash-spinner{width:28px;height:28px;border:2.5px solid rgba(255,255,255,.1);border-top-color:#ff9130;border-radius:50%;animation:splash-spin .8s linear infinite}
+    .splash-spinner{width:24px;height:24px;border:2px solid var(--bd-s);border-top-color:var(--accent);border-radius:50%;animation:splash-spin .7s linear infinite}
     @keyframes splash-spin{to{transform:rotate(360deg)}}
-    .splash-label{margin-top:14px;font-size:13px;font-weight:600;color:#f4efe8;letter-spacing:.02em;opacity:.8}
+    .splash-label{margin-top:12px;font-size:14px;font-weight:600;color:var(--tx2);letter-spacing:.02em}
   </style>
 </head>
 <body>

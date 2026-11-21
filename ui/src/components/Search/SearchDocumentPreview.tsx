@@ -212,14 +212,26 @@ function SearchDocumentPreviewInner({
   useEffect(() => {
     if (!item || preview.status !== 'ready' || preview.key !== itemKey || !renderedHtml) return;
     const timer = window.setTimeout(() => {
-      scrollToRenderedSearchMatchInRoot(
-        previewRootRef.current,
-        query,
-        item.matchOrdinal,
-        item.matchIndex,
-        preview.markdownSource,
-        matchCase,
-      );
+      if (item.lineNumber !== undefined) {
+        scrollToRenderedSearchMatchInRoot(
+          previewRootRef.current,
+          query,
+          item.matchOrdinal,
+          item.matchIndex,
+          preview.markdownSource,
+          matchCase,
+          { lineNumber: item.lineNumber, excerpt: item.excerpt },
+        );
+      } else {
+        scrollToRenderedSearchMatchInRoot(
+          previewRootRef.current,
+          query,
+          item.matchOrdinal,
+          item.matchIndex,
+          preview.markdownSource,
+          matchCase,
+        );
+      }
     }, 0);
     return () => window.clearTimeout(timer);
   }, [item, itemKey, matchCase, preview, query, renderedHtml]);

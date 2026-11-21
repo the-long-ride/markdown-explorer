@@ -24,6 +24,36 @@ interface QueueOptions {
 
 const DEFAULT_IDLE_TIMEOUT_MS = 600;
 
+export function isMermaidNodeHidden(node: HTMLElement | null | undefined): boolean {
+  if (!node) return false;
+  let child: HTMLElement | null = null;
+  let current: HTMLElement | null = node;
+  while (current) {
+    if (current.hidden === true || current.hasAttribute?.('hidden')) return true;
+    if (current.style?.display === 'none') return true;
+    if (current.classList?.contains?.('mdn-section') && current.dataset?.expanded !== 'true') return true;
+    if (
+      current.tagName?.toUpperCase() === 'DETAILS'
+      && !current.hasAttribute?.('open')
+      && child?.tagName?.toUpperCase() !== 'SUMMARY'
+    ) {
+      return true;
+    }
+    child = current;
+    current = current.parentElement ?? null;
+  }
+
+  const getComputedStyle = node.ownerDocument?.defaultView?.getComputedStyle;
+  if (typeof getComputedStyle === 'function') {
+    current = node;
+    while (current) {
+      if (getComputedStyle(current)?.display === 'none') return true;
+      current = current.parentElement ?? null;
+    }
+  }
+  return false;
+}
+
 function priorityForRect(rect: { top: number; bottom: number }, viewport: MermaidViewport): number {
   if (rect.bottom >= viewport.top && rect.top <= viewport.bottom) return 0;
   const nearTop = viewport.top - viewport.nearDistance;

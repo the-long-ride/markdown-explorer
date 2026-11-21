@@ -1,4 +1,5 @@
 import { useAppState } from '../../contexts/AppStateContext';
+import { normalizePathKey } from '../../contexts/appStateModel';
 import { FolderChevronIcon, FolderIcon } from '../shared/icons';
 import { unicodeIndexOf } from '../../utils/unicodeSearch';
 import type { WorkspaceSearchResult } from '../../types';
@@ -49,8 +50,31 @@ export function SearchResultFileView({
       onOpenResult(match);
       return;
     }
-    window.dispatchEvent(new CustomEvent('search-jump', { detail: { filePath: file.fsPath, query, matchOrdinal: match.matchOrdinal, matchIndex: match.matchIndex, matchCase } }));
-    navigate(file.fsPath);
+    window.dispatchEvent(new CustomEvent('search-jump', {
+      detail: {
+        filePath: file.fsPath,
+        query,
+        matchOrdinal: match.matchOrdinal,
+        matchIndex: match.matchIndex,
+        lineNumber: match.lineNumber,
+        excerpt: match.excerpt,
+        matchCase,
+      },
+    }));
+    const activePaneFile = state?.splitView?.enabled
+      ? state.splitView[state.splitView.activePane]?.filePath
+      : state?.currentFile;
+    const isAlreadyLiveCurrent = Boolean(
+      activePaneFile
+      && normalizePathKey(activePaneFile) === normalizePathKey(file.fsPath)
+      && !state?.isLoading
+      && !state?.notFoundHref
+      && !state?.staleContentFilePath
+      && Boolean(state?.contentHtml),
+    );
+    if (!isAlreadyLiveCurrent) {
+      navigate?.(file.fsPath);
+    }
   };
   return <div className={`tree-file-search-group${isOpen ? ' is-open' : ''}`}><div className="tree-file-search-header" onClick={() => togglePath(file.fsPath)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePath(file.fsPath); } }}><span className="tree-file-search-chevron"><FolderChevronIcon /></span><span className="tree-file-search-name" data-hover-tooltip={file.relativePath} data-hover-tooltip-pos="right">{displayName}</span><span className="tree-file-search-count-badge">{file.matches.length}</span></div>{isOpen && <div className="tree-file-search-matches" role="group">{file.matches.map((match, idx) => <div key={`${file.fsPath}:${match.matchIndex}:${idx}`} className="tree-file-search-match-row" data-hover-tooltip={match.lineNumber ? `Line ${match.lineNumber}: ${match.excerpt || file.relativePath}` : (match.excerpt || file.relativePath)} data-hover-tooltip-pos="right" onClick={() => handleClickMatch(match)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleClickMatch(match); } }}>{match.lineNumber && <span className="tree-file-search-match-line">{match.lineNumber}</span>}<span className="tree-file-search-match-excerpt">{renderHighlightedExcerpt(match.excerpt || '', query, matchCase)}</span></div>)}</div>}</div>;
 }

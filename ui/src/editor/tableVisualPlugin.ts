@@ -2,14 +2,12 @@ import {
   Decoration,
   type DecorationSet,
   EditorView,
-  keymap,
   WidgetType,
 } from '@codemirror/view';
 import { redo, undo } from '@codemirror/commands';
 import { isRedoChord, isUndoChord } from './editorUx';
 import {
   type Extension,
-  Prec,
   RangeSetBuilder,
   StateEffect,
   StateField,
@@ -27,6 +25,16 @@ import {
 import { createSvgIcon, createTableGridIcon, TABLE_ICON_PATHS } from './tableIcons';
 import { showContextMenu } from './tableContextMenu';
 import { TableSelectionController } from './tableSelection';
+import {
+  createTableBoundaryKeymap,
+  displayTextToMarkdownCell,
+  getCellSelectionOffsets,
+  handleTableCellKeyDown,
+  markdownCellToDisplayText,
+  normalizeCellLiveInput,
+  setCellCaretOffset,
+  TABLE_CELL_COMMIT_EVENT,
+} from './tableCellEditing';
 
 export const toggleTableRawEffect = StateEffect.define<number>();
 
@@ -67,6 +75,38 @@ export function exitTableToNewLine(view: EditorView, to: number) {
   view.focus();
 }
 
+function createTooltipButton(
+  className: string,
+  labelText: string,
+  icon: SVGElement,
+  onClick: () => void,
+  tooltipAlign?: string,
+): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = `${className} tooltip-container`;
+  btn.setAttribute('data-tooltip-pos', 'below');
+  if (tooltipAlign) btn.setAttribute('data-tooltip-align', tooltipAlign);
+  btn.setAttribute('aria-label', labelText);
+  const label = document.createElement('span');
+  label.textContent = labelText;
+  const tip = document.createElement('span');
+  tip.className = 'tooltip-text';
+  tip.textContent = labelText;
+  btn.append(icon, label, tip);
+  btn.onclick = onClick;
+  return btn;
+}
+
+export function exitTableAbove(view: EditorView, from: number) {
+  if (from <= 0) {
+    view.dispatch({ changes: { from: 0, insert: '\n' }, selection: { anchor: 0 }, scrollIntoView: true });
+  } else {
+    view.dispatch({ selection: { anchor: Math.max(0, from - 1) }, scrollIntoView: true });
+  }
+  view.focus();
+}
+
 class TableWidget extends WidgetType {
   private selection?: TableSelectionController;
 
@@ -95,6 +135,7 @@ class TableWidget extends WidgetType {
     const container = document.createElement('div');
     container.className = 'cm-table-widget';
     container.setAttribute('data-testid', 'cm-table-widget');
+    container.setAttribute('data-table-from', String(this.from));
 
     const labels = getEditorUiTranslations(this.getLanguage());
 
@@ -106,24 +147,13 @@ class TableWidget extends WidgetType {
     info.textContent = formatTableDimensions(labels.tableDimensions, this.data.rows.length, this.data.headers.length);
     bar.appendChild(info);
 
-    const toggleBtn = document.createElement('button');
-    toggleBtn.type = 'button';
-    toggleBtn.className = 'cm-table-widget__toggle-btn tooltip-container';
-    toggleBtn.setAttribute('data-tooltip-pos', 'below');
-    toggleBtn.setAttribute('data-tooltip-align', 'right');
-    toggleBtn.setAttribute('aria-label', labels.viewRawMarkdown);
-    const toggleIcon = createSvgIcon(TABLE_ICON_PATHS.rawMarkdown, 13);
-    toggleBtn.appendChild(toggleIcon);
-    const toggleLabel = document.createElement('span');
-    toggleLabel.textContent = labels.viewRawMarkdown;
-    toggleBtn.appendChild(toggleLabel);
-    const toggleTip = document.createElement('span');
-    toggleTip.className = 'tooltip-text';
-    toggleTip.textContent = labels.viewRawMarkdown;
-    toggleBtn.appendChild(toggleTip);
-    toggleBtn.onclick = () => {
-      view.dispatch({ effects: toggleTableRawEffect.of(this.from) });
-    };
+    const toggleBtn = createTooltipButton(
+      'cm-table-widget__toggle-btn',
+      labels.viewRawMarkdown,
+      createSvgIcon(TABLE_ICON_PATHS.rawMarkdown, 13),
+      () => view.dispatch({ effects: toggleTableRawEffect.of(this.from) }),
+      'right',
+    );
     bar.appendChild(toggleBtn);
 
     container.appendChild(bar);
@@ -149,35 +179,59 @@ class TableWidget extends WidgetType {
     });
     this.selection = selection;
 
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
+    const commitByCell = new WeakMap<HTMLElement, () => number | null>();
 
-    this.data.headers.forEach((headerText, colIdx) => {
-      const th = document.createElement('th');
-      th.className = 'cm-table-cell cm-table-cell--header';
-      th.contentEditable = 'true';
-      th.spellcheck = false;
-      th.textContent = headerText;
-      th.setAttribute('data-row', '-1');
-      th.setAttribute('data-col', String(colIdx));
+    const createCell = (tag: 'th' | 'td', rawText: string, rowIdx: number, colIdx: number): HTMLElement => {
+      const cell = document.createElement(tag);
+      cell.className = tag === 'th' ? 'cm-table-cell cm-table-cell--header' : 'cm-table-cell';
+      cell.contentEditable = 'true';
+      cell.tabIndex = 0;
+      cell.spellcheck = false;
+      const initialDisplay = markdownCellToDisplayText(rawText);
+      cell.textContent = initialDisplay;
+      cell.setAttribute('data-row', String(rowIdx));
+      cell.setAttribute('data-col', String(colIdx));
       const align = this.data.alignments[colIdx];
-      if (align) th.style.textAlign = align;
+      if (align) cell.style.textAlign = align;
 
-      selection.bindCell(th, -1, colIdx);
+      selection.bindCell(cell, rowIdx, colIdx);
+      cell.oninput = () => normalizeCellLiveInput(cell);
 
-      th.onblur = () => {
-        if (selection.hasMultiSelection() || selection.isClearing()) return;
-        const text = th.textContent ?? '';
-        if (text !== headerText) {
-          updateDocWith(updateCell(this.data, -1, colIdx, text));
-        }
+      const commitIfEdited = (): number | null => {
+        if (selection.hasMultiSelection() || selection.isClearing() || !container.isConnected) return null;
+        const currentDisplay = cell.textContent ?? '';
+        if (currentDisplay === initialDisplay) return null;
+        const nextMarkdown = displayTextToMarkdownCell(currentDisplay);
+        if (nextMarkdown === rawText) return null;
+        updateDocWith(updateCell(this.data, rowIdx, colIdx, nextMarkdown));
+        return findTableRanges(view.state.doc.toString()).find((r) => r.from === this.from)?.to ?? null;
+      };
+      commitByCell.set(cell, commitIfEdited);
+
+      cell.onblur = () => {
+        commitIfEdited();
       };
 
-      th.oncontextmenu = (e) => {
+      cell.addEventListener(TABLE_CELL_COMMIT_EVENT, () => {
+        const caretOffset = getCellSelectionOffsets(cell).end;
+        const nextMarkdown = displayTextToMarkdownCell(cell.textContent ?? '');
+        if (nextMarkdown !== rawText) {
+          updateDocWith(updateCell(this.data, rowIdx, colIdx, nextMarkdown));
+        }
+        const replacement = view.dom.querySelector<HTMLElement>(
+          `[data-table-from="${this.from}"] [data-row="${rowIdx}"][data-col="${colIdx}"]`,
+        );
+        if (replacement) {
+          replacement.focus();
+          setCellCaretOffset(replacement, caretOffset);
+        }
+      });
+
+      cell.oncontextmenu = (e) => {
         showContextMenu(
           e,
           this.data,
-          -1,
+          rowIdx,
           colIdx,
           this.from,
           this.to,
@@ -188,7 +242,13 @@ class TableWidget extends WidgetType {
         );
       };
 
-      headerRow.appendChild(th);
+      return cell;
+    };
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    this.data.headers.forEach((headerText, colIdx) => {
+      headerRow.appendChild(createCell('th', headerText, -1, colIdx));
     });
     thead.appendChild(headerRow);
     table.appendChild(thead);
@@ -197,42 +257,7 @@ class TableWidget extends WidgetType {
     this.data.rows.forEach((row, rowIdx) => {
       const tr = document.createElement('tr');
       row.forEach((cellText, colIdx) => {
-        const td = document.createElement('td');
-        td.className = 'cm-table-cell';
-        td.contentEditable = 'true';
-        td.spellcheck = false;
-        td.textContent = cellText;
-        td.setAttribute('data-row', String(rowIdx));
-        td.setAttribute('data-col', String(colIdx));
-        const align = this.data.alignments[colIdx];
-        if (align) td.style.textAlign = align;
-
-        selection.bindCell(td, rowIdx, colIdx);
-
-        td.onblur = () => {
-          if (selection.hasMultiSelection() || selection.isClearing()) return;
-          const text = td.textContent ?? '';
-          if (text !== cellText) {
-            updateDocWith(updateCell(this.data, rowIdx, colIdx, text));
-          }
-        };
-
-        td.oncontextmenu = (e) => {
-          showContextMenu(
-            e,
-            this.data,
-            rowIdx,
-            colIdx,
-            this.from,
-            this.to,
-            view,
-            this.getLanguage,
-            () => exitTableToNewLine(view, this.to),
-            () => view.dispatch({ effects: toggleTableRawEffect.of(this.from) }),
-          );
-        };
-
-        tr.appendChild(td);
+        tr.appendChild(createCell('td', cellText, rowIdx, colIdx));
       });
       tbody.appendChild(tr);
     });
@@ -240,7 +265,15 @@ class TableWidget extends WidgetType {
 
     selection.restoreStyles();
 
-    const focusCell = (r: number, c: number) => container.querySelector<HTMLElement>(`[data-row="${r}"][data-col="${c}"]`)?.focus();
+    const focusCell = (r: number, c: number) => {
+      const selector = `[data-row="${r}"][data-col="${c}"]`;
+      container.querySelector<HTMLElement>(selector)?.focus();
+      if (!container.isConnected) {
+        view.dom.querySelector<HTMLElement>(`[data-table-from="${this.from}"] ${selector}`)?.focus();
+      }
+    };
+
+    const commitBeforeExit = (target: HTMLElement): number => commitByCell.get(target)?.() ?? this.to;
 
     const handleUndoRedo = (e: KeyboardEvent): boolean => {
       const isUndo = isUndoChord(e);
@@ -265,41 +298,23 @@ class TableWidget extends WidgetType {
     };
 
     table.onkeydown = (e) => {
-      if (handleUndoRedo(e)) return;
-      if (selection.handleKeyDown(e)) return;
+      if (handleUndoRedo(e) || selection.handleKeyDown(e)) return;
       const target = e.target as HTMLElement;
       if (!target || !target.classList.contains('cm-table-cell')) return;
-
-      const rIdx = parseInt(target.getAttribute('data-row') ?? '0', 10);
-      const cIdx = parseInt(target.getAttribute('data-col') ?? '0', 10);
-      const isLastRow = rIdx === this.data.rows.length - 1;
-
-      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        if (!isLastRow && rIdx !== -1) focusCell(rIdx + 1, cIdx);
-        else if (rIdx === -1 && this.data.rows.length > 0) focusCell(0, cIdx);
-        else exitTableToNewLine(view, this.to);
-        return;
-      }
-
-      if (e.key === 'ArrowDown' && isLastRow) {
-        e.preventDefault();
-        exitTableToNewLine(view, this.to);
-        return;
-      }
-
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        if (!e.shiftKey) {
-          if (cIdx + 1 < this.data.headers.length) focusCell(rIdx, cIdx + 1);
-          else if (rIdx + 1 < this.data.rows.length) focusCell(rIdx + 1, 0);
-          else updateDocWith(insertRow(this.data, rIdx, 'below'));
-        } else {
-          if (cIdx > 0) focusCell(rIdx, cIdx - 1);
-          else if (rIdx > 0) focusCell(rIdx - 1, this.data.headers.length - 1);
-          else if (rIdx === 0) focusCell(-1, this.data.headers.length - 1);
-        }
-      }
+      handleTableCellKeyDown({
+        e,
+        target,
+        rowCount: this.data.rows.length,
+        colCount: this.data.headers.length,
+        focusCell,
+        commitBeforeExit,
+        onExitBelow: (to) => exitTableToNewLine(view, to),
+        onExitAbove: () => exitTableAbove(view, this.from),
+        onInsertRowBelow: (rIdx) => {
+          updateDocWith(insertRow(this.data, rIdx, 'below'));
+          focusCell(rIdx + 1, 0);
+        },
+      });
     };
 
     container.appendChild(table);
@@ -326,24 +341,14 @@ class RawTableBannerWidget extends WidgetType {
   toDOM(view: EditorView): HTMLElement {
     const div = document.createElement('div');
     div.className = 'cm-raw-table-banner';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'cm-raw-table-banner__btn tooltip-container';
-    btn.setAttribute('data-tooltip-pos', 'below');
-    btn.setAttribute('aria-label', this.labels.viewRenderedTable);
-    const rawIcon = createTableGridIcon(13);
-    btn.appendChild(rawIcon);
-    const rawLabel = document.createElement('span');
-    rawLabel.textContent = this.labels.viewRenderedTable;
-    btn.appendChild(rawLabel);
-    const rawTip = document.createElement('span');
-    rawTip.className = 'tooltip-text';
-    rawTip.textContent = this.labels.viewRenderedTable;
-    btn.appendChild(rawTip);
-    btn.onclick = () => {
-      view.dispatch({ effects: toggleTableRawEffect.of(this.offset) });
-    };
-    div.appendChild(btn);
+    div.appendChild(
+      createTooltipButton(
+        'cm-raw-table-banner__btn',
+        this.labels.viewRenderedTable,
+        createTableGridIcon(13),
+        () => view.dispatch({ effects: toggleTableRawEffect.of(this.offset) }),
+      ),
+    );
     return div;
   }
 }
@@ -410,33 +415,7 @@ export function createTableVisualExtension(getLanguage: () => string): Extension
     },
   });
 
-  const backspaceHandler = Prec.high(
-    keymap.of([
-      {
-        key: 'Backspace',
-        run(view) {
-          const { from, empty } = view.state.selection.main;
-          if (!empty) return false;
-          const line = view.state.doc.lineAt(from);
-          if (line.from === from && line.from === line.to && line.number > 1) {
-            const ranges = findTableRanges(view.state.doc.toString());
-            const tableBefore = ranges.find((r) => r.to === line.from - 1);
-            if (tableBefore) {
-              view.dispatch({
-                changes: { from: line.from - 1, to: line.to },
-                selection: { anchor: tableBefore.from },
-              });
-              const lastWidget = view.dom.querySelector('.cm-table-widget:last-of-type');
-              const lastCell = lastWidget?.querySelector('tbody tr:last-child td:last-child') as HTMLElement;
-              lastCell?.focus();
-              return true;
-            }
-          }
-          return false;
-        },
-      },
-    ]),
-  );
+  const boundaryKeymap = createTableBoundaryKeymap(rawTableOffsetsField);
 
-  return [rawTableOffsetsField, tableVisualField, clickBelowHandler, backspaceHandler];
+  return [rawTableOffsetsField, tableVisualField, clickBelowHandler, boundaryKeymap];
 }

@@ -48,6 +48,7 @@ export interface EditorUiTranslations {
   conflictComparing: string;
   conflictBackToResolution: string;
   inlineHint: string;
+  tableCellHint: string;
   saving: string;
   saved: string;
   saveFailed: string;
@@ -93,7 +94,9 @@ const EN_FORMATTING: MarkdownFormattingTranslations = {
 
 export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> = {
   en: {
-    inlineHint: '{mod}+Enter to apply · Esc to cancel', saving: 'Saving…', saved: 'Saved',
+    inlineHint: '{mod}+Enter to apply · Esc to cancel',
+    tableCellHint: 'Shift+Enter: line break · Alt+Enter: line break (keep trailing words) · Alt+←/→: move across cells',
+    saving: 'Saving…', saved: 'Saved',
     saveFailed: "Could not save the file.", saveFailedReadOnly: "The file is read-only.", saveFailedPermissionDenied: "Permission denied.",
     saveFailedMissing: "The file no longer exists.", saveFailedOutsideWorkspace: "The file is outside the workspace.", saveFailedWriteFailed: "Writing to the file failed.",
     statusLine: 'Ln {line}, Col {column}', statusWords: '{count} words', statusCharacters: '{count} characters', editBlock: 'Edit this block (double-click)',
@@ -113,7 +116,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: EN_FORMATTING,
   },
   vi: {
-    inlineHint: '{mod}+Enter để áp dụng · Esc để hủy', saving: 'Đang lưu…', saved: 'Đã lưu',
+    inlineHint: '{mod}+Enter để áp dụng · Esc để hủy',
+    tableCellHint: 'Shift+Enter: xuống dòng · Alt+Enter: xuống dòng (giữ từ phía sau) · Alt+←/→: di chuyển qua các ô',
+    saving: 'Đang lưu…', saved: 'Đã lưu',
     saveFailed: "Không thể lưu tệp.", saveFailedReadOnly: "Tệp ở chế độ chỉ đọc.", saveFailedPermissionDenied: "Bị từ chối quyền truy cập.",
     saveFailedMissing: "Tệp không còn tồn tại.", saveFailedOutsideWorkspace: "Tệp nằm ngoài không gian làm việc.", saveFailedWriteFailed: "Ghi vào tệp không thành công.",
     statusLine: 'Dòng {line}, Cột {column}', statusWords: '{count} từ', statusCharacters: '{count} ký tự', editBlock: 'Nhấp đúp để chỉnh sửa khối này',
@@ -133,7 +138,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: { toolbar: 'Định dạng Markdown', bold: 'Đậm', italic: 'Nghiêng', underline: 'Gạch chân', heading: 'Tiêu đề', quote: 'Trích dẫn', inlineCode: 'Mã nội tuyến', codeBlock: 'Khối mã', link: 'Liên kết', bulletList: 'Danh sách dấu đầu dòng', numberedList: 'Danh sách đánh số', taskList: 'Danh sách công việc', table: 'Bảng', properties: 'Chèn thuộc tính', undo: 'Hoàn tác', redo: 'Làm lại', preview: 'Xem trước', wrapText: 'Tự động xuống dòng', decreaseFontSize: 'Giảm cỡ chữ', increaseFontSize: 'Tăng cỡ chữ' },
   },
   fr: {
-    inlineHint: '{mod}+Entrée pour appliquer · Échap pour annuler', saving: 'Enregistrement…', saved: 'Enregistré',
+    inlineHint: '{mod}+Entrée pour appliquer · Échap pour annuler',
+    tableCellHint: 'Maj+Entrée : saut de ligne · Alt+Entrée : saut de ligne (garder la suite) · Alt+←/→ : naviguer entre cellules',
+    saving: 'Enregistrement…', saved: 'Enregistré',
     saveFailed: "Impossible d’enregistrer le fichier.", saveFailedReadOnly: "Le fichier est en lecture seule.", saveFailedPermissionDenied: "Autorisation refusée.",
     saveFailedMissing: "Le fichier n’existe plus.", saveFailedOutsideWorkspace: "Le fichier se trouve en dehors de l’espace de travail.", saveFailedWriteFailed: "Échec de l’écriture dans le fichier.",
     statusLine: 'Ligne {line}, col. {column}', statusWords: '{count} mots', statusCharacters: '{count} caractères', editBlock: 'Double-cliquez pour modifier ce bloc',
@@ -153,7 +160,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: { toolbar: 'Mise en forme Markdown', bold: 'Gras', italic: 'Italique', underline: 'Souligné', heading: 'Titre', quote: 'Citation', inlineCode: 'Code en ligne', codeBlock: 'Bloc de code', link: 'Lien', bulletList: 'Liste à puces', numberedList: 'Liste numérotée', taskList: 'Liste de tâches', table: 'Tableau', properties: 'Insérer des propriétés', undo: 'Annuler', redo: 'Rétablir', preview: 'Aperçu', wrapText: 'Retour à la ligne', decreaseFontSize: 'Réduire la taille de police', increaseFontSize: 'Augmenter la taille de police' },
   },
   es: {
-    inlineHint: '{mod}+Intro para aplicar · Esc para cancelar', saving: 'Guardando…', saved: 'Guardado',
+    inlineHint: '{mod}+Intro para aplicar · Esc para cancelar',
+    tableCellHint: 'Mayús+Intro: salto de línea · Alt+Intro: salto de línea (mantener texto siguiente) · Alt+←/→: moverse entre celdas',
+    saving: 'Guardando…', saved: 'Guardado',
     saveFailed: "No se pudo guardar el archivo.", saveFailedReadOnly: "El archivo es de solo lectura.", saveFailedPermissionDenied: "Permiso denegado.",
     saveFailedMissing: "El archivo ya no existe.", saveFailedOutsideWorkspace: "El archivo está fuera del espacio de trabajo.", saveFailedWriteFailed: "Error al escribir en el archivo.",
     statusLine: 'Línea {line}, col. {column}', statusWords: '{count} palabras', statusCharacters: '{count} caracteres', editBlock: 'Doble clic para editar este bloque',
@@ -173,7 +182,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: { toolbar: 'Formato Markdown', bold: 'Negrita', italic: 'Cursiva', underline: 'Subrayado', heading: 'Encabezado', quote: 'Cita', inlineCode: 'Código en línea', codeBlock: 'Bloque de código', link: 'Enlace', bulletList: 'Lista con viñetas', numberedList: 'Lista numerada', taskList: 'Lista de tareas', table: 'Tabla', properties: 'Insertar propiedades', undo: 'Deshacer', redo: 'Rehacer', preview: 'Vista previa', wrapText: 'Ajuste de línea', decreaseFontSize: 'Reducir tamaño de fuente', increaseFontSize: 'Aumentar tamaño de fuente' },
   },
   zh: {
-    inlineHint: '{mod}+Enter 应用 · Esc 取消', saving: '正在保存…', saved: '已保存',
+    inlineHint: '{mod}+Enter 应用 · Esc 取消',
+    tableCellHint: 'Shift+Enter：换行 · Alt+Enter：换行（保留光标后文字） · Alt+←/→：单元格间移动',
+    saving: '正在保存…', saved: '已保存',
     saveFailed: "无法保存文件。", saveFailedReadOnly: "文件为只读。", saveFailedPermissionDenied: "权限被拒绝。",
     saveFailedMissing: "文件已不存在。", saveFailedOutsideWorkspace: "文件位于工作区之外。", saveFailedWriteFailed: "写入文件失败。",
     statusLine: '行 {line}，列 {column}', statusWords: '{count} 个词', statusCharacters: '{count} 个字符', editBlock: '双击以编辑此块',
@@ -193,7 +204,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: { toolbar: 'Markdown 格式', bold: '粗体', italic: '斜体', underline: '下划线', heading: '标题', quote: '引用', inlineCode: '行内代码', codeBlock: '代码块', link: '链接', bulletList: '项目符号列表', numberedList: '编号列表', taskList: '任务列表', table: '表格', properties: '插入属性', undo: '撤销', redo: '重做', preview: '预览', wrapText: '自动换行', decreaseFontSize: '减小字号', increaseFontSize: '增大字号' },
   },
   no: {
-    inlineHint: '{mod}+Enter for å bruke · Esc for å avbryte', saving: 'Lagrer…', saved: 'Lagret',
+    inlineHint: '{mod}+Enter for å bruke · Esc for å avbryte',
+    tableCellHint: 'Shift+Enter: linjeskift · Alt+Enter: linjeskift (behold tekst etter) · Alt+←/→: flytt mellom celler',
+    saving: 'Lagrer…', saved: 'Lagret',
     saveFailed: "Kunne ikke lagre filen.", saveFailedReadOnly: "Filen er skrivebeskyttet.", saveFailedPermissionDenied: "Tilgang nektet.",
     saveFailedMissing: "Filen finnes ikke lenger.", saveFailedOutsideWorkspace: "Filen ligger utenfor arbeidsområdet.", saveFailedWriteFailed: "Skriving til filen mislyktes.",
     statusLine: 'Linje {line}, kol. {column}', statusWords: '{count} ord', statusCharacters: '{count} tegn', editBlock: 'Dobbeltklikk for å redigere denne blokken',
@@ -213,7 +226,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: { toolbar: 'Markdown-formatering', bold: 'Fet', italic: 'Kursiv', underline: 'Understreking', heading: 'Overskrift', quote: 'Sitat', inlineCode: 'Kode i linjen', codeBlock: 'Kodeblokk', link: 'Lenke', bulletList: 'Punktliste', numberedList: 'Nummerert liste', taskList: 'Oppgaveliste', table: 'Tabell', properties: 'Sett inn egenskaper', undo: 'Angre', redo: 'Gjør om', preview: 'Forhåndsvisning', wrapText: 'Tekstbryting', decreaseFontSize: 'Reduser skriftstørrelse', increaseFontSize: 'Øk skriftstørrelse' },
   },
   ja: {
-    inlineHint: '{mod}+Enter で適用 · Esc でキャンセル', saving: '保存中…', saved: '保存済み',
+    inlineHint: '{mod}+Enter で適用 · Esc でキャンセル',
+    tableCellHint: 'Shift+Enter: 改行 · Alt+Enter: 改行（カーソル後の文字を維持） · Alt+←/→: セル間を移動',
+    saving: '保存中…', saved: '保存済み',
     saveFailed: "ファイルを保存できませんでした。", saveFailedReadOnly: "ファイルは読み取り専用です。", saveFailedPermissionDenied: "アクセスが拒否されました。",
     saveFailedMissing: "ファイルは既に存在しません。", saveFailedOutsideWorkspace: "ファイルはワークスペースの外にあります。", saveFailedWriteFailed: "ファイルへの書き込みに失敗しました。",
     statusLine: '{line} 行、{column} 列', statusWords: '{count} 語', statusCharacters: '{count} 文字', editBlock: 'ダブルクリックしてこのブロックを編集',
@@ -233,7 +248,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: { toolbar: 'Markdown 書式', bold: '太字', italic: '斜体', underline: '下線', heading: '見出し', quote: '引用', inlineCode: 'インラインコード', codeBlock: 'コードブロック', link: 'リンク', bulletList: '箇条書き', numberedList: '番号付きリスト', taskList: 'タスクリスト', table: '表', properties: 'プロパティを挿入', undo: '元に戻す', redo: 'やり直す', preview: 'プレビュー', wrapText: '右端で折り返す', decreaseFontSize: '文字サイズを縮小', increaseFontSize: '文字サイズを拡大' },
   },
   ko: {
-    inlineHint: '{mod}+Enter로 적용 · Esc로 취소', saving: '저장 중…', saved: '저장됨',
+    inlineHint: '{mod}+Enter로 적용 · Esc로 취소',
+    tableCellHint: 'Shift+Enter: 줄바꿈 · Alt+Enter: 줄바꿈(커서 뒤 텍스트 유지) · Alt+←/→: 셀 간 이동',
+    saving: '저장 중…', saved: '저장됨',
     saveFailed: "파일을 저장할 수 없습니다.", saveFailedReadOnly: "파일이 읽기 전용입니다.", saveFailedPermissionDenied: "권한이 거부되었습니다.",
     saveFailedMissing: "파일이 더 이상 존재하지 않습니다.", saveFailedOutsideWorkspace: "파일이 작업 공간 밖에 있습니다.", saveFailedWriteFailed: "파일 쓰기에 실패했습니다.",
     statusLine: '{line}행, {column}열', statusWords: '{count}단어', statusCharacters: '{count}자', editBlock: '더블클릭하여 이 블록 편집',
@@ -253,7 +270,9 @@ export const EDITOR_UI_TRANSLATIONS: Record<AppLanguage, EditorUiTranslations> =
     formatting: { toolbar: 'Markdown 서식', bold: '굵게', italic: '기울임꼴', underline: '밑줄', heading: '제목', quote: '인용', inlineCode: '인라인 코드', codeBlock: '코드 블록', link: '링크', bulletList: '글머리 기호 목록', numberedList: '번호 목록', taskList: '작업 목록', table: '표', properties: '속성 삽입', undo: '실행 취소', redo: '다시 실행', preview: '미리 보기', wrapText: '자동 줄 바꿈', decreaseFontSize: '글꼴 크기 축소', increaseFontSize: '글꼴 크기 확대' },
   },
   ru: {
-    inlineHint: '{mod}+Enter — применить · Esc — отмена', saving: 'Сохранение…', saved: 'Сохранено',
+    inlineHint: '{mod}+Enter — применить · Esc — отмена',
+    tableCellHint: 'Shift+Enter: перенос строки · Alt+Enter: перенос (оставить текст после курсора) · Alt+←/→: переход по ячейкам',
+    saving: 'Сохранение…', saved: 'Сохранено',
     saveFailed: "Не удалось сохранить файл.", saveFailedReadOnly: "Файл доступен только для чтения.", saveFailedPermissionDenied: "Доступ запрещён.",
     saveFailedMissing: "Файл больше не существует.", saveFailedOutsideWorkspace: "Файл находится вне рабочей области.", saveFailedWriteFailed: "Не удалось записать файл.",
     statusLine: 'Стр. {line}, столб. {column}', statusWords: 'Слов: {count}', statusCharacters: 'Символов: {count}', editBlock: 'Двойной щелчок для редактирования',

@@ -7,6 +7,8 @@ export interface DocumentInteractionDocument {
   renderVersion: number;
   /** Loading, not-found or unavailable-workspace screens: nothing to wire. */
   disabled: boolean;
+  /** Disable reading-progress persistence for ephemeral views like git snapshots. */
+  persistReadingProgress?: boolean;
 }
 
 export interface DocumentInteractionCallbacks {

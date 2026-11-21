@@ -28,8 +28,10 @@ interface DocumentOverlayArgs {
   state: AppState;
   bridge: any;
   document: DocumentOverlayDocument;
-  bodyRef: RefObject<HTMLDivElement | null>;
+  bodyRef: RefObject<HTMLElement | null>;
   onImageClick: (el: HTMLElement) => void;
+  disableBookmarks?: boolean;
+  disableScope?: boolean;
 }
 
 export function showActionNotice(message: string, tone: ActionNoticeTone = "neutral"): void {
@@ -38,7 +40,15 @@ export function showActionNotice(message: string, tone: ActionNoticeTone = "neut
 
 // Link/image context menu, bookmark selection menu, HTML preview modal and
 // scope modal for one rendered document (main view or a split pane).
-export function useDocumentOverlays({ state, bridge, document: doc, bodyRef, onImageClick }: DocumentOverlayArgs) {
+export function useDocumentOverlays({
+  state,
+  bridge,
+  document: doc,
+  bodyRef,
+  onImageClick,
+  disableBookmarks = false,
+  disableScope = false,
+}: DocumentOverlayArgs) {
   const currentLang = state.settings.language || "en";
   const t = getTranslations(currentLang);
   const scopeT = getExportScopeTranslations(currentLang).scopeView;
@@ -111,8 +121,9 @@ export function useDocumentOverlays({ state, bridge, document: doc, bodyRef, onI
     }
   }, [t.previewActions.imageSaveFailed, t.previewActions.imageSaved]);
 
+  const bookmarksEnabled = !disableBookmarks && state.settings.bookmarksEnabled;
   const { bookmarkSelection, closeBookmarkSelection, handleBookmarkContextMenu, openBookmarkDialogForElement } = useBookmarkSelection({
-    enabled: state.settings.bookmarksEnabled,
+    enabled: bookmarksEnabled,
     currentFile: doc.filePath,
     renderVersion: doc.renderVersion,
     isFullHtmlPreview: doc.isFullHtmlPreview,
@@ -122,22 +133,22 @@ export function useDocumentOverlays({ state, bridge, document: doc, bodyRef, onI
     closeLinkMenu: () => setLinkMenu(null),
   });
 
-  const scopeTarget = linkMenu?.link ? findScopeFile(linkMenu.link, state.fileList, doc.filePath) : null;
+  const scopeTarget = !disableScope && linkMenu?.link ? findScopeFile(linkMenu.link, state.fileList, doc.filePath) : null;
 
   const overlays: ReactNode = (
     <>
       {htmlModal && <HtmlPreviewModal documentHtml={htmlModal.documentHtml} title={t.previewActions.modalTitle} closeLabel={t.previewActions.closeModal} trigger={htmlModal.trigger} onClose={() => setHtmlModal(null)} />}
-      <ScopeViewModal initialFile={scopeFile} files={state.fileList} onMediaClick={onImageClick} onClose={() => setScopeFile(null)} />
-      <BookmarkSelectionMenu state={bookmarkSelection} workspaceName={state.workspaceName} workspacePath={state.workspacePath} filePath={doc.filePath} translations={t.bookmarks} onClose={closeBookmarkSelection} />
+      {!disableScope && <ScopeViewModal initialFile={scopeFile} files={state.fileList} onMediaClick={onImageClick} onClose={() => setScopeFile(null)} />}
+      {bookmarksEnabled && <BookmarkSelectionMenu state={bookmarkSelection} workspaceName={state.workspaceName} workspacePath={state.workspacePath} filePath={doc.filePath} translations={t.bookmarks} onClose={closeBookmarkSelection} />}
       {linkMenu && (
         <LinkContextMenu
           state={linkMenu} menuLabel={t.previewActions.linkMenu} openLabel={t.previewActions.openInBrowser}
           copyLabel={t.previewActions.copyLink} copyImageLabel={t.previewActions.copyImage} saveImageLabel={t.previewActions.saveImagePng}
-          bookmarkLabel={state.settings.bookmarksEnabled ? t.bookmarks.addSelection : undefined}
+          bookmarkLabel={bookmarksEnabled ? t.bookmarks.addSelection : undefined}
           scopeLabel={scopeTarget ? scopeT.openAsScope : undefined}
           onOpenScope={scopeTarget ? () => { setScopeFile(scopeTarget); setLinkMenu(null); } : undefined}
           onOpen={handleOpenResolvedLink} onCopy={handleCopyResolvedLink} onCopyImage={handleCopyImage} onSaveImage={handleSaveImage}
-          onBookmark={state.settings.bookmarksEnabled && linkMenu.bookmarkTarget ? () => {
+          onBookmark={bookmarksEnabled && linkMenu.bookmarkTarget ? () => {
             const opened = linkMenu.bookmarkTarget ? openBookmarkDialogForElement(linkMenu.bookmarkTarget, linkMenu.x, linkMenu.y) : false;
             if (!opened) showActionNotice(t.bookmarks.targetUnavailable, 'error');
           } : undefined}

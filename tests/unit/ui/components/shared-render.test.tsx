@@ -567,4 +567,21 @@ describe('parseShortcutText', () => {
     expect(screen.getByText('Toggle anytime with Ctrl+Alt+T.')).toBeInTheDocument();
     expect(container.querySelector('.keycap-3d')).toBeInTheDocument();
   });
+
+  it('parses table cell hints with arrow keys without swallowing colons or plain parenthesized notes', () => {
+    const input = 'Shift+Enter: line break · Alt+Enter: line break (keep trailing words) · Alt+←/→: move across cells';
+    const res = parseShortcutText(input);
+    const { container } = render(res as React.ReactElement);
+    expect(screen.getByText(input)).toBeInTheDocument();
+    const keycaps = Array.from(container.querySelectorAll('kbd.keycap-3d')).map((el) => el.textContent);
+    expect(keycaps).toEqual(['Shift', 'Enter', 'Alt', 'Enter', 'Alt', '←/→']);
+    expect(container.textContent).toContain('(keep trailing words)');
+  });
+
+  it('parses localized modifier and Enter key labels without swallowing colons', () => {
+    const res = parseShortcutText('Maj+Entrée: saut · Mayús+Intro: salto');
+    const { container } = render(res as React.ReactElement);
+    const keycaps = Array.from(container.querySelectorAll('kbd.keycap-3d')).map((el) => el.textContent);
+    expect(keycaps).toEqual(['Maj', 'Entrée', 'Mayús', 'Intro']);
+  });
 });

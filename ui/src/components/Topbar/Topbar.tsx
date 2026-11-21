@@ -90,13 +90,14 @@ export function Topbar({
     toggleFocusMode, dispatch, setDocumentEditMode, saveDocument,
     guardUnsavedChanges = (_filePaths: string[], commit: () => void) => commit(),
   } = useAppState();
-  const { repositoryView } = useRepositorySnapshot();
+  const { repositoryView, activeToc } = useRepositorySnapshot();
   const { back, forward, canGoBack, canGoForward } = useNavigation();
   const bridge = usePlatform();
   const isElectron = typeof (window as any).electronAPI !== 'undefined';
   const isDesktop = isElectron || state.appRuntime === 'tauri';
   const isNativeEditRuntime = state.appRuntime === 'desktop' || state.appRuntime === 'tauri' || state.appRuntime === 'vscode';
-  const isRevisionMode = repositoryView.mode === 'revision';
+  const isRevisionMode = repositoryView?.mode === 'revision';
+  const effectiveToc = isRevisionMode ? (activeToc ?? []) : state.toc;
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
   const editorT = getEditorUiTranslations(currentLang);
@@ -219,8 +220,8 @@ export function Topbar({
           tocLabel={t.actions.toggleToc}
           tocTooltip={t.actions.toggleToc}
           tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')}
-          tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0}
-          tocToggleDisabled={isRevisionMode || !state.currentFile || state.toc.length === 0}
+          tocActive={!state.tocCollapsed && effectiveToc.length > 0 && (isRevisionMode || !!state.currentFile)}
+          tocToggleDisabled={effectiveToc.length === 0 || (!isRevisionMode && !state.currentFile)}
           onTocToggle={toggleToc}
           showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled}
           insightsLabel={insightsT.title}

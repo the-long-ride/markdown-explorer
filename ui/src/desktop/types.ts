@@ -47,6 +47,8 @@ export interface PendingSearchJump {
   query: string;
   matchOrdinal?: number;
   matchIndex?: number;
+  lineNumber?: number;
+  excerpt?: string;
   matchCase?: boolean;
   failureMessage?: string;
   bookmark?: BookmarkRecord;

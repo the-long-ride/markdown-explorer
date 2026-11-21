@@ -86,8 +86,9 @@ export function createDocumentClickHandler({
       callbacks.onImageClick(media);
       return;
     }
-    const link = target.closest<HTMLAnchorElement>(".mdn-body a[href]");
-    const href = link?.getAttribute("href") ?? "";
+    const link = target.closest<HTMLAnchorElement>(".mdn-body a[href], .mdn-body a[data-mdn-target]");
+    const linkTarget = link && !link.hasAttribute("onclick") ? (link.dataset.mdnTarget ?? "") : "";
+    const href = linkTarget || (link?.getAttribute("href") ?? "");
     if (link && isWorkspaceNavigationHref(href)) {
       e.preventDefault(); e.stopPropagation();
       callbacks.navigate(href);

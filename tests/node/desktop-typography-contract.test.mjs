@@ -108,3 +108,19 @@ test('desktop typography exposes independent role variables and markdown selecto
   assert.match(tokens, /--font-quote:/);
   assert.match(tokens, /--font-mermaid:/);
 });
+
+test('boot HTML entrypoints and raw-grid styles use active/default raw-grid theme variables for loading screens', async () => {
+  const rawGridCss = await read('ui/src/styles/global/global-theme-raw-grid.css');
+  for (const selector of ['[data-theme-style="raw-grid"] .app', '[data-theme-style="raw-grid"] .tab-loading', '[data-theme-style="raw-grid"] .splash']) {
+    assert.ok(rawGridCss.includes(selector), `${selector} should use the Raw Grid background grid`);
+  }
+  for (const htmlPath of ['ui/index.html', 'website-app/index.html', 'website-app/features/index.html']) {
+    const html = await read(htmlPath);
+    assert.match(html, /<html[^>]*data-theme-style="raw-grid"/, `${htmlPath} must default data-theme-style to raw-grid`);
+    assert.match(html, /\.splash\{[^}]*background:var\(--bg\)/, `${htmlPath} .splash must use var(--bg)`);
+    assert.match(html, /\.splash-spinner\{[^}]*border-top-color:var\(--accent\)/, `${htmlPath} .splash-spinner must use var(--accent)`);
+    assert.match(html, /\.splash-label\{[^}]*color:var\(--tx2\)/, `${htmlPath} .splash-label must use var(--tx2)`);
+    assert.doesNotMatch(html, /\.splash\{[^}]*#151518/, `${htmlPath} .splash must not hardcode Explorer Classic #151518`);
+    assert.doesNotMatch(html, /\.splash-spinner\{[^}]*#ff9130/, `${htmlPath} .splash-spinner must not hardcode Explorer Classic #ff9130`);
+  }
+});

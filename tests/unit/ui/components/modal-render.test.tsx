@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
 import { MediaModal } from '../../../../ui/src/components/Modal/MediaModal';
 import { createMediaGallery } from '../../../../ui/src/components/Modal/mediaGallery';
 import { TermsModal } from '../../../../ui/src/components/Modal/TermsModal';
@@ -61,6 +62,16 @@ vi.mock('../../../../ui/src/components/shared/icons', () => ({
   SaveImageIcon: () => <span>save-image-icon</span>,
   SunIcon: () => <span>sun-icon</span>,
   MoonIcon: () => <span>moon-icon</span>,
+}));
+
+const copyImageMocks = vi.hoisted(() => ({
+  copyElementImageToClipboard: vi.fn<() => Promise<boolean>>(),
+  saveElementImageAsPng: vi.fn<() => Promise<boolean>>(),
+}));
+
+vi.mock('../../../../ui/src/dom/copyImage', () => ({
+  copyElementImageToClipboard: copyImageMocks.copyElementImageToClipboard,
+  saveElementImageAsPng: copyImageMocks.saveElementImageAsPng,
 }));
 
 vi.mock('../../../../ui/src/assets/logos/logo-500.png?inline', () => ({ default: 'logo.png' }));
@@ -200,6 +211,92 @@ describe('MediaModal', () => {
     const html = gallery?.items[0]?.html ?? '';
     expect(html).toContain('width="512"');
     expect(html).toContain('height="256"');
+  });
+
+  it('preserves unclamped intrinsic and viewBox dimensions when in-document layout is narrower', () => {
+    const body = document.createElement('div');
+    body.className = 'mdn-body';
+    document.body.appendChild(body);
+
+    const attrWrapper = document.createElement('div');
+    attrWrapper.className = 'mdn-mermaid-wrap';
+    const attrSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    attrSvg.setAttribute('width', '1720');
+    attrSvg.setAttribute('height', '260');
+    attrSvg.setAttribute('viewBox', '0 0 1720 260');
+    attrWrapper.appendChild(attrSvg);
+    body.appendChild(attrWrapper);
+    const attrRectSpy = vi.spyOn(attrSvg, 'getBoundingClientRect').mockReturnValue({
+      width: 750, height: 113, x: 0, y: 0,
+      top: 0, left: 0, right: 750, bottom: 113,
+      toJSON: () => ({}),
+    });
+
+    const responsiveWrapper = document.createElement('div');
+    responsiveWrapper.className = 'mdn-mermaid-wrap';
+    const responsiveSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    responsiveSvg.setAttribute('width', '100%');
+    responsiveSvg.setAttribute('viewBox', '0 0 1200 800');
+    responsiveWrapper.appendChild(responsiveSvg);
+    body.appendChild(responsiveWrapper);
+    const responsiveRectSpy = vi.spyOn(responsiveSvg, 'getBoundingClientRect').mockReturnValue({
+      width: 750, height: 500, x: 0, y: 0,
+      top: 0, left: 0, right: 750, bottom: 500,
+      toJSON: () => ({}),
+    });
+
+    const attrGallery = createMediaGallery(attrWrapper, body);
+    const attrHtml = attrGallery?.items[0]?.html ?? '';
+    expect(attrHtml).toContain('width="1720"');
+    expect(attrHtml).toContain('height="260"');
+
+    const responsiveGallery = createMediaGallery(responsiveWrapper, body);
+    const responsiveHtml = responsiveGallery?.items[1]?.html ?? '';
+    expect(responsiveHtml).toContain('width="1200"');
+    expect(responsiveHtml).toContain('height="800"');
+
+    attrRectSpy.mockRestore();
+    responsiveRectSpy.mockRestore();
+  });
+
+  it('dispatches the Image saved success toast when Save as image (.PNG) succeeds', async () => {
+    copyImageMocks.saveElementImageAsPng.mockReset();
+    copyImageMocks.saveElementImageAsPng.mockResolvedValue(true);
+    const notices: Array<{ message: string; tone: string }> = [];
+    const onNotice = (event: Event) => {
+      notices.push((event as CustomEvent).detail);
+    };
+    window.addEventListener(ACTION_NOTICE_EVENT, onNotice);
+    try {
+      render(<MediaModal gallery={{ items: [{ type: 'svg', html: '<svg></svg>', source: 'packet-beta\n+4: "Version"' }], currentIndex: 0 }} onClose={() => {}} />);
+      const saveBtn = document.querySelector<HTMLButtonElement>('button[tooltip="Save as image (.PNG)"]');
+      expect(saveBtn).toBeTruthy();
+      fireEvent.click(saveBtn!);
+      await waitFor(() => expect(copyImageMocks.saveElementImageAsPng).toHaveBeenCalledWith(expect.any(HTMLElement), 'diagram.png'));
+      await waitFor(() => expect(notices).toEqual([{ message: 'Image saved.', tone: 'success' }]));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, onNotice);
+    }
+  });
+
+  it('dispatches the error toast when Save as image (.PNG) fails', async () => {
+    copyImageMocks.saveElementImageAsPng.mockReset();
+    copyImageMocks.saveElementImageAsPng.mockResolvedValue(false);
+    const notices: Array<{ message: string; tone: string }> = [];
+    const onNotice = (event: Event) => {
+      notices.push((event as CustomEvent).detail);
+    };
+    window.addEventListener(ACTION_NOTICE_EVENT, onNotice);
+    try {
+      render(<MediaModal gallery={{ items: [{ type: 'img', src: 'https://example.com/image.png' }], currentIndex: 0 }} onClose={() => {}} />);
+      const saveBtn = document.querySelector<HTMLButtonElement>('button[tooltip="Save as image (.PNG)"]');
+      expect(saveBtn).toBeTruthy();
+      fireEvent.click(saveBtn!);
+      await waitFor(() => expect(copyImageMocks.saveElementImageAsPng).toHaveBeenCalledWith(expect.any(HTMLElement), 'image.png'));
+      await waitFor(() => expect(notices).toEqual([{ message: 'Failed to save image.', tone: 'error' }]));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, onNotice);
+    }
   });
 });
 

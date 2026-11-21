@@ -2,7 +2,7 @@ import { getMermaid } from '../../../lib/renderLibs';
 import { resolveThemeMode, type AppThemeMode } from '../../../utils/themeMode.ts';
 import { createDeferredMermaidRerender } from './deferredMermaidRerender.ts';
 import { resolveMermaidViewport, runInMermaidRenderLane } from './mermaidLazyRendering.ts';
-import { createMermaidRerenderQueue } from './mermaidRerenderQueue.ts';
+import { createMermaidRerenderQueue, isMermaidNodeHidden } from './mermaidRerenderQueue.ts';
 import {
   enhanceMermaid,
   getMermaidRenderNodes,
@@ -38,6 +38,11 @@ export function createMermaidRerenderLifecycle(
 
   const queue = createMermaidRerenderQueue<HTMLElement>((node, isCancelled) => runInMermaidRenderLane(async () => {
     if (disposed || isCancelled()) return;
+    if (isMermaidNodeHidden(node)) {
+      invalidateMermaidRendering(node);
+      node.removeAttribute('data-mdn-rerender-queued');
+      return;
+    }
     node.setAttribute('data-mdn-rerender-queued', 'true');
     invalidateMermaidRendering(node);
     try {
@@ -64,7 +69,16 @@ export function createMermaidRerenderLifecycle(
       stopEnhancements();
       enhancementsPaused = true;
     }
-    queue.start(getMermaidRenderNodes(root));
+    const visibleNodes: HTMLElement[] = [];
+    for (const node of getMermaidRenderNodes(root)) {
+      if (isMermaidNodeHidden(node)) {
+        invalidateMermaidRendering(node);
+        node.removeAttribute('data-mdn-rerender-queued');
+      } else {
+        visibleNodes.push(node);
+      }
+    }
+    queue.start(visibleNodes);
   });
 
   return {

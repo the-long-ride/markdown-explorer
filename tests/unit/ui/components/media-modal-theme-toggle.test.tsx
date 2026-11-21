@@ -185,4 +185,66 @@ describe('MediaModal theme toggle integration', () => {
       expect(svgDiv.innerHTML).toContain('mock-dark');
     });
   });
+
+  it('keeps the re-rendered themed SVG across zoom, pan, and parent re-renders', async () => {
+    const gallery: MediaGallery = {
+      items: [{ type: 'svg', html: '<svg id="original">INIT</svg>', source: 'flowchart TD\nA-->B' }],
+      currentIndex: 0,
+    };
+    const { baseElement, rerender } = render(
+      <MediaModal gallery={gallery} onClose={() => {}} />,
+    );
+    const svgDiv = baseElement.querySelector('.mdn-modal-content-svg') as HTMLDivElement;
+    expect(svgDiv.innerHTML).toContain('INIT');
+
+    // Flip Dark -> Light
+    mocks.stateRef.current = { ...mocks.stateRef.current, theme: 'light' };
+    rerender(<MediaModal gallery={gallery} onClose={() => {}} />);
+
+    await waitFor(() => {
+      expect(svgDiv.innerHTML).toContain('mock-light');
+    });
+
+    // Trigger subsequent component re-renders via zoom, drag-pan, and parent rerender.
+    fireEvent.click(screen.getByLabelText('Zoom In'));
+    const wrap = baseElement.querySelector('.mdn-modal-content-wrap') as HTMLDivElement;
+    fireEvent.mouseDown(wrap, { clientX: 10, clientY: 10 });
+    fireEvent.mouseMove(wrap, { clientX: 35, clientY: 40 });
+    fireEvent.mouseUp(wrap);
+    rerender(<MediaModal gallery={gallery} onClose={() => {}} />);
+
+    expect(svgDiv.innerHTML).toContain('mock-light');
+    expect(svgDiv.innerHTML).not.toContain('INIT');
+  });
+
+  it('preserves snapshot on open at a non-zero currentIndex and re-renders on theme toggle', async () => {
+    const multiGallery: MediaGallery = {
+      items: [
+        { type: 'img', src: 'https://example.com/first.png' },
+        { type: 'svg', html: '<svg id="snap-second">SNAP-SECOND</svg>', source: 'flowchart TD\nX-->Y' },
+      ],
+      currentIndex: 1,
+    };
+
+    const { baseElement, rerender } = render(
+      <MediaModal gallery={multiGallery} onClose={() => {}} />,
+    );
+
+    let svgDiv: HTMLDivElement | null = null;
+    await waitFor(() => {
+      svgDiv = baseElement.querySelector('.mdn-modal-content-svg') as HTMLDivElement | null;
+      expect(svgDiv).toBeTruthy();
+      expect(svgDiv!.innerHTML).toContain('SNAP-SECOND');
+    });
+    expect(svgDiv!.innerHTML).not.toContain('RECOLOR');
+
+    // Toggle theme while viewing the second item
+    mocks.stateRef.current = { ...mocks.stateRef.current, theme: 'light' };
+    rerender(<MediaModal gallery={multiGallery} onClose={() => {}} />);
+
+    await waitFor(() => {
+      expect(svgDiv!.innerHTML).toContain('mock-light');
+    });
+    expect(svgDiv!.innerHTML).not.toContain('SNAP-SECOND');
+  });
 });

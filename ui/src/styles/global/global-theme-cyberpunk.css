@@ -97,7 +97,7 @@
 ) { border: 0 !important; box-shadow: 0 -1px 0 var(--bd-s) !important; }
 
 /* 2. Document Reading Pane & Section Surfaces */
-:root[data-theme][data-theme-style="cyberpunk"] :is(.body, .content-shell, .content-shell__main, .content) {
+:root[data-theme][data-theme-style="cyberpunk"] :is(.body, .content-shell, .content-shell__main, .content:not(.repository-snapshot-content)) {
   background: transparent !important;
   position: relative;
   z-index: 1;

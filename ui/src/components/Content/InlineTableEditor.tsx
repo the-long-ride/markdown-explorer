@@ -8,6 +8,7 @@ import {
 import { markdown } from '@codemirror/lang-markdown';
 import { markdownCustomLanguageExtension, markdownHighlighting } from '../../editor/markdownHighlight';
 import { createTableVisualExtension } from '../../editor/tableVisualPlugin';
+import { formatFocusedTableCell } from '../../editor/tableCellEditing';
 import { applyMarkdownFormat, type MarkdownFormatCommand } from '../../editor/markdownFormatting';
 
 export interface InlineTableEditorHandle {
@@ -76,6 +77,7 @@ export function InlineTableEditor({
     if (!editorRef) return;
     editorRef.current = {
       runFormat: (command: MarkdownFormatCommand) => {
+        if (formatFocusedTableCell(hostRef.current, command)) return;
         const view = viewRef.current;
         if (!view) return;
         const selection = view.state.selection.main;

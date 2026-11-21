@@ -494,6 +494,9 @@ describe('UI style contract', () => {
     expect(scopeCss).toMatch(/\.scope-view\s*\{[^}]*z-index:\s*var\(--z-modal\);/s);
     expect(mediaCss).toMatch(/\.media-modal\.mdn-modal\s*\{[^}]*z-index:\s*var\(--z-modal-popover\);/s);
     expect(syntaxCss).toMatch(/body\s*>\s*\.mdn-link-context-menu\s*\{[^}]*z-index:/s);
+    expect(syntaxCss).toMatch(/\.mdn-action-notice\s*\{[^}]*z-index:\s*calc\(var\(--z-tooltip\) - 1\);/s);
+    const contentTsx = fs.readFileSync(path.join(uiRoot, 'components/Content/Content.tsx'), 'utf8');
+    expect(contentTsx).toContain('createPortal(actionNoticeNode, document.body)');
     expect(tableCoreCss).not.toMatch(/\.mdn-filter-dropdown\s*\{[^}]*z-index:\s*var\(--z-dropdown\);/s);
     expect(tableControlsCss).not.toMatch(/not\(\.is-wrapped\)\s+\.mdn-table\s+th\s*\{[^}]*overflow:\s*hidden/s);
   });
@@ -504,6 +507,11 @@ describe('UI style contract', () => {
 
     expect(menusCss).toMatch(/\.tab-context-menu__item-shortcut\s*\{[^}]*height:\s*16px;/s);
     expect(cpMenusCss).toMatch(/\.tab-context-menu__item-shortcut\s*\{[^}]*height:\s*16px;/s);
+  });
+
+  test('resets host-inherited scrollbar-color/width when ::-webkit-scrollbar is supported', () => {
+    const tokensShellCss = fs.readFileSync(path.join(uiRoot, 'styles/tokens/tokens-app-shell.css'), 'utf8');
+    expect(tokensShellCss).toMatch(/@supports selector\(::-webkit-scrollbar\)\s*\{\s*html,\s*body,\s*\*\s*\{[^}]*scrollbar-width:\s*auto;\s*scrollbar-color:\s*auto;/s);
   });
 });
 

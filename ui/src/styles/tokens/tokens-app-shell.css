@@ -18,6 +18,15 @@ body {
     scrollbar-color: var(--bd-s) transparent;
   }
 }
+/* Chromium 121+ disables ::-webkit-scrollbar whenever scrollbar-color/width is non-auto (e.g. VS Code webview host CSS). */
+@supports selector(::-webkit-scrollbar) {
+  html,
+  body,
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
 *::-webkit-scrollbar {
   width: 5px;
   height: 5px;

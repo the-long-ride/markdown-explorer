@@ -1,5 +1,10 @@
-import { useEffect, type RefObject } from 'react';
-import { registerDocumentRoot, setActiveDocumentRootId, type DocumentRootId } from './activeDocumentRoot';
+import { useLayoutEffect, type RefObject } from 'react';
+import {
+  getActiveDocumentRootId,
+  registerDocumentRoot,
+  setActiveDocumentRootId,
+  type DocumentRootId,
+} from './activeDocumentRoot';
 
 interface DocumentRootRegistrationArgs {
   id: DocumentRootId;
@@ -20,13 +25,20 @@ export function useDocumentRootRegistration({
   renderVersion,
   active,
 }: DocumentRootRegistrationArgs): void {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
     return registerDocumentRoot({ id, body, scroll: scrollRef.current, filePath, markdownSource });
   }, [bodyRef, filePath, id, markdownSource, renderVersion, scrollRef]);
 
-  useEffect(() => {
-    if (active) setActiveDocumentRootId(id);
+  useLayoutEffect(() => {
+    if (!active) return;
+    const previousId = getActiveDocumentRootId();
+    setActiveDocumentRootId(id);
+    return () => {
+      if (getActiveDocumentRootId() === id && previousId !== id) {
+        setActiveDocumentRootId(previousId);
+      }
+    };
   }, [active, id]);
 }

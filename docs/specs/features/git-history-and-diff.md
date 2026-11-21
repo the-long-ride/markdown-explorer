@@ -4,51 +4,87 @@ id: "feature.git-history-and-diff"
 title: "Git History and Diff Viewer"
 kind: "feature"
 status: "verified"
-summary: "Per-file and workspace Git commit history inspection and side-by-side/unified diff rendering."
-tags: ["git", "history", "diff", "timeline"]
-source_paths: ["ui/src/components/History/CopyableHistoryMeta.tsx", "ui/src/components/History/DocumentDiffView.tsx", "ui/src/components/History/FileHistoryCommitList.tsx", "ui/src/components/History/FileHistoryDiffPane.tsx", "ui/src/components/History/FileHistoryModal.tsx", "ui/src/components/History/FileHistoryResizeHandle.tsx", "ui/src/components/History/GitCommitGraph.tsx", "ui/src/components/History/GitRevisionView.tsx", "ui/src/components/History/HistoryActionIcons.tsx", "ui/src/components/History/HistorySelectionCheckbox.tsx", "ui/src/components/History/RenderedDiffView.tsx", "ui/src/components/History/RepositoryCommitMenu.tsx", "ui/src/components/History/RepositoryHistoryPanel.tsx", "ui/src/components/History/RepositorySnapshotContent.tsx", "ui/src/components/History/RepositorySnapshotPortal.tsx", "ui/src/components/History/SourceDiffView.tsx", "ui/src/components/History/SplitSourceDiffView.tsx", "ui/src/components/History/diffVirtualRows.ts", "ui/src/components/History/repositoryHistoryLabels.ts", "ui/src/components/History/useFileHistoryLayout.ts", "ui/src/components/History/useSyncedScroll.ts", "ui/src/components/History/useVisibleRowRange.ts", "ui/src/history/contracts.ts", "ui/src/history/diffRanges.ts", "ui/src/history/gitGraphLayout.ts", "ui/src/history/historyAvailability.ts", "ui/src/history/historyClient.ts", "ui/src/history/lineDiff.ts", "ui/src/history/repositoryView.ts", "ui/src/history/revisionWorkspace.ts", "ui/src/history/splitDiffRows.ts", "ui/src/history/useFileHistory.ts"]
-related_specs: ["architecture.ui-state-and-runtimes"]
-last_doc_update_at: "2026-11-19T11:53:00Z"
-last_verified_at: "2026-11-19T11:53:00Z"
-last_verified_code_commit: "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0"
-last_source_change_commit: "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0"
-last_source_change_at: "2026-11-17T07:16:00Z"
-source_fingerprint: "sha256:01e3d05ba7107573baecdc9d2563e24cbe96b862fee0aee0f6ba63ffc107819f"
+summary: "Per-file and workspace Git commit history inspection, three-mode diff rendering, and interactive read-only commit snapshot viewing."
+tags: ["git", "history", "diff", "timeline", "snapshot"]
+source_paths: ["ui/src/components/History/CopyableHistoryMeta.tsx", "ui/src/components/History/DocumentDiffView.tsx", "ui/src/components/History/FileHistoryCommitList.tsx", "ui/src/components/History/FileHistoryDiffPane.tsx", "ui/src/components/History/FileHistoryModal.tsx", "ui/src/components/History/FileHistoryResizeHandle.tsx", "ui/src/components/History/GitCommitGraph.tsx", "ui/src/components/History/GitRevisionView.tsx", "ui/src/components/History/HistoryActionIcons.tsx", "ui/src/components/History/HistorySelectionCheckbox.tsx", "ui/src/components/History/RenderedDiffView.tsx", "ui/src/components/History/RepositoryCommitMenu.tsx", "ui/src/components/History/RepositoryHistoryPanel.tsx", "ui/src/components/History/RepositorySnapshotContent.tsx", "ui/src/components/History/RepositorySnapshotPortal.tsx", "ui/src/components/History/SourceDiffView.tsx", "ui/src/components/History/SplitSourceDiffView.tsx", "ui/src/components/History/diffVirtualRows.ts", "ui/src/components/History/repositoryHistoryLabels.ts", "ui/src/components/History/useFileHistoryLayout.ts", "ui/src/components/History/useSyncedScroll.ts", "ui/src/components/History/useVisibleRowRange.ts", "ui/src/history/contracts.ts", "ui/src/history/diffRanges.ts", "ui/src/history/gitGraphLayout.ts", "ui/src/history/historyAvailability.ts", "ui/src/history/historyClient.ts", "ui/src/history/lineDiff.ts", "ui/src/history/repositoryView.ts", "ui/src/history/revisionWorkspace.ts", "ui/src/history/snapshotLinkResolution.ts", "ui/src/history/splitDiffRows.ts", "ui/src/history/useFileHistory.ts", "ui/src/utils/snapshotSearchJump.ts"]
+related_specs: ["architecture.ui-state-and-runtimes", "architecture.ui-theming-and-styles", "feature.markdown-rendering-and-tables", "feature.sidebar-search-bookmarks", "architecture.runtime-tauri", "architecture.runtime-electron", "architecture.runtime-vscode", "architecture.runtime-chromium-and-web-demo"]
+last_doc_update_at: "2026-11-20T19:12:00Z"
+last_verified_at: "2026-11-20T19:12:00Z"
+last_verified_code_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
+last_source_change_commit: "d0a2d7f5fc3278c4e0ca84174a985eff8b133da1"
+last_source_change_at: "2026-11-19T19:10:50+07:00"
+source_fingerprint: "sha256:ff1a02f0ed8dd5d2801efb44f2ea2c692d755cc14d738ed17b7a746429704624"
 ---
 
 # Git History and Diff Viewer
 
-## Overview
+## Purpose and boundaries
 
-Surfaces Git commit logs, file revision timelines, and line-level diffs inside the UI by querying Git capabilities exposed through desktop and IDE runtime bridges.
+Surfaces per-file revision timelines, workspace-level Git commit graphs, three-mode document diffs, and interactive read-only commit snapshot viewing inside the UI by querying Git capabilities exposed through desktop, IDE, and browser Git history host bridges.
 
-## Scope and entry points
+- **In scope**: Per-file history modal (`FileHistoryModal`, `FileHistoryCommitList`, `FileHistoryDiffPane`, `HistorySelectionCheckbox`), workspace Git commit graph and sidebar history panel (`RepositoryHistoryPanel`, `GitCommitGraph`, `RepositoryCommitMenu`), diff views (`DocumentDiffView`, `SourceDiffView`, `SplitSourceDiffView`, `RenderedDiffView`), read-only commit snapshot viewer (`RepositorySnapshotPortal`, `RepositorySnapshotContent`, `GitRevisionView`), history data/diff/link helpers (`ui/src/history/*`), and revision-mode search-jump coordination (`ui/src/utils/snapshotSearchJump.ts`).
+- **Out of scope**: Host-side Git command execution in Tauri (`architecture.runtime-tauri`), Electron (`architecture.runtime-electron`), and VS Code (`architecture.runtime-vscode`), plus the live Web App's `unsupported-runtime` stub and Feature Demo Studio fixtures (`architecture.runtime-chromium-and-web-demo`).
+
+## Observable behavior
+
+- **Per-file commit timeline & Compare mode (`FileHistoryModal`, `FileHistoryCommitList`, `HistorySelectionCheckbox`)**:
+  - Lists commits affecting the active file with author, timestamp, short SHA, and subject metadata, plus resizable split panes (`FileHistoryResizeHandle`, `useFileHistoryLayout`) and custom hover tooltips (`data-hover-tooltip` instead of native HTML `title`).
+  - Compare mode renders transparent theme-matched SVG checkboxes (`CheckboxCheckedIcon` / `CheckboxUncheckedIcon` via `HistorySelectionCheckbox`) with left-aligned body-portaled tooltips (`portalTooltip`, `tooltipPos="below"`, `tooltipAlign="left"`) and Option 3 boundary movement (`nextComparePicks`: clicking a commit outside the two checked commits moves the adjacent outer boundary, while clicking a commit between the checked pair alternates moving the older then newer endpoint).
+- **Workspace commit graph & revision browsing (`RepositoryHistoryPanel`, `GitCommitGraph`, `RepositoryCommitMenu`)**:
+  - Paginates workspace commit history (`HISTORY_PAGE_SIZE = 50` with `IntersectionObserver` + scroll threshold infinite loading), filters commits by SHA/author/subject, toggles `--all` branch refs (`SwitchButton`), and renders a virtualized multi-lane SVG DAG (`layoutGitGraph`, `useVisibleRowRange`) with body-portaled `CommitNodeHoverCard` tooltips and `RepositoryCommitMenu` actions (browse commit revision, return to `HEAD`, copy commit SHA/subject/author).
+  - Activating a non-`HEAD` commit switches `RepositorySnapshotContext` into `repositoryView.mode === 'revision'`, projects the commit's tree (`buildRevisionWorkspaceProjection`), and lists commit files in `RepositoryHistoryPanel`.
+- **Three-mode diff inspection (`DocumentDiffView`, `FileHistoryDiffPane`, `SourceDiffView`, `SplitSourceDiffView`, `RenderedDiffView`)**:
+  - Fetches commit or working-tree diffs from the host bridge and renders formatted additions/deletions for selected revisions.
+  - `DocumentDiffView` and `FileHistoryDiffPane` support three modes localized across all 9 languages (`splitDiff` in `historyTranslations.ts`): unified inline source table (`'source'` / `'raw-inline'` via virtualized `SourceDiffView`), side-by-side source diff (`'split'` / `'raw-split'` via virtualized `SplitSourceDiffView`), and side-by-side rendered Markdown diff (`'rendered'` via `RenderedDiffView` with `useSyncedScroll` and memoized `{ __html }` objects so React re-renders do not wipe imperative `.is-diff-changed` block highlights).
+- **Interactive commit snapshot viewer (`RepositorySnapshotPortal`, `RepositorySnapshotContent`, `snapshotLinkResolution.ts`, `snapshotSearchJump.ts`)**:
+  - When `repositoryView.mode === 'revision'`, `RepositorySnapshotPortal` portals `RepositorySnapshotContent` into `.content-shell__main` (hiding `.topbar__markdown-editing` via `body:has(.repository-snapshot-content) .topbar__markdown-editing`). The header displays a read-only badge (`t.snapshotReadOnly`), file path with `data-hover-tooltip` (when a snapshot file is open), 7-character commit SHA, and a `Back to current HEAD` action (`returnToHead`).
+  - **Commit overview panel (`!snapshot`)**: When no snapshot file is selected yet, `.repository-snapshot-content__empty` (`data-testid="repository-snapshot-commit-panel"`) renders a centered `.repository-snapshot-content__commit-card` showing `t.snapshotViewingCommit`, commit `shortOid` (with full `revisionOid` tooltip), commit subject (or `t.noCommitMessage`), localized author/date (`formatSnapshotCommitDate` formatting dates as `15 Jan 2026`), an **Explore Files** button (expanding a collapsed sidebar and switching `sidebarActiveTab` to `'files'`), and **Back to current HEAD** (`returnToHead`).
+  - **Markdown & frontmatter rendering**: Uses `activeRendered` from `RepositorySnapshotContext` (with `renderMarkdownClientSide` fallback), splits leading HTML comments (`splitLeadingHtmlComments`), renders collapsible YAML frontmatter properties (`frontmatterEntriesOf`), and strips inline `onclick="Nav.go(...)"` attributes (`stripSnapshotInlineNavHandlers` + `useLayoutEffect` cleanup) so links never leak navigation into the live workspace. Non-Markdown files render in `<pre class="repository-snapshot-content__source">`.
+  - **Document root registration & TOC synchronization**: Registers `id: 'snapshot'` via `useDocumentRootRegistration` (`data-document-root="snapshot"`, `documentKey="${revisionOid}:${snapshot.path}"`) and mounts a lazy compact `TableOfContents` (`variant="compact"`, `rootId="snapshot"`) at the top of `.repository-snapshot-content__body`. Both compact and sidebar panel TOC instances scope heading lookups, collapsible `.mdn-section` expansion (`setHeadingSectionExpanded`), and active-heading scroll tracking exclusively to the snapshot root.
+  - **Mermaid diagrams, theme re-render & MediaModal**: Runs `useDocumentInteractions` (`rootId: 'snapshot'`, `persistReadingProgress: false`) to execute content enhancements (`scheduleContentEnhancements` + `installMermaidContentLifecycle`), rendering both tagged (` ```mermaid `) and untagged Mermaid diagrams, re-rendering diagrams on theme/preset/custom-theme/font changes, and dispatching `markdown-explorer-open-media-modal` via `createMediaGallery` when a diagram or image is clicked.
+  - **Interactive tables, sticky headers, View as chart & sticky Show Less**: Enhances snapshot tables (`data-mdn-enhanced="true"`) with row counts, `Show More`/`Show Less` collapsing, JS sticky table header translation (`syncStickyTableHeaders` setting `data-mdn-js-sticky-headers="true"` and `--mdn-sticky-bottom-offset` on `.repository-snapshot-content__scroll`), and `View as chart` (`Chart.js` bar/line/pie/doughnut/radar/polarArea rendering). Expanded codeblocks pin their `Show Less` button (`position: sticky; bottom: var(--mdn-sticky-bottom-offset, 0px)`) inside the snapshot scroll viewport.
+  - **Snapshot link navigation & portaled `LinkContextMenu`**: `resolveSnapshotLinkTarget` resolves `#fragment` links (expanding parent `.mdn-section` blocks and scrolling smoothly within the snapshot body), external `http(s):` links (`openExternal` via platform bridge), relative (`./`, `../`), root-relative (`/`), and Obsidian `[[wiki-links]]` (with `.md`/`.mdx` extension and case-insensitive basename fallbacks) against the commit's `state.files` list, calling `openSnapshotFile(target.path)` and queueing `pendingFragmentRef` when cross-file links include a `#fragment`. Missing snapshot files display an error toast (`showActionNotice`) and dangerous schemes (`javascript:`, `data:`, `vbscript:`) return `null`. Right-clicking links or images opens `useDocumentOverlays` (`disableBookmarks: true`, `disableScope: true`) portaled to `document.body` (`LinkContextMenu` for open/copy link and copy/save image PNG, plus `HtmlPreviewModal`).
+  - **Revision-mode sidebar search jump (`snapshotSearchJump.ts`)**: `createRevisionSidebarSearch` wires `SidebarSearch` in revision mode to `searchRevision` (`searchRevisionWorkspace`, up to 200 files / 1,000 results) and accepts a getter `() => activeSnapshotPath` so `revisionSearch` stays referentially stable across file switches without re-running commit search. Clicking a match calls `queueSnapshotSearchJump` (converting 1-based `matchOrdinal` to 0-based, dispatching `repository-snapshot-search-jump`, and calling `openSnapshotFile` only if the target file is not already loaded). `useSnapshotSearchJump` is an imperative ref-driven hook (zero `useState`, avoiding re-renders that would wipe `<mark>` nodes) that retries up to 8 times (`40ms` initial timer + `100ms` retries) and calls `scrollToRenderedSearchMatchInRoot` on `.repository-snapshot-content__body` or `.repository-snapshot-content__source`.
+
+## Workflow
+
+1. **Per-file history**: User opens File History from the topbar or tab menu -> `FileHistoryModal` calls `useFileHistory` (`historyClient.listFileHistory` / `readCommitDiff`) -> user inspects single-commit diffs or enables Compare mode (`nextComparePicks`) and switches between Raw Inline (`SourceDiffView`), Raw Split (`SplitSourceDiffView`), and Rendered (`RenderedDiffView`) views.
+2. **Workspace revision mode**: User opens the History sidebar tab (`RepositoryHistoryPanel`) -> selects a commit node or menu action in `GitCommitGraph` -> `RepositorySnapshotContext.activateWorkspaceRevision(oid)` loads `listRevisionFiles(oid)` and persists the selection per workspace -> `RepositorySnapshotPortal` mounts `RepositorySnapshotContent` over `.content-shell__main`.
+3. **Snapshot interaction & search jump**: User clicks a commit file in `RepositoryHistoryPanel`, follows an in-document snapshot link (`resolveSnapshotLinkTarget`), or clicks a revision search match (`createRevisionSidebarSearch` -> `queueSnapshotSearchJump`) -> `openSnapshotFile(path)` loads `readRevisionFile(oid, path)` -> `RepositorySnapshotContent` registers document root `'snapshot'`, renders Markdown/TOC/Mermaid/tables/overlays, and `useSnapshotSearchJump` scrolls to and highlights the matched text. Clicking `Back to HEAD` (or selecting a live workspace search result in `useAppSearchEffects`) invokes `returnToHead()`.
 
 ## Code map
 
-- History components: `ui/src/components/History/`
-- History & diff parsing/state: `ui/src/history/`
+- `ui/src/components/History/FileHistoryModal.tsx`, `FileHistoryCommitList.tsx`, `FileHistoryDiffPane.tsx`, `FileHistoryResizeHandle.tsx`, `HistorySelectionCheckbox.tsx`, `CopyableHistoryMeta.tsx`, `HistoryActionIcons.tsx`, `useFileHistoryLayout.ts` — per-file Git history modal, Option 3 compare range picker (`nextComparePicks`), resizable split layout, and view mode controls.
+- `ui/src/components/History/RepositoryHistoryPanel.tsx`, `GitCommitGraph.tsx`, `RepositoryCommitMenu.tsx`, `repositoryHistoryLabels.ts` — sidebar workspace commit timeline, virtualized SVG commit graph, node hover cards, and commit action menu.
+- `ui/src/components/History/RepositorySnapshotPortal.tsx`, `RepositorySnapshotContent.tsx`, `GitRevisionView.tsx` — portaled read-only commit snapshot viewer with compact TOC, Mermaid lifecycle, interactive tables/charts, internal/wiki link routing, portaled overlays, and search-jump highlighting.
+- `ui/src/components/History/DocumentDiffView.tsx`, `SourceDiffView.tsx`, `SplitSourceDiffView.tsx`, `RenderedDiffView.tsx`, `diffVirtualRows.ts`, `useSyncedScroll.ts`, `useVisibleRowRange.ts` — three-mode unified, split, and rendered diff views with row virtualization and synchronized scrolling.
+- `ui/src/history/contracts.ts`, `historyClient.ts`, `historyAvailability.ts`, `useFileHistory.ts`, `repositoryView.ts`, `revisionWorkspace.ts`, `snapshotLinkResolution.ts`, `gitGraphLayout.ts`, `lineDiff.ts`, `diffRanges.ts`, `splitDiffRows.ts` — runtime-agnostic Git history contracts, bridge client, DAG lane layout, Myers/LCS line and character-range diffing, revision workspace projection/search, and snapshot link target resolution.
+- `ui/src/utils/snapshotSearchJump.ts` — revision-mode sidebar search adapter (`createRevisionSidebarSearch`), pending jump queue (`queueSnapshotSearchJump`), and imperative snapshot search-jump hook (`useSnapshotSearchJump`).
 
-## Key workflows and behavior
+## Interfaces and data
 
-- **Commit timeline**: Lists recent commits affecting the active file or workspace with author, timestamp, and commit message metadata. In `FileHistoryModal` (`FileHistoryCommitList` + `HistorySelectionCheckbox`), Compare mode renders transparent theme-matched SVG checkboxes (`CheckboxCheckedIcon` / `CheckboxUncheckedIcon`) with left-aligned body-portaled tooltips (`portalTooltip`, `tooltipAlign="left"`) and Option 3 boundary movement (`nextComparePicks`: outside picks move the adjacent outer boundary, while in-between picks alternate moving older then newer endpoints).
-- **Diff inspection**: Fetches commit diffs from the host bridge and renders formatted additions/deletions for selected revisions. `DocumentDiffView` supports three modes (`'source'` inline unified table via `SourceDiffView`, `'split'` side-by-side source diff via `SplitSourceDiffView`, and `'rendered'` side-by-side HTML diff via `RenderedDiffView`), localized across all 9 languages (`splitDiff` in `historyTranslations.ts`).
-
-## Architecture and design notes
-
-- Git CLI/API execution stays on the host side (`tauri`, `electron`, `vscode`), while `ui/src/history/` normalizes commit entries and diff hunks into a runtime-agnostic model.
+- Core types (`ui/src/history/contracts.ts`, `repositoryView.ts`): `GitRevisionSummary`, `GitRevisionSnapshot`, `GitRepositoryCommit`, `GitRevisionFile`, `GitRevisionFileSnapshot`, `GitCompareSide`, `GitComparisonSources`, `RepositoryView` (`{ mode: 'live' } | { mode: 'revision', oid, headOid }`).
+- Snapshot link & search contracts (`snapshotLinkResolution.ts`, `snapshotSearchJump.ts`): `SnapshotLinkTarget` (`'fragment' | 'external' | 'snapshot-file' | 'not-found'`), `SnapshotSearchJumpRequest`, `RevisionSidebarSearchConfig`, custom event `REPOSITORY_SNAPSHOT_SEARCH_JUMP_EVENT` (`'repository-snapshot-search-jump'`).
 
 ## Verification
 
-- Covered by `tests/unit/ui/` tests for diff parsing and history state formatting, plus runtime bridge tests in host suites.
+- `tests/unit/ui/history/repository-snapshot-content.test.tsx` — verifies `snapshotLinkResolution`, `RepositorySnapshotPortal`, Mermaid tagged/untagged rendering + theme re-render + `MediaModal`, compact & panel `TableOfContents` (`rootId="snapshot"`), large table enhancement + sticky header reset + `View as chart`, link navigation + right-click `LinkContextMenu`, and sticky codeblock `Show Less` CSS contracts.
+- `tests/unit/ui/history/snapshot-search-jump.test.tsx` — verifies asynchronous and same-file snapshot search jumps, plain-text snapshot highlights, `createRevisionSidebarSearch` referential stability, and `useAppSearchEffects` live/revision mode coordination.
+- `tests/unit/ui/history/file-history-modal.test.tsx`, `file-history-entry-points.test.tsx`, `use-file-history.test.tsx`, `repository-history-panel.test.tsx`, `repository-history-routing.test.tsx`, `repository-snapshot-context.test.tsx`, `history-client.test.ts`, `line-diff.test.ts`, `diff-ranges.test.ts`, `split-diff-rows.test.ts`, `source-diff-view.test.tsx`, `source-diff-virtualization.test.tsx`, `split-source-diff-view.test.tsx`, `rendered-diff-view.test.tsx`, `rendered-diff-crlf.test.tsx`.
+- Host Git history tests: `tests/unit/electron/document-history.test.ts`, `tests/unit/vscode/panel-git-history.test.ts`, `tests/unit/website/browser-git-history-host.test.ts`.
 
 ## Related documentation
 
 - [UI State, Contexts, and Platform Runtimes](../architecture/ui-state-and-runtimes.md)
+- [UI Theming, CSS Architecture, and Style Contracts](../architecture/ui-theming-and-styles.md)
+- [Markdown Rendering, Media Embeds, and Interactive Data Tables](markdown-rendering-and-tables.md)
+- [Sidebar Navigation, Search, Bookmarks, and TOC](sidebar-search-bookmarks.md)
 - [Tauri Desktop Runtime](../architecture/runtime-tauri.md)
 - [Electron Desktop Runtime](../architecture/runtime-electron.md)
 - [VS Code Extension Runtime](../architecture/runtime-vscode.md)
+- [Web App & Website Runtime Architecture](../architecture/runtime-chromium-and-web-demo.md)
 
 ## Known limitations and open questions
 
-- Requires a Git repository in the opened workspace and a runtime bridge that supports Git queries (unavailable in web demo / Chromium extension).
+- Requires a Git repository in the opened workspace on a host runtime supporting Git queries (Tauri, Electron, or VS Code; disabled with `unsupported-runtime` in the live Web App, with static fixtures in the Feature Demo Studio).
+- Revision snapshot mode is strictly read-only; bookmark creation and Scope View are intentionally disabled inside `RepositorySnapshotContent` overlays (`disableBookmarks: true`, `disableScope: true`).

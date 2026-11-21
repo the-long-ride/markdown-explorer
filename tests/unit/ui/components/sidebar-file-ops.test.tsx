@@ -315,8 +315,10 @@ it('focuses clicked rows, renames with F2, and opens mode-aware deletion with De
   fireEvent.change(input,{target:{value:'Guide.md'}});fireEvent.keyDown(input,{key:'Enter'});
   const rename=posted.find(m=>m.command==='renameWorkspaceEntry');expect(rename).toMatchObject({path:'Readme.md',name:'Guide.md',kind:'file'});
   emit({command:'renameWorkspaceEntryResult',requestId:rename.requestId,ok:true,path:'Guide.md',oldPath:'Readme.md',kind:'file'});
-  await waitFor(()=>expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({type:'RENAME_WORKSPACE_ENTRY',oldPath:'Readme.md',newPath:'Guide.md'})));
-  fireEvent.click(row('Readme.md'));fireEvent.keyDown(row('Readme.md'),{key:'Delete'});
+  await waitFor(()=>{expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({type:'RENAME_WORKSPACE_ENTRY',oldPath:'Readme.md',newPath:'Guide.md'}));expect(screen.queryByRole('textbox',{name:'Rename file'})).toBeNull();});
+  fireEvent.click(row('Readme.md'));
+  expect(row('Readme.md').classList.contains('is-entry-focused')).toBe(true);
+  fireEvent.keyDown(row('Readme.md'),{key:'Delete'});
   const permanent=screen.getByRole('checkbox',{name:'Permanently Delete'});fireEvent.click(permanent);
   fireEvent.click(screen.getByRole('button',{name:'Delete permanently'}));
   await waitFor(()=>expect(posted).toContainEqual(expect.objectContaining({command:'deleteWorkspaceEntries',mode:'permanent',paths:['Readme.md']})));

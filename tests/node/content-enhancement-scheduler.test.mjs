@@ -161,3 +161,69 @@ test('scheduler keeps retrying with bounded backoff for slow render dependencies
   assert.deepEqual(delays, [60, 180, 500, 1000, 2000]);
   scheduler.dispose();
 });
+
+test('scheduler observes expansion attributes and runs only when pending items become visible', async () => {
+  const observed = [];
+  let observerCallback = null;
+  let pending = false;
+  let runs = 0;
+  const frames = new Map();
+  let nextFrame = 1;
+  const scheduler = createContentEnhancementScheduler({
+    body: { isConnected: true },
+    hasPending: () => pending,
+    run: async () => {
+      runs += 1;
+      pending = false;
+    },
+    onSettled: () => {},
+    requestFrame(callback) {
+      const id = nextFrame++;
+      frames.set(id, callback);
+      return id;
+    },
+    cancelFrame(id) { frames.delete(id); },
+    createObserver(callback) {
+      observerCallback = callback;
+      return {
+        observe(_target, options) { observed.push(options); },
+        disconnect() {},
+      };
+    },
+    setDelay: () => 0,
+    clearDelay: () => {},
+  });
+
+  assert.deepEqual(observed, [{
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-expanded', 'open', 'hidden'],
+  }]);
+
+  // Initial pass completes cleanly.
+  const firstFrame = frames.entries().next().value;
+  frames.delete(firstFrame[0]);
+  firstFrame[1]();
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(runs, 1);
+
+  // Attribute mutation with no pending visible items does not schedule a rerun.
+  observerCallback([{ type: 'attributes', attributeName: 'data-expanded' }]);
+  assert.equal(frames.size, 0);
+  assert.equal(runs, 1);
+
+  // Attribute mutation revealing a pending item schedules and runs enhancement.
+  pending = true;
+  observerCallback([{ type: 'attributes', attributeName: 'data-expanded' }]);
+  assert.equal(frames.size, 1);
+  const expandFrame = frames.entries().next().value;
+  frames.delete(expandFrame[0]);
+  expandFrame[1]();
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(runs, 2);
+
+  scheduler.dispose();
+});

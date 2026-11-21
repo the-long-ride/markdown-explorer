@@ -283,6 +283,23 @@
   flex: 1 1 auto;
 }
 
+.markdown-source-editor__table-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent, var(--tx2));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.markdown-source-editor__table-hint .tooltip-content-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
 .markdown-source-editor__state {
   display: inline-flex;
   align-items: center;

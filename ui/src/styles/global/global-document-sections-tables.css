@@ -83,6 +83,8 @@
   outline: none;
   line-height: 1.45;
   color: var(--tx);
+  white-space: pre-wrap;
+  vertical-align: top;
   transition: box-shadow 0.1s ease, background 0.1s ease;
 }
 

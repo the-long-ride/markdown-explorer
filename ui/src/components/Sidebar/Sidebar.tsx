@@ -14,8 +14,8 @@ import { SidebarItemMenu } from "./SidebarItemMenu";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { supportsShellLocation } from "../../desktop/shellLocation";
 import { getTranslations } from "../../contexts/translations";
-import { SidebarSearch, type RevisionSidebarSearch } from "./SidebarSearch";
-import type { SidebarSearchStatus } from "./SidebarSearch";
+import { SidebarSearch, type RevisionSidebarSearch, type SidebarSearchStatus } from "./SidebarSearch";
+import { clearPendingSnapshotSearchJump, createRevisionSidebarSearch } from "../../utils/snapshotSearchJump";
 import { useSidebarCursorNavigation } from "./useSidebarCursorNavigation";
 import { getEnabledShortcut } from "../../utils/shortcuts";
 import { isWebRuntime } from "../../insights/runtimeCapabilities";
@@ -310,16 +310,16 @@ export function Sidebar({
     itemMenu, navigate, pinLimitReached, pinnedKeys, state, t, togglePin,
   ]);
 
+  const activeSnapshotPathRef = useRef<string | null>(null);
+  activeSnapshotPathRef.current = snapshotState.activeFile?.path ?? null;
   const openRevisionFile = useCallback((file: { relativePath: string }) => {
+    clearPendingSnapshotSearchJump();
     void openSnapshotFile(file.relativePath);
   }, [openSnapshotFile]);
-  const revisionSearch = useMemo<RevisionSidebarSearch | undefined>(() => repositoryView.mode === 'revision'
-    ? {
-      oid: repositoryView.oid,
-      run: (query, matchCase, signal) => searchRevision(query, matchCase, signal),
-      openPath: (path) => { void openSnapshotFile(path); },
-    }
-    : undefined, [openSnapshotFile, repositoryView, searchRevision]);
+  const revisionSearch = useMemo<RevisionSidebarSearch | undefined>(
+    () => createRevisionSidebarSearch(repositoryView, () => activeSnapshotPathRef.current, searchRevision, openSnapshotFile),
+    [openSnapshotFile, repositoryView, searchRevision],
+  );
 
   const treeEntryContextValue = useMemo<SidebarTreeEntryContextValue>(() => ({
     inlineParentPath: fileOps.treeContext?.inlineParentPath ?? null,

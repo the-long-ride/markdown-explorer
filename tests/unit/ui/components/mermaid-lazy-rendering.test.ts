@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  enhanceMermaidLazily,
   renderMermaidNodesLazily,
   resolveMermaidViewport,
   runInMermaidRenderLane,
 } from '../../../../ui/src/components/Content/enhancements/mermaidLazyRendering';
-import type { MermaidQueueScheduler } from '../../../../ui/src/components/Content/enhancements/mermaidRerenderQueue';
+import {
+  clearMermaidSvgCache,
+  getCachedMermaidSvg,
+  mermaidCacheKey,
+} from '../../../../ui/src/components/Content/enhancements/mermaidSvgCache';
+import {
+  isMermaidNodeHidden,
+  type MermaidQueueScheduler,
+} from '../../../../ui/src/components/Content/enhancements/mermaidRerenderQueue';
 
 const rectOf = (top: number, bottom: number) => ({ getBoundingClientRect: () => ({ top, bottom }) as DOMRect });
 const win = { innerHeight: 800 };
@@ -96,5 +105,89 @@ describe('runInMermaidRenderLane', () => {
     };
     await Promise.allSettled([runInMermaidRenderLane(task(true)), runInMermaidRenderLane(task()), runInMermaidRenderLane(task())]);
     expect(peak).toBe(1);
+  });
+});
+
+describe('isMermaidNodeHidden', () => {
+  it('detects collapsed sections, nested collapsed ancestors, closed details, hidden attributes, and display:none', () => {
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <section class="mdn-section" data-expanded="false">
+        <div class="mdn-section-body"><div class="mermaid" id="m-collapsed">graph TD; A-->B</div></div>
+      </section>
+      <section class="mdn-section" data-expanded="true">
+        <div class="mdn-section-body"><div class="mermaid" id="m-expanded">graph TD; A-->B</div></div>
+      </section>
+      <section class="mdn-section" data-expanded="false">
+        <div class="mdn-section-body">
+          <section class="mdn-section" data-expanded="true">
+            <div class="mdn-section-body"><div class="mermaid" id="m-nested">graph TD; A-->B</div></div>
+          </section>
+        </div>
+      </section>
+      <details id="d-closed"><summary>Sum</summary><div class="mermaid" id="m-details-closed">graph TD; A-->B</div></details>
+      <details id="d-open" open><summary>Sum</summary><div class="mermaid" id="m-details-open">graph TD; A-->B</div></details>
+      <div hidden><div class="mermaid" id="m-hidden">graph TD; A-->B</div></div>
+      <div style="display: none"><div class="mermaid" id="m-display-none">graph TD; A-->B</div></div>
+    `;
+    document.body.appendChild(container);
+    try {
+      expect(isMermaidNodeHidden(document.getElementById('m-collapsed'))).toBe(true);
+      expect(isMermaidNodeHidden(document.getElementById('m-expanded'))).toBe(false);
+      expect(isMermaidNodeHidden(document.getElementById('m-nested'))).toBe(true);
+      expect(isMermaidNodeHidden(document.getElementById('m-details-closed'))).toBe(true);
+      expect(isMermaidNodeHidden(document.getElementById('m-details-open'))).toBe(false);
+      expect(isMermaidNodeHidden(document.getElementById('m-hidden'))).toBe(true);
+      expect(isMermaidNodeHidden(document.getElementById('m-display-none'))).toBe(true);
+    } finally {
+      container.remove();
+    }
+  });
+
+  it('skips hidden diagrams during lazy enhancement and renders + caches only once expanded', async () => {
+    clearMermaidSvgCache();
+    const { scheduler, flush } = manualScheduler();
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <section class="mdn-section" data-expanded="false" id="sec-1">
+        <div class="mdn-section-body">
+          <div class="mdn-mermaid-wrap"><div class="mermaid" id="diag-1">block-beta\n  a["Hello"]</div></div>
+        </div>
+      </section>
+    `;
+    document.body.appendChild(root);
+
+    const run = vi.fn(async ({ nodes }: { nodes: HTMLElement[] }) => {
+      for (const el of nodes) {
+        el.innerHTML = '<svg viewBox="0 0 10 10"><g></g></svg>';
+      }
+    });
+    const options = {
+      getLibrary: async () => ({ initialize: vi.fn(), run }),
+      isDark: false,
+      isCancelled: () => false,
+      runIdRef: { current: 0 },
+      cacheSignature: 'sig-light',
+    };
+
+    try {
+      await enhanceMermaidLazily(root, options, { scheduler });
+      expect(run).not.toHaveBeenCalled();
+      const diag = document.getElementById('diag-1')!;
+      expect(diag.dataset.mdnRendered).toBeUndefined();
+      expect(getCachedMermaidSvg(mermaidCacheKey('block-beta\n  a["Hello"]', 'sig-light'))).toBeUndefined();
+
+      document.getElementById('sec-1')!.dataset.expanded = 'true';
+      const pending = enhanceMermaidLazily(root, options, { scheduler });
+      await flush();
+      await pending;
+
+      expect(run).toHaveBeenCalledTimes(1);
+      expect(diag.dataset.mdnRendered).toBe('true');
+      expect(getCachedMermaidSvg(mermaidCacheKey('block-beta\n  a["Hello"]', 'sig-light'))).toBe('<svg viewBox="0 0 10 10"><g></g></svg>');
+    } finally {
+      clearMermaidSvgCache();
+      root.remove();
+    }
   });
 });

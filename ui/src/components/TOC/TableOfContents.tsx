@@ -7,12 +7,19 @@ import { useAppState } from '../../contexts/AppStateContext';
 import type { TocEntry } from '../../types';
 import { ChevronUpIcon } from '../shared/icons';
 import { getTranslations } from '../../contexts/translations';
-import { getActiveDocumentBody, getActiveDocumentScroll, getDocumentRoot, type DocumentRootId } from '../../document/activeDocumentRoot';
+import {
+  getActiveDocumentBody,
+  getActiveDocumentScroll,
+  getDocumentRoot,
+  subscribeDocumentRoots,
+  type DocumentRootId,
+} from '../../document/activeDocumentRoot';
 
 interface TableOfContentsProps {
   variant?: 'panel' | 'compact';
   entries?: readonly TocEntry[];
   rootId?: DocumentRootId;
+  documentKey?: string | number;
 }
 
 function tocScrollContainer(rootId: DocumentRootId | undefined): HTMLElement | null {
@@ -25,8 +32,13 @@ function findHeading(rootId: DocumentRootId | undefined, id: string): HTMLElemen
   return scoped ?? (rootId ? null : document.getElementById(id));
 }
 
-function useActiveTocId(toc: readonly TocEntry[], renderVersion: number, rootId?: DocumentRootId) {
+function useActiveTocId(toc: readonly TocEntry[], renderKey: string | number, rootId?: DocumentRootId) {
   const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
+  const [rootRevision, setRootRevision] = useState(0);
+
+  useEffect(() => subscribeDocumentRoots(() => {
+    setRootRevision((value) => value + 1);
+  }), []);
 
   useEffect(() => {
     if (toc.length === 0) {
@@ -76,16 +88,17 @@ function useActiveTocId(toc: readonly TocEntry[], renderVersion: number, rootId?
       scrollContainer.removeEventListener('scroll', scheduleUpdate);
       window.removeEventListener('resize', scheduleUpdate);
     };
-  }, [toc, renderVersion, rootId]);
+  }, [toc, renderKey, rootId, rootRevision]);
 
   return activeId;
 }
 
-export function TableOfContents({ variant = 'panel', entries, rootId }: TableOfContentsProps) {
+export function TableOfContents({ variant = 'panel', entries, rootId, documentKey }: TableOfContentsProps) {
   const { state } = useAppState();
   const toc = entries ?? state.toc;
+  const renderKey = documentKey ?? state.renderVersion;
   const [compactOpen, setCompactOpen] = useState(false);
-  const activeId = useActiveTocId(toc, state.renderVersion, rootId);
+  const activeId = useActiveTocId(toc, renderKey, rootId);
   const currentLang = state.settings.language || 'en';
   const t = getTranslations(currentLang);
 
@@ -120,7 +133,7 @@ export function TableOfContents({ variant = 'panel', entries, rootId }: TableOfC
 
   useEffect(() => {
     setCompactOpen(false);
-  }, [state.currentFile, state.renderVersion]);
+  }, [state.currentFile, renderKey]);
 
   if (toc.length === 0) return null;
 

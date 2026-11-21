@@ -47,6 +47,7 @@ const REQUIRED_LABELS = [
   'linkUrlPlaceholder',
   'linkText',
   'linkTextPlaceholder',
+  'tableCellHint',
   'pasteUrl',
 ] as const;
 

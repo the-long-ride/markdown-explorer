@@ -8,6 +8,7 @@ import {
 import logoUrl from '../../assets/logos/logo-500.png?inline';
 import type { DesktopTab } from '../../desktop/types';
 import { useAppState } from '../../contexts/AppStateContext';
+import { useRepositorySnapshot } from '../../contexts/RepositorySnapshotContext';
 import { getTranslations } from '../../contexts/translations';
 import { getEditorUiTranslations } from '../../contexts/editorUiTranslations';
 import { documentSessionKey } from '../../editor/documentSession';
@@ -53,6 +54,9 @@ export function DesktopTabBar({
   isInsightsOpen = false, onInsightsToggle,
 }: DesktopTabBarProps) {
   const { state, openInEditor, setDocumentEditMode, saveDocument, toggleToc, toggleFocusMode } = useAppState();
+  const snapshotContext = useRepositorySnapshot();
+  const isRevisionMode = snapshotContext?.repositoryView?.mode === 'revision';
+  const effectiveToc = isRevisionMode ? (snapshotContext.activeToc ?? []) : state.toc;
   const bridge = usePlatform();
   const requestWindowClose = useRequestWindowClose();
   const currentLang = state.settings.language || 'en';
@@ -345,7 +349,7 @@ export function DesktopTabBar({
         canEdit={canUseEditAction} isDark={isDark} hasUpdate={hasUpdate} showEdit={true}
         onHome={() => onSelectTab('home')} onTheme={onThemeToggle} onEdit={handleEdit} onSettings={onSettingsOpen}
         sidebarLabel={t.actions.toggleSidebar} sidebarTooltip={t.actions.toggleSidebar} sidebarShortcut={getEnabledShortcut(state.settings, 'toggleSidebar')} sidebarActive={!state.sidebarCollapsed} onSidebarToggle={onSidebarToggle}
-        tocLabel={t.actions.toggleToc} tocTooltip={t.actions.toggleToc} tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')} tocActive={!state.tocCollapsed && !!state.currentFile && state.toc.length > 0} tocToggleDisabled={!state.currentFile || state.toc.length === 0} onTocToggle={toggleToc}
+        tocLabel={t.actions.toggleToc} tocTooltip={t.actions.toggleToc} tocShortcut={getEnabledShortcut(state.settings, 'toggleToc')} tocActive={!state.tocCollapsed && effectiveToc.length > 0 && (isRevisionMode || !!state.currentFile)} tocToggleDisabled={effectiveToc.length === 0 || (!isRevisionMode && !state.currentFile)} onTocToggle={toggleToc}
         showInsights={supportsWorkspaceInsights(state.appRuntime) && state.settings.insightsEnabled} insightsLabel={insightsLabel} insightsTooltip={insightsLabel} insightsShortcut={getEnabledShortcut(state.settings, 'toggleWorkspaceInsights')} insightsActive={isInsightsOpen} canInsights={!!(state.workspacePath || state.workspaceName)} onInsightsToggle={onInsightsToggle}
         focusModeLabel={t.actions.toggleFocusMode} focusModeTooltip={t.actions.toggleFocusMode} focusModeShortcut={getEnabledShortcut(state.settings, 'toggleFocusMode')} isFocusMode={state.focusMode} onFocusModeToggle={toggleFocusMode}
         showFullscreen fullscreenLabel={t.actions.toggleFullscreen} fullscreenTooltip={t.actions.toggleFullscreenTooltip} fullscreenShortcut="F11" isFullscreen={isFullscreen} onFullscreenToggle={onFullscreenToggle}
