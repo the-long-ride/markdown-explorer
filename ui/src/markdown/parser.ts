@@ -127,7 +127,7 @@ export function parse(markdown: string, isMdx = false): ParseResult {
 
 // CommonMark: a closing fence may be indented up to three spaces, must use the
 // opening fence character, be at least as long, and carry no info string.
-function isClosingCodeFence(line: string, openingFence: string): boolean {
+export function isClosingCodeFence(line: string, openingFence: string): boolean {
   const match = /^ {0,3}(`{3,}|~{3,})[ \t]*$/.exec(line);
   return Boolean(match && match[1][0] === openingFence[0] && match[1].length >= openingFence.length);
 }
