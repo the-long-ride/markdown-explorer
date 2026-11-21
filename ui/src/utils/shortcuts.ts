@@ -3,6 +3,12 @@ const SHORTCUT_KEY_LABELS: Record<string, string> = {
   arrowright: '→',
   esc: 'Esc',
   enter: 'Enter',
+  'entrée': 'Entrée',
+  entree: 'Entrée',
+  intro: 'Intro',
+  '←': '←',
+  '→': '→',
+  '←/→': '←/→',
 };
 
 const MODIFIER_LABELS: Record<string, string> = {
@@ -14,11 +20,15 @@ const MODIFIER_LABELS: Record<string, string> = {
   alt: 'Alt',
   option: 'Alt',
   shift: 'Shift',
+  maj: 'Maj',
+  'mayús': 'Mayús',
+  mayus: 'Mayús',
 };
 
 function normalizeShortcutPart(part: string): string {
   const trimmed = part.trim();
   if (!trimmed) return '';
+  if (trimmed === '←/→' || trimmed === '←' || trimmed === '→') return trimmed;
   const normalized = trimmed.toLowerCase();
   const modifier = MODIFIER_LABELS[normalized];
   if (modifier) return modifier;

@@ -362,6 +362,20 @@ describe('useKeyboard hook integration', () => {
     input.remove();
   });
 
+  it('does not call back or forward on Alt+ArrowLeft/ArrowRight inside a table cell', () => {
+    renderHook(() => useKeyboard(defaultProps));
+    const cell = document.createElement('td');
+    cell.className = 'cm-table-cell';
+    cell.tabIndex = 0;
+    document.body.appendChild(cell);
+    cell.focus();
+    cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true }));
+    cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockForward).not.toHaveBeenCalled();
+    cell.remove();
+  });
+
   it('dispatches zoom-in on pinching (ctrl+wheel up)', () => {
     (window as any).electronAPI = {};
     renderHook(() => useKeyboard(defaultProps));

@@ -3,6 +3,7 @@ import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { history } from '@codemirror/commands';
 import { createTableVisualExtension } from '../../../../ui/src/editor/tableVisualPlugin';
+import { getCellSelectionOffsets, setCellCaretOffset } from '../../../../ui/src/editor/tableCellEditing';
 
 describe('tableVisualPlugin', () => {
   const sampleDoc = [
@@ -454,6 +455,335 @@ describe('tableVisualPlugin', () => {
     const cellForShiftZ = parent.querySelector('tbody .cm-table-cell') as HTMLElement;
     cellForShiftZ.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, shiftKey: true, bubbles: true }));
     expect(view.state.doc.toString()).toContain('Edited Cell');
+
+    view.destroy();
+    parent.remove();
+  });
+
+  it('inserts line breaks and continues bullet lists on Shift+Enter and serializes on blur', () => {
+    const tableDoc = ['| H1 | H2 |', '| --- | --- |', '| Hello | • First |'].join('\n');
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: tableDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const cell0 = parent.querySelector<HTMLElement>('[data-row="0"][data-col="0"]')!;
+    cell0.focus();
+    setCellCaretOffset(cell0, 5);
+    cell0.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true }));
+    cell0.textContent = `${cell0.textContent}World`;
+    cell0.dispatchEvent(new Event('blur'));
+    expect(view.state.doc.toString()).toContain('Hello<br>World');
+
+    const cell1 = parent.querySelector<HTMLElement>('[data-row="0"][data-col="1"]')!;
+    cell1.focus();
+    setCellCaretOffset(cell1, cell1.textContent!.length);
+    cell1.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true }));
+    expect(cell1.textContent).toBe('• First\n• ');
+    cell1.textContent = `${cell1.textContent}Second`;
+    cell1.dispatchEvent(new Event('blur'));
+    expect(view.state.doc.toString()).toContain('<ul><li>First</li><li>Second</li></ul>');
+
+    view.destroy();
+    parent.remove();
+  });
+
+  it('inserts a blank line below without splitting current line on Alt+Enter', () => {
+    const tableDoc = ['| H1 | H2 |', '| --- | --- |', '| Hello world | B |'].join('\n');
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: tableDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const cell = parent.querySelector<HTMLElement>('[data-row="0"][data-col="0"]')!;
+    cell.focus();
+    setCellCaretOffset(cell, 5);
+    cell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', altKey: true, bubbles: true }));
+
+    expect(cell.textContent).toBe('Hello world\n');
+    expect(getCellSelectionOffsets(cell)).toEqual({ start: 12, end: 12 });
+
+    cell.dispatchEvent(new Event('blur'));
+    expect(view.state.doc.toString()).toContain('Hello world<br>');
+
+    view.destroy();
+
+    const bulletDoc = ['| H1 | H2 |', '| --- | --- |', '| • Hello world | B |'].join('\n');
+    const bulletView = new EditorView({
+      state: EditorState.create({
+        doc: bulletDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const bulletCell = parent.querySelector<HTMLElement>('[data-row="0"][data-col="0"]')!;
+    bulletCell.focus();
+    setCellCaretOffset(bulletCell, 5);
+    bulletCell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', altKey: true, bubbles: true }));
+
+    expect(bulletCell.textContent).toBe('• Hello world\n• ');
+    expect(getCellSelectionOffsets(bulletCell)).toEqual({ start: 16, end: 16 });
+
+    bulletCell.dispatchEvent(new Event('blur'));
+    expect(bulletView.state.doc.toString()).toContain('<ul><li>Hello world</li><li></li></ul>');
+
+    bulletView.destroy();
+    parent.remove();
+  });
+
+  it('enters first cell on ArrowDown from line above and last cell on ArrowUp from line below', () => {
+    const tableDoc = [
+      'Above',
+      '| H1 | H2 |',
+      '| --- | --- |',
+      '| R0C0 | R0C1 |',
+      '',
+    ].join('\n');
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: tableDoc,
+        selection: { anchor: 2 },
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    view.contentDOM.focus();
+    view.contentDOM.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }),
+    );
+    expect(document.activeElement).toBe(
+      parent.querySelector<HTMLElement>('[data-row="-1"][data-col="0"]'),
+    );
+
+    view.contentDOM.focus();
+    view.dispatch({ selection: { anchor: view.state.doc.length } });
+    view.contentDOM.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }),
+    );
+    expect(document.activeElement).toBe(
+      parent.querySelector<HTMLElement>('[data-row="0"][data-col="1"]'),
+    );
+
+    // Raw-toggled table must not hijack ArrowDown / ArrowUp
+    parent.querySelector<HTMLElement>('.cm-table-widget__toggle-btn')!.click();
+    expect(parent.querySelector('.cm-table-cell')).toBeNull();
+
+    view.contentDOM.focus();
+    view.dispatch({ selection: { anchor: 2 } });
+    const downRawEv = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+    view.contentDOM.dispatchEvent(downRawEv);
+    expect(downRawEv.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(view.contentDOM);
+
+    view.contentDOM.focus();
+    view.dispatch({ selection: { anchor: view.state.doc.length } });
+    const upRawEv = new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true });
+    view.contentDOM.dispatchEvent(upRawEv);
+    expect(upRawEv.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(view.contentDOM);
+
+    view.destroy();
+    parent.remove();
+  });
+
+  it('preserves raw markdown when an unmodified cell blurs', () => {
+    const rawDoc = [
+      '| H1 | H2 |',
+      '| --- | --- |',
+      '| • First point<br>• Second point | Plain |',
+    ].join('\n');
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: rawDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const cell = parent.querySelector<HTMLElement>('[data-row="0"][data-col="0"]')!;
+    expect(cell.textContent).toBe('• First point\n• Second point');
+    cell.focus();
+    cell.dispatchEvent(new Event('blur'));
+
+    expect(view.state.doc.toString()).toBe(rawDoc);
+
+    view.destroy();
+    parent.remove();
+  });
+
+  it('navigates rows with ArrowDown and ArrowUp and exits table at boundaries', () => {
+    const tableDoc = [
+      'Above',
+      '| H1 | H2 |',
+      '| --- | --- |',
+      '| R0C0 | R0C1 |',
+      '| R1C0 | R1C1 |',
+    ].join('\n');
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: tableDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const getCell = (r: number, c: number) =>
+      parent.querySelector<HTMLElement>(`[data-row="${r}"][data-col="${c}"]`);
+
+    getCell(-1, 1)!.focus();
+    getCell(-1, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(getCell(0, 1));
+
+    getCell(0, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(getCell(1, 1));
+
+    getCell(1, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(document.activeElement).toBe(getCell(0, 1));
+
+    getCell(0, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(document.activeElement).toBe(getCell(-1, 1));
+
+    getCell(-1, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(view.state.selection.main.anchor).toBe(5);
+
+    getCell(1, 0)!.focus();
+    getCell(1, 0)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(view.state.doc.toString()).toBe(`${tableDoc}\n`);
+    expect(view.state.selection.main.anchor).toBe(view.state.doc.length);
+
+    view.destroy();
+    parent.remove();
+  });
+
+  it('navigates across cells and wraps rows with Alt+ArrowRight and Alt+ArrowLeft', () => {
+    const tableDoc = [
+      'Above',
+      '| H1 | H2 |',
+      '| --- | --- |',
+      '| R0C0 | R0C1 |',
+    ].join('\n');
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: tableDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const getCell = (r: number, c: number) =>
+      parent.querySelector<HTMLElement>(`[data-row="${r}"][data-col="${c}"]`);
+
+    getCell(-1, 0)!.focus();
+    getCell(-1, 0)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(getCell(-1, 1));
+
+    getCell(-1, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(getCell(0, 0));
+
+    getCell(0, 0)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(getCell(0, 1));
+
+    getCell(0, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(getCell(0, 0));
+
+    getCell(0, 0)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(getCell(-1, 1));
+
+    getCell(-1, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(getCell(-1, 0));
+
+    getCell(-1, 0)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true }));
+    expect(view.state.selection.main.anchor).toBe(5);
+
+    getCell(0, 1)!.focus();
+    getCell(0, 1)!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
+    expect(view.state.doc.toString()).toBe(`${tableDoc}\n`);
+    expect(view.state.selection.main.anchor).toBe(view.state.doc.length);
+
+    view.destroy();
+    parent.remove();
+  });
+
+  it('normalizes leading "- " input to a bullet and persists <ul><li> on blur', () => {
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: sampleDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const cell = parent.querySelector<HTMLElement>('[data-row="0"][data-col="0"]')!;
+    cell.focus();
+    cell.textContent = '- ';
+    setCellCaretOffset(cell, 2);
+    cell.dispatchEvent(new Event('input', { bubbles: true }));
+
+    expect(cell.textContent).toBe('• ');
+
+    cell.textContent = `${cell.textContent}Item 1`;
+    cell.dispatchEvent(new Event('blur'));
+
+    expect(view.state.doc.toString()).toContain('<ul><li>Item 1</li></ul>');
+
+    view.destroy();
+    parent.remove();
+  });
+
+  it('commits edited cell content and preserves focus on destination cell when pressing ArrowDown', () => {
+    const tableDoc = [
+      '| H1 | H2 |',
+      '| --- | --- |',
+      '| R0C0 | R0C1 |',
+      '| R1C0 | R1C1 |',
+    ].join('\n');
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: tableDoc,
+        extensions: [createTableVisualExtension(() => 'en')],
+      }),
+      parent,
+    });
+
+    const cell00 = parent.querySelector<HTMLElement>('[data-row="0"][data-col="0"]')!;
+    cell00.focus();
+    cell00.textContent = 'Edited 00';
+    cell00.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+
+    expect(view.state.doc.toString()).toContain('Edited 00');
+    expect(document.activeElement).toBe(parent.querySelector('[data-row="1"][data-col="0"]'));
 
     view.destroy();
     parent.remove();

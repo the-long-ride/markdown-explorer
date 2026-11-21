@@ -15,6 +15,10 @@ import {
   updateCell,
   type TableData,
 } from '../../../../ui/src/editor/tableEditor';
+import {
+  displayTextToMarkdownCell,
+  markdownCellToDisplayText,
+} from '../../../../ui/src/editor/tableCellEditing';
 
 describe('tableEditor', () => {
   it('splits cells with escaped pipes and inline code', () => {
@@ -220,5 +224,31 @@ describe('tableEditor', () => {
       ['A1', '', 'C1'],
       ['A2', '', ''],
     ]);
+  });
+
+  it('converts <br> and <ul><li> markdown cells to display text while preserving inline code', () => {
+    expect(markdownCellToDisplayText('Line 1<br>Line 2<br/>Line 3')).toBe('Line 1\nLine 2\nLine 3');
+    expect(markdownCellToDisplayText('<ul><li>First point</li><li>Second point</li></ul>')).toBe(
+      '• First point\n• Second point',
+    );
+    expect(markdownCellToDisplayText('Intro<ul><li>One</li><li>Two</li></ul>Outro')).toBe(
+      'Intro\n• One\n• Two\nOutro',
+    );
+    expect(markdownCellToDisplayText('<ul></ul>')).toBe('');
+    expect(markdownCellToDisplayText('**Using `<br>`** and ``<ul><li>x</li></ul>``')).toBe(
+      '**Using `<br>`** and ``<ul><li>x</li></ul>``',
+    );
+  });
+
+  it('serializes display text lines and bullet runs back to markdown cells', () => {
+    expect(displayTextToMarkdownCell('Line 1\nLine 2')).toBe('Line 1<br>Line 2');
+    expect(displayTextToMarkdownCell('• Single item')).toBe('<ul><li>Single item</li></ul>');
+    expect(displayTextToMarkdownCell('• First point\n• Second point')).toBe(
+      '<ul><li>First point</li><li>Second point</li></ul>',
+    );
+    expect(displayTextToMarkdownCell('Intro\n• First\n• Second\nOutro')).toBe(
+      'Intro<br><ul><li>First</li><li>Second</li></ul><br>Outro',
+    );
+    expect(displayTextToMarkdownCell('• First\n• ')).toBe('<ul><li>First</li><li></li></ul>');
   });
 });

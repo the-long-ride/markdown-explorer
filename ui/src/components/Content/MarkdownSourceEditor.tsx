@@ -1,8 +1,6 @@
 import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Compartment, EditorState } from '@codemirror/state';
-import {
-  EditorView, crosshairCursor, drawSelection, keymap, lineNumbers, rectangularSelection,
-} from '@codemirror/view';
+import { EditorView, crosshairCursor, drawSelection, keymap, lineNumbers, rectangularSelection } from '@codemirror/view';
 import {
   addCursorAbove, addCursorBelow, cursorGroupLeft, cursorGroupRight,
   defaultKeymap, history, historyKeymap, indentWithTab,
@@ -20,10 +18,12 @@ import { applyMarkdownFormat, applyMarkdownLink, parseMarkdownLinkSelection, typ
 import { getEditorSession, setEditorSession } from '../../editor/editorSessionStore';
 import { markdownCustomLanguageExtension, markdownHighlighting } from '../../editor/markdownHighlight';
 import { buildCustomTable } from '../../editor/tableEditor';
+import { formatFocusedTableCell } from '../../editor/tableCellEditing';
 import { createTableVisualExtension } from '../../editor/tableVisualPlugin';
 import { MarkdownFormattingToolbar, type MarkdownEditorActions } from './MarkdownFormattingToolbar';
 import { TableInsertDialog } from './TableInsertDialog';
 import { LinkInsertDialog } from './LinkInsertDialog';
+import { parseShortcutText } from '../shared/parseShortcutText';
 
 interface MarkdownSourceEditorProps {
   sessionKey?: string;
@@ -90,6 +90,7 @@ export function MarkdownSourceEditor({
   const [cursor, setCursor] = useState<CursorPosition>({ line: 1, column: 1 });
   const [tableDialogOpen, setTableDialogOpen] = useState(false);
   const [linkDialogState, setLinkDialogState] = useState({ open: false, initialText: '', initialUrl: '' });
+  const [isTableCellFocused, setIsTableCellFocused] = useState(false);
   const labels = getEditorUiTranslations(language);
 
   disabledRef.current = disabled;
@@ -193,6 +194,7 @@ export function MarkdownSourceEditor({
     }
     const view = viewRef.current;
     if (!view || disabledRef.current) return false;
+    if (formatFocusedTableCell(hostRef.current, command)) return true;
     const selection = view.state.selection.main;
     const result = applyMarkdownFormat(
       view.state.doc.toString(),
@@ -403,11 +405,24 @@ export function MarkdownSourceEditor({
         fontSize={fontSize} onChangeFontSize={handleChangeFontSize}
         onOpenTableDialog={() => setTableDialogOpen(true)} onOpenLinkDialog={openLinkDialog}
       />
-      <div ref={hostRef} className="markdown-source-editor__host" />
+      <div
+        ref={hostRef}
+        className="markdown-source-editor__host"
+        onFocusCapture={(e) => setIsTableCellFocused(Boolean((e.target as Element | null)?.closest?.('.cm-table-cell')))}
+        onBlurCapture={(e) => {
+          const next = e.relatedTarget as Element | null;
+          if (!next || !hostRef.current?.contains(next) || !next.closest?.('.cm-table-cell')) setIsTableCellFocused(false);
+        }}
+      />
       <div className="markdown-source-editor__status" data-testid="markdown-source-editor-status">
         <span>{fillTemplate(labels.statusLine, { line: cursor.line, column: cursor.column })}</span>
         <span>{fillTemplate(labels.statusWords, { count: stats.words })}</span>
         <span>{fillTemplate(labels.statusCharacters, { count: stats.characters })}</span>
+        {isTableCellFocused && (
+          <span className="markdown-source-editor__table-hint" data-testid="markdown-source-editor-table-hint">
+            {parseShortcutText(labels.tableCellHint)}
+          </span>
+        )}
         <span className="markdown-source-editor__status-spacer" aria-hidden="true" />
         {saveStateLabel && (
           <span className={`markdown-source-editor__state is-${saveState}`}>{saveStateLabel}</span>

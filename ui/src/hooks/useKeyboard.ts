@@ -88,10 +88,15 @@ export function useKeyboard({
         return;
       }
 
-      const isBrowserBackFallback = e.key === 'BrowserBack'
-        || (e.altKey && e.key === 'ArrowLeft' && !e.ctrlKey && !e.metaKey && !e.shiftKey);
-      const isBrowserForwardFallback = e.key === 'BrowserForward'
-        || (e.altKey && e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey && !e.shiftKey);
+      const isTableCellTarget = e.target instanceof Element && Boolean(e.target.closest('.cm-table-cell'));
+      const isBrowserBackFallback = !isTableCellTarget && (
+        e.key === 'BrowserBack'
+        || (e.altKey && e.key === 'ArrowLeft' && !e.ctrlKey && !e.metaKey && !e.shiftKey)
+      );
+      const isBrowserForwardFallback = !isTableCellTarget && (
+        e.key === 'BrowserForward'
+        || (e.altKey && e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey && !e.shiftKey)
+      );
 
       if (!isTermsOpen) {
         if (getScopeNavigationStateSnapshot().active) {
@@ -108,7 +113,8 @@ export function useKeyboard({
         }
       }
 
-      if (!isEditableTarget(e.target) && getScopeNavigationStateSnapshot().active) {
+      const isEditable = isTableCellTarget || isEditableTarget(e.target);
+      if (!isEditable && getScopeNavigationStateSnapshot().active) {
         if (matchesShortcut(e, keybindings.back)) {
           e.preventDefault();
           requestScopeNavigation('previous');
@@ -173,7 +179,7 @@ export function useKeyboard({
         hasOnToggleFullscreen: !!onToggleFullscreen,
         hasOnFindClose: !!onFindClose,
         isRepeat: e.repeat,
-        isEditableTarget: isEditableTarget(e.target),
+        isEditableTarget: isEditable,
       });
 
       if (!action) return;

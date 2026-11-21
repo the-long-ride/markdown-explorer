@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
-  "last_sync_commit": "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0",
+  "last_sync_commit": "f0818d86f926ee15c5508b3bc186e1ddf18f50b8",
   "last_full_scan_commit": "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0",
+  "last_sync_at": "2026-11-21T21:06:00Z",
   "inventory_complete": true,
   "source_to_specs": {
     ".github/scripts/release-notes.mjs": [
@@ -405,6 +406,9 @@
     ],
     "tauri/windows/explorer-hooks.nsh": [
       "architecture.runtime-tauri"
+    ],
+    "ui/index.html": [
+      "architecture.ui-state-and-runtimes"
     ],
     "ui/scripts/build-export-runtime.mjs": [
       "architecture.ui-state-and-runtimes"
@@ -1162,6 +1166,9 @@
     "ui/src/components/Tour/tourSteps.ts": [
       "architecture.ui-state-and-runtimes"
     ],
+    "ui/src/components/Tour/tourTargetPosition.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
     "ui/src/components/Tour/tourTranslations.ts": [
       "architecture.ui-state-and-runtimes"
     ],
@@ -1516,6 +1523,9 @@
     "ui/src/editor/saveDocument.ts": [
       "feature.local-editing-and-split-view"
     ],
+    "ui/src/editor/tableCellEditing.ts": [
+      "feature.local-editing-and-split-view"
+    ],
     "ui/src/editor/tableContextMenu.ts": [
       "feature.local-editing-and-split-view"
     ],
@@ -1640,6 +1650,9 @@
       "feature.git-history-and-diff"
     ],
     "ui/src/history/revisionWorkspace.ts": [
+      "feature.git-history-and-diff"
+    ],
+    "ui/src/history/snapshotLinkResolution.ts": [
       "feature.git-history-and-diff"
     ],
     "ui/src/history/splitDiffRows.ts": [
@@ -2063,6 +2076,9 @@
     "ui/src/styles/global/global-theme-cyberpunk-menus.css": [
       "architecture.ui-theming-and-styles"
     ],
+    "ui/src/styles/global/global-theme-cyberpunk-modals.css": [
+      "architecture.ui-theming-and-styles"
+    ],
     "ui/src/styles/global/global-theme-cyberpunk-scope-view.css": [
       "architecture.ui-theming-and-styles"
     ],
@@ -2207,8 +2223,17 @@
     "ui/src/utils/searchJump.ts": [
       "architecture.ui-state-and-runtimes"
     ],
+    "ui/src/utils/searchJumpDom.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/searchJumpResolver.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
     "ui/src/utils/shortcuts.ts": [
       "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/utils/snapshotSearchJump.ts": [
+      "feature.git-history-and-diff"
     ],
     "ui/src/utils/supportPromptStore.ts": [
       "architecture.ui-state-and-runtimes"
@@ -2409,6 +2434,12 @@
     "vscode/src/utils.ts": [
       "architecture.runtime-vscode"
     ],
+    "website-app/features/index.html": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/index.html": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
     "website-app/src/browser-font-host.ts": [
       "architecture.runtime-chromium-and-web-demo"
     ],
@@ -2425,6 +2456,54 @@
       "architecture.runtime-chromium-and-web-demo"
     ],
     "website-app/src/demo-entry-store.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features-main.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/AuthoringStage.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/FeatureStageRouter.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/FeaturesStudioApp.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/InsightsAndDiffStage.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/SearchExportStage.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/ThemesAndSettingsStage.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/WorkspaceAndNavStage.tsx": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/demoBusHost.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/demoCatalog.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/demoGitFixtures.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/demoHtmlSandboxFixture.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/demoInsightsFixture.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/demoMarkdownFixtures.ts": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/features-demo.css": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
+    "website-app/src/features/features-stages.css": [
       "architecture.runtime-chromium-and-web-demo"
     ],
     "website-app/src/file-access.ts": [
@@ -2505,6 +2584,9 @@
     "website-app/vite.config.ts": [
       "architecture.runtime-chromium-and-web-demo"
     ],
+    "website/features/index.html": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
     "website/i18n.js": [
       "architecture.runtime-chromium-and-web-demo"
     ],
@@ -2562,6 +2644,9 @@
     "website/site-release-api.js": [
       "architecture.runtime-chromium-and-web-demo"
     ],
+    "website/sitemap.xml": [
+      "architecture.runtime-chromium-and-web-demo"
+    ],
     "website/styles.css": [
       "architecture.runtime-chromium-and-web-demo"
     ],
@@ -2607,5 +2692,17 @@
     "website/terms.html": [
       "architecture.runtime-chromium-and-web-demo"
     ]
-  }
+  },
+  "uncovered_source_paths": [],
+  "skipped_source_paths": [
+    "tauri/vendor/**",
+    "manual-tests/**",
+    "docs/**",
+    "tests/**"
+  ],
+  "notes": [
+    "Incremental sync from 6ad4907b3df006942c3e8ebcf2ba6ae5195355a0 to f0818d86f926ee15c5508b3bc186e1ddf18f50b8 plus dirty working tree (staged/unstaged/untracked).",
+    "Per-spec source_fingerprint hashes capture exact current working-tree bytes including uncommitted edits and newly added untracked implementation files.",
+    "Auxiliary packaging/store workflows (.github/workflows/publish-desktop-stores.yml, .github/workflows/refresh-marketplace-stats.yml), package manifests (electron/ui/tauri/website-app package.json, tauri/Cargo.toml, tauri/tauri*.conf.json, snap/snapcraft.yaml), and test suites are inspected as config/verification evidence without inflating first-party code inventory."
+  ]
 }

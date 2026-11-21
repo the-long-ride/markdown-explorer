@@ -432,4 +432,37 @@ it('preserves undo and redo history across unmount and remount with the same ses
 
     clearAllEditorSessions();
   });
+
+  it('shows and hides the table cell hint when a table cell gains and loses focus', () => {
+    renderEditor({ value: '| A | B |\n| --- | --- |\n| 1 | 2 |' });
+    expect(screen.queryByTestId('markdown-source-editor-table-hint')).toBeNull();
+
+    const cell = document.querySelector<HTMLElement>('.cm-table-cell');
+    expect(cell).not.toBeNull();
+    fireEvent.focus(cell!);
+    const hint = screen.getByTestId('markdown-source-editor-table-hint');
+    expect(hint).toHaveTextContent(
+      'Shift+Enter: line break · Alt+Enter: line break (keep trailing words) · Alt+←/→: move across cells',
+    );
+    const keycaps = hint.querySelectorAll('kbd.keycap-3d');
+    expect(keycaps.length).toBeGreaterThan(0);
+    for (const k of keycaps) {
+      expect(k.textContent).not.toContain(':');
+    }
+
+    fireEvent.blur(cell!, { relatedTarget: null });
+    expect(screen.queryByTestId('markdown-source-editor-table-hint')).toBeNull();
+  });
+
+  it('formats a focused table cell as a bulleted list via the toolbar button', () => {
+    const onChange = vi.fn();
+    renderEditor({ value: '| A | B |\n| --- | --- |\n| item | 2 |', onChange });
+    const cell = document.querySelector<HTMLElement>('.cm-table-cell[data-row="0"][data-col="0"]');
+    expect(cell).not.toBeNull();
+    cell!.tabIndex = 0;
+    cell!.focus();
+    fireEvent.focus(cell!);
+    fireEvent.click(screen.getByRole('button', { name: 'Bulleted list' }));
+    expect(onChange).toHaveBeenLastCalledWith(expect.stringContaining('<ul><li>item</li></ul>'));
+  });
 });

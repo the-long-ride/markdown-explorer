@@ -5,10 +5,16 @@
 
 import { ShortcutKeycaps } from './ShortcutKeycaps';
 
+const BARE_SHORTCUT_RE = /^(?:Ctrl|Cmd|Alt|Shift|Meta|Maj|Mayús)(?:\+(?:←\/→|←|→|[A-Za-z0-9\u00C0-\u017F,/\\;'`\[\]=-]+))+$/i;
+const BARE_SHORTCUT_SOURCE = BARE_SHORTCUT_RE.source.slice(1, -1);
+
 export function parseShortcutText(text?: string) {
   if (!text) return null;
 
-  const regex = /(\[[^\]]+\]|\((?:Ctrl|Cmd|Alt|Shift|Meta|F\d+|[A-Za-z0-9,/\\;:'`\[\]=-]+\+?)[^)]*\)|(?:Ctrl|Cmd|Alt|Shift|Meta)\+(?:[A-Za-z0-9,/\\;:'`\[\]=-]+\+?)*[A-Za-z0-9,/\\;:'`\[\]=-]+)/gi;
+  const regex = new RegExp(
+    `(\\[[^\\]]+\\]|\\((?:Ctrl|Cmd|Alt|Shift|Meta|Maj|Mayús|F\\d+|[A-Za-z0-9,/\\\\;:'\`\\[\\]=-]+\\+?)[^)]*\\)|${BARE_SHORTCUT_SOURCE})`,
+    'gi',
+  );
 
   if (!regex.test(text)) {
     return text;
@@ -36,7 +42,7 @@ export function parseShortcutText(text?: string) {
             ) {
               key = inner;
             }
-          } else if (/^(?:Ctrl|Cmd|Alt|Shift|Meta)\+(?:[A-Za-z0-9,/\\;:'`\[\]=-]+\+?)*[A-Za-z0-9,/\\;:'`\[\]=-]+$/i.test(part)) {
+          } else if (BARE_SHORTCUT_RE.test(part)) {
             key = part;
           }
 

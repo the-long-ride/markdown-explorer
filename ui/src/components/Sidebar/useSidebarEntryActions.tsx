@@ -34,8 +34,14 @@ export function useSidebarEntryActions({ enabled, active, workspaceKey, bridge, 
   useLayoutEffect(() => { generation.current += 1; running.current = false; onBusyChange(false); setFocused(null); setDraft(null); setTarget(null); }, [workspaceKey, onBusyChange]);
   useEffect(() => { if (!active) { setFocused(null); if (!running.current) setDraft(null); setTarget(null); } }, [active]);
   useEffect(() => {
-    if (focused && !(focused.kind === 'file' ? state.fileList.some(file => file.fsPath === focused.path) : findFolderNode(state.tree, focused.path))) setFocused(null);
-  }, [focused, state.fileList, state.tree]);
+    setFocused((current) => {
+      if (!current) return current;
+      const exists = current.kind === 'file'
+        ? state.fileList.some((file) => file.fsPath === current.path)
+        : Boolean(findFolderNode(state.tree, current.path));
+      return exists ? current : null;
+    });
+  }, [state.fileList, state.tree]);
   const relativePath = useCallback((entry: Entry) => entry.kind === 'folder' ? entry.path
     : toEntryPath(state.fileList.find(file => file.fsPath === entry.path)?.relativePath ?? ''), [state.fileList]);
   const canChange = useCallback((entry: Entry) => {
@@ -117,12 +123,19 @@ export function useSidebarEntryActions({ enabled, active, workspaceKey, bridge, 
     } finally { running.current = false; onBusyChange(false); }
   };
   const onTreeKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.defaultPrevented || event.nativeEvent.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || !focused || draft || target || running.current || busy) return;
-    if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable="true"], [role="menu"], button')) return;
-    if (event.key === 'F2' && !selectionActive && canChange(focused)) {
-      event.preventDefault(); event.stopPropagation(); startRename(focused.kind, focused.path);
-    } else if (event.key === 'Delete' && deleteMode && canChange(focused)) {
-      event.preventDefault(); event.stopPropagation(); requestDelete(focused.kind, focused.path);
+    if (event.defaultPrevented || event.nativeEvent.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || draft || target || running.current || busy) return;
+    if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable="true"], [role="menu"], button:not([data-sidebar-kind])')) return;
+    const rowEl = (event.target as HTMLElement).closest<HTMLElement>('[data-sidebar-kind][data-sidebar-id]');
+    const rawId = rowEl?.dataset.sidebarId;
+    const rowKind = rowEl?.dataset.sidebarKind as SidebarItemKind | undefined;
+    const activeEntry: Entry | null = focused ?? (rowKind && rawId
+      ? { kind: rowKind, path: rowKind === 'folder' && rawId.startsWith('folder:') ? rawId.slice(7) : rawId }
+      : null);
+    if (!activeEntry) return;
+    if (event.key === 'F2' && !selectionActive && canChange(activeEntry)) {
+      event.preventDefault(); event.stopPropagation(); startRename(activeEntry.kind, activeEntry.path);
+    } else if (event.key === 'Delete' && deleteMode && canChange(activeEntry)) {
+      event.preventDefault(); event.stopPropagation(); requestDelete(activeEntry.kind, activeEntry.path);
     }
   };
   return {
