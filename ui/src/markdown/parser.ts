@@ -125,6 +125,13 @@ export function parse(markdown: string, isMdx = false): ParseResult {
 
 // ── Block tokenizer ────────────────────────────────────────
 
+// CommonMark: a closing fence may be indented up to three spaces, must use the
+// opening fence character, be at least as long, and carry no info string.
+function isClosingCodeFence(line: string, openingFence: string): boolean {
+  const match = /^ {0,3}(`{3,}|~{3,})[ \t]*$/.exec(line);
+  return Boolean(match && match[1][0] === openingFence[0] && match[1].length >= openingFence.length);
+}
+
 function tokenize(lines: string[], isMdx = false): BlockToken[] {
   const tokens: BlockToken[] = [];
   const lineOffsets: number[] = [];
@@ -226,7 +233,7 @@ function tokenize(lines: string[], isMdx = false): BlockToken[] {
       const meta = (fenceMatch[3] ?? '').trim();
       const codeLines: string[] = [];
       i++;
-      while (i < lines.length && !lines[i].startsWith(fence)) {
+      while (i < lines.length && !isClosingCodeFence(lines[i], fence)) {
         codeLines.push(lines[i]);
         i++;
       }

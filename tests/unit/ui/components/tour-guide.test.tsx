@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useReducer } from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { TourGuideOverlay } from '../../../../ui/src/components/Tour/TourGuideOverlay';
 import { AppStateContext } from '../../../../ui/src/contexts/AppStateContext';
 import { initialState } from '../../../../ui/src/contexts/appStateModel';
@@ -599,6 +599,7 @@ describe('Tour Subsystem', () => {
     it('detects target elements in DOM and sets data-has-target="true"', () => {
       const hero = document.createElement('div');
       hero.setAttribute('data-tour-id', 'welcome-hero');
+      hero.getBoundingClientRect = () => DOMRect.fromRect({ x: 100, y: 50, width: 400, height: 200 });
       document.body.appendChild(hero);
 
       render(<TourGuideOverlay />);
@@ -608,6 +609,40 @@ describe('Tour Subsystem', () => {
 
       const overlay = screen.getByTestId('tour-guide-overlay');
       expect(overlay.getAttribute('data-has-target')).toBe('true');
+    });
+
+    it('does not spotlight a target that has no layout box yet', () => {
+      const hero = document.createElement('div');
+      hero.setAttribute('data-tour-id', 'welcome-hero');
+      document.body.appendChild(hero);
+
+      render(<TourGuideOverlay />);
+      act(() => {
+        requestStartUserTour();
+      });
+
+      expect(screen.getByTestId('tour-guide-overlay').getAttribute('data-has-target')).toBe('false');
+    });
+
+    it('spotlights a target once it gets laid out after the tour opens', async () => {
+      const hero = document.createElement('div');
+      hero.setAttribute('data-tour-id', 'welcome-hero');
+      document.body.appendChild(hero);
+
+      render(<TourGuideOverlay />);
+      act(() => {
+        requestStartUserTour();
+      });
+      const overlay = screen.getByTestId('tour-guide-overlay');
+      expect(overlay.getAttribute('data-has-target')).toBe('false');
+
+      hero.getBoundingClientRect = () => DOMRect.fromRect({ x: 100, y: 50, width: 400, height: 200 });
+      act(() => {
+        hero.className = 'is-ready';
+      });
+
+      await waitFor(() => expect(overlay.getAttribute('data-has-target')).toBe('true'));
+      expect(overlay.style.getPropertyValue('--tour-spot-left')).toBe('92px');
     });
 
     it('does not open when isBlocked is true and defers until unblocked', () => {

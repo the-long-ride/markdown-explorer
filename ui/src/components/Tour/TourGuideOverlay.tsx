@@ -200,8 +200,25 @@ export function TourGuideOverlay({
     const handleViewportUpdate = () => updateTarget();
     window.addEventListener('resize', handleViewportUpdate);
     window.addEventListener('scroll', handleViewportUpdate, true);
+    // Targets can mount or finish layout after the fixed retries above (lazy
+    // chunks, slower webviews), so re-measure on DOM and size changes too.
+    let layoutRafId = 0;
+    const scheduleLayoutUpdate = () => {
+      if (layoutRafId) return;
+      layoutRafId = requestAnimationFrame(() => {
+        layoutRafId = 0;
+        updateTarget();
+      });
+    };
+    const mutationObserver = typeof MutationObserver !== 'undefined' ? new MutationObserver(scheduleLayoutUpdate) : null;
+    mutationObserver?.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(scheduleLayoutUpdate) : null;
+    resizeObserver?.observe(document.body);
     return () => {
       cancelAnimationFrame(rafId);
+      if (layoutRafId) cancelAnimationFrame(layoutRafId);
+      mutationObserver?.disconnect();
+      resizeObserver?.disconnect();
       clearTimeout(t60);
       clearTimeout(t180);
       clearTimeout(t350);

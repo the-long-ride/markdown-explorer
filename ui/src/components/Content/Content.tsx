@@ -16,6 +16,7 @@ import { ContentMainView } from "./ContentMainView";
 import { SplitContent } from "./SplitContent";
 import { ACTION_NOTICE_EVENT, normalizeActionNoticeDetail, type ActionNoticeDetail, type ActionNoticeTone } from "../../utils/actionNotice.ts";
 import { useDialogKeyboard } from "../../hooks/useDialogKeyboard";
+import { useResetOnChange } from "../../hooks/useResetOnChange";
 
 export { isWorkspaceNavigationHref } from "./contentUtils";
 
@@ -94,9 +95,11 @@ export const Content = memo(function Content({
     },
     cancelSelector: '.html-local-first-warning__close, .html-local-first-warning__actions button:first-child',
   });
-  useEffect(() => {
+  useResetOnChange([state.currentFile, state.renderVersion], () => {
     setHtmlLocalFirstWarning(null);
     setAllowUpstreamHtmlPreviewOnce(false);
+  });
+  useEffect(() => {
     if (state.currentFile) htmlPreviewWarningSeenRef.current.delete(state.currentFile);
   }, [state.currentFile, state.renderVersion]);
   useEffect(() => {

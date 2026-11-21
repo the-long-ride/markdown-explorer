@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { captureDomBookmarkTarget } from '../../bookmarks/bookmarkDomAnchors.ts';
 import type { BookmarkSelectionState } from '../Bookmarks/BookmarkSelectionMenu';
+import { useResetOnChange } from '../../hooks/useResetOnChange';
 
 interface BookmarkSelectionArgs {
   enabled: boolean;
@@ -24,7 +25,7 @@ export function useBookmarkSelection({
   closeLinkMenu,
 }: BookmarkSelectionArgs) {
   const [selectionState, setSelectionState] = useState<BookmarkSelectionState | null>(null);
-  useEffect(() => setSelectionState(null), [currentFile, renderVersion]);
+  useResetOnChange([currentFile, renderVersion], () => setSelectionState(null));
 
   const openCapture = useCallback((
     target: Range | Element,
