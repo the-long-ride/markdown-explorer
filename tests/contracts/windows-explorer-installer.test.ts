@@ -27,6 +27,21 @@ describe('Windows Explorer installer integration', () => {
     expect(electronHooks).toContain('Add Open Folder in Markdown Explorer to File Explorer');
     expect(electronHooks).toContain('SystemFileAssociations\\.md\\shell\\MarkdownExplorer');
     expect(electronHooks).toContain('Directory\\Background\\shell\\MarkdownExplorer');
+
+    // Declaring top-level NSIS Function blocks outside macros causes
+    // electron-builder to compile them before !addplugindir is emitted.
+    let inMacro = false;
+    for (const rawLine of electronHooks.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (/^!macro\b/i.test(line)) {
+        inMacro = true;
+      } else if (/^!macroend\b/i.test(line)) {
+        inMacro = false;
+      } else if (/^Function\b/i.test(line)) {
+        expect(inMacro).toBe(true);
+      }
+    }
+    expect(inMacro).toBe(false);
   });
 
   test('uses Tauri NSIS hooks and defines a checked-by-default options page', () => {

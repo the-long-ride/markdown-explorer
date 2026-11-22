@@ -13,7 +13,7 @@ last_verified_at: "2026-11-20T11:41:20Z"
 last_verified_code_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
 last_source_change_commit: "f8fd06a7148e4607c9ee8adf9b244dd24b704cea"
 last_source_change_at: "2026-11-18T04:36:49+07:00"
-source_fingerprint: "sha256:0b05fe8003abda9ede97f96a33cc03e4c020a25237edf1ba6360503886e45257"
+source_fingerprint: "sha256:f743aab16adb17b7b98e9b076c51781409f09cb5f2c992f69d01475052888fce"
 ---
 
 # Electron Desktop Runtime Architecture
