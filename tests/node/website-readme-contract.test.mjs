@@ -173,5 +173,19 @@ describe("website landing and tauri download contracts", () => {
       helpersJs.includes('"tauri-windows-portable"'),
       "site-download-helpers.js must define tauri-windows-portable asset matching",
     );
+
+    const fakeWindow = {};
+    new Function("window", helpersJs)(fakeWindow);
+    const { pickAsset } = fakeWindow.MdeSiteDownloadHelpers;
+    const sampleAssets = [
+      { id: 1, name: "electron-Markdown.Explorer.Portable.exe", download_count: 1 },
+      { id: 2, name: "electron-Markdown.Explorer.Setup.exe", download_count: 1 },
+      { id: 3, name: "tauri-Markdown.Explorer.Portable.exe", download_count: 1 },
+      { id: 4, name: "tauri-Markdown.Explorer_x64-setup.exe", download_count: 1 },
+    ];
+    assert.equal(pickAsset(sampleAssets, "tauri-windows")?.name, "tauri-Markdown.Explorer_x64-setup.exe");
+    assert.equal(pickAsset(sampleAssets, "tauri-windows-portable")?.name, "tauri-Markdown.Explorer.Portable.exe");
+    assert.equal(pickAsset(sampleAssets, "windows-nsis")?.name, "electron-Markdown.Explorer.Setup.exe");
+    assert.equal(pickAsset(sampleAssets, "windows-portable")?.name, "electron-Markdown.Explorer.Portable.exe");
   });
 });

@@ -51,11 +51,15 @@ test('Windows portable exe is described as portable, not installer', () => {
     assets: [
       'electron-Markdown.Explorer.exe',
       'electron-Markdown.Explorer.Setup.exe',
+      'tauri-Markdown.Explorer.Portable.exe',
+      'tauri-Markdown.Explorer_x64-setup.exe',
     ],
   });
 
   expect(notes).toContain('Electron desktop portable executable for Windows.');
   expect(notes).toContain('Electron desktop installer for Windows.');
+  expect(notes).toContain('Tauri desktop portable executable for Windows.');
+  expect(notes).toContain('Tauri desktop installer for Windows.');
 });
 
 test('renders asset sizes in human-readable form after the Download column', () => {
