@@ -17,20 +17,18 @@ export function generateVscodeReadme(rootReadmeContent, existingVscodeReadmeCont
     ? tutorialMatch[0].trim()
     : `## VS Code Extension Tutorial
 
-Open any folder containing Markdown files in VS Code to get started. Use the Markdown Explorer button in the workspace header, or open the Command Palette:
+Open a folder containing Markdown files and click the Markdown Explorer button in the workspace header, or use the Command Palette / context menus:
 
-| Goal | Command / Action | Access Point | Shortcut (Win/Linux) | Shortcut (macOS) |
+| Action | Command | Where | Win/Linux | macOS |
 | --- | --- | --- | --- | --- |
-| **Open Docs Viewer** | \`Markdown Explorer: Open Docs Viewer\` | Explorer Header Icon / Command Palette | \`Ctrl+Shift+M\` | \`Cmd+Shift+M\` |
-| **Toggle Active File Preview** | \`Markdown Explorer: Toggle Docs Viewer\` | Editor Title Icon / Command Palette | \`Ctrl+Alt+V\` | \`Cmd+Alt+V\` |
-| **Preview Selected File** | \`Markdown Explorer: Preview This File\` | Right-click \`.md\`/\`.mdx\` in File Explorer | Context Menu | Context Menu |
-| **Open Folder Workspace** | \`Open Folder in Markdown Explorer\` | Right-click folder in File Explorer | Context Menu | Context Menu |
-| **Refresh Workspace** | \`Markdown Explorer: Refresh\` | Webview Header / Command Palette | \`R\` | \`R\` |
+| Open workspace viewer | \`Markdown Explorer: Open Docs Viewer\` | Explorer Header / Palette | \`Ctrl+Shift+M\` | \`Cmd+Shift+M\` |
+| Toggle active file preview | \`Markdown Explorer: Toggle Docs Viewer\` | Editor Title / Palette | \`Ctrl+Alt+V\` | \`Cmd+Alt+V\` |
+| Preview file | \`Markdown Explorer: Preview This File\` | File Context Menu | — | — |
+| Open folder workspace | \`Open Folder in Markdown Explorer\` | Folder Context Menu | — | — |
+| Refresh workspace | \`Markdown Explorer: Refresh\` | Webview Header / Palette | \`R\` | \`R\` |
 
 > [!TIP]
-> **Icon Missing?** The Explorer header icon adapts automatically to your VS Code color theme. If it does not appear after installing or updating, run **Developer: Reload Window** in the Command Palette.
-
-In VS Code, imported fonts live in extension global storage and do not change VS Code editor fonts. Use the dedicated Edit icon beside More actions (\`Ctrl+Alt+E\` / \`Cmd+Alt+E\`) to open the current Markdown source in a normal editor tab.`;
+> **Icon missing?** Run **Developer: Reload Window** in the Command Palette if the header icon does not appear after installing. Imported fonts stay in extension storage, and \`Ctrl+Alt+E\` / \`Cmd+Alt+E\` opens the source file in an editor tab.`;
 
   let content = rootReadmeContent;
 

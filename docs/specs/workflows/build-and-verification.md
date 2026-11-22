@@ -13,7 +13,7 @@ last_verified_at: "2026-11-20T11:45:00Z"
 last_verified_code_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
 last_source_change_commit: "5c29d99733a2a76d04ac75dc51ff685c0a1b8724"
 last_source_change_at: "2026-11-20T10:48:12+07:00"
-source_fingerprint: "sha256:54e69f3938401d885602ec50960f51b772aff118a2b10e0a090943dcbf3f1011"
+source_fingerprint: "sha256:64d687597d199c8beb52dba8ff4919f5e05d876ac0e1fb0d14bba6609049eebb"
 ---
 
 # Build, Versioning, and Verification

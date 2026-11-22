@@ -101,7 +101,7 @@ describe('website homepage positioning', () => {
     expect(readme).toContain('CSV and TSV Code Fences');
     expect(readme).toContain('Open in Browser');
     expect(readme).toContain('Microsoft Store and Ubuntu App Center');
-    expect(readme).toContain('media/demo/chart-for datatable-and-CSV-TSV.png');
+    expect(readme).toContain('https://www.youtube.com/watch?v=44lXcn-hWe0');
   });
 
   test('queries GitHub for real version first and updates all version texts', () => {
