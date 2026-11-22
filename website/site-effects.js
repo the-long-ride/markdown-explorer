@@ -123,9 +123,10 @@
       if (embedUrl || (videoId && videoId !== "coming-soon")) {
         const stage = box.querySelector(".youtube-placeholder-stage");
         if (!stage) return;
+        stage.classList.add("is-embedded");
         const iframe = Object.assign(document.createElement("iframe"), {
           className: "youtube-embed-iframe", title: "Markdown Explorer YouTube App Walkthrough", allowFullscreen: true,
-          allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+          allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
           src: embedUrl || `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1`,
         });
         return stage.replaceChildren(iframe);

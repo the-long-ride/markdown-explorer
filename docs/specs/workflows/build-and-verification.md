@@ -13,7 +13,7 @@ last_verified_at: "2026-11-20T11:45:00Z"
 last_verified_code_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
 last_source_change_commit: "5c29d99733a2a76d04ac75dc51ff685c0a1b8724"
 last_source_change_at: "2026-11-20T10:48:12+07:00"
-source_fingerprint: "sha256:64d687597d199c8beb52dba8ff4919f5e05d876ac0e1fb0d14bba6609049eebb"
+source_fingerprint: "sha256:6a1f239f2b827c931b49bfb185e9c3f275060f63fe114d3649db5de2f4e31ee6"
 ---
 
 # Build, Versioning, and Verification
@@ -47,7 +47,7 @@ Documents the root monorepo scripts and dependency policies, version and README 
   - `scripts/fetch-marketplace-stats.mjs` queries live Open VSX and VS Code Marketplace download counts and writes `website/marketplace-stats.json`.
 - **CI, packaging & release workflows (`.github/workflows/*`, `.github/scripts/release-notes.mjs`)**:
   - `.github/workflows/test.yml` runs 7 jobs: `contracts` (`test:contracts`, `test:node`, `test:update-contracts`), `translations` (`test:translations`), `ui` (`test:ui` across 4 shards), `electron` (`test:electron`), `host-variants` (`test:vscode`, `test:website`, `build:ui`, `build:ui:electron`, `build:vscode`, `pnpm --dir website-app typecheck`, `pnpm --dir website-app build`), `tauri` (`test:tauri` matrix on `ubuntu-latest`, `windows-latest`, `macos-latest`), and `tauri-coverage` (`cargo llvm-cov` enforcing an 85% coverage threshold on non-bootstrap Tauri modules).
-  - `.github/workflows/{build-all,release}.yml` build VS Code (`.vsix`), Electron desktop (`windows-latest`, `ubuntu-latest`, `macos-latest`), and Tauri desktop (`windows-latest`, `ubuntu-22.04` pinned for glibc AppImage baseline compatibility, `macos-latest`, with `Swatinem/rust-cache@v2` keyed by `matrix.os`). `release.yml` gates on `test.yml` (`test-gate`), stages assets with `electron-` and `tauri-` prefixes, generates categorized markdown tables and SHA-256 checksums via `.github/scripts/release-notes.mjs` (`Windows`, `macOS`, `Linux`, `VS Code Extension`, `Other`), publishes the `.vsix` to Open VSX and VS Code Marketplace, creates the GitHub Release, and chains `publish-desktop-stores.yml`.
+  - `.github/workflows/{build-all,release}.yml` build VS Code (`.vsix`), Electron desktop (`windows-latest`, `ubuntu-latest`, `macos-latest`), and Tauri desktop (`windows-latest` NSIS installer + standalone `Markdown Explorer Portable.exe` copied from `markdown-explorer-tauri.exe`, `ubuntu-22.04` pinned for glibc AppImage baseline compatibility, `macos-latest`, with `Swatinem/rust-cache@v2` keyed by `matrix.os`). `release.yml` gates on `test.yml` (`test-gate`), stages assets with `electron-` and `tauri-` prefixes (producing `tauri-Markdown.Explorer.Portable.exe`), generates categorized markdown tables and SHA-256 checksums via `.github/scripts/release-notes.mjs` (`Windows`, `macOS`, `Linux`, `VS Code Extension`, `Other`), publishes the `.vsix` to Open VSX and VS Code Marketplace, creates the GitHub Release, and chains `publish-desktop-stores.yml`.
   - `.github/workflows/deploy-website.yml` fetches live marketplace stats (`node scripts/fetch-marketplace-stats.mjs`), builds `website-app` (`pnpm --filter ./website-app run build`), copies `website-app/dist/.` into `website/app/`, and deploys `website` to GitHub Pages.
 - **Test runner & coverage configuration (`vitest.config.ts`)**:
   - Defines 7 Vitest projects (`pool: 'forks'`, `testTimeout: 20_000`): `electron`, `vscode`, `ui`, `contracts`, `manifest`, `build`, and `website` (`tests/unit/website/**/*.test.{ts,tsx}` with `tests/setup/website.ts`).

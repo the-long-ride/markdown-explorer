@@ -130,6 +130,9 @@ describe('website homepage positioning', () => {
     expect(landingHtml).toContain('href="features/"');
     expect(landingHtml).toContain('id="video-demo"');
     expect(landingHtml).toContain('data-youtube-placeholder');
+    expect(landingHtml).toContain('data-youtube-video-id="44lXcn-hWe0"');
+    expect(landingHtml).toContain('https://www.youtube.com/embed/44lXcn-hWe0');
+    expect(landingHtml).not.toContain('coming-soon');
 
     const indexHtml = read('website/index.html');
     expect(indexHtml).toContain('app/?mode=web');

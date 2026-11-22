@@ -72,8 +72,16 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).toContain('name: Build Tauri Desktop Application');
     expect(workflow).toContain('os: [windows-latest, ubuntu-22.04, macos-latest]');
     expect(workflow).toContain('cargo tauri build --bundles nsis');
+    expect(workflow).toContain('target/release/markdown-explorer-tauri.exe');
+    expect(workflow).toContain('target/release/bundle/portable/Markdown Explorer Portable.exe');
+    expect(workflow).toContain('tauri/target/release/bundle/portable/*.exe');
     expect(workflow).toContain('cargo tauri build --bundles appimage,deb');
     expect(workflow).toContain('cargo tauri build --bundles app,dmg');
+
+    const buildAll = readWorkflow('build-all.yml');
+    expect(buildAll).toContain('target/release/markdown-explorer-tauri.exe');
+    expect(buildAll).toContain('target/release/bundle/portable/Markdown Explorer Portable.exe');
+    expect(buildAll).toContain('tauri/target/release/bundle/portable/*.exe');
   });
 
   test('release workflow generates grouped download notes', () => {

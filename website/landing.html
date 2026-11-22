@@ -763,7 +763,7 @@
 
       <div class="section-divider" aria-hidden="true"></div>
 
-      <!-- Band 2.5: YouTube App Demo Embed Placeholder -->
+      <!-- Band 2.5: YouTube App Demo Embed -->
       <section
         id="video-demo"
         class="section video-demo-band"
@@ -783,47 +783,34 @@
         <div
           class="youtube-placeholder-frame"
           data-youtube-placeholder
-          data-youtube-video-id="coming-soon"
-          data-youtube-embed=""
+          data-youtube-video-id="44lXcn-hWe0"
+          data-youtube-embed="https://www.youtube.com/embed/44lXcn-hWe0"
         >
           <div class="youtube-placeholder-topbar">
             <span class="youtube-status-pill" data-i18n="video_demo_badge">
-              YouTube App Demo — Embed Placeholder
+              YouTube App Demo — Walkthrough
             </span>
-            <span class="youtube-aspect-pill">16:9 · YOUTUBE SLOT</span>
+            <a
+              class="youtube-aspect-pill"
+              href="https://www.youtube.com/watch?v=44lXcn-hWe0"
+              target="_blank"
+              rel="noopener"
+              data-i18n="video_demo_watch_link"
+            >
+              16:9 · WATCH ON YOUTUBE ↗
+            </a>
           </div>
 
-          <div class="youtube-placeholder-stage">
-            <button
-              type="button"
-              class="youtube-play-trigger"
-              data-youtube-placeholder-trigger
-              aria-label="Preview YouTube App Demo Placeholder"
-            >
-              <span class="youtube-play-badge" aria-hidden="true">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="8 5 19 12 8 19 8 5"></polygon>
-                </svg>
-              </span>
-              <span class="youtube-play-meta">
-                <strong data-i18n="video_demo_placeholder_title">Full Walkthrough Video Coming Soon</strong>
-                <span data-i18n="video_demo_placeholder_copy">
-                  This 16:9 cinema slot is pre-wired for the official YouTube walkthrough. While the recording is being finalized, explore the live interactive components above or launch the full demo studio.
-                </span>
-              </span>
-              <span class="button primary youtube-preview-btn" data-i18n="video_demo_play_btn">
-                Preview Video Slot
-              </span>
-            </button>
-
-            <div class="youtube-placeholder-preview-note" data-youtube-preview-note hidden>
-              <p data-i18n="video_demo_preview_note">
-                Official YouTube video ID is queued (coming-soon). Jump straight into any live component in the studio:
-              </p>
-              <a class="button primary" href="features/" data-i18n="video_demo_studio_cta">
-                Open Interactive Component Studio ↗
-              </a>
-            </div>
+          <div class="youtube-placeholder-stage is-embedded">
+            <iframe
+              class="youtube-embed-iframe"
+              src="https://www.youtube.com/embed/44lXcn-hWe0?rel=0"
+              title="Markdown Explorer YouTube App Walkthrough"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            ></iframe>
           </div>
         </div>
       </section>
