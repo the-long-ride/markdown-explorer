@@ -13,7 +13,7 @@ last_verified_at: "2026-11-20T11:45:00Z"
 last_verified_code_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
 last_source_change_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
 last_source_change_at: "2026-11-20T14:51:38+07:00"
-source_fingerprint: "sha256:5b34fae237d608b130ff919313e1825b5fce154e31a668ea86469cfdffbd1293"
+source_fingerprint: "sha256:86198344e39b8b0d479e71b773872a3d6d250fa9118c681960bbb18d98113e5a"
 ---
 
 # Web App & Website Runtime Architecture (Chromium Extension Retired)
@@ -46,7 +46,7 @@ Defines the browser-hosted Web App runtime (`appRuntime: 'web'`) and Interactive
 - **Marketing & Landing Website (`website/`)**:
   - `website/index.html` is a redirect-only root entrypoint forwarding `/` (including legacy `?mode=file` -> `web`) straight to `app/?mode=web` and routing section hashes (`#features`, `#gallery`, `#video-demo`, `#download`, `#faq`) to `landing.html${hash}`, with no `?landing=1` HTML page.
   - `website/landing.html` (alongside `privacy.html`, `terms.html`, and `features/index.html`) is the sole marketing landing page using the Raw Grid theme (`data-theme="dark" data-theme-style="raw-grid"`, styled via `landing-raw-grid.css`).
-  - `landing.html` replaces the static hero and 4 spotlight `<img>` previews with live interactive `<iframe src="app/features/?embed=1&feature=...">` embeds (`#hero-demo-iframe` switched by `[data-hero-mode]` and 4 `[data-spotlight-iframe]` panels synced with `[data-spotlight-tab]` via `site-effects.js` `mde-demo-select` `postMessage`, using `search-bookmarks` for the Search & Export tab and a full-width stacked layout in `landing-spotlight.css` with the embed above the copy), links to `features/`, and includes the `#video-demo` YouTube walkthrough embed placeholder (`[data-youtube-placeholder]`, `[data-youtube-placeholder-trigger]`, without fake chapter timestamps).
+  - `landing.html` replaces the static hero and 4 spotlight `<img>` previews with live interactive `<iframe src="app/features/?embed=1&feature=...">` embeds (`#hero-demo-iframe` switched by `[data-hero-mode]` and 4 `[data-spotlight-iframe]` panels synced with `[data-spotlight-tab]` via `site-effects.js` `mde-demo-select` `postMessage`, using `search-bookmarks` for the Search & Export tab and a full-width stacked layout in `landing-spotlight.css` with the embed above the copy), links to `features/`, and embeds the `#video-demo` YouTube walkthrough (`[data-youtube-placeholder]` with `data-youtube-video-id="44lXcn-hWe0"` and `<iframe class="youtube-embed-iframe" src="https://www.youtube.com/embed/44lXcn-hWe0?rel=0">`).
   - Retains prioritized Rust Tauri download buttons including `#dl-win-light-portable-btn` (`tauri-windows-portable` matcher in `site-download-helpers.js`), icon-only GitHub star nav link (`.nav-github-link` + `[data-github-stars]`), `--accent` author link (`@the-long-ride`), View Transition / `is-theme-switching` dark-light toggle animations (`script.js` + `site-foundation.css`), retro-styled footer/legal panels (`privacy.html`, `terms.html`) with 9-language localization (`i18n.js`, `i18n/*.js`, plus `data-i18n-html` support in `script.js`), and `/markdown-explorer/landing.html` + `/markdown-explorer/features/` in `website/sitemap.xml`.
 
 ## Workflow
@@ -90,4 +90,3 @@ Defines the browser-hosted Web App runtime (`appRuntime: 'web'`) and Interactive
 ## Known limitations and open questions
 
 - `browser-git-history-host.ts` disables all Git history commands in browser runtimes (`unsupported-runtime`), and `browser-insights-host.ts` returns `unsupported` for `checkExternalLinks`.
-- `#video-demo` currently renders a styled YouTube walkthrough placeholder (`data-youtube-video-id="coming-soon"`) until the recorded walkthrough video ID is published.
