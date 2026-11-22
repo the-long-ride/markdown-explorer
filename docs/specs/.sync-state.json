@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "last_sync_commit": "f0818d86f926ee15c5508b3bc186e1ddf18f50b8",
+  "last_sync_commit": "f068b48112d1e850767ce2d82c3234d9d2e64585",
   "last_full_scan_commit": "6ad4907b3df006942c3e8ebcf2ba6ae5195355a0",
-  "last_sync_at": "2026-11-21T21:06:00Z",
+  "last_sync_at": "2026-11-21T23:54:00Z",
   "inventory_complete": true,
   "source_to_specs": {
     ".github/scripts/release-notes.mjs": [
@@ -1689,6 +1689,9 @@
       "architecture.ui-state-and-runtimes"
     ],
     "ui/src/hooks/useKeyboard.ts": [
+      "architecture.ui-state-and-runtimes"
+    ],
+    "ui/src/hooks/useResetOnChange.ts": [
       "architecture.ui-state-and-runtimes"
     ],
     "ui/src/hooks/useResize.ts": [
