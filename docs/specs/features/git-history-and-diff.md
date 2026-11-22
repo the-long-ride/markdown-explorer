@@ -9,11 +9,11 @@ tags: ["git", "history", "diff", "timeline", "snapshot"]
 source_paths: ["ui/src/components/History/CopyableHistoryMeta.tsx", "ui/src/components/History/DocumentDiffView.tsx", "ui/src/components/History/FileHistoryCommitList.tsx", "ui/src/components/History/FileHistoryDiffPane.tsx", "ui/src/components/History/FileHistoryModal.tsx", "ui/src/components/History/FileHistoryResizeHandle.tsx", "ui/src/components/History/GitCommitGraph.tsx", "ui/src/components/History/GitRevisionView.tsx", "ui/src/components/History/HistoryActionIcons.tsx", "ui/src/components/History/HistorySelectionCheckbox.tsx", "ui/src/components/History/RenderedDiffView.tsx", "ui/src/components/History/RepositoryCommitMenu.tsx", "ui/src/components/History/RepositoryHistoryPanel.tsx", "ui/src/components/History/RepositorySnapshotContent.tsx", "ui/src/components/History/RepositorySnapshotPortal.tsx", "ui/src/components/History/SourceDiffView.tsx", "ui/src/components/History/SplitSourceDiffView.tsx", "ui/src/components/History/diffVirtualRows.ts", "ui/src/components/History/repositoryHistoryLabels.ts", "ui/src/components/History/useFileHistoryLayout.ts", "ui/src/components/History/useSyncedScroll.ts", "ui/src/components/History/useVisibleRowRange.ts", "ui/src/history/contracts.ts", "ui/src/history/diffRanges.ts", "ui/src/history/gitGraphLayout.ts", "ui/src/history/historyAvailability.ts", "ui/src/history/historyClient.ts", "ui/src/history/lineDiff.ts", "ui/src/history/repositoryView.ts", "ui/src/history/revisionWorkspace.ts", "ui/src/history/snapshotLinkResolution.ts", "ui/src/history/splitDiffRows.ts", "ui/src/history/useFileHistory.ts", "ui/src/utils/snapshotSearchJump.ts"]
 related_specs: ["architecture.ui-state-and-runtimes", "architecture.ui-theming-and-styles", "feature.markdown-rendering-and-tables", "feature.sidebar-search-bookmarks", "architecture.runtime-tauri", "architecture.runtime-electron", "architecture.runtime-vscode", "architecture.runtime-chromium-and-web-demo"]
 last_doc_update_at: "2026-11-20T19:12:00Z"
-last_verified_at: "2026-11-20T19:12:00Z"
-last_verified_code_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
+last_verified_at: "2026-11-21T23:54:00Z"
+last_verified_code_commit: "f068b48112d1e850767ce2d82c3234d9d2e64585"
 last_source_change_commit: "d0a2d7f5fc3278c4e0ca84174a985eff8b133da1"
 last_source_change_at: "2026-11-19T19:10:50+07:00"
-source_fingerprint: "sha256:ff1a02f0ed8dd5d2801efb44f2ea2c692d755cc14d738ed17b7a746429704624"
+source_fingerprint: "sha256:47cca93f88f17b5bdfd2feeceff277f3488b3068b1deab86d54fab292c99d715"
 ---
 
 # Git History and Diff Viewer

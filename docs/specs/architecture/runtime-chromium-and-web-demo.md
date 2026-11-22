@@ -13,7 +13,7 @@ last_verified_at: "2026-11-20T11:45:00Z"
 last_verified_code_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
 last_source_change_commit: "f0818d86f926ee15c5508b3bc186e1ddf18f50b8"
 last_source_change_at: "2026-11-20T14:51:38+07:00"
-source_fingerprint: "sha256:494ffd9a5e659094811a40a934c641f7e44be6e9cee91805c98dd5cbfc5e566c"
+source_fingerprint: "sha256:5b34fae237d608b130ff919313e1825b5fce154e31a668ea86469cfdffbd1293"
 ---
 
 # Web App & Website Runtime Architecture (Chromium Extension Retired)
