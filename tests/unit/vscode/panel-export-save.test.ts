@@ -48,4 +48,23 @@ describe('VS Code generic export save', () => {
       { command: 'refresh' }, harness.vscodeApi, () => Promise.resolve(true),
     )).resolves.toBe(false);
   });
+
+  it('rejects missing export data before opening the save dialog', async () => {
+    const { vscodeApi, showSaveDialog } = vscodeHarness();
+    const respond = vi.fn(async () => true);
+    await expect(handlePanelExportSaveMessage({ command: 'saveExportFile' }, vscodeApi, respond)).resolves.toBe(true);
+    expect(showSaveDialog).not.toHaveBeenCalled();
+    expect(respond).toHaveBeenCalledWith({ command: 'exportFileSaveResult', requestId: '', ok: false, error: 'Missing export data' });
+  });
+
+  it.each([
+    [new Error('disk is full'), 'disk is full'],
+    ['unexpected failure', 'Unable to save export file'],
+  ])('reports writing errors for the originating export: %s', async (failure, error) => {
+    const { vscodeApi, writeFile } = vscodeHarness();
+    writeFile.mockRejectedValueOnce(failure);
+    const respond = vi.fn(async () => true);
+    await handlePanelExportSaveMessage({ command: 'saveExportFile', requestId: 'export', dataBase64: 'AQ==' }, vscodeApi, respond);
+    expect(respond).toHaveBeenCalledWith({ command: 'exportFileSaveResult', requestId: 'export', ok: false, error });
+  });
 });
