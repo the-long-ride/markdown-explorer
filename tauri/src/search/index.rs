@@ -144,9 +144,21 @@ fn score_item_name(
     query: &str,
     match_case: bool,
 ) -> i32 {
-    let title_score = if contains_search_value(title, query, match_case) { 5 } else { 0 };
-    let file_name_score = if contains_search_value(file_name, query, match_case) { 4 } else { 0 };
-    let path_score = if contains_search_value(relative_path, query, match_case) { 2 } else { 0 };
+    let title_score = if contains_search_value(title, query, match_case) {
+        5
+    } else {
+        0
+    };
+    let file_name_score = if contains_search_value(file_name, query, match_case) {
+        4
+    } else {
+        0
+    };
+    let path_score = if contains_search_value(relative_path, query, match_case) {
+        2
+    } else {
+        0
+    };
     title_score + file_name_score + path_score
 }
 
@@ -303,7 +315,8 @@ impl SearchIndex {
             } else {
                 item.title.clone()
             };
-            let base_score = score_item_name(&title, &file_name, &relative_path, &needle, match_case);
+            let base_score =
+                score_item_name(&title, &file_name, &relative_path, &needle, match_case);
             if can_search_file_contents(&item.fs_path) {
                 if let Some(entry) = self.get_entry(&item.fs_path) {
                     let mut next_index = 0;
@@ -316,16 +329,12 @@ impl SearchIndex {
                         };
                         found_any = true;
                         let mut result = make_result(item, &title, &file_name, &relative_path);
-                        result.excerpt = Some(make_search_excerpt(
-                            &entry.raw,
-                            match_index,
-                            match_length,
-                        ));
+                        result.excerpt =
+                            Some(make_search_excerpt(&entry.raw, match_index, match_length));
                         result.match_index = Some(match_index);
                         result.match_ordinal = Some(ordinal);
                         result.match_length = Some(match_length);
-                        result.line_number =
-                            Some(entry.raw[..match_index].split('\n').count());
+                        result.line_number = Some(entry.raw[..match_index].split('\n').count());
                         scored.push(ScoredResult {
                             result,
                             score: base_score as f64 + 3.0 - (ordinal.min(20) as f64) / 100.0,

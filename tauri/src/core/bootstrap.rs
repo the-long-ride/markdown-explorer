@@ -1,11 +1,18 @@
 #![allow(dead_code)]
 
-use tauri::{image::Image, DragDropEvent, Manager, WebviewEvent, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+    image::Image, DragDropEvent, Manager, WebviewEvent, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder,
+};
 use tauri_plugin_window_state::StateFlags;
 
 const APP_ICON_PNG: &[u8] = include_bytes!("../../icons/icon.png");
 
-fn dispatch_native_drop_event(window: &WebviewWindow, event_type: &str, paths: &[std::path::PathBuf]) {
+fn dispatch_native_drop_event(
+    window: &WebviewWindow,
+    event_type: &str,
+    paths: &[std::path::PathBuf],
+) {
     let payload = serde_json::json!({
         "type": event_type,
         "paths": paths
@@ -16,9 +23,7 @@ fn dispatch_native_drop_event(window: &WebviewWindow, event_type: &str, paths: &
     let Ok(payload_json) = serde_json::to_string(&payload) else {
         return;
     };
-    let script = format!(
-        "window.__markdownExplorerHandleNativeDrop?.({payload_json});"
-    );
+    let script = format!("window.__markdownExplorerHandleNativeDrop?.({payload_json});");
     let _ = window.eval(script);
 }
 
@@ -64,7 +69,8 @@ pub fn boot() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             let args: Vec<String> = argv.into_iter().collect();
-            let Some(request) = crate::runtime::external_open::parse_external_open_request(&args) else {
+            let Some(request) = crate::runtime::external_open::parse_external_open_request(&args)
+            else {
                 return;
             };
             handle_external_open_request(app, request);
@@ -232,16 +238,16 @@ pub fn boot() {
                         return;
                     }
                     tauri::async_runtime::spawn(crate::runtime::html_preview::shutdown());
-                    if crate::update::manager::UpdateManager::should_apply_on_close(&state_for_event)
-                    {
+                    if crate::update::manager::UpdateManager::should_apply_on_close(
+                        &state_for_event,
+                    ) {
                         api.prevent_close();
                         let app = app_for_event.clone();
                         let state = state_for_event.clone();
                         tauri::async_runtime::spawn(async move {
                             if let Err(error) =
                                 crate::update::manager::UpdateManager::apply_scheduled_update(
-                                    app,
-                                    state,
+                                    app, state,
                                 )
                                 .await
                             {

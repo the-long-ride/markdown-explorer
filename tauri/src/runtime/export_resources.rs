@@ -85,12 +85,12 @@ fn encode_base64(bytes: &[u8]) -> String {
     output
 }
 
-fn reference_path(root: &Path, document_path: Option<&str>, resource_path: &str) -> Result<PathBuf, &'static str> {
-    let reference = resource_path
-        .split(['?', '#'])
-        .next()
-        .unwrap_or("")
-        .trim();
+fn reference_path(
+    root: &Path,
+    document_path: Option<&str>,
+    resource_path: &str,
+) -> Result<PathBuf, &'static str> {
+    let reference = resource_path.split(['?', '#']).next().unwrap_or("").trim();
     let lower = reference.to_ascii_lowercase();
     if reference.is_empty()
         || lower.starts_with("http://")
@@ -151,48 +151,10 @@ pub fn read_workspace_resource(
 }
 
 #[cfg(not(test))]
-pub fn handle_command(
-    app: &tauri::AppHandle,
-    state: &crate::app_state::AppState,
-    cmd: &str,
-    msg: &serde_json::Value,
-) -> Result<bool, String> {
-    let request_id = msg.get("requestId").and_then(serde_json::Value::as_str).unwrap_or("");
-    let workspace_path = state.inner.read().workspace_path.clone();
-    match cmd {
-        "readWorkspaceExportResource" => {
-            let result = workspace_path
-                .as_deref()
-                .ok_or("missing")
-                .and_then(|workspace| {
-                    read_workspace_resource(
-                        workspace,
-                        msg.get("documentPath").and_then(serde_json::Value::as_str),
-                        msg.get("resourcePath")
-                            .and_then(serde_json::Value::as_str)
-                            .ok_or("unsupported")?,
-                    )
-                });
-            let mut extra = serde_json::Map::new();
-            extra.insert("requestId".into(), request_id.into());
-            match result {
-                Ok(resource) => {
-                    extra.insert("ok".into(), true.into());
-                    extra.insert("relativePath".into(), resource.relative_path.into());
-                    extra.insert("mimeType".into(), resource.mime_type.into());
-                    extra.insert("dataBase64".into(), resource.data_base64.into());
-                }
-                Err(reason) => {
-                    extra.insert("ok".into(), false.into());
-                    extra.insert("reason".into(), reason.into());
-                }
-            }
-            crate::host_message::emit(app, "workspaceExportResourceResult", extra);
-            Ok(true)
-        }
-        _ => Ok(false),
-    }
-}
+#[path = "export_resources_host.rs"]
+mod host;
+#[cfg(not(test))]
+pub use host::handle_command;
 
 #[cfg(test)]
 mod tests {
@@ -227,13 +189,21 @@ mod tests {
         let outside = tempdir().unwrap();
         let outside_file = write(outside.path(), "secret.txt", b"secret");
         let document = write(workspace.path(), "docs/readme.md", b"# Readme");
-        let outside_url = tauri::Url::from_file_path(&outside_file).unwrap().to_string();
-        assert_eq!(read_workspace_resource(workspace.path(), document.to_str(), &outside_url).unwrap_err(), "outside-workspace");
+        let outside_url = tauri::Url::from_file_path(&outside_file)
+            .unwrap()
+            .to_string();
+        assert_eq!(
+            read_workspace_resource(workspace.path(), document.to_str(), &outside_url).unwrap_err(),
+            "outside-workspace"
+        );
     }
 
     #[test]
     fn returns_missing_for_contained_missing_resource() {
         let dir = tempdir().unwrap();
-        assert_eq!(read_workspace_resource(dir.path(), None, "assets/missing.svg").unwrap_err(), "missing");
+        assert_eq!(
+            read_workspace_resource(dir.path(), None, "assets/missing.svg").unwrap_err(),
+            "missing"
+        );
     }
 }

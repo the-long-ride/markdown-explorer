@@ -21,8 +21,8 @@ fn convert_rtf(source: &str) -> Result<String, ConversionError> {
         ));
     }
 
-    let document = RtfDocument::try_from(source)
-        .map_err(|error| ConversionError::Parse(error.to_string()))?;
+    let document =
+        RtfDocument::try_from(source).map_err(|error| ConversionError::Parse(error.to_string()))?;
     let mut markdown = String::new();
 
     for block in document.body {
