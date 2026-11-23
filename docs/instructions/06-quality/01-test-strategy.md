@@ -31,15 +31,24 @@ keywords:
 | Layer | Command/project | Purpose |
 |---|---|---|
 | Node contracts | `pnpm test:node` | Dependency-light behavior/source contracts |
-| UI | `pnpm test:ui` | React, DOM, Markdown, contexts, settings, hooks |
+| UI | `pnpm test:ui` | React, DOM, Markdown, contexts, settings, hooks (four local shards) |
 | Electron | `pnpm test:electron` | Host services and packaging behavior |
 | VS Code | `pnpm test:vscode` | Extension/panel/parser integration |
-| Chromium | `pnpm test:chromium` | Browser handles, host, scanner, search |
+| Website | `pnpm test:website` | Browser web runtime, host, scanner, search |
 | Contracts/build/manifest | `pnpm test:contracts` | Parity, LOC, dead code, workflow/config, coverage manifest |
+| Static source/style gates | `pnpm lint:loc`, `pnpm lint:ui-styles` | File-size budgets and stylesheet organization |
+| TypeScript | `pnpm typecheck` | Shared UI, VS Code, and Web App compile-time validation |
 | Tauri | `pnpm test:tauri` | Rust host and native conversion |
 | Full JS suite | `pnpm test` | All Vitest projects |
-| Coverage | `pnpm test:coverage` | Instrumented coverage reporting |
+| Coverage | `pnpm test:coverage` | Instrumented reporting with enforced 90% thresholds |
 | Desktop aggregate | `pnpm test:desktop` | Electron + Tauri |
+
+## Coverage gates
+
+- JavaScript/TypeScript coverage uses V8 and enforces 90% lines, functions, branches, and statements globally and independently for `ui/src/**`, `electron/**`, `vscode/**`, and `website-app/src/**`.
+- CI splits the four runtime projects across four parallel unit shards. A shard sets `VITEST_SKIP_COVERAGE_THRESHOLDS=1` only while executing because partial shard coverage cannot meaningfully satisfy the threshold; the downstream coverage job merges all blob reports without the override and enforces the complete gate.
+- Unit shards print failures through the default reporter, write blob reports through `--outputFile.blob`, and upload those blobs with `if: always()` so a failing shard remains diagnosable.
+- Rust coverage uses `cargo llvm-cov` and independently requires 90% regions, functions, and lines. The only excluded Rust files are `main.rs`, `lib.rs`, `core/bootstrap.rs`, `dispatcher/native.rs`, and `update/manager/native.rs`: process entrypoints, real window/event-loop startup, OS integration, installer, and restart seams that require a live desktop runtime.
 
 ## Requirement-to-test rule
 

@@ -84,7 +84,7 @@ keywords:
 | Markdown editing | Rendered/Inline Edit/Plain transitions, CodeMirror source editor, formatting toolbar/shortcuts, one shared working copy per document, dirty-state derivation, local re-render, writable-runtime gating |
 | Edit routing | Live workspace: feature ON enters internal editor, feature OFF opens external/native editor on capable hosts; historical workspace disables both paths |
 | Save/conflicts | Revision-token save, conflict rejection, Reload/Compare/keep-mine flow, unsaved guards, permission/read-only failures, no silent overwrite |
-| Split view | Two panes with pane-owned tab strips and active tabs, focused-pane navigation, move/swap/close, mode independence, shared editable source, read-only Revision/Diff modes |
+| Split view | Two panes with pane-owned tab strips and active tabs, focused-pane navigation, drag/drop movement between panes, split-header swap/close actions, mode independence, shared editable source, read-only Revision/Diff modes; the removed content-tab **Move to other pane** menu action must not return |
 | Split close | Closing split preserves the currently focused pane and that pane's tabs; the opposite pane is discarded |
 | Split scroll/render isolation | Ordinary scrolling stays local and persists at lifecycle boundaries; opposite-pane document bodies do not rerender/remount for unrelated scroll, source, or activation changes |
 | Split file opening | Files context menu exposes Open in Split View; drag/drop uses the Markdown Explorer file MIME payload and targets the exact pane under the pointer |
@@ -102,7 +102,8 @@ keywords:
 | Desktop | Window/fullscreen/zoom/quit, updater capability gating, signed artifact pairs, deferred/immediate apply |
 | Security | Path containment, dangerous URL blocking, HTML network restrictions, Git no-shell structured arguments, repository/workspace-contained reads, no Git mutation commands |
 | Performance | Incremental reveal, bounded work/results, cancellation, bounded historical search, paged history, 10k-line mostly-identical diff without quadratic matrix allocation, split-pane render isolation |
-| Version | Root and synchronized runtime/package/site metadata agree on the intended release version; current version is 1.7.1 (PR #48 targeted 1.7.0) |
+| Version | Root and synchronized runtime/package/site metadata agree on the intended release version; current version is 1.7.2 |
+| Verification gates | `lint:loc`, `lint:ui-styles`, `typecheck`, contract/manifest/translation suites, four merged runtime coverage shards, and Rust coverage all pass; JavaScript/TypeScript coverage is at least 90% lines/functions/branches/statements globally and per variant, Rust coverage is at least 90% regions/functions/lines, and `ci-gate` is green |
 
 ## Host acceptance
 
@@ -157,11 +158,14 @@ For the local Markdown editing + split view + Git History/Diff release gate, all
 pnpm run test:ui
 pnpm run test:electron
 pnpm run test:vscode
-pnpm run test:chromium
+pnpm run test:website
+pnpm run lint:loc
+pnpm run lint:ui-styles
+pnpm run typecheck
 pnpm run test:contracts
 pnpm run test:node
 pnpm run test:translations
-pnpm run lint:ui-styles
+pnpm run test:coverage
 pnpm run build
 cargo test --manifest-path tauri/Cargo.toml -- --test-threads=1
 ```

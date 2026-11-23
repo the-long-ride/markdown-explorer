@@ -20,6 +20,7 @@ test_scope:
 - tests/contracts/windows-explorer-installer.test.ts
 - tests/node/windows-installer-options.test.mjs
 - tests/contracts/tauri-platform-associations.test.ts
+- tests/node/tauri-bundle-icons.test.mjs
 runtime_scope:
 - all
 keywords:
@@ -43,6 +44,7 @@ keywords:
 
 - Platform-specific associations and manifest/config are maintained in Tauri configuration.
 - Windows Store configuration is separate from general desktop configuration.
+- The Windows NSIS installer sets `bundle.windows.nsis.installerIcon` to the same `icons/icon.ico` used by the application bundle, so the installer is branded with the Markdown Explorer logo.
 - Linux desktop entry identifies application and supported launch behavior.
 - Signing/update placeholders must be replaced before production publishing.
 
@@ -68,6 +70,7 @@ Installer-created shell hooks and associations are removed without deleting user
 | Verification | `tests/contracts/windows-explorer-installer.test.ts` | Automated expectation |
 | Verification | `tests/node/windows-installer-options.test.mjs` | Automated expectation |
 | Verification | `tests/contracts/tauri-platform-associations.test.ts` | Automated expectation |
+| Verification | `tests/node/tauri-bundle-icons.test.mjs` | Windows application/installer icon parity |
 
 ---
 

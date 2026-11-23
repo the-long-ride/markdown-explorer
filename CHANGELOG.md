@@ -2,6 +2,18 @@
 
 All notable changes to **Markdown Explorer** will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Branded Tauri Windows installer**: The NSIS installer now uses the same Markdown Explorer `icon.ico` as the application bundle, with a Node contract guarding application/installer icon parity.
+- **Coverage gates, parallel CI & native caching**: Added dedicated `lint:loc`/`lint:ui-styles` and `typecheck` CI jobs, split UI/Electron/VS Code/Web runtime tests across four parallel coverage shards with always-uploaded blob diagnostics, merged those reports for enforced 90% lines/functions/branches/statements gates in every JavaScript/TypeScript variant, added matching 90% Rust regions/functions/lines gates, OS-keyed Rust caches, and a single `ci-gate` aggregation job.
+
+### Changed
+- **Coverage ownership & test hardening**: Expanded manifest-backed unit, contract, Node, UI, Electron, VS Code, Web, and Rust coverage; removed unreachable dead helpers including orphaned `tableFilterHandlers` and the unused content-tab **Move to other pane** menu action; stabilized native Tauri watcher/HTTP tests; and made shard failures visible in normal CI logs.
+
+### Fixed
+- **PDF custom-font embedding**: Fixed `@font-face` parsing so semicolons inside embedded `url(data:...;base64,...)` sources no longer truncate custom font declarations; eligible custom fonts are embedded and mapped by weight/style in exported PDFs instead of falling back to Roboto.
+
 ## [v1.7.2] — 2026-11-19
 
 ### Added

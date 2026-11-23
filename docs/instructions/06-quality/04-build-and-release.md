@@ -31,11 +31,11 @@ keywords:
 
 # Build and Release Specification
 
-## Current unreleased target
+## Current release state
 
-PR #48 / `feature/editor-git-history-split-view` targets **1.7.0**. The 1.7.0 target is intentionally above the separate 1.6.8 hot-fix line. It is still an unreleased/manual-validation target until the PR is explicitly approved and merged.
+The current application version is **1.7.2**. PR #73 did not change the product version; its installer branding, CI/coverage gates, PDF font fix, and test infrastructure belong to the next Unreleased cycle.
 
-The current application version is **1.7.1** (sidebar file operations). The Tauri build now pulls the `trash` crate from crates.io (`trash = "5"` in `tauri/Cargo.toml`) to move deleted entries to the OS Trash; it adds transitive dependencies, including a second `windows` crate generation in `tauri/Cargo.lock`. The real OS-Trash call is not exercised by the Rust unit tests (they inject the removal), so it needs a manual smoke test on a real desktop build.
+The Tauri build pulls the `trash` crate from crates.io (`trash = "5"` in `tauri/Cargo.toml`) to move deleted entries to the OS Trash. The real OS-Trash call is not exercised by the Rust unit tests (they inject the removal), so it needs a manual smoke test on a real desktop build.
 
 ## Main build commands
 
@@ -49,7 +49,6 @@ The current application version is **1.7.1** (sidebar file operations). The Taur
 | `pnpm build:electron:mac` | macOS artifacts |
 | `pnpm build:electron:linux` | Linux artifacts |
 | `pnpm build:tauri` | Tauri desktop artifacts |
-| `pnpm build:chromium` | Chromium extension |
 | `pnpm build:website-app` | Website application |
 | `pnpm package` | VS Code extension package path |
 
@@ -57,13 +56,11 @@ The current application version is **1.7.1** (sidebar file operations). The Taur
 
 Root `package.json` is the authoritative application version. `prebuild`, `precompile`, and runtime prebuild scripts invoke `scripts/sync-versions.mjs`.
 
-For 1.7.1 the synchronized targets are:
+The synchronized targets are:
 
 - `ui/package.json`
 - `vscode/package.json`
 - `electron/package.json`
-- `chromium-xtension/package.json`
-- `chromium-xtension/manifest.json`
 - `website-app/package.json`
 - `tauri/package.json`
 - `tauri/tauri.conf.json`
@@ -92,7 +89,7 @@ See [Tauri AppImage limitations](https://v2.tauri.app/distribute/appimage/#limit
 
 1. Run `pnpm run sync-versions` and verify no intended target remains on an older application version.
 2. Clean install from the lockfile.
-3. Run required tests/contracts.
+3. Run required tests, static gates, typechecks, coverage gates, and contracts.
 4. Build each intended artifact.
 5. Inspect artifact names/version/platform/architecture.
 6. Verify installed vs portable updater capability.

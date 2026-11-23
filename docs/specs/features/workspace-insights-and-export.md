@@ -42,6 +42,7 @@ Analyzes workspace documents to compute word counts, link graphs, tag distributi
 - **Export scope resolution, snapshots & saving (`documentSnapshot.ts`, `exportHtml.ts`, `exportSave.ts`, `pdfSemantic.ts`, `entry-table.ts`)**:
   - `findScopeFile(link, files, currentFile?)` falls back to `resolveWorkspaceScopePath()` when `link.resolved` does not match `file.fsPath` directly, resolving URI-decoded relative or workspace-root paths against `currentFile` and matching `file.relativePath` / `file.fsPath` (exact then case-insensitive). `loadDocumentSnapshot()` captures parsed heading outlines onto `DocumentSnapshot.toc?: TocEntry[]` for export and Scope View consumers.
   - `entry-table.ts` invokes `win.Table?.restoreTableLayout?.(table.id)` during exported HTML table hydration, while `.mdn-table-align-btn` is excluded from `@media print` (`exportHtml.ts`) and semantic PDF capture (`pdfSemantic.ts`). `exportSave.ts` (`saveExportArtifact`) downloads directly in browser when `runtime === 'web'` and uses the host bridge on other runtimes.
+  - `pdf/pdfFonts.ts` parses `@font-face` declarations without truncating semicolons inside `url(...)`; embedded base64 font data is written into the pdfmake virtual filesystem, mapped across normal/bold/italic/bold-italic faces, used as the default body font when available, and otherwise falls back to Roboto with a warning.
 
 ## Code map
 
@@ -50,7 +51,7 @@ Analyzes workspace documents to compute word counts, link graphs, tag distributi
 
 ## Verification
 
-- Verified by `tests/unit/ui/export/` (`document-snapshot.test.ts`, `export-save.test.ts`, `export-job-runner.test.ts`), `tests/unit/ui/insights/` (`ai-prompts.test.ts`, `runtime-capabilities.test.ts`, `use-workspace-insights.test.tsx`, `worker-client.test.ts`, `settings-portability.test.ts`), `tests/unit/ui/components/` (`export-center-modal.test.tsx`, `workspace-insights-panel.test.tsx`, `mermaid-thumbnail.test.tsx`, `insights-gallery-links.test.tsx`, `insights-graph-related-reports.test.tsx`, `insights-lint-duplicates.test.tsx`, `insights-settings-integration.test.tsx`), and `tests/contracts/website-demo-insights-removal.test.ts`.
+- Verified by `tests/unit/ui/export/` (`document-snapshot.test.ts`, `export-save.test.ts`, `export-job-runner.test.ts`, `export-job-runner-pdf.test.ts`, `pdf/pdf-fonts.test.ts`), `tests/unit/ui/insights/` (`ai-prompts.test.ts`, `runtime-capabilities.test.ts`, `use-workspace-insights.test.tsx`, `worker-client.test.ts`, `settings-portability.test.ts`), `tests/unit/ui/components/` (`export-center-modal.test.tsx`, `workspace-insights-panel.test.tsx`, `mermaid-thumbnail.test.tsx`, `insights-gallery-links.test.tsx`, `insights-graph-related-reports.test.tsx`, `insights-lint-duplicates.test.tsx`, `insights-settings-integration.test.tsx`), and `tests/contracts/website-demo-insights-removal.test.ts`.
 
 ## Related documentation
 
