@@ -1,9 +1,7 @@
-import { pathToFileUrl } from '../dom/localFileUrl';
 import type { MdFile } from '../types/files';
 import { buildExportExplorerNavigation } from './exportExplorerNavigation';
 import type { ExportLayout } from './exportModel';
 import {
-  captureExportThemeSnapshot,
   renderExportThemeCss,
   serializeExportThemeAttributes,
   type ExportThemeSnapshot,
@@ -189,61 +187,6 @@ function rewriteMergedLinks(html: string, source: MdFile, exported: readonly MdF
     if (!target) return full;
     return `href=${quote}#${documentId(target.file, exported)}${quote}`;
   });
-}
-
-function localAssetUrl(raw: string, documentPath: string): string | null {
-  const value = raw.trim();
-  if (!value || value.startsWith('#') || /^(?:data|https?|mailto|tel|javascript):/i.test(value)) return null;
-  if (/^blob:/i.test(value)) return value;
-  if (/^file:/i.test(value)) return value;
-  const base = pathToFileUrl(documentPath);
-  if (!base) return null;
-  try {
-    const resolved = new URL(value, base);
-    return resolved.protocol === 'file:' ? resolved.href : null;
-  } catch {
-    return null;
-  }
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-    const chunk = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length));
-    binary += String.fromCharCode(...chunk);
-  }
-  return btoa(binary);
-}
-
-export async function embedExportLocalAssets(html: string, documentPath: string): Promise<string> {
-  if (typeof DOMParser === 'undefined' || typeof fetch !== 'function' || typeof btoa !== 'function') return html;
-  const parsed = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
-  const targets: Array<{ element: Element; attribute: string }> = [];
-  parsed.body.querySelectorAll('img[src],source[src],audio[src]').forEach((element) => targets.push({ element, attribute: 'src' }));
-  parsed.body.querySelectorAll('video[poster]').forEach((element) => targets.push({ element, attribute: 'poster' }));
-
-  await Promise.all(targets.map(async ({ element, attribute }) => {
-    const raw = element.getAttribute(attribute);
-    if (!raw) return;
-    const url = localAssetUrl(raw, documentPath);
-    if (!url) return;
-    try {
-      const response = await fetch(url);
-      if (!response.ok) return;
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      const contentType = response.headers.get('content-type')?.split(';', 1)[0]?.trim() || 'application/octet-stream';
-      element.setAttribute(attribute, `data:${contentType};base64,${bytesToBase64(bytes)}`);
-    } catch {
-      // Export stays usable even if a local asset cannot be embedded.
-    }
-  }));
-
-  return parsed.body.innerHTML;
-}
-
-export function captureExportThemeCss(root?: HTMLElement): string {
-  return renderExportThemeCss(captureExportThemeSnapshot(root));
 }
 
 function scriptMarkup(script: ExportScript): string {

@@ -1,5 +1,6 @@
+use crate::HostApp;
 use serde_json::{json, Value};
-use tauri::{AppHandle, Manager};
+use tauri::Manager;
 
 use crate::workspace::open::WorkspaceUnavailableReason;
 use crate::workspace::recents::RecentWorkspace;
@@ -19,7 +20,7 @@ impl WorkspaceOperationMetadata {
     }
 }
 
-pub fn current_workspace_operation(app: &AppHandle) -> Option<WorkspaceOperationMetadata> {
+pub fn current_workspace_operation(app: &HostApp) -> Option<WorkspaceOperationMetadata> {
     let state = app.state::<crate::app_state::AppState>();
     let inner = state.inner.read();
     WorkspaceOperationMetadata::from_parts(
@@ -28,21 +29,20 @@ pub fn current_workspace_operation(app: &AppHandle) -> Option<WorkspaceOperation
     )
 }
 
-fn dispatch_native_host_message(app: &AppHandle, payload: &Value) {
-    let Some(window) = app.get_webview_window("main") else {
-        return;
-    };
-    let Ok(payload_json) = serde_json::to_string(payload) else {
-        return;
-    };
-    let script = format!(
-        "window.__markdownExplorerHandleHostMessage?.({payload_json});"
-    );
-    let _ = window.eval(script);
+fn dispatch_native_host_message(app: &HostApp, payload: &Value) {
+    if let Some(window) = app.get_webview_window("main") {
+        let script = format!("window.__markdownExplorerHandleHostMessage?.({payload});");
+        let _ = window.eval(script);
+    }
+    #[cfg(test)]
+    {
+        use tauri::Emitter;
+        app.emit("host-message", payload).unwrap();
+    }
 }
 
 pub fn emit_scoped(
-    app: &AppHandle,
+    app: &HostApp,
     command: &str,
     extra: serde_json::Map<String, Value>,
     operation: Option<&WorkspaceOperationMetadata>,
@@ -62,13 +62,13 @@ pub fn emit_scoped(
     dispatch_native_host_message(app, &Value::Object(payload));
 }
 
-pub fn emit(app: &AppHandle, command: &str, extra: serde_json::Map<String, Value>) {
+pub fn emit(app: &HostApp, command: &str, extra: serde_json::Map<String, Value>) {
     let operation = current_workspace_operation(app);
     emit_scoped(app, command, extra, operation.as_ref());
 }
 
 pub fn emit_ready_ack_scoped(
-    app: &AppHandle,
+    app: &HostApp,
     ready_ack: &Value,
     operation: Option<&WorkspaceOperationMetadata>,
 ) {
@@ -99,7 +99,7 @@ pub fn emit_ready_ack_scoped(
 }
 
 pub fn emit_loading_scoped(
-    app: &AppHandle,
+    app: &HostApp,
     label: &str,
     detail: Option<&str>,
     operation: Option<&WorkspaceOperationMetadata>,
@@ -112,13 +112,13 @@ pub fn emit_loading_scoped(
     emit_scoped(app, "setLoading", extra, operation);
 }
 
-pub fn emit_loading(app: &AppHandle, label: &str, detail: Option<&str>) {
+pub fn emit_loading(app: &HostApp, label: &str, detail: Option<&str>) {
     let operation = current_workspace_operation(app);
     emit_loading_scoped(app, label, detail, operation.as_ref());
 }
 
 pub fn emit_workspace_scan_progress_scoped(
-    app: &AppHandle,
+    app: &HostApp,
     scanned_files: usize,
     active: bool,
     operation: Option<&WorkspaceOperationMetadata>,
@@ -129,14 +129,14 @@ pub fn emit_workspace_scan_progress_scoped(
     emit_scoped(app, "workspaceScanProgress", extra, operation);
 }
 
-pub fn emit_recent_workspaces_changed(app: &AppHandle, recent_workspaces: Vec<RecentWorkspace>) {
+pub fn emit_recent_workspaces_changed(app: &HostApp, recent_workspaces: Vec<RecentWorkspace>) {
     let mut extra = serde_json::Map::new();
     extra.insert("recentWorkspaces".into(), json!(recent_workspaces));
     emit(app, "recentWorkspacesChanged", extra);
 }
 
 pub fn emit_workspace_unavailable_scoped(
-    app: &AppHandle,
+    app: &HostApp,
     workspace_path: &str,
     reason: WorkspaceUnavailableReason,
     recent_workspaces: Vec<RecentWorkspace>,
@@ -177,7 +177,7 @@ pub fn emit_workspace_unavailable_scoped(
 }
 
 pub fn emit_render_content_empty_welcome_scoped(
-    app: &AppHandle,
+    app: &HostApp,
     file_list: Value,
     operation: Option<&WorkspaceOperationMetadata>,
 ) {
@@ -196,7 +196,7 @@ pub fn emit_render_content_empty_welcome_scoped(
 
 #[allow(clippy::too_many_arguments)]
 pub fn emit_workspace_files_changed_scoped(
-    app: &AppHandle,
+    app: &HostApp,
     file_list: Value,
     tree: Value,
     workspace_name: &str,
@@ -216,26 +216,26 @@ pub fn emit_workspace_files_changed_scoped(
     emit_scoped(app, "workspaceFilesChanged", extra, operation);
 }
 
-pub fn emit_current_file_changed(app: &AppHandle, file_path: &str) {
+pub fn emit_current_file_changed(app: &HostApp, file_path: &str) {
     let mut extra = serde_json::Map::new();
     extra.insert("filePath".into(), file_path.into());
     emit(app, "currentFileChanged", extra);
 }
 
-pub fn emit_nav_not_found(app: &AppHandle, href: &str) {
+pub fn emit_nav_not_found(app: &HostApp, href: &str) {
     let mut extra = serde_json::Map::new();
     extra.insert("href".into(), href.into());
     emit(app, "navNotFound", extra);
 }
 
-pub fn emit_workspace_search_results(app: &AppHandle, request_id: &str, results: Value) {
+pub fn emit_workspace_search_results(app: &HostApp, request_id: &str, results: Value) {
     let mut extra = serde_json::Map::new();
     extra.insert("requestId".into(), request_id.into());
     extra.insert("results".into(), results);
     emit(app, "workspaceSearchResults", extra);
 }
 
-pub fn emit_workspace_search_results_batch(app: &AppHandle, request_id: &str, results: Value) {
+pub fn emit_workspace_search_results_batch(app: &HostApp, request_id: &str, results: Value) {
     let mut extra = serde_json::Map::new();
     extra.insert("requestId".into(), request_id.into());
     extra.insert("results".into(), results);
@@ -244,7 +244,7 @@ pub fn emit_workspace_search_results_batch(app: &AppHandle, request_id: &str, re
 }
 
 pub fn emit_workspace_search_results_done(
-    app: &AppHandle,
+    app: &HostApp,
     request_id: &str,
     total: usize,
     truncated: bool,
@@ -260,7 +260,7 @@ pub fn emit_workspace_search_results_done(
     emit(app, "workspaceSearchResults", extra);
 }
 
-pub fn emit_cross_tab_search_results_batch(app: &AppHandle, request_id: &str, results: Value) {
+pub fn emit_cross_tab_search_results_batch(app: &HostApp, request_id: &str, results: Value) {
     let mut extra = serde_json::Map::new();
     extra.insert("requestId".into(), request_id.into());
     extra.insert("results".into(), results);
@@ -269,7 +269,7 @@ pub fn emit_cross_tab_search_results_batch(app: &AppHandle, request_id: &str, re
 }
 
 pub fn emit_cross_tab_search_results_done(
-    app: &AppHandle,
+    app: &HostApp,
     request_id: &str,
     total: usize,
     truncated: bool,
@@ -286,7 +286,7 @@ pub fn emit_cross_tab_search_results_done(
 }
 
 pub fn emit_workspace_search_index_loaded(
-    app: &AppHandle,
+    app: &HostApp,
     tab_id: &str,
     workspace_path: &str,
     file_list: Value,
@@ -305,13 +305,13 @@ pub fn emit_workspace_search_index_loaded(
     emit(app, "workspaceSearchIndexLoaded", extra);
 }
 
-pub fn emit_window_state_changed(app: &AppHandle, is_maximized: bool) {
+pub fn emit_window_state_changed(app: &HostApp, is_maximized: bool) {
     let mut extra = serde_json::Map::new();
     extra.insert("isMaximized".into(), is_maximized.into());
     emit(app, "window-state-changed", extra);
 }
 
-pub fn emit_fullscreen_changed(app: &AppHandle, is_fullscreen: bool) {
+pub fn emit_fullscreen_changed(app: &HostApp, is_fullscreen: bool) {
     let mut extra = serde_json::Map::new();
     extra.insert("isFullscreen".into(), is_fullscreen.into());
     emit(app, "fullscreenChanged", extra);
@@ -319,14 +319,14 @@ pub fn emit_fullscreen_changed(app: &AppHandle, is_fullscreen: bool) {
 
 /// Asks the UI to run its unsaved-changes guard. Deliberately not workspace-scoped: a close request
 /// belongs to the window, not to a workspace operation.
-pub fn emit_native_close_requested(app: &AppHandle, request_id: &str, intent: &str) {
+pub fn emit_native_close_requested(app: &HostApp, request_id: &str, intent: &str) {
     let mut extra = serde_json::Map::new();
     extra.insert("requestId".into(), request_id.into());
     extra.insert("intent".into(), intent.into());
     emit_scoped(app, "nativeCloseRequested", extra, None);
 }
 
-pub fn emit_external_open_path(app: &AppHandle, path: &str) {
+pub fn emit_external_open_path(app: &HostApp, path: &str) {
     let mut extra = serde_json::Map::new();
     extra.insert("path".into(), path.into());
     emit(app, "externalOpenPath", extra);

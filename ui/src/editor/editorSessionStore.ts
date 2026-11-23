@@ -32,8 +32,6 @@ export function setEditorSession(key: string, session: CachedEditorSession): voi
   editorSessions.set(key, session);
 }
 
-export const setCachedEditorSession = setEditorSession;
-
 export function clearEditorSession(key: string): void {
   editorSessions.delete(key);
 }

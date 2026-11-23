@@ -136,4 +136,36 @@ describe('FontVariantDropdown', () => {
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
+
+  it('opens upward near the viewport edge, wraps keyboard navigation and selects by Space', () => {
+    const onChange = vi.fn();
+    render(<FontVariantDropdown family={sampleFamily} value={customBinding} t={mockT} onChange={onChange} />);
+    const trigger = screen.getByRole('button', { name: /font variant/i });
+    const edge = window.innerHeight;
+    const bounds = vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({ x: window.innerWidth - 80, y: edge - 34, width: 70, height: 26 }),
+    );
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' });
+    const menu = screen.getByRole('listbox');
+    expect(menu).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Italic 400' }).id);
+    expect(parseFloat(menu.style.getPropertyValue('--menu-top'))).toBeLessThan(edge - 34);
+    fireEvent.pointerDown(menu);
+    expect(menu).toBeInTheDocument();
+    fireEvent.keyDown(menu, { key: 'ArrowDown' });
+    expect(menu).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Normal 400' }).id);
+    fireEvent.keyDown(menu, { key: 'ArrowUp' });
+    fireEvent.keyDown(menu, { key: 'ArrowUp' });
+    fireEvent.keyDown(menu, { key: ' ' });
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ style: 'normal', weight: 700 });
+    expect(menu).not.toBeInTheDocument();
+    bounds.mockRestore();
+  });
+
+  it('does not open from the keyboard when no family is available', () => {
+    render(<FontVariantDropdown family={undefined} value={customBinding} t={mockT} onChange={vi.fn()} />);
+    const trigger = screen.getByRole('button', { name: /font variant/i });
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' });
+    expect(trigger).toBeDisabled();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
 });

@@ -121,7 +121,3 @@ export const WIKI_RENDERER_TRANSLATIONS: Record<AppLanguage, WikiRendererTransla
   ko: { wikiTransclusionCycle: '트랜스클루전 순환이 감지되었습니다.', wikiTransclusionDepth: '트랜스클루전 깊이 제한에 도달했습니다.', wikiLinkAmbiguous: 'Wiki Link 대상이 모호합니다.' },
   ru: { wikiTransclusionCycle: 'Обнаружен цикл включения.', wikiTransclusionDepth: 'Достигнут предел глубины включения.', wikiLinkAmbiguous: 'Цель Wiki Link неоднозначна.' },
 };
-
-export function getInsightsTranslations(language: AppLanguage): InsightsTranslations {
-  return INSIGHTS_TRANSLATIONS[language] ?? INSIGHTS_TRANSLATIONS.en;
-}

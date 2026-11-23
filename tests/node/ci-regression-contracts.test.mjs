@@ -19,11 +19,17 @@ test('sidebar bookmark and search additions remain backwards-compatible', () => 
   assert.match(scope, /selectedFilePaths: ReadonlySet<string> = EMPTY_SELECTED_FILE_PATHS/);
 });
 
-test('Tauri updater runtime integration is excluded from unit-test compilation', () => {
-  const source = read('tauri/src/update/manager.rs');
-  assert.match(source, /#\[cfg\(not\(test\)\)\]\s*use \{[^}]*crate::app_state::AppState/);
-  assert.match(source, /#\[cfg\(not\(test\)\)\]\s*pub fn start_download/);
-  assert.match(source, /#\[cfg\(not\(test\)\)\]\s*pub async fn apply_scheduled_update/);
+test('Only native Tauri updater installation and restart are excluded from unit-test compilation', () => {
+  const manager = read('tauri/src/update/manager.rs');
+  const native = read('tauri/src/update/manager/native.rs');
+  assert.match(manager, /pub fn start_download\(/);
+  assert.match(manager, /pub async fn apply_scheduled_update\(/);
+  assert.doesNotMatch(manager, /#\[cfg\(not\(test\)\)\]/);
+  assert.match(native, /#\[cfg\(not\(test\)\)\]\s*pub\(super\) fn install\b[^{]*\{[^}]*update\.install\(/);
+  assert.match(native, /#\[cfg\(not\(test\)\)\]\s*pub\(super\) fn restart\b[^{]*\{[^}]*app\.restart\(/);
+  assert.match(native, /#\[cfg\(test\)\]\s*pub\(super\) fn install\b/);
+  assert.match(native, /#\[cfg\(test\)\]\s*pub\(super\) fn restart\b/);
+  assert.equal([...native.matchAll(/#\[cfg\(not\(test\)\)\]/g)].length, 2);
 });
 
 test('CI contracts include installer, release bundles, theme spacing, and new source coverage', () => {

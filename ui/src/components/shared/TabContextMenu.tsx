@@ -11,7 +11,6 @@ export type TabContextMenuAction =
   | "openLocation"
   | "openInSplit"
   | "history"
-  | "moveToOtherPane"
   | "swapPanes"
   | "closeSplit"
   | "closeThisTab"

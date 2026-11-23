@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GitCommitGraph } from '../../../../ui/src/components/History/GitCommitGraph';
 import type { GitRepositoryCommit } from '../../../../ui/src/history/contracts';
+import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
 
 function makeCommits(count: number): GitRepositoryCommit[] {
   const oids = Array.from({ length: count }, (_, index) => index.toString(16).padStart(40, '0'));
@@ -54,5 +55,68 @@ describe('GitCommitGraph virtualization', () => {
     expect(screen.getByText('commit 1000')).toBeInTheDocument();
     const firstSubject = rows[0].querySelector('.repository-history__commit-subject')?.textContent ?? '';
     expect(Number(firstSubject.replace('commit ', ''))).toBeGreaterThanOrEqual(990);
+  });
+
+  it('opens a commit menu from the row and clamps the hover card at viewport edges', () => {
+    const [head] = makeCommits(1);
+    const commit = { ...head, shortOid: 'abc123', subject: '', refs: ['main', 'v1'] };
+    const activate = vi.fn();
+    render(<GitCommitGraph commits={[commit]} selectedOid={null} headLabel="HEAD" browseLabel="Browse" onActivateRevision={activate} onReturnToHead={vi.fn()} />);
+    const row = screen.getByRole('listitem');
+    const button = screen.getByRole('button', { name: /abc123/ });
+    expect(row.querySelector('.repository-history__commit-subject')).toHaveTextContent('abc123');
+    fireEvent.click(row);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    const node = screen.getByTestId(`repository-history-node-${commit.oid}`);
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue(new DOMRect(window.innerWidth - 30, window.innerHeight - 25, 20, 20));
+    fireEvent.mouseEnter(node);
+    const card = screen.getByRole('tooltip');
+    expect(card).toHaveTextContent('main · v1');
+    expect(card.style.getPropertyValue('--repository-history-card-left')).toBe(`${window.innerWidth - 300}px`);
+    expect(card.style.getPropertyValue('--repository-history-card-top')).toBe(`${window.innerHeight - 122}px`);
+    fireEvent.resize(window);
+    expect(card).not.toBeInTheDocument();
+    fireEvent.click(node);
+    expect(activate).toHaveBeenCalledExactlyOnceWith(commit.oid);
+  });
+
+  it.each(['no clipboard', 'denied', 'copied'])('reports clipboard outcome from the commit menu: %s', async (outcome) => {
+    const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    const writeText = outcome === 'denied' ? vi.fn().mockRejectedValue(new Error('Denied')) : vi.fn().mockResolvedValue(undefined);
+    const notice = vi.fn();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: outcome === 'no clipboard' ? undefined : { writeText } });
+    window.addEventListener(ACTION_NOTICE_EVENT, notice);
+    try {
+      const [commit] = makeCommits(1);
+      render(<div className="sidebar"><GitCommitGraph commits={[commit]} selectedOid={null} headLabel="HEAD" browseLabel="Browse" onActivateRevision={vi.fn()} onReturnToHead={vi.fn()} /></div>);
+      fireEvent.click(screen.getByRole('button', { name: /commit 0/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: `SHA ${commit.shortOid}` }));
+      if (outcome !== 'no clipboard') expect(writeText).toHaveBeenCalledExactlyOnceWith(commit.oid);
+      await waitFor(() => expect(notice).toHaveBeenCalledWith(expect.objectContaining({
+        detail: {
+          message: outcome === 'copied' ? 'Commit SHA copied' : 'Commit SHA could not be copied',
+          tone: outcome === 'copied' ? 'success' : 'error',
+        },
+      })));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, notice);
+      if (clipboard) Object.defineProperty(navigator, 'clipboard', clipboard);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
+  });
+
+  it('keeps a hover card inside the top edge when its commit is near the top left', () => {
+    const [commit] = makeCommits(1);
+    render(<GitCommitGraph commits={[commit]} selectedOid={null} headLabel="HEAD" browseLabel="Browse" onActivateRevision={vi.fn()} onReturnToHead={vi.fn()} />);
+    const node = screen.getByTestId(`repository-history-node-${commit.oid}`);
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 20, 20));
+    fireEvent.mouseEnter(node);
+    const card = screen.getByRole('tooltip');
+    expect(card.style.getPropertyValue('--repository-history-card-left')).toBe('30px');
+    expect(card.style.getPropertyValue('--repository-history-card-top')).toBe('12px');
+    fireEvent.mouseLeave(node);
+    expect(card).not.toBeInTheDocument();
   });
 });

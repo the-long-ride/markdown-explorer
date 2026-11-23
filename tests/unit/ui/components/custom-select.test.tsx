@@ -52,4 +52,44 @@ describe('CustomSelect component', () => {
     fireEvent.keyDown(trigger, { key: 'Enter' });
     expect(onChange).toHaveBeenCalled();
   });
+
+  it('falls back to the first option and skips disabled choices with either keyboard or pointer', () => {
+    const onChange = vi.fn();
+    const choices = [...options, { value: 'off', label: 'Unavailable', disabled: true }];
+    const { container } = render(<CustomSelect aria-label="Filter" value="unknown" options={choices} onChange={onChange} />);
+    const trigger = screen.getByRole('button', { name: 'Filter' });
+    expect(trigger).toHaveTextContent('All');
+    fireEvent.keyDown(trigger, { key: ' ' });
+    const disabled = screen.getByRole('option', { name: 'Unavailable' });
+    fireEvent.mouseEnter(disabled);
+    fireEvent.keyDown(trigger, { key: 'Enter' });
+    fireEvent.click(disabled);
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.mouseDown(disabled);
+    expect(disabled).toBeInTheDocument();
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' });
+    fireEvent.keyDown(trigger, { key: ' ' });
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('err');
+    fireEvent.click(trigger);
+    fireEvent.mouseDown(document.body);
+    expect(disabled).not.toBeInTheDocument();
+    fireEvent.change(container.querySelector('select')!, { target: { value: 'warn' } });
+    expect(onChange).toHaveBeenLastCalledWith('warn');
+  });
+
+  it('shows a raw value with no options and ignores keyboard input when disabled', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<CustomSelect aria-label="Filter" value="custom" options={[]} onChange={onChange} />);
+    const trigger = screen.getByRole('button', { name: 'Filter' });
+    expect(trigger).toHaveTextContent('custom');
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' });
+    expect(screen.getByRole('listbox')).toBeEmptyDOMElement();
+    fireEvent.keyDown(trigger, { key: 'Enter' });
+    fireEvent.click(trigger);
+    rerender(<CustomSelect aria-label="Filter" value="custom" options={[]} onChange={onChange} disabled />);
+    expect(fireEvent.keyDown(trigger, { key: 'Enter' })).toBe(true);
+    expect(trigger).toBeDisabled();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

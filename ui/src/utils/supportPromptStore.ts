@@ -120,6 +120,8 @@ export function isDebugMode(): boolean {
     return false;
   }
 
+  // Unreachable under Vitest: the isTestEnv guard above always returns first.
+  /* v8 ignore start */
   // Vite development server / Node development runtime
   try {
     if (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) {
@@ -146,6 +148,7 @@ export function isDebugMode(): boolean {
   } catch {}
 
   return false;
+  /* v8 ignore stop */
 }
 
 if (typeof window !== 'undefined') {

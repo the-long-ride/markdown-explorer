@@ -63,6 +63,7 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
   ],
   PET_THEME_STYLE_OPTIONS: [
     { id: 'pet-white-shiba', label: 'Nika', description: 'Nika style' },
+    { id: 'pet-k-ink', label: 'K-Ink', description: 'K-Ink style' },
   ],
   DEFAULT_PET_THEME_STYLE: 'pet-white-shiba',
   isPetThemeStyle: (value: string) => value.startsWith('pet-'),
@@ -444,9 +445,45 @@ describe('ThemeStylePicker', () => {
     expect(onChange).toHaveBeenCalledWith('pet-white-shiba');
   });
 
+  it('uses the default theme and omits the custom group when stored theme settings are unavailable', () => {
+    mockState.settings.language = '';
+    delete mockState.settings.customThemes;
+    mockState.settings.activeCustomThemeId = 'removed-theme';
+    render(<ThemeStylePicker value={'removed-theme' as never} onChange={vi.fn()} showCustomThemes />);
+    expect(screen.queryByText('Your custom themes')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Explorer Classic/i })).toBeInTheDocument();
+    const pet = screen.getAllByRole('button').find((button) => button.className.includes('pet-theme-select'))!;
+    fireEvent.click(pet);
+    expect(screen.getByRole('listbox', { name: 'Pet themes' })).toBeInTheDocument();
+    fireEvent.click(pet);
+    expect(screen.queryByRole('listbox', { name: 'Pet themes' })).not.toBeInTheDocument();
+  });
+
   it('marks Pet themes group active when a pet theme is selected', () => {
     const { container } = render(<ThemeStylePicker value="pet-white-shiba" onChange={() => {}} />);
     expect(container.querySelector('[data-theme-group="pets"]')).toHaveClass('is-active');
+  });
+
+  it('marks the active remix and switches out of it through either main theme button', () => {
+    mockState.settings.customThemes = [{ id: 'c1', name: 'Custom 1', baseStyle: 'default' }];
+    mockState.settings.activeCustomThemeId = 'c1';
+    const onChange = vi.fn();
+    const { container, rerender } = render(<ThemeStylePicker value="default" onChange={onChange} showCustomThemes />);
+    const custom = container.querySelector('[data-theme-group="custom"]')!;
+    expect(custom).toHaveClass('is-active');
+    fireEvent.click(screen.getByRole('button', { name: 'Custom 1' }));
+    const active = screen.getByRole('option', { name: 'Custom 1' });
+    expect(active).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(active, { clientX: 42 });
+    expect(mockSelectCustomTheme).toHaveBeenCalledWith('c1');
+    fireEvent.click(container.querySelector('[data-theme-group="themes"] .theme-style-option__main')!, { clientX: 42 });
+    expect(onChange).toHaveBeenLastCalledWith('default');
+    rerender(<ThemeStylePicker value="pet-k-ink" onChange={onChange} />);
+    expect(custom).not.toBeInTheDocument();
+    const pet = container.querySelector('[data-theme-group="pets"]')!;
+    expect(pet).toHaveClass('is-active');
+    fireEvent.click(pet.querySelector('.theme-style-option__main')!, { clientX: 42 });
+    expect(onChange).toHaveBeenLastCalledWith('pet-k-ink');
   });
 
   it('renders exactly three groups when custom themes exist', () => {
@@ -511,6 +548,33 @@ describe('ThemeStylePicker', () => {
     expect(screen.getByRole('listbox', { name: 'Built-in themes' })).toBeInTheDocument();
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('listbox', { name: 'Built-in themes' })).not.toBeInTheDocument();
+  });
+
+  it('repositions an open theme menu after viewport movement without dismissing it on inside clicks', () => {
+    render(<ThemeStylePicker value="default" onChange={vi.fn()} />);
+    const trigger = screen.getByRole('button', { name: /Explorer Classic/i });
+    const rect = vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(window.innerWidth - 20, window.innerHeight - 40, 130, 24));
+    fireEvent.click(trigger);
+    const menu = screen.getByRole('listbox', { name: 'Built-in themes' });
+    expect(menu.style.getPropertyValue('--menu-bottom')).toBe('45px');
+    expect(menu.style.getPropertyValue('--menu-top')).toBe('');
+    expect(menu.style.getPropertyValue('--menu-left')).toBe(`${window.innerWidth - 228}px`);
+    expect(menu.style.getPropertyValue('--menu-width')).toBe('220px');
+    fireEvent.pointerDown(screen.getByRole('option', { name: /Bento/i }));
+    expect(menu).toBeInTheDocument();
+    fireEvent.pointerDown(trigger);
+    fireEvent.keyDown(document, { key: 'ArrowDown' });
+    expect(menu).toBeInTheDocument();
+
+    rect.mockReturnValue(new DOMRect(-10, 20, 260, 24));
+    fireEvent.scroll(window);
+    expect(menu.style.getPropertyValue('--menu-top')).toBe('49px');
+    expect(menu.style.getPropertyValue('--menu-bottom')).toBe('');
+    expect(menu.style.getPropertyValue('--menu-left')).toBe('8px');
+    expect(menu.style.getPropertyValue('--menu-width')).toBe('260px');
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(menu).not.toBeInTheDocument();
   });
 
   it('renders with custom className', () => {

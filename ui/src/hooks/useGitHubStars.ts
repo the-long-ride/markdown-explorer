@@ -26,25 +26,6 @@ export function readCachedStars(): number | null {
   return null;
 }
 
-export function isCacheFresh(): boolean {
-  try {
-    if (typeof localStorage === 'undefined') return false;
-    const raw = localStorage.getItem(GITHUB_STARS_STORAGE_KEY);
-    if (!raw) return false;
-    const parsed = JSON.parse(raw) as Partial<GitHubStarCache>;
-    if (
-      typeof parsed?.count === 'number' &&
-      typeof parsed?.timestamp === 'number' &&
-      Date.now() - parsed.timestamp < GITHUB_STARS_CACHE_TTL_MS
-    ) {
-      return true;
-    }
-  } catch {
-    // Ignore
-  }
-  return false;
-}
-
 export function useGitHubStars(
   initialFallback: number = DEFAULT_FALLBACK_STARS,
   enabled: boolean = true

@@ -83,28 +83,6 @@ impl Dispatcher {
         }
     }
 
-    pub(super) fn pick_folder(&self) -> Option<PathBuf> {
-        tauri_plugin_dialog::DialogExt::dialog(&self.app)
-            .file()
-            .blocking_pick_folder()
-            .and_then(|p| p.into_path().ok())
-    }
-
-    pub(super) fn pick_file(&self) -> Option<PathBuf> {
-        tauri_plugin_dialog::DialogExt::dialog(&self.app)
-            .file()
-            .blocking_pick_file()
-            .and_then(|p| p.into_path().ok())
-    }
-
-    pub(super) fn pick_font_file(&self) -> Option<PathBuf> {
-        tauri_plugin_dialog::DialogExt::dialog(&self.app)
-            .file()
-            .add_filter("Fonts", &["ttf", "otf"])
-            .blocking_pick_file()
-            .and_then(|path| path.into_path().ok())
-    }
-
     pub(super) fn ensure_search_index(&self) -> SearchIndex {
         {
             let state = self.state.inner.read();
@@ -279,11 +257,8 @@ impl Dispatcher {
         };
 
         if !status.ok {
-            if self.is_workspace_scan_current(
-                &workspace_path,
-                scan_generation,
-                operation.as_ref(),
-            ) {
+            if self.is_workspace_scan_current(&workspace_path, scan_generation, operation.as_ref())
+            {
                 self.send_workspace_unavailable(
                     &workspace_path,
                     status.reason.unwrap_or(WorkspaceUnavailableReason::Missing),
@@ -337,5 +312,4 @@ impl Dispatcher {
         );
         true
     }
-
 }

@@ -1,11 +1,10 @@
 use super::*;
+use crate::git_history;
 
-#[path = "document_write.rs"]
-pub(super) mod document_write;
+#[path = "document_write_host.rs"]
+mod document_write_host;
 #[path = "workspace_entries.rs"]
-pub(super) mod workspace_entries;
-#[path = "git_history.rs"]
-mod git_history;
+mod workspace_entries;
 
 impl Dispatcher {
     pub async fn handle(self, msg: Value) -> Result<(), String> {

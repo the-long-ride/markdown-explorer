@@ -7,6 +7,13 @@ pub fn handle_youtube_proxy(
     _ctx: tauri::UriSchemeContext<'_, tauri::Wry>,
     request: http::Request<Vec<u8>>,
 ) -> http::Response<Vec<u8>> {
+    proxy_request(request, ureq::Request::call)
+}
+
+fn proxy_request(
+    request: http::Request<Vec<u8>>,
+    fetch: impl FnOnce(ureq::Request) -> Result<ureq::Response, ureq::Error>,
+) -> http::Response<Vec<u8>> {
     let path_and_query = request
         .uri()
         .path_and_query()
@@ -43,7 +50,7 @@ pub fn handle_youtube_proxy(
         req = req.set(name, value);
     }
 
-    match req.call() {
+    match fetch(req) {
         Ok(response) => {
             let status = response.status();
             let content_type = response
@@ -71,6 +78,65 @@ pub fn handle_youtube_proxy(
             .header("content-type", "text/plain")
             .body(b"Failed to fetch YouTube content".to_vec())
             .unwrap_or_default(),
+    }
+}
+
+#[cfg(test)]
+mod proxy_tests {
+    use super::*;
+
+    #[test]
+    fn forwards_embed_request_and_only_allowlisted_headers() {
+        let request = http::Request::builder()
+            .uri("/embed/video?autoplay=1")
+            .header("accept", "text/html")
+            .header("accept-language", "en")
+            .header("user-agent", "test browser")
+            .header("cookie", "test=ignored")
+            .body(Vec::new())
+            .unwrap();
+        let response = proxy_request(request, |request| {
+            assert_eq!(
+                request.url(),
+                "https://www.youtube.com/embed/video?autoplay=1"
+            );
+            assert_eq!(request.header("referer"), Some(YOUTUBE_EMBED_REFERRER));
+            assert_eq!(request.header("accept"), Some("text/html"));
+            assert_eq!(request.header("accept-language"), Some("en"));
+            assert_eq!(request.header("user-agent"), Some("test browser"));
+            assert_eq!(request.header("cookie"), None);
+            ureq::Response::new(200, "OK", "player")
+        });
+        assert_eq!(response.status(), 200);
+        assert_eq!(response.headers()["access-control-allow-origin"], "*");
+        assert_eq!(response.body(), b"player");
+    }
+
+    #[test]
+    fn blocks_other_hosts_and_reports_upstream_errors() {
+        let blocked = http::Request::builder()
+            .uri("/example.com/")
+            .body(Vec::new())
+            .unwrap();
+        assert_eq!(
+            proxy_request(blocked, |_| panic!("must not fetch unsupported host")).status(),
+            403
+        );
+        let allowed = http::Request::builder()
+            .uri("/www.youtube-nocookie.com/embed/video")
+            .body(Vec::new())
+            .unwrap();
+        let response = proxy_request(allowed, |request| {
+            assert_eq!(
+                request.url(),
+                "https://www.youtube-nocookie.com/embed/video"
+            );
+            Err(ureq::Error::Status(
+                503,
+                ureq::Response::new(503, "Unavailable", "").unwrap(),
+            ))
+        });
+        assert_eq!(response.status(), 502);
     }
 }
 

@@ -82,11 +82,22 @@ async fn handle_connection(
     let first_line = request.lines().next().unwrap_or_default();
     let mut parts = first_line.split_whitespace();
     let method = parts.next().unwrap_or_default();
-    let path = parts.next().unwrap_or_default().split('?').next().unwrap_or_default();
+    let path = parts
+        .next()
+        .unwrap_or_default()
+        .split('?')
+        .next()
+        .unwrap_or_default();
 
     if let Some(token) = path.strip_prefix("/preview/") {
         if method != "GET" {
-            return write_response(&mut stream, "405 Method Not Allowed", "text/plain; charset=utf-8", "").await;
+            return write_response(
+                &mut stream,
+                "405 Method Not Allowed",
+                "text/plain; charset=utf-8",
+                "",
+            )
+            .await;
         }
         let document = {
             let mut guard = sessions.write().await;
@@ -99,12 +110,24 @@ async fn handle_connection(
             let body = inject_lifecycle_script(&document_html, token);
             return write_response(&mut stream, "200 OK", "text/html; charset=utf-8", &body).await;
         }
-        return write_response(&mut stream, "404 Not Found", "text/plain; charset=utf-8", "Preview expired").await;
+        return write_response(
+            &mut stream,
+            "404 Not Found",
+            "text/plain; charset=utf-8",
+            "Preview expired",
+        )
+        .await;
     }
 
     if let Some(token) = path.strip_prefix("/heartbeat/") {
         if method != "POST" {
-            return write_response(&mut stream, "405 Method Not Allowed", "text/plain; charset=utf-8", "").await;
+            return write_response(
+                &mut stream,
+                "405 Method Not Allowed",
+                "text/plain; charset=utf-8",
+                "",
+            )
+            .await;
         }
         let found = {
             let mut guard = sessions.write().await;
@@ -117,7 +140,11 @@ async fn handle_connection(
         };
         return write_response(
             &mut stream,
-            if found { "204 No Content" } else { "404 Not Found" },
+            if found {
+                "204 No Content"
+            } else {
+                "404 Not Found"
+            },
             "text/plain; charset=utf-8",
             "",
         )
@@ -126,13 +153,31 @@ async fn handle_connection(
 
     if let Some(token) = path.strip_prefix("/close/") {
         if method != "POST" {
-            return write_response(&mut stream, "405 Method Not Allowed", "text/plain; charset=utf-8", "").await;
+            return write_response(
+                &mut stream,
+                "405 Method Not Allowed",
+                "text/plain; charset=utf-8",
+                "",
+            )
+            .await;
         }
         sessions.write().await.remove(token);
-        return write_response(&mut stream, "204 No Content", "text/plain; charset=utf-8", "").await;
+        return write_response(
+            &mut stream,
+            "204 No Content",
+            "text/plain; charset=utf-8",
+            "",
+        )
+        .await;
     }
 
-    write_response(&mut stream, "404 Not Found", "text/plain; charset=utf-8", "Not found").await
+    write_response(
+        &mut stream,
+        "404 Not Found",
+        "text/plain; charset=utf-8",
+        "Not found",
+    )
+    .await
 }
 
 async fn ensure_server() -> anyhow::Result<(String, Arc<RwLock<HashMap<String, PreviewSession>>>)> {
@@ -184,7 +229,21 @@ async fn ensure_server() -> anyhow::Result<(String, Arc<RwLock<HashMap<String, P
     Ok((origin, sessions))
 }
 
-pub async fn open(app: &AppHandle, document_html: &str) -> anyhow::Result<String> {
+pub async fn open<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    document_html: &str,
+) -> anyhow::Result<String> {
+    open_with(document_html, |url| {
+        app.opener().open_url(url, None::<&str>)?;
+        Ok(())
+    })
+    .await
+}
+
+async fn open_with(
+    document_html: &str,
+    open_url: impl FnOnce(&str) -> anyhow::Result<()>,
+) -> anyhow::Result<String> {
     if document_html.trim().is_empty() {
         anyhow::bail!("Preview document must be a non-empty string");
     }
@@ -203,9 +262,9 @@ pub async fn open(app: &AppHandle, document_html: &str) -> anyhow::Result<String
         },
     );
     let url = format!("{origin}/preview/{token}");
-    if let Err(error) = app.opener().open_url(&url, None::<&str>) {
+    if let Err(error) = open_url(&url) {
         sessions.write().await.remove(&token);
-        return Err(error.into());
+        return Err(error);
     }
     Ok(url)
 }
@@ -224,6 +283,91 @@ pub async fn shutdown() {
 mod tests {
     use super::*;
 
+    async fn request(url: &str, method: &str, path: &str) -> String {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            let mut stream = TcpStream::connect(url.strip_prefix("http://").unwrap())
+                .await
+                .unwrap();
+            stream
+                .write_all(
+                    format!("{method} {path} HTTP/1.1\r\nHost: localhost\r\n\r\n").as_bytes(),
+                )
+                .await
+                .unwrap();
+            let mut response = String::new();
+            stream.read_to_string(&mut response).await.unwrap();
+            response
+        })
+        .await
+        .unwrap()
+    }
+
+    #[tokio::test]
+    async fn creates_serves_and_closes_preview_sessions_without_launching_browser() {
+        assert!(
+            open_with(" ", |_| panic!("invalid preview must not launch"))
+                .await
+                .is_err()
+        );
+        assert!(open_with(&"x".repeat(MAX_DOCUMENT_BYTES + 1), |_| panic!(
+            "oversized preview must not launch"
+        ))
+        .await
+        .is_err());
+        let mut launched = String::new();
+        let url = open_with("<head></head><p>Preview</p>", |url| {
+            launched = url.to_owned();
+            Ok(())
+        })
+        .await
+        .unwrap();
+        assert_eq!(url, launched);
+        let (origin, token) = url.split_once("/preview/").unwrap();
+        let (reused_origin, sessions) = ensure_server().await.unwrap();
+        assert_eq!(origin, reused_origin);
+
+        let preview = format!("/preview/{token}");
+        let heartbeat = format!("/heartbeat/{token}");
+        let close = format!("/close/{token}");
+        assert!(request(origin, "POST", &preview)
+            .await
+            .starts_with("HTTP/1.1 405"));
+        assert!(request(origin, "GET", &heartbeat)
+            .await
+            .starts_with("HTTP/1.1 405"));
+        assert!(request(origin, "GET", &close)
+            .await
+            .starts_with("HTTP/1.1 405"));
+        let page = request(origin, "GET", &format!("{preview}?v=1")).await;
+        assert!(page.starts_with("HTTP/1.1 200"));
+        assert!(page.contains("Cache-Control: no-store"));
+        assert!(page.contains("data-mdn-preview-session"));
+        assert!(page.ends_with("<p>Preview</p>"));
+        assert!(request(origin, "POST", &heartbeat)
+            .await
+            .starts_with("HTTP/1.1 204"));
+        assert!(request(origin, "POST", &close)
+            .await
+            .starts_with("HTTP/1.1 204"));
+        assert!(request(origin, "GET", &preview)
+            .await
+            .ends_with("Preview expired"));
+        assert!(request(origin, "POST", &heartbeat)
+            .await
+            .starts_with("HTTP/1.1 404"));
+        assert!(request(origin, "GET", "/unknown")
+            .await
+            .ends_with("Not found"));
+
+        let failure = open_with("<p>second</p>", |_| anyhow::bail!("launch failed"))
+            .await
+            .unwrap_err();
+        assert_eq!(failure.to_string(), "launch failed");
+        assert!(sessions.read().await.is_empty());
+        shutdown().await;
+        assert!(SERVER.lock().await.is_none());
+    }
+
     #[test]
     fn lifecycle_script_is_injected_before_body_close() {
         let html = inject_lifecycle_script("<html><body>Preview</body></html>", "token");
@@ -231,7 +375,6 @@ mod tests {
         assert!(html.contains("/close/"));
         assert!(html.find("data-mdn-preview-session").unwrap() < html.find("</body>").unwrap());
     }
-
 
     #[test]
     fn lifecycle_script_precedes_headless_csp_meta() {

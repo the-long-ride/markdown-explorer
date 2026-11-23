@@ -185,7 +185,7 @@ jobs:
           set -euo pipefail
 
           cargo llvm-cov --manifest-path tauri/Cargo.toml --workspace \
-            --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs" \
+            --ignore-filename-regex "(^|/)(main|lib)[.]rs$|core/bootstrap[.]rs$|dispatcher/native[.]rs$|update/manager/native[.]rs$" \
             --summary-only -- --test-threads=1 2>&1 | tee coverage.txt
 
           total_line=$(grep '^TOTAL' coverage.txt | tail -n 1 || true)
@@ -213,7 +213,7 @@ jobs:
       - name: Export LCOV report
         run: |
           cargo llvm-cov report --manifest-path tauri/Cargo.toml \
-            --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs" \
+            --ignore-filename-regex "(^|/)(main|lib)[.]rs$|core/bootstrap[.]rs$|dispatcher/native[.]rs$|update/manager/native[.]rs$" \
             --lcov --output-path lcov.info
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v6

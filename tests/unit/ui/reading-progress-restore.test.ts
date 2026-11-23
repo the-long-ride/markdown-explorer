@@ -32,4 +32,29 @@ describe('heading section interactions write-through', () => {
     expect(onRemember.mock.calls[0][0]).toBeInstanceOf(Map);
     interactions.dispose();
   });
+
+  test('remembers keyboard toggles with no file but leaves copy and unrelated keys alone', () => {
+    const body = document.createElement('div');
+    body.innerHTML = '<section class="mdn-section"><div class="mdn-section-header"><button class="mdn-section-copy-btn">Copy</button></div></section>';
+    const section = body.querySelector('section')!;
+    const header = body.querySelector('.mdn-section-header')!;
+    const copy = body.querySelector('button')!;
+    const stateByFile = new Map();
+    const interactions = createHeadingSectionInteractions({ body, currentFile: '', defaultExpanded: true, stateByFile });
+    const key = (element: Element, value: string) =>
+      element.dispatchEvent(new KeyboardEvent('keydown', { key: value, bubbles: true, cancelable: true }));
+    try {
+      expect(key(body, 'Enter')).toBe(true);
+      expect(key(copy, 'Enter')).toBe(true);
+      expect(key(header, 'Tab')).toBe(true);
+      expect(stateByFile.size).toBe(0);
+      expect(key(header, ' ')).toBe(false);
+      expect(section).toHaveAttribute('data-expanded', 'false');
+      expect(stateByFile.get('__current-document__')).toBeInstanceOf(Map);
+      expect(key(header, 'Enter')).toBe(false);
+      expect(section).toHaveAttribute('data-expanded', 'true');
+    } finally {
+      interactions.dispose();
+    }
+  });
 });

@@ -215,10 +215,3 @@ export function findDuplicateGroups(
 
   return result.sort((a, b) => a.kind.localeCompare(b.kind) || a.key.localeCompare(b.key));
 }
-
-export const DUPLICATE_THRESHOLDS = Object.freeze({
-  minSectionChars: MIN_SECTION_CHARS,
-  minSectionTokens: MIN_SECTION_TOKENS,
-  passageWindow: PASSAGE_WINDOW,
-  passageStride: PASSAGE_STRIDE,
-});

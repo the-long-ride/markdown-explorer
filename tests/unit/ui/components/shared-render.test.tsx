@@ -202,6 +202,46 @@ describe('TabContextMenu', () => {
     expect(menu.style.left).toBeDefined();
     expect(menu.style.top).toBeDefined();
   });
+
+  it('shows a custom location action with no pointer dismissal inside the menu', () => {
+    const onAction = vi.fn();
+    const onClose = vi.fn();
+    render(React.createElement(TabContextMenu, {
+      x: 5, y: 5, labels: { ...defaultLabels, openLocation: 'Reveal in folder' },
+      openLocationIcon: React.createElement('span'), ariaLabel: 'Document actions', onAction, onClose,
+    }));
+    const menu = screen.getByRole('menu', { name: 'Document actions' });
+    fireEvent.pointerDown(menu);
+    fireEvent.keyDown(document, { key: 'Enter' });
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reveal in folder' }));
+    expect(onAction).toHaveBeenCalledExactlyOnceWith('openLocation');
+    fireEvent.pointerDown(document.body);
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not invent menu items when none were provided', () => {
+    render(React.createElement(TabContextMenu, { x: 5, y: 5, onAction: vi.fn(), onClose: vi.fn() }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+  });
+
+  it('keeps actions accessible at the menu margin when the viewport is not measured', () => {
+    const width = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(0);
+    const height = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(0);
+    try {
+      const onAction = vi.fn();
+      render(React.createElement(TabContextMenu, { x: 450, y: 450, labels: defaultLabels, onAction, onClose: vi.fn() }));
+      const menu = screen.getByRole('menu');
+      expect(menu.style.getPropertyValue('--menu-left')).toBe(menu.style.getPropertyValue('--menu-top'));
+      expect(parseInt(menu.style.getPropertyValue('--menu-left'), 10)).toBeGreaterThan(0);
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Close' }));
+      expect(onAction).toHaveBeenCalledExactlyOnceWith('closeThisTab');
+    } finally {
+      width.mockRestore();
+      height.mockRestore();
+    }
+  });
 });
 
 describe('TooltipButton', () => {
@@ -281,6 +321,18 @@ describe('TooltipButton', () => {
 
     const portalTooltip = document.querySelector(".tooltip-portal") as HTMLElement;
     expect(portalTooltip).toBeInTheDocument();
+  });
+
+  it('positions an above tooltip below the top edge and dismisses it on blur', () => {
+    render(React.createElement(TooltipButton, { as: 'span', role: 'switch', tooltip: 'Pin', portalTooltip: true, tooltipPos: 'above', tooltipAlign: 'right' }));
+    const trigger = screen.getByRole('switch', { name: 'Pin' });
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({ left: 100, right: 150, top: 4, bottom: 30, width: 50, height: 26 } as DOMRect);
+    fireEvent.focus(trigger);
+    const tooltip = document.querySelector<HTMLElement>('.tooltip-portal');
+    expect(tooltip?.style.getPropertyValue('--portal-top')).toBe('38px');
+    expect(tooltip?.style.getPropertyValue('--portal-left')).toBe('150px');
+    fireEvent.blur(trigger);
+    expect(tooltip).not.toBeInTheDocument();
   });
 
   it('opens clamped portal tooltip on hover of disabled button and keeps button identity across disabled changes', () => {

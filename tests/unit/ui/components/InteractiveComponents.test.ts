@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 describe('InteractiveComponents', () => {
   beforeEach(() => {
@@ -57,6 +57,36 @@ describe('InteractiveComponents', () => {
   });
 
   describe('ConfettiButton', () => {
+    it('launches particles at the click origin and removes them after animation', async () => {
+      await import('../../../../ui/src/components/Content/InteractiveComponents');
+      const animations: Animation[] = [];
+      const originalAnimate = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'animate');
+      Object.defineProperty(HTMLElement.prototype, 'animate', {
+        configurable: true,
+        value: vi.fn(() => {
+          const animation = { onfinish: null } as Animation;
+          animations.push(animation);
+          return animation;
+        }),
+      });
+      const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0.25).mockReturnValueOnce(0.25)
+        .mockReturnValueOnce(0.25).mockReturnValue(0.75);
+      try {
+        const element = document.createElement('confetti-button');
+        document.body.appendChild(element);
+        element.querySelector('button')!.dispatchEvent(new MouseEvent('click', { clientX: 20, clientY: 40 }));
+        const particles = [...document.querySelectorAll<HTMLElement>('.confetti-particle')];
+        expect(particles).toHaveLength(30);
+        expect(particles[0]).toHaveStyle({ left: '20px', top: '40px', borderRadius: '2px' });
+        expect(particles[1]).toHaveStyle({ borderRadius: '50%' });
+        for (const animation of animations) animation.onfinish?.call(animation, new Event('finish') as AnimationPlaybackEvent);
+        expect(document.querySelectorAll('.confetti-particle')).toHaveLength(0);
+      } finally {
+        random.mockRestore();
+        if (originalAnimate) Object.defineProperty(HTMLElement.prototype, 'animate', originalAnimate);
+        else Reflect.deleteProperty(HTMLElement.prototype, 'animate');
+      }
+    });
     it('renders button with default text', async () => {
       const el = document.createElement('confetti-button');
       document.body.appendChild(el);

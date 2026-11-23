@@ -82,10 +82,6 @@ function createDegradedClient(yieldControl: () => Promise<void>): InsightsWorker
   };
 }
 
-export function createChunkedInsightsFallback(options: Pick<CreateInsightsWorkerClientOptions, 'yieldControl'> = {}): InsightsWorkerClient {
-  return createDegradedClient(options.yieldControl ?? defaultYield);
-}
-
 export function createInsightsWorkerClient(options: CreateInsightsWorkerClientOptions = {}): InsightsWorkerClient {
   let worker: WorkerLike;
   try {

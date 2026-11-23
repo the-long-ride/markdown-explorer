@@ -17,15 +17,17 @@ test('Tauri owns a native font service with SFNT metadata parsing and managed im
 });
 
 test('Tauri dispatcher supports desktop font list/import/remove and single-file font picker', async () => {
-  const [external, handlers] = await Promise.all([
+  const [external, dialogs] = await Promise.all([
     read('tauri/src/dispatcher/commands_external.rs'),
-    read('tauri/src/dispatcher/handlers.rs'),
+    read('tauri/src/dispatcher/native.rs'),
   ]);
   for (const command of ['listDesktopFonts', 'importDesktopFonts', 'removeImportedDesktopFont']) {
     assert.match(external, new RegExp(`"${command}"`));
   }
-  assert.match(handlers, /blocking_pick_file\(\)/);
-  assert.doesNotMatch(handlers, /blocking_pick_files\(\)/);
+  assert.match(external, /self\.pick_font_file\(\)/);
+  const fontPicker = dialogs.match(/fn pick_font_file\b[^{]*\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(fontPicker, /blocking_pick_file\(\)/);
+  assert.doesNotMatch(fontPicker, /blocking_pick_files\(\)/);
 });
 
 test('Tauri local-file protocol permits app-managed fonts and serves font MIME types', async () => {

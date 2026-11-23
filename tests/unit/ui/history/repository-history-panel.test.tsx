@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -200,6 +200,41 @@ describe('RepositoryHistoryPanel', () => {
     await waitFor(() => expect(document.querySelector('.repository-history__rows-spacer--after')).not.toBeNull());
     fireEvent.scroll(body, { target: { scrollTop: 2400 } });
     expect(await screen.findByText('fix parser pagination')).toBeInTheDocument();
+  });
+
+  it('loads older history only when the intersection sentinel enters view and stops after an exhausted search', async () => {
+    let notify: ((entries: Array<{ isIntersecting: boolean }>) => void) | undefined;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(callback: typeof notify) { notify = callback; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    try {
+      const client = createPagedClient();
+      const { unmount } = render(<HistoryFixture client={client} visible />);
+      await screen.findByText('commit 2');
+      expect(observe).toHaveBeenCalled();
+      notify!([{ isIntersecting: false }]);
+      expect(client.listRepositoryHistory).toHaveBeenCalledTimes(1);
+      act(() => notify!([{ isIntersecting: true }]));
+      await waitFor(() => expect(client.listRepositoryHistory).toHaveBeenCalledTimes(2));
+      fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'no such commit' } });
+      expect(await screen.findByText('No matching commits.')).toBeInTheDocument();
+      expect(client.listRepositoryHistory).toHaveBeenCalledTimes(2);
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('shows the history service error when it has no recognized recovery instructions', async () => {
+    const client = createClient();
+    vi.mocked(client.listRepositoryHistory).mockRejectedValueOnce(new Error('Revision history timed out'));
+    render(<HistoryFixture client={client} visible />);
+    expect(await screen.findByText('Revision history timed out')).toBeInTheDocument();
   });
 });
 

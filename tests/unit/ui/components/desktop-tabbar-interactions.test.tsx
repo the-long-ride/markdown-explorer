@@ -10,6 +10,11 @@ const mockPostMessage = vi.fn();
 const mockOpenInEditor = vi.fn();
 const mockToggleToc = vi.fn();
 const mockToggleFocusMode = vi.fn();
+let mockSnapshot: { repositoryView: { mode: 'revision' }; activeToc?: Array<{ id: string; text: string; level: number; children: [] }> } | undefined;
+
+vi.mock('../../../../ui/src/contexts/RepositorySnapshotContext', () => ({
+  useRepositorySnapshot: () => mockSnapshot,
+}));
 
 let mockAppState: any;
 
@@ -205,7 +210,7 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
       <button data-testid="menu-edit" onClick={props.onEdit}>Edit</button>
       <button data-testid="menu-settings" onClick={props.onSettings}>Settings</button>
       <button data-testid="menu-sidebar" onClick={props.onSidebarToggle}>Sidebar</button>
-      <button data-testid="menu-toc" onClick={props.onTocToggle}>TOC</button>
+      <button data-testid="menu-toc" disabled={props.tocToggleDisabled} aria-pressed={props.tocActive} onClick={props.onTocToggle}>TOC</button>
       <button data-testid="menu-focus" onClick={props.onFocusModeToggle}>Focus</button>
       {props.showFullscreen && <button data-testid="menu-fullscreen" onClick={props.onFullscreenToggle}>Show full screen</button>}
     </div>
@@ -256,6 +261,7 @@ describe('DesktopTabBar interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAppState = createMockAppState();
+    mockSnapshot = undefined;
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
@@ -345,11 +351,73 @@ describe('DesktopTabBar interactions', () => {
     expect(props.onReorderTabs).toHaveBeenCalledWith('ws2', 'ws1');
   });
 
+  it('ignores right-button drags and suppresses tab selection after a reorder', () => {
+    const { container } = renderTabBar();
+    const [first, second] = screen.getAllByRole('tab');
+    fireEvent.pointerDown(second, { button: 2 });
+    fireEvent.pointerEnter(first);
+    expect(props.onReorderTabs).not.toHaveBeenCalled();
+    expect(container.querySelector('.tab-drag-ghost')).not.toBeInTheDocument();
+    fireEvent.pointerDown(second, { button: 0 });
+    fireEvent.pointerMove(document, { clientX: 20, clientY: 30 });
+    expect(container.querySelector('.tab-drag-ghost')).toHaveStyle({ transform: 'translate3d(30px, 40px, 0)' });
+    fireEvent.pointerEnter(second);
+    expect(props.onReorderTabs).not.toHaveBeenCalled();
+    fireEvent.pointerEnter(first);
+    fireEvent.pointerCancel(document);
+    expect(container.querySelector('.tab-drag-ghost')).not.toBeInTheDocument();
+    fireEvent.click(second);
+    expect(props.onSelectTab).not.toHaveBeenCalled();
+    fireEvent.click(second);
+    expect(props.onSelectTab).toHaveBeenCalledExactlyOnceWith('ws2');
+  });
+
+  it('only closes a workspace on middle-button auxiliary click', () => {
+    renderTabBar();
+    const [, tab] = screen.getAllByRole('tab');
+    fireEvent(tab, new MouseEvent('auxclick', { bubbles: true, button: 2 }));
+    expect(props.onCloseTab).not.toHaveBeenCalled();
+    fireEvent(tab, new MouseEvent('auxclick', { bubbles: true, button: 1 }));
+    expect(props.onCloseTab).toHaveBeenCalledExactlyOnceWith('ws2');
+  });
+
   it('toggles fullscreen from the toolbar action menu', () => {
     const onFullscreenToggle = vi.fn();
     renderTabBar({ onFullscreenToggle });
     fireEvent.click(screen.getByTestId('menu-fullscreen'));
     expect(onFullscreenToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('exits non-maximized Tauri fullscreen from Restore instead of maximizing', () => {
+    mockAppState = createMockAppState({ appRuntime: 'tauri' });
+    const onFullscreenToggle = vi.fn();
+    render(<DesktopTabBar {...props} isFullscreen onFullscreenToggle={onFullscreenToggle} />);
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(onFullscreenToggle).toHaveBeenCalledOnce();
+    expect(mockPostMessage).not.toHaveBeenCalledWith({ command: 'window-maximize' });
+  });
+
+  it('does not ask the native editor to open a document from a web workspace', () => {
+    mockAppState = createMockAppState({ appRuntime: 'web' });
+    renderTabBar();
+    fireEvent.click(screen.getByTestId('menu-edit'));
+    expect(mockOpenInEditor).not.toHaveBeenCalled();
+  });
+
+  it('does not launch editing without a live file and uses the revision outline', () => {
+    mockAppState = createMockAppState({ currentFile: null, tocCollapsed: false });
+    mockSnapshot = { repositoryView: { mode: 'revision' } };
+    const { rerender } = renderTabBar();
+    expect(screen.getByTestId('menu-toc')).toBeDisabled();
+    fireEvent.click(screen.getByTestId('menu-edit'));
+    expect(mockOpenInEditor).not.toHaveBeenCalled();
+    mockSnapshot.activeToc = [{ id: 'revision', text: 'Revision', level: 1, children: [] }];
+    rerender(<DesktopTabBar {...props} />);
+    const toc = screen.getByTestId('menu-toc');
+    expect(toc).toBeEnabled();
+    expect(toc).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(toc);
+    expect(mockToggleToc).toHaveBeenCalledOnce();
   });
 
   it('closes a tab when its close button is clicked', () => {
@@ -382,6 +450,31 @@ describe('DesktopTabBar interactions', () => {
       expect(props.onCloseTab).toHaveBeenCalledWith('ws2');
     } finally {
       spy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('closes a zero-width tab without waiting for animations', () => {
+    (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+    renderTabBar();
+    fireEvent.click(screen.getAllByLabelText('Close tab')[1]);
+    expect(props.onCloseTab).toHaveBeenCalledExactlyOnceWith('ws2');
+    expect(screen.getAllByRole('tab')[1]).not.toHaveClass('is-closing--fade');
+  });
+
+  it('prevents another deferred close while the first close is animating', () => {
+    vi.useFakeTimers();
+    const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
+    try {
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+      renderTabBar();
+      const [first, second] = screen.getAllByLabelText('Close tab');
+      fireEvent.click(first);
+      fireEvent.click(second);
+      act(() => vi.runAllTimers());
+      expect(props.onCloseTab).toHaveBeenCalledExactlyOnceWith('ws1');
+    } finally {
+      width.mockRestore();
       vi.useRealTimers();
     }
   });
@@ -508,6 +601,19 @@ describe('DesktopTabBar interactions', () => {
     fireEvent.doubleClick(ws1Tab);
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toHaveValue('Docs');
+  });
+
+  it.each([
+    [{ alias: 'Project alias', workspaceName: 'Docs' }, 'Project alias'],
+    [{ alias: undefined, workspaceName: undefined }, ''],
+  ])('initializes alias editing from the saved alias or an empty unnamed tab', (tabFields, value) => {
+    renderTabBar({ tabs: [makeDesktopTab('home', 'home'), makeDesktopTab('ws1', 'workspace', tabFields)] });
+    fireEvent.doubleClick(screen.getByRole('tab'));
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue(value);
+    fireEvent.change(input, { target: { value: '   Updated workspace   ' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(props.onAliasChange).toHaveBeenCalledExactlyOnceWith('ws1', 'Updated workspace');
   });
 
   it('commits alias change when the alias input is blurred', () => {

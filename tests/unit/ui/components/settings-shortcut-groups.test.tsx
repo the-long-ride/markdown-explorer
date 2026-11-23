@@ -1,10 +1,18 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsShortcutsPanel } from '../../../../ui/src/components/Settings/SettingsShortcutsPanel';
 import { SettingsModal } from '../../../../ui/src/components/Settings/SettingsModal';
+import { SettingsUpdateBackupPanel } from '../../../../ui/src/components/Settings/SettingsUpdateBackupPanel';
 import { ACTIONS_LIST } from '../../../../ui/src/components/Settings/settingsActions';
+import { getDefaultKeybindingsForRuntime } from '../../../../ui/src/contexts/appStateConstants';
+import { initialState } from '../../../../ui/src/contexts/appStateModel';
+import { getTranslations } from '../../../../ui/src/contexts/translations';
+import { INSIGHTS_SETTINGS_CHANGED_EVENT } from '../../../../ui/src/insights/settingsStore';
 
 const mockUpdateSettings = vi.fn();
+const mockPostMessage = vi.fn();
+const mockSetTheme = vi.fn();
+const mockSetThemeStyle = vi.fn();
 let mockState: any;
 
 function getMockState() {
@@ -46,15 +54,15 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
     state: mockState,
     dispatch: vi.fn(),
-    setTheme: vi.fn(),
-    setThemeStyle: vi.fn(),
+    setTheme: mockSetTheme,
+    setThemeStyle: mockSetThemeStyle,
     updateSettings: mockUpdateSettings,
   }),
 }));
 
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
   usePlatform: () => ({
-    postMessage: vi.fn(),
+    postMessage: mockPostMessage,
     onMessage: vi.fn(() => () => {}),
     getState: () => undefined,
     setState: () => {},
@@ -72,6 +80,73 @@ function getShortcutInputForAction(actionTitle: string): HTMLInputElement {
 
 const defaultUpdateCheck = { status: 'idle' as const, currentVersion: '1.0.0', latestVersion: '1.0.0', hasUpdate: false, changelogUrl: '' };
 const defaultHostUpdateState = { status: 'idle' as const };
+
+describe('SettingsUpdateBackupPanel', () => {
+  const t = getTranslations('en');
+
+  it('shows availability, checks for updates, and displays installer progress through completion', () => {
+    const onDownloadUpdate = vi.fn();
+    const onOpenChangelog = vi.fn();
+    const checkNow = vi.fn();
+    const props = {
+      state: { ...initialState, appRuntime: 'desktop' as const, appVersion: '1.0.0' },
+      t,
+      updateCheck: {
+        status: 'available' as const, hasUpdate: true, currentVersion: '', latestVersion: '2.0.0', checkNow,
+        changelogUrl: '', releaseUrl: '', downloadUrl: '', canInstallUpdate: true,
+      },
+      hostUpdateState: { status: 'idle' as const },
+      settingsDataStatus: '',
+      onImport: vi.fn(), onExport: vi.fn(), onOpenChangelog, onDownloadUpdate,
+    };
+    const { rerender } = render(<SettingsUpdateBackupPanel {...props} />);
+    expect(screen.getByText(t.newerVersionStatus.replace('{current}', '1.0.0').replace('{latest}', '2.0.0'))).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: t.checkForUpdate }));
+    fireEvent.click(screen.getByRole('button', { name: t.update.viewChangelog }));
+    fireEvent.click(screen.getByRole('button', { name: t.update.downloadButton }));
+    expect(checkNow).toHaveBeenCalledOnce();
+    expect(onOpenChangelog).toHaveBeenCalledOnce();
+    expect(onDownloadUpdate).toHaveBeenCalledOnce();
+
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'downloading', progressPercent: 25 }} />);
+    expect(screen.getByText(t.update.downloading.replace('{progress}', '25'))).toBeVisible();
+    expect(screen.queryByRole('button', { name: t.update.downloadButton })).not.toBeInTheDocument();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'applying' }} />);
+    expect(screen.getByText(t.update.applying)).toBeVisible();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'scheduled-on-exit' }} />);
+    expect(screen.getByText(t.update.scheduled)).toBeVisible();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'downloaded' }} />);
+    expect(screen.queryByRole('button', { name: t.update.downloadButton })).not.toBeInTheDocument();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'error', error: 'Update unavailable' }} />);
+    expect(screen.getByText('Update unavailable')).toBeVisible();
+    expect(screen.getByRole('button', { name: t.update.downloadButton })).toBeVisible();
+  });
+
+  it.each(['web', 'vscode'] as const)('hides the installer in the %s runtime', (appRuntime) => {
+    const panel = (status: 'available' | 'checking') => <SettingsUpdateBackupPanel
+      state={{ ...initialState, appRuntime, appVersion: '1.0.0' }}
+      t={t}
+      updateCheck={{
+        status, hasUpdate: true, currentVersion: '', latestVersion: '2.0.0', checkNow: vi.fn(),
+        changelogUrl: '', releaseUrl: '', downloadUrl: '', canInstallUpdate: false,
+      }}
+      hostUpdateState={{ status: 'error' }}
+      settingsDataStatus=""
+      onImport={vi.fn()} onExport={vi.fn()} onOpenChangelog={vi.fn()} onDownloadUpdate={vi.fn()}
+    />;
+    const { rerender } = render(panel('available'));
+    expect(screen.queryByRole('button', { name: t.update.downloadButton })).not.toBeInTheDocument();
+    if (appRuntime === 'web') {
+      expect(screen.getByText(t.webVersionStatus.replace('{current}', '1.0.0'))).toBeVisible();
+      expect(screen.queryByRole('button', { name: t.checkForUpdate })).not.toBeInTheDocument();
+    } else {
+      expect(screen.getByText(t.newerVersionStatus.replace('{current}', '1.0.0').replace('{latest}', '2.0.0'))).toBeVisible();
+      rerender(panel('checking'));
+      expect(screen.getByText(t.updateChecking)).toBeVisible();
+      expect(screen.getByRole('button', { name: t.checkForUpdate })).toBeVisible();
+    }
+  });
+});
 
 function renderModal() {
   return render(
@@ -149,6 +224,46 @@ describe('Settings shortcut groups', () => {
     expect(within(editorGroup).getByText('Task list')).toBeInTheDocument();
   });
 
+  it('filters and clears shortcut rows, toggles bindings, and lets focus move to a different recording field', () => {
+    vi.useFakeTimers();
+    try {
+      const t = getTranslations('en');
+      const { rerender } = renderModal();
+      fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+      const search = screen.getByRole('textbox', { name: t.ui.shortcutSearchLabel });
+      const clear = screen.getByRole('button', { name: t.ui.shortcutSearchClear });
+      expect(clear).toBeDisabled();
+      fireEvent.change(search, { target: { value: 'Italic' } });
+      expect(getShortcutInputForAction('Italic')).toBeInTheDocument();
+      expect(screen.queryByText('Bold')).not.toBeInTheDocument();
+      fireEvent.click(clear);
+      expect(search).toHaveValue('');
+      const bold = getShortcutInputForAction('Bold');
+      const italic = getShortcutInputForAction('Italic');
+      fireEvent.focus(bold);
+      expect(bold).toHaveValue(t.ui.shortcutPressKeys);
+      fireEvent.blur(bold);
+      fireEvent.focus(italic);
+      act(() => { vi.advanceTimersByTime(250); });
+      expect(italic).toHaveValue(t.ui.shortcutPressKeys);
+      expect(bold).toHaveValue('Ctrl + B');
+      fireEvent.blur(italic);
+      act(() => { vi.advanceTimersByTime(250); });
+      expect(italic).toHaveValue('Ctrl + I');
+      const disable = t.ui.shortcutDisable.replace('{action}', 'Bold');
+      fireEvent.click(screen.getByRole('switch', { name: disable }));
+      expect(mockUpdateSettings).toHaveBeenLastCalledWith({ disabledKeybindings: { editorBold: true } });
+      mockState.settings.disabledKeybindings = { editorBold: true };
+      rerender(<SettingsModal isOpen onClose={vi.fn()} updateCheck={defaultUpdateCheck} hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={vi.fn()} onScheduleUpdateOnExit={vi.fn()} onRestartAndApplyUpdate={vi.fn()} onOpenChangelog={vi.fn()} />);
+      expect(bold).toBeDisabled();
+      fireEvent.click(screen.getByRole('switch', { name: t.ui.shortcutEnable.replace('{action}', 'Bold') }));
+      expect(mockUpdateSettings).toHaveBeenLastCalledWith({ disabledKeybindings: { editorBold: false } });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('allows assigning an editor shortcut to the same key combo as a non-editor app shortcut', () => {
     renderModal();
     fireEvent.click(screen.getByText('Keyboard Shortcuts'));
@@ -197,5 +312,148 @@ describe('Settings shortcut groups', () => {
 
     expect(mockUpdateSettings).not.toHaveBeenCalled();
     expect(screen.getByText(/"Ctrl\+I" is already assigned/i)).toBeInTheDocument();
+  });
+
+  it.each([
+    { name: 'disabled binding', key: 'i', modifiers: { metaKey: true }, expected: 'Ctrl+I' },
+    { name: 'Space chord', key: ' ', modifiers: { metaKey: true, shiftKey: true, altKey: true }, expected: 'Ctrl+Shift+Alt+Space' },
+  ])('records a $name when there is no active conflict', ({ key, modifiers, expected }) => {
+    mockState.settings.disabledKeybindings = { editorItalic: true };
+    renderModal();
+    fireEvent.click(screen.getByRole('button', { name: getTranslations('en').shortcuts }));
+    const input = getShortcutInputForAction('Bold');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key, ...modifiers });
+    expect(mockUpdateSettings).toHaveBeenCalledExactlyOnceWith({
+      keybindings: expect.objectContaining({ editorBold: expected }),
+    });
+  });
+
+  it('opens the language chooser, dismisses it without changing settings, and applies a selection', () => {
+    const t = getTranslations('en');
+    renderModal();
+    const trigger = screen.getByRole('button', { name: t.tooltips.switchLanguage });
+    fireEvent.click(trigger);
+    const list = screen.getByRole('listbox', { name: t.ui.languages });
+    expect(within(list).getByRole('option', { name: 'English' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.pointerDown(trigger);
+    expect(list).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(list).not.toBeInTheDocument();
+    fireEvent.click(trigger);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('listbox', { name: t.ui.languages })).not.toBeInTheDocument();
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole('option', { name: /français/i }));
+    expect(mockUpdateSettings).toHaveBeenCalledExactlyOnceWith({ language: 'fr' });
+    expect(screen.queryByRole('listbox', { name: t.ui.languages })).not.toBeInTheDocument();
+  });
+
+  it('ignores standalone modifiers, warns about the IME shortcut, and resets only after confirmation', () => {
+    const t = getTranslations('en');
+    mockState.themeStyle = 'pet-k-ink';
+    renderModal();
+    fireEvent.click(screen.getByRole('button', { name: t.shortcuts }));
+    const input = getShortcutInputForAction('Bold');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'Control', ctrlKey: true });
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: ' ', ctrlKey: true });
+    expect(screen.getByText(t.bannedShortcutImeMessage)).toBeInTheDocument();
+    expect(screen.getByAltText(t.ui.warningMascotAlt)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: t.bannedShortcutDismiss }));
+    expect(screen.queryByText(t.bannedShortcutImeMessage)).not.toBeInTheDocument();
+    const reset = screen.getByRole('button', { name: t.resetShortcuts });
+    fireEvent.click(reset);
+    expect(screen.getByText(t.resetShortcutsConfirmBody)).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByText(t.resetShortcutsConfirmBody)).not.toBeInTheDocument();
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
+    fireEvent.click(reset);
+    fireEvent.click(screen.getByRole('button', { name: t.confirmResetShortcuts }));
+    expect(mockUpdateSettings).toHaveBeenCalledExactlyOnceWith({
+      keybindings: getDefaultKeybindingsForRuntime('desktop'), disabledKeybindings: {},
+    });
+    expect(screen.queryByText(t.resetShortcutsConfirmBody)).not.toBeInTheDocument();
+  });
+
+  it('downloads a settings backup, reports malformed JSON, and restores the exported appearance', async () => {
+    const t = getTranslations('en');
+    const createObjectURL = vi.fn<(blob: Blob) => string>().mockReturnValue('blob:settings-backup');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = createObjectURL;
+      static revokeObjectURL = revokeObjectURL;
+    });
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    try {
+      const { container } = renderModal();
+      fireEvent.click(screen.getByRole('button', { name: t.updateBackup }));
+      const input = container.querySelector<HTMLInputElement>('input[type=file]')!;
+      const openPicker = vi.spyOn(input, 'click').mockImplementation(() => {});
+      fireEvent.click(screen.getByRole('button', { name: t.importJson }));
+      expect(openPicker).toHaveBeenCalledOnce();
+      fireEvent.change(input, { target: { files: [] } });
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      fireEvent.change(input, { target: { files: [new File(['{no'], 'invalid.json')] } });
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.invalidJson));
+      expect(mockUpdateSettings).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: t.exportJson }));
+      expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.exported);
+      expect(anchorClick.mock.contexts[0]).toHaveAttribute('download', expect.stringMatching(/^markdown-explorer-settings-\d{4}-\d{2}-\d{2}\.json$/));
+      expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:settings-backup');
+      const backup = new File([createObjectURL.mock.calls[0][0]], 'backup.json', { type: 'application/json' });
+      fireEvent.change(input, { target: { files: [backup] } });
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.imported));
+      expect(mockUpdateSettings).toHaveBeenCalledWith(expect.objectContaining({ language: 'en', defaultHtmlPreview: false }));
+      expect(mockSetTheme).toHaveBeenCalledExactlyOnceWith('dark');
+      expect(mockSetThemeStyle).toHaveBeenCalledExactlyOnceWith('default');
+      expect(mockPostMessage).toHaveBeenCalledWith({ command: 'replaceRecentWorkspaces', recentWorkspaces: [] });
+    } finally {
+      vi.unstubAllGlobals();
+      anchorClick.mockRestore();
+    }
+  });
+
+  it('restores a custom theme and announces imported Insights settings separately from the built-in appearance', async () => {
+    const t = getTranslations('en');
+    const settingsChanged = vi.fn();
+    window.addEventListener(INSIGHTS_SETTINGS_CHANGED_EVENT, settingsChanged);
+    try {
+      const { container } = renderModal();
+      fireEvent.click(screen.getByRole('button', { name: t.updateBackup }));
+      const input = container.querySelector<HTMLInputElement>('input[type=file]')!;
+      const settings = {
+        activeCustomThemeId: 'project-theme',
+        customThemes: [{ id: 'project-theme', name: 'Project Theme', baseStyle: 'bento', createdAt: 1, updatedAt: 1 }],
+      };
+      const backup = new File([JSON.stringify({
+        kind: 'markdown-explorer-settings', schemaVersion: 1,
+        payload: { theme: 'light', themeStyle: 'default', settings, insights: {} },
+      })], 'custom-settings.json');
+      fireEvent.change(input, { target: { files: [backup] } });
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.imported));
+      expect(mockUpdateSettings).toHaveBeenCalledWith(expect.objectContaining({ activeCustomThemeId: 'project-theme' }));
+      expect(mockSetTheme).toHaveBeenCalledWith('light');
+      expect(mockSetThemeStyle).not.toHaveBeenCalled();
+      expect(mockPostMessage).toHaveBeenCalledWith({ command: 'updateAppearance', theme: 'light', themeStyle: 'bento' });
+      expect(settingsChanged).toHaveBeenCalledOnce();
+    } finally {
+      window.removeEventListener(INSIGHTS_SETTINGS_CHANGED_EVENT, settingsChanged);
+    }
+  });
+
+  it('asks the VS Code host to reload even when its reload shortcut has been disabled', () => {
+    mockState.appRuntime = 'vscode';
+    mockState.settings.language = '';
+    mockState.settings.keybindings.reloadWindow = 'Ctrl+Alt+R';
+    mockState.settings.disabledKeybindings.reloadWindow = true;
+    renderModal();
+    const reload = screen.getByRole('button', { name: getTranslations('en').tooltips.reloadWindow });
+    expect(reload).not.toHaveAttribute('data-hover-tooltip-shortcut');
+    fireEvent.click(reload);
+    expect(mockPostMessage).toHaveBeenCalledWith({ command: 'reloadWebview' });
   });
 });

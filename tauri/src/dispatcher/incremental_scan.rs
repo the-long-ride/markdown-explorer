@@ -1,49 +1,14 @@
 use super::*;
 use crate::host_message::WorkspaceOperationMetadata;
+use crate::workspace::scan_publication::{
+    next_incremental_publish_count, store_workspace_scan_result, workspace_name,
+};
 
 const WORKSPACE_SCAN_REVEAL_DELAY: Duration = Duration::from_secs(3);
 const WORKSPACE_SCAN_BATCH_SIZE: usize = 32;
-const WORKSPACE_SCAN_MAX_BATCH_SIZE: usize = 1024;
-
-fn next_incremental_publish_count(last_published_count: usize) -> usize {
-    if last_published_count < WORKSPACE_SCAN_BATCH_SIZE {
-        return WORKSPACE_SCAN_BATCH_SIZE;
-    }
-
-    let ratio = last_published_count / WORKSPACE_SCAN_BATCH_SIZE;
-    let growth_steps = usize::BITS - 1 - ratio.leading_zeros();
-    let batch_size = WORKSPACE_SCAN_BATCH_SIZE
-        .saturating_mul(1usize << growth_steps)
-        .min(WORKSPACE_SCAN_MAX_BATCH_SIZE);
-    last_published_count.saturating_add(batch_size)
-}
-
-fn workspace_name(workspace_path: &Path) -> String {
-    workspace_path
-        .file_name()
-        .map(|name| name.to_string_lossy().to_string())
-        .filter(|name| !name.is_empty())
-        .unwrap_or_else(|| workspace_path.to_string_lossy().to_string())
-}
-
-fn store_workspace_scan_result(
-    state: &AppState,
-    workspace_path: &Path,
-    scan_generation: u64,
-    flat: Vec<MdFile>,
-) -> bool {
-    let mut inner = state.inner.write();
-    if inner.workspace_path.as_deref() != Some(workspace_path)
-        || inner.workspace_scan_generation != scan_generation
-    {
-        return false;
-    }
-    inner.flat_list = flat;
-    true
-}
 
 fn publish_incremental_workspace_snapshot(
-    app: &AppHandle,
+    app: &HostApp,
     state: &AppState,
     workspace_path: &Path,
     scan_generation: u64,
@@ -224,9 +189,10 @@ impl Dispatcher {
                         && callback_revealed
                             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                             .is_ok();
-                    let next_publish_count = next_incremental_publish_count(
-                        callback_last_published_count.load(Ordering::Acquire),
-                    );
+                    let next_publish_count =
+                        next_incremental_publish_count::<WORKSPACE_SCAN_BATCH_SIZE>(
+                            callback_last_published_count.load(Ordering::Acquire),
+                        );
                     let batch_refresh = callback_revealed.load(Ordering::Acquire)
                         && scanned_files >= next_publish_count;
                     if first_reveal || batch_refresh {
@@ -295,12 +261,13 @@ impl Dispatcher {
                 operation.as_ref(),
             );
             tauri::async_runtime::spawn(async move {
-                dispatcher.send_initial_content_for_scan(
+                let content = dispatcher.send_initial_content_for_scan(
                     open_first_file,
                     &workspace_path,
                     scan_generation,
                     operation.as_ref(),
-                ).await;
+                );
+                content.await;
             });
         });
     }
@@ -309,47 +276,49 @@ impl Dispatcher {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tauri::test::mock_app;
 
     #[test]
-    fn grows_incremental_publish_batches_to_the_maximum() {
-        let counts = [0, 32, 64, 128, 256, 512, 1024, 2048];
-        let next_counts = counts.map(next_incremental_publish_count);
-        assert_eq!(next_counts, [32, 64, 128, 256, 512, 1024, 2048, 3072]);
-    }
-
-    #[test]
-    fn stores_current_scan_without_retaining_the_state_lock() {
+    fn snapshot_publication_skips_stale_empty_and_duplicate_batches() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path();
+        std::fs::write(path.join("note.md"), "# Note").unwrap();
+        let app = mock_app();
         let state = AppState::new();
-        let workspace_path = PathBuf::from("workspace");
-        {
-            let mut inner = state.inner.write();
-            inner.workspace_path = Some(workspace_path.clone());
-            inner.runtime_state = RuntimeState::Initializing;
-            inner.workspace_scan_generation = 1;
-        }
-        assert!(store_workspace_scan_result(
-            &state,
-            &workspace_path,
-            1,
-            Vec::new()
-        ));
-        assert!(state.inner.try_read().is_some());
-    }
-
-    #[test]
-    fn rejects_stale_same_path_scan() {
-        let state = AppState::new();
-        let workspace_path = PathBuf::from("workspace");
-        {
-            let mut inner = state.inner.write();
-            inner.workspace_path = Some(workspace_path.clone());
-            inner.workspace_scan_generation = 2;
-        }
-        assert!(!store_workspace_scan_result(
-            &state,
-            &workspace_path,
-            1,
-            Vec::new()
-        ));
+        state.inner.write().workspace_path = Some(path.to_owned());
+        state.inner.write().workspace_scan_generation = 2;
+        let events = Arc::new(Mutex::new(Vec::<Value>::new()));
+        let listener = events.clone();
+        app.listen("host-message", move |event| {
+            listener
+                .lock()
+                .unwrap()
+                .push(serde_json::from_str(event.payload()).unwrap());
+        });
+        let operation = WorkspaceOperationMetadata::from_parts(Some("operation"), Some("tab"));
+        let discovered = Arc::new(Mutex::new(Vec::new()));
+        let last_published = AtomicUsize::new(0);
+        let publish = |generation| {
+            publish_incremental_workspace_snapshot(
+                app.handle(),
+                &state,
+                path,
+                generation,
+                &discovered,
+                &last_published,
+                operation.as_ref(),
+            )
+        };
+        assert!(!publish(2));
+        *discovered.lock().unwrap() = scan(path, ScanOptions::default()).unwrap().flat;
+        assert!(!publish(1));
+        assert!(events.lock().unwrap().is_empty());
+        assert!(publish(2));
+        assert!(!publish(2));
+        let events = events.lock().unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0]["command"], "workspaceFilesChanged");
+        assert_eq!(events[0]["workspaceTabId"], "tab");
+        assert_eq!(events[0]["fileList"][0]["fileName"], "note.md");
     }
 }

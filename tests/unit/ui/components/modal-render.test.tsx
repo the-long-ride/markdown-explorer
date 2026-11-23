@@ -8,6 +8,7 @@ import { createMediaGallery } from '../../../../ui/src/components/Modal/mediaGal
 import { TermsModal } from '../../../../ui/src/components/Modal/TermsModal';
 import { SwitchWorkspaceModal } from '../../../../ui/src/components/Modal/SwitchWorkspaceModal';
 import { WorkspaceSelectionConfirmModal } from '../../../../ui/src/components/Modal/WorkspaceSelectionConfirmModal';
+import * as translations from '../../../../ui/src/contexts/translations';
 
 const mockState: any = {
   theme: 'dark',
@@ -259,6 +260,25 @@ describe('MediaModal', () => {
     responsiveRectSpy.mockRestore();
   });
 
+  it('skips unloaded media and selects a nested standalone diagram with fallback metadata', () => {
+    const root = document.createElement('main');
+    root.innerHTML = '<div class="mdn-body"><img aria-label="Unloaded"><div class="mermaid">Rendering</div></div>';
+    expect(createMediaGallery(root, root)).toBeNull();
+    root.firstElementChild!.insertAdjacentHTML('beforeend', `
+      <img src="https://example.test/loaded.png">
+      <div class="mermaid" data-mdn-mermaid-source="%"><svg data-mdn-mermaid-kind="flowchart"><g><text>Example</text></g></svg></div>
+      <div class="mdn-mermaid-wrap" data-mdn-mermaid-source="%"><div class="mermaid" data-original-code="flowchart LR"><svg><text>Wrapped</text></svg></div></div>
+    `);
+    const gallery = createMediaGallery(root.querySelector('g')!, root);
+    expect(gallery?.currentIndex).toBe(1);
+    expect(gallery?.items).toMatchObject([
+      { type: 'img', src: 'https://example.test/loaded.png' },
+      { type: 'svg', kind: 'flowchart', source: undefined },
+      { type: 'svg', source: 'flowchart LR' },
+    ]);
+    expect(createMediaGallery(document.createElement('p'), root)?.currentIndex).toBe(0);
+  });
+
   it('dispatches the Image saved success toast when Save as image (.PNG) succeeds', async () => {
     copyImageMocks.saveElementImageAsPng.mockReset();
     copyImageMocks.saveElementImageAsPng.mockResolvedValue(true);
@@ -296,6 +316,32 @@ describe('MediaModal', () => {
       await waitFor(() => expect(notices).toEqual([{ message: 'Failed to save image.', tone: 'error' }]));
     } finally {
       window.removeEventListener(ACTION_NOTICE_EVENT, onNotice);
+    }
+  });
+});
+
+describe('MediaModal save notices', () => {
+  it.each([true, false, new Error('disk unavailable')])('reports save outcome %s even without localized notices', async outcome => {
+    const original = translations.getTranslations('en');
+    const translate = vi.spyOn(translations, 'getTranslations').mockReturnValue({
+      ...original, previewActions: { ...original.previewActions, imageSaved: '', imageSaveFailed: '' },
+    });
+    copyImageMocks.saveElementImageAsPng.mockReset().mockImplementationOnce(async () => {
+      if (outcome instanceof Error) throw outcome;
+      return outcome;
+    });
+    const onNotice = vi.fn();
+    window.addEventListener(ACTION_NOTICE_EVENT, onNotice);
+    try {
+      render(<MediaModal gallery={{ items: [{ type: 'img', src: 'https://example.com/image.png' }], currentIndex: 0 }} onClose={vi.fn()} />);
+      fireEvent.click(document.querySelector('button[tooltip="Save as image (.PNG)"]')!);
+      const expected = outcome === true
+        ? { message: 'Image saved.', tone: 'success' }
+        : { message: 'Failed to save image.', tone: 'error' };
+      await waitFor(() => expect(onNotice).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ detail: expected })));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, onNotice);
+      translate.mockRestore();
     }
   });
 });

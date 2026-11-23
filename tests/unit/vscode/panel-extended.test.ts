@@ -2,6 +2,9 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { DocumentConverter } from '../../../vscode/src/core/documentConversion';
+import { HtmlPreviewServer } from '../../../vscode/src/core/htmlPreviewServer';
 
 function makeTempDir(prefix: string) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -105,6 +108,107 @@ function createPanel(workspaceFolders?: any[], initialFilePath?: string | null) 
   MarkdownDocsPanel.createOrShow(context, initialFilePath ?? null);
   return getPanel();
 }
+
+describe('Panel integration: webview protocol', () => {
+  let root: string;
+
+  beforeEach(() => {
+    root = makeTempDir('vscode-webview-protocol-');
+    mockConfigGet = vi.fn(() => undefined);
+    mockConfigUpdate = vi.fn(async () => {});
+  });
+  afterEach(() => {
+    MarkdownDocsPanel.currentPanel?.dispose();
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  test('restores settings before accepting writes and gates them again after a webview reload', async () => {
+    const get = vi.fn(() => ({ theme: 'dark' }));
+    const update = vi.fn(async () => {});
+    const context = { extensionPath: root, extension: { packageJSON: {} }, globalState: { get, update } } as any;
+    setupVscodeMock();
+    MarkdownDocsPanel.createOrShow(context, null);
+    const panel = getPanel();
+    const fromWebview = mockOnDidReceiveMessage.mock.lastCall![0];
+    await fromWebview({ command: 'persistState', state: { theme: 'light' } });
+    expect(update).not.toHaveBeenCalled();
+    await fromWebview({ command: 'ready', documentConversionEnabled: true });
+    expect(get).toHaveBeenCalledWith('markdownExplorer.uiState');
+    expect(mockPostMessage).toHaveBeenCalledWith({ command: 'restorePersistedState', state: { theme: 'dark' } });
+    expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({
+      command: 'readyAck', documentConversionEnabled: true, appVersion: '',
+    }));
+    await fromWebview({ command: 'stateHydrated' });
+    await fromWebview({ command: 'persistState', state: { theme: 'light' } });
+    expect(update).toHaveBeenCalledExactlyOnceWith('markdownExplorer.uiState', { theme: 'light' });
+    await fromWebview({ command: 'reloadWebview' });
+    expect(panel._panel.webview.html).toContain('Markdown Explorer');
+    await fromWebview({ command: 'persistState', state: { theme: 'auto' } });
+    expect(update).toHaveBeenCalledTimes(1);
+    await panel.requestSaveCurrentDocument();
+    expect(mockPostMessage).toHaveBeenLastCalledWith({ command: 'requestSaveCurrentDocument' });
+  });
+
+  test('returns raw local HTML and routes local resource requests and non-empty previews', async () => {
+    const doc = path.join(root, 'notes.html');
+    const text = '<p>Local preview</p>';
+    const style = path.join(root, 'style.css');
+    writeFile(doc, text);
+    writeFile(style, 'p {}');
+    vi.mocked(WorkspaceScanner.readFile).mockReturnValueOnce(text);
+    const open = vi.spyOn(HtmlPreviewServer.prototype, 'open').mockResolvedValue('http://127.0.0.1/preview/test');
+    const workspace = { uri: { fsPath: fs.realpathSync(root) }, name: 'Protocol' };
+    createPanel([workspace], doc);
+    const fromWebview = mockOnDidReceiveMessage.mock.lastCall![0];
+    await fromWebview({ command: 'ready', documentConversionEnabled: true });
+    expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({
+      command: 'renderContent', sourceDocumentText: text, filePath: doc,
+    }));
+    await fromWebview({ command: 'readWorkspaceTextResource', requestId: 'css', documentPath: doc, resourcePath: 'style.css' });
+    expect(mockPostMessage).toHaveBeenLastCalledWith({
+      command: 'workspaceTextResourceResult', requestId: 'css', ok: true, content: 'p {}', resolvedPath: fs.realpathSync(style),
+    });
+    await fromWebview({ command: 'readWorkspaceTextResource', requestId: 'missing', documentPath: doc, resourcePath: pathToFileURL(path.join(root, 'missing.css')).href });
+    expect(mockPostMessage).toHaveBeenLastCalledWith(expect.objectContaining({ requestId: 'missing', ok: false }));
+    await fromWebview({ command: 'openHtmlPreview', documentHtml: ' ' });
+    await fromWebview({ command: 'openHtmlPreview', documentHtml: undefined });
+    await fromWebview({ command: 'openHtmlPreview', documentHtml: text });
+    expect(open).toHaveBeenCalledExactlyOnceWith(text);
+  });
+
+  test('uses converted content and reports conversion failure without crashing the webview', async () => {
+    const doc = path.join(root, 'sample.pdf');
+    const workspace = [{ uri: { fsPath: root }, name: 'Protocol' }];
+    writeFile(doc, 'fake PDF fixture');
+    const previewInfo = { kind: 'converted', sourceExtension: '.pdf', sourceLabel: 'PDF' } as const;
+    const convert = vi.spyOn(DocumentConverter.prototype, 'readMarkdown')
+      .mockResolvedValueOnce({ markdown: '# Converted', previewInfo })
+      .mockRejectedValueOnce(new Error('unavailable'));
+    const report = vi.spyOn(console, 'error').mockImplementation(() => {});
+    createPanel(workspace, doc);
+    const fromWebview = mockOnDidReceiveMessage.mock.lastCall![0];
+    await fromWebview({ command: 'ready', documentConversionEnabled: true });
+    expect(mockPostMessage).toHaveBeenLastCalledWith(expect.objectContaining({
+      command: 'renderContent', markdownSource: '# Converted', previewInfo,
+    }));
+    await fromWebview({ command: 'refresh' });
+    expect(report).toHaveBeenCalledWith('Failed to prepare file preview:', doc, expect.any(Error));
+    expect(convert).toHaveBeenCalledTimes(2);
+    expect(mockPostMessage).toHaveBeenLastCalledWith(expect.objectContaining({
+      command: 'renderContent', previewInfo: expect.objectContaining({ kind: 'converted', qualityWarning: expect.any(String) }),
+    }));
+  });
+
+  test('closes the webview and disposes VS Code subscriptions on the dispose event', () => {
+    const panel = createPanel();
+    const dispose = vi.fn();
+    panel._disposables.push({ dispose });
+    mockOnDidDispose.mock.lastCall![0]();
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(mockPanelDispose).toHaveBeenCalledOnce();
+    expect(MarkdownDocsPanel.currentPanel).toBeUndefined();
+  });
+});
 
 describe('Panel integration: navigation', () => {
   let tempDir: string;

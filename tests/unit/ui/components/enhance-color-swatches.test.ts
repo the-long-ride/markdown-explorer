@@ -4,6 +4,21 @@ import { describe, expect, it } from 'vitest';
 import { enhanceColorSwatches } from '../../../../ui/src/components/Content/enhancements/enhanceColorSwatches';
 
 describe('enhanceColorSwatches', () => {
+  it('uses the document fallback traversal without changing excluded descendants or original text', () => {
+    const embeddedDocument = document.implementation.createHTMLDocument();
+    const root = embeddedDocument.body;
+    root.innerHTML = '<p>#fff</p><!-- #aaa --><code>prefix #abc / rgb(1, 2, 3) suffix</code><div class="cm-editor"><code>#fed</code></div><code><span data-color-swatched="true">#aaa</span></code>';
+    const originalText = root.textContent;
+    Object.defineProperty(embeddedDocument, 'createTreeWalker', { value: undefined, configurable: true });
+    enhanceColorSwatches(root);
+    enhanceColorSwatches(root);
+    Reflect.deleteProperty(embeddedDocument, 'createTreeWalker');
+    expect([...root.querySelectorAll('.mdn-color-swatch')].map((swatch) => swatch.getAttribute('data-color'))).toEqual(['#abc', 'rgb(1, 2, 3)']);
+    expect(root.querySelector('.cm-editor code')?.textContent).toBe('#fed');
+    expect(root.querySelectorAll('.cm-editor .mdn-color-token, p .mdn-color-token')).toHaveLength(0);
+    expect(root.textContent).toBe(originalText);
+    expect(root.querySelectorAll('.mdn-color-token')).toHaveLength(2);
+  });
   it('enhances hex colors in inline code elements', () => {
     const container = document.createElement('div');
     container.innerHTML = '<code>#E9E5DD</code> and <code>color: #171716;</code> and <code>#fff</code>';

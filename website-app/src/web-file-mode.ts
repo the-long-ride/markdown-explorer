@@ -4,13 +4,11 @@ import { BrowserSearchIndex } from './search-index';
 import { BrowserRecentWorkspaces } from './recent-workspaces';
 import { rewriteMediaUrls } from './media-resolver';
 import {
-  writeSingleFileDocument,
   buildMdFileFromName,
   readContainerDocument,
   readAndConvertFile,
 } from './web-file-content';
 import { isExtraDocumentFile, convertWebDocumentToMarkdown } from './web-document-converter';
-export { writeSingleFileDocument };
 import { nextIncrementalPublishCount, treeHasEmptyFolder } from './incremental-publish';
 import type { MdFile, FolderNode } from '../../ui/src/types';
 import {
@@ -43,7 +41,6 @@ interface FileModeState {
 interface FileModeDeps {
   state: FileModeState;
   send: (message: unknown) => void;
-  sendLoading: (label: string, detail?: string) => void;
   hostInfo: () => Record<string, unknown>;
   findFileInfo: (list: MdFile[], relativePath: string) => { relativePath: string; title: string };
   extractWorkspaceName: (path: string) => string;
@@ -403,7 +400,6 @@ function cancelAllWorkspaceScans() { workspaceScanGeneration += 1; }
     resetFileState,
     loadHandleWorkspace,
     sendFileContent,
-    buildMdFileFromName,
     loadSingleFileWorkspace,
     sendSingleFileContent,
     sendFileRecentWorkspacesChanged,

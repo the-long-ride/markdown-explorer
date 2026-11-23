@@ -65,6 +65,18 @@ describe('createPerfTimer', () => {
       expect(spy).toHaveBeenCalledWith('[perf] mark alpha');
     });
 
+    test('reports every startup interval and omits absent optional renderer marks', () => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      for (const name of ['main:required', 'electron:ready', 'window:created', 'renderer:did-finish-load']) perf.mark(name);
+      perf.setRendererMarks(undefined);
+      perf.printSummary();
+      expect(log.mock.calls.flat()).toEqual(expect.arrayContaining([
+        '[perf]   Module require: 1000ms', '[perf]   Window create: 1000ms', '[perf]   HTML load + renderer boot: 1000ms',
+        '[perf]   TOTAL (main require → renderer load): 3000ms',
+      ]));
+      expect(log.mock.calls.flat().join('\n')).not.toMatch(/Renderer JS entry|React mounted/);
+    });
+
     test('measure computes delta between two marks', () => {
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       perf.mark('start');

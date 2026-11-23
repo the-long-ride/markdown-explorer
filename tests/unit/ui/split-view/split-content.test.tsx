@@ -4,7 +4,12 @@ import { initialState, type AppState } from '../../../../ui/src/contexts/appStat
 import { createEditableDocumentSession, documentSessionKey } from '../../../../ui/src/editor/documentSession';
 import { createSplitViewState } from '../../../../ui/src/split-view/paneState';
 import { SplitContentView } from '../../../../ui/src/components/Content/SplitContent';
+import { SplitPaneView } from '../../../../ui/src/components/Content/SplitPaneView';
 import { endDragSession } from '../../../../ui/src/components/Content/documentFileDrop';
+import { selectPaneDocument } from '../../../../ui/src/split-view/paneSelectors';
+import { getHistoryTranslations } from '../../../../ui/src/contexts/historyTranslations';
+import { getEditorUiTranslations } from '../../../../ui/src/contexts/editorUiTranslations';
+import { getSplitViewTranslations } from '../../../../ui/src/contexts/splitViewTranslations';
 
 const tab = {
   filePath: '/docs/a.md',
@@ -61,6 +66,51 @@ afterEach(() => {
 });
 
 describe('SplitContentView', () => {
+  it('keeps revision and diff controls in the pane and returns to the current document', () => {
+    const dir = getSplitViewTranslations('en');
+    const history = getHistoryTranslations('en');
+    const editor = getEditorUiTranslations('en');
+    const projection = selectPaneDocument(fixtureState(), 'primary')!;
+    const revision = { oid: 'abc123456', path: 'a.md', source: '# Archived text' };
+    const comparison = { leftSource: 'old text', rightSource: 'new text' };
+    const props = {
+      paneId: 'primary' as const, paneTabs: ['/docs/a.md'], activeTabPath: '/docs/a.md',
+      tabLabels: new Map([['/docs/a.md', 'A']]), showTabs: false, language: 'en',
+      documentRenderRevision: 1, editingEnabled: false, clearHistoryView: vi.fn(),
+      onModeChange: vi.fn(), onSourceChange: vi.fn(), onSave: vi.fn(), onScrollChange: vi.fn(),
+      onHeaderContextMenu: vi.fn(),
+    };
+    const historyView = { filePath: projection.filePath, mode: 'git-revision' as const, revision };
+    const { rerender } = render(<SplitPaneView {...props} projection={{ ...projection, title: '', mode: 'git-revision' }} historyView={historyView} />);
+    expect(screen.getByText('a.md', { selector: '.split-document-pane__title' })).toHaveAttribute('data-hover-tooltip', '/docs/a.md');
+    expect(screen.getByRole('heading', { name: 'Archived text' })).toBeInTheDocument();
+    const resume = screen.getByRole('button', { name: `${dir.primaryDocument} ${editor.rendered}` });
+    const revisionMode = screen.getByRole('button', { name: `${dir.primaryDocument} ${history.revision}` });
+    expect(revisionMode).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.contextMenu(revisionMode);
+    expect(props.onHeaderContextMenu).not.toHaveBeenCalled();
+    fireEvent.click(resume);
+    fireEvent.click(screen.getByRole('button', { name: history.returnCurrent }));
+    expect(props.clearHistoryView.mock.calls).toEqual([['primary'], ['primary']]);
+    expect(props.onModeChange).not.toHaveBeenCalled();
+
+    rerender(<SplitPaneView {...props} projection={{ ...projection, mode: 'diff' }} historyView={{ filePath: projection.filePath, mode: 'diff', comparison }} />);
+    expect(screen.getByTestId('document-diff-view')).toHaveTextContent('old text');
+    expect(screen.getByTestId('document-diff-view')).toHaveTextContent('new text');
+    fireEvent.click(screen.getByRole('button', { name: history.returnCurrent }));
+    expect(props.clearHistoryView).toHaveBeenCalledTimes(3);
+
+    rerender(<SplitPaneView {...props} projection={{ ...projection, mode: 'rendered' }} historyView={historyView} />);
+    expect(screen.queryByTestId('document-diff-view')).not.toBeInTheDocument();
+    const openRevision = screen.getByRole('button', { name: `${dir.primaryDocument} ${history.revision}` });
+    expect(openRevision).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(openRevision);
+    expect(props.onModeChange).toHaveBeenCalledExactlyOnceWith('primary', 'git-revision');
+    rerender(<SplitPaneView {...props} projection={projection} />);
+    expect(screen.queryByRole('textbox', { name: /markdown source/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'edited' })).toBeInTheDocument();
+  });
+
   it('renders independent modes for one shared source', () => {
     render(
       <SplitContentView

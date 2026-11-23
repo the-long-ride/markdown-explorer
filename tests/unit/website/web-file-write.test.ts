@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { writeSingleFileDocument } from '../../../website-app/src/web-file-mode';
+import { writeFileHandle } from '../../../website-app/src/file-access';
 
 function createHandle(initialSource = '# A', initialModified = 10, permission: 'granted' | 'denied' | 'prompt' = 'prompt') {
   let source = initialSource;
@@ -28,7 +28,7 @@ describe('web single-file Markdown writes', () => {
   it('requests write permission and saves the selected file', async () => {
     const { handle, requestPermission, readSource } = createHandle();
 
-    const result = await writeSingleFileDocument(handle, '# B', '10:3', false);
+    const result = await writeFileHandle(handle, '# B', '10:3', false);
 
     expect(requestPermission).toHaveBeenCalledWith({ mode: 'readwrite' });
     expect(result.ok).toBe(true);
@@ -38,7 +38,7 @@ describe('web single-file Markdown writes', () => {
   it('returns conflict without overwriting a stale selected file', async () => {
     const { handle, readSource } = createHandle('# External', 20, 'granted');
 
-    const result = await writeSingleFileDocument(handle, '# Mine', '10:3', false);
+    const result = await writeFileHandle(handle, '# Mine', '10:3', false);
 
     expect(result).toMatchObject({ ok: false, reason: 'conflict', diskSource: '# External' });
     expect(handle.createWritable).not.toHaveBeenCalled();
@@ -48,7 +48,7 @@ describe('web single-file Markdown writes', () => {
   it('returns permission denied without writing', async () => {
     const { handle } = createHandle('# A', 10, 'denied');
 
-    const result = await writeSingleFileDocument(handle, '# B', null, false);
+    const result = await writeFileHandle(handle, '# B', null, false);
 
     expect(result).toMatchObject({ ok: false, reason: 'permission-denied' });
     expect(handle.createWritable).not.toHaveBeenCalled();
