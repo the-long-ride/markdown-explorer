@@ -96,6 +96,10 @@ jobs:
           # fail when no Apple Developer certificate is present in the runner.
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+      - name: Set Finder icons on Electron disk image files
+        if: runner.os == 'macOS'
+        run: swift scripts/set-dmg-file-icon.swift ui/assets/logos/logo-512.png electron/dist/*.dmg
+
       - name: Upload Desktop Artifact (Windows)
         if: matrix.platform == 'windows'
         uses: actions/upload-artifact@v6
@@ -269,6 +273,10 @@ jobs:
             console.log(`${base} -> ${next}`);
           }
           NODE
+
+      - name: Set Finder icons on Tauri disk image files
+        if: runner.os == 'macOS'
+        run: swift scripts/set-dmg-file-icon.swift ui/assets/logos/logo-512.png tauri/target/release/bundle/dmg/*.dmg
 
       - name: Upload Tauri Artifact (Windows)
         if: runner.os == 'Windows'
