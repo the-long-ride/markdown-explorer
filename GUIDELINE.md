@@ -5,7 +5,7 @@ This document provides comprehensive instructions and architectural guidelines f
 ---
 
 ## 🎯 Mission of this Document
-The mission of `GUIDELINE.md` is to preserve codebase health, establish standardized patterns for shared asset usage, and ensure visual and execution consistency across all three deployment targets (**VS Code Extension**, **Shared React UI**, and the **Standalone Electron Desktop App**). Our core design tenets are:
+The mission of `GUIDELINE.md` is to preserve codebase health, establish standardized patterns for shared asset usage, and ensure visual and execution consistency across the VS Code extension, Tauri/Electron desktop applications, and browser Web App that share the React UI. Our core design tenets are:
 *   **Offline-First & Security-Centered**: Operating 100% locally with zero cloud telemetry, tracking, or remote dependencies.
 *   **Aesthetic & Premium Feel**: Smooth hover animations, glassmorphism designs, sticky components, and custom typography.
 *   **Lightweight & Performant**: Keeping asset footprints small and bundle sizes optimized.
@@ -16,8 +16,8 @@ The mission of `GUIDELINE.md` is to preserve codebase health, establish standard
 
 ### 1. Prerequisites
 Ensure the following tools are installed on your machine:
-*   **Node.js**: Version `18.x` or higher is recommended (supports ESModules and workspace configurations).
-*   **pnpm**: Version `9.x` or higher (managed via [Corepack](https://nodejs.org/api/corepack.html) or installed globally). Enable with `corepack enable` then `corepack prepare pnpm@latest --activate`.
+*   **Node.js**: Version `24.x` is recommended (matching CI).
+*   **pnpm**: Version `12.11.2` (managed via [Corepack](https://nodejs.org/api/corepack.html) or installed globally). Enable with `corepack enable` then `corepack prepare pnpm@12.11.2 --activate`.
 *   **Visual Studio Code**: The recommended IDE for extension development.
 
 ### 2. Monorepo Setup (pnpm Workspaces)
@@ -25,7 +25,8 @@ This project leverages **pnpm Workspaces** to share code, models, and assets acr
 *   `ui` (React Shared Frontend)
 *   `vscode` (VS Code Extension runtime)
 *   `electron` (Electron Standalone Desktop container)
-*   `chromium-xtension` (Chromium browser extension)
+*   `tauri` (Rust/Tauri desktop runtime)
+*   `website-app` (browser Web App runtime)
 
 To configure your local developer environment:
 1.  Clone the repository.
@@ -34,7 +35,7 @@ To configure your local developer environment:
     ```bash
     pnpm install
     ```
-    *This runs a single install command that recursively resolves dependencies across `ui`, `vscode`, `electron`, and `chromium-xtension`, linking the shared pnpm content-addressable store and symlinking workspace packages.*
+    *This runs a single install command that recursively resolves dependencies across `ui`, `vscode`, `electron`, `tauri`, and `website-app`, linking the shared pnpm content-addressable store and symlinking workspace packages.*
 
 ---
 
@@ -80,7 +81,7 @@ Inside [electron/main.js](file:///f:/Extensions/markdown-explorer/electron/main.
 
 ## 🐞 Run & Debug Workflows
 
-We provide unified commands inside the root [package.json](file:///f:/Extensions/markdown-explorer/package.json) to develop and debug both targets:
+We provide unified commands inside the root [package.json](file:///f:/Extensions/markdown-explorer/package.json) to develop and debug the runtime targets:
 
 ### 1. VS Code Extension (F5 Workflow)
 1.  Open the workspace root in VS Code.
@@ -106,6 +107,32 @@ We provide unified commands inside the root [package.json](file:///f:/Extensions
     pnpm run start:electron
     ```
     *This executes `electron .` within the `electron/` workspace folder, opening a frameless desktop window pointing to the compiled React UI.*
+
+### 3. Tauri Desktop App
+1.  Build the Tauri UI bundle and launch the Rust shell:
+    ```bash
+    pnpm run start:tauri
+    ```
+2.  Produce release artifacts with `pnpm run build:tauri`.
+
+### 4. Browser Web App
+Run `pnpm run dev:web` for development or `pnpm run build:website-app` for a production build.
+
+### 5. Verification & Quality Gates
+Before submitting changes, run the narrowest relevant tests plus the static gates:
+
+```bash
+pnpm run lint:loc          # source file-size budget
+pnpm run lint:ui-styles    # stylesheet organization contract
+pnpm run typecheck         # ui + vscode + website-app TypeScript
+pnpm run test:contracts    # contract, manifest, and build tests
+pnpm test                  # full Vitest suite
+pnpm run test:node         # dependency-light Node contracts
+pnpm run test:coverage     # V8 coverage with 90% gates
+pnpm run test:tauri        # Rust tests
+```
+
+JavaScript/TypeScript coverage requires **90% lines, functions, branches, and statements** globally and independently for `ui/src`, `electron`, `vscode`, and `website-app/src`. Rust coverage requires **90% regions, functions, and lines**; only live-native startup, window/event-loop, OS-integration, installer, and restart seams are excluded because they require a running desktop runtime.
 
 ---
 
@@ -155,13 +182,11 @@ To ensure the application looks premium offline without making external CDN call
 
 ## 📦 Packaging & Distribution
 
-```bash
+```text
 # Packaging Targets and Output Folders
-├── vscode/
-│   └── vscode-extension-markdown-explorer-1.3.0.vsix (Packaged Extension)
-└── electron/
-    └── dist/
-        └── Markdown Explorer Portable.exe            (Windows Desktop Target)
+├── vscode/     (VS Code .vsix packaging)
+├── electron/   (Electron installers/portable/ZIP artifacts under dist/)
+└── tauri/      (Tauri installers/updater artifacts generated by cargo/tauri build)
 ```
 
 ### 1. VS Code Extension packaging
@@ -178,11 +203,10 @@ pnpm run build:electron
 ```
 *This compiles the shared UI, compiles the VS Code markdown parser, and executes `electron-builder` under the `electron` workspace to bundle a portable Windows binary (or standard system installers) under `electron/dist/`.*
 
-### 3. CI/CD Release Pipeline
-Our automated GitHub Actions release workflow packages deployment targets in parallel:
-*   **Runner A (Ubuntu)**: Compiles and packages the VS Code `.vsix` file.
-*   **Runner B (Windows)**: Compiles and packages the Electron `.exe` file.
-*   Both binaries are uploaded and published concurrently under a unified tag-release on GitHub.
+### 3. CI/CD Verification & Release Pipeline
+`test.yml` runs lint (`lint:loc`, `lint:ui-styles`), `typecheck`, contracts/translations, four parallel cross-project unit shards, merged coverage enforcement, shared/host builds, Windows/macOS Tauri tests, Ubuntu Rust coverage, and a final `ci-gate`. Unit shards upload blob reports with `if: always()`; the coverage job merges all four blobs and enforces the complete 90% JavaScript/TypeScript gates. Rust coverage likewise enforces 90% regions, functions, and lines. Native Tauri jobs use OS-keyed Rust caches.
+
+Tag/manual release workflows reuse `test.yml` as `test-gate`, then package VS Code, Electron, and Tauri artifacts across their platform matrices. The Tauri Windows NSIS installer uses the same Markdown Explorer `icon.ico` as the application bundle.
 
 ---
 

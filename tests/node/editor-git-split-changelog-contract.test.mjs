@@ -4,18 +4,18 @@ import { readFileSync } from 'node:fs';
 
 const changelog = readFileSync(new URL('../../CHANGELOG.md', import.meta.url), 'utf8');
 
-function unreleasedSection(source) {
-  const match = source.match(/## \[(?:v1\.7\.0|Unreleased)\]([\s\S]*?)(?=\n---\n|\n## \[)/);
+function v170Section(source) {
+  const match = source.match(/## \[v1\.7\.0\]([\s\S]*?)(?=\n---\n|\n## \[)/);
   return match?.[1] ?? '';
 }
 
-test('v1.7.0 / Unreleased changelog documents local editing, split view, and Git history', () => {
-  const unreleased = unreleasedSection(changelog);
+test('v1.7.0 changelog documents local editing, split view, and Git history', () => {
+  const section = v170Section(changelog);
 
-  assert.match(unreleased, /local Markdown editing/i);
-  assert.match(unreleased, /split document view/i);
-  assert.match(unreleased, /Git history/i);
-  assert.match(unreleased, /Electron/i);
-  assert.match(unreleased, /Tauri/i);
-  assert.match(unreleased, /VS Code/i);
+  assert.match(section, /local Markdown editing/i);
+  assert.match(section, /split document view/i);
+  assert.match(section, /Git history/i);
+  assert.match(section, /Electron/i);
+  assert.match(section, /Tauri/i);
+  assert.match(section, /VS Code/i);
 });

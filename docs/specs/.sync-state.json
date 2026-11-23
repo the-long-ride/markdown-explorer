@@ -1478,9 +1478,6 @@
     "ui/src/dom/tableColumnHandlers.ts": [
       "feature.markdown-rendering-and-tables"
     ],
-    "ui/src/dom/tableFilterHandlers.ts": [
-      "feature.markdown-rendering-and-tables"
-    ],
     "ui/src/dom/tableHandlers.ts": [
       "feature.markdown-rendering-and-tables"
     ],

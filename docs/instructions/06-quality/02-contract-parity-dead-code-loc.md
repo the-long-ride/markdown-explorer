@@ -15,11 +15,13 @@ source_scope:
 - tests/contracts/dead-code-removal.test.ts
 - tests/contracts/source-loc.test.ts
 - tests/contracts/ui-style-contract.test.ts
+- tests/node/tauri-bundle-icons.test.mjs
 test_scope:
 - tests/contracts/host-message-parity.test.ts
 - tests/contracts/tauri-dispatcher-parity.test.ts
 - tests/contracts/dead-code-removal.test.ts
 - tests/contracts/source-loc.test.ts
+- tests/node/tauri-bundle-icons.test.mjs
 runtime_scope:
 - all
 keywords:
@@ -39,7 +41,7 @@ keywords:
 | Markdown parity | Shared and VS Code renderer behavior remains compatible |
 | Platform paths | Runtime path conventions remain valid |
 | Package/workflow config | Scripts and release workflows retain required structure |
-| Windows installer | Explorer integration/options remain present and intentional |
+| Windows installer | Explorer integration/options and application-installer icon parity remain present and intentional |
 | Fullscreen/header style | Frameless/fullscreen UI remains operable |
 | Dead-code removal | Removed/forbidden source patterns do not return |
 | Source LOC | Large files are constrained and decomposition remains enforceable |
@@ -67,6 +69,7 @@ This instruction set references only files that exist and active contracts. If a
 | Verification | `tests/contracts/tauri-dispatcher-parity.test.ts` | Automated expectation |
 | Verification | `tests/contracts/dead-code-removal.test.ts` | Automated expectation |
 | Verification | `tests/contracts/source-loc.test.ts` | Automated expectation |
+| Verification | `tests/node/tauri-bundle-icons.test.mjs` | Windows application/installer icon parity |
 
 ---
 

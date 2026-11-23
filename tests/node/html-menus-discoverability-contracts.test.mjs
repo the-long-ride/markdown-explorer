@@ -150,7 +150,7 @@ test('all supported locales expose HTML menus, sidebar actions, renamed preview 
   }
 });
 
-test('Snake sandbox and Unreleased changelog cover the patch series', async () => {
+test('Snake sandbox and v1.6.5 changelog cover the patch series', async () => {
   const [fixture, changelog] = await Promise.all([
     read('manual-tests/test-code.md'),
     read('CHANGELOG.md'),
@@ -161,14 +161,14 @@ test('Snake sandbox and Unreleased changelog cover the patch series', async () =
   assert.match(fixture, />Restart</);
   assert.match(fixture, /ArrowUp|KeyW/);
   assert.match(fixture, /requestAnimationFrame|setInterval/);
-  const unreleased = changelog;
-  assert.match(unreleased, /### Added/);
-  assert.match(unreleased, /### Changed/);
-  assert.match(unreleased, /### Fixed/);
-  assert.match(unreleased, /Reading Progress/i);
-  assert.match(unreleased, /onboarding/i);
-  assert.match(unreleased, /chart/i);
-  assert.match(unreleased, /pin/i);
+  const v165 = changelog.match(/## \[v1\.6\.5\]([\s\S]*?)(?=\n---\n|\n## \[)/)?.[1] ?? '';
+  assert.match(v165, /### Added/);
+  assert.match(v165, /### Changed/);
+  assert.match(v165, /### Fixed/);
+  assert.match(v165, /Reading Progress/i);
+  assert.match(v165, /onboarding/i);
+  assert.match(v165, /chart/i);
+  assert.match(v165, /pin/i);
 });
 
 test('raw HTML source survives every host and desktop workspace-tab cache path', async () => {
