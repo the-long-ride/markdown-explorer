@@ -65,6 +65,27 @@ describe('mermaidArchitecture', () => {
   });
 
   describe('curveArchitectureEdges and enforceArchitectureGroupBounds', () => {
+    it.each([
+      ['13,0 0,6.6 13,13', 'M 0,0 C 40,0 40,40 80,40'],
+      ['6.6,0 0,13.33 13.33,13.33', 'M 0,0 C 0,20 80,20 80,40'],
+      ['0,0 6.6,13 13,0', 'M 0,0 C 0,20 80,20 80,40'],
+    ])('curves the edge to meet the arrow orientation %s', (points, expected) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.innerHTML = `<g class="architecture-edges"><g><path class="edge" d="M 0,0 L 80,40" /><polygon class="arrow" points="${points}" /></g></g>`;
+      expect(curveArchitectureEdges(svg)).toBe(1);
+      expect(svg.querySelector('path')?.getAttribute('d')).toBe(expected);
+    });
+
+    it('skips missing paths and marks straight edges without reporting them as curved', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.innerHTML = '<g class="architecture-edges"><g><polygon /></g><g><path class="edge" /></g><g><path class="edge" d="M 0,0 L 80,0" /></g></g>';
+      expect(curveArchitectureEdges(svg)).toBe(0);
+      const [empty, straight] = svg.querySelectorAll('path');
+      expect(empty.hasAttribute('data-mdn-architecture-edge-curved')).toBe(false);
+      expect(straight.getAttribute('data-mdn-architecture-edge-curved')).toBe('true');
+      expect(straight.getAttribute('d')).toBe('M 0,0 L 80,0');
+    });
+
     it('curves edges and marks them with data-mdn-architecture-edge-curved', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.innerHTML = `

@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { EditorView } from '@codemirror/view';
 import { MarkdownSourceEditor } from '../../../../ui/src/components/Content/MarkdownSourceEditor';
-import { EDITOR_FONT_SIZE_EVENT } from '../../../../ui/src/editor/editorUx';
+import { EDITOR_FONT_SIZE_EVENT, EDITOR_FONT_SIZE_STORAGE_KEY } from '../../../../ui/src/editor/editorUx';
 
 function renderEditor(overrides: Partial<React.ComponentProps<typeof MarkdownSourceEditor>> = {}) {
   const props: React.ComponentProps<typeof MarkdownSourceEditor> = {
@@ -154,6 +154,33 @@ describe('MarkdownSourceEditor', () => {
     expect(requestMeasureSpy).toHaveBeenCalled();
 
     requestMeasureSpy.mockRestore();
+  });
+
+  it('synchronizes font size across windows without accepting unrelated storage events', () => {
+    const { container, unmount } = renderEditor();
+    const editor = container.querySelector('.markdown-source-editor');
+    const measure = vi.spyOn(EditorView.prototype, 'requestMeasure');
+    const storage = (key: string, newValue: string | null) =>
+      fireEvent(window, new StorageEvent('storage', { key, newValue }));
+    try {
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, '42');
+      expect(editor).toHaveAttribute('data-editor-font-size', '32');
+      expect(measure).toHaveBeenCalled();
+      measure.mockClear();
+      storage('another-setting', '12');
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, null);
+      fireEvent(window, new CustomEvent(EDITOR_FONT_SIZE_EVENT, { detail: '10' }));
+      expect(editor).toHaveAttribute('data-editor-font-size', '32');
+      expect(measure).not.toHaveBeenCalled();
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, '2');
+      expect(editor).toHaveAttribute('data-editor-font-size', '8');
+      unmount();
+      measure.mockClear();
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, '14');
+      expect(measure).not.toHaveBeenCalled();
+    } finally {
+      measure.mockRestore();
+    }
   });
 it('preserves undo and redo history across unmount and remount with the same sessionKey', () => {
     let currentValue = 'initial text';

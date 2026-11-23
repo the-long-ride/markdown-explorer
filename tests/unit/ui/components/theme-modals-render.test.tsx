@@ -513,6 +513,33 @@ describe('ThemeStylePicker', () => {
     expect(screen.queryByRole('listbox', { name: 'Built-in themes' })).not.toBeInTheDocument();
   });
 
+  it('repositions an open theme menu after viewport movement without dismissing it on inside clicks', () => {
+    render(<ThemeStylePicker value="default" onChange={vi.fn()} />);
+    const trigger = screen.getByRole('button', { name: /Explorer Classic/i });
+    const rect = vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(window.innerWidth - 20, window.innerHeight - 40, 130, 24));
+    fireEvent.click(trigger);
+    const menu = screen.getByRole('listbox', { name: 'Built-in themes' });
+    expect(menu.style.getPropertyValue('--menu-bottom')).toBe('45px');
+    expect(menu.style.getPropertyValue('--menu-top')).toBe('');
+    expect(menu.style.getPropertyValue('--menu-left')).toBe(`${window.innerWidth - 228}px`);
+    expect(menu.style.getPropertyValue('--menu-width')).toBe('220px');
+    fireEvent.pointerDown(screen.getByRole('option', { name: /Bento/i }));
+    expect(menu).toBeInTheDocument();
+    fireEvent.pointerDown(trigger);
+    fireEvent.keyDown(document, { key: 'ArrowDown' });
+    expect(menu).toBeInTheDocument();
+
+    rect.mockReturnValue(new DOMRect(-10, 20, 260, 24));
+    fireEvent.scroll(window);
+    expect(menu.style.getPropertyValue('--menu-top')).toBe('49px');
+    expect(menu.style.getPropertyValue('--menu-bottom')).toBe('');
+    expect(menu.style.getPropertyValue('--menu-left')).toBe('8px');
+    expect(menu.style.getPropertyValue('--menu-width')).toBe('260px');
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(menu).not.toBeInTheDocument();
+  });
+
   it('renders with custom className', () => {
     render(<ThemeStylePicker value="default" onChange={() => {}} className="custom-class" />);
     expect(document.querySelector('.custom-class')).toBeInTheDocument();
