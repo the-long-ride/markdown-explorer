@@ -367,3 +367,36 @@ it('restores folder focus and keeps keyboard actions after unchanged-name Enter'
   fireEvent.keyDown(row('docs'),{key:'Delete'});expect(screen.getByRole('alertdialog')).toBeTruthy();
   expect(posted.some(m=>m.command==='renameWorkspaceEntry')).toBe(false);
 });
+
+it('validates folder renames before posting, then allows retry after a host conflict', async () => {
+  render(<Sidebar />);
+  fireEvent.keyDown(row('docs'), { key: 'F2', shiftKey: true });
+  expect(textbox(t.sidebar.renameFolder)).toBeNull();
+  fireEvent.keyDown(row('docs'), { key: 'F2' });
+  const input = screen.getByRole('textbox', { name: t.sidebar.renameFolder });
+  fireEvent.change(input, { target: { value: 'invalid/name' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(input).toHaveAttribute('aria-invalid', 'true');
+  expect(posted.some((message) => message.command === 'renameWorkspaceEntry')).toBe(false);
+  fireEvent.change(input, { target: { value: 'manual' } });
+  expect(input).toHaveAttribute('aria-invalid', 'false');
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const first = posted.find((message) => message.command === 'renameWorkspaceEntry');
+  expect(first).toMatchObject({ path: 'docs', name: 'manual', kind: 'folder' });
+  expect(input).toHaveAttribute('aria-busy', 'true');
+  fireEvent.blur(input);
+  fireEvent.keyDown(input, { key: 'Escape' });
+  expect(input).toBeInTheDocument();
+
+  emit({ command: 'renameWorkspaceEntryResult', requestId: first.requestId, ok: false, reason: 'exists', error: 'A folder with this name already exists' });
+  await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'));
+  expect(input).toHaveAttribute('aria-busy', 'false');
+  expect(notices).toContainEqual(expect.objectContaining({ message: 'A folder with this name already exists', tone: 'error' }));
+  fireEvent.change(input, { target: { value: 'guides' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const retry = posted.filter((message) => message.command === 'renameWorkspaceEntry').at(-1);
+  expect(retry.requestId).not.toBe(first.requestId);
+  emit({ command: 'renameWorkspaceEntryResult', requestId: retry.requestId, ok: true, path: 'guides', oldPath: 'docs', kind: 'folder' });
+  await waitFor(() => expect(input).not.toBeInTheDocument());
+  expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'RENAME_WORKSPACE_ENTRY', oldPath: 'docs', newPath: 'guides' }));
+});

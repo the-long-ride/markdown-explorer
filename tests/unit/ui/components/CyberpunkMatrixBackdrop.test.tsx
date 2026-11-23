@@ -4,11 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CyberpunkMatrixBackdrop } from '../../../../ui/src/components/shared/CyberpunkMatrixBackdrop';
 
 let mockThemeStyle = 'cyberpunk';
+let mockTheme = 'dark';
 
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
     state: {
-      theme: 'dark',
+      theme: mockTheme,
       themeStyle: mockThemeStyle,
     },
   }),
@@ -35,6 +36,7 @@ function createMockCtx() {
 describe('CyberpunkMatrixBackdrop', () => {
   beforeEach(() => {
     mockThemeStyle = 'cyberpunk';
+    mockTheme = 'dark';
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
   });
 
@@ -128,5 +130,80 @@ describe('CyberpunkMatrixBackdrop', () => {
     expect(mockCtx.fillText).toHaveBeenCalled();
 
     unmount();
+  });
+
+  it.each([
+    ['dark', 0.25, '#FFFFFF'],
+    ['light', 0.60, '#FF0055'],
+    ['auto', 0.90, '#FFFFFF'],
+  ])('renders %s terminal text and rotates telemetry phases over time', (theme, random, cursorColor) => {
+    mockTheme = theme;
+    vi.stubGlobal('innerWidth', 840);
+    vi.stubGlobal('innerHeight', 320);
+    vi.stubGlobal('devicePixelRatio', 3);
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(prefers-color-scheme: dark)' }));
+    vi.spyOn(Math, 'random').mockReturnValue(random);
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+    const ctx = createMockCtx();
+    const telemetry = new Set<string>();
+    const cursorColors = new Set<string>();
+    const finishedPhrases = new Set<string>();
+    const textAlpha = new Set<number>();
+    vi.mocked(ctx.fillText).mockImplementation((text) => {
+      if (text === '█') cursorColors.add(String(ctx.fillStyle));
+      if (text.startsWith('//') || text.startsWith('BUFFER:') || text.startsWith('LINK:')) telemetry.add(text);
+      if (text.startsWith('>')) {
+        finishedPhrases.add(text);
+        textAlpha.add(ctx.globalAlpha);
+      }
+    });
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx);
+    let next: FrameRequestCallback;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => { next = callback; return 1; });
+    const { container, unmount } = render(<CyberpunkMatrixBackdrop />);
+    const canvas = container.querySelector('canvas')!;
+    expect(canvas).toHaveAttribute('width', '1680');
+    expect(canvas).toHaveAttribute('height', '640');
+    expect(ctx.setTransform).toHaveBeenCalledWith(2, 0, 0, 2, 0, 0);
+    for (let frame = 1; frame <= 185; frame += 1) next!(frame * 45);
+    expect(cursorColors).toEqual(new Set([cursorColor]));
+    expect([...telemetry]).toEqual(expect.arrayContaining([
+      expect.stringMatching(/^\/\/ /), expect.stringMatching(/^BUFFER: 0x/), expect.stringMatching(/^LINK: /),
+    ]));
+    expect([...finishedPhrases].some((phrase) => phrase.length > 20)).toBe(true);
+    expect([...textAlpha].some((alpha) => alpha < 0.5)).toBe(true);
+    unmount();
+  });
+
+  it('defers painting during transitions and fast frames, then remeasures on resize', () => {
+    const ctx = createMockCtx();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx);
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+    vi.stubGlobal('innerWidth', 300);
+    vi.stubGlobal('innerHeight', 100);
+    vi.stubGlobal('devicePixelRatio', 0);
+    let next: FrameRequestCallback;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => { next = callback; return 42; });
+    const cancel = vi.spyOn(window, 'cancelAnimationFrame');
+    const { container, unmount } = render(<CyberpunkMatrixBackdrop />);
+    const canvas = container.querySelector('canvas')!;
+    expect(ctx.setTransform).toHaveBeenCalledWith(1, 0, 0, 1, 0, 0);
+    try {
+      document.documentElement.dataset.themeTransitioning = 'true';
+      next!(60);
+      expect(ctx.clearRect).not.toHaveBeenCalled();
+    } finally {
+      delete document.documentElement.dataset.themeTransitioning;
+    }
+    next!(20);
+    expect(ctx.clearRect).not.toHaveBeenCalled();
+    next!(70);
+    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, 300, 100);
+    expect(vi.mocked(ctx.fillText).mock.calls.some(([text]) => text.startsWith('//'))).toBe(false);
+    vi.stubGlobal('innerWidth', 380);
+    window.dispatchEvent(new Event('resize'));
+    expect(canvas).toHaveAttribute('width', '380');
+    unmount();
+    expect(cancel).toHaveBeenCalledWith(42);
   });
 });

@@ -536,6 +536,50 @@ describe('RepositorySnapshotContent', () => {
     expect(cyberpunkCss).toContain('.content:not(.repository-snapshot-content)');
   });
 
+  it('renders literal source for a non-Markdown snapshot file', () => {
+    const source = '<script type="application/json">{"example":true}</script>';
+    mocks.snapshotContext = makeSnapshotContext({ oid: OID, path: 'config/example.html', source });
+    const { container } = render(<RepositorySnapshotContent />);
+    expect(screen.getByText('config/example.html')).toBeInTheDocument();
+    expect(container.querySelector('pre code')).toHaveTextContent(source);
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.querySelector('article')).toBeNull();
+  });
+
+  it('renders Markdown locally when pre-rendered content is unavailable', () => {
+    mocks.appState.tocCollapsed = true;
+    const source = '---\nstatus: ready\n---\n\n<!-- private note -->\n\n# Offline snapshot\n\nDetails.';
+    mocks.snapshotContext = makeSnapshotContext({ oid: OID, path: 'docs/offline.mdx', source }, { activeRendered: undefined });
+    const { container } = render(<RepositorySnapshotContent />);
+    expect(screen.getByRole('heading', { name: 'Offline snapshot' })).toBeInTheDocument();
+    expect(screen.getByText('Details.')).toBeInTheDocument();
+    expect(screen.getByText('ready')).toBeInTheDocument();
+    expect(container.querySelector('article')).toHaveAttribute('data-mdn-source-document-path', 'docs/offline.mdx');
+  });
+
+  it.each([
+    [' Jane Doe ', '', 'Authored by Jane Doe'],
+    ['', '2026-01-15', 'Authored on 15 Jan 2026'],
+    ['', '', null],
+  ] as const)('handles partial commit metadata for author %j and date %j', (author, authoredAt, metadata) => {
+    mocks.appState.sidebarCollapsed = false;
+    mocks.setSidebarCollapsed.mockClear();
+    mocks.setSidebarActiveTab.mockClear();
+    mocks.snapshotContext = makeSnapshotContext(null, {
+      commits: [{ oid: OID, shortOid: '', parentOids: [], author, authoredAt, subject: ' ', refs: [], isHead: false }],
+    });
+    const { container } = render(<RepositorySnapshotContent />);
+    const panel = screen.getByTestId('repository-snapshot-commit-panel');
+    expect(panel).toHaveTextContent(OID.slice(0, 7));
+    expect(screen.getByRole('heading')).not.toBeEmptyDOMElement();
+    const meta = container.querySelector('.repository-snapshot-content__commit-meta');
+    if (metadata) expect(meta).toHaveTextContent(metadata);
+    else expect(meta).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Explore Files' }));
+    expect(mocks.setSidebarActiveTab).toHaveBeenCalledWith('files');
+    expect(mocks.setSidebarCollapsed).not.toHaveBeenCalled();
+  });
+
   it('renders a centered commit info panel when no snapshot file is opened yet, with Explore Files and Back to current HEAD actions', () => {
     mocks.appState.sidebarCollapsed = true;
     mocks.setSidebarActiveTab.mockClear();

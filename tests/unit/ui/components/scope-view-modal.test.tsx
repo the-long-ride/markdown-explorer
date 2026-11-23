@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
+import { getExportScopeTranslations } from '../../../../ui/src/contexts/exportScopeTranslations';
+import { SCOPE_NAVIGATION_REQUEST_EVENT, SCOPE_NAVIGATION_STATE_EVENT } from '../../../../ui/src/components/Modal/scopeHistory';
 
 const mocks = vi.hoisted(() => ({
   loadDocumentSnapshot: vi.fn(),
@@ -112,6 +114,74 @@ describe('ScopeViewModal', () => {
       switchView: mocks.switchView,
       closeViewDropdown: mocks.closeViewDropdown,
     };
+  });
+
+  it('ignores a stale initial read, shows errors, and resets to a closed dialog when the initial file is removed', async () => {
+    let complete: (value: ReturnType<typeof snapshot>) => void;
+    mocks.loadDocumentSnapshot
+      .mockReturnValueOnce(new Promise((resolve) => { complete = resolve; }))
+      .mockRejectedValueOnce(new Error('Document no longer exists'));
+    const props = { files, onClose: vi.fn() };
+    const { rerender } = render(<ScopeViewModal {...props} initialFile={files[0]} />);
+    const english = getExportScopeTranslations('en').scopeView;
+    expect(screen.getByText(english.loading)).toBeInTheDocument();
+    rerender(<ScopeViewModal {...props} initialFile={files[1]} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Document no longer exists');
+    await act(async () => complete!(snapshot(files[0])));
+    expect(screen.queryByRole('heading', { name: files[0].title })).not.toBeInTheDocument();
+    rerender(<ScopeViewModal {...props} initialFile={null} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    rerender(<ScopeViewModal {...props} initialFile={files[2]} />);
+    expect(await screen.findByRole('heading', { name: files[2].title })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('publishes history availability, supports navigation requests, and opens the scoped file only on command', async () => {
+    const listener = vi.fn();
+    const onClose = vi.fn();
+    window.addEventListener(SCOPE_NAVIGATION_STATE_EVENT, listener);
+    try {
+      const { unmount } = render(<ScopeViewModal files={files} initialFile={files[0]} onClose={onClose} />);
+      const english = getExportScopeTranslations('en').scopeView;
+      fireEvent.click(await screen.findByRole('link', { name: 'Open 2' }));
+      expect(await screen.findByRole('heading', { name: files[1].title })).toBeInTheDocument();
+      expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { active: true, canPrevious: true, canNext: false } }));
+      act(() => window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_REQUEST_EVENT, { detail: { direction: 'previous' } })));
+      expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
+      act(() => window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_REQUEST_EVENT, { detail: { direction: 'next' } })));
+      expect(mocks.postMessage).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: english.openFile }));
+      expect(mocks.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'navigate', path: files[1].fsPath });
+      expect(onClose).toHaveBeenCalledOnce();
+      unmount();
+      expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { active: false, canPrevious: false, canNext: false } }));
+    } finally {
+      window.removeEventListener(SCOPE_NAVIGATION_STATE_EVENT, listener);
+    }
+  });
+
+  it('allows nested overlays to handle Escape before closing the scope', async () => {
+    const onClose = vi.fn();
+    render(<ScopeViewModal files={files} initialFile={files[0]} onClose={onClose} />);
+    const link = await screen.findByRole('link', { name: 'Open 2' });
+    fireEvent.contextMenu(link);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    const media = document.createElement('div');
+    media.id = 'mediaModal';
+    document.body.append(media);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+    media.remove();
+    const dropdown = document.createElement('div');
+    dropdown.className = 'mdn-filter-dropdown';
+    document.body.append(dropdown);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(dropdown).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('renders ten depth segments and enlarges the active segment marker', async () => {
