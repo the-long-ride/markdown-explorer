@@ -701,6 +701,49 @@ describe('ContentTabs deep', () => {
   });
 
   describe('scrollbar drag', () => {
+    it('seeks on the track, drags from the thumb, and stops scrolling after release', () => {
+      mockAppState = createMockAppState({
+        contentTabs: [makeTab('/a.md', 'a.md', 'A')],
+        activeContentTabPath: '/a.md',
+      });
+      const { container } = render(createElement(ContentTabs));
+      const viewport = screen.getByRole('tablist');
+      let contentWidth = 800;
+      Object.defineProperties(viewport, {
+        clientWidth: { value: 200 },
+        scrollWidth: { get: () => contentWidth },
+      });
+      fireEvent.scroll(viewport);
+      const track = container.querySelector<HTMLElement>('.content-tabs__scrollbar')!;
+      expect(track).toBeInTheDocument();
+      Object.defineProperty(track, 'clientWidth', { value: 180 });
+      track.getBoundingClientRect = () => new DOMRect(20, 0, 180, 10);
+      fireEvent.resize(window);
+      const thumb = track.querySelector<HTMLElement>('.content-tabs__scrollbar-thumb')!;
+      expect(thumb.style.getPropertyValue('--scrollbar-thumb-width')).toBe('45px');
+      const pointer = (target: Element | Window, type: string, clientX: number) =>
+        fireEvent(target, new MouseEvent(type, { clientX, bubbles: true, cancelable: true }));
+      expect(pointer(track, 'pointerdown', 110)).toBe(false);
+      expect(viewport.scrollLeft).toBe(300);
+      expect(thumb.style.getPropertyValue('--scrollbar-thumb-left')).toBe('67.5px');
+      expect(track).toHaveClass('is-dragging');
+      pointer(window, 'pointermove', 400);
+      expect(viewport.scrollLeft).toBe(600);
+      pointer(window, 'pointercancel', 400);
+      expect(track).not.toHaveClass('is-dragging');
+      pointer(window, 'pointermove', 0);
+      expect(viewport.scrollLeft).toBe(600);
+
+      expect(pointer(thumb, 'pointerdown', 150)).toBe(false);
+      pointer(window, 'pointermove', -200);
+      expect(viewport.scrollLeft).toBe(0);
+      pointer(window, 'pointerup', -200);
+      expect(track).not.toHaveClass('is-dragging');
+      contentWidth = 200;
+      fireEvent.resize(window);
+      expect(track).not.toBeInTheDocument();
+    });
+
     it('pointer down on scrollbar thumb starts drag', () => {
       const origRAF = window.requestAnimationFrame;
       window.requestAnimationFrame = (cb) => { cb(); return 0; };
