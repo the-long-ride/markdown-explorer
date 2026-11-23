@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clearWorkspaceOperation } from '../../../../ui/src/desktop/workspaceOperations';
+import { beginWorkspaceOperation, clearWorkspaceOperation } from '../../../../ui/src/desktop/workspaceOperations';
 import { createExternalOpenCommand, useDesktopTabSearchSync } from '../../../../ui/src/hooks/useDesktopTabSearchSync';
 
 afterEach(() => clearWorkspaceOperation());
@@ -57,5 +57,22 @@ describe('useDesktopTabSearchSync host messages', () => {
 
   it('builds parent-workspace activation commands', () => {
     expect(createExternalOpenCommand({ mode: 'file-with-parent-workspace', folderPath: '/f', filePath: '/f/a.md' } as any)).toMatchObject({ command: 'activateWorkspace', workspacePath: '/f' });
+  });
+  it('tracks loading state for the active workspace operation and clears replacements on ready', () => {
+    const { fire, getTabs, replacementRef } = setup({ replacement: { workspaceOperationId: 'rep', oldPath: '/o' } });
+    const op = beginWorkspaceOperation('w1');
+    const ids = { workspaceOperationId: op.workspaceOperationId, workspaceTabId: 'w1' };
+    fire({ command: 'setLoading', ...ids });
+    expect(getTabs()[0].workspaceLoadState).toBe('loading');
+    fire({ command: 'workspaceScanProgress', active: false, ...ids });
+    expect(getTabs()[0].workspaceLoadState).toBe('ready');
+    fire({ command: 'workspaceScanProgress', active: true, ...ids });
+    expect(getTabs()[0].workspaceLoadState).toBe('loading');
+    fire({ command: 'workspaceFilesChanged', ...ids });
+    fire({ command: 'setLoading', workspaceOperationId: 'stale', workspaceTabId: 'w1' });
+    fire({ command: 'readyAck', workspaceOperationId: 'rep' });
+    expect(replacementRef.current).toBeNull();
+    fire({ command: 'workspaceOpenCancelled', ...ids });
+    expect(getTabs()[0].workspaceLoadState).toBe('ready');
   });
 });
