@@ -9,13 +9,11 @@ export type FileWriteResult =
   | { ok: true; revision: string; reason?: never }
   | {
       ok: false;
-      reason: 'permission-denied' | 'missing' | 'outside-workspace' | 'conflict' | 'write-failed' | 'io-error';
+      reason: 'permission-denied' | 'missing' | 'outside-workspace' | 'conflict' | 'write-failed';
       diskSource?: string;
       diskRevision?: string;
       error?: string;
     };
-
-export type BrowserDocumentWriteResult = FileWriteResult;
 
 export type BrowserDocumentWriteCapability =
   | { supported: true; revision: string }
@@ -150,20 +148,6 @@ export async function readBlobUrl(root: FileSystemDirectoryHandle, relativePath:
   if (!fileHandle) throw new Error(`File not found: ${relativePath}`);
   const file = await fileHandle.getFile();
   return URL.createObjectURL(file);
-}
-
-export async function readBinaryFile(
-  root: FileSystemDirectoryHandle,
-  relativePath: string,
-): Promise<{ bytes: Uint8Array; type: string; size: number } | null> {
-  const handle = await resolveFileHandle(root, relativePath);
-  if (!handle) return null;
-  const file = await handle.getFile();
-  return {
-    bytes: new Uint8Array(await file.arrayBuffer()),
-    type: file.type || '',
-    size: file.size,
-  };
 }
 
 export async function documentRevision(handle: FileSystemFileHandle): Promise<string> {

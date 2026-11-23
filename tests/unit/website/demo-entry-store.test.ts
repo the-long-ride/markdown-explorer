@@ -22,4 +22,23 @@ describe('demo storage recovery', () => {
     expect(() => store.delete('sample.md')).toThrow('failed');
     expect(store.entries).toEqual(seeds);
   });
+
+  it('rejects malformed paths, protected names and invalid kinds, and preserves same-name entries', () => {
+    const store = new DemoEntryStore(seeds, localStorage);
+    expect(() => store.create('', 'draft.md', 'invalid')).toThrow('invalid-name');
+    expect(() => store.create('', null, 'file')).toThrow('invalid-name');
+    expect(() => store.create('.git', 'config', 'file')).toThrow('protected');
+    expect(() => store.create('bad:name', 'note.md', 'file')).toThrow('invalid-name');
+    expect(() => store.create('', '.git', 'folder')).toThrow('protected');
+    expect(() => store.delete(null)).toThrow('outside-workspace');
+    store.create('', 'taken.md', 'file');
+    expect(() => store.rename('sample.md', 'taken.md', 'file')).toThrow('exists');
+    expect(store.rename('sample.md', 'sample.md', 'file')).toBe('sample.md');
+    expect(store.entries).toHaveLength(2);
+  });
+
+  it('ignores a persisted record for an unknown entry kind', () => {
+    localStorage.setItem(DEMO_WORKSPACE_STORAGE_KEY, '[{"path":"invalid","kind":"symlink"}]');
+    expect(new DemoEntryStore(seeds, localStorage).entries).toEqual(seeds);
+  });
 });
