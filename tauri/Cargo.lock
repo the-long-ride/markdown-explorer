@@ -2606,6 +2606,7 @@ version = "1.7.2"
 dependencies = [
  "anyhow",
  "calamine",
+ "embed-resource",
  "html2markdown",
  "http",
  "notify",

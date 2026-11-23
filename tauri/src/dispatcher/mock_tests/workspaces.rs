@@ -157,11 +157,25 @@ async fn insights_dispatch_reports_results_for_available_and_missing_workspaces(
         "native"
     );
     assert!(host.state.inner.read().insights_watch_controller.is_some());
-    fs::write(&note, "# Changed").unwrap();
-    assert_eq!(
-        host.event("insightsFsDelta").await["deltas"][0]["kind"],
-        "update"
-    );
+    let delta = tokio::time::timeout(Duration::from_secs(5), async {
+        let mut write_count = 0;
+        loop {
+            write_count += 1;
+            fs::write(&note, format!("# Changed {write_count}")).unwrap();
+            tokio::select! {
+                payload = host.events.recv() => {
+                    let payload = payload.expect("host event channel closed");
+                    if payload["command"] == "insightsFsDelta" {
+                        break payload;
+                    }
+                }
+                _ = tokio::time::sleep(Duration::from_millis(250)) => {}
+            }
+        }
+    })
+    .await
+    .unwrap_or_else(|_| panic!("no insightsFsDelta event"));
+    assert_eq!(delta["deltas"][0]["kind"], "update");
     host.send(json!({"command":"setInsightsWatchState","active":false}))
         .await;
     assert!(host.state.inner.read().insights_watch_controller.is_none());

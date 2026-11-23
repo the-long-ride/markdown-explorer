@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-const coverageThreshold = 0;
+const coverageThreshold = 90;
 const skipCoverageThresholds = process.env.VITEST_SKIP_COVERAGE_THRESHOLDS === '1';
 
 const coverageThresholds = {

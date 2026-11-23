@@ -23,14 +23,21 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).not.toMatch(/pnpm\/action-setup@v4[\s\S]*version:\s*11/);
   });
 
-  test('test workflow runs sharded runtime unit tests with blob coverage', () => {
+  test('test workflow runs sharded runtime unit tests with visible failures and blob coverage', () => {
     const workflow = readWorkflow('test.yml');
     expect(workflow).toContain(
       '--project ui --project electron --project vscode --project website',
     );
     expect(workflow).toContain('--shard=${{ matrix.shard }}/4');
+    expect(workflow).toContain('--reporter=default');
     expect(workflow).toContain('--reporter=blob');
+    expect(workflow).toContain(
+      '--outputFile.blob=blob-reports/shard-${{ matrix.shard }}.json',
+    );
     expect(workflow).toContain('VITEST_SKIP_COVERAGE_THRESHOLDS=1');
+    expect(workflow).toMatch(
+      /- name: Upload blob report\r?\n\s+if: always\(\)\r?\n\s+uses: actions\/upload-artifact@v6/,
+    );
   });
 
   test('tauri CI jobs restore cached target artifacts', () => {

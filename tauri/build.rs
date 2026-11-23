@@ -1,5 +1,9 @@
 fn main() {
-    tauri_build::build();
+    // tauri-build 2.7 links resources only into binaries. The separate resource
+    // below carries the manifest so test binaries can use it too.
+    let attributes = tauri_build::Attributes::new()
+        .windows_attributes(tauri_build::WindowsAttributes::new_without_app_manifest());
+    tauri_build::try_build(attributes).expect("failed to run tauri-build");
 
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
     let out_dir = std::env::var("OUT_DIR").unwrap_or_default();
@@ -7,6 +11,13 @@ fn main() {
     if target_os != "windows" {
         return;
     }
+
+    // Link the manifest into every target so test binaries can use Common Controls v6.
+    println!("cargo:rerun-if-changed=windows-app-manifest.xml");
+    println!("cargo:rerun-if-changed=windows-app-manifest.rc");
+    embed_resource::compile_for_everything("windows-app-manifest.rc", embed_resource::NONE)
+        .manifest_required()
+        .expect("failed to compile the Windows application manifest resource");
 
     // Copy WebView2Loader.dll to output directories to prevent STATUS_ENTRYPOINT_NOT_FOUND
     // when Cloudflare WARP's version shadows the correct one in PATH.

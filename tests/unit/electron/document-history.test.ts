@@ -25,10 +25,22 @@ const {
 
 const roots: string[] = [];
 
+const TEST_GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: 'Markdown Explorer Tests',
+  GIT_AUTHOR_EMAIL: 'tests@example.invalid',
+  GIT_COMMITTER_NAME: 'Markdown Explorer Tests',
+  GIT_COMMITTER_EMAIL: 'tests@example.invalid',
+};
+
+function gitEnv(extra: Record<string, string> = {}) {
+  return { ...process.env, ...TEST_GIT_IDENTITY, ...extra };
+}
+
 async function git(repo: string, ...args: string[]): Promise<string> {
   const { stdout } = await execFileAsync('git', ['-C', repo, ...args], {
     encoding: 'utf8',
     windowsHide: true,
+    env: gitEnv(),
   });
   return stdout;
 }
@@ -78,6 +90,7 @@ async function createRepositorySnapshotFixture() {
 }
 
 afterEach(async () => {
+  clearGitContextCache();
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
@@ -371,7 +384,7 @@ describe('Electron repository history paging', () => {
       await execFileAsync('git', ['-C', repo, 'commit', '-m', `commit ${index}`], {
         encoding: 'utf8',
         windowsHide: true,
-        env: { ...process.env, ...env },
+        env: gitEnv(env),
       });
     }
   }
