@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SidebarItemMenu } from '../../../../ui/src/components/Sidebar/SidebarItemMenu';
 import { buildSidebarItemMenuItems } from '../../../../ui/src/components/Sidebar/sidebarItemMenuItems';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
+import { initialState } from '../../../../ui/src/contexts/appStateModel';
 import { DOCUMENT_HISTORY_OPEN_EVENT } from '../../../../ui/src/components/shared/ToolbarActionMenu';
 
 function createConnectedElement(rect: Partial<DOMRect> = {}): HTMLElement {
@@ -224,5 +225,78 @@ describe('SidebarItemMenu', () => {
 
     copyFull?.onSelect();
     expect(copyToClipboard).toHaveBeenCalledWith('/repo/docs/sub');
+  });
+
+  it('uses the matching HTML tab override and routes native actions for its full path', () => {
+    const path = '/repo/some page.html';
+    const t = getTranslations('en');
+    const postMessage = vi.fn();
+    const navigate = vi.fn();
+    const onRenameEntry = vi.fn();
+    const onDeleteEntry = vi.fn();
+    const onTogglePin = vi.fn();
+    const options: Parameters<typeof buildSidebarItemMenuItems>[0] = {
+      state: {
+        ...initialState, currentFile: path, currentHtmlPreviewOverride: true,
+        contentTabs: [{ filePath: path, htmlPreviewOverride: false } as typeof initialState.contentTabs[number]],
+      },
+      target: { kind: 'file', path, anchor: createConnectedElement() }, translations: t,
+      canOpenHtmlInBrowser: true, canOpenItemLocations: true,
+      bridge: { postMessage } as Parameters<typeof buildSidebarItemMenuItems>[0]['bridge'], navigate,
+      isPinned: true, pinLimitReached: false, onTogglePin, onRenameEntry, onDeleteEntry, canChangeEntry: () => true,
+    };
+    const items = buildSidebarItemMenuItems(options);
+    const item = (id: string) => items.find((entry) => entry.id === id)!;
+    expect(item('toggle-html-preview').label).toBe(t.showHtmlPreview);
+    item('toggle-html-preview').onSelect();
+    expect(navigate).toHaveBeenCalledWith(path, { htmlPreviewOverride: true });
+    item('open-in-browser').onSelect();
+    expect(postMessage).toHaveBeenLastCalledWith({ command: 'openExternal', url: 'file:///repo/some%20page.html' });
+    item('open-location').onSelect();
+    expect(postMessage).toHaveBeenLastCalledWith({ command: 'openShellLocation', path, mode: 'reveal-file' });
+    item('rename-entry').onSelect();
+    item('delete-entry').onSelect();
+    item('unpin').onSelect();
+    expect(onRenameEntry).toHaveBeenCalledWith('file', path);
+    expect(onDeleteEntry).toHaveBeenCalledWith('file', path);
+    expect(onTogglePin).toHaveBeenCalledWith({ kind: 'file', path });
+
+    const withoutTab = buildSidebarItemMenuItems({
+      ...options, state: { ...options.state, contentTabs: [] }, canOpenHtmlInBrowser: false, isPinned: false, pinLimitReached: true, canChangeEntry: () => false,
+    });
+    expect(withoutTab.find((entry) => entry.id === 'toggle-html-preview')?.label).toBe(t.showMarkdownView);
+    expect(withoutTab.find((entry) => entry.id === 'open-in-browser')).toBeUndefined();
+    for (const id of ['pin-this-file', 'rename-entry', 'delete-entry']) {
+      expect(withoutTab.find((entry) => entry.id === id)?.disabled).toBe(true);
+    }
+  });
+
+  it('opens a Windows folder using its native path and falls back to the browser clipboard', () => {
+    const postMessage = vi.fn();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const previousClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    try {
+      const options: Parameters<typeof buildSidebarItemMenuItems>[0] = {
+        state: { ...initialState, workspacePath: 'C:\\repo\\', hostPlatform: 'windows' },
+        target: { kind: 'folder', path: 'docs/sub', anchor: createConnectedElement() },
+        translations: getTranslations('en'), canOpenHtmlInBrowser: false, canOpenItemLocations: true,
+        bridge: { postMessage, copyToClipboard: () => { throw new Error('Host clipboard unavailable'); } } as Parameters<typeof buildSidebarItemMenuItems>[0]['bridge'],
+        navigate: vi.fn(), isPinned: false, pinLimitReached: false, onTogglePin: vi.fn(),
+      };
+      const items = buildSidebarItemMenuItems(options);
+      const item = (id: string) => items.find((entry) => entry.id === id)!;
+      expect(item('open-location').shortcut).toBeUndefined();
+      item('open-location').onSelect();
+      expect(postMessage).toHaveBeenCalledWith({ command: 'openShellLocation', path: 'C:\\repo\\docs\\sub', mode: 'open-directory' });
+      item('copy-relative-path').onSelect();
+      expect(writeText).toHaveBeenLastCalledWith('docs\\sub');
+      item('copy-full-path').onSelect();
+      expect(writeText).toHaveBeenLastCalledWith('C:\\repo\\docs\\sub');
+      expect(buildSidebarItemMenuItems({ ...options, target: null })).toEqual([]);
+    } finally {
+      if (previousClipboard) Object.defineProperty(navigator, 'clipboard', previousClipboard);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
   });
 });

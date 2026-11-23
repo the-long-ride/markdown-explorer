@@ -1,10 +1,15 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsShortcutsPanel } from '../../../../ui/src/components/Settings/SettingsShortcutsPanel';
 import { SettingsModal } from '../../../../ui/src/components/Settings/SettingsModal';
 import { ACTIONS_LIST } from '../../../../ui/src/components/Settings/settingsActions';
+import { getDefaultKeybindingsForRuntime } from '../../../../ui/src/contexts/appStateConstants';
+import { getTranslations } from '../../../../ui/src/contexts/translations';
 
 const mockUpdateSettings = vi.fn();
+const mockPostMessage = vi.fn();
+const mockSetTheme = vi.fn();
+const mockSetThemeStyle = vi.fn();
 let mockState: any;
 
 function getMockState() {
@@ -46,15 +51,15 @@ vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({
   useAppState: () => ({
     state: mockState,
     dispatch: vi.fn(),
-    setTheme: vi.fn(),
-    setThemeStyle: vi.fn(),
+    setTheme: mockSetTheme,
+    setThemeStyle: mockSetThemeStyle,
     updateSettings: mockUpdateSettings,
   }),
 }));
 
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
   usePlatform: () => ({
-    postMessage: vi.fn(),
+    postMessage: mockPostMessage,
     onMessage: vi.fn(() => () => {}),
     getState: () => undefined,
     setState: () => {},
@@ -197,5 +202,93 @@ describe('Settings shortcut groups', () => {
 
     expect(mockUpdateSettings).not.toHaveBeenCalled();
     expect(screen.getByText(/"Ctrl\+I" is already assigned/i)).toBeInTheDocument();
+  });
+
+  it('opens the language chooser, dismisses it without changing settings, and applies a selection', () => {
+    const t = getTranslations('en');
+    renderModal();
+    const trigger = screen.getByRole('button', { name: t.tooltips.switchLanguage });
+    fireEvent.click(trigger);
+    const list = screen.getByRole('listbox', { name: t.ui.languages });
+    expect(within(list).getByRole('option', { name: 'English' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.pointerDown(trigger);
+    expect(list).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(list).not.toBeInTheDocument();
+    fireEvent.click(trigger);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('listbox', { name: t.ui.languages })).not.toBeInTheDocument();
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole('option', { name: /français/i }));
+    expect(mockUpdateSettings).toHaveBeenCalledExactlyOnceWith({ language: 'fr' });
+    expect(screen.queryByRole('listbox', { name: t.ui.languages })).not.toBeInTheDocument();
+  });
+
+  it('ignores standalone modifiers, warns about the IME shortcut, and resets only after confirmation', () => {
+    const t = getTranslations('en');
+    mockState.themeStyle = 'pet-k-ink';
+    renderModal();
+    fireEvent.click(screen.getByRole('button', { name: t.shortcuts }));
+    const input = getShortcutInputForAction('Bold');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: 'Control', ctrlKey: true });
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: ' ', ctrlKey: true });
+    expect(screen.getByText(t.bannedShortcutImeMessage)).toBeInTheDocument();
+    expect(screen.getByAltText(t.ui.warningMascotAlt)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: t.bannedShortcutDismiss }));
+    expect(screen.queryByText(t.bannedShortcutImeMessage)).not.toBeInTheDocument();
+    const reset = screen.getByRole('button', { name: t.resetShortcuts });
+    fireEvent.click(reset);
+    expect(screen.getByText(t.resetShortcutsConfirmBody)).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByText(t.resetShortcutsConfirmBody)).not.toBeInTheDocument();
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
+    fireEvent.click(reset);
+    fireEvent.click(screen.getByRole('button', { name: t.confirmResetShortcuts }));
+    expect(mockUpdateSettings).toHaveBeenCalledExactlyOnceWith({
+      keybindings: getDefaultKeybindingsForRuntime('desktop'), disabledKeybindings: {},
+    });
+    expect(screen.queryByText(t.resetShortcutsConfirmBody)).not.toBeInTheDocument();
+  });
+
+  it('downloads a settings backup, reports malformed JSON, and restores the exported appearance', async () => {
+    const t = getTranslations('en');
+    const createObjectURL = vi.fn<(blob: Blob) => string>().mockReturnValue('blob:settings-backup');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = createObjectURL;
+      static revokeObjectURL = revokeObjectURL;
+    });
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    try {
+      const { container } = renderModal();
+      fireEvent.click(screen.getByRole('button', { name: t.updateBackup }));
+      const input = container.querySelector<HTMLInputElement>('input[type=file]')!;
+      const openPicker = vi.spyOn(input, 'click').mockImplementation(() => {});
+      fireEvent.click(screen.getByRole('button', { name: t.importJson }));
+      expect(openPicker).toHaveBeenCalledOnce();
+      fireEvent.change(input, { target: { files: [] } });
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      fireEvent.change(input, { target: { files: [new File(['{no'], 'invalid.json')] } });
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.invalidJson));
+      expect(mockUpdateSettings).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: t.exportJson }));
+      expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.exported);
+      expect(anchorClick.mock.contexts[0]).toHaveAttribute('download', expect.stringMatching(/^markdown-explorer-settings-\d{4}-\d{2}-\d{2}\.json$/));
+      expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:settings-backup');
+      const backup = new File([createObjectURL.mock.calls[0][0]], 'backup.json', { type: 'application/json' });
+      fireEvent.change(input, { target: { files: [backup] } });
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.imported));
+      expect(mockUpdateSettings).toHaveBeenCalledWith(expect.objectContaining({ language: 'en', defaultHtmlPreview: false }));
+      expect(mockSetTheme).toHaveBeenCalledExactlyOnceWith('dark');
+      expect(mockSetThemeStyle).toHaveBeenCalledExactlyOnceWith('default');
+      expect(mockPostMessage).toHaveBeenCalledWith({ command: 'replaceRecentWorkspaces', recentWorkspaces: [] });
+    } finally {
+      vi.unstubAllGlobals();
+      anchorClick.mockRestore();
+    }
   });
 });

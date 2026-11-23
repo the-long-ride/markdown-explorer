@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { getTranslations } from '../../../../ui/src/contexts/translations';
+import { copyElementImageToClipboard, saveElementImageAsPng } from '../../../../ui/src/dom/copyImage';
+import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
 
 // Vi hoisting: the mock factory must reference state captured in `vi.hoisted`
 // so the mock installs before the module imports resolve.
@@ -24,6 +27,7 @@ vi.mock('../../../../ui/src/components/Content/enhancements/mermaidRenderToSvg',
     svgHtml: `<svg id="mock-${isDark ? 'dark' : 'light'}">RECOLOR</svg>`,
   })),
 }));
+vi.mock('../../../../ui/src/dom/copyImage', () => ({ copyElementImageToClipboard: vi.fn(), saveElementImageAsPng: vi.fn() }));
 
 import { MediaModal } from '../../../../ui/src/components/Modal/MediaModal';
 import type { MediaGallery } from '../../../../ui/src/components/Modal/mediaGallery';
@@ -37,6 +41,88 @@ describe('MediaModal theme toggle integration', () => {
   beforeEach(() => {
     mocks.stateRef.current = { theme: 'dark', settings: { language: 'en' } };
     mocks.setTheme.mockClear();
+  });
+
+  it('wraps around a mixed gallery with the keyboard and buttons, resets the media transform, and closes on Escape or backdrop', () => {
+    const t = getTranslations('en');
+    const gallery: MediaGallery = { items: [{ type: 'img', src: '/docs/chart.png' }, { type: 'svg', html: '<svg aria-label="Chart"></svg>' }], currentIndex: 0 };
+    const onClose = vi.fn();
+    const { baseElement, rerender } = render(<MediaModal gallery={gallery} onClose={onClose} />);
+    const image = baseElement.querySelector('img')!;
+    expect(image).toHaveAttribute('src', '/docs/chart.png');
+    const wrap = image.closest('.mdn-modal-content-wrap')!;
+    fireEvent.mouseMove(wrap, { clientX: 75, clientY: 25 });
+    expect(image.style.getPropertyValue('--pan-x')).toBe('0px');
+    fireEvent.mouseDown(wrap, { clientX: 50, clientY: 30 });
+    fireEvent.mouseMove(wrap, { clientX: 75, clientY: 25 });
+    fireEvent.mouseLeave(wrap);
+    expect(image.style.getPropertyValue('--pan-x')).toBe('25px');
+    expect(image.style.getPropertyValue('--pan-y')).toBe('-5px');
+    fireEvent.wheel(screen.getByRole('dialog'), { deltaY: -1 });
+    expect(Number(image.style.getPropertyValue('--zoom'))).toBeGreaterThan(1);
+    fireEvent.wheel(screen.getByRole('dialog'), { deltaY: 1 });
+    expect(Number(image.style.getPropertyValue('--zoom'))).toBeCloseTo(1);
+    fireEvent.click(screen.getByRole('button', { name: t.tooltips.zoomOut }));
+    expect(Number(image.style.getPropertyValue('--zoom'))).toBeLessThan(1);
+    fireEvent.click(screen.getByRole('button', { name: t.tooltips.resetZoom }));
+    expect(image.style.getPropertyValue('--pan-x')).toBe('0px');
+
+    fireEvent.click(screen.getByRole('button', { name: t.tooltips.zoomIn }));
+    fireEvent.keyDown(document, { key: 'ArrowLeft' });
+    const svg = baseElement.querySelector<HTMLElement>('.mdn-modal-content-svg')!;
+    expect(svg.querySelector('svg')).toHaveAttribute('aria-label', 'Chart');
+    expect(svg.style.getPropertyValue('--zoom')).toBe('1');
+    fireEvent.click(screen.getByRole('button', { name: t.tooltips.next }));
+    expect(baseElement.querySelector('img')).toHaveAttribute('src', '/docs/chart.png');
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(baseElement.querySelector('.mdn-modal-content-svg')).toBeInTheDocument();
+    fireEvent.click(baseElement.querySelector('.mdn-modal-content-wrap')!);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledTimes(2);
+    rerender(<MediaModal gallery={null} onClose={onClose} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ['img', true, 'image.png'],
+    ['svg', false, 'diagram.png'],
+    ['img', new Error('Cannot read image'), 'image.png'],
+  ] as const)('copies and saves %s, reporting the result %j', async (type, outcome, fileName) => {
+    const copy = getTranslations('en').previewActions;
+    const gallery: MediaGallery = { items: [{ type, src: '/docs/chart.png', html: '<svg aria-label="Chart"></svg>' }], currentIndex: 0 };
+    const copyImage = vi.mocked(copyElementImageToClipboard);
+    const saveImage = vi.mocked(saveElementImageAsPng);
+    if (outcome instanceof Error) {
+      copyImage.mockRejectedValueOnce(outcome);
+      saveImage.mockRejectedValueOnce(outcome);
+    } else {
+      copyImage.mockResolvedValueOnce(outcome);
+      saveImage.mockResolvedValueOnce(outcome);
+    }
+    const notice = vi.fn();
+    window.addEventListener(ACTION_NOTICE_EVENT, notice);
+    try {
+      const { baseElement } = render(<MediaModal gallery={gallery} onClose={vi.fn()} />);
+      const target = baseElement.querySelector(type === 'img' ? '.mdn-modal-content-img' : '.mdn-modal-content-svg');
+      expect(target).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: copy.copyImage }));
+      expect(copyImage).toHaveBeenLastCalledWith(target);
+      const tone = outcome === true ? 'success' : 'error';
+      await waitFor(() => expect(notice).toHaveBeenLastCalledWith(expect.objectContaining({
+        detail: { message: outcome === true ? copy.imageCopied : copy.copyFailed, tone },
+      })));
+      fireEvent.click(screen.getByRole('button', { name: copy.saveImagePng }));
+      expect(saveImage).toHaveBeenLastCalledWith(target, fileName);
+      await waitFor(() => expect(notice).toHaveBeenLastCalledWith(expect.objectContaining({
+        detail: { message: outcome === true ? copy.imageSaved : copy.imageSaveFailed, tone },
+      })));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, notice);
+    }
   });
 
   it('replaces SVG innerHTML on theme flip while preserving zoom/pan CSS vars', async () => {

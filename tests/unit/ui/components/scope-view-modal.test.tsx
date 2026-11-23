@@ -367,6 +367,47 @@ describe('ScopeViewModal', () => {
     expect(onMediaClick).toHaveBeenCalledWith(baseElement.querySelector('.mdn-mermaid-wrap'));
   });
 
+  it('handles external, fragment, missing workspace, and image links without replacing the scope', async () => {
+    const onMediaClick = vi.fn();
+    const onClose = vi.fn();
+    const html = '<a href="https://example.test/docs">External</a><a href="#scope%2Dheading">Jump</a><a href="missing.md">Missing</a><h2 id="scope-heading">Section</h2><img alt="Scope image" src="image.png">';
+    mocks.loadDocumentSnapshot.mockResolvedValue({ ...snapshot(files[0]), html, toc: [] });
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={onClose} onMediaClick={onMediaClick} />);
+    fireEvent.click(await screen.findByRole('link', { name: 'External' }));
+    expect(mocks.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'openExternal', url: 'https://example.test/docs' });
+    const section = screen.getByRole('heading', { name: 'Section' });
+    section.scrollIntoView = vi.fn();
+    fireEvent.click(screen.getByRole('link', { name: 'Jump' }));
+    expect(section.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+    const missing = screen.getByRole('link', { name: 'Missing' });
+    fireEvent.contextMenu(missing);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    fireEvent.click(missing);
+    expect(screen.getByRole('status')).toHaveTextContent(getExportScopeTranslations('en').scopeView.outsideWorkspace);
+    const image = screen.getByRole('img', { name: 'Scope image' });
+    fireEvent.click(image);
+    expect(onMediaClick).toHaveBeenCalledExactlyOnceWith(image);
+    expect(mocks.loadDocumentSnapshot).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the current scope and clears loading when a nested document fails to open', async () => {
+    let fail: (reason: unknown) => void;
+    mocks.loadDocumentSnapshot
+      .mockResolvedValueOnce(snapshot(files[0]))
+      .mockReturnValueOnce(new Promise((_, reject) => { fail = reject; }));
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    fireEvent.click(await screen.findByRole('link', { name: 'Open 2' }));
+    expect(baseElement.querySelector('.scope-view__loading-overlay')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
+    await act(async () => fail!('Host unavailable'));
+    expect(screen.getByRole('alert')).toHaveTextContent(getExportScopeTranslations('en').scopeView.unableOpen);
+    expect(baseElement.querySelector('.scope-view__loading-overlay')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
+  });
+
   it('rerenders Mermaid when Scope View appearance changes', async () => {
     const view = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Doc 1');

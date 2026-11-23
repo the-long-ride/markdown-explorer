@@ -199,7 +199,8 @@ vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => 
   };
 });
 
-import { ContentTabs } from '../../../../ui/src/components/Content/ContentTabs';
+import { ContentTabs, CONTENT_TAB_CLOSE_COLLAPSE_MS, CONTENT_TAB_CLOSE_FADE_MS } from '../../../../ui/src/components/Content/ContentTabs';
+import { CONTENT_TAB_CLOSE_REQUEST_EVENT, requestAnimatedContentTabClose } from '../../../../ui/src/components/Content/contentTabCloseEvents';
 
 describe('ContentTabs deep', () => {
   beforeEach(() => {
@@ -207,6 +208,69 @@ describe('ContentTabs deep', () => {
     mockAppState = createMockAppState();
     capturedOnAction = null;
     capturedOnClose = null;
+  });
+
+  it('handles keyboard close requests for tabs in the current workspace', () => {
+    mockAppState = createMockAppState({
+      contentTabs: [makeTab('/a.md', 'a.md', 'A'), makeTab('/b.md', 'b.md', 'B'), makeTab('/c.md', 'c.md', 'C')],
+    });
+    const { unmount } = render(createElement(ContentTabs));
+    expect(window.dispatchEvent(new Event(CONTENT_TAB_CLOSE_REQUEST_EVENT, { cancelable: true }))).toBe(true);
+    act(() => {
+      expect(requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath: '/missing.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath: '/c.md' })).toBe(true);
+    });
+    expect(mockCloseContentTabsToRight).not.toHaveBeenCalled();
+    act(() => {
+      expect(requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/b.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath: '/b.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeOtherTabs', filePath: '/b.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeAllTabs' })).toBe(true);
+    });
+    expect(mockCloseContentTab).toHaveBeenCalledExactlyOnceWith('/b.md');
+    expect(mockCloseContentTabsToRight).toHaveBeenCalledExactlyOnceWith('/b.md');
+    expect(mockCloseOtherContentTabs).toHaveBeenCalledExactlyOnceWith('/b.md');
+    expect(mockCloseAllContentTabs).toHaveBeenCalledOnce();
+    unmount();
+    expect(requestAnimatedContentTabClose({ action: 'closeAllTabs' })).toBe(false);
+  });
+
+  it('animates measured tabs before closing, blocks duplicate requests, and clears pending closes on unmount', () => {
+    vi.useFakeTimers();
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    try {
+      mockAppState = createMockAppState({
+        contentTabs: [makeTab('/a.md', 'a.md', 'A'), makeTab('/b.md', 'b.md', 'B')],
+      });
+      const { unmount } = render(createElement(ContentTabs));
+      const a = screen.getByRole('tab', { name: /a\.md/ });
+      const b = screen.getByRole('tab', { name: /b\.md/ });
+      a.getBoundingClientRect = () => new DOMRect(0, 0, 125, 25);
+      act(() => requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/b.md' }));
+      expect(mockCloseContentTab).toHaveBeenCalledExactlyOnceWith('/b.md');
+      act(() => requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/a.md' }));
+      expect(a).toHaveClass('is-closing--fade');
+      expect(a.style.getPropertyValue('--content-tab-close-width')).toBe('125px');
+      act(() => requestAnimatedContentTabClose({ action: 'closeAllTabs' }));
+      expect(b).not.toHaveClass('is-closing--fade');
+      act(() => vi.advanceTimersByTime(CONTENT_TAB_CLOSE_FADE_MS));
+      expect(a).toHaveClass('is-closing--collapse');
+      expect(mockCloseContentTab).toHaveBeenCalledTimes(1);
+      act(() => vi.advanceTimersByTime(CONTENT_TAB_CLOSE_COLLAPSE_MS));
+      expect(mockCloseContentTab).toHaveBeenLastCalledWith('/a.md');
+      expect(a).not.toHaveClass('is-closing--collapse');
+      expect(mockCloseAllContentTabs).not.toHaveBeenCalled();
+
+      act(() => requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/a.md' }));
+      unmount();
+      act(() => vi.runOnlyPendingTimers());
+      expect(mockCloseContentTab).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
   });
 
   describe('context menu', () => {

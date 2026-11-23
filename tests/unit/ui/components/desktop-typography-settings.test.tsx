@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DesktopTypographySettings } from '../../../../ui/src/components/Settings/DesktopTypographySettings.tsx';
 import { PlatformProvider } from '../../../../ui/src/contexts/PlatformContext.tsx';
@@ -48,17 +48,18 @@ describe('DesktopTypographySettings', () => {
     const postMessage = vi.fn();
     const bridge = { postMessage } as any;
 
-    const utils = render(
+    const view = (state: AppState) => (
       <PlatformProvider bridge={bridge}>
         <DesktopTypographySettings
           state={state}
           t={t}
           updateSettings={updateSettings}
         />
-      </PlatformProvider>,
+      </PlatformProvider>
     );
+    const utils = render(view(state));
 
-    return { ...utils, postMessage, updateSettings };
+    return { ...utils, postMessage, updateSettings, rerenderState: (state: AppState) => utils.rerender(view(state)) };
   }
 
   it('renders all typography role headings and initial default font descriptions', () => {
@@ -86,6 +87,54 @@ describe('DesktopTypographySettings', () => {
         requestId: expect.stringMatching(/^import-font-appUi/),
       }),
     );
+  });
+
+  it('only binds a matching import response to its requested role, and saves the selected font variant', () => {
+    const state = createMockState();
+    const { postMessage, rerenderState, updateSettings } = renderComponent(state);
+    const headingRow = screen.getByText(t.headingFont).closest<HTMLElement>('.desktop-font-binding-row')!;
+    const row = within(headingRow);
+    const apply = screen.getByRole('button', { name: t.fontApply });
+    fireEvent.click(row.getByRole('button', { name: t.fontImport }));
+    const requestId = postMessage.mock.lastCall?.[0].requestId;
+    expect(requestId).toMatch(/^import-font-heading/);
+    rerenderState({ ...state, desktopFontsResult: { requestId: 'another-request', importedId: 'custom_1' } });
+    expect(row.getByRole('button', { name: t.fontDefault })).toBeInTheDocument();
+    expect(apply).toBeDisabled();
+
+    rerenderState({ ...state, desktopFontsResult: { requestId, importedId: 'custom_1' } });
+    expect(row.getByRole('button', { name: 'Custom Sans' })).toBeInTheDocument();
+    expect(updateSettings).not.toHaveBeenCalled();
+    fireEvent.click(row.getByRole('button', { name: t.fontVariant }));
+    fireEvent.click(screen.getByRole('option', { name: `${t.fontItalic} 700` }));
+    fireEvent.click(apply);
+    const confirm = screen.getByRole('dialog', { name: t.fontApplyConfirmTitle });
+    expect(within(confirm).getByText(new RegExp(`Custom Sans · ${t.fontItalic} 700`))).toBeInTheDocument();
+    fireEvent.click(within(confirm).getByRole('button', { name: t.fontApplyChanges }));
+    expect(updateSettings).toHaveBeenCalledExactlyOnceWith({
+      fontBindings: {
+        ...DEFAULT_DESKTOP_FONT_BINDINGS,
+        heading: { source: 'imported', id: 'custom_1', family: 'Custom Sans', weight: 700, style: 'italic', size: 16 },
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: t.fontResetAll }));
+    expect(row.getByRole('button', { name: t.fontDefault })).toBeInTheDocument();
+    expect(apply).toBeDisabled();
+  });
+
+  it('keeps the default binding when an import is cancelled or the returned font is unavailable', () => {
+    const state = createMockState();
+    const { postMessage, rerenderState } = renderComponent(state);
+    const row = within(screen.getByText(t.mermaidFont).closest<HTMLElement>('.desktop-font-binding-row')!);
+    fireEvent.click(row.getByRole('button', { name: t.fontImport }));
+    const requestId = postMessage.mock.lastCall?.[0].requestId;
+    expect(requestId).toMatch(/^import-font-mermaid/);
+    rerenderState({ ...state, desktopFontsResult: { requestId, importedId: 'unavailable-id' } });
+    expect(row.getByRole('button', { name: t.fontDefault })).toBeInTheDocument();
+    fireEvent.click(row.getByRole('button', { name: t.fontImport }));
+    rerenderState({ ...state, desktopFontsResult: { requestId: postMessage.mock.lastCall?.[0].requestId } });
+    expect(row.getByRole('button', { name: t.fontDefault })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t.fontApply })).toBeDisabled();
   });
 
   it('resets a single role back to default bindings', () => {
