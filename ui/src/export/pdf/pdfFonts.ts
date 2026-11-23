@@ -8,7 +8,7 @@ export interface PdfFontBundle {
 }
 
 function declaration(block: string, property: string): string | null {
-  const match = block.match(new RegExp(`${property}\\s*:\\s*([^;]+)`, 'i'));
+  const match = block.match(new RegExp(`${property}\\s*:\\s*((?:url\\([^)]*\\)|[^;])+)`, 'i'));
   return match?.[1]?.trim() || null;
 }
 
