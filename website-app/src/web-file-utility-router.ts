@@ -91,12 +91,6 @@ async function searchSingleFile(
   return results;
 }
 
-function protocolWriteResult(result: Awaited<ReturnType<typeof writeTextFile>>) {
-  return result.reason === 'io-error'
-    ? { ...result, reason: 'write-failed' as const }
-    : result;
-}
-
 export async function handleWebFileUtilityMessage(
   msg: any,
   deps: FileUtilityRouterDeps,
@@ -253,7 +247,7 @@ export async function handleWebFileUtilityMessage(
         command: 'saveDocumentResult',
         requestId: msg.requestId,
         filePath: requestedPath,
-        ...protocolWriteResult(result as Awaited<ReturnType<typeof writeTextFile>>),
+        ...result,
       });
       return true;
     }

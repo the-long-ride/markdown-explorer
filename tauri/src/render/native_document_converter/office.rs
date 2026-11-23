@@ -71,7 +71,10 @@ mod tests {
             );
         }
         for extension in ["docx", "xlsx"] {
-            assert_eq!(quality_for_extension(extension), ConversionQuality::Standard);
+            assert_eq!(
+                quality_for_extension(extension),
+                ConversionQuality::Standard
+            );
         }
     }
 }

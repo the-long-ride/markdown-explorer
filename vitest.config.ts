@@ -85,7 +85,8 @@ const runtimeExclude = [
 ];
 
 export default defineConfig({
-  plugins: [react()],
+  // Electron's native CommonJS coverage offsets refer to the untransformed source.
+  plugins: [react({ exclude: [/\/node_modules\//, /[/\\]electron[/\\].*\.js$/] })],
   test: {
     restoreMocks: true,
     clearMocks: true,

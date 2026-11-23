@@ -11,17 +11,17 @@ import { handleWebInsightsHostCommand } from '../../../website-app/src/web-insig
 import { handleWebTestMessage } from '../../../website-app/src/web-test-message-router';
 import { BrowserScanner } from '../../../website-app/src/scanner';
 
-function makeSimpleZip(entries: Record<string, string>): ArrayBuffer {
+function makeSimpleZip(entries: Record<string, string>, method = 8): ArrayBuffer {
   const parts: Buffer[] = [];
   for (const [name, content] of Object.entries(entries)) {
     const nameBuf = Buffer.from(name);
     const dataBuf = Buffer.from(content);
-    const compBuf = zlib.deflateRawSync(dataBuf);
+    const compBuf = method === 8 ? zlib.deflateRawSync(dataBuf) : dataBuf;
     const local = Buffer.alloc(30 + nameBuf.length + compBuf.length);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
     local.writeUInt16LE(0, 6);
-    local.writeUInt16LE(8, 8);
+    local.writeUInt16LE(method, 8);
     local.writeUInt32LE(0, 14);
     local.writeUInt32LE(compBuf.length, 18);
     local.writeUInt32LE(dataBuf.length, 22);
@@ -244,6 +244,55 @@ describe('Web - Document Conversion & Workspace Insights', () => {
       expect(res.markdown).toContain('| Product | Price |');
       expect(res.markdown).toContain('| Apples | 10 |');
       expect(res.previewInfo?.convertedFrom).toBe('XLSX');
+    });
+
+    it('converts stored slide and OpenDocument XML while omitting empty text', async () => {
+      const pptx = makeSimpleZip({
+        'ppt/slides/slide2.xml': '<a:t>Second &amp; last</a:t>',
+        'ppt/slides/slide1.xml': '<a:t> </a:t><a:t>First</a:t>',
+        'ppt/slides/slide3.xml': '<a:t> </a:t>',
+        'ppt/notesSlides/notesSlide1.xml': '<a:t>Notes</a:t>',
+      }, 0);
+      expect(await convertWebDocumentToMarkdown({ name: 'slides.pptx', arrayBuffer: async () => pptx })).toMatchObject({
+        markdown: '## Slide 1\n\n* First\n\n## Slide 2\n\n* Second & last',
+        previewInfo: { convertedFrom: 'PPTX', readOnly: true },
+      });
+      const odt = makeSimpleZip({ 'content.xml': '<text:h>A &lt; B</text:h><text:p>Example &quot;item&quot;</text:p><text:p> </text:p>' }, 0);
+      expect(await convertWebDocumentToMarkdown({ name: 'notes.odt', arrayBuffer: async () => odt })).toMatchObject({
+        markdown: '# A < B\n\nExample "item"', previewInfo: { convertedFrom: 'ODT' },
+      });
+    });
+
+    it('uses the first available worksheet and pads rows, ignoring empty cells and missing string IDs', async () => {
+      const sheet = makeSimpleZip({ 'xl/worksheets/sheet2.xml':
+        '<row><c><v>A|B</v></c><c><v>Count</v></c></row>' +
+        '<row><c><v>Solo</v></c></row><row><c t="s"><v>42</v></c><c></c></row>',
+      });
+      expect((await convertWebDocumentToMarkdown({ name: 'sheet.xlsx', arrayBuffer: async () => sheet })).markdown)
+        .toBe('| A\\|B | Count |\n| --- | --- |\n| Solo |  |');
+    });
+
+    it('reads named and unnamed markdown, decodes byte-backed text, and omits executable HTML', async () => {
+      const bytes = new TextEncoder().encode('café').buffer as ArrayBuffer;
+      expect(await convertWebDocumentToMarkdown({ name: '', arrayBuffer: async () => bytes }))
+        .toEqual({ markdown: 'café', previewInfo: null });
+      expect(await convertWebDocumentToMarkdown({ name: 'empty.mdx' })).toEqual({ markdown: '', previewInfo: null });
+      const html = '<script>hidden()</script><style>invisible</style><h2>Summary</h2><ul><li>One</li></ul><p> </p><pre>sample</pre>';
+      const convert = (text: string) => convertWebDocumentToMarkdown({ name: 'test.htm', text });
+      expect((await convert(html)).markdown).toBe('## Summary\n\n* One\n\n```\nsample\n```');
+      expect((await convert('<div>Fallback &amp; safe</div>')).markdown).toBe('Fallback & safe');
+      vi.stubGlobal('DOMParser', undefined);
+      expect((await convert('<style>hide</style><p> One </p>\n\n<p> Two </p>')).markdown).toBe('One\n\nTwo');
+    });
+
+    it('uses readable binary text or an explicit placeholder when structured content is unavailable', async () => {
+      const recover = await convertWebDocumentToMarkdown({ name: 'older.doc', text: 'document text\x00deadbeef\x00no\x00' });
+      expect(recover).toMatchObject({ markdown: 'document text', previewInfo: { convertedFrom: 'DOC', readOnly: true } });
+      expect((await convertWebDocumentToMarkdown({ name: 'empty.pdf' })).markdown)
+        .toBe('# empty.pdf\n\n_No readable text content extracted._');
+      expect((await convertWebDocumentToMarkdown({ name: 'empty.docx', text: '' })).markdown)
+        .toBe('# empty.docx\n\n_No readable text content extracted._');
+      expect((await convertWebDocumentToMarkdown({ name: 'empty.xlsx', text: 'fallback text\x00' })).markdown).toBe('fallback text');
     });
   });
 

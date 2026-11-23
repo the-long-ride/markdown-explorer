@@ -29,7 +29,6 @@ import { version as appVersion } from '../../package.json';
 export interface DemoHostController {
   selectDoc: (path: string) => void;
   applyFeaturePreset: (slug: FeatureDemoSlug) => void;
-  getActiveDocPath: () => string;
   dispose: () => void;
 }
 
@@ -353,7 +352,6 @@ export function installDemoBusHost(options: InstallDemoBusHostOptions = {}): Dem
     applyFeaturePreset(slug: FeatureDemoSlug) {
       renderAndSendDoc(getFeatureDemoItem(slug).defaultDocPath);
     },
-    getActiveDocPath: () => activeDocPath,
     dispose() {
       bus.removeEventListener('webview-message', onBusEvent);
       window.removeEventListener('message', onWindowMessage);

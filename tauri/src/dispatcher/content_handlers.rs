@@ -139,28 +139,29 @@ impl Dispatcher {
         let is_markdown_doc = crate::workspace::file_types::is_markdown_file_path(&file_path);
         let current_file_for_io = current_file.clone();
         let file_path_str = file_path.clone();
-        let (source_document_text, result, document_write) = tauri::async_runtime::spawn_blocking(move || {
-            let source_document_text = if is_html_document {
-                std::fs::read_to_string(&current_file_for_io).ok()
-            } else {
-                None
-            };
-            let result = if is_html_document && !native_html_conversion {
-                None
-            } else {
-                Some(converter.read_markdown(&file_path_str, conversion_enabled))
-            };
-            let document_write = if is_markdown_doc {
-                super::commands::document_write::document_revision(&current_file_for_io)
-                    .ok()
-                    .map(|revision| json!({ "supported": true, "revision": revision }))
-            } else {
-                None
-            };
-            (source_document_text, result, document_write)
-        })
-        .await
-        .unwrap_or((None, None, None));
+        let (source_document_text, result, document_write) =
+            tauri::async_runtime::spawn_blocking(move || {
+                let source_document_text = if is_html_document {
+                    std::fs::read_to_string(&current_file_for_io).ok()
+                } else {
+                    None
+                };
+                let result = if is_html_document && !native_html_conversion {
+                    None
+                } else {
+                    Some(converter.read_markdown(&file_path_str, conversion_enabled))
+                };
+                let document_write = if is_markdown_doc {
+                    crate::document_write::document_revision(&current_file_for_io)
+                        .ok()
+                        .map(|revision| json!({ "supported": true, "revision": revision }))
+                } else {
+                    None
+                };
+                (source_document_text, result, document_write)
+            })
+            .await
+            .unwrap_or((None, None, None));
         if !self.is_workspace_request_current(&request) {
             return;
         }
@@ -225,5 +226,4 @@ impl Dispatcher {
             request.operation.as_ref(),
         );
     }
-
 }

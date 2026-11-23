@@ -74,10 +74,9 @@ impl CloseGuard {
 
     /// Handles `confirmNativeClose`.
     pub fn confirm(&mut self, request_id: &str, intent: &str, cancelled: bool) -> ConfirmOutcome {
-        let matches = self
-            .pending
-            .as_ref()
-            .is_some_and(|(request, _)| request.request_id == request_id && request.intent == intent);
+        let matches = self.pending.as_ref().is_some_and(|(request, _)| {
+            request.request_id == request_id && request.intent == intent
+        });
         if !matches {
             return ConfirmOutcome::Ignored;
         }
@@ -116,7 +115,10 @@ mod tests {
         let decision = guard.on_close_requested(Instant::now());
         assert_eq!(
             decision,
-            CloseDecision::Prevent(CloseRequest { request_id: "native-close-1".into(), intent: "app" })
+            CloseDecision::Prevent(CloseRequest {
+                request_id: "native-close-1".into(),
+                intent: "app"
+            })
         );
         assert!(guard.has_pending());
     }
@@ -138,7 +140,10 @@ mod tests {
         assert_eq!(guard.confirm(&id, "app", false), ConfirmOutcome::Approved);
         assert!(!guard.has_pending());
         assert_eq!(guard.on_close_requested(now), CloseDecision::Allow);
-        assert!(matches!(guard.on_close_requested(now), CloseDecision::Prevent(_)));
+        assert!(matches!(
+            guard.on_close_requested(now),
+            CloseDecision::Prevent(_)
+        ));
     }
 
     #[test]
@@ -155,12 +160,21 @@ mod tests {
     fn mismatching_or_stale_confirmations_are_ignored() {
         let mut guard = CloseGuard::default();
         let now = Instant::now();
-        assert_eq!(guard.confirm("native-close-1", "app", false), ConfirmOutcome::Ignored);
+        assert_eq!(
+            guard.confirm("native-close-1", "app", false),
+            ConfirmOutcome::Ignored
+        );
         let id = request_id(guard.on_close_requested(now));
-        assert_eq!(guard.confirm("other", "app", false), ConfirmOutcome::Ignored);
+        assert_eq!(
+            guard.confirm("other", "app", false),
+            ConfirmOutcome::Ignored
+        );
         assert_eq!(guard.confirm(&id, "window", false), ConfirmOutcome::Ignored);
         assert!(guard.has_pending());
-        assert!(matches!(guard.on_close_requested(now), CloseDecision::Prevent(_)));
+        assert!(matches!(
+            guard.on_close_requested(now),
+            CloseDecision::Prevent(_)
+        ));
     }
 
     #[test]
@@ -169,8 +183,14 @@ mod tests {
         let now = Instant::now();
         request_id(guard.on_close_requested(now));
         let just_before = now + PENDING_TIMEOUT - Duration::from_millis(1);
-        assert!(matches!(guard.on_close_requested(just_before), CloseDecision::Prevent(_)));
-        assert_eq!(guard.on_close_requested(now + PENDING_TIMEOUT), CloseDecision::Allow);
+        assert!(matches!(
+            guard.on_close_requested(just_before),
+            CloseDecision::Prevent(_)
+        ));
+        assert_eq!(
+            guard.on_close_requested(now + PENDING_TIMEOUT),
+            CloseDecision::Allow
+        );
         assert!(!guard.has_pending());
     }
 

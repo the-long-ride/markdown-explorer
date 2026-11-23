@@ -39,6 +39,19 @@ describe('external Explorer launches', () => {
     expect(findExternalOpenRequest(['electron.exe', '.'], fs, { isPackaged: false })).toBeNull();
   });
 
+  test('handles legacy launch options, missing paths, and an empty launch queue', () => {
+    const fs = fsFor({ '.': 'directory', 'C:/Docs': 'directory', 'C:/Docs/guide.MD': 'file' });
+    expect(findExternalOpenRequest(['electron.exe', '.', '', 'C:/Docs/missing.md', 'C:/Docs/guide.MD'], fs, false))
+      .toEqual({ mode: 'file', filePath: 'C:/Docs/guide.MD' });
+    expect(findExternalOpenRequest(undefined, fs, null)).toBeNull();
+    expect(findExternalOpenRequest(['Markdown Explorer.exe', '--open-with-folder'], fs)).toBeNull();
+    expect(findExternalOpenRequest(['Markdown Explorer.exe', '--open-with-folder', 'C:/Docs'], fs)).toBeNull();
+    const queue = createExternalOpenQueue();
+    queue.push({ mode: 'folder', folderPath: 'C:/Docs' });
+    queue.push(null);
+    expect(queue.take()).toBeNull();
+  });
+
   test('queues newest structured launch until renderer becomes ready and delivers it once', () => {
     const queue = createExternalOpenQueue();
     queue.push({ mode: 'file', filePath: 'C:/Docs/first.md' });

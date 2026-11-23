@@ -105,6 +105,39 @@ describe('createWorkspaceWatchController', () => {
     expect(refreshes[0].change.fsPath.replace(/\\/g, '/')).toBe('C:/docs/guide.md');
   });
 
+  test.each([false, true])('coalesces events during a refresh without refreshing after disposal (%s)', async (dispose) => {
+    vi.useFakeTimers();
+    let onEvent!: (event: string, filename: string | null) => void;
+    let finishFirstRefresh!: () => void;
+    const refresh = vi.fn().mockImplementationOnce(() => new Promise<void>(resolve => { finishFirstRefresh = resolve; }));
+    const controller = createWorkspaceWatchController({
+      fs: {
+        watch(_target: string, _options: unknown, handler: typeof onEvent) {
+          onEvent = handler;
+          return { close() {} };
+        },
+      } as any,
+      setTimeout,
+      clearTimeout,
+      debounceMs: 5,
+      onRefresh: refresh,
+    });
+    controller.watchWorkspace('C:/docs');
+    onEvent('change', 'guide.md');
+    await vi.advanceTimersByTimeAsync(5);
+    expect(refresh).toHaveBeenCalledOnce();
+    onEvent('change', '.git/index');
+    onEvent('rename', null);
+    onEvent('change', 'notes.md');
+    await vi.advanceTimersByTimeAsync(5);
+    expect(refresh).toHaveBeenCalledOnce();
+    if (dispose) controller.dispose();
+    finishFirstRefresh();
+    await vi.advanceTimersByTimeAsync(5);
+    if (dispose) expect(refresh).toHaveBeenCalledOnce();
+    else expect(refresh).toHaveBeenNthCalledWith(2, 'C:/docs', { eventType: 'mixed', relativePath: '', fsPath: '' });
+  });
+
   test('dispose resets state and closes watcher', async () => {
     vi.useFakeTimers();
     let watcherClosed = false;

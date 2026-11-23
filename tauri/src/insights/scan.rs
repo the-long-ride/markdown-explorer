@@ -10,7 +10,14 @@ pub const DEFAULT_HARD_LIMIT_BYTES: u64 = 64 * 1024 * 1024;
 pub const SCAN_BATCH_SIZE: usize = 200;
 
 const HARD_EXCLUDED: &[&str] = &[".git", ".hg", ".svn"];
-const DEFAULT_EXCLUDED: &[&str] = &["node_modules", ".next", "dist", "build", "coverage", ".cache"];
+const DEFAULT_EXCLUDED: &[&str] = &[
+    "node_modules",
+    ".next",
+    "dist",
+    "build",
+    "coverage",
+    ".cache",
+];
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -133,7 +140,12 @@ where
     F: Fn() -> bool,
 {
     let Ok(root_real) = fs::canonicalize(root) else {
-        return ScanResult { entries: vec![], excluded_entries: 0, skipped_entries: 1, cancelled: false };
+        return ScanResult {
+            entries: vec![],
+            excluded_entries: 0,
+            skipped_entries: 1,
+            cancelled: false,
+        };
     };
     let gitignore = read_gitignore(&root_real);
     let mut entries = Vec::new();
@@ -146,11 +158,19 @@ where
     let mut it = WalkDir::new(&root_real).follow_links(true).into_iter();
     while let Some(item) = it.next() {
         if cancelled() {
-            return ScanResult { entries, excluded_entries, skipped_entries, cancelled: true };
+            return ScanResult {
+                entries,
+                excluded_entries,
+                skipped_entries,
+                cancelled: true,
+            };
         }
         let entry = match item {
             Ok(entry) => entry,
-            Err(_) => { skipped_entries += 1; continue; }
+            Err(_) => {
+                skipped_entries += 1;
+                continue;
+            }
         };
         if entry.path() == root_real {
             continue;
@@ -188,7 +208,8 @@ where
         if !metadata.is_file() || !seen_files.insert(real.clone()) {
             continue;
         }
-        let canonical_relative = normalized_relative(&root_real, &real).unwrap_or_else(|| display_relative.clone());
+        let canonical_relative =
+            normalized_relative(&root_real, &real).unwrap_or_else(|| display_relative.clone());
         entries.push(InsightsWorkspaceEntry {
             relative_path: display_relative,
             canonical_relative_path: canonical_relative,
@@ -203,7 +224,12 @@ where
         });
     }
 
-    ScanResult { entries, excluded_entries, skipped_entries, cancelled: false }
+    ScanResult {
+        entries,
+        excluded_entries,
+        skipped_entries,
+        cancelled: false,
+    }
 }
 
 fn resolve_relative(root: &Path, relative_path: &str) -> Option<PathBuf> {
@@ -216,8 +242,15 @@ fn resolve_relative(root: &Path, relative_path: &str) -> Option<PathBuf> {
     same_or_inside(&root_real, &real).then_some(real)
 }
 
-pub fn read_document_source(root: &Path, relative_path: &str, soft_limit: u64, hard_limit: u64) -> Value {
-    if !relative_path.to_lowercase().ends_with(".md") && !relative_path.to_lowercase().ends_with(".mdx") {
+pub fn read_document_source(
+    root: &Path,
+    relative_path: &str,
+    soft_limit: u64,
+    hard_limit: u64,
+) -> Value {
+    if !relative_path.to_lowercase().ends_with(".md")
+        && !relative_path.to_lowercase().ends_with(".mdx")
+    {
         return json!({"status": "unsupported"});
     }
     let Some(real) = resolve_relative(root, relative_path) else {
@@ -249,24 +282,52 @@ pub fn read_document_source(root: &Path, relative_path: &str, soft_limit: u64, h
 }
 
 fn mime_type(path: &Path) -> &'static str {
-    match path.extension().and_then(|value| value.to_str()).unwrap_or("").to_lowercase().as_str() {
-        "png" => "image/png", "jpg" | "jpeg" => "image/jpeg", "gif" => "image/gif", "webp" => "image/webp",
-        "svg" => "image/svg+xml", "avif" => "image/avif", "mp4" => "video/mp4", "webm" => "video/webm",
-        "mp3" => "audio/mpeg", "wav" => "audio/wav", "ogg" => "audio/ogg", "m4a" => "audio/mp4",
-        "md" => "text/markdown", "mdx" => "text/mdx", "pdf" => "application/pdf", _ => "application/octet-stream",
+    match path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("")
+        .to_lowercase()
+        .as_str()
+    {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "avif" => "image/avif",
+        "mp4" => "video/mp4",
+        "webm" => "video/webm",
+        "mp3" => "audio/mpeg",
+        "wav" => "audio/wav",
+        "ogg" => "audio/ogg",
+        "m4a" => "audio/mp4",
+        "md" => "text/markdown",
+        "mdx" => "text/mdx",
+        "pdf" => "application/pdf",
+        _ => "application/octet-stream",
     }
 }
 
 pub fn probe_resource(root: &Path, document_path: &str, resource_path: &str) -> Value {
     let raw = resource_path.split(['?', '#']).next().unwrap_or("");
-    if raw.is_empty() || raw.starts_with("http:") || raw.starts_with("https:") || raw.starts_with("data:") || raw.starts_with("blob:") || raw.starts_with("file:") {
+    if raw.is_empty()
+        || raw.starts_with("http:")
+        || raw.starts_with("https:")
+        || raw.starts_with("data:")
+        || raw.starts_with("blob:")
+        || raw.starts_with("file:")
+    {
         return json!({"status": "outside-workspace"});
     }
     let Ok(root_real) = fs::canonicalize(root) else {
         return json!({"status": "missing"});
     };
     let doc = Path::new(document_path);
-    let doc_absolute = if doc.is_absolute() { doc.to_path_buf() } else { root_real.join(doc) };
+    let doc_absolute = if doc.is_absolute() {
+        doc.to_path_buf()
+    } else {
+        root_real.join(doc)
+    };
     let candidate = if raw.starts_with('/') {
         root_real.join(raw.trim_start_matches('/'))
     } else {
@@ -290,10 +351,84 @@ pub fn probe_resource(root: &Path, document_path: &str, resource_path: &str) -> 
     })
 }
 
+#[path = "watch_entry.rs"]
+mod watch_entry;
+pub(super) use watch_entry::entry_for_path;
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::io::Write;
+
+    #[test]
+    fn scan_applies_ignore_patterns_and_can_cancel() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        for file in [
+            ".git/private.md",
+            "node_modules/package.md",
+            "notes/temp-1.md",
+            "notes/temp-2.md",
+            "notes/keep.md",
+            "notes/draft(+).md",
+        ] {
+            let path = root.join(file);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, "test").unwrap();
+        }
+        fs::write(root.join(".gitignore"), "# notes\n\nnotes/temp-?.md\n").unwrap();
+        let patterns = ["!notes/temp-2.md".into(), "notes/draft(+).*".into()];
+        let result = scan_workspace(root, &patterns, || false);
+        let names: HashSet<_> = result
+            .entries
+            .iter()
+            .map(|item| item.relative_path.as_str())
+            .collect();
+        assert_eq!(
+            names,
+            HashSet::from([".gitignore", "notes/temp-2.md", "notes/keep.md"])
+        );
+        assert_eq!(result.excluded_entries, 4);
+        assert!(scan_workspace(root, &[], || true).cancelled);
+        assert_eq!(
+            scan_workspace(&root.join("missing"), &[], || false).skipped_entries,
+            1
+        );
+    }
+
+    #[test]
+    fn reads_scoped_document_source_and_watch_entry_metadata() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let note = root.join("note.MDX");
+        fs::write(&note, "# Note").unwrap();
+        let entry = entry_for_path(&root, &note).unwrap();
+        assert_eq!(entry.relative_path, "note.MDX");
+        assert_eq!(entry.extension.as_deref(), Some(".mdx"));
+        assert_eq!(entry.size_bytes, 6);
+        assert!(entry_for_path(&root, &root).is_none());
+        assert_eq!(
+            read_document_source(&root, "note.MDX", 16, 16)["source"],
+            "# Note"
+        );
+        assert_eq!(
+            read_document_source(&root, "note.MDX", 16, 2)["hardLimit"],
+            true
+        );
+        assert_eq!(
+            read_document_source(&root, "missing.md", 16, 16)["status"],
+            "missing"
+        );
+        assert_eq!(
+            read_document_source(&root, "file.txt", 16, 16)["status"],
+            "unsupported"
+        );
+        fs::write(&note, [0xff]).unwrap();
+        assert_eq!(
+            read_document_source(&root, "note.MDX", 16, 16)["status"],
+            "unreadable"
+        );
+    }
 
     #[test]
     fn scans_more_than_sidebar_cap() {

@@ -38,11 +38,6 @@ export function getWebBus(): EventTarget {
 
 export type DemoMode = 'test' | 'web';
 
-export function detectMode(search?: string): DemoMode {
-  const query = typeof search === 'string' ? search : (typeof window !== 'undefined' ? window.location?.search || '' : '');
-  return new URLSearchParams(query).get('mode') === 'test' ? 'test' : 'web';
-}
-
 let mode: DemoMode = 'test';
 let currentFile: string | null = null;
 let flatList: MdFile[] = [];
@@ -101,7 +96,7 @@ const fileModeState = {
 };
 
 const fileModeHandlers = createFileModeHandlers({
-  state: fileModeState, send, sendLoading, hostInfo, findFileInfo, extractWorkspaceName,
+  state: fileModeState, send, hostInfo, findFileInfo, extractWorkspaceName,
   getWorkspaceOperationMetadata: workspaceOperation.current,
 });
 const {

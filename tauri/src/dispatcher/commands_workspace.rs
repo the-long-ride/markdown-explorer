@@ -1,7 +1,11 @@
 use super::*;
 
 impl Dispatcher {
-    pub(super) async fn handle_workspace_command(&self, cmd: &str, msg: &Value) -> Result<bool, String> {
+    pub(super) async fn handle_workspace_command(
+        &self,
+        cmd: &str,
+        msg: &Value,
+    ) -> Result<bool, String> {
         if self.handle_workspace_entry_command(cmd, msg).await {
             return Ok(true);
         }
@@ -99,7 +103,8 @@ impl Dispatcher {
                     state.flat_list.clear();
                     state.search_preview_paths.clear();
                     state.ready_handled = false;
-                    state.workspace_scan_generation = state.workspace_scan_generation.wrapping_add(1);
+                    state.workspace_scan_generation =
+                        state.workspace_scan_generation.wrapping_add(1);
                     state.workspace_operation_id = None;
                     state.workspace_tab_id = None;
                     if let Some(ref wc) = state.watch_controller {
@@ -119,9 +124,7 @@ impl Dispatcher {
                 self.handle_ready(&ready_message).await;
             }
             "cancelWorkspaceScan" => {
-                let requested_operation = msg
-                    .get("workspaceOperationId")
-                    .and_then(Value::as_str);
+                let requested_operation = msg.get("workspaceOperationId").and_then(Value::as_str);
                 let cancelled = {
                     let mut state = self.state.inner.write();
                     let matches = requested_operation.is_some()
@@ -229,7 +232,11 @@ impl Dispatcher {
                     .and_then(Value::as_bool)
                     .unwrap_or(false);
                 let tab_ids = msg.get("tabIds").and_then(Value::as_array).map(|values| {
-                    values.iter().filter_map(Value::as_str).map(ToOwned::to_owned).collect()
+                    values
+                        .iter()
+                        .filter_map(Value::as_str)
+                        .map(ToOwned::to_owned)
+                        .collect()
                 });
                 self.handle_search_across_workspaces(&request_id, &query, match_case, tab_ids);
             }

@@ -30,7 +30,6 @@ import {
   DEMO_FILES,
   DEMO_TREE,
   DEMO_WORKSPACE_NAME,
-  DEMO_WORKSPACE_PATH,
 } from './demoMarkdownFixtures';
 
 export interface ThemesAndSettingsStageProps {
@@ -49,6 +48,8 @@ const NEW_TAB_TEMPLATES = [
   { name: 'release-engineering', doc: 'docs/release-playbook.md' },
   { name: 'theme-tokens', doc: 'docs/design-system-themes.md' },
 ] as const;
+
+const noop = () => undefined;
 
 function createDemoTab(
   id: string,
@@ -86,7 +87,6 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [remixOpen, setRemixOpen] = useState(false);
   const [mediaGallery, setMediaGallery] = useState<MediaGallery | null>(null);
-  const setStatusNote = useCallback((_note: string) => undefined, []);
 
   const isDark = resolveThemeMode(state.theme) === 'dark';
 
@@ -128,7 +128,6 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
         if (fallback) {
           setActiveTabId(fallback.id);
           openDoc('docs/architecture-overview.md');
-          setStatusNote('Navigated to Architecture Overview from Home action.');
         }
         return;
       }
@@ -136,7 +135,6 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
       const target = tabs.find((tab) => tab.id === tabId);
       if (target?.currentFile) {
         openDoc(target.currentFile);
-        setStatusNote(`Switched to tab "${target.alias || target.workspaceName}" (${target.currentFile}).`);
       }
     },
     [openDoc, tabs],
@@ -151,16 +149,12 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
     setTabs((prev) => [...prev, nextTab]);
     setActiveTabId(newId);
     openDoc(tpl.doc);
-    setStatusNote(`Opened new workspace tab "${nextTab.workspaceName}".`);
   }, [openDoc]);
 
   const handleCloseTab = useCallback(
     (tabId: string) => {
       setTabs((prev) => {
-        if (prev.length <= 1) {
-          setStatusNote('Kept the last demo workspace tab open.');
-          return prev;
-        }
+        if (prev.length <= 1) return prev;
         const idx = prev.findIndex((tab) => tab.id === tabId);
         const remaining = prev.filter((tab) => tab.id !== tabId);
         if (tabId === activeTabId && remaining.length > 0) {
@@ -168,7 +162,6 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
           setActiveTabId(nextActive.id);
           if (nextActive.currentFile) openDoc(nextActive.currentFile);
         }
-        setStatusNote(`Closed tab "${tabId}".`);
         return remaining;
       });
     },
@@ -186,7 +179,6 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
       next.splice(targetIndex, 0, moved);
       return next;
     });
-    setStatusNote('Reordered workspace tabs.');
   }, []);
 
   const handleCloseTabsToRight = useCallback(
@@ -224,14 +216,12 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
     setTabs(reset);
     setActiveTabId(reset[0].id);
     if (reset[0].currentFile) openDoc(reset[0].currentFile);
-    setStatusNote('Reset workspace tabs to default core tab.');
   }, [openDoc]);
 
   const handleAliasChange = useCallback((tabId: string, alias: string) => {
     setTabs((prev) =>
       prev.map((tab) => (tab.id === tabId ? { ...tab, alias: alias || undefined } : tab)),
     );
-    setStatusNote(alias ? `Renamed tab alias to "${alias}".` : 'Cleared custom tab alias.');
   }, []);
 
   const handleImageClick = useCallback((el: HTMLElement) => {
@@ -250,7 +240,7 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
 
   const updateCheckStub = useMemo<UpdateCheckState>(
     () => ({
-      checkNow: () => setStatusNote('Demo update check: running latest studio build.'),
+      checkNow: noop,
       status: 'current',
       currentVersion: state.appVersion || '1.0.0',
       latestVersion: state.appVersion || '1.0.0',
@@ -289,8 +279,8 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
         onRefresh={refresh}
         canGoBack={canGoBack}
         canGoForward={canGoForward}
-        onCollapseAll={() => setStatusNote('Collapsed sections in preview.')}
-        onExpandAll={() => setStatusNote('Expanded sections in preview.')}
+        onCollapseAll={noop}
+        onExpandAll={noop}
         onCopyFile={() => void bridge.copyToClipboard(state.markdownSource ?? '')}
         isDark={isDark}
         isMaximized={false}
@@ -357,9 +347,9 @@ export function ThemesAndSettingsStage({ activeDocPath, onSelectDoc }: ThemesAnd
       <SettingsModal
         isOpen={settingsOpen} onClose={() => setSettingsOpen(false)}
         updateCheck={updateCheckStub} hostUpdateState={hostUpdateStub}
-        onDownloadUpdate={() => setStatusNote('Updates are disabled in browser demo mode.')}
-        onScheduleUpdateOnExit={() => undefined} onRestartAndApplyUpdate={() => undefined}
-        onOpenChangelog={() => setStatusNote('Changelog opens on GitHub Releases.')}
+        onDownloadUpdate={noop}
+        onScheduleUpdateOnExit={noop} onRestartAndApplyUpdate={noop}
+        onOpenChangelog={noop}
       />
       <ThemeRemixModal isOpen={remixOpen} onClose={() => setRemixOpen(false)} />
       <TourGuideOverlay />
