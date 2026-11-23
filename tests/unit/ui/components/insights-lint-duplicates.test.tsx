@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
@@ -19,6 +19,39 @@ describe('Insights Lint and Duplicates views', () => {
     expect(screen.getByRole('button', { name: INSIGHTS_TRANSLATIONS.en.showSuppressed })).toBeVisible();
     await user.click(screen.getByRole('button', { name: INSIGHTS_TRANSLATIONS.en.showSuppressed }));
     expect(screen.getByText(INSIGHTS_TRANSLATIONS.en.suppressed)).toBeVisible();
+  });
+
+  it('combines severity and rule filters, then restores controlled path, rule, and finding suppressions', () => {
+    const labels = INSIGHTS_UI_TRANSLATIONS.en;
+    const first = doc('guide.md', '# A\n### C\n');
+    const second = doc('other.md', '# A\n### C\n');
+    const finding = first.lint.find(({ ruleId }) => ruleId === 'heading/skipped-level')!;
+    const next = vi.fn();
+    const documents = [first, second];
+    const { rerender } = render(<LintView documents={documents} suppressions={[]} onSuppressionsChange={next} />);
+    const select = (name: string, option: string) => {
+      fireEvent.click(screen.getByRole('button', { name }));
+      fireEvent.click(screen.getByRole('option', { name: option }));
+    };
+    select(labels.severity, labels[finding.severity]);
+    select(labels.rule, labels.presentation.lintRules['heading/skipped-level']);
+    expect(screen.getByTestId('lint-findings-count')).toHaveTextContent('2');
+    const guide = screen.getByRole('button', { name: /guide\.md/ }).closest('li')!;
+    const pathRule = { scope: 'path-rule', path: finding.path, ruleId: finding.ruleId } as const;
+    const rule = { scope: 'rule', ruleId: finding.ruleId } as const;
+    const one = { scope: 'finding', findingId: finding.id } as const;
+    fireEvent.click(within(guide).getByRole('button', { name: labels.suppressPath }));
+    expect(next).toHaveBeenLastCalledWith([pathRule]);
+    fireEvent.click(within(guide).getByRole('button', { name: labels.suppressRule }));
+    expect(next).toHaveBeenLastCalledWith([rule]);
+    rerender(<LintView documents={documents} suppressions={[one, pathRule, rule]} onSuppressionsChange={next} />);
+    expect(screen.getByTestId('lint-findings-count')).toHaveTextContent('0');
+    fireEvent.click(screen.getByRole('button', { name: labels.showSuppressed }));
+    const suppressed = screen.getByRole('button', { name: /guide\.md/ }).closest('li')!;
+    fireEvent.click(within(suppressed).getByRole('button', { name: labels.restoreFinding }));
+    expect(next).toHaveBeenLastCalledWith([]);
+    fireEvent.click(screen.getByRole('button', { name: labels.hideSuppressed }));
+    expect(screen.getByText(labels.noLintFindings)).toBeInTheDocument();
   });
 
   it('shows exact and near duplicate groups and reversible suppression', async () => {

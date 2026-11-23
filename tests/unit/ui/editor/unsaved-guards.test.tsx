@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { UnsavedChangesModal } from '../../../../ui/src/components/Modal/UnsavedChangesModal';
@@ -47,5 +47,47 @@ describe('unsaved changes guard', () => {
     render(<UnsavedChangesModal fileName="a.md" onChoose={onChoose} />);
     await user.keyboard('{Escape}');
     expect(onChoose).toHaveBeenCalledWith('cancel');
+  });
+
+  it('wraps Tab within the dialog, handles Enter on Save, and leaves the other actions alone', () => {
+    const onChoose = vi.fn();
+    render(<><button type="button">Outside</button><UnsavedChangesModal fileName="a.md" onChoose={onChoose} /></>);
+    const save = screen.getByRole('button', { name: 'Save' });
+    const discard = screen.getByRole('button', { name: "Don't Save & Leave" });
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    const outside = screen.getByRole('button', { name: 'Outside' });
+    fireEvent.keyDown(save, { key: 'Tab' });
+    expect(discard).toHaveFocus();
+    fireEvent.keyDown(discard, { key: 'Tab', shiftKey: true });
+    expect(save).toHaveFocus();
+    outside.focus();
+    fireEvent.keyDown(outside, { key: 'Tab', shiftKey: true });
+    expect(save).toHaveFocus();
+    outside.focus();
+    fireEvent.keyDown(outside, { key: 'Tab' });
+    expect(discard).toHaveFocus();
+    cancel.focus();
+    expect(fireEvent.keyDown(cancel, { key: 'Tab' })).toBe(true);
+    fireEvent.keyDown(cancel, { key: 'Enter' });
+    expect(onChoose).not.toHaveBeenCalled();
+    save.focus();
+    fireEvent.keyDown(save, { key: 'Enter' });
+    expect(onChoose).toHaveBeenCalledExactlyOnceWith('save');
+  });
+
+  it('keeps keyboard choices disabled during a save with an error and restores only a connected trigger', () => {
+    const onChoose = vi.fn();
+    const detached = document.createElement('button');
+    document.body.appendChild(detached);
+    detached.focus();
+    const { unmount } = render(<UnsavedChangesModal fileName="a.md" saving errorMessage="Connection lost" onChoose={onChoose} />);
+    detached.remove();
+    expect(screen.getByRole('alert')).toHaveTextContent('Connection lost');
+    for (const button of screen.getAllByRole('button')) expect(button).toBeDisabled();
+    for (const key of ['Enter', 'Escape', 'Tab']) fireEvent.keyDown(document, { key });
+    expect(onChoose).not.toHaveBeenCalled();
+    const focus = vi.spyOn(detached, 'focus');
+    unmount();
+    expect(focus).not.toHaveBeenCalled();
   });
 });

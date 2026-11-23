@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { FileHistoryModal } from '../../../../ui/src/components/History/FileHistoryModal';
+import { FileHistoryModal, nextComparePicks } from '../../../../ui/src/components/History/FileHistoryModal';
+import { getHistoryTranslations } from '../../../../ui/src/contexts/historyTranslations';
+import { getFileHistoryTranslations } from '../../../../ui/src/contexts/fileHistoryTranslations';
 import { PlatformProvider } from '../../../../ui/src/contexts/PlatformContext';
 import type { GitRevisionSummary } from '../../../../ui/src/history/contracts';
 import type { HistoryClient } from '../../../../ui/src/history/historyClient';
@@ -207,6 +209,41 @@ describe('FileHistoryModal', () => {
     expect(await screen.findByText(/not inside a git repository/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
     expect(await screen.findByText('commit 0')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['unsupported-runtime', getHistoryTranslations('en').unsupportedRuntime],
+    ['git-unavailable', getHistoryTranslations('en').gitUnavailable],
+    ['History request timed out', getFileHistoryTranslations('en').timeout],
+    ['Host rejected this path', 'Host rejected this path'],
+  ])('reports the history failure %s and allows closing from the backdrop', async (reason, message) => {
+    const client = createClient([]);
+    vi.mocked(client.listDocumentHistory).mockRejectedValueOnce(new Error(reason));
+    const bridge = createBridge();
+    const onClose = vi.fn();
+    render(<PlatformProvider bridge={bridge}><FileHistoryModal filePath="docs/a.md" client={client} language="en" currentSource={() => null} onClose={onClose} bridge={bridge} /></PlatformProvider>);
+    expect(await screen.findByRole('status')).toHaveTextContent(message);
+    fireEvent.click(screen.getByText(message));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('reports an empty history, with Compare disabled', async () => {
+    renderModal([]);
+    expect(await screen.findByRole('status')).toHaveTextContent(getFileHistoryTranslations('en').noFileHistory);
+    expect(screen.getByRole('button', { name: 'Compare' })).toBeDisabled();
+  });
+
+  it.each([
+    [['old', 'new'], 'older', ['new', 'older']],
+    [['new', 'old'], 'newer', ['newer', 'old']],
+    [['old', 'stale'], 'middle', ['stale', 'middle']],
+    [['new', 'stale'], 'unlisted', ['stale', 'unlisted']],
+    [['stale', 'old'], 'middle', ['stale', 'middle']],
+  ])('updates compare boundaries for %j when picking %s', (picks, oid, expected) => {
+    const entries = ['newer', 'new', 'middle', 'old', 'older'].map(oid => ({ oid }));
+    expect(nextComparePicks(entries, picks, oid, 'older')).toEqual({ picks: expected, nextInsideSide: 'older' });
   });
 
   it('shows the file as added for its first commit', async () => {

@@ -4,6 +4,8 @@ import type { MdFile } from '../../../../ui/src/types/files';
 import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
 import { getExportScopeTranslations } from '../../../../ui/src/contexts/exportScopeTranslations';
 import { SCOPE_NAVIGATION_REQUEST_EVENT, SCOPE_NAVIGATION_STATE_EVENT } from '../../../../ui/src/components/Modal/scopeHistory';
+import { extractScopeTocEntries, ScopeViewToc } from '../../../../ui/src/components/Modal/ScopeViewToc';
+import type { DocumentSnapshot } from '../../../../ui/src/export/documentSnapshot';
 
 const mocks = vi.hoisted(() => ({
   loadDocumentSnapshot: vi.fn(),
@@ -94,6 +96,48 @@ function snapshot(target: MdFile) {
     html: `<h1>${target.title}</h1>${next <= 11 ? `<a href="./${next}.md">Open ${next}</a>` : ''}`,
   };
 }
+
+describe('ScopeViewToc', () => {
+  it('uses supplied entries, or derives nonempty headings and stable fallback identifiers from older snapshots', () => {
+    const legacy: DocumentSnapshot = { file: file(0), markdownSource: '', html: '' };
+    const body = document.createElement('div');
+    body.innerHTML = '<h1 id="intro">Intro</h1><h2> </h2><section class="mdn-section" id="parent"><h3> Nested </h3></section><h4>Legacy</h4>';
+    const entries = [
+      { id: 'intro', text: 'Intro', level: 1 },
+      { id: 'parent', text: 'Nested', level: 3 },
+      { id: 'scope-toc-heading-3', text: 'Legacy', level: 4 },
+    ];
+    expect(extractScopeTocEntries(null, body)).toEqual([]);
+    expect(extractScopeTocEntries(legacy, null)).toEqual([]);
+    expect(extractScopeTocEntries(legacy, body)).toEqual(entries);
+    expect(extractScopeTocEntries({ ...legacy, toc: [] }, body)).toEqual([]);
+    expect(extractScopeTocEntries({ ...legacy, toc: entries }, null)).toBe(entries);
+  });
+
+  it('expands nested sections, scrolls to legacy headings, and resets when the document has no headings', () => {
+    const body = document.createElement('div');
+    body.innerHTML = '<h1 id="first">First</h1><section class="mdn-section" data-expanded="false"><section class="mdn-section" data-expanded="false"><h2>Second</h2></section></section>';
+    const second = body.querySelector('h2')!;
+    second.scrollIntoView = vi.fn();
+    const bodyRef = { current: body };
+    const scrollRef = { current: null };
+    const entries = [
+      { id: 'first', text: 'First', level: 1 },
+      { id: 'scope-toc-heading-8', text: 'Missing', level: 2 },
+      { id: 'scope-toc-heading-1', text: 'Second', level: 2 },
+    ];
+    const props = { bodyRef, scrollRef, emptyLabel: 'No sections' };
+    const { rerender } = render(<ScopeViewToc {...props} documentKey="first" entries={entries} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Missing' }));
+    expect(screen.getByRole('button', { name: 'First' })).toHaveAttribute('aria-current', 'location');
+    fireEvent.click(screen.getByRole('button', { name: 'Second' }));
+    expect(screen.getByRole('button', { name: 'Second' })).toHaveAttribute('aria-current', 'location');
+    expect(second.scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
+    expect(body.querySelectorAll('[data-expanded="true"]')).toHaveLength(2);
+    rerender(<ScopeViewToc {...props} documentKey="empty" entries={[]} />);
+    expect(screen.getByText('No sections')).toBeInTheDocument();
+  });
+});
 
 describe('ScopeViewModal', () => {
   beforeEach(() => {

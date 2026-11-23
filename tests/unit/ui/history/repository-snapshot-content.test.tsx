@@ -546,6 +546,55 @@ describe('RepositorySnapshotContent', () => {
     expect(container.querySelector('article')).toBeNull();
   });
 
+  it('falls back to the revision ID without commit metadata, and renders nothing in live mode', () => {
+    mocks.snapshotContext = makeSnapshotContext(null);
+    const { rerender } = render(<RepositorySnapshotContent />);
+    const card = screen.getByTestId('repository-snapshot-commit-panel');
+    expect(card).toHaveTextContent(OID.slice(0, 7));
+    expect(card.querySelector('.repository-snapshot-content__commit-meta')).not.toBeInTheDocument();
+    mocks.snapshotContext = makeSnapshotContext(null, { repositoryView: { mode: 'live' } });
+    rerender(<RepositorySnapshotContent />);
+    expect(screen.queryByTestId('repository-snapshot-content')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [undefined, ''],
+    ['2026-13-07', '2026-13-07'],
+    [' invalid date ', 'invalid date'],
+    ['2026-05-07T12:00:00', '7 May 2026'],
+  ])('formats commit date %j as %j', (value, expected) => {
+    expect(formatSnapshotCommitDate(value)).toBe(expected);
+  });
+
+  it('scrolls to fragment targets after the next revision file opens and resets on same-file links', () => {
+    mocks.appState.tocCollapsed = true;
+    const openSnapshotFile = vi.fn().mockResolvedValue(undefined);
+    mocks.snapshotContext = makeSnapshotContext({
+      oid: OID, path: 'README.md', source: '[Same file](./README.md)\n\n[Destination](./manual-tests/test-basic.md#destination)',
+    }, { openSnapshotFile });
+    const scrollIntoView = vi.fn();
+    const { container, rerender } = render(<RepositorySnapshotContent />);
+    const scroll = container.querySelector('.repository-snapshot-content__scroll')!;
+    scroll.scrollTop = 100;
+    fireEvent.click(screen.getByRole('link', { name: 'Same file' }));
+    expect(scroll.scrollTop).toBe(0);
+    expect(openSnapshotFile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('link', { name: 'Destination' }));
+    expect(openSnapshotFile).toHaveBeenCalledExactlyOnceWith('manual-tests/test-basic.md');
+    const scrollSpy = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    try {
+      mocks.snapshotContext = makeSnapshotContext({
+        oid: OID, path: 'manual-tests/test-basic.md', source: '# Destination',
+      }, { openSnapshotFile });
+      rerender(<RepositorySnapshotContent />);
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
+    } finally {
+      if (scrollSpy) Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', scrollSpy);
+      else Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+    }
+  });
+
   it('renders Markdown locally when pre-rendered content is unavailable', () => {
     mocks.appState.tocCollapsed = true;
     const source = '---\nstatus: ready\n---\n\n<!-- private note -->\n\n# Offline snapshot\n\nDetails.';

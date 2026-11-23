@@ -626,6 +626,36 @@ describe('Topbar render', () => {
     expect(container.querySelector('.topbar__breadcrumb-container')).toHaveAttribute('data-tauri-drag-region');
   });
 
+  it('exits Tauri fullscreen on Restore, but uses the host window controls otherwise', () => {
+    mockState.appRuntime = 'tauri';
+    const onFullscreenToggle = vi.fn();
+    const { rerender } = render(<Topbar {...defaultProps} isFullscreen onFullscreenToggle={onFullscreenToggle} />);
+    fireEvent.click(screen.getByTitle('Restore'));
+    expect(onFullscreenToggle).toHaveBeenCalledOnce();
+    expect(mockPostMessage).not.toHaveBeenCalled();
+    rerender(<Topbar {...defaultProps} isFullscreen />);
+    fireEvent.click(screen.getByTitle('Restore'));
+    expect(mockPostMessage).toHaveBeenLastCalledWith({ command: 'window-maximize' });
+    rerender(<Topbar {...defaultProps} onFullscreenToggle={onFullscreenToggle} />);
+    fireEvent.click(screen.getByTitle('Maximize'));
+    expect(mockPostMessage).toHaveBeenCalledTimes(2);
+    expect(onFullscreenToggle).toHaveBeenCalledOnce();
+  });
+
+  it('uses a workspace name and indexed files when the folder path and active document are unavailable', () => {
+    mockState.workspacePath = undefined;
+    mockState.currentFile = null;
+    mockState.workspaceName = 'Imported articles';
+    mockState.relativePath = 'articles\\today.md';
+    mockState.fileList = [{ fsPath: '/articles/today.md' }];
+    const { container, rerender } = render(<Topbar {...defaultProps} />);
+    expect(screen.getByTitle('Close Folder')).toBeEnabled();
+    expect(container.querySelector('.tooltip-content-wrap')?.textContent).toBe('articles\\\u200Btoday.md');
+    mockState.fileList = [];
+    rerender(<Topbar {...defaultProps} />);
+    expect(screen.queryByTitle('Close Folder')).not.toBeInTheDocument();
+  });
+
   it('omits data-tauri-drag-region when not running in desktop or tauri', () => {
     mockState.appRuntime = 'vscode';
     const { container } = render(React.createElement(Topbar, defaultProps));

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
@@ -17,6 +17,41 @@ const labels = INSIGHTS_UI_TRANSLATIONS.en;
 function doc(path: string, source: string) { return analyzeDocument({ path, source, revision: `${path}-1` }); }
 
 describe('Insights Gallery and Links views', () => {
+  it('skips non-media links and dispatches local image previews without requiring host probing', () => {
+    const open = vi.fn();
+    window.addEventListener('markdown-explorer-open-media-modal', open);
+    const onSelectPath = vi.fn();
+    const mediaDocument = doc('guide.md', [
+      '[Ordinary Markdown](notes.md)',
+      '![ ](image.png)',
+      '[Paper](manual.pdf)',
+      '[Clip](film.mp4)',
+      '[Sound](sound.ogg)',
+    ].join('\n'));
+    try {
+      const { rerender } = render(<GalleryView documents={[]} />);
+      expect(screen.getByText(labels.noMedia)).toBeInTheDocument();
+      rerender(<GalleryView documents={[mediaDocument]} onSelectPath={onSelectPath} />);
+      expect(screen.queryByText('notes.md')).not.toBeInTheDocument();
+      for (const category of ['document', 'video', 'audio', 'image'] as const) {
+        expect(screen.getByRole('button', { name: `${labels.presentation.galleryCategories[category]} (1)` })).toBeInTheDocument();
+      }
+      const preview = screen.getByRole('button', { name: `${labels.loadPreview}:` });
+      const card = preview.closest('article')!;
+      fireEvent.keyDown(card, { key: 'Tab' });
+      expect(onSelectPath).not.toHaveBeenCalled();
+      fireEvent.keyDown(card, { key: 'Enter' });
+      expect(onSelectPath).toHaveBeenCalledWith('guide.md', expect.objectContaining({ sourceStart: expect.any(Number) }));
+      fireEvent.click(preview);
+      expect(open).toHaveBeenCalledWith(expect.objectContaining({
+        detail: { items: [expect.objectContaining({ type: 'img', src: 'image.png' })], currentIndex: 0 },
+      }));
+      expect(onSelectPath).toHaveBeenCalledOnce();
+    } finally {
+      window.removeEventListener('markdown-explorer-open-media-modal', open);
+    }
+  });
+
   it('shows referenced media and Mermaid diagrams, probes local metadata, and never auto-loads remote media', async () => {
     const probeResource = vi.fn(async () => ({ status: 'exists' as const, kind: 'file' as const, sizeBytes: 123 }));
     const onOpenMedia = vi.fn();

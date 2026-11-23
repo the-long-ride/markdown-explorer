@@ -63,6 +63,7 @@ vi.mock('../../../../ui/src/contexts/appStateConstants', () => ({
   ],
   PET_THEME_STYLE_OPTIONS: [
     { id: 'pet-white-shiba', label: 'Nika', description: 'Nika style' },
+    { id: 'pet-k-ink', label: 'K-Ink', description: 'K-Ink style' },
   ],
   DEFAULT_PET_THEME_STYLE: 'pet-white-shiba',
   isPetThemeStyle: (value: string) => value.startsWith('pet-'),
@@ -447,6 +448,28 @@ describe('ThemeStylePicker', () => {
   it('marks Pet themes group active when a pet theme is selected', () => {
     const { container } = render(<ThemeStylePicker value="pet-white-shiba" onChange={() => {}} />);
     expect(container.querySelector('[data-theme-group="pets"]')).toHaveClass('is-active');
+  });
+
+  it('marks the active remix and switches out of it through either main theme button', () => {
+    mockState.settings.customThemes = [{ id: 'c1', name: 'Custom 1', baseStyle: 'default' }];
+    mockState.settings.activeCustomThemeId = 'c1';
+    const onChange = vi.fn();
+    const { container, rerender } = render(<ThemeStylePicker value="default" onChange={onChange} showCustomThemes />);
+    const custom = container.querySelector('[data-theme-group="custom"]')!;
+    expect(custom).toHaveClass('is-active');
+    fireEvent.click(screen.getByRole('button', { name: 'Custom 1' }));
+    const active = screen.getByRole('option', { name: 'Custom 1' });
+    expect(active).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(active, { clientX: 42 });
+    expect(mockSelectCustomTheme).toHaveBeenCalledWith('c1');
+    fireEvent.click(container.querySelector('[data-theme-group="themes"] .theme-style-option__main')!, { clientX: 42 });
+    expect(onChange).toHaveBeenLastCalledWith('default');
+    rerender(<ThemeStylePicker value="pet-k-ink" onChange={onChange} />);
+    expect(custom).not.toBeInTheDocument();
+    const pet = container.querySelector('[data-theme-group="pets"]')!;
+    expect(pet).toHaveClass('is-active');
+    fireEvent.click(pet.querySelector('.theme-style-option__main')!, { clientX: 42 });
+    expect(onChange).toHaveBeenLastCalledWith('pet-k-ink');
   });
 
   it('renders exactly three groups when custom themes exist', () => {

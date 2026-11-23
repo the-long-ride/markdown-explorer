@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  enhanceMermaid, fitMermaidSvg, getMermaidRenderNodes, invalidateMermaidRenderings,
+  applyGanttIntrinsicWidth, enhanceMermaid, fitMermaidSvg, getMermaidRenderNodes, invalidateMermaidRenderings,
   polishMermaidSvg, resolveMermaidThemeOptions,
 } from '../../../../ui/src/components/Content/enhancements/mermaidRendering';
 
@@ -182,5 +182,25 @@ describe('Mermaid rendering', () => {
     expect(svg.querySelector('#recoverable')).toHaveAttribute('vector-effect', 'non-scaling-stroke');
     expect(svg.querySelector('#arrow')).toHaveAttribute('transform', 'translate(2 1)');
     expect(svg.querySelector('#arrow')).not.toHaveAttribute('vector-effect');
+  });
+
+  it('removes authored stroke overrides and raises native Sankey labels', () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.innerHTML = '<g class="node-labels"><text>Entry</text></g><g class="links"><path vector-effect="non-scaling-stroke" stroke-linecap="square" stroke-linejoin="bevel" /></g>';
+    const path = svg.querySelector('path')!;
+    polishMermaidSvg(svg, 'sankey');
+    expect(path).not.toHaveAttribute('vector-effect');
+    expect(path).not.toHaveAttribute('stroke-linecap');
+    expect(path).not.toHaveAttribute('stroke-linejoin');
+    expect(svg.lastElementChild).toHaveClass('node-labels');
+  });
+
+  it('computes intrinsic Gantt width from source when the host SVG width is invalid and no wrapper exists', () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', 'auto');
+    const width = applyGanttIntrinsicWidth(svg, null, 'gantt\nTask : 2026-01-01, 7d');
+    expect(width).toBeGreaterThan(0);
+    expect(svg).toHaveAttribute('width', String(width));
+    expect(svg.style.minWidth).toBe(`${width}px`);
   });
 });
